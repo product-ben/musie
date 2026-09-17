@@ -1,0 +1,13 @@
+{
+  "name": "musie",
+  "private": true,
+  "packageManager": "pnpm@9.15.5",
+  "scripts": {
+    "check": "pnpm run typecheck && pnpm run lint",
+    "typecheck": "pnpm --filter web typecheck",
+    "lint": "pnpm --filter web lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
