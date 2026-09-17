@@ -21,6 +21,7 @@ const config: StorybookConfig = {
   },
   stories: [
     '../stories/**/*.mdx',
+    '../stories/**/*.stories.tsx',
     '../src/**/*.stories.tsx',
   ],
   /* addon-docs ONLY, and it is not a preference: Storybook 9 cannot compile an
