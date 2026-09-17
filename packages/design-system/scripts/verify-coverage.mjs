@@ -38,8 +38,15 @@ if (!idx) {
   console.error(`FAIL  no Storybook at ${SB} — start it with \`pnpm storybook\` first.`);
   process.exit(1);
 }
-const docs = Object.keys(idx.entries)
-  .filter((k) => idx.entries[k].type === 'docs' && !k.includes('contrast'));
+/* FOUNDATIONS pages only, minus Contrast.
+   Ownership is a question about the foundations reference: which page is a
+   token's home. Contrast must name semantic tokens to describe a pair, and the
+   Layout rules page quotes token names inside its own tables (L9's drop
+   indicator names --interactive-accent-placeholder2). Neither is a home, and
+   counting them makes real duplicates impossible to see. */
+const docs = Object.keys(idx.entries).filter(
+  (k) => idx.entries[k].type === 'docs' && k.startsWith('foundations-') && !k.includes('contrast'),
+);
 
 const chrome = spawn(CHROME, [
   '--headless=new', '--disable-gpu', '--no-sandbox',

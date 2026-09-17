@@ -132,6 +132,33 @@ export const PALETTE = paletteJson as Record<string, Record<'light' | 'dark', Re
 
 export const STEP_PURPOSE = manifestJson.stepPurpose as Record<string, string>;
 
+/**
+ * The semantic layer, grouped the way "Musy Foundations Proof.dc.html" groups
+ * it. A flat alphabetical list of 83 tokens is technically complete and
+ * practically unusable: the four text colours end up buried between forty
+ * --interactive-* rows and the surfaces.
+ *
+ * Predicates, not name lists — a token added to the CSS lands in a group
+ * automatically, and `semanticGroupOf` returns 'other' for anything no
+ * predicate claims, which the page renders as a visible catch-all rather than
+ * dropping silently.
+ */
+export const SEMANTIC_GROUPS: Array<{ id: string; title: string; match: (n: string) => boolean }> = [
+  { id: 'surface', title: 'Surfaces', match: (n) => n.startsWith('--surface') },
+  { id: 'text', title: 'Text', match: (n) => n.startsWith('--on-surface') },
+  { id: 'border', title: 'Borders', match: (n) => n.startsWith('--border-') },
+  { id: 'primary', title: 'Interactive — primary (terracotta)', match: (n) => n.startsWith('--interactive-primary') },
+  { id: 'p1', title: 'Interactive — accent placeholder 1 (ocher)', match: (n) => n.startsWith('--interactive-accent-placeholder1') },
+  { id: 'p2', title: 'Interactive — accent placeholder 2 (purple)', match: (n) => n.startsWith('--interactive-accent-placeholder2') },
+  { id: 'ghost', title: 'Interactive — ghost', match: (n) => n.startsWith('--interactive-ghost') },
+  { id: 'accent', title: 'Accent rotation', match: (n) => /^--accent-\d/.test(n) },
+  { id: 'feedback', title: 'Feedback', match: (n) => n.startsWith('--feedback-') },
+];
+
+export function semanticGroupOf(name: string): string {
+  return SEMANTIC_GROUPS.find((g) => g.match(name))?.id ?? 'other';
+}
+
 export interface AuditPair { fg: string; bg: string; req: number; why: string }
 export const AUDIT_PAIRS = manifestJson.audit as AuditPair[];
 

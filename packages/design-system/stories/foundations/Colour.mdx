@@ -30,6 +30,15 @@ The only colour tokens a component may reference. Where light and dark point at
 different raw steps, that is deliberate: `--surface-raised` is lighter than the
 page in *both* themes, which takes `sand-1` in light and `sand-4` in dark.
 
+Grouped the way the foundations proof groups them — **Surfaces**, **Text**,
+**Borders**, the three interactive families, **Accent rotation** and
+**Feedback**. A flat alphabetical list is complete and unusable: the four text
+colours end up buried between forty `--interactive-*` rows.
+
+The **specimen** column renders each foreground in its own colour, on the
+background the [contrast audit](?path=/docs/foundations-contrast--docs) pairs it
+with. A swatch shows a colour; only text shows whether it reads as text.
+
 The **resolves to** column comes from the token JSON. A blank there means the
 alias exists only in the CSS — see `TOKEN-DRIFT.md`.
 
