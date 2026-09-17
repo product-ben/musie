@@ -1,0 +1,15 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { MotionDemo } from './_pages/Dimension';
+
+<Meta title="Foundations/Motion" />
+
+# Motion
+
+No token loops or flashes, so **2.3.1 is satisfied structurally** rather than by
+review.
+
+Reduced motion is honoured at the *token* level: every duration collapses to
+1ms and every travel token goes to 0px, so anything built on these tokens
+becomes still without a component-level media query.
+
+<MotionDemo />

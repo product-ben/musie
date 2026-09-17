@@ -1,0 +1,26 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { IconSizes } from './_pages/Dimension';
+
+<Meta title="Foundations/Icon" />
+
+# Iconography
+
+Lucide, 24px grid, 2px stroke, unrounded.
+
+Icon size pairs with the **adjacent text step**, never with the container:
+
+| Text | Icon |
+|---|---|
+| `body-sm` / `label-md` | `--icon-size-sm` |
+| `body-md` / `label-lg` | `--icon-size-md` |
+| `heading-sm` / `heading-md` | `--icon-size-lg` |
+| `heading-lg` and up | `--icon-size-xl` |
+
+Optically centre on cap height, not bounding box — nudge a text-adjacent icon
+by `--icon-optical-nudge`. A meaningful icon takes a step-11 token (≥3:1,
+1.4.11); a decorative one may take any.
+
+`--icon-stroke-sm` is **not on this page**: it is an amendment token, staged in
+`musy-foundations-amendments.css`. See `TOKEN-DRIFT.md`.
+
+<IconSizes />

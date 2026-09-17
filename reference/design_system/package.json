@@ -1,0 +1,14 @@
+{
+  "name": "musy-design-system",
+  "private": true,
+  "description": "Musy design system — Layer 1 foundations (tokens) + Layer 2 components.",
+  "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "lucide-react": "^0.470.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

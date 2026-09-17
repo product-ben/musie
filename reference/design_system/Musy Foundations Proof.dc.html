@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Musy — Foundations proof</title>
+<!-- The manifest is fetched from JS, so the bundler cannot discover it by
+     scanning attributes. Declaring it here gets the bytes inlined; at runtime
+     window.__resources.manifest is a blob URL for them. -->
+<meta name="ext-resource-dependency" content="tokens/proof-manifest.json" data-resource-id="manifest" />
+<!-- Unpack splash / no-JS fallback for the published bundle: sand ground,
+     matching the light theme's page surface.
+
+     Injected as a STRING rather than authored declaratively, because the DC
+     compiler claims any <template> element it parses — in the helmet exactly
+     as in the body — and discards its subtree, leaving .content empty. Built
+     here by the HTML parser from markup the compiler never sees. -->
+<script>
+  (function () {
+    /* Drop any EMPTY predecessor first: the compiler emits a stripped
+       <template> for a declaratively-authored splash and leaves it in the head
+       across re-renders, so a plain existence guard would defer to the very
+       node this script exists to replace. A populated one is left alone. */
+    var prior = document.getElementById('__bundler_thumbnail');
+    if (prior) {
+      if (prior.content && prior.content.childElementCount > 0) return;
+      prior.remove();
+    }
+    document.head.insertAdjacentHTML('beforeend', [
+      '<template id="__bundler_thumbnail">',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" data-bg-color="#F7F4EF" role="img" aria-label="Musy Foundations">',
+      '<rect width="240" height="240" fill="#F7F4EF"></rect>',
+      '<circle cx="120" cy="120" r="46" fill="none" stroke="#2E2A26" stroke-width="8"></circle>',
+      '<circle cx="120" cy="120" r="14" fill="#2E2A26"></circle>',
+      '<path d="M120 74V38M120 202v-36M74 120H38M202 120h-36" stroke="#2E2A26" stroke-width="8" stroke-linecap="round"></path>',
+      '</svg>',
+      '</template>'
+    ].join(''));
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens/musy-foundations.css">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--surface); color: var(--on-surface); font-family: var(--font-text); }
+  /* §4.8 — the ONE focus indicator, defined once. This rule is the deliverable. */
+  :focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+  a { color: var(--accent-1-text); text-underline-offset: 2px; }
+  a:hover { color: var(--interactive-primary-active); }
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background: var(--surface); color: var(--on-surface); min-height: 100vh; padding: var(--sp-6) var(--sp-5) var(--sp-9); box-sizing: border-box;">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--sp-8);">
+
+  <header style="display: flex; flex-direction: column; gap: var(--sp-4);">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-4);">
+      <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Design system foundations · root layer</span>
+        <h1 style="margin: 0; font-family: var(--font-display); font-size: var(--type-display-lg-size); line-height: var(--type-display-lg-line); letter-spacing: var(--type-display-lg-tracking); font-weight: var(--type-display-lg-weight); text-wrap: balance;">Musy — foundations proof</h1>
+      </div>
+      <button type="button" onClick="{{ toggleTheme }}" style="min-height: var(--target-primary); padding: var(--space-inset-control); border: none; border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-primary); color: var(--interactive-primary-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium); box-shadow: var(--elevation-1); transition: background var(--motion-toggle);" style-hover="background: var(--interactive-primary-hover);" style-active="background: var(--interactive-primary-active);">Page theme — {{ themeLabel }}</button>
+    </div>
+    <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); color: var(--on-surface-muted); text-wrap: pretty;">Every hex and every ratio below is read live from the rendered DOM: the page probes its own computed token values in both themes and recomputes the audit on load. Nothing is transcribed, so this page cannot drift from the token file. The page itself contains no hardcoded colour.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: var(--sp-3);">
+      <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--feedback-success-surface); border: var(--border-width-regular) solid var(--feedback-success-border); color: var(--feedback-success-text); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">{{ statPass }}</span>
+      <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--feedback-error-surface); border: var(--border-width-regular) solid var(--feedback-error-border); color: var(--feedback-error-text); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">{{ statFail }}</span>
+      <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--surface-sunken); border: var(--border-width-hairline) solid var(--border-subtle); color: var(--on-surface-muted); font-size: var(--type-label-md-size);">{{ statTokens }}</span>
+      <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--surface-sunken); border: var(--border-width-hairline) solid var(--border-subtle); color: var(--on-surface-muted); font-size: var(--type-label-md-size);">{{ statMotion }}</span>
+    </div>
+    <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted);">Read in order: colour, type, spacing, focus, motion. Paired panels are always light on the left and dark on the right, whatever the page theme — those panels are themselves the nested-override demo.</p>
+  </header>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-5);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">1 · Raw palette</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Eight Radix-structured 12-step scales. Steps 1–8 are curve-placed in OKLCH, 9 and 10 are anchored on the Figma brand values, and 11 / 12 / <strong style="color: var(--on-surface); font-weight: var(--font-weight-medium);">edge</strong> / <strong style="color: var(--on-surface); font-weight: var(--font-weight-medium);">press</strong> are contrast-solved against every surface a foreground can legally land on — including other scales' tinted fills. Hover any swatch for its stated purpose.</p>
+    </div>
+    <sc-for list="{{ scaleRows }}" as="sc" hint-placeholder-count="8">
+      <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+        <div style="display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap;">
+          <h3 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-sm-size); line-height: var(--type-heading-sm-line); font-weight: var(--font-weight-medium);">{{ sc.name }}</h3>
+          <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">{{ sc.note }}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--sp-3);">
+          <sc-for list="{{ sc.panes }}" as="pane" hint-placeholder-count="2">
+            <div data-theme="{{ pane.theme }}" style="background: var(--surface); border-radius: var(--radius-lg); border: var(--border-width-hairline) solid var(--border-subtle); padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3);">
+              <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">{{ pane.theme }}</span>
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-2);">
+                <sc-for list="{{ pane.swatches }}" as="s" hint-placeholder-count="14">
+                  <div title="{{ s.purpose }}" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                    <div style="height: 44px; border-radius: var(--radius-xs); border: var(--border-width-hairline) solid var(--border-subtle); background: {{ s.hex }};"></div>
+                    <span style="font-size: 11px; font-weight: var(--font-weight-medium); color: var(--on-surface);">{{ s.label }}</span>
+                    <span style="font-size: 9px; font-family: ui-monospace, monospace; color: var(--on-surface-muted);">{{ s.hex }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-5);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">2 · Semantic layer</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">The only colour tokens a component may reference. Both resolved values are shown side by side; where light and dark differ by more than a shade, they are pointing at different raw steps on purpose — dark mode is re-derived, not inverted.</p>
+    </div>
+    <sc-for list="{{ semanticGroups }}" as="g" hint-placeholder-count="6">
+      <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+        <h3 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-sm-size); line-height: var(--type-heading-sm-line); font-weight: var(--font-weight-medium);">{{ g.title }}</h3>
+        <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
+          <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="8">
+            <div style="display: grid; grid-template-columns: minmax(210px, 1fr) 104px 104px minmax(220px, 1.5fr); gap: var(--sp-3); align-items: center; padding: var(--sp-3); border-radius: var(--radius-sm); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle);">
+              <code style="font-family: ui-monospace, monospace; font-size: var(--type-body-sm-size); color: var(--on-surface); overflow-wrap: anywhere;">{{ r.name }}</code>
+              <div data-theme="light" style="display: flex; align-items: center; gap: var(--sp-2); background: var(--surface); border-radius: var(--radius-xs); padding: 3px 5px;">
+                <div style="width: 20px; height: 20px; flex: none; border-radius: 3px; border: 1px solid var(--border-subtle); background: {{ r.lightHex }};"></div>
+                <span style="font-size: 9px; font-family: ui-monospace, monospace; color: var(--on-surface-muted);">{{ r.lightHex }}</span>
+              </div>
+              <div data-theme="dark" style="display: flex; align-items: center; gap: var(--sp-2); background: var(--surface); border-radius: var(--radius-xs); padding: 3px 5px;">
+                <div style="width: 20px; height: 20px; flex: none; border-radius: 3px; border: 1px solid var(--border-subtle); background: {{ r.darkHex }};"></div>
+                <span style="font-size: 9px; font-family: ui-monospace, monospace; color: var(--on-surface-muted);">{{ r.darkHex }}</span>
+              </div>
+              <span style="font-size: var(--type-body-sm-size); line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">{{ r.why }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-5);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">3 · Every pair, rendered in both themes</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Token demonstrations, not components — no component styles exist yet. German copy throughout, because that is the length the system has to survive.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--sp-4);">
+      <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+        <div data-theme="{{ t.theme }}" style="background: var(--surface); color: var(--on-surface); border-radius: var(--radius-lg); border: var(--border-width-hairline) solid var(--border-subtle); padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--space-gap-group);">
+          <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">{{ t.theme }}</span>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Surfaces — raised is lighter than the page in <em>both</em> themes</span>
+            <div style="background: var(--surface-raised); box-shadow: var(--elevation-1); border-radius: var(--radius-card); padding: var(--space-inset-card); display: flex; flex-direction: column; gap: var(--space-gap-related);">
+              <span style="font-family: var(--font-display); font-size: var(--type-heading-sm-size); line-height: var(--type-heading-sm-line); font-weight: var(--font-weight-medium);">Gruppensession</span>
+              <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">8 Teilnehmer:innen · heute, 18:00</span>
+              <div style="background: var(--surface-sunken); border-radius: var(--radius-sm); padding: var(--sp-3); font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">surface-sunken — an inset well</div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Interactive — solid, outline, disabled</span>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--sp-3);">
+              <button type="button" style="min-height: var(--target-primary); padding: var(--space-inset-control); border: none; border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-primary); color: var(--interactive-primary-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium); transition: background var(--motion-toggle);" style-hover="background: var(--interactive-primary-hover);" style-active="background: var(--interactive-primary-active);">Session öffnen</button>
+              <button type="button" style="min-height: var(--target-primary); padding: var(--space-inset-control); border: var(--border-width-regular) solid var(--border-strong); border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-ghost); color: var(--interactive-ghost-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium); transition: background var(--motion-toggle);" style-hover="background: var(--interactive-ghost-hover);" style-active="background: var(--interactive-ghost-active);">Später</button>
+              <button type="button" style="min-height: var(--target-primary); padding: var(--space-inset-control); border: none; border-radius: var(--radius-control); cursor: not-allowed; background: var(--interactive-primary-disabled); color: var(--interactive-primary-on-disabled); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium);" aria-disabled="true">Nicht verfügbar</button>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--sp-2);">
+              <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--interactive-primary-subtle); color: var(--interactive-primary-on-subtle); border: var(--border-width-hairline) solid var(--interactive-primary-border); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">primary</span>
+              <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--interactive-accent-placeholder1-subtle); color: var(--interactive-accent-placeholder1-on-subtle); border: var(--border-width-hairline) solid var(--interactive-accent-placeholder1-border); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">placeholder1</span>
+              <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--interactive-accent-placeholder2-subtle); color: var(--interactive-accent-placeholder2-on-subtle); border: var(--border-width-hairline) solid var(--interactive-accent-placeholder2-border); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">placeholder2</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--sp-2);">
+              <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--accent-1); color: var(--accent-1-on); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">accent-1</span>
+              <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--accent-2); color: var(--accent-2-on); border: var(--border-width-regular) solid var(--accent-2-border); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">accent-2 + border</span>
+              <span style="display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-full); background: var(--accent-3); color: var(--accent-3-on); border: var(--border-width-regular) solid var(--accent-3-border); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">accent-3 + border</span>
+            </div>
+            <p style="margin: 0; font-size: var(--type-body-sm-size); line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">accent-2 and accent-3 carry a visible border because their fills sit under 3:1 against the page — the boundary is delegated to the <code style="font-family: ui-monospace, monospace;">-border</code> token rather than darkening a brand colour into mud.</p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Text levels + an input boundary</span>
+            <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
+              <span style="font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface);">on-surface — Atemübung mit Klangschale</span>
+              <span style="font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted);">on-surface-muted — zuletzt gespielt vor drei Tagen</span>
+              <span style="font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-disabled);">on-surface-disabled — gesperrt bis zur Freigabe</span>
+            </div>
+            <div style="min-height: var(--target-primary); display: flex; align-items: center; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-input); background: var(--surface-raised); border: var(--border-width-regular) solid var(--border-strong); color: var(--on-surface-muted); font-size: var(--type-body-md-size);">Sitzung benennen …</div>
+            <div style="display: inline-flex; align-self: flex-start; align-items: center; padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-sm); background: var(--surface-inverse); color: var(--on-surface-inverse); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium);">surface-inverse — tooltip</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Feedback — icon + text + border, never colour alone (1.4.1)</span>
+            <sc-for list="{{ feedback }}" as="f" hint-placeholder-count="4">
+              <div style="display: flex; gap: var(--space-gap-inline); align-items: flex-start; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-sm); background: {{ f.bgVar }}; border: var(--border-width-regular) solid {{ f.borderVar }};">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ f.iconVar }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px;"><path d="{{ f.path }}"></path><path d="{{ f.path2 }}"></path></svg>
+                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                  <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); color: {{ f.textVar }};">{{ f.title }}</span>
+                  <span style="font-size: var(--type-body-sm-size); line-height: 1.45; color: {{ f.textVar }}; text-wrap: pretty;">{{ f.body }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Elevation — 1 / 2 / 3. In dark, both a lighter surface <em>and</em> a ring.</span>
+            <div style="display: flex; gap: var(--sp-4); flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 88px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-card); background: var(--surface-raised); box-shadow: var(--elevation-1); font-size: var(--type-label-md-size); color: var(--on-surface-muted);">1</div>
+              <div style="flex: 1; min-width: 88px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-card); background: var(--surface-overlay); box-shadow: var(--elevation-2); font-size: var(--type-label-md-size); color: var(--on-surface-muted);">2</div>
+              <div style="flex: 1; min-width: 88px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-card); background: var(--surface-overlay); box-shadow: var(--elevation-3); font-size: var(--type-label-md-size); color: var(--on-surface-muted);">3</div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-4);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">4 · Contrast audit, measured live</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Every pair the semantic layer actually produces, measured in light and dark independently from the resolved DOM values. <strong style="color: var(--on-surface); font-weight: var(--font-weight-medium);">4.5</strong> = body text (1.4.3), <strong style="color: var(--on-surface); font-weight: var(--font-weight-medium);">3.0</strong> = non-text contrast (1.4.11), <strong style="color: var(--on-surface); font-weight: var(--font-weight-medium);">—</strong> = exempt and reported anyway.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center;">
+      <button type="button" onClick="{{ setFilterAll }}" style="{{ filterAllStyle }}">All pairs</button>
+      <button type="button" onClick="{{ setFilterRequired }}" style="{{ filterReqStyle }}">Required only</button>
+      <button type="button" onClick="{{ setFilterExempt }}" style="{{ filterExemptStyle }}">Exempt only</button>
+    </div>
+    <div style="overflow-x: auto; border-radius: var(--radius-lg); border: var(--border-width-hairline) solid var(--border-subtle); background: var(--surface-raised);">
+      <div style="min-width: 860px; display: flex; flex-direction: column;">
+        <div style="display: grid; grid-template-columns: 1.5fr 1.4fr 54px 74px 74px 1.7fr; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-bottom: var(--border-width-regular) solid var(--border-strong); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); color: var(--on-surface); position: sticky; top: 0; background: var(--surface-raised);">
+          <span>Foreground</span><span>Background</span><span>Req</span><span>Light</span><span>Dark</span><span>Purpose</span>
+        </div>
+        <sc-for list="{{ auditRows }}" as="a" hint-placeholder-count="12">
+          <div style="display: grid; grid-template-columns: 1.5fr 1.4fr 54px 74px 74px 1.7fr; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-bottom: var(--border-width-hairline) solid var(--border-subtle); align-items: center;">
+            <code style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--on-surface); overflow-wrap: anywhere;">{{ a.fg }}</code>
+            <code style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--on-surface-muted); overflow-wrap: anywhere;">{{ a.bg }}</code>
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">{{ a.req }}</span>
+            <span style="{{ a.lightStyle }}">{{ a.lightText }}</span>
+            <span style="{{ a.darkStyle }}">{{ a.darkText }}</span>
+            <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted); text-wrap: pretty;">{{ a.why }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); text-wrap: pretty;">Three groups are reported as exempt rather than fixed: disabled tokens (1.4.3 exempts them, and they still land near 3:1), <code style="font-family: ui-monospace, monospace;">border-subtle</code> (decorative, and barred by name from control boundaries), and the ocher / purple fills whose 3:1 boundary is delegated to their <code style="font-family: ui-monospace, monospace;">-border</code> token.</p>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-5);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">5 · Type scale</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Two families — Space Grotesk for display and headings, Inter for body and UI. Fluid between 393px and 1440px, so the rendered column below shows the size <em>at this viewport width</em>; resize and it moves. The body floor is 17px at the 393px reference, which bars <code style="font-family: ui-monospace, monospace;">body-sm</code> and <code style="font-family: ui-monospace, monospace;">label-md</code> from essential prose.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+      <sc-for list="{{ typeRows }}" as="ty" hint-placeholder-count="10">
+        <div style="display: flex; flex-direction: column; gap: var(--sp-2); padding-bottom: var(--sp-4); border-bottom: var(--border-width-hairline) solid var(--border-subtle);">
+          <div style="display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: baseline;">
+            <code style="font-family: ui-monospace, monospace; font-size: var(--type-body-sm-size); color: var(--on-surface);">{{ ty.name }}</code>
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">{{ ty.spec }}</span>
+            <span style="font-size: var(--type-body-sm-size); color: var(--accent-1-text); font-weight: var(--font-weight-medium);">{{ ty.live }}</span>
+          </div>
+          <span style="{{ ty.sampleStyle }}">{{ ty.sample }}</span>
+          <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">{{ ty.use }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4);">
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-3);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); color: var(--on-surface);">Hyphenation, on</span>
+        <p style="margin: 0; max-width: 15ch; hyphens: var(--text-hyphens); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface);">Musiktherapiesitzung Klangschalenübung</p>
+        <span style="font-size: var(--type-body-sm-size); line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">Not optional for German: these compounds do not fit a 393px card without it.</span>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-3);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); color: var(--on-surface);">Hyphenation, off</span>
+        <p style="margin: 0; max-width: 15ch; hyphens: none; font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface);">Musiktherapiesitzung Klangschalenübung</p>
+        <span style="font-size: var(--type-body-sm-size); line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">The same string overflows its measure — this is the failure the token prevents.</span>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-3);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); color: var(--on-surface);">1.4.12 text-spacing survival</span>
+        <p style="margin: 0; max-width: 28ch; font-size: var(--type-body-md-size); line-height: 1.5; letter-spacing: 0.12em; word-spacing: 0.16em; color: var(--on-surface);">Atemübung mit Klangschale beginnt in zwei Minuten.</p>
+        <span style="font-size: var(--type-body-sm-size); line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">User-forced 1.5 line-height, 0.12em letter-spacing, 0.16em word-spacing. Body sits at 1.6 already, so nothing clips.</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-5);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">6 · Spacing, targets, radius, icons</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">The scale is not the guideline — the ratio between adjacent levels is. The gap between two groups is always at least double the largest gap inside either group.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4);">
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Scale</span>
+        <sc-for list="{{ spacingRows }}" as="sp" hint-placeholder-count="10">
+          <div style="display: flex; align-items: center; gap: var(--sp-3);">
+            <code style="font-family: ui-monospace, monospace; font-size: 12px; width: 62px; flex: none; color: var(--on-surface);">{{ sp.name }}</code>
+            <div style="height: 14px; border-radius: 3px; background: var(--accent-1); width: {{ sp.px }};"></div>
+            <span style="font-size: 12px; color: var(--on-surface-muted);">{{ sp.px }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Semantic roles</span>
+        <sc-for list="{{ roleRows }}" as="rr" hint-placeholder-count="6">
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="display: flex; gap: var(--sp-3); align-items: baseline;">
+              <code style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--on-surface); overflow-wrap: anywhere;">{{ rr.name }}</code>
+              <span style="font-size: 12px; color: var(--accent-1-text); font-weight: var(--font-weight-medium);">{{ rr.px }}</span>
+            </div>
+            <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted);">{{ rr.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Touch targets, actual size</span>
+        <sc-for list="{{ targetRows }}" as="tg" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: var(--sp-3);">
+            <div style="flex: none; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-full); background: var(--interactive-primary-subtle); border: var(--border-width-hairline) solid var(--interactive-primary-border); color: var(--interactive-primary-on-subtle); font-size: 11px; font-weight: var(--font-weight-medium); width: {{ tg.px }}; height: {{ tg.px }};">{{ tg.n }}</div>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <code style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--on-surface);">{{ tg.name }}</code>
+              <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted); text-wrap: pretty;">{{ tg.use }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Radius</span>
+        <sc-for list="{{ radiusRows }}" as="rd" hint-placeholder-count="6">
+          <div style="display: flex; align-items: center; gap: var(--sp-3);">
+            <div style="flex: none; width: 52px; height: 40px; background: var(--interactive-primary-subtle); border: var(--border-width-hairline) solid var(--interactive-primary-border); border-radius: {{ rd.px }};"></div>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <code style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--on-surface);">{{ rd.name }}</code>
+              <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted);">{{ rd.use }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Icon ↔ text pairing</span>
+        <sc-for list="{{ iconRows }}" as="ic" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: var(--space-gap-inline);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--on-surface-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; vertical-align: var(--icon-optical-nudge); width: {{ ic.px }}; height: {{ ic.px }};"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <code style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--on-surface);">{{ ic.name }}</code>
+              <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted);">{{ ic.use }}</span>
+            </div>
+          </div>
+        </sc-for>
+        <span style="font-size: 12px; line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">Lucide, 24px grid, 2px stroke, reproduced exactly — including the 16px case, where a 2px stroke reads heavy. That is conflict A2, unresolved, in the conflict report.</span>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Grouping — the 2× rule</span>
+        <div style="display: flex; flex-direction: column; gap: var(--space-gap-group);">
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Sitzungsname</span>
+            <div style="min-height: var(--target-primary); display: flex; align-items: center; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-input); background: var(--surface); border: var(--border-width-regular) solid var(--border-strong); font-size: var(--type-body-md-size); color: var(--on-surface-muted);">Morgenkreis</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-gap-related);">
+            <span style="font-size: var(--type-body-sm-size); color: var(--on-surface-muted);">Dauer</span>
+            <div style="min-height: var(--target-primary); display: flex; align-items: center; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-input); background: var(--surface); border: var(--border-width-regular) solid var(--border-strong); font-size: var(--type-body-md-size); color: var(--on-surface-muted);">20 Minuten</div>
+          </div>
+        </div>
+        <span style="font-size: 12px; line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">12px inside each pair, 32px between them. The label belongs to its field; the two fields do not belong to each other.</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-5);">
+    <div style="display: flex; flex-direction: column; gap: var(--sp-3);">
+      <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">7 · Focus, motion, layering</h2>
+      <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Press <kbd style="font-family: ui-monospace, monospace; font-size: 13px; padding: 2px 6px; border-radius: var(--radius-xs); background: var(--surface-sunken); border: var(--border-width-hairline) solid var(--border-strong);">Tab</kbd> to walk the row below. One indicator, 3px at 2px offset, on every control including the terracotta fill — the offset is what makes the 3:1 provable, because the ring is only ever adjacent to a surface token.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4);">
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Focus — tab through these</span>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--sp-4); padding: var(--sp-2);">
+          <button type="button" style="min-height: var(--target-primary); padding: var(--space-inset-control); border: none; border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-primary); color: var(--interactive-primary-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium);">Solid</button>
+          <button type="button" style="min-height: var(--target-primary); padding: var(--space-inset-control); border: var(--border-width-regular) solid var(--border-strong); border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-ghost); color: var(--interactive-ghost-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium);">Outline</button>
+          <a href="#top" style="min-height: var(--target-primary); display: inline-flex; align-items: center; padding: var(--sp-3) var(--sp-2); font-size: var(--type-body-md-size);">Inline link</a>
+        </div>
+        <span style="font-size: 12px; line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;"><code style="font-family: ui-monospace, monospace;">:focus-visible</code> only, never <code style="font-family: ui-monospace, monospace;">:focus</code> — a tap on a session card must not leave a ring behind.</span>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Motion — token-driven</span>
+        <button type="button" onClick="{{ toggleMotion }}" style="align-self: flex-start; min-height: var(--target-primary); padding: var(--space-inset-control); border: var(--border-width-regular) solid var(--border-strong); border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-ghost); color: var(--interactive-ghost-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium);">{{ motionLabel }}</button>
+        <div style="height: 56px; border-radius: var(--radius-sm); background: var(--surface-sunken); position: relative; overflow: hidden;">
+          <div style="{{ motionDotStyle }}"></div>
+        </div>
+        <sc-for list="{{ motionRows }}" as="mo" hint-placeholder-count="5">
+          <div style="display: flex; gap: var(--sp-3); align-items: baseline;">
+            <code style="font-family: ui-monospace, monospace; font-size: 12px; width: 62px; flex: none; color: var(--on-surface);">{{ mo.name }}</code>
+            <span style="font-size: 12px; color: var(--accent-1-text); font-weight: var(--font-weight-medium); width: 52px; flex: none;">{{ mo.live }}</span>
+            <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted);">{{ mo.use }}</span>
+          </div>
+        </sc-for>
+        <span style="{{ reducedNoteStyle }}">{{ reducedNote }}</span>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Layering</span>
+        <sc-for list="{{ zRows }}" as="z" hint-placeholder-count="7">
+          <div style="display: flex; gap: var(--sp-3); align-items: baseline;">
+            <code style="font-family: ui-monospace, monospace; font-size: 12px; width: 76px; flex: none; color: var(--on-surface);">{{ z.name }}</code>
+            <span style="font-size: 12px; color: var(--accent-1-text); font-weight: var(--font-weight-medium); width: 34px; flex: none;">{{ z.v }}</span>
+            <span style="font-size: 12px; line-height: 1.4; color: var(--on-surface-muted);">{{ z.use }}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 12px; line-height: 1.45; color: var(--on-surface-muted); text-wrap: pretty;">Toast outranks sheet deliberately — a "gespeichert" confirmation must be visible over an open sheet.</span>
+      </div>
+      <div style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface-raised); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-muted);">Breakpoints + live grid</span>
+        <sc-for list="{{ bpRows }}" as="bp" hint-placeholder-count="5">
+          <div style="display: flex; gap: var(--sp-3); align-items: baseline;">
+            <code style="font-family: ui-monospace, monospace; font-size: 12px; width: 46px; flex: none; color: var(--on-surface);">{{ bp.name }}</code>
+            <span style="font-size: 12px; width: 62px; flex: none; color: var(--on-surface-muted);">{{ bp.px }}</span>
+            <span style="font-size: 12px; color: var(--on-surface-muted);">{{ bp.spec }}</span>
+          </div>
+        </sc-for>
+        <div style="display: flex; flex-direction: column; gap: var(--sp-2);">
+          <span style="font-size: 12px; color: var(--accent-1-text); font-weight: var(--font-weight-medium);">{{ gridLive }}</span>
+          <div style="{{ gridStyle }}">
+            <sc-for list="{{ gridCells }}" as="c" hint-placeholder-count="4">
+              <div style="height: 34px; border-radius: 3px; background: var(--interactive-primary-subtle); border: var(--border-width-hairline) solid var(--interactive-primary-border);"></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--sp-4);">
+    <h2 style="margin: 0; font-family: var(--font-display); font-size: var(--type-heading-lg-size); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); font-weight: var(--type-heading-lg-weight); text-wrap: balance;">8 · Nested theme override</h2>
+    <p style="margin: 0; max-width: var(--measure-body); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Tokens are declared on <code style="font-family: ui-monospace, monospace;">:root, [data-theme]</code>, not <code style="font-family: ui-monospace, monospace;">:root</code> alone. That is what lets any subtree flip theme correctly at any depth — a token declared only on the root would have collapsed to one value and merely inherited down. Every paired panel on this page relies on it.</p>
+    <div data-theme="light" style="padding: var(--space-inset-card); border-radius: var(--radius-panel); background: var(--surface); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+      <span style="font-size: var(--type-body-md-size); color: var(--on-surface);">Light subtree — <code style="font-family: ui-monospace, monospace;">data-theme="light"</code></span>
+      <div data-theme="dark" style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-4);">
+        <span style="font-size: var(--type-body-md-size); color: var(--on-surface);">Dark inside light — <code style="font-family: ui-monospace, monospace;">data-theme="dark"</code></span>
+        <div data-theme="light" style="padding: var(--space-inset-card); border-radius: var(--radius-card); background: var(--surface); border: var(--border-width-hairline) solid var(--border-subtle); display: flex; flex-direction: column; gap: var(--sp-3);">
+          <span style="font-size: var(--type-body-md-size); color: var(--on-surface);">Light inside dark inside light — three levels, still correct</span>
+          <button type="button" style="align-self: flex-start; min-height: var(--target-primary); padding: var(--space-inset-control); border: none; border-radius: var(--radius-control); cursor: pointer; background: var(--interactive-primary); color: var(--interactive-primary-on); font-family: var(--font-text); font-size: var(--type-label-lg-size); font-weight: var(--font-weight-medium);">Label flips with the theme</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="display: flex; flex-direction: column; gap: var(--sp-3); padding-top: var(--sp-6); border-top: var(--border-width-regular) solid var(--border-strong);">
+    <span style="font-size: var(--type-body-md-size); color: var(--on-surface);">Foundations only — no component styles exist yet.</span>
+    <span style="font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); text-wrap: pretty;">Deliverables: <code style="font-family: ui-monospace, monospace;">tokens/musy-foundations.css</code> · <code style="font-family: ui-monospace, monospace;">tokens/musy-foundations.tokens.json</code> · <code style="font-family: ui-monospace, monospace;">tokens/theme-init.js</code> · <code style="font-family: ui-monospace, monospace;">docs/</code> (foundations, deltas, conflict report, contrast audit, palette reference, open questions).</span>
+  </footer>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:900}}">
+const SAMPLES = {
+  'display-xl': 'Willkommen bei Musy',
+  'display-lg': 'Klangschale & Atem',
+  'heading-lg': 'Heutige Sitzung',
+  'body-xl': 'Hör dir den Track an. Denk an die letzten Stunden.',
+  'heading-md': 'Vorbereitung',
+  'heading-sm': 'Morgenkreis',
+  'body-lg': 'Setzt euch bequem hin und atmet dreimal langsam ein und aus.',
+  'body-md': 'Die Übung dauert etwa zwanzig Minuten und eignet sich für Gruppen.',
+  'body-sm': 'Zuletzt gespielt vor drei Tagen · 8 Teilnehmer:innen',
+  'label-lg': 'Session öffnen',
+  'label-md': 'Filter'
+};
+
+const FEEDBACK = [
+  { key: 'info', title: 'Kopfhörer empfohlen', body: 'Die Übung nutzt tiefe Frequenzen.', path: 'M12 16v-4', path2: 'M12 8h.01' },
+  { key: 'success', title: 'Sitzung gespeichert', body: 'Der Morgenkreis liegt jetzt in deiner Bibliothek.', path: 'M20 6 9 17l-5-5', path2: '' },
+  { key: 'warning', title: 'Lautstärke hoch', body: 'Für Kindergartengruppen bitte reduzieren.', path: 'M12 9v4', path2: 'M12 17h.01' },
+  { key: 'error', title: 'Aufnahme fehlgeschlagen', body: 'Kein Mikrofonzugriff. Bitte in den Einstellungen erlauben.', path: 'M18 6 6 18', path2: 'M6 6l12 12' }
+];
+
+const GROUPS = [
+  ['surface', 'Surfaces', n => n.startsWith('surface')],
+  ['text', 'Text', n => n.startsWith('on-surface')],
+  ['border', 'Borders', n => n.startsWith('border-')],
+  ['primary', 'Interactive — primary (terracotta)', n => n.startsWith('interactive-primary')],
+  ['p1', 'Interactive — accent placeholder 1 (ocher)', n => n.startsWith('interactive-accent-placeholder1')],
+  ['p2', 'Interactive — accent placeholder 2 (purple)', n => n.startsWith('interactive-accent-placeholder2')],
+  ['ghost', 'Interactive — ghost', n => n.startsWith('interactive-ghost')],
+  ['accent', 'Accent rotation', n => /^accent-\d/.test(n)],
+  ['feedback', 'Feedback', n => n.startsWith('feedback-')]
+];
+
+const NOTES = {
+  sand: 'Terracotta-toned neutral — carries all five Figma neutral variables',
+  terracotta: 'Figma accent/terracotta — the primary family',
+  ocher: 'Figma accent/ocher — accent placeholder 1',
+  purple: 'Figma accent/purple — accent placeholder 2 (the file still labels this accent/pop)',
+  info: 'Added — feedback only, never decorative',
+  success: 'Added — feedback only',
+  warning: 'Added — feedback only',
+  error: 'Added — feedback only'
+};
+
+class Component extends DCLogic {
+  state = { m: null, pal: null, sem: null, theme: 'light', filter: 'all', motionOn: false, reduced: false, vw: 0 };
+
+  componentDidMount() {
+    this.onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this.onResize);
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.onMq = () => this.setState({ reduced: mq.matches });
+    mq.addEventListener('change', this.onMq);
+    this._alive = true;
+    Promise.all([
+      fetch((window.__resources && window.__resources.manifest) || 'tokens/proof-manifest.json').then(r => r.json()),
+      this.tokensReady(),
+    ])
+      .then(([m]) => {
+        if (!this._alive) return;
+        const probed = this.probe(m);
+        this.setState({ m: m, pal: probed.pal, sem: probed.sem, reduced: mq.matches, vw: window.innerWidth });
+      })
+      .catch(() => this.setState({ m: false }));
+  }
+  componentWillUnmount() {
+    this._alive = false;
+    window.removeEventListener('resize', this.onResize);
+  }
+
+  /* The whole page is measured out of the DOM, so probing before the token
+     stylesheet has APPLIED yields 390 swatches reading "transparent" — the
+     alpha-0 path in toHex(). A load event on the <link> is not enough on its
+     own (it can have fired before we mount, and in the published bundle the
+     manifest is a blob URL that resolves near-instantly, so this race is lost
+     reliably rather than intermittently). Instead assert the outcome we
+     actually depend on: a sentinel painted with var(--sand-1) resolving to a
+     real colour. Bounded at ~2s, after which we probe anyway and let the page
+     show what it can rather than hanging on a blank screen. */
+  tokensReady() {
+    return new Promise(resolve => {
+      const probeEl = document.createElement('div');
+      probeEl.setAttribute('aria-hidden', 'true');
+      probeEl.setAttribute('data-theme', 'light');
+      probeEl.style.cssText = 'position:absolute;left:-99999px;top:0;width:0;height:0;overflow:hidden;background:var(--sand-1)';
+      document.body.appendChild(probeEl);
+      const deadline = performance.now() + 2000;
+      const tick = () => {
+        const bg = getComputedStyle(probeEl).backgroundColor;
+        const settled = bg && bg !== 'transparent' && !/rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)/.test(bg);
+        if (settled || performance.now() > deadline) {
+          probeEl.remove();
+          resolve();
+        } else {
+          requestAnimationFrame(tick);
+        }
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+
+  /* Read the REAL computed value of every token, per theme, out of the DOM.
+     Nothing on this page is transcribed — this is why it cannot drift. */
+  probe(m) {
+    const host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.style.cssText = 'position:absolute;left:-99999px;top:0;width:0;height:0;overflow:hidden';
+    const themes = ['light', 'dark'];
+    const refs = { pal: {}, sem: {} };
+    themes.forEach(t => {
+      const wrap = document.createElement('div');
+      wrap.setAttribute('data-theme', t);
+      refs.pal[t] = {};
+      refs.sem[t] = {};
+      m.scales.forEach(sc => {
+        refs.pal[t][sc] = {};
+        m.steps.forEach(st => {
+          const d = document.createElement('div');
+          d.style.background = 'var(--' + sc + '-' + st + ')';
+          wrap.appendChild(d);
+          refs.pal[t][sc][st] = d;
+        });
+      });
+      m.semantic.forEach(s => {
+        const d = document.createElement('div');
+        d.style.background = 'var(--' + s.name + ')';
+        wrap.appendChild(d);
+        refs.sem[t][s.name] = d;
+      });
+      host.appendChild(wrap);
+    });
+    document.body.appendChild(host);
+    const read = el => this.toHex(getComputedStyle(el).backgroundColor);
+    const pal = {}, sem = {};
+    themes.forEach(t => {
+      pal[t] = {}; sem[t] = {};
+      m.scales.forEach(sc => {
+        pal[t][sc] = {};
+        m.steps.forEach(st => { pal[t][sc][st] = read(refs.pal[t][sc][st]); });
+      });
+      m.semantic.forEach(s => { sem[t][s.name] = read(refs.sem[t][s.name]); });
+    });
+    host.remove();
+    return { pal: pal, sem: sem };
+  }
+
+  toHex(v) {
+    const n = (v || '').match(/[\d.]+/g);
+    if (!n) return null;
+    if (n.length > 3 && parseFloat(n[3]) === 0) return null; // transparent
+    const h = x => parseInt(x, 10).toString(16).padStart(2, '0').toUpperCase();
+    return '#' + h(n[0]) + h(n[1]) + h(n[2]);
+  }
+  lum(hex) {
+    const d = c => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+    const n = hex.replace('#', '');
+    const r = d(parseInt(n.slice(0, 2), 16) / 255);
+    const g = d(parseInt(n.slice(2, 4), 16) / 255);
+    const b = d(parseInt(n.slice(4, 6), 16) / 255);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  ratio(a, b) {
+    if (!a || !b) return null;
+    const x = this.lum(a), y = this.lum(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  }
+
+  px(name) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--' + name).trim();
+    return v || '';
+  }
+
+  chip(active) {
+    return 'min-height: var(--target-primary); padding: var(--space-inset-control); border-radius: var(--radius-control); cursor: pointer; font-family: var(--font-text); font-size: var(--type-label-md-size); font-weight: var(--font-weight-medium); transition: background var(--motion-toggle); ' +
+      (active
+        ? 'border: none; background: var(--interactive-primary); color: var(--interactive-primary-on);'
+        : 'border: var(--border-width-regular) solid var(--border-strong); background: var(--interactive-ghost); color: var(--interactive-ghost-on);');
+  }
+
+  renderVals() {
+    const st = this.state;
+    const m = st.m;
+    const theme = st.theme;
+    const vals = {
+      theme: theme,
+      themeLabel: theme === 'dark' ? 'dark' : 'light',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      themes: [{ theme: 'light' }, { theme: 'dark' }],
+      setFilterAll: () => this.setState({ filter: 'all' }),
+      setFilterRequired: () => this.setState({ filter: 'req' }),
+      setFilterExempt: () => this.setState({ filter: 'exempt' }),
+      filterAllStyle: this.chip(st.filter === 'all'),
+      filterReqStyle: this.chip(st.filter === 'req'),
+      filterExemptStyle: this.chip(st.filter === 'exempt'),
+      toggleMotion: () => this.setState({ motionOn: !st.motionOn }),
+      motionLabel: st.motionOn ? 'Zurücksetzen' : 'Bewegung abspielen',
+      motionDotStyle: 'position: absolute; top: 50%; margin-top: -14px; width: 28px; height: 28px; border-radius: var(--radius-full); background: var(--accent-1); transition: transform var(--motion-sheet-slide); transform: translateX(' + (st.motionOn ? 'calc(100% + 300%)' : '8px') + ');',
+      reducedNote: st.reduced
+        ? 'prefers-reduced-motion: reduce is ACTIVE — every duration is 1ms and every travel token is 0px, with no component-level media query.'
+        : 'prefers-reduced-motion is off. Turn it on in your OS and reload: the dot will jump instantly, because durations and travel are both tokens.',
+      reducedNoteStyle: 'font-size: 12px; line-height: 1.45; text-wrap: pretty; color: ' + (st.reduced ? 'var(--feedback-success-text)' : 'var(--on-surface-muted)') + ';',
+      feedback: FEEDBACK.map(f => ({
+        title: f.title, body: f.body, path: f.path, path2: f.path2 || f.path,
+        bgVar: 'var(--feedback-' + f.key + '-surface)',
+        borderVar: 'var(--feedback-' + f.key + '-border)',
+        iconVar: 'var(--feedback-' + f.key + '-icon)',
+        textVar: 'var(--feedback-' + f.key + '-text)'
+      }))
+    };
+
+    if (!m || !st.pal) {
+      return Object.assign(vals, {
+        statPass: 'measuring…', statFail: '—', statTokens: '—', statMotion: '—',
+        scaleRows: [], semanticGroups: [], auditRows: [], typeRows: [], spacingRows: [],
+        roleRows: [], targetRows: [], radiusRows: [], iconRows: [], motionRows: [],
+        zRows: [], bpRows: [], gridCells: [], gridLive: '', gridStyle: 'display: grid; gap: var(--grid-gap); grid-template-columns: repeat(4, 1fr);'
+      });
+    }
+
+    // 1 · raw palette
+    vals.scaleRows = m.scales.map(sc => ({
+      name: sc,
+      note: NOTES[sc] || '',
+      panes: ['light', 'dark'].map(t => ({
+        theme: t,
+        swatches: m.steps.map(step => ({
+          label: String(step),
+          hex: st.pal[t][sc][step] || 'transparent',
+          purpose: sc + '-' + step + ' — ' + (m.stepPurpose[step] || '')
+        }))
+      }))
+    }));
+
+    // 2 · semantic
+    vals.semanticGroups = GROUPS.map(g => ({
+      title: g[1],
+      rows: m.semantic.filter(s => g[2](s.name)).map(s => ({
+        name: '--' + s.name,
+        why: s.why,
+        lightHex: st.sem.light[s.name] || 'transparent',
+        darkHex: st.sem.dark[s.name] || 'transparent'
+      }))
+    })).filter(g => g.rows.length);
+
+    // 4 · live audit
+    const cell = (r, req) => {
+      if (r === null) return { text: 'n/a', style: 'font-size: 12px; color: var(--on-surface-muted);' };
+      const txt = r.toFixed(2);
+      if (req === 0) return { text: txt, style: 'font-size: 12px; font-weight: var(--font-weight-medium); color: var(--on-surface-muted);' };
+      const pass = r >= req - 0.005;
+      return {
+        text: txt + (pass ? ' ✓' : ' ✗'),
+        style: 'font-size: 12px; font-weight: var(--font-weight-medium); color: ' + (pass ? 'var(--feedback-success-text)' : 'var(--feedback-error-text)') + ';'
+      };
+    };
+    let pass = 0, fail = 0;
+    const all = m.audit.map(a => {
+      const lr = this.ratio(st.sem.light[a.fg], st.sem.light[a.bg]);
+      const dr = this.ratio(st.sem.dark[a.fg], st.sem.dark[a.bg]);
+      if (a.req > 0) {
+        [lr, dr].forEach(r => { if (r !== null) { if (r >= a.req - 0.005) pass++; else fail++; } });
+      }
+      const lc = cell(lr, a.req), dc = cell(dr, a.req);
+      return {
+        fg: '--' + a.fg, bg: '--' + a.bg, why: a.why, req: a.req === 0 ? '—' : a.req.toFixed(1),
+        exempt: a.req === 0,
+        lightText: lc.text, lightStyle: lc.style, darkText: dc.text, darkStyle: dc.style
+      };
+    });
+    vals.auditRows = all.filter(r => st.filter === 'all' || (st.filter === 'req' ? !r.exempt : r.exempt));
+    vals.statPass = pass + ' measurements pass';
+    vals.statFail = fail === 0 ? 'no failures' : fail + ' FAILURES';
+    vals.statTokens = m.semantic.length + ' semantic · ' + (m.scales.length * m.steps.length) + ' raw';
+    vals.statMotion = st.reduced ? 'reduced motion active' : 'motion enabled';
+
+    // 5 · type
+    vals.typeRows = m.type.map(t => {
+      const name = t[0];
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;left:-9999px;font-size:var(--type-' + name + '-size)';
+      document.body.appendChild(probe);
+      const live = parseFloat(getComputedStyle(probe).fontSize);
+      probe.remove();
+      return {
+        name: '--type-' + name,
+        spec: t[1] + ' → ' + t[3] + 'px fluid',
+        live: 'now ' + (Math.round(live * 10) / 10) + 'px',
+        use: m.typeUse[name],
+        sample: SAMPLES[name],
+        sampleStyle: 'font-family: var(--type-' + name + '-family); font-size: var(--type-' + name + '-size); line-height: var(--type-' + name + '-line); letter-spacing: var(--type-' + name + '-tracking); font-weight: var(--type-' + name + '-weight); color: var(--on-surface); max-width: var(--measure-body); text-wrap: pretty;'
+      };
+    });
+
+    // 6 · dimension
+    vals.spacingRows = m.spacing.map(s => ({ name: '--' + s[0], px: s[1] + 'px' }));
+    vals.roleRows = m.spacingRoles.map(s => ({ name: '--' + s[0], px: s[1] + 'px', use: s[2] }));
+    vals.targetRows = m.targets.map(t => ({ name: '--' + t[0], px: t[1] + 'px', n: t[1], use: t[2] }));
+    vals.radiusRows = m.radius.map(r => ({ name: '--' + r[0], px: (r[1] > 100 ? '999px' : r[1] + 'px'), use: r[2] }));
+    vals.iconRows = m.icons.map(i => ({ name: '--' + i[0], px: i[1] + 'px', use: i[2] }));
+    vals.motionRows = m.motion.map(d => ({ name: '--' + d[0], live: this.px('motion-duration-' + d[0]) || d[1] + 'ms', use: d[2] }));
+    vals.zRows = m.z.map(z => ({ name: '--' + z[0], v: z[1], use: z[2] }));
+    vals.bpRows = m.breakpoints.map(b => ({ name: b[0], px: b[1] === 0 ? 'base' : b[1] + 'px', spec: b[2] + ' col · ' + b[3] + 'px gutter' }));
+
+    const cols = parseInt(this.px('columns'), 10) || 4;
+    vals.gridCells = Array.from({ length: cols }, (_, i) => ({ i: i }));
+    vals.gridLive = 'At ' + st.vw + 'px: ' + cols + ' columns, ' + this.px('gutter') + ' gutter';
+    vals.gridStyle = 'display: grid; gap: var(--grid-gap); grid-template-columns: repeat(' + cols + ', minmax(0, 1fr));';
+
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

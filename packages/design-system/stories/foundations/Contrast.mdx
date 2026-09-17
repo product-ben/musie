@@ -1,0 +1,24 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { ContrastTable } from './_pages/Contrast';
+
+<Meta title="Foundations/Contrast" />
+
+# Contrast
+
+Every documented foreground/background pair, **measured in your browser right
+now**.
+
+No number on this page is transcribed. Each pair's two colours are probed out
+of a real `[data-theme]` subtree, then run through WCAG 2.2 relative luminance
+and `(L1 + 0.05) / (L2 + 0.05)`. The audited figures in
+`docs/04-contrast-audit.md` are deliberately not printed — a copied ratio is a
+claim about a palette that may since have moved.
+
+The **drift** column is the one place the stored audit is read: it compares the
+live ratio against the figure recorded when `tokens/_audit.json` was generated.
+Anything other than `—` means the palette has changed underneath the audit.
+
+`req` of `—` marks a pair documented as **exempt**: disabled text is outside
+1.4.3, so it is measured and reported but never failed.
+
+<ContrastTable />

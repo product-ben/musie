@@ -3,9 +3,10 @@
   "private": true,
   "packageManager": "pnpm@9.15.5",
   "scripts": {
+    "storybook": "pnpm --filter @musie/design-system storybook",
     "check": "pnpm run typecheck && pnpm run lint",
-    "typecheck": "pnpm --filter web typecheck",
-    "lint": "pnpm --filter web lint"
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

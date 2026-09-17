@@ -1,0 +1,32 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { ScaleBars, TokenGroup } from './_pages/Dimension';
+
+<Meta title="Foundations/Spacing" />
+
+# Spacing & targets
+
+Base unit **4px**. `sp-1`–`sp-8` reproduce the Figma Spacing collection exactly;
+`sp-9`/`sp-10` are additions for desktop section rhythm.
+
+The semantic steps carry the rule that makes the app feel light: **the jump
+between groups is always at least two steps larger than the gap inside one.**
+
+## The raw scale
+
+<ScaleBars group="spacing" filter={/^--sp-/} />
+
+## Semantic spacing — which step at which level
+
+<ScaleBars group="spacing" filter={/^--space-/} />
+
+## Touch targets — WCAG 2.5.8
+
+`--target-min` is the absolute floor and carries a condition: 24px is legal for
+inline controls in prose and card controls on a *fine* pointer, and never for a
+primary action.
+
+<ScaleBars group="spacing" filter={/^--target-/} />
+
+## Every token on this page
+
+<TokenGroup group="spacing" />

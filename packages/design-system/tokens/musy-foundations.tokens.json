@@ -1,0 +1,2580 @@
+{
+  "$description": "Musy design system foundations. Two-layer: palette (raw, per mode) → semantic (aliases). Import palette.light + semantic.light as one Tokens Studio set and palette.dark + semantic.dark as the other; dimension/typography/motion/layout are mode-agnostic shared sets.",
+  "palette": {
+    "light": {
+      "sand": {
+        "1": {
+          "$type": "color",
+          "$value": "#FBF8F2",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#F5EEE1",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#EBE1D0",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#E5DAC8",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#E2D6C2",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#DFD3BD",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#D0C2A9",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#C8B89C",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#8F8572",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#817866",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#615A4D",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#1C1A17",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#83745A",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#8C816E",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "terracotta": {
+        "1": {
+          "$type": "color",
+          "$value": "#FBF7F6",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#FAEBE5",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#F6DCD3",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#F4D4C8",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#F2CCBE",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#F1C4B5",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#EBB5A2",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#DF9C85",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#B55634",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#A64926",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#90462B",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#4C281B",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#A56751",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#9A3E1B",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "ocher": {
+        "1": {
+          "$type": "color",
+          "$value": "#FAF8F6",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#F4EDE3",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#ECE0CF",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#E8D9C4",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#E5D3B9",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#E1CCAF",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#D9BF9A",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#C9A97A",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#E9B86C",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#DAA95D",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#785514",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#412F14",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#8F7244",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#CE9E52",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "purple": {
+        "1": {
+          "$type": "color",
+          "$value": "#F9F8F9",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#F2ECF1",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#E8DFE7",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#E3D8E2",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#DED1DD",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#DACAD8",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#D0BCCE",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#BEA6BB",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#CCA6C7",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#BD99B9",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#6D526A",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#3B2E3A",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#867084",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#B28EAE",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "info": {
+        "1": {
+          "$type": "color",
+          "$value": "#F6F9FC",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#E5F0FB",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#D3E5F8",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#C8DEF6",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#BED9F5",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#B4D3F4",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#A1C8F0",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#83B3E5",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#2675BD",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#1368AF",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#205D96",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#193550",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#4C7AA9",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#025DA2",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "success": {
+        "1": {
+          "$type": "color",
+          "$value": "#F7F9F7",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#E7F2E9",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#D6E8D9",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#CCE3D0",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#C3DEC7",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#BAD9BF",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#A9CFAF",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#8CBD95",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#348149",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#24733D",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#2B673B",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#1F3A25",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#53815C",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#176933",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "warning": {
+        "1": {
+          "$type": "color",
+          "$value": "#FBF8F5",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#FAECE0",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#F6DDC9",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#F4D5BC",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#F2CEAF",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#F0C7A3",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#EBB88C",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#DF9F66",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#FEA247",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#F29226",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#894C00",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#4C2903",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#A5692F",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#E68710",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "error": {
+        "1": {
+          "$type": "color",
+          "$value": "#FDF7F6",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#FFE9E6",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#FFD8D4",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#FFCEC9",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#FFC5C0",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#FFBDB6",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#FCABA4",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#F28F87",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#D03C3C",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#C02B2F",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#A53231",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#551F1D",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#B85B55",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#B31B24",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "alpha": {
+        "scrim": {
+          "$type": "color",
+          "$value": "rgb(28 26 23 / 0.55)",
+          "$description": "Modal / sheet backdrop. Deeper in dark because the canvas is already dark."
+        },
+        "shadow-key": {
+          "$type": "color",
+          "$value": "rgb(60 46 30 / 0.10)",
+          "$description": "Tight contact shadow. Warm-tinted in light so elevation reads as sunlight, not grey."
+        },
+        "shadow-ambient": {
+          "$type": "color",
+          "$value": "rgb(60 46 30 / 0.06)",
+          "$description": "Wide diffuse shadow."
+        }
+      }
+    },
+    "dark": {
+      "sand": {
+        "1": {
+          "$type": "color",
+          "$value": "#13100C",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#1D1A14",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#26221A",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#2D281F",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#352F25",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#3D372C",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#4F4738",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#635948",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#7C7364",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#8A8273",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#A0998C",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#F3ECE0",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#847A67",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#847B6C",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "terracotta": {
+        "1": {
+          "$type": "color",
+          "$value": "#160F0C",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#221612",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#2F1D16",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#3B231B",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#45281F",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#513024",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#673C2D",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#854B37",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#DF7D5A",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#F08B68",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#D1886E",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#F8D5C9",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#A96C57",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#D2714E",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "ocher": {
+        "1": {
+          "$type": "color",
+          "$value": "#13100B",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#1E1810",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#292113",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#332817",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#3C2E1A",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#46361E",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#5A4525",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#73582C",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#E9B86C",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#F9C77B",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#B79460",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#ECDCC5",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#93764A",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#DCAB5F",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "purple": {
+        "1": {
+          "$type": "color",
+          "$value": "#121012",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#1C181C",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#262026",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#2F272E",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#372D36",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#413540",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#534351",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#6A5568",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#C09CBC",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#D0ABCB",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#AC92A9",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#E6DAE4",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#8A7487",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#B490B0",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "info": {
+        "1": {
+          "$type": "color",
+          "$value": "#0C1117",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#121A23",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#162331",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#1A2B3D",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#1D3248",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#233B55",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#2B4B6C",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#34608C",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#3D8AD4",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#4C99E4",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#689ED5",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#C9E1FA",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#517EAC",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#317FC8",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "success": {
+        "1": {
+          "$type": "color",
+          "$value": "#0D120E",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#131C15",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#18261B",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#1D2F21",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#223726",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#28402D",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#315238",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#3D6947",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#53A066",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#62AF74",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#70A67B",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#CEE5D1",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#588561",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#48945B",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "warning": {
+        "1": {
+          "$type": "color",
+          "$value": "#160F09",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#22170D",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#2F1E0E",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#3B240F",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#452A10",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#513112",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#673E13",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#854E10",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#FFA958",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#FEC08A",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#D08A48",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#F8D7BC",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#A86E37",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#FA9931",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "error": {
+        "1": {
+          "$type": "color",
+          "$value": "#180E0D",
+          "$description": "App canvas — deepest surface in the theme"
+        },
+        "2": {
+          "$type": "color",
+          "$value": "#261412",
+          "$description": "Default surface — page background"
+        },
+        "3": {
+          "$type": "color",
+          "$value": "#351917",
+          "$description": "Subtle surface — component background at rest"
+        },
+        "4": {
+          "$type": "color",
+          "$value": "#411E1C",
+          "$description": "Component background — hover"
+        },
+        "5": {
+          "$type": "color",
+          "$value": "#4D2220",
+          "$description": "Component background — active / selected"
+        },
+        "6": {
+          "$type": "color",
+          "$value": "#5A2825",
+          "$description": "Subtle border — separators, dividers, decorative outlines"
+        },
+        "7": {
+          "$type": "color",
+          "$value": "#73322E",
+          "$description": "Component border — decorative, non-load-bearing"
+        },
+        "8": {
+          "$type": "color",
+          "$value": "#943D3A",
+          "$description": "Component border — hover"
+        },
+        "9": {
+          "$type": "color",
+          "$value": "#E7524F",
+          "$description": "Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11)"
+        },
+        "10": {
+          "$type": "color",
+          "$value": "#F8625D",
+          "$description": "Solid fill — hover"
+        },
+        "11": {
+          "$type": "color",
+          "$value": "#E87A73",
+          "$description": "Accessible text + meaningful icons (solved ≥4.5:1)"
+        },
+        "12": {
+          "$type": "color",
+          "$value": "#FFD2CD",
+          "$description": "High-contrast text — headings, emphasis (solved ≥7:1)"
+        },
+        "edge": {
+          "$type": "color",
+          "$value": "#BB605A",
+          "$description": "Boundary — solved ≥3:1 vs every surface (WCAG 1.4.11)"
+        },
+        "press": {
+          "$type": "color",
+          "$value": "#DB4746",
+          "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
+        }
+      },
+      "alpha": {
+        "scrim": {
+          "$type": "color",
+          "$value": "rgb(8 6 4 / 0.72)",
+          "$description": "Modal / sheet backdrop. Deeper in dark because the canvas is already dark."
+        },
+        "shadow-key": {
+          "$type": "color",
+          "$value": "rgb(0 0 0 / 0.46)",
+          "$description": "Tight contact shadow. Warm-tinted in light so elevation reads as sunlight, not grey."
+        },
+        "shadow-ambient": {
+          "$type": "color",
+          "$value": "rgb(0 0 0 / 0.32)",
+          "$description": "Wide diffuse shadow."
+        }
+      }
+    }
+  },
+  "semantic": {
+    "light": {
+      "surface": {
+        "$type": "color",
+        "$value": "{palette.light.sand.2}",
+        "$description": "Page background. The default canvas everything sits on."
+      },
+      "surface-raised": {
+        "$type": "color",
+        "$value": "{palette.light.sand.1}",
+        "$description": "Cards, panels, popovers. Lighter than the page in BOTH themes — the paper-on-canvas model from the Figma screens."
+      },
+      "surface-sunken": {
+        "$type": "color",
+        "$value": "{palette.light.sand.3}",
+        "$description": "Wells, track backgrounds, inset media. One level below the page."
+      },
+      "surface-overlay": {
+        "$type": "color",
+        "$value": "{palette.light.sand.1}",
+        "$description": "Sheets, modals, menus. Same value as -raised; separated by elevation and scrim, not hue."
+      },
+      "surface-inverse": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Tooltips, high-emphasis chips — deliberately opposite the theme."
+      },
+      "on-surface": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Default body and heading text on any surface token."
+      },
+      "on-surface-muted": {
+        "$type": "color",
+        "$value": "{palette.light.sand.11}",
+        "$description": "Secondary text, metadata, placeholder. Still a full 4.5:1 — never dips below the body threshold."
+      },
+      "on-surface-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.9}",
+        "$description": "Text and icons in a disabled control. Exempt from 1.4.3; held near 3:1 anyway."
+      },
+      "on-surface-inverse": {
+        "$type": "color",
+        "$value": "{palette.light.sand.1}",
+        "$description": "Text on --surface-inverse."
+      },
+      "border-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.sand.6}",
+        "$description": "Dividers and decorative outlines ONLY. Never permitted on an interactive boundary."
+      },
+      "border-strong": {
+        "$type": "color",
+        "$value": "{palette.light.sand.edge}",
+        "$description": "The only neutral border allowed to carry a control boundary — solved to ≥3:1 (1.4.11)."
+      },
+      "border-focus": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.11}",
+        "$description": "Focus indicator colour. ≥3:1 against every surface token in both themes."
+      },
+      "interactive-primary": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.9}",
+        "$description": "Terracotta solid fill — the family's resting state."
+      },
+      "interactive-primary-hover": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.10}",
+        "$description": "Terracotta solid fill on hover."
+      },
+      "interactive-primary-active": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.press}",
+        "$description": "Terracotta solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
+      },
+      "interactive-primary-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.5}",
+        "$description": "Disabled fill — neutral, so no family reads as available."
+      },
+      "interactive-primary-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.1}",
+        "$description": "Foreground on the terracotta solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
+      },
+      "interactive-primary-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.10}",
+        "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
+      },
+      "interactive-primary-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.3}",
+        "$description": "Terracotta tinted fill — chips, tags, selected rows."
+      },
+      "interactive-primary-subtle-hover": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.4}",
+        "$description": "Terracotta tinted fill on hover."
+      },
+      "interactive-primary-subtle-active": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.5}",
+        "$description": "Terracotta tinted fill while pressed."
+      },
+      "interactive-primary-on-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.11}",
+        "$description": "Text and icons on the terracotta tinted fill, at any of its three states."
+      },
+      "interactive-primary-border": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.edge}",
+        "$description": "Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface."
+      },
+      "interactive-accent-placeholder1": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.9}",
+        "$description": "Ocher solid fill — the family's resting state."
+      },
+      "interactive-accent-placeholder1-hover": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.10}",
+        "$description": "Ocher solid fill on hover."
+      },
+      "interactive-accent-placeholder1-active": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.press}",
+        "$description": "Ocher solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
+      },
+      "interactive-accent-placeholder1-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.5}",
+        "$description": "Disabled fill — neutral, so no family reads as available."
+      },
+      "interactive-accent-placeholder1-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Foreground on the ocher solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
+      },
+      "interactive-accent-placeholder1-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.10}",
+        "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
+      },
+      "interactive-accent-placeholder1-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.3}",
+        "$description": "Ocher tinted fill — chips, tags, selected rows."
+      },
+      "interactive-accent-placeholder1-subtle-hover": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.4}",
+        "$description": "Ocher tinted fill on hover."
+      },
+      "interactive-accent-placeholder1-subtle-active": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.5}",
+        "$description": "Ocher tinted fill while pressed."
+      },
+      "interactive-accent-placeholder1-on-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.11}",
+        "$description": "Text and icons on the ocher tinted fill, at any of its three states."
+      },
+      "interactive-accent-placeholder1-border": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.edge}",
+        "$description": "Ocher boundary at ≥3:1. MANDATORY on any ocher fill that is not itself 3:1 against the surface."
+      },
+      "interactive-accent-placeholder2": {
+        "$type": "color",
+        "$value": "{palette.light.purple.9}",
+        "$description": "Purple solid fill — the family's resting state."
+      },
+      "interactive-accent-placeholder2-hover": {
+        "$type": "color",
+        "$value": "{palette.light.purple.10}",
+        "$description": "Purple solid fill on hover."
+      },
+      "interactive-accent-placeholder2-active": {
+        "$type": "color",
+        "$value": "{palette.light.purple.press}",
+        "$description": "Purple solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
+      },
+      "interactive-accent-placeholder2-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.5}",
+        "$description": "Disabled fill — neutral, so no family reads as available."
+      },
+      "interactive-accent-placeholder2-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Foreground on the purple solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
+      },
+      "interactive-accent-placeholder2-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.10}",
+        "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
+      },
+      "interactive-accent-placeholder2-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.purple.3}",
+        "$description": "Purple tinted fill — chips, tags, selected rows."
+      },
+      "interactive-accent-placeholder2-subtle-hover": {
+        "$type": "color",
+        "$value": "{palette.light.purple.4}",
+        "$description": "Purple tinted fill on hover."
+      },
+      "interactive-accent-placeholder2-subtle-active": {
+        "$type": "color",
+        "$value": "{palette.light.purple.5}",
+        "$description": "Purple tinted fill while pressed."
+      },
+      "interactive-accent-placeholder2-on-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.purple.11}",
+        "$description": "Text and icons on the purple tinted fill, at any of its three states."
+      },
+      "interactive-accent-placeholder2-border": {
+        "$type": "color",
+        "$value": "{palette.light.purple.edge}",
+        "$description": "Purple boundary at ≥3:1. MANDATORY on any purple fill that is not itself 3:1 against the surface."
+      },
+      "interactive-ghost": {
+        "$type": "color",
+        "$value": "transparent",
+        "$description": "Ghost control at rest — no fill."
+      },
+      "interactive-ghost-hover": {
+        "$type": "color",
+        "$value": "{palette.light.sand.3}",
+        "$description": "Ghost hover fill."
+      },
+      "interactive-ghost-active": {
+        "$type": "color",
+        "$value": "{palette.light.sand.4}",
+        "$description": "Ghost pressed fill."
+      },
+      "interactive-ghost-disabled": {
+        "$type": "color",
+        "$value": "transparent",
+        "$description": "Disabled ghost — still no fill; the label carries the state."
+      },
+      "interactive-ghost-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Ghost label and icon."
+      },
+      "interactive-ghost-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.light.sand.9}",
+        "$description": "Disabled ghost label. Exempt from 1.4.3."
+      },
+      "interactive-ghost-border": {
+        "$type": "color",
+        "$value": "{palette.light.sand.edge}",
+        "$description": "Boundary for a ghost control that must still read as a control (outline button)."
+      },
+      "accent-1": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.9}",
+        "$description": "Accent 1 (terracotta) solid — category colour, chart series, avatar."
+      },
+      "accent-1-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.3}",
+        "$description": "Accent 1 tinted background."
+      },
+      "accent-1-border": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.edge}",
+        "$description": "Accent 1 boundary at ≥3:1."
+      },
+      "accent-1-text": {
+        "$type": "color",
+        "$value": "{palette.light.terracotta.11}",
+        "$description": "Accent 1 as accessible text."
+      },
+      "accent-1-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.1}",
+        "$description": "Foreground on the accent 1 solid."
+      },
+      "accent-2": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.9}",
+        "$description": "Accent 2 (ocher) solid — category colour, chart series, avatar."
+      },
+      "accent-2-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.3}",
+        "$description": "Accent 2 tinted background."
+      },
+      "accent-2-border": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.edge}",
+        "$description": "Accent 2 boundary at ≥3:1."
+      },
+      "accent-2-text": {
+        "$type": "color",
+        "$value": "{palette.light.ocher.11}",
+        "$description": "Accent 2 as accessible text."
+      },
+      "accent-2-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Foreground on the accent 2 solid."
+      },
+      "accent-3": {
+        "$type": "color",
+        "$value": "{palette.light.purple.9}",
+        "$description": "Accent 3 (purple) solid — category colour, chart series, avatar."
+      },
+      "accent-3-subtle": {
+        "$type": "color",
+        "$value": "{palette.light.purple.3}",
+        "$description": "Accent 3 tinted background."
+      },
+      "accent-3-border": {
+        "$type": "color",
+        "$value": "{palette.light.purple.edge}",
+        "$description": "Accent 3 boundary at ≥3:1."
+      },
+      "accent-3-text": {
+        "$type": "color",
+        "$value": "{palette.light.purple.11}",
+        "$description": "Accent 3 as accessible text."
+      },
+      "accent-3-on": {
+        "$type": "color",
+        "$value": "{palette.light.sand.12}",
+        "$description": "Foreground on the accent 3 solid."
+      },
+      "feedback-info-surface": {
+        "$type": "color",
+        "$value": "{palette.light.info.2}",
+        "$description": "info banner / inline-message background."
+      },
+      "feedback-info-border": {
+        "$type": "color",
+        "$value": "{palette.light.info.edge}",
+        "$description": "info banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-info-icon": {
+        "$type": "color",
+        "$value": "{palette.light.info.11}",
+        "$description": "info status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-info-text": {
+        "$type": "color",
+        "$value": "{palette.light.info.12}",
+        "$description": "info message text at ≥7:1."
+      },
+      "feedback-warning-surface": {
+        "$type": "color",
+        "$value": "{palette.light.warning.2}",
+        "$description": "warning banner / inline-message background."
+      },
+      "feedback-warning-border": {
+        "$type": "color",
+        "$value": "{palette.light.warning.edge}",
+        "$description": "warning banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-warning-icon": {
+        "$type": "color",
+        "$value": "{palette.light.warning.11}",
+        "$description": "warning status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-warning-text": {
+        "$type": "color",
+        "$value": "{palette.light.warning.12}",
+        "$description": "warning message text at ≥7:1."
+      },
+      "feedback-success-surface": {
+        "$type": "color",
+        "$value": "{palette.light.success.2}",
+        "$description": "success banner / inline-message background."
+      },
+      "feedback-success-border": {
+        "$type": "color",
+        "$value": "{palette.light.success.edge}",
+        "$description": "success banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-success-icon": {
+        "$type": "color",
+        "$value": "{palette.light.success.11}",
+        "$description": "success status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-success-text": {
+        "$type": "color",
+        "$value": "{palette.light.success.12}",
+        "$description": "success message text at ≥7:1."
+      },
+      "feedback-error-surface": {
+        "$type": "color",
+        "$value": "{palette.light.error.2}",
+        "$description": "error banner / inline-message background."
+      },
+      "feedback-error-border": {
+        "$type": "color",
+        "$value": "{palette.light.error.edge}",
+        "$description": "error banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-error-icon": {
+        "$type": "color",
+        "$value": "{palette.light.error.11}",
+        "$description": "error status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-error-text": {
+        "$type": "color",
+        "$value": "{palette.light.error.12}",
+        "$description": "error message text at ≥7:1."
+      }
+    },
+    "dark": {
+      "surface": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.2}",
+        "$description": "Page background. The default canvas everything sits on."
+      },
+      "surface-raised": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.4}",
+        "$description": "Cards, panels, popovers. Lighter than the page in BOTH themes — the paper-on-canvas model from the Figma screens."
+      },
+      "surface-sunken": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Wells, track backgrounds, inset media. One level below the page."
+      },
+      "surface-overlay": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.4}",
+        "$description": "Sheets, modals, menus. Same value as -raised; separated by elevation and scrim, not hue."
+      },
+      "surface-inverse": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.12}",
+        "$description": "Tooltips, high-emphasis chips — deliberately opposite the theme."
+      },
+      "on-surface": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.12}",
+        "$description": "Default body and heading text on any surface token."
+      },
+      "on-surface-muted": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.11}",
+        "$description": "Secondary text, metadata, placeholder. Still a full 4.5:1 — never dips below the body threshold."
+      },
+      "on-surface-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.9}",
+        "$description": "Text and icons in a disabled control. Exempt from 1.4.3; held near 3:1 anyway."
+      },
+      "on-surface-inverse": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Text on --surface-inverse."
+      },
+      "border-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.6}",
+        "$description": "Dividers and decorative outlines ONLY. Never permitted on an interactive boundary."
+      },
+      "border-strong": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.edge}",
+        "$description": "The only neutral border allowed to carry a control boundary — solved to ≥3:1 (1.4.11)."
+      },
+      "border-focus": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.10}",
+        "$description": "Focus indicator colour. ≥3:1 against every surface token in both themes."
+      },
+      "interactive-primary": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.9}",
+        "$description": "Terracotta solid fill — the family's resting state."
+      },
+      "interactive-primary-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.10}",
+        "$description": "Terracotta solid fill on hover."
+      },
+      "interactive-primary-active": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.press}",
+        "$description": "Terracotta solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
+      },
+      "interactive-primary-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.5}",
+        "$description": "Disabled fill — neutral, so no family reads as available."
+      },
+      "interactive-primary-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Foreground on the terracotta solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
+      },
+      "interactive-primary-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.10}",
+        "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
+      },
+      "interactive-primary-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.3}",
+        "$description": "Terracotta tinted fill — chips, tags, selected rows."
+      },
+      "interactive-primary-subtle-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.4}",
+        "$description": "Terracotta tinted fill on hover."
+      },
+      "interactive-primary-subtle-active": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.5}",
+        "$description": "Terracotta tinted fill while pressed."
+      },
+      "interactive-primary-on-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.11}",
+        "$description": "Text and icons on the terracotta tinted fill, at any of its three states."
+      },
+      "interactive-primary-border": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.edge}",
+        "$description": "Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface."
+      },
+      "interactive-accent-placeholder1": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.9}",
+        "$description": "Ocher solid fill — the family's resting state."
+      },
+      "interactive-accent-placeholder1-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.10}",
+        "$description": "Ocher solid fill on hover."
+      },
+      "interactive-accent-placeholder1-active": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.press}",
+        "$description": "Ocher solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
+      },
+      "interactive-accent-placeholder1-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.5}",
+        "$description": "Disabled fill — neutral, so no family reads as available."
+      },
+      "interactive-accent-placeholder1-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Foreground on the ocher solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
+      },
+      "interactive-accent-placeholder1-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.10}",
+        "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
+      },
+      "interactive-accent-placeholder1-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.3}",
+        "$description": "Ocher tinted fill — chips, tags, selected rows."
+      },
+      "interactive-accent-placeholder1-subtle-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.4}",
+        "$description": "Ocher tinted fill on hover."
+      },
+      "interactive-accent-placeholder1-subtle-active": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.5}",
+        "$description": "Ocher tinted fill while pressed."
+      },
+      "interactive-accent-placeholder1-on-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.11}",
+        "$description": "Text and icons on the ocher tinted fill, at any of its three states."
+      },
+      "interactive-accent-placeholder1-border": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.edge}",
+        "$description": "Ocher boundary at ≥3:1. MANDATORY on any ocher fill that is not itself 3:1 against the surface."
+      },
+      "interactive-accent-placeholder2": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.9}",
+        "$description": "Purple solid fill — the family's resting state."
+      },
+      "interactive-accent-placeholder2-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.10}",
+        "$description": "Purple solid fill on hover."
+      },
+      "interactive-accent-placeholder2-active": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.press}",
+        "$description": "Purple solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
+      },
+      "interactive-accent-placeholder2-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.5}",
+        "$description": "Disabled fill — neutral, so no family reads as available."
+      },
+      "interactive-accent-placeholder2-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Foreground on the purple solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
+      },
+      "interactive-accent-placeholder2-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.10}",
+        "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
+      },
+      "interactive-accent-placeholder2-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.3}",
+        "$description": "Purple tinted fill — chips, tags, selected rows."
+      },
+      "interactive-accent-placeholder2-subtle-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.4}",
+        "$description": "Purple tinted fill on hover."
+      },
+      "interactive-accent-placeholder2-subtle-active": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.5}",
+        "$description": "Purple tinted fill while pressed."
+      },
+      "interactive-accent-placeholder2-on-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.11}",
+        "$description": "Text and icons on the purple tinted fill, at any of its three states."
+      },
+      "interactive-accent-placeholder2-border": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.edge}",
+        "$description": "Purple boundary at ≥3:1. MANDATORY on any purple fill that is not itself 3:1 against the surface."
+      },
+      "interactive-ghost": {
+        "$type": "color",
+        "$value": "transparent",
+        "$description": "Ghost control at rest — no fill."
+      },
+      "interactive-ghost-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.4}",
+        "$description": "Ghost hover fill."
+      },
+      "interactive-ghost-active": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.5}",
+        "$description": "Ghost pressed fill."
+      },
+      "interactive-ghost-disabled": {
+        "$type": "color",
+        "$value": "transparent",
+        "$description": "Disabled ghost — still no fill; the label carries the state."
+      },
+      "interactive-ghost-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.12}",
+        "$description": "Ghost label and icon."
+      },
+      "interactive-ghost-on-disabled": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.9}",
+        "$description": "Disabled ghost label. Exempt from 1.4.3."
+      },
+      "interactive-ghost-border": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.edge}",
+        "$description": "Boundary for a ghost control that must still read as a control (outline button)."
+      },
+      "accent-1": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.9}",
+        "$description": "Accent 1 (terracotta) solid — category colour, chart series, avatar."
+      },
+      "accent-1-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.3}",
+        "$description": "Accent 1 tinted background."
+      },
+      "accent-1-border": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.edge}",
+        "$description": "Accent 1 boundary at ≥3:1."
+      },
+      "accent-1-text": {
+        "$type": "color",
+        "$value": "{palette.dark.terracotta.11}",
+        "$description": "Accent 1 as accessible text."
+      },
+      "accent-1-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Foreground on the accent 1 solid."
+      },
+      "accent-2": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.9}",
+        "$description": "Accent 2 (ocher) solid — category colour, chart series, avatar."
+      },
+      "accent-2-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.3}",
+        "$description": "Accent 2 tinted background."
+      },
+      "accent-2-border": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.edge}",
+        "$description": "Accent 2 boundary at ≥3:1."
+      },
+      "accent-2-text": {
+        "$type": "color",
+        "$value": "{palette.dark.ocher.11}",
+        "$description": "Accent 2 as accessible text."
+      },
+      "accent-2-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Foreground on the accent 2 solid."
+      },
+      "accent-3": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.9}",
+        "$description": "Accent 3 (purple) solid — category colour, chart series, avatar."
+      },
+      "accent-3-subtle": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.3}",
+        "$description": "Accent 3 tinted background."
+      },
+      "accent-3-border": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.edge}",
+        "$description": "Accent 3 boundary at ≥3:1."
+      },
+      "accent-3-text": {
+        "$type": "color",
+        "$value": "{palette.dark.purple.11}",
+        "$description": "Accent 3 as accessible text."
+      },
+      "accent-3-on": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.1}",
+        "$description": "Foreground on the accent 3 solid."
+      },
+      "feedback-info-surface": {
+        "$type": "color",
+        "$value": "{palette.dark.info.2}",
+        "$description": "info banner / inline-message background."
+      },
+      "feedback-info-border": {
+        "$type": "color",
+        "$value": "{palette.dark.info.edge}",
+        "$description": "info banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-info-icon": {
+        "$type": "color",
+        "$value": "{palette.dark.info.11}",
+        "$description": "info status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-info-text": {
+        "$type": "color",
+        "$value": "{palette.dark.info.12}",
+        "$description": "info message text at ≥7:1."
+      },
+      "feedback-warning-surface": {
+        "$type": "color",
+        "$value": "{palette.dark.warning.2}",
+        "$description": "warning banner / inline-message background."
+      },
+      "feedback-warning-border": {
+        "$type": "color",
+        "$value": "{palette.dark.warning.edge}",
+        "$description": "warning banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-warning-icon": {
+        "$type": "color",
+        "$value": "{palette.dark.warning.11}",
+        "$description": "warning status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-warning-text": {
+        "$type": "color",
+        "$value": "{palette.dark.warning.12}",
+        "$description": "warning message text at ≥7:1."
+      },
+      "feedback-success-surface": {
+        "$type": "color",
+        "$value": "{palette.dark.success.2}",
+        "$description": "success banner / inline-message background."
+      },
+      "feedback-success-border": {
+        "$type": "color",
+        "$value": "{palette.dark.success.edge}",
+        "$description": "success banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-success-icon": {
+        "$type": "color",
+        "$value": "{palette.dark.success.11}",
+        "$description": "success status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-success-text": {
+        "$type": "color",
+        "$value": "{palette.dark.success.12}",
+        "$description": "success message text at ≥7:1."
+      },
+      "feedback-error-surface": {
+        "$type": "color",
+        "$value": "{palette.dark.error.2}",
+        "$description": "error banner / inline-message background."
+      },
+      "feedback-error-border": {
+        "$type": "color",
+        "$value": "{palette.dark.error.edge}",
+        "$description": "error banner boundary at ≥3:1 — part of how status survives without colour (1.4.1)."
+      },
+      "feedback-error-icon": {
+        "$type": "color",
+        "$value": "{palette.dark.error.11}",
+        "$description": "error status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1."
+      },
+      "feedback-error-text": {
+        "$type": "color",
+        "$value": "{palette.dark.error.12}",
+        "$description": "error message text at ≥7:1."
+      }
+    }
+  },
+  "dimension": {
+    "sp-1": {
+      "$type": "dimension",
+      "$value": "4px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-2": {
+      "$type": "dimension",
+      "$value": "8px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-3": {
+      "$type": "dimension",
+      "$value": "12px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-4": {
+      "$type": "dimension",
+      "$value": "16px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-5": {
+      "$type": "dimension",
+      "$value": "24px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-6": {
+      "$type": "dimension",
+      "$value": "32px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-7": {
+      "$type": "dimension",
+      "$value": "48px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-8": {
+      "$type": "dimension",
+      "$value": "64px",
+      "$description": "Figma Spacing collection — reproduced exactly"
+    },
+    "sp-9": {
+      "$type": "dimension",
+      "$value": "96px",
+      "$description": "Addition — desktop section rhythm"
+    },
+    "sp-10": {
+      "$type": "dimension",
+      "$value": "128px",
+      "$description": "Addition — desktop section rhythm"
+    },
+    "space-inset-control": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-3} {dimension.sp-5}",
+      "$description": "Inside a control → 44px min height at label-lg"
+    },
+    "space-gap-inline": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-2}",
+      "$description": "Icon ↔ its own label"
+    },
+    "space-gap-related": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-3}",
+      "$description": "Atoms that belong together"
+    },
+    "space-gap-stack": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-4}",
+      "$description": "Controls inside one molecule"
+    },
+    "space-gap-group": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-6}",
+      "$description": "Molecules that do not belong together"
+    },
+    "space-section": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-7}",
+      "$description": "Between sections, mobile"
+    },
+    "space-section-lg": {
+      "$type": "dimension",
+      "$value": "{dimension.sp-9}",
+      "$description": "Between sections, ≥lg"
+    },
+    "target-min": {
+      "$type": "dimension",
+      "$value": "24px",
+      "$description": "WCAG 2.5.8 floor"
+    },
+    "target-primary": {
+      "$type": "dimension",
+      "$value": "44px",
+      "$description": "Every primary action"
+    },
+    "target-comfort": {
+      "$type": "dimension",
+      "$value": "56px",
+      "$description": "One-handed / noisy room"
+    },
+    "target-guided": {
+      "$type": "dimension",
+      "$value": "64px",
+      "$description": "Kindergarten / assisted use"
+    },
+    "radius-xs": {
+      "$type": "dimension",
+      "$value": "4px",
+      "$description": "Checkbox, swatch, tag"
+    },
+    "radius-sm": {
+      "$type": "dimension",
+      "$value": "8px",
+      "$description": "Figma Corner/Small"
+    },
+    "radius-md": {
+      "$type": "dimension",
+      "$value": "12px",
+      "$description": "Figma Corner/Medium"
+    },
+    "radius-lg": {
+      "$type": "dimension",
+      "$value": "16px",
+      "$description": "Panels, large media"
+    },
+    "radius-xl": {
+      "$type": "dimension",
+      "$value": "24px",
+      "$description": "Sheets, drawers"
+    },
+    "radius-full": {
+      "$type": "dimension",
+      "$value": "999px",
+      "$description": "Pills and circles"
+    },
+    "border-width-hairline": {
+      "$type": "dimension",
+      "$value": "1px",
+      "$description": "Dividers"
+    },
+    "border-width-regular": {
+      "$type": "dimension",
+      "$value": "1.5px",
+      "$description": "Control boundaries"
+    },
+    "border-width-thick": {
+      "$type": "dimension",
+      "$value": "2px",
+      "$description": "Selected / current"
+    },
+    "border-width-focus": {
+      "$type": "dimension",
+      "$value": "3px",
+      "$description": "Focus ring only"
+    },
+    "focus-ring-offset": {
+      "$type": "dimension",
+      "$value": "2px",
+      "$description": "Gap renders in the parent surface"
+    },
+    "focus-ring-clearance": {
+      "$type": "dimension",
+      "$value": "5px",
+      "$description": "Padding a focusable ancestor must keep so focus is never clipped (2.4.11)"
+    }
+  },
+  "typography": {
+    "display-xl": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.display}",
+        "fontWeight": 700,
+        "fontSize": "40px",
+        "fontSizeMax": "64px",
+        "lineHeight": 1.04,
+        "letterSpacing": "-0.022em"
+      },
+      "$description": "Hero / launch headline. One per screen, ≤6 words. · 393px 40px / 834px 50.1px / 1440px 64px"
+    },
+    "display-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.display}",
+        "fontWeight": 700,
+        "fontSize": "32px",
+        "fontSizeMax": "44px",
+        "lineHeight": 1.08,
+        "letterSpacing": "-0.018em"
+      },
+      "$description": "Session titles, empty-state headlines. · 393px 32px / 834px 37.1px / 1440px 44px"
+    },
+    "heading-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.display}",
+        "fontWeight": 700,
+        "fontSize": "26px",
+        "fontSizeMax": "34px",
+        "lineHeight": 1.18,
+        "letterSpacing": "-0.012em"
+      },
+      "$description": "Primary screen headline — the Figma 26px step. · 393px 26px / 834px 29.4px / 1440px 34px"
+    },
+    "body-xl": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.display}",
+        "fontWeight": 500,
+        "fontSize": "26px",
+        "fontSizeMax": "34px",
+        "lineHeight": 1.18,
+        "letterSpacing": "-0.012em"
+      },
+      "$description": "The largest body step, at display scale — an instruction the user reads and acts on, which asks rather than asserts. 500 not 600: the display face is loaded at 400/500/700, so a 600 would be synthesised. Same size, line and tracking as heading-lg; in CSS they are aliased so the two cannot drift. Pairs with on-surface-muted. Not a substitute for heading-lg on a screen title. · 393px 26px / 834px 29.4px / 1440px 34px"
+    },
+    "heading-md": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.display}",
+        "fontWeight": 500,
+        "fontSize": "22px",
+        "fontSizeMax": "26px",
+        "lineHeight": 1.25,
+        "letterSpacing": "-0.008em"
+      },
+      "$description": "Section headline inside a screen. · 393px 22px / 834px 23.7px / 1440px 26px"
+    },
+    "heading-sm": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.display}",
+        "fontWeight": 500,
+        "fontSize": "19px",
+        "fontSizeMax": "21px",
+        "lineHeight": 1.3,
+        "letterSpacing": "-0.004em"
+      },
+      "$description": "Card title, group label, subsection. · 393px 19px / 834px 19.8px / 1440px 21px"
+    },
+    "body-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.text}",
+        "fontWeight": 400,
+        "fontSize": "19px",
+        "fontSizeMax": "20px",
+        "lineHeight": 1.6,
+        "letterSpacing": "0"
+      },
+      "$description": "Guided-exercise prose — the reading size during a session. · 393px 19px / 834px 19.4px / 1440px 20px"
+    },
+    "body-md": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.text}",
+        "fontWeight": 400,
+        "fontSize": "17px",
+        "fontSizeMax": "18px",
+        "lineHeight": 1.6,
+        "letterSpacing": "0"
+      },
+      "$description": "Default body. The MINIMUM body size in the system. · 393px 17px / 834px 17.4px / 1440px 18px"
+    },
+    "body-sm": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.text}",
+        "fontWeight": 400,
+        "fontSize": "15px",
+        "fontSizeMax": "16px",
+        "lineHeight": 1.55,
+        "letterSpacing": "0.002em"
+      },
+      "$description": "Metadata, timestamps, captions. NEVER essential prose. · 393px 15px / 834px 15.4px / 1440px 16px"
+    },
+    "label-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.text}",
+        "fontWeight": 500,
+        "fontSize": "17px",
+        "fontSizeMax": "18px",
+        "lineHeight": 1.2,
+        "letterSpacing": "0.002em"
+      },
+      "$description": "Primary button and tab labels. · 393px 17px / 834px 17.4px / 1440px 18px"
+    },
+    "label-md": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.family.text}",
+        "fontWeight": 500,
+        "fontSize": "15px",
+        "fontSizeMax": "16px",
+        "lineHeight": 1.2,
+        "letterSpacing": "0.006em"
+      },
+      "$description": "Compact controls, chips, table headers. · 393px 15px / 834px 15.4px / 1440px 16px"
+    },
+    "family": {
+      "display": {
+        "$type": "fontFamily",
+        "$value": "Space Grotesk",
+        "$description": "Display + headings"
+      },
+      "text": {
+        "$type": "fontFamily",
+        "$value": "Inter",
+        "$description": "Body + UI"
+      }
+    },
+    "rules": {
+      "bodyMinStep": {
+        "$type": "other",
+        "$value": "body-md",
+        "$description": "17px at 393px. Steps below this are label/metadata only"
+      },
+      "wrapHeading": {
+        "$type": "other",
+        "$value": "balance"
+      },
+      "wrapBody": {
+        "$type": "other",
+        "$value": "pretty"
+      },
+      "hyphens": {
+        "$type": "other",
+        "$value": "auto",
+        "$description": "Required for German compounds at 393px"
+      },
+      "measureBody": {
+        "$type": "other",
+        "$value": "62ch"
+      },
+      "measureHeading": {
+        "$type": "other",
+        "$value": "26ch"
+      }
+    }
+  },
+  "motion": {
+    "duration-instant": {
+      "$type": "duration",
+      "$value": "80ms",
+      "$description": "State flip with no travel"
+    },
+    "duration-fast": {
+      "$type": "duration",
+      "$value": "140ms",
+      "$description": "Toggle, hover, exit"
+    },
+    "duration-base": {
+      "$type": "duration",
+      "$value": "220ms",
+      "$description": "Default enter"
+    },
+    "duration-slow": {
+      "$type": "duration",
+      "$value": "340ms",
+      "$description": "Sheet slide"
+    },
+    "duration-slower": {
+      "$type": "duration",
+      "$value": "520ms",
+      "$description": "Emphasis, celebration"
+    },
+    "ease-standard": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.2,
+        0,
+        0.2,
+        1
+      ]
+    },
+    "ease-entrance": {
+      "$type": "cubicBezier",
+      "$value": [
+        0,
+        0,
+        0.2,
+        1
+      ]
+    },
+    "ease-exit": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.4,
+        0,
+        1,
+        1
+      ]
+    },
+    "ease-emphasis": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.2,
+        0.9,
+        0.1,
+        1
+      ]
+    },
+    "enter": {
+      "$type": "other",
+      "$value": "{motion.duration-base} {motion.ease-entrance}"
+    },
+    "exit": {
+      "$type": "other",
+      "$value": "{motion.duration-fast} {motion.ease-exit}"
+    },
+    "toggle": {
+      "$type": "other",
+      "$value": "{motion.duration-fast} {motion.ease-standard}"
+    },
+    "sheet-slide": {
+      "$type": "other",
+      "$value": "{motion.duration-slow} {motion.ease-emphasis}"
+    },
+    "emphasis": {
+      "$type": "other",
+      "$value": "{motion.duration-slower} {motion.ease-emphasis}"
+    },
+    "reducedMotion": {
+      "$type": "other",
+      "$value": "all durations → 1ms, all travel → 0px, ease-emphasis → linear",
+      "$description": "Applied by media query in the CSS layer"
+    }
+  },
+  "layout": {
+    "bp-sm": {
+      "$type": "dimension",
+      "$value": "480px"
+    },
+    "bp-md": {
+      "$type": "dimension",
+      "$value": "768px"
+    },
+    "bp-lg": {
+      "$type": "dimension",
+      "$value": "1024px"
+    },
+    "bp-xl": {
+      "$type": "dimension",
+      "$value": "1280px"
+    },
+    "container-max": {
+      "$type": "dimension",
+      "$value": "1200px"
+    },
+    "gutter": {
+      "$type": "other",
+      "$value": "16 / 24 / 32 / 48 px at base / md / lg / xl"
+    },
+    "columns": {
+      "$type": "other",
+      "$value": "4 / 8 / 12 / 12 at base / md / lg / xl"
+    }
+  },
+  "elevation": {
+    "0": {
+      "$type": "other",
+      "$value": "none"
+    },
+    "1": {
+      "$type": "other",
+      "$value": "0 1px 2px {palette.light.alpha.shadow-key}, 0 1px 3px -1px {palette.light.alpha.shadow-ambient}, inset ring",
+      "$description": "Card at rest. Dark mode adds the ring + surface-lightening"
+    },
+    "2": {
+      "$type": "other",
+      "$value": "0 2px 4px -1px key, 0 8px 16px -6px ambient, inset ring",
+      "$description": "Popover, lifted card"
+    },
+    "3": {
+      "$type": "other",
+      "$value": "0 4px 8px -2px key, 0 20px 40px -12px ambient, inset ring",
+      "$description": "Sheet, modal"
+    },
+    "darkStrategy": {
+      "$type": "other",
+      "$value": "surface-lightening AND border",
+      "$description": "Both: --surface-raised steps up to sand-4 and --elevation-ring becomes sand-7"
+    }
+  },
+  "zIndex": {
+    "base": {
+      "$type": "number",
+      "$value": 0
+    },
+    "raised": {
+      "$type": "number",
+      "$value": 10
+    },
+    "sticky": {
+      "$type": "number",
+      "$value": 100
+    },
+    "overlay": {
+      "$type": "number",
+      "$value": 200
+    },
+    "sheet": {
+      "$type": "number",
+      "$value": 300
+    },
+    "tooltip": {
+      "$type": "number",
+      "$value": 400
+    },
+    "toast": {
+      "$type": "number",
+      "$value": 500
+    }
+  },
+  "icon": {
+    "set": {
+      "$type": "other",
+      "$value": "Lucide (lucide-animated)",
+      "$description": "[LOCKED] — reproduced, not optimised"
+    },
+    "size-sm": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "size-md": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
+    "size-lg": {
+      "$type": "dimension",
+      "$value": "24px",
+      "$description": "Lucide native grid"
+    },
+    "size-xl": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "stroke": {
+      "$type": "dimension",
+      "$value": "2px",
+      "$description": "Lucide default"
+    },
+    "optical-nudge": {
+      "$type": "dimension",
+      "$value": "-0.055em",
+      "$description": "Cap-height centring against adjacent text"
+    }
+  }
+}

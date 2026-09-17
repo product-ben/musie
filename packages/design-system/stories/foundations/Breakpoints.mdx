@@ -1,0 +1,15 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { Grid } from './_pages/Dimension';
+
+<Meta title="Foundations/Breakpoints" />
+
+# Breakpoints & grid
+
+Mirror values only — **a media query cannot read a custom property**, so the
+numbers live in the tokens for code to reference and in the JSON for Figma, and
+the `@media` rules repeat them as literals. That duplication is unavoidable;
+what matters is that both sides come from one recorded number.
+
+Columns step 4 → 8 → 12 at 768 / 1024 / 1280.
+
+<Grid />

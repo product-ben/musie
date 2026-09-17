@@ -1,0 +1,17 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { RadiusSwatches, TokenGroup } from './_pages/Dimension';
+
+<Meta title="Foundations/Radius" />
+
+# Radius
+
+Six raw steps and five semantic aliases. The aliases are what a component
+should reference — `--radius-control` is `--radius-full`, taken from the Figma
+button geometry, and changing the button shape should be one edit.
+
+The aliases have **no entry in the token JSON** — they exist only in the
+stylesheet. See `TOKEN-DRIFT.md`.
+
+<RadiusSwatches />
+
+<TokenGroup group="radius" />

@@ -1,0 +1,36 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { ColourRaw, ColourSemantic } from './_pages/Colour';
+
+<Meta title="Foundations/Colour" />
+
+# Colour
+
+Two layers. **Layer 1** is eight Radix-structured scales that no component may
+consume directly. **Layer 2** is the semantic aliases, which are the API.
+
+Every swatch below is **probed out of the DOM**, not transcribed. Each token is
+painted onto a hidden element inside a real `[data-theme]` subtree and read
+back with `getComputedStyle`, so what you see is what the browser resolved —
+through `light-dark()` and through however many `var()` hops the chain takes.
+A hex typed into this page could be wrong; a probed one cannot.
+
+## Layer 1 — raw palette
+
+Steps 1–8 are curve-placed. Steps 9 and 10 are anchored on the Figma brand
+values. Steps 11, 12, `edge` and `press` are **contrast-solved** against every
+surface a foreground can legally land on, including other scales' tinted fills
+— not eyeballed. See [Contrast](?path=/docs/foundations-contrast--docs) for the
+measurements.
+
+<ColourRaw />
+
+## Layer 2 — semantic aliases
+
+The only colour tokens a component may reference. Where light and dark point at
+different raw steps, that is deliberate: `--surface-raised` is lighter than the
+page in *both* themes, which takes `sand-1` in light and `sand-4` in dark.
+
+The **resolves to** column comes from the token JSON. A blank there means the
+alias exists only in the CSS — see `TOKEN-DRIFT.md`.
+
+<ColourSemantic />

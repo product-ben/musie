@@ -1,0 +1,65 @@
+<!--
+  Musy — Storybook preview <head>
+
+  THIS RUNS SYNCHRONOUSLY, BEFORE ANY STYLESHEET, AND THAT IS THE WHOLE POINT.
+  Storybook injects this block into the preview iframe's <head>, ahead of its
+  own bundle — so this inline <script> executes before preview.ts is evaluated
+  and therefore before a single line of the token CSS is applied.
+
+  Two things have to happen in that window:
+
+  1. data-theme must already be on <html> at first paint. Every themed token in
+     musy-foundations.css is declared on `:root, [data-theme]` and resolves
+     through light-dark(), so the attribute decides which half of every
+     light-dark() pair wins. Set it late and the first paint resolves against
+     the wrong one — a visible flash of the wrong theme on every reload.
+     Importing tokens/theme-init.js from preview.ts is exactly that mistake:
+     a module import is deferred, so it lands after the CSS.
+
+  2. lang must be on <html>. Layer 1 sets --text-hyphens: auto and every
+     wrapping text part consumes it, but `hyphens: auto` is a no-op without a
+     language tag. Without it "Partnerschaft" in a narrow card column has no
+     legal break point and overflows. See docs/07-components.md, "Integration
+     requirement". `de`, because the system is German-primary: Badge's status
+     words, "Wird geladen", "Keine Optionen verfügbar" are all German.
+
+  DUPLICATION IS DELIBERATE. The block below is a BYTE-FOR-BYTE copy of the
+  IIFE in tokens/theme-init.js. It cannot be a <script src> — that is a second
+  round trip inside the very window we are closing — and it cannot be an
+  import, because imports are deferred. If tokens/theme-init.js changes, change
+  this too. That is the price of running before the stylesheets, and it is why
+  this file exists rather than a line in preview.ts.
+-->
+<script>
+document.documentElement.lang = 'de';
+</script>
+<script>
+(function () {
+  var KEY = 'musy-theme';
+  var stored = null;
+  try { stored = localStorage.getItem(KEY); } catch (e) {}
+  document.documentElement.setAttribute('data-theme', stored === 'dark' ? 'dark' : 'light');
+  window.musyTheme = {
+    get: function () { return document.documentElement.getAttribute('data-theme'); },
+    set: function (t) {
+      document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+      try { localStorage.setItem(KEY, t === 'dark' ? 'dark' : 'light'); } catch (e) {}
+    },
+    toggle: function () { this.set(this.get() === 'dark' ? 'light' : 'dark'); }
+  };
+})();
+</script>
+
+<!--
+  The canvas, painted from tokens rather than from Storybook's default white.
+  This follows data-theme, so switching theme repaints the surface too. It is
+  the only styling this file adds: everything else comes from the four
+  stylesheets preview.ts imports.
+-->
+<style>
+  body,
+  .sb-show-main.sb-main-padded {
+    background-color: var(--surface);
+    color: var(--on-surface);
+  }
+</style>

@@ -1,0 +1,491 @@
+/**
+ * Draggable List — Layer 2 · §7.24
+ * No new primitives: Content Box, Icon Button, CTA Button, Toast and an <ol>,
+ * arranged per Layer 3 L3, L4, L5, L6, L9 and L13.
+ *
+ * WHAT MAKES IT A COMPONENT RATHER THAN A COMPOSITION is the state machine.
+ * Twelve states, and three pairs of them are mutually exclusive in a way that
+ * is easy to get wrong by hand: an item cannot be editing AND open, editing AND
+ * draggable, or a merge target AND a drop target. `dropMode` is ONE value,
+ * never two, and the controls disappear while editing. That invariant is the
+ * component's, not the consumer's.
+ *
+ * THE LIST IS THE EDITING SURFACE. No separate edit mode, no toolbar, nothing
+ * opens in a dialog. Editing replaces the row's *content*, not the row: the
+ * Content Box stays and its interior swaps for Field's parts and an action row.
+ *
+ * THE TEXT LEADS IN THE DOM AND FLOATS A SPACER (L4). The controls are
+ * positioned into the gap it leaves. Floating the controls themselves is one
+ * rule shorter and wrong: a float only operates from the front of the flow, so
+ * it would put both buttons ahead of the sentence they act on for a screen
+ * reader, on every item in the list.
+ *
+ * THE TEXT MUST STAY A PLAIN BLOCK. A flex or grid container establishes its
+ * own formatting context and steps *around* the spacer instead of wrapping
+ * beside it. This fails SILENTLY — the card just reverts to the flex-row
+ * measurements — so if a float looks inert, look for a `display: flex` on the
+ * text's wrapper first.
+ *
+ * COMBINING IS DIRECTION-AWARE, AND DIRECTION COMES FROM LIST POSITION, not
+ * from the gesture. Dragging an item down prepends its text; dragging up
+ * appends it. Either way the merged text reads in the order the items appear on
+ * screen, which is what the user is looking at. Deriving it from the gesture is
+ * the obvious implementation and is wrong on a slow drag that crosses back over
+ * itself.
+ *
+ * UNDO IS THE CONSUMER'S. This reports the change; whoever owns the data owns
+ * the snapshot and the window. Same split as §7.19, §7.22 and §7.23.
+ *
+ * THE EDITOR COMPOSES ON FIELD'S PARTS, not on the Field component. That is the
+ * system's own sanctioned pattern (§7.19 does it and says so). Note that it is
+ * now a CHOICE rather than a necessity: before §7.16's controlled-value defect
+ * was fixed, Field could not show existing text at all.
+ */
+import * as React from 'react';
+import { ChevronDown, GripVertical, Pencil, Trash2 } from 'lucide-react';
+import { ContentBox } from './ContentBox';
+import { CtaButton } from './CtaButton';
+import { IconButton } from './IconButton';
+import { useToolSize } from './useCoarsePointer';
+import type { ToolSize } from './useCoarsePointer';
+
+/** Where a dragged item will land relative to the item under the pointer. */
+export type DropMode = 'before' | 'after' | 'combine';
+export type CombineOrder = 'sourceFirst' | 'targetFirst';
+
+export interface DropHints {
+  combine: (position: number) => string;
+  before: (position: number) => string;
+  after: (position: number) => string;
+  cancel: string;
+}
+
+const DEFAULT_DROP_HINTS: DropHints = {
+  combine: (n) => `Merge into ${n}`,
+  before: (n) => `Insert before ${n}`,
+  after: (n) => `Insert after ${n}`,
+  cancel: 'Release to cancel',
+};
+
+export interface DraggableItem {
+  /** REQUIRED. Reordering has to survive re-render, and an index cannot. */
+  id: string;
+  text: string;
+}
+
+export interface DraggableListProps {
+  items: DraggableItem[];
+  /** False while the source is still producing items — nothing is editable
+   *  mid-capture, so no item renders a control. */
+  editable?: boolean;
+  onEdit?: (id: string, text: string) => void;
+  onCombine?: (sourceId: string, targetId: string, order: CombineOrder) => void;
+  onMove?: (sourceId: string, targetId: string, position: 'before' | 'after') => void;
+  onDelete?: (id: string) => void;
+  /** Shows the waiting box — heard something, no content back yet. */
+  pending?: boolean;
+  /** Shows the hearing box, carrying the partial text. */
+  partial?: string;
+  emptyHeadline?: string;
+  emptyText?: string;
+  /** The waiting and hearing states' copy. Same box, so same shell. */
+  listeningLabel?: string;
+  hearingLabel?: string;
+  /**
+   * The drag hint's wording. Defaults are English, like the rest of the set's
+   * copy; the consumer localises. Each takes the target's 1-based position,
+   * because "merge into 2" is the only thing that separates a merge from a
+   * reorder while the finger is still down.
+   */
+  dropHints?: DropHints;
+  /**
+   * Opt into L8's dense-list exception *as L8 states it*: the step varies per
+   * item, `body-sm` at 80 characters or fewer and `body-md` above.
+   *
+   * DEFAULT FALSE, which is a deliberate departure. Left on, the exception has
+   * a cost the reference screen never hit: merging two short items crosses the
+   * threshold, so text the user just combined gets bigger, and a size change on
+   * unchanged content reads as a bug. Off, every item takes `body-sm` — one
+   * size, and a merge changes the text and nothing else. Logged as conflict
+   * B23.
+   */
+  dense?: boolean;
+  /**
+   * Heading level for each item's hidden headline. Pass it — the box cannot
+   * know where it sits (1.3.1), and inside a wizard panel the question is the
+   * heading, so this shifts down by one. See 14 · Reflect step.
+   */
+  headingLevel?: 2 | 3 | 4 | 5 | 6;
+  /** What one item is called, for every control's accessible name. */
+  itemNoun?: string;
+  /** Accessible name for the list itself. */
+  label?: string;
+  className?: string;
+}
+
+/** The item's type step.
+ *
+ *  DEFAULT `body-sm`, ONE SIZE FOR EVERY ITEM. Layer 1 §4 sets a 17px floor and
+ *  bars `body-sm` from essential prose, and L8 grants an exception for a
+ *  scannable list item — but per item, by length, which is what made a merge
+ *  re-size text the user had just combined. These are list items in a dense
+ *  editing surface, so they take the exception's size UNCONDITIONALLY: one
+ *  size, no jump on merge. `dense` restores L8's per-item behaviour.
+ *  Conflict B23. */
+const SCANNABLE_CHARS = 80;
+export const itemTypeStep = (text: string, dense = false) =>
+  dense ? (text.length <= SCANNABLE_CHARS ? 'body-sm' : 'body-md') : 'body-sm';
+
+/** Outer quarters reorder, middle half merges. The ratio is the component's. */
+function zoneFor(rect: DOMRect, y: number): DropMode {
+  const offset = (y - rect.top) / rect.height;
+  if (offset < 0.25) return 'before';
+  if (offset > 0.75) return 'after';
+  return 'combine';
+}
+
+export function DraggableList({
+  items, editable = true, onEdit, onCombine, onMove, onDelete,
+  pending = false, partial, headingLevel = 3,
+  emptyHeadline = 'Nothing captured yet',
+  emptyText = 'Finished statements will appear here, one box each, in the order you said them.',
+  listeningLabel = 'Listening', hearingLabel = 'Hearing you',
+  itemNoun = 'statement', label = 'Transcript',
+  dropHints = DEFAULT_DROP_HINTS, dense = false, className,
+}: DraggableListProps) {
+  const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  const [dropTarget, setDropTarget] = React.useState<{ id: string; mode: DropMode } | null>(null);
+  const [pointer, setPointer] = React.useState<{ x: number; y: number } | null>(null);
+  /** One item's actions open at a time, so the list stays scannable. */
+  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+  const [liveMessage, setLiveMessage] = React.useState('');
+  const toolSize = useToolSize();
+
+  const nodes = React.useRef(new Map<string, HTMLElement>());
+  const registerItem = (id: string, el: HTMLElement | null) => {
+    if (el) nodes.current.set(id, el);
+    else nodes.current.delete(id);
+  };
+
+  const indexOf = (id: string) => items.findIndex((i) => i.id === id);
+
+  /** Direction from list position, never from the gesture — see the header. */
+  const combine = (sourceId: string, targetId: string) => {
+    const from = indexOf(sourceId);
+    const to = indexOf(targetId);
+    onCombine?.(sourceId, targetId, from < to ? 'sourceFirst' : 'targetFirst');
+  };
+
+  const endDrag = () => {
+    setDraggingId(null);
+    setDropTarget(null);
+    setPointer(null);
+  };
+
+  const onPointerMove = (event: React.PointerEvent) => {
+    if (!draggingId) return;
+    setPointer({ x: event.clientX, y: event.clientY });
+    let found: { id: string; mode: DropMode } | null = null;
+    for (const [id, el] of nodes.current) {
+      if (id === draggingId) continue;
+      const rect = el.getBoundingClientRect();
+      if (event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        found = { id, mode: zoneFor(rect, event.clientY) };
+        break;
+      }
+    }
+    setDropTarget(found);
+  };
+
+  const onPointerUp = () => {
+    if (draggingId && dropTarget) {
+      if (dropTarget.mode === 'combine') combine(draggingId, dropTarget.id);
+      else onMove?.(draggingId, dropTarget.id, dropTarget.mode);
+    }
+    endDrag();
+  };
+
+  /**
+   * KEYBOARD EQUIVALENTS ARE SPECIFIED AND UNVERIFIED. Space lifts, arrows
+   * move, M merges into the item above, Escape cancels, and each is announced.
+   * Implemented here and in the reference; never tested with a screen reader —
+   * see 13 · Layout evidence, "What is not evidenced".
+   */
+  const onHandleKeyDown = (id: string) => (event: React.KeyboardEvent) => {
+    const i = indexOf(id);
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      const lifting = draggingId !== id;
+      setDraggingId(lifting ? id : null);
+      setLiveMessage(lifting ? `${itemNoun} ${i + 1} lifted. Arrows to move, M to merge, Escape to cancel.`
+                             : `${itemNoun} ${i + 1} dropped.`);
+      return;
+    }
+    if (event.key === 'Escape' && draggingId) {
+      event.preventDefault();
+      endDrag();
+      setLiveMessage('Move cancelled.');
+      return;
+    }
+    if (draggingId !== id) return;
+    if (event.key === 'ArrowUp' && i > 0) {
+      event.preventDefault();
+      onMove?.(id, items[i - 1].id, 'before');
+      setLiveMessage(`${itemNoun} moved to position ${i}.`);
+      return;
+    }
+    if (event.key === 'ArrowDown' && i < items.length - 1) {
+      event.preventDefault();
+      onMove?.(id, items[i + 1].id, 'after');
+      setLiveMessage(`${itemNoun} moved to position ${i + 2}.`);
+      return;
+    }
+    if ((event.key === 'm' || event.key === 'M') && i > 0) {
+      event.preventDefault();
+      combine(id, items[i - 1].id);
+      endDrag();
+      setLiveMessage(`Merged into ${itemNoun} ${i}.`);
+    }
+  };
+
+  const waiting = (pending || Boolean(partial)) && !draggingId;
+  const dragged = items.find((i) => i.id === draggingId);
+
+  /**
+   * The action half of the drag hint. Phrased as what a release WOULD do, not
+   * as what is happening — the user is still deciding, and naming the target
+   * position is the only thing that distinguishes a merge from a reorder
+   * before they commit. The drop indicator is at the target; this is under the
+   * finger, where the eye already is.
+   */
+  const dragHint = !draggingId ? ''
+    : !dropTarget ? dropHints.cancel
+    : dropTarget.mode === 'combine' ? dropHints.combine(indexOf(dropTarget.id) + 1)
+    : dropTarget.mode === 'before' ? dropHints.before(indexOf(dropTarget.id) + 1)
+    : dropHints.after(indexOf(dropTarget.id) + 1);
+
+  return (
+    <div
+      className={['musy-dlist', className ?? ''].filter(Boolean).join(' ')}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={endDrag}
+    >
+      {/* Empty, waiting and hearing are ONE box in three states on purpose: the
+          page must not change shape when content starts arriving (L10) — which
+          is also why the headline is hidden in all three rather than appearing
+          with the state. Sunken, not raised: this is a hole waiting to be
+          filled, not a card. */}
+      {items.length === 0 && !waiting ? (
+        <ContentBox
+          outline="dashed"
+          className="musy-dlist__empty"
+          headline={emptyHeadline}
+          headlineHidden
+          headingLevel={headingLevel}
+          text={emptyText}
+          textStep="body-sm"
+        />
+      ) : (
+        <ol className="musy-dlist__list" aria-label={label}>
+          {items.map((item, index) => {
+            const mode = dropTarget?.id === item.id ? dropTarget.mode : null;
+            return (
+              <li key={item.id}>
+                {mode === 'before' && <div className="musy-dlist__drop" aria-hidden="true" />}
+                <DraggableListRow
+                  item={item}
+                  position={index + 1}
+                  itemNoun={itemNoun}
+                  headingLevel={headingLevel}
+                  dense={dense}
+                  editable={editable}
+                  dragging={draggingId === item.id}
+                  mergeTarget={mode === 'combine'}
+                  menuOpen={openMenuId === item.id}
+                  onToggleMenu={() =>
+                    setOpenMenuId((current) => (current === item.id ? null : item.id))
+                  }
+                  toolSize={toolSize}
+                  onSave={(text) => onEdit?.(item.id, text)}
+                  onDelete={() => onDelete?.(item.id)}
+                  onLift={() => setDraggingId(item.id)}
+                  onHandleKeyDown={onHandleKeyDown(item.id)}
+                  registerRef={(el) => registerItem(item.id, el)}
+                />
+                {mode === 'after' && <div className="musy-dlist__drop" aria-hidden="true" />}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      {waiting && (
+        <ContentBox
+          outline="dashed"
+          className="musy-dlist__empty"
+          headline={partial ? hearingLabel : listeningLabel}
+          headlineHidden
+          headingLevel={headingLevel}
+          text={partial || listeningLabel}
+          textStep="body-sm"
+        >
+          {!partial && (
+            /* L10: three dots, and under reduced motion the pulse is DROPPED
+               rather than shortened — Layer 1 collapses every duration to 1ms,
+               which on a loop strobes. */
+            <span className="musy-dlist__dots" aria-label={listeningLabel}>
+              <span /><span /><span />
+            </span>
+          )}
+        </ContentBox>
+      )}
+
+      {/* Follows the finger, and carries BOTH halves of the gesture: which item
+          is moving, and what releasing would do. */}
+      {dragged && pointer && (
+        <div
+          className="musy-dlist__preview"
+          style={{ left: pointer.x, top: pointer.y }}
+          aria-hidden="true"
+        >
+          <span className="musy-dlist__preview-item">
+            {itemNoun} {indexOf(dragged.id) + 1}
+          </span>
+          <span className="musy-dlist__preview-text">{dragged.text}</span>
+          <span className="musy-dlist__preview-action">{dragHint}</span>
+        </div>
+      )}
+
+      <span className="musy-sr-only" role="status" aria-live="polite">{liveMessage}</span>
+    </div>
+  );
+}
+
+interface RowProps {
+  item: DraggableItem;
+  position: number;
+  itemNoun: string;
+  headingLevel: 2 | 3 | 4 | 5 | 6;
+  dense: boolean;
+  editable: boolean;
+  dragging: boolean;
+  mergeTarget: boolean;
+  menuOpen: boolean;
+  onToggleMenu: () => void;
+  toolSize: ToolSize;
+  onSave: (text: string) => void;
+  onDelete: () => void;
+  onLift: () => void;
+  onHandleKeyDown: (event: React.KeyboardEvent) => void;
+  registerRef: (el: HTMLElement | null) => void;
+}
+
+function DraggableListRow({
+  item, position, itemNoun, headingLevel, dense, editable, dragging, mergeTarget,
+  menuOpen, onToggleMenu, toolSize, onSave, onDelete, onLift, onHandleKeyDown,
+  registerRef,
+}: RowProps) {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(item.text);
+  const reactId = React.useId();
+  const menuId = `musy-dlist-menu-${reactId}`;
+  const fieldId = `musy-dlist-field-${reactId}`;
+
+  /** Seeded on OPEN rather than synced: a merge can rewrite the item while the
+   *  editor is closed, and the draft must not be stale when it reopens. */
+  const startEditing = () => { setDraft(item.text); setEditing(true); };
+  const save = () => { onSave(draft); setEditing(false); };
+  const discard = () => { setDraft(item.text); setEditing(false); };
+
+  /** Primary only once there is something to save. Until then Save and Discard
+   *  do the same thing, so they should look alike (L6). */
+  const dirty = draft.trim() !== item.text && draft.trim() !== '';
+  const controls = editable && !editing;
+
+  return (
+    <ContentBox
+      headline={`${itemNoun} ${position}`}
+      headlineHidden
+      headingLevel={headingLevel}
+      className={[
+        'musy-dlist__item',
+        dragging ? 'musy-dlist__item--dragging' : '',
+        mergeTarget ? 'musy-dlist__item--merge-target' : '',
+      ].filter(Boolean).join(' ')}
+      /* base-ui composition: the measurement ref goes onto the element the
+         system already renders, not a wrapper around it. The rect measured at
+         drag start has to be the card's own. */
+      render={<article ref={registerRef as never} />}
+    >
+      <div className="musy-dlist__row" data-size={toolSize}>
+        {editing ? (
+          <div className="musy-dlist__editor">
+            <div className="musy-field">
+              <label className="musy-field__label" htmlFor={fieldId}>
+                {itemNoun} {position}
+              </label>
+              <textarea
+                id={fieldId}
+                className="musy-field__control musy-field__control--textarea"
+                rows={3}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                data-filled={draft ? '' : undefined}
+              />
+            </div>
+            {/* L6: right-aligned, Save outermost, Discard leading in the DOM so
+                tab order matches the screen. */}
+            <div className="musy-dlist__actions musy-dlist__actions--end">
+              <CtaButton variant="secondary" onClick={discard}>Discard</CtaButton>
+              <CtaButton variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
+                Save
+              </CtaButton>
+            </div>
+          </div>
+        ) : (
+          /* A PLAIN BLOCK, deliberately — see the header. */
+          <p className="musy-dlist__text" data-type-step={itemTypeStep(item.text, dense)}>
+            {item.text}
+          </p>
+        )}
+
+        {controls && (
+          <div className="musy-dlist__tools" data-size={toolSize}>
+            <IconButton
+              glyph={GripVertical}
+              label={`Drag ${itemNoun} ${position}`}
+              variant="ghost"
+              size={toolSize}
+              className="musy-dlist__handle"
+              onPointerDown={onLift}
+              onKeyDown={onHandleKeyDown}
+            />
+            <IconButton
+              glyph={ChevronDown}
+              label={menuOpen ? `Hide actions for ${itemNoun} ${position}`
+                              : `Show actions for ${itemNoun} ${position}`}
+              variant="ghost"
+              size={toolSize}
+              className="musy-dlist__chevron"
+              aria-expanded={menuOpen}
+              aria-controls={menuOpen ? menuId : undefined}
+              onClick={onToggleMenu}
+            />
+          </div>
+        )}
+      </div>
+
+      {controls && menuOpen && (
+        /* L6 again: Edit outermost, Delete leading in the DOM. That puts a
+           destructive action first in the tab order, which is accepted —
+           Toast's undo (L11) is a better safety net than a confirm dialog
+           nobody reads. */
+        <div className="musy-dlist__actions musy-dlist__actions--end" id={menuId}>
+          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={onDelete}>Delete</CtaButton>
+          <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>Edit</CtaButton>
+        </div>
+      )}
+    </ContentBox>
+  );
+}

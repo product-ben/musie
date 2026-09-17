@@ -1,0 +1,37 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { TypeScale, TypeAtWidth, TypeRules, WIDTHS } from './_pages/Typography';
+
+<Meta title="Foundations/Typography" />
+
+# Typography
+
+Two families, fluid between **393px** (iPhone 16) and **1440px** (desktop).
+Every step is a `clamp()`, so there are no typographic breakpoints — the scale
+interpolates continuously.
+
+## The scale
+
+The three width columns are solved from the `clamp()` expression **read out of
+the stylesheet**, not copied from the manifest: retune a curve and this table
+follows. **now** is the step's actual computed size at your current viewport —
+resize and it moves.
+
+<TypeScale />
+
+## Interpolation, rendered
+
+Real type at each reference width. These are iframes because `clamp()` resolves
+against the *viewport*: a scaled or width-constrained `div` would render this
+docs page's size, not the breakpoint's. Each frame loads the same token
+stylesheets this page does.
+
+{WIDTHS.map((w) => <TypeAtWidth key={w} width={w} />)}
+
+## Families, measures and wrapping
+
+German runs about 30% longer than English, so measures are set from the German
+string and headings take a tighter measure than body, to stop a compound
+stranding one word on the last line. `--text-hyphens` does nothing without
+`<html lang>` — see the README.
+
+<TypeRules />

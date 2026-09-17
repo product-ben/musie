@@ -1,0 +1,22 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { FocusDemo } from './_pages/Dimension';
+
+<Meta title="Foundations/Focus" />
+
+# Focus
+
+**One indicator, defined once.** `:focus-visible` only, never `:focus`.
+
+The 2px offset means the gap renders in the parent surface, so the ring is only
+ever adjacent to a surface token — which is why 3:1 holds even around a
+terracotta button. Ring radius is element radius + offset; browsers do that
+automatically for `outline`, and you must match it manually if you fake a ring
+with `box-shadow`.
+
+**2.4.11 — never clip focus.** No `overflow: hidden` on a focusable ancestor
+without at least `--focus-ring-clearance` of padding.
+
+The first chip below has the ring pinned on so it is visible in a screenshot.
+Tab to the second to see the real thing.
+
+<FocusDemo />

@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap">
+<script src="tokens/theme-init.js"></script>
+<link rel="stylesheet" href="tokens/musy-foundations.css">
+<link rel="stylesheet" href="tokens/musy-foundations-amendments.css">
+<link rel="stylesheet" href="components/musy-components.css">
+<script src="data/mindfulness-cards.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  /* base-ui asks for this on the app shell: iOS 26+ Safari backdrops. */
+  body { position: relative; background: var(--surface); color: var(--on-surface); font-family: var(--type-body-md-family); -webkit-font-smoothing: antialiased; }
+  a { color: var(--interactive-primary-on-subtle); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--on-surface); }
+  a:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-xs); }
+  svg { display: block; }
+  /* Musie's two messages arrive in turn, like someone typing. visibility is in
+     the keyframe so nothing invisible is clickable or focusable while waiting;
+     backwards fill holds the hidden state through the delay. */
+  @keyframes musy-msg-in {
+    from { opacity: 0; visibility: hidden; transform: translateY(var(--motion-travel-md)); }
+    to   { opacity: 1; visibility: visible; transform: none; }
+  }
+  /* Longhand, not the shorthand: --motion-enter is a compound token (duration +
+     easing) meant for the tail of a transition, so any shorthand that also
+     names an easing is invalid and silently dropped.
+     Layer 1 already collapses --motion-duration-* to 1ms under reduced motion
+     and --motion-travel-md to 0, so the sequence survives without a second
+     rule — only the movement goes. */
+  [data-msg-in] {
+    animation-name: musy-msg-in;
+    animation-duration: var(--motion-duration-base);
+    animation-timing-function: var(--motion-ease-entrance);
+    animation-fill-mode: backwards;
+    /* No animation-delay. An earlier draft staggered the two messages with a
+       --musy-msg-delay custom property; the cadence is owned by the timer
+       sequence in componentDidMount now, and each message animates the moment
+       its own gate opens. The property was never set, so the declaration
+       resolved to its 0ms fallback and did nothing. */
+  }
+  /* Typing indicator — the chat-UI convention, so the wait reads as Musie
+     composing rather than as a stalled screen. Decorative: the arriving box
+     is announced on its own, so the dots stay aria-hidden. */
+  @keyframes musy-typing {
+    0%, 60%, 100% { transform: none; opacity: 0.45; }
+    30%           { transform: translateY(calc(var(--sp-1) * -1)); opacity: 1; }
+  }
+  [data-typing-dot] {
+    animation-name: musy-typing;
+    animation-duration: 1200ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: var(--motion-ease-standard);
+  }
+  [data-typing-dot="2"] { animation-delay: 160ms; }
+  [data-typing-dot="3"] { animation-delay: 320ms; }
+  @media (prefers-reduced-motion: reduce) {
+    /* Steady dots still say "waiting" without a loop. */
+    [data-typing-dot] { animation-name: none; opacity: 0.6; }
+  }
+  /* The shell is --bp-md (768px) everywhere except the Methods / method-flow /
+     end screens, whose cards are capped at 980px. Gutters are added on top so
+     the card itself — not the padding box — measures 980px. Overrides an
+     inline max-width, hence !important. */
+  [data-shell="main"][data-wide="1"] {
+    max-width: calc(980px + 2 * var(--gutter)) !important;
+  }
+  /* PREVIEW-ONLY SCAFFOLDING — container-driven collapse for the wizard inside
+     the method card. base-ui ships .musy-wizard--compact for this; here the
+     card's inline-size container triggers the same rules — at the SAME
+     threshold as the component's own media query (768px), not a lower one, or
+     a run between the two collapses labels mid-word instead of compacting. */
+  @container (max-width: 767.98px) {
+    .musy-wizard__connector { flex: 0 1 var(--sp-4); }
+    .musy-wizard__step { flex: 0 1 auto; }
+    .musy-wizard__step:has([aria-current="step"]) { flex: 1 1 auto; min-width: 0; }
+    .musy-wizard__trigger:not([aria-current="step"]) { flex: 0 0 auto; padding-inline: var(--sp-1); }
+    .musy-wizard__trigger:not([aria-current="step"]) .musy-wizard__label {
+      position: absolute;
+      width: var(--border-width-hairline);
+      height: var(--border-width-hairline);
+      padding: 0;
+      margin: calc(var(--border-width-hairline) * -1);
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+  }
+</style>
+</helmet>
+
+<div lang="en" style="isolation: isolate; position: relative; min-height: 100dvh; display: flex; flex-direction: column; background: var(--surface); color: var(--on-surface);">
+
+  <!-- ══ NAVBAR — permitted custom pattern 1 ══ -->
+  <header style="position: sticky; top: 0; z-index: var(--z-sticky); display: flex; align-items: center; gap: var(--space-gap-related); padding: var(--sp-3) var(--gutter); background: var(--surface-raised); border-bottom: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);">
+    <button type="button" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size" aria-label="Open menu" aria-expanded="{{ navExpanded }}" onClick="{{ openNav }}">
+      <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+    <span class="musy-logo">
+      <img class="musy-logo__mark" src="assets/web/musy-logo.png" alt="" aria-hidden="true">
+      <span class="musy-logo__wordmark">Musie</span>
+    </span>
+    <span style="margin-inline-start: auto;"></span>
+    <button type="button" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size" aria-label="Open profile and settings" aria-expanded="{{ profileExpanded }}" onClick="{{ openProfile }}">
+      <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    </button>
+  </header>
+
+  <main data-shell="main" data-wide="{{ mainWide }}" style="flex: 1 1 auto; width: 100%; max-width: var(--bp-md); margin-inline: auto; padding: var(--sp-5) var(--gutter) var(--sp-7); display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--grid-gap);">
+
+    <!-- ══ ONBOARDING ══ -->
+    <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ true }}">
+      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-3); min-block-size: calc(100dvh - var(--target-guided) - var(--sp-6) - var(--sp-7));">
+
+      <!-- Musie speaking: avatar, then a narrower box than the carousel's, so
+           the two read as a message and its attachment rather than two panels.
+           Each message mounts on its own timer, so the entrance animation runs
+           on arrival rather than on an animation-delay — a delayed animation
+           has already finished by the time anyone navigates back here. -->
+      <sc-if value="{{ msgGreeting }}" hint-placeholder-val="{{ true }}">
+      <div data-msg-in="1" style="inline-size: 100%; max-inline-size: var(--measure-body); display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-5);">
+        <span style="display: grid; place-items: center; inline-size: var(--sp-10); block-size: var(--sp-10); border-radius: var(--radius-full); background-color: var(--interactive-accent-placeholder1); border: var(--border-width-hairline) var(--border-style-solid) var(--interactive-accent-placeholder1-border); overflow: hidden;">
+          <img src="assets/web/musy-logo.png" alt="" aria-hidden="true" style="inline-size: 60%; block-size: 60%; object-fit: contain;">
+        </span>
+        <article class="musy-box" style="inline-size: 100%; max-inline-size: calc(var(--measure-body) * 0.82);">
+          <h1 class="musy-box__headline" data-type-step="display-lg">Hi, I'm Musie.</h1>
+          <p class="musy-box__text" data-type-step="stage">I help you feel and act more mindful, aware, connected and safe through the power of music</p>
+          <p class="musy-box__text" data-type-step="body-lg"><span data-metadata="&lt;!--(figmeta)eyJmaWxlS2V5IjoiOGhEbXRrajVTV1pYUmFpM2I3U2h3VyIsInBhc3RlSUQiOjIxMDg5MzE3NzAsImRhdGFUeXBlIjoic2NlbmUiLCJlZGl0b3JUeXBlIjoiZmlnamFtIiwiZW52aXJvbm1lbnQiOiJ3d3cuZmlnbWEuY29tIiwic2VsZWN0ZWROb2RlRGF0YSI6IjEyOjE2NnwzMXwwfDAifQo=(/figmeta)--&gt;"></span><span data-buffer="&lt;!--(figma)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(/figma)--&gt;"></span></p>
+        </article>
+      </div>
+
+      <sc-if value="{{ msgTyping }}" hint-placeholder-val="{{ false }}">
+        <div data-msg-in="typing" style="inline-size: 100%; max-inline-size: var(--measure-body);">
+          <div role="status" aria-label="Musie is typing" style="display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-card); background-color: var(--surface-raised); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);">
+            <span data-typing-dot="1" aria-hidden="true" style="inline-size: var(--sp-2); block-size: var(--sp-2); border-radius: var(--radius-full); background-color: var(--on-surface-muted);"></span>
+            <span data-typing-dot="2" aria-hidden="true" style="inline-size: var(--sp-2); block-size: var(--sp-2); border-radius: var(--radius-full); background-color: var(--on-surface-muted);"></span>
+            <span data-typing-dot="3" aria-hidden="true" style="inline-size: var(--sp-2); block-size: var(--sp-2); border-radius: var(--radius-full); background-color: var(--on-surface-muted);"></span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ msgCarousel }}" hint-placeholder-val="{{ true }}">
+      <article class="musy-box" data-msg-in="2" style="inline-size: 100%; max-inline-size: var(--measure-body);">
+        <h2 class="musy-box__headline" data-type-step="heading-md">How we play with music</h2>
+        <div class="musy-box__slot">
+          <div class="musy-carousel musy-carousel--accent-placeholder1" role="group" aria-roledescription="carousel" aria-label="How a session works">
+            <ol class="musy-carousel__viewport" ref="{{ carRef }}" onKeyDown="{{ carKeys }}" tabindex="-1">
+              <sc-for list="{{ onboardingSteps }}" as="p" hint-placeholder-count="5">
+                <li class="musy-carousel__slide" data-carousel-slide="{{ p.idx }}" data-current="{{ p.dataCurrent }}" role="group" aria-roledescription="slide" aria-label="{{ p.slideLabel }}">
+                  <div class="musy-carousel__card" onClick="{{ p.select }}">
+                    <span class="musy-carousel__badge"><svg class="musy-icon musy-icon--xl" viewBox="0 0 24 24"><path d="{{ p.path }}"></path></svg></span>
+                    <h3 class="musy-carousel__title">{{ p.title }}</h3>
+                  </div>
+                </li>
+              </sc-for>
+            </ol>
+            <div class="musy-carousel__controls">
+              <button type="button" class="musy-icon-btn musy-icon-btn--secondary musy-icon-btn--primary-size" aria-label="Previous step" disabled="{{ carAtStart }}" onClick="{{ carPrev }}">
+                <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>
+              </button>
+              <div class="musy-carousel__dots">
+                <sc-for list="{{ onboardingSteps }}" as="p" hint-placeholder-count="5">
+                  <button type="button" class="musy-carousel__dot" aria-current="{{ p.ariaCurrent }}" aria-label="{{ p.dotAria }}" onClick="{{ p.select }}">
+                    <span class="musy-carousel__dot-mark"><span class="musy-carousel__dot-label" aria-hidden="true">{{ p.dotLabel }}</span></span>
+                  </button>
+                </sc-for>
+              </div>
+              <button type="button" class="musy-icon-btn {{ carNextVariant }} musy-icon-btn--primary-size" aria-label="Next step" disabled="{{ carAtEnd }}" onClick="{{ carNext }}">
+                <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-gap-related); margin-block-start: var(--space-gap-stack);">
+            <button type="button" class="musy-btn musy-btn--primary {{ gotItSize }}" disabled="{{ gotItLocked }}" aria-describedby="onboard-hint" onClick="{{ goStart }}"><span class="musy-btn__label">Start a session</span><span class="musy-spinner" aria-hidden="true"></span></button>
+            <p id="onboard-hint" style="margin: 0; text-align: center; max-width: var(--measure-body); font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); text-wrap: pretty;">{{ gotItHint }}</p>
+          </div>
+        </div>
+      </article>
+      </sc-if>
+      </sc-if></div>
+    </sc-if>
+
+    <!-- ══ ABOUT YOU ══ -->
+    <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-3); min-block-size: calc(100dvh - var(--target-guided) - var(--sp-6) - var(--sp-7));">
+        <article class="musy-box" style="inline-size: 100%; max-inline-size: var(--measure-body);">
+          <h1 class="musy-box__headline" data-type-step="heading-lg">And who are you here as?</h1>
+          <p class="musy-box__text" data-type-step="body-md">I use this to narrow down the Methods I offer you. You can change it here any time.</p>
+          <div class="musy-box__slot">
+            <fieldset class="musy-radio-group musy-radio-group--accent-placeholder1" onKeyDown="{{ onRadioKeys }}">
+              <legend class="musy-sr-only">Who are you here as?</legend>
+              <div class="musy-radio-card-group musy-radio-card-group--accent-placeholder1">
+                <sc-for list="{{ userTypeOptions }}" as="o" hint-placeholder-count="4">
+                  <button type="button" role="radio" class="musy-radio-card__body" aria-checked="{{ o.ariaChecked }}" data-checked="{{ o.dataChecked }}" data-unchecked="{{ o.dataUnchecked }}" tabindex="{{ o.tabIndex }}" onClick="{{ o.select }}">
+                    <span class="musy-radio-card__media">
+                      <img src="assets/web/method-card.png" alt="{{ o.imageAlt }}">
+                      <span class="musy-radio-card__check" aria-hidden="true"><span data-checked="{{ o.dataChecked }}"><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span></span>
+                    </span>
+                    <span class="musy-radio-card__label">{{ o.label }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </fieldset>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-gap-related); margin-block-start: var(--space-gap-stack);">
+            <button type="button" class="musy-btn musy-btn--primary {{ aboutCtaSize }}" disabled="{{ aboutCtaLocked }}" aria-describedby="about-hint" onClick="{{ startSession }}"><span class="musy-btn__label">Continue</span><span class="musy-spinner" aria-hidden="true"></span></button>
+            <p id="about-hint" style="margin: 0; text-align: center; max-width: var(--measure-body); font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); text-wrap: pretty;">{{ aboutHint }}</p>
+          </div>
+        </article>
+      </div>
+    </sc-if>
+
+    <!-- ══ METHOD RECOMMENDATION ══ -->
+    <sc-if value="{{ isMethods }}" hint-placeholder-val="{{ false }}">
+      <article class="musy-box" style="inline-size: 100%; max-inline-size: 980px; margin-inline: auto;">
+        <h1 class="musy-box__headline" data-type-step="display-xl" style="inline-size: 100%;">What would you like to start with now?</h1>
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-gap-inline);">
+          <!-- The icon legend takes the subline's place: it explains what the
+               card metrics MEAN, which is the only thing this line has to say
+               that the headline does not already say. -->
+            <dl class="musy-rcard-legend">
+              <div class="musy-rcard-legend__item">
+                <dt><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"></line><line x1="12" x2="15" y1="14" y2="11"></line><circle cx="12" cy="14" r="8"></circle></svg></dt>
+                <dd>Time</dd>
+              </div>
+              <div class="musy-rcard-legend__item">
+                <dt><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 7v10"></path><path d="M6 5v14"></path><rect width="12" height="18" x="10" y="3" rx="2"></rect></svg></dt>
+                <dd>Card deck</dd>
+              </div>
+              <div class="musy-rcard-legend__item">
+                <dt><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path></svg></dt>
+                <dd>Sound</dd>
+              </div>
+            </dl>
+          <!-- The escape hatch for "I don't want to choose" sits on the same
+               line as the instruction to choose, not below the list. -->
+          <button type="button" class="musy-btn musy-btn--ghost" onClick="{{ startRandomMethod }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="M16 3h5v5"></path><path d="M8 3H3v5"></path><path d="m21 3-7.5 7.5"></path><path d="M3 21l7.5-7.5"></path><path d="M16 21h5v-5"></path><path d="m15 15 6 6"></path></svg><span class="musy-btn__label">Let Musie pick an exercise</span><span class="musy-spinner" aria-hidden="true"></span></button>
+        </div>
+        <div class="musy-box__slot">
+          <fieldset class="musy-radio-group musy-radio-group--accent-placeholder1" onKeyDown="{{ onRadioKeys }}">
+            <legend class="musy-sr-only">Choose a Method</legend>
+            <div class="musy-rcard-group musy-rcard-group--accent-placeholder1">
+              <sc-for list="{{ methodOptions }}" as="m" hint-placeholder-count="2">
+                <button type="button" role="radio" class="musy-rcard__body" aria-checked="{{ m.ariaChecked }}" data-checked="{{ m.dataChecked }}" data-unchecked="{{ m.dataUnchecked }}" tabindex="{{ m.tabIndex }}" onClick="{{ m.select }}">
+                  <span class="musy-rcard__media">
+                    <img src="assets/web/method-card.png" alt="{{ m.imageAlt }}">
+                    <span class="musy-rcard__check" aria-hidden="true"><span data-checked="{{ m.dataChecked }}"><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span></span>
+                  </span>
+                  <span class="musy-rcard__text">
+                    <span class="musy-rcard__headline" data-type-step="heading-sm">{{ m.name }}</span>
+                    <span class="musy-rcard__desc" data-type-step="body-md">{{ m.description }}</span>
+                    <span class="musy-rcard__facts">
+                      <span class="musy-rcard__fact musy-tip">
+                        <svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"></line><line x1="12" x2="15" y1="14" y2="11"></line><circle cx="12" cy="14" r="8"></circle></svg>
+                        <span aria-hidden="true">{{ m.timeText }}</span>
+                        <span class="musy-sr-only">{{ m.timeAria }}</span>
+                        <span class="musy-tip__bubble" aria-hidden="true">{{ m.timeAria }}</span>
+                      </span>
+                      <sc-if value="{{ m.needsCards }}" hint-placeholder-val="{{ true }}">
+                        <span class="musy-rcard__fact musy-tip">
+                          <svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 7v10"></path><path d="M6 5v14"></path><rect width="12" height="18" x="10" y="3" rx="2"></rect></svg>
+                          <span class="musy-sr-only">Needs your Mindfulness Cards deck</span>
+                          <span class="musy-tip__bubble" aria-hidden="true">Needs your Mindfulness Cards deck</span>
+                        </span>
+                      </sc-if>
+                      <sc-if value="{{ m.needsSound }}" hint-placeholder-val="{{ true }}">
+                        <span class="musy-rcard__fact musy-tip">
+                          <svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path></svg>
+                          <span class="musy-sr-only">Sound on — headphones recommended</span>
+                          <span class="musy-tip__bubble" aria-hidden="true">Sound on — headphones recommended</span>
+                        </span>
+                      </sc-if>
+                    </span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </fieldset>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-gap-related); margin-block-start: var(--space-gap-stack);">
+            <button type="button" class="musy-btn musy-btn--ghost" onClick="{{ back }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg><span class="musy-btn__label">Back</span><span class="musy-spinner" aria-hidden="true"></span></button>
+          </div>
+        </div>
+      </article>
+    </sc-if>
+
+    <!-- ══ METHOD FLOW — wizard ══ -->
+    <sc-if value="{{ isMethod }}" hint-placeholder-val="{{ false }}">
+      <!-- §7.9 framed: method name + stepper above the line, the live step below. -->
+      <article class="musy-box musy-box--framed" style="inline-size: 100%; max-inline-size: 980px; margin-inline: auto;">
+        <div class="musy-box__header">
+        <h1 class="musy-box__headline" data-type-step="heading-sm" style="color: var(--on-surface-muted);">Quick Mindfulness Break</h1>
+          <div style="container-type: inline-size;">
+          <nav class="musy-wizard musy-wizard--accent-placeholder1" aria-label="Method steps">
+            <ol class="musy-wizard__list">
+              <sc-for list="{{ wizSteps }}" as="w" hint-placeholder-count="5">
+                <li class="musy-wizard__step">
+                  <button type="button" class="musy-wizard__trigger" data-state="{{ w.state }}" aria-current="{{ w.current }}" disabled="{{ w.disabled }}" onClick="{{ w.select }}">
+                    <span class="musy-wizard__marker" aria-hidden="true">
+                      <span class="musy-wizard__num">{{ w.num }}</span>
+                      <span class="musy-wizard__check"><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                    </span>
+                    <span class="musy-wizard__label">{{ w.label }}</span>
+                  </button>
+                  <sc-if value="{{ w.showConnector }}" hint-placeholder-val="{{ true }}">
+                    <span class="musy-wizard__connector" data-complete="{{ w.connectorComplete }}" aria-hidden="true"></span>
+                  </sc-if>
+                </li>
+              </sc-for>
+            </ol>
+          </nav>
+          </div>
+        </div>
+        <div class="musy-box__body">
+
+          <!-- STEP 1 · INTRO -->
+          <sc-if value="{{ stepIntro }}" hint-placeholder-val="{{ true }}">
+            <div class="musy-wizard__panel">
+              <!-- Three instructions, not one sentence with two line breaks. The
+                   spans are display: block because an <h2> takes phrasing
+                   content only — a <p> inside it would be invalid — and the
+                   gap comes off the ladder: --space-gap-related between lines
+                   that belong to one instruction set, --space-gap-group to the
+                   region below, which is the doubling check L2 asks for
+                   (32 ≥ 2 × 12). It used to be --sp-2 below, smaller than the
+                   gap inside, which is what made the three lines read as one
+                   block of text.
+                   heading-lg-MEDIUM in --on-surface-muted: an instruction at
+                   headline size asks rather than asserts, and three
+                   imperatives in bold full-contrast ink read as a warning. The
+                   muted ink still clears 4.5:1 on this surface, and at this
+                   scale 3:1 would be the requirement anyway. -->
+              <h2 style="margin: 0 0 var(--space-gap-group); display: flex; flex-direction: column; gap: var(--space-gap-related); text-wrap: var(--text-wrap-body); font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--type-body-xl-weight); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); color: var(--on-surface-muted);">
+                <span>Choose 4 random cards from your mindfulness deck.</span>
+                <span>Lay out the cards in front of you.</span>
+                <span>Then, take a deep breath.</span>
+              </h2>
+              <dl class="musy-clist" aria-label="Setting up">
+                
+              </dl>
+              <div class="musy-wizard__actions">
+                <button type="button" class="musy-btn musy-btn--ghost" onClick="{{ back }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg><span class="musy-btn__label">Back</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                <button type="button" class="musy-btn musy-btn--primary" onClick="{{ goScan }}"><span class="musy-btn__label">Continue</span><span class="musy-spinner" aria-hidden="true"></span></button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- STEP 2 · SELECT CARD -->
+          <sc-if value="{{ stepScan }}" hint-placeholder-val="{{ false }}">
+            <div class="musy-wizard__panel">
+              <h2 style="margin: 0 0 var(--space-gap-related); text-wrap: var(--text-wrap-body); font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--type-body-xl-weight); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); color: var(--on-surface-muted);">{{ scanTitle }}</h2>
+              
+
+              <sc-if value="{{ scanDone }}" hint-placeholder-val="{{ false }}">
+                <dl class="musy-clist" aria-label="Your card">
+                  <div class="musy-clist__row">
+                    <dt class="musy-clist__term">Your card</dt>
+                    <dd class="musy-clist__def" data-type-step="body-md">{{ cardTitle }}</dd>
+                  </div>
+                  <div class="musy-clist__row">
+                    <dt class="musy-clist__term">Listening instructions</dt>
+                    <dd class="musy-clist__def" data-type-step="body-md">{{ cardListening }}</dd>
+                  </div>
+                </dl>
+              </sc-if>
+
+              <sc-if value="{{ scanOpen }}" hint-placeholder-val="{{ true }}">
+              <!-- QR READER — permitted custom pattern 3 -->
+              <div style="position: relative; aspect-ratio: 1; inline-size: 100%; max-inline-size: calc(var(--target-guided) * 5); margin-inline: auto; display: grid; place-items: center; align-content: center; gap: var(--space-gap-related); padding: var(--space-inset-card); border-radius: var(--radius-panel); border: var(--border-width-thick) var(--border-style-dashed) var(--border-subtle); background-color: var(--surface-sunken); text-align: center;">
+                <svg class="musy-icon musy-icon--xl" viewBox="0 0 24 24" style="color: var(--on-surface-muted);" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 12h10"></path></svg>
+                <p style="margin: 0; max-width: var(--measure-body); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Hold the QR code on your card inside the frame.</p>
+              </div>
+
+              <div style="margin-block-start: var(--space-gap-stack);">
+                <div class="musy-msg musy-msg--info">
+                  <span class="musy-msg__icon"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg></span>
+                  <div class="musy-msg__main">
+                    <h3 class="musy-msg__headline" data-type-step="heading-sm"><span class="musy-sr-only">Info: </span>Prototype control</h3>
+                    <p class="musy-msg__text" data-type-step="body-md">This clickdummy does not use the camera. Simulating a scan picks one of the nine cards for you.</p>
+                    <div class="musy-msg__action">
+                      <button type="button" class="musy-btn musy-btn--secondary" onClick="{{ simulateScan }}"><span class="musy-btn__label">Simulate scan</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                    </div>
+                  </div>
+                  <span></span>
+                </div>
+              </div>
+
+              </sc-if>
+
+              <div class="musy-wizard__actions">
+                <button type="button" class="musy-btn musy-btn--ghost" onClick="{{ back }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg><span class="musy-btn__label">Back</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                <sc-if value="{{ scanDone }}" hint-placeholder-val="{{ false }}">
+                  <button type="button" class="musy-btn musy-btn--secondary" onClick="{{ scanAnother }}"><span class="musy-btn__label">Scan a different card</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                  <button type="button" class="musy-btn musy-btn--primary" onClick="{{ goListen }}"><span class="musy-btn__label">Complete Exercise with this card</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- STEP 3 · LISTEN -->
+          <sc-if value="{{ stepListen }}" hint-placeholder-val="{{ false }}">
+            <div class="musy-wizard__panel">
+              <h2 style="margin: 0 0 var(--space-gap-related); display: flex; flex-direction: column; gap: var(--space-gap-related); text-wrap: var(--text-wrap-body); font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--type-body-xl-weight); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); color: var(--on-surface-muted);">
+                <span>Listen to the track.</span>
+                <span>What has happened in the past hours? How do you feel?<br></span>
+                <span>Remember to breathe deeply.</span>
+              </h2>
+              <!-- The gate copy sits with the sentences it qualifies, not with
+                   the buttons it unlocks: it is the small print under the
+                   instruction. --space-gap-related to the headline above (they
+                   are one instruction set), --space-gap-group to the stage. -->
+              <p class="musy-field__description" id="listen-gate" style="margin: 0 0 var(--space-gap-group); max-inline-size: var(--measure-body);">
+                <sc-if value="{{ auListenMet }}" hint-placeholder-val="{{ false }}"><span>Enough of the track is behind you. Listen on as long as you like, or start the reflection now.</span></sc-if>
+                <sc-if value="{{ auListenLocked }}" hint-placeholder-val="{{ true }}"><span>Listen to as much of the track as you want — {{ auListenGate }} is the minimum for this exercise, {{ auListenLeft }} to go. You can drag the player’s position to skip ahead.</span></sc-if>
+              </p>
+              <div ref="{{ listenRef }}" style="position: relative;">
+
+                <!-- Scroll 0 · Stage. Sized to the space left below the shell
+                     chrome so the button pair is centred in what is actually visible. -->
+                <section ref="{{ listenStageRef }}" style="min-block-size: {{ listenHeight }}; box-sizing: border-box; display: grid; align-content: center; gap: var(--space-gap-stack); padding-block-start: var(--sp-2); padding-block-end: {{ listenBandPad }};">
+                  <div style="display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: var(--space-gap-related);">
+                    <!-- L6: end-aligned, not centred. The centred exception is
+                         for a stage's SINGLE action; this stage has two, and
+                         the forward one hugs the right edge where the thumb is.
+                         The column stretches so this group has a full width to
+                         push its buttons to the end of. -->
+                    <div class="musy-btn-group musy-btn-group--end">
+                      <button type="button" class="musy-btn musy-mbtn musy-btn--guided {{ auTrackVariant }}" data-state="{{ auState }}" onClick="{{ auToggle }}">
+                        <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="{{ auPath }}"></path></svg>
+                        <span class="musy-btn__label">{{ auAction }}</span>
+                        <span class="musy-sr-only">, {{ auTitle }}</span>
+                        <span class="musy-mbtn__time">{{ auRemaining }}</span>
+                        <span class="musy-spinner" aria-hidden="true"></span>
+                      </button>
+                      <button type="button" class="musy-btn musy-btn--guided musy-btn--secondary" onClick="{{ listenToWarning }}"><span class="musy-btn__label">Track details &amp; Player</span><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg><span class="musy-spinner" aria-hidden="true"></span></button>
+                      <button type="button" class="musy-btn musy-btn--guided {{ auCtaVariant }}" disabled="{{ auListenLocked }}" aria-describedby="listen-gate" onClick="{{ goReflect }}"><span class="musy-btn__label">Start Reflection</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Scroll 1 · Before you look -->
+                <section ref="{{ listenWarnRef }}" style="min-block-size: 100svh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-block: var(--sp-4);">
+                  <div ref="{{ listenWarnContentRef }}" style="display: flex; flex-direction: column; align-items: center; gap: var(--space-gap-stack);">
+                  <p style="margin: 0; max-inline-size: 26ch; text-align: center; text-wrap: pretty; font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--type-body-xl-weight); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); color: var(--on-surface-muted);">For the exercise, it would be better to not get influenced by the track name and cover</p>
+                  <div class="musy-btn-group musy-btn-group--center">
+                    <button type="button" class="musy-btn musy-btn--primary" onClick="{{ listenToStage }}"><span class="musy-btn__label">Continue exercise</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                    <button type="button" class="musy-btn musy-btn--secondary" onClick="{{ listenToDetails }}"><span class="musy-btn__label">Show details &amp; player</span><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg><span class="musy-spinner" aria-hidden="true"></span></button>
+                  </div>
+                  </div>
+                </section>
+
+                <!-- Scroll 2 · Track details -->
+                <!-- Content starts below the pinned band rather than centring:
+                     centring absorbs top padding into the slack, which put the
+                     player under the scroll-up button. -->
+                <section ref="{{ listenDetailRef }}" style="min-block-size: 100svh; box-sizing: border-box; display: grid; align-content: start; gap: var(--space-gap-stack); padding-block-start: {{ listenDetailPad }}; padding-block-end: var(--sp-4);">
+                  <div ref="{{ listenDetailContentRef }}" style="display: flex; flex-direction: column; justify-content: center; gap: var(--space-gap-stack);">
+                    <div class="musy-mplayer" data-state="{{ auState }}">
+                      <button type="button" class="musy-icon-btn musy-icon-btn--primary musy-icon-btn--guided" aria-label="{{ auButtonAria }}" onClick="{{ auToggle }}">
+                        <svg class="musy-icon musy-icon--lg" viewBox="0 0 24 24"><path d="{{ auPath }}"></path></svg>
+                      </button>
+                      <div class="musy-mplayer__main">
+                        <span class="musy-mplayer__title">{{ auTitle }}</span>
+                        <div class="musy-mplayer__slider" data-dragging="{{ auDraggingAttr }}" onPointerDown="{{ auPointerDown }}">
+                          <div class="musy-mplayer__control">
+                            <span class="musy-mplayer__track"></span>
+                            <span class="musy-mplayer__fill" style="inline-size: {{ auPct }};"></span>
+                            <span class="musy-mplayer__thumb" role="slider" tabindex="0" aria-label="Playback position" aria-valuemin="0" aria-valuemax="{{ auDuration }}" aria-valuenow="{{ auValueNow }}" aria-valuetext="{{ auValueText }}" onKeyDown="{{ auKeys }}" style="inset-inline-start: {{ auPct }};"></span>
+                          </div>
+                        </div>
+                        <div class="musy-mplayer__times">
+                          <span>{{ auElapsed }}</span>
+                          <span>−{{ auRemaining }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <dl class="musy-clist" aria-label="Track details" aria-live="polite">
+                      <div class="musy-clist__row">
+                        <dt class="musy-clist__term">Track</dt>
+                        <dd class="musy-clist__def" data-type-step="body-md">{{ auTrackName }}</dd>
+                      </div>
+                      <div class="musy-clist__row">
+                        <dt class="musy-clist__term">Artist</dt>
+                        <dd class="musy-clist__def" data-type-step="body-md">{{ auArtist }}</dd>
+                      </div>
+                      <div class="musy-clist__row">
+                        <dt class="musy-clist__term">Your card</dt>
+                        <dd class="musy-clist__def" data-type-step="body-md">{{ cardTitle }}</dd>
+                      </div>
+                      <div class="musy-clist__row">
+                        <dt class="musy-clist__term">Listening instructions</dt>
+                        <dd class="musy-clist__def" data-type-step="body-md">{{ cardListening }}</dd>
+                      </div>
+                    </dl>
+                    <sc-if value="{{ auSimulated }}" hint-placeholder-val="{{ false }}">
+                      <p class="musy-field__description">Prototype: no audio file is bundled for this card yet, so the transport runs on a simulated clock at the track’s real length.</p>
+                    </sc-if>
+                  </div>
+                </section>
+
+                <!-- Sticky rails. Each is an out-of-flow track whose HEIGHT is
+                     the sticky range, measured to end 200px clear of the next
+                     (or previous) section's content — a sticky child can only
+                     travel as far as its own container, and the sections
+                     themselves are the wrong containers: their edges are where
+                     the 100svh boxes meet, not where the reading starts. -->
+                <div style="position: absolute; inset-inline: 0; inset-block-start: {{ listenRailTopY }}; block-size: {{ listenRailTopH }}; pointer-events: none; z-index: 2;">
+                  <div style="position: sticky; inset-block-start: {{ listenStickyTop }}; display: flex; justify-content: center; padding-block: var(--sp-2);">
+                    <button type="button" class="musy-btn musy-btn--ghost" style="pointer-events: auto;" onClick="{{ listenToStage }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg><span class="musy-btn__label">Scroll up</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- STEP 4 · REFLECT -->
+          <sc-if value="{{ stepReflect }}" hint-placeholder-val="{{ false }}">
+            <div class="musy-wizard__panel">
+              <!-- No subheadline in this step, so the headline owes the region
+                   below it the GROUP gap, same as step 1 — 32px against the
+                   segmented control's 12px interior is L2's doubling check.
+                   A trailing margin-block-end: --space-gap-stack used to
+                   override the shorthand here and left 16px, which failed it. -->
+              <h2 style="margin: 0 0 var(--space-gap-group); text-wrap: var(--text-wrap-body); font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--type-body-xl-weight); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); color: var(--on-surface-muted);">What do you feel in your body, and where?</h2>
+
+              <sc-if value="{{ auCarryOver }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-block-end: var(--space-gap-stack);">
+                  <button type="button" class="musy-btn musy-btn--secondary musy-mbtn" data-state="{{ auState }}" onClick="{{ auToggle }}">
+                    <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="{{ auPath }}"></path></svg>
+                    <span class="musy-btn__label">{{ auAction }}</span>
+                    <span class="musy-sr-only">, {{ auTitle }}</span>
+                    <span class="musy-mbtn__time">{{ auRemaining }}</span>
+                    <span class="musy-spinner" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </sc-if>
+
+              <fieldset class="musy-seg musy-seg--accent-placeholder1" onKeyDown="{{ onRadioKeys }}">
+                <legend class="musy-radio-group__legend musy-radio-group__legend--label">How would you like to answer?</legend>
+                <div class="musy-seg__track">
+                  <sc-for list="{{ reflectSegments }}" as="o" hint-placeholder-count="3">
+                    <button type="button" role="radio" class="musy-seg__option" aria-checked="{{ o.ariaChecked }}" data-checked="{{ o.dataChecked }}" data-unchecked="{{ o.dataUnchecked }}" tabindex="{{ o.tabIndex }}" onClick="{{ o.select }}">
+                      <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="{{ o.p1 }}"></path><path d="{{ o.p2 }}"></path></svg>
+                      <span class="musy-seg__label">{{ o.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </fieldset>
+
+              <div style="margin-block-start: var(--space-gap-stack);">
+                <!-- VOICE -->
+                <sc-if value="{{ modeVoice }}" hint-placeholder-val="{{ true }}">
+                  <div class="musy-field musy-voice">
+                    <span class="musy-field__label" id="reflect-voice-label">Your spoken answer</span>
+                    <div class="musy-voice__control" data-state="{{ voiceState }}" role="group" aria-labelledby="reflect-voice-label" aria-describedby="reflect-voice-desc">
+                      <sc-if value="{{ voiceCapturing }}" hint-placeholder-val="{{ true }}">
+                        <button type="button" class="musy-btn musy-btn--primary musy-rec" data-state="{{ voiceRecState }}" onClick="{{ voiceCaptureToggle }}">
+                          <svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="{{ voiceRecGlyph }}"></path><sc-if value="{{ voiceIdle }}" hint-placeholder-val="{{ true }}"><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"></path></sc-if></svg>
+                          <span class="musy-btn__label">{{ voiceRecLabel }}</span>
+                          <sc-if value="{{ voiceRecording }}" hint-placeholder-val="{{ false }}">
+                            <span class="musy-rec__meter" aria-hidden="true">
+                              <sc-for list="{{ voiceRecBars }}" as="b" hint-placeholder-count="12">
+                                <span class="musy-rec__bar" style="block-size: {{ b.h }};"></span>
+                              </sc-for>
+                            </span>
+                            <span class="musy-rec__time">
+                              <span>{{ voiceClock }}</span>
+                              <span>−{{ voiceRecLeft }}</span>
+                            </span>
+                            <span class="musy-sr-only" role="status">{{ voiceRecStatus }}</span>
+                          </sc-if>
+                          <span class="musy-spinner" aria-hidden="true"></span>
+                        </button>
+                      </sc-if>
+                      <sc-if value="{{ voiceRecorded }}" hint-placeholder-val="{{ false }}">
+                        <button type="button" class="musy-icon-btn musy-icon-btn--primary musy-icon-btn--primary-size" aria-label="{{ voicePlayLabel }}" onClick="{{ voiceToggle }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="{{ voicePlayPath }}"></path></svg></button>
+                        <div class="musy-voice__playback">
+                          <div class="musy-voice__bar" role="progressbar" aria-label="Your spoken answer" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ voicePercent }}">
+                            <div class="musy-voice__track"><div class="musy-voice__fill" style="inline-size: {{ voiceFill }};"></div></div>
+                          </div>
+                          <span class="musy-voice__time">{{ voicePos }} / {{ voiceDur }}</span>
+                        </div>
+                        <button type="button" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size" aria-label="Delete answer" onClick="{{ voiceDelete }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                      </sc-if>
+                    </div>
+                    <p class="musy-field__description" id="reflect-voice-desc">Nothing leaves your device until you share it.</p>
+                  </div>
+                </sc-if>
+
+                <!-- WRITTEN -->
+                <sc-if value="{{ modeWrite }}" hint-placeholder-val="{{ false }}">
+                  <div class="musy-field">
+                    <label class="musy-field__label" for="reflect-written">Your written answer</label>
+                    <textarea class="musy-field__control musy-field__control--textarea" id="reflect-written" placeholder="A sentence is enough." aria-describedby="reflect-written-desc" data-filled="{{ writtenFilled }}" onInput="{{ onWritten }}" value="{{ written }}"></textarea>
+                    <p class="musy-field__description" id="reflect-written-desc">Nothing leaves your device until you share it.</p>
+                  </div>
+                </sc-if>
+
+                <!-- PHOTO -->
+                <sc-if value="{{ modePhoto }}" hint-placeholder-val="{{ false }}">
+                  <div class="musy-field musy-upload">
+                    <label class="musy-field__label" for="reflect-photo">Photo of your handwritten notes</label>
+                    <input id="reflect-photo" type="file" accept="image/*" class="musy-sr-only" aria-describedby="reflect-photo-desc" onChange="{{ onPhoto }}">
+                    <sc-if value="{{ photoEmpty }}" hint-placeholder-val="{{ true }}">
+                      <div class="musy-upload__zone">
+                        <span class="musy-upload__zone-icon" aria-hidden="true"><svg class="musy-icon musy-icon--lg" viewBox="0 0 24 24"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path><path d="M16 5h6M19 2v6"></path><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"></path></svg></span>
+                        <p class="musy-upload__zone-text">Drag a photo here, or choose one from your device.</p>
+                        <button type="button" class="musy-btn musy-btn--secondary" onClick="{{ pickPhoto }}"><span class="musy-btn__label">Choose photo</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ photoPicked }}" hint-placeholder-val="{{ false }}">
+                      <div class="musy-upload__preview">
+                        <img class="musy-upload__thumb" id="reflect-photo-thumb" src="assets/web/method-card.png" alt="Photo of your handwritten notes">
+                        <div class="musy-upload__meta">
+                          <span class="musy-upload__name">{{ photoName }}</span>
+                          <span class="musy-upload__size">{{ photoSize }}</span>
+                        </div>
+                        <div class="musy-upload__preview-actions">
+                          <button type="button" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size" aria-label="Remove photo" onClick="{{ removePhoto }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                        </div>
+                      </div>
+                    </sc-if>
+                    <p class="musy-field__description" id="reflect-photo-desc">Nothing leaves your device until you share it.</p>
+                  </div>
+                </sc-if>
+
+                <!-- DECLINED — a complete answer, not a skipped step -->
+                <sc-if value="{{ modeNone }}" hint-placeholder-val="{{ false }}">
+                  <div class="musy-box">
+                    <p class="musy-box__text" data-type-step="body-md">Nothing to capture this time. You can still end the session, and the method stays in your history.</p>
+                    <div class="musy-box__slot">
+                      <button type="button" class="musy-btn musy-btn--secondary" onClick="{{ undecline }}"><span class="musy-btn__label">Answer after all</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <!-- Declining sits OUTSIDE the segmented control: three ways to
+                   answer and one way to not answer are different kinds of
+                   choice, and a fourth segment reading "Not right now" would
+                   have made refusal look like a method. -->
+              <sc-if value="{{ modeAnswering }}" hint-placeholder-val="{{ true }}">
+                <div style="margin-block-start: var(--space-gap-related);">
+                  <button type="button" class="musy-btn musy-btn--ghost" onClick="{{ decline }}"><span class="musy-btn__label">Not right now</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                </div>
+              </sc-if>
+
+              <div class="musy-wizard__actions">
+                <button type="button" class="musy-btn musy-btn--ghost" onClick="{{ back }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg><span class="musy-btn__label">Back</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                <button type="button" class="musy-btn musy-btn--primary" disabled="{{ reflectIncomplete }}" onClick="{{ endSession }}"><span class="musy-btn__label">Finish session</span><span class="musy-spinner" aria-hidden="true"></span></button>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </article>
+    </sc-if>
+
+    <!-- ══ END ══ -->
+    <sc-if value="{{ isEnd }}" hint-placeholder-val="{{ false }}">
+      <article class="musy-box" style="inline-size: 100%; max-inline-size: 980px; margin-inline: auto;">
+        <h1 class="musy-box__headline" data-type-step="heading-lg">Session complete</h1>
+        <p class="musy-box__text" data-type-step="body-md">That is everything for today, Lucy.</p>
+        <div class="musy-box__slot">
+          <div class="musy-msg musy-msg--success" role="status">
+            <span class="musy-msg__icon"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m22 4-10 10.01-3-3"></path></svg></span>
+            <div class="musy-msg__main">
+              <h2 class="musy-msg__headline" data-type-step="heading-sm"><span class="musy-sr-only">Success: </span>{{ endSummary }}</h2>
+              <p class="musy-msg__text" data-type-step="body-md">Nothing is stored — this prototype keeps the session in memory only.</p>
+            </div>
+            <span></span>
+          </div>
+
+          <!-- Sharing is an OFFER on the way out, not a step on the way
+               through: the reflection is already complete and saved to the
+               session, so this screen can be left without touching it. It only
+               appears when there is something to send — sharing a declined
+               reflection would be an empty promise. -->
+          <sc-if value="{{ endCanShare }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-block-start: var(--space-gap-stack); padding-block-start: var(--space-gap-stack); border-block-start: var(--border-width-hairline) solid var(--border-subtle);">
+              <sc-if value="{{ shareOpen }}" hint-placeholder-val="{{ true }}">
+                <h3 style="margin: 0 0 var(--sp-2); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); color: var(--on-surface);">Share via email</h3>
+                <p style="margin: 0 0 var(--space-gap-group); max-width: var(--measure-body); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: pretty;">Send {{ endShareWhat }} to someone who is important to you. Optional — you can just start again.</p>
+                <div class="musy-field">
+                  <label class="musy-field__label" for="share-email">Email address</label>
+                  <input class="musy-field__control" id="share-email" type="email" placeholder="name@example.com" aria-describedby="share-email-desc" data-filled="{{ emailFilled }}" data-invalid="{{ emailInvalidAttr }}" aria-invalid="{{ emailAriaInvalid }}" onInput="{{ onEmail }}" value="{{ shareEmail }}">
+                  <sc-if value="{{ emailInvalid }}" hint-placeholder-val="{{ false }}">
+                    <div class="musy-field__error" role="alert">
+                      <svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6M9 9l6 6"></path></svg>
+                      <span><span class="musy-sr-only">Error: </span>That does not look like an email address yet.</span>
+                    </div>
+                  </sc-if>
+                  <p class="musy-field__description" id="share-email-desc">Only the answer you just gave is sent. Nothing else from your session.</p>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: var(--space-gap-related); margin-block-start: var(--space-gap-stack);">
+                  <button type="button" class="musy-btn musy-btn--secondary" disabled="{{ sendDisabled }}" onClick="{{ sendShare }}"><svg class="musy-icon musy-icon--md musy-icon--inline" viewBox="0 0 24 24"><path d="M22 2 11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg><span class="musy-btn__label">Send reflection</span><span class="musy-spinner" aria-hidden="true"></span></button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ shareSent }}" hint-placeholder-val="{{ false }}">
+                <div class="musy-msg musy-msg--success" role="status">
+                  <span class="musy-msg__icon"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m22 4-10 10.01-3-3"></path></svg></span>
+                  <div class="musy-msg__main">
+                    <h3 class="musy-msg__headline" data-type-step="heading-sm"><span class="musy-sr-only">Success: </span>Sent to {{ shareEmail }}</h3>
+                    <p class="musy-msg__text" data-type-step="body-md">They will get your reflection and nothing else.</p>
+                  </div>
+                  <span></span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-gap-related); margin-block-start: var(--space-gap-stack);">
+            <button type="button" class="musy-btn musy-btn--accent-placeholder1" onClick="{{ restart }}"><span class="musy-btn__label">Start again</span><span class="musy-spinner" aria-hidden="true"></span></button>
+          </div>
+        </div>
+      </article>
+    </sc-if>
+
+    <!-- ══ CONTEXT COLUMN — the deliberate wide-screen second column ══ -->
+    <sc-if value="{{ showContext }}" hint-placeholder-val="{{ false }}">
+      <article class="musy-box musy-box--sunken">
+        <h2 class="musy-box__headline" data-type-step="heading-sm">This session</h2>
+        <div class="musy-box__slot">
+          <dl class="musy-clist" aria-label="Your choices so far">
+            <sc-for list="{{ contextRows }}" as="r" hint-placeholder-count="2">
+              <div class="musy-clist__row">
+                <dt class="musy-clist__term">{{ r.term }}</dt>
+                <dd class="musy-clist__def" data-type-step="body-md">{{ r.value }}</dd>
+              </div>
+            </sc-for>
+          </dl>
+        </div>
+      </article>
+    </sc-if>
+  </main>
+
+  <!-- ══ SCRIM — shared by both sheets and every lightbox ══ -->
+  <sc-if value="{{ overlayOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: var(--z-overlay); background-color: var(--alpha-scrim);" onClick="{{ closeOverlay }}"></div>
+  </sc-if>
+
+  <!-- ══ LEFT NAVIGATION DRAWER — permitted custom pattern 2 ══ -->
+  <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" aria-label="Menu" data-overlay="nav" style="position: fixed; inset-block: 0; inset-inline-start: 0; z-index: var(--z-sheet); inline-size: min(100%, var(--measure-body)); padding: var(--space-inset-sheet); overflow-y: auto; background-color: var(--surface-overlay); border-inline-end: var(--border-width-regular) var(--border-style-solid) var(--border-subtle); box-shadow: var(--elevation-3); display: flex; flex-direction: column; gap: var(--space-gap-stack);">
+      <div style="display: flex; align-items: center; gap: var(--space-gap-related);">
+        <span class="musy-logo"><img class="musy-logo__mark" src="assets/web/musy-logo.png" alt="" aria-hidden="true"><span class="musy-logo__wordmark">Musie</span></span>
+        <span style="margin-inline-start: auto;"></span>
+        <button type="button" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size" aria-label="Close menu" onClick="{{ closeOverlay }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <nav aria-label="Pages">
+        <ul style="display: flex; flex-direction: column; gap: var(--sp-1); margin: 0; padding: 0; list-style: none;">
+          <sc-for list="{{ navPages }}" as="n" hint-placeholder-count="2">
+            <li>
+              <button type="button" class="musy-btn {{ n.variant }}" aria-current="{{ n.ariaCurrent }}" onClick="{{ n.go }}" style="inline-size: 100%; justify-content: flex-start;"><span class="musy-btn__label">{{ n.label }}</span><span class="musy-spinner" aria-hidden="true"></span></button>
+            </li>
+          </sc-for>
+        </ul>
+      </nav>
+    </div>
+  </sc-if>
+
+  <!-- ══ RIGHT PROFILE / SETTINGS SHEET — permitted custom pattern 2 ══ -->
+  <sc-if value="{{ profileOpen }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" aria-label="Profile and settings" data-overlay="profile" style="position: fixed; inset-block: 0; inset-inline-end: 0; z-index: var(--z-sheet); inline-size: min(100%, var(--measure-body)); padding: var(--space-inset-sheet); overflow-y: auto; background-color: var(--surface-overlay); border-inline-start: var(--border-width-regular) var(--border-style-solid) var(--border-subtle); box-shadow: var(--elevation-3); display: flex; flex-direction: column; gap: var(--space-gap-stack);">
+      <div style="display: flex; align-items: center; gap: var(--space-gap-related);">
+        <span style="font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); letter-spacing: var(--type-heading-sm-tracking); color: var(--on-surface);">Lucy</span>
+        <span style="margin-inline-start: auto;"></span>
+        <button type="button" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size" aria-label="Close profile and settings" onClick="{{ closeOverlay }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+
+      <article class="musy-box">
+        <h2 class="musy-box__headline" data-type-step="heading-sm">Settings</h2>
+        <div class="musy-box__slot">
+          <div class="musy-switch musy-switch--reverse musy-switch--accent-placeholder1">
+            <button type="button" role="switch" class="musy-switch__track" id="set-dark" aria-checked="{{ darkAria }}" data-checked="{{ darkChecked }}" data-unchecked="{{ darkUnchecked }}" onClick="{{ toggleTheme }}">
+              <span class="musy-switch__knob" data-checked="{{ darkChecked }}" data-unchecked="{{ darkUnchecked }}">
+                <svg class="musy-icon musy-icon--sm musy-switch__glyph" viewBox="0 0 24 24" data-state="{{ moonState }}"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+                <svg class="musy-icon musy-icon--sm musy-switch__glyph" viewBox="0 0 24 24" data-state="{{ sunState }}"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+              </span>
+            </button>
+            <label class="musy-switch__label" for="set-dark">Dark mode</label>
+          </div>
+
+          <fieldset class="musy-radio-group musy-radio-group--accent-placeholder1" style="margin-block-start: var(--space-gap-stack);" onKeyDown="{{ onRadioKeys }}">
+            <legend class="musy-radio-group__legend">Here as</legend>
+            <p class="musy-radio-group__hint">Musie uses this to narrow down the Methods it offers you.</p>
+            <sc-for list="{{ userTypeOptions }}" as="o" hint-placeholder-count="4">
+              <button type="button" role="radio" class="musy-radio__body" aria-checked="{{ o.ariaChecked }}" data-checked="{{ o.dataChecked }}" data-unchecked="{{ o.dataUnchecked }}" tabindex="{{ o.tabIndex }}" onClick="{{ o.select }}">
+                <span class="musy-radio__marker" aria-hidden="true"><span data-checked="{{ o.dataChecked }}"><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span></span>
+                <span class="musy-radio__label">{{ o.label }}</span>
+              </button>
+            </sc-for>
+          </fieldset>
+
+          <fieldset class="musy-radio-group musy-radio-group--accent-placeholder1" style="margin-block-start: var(--space-gap-stack);" onKeyDown="{{ onRadioKeys }}">
+            <legend class="musy-radio-group__legend">Language</legend>
+            <p class="musy-radio-group__hint">German arrives in the next iteration.</p>
+            <sc-for list="{{ languageOptions }}" as="o" hint-placeholder-count="2">
+              <button type="button" role="radio" class="musy-radio__body" aria-checked="{{ o.ariaChecked }}" data-checked="{{ o.dataChecked }}" data-unchecked="{{ o.dataUnchecked }}" tabindex="{{ o.tabIndex }}" onClick="{{ o.select }}">
+                <span class="musy-radio__marker" aria-hidden="true"><span data-checked="{{ o.dataChecked }}"><svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span></span>
+                <span class="musy-radio__label">{{ o.label }}</span>
+              </button>
+            </sc-for>
+          </fieldset>
+        </div>
+      </article>
+      <article class="musy-box">
+        <h2 class="musy-box__headline" data-type-step="heading-sm">Your account</h2>
+        <div class="musy-box__slot">
+          <dl class="musy-clist" aria-label="Your account">
+            <div class="musy-clist__row">
+              <dt class="musy-clist__term">Email</dt>
+              <dd class="musy-clist__def" data-type-step="body-md">ldamn@nitz.com</dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+
+    </div>
+  </sc-if>
+
+  <!-- ══ LIGHTBOX · NOT IMPLEMENTED ══ -->
+  <sc-if value="{{ nyiOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="musy-lightbox__positioner" data-overlay="nyi">
+      <div class="musy-lightbox__popup" role="dialog" aria-modal="true" aria-labelledby="nyi-title">
+        <h2 class="musy-lightbox__headline" data-type-step="heading-md" id="nyi-title">Not implemented yet</h2>
+        <article class="musy-box">
+          <h3 class="musy-box__headline" data-type-step="heading-sm">{{ nyiWhat }}</h3>
+          <p class="musy-box__text" data-type-step="body-md">This clickdummy only implements the “By myself” path with the Quick Mindfulness Break Method.</p>
+          <div class="musy-box__slot">
+            <button type="button" class="musy-btn musy-btn--accent-placeholder1" onClick="{{ closeOverlay }}"><span class="musy-btn__label">Back to the choice</span><span class="musy-spinner" aria-hidden="true"></span></button>
+          </div>
+        </article>
+        <button type="button" class="musy-lightbox__close" aria-label="Close" onClick="{{ closeOverlay }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ LIGHTBOX · METHOD DETAIL ══ -->
+  <sc-if value="{{ detailOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="musy-lightbox__positioner" data-overlay="detail">
+      <div class="musy-lightbox__popup" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <h2 class="musy-lightbox__headline" data-type-step="heading-md" id="detail-title">Quick Mindfulness Break</h2>
+        <article class="musy-box">
+          <h3 class="musy-box__headline" data-type-step="heading-sm">For getting aware of feelings</h3>
+          <p class="musy-box__text" data-type-step="body-md">Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.</p>
+          <div class="musy-box__slot">
+            <dl class="musy-clist" aria-label="Method details">
+              <div class="musy-clist__row">
+                <dt class="musy-clist__term">You need</dt>
+                <dd class="musy-clist__def" data-type-step="body-md">Your physical Mindfulness Cards deck</dd>
+              </div>
+              <div class="musy-clist__row">
+                <dt class="musy-clist__term">Guideline</dt>
+                <dd class="musy-clist__def" data-type-step="body-md">Work with the card you are drawn to, not the one you think you should pick.</dd>
+              </div>
+              <div class="musy-clist__row">
+                <dt class="musy-clist__term">Duration</dt>
+                <dd class="musy-clist__def" data-type-step="body-md">About 15 minutes</dd>
+              </div>
+            </dl>
+            <!-- L6: the forward action hugs the right edge, at 393px as much as
+                 anywhere — that is where a right-handed thumb already is. -->
+            <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-gap-related); margin-block-start: var(--space-gap-stack);">
+              <button type="button" class="musy-btn musy-btn--primary" onClick="{{ startMethod }}"><span class="musy-btn__label">Start Exercise</span><span class="musy-spinner" aria-hidden="true"></span></button>
+            </div>
+          </div>
+        </article>
+        <button type="button" class="musy-lightbox__close" aria-label="Close" onClick="{{ closeOverlay }}"><svg class="musy-icon musy-icon--md" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;audioOwnership&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;step&quot;,&quot;wizard&quot;],&quot;default&quot;:&quot;step&quot;,&quot;tsType&quot;:&quot;'step' | 'wizard'&quot;,&quot;section&quot;:&quot;Listen&quot;}}">
+/* Musie clickdummy — prototype state.
+ *
+ * SCOPE OF THIS FILE. Everything here is either (a) session state the flow
+ * needs, or (b) PREVIEW-ONLY SCAFFOLDING standing in for behaviour that
+ * base-ui gives the real components for free. Every scaffolding block is
+ * marked `SCAFFOLDING`; docs/09-clickdummy-handoff.md lists them and says to
+ * delete them when this is rebuilt on the real component package.
+ *
+ * No visual value is decided here. The markup carries only design-system class
+ * names and tokens.
+ */
+class Component extends DCLogic {
+  /* First visit lands on "How Musie works"; a returning visitor came back to
+     listen, so they land on "Start a session" with their saved type. The visit
+     is only marked once the user has actually chosen a type — someone who
+     bounced off the intro has not really been here yet. */
+  _visit = (() => {
+    try { return JSON.parse(localStorage.getItem('musie.visit') || 'null') || {}; }
+    catch (e) { return {}; }
+  })();
+
+  state = {
+    screen: this._visit.returning ? 'methods' : 'onboarding',
+    userType: this._visit.userType || null,
+    step: 'intro',
+    completed: [],
+    scanned: null,
+    onboardIndex: 0,
+    onboardSeenMax: 0,
+    msgPhase: 0,
+    /* Listen transport. The app owns the media, so position and playing live
+       here and the components only draw them. auRevealed is the one thing the
+       step withholds; the nudge is remembered per card, not per press. */
+    auPlaying: false, auPos: 0, auStarted: false, auSimulated: false, auListened: false,
+    auDragging: false, auRevealed: false, auNudge: false, auNudgeSeen: false,
+    listenChoice: null, listenH: 0,
+    listenRailBottomH: 0, listenRailTopY: 0, listenRailTopH: 0, listenHeaderH: 0,
+    reflectMode: 'voice',
+    voiceState: 'idle',
+    voicePlaying: false,
+    written: '',
+    photo: null,
+    shareEmail: '',
+    shareSent: false,
+    overlay: null,
+    nyiWhat: '',
+    dark: false,
+    language: 'en',
+  };
+
+  _wizDefs = [
+    { id: 'intro', label: 'Intro' },
+    { id: 'scan', label: 'Select Card' },
+    { id: 'listen', label: 'Listen' },
+    { id: 'reflect', label: 'Reflect' },
+  ];
+
+  _onboarding = [
+    { title: 'You help me understand your situation', body: 'And which Situation you are in right now.', path: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8z' },
+    { title: 'I recommend you music based methods for your context', body: 'Only what fits the Situation you named.', path: 'm12 3 1.9 5.8L20 10l-5.2 3.1L16 19l-4-3.4L8 19l1.2-5.9L4 10l6.1-1.2L12 3z' },
+    { title: 'Curated music & instructions will trigger some things in you\n', body: 'Cards, sound, and whatever you have to hand.', path: 'M9 18V5l12-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
+    { title: 'I guide you through a reflection', body: 'And captures it, if you want it to.', path: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
+    { title: 'If you want to, I help you share your thoughts', body: 'What you want, with the people who are important to you.', path: 'M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z' },
+  ];
+
+  /* One closure per (key, value) pair, made once: a fresh arrow inside
+     renderVals() gets a new identity every pass, and that is a render loop. */
+  _pickers = {};
+  pick = (key, val, after) => {
+    const k = key + '=' + val;
+    if (!this._pickers[k]) {
+      this._pickers[k] = () => {
+        this.setState({ [key]: val });
+        if (after) after(val);
+      };
+    }
+    return this._pickers[k];
+  };
+
+  /* ── navigation ─────────────────────────────────────────────────────────
+     Back never resets a choice: every screen reads its selection out of the
+     same state, so returning to it finds it still selected. */
+  back = () => {
+    const s = this.state;
+    if (s.screen === 'about') return this.setState({ screen: 'onboarding' });
+    if (s.screen === 'methods') return this.setState({ screen: s.userType ? 'about' : 'onboarding' });
+    if (s.screen === 'method') {
+      /* Going BACKWARDS out of Listen abandons the take in both variants: the
+         continuing variant carries playback forward, not back to the scanner. */
+      if (s.step === 'listen') this._auStop();
+      const i = this._wizDefs.findIndex(w => w.id === s.step);
+      if (i <= 0) return this.setState({ screen: 'methods' });
+      return this.setState({ step: this._wizDefs[i - 1].id });
+    }
+    return undefined;
+  };
+
+  /* "Who are you here as?" is asked once. Once answered it lives in Settings,
+     so any later run goes straight to the Methods. */
+  /* Carousel: the scroll container owns the position, this only tracks which
+     slide is centred (for the dots and the scale) and drives scrollTo. */
+  carRef = (el) => {
+    this._car = el;
+    if (!el || el._musyBound) return;
+    el._musyBound = true;
+    el.addEventListener('scroll', this._carScroll, { passive: true });
+  };
+
+  _carScroll = () => {
+    clearTimeout(this._carT);
+    this._carT = setTimeout(() => {
+      const vp = this._car;
+      if (!vp) return;
+      const slides = Array.from(vp.querySelectorAll('[data-carousel-slide]'));
+      const mid = vp.scrollLeft + vp.clientWidth / 2;
+      let best = 0, bestD = Infinity;
+      slides.forEach((sl, i) => {
+        const d = Math.abs(sl.offsetLeft + sl.offsetWidth / 2 - mid);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      if (best !== this.state.onboardIndex) {
+        this._onbIdx = best;
+        this.setState((st) => ({
+          onboardIndex: best,
+          onboardSeenMax: Math.max(st.onboardSeenMax, best),
+        }));
+      }
+    }, 90);
+  };
+
+  /* Steps read the CURRENT index, not the one captured at render time — two
+     taps inside one frame must move two slides. */
+  _onbIdx = 0;
+  carPrev = () => this.carGo(this._onbIdx - 1);
+  carNext = () => this.carGo(this._onbIdx + 1);
+
+  carGo = (i) => {
+    const n = this._onboarding.length;
+    const idx = Math.max(0, Math.min(n - 1, i));
+    /* Mirrored on the instance because setState is batched: two taps in one
+       frame both read this, not the state from the last render. */
+    this._onbIdx = idx;
+    /* Seen-so-far is what unlocks the CTA: the promise is that you looked at
+       the whole flow, so it only ever moves forward. */
+    this.setState((st) => ({ onboardIndex: idx, onboardSeenMax: Math.max(st.onboardSeenMax, idx) }));
+    const vp = this._car;
+    const sl = vp && vp.querySelectorAll('[data-carousel-slide]')[idx];
+    if (sl) vp.scrollTo({ left: sl.offsetLeft - (vp.clientWidth - sl.offsetWidth) / 2 });
+  };
+
+  carKeys = (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); this.carGo(this.state.onboardIndex + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); this.carGo(this.state.onboardIndex - 1); }
+  };
+
+  startSession = () => this.setState({ screen: 'methods', overlay: null });
+
+  /* The two pages the drawer offers. "How Musie works" is the first-session
+     start page; once the user has a type, a session is what they came for, so
+     Methods becomes the landing screen. */
+  goHowItWorks = () => this.setState({ screen: 'onboarding', overlay: null });
+  goAbout = () => this.setState({ screen: 'about', overlay: null });
+
+  /* "Start a session" needs a user type to filter Methods, so without one it
+     routes through About you first rather than dead-ending. */
+  goStart = () => (this.state.userType ? this.startSession() : this.goAbout());
+
+  pickUserType = (id) => {
+    const D = window.MUSIE_DATA;
+    const t = (D.userTypes || []).find(u => u.id === id);
+    if (!t || !t.implemented) {
+      /* The choice is still recorded as attempted, but the flow does not move
+         and no other path is designed — the prompt's rule, not an invention. */
+      this.setState({ overlay: 'nyi', nyiWhat: t ? t.label : '' });
+      return;
+    }
+    /* From the onboarding question this advances; changed later in Settings it
+       only records the choice and leaves the user where they are. */
+    /* Asked inline on "How Musie works" now, so picking never navigates —
+       it only unlocks the CTA (and in Settings, only records the change). */
+    this.setState({ userType: id });
+    try { localStorage.setItem('musie.visit', JSON.stringify({ returning: true, userType: id })); }
+    catch (e) {}
+  };
+
+  /* "Surprise me" — for the user who came to do something, not to choose. It
+     goes through pickMethod, so a random start is the same event as a picked
+     one and nothing downstream has to know which it was. */
+  startRandomMethod = () => {
+    const list = (window.MUSIE_DATA || {}).methods || [];
+    if (!list.length) return;
+    this.pickMethod(list[Math.floor(Math.random() * list.length)].id);
+  };
+
+  pickMethod = (id) => {
+    const D = window.MUSIE_DATA;
+    const m = (D.methods || []).find(x => x.id === id);
+    if (!m || !m.implemented) {
+      this.setState({ overlay: 'nyi', nyiWhat: m ? m.name : '' });
+      return;
+    }
+    this.setState({ overlay: 'detail' });
+  };
+
+  startMethod = () => this.setState({ overlay: null, screen: 'method', step: 'intro', completed: [] });
+
+  _complete = (id, next) => {
+    const done = this.state.completed.includes(id)
+      ? this.state.completed
+      : this.state.completed.concat(id);
+    this.setState({ completed: done, step: next });
+  };
+
+  goScan = () => this._complete('intro', 'scan');
+  /* Clearing the scan is what returns step 2 to its reader state — one piece
+     of state, so the panel and the wizard can never disagree. */
+  scanAnother = () => {
+    this._auStop();
+    this.setState({
+      scanned: null, step: 'scan', overlay: null,
+      auSimulated: false, auRevealed: false, auNudge: false, auNudgeSeen: false,
+      auListened: false,
+    });
+  };
+  goReflect = () => {
+    if ((this.props.audioOwnership || 'step') === 'step') this._auStop();
+    this._complete('listen', 'reflect');
+  };
+  goListen = () => { this._complete('scan', 'listen'); this.setState({ overlay: null }); };
+
+  /* ── Listen transport ───────────────────────────────────────────────────
+     Self-hosted audio: full length everywhere, nobody leaves the app, no
+     third-party terms, and the track identity is ours to withhold. The <audio>
+     element is created HERE and never inside Music Player — the components own
+     the transport UI and its state machine and never the media. Which is what
+     makes the continuing variant a prop on this app rather than a branch inside
+     a component: audioOwnership 'step' ends playback with the step, 'wizard'
+     carries it across and offers a TrackButton in Reflect. */
+  _auEl = null;
+  _auSrc = null;
+  _auT = null;
+
+  _auCard() {
+    const D = window.MUSIE_DATA || {};
+    return (D.cards || []).find(c => c.id === this.state.scanned) || null;
+  }
+
+  /* Latches the gate. 90s of the track, or the whole track if it is shorter. */
+  _auMark(pos) {
+    if (this.state.auListened) return undefined;
+    const d = this._auDur();
+    return Math.floor(Math.min(d || pos, pos)) >= Math.min(90, d || 90) ? true : undefined;
+  }
+
+  _auDur() {
+    const card = this._auCard();
+    return card && card.audio ? card.audio.duration : 0;
+  }
+
+  /* No audio files are bundled yet, so a 404 is the NORMAL case here and the
+     transport falls back to a clock at the card's real length rather than
+     showing a dead control. Deleting the fallback is the only change a real
+     file needs — duration in the data is what lets the countdown render
+     before anything has loaded. */
+  _auEnsure() {
+    const card = this._auCard();
+    if (!card || !card.audio) return null;
+    if (this._auEl && this._auSrc === card.audio.src) return this._auEl;
+    this._auDrop();
+    const el = new Audio(card.audio.src);
+    el.preload = 'metadata';
+    el.addEventListener('timeupdate', () => {
+      if (this.state.auDragging) return;
+      const mark = this._auMark(el.currentTime);
+      this.setState(mark ? { auPos: el.currentTime, auListened: true } : { auPos: el.currentTime });
+    });
+    el.addEventListener('ended', () => this.setState({ auPlaying: false, auPos: this._auDur() }));
+    el.addEventListener('error', this._auFallback);
+    this._auEl = el;
+    this._auSrc = card.audio.src;
+    return el;
+  }
+
+  _auFallback = () => {
+    this._auDrop();
+    this.setState({ auSimulated: true }, () => { if (this.state.auPlaying) this._auClock(); });
+  };
+
+  _auClock = () => {
+    if (this._auT) return;
+    this._auT = setInterval(() => {
+      const s = this.state;
+      if (!s.auPlaying) { clearInterval(this._auT); this._auT = null; return; }
+      if (!s.auSimulated || s.auDragging) return;
+      const d = this._auDur();
+      const next = Math.min(d, s.auPos + 0.25);
+      const mark = this._auMark(next);
+      const patch = next >= d ? { auPos: d, auPlaying: false } : { auPos: next };
+      this.setState(mark ? { ...patch, auListened: true } : patch);
+    }, 250);
+  };
+
+  /* Ended restarts from zero: the glyph promised a restart, so resuming from
+     the end would be a lie. */
+  auToggle = () => {
+    const d = this._auDur();
+    if (d > 0 && this.state.auPos >= d) { this._auSeek(0); return this._auPlay(); }
+    return this.state.auPlaying ? this._auPause() : this._auPlay();
+  };
+
+  _auPlay = () => {
+    const el = this.state.auSimulated ? null : this._auEnsure();
+    this.setState({ auPlaying: true, auStarted: true }, this._auClock);
+    if (el) {
+      const p = el.play();
+      if (p && p.catch) p.catch(this._auFallback);
+    }
+  };
+
+  _auPause = () => {
+    if (this._auEl) this._auEl.pause();
+    if (this._auT) { clearInterval(this._auT); this._auT = null; }
+    this.setState({ auPlaying: false });
+  };
+
+  /* Leaving Listen in the shipping variant ends the take. The reveal and the
+     nudge belong to the CARD, so they reset with the card and not with the
+     step — coming back to the same card finds it as you left it. */
+  _auStop = () => {
+    this._auPause();
+    this._auDrop();
+    this.setState({ auPos: 0, auStarted: false });
+  };
+
+  _auDrop = () => {
+    if (this._auT) { clearInterval(this._auT); this._auT = null; }
+    if (this._auEl) {
+      this._auEl.pause();
+      this._auEl.removeEventListener('error', this._auFallback);
+      this._auEl = null;
+    }
+    this._auSrc = null;
+  };
+
+  _auSeek = (sec) => {
+    const d = this._auDur();
+    const v = Math.min(d, Math.max(0, sec));
+    if (this._auEl && !this.state.auSimulated) {
+      try { this._auEl.currentTime = v; } catch (err) { /* metadata not in yet */ }
+    }
+    const mark = this._auMark(v);
+    this.setState(mark ? { auPos: v, auListened: true } : { auPos: v });
+  };
+
+  _auSeekFrom = (clientX, el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width) return;
+    this._auSeek(((clientX - r.left) / r.width) * this._auDur());
+  };
+
+  /* base-ui Slider owns this in the shipped component — pointer capture, the
+     value clamp and the key map all come from it. */
+  auPointerDown = (e) => {
+    const el = e.currentTarget;
+    this.setState({ auDragging: true });
+    this._auSeekFrom(e.clientX, el);
+    const move = (ev) => this._auSeekFrom(ev.clientX, el);
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.setState({ auDragging: false });
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  auKeys = (e) => {
+    const d = this._auDur();
+    const map = { ArrowRight: 5, ArrowUp: 5, ArrowLeft: -5, ArrowDown: -5, PageUp: 15, PageDown: -15 };
+    if (e.key === 'Home') { e.preventDefault(); return this._auSeek(0); }
+    if (e.key === 'End') { e.preventDefault(); return this._auSeek(d); }
+    const delta = map[e.key];
+    if (delta === undefined) return undefined;
+    e.preventDefault();
+    return this._auSeek(this.state.auPos + delta);
+  };
+
+  /* The nudge appears ONCE per card. A listener who read the sentence and chose
+     to continue has already decided; repeating it on the next press would read
+     as the app arguing, so the second press goes straight through. Playback is
+     never interrupted by any of this. */
+  auRevealPress = () => {
+    if (this.state.auNudgeSeen) return this.setState({ auRevealed: true, auNudge: false });
+    return this.setState({ auNudge: true, auNudgeSeen: true });
+  };
+
+  /* ── Listen scroll views ────────────────────────────────────────────────
+     The step is three stacked viewports: stage, the "don't look yet" warning,
+     and the details. Scrolling is the navigation, so the buttons drive the
+     SAME container the wheel does rather than a second mode. Reaching the
+     third view IS the reveal — you cannot see the details without it. */
+  listenRef = (el) => {
+    this._listenEl = el || null;
+    if (!el) return;
+    /* The PAGE is the scroll context — a nested scroller inside a card that
+       starts below the shell chrome gives two scrollbars and snap positions
+       that never coincide with the real viewport. Only the stage is measured:
+       it has to fit in the space left below the chrome so its ghost button
+       stays above the fold; the two views under it are plain 100svh. */
+    if (!el._musyListenBound) {
+      el._musyListenBound = true;
+      window.addEventListener('resize', this._listenSize);
+      window.addEventListener('scroll', this._listenScroll, { passive: true });
+    }
+    requestAnimationFrame(this._listenSize);
+  };
+  listenStageRef = (el) => { this._listenStage = el || null; };
+  listenWarnRef = (el) => { this._listenWarn = el || null; };
+  listenWarnContentRef = (el) => { this._listenWarnContent = el || null; };
+  listenDetailRef = (el) => { this._listenDetail = el || null; };
+  listenDetailContentRef = (el) => { this._listenDetailContent = el || null; };
+
+  /* Measures the stage height AND the two sticky rails in one pass. The rails
+     are ranges, not boxes: each ends 200px clear of the neighbouring section's
+     CONTENT — which is why the warning and detail sections carry an inner
+     content ref. Their own 100svh edges say nothing about where reading
+     begins. Converges: a pass that changes nothing schedules no successor. */
+  _listenSize = () => {
+    const el = this._listenEl;
+    if (!el || !el.isConnected) return;
+    const GAP = 200;
+    const panel = el.closest('.musy-wizard__panel');
+    const pad = panel ? parseFloat(getComputedStyle(panel).paddingBlockEnd) || 0 : 0;
+    const wrap = el.getBoundingClientRect();
+    const top = wrap.top + (window.scrollY || 0);
+    const next = {
+      listenH: Math.max(220, Math.round(window.innerHeight - top - pad)),
+      listenHeaderH: this.state.listenHeaderH,
+      listenRailBottomH: this.state.listenRailBottomH,
+      listenRailTopY: this.state.listenRailTopY,
+      listenRailTopH: this.state.listenRailTopH,
+    };
+    /* The app header is sticky and opaque, so "top of the viewport" for
+       anything of ours means below it — measured, because the header's own
+       height is type-dependent. */
+    const header = document.querySelector('header');
+    next.listenHeaderH = header ? Math.round(header.getBoundingClientRect().height) : 0;
+    const warn = this._listenWarnContent && this._listenWarnContent.getBoundingClientRect();
+    const detail = this._listenDetailContent && this._listenDetailContent.getBoundingClientRect();
+    /* The rail must at minimum span the stage — on a short viewport the
+       warning content (centred in its own 100svh box) sits less than 200px
+       below the fold, which would end the rail's travel before it began. */
+    const stage = this._listenStage && this._listenStage.getBoundingClientRect();
+    if (warn || stage) {
+      const byWarn = warn ? warn.top - wrap.top - GAP : 0;
+      const byStage = stage ? stage.bottom - wrap.top : 0;
+      next.listenRailBottomH = Math.max(0, Math.round(Math.max(byWarn, byStage)));
+    }
+    if (warn && detail) {
+      const y = Math.round(warn.bottom - wrap.top + GAP);
+      next.listenRailTopY = y;
+      next.listenRailTopH = Math.max(0, Math.round(detail.bottom - wrap.top - y));
+    }
+    const changed = Object.keys(next).some(k => next[k] !== this.state[k]);
+    if (changed) this.setState(next, () => requestAnimationFrame(this._listenSize));
+  };
+  /* Reaching the details view IS the reveal. */
+  _listenScroll = () => {
+    const d = this._listenDetail;
+    if (!d || !d.isConnected || this.state.auRevealed) return;
+    if (d.getBoundingClientRect().top < window.innerHeight * 0.5) this.setState({ auRevealed: true });
+  };
+  _listenGo = (el) => {
+    const top = el ? el.getBoundingClientRect().top + (window.scrollY || 0) : 0;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
+  listenToStage = () => this._listenGo(null);
+  listenToWarning = () => this._listenGo(this._listenWarn);
+  listenToDetails = () => { this.setState({ auRevealed: true }); this._listenGo(this._listenDetail); };
+
+  auContinue = () => this.setState({ auNudge: false });
+  auReveal = () => this.setState({ auRevealed: true, auNudge: false });
+
+  _mmss(seconds) {
+    const t = Math.max(0, Math.round(seconds));
+    return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+  }
+
+  /** Everything the two transports draw. The title is a NEUTRAL STRING before
+   *  the reveal and the real track after it: Music Player is unchanged and
+   *  nothing about it knows this step exists. */
+  audioVals(card) {
+    const s = this.state;
+    const audio = card && card.audio ? card.audio : null;
+    const d = audio ? audio.duration : 0;
+    const pos = Math.min(d, s.auPos);
+    const ended = d > 0 && pos >= d;
+    /* How much of the track has to be behind you before the reflection is
+       worth starting. A time, not a completion: the exercise works from ninety
+       seconds in, and demanding the whole track would make a five-minute piece
+       a five-minute wait. Capped at the track's own length so a shorter piece
+       is satisfied by finishing it. */
+    const LISTEN_GATE = Math.min(90, d || 90);
+    /* Sticky, deliberately. Leaving the step stops the track and resets its
+       position, so a position-only test would re-lock the step the moment the
+       user stepped back into it — and they HAVE listened. auListened records
+       that it happened; only a new card clears it. */
+    const listenMet = s.auListened || Math.floor(pos) >= LISTEN_GATE;
+    const PLAY = 'm6 4 14 8-14 8V4z';
+    const PAUSE = 'M8 5v14M16 5v14';
+    const RESTART = 'M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8M3 3v5h5';
+    /* §7.21: the track button's visible label is the ACTION — this step
+       withholds the track name, so a fixed label had nothing true to say. */
+    const action = ended ? 'Replay' : (s.auPlaying ? 'Pause' : 'Start Listening');
+    const title = s.auRevealed && audio ? audio.title : 'Your track';
+    return {
+      auState: ended ? 'ended' : (s.auPlaying ? 'playing' : 'paused'),
+      auPath: ended ? RESTART : (s.auPlaying ? PAUSE : PLAY),
+      auAction: action,
+      auButtonAria: action + ': ' + title,
+      auTitle: title,
+      auTrackName: audio ? audio.title : '—',
+      auArtist: audio ? audio.artist : '—',
+      auToggle: this.auToggle,
+      auPointerDown: this.auPointerDown,
+      auKeys: this.auKeys,
+      auPct: (d > 0 ? (pos / d) * 100 : 0) + '%',
+      auDuration: Math.round(d),
+      auValueNow: Math.round(pos),
+      auValueText: this._mmss(pos) + ' of ' + this._mmss(d),
+      auElapsed: this._mmss(pos),
+      auRemaining: this._mmss(d - pos),
+      auDraggingAttr: s.auDragging ? '' : undefined,
+      auStarted: s.auStarted,
+      auEnded: ended,
+      auSimulated: s.auSimulated,
+      auRevealed: s.auRevealed,
+      auCanReveal: !s.auRevealed,
+      auNudge: s.auNudge,
+      auRevealPress: this.auRevealPress,
+      listenRef: this.listenRef,
+      listenWarnRef: this.listenWarnRef,
+      listenWarnContentRef: this.listenWarnContentRef,
+      listenDetailRef: this.listenDetailRef,
+      listenDetailContentRef: this.listenDetailContentRef,
+      listenHeight: s.listenH ? s.listenH + 'px' : '60svh',
+      listenRailBottomH: (s.listenRailBottomH || 0) + 'px',
+      listenRailTopY: (s.listenRailTopY || 0) + 'px',
+      listenRailTopH: (s.listenRailTopH || 0) + 'px',
+      listenStageRef: this.listenStageRef,
+      listenStickyTop: ((s.listenHeaderH || 0) + 8) + 'px',
+      /* The pinned band is out of flow, so the stage reserves it as padding —
+         otherwise centred content runs straight under the ghost button. */
+      listenBandPad: '68px',
+      /* Clearance for the pinned band: header + inset + a 44px target + inset. */
+      listenDetailPad: ((s.listenHeaderH || 0) + 8 + 44 + 16) + 'px',
+      listenToStage: this.listenToStage,
+      listenToWarning: this.listenToWarning,
+      listenToDetails: this.listenToDetails,
+      /* ONE FILLED PRIMARY, AND IT MOVES WHEN THE GATE OPENS. Listening is the
+         only thing to do until the step is satisfied, so Start Listening holds
+         the filled treatment and the CTA is disabled beside it. At the
+         threshold the CTA becomes the primary and the transport steps back to
+         secondary. L6 still holds — the forward action is primary and
+         right-aligned the moment it is a forward action at all; before that
+         there is nothing to go forward to. */
+      auTrackVariant: listenMet ? 'musy-btn--secondary' : 'musy-btn--primary',
+      auCtaVariant: listenMet ? 'musy-btn--primary' : 'musy-btn--secondary',
+      /* The gate. Rounded down to whole seconds so the readout and the unlock
+         agree: 1:29.9 showing "1:29" must not already be open. */
+      auListenMet: listenMet,
+      auListenLocked: listenMet ? undefined : true,
+      auListenGate: this._mmss(LISTEN_GATE),
+      auListenLeft: this._mmss(Math.max(0, LISTEN_GATE - Math.floor(pos))),
+      auContinue: this.auContinue,
+      auReveal: this.auReveal,
+      /* The only difference between the two variants: where the media is owned. */
+      auCarryOver: (this.props.audioOwnership || 'step') === 'wizard' && s.auStarted,
+    };
+  }
+
+  simulateScan = () => {
+    /* A successful read goes straight to Listen — no confirmation step. */
+    const cards = (window.MUSIE_DATA.cards || []);
+    const card = cards[Math.floor(Math.random() * cards.length)];
+    this._auStop();
+    this.setState({
+      scanned: card ? card.id : null, overlay: null,
+      auSimulated: false, auRevealed: false, auNudge: false, auNudgeSeen: false,
+      auListened: false,
+    });
+    this._complete('scan', 'listen');
+  };
+
+  pickWizStep = (id) => this.setState({ step: id });
+
+  sendShare = () => this.setState({ shareSent: true });
+  /* Reflect is now the last step, so finishing completes IT and the wizard is
+     fully ticked before the end screen appears. */
+  endSession = () => { this._complete('reflect', 'reflect'); this.setState({ screen: 'end' }); };
+
+  /* Second session onwards the landing screen is Methods — the intro is a page
+     in the drawer, not something to sit through again. */
+  restart = () => (this._onbIdx = 0, this.setState({
+    screen: this.state.userType ? 'methods' : 'onboarding', step: 'intro', completed: [], scanned: null, onboardIndex: 0, onboardSeenMax: 0,
+    auPlaying: false, auPos: 0, auStarted: false, auSimulated: false, auListened: false, auRevealed: false, auNudge: false, auNudgeSeen: false,
+    listenChoice: null, reflectMode: 'voice', voiceState: 'idle', voicePlaying: false,
+    written: '', photo: null, shareEmail: '', shareSent: false, overlay: null,
+  }));
+
+  /* ── reflection ─────────────────────────────────────────────────────────
+     The recorder is a state machine only: no getUserMedia anywhere, matching
+     the component contract and the QR reader's posture. */
+
+  /* The ceiling §7.22 draws but does not own. Ninety seconds: the same figure
+     the listen gate uses, so a spoken answer can be as long as the passage it
+     answers. */
+  _voiceMax = 90;
+
+  /* Twelve bars from the clock. §7.22 takes levels as data and draws them; with
+     no microphone there is nothing to measure, so this stands in — a slow swell
+     rather than random, because random reads as a glitch. */
+  _voiceBars(elapsed) {
+    const out = [];
+    for (let i = 0; i < 12; i++) {
+      const phase = (elapsed * 1.7 + i * 0.6);
+      const amp = 0.35 + 0.45 * Math.abs(Math.sin(phase));
+      out.push({ h: Math.round(amp * 100) + '%' });
+    }
+    return out;
+  }
+
+  voiceStart = () => {
+    this.setState({ voiceState: 'recording', voiceElapsed: 0 });
+    /* 4 Hz, not 1: the meter is the part that moves, and once a second it
+       reads as a stutter rather than a level. */
+    this._tick = setInterval(() => this.forceUpdate(), 250);
+    this._startedAt = Date.now();
+  };
+
+  voiceStop = () => {
+    if (this._tick) { clearInterval(this._tick); this._tick = null; }
+    const secs = this._startedAt ? Math.max(1, Math.round((Date.now() - this._startedAt) / 1000)) : 12;
+    this._duration = secs;
+    this.setState({ voiceState: 'recorded', voicePlaying: false });
+  };
+
+  voiceToggle = () => this.setState(p => ({ voicePlaying: !p.voicePlaying }));
+  voiceDelete = () => this.setState({ voiceState: 'idle', voicePlaying: false });
+
+  onWritten = (e) => this.setState({ written: e.target.value });
+
+  /* Declining is its own pair of handlers rather than a fourth radio value in
+     the group: refusal is not a method, and reflectDone already treats 'none'
+     as complete so it must never gate the CTA. */
+  decline = () => this.setState({ reflectMode: 'none' });
+  undecline = () => this.setState({ reflectMode: 'voice' });
+
+  pickPhoto = () => {
+    const input = document.getElementById('reflect-photo');
+    if (input) input.click();
+  };
+
+  onPhoto = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (this._photoUrl) URL.revokeObjectURL(this._photoUrl);
+    this._photoUrl = URL.createObjectURL(file);
+    this.setState({ photo: { name: file.name, size: file.size, src: this._photoUrl } });
+  };
+
+  removePhoto = () => {
+    if (this._photoUrl) { URL.revokeObjectURL(this._photoUrl); this._photoUrl = null; }
+    this.setState({ photo: null });
+  };
+
+  onEmail = (e) => this.setState({ shareEmail: e.target.value });
+
+  /* ── theme + language ───────────────────────────────────────────────────
+     The design system's own mechanism, not a second colour map: theme-init.js
+     owns the attribute and the persistence key. */
+  toggleTheme = () => {
+    const next = this.state.dark ? 'light' : 'dark';
+    if (window.musyTheme) window.musyTheme.set(next);
+    this.setState({ dark: next === 'dark' });
+  };
+
+  pickLanguage = (id) => {
+    if (id !== 'en') {
+      this.setState({ overlay: 'nyi', nyiWhat: 'Deutsch' });
+      return;
+    }
+    this.setState({ language: id });
+  };
+
+  closeOverlay = () => this.setState({ overlay: null });
+  openNav = () => this.setState({ overlay: 'nav' });
+  openProfile = () => this.setState({ overlay: 'profile' });
+
+  /* ══ SCAFFOLDING ══════════════════════════════════════════════════════════
+     Everything from here to the end of componentDidUpdate stands in for
+     base-ui. In the real app Dialog owns focus capture, focus restore, the
+     inert background, scroll lock and Escape; RadioGroup owns roving arrow
+     keys. None of it is design-system behaviour, and none of it should be
+     ported. ═══════════════════════════════════════════════════════════════ */
+
+  /* Chat cadence: greeting at 1s, then the typing dots stand in until the
+     carousel arrives at 4s. Restarted whenever onboarding is entered, so the
+     sequence plays again on "Start again" instead of only on first load. */
+  _msgTimers = [];
+  _startMsgSequence() {
+    this._msgTimers.forEach(clearTimeout);
+    this.setState({ msgPhase: 0 });
+    this._msgTimers = [
+      setTimeout(() => this.setState({ msgPhase: 1 }), 1000),
+      setTimeout(() => this.setState({ msgPhase: 2 }), 4000),
+    ];
+  }
+
+  componentDidMount() {
+    this._prevScreen = this.state.screen;
+    this._prevOverlay = this.state.overlay;
+    this._prevStep = this.state.step;
+    this._startMsgSequence();
+    this._onKey = (e) => {
+      if (e.key === 'Escape' && this.state.overlay) {
+        e.preventDefault();
+        this.closeOverlay();
+        return;
+      }
+      if (e.key !== 'Tab' || !this.state.overlay) return;
+      const surface = document.querySelector('[data-overlay], [role="dialog"]');
+      if (!surface) return;
+      const items = surface.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', this._onKey);
+    const t = window.musyTheme ? window.musyTheme.get() : 'light';
+    if (t === 'dark') this.setState({ dark: true });
+  }
+
+  componentWillUnmount() {
+    this._auDrop();
+    document.removeEventListener('keydown', this._onKey);
+    window.removeEventListener('resize', this._listenSize);
+    window.removeEventListener('scroll', this._listenScroll);
+    this._msgTimers.forEach(clearTimeout);
+    if (this._tick) clearInterval(this._tick);
+    if (this._photoUrl) URL.revokeObjectURL(this._photoUrl);
+  }
+
+  /* Previous screen/overlay are tracked on the instance: this runtime calls
+     componentDidUpdate with prevProps only, so a prevState parameter would be
+     undefined and every read of it would throw. */
+  _prevScreen = null;
+  _prevOverlay = null;
+  _prevStep = null;
+
+  componentDidUpdate() {
+    const prevScreen = this._prevScreen;
+    const prevOverlay = this._prevOverlay;
+    const prevStep = this._prevStep;
+    this._prevScreen = this.state.screen;
+    this._prevOverlay = this.state.overlay;
+    this._prevStep = this.state.step;
+
+    /* Arriving at a step means arriving at its top. Without this a long step
+       (Listen is three viewports) hands the next one the scroll position it
+       was left at, so the user lands mid-screen on content they never saw the
+       start of. Applies to every step and every screen, not just Listen. */
+    if (this.state.step !== prevStep || this.state.screen !== prevScreen) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    /* Entering "How Musie works" replays Musie's chat arrival — it is a page
+       users navigate back to, not just the first screen of the app. */
+    if (this.state.screen === 'onboarding' && prevScreen !== 'onboarding') {
+      this._startMsgSequence();
+    }
+
+    /* The photo preview's src is set imperatively, never through a template
+       hole: a bare {{ }} inside src is emitted literally while the template
+       streams, and the browser fires a request for it before any value can
+       resolve. The markup carries a real, loadable path; the blob url is
+       applied after render. */
+    const thumb = document.getElementById('reflect-photo-thumb');
+    if (thumb && this.state.photo && thumb.src !== this.state.photo.src) {
+      thumb.src = this.state.photo.src;
+    }
+
+    if (prevOverlay === this.state.overlay) return;
+    if (this.state.overlay) {
+      this._returnTo = document.activeElement;
+      document.body.style.overflow = 'hidden';
+      const surface = document.querySelector('[data-overlay], [role="dialog"]');
+      const target = surface && surface.querySelector(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])'
+      );
+      if (target) target.focus();
+    } else {
+      document.body.style.overflow = '';
+      if (this._returnTo && this._returnTo.focus) this._returnTo.focus();
+      this._returnTo = null;
+    }
+  }
+
+  /** Roving arrow keys across one radio group. base-ui's RadioGroup does this;
+   *  the markup here is the same button-with-role=radio it renders. */
+  onRadioKeys = (e) => {
+    const keys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'];
+    if (keys.indexOf(e.key) === -1) return;
+    const group = e.currentTarget;
+    const radios = Array.from(group.querySelectorAll('[role="radio"]'));
+    if (!radios.length) return;
+    e.preventDefault();
+    const i = radios.indexOf(document.activeElement);
+    const forward = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+    const next = radios[(Math.max(0, i) + (forward ? 1 : radios.length - 1)) % radios.length];
+    next.focus();
+    next.click();
+  };
+  /* ══ END SCAFFOLDING ═════════════════════════════════════════════════════ */
+
+  _clock(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  _size(bytes) {
+    const units = ['B', 'kB', 'MB'];
+    let n = bytes; let u = 0;
+    while (n >= 1024 && u < units.length - 1) { n /= 1024; u += 1; }
+    return (n < 10 && u > 0 ? n.toFixed(1) : Math.round(n)) + ' ' + units[u];
+  }
+
+  _radios(list, current, onPick) {
+    /* Roving tabindex: one tab stop per group, which is what a radio group is
+       supposed to be. The checked option holds it, or the first one does. */
+    const hasChecked = list.some(o => o.id === current);
+    return list.map((o, i) => ({
+      label: o.label,
+      imageAlt: o.imageAlt,
+      /* Glyph path pair, for the options rendered as segments. */
+      p1: o.p1,
+      p2: o.p2,
+      ariaChecked: o.id === current ? 'true' : 'false',
+      dataChecked: o.id === current ? '' : undefined,
+      dataUnchecked: o.id === current ? undefined : '',
+      tabIndex: o.id === current || (!hasChecked && i === 0) ? 0 : -1,
+      select: this.pick('__noop', o.id + '@' + (o.key || ''), () => onPick(o.id)),
+    }));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const D = window.MUSIE_DATA || { userTypes: [], situations: [], methods: [], cards: [], matches: {} };
+    const card = (D.cards || []).find(c => c.id === s.scanned) || null;
+    const userType = (D.userTypes || []).find(x => x.id === s.userType) || null;
+    const stepIndex = this._wizDefs.findIndex(w => w.id === s.step);
+
+    const elapsed = s.voiceState === 'recording' && this._startedAt
+      ? Math.round((Date.now() - this._startedAt) / 1000) : 0;
+    const duration = this._duration || 0;
+
+    /* No Situation step any more, so every Method is on offer. */
+    const methods = (D.methods || []).filter(Boolean);
+    const carouselSeen = s.onboardSeenMax >= this._onboarding.length - 1;
+
+    const contextRows = [];
+    if (userType) contextRows.push({ term: 'Here as', value: userType.label });
+    if (s.screen === 'method' || s.screen === 'end') contextRows.push({ term: 'Method', value: 'Quick Mindfulness Break' });
+    if (card) contextRows.push({ term: 'Card', value: card.code + ' · ' + card.feeling });
+
+    /* "Not right now" is a complete answer, not a skipped one — the flow lets
+       the reflection be declined, so it must not gate the CTA. */
+    const reflectDone = s.reflectMode === 'none' ? true
+      : s.reflectMode === 'voice' ? s.voiceState === 'recorded'
+      : s.reflectMode === 'write' ? s.written.trim().length > 0
+      : !!s.photo;
+
+    const emailLooksWrong = s.shareEmail.length > 0 && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.shareEmail);
+
+    return {
+      /* screens */
+      isOnboarding: s.screen === 'onboarding',
+      isMethods: s.screen === 'methods',
+      isMethod: s.screen === 'method',
+      isEnd: s.screen === 'end',
+      /* Methods / method flow / end get a wider shell so the 980px card cap can
+         actually take effect — --bp-md (768px) on <main> would clamp it. */
+      mainWide: ['methods', 'method', 'end'].includes(s.screen) ? '1' : '0',
+
+      onboardingSteps: this._onboarding.map((o, i) => ({
+        idx: i, num: i + 1, title: o.title, path: o.path,
+        /* Paired explicit values, as the radio components do — an add/remove
+           attribute toggle does not always invalidate style. */
+        dataCurrent: i === s.onboardIndex ? 'true' : 'false',
+        ariaCurrent: i === s.onboardIndex ? 'true' : 'false',
+        slideLabel: `Step ${i + 1} of ${this._onboarding.length}: ${o.title}`,
+        dotLabel: `Step ${i + 1}`,
+        dotAria: `Go to step ${i + 1} of ${this._onboarding.length}`,
+        select: () => this.carGo(i),
+      })),
+      carRef: this.carRef,
+      carKeys: this.carKeys,
+      carPrev: this.carPrev,
+      carNext: this.carNext,
+      carAtStart: s.onboardIndex <= 0,
+      carAtEnd: s.onboardIndex >= this._onboarding.length - 1,
+      msgGreeting: s.msgPhase >= 1,
+      msgTyping: s.msgPhase === 1,
+      msgCarousel: s.msgPhase >= 2,
+      gotItLocked: !carouselSeen,
+      gotItHint: carouselSeen
+        ? (s.userType ? 'Ready when you are.' : "Next I'll ask who you are here as.")
+        : 'Check out how a session will work before starting.',
+      isAbout: s.screen === 'about',
+      aboutCtaLocked: !s.userType,
+      aboutCtaSize: s.userType ? 'musy-btn--guided' : '',
+      aboutHint: s.userType ? 'Ready when you are.' : 'Pick one to carry on.',
+      /* Once the whole flow has been seen the CTA steps up to the guided (64px)
+         target — it is the only thing left to do on the screen. */
+      gotItSize: carouselSeen ? 'musy-btn--guided' : '',
+      /* Next hands the filled treatment over to the CTA the moment the CTA
+         unlocks — two filled primaries on one screen compete. */
+      carNextVariant: carouselSeen ? 'musy-icon-btn--secondary' : 'musy-icon-btn--primary',
+      startSession: this.startSession,
+      goStart: this.goStart,
+      back: this.back,
+
+      userTypeOptions: this._radios(D.userTypes || [], s.userType, this.pickUserType),
+      languageOptions: this._radios(
+        [{ id: 'en', label: 'English' }, { id: 'de', label: 'Deutsch' }],
+        s.language, this.pickLanguage
+      ),
+      /* Three ways to answer, as a segmented control. Declining moved OUT of
+         the group — see the template comment. Labels are short because a
+         segment ellipses: "Upload a photo of handwritten notes" was a row
+         label, and the photo field's own label still says the long version. */
+      reflectSegments: this._radios(
+        [
+          { id: 'voice', label: 'Record audio', p1: 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z', p2: 'M19 10v2a7 7 0 0 1-14 0v-2M12 19v3' },
+          { id: 'write', label: 'Write answer', p1: 'M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z', p2: 'M12 20h9' },
+          { id: 'photo', label: 'Take photo', p1: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z', p2: 'M15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z' },
+        ],
+        s.reflectMode, (id) => this.setState({ reflectMode: id })
+      ),
+
+      startRandomMethod: this.startRandomMethod,
+      methodOptions: methods.map(m => ({
+        name: m.name, description: m.description, imageAlt: m.imageAlt,
+        /* The glyph shows the range; the hidden text and the bubble say what
+           the range IS, so nothing is carried by the icon alone. */
+        timeText: m.timeframeMin + '–' + m.timeframeMax + ' min',
+        timeAria: 'Takes ' + m.timeframeMin + ' to ' + m.timeframeMax + ' minutes',
+        needsCards: !!m.needsCards,
+        needsSound: !!m.needsSound,
+        ariaChecked: 'false',
+        dataChecked: undefined,
+        dataUnchecked: '',
+        tabIndex: 0,
+        select: this.pick('__method', m.id, () => this.pickMethod(m.id)),
+      })),
+
+      /* wizard */
+      wizSteps: this._wizDefs.map((w, i) => {
+        const selected = w.id === s.step;
+        const completed = s.completed.includes(w.id);
+        const reachable = completed || i <= stepIndex ||
+          this._wizDefs.slice(0, i).every(p => s.completed.includes(p.id));
+        const state = selected ? 'selected' : completed ? 'completed'
+          : reachable ? 'active' : 'disabled';
+        return {
+          num: i + 1,
+          label: w.label,
+          state,
+          current: selected ? 'step' : undefined,
+          disabled: state === 'disabled' ? true : undefined,
+          showConnector: i < this._wizDefs.length - 1,
+          connectorComplete: completed ? '' : undefined,
+          select: this.pick('step', w.id),
+        };
+      }),
+      /* Step 2 has two states on one panel: the reader, and the scanned card.
+         The scanned state is what the user comes back to after the lightbox,
+         so closing it never loses the scan. */
+      scanTitle: card ? 'Card scanned' : 'Scan the card that describes best how you feel right now.',
+      scanText: card
+        ? 'This is the card you scanned. You can go on to listening, or scan a different one.'
+        : 'Place the reader over the QR code.',
+      scanOpen: !card,
+      scanDone: !!card,
+      scanAnother: this.scanAnother,
+      goReflect: this.goReflect,
+
+      stepIntro: s.step === 'intro',
+      stepScan: s.step === 'scan',
+      stepListen: s.step === 'listen',
+      stepReflect: s.step === 'reflect',
+      goScan: this.goScan,
+      goListen: this.goListen,
+      simulateScan: this.simulateScan,
+      ...this.audioVals(card),
+
+      /* card */
+      cardTitle: card ? card.code + ' · ' + card.feeling : '—',
+      cardListening: card ? card.listening : '',
+      cardQuestion: card ? card.question : 'What stayed with you?',
+
+      /* reflection */
+      modeVoice: s.reflectMode === 'voice',
+      modeWrite: s.reflectMode === 'write',
+      modePhoto: s.reflectMode === 'photo',
+      modeNone: s.reflectMode === 'none',
+      modeAnswering: s.reflectMode !== 'none',
+      decline: this.decline,
+      undecline: this.undecline,
+      voiceState: s.voiceState,
+      voiceIdle: s.voiceState === 'idle',
+      voiceRecording: s.voiceState === 'recording',
+      voiceRecorded: s.voiceState === 'recorded',
+      voiceClock: this._clock(elapsed),
+
+      /* §7.22 Record Button drives capture now: ONE control, two states, and
+         the clock and the ceiling stay here — the component only draws them.
+         The recorded state is still §7.19's playback; §7.22 is explicitly not
+         a player, so the two split at the moment the recording exists. */
+      voiceCapturing: s.voiceState !== 'recorded',
+      voiceRecState: s.voiceState === 'recording' ? 'recording' : 'ready',
+      voiceRecGlyph: s.voiceState === 'recording'
+        ? 'M8 5v14h8V5z'
+        : 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z',
+      /* Short by default, per the Layer 3 change to §7.22: "Recording Running"
+         overflows a phone column and clips the readout, which is the one part
+         that must never give. */
+      voiceRecLabel: s.voiceState === 'recording' ? 'Recording' : 'Record answer',
+      voiceRecLeft: this._clock(Math.max(0, this._voiceMax - elapsed)),
+      voiceRecStatus: 'Recording, ' + this._clock(elapsed) + ' in, '
+        + this._clock(Math.max(0, this._voiceMax - elapsed)) + ' left',
+      /* Twelve bars, the same count §7.22's own specimen uses. Simulated from
+         the clock: there is no getUserMedia anywhere in this prototype, which
+         is the posture the component contract and the QR reader both take. */
+      voiceRecBars: this._voiceBars(elapsed),
+      voiceCaptureToggle: s.voiceState === 'recording' ? this.voiceStop : this.voiceStart,
+      voicePos: this._clock(s.voicePlaying ? Math.round(duration * 0.4) : 0),
+      voiceDur: this._clock(duration),
+      voicePercent: s.voicePlaying ? 40 : 0,
+      voiceFill: s.voicePlaying ? '40%' : '0%',
+      voicePlayLabel: s.voicePlaying ? 'Pause answer' : 'Play answer',
+      voicePlayPath: s.voicePlaying ? 'M8 5v14M16 5v14' : 'm6 4 14 8-14 8V4z',
+      voiceStart: this.voiceStart,
+      voiceStop: this.voiceStop,
+      voiceToggle: this.voiceToggle,
+      voiceDelete: this.voiceDelete,
+      written: s.written,
+      writtenFilled: s.written.length ? '' : undefined,
+      onWritten: this.onWritten,
+      photoEmpty: !s.photo,
+      photoPicked: !!s.photo,
+      /* Never an empty src: a bare hole in `src` is emitted literally while the
+         template streams, and the browser fires a request for it. The fallback
+         is a real, loadable path. */
+      photoName: s.photo ? s.photo.name : '',
+      photoSize: s.photo ? this._size(s.photo.size) : '',
+      pickPhoto: this.pickPhoto,
+      onPhoto: this.onPhoto,
+      removePhoto: this.removePhoto,
+      reflectIncomplete: reflectDone ? undefined : true,
+
+      /* share + end — sharing now lives on the end screen only, and only when
+         there is an answer to send: 'none' means the reflection was declined,
+         so offering to share it would be an empty promise. */
+      endCanShare: s.reflectMode !== 'none',
+      endShareWhat: s.reflectMode === 'voice' ? 'your voice message'
+        : s.reflectMode === 'write' ? 'your written answer'
+        : 'your photo',
+      shareOpen: !s.shareSent,
+      shareSent: s.shareSent,
+      shareEmail: s.shareEmail,
+      emailFilled: s.shareEmail.length ? '' : undefined,
+      emailInvalid: emailLooksWrong,
+      emailInvalidAttr: emailLooksWrong ? '' : undefined,
+      emailAriaInvalid: emailLooksWrong ? 'true' : undefined,
+      sendDisabled: (!s.shareEmail.length || emailLooksWrong) ? true : undefined,
+      onEmail: this.onEmail,
+      sendShare: this.sendShare,
+      endSession: this.endSession,
+      restart: this.restart,
+      endSummary: s.shareSent
+        ? 'Your reflection is on its way to ' + s.shareEmail
+        : s.reflectMode === 'none'
+        ? 'You listened, and that was enough'
+        : 'Your reflection stayed with you',
+
+      /* context column */
+      showContext: contextRows.length > 0 && s.screen !== 'onboarding',
+      contextRows,
+
+      /* shell */
+      navOpen: s.overlay === 'nav',
+      profileOpen: s.overlay === 'profile',
+      nyiOpen: s.overlay === 'nyi',
+      detailOpen: s.overlay === 'detail',
+      overlayOpen: !!s.overlay,
+      navExpanded: s.overlay === 'nav' ? 'true' : 'false',
+      profileExpanded: s.overlay === 'profile' ? 'true' : 'false',
+      navPages: [
+        { id: 'onboarding', label: 'How Musie works', go: this.goHowItWorks },
+        { id: 'about', label: 'About you', go: this.goAbout },
+        { id: 'methods', label: 'Start a session', go: this.goStart },
+      ].map(p => ({
+        label: p.label,
+        go: p.go,
+        ariaCurrent: s.screen === p.id ? 'page' : 'false',
+        /* Outlined marks the page you are on, ghost the one you are not —
+           existing variants, so no new selected treatment is invented. */
+        variant: s.screen === p.id ? 'musy-btn--secondary' : 'musy-btn--ghost',
+      })),
+      openNav: this.openNav,
+      openProfile: this.openProfile,
+      closeOverlay: this.closeOverlay,
+      startMethod: this.startMethod,
+      nyiWhat: s.nyiWhat,
+      userTypeLabel: userType ? userType.label : 'Not chosen yet',
+
+      /* theme */
+      darkAria: s.dark ? 'true' : 'false',
+      darkChecked: s.dark ? '' : undefined,
+      darkUnchecked: s.dark ? undefined : '',
+      moonState: s.dark ? 'shown' : 'hidden',
+      sunState: s.dark ? 'hidden' : 'shown',
+      toggleTheme: this.toggleTheme,
+
+      onRadioKeys: this.onRadioKeys,
+    };
+  }
+}
+</script>
+</body>
+</html>

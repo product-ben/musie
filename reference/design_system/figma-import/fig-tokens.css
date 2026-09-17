@@ -1,0 +1,40 @@
+/* Generated from Figma Variables. First mode = :root default.
+   FLOAT tokens are unitless — multiply by 1px in calc() where a length is needed. */
+
+:root {
+  --accent-ocher: rgb(234,185,109); /* @kind color */
+  --accent-purple: rgb(204,167,200); /* @kind color */
+  --accent-terracotta: rgb(193,97,63); /* @kind color */
+  --bg-primary: rgb(243,236,224); /* @kind color */
+  --bg-secondary: rgb(234,225,208); /* @kind color */
+  --border-strong: rgb(199,185,156); /* @kind color */
+  --border: rgb(221,210,189); /* @kind color */
+  --corner-medium: 12;
+  --corner-small: 8;
+  --ink-muted: rgb(138,122,99); /* @kind color */
+  --ink-primary: rgb(28,26,23); /* @kind color */
+  --ink-secondary: rgb(92,81,72); /* @kind color */
+  --sp-1: 4;
+  --sp-2: 8;
+  --sp-3: 12;
+  --sp-4: 16;
+  --sp-5: 24;
+  --sp-6: 32;
+  --sp-7: 48;
+  --sp-8: 64;
+  --surface: rgb(251,248,242); /* @kind color */
+}
+
+:root[data-theme="dark"], .dark {
+  --accent-ocher: rgb(234,185,109); /* @kind color */
+  --accent-purple: rgb(204,167,200); /* @kind color */
+  --accent-terracotta: rgb(227,122,82); /* @kind color */
+  --bg-primary: rgb(28,26,23); /* @kind color */
+  --bg-secondary: rgb(36,31,26); /* @kind color */
+  --border-strong: rgb(74,66,56); /* @kind color */
+  --border: rgb(58,51,44); /* @kind color */
+  --ink-muted: rgb(147,130,106); /* @kind color */
+  --ink-primary: rgb(243,236,224); /* @kind color */
+  --ink-secondary: rgb(201,190,169); /* @kind color */
+  --surface: rgb(42,36,32); /* @kind color */
+}
