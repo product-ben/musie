@@ -55,7 +55,7 @@ export function TokenGroup({ group }: { group: GroupName }) {
   return (
     <>
       <Note>{names.length} tokens.</Note>
-      <Table head={['Token', 'Declared', 'Resolved', 'Use']}>
+      <Table home head={['Token', 'Declared', 'Resolved', 'Use']}>
         {names.map((n) => (
           <Row key={n}>
             <Cell code nowrap>{n}</Cell>

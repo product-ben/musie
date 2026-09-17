@@ -51,7 +51,7 @@ export function TypeScale() {
         only in the stylesheet, which is why this list is parsed from the CSS. See{' '}
         <code style={mono}>TOKEN-DRIFT.md</code>.
       </Note>
-      <Table head={['Step', ...WIDTHS.map((w) => `${w}px`), 'now', 'Family / weight']}>
+      <Table home head={['Step', ...WIDTHS.map((w) => `${w}px`), 'now', 'Family / weight']}>
         {TYPE_STEPS.map((step) => {
           const expr = declaredValue(`--type-${step}-size`) ?? '';
           const fam = (declaredValue(`--type-${step}-family`) ?? '').replace(/var\(--font-(\w+)\)/, '$1');
@@ -153,7 +153,7 @@ export function TypeRules() {
   const probed = useProbe(() => probeValues(names));
   if (!probed) return <Measuring />;
   return (
-    <Table head={['Token', 'Value']}>
+    <Table home head={['Token', 'Value']}>
       {names.map((n) => (
         <Row key={n}>
           <Cell code nowrap>{n}</Cell>

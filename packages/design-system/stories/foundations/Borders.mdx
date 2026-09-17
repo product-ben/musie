@@ -1,0 +1,60 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { TokenGroup } from './_pages/Dimension';
+import { Recipes, RuleTable, Evidence, Checks } from './_pages/Borders';
+
+<Meta title="Foundations/Borders" />
+
+# Borders
+
+A border is three decisions — **colour**, **width**, **style** — and the system
+has a token for each. This page is the rule for picking them, derived from how
+`musy-components.css` and the prototype actually draw borders. The counts are
+read from the stylesheet at build time, so a rule that stops matching the code
+shows it here.
+
+<Recipes />
+
+## When to use which
+
+Read top to bottom and stop at the first match.
+
+<RuleTable />
+
+Three of these are worth stating on their own, because they are the ones that
+get got wrong:
+
+**Width carries state, not just colour.** Selection, validity and the recording
+state all step `--border-width-regular` → `--border-width-thick`. That is the
+non-colour cue 1.4.1 requires: strip the hue and the state still reads.
+
+**Disabled drops the colour, never the width.** A disabled control keeps its
+1.5px edge and exchanges `--border-strong` for `--border-subtle`. Changing the
+width instead would move the layout as a control becomes unavailable.
+
+**Focus is an outline, not a border.** `--border-width-focus` exists but is used
+as a border **zero** times. It feeds `--focus-ring`, which is drawn as an
+`outline` with `--focus-ring-offset`, precisely so the ring adds no layout.
+
+## Evidence
+
+Every border declaration in `musy-components.css`, counted by token and by the
+state its selector targets.
+
+<Evidence />
+
+## What the rules imply, checked
+
+These are the assertions the rules above make about the code. They run against
+the stylesheet each time this page renders.
+
+<Checks />
+
+## Width tokens
+
+<TokenGroup group="border-width" />
+
+The colour tokens — `--border-subtle`, `--border-strong`, `--border-focus` — are
+documented on [Colour](?path=/docs/foundations-colour--docs) under **Borders**,
+where the rest of the semantic layer lives. `--border-style-solid` and
+`--border-style-dashed` are amendment tokens (gap G2) and live in
+`musy-foundations-amendments.css`; see `TOKEN-DRIFT.md`.

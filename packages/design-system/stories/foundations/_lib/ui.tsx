@@ -34,9 +34,21 @@ export const mono: React.CSSProperties = {
   fontSize: '12px',
 };
 
-export function Table({ head, children }: { head: string[]; children: React.ReactNode }) {
+/**
+ * `home` marks this table as a token's CANONICAL home — the place the token is
+ * defined rather than merely mentioned. scripts/verify-coverage.mjs counts only
+ * these when asserting that every property is documented exactly once.
+ *
+ * Without the flag the check has to guess from "first cell of any table", and
+ * then a page that legitimately CITES a token (Contrast naming a pair, Borders
+ * showing where --interactive-primary-border is used) reads as a second home.
+ */
+export function Table({ head, children, home = false }: {
+  head: string[]; children: React.ReactNode; home?: boolean;
+}) {
   return (
-    <table style={{ borderCollapse: 'collapse', width: '100%', margin: 'var(--sp-4) 0' }}>
+    <table data-token-home={home ? '' : undefined}
+           style={{ borderCollapse: 'collapse', width: '100%', margin: 'var(--sp-4) 0' }}>
       <thead>
         <tr>
           {head.map((h) => (

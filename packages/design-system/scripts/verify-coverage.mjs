@@ -78,14 +78,21 @@ let id = 1;
 await rpc(ws, id++, 'Page.enable');
 await rpc(ws, id++, 'Runtime.enable');
 
+/* Only CANONICAL homes count. A table marks itself with data-token-home when
+   it is where a token is defined; a page that merely cites a token (Contrast
+   naming a pair, Borders showing where a family boundary is used) carries no
+   such mark. Guessing from "first cell of any table" made every citation look
+   like a second home. */
 const OWNS = `(() => {
   const root = document.querySelector('#storybook-docs') || document.body;
   const out = new Set();
-  for (const tr of root.querySelectorAll('tbody tr'))
-    for (const m of (tr.children[0]?.innerText || '').matchAll(/--[a-z0-9-]+/g)) out.add(m[0]);
-  for (const el of root.querySelectorAll('[title]')) {
-    const t = el.getAttribute('title') || '';
-    if (t.startsWith('--')) out.add(t.split(/[\\s\\u2014]/)[0]);
+  for (const home of root.querySelectorAll('[data-token-home]')) {
+    for (const tr of home.querySelectorAll('tbody tr'))
+      for (const m of (tr.children[0]?.innerText || '').matchAll(/--[a-z0-9-]+/g)) out.add(m[0]);
+    for (const el of home.querySelectorAll('[title]')) {
+      const t = el.getAttribute('title') || '';
+      if (t.startsWith('--')) out.add(t.split(/[\\s\u2014]/)[0]);
+    }
   }
   return [...out];
 })()`;

@@ -28,7 +28,7 @@ export function ColourRaw() {
               <div style={{ ...mono, color: 'var(--on-surface-muted)', marginBottom: 'var(--sp-1)' }}>
                 {theme}
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-1)' }}>
+              <div data-token-home="" style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-1)' }}>
                 {STEPS.map((step) => {
                   const name = `--${scale}-${step}`;
                   const hex = probed[theme][name] ?? null;
@@ -46,7 +46,7 @@ export function ColourRaw() {
         </section>
       ))}
       <h3 style={{ fontFamily: 'var(--type-heading-sm-family)', fontSize: 'var(--type-heading-sm-size)' }}>Alpha</h3>
-      <Table head={['Token', 'light', 'dark', 'Purpose']}>
+      <Table home head={['Token', 'light', 'dark', 'Purpose']}>
         <Row>
           <Cell code>--alpha-scrim</Cell>
           <Cell><Chip hex={probed.light['--alpha-scrim'] ?? null} size={24} /></Cell>
@@ -120,7 +120,7 @@ export function ColourSemantic() {
               {g.rows.length}
             </span>
           </h3>
-          <Table head={['Token', 'light', 'dark', 'Specimen', 'Resolves to', 'Why']}>
+          <Table home head={['Token', 'light', 'dark', 'Specimen', 'Resolves to', 'Why']}>
             {g.rows.map((name) => (
               <Row key={name}>
                 <Cell code nowrap>{name}</Cell>
