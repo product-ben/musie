@@ -32,6 +32,38 @@ Use `apps/web/.env.example` as the template. Vite exposes browser variables only
 when their names start with `VITE_`. For Netlify builds, configure the same
 variables in the site's **Project configuration > Environment variables**.
 
+## Storybook
+
+The design system's Storybook covers 26 components (258 stories), the
+foundations token reference and the Layer 3 layout rules.
+
+```bash
+pnpm storybook          # dev server on :6006
+pnpm build:storybook    # static build into packages/design-system/storybook-static
+```
+
+### Deploy it as a second Netlify site
+
+Storybook deploys **separately** from the web app. The root `netlify.toml` is
+untouched and still publishes `apps/web/dist`; the Storybook site reads
+`packages/design-system/netlify.toml` instead.
+
+1. Netlify → **Add new project** → **Import an existing project**
+2. Choose `product-ben/musie`, branch `main`
+3. Site configuration → Build & deploy → **Base directory: `packages/design-system`**
+
+Step 3 is the one that matters. Netlify reads `netlify.toml` from the base
+directory, so two sites on one repository can only differ by having different
+bases. Leave the base empty and the Storybook site will build the web app
+instead, because it falls back to the root config.
+
+Everything else — build command, publish directory, Node version, the SPA
+redirect — comes from `packages/design-system/netlify.toml`. Nothing needs
+setting in the UI.
+
+The site is served `X-Robots-Tag: noindex`, because the pages still carry the
+review scaffolding described in `packages/design-system/stories/OPEN-QUESTIONS.md`.
+
 ## Connect Netlify
 
 After pushing this repository to GitHub:

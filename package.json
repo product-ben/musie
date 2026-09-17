@@ -4,6 +4,7 @@
   "packageManager": "pnpm@9.15.5",
   "scripts": {
     "storybook": "pnpm --filter @musie/design-system storybook",
+    "build:storybook": "pnpm --filter @musie/design-system build-storybook",
     "check": "pnpm run typecheck && pnpm run lint",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm -r run lint"
