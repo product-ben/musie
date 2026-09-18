@@ -294,16 +294,34 @@ export const HeadlineHidden: Story = {
   args: { headlineHidden: true, children: <p>{ONBOARDING_TEXT}</p> },
 };
 
-/** Every heading level. The correct one depends on where the box sits in the
- *  page, which the box cannot know (1.3.1) — so it is never guessed. */
+/**
+ * `headingLevel` changes the emitted tag — `<h2>` … `<h6>` — and nothing else.
+ *
+ * **All five boxes look identical on purpose.** Size comes from a separate
+ * prop, `headlineStep`, which is `heading-sm` for every box here. §7.9 keeps
+ * them apart because the correct level depends on where the box sits in the
+ * page, which the box cannot know (1.3.1) — so a card can be an `<h4>` in the
+ * outline while still looking like every other card.
+ *
+ * Inspect the elements to see the difference; it is in the document outline,
+ * not in the rendering.
+ */
 export const HeadingLevels: Story = {
   render: (args) => (
     <Stack>
-      <ContentBox {...args} headingLevel={2} headline="headingLevel: 2" />
-      <ContentBox {...args} headingLevel={3} headline="headingLevel: 3 (default)" />
-      <ContentBox {...args} headingLevel={4} headline="headingLevel: 4" />
-      <ContentBox {...args} headingLevel={5} headline="headingLevel: 5" />
-      <ContentBox {...args} headingLevel={6} headline="headingLevel: 6" />
+      {([2, 3, 4, 5, 6] as const).map((level) => (
+        <ContentBox
+          key={level}
+          {...args}
+          headingLevel={level}
+          headline={`headingLevel={${level}} renders <h${level}>`}
+          text={
+            level === 3
+              ? 'The component default. Every box on this page is heading-sm, so the level changes the document outline and not the picture.'
+              : undefined
+          }
+        />
+      ))}
     </Stack>
   ),
 };
