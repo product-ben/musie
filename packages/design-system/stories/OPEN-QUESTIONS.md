@@ -1609,3 +1609,21 @@ Why: the alternative was repeating the tag in 26 metas.
 What I need from Ben: nothing, just flagging — but note this means none of the
 Build notes had ever been seen at the time the session reported them as
 "mirrored onto the pages". They were in the source; they were not on a page.
+
+## Switch — both knob glyphs rendered stacked; fixed by wrapping them
+Where: `src/Switch.tsx:78-90`, `src/musy-components.css:630-631`
+What I checked: Level 1. `.musy-switch__glyph[data-state="hidden"] { opacity: 0 }`
+was the only thing hiding one of the two knob glyphs, and `data-state` was being
+passed to `<Icon>`, whose `IconProps` is a closed interface with no index
+signature — so the attribute never reached the DOM and the rule never matched.
+Measured: both glyphs at `opacity: 1`, same grid cell, in both states.
+What I did: wrapped each glyph in a `<span className="musy-switch__glyph"
+data-state=…>` and left `<Icon>` and the stylesheet untouched. Verified: off →
+`[hidden 0, shown 1]`, on → `[shown 1, hidden 0]`, and `showStateIcons={false}`
+still renders none.
+Why: it restores the cue the stylesheet was already written for without widening
+Icon's API.
+What I need from Ben: nothing — fixed. Noting the history: the earlier move task
+instructed deleting this prop on the stated grounds that "no CSS rule uses it".
+A rule did. The deletion was not what broke it — the prop never reached the DOM —
+but it removed the last trace of an already-dead 1.4.1 non-colour cue.

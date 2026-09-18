@@ -79,8 +79,19 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           <BaseSwitch.Thumb className="musy-switch__knob">
             {showStateIcons && (
               <>
-                <Icon glyph={onGlyph} size="sm" className="musy-switch__glyph" />
-                <Icon glyph={offGlyph} size="sm" className="musy-switch__glyph" />
+                {/* The span carries the state, not the Icon. IconProps is a
+                    closed interface with no index signature, so a `data-state`
+                    passed to <Icon> is dropped silently and
+                    `.musy-switch__glyph[data-state="hidden"]` never matches —
+                    which left both glyphs stacked in the same grid cell at full
+                    opacity, in both states. Wrapping keeps Icon's API closed and
+                    restores the cue the stylesheet was already written for. */}
+                <span className="musy-switch__glyph" data-state={checked ? 'shown' : 'hidden'}>
+                  <Icon glyph={onGlyph} size="sm" />
+                </span>
+                <span className="musy-switch__glyph" data-state={checked ? 'hidden' : 'shown'}>
+                  <Icon glyph={offGlyph} size="sm" />
+                </span>
               </>
             )}
           </BaseSwitch.Thumb>
