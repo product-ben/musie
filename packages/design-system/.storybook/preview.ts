@@ -26,6 +26,12 @@ import '../tokens/musy-foundations-amendments.css';
 import '../src/musy-components.css';
 
 const preview: Preview = {
+  /* A component gets a Docs page only when it is tagged `autodocs`. Without
+     this, every `parameters.docs.description.component` written into the story
+     files — which is where each component's purpose, its prop rationale and its
+     "Build notes" review block live — renders nowhere at all: the sidebar shows
+     the stories and nothing else. Set globally rather than repeated in 26 metas. */
+  tags: ['autodocs'],
   parameters: {
     /* Storybook's own background switcher is off: the canvas is painted from
        --surface / --on-surface in preview-head.html, so it follows data-theme
