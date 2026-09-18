@@ -42,27 +42,30 @@ pnpm storybook          # dev server on :6006
 pnpm build:storybook    # static build into packages/design-system/storybook-static
 ```
 
-### Deploy it as a second Netlify site
+### Where it is deployed
 
-Storybook deploys **separately** from the web app. The root `netlify.toml` is
-untouched and still publishes `apps/web/dist`; the Storybook site reads
-`packages/design-system/netlify.toml` instead.
+Storybook ships **with the web app, at `/storybook/`** — one Netlify site, one
+deploy. `scripts/netlify-build.sh` builds the app, builds Storybook, and copies
+Storybook into `apps/web/dist/storybook/`.
 
-1. Netlify → **Add new project** → **Import an existing project**
-2. Choose `product-ben/musie`, branch `main`
-3. Site configuration → Build & deploy → **Base directory: `packages/design-system`**
+It also copies the design system's `assets/` and `tokens/` to the **domain
+root**, as `/assets/web/` and `/foundations-tokens/`. That is not tidiness:
+Logo's default `src` is the root-absolute `/assets/web/musy-logo.png`, and the
+Typography page's iframes load `/foundations-tokens/musy-fonts.css`. Both would
+404 under a subpath, so the files are placed where those paths point. There is
+no collision with the app — Vite emits hashed `index-*.js` / `*.css` directly
+into `assets/`.
 
-Step 3 is the one that matters. Netlify reads `netlify.toml` from the base
-directory, so two sites on one repository can only differ by having different
-bases. Leave the base empty and the Storybook site will build the web app
-instead, because it falls back to the root config.
+`netlify.toml` carries a `/storybook/*` redirect **before** the app's catch-all.
+Netlify evaluates redirects in order, so without it every Storybook deep link
+would be served the app's `index.html`.
 
-Everything else — build command, publish directory, Node version, the SPA
-redirect — comes from `packages/design-system/netlify.toml`. Nothing needs
-setting in the UI.
+To run the exact published build locally:
 
-The site is served `X-Robots-Tag: noindex`, because the pages still carry the
-review scaffolding described in `packages/design-system/stories/OPEN-QUESTIONS.md`.
+```bash
+./scripts/netlify-build.sh
+cd apps/web/dist && python3 -m http.server 8080   # / is the app, /storybook/ is Storybook
+```
 
 ## Connect Netlify
 

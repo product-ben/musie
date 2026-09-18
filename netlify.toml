@@ -1,9 +1,17 @@
 [build]
-  command = "pnpm check && pnpm --filter web build"
+  command = "./scripts/netlify-build.sh"
   publish = "apps/web/dist"
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Storybook first, and BEFORE the app's catch-all. Netlify evaluates redirects
+# in order, so without this the /* rule below would hand every Storybook deep
+# link the app's index.html instead.
+[[redirects]]
+  from = "/storybook/*"
+  to = "/storybook/index.html"
+  status = 200
 
 [[redirects]]
   from = "/*"
