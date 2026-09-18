@@ -11,6 +11,16 @@ import { ContentList } from '../src/ContentList';
 import { CtaButton } from '../src/CtaButton';
 import { bothThemes, Stack } from './_decorators';
 
+/* Every step `TypeStep` declares, in the scale's own order — largest first,
+   display through label. Declared once and reused by the argTypes below and by
+   the HeadlineSteps story, so the two cannot drift from the union. */
+const STEPS = [
+  'display-xl', 'display-lg', 'stage',
+  'heading-lg', 'heading-md', 'heading-sm',
+  'body-lg', 'body-md', 'body-sm',
+  'label-lg', 'label-md',
+] as const;
+
 /* The prototype's own opening panel — ONBOARDING, headline at display-lg and
    body at stage. See PROTOTYPE-USAGE.md. */
 const ONBOARDING_TEXT =
@@ -148,20 +158,12 @@ const meta = {
     },
     headlineStep: {
       control: 'select',
-      options: [
-        'display-xl', 'display-lg', 'stage',
-        'heading-lg', 'heading-md', 'heading-sm',
-        'body-lg', 'body-md', 'body-sm', 'label-lg', 'label-md',
-      ],
+      options: [...STEPS],
     },
     text: { control: 'text' },
     textStep: {
       control: 'select',
-      options: [
-        'display-xl', 'display-lg', 'stage',
-        'heading-lg', 'heading-md', 'heading-sm',
-        'body-lg', 'body-md', 'body-sm', 'label-lg', 'label-md',
-      ],
+      options: [...STEPS],
     },
     outline: {
       control: 'inline-radio',
@@ -239,6 +241,29 @@ export const TypeSteps: Story = {
         headlineStep="heading-sm"
         text={ONBOARDING_TEXT}
       />
+    </Stack>
+  ),
+};
+
+/**
+ * The headline at **every step the type scale defines**, largest to smallest.
+ *
+ * This is the prop that changes the picture. `headingLevel` changes the tag;
+ * `headlineStep` changes the size, weight, family, line height and tracking —
+ * all five come from the Layer 1 token for that step, and every one is fluid,
+ * so the figures move with the viewport. Resize the canvas and watch them.
+ *
+ * Two of these are not heading steps and are here because the prop accepts
+ * them: `stage` is Musie speaking — display family at heading-lg's size but
+ * regular weight and an open line height — and the `body-*` / `label-*` rungs
+ * are for a card whose title should not shout.
+ */
+export const HeadlineSteps: Story = {
+  render: (args) => (
+    <Stack>
+      {STEPS.map((step) => (
+        <ContentBox key={step} {...args} headlineStep={step} headline={`headlineStep="${step}"`} />
+      ))}
     </Stack>
   ),
 };
