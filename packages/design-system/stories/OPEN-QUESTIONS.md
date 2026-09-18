@@ -1570,3 +1570,42 @@ RecordButton folding a once-a-second clock into a button's accessible name,
 PhotoUpload's orphaned `role="alert"`, Switch + FieldItem giving one control two
 labels, WizardPanel having no association back to its step, DraggableList's
 keyboard equivalents being specified and never verified.
+
+
+---
+
+# Follow-up — 2026-09-18
+
+## ContentBox — the headline has no overflow-wrap safety net
+Where: `src/musy-components.css:1374`
+What I checked: Level 1. `.musy-box__headline` sets `text-wrap`, `max-width`
+and colour, and nothing else — it computes `overflow-wrap: normal` and carries
+no `hyphens`. The line directly below it, `.musy-box__text`, does carry
+`hyphens: var(--text-hyphens)`. Level 3, `docs/07-components.md:46` promises the
+opposite: "Every affected part also carries `overflow-wrap: break-word` as the
+safety net for a word with no legal hyphenation point in range." The headline is
+not one of them.
+What I did: nothing to the CSS. Fixed the HeadlineSteps story's own labels so
+they contain a space and can wrap, and measured the rest: at `display-xl` an
+unbreakable 25-character string renders 691px wide inside a 568px box and is
+simply clipped.
+Why: editing the stylesheet is a design-system change, not a story fix.
+What I need from Ben: **a decision.** German compounds are exactly the case §46
+raises — "Partnerschaftsberatung" at `display-xl` in a phone-width card has no
+legal break point and will overflow the same way. Either the headline gets
+`overflow-wrap: break-word` like the text beside it, or §46 should stop claiming
+every wrapping part has it.
+
+## Session — component docs pages did not exist until today
+Where: `.storybook/preview.ts`
+What I checked: Level 1. Storybook 9 builds a Docs page only for a component
+tagged `autodocs`. No meta carried the tag, so the index held 258 story entries
+and zero component docs entries — every `parameters.docs.description.component`
+written across the five batches, including all 118 Build notes blocks, rendered
+nowhere.
+What I did: set `tags: ['autodocs']` globally in preview.ts. Verified 26/26
+component docs pages now carry their description and Build notes.
+Why: the alternative was repeating the tag in 26 metas.
+What I need from Ben: nothing, just flagging — but note this means none of the
+Build notes had ever been seen at the time the session reported them as
+"mirrored onto the pages". They were in the source; they were not on a page.
