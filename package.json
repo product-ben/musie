@@ -5,10 +5,12 @@
   "scripts": {
     "storybook": "pnpm --filter @musie/design-system storybook",
     "build:storybook": "pnpm --filter @musie/design-system build-storybook",
-    "check": "pnpm run typecheck && pnpm run lint",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm -r run lint",
-    "gen:types": "supabase gen types typescript --local > apps/web/src/lib/database.types.ts"
+    "gen:types": "supabase gen types typescript --local > apps/web/src/lib/database.types.ts",
+    "test": "pnpm -r run test",
+    "test:db": "pnpm -r run test:db"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

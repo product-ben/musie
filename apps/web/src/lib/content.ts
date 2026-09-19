@@ -92,7 +92,7 @@ interface Translated {
  * failure from a missing German one: there is nothing to render, so the caller
  * drops the record rather than putting `undefined` on screen.
  */
-function pickTranslation<T extends Translated>(
+export function pickTranslation<T extends Translated>(
   rows: T[] | null | undefined,
   locale: Locale,
   table: string,
