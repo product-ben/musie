@@ -12,7 +12,7 @@
  * there was no way to change it and wrong the moment there was.
  *
  * ── WHY <html lang> MATTERS, AND WHY IT IS NOT COSMETIC ────────────────────
- * Layer 1 sets `--text-hyphens: auto`, which 13 rules in musy-components.css
+ * Layer 1 sets `--text-hyphens: auto`, which 12 rules in musy-components.css
  * consume, and `hyphens: auto` hyphenates according to the ELEMENT'S DECLARED
  * LANGUAGE. German copy rendering under `lang="en"` does not fail loudly — it
  * breaks German compounds at English hyphenation points, which is worse than
