@@ -1,0 +1,30 @@
+{
+  /**
+   * The TEST program — separate from tsconfig.json so that `@types/node` is
+   * visible HERE and nowhere else.
+   *
+   * src/process-shim.d.ts explains the decision this preserves: pulling
+   * @types/node into the app's own typecheck brings the whole Node global
+   * surface with it — setTimeout starts returning NodeJS.Timeout instead of a
+   * number, `Buffer` becomes a valid identifier in browser code, and mistakes
+   * that should be type errors quietly are not.
+   *
+   * The database tests genuinely need Node: they shell out to `supabase
+   * status` for the stack's keys, and they read the migration files from disk.
+   * So the types go where the need is, and the app keeps its narrower surface.
+   * `types: ["node"]` is explicit rather than implicit for the same reason —
+   * this program gets Node and nothing else that happens to be in @types.
+   */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  /* `extends` inherits the parent's `exclude`, which excludes exactly
+     these files — so it has to be cleared, not just overridden. */
+  "exclude": [],
+  /* env.d.ts because content.ts reaches supabase.ts, which reads
+     import.meta.env. process-shim.d.ts is deliberately NOT here: it
+     declares `process`, which would collide with @types/node. Nothing in
+     this program reaches the design system, so nothing needs it. */
+  "include": ["src/**/*.test.ts", "src/lib/db.support.ts", "src/env.d.ts"]
+}

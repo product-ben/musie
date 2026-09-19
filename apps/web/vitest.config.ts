@@ -23,13 +23,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     /**
-     * `db` legitimately matches nothing yet, and "no test files" is Vitest's
-     * default FAILURE. This is a non-project option, so it cannot be scoped to
-     * `db` alone — the cost is that an accidentally empty `unit` run would
-     * also report green. The typecheck and lint halves of `pnpm check` still
-     * run, and a deleted test file is a visible diff.
+     * NOT `passWithNoTests`. Both projects now match real files, so Vitest's
+     * default — fail when a project finds nothing — is exactly what is wanted:
+     * a suite that has silently stopped running is the failure this whole
+     * step exists to catch, and it should be red, not green.
      */
-    passWithNoTests: true,
     projects: [
       {
         test: {
