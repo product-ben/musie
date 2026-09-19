@@ -133,9 +133,9 @@ const meta = {
       description: '--target-guided (64px) for assisted use.',
     },
     disabled: { control: 'boolean', description: 'Disables the button.' },
-    playLabel: { control: 'text', description: 'Copy. English default: "Start Listening".' },
-    pauseLabel: { control: 'text', description: 'Copy. English default: "Pause".' },
-    restartLabel: { control: 'text', description: 'Copy. English default: "Replay".' },
+    playLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue’s track wording — “Jetzt anhören” in German, “Start Listening” in English.' },
+    pauseLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Pause” in both.' },
+    restartLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Noch einmal” / “Replay”.' },
     className: { control: false },
   },
 } satisfies Meta<typeof TrackButton>;
@@ -199,7 +199,9 @@ export const PrototypeListenStep: Story = {
   args: { position: 72 },
 };
 
-/** Copy overrides. The visible label is always the action, never the track. */
+/** Copy overrides. The visible label is always the action, never the track.
+ *  These are the catalogue's own German words, passed explicitly — the story
+ *  is demonstrating that a per-call prop still wins over the catalogue. */
 export const CopyOverrides: Story = {
   args: {
     position: 72,

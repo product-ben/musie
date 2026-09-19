@@ -315,3 +315,376 @@ has nothing to contrast with. Either:
 
 Both are Layer 1 decisions, not drawer decisions. Flagging rather than filling
 the gap, as the brief asks.
+
+---
+
+# Phase C — the session spine
+
+Five agents in two waves, plus the integrator. Everything below was either
+decided in flight or is still waiting on Ben; the decisions Ben answered before
+any code was written live in `DOMAIN-MODEL.md`'s Resolved section, not here.
+
+## Diary entry — three of its facts have no label copy, so the `<dl>` holds one row
+
+Where: `src/routes/DiaryEntry.tsx`, `src/i18n/en.ts` (`diary.*`)
+
+What I checked: the catalogue's only label-shaped diary strings are
+`diary.card` and `diary.yourAnswer`. The date, the duration and the
+*Unfinished* marker exist only as VALUES — `diary.duration` is `'{minutes} min'`,
+`session.status.abandoned` is `'Unfinished'`. Neither has a term to sit beside
+in a description list.
+
+What I did: rendered the card as the one `<dl>` row and let the date, duration
+and status sit as heading, subtitle and quiet lines. When the exercise drew no
+card the `<dl>` is not rendered at all, rather than showing an empty-list
+message under an entry that has just stated three facts.
+
+Why: inventing `diary.dateLabel` / `diary.durationLabel` would be writing
+user-visible copy to fill a layout, which is the wrong order.
+
+What I need from Ben: **is the entry page a facts table or a short read?** If
+it is a table, it needs three label keys and I will write them. If it is a
+read, it is right as it stands and this entry closes.
+
+## Diary — deep-linking a RUNNING session's id lands on "not found"
+
+Where: `src/lib/diary.ts`, both reads filter `status <> 'started'`
+
+What I checked: the Diary is defined as every session that is no longer
+running (DOMAIN-MODEL.md), and the drawer already offers the running one as
+*Continue session*. So the id is reachable from one place and 404s in another.
+
+What I did: left it as a 404.
+
+Why: the diary is what is over, and a running session has no duration, no
+outcome and no reflection to show.
+
+What I need from Ben: **should `/diary/<running id>` redirect into the session
+instead?** It is three lines either way. A 404 is defensible; a redirect is
+friendlier and is what a user typing a remembered URL probably wants.
+
+## Duration — a 20-second session renders as "1 min", never "0 min"
+
+Where: `src/lib/diary.ts`, `durationMinutes`
+
+What I did: floored at 1.
+
+Why: "0 min" reads as *this did not happen*, and a diary's job is to say that
+it did.
+
+What I need from Ben: nothing, just flagging — it is a copy decision made in
+code, which is exactly the kind that disappears if nobody writes it down.
+
+## `.musie-placeholder` is now the page-title class on real screens
+
+Where: `src/shell.css`, used by `routes/Exercises.tsx`, `routes/Diary.tsx`,
+`routes/DiaryEntry.tsx` and `routes/Placeholder.tsx`
+
+What I checked: the class was named for scaffolding and is now what every h1
+in the app uses, including on screens that are finished.
+
+What I did: kept the name rather than renaming it mid-phase across four files
+and one stylesheet.
+
+What I need from Ben: nothing — flagging for whoever deletes the last
+placeholder route. The rename belongs in that commit, not before it.
+
+## The seed nearly lost real copy, because MY brief was wrong
+
+Where: `supabase/migrations/20260918150600_content_seed.sql`
+
+What I checked: the C.0 brief said the four new step arrays were NULL for all
+three exercises. But `guideline` → `scan_text` was a RENAME, and `guideline`
+held the one characterful exercise-level string in the seed — *"Work with the
+card you are drawn to, not the one you think you should pick."* — with
+hand-written German beside it. Following the brief literally discarded both.
+
+What I did: the agent flagged it rather than silently obeying; I carried both
+strings into `scan_text`. The owed-string count is 28, not 30.
+
+Why: a rename that drops content is a silent content loss wearing a schema
+change's clothes.
+
+What I need from Ben: nothing. Recorded because the agent catching a wrong
+premise is the behaviour that saved it, and that is worth keeping.
+
+## `Intl` with the bare tag `'en'` was rendering American dates
+
+Where: `src/lib/diary.ts`, now `src/i18n/index.ts` (`INTL_LOCALES`)
+
+What I checked: `new Intl.DateTimeFormat('en')` resolves to **en-US** —
+"September 19, 2026 at 2:32 PM" — in a product whose English copy is otherwise
+British and whose German column sits right beside it.
+
+What I did: added `INTL_LOCALES`, mapping the locale ID to a BCP-47 tag
+(`en` → `en-GB`, `de` → `de-DE`), and pointed both formatters at it.
+
+Why: `Locale` is an ID — it is the URL, the `locale` column in every `_i18n`
+table and the catalogue key. Widening it to `'en-GB'` to fix a date format
+would mean re-seeding content rows.
+
+What I need from Ben: **confirm en-GB is right.** If the product's English is
+meant to be American, it is one line.
+
+## An enumerated `revoke` fails open, and CLAUDE.md rule 2 now understates it
+
+Where: `supabase/migrations/20260919120000_sessions.sql`,
+`20260918142704_profiles.sql`, `CLAUDE.md` rule 2
+
+What I checked: MEASURED on PostgreSQL 17.6. `revoke truncate, references,
+trigger … from authenticated` left `authenticated=arwdm` — the trailing `m` is
+**MAINTAIN**, which arrived in PG 17 and which no enumeration written before it
+could name. `profiles` had the same hole at `arwm`. MAINTAIN only permits
+VACUUM / ANALYZE / REINDEX / CLUSTER / REFRESH, so nothing leaked.
+
+What I did: replaced both with `revoke all … from authenticated` followed by
+the grant, and re-measured: `profiles` is now `arw`, `sessions` and
+`reflections` are `arwd`, `anon` holds no entry on any of them. This also put
+`profiles` into the revoke-then-grant order rule 2 states — it had been
+grant-then-revoke, which only worked *because* the revoke was enumerated.
+
+Why: the problem is not the privilege, it is the shape. Any enumerated revoke
+silently stops being complete the next time Postgres invents one.
+
+What I need from Ben: **one line in CLAUDE.md rule 2** — that the revoke is
+`revoke all`, not an enumeration. The rule's reasoning is already right; its
+example is now the weaker of the two forms in the repo.
+
+## CLAUDE.md rule 7 needs amending, because the design system now has locales
+
+Where: `CLAUDE.md` rule 7, `packages/design-system/src/locale.ts`
+
+What I checked: rule 7 says never let a design-system default through, because
+"those defaults are a mix of German and English". After C.10 that is no longer
+why — the defaults now come from a locale catalogue the app drives, and
+`Badge` and `Message` have `statusWord` props for the first time.
+
+What I did: nothing. CLAUDE.md is a guardrail file and I do not edit those on
+my own initiative.
+
+Why: the rule's CONCLUSION still holds — anything content-bearing stays
+explicit, and the Diary passes every string including `ContentList.emptyLabel`.
+Only its stated reason has changed.
+
+What I need from Ben: **approve the amendment.** Proposed: keep rule 7, replace
+its justification with "the catalogue is the floor, not a substitute — a
+component's default is correct for chrome and never correct for content", and
+add that the app must mount `MusyLocaleProvider`.
+
+## One db test failed once, immediately after a reset, and I could not reproduce it
+
+Where: `pnpm test:db`, on the run straight after `supabase db reset`
+
+What I checked: 1 failed / 60 passed on that run; 61/61 on the three runs
+after it, including a fresh `db reset` followed immediately by the suite. I did
+not capture which test failed, so I cannot name a cause. The most likely
+candidate is PostgREST's schema cache reloading behind the first request after
+a reset, but I did not observe that and am not claiming it.
+
+What I did: logged it rather than calling the suite clean.
+
+What I need from Ben: nothing yet. If it recurs, the first thing to capture is
+WHICH test — that is the fact I lost.
+
+## Nothing asserts the step copy is PRESENT once the spreadsheet lands
+
+Where: `src/lib/db.content.db.test.ts`, `public.missing_translations`
+
+What I checked: the view reports a hole only when a column is filled in one
+locale and empty in the other, so 28 strings absent from BOTH locales are
+invisible to it — deliberately, because absent-from-both is data rather than a
+dropped translation. So the suite passes today with no step copy at all, and
+will keep passing if the spreadsheet arrives half-filled in one language only.
+
+What I did: nothing.
+
+What I need from Ben: nothing now. Flagging for whoever imports the
+spreadsheet: that import wants a test asserting the columns are non-empty, and
+the moment to write it is then, not now.
+
+---
+
+# Phase C · after the decisions came back
+
+Ben answered the open questions the phase raised. Three of the answers changed
+code rather than only documents, which is what these entries record.
+
+## `reflections.mode` gained a third value before the feature exists
+
+Where: `supabase/migrations/20260919120000_sessions.sql`
+
+What I checked: D13's answer is that a photo answer is **read back as text**
+and only the text is stored — the same shape as a voice answer's transcript. So
+`mode` is not "what kind of file is attached" (no file is ever attached); it is
+**how the text was produced**: typed, transcribed, or read off a photograph.
+
+What I did: widened the check constraint from `('text','voice')` to
+`('text','voice','photo')`, rewrote the comment block that said "mode has two
+values, not three, because a photo produces no row", and replaced the db test
+asserting `'photo'` is REFUSED with one asserting all three are accepted.
+
+Why: it costs nothing while nothing is deployed (rule 4) and is an `alter
+table` against live rows the day after A.6. The constraint should say what the
+product is, not what this week's build reaches.
+
+What I need from Ben: nothing. Flagging that two of the three modes are now
+decided-but-unbuilt, and the positive-control tests are the only thing stopping
+someone narrowing the constraint back to what the build reaches.
+
+## A cardless exercise could not finish, and nothing would have caught it
+
+Where: `src/lib/sessionMachine.ts`, `src/lib/sessionMachine.test.ts`
+
+What I checked: `exercises.needs_cards` is false for Breathing Score and Body
+Scan Soundwalk, so neither has anything to scan. The reachability rule wants
+every earlier step completed; `scan` never completes; `listen` was therefore
+**permanently unreachable** and the run could not be finished. It could not
+fire because the one implemented exercise draws cards — so no test, no screen
+and no type would have found it.
+
+What I did: `SessionState` carries a `skipped` list, and `activeSteps()` filters
+it out of the list handed to the design system's `isWizardStepReachable`. It is
+**derived from the exercise, never stored** — so `sessions` gains no column, and
+a content edit that made an exercise cardless between two visits is reflected on
+resume rather than leaving a stale answer in the row. Six regression tests.
+
+Why: filtering the step list rather than teaching the shared rule about
+skipping. "Every earlier step is completed" is exactly right once the steps
+that are not in the run are not in the list, and the wizard rail keeps using
+the same predicate.
+
+What I need from Ben: nothing on the machine. **The design system has no
+*skipped* wizard state**, though — `completed` would draw a check for a step
+nobody did and `disabled` reads as "not yet". Logged in
+`packages/design-system/stories/OPEN-QUESTIONS.md`; D.4 will otherwise pick one
+silently.
+
+## The Diary can replay a track but cannot name it — D15
+
+Where: `src/lib/diary.ts`, `supabase/migrations/20260918150500_content_schema.sql`
+
+What I checked: the entry page's design is one content box with everything
+known, including the option to hear the track again while reading what you
+wrote. `sessions.track_id` records what played, and `tracks.src` and
+`duration_seconds` ARE granted — so playback is possible. But `tracks.title`
+and `tracks.artist` are **not granted to the client at all**, and selecting
+either fails the request outright rather than returning null.
+
+What I did: rendered the re-listen control with `diary.listenAgain` and no
+title. It does not render today at all, because `track_id` is null on every row
+until E.4 has audio files.
+
+Why: the column grant is load-bearing — the premise of the exercise is a
+listener who has not been primed by the track name (CLAUDE.md rule 2).
+
+What I need from Ben: **D15, written up in DOMAIN-MODEL.md.** The reveal has
+already happened by the time a session is in the Diary, so withholding the
+title from your own past entry may be the grant outliving its reason. Naming it
+means routing the diary through E.5's `reveal-track` function; not naming it
+means a *Listen again* control with no label but its own. Not urgent — there is
+no audio yet.
+
+## Diary — the entry page shows a duration for an unfinished session; the list does not
+
+Where: `src/routes/DiaryEntry.tsx`, `src/routes/Diary.tsx`
+
+What I checked: `/diary` deliberately withholds a duration for an abandoned
+session — a one-line row reading "11 min" next to "Unfinished" invites the
+reading that eleven minutes were spent doing the exercise, when they may have
+been spent with the tab open. The entry page shows it for both.
+
+What I did: kept the difference, because the entry page supplies the context
+the list row cannot: the duration sits under an *Unfinished* badge and beside
+*Stopped at Listen*, so what it measures is unambiguous.
+
+Why: the same number is honest in one place and misleading in the other.
+
+What I need from Ben: **yes or no.** It is defensible and it is also an
+inconsistency, and inconsistencies that nobody chose tend to get "fixed" in the
+wrong direction later.
+
+## The track playback path has never executed
+
+Where: `src/routes/DiaryEntry.tsx` (`trackUrl`, the `<audio>` wiring)
+
+What I checked: `track_id` is null on every session row because there are no
+audio files (E.4), so the re-listen block does not render. The code is covered
+by types, lint and unit tests and by nothing else. `trackUrl`'s premise — that
+`tracks.src` is repo-relative and `public/assets/**` is served at `/assets/**`,
+which is how `Logo`'s default src behaves — is sound and unproven.
+
+What I did: left it unexercised rather than seeding a fake track to make it
+run.
+
+Why: a fake row would have proved the wiring against a fixture nobody will ship
+and left a fabricated track in a content table that is edited in place.
+
+What I need from Ben: nothing. E.4 is where this first runs, and whoever does
+it should expect `trackUrl` to be the line that is wrong.
+
+## `/session/:id/:step` shows the raw step slug, and the redirect made it visible
+
+Where: `src/routes/Placeholder.tsx`, `src/i18n/en.ts` (`route.session.title`)
+
+What I checked: the title is `'Current session — {step}'` and `Placeholder`
+interpolates `useParams()` directly, so it renders "Current session — scan"
+rather than the translated step name. `session.step.*` exists and is unused by
+that route.
+
+What I did: nothing. The whole session screen is placeholder scaffolding that
+D.4 replaces, and translating one word of a screen that is otherwise a bare h1
+would be polishing something that is about to be deleted.
+
+Why: it is newly VISIBLE, though — `/diary/<running id>` now redirects here, so
+a user can reach it from the Diary rather than only by typing a URL.
+
+What I need from Ben: nothing. Flagging so D.4 does not inherit it silently.
+
+## The diary entry became an overlay route, and cold deep-linking needed new machinery
+
+Where: `src/routeHandle.ts` (`beneath`), `src/AppShell.tsx`, `src/router.tsx`,
+`src/routes/DiaryEntry.tsx`, `src/lib/useCloseOverlay.ts`
+
+What I checked: the designer asked for the entry to open in a lightbox rather
+than on its own page — "better for the flow". Done as an OVERLAY ROUTE, not as
+modal-only state, because router.tsx's rule is that every screen is a real
+route: Back still closes it and the URL is still linkable.
+
+`AppShell` already re-renders the last non-overlay page beneath an overlay, but
+it learns that page by REMEMBERING A NAVIGATION. On a cold deep-link straight
+to `/diary/<id>` nothing has navigated, so `<main>` rendered EMPTY — a lightbox
+floating over nothing. Observed in the browser before it was fixed, not
+reasoned about afterwards.
+
+What I did: `RouteHandle` gained `beneath: { element, path, wide? }` — the same
+three values the ref holds, declared by the route instead of remembered from a
+navigation. `/diary/:id` declares `beneath: { element: <Diary />, path:
+'/diary' }`. `/menu` and `/settings` deliberately omit it, because they belong
+to no one page, so their cold behaviour is unchanged.
+
+`useCloseOverlay()` also gained an optional fallback path (default `'/'`), so
+closing a cold-linked diary entry lands on `/diary` rather than the root.
+
+Why: an overlay whose backdrop is a blank page is worse than a full page — it
+looks broken rather than deliberate.
+
+What I need from Ben: nothing. Flagging that `beneath` is a new concept in
+`routeHandle.ts` and the second overlay pattern in the app; if a third overlay
+belongs to a page, it declares `beneath` too.
+
+## `diary.back` and `diary.exercise` were written and then not needed
+
+Where: `src/i18n/en.ts`, `src/i18n/de.ts`
+
+What I did: deleted both. `diary.exercise` labelled a `<dl>` row that would
+have defined the term the heading already states; `diary.back` was a back link
+the scrim, the close button and Escape all made redundant when the entry became
+a lightbox.
+
+Why: nothing enforces that a catalogue key is used, so a dead key survives
+indefinitely and reads as a string somebody forgot to render.
+
+What I need from Ben: nothing. Noting the gap itself — **there is no check that
+every `MessageKey` is referenced.** `en.ts`'s own header argues that an unknown
+key is a typecheck error; the reverse, an unused one, is invisible. A lint rule
+or a test could close it.

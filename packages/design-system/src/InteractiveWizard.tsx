@@ -11,10 +11,15 @@
  * these are links-in-spirit, every one is a tab stop, which is what a user
  * expects from a navigation region.
  *
- * REACHABILITY IS THE COMPONENT'S RULE, not the consumer's: every completed
- * step stays reachable, so going back is always allowed; the only unreachable
- * step is one whose predecessors are unfinished. That rule lives here so two
- * screens cannot disagree about it.
+ * REACHABILITY IS THE SYSTEM'S RULE, not the consumer's: every completed step
+ * stays reachable, so going back is always allowed; the only unreachable step
+ * is one whose predecessors are unfinished.
+ *
+ * The rule itself no longer lives in this file. It used to sit in a private
+ * closure here, which meant the app could not ask the question and wrote the
+ * same rule a second time in its session reducer. It is now one pure function,
+ * `wizardStepState` in src/wizardSteps.ts, exported from the package — this
+ * component is a CONSUMER of it, like anything else.
  *
  * Four states, and they are a progression rather than a palette:
  *   disabled → active → selected → completed
@@ -28,29 +33,26 @@
 import * as React from 'react';
 import { Check } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
+import { wizardStepState } from './wizardSteps';
 
-export type WizardStepState = 'disabled' | 'active' | 'selected' | 'completed';
+/* Declared in wizardSteps.ts, beside the function that returns it, and
+   re-exported here so the component's own type surface is unchanged. */
+export type { WizardStepState } from './wizardSteps';
 
 export interface WizardStep {
   id: string;
   label: string;
 }
 
-/** The state word appended under each label. Localised by the consumer; the
- *  defaults are English because the prototype ships English first. */
+/** The state word appended under each label. Each one defaults to the locale
+ *  catalogue (src/locale.ts); pass any subset to override. */
 export interface WizardStateWords {
   disabled: string;
   active: string;
   selected: string;
   completed: string;
 }
-
-const DEFAULT_STATE_WORDS: WizardStateWords = {
-  disabled: 'locked',
-  active: 'available',
-  selected: 'current',
-  completed: 'done',
-};
 
 /** The three solved accent families, named verbatim per Decision 3. */
 export type WizardAccent = 'primary' | 'accent' | 'accent-alt';
@@ -89,17 +91,16 @@ export function InteractiveWizard({
   vertical = false, compact = false,
   showStateWords = true, stateWords, accent = 'primary', className,
 }: InteractiveWizardProps) {
-  const words = { ...DEFAULT_STATE_WORDS, ...stateWords };
-  const done = React.useMemo(() => new Set(completed), [completed]);
-
-  /** A step is reachable when it is the current one, when it is completed, or
-   *  when every step before it is completed. */
-  const stateOf = (step: WizardStep, index: number): WizardStepState => {
-    if (step.id === current) return 'selected';
-    if (done.has(step.id)) return 'completed';
-    const predecessorsDone = steps.slice(0, index).every((s) => done.has(s.id));
-    return predecessorsDone ? 'active' : 'disabled';
+  const t = useMusyText();
+  const words: WizardStateWords = {
+    disabled: t.wizardDisabled,
+    active: t.wizardActive,
+    selected: t.wizardSelected,
+    completed: t.wizardCompleted,
+    ...stateWords,
   };
+  const done = React.useMemo(() => new Set(completed), [completed]);
+  const ids = React.useMemo(() => steps.map((s) => s.id), [steps]);
 
   return (
     <nav
@@ -114,7 +115,7 @@ export function InteractiveWizard({
     >
       <ol className="musy-wizard__list">
         {steps.map((step, i) => {
-          const state = stateOf(step, i);
+          const state = wizardStepState(ids, step.id, current, done);
           const isLast = i === steps.length - 1;
           return (
             <li className="musy-wizard__step" key={step.id}>

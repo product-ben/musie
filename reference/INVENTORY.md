@@ -637,6 +637,21 @@ German-primary", `IconButton.tsx:38`), and `07-components.md` makes
 rule: the earlier components ship German, the later ones ship English, and one
 component ships an English word with a German sibling.
 
+> **SUPERSEDED on 19 September by Phase C.10 — read the tables below as a
+> RECORD OF WHAT WAS FOUND, not as current fact.** Every string in both tables,
+> plus `DraggableList`'s hardcoded row controls in §7, now falls back to the
+> locale catalogue in `packages/design-system/src/locale.ts`, driven by
+> `MusyLocaleProvider`. `Badge` and `Message` gained `statusWord` props; their
+> status words had no prop when this was written. `DropHints` is exported from
+> the barrel now (§3 says it is not), and `dropHints` takes a `Partial`.
+> `InteractiveWizard.DEFAULT_STATE_WORDS` no longer exists — the rule moved to
+> `src/wizardSteps.ts`.
+>
+> The tables are left standing because this file is the inventory of what the
+> package looked like when it arrived, and rewriting it would destroy the
+> before to make the after look tidy. `packages/design-system/stories/OPEN-QUESTIONS.md`
+> carries the resolution under *Phase C.10*.
+
 ### German defaults
 
 | String | Where |

@@ -72,23 +72,48 @@ create table public.exercises (
 create table public.exercise_i18n (
   exercise_id    text not null references public.exercises (id) on delete cascade,
   locale         text not null check (locale in ('de', 'en')),
+  -- ── EXERCISE-LIBRARY COPY ─────────────────────────────────────────────
+  -- What /exercises says about an exercise before anyone starts it. NOT step
+  -- copy, which is the block below.
   name           text not null,
   description    text not null,
   -- Nullable, and legitimately so: only the implemented exercise carries these
-  -- three in the source. They are absent in BOTH locales, which is data rather
+  -- two in the source. They are absent in BOTH locales, which is data rather
   -- than a missing translation — and is why missing_translations compares the
   -- locales against each other instead of simply testing for null.
   needs          text,
-  guideline      text,
   duration_label text,
-  -- THE LISTENING INSTRUCTION AND THE REFLECTION QUESTION FOLLOW THE
-  -- EXERCISE, not the card and not the track. One of each per exercise, used
-  -- with every card that exercise draws.
+  -- ── STEP COPY ─────────────────────────────────────────────────────────
+  -- THE STEP COPY FOLLOWS THE EXERCISE, not the card and not the track. One
+  -- set per exercise, used with every card that exercise draws: card 3 is
+  -- Anger in every exercise, and what you are told to do with it is not the
+  -- card's to say.
   --
-  -- Nullable because the source has neither: the prototype wrote nine
-  -- per-card variants and no exercise-level one, so these arrive from the
-  -- Mindfulness Cards spreadsheet. Three of each, in both locales.
-  listening      text,
+  -- FOUR STEPS, FIXED: intro → scan → listen → reflect. One column each, so a
+  -- step's copy is found by its own name and a fifth step would be a migration
+  -- rather than a convention.
+  --
+  -- A LIST, NOT A PARAGRAPH. Each step carries 1–3 sentences and each element
+  -- RENDERS AS ITS OWN PARAGRAPH, so the array boundary IS the paragraph
+  -- break. One text column would put the screen in the business of splitting
+  -- prose on punctuation, which is wrong in German the first time a sentence
+  -- ends in an abbreviation.
+  --
+  -- scan_text was `guideline`: that column always held the card-picking
+  -- advice, which is the scan step. listen_text was `listening`.
+  --
+  -- Nullable because the source has none of it: the prototype wrote nine
+  -- per-card variants and no exercise-level copy at all, so all four arrive
+  -- from the Mindfulness Cards spreadsheet. Three of each, in both locales.
+  intro_text     text[],
+  scan_text      text[],
+  listen_text    text[],
+  reflect_text   text[],
+  -- ONE QUESTION PER EXERCISE, SHOWN TWICE: on the listen step, so the
+  -- listener knows what they are listening for, and again on the reflect step,
+  -- where they answer it. One string — two columns, or an array of two, could
+  -- silently disagree with themselves, and the whole point is that the
+  -- question asked and the question answered are the same question.
   question       text,
   image_alt      text not null,
   primary key (exercise_id, locale)
@@ -296,8 +321,16 @@ grant select (id, src, duration_seconds, licence_ref)
 --
 -- The second check compares the locales against EACH OTHER rather than
 -- testing for null, which is what keeps it quiet about the two unimplemented
--- exercises that carry no `needs` / `guideline` / `duration_label` in either
--- locale. Absent from both is data; absent from one is a dropped translation.
+-- exercises that carry no `needs` / `duration_label` in either locale. Absent
+-- from both is data; absent from one is a dropped translation.
+--
+-- ── THE FOUR STEP ARRAYS ARE FLATTENED, AND EMPTY COUNTS AS MISSING ────────
+-- `strings` unpivots one text `value` per translatable column, so a text[]
+-- needs a text representation: array_to_string joins it with a space, which
+-- is enough because nothing downstream reads the value — only whether it is
+-- null. The nullif then makes `{}` and `{""}` behave EXACTLY like NULL: an
+-- empty list renders as nothing on screen, so a step whose copy was cleared
+-- rather than deleted is the same hole and must report as one.
 --
 -- security_invoker = true so the view runs with the CALLER's privileges and
 -- respects their RLS. A Postgres view is owner-privileged by default, which
@@ -329,9 +362,11 @@ strings (entity, record_id, locale, column_name, value) as (
   union all select 'exercises',  exercise_id,  locale, 'name',           name           from public.exercise_i18n
   union all select 'exercises',  exercise_id,  locale, 'description',    description    from public.exercise_i18n
   union all select 'exercises',  exercise_id,  locale, 'needs',          needs          from public.exercise_i18n
-  union all select 'exercises',  exercise_id,  locale, 'guideline',      guideline      from public.exercise_i18n
   union all select 'exercises',  exercise_id,  locale, 'duration_label', duration_label from public.exercise_i18n
-  union all select 'exercises',  exercise_id,  locale, 'listening',      listening      from public.exercise_i18n
+  union all select 'exercises',  exercise_id,  locale, 'intro_text',     nullif(array_to_string(intro_text,   ' '), '') from public.exercise_i18n
+  union all select 'exercises',  exercise_id,  locale, 'scan_text',      nullif(array_to_string(scan_text,    ' '), '') from public.exercise_i18n
+  union all select 'exercises',  exercise_id,  locale, 'listen_text',    nullif(array_to_string(listen_text,  ' '), '') from public.exercise_i18n
+  union all select 'exercises',  exercise_id,  locale, 'reflect_text',   nullif(array_to_string(reflect_text, ' '), '') from public.exercise_i18n
   union all select 'exercises',  exercise_id,  locale, 'question',       question       from public.exercise_i18n
   union all select 'exercises',  exercise_id,  locale, 'image_alt',      image_alt      from public.exercise_i18n
   union all select 'cards',      card_id,      locale, 'feeling',        feeling        from public.card_i18n

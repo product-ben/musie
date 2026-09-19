@@ -6,13 +6,18 @@
  *
  * Every screen is a real route. There is no modal-only navigation: /settings
  * presents as a sheet but IS a route, so Back closes it and the URL is
- * linkable. The nav drawer arrives the same way in 2.5.
+ * linkable. The nav drawer arrives the same way in 2.5, and /diary/:id — a
+ * lightbox over the diary — the same way again. `handle.overlay` is the whole
+ * of the difference between a screen that replaces the page and one that
+ * comes forward over it.
  */
 import { createBrowserRouter, redirect } from 'react-router';
 import type { LoaderFunctionArgs } from 'react-router';
 import { AppShell } from './AppShell';
 import { SettingsSheet } from './SettingsSheet';
 import { MenuDrawer } from './routes/MenuDrawer';
+import { Diary } from './routes/Diary';
+import { DiaryEntry } from './routes/DiaryEntry';
 import { Exercises } from './routes/Exercises';
 import { Placeholder } from './routes/Placeholder';
 import { isStepId } from './routeHandle';
@@ -45,21 +50,67 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       {
+        /* `/` IS About Musie, rather than a redirect to `/about-musie`. A root
+           that only redirects costs a round trip and leaves the site with no
+           home — and the pair then reads right: `/` is about the product,
+           `/about-you` is about the reader. */
         index: true,
-        element: <Placeholder titleKey="route.landing.title" />,
-        handle: handle({ titleKey: 'route.landing.title' }),
+        element: <Placeholder titleKey="route.aboutMusie.title" />,
+        handle: handle({ titleKey: 'route.aboutMusie.title' }),
       },
       {
-        path: 'about',
-        element: <Placeholder titleKey="route.about.title" />,
-        handle: handle({ titleKey: 'route.about.title' }),
+        /* `about-you`, not `about`: one spelling per route, and the path now
+           says which "about" it is. */
+        path: 'about-you',
+        element: <Placeholder titleKey="route.aboutYou.title" />,
+        handle: handle({ titleKey: 'route.aboutYou.title' }),
       },
       {
-        /* A PLACEHOLDER, so the drawer's "Your diary" row is not a dead link
-           into Not found. The diary screen itself is a later phase. */
         path: 'diary',
-        element: <Placeholder titleKey="route.diary.title" />,
+        element: <Diary />,
         handle: handle({ titleKey: 'route.diary.title' }),
+      },
+      {
+        /* The `:id` IS looked up now — that is what C.7 changed. No loader,
+           though: the screen reads it through the same hook every other screen
+           uses, so loading, failure and a missing entry are one set of states
+           written once. A loader would move the 404 into the router and leave
+           the other two here.
+
+           THAT SURVIVED THE SCREEN GAINING A REDIRECT. Deep-linking a session
+           that is still running now sends the person into the session rather
+           than to "this entry does not exist", which is the one thing a loader
+           would ordinarily be for — sessionLoader below is exactly that. It
+           stays out of one anyway, because the redirect needs the ROW: only
+           the session's own status and step can say whether to redirect and to
+           where. A loader would have to read it, and the screen would read it
+           again to draw it — two fetches of one row, and two places holding
+           the locale fallback and the status narrowing, to save one render
+           that nothing has painted from. `sessionLoader` has no such cost: it
+           reads a URL segment, not a table. See DiaryEntry.tsx.
+
+           AND IT SURVIVED THE ENTRY BECOMING AN OVERLAY as well, because
+           `overlay` changes nothing about the fetch: the screen still reads
+           the id through the same hook, still holds loading, failure and the
+           404 in one place, and now shows all three inside the lightbox
+           rather than behind it. What `overlay: true` changes is where the
+           element is rendered — AppShell keeps the last non-overlay page
+           mounted beneath it, so the diary is still on screen behind the
+           scrim. The route is still a route: Back closes it and the URL is
+           still linkable, which is this file's opening rule and the only
+           reason a modal was allowed here at all. */
+        path: 'diary/:id',
+        element: <DiaryEntry />,
+        handle: handle({
+          titleKey: 'route.diaryEntry.title',
+          overlay: true,
+          /* And on a COLD deep-link there is no held page, so the route names
+             the one it belongs to. /menu and /settings cannot: they cover
+             whatever page you were on. An entry can — it is an entry OF this
+             list, and pasting its URL should open it over the diary rather
+             than over nothing. Same element the `diary` route renders. */
+          beneath: { element: <Diary />, path: '/diary' },
+        }),
       },
       {
         path: 'exercises',

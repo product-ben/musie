@@ -30,6 +30,7 @@ import { Button } from '@base-ui/react/button';
 import { Progress } from '@base-ui/react/progress';
 import { Mic, Square, Play, Pause, Trash2, CircleX } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 
 export type VoiceNoteState = 'idle' | 'recording' | 'recorded';
 
@@ -51,7 +52,8 @@ export interface VoiceNoteProps {
   description?: string;
   error?: string;
   disabled?: boolean;
-  /** Copy. English defaults; the consumer localises. */
+  /** Copy. Each defaults to the locale catalogue (src/locale.ts); pass one to
+   *  override it here. */
   idleText?: string;
   recordLabel?: string;
   stopLabel?: string;
@@ -74,16 +76,11 @@ export function VoiceNote({
   label, state, elapsed = 0, duration = 0, position = 0, playing = false,
   onRecordStart, onRecordStop, onTogglePlay, onDelete,
   description, error, disabled = false,
-  idleText = 'Answer out loud — you can delete it and start again.',
-  recordLabel = 'Record answer',
-  stopLabel = 'Stop recording',
-  playLabel = 'Play answer',
-  pauseLabel = 'Pause answer',
-  deleteLabel = 'Delete answer',
-  recordingWord = 'Recording',
-  errorWord = 'Error',
+  idleText, recordLabel, stopLabel, playLabel, pauseLabel, deleteLabel,
+  recordingWord, errorWord,
   id, className,
 }: VoiceNoteProps) {
+  const t = useMusyText();
   const reactId = React.useId();
   const rootId = id ?? `voice-${reactId}`;
 
@@ -108,13 +105,13 @@ export function VoiceNote({
           <>
             <Button
               className="musy-icon-btn musy-icon-btn--primary musy-icon-btn--primary-size"
-              aria-label={recordLabel}
+              aria-label={recordLabel ?? t.voiceRecord}
               disabled={disabled}
               onClick={onRecordStart}
             >
               <Icon glyph={Mic} size="md" />
             </Button>
-            <p className="musy-voice__text">{idleText}</p>
+            <p className="musy-voice__text">{idleText ?? t.voiceIdleText}</p>
           </>
         )}
 
@@ -122,7 +119,7 @@ export function VoiceNote({
           <>
             <Button
               className="musy-icon-btn musy-icon-btn--primary musy-icon-btn--primary-size"
-              aria-label={stopLabel}
+              aria-label={stopLabel ?? t.voiceStop}
               disabled={disabled}
               onClick={onRecordStop}
             >
@@ -131,7 +128,7 @@ export function VoiceNote({
             <div className="musy-voice__live">
               <span className="musy-voice__dot" aria-hidden="true" />
               <span className="musy-voice__status" role="status">
-                {recordingWord} {clock(elapsed)}
+                {recordingWord ?? t.voiceRecording} {clock(elapsed)}
               </span>
             </div>
           </>
@@ -141,7 +138,7 @@ export function VoiceNote({
           <>
             <Button
               className="musy-icon-btn musy-icon-btn--primary musy-icon-btn--primary-size"
-              aria-label={playing ? pauseLabel : playLabel}
+              aria-label={playing ? (pauseLabel ?? t.voicePause) : (playLabel ?? t.voicePlay)}
               disabled={disabled}
               onClick={onTogglePlay}
             >
@@ -161,7 +158,7 @@ export function VoiceNote({
             </div>
             <Button
               className="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size"
-              aria-label={deleteLabel}
+              aria-label={deleteLabel ?? t.voiceDelete}
               disabled={disabled}
               onClick={onDelete}
             >
@@ -174,7 +171,7 @@ export function VoiceNote({
       {error && (
         <div className="musy-field__error" role="alert">
           <Icon glyph={CircleX} size="sm" />
-          <span><span className="musy-sr-only">{errorWord}: </span>{error}</span>
+          <span><span className="musy-sr-only">{errorWord ?? t.statusError}: </span>{error}</span>
         </div>
       )}
 

@@ -48,15 +48,32 @@ export interface Exercise {
   description: string;
   /** Null for exercises the source has no `needs` for. Absent, not untranslated. */
   needs: string | null;
-  guideline: string | null;
   durationLabel: string | null;
   /**
-   * The listening instruction and the reflection question FOLLOW THE EXERCISE,
-   * not the card and not the track: one of each, used with every card the
-   * exercise draws. Null until the spreadsheet supplies them — the prototype
-   * wrote nine per-card variants and no exercise-level one.
+   * THE FOUR STEPS' COPY, one array each, in step order: intro → scan →
+   * listen → reflect. Each element is ONE PARAGRAPH — the array boundary is
+   * the paragraph break, so a screen maps over it and never splits prose on
+   * punctuation.
+   *
+   * `string[]`, NEVER `string[] | null`. The column is nullable and the rows
+   * are null today, but null and `[]` render identically — as nothing — so
+   * handing both shapes to every screen would buy a null check that has no
+   * distinct branch. Coalesced here, at the boundary, with the rest of the
+   * column mapping; a screen asks `.length === 0`.
    */
-  listening: string | null;
+  introText: string[];
+  scanText: string[];
+  listenText: string[];
+  reflectText: string[];
+  /**
+   * ONE question, SHOWN TWICE: on the listen step and again on the reflect
+   * step. Still `string | null`, unlike the arrays above, because a question
+   * is one sentence and its absence is a real branch — there is no question
+   * to show rather than an empty list of them.
+   *
+   * Null until the spreadsheet supplies it — the prototype wrote nine per-card
+   * variants and no exercise-level one.
+   */
   question: string | null;
   imageAlt: string;
 }
@@ -155,7 +172,7 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, exercise_i18n(locale, name, description, needs, guideline, duration_label, listening, question, image_alt)';
+const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, exercise_i18n(locale, name, description, needs, duration_label, intro_text, scan_text, listen_text, reflect_text, question, image_alt)';
 
 interface ExerciseRow {
   id: string;
@@ -171,9 +188,11 @@ interface ExerciseRow {
     name: string;
     description: string;
     needs: string | null;
-    guideline: string | null;
     duration_label: string | null;
-    listening: string | null;
+    intro_text: string[] | null;
+    scan_text: string[] | null;
+    listen_text: string[] | null;
+    reflect_text: string[] | null;
     question: string | null;
     image_alt: string;
   }[];
@@ -194,9 +213,13 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     name: text.name,
     description: text.description,
     needs: text.needs,
-    guideline: text.guideline,
     durationLabel: text.duration_label,
-    listening: text.listening,
+    /* ?? [] is the whole of the null-versus-empty decision: it happens once,
+       here, so no screen ever sees the nullable column. */
+    introText: text.intro_text ?? [],
+    scanText: text.scan_text ?? [],
+    listenText: text.listen_text ?? [],
+    reflectText: text.reflect_text ?? [],
     question: text.question,
     imageAlt: text.image_alt,
   }];

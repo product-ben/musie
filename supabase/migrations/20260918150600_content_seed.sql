@@ -35,8 +35,10 @@
 -- and read what actually landed with:
 --   select locale, feeling from public.card_i18n order by card_id, locale;
 --
--- STILL OWED, and NOT ours to write: exercise_i18n.listening and .question
--- (null in BOTH locales, three of each, from the spreadsheet) and
+-- STILL OWED, and NOT ours to write: THIRTY strings of exercise step copy —
+-- exercise_i18n.intro_text, .scan_text, .listen_text and .reflect_text
+-- (4 lists × 3 exercises × 2 locales = 24) plus .question (1 × 3 × 2 = 6),
+-- null in BOTH locales throughout, all from the spreadsheet — and
 -- card_i18n.image_alt (null in both — the source has no per-card alt text).
 -- Null in both locales is data; null in one is a dropped translation, which
 -- is the difference public.missing_translations exists to report.
@@ -89,13 +91,31 @@ values
   ('breathing-score', 5, 8, false, true, 'assets/web/method-card.png', false, 2),
   ('body-scan-soundwalk', 15, 20, false, true, 'assets/web/method-card.png', false, 3);
 
--- needs / guideline / duration_label: null for the two unimplemented
--- exercises — the source has them for neither locale.
+-- needs / duration_label: null for the two unimplemented exercises — the
+-- source has them for neither locale.
 --
--- listening / question: NULL FOR ALL THREE. They follow the exercise now,
--- and the source has no exercise-level instruction or question at all —
--- it wrote nine per-card variants instead. Three of each, in both
--- locales, come from the Mindfulness Cards spreadsheet.
+-- THE FOUR STEP ARRAYS AND THE QUESTION: NULL almost everywhere, in both
+-- locales. The step copy follows the exercise now, and the source has
+-- essentially no exercise-level copy — it wrote nine per-card listening
+-- instructions and nine per-card questions instead, and neither has a home
+-- once both follow the exercise.
+--
+-- THE ONE EXCEPTION IS `scan_text` ON mindfulness-cards, and it is the reason
+-- this file does not simply null the lot. The re-cut renamed `guideline` to
+-- `scan_text` — *"Work with the card you are drawn to, not the one you think
+-- you should pick."* — which is the card-picking advice, which is the scan
+-- step. It is the one characterful string the source did write at exercise
+-- level, DOMAIN-MODEL.md quotes it, and its German is hand-written rather
+-- than provisional. A rename that dropped it would be a silent content loss
+-- disguised as a schema change.
+--
+-- So TWENTY-TWO lists and six questions are still owed from the Mindfulness
+-- Cards spreadsheet: 4 lists x 3 exercises x 2 locales = 24, less the two
+-- `scan_text` rows carried over here.
+--
+-- NULL, not '{}'. The view treats an empty array as missing exactly like
+-- null, so either reports; null is the honest one, because nobody has written
+-- a list yet and an empty list would claim somebody had.
 
 -- PROVISIONAL GERMAN in every 'de' row below — see the header.
 --
@@ -107,15 +127,15 @@ values
 -- the terms the German-speaking field uses, so only the connective tissue is
 -- translated.
 insert into public.exercise_i18n
-  (exercise_id, locale, name, description, needs, guideline, duration_label,
-   listening, question, image_alt)
+  (exercise_id, locale, name, description, needs, duration_label,
+   intro_text, scan_text, listen_text, reflect_text, question, image_alt)
 values
-  ('mindfulness-cards', 'en', 'Quick Mindfulness Break', 'Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.', 'Your physical Mindfulness Cards deck', 'Work with the card you are drawn to, not the one you think you should pick.', 'About 15 minutes', null, null, 'The Mindfulness Cards deck laid out on a table'),
-  ('mindfulness-cards', 'de', 'Kurze Achtsamkeitspause', 'Neun Papierkarten, je ein Gefühl. Scanne die Karte, die dich anspricht, und höre das Stück dahinter.', 'Dein gedrucktes Mindfulness-Cards-Set', 'Arbeite mit der Karte, zu der es dich zieht – nicht mit der, die du für richtig hältst.', 'Etwa 15 Minuten', null, null, 'Das Mindfulness-Cards-Set auf einem Tisch ausgelegt'),
-  ('breathing-score', 'en', 'Breathing Score', 'A slow score that follows your breath, for settling before anything else.', null, null, null, null, null, 'Placeholder artwork for the Breathing Score Exercise'),
-  ('breathing-score', 'de', 'Atempartitur', 'Eine langsame Partitur, die deinem Atem folgt – zum Ankommen, bevor alles andere beginnt.', null, null, null, null, null, 'Platzhalterbild für die Übung Atempartitur'),
-  ('body-scan-soundwalk', 'en', 'Body Scan Soundwalk', 'A guided walk through the body, one sound at a time.', null, null, null, null, null, 'Placeholder artwork for the Body Scan Soundwalk Exercise'),
-  ('body-scan-soundwalk', 'de', 'Body Scan als Soundwalk', 'Ein geführter Gang durch den Körper, Klang für Klang.', null, null, null, null, null, 'Platzhalterbild für die Übung Body Scan als Soundwalk');
+  ('mindfulness-cards', 'en', 'Quick Mindfulness Break', 'Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.', 'Your physical Mindfulness Cards deck', 'About 15 minutes', null, array['Work with the card you are drawn to, not the one you think you should pick.'], null, null, null, 'The Mindfulness Cards deck laid out on a table'),
+  ('mindfulness-cards', 'de', 'Kurze Achtsamkeitspause', 'Neun Papierkarten, je ein Gefühl. Scanne die Karte, die dich anspricht, und höre das Stück dahinter.', 'Dein gedrucktes Mindfulness-Cards-Set', 'Etwa 15 Minuten', null, array['Arbeite mit der Karte, zu der es dich zieht – nicht mit der, die du für richtig hältst.'], null, null, null, 'Das Mindfulness-Cards-Set auf einem Tisch ausgelegt'),
+  ('breathing-score', 'en', 'Breathing Score', 'A slow score that follows your breath, for settling before anything else.', null, null, null, null, null, null, null, 'Placeholder artwork for the Breathing Score Exercise'),
+  ('breathing-score', 'de', 'Atempartitur', 'Eine langsame Partitur, die deinem Atem folgt – zum Ankommen, bevor alles andere beginnt.', null, null, null, null, null, null, null, 'Platzhalterbild für die Übung Atempartitur'),
+  ('body-scan-soundwalk', 'en', 'Body Scan Soundwalk', 'A guided walk through the body, one sound at a time.', null, null, null, null, null, null, null, 'Placeholder artwork for the Body Scan Soundwalk Exercise'),
+  ('body-scan-soundwalk', 'de', 'Body Scan als Soundwalk', 'Ein geführter Gang durch den Körper, Klang für Klang.', null, null, null, null, null, null, null, 'Platzhalterbild für die Übung Body Scan als Soundwalk');
 
 -- ── which exercises each situation surfaces ─────────────────────────────────
 insert into public.exercise_situations (exercise_id, situation_id) values

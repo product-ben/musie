@@ -22,6 +22,8 @@ import * as React from 'react';
 import { Button } from '@base-ui/react/button';
 import { Info, TriangleAlert, CircleCheck, CircleX, X } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
+import type { MusyStatusKey } from './locale';
 import type { LucideIcon } from 'lucide-react';
 import type { TypeStep, HeadingLevel } from './ContentBox';
 
@@ -33,9 +35,12 @@ const GLYPH: Record<MessageVariant, LucideIcon> = {
 };
 
 /** Icon-only status is a 1.4.1 failure, so each variant also carries a word.
- *  German, matching the app's primary language. */
-const STATUS_WORD: Record<MessageVariant, string> = {
-  info: 'Hinweis', warning: 'Warnung', success: 'Erfolg', error: 'Fehler',
+ *  It used to be a hardcoded German record with no prop — so an English screen
+ *  announced "Fehler: This content could not be loaded" to exactly the users
+ *  who could not see the colour. It now comes from the locale catalogue
+ *  (src/locale.ts), and `statusWord` overrides it per message. */
+const STATUS_WORD_KEY: Record<MessageVariant, MusyStatusKey> = {
+  info: 'statusInfo', warning: 'statusWarning', success: 'statusSuccess', error: 'statusError',
 };
 
 export interface MessageProps {
@@ -49,6 +54,9 @@ export interface MessageProps {
   action?: React.ReactNode;
   onDismiss?: () => void;
   dismissLabel?: string;
+  /** The screen-reader status word before the headline. Defaults to the
+   *  locale catalogue's word for the variant. */
+  statusWord?: string;
   live?: MessageLive;
   /** Animate the entrance. Travel comes from --motion-travel-sm, so reduced
    *  motion flattens it without a component branch. */
@@ -60,9 +68,10 @@ export interface MessageProps {
 export function Message({
   variant, headline, headlineStep = 'heading-sm', headingLevel = 3,
   text, textStep = 'body-md', action, onDismiss,
-  dismissLabel = 'Meldung schließen', live = 'off', entering = false,
+  dismissLabel, statusWord, live = 'off', entering = false,
   id, className,
 }: MessageProps) {
+  const t = useMusyText();
   const H = `h${headingLevel}` as 'h3';
   const role = live === 'assertive' ? 'alert' : live === 'polite' ? 'status' : undefined;
 
@@ -82,14 +91,14 @@ export function Message({
       </span>
       <div className="musy-msg__main">
         <H className="musy-msg__headline" data-type-step={headlineStep}>
-          <span className="musy-sr-only">{STATUS_WORD[variant]}: </span>
+          <span className="musy-sr-only">{statusWord ?? t[STATUS_WORD_KEY[variant]]}: </span>
           {headline}
         </H>
         {text && <p className="musy-msg__text" data-type-step={textStep}>{text}</p>}
         {action && <div className="musy-msg__action">{action}</div>}
       </div>
       {onDismiss ? (
-        <Button className="musy-msg__dismiss" onClick={onDismiss} aria-label={dismissLabel}>
+        <Button className="musy-msg__dismiss" onClick={onDismiss} aria-label={dismissLabel ?? t.dismissMessage}>
           <Icon glyph={X} size="md" />
         </Button>
       ) : <span />}

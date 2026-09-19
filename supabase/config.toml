@@ -199,7 +199,13 @@ email_sent = 2
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
-anonymous_users = 30
+#
+# RAISED FROM THE DEFAULT 30 FOR THE TEST SUITE, not for the app. `pnpm
+# test:db` signs in five fresh anonymous users per run, and one browser tab
+# doing real work signs in too — so at 30 the sixth consecutive run inside an
+# hour fails at SIGN-IN rather than at an assertion, which reads exactly like
+# a broken policy and is not. A local stack has no abuse surface to protect.
+anonymous_users = 300
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).

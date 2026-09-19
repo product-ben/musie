@@ -25,7 +25,7 @@ import type { NavRow } from '../components/NavDrawer';
 import { useCloseOverlay } from '../lib/useCloseOverlay';
 import { useProfile } from '../lib/profileContext';
 import { usePagePath } from '../lib/shellContext';
-import { readActiveSession } from '../lib/session';
+import { useActiveSession } from '../lib/session';
 
 export function MenuDrawer() {
   const close = useCloseOverlay();
@@ -39,31 +39,55 @@ export function MenuDrawer() {
    * the list — which is what "the start CTA is hidden while a session runs"
    * means structurally, rather than rendering both and hiding one.
    *
-   * CURRENTLY ALWAYS THE START BRANCH: readActiveSession() returns null
-   * because no sessions table exists yet. See lib/session.ts.
+   * NOW THREE BRANCHES, NOT TWO, because the answer is fetched rather than
+   * known: *Continue session*, *Start a session*, and — until the read lands —
+   * neither. The third is not padding. Guessing *Start a session* and swapping
+   * it a beat later would let a fast tap try to open a second session, which
+   * the unique index refuses with an error the user did nothing to deserve.
+   * So the row renders busy and disabled while the answer is unknown.
+   *
+   * A FAILED read is treated as the loading case too, deliberately: what it
+   * means is "we do not know", and the honest response to not knowing is not
+   * to offer to start something. The error is already logged by useAsync.
    */
-  const activeSession = readActiveSession();
+  const { data: activeSession, loading, error } = useActiveSession();
+  const unknown = loading || error !== null;
 
   /**
    * Where "Start a session" goes, and it is TWO gates, not one:
    *
-   *   1. no user type recorded → /about asks who they are here as first
-   *      (2.5's rule, and the reason /about exists on first use);
+   *   1. no user type recorded → /about-you asks who they are here as first
+   *      (2.5's rule, and the reason /about-you exists on first use);
    *   2. otherwise → /exercises, where they pick what to start with.
    *
-   * Falls back to /about while the profile is loading or unavailable, because
-   * asking again is recoverable and skipping the question is not.
+   * Falls back to /about-you while the profile is loading or unavailable,
+   * because asking again is recoverable and skipping the question is not.
    */
-  const startHref = profile?.user_type_id ? '/exercises' : '/about';
+  const startHref = profile?.user_type_id ? '/exercises' : '/about-you';
 
-  const action: NavRow = activeSession === null
-    ? { id: 'start', labelKey: 'menu.startSession', href: startHref, action: true }
-    : {
-        id: 'continue',
-        labelKey: 'menu.continueSession',
-        href: `/session/${encodeURIComponent(activeSession.id)}/${activeSession.step}`,
-        action: true,
-      };
+  let action: NavRow;
+  if (unknown) {
+    /* The label is the start label, but the row is disabled and announces
+       itself busy, so it is never read as an offer. Keeping a label rather
+       than emptying the row avoids the drawer reflowing under the user's
+       thumb as the answer arrives. */
+    action = {
+      id: 'start',
+      labelKey: 'menu.startSession',
+      href: startHref,
+      action: true,
+      loading: true,
+    };
+  } else if (activeSession === null) {
+    action = { id: 'start', labelKey: 'menu.startSession', href: startHref, action: true };
+  } else {
+    action = {
+      id: 'continue',
+      labelKey: 'menu.continueSession',
+      href: `/session/${encodeURIComponent(activeSession.id)}/${activeSession.step}`,
+      action: true,
+    };
+  }
 
   /**
    * The list as DATA, and the order is the design rather than an accident:
@@ -73,7 +97,7 @@ export function MenuDrawer() {
   const pages: NavRow[] = [
     action,
     { id: 'diary', labelKey: 'menu.yourDiary', href: '/diary', separatorBefore: true },
-    { id: 'about', labelKey: 'menu.aboutYou', href: '/about' },
+    { id: 'about', labelKey: 'menu.aboutYou', href: '/about-you' },
     { id: 'how', labelKey: 'menu.howItWorks', href: '/', separatorBefore: true },
   ];
 

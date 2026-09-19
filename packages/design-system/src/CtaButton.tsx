@@ -31,6 +31,7 @@
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 import type { LucideIcon } from 'lucide-react';
 
 export type CtaVariant =
@@ -62,6 +63,7 @@ export interface CtaButtonProps
    *  which is a different component. */
   leadingIcon?: LucideIcon;
   loading?: boolean;
+  /** Announced while loading. Defaults to the locale catalogue's word. */
   loadingLabel?: string;
   /** Fill the inline axis. A layout decision, so the consumer opts in. */
   block?: boolean;
@@ -86,9 +88,10 @@ export interface CtaButtonProps
 export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
   function CtaButton({
     children, variant = 'primary', size = 'primary', leadingIcon,
-    loading = false, loadingLabel = 'Wird geladen', block = false, wrap = false,
+    loading = false, loadingLabel, block = false, wrap = false,
     align = 'center', disabled, className, ...rest
   }, ref) {
+    const t = useMusyText();
     return (
       <Button
         {...rest}
@@ -108,7 +111,7 @@ export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
         {leadingIcon && <Icon glyph={leadingIcon} size={size === 'min' ? 'sm' : 'md'} inline />}
         <span className="musy-btn__label">{children}</span>
         {loading && <span className="musy-spinner" aria-hidden="true" />}
-        {loading && <span className="musy-sr-only" role="status">{loadingLabel}</span>}
+        {loading && <span className="musy-sr-only" role="status">{loadingLabel ?? t.loading}</span>}
       </Button>
     );
   }

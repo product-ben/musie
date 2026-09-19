@@ -89,37 +89,43 @@ export type Database = {
           description: string
           duration_label: string | null
           exercise_id: string
-          guideline: string | null
           image_alt: string
-          listening: string | null
+          intro_text: string[] | null
+          listen_text: string[] | null
           locale: string
           name: string
           needs: string | null
           question: string | null
+          reflect_text: string[] | null
+          scan_text: string[] | null
         }
         Insert: {
           description: string
           duration_label?: string | null
           exercise_id: string
-          guideline?: string | null
           image_alt: string
-          listening?: string | null
+          intro_text?: string[] | null
+          listen_text?: string[] | null
           locale: string
           name: string
           needs?: string | null
           question?: string | null
+          reflect_text?: string[] | null
+          scan_text?: string[] | null
         }
         Update: {
           description?: string
           duration_label?: string | null
           exercise_id?: string
-          guideline?: string | null
           image_alt?: string
-          listening?: string | null
+          intro_text?: string[] | null
+          listen_text?: string[] | null
           locale?: string
           name?: string
           needs?: string | null
           question?: string | null
+          reflect_text?: string[] | null
+          scan_text?: string[] | null
         }
         Relationships: [
           {
@@ -269,6 +275,113 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_types"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      reflections: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          mode: string
+          session_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          mode: string
+          session_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          mode?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reflections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          card_id: string | null
+          ended_at: string | null
+          exercise_id: string
+          id: string
+          situation_id: string | null
+          started_at: string
+          status: string
+          step: string
+          track_id: string | null
+          user_id: string
+        }
+        Insert: {
+          card_id?: string | null
+          ended_at?: string | null
+          exercise_id: string
+          id?: string
+          situation_id?: string | null
+          started_at?: string
+          status: string
+          step: string
+          track_id?: string | null
+          user_id: string
+        }
+        Update: {
+          card_id?: string | null
+          ended_at?: string | null
+          exercise_id?: string
+          id?: string
+          situation_id?: string | null
+          started_at?: string
+          status?: string
+          step?: string
+          track_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_situation_id_fkey"
+            columns: ["situation_id"]
+            isOneToOne: false
+            referencedRelation: "situations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }

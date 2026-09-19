@@ -256,9 +256,11 @@ that block them.
 - [ ] **B.2 Apply them, plus the API holes that remain.** One of the three is
   already closed: `CtaButton` now takes `align`, and the app's
   `justify-content` override is gone. The renames, the
-  Carousel resolution, one language for the defaults, `--border-strong-hover`
-  replacing both raw `--sand-8` references, and a `statusWord?: string` prop on
-  `Message` so its screen-reader word follows the locale. *Done when:* a grep
+  Carousel resolution, ~~one language for the defaults~~ (**done differently in
+  C.10 — a locale catalogue, which is a better answer than picking a
+  language**), `--border-strong-hover`
+  replacing both raw `--sand-8` references, and ~~a `statusWord?: string` prop on
+  `Message`~~ — **C.10 added that prop, and the same one on `Badge`.** *Done when:* a grep
   for `--sand-`, `--terracotta-`, `--ocher-` and `--purple-` in component CSS
   returns nothing, `accent-placeholder` appears nowhere, and the app passes
   `t('status.error')` to `Message`.
@@ -274,113 +276,86 @@ where fixing a component is cheap.
 
 ---
 
-## Phase C · The session spine
+## Phase C · The session spine — DONE 2026-09-19
 
-The real next work, and where DOMAIN-MODEL.md lands. The flow now ends in the
-Diary, so the Diary is on the critical path rather than a final phase.
+The spine is built and the schema has stopped moving. `pnpm check` is green
+(59 unit tests), `pnpm test:db` is green (61 tests across 4 files), and the
+whole spine was walked end to end against the local stack.
 
-- [ ] **C.1 Answer the open decisions.** No code. The set has grown to twelve
-  and two are already answered and built:
+**The phase grew by two steps and shrank by one.** C.1 was answered in
+conversation rather than costing a session; C.0 and C.9/C.10 appeared because
+two of Ben's answers turned out to be schema and design-system work rather
+than screen work.
 
-  - **Resolved.** D8 — a cardless exercise's track is a pairing row with a
-    null `card_id`. D9 — the listening instruction and the question follow the
-    **exercise**, which turned a re-key into a re-cut of the content model.
+- [x] **C.1 Answer the open decisions.** Done in conversation, no code. Nine of
+  twelve answered, three still open (D11 deferred, plus two NEW ones the work
+  surfaced — D13, what a photo answer is FOR if it is never kept, and D14,
+  whether a cardless exercise shows three steps or four). All of it is written
+  up in [DOMAIN-MODEL.md](DOMAIN-MODEL.md)'s Resolved section, which was also
+  **corrected in four places where it no longer described the schema**.
 
-    > **D8's text in DOMAIN-MODEL.md no longer describes the schema.** It says
-    > "`tracks.card_id` is nullable" and "the two-table alternative was
-    > rejected"; `tracks` now has no `card_id`, and there are two tables. The
-    > *decision* survives intact — one pairing row per (exercise, card), null
-    > for a cardless exercise, `nulls not distinct` — but CHANGED ⑦ split the
-    > table for a different reason (a recording is licensed once) than the one
-    > D8 rejected. Worth rewriting before anyone builds from it.
-  - **Blocks the migration outright.** D1 — whether reflections are stored at
-    all, and whether voice is among them.
-  - **One column or one screen each.** D2, D5, D6, D7, D10.
-  - **Cheaper than they were.** D3 and D4 — a second listening instruction and
-    a second question used to mean eighteen more strings on the card; after the
-    re-cut they are six on the exercise.
-  - **New, and worth settling before C.3.** D11 — how a track is chosen when it
-    is not looked up, because "at random" needs a repeat rule and that rule
-    reads the diary. D12 — the migrations are being *rewritten* in place rather
-    than stacked, which is only safe while nothing is deployed; A.5 ends that.
+- [x] **C.0 The exercise copy re-cut.** NEW, and it came out of D3/D4's answer:
+  each of the four steps carries 1–3 sentences as a bullet list, and there is
+  ONE question shown on both the listen and the reflect step. So
+  `exercise_i18n` lost `guideline` and `listening` and gained `intro_text`,
+  `scan_text`, `listen_text` and `reflect_text` as `text[]`, edited in place
+  per rule 4. **The owed-string count went from 6 to 28**, which was the known
+  cost of that answer.
 
-  See [DOMAIN-MODEL.md](DOMAIN-MODEL.md).
+- [x] **C.2 The privacy copy.** Written, in both languages, as
+  `privacy.*` in `en.ts` and `de.ts`. It is smaller than it was because only
+  text is ever stored, and every sentence is true of the code today AND after
+  voice lands. **Still needs your and your co-founder's sign-off** — that is
+  the one part of this step nobody but you can do.
 
-- [ ] **C.2 The privacy copy.** Moved forward from the old 6.1, because the
-  moment a reflection is stored and shown, *"Nothing leaves your device until
-  you share it"* is false — and with the Share step gone there is no longer a
-  sharing step to qualify it. Write what is true, in both languages. *Done
-  when:* you and your co-founder have signed off the strings, and they are in
-  `en.ts` and `de.ts`. Nothing else in this phase starts first.
+- [x] **C.3 The sessions and reflections migration.** Both tables, eight
+  policies, the partial unique index, and a `check ((status = 'started') =
+  (ended_at is null))` that no document proposed. `track_id` is `text`.
+  `reflections` has no `media_path` and `mode` has two values, not three.
 
-- [ ] **C.3 The sessions and reflections migration.** `sessions` with
-  `status`, `step`, `started_at`, `ended_at`, nullable `card_id`,
-  `situation_id` **and `track_id`**; the partial unique index that allows one
-  `started` row per user; `reflections` with its exactly-one-of check; RLS,
-  policies and grants on both; `on delete cascade` throughout.
+- [x] **C.4 The session state machine — no UI.** Pure reducer, 41 tests.
+  `FINISH` is refused anywhere but the last step, so a session cannot sit in
+  the Diary claiming a reflection that never happened.
 
-  `track_id` records what actually played rather than deriving it from the
-  pair — so a later content edit cannot rewrite what a diary entry claims you
-  heard, and resuming cannot re-roll the music. It points at **`tracks`, the
-  recording** — not at `exercise_tracks`, the pairing. "What did I listen to"
-  is answered by the recording.
+- [x] **C.5 The canonical route paths.** `/about` → `/about-you`, with the
+  catalogue keys renamed to match so no route name exists in two spellings.
+  `/` stays *About Musie*. `/done` is still there — D.5 deletes it.
 
-  > **`track_id` is `text`, not `uuid`.** DOMAIN-MODEL.md's session table still
-  > types it `uuid`, which was right while a track id was
-  > `gen_random_uuid()`. Since the split, `tracks.id` is `text` (`trk-01`) and
-  > only `exercise_tracks.id` is a uuid. Written as `uuid` this migration will
-  > not apply. Fix the document or fix it here, but notice it before you run
-  > it.
+- [x] **C.6 The active session, in the navigation.** The honest `null` is a
+  real query. The drawer's action row now has THREE states: a pending or
+  failed read means *we do not know*, and the row renders busy and disabled
+  rather than offering to start a second session.
 
-  **A.6 changes the cost of this step.** Before a hosted project exists, a
-  field added tomorrow is a rewrite of this migration; after, it is an
-  `alter table` against live rows. If more fields are still arriving (D12),
-  this step is cheaper now than it will ever be again — which is an argument
-  for doing it *before* the deploy, not after.
+- [x] **C.7 The Diary, minimally.** `/diary` groups by day with `Timeline` +
+  `LinkList`; `/diary/:id` shows one. An abandoned session appears in the list
+  marked unfinished, and says which step it stopped at.
 
-  *Done when:* a second `started` session is refused **by the database**,
-  deleting a session removes its reflection in one statement, and a second
-  anonymous user sees neither.
+- [x] **C.9 `LinkList` and `Timeline`.** NEW. An inventory found the design
+  system had no navigable list-item and nothing that groups by date, so the
+  Diary would have been a custom pattern. Built basic and measured — rows are
+  exactly 44px, Timeline's 32/16 gap ladder passes L2's doubling check exactly.
+  G.1 does the visual detail.
 
-- [ ] **C.4 The session state machine — no UI.** A `useReducer` and pure
-  functions: the four steps, the completed-steps list, the back stack, finish
-  and cancel. Not twenty `useState` calls, which is the default if nobody says
-  otherwise. *Done when:* unit tests cover forward, back, resume, finish and
-  cancel, and they pass.
+- [x] **C.10 The system's own words, as a locale layer.** NEW. `Badge` and
+  `Message` hardcoded `Hinweis`/`Fehler` with NO PROP, and `DraggableList`
+  hardcoded `Save`/`Discard`/`Edit`/`Delete` the same way — no discipline in
+  `apps/web` could reach them. Now a `MusyLocaleProvider` + catalogue across 19
+  components, with per-call props still winning. **This supersedes B.2's "one
+  language for the defaults"**, which was the weaker answer to the same
+  question. It also extracted the wizard's reachability rule so the rail and
+  the reducer share one implementation instead of two.
 
-- [ ] **C.5 The canonical route paths.** Smaller than it was: the *titles* are
-  already canonical — `/` is About Musie, `/about` is About you, `/diary` is
-  Your diary, `/session/:id/:step` is Current session — and `/exercises`,
-  `/diary`, `/menu` and `/settings` all exist. What remains is the **paths**:
-  `/about` → `/about-you`, and deciding whether `/` stays About Musie or
-  redirects to `/about-musie`. `/done` is still there and still unreachable;
-  delete it when D.5 routes finishing into the Diary instead. *Done when:*
-  every URL loads directly, browser back works through the set, and no route
-  name exists in two spellings.
+**Checkpoint — walked, 2026-09-19.** Start a session, leave it at the listen
+step, come back to the exact step, be refused a second one by the database,
+cancel it, find it in the Diary marked unfinished, then a finished session with
+its answer reading back and its reflection cascading on delete. 17 assertions,
+all passing. Driven at the data layer rather than through the UI, because the
+screens that create a session are Phase D.
 
-- [ ] **C.6 The active session, in the navigation.** Mostly built already: the
-  drawer chooses between *Start a session* and *Continue session* from a single
-  `activeSession` value, and exactly one of the two is ever in the list. What
-  is missing is one query — replace `readActiveSession()`'s honest `null` in
-  `lib/session.ts` with the real read. The drawer switches
-  *Start session* ⇄ *Continue session*; cancel is offered both there and inside
-  the session screen, because with one session open the drawer offers no other
-  exit. *Done when:* creating a session hides *Start session* everywhere,
-  *Continue session* returns to the exact step you left, and cancelling brings
-  *Start session* back.
+**What Phase D inherits.** The spine works and has nothing in it: no exercise
+says what to do at any step (28 strings owed), no track plays, and nothing
+creates a session except a script. See [MOCKUPS.md](MOCKUPS.md).
 
-- [ ] **C.7 The Diary, minimally.** `/diary` listing the user's non-running
-  sessions newest first, and `/diary/:id` showing one — because the flow ends
-  there and a happy path that ends on a blank page is not a happy path. A
-  cancelled session appears like any other, marked unfinished. *Done when:* a
-  finished session and a cancelled one both read back correctly, and the empty
-  state reads well.
-
-**Checkpoint.** Create a session, leave it, come back through *Continue
-session*, cancel it, and find it in the Diary. The whole spine, with no
-content in it yet.
-
----
 
 ## Phase D · The flow, screen by screen
 
@@ -530,7 +505,8 @@ F first.
 |---|---|
 | Up to **eleven** recordings cleared for commercial use — nine for the deck, plus one each for Breathing Score and Body Scan Soundwalk. Fewer if any is shared; `count(*) from tracks` is the number | E.4, E.5 |
 | Which vision model reads handwriting — or ship photo as session-only | D.5 |
-| The privacy copy, with your co-founder | C.2, and everything after it |
-| The real Mindfulness Cards spreadsheet | The content is placeholder until it lands; all German content rows are `[DE] `-prefixed. **The re-cut also left six strings with no source at all** — `listening` and `question` per exercise, in both locales — which D.5 needs |
+| **Sign-off** on the privacy copy — it is written, in both languages, and waiting | nothing is blocked; it is a promise already in the catalogue |
+| The real Mindfulness Cards spreadsheet | The content is placeholder until it lands; all German content rows are `[DE] `-prefixed. **The re-cut then the step re-cut left TWENTY-EIGHT strings with no source** — four step lists plus one question per exercise, in both locales — which D.4 and D.5 need |
 | The four user-type artworks | D.2 uses `RadioGroupImage` properly only once they exist |
-| D1 in DOMAIN-MODEL.md, and ideally D11 | C.3 |
+| Which vision model reads the handwriting — D13 settled that a photo BECOMES TEXT, so this is now the only thing between photo mode and working | D.5's reflect step |
+| D15 — may the Diary NAME the track you heard, given the column grant withholds the title | the diary entry page's *Listen again* control |

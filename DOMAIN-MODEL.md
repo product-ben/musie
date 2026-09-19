@@ -6,9 +6,18 @@ still open.
 Supersedes the diagram of 2026-09-19 in three places, each marked **CHANGED**
 with the reason. Everything else is that diagram, written out.
 
-Status of this document: **the Session and Reflection tables do not exist yet.**
-Everything under "Already built" is live and verified; everything under "To
-build" is a proposal waiting on the open decisions at the foot.
+Status of this document, **revised 19 September after Phase C.0 and C.3**:
+the Session and Reflection tables now EXIST. Everything below is live and
+verified against `supabase db reset` + `pnpm test:db` (57 tests) unless a line
+says otherwise.
+
+Phase C answered nine of the twelve open decisions. They have moved to
+**Resolved** at the foot, each with the shape it actually took — which in four
+places is NOT the shape this document originally proposed. Those four are
+marked **CORRECTED** and are the reason to re-read rather than skim:
+`sessions.track_id` is `text`, the `on delete` behaviours are not cascade,
+`reflections` has no `media_path`, and the exercise's step copy is four arrays
+rather than two strings.
 
 ---
 
@@ -39,7 +48,7 @@ erDiagram
         text exercise_id FK
         text card_id FK "null unless a card was drawn"
         text situation_id FK "open — D6"
-        uuid track_id FK "what actually played — null before the listen step"
+        text track_id FK "what actually played — TEXT, not uuid. Null before the listen step"
         text status "started | finished | abandoned"
         text step "intro | scan | listen | reflect"
         timestamptz started_at
@@ -52,8 +61,11 @@ erDiagram
         bool needs_cards
         bool needs_sound
         bool implemented
-        text listening "the instruction — per locale"
-        text question "the reflection prompt — per locale"
+        text_array intro_text "the intro step's 1-3 sentences — per locale"
+        text_array scan_text "the scan step's — per locale"
+        text_array listen_text "the listen step's — per locale"
+        text_array reflect_text "the reflect step's — per locale"
+        text question "ONE question, shown on listen AND reflect — per locale"
     }
     CARD {
         text id PK
@@ -80,9 +92,8 @@ erDiagram
     REFLECTION {
         uuid id PK
         uuid session_id FK
-        text mode "voice | text | photo"
-        text body "the written answer"
-        text media_path "Storage object — open, D1"
+        text mode "text | voice — NOT photo. See D1"
+        text body "the answer, always text, never null"
     }
 ```
 
@@ -136,18 +147,44 @@ Created by a trigger on `auth.users` insert, never by the client.
 The library. Three rows; one implemented.
 
 Owns `timeframe_min/max`, `needs_cards`, `needs_sound`, `implemented`, `sort`,
-and per locale `name`, `description`, `needs`, `guideline`, `duration_label`,
-`image_alt` — **and, since the re-cut, `listening` and `question`.**
+and per locale `name`, `description`, `needs`, `duration_label`, `image_alt` —
+plus the step copy below.
 
-**CHANGED ⑤: the listening instruction and the reflection question follow the
-EXERCISE.** Not the card, not the track. One of each per exercise, used with
-every card that exercise draws.
+**CHANGED ⑤: the step copy follows the EXERCISE.** Not the card, not the
+track. Used with every card that exercise draws.
 
-> **Both are null for all three exercises.** The source has no exercise-level
-> instruction or question — it wrote nine per-card variants instead — so six
-> strings (3 exercises × 2 locales, twice over) have to come from the
-> Mindfulness Cards spreadsheet. Until they do, no exercise can say what to do
-> while the track plays.
+**CORRECTED in C.0 — it is FOUR ARRAYS AND ONE QUESTION, not two strings.**
+This document previously said `listening` and `question`, one string each. The
+designer's answer re-cut it again:
+
+| Column | Type | |
+|---|---|---|
+| `intro_text` | `text[]` | the intro step's 1–3 sentences |
+| `scan_text` | `text[]` | the scan step's — **was `guideline`** |
+| `listen_text` | `text[]` | the listen step's — **was `listening`** |
+| `reflect_text` | `text[]` | the reflect step's |
+| `question` | `text` | **ONE question, rendered on BOTH the listen and the reflect step** |
+
+Two things follow from the shape and are easy to get wrong:
+
+- **The array boundary IS the paragraph break.** Each element renders as its
+  own paragraph, so no screen ever splits prose on punctuation — which breaks
+  in German at the first abbreviation.
+- **One question, shown twice, is deliberate.** The question you hold in mind
+  while the track plays and the question you answer afterwards are the same
+  question. Two columns would let them drift apart.
+
+`scan_text` inherits `guideline`'s rename and is the one place the re-cut kept
+real copy: *"Work with the card you are drawn to, not the one you think you
+should pick."*, with hand-written German. Everything else is null.
+
+> **Twenty-eight strings are owed, and they are not ours to write.** Four
+> lists × 3 exercises × 2 locales = 24, less the two `scan_text` rows carried
+> over, plus one question × 3 × 2 = 6. They come from the Mindfulness Cards
+> spreadsheet. Until they land, no exercise can say what to do while the track
+> plays. `select * from public.missing_translations` stays quiet about them,
+> because it compares locales against each other rather than testing for null —
+> absent from both is data, absent from one is a dropped translation.
 
 ### Card — `cards` + `card_i18n`
 
@@ -221,7 +258,10 @@ offer.
 
 ---
 
-## To build
+## Built in C.3
+
+`supabase/migrations/20260919120000_sessions.sql`, proved by 26 tests in
+`apps/web/src/lib/db.sessions.db.test.ts`.
 
 ### Session
 
@@ -230,15 +270,41 @@ One run of one exercise by one person.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid | |
-| `user_id` | uuid | → `profiles`, cascade delete |
-| `exercise_id` | text | → `exercises` |
-| `card_id` | text, **nullable** | → `cards`. Null for exercises that draw no card |
-| `situation_id` | text, **nullable** | → `situations`. Which situation led here — **open, see D6** |
-| `track_id` | uuid, **nullable** | → `tracks`. What actually played; null until the listen step |
-| `status` | text | `started` · `finished` · `abandoned` |
-| `step` | text | `intro` · `scan` · `listen` · `reflect` — where to resume |
+| `user_id` | uuid | → `profiles`, **on delete cascade** |
+| `exercise_id` | text | → `exercises`, **on delete restrict** |
+| `card_id` | text, **nullable** | → `cards`, **on delete set null** |
+| `situation_id` | text, **nullable** | → `situations`, **on delete set null**. Recorded, never yet filled — D6 |
+| `track_id` | **text**, nullable | → `tracks`, **on delete restrict**. What actually played |
+| `status` | text | `started` · `finished` · `abandoned`, by check constraint |
+| `step` | text | `intro` · `scan` · `listen` · `reflect`, by check constraint |
 | `started_at` | timestamptz | not null |
 | `ended_at` | timestamptz, nullable | set when status leaves `started` |
+
+**CORRECTED ⓐ: `track_id` is `text`, not `uuid`.** This document said `uuid`,
+which was right while a track id was `gen_random_uuid()`. Since the tracks
+split, `tracks.id` is the opaque slug `trk-01` and only `exercise_tracks.id` is
+a uuid. Written as `uuid` the migration does not apply at all.
+
+**CORRECTED ⓑ: the `on delete` behaviours are not cascade, and this document
+said they were.** A diary must never silently lose or rewrite what it says you
+did, which points three different ways:
+
+- `exercise_id` and `track_id` **restrict** — retiring an exercise or a
+  recording somebody has already done fails loudly rather than deleting their
+  history or quietly unhooking it.
+- `card_id` and `situation_id` **set null** — retiring one of those loses the
+  detail, not the entry.
+- `user_id` **cascade** — a session dies with its person, and only that way.
+
+**And one invariant the database now holds that no document proposed:**
+
+```sql
+check ((status = 'started') = (ended_at is null))
+```
+
+A running session cannot carry an end time and an ended one cannot lack it.
+Without it, `ended_at` is a field the app has to remember to set, and the Diary
+silently shows a duration of nothing.
 
 **CHANGED ①: three statuses, not two.** The diagram had `Angefangen` /
 `Beendet`. You confirmed a user must *close* a running session **or** *finish*
@@ -274,7 +340,8 @@ listen to".
 can show how long a session took. One field cannot express a duration.
 
 **At most one running session per person**, enforced by the database rather
-than hoped for by the app:
+than hoped for by the app — and now verified: a second insert fails with
+`23505` in the suite, watched going red with the index dropped.
 
 ```sql
 create unique index sessions_one_running_per_user
@@ -292,19 +359,41 @@ That rule has two visible consequences:
 
 ### Reflection
 
-What the person recorded at the end.
+What the person wrote at the end.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid | |
-| `session_id` | uuid | → `sessions`, cascade delete |
-| `mode` | text | `voice` · `text` · `photo` |
-| `body` | text, nullable | the written answer |
-| `media_path` | text, nullable | Storage object for voice / photo |
+| `session_id` | uuid | → `sessions`, **on delete cascade** |
+| `mode` | text | `text` · `voice`, by check constraint |
+| `body` | text, **not null** | the answer — always text |
 | `created_at` | timestamptz | |
 
-Exactly one of `body` / `media_path` is set, which a check constraint can
-enforce.
+**CORRECTED ⓒ: there is no `media_path`, no Storage bucket, and `mode` has two
+values rather than three.** D1 is answered: **only text is ever stored.**
+
+- A **voice** answer is transcribed to text and the transcript is stored. So
+  it is an ordinary row with `mode = 'voice'` and the words in `body`. **Musie
+  never holds a recording of anyone's voice** — the missing column is the
+  design, not an omission, and it is the same position the prototype's own
+  privacy copy took.
+- A **photo** answer is never stored server-side at all, which is why `photo`
+  is not a mode. A row would have nothing to put in `body`.
+
+So this document's "exactly one of `body` / `media_path`" collapses to `body
+not null`, and the larger piece of work it implied — a bucket, object-level
+RLS, a retention policy — does not exist and is not scheduled.
+
+**Two unique constraints, and they are two different rules:**
+
+```sql
+unique (session_id, mode)   -- the permanent shape
+unique (session_id)         -- "one reflection per session", today's rule
+```
+
+The designer chose one per session now, architected to scale to one per mode
+later. That scaling is a one-line `drop constraint` on the second index; the
+first already says what the final shape is. Nothing else moves.
 
 ### Diary
 
@@ -342,135 +431,190 @@ would stop meaning anything. So the Session records *which card was drawn*
 
 ---
 
-## Open decisions
+## Still open
 
-These block the migration, in roughly descending order of cost.
+Two, and neither blocks anything that is built. D13 and D14 were answered on
+19 September and have moved to Resolved.
 
-### D1 · Storing reflections contradicts a promise the prototype makes
+### D11 · How does a track get chosen when it is not looked up? — DEFERRED to Phase E
 
-The prototype says, on the written answer, the voice note **and** the photo:
+`sessions.track_id` covers the link whichever way the answer goes, so nothing
+waits on this. What it decides is how the exercises that do NOT draw a card
+pick their recording: the user chooses, the exercise rotates, or it picks at
+random and the session pins the result.
 
-> "Nothing leaves your device until you share it."
+**Deferred deliberately rather than left unnoticed.** The only implemented
+exercise draws cards, so its track is looked up and the question cannot fire
+yet. It needs settling before one picks at random, because "at random" needs a
+rule for repeats — the same track twice running is a bad session — and that
+rule has to read history, which makes the diary an *input* to the picker
+rather than only an output of it.
 
-A Diary of past sessions means voice memos, photos and text are stored
-server-side. Both cannot be true. If the Diary wins, that copy changes before
-anything ships — and voice and photo mean **Supabase Storage**: a bucket,
-object-level RLS, and a retention policy. That is a larger piece of work than
-the sessions table itself, and it is a promise to users rather than a technical
-detail.
+### D15 · Can the Diary NAME the track you heard? — NEW
 
-### D10 · Does every exercise share the one deck?
+`sessions.track_id` records what played, so the Diary can offer the recording
+back. It cannot say what it was: **`tracks.title` and `tracks.artist` are not
+granted to the client at all**, by column grant, and selecting either fails the
+request outright rather than returning null.
 
-Assumed yes, and now **built on that assumption**: card 3 exists in both
-exercises, so `cards` is a flat shared deck and only the pairing varies. An
-exercise with its own deck would need a third table, not a column — and
-re-seeding.
+That grant exists because the premise of the exercise is a listener who has not
+been primed by the track name. But **the reveal has already happened by the
+time a session is in the Diary** — you heard it, and E.5's reveal gate showed
+you what it was. So withholding it from your own diary entry may be the grant
+outliving its reason.
 
-### D11 · How does a track get chosen when it is not looked up?
+Three readings, and it is a product call:
 
-"In some exercises a track is linked directly to a session" says *where the
-link lives*, not *how the track is picked*. `sessions.track_id` covers the link
-either way. What it does not say is how those exercises choose:
+- **The Diary names it**, through the same `reveal-track` Edge Function E.5
+  builds. The grant stays; the function is the one door.
+- **The Diary offers playback and no name** — which is what is built today,
+  because it is what the grant allows without new machinery.
+- **The Diary names it only for a FINISHED session**, on the grounds that
+  abandoning a session means you never reached the reveal.
 
-- the user picks from a list;
-- the exercise rotates, or picks at random, and the session pins the result;
-- something else entirely.
-
-It matters because "pick at random" needs a rule for repeats — the same track
-twice running is a bad session — and that rule needs to see history, which
-means the diary is an input to the picker rather than only an output of it.
-
-### D12 · The schema is a moving target, and the current method has a shelf life
-
-Noted: more fields are coming to every table. Two consequences worth stating
-before they bite.
-
-**Migrations are being rewritten in place, not stacked.** Every content change
-so far — the exercise rename, the track re-key, the content re-cut — edited
-`20260918150500_content_schema.sql` as though it had always said that, and
-`supabase db reset` rebuilt from scratch. That is only safe because **nothing
-is deployed and no hosted project is linked**. The day either becomes untrue,
-every added field is its own `alter table` migration and the history stops
-being editable. Worth deciding deliberately rather than discovering.
-
-**A table nobody has built yet costs nothing to change.** `sessions` and
-`reflections` are still only in this document, so fields arriving now are free.
-The same fields arriving after the tables ship are migrations against live
-rows. If more shape is coming, there is an argument for letting it arrive
-before building them — and none for building them twice.
-
-### D2 · One reflection per session, or one per mode?
-
-The prototype's segmented control picks exactly one of voice / text / photo.
-Can someone record audio *and* write? One row with a unique `session_id`, or
-many rows per session. The table above assumes one; the constraint is a
-one-line difference.
-
-### D3 · "Listening Instructions" appears twice in the diagram — now cheap
-
-Once between Selection Help and Listening Question, once between Track and
-Reflection Question. A duplicated box, or two genuine blocks — one read before
-the track and one after?
-
-**The re-cut made this cheap.** It used to mean a second column on
-`card_i18n` and eighteen more strings; now it is a second column on
-`exercise_i18n` and six.
-
-### D4 · "Listening Question" and "Reflection Question" are both listed — now cheap
-
-The schema has one `question` per exercise. If the listening step asks its own
-question as well, that is a second column on `exercise_i18n` and three more
-strings per locale — not eighteen, as it would have been per card.
-
-### D5 · Do the four steps survive?
-
-The router validates `intro · scan · listen · reflect` today and redirects an
-unknown step. The diagram's sequence is finer-grained. Are those the same four
-renamed, a replacement, or not steps at all? `sessions.step` and the route's
-loader both follow from the answer.
-
-### D6 · Does a session record its situation?
-
-`situations` and `exercise_situations` exist and are how the prototype narrows
-the offer, but the diagram omits them. Worth keeping on the session — "what was
-I trying to do?" is diary-grade context — but it is a product call.
-
-### D7 · What does the Diary show for an abandoned session?
-
-The status now distinguishes it. Whether the Diary lists abandoned sessions
-alongside finished ones, separates them, or hides them is a design decision,
-not a data one.
-
+Until this is answered the entry page shows a *Listen again* control with no
+title. Nothing is blocked: there are no audio files yet (E.4), so `track_id` is
+null on every row and the control does not render.
 
 ---
 
 ## Resolved
 
+### D13 · What is a photo answer FOR, if it is never kept? — IT BECOMES TEXT
+
+The image is read back as text and **only the text is stored**, exactly as a
+voice answer is transcribed. So photo and voice turn out to be one feature with
+two front doors: both produce words, neither produces a file.
+
+**This changed the schema**, and cheaply, because nothing is deployed:
+`reflections.mode` now allows `'photo'` as a third value. `mode` records HOW
+THE TEXT WAS PRODUCED — typed, transcribed, or read off a photograph — rather
+than what kind of file is attached, because no file is ever attached. The
+constraint now says what the product is rather than what this week's build
+reaches, which is the whole argument for widening it before A.6 rather than
+after.
+
+### D14 · Do the four steps survive an exercise that draws no card? — FOUR, WITH SCAN SKIPPED
+
+The rail shows four markers and `scan` is visibly skipped, so every exercise
+reads structurally alike. A three-step rail was the alternative and was not
+chosen.
+
+**This was a live bug, not a hypothetical.** The reachability rule wants every
+earlier step completed, `scan` never completes for a cardless exercise, so
+`listen` was permanently unreachable and the run could not be finished. It
+could not fire only because the one implemented exercise draws cards.
+`sessionMachine` now carries a `skipped` list — DERIVED from the exercise's
+`needs_cards`, never stored, so `sessions` gains no column and a content edit
+cannot leave a stale answer behind. Six regression tests cover it.
+
+One consequence for the design system, recorded in its own log: **the wizard
+has no *skipped* state.** `InteractiveWizard` offers disabled / active /
+selected / completed, and a skipped step is none of those — `completed` would
+draw a check mark for something you did not do, and `disabled` reads as "not
+yet" rather than "not part of this run". D.4 needs a fifth state or a
+deliberate reuse of `disabled`.
+
+### D1 · Whether reflections are stored, and whether voice is among them — TEXT ONLY
+
+Only text is ever stored. A voice answer is transcribed and the transcript is
+the row; a photo answer is never stored at all. No `media_path`, no Storage
+bucket, no retention policy. Voice and photo are built as interactive UI
+mockups in the flow — see [MOCKUPS.md](MOCKUPS.md), which exists because of
+this decision.
+
+This also settles the contradiction BUILD-PLAN.md flagged between the
+prototype's *"the app never holds a recording of anyone's voice"* and this
+document's old `mode: voice` + `media_path`. The prototype was right.
+
+### D2 · One reflection per session, or one per mode? — ONE PER SESSION, SHAPED TO SCALE
+
+`unique (session_id)` today, with `unique (session_id, mode)` alongside it as
+the permanent shape. Scaling to one-per-mode is dropping the first constraint.
+
+### D3 · "Listening Instructions" appears twice — SUPERSEDED by the step re-cut
+
+### D4 · "Listening Question" and "Reflection Question" — SUPERSEDED, and answered
+
+Both dissolved into C.0's answer: **each of the four steps carries its own
+list of 1–3 sentences, and there is ONE question shown on both the listen and
+the reflect step.** So the diagram's duplicated instruction box was real (every
+step has copy) and its two questions were not (they are one question, read
+twice). See the Exercise section above.
+
+### D5 · Do the four steps survive? — YES, AS NAMED
+
+`intro · scan · listen · reflect`, unchanged in the router, in `routeHandle.ts`
+and now in `sessions.step`'s check constraint. See D14 for the one case that
+still needs an answer.
+
+### D6 · Does a session record its situation? — YES, ASKED LATER
+
+`situation_id` is on the table, nullable, and null for every row: nothing in
+the flow puts the question to anyone yet. The column is there because it was
+free before the schema deployed and an `alter table` against live rows
+afterwards.
+
+### D7 · What does the Diary show for an abandoned session? — IN THE LIST, MARKED UNFINISHED
+
+One chronological list. An abandoned entry carries a quiet marker and says
+which step it stopped at. The diary reads as an honest record of what
+happened, which is the reason `finished` and `abandoned` are separate statuses
+at all.
+
 ### D8 · Where a cardless exercise's track lives — ONE TABLE, NULLABLE CARD
 
-`tracks.card_id` is nullable and null means "the exercise's own track", with
-`unique nulls not distinct (exercise_id, card_id)` keeping one per pair. The
-two-table alternative was rejected: it would have cost two query paths and two
-sets of column grants for the same protection.
+**The decision survives; the sentences describing it did not.** It said
+"`tracks.card_id` is nullable" and "the two-table alternative was rejected".
+`tracks` now has no `card_id` and there ARE two tables — but that split is
+CHANGED ⑦'s doing, made for a different reason (a recording is licensed once)
+than the one D8 rejected (two query paths and two sets of column grants).
+
+What survives intact: **one pairing row per (exercise, card), null `card_id`
+for a cardless exercise, `unique nulls not distinct`.** That rule now lives on
+`exercise_tracks` instead of on `tracks`.
 
 ### D9 · Whether the instruction and question follow the track — NO, THE EXERCISE
 
-They are `exercise_i18n.listening` and `.question`, one of each per exercise,
-used with every card it draws. `card_i18n` keeps only the feeling. This was the
-decision that turned a re-key into a re-cut of the content model, and it is the
-reason eighteen per-card strings were dropped and six exercise-level ones are
-now owed.
+They are the exercise's, one set per exercise, used with every card it draws.
+`card_i18n` keeps only the feeling. This was the decision that turned a re-key
+into a re-cut of the content model — and C.0 then re-cut it once more, from
+two strings into four arrays and a question.
 
----
+### D10 · Does every exercise share the one deck? — YES, AND IT IS BUILT ON
+
+Card 3 exists in both exercises, so `cards` is a flat shared deck and only the
+pairing varies. An exercise with its own deck would need a third table, not a
+column — and a re-seed.
+
+### D12 · Migrations rewritten in place — YES, UNTIL A.6, AND IT IS NOW A RULE
+
+Every content change edits the existing migration as though it had always said
+that, verified with `supabase db reset`. Safe only while nothing is deployed
+and no hosted project is linked. This is now CLAUDE.md rule 4, and it inverts
+the day A.6 happens.
+
+The second half of D12 — *"a table nobody has built yet costs nothing to
+change, so there is an argument for letting the shape arrive before building
+them"* — was overtaken: the shape arrived (D1, D2, D6 and the step re-cut all
+landed first), and the tables were built once, after it.
+
 
 ## What the content still owes
 
 | Missing | Count | Why it is missing |
 |---|---|---|
-| `exercise_i18n.listening` | 3 exercises × 2 locales | the source only ever wrote per-card variants |
-| `exercise_i18n.question` | 3 exercises × 2 locales | same |
+| `exercise_i18n.intro_text` | 3 exercises × 2 locales | the source only ever wrote per-card variants |
+| `exercise_i18n.scan_text` | 2 exercises × 2 locales | mindfulness-cards has it — it is the old `guideline` |
+| `exercise_i18n.listen_text` | 3 exercises × 2 locales | as above |
+| `exercise_i18n.reflect_text` | 3 exercises × 2 locales | as above |
+| `exercise_i18n.question` | 3 exercises × 2 locales | as above |
 | A track for Breathing Score | 1 file | needs sound, draws no card, no file in the source |
 | A track for Body Scan Soundwalk | 1 file | same |
+
+**Twenty-eight strings**, and the count grew from six because the step re-cut
+asked each of the four steps for its own copy rather than asking the exercise
+for one instruction. That was the designer's decision knowing the cost.
 
 None of this blocks the schema — the columns and the rows exist and are
 nullable. It blocks the screens: an exercise that cannot say what to do while

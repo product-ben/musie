@@ -187,6 +187,86 @@ These are the consuming app's responsibility, not the package's:
 - **`body { position: relative }`** for iOS 26+ Safari backdrops.
 - **One `<MusyTooltipProvider>`** near the root, so moving between neighbouring
   icon buttons does not re-run the tooltip open delay.
+- **One `<MusyLocaleProvider locale={…}>`** near the root — see below. Without
+  it every component speaks German.
+
+## The system's own words
+
+Every user-visible default this package ships lives in **`src/locale.ts`**: one
+flat catalogue per locale, `musyTextDe` and `musyTextEn`, both answering to
+`MusyTextCatalogue`. Components read it through `useMusyText()`.
+
+```tsx
+import { MusyLocaleProvider } from '@musie/design-system';
+
+<MusyLocaleProvider locale={locale}>{children}</MusyLocaleProvider>
+```
+
+**Mount it once, at the root, and drive it from the locale the app already
+resolved.** `locale` is `'de' | 'en'`. With no provider mounted the catalogue
+falls back to **German**, because the app is German-primary — so a missing
+provider is not a crash, it is an English screen speaking German, which is
+exactly the bug the file exists to end.
+
+**Props still win.** The catalogue is the floor, not a replacement: every prop
+that took a string still takes it, still means what it meant, and still
+overrides. The catalogue only changes what a prop *falls back to*.
+
+**Some of these strings had no prop at all**, which is why this is a provider
+and not a convention. `Badge` and `Message` render a screen-reader-only status
+word before the label — *Hinweis · Warnung · Erfolg · Fehler* — and there was no
+way to change it, so an English screen announced "Fehler: …" to precisely the
+users who cannot see the colour. `DraggableList` hardcoded *Discard*, *Save*,
+*Delete*, *Edit*, both tool-button names and every keyboard announcement. Those
+are catalogue entries now. `Badge` and `Message` also gained a `statusWord`
+prop for the per-call case.
+
+**It is a provider, not a setter.** There is deliberately no
+`setMusyLocale()`: the app switches language at runtime with no reload, and a
+module-level setter would leave every mounted component rendering the previous
+language until something unrelated re-rendered it.
+
+Entries that interpolate are **functions**, not templates with slots —
+`dragHandleLabel(noun, position)`, `dropCombine(position)`,
+`recordStatus(elapsed, remaining)` — so each locale writes the whole phrase and
+German can put the verb where German puts the verb. The German is written to
+`docs/GERMAN-UI-WRITING.md` at the repo root.
+
+## The wizard's reachability rule
+
+`src/wizardSteps.ts` exports it as one pure function, with no React and no
+imports:
+
+```ts
+wizardStepState(steps, step, current, completed?)  // 'disabled' | 'active' | 'selected' | 'completed'
+isWizardStepReachable(steps, step, current, completed?)  // everything but 'disabled'
+```
+
+A step is reachable when it is the current one, when it is completed, or when
+every step before it is completed. `InteractiveWizard` consumes it rather than
+owning it, so an app that has to refuse the same transitions in a reducer can
+import the rule instead of writing it a second time.
+
+## Opening a lightbox from a route
+
+`Lightbox.trigger` is OPTIONAL. Pass it and base-ui renders a `Dialog.Trigger`,
+owns the open state and returns focus to that control on close. Omit it when
+the URL is what opened the lightbox — a route that presents as a modal — and
+drive `open` yourself:
+
+```tsx
+<Lightbox open title={name} titleHidden closeLabel={t('common.closeLabel')}
+          onOpenChange={(next) => { if (!next) close(); }}>
+```
+
+A hidden dummy trigger is not the alternative: it is a stray node in the DOM
+claiming to have opened a dialog it did not.
+
+What the trigger-less caller owes in exchange is the RETURN. With nothing to
+go back to, base-ui falls back to whatever was focused as the popup mounted —
+the link that navigated, if the page it sits on is still mounted behind the
+scrim, and `<body>` on a cold deep-link. `finalFocus` is base-ui's own prop,
+passed straight through, for naming the element instead.
 
 ## Theming
 

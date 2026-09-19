@@ -3970,3 +3970,144 @@
 @media (prefers-reduced-motion: reduce) {
   .musy-rec__bar { block-size: var(--sp-1) !important; transition: none; }
 }
+
+
+/* ═══ LINK LIST ════════════════════════════════════════════════════════════
+   A list of destinations. The WHOLE ROW is the hit target — the row element
+   itself comes from the consumer through the item's `render` prop, so this
+   stylesheet styles whatever that turns out to be (an <a>, a router Link, or
+   the default inert <div>).
+
+   DELIBERATELY BASIC. A rule between rows, §0's focus ring, the standard
+   interactive row height, spacing off the L2 ladder. No hover treatment, no
+   elevation, no motion, no transition: Phase G.1 owns the visual detail, and
+   an invented hover state now would be a decision taken in the wrong phase. */
+
+.musy-llist {
+  list-style: none;                /* L3: the semantics stay, the markers go */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The rule between rows. NOT base-ui's Separator, which is what §11 uses: a
+   <ul> may contain only <li>, so a Separator between two rows would be invalid
+   markup — and unlike a <dl>'s rows, list items are already delimited for AT
+   by the list itself, so this line is decorative and a border is the honest
+   way to draw it. Adjacent-sibling only, so the first row has no line above it
+   and the last none below it. */
+.musy-llist__item + .musy-llist__item {
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* THE ROW IS THE TARGET. --target-primary at every pointer: the row already
+   clears 2.5.8 on a fine pointer, so L5's split has no smaller rung to offer
+   and there is no `size` prop to pick. border-box, so the padding counts
+   towards the 44px rather than being added to it.
+   The row inherits its colour and drops the underline because the affordance
+   is the ROW, not a coloured word inside it — nothing here distinguishes a row
+   by colour alone (1.4.1), and Phase G.1 adds the visible affordance. */
+.musy-llist__row {
+  --musy-llist-media: var(--target-primary);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-stack);
+  min-block-size: var(--target-primary);
+  padding-block: var(--space-gap-related);
+  padding-inline: var(--sp-2);
+  border-radius: var(--radius-input);
+  color: inherit;
+  text-decoration: none;
+  text-align: start;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The thumbnail is a square at the row's own target height, so a row with
+   media is the same height as a row without it. Derived from --target-primary
+   rather than picked, so it steps with the touch scale. */
+.musy-llist__media {
+  flex: none;
+  inline-size: var(--musy-llist-media);
+  block-size: var(--musy-llist-media);
+  overflow: hidden;
+  border-radius: var(--radius-input);
+  background-color: var(--surface-sunken);
+}
+.musy-llist__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.musy-llist__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;              /* the elastic part; L15's flex-child trap */
+  max-inline-size: var(--measure-body);
+}
+
+/* label-lg, applied from the .tsx: body-md's size at weight 500. Emphasised
+   without dropping below L8's floor, which label-md and body-sm would. */
+.musy-llist__headline {
+  margin: 0;
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* A column, so two or three meta lines stack instead of running together. */
+.musy-llist__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+.musy-llist__empty {
+  margin: 0;
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+  max-inline-size: var(--measure-body);
+}
+
+
+/* ═══ TIMELINE ═════════════════════════════════════════════════════════════
+   Groups a list under headings. It draws a heading and the group's body and
+   nothing else — no rail, no marker, no sticky heading. Those are Phase G.1.
+
+   THE GAP LADDER, AND THE DOUBLING CHECK. Groups sit at --space-gap-group
+   (32px) because two date groups do not belong together; inside a group the
+   heading and its body sit at --space-gap-stack (16px), the content the
+   heading acts on. 32 is exactly double 16, which is L2's check — and the row
+   list inside a group separates its rows with a rule rather than a gap, so
+   16px stays the largest gap inside either group. */
+
+.musy-timeline {
+  list-style: none;                /* L3, as above: semantics stay, markers go */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+}
+
+.musy-timeline__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+  min-inline-size: 0;
+}
+
+/* heading-sm, applied from the .tsx. balance-wrapped like every other heading
+   in the system; a date is short, and a two-line date should break evenly. */
+.musy-timeline__heading {
+  margin: 0;
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  max-inline-size: var(--measure-heading);
+}
+
+.musy-timeline__body { min-inline-size: 0; }

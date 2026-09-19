@@ -35,6 +35,7 @@ import { Fieldset } from '@base-ui/react/fieldset';
 import { Check } from 'lucide-react';
 import { Icon } from './Icon';
 import { Message } from './Message';
+import { useMusyText } from './locale';
 import type { TypeStep } from './ContentBox';
 import type { RadioAccent } from './RadioGroupText';
 
@@ -76,6 +77,7 @@ export interface RadioCardsProps {
   descriptionStep?: TypeStep;
   disabled?: boolean;
   error?: string;
+  /** Empty state. Defaults to the locale catalogue's wording. */
   emptyLabel?: string;
   className?: string;
 }
@@ -83,8 +85,9 @@ export interface RadioCardsProps {
 export function RadioCards({
   name, legend, hint, options, value, onValueChange, accent = 'primary',
   headingLevel = 3, headlineStep = 'heading-sm', descriptionStep = 'body-md',
-  disabled = false, error, emptyLabel = 'Keine Optionen verfügbar', className,
+  disabled = false, error, emptyLabel, className,
 }: RadioCardsProps) {
+  const t = useMusyText();
   const hintId = React.useId();
   const errorId = React.useId();
   const H = `h${headingLevel}` as 'h3';
@@ -112,7 +115,7 @@ export function RadioCards({
         className ?? '',
       ].filter(Boolean).join(' ')}>
         {options.length === 0 ? (
-          <p className="musy-rcard-group__empty musy-radio-group__hint">{emptyLabel}</p>
+          <p className="musy-rcard-group__empty musy-radio-group__hint">{emptyLabel ?? t.optionsEmpty}</p>
         ) : options.map((opt) => (
           <Radio.Root
             key={opt.value}

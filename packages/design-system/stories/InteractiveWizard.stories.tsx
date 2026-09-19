@@ -168,7 +168,7 @@ const meta = {
       // The source comment says "Hide the state word"; true SHOWS it. See Build notes.
       description: 'Show the state word under each label. Default true.',
     },
-    stateWords: { control: false, description: 'Override the four state words. Defaults: locked / available / current / done.' },
+    stateWords: { control: false, description: 'Override any of the four state words. Each defaults to the locale catalogue — gesperrt / verfügbar / aktuell / erledigt in German, locked / available / current / done in English.' },
     accent: {
       control: 'inline-radio',
       options: ['primary', 'accent', 'accent-alt'],
@@ -208,8 +208,9 @@ export const Compact: Story = { args: { compact: true } };
 /** The prototype's actual appearance: no state words under the labels. */
 export const StateWordsHidden: Story = { args: { showStateWords: false } };
 
-/** The state words are the consumer's to localise. The defaults are English
- *  because the prototype ships English first. */
+/** The state words now default to the locale catalogue, so this story passes
+ *  the same German the catalogue ships — what it demonstrates is that a
+ *  per-call override still wins. */
 export const CustomStateWords: Story = {
   args: {
     stateWords: {

@@ -11,9 +11,9 @@
  * THE STATE IS NOT CARRIED BY HUE. The button stays primary while live —
  * swapping to the error family would paint a working control as a failure, and
  * §19's red-while-live belongs to a surface, not to the screen's main action.
- * Three cues change instead: the glyph (mic → stop), the label ("Record Now" →
- * "Recording") and the meter, which only exists while recording. It
- * survives greyscale and forced colours (1.4.1).
+ * Three cues change instead: the glyph (mic → stop), the label (ready →
+ * recording, from the locale catalogue) and the meter, which only exists while
+ * recording. It survives greyscale and forced colours (1.4.1).
  *
  * THE METER IS DECORATIVE, THE COUNTER IS NOT. Bars are aria-hidden and take
  * currentColor, so they follow the button's ink in every variant. What a
@@ -31,6 +31,7 @@ import * as React from 'react';
 import { Button } from '@base-ui/react/button';
 import { Mic, Square } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 
 export type RecordButtonState = 'ready' | 'recording';
 
@@ -56,10 +57,11 @@ export interface RecordButtonProps {
   size?: 'primary' | 'comfort' | 'guided';
   disabled?: boolean;
   block?: boolean;
-  /** Copy. English defaults; the consumer localises. */
+  /** Copy. Each defaults to the locale catalogue (src/locale.ts); pass one to
+   *  override it for this button. */
   readyLabel?: string;
   recordingLabel?: string;
-  /** Spoken status: ("12", "48") → "…". */
+  /** Spoken status: ("0:12", "0:48") → "…". */
   status?: (inSeconds: string, leftSeconds: string) => string;
   className?: string;
 }
@@ -67,11 +69,11 @@ export interface RecordButtonProps {
 export function RecordButton({
   state, elapsed = 0, maxSeconds = 60, levels = [], bars = 12,
   onToggle, variant = 'primary', size = 'primary', disabled = false, block = false,
-  readyLabel = 'Record Now',
-  recordingLabel = 'Recording',
-  status = (i, left) => `Recording, ${i} in, ${left} left`,
+  readyLabel, recordingLabel, status,
   className,
 }: RecordButtonProps) {
+  const t = useMusyText();
+  const say = status ?? t.recordStatus;
   const recording = state === 'recording';
   const left = Math.max(0, maxSeconds - elapsed);
 
@@ -92,7 +94,9 @@ export function RecordButton({
       onClick={onToggle}
     >
       <Icon glyph={recording ? Square : Mic} size={size === 'primary' ? 'md' : 'lg'} />
-      <span className="musy-btn__label">{recording ? recordingLabel : readyLabel}</span>
+      <span className="musy-btn__label">
+        {recording ? (recordingLabel ?? t.recordRecording) : (readyLabel ?? t.recordReady)}
+      </span>
 
       {recording && (
         <>
@@ -112,7 +116,7 @@ export function RecordButton({
             <span>{`−${recordClock(left)}`}</span>
           </span>
           <span className="musy-sr-only" role="status">
-            {status(recordClock(elapsed), recordClock(left))}
+            {say(recordClock(elapsed), recordClock(left))}
           </span>
         </>
       )}

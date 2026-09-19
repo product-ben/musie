@@ -36,6 +36,13 @@
  * UNDO IS THE CONSUMER'S. This reports the change; whoever owns the data owns
  * the snapshot and the window. Same split as §7.19, §7.22 and §7.23.
  *
+ * EVERY WORD IT SPEAKS COMES FROM THE LOCALE CATALOGUE (src/locale.ts). Four of
+ * them — Discard, Save, Delete, Edit — used to be hardcoded English in the JSX
+ * with no prop, alongside the handle and chevron names and every keyboard
+ * announcement, so a consumer who localised everything the props exposed still
+ * shipped four English buttons. They are catalogue entries now; the props that
+ * existed before still exist and still win.
+ *
  * THE EDITOR COMPOSES ON FIELD'S PARTS, not on the Field component. That is the
  * system's own sanctioned pattern (§7.19 does it and says so). Note that it is
  * now a CHOICE rather than a necessity: before §7.16's controlled-value defect
@@ -47,6 +54,8 @@ import { ContentBox } from './ContentBox';
 import { CtaButton } from './CtaButton';
 import { IconButton } from './IconButton';
 import { useToolSize } from './useCoarsePointer';
+import { useMusyText } from './locale';
+import type { MusyTextCatalogue } from './locale';
 import type { ToolSize } from './useCoarsePointer';
 
 /** Where a dragged item will land relative to the item under the pointer. */
@@ -59,13 +68,6 @@ export interface DropHints {
   after: (position: number) => string;
   cancel: string;
 }
-
-const DEFAULT_DROP_HINTS: DropHints = {
-  combine: (n) => `Merge into ${n}`,
-  before: (n) => `Insert before ${n}`,
-  after: (n) => `Insert after ${n}`,
-  cancel: 'Release to cancel',
-};
 
 export interface DraggableItem {
   /** REQUIRED. Reordering has to survive re-render, and an index cannot. */
@@ -92,12 +94,15 @@ export interface DraggableListProps {
   listeningLabel?: string;
   hearingLabel?: string;
   /**
-   * The drag hint's wording. Defaults are English, like the rest of the set's
-   * copy; the consumer localises. Each takes the target's 1-based position,
-   * because "merge into 2" is the only thing that separates a merge from a
-   * reorder while the finger is still down.
+   * The drag hint's wording, any subset of it. Each hint takes the target's
+   * 1-based position, because "merge into 2" is the only thing that separates
+   * a merge from a reorder while the finger is still down.
+   *
+   * Defaults come from the locale catalogue (src/locale.ts) — as do the four
+   * row controls, the handle and chevron names and every keyboard
+   * announcement, none of which had a prop at all before C.10.
    */
-  dropHints?: DropHints;
+  dropHints?: Partial<DropHints>;
   /**
    * Opt into L8's dense-list exception *as L8 states it*: the step varies per
    * item, `body-sm` at 80 characters or fewer and `body-md` above.
@@ -116,9 +121,10 @@ export interface DraggableListProps {
    * heading, so this shifts down by one. See 14 · Reflect step.
    */
   headingLevel?: 2 | 3 | 4 | 5 | 6;
-  /** What one item is called, for every control's accessible name. */
+  /** What one item is called, for every control's accessible name. Defaults
+   *  to the locale catalogue's noun. */
   itemNoun?: string;
-  /** Accessible name for the list itself. */
+  /** Accessible name for the list itself. Defaults to the catalogue's. */
   label?: string;
   className?: string;
 }
@@ -147,12 +153,19 @@ function zoneFor(rect: DOMRect, y: number): DropMode {
 export function DraggableList({
   items, editable = true, onEdit, onCombine, onMove, onDelete,
   pending = false, partial, headingLevel = 3,
-  emptyHeadline = 'Nothing captured yet',
-  emptyText = 'Finished statements will appear here, one box each, in the order you said them.',
-  listeningLabel = 'Listening', hearingLabel = 'Hearing you',
-  itemNoun = 'statement', label = 'Transcript',
-  dropHints = DEFAULT_DROP_HINTS, dense = false, className,
+  emptyHeadline, emptyText, listeningLabel, hearingLabel,
+  itemNoun, label,
+  dropHints, dense = false, className,
 }: DraggableListProps) {
+  const t = useMusyText();
+  const noun = itemNoun ?? t.dragItemNoun;
+  const listening = listeningLabel ?? t.dragListening;
+  const hints: DropHints = {
+    combine: dropHints?.combine ?? t.dropCombine,
+    before: dropHints?.before ?? t.dropBefore,
+    after: dropHints?.after ?? t.dropAfter,
+    cancel: dropHints?.cancel ?? t.dropCancel,
+  };
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dropTarget, setDropTarget] = React.useState<{ id: string; mode: DropMode } | null>(null);
   const [pointer, setPointer] = React.useState<{ x: number; y: number } | null>(null);
@@ -217,34 +230,33 @@ export function DraggableList({
       event.preventDefault();
       const lifting = draggingId !== id;
       setDraggingId(lifting ? id : null);
-      setLiveMessage(lifting ? `${itemNoun} ${i + 1} lifted. Arrows to move, M to merge, Escape to cancel.`
-                             : `${itemNoun} ${i + 1} dropped.`);
+      setLiveMessage(lifting ? t.dragLifted(noun, i + 1) : t.dragDropped(noun, i + 1));
       return;
     }
     if (event.key === 'Escape' && draggingId) {
       event.preventDefault();
       endDrag();
-      setLiveMessage('Move cancelled.');
+      setLiveMessage(t.dragCancelled);
       return;
     }
     if (draggingId !== id) return;
     if (event.key === 'ArrowUp' && i > 0) {
       event.preventDefault();
       onMove?.(id, items[i - 1].id, 'before');
-      setLiveMessage(`${itemNoun} moved to position ${i}.`);
+      setLiveMessage(t.dragMoved(noun, i));
       return;
     }
     if (event.key === 'ArrowDown' && i < items.length - 1) {
       event.preventDefault();
       onMove?.(id, items[i + 1].id, 'after');
-      setLiveMessage(`${itemNoun} moved to position ${i + 2}.`);
+      setLiveMessage(t.dragMoved(noun, i + 2));
       return;
     }
     if ((event.key === 'm' || event.key === 'M') && i > 0) {
       event.preventDefault();
       combine(id, items[i - 1].id);
       endDrag();
-      setLiveMessage(`Merged into ${itemNoun} ${i}.`);
+      setLiveMessage(t.dragMerged(noun, i));
     }
   };
 
@@ -259,10 +271,10 @@ export function DraggableList({
    * finger, where the eye already is.
    */
   const dragHint = !draggingId ? ''
-    : !dropTarget ? dropHints.cancel
-    : dropTarget.mode === 'combine' ? dropHints.combine(indexOf(dropTarget.id) + 1)
-    : dropTarget.mode === 'before' ? dropHints.before(indexOf(dropTarget.id) + 1)
-    : dropHints.after(indexOf(dropTarget.id) + 1);
+    : !dropTarget ? hints.cancel
+    : dropTarget.mode === 'combine' ? hints.combine(indexOf(dropTarget.id) + 1)
+    : dropTarget.mode === 'before' ? hints.before(indexOf(dropTarget.id) + 1)
+    : hints.after(indexOf(dropTarget.id) + 1);
 
   return (
     <div
@@ -280,14 +292,14 @@ export function DraggableList({
         <ContentBox
           outline="dashed"
           className="musy-dlist__empty"
-          headline={emptyHeadline}
+          headline={emptyHeadline ?? t.dragEmptyHeadline}
           headlineHidden
           headingLevel={headingLevel}
-          text={emptyText}
+          text={emptyText ?? t.dragEmptyText}
           textStep="body-sm"
         />
       ) : (
-        <ol className="musy-dlist__list" aria-label={label}>
+        <ol className="musy-dlist__list" aria-label={label ?? t.dragListLabel}>
           {items.map((item, index) => {
             const mode = dropTarget?.id === item.id ? dropTarget.mode : null;
             return (
@@ -296,7 +308,8 @@ export function DraggableList({
                 <DraggableListRow
                   item={item}
                   position={index + 1}
-                  itemNoun={itemNoun}
+                  itemNoun={noun}
+                  text={t}
                   headingLevel={headingLevel}
                   dense={dense}
                   editable={editable}
@@ -324,17 +337,17 @@ export function DraggableList({
         <ContentBox
           outline="dashed"
           className="musy-dlist__empty"
-          headline={partial ? hearingLabel : listeningLabel}
+          headline={partial ? (hearingLabel ?? t.dragHearing) : listening}
           headlineHidden
           headingLevel={headingLevel}
-          text={partial || listeningLabel}
+          text={partial || listening}
           textStep="body-sm"
         >
           {!partial && (
             /* L10: three dots, and under reduced motion the pulse is DROPPED
                rather than shortened — Layer 1 collapses every duration to 1ms,
                which on a loop strobes. */
-            <span className="musy-dlist__dots" aria-label={listeningLabel}>
+            <span className="musy-dlist__dots" aria-label={listening}>
               <span /><span /><span />
             </span>
           )}
@@ -350,7 +363,7 @@ export function DraggableList({
           aria-hidden="true"
         >
           <span className="musy-dlist__preview-item">
-            {itemNoun} {indexOf(dragged.id) + 1}
+            {t.dragItemLabel(noun, indexOf(dragged.id) + 1)}
           </span>
           <span className="musy-dlist__preview-text">{dragged.text}</span>
           <span className="musy-dlist__preview-action">{dragHint}</span>
@@ -366,6 +379,8 @@ interface RowProps {
   item: DraggableItem;
   position: number;
   itemNoun: string;
+  /** Passed down rather than re-read: one lookup per list, not per row. */
+  text: MusyTextCatalogue;
   headingLevel: 2 | 3 | 4 | 5 | 6;
   dense: boolean;
   editable: boolean;
@@ -382,7 +397,7 @@ interface RowProps {
 }
 
 function DraggableListRow({
-  item, position, itemNoun, headingLevel, dense, editable, dragging, mergeTarget,
+  item, position, itemNoun, text: t, headingLevel, dense, editable, dragging, mergeTarget,
   menuOpen, onToggleMenu, toolSize, onSave, onDelete, onLift, onHandleKeyDown,
   registerRef,
 }: RowProps) {
@@ -405,7 +420,7 @@ function DraggableListRow({
 
   return (
     <ContentBox
-      headline={`${itemNoun} ${position}`}
+      headline={t.dragItemLabel(itemNoun, position)}
       headlineHidden
       headingLevel={headingLevel}
       className={[
@@ -423,7 +438,7 @@ function DraggableListRow({
           <div className="musy-dlist__editor">
             <div className="musy-field">
               <label className="musy-field__label" htmlFor={fieldId}>
-                {itemNoun} {position}
+                {t.dragItemLabel(itemNoun, position)}
               </label>
               <textarea
                 id={fieldId}
@@ -437,9 +452,9 @@ function DraggableListRow({
             {/* L6: right-aligned, Save outermost, Discard leading in the DOM so
                 tab order matches the screen. */}
             <div className="musy-dlist__actions musy-dlist__actions--end">
-              <CtaButton variant="secondary" onClick={discard}>Discard</CtaButton>
+              <CtaButton variant="secondary" onClick={discard}>{t.dragDiscard}</CtaButton>
               <CtaButton variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
-                Save
+                {t.dragSave}
               </CtaButton>
             </div>
           </div>
@@ -454,7 +469,7 @@ function DraggableListRow({
           <div className="musy-dlist__tools" data-size={toolSize}>
             <IconButton
               glyph={GripVertical}
-              label={`Drag ${itemNoun} ${position}`}
+              label={t.dragHandleLabel(itemNoun, position)}
               variant="ghost"
               size={toolSize}
               className="musy-dlist__handle"
@@ -463,8 +478,8 @@ function DraggableListRow({
             />
             <IconButton
               glyph={ChevronDown}
-              label={menuOpen ? `Hide actions for ${itemNoun} ${position}`
-                              : `Show actions for ${itemNoun} ${position}`}
+              label={menuOpen ? t.dragHideActions(itemNoun, position)
+                              : t.dragShowActions(itemNoun, position)}
               variant="ghost"
               size={toolSize}
               className="musy-dlist__chevron"
@@ -482,8 +497,8 @@ function DraggableListRow({
            Toast's undo (L11) is a better safety net than a confirm dialog
            nobody reads. */
         <div className="musy-dlist__actions musy-dlist__actions--end" id={menuId}>
-          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={onDelete}>Delete</CtaButton>
-          <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>Edit</CtaButton>
+          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={onDelete}>{t.dragDelete}</CtaButton>
+          <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>{t.dragEdit}</CtaButton>
         </div>
       )}
     </ContentBox>

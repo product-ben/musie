@@ -37,14 +37,7 @@ create policy profiles_update_own
 -- No delete policy, deliberately. A profile dies with its auth user, through
 -- the `on delete cascade` above, and by no other route.
 
--- ── API visibility ─────────────────────────────────────────────────────────
--- The hosted project has "automatically expose new tables" turned OFF, so
--- without this grant PostgREST cannot see the table at all and every request
--- fails with a permission error rather than returning an empty set — which
--- reads like broken RLS and is not.
-grant select, insert, update on table public.profiles to authenticated;
-
--- ── …and taking back what nobody asked for ─────────────────────────────────
+-- ── Taking back what nobody asked for, and only then granting ─────────────
 -- MEASURED, not assumed: the local stack ships
 --
 --   alter default privileges in schema public
@@ -65,7 +58,32 @@ grant select, insert, update on table public.profiles to authenticated;
 -- the app signs in before it reads anything. There is no anon policy either,
 -- so this removes no working access.
 revoke all on table public.profiles from anon;
-revoke delete, truncate, references, trigger on table public.profiles from authenticated;
+
+-- authenticated: REVOKE ALL, then grant back exactly the three operations the
+-- app performs.
+--
+-- `revoke all`, NOT an enumerated `revoke delete, truncate, references,
+-- trigger`. MEASURED on this stack (PostgreSQL 17.6): the enumerated form
+-- left `authenticated=arwm` — the trailing `m` is MAINTAIN, a privilege that
+-- arrived in PG 17 and that no enumeration written before it could name. It
+-- only permits VACUUM / ANALYZE / REINDEX / CLUSTER / REFRESH, so nothing
+-- leaked. The lesson is the shape, not the privilege: an enumerated revoke
+-- stops being complete the next time Postgres invents one, and it fails OPEN.
+--
+-- The grant now comes AFTER the revoke, which is also the order CLAUDE.md
+-- rule 2 states. It was the other way round here, which worked only because
+-- the revoke was enumerated and could not take the grant back with it.
+revoke all on table public.profiles from authenticated;
+
+-- ── API visibility ─────────────────────────────────────────────────────────
+-- The hosted project has "automatically expose new tables" turned OFF, so
+-- without this grant PostgREST cannot see the table at all and every request
+-- fails with a permission error rather than returning an empty set — which
+-- reads like broken RLS and is not.
+--
+-- No DELETE: a profile dies with its auth user, through the `on delete
+-- cascade` above, and by no other route.
+grant select, insert, update on table public.profiles to authenticated;
 
 -- ── Row creation ───────────────────────────────────────────────────────────
 -- A trigger, not a client-side upsert. Two reasons: a client upsert races

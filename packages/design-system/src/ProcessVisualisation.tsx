@@ -15,6 +15,7 @@ import * as React from 'react';
 import { Separator } from '@base-ui/react/separator';
 import { ArrowDown } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 import type { LucideIcon } from 'lucide-react';
 import type { TypeStep } from './ContentBox';
 
@@ -32,7 +33,7 @@ export interface ProcessVisualisationProps {
   /** Show "Schritt 1" style ordinals above each title. On by default: the
    *  visible number is what a group reading together points at. */
   showOrdinals?: boolean;
-  /** Localised ordinal prefix. */
+  /** The ordinal prefix. Defaults to the locale catalogue's word. */
   ordinalPrefix?: string;
   titleStep?: TypeStep;
   bodyStep?: TypeStep;
@@ -40,9 +41,11 @@ export interface ProcessVisualisationProps {
 }
 
 export function ProcessVisualisation({
-  label, steps, showOrdinals = true, ordinalPrefix = 'Schritt',
+  label, steps, showOrdinals = true, ordinalPrefix,
   titleStep = 'heading-sm', bodyStep = 'body-md', className,
 }: ProcessVisualisationProps) {
+  const t = useMusyText();
+  const prefix = ordinalPrefix ?? t.stepPrefix;
   return (
     <ol className={['musy-process', className ?? ''].filter(Boolean).join(' ')} aria-label={label}>
       {steps.map((step, i) => (
@@ -53,7 +56,7 @@ export function ProcessVisualisation({
             </span>
             <span className="musy-process__text">
               {showOrdinals && (
-                <span className="musy-process__ordinal">{ordinalPrefix} {i + 1}</span>
+                <span className="musy-process__ordinal">{prefix} {i + 1}</span>
               )}
               <h3 className="musy-process__title" data-type-step={titleStep}>{step.title}</h3>
               {step.body && (

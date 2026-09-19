@@ -34,6 +34,7 @@ import { Button } from '@base-ui/react/button';
 import { Slider } from '@base-ui/react/slider';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 
 export type MusicTransport = 'paused' | 'playing' | 'ended';
 
@@ -52,8 +53,8 @@ function transportOf(playing: boolean, position: number, duration: number): Musi
  * THE LABEL NAMES THE ACTION, NOT THE TRACK. A fixed label is the safer
  * default, but the flows this button exists for withhold the track name on
  * purpose, which left the label with nothing true to say. So the visible label
- * is the verb — "Start Listening" / "Pause" / "Replay" — and `label` (the
- * track) moves into the accessible name, where it still disambiguates two
+ * is the verb — play / pause / replay, from the locale catalogue — and `label`
+ * (the track) moves into the accessible name, where it still disambiguates two
  * players on one screen.
  */
 export interface TrackButtonProps {
@@ -71,6 +72,9 @@ export interface TrackButtonProps {
   /** --target-guided (64px) for assisted use. */
   size?: 'primary' | 'guided' | 'comfort';
   disabled?: boolean;
+  /** The three transport words. Each defaults to the locale catalogue's
+   *  TRACK wording — "Jetzt anhören" invites, where the player's "Abspielen"
+   *  is a transport control. */
   playLabel?: string;
   pauseLabel?: string;
   restartLabel?: string;
@@ -81,12 +85,15 @@ export function TrackButton({
   label, duration, position = 0, playing = false,
   onTogglePlay, onRestart,
   variant = 'secondary', size = 'primary', disabled = false,
-  playLabel = 'Start Listening', pauseLabel = 'Pause', restartLabel = 'Replay',
+  playLabel, pauseLabel, restartLabel,
   className,
 }: TrackButtonProps) {
+  const t = useMusyText();
   const state = transportOf(playing, position, duration);
   const glyph = state === 'playing' ? Pause : state === 'ended' ? RotateCcw : Play;
-  const action = state === 'playing' ? pauseLabel : state === 'ended' ? restartLabel : playLabel;
+  const action = state === 'playing' ? (pauseLabel ?? t.trackPause)
+    : state === 'ended' ? (restartLabel ?? t.trackRestart)
+    : (playLabel ?? t.trackPlay);
 
   return (
     <Button
@@ -122,6 +129,8 @@ export interface MusicPlayerProps {
   onSeek?: (seconds: number) => void;
   accent?: 'primary' | 'accent' | 'accent-alt';
   disabled?: boolean;
+  /** The transport words and the scrubber's name. Each defaults to the locale
+   *  catalogue's PLAYER wording. */
   playLabel?: string;
   pauseLabel?: string;
   restartLabel?: string;
@@ -133,13 +142,15 @@ export function MusicPlayer({
   title, duration, position = 0, playing = false,
   onTogglePlay, onRestart, onSeek,
   accent = 'primary', disabled = false,
-  playLabel = 'Play', pauseLabel = 'Pause', restartLabel = 'Play again',
-  seekLabel = 'Playback position',
+  playLabel, pauseLabel, restartLabel, seekLabel,
   className,
 }: MusicPlayerProps) {
+  const t = useMusyText();
   const state = transportOf(playing, position, duration);
   const glyph = state === 'playing' ? Pause : state === 'ended' ? RotateCcw : Play;
-  const action = state === 'playing' ? pauseLabel : state === 'ended' ? restartLabel : playLabel;
+  const action = state === 'playing' ? (pauseLabel ?? t.playerPause)
+    : state === 'ended' ? (restartLabel ?? t.playerRestart)
+    : (playLabel ?? t.playerPlay);
 
   return (
     <div
@@ -172,7 +183,7 @@ export function MusicPlayer({
             <Slider.Track className="musy-mplayer__control">
               <span className="musy-mplayer__track" />
               <Slider.Indicator className="musy-mplayer__fill" />
-              <Slider.Thumb className="musy-mplayer__thumb" aria-label={seekLabel} />
+              <Slider.Thumb className="musy-mplayer__thumb" aria-label={seekLabel ?? t.playerSeek} />
             </Slider.Track>
           </Slider.Control>
         </Slider.Root>

@@ -1,4 +1,5 @@
 import { StrictMode } from 'react';
+import type * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 
@@ -28,10 +29,40 @@ import '@musie/design-system/musy-components.css';
 import './styles.css';
 import './shell.css';
 
+import { MusyLocaleProvider } from '@musie/design-system';
+
 import { AuthProvider } from './AuthProvider';
 import { LocaleProvider } from './LocaleProvider';
+import { useLocale } from './i18n/localeContext';
 import { ProfileProvider } from './ProfileProvider';
 import { router } from './router';
+
+/**
+ * The design system's own chrome words follow the app's locale.
+ *
+ * Every component default the package ships — including the ones with no prop
+ * at all, like Badge's and Message's screen-reader status word — is read from
+ * @musie/design-system's catalogue through this provider. Unmounted, the set
+ * speaks German, so an English session would announce "Fehler: …" to exactly
+ * the users who cannot see the colour.
+ *
+ * It sits INSIDE LocaleProvider because it derives from it, and it is a
+ * component rather than a value because `locale` changes at runtime with no
+ * reload: a module-level setter would not re-render anything.
+ *
+ * This does not soften the app's own rule. apps/web still passes every
+ * user-visible string explicitly (CLAUDE.md rule 7); the catalogue is the
+ * floor under the strings a screen cannot pass.
+ */
+/* eslint-disable-next-line react-refresh/only-export-components --
+   the rule wants components in a file that exports them, so Fast Refresh can
+   replace them. main.tsx is the entry point and exports nothing at all, so
+   Fast Refresh never applies to it either way, and a file of its own for three
+   lines that only ever mount here would hide the wiring rather than show it. */
+function DesignSystemLocale({ children }: { children: React.ReactNode }) {
+  const { locale } = useLocale();
+  return <MusyLocaleProvider locale={locale}>{children}</MusyLocaleProvider>;
+}
 
 const container = document.getElementById('root');
 if (container === null) throw new Error('#root is missing from index.html');
@@ -49,7 +80,9 @@ createRoot(container).render(
           waits for auth and locale together is in AppShell. */}
       <ProfileProvider>
         <LocaleProvider>
-          <RouterProvider router={router} />
+          <DesignSystemLocale>
+            <RouterProvider router={router} />
+          </DesignSystemLocale>
         </LocaleProvider>
       </ProfileProvider>
     </AuthProvider>

@@ -12,6 +12,7 @@
  */
 import * as React from 'react';
 import { Separator } from '@base-ui/react/separator';
+import { useMusyText } from './locale';
 import type { TypeStep } from './ContentBox';
 
 export interface ContentListItem {
@@ -36,16 +37,19 @@ export interface ContentListProps {
   label?: string;
   items: ContentListItem[];
   contentStep?: TypeStep;
+  /** Shown instead of the list when `items` is empty. Defaults to the locale
+   *  catalogue's wording. */
   emptyLabel?: string;
   className?: string;
 }
 
 export function ContentList({
   label, items, contentStep = 'body-md',
-  emptyLabel = 'Noch keine Einträge', className,
+  emptyLabel, className,
 }: ContentListProps) {
+  const t = useMusyText();
   if (items.length === 0) {
-    return <p className="musy-clist__empty" data-type-step="body-md">{emptyLabel}</p>;
+    return <p className="musy-clist__empty" data-type-step="body-md">{emptyLabel ?? t.listEmpty}</p>;
   }
   return (
     <dl className={['musy-clist', className ?? ''].filter(Boolean).join(' ')} aria-label={label}>

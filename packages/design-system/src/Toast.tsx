@@ -39,6 +39,7 @@ import { Button } from '@base-ui/react/button';
 import { X } from 'lucide-react';
 import { Icon } from './Icon';
 import { CtaButton } from './CtaButton';
+import { useMusyText } from './locale';
 
 export type ToastLive = 'polite' | 'off';
 
@@ -67,10 +68,11 @@ export function Toast({
   action,
   onDismiss,
   live = 'polite',
-  dismissLabel = 'Meldung schließen',
+  dismissLabel,
   id,
   className,
 }: ToastProps) {
+  const t = useMusyText();
   if (!label) return null;
 
   return (
@@ -91,7 +93,7 @@ export function Toast({
       )}
 
       {onDismiss ? (
-        <Button className="musy-toast__dismiss" onClick={onDismiss} aria-label={dismissLabel}>
+        <Button className="musy-toast__dismiss" onClick={onDismiss} aria-label={dismissLabel ?? t.dismissMessage}>
           <Icon glyph={X} size="md" />
         </Button>
       ) : null}

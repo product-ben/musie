@@ -45,7 +45,8 @@ const meta = {
           '**Purpose.** Bring one thing forward, over the screen it came from.',
           '',
           '**base-ui owns everything that is easy to get wrong and invisible when it is:**',
-          'focus is moved into the popup on open and RESTORED to the trigger on close,',
+          'focus is moved into the popup on open and restored on close (to the trigger,',
+          'or to `finalFocus`),',
           'the background is made inert, the page scroll is locked, Escape closes, and the',
           'popup is portaled so no ancestor’s `overflow` can clip it. None of that is',
           're-implemented here.',
@@ -65,9 +66,15 @@ const meta = {
           '(4.1.2). When the framed content already shows the title, pass the same string',
           'with `titleHidden` rather than dropping it.',
           '',
-          '**`trigger` is rendered through `Dialog.Trigger`,** so the trigger keeps its own',
-          'semantics and gets `aria-haspopup` / `aria-expanded` for free — pass a',
-          'CtaButton or an IconButton, not a div.',
+          '**Two ways in.** Opened by a CONTROL: pass `trigger`. It is rendered through',
+          '`Dialog.Trigger`, so it keeps its own semantics and gets `aria-haspopup` /',
+          '`aria-expanded` for free — pass a CtaButton or an IconButton, not a div — and',
+          'focus returns to it on close.',
+          '',
+          'Opened by NAVIGATION: omit `trigger` and drive `open`. **The URL is the',
+          'trigger**, so there is no opening element and a hidden dummy one would be a',
+          'stray node lying about what opened the dialog. What the caller owes in',
+          'exchange is the RETURN — see `finalFocus`, and `RouteDriven` below.',
           '',
           '**Two states, and they are base-ui’s:** open and closed. `[data-closed]` runs',
           'the enter animation in reverse at `--motion-exit`, so the exit is faster than',
@@ -89,9 +96,10 @@ const meta = {
           'What I checked: Level 2 gives both lightboxes’ titles, contents and CTAs, but',
           'nothing about what opens them. Elsewhere it says the ABOUT YOU image radio',
           'routes to the "Not implemented yet" lightbox, which is a radio, not a button —',
-          'and `trigger` is a required `ReactElement` rendered through `Dialog.Trigger`,',
-          'so a story cannot omit it. Level 1 says only "pass a CtaButton or an',
-          'IconButton, not a div".',
+          'and `trigger` was then a required `ReactElement` rendered through',
+          '`Dialog.Trigger`, so a story could not omit it. Level 1 says only "pass a',
+          'CtaButton or an IconButton, not a div". (`trigger` is optional as of the',
+          'route-driven case — see `RouteDriven`. The rest of this note stands.)',
           'What I did: used a `secondary` CtaButton reading "Show details & player" — the',
           'prototype’s own copy for the control that opens a method’s detail, borrowed',
           'from METHOD FLOW.',
@@ -166,7 +174,7 @@ const meta = {
   argTypes: {
     trigger: {
       control: false,
-      description: 'The control that opens it. Rendered through Dialog.Trigger — pass a CtaButton or an IconButton, not a div.',
+      description: 'Optional. The control that opens it, rendered through Dialog.Trigger — pass a CtaButton or an IconButton, not a div. Omit it for a lightbox opened by navigation.',
     },
     title: {
       control: 'text',
@@ -180,7 +188,11 @@ const meta = {
     children: { control: false, description: 'The framed content. A ContentBox is the reference case.' },
     open: { control: 'boolean', description: 'Controlled open state. Omit for an uncontrolled lightbox.' },
     onOpenChange: { action: 'openChange', description: 'Fires with the requested open state.' },
-    closeLabel: { control: 'text', description: 'Label for the close control. Defaults to German, like the rest of the set’s user-facing strings.' },
+    finalFocus: {
+      control: false,
+      description: 'Where focus goes on close — base-ui’s own prop, passed through. Unset, base-ui returns focus to the trigger, or to whatever was focused when the lightbox mounted. A trigger-less lightbox that cannot rely on that names the element here.',
+    },
+    closeLabel: { control: 'text', description: 'Label for the close control. Defaults to the locale catalogue — “Schließen” unless the app mounts MusyLocaleProvider with another locale.' },
     mandatory: {
       control: 'boolean',
       description: 'Remove the close button and the click-outside dismissal. Use ONLY when the lightbox is blocking on a decision the framed content itself resolves.',
@@ -250,6 +262,29 @@ export const MinimalContent: Story = {
 /** `closeLabel` overridden with the prototype's own English string. The
  *  component's default is German. */
 export const CloseLabelOverridden: Story = { args: { open: true, closeLabel: 'Close' } };
+
+/**
+ * NO TRIGGER — the case a route-driven lightbox is. `trigger` is omitted and
+ * `open` is the story's, because in the app the URL is what opened it and
+ * closing it is a navigation, not a state change. Nothing renders at rest and
+ * no dummy element stands in for the control that does not exist.
+ *
+ * `finalFocus` is left unset here, so base-ui returns focus to whatever was
+ * focused when the popup mounted — in Storybook that is the canvas. A screen
+ * whose opener may be gone passes a ref instead.
+ */
+export const RouteDriven: Story = {
+  args: {
+    trigger: undefined,
+    open: true,
+    title: 'Diary entry',
+    children: (
+      <ContentBox headline="Quick Mindfulness Break" headingLevel={3} headlineStep="heading-md">
+        <ContentList label="Method details" items={METHOD_DETAILS} contentStep="body-md" />
+      </ContentBox>
+    ),
+  },
+};
 
 /** `mandatory` removes the close button and click-outside dismissal. For a
  *  lightbox blocking on a decision the framed content itself resolves —

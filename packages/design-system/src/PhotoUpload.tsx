@@ -28,6 +28,7 @@ import * as React from 'react';
 import { Button } from '@base-ui/react/button';
 import { ImagePlus, Trash2, CircleX } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 
 export interface UploadedPhoto {
   /** Object URL or data URL for the preview. */
@@ -51,7 +52,8 @@ export interface PhotoUploadProps {
   error?: string;
   disabled?: boolean;
   required?: boolean;
-  /** Copy. English defaults; the consumer localises. */
+  /** Copy. Each defaults to the locale catalogue (src/locale.ts); pass one to
+   *  override it here. */
   zoneText?: string;
   chooseLabel?: string;
   replaceLabel?: string;
@@ -74,13 +76,10 @@ export function PhotoUpload({
   label, name, value = null, onValueChange, previewAlt,
   accept = 'image/*', description, error,
   disabled = false, required = false,
-  zoneText = 'Drag a photo here, or choose one from your device.',
-  chooseLabel = 'Choose photo',
-  replaceLabel = 'Replace',
-  removeLabel = 'Remove photo',
-  errorWord = 'Error',
+  zoneText, chooseLabel, replaceLabel, removeLabel, errorWord,
   id, className,
 }: PhotoUploadProps) {
+  const t = useMusyText();
   const reactId = React.useId();
   const controlId = id ?? `upload-${reactId}`;
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -144,11 +143,11 @@ export function PhotoUpload({
               disabled={disabled}
               onClick={() => inputRef.current?.click()}
             >
-              <span className="musy-btn__label">{replaceLabel}</span>
+              <span className="musy-btn__label">{replaceLabel ?? t.uploadReplace}</span>
             </Button>
             <Button
               className="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size"
-              aria-label={removeLabel}
+              aria-label={removeLabel ?? t.uploadRemove}
               disabled={disabled}
               onClick={() => onValueChange?.(null)}
             >
@@ -173,13 +172,13 @@ export function PhotoUpload({
           <span className="musy-upload__zone-icon" aria-hidden="true">
             <Icon glyph={ImagePlus} size="lg" />
           </span>
-          <p className="musy-upload__zone-text">{zoneText}</p>
+          <p className="musy-upload__zone-text">{zoneText ?? t.uploadZoneText}</p>
           <Button
             className="musy-btn musy-btn--secondary"
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
           >
-            <span className="musy-btn__label">{chooseLabel}</span>
+            <span className="musy-btn__label">{chooseLabel ?? t.uploadChoose}</span>
           </Button>
         </div>
       )}
@@ -187,7 +186,7 @@ export function PhotoUpload({
       {error && (
         <div className="musy-field__error" role="alert">
           <Icon glyph={CircleX} size="sm" />
-          <span><span className="musy-sr-only">{errorWord}: </span>{error}</span>
+          <span><span className="musy-sr-only">{errorWord ?? t.statusError}: </span>{error}</span>
         </div>
       )}
 

@@ -168,7 +168,7 @@ const meta = {
     },
     emptyLabel: {
       control: 'text',
-      description: 'Rendered as a paragraph instead of an empty <dl> when items is empty.',
+      description: 'Rendered as a paragraph instead of an empty <dl> when items is empty. Defaults to the locale catalogue — “Noch keine Einträge” / “No entries yet”.',
     },
     className: { control: false },
   },

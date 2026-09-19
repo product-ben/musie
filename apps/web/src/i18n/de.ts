@@ -62,10 +62,54 @@ export const de: Messages = {
   'exercises.timeframe': '{min}–{max} Minuten',
   'exercises.notImplemented': 'Noch nicht verfügbar',
 
+  /* ── The session ─────────────────────────────────────────────────────────
+     Noun forms, not imperatives: these name the steps in a rail, they do not
+     ask for an action. §3's verb-first rule is about buttons. */
+  'session.step.intro': 'Einstieg',
+  'session.step.scan': 'Scannen',
+  'session.step.listen': 'Hören',
+  'session.step.reflect': 'Nachdenken',
+  'session.status.finished': 'Beendet',
+  /* 'Nicht beendet', not 'Abgebrochen': the session was left, and the diary
+     records that without judging it. */
+  'session.status.abandoned': 'Nicht beendet',
+
+  /* ── Diary ─────────────────────────────────────────────────────────────── */
+  'diary.timelineLabel': 'Deine Sitzungen, neueste zuerst',
+  'diary.listLabel': 'Tagebucheinträge',
+  'diary.empty': 'Noch keine Sitzungen',
+  'diary.emptyText': 'Beende eine Sitzung, dann erscheint sie hier.',
+  'diary.stoppedAt': 'Aufgehört bei {step}',
+  /* 'Min.' with the point: the abbreviation DIN 1301 uses, and it keeps the
+     row inside the measure where 'Minuten' would not. */
+  'diary.duration': '{minutes} Min.',
+  'diary.when': 'Wann',
+  /* 'Dauer', not 'Wie lange': a label in a facts list is a noun in German
+     where English gets away with a question. */
+  'diary.howLong': 'Dauer',
+  'diary.card': 'Karte',
+  'diary.listenAgain': 'Nochmal hören',
+  'diary.yourAnswer': 'Deine Antwort',
+  'diary.notFound': 'Diesen Tagebucheintrag gibt es nicht',
+
+  /* ── Privacy · C.2 ───────────────────────────────────────────────────────
+     Written to docs/GERMAN-UI-WRITING.md: du, sentence case, no 'Bitte'.
+     'E-Mail-Adresse' keeps its hyphens (Durchkopplung). See en.ts for what
+     each sentence is claiming and why it is true. */
+  'privacy.title': 'Was Musie speichert',
+  'privacy.account': 'Musie fragt nie nach deinem Namen oder deiner E-Mail-Adresse. Dieser Browser hat ein eigenes, privates Konto, und dein Tagebuch gehört dazu.',
+  'privacy.written': 'Was du schreibst, kommt in dein Tagebuch, damit du es später nachlesen kannst. Niemand sonst sieht es.',
+  'privacy.voice': 'Wenn du laut antwortest, macht Musie aus deinen Worten Text und behält nur den Text. Die Aufnahme selbst wird nie gespeichert.',
+  'privacy.photo': 'Ein Foto bleibt auf deinem Gerät. Musie lädt es nie hoch.',
+  /* 'ist auch dein Tagebuch weg' rather than a softer 'geht verloren': the
+     English is blunt on purpose and the German should not apologise for it. */
+  'privacy.browserBound': 'Weil das Konto in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch. Zurückholen lässt es sich nicht.',
+
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
-  'route.landing.title': 'Über Musie',
-  'route.about.title': 'Über dich',
+  'route.aboutMusie.title': 'Über Musie',
+  'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',
+  'route.diaryEntry.title': 'Tagebucheintrag',
   'route.exercises.title': 'Übungen',
   /* A Gedankenstrich: German sets a parenthetical dash as an EN dash with
      spaces, where English sets an em dash. The English key keeps its '—'. */

@@ -29,6 +29,7 @@ import * as React from 'react';
 import { Field as BaseField } from '@base-ui/react/field';
 import { CircleX, Check } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
 
 export type FieldType = 'text' | 'email' | 'tel' | 'url' | 'search' | 'password';
 
@@ -53,7 +54,8 @@ export interface FieldProps {
   disabled?: boolean;
   readOnly?: boolean;
   rows?: number;
-  /** Screen-reader status word before the error text (1.4.1, matches Message). */
+  /** Screen-reader status word before the error text (1.4.1, matches Message).
+   *  Defaults to the locale catalogue's error word. */
   errorWord?: string;
   className?: string;
   id?: string;
@@ -64,8 +66,9 @@ export function Field({
   value, defaultValue, onValueChange, placeholder,
   description, error, validMessage,
   required = false, disabled = false, readOnly = false, rows,
-  errorWord = 'Error', className, id,
+  errorWord, className, id,
 }: FieldProps) {
+  const t = useMusyText();
   const invalid = Boolean(error);
 
   return (
@@ -100,7 +103,7 @@ export function Field({
       {error && (
         <div className="musy-field__error" role="alert">
           <Icon glyph={CircleX} size="sm" />
-          <span><span className="musy-sr-only">{errorWord}: </span>{error}</span>
+          <span><span className="musy-sr-only">{errorWord ?? t.statusError}: </span>{error}</span>
         </div>
       )}
 

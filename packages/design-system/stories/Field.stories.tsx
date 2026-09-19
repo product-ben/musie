@@ -189,7 +189,7 @@ const meta = {
     rows: { control: 'number', description: 'Rows on the <textarea>. Only meaningful with multiline.' },
     errorWord: {
       control: 'text',
-      description: 'Screen-reader status word before the error text (1.4.1, matches Message).',
+      description: 'Screen-reader status word before the error text (1.4.1, matches Message). Defaults to the locale catalogue’s status word — “Fehler” / “Error”.',
     },
     id: { control: 'text' },
     className: { control: false },

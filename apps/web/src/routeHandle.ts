@@ -9,6 +9,7 @@
  * It lives in its own module so `router.tsx` and `AppShell.tsx` can both use
  * it without importing each other.
  */
+import type { ReactNode } from 'react';
 import type { MessageKey } from './i18n';
 
 /** The wizard's four steps. The ONLY valid values for `:step`. */
@@ -30,7 +31,25 @@ export interface RouteHandle {
   wide?: boolean;
   /**
    * Presents over the page instead of replacing it — a route whose element is
-   * a sheet. The shell keeps the previous page mounted beneath it.
+   * a sheet or a lightbox. The shell keeps the previous page mounted beneath
+   * it.
    */
   overlay?: boolean;
+  /**
+   * The page to draw beneath THIS overlay when the shell has none to keep —
+   * a cold deep-link, where the overlay is the first entry in the history and
+   * no page was ever rendered to hold on to. Shape mirrors AppShell's
+   * `beneath` ref, because it fills exactly that ref's job.
+   *
+   * Only an overlay that BELONGS to one page can answer this. /menu and
+   * /settings cover whatever page you were on and belong to none, so they omit
+   * it and a cold deep-link to either keeps its current behaviour: an empty
+   * main behind the sheet. /diary/:id is one entry OF the diary, so pasting
+   * its URL opens the entry over the list rather than over nothing.
+   *
+   * `path` is what `usePagePath` reports, so the nav drawer marks the right
+   * row current; `wide` matches the page's own handle so the column does not
+   * change width when the overlay closes onto it.
+   */
+  beneath?: { element: ReactNode; path: string; wide?: boolean };
 }

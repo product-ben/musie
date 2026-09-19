@@ -74,10 +74,71 @@ export const en = {
   'exercises.timeframe': '{min}–{max} minutes',
   'exercises.notImplemented': 'Not available yet',
 
+  /* ── The session ─────────────────────────────────────────────────────────
+     The four step ids are `intro · scan · listen · reflect` (routeHandle.ts).
+     These are their DISPLAY names, and the split is the point: the ids are
+     English slugs in the URL and in `sessions.step`, the copy is per locale.
+     The same split the schema uses everywhere else. */
+  'session.step.intro': 'Intro',
+  'session.step.scan': 'Scan',
+  'session.step.listen': 'Listen',
+  'session.step.reflect': 'Reflect',
+  'session.status.finished': 'Finished',
+  'session.status.abandoned': 'Unfinished',
+
+  /* ── Diary ───────────────────────────────────────────────────────────────
+     `{step}` takes a `session.step.*` value, already translated — the diary
+     never interpolates a raw step id. */
+  'diary.timelineLabel': 'Your sessions, newest first',
+  'diary.listLabel': 'Diary entries',
+  'diary.empty': 'No sessions yet',
+  'diary.emptyText': 'Finish a session and it appears here.',
+  'diary.stoppedAt': 'Stopped at {step}',
+  'diary.duration': '{minutes} min',
+  'diary.when': 'When',
+  'diary.howLong': 'How long',
+  'diary.card': 'Card',
+  /* No track NAME beside it, and that is the column grant rather than an
+     omission: `tracks.title` and `.artist` are not granted to the client at
+     all, so the diary can offer the recording back without being able to say
+     what it was. Naming it needs E.5's reveal function. */
+  'diary.listenAgain': 'Listen again',
+  'diary.yourAnswer': 'Your answer',
+  'diary.notFound': 'This diary entry does not exist',
+
+  /* ── Privacy · C.2 ───────────────────────────────────────────────────────
+     THE PROTOTYPE'S PROMISE WAS "Nothing leaves your device until you share
+     it", and a stored diary makes that false. These six strings are what
+     replaced it, and every one of them is true of the code as it stands:
+
+       · only TEXT is ever stored (D1). No recording, no photo, no bucket;
+       · RLS scopes every session and reflection to its own account, proved by
+         `pnpm test:db` rather than asserted here;
+       · there is no sharing feature to qualify — the Share step was cut.
+
+     The voice and photo lines are true TODAY, when neither is implemented, and
+     true LATER, when voice transcribes to text and photo still uploads
+     nothing. Copy that survives the feature landing is copy nobody has to
+     remember to revisit.
+
+     AWAITING SIGN-OFF from Ben and his co-founder. It is a promise to users
+     rather than a screen, which is why it is written before a screen shows
+     it. */
+  'privacy.title': 'What Musie keeps',
+  'privacy.account': 'Musie never asks for your name or your email. This browser holds a private account of its own, and your diary belongs to it.',
+  'privacy.written': 'What you write is saved to your diary so you can read it back later. Nobody else can see it.',
+  'privacy.voice': 'If you answer out loud, Musie turns your words into text and keeps only the text. The recording itself is never stored.',
+  'privacy.photo': 'A photo you take stays on your device. Musie never uploads it.',
+  /* The uncomfortable one, and the reason it is here: an anonymous account
+     living in browser storage is a real limitation, not a detail. Saying it
+     plainly is the difference between a private product and a careless one. */
+  'privacy.browserBound': 'Because the account lives in this browser, clearing its data also clears your diary. There is no way to get it back.',
+
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
-  'route.landing.title': 'About Musie',
-  'route.about.title': 'About you',
+  'route.aboutMusie.title': 'About Musie',
+  'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',
+  'route.diaryEntry.title': 'Diary entry',
   'route.exercises.title': 'Exercises',
   'route.session.title': 'Current session — {step}',
   'route.done.title': 'Done',

@@ -15,6 +15,7 @@ import * as React from 'react';
 import { Button } from '@base-ui/react/button';
 import { Tooltip } from '@base-ui/react/tooltip';
 import { Icon, type IconSize } from './Icon';
+import { useMusyText } from './locale';
 import type { LucideIcon } from 'lucide-react';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -32,7 +33,8 @@ export interface IconButtonProps
    *  (a close X in a sheet header). */
   tooltip?: boolean;
   loading?: boolean;
-  /** Announced while loading. German default: the app is German-primary. */
+  /** Announced while loading. Defaults to the locale catalogue's word
+   *  (src/locale.ts) — German unless the app says otherwise. */
   loadingLabel?: string;
   className?: string;
 }
@@ -44,9 +46,10 @@ const ICON_FOR_TARGET: Record<IconButtonSize, IconSize> = {
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   function IconButton({
     glyph, label, variant = 'ghost', size = 'primary',
-    tooltip = true, loading = false, loadingLabel = 'Wird geladen',
+    tooltip = true, loading = false, loadingLabel,
     disabled, className, ...rest
   }, ref) {
+    const t = useMusyText();
     const sizeClass = size === 'primary' ? 'primary-size' : size;
     const classes = ['musy-icon-btn', `musy-icon-btn--${variant}`, `musy-icon-btn--${sizeClass}`, className ?? '']
       .filter(Boolean).join(' ');
@@ -63,7 +66,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
       >
         <Icon glyph={glyph} size={ICON_FOR_TARGET[size]} />
         {loading && <span className="musy-spinner" aria-hidden="true" />}
-        {loading && <span className="musy-sr-only" role="status">{loadingLabel}</span>}
+        {loading && <span className="musy-sr-only" role="status">{loadingLabel ?? t.loading}</span>}
       </Button>
     );
 

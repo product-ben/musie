@@ -82,9 +82,26 @@ export function AppShell() {
     };
   }
 
-  const pageNode = isOverlay ? beneath.current.node : outlet;
-  const pageWide = isOverlay ? beneath.current.wide : handle.wide === true;
-  const pagePath = isOverlay ? beneath.current.path : location.pathname;
+  /**
+   * A COLD DEEP-LINK HAS NOTHING TO KEEP. Paste an overlay's URL into a fresh
+   * tab and the ref above has never been written: the overlay IS the first
+   * render, so there is no previous page, and `main` would be empty behind the
+   * scrim. For /menu and /settings that is honest — they cover whatever page
+   * you were on and belong to no one page — so they say nothing and get it.
+   *
+   * An overlay that belongs to exactly one page says which, in its handle, and
+   * gets that page drawn beneath instead. It is the same three values the ref
+   * holds, named by the route rather than remembered from a navigation.
+   */
+  const held = beneath.current;
+  const cold = handle.beneath;
+  const under = held.node !== null || cold === undefined
+    ? held
+    : { node: cold.element, wide: cold.wide === true, path: cold.path };
+
+  const pageNode = isOverlay ? under.node : outlet;
+  const pageWide = isOverlay ? under.wide : handle.wide === true;
+  const pagePath = isOverlay ? under.path : location.pathname;
 
   const t = useT();
   const title = handle.titleKey ? t(handle.titleKey, leaf?.params) : BRAND_NAME;

@@ -27,6 +27,7 @@ import { Fieldset } from '@base-ui/react/fieldset';
 import { Check } from 'lucide-react';
 import { Icon } from './Icon';
 import { Message } from './Message';
+import { useMusyText } from './locale';
 
 export type RadioAccent = 'primary' | 'accent' | 'accent-alt';
 
@@ -52,7 +53,8 @@ export interface RadioGroupTextProps {
   /** Validation message. Renders a Message in error variant below the group
    *  and marks every row's boundary, so the error is not colour-only. */
   error?: string;
-  /** Empty state, shown instead of the rows when options is empty. */
+  /** Empty state, shown instead of the rows when options is empty. Defaults
+   *  to the locale catalogue's wording. */
   emptyLabel?: string;
   className?: string;
 }
@@ -60,8 +62,9 @@ export interface RadioGroupTextProps {
 export function RadioGroupText({
   name, legend, hint, options, value, onValueChange,
   accent = 'primary', guided = false, disabled = false,
-  error, emptyLabel = 'Keine Optionen verfügbar', className,
+  error, emptyLabel, className,
 }: RadioGroupTextProps) {
+  const t = useMusyText();
   const hintId = React.useId();
   const errorId = React.useId();
 
@@ -99,7 +102,7 @@ export function RadioGroupText({
       {hint && <p id={hintId} className="musy-radio-group__hint">{hint}</p>}
 
       {options.length === 0 ? (
-        <p className="musy-radio-group__hint">{emptyLabel}</p>
+        <p className="musy-radio-group__hint">{emptyLabel ?? t.optionsEmpty}</p>
       ) : options.map((opt) => (
         <Radio.Root
           key={opt.value}

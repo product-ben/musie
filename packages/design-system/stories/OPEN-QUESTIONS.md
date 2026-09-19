@@ -1789,3 +1789,422 @@ Also: that gaps document has six numbered entries and none of them is G3, so
 the G1/G2/G3 numbering is a separate sequence from it.
 What I need from Ben: nothing yet — flagging, because it will look like a
 broken link to the next person who follows it.
+
+---
+
+# Phase C.9 — LinkList and Timeline
+
+_Two new components, written 2026-09-19: `LinkList` (a list of destinations)
+and `Timeline` (groups a list under headings). Both are deliberately basic —
+the visual detail is Phase G.1's._
+
+**Why these arrive late.** This log was locked while those components were
+built, so their questions were written into each story's `Build notes` block
+instead. `CONVENTIONS.md` §8 requires the Build notes to repeat a component's
+OPEN-QUESTIONS entries verbatim, so with the log behind, the story was the only
+copy and the two would have drifted. The six entries below are copied back from
+`stories/LinkList.stories.tsx` and `stories/Timeline.stories.tsx` verbatim; the
+seventh had no story to live in and is written here for the first time.
+
+## LinkList — a navigable row is visually identical to a static one
+Where: src/musy-components.css, the LINK LIST block (`.musy-llist__row`), src/LinkList.tsx
+What I checked: the brief asks for "no hover choreography, no elevation, no
+motion", and the row drops the anchor underline because the affordance is the
+whole row rather than a coloured word inside it. The result is that a row with
+`render={<a …>}` and a row without it look the same until focus or a pointer
+lands on them.
+What I did: shipped it that way, and said so here. The row is still a real
+link — cursor, status bar, context menu, focus ring and AT all report it.
+Why: the affordance is a visual decision, and adding a chevron or a hover fill
+now would be taking Phase G.1's decision in Phase C.
+What I need from Ben: **Phase G.1 owes this row its affordance** — a trailing
+chevron is the obvious candidate, and it would make `media` and a trailing
+slot the row's two ends.
+
+## LinkList — the empty state drops the list's accessible name
+Where: src/LinkList.tsx, the `items.length === 0` branch
+What I checked: this is ContentList's open question ("the empty state loses the
+list's accessible name") arriving a second time. The alternatives each mislead:
+an empty labelled `<ul>` announces "list, 0 items" and says less than the
+sentence does; a `<ul>` holding the message as its one `<li>` announces a count
+that is a lie; a labelled `<section>` makes every empty list a landmark.
+What I did: rendered a paragraph, matching ContentList, and did not re-decide
+it here.
+Why: one component should not answer a question the component beside it has
+open — whatever is decided should be decided for both at once.
+What I need from Ben: **one decision covering ContentList and LinkList.**
+
+## LinkList — no trailing slot, so a row cannot carry a control
+Where: src/LinkList.tsx, LinkListItem
+What I checked: an item carries `media`, `headline` and `meta`. A diary row
+that needs a per-row action (delete, favourite) cannot have one: a button
+inside the row would be a control inside a link, which is exactly the nesting
+that rules RadioCards out for this job in the first place.
+What I did: nothing. The brief specifies the item's fields and I kept to them.
+Why: the fix is not a slot — it is L4's card anatomy, where the controls are
+positioned into a float spacer as SIBLINGS of the link rather than inside it.
+What I need from Ben: **a note that per-row actions are out of scope** until a
+screen needs them, and then that they arrive as L4 geometry, not as a child of
+the row.
+
+## Timeline — `headingLevel` is not in the brief's API, and it had to be
+Where: src/Timeline.tsx, TimelineProps
+What I checked: the brief specifies `label`, `groups` and `className?` and says
+"renders a heading per group". A heading needs a level, and ContentBox's own
+comment says the level is "never guessed" because it depends on where the
+component sits. Hardcoding one would guess.
+What I did: added `headingLevel?: HeadingLevel`, defaulting to 3 — the same
+default and the same type ContentBox already uses.
+Why: consistency with the one component in the set that already had this
+problem, and it is optional, so a consumer written against the brief's API
+still compiles.
+What I need from Ben: **confirmation**, since it is an addition to a specified
+API rather than a question about the repo.
+
+## Timeline — nothing enforces that group order matches the labels
+Where: src/Timeline.tsx
+What I checked: the element is an `<ol>` because the sequence of groups is the
+meaning. The component cannot verify that: it never parses a label, so a
+consumer that sorts its groups wrongly gets an `<ol>` asserting an order the
+dates contradict.
+What I did: nothing. Checking would mean parsing a date, which is the one thing
+this component must not do.
+Why: the sort belongs to whatever produced the groups — a query's `order by`,
+not a presentation component.
+What I need from Ben: nothing, just flagging — the diary screen owes its own
+ordering.
+
+## Timeline — a group is not visually bounded, only headed
+Where: src/musy-components.css, the TIMELINE block
+What I checked: a group is a heading plus its body at 16px, and the next group
+is 32px below. The grouping reads off the gap ladder alone: no rail, no rule,
+no surface. That satisfies L2's doubling check, and L2 also says that when a
+grouping is ambiguous "the fix is a divider or a shared surface, never a bigger
+gap" — which is a decision this basic version does not take.
+What I did: shipped the gaps only, and did not invent a rail or a marker.
+Why: the rail is the whole visual idea of a timeline, and it is Phase G.1's.
+What I need from Ben: **Phase G.1 should decide the group boundary** — rail,
+divider or shared surface — rather than letting each screen pick one.
+
+## musy-components.css — the section numbering is already inconsistent, so the two new blocks are unnumbered
+Where: `src/musy-components.css`, the `/* ═══ n · NAME ═══ */` headers
+What I checked: Level 1, the stylesheet's own headers. **§15 appears twice** —
+`15 · SEGMENTED CONTROL` and `15 · FIELD`. **§17–22 are missing entirely**:
+the sequence runs `16 · INTERACTIVE WIZARD` and then jumps to `23 · TOAST`.
+(§3 is absent too — HINT lives inside the ICON BUTTON block.) And the three
+most recently added blocks — `BADGE`, `MUSIC PLAYER`, `RECORD BUTTON` — carry
+**no number at all**.
+What I did: wrote `LINK LIST` and `TIMELINE` unnumbered, following the recent
+precedent rather than inventing a number.
+Why: every free number is free for a reason nobody recorded, and guessing one
+would either collide again or claim a gap that meant something.
+What I need from Ben: **a decision** — either renumber the whole sheet once, or
+declare the numbers retired and drop them from the older headers too. As it
+stands a cross-reference of the form "§15" is ambiguous, the same way §7.24 is
+ambiguous in `docs/07-components.md` (logged in Batch A).
+
+---
+
+# Phase C.10 — the system's own words, and what it closes
+
+_Written 2026-09-19. `src/locale.ts` gives the package its own chrome
+catalogue: a `MusyLocale` type (`'de' | 'en'`), `musyTextDe` / `musyTextEn`,
+a `MusyLocaleProvider` and a `useMusyText()` hook. 19 components across 18
+files (`MusicPlayer.tsx` holds two) now read their default user-visible strings
+from it. **Per-call props still win** — the catalogue only changes what a prop
+falls back to. `Badge.statusWord` and `Message.statusWord` are new props for
+two strings that previously had none._
+
+_Recorded here rather than edited into the entries above, because this file is
+append-only. Each entry names the questions it closes, in their own heading
+text, so they can be found._
+
+## The language split is closed at the source — every German/English default entry above
+Closes, by making the language a property of the tree rather than of each
+component:
+
+- "**Session — prototype copy is English, several components default to
+  German**" (Step 1) — the session-level entry the rest of these point at.
+- "**ContentList — `emptyLabel` defaults to German in an English prototype**"
+  (Batch A).
+- "**RadioGroupText — the Empty story shows the German default `emptyLabel`**"
+  (Batch C).
+- "**Lightbox — `closeLabel` defaults to German, the prototype renders
+  "Close"**" (Batch C).
+- "**CtaButton — `loadingLabel` defaults to German and `loading` is never used
+  in the prototype**" and "**IconButton — `loadingLabel` defaults to German
+  while every caption around it is English**" (Batch B).
+- In the story Build notes only, with no log entry of their own: Toast's
+  "`dismissLabel` defaults to German while the component's own copy is
+  otherwise caller-supplied", and DraggableList's "every default string is
+  English while the earlier components default to German".
+
+Where: `src/locale.ts`, and the `useMusyText()` call in `src/Badge.tsx`,
+`ContentList.tsx`, `CtaButton.tsx`, `DraggableList.tsx`, `Field.tsx`,
+`IconButton.tsx`, `InteractiveWizard.tsx`, `Lightbox.tsx`, `Message.tsx`,
+`MusicPlayer.tsx` (MusicPlayer and TrackButton), `PhotoUpload.tsx`,
+`ProcessVisualisation.tsx`, `RadioCards.tsx`, `RadioGroupImage.tsx`,
+`RadioGroupText.tsx`, `RecordButton.tsx`, `Toast.tsx` and `VoiceNote.tsx`.
+
+What it does NOT close: the app's own rule. `apps/web` still passes every
+user-visible string explicitly (CLAUDE.md rule 7) — a default in either
+language is wrong in the other. What changed is only what shows when a screen
+forgets.
+
+## Badge and Message — the status words now have a prop, and a locale
+Closes the part of the problem no log entry could name, because there was
+nothing to pass: `STATUS_WORD` was a module constant in both files, so
+*Hinweis / Warnung / Erfolg / Fehler* reached the screen reader in German no
+matter how disciplined the consuming screen was. Recorded in
+`reference/INVENTORY.md` §7 under "English copy with no prop to override it"
+("`Badge` / `Message` status words — `STATUS_WORD` is a module constant with no
+prop — the German words cannot be overridden either").
+Where: `src/Badge.tsx:58` and `src/Message.tsx:59` — the new optional
+`statusWord`, falling back to `t.statusInfo` / `statusWarning` /
+`statusSuccess` / `statusError`. `Field.errorWord` falls back to
+`t.statusError` from the same four.
+
+## DraggableList — "the row action copy has no prop at all" is now FACTUALLY FALSE
+Not superseded — **false**. The entry is "**DraggableList — the row action copy
+has no prop at all**" (Step 3 · Batch E, above), and it claimed that "Discard",
+"Save", "Delete", "Edit", the handle and chevron `aria-label`s and all five
+keyboard live-region announcements are hardcoded English in the JSX with no
+prop.
+
+Every string it names now comes from the catalogue: `dragDiscard`, `dragSave`,
+`dragDelete`, `dragEdit`; `dragHandleLabel(noun, position)` and
+`dragShowActions` / `dragHideActions` for the two tool buttons;
+`dragItemLabel(noun, position)` for the row headline; `dragItemNoun`,
+`dragListLabel`, `dragEmptyHeadline`, `dragEmptyText`, `dragListening`,
+`dragHearing`; all four drop hints (`dropCombine`, `dropBefore`, `dropAfter`,
+`dropCancel`); and all five announcements (`dragLifted`, `dragDropped`,
+`dragCancelled`, `dragMoved`, `dragMerged`).
+Where: `src/locale.ts:131-160`, consumed in `src/DraggableList.tsx`.
+
+The claim is **still asserted in three places outside this log**, and all three
+are now wrong. They are named here rather than changed, because this bookkeeping
+pass owns only this file:
+
+1. `packages/design-system/stories/DraggableList.stories.tsx:82-86` — the Build
+   notes block, "**DraggableList — the row action copy has no prop at all.**"
+   Its `itemNoun` argType in the same file has already been updated to say
+   "Defaults to the locale catalogue", so the file now contradicts itself.
+2. `packages/design-system/stories/DraggableList.stories.tsx:75-80` — the
+   neighbouring block, "**every default string is English while the earlier
+   components default to German**", which the section above closes.
+3. `reference/INVENTORY.md:679-683` — the "English copy with no prop to
+   override it" table, five rows: `'Discard'`/`'Save'`, `'Delete'`/`'Edit'`,
+   the handle `aria-label`, the chevron `aria-label`s and the five keyboard
+   announcements. Its §7 "English defaults" table (`:657-658`) is stale in the
+   same way, as is the German table at `:645-650`.
+
+What I need from Ben: nothing to decide — but the Build notes are the artefact
+CONVENTIONS §8 says must match this log, so the two DraggableList blocks want
+rewriting before the next reader trusts them. `reference/` is a vendored
+snapshot and may be meant to stay stale; Phase B.1 already ruled that it keeps
+the old accent names for that reason.
+
+## DraggableList — `DropHints` is in the barrel now, and the prop is `Partial`
+Closes: "**DraggableList — `DropHints` is exported from the module, missing
+from the barrel**" (Step 3 · Batch E).
+Where: `src/index.ts:81` now exports `DropHints` alongside
+`DraggableListProps`, `DraggableItem`, `DropMode` and `CombineOrder`, and
+`src/DraggableList.tsx:105` widens the prop to `dropHints?: Partial<DropHints>`
+so a consumer can override one hint without restating four.
+Note `reference/INVENTORY.md:478` still lists `DropHints` as missing from
+`index.ts`.
+
+## InteractiveWizard — the reachability rule is one implementation now
+Where: `src/wizardSteps.ts` (`wizardStepState`, `isWizardStepReachable`),
+exported from `src/index.ts:35`, imported by `src/InteractiveWizard.tsx:37` and
+by `apps/web/src/lib/sessionMachine.ts:30`.
+What I checked: the app had its own copy of "a step is reachable when its
+predecessors are done"; the component derived the same thing inline. Two
+implementations of one rule is the state where a screen and the stepper it
+draws can disagree about which step is locked.
+What I did: nothing — recording it. It is the same shape of fix as the locale
+catalogue: the system owns the rule, the app consumes it.
+What I need from Ben: nothing, just flagging.
+
+## OPEN QUESTION — the catalogue defaults to GERMAN, and Phase B.1 answered "English"
+Where: `src/locale.ts:332` (`DEFAULT_MUSY_LOCALE: MusyLocale = 'de'`) vs
+"**Component defaults — English — ANSWERED**" (Phase B.1, above).
+
+The tension, with both readings stated and neither taken:
+
+**What B.1 decided.** "13 German strings across 11 components become English",
+on the grounds that `en.ts` is the source of truth `de.ts` is typed against, so
+English defaults match the direction the app already resolves in, and it was
+13 edits rather than 25.
+
+**What C.10 shipped.** With no `MusyLocaleProvider` mounted, `useMusyText()`
+returns `musyTextDe`. `src/locale.ts`'s own header gives the reason: the app is
+German-primary, and every component comment in the set that named a language
+named German as the reason.
+
+**Who is affected.** For **Lightbox**, **ContentList**, the three radio groups,
+**Message**, **Toast**, **CtaButton** and **IconButton** the unwrapped output is
+byte-identical to what it always was — those defaults were already German. It
+**changes** the unwrapped output from English to German for **RecordButton**,
+**VoiceNote**, **PhotoUpload**, **DraggableList**, **TrackButton**,
+**MusicPlayer**, `Field.errorWord`, and the wizard's four state words.
+
+**Where that shows.** Not in the app: `apps/web/src/main.tsx:64` mounts
+`MusyLocaleProvider` with the active locale, and every screen passes its strings
+explicitly regardless. It shows in **Storybook**, which mounts no provider — so
+those eight now render German on their docs pages, where they rendered English
+before, and the stories that documented an English default now document a
+German one.
+
+**The two readings.**
+- *German is right.* The product is German-primary; an unprovidered component is
+  a bug in the consumer, and the fallback should fail in the language the
+  product actually ships. B.1's "13 edits vs 25" argument was about editing
+  hardcoded literals, and the catalogue makes the count irrelevant — both
+  languages are written out in full either way.
+- *English is right.* B.1 is an answered decision in this log and this silently
+  reverses half of it. `en.ts` is the typed source of truth; Storybook is where
+  the system is reviewed and it now shows a language the reviewer did not
+  choose; and "unwrapped behaves as before" would have held for the whole set.
+
+A third option nobody has taken: mount `MusyLocaleProvider` in
+`.storybook/preview.tsx` with a locale toolbar, which makes the question
+visible in the place it shows rather than answering it once for everyone.
+
+What I need from Ben: **a decision on `DEFAULT_MUSY_LOCALE`** — and, whichever
+way it goes, one line appended to the B.1 "Component defaults — English"
+entry's successors here saying so, because the two currently disagree in
+writing.
+
+---
+
+# Phase C · after the fact — one gap the app hit
+
+## InteractiveWizard — there is no *skipped* state, and a cardless exercise needs one
+Where: `src/InteractiveWizard.tsx`, `src/wizardSteps.ts` (`WizardStepState`),
+consumed by `apps/web/src/lib/sessionMachine.ts`
+
+What I checked: `WizardStepState` is `'disabled' | 'active' | 'selected' |
+'completed'`, and the state words are `gesperrt / verfügbar / aktuell /
+erledigt`. Two of the three exercises draw no cards — `exercises.needs_cards`
+is false for Breathing Score and Body Scan Soundwalk — so their run has nothing
+to scan, and the designer's decision (D14) is that the rail **still shows four
+markers with scan visibly skipped** rather than showing three.
+
+None of the four existing states says that:
+
+- `completed` draws a check mark, which claims the user did a step they never
+  did. In a rail above a diary that later reports what happened, that is a
+  small lie with a long life.
+- `disabled` reads as *not yet* — locked pending something — when the truth is
+  *not part of this run at all*, and no sequence of completions will ever open
+  it.
+- `active` and `selected` are plainly wrong.
+
+What I did: nothing in the component. The app side is handled — `sessionMachine`
+carries a `skipped` list and filters it out of the step list it passes to
+`isWizardStepReachable`, so the RULE is right and only the PRESENTATION is
+missing. Six regression tests cover the machine.
+
+Why: adding a fifth visual state is a Layer 2 design decision with a token, a
+state word in two languages and an a11y story attached, and D.4 is the step
+that actually renders the rail.
+
+What I need from Ben: **a fifth `WizardStepState`, or a deliberate reuse of
+`disabled`.** If it is a new state it needs a name, a treatment and a word in
+both catalogues (`src/locale.ts` now owns those). If it is `disabled`, that
+should be written down as a choice rather than left looking like the component
+could not express the difference. D.4 is blocked on it in the sense that it
+will otherwise pick one silently.
+
+## ContentBox — a lone Badge in the `header` slot stretches edge to edge
+Where: `src/musy-components.css` (`.musy-box__header`), `src/Badge.tsx`,
+hit by `apps/web/src/routes/DiaryEntry.tsx`
+
+What I checked: `.musy-box__header` is a flex COLUMN, so its default
+`align-items: stretch` pulls an `inline-flex` `.musy-badge` to the full width
+of the box. A single status badge renders as a bar across the entry, which
+reads as a banner rather than a chip.
+
+What I did: used `BadgeRow`, which ContentBox's own header comment names for
+this and which lays badges out at their natural width. It costs a `<ul>` of one
+item, announced as "list, 1 item" — a small a11y wart to avoid a visual one.
+
+Why: the real fix is an `align-self` INSIDE the package, and a screen must not
+reach into a component's own geometry (10-layout.md L14's opening rule, and
+L7). Working around it in the app would have been the exact thing rule 1
+forbids.
+
+What I need from Ben: **one line of CSS in the package** so a bare `Badge` can
+sit in a `header` slot without `BadgeRow` around it — or a note in ContentBox's
+docs that `BadgeRow` is mandatory there, which is also a fine answer as long as
+it is written down.
+
+## TrackButton — `label` and the action verb are both announced, so a named button says itself twice
+Where: `src/MusicPlayer.tsx` (`TrackButton`), used by
+`apps/web/src/routes/DiaryEntry.tsx`
+
+What I checked: `TrackButton` shows the action verb and announces
+`` `${label}` `` alongside it, on the assumption that `label` is the TRACK
+(announced, never shown). The diary has no track name to give it — `tracks.title`
+is withheld from the client by column grant — so it passes the control's own
+purpose, *Listen again*. The result announces "Start Listening, Listen again".
+
+What I did: passed it anyway, and left play/pause/replay to the locale
+catalogue. Mildly redundant is better than fabricating a title.
+
+Why: the redundancy is one string; inventing a track name in a product whose
+whole premise is an unprimed listener is not a trade worth making.
+
+What I need from Ben: nothing urgent — no track plays until E.4. Worth knowing
+that a `TrackButton` whose `label` were OPTIONAL (falling back to the action
+verb alone) would fit the nameless case exactly, and that case now exists.
+
+## Lightbox — a route-driven one names its content TWICE in the accessibility tree
+Where: `src/Lightbox.tsx` (`Dialog.Title`), hit by
+`apps/web/src/routes/DiaryEntry.tsx`
+
+What I checked: `Lightbox.title` is required, and rightly — a modal with no
+name announces as "dialog" and leaves a screen-reader user with no idea what
+came forward (4.1.2). When the framed content already shows that title, the
+documented answer is `titleHidden`. But `titleHidden` does not remove the
+element: the string then exists as an sr-only `<h2>` (Dialog.Title) AND as the
+visible `<h3>` ContentBox headline, so the name is announced twice.
+
+`SettingsSheet` solves the same problem by making `Dialog.Title` *be* the
+visible heading through base-ui's `render`. `Lightbox` renders `Dialog.Title`
+itself and exposes no `render`, so a consumer cannot collapse the two.
+
+What I did: used `titleHidden` and commented it. Did not work around it.
+
+Why: the fix is a component change — a `titleRender` prop, or labelling the
+popup with `aria-labelledby` pointing at the framed content's own heading — and
+a screen must not reach into a component's internals (L14, L7).
+
+What I need from Ben: nothing urgent; it is a duplicated announcement, not a
+missing one. Worth fixing when Lightbox is next opened, because every
+route-driven lightbox will have it.
+
+## Lightbox — the rule reserving space for the close button is silently dead under `titleHidden`
+Where: `src/musy-components.css`, the
+`.musy-lightbox__popup > .musy-box:first-child .musy-box__headline` rule
+
+What I checked: MEASURED — `padding-inline-end` computes to `0px` on the box
+headline inside a `titleHidden` lightbox. The selector wants the ContentBox to
+be the popup's FIRST CHILD, and with `titleHidden` the sr-only `Dialog.Title`
+is first, so `:first-child` never matches and the close button's column is
+never reserved.
+
+Harmless today, and measured as such: `.musy-box__headline` has a narrow
+measure, so a 60-character German title wrapped at ~250px — `headRight 492`
+against `closeLeft 731`, well clear. It fails only for a long unwrapped title.
+
+What I did: nothing. Did not touch the stylesheet.
+
+Why: it predates this change — the existing `TitleHidden` story has the same
+hole — and changing a shared selector to fix a case that does not currently
+collide is the kind of edit that breaks the case that does.
+
+What I need from Ben: nothing, just flagging. The rule reads as protection and
+is not providing any; whoever next touches Lightbox's CSS should either make
+the selector match (`:has()`, or a class) or delete it.

@@ -48,6 +48,21 @@ export interface NavRow {
    */
   action?: boolean;
   /**
+   * The row's answer is still being fetched.
+   *
+   * Only meaningful on the ACTION row, which is the one row whose identity
+   * depends on a query: *Start a session* and *Continue session* are
+   * alternatives chosen by whether a session is running, and until that is
+   * known neither label is true. Rendering one and swapping it a beat later
+   * would flash the wrong label — and on the action row that is not cosmetic,
+   * because tapping *Start a session* while one is already running is exactly
+   * the mistake the database refuses.
+   *
+   * `CtaButton`'s own `loading` sets `disabled` as well as `aria-busy`, so the
+   * row cannot be activated in this state.
+   */
+  loading?: boolean;
+  /**
    * Draw a rule above this row.
    *
    * A rule, not a bigger gap. The rows sit at --sp-1, and L2's doubling check
@@ -154,6 +169,8 @@ export function NavDrawer({ open, onClose, currentPage, onNavigate, pages }: Nav
                       /* German compounds at 393px need this more often than
                          English does, which is what CtaButton's own docs say. */
                       wrap
+                      loading={row.loading === true}
+                      loadingLabel={t('content.loading')}
                       render={<Link to={row.href} replace />}
                       aria-current={current ? 'page' : 'false'}
                       onClick={() => onNavigate(row)}

@@ -38,6 +38,25 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   de: 'Deutsch',
 };
 
+/**
+ * The BCP-47 tag to hand `Intl`, which is NOT the same string as the locale id.
+ *
+ * `new Intl.DateTimeFormat('en')` resolves to **en-US**, so a bare `'en'`
+ * renders "September 19, 2026 at 2:32 PM" — American month-first dates and a
+ * 12-hour clock, in a German-first product whose English copy is otherwise
+ * British. `'en-GB'` gives "19 September 2026 at 14:32", which matches both the
+ * German column beside it and the register the catalogue is written in.
+ *
+ * Separate from `Locale` on purpose. `Locale` is an ID — it is the URL, the
+ * `locale` column in every `_i18n` table, and the catalogue key, and widening
+ * it to `'en-GB'` would mean re-seeding content rows to match a formatting
+ * decision. One map, at the one boundary that needs the distinction.
+ */
+export const INTL_LOCALES: Record<Locale, string> = {
+  en: 'en-GB',
+  de: 'de-DE',
+};
+
 /** Also hardcoded in index.html's pre-paint snippet, which cannot import. */
 export const LOCALE_STORAGE_KEY = 'musie-locale';
 

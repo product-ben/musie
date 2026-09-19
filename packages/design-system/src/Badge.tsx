@@ -18,6 +18,8 @@
 import * as React from 'react';
 import { Info, TriangleAlert, CircleCheck, CircleX } from 'lucide-react';
 import { Icon } from './Icon';
+import { useMusyText } from './locale';
+import type { MusyStatusKey } from './locale';
 import type { LucideIcon } from 'lucide-react';
 
 export type BadgeVariant =
@@ -30,11 +32,15 @@ const STATUS_GLYPH: Partial<Record<BadgeVariant, LucideIcon>> = {
   info: Info, warning: TriangleAlert, success: CircleCheck, error: CircleX,
 };
 
-/** German, matching the app's primary language. Read before the label so the
- *  announcement is "Warnung: Deck fehlt", not "Deck fehlt" with the severity
- *  living in a colour nobody can hear. */
-const STATUS_WORD: Partial<Record<BadgeVariant, string>> = {
-  info: 'Hinweis', warning: 'Warnung', success: 'Erfolg', error: 'Fehler',
+/** Read BEFORE the label, so the announcement is "Warnung: Deck fehlt" and not
+ *  "Deck fehlt" with the severity living in a colour nobody can hear.
+ *
+ *  This word used to be a hardcoded German record with no prop, which meant an
+ *  English screen announced "Fehler: ..." and no amount of care in the app
+ *  could reach it. It now comes from the locale catalogue (src/locale.ts) and
+ *  can be overridden per badge with `statusWord`. */
+const STATUS_WORD_KEY: Partial<Record<BadgeVariant, MusyStatusKey>> = {
+  info: 'statusInfo', warning: 'statusWarning', success: 'statusSuccess', error: 'statusError',
 };
 
 export interface BadgeProps {
@@ -47,15 +53,20 @@ export interface BadgeProps {
    *  status WORD stays, so 1.4.1 still holds — this drops a cue, not the only
    *  one. Correct for a dense row where four glyphs read as noise. */
   hideIcon?: boolean;
+  /** The screen-reader status word on a status variant. Defaults to the
+   *  locale catalogue's word for that variant. */
+  statusWord?: string;
   className?: string;
   id?: string;
 }
 
 export function Badge({
-  children, variant = 'neutral', glyph, hideIcon = false, className, id,
+  children, variant = 'neutral', glyph, hideIcon = false, statusWord, className, id,
 }: BadgeProps) {
+  const t = useMusyText();
   const resolved = glyph ?? STATUS_GLYPH[variant];
-  const word = STATUS_WORD[variant];
+  const key = STATUS_WORD_KEY[variant];
+  const word = statusWord ?? (key ? t[key] : undefined);
 
   return (
     <span

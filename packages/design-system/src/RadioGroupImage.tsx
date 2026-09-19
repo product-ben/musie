@@ -24,6 +24,7 @@ import { Fieldset } from '@base-ui/react/fieldset';
 import { Check } from 'lucide-react';
 import { Icon } from './Icon';
 import { Message } from './Message';
+import { useMusyText } from './locale';
 import type { RadioAccent } from './RadioGroupText';
 
 export interface RadioCardOption {
@@ -50,6 +51,7 @@ export interface RadioGroupImageProps {
   accent?: RadioAccent;
   disabled?: boolean;
   error?: string;
+  /** Empty state. Defaults to the locale catalogue's wording. */
   emptyLabel?: string;
   className?: string;
 }
@@ -57,8 +59,9 @@ export interface RadioGroupImageProps {
 export function RadioGroupImage({
   name, legend, hint, options, value, onValueChange,
   accent = 'primary', disabled = false, error,
-  emptyLabel = 'Keine Optionen verfügbar', className,
+  emptyLabel, className,
 }: RadioGroupImageProps) {
+  const t = useMusyText();
   const hintId = React.useId();
   const errorId = React.useId();
 
@@ -85,7 +88,7 @@ export function RadioGroupImage({
         className ?? '',
       ].filter(Boolean).join(' ')}>
         {options.length === 0 ? (
-          <p className="musy-radio-card-group__empty musy-radio-group__hint">{emptyLabel}</p>
+          <p className="musy-radio-card-group__empty musy-radio-group__hint">{emptyLabel ?? t.optionsEmpty}</p>
         ) : options.map((opt) => (
           <Radio.Root
             key={opt.value}

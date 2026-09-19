@@ -37,8 +37,9 @@ const meta = {
           '**The state is not carried by hue.** The button stays primary while live —',
           'swapping to the error family would paint a working control as a failure, and',
           '§19’s red-while-live belongs to a surface, not to the screen’s main action.',
-          'Three cues change instead: the glyph (mic → stop), the label ("Record Now" →',
-          '"Recording") and the meter, which only exists while recording. It survives',
+          'Three cues change instead: the glyph (mic → stop), the label (ready →',
+          'recording, from the locale catalogue) and the meter, which only exists while',
+          'recording. It survives',
           'greyscale and forced colours (1.4.1).',
           '',
           '**The meter is decorative, the counter is not.** Bars are `aria-hidden` and take',
@@ -132,8 +133,8 @@ const meta = {
     },
     disabled: { control: 'boolean', description: 'Disables the button. Meter and readout follow the ink via currentColor.' },
     block: { control: 'boolean', description: 'Fills the inline axis where the CTA does; the extra room goes to the meter.' },
-    readyLabel: { control: 'text', description: 'Copy. English defaults; the consumer localises. Default "Record Now".' },
-    recordingLabel: { control: 'text', description: 'Copy. English defaults; the consumer localises. Default "Recording".' },
+    readyLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Jetzt aufnehmen” in German, “Record Now” in English.' },
+    recordingLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Aufnahme läuft” / “Recording”.' },
     status: { control: false, description: 'Spoken status: ("12", "48") → "…".' },
     className: { control: false },
   },
@@ -142,8 +143,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Component defaults, in the `ready` state: primary solid, Mic glyph,
- *  "Record Now", no meter and no readout. The button hugs its label here. */
+/** Component defaults, in the `ready` state: primary solid, Mic glyph, the
+ *  catalogue's ready label, no meter and no readout. The preview is lang="de"
+ *  and no MusyLocaleProvider is mounted, so that label is "Jetzt aufnehmen".
+ *  The button hugs its label here. */
 export const Default: Story = {};
 
 /** All three button families, ready and recording. The variant does not change
@@ -174,11 +177,12 @@ export const Sizes: Story = {
   ),
 };
 
-/** `ready` — Mic glyph, "Record Now", no meter, no readout. No microphone and
- *  no permission is involved: the state is a prop. */
+/** `ready` — Mic glyph, the catalogue's ready label, no meter, no readout. No
+ *  microphone and no permission is involved: the state is a prop. */
 export const Ready: Story = { args: { state: 'ready' } };
 
-/** `recording` — Square glyph, "Recording", live meter, `0:12 · −0:48`.
+/** `recording` — Square glyph, the catalogue's recording label, live meter,
+ *  `0:12 · −0:48`.
  *  `levels` is a fixed literal array, so the meter is identical on every
  *  render. */
 export const Recording: Story = {
@@ -239,8 +243,10 @@ export const ShortLimit: Story = {
   args: { state: 'recording', elapsed: 8, maxSeconds: 15, levels: LEVELS },
 };
 
-/** Copy overrides. §7.22 notes the known limit: German runs ~30% longer, and a
- *  long `recordingLabel` is what pushed the readout out of a 310px column. */
+/** Copy overrides — the same German the catalogue now ships, passed by hand,
+ *  which is what a per-call override looks like. §7.22 notes the known limit:
+ *  German runs ~30% longer, and a long `recordingLabel` is what pushed the
+ *  readout out of a 310px column. */
 export const CopyOverrides: Story = {
   args: {
     state: 'recording',

@@ -10,11 +10,30 @@
  * icon buttons does not re-run the open delay. Lightbox portals its popup, so
  * `isolation: isolate` on the root is what keeps it above page content.
  *
+ * Wrap it in <MusyLocaleProvider locale={…}> once as well, driven from whatever
+ * locale the app already resolved. That is where every component's default
+ * user-visible string comes from — including the ones that have no prop, like
+ * Badge's and Message's screen-reader status word. Without it the set speaks
+ * German. See src/locale.ts.
+ *
  * Import the stylesheets once, in this order, at the app root:
  *   import 'tokens/musy-foundations.css';
  *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1, G2
  *   import 'components/musy-components.css';
  */
+export {
+  MusyLocaleProvider, useMusyLocale, useMusyText,
+  MUSY_TEXT, musyTextDe, musyTextEn, DEFAULT_MUSY_LOCALE,
+} from './locale';
+export type {
+  MusyLocale, MusyLocaleProviderProps, MusyTextCatalogue, MusyStatusKey,
+} from './locale';
+
+/* The wizard's reachability rule, as one pure function. InteractiveWizard
+   consumes it; the app's session reducer can import it instead of writing the
+   same rule a second time. */
+export { wizardStepState, isWizardStepReachable } from './wizardSteps';
+
 export { Icon } from './Icon';
 export type { IconProps, IconSize, IconTone } from './Icon';
 
@@ -59,7 +78,7 @@ export type { ContentListProps, ContentListItem } from './ContentList';
 
 export { DraggableList, itemTypeStep } from './DraggableList';
 export type {
-  DraggableListProps, DraggableItem, DropMode, CombineOrder,
+  DraggableListProps, DraggableItem, DropMode, CombineOrder, DropHints,
 } from './DraggableList';
 
 /* L5's pointer split, as a hook rather than a media query: the size has to
@@ -98,3 +117,9 @@ export type { TrackButtonProps, MusicPlayerProps, MusicTransport } from './Music
 
 export { RecordButton, recordClock } from './RecordButton';
 export type { RecordButtonProps, RecordButtonState } from './RecordButton';
+
+export { LinkList } from './LinkList';
+export type { LinkListProps, LinkListItem } from './LinkList';
+
+export { Timeline } from './Timeline';
+export type { TimelineProps, TimelineGroup } from './Timeline';
