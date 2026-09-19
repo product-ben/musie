@@ -1,0 +1,63 @@
+# The pre-merge gate: typecheck, lint, and prove both bundles still build.
+#
+# WHY THIS EXISTS. Until this file, every check in the repo ran only AFTER a
+# merge — Netlify builds `main`, and storybook.yml is a `push` workflow behind a
+# path filter, so a pull request touching apps/web ran nothing at all. Breakage
+# was found on main, by the next person, instead of on the branch, by its
+# author. This moves the same commands to the branch.
+#
+# WHY IT BUILDS AS WELL AS CHECKS. `tsc --noEmit` does not resolve CSS imports,
+# font assets, or the vite.config.ts plugin that pins /fonts/*.woff2 — a change
+# can typecheck cleanly and still fail the bundle. Building is the only check
+# that exercises those.
+#
+# DELIBERATE OVERLAP: on a push to main this rebuilds Storybook, which
+# storybook.yml then builds again to publish. That is a second ~1min run on a
+# free public-repo allowance, and the alternative — trusting the publish job as
+# the first build — is the failure mode this file exists to remove.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The token this run gets. Reading the repo is all any step here does.
+permissions:
+  contents: read
+
+# One run per branch. Pushing twice to a PR cancels the first rather than
+# paying for a verdict on a commit nobody is waiting for any more.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No `version:` on purpose — action-setup reads the `packageManager`
+      # field in package.json, so the pnpm version lives in exactly one place.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # --frozen-lockfile fails if package.json and pnpm-lock.yaml disagree,
+      # rather than quietly resolving something newer than what was reviewed.
+      # A lockfile edit that was never committed is a CI failure, not a
+      # surprise in production.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and lint
+        run: pnpm check
+
+      - name: Build the app
+        run: pnpm --filter web build
+
+      - name: Build Storybook
+        run: pnpm build:storybook
