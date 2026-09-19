@@ -12,10 +12,15 @@
  * remember when the real copy arrives.
  *
  * ── THIS IS CHROME, NOT CONTENT ────────────────────────────────────────────
- * The German in de.ts is REAL German, written by the implementer and needing
- * a native read. That is different from the content tables, whose German rows
- * are deliberately '[DE] '-prefixed placeholders because the copy belongs to
- * the Mindfulness Cards spreadsheet. Chrome is ours; content is not.
+ * The German in de.ts is REAL German, written by the implementer and read
+ * back against docs/GERMAN-UI-WRITING.md. Chrome is OURS and permanent: no
+ * one else is ever going to supply it.
+ *
+ * The content tables are the other case. Their German is also real German
+ * now, written to the same standard, but it is PROVISIONAL — that copy
+ * belongs to the Mindfulness Cards spreadsheet and will be overwritten by it.
+ * The seed migration says so at the head of its German inserts. Chrome is
+ * ours; content is not.
  *
  * The design system is deliberately NOT held to this rule. Its components
  * ship hardcoded defaults, and they are a mix of German (`Lightbox`
@@ -53,7 +58,9 @@ export const en = {
   'settings.darkMode': 'Dark mode',
   'settings.userType': 'Here as',
   'settings.language': 'Language',
-  'settings.languageHint': 'Content translations are still placeholders.',
+  /* Provisional, not placeholder: the content IS translated, but the
+     Mindfulness Cards spreadsheet still owns that copy and will replace it. */
+  'settings.languageHint': 'Content translations are provisional.',
 
   /* ── Loading, failure, emptiness ───────────────────────────────────────── */
   'content.loading': 'Loading…',

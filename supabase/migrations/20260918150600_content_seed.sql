@@ -1,23 +1,45 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- CONTENT SEED
 --
--- GENERATED from reference/design_system/data/mindfulness-cards.js.
--- Do not hand-edit: regenerate instead. The authoritative source is the
--- Mindfulness Cards spreadsheet, and this file is how it lands.
+-- The ENGLISH rows were GENERATED from
+-- reference/design_system/data/mindfulness-cards.js. The authoritative source
+-- for content is the Mindfulness Cards spreadsheet, and this file is how it
+-- lands.
+--
+-- ── NO LONGER SAFE TO REGENERATE ───────────────────────────────────────────
+-- This header used to say "do not hand-edit: regenerate instead". That is now
+-- FALSE and dangerous. The German below was written BY HAND on 19 September
+-- and exists in no source file: mindfulness-cards.js contains no German at
+-- all, so re-running a generator over it would silently destroy every German
+-- string here. Hand-edit this file, or bring the German with you.
 --
 -- In a MIGRATION rather than supabase/seed.sql on purpose: `supabase db
 -- reset` runs seed.sql but `supabase db push` does NOT, so content in
 -- seed.sql would never reach a deployed environment. Content changes by
 -- migration only.
 --
--- ── THE GERMAN ROWS ARE PLACEHOLDERS ──────────────────────────────────────
--- Every German string is the English text prefixed '[DE] '. NOTHING HAS
--- BEEN TRANSLATED. The real German copy comes from the spreadsheet and is
--- not ours to invent; the prefix is there so no placeholder can be mistaken
--- for finished copy, in the database or on a screen.
+-- ── THE GERMAN CONTENT IS REAL, AND PROVISIONAL ────────────────────────────
+-- Every German string below was written by hand to docs/GERMAN-UI-WRITING.md
+-- — du, sentence case, verb-first actions, no 'Bitte', the length budget,
+-- German dashes. It is real German and reads as German on a screen. It is
+-- NOT final copy: the Mindfulness Cards spreadsheet owns this text and will
+-- overwrite all of it.
 --
--- Find them all at any time with:
---   select * from public.card_i18n where locale = 'de' and feeling like '[DE] %';
+-- That distinction used to be carried by a placeholder prefix on the front of
+-- every German value, visible in the database and on screen. The prefix is
+-- gone; the distinction is not. It is stated here and again above every block
+-- of German inserts, marked PROVISIONAL GERMAN.
+--
+-- Find every provisional block with:
+--   grep -n 'PROVISIONAL GERMAN' supabase/migrations/*_content_seed.sql
+-- and read what actually landed with:
+--   select locale, feeling from public.card_i18n order by card_id, locale;
+--
+-- STILL OWED, and NOT ours to write: exercise_i18n.listening and .question
+-- (null in BOTH locales, three of each, from the spreadsheet) and
+-- card_i18n.image_alt (null in both — the source has no per-card alt text).
+-- Null in both locales is data; null in one is a dropped translation, which
+-- is the difference public.missing_translations exists to report.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── user types ────────────────────────────────────────────────────────────
@@ -27,15 +49,22 @@ insert into public.user_types (id, implemented, image_url, sort) values
   ('with-my-partner', false, 'assets/web/method-card.png', 3),
   ('with-a-patient', false, 'assets/web/method-card.png', 4);
 
+-- PROVISIONAL GERMAN in every 'de' row below — see the header.
+--
+-- The LABEL is the user's own voice answering "Hier als …", so it is first
+-- person ('meiner Partnerin'). The IMAGE_ALT is the app speaking about the
+-- reader, so it is du ('deiner Partnerin'). The paired form (Doppelnennung)
+-- is what docs/GERMAN-UI-WRITING.md defaults to, and §9 there flags the
+-- alternatives as a brand decision that is still open.
 insert into public.user_type_i18n (user_type_id, locale, label, image_alt) values
   ('by-myself', 'en', 'By myself', 'Placeholder artwork for using Musie by yourself'),
-  ('by-myself', 'de', '[DE] By myself', '[DE] Placeholder artwork for using Musie by yourself'),
+  ('by-myself', 'de', 'Allein', 'Platzhalterbild: Musie allein nutzen'),
   ('with-a-group', 'en', 'With a group', 'Placeholder artwork for using Musie with a group'),
-  ('with-a-group', 'de', '[DE] With a group', '[DE] Placeholder artwork for using Musie with a group'),
+  ('with-a-group', 'de', 'Mit einer Gruppe', 'Platzhalterbild: Musie mit einer Gruppe nutzen'),
   ('with-my-partner', 'en', 'With my partner', 'Placeholder artwork for using Musie with your partner'),
-  ('with-my-partner', 'de', '[DE] With my partner', '[DE] Placeholder artwork for using Musie with your partner'),
+  ('with-my-partner', 'de', 'Mit meiner Partnerin oder meinem Partner', 'Platzhalterbild: Musie mit deiner Partnerin oder deinem Partner nutzen'),
   ('with-a-patient', 'en', 'With a patient', 'Placeholder artwork for using Musie with a patient'),
-  ('with-a-patient', 'de', '[DE] With a patient', '[DE] Placeholder artwork for using Musie with a patient');
+  ('with-a-patient', 'de', 'Mit einer Patientin oder einem Patienten', 'Platzhalterbild: Musie mit einer Patientin oder einem Patienten nutzen');
 
 -- ── situations ────────────────────────────────────────────────────────────
 insert into public.situations (id, sort) values
@@ -43,13 +72,14 @@ insert into public.situations (id, sort) values
   ('get-day-started', 2),
   ('relax-busy-day', 3);
 
+-- PROVISIONAL GERMAN in every 'de' row below — see the header.
 insert into public.situation_i18n (situation_id, locale, label) values
   ('feel-feelings', 'en', 'Feel my feelings'),
-  ('feel-feelings', 'de', '[DE] Feel my feelings'),
+  ('feel-feelings', 'de', 'Meine Gefühle spüren'),
   ('get-day-started', 'en', 'Get the day started'),
-  ('get-day-started', 'de', '[DE] Get the day started'),
+  ('get-day-started', 'de', 'In den Tag starten'),
   ('relax-busy-day', 'en', 'Relax during a busy day'),
-  ('relax-busy-day', 'de', '[DE] Relax during a busy day');
+  ('relax-busy-day', 'de', 'An einem vollen Tag entspannen');
 
 -- ── exercises ───────────────────────────────────────────────────────────────
 insert into public.exercises
@@ -59,7 +89,6 @@ values
   ('breathing-score', 5, 8, false, true, 'assets/web/method-card.png', false, 2),
   ('body-scan-soundwalk', 15, 20, false, true, 'assets/web/method-card.png', false, 3);
 
--- needs / guideline / duration_label are null for the two unimplemented
 -- needs / guideline / duration_label: null for the two unimplemented
 -- exercises — the source has them for neither locale.
 --
@@ -67,16 +96,26 @@ values
 -- and the source has no exercise-level instruction or question at all —
 -- it wrote nine per-card variants instead. Three of each, in both
 -- locales, come from the Mindfulness Cards spreadsheet.
+
+-- PROVISIONAL GERMAN in every 'de' row below — see the header.
+--
+-- 'Achtsamkeitspause' and 'Atempartitur' stay compounds on purpose: both have
+-- dictionary break points, so --text-hyphens: auto handles them and there is
+-- nothing to rephrase. 'Mindfulness-Cards-Set' is hyphenated throughout
+-- (Durchkopplung) because a German noun welded to an English product name has
+-- no break point at all. 'Body Scan' and 'Soundwalk' stay English: they are
+-- the terms the German-speaking field uses, so only the connective tissue is
+-- translated.
 insert into public.exercise_i18n
   (exercise_id, locale, name, description, needs, guideline, duration_label,
    listening, question, image_alt)
 values
   ('mindfulness-cards', 'en', 'Quick Mindfulness Break', 'Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.', 'Your physical Mindfulness Cards deck', 'Work with the card you are drawn to, not the one you think you should pick.', 'About 15 minutes', null, null, 'The Mindfulness Cards deck laid out on a table'),
-  ('mindfulness-cards', 'de', '[DE] Quick Mindfulness Break', '[DE] Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.', '[DE] Your physical Mindfulness Cards deck', '[DE] Work with the card you are drawn to, not the one you think you should pick.', '[DE] About 15 minutes', null, null, '[DE] The Mindfulness Cards deck laid out on a table'),
+  ('mindfulness-cards', 'de', 'Kurze Achtsamkeitspause', 'Neun Papierkarten, je ein Gefühl. Scanne die Karte, die dich anspricht, und höre das Stück dahinter.', 'Dein gedrucktes Mindfulness-Cards-Set', 'Arbeite mit der Karte, zu der es dich zieht – nicht mit der, die du für richtig hältst.', 'Etwa 15 Minuten', null, null, 'Das Mindfulness-Cards-Set auf einem Tisch ausgelegt'),
   ('breathing-score', 'en', 'Breathing Score', 'A slow score that follows your breath, for settling before anything else.', null, null, null, null, null, 'Placeholder artwork for the Breathing Score Exercise'),
-  ('breathing-score', 'de', '[DE] Breathing Score', '[DE] A slow score that follows your breath, for settling before anything else.', null, null, null, null, null, '[DE] Placeholder artwork for the Breathing Score Exercise'),
+  ('breathing-score', 'de', 'Atempartitur', 'Eine langsame Partitur, die deinem Atem folgt – zum Ankommen, bevor alles andere beginnt.', null, null, null, null, null, 'Platzhalterbild für die Übung Atempartitur'),
   ('body-scan-soundwalk', 'en', 'Body Scan Soundwalk', 'A guided walk through the body, one sound at a time.', null, null, null, null, null, 'Placeholder artwork for the Body Scan Soundwalk Exercise'),
-  ('body-scan-soundwalk', 'de', '[DE] Body Scan Soundwalk', '[DE] A guided walk through the body, one sound at a time.', null, null, null, null, null, '[DE] Placeholder artwork for the Body Scan Soundwalk Exercise');
+  ('body-scan-soundwalk', 'de', 'Body Scan als Soundwalk', 'Ein geführter Gang durch den Körper, Klang für Klang.', null, null, null, null, null, 'Platzhalterbild für die Übung Body Scan als Soundwalk');
 
 -- ── which exercises each situation surfaces ─────────────────────────────────
 insert into public.exercise_situations (exercise_id, situation_id) values
@@ -109,25 +148,26 @@ insert into public.cards (id, code, image_url, sort) values
 --
 -- image_alt is null in both locales: the source has no per-card alt text and
 -- writing it would be authoring copy, not seeding data.
+-- PROVISIONAL GERMAN in every 'de' row below — see the header.
 insert into public.card_i18n (card_id, locale, feeling, image_alt) values
   ('mc-01', 'en', 'Joy', null),
-  ('mc-01', 'de', '[DE] Joy', null),
+  ('mc-01', 'de', 'Freude', null),
   ('mc-02', 'en', 'Sadness', null),
-  ('mc-02', 'de', '[DE] Sadness', null),
+  ('mc-02', 'de', 'Trauer', null),
   ('mc-03', 'en', 'Anger', null),
-  ('mc-03', 'de', '[DE] Anger', null),
+  ('mc-03', 'de', 'Wut', null),
   ('mc-04', 'en', 'Fear', null),
-  ('mc-04', 'de', '[DE] Fear', null),
+  ('mc-04', 'de', 'Angst', null),
   ('mc-05', 'en', 'Calm', null),
-  ('mc-05', 'de', '[DE] Calm', null),
+  ('mc-05', 'de', 'Ruhe', null),
   ('mc-06', 'en', 'Longing', null),
-  ('mc-06', 'de', '[DE] Longing', null),
+  ('mc-06', 'de', 'Sehnsucht', null),
   ('mc-07', 'en', 'Gratitude', null),
-  ('mc-07', 'de', '[DE] Gratitude', null),
+  ('mc-07', 'de', 'Dankbarkeit', null),
   ('mc-08', 'en', 'Loneliness', null),
-  ('mc-08', 'de', '[DE] Loneliness', null),
+  ('mc-08', 'de', 'Einsamkeit', null),
   ('mc-09', 'en', 'Hope', null),
-  ('mc-09', 'de', '[DE] Hope', null);
+  ('mc-09', 'de', 'Hoffnung', null);
 
 -- ── tracks ────────────────────────────────────────────────────────────────
 -- The music, once per recording.

@@ -133,9 +133,10 @@ function ThemeSwitch() {
 /**
  * "Here as" — the four user types, from the database.
  *
- * The labels are CONTENT (user_type_i18n), not chrome, so in German they carry
- * the `[DE] ` placeholder prefix until the spreadsheet copy lands. That is
- * correct and visible on purpose.
+ * The labels are CONTENT (user_type_i18n), not chrome, so their German is
+ * PROVISIONAL: real German, written to docs/GERMAN-UI-WRITING.md, but owned by
+ * the Mindfulness Cards spreadsheet and due to be overwritten by it. Nothing
+ * marks it on screen any more — the seed migration carries the distinction.
  *
  * All four are selectable. Three carry `implemented: false` in the database
  * and that flag is deliberately unused here: the brief asks for the four rows

@@ -5,10 +5,16 @@
  * runtime hole. There is no per-key fallback to English on purpose: a half
  * translated screen is harder to spot than a build that refuses to pass.
  *
- * WRITTEN BY THE IMPLEMENTER, NOT SUPPLIED — needs a native read before any
- * of it ships. This is the app's own chrome, which is ours to write; the
- * CONTENT tables are the opposite case and carry '[DE] ' placeholders because
- * that copy belongs to the Mindfulness Cards spreadsheet.
+ * WRITTEN BY THE IMPLEMENTER, NOT SUPPLIED, and read back on 19 September
+ * against docs/GERMAN-UI-WRITING.md — du, sentence case, verb-first actions,
+ * no 'Bitte', the length budget, and German dashes. That standard is the
+ * thing to argue with; a string that breaks it is a bug. A native read before
+ * launch is still wanted: the standard catches what a rule can catch.
+ *
+ * This is the app's own chrome, which is OURS and permanent. The CONTENT
+ * tables are the other case: their German is now real German, written to the
+ * same standard, but PROVISIONAL — the Mindfulness Cards spreadsheet owns
+ * that copy and will overwrite it. See the seed migration's header.
  *
  * Note for later: German runs ~30% longer than English, which is what
  * `--measure-body` (62ch) and `--text-hyphens: auto` are set from. Layer 1's
@@ -41,7 +47,9 @@ export const de: Messages = {
   'settings.darkMode': 'Dunkelmodus',
   'settings.userType': 'Hier als',
   'settings.language': 'Sprache',
-  'settings.languageHint': 'Die Übersetzungen der Inhalte sind noch Platzhalter.',
+  /* Provisional, not placeholder: the content IS German now, but the
+     Mindfulness Cards spreadsheet still owns it and will replace it. */
+  'settings.languageHint': 'Die Übersetzungen der Inhalte sind vorläufig.',
 
   /* ── Loading, failure, emptiness ───────────────────────────────────────── */
   'content.loading': 'Wird geladen…',
@@ -59,7 +67,9 @@ export const de: Messages = {
   'route.about.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',
   'route.exercises.title': 'Übungen',
-  'route.session.title': 'Aktuelle Sitzung — {step}',
+  /* A Gedankenstrich: German sets a parenthetical dash as an EN dash with
+     spaces, where English sets an em dash. The English key keeps its '—'. */
+  'route.session.title': 'Aktuelle Sitzung – {step}',
   'route.done.title': 'Fertig',
   'route.settings.title': 'Einstellungen',
   'route.notFound.title': 'Nicht gefunden',
