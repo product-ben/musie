@@ -479,45 +479,45 @@
    purple are light solids, so their foreground is theme-conditional where
    terracotta's is not. That is exactly why these are separate variants and not
    a hue swap on primary. */
-.musy-btn--accent-placeholder1 {
-  background-color: var(--interactive-accent-placeholder1);
-  border-color: var(--interactive-accent-placeholder1-border);
-  color: var(--interactive-accent-placeholder1-on);
+.musy-btn--accent {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent-border);
+  color: var(--interactive-accent-on);
 }
-.musy-btn--accent-placeholder2 {
-  background-color: var(--interactive-accent-placeholder2);
-  border-color: var(--interactive-accent-placeholder2-border);
-  color: var(--interactive-accent-placeholder2-on);
+.musy-btn--accent-alt {
+  background-color: var(--interactive-accent-alt);
+  border-color: var(--interactive-accent-alt-border);
+  color: var(--interactive-accent-alt-on);
 }
 @media (hover: hover) and (pointer: fine) {
-  .musy-btn--accent-placeholder1:hover:not(:disabled):not([data-loading]),
-  .musy-btn--accent-placeholder1[data-force~="hover"] {
-    background-color: var(--interactive-accent-placeholder1-hover);
+  .musy-btn--accent:hover:not(:disabled):not([data-loading]),
+  .musy-btn--accent[data-force~="hover"] {
+    background-color: var(--interactive-accent-hover);
   }
-  .musy-btn--accent-placeholder2:hover:not(:disabled):not([data-loading]),
-  .musy-btn--accent-placeholder2[data-force~="hover"] {
-    background-color: var(--interactive-accent-placeholder2-hover);
+  .musy-btn--accent-alt:hover:not(:disabled):not([data-loading]),
+  .musy-btn--accent-alt[data-force~="hover"] {
+    background-color: var(--interactive-accent-alt-hover);
   }
 }
-.musy-btn--accent-placeholder1:active:not(:disabled),
-.musy-btn--accent-placeholder1[data-pressed]:not(:disabled),
-.musy-btn--accent-placeholder1[data-force~="active"] {
-  background-color: var(--interactive-accent-placeholder1-active);
+.musy-btn--accent:active:not(:disabled),
+.musy-btn--accent[data-pressed]:not(:disabled),
+.musy-btn--accent[data-force~="active"] {
+  background-color: var(--interactive-accent-active);
 }
-.musy-btn--accent-placeholder2:active:not(:disabled),
-.musy-btn--accent-placeholder2[data-pressed]:not(:disabled),
-.musy-btn--accent-placeholder2[data-force~="active"] {
-  background-color: var(--interactive-accent-placeholder2-active);
+.musy-btn--accent-alt:active:not(:disabled),
+.musy-btn--accent-alt[data-pressed]:not(:disabled),
+.musy-btn--accent-alt[data-force~="active"] {
+  background-color: var(--interactive-accent-alt-active);
 }
-.musy-btn--accent-placeholder1:disabled, .musy-btn--accent-placeholder1[data-disabled] {
-  background-color: var(--interactive-accent-placeholder1-disabled);
+.musy-btn--accent:disabled, .musy-btn--accent[data-disabled] {
+  background-color: var(--interactive-accent-disabled);
   border-color: transparent;
-  color: var(--interactive-accent-placeholder1-on-disabled);
+  color: var(--interactive-accent-on-disabled);
 }
-.musy-btn--accent-placeholder2:disabled, .musy-btn--accent-placeholder2[data-disabled] {
-  background-color: var(--interactive-accent-placeholder2-disabled);
+.musy-btn--accent-alt:disabled, .musy-btn--accent-alt[data-disabled] {
+  background-color: var(--interactive-accent-alt-disabled);
   border-color: transparent;
-  color: var(--interactive-accent-placeholder2-on-disabled);
+  color: var(--interactive-accent-alt-on-disabled);
 }
 
 .musy-btn:disabled, .musy-btn[data-disabled] { cursor: not-allowed; }
@@ -618,20 +618,20 @@
   color: var(--interactive-primary-on-subtle);
 }
 
-/* Accent-styled switches (Decision 3 — literal placeholder names). */
-.musy-switch--accent-placeholder1 .musy-switch__track[data-checked] {
-  background-color: var(--interactive-accent-placeholder1);
-  border-color: var(--interactive-accent-placeholder1-border);
+/* Accent-styled switches. */
+.musy-switch--accent .musy-switch__track[data-checked] {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent-border);
 }
-.musy-switch--accent-placeholder1 .musy-switch__track[data-checked] .musy-switch__knob {
-  color: var(--interactive-accent-placeholder1-on-subtle);
+.musy-switch--accent .musy-switch__track[data-checked] .musy-switch__knob {
+  color: var(--interactive-accent-on-subtle);
 }
-.musy-switch--accent-placeholder2 .musy-switch__track[data-checked] {
-  background-color: var(--interactive-accent-placeholder2);
-  border-color: var(--interactive-accent-placeholder2-border);
+.musy-switch--accent-alt .musy-switch__track[data-checked] {
+  background-color: var(--interactive-accent-alt);
+  border-color: var(--interactive-accent-alt-border);
 }
-.musy-switch--accent-placeholder2 .musy-switch__track[data-checked] .musy-switch__knob {
-  color: var(--interactive-accent-placeholder2-on-subtle);
+.musy-switch--accent-alt .musy-switch__track[data-checked] .musy-switch__knob {
+  color: var(--interactive-accent-alt-on-subtle);
 }
 
 /* The embedded check / x. Both live in the knob; only one is visible.
@@ -825,36 +825,36 @@
 }
 .musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-primary-on-subtle); }
 
-/* SELECTED — accent placeholder 1 */
-.musy-radio-group--accent-placeholder1 .musy-radio__body[data-checked] {
-  background-color: var(--interactive-accent-placeholder1-subtle);
-  border-color: var(--interactive-accent-placeholder1-border);
+/* SELECTED — accent */
+.musy-radio-group--accent .musy-radio__body[data-checked] {
+  background-color: var(--interactive-accent-subtle);
+  border-color: var(--interactive-accent-border);
   border-width: var(--border-width-thick);
 }
-.musy-radio-group--accent-placeholder1 .musy-radio__body[data-checked] .musy-radio__marker {
-  background-color: var(--interactive-accent-placeholder1);
-  border-color: var(--interactive-accent-placeholder1-border);
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__marker {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent-border);
   border-width: var(--border-width-thick);
-  color: var(--interactive-accent-placeholder1-on);
+  color: var(--interactive-accent-on);
 }
-.musy-radio-group--accent-placeholder1 .musy-radio__body[data-checked] .musy-radio__label {
-  color: var(--interactive-accent-placeholder1-on-subtle);
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__label {
+  color: var(--interactive-accent-on-subtle);
 }
 
-/* SELECTED — accent placeholder 2 */
-.musy-radio-group--accent-placeholder2 .musy-radio__body[data-checked] {
-  background-color: var(--interactive-accent-placeholder2-subtle);
-  border-color: var(--interactive-accent-placeholder2-border);
+/* SELECTED — accent alt */
+.musy-radio-group--accent-alt .musy-radio__body[data-checked] {
+  background-color: var(--interactive-accent-alt-subtle);
+  border-color: var(--interactive-accent-alt-border);
   border-width: var(--border-width-thick);
 }
-.musy-radio-group--accent-placeholder2 .musy-radio__body[data-checked] .musy-radio__marker {
-  background-color: var(--interactive-accent-placeholder2);
-  border-color: var(--interactive-accent-placeholder2-border);
+.musy-radio-group--accent-alt .musy-radio__body[data-checked] .musy-radio__marker {
+  background-color: var(--interactive-accent-alt);
+  border-color: var(--interactive-accent-alt-border);
   border-width: var(--border-width-thick);
-  color: var(--interactive-accent-placeholder2-on);
+  color: var(--interactive-accent-alt-on);
 }
-.musy-radio-group--accent-placeholder2 .musy-radio__body[data-checked] .musy-radio__label {
-  color: var(--interactive-accent-placeholder2-on-subtle);
+.musy-radio-group--accent-alt .musy-radio__body[data-checked] .musy-radio__label {
+  color: var(--interactive-accent-alt-on-subtle);
 }
 
 /* DISABLED */
@@ -998,31 +998,31 @@
   color: var(--interactive-primary-on-subtle);
 }
 
-.musy-radio-card-group--accent-placeholder1 .musy-radio-card__body[data-checked] {
-  background-color: var(--interactive-accent-placeholder1-subtle);
-  border-color: var(--interactive-accent-placeholder1-border);
+.musy-radio-card-group--accent .musy-radio-card__body[data-checked] {
+  background-color: var(--interactive-accent-subtle);
+  border-color: var(--interactive-accent-border);
   border-width: var(--border-width-thick);
 }
-.musy-radio-card-group--accent-placeholder1 .musy-radio-card__body[data-checked] .musy-radio-card__check {
-  background-color: var(--interactive-accent-placeholder1);
-  border-color: var(--interactive-accent-placeholder1-on);
-  color: var(--interactive-accent-placeholder1-on);
+.musy-radio-card-group--accent .musy-radio-card__body[data-checked] .musy-radio-card__check {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent-on);
+  color: var(--interactive-accent-on);
 }
-.musy-radio-card-group--accent-placeholder2 .musy-radio-card__body[data-checked] {
-  background-color: var(--interactive-accent-placeholder2-subtle);
-  border-color: var(--interactive-accent-placeholder2-border);
+.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked] {
+  background-color: var(--interactive-accent-alt-subtle);
+  border-color: var(--interactive-accent-alt-border);
   border-width: var(--border-width-thick);
 }
-.musy-radio-card-group--accent-placeholder1 .musy-radio-card__body[data-checked] .musy-radio-card__label {
-  color: var(--interactive-accent-placeholder1-on-subtle);
+.musy-radio-card-group--accent .musy-radio-card__body[data-checked] .musy-radio-card__label {
+  color: var(--interactive-accent-on-subtle);
 }
-.musy-radio-card-group--accent-placeholder2 .musy-radio-card__body[data-checked] .musy-radio-card__label {
-  color: var(--interactive-accent-placeholder2-on-subtle);
+.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked] .musy-radio-card__label {
+  color: var(--interactive-accent-alt-on-subtle);
 }
-.musy-radio-card-group--accent-placeholder2 .musy-radio-card__body[data-checked] .musy-radio-card__check {
-  background-color: var(--interactive-accent-placeholder2);
-  border-color: var(--interactive-accent-placeholder2-on);
-  color: var(--interactive-accent-placeholder2-on);
+.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked] .musy-radio-card__check {
+  background-color: var(--interactive-accent-alt);
+  border-color: var(--interactive-accent-alt-on);
+  color: var(--interactive-accent-alt-on);
 }
 
 .musy-radio-card__body[data-disabled] {
@@ -1806,31 +1806,31 @@
 }
 .musy-rcard__body[data-checked] .musy-rcard__headline { color: var(--interactive-primary-on-subtle); }
 
-.musy-rcard-group--accent-placeholder1 .musy-rcard__body[data-checked] {
-  background-color: var(--interactive-accent-placeholder1-subtle);
-  border-color: var(--interactive-accent-placeholder1-border);
+.musy-rcard-group--accent .musy-rcard__body[data-checked] {
+  background-color: var(--interactive-accent-subtle);
+  border-color: var(--interactive-accent-border);
   border-width: var(--border-width-thick);
 }
-.musy-rcard-group--accent-placeholder1 .musy-rcard__body[data-checked] .musy-rcard__check {
-  background-color: var(--interactive-accent-placeholder1);
-  border-color: var(--interactive-accent-placeholder1-on);
-  color: var(--interactive-accent-placeholder1-on);
+.musy-rcard-group--accent .musy-rcard__body[data-checked] .musy-rcard__check {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent-on);
+  color: var(--interactive-accent-on);
 }
-.musy-rcard-group--accent-placeholder1 .musy-rcard__body[data-checked] .musy-rcard__headline {
-  color: var(--interactive-accent-placeholder1-on-subtle);
+.musy-rcard-group--accent .musy-rcard__body[data-checked] .musy-rcard__headline {
+  color: var(--interactive-accent-on-subtle);
 }
-.musy-rcard-group--accent-placeholder2 .musy-rcard__body[data-checked] {
-  background-color: var(--interactive-accent-placeholder2-subtle);
-  border-color: var(--interactive-accent-placeholder2-border);
+.musy-rcard-group--accent-alt .musy-rcard__body[data-checked] {
+  background-color: var(--interactive-accent-alt-subtle);
+  border-color: var(--interactive-accent-alt-border);
   border-width: var(--border-width-thick);
 }
-.musy-rcard-group--accent-placeholder2 .musy-rcard__body[data-checked] .musy-rcard__check {
-  background-color: var(--interactive-accent-placeholder2);
-  border-color: var(--interactive-accent-placeholder2-on);
-  color: var(--interactive-accent-placeholder2-on);
+.musy-rcard-group--accent-alt .musy-rcard__body[data-checked] .musy-rcard__check {
+  background-color: var(--interactive-accent-alt);
+  border-color: var(--interactive-accent-alt-on);
+  color: var(--interactive-accent-alt-on);
 }
-.musy-rcard-group--accent-placeholder2 .musy-rcard__body[data-checked] .musy-rcard__headline {
-  color: var(--interactive-accent-placeholder2-on-subtle);
+.musy-rcard-group--accent-alt .musy-rcard__body[data-checked] .musy-rcard__headline {
+  color: var(--interactive-accent-alt-on-subtle);
 }
 
 .musy-rcard__body[data-disabled] {
@@ -2047,13 +2047,13 @@
   color: var(--interactive-primary-on-subtle);
 }
 
-.musy-seg--accent-placeholder1 .musy-seg__option[data-checked] {
-  border-color: var(--interactive-accent-placeholder1-border);
-  color: var(--interactive-accent-placeholder1-on-subtle);
+.musy-seg--accent .musy-seg__option[data-checked] {
+  border-color: var(--interactive-accent-border);
+  color: var(--interactive-accent-on-subtle);
 }
-.musy-seg--accent-placeholder2 .musy-seg__option[data-checked] {
-  border-color: var(--interactive-accent-placeholder2-border);
-  color: var(--interactive-accent-placeholder2-on-subtle);
+.musy-seg--accent-alt .musy-seg__option[data-checked] {
+  border-color: var(--interactive-accent-alt-border);
+  color: var(--interactive-accent-alt-on-subtle);
 }
 
 .musy-seg__option[data-disabled] {
@@ -2323,8 +2323,8 @@
 
 /* L9 — merge target: the accent's -subtle fill with its -border boundary. */
 .musy-dlist__item--merge-target {
-  border-color: var(--interactive-accent-placeholder2-border);
-  background-color: var(--interactive-accent-placeholder2-subtle);
+  border-color: var(--interactive-accent-alt-border);
+  background-color: var(--interactive-accent-alt-subtle);
 }
 
 /* ── L9 · the drop indicator ──────────────────────────────────────────────
@@ -2332,14 +2332,14 @@
    length on a phone.
 
    THE -border STEP, NEVER THE SOLID. A drop indicator is a meaningful graphic,
-   so 1.4.11 wants 3:1. --interactive-accent-placeholder2 is purple-9, which
+   so 1.4.11 wants 3:1. --interactive-accent-alt is purple-9, which
    measures 1.85:1 against the page and 2.01:1 against a card; the same family's
    -border is purple-edge at 3.90:1 / 4.25:1. Layer 1's step-9 comment was
    corrected to say so — 12 · Component gaps §5. */
 .musy-dlist__drop {
   height: var(--border-width-thick);
   border-radius: var(--radius-full);
-  background-color: var(--interactive-accent-placeholder2-border);
+  background-color: var(--interactive-accent-alt-border);
   /* --sp-1 is the smallest step in the scale, and the line wants the same
      clearance either side. */
   margin-block: var(--sp-1);
@@ -2400,7 +2400,7 @@
 /* What a release would do. Takes the accent that the drop indicator and the
    merge fill already use, so the hint and the target read as one answer. */
 .musy-dlist__preview-action {
-  color: var(--interactive-accent-placeholder2-on-subtle);
+  color: var(--interactive-accent-alt-on-subtle);
   font-family: var(--type-label-md-family);
   font-size: var(--type-label-md-size);
   font-weight: var(--type-label-md-weight);
@@ -2478,7 +2478,7 @@
    TRANSPARENT, NOT A COLOUR PER STATE. A transparent border shows the
    element's own background through it — background-clip defaults to
    border-box — so one declaration covers the resting fill, the selected fill
-   and both accent placeholders. Naming a colour instead would have meant one
+   and both accent families. Naming a colour instead would have meant one
    rule per family per state, and the first accent added would have drifted.
 
    THE WIDTH STAYS CONSTANT. It used to step from regular to thick on
@@ -2506,14 +2506,14 @@
 /* The accent group modifiers set the selected fill through their own rules, so
    they need the same neutralising here or their -border step would win on
    specificity. */
-.musy-radio-group--accent-placeholder1 .musy-radio__body[data-checked],
-.musy-radio-group--accent-placeholder2 .musy-radio__body[data-checked],
-.musy-radio-card-group--accent-placeholder1 .musy-radio-card__body[data-checked],
-.musy-radio-card-group--accent-placeholder2 .musy-radio-card__body[data-checked],
-.musy-rcard-group--accent-placeholder1 .musy-rcard__body[data-checked],
-.musy-rcard-group--accent-placeholder2 .musy-rcard__body[data-checked],
-.musy-seg--accent-placeholder1 .musy-seg__option[data-checked],
-.musy-seg--accent-placeholder2 .musy-seg__option[data-checked] {
+.musy-radio-group--accent .musy-radio__body[data-checked],
+.musy-radio-group--accent-alt .musy-radio__body[data-checked],
+.musy-radio-card-group--accent .musy-radio-card__body[data-checked],
+.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked],
+.musy-rcard-group--accent .musy-rcard__body[data-checked],
+.musy-rcard-group--accent-alt .musy-rcard__body[data-checked],
+.musy-seg--accent .musy-seg__option[data-checked],
+.musy-seg--accent-alt .musy-seg__option[data-checked] {
   border-color: transparent;
   border-width: var(--border-width-regular);
 }
@@ -2619,31 +2619,31 @@
   --musy-sel-fill: var(--interactive-primary);
   --musy-sel-on: var(--interactive-primary-on);
 }
-.musy-switch.musy-switch--accent-placeholder1,
-.musy-radio-group.musy-radio-group--accent-placeholder1,
-.musy-radio-card-group.musy-radio-card-group--accent-placeholder1,
-.musy-carousel.musy-carousel--accent-placeholder1,
-.musy-rcard-group.musy-rcard-group--accent-placeholder1 {
-  --musy-rest-fill: var(--interactive-accent-placeholder1-subtle);
-  --musy-rest-fill-hover: var(--interactive-accent-placeholder1-subtle-hover);
-  --musy-rest-fill-active: var(--interactive-accent-placeholder1-subtle-active);
-  --musy-rest-border: var(--interactive-accent-placeholder1-border);
-  --musy-rest-on: var(--interactive-accent-placeholder1-on-subtle);
-  --musy-sel-fill: var(--interactive-accent-placeholder1);
-  --musy-sel-on: var(--interactive-accent-placeholder1-on);
+.musy-switch.musy-switch--accent,
+.musy-radio-group.musy-radio-group--accent,
+.musy-radio-card-group.musy-radio-card-group--accent,
+.musy-carousel.musy-carousel--accent,
+.musy-rcard-group.musy-rcard-group--accent {
+  --musy-rest-fill: var(--interactive-accent-subtle);
+  --musy-rest-fill-hover: var(--interactive-accent-subtle-hover);
+  --musy-rest-fill-active: var(--interactive-accent-subtle-active);
+  --musy-rest-border: var(--interactive-accent-border);
+  --musy-rest-on: var(--interactive-accent-on-subtle);
+  --musy-sel-fill: var(--interactive-accent);
+  --musy-sel-on: var(--interactive-accent-on);
 }
-.musy-switch.musy-switch--accent-placeholder2,
-.musy-radio-group.musy-radio-group--accent-placeholder2,
-.musy-radio-card-group.musy-radio-card-group--accent-placeholder2,
-.musy-carousel.musy-carousel--accent-placeholder2,
-.musy-rcard-group.musy-rcard-group--accent-placeholder2 {
-  --musy-rest-fill: var(--interactive-accent-placeholder2-subtle);
-  --musy-rest-fill-hover: var(--interactive-accent-placeholder2-subtle-hover);
-  --musy-rest-fill-active: var(--interactive-accent-placeholder2-subtle-active);
-  --musy-rest-border: var(--interactive-accent-placeholder2-border);
-  --musy-rest-on: var(--interactive-accent-placeholder2-on-subtle);
-  --musy-sel-fill: var(--interactive-accent-placeholder2);
-  --musy-sel-on: var(--interactive-accent-placeholder2-on);
+.musy-switch.musy-switch--accent-alt,
+.musy-radio-group.musy-radio-group--accent-alt,
+.musy-radio-card-group.musy-radio-card-group--accent-alt,
+.musy-carousel.musy-carousel--accent-alt,
+.musy-rcard-group.musy-rcard-group--accent-alt {
+  --musy-rest-fill: var(--interactive-accent-alt-subtle);
+  --musy-rest-fill-hover: var(--interactive-accent-alt-subtle-hover);
+  --musy-rest-fill-active: var(--interactive-accent-alt-subtle-active);
+  --musy-rest-border: var(--interactive-accent-alt-border);
+  --musy-rest-on: var(--interactive-accent-alt-on-subtle);
+  --musy-sel-fill: var(--interactive-accent-alt);
+  --musy-sel-on: var(--interactive-accent-alt-on);
 }
 
 /* 05 · Switch — OFF track tinted. ON is left exactly as it was.
@@ -2960,24 +2960,24 @@
   --musy-wizard-accent-on-subtle: var(--interactive-primary-on-subtle);
 }
 
-/* The two accent placeholders. Whole solved families, not a hue swap: ocher and
+/* The two accent families. Whole solved families, not a hue swap: ocher and
    purple are LIGHT solids and take dark ink, where terracotta is a dark solid
    and takes light ink — so -on has to travel with -subtle, or the selected
    marker's number fails 1.4.3. Which of the three a screen should use is still
    undefined (conflict B12, open question 7). */
-.musy-wizard--accent-placeholder1 {
-  --musy-wizard-accent: var(--interactive-accent-placeholder1);
-  --musy-wizard-accent-subtle: var(--interactive-accent-placeholder1-subtle);
-  --musy-wizard-accent-border: var(--interactive-accent-placeholder1-border);
-  --musy-wizard-accent-on: var(--interactive-accent-placeholder1-on);
-  --musy-wizard-accent-on-subtle: var(--interactive-accent-placeholder1-on-subtle);
+.musy-wizard--accent {
+  --musy-wizard-accent: var(--interactive-accent);
+  --musy-wizard-accent-subtle: var(--interactive-accent-subtle);
+  --musy-wizard-accent-border: var(--interactive-accent-border);
+  --musy-wizard-accent-on: var(--interactive-accent-on);
+  --musy-wizard-accent-on-subtle: var(--interactive-accent-on-subtle);
 }
-.musy-wizard--accent-placeholder2 {
-  --musy-wizard-accent: var(--interactive-accent-placeholder2);
-  --musy-wizard-accent-subtle: var(--interactive-accent-placeholder2-subtle);
-  --musy-wizard-accent-border: var(--interactive-accent-placeholder2-border);
-  --musy-wizard-accent-on: var(--interactive-accent-placeholder2-on);
-  --musy-wizard-accent-on-subtle: var(--interactive-accent-placeholder2-on-subtle);
+.musy-wizard--accent-alt {
+  --musy-wizard-accent: var(--interactive-accent-alt);
+  --musy-wizard-accent-subtle: var(--interactive-accent-alt-subtle);
+  --musy-wizard-accent-border: var(--interactive-accent-alt-border);
+  --musy-wizard-accent-on: var(--interactive-accent-alt-on);
+  --musy-wizard-accent-on-subtle: var(--interactive-accent-alt-on-subtle);
 }
 
 /* The run is a ROW at every width. Narrow screens do not stack it — they
@@ -3603,15 +3603,15 @@
   border-color: var(--interactive-primary-border);
   color: var(--interactive-primary-on-subtle);
 }
-.musy-badge--accent-placeholder1 {
-  background-color: var(--interactive-accent-placeholder1);
-  border-color: var(--interactive-accent-placeholder1-border);
-  color: var(--interactive-accent-placeholder1-on);
+.musy-badge--accent {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent-border);
+  color: var(--interactive-accent-on);
 }
-.musy-badge--accent-placeholder2 {
-  background-color: var(--interactive-accent-placeholder2);
-  border-color: var(--interactive-accent-placeholder2-border);
-  color: var(--interactive-accent-placeholder2-on);
+.musy-badge--accent-alt {
+  background-color: var(--interactive-accent-alt);
+  border-color: var(--interactive-accent-alt-border);
+  color: var(--interactive-accent-alt-on);
 }
 
 /* Status — the same four feedback families as Message, so a badge and a banner
@@ -3755,13 +3755,13 @@
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
 }
-.musy-mplayer--accent-placeholder1 {
-  --musy-mplayer-accent: var(--interactive-accent-placeholder1);
-  --musy-mplayer-accent-border: var(--interactive-accent-placeholder1-border);
+.musy-mplayer--accent {
+  --musy-mplayer-accent: var(--interactive-accent);
+  --musy-mplayer-accent-border: var(--interactive-accent-border);
 }
-.musy-mplayer--accent-placeholder2 {
-  --musy-mplayer-accent: var(--interactive-accent-placeholder2);
-  --musy-mplayer-accent-border: var(--interactive-accent-placeholder2-border);
+.musy-mplayer--accent-alt {
+  --musy-mplayer-accent: var(--interactive-accent-alt);
+  --musy-mplayer-accent-border: var(--interactive-accent-alt-border);
 }
 .musy-mplayer[data-disabled] {
   border-color: var(--border-subtle);

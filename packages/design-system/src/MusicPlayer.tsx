@@ -67,7 +67,7 @@ export interface TrackButtonProps {
   onTogglePlay?: () => void;
   /** Called instead of onTogglePlay once the track has ended. */
   onRestart?: () => void;
-  variant?: 'primary' | 'secondary' | 'accent-placeholder1' | 'accent-placeholder2';
+  variant?: 'primary' | 'secondary' | 'accent' | 'accent-alt';
   /** --target-guided (64px) for assisted use. */
   size?: 'primary' | 'guided' | 'comfort';
   disabled?: boolean;
@@ -120,7 +120,7 @@ export interface MusicPlayerProps {
   onRestart?: () => void;
   /** Scrub. Fires with the new position in seconds. */
   onSeek?: (seconds: number) => void;
-  accent?: 'primary' | 'accent-placeholder1' | 'accent-placeholder2';
+  accent?: 'primary' | 'accent' | 'accent-alt';
   disabled?: boolean;
   playLabel?: string;
   pauseLabel?: string;

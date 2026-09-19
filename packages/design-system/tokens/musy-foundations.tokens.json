@@ -1309,112 +1309,112 @@
         "$value": "{palette.light.terracotta.edge}",
         "$description": "Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface."
       },
-      "interactive-accent-placeholder1": {
+      "interactive-accent": {
         "$type": "color",
         "$value": "{palette.light.ocher.9}",
-        "$description": "Ocher solid fill — the family's resting state."
+        "$description": "Ocher solid fill — the family's resting state. THE standard accent for interactive elements (stepper, cards, most form controls). Default to this; use --interactive-accent-alt only where warnings are common."
       },
-      "interactive-accent-placeholder1-hover": {
+      "interactive-accent-hover": {
         "$type": "color",
         "$value": "{palette.light.ocher.10}",
         "$description": "Ocher solid fill on hover."
       },
-      "interactive-accent-placeholder1-active": {
+      "interactive-accent-active": {
         "$type": "color",
         "$value": "{palette.light.ocher.press}",
         "$description": "Ocher solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
       },
-      "interactive-accent-placeholder1-disabled": {
+      "interactive-accent-disabled": {
         "$type": "color",
         "$value": "{palette.light.sand.5}",
         "$description": "Disabled fill — neutral, so no family reads as available."
       },
-      "interactive-accent-placeholder1-on": {
+      "interactive-accent-on": {
         "$type": "color",
         "$value": "{palette.light.sand.12}",
         "$description": "Foreground on the ocher solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
       },
-      "interactive-accent-placeholder1-on-disabled": {
+      "interactive-accent-on-disabled": {
         "$type": "color",
         "$value": "{palette.light.sand.10}",
         "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
       },
-      "interactive-accent-placeholder1-subtle": {
+      "interactive-accent-subtle": {
         "$type": "color",
         "$value": "{palette.light.ocher.3}",
         "$description": "Ocher tinted fill — chips, tags, selected rows."
       },
-      "interactive-accent-placeholder1-subtle-hover": {
+      "interactive-accent-subtle-hover": {
         "$type": "color",
         "$value": "{palette.light.ocher.4}",
         "$description": "Ocher tinted fill on hover."
       },
-      "interactive-accent-placeholder1-subtle-active": {
+      "interactive-accent-subtle-active": {
         "$type": "color",
         "$value": "{palette.light.ocher.5}",
         "$description": "Ocher tinted fill while pressed."
       },
-      "interactive-accent-placeholder1-on-subtle": {
+      "interactive-accent-on-subtle": {
         "$type": "color",
         "$value": "{palette.light.ocher.11}",
         "$description": "Text and icons on the ocher tinted fill, at any of its three states."
       },
-      "interactive-accent-placeholder1-border": {
+      "interactive-accent-border": {
         "$type": "color",
         "$value": "{palette.light.ocher.edge}",
         "$description": "Ocher boundary at ≥3:1. MANDATORY on any ocher fill that is not itself 3:1 against the surface."
       },
-      "interactive-accent-placeholder2": {
+      "interactive-accent-alt": {
         "$type": "color",
         "$value": "{palette.light.purple.9}",
-        "$description": "Purple solid fill — the family's resting state."
+        "$description": "Purple solid fill — the family's resting state. The backup accent, for components where warnings are common: ocher (#E9B86C) sits too close to --warning-9 (#FEA247), so the standard accent would read as a warning state there. Not a second decorative option."
       },
-      "interactive-accent-placeholder2-hover": {
+      "interactive-accent-alt-hover": {
         "$type": "color",
         "$value": "{palette.light.purple.10}",
         "$description": "Purple solid fill on hover."
       },
-      "interactive-accent-placeholder2-active": {
+      "interactive-accent-alt-active": {
         "$type": "color",
         "$value": "{palette.light.purple.press}",
         "$description": "Purple solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
       },
-      "interactive-accent-placeholder2-disabled": {
+      "interactive-accent-alt-disabled": {
         "$type": "color",
         "$value": "{palette.light.sand.5}",
         "$description": "Disabled fill — neutral, so no family reads as available."
       },
-      "interactive-accent-placeholder2-on": {
+      "interactive-accent-alt-on": {
         "$type": "color",
         "$value": "{palette.light.sand.12}",
         "$description": "Foreground on the purple solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
       },
-      "interactive-accent-placeholder2-on-disabled": {
+      "interactive-accent-alt-on-disabled": {
         "$type": "color",
         "$value": "{palette.light.sand.10}",
         "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
       },
-      "interactive-accent-placeholder2-subtle": {
+      "interactive-accent-alt-subtle": {
         "$type": "color",
         "$value": "{palette.light.purple.3}",
         "$description": "Purple tinted fill — chips, tags, selected rows."
       },
-      "interactive-accent-placeholder2-subtle-hover": {
+      "interactive-accent-alt-subtle-hover": {
         "$type": "color",
         "$value": "{palette.light.purple.4}",
         "$description": "Purple tinted fill on hover."
       },
-      "interactive-accent-placeholder2-subtle-active": {
+      "interactive-accent-alt-subtle-active": {
         "$type": "color",
         "$value": "{palette.light.purple.5}",
         "$description": "Purple tinted fill while pressed."
       },
-      "interactive-accent-placeholder2-on-subtle": {
+      "interactive-accent-alt-on-subtle": {
         "$type": "color",
         "$value": "{palette.light.purple.11}",
         "$description": "Text and icons on the purple tinted fill, at any of its three states."
       },
-      "interactive-accent-placeholder2-border": {
+      "interactive-accent-alt-border": {
         "$type": "color",
         "$value": "{palette.light.purple.edge}",
         "$description": "Purple boundary at ≥3:1. MANDATORY on any purple fill that is not itself 3:1 against the surface."
@@ -1726,112 +1726,112 @@
         "$value": "{palette.dark.terracotta.edge}",
         "$description": "Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface."
       },
-      "interactive-accent-placeholder1": {
+      "interactive-accent": {
         "$type": "color",
         "$value": "{palette.dark.ocher.9}",
-        "$description": "Ocher solid fill — the family's resting state."
+        "$description": "Ocher solid fill — the family's resting state. THE standard accent for interactive elements (stepper, cards, most form controls). Default to this; use --interactive-accent-alt only where warnings are common."
       },
-      "interactive-accent-placeholder1-hover": {
+      "interactive-accent-hover": {
         "$type": "color",
         "$value": "{palette.dark.ocher.10}",
         "$description": "Ocher solid fill on hover."
       },
-      "interactive-accent-placeholder1-active": {
+      "interactive-accent-active": {
         "$type": "color",
         "$value": "{palette.dark.ocher.press}",
         "$description": "Ocher solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
       },
-      "interactive-accent-placeholder1-disabled": {
+      "interactive-accent-disabled": {
         "$type": "color",
         "$value": "{palette.dark.sand.5}",
         "$description": "Disabled fill — neutral, so no family reads as available."
       },
-      "interactive-accent-placeholder1-on": {
+      "interactive-accent-on": {
         "$type": "color",
         "$value": "{palette.dark.sand.1}",
         "$description": "Foreground on the ocher solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
       },
-      "interactive-accent-placeholder1-on-disabled": {
+      "interactive-accent-on-disabled": {
         "$type": "color",
         "$value": "{palette.dark.sand.10}",
         "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
       },
-      "interactive-accent-placeholder1-subtle": {
+      "interactive-accent-subtle": {
         "$type": "color",
         "$value": "{palette.dark.ocher.3}",
         "$description": "Ocher tinted fill — chips, tags, selected rows."
       },
-      "interactive-accent-placeholder1-subtle-hover": {
+      "interactive-accent-subtle-hover": {
         "$type": "color",
         "$value": "{palette.dark.ocher.4}",
         "$description": "Ocher tinted fill on hover."
       },
-      "interactive-accent-placeholder1-subtle-active": {
+      "interactive-accent-subtle-active": {
         "$type": "color",
         "$value": "{palette.dark.ocher.5}",
         "$description": "Ocher tinted fill while pressed."
       },
-      "interactive-accent-placeholder1-on-subtle": {
+      "interactive-accent-on-subtle": {
         "$type": "color",
         "$value": "{palette.dark.ocher.11}",
         "$description": "Text and icons on the ocher tinted fill, at any of its three states."
       },
-      "interactive-accent-placeholder1-border": {
+      "interactive-accent-border": {
         "$type": "color",
         "$value": "{palette.dark.ocher.edge}",
         "$description": "Ocher boundary at ≥3:1. MANDATORY on any ocher fill that is not itself 3:1 against the surface."
       },
-      "interactive-accent-placeholder2": {
+      "interactive-accent-alt": {
         "$type": "color",
         "$value": "{palette.dark.purple.9}",
-        "$description": "Purple solid fill — the family's resting state."
+        "$description": "Purple solid fill — the family's resting state. The backup accent, for components where warnings are common: ocher (#E9B86C) sits too close to --warning-9 (#FEA247), so the standard accent would read as a warning state there. Not a second decorative option."
       },
-      "interactive-accent-placeholder2-hover": {
+      "interactive-accent-alt-hover": {
         "$type": "color",
         "$value": "{palette.dark.purple.10}",
         "$description": "Purple solid fill on hover."
       },
-      "interactive-accent-placeholder2-active": {
+      "interactive-accent-alt-active": {
         "$type": "color",
         "$value": "{palette.dark.purple.press}",
         "$description": "Purple solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill."
       },
-      "interactive-accent-placeholder2-disabled": {
+      "interactive-accent-alt-disabled": {
         "$type": "color",
         "$value": "{palette.dark.sand.5}",
         "$description": "Disabled fill — neutral, so no family reads as available."
       },
-      "interactive-accent-placeholder2-on": {
+      "interactive-accent-alt-on": {
         "$type": "color",
         "$value": "{palette.dark.sand.1}",
         "$description": "Foreground on the purple solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion."
       },
-      "interactive-accent-placeholder2-on-disabled": {
+      "interactive-accent-alt-on-disabled": {
         "$type": "color",
         "$value": "{palette.dark.sand.10}",
         "$description": "Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue."
       },
-      "interactive-accent-placeholder2-subtle": {
+      "interactive-accent-alt-subtle": {
         "$type": "color",
         "$value": "{palette.dark.purple.3}",
         "$description": "Purple tinted fill — chips, tags, selected rows."
       },
-      "interactive-accent-placeholder2-subtle-hover": {
+      "interactive-accent-alt-subtle-hover": {
         "$type": "color",
         "$value": "{palette.dark.purple.4}",
         "$description": "Purple tinted fill on hover."
       },
-      "interactive-accent-placeholder2-subtle-active": {
+      "interactive-accent-alt-subtle-active": {
         "$type": "color",
         "$value": "{palette.dark.purple.5}",
         "$description": "Purple tinted fill while pressed."
       },
-      "interactive-accent-placeholder2-on-subtle": {
+      "interactive-accent-alt-on-subtle": {
         "$type": "color",
         "$value": "{palette.dark.purple.11}",
         "$description": "Text and icons on the purple tinted fill, at any of its three states."
       },
-      "interactive-accent-placeholder2-border": {
+      "interactive-accent-alt-border": {
         "$type": "color",
         "$value": "{palette.dark.purple.edge}",
         "$description": "Purple boundary at ≥3:1. MANDATORY on any purple fill that is not itself 3:1 against the surface."

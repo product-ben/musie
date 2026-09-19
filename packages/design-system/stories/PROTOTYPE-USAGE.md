@@ -97,18 +97,18 @@ the prototype — every icon inherits its colour from its container.
 | METHOD FLOW | `ghost` | default | **"Not right now"** |
 | METHOD FLOW | `primary` | default | **"Finish session"** |
 | END | `secondary` | default | **"Send reflection"** (leading icon) |
-| END | **`accent-placeholder1`** | default | **"Start again"** |
-| LIGHTBOX · NYI | **`accent-placeholder1`** | default | **"Back to the choice"** |
+| END | **`accent`** | default | **"Start again"** |
+| LIGHTBOX · NYI | **`accent`** | default | **"Back to the choice"** |
 | LIGHTBOX · DETAIL | `primary` | default | **"Start Exercise"** |
 
 **Intent:** `primary` = the one way forward. `secondary` = a real but lesser
 action. `ghost` = Back, and anything that does not advance the flow.
-`accent-placeholder1` appears exactly twice, both times for *start over / go
+`accent` appears exactly twice, both times for *start over / go
 back to choosing* — a restart, not a primary. `guided` (64px) is used only in
 the Listen step, where the user may be across the room.
 
 `loading` is never used in the prototype. Neither is `size="min"`,
-`size="comfort"`, `block`, `wrap`, or `accent-placeholder2`.
+`size="comfort"`, `block`, `wrap`, or `accent-alt`.
 
 ---
 
@@ -169,7 +169,7 @@ writes the class `musy-icon-btn--primary-size`, which is `size="primary"`.
 
 ---
 
-## RadioGroupText — 4 usages, always `accent-placeholder1`
+## RadioGroupText — 4 usages, always `accent`
 
 | Screen | Legend | Options |
 |---|---|---|
@@ -178,14 +178,14 @@ writes the class `musy-icon-btn--primary-size`, which is `size="primary"`.
 | SETTINGS | **"Here as"** | hint: **"Musie uses this to narrow down the Methods it offers you."** |
 | SETTINGS | **"Language"** | **"English"**, **"Deutsch"** — hint: **"German arrives in the next iteration."** |
 
-**Every single use is `accent="accent-placeholder1"`.** The `primary` default
+**Every single use is `accent="accent"`.** The `primary` default
 never appears. `guided` is never used.
 
 ---
 
 ## RadioGroupImage — 1 usage
 
-ABOUT YOU, `accent-placeholder1`, legend **"And who are you here as?"**.
+ABOUT YOU, `accent`, legend **"And who are you here as?"**.
 Four options, all pointing at the same placeholder image:
 
 | value | label | imageAlt |
@@ -204,7 +204,7 @@ routes to a lightbox instead.
 ## RadioCards — 2 usages
 
 METHOD RECOMMENDATION, legend **"What would you like to start with now?"**,
-`accent-placeholder1`. Headline `heading-sm`, description `body-md`.
+`accent`. Headline `heading-sm`, description `body-md`.
 
 | name | description | image |
 |---|---|---|
@@ -230,7 +230,7 @@ which is exactly the case Hint's header says it exists for.
 
 ---
 
-## InteractiveWizard — 1 usage, `accent-placeholder1`
+## InteractiveWizard — 1 usage, `accent`
 
 `label="Method steps"`. Four steps, in order:
 
@@ -262,14 +262,14 @@ component's `alt` default is `'Musy'`. Flagged in OPEN-QUESTIONS.md.
 
 ## Switch — 1 usage
 
-SETTINGS, `reverse` + `accent-placeholder1`. Label **"Dark mode"**.
+SETTINGS, `reverse` + `accent`. Label **"Dark mode"**.
 Knob glyphs are a **Moon / Sun** pair, not the component's Check / X default —
 exactly the domain-pair case `onGlyph`/`offGlyph` documents.
 `guided` and `labelHidden` never appear.
 
 ---
 
-## SegmentedControl — 1 usage, `accent-placeholder1`
+## SegmentedControl — 1 usage, `accent`
 
 METHOD FLOW · Reflect. Legend **"How would you like to answer?"**.
 Three options, each with a glyph:
@@ -340,7 +340,7 @@ Description: **"Nothing leaves your device until you share it."**
 
 | Title | Content |
 |---|---|
-| **"Not implemented yet"** | The thing's name, then a `accent-placeholder1` CTA **"Back to the choice"** |
+| **"Not implemented yet"** | The thing's name, then a `accent` CTA **"Back to the choice"** |
 | **"Quick Mindfulness Break"** | Subtitle "For getting aware of feelings", a ContentList of method details, and a `primary` CTA **"Start Exercise"** |
 
 Both use `data-type-step="heading-md"` on the headline — the component's own
@@ -371,7 +371,7 @@ RETIRED. Write its stories from the component source and docs only.
 
 ## Components used by the prototype that are NOT in the system
 
-- **Carousel** (`musy-carousel--accent-placeholder1`, ONBOARDING) — ~200 lines
+- **Carousel** (`musy-carousel--accent`, ONBOARDING) — ~200 lines
   of CSS, no component, no export.
 
 ## Components the prototype uses that ARE in the system

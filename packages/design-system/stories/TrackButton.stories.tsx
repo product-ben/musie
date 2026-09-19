@@ -88,9 +88,9 @@ const meta = {
           '## TrackButton / MusicPlayer — one calls the colour prop `variant`, the other `accent`',
           'Where: `src/MusicPlayer.tsx:71` vs `:121`',
           'What I checked: Level 1. `TrackButtonProps.variant` is `\'primary\' |',
-          '\'secondary\' | \'accent-placeholder1\' | \'accent-placeholder2\'`;',
-          '`MusicPlayerProps.accent` is `\'primary\' | \'accent-placeholder1\' |',
-          '\'accent-placeholder2\'`. Two components in one file, overlapping value sets,',
+          '\'secondary\' | \'accent\' | \'accent-alt\'`;',
+          '`MusicPlayerProps.accent` is `\'primary\' | \'accent\' |',
+          '\'accent-alt\'`. Two components in one file, overlapping value sets,',
           'different prop names.',
           'What I did: used each name as declared.',
           'Why: renaming either is a design decision.',
@@ -124,7 +124,7 @@ const meta = {
     onRestart: { action: 'restart', description: 'Called instead of onTogglePlay once the track has ended.' },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'accent-placeholder1', 'accent-placeholder2'],
+      options: ['primary', 'secondary', 'accent', 'accent-alt'],
       description: 'Button family. Defaults to `secondary`.',
     },
     size: {
@@ -155,8 +155,8 @@ export const Variants: Story = {
     <Stack>
       <TrackButton {...args} variant="primary" />
       <TrackButton {...args} variant="secondary" />
-      <TrackButton {...args} variant="accent-placeholder1" />
-      <TrackButton {...args} variant="accent-placeholder2" />
+      <TrackButton {...args} variant="accent" />
+      <TrackButton {...args} variant="accent-alt" />
     </Stack>
   ),
 };

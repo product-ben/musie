@@ -51,7 +51,7 @@ export interface RecordButtonProps {
   levels?: number[];
   bars?: number;
   onToggle?: () => void;
-  variant?: 'primary' | 'accent-placeholder1' | 'accent-placeholder2';
+  variant?: 'primary' | 'accent' | 'accent-alt';
   /** Raises the TARGET, not the type step — §7.4's ladder. */
   size?: 'primary' | 'comfort' | 'guided';
   disabled?: boolean;

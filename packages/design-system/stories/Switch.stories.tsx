@@ -9,7 +9,7 @@ import { Moon, Sun, Volume2, VolumeX } from 'lucide-react';
 import { Switch } from '../src/Switch';
 import { bothThemes, Stack } from './_decorators';
 
-/* The prototype's only Switch — SETTINGS, `reverse` + `accent-placeholder1`,
+/* The prototype's only Switch — SETTINGS, `reverse` + `accent`,
    label "Dark mode", Moon / Sun knob glyphs. See PROTOTYPE-USAGE.md. */
 
 const meta = {
@@ -149,8 +149,8 @@ const meta = {
     },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
-      description: 'Solved accent family. Literal placeholder names per Decision 3.',
+      options: ['primary', 'accent', 'accent-alt'],
+      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
     },
     guided: { control: 'boolean', description: 'Raise the row to --target-guided for assisted use.' },
     showStateIcons: {
@@ -183,16 +183,16 @@ export const Default: Story = {};
 export const Checked: Story = { args: { checked: true } };
 
 /** All three accent families, on and off. The prototype uses
- *  `accent-placeholder1`. */
+ *  `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <Switch {...args} accent="primary" label="accent: primary (default) — off" checked={false} />
       <Switch {...args} accent="primary" label="accent: primary (default) — on" checked />
-      <Switch {...args} accent="accent-placeholder1" label="accent: accent-placeholder1 — off" checked={false} />
-      <Switch {...args} accent="accent-placeholder1" label="accent: accent-placeholder1 — on" checked />
-      <Switch {...args} accent="accent-placeholder2" label="accent: accent-placeholder2 — off" checked={false} />
-      <Switch {...args} accent="accent-placeholder2" label="accent: accent-placeholder2 — on" checked />
+      <Switch {...args} accent="accent" label="accent: accent — off" checked={false} />
+      <Switch {...args} accent="accent" label="accent: accent — on" checked />
+      <Switch {...args} accent="accent-alt" label="accent: accent-alt — off" checked={false} />
+      <Switch {...args} accent="accent-alt" label="accent: accent-alt — on" checked />
     </Stack>
   ),
 };
@@ -209,13 +209,13 @@ export const Guided: Story = { args: { guided: true, label: 'guided — 64px row
  *  state `role="switch"` already announces — so removing it is legitimate. */
 export const WithoutStateIcons: Story = { args: { showStateIcons: false, checked: true } };
 
-/** The prototype's own SETTINGS control: `reverse`, `accent-placeholder1`, a
+/** The prototype's own SETTINGS control: `reverse`, `accent`, a
  *  Moon / Sun domain pair instead of the Check / X default. */
 export const DarkModePair: Story = {
   args: {
     label: 'Dark mode',
     reverse: true,
-    accent: 'accent-placeholder1',
+    accent: 'accent',
     onGlyph: Moon,
     offGlyph: Sun,
     checked: true,

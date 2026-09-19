@@ -496,8 +496,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on",
-    "bg": "interactive-accent-placeholder1",
+    "fg": "interactive-accent-on",
+    "bg": "interactive-accent",
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
@@ -512,8 +512,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on",
-    "bg": "interactive-accent-placeholder1-hover",
+    "fg": "interactive-accent-on",
+    "bg": "interactive-accent-hover",
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
@@ -528,8 +528,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on",
-    "bg": "interactive-accent-placeholder1-active",
+    "fg": "interactive-accent-on",
+    "bg": "interactive-accent-active",
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
@@ -544,7 +544,7 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1",
+    "fg": "interactive-accent",
     "bg": "surface",
     "req": 0,
     "why": "Fill vs page — if <3:1 the -border token is MANDATORY",
@@ -560,7 +560,7 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-border",
+    "fg": "interactive-accent-border",
     "bg": "surface",
     "req": 3,
     "why": "Fill boundary · 1.4.11",
@@ -576,8 +576,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on-subtle",
-    "bg": "interactive-accent-placeholder1-subtle",
+    "fg": "interactive-accent-on-subtle",
+    "bg": "interactive-accent-subtle",
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
@@ -592,8 +592,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on-subtle",
-    "bg": "interactive-accent-placeholder1-subtle-hover",
+    "fg": "interactive-accent-on-subtle",
+    "bg": "interactive-accent-subtle-hover",
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
@@ -608,8 +608,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on-subtle",
-    "bg": "interactive-accent-placeholder1-subtle-active",
+    "fg": "interactive-accent-on-subtle",
+    "bg": "interactive-accent-subtle-active",
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
@@ -624,7 +624,7 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on-subtle",
+    "fg": "interactive-accent-on-subtle",
     "bg": "surface",
     "req": 4.5,
     "why": "Tinted-fill text used bare on the page",
@@ -641,7 +641,7 @@
   },
   {
     "fg": "on-surface",
-    "bg": "interactive-accent-placeholder1-subtle",
+    "bg": "interactive-accent-subtle",
     "req": 4.5,
     "why": "Body text inside a tinted card",
     "light": {
@@ -657,7 +657,7 @@
   },
   {
     "fg": "on-surface-muted",
-    "bg": "interactive-accent-placeholder1-subtle",
+    "bg": "interactive-accent-subtle",
     "req": 4.5,
     "why": "Muted text inside a tinted card",
     "light": {
@@ -672,8 +672,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder1-on-disabled",
-    "bg": "interactive-accent-placeholder1-disabled",
+    "fg": "interactive-accent-on-disabled",
+    "bg": "interactive-accent-disabled",
     "req": 0,
     "why": "Disabled label — exempt",
     "light": {
@@ -688,8 +688,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on",
-    "bg": "interactive-accent-placeholder2",
+    "fg": "interactive-accent-alt-on",
+    "bg": "interactive-accent-alt",
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
@@ -704,8 +704,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on",
-    "bg": "interactive-accent-placeholder2-hover",
+    "fg": "interactive-accent-alt-on",
+    "bg": "interactive-accent-alt-hover",
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
@@ -720,8 +720,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on",
-    "bg": "interactive-accent-placeholder2-active",
+    "fg": "interactive-accent-alt-on",
+    "bg": "interactive-accent-alt-active",
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
@@ -736,7 +736,7 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2",
+    "fg": "interactive-accent-alt",
     "bg": "surface",
     "req": 0,
     "why": "Fill vs page — if <3:1 the -border token is MANDATORY",
@@ -752,7 +752,7 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-border",
+    "fg": "interactive-accent-alt-border",
     "bg": "surface",
     "req": 3,
     "why": "Fill boundary · 1.4.11",
@@ -768,8 +768,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on-subtle",
-    "bg": "interactive-accent-placeholder2-subtle",
+    "fg": "interactive-accent-alt-on-subtle",
+    "bg": "interactive-accent-alt-subtle",
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
@@ -784,8 +784,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on-subtle",
-    "bg": "interactive-accent-placeholder2-subtle-hover",
+    "fg": "interactive-accent-alt-on-subtle",
+    "bg": "interactive-accent-alt-subtle-hover",
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
@@ -800,8 +800,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on-subtle",
-    "bg": "interactive-accent-placeholder2-subtle-active",
+    "fg": "interactive-accent-alt-on-subtle",
+    "bg": "interactive-accent-alt-subtle-active",
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
@@ -816,7 +816,7 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on-subtle",
+    "fg": "interactive-accent-alt-on-subtle",
     "bg": "surface",
     "req": 4.5,
     "why": "Tinted-fill text used bare on the page",
@@ -833,7 +833,7 @@
   },
   {
     "fg": "on-surface",
-    "bg": "interactive-accent-placeholder2-subtle",
+    "bg": "interactive-accent-alt-subtle",
     "req": 4.5,
     "why": "Body text inside a tinted card",
     "light": {
@@ -849,7 +849,7 @@
   },
   {
     "fg": "on-surface-muted",
-    "bg": "interactive-accent-placeholder2-subtle",
+    "bg": "interactive-accent-alt-subtle",
     "req": 4.5,
     "why": "Muted text inside a tinted card",
     "light": {
@@ -864,8 +864,8 @@
     }
   },
   {
-    "fg": "interactive-accent-placeholder2-on-disabled",
-    "bg": "interactive-accent-placeholder2-disabled",
+    "fg": "interactive-accent-alt-on-disabled",
+    "bg": "interactive-accent-alt-disabled",
     "req": 0,
     "why": "Disabled label — exempt",
     "light": {

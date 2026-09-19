@@ -120,6 +120,19 @@ export function ColourSemantic() {
               {g.rows.length}
             </span>
           </h3>
+          {/* The rule for the whole family, where one exists. A per-row
+              description says what a token IS; this says when to reach for it,
+              which is the thing a caller actually gets wrong. */}
+          {'usage' in g && g.usage ? (
+            <p style={{
+              fontFamily: 'var(--type-body-md-family)', fontSize: 'var(--type-body-md-size)',
+              lineHeight: 'var(--type-body-md-line-height)', color: 'var(--on-surface-muted)',
+              maxWidth: 'var(--measure-body)', textWrap: 'var(--text-wrap-body)' as 'pretty',
+              margin: '0 0 var(--sp-3)',
+            }}>
+              {g.usage}
+            </p>
+          ) : null}
           <Table home head={['Token', 'light', 'dark', 'Specimen', 'Resolves to', 'Why']}>
             {g.rows.map((name) => (
               <Row key={name}>

@@ -158,7 +158,7 @@ export const MixedWithFieldItems: Story = {
               id="fieldgroup-dark-mode"
               label="Dark mode"
               labelHidden
-              accent="accent-placeholder1"
+              accent="accent"
               onGlyph={Moon}
               offGlyph={Sun}
               checked

@@ -136,7 +136,7 @@ const meta = {
           'Where: `src/InteractiveWizard.tsx:76-82` (the prop’s own doc comment)',
           'What I checked: Level 1 says so itself: "Which of the three a screen should use',
           'is still undefined — conflict B12, open question 7." Level 2 records one usage,',
-          '`accent-placeholder1`. Level 3 repeats the same sentence.',
+          '`accent`. Level 3 repeats the same sentence.',
           'What I did: `Default` uses the component default `primary`; `Accents` shows all',
           'three; nothing recommends one.',
           'Why: picking one would be a design decision.',
@@ -171,7 +171,7 @@ const meta = {
     stateWords: { control: false, description: 'Override the four state words. Defaults: locked / available / current / done.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
+      options: ['primary', 'accent', 'accent-alt'],
       description: 'Which solved accent family paints the markers, the current label and the completed connectors.',
     },
     className: { control: false },
@@ -186,13 +186,13 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /** All three accent families. The prototype's one usage is
- *  `accent-placeholder1`. */
+ *  `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <InteractiveWizard {...args} accent="primary" label="accent: primary (default)" />
-      <InteractiveWizard {...args} accent="accent-placeholder1" label="accent: accent-placeholder1" />
-      <InteractiveWizard {...args} accent="accent-placeholder2" label="accent: accent-placeholder2" />
+      <InteractiveWizard {...args} accent="accent" label="accent: accent" />
+      <InteractiveWizard {...args} accent="accent-alt" label="accent: accent-alt" />
     </Stack>
   ),
 };

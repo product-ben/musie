@@ -224,49 +224,49 @@
   /* Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface. */
   --interactive-primary-border: var(--terracotta-edge);
   /* Ocher solid fill — the family's resting state. */
-  --interactive-accent-placeholder1: var(--ocher-9);
+  --interactive-accent: var(--ocher-9);
   /* Ocher solid fill on hover. */
-  --interactive-accent-placeholder1-hover: var(--ocher-10);
+  --interactive-accent-hover: var(--ocher-10);
   /* Ocher solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill. */
-  --interactive-accent-placeholder1-active: var(--ocher-press);
+  --interactive-accent-active: var(--ocher-press);
   /* Disabled fill — neutral, so no family reads as available. */
-  --interactive-accent-placeholder1-disabled: var(--sand-5);
+  --interactive-accent-disabled: var(--sand-5);
   /* Foreground on the ocher solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion. */
-  --interactive-accent-placeholder1-on: light-dark(var(--sand-12), var(--sand-1));
+  --interactive-accent-on: light-dark(var(--sand-12), var(--sand-1));
   /* Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue. */
-  --interactive-accent-placeholder1-on-disabled: var(--sand-10);
+  --interactive-accent-on-disabled: var(--sand-10);
   /* Ocher tinted fill — chips, tags, selected rows. */
-  --interactive-accent-placeholder1-subtle: var(--ocher-3);
+  --interactive-accent-subtle: var(--ocher-3);
   /* Ocher tinted fill on hover. */
-  --interactive-accent-placeholder1-subtle-hover: var(--ocher-4);
+  --interactive-accent-subtle-hover: var(--ocher-4);
   /* Ocher tinted fill while pressed. */
-  --interactive-accent-placeholder1-subtle-active: var(--ocher-5);
+  --interactive-accent-subtle-active: var(--ocher-5);
   /* Text and icons on the ocher tinted fill, at any of its three states. */
-  --interactive-accent-placeholder1-on-subtle: var(--ocher-11);
+  --interactive-accent-on-subtle: var(--ocher-11);
   /* Ocher boundary at ≥3:1. MANDATORY on any ocher fill that is not itself 3:1 against the surface. */
-  --interactive-accent-placeholder1-border: var(--ocher-edge);
+  --interactive-accent-border: var(--ocher-edge);
   /* Purple solid fill — the family's resting state. */
-  --interactive-accent-placeholder2: var(--purple-9);
+  --interactive-accent-alt: var(--purple-9);
   /* Purple solid fill on hover. */
-  --interactive-accent-placeholder2-hover: var(--purple-10);
+  --interactive-accent-alt-hover: var(--purple-10);
   /* Purple solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill. */
-  --interactive-accent-placeholder2-active: var(--purple-press);
+  --interactive-accent-alt-active: var(--purple-press);
   /* Disabled fill — neutral, so no family reads as available. */
-  --interactive-accent-placeholder2-disabled: var(--sand-5);
+  --interactive-accent-alt-disabled: var(--sand-5);
   /* Foreground on the purple solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion. */
-  --interactive-accent-placeholder2-on: light-dark(var(--sand-12), var(--sand-1));
+  --interactive-accent-alt-on: light-dark(var(--sand-12), var(--sand-1));
   /* Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue. */
-  --interactive-accent-placeholder2-on-disabled: var(--sand-10);
+  --interactive-accent-alt-on-disabled: var(--sand-10);
   /* Purple tinted fill — chips, tags, selected rows. */
-  --interactive-accent-placeholder2-subtle: var(--purple-3);
+  --interactive-accent-alt-subtle: var(--purple-3);
   /* Purple tinted fill on hover. */
-  --interactive-accent-placeholder2-subtle-hover: var(--purple-4);
+  --interactive-accent-alt-subtle-hover: var(--purple-4);
   /* Purple tinted fill while pressed. */
-  --interactive-accent-placeholder2-subtle-active: var(--purple-5);
+  --interactive-accent-alt-subtle-active: var(--purple-5);
   /* Text and icons on the purple tinted fill, at any of its three states. */
-  --interactive-accent-placeholder2-on-subtle: var(--purple-11);
+  --interactive-accent-alt-on-subtle: var(--purple-11);
   /* Purple boundary at ≥3:1. MANDATORY on any purple fill that is not itself 3:1 against the surface. */
-  --interactive-accent-placeholder2-border: var(--purple-edge);
+  --interactive-accent-alt-border: var(--purple-edge);
   /* Ghost control at rest — no fill. */
   --interactive-ghost: transparent;
   /* Ghost hover fill. */

@@ -173,8 +173,8 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
-      description: 'Solved accent family. Literal placeholder names per Decision 3.',
+      options: ['primary', 'accent', 'accent-alt'],
+      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
     },
     headingLevel: {
       control: 'inline-radio',
@@ -202,17 +202,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Component defaults at the 393px phone reference. The prototype passes
- *  `accent-placeholder1`, `heading-sm` and `body-md`; the last two are the
+ *  `accent`, `heading-sm` and `body-md`; the last two are the
  *  component's own defaults. */
 export const Default: Story = {};
 
-/** All three accent families. The prototype's usage is `accent-placeholder1`. */
+/** All three accent families. The prototype's usage is `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <RadioCards {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
-      <RadioCards {...args} name="a-p1" accent="accent-placeholder1" legend="accent: accent-placeholder1" />
-      <RadioCards {...args} name="a-p2" accent="accent-placeholder2" legend="accent: accent-placeholder2" />
+      <RadioCards {...args} name="a-p1" accent="accent" legend="accent: accent" />
+      <RadioCards {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
 };

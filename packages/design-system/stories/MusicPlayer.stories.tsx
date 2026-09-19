@@ -63,7 +63,7 @@ const meta = {
           'What I checked: Level 1. The wrapper takes `musy-mplayer--${accent}`, but the',
           'play control’s class list is the literal string `\'musy-icon-btn',
           'musy-icon-btn--primary musy-icon-btn--guided\'`. Level 3, §7.21’s token list',
-          'names `--interactive-accent-placeholder1/2`, and the CSS only sets',
+          'names `--interactive-accent/2`, and the CSS only sets',
           '`--musy-mplayer-accent` on the wrapper.',
           'What I did: wrote an `Accents` story showing all three anyway.',
           'Why: the accent does change the fill, the thumb and the border, so the story',
@@ -109,8 +109,8 @@ const meta = {
     onSeek: { action: 'seek', description: 'Scrub. Fires with the new position in seconds.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
-      description: 'Solved accent family. Literal placeholder names per Decision 3.',
+      options: ['primary', 'accent', 'accent-alt'],
+      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
     },
     disabled: { control: 'boolean', description: 'Disables the transport button and the scrubber.' },
     playLabel: { control: 'text', description: 'Copy. English default: "Play".' },
@@ -135,8 +135,8 @@ export const Accents: Story = {
   render: (args) => (
     <Stack>
       <MusicPlayer {...args} accent="primary" title="accent: primary (default)" />
-      <MusicPlayer {...args} accent="accent-placeholder1" title="accent: accent-placeholder1" />
-      <MusicPlayer {...args} accent="accent-placeholder2" title="accent: accent-placeholder2" />
+      <MusicPlayer {...args} accent="accent" title="accent: accent" />
+      <MusicPlayer {...args} accent="accent-alt" title="accent: accent-alt" />
     </Stack>
   ),
   args: { position: 72 },

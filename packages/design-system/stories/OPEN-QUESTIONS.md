@@ -1627,3 +1627,165 @@ What I need from Ben: nothing — fixed. Noting the history: the earlier move ta
 instructed deleting this prop on the stated grounds that "no CSS rule uses it".
 A rule did. The deletion was not what broke it — the prop never reached the DOM —
 but it removed the last trace of an already-dead 1.4.1 non-colour cue.
+
+---
+
+# Phase B.1 — the four decisions, answered 2026-09-19
+
+Ben's answers to the four questions B.1 reserved for him. Recorded here rather
+than in the entries above because this file is append-only; each entry names
+the questions it closes. **No code has been written for any of these** — that
+is B.2.
+
+## Accents — `accent-placeholder1/2` get real names, in Layer 1 — ANSWERED
+Closes: the B12 conflict, and every "accent-placeholder" entry above.
+
+What they turned out to be, in Ben's words:
+
+- **`accent-placeholder1` is the standard accent** for interactive elements —
+  the stepper, the cards, and in practice almost every form control. It becomes
+  **`--interactive-accent`**.
+- **`accent-placeholder2` is a backup** for components where warnings are
+  common, "as the ocher is too close to a warning orange". The example given is
+  the draggable list, where statements can be combined.
+
+The collision is real and measurable: `--ocher-9` is `#E9B86C` and
+`--warning-9` is `#FEA247` — two warm ambers, one of them load-bearing for
+feedback. So the second accent is not decoration, it is what a component reaches
+for when the first accent would read as a warning state.
+
+**Where the rename lands: Layer 1, re-signed.** Ben chose this over aliasing in
+`musy-foundations-amendments.css`. The consequence is explicit — the "Layer 1 is
+byte-identical to the signed-off version" guarantee in README.md is broken and
+then re-established, and `scripts/verify-tokens.mjs` is re-baselined as part of
+the same change. 22 tokens, plus the DTCG mirror (44 entries) and
+`tokens/_audit.json` (38), plus 20 CSS class variants and 9 component prop
+unions.
+
+**Two things B.2 still has to settle, both consequences rather than decisions:**
+
+1. **`DraggableList` has no `accent` prop.** It renders inner `CtaButton`s at
+   `variant="ghost" | "secondary" | "primary"` and exposes no accent at all, so
+   the use case that justifies the second accent cannot currently be expressed.
+   The seven components that DO expose it are Badge, CtaButton,
+   InteractiveWizard, MusicPlayer, RecordButton, RadioGroupText and Switch.
+   Either DraggableList gains the prop, or the stated reason for keeping a
+   second accent has no call site.
+2. **The second accent is `--interactive-accent-alt`** — confirmed by Ben on
+   2026-09-19. It says "the other one" without claiming a hue, which matters
+   because the reason it exists is a contrast relationship with `--warning-*`
+   rather than a pigment.
+   Note that where the prop is itself called `accent` (Switch, RadioGroupText,
+   InteractiveWizard), the value now reads `accent="accent"`. On `variant`
+   props (CtaButton, RecordButton, MusicPlayer) it reads fine. Left as is: the
+   alternative was naming the value differently from the token it selects.
+
+**DONE 2026-09-19 — the rename landed.** 610 occurrences across 36 files:
+Layer 1 (22 tokens), the DTCG mirror, `_audit.json`, `proof-manifest.json`,
+`musy-components.css` (163), seven component prop unions, seventeen story
+files, PROTOTYPE-USAGE.md, both Layer 3 docs and their reference mirrors, and
+three call sites in `apps/web/src/SettingsSheet.tsx` — which `tsc` caught
+rather than a grep, because the prop types are unions.
+
+Three places deliberately keep the OLD names, and a grep will find them:
+
+- **This file, above.** It is append-only and records what was true when each
+  entry was written. Rewriting the history to match the present would destroy
+  the thing the log is for.
+- **`reference/`** — the vendored snapshot of the original design system. It is
+  a record of what was specified, not a live document. The two exceptions are
+  `reference/design_system/docs/10-layout.md` and `15-layout-evidence.md`,
+  which `verify-layout.mjs` asserts are byte-identical to the package copies;
+  those two were renamed in both places so the check still passes.
+- **`BUILD-PLAN.md`**, inside the collapsed "original four questions" block.
+
+**`README.md` no longer claims Layer 1 is byte-identical to the signed-off
+version**, because it is not. It now records the rename, that nothing else
+changed — no value, no alias, no override — and that the lock is re-established
+from the new version.
+
+One correction to what was said while deciding this: `verify-tokens.mjs` does
+NOT store a hash or signature of Layer 1. It asserts that every declared token
+is claimed by exactly one Storybook page group. So "re-signing" meant updating
+those predicates and the README sentence, not re-baselining a checksum — a
+smaller and less alarming operation than it sounded.
+
+**The Storybook page groups needed care.** `--interactive-accent-alt-*` also
+starts with `--interactive-accent`, so the plain predicate excludes the alt
+prefix explicitly. Without that, the first group claims all 22 tokens, the
+second renders empty, and `verify-tokens.mjs` fails on "claimed twice". Written
+as an exclusion rather than relying on array order, so reordering the list
+cannot silently break it.
+
+## ProcessVisualisation — retired, and Carousel gets built in B.2 — ANSWERED
+Closes: "ProcessVisualisation — the CSS section is RETIRED, the component is
+exported, and the docs are `[OPEN]`", and its three follow-on entries.
+
+The export goes, `§7.8` is marked retired rather than `[OPEN]`, and the `8b ·
+PROCESS VISUALISATION — RETIRED` CSS section is deleted. The three defects
+logged against it — the German `ordinalPrefix = 'Schritt'`, the hardcoded
+`<h3>`, and the dividers carrying only `aria-hidden` where §7.8 specifies
+`role="presentation"` — die with it and need no fix.
+
+**Carousel is built in B.2, not deferred to D.1.** The ~200 lines of
+`.musy-carousel` CSS have no component and no export, and D.1's five-slide
+onboarding needs one. Building it in B.2 keeps the component work inside the
+phase where component work is reviewed, rather than having D.1 write a screen
+and a component in one session — which is where hand-written markup appears.
+
+## Component defaults — English — ANSWERED
+Closes: "ProcessVisualisation — `ordinalPrefix` defaults to German while the
+rest of Batch D defaults to English", and the several `emptyLabel` entries.
+
+13 German strings across 11 components become English: the `Badge` and
+`Message` status words (Hinweis / Warnung / Erfolg / Fehler), `Lightbox`
+`closeLabel`, `Toast` and `Message` `dismissLabel`, the four `emptyLabel`s on
+ContentList / RadioCards / RadioGroupImage / RadioGroupText, and the
+`loadingLabel = 'Wird geladen'` on CtaButton and IconButton.
+`ProcessVisualisation.ordinalPrefix` is retired rather than translated.
+
+`en.ts` is the source of truth that `de.ts` is typed against, so English
+defaults match the direction the app already resolves in — and it is 13 edits
+rather than the 25 that going German would cost.
+
+This does NOT relax the app's own rule. `apps/web` still passes every
+user-visible string explicitly, because a default in either language is wrong
+in the other; see CLAUDE.md rule 7. What changes is only what shows when
+someone forgets.
+
+## G3 — `--interactive-ghost-border-hover` — ANSWERED
+Closes: the two raw `--sand-8` references in `musy-components.css`.
+
+Ben chose the name inside the existing `--interactive-ghost-*` family over
+`--border-strong-hover`. Both raw references are the same role — the border of
+a `--secondary` control on hover, at `.musy-btn--secondary:hover` and
+`.musy-icon-btn--secondary:hover`, both of which already take
+`--interactive-ghost-hover` for their background. So the ghost family is where
+their background already comes from, and the border now follows it.
+
+**Two things B.2 must carry, or the token is worse than the raw value:**
+
+- `--border-strong` has `forced-colors: active` and `prefers-contrast: more`
+  overrides; `--interactive-ghost-border` has neither. A hover border needs
+  them, so they have to be written for the new token rather than inherited.
+- Since Layer 1 is being re-signed for the accent rename anyway, this token
+  goes into Layer 1 beside `--interactive-ghost-border` rather than into the
+  amendments file. G1 and G2 stay where they are.
+
+**G3 is not tracked anywhere.** G1 and G2 appear in `TOKEN-DRIFT.md`,
+`README.md`, `.storybook/preview.ts` and the Icon stories; "G3" appears only in
+`BUILD-PLAN.md`. B.2 adds the missing row so the three read alike.
+
+## Noted while answering these — `docs/12-component-gaps.md` does not exist here
+Where: `docs/10-layout.md:19` and `:337`
+
+`10-layout.md` links to `12-component-gaps.md` twice. That file exists only in
+`reference/design_system/docs/`, not in this package, so both links are dead
+from here. It cannot simply be fixed: `verify-layout.mjs` asserts
+`docs/10-layout.md` is byte-identical to the reference copy, so the reference
+copy has to change first or the check fails.
+
+Also: that gaps document has six numbered entries and none of them is G3, so
+the G1/G2/G3 numbering is a separate sequence from it.
+What I need from Ben: nothing yet — flagging, because it will look like a
+broken link to the next person who follows it.

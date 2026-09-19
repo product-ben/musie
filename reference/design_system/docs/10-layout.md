@@ -315,7 +315,7 @@ reason it is an `<article>`. Hide it with `headlineHidden`
 
 **A standalone graphic takes the `-border` step, never the solid.** A drop
 indicator is a meaningful graphic and 1.4.11 wants 3:1. Measured:
-`--interactive-accent-placeholder2` (`purple-9`) gives **1.85:1 against the page
+`--interactive-accent-alt` (`purple-9`) gives **1.85:1 against the page
 and 2.01:1 against a card**; the same family's `-border` (`purple-edge`) gives
 **3.90:1 / 4.25:1**. Layer 1's step-9 comment is being corrected to match —
 [12 · Component gaps](12-component-gaps.md) §5.

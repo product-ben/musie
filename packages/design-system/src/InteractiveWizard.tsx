@@ -53,7 +53,7 @@ const DEFAULT_STATE_WORDS: WizardStateWords = {
 };
 
 /** The three solved accent families, named verbatim per Decision 3. */
-export type WizardAccent = 'primary' | 'accent-placeholder1' | 'accent-placeholder2';
+export type WizardAccent = 'primary' | 'accent' | 'accent-alt';
 
 export interface InteractiveWizardProps {
   /** Names the navigation region. Required (4.1.2). */

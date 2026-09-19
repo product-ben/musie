@@ -233,7 +233,7 @@ export const WithDescription: Story = {
 };
 
 /** The prototype's other lightbox — a title, the thing's name, and one
- *  `accent-placeholder1` CTA back to the choice. */
+ *  `accent` CTA back to the choice. */
 export const MinimalContent: Story = {
   args: {
     open: true,
@@ -241,7 +241,7 @@ export const MinimalContent: Story = {
     children: (
       <>
         <p data-type-step="body-md">With a group</p>
-        <CtaButton variant="accent-placeholder1">Back to the choice</CtaButton>
+        <CtaButton variant="accent">Back to the choice</CtaButton>
       </>
     ),
   },
@@ -262,7 +262,7 @@ export const Mandatory: Story = {
     children: (
       <>
         <p data-type-step="body-md">With a group</p>
-        <CtaButton variant="accent-placeholder1">Back to the choice</CtaButton>
+        <CtaButton variant="accent">Back to the choice</CtaButton>
       </>
     ),
   },

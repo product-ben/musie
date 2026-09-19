@@ -28,7 +28,7 @@ import { Check } from 'lucide-react';
 import { Icon } from './Icon';
 import { Message } from './Message';
 
-export type RadioAccent = 'primary' | 'accent-placeholder1' | 'accent-placeholder2';
+export type RadioAccent = 'primary' | 'accent' | 'accent-alt';
 
 export interface RadioOption {
   value: string;

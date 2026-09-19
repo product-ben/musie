@@ -108,8 +108,8 @@ Accent-2, measured against each surface it can land on:
 
 | Token | Colour | vs page `sand-2` | vs card `sand-1` |
 | --- | --- | --- | --- |
-| `--interactive-accent-placeholder2` (`purple-9`) | #CCA6C7 | **1.85:1** | **2.01:1** |
-| `--interactive-accent-placeholder2-border` (`purple-edge`) | #867084 | **3.90:1** | **4.25:1** |
+| `--interactive-accent-alt` (`purple-9`) | #CCA6C7 | **1.85:1** | **2.01:1** |
+| `--interactive-accent-alt-border` (`purple-edge`) | #867084 | **3.90:1** | **4.25:1** |
 
 1.4.11 requires 3:1 of a meaningful graphic. This is `12-component-gaps.md` §5.
 

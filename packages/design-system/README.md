@@ -45,7 +45,16 @@ radius, borders, elevation, focus, motion, z-index, iconography, typography,
 breakpoints). It also carries the `prefers-reduced-motion`,
 `prefers-contrast: more` and `forced-colors: active` overrides, which are
 honoured at the *token* level so components need no branch of their own.
-Layer 1 is `[LOCKED]`: this file is byte-identical to the signed-off version.
+Layer 1 was `[LOCKED]` — byte-identical to the signed-off version — until
+2026-09-19, when the two accent families were renamed at source: the
+`--interactive-accent-placeholder1/2` tokens became `--interactive-accent-*`
+and `--interactive-accent-alt-*`. Nothing else changed: no value, no alias, no
+override. The lock is re-established from that version.
+
+The rename was taken in Layer 1 rather than aliased in the amendments file
+because "placeholder" was in the public API of nine components, and an alias
+would have left both names live and both greppable. See
+`stories/OPEN-QUESTIONS.md`, "Phase B.1 — the four decisions, answered".
 
 **`musy-foundations-amendments.css`** declares the two token gaps Layer 2
 needs and Layer 1 does not yet have — `--icon-stroke-sm` (gap G1) and

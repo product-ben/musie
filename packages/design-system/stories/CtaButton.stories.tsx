@@ -110,20 +110,20 @@ const meta = {
           'Where: `src/CtaButton.tsx:29-31` header, `docs/07-components.md` §7.4 "Accent variants"',
           'What I checked: Level 1 says outright "There is still no rule in the system for',
           'WHEN to pick an accent over primary — see conflict B12 and open question 7".',
-          'Level 2, the prototype, uses `accent-placeholder1` exactly twice, both for',
-          '*start over / go back to choosing*, and never uses `accent-placeholder2` at all.',
+          'Level 2, the prototype, uses `accent` exactly twice, both for',
+          '*start over / go back to choosing*, and never uses `accent-alt` at all.',
           'Level 3 repeats the same open question.',
           'What I did: the `Variants` story shows all five; the per-story note records only',
           'the prototype’s observed usage, with no rationale attached.',
           'Why: CONVENTIONS §7 forbids inventing rationale.',
           'What I need from Ben: **the missing rule** (open question 7 / conflict B12).',
-          '`accent-placeholder2` currently has no use anywhere in the system.',
+          '`accent-alt` currently has no use anywhere in the system.',
           '',
           '## CtaButton — `loadingLabel` defaults to German and `loading` is never used in the prototype',
           'Where: `src/CtaButton.tsx:70` (`loadingLabel = \'Wird geladen\'`)',
           'What I checked: Level 1, the default. Level 2: "`loading` is never used in the',
           'prototype. Neither is `size="min"`, `size="comfort"`, `block`, `wrap`, or',
-          '`accent-placeholder2`."',
+          '`accent-alt`."',
           'What I did: wrote stories for all of them from the source and §7.4, using the',
           'component’s own German loading default unchanged.',
           'Why: the props exist and the brief asks for every variant and size; the prototype',
@@ -141,7 +141,7 @@ const meta = {
     children: { control: 'text', description: 'The button label.' },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'ghost', 'accent-placeholder1', 'accent-placeholder2'],
+      options: ['primary', 'secondary', 'ghost', 'accent', 'accent-alt'],
       description:
         'Fill family. Literal placeholder names, per Decision 3 — renaming later is a find-replace, not a redesign.',
     },
@@ -178,8 +178,8 @@ export const Default: Story = {};
 
 /** All five variants. The prototype uses `primary` for the one way forward,
  *  `secondary` for a real but lesser action, `ghost` for Back and anything that
- *  does not advance the flow, and `accent-placeholder1` exactly twice — both
- *  times for start over / go back to choosing. `accent-placeholder2` does not
+ *  does not advance the flow, and `accent` exactly twice — both
+ *  times for start over / go back to choosing. `accent-alt` does not
  *  appear in the prototype at all. */
 export const Variants: Story = {
   render: (args) => (
@@ -193,11 +193,11 @@ export const Variants: Story = {
       <Row label="variant: ghost">
         <CtaButton {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
       </Row>
-      <Row label="variant: accent-placeholder1">
-        <CtaButton {...args} variant="accent-placeholder1">Start again</CtaButton>
+      <Row label="variant: accent">
+        <CtaButton {...args} variant="accent">Start again</CtaButton>
       </Row>
-      <Row label="variant: accent-placeholder2">
-        <CtaButton {...args} variant="accent-placeholder2">Start again</CtaButton>
+      <Row label="variant: accent-alt">
+        <CtaButton {...args} variant="accent-alt">Start again</CtaButton>
       </Row>
     </Stack>
   ),
@@ -294,8 +294,8 @@ export const DisabledVariants: Story = {
         <CtaButton {...args} variant="ghost" disabled>Back</CtaButton>
       </Row>
       <Row label="disabled — accents">
-        <CtaButton {...args} variant="accent-placeholder1" disabled>Start again</CtaButton>
-        <CtaButton {...args} variant="accent-placeholder2" disabled>Start again</CtaButton>
+        <CtaButton {...args} variant="accent" disabled>Start again</CtaButton>
+        <CtaButton {...args} variant="accent-alt" disabled>Start again</CtaButton>
       </Row>
     </Stack>
   ),

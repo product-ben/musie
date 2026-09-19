@@ -121,7 +121,7 @@ function ThemeSwitch() {
         update({ theme }); // mirror, for a future real account
       }}
       reverse
-      accent="accent-placeholder1"
+      accent="accent"
       /* A domain pair, not the Check / X default: the glyph says WHAT is
          switching. Moon is the checked state because checked means dark. */
       onGlyph={Moon}
@@ -170,7 +170,7 @@ function UserTypeChoice() {
     <RadioGroupText
       name="user-type"
       legend={t('settings.userType')}
-      accent="accent-placeholder1"
+      accent="accent"
       /* undefined, not null: an uncontrolled group has no selection, which is
          exactly the state of a profile that has not answered yet. */
       value={profile?.user_type_id ?? undefined}
@@ -201,7 +201,7 @@ function LanguageChoice() {
       name="language"
       legend={t('settings.language')}
       hint={t('settings.languageHint')}
-      accent="accent-placeholder1"
+      accent="accent"
       value={locale}
       options={LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] }))}
       onValueChange={(next) => {

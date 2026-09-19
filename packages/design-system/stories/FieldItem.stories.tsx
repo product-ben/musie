@@ -100,7 +100,7 @@ const meta = {
         id="fielditem-dark-mode"
         label="Dark mode"
         labelHidden
-        accent="accent-placeholder1"
+        accent="accent"
         onGlyph={Moon}
         offGlyph={Sun}
         checked
@@ -144,7 +144,7 @@ export const ControlOff: Story = {
         id="fielditem-dark-mode"
         label="Dark mode"
         labelHidden
-        accent="accent-placeholder1"
+        accent="accent"
         onGlyph={Moon}
         offGlyph={Sun}
         checked={false}
@@ -184,7 +184,7 @@ export const Disabled: Story = {
         id="fielditem-dark-mode"
         label="Dark mode"
         labelHidden
-        accent="accent-placeholder1"
+        accent="accent"
         onGlyph={Moon}
         offGlyph={Sun}
         checked

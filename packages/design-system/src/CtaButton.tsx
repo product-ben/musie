@@ -39,8 +39,8 @@ export type CtaVariant =
   | 'ghost'
   /** Literal placeholder names, per Decision 3 — renaming later is a
    *  find-replace, not a redesign. */
-  | 'accent-placeholder1'
-  | 'accent-placeholder2';
+  | 'accent'
+  | 'accent-alt';
 
 export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
 

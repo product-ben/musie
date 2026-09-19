@@ -228,7 +228,17 @@ locally. This is the safety net for every step after.
 The two Phase 1 steps that were deliberately left for you, plus the decisions
 that block them.
 
-- [ ] **B.1 The four decisions.** No code — a conversation, then a written
+- [x] **B.1 The four decisions.** ANSWERED 2026-09-19 — written up in
+  `packages/design-system/stories/OPEN-QUESTIONS.md`, "Phase B.1 — the four
+  decisions, answered". In short: the accents become `--interactive-accent`
+  plus a second, warning-safe accent still to be named, renamed in Layer 1 and
+  re-signed; `ProcessVisualisation` is retired and Carousel is built in B.2;
+  component defaults become English; G3 is
+  `--interactive-ghost-border-hover`.
+
+  <details><summary>The original four questions</summary>
+
+  **B.1 The four decisions.** No code — a conversation, then a written
   answer per item:
   - **What are `accent-placeholder1` and `accent-placeholder2` for?** Every
     accent prop in the system carries the literal word *placeholder*, and it is
@@ -240,6 +250,8 @@ that block them.
   - **German or English component defaults?** Currently half each.
   - **Gap G3's name** — `--border-strong-hover`, or
     `--interactive-ghost-border-hover` inside the existing family.
+
+  </details>
 
 - [ ] **B.2 Apply them, plus the API holes that remain.** One of the three is
   already closed: `CtaButton` now takes `align`, and the app's

@@ -142,8 +142,8 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
-      description: 'Solved accent family. Literal placeholder names per Decision 3.',
+      options: ['primary', 'accent', 'accent-alt'],
+      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
     },
     disabled: { control: 'boolean', description: 'Disables the whole group.' },
     error: { control: 'text', description: 'Validation message. Renders a Message in error variant below the group.' },
@@ -156,17 +156,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Component defaults at the 393px phone reference — two columns. The
- *  prototype passes `accent-placeholder1`; `primary` is the default. */
+ *  prototype passes `accent`; `primary` is the default. */
 export const Default: Story = {};
 
 /** All three accent families. The prototype's one usage is
- *  `accent-placeholder1`. */
+ *  `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <RadioGroupImage {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
-      <RadioGroupImage {...args} name="a-p1" accent="accent-placeholder1" legend="accent: accent-placeholder1" />
-      <RadioGroupImage {...args} name="a-p2" accent="accent-placeholder2" legend="accent: accent-placeholder2" />
+      <RadioGroupImage {...args} name="a-p1" accent="accent" legend="accent: accent" />
+      <RadioGroupImage {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
 };

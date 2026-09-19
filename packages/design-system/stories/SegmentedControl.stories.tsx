@@ -73,8 +73,8 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
-      description: 'Solved accent family. Literal placeholder names per Decision 3.',
+      options: ['primary', 'accent', 'accent-alt'],
+      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
     },
     guided: { control: 'boolean', description: 'Raise each segment to --target-guided (64px).' },
     disabled: { control: 'boolean', description: 'Disables the whole group.' },
@@ -88,13 +88,13 @@ type Story = StoryObj<typeof meta>;
 /** Component defaults, with the prototype's own copy. */
 export const Default: Story = {};
 
-/** All three accent families. The prototype uses `accent-placeholder1`. */
+/** All three accent families. The prototype uses `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <SegmentedControl {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
-      <SegmentedControl {...args} name="a-p1" accent="accent-placeholder1" legend="accent: accent-placeholder1" />
-      <SegmentedControl {...args} name="a-p2" accent="accent-placeholder2" legend="accent: accent-placeholder2" />
+      <SegmentedControl {...args} name="a-p1" accent="accent" legend="accent: accent" />
+      <SegmentedControl {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
 };

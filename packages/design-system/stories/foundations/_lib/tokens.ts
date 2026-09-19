@@ -143,13 +143,45 @@ export const STEP_PURPOSE = manifestJson.stepPurpose as Record<string, string>;
  * predicate claims, which the page renders as a visible catch-all rather than
  * dropping silently.
  */
-export const SEMANTIC_GROUPS: Array<{ id: string; title: string; match: (n: string) => boolean }> = [
+export const SEMANTIC_GROUPS: Array<{
+  id: string;
+  title: string;
+  match: (n: string) => boolean;
+  /** Rendered under the group heading on the Colour page. When a group needs a
+   *  rule rather than a caption — which of two families to reach for, and why
+   *  — it goes here rather than being repeated on every row's description. */
+  usage?: string;
+}> = [
   { id: 'surface', title: 'Surfaces', match: (n) => n.startsWith('--surface') },
   { id: 'text', title: 'Text', match: (n) => n.startsWith('--on-surface') },
   { id: 'border', title: 'Borders', match: (n) => n.startsWith('--border-') },
   { id: 'primary', title: 'Interactive — primary (terracotta)', match: (n) => n.startsWith('--interactive-primary') },
-  { id: 'p1', title: 'Interactive — accent placeholder 1 (ocher)', match: (n) => n.startsWith('--interactive-accent-placeholder1') },
-  { id: 'p2', title: 'Interactive — accent placeholder 2 (purple)', match: (n) => n.startsWith('--interactive-accent-placeholder2') },
+  /* ORDER AND EXCLUSION BOTH MATTER. `--interactive-accent-alt-*` also starts
+     with `--interactive-accent`, so the plain predicate has to exclude it
+     explicitly: semanticGroupOf takes the FIRST match, and verify-tokens.mjs
+     fails a token claimed twice. Written as an exclusion rather than relying
+     on array order, so reordering this list cannot silently break it. */
+  {
+    id: 'accent',
+    title: 'Interactive — accent (ocher)',
+    match: (n) => n.startsWith('--interactive-accent') && !n.startsWith('--interactive-accent-alt'),
+    usage: 'THE standard accent for interactive elements — the stepper, cards, '
+      + 'and in practice almost every form control. Reach for this one by '
+      + 'default; `primary` (terracotta) stays the one way forward through a '
+      + 'flow, and this is what everything else that needs colour takes.',
+  },
+  {
+    id: 'accent-alt',
+    title: 'Interactive — accent alt (purple)',
+    match: (n) => n.startsWith('--interactive-accent-alt'),
+    usage: 'The backup accent, for components where WARNINGS are common — the '
+      + 'draggable list, where statements can be combined, is the case it '
+      + 'exists for. `--interactive-accent` resolves to `--ocher-9` (#E9B86C) '
+      + 'and `--warning-9` is #FEA247: two warm ambers. Put the ocher accent '
+      + 'next to a warning and the accent reads as a warning state, so use '
+      + 'this instead. That is the only reason to choose it — it is not a '
+      + 'second decorative option.',
+  },
   { id: 'ghost', title: 'Interactive — ghost', match: (n) => n.startsWith('--interactive-ghost') },
   { id: 'accent', title: 'Accent rotation', match: (n) => /^--accent-\d/.test(n) },
   { id: 'feedback', title: 'Feedback', match: (n) => n.startsWith('--feedback-') },

@@ -122,7 +122,7 @@ const meta = {
     onToggle: { action: 'toggle', description: 'Fires on every press; the consumer flips `state`.' },
     variant: {
       control: 'inline-radio',
-      options: ['primary', 'accent-placeholder1', 'accent-placeholder2'],
+      options: ['primary', 'accent', 'accent-alt'],
       description: 'Button family. The state is never carried by hue, so this stays put across ready and recording.',
     },
     size: {
@@ -152,11 +152,11 @@ export const Variants: Story = {
   render: (args) => (
     <Stack>
       <RecordButton {...args} variant="primary" />
-      <RecordButton {...args} variant="accent-placeholder1" />
-      <RecordButton {...args} variant="accent-placeholder2" />
+      <RecordButton {...args} variant="accent" />
+      <RecordButton {...args} variant="accent-alt" />
       <RecordButton {...args} variant="primary" state="recording" elapsed={12} levels={LEVELS} />
-      <RecordButton {...args} variant="accent-placeholder1" state="recording" elapsed={12} levels={LEVELS} />
-      <RecordButton {...args} variant="accent-placeholder2" state="recording" elapsed={12} levels={LEVELS} />
+      <RecordButton {...args} variant="accent" state="recording" elapsed={12} levels={LEVELS} />
+      <RecordButton {...args} variant="accent-alt" state="recording" elapsed={12} levels={LEVELS} />
     </Stack>
   ),
 };
