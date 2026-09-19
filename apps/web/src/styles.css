@@ -1,16 +1,46 @@
-:root {
-  font-family: system-ui, sans-serif;
-  color: #1f2937;
-  background: #f8fafc;
+/**
+ * Global element defaults.
+ *
+ * Every declaration resolves to a Layer 1 token. The only bare values are the
+ * geometric identities L14 permits (0 and 100%).
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
+  /* base-ui app-shell requirement, alongside `isolation: isolate` on
+     .musie-app: without it, iOS 26+ Safari renders dialog backdrops wrong. */
+  position: relative;
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
-  display: grid;
-  min-height: 100vh;
-  place-content: center;
-  text-align: center;
+a {
+  color: var(--interactive-primary-on-subtle);
+}
+
+a:hover {
+  color: var(--on-surface);
+}
+
+a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
+}
+
+svg {
+  display: block;
 }

@@ -1,8 +1,107 @@
 <!doctype html>
+<!--
+  lang is set here as the pre-paint DEFAULT and then kept in step with the
+  stored locale by the snippet below. It is not cosmetic: Layer 1 sets
+  `--text-hyphens: auto`, which 13 rules in musy-components.css consume, and
+  `hyphens: auto` hyphenates according to the element's declared language.
+  German copy under lang="en" does not fail loudly — it breaks German
+  compounds at English hyphenation points.
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+      ══ THEME · MUST RUN BEFORE ANY STYLESHEET ══════════════════════════════
+      Inlined verbatim from @musie/design-system/tokens/theme-init.js. Inlined
+      rather than linked so there is no request between parsing this and the
+      first paint: the file's whole job is to set data-theme before anything is
+      painted, and a linked script — even a synchronous one — is a round trip
+      during which the wrong theme can render.
+
+      Vite appends the bundle's stylesheet link to the END of <head>, so this
+      still runs first in production; in development there is no stylesheet
+      until the module graph loads, so it runs first there too.
+
+      DO NOT EDIT HERE. It is a copy. Change the package file and re-copy.
+    -->
+    <script>
+      (function () {
+        var KEY = 'musy-theme';
+        var stored = null;
+        try { stored = localStorage.getItem(KEY); } catch (e) {}
+        document.documentElement.setAttribute('data-theme', stored === 'dark' ? 'dark' : 'light');
+        window.musyTheme = {
+          get: function () { return document.documentElement.getAttribute('data-theme'); },
+          set: function (t) {
+            document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+            try { localStorage.setItem(KEY, t === 'dark' ? 'dark' : 'light'); } catch (e) {}
+          },
+          toggle: function () { this.set(this.get() === 'dark' ? 'light' : 'dark'); }
+        };
+      })();
+    </script>
+
+    <!--
+      ══ LOCALE · SAME REASON, APP-OWNED ════════════════════════════════════
+      Sets <html lang> from the stored locale before first paint, so
+      hyphenation is right on the first render rather than after a reflow.
+      This is the app's own script, not a copy of a package file.
+
+      The 'musie-locale' key is duplicated from src/i18n/index.ts, which this
+      cannot import. The two must agree.
+
+      Two sources, in the same order the app uses: the cached choice first,
+      then what the browser asks for — so a German browser's FIRST paint is
+      already German rather than one frame of English. profiles.language is
+      authoritative and wins as soon as it arrives, but it cannot be known
+      before a network round trip, which is the whole reason for the cache.
+
+      LocaleProvider keeps this attribute in step from here on.
+    -->
+    <script>
+      (function () {
+        var locale = null;
+        try {
+          var stored = localStorage.getItem('musie-locale');
+          if (stored === 'de' || stored === 'en') locale = stored;
+        } catch (e) {}
+        if (locale === null) {
+          try {
+            var tags = (navigator.languages && navigator.languages.length)
+              ? navigator.languages : [navigator.language];
+            for (var i = 0; i < tags.length; i += 1) {
+              var tag = String(tags[i] || '').toLowerCase();
+              if (tag.indexOf('de') === 0) { locale = 'de'; break; }
+              if (tag.indexOf('en') === 0) { locale = 'en'; break; }
+            }
+          } catch (e) {}
+        }
+        document.documentElement.lang = locale === 'de' ? 'de' : 'en';
+      })();
+    </script>
+
+    <!--
+      ══ FONT PRELOAD ═══════════════════════════════════════════════════════
+      LATIN ONLY, on purpose: <link rel="preload"> ignores unicode-range, so
+      preloading the latin-ext files would fetch 173 KB that most sessions
+      never render a glyph from. They load on demand.
+
+      `crossorigin` is required even same-origin — fonts are always fetched in
+      anonymous CORS mode, and without it the file is fetched twice.
+
+      These paths are only stable because vite.config.ts pins .woff2 output to
+      fonts/[name][extname] instead of hashing it, and serves the same URLs in
+      dev. A hashed name here would mean a preload that never matches the
+      request the stylesheet makes — two fetches, and a preload warning.
+    -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/fonts/space-grotesk-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/fonts/inter-latin.woff2" />
+
+    <!-- Replaced per route by the shell. This is the pre-JS default. -->
     <title>Musie</title>
   </head>
   <body>

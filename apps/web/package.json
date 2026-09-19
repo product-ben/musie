@@ -10,8 +10,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "1.7.0",
+    "@musie/design-system": "workspace:*",
+    "@supabase/supabase-js": "^2.116.0",
+    "lucide-react": "0.470.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-router": "^7.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
