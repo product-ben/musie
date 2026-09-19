@@ -1,0 +1,347 @@
+/**
+ * The app shell — L14 custom patterns.
+ *
+ * The system has no App Shell, Header, Sheet or Skip Link component, which is
+ * what makes these permitted. L14's three conditions apply:
+ *
+ *   1. Every declaration resolves to a Layer 1 token or to arithmetic over
+ *      one. The only bare values are the geometric identities L14 allows
+ *      (0, 100%) and unitless multipliers inside calc().
+ *      ONE EXCEPTION, flagged loudly below: --musie-main-wide.
+ *   2. Naming is `.musie-<block>[__<part>]` — deliberately NOT `musy-`, so a
+ *      shell file can never be mistaken for a system file.
+ *   3. Anything here that recurs is a component request, not a second copy.
+ *
+ * Geometry follows reference/design_system/Musy MVP 0.3.dc.html, whose header
+ * and sheets are custom patterns in the prototype too.
+ */
+
+/* ═══ THE ONE NUMBER THAT IS NOT A TOKEN ════════════════════════════════════
+   The prototype caps the exercises / session / end column at 980px, and Layer 1
+   has no token for it: --bp-md is 768px and --bp-lg is 1024px, so neither
+   reproduces the measurement. Declared once, here, named, so that absorbing it
+   into Layer 1 is a find-and-replace rather than a hunt.
+
+   THIS IS A REAL TOKEN GAP AND IS REPORTED AS ONE. It is the only raw px in
+   the app.                                                                  */
+:root {
+  --musie-main-wide: 980px;
+}
+
+/* ═══ APP ROOT ══════════════════════════════════════════════════════════════
+   L1's page skeleton. `isolation: isolate` is a base-ui requirement, not a
+   preference: it gives the shell its own stacking context so a portaled popup
+   always lands above page content. Paired with `body { position: relative }`
+   in styles.css — base-ui needs BOTH, and breaks quietly without either.    */
+.musie-app {
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--type-body-md-family);
+}
+
+/* ═══ SKIP LINK ═════════════════════════════════════════════════════════════
+   First in the DOM and first in the tab order (2.4.1).
+
+   Moved off-screen with a transform rather than hidden: `display: none` and
+   `visibility: hidden` both remove it from the tab order, which is the one
+   thing it exists to be in. It is NOT .musy-sr-only either — that class clips
+   permanently, and this has to become a real, visible, hit-testable control
+   the moment it takes focus.
+
+   --z-overlay, not --z-sticky: it has to clear the sticky header it overlaps,
+   and because it comes BEFORE the header in the DOM, an equal z-index would
+   lose. --z-overlay is the next rung up.                                    */
+.musie-skip {
+  position: fixed;
+  z-index: var(--z-overlay);
+  inset-block-start: var(--sp-2);
+  inset-inline-start: var(--sp-2);
+  transform: translateY(calc(100% + var(--sp-8)));
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-primary);
+  padding: var(--space-inset-control);
+  border-radius: var(--radius-panel);
+  background-color: var(--interactive-primary);
+  color: var(--interactive-primary-on);
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  line-height: var(--type-label-lg-line);
+  letter-spacing: var(--type-label-lg-tracking);
+  text-decoration: none;
+}
+
+.musie-skip:focus-visible {
+  transform: none;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  color: var(--interactive-primary-on);
+}
+
+/* ═══ HEADER ════════════════════════════════════════════════════════════════
+   Three columns rather than the prototype's flex row, because the brief puts
+   the Logo in the CENTRE and the prototype does not — it groups the logo
+   beside the hamburger and pushes the profile button out with an auto margin.
+   `1fr auto 1fr` centres the logo against the viewport whatever the two
+   buttons' labels do, which a flex row cannot promise.                      */
+.musie-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-gap-related);
+  padding: var(--sp-3) var(--gutter);
+  background-color: var(--surface-raised);
+  border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+.musie-header > :first-child {
+  justify-self: start;
+}
+
+.musie-header > :last-child {
+  justify-self: end;
+}
+
+/* ═══ MAIN ══════════════════════════════════════════════════════════════════
+   --bp-md everywhere except the exercises / session / done routes, which the
+   prototype widens. Gutters are added ON TOP of the cap so the content — not
+   the padding box — is what measures --musie-main-wide.                     */
+.musie-main {
+  flex: 1 1 auto;
+  inline-size: 100%;
+  max-inline-size: var(--bp-md);
+  margin-inline: auto;
+  padding: var(--sp-5) var(--gutter) var(--sp-7);
+}
+
+.musie-main[data-wide='1'] {
+  max-inline-size: calc(var(--musie-main-wide) + 2 * var(--gutter));
+}
+
+/* The skip link's target takes focus programmatically, so the ring has to be
+   declared — a tabindex="-1" region shows nothing by default. */
+.musie-main:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-panel);
+}
+
+/* ═══ PLACEHOLDER PAGE ══════════════════════════════════════════════════════
+   Scaffolding: every route is an h1 and nothing else this session. heading-lg
+   is L8's step for a screen title. `hyphens` is inherited from Layer 1 rather
+   than set to a literal, which is the whole reason <html lang> has to track
+   the locale.                                                               */
+.musie-placeholder {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-lg-family);
+  font-size: var(--type-heading-lg-size);
+  font-weight: var(--type-heading-lg-weight);
+  line-height: var(--type-heading-lg-line);
+  letter-spacing: var(--type-heading-lg-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}
+
+/* ═══ SCRIM ═════════════════════════════════════════════════════════════════
+   Shared by every overlay, exactly as the prototype shares one.             */
+.musie-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background-color: var(--alpha-scrim);
+}
+
+/* ═══ SIDE SHEET — BOTH SIDES ═══════════════════════════════════════════════
+   /settings anchors to the inline END, /menu to the inline START. One pattern
+   with a modifier, NOT a second copy.
+
+   L14.3 says a pattern that recurs is a component request rather than a
+   second copy. It now recurs, so it is parameterised here AND requested
+   properly — see apps/web/OPEN-QUESTIONS.md. Everything the two sides share
+   lives in the base class; the modifiers carry only the two declarations that
+   genuinely differ, the edge and the border that faces the page.
+
+   No entrance animation. The prototype's sheets have none, and an animation
+   driven by base-ui's own enter/exit attributes is the kind of thing that
+   fails silently or, worse, leaves the sheet mounted.                       */
+.musie-sheet {
+  position: fixed;
+  inset-block: 0;
+  z-index: var(--z-sheet);
+  inline-size: min(100%, var(--measure-body));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  padding: var(--space-inset-sheet);
+  overflow-y: auto;
+  background-color: var(--surface-overlay);
+  box-shadow: var(--elevation-3);
+}
+
+.musie-sheet--end {
+  inset-inline-end: 0;
+  border-inline-start: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+}
+
+.musie-sheet--start {
+  inset-inline-start: 0;
+  border-inline-end: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+}
+
+/* base-ui moves focus to the popup on open. The offset is negative so the ring
+   draws inside an element flush with the viewport edge, where an outward ring
+   would be clipped. */
+.musie-sheet:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+/* Close control at the inline end — L6, the likely action outermost, and the
+   prototype's own arrangement. DOM order matches visual order.
+
+   `gap` rather than `justify-content: space-between` alone, so a long German
+   title wraps against the close button instead of colliding with it at 393px. */
+.musie-sheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+}
+
+/* ═══ THE DRAWER ════════════════════════════════════════════════════════════
+   Shares every sheet declaration with /settings through .musie-sheet and
+   .musie-sheet--start; only the inner rhythm differs. Both classes are named
+   so the rule cannot be beaten by source order the way two single-class
+   selectors can.                                                            */
+.musie-sheet.musie-drawer {
+  gap: var(--space-gap-stack);
+}
+
+/* ═══ THE PAGE LIST ═════════════════════════════════════════════════════════
+   L3: a run of repeated destinations is a list, not a stack of divs.
+
+   --sp-1 is the SMALLEST step in the scale, and that is correct here: these
+   rows are one group, and the rows themselves carry the visual separation.
+   The group boundaries are rules, not gaps — see .musie-nav__rule.           */
+.musie-nav {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* The list item is left as a PLAIN BLOCK, deliberately.
+
+   An earlier version made it `display: flex; flex-direction: column` so a rule
+   could sit above the row — which silently broke the action button: a flex
+   container stretches its items across the cross axis by default, so
+   `.musy-btn`'s `inline-flex` hug became a full-width row and "Start a
+   session" was indistinguishable from the pages it is meant to contrast with.
+   MEASURED: 328px, exactly the width of a page row.
+
+   As a block, each child does what it already knows how to do — the <hr>
+   fills, the hugging button hugs, and a `--block` button takes its 100%.     */
+
+/* ═══ GROUP RULES ═══════════════════════════════════════════════════════════
+   WHY A RULE AND NOT A BIGGER GAP. L2's doubling check: a gap only reads as a
+   boundary when it is at least double the largest gap inside either group.
+   The gap inside is --sp-1, and with groups of one or two rows there is no
+   spacing that separates three groups without growing large enough to make the
+   menu scroll on a phone. L2's own answer when the doubling check cannot be
+   met is a divider or a shared surface — never just more space.
+
+   role="separator" is on the element so it is a divider to assistive tech too,
+   not only to the eye.                                                       */
+.musie-nav__rule {
+  margin-block: var(--space-gap-related);
+  border: 0;
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* ═══ QUIET TEXT STATES ═════════════════════════════════════════════════════
+   Loading and empty, as text. NOT the error: that is the design system's own
+   Message component now — L14's first rule is not to recreate a component the
+   system already has, and L11 names Message for a fatal problem injected after
+   load. `.musie-error` and its use of --feedback-error-text are gone with it.
+
+   Loading and empty are deliberately NOT Message: they are not feedback about
+   a problem, and dressing "nothing here yet" as a status panel overstates it.
+   L10's reading of provisional/empty is ContentBox outline="dashed", which is
+   a Phase 3 decision, not a shell one.                                       */
+.musie-note {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* ═══ PLAIN LIST ════════════════════════════════════════════════════════════
+   L3: a run of repeated items is a list, so the count and position reach
+   assistive tech instead of being drawn. Items sit at --space-gap-stack, and
+   the gaps inside an item are one rung down (--space-gap-related), which keeps
+   L2's doubling check satisfied.                                            */
+.musie-plain-list {
+  margin: var(--space-gap-group) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+}
+
+.musie-plain-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
+.musie-plain-list__name {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}
+
+.musie-plain-list__text {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* body-sm is permitted here by L8: metadata, not the thing the screen is
+   about. */
+.musie-plain-list__meta {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}

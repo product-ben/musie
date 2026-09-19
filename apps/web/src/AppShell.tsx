@@ -1,0 +1,183 @@
+/**
+ * The one shell every route renders inside.
+ *
+ * DOM order is the deliverable here: skip link, header, main. Everything below
+ * is either that order or a consequence of it.
+ */
+import * as React from 'react';
+import { Menu, User } from 'lucide-react';
+import { IconButton, Logo, MusyTooltipProvider } from '@musie/design-system';
+import { useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
+import { BRAND_NAME } from './brand';
+import { useLocale, useT } from './i18n/localeContext';
+import { useAuth } from './lib/authContext';
+import { PagePathContext } from './lib/shellContext';
+import type { RouteHandle } from './routeHandle';
+
+/** The skip link's target. */
+const MAIN_ID = 'main';
+
+const SETTINGS_PATH = '/settings';
+const MENU_PATH = '/menu';
+
+export function AppShell() {
+  const outlet = useOutlet();
+  const matches = useMatches();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const leaf = matches[matches.length - 1];
+  const handle = (leaf?.handle ?? {}) as Partial<RouteHandle>;
+  const isOverlay = handle.overlay === true;
+
+  /**
+   * THE AUTH GATE. The shell — skip link, header, main landmark — renders
+   * immediately, because none of it needs a user and blanking it would make
+   * the page look broken during the round trip. What waits is the ROUTES,
+   * since every one of them will read data as soon as there is data to read.
+   *
+   * Nothing elaborate while waiting: an empty main. No spinner, so there is no
+   * copy to translate and nothing to delete when the real screens land.
+   *
+   * 'error' holds the same empty main. The reason is on the console, and
+   * inventing an error screen now would be a product decision made by
+   * accident.
+   */
+  const { status: authStatus } = useAuth();
+  const { resolved: localeResolved } = useLocale();
+  const authReady = authStatus === 'ready';
+
+  /* Content waits for the locale as well as the user. The CHROME does not:
+     re-labelling a button when profiles.language arrives is cheap, and for a
+     returning user the cached locale is already right, so nothing flips.
+     Fetching a list in the wrong language and swapping it is not cheap. */
+  const contentReady = authReady && localeResolved;
+
+  /**
+   * An overlay route presents OVER the page rather than replacing it, but
+   * `<Outlet>` only ever yields the leaf. So the last non-overlay page is kept
+   * and re-rendered beneath — it is just a React element, so re-rendering a
+   * held one is cheap and safe.
+   *
+   * Written during render rather than in an effect because the sheet's FIRST
+   * render is the one that needs the page behind it; an effect would flash an
+   * empty frame. The write is idempotent, so StrictMode's double render is not
+   * a problem.
+   *
+   * `wide` is held alongside the element, or the page beneath would reflow
+   * from 980px to `--bp-md` the moment the sheet opened over it.
+   */
+  const beneath = React.useRef<{ node: React.ReactNode; wide: boolean; path: string | null }>({
+    node: null,
+    wide: false,
+    path: null,
+  });
+  if (!isOverlay) {
+    beneath.current = {
+      node: outlet,
+      wide: handle.wide === true,
+      /* Kept so an overlay can mark the right nav item current — the overlay
+         IS the location, but the page underneath is where the user is. */
+      path: location.pathname,
+    };
+  }
+
+  const pageNode = isOverlay ? beneath.current.node : outlet;
+  const pageWide = isOverlay ? beneath.current.wide : handle.wide === true;
+  const pagePath = isOverlay ? beneath.current.path : location.pathname;
+
+  const t = useT();
+  const title = handle.titleKey ? t(handle.titleKey, leaf?.params) : BRAND_NAME;
+
+  React.useEffect(() => {
+    document.title = `${title} · ${BRAND_NAME}`;
+  }, [title]);
+
+  /**
+   * Arriving at a route means arriving at its top — the prototype does this on
+   * every screen AND every step change, and on a phone a long step otherwise
+   * hands the next one a scroll position it was never at.
+   *
+   * Two things this deliberately does not do. It does not fire for an overlay
+   * route: the sheet locks page scroll anyway, and scrolling the page behind it
+   * would throw away the position the user returns to. And it compares the path
+   * rather than trusting `location.key`, so closing the sheet — which restores
+   * the previous entry, and with it that entry's key — does not read as an
+   * arrival and does not scroll.
+   */
+  const scrolledFor = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (isOverlay) return;
+    const path = location.pathname + location.search;
+    if (scrolledFor.current === path) return;
+    scrolledFor.current = path;
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [isOverlay, location.pathname, location.search]);
+
+  /**
+   * The jump is done here rather than left to the browser's own fragment
+   * navigation, for two reasons: `#main` in the URL would add a history entry
+   * that Back then has to walk back through, and moving focus explicitly is
+   * what actually works across browsers. `<main>` carries `tabIndex={-1}` to
+   * be a focus target at all.
+   */
+  const onSkip = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    const main = document.getElementById(MAIN_ID);
+    if (main === null) return;
+    main.focus();
+    main.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }, []);
+
+  return (
+    /* Mounted once, so moving between the two header buttons does not re-run
+       the open delay. */
+    <MusyTooltipProvider>
+      <PagePathContext.Provider value={pagePath}>
+      <div className="musie-app">
+        {/* FIRST in the DOM, so it is the first thing Tab reaches. */}
+        <a className="musie-skip" href={`#${MAIN_ID}`} onClick={onSkip}>
+          {t('shell.skipLink')}
+        </a>
+
+        <header className="musie-header">
+          <IconButton
+            glyph={Menu}
+            label={t('shell.menuLabel')}
+            variant="ghost"
+            size="primary"
+            aria-expanded={location.pathname === MENU_PATH}
+            onClick={() => navigate(MENU_PATH)}
+          />
+          <Logo size="nav" showWordmark alt={BRAND_NAME} />
+          <IconButton
+            glyph={User}
+            label={t('shell.profileLabel')}
+            variant="ghost"
+            size="primary"
+            aria-expanded={location.pathname === SETTINGS_PATH}
+            onClick={() => navigate(SETTINGS_PATH)}
+          />
+        </header>
+
+        <main
+          id={MAIN_ID}
+          tabIndex={-1}
+          className="musie-main"
+          data-wide={pageWide ? '1' : '0'}
+          data-auth={authStatus}
+          data-locale-resolved={localeResolved ? '1' : '0'}
+        >
+          {contentReady ? pageNode : null}
+        </main>
+
+        {/* The overlay route's own element. It portals itself to the end of
+            body, which is what `isolation: isolate` on .musie-app is for.
+            Gated on the same condition as the page, so there is one rule
+            rather than two that can disagree. */}
+        {isOverlay && contentReady ? outlet : null}
+      </div>
+      </PagePathContext.Provider>
+    </MusyTooltipProvider>
+  );
+}
