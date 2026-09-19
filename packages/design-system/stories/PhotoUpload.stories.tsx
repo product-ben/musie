@@ -14,7 +14,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PhotoUpload } from '../src/PhotoUpload';
 import type { UploadedPhoto } from '../src/PhotoUpload';
-import { bothThemes, Stack } from './_decorators';
+import { Stack, asset, bothThemes } from './_decorators';
 
 /* The prototype's own label and copy — METHOD FLOW · Reflect. */
 const LABEL = 'Photo of your handwritten notes';
@@ -23,7 +23,7 @@ const DESCRIPTION = 'Nothing leaves your device until you share it.';
 /* A STATIC path, never a blob: URL. The prototype's preview thumb is
    assets/web/method-card.png. */
 const PHOTO: UploadedPhoto = {
-  src: '/assets/web/method-card.png',
+  src: asset('assets/web/method-card.png'),
   name: 'method-card.png',
   size: 284_160,
 };

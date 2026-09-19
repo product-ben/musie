@@ -44,27 +44,38 @@ pnpm build:storybook    # static build into packages/design-system/storybook-sta
 
 ### Where it is deployed
 
-Storybook ships **with the web app, at `/storybook/`** — one Netlify site, one
-deploy. `scripts/netlify-build.sh` builds the app, builds Storybook, and copies
-Storybook into `apps/web/dist/storybook/`.
+**GitHub Pages**, at `https://product-ben.github.io/musie/`, published by
+`.github/workflows/storybook.yml` on every push to `main` that touches
+`packages/design-system/`.
 
-It also copies the design system's `assets/` and `tokens/` to the **domain
-root**, as `/assets/web/` and `/foundations-tokens/`. That is not tidiness:
-Logo's default `src` is the root-absolute `/assets/web/musy-logo.png`, and the
-Typography page's iframes load `/foundations-tokens/musy-fonts.css`. Both would
-404 under a subpath, so the files are placed where those paths point. There is
-no collision with the app — Vite emits hashed `index-*.js` / `*.css` directly
-into `assets/`.
+Pages and Actions are free with no build-minute allowance on a public
+repository, which is why the docs live here and not on Netlify. It also
+decouples them: a broken app build no longer stops Storybook publishing, and
+vice versa.
 
-`netlify.toml` carries a `/storybook/*` redirect **before** the app's catch-all.
-Netlify evaluates redirects in order, so without it every Storybook deep link
-would be served the app's `index.html`.
+**One-time setup:** Settings → Pages → Build and deployment → Source:
+**GitHub Actions**.
 
-To run the exact published build locally:
+#### The base path matters
+
+Pages serves a project site under `/<repo>/`, not at a domain root. The
+workflow therefore builds with `STORYBOOK_BASE_PATH=/musie/`, which
+`.storybook/main.ts` turns into Vite's `base`.
+
+Anything in a story that points at a served file must go through `asset()` in
+`stories/_decorators.tsx`, which prefixes `import.meta.env.BASE_URL`. Written as
+`/assets/…` it resolves against the domain root and 404s on Pages. The one place
+this cannot reach is `Logo`'s default `src`, which is root-absolute in the
+component; the Logo stories pass a base-aware `src` instead. See that page's
+Build notes.
+
+To reproduce the published build locally:
 
 ```bash
-./scripts/netlify-build.sh
-cd apps/web/dist && python3 -m http.server 8080   # / is the app, /storybook/ is Storybook
+cd packages/design-system
+STORYBOOK_BASE_PATH=/musie/ npx storybook build
+mkdir -p /tmp/pages/musie && cp -R storybook-static/. /tmp/pages/musie/
+cd /tmp/pages && python3 -m http.server 8080   # then open /musie/
 ```
 
 ## Connect Netlify

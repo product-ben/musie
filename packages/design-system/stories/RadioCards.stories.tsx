@@ -6,10 +6,10 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RadioCards } from '../src/RadioCards';
-import { fixedWidth, Stack } from './_decorators';
+import { Stack, asset, fixedWidth } from './_decorators';
 
 /* Storybook serves /assets. */
-const IMAGE = '/assets/web/method-card.png';
+const IMAGE = asset('assets/web/method-card.png');
 
 /* METHOD RECOMMENDATION — the prototype's two cards, verbatim. Only the first
    card has a duration in the prototype, so only it carries `label`. */

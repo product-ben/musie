@@ -10,7 +10,7 @@ import { Clock } from 'lucide-react';
 import { ContentList } from '../src/ContentList';
 import type { ContentListItem } from '../src/ContentList';
 import { Icon } from '../src/Icon';
-import { bothThemes, Stack, Row } from './_decorators';
+import { Row, Stack, asset, bothThemes } from './_decorators';
 
 /* The prototype's own method-detail rows, verbatim — LIGHTBOX · METHOD DETAIL,
    label "Method details". See PROTOTYPE-USAGE.md. */
@@ -219,7 +219,7 @@ export const WithImageMedia: Story = {
         label: 'Your card',
         content: 'Quick Mindfulness Break',
         media: {
-          src: '/assets/web/method-card.png',
+          src: asset('assets/web/method-card.png'),
           alt: 'The Mindfulness Cards deck laid out on a table',
         },
       },

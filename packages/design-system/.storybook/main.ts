@@ -28,6 +28,15 @@ const config: StorybookConfig = {
      .mdx file without it. No other addon is installed — each one injects CSS
      into the preview iframe and can quietly outrank a token. */
   addons: ['@storybook/addon-docs'],
+  /* GitHub Pages publishes a project site under /<repo>/, not at the domain
+     root, so the build needs to know its own base path. Unset locally, where
+     everything is served from /. stories/_decorators.tsx#asset() reads the same
+     value back through import.meta.env.BASE_URL. */
+  async viteFinal(config) {
+    const base = process.env.STORYBOOK_BASE_PATH;
+    if (base) config.base = base;
+    return config;
+  },
   staticDirs: [
     { from: '../assets', to: '/assets' },
     /* The Typography page renders real type at 393/834/1440px inside iframes,

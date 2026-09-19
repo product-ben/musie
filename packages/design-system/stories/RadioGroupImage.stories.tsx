@@ -6,11 +6,11 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RadioGroupImage } from '../src/RadioGroupImage';
-import { fixedWidth, Stack } from './_decorators';
+import { Stack, asset, fixedWidth } from './_decorators';
 
 /* Storybook serves /assets. The prototype points every option at the same
    placeholder artwork and authors a distinct alt for each. */
-const IMAGE = '/assets/web/method-card.png';
+const IMAGE = asset('assets/web/method-card.png');
 
 /* ABOUT YOU — the prototype's only usage of this component, verbatim. */
 const OPTIONS = [

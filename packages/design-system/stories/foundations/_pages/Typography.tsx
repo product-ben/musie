@@ -3,6 +3,10 @@ import { TYPE_STEPS, declaredValue, tokensIn } from '../_lib/tokens';
 import { probePx, probeValues } from '../_lib/probe';
 import { Cell, Measuring, Note, Row, Table, mono, useProbe } from '../_lib/ui';
 
+/* Storybook's base path. `/` on the dev server, `/<repo>/` on GitHub Pages —
+   the iframes below load real stylesheets, so the href has to follow it. */
+const TOKENS = `${import.meta.env.BASE_URL || '/'}foundations-tokens/`.replace('//foundations', '/foundations');
+
 /** The three reference widths from Layer 1: iPhone 16, tablet, desktop. */
 export const WIDTHS = [393, 834, 1440] as const;
 
@@ -99,9 +103,9 @@ export function TypeAtWidth({ width }: { width: number }) {
                   font-weight:var(--type-${s}-weight)">${SAMPLES[s] ?? s}</p></div>`,
     ).join('');
     return `<!doctype html><html lang="de"><head>
-      <link rel="stylesheet" href="/foundations-tokens/musy-fonts.css">
-      <link rel="stylesheet" href="/foundations-tokens/musy-foundations.css">
-      <link rel="stylesheet" href="/foundations-tokens/musy-foundations-amendments.css">
+      <link rel="stylesheet" href="${TOKENS}musy-fonts.css">
+      <link rel="stylesheet" href="${TOKENS}musy-foundations.css">
+      <link rel="stylesheet" href="${TOKENS}musy-foundations-amendments.css">
       <style>
         body{margin:0;padding:12px;background:var(--surface);color:var(--on-surface)}
         .r{padding:6px 0;border-bottom:1px solid var(--border-subtle)}

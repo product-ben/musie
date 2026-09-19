@@ -7,7 +7,7 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Logo } from '../src/Logo';
-import { bothThemes, Row, Stack } from './_decorators';
+import { Row, Stack, asset, bothThemes } from './_decorators';
 
 const meta = {
   title: 'Components/Logo',
@@ -59,6 +59,23 @@ const meta = {
           '"Musie" the product’s, but the Logo’s `alt` is user-facing product copy, so',
           'the default is probably wrong.',
           '',
+          '## Logo — the default `src` is root-absolute, so it 404s under a subpath',
+          'Where: src/Logo.tsx:38',
+          'What I checked: Level 1. The default is `\'/assets/web/musy-logo.png\'`,',
+          'which resolves against the DOMAIN root. Storybook is deployed to GitHub',
+          'Pages, which publishes a project site under `/<repo>/`, so the default',
+          'points at a path that does not exist there. Every other asset in these',
+          'stories goes through `asset()` in _decorators.tsx, which prefixes',
+          '`import.meta.env.BASE_URL`; a component default cannot.',
+          'What I did: passed a base-aware `src` on this page\u2019s meta so every Logo',
+          'story renders. The component is untouched and the real default is still',
+          'what the argTypes document.',
+          'Why: changing a component default is a design decision; making a story',
+          'render is not.',
+          'What I need from Ben: **a decision.** A root-absolute default means the',
+          'component only works on a site served at `/`. Either it becomes relative,',
+          'or `src` becomes required, or the constraint gets written down.',
+          '',
           '## Logo — the documented default `src` is not the implemented one',
           'Where: src/Logo.tsx:38 (`’/assets/web/musy-logo.png’`) vs',
           'docs/07-components.md §7.15 props table (`’/assets/musy-logo.png’`)',
@@ -100,7 +117,14 @@ const meta = {
       },
     },
   },
-  args: {},
+  args: {
+    /* Mirrors the component default, '/assets/web/musy-logo.png', but resolved
+       against Storybook's base path. The default is ROOT-absolute, so on a site
+       served under a subpath — GitHub Pages publishes at /<repo>/ — it 404s.
+       Passing it here keeps every Logo story rendering; the real default is
+       still documented in the argTypes below and in Build notes. */
+    src: asset('assets/web/musy-logo.png'),
+  },
   argTypes: {
     size: {
       control: 'inline-radio',
@@ -169,7 +193,7 @@ export const CustomAlt: Story = { args: { alt: 'Musy — back to the start' } };
 
 /** The other rendition that ships in the package. The default `src` is the web
  *  one; see the build notes. */
-export const CustomSrc: Story = { args: { src: '/assets/musy-logo.png' } };
+export const CustomSrc: Story = { args: { src: asset('assets/musy-logo.png') } };
 
 /** `render` composes the wrapper, which is how the consuming app makes a home
  *  link without the component knowing about routing. The component itself is
@@ -181,5 +205,5 @@ export const Composed: Story = {
 /** A missing asset. `alt` is what is left, which is the whole reason the
  *  `alt`/aria-hidden fork is a prop and not a guess. */
 export const BrokenSrc: Story = {
-  args: { src: '/assets/web/does-not-exist.png' },
+  args: { src: asset('assets/web/does-not-exist.png') },
 };

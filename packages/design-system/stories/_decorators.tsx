@@ -106,3 +106,22 @@ export function Stack({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+/**
+ * Resolve a static asset against Storybook's base path.
+ *
+ * WHY THIS EXISTS. The stories reference two things that Storybook serves from
+ * its own root: `assets/` (Logo's mark, the card artwork) and
+ * `foundations-tokens/` (the stylesheets the Typography iframes load). Written
+ * as `/assets/…` they resolve against the DOMAIN root, which is correct on a
+ * site served at `/` and wrong everywhere else — GitHub Pages publishes a
+ * project site under `/<repo>/`, so every one of them would 404.
+ *
+ * `import.meta.env.BASE_URL` is whatever Storybook was built with: `/` for the
+ * dev server and a local build, `/musie/` for the Pages deploy. Always pass a
+ * path WITHOUT a leading slash.
+ */
+export function asset(path: string): string {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base.endsWith('/') ? base : `${base}/`}${path.replace(/^\//, '')}`;
+}

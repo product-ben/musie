@@ -1,0 +1,73 @@
+# Publish Storybook to GitHub Pages.
+#
+# WHY HERE AND NOT NETLIFY. This repository is public, so Pages and Actions are
+# free with no build-minute allowance to exhaust — which is what paused the
+# Netlify deploys. Storybook is internal documentation; the app keeps Netlify.
+# Keeping them apart also means a broken app build no longer stops the docs
+# from publishing.
+#
+# ONE-TIME SETUP: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Storybook
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/design-system/**'
+      - '.github/workflows/storybook.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never publish two deploys at once; cancel a superseded run rather than racing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The same gate the repo uses everywhere else. Docs that do not typecheck
+      # are not worth publishing.
+      - run: pnpm check
+
+      # Pages serves this repo at /musie/. Without the base path every asset
+      # written as /assets/... resolves against the domain root and 404s.
+      - name: Build Storybook
+        run: pnpm build:storybook
+        env:
+          STORYBOOK_BASE_PATH: /${{ github.event.repository.name }}/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/design-system/storybook-static
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
