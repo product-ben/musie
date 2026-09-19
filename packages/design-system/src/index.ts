@@ -22,7 +22,7 @@ export { IconButton, MusyTooltipProvider } from './IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './IconButton';
 
 export { CtaButton } from './CtaButton';
-export type { CtaButtonProps, CtaVariant, CtaSize } from './CtaButton';
+export type { CtaButtonProps, CtaVariant, CtaSize, CtaAlign } from './CtaButton';
 
 export { Switch } from './Switch';
 export type { SwitchProps, SwitchAccent } from './Switch';

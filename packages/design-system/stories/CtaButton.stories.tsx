@@ -254,6 +254,22 @@ export const Wrap: Story = {
   args: { wrap: true, children: 'Vollständige Übung mit dieser Karte abschließen' },
 };
 
+/** `align="start"` puts the label at the inline start instead of centring it.
+ *  For a STACK of full-width buttons — a nav drawer's rows — where five centred
+ *  strings do not form a readable column. Only visible alongside `block`, since
+ *  alignment needs the button to be wider than its label. `start` rather than
+ *  `left` so the stack mirrors in RTL without a second rule. */
+export const AlignStart: Story = {
+  render: (args) => (
+    <Stack>
+      <CtaButton {...args} variant="primary">Start a session</CtaButton>
+      <CtaButton {...args} block align="start" variant="ghost">Your diary</CtaButton>
+      <CtaButton {...args} block align="start" variant="secondary">About you</CtaButton>
+      <CtaButton {...args} block align="start" variant="ghost">How Musie works</CtaButton>
+    </Stack>
+  ),
+};
+
 /** Loading hides the label as well as the icon and holds the button's
  *  footprint, so a full-width mobile CTA does not collapse mid-request. The
  *  state is announced through the `role="status"` string. Reduced motion drops

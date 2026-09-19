@@ -417,6 +417,16 @@
    the button assumes. */
 .musy-btn--block { display: flex; width: 100%; }
 
+/* Label alignment, for a STACK of full-width buttons — a nav drawer's rows —
+   where centred labels do not form a readable column. The base rule centres,
+   which is right for a CTA standing on its own, so only the opt-in needs a
+   declaration.
+
+   `flex-start`, which resolves against the writing mode, so the stack mirrors
+   in RTL with no second rule. Only visible once the button is wider than its
+   label, i.e. alongside `--block`. */
+.musy-btn--align-start { justify-content: flex-start; }
+
 .musy-btn--primary {
   background-color: var(--interactive-primary);
   border-color: var(--interactive-primary-border);

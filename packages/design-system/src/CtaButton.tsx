@@ -44,6 +44,15 @@ export type CtaVariant =
 
 export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
 
+/**
+ * Where the label sits on the inline axis.
+ *
+ * `start`, not `left`: the system is built for German as well as English and
+ * must mirror in RTL without a second rule, so this follows the same logical
+ * axis as every other declaration in the stylesheet.
+ */
+export type CtaAlign = 'center' | 'start';
+
 export interface CtaButtonProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'className'> {
   children: React.ReactNode;
@@ -56,6 +65,18 @@ export interface CtaButtonProps
   loadingLabel?: string;
   /** Fill the inline axis. A layout decision, so the consumer opts in. */
   block?: boolean;
+  /**
+   * Label alignment. `center` by default, which is what a CTA standing on its
+   * own wants.
+   *
+   * `start` exists for a STACK of full-width buttons — a nav drawer's rows,
+   * say — where five centred strings do not form a readable column. It is a
+   * layout decision about the group, so like `block` the consumer opts in.
+   *
+   * Pairs with `block`: alignment only shows once the button is wider than its
+   * label.
+   */
+  align?: CtaAlign;
   /** Allow the label to wrap to two lines instead of overflowing. German
    *  compounds at 393px need this more often than English does. */
   wrap?: boolean;
@@ -66,7 +87,7 @@ export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
   function CtaButton({
     children, variant = 'primary', size = 'primary', leadingIcon,
     loading = false, loadingLabel = 'Wird geladen', block = false, wrap = false,
-    disabled, className, ...rest
+    align = 'center', disabled, className, ...rest
   }, ref) {
     return (
       <Button
@@ -77,6 +98,7 @@ export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
           size !== 'primary' ? `musy-btn--${size}` : '',
           block ? 'musy-btn--block' : '',
           wrap ? 'musy-btn--wrap' : '',
+          align !== 'center' ? `musy-btn--align-${align}` : '',
           className ?? '',
         ].filter(Boolean).join(' ')}
         aria-busy={loading || undefined}

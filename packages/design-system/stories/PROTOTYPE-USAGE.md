@@ -12,6 +12,17 @@ data file `reference/design_system/data/mindfulness-cards.js`. Read once, on
 > exists. The prototype is `reference/design_system/Musy MVP 0.3.dc.html`.
 > Logged in OPEN-QUESTIONS.md.
 
+> **Terminology note, 2026-09-18.** The product term for a Method is now
+> **exercise**. This document deliberately keeps saying *Method* — it
+> describes the PROTOTYPE, whose screens are named `METHOD FLOW` and
+> `METHOD RECOMMENDATION` and whose data file exports `methods`, and renaming
+> them here would make this file misdescribe the artifact it exists to
+> summarise. In `apps/web` and the database the tables, routes and identifiers
+> are `exercises` / `exercise_i18n` / `exercise_situations` / `/exercises`.
+> Note the prototype's own COPY already said "exercise" — "Start Exercise",
+> "Complete Exercise with this card" — so the rename brought the code in line
+> with the copy rather than the other way round.
+
 **The prototype is a MARKUP MIRROR.** It hand-writes HTML carrying the design
 system's class names; it does not import the components. Follow its *intent* —
 which variant, which size, which copy — never its markup. Where it writes
@@ -363,19 +374,53 @@ RETIRED. Write its stories from the component source and docs only.
 - **Carousel** (`musy-carousel--accent-placeholder1`, ONBOARDING) — ~200 lines
   of CSS, no component, no export.
 
-## Components the prototype uses that were deleted
+## Components the prototype uses that ARE in the system
 
-- **Message** — 3 usages: one `info` ("Info: Prototype control"), two `success`
-  ("Success: …", `role="status"`).
-- **Badge** — referenced in the system's CSS, not in this prototype's markup.
+> **CORRECTED 2026-09-18.** This section previously read "Components the
+> prototype uses that were **deleted**" and listed Message and Badge. Both
+> claims were wrong, and the Message one cost real work: Phase 2.4 was briefed
+> to render errors as plain text *because* "the design system has NO Message
+> component — deliberately deleted, nothing replaces it", and a custom
+> `.musie-error` pattern was written in `apps/web` before the claim was
+> checked. It was then deleted again in favour of `Message`. Everything below
+> is verified by file, export and stylesheet rather than recalled.
 
-Per the brief these are **not** to be re-added. Their presence here is expected
-and is not a signal.
+- **Message** — 3 usages, and the component is **present and exported**:
+  - `src/Message.tsx` (4,019 bytes)
+  - `src/index.ts:54-55` exports `Message` plus `MessageProps` /
+    `MessageVariant` / `MessageLive`
+  - `.musy-msg` and `.musy-msg--{info,warning,success,error}` in
+    `musy-components.css`
+  - imported by `RadioCards`, `RadioGroupText` and `RadioGroupImage` for their
+    `error` prop — so it **could not be removed** without breaking three
+    shipped components
+
+  Prototype markup: one `musy-msg--info` ("Info: Prototype control") and two
+  `musy-msg--success` ("Success: …", `role="status"`).
+
+  `docs/10-layout.md` L11 names it for the case a screen most often needs:
+  *a fatal problem, injected after load, inline where it happened, with
+  `live="assertive"`*. `apps/web` uses it for exactly that on `/methods`.
+
+  **One gap when consuming it from a bilingual app:** the visually hidden
+  status word (`Fehler` / `Hinweis` / `Warnung` / `Erfolg`) comes from a module
+  constant with no prop, so an English screen announces "Fehler: This content
+  could not be loaded" to a screen reader. Logged in
+  `apps/web/OPEN-QUESTIONS.md`; the fix is a `statusWord?: string` prop.
+
+Nothing in this section needs re-adding. Badge was also never deleted, but the
+prototype's markup does not use it at all — `musy-badge` appears **0 times** —
+so it has moved to the next section, where it belongs.
 
 ---
 
 ## Components with no prototype usage at all
 
-`Toast`, `DraggableList`, `ProcessVisualisation`, `ContentBox outline="dashed"`,
-`FieldItem`, `FieldGroup`, `useCoarsePointer`. Write these from the component
-source and `docs/07-components.md` only.
+`Badge`, `Toast`, `DraggableList`, `ProcessVisualisation`,
+`ContentBox outline="dashed"`, `FieldItem`, `FieldGroup`, `useCoarsePointer`.
+Write these from the component source and
+`reference/design_system/docs/07-components.md` only.
+
+`Badge` is present and exported (`src/Badge.tsx`, `src/index.ts:51-52`, 23
+`musy-badge` rules in the stylesheet) — it is simply unused by this prototype.
+It was previously listed as deleted; see the correction above.
