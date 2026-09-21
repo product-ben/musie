@@ -329,6 +329,49 @@ export async function deleteSession(id: string): Promise<void> {
 }
 
 /**
+ * Delete EVERY session this user has, and every reflection with them — G.2.
+ *
+ * ── WHY THERE IS A FILTER ON A DELETE THAT MEANS "ALL OF THEM" ─────────────
+ * `.not('id', 'is', null)` is not a narrowing and is not meant to be: `id` is
+ * the primary key, so it is never null and the predicate is true of every row.
+ * It is there because PostgREST REFUSES an unqualified DELETE — a request with
+ * no filter at all is rejected rather than run — and that refusal is a good
+ * rule protecting a case this one is not. Writing the always-true predicate
+ * out is the honest way to say "yes, all of them, deliberately".
+ *
+ * ── RLS IS STILL THE BOUNDARY, AND IT IS DOING MORE HERE THAN ANYWHERE ─────
+ * No `user_id` filter, the same as `deleteSession` above — `sessions_delete_own`
+ * is `using (user_id = (select auth.uid()))`. On a delete that names no row,
+ * that policy is the ONLY thing standing between this statement and every
+ * session in the table. It is worth being explicit that this is load bearing:
+ * anything that weakens `sessions_delete_own` turns this function into a
+ * different function, and rule 3 — never disable RLS to make something work —
+ * is at its sharpest right here.
+ *
+ * ── IT TAKES A RUNNING SESSION TOO ─────────────────────────────────────────
+ * No `status` filter, so a session that is still in progress goes with the
+ * rest. That is the done-when as written — no `sessions` rows and no
+ * `reflections` rows — and it is also the only answer that matches the copy:
+ * "your whole diary" cannot quietly mean "all of it except the one you are in
+ * the middle of". The caller is responsible for not leaving the person on
+ * /session/:id/:step afterwards; SettingsSheet navigates to /diary.
+ *
+ * ── THE CASCADE DOES THE SECOND HALF ───────────────────────────────────────
+ * `reflections.session_id` is `on delete cascade`, so this is one statement
+ * and there are no orphans to sweep up. There is no storage half to this: D1
+ * settled that nothing is ever uploaded, so there are no files to orphan.
+ */
+export async function deleteAllSessions(): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .delete()
+    .not('id', 'is', null);
+  if (error !== null) {
+    throw new Error(`[musie] could not delete the diary: ${error.message}`);
+  }
+}
+
+/**
  * The answer.
  *
  * `mode` says HOW THE TEXT WAS PRODUCED — typed, transcribed, or read off a

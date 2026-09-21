@@ -20,13 +20,17 @@
  * a component request, logged in apps/web/OPEN-QUESTIONS.md.
  */
 import * as React from 'react';
+import { useNavigate } from 'react-router';
 import { Dialog } from '@base-ui/react/dialog';
-import { Moon, Sun, X } from 'lucide-react';
-import { IconButton, Message, RadioGroupText, Switch } from '@musie/design-system';
+import { Moon, Sun, Trash2, X } from 'lucide-react';
+import {
+  ButtonGroup, ContentBox, CtaButton, IconButton, Message, RadioGroupText, Switch,
+} from '@musie/design-system';
 import { LOCALES, LOCALE_LABELS, isLocale } from './i18n';
 import { useLocale, useT } from './i18n/localeContext';
 import { useCloseOverlay } from './lib/useCloseOverlay';
 import { useProfile } from './lib/profileContext';
+import { deleteAllSessions } from './lib/session';
 import { useUserTypes } from './lib/useContent';
 
 export function SettingsSheet() {
@@ -71,6 +75,12 @@ export function SettingsSheet() {
           <ThemeSwitch />
           <UserTypeChoice />
           <LanguageChoice />
+          {/* LAST, and that is the whole of its position: everything above is
+              a preference you set and unset, and this is the one control in
+              the sheet that takes something away for good. It goes where a
+              thumb arrives at it deliberately rather than on the way to
+              something else. */}
+          <DeleteEverything />
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
@@ -228,5 +238,163 @@ function LanguageChoice() {
         if (isLocale(next)) setLocale(next);
       }}
     />
+  );
+}
+
+/**
+ * DELETE MY WHOLE DIARY — G.2's remaining half.
+ *
+ * ── WHY IT IS HERE AND NOT ON /diary ───────────────────────────────────────
+ * The one real decision in this piece of work, so it is written down rather
+ * than implied by where the code sits.
+ *
+ * Deleting ONE session belongs on the entry, and that is where it is: the
+ * thing being deleted is on screen, the trash control sits inside its card,
+ * and the confirmation replaces that card's own controls. The act and its
+ * object are in the same place.
+ *
+ * Deleting EVERY session has no such object. It is not an operation on a row;
+ * it is an operation on the account, in the same family as the language, the
+ * theme and who you are here as — all of which live in this sheet. Three
+ * arguments, in the order they mattered:
+ *
+ *   1. /diary IS THE THING BEING DESTROYED. A control that empties the diary,
+ *      sitting under the diary, is a control adjacent to thirty rows the user
+ *      is reading and scrolling past. A destructive act must never be the
+ *      easy thing to hit by accident, and "at the bottom of the screen you
+ *      scroll through most" is the definition of easy to hit.
+ *
+ *   2. GETTING HERE IS ALREADY DELIBERATE. /settings is two intentional acts
+ *      away — open the menu, open settings — and nobody arrives in this sheet
+ *      by scrolling. The confirmation below is then the third act, not the
+ *      first line of defence.
+ *
+ *   3. IT IS WHERE SOMEBODY WOULD LOOK FOR IT. "Delete my data" is a settings
+ *      question in every product a person has used, and it belongs beside the
+ *      privacy promise C.2 wrote — the account lives in this browser, and this
+ *      is the button that empties it.
+ *
+ * The cost is honest and small: somebody who wants it while looking at the
+ * diary has to go to settings. That is the right friction for this button.
+ *
+ * ── THE CONFIRMATION IS INLINE, FOR THE REASON DiaryCard'S IS ──────────────
+ * A `Message variant="warning"` replacing this box's own control, not a second
+ * dialog. This sheet IS a dialog, and a dialog over a dialog is where focus
+ * management stops being base-ui's problem and starts being ours. The decision
+ * happens where the thing being decided about is on screen.
+ *
+ * The affirmative is `secondary`, not `primary`, matching the entry card: the
+ * loudest button on a screen should not be the irreversible one.
+ *
+ * ── WHERE IT LEAVES YOU ────────────────────────────────────────────────────
+ * /diary, replacing this entry in the history. Three things at once, and all
+ * three are needed:
+ *
+ *   The sheet closes, because the route changed.
+ *   The diary re-reads, because `useDiary` keys on `location.key` and this is
+ *   a new entry — the same mechanism that stops a deleted row lingering after
+ *   a single delete. See lib/useDiary.ts.
+ *   AND THE APP IS NOT LEFT ON A ROUTE WHOSE ROW IS GONE. `deleteAllSessions`
+ *   takes a running session with the rest, and this sheet opens over anything,
+ *   /session/:id/:step included. Sending the person to their now-empty diary
+ *   is both the honest confirmation — here is the result — and the only exit
+ *   that is guaranteed to still exist.
+ *
+ * `replace`, so Back does not return to a settings sheet over a page that no
+ * longer describes anything.
+ *
+ * ── A FAILURE IS SAID OUT LOUD ─────────────────────────────────────────────
+ * Unlike the latest entry's quiet failure on /diary, which has a working list
+ * beside it. Here there is nothing else on screen to infer the outcome from,
+ * and a destructive action that silently did nothing is the worst of the three
+ * possible endings: the person believes their diary is gone and it is not.
+ *
+ * The text does NOT claim nothing was deleted. A single `delete` is atomic in
+ * Postgres, but a connection lost after it commits looks exactly like one lost
+ * before, and this is not the screen to guess on. It says what to do instead.
+ */
+function DeleteEverything() {
+  const t = useT();
+  const navigate = useNavigate();
+
+  /* One state rather than three booleans: 'confirming and failed' and
+     'deleting and idle' are not states this control has, and a union cannot
+     represent them. */
+  const [status, setStatus] = React.useState<'idle' | 'confirming' | 'deleting' | 'failed'>(
+    'idle',
+  );
+
+  async function removeEverything() {
+    if (status === 'deleting') return;
+    setStatus('deleting');
+    try {
+      await deleteAllSessions();
+      navigate('/diary', { replace: true });
+    } catch (thrown: unknown) {
+      console.error('[musie] could not delete the diary:', thrown);
+      setStatus('failed');
+    }
+  }
+
+  const deciding = status === 'confirming' || status === 'deleting';
+
+  return (
+    /* `route.diary.title` REUSED rather than a new string: the section names
+       the thing it acts on, and the app already has exactly one word for that
+       thing. Two spellings of 'your diary' is how a settings section and the
+       screen it empties stop sounding like one product.
+
+       h2, under the sheet's Dialog.Title h1. */
+    <ContentBox headline={t('route.diary.title')} headingLevel={2}>
+      {status === 'failed' && (
+        <Message
+          variant="error"
+          /* 'assertive': it answers an action the person took and is the only
+             thing on screen that says how it went. L11. */
+          live="assertive"
+          headingLevel={3}
+          headline={t('diary.deleteAll.failed')}
+          text={t('content.errorDetail')}
+        />
+      )}
+
+      {deciding ? (
+        <Message
+          variant="warning"
+          live="assertive"
+          headingLevel={3}
+          headline={t('diary.deleteAll.confirm')}
+          text={t('diary.deleteAll.text')}
+          action={
+            <ButtonGroup align="end">
+              <CtaButton variant="ghost" onClick={() => setStatus('idle')}>
+                {t('common.cancel')}
+              </CtaButton>
+              <CtaButton
+                variant="secondary"
+                loading={status === 'deleting'}
+                loadingLabel={t('content.loading')}
+                onClick={() => void removeEverything()}
+              >
+                {t('diary.deleteAll.yes')}
+              </CtaButton>
+            </ButtonGroup>
+          }
+        />
+      ) : (
+        /* A LABELLED BUTTON, not the entry card's bare trash icon. That icon
+           is unambiguous because it sits inside the card it deletes; here
+           there is no object beside it, and a glyph alone would be a control
+           whose scope you have to guess at. The glyph stays as the leading
+           icon, so the two controls still read as the same kind of act.
+
+           `ghost`, and at the start edge: it is not what this sheet is for. */
+        <ButtonGroup align="start">
+          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={() => setStatus('confirming')}>
+            {t('diary.deleteAll')}
+          </CtaButton>
+        </ButtonGroup>
+      )}
+    </ContentBox>
   );
 }
