@@ -729,12 +729,38 @@ that looks exactly like a bug.
   favour of the real one, the demo scaffolding left behind. *Done when:*
   `pnpm check` passes with it in and nothing imports a relative path into
   `packages/`.
-- [ ] **F.1 The token function.** `realtime-token` Edge Function, the OpenAI key
-  as a Supabase secret. *Done when:* a `curl` returns a token and the real key
-  appears nowhere in the browser bundle.
-- [ ] **F.2 Wire the core to tokens.** The only edit: `connectRealtime` takes a
-  token, not an API key. *Done when:* you speak and words appear, with no key
-  field anywhere.
+- [x] **F.1 The token function.** `realtime-token` Edge Function, the OpenAI
+  key as a Supabase secret, set with `--env-file` so the value never enters a
+  command line. Both halves of the done-when are verified: a `curl` returns an
+  `ek_…` expiring in 600 seconds, and a grep of `apps/web/dist` for the key and
+  for anything key-shaped comes back empty.
+
+  **THE ENDPOINT IN THE OLD DOCS IS GONE.** `POST /v1/realtime/transcription_sessions`
+  answers `404 Invalid URL`, and so does `/v1/realtime/sessions`. The live one
+  is `/v1/realtime/client_secrets`; the model goes at
+  `session.audio.input.transcription.model` and the token comes back at the
+  TOP level as `value`, not at `client_secret.value`. All three were probed
+  against the real API, because a wrong endpoint fails exactly like a bad key.
+
+  429 and 402 are mapped to `rateLimited` and `noCredits` rather than being
+  flattened into a generic failure — the $50 cap fails requests hard when it is
+  reached, and "out of budget" reaching a person as "the connection dropped"
+  sends them to their wifi rather than to their invoice.
+- [x] **F.2 Wire the core to tokens — THE CODE, NOT YET THE PROOF.**
+  `connectRealtime` takes `token`, and it really was one parameter; the POC's
+  own comment predicted that. Renamed rather than left as `apiKey` holding a
+  token, because a name that lies is worse than one that is vague — the next
+  person to read the subprotocol line needs to know which of the two is in it.
+  `apps/web/src/lib/realtimeToken.ts` is the client half, minting one token per
+  recording rather than caching one: a token lives ten minutes, a reflection
+  takes two, and a stale one closes the socket seconds after somebody starts
+  speaking, which reads as "the microphone broke".
+
+  ***Done when:* you speak and words appear, with no key field anywhere —
+  NOT YET SHOWN.** Nothing renders the voice feature: `@musie/voice` exports
+  hooks and no components, by F.0's design. The wiring is complete and
+  unexercised end to end until F.4 builds the editor, and that is the honest
+  state rather than a tick.
 - [x] **F.3 Tests for the two pure files.** `segmentation.ts` and
   `transcript/fillers.ts` — German abbreviations, the `um`/`äh` split, the
   whole-statement-was-hesitation case.

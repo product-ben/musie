@@ -171,7 +171,10 @@ export function useTranscription() {
 
   const start = useCallback(
     async (
-      apiKey: string,
+      /* F.2: an ephemeral token from the `realtime-token` Edge Function, not
+         an API key. The caller fetches one per session; this hook never sees
+         the account's real credential. */
+      token: string,
       model: TranscriptionModel,
       language: LanguageChoice,
       segmentation: SegmentationMode = 'silence',
@@ -200,7 +203,7 @@ export function useTranscription() {
       silentSince.current = null;
       setStatus('connecting');
 
-      connection.current = connectRealtime(apiKey, model, language, segmentation, (event) => {
+      connection.current = connectRealtime(token, model, language, segmentation, (event) => {
         switch (event.type) {
           case 'ready':
             setStatus('recording');

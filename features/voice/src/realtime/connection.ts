@@ -21,14 +21,24 @@ export type RealtimeConnection = {
 };
 
 /**
- * F.2 IS THE ONE EDIT THIS FILE IS WAITING FOR: `apiKey` becomes a short-lived
- * token minted by the `realtime-token` Edge Function (F.1), and the parameter
- * is the only thing that changes. It is still a key here because F.1 is blocked
- * on a payment method on the OpenAI account, and importing the file is not the
- * same as pointing it at something real — nothing in apps/web calls this yet.
+ * ── F.2 LANDED, AND IT REALLY WAS ONE PARAMETER ───────────────────────────
+ * This file used to take an `apiKey` typed into a field by whoever was
+ * demonstrating it. It now takes `token`: a short-lived credential minted by
+ * the `realtime-token` Edge Function (F.1), which holds the real key as a
+ * Supabase secret and never lets it reach a browser.
+ *
+ * The TRANSPORT is unchanged and cannot be changed — see the subprotocol note
+ * below. What changed is what is worth stealing out of it: an `ek_…` that
+ * expires in ten minutes and can open nothing but a transcription session,
+ * instead of the key to the account.
+ *
+ * The parameter is renamed rather than left as `apiKey` holding a token,
+ * because a name that lies is worse than a name that is merely vague — the
+ * next person to read the subprotocol line needs to know which of the two
+ * things is in it.
  */
 export function connectRealtime(
-  apiKey: string,
+  token: string,
   model: TranscriptionModel,
   language: LanguageChoice,
   segmentation: SegmentationMode,
@@ -36,10 +46,16 @@ export function connectRealtime(
 ): RealtimeConnection {
   // A browser WebSocket cannot set an Authorization header, so the credential
   // travels in the subprotocol list instead. Hence the name: anyone with the
-  // page can read it. That is exactly why F.1 replaces the key with a token.
+  // page can read it.
+  //
+  // THE NAME IS STILL `openai-insecure-api-key` AND THAT IS NOT A MISTAKE:
+  // it is what the protocol calls this slot, whatever is put in it. Since F.2
+  // what goes in is an ephemeral token, so the sentence above is still true
+  // and no longer matters much — reading it off the page buys ten minutes of
+  // transcription and nothing else.
   const socket = new WebSocket(REALTIME_URL, [
     'realtime',
-    `openai-insecure-api-key.${apiKey}`,
+    `openai-insecure-api-key.${token}`,
   ]);
 
   // Transcript deltas arrive per audio item; collect them until that item completes.
