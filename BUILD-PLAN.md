@@ -191,13 +191,42 @@ Do not run `supabase link`.
   catch it. *Done when:* deliberately dropping a policy turns a test red, and
   you have watched it happen.
 
-- [ ] **A.6 Deploy, the week of 22 September.** Not now. When the build
-  allowance returns and the schema has stopped moving — realistically after
-  C.3 — create the hosted project, `supabase link`, push the migrations, put
-  the URL and anon key into Netlify. From that day, migrations stack rather
-  than being rewritten. *Done when:* the Netlify URL signs a visitor in
-  anonymously and lists three exercises from the hosted database, and a
-  deliberately broken type blocks the deploy.
+- [ ] **A.6 The first deploy — TWO HALVES, and they are independent.** Begun
+  2026-09-21, after Phase D rather than in Phase A: the point of deploying is
+  to find where hosted Postgres disagrees with the local stack, and that is
+  worth doing once there are real screens to disagree about.
+
+  **Half 1 — the hosted database. No build minutes, so it went first.** Create
+  the project, `supabase link`, `supabase db push`, point `.env.local` at it
+  and run everything against it from `pnpm dev`. This is where the bugs are,
+  because the local stack is *more permissive* than hosted: it ships
+  `alter default privileges … grant all on tables`, so a table with a missing
+  `grant` works locally and 403s hosted — which reads exactly like broken RLS.
+
+  - [x] Project created, `project-musie` / `xliwtiiopwyfunxkdmxh`, Frankfurt,
+        with *Automatically expose new tables* **off** (which is what makes the
+        explicit grants a real test) and *automatic RLS* **off** (the
+        migrations enable it themselves, and a hosted-only trigger would be a
+        new divergence on the day we came to remove divergences).
+  - [x] All 8 migrations pushed; `migration list` shows both columns matching.
+  - [ ] **Divergence 1, found before the app was even opened:** anonymous
+        sign-ins are a *dashboard* setting hosted, and `config.toml`'s
+        `enable_anonymous_sign_ins = true` governs only the local stack.
+        `POST /auth/v1/signup` returned `anonymous_provider_disabled`.
+  - [ ] `db.support.ts` taught to point anywhere — it currently reads its keys
+        from `supabase status`, which only ever describes the local stack.
+  - [ ] `pnpm test:db` and `pnpm test:e2e`, green against hosted.
+  - [ ] Security and Performance Advisors read on the new project.
+
+  **Half 2 — Netlify and a domain.** When the build allowance returns. It
+  tests different things: the SPA redirect on deep links, theme and `lang`
+  landing before first paint on a cold CDN load, the font preload paths in a
+  production build, and the flow on a phone over mobile data. *Done when:* the
+  app is live on its own domain, signs a visitor in, lists three exercises
+  from the hosted database, and a deliberately broken type blocks the deploy.
+
+  **From the moment of `db push`, migrations stack.** The content schema is no
+  longer editable in place; every change is its own `alter table`.
 
 ### What can run in parallel
 
@@ -557,14 +586,78 @@ code rather than softening the sentence.
 
 ---
 
+## Phase H · Accounts
+
+**Last, deliberately.** The MVP is a complete, functional product on its own
+domain first; accounts are what turn it from a thing you test into a thing
+people keep. Nothing before this phase is written differently because this
+phase exists — the schema already carries `user_id` everywhere, which is the
+whole reason this is a phase rather than a migration.
+
+**The fact the phase rests on:** `updateUser({ email, password })` on an
+anonymous user converts it in place and **keeps the same `auth.users.id`**. So
+`profiles`, `sessions` and `reflections` all still point at it, and somebody
+who does three sessions anonymously and then signs up **keeps their diary**.
+That is the right product behaviour — the first session is what convinces
+anyone, and asking for an email before it is how you lose them — and it is
+free only because the schema was written this way from the start.
+
+[auth.ts](apps/web/src/lib/auth.ts) is already compatible: it calls
+`getSession()` first and only falls back to `signInAnonymously()` when there
+is none, so a real session is simply used.
+
+- [ ] **H.1 The provider, and who sends the mail.** Email + password, magic
+  link, or OAuth. The second decision is the one with a tail: Supabase's
+  built-in SMTP is rate-limited to a handful of messages an hour and is
+  explicitly not for production, so real signup means a sending provider and a
+  sending domain. If OAuth is wanted, `enable_manual_linking` has to go true —
+  email conversion does not need it.
+
+- [ ] **H.2 Convert, never create — and prove it before building any UI.** A
+  test that runs sessions as an anonymous user, converts that user, and reads
+  the same rows back under the same id. If this does not hold, every screen in
+  H.3 is built on a wrong assumption. *Done when:* the test passes and the id
+  before and after are identical.
+
+- [ ] **H.3 The screens.** Sign up, sign in, sign out, password reset — in
+  both languages, every string through the catalogue, no component default
+  leaking through. *Done when:* a returning user on a second device sees their
+  own diary.
+
+- [ ] **H.4 What an account changes elsewhere.** `profiles.theme` stops being
+  a write-only column — [SettingsSheet](apps/web/src/SettingsSheet.tsx) says
+  it *"becomes readable the day an account spans devices"*, and this is that
+  day, which means answering the reconciliation question it flags. The
+  settings sheet grows an account section. And the privacy copy changes again:
+  *saved on this device* becomes *saved to your account*.
+
+- [ ] **H.5 Anonymous cleanup, on a schedule.** Every browser that ever opened
+  the app left a permanent `auth.users` row, and they count toward monthly
+  active users. Delete stale anonymous users that own no sessions. *Done
+  when:* it runs unattended and an anonymous user with a diary is never
+  touched.
+
+> **Before then, during MVP testing:** anonymous rows piling up is a cleanup
+> query, not an architecture problem — delete anonymous users with no sessions
+> whenever it bothers you. The one thing accounts would buy you *early* is
+> knowing **which tester said what**, since every tester is otherwise an opaque
+> uuid. If that turns out to matter for the pilot, that is the reason to pull
+> H forward, and the only one.
+
+---
+
 ## Size
 
-Thirty-four steps, against the original plan's forty-one with eighteen already
-banked — and three of those thirty-four have shrunk since this was written:
-C.5 is now paths only, C.6 is one query, and B.2 lost one of its three API
-holes. The expensive, easy-to-get-wrong part — the design system and its
-Storybook — is behind you, which is the half of the original plan most likely
-to have been skipped and regretted.
+Thirty-four steps to the MVP, against the original plan's forty-one with
+eighteen already banked — and three of those thirty-four have shrunk since this
+was written: C.5 is now paths only, C.6 is one query, and B.2 lost one of its
+three API holes. The expensive, easy-to-get-wrong part — the design system and
+its Storybook — is behind you, which is the half of the original plan most
+likely to have been skipped and regretted.
+
+**Phase H's five steps are not part of that count.** The MVP is done when the
+app is functional and live on its own domain, which is the end of A.6's second
+half. Accounts come after that line, not before it.
 
 Phases E and F do not depend on each other. If the music licensing stalls, run
 F first.
