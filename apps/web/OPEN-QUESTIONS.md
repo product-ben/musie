@@ -1228,3 +1228,149 @@ What I need from Ben: **this is half of G.2.** "One session" is done, with
 confirmation. "And everything" — a delete-my-whole-diary control — is not, and
 neither is anything about orphaned files, which there are none of because
 nothing is ever uploaded. G.2 should be re-scoped rather than re-planned.
+
+---
+
+# Phase F · F.0 — the voice proof-of-concept comes in
+
+## F.0 stopped short of the two Musie UI files, because F.4 is where they belong
+
+Where: `features/voice/src/index.ts` (the "what was left behind" list),
+`packages/design-system/src/DraggableList.tsx`
+
+What I checked: F.0 says "the demo scaffolding left behind" and F.4 says
+"`MusieTranscriptWorkspace` and `MusieStatementCard`, on the real `Toast` and
+`DraggableList`". So the plan already has the two files landing twice, and the
+question is which step they land in.
+
+`MusieStatementCard` is 194 lines and `useDragList` is 281, and between them
+they are §7.24 rewritten: the same hidden headline, the same float-a-spacer
+layout with the text leading in the DOM, the same `data-no-drag`, the same
+Field-parts editor, the same before/after/combine drop modes, the same
+direction-aware merge. `DraggableList.tsx` says so in its own header, at
+length, including the two traps the POC also fell into and documented — the
+float that only works from the front of the flow, and the flex container that
+silently steps around the spacer. The POC took its copies from
+`reference/musie260917/`, a snapshot of the system from before the app existed.
+
+What I did: imported the feature — microphone, socket, segmentation, filler
+cleaning, statement state — and left both UI files in the POC repository. The
+package now renders nothing at all.
+
+Why: importing them would have been a second copy of a released component, in
+a monorepo whose first rule is that the app consumes the design system rather
+than reimplementing it, and F.4 would have deleted them in the next session —
+so the choice was between importing 475 lines to delete them and not importing
+them. What the import DOES carry is the shape that makes F.4 mechanical:
+`Sentence` extends the system's `DraggableItem`, and `combine` and `move` take
+exactly the arguments `onCombine` and `onMove` hand them, so
+`<DraggableList items={sentences} …>` type-checks with no adapter.
+
+What I need from Ben: **a ruling on whether F.0 is done.** "Nothing imports a
+relative path into `packages/`" is satisfied and `pnpm check` passes, but if
+F.0 was meant to leave a rendering component behind, it did not. My reading is
+that F.4 is that step and it is unblocked.
+
+## The POC's user-visible strings could not come across, so the feature stopped speaking
+
+Where: `features/voice/src/messages.ts`, `apps/web/src/lib/voiceMessages.ts`,
+`src/i18n/{en,de}.ts` (`voice.*`)
+
+What I checked: the POC wrote its copy where the failure happened —
+"Microphone access was denied. Allow it in your browser's site settings and try
+again.", "Rate limit reached — this sentence was skipped… free-tier accounts (3
+per minute) run out quickly", "Statements combined". English prose, in the
+core, handed to a banner. CLAUDE.md 6 and 7 do not allow that: every
+user-visible string comes from `apps/web/src/i18n` in both languages, and
+`MessageKey` is `keyof typeof en` so the catalogue is the only source. A
+package below the app can satisfy neither half.
+
+What I did: the feature reports a `VoiceMessageCode` and the app decides what
+to say. `VOICE_MESSAGE_KEYS` is a `Record<VoiceMessageCode, MessageKey>`, so a
+code with no catalogue entry is a typecheck error in English and German at
+once. Thirteen strings written to `docs/GERMAN-UI-WRITING.md`: eleven failures,
+one warning, two undo labels.
+
+Why: it is the same guarantee the i18n layer already has, extended across a
+package boundary, and it also fixes a second problem — the POC's copy was
+written for an operator. "Add credits at
+platform.openai.com/settings/organization/billing" is unactionable by the
+person holding the phone, who has no OpenAI account and only needs to know
+that Musie cannot listen and that writing still works.
+
+What I need from Ben: **thirteen strings are now in the catalogue with nothing
+rendering them**, so they have been read but not seen. Two in particular are
+product statements rather than error text and are worth a look before F.4:
+`voice.error.connectionRejected` and `voice.error.noCredits` both say "That is
+on our side, not yours", which is a posture, not a translation. There is
+deliberately no headline key — Message, Toast or inline is F.4's decision, and
+a headline written for a component nobody has chosen is a placeholder.
+
+## The PCM worklet's delivery has never been through a bundler
+
+Where: `features/voice/src/audio/recorder.ts`, `DEFAULT_WORKLET_URL`
+
+What I checked: the POC read `${import.meta.env.BASE_URL}pcm-worklet.js` and
+kept the file in its own `public/`, which cannot survive the move — the package
+does not know what the app's public directory holds, and the worklet belongs to
+the recorder rather than to the app. The file came across to
+`src/audio/pcm-worklet.js` and is loaded with `new URL('./pcm-worklet.js',
+import.meta.url)`.
+
+What I did: took the bundler pattern, and added a `workletUrl` override on
+`startRecorder` so the app can supply its own if the pattern disappoints.
+
+Why: it keeps the worklet beside the module that loads it, which is the only
+arrangement that is true for both the dev server and a production build.
+
+What I need from Ben: nothing, but **the main session should know this is
+unverified.** Nothing in `apps/web` imports `startRecorder` yet, so no bundle
+has been asked to emit that file — `pnpm --filter web build` passing proves the
+app builds, not that the worklet would load. F.2 or F.4 is where it first
+runs, and if `AudioWorklet.addModule` 404s, the override is the lever.
+
+## `onSentenceFinal` lost its toast, and gained a handler
+
+Where: `features/voice/src/onSentenceFinal.ts`
+
+What I checked: the POC's extension point carried a `console.log`, a `Set` of
+toast listeners, a `subscribeToToasts`, and a hardcoded "Sentence finished"
+raised on every finalised statement. The undo toast the product actually wants
+is a different thing and is owned by `useSentences`, which knows what was
+undone.
+
+What I did: dropped all three. The module now holds one settable handler
+(`setSentenceFinalHandler`), defaulting to a no-op.
+
+Why: the toast was instrumentation — something had to prove on screen that the
+hook had fired — and it would have fired on every pause, in English, over the
+top of the undo offer. The settable handler is what F.6 needs: the Supabase
+write is installed once, and no hook has to learn about it.
+
+What I need from Ben: nothing. Flagging for F.6 that the four paths that call
+this are all in `useSentences` and `useTranscription` — a turn completing,
+Stop's grace period expiring, an edit being saved, two statements being
+combined — which is where "it must be idempotent" will bite.
+
+## `features/*` is a third workspace root, and the design system is a real dependency of it
+
+Where: `pnpm-workspace.yaml`, `features/voice/package.json`
+
+What I did: added `features/*` beside `apps/*` and `packages/*`, and made
+`@musie/voice` its own workspace package with its own `typecheck`, `lint` and
+`test` scripts, so `pnpm check` reaches it whether or not a screen consumes it.
+`apps/web` now depends on it, for the code-to-key map above.
+
+Why a package rather than a folder in `apps/web`: the feature has to hold up on
+its own before a screen is built on it, and F.1, F.2 and F.6 all change it from
+the outside. Netlify's build command is `pnpm check && pnpm --filter web
+build`, run from the root, so the new package is installed and checked there
+with no change to `netlify.toml`; CI's `pnpm install --frozen-lockfile` covers
+the lockfile.
+
+What I need from Ben: nothing, but it is worth knowing WHY `@musie/voice`
+depends on the design system when it renders nothing. It imports two TYPES —
+`DraggableItem` and `CombineOrder` — rather than declaring its own copies of
+shapes §7.24 already owns. Type-only, so nothing reaches the bundle, but it
+does mean `@base-ui/react` and `lucide-react` are dev dependencies of a package
+with no components in it: `tsc` has to resolve the barrel to read two types.
