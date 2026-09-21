@@ -52,8 +52,21 @@ order — `musy-fonts` → `musy-foundations` → `musy-foundations-amendments` 
 
 ## 2 · Every migration that creates a table: RLS, policies, revoke, then grant
 
-Enable RLS, write the policies, **revoke, then grant** privileges to
-`authenticated`. The revoke is not decoration: the local stack ships `alter
+Enable RLS, write the policies, **revoke, then grant** — to `authenticated`
+what the client may read, **and to `service_role` what the server may**. The
+second half is not optional and is easy to miss: `service_role` has `BYPASSRLS`,
+so one assumes the grants are irrelevant to it too. They are not — Postgres
+checks table privileges first, for every role.
+
+It was missed. The hosted project is created with *Automatically expose new
+tables* **off**, which is also what switches off the local stack's default
+grant to `service_role` — so on 2026-09-21 the role held nothing on any table,
+23 db tests failed in three files for one cause, and `reveal-track` (E.5) would
+have failed three phases later with no test around it. Fixed by
+`20260921100000` and `20260921103000`; read the second for why the first was
+too narrow.
+
+The revoke is not decoration: the local stack ships `alter
 default privileges in schema public grant all on tables to postgres, anon,
 authenticated, service_role`, so a new table arrives **already fully granted to
 `anon` and `authenticated`**, and a later column-level grant merely ADDS to a
@@ -70,15 +83,31 @@ back what nobody asked for" block in `20260918142704_profiles.sql`, both under
 A query returning nothing means a missing policy or a missing grant.
 `alter table ... disable row level security` is not a debugging step.
 
-## 4 · Content migrations are edited in place, not stacked
+## 4 · Migrations STACK. Never edit an applied one
 
-Nothing is deployed and no hosted project is linked. While that holds, a
-content change **edits the existing migration** as though it had always said
-that, and is verified with `supabase db reset` (`DOMAIN-MODEL.md` D12).
+**This rule inverted on 2026-09-21**, when `project-musie`
+(`xliwtiiopwyfunxkdmxh`, Frankfurt) was linked and all eight migrations pushed.
+Until then a content change edited the existing migration as though it had
+always said that; every earlier file's history was rewritten that way, which is
+why their timestamps say September 18 and their contents do not.
 
-Do not create a hosted project. Do not run `supabase link`. That is
-`BUILD-PLAN.md` A.6, deliberately deferred; the day it happens, migrations
-start stacking and this rule inverts.
+That freedom is gone. Supabase records an applied migration **by timestamp, not
+by content**, so editing a pushed file changes nothing on the remote and is
+skipped in silence — local and hosted drift apart and every check reports
+success. Every change is now its own new migration with `alter table`.
+
+Verify with `supabase db reset` locally, and `supabase db push` to send it.
+Nothing pushes automatically; `pnpm check` does not touch the database.
+
+Content lives in a migration rather than `supabase/seed.sql` because `supabase
+db push` does not run `seed.sql` — header of `20260918150600_content_seed.sql`.
+
+**`pnpm test:db` runs against whichever database you point it at.** Bare, it
+uses the local stack. Set `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` and
+`SUPABASE_TEST_SERVICE_ROLE_KEY` — all three or none — to run it against
+hosted, which is how the `service_role` hole in rule 2 was found. It prints its
+target on the first call. Pass the keys for one run; the service-role key does
+not belong in a file.
 
 Content lives in a migration rather than `supabase/seed.sql` because `supabase
 db push` does not run `seed.sql` — header of `20260918150600_content_seed.sql`.

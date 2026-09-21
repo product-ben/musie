@@ -53,9 +53,16 @@ beforeAll(async () => {
 }, 30_000);
 
 /* A leftover row would make the next test read two sessions where it expects
-   one, and the failure would name the wrong cause. */
+   one, and the failure would name the wrong cause.
+ *
+ * THE ERROR IS CHECKED, and that is not pedantry. Run against a hosted project
+ * before `service_role` had its grants and this delete was REFUSED, silently —
+ * so the rows stayed, the next test read three where it expected one, and the
+ * suite reported a diary bug that did not exist. A cleanup allowed to fail
+ * quietly turns one cause into a page of unrelated failures. */
 afterEach(async () => {
-  await serviceClient().from('sessions').delete().eq('user_id', userId);
+  const { error } = await serviceClient().from('sessions').delete().eq('user_id', userId);
+  expect(error, 'cleanup was refused — later failures in this file are not their own').toBeNull();
 });
 
 /** Minutes ago, so a fixture can control the order it is asserted in. */

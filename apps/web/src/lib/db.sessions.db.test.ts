@@ -70,7 +70,10 @@ beforeAll(async () => {
  * itself asserted below.
  */
 afterEach(async () => {
-  await serviceClient().from('sessions').delete().in('user_id', [aliceId, bobId]);
+  /* Checked, because a cleanup that can fail quietly is how one missing grant
+     became nineteen failures in this file alone. See diary.db.test.ts. */
+  const { error } = await serviceClient().from('sessions').delete().in('user_id', [aliceId, bobId]);
+  expect(error, 'cleanup was refused — later failures in this file are not their own').toBeNull();
 });
 
 /** A complete, valid session for `userId`, ready to be spread and overridden. */
@@ -531,8 +534,10 @@ describe('sessions · the catalogue cannot be edited out from under a diary', ()
 
   afterEach(async () => {
     /* Removed here as well as by the test, so a failure part-way through does
-       not leave the row behind for the next run. */
-    await serviceClient().from('cards').delete().eq('id', CARD);
+       not leave the row behind for the next run — and checked, so a refused
+       delete says so instead of stranding the fixture for every later run. */
+    const { error } = await serviceClient().from('cards').delete().eq('id', CARD);
+    expect(error, 'fixture cleanup was refused — the throwaway card is stranded').toBeNull();
   });
 
   it('refuses retiring an exercise or a track a session refers to', async () => {
