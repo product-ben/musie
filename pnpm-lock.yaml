@@ -20,6 +20,9 @@ importers:
       '@musie/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system
+      '@musie/voice':
+        specifier: workspace:*
+        version: link:../../features/voice
       '@supabase/supabase-js':
         specifier: ^2.116.0
         version: 2.116.0
@@ -78,6 +81,46 @@ importers:
       vite:
         specifier: ^6.0.7
         version: 6.4.3(@types/node@22.20.3)
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@types/node@22.20.3)(vite@6.4.3(@types/node@22.20.3))
+
+  features/voice:
+    dependencies:
+      '@musie/design-system':
+        specifier: workspace:*
+        version: link:../../packages/design-system
+    devDependencies:
+      '@base-ui/react':
+        specifier: 1.7.0
+        version: 1.7.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@eslint/js':
+        specifier: ^9.17.0
+        version: 9.39.5
+      '@types/react':
+        specifier: ^19.0.2
+        version: 19.3.0
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.5
+      eslint-plugin-react-hooks:
+        specifier: ^5.1.0
+        version: 5.2.0(eslint@9.39.5)
+      globals:
+        specifier: ^15.14.0
+        version: 15.15.0
+      lucide-react:
+        specifier: 0.470.0
+        version: 0.470.0(react@19.3.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.3.0
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.18.0
+        version: 8.70.0(eslint@9.39.5)(typescript@5.9.3)
       vitest:
         specifier: ^5.0.1
         version: 5.0.1(@types/node@22.20.3)(vite@6.4.3(@types/node@22.20.3))

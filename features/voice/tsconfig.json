@@ -1,0 +1,28 @@
+{
+  /**
+   * The same compiler options as apps/web, with one difference that matters:
+   * there is no second `tsconfig.test.json` here, because nothing in this
+   * package's tests needs `@types/node`. The two pure files are pure — no
+   * disk, no network, no child process — so the test files sit in the same
+   * program as the source and get the same narrow browser surface.
+   */
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src", "vitest.config.ts"],
+  "references": []
+}

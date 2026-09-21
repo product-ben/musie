@@ -380,6 +380,49 @@ export const en = {
   'scan.dev.title': 'QR codes for the deck',
   'scan.dev.text': 'Generated from {origin}, so every code here points back at the server that served this page. Print day is the same codes from the generator script, with the real address.',
   'scan.dev.qrLabel': 'QR code for card {code}',
+  /* ── Voice · what @musie/voice could not say for itself ─────────────────
+     F.0 brought the voice proof-of-concept in as a package below the app, and
+     a package below the app cannot hold a user-visible string: it has no
+     German, and it is not reachable from this catalogue. So the feature
+     reports a CODE for everything that goes wrong, and these are the
+     sentences those codes resolve to. The map is src/lib/voiceMessages.ts,
+     and it is a Record over the code union — a code with no entry here is a
+     typecheck error, in both languages.
+
+     WHAT THE POC SAID INSTEAD, and why none of it survived: "Rate limit
+     reached — this sentence was skipped. Each sentence is one request, so
+     free-tier accounts (3 per minute) run out quickly", and "Add credits at
+     platform.openai.com/settings/organization/billing". That is operator
+     copy. The person holding the phone has no OpenAI account, cannot add
+     credits to one, and does not need to learn that a transcription service
+     exists to be told that Musie cannot listen and that writing still works.
+
+     There is no headline key yet, deliberately. Whether these land in a
+     Message, a Toast or inline text is F.4's decision, and a headline written
+     for a component nobody has chosen is the placeholder this repo does not
+     ship. */
+  'voice.error.micDenied': 'Musie needs your microphone to hear you. Allow it in your browser settings, then start again.',
+  'voice.error.micNotFound': 'This device has no microphone Musie can use. Write your answer instead.',
+  'voice.error.micUnavailable': 'The microphone could not be opened. Close whatever else is using it, then start again.',
+  'voice.error.recorderFailed': 'Recording could not start on this device. Write your answer instead.',
+  'voice.error.connectionFailed': 'Musie cannot reach the service that turns your words into text. Check your connection and start again.',
+  /* Not an apology and not a warning: the words already heard are still
+     there, and saying so is the only thing the reader needs. */
+  'voice.error.connectionClosed': 'The connection dropped. Everything Musie had already heard was kept.',
+  /* An expired key, a rejected setting and an empty account are three
+     different faults and one situation for the reader: it is ours, and there
+     is a way to finish the session anyway. */
+  'voice.error.connectionRejected': 'Musie cannot listen right now. That is on our side, not yours — write your answer, or try again later.',
+  'voice.error.segmentationRejected': 'Musie could not set the recording up. That is on our side, not yours — write your answer, or try again later.',
+  'voice.error.noCredits': 'Musie cannot turn words into text at the moment. That is on our side, not yours — write your answer instead.',
+  'voice.error.providerError': 'Something went wrong while Musie was listening. Write your answer, or try again.',
+  /* The one that is NOT fatal. Recording is still running, so the sentence is
+     to carry on rather than to start over. */
+  'voice.warning.rateLimited': 'One sentence could not be turned into text. Say it again, and keep going.',
+  /* What an undo offer is undoing. Combining and deleting destroy text;
+     editing has its own Discard and needs no offer. */
+  'voice.undo.combined': 'Statements combined',
+  'voice.undo.deleted': 'Statement deleted',
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'About Musie',
