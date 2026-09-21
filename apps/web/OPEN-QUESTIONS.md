@@ -1920,3 +1920,181 @@ browser and does something else entirely in the shell.
 What I need from Ben: nothing. Flagging because `channel: 'chromium'` means CI
 must install that browser, which `.github/workflows/ci.yml` does not currently
 do — but CI does not run `test:e2e` at all today, so nothing is broken yet.
+
+---
+
+# Phase F · F.4 and F.5 — the editor, and the keyboard
+
+## F.5's fix landed in `packages/design-system`, not in the app
+
+Where: `packages/design-system/src/DraggableList.tsx` (`refocus`,
+`neighbourOf`, `removeItem`), `packages/design-system/stories/DraggableList.stories.tsx`
+
+What I checked: F.5 asks for "lift-and-move, merge-with-previous, the
+`aria-live` announcements", restored against what the POC's Musie card lost.
+All three were **already in §7.24** before I touched anything: Space or Enter
+lifts, ArrowUp/ArrowDown move, M merges into the item above, Escape cancels,
+and every one of the five sets a string in a `role="status"` `aria-live="polite"`
+region. So the step's own done-when — reorder and merge without a mouse —
+read as already satisfied.
+
+It is not, and the reason is not in the key handling. M is pressed on the
+source row's drag handle; Delete is pressed in the source row's own action
+menu. Both END that row, React unmounts the focused button, and the document
+falls back to `<body>`. The first merge works; the second one starts from the
+top of the page.
+
+What I did: the component parks the surviving neighbour's id in a ref and
+focuses its handle in the effect after the commit that removed the row. Set at
+the two call sites, never inside `combine` — a pointer drop also ends a row and
+nothing was focused during it, so focusing there would scroll the page under
+somebody's finger. The story's Build notes are updated where they quote source
+text that no longer exists.
+
+Why it is not in `apps/web`: a screen cannot reach a row's controls to move
+focus between them without reaching into a component's geometry, which is the
+one thing rule 1 and L7 forbid outright. `CtaButton`'s `align` prop is the
+precedent the guardrails already cite.
+
+What I need from Ben: **an acknowledgement that Track F changed a released
+component.** It is 20 lines, it is additive, and every existing behaviour is
+unchanged — but it is a design-system change made from an app phase, and the
+reference tree under `reference/design_system/` does not have it. If that tree
+is ever re-synced over the package, this goes.
+
+## Nothing in this repository can render a component under test, and now something needs to
+
+Where: `apps/web/vitest.config.ts`, `packages/design-system/stories/CONVENTIONS.md`
+§5, `apps/web/playwright.config.ts`
+
+What I checked: three routes to evidence for F.4 and F.5, and all three are
+closed.
+
+- **Unit.** Both vitest projects are `environment: 'node'`, and the config
+  argues for it in writing: "nothing under test touches the DOM, and a jsdom
+  dependency bought for nothing is a dependency to keep updated." That was
+  true when it was written. It stopped being true with `VoiceTranscript`.
+- **Storybook.** CONVENTIONS §5 is explicit — "Never add local state to a
+  story. No `useState`, no `useReducer`, no mutable module variable." §7.24's
+  own Build notes already name the consequence: "the drag, merge and edit
+  states cannot be reached from props… **This is the largest documentation gap
+  in the batch.**" A stateful story would make the keyboard path reviewable by
+  hand in one screen, and it is the one thing the conventions rule out.
+- **End to end.** A Playwright walk can reach the reflect step, but the list is
+  filled by SPEECH. There is no statement to reorder without a microphone and a
+  live OpenAI session, so a keyboard walk would assert against an empty list.
+
+What I did: pulled every decision that can be wrong out of the component and
+into `src/lib/voiceScreen.ts` — which label the record button carries, which
+sentence sits under it, whether an ended session owes the reader an
+explanation, whether anything has been captured — and drove all of them from
+fixture values in `voiceScreen.test.ts` (19 tests). What is left in
+`VoiceTranscript.tsx` is JSX and one `await`, which is deliberate: the wiring
+should be the only unexercised part, and it is.
+
+Why not simply add jsdom: it is two dev dependencies, a third vitest project
+and a rewrite of a config whose reasoning is written down and was correct.
+That is a repository decision, not a Track F one, and the brief said to prefer
+no new dependency and to say so.
+
+What I need from Ben: **a ruling.** Either (a) `apps/web` gains jsdom and
+`@testing-library/react` as a third vitest project, and the voice editor is the
+first thing rendered in it; or (b) CONVENTIONS §5 gains an exception for a
+component whose entire purpose is a state machine, and §7.24 gets the
+interactive story its own Build notes have been asking for since 2026-09-17.
+(a) is the stronger one. Until one of them, F.5's behaviour is READ, not seen.
+
+## The transcript dies when you touch the mode switch
+
+Where: `src/components/SessionReflect.tsx` (`{mode === 'voice' && …}`),
+`src/components/VoiceTranscript.tsx`
+
+What I checked: the three modes are conditionally rendered, so switching to
+*Write answer* unmounts `VoiceTranscript`, and with it `useTranscription` and
+every statement in the list. Switching back gives you an empty transcript. The
+unmount itself is correct and load-bearing — the hook's cleanup calls
+`stop('manual', { immediate: true })`, which closes the microphone and the
+socket, and leaving those open behind a hidden panel would be worse in every
+way.
+
+What I did: nothing. Left it as it is, and did not lift the sentences into
+`Session.tsx`.
+
+Why: lifting them is the same move F.6 has to make anyway, and it has to decide
+the harder half at the same time — whether a statement is a row of its own and
+what happens to the list when the step is left and re-entered. Doing half of it
+now, in a shape F.6 would then re-cut, is how two designs end up in one file.
+
+What I need from Ben: **is losing the transcript on a mode switch acceptable
+until F.6?** My reading is yes — choosing another door is a deliberate act, and
+the three modes are alternatives rather than tabs — but somebody who taps
+*Write answer* to see what it looks like loses a minute of speech with no
+warning, and that is a real way to lose somebody's words.
+
+## The PCM worklet DOES survive the bundler — as a `data:` URI, which is a new unknown
+
+Where: `features/voice/src/audio/recorder.ts` (`DEFAULT_WORKLET_URL`),
+`apps/web/dist/assets/index-*.js`
+
+What I checked: F.0 logged that `new URL('./pcm-worklet.js', import.meta.url)`
+had never been through a bundler, because nothing in `apps/web` imported
+`startRecorder`. Something does now, so the question is answerable and I
+answered it. `pnpm --filter web build` emits **no** `pcm-worklet.js` asset and
+the string `pcm-worklet` does not appear anywhere in `dist` — which looks like
+the failure F.0 predicted, and is not. Vite inlined the file as
+`new URL("data:text/javascript…")`, because it is under the 4 kB
+`assetsInlineLimit`. `class PcmRecorder` and the `pcm-recorder` processor name
+are both in the bundle.
+
+What I did: nothing. The `workletUrl` override F.0 added is still the lever and
+is still unused.
+
+Why: it is the bundler doing something reasonable, and forcing a separate file
+(`?url`, or raising `assetsInlineLimit`) would be a build-config change made to
+satisfy a worry rather than a measurement.
+
+What I need from Ben: **flagging one thing for the iPhone checkpoint.**
+`AudioWorklet.addModule()` is being handed a `data:` URL rather than a path.
+Chromium and Firefox accept module scripts from `data:` URLs; WebKit's
+behaviour here is exactly the kind of thing the checkpoint exists to find, and
+if it refuses, the symptom will be a microphone that opens and produces no
+audio. The fix is one line — pass `workletUrl` from the app, or set
+`assetsInlineLimit: 0` for that asset — and knowing to look there is the whole
+value of this entry.
+
+## `hasAnswered` still says a spoken answer is not an answer, although it now is words
+
+Where: `src/lib/reflect.ts`, `src/routes/Session.tsx` (the `disabled` on
+*Finish session*), `src/i18n/en.ts` `reflect.voice.notSaved`
+
+What I checked: `hasAnswered` returns `mode === 'text' && text.trim() !== ''`,
+and its own comment anticipates this session: "The day voice lands,
+`mode === 'voice'` gets the same treatment as text: a transcript is words, and
+words are what this asks for." Voice has now landed. The transcript is words.
+Opening that gate is three characters.
+
+What I did: did not open it. `hasAnswered` is untouched, *Finish session* stays
+disabled in voice mode, and the step says why in a Message that replaces the
+old *Recording is not built yet* — the two keys are renamed rather than
+reworded, because the sentence now names the missing STEP rather than the
+missing feature.
+
+Why: opening it would make `saveReflection(id, 'voice', answer)` write the
+joined transcript into `reflections.body`, and that is a persistence design
+made in passing. F.6 is "persist the statements… editing a statement updates
+its ROW rather than inserting a second", which is a table this phase does not
+have and a shape a single `body` column cannot express. Deciding the storage of
+a spoken answer by whichever gate happened to be easiest to open is how the two
+designs disagree later.
+
+What I need from Ben: **nothing to decide, but F.6 inherits a question.** Does a
+spoken reflection produce rows AND a `reflections.body`, or rows only with the
+body assembled on read? The Message that stands in until then is honest but it
+is also the second modal in this step that says "not yet", and the step can
+only carry that for so long.
+
+Flagging separately, since F.0 asked and the answer is now visible: the
+thirteen `voice.*` strings written at F.0 all render for the first time, and
+`voice.error.connectionRejected` and `voice.error.noCredits` still carry "That
+is on our side, not yours". F.0 asked for a read on that posture. It is now
+readable on a real screen rather than in a diff.
