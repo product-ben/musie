@@ -180,6 +180,56 @@ export function DraggableList({
     else nodes.current.delete(id);
   };
 
+  /**
+   * WHERE FOCUS GOES WHEN THE FOCUSED ROW STOPS EXISTING.
+   *
+   * Added from the app's side of the line, during F.5, because the fix
+   * belongs to the component: a screen cannot reach a row's controls to
+   * move focus between them without doing the thing rule 1 forbids.
+   * Logged in apps/web/OPEN-QUESTIONS.md.
+   *
+   * Merging and deleting both END a row, and in both cases the control that
+   * was operated is INSIDE it: M is pressed on the source item's handle, and
+   * Delete is pressed in the source item's own menu. React unmounts that
+   * button, the document loses its active element, and focus falls back to
+   * <body>. From there a keyboard user is at the top of the page and has to
+   * tab all the way back in — so the second merge costs what the first one
+   * did not, and "reorder and merge without a mouse" is true exactly once.
+   *
+   * The id parked here is read after the commit that removed the row, and the
+   * handle of the surviving item takes focus. It is a ref rather than state
+   * because it must not cause a render of its own: it is read in the effect
+   * that the render it describes has already scheduled.
+   *
+   * IT IS SET AT THE CALL SITES, NEVER INSIDE `combine`. A pointer drop also
+   * ends a row, and nothing was focused during it — moving focus there would
+   * scroll the page under somebody's finger for no reason.
+   */
+  const refocus = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const id = refocus.current;
+    if (id === null) return;
+    refocus.current = null;
+    nodes.current.get(id)?.querySelector<HTMLElement>('.musy-dlist__handle')?.focus();
+  });
+
+  /** The row that should hold focus once `id` is gone: the one above it, or
+   *  the one below when `id` was first. Undefined when it was the only one. */
+  const neighbourOf = (id: string) => {
+    const i = items.findIndex((item) => item.id === id);
+    return (items[i - 1] ?? items[i + 1])?.id;
+  };
+
+  /** Delete, with the focus hand-off the plain callback cannot do. The guard
+   *  matters: with no `onDelete` the row does not go anywhere, and moving
+   *  focus off the button that was pressed would be a jump with no cause. */
+  const removeItem = (id: string) => {
+    if (!onDelete) return;
+    refocus.current = neighbourOf(id) ?? null;
+    setOpenMenuId(null);
+    onDelete(id);
+  };
+
   const indexOf = (id: string) => items.findIndex((i) => i.id === id);
 
   /** Direction from list position, never from the gesture — see the header. */
@@ -219,10 +269,22 @@ export function DraggableList({
   };
 
   /**
-   * KEYBOARD EQUIVALENTS ARE SPECIFIED AND UNVERIFIED. Space lifts, arrows
-   * move, M merges into the item above, Escape cancels, and each is announced.
-   * Implemented here and in the reference; never tested with a screen reader —
-   * see 13 · Layout evidence, "What is not evidenced".
+   * THE KEYBOARD EQUIVALENT OF THE DRAG. Space or Enter lifts, arrows move, M
+   * merges into the item above, Escape cancels, and each one is announced in
+   * the live region at the foot of this component.
+   *
+   * ALL FIVE WERE ALREADY HERE before F.5 went looking for them, which is the
+   * whole argument for the app consuming this rather than restyling a card:
+   * the proof-of-concept's own statement card had none of them, and the app
+   * gets them by passing `items`.
+   *
+   * WHAT F.5 ADDED IS WHERE FOCUS GOES AFTERWARDS — see `refocus` above. M
+   * ends the row the key was pressed in, and without the hand-off the second
+   * merge starts from <body>.
+   *
+   * STILL NOT VERIFIED WITH A SCREEN READER. See 13 · Layout evidence, "What
+   * is not evidenced". The announcements are strings in a live region, which
+   * is a construction, not a measurement.
    */
   const onHandleKeyDown = (id: string) => (event: React.KeyboardEvent) => {
     const i = indexOf(id);
@@ -254,6 +316,9 @@ export function DraggableList({
     }
     if ((event.key === 'm' || event.key === 'M') && i > 0) {
       event.preventDefault();
+      /* This row is about to stop existing, and the key that ended it was
+         pressed on a control inside it. Park the survivor. */
+      refocus.current = items[i - 1].id;
       combine(id, items[i - 1].id);
       endDrag();
       setLiveMessage(t.dragMerged(noun, i));
@@ -321,7 +386,7 @@ export function DraggableList({
                   }
                   toolSize={toolSize}
                   onSave={(text) => onEdit?.(item.id, text)}
-                  onDelete={() => onDelete?.(item.id)}
+                  onDelete={() => removeItem(item.id)}
                   onLift={() => setDraggingId(item.id)}
                   onHandleKeyDown={onHandleKeyDown(item.id)}
                   registerRef={(el) => registerItem(item.id, el)}
