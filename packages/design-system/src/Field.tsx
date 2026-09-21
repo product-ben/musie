@@ -2,10 +2,36 @@
  * Field — Layer 2 · §7.16
  * APG: no pattern of its own — a field is a label/control/help/error assembly,
  * and the pattern lives in the native control it wraps. base-ui's `Field` owns
- * exactly the parts that are easy to get wrong by hand: the label↔control
- * association, `aria-describedby` wiring for description AND error, and the
- * validity data-attributes (`data-valid` / `data-invalid` / `data-touched` /
- * `data-dirty` / `data-filled` / `data-disabled`) that the stylesheet targets.
+ * the validity data-attributes (`data-valid` / `data-invalid` / `data-touched`
+ * / `data-dirty` / `data-filled` / `data-disabled`) that the stylesheet
+ * targets.
+ *
+ * ── IT DOES NOT OWN THE ACCESSIBLE NAME. WE DO, EXPLICITLY ────────────────
+ * This docblock used to say base-ui owned "the label↔control association and
+ * `aria-describedby` wiring for description AND error", which is what its
+ * documentation promises and what the part names imply. MEASURED against a
+ * running browser on 2026-09-21, base-ui 1.7 rendered this:
+ *
+ *   <label id="base-ui-_r_19_">Card code</label>
+ *   <input id="base-ui-_r_1a_" placeholder="MC-01">
+ *   <p    id="base-ui-_r_1b_">The code is printed beside the QR code…</p>
+ *
+ * Every part has an id and NOTHING REFERENCES ANYTHING. No `for`, no
+ * `aria-labelledby`, no `aria-describedby`. So the accessible name fell
+ * through to the PLACEHOLDER — a screen reader announced the example, "MC-01",
+ * in place of the label — and the description was not announced at all.
+ *
+ * This is the same shape of defect as the `value` one recorded below: a
+ * base-ui 1.7 part that accepts the intent, renders something plausible, and
+ * silently does not do the thing. So the association is written out here by
+ * hand and not delegated. Explicit `htmlFor`, explicit control `id`, explicit
+ * `aria-describedby` — three attributes that cannot silently stop working,
+ * because they are the mechanism rather than a request for one.
+ *
+ * FOUND BY THE END-TO-END WALK, and only by it: `tsc` cannot see an accessible
+ * name, no unit test rendered a DOM, and on screen the field looks perfect.
+ * What failed was `getByRole('textbox', { name: 'Card code' })`, which is the
+ * assistive-technology view of the same screen.
  *
  * One component, two controls. `multiline` swaps <input> for <textarea> via the
  * same Field.Control part — it is the same field with a different measure, not
@@ -71,6 +97,24 @@ export function Field({
   const t = useMusyText();
   const invalid = Boolean(error);
 
+  /* The ids the wiring above is written against. Derived from one `useId` so
+     they are stable across renders and unique across however many fields share
+     a screen — the reflect step and the scan step are one component twice. */
+  const fieldId = React.useId();
+  const controlId = `${fieldId}-control`;
+  const errorId = `${fieldId}-error`;
+  const descriptionId = `${fieldId}-description`;
+
+  /* ERROR FIRST, THEN DESCRIPTION — the same order they sit in the DOM, and
+     the order matters: `aria-describedby` is announced in the order given, so
+     a message that has just appeared is read before the hint the person
+     already read. Undefined rather than an empty string when there is
+     neither, because `aria-describedby=""` is a dangling reference. */
+  const describedBy =
+    [invalid ? errorId : null, description ? descriptionId : null]
+      .filter(Boolean)
+      .join(' ') || undefined;
+
   return (
     <BaseField.Root
       name={name}
@@ -79,7 +123,11 @@ export function Field({
       className={['musy-field', className ?? ''].filter(Boolean).join(' ')}
       id={id}
     >
-      <BaseField.Label className="musy-field__label">
+      {/* `htmlFor`, natively. Not `aria-labelledby`: a real `for`/`id` pair
+          also makes the label CLICKABLE to focus the control, which is a
+          pointer affordance people expect and which an aria reference does not
+          provide. */}
+      <BaseField.Label className="musy-field__label" htmlFor={controlId}>
         {label}
         {/* Decorative: the real signal is the control's own `required`, which
             base-ui reflects to assistive tech. */}
@@ -92,6 +140,8 @@ export function Field({
           multiline ? 'musy-field__control--textarea' : '',
         ].filter(Boolean).join(' ')}
         render={multiline ? <textarea rows={rows} /> : <input type={type} />}
+        id={controlId}
+        aria-describedby={describedBy}
         value={value}
         defaultValue={defaultValue}
         onChange={(e) => onValueChange?.(e.target.value)}
@@ -101,7 +151,7 @@ export function Field({
       />
 
       {error && (
-        <div className="musy-field__error" role="alert">
+        <div className="musy-field__error" role="alert" id={errorId}>
           <Icon glyph={CircleX} size="sm" />
           <span><span className="musy-sr-only">{errorWord ?? t.statusError}: </span>{error}</span>
         </div>
@@ -121,7 +171,7 @@ export function Field({
       )}
 
       {description && (
-        <BaseField.Description className="musy-field__description">
+        <BaseField.Description className="musy-field__description" id={descriptionId}>
           {description}
         </BaseField.Description>
       )}
