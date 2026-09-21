@@ -433,7 +433,13 @@
    would shrink the QR code the person is holding up — which is the one thing
    in the picture that has to stay large enough to read.                      */
 .musie-scanner__view {
-  display: block;
+  /* ABSOLUTE, against the `position: relative` the frame already carries. A
+     percentage block-size would have to resolve against a height that only
+     exists because of `aspect-ratio`, which is true in current browsers and is
+     the sort of true that fails quietly in one of them. Filling the padding
+     box costs nothing and cannot be argued with.                            */
+  position: absolute;
+  inset: 0;
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
