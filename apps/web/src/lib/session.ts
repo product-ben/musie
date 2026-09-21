@@ -333,11 +333,19 @@ export async function deleteSession(id: string): Promise<void> {
  *
  * ── WHY THERE IS A FILTER ON A DELETE THAT MEANS "ALL OF THEM" ─────────────
  * `.not('id', 'is', null)` is not a narrowing and is not meant to be: `id` is
- * the primary key, so it is never null and the predicate is true of every row.
- * It is there because PostgREST REFUSES an unqualified DELETE — a request with
- * no filter at all is rejected rather than run — and that refusal is a good
- * rule protecting a case this one is not. Writing the always-true predicate
- * out is the honest way to say "yes, all of them, deliberately".
+ * the primary key, so it is never null and the predicate is true of every row
+ * the caller can see. It is written out rather than left off for two reasons.
+ *
+ * A bare `.delete()` is the one call in supabase-js whose blast radius is
+ * invisible at the call site — it looks like an unfinished line — and
+ * supabase-js's own guidance is that a delete always carries a filter. The
+ * always-true predicate is the difference between "all of them, deliberately"
+ * and "somebody forgot the `.eq`".
+ *
+ * (Whether PostgREST would also REFUSE the unfiltered request is not claimed
+ * here. Nothing in this branch has run against a database — see the report
+ * and OPEN-QUESTIONS.md — and a comment asserting a refusal nobody watched
+ * happen is the kind of fact that outlives its truth.)
  *
  * ── RLS IS STILL THE BOUNDARY, AND IT IS DOING MORE HERE THAN ANYWHERE ─────
  * No `user_id` filter, the same as `deleteSession` above — `sessions_delete_own`

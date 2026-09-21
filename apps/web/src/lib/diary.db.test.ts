@@ -163,3 +163,117 @@ describe('the diary read · the one-to-one embed is an OBJECT, not an array', ()
     expect((data as { reflections: unknown }).reflections).toBeNull();
   }, 30_000);
 });
+
+/**
+ * ── DELETING EVERYTHING · G.2 ──────────────────────────────────────────────
+ * `lib/session.ts` `deleteAllSessions` is three method calls, and every one of
+ * them is a claim this file can check and a type cannot:
+ *
+ *   `.delete()`                 the policy allows it, as this user
+ *   `.not('id', 'is', null)`    an always-true predicate really does match
+ *                               every row rather than parsing as something
+ *                               narrower
+ *   no `.eq('status', …)`       a RUNNING session goes with the rest, which
+ *                               is what the confirmation copy promises
+ *
+ * and the cascade it relies on is a fourth. The select is written out here
+ * exactly as the module writes it, for the same reason `DETAIL_SELECT` is: a
+ * test that phrases the query its own way tests its own phrasing.
+ *
+ * NOT RUN. Written in a worktree with no access to the local stack — the main
+ * session held it — so every assertion below is a statement of intent that has
+ * never gone green or red. Logged in OPEN-QUESTIONS.md, and it is the first
+ * thing to run against `supabase start`.
+ */
+describe('deleting the whole diary · G.2', () => {
+  it('takes every session, the one still running included', async () => {
+    await insertSession({
+      status: 'finished', step: 'reflect', started_at: agoISO(40), ended_at: agoISO(30),
+    });
+    await insertSession({
+      status: 'abandoned', step: 'listen', started_at: agoISO(20), ended_at: agoISO(19),
+    });
+    /* The row the diary never lists, and the one a status filter would have
+       left behind. "Your whole diary" cannot quietly mean "except that one". */
+    await insertSession({ status: 'started', step: 'intro' });
+
+    /* Verbatim from deleteAllSessions. */
+    const { error } = await client.from('sessions').delete().not('id', 'is', null);
+    expect(error).toBeNull();
+
+    const { data } = await client.from('sessions').select('id');
+    expect(data).toEqual([]);
+  }, 30_000);
+
+  it('takes the reflections with them, through the cascade and not a second call', async () => {
+    const id = await insertSession({
+      status: 'finished', step: 'reflect', started_at: agoISO(15), ended_at: agoISO(5),
+    });
+    const { error: written } = await client
+      .from('reflections')
+      .insert({ session_id: id, mode: 'text', body: 'Something worth losing on purpose.' });
+    expect(written).toBeNull();
+
+    const { error } = await client.from('sessions').delete().not('id', 'is', null);
+    expect(error).toBeNull();
+
+    /* Asked as SERVICE ROLE, which is the only way this assertion means
+       anything: `reflections_select_own` follows the session, so once the
+       session is gone the row would be invisible to the user whether it had
+       been deleted or merely orphaned. An orphan is exactly the failure this
+       is looking for, and only a reader that bypasses the policy can tell the
+       two apart. */
+    const { data, error: read } = await serviceClient()
+      .from('reflections')
+      .select('session_id')
+      .eq('session_id', id);
+
+    expect(read).toBeNull();
+    expect(data).toEqual([]);
+  }, 30_000);
+
+  it('does not reach another person\'s diary', async () => {
+    /* THE ONE THAT MATTERS. A delete naming no row has `sessions_delete_own`
+       and nothing else between it and the whole table, so this is the test
+       that would go red the day that policy is weakened — and it would go red
+       loudly, where the app would simply start deleting other people's
+       sessions in silence. */
+    const stranger = await anonymousUser();
+    const { data: theirs, error: written } = await stranger.client
+      .from('sessions')
+      .insert({
+        user_id: stranger.userId,
+        exercise_id: 'mindfulness-cards',
+        status: 'finished',
+        step: 'reflect',
+        started_at: agoISO(60),
+        ended_at: agoISO(50),
+      })
+      .select('id')
+      .single();
+    expect(written).toBeNull();
+
+    await insertSession({
+      status: 'finished', step: 'reflect', started_at: agoISO(10), ended_at: agoISO(4),
+    });
+
+    const { error } = await client.from('sessions').delete().not('id', 'is', null);
+    expect(error).toBeNull();
+
+    const { data: survivors } = await serviceClient()
+      .from('sessions')
+      .select('id')
+      .eq('user_id', stranger.userId);
+
+    expect(survivors).toEqual([{ id: (theirs as { id: string }).id }]);
+
+    /* This file's afterEach only sweeps up `userId`, so the stranger's rows
+       are this test's to clear. Left behind they would accumulate across runs
+       and, worse, make a future test that counts rows lie. */
+    const { error: swept } = await serviceClient()
+      .from('sessions')
+      .delete()
+      .eq('user_id', stranger.userId);
+    expect(swept, 'the stranger\'s rows were left behind').toBeNull();
+  }, 30_000);
+});

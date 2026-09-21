@@ -1430,3 +1430,231 @@ depends on the design system when it renders nothing. It imports two TYPES —
 shapes §7.24 already owns. Type-only, so nothing reaches the bundle, but it
 does mean `@base-ui/react` and `lucide-react` are dev dependencies of a package
 with no components in it: `tsc` has to resolve the barrel to read two types.
+
+# Phase G · the diary at a month's scale, and deleting all of it
+
+## Delete-everything went to /settings, and /diary was the other candidate
+
+Where: `src/SettingsSheet.tsx`, `src/lib/session.ts`
+
+What I checked: BUILD-PLAN G.2 says only "a delete-everything control leaves
+no `sessions` and no `reflections` rows" — it does not say where the control
+lives. The existing entry above, *Deleting a session, and the two things it
+needed that nobody asked for*, settles the single delete: the control sits
+inside the card of the thing it deletes, and the confirmation replaces that
+card's own controls. That is the pattern this had to either extend or break.
+
+What I did: put it in /settings, last in the sheet, as a labelled `CtaButton`
+with a leading `Trash2` inside a `ContentBox` headed `route.diary.title`. The
+full argument is in a header comment above `DeleteEverything`, because it is
+the one real decision in this piece of work.
+
+Why: the single delete's pattern does not extend, because it depends on the
+object being on screen. Delete-everything has no object — it is an act on the
+account, in the same family as the language and the theme, which are already
+here. And /diary is the thing being destroyed: a control that empties the
+diary, sitting under thirty rows somebody is scrolling past, is the definition
+of the easy thing to hit by accident.
+
+What I need from Ben: nothing, but it is worth knowing the cost. Somebody who
+wants this while looking at their diary has to go to settings to find it.
+I think that is the right friction for this button; if you disagree, the
+component moves in one piece and the only thing that changes is which file
+renders it.
+
+## Deleting everything takes a RUNNING session, and only one line stops that stranding you
+
+Where: `src/lib/session.ts` `deleteAllSessions`, `src/SettingsSheet.tsx`
+
+What I checked: `deleteAllSessions` carries no `status` filter, so a session
+with `status = 'started'` goes with the rest. That is what the done-when asks
+for — no `sessions` rows — and it is the only reading the copy can honestly
+carry: "your whole diary" cannot quietly mean "except the one you are in the
+middle of". The German and English both name it.
+
+/settings is an overlay that opens over ANY page, `/session/:id/:step`
+included (`AppShell`, `router.tsx`). So this is reachable: start a session,
+open the menu, open settings, delete everything, and the page underneath the
+sheet is a route whose row no longer exists.
+
+What I did: the sheet navigates to `/diary` with `replace` after a successful
+delete. That closes the sheet, re-reads the diary through `useDiary`'s
+`location.key`, and — the part that matters here — takes the person off the
+dead route. Nothing else in the app is notified, and nothing else needs to be:
+`useActiveSession` is read by the drawer, which is a route and re-reads on
+every open, and `ScanLink` reads it fresh too.
+
+Why: the navigation is doing three jobs at once, and only one of them is
+obvious. If somebody later "tidies" it into `close()` — the sheet's own
+`useCloseOverlay` — two of the three quietly stop happening.
+
+What I need from Ben: a decision I made by default. Deleting your diary
+mid-session ENDS that session by deleting it, rather than refusing, warning
+twice, or finishing it first. I think that is right — it is what "everything"
+means — but it is the one case where the button does something the person may
+not have pictured.
+
+## The delete-everything confirmation names no count, and a count was the first instinct
+
+Where: `src/i18n/en.ts` `diary.deleteAll.text`
+
+What I checked: the strongest version of this confirmation says the number —
+*this removes all 34 sessions*. It needs one cheap read
+(`select('id', { count: 'exact', head: true })`) and it would also give the
+control a reason to be hidden when the diary is empty.
+
+What I did: no count. The sentence says what is lost in words.
+
+Why: two reasons and the second is the deciding one. German and English
+pluralise differently and the catalogue has no plural machinery — *all 1
+sessions* / *alle 1 Sessions* — so a count needs two more strings per language
+before it is correct. And a count read that FAILS would have to either hide a
+control the privacy copy promises the user, or show a confirmation with a hole
+in it. A sentence that is always true beats a number that is usually there.
+
+What I need from Ben: nothing. If you want the number, the honest shape is
+`diary.deleteAll.textOne` / `…textMany`, and it is four strings, not one.
+
+## The filter appears at five entries, and five is a judgement rather than a measurement
+
+Where: `src/lib/diary.ts` `FILTER_FROM_ENTRIES`
+
+What I checked: BUILD-PLAN G.1 asks for filtering and for a screen that reads
+well "after thirty sessions rather than on day one". A filter drawn on day one
+is three segments over one row — chrome explaining itself — so it needs a
+floor, and nothing in the plan or the mockups names one.
+
+What I did: `FILTER_FROM_ENTRIES = 5`, one exported constant, read once.
+
+Why: five is roughly where the run stops fitting under the latest entry's card
+on a 393px screen. I did not measure it against a device — see the note below
+about what has and has not run — so it is a designer's number waiting for a
+designer.
+
+What I need from Ben: a number, if five is wrong. It is a one-line change and
+nothing else depends on it.
+
+## The filter axis is status, and the exercise was the other candidate
+
+Where: `src/lib/diary.ts` `DiaryFilter`, `src/routes/Diary.tsx` `FILTER_LABEL`
+
+What I checked: the two things a diary row can be filtered by today are its
+status and its exercise. `SegmentedControl` is specified for **2–4 options**
+and warns in development past that (`SegmentedControl.tsx`), and it requires a
+glyph per option because a label can be clipped.
+
+What I did: status. Three segments — all, finished, unfinished — and the last
+two reuse `session.status.*` rather than new strings, so the filter and the
+badge on the entry card cannot end up calling one status two things.
+
+Why: status is the question a long diary actually raises, and it is answerable
+from a column every row already carries. An exercise filter is three segments
+today and eleven once the Mindfulness Cards spreadsheet lands, which is past
+the point where this is the right component at all.
+
+What I need from Ben: nothing, but if filtering by exercise is wanted later it
+is a different control (a Select, or RadioGroupText) and not a fourth segment.
+
+## G.1's VISUAL half is not built, and it does not belong in the app
+
+Where: `packages/design-system/src/Timeline.tsx`, `LinkList.tsx` — untouched
+
+What I checked: both components say they are "deliberately basic" and that
+"Phase G.1 draws the real timeline". Timeline's header is specific about what
+that means: "a rail, a marker per group, sticky headings".
+
+What I did: **nothing in `packages/`.** G.1's grouping, filtering and empty
+states are entirely consumer-side — which resolution a heading gets, what it
+says, and in which language — and none of it needed a prop or a rule that
+Timeline and LinkList do not already have. The bones really were correct.
+
+Why: the rail, the markers and the sticky heading are the design system's,
+not the screen's. Building them in `apps/web` would mean a `musie-` pattern
+reaching into `.musy-timeline__group`'s geometry, which is exactly what L14's
+opening rule and L7 forbid, and the second copy L14.3 calls a component
+request.
+
+What I need from Ben: **a decision, and this is the loudest thing in this
+log.** Half of what G.1's name promises is still unbuilt, and it is a design
+system change: `Timeline` needs a variant that draws the rail and the markers,
+and `position: sticky` on `.musy-timeline__heading` is a one-declaration
+change with a scroll-container question behind it. Until then the diary at a
+month's scale is correctly GROUPED and looks the same as it did.
+
+## Three database tests were written for G.2 and none of them has run
+
+Where: `src/lib/diary.db.test.ts`, the `deleting the whole diary · G.2` block
+
+What I checked: the local Supabase stack is one shared resource and another
+session was using it, so `supabase start`, `db reset` and `pnpm test:db` were
+all off limits in this worktree.
+
+What I did: wrote the three assertions anyway — every session goes including
+the running one, the reflections cascade rather than orphan, and another
+person's rows survive — and said in the file's own comment that they have
+never gone green or red.
+
+Why: the third one is the one that matters. `deleteAllSessions` names no row,
+so `sessions_delete_own` is the ONLY thing between that statement and every
+session in the table, and a test is the only artefact that will notice the day
+that policy is weakened.
+
+What I need from Ben: run `pnpm test:db` against the local stack before this
+branch is believed. Nothing under `supabase/` changed — no migration was
+needed, the cascade has been in `20260919120000_sessions.sql` since Phase D —
+so this is the only unrun thing in the change.
+
+## MOCKUPS.md entry 10 is now wrong in the other direction, and I could not fix it here
+
+Where: `MOCKUPS.md` § 10 — read-only for this branch
+
+What I checked: entry 10 currently says the diary "groups by calendar day,
+which reads well at ten entries and badly at three hundred", that "a month's
+scale, filtering, and an empty state tuned for day thirty rather than day one
+are G.1", and that what is left of G.2 is deleting everything. All three
+sentences were true this morning and none of them is now.
+
+What I did: nothing to the file. Logged here, as the brief asked.
+
+Why: it is the third entry in that file to drift by being right when it was
+written, which is the failure mode the file's own header names.
+
+What I need from Ben: entry 10 should now say, in the same voice —
+
+> `/diary` lists your non-running sessions and `/diary/:id` shows one. The run
+> is grouped at two resolutions: a heading per day for the last week, one per
+> month before that, so the number of headings is bounded by the calendar
+> rather than by how long you have been using the product. A filter — all,
+> finished, unfinished — appears once the diary holds five entries and has its
+> own empty state when it matches nothing.
+>
+> **Deletion is done.** One session goes from its own card
+> ([DiaryCard](apps/web/src/components/DiaryCard.tsx)); the whole diary goes
+> from /settings ([SettingsSheet](apps/web/src/SettingsSheet.tsx)), including
+> a session still running. Both confirm first. There is nothing to orphan —
+> nothing is ever uploaded.
+>
+> **What is missing:** the timeline's VISUALS. `Timeline` and `LinkList` are
+> still the deliberately basic versions — no rail, no marker per group, no
+> sticky heading — and that half of G.1 is a design system change, logged in
+> `apps/web/OPEN-QUESTIONS.md`. The delete-everything path has never been run
+> against a database.
+
+## `diary.latest` and `diary.openEntry` are dead keys, and I left them there
+
+Where: `src/i18n/en.ts` 290–291, `src/i18n/de.ts`
+
+What I checked: neither key is referenced anywhere in `apps/web` or
+`packages`. They pre-date this change — the newest entry stopped being a
+lookalike box with an *Open entry* link on 2026-09-21, and the two strings it
+used were not removed with it.
+
+What I did: nothing. Flagged only.
+
+Why: the precedent in this file is to delete them (*`diary.back` and
+`diary.exercise` were written and then not needed*), but both catalogue files
+are being edited by another agent this round for `scan.*`, and a tidy-up that
+touches lines nobody asked about is the wrong thing to hand a merge.
+
+What I need from Ben: nothing. Two lines in each file, deletable in one
+commit whenever the catalogues are quiet.
