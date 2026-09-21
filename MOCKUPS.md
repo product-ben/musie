@@ -28,6 +28,17 @@ CSS and no component; D.0 built the component, so the entry describing its
 absence is gone. An entry describing something that now works is worse than no
 entry, because it teaches the reader to distrust the rest.
 
+**Revised again 2026-09-21, after E.0 and E.1, and three entries had gone
+wrong in the same direction — each understating what works.** Entry 4 described
+a simulated scan that no longer exists, so the thing it called fake is now the
+part that works. Entry 11 still said no hosted project was linked, and told the
+reader to edit applied migrations in place, which is the one instruction in
+this repo that fails silently. Entry 10 said the delete confirmation did not
+exist, when Phase D built it the day before. All three are rewritten rather than
+softened, and each now carries a line saying what it used to claim, because an
+entry that quietly changes its mind is the same failure as one that goes stale:
+the reader cannot tell which parts of this file to trust.
+
 ---
 
 ## At a glance
@@ -37,14 +48,14 @@ entry, because it teaches the reader to distrust the rest.
 | 1 | Voice reflection: record button, meter, timer | Nothing is recorded or transcribed, and the step says so | F.1–F.6 |
 | 2 | Photo reflection: drop zone, picker, preview | Nothing is uploaded or read, and the step says so | blocked |
 | 3 | Listen step's transport and clock | There are no audio files; the clock is simulated | E.4 |
-| 4 | Scan step | Simulated — no camera, no code entry, and it says so | E.1–E.3 |
+| 4 | Scan step's dashed frame | Musie cannot open a camera; the QR code is read by the phone's own camera app instead | E.2–E.3 |
 | 5 | Track title and artist | Withheld by design, and no reveal gate yet | E.5 |
 | 6 | Exercise step copy | Columns exist, near-empty — 28 strings owed | blocked |
 | 7 | Situation on a session | Recorded, never filled — nothing asks | open |
 | 8 | The listen step's three scroll views | Only the stage is built; the reveal is not | E.5 |
 | 9 | The four user types | Three unbuilt; no artwork for any | D.2 ✓ / artwork |
-| 10 | The Diary | Minimal by design — day grouping only, no delete | G.1, G.2 |
-| 11 | The whole app | Nothing is deployed; localhost only | A.6 |
+| 10 | The Diary | Minimal by design — day grouping only; deleting one session works, deleting everything does not | G.1, G.2 |
+| 11 | The whole app | The database is hosted; the app is not — no Netlify build, no domain | A.6 half 2 |
 
 ---
 
@@ -124,26 +135,54 @@ No scrubber: this is the stage, and the stage never had one — see entry 8.
 schema deliberately stores a recording **once** and points at it, so a
 recording shared between two exercises is one licence, not two. E.4.
 
-## 4 · The scan step is simulated
+## 4 · Musie cannot open your camera
 
-**What you see.** A dashed square viewport with a scan glyph and the
-instruction to hold the card's QR code inside it, and beneath it an info
-`Message` headed *The reader is not built yet* carrying a **Simulate a scan**
-button. Pressing it picks one of the nine cards at random.
+**Rewritten 2026-09-21, and it now says close to the opposite.** This entry used
+to describe a simulated scan — a **Simulate a scan** button that picked one of
+the nine cards at random. E.0 and E.1 deleted it. What the entry called fake is
+the part that now works, which is exactly the situation the *Keeping this file
+honest* rule at the foot exists to prevent.
 
-**What is missing.** Both real routes in. **Manual code entry comes first**
-(E.1, a field that takes `MC-01`), then the camera (E.2, `getUserMedia` +
-`BarcodeDetector`), then a wasm fallback for Safari (E.3). The simulate button
-disappears when E.1 lands.
+**What you see.** A dashed square frame with a scan glyph, holding two lines:
+*Scan the QR code on your card with your phone's camera app — it opens Musie at
+that card*, and beneath it *Musie cannot open the camera itself yet*. Below the
+frame, a **Card code** field that takes `MC-01` and a **Use this card** button.
+Nothing picks a card for you.
 
-`getCardByCode()` in `apps/web/src/lib/content.ts` is already the real lookup —
-the code path exists, nothing calls it yet.
+**What is missing.** The in-app camera: E.2 (`getUserMedia` +
+`BarcodeDetector`) and E.3 (a wasm decoder for Safari). **The dashed frame is
+the slot that camera goes into** — that is the whole of the mockup here, and it
+is why this entry survives rather than being deleted. A square dashed viewport
+is a viewfinder by convention, and this one cannot see anything.
 
-**The WRITE is real, though, and that is the part worth knowing.** A simulated
-scan resolves the (exercise, card) pairing and writes `card_id` AND `track_id`
-to the session in one update. So every row the flow produces from here on
-carries a real card and a real recording id — only the reading of the QR code
-is simulated, not the record of what was drawn.
+**What is NOT missing, and it is most of what this entry used to claim.** Both
+real ways of naming a card work today:
+
+1. **The QR code on the card**, read by the phone's own camera app. It carries
+   `<origin>/s/MC-01`, and [ScanLink](apps/web/src/routes/ScanLink.tsx) resolves
+   it into the running session. No domain is needed for this — the decoder never
+   compares a host and the route is same-origin (E.0).
+2. **The code printed beside it**, typed into the field (E.1).
+
+`getCardByCode()` in `apps/web/src/lib/content.ts` used to be a real lookup that
+nothing called. It now has three callers, all through `scanCardInto`
+([lib/scan.ts](apps/web/src/lib/scan.ts)), so a deep link and a typed code
+perform one act rather than two implementations of it. E.2's camera will be the
+third route into the same function.
+
+**The consequence worth knowing, and it is a deliberate trade.** The QR route
+works *by leaving Musie* — you scan with the phone's camera app and arrive back
+through `/s/:code`. Somebody who opens the app first, card in hand, is told to
+go and use a different app. **Ben judged that shippable for now (2026-09-21)**:
+the deep link makes the printed deck work end to end today, which the simulate
+button never did, and the second line of copy states the limitation plainly
+rather than leaving it to be discovered. It stops being true at E.2.
+
+**The WRITE was always real, and still is.** Resolving a card — typed or deep
+-linked — looks up the (exercise, card) pairing and writes `card_id` AND
+`track_id` to the session in one update. What changed in E.1 is only the
+READ: the card is now the one you are actually holding rather than one drawn
+for you.
 
 ## 5 · A track's title and artist are withheld, deliberately
 
@@ -254,25 +293,47 @@ one. A cancelled session appears like any other, marked unfinished.
 
 **What is missing:** it groups by calendar day, which reads well at ten
 entries and badly at three hundred. A month's scale, filtering, and an empty
-state tuned for day thirty rather than day one are G.1. Deletion is G.2 — the
-cascade already does the work, the confirmation UI does not exist.
+state tuned for day thirty rather than day one are G.1.
+
+**Deletion is half done, and this entry said none of it was (corrected
+2026-09-21).** Deleting ONE session landed in Phase D —
+[DiaryCard](apps/web/src/components/DiaryCard.tsx) has the control, an inline
+confirmation, and the cascade that takes the reflection with it. What is left
+of G.2 is **deleting everything**, with its own confirmation. The old
+done-when's other half, orphaned files in storage, is moot: nothing is ever
+uploaded, so there is nothing to orphan.
 
 `LinkList` and `Timeline` in the design system are deliberately basic for the
 same reason — correct bones, styling detail deferred to G.1.
 
-## 11 · Nothing is deployed
+## 11 · The database is deployed. The app is not
 
-Localhost only, and **that is a decision rather than a constraint**. No hosted
-Supabase project is linked and no Netlify build runs.
+**Rewritten 2026-09-21, and this one had gone dangerous rather than merely
+stale.** It used to say *"No hosted Supabase project is linked… Do not create a
+hosted project. Do not run `supabase link`"*, and it told the reader that a
+content change **edits the existing migration in place**. All three sentences
+are now false, and the last one is the kind of false that costs an afternoon:
+following it today edits a migration Supabase has already applied, which is
+recorded by timestamp rather than by content, so the change is **skipped in
+silence** on the remote while every local check reports success.
 
-It buys something specific: while nothing is deployed, a content change **edits
-the existing migration in place** as though it had always said that, verified
-with `supabase db reset`. Every content change so far was made that way. The
-day a project is linked, migrations start stacking and that freedom is gone —
-which is why A.6 waits until the schema stops moving.
+**What is deployed.** `project-musie` (`xliwtiiopwyfunxkdmxh`, Frankfurt) is
+linked, and every migration has been pushed. So **migrations stack now.** Never
+edit an applied one; each change is a new file with `alter table`. That is
+CLAUDE.md rule 4, and rule 4 is where the full reasoning lives.
 
-**Do not create a hosted project. Do not run `supabase link`.** CLAUDE.md rule
-4, and it inverts the day A.6 happens.
+**What is not deployed.** The app itself. No Netlify build runs and there is no
+domain — [BUILD-PLAN.md](BUILD-PLAN.md) A.6's second half, waiting on the build
+allowance. `pnpm --filter web dev` against `supabase start` is still how the
+product is looked at.
+
+**The domain is not only a deploy question, and that is the part worth knowing
+here.** A QR code printed on a paper card carries an absolute URL, so the
+printed deck locks the domain in permanently. E.0 is built so that nothing
+*waits* on it — the decoder never compares a host, `/s/:code` is same-origin,
+and the dev QR sheet generates its codes from whatever origin served it — but
+the deck cannot go to print until the domain is chosen. Entry 4 is the screen
+this lands on.
 
 ---
 
