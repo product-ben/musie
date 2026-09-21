@@ -158,3 +158,79 @@ describe('exercises · the listen gate', () => {
     }
   });
 });
+
+describe('the tracks bucket · private, readable signed, and honest about absence', () => {
+  /**
+   * THE BUCKET MUST NOT BE PUBLIC, AND THIS IS THE ONLY THING THAT SAYS SO.
+   *
+   * A public bucket serves every object at a permanent, unauthenticated,
+   * guessable URL — which is the state E.4 exists to avoid, and flipping it
+   * is one toggle in the dashboard with no diff and no review. Nothing else in
+   * the repository would notice: signed URLs keep working, the app keeps
+   * playing, and the licensed masters are simply on the open internet.
+   */
+  it('keeps the bucket private', async () => {
+    /* Through the storage API, not PostgREST: `buckets` lives in the
+       `storage` schema, which is not exposed to REST — asking for
+       `.from('buckets')` gets PGRST205 and a test that looks like a missing
+       bucket when it is a missing schema. */
+    const { data, error } = await serviceClient().storage.getBucket('tracks');
+
+    expect(error, 'the tracks bucket does not exist').toBeNull();
+    expect(data?.public, 'the tracks bucket is PUBLIC — every master is on the open internet').toBe(false);
+  }, 30_000);
+
+  /**
+   * A signed-in listener can mint a URL for a recording that exists. This is
+   * the policy `tracks_objects_select` — without it every card falls back to
+   * the simulated clock and the app looks like it did before E.4.
+   */
+  it('lets a signed-in listener sign a real object', async () => {
+    const { client } = await anonymousUser();
+
+    const { data: track, error: read } = await client
+      .from('tracks')
+      .select('id, src')
+      .not('src', 'is', null)
+      .limit(1)
+      .maybeSingle();
+
+    expect(read).toBeNull();
+    expect(track, 'no track has a src — E.4 has not been applied').not.toBeNull();
+
+    const { data, error } = await client
+      .storage.from('tracks')
+      .createSignedUrl(track!.src as string, 60);
+
+    expect(error, 'a signed-in listener cannot sign a track object').toBeNull();
+    expect(data?.signedUrl).toContain(track!.src as string);
+  }, 30_000);
+
+  /**
+   * FOUR HAVE A FILE AND FIVE DO NOT, and the five say so with NULL rather
+   * than with a path to something that was never uploaded.
+   *
+   * The distinction is the point of the nullable column: a null is absence,
+   * and a src that will not resolve is a fault. A test that only counted
+   * rows would pass against a schema that had quietly gone back to pointing
+   * at files that do not exist.
+   */
+  it('gives exactly the cleared recordings a src, and the rest null', async () => {
+    const { data, error } = await serviceClient()
+      .from('tracks')
+      .select('id, src')
+      .order('id');
+
+    expect(error).toBeNull();
+
+    const withFile = (data ?? []).filter((t) => t.src !== null).map((t) => t.id);
+    expect(withFile).toEqual(['trk-01', 'trk-02', 'trk-04', 'trk-05']);
+
+    /* The key is the id and nothing else. `mc-01-joy.mp3` would name the card
+       and the feeling — the same leak the opaque ids exist to prevent, moved
+       into the filename. */
+    for (const row of data ?? []) {
+      if (row.src !== null) expect(row.src).toBe(`${row.id}.mp3`);
+    }
+  }, 30_000);
+});

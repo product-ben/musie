@@ -34,7 +34,8 @@ import {
 import type { ContentListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { deleteSession } from '../lib/session';
-import { durationMinutes, formatDateTime, stepMessageKey, trackUrl } from '../lib/diary';
+import { durationMinutes, formatDateTime, stepMessageKey } from '../lib/diary';
+import { useTrackSource } from '../lib/audio';
 import type { DiaryEntryDetail, DiaryTrack } from '../lib/diary';
 
 export interface DiaryCardProps {
@@ -316,15 +317,28 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
  * is not there. Where a row does carry one, the button appears and counts
  * down. (An earlier note here claimed the column was null for EVERY row and
  * that this never rendered. It is not: the local stack has rows with a
- * track_id and the control draws. The audio FILES are still missing, so
- * pressing play logs a refusal and the glyph stays on Play — which is the
- * behaviour `play()`'s catch is written for.)
+ * track_id and the control draws.)
+ *
+ * SINCE E.4 THE FILES EXIST, for four of the nine cards. `track.src` is an
+ * object key signed on mount; where it is NULL there is no recording and this
+ * block renders nothing at all, which is the same honesty as before by a
+ * different route — absence stated by the schema rather than discovered by a
+ * browser failing to load a path. `play()`'s catch still stands, because a
+ * signed URL can expire and a codec can still be refused.
  */
 function ListenAgain({ track }: { track: DiaryTrack }) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = React.useState(false);
   const [position, setPosition] = React.useState(0);
+  const { url } = useTrackSource(track.src);
+
+  /* NOTHING TO OFFER, SO NOTHING IS DRAWN. Either the row has no recording
+     (`src` null — five of the nine cards) or the signed URL did not come
+     back. A TrackButton with no file behind it is a promise the diary cannot
+     keep, and this screen's whole posture is that an absent control says more
+     than a disabled one. */
+  if (url === null) return null;
 
   /* `play()` rejects when the browser refuses — no gesture it trusts, a
      missing file, a codec it will not decode. Logged, and nothing else: no
@@ -343,7 +357,7 @@ function ListenAgain({ track }: { track: DiaryTrack }) {
     <>
       <audio
         ref={media}
-        src={trackUrl(track.src)}
+        src={url}
         preload="none"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}

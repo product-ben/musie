@@ -23,7 +23,8 @@ export const BRAND_NAME = 'Musie';
  *
  * So the path is declared once, here, beside the name it belongs to, rather
  * than written into a screen. It is the same file `Logo` defaults to, and the
- * leading slash matters for the same reason `trackUrl` documents: the app
+ * leading slash matters for the reason `trackUrl` used to document (it was
+ * deleted in E.4, when the audio moved to a signed bucket URL): the app
  * serves `public/assets/**` at `/assets/**`, and a document-relative URL would
  * resolve against whatever route is showing.
  */

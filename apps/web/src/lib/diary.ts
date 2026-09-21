@@ -123,8 +123,9 @@ export interface DiaryReflection {
  */
 export interface DiaryTrack {
   id: string;
-  /** Repo-relative, as the seed stores it. `trackUrl` resolves it. */
-  src: string;
+  /** Object key in the private `tracks` bucket, or NULL where there is no
+   *  recording. `useTrackSource` in lib/audio.ts signs it. */
+  src: string | null;
   durationSeconds: number;
   licenceRef: string | null;
 }
@@ -424,24 +425,7 @@ export function sessionPath(session: RunningSession): string {
  * The URL an `<audio>` element can load a track from.
  *
  * `tracks.src` is stored REPO-RELATIVE — 'assets/audio/mc-01-joy.mp3' — and
- * the app serves `apps/web/public/assets/**` at `/assets/**`, the convention
- * Logo's own default `/assets/web/musy-logo.png` already relies on. So the
- * leading slash is not decoration: a document-relative URL on /diary/:id
- * resolves against /diary/, and the browser would ask for
- * /diary/assets/audio/… — which in an SPA comes back as index.html with a 200
- * on it, i.e. HTML served as audio and a decode error rather than a 404.
- *
- * An already-absolute src is passed through, so the day the audio moves to a
- * bucket this function does not have to be found again.
- *
- * NOT VERIFIED AGAINST A REAL FILE, and honestly so: there are no audio files
- * yet and no session writes `track_id`, so nothing has ever fetched one.
- */
-export function trackUrl(src: string): string {
-  if (src.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(src)) return src;
-  return `/${src}`;
-}
-
+ * the app serves `apps/web/public/assets/**` at `/assets
 /* ── Dates on screen ──────────────────────────────────────────────────────*/
 
 /**

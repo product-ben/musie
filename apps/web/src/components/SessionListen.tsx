@@ -28,13 +28,21 @@
  * name. It is not a title standing in for one; it is what the control IS,
  * which is the same thing the diary's *Listen again* does with the same grant.
  *
- * ── THERE IS NO AUDIO, SO THE CLOCK IS SIMULATED ───────────────────────────
- * `tracks.src` points at files that are not in the project, because the
- * licensing is not cleared (E.4) — a real-world blocker rather than an
- * engineering one. The element is still real and still tried first: when it
- * fails, the clock takes over at the track's own `duration_seconds`, which the
- * seed carries precisely so a countdown can render before anything has loaded.
- * That fallback is the only thing a real file deletes.
+ * ── FOUR CARDS HAVE AUDIO AND FIVE DO NOT, SO BOTH PATHS ARE LIVE ─────────
+ * E.4 landed the recordings. `tracks.src` now holds an object key in a
+ * private bucket and `useTrackSource` signs it; the `<audio>` gets a real URL
+ * and really plays. For the other five `src` is NULL — the schema saying there
+ * is no recording, rather than pointing at a file that was never there — and
+ * the clock takes over at the track's own `duration_seconds`, which the seed
+ * carries precisely so a countdown can render before anything has loaded.
+ *
+ * SO THE CLOCK IS NO LONGER THE ONLY OUTCOME, and that is what makes
+ * `resolving` load-bearing. Three states now reach this component where two
+ * did before: a file, no file, and *not yet known*. The third looks exactly
+ * like the second to anything that only asks whether a URL is present, and
+ * mistaking it means a card with a real recording plays a silent countdown —
+ * intermittently, on slow connections. `play()` refuses to start the clock
+ * while a URL is in flight, for that reason and no other.
  *
  * ── THE GATE IS STICKY, AND IT HAS TO BE ───────────────────────────────────
  * Ninety seconds, or the whole track if it is shorter. Once met it stays met
@@ -46,7 +54,7 @@ import * as React from 'react';
 import { Message, TrackButton } from '@musie/design-system';
 import { StepText } from './StepText';
 import { useT } from '../i18n/localeContext';
-import { trackUrl } from '../lib/diary';
+import { useTrackSource } from '../lib/audio';
 import type { Exercise, Track } from '../lib/content';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
@@ -81,6 +89,18 @@ export function SessionListen({
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
+  /**
+   * THE SIGNED URL, AND WHY THE STEP WAITS FOR IT — E.4.
+   *
+   * A private bucket has no permanent address, so the file's URL is a request
+   * rather than a string. `resolving` is the guard that matters: a URL that
+   * has not arrived yet looks exactly like a card with no recording, and
+   * concluding the second while the first is true would play a countdown over
+   * a track that exists — intermittently, on slow connections, which is the
+   * worst way for it to happen.
+   */
+  const { url, resolving } = useTrackSource(track?.src ?? null);
+
   const [playing, setPlaying] = React.useState(false);
   const [position, setPosition] = React.useState(0);
   /**
@@ -145,6 +165,31 @@ export function SessionListen({
   }, [simulated, playing, duration]);
 
   function play() {
+    /* THE URL HAS NOT LANDED YET — do nothing, and specifically do not start
+       the clock. The clock is how this step says "there is no recording", and
+       a request in flight is not that. Without this guard a card WITH a track
+       plays a silent countdown whenever the storage round-trip loses a race
+       with the first press, which is intermittent, connection-dependent, and
+       looks exactly like correct behaviour. */
+    if (resolving) return;
+
+    /* NO FILE, AND WE KNOW IT UP FRONT — so the clock has to be started
+       DELIBERATELY here.
+
+       Before E.4 the `<audio>` was always mounted, pointed at a path that did
+       not exist, and its refusal is what switched the clock on. Now absence is
+       a null `src` and the element is never mounted at all, so there is no
+       failure to react to: without this branch the transport flips to playing,
+       nothing advances the position, the gate never opens and the listen step
+       is a dead end for all five silent cards. The end-to-end walk caught
+       exactly that, which is the second time it has caught this same step
+       going nowhere. */
+    if (url === null) {
+      goSimulated();
+      setPlaying(true);
+      return;
+    }
+
     const element = media.current;
     if (element === null || simulated) {
       setPlaying(true);
@@ -204,10 +249,10 @@ export function SessionListen({
               against the clock that has taken over. The ref guards inside the
               handlers cover the events already in flight; this stops any more
               being raised at all. */}
-          {!simulated && (
+          {!simulated && url !== null && (
             <audio
               ref={media}
-              src={trackUrl(track.src)}
+              src={url}
               preload="none"
               onPlay={() => { if (!simulatedRef.current) setPlaying(true); }}
               onPause={() => { if (!simulatedRef.current) setPlaying(false); }}

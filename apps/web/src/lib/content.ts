@@ -327,8 +327,10 @@ export async function getCard(id: string, locale: Locale): Promise<Card | null> 
  */
 export interface Track {
   id: string;
-  /** Repo-relative, as the seed stores it. `trackUrl` in diary.ts resolves it. */
-  src: string;
+  /** Object key in the private `tracks` bucket, or NULL where there is no
+   *  recording — which is ordinary: five of the nine cards are silent.
+   *  `useTrackSource` in lib/audio.ts turns it into a signed URL. */
+  src: string | null;
   durationSeconds: number;
   licenceRef: string | null;
 }

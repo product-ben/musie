@@ -432,7 +432,7 @@ export type Database = {
           duration_seconds: number
           id: string
           licence_ref: string | null
-          src: string
+          src: string | null
           title: string
         }
         Insert: {
@@ -440,7 +440,7 @@ export type Database = {
           duration_seconds: number
           id: string
           licence_ref?: string | null
-          src: string
+          src?: string | null
           title: string
         }
         Update: {
@@ -448,7 +448,7 @@ export type Database = {
           duration_seconds?: number
           id?: string
           licence_ref?: string | null
-          src?: string
+          src?: string | null
           title?: string
         }
         Relationships: []

@@ -26,7 +26,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DAY_SCALE_DAYS, DIARY_FILTERS, durationMinutes, filterByStatus, groupByPeriod,
-  isDiaryFilter, sessionPath, trackUrl,
+  isDiaryFilter, sessionPath,
 } from './diary';
 
 /** An entry, reduced to the one field `groupByPeriod` reads. */
@@ -273,19 +273,3 @@ describe('sessionPath', () => {
   });
 });
 
-describe('trackUrl', () => {
-  it('resolves the seed\'s repo-relative src from the site root', () => {
-    /* Document-relative, this would resolve against /diary/ on the entry
-       page — and an SPA answers /diary/assets/... with index.html and a 200,
-       so the failure would be HTML decoded as audio rather than a 404. */
-    expect(trackUrl('assets/audio/mc-01-joy.mp3')).toBe('/assets/audio/mc-01-joy.mp3');
-  });
-
-  it('leaves an already-absolute src alone', () => {
-    /* The day the audio moves to a bucket, this function does not have to be
-       found again. */
-    expect(trackUrl('/assets/audio/mc-01-joy.mp3')).toBe('/assets/audio/mc-01-joy.mp3');
-    expect(trackUrl('https://cdn.example/mc-01.mp3')).toBe('https://cdn.example/mc-01.mp3');
-    expect(trackUrl('//cdn.example/mc-01.mp3')).toBe('//cdn.example/mc-01.mp3');
-  });
-});

@@ -860,3 +860,48 @@ those are.
 | The four user-type artworks | D.2 uses `RadioGroupImage` properly only once they exist |
 | Which vision model reads the handwriting — D13 settled that a photo BECOMES TEXT, so this is now the only thing between photo mode and working | D.5's reflect step |
 | D15 — may the Diary NAME the track you heard, given the column grant withholds the title | the diary entry page's *Listen again* control |
+
+---
+
+## The two that are only Ben's, and the only two with a clock on them
+
+Everything else in the table above is waiting on information. These two are
+waiting on a **decision**, they are the two nothing else can route around, and
+each gets more expensive the longer it is left.
+
+### 1 · The domain
+
+**A printed QR code carries an absolute URL, so the deck locks the domain in
+permanently.** Five hundred cards cannot be reprinted because a name changed.
+
+Nothing in the repository waits on this — that was E.0's whole design, and it
+held: the decoder never compares a host, `/s/:code` is same-origin, the dev
+sheet mints its codes from whatever origin served it, and the end-to-end walk
+proves the deep link on `localhost` with no domain configured anywhere. Print
+day is one run of `apps/web/scripts/qr-codes.mjs` with `--base-url`.
+
+So this blocks exactly one thing, and it blocks it absolutely: **the deck going
+to print.** A.6's second half — Netlify and a domain — is the step, and the
+build allowance returned the week of 22 September.
+
+### 2 · The remaining recordings
+
+**Four landed on 2026-09-21. Five of the nine deck cards are silent**, and
+Breathing Score and Body Scan Soundwalk have no recording at all.
+
+The four are mood-matched rather than arbitrary, from their own ID3 tags:
+Little Yellow Petals → MC-01 Joy, Wait for It → MC-02 Sadness, High Sierra Call
+→ MC-05 Calm, Bats and Rats → MC-04 Fear. Anger, Longing, Gratitude, Hope and
+Loneliness draw a card and hear a simulated clock.
+
+`select count(*) from tracks` is the number to quote when asking for more, and
+the schema stores a recording **once** — so a piece shared between two
+exercises is one licence, not two.
+
+**Two things about these four that are not obvious.** Epidemic Sound is a
+*subscription* licence, not the per-track clearance this plan assumed
+everywhere it says "cleared" — worth confirming what happens to published
+work if the subscription lapses. And *Wait for It* is 102 seconds against a
+90-second gate: it works, because the step caps the gate at the track's length,
+but twelve seconds of headroom means one pause puts the reflection out of reach
+without a replay. Tune `listen_gate_seconds` once you have heard them.
