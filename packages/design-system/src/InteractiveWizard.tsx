@@ -26,12 +26,21 @@
  * Selection changes the marker FILL and the label WEIGHT; completion changes
  * the GLYPH (number → check). No state rests on hue (1.4.1).
  *
+ * AND A FIFTH THAT IS NOT ON THAT LINE — `skipped`, D14. A step that is not
+ * part of this run at all: the rail still draws its marker, so every run reads
+ * structurally alike, but the number becomes a dash and the step is not
+ * reachable. It is a separate state because neither of the two candidates could
+ * say it — `completed` draws a check for something nobody did, and `disabled`
+ * reads as "not yet" about a step that is never opening. The GLYPH is what
+ * distinguishes it from `disabled`, not the ink, for the same 1.4.1 reason the
+ * check distinguishes `completed`.
+ *
  * Narrow screens COLLAPSE rather than stack: the step on screen keeps its
  * label, every other step shrinks to its marker. The hidden labels are moved
  * out of sight, not removed, so a marker-only step still announces its name.
  */
 import * as React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Minus } from 'lucide-react';
 import { Icon } from './Icon';
 import { useMusyText } from './locale';
 import { wizardStepState } from './wizardSteps';
@@ -52,6 +61,7 @@ export interface WizardStateWords {
   active: string;
   selected: string;
   completed: string;
+  skipped: string;
 }
 
 /** The three solved accent families, named verbatim per Decision 3. */
@@ -65,6 +75,19 @@ export interface InteractiveWizardProps {
   current: string;
   /** ids of finished steps. A completed step is always reachable. */
   completed?: string[];
+  /**
+   * ids that are NOT PART OF THIS RUN — D14.
+   *
+   * The rail still shows the marker, so every run reads structurally alike; the
+   * step is drawn as skipped and is not reachable. DERIVED by the consumer from
+   * whatever makes the step inapplicable (in Musie, `exercises.needs_cards`),
+   * never stored — a content edit must not be able to leave a stale answer
+   * behind.
+   *
+   * Skipped steps are transparent to the reachability rule: without that, every
+   * step after one would be locked forever and the run could not be finished.
+   */
+  skipped?: string[];
   onStepChange?: (id: string) => void;
   /** Opt-in label-first stacking. Narrow screens collapse instead — see above. */
   vertical?: boolean;
@@ -87,7 +110,7 @@ export interface InteractiveWizardProps {
 }
 
 export function InteractiveWizard({
-  label, steps, current, completed = [], onStepChange,
+  label, steps, current, completed = [], skipped = [], onStepChange,
   vertical = false, compact = false,
   showStateWords = true, stateWords, accent = 'primary', className,
 }: InteractiveWizardProps) {
@@ -97,10 +120,32 @@ export function InteractiveWizard({
     active: t.wizardActive,
     selected: t.wizardSelected,
     completed: t.wizardCompleted,
+    skipped: t.wizardSkipped,
     ...stateWords,
   };
   const done = React.useMemo(() => new Set(completed), [completed]);
+  const notInRun = React.useMemo(() => new Set(skipped), [skipped]);
   const ids = React.useMemo(() => steps.map((s) => s.id), [steps]);
+
+  /**
+   * The connector's completion, folded along the run rather than read per step.
+   *
+   * `done.has(step.id)` alone leaves a GAP either side of a skipped step: the
+   * run visibly passes through it, so the line has to as well. A skipped step
+   * is therefore transparent to the connector in the same way it is transparent
+   * to the reachability rule — it inherits the completion of the connector
+   * before it and passes it on.
+   *
+   * Written as a fold with a running value, not as "every earlier step is
+   * done", so a run with nothing skipped renders byte-identically to before.
+   */
+  const connectorComplete = React.useMemo(() => {
+    let carried = false;
+    return steps.map((step) => {
+      carried = notInRun.has(step.id) ? carried : done.has(step.id);
+      return carried;
+    });
+  }, [steps, done, notInRun]);
 
   return (
     <nav
@@ -115,7 +160,7 @@ export function InteractiveWizard({
     >
       <ol className="musy-wizard__list">
         {steps.map((step, i) => {
-          const state = wizardStepState(ids, step.id, current, done);
+          const state = wizardStepState(ids, step.id, current, done, notInRun);
           const isLast = i === steps.length - 1;
           return (
             <li className="musy-wizard__step" key={step.id}>
@@ -123,16 +168,22 @@ export function InteractiveWizard({
                 type="button"
                 className="musy-wizard__trigger"
                 data-state={state}
-                aria-current={step.id === current ? 'step' : undefined}
-                disabled={state === 'disabled'}
+                /* A skipped step is never the one on screen, so it never
+                   carries aria-current even if a caller passes it as both. */
+                aria-current={step.id === current && state !== 'skipped' ? 'step' : undefined}
+                disabled={state === 'disabled' || state === 'skipped'}
                 onClick={() => onStepChange?.(step.id)}
               >
-                {/* The number and the check are siblings; the state decides
-                    which one shows, so a completed step never re-renders its
+                {/* The number, the check and the dash are siblings; the state
+                    decides which one shows, so a step never re-renders its
                     marker from a different tree. */}
                 <span className="musy-wizard__marker" aria-hidden="true">
                   <span className="musy-wizard__num">{i + 1}</span>
                   <span className="musy-wizard__check"><Icon glyph={Check} size="sm" /></span>
+                  {/* A DIFFERENT GLYPH, not a different colour: greyed-out is
+                      what `disabled` already is, and the two states have to be
+                      told apart without hue (1.4.1). */}
+                  <span className="musy-wizard__skip"><Icon glyph={Minus} size="sm" /></span>
                 </span>
                 <span className="musy-wizard__label">
                   {step.label}
@@ -144,7 +195,7 @@ export function InteractiveWizard({
               {!isLast && (
                 <span
                   className="musy-wizard__connector"
-                  data-complete={done.has(step.id) ? '' : undefined}
+                  data-complete={connectorComplete[i] ? '' : undefined}
                   aria-hidden="true"
                 />
               )}

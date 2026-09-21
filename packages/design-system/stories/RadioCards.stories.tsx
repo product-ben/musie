@@ -5,11 +5,21 @@
  * docs/07-components.md §7.13. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { RadioCards } from '../src/RadioCards';
+import { GalleryHorizontalEnd, Headphones, Timer } from 'lucide-react';
+import { RadioCardLegend, RadioCards } from '../src/RadioCards';
 import { Stack, asset, fixedWidth } from './_decorators';
 
 /* Storybook serves /assets. */
 const IMAGE = asset('assets/web/method-card.png');
+
+/* The three glyphs the prototype's cards use, and the legend that explains
+   them. Both come from the prototype's markup verbatim — its own `dl` legend
+   reads Time / Card deck / Sound. */
+const LEGEND = [
+  { id: 'time', glyph: Timer, label: 'Time' },
+  { id: 'cards', glyph: GalleryHorizontalEnd, label: 'Card deck' },
+  { id: 'sound', glyph: Headphones, label: 'Sound' },
+];
 
 /* METHOD RECOMMENDATION — the prototype's two cards, verbatim. Only the first
    card has a duration in the prototype, so only it carries `label`. */
@@ -18,6 +28,15 @@ const OPTIONS = [
     value: 'mindfulness-break',
     headline: 'Quick Mindfulness Break',
     description: 'Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.',
+    /* The prototype's three facts, with its own sentences. Only the duration
+       has a short form worth drawing — the other two are conditions, not
+       measurements, and the glyph plus the legend is the whole of what they
+       need to show. */
+    facts: [
+      { id: 'time', glyph: Timer, text: 'Takes 2 to 12 minutes', shortText: '2–12 min' },
+      { id: 'cards', glyph: GalleryHorizontalEnd, text: 'Needs your Mindfulness Cards deck' },
+      { id: 'sound', glyph: Headphones, text: 'Sound on — headphones recommended' },
+    ],
     label: '2–12 minutes',
     image: IMAGE,
     imageAlt: 'The Mindfulness Cards deck laid out on a table',
@@ -26,6 +45,12 @@ const OPTIONS = [
     value: 'breathing-score',
     headline: 'Breathing Score',
     description: 'A slow score that follows your breath, for settling before anything else.',
+    /* Draws no card, so it carries two facts rather than three. The row is
+       built from what is true, not padded to a fixed count. */
+    facts: [
+      { id: 'time', glyph: Timer, text: 'Takes 5 to 8 minutes', shortText: '5–8 min' },
+      { id: 'sound', glyph: Headphones, text: 'Sound on — headphones recommended' },
+    ],
     image: IMAGE,
     imageAlt: 'Placeholder artwork for the Breathing Score Method',
   },
@@ -122,6 +147,16 @@ const meta = {
           'missing them. As it stands the documented anatomy cannot be produced by the',
           'component’s API.',
           '',
+          '**ANSWERED 2026-09-19 — the component was missing them.** Landed in D.0:',
+          '`RadioCardOptionRich.facts` and a group-level `glyphLegend`, rendering the',
+          '`span.musy-rcard__facts` and `dl.musy-rcard-legend` that §7.13’s anatomy',
+          'already describes and that `musy-components.css` has had rules for since the',
+          'first pass. NOT ONE LINE OF CSS WAS WRITTEN — the stylesheet was complete and',
+          'only the React API was absent, which is why this read as a gap rather than a',
+          'feature. Each fact is wrapped in `Hint`, so its full sentence is announced AND',
+          'available as a hover bubble, and `shortText` is the only part drawn beside the',
+          'glyph. D.3 is the screen that needed it.',
+          '',
           '## RadioCards — only one of the prototype’s two cards has a meta label',
           'Where: PROTOTYPE-USAGE.md, "RadioCards" table',
           'What I checked: Level 2 gives a duration ("2–12 minutes") only for Quick',
@@ -165,9 +200,13 @@ const meta = {
     name: { control: 'text', description: 'Identifies the field when a form is submitted.' },
     legend: { control: 'text', description: 'The group’s accessible name, rendered as a real <legend>.' },
     hint: { control: 'text', description: 'Optional supporting sentence under the legend.' },
+    legendHidden: {
+      control: 'boolean',
+      description: 'Hide the legend visually. It stays in the accessible tree — an unnamed radio group announces as a bare set of options.',
+    },
     options: {
       control: false,
-      description: 'Each card is { value, headline, description, label?, image, imageAlt, disabled? }. imageAlt is required per item.',
+      description: 'Each card is { value, headline, description, facts?, label?, image, imageAlt, disabled? }. imageAlt is required per item; each fact is { id, glyph, text, shortText? }.',
     },
     value: { control: 'text', description: 'Controlled selection.' },
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
@@ -200,6 +239,24 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/**
+ * THE GLYPH KEY IS ITS OWN COMPONENT, so it composes rather than being a prop.
+ * `/exercises` puts it on one row with the "let Musie pick" escape hatch; here
+ * it sits where it sits by default, directly above the cards it explains.
+ */
+export const WithGlyphLegend: Story = {
+  render: (args) => (
+    <Stack>
+      <RadioCardLegend items={LEGEND} />
+      <RadioCards {...args} />
+    </Stack>
+  ),
+};
+
+/** The screen has already asked the question in its own `h1`, so the legend is
+ *  hidden rather than repeated. It is still in the accessible tree. */
+export const LegendHidden: Story = { args: { legendHidden: true } };
 
 /** Component defaults at the 393px phone reference. The prototype passes
  *  `accent`, `heading-sm` and `body-md`; the last two are the

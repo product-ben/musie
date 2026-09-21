@@ -10,7 +10,8 @@
     "lint": "pnpm -r run lint",
     "gen:types": "supabase gen types typescript --local > apps/web/src/lib/database.types.ts",
     "test": "pnpm -r run test",
-    "test:db": "pnpm -r run test:db"
+    "test:db": "pnpm -r run test:db",
+    "test:e2e": "pnpm -r run test:e2e"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

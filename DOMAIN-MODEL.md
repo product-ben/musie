@@ -61,6 +61,7 @@ erDiagram
         bool needs_cards
         bool needs_sound
         bool implemented
+        int listen_gate_seconds "seconds of track before the reflection unlocks"
         text_array intro_text "the intro step's 1-3 sentences — per locale"
         text_array scan_text "the scan step's — per locale"
         text_array listen_text "the listen step's — per locale"
@@ -125,6 +126,16 @@ stateDiagram-v2
 Both terminal states are in the Diary; `finished` and `abandoned` are kept
 apart so a session someone walked out of is not shown as one they completed.
 
+**CORRECTED 2026-09-20 — `finished` means REACHED THE END, not "left words".**
+The transition above reads *completes the reflection*, and D.5c found that it
+cannot: `reflections.body` is `not null`, so declining to answer can only be
+expressed as the ABSENCE of a reflection row. Ben's answer is that a declined
+reflection still finishes the session — you did the exercise, and whether you
+wrote anything down is a separate fact the diary already reports on its own.
+So the label on that arrow describes the common case rather than the rule, and
+`sessionMachine.FINISH` enforces the rule it always did: you must be on the
+last step.
+
 ---
 
 ## Already built
@@ -147,8 +158,24 @@ Created by a trigger on `auth.users` insert, never by the client.
 The library. Three rows; one implemented.
 
 Owns `timeframe_min/max`, `needs_cards`, `needs_sound`, `implemented`, `sort`,
-and per locale `name`, `description`, `needs`, `duration_label`, `image_alt` —
-plus the step copy below.
+`listen_gate_seconds`, and per locale `name`, `description`, `needs`,
+`duration_label`, `image_alt` — plus the step copy below.
+
+**ADDED 2026-09-20: `listen_gate_seconds`.** How much of the track has to be
+behind you before the reflection unlocks. It was a hardcoded 90 in the listen
+step, carried over from the prototype, and Ben settled that it VARIES by
+exercise — a two-minute card draw and a twenty-minute soundwalk do not earn the
+same wait.
+
+In `exercises` rather than `exercise_i18n` because it is a number, not copy,
+which is the same reasoning that puts `timeframe_min` there. `not null default
+90`; the app caps it at the track's own duration, so a gate longer than the
+recording is satisfied by finishing it rather than being unreachable.
+
+Only Quick Mindfulness Break's 90 is MEASURED — it is the prototype's figure,
+arrived at against the real card tracks. The other two are estimates
+proportional to their own timeframes (60s and 180s) and are flagged as such in
+the seed, because neither exercise has a recording to tune against yet.
 
 **CHANGED ⑤: the step copy follows the EXERCISE.** Not the card, not the
 track. Used with every card that exercise draws.
@@ -400,6 +427,22 @@ first already says what the final shape is. Nothing else moves.
 **Not a table.** Every session for the current user that is no longer
 `started`, newest first, joined to its exercise and card for display. A query,
 or a view if it earns one.
+
+### `completed` is not a column, and D.4 decided it would not become one
+
+`sessions` stores `step`. The wizard's own reachability rule is "every earlier
+step is completed", so a row's `step` already implies which steps are behind
+it — and `completedBefore(step, skipped)` in `apps/web/src/lib/session.ts` is
+that implication, written once.
+
+A column would have been a second source of truth for something the first one
+already says, which is the argument `skipped` won in D14 and the same one
+again. It has one visible consequence, and it is a behaviour rather than an
+accident: **go back a step, close the tab, and you resume at the step you went
+back to** rather than the furthest you reached. That is what `sessions.step`
+means — where you stopped — and it is what the diary reports for an unfinished
+run, so storing "furthest" would have needed a second column meaning something
+else.
 
 ---
 

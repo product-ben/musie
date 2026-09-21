@@ -34,12 +34,19 @@
  */
 export const en = {
   /* ── Shell ─────────────────────────────────────────────────────────────── */
-  'shell.skipLink': 'Skip to main content',
   'shell.menuLabel': 'Open menu',
   'shell.profileLabel': 'Open profile and settings',
 
   /* ── Shared across overlays ────────────────────────────────────────────── */
   'common.closeLabel': 'Close',
+
+  /* ── Shared across the flow ──────────────────────────────────────────────
+     Three words that appear on four screens each. Written once: "Continue"
+     rendering as two different strings in two steps of one wizard is exactly
+     the drift a catalogue exists to stop. */
+  'common.back': 'Back',
+  'common.continue': 'Continue',
+  'common.cancel': 'Cancel',
 
   /* ── Nav drawer ────────────────────────────────────────────────────────── */
   'menu.title': 'Menu',
@@ -70,9 +77,90 @@ export const en = {
   'content.errorDetail': 'Check your connection and try again.',
   'content.empty': 'There is nothing here yet.',
 
+  /* ── About Musie · D.1 ───────────────────────────────────────────────────
+     THE FIVE SLIDES ARE OURS. The prototype wrote them, they are about the
+     product rather than about any exercise, and no spreadsheet is coming for
+     them — so rule 6 applies and the German below them is written, not owed.
+
+     The prototype's slides also carried a second line each; none of them was
+     ever rendered, because `.musy-carousel__card` has a badge and a title and
+     no third part. They are not carried over. Logged in the Carousel's build
+     notes as a copy decision for Ben. */
+  'about.greeting': "Hi, I'm Musie.",
+  'about.pitch': 'I help you feel and act more mindful, aware, connected and safe through the power of music',
+  /* The typing indicator's accessible name. The dots are decorative; this is
+     what a screen reader gets while the second message is on its way. */
+  'about.typing': 'Musie is typing',
+  'about.carouselHeadline': 'How we play with music',
+  'about.carouselLabel': 'How a session works',
+  'about.slide.situation': 'You help me understand your situation',
+  'about.slide.recommend': 'I recommend you music based methods for your context',
+  'about.slide.listen': 'Curated music and instructions will trigger some things in you',
+  'about.slide.reflect': 'I guide you through a reflection',
+  'about.slide.share': 'If you want to, I help you share your thoughts',
+  'about.previousSlide': 'Previous step',
+  'about.nextSlide': 'Next step',
+  'about.slideLabel': 'Step {position} of {total}: {title}',
+  'about.dotLabel': 'Step {position}',
+  'about.goToSlide': 'Go to step {position} of {total}',
+  /* Three hints under one CTA, and which one shows is the whole of the gate:
+     locked until the last slide has been SEEN, then either "next I'll ask" or
+     "ready", depending on whether a user type is already recorded. */
+  'about.hint.unseen': 'Check out how a session will work before starting.',
+  'about.hint.next': "Next I'll ask who you are here as.",
+  'about.hint.ready': 'Ready when you are.',
+
+  /* ── About you · D.2 ─────────────────────────────────────────────────────
+     "Methods" became "exercises" everywhere in the product, so the prototype's
+     sentence is carried over with that one word changed and nothing else. */
+  'aboutYou.headline': 'And who are you here as?',
+  'aboutYou.text': 'I use this to narrow down the exercises I offer you. You can change it here any time.',
+  'aboutYou.legend': 'Who are you here as?',
+  'aboutYou.hint.pick': 'Pick one to carry on.',
+  'aboutYou.hint.ready': 'Ready when you are.',
+
+  /* ── Not implemented · D.2 ───────────────────────────────────────────────
+     Shown when someone picks one of the three unbuilt user types ON THE
+     ONBOARDING SCREEN. /settings deliberately does NOT show it — see the
+     comment on SettingsSheet's UserTypeChoice. The two screens differ on
+     purpose: this one is a gate on the way into a session and has to say why
+     it will not open, where settings is a preference you are entitled to
+     record whether or not it does anything yet. */
+  'notImplemented.title': 'Not implemented yet',
+  'notImplemented.text': 'Musie only builds the “By myself” path so far, with the Quick Mindfulness Break exercise.',
+  'notImplemented.back': 'Back to the choice',
+
   /* ── Exercises ───────────────────────────────────────────────────────────── */
   'exercises.timeframe': '{min}–{max} minutes',
   'exercises.notImplemented': 'Not available yet',
+  'exercises.headline': 'What would you like to start with now?',
+  'exercises.legend': 'Choose an exercise',
+  /* THE GLYPH LEGEND — the shortest true word for each of the three fact
+     glyphs, above the cards. A key is only useful before the thing it
+     explains. */
+  'exercises.legend.time': 'Time',
+  'exercises.legend.cards': 'Card deck',
+  'exercises.legend.sound': 'Sound',
+  /* The facts themselves. Each is announced in full; only the duration has a
+     short form worth drawing beside its glyph. */
+  'exercises.fact.time': 'Takes {min} to {max} minutes',
+  'exercises.fact.timeShort': '{min}–{max} min',
+  'exercises.fact.cards': 'Needs your Mindfulness Cards deck',
+  'exercises.fact.sound': 'Sound on — headphones recommended',
+  /* The escape hatch for "I don't want to choose". It picks among the
+     IMPLEMENTED exercises only — the prototype picked among all three and then
+     opened the not-implemented lightbox two times in three. */
+  'exercises.surpriseMe': 'Let Musie pick an exercise',
+  'exercises.detail.needs': 'You need',
+  'exercises.detail.duration': 'Duration',
+  'exercises.start': 'Start exercise',
+  /* The database refuses a second running session (a partial unique index), so
+     this is a real outcome rather than a defensive branch. It is a Message
+     with a way forward, not an error: the session it collides with is the
+     user's own and is one tap away. */
+  'exercises.alreadyRunning': 'A session is already running',
+  'exercises.alreadyRunningDetail': 'Finish or close the one you are in before starting another.',
+  'exercises.goToSession': 'Continue that session',
 
   /* ── The session ─────────────────────────────────────────────────────────
      The four step ids are `intro · scan · listen · reflect` (routeHandle.ts).
@@ -86,9 +174,103 @@ export const en = {
   'session.status.finished': 'Finished',
   'session.status.abandoned': 'Unfinished',
 
+  /* ── The session screen · D.4 ─────────────────────────────────────────── */
+  'session.wizardLabel': 'Session steps',
+  'session.notFound': 'This session does not exist',
+  'session.notFoundText': 'It may have been deleted, or it belongs to another browser.',
+  /* CLOSING FROM INSIDE. The nav drawer offers no way out while a session is
+     running — that follows from the one-running-session index — so without
+     this control the only exit is to finish. Confirmed, because the row it
+     writes is permanent and appears in the diary as unfinished. */
+  'session.close': 'Close this session',
+  'session.close.title': 'Close this session?',
+  /* IT SAYS THE RUN CANNOT BE PICKED UP AGAIN, and that is the product rather
+     than a technical limit: the exercise works from the state you are in NOW,
+     and an hour later that is a different state. Resuming would be finishing
+     somebody else's session. Better to say so here than to let someone close
+     it expecting to come back. */
+  'session.close.text': 'You cannot pick this one up again — the exercise works from how you feel right now, and that will have moved on by the time you come back. It stays in your diary marked unfinished, and you can start a fresh session whenever you like.',
+  'session.close.confirm': 'Close the session',
+
+  /* ── Intro · D.5a ────────────────────────────────────────────────────────
+     A FALLBACK, AND IT IS OURS RATHER THAN THE SPREADSHEET'S. Every exercise
+     is meant to supply its own `intro_text`, and none of the three does yet
+     (28 owed strings, DOMAIN-MODEL.md). This one sentence is what the intro
+     step says when the exercise says nothing — chrome, permanent, and true of
+     every exercise, so it is correct copy rather than a placeholder. It is
+     simply never rendered once an exercise has its own words. */
+  'session.intro.fallback': 'Take a moment to arrive. When you are ready, carry on.',
+
+  /* ── Scan · D.5a ─────────────────────────────────────────────────────────
+     The reader is SIMULATED — no camera, no code entry, both E.1–E.3. The
+     Message says so on screen rather than pretending, which is MOCKUPS.md's
+     own standard. */
+  'session.scan.headline': 'Scan the card that describes best how you feel right now.',
+  'session.scan.reader': 'Hold the QR code on your card inside the frame.',
+  'session.scan.simulateTitle': 'The reader is not built yet',
+  'session.scan.simulateText': 'Musie does not use the camera yet. Simulating a scan picks one of the nine cards for you.',
+  'session.scan.simulate': 'Simulate a scan',
+  'session.scan.done': 'Card scanned',
+  'session.scan.yourCard': 'Your card',
+  'session.scan.again': 'Scan a different card',
+
+  /* ── Listen · D.5b ───────────────────────────────────────────────────────
+     THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:
+     `tracks.title` and `.artist` are not granted to the client at all. The
+     reveal is E.5. */
+  'session.listen.track': 'Your track',
+  'session.listen.gateMet': 'Enough of the track is behind you. Listen on as long as you like, or start the reflection now.',
+  'session.listen.gateLocked': 'Listen to as much of the track as you want — {gate} is the minimum for this exercise, {left} to go.',
+  'session.listen.start': 'Start reflection',
+  /* There are no audio files (E.4), so the transport runs on a clock at the
+     track's real length. Said on screen, for the same reason as the scanner. */
+  'session.listen.simulated': 'No recording is bundled yet, so the player runs on a clock at the track’s real length.',
+  'session.listen.noTrack': 'This exercise has no recording yet.',
+
+  /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
+  /* ONE QUESTION, SHOWN ON BOTH the listen and the reflect step — that is the
+     schema's own shape, and this is what stands in until an exercise supplies
+     its own. The prototype had the same fallback, word for word. */
+  'reflect.questionFallback': 'What stayed with you?',
+  'reflect.legend': 'How would you like to answer?',
+  'reflect.mode.voice': 'Record audio',
+  'reflect.mode.text': 'Write answer',
+  'reflect.mode.photo': 'Take photo',
+  'reflect.text.label': 'Your written answer',
+  'reflect.text.placeholder': 'A sentence is enough.',
+  'reflect.voice.label': 'Your spoken answer',
+  'reflect.voice.record': 'Record answer',
+  'reflect.voice.recording': 'Recording',
+  'reflect.voice.status': 'Recording, {elapsed} in, {remaining} left',
+  'reflect.photo.label': 'Photo of your handwritten notes',
+  'reflect.photo.zone': 'Drag a photo here, or choose one from your device.',
+  'reflect.photo.choose': 'Choose photo',
+  'reflect.photo.replace': 'Replace',
+  'reflect.photo.remove': 'Remove photo',
+  'reflect.photo.previewAlt': 'The photo of your handwritten notes',
+  /* VOICE AND PHOTO ARE UI ONLY, and both say so where the answer would go.
+     Voice is Phase F; photo is waiting on which model reads handwriting. Both
+     produce words and neither produces a file — see MOCKUPS.md 1 and 2. */
+  'reflect.voice.notBuilt': 'Recording is not built yet',
+  'reflect.voice.notBuiltText': 'This shows how it will work. Your words will be turned into text and only the text kept — the recording itself is never stored.',
+  'reflect.photo.notBuilt': 'Reading a photo is not built yet',
+  'reflect.photo.notBuiltText': 'This shows how it will work. The photo stays on your device and is read back as text; the image is never uploaded.',
+  /* NOT a fourth segment — three ways to answer and one way not to are
+     different kinds of choice, and a segment would make refusal look like a
+     method. It sits in the action row beside Finish, as the alternative to it,
+     and it ENDS the session: no `reflections` row, `status = 'finished'`. */
+  'reflect.skip': 'Skip reflection',
+  'reflect.finish': 'Finish session',
+
   /* ── Diary ───────────────────────────────────────────────────────────────
      `{step}` takes a `session.step.*` value, already translated — the diary
      never interpolates a raw step id. */
+  /* The most recent session, lifted out of the list and given a box of its
+     own. A heading rather than a label: it names a region, and the entry
+     under it carries its own labelled rows. */
+  'diary.latest': 'Your last session',
+  'diary.openEntry': 'Open this entry',
+  'diary.earlier': 'Earlier',
   'diary.timelineLabel': 'Your sessions, newest first',
   'diary.listLabel': 'Diary entries',
   'diary.empty': 'No sessions yet',
@@ -105,6 +287,13 @@ export const en = {
   'diary.listenAgain': 'Listen again',
   'diary.yourAnswer': 'Your answer',
   'diary.notFound': 'This diary entry does not exist',
+  /* DELETION. The confirm is not a formality: the row and its answer go for
+     good — `reflections` cascades — and there is no undo, because a diary the
+     user asked to forget something from should forget it. */
+  'diary.delete': 'Delete this session',
+  'diary.delete.confirm': 'Delete this session?',
+  'diary.delete.text': 'This removes the session and anything you wrote in it. It cannot be undone.',
+  'diary.delete.yes': 'Delete',
 
   /* ── Privacy · C.2 ───────────────────────────────────────────────────────
      THE PROTOTYPE'S PROMISE WAS "Nothing leaves your device until you share
@@ -141,7 +330,6 @@ export const en = {
   'route.diaryEntry.title': 'Diary entry',
   'route.exercises.title': 'Exercises',
   'route.session.title': 'Current session — {step}',
-  'route.done.title': 'Done',
   'route.settings.title': 'Settings',
   'route.notFound.title': 'Not found',
 } as const;

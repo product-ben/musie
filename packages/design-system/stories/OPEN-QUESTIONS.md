@@ -2208,3 +2208,230 @@ collide is the kind of edit that breaks the case that does.
 What I need from Ben: nothing, just flagging. The rule reads as protection and
 is not providing any; whoever next touches Lightbox's CSS should either make
 the selector match (`:has()`, or a class) or delete it.
+
+---
+
+# Phase D.0 — the component work Phase D was blocked on
+
+_Written 2026-09-19. B.1 answered four questions and assigned the consequences
+to B.2; only the accent rename had landed. D.0 is the rest of B.2, done inside
+Phase D because three screens could not start without it._
+
+## Carousel — built, and not one line of CSS was written for it
+Where: `src/Carousel.tsx` (new), `src/musy-components.css` section 8,
+`src/index.ts`
+
+What I checked: `.musy-carousel` has ~200 lines of complete, commented CSS —
+container-relative slide widths (`66cqi`, `82cqi` under 420px), scroll-snap,
+the 12px-mark/24px-target dots, the active dot's pill with its ordinal, and an
+explicit decision against `scroll-behavior: smooth`. There was no component, no
+export, and nothing in the package rendered any of it.
+
+What I did: wrote the component to the markup the stylesheet already describes,
+and changed no CSS at all. The API follows the split the CSS header states —
+"the consuming app only owns the selected index and calls scrollTo()" — with
+one correction: the component owns the scroller (a debounced settle listener
+and a `scrollTo` effect) and the app owns the INDEX. Handing a ref out so the
+app could call `scrollTo` itself would have made every consumer reimplement the
+same two effects.
+
+Why the app owns the index rather than the component: D.1's CTA unlocks on the
+furthest slide ever SEEN, which is a fact about the session, not about the
+carousel. A component holding its own index could not express it.
+
+What I need from Ben: nothing on the component. **One copy decision**, below.
+
+## Carousel — the prototype's slides have a `body` and nowhere to put it
+Where: `reference/design_system/Musy MVP 0.3.dc.html`, `_onboarding`
+
+What I checked: each of the five onboarding slides carries `title`, `body` and
+a glyph path. The card markup renders the badge and the title only, and section
+8 declares `.musy-carousel__badge` and `.musy-carousel__title` and no third
+part. So the five second lines were written and never displayed — in the
+prototype as much as here.
+
+What I did: `CarouselSlide` is `{ id, title, glyph }`. No `body`.
+
+Why: adding a part the stylesheet has no rule for would be inventing a
+component rather than building the one that was specified.
+
+What I need from Ben: **a decision, and it is copy rather than code.** Either
+the five second lines are cut for good, or section 8 needs a body part and the
+cards get taller. D.1 ships titles only until then, and the strings are still
+in the prototype.
+**ANSWERED 2026-09-20 — CUT, and deleted at the source.** Ben's decision: the
+five second lines go, and the carousel card keeps a badge and a title. So
+`CarouselSlide` stays `{ id, title, glyph }` permanently rather than pending a
+decision, section 8 needs no body part, and the cards do not grow.
+
+The five strings are deleted from `_onboarding` in
+`reference/design_system/Musy MVP 0.3.dc.html` as well, which is the only place
+they existed — they were never in the app's catalogues, because they were never
+rendered. `reference/` is normally left alone as a record of what was
+specified; this is an exception Ben asked for, and the reason is that the
+strings were not a record of anything shipped. They were written and never
+displayed, in the prototype as much as here.
+
+## ContentBox — `headingLevel` gained 1, because a screen's main content is a box
+Where: `src/ContentBox.tsx`, `HeadingLevel`
+
+What I checked: the union was `2 | 3 | 4 | 5 | 6`. About Musie's greeting and
+About you's question are each ONE box that is the whole screen, so the box's
+headline is the page's `h1` — and the prototype's own markup agrees: its
+greeting is `<h1 class="musy-box__headline" data-type-step="display-lg">`.
+
+The two alternatives were both worse. A visually hidden `h1` above the box puts
+the same string in the accessible tree twice, which is exactly what
+`SettingsSheet` avoided by making `Dialog.Title` the `h1` itself. A page with
+no `h1` at all is a real defect rather than a stylistic one.
+
+What I did: widened the union to `1 | 2 | 3 | 4 | 5 | 6`. The default is still
+3 and the level is still never guessed — a box has to be ASKED to be an `h1`.
+
+What I need from Ben: nothing, just flagging that `HeadingLevel` is shared with
+`Message`, `RadioCards`, `Timeline` and `LinkList`, so the type is now wide
+enough to let somebody make a `Message` an `h1`. The prop's own doc comment is
+what argues against that, as it already did for levels 2 to 6.
+
+## RadioCards — `facts` and `glyphLegend` landed; the anatomy was right and the API was missing
+Where: `src/RadioCards.tsx`, `src/index.ts`
+
+What I checked: `.musy-rcard__facts`, `.musy-rcard__fact` and
+`.musy-rcard-legend` are all in the stylesheet, fully written, with comments
+explaining the auto-margin that pins the facts to the foot of the text column
+and why the legend sits above the group. §7.13's anatomy shows both. The
+component had neither, which is the entry logged in Batch C.
+
+What I did: `RadioCardOptionRich.facts` and a group-level `glyphLegend`, each
+fact wrapped in `Hint` so its full sentence is announced AND available as a
+hover bubble, with `shortText` the only part drawn beside the glyph. No CSS.
+
+Why `shortText` is optional: "2–12 min" has a short form worth drawing; "needs
+your Mindfulness Cards deck" does not, and a card that spelled all three out
+would be a paragraph pretending to be a row of chips.
+
+What I need from Ben: nothing. This closes the Batch C entry above.
+
+## RadioCards — the card is a `<button>` containing an `<h3>` and a `<p>`
+Where: `src/RadioCards.tsx`, `Radio.Root render={<button type="button" />}`
+
+What I checked: `<button>` takes PHRASING content only. The component renders
+`<H className="musy-rcard__headline">` (a real heading, by `headingLevel`) and
+`<p className="musy-rcard__desc">` inside it, which is invalid HTML. The
+prototype's own markup used `<span>` for both. This PREDATES D.0 — adding
+`facts` put more phrasing content inside the same button but did not create the
+problem.
+
+What I did: nothing. Left both elements as they are.
+
+Why: changing the heading to a span would remove the cards from the document
+outline, which is the thing `headingLevel` exists for and which §7.13
+specifies. Changing it is a design decision about whether a chooser's options
+belong in the outline at all, and it is not D.0's to make.
+
+**MEASURED 2026-09-20, because Ben asked why.** Three findings, and the first
+two contradict what this entry assumed:
+
+**1 · It is the SPEC's shape, not an implementation slip.** §7.13's anatomy
+block draws it literally — `h2–h6.musy-rcard__headline` and `p.musy-rcard__desc`
+nested inside `Radio.Root.musy-rcard__body`. The component implemented what was
+specified. The PROTOTYPE used `<span>` for both, so the headings were
+introduced by the spec rather than carried over from the markup.
+
+Why the spec did it: two of its own rules collide. *"The whole card is the
+control"* — one focusable element, no nested interactive children (4.1.2) —
+and *"`headingLevel` is never guessed"* (1.3.1), because a card is a titled
+thing and a chooser of titled things should be navigable by heading. Satisfy
+both and the heading has nowhere to go but inside the button.
+
+**2 · Nothing is hoisted, and the headings DO reach assistive tech.** Measured
+in Chrome against the running app: `.musy-rcard__body` is a `BUTTON`, the
+headline is an `H2`, `card.contains(headline)` is `true`, and Chrome's own
+accessibility tree exposes three `heading` nodes at level 2 with the right
+names. The content-model rule is enforced by the HTML PARSER, and React builds
+the DOM node by node rather than parsing markup, so it never runs. So
+`headingLevel` is doing exactly what it claims — this entry previously implied
+it might not be.
+
+The risk is narrower than "invalid": it is a round trip through markup. Server
+rendering, `innerHTML`, a sanitiser or a copy-paste of the rendered HTML would
+each hoist the heading out of the button and change the tree. Musie has no SSR
+today, so nothing exercises it.
+
+**3 · The heading is not the interesting defect. The radio's NAME is.** Because
+the whole card is the control and a button takes its name from its contents,
+each radio announces as ~290 characters:
+
+> "The Mindfulness Cards deck laid out on a table Quick Mindfulness Break Nine
+> paper cards, one feeling each. Scan the card you relate to and listen to the
+> track behind it. Takes 2 to 12 minutes Needs your Mindfulness Cards deck
+> Sound on — headphones recommended About 15 minutes"
+
+That is the image alt, the headline, the description, all three facts AND the
+meta label, run together, read before the word "radio". It is inherent to
+card-as-control and has nothing to do with the heading element — swapping both
+back to `<span>` would not shorten it by a character.
+
+What I need from Ben: **nothing on the heading.** It is specified, it works,
+and it is only fragile against a round trip this app never makes. **The name is
+worth a decision**, though: an `aria-label` on the radio carrying just the
+headline would make the group readable, at the cost of the facts no longer
+being announced with the option — which is exactly what the visually-hidden
+fact sentences were added FOR. Not Phase D's to settle, and a real trade.
+
+## The wizard's fifth state — built as a state, not as a reused `disabled`
+Where: `src/wizardSteps.ts`, `src/InteractiveWizard.tsx`, `src/locale.ts`,
+`src/musy-components.css`
+
+Answered under "InteractiveWizard — there is no *skipped* state" above. Two
+things the implementation added that the question did not anticipate:
+
+**The connector had to be folded, not read per step.** `data-complete` was
+`done.has(step.id)`, which leaves a GAP either side of a skipped step — the run
+visibly passes through it, so the line has to as well. It is now a running
+value carried along the map: a skipped step inherits the connector before it
+and passes it on. A run with nothing skipped renders exactly as before.
+
+**`skipped` is checked FIRST in `wizardStepState`,** before `current` and
+before `completed`. A skipped step cannot legitimately be either, and if a
+caller puts one in both lists the honest answer is still that it is not in the
+run — reporting 'selected' would hand the screen a step it has nothing to draw.
+
+What I need from Ben: nothing.
+
+## G3 landed, and it changed one rendered value
+Where: `tokens/musy-foundations.css`, `tokens/musy-foundations.tokens.json`,
+`src/musy-components.css`
+
+What I checked: the two raw `--sand-8` references were
+`.musy-btn--secondary:hover` and `.musy-icon-btn--secondary:hover`, both of
+which already take `--interactive-ghost-hover` for their background — which is
+why Ben's name, inside the ghost family, is the right one.
+
+What I did: `--interactive-ghost-border-hover: var(--sand-8)` in Layer 1 beside
+`--interactive-ghost-border`, with the `prefers-contrast: more` and
+`forced-colors: active` overrides B.1 said it would need, plus the DTCG mirror
+so it does NOT become a new row in TOKEN-DRIFT.md.
+
+**One rendered value changed, and it is an improvement rather than a rename.**
+Under `prefers-contrast: more` the raw `--sand-8` stayed `--sand-8`; the token
+now steps up to `--sand-11`, so an outlined control's hover edge is no longer
+the one boundary on screen that does not respond to the setting.
+
+What I need from Ben: **nothing blocking, one gap flagged.** `tokens/_audit.json`
+has a row for `interactive-ghost-border` and none for the hover token. The
+value is unchanged from what shipped, so nothing regressed — but the contrast
+pair has never been measured under its own name, and the audit is where that
+belongs.
+
+## ProcessVisualisation is gone
+`src/ProcessVisualisation.tsx`, `stories/ProcessVisualisation.stories.tsx`, the
+two exports and the `8b · PROCESS VISUALISATION — RETIRED` CSS section (84
+lines) are all deleted. The three defects logged against it above — the German
+`ordinalPrefix`, the hardcoded `<h3>`, the dividers carrying only `aria-hidden`
+— died with it and needed no fix.
+
+`locale.ts` keeps `stepPrefix`, which was its ordinal word: Carousel's dot pill
+needs exactly that string and would otherwise have invented a second one.
+`stories/PROTOTYPE-USAGE.md` still describes the component in two places; it is
+a record of what the prototype used, so it is left alone.

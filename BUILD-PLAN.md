@@ -357,54 +357,118 @@ says what to do at any step (28 strings owed), no track plays, and nothing
 creates a session except a script. See [MOCKUPS.md](MOCKUPS.md).
 
 
-## Phase D · The flow, screen by screen
+## Phase D · The flow, screen by screen — DONE 2026-09-20
 
-Old Phase 3. For each screen: open the prototype's markup, find the components
-in `reference/design_system/docs/09-clickdummy-handoff.md`'s map, write the
-React screen, delete the markup, compare in a browser. Ask for the component
-list it used at the end of each one — a name that is not in the design system
-means something was invented.
+Every screen in the flow is built and all three suites are green: `pnpm check`
+(89 unit tests, twenty of them new), `pnpm test:db` (64) and the new
+`pnpm test:e2e` — one Playwright walk of a whole session, run once per locale,
+asserting the rows it left in Postgres. Both bundles build.
 
-- [ ] **D.1 About Musie.** The chat cadence, the five-slide carousel, the CTA
-  that stays locked until the last slide has been seen. Needs B.1's Carousel
-  answer: there is CSS and no component. *Done when:* it matches the prototype,
-  and a returning visitor skips it.
+**The phase grew one step and split another.** D.0 appeared because three of
+the five screens were blocked on design-system work that B.1 had already
+assigned to B.2 and that B.2 had not done. D.5 split in three because it
+omitted Listen, which is the largest screen in the prototype.
 
-- [ ] **D.2 About you.** The four user types from the database, the
-  not-implemented lightbox for the three unbuilt ones. *Done when:* picking the
-  built one writes `profiles.user_type_id` and advances.
+**Four things in this section's original text turned out to be wrong about the
+repo**, and each is written up in `apps/web/OPEN-QUESTIONS.md` rather than
+quietly worked around: D.1 was blocked on unbuilt code rather than on a
+decision; D.3's fact chips could not be built from the app at all; D.5's "six
+strings" was stale by a whole re-cut (it is 28); and the prototype's end screen
+carried a Share step that C.2 cut.
 
-- [ ] **D.3 Exercises.** `RadioCards`, the fact chips with tooltips, the
-  legend, "Surprise me", and the detail lightbox bound to database rows rather
-  than fixed copy. *Done when:* the lightbox shows the row, in the active
-  locale.
+- [x] **D.0 Finish B.2.** NEW, and Phase D's entry ticket. **Carousel** built
+  (~200 lines of CSS had no component; not one line of CSS was written for it),
+  **`RadioCards.facts` and `glyphLegend`** added (same story — the stylesheet
+  and §7.13's anatomy were complete, the React API was absent), the wizard's
+  **fifth `skipped` state** (D14 — a dash, not a second grey, so it survives
+  greyscale), and **G3** (`--interactive-ghost-border-hover`), which retires the
+  last two raw scale tokens in component CSS. `ProcessVisualisation` is deleted.
+  *Done:* `grep -nE '\-\-(sand|terracotta|ocher|purple)-[0-9]'` on
+  `musy-components.css` returns nothing.
 
-- [ ] **D.4 Wizard chrome.** The four-step rail, the session context column,
-  the panel, and a route per step. *Done when:* you can reload on
-  `/session/:id/reflect` and land in the right place.
+- [x] **D.1 About Musie.** The chat cadence (greeting at 1s, typing dots, the
+  carousel at 4s, replayed on every arrival rather than only on first load),
+  the five-slide carousel, and the CTA locked until the last slide has been
+  SEEN — `seenMax` is monotonic, so scrolling back does not re-lock it. A
+  returning visitor skips it, and "returning" is `profiles.user_type_id`,
+  which is the column the drawer already forks on.
 
-- [ ] **D.5 Intro, Scan (simulated) and Reflect.** Text and photo modes only;
-  voice is Phase F.
+- [x] **D.2 About you.** The four user types from the database, writing
+  `profiles.user_type_id` on the pick rather than on Continue, so the choice
+  survives whether or not anyone presses it. The three unbuilt types open a
+  not-implemented lightbox **here** and are accepted **in /settings** — Ben's
+  decision, commented in both files. Still `RadioGroupText`: the artwork is the
+  one part of this step still waiting on somebody.
 
-  **Blocked on copy, not code.** The listen step reads
-  `exercise_i18n.listening` and the reflect step reads `.question`, and both
-  are **null for all three exercises** — the re-cut moved them from the card to
-  the exercise and the source has no exercise-level version. Six strings, from
-  the spreadsheet. Sessions and reflections persist; finishing routes into
-  that session's Diary entry, carrying the acknowledgement the prototype's end
-  screen used to hold. *Done when:* a full run leaves a complete `sessions` row
-  and a `reflections` row, and lands you in the Diary entry with no end screen
-  in between.
+- [x] **D.3 Exercises.** `RadioCards` with the fact chips and the glyph legend
+  D.0 built, "Let Musie pick an exercise" (among the IMPLEMENTED ones — the
+  prototype picked among all three and opened the not-implemented lightbox two
+  times in three), and the detail lightbox bound to database rows. The
+  Guideline row is gone: `guideline` became `scan_text`, which is the scan
+  step's own copy, and showing it here would put the same sentence on screen
+  twice in one session. This screen performs the first write, and handles the
+  `23505` the one-running-session index raises as an offer rather than an error.
 
-- [ ] **D.6 One end-to-end test.** A single Playwright walk of a whole session
-  that then asserts the rows landed in Postgres. Run twice, once per locale —
-  the German run is what catches strings hardcoded in a hurry. One test, not a
-  suite. *Done when:* deleting a line from the reducer makes it fail.
+- [x] **D.4 Wizard chrome.** The four-step rail with `scan` visibly skipped for
+  a cardless exercise, the session context box, a route per step, and the seam
+  between three sources of truth: **the URL says which step is on screen, the
+  reducer says which are allowed, the row is what survives a closed tab.**
+  Reconciled in one effect and one direction. `completed` is DERIVED from
+  `step` rather than stored — `sessions` has no column for it — and the first
+  version of that derivation had a real off-by-one that a unit test caught.
+  Closing is reachable from inside the panel, which the unique index makes
+  mandatory.
 
-**Checkpoint.** The big one. Run the whole flow on your phone, in both themes,
-in both languages, next to the prototype.
+- [x] **D.5a Intro and Scan.** The instruction copy, the dashed QR viewport,
+  and the simulated scan as a `Message variant="info"` carrying its own
+  control. The READ is simulated; the WRITE is real — one update setting
+  `card_id` and `track_id` together, because they are decided by one act.
 
----
+- [x] **D.5b Listen — the stage only.** Copy, the question, `TrackButton`, the
+  90-second gate and the CTA handover. The prototype's other two viewports —
+  the "do not get influenced by the track name" interstitial and the details
+  view — are **E.5**, because reaching the third one IS the reveal, and the
+  reveal is what `reveal-track` exists to gate. Nothing here has to be undone
+  when they arrive.
+
+- [x] **D.5c Reflect and finish.** Three modes, and only text can complete the
+  step: voice and photo write nothing and say so on screen. Declining is an
+  answer and finishes the session (Ben, 2026-09-19) — no `reflections` row,
+  `status = 'finished'`. The reflection is written BEFORE the status, so a
+  failed answer leaves a retryable session rather than a finished one claiming
+  a reflection that was never stored. Finishing lands in that session's diary
+  entry; `/done` is deleted.
+
+- [x] **D.6 One end-to-end test.** `apps/web/e2e/session.spec.ts` — one
+  Playwright walk of a whole session that then asserts the rows in Postgres,
+  run twice, once per locale. Beside `test:db` rather than inside `pnpm check`,
+  for the same reason: CI has no Supabase and a suite that silently skips is
+  worse than no suite. **It has never been executed** — see the checkpoint.
+
+**Checkpoint — walked by machine, not yet by hand.**
+
+`pnpm test:e2e` drives the whole flow twice and then reads the rows back: a
+`finished` session with a real `card_id` and `track_id` paired correctly
+(mc-08 → trk-08), `ended_at` set, and the reflection stored with the right
+body in the right language.
+
+**It found two real defects that nothing else did**, which is the argument for
+having written it:
+
+1. **The listen step was a dead end.** With no audio file — the product's
+   actual state until E.4 — `play()` rejects, and the element fires `pause` on
+   its way down AFTER the step has decided to simulate. The handler read a
+   stale `false`, set `playing` back, and the interval never started: the
+   transport flipped to playing and instantly back, and the gate could never
+   open. Fixed by mirroring the flag on a ref and unmounting the dead element.
+2. **The reconciliation refused every forward move** — see D.4.
+
+Neither was visible to `tsc`, to lint, or to 89 unit tests.
+
+**Still to do by hand, and it is the part a machine cannot do:** run the whole
+flow on your phone, in both themes, in both languages, next to the prototype.
+That is what this checkpoint was always for, and it is the only thing left in
+Phase D.
 
 ## Phase E · Scan and listen
 
@@ -477,9 +541,15 @@ Reduced, because C.7 already built the part the flow depends on.
 
 - [ ] **G.1 The timeline at a month's scale.** Grouping, filtering, and an
   empty state that reads well after thirty sessions rather than on day one.
-- [ ] **G.2 Deletion.** One session, and everything, both with confirmation.
-  The cascade does the work. *Done when:* deleting leaves no orphaned rows and
-  no orphaned files in storage.
+- [ ] **G.2 Deletion — HALF DONE, 2026-09-20.** Deleting ONE session landed in
+  Phase D: a trash control in the diary entry, an inline confirmation, and the
+  cascade taking the reflection with it. `useDiary` re-reads on arrival, which
+  is what stops the list showing a row that is gone.
+
+  What is left: **deleting everything**, with its own confirmation. The
+  "orphaned files in storage" half of the old done-when is moot — D1 settled
+  that nothing is ever uploaded, so there is no storage to orphan. *Done when:*
+  a delete-everything control leaves no `sessions` and no `reflections` rows.
 
 **Checkpoint.** Read the privacy copy from C.2 next to what the app actually
 does, line by line. If a sentence is doing work the code does not, fix the

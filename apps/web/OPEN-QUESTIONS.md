@@ -688,3 +688,543 @@ What I need from Ben: nothing. Noting the gap itself — **there is no check tha
 every `MessageKey` is referenced.** `en.ts`'s own header argues that an unknown
 key is a typecheck error; the reverse, an unused one, is invisible. A lint rule
 or a test could close it.
+
+---
+
+# Phase D — the flow, screen by screen
+
+Written 2026-09-19/20. The four stale premises in BUILD-PLAN.md's Phase D text
+are the first four entries, because CLAUDE.md's closing rule says a brief whose
+premise is wrong about the repo belongs here rather than being quietly worked
+around.
+
+## BUILD-PLAN D.1 — "Needs B.1's Carousel answer" was answered, and unbuilt
+
+Where: `BUILD-PLAN.md` D.1, `packages/design-system/stories/OPEN-QUESTIONS.md`
+"Phase B.1 — the four decisions"
+
+What I checked: B.1 answered it on 19 September and the answer was explicit —
+*"Carousel is built in B.2, not deferred to D.1"*, because "having D.1 write a
+screen and a component in one session is where hand-written markup appears".
+B.2 had only partly run: the accent rename landed (commit `0497029`) and the
+other three items did not. Verified by file — no `Carousel.tsx`, no export,
+`ProcessVisualisation` still exported, two raw `--sand-8` references still in
+component CSS, no `--interactive-ghost-border-hover` token anywhere.
+
+What I did: ran B.2's remainder as **D.0**, first, before any screen. All four
+items, with their own entries in the design system's log.
+
+Why: D.1, D.3 and D.4 were each blocked on a different one of them, and doing
+them inside a screen session is precisely what B.1 said not to do.
+
+What I need from Ben: nothing. Flagging that BUILD-PLAN.md's Phase D still
+opens by pointing at a decision rather than at the work, and that the step list
+in it is now behind what the tree holds.
+
+## BUILD-PLAN D.3 — the fact chips could not be built from the app at all
+
+Where: `packages/design-system/src/RadioCards.tsx`,
+`src/musy-components.css` §13
+
+What I checked: D.3 asks for "`RadioCards`, the fact chips with tooltips, the
+legend". `.musy-rcard__facts`, `.musy-rcard__fact` and `.musy-rcard-legend` are
+all in the component stylesheet, complete and commented. `RadioCards.tsx` had
+no `facts` prop, no legend and no children slot — the only place a fact could
+go was the single-line `label`. Already logged on the system's side since Batch
+C and unanswered.
+
+What I did: added both to the component in D.0. CLAUDE.md rule 1 — "when a
+component cannot do what a screen needs, the fix goes into the component".
+
+What I need from Ben: nothing. Recorded because the brief read as screen work
+and was component work, and a screen that tried to emit `.musy-rcard__fact`
+from `apps/web` would have broken L14.2 to do it.
+
+## BUILD-PLAN D.5 — "six strings" is stale by one whole re-cut
+
+Where: `BUILD-PLAN.md` D.5, `supabase/migrations/20260918150600_content_seed.sql`
+
+What I checked: D.5 says the listen step reads `exercise_i18n.listening` and
+the reflect step reads `.question`, and that **six** strings are owed. C.0
+replaced that with four `text[]` columns plus one `question`, and the count is
+**28** (4 lists × 3 exercises × 2 locales = 24, less the two `scan_text` rows
+that carry real copy, plus 1 question × 3 × 2 = 6).
+
+The seed migration's own header says **thirty** in one place and
+**twenty-eight** in another — it subtracts the two carried-over `scan_text`
+rows in the second paragraph and not in the first.
+
+What I did: built to 28 and did not touch either document. The screens render
+what is there and fall back where nothing is.
+
+What I need from Ben: **one number, fixed in two places.** BUILD-PLAN.md D.5
+says six; the seed header says thirty at line 36 and twenty-eight at line 115.
+28 is right.
+
+## BUILD-PLAN D.5 — the end screen also carried the Share step, which is cut
+
+Where: `BUILD-PLAN.md` D.5, `reference/design_system/Musy MVP 0.3.dc.html`
+
+What I checked: D.5 says finishing carries "the acknowledgement the prototype's
+end screen used to hold". That screen held an acknowledgement AND a
+share-by-email step — a `Field type="email"`, a send button and a success
+message. C.2's privacy position cut sharing entirely.
+
+What I did: only the acknowledgement travels, and it travels by being the diary
+entry rather than by being restated. `/done` is deleted, along with
+`route.done.title` in both catalogues.
+
+What I need from Ben: nothing.
+
+---
+
+## The session's three sources of truth, and the one direction between them
+
+Where: `src/routes/Session.tsx`
+
+What I checked: a step is held in three places and each has a different job —
+the URL says which step is on screen (D.4's done-when is reloading on
+`/session/:id/reflect`), the reducer says which steps are allowed, and the row
+is what survives a closed tab.
+
+What I did: reconciled them in ONE effect and in ONE direction, URL → rules →
+row. Every control navigates rather than dispatching, so a rail tap and a
+pasted URL take the same path.
+
+Why: two effects pushing at each other is how a wizard flickers between steps.
+The single direction is also what makes the unreachable-step case a redirect
+rather than a fight — and that redirect is a `<Navigate>` in the render rather
+than a `navigate()` in the effect, because a redirect issued during an effect
+races the render it was trying to prevent.
+
+What I need from Ben: nothing, just flagging that this is the most load-bearing
+thirty lines in the phase.
+
+## `sessions` has no `completed` column, so it is derived — and the derivation had a real bug
+
+Where: `src/lib/session.ts` (`completedBefore`), `src/lib/session.test.ts`
+
+What I checked: `PersistedSession.completed` is `readonly StepId[]` and
+`sessions` stores only `step`. So `resumeSession` could not be fed from a row
+as written — D.4 had to either add a column or derive the set.
+
+What I did: derived it. Everything before `step` that is in the run, which is
+exactly what the reachability rule already implies, so no row can disagree with
+itself. A column would have been a second source of truth for something the
+first one already says — the same argument `skipped` won.
+
+**The first version was wrong and a test caught it.** `run.indexOf(step)`
+returns −1 for a step outside the run, and `slice(0, -1)` quietly returns
+everything but the LAST element rather than nothing. That is reachable: a
+content edit making an exercise cardless while somebody's session sits at
+`scan` produces exactly that call, and resuming would have reported `listen` as
+completed when it had not been. Guarded, with the reason written beside it.
+
+What I need from Ben: **one consequence, stated rather than hidden.** Go back a
+step, close the tab, and you resume at the step you went back to rather than
+the furthest you reached. That is what `sessions.step` means — "where you
+stopped" — and it is what the diary reports for an unfinished run, so the
+alternative needed a second column meaning something else. It is defensible and
+it is a behaviour, not an accident.
+
+## A declined reflection finishes the session, and DOMAIN-MODEL.md's diagram is now the looser of the two
+
+Where: `src/routes/Session.tsx` (`finish`), `DOMAIN-MODEL.md`
+
+What I checked: `reflections.body` is `not null`, so "nothing to say" can only
+be expressed as the ABSENCE of a row. DOMAIN-MODEL.md's state diagram reads
+`started --> finished : completes the reflection`, and `sessionMachine.FINISH`
+enforces only "you are on the last step".
+
+What I did: Ben answered yes on 2026-09-19 — declining finishes. The run writes
+no `reflections` row and sets `status = 'finished'`. The diary already renders
+an entry with no answer.
+
+Why the order of the two writes matters: the reflection first, then the status.
+A failed answer then leaves the session running and retryable; reversed, it
+would leave a finished session claiming a reflection that was never stored,
+which is the one thing a diary must never do.
+
+What I need from Ben: nothing — the decision is his. Flagging that
+DOMAIN-MODEL.md's diagram sentence now describes the common case rather than
+the rule, and should be re-worded when that file is next touched.
+
+## The session context column shows a user-type ID — ANSWERED, ROW DROPPED
+
+Where: `src/routes/Session.tsx`, the `context` list
+
+What I checked: the prototype's "This session" box shows *Here as* with the
+chosen type's label. `profiles.user_type_id` is an id (`by-myself`); the labels
+live in `user_type_i18n`, which this screen does not read, so the row rendered
+a slug.
+
+**ANSWERED 2026-09-20 — dropped.** Ben's call, and the better of the two
+reasons is not the round trip: the box's job is what THIS SESSION is, and
+"here as" is a profile fact that has not changed since /about-you and is on
+/settings whenever anyone wants it. The screen no longer reads the profile at
+all.
+
+What I need from Ben: nothing. The box now carries the exercise, and the card
+once one is drawn.
+
+## The listen step is the stage only, and the reveal is still E.5
+
+Where: `src/components/SessionListen.tsx`
+
+What I checked: the prototype's listen step is three stacked 100svh viewports
+with two sticky rails, a measured stage height, a warning interstitial and a
+details view holding the full `MusicPlayer` and the track's identity — and
+reaching the third view IS the reveal.
+
+What I did: built the stage — copy, question, `TrackButton`, the 90-second
+gate, the CTA handover. The other two views are not here.
+
+Why: they exist to gate `reveal-track`, which is E.5, and MOCKUPS.md 5 already
+files the reveal there. Nothing built here has to be undone when they arrive —
+they are scroll targets below this one.
+
+What I need from Ben: nothing. Flagging so E.5 does not inherit it as a
+surprise.
+
+## The gate is 90 seconds and nothing in the schema says so — ANSWERED, IT IS A COLUMN
+
+Where: `src/components/SessionListen.tsx`,
+`supabase/migrations/20260918150500_content_schema.sql`
+
+What I checked: the prototype hardcodes `Math.min(90, duration)` with a comment
+— "the exercise works from ninety seconds in, and demanding the whole track
+would make a five-minute piece a five-minute wait". There was no column for it.
+`exercises` has `timeframe_min` and `timeframe_max`, which are the whole
+exercise rather than the listening.
+
+**ANSWERED 2026-09-20 — it varies, so it is a column.**
+`exercises.listen_gate_seconds`, `not null default 90`, with a `>= 0` check.
+In `exercises` rather than `exercise_i18n` because it is a number, not copy —
+the same reasoning that puts `timeframe_min` there. Edited into the existing
+migration in place and verified with `supabase db reset` (rule 4), types
+regenerated, three new `pnpm test:db` assertions.
+
+THE CAP STAYS IN THE APP, and the split is deliberate: the exercise cannot see
+the recording, so a gate longer than the track would be unreachable. The column
+says what the exercise wants; the step reconciles it with what the track is.
+
+What I need from Ben: **two of the three numbers are estimates and are yours.**
+90 for Quick Mindfulness Break is the prototype's measured figure and is
+carried over unchanged. Breathing Score (60s) and Body Scan Soundwalk (180s)
+are proportional guesses — neither exercise has a recording to tune against, so
+there has never been anything to measure. The seed says so where they are set.
+The moment either has a track: listen to it, and set the number.
+
+## Two screens hold a state the reducer also holds, and they are not the same state
+
+Where: `src/routes/Session.tsx` (`listened`), `src/components/SessionReflect.tsx`
+(`recording`, `elapsed`, `photo`)
+
+What I checked: `listened` is sticky within a session — leaving the listen step
+and coming back must not re-lock it, because they HAVE listened — so it lives
+on the session screen rather than in the step. The reflect step's recording
+clock and chosen photo live in the step, because nothing they capture is ever
+saved and lifting them would put something in the session's shape that the
+session never writes.
+
+What I did: split them exactly that way.
+
+What I need from Ben: nothing. Flagging that `listened` is NOT persisted: a
+reload mid-listen re-locks the gate. Persisting it would need a column for a
+fact about a session's UI rather than about the session, and the cost of
+getting it wrong is ninety seconds.
+
+## The end-to-end walk found two defects that nothing else did
+
+Where: `apps/web/e2e/session.spec.ts`, `src/components/SessionListen.tsx`,
+`src/routes/Session.tsx`
+
+What I checked: `pnpm check` was green — typecheck, lint and 89 unit tests —
+and both bundles built, through both of the bugs below. Neither was visible to
+any of it, because every piece in isolation was correct.
+
+**1 · The listen step was a dead end, in exactly the state the product is in.**
+There are no audio files (E.4 is blocked on licensing), so `play()` rejects and
+the step falls back to a simulated clock. But the `<audio>` element also fires
+`pause` on its way down, and that event arrives AFTER the step has decided to
+simulate — the handler was closed over the state variable, still read `false`,
+and called `setPlaying(false)`. The transport flipped to playing and instantly
+back, the interval never started, the position never moved, and the 90-second
+gate could never open. **There was no way past the listen step.**
+
+Fixed by mirroring the flag on a ref, so events already in flight see the
+decision, and by unmounting the element once it has refused — it has nothing
+left to offer, and leaving it mounted leaves a second thing driving `playing`
+against the clock that has taken over.
+
+**2 · The reconciliation refused every forward move.** Written up under "the
+session's three sources of truth" above; `stepTransition` is the fix and it has
+seven tests.
+
+What I need from Ben: nothing. Recorded because it is the answer to "was the
+end-to-end test worth writing" — it paid for itself on the first run, and both
+defects were in the two places D.4 and D.5b are most load-bearing.
+
+## Everything is verified against a running stack now
+
+Where: the whole phase
+
+What I checked: Docker WAS running; `docker ps` and `supabase status` were
+simply slow to answer, and an earlier version of this entry concluded from that
+silence that the stack was down. It was not. All twelve containers were up.
+
+What I did: ran everything. `pnpm check` green (89 unit tests), `pnpm test:db`
+green (64 tests, schema untouched this phase), `pnpm test:e2e` green in both
+locales, both bundles build, and the rows were read back out of Postgres by
+hand as well — a `finished` session with `card_id` mc-08 and `track_id` trk-08,
+`ended_at` set, and the German reflection body stored verbatim.
+
+What I need from Ben: **the hand walk.** A machine can prove the rows land; it
+cannot tell you whether the cadence on About Musie feels like someone talking
+to you, or whether the German fits at 393px. That is the checkpoint, and it is
+the only part of Phase D still open.
+
+## Playwright's `webServer` url must be `localhost`, not `127.0.0.1`
+
+Where: `apps/web/playwright.config.ts`
+
+What I checked: Vite binds to `localhost`, which Node 22 on macOS resolves to
+`::1`. A dev server that is up and serving is therefore INVISIBLE on
+`127.0.0.1` — Playwright decides it has to start its own, Vite finds 5173 taken
+and moves to 5174, and the walk then tests a server the config is not pointed
+at. Measured, not guessed.
+
+What I did: `http://localhost:5173`.
+
+What I need from Ben: nothing. Flagging because it will look like an arbitrary
+preference to whoever tidies it.
+
+---
+
+# Phase D — twelve changes after the first walk
+
+Ben walked the flow on 2026-09-20 and asked for twelve changes. Most were
+straightforward; these are the ones that turned out to decide something.
+
+## "Allein" is preselected, and it must NOT be a database default
+
+Where: `src/routes/AboutYou.tsx`, `DEFAULT_USER_TYPE`
+
+What I checked: the obvious implementation is a default on
+`profiles.user_type_id`, set by the trigger that creates the row. It would
+have broken the onboarding outright: `/` decides whether you are a RETURNING
+visitor by asking whether that column is set, so every brand-new user would
+have skipped the About Musie explainer on their first ever visit — the one
+screen that exists to be seen once.
+
+What I did: the default is a SUGGESTION on screen and nothing else. The radio
+shows it, Continue is live because of it, and the write happens when Continue
+is pressed. Nothing is recorded until the reader acts.
+
+That made Continue write, which it did not before. A pick still writes
+immediately; Continue now also writes, for the one reader a pick cannot cover
+— the one who accepts the default without touching it. Without that, accepting
+the default would land on /exercises with nothing recorded and the drawer would
+bounce them straight back.
+
+What I need from Ben: nothing. Flagging that the id is a constant rather than
+"the first implemented one": `implemented` says what is BUILT and this says
+what is COMMON, and those stop agreeing the day a second path ships.
+
+## The glyph key became its own component, because a prop could not be moved
+
+Where: `packages/design-system/src/RadioCards.tsx`, `RadioCardLegend`
+
+What I checked: the key was `RadioCards.glyphLegend`, which rendered it inside
+the fieldset directly above the cards. Ben wants it on one row with "let Musie
+pick an exercise". A prop that renders inside the group cannot express that,
+and a screen cannot build the row itself without emitting `.musy-rcard-legend`
+from `apps/web` — which is the one thing a screen must not do.
+
+What I did: extracted `RadioCardLegend` as its own export. Both arrangements
+are now the consumer's to compose.
+
+It also moved a spacing decision. `.musy-rcard-legend` carried
+`padding-block-end`, which was right when it had exactly one home and is
+geometry the consumer cannot control now that it has two. The padding is gone
+from the component and the GAP belongs to whatever places it — which is what
+stopped the app needing an override.
+
+What I need from Ben: nothing.
+
+## The skip control finishes the session rather than toggling a mode
+
+Where: `src/routes/Session.tsx` (`finish`), `src/components/SessionReflect.tsx`
+
+What I checked: "Not right now" used to put the panel into a declined state
+with an "Answer after all" escape, and Finish then ended the run — two taps and
+a mode. Ben asked for it renamed to *Skip reflection* and placed next to
+*Finish session*.
+
+What I did: read the placement as the intent. Beside Finish it is an
+ALTERNATIVE ACTION, not a mode toggle, so it ends the session directly and
+writes no `reflections` row. The declined state, its box and its two strings
+are gone.
+
+`finish(skip)` takes an argument rather than reading state, because the two
+have to be decided in the same tick — `setDeclined(true)` followed by
+`finish()` would read the render that has not happened and write an empty
+answer. `hasAnswered` lost its `declined` parameter with it: it now answers one
+question, "is there something to write", and skipping never consults it.
+
+What I need from Ben: **confirm the reading.** One tap ends the run with no
+answer. If you meant two — mark it skipped, then press Finish — it is a small
+change back.
+
+## The skip link is gone, and that is a Level A criterion
+
+Where: `src/AppShell.tsx`, `src/shell.css`, both catalogues
+
+What I checked: WCAG 2.4.1 Bypass Blocks is **Level A**, and the skip link was
+how this app met it — one tab stop, first in the DOM, jumping past the header.
+
+What I did: removed it, as asked. `<main>` is still a real landmark with an id,
+so screen-reader users reach it by landmark navigation, which is how most of
+them actually move.
+
+Why the cost is small here and still real: what is lost is the KEYBOARD-ONLY
+SIGHTED user, who has no landmark list. On this app that is two tab stops of
+header to walk past on every page. `tabIndex={-1}` and the focus ring on
+`<main>` went with it — they existed only so the skip target could take
+programmatic focus.
+
+What I need from Ben: nothing — it is your call and it is made. Recorded
+because "we do not meet a Level A criterion" is the kind of thing that should
+be a decision in writing rather than a thing someone discovers in an audit.
+It is one component to put back.
+
+## Finishing lands on /diary, and the list had to earn it
+
+Where: `src/routes/Session.tsx`, `src/routes/Diary.tsx`
+
+What I checked: finishing used to land on `/diary/:id` — the entry you just
+made. Ben asked for `/diary`.
+
+What I did: both halves, because one without the other is worse. The list now
+leads with the most recent session in a framed box carrying its facts and a way
+into the full entry; everything older keeps the grouped list under an *Earlier*
+heading. So landing on the list still puts the thing you just did first.
+
+With exactly one session there is no *Earlier* heading and no timeline at all —
+a heading over an empty run says less than its absence. Verified at both
+shapes in a browser.
+
+What I need from Ben: nothing.
+
+## Four things were measured rather than assumed
+
+Where: the browser, against the running stack
+
+- The session headline resolves to exactly `rgb(97, 90, 77)`, which is
+  `--on-surface-muted` computed — so `headlineTone="muted"` is doing what it
+  claims rather than merely looking darker.
+- The track button is 285px inside a 930px column, so it hugs rather than
+  fills. It needed no CSS: a plain `<div>` around it is enough, because
+  `.musie-stack` is a flex column whose children stretch and `.musy-btn` is
+  `inline-flex` inside a block.
+- The glyph key and the escape hatch share one row, and the legend is no longer
+  rendered visibly while remaining in the accessible tree.
+- "Allein" is preselected with the ready hint, in German, and Continue is live
+  on arrival.
+
+---
+
+# Phase D — five more, from the second walk
+
+2026-09-20. Two were bugs Ben found by using the thing; three were gaps.
+
+## The explainer was unreachable, and the redirect was the cause
+
+Where: `src/routes/AboutMusie.tsx`
+
+What I checked: the drawer's *How Musie works* row points at `/`, and `/` IS
+the explainer — but it redirects to /exercises whenever a user type is
+recorded, which is everyone past their first visit. So the row went straight
+past the page it names. D.1's own comment claimed a `useRef` latch prevented
+this; it did not. The latch only stops the page redirecting out from under
+somebody who picks a type WHILE reading it. A fresh mount always re-decided.
+
+What I did: the skip now also requires `location.key === 'default'`. React
+Router labels the first entry in a history stack 'default', so it means "the
+app was opened here" rather than "somebody navigated here". Opening Musie takes
+you to the library; asking how it works shows you how it works.
+
+One measured consequence, and it is the right one: RELOADING the explainer
+keeps you on it, because a reload restores React Router's own history state and
+the key is no longer 'default'. Being bounced off a page you deliberately
+opened because you pressed refresh would be worse.
+
+What I need from Ben: nothing.
+
+## A dismissed lightbox left the card selected, because the group was uncontrolled
+
+Where: `src/routes/Exercises.tsx`
+
+What I checked: `RadioCards` had `onValueChange` and no `value`, which makes
+base-ui's RadioGroup UNCONTROLLED — it keeps its own selection. So dismissing
+the detail left the card filled, claiming a choice the session never made. The
+comment beside it said "no selection is ever held", which was the intent and
+not what the code did.
+
+What I did: `value` is DERIVED from the open lightbox. The card you are reading
+about is checked while you read about it, and nothing is checked once the popup
+closes. `''` rather than `undefined` for the empty case — a defined value is
+what makes the group controlled, and no card has that value.
+
+What I need from Ben: nothing.
+
+## Closing a session says why it cannot be resumed
+
+Where: `src/i18n/*.ts`, `session.close.text`
+
+What I did: the dialog now says the run cannot be picked up again, and why —
+the exercise works from how you feel now, and that will have moved on. Ben's
+wording, and it is a PRODUCT statement rather than a technical one: nothing in
+the schema prevents resuming an abandoned session, and the reason not to is
+that it would be finishing somebody else's.
+
+What I need from Ben: nothing. Flagging that the code and the copy now agree
+by convention rather than by constraint — `sessions_status_check` would accept
+a row moving from 'abandoned' back to 'started', and no screen offers it.
+
+## Both ways out of a session now end in the same place
+
+Where: `src/routes/Session.tsx`
+
+Finishing and closing both `navigate('/diary')`. They used to differ —
+finishing went to the list and closing to the entry — which meant the two
+endings of one screen felt like different products.
+
+## Deleting a session, and the two things it needed that nobody asked for
+
+Where: `src/routes/DiaryEntry.tsx`, `src/lib/session.ts`, `src/lib/useDiary.ts`
+
+Ben asked for a delete icon button in the entry lightbox. Two things came with
+it:
+
+**A CONFIRMATION, which was not requested.** The row and its reflection go for
+good — `reflections.session_id` is `on delete cascade` — and BUILD-PLAN G.2
+already specifies that deletion is confirmed. A one-tap irreversible delete on
+somebody's diary is the wrong default. It is INLINE (a `Message variant=
+"warning"` replacing the box's controls) rather than a second Lightbox: this
+box is already inside one, and a dialog over a dialog is where focus management
+stops being base-ui's problem and becomes ours.
+
+**A CACHE KEY, because the list showed the deleted row.** `AppShell` keeps the
+diary mounted beneath the entry overlay, so returning to it re-rendered a
+component with no reason to re-read. `useDiary` now keys on `location.key` as
+well as the locale, which gives one rule: **the diary re-reads whenever you
+ARRIVE at it, and not when an overlay over it merely closes.** Closing an entry
+goes BACK, restoring the previous key, so the list you had is the list you get
+— correct, nothing changed. Finishing, closing or deleting all NAVIGATE, so the
+list re-reads — correct, something did.
+
+What I need from Ben: **this is half of G.2.** "One session" is done, with
+confirmation. "And everything" — a delete-my-whole-diary control — is not, and
+neither is anything about orphaned files, which there are none of because
+nothing is ever uploaded. G.2 should be re-scoped rather than re-planned.

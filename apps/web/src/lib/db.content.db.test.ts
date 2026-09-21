@@ -91,3 +91,70 @@ describe('tracks · the ids are opaque, and that is the security model', () => {
     }
   });
 });
+
+/**
+ * `listen_gate_seconds` — the one number in `exercises` that a person tunes.
+ *
+ * WORTH ASSERTING because it is silently destructive in both directions. Set
+ * above a track's length and the reflection is unreachable — the listen step
+ * caps it, but only if it is reading the column at all. Set to something
+ * absurd and nobody notices until a user is sitting there.
+ */
+describe('exercises · the listen gate', () => {
+  it('is positive and present for every exercise', async () => {
+    const { client } = await anonymousUser();
+    const { data, error } = await client
+      .from('exercises')
+      .select('id, listen_gate_seconds, timeframe_min');
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(3);
+    for (const row of data ?? []) {
+      expect(typeof row.listen_gate_seconds).toBe('number');
+      expect(row.listen_gate_seconds).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('never asks for more listening than the exercise claims to take', async () => {
+    /* `timeframe_min` is the whole exercise in MINUTES — intro, scan, listen
+       and reflect. A gate that exceeded it would be asking somebody to listen
+       for longer than the card says the entire thing lasts, which is a
+       promise broken before the track starts. */
+    const { client } = await anonymousUser();
+    const { data } = await client
+      .from('exercises')
+      .select('id, listen_gate_seconds, timeframe_min');
+
+    for (const row of data ?? []) {
+      expect(row.listen_gate_seconds).toBeLessThan(row.timeframe_min * 60);
+    }
+  });
+
+  it('is shorter than every track it gates, so the step is always reachable', async () => {
+    /* The app caps the gate at the track's duration, so this cannot lock a
+       user out today. It asserts the SEED is coherent without that safety
+       net — if this goes red, somebody has set a gate that only the cap is
+       saving, and the cap is a fallback rather than the design. */
+    const { client } = await anonymousUser();
+    const { data: pairs } = await client
+      .from('exercise_tracks')
+      .select('exercise_id, track_id, exercises(listen_gate_seconds), tracks(duration_seconds)');
+
+    expect(pairs?.length).toBeGreaterThan(0);
+    for (const pair of pairs ?? []) {
+      /* PostgREST returns an OBJECT for a to-one embed and supabase-js infers
+         an ARRAY from the generated relationship — the same mismatch
+         `diary.ts` documents at `Embedded<T>`. Collapsed through `unknown`,
+         because the two shapes genuinely do not overlap. */
+      const one = <T,>(embed: unknown): T | null => {
+        if (embed === null || embed === undefined) return null;
+        return (Array.isArray(embed) ? embed[0] ?? null : embed) as T | null;
+      };
+      const gate = one<{ listen_gate_seconds: number }>(pair.exercises);
+      const track = one<{ duration_seconds: number }>(pair.tracks);
+      expect(gate).not.toBeNull();
+      expect(track).not.toBeNull();
+      expect(gate!.listen_gate_seconds).toBeLessThan(track!.duration_seconds);
+    }
+  });
+});

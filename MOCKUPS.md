@@ -18,12 +18,15 @@ Two things this file is *not*. It is not a list of unbuilt screens — an absent
 screen is honest and lives in BUILD-PLAN.md. And it is not a list of known
 defects — a mockup behaves as designed.
 
-**Some entries below describe a screen that does not exist yet.** Entries 1–4
-are Phase D's to build, and they are written down NOW because the decision
-behind each one has already been made — what a voice answer does, what a photo
-answer does not do, what the listen step counts down. Recording them here is
-what stops the decision being re-litigated or quietly lost between phases. Each
-says which step builds it.
+**Updated 2026-09-20, after Phase D.** Entries 1–4 described screens that did
+not exist when this file was written; all four are now built, and every one of
+them is still a mockup — which is exactly why they were written down early. The
+text of each now says what you actually see rather than what you would see.
+
+**One entry has been deleted rather than updated.** About Musie's carousel had
+CSS and no component; D.0 built the component, so the entry describing its
+absence is gone. An entry describing something that now works is worse than no
+entry, because it teaches the reader to distrust the rest.
 
 ---
 
@@ -31,30 +34,36 @@ says which step builds it.
 
 | # | What looks real | What is actually missing | Lands in |
 |---|---|---|---|
-| 1 | Voice reflection: record, meter, timer | Nothing is recorded or transcribed | F.1–F.6 |
-| 2 | Photo reflection: choose, preview | Nothing is uploaded; the image is read as text | D.5 |
-| 3 | Listen step's transport and clock | There are no audio files | E.4 |
-| 4 | Scan step | Simulated — no camera, no code entry | E.1–E.3 |
+| 1 | Voice reflection: record button, meter, timer | Nothing is recorded or transcribed, and the step says so | F.1–F.6 |
+| 2 | Photo reflection: drop zone, picker, preview | Nothing is uploaded or read, and the step says so | blocked |
+| 3 | Listen step's transport and clock | There are no audio files; the clock is simulated | E.4 |
+| 4 | Scan step | Simulated — no camera, no code entry, and it says so | E.1–E.3 |
 | 5 | Track title and artist | Withheld by design, and no reveal gate yet | E.5 |
 | 6 | Exercise step copy | Columns exist, near-empty — 28 strings owed | blocked |
 | 7 | Situation on a session | Recorded, never filled — nothing asks | open |
-| 8 | `sessions.track_id` | Recorded, null until playback is real | E.4 |
-| 9 | About Musie's carousel | CSS with no component behind it | D.1 |
-| 10 | The four user types | Three unbuilt; no artwork for any | D.2 |
-| 11 | The Diary | Minimal by design — day grouping only, no delete | G.1, G.2 |
-| 12 | The whole app | Nothing is deployed; localhost only | A.6 |
+| 8 | The listen step's three scroll views | Only the stage is built; the reveal is not | E.5 |
+| 9 | The four user types | Three unbuilt; no artwork for any | D.2 ✓ / artwork |
+| 10 | The Diary | Minimal by design — day grouping only, no delete | G.1, G.2 |
+| 11 | The whole app | Nothing is deployed; localhost only | A.6 |
 
 ---
 
 ## 1 · Voice reflections are UI only
 
 **What you see.** The reflect step offers voice as one of three modes. Pressing
-record starts a timer and animates a level meter. Stopping offers playback and
-a delete.
+record starts a timer and animates a level meter; pressing it again stops.
 
 **What is missing.** All of it. No `MediaRecorder`, no upload, no
-transcription. The UI is interactive so the flow can be walked and reviewed,
-and it says so on screen rather than pretending.
+transcription — and **no level, either**: the meter runs on the clock, because
+with no microphone there is nothing to measure. The UI is interactive so the
+flow can be walked and reviewed, and it says so on screen rather than
+pretending: an info `Message` sits under the control and states that recording
+is not built and that only the text would ever be kept.
+
+**IT CANNOT COMPLETE THE STEP.** Voice writes no `reflections` row, so *Finish
+session* stays disabled while it is the chosen mode. That is deliberate — the
+alternative was hiding a mode the product has already decided on, which would
+make the screen look finished and be less true.
 
 **How it will work, and why the schema already suits it.** A voice answer is
 **transcribed to text** by OpenAI and only the text is stored — so a voice
@@ -69,7 +78,9 @@ it in).
 
 ## 2 · Photo reflections are UI only, and the image is never kept
 
-**What you see.** A drop zone, a file picker, a preview, a remove.
+**What you see.** A drop zone, a file picker, a preview, a remove — the real
+`PhotoUpload`, driving a real `<input type="file">`, so choosing a photo really
+does show it.
 
 **What is missing.** The reading. The image is **never stored server-side** —
 but it is not discarded either: it is **read back as text**, and the text is
@@ -85,17 +96,29 @@ before A.6 and would be an `alter table` against live rows after.
 
 **Still blocked on someone other than Claude Code:** which vision model reads
 the handwriting. BUILD-PLAN.md lists it. Until it lands, the reflect step's
-photo mode captures and shows a preview and writes no row.
+photo mode captures and shows a preview and writes no row — and, like voice,
+leaves *Finish session* disabled, with an info `Message` saying why.
 
 ## 3 · There is no audio
 
-**What you see.** A transport with a play control, a scrubber and a clock that
-counts down.
+**What you see.** A `TrackButton` — one pill carrying the action word and a
+countdown — that starts, pauses and replays. The listen step's 90-second gate
+unlocks against it.
 
 **What is missing.** The files. `tracks.src` points at recordings that are not
 in the project, because **the licensing is not cleared** — up to eleven
-recordings, and that is a real-world blocker, not an engineering one. The
-clock is simulated so the listen step has a duration to behave against.
+recordings, and that is a real-world blocker, not an engineering one.
+
+**The element is real and is tried first.** There is an `<audio>` with the
+track's `src` on it; when the browser refuses the file, the step falls back to
+a clock at the track's own `duration_seconds`, which the seed carries precisely
+so a countdown can render before anything has loaded. A note appears under the
+control saying the clock is what is running, and the element is unmounted — it
+has already refused, and leaving it mounted left it fighting the clock that
+took over, which was a real defect the end-to-end walk found. That fallback is
+the only thing a real file deletes.
+
+No scrubber: this is the stage, and the stage never had one — see entry 8.
 
 `select count(*) from tracks` is the number to quote when asking. Note the
 schema deliberately stores a recording **once** and points at it, so a
@@ -103,8 +126,10 @@ recording shared between two exercises is one licence, not two. E.4.
 
 ## 4 · The scan step is simulated
 
-**What you see.** A step that claims to read the QR code on a paper card, with
-a button that advances anyway.
+**What you see.** A dashed square viewport with a scan glyph and the
+instruction to hold the card's QR code inside it, and beneath it an info
+`Message` headed *The reader is not built yet* carrying a **Simulate a scan**
+button. Pressing it picks one of the nine cards at random.
 
 **What is missing.** Both real routes in. **Manual code entry comes first**
 (E.1, a field that takes `MC-01`), then the camera (E.2, `getUserMedia` +
@@ -113,6 +138,12 @@ disappears when E.1 lands.
 
 `getCardByCode()` in `apps/web/src/lib/content.ts` is already the real lookup —
 the code path exists, nothing calls it yet.
+
+**The WRITE is real, though, and that is the part worth knowing.** A simulated
+scan resolves the (exercise, card) pairing and writes `card_id` AND `track_id`
+to the session in one update. So every row the flow produces from here on
+carries a real card and a real recording id — only the reading of the QR code
+is simulated, not the record of what was drawn.
 
 ## 5 · A track's title and artist are withheld, deliberately
 
@@ -134,6 +165,8 @@ scroll-gated reveal at the end of the listen step. E.5.
 ## 6 · Every exercise's step copy is empty
 
 **What you see.** Session steps with chrome and almost no words of their own.
+The intro step shows one borrowed sentence; the listen and reflect steps show a
+borrowed question.
 
 **What is missing.** The copy. `exercise_i18n` carries `intro_text`,
 `scan_text`, `listen_text` and `reflect_text` — one list of 1–3 sentences per
@@ -151,6 +184,17 @@ The exception is worth knowing about, because it is the only content the
 re-cut kept: `scan_text` on Quick Mindfulness Break is the old `guideline` —
 *"Work with the card you are drawn to, not the one you think you should
 pick."* — with hand-written German. Everything else is null.
+
+**TWO FALLBACKS EXIST, AND THEY ARE CHROME RATHER THAN PLACEHOLDERS.**
+`session.intro.fallback` and `reflect.questionFallback` are in the app's own
+catalogues, in both languages, written to `docs/GERMAN-UI-WRITING.md`. They are
+not stand-ins for content nobody has written — they are true of every exercise,
+which is exactly why they could be written without the spreadsheet, and they
+simply stop rendering the moment an exercise has words of its own. The question
+fallback is the prototype's, word for word.
+
+Ben approved that on 2026-09-19, and it is what un-blocked D.5: the step copy
+blocks FINAL copy, not the screens.
 
 `select * from public.missing_translations` finds every hole. It stays quiet
 about these because it compares locales against *each other* rather than
@@ -171,36 +215,39 @@ The column is here because it was free to add before the schema deployed and an
 later. "What was I trying to do?" is diary-grade context whenever a picker
 lands.
 
-## 8 · `sessions.track_id` is recorded but empty
+## 8 · The listen step is the stage, and the reveal is not built
 
-Null until the listen step plays something real, which needs item 3.
+**What you see.** One screen: the exercise's words, the question, the transport
+and the gate copy under it. The gate is `exercises.listen_gate_seconds` — 90s
+for Quick Mindfulness Break, which is the prototype's measured figure. **The
+other two exercises carry estimates** (60s and 180s), because neither has a
+recording to tune against; the seed says so where they are set.
 
-**It is a fact the session owns, not a lookup it performs**, and that is worth
-understanding before anyone decides to derive it. Two reasons. A content edit
-would otherwise **rewrite history** — swap the file behind a card and every
-past diary entry silently starts claiming you heard something you never heard.
-And where a track is *chosen* rather than looked up, resuming must not
-re-roll it.
+**What is missing.** Two more. The prototype's listen step is three stacked
+viewports — this stage, a *"it would be better not to get influenced by the
+track name and cover"* interstitial, and a details view with the full
+`MusicPlayer`, the track's title and its artist. **Reaching the third view IS
+the reveal**, which is the whole mechanism entry 5 is waiting on.
 
-Which leaves an open decision, **D11**: how a track gets chosen when it is not
-looked up. Deferred deliberately — the only implemented exercise draws cards,
-so its track is looked up, and `track_id` holds the answer either way. It needs
-settling before an exercise picks at random, because "at random" needs a repeat
-rule and that rule reads the diary.
+Deliberately not built here: those two views exist to gate `reveal-track`, and
+that function is E.5. Nothing in the stage has to be undone when they arrive —
+they are scroll targets below it.
 
-## 9 · About Musie's carousel has no component
-
-`musy-components.css` carries ~200 lines of `.musy-carousel` rules and there is
-**no Carousel component and no export**. The five-slide explainer needs one
-built. D.1, and B.1 already decided it gets built rather than retired.
-
-## 10 · Three of the four user types are not built
+## 9 · Three of the four user types are not built
 
 `user_types.implemented` is true for exactly one. Picking one of the other
-three opens a not-implemented lightbox. Separately, **none of the four has
-artwork**, so `RadioGroupImage` cannot be used properly until it arrives. D.2.
+three **on `/about-you`** opens a not-implemented lightbox and records nothing;
+`/settings` deliberately accepts all four, because a preference is something
+you are entitled to record whether or not the product has caught up with it.
+Ben settled that asymmetry on 2026-09-19 and it is commented in both files.
 
-## 11 · The Diary is minimal on purpose
+Separately, **none of the four has artwork** — all four rows point at the same
+placeholder — so `RadioGroupText` is what ships and `RadioGroupImage` cannot be
+used properly until the four pictures arrive. Four identical images destroy the
+thing that component is for; this is the clickdummy handoff's own open item 1,
+and it is the one part of D.2 still waiting on somebody.
+
+## 10 · The Diary is minimal on purpose
 
 `/diary` lists your non-running sessions newest first and `/diary/:id` shows
 one. A cancelled session appears like any other, marked unfinished.
@@ -213,7 +260,7 @@ cascade already does the work, the confirmation UI does not exist.
 `LinkList` and `Timeline` in the design system are deliberately basic for the
 same reason — correct bones, styling detail deferred to G.1.
 
-## 12 · Nothing is deployed
+## 11 · Nothing is deployed
 
 Localhost only, and **that is a decision rather than a constraint**. No hosted
 Supabase project is linked and no Netlify build runs.

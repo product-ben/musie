@@ -84,12 +84,27 @@ insert into public.situation_i18n (situation_id, locale, label) values
   ('relax-busy-day', 'de', 'An einem vollen Tag entspannen');
 
 -- ── exercises ───────────────────────────────────────────────────────────────
+-- ── listen_gate_seconds ───────────────────────────────────────────────────
+-- 90 for Quick Mindfulness Break is the one MEASURED value in this column: it
+-- is the prototype's own figure, arrived at against the real card tracks, and
+-- it is carried over unchanged.
+--
+-- THE OTHER TWO ARE UNTUNED AND ARE BEN'S TO SET. Neither exercise has a
+-- recording yet (the source has no file for either), so there has never been
+-- anything to tune against. They are seeded proportionally to their own
+-- timeframes rather than to the default, so the column says something true
+-- about each exercise instead of quietly repeating the one number we know:
+-- Breathing Score settles in 5–8 minutes and Body Scan Soundwalk runs 15–20,
+-- so a gate of roughly a fifth of the shorter end is 60s and 180s.
+--
+-- That is an ESTIMATE, and it is written down as one. The moment either
+-- exercise has a track, listen to it and set the number.
 insert into public.exercises
-  (id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort)
+  (id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds)
 values
-  ('mindfulness-cards', 2, 12, true, true, 'assets/web/method-card.png', true, 1),
-  ('breathing-score', 5, 8, false, true, 'assets/web/method-card.png', false, 2),
-  ('body-scan-soundwalk', 15, 20, false, true, 'assets/web/method-card.png', false, 3);
+  ('mindfulness-cards', 2, 12, true, true, 'assets/web/method-card.png', true, 1, 90),
+  ('breathing-score', 5, 8, false, true, 'assets/web/method-card.png', false, 2, 60),
+  ('body-scan-soundwalk', 15, 20, false, true, 'assets/web/method-card.png', false, 3, 180);
 
 -- needs / duration_label: null for the two unimplemented exercises — the
 -- source has them for neither locale.

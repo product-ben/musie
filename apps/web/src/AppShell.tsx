@@ -1,8 +1,8 @@
 /**
  * The one shell every route renders inside.
  *
- * DOM order is the deliverable here: skip link, header, main. Everything below
- * is either that order or a consequence of it.
+ * DOM order is the deliverable here: header, then main. Everything below is
+ * either that order or a consequence of it.
  */
 import * as React from 'react';
 import { Menu, User } from 'lucide-react';
@@ -14,7 +14,6 @@ import { useAuth } from './lib/authContext';
 import { PagePathContext } from './lib/shellContext';
 import type { RouteHandle } from './routeHandle';
 
-/** The skip link's target. */
 const MAIN_ID = 'main';
 
 const SETTINGS_PATH = '/settings';
@@ -31,7 +30,7 @@ export function AppShell() {
   const isOverlay = handle.overlay === true;
 
   /**
-   * THE AUTH GATE. The shell — skip link, header, main landmark — renders
+   * THE AUTH GATE. The shell — header and main landmark — renders
    * immediately, because none of it needs a user and blanking it would make
    * the page look broken during the round trip. What waits is the ROUTES,
    * since every one of them will read data as soon as there is data to read.
@@ -131,32 +130,12 @@ export function AppShell() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [isOverlay, location.pathname, location.search]);
 
-  /**
-   * The jump is done here rather than left to the browser's own fragment
-   * navigation, for two reasons: `#main` in the URL would add a history entry
-   * that Back then has to walk back through, and moving focus explicitly is
-   * what actually works across browsers. `<main>` carries `tabIndex={-1}` to
-   * be a focus target at all.
-   */
-  const onSkip = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    const main = document.getElementById(MAIN_ID);
-    if (main === null) return;
-    main.focus();
-    main.scrollIntoView({ block: 'start', behavior: 'auto' });
-  }, []);
-
   return (
     /* Mounted once, so moving between the two header buttons does not re-run
        the open delay. */
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
       <div className="musie-app">
-        {/* FIRST in the DOM, so it is the first thing Tab reaches. */}
-        <a className="musie-skip" href={`#${MAIN_ID}`} onClick={onSkip}>
-          {t('shell.skipLink')}
-        </a>
-
         <header className="musie-header">
           <IconButton
             glyph={Menu}
@@ -177,9 +156,22 @@ export function AppShell() {
           />
         </header>
 
+        {/* NO SKIP LINK, and it is a removal rather than an omission — Ben,
+            2026-09-20. WCAG 2.4.1 Bypass Blocks is a Level A criterion and this
+            was how the app met it: one tab stop, first in the DOM, that jumped
+            past the header.
+
+            What is left in its place: `<main>` is still a real landmark with
+            an id, so screen-reader users reach it by landmark navigation,
+            which is how most of them actually move. What is lost is the
+            KEYBOARD-ONLY, SIGHTED user, who has no landmark list — on this app
+            that is two tab stops of header to walk past, which is why the cost
+            is small. It is a cost, though, and it is logged as one.
+
+            `tabIndex={-1}` went with the link: it existed so the skip target
+            could take programmatic focus, and nothing focuses main any more. */}
         <main
           id={MAIN_ID}
-          tabIndex={-1}
           className="musie-main"
           data-wide={pageWide ? '1' : '0'}
           data-auth={authStatus}

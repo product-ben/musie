@@ -30,6 +30,7 @@ import {
   resumeSession,
   sessionReducer,
   startSession,
+  stepTransition,
   type SessionAction,
   type SessionState,
 } from './sessionMachine';
@@ -366,5 +367,72 @@ describe('a cardless exercise · scan is skipped, and the run still finishes', (
     expect(isStepReachable(state, 'scan')).toBe(false);
     /* The resumed run must still be finishable. */
     expect(nextStep(state.step, state.skipped)).toBe('reflect');
+  });
+});
+
+/**
+ * `stepTransition` — the rule that decides NEXT versus GO_TO.
+ *
+ * THESE EXIST BECAUSE THE FIRST VERSION OF D.4's RECONCILIATION WAS WRONG.
+ * The effect dispatched `GO_TO` for every URL change, including a forward one.
+ * `GO_TO` does not complete the step you leave, so `completed` stayed empty,
+ * so `scan` was never reachable, so pressing Continue on `intro` did nothing
+ * at all — and nothing in the typechecker or the other 41 tests noticed,
+ * because every piece in isolation was correct.
+ */
+describe('stepTransition', () => {
+  it('is `stay` for the step you are already on', () => {
+    const state = startSession();
+    expect(stepTransition(state, 'intro')).toBe('stay');
+  });
+
+  it('is `next` for the step immediately after — which is what completes one', () => {
+    const state = startSession();
+    expect(stepTransition(state, 'scan')).toBe('next');
+  });
+
+  it('is `refuse` for a step two ahead of an unfinished one', () => {
+    const state = startSession();
+    expect(stepTransition(state, 'listen')).toBe('refuse');
+    expect(stepTransition(state, 'reflect')).toBe('refuse');
+  });
+
+  it('is `jump` for a step already completed', () => {
+    /* Going back to re-read something must not undo it, which is why this is
+       a jump rather than a NEXT run backwards. */
+    const state = sessionReducer(sessionReducer(startSession(), { type: 'NEXT' }), { type: 'NEXT' });
+    expect(state.step).toBe('listen');
+    expect(stepTransition(state, 'intro')).toBe('jump');
+    expect(stepTransition(state, 'scan')).toBe('jump');
+  });
+
+  it('skips the skipped step when deciding what `next` means', () => {
+    /* A cardless exercise goes intro → listen. `scan` is not the next step,
+       it is not in the run at all — so Continue from intro is a NEXT to
+       `listen`, not a refused jump. */
+    const state = startSession(['scan']);
+    expect(stepTransition(state, 'listen')).toBe('next');
+    expect(stepTransition(state, 'scan')).toBe('refuse');
+  });
+
+  it('walks a whole cardless run without ever refusing a forward move', () => {
+    /* The regression this pair of rules exists to prevent, end to end. */
+    let state = startSession(['scan']);
+    for (const target of ['listen', 'reflect'] as const) {
+      expect(stepTransition(state, target)).toBe('next');
+      state = sessionReducer(state, { type: 'NEXT' });
+      expect(state.step).toBe(target);
+    }
+    expect(state.completed).toEqual(['intro', 'listen']);
+  });
+
+  it('walks a whole four-step run the same way', () => {
+    let state = startSession();
+    for (const target of ['scan', 'listen', 'reflect'] as const) {
+      expect(stepTransition(state, target)).toBe('next');
+      state = sessionReducer(state, { type: 'NEXT' });
+    }
+    expect(state.step).toBe('reflect');
+    expect(state.completed).toEqual(['intro', 'scan', 'listen']);
   });
 });

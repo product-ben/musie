@@ -4,3 +4,8 @@ storybook-static
 .env
 .env.*
 !.env.example
+
+# Playwright's failure artefacts — traces, screenshots and the HTML report.
+# Written only when the end-to-end walk fails, and regenerated on every run.
+apps/web/test-results/
+apps/web/playwright-report/

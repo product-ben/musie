@@ -215,6 +215,7 @@ export type Database = {
           id: string
           image_url: string | null
           implemented: boolean
+          listen_gate_seconds: number
           needs_cards: boolean
           needs_sound: boolean
           sort: number
@@ -225,6 +226,7 @@ export type Database = {
           id: string
           image_url?: string | null
           implemented?: boolean
+          listen_gate_seconds?: number
           needs_cards?: boolean
           needs_sound?: boolean
           sort: number
@@ -235,6 +237,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           implemented?: boolean
+          listen_gate_seconds?: number
           needs_cards?: boolean
           needs_sound?: boolean
           sort?: number

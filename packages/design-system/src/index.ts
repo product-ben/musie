@@ -52,11 +52,20 @@ export type { RadioGroupTextProps, RadioOption, RadioAccent } from './RadioGroup
 export { RadioGroupImage } from './RadioGroupImage';
 export type { RadioGroupImageProps, RadioCardOption } from './RadioGroupImage';
 
-export { RadioCards } from './RadioCards';
-export type { RadioCardsProps, RadioCardOptionRich } from './RadioCards';
+export { RadioCards, RadioCardLegend } from './RadioCards';
+export type {
+  RadioCardsProps, RadioCardOptionRich, RadioCardFact,
+  RadioCardLegendProps, RadioCardLegendItem,
+} from './RadioCards';
 
-export { ProcessVisualisation } from './ProcessVisualisation';
-export type { ProcessVisualisationProps, ProcessStep } from './ProcessVisualisation';
+/* §7.8 PROCESS VISUALISATION IS RETIRED — B.1, answered 2026-09-19. Its CSS
+   section said RETIRED while the export and the docs said live; the export,
+   the component, its story and the `8b` CSS block are all gone, and Carousel
+   below is what replaces it. The three defects logged against it — a German
+   `ordinalPrefix`, a hardcoded <h3>, dividers carrying only aria-hidden — died
+   with it and needed no fix. */
+export { Carousel } from './Carousel';
+export type { CarouselProps, CarouselSlide } from './Carousel';
 
 export { Hint } from './Hint';
 export type { HintProps } from './Hint';

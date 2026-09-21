@@ -1,8 +1,8 @@
 /**
  * The app shell — L14 custom patterns.
  *
- * The system has no App Shell, Header, Sheet or Skip Link component, which is
- * what makes these permitted. L14's three conditions apply:
+ * The system has no App Shell, Header or Sheet component, which is what makes
+ * these permitted. L14's three conditions apply:
  *
  *   1. Every declaration resolves to a Layer 1 token or to arithmetic over
  *      one. The only bare values are the geometric identities L14 allows
@@ -41,46 +41,6 @@
   background-color: var(--surface);
   color: var(--on-surface);
   font-family: var(--type-body-md-family);
-}
-
-/* ═══ SKIP LINK ═════════════════════════════════════════════════════════════
-   First in the DOM and first in the tab order (2.4.1).
-
-   Moved off-screen with a transform rather than hidden: `display: none` and
-   `visibility: hidden` both remove it from the tab order, which is the one
-   thing it exists to be in. It is NOT .musy-sr-only either — that class clips
-   permanently, and this has to become a real, visible, hit-testable control
-   the moment it takes focus.
-
-   --z-overlay, not --z-sticky: it has to clear the sticky header it overlaps,
-   and because it comes BEFORE the header in the DOM, an equal z-index would
-   lose. --z-overlay is the next rung up.                                    */
-.musie-skip {
-  position: fixed;
-  z-index: var(--z-overlay);
-  inset-block-start: var(--sp-2);
-  inset-inline-start: var(--sp-2);
-  transform: translateY(calc(100% + var(--sp-8)));
-  display: inline-flex;
-  align-items: center;
-  min-block-size: var(--target-primary);
-  padding: var(--space-inset-control);
-  border-radius: var(--radius-panel);
-  background-color: var(--interactive-primary);
-  color: var(--interactive-primary-on);
-  font-family: var(--type-label-lg-family);
-  font-size: var(--type-label-lg-size);
-  font-weight: var(--type-label-lg-weight);
-  line-height: var(--type-label-lg-line);
-  letter-spacing: var(--type-label-lg-tracking);
-  text-decoration: none;
-}
-
-.musie-skip:focus-visible {
-  transform: none;
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  color: var(--interactive-primary-on);
 }
 
 /* ═══ HEADER ════════════════════════════════════════════════════════════════
@@ -126,14 +86,6 @@
   max-inline-size: calc(var(--musie-main-wide) + 2 * var(--gutter));
 }
 
-/* The skip link's target takes focus programmatically, so the ring has to be
-   declared — a tabindex="-1" region shows nothing by default. */
-.musie-main:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  border-radius: var(--radius-panel);
-}
-
 /* ═══ PLACEHOLDER PAGE ══════════════════════════════════════════════════════
    Scaffolding: every route is an h1 and nothing else this session. heading-lg
    is L8's step for a screen title. `hyphens` is inherited from Layer 1 rather
@@ -150,6 +102,347 @@
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
   hyphens: var(--text-hyphens);
+}
+
+/* ═══ THE STAGE ═════════════════════════════════════════════════════════════
+   A screen whose single job is one decision, centred in what is left of the
+   viewport below the chrome — About Musie and About you, both of which the
+   prototype composes this way.
+
+   THE SUBTRACTION IS THE PROTOTYPE'S, token for token: the sticky header is
+   --target-guided tall at its largest, and <main> adds --sp-5 above and --sp-7
+   below. Taking all three off 100dvh is what makes the CTA land in the middle
+   of what is actually visible rather than in the middle of the document.
+
+   `min-block-size`, not `block-size`: content that outgrows the viewport —
+   German at 393px, or a large text size — has to be allowed to push past it
+   rather than scroll inside a fixed box.                                    */
+.musie-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-gap-stack);
+  min-block-size: calc(100dvh - var(--target-guided) - var(--sp-5) - var(--sp-7));
+}
+
+/* A stage holding ONE box rather than a run of messages. The box takes the
+   measure the messages take, so the two screens line up when you walk from
+   one to the other. */
+.musie-stage__box {
+  inline-size: 100%;
+  max-inline-size: var(--measure-body);
+}
+
+/* ═══ THE CHAT CADENCE ══════════════════════════════════════════════════════
+   Musie's two messages arrive in turn, like someone typing. The system has no
+   Chat, no Avatar and no typing indicator, which is what makes this a
+   permitted L14 pattern; every declaration resolves to a Layer 1 token.
+
+   VISIBILITY IS IN THE KEYFRAME, not only opacity, so nothing invisible is
+   clickable or focusable while it waits. `backwards` fill holds the hidden
+   state through the delay before the animation's own start.
+
+   NO animation-delay. The cadence is owned by the timers in the screen, and
+   each message animates the moment its own gate opens — a delayed animation
+   has already finished by the time anyone navigates back to this page, which
+   is the defect the prototype's comment records having had.               */
+@keyframes musie-message-in {
+  from {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(var(--motion-travel-md));
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+}
+
+/* LONGHAND, NOT THE SHORTHAND. --motion-enter is a compound token (duration
+   plus easing) meant for the tail of a transition, so any `animation`
+   shorthand that also names an easing is invalid and silently dropped.
+   Layer 1 already collapses --motion-duration-* to 1ms and --motion-travel-md
+   to 0 under reduced motion, so the sequence survives and only the movement
+   goes. This animation runs ONCE, so it is shortened rather than removed —
+   L10's "remove it entirely" rule is about LOOPS.                          */
+.musie-message {
+  inline-size: 100%;
+  max-inline-size: var(--measure-body);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-gap-stack);
+  animation-name: musie-message-in;
+  animation-duration: var(--motion-duration-base);
+  animation-timing-function: var(--motion-ease-entrance);
+  animation-fill-mode: backwards;
+}
+
+/* The speaker. A circle of the accent's tinted fill with the mark inside it,
+   at the same --sp-10 the prototype uses. */
+.musie-message__avatar {
+  display: grid;
+  place-items: center;
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--interactive-accent-subtle);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--interactive-accent-border);
+  overflow: hidden;
+}
+
+.musie-message__avatar img {
+  inline-size: 60%;
+  block-size: 60%;
+  object-fit: contain;
+}
+
+/* The greeting box is narrower than the carousel's, so the two read as a
+   message and its attachment rather than as two panels. */
+.musie-message__box {
+  inline-size: 100%;
+  max-inline-size: calc(var(--measure-body) * 0.82);
+}
+
+/* ═══ THE TYPING INDICATOR ══════════════════════════════════════════════════
+   The chat-UI convention, so the wait reads as Musie composing rather than as
+   a stalled screen. The dots are DECORATIVE — the arriving box announces
+   itself — so they are aria-hidden and the group carries the name.         */
+@keyframes musie-typing {
+  0%, 60%, 100% { transform: none; opacity: 0.45; }
+  30%           { transform: translateY(calc(var(--sp-1) * -1)); opacity: 1; }
+}
+
+.musie-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-card);
+  background-color: var(--surface-raised);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+.musie-typing__dot {
+  inline-size: var(--sp-2);
+  block-size: var(--sp-2);
+  border-radius: var(--radius-full);
+  background-color: var(--on-surface-muted);
+  animation-name: musie-typing;
+  animation-duration: 1200ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: var(--motion-ease-standard);
+}
+
+.musie-typing__dot:nth-child(2) { animation-delay: 160ms; }
+.musie-typing__dot:nth-child(3) { animation-delay: 320ms; }
+
+/* L10, and the one place it overrides L12: a LOOPING animation is REMOVED
+   under reduced motion rather than shortened. Layer 1 collapses every duration
+   to 1ms, which on an infinite loop strobes. Steady dots still say "waiting".
+   The 1200ms literal above is deliberate for the same reason — no Layer 1
+   duration is meant for a loop, and naming one here would make the strobe a
+   token's fault.                                                           */
+@media (prefers-reduced-motion: reduce) {
+  .musie-typing__dot { animation-name: none; opacity: 0.6; }
+}
+
+/* ═══ A STAGE'S SINGLE ACTION, AND THE LINE UNDER IT ════════════════════════
+   L6 names this as the ONE permitted exception to right-alignment: a control
+   that is the stage's single action may be centred on the stage. The hint
+   below it is what `aria-describedby` points at, so it is part of the control
+   rather than a caption — hence --space-gap-related, not the stack gap.    */
+.musie-cta-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-related);
+  margin-block-start: var(--space-gap-stack);
+}
+
+.musie-cta-stack__hint {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  text-align: center;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* ═══ THE GLYPH KEY AND THE ESCAPE HATCH, ON ONE ROW ════════════════════════
+   /exercises puts `RadioCardLegend` and "let Musie pick an exercise" on the
+   same line: the key explains what the cards say, and the escape hatch is the
+   alternative to reading them, so both belong with the instruction to choose
+   rather than stacked above and below it. The prototype does the same.
+
+   The system has no legend-and-action row, which is what makes this a
+   permitted L14 pattern — and both halves ARE components; only the row is new.
+
+   `wrap` with `space-between`: at 393px the key and the button do not fit on
+   one line, and wrapping puts the button under the key rather than squeezing
+   either. `align-items: baseline` so the key's words and the button's label
+   sit on one line when they do share it.                                    */
+.musie-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-gap-inline) var(--space-gap-stack);
+}
+
+/* ═══ THE DIARY'S SECOND HEADING ════════════════════════════════════════════
+   *Earlier* — what separates the session you just finished from the ones
+   before it. heading-sm rather than the page title's step: it labels a region
+   inside the screen, not the screen.                                       */
+.musie-diary__earlier {
+  margin: var(--space-gap-group) 0 0;
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface-muted);
+}
+
+/* ═══ THE SESSION ═══════════════════════════════════════════════════════════
+   ONE COLUMN. It was a two-column grid — the run, and a "This session" box
+   beside it — and that box is gone (Ben, 2026-09-20): the rail already says
+   which step you are on and the panel header already names the exercise, so
+   it restated the screen rather than adding to it. With nothing to sit beside,
+   the grid was a grid of one.                                              */
+.musie-session {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+/* The only way out of a running session that is not finishing it. Leading
+   edge and quiet: it is not what the screen is for, but the nav drawer offers
+   nothing else while a session runs, so it has to be reachable. */
+.musie-session__exit {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ═══ A STEP'S OWN SENTENCES ════════════════════════════════════════════════
+   `exercise_i18n.intro_text` and its three siblings are `text[]`, and THE
+   ARRAY BOUNDARY IS THE PARAGRAPH BREAK — one element, one line, so no screen
+   ever splits prose on punctuation, which breaks in German at the first
+   abbreviation.
+
+   Rendered at body-xl in muted ink, which is the prototype's own treatment and
+   its own reasoning: an instruction at headline size asks rather than asserts,
+   and three imperatives in bold full-contrast ink read as a warning. The muted
+   ink still clears 4.5:1 on this surface.
+
+   --space-gap-related between the lines, because they are one instruction set;
+   --space-gap-group below, which is L2's doubling check (32 ≥ 2 × 12).      */
+.musie-steps {
+  margin: 0 0 var(--space-gap-group);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-xl-family);
+  font-size: var(--type-body-xl-size);
+  font-weight: var(--type-body-xl-weight);
+  line-height: var(--type-body-xl-line);
+  letter-spacing: var(--type-body-xl-tracking);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+.musie-steps > p { margin: 0; }
+
+/* ═══ THE QR READER ═════════════════════════════════════════════════════════
+   A permitted custom pattern: the system has no camera viewport, and it is one
+   of the three the clickdummy handoff already names.
+
+   SQUARE, because a QR code is. Capped at five guided targets across so it
+   does not become a wall on a tablet, and dashed — L10's "a place where
+   something will be" — because nothing is in it yet.                       */
+.musie-scanner {
+  position: relative;
+  aspect-ratio: 1;
+  inline-size: 100%;
+  max-inline-size: calc(var(--target-guided) * 5);
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-gap-related);
+  padding: var(--space-inset-card);
+  border-radius: var(--radius-panel);
+  border: var(--border-width-thick) var(--border-style-dashed) var(--border-subtle);
+  background-color: var(--surface-sunken);
+  text-align: center;
+  color: var(--on-surface-muted);
+}
+
+.musie-scanner__text {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* ═══ THE QUESTION ══════════════════════════════════════════════════════════
+   Shown on the listen step and again on the reflect step — ONE column in the
+   schema, read twice, so the question you hold while the track plays and the
+   question you answer afterwards cannot drift apart.
+
+   A REAL HEADING. `14-reflect-step.md` puts it plainly: inside a wizard panel
+   the step's question IS the heading. It is an <h2>, under the exercise name's
+   <h1>, which also gives the two steps an outline entry each rather than a
+   panel of anonymous prose.
+
+   L8 — it is prose the user must read in order to act, so it never drops to
+   body-sm. Same step and same muted ink as `.musie-steps`, because it is the
+   same voice; the weight is what separates a question from an instruction.   */
+.musie-question {
+  margin: 0 0 var(--space-gap-group);
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-body-xl-family);
+  font-size: var(--type-body-xl-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--type-body-xl-line);
+  letter-spacing: var(--type-body-xl-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}
+
+/* ═══ THE STEP RAIL'S CONTAINER ═════════════════════════════════════════════
+   InteractiveWizard collapses below --bp-md — the current step keeps its
+   label, the rest shrink to markers — and that rule is a MEDIA query, which
+   cannot see that the rail sits inside a card inside a grid column. At 1024px
+   the viewport is wide and the column is not, so the expanded run would
+   overflow its own card.
+
+   An inline-size container is what lets the component's own `compact` rule
+   answer to the card instead. The component ships `.musy-wizard--compact` for
+   forcing it; this is the other half — declaring the container so the rail can
+   measure something true.                                                   */
+.musie-rail {
+  container-type: inline-size;
+}
+
+/* ═══ A RUN OF THINGS INSIDE A STEP ═════════════════════════════════════════
+   The stack gap, named once so four step panels do not each invent it.     */
+.musie-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
 }
 
 /* ═══ SCRIM ═════════════════════════════════════════════════════════════════

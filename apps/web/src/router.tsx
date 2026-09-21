@@ -15,10 +15,13 @@ import { createBrowserRouter, redirect } from 'react-router';
 import type { LoaderFunctionArgs } from 'react-router';
 import { AppShell } from './AppShell';
 import { SettingsSheet } from './SettingsSheet';
+import { AboutMusie } from './routes/AboutMusie';
+import { AboutYou } from './routes/AboutYou';
 import { MenuDrawer } from './routes/MenuDrawer';
 import { Diary } from './routes/Diary';
 import { DiaryEntry } from './routes/DiaryEntry';
 import { Exercises } from './routes/Exercises';
+import { Session } from './routes/Session';
 import { Placeholder } from './routes/Placeholder';
 import { isStepId } from './routeHandle';
 import type { RouteHandle } from './routeHandle';
@@ -55,14 +58,14 @@ export const router = createBrowserRouter([
            home — and the pair then reads right: `/` is about the product,
            `/about-you` is about the reader. */
         index: true,
-        element: <Placeholder titleKey="route.aboutMusie.title" />,
+        element: <AboutMusie />,
         handle: handle({ titleKey: 'route.aboutMusie.title' }),
       },
       {
         /* `about-you`, not `about`: one spelling per route, and the path now
            says which "about" it is. */
         path: 'about-you',
-        element: <Placeholder titleKey="route.aboutYou.title" />,
+        element: <AboutYou />,
         handle: handle({ titleKey: 'route.aboutYou.title' }),
       },
       {
@@ -120,14 +123,15 @@ export const router = createBrowserRouter([
       {
         path: 'session/:id/:step',
         loader: sessionLoader,
-        element: <Placeholder titleKey="route.session.title" />,
+        element: <Session />,
         handle: handle({ titleKey: 'route.session.title', wide: true }),
       },
-      {
-        path: 'done',
-        element: <Placeholder titleKey="route.done.title" />,
-        handle: handle({ titleKey: 'route.done.title', wide: true }),
-      },
+      /* `/done` IS GONE. The prototype ended on a screen that acknowledged the
+         session and offered to share it; C.2 cut sharing, and D.5 routes a
+         finished run straight into its own diary entry — which already says
+         what happened, in the place the person will look for it again. An end
+         screen between the two would be a page whose only content is that it
+         is not the diary yet. */
       {
         /* An overlay route, like settings: linkable, and Back closes it. */
         path: 'menu',

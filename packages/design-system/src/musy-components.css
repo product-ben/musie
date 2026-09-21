@@ -200,7 +200,7 @@
   .musy-icon-btn--secondary:hover:not(:disabled):not([data-loading]),
   .musy-icon-btn--secondary[data-force~="hover"] {
     background-color: var(--interactive-ghost-hover);
-    border-color: var(--sand-8);
+    border-color: var(--interactive-ghost-border-hover);
   }
   .musy-icon-btn--ghost:hover:not(:disabled):not([data-loading]),
   .musy-icon-btn--ghost[data-force~="hover"] {
@@ -451,7 +451,7 @@
   .musy-btn--secondary:hover:not(:disabled):not([data-loading]),
   .musy-btn--secondary[data-force~="hover"] {
     background-color: var(--interactive-ghost-hover);
-    border-color: var(--sand-8);
+    border-color: var(--interactive-ghost-border-hover);
   }
   .musy-btn--ghost:hover:not(:disabled):not([data-loading]),
   .musy-btn--ghost[data-force~="hover"] {
@@ -1242,90 +1242,6 @@
 }
 
 
-/* ═══ 8b · PROCESS VISUALISATION — RETIRED ═════════════════════════════════
-   Superseded by 8 · Carousel. Kept only so the v0.1 clickdummy still renders;
-   no new screen should reach for it.                                        */
-
-.musy-process {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  counter-reset: musy-step;
-}
-.musy-process__step {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-gap-stack);
-  counter-increment: musy-step;
-}
-.musy-process__badge {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: var(--target-primary);
-  height: var(--target-primary);
-  border: var(--border-width-regular) var(--border-style-solid) var(--interactive-primary-border);
-  border-radius: var(--radius-full);
-  background-color: var(--interactive-primary-subtle);
-  color: var(--interactive-primary-on-subtle);
-}
-.musy-process__text { display: flex; flex-direction: column; gap: var(--sp-1); padding-block-start: var(--sp-1); }
-.musy-process__ordinal {
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  letter-spacing: var(--type-label-md-tracking);
-  color: var(--on-surface-muted);
-}
-.musy-process__title {
-  margin: 0;
-  font-family: var(--type-heading-sm-family);
-  font-size: var(--type-heading-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-heading-sm-line);
-  letter-spacing: var(--type-heading-sm-tracking);
-  color: var(--on-surface);
-  text-wrap: var(--text-wrap-heading);
-  max-width: var(--measure-heading);
-}
-.musy-process__body {
-  margin: 0;
-  font-family: var(--type-body-md-family);
-  font-size: var(--type-body-md-size);
-  font-weight: var(--type-body-md-weight);
-  line-height: var(--type-body-md-line);
-  color: var(--on-surface-muted);
-  text-wrap: var(--text-wrap-body);
-  max-width: var(--measure-body);
-  hyphens: var(--text-hyphens);
-}
-/* The divider: a vertical run with an arrowhead. Centred on the STACK, not on
-   the badge column — it belongs to the whole step sequence rather than to the
-   badge rail, and centring it keeps the rhythm symmetrical however wide the
-   text column gets. Decorative — the <ol> carries the sequence. */
-.musy-process__divider {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  width: 100%;
-  /* Symmetrical: --space-gap-stack above and below. The arrow belongs to the
-     sequence, not to either neighbouring step, so it sits evenly between them.
-     The line itself carries the visual pull toward the next step. */
-  padding-block: var(--space-gap-stack);
-  color: var(--border-strong);
-}
-.musy-process__divider-line {
-  width: var(--border-width-thick);
-  height: var(--sp-5);
-  background-color: currentColor;
-}
-
-
 /* ═══ 9 · CONTENT BOX ══════════════════════════════════════════════════════
    No APG pattern (not interactive, not a landmark). Semantic HTML: <article>
    with a heading, so it appears in the document outline as a unit.
@@ -1382,6 +1298,16 @@
 }
 
 .musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+/* MUTED HEADLINE — opt-in, for a box whose headline NAMES ITS CONTEXT rather
+   than announcing itself. The session's framed box is the case: the exercise
+   name sits above the step rail as a reminder of what you are in, and at full
+   contrast it competes with the step you are actually doing. The prototype
+   does exactly this, inline; this is the same decision with a prop in front
+   of it so a screen does not have to reach for the part.
+   The heading LEVEL is unchanged, so nothing moves in the outline — this is
+   ink, not structure. --on-surface-muted clears 4.5:1 on every surface a box
+   can sit on, so the headline is still body-grade text. */
+.musy-box--headline-muted .musy-box__headline { color: var(--on-surface-muted); }
 .musy-box__text     { margin: 0; color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); max-width: var(--measure-body); hyphens: var(--text-hyphens); }
 .musy-box__slot     { display: flex; flex-direction: column; gap: var(--space-gap-stack); }
 
@@ -1764,9 +1690,15 @@
   flex-wrap: wrap;
   gap: var(--space-gap-inline) var(--space-gap-stack);
   margin: 0;
-  /* Above the group: it is a key, and a key is only useful before the thing
-     it explains. */
-  padding-block-end: var(--space-gap-related);
+  /* NO TRAILING SPACE OF ITS OWN. It used to carry
+     `padding-block-end: --space-gap-related`, from when it was rendered inside
+     RadioCards directly above the cards and had exactly one arrangement.
+
+     It is its own component now, and a consumer may put it on a row with
+     something else — /exercises pairs it with the "let Musie pick" escape
+     hatch. Baked-in trailing space is then geometry the consumer cannot
+     control without reaching into this class, which is the one thing a
+     consumer must not do. The GAP belongs to whatever places it. */
   color: var(--on-surface-muted);
   font-family: var(--type-body-sm-family);
   font-size: var(--type-body-sm-size);
@@ -2569,7 +2501,8 @@
     color: HighlightText;
     border-color: Highlight;
   }
-  .musy-wizard__trigger[data-state="disabled"] .musy-wizard__marker { border-color: GrayText; color: GrayText; }
+  .musy-wizard__trigger[data-state="disabled"] .musy-wizard__marker,
+  .musy-wizard__trigger[data-state="skipped"] .musy-wizard__marker { border-color: GrayText; color: GrayText; }
   .musy-btn--primary, .musy-icon-btn--primary { background-color: ButtonFace; color: ButtonText; }
   .musy-radio__body[data-checked],
   .musy-radio-card__body[data-checked],
@@ -3138,6 +3071,31 @@
 .musy-wizard__trigger[data-state="disabled"] .musy-wizard__label,
 .musy-wizard__trigger[data-state="disabled"] .musy-wizard__hint { color: var(--on-surface-disabled); }
 
+/* SKIPPED — not part of THIS run (D14). Two of the three exercises draw no
+   card, so their `scan` step is never reachable and never will be, however many
+   steps get completed.
+
+   THE INK IS THE SAME AS DISABLED AND THE GLYPH IS NOT, deliberately. Both
+   states are unreachable, so both sit at --on-surface-disabled and neither
+   competes with the live run; what tells them apart is the marker — a NUMBER
+   for a step that is waiting its turn, a DASH for one that has none. That is
+   the same device `completed` uses (number → check) and it survives greyscale
+   and forced colours (1.4.1), where a second grey would not. The state word
+   under the label says it in words as well.
+
+   No dashed border, no strike-through: both were tried on paper and both read
+   as an error state rather than an omission. */
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__marker {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--on-surface-disabled);
+}
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__label,
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__hint { color: var(--on-surface-disabled); }
+/* Same cursor as disabled: the button IS disabled, so the pointer must not
+   promise a destination. */
+.musy-wizard__trigger[data-state="skipped"] { cursor: not-allowed; }
+
 /* ACTIVE — reachable. Neutral ring instead of the accent one, so the accent
    belongs to the step you are ON. The ring cannot simply go: the tint behind
    it is ~1.2:1 on the panel, so without a border a reachable step and an
@@ -3202,11 +3160,17 @@
   color: var(--musy-wizard-accent-on-subtle);
 }
 
-/* The number and the check are siblings; the state decides which one shows, so
-   a completed step never has to re-render its marker from a different tree. */
-.musy-wizard__num, .musy-wizard__check { display: grid; place-items: center; }
-.musy-wizard__trigger[data-state="completed"] .musy-wizard__num { display: none; }
+/* The number, the check and the dash are siblings; the state decides which one
+   shows, so a step never has to re-render its marker from a different tree.
+
+   Written as three "show exactly one" pairs rather than a cascade of
+   :not()s — the number hides for completed AND skipped, and stating that twice
+   is clearer than one compound selector nobody can read. */
+.musy-wizard__num, .musy-wizard__check, .musy-wizard__skip { display: grid; place-items: center; }
+.musy-wizard__trigger[data-state="completed"] .musy-wizard__num,
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__num { display: none; }
 .musy-wizard__trigger:not([data-state="completed"]) .musy-wizard__check { display: none; }
+.musy-wizard__trigger:not([data-state="skipped"]) .musy-wizard__skip { display: none; }
 
 /* Connector. Decorative — it is not in the reading order, and it carries the
    completed colour only when the step BEFORE it is done.

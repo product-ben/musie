@@ -65,9 +65,34 @@ create table public.exercises (
   image_url     text,
   implemented   boolean not null default false,
   sort          integer not null unique,
+  -- ── HOW MUCH OF THE TRACK HAS TO BE BEHIND YOU ────────────────────────
+  -- Before the reflection is worth starting. A TIME, NOT A COMPLETION: the
+  -- exercise works from some way in, and demanding the whole track would make
+  -- a five-minute piece a five-minute wait.
+  --
+  -- A COLUMN BECAUSE IT VARIES BY EXERCISE (Ben, 2026-09-20). It began as a
+  -- hardcoded 90 in the listen step, carried over from the prototype, and a
+  -- fifteen-minute Body Scan Soundwalk and a two-minute card draw plainly do
+  -- not earn the same gate. It sits HERE rather than in `exercise_i18n`
+  -- because it is a number, not copy — the same reasoning that puts
+  -- `timeframe_min` here.
+  --
+  -- NOT NULL with a default: every exercise has an answer, and the default is
+  -- the one measured value the product actually has. The app still caps it at
+  -- the track's own length, so a gate longer than the recording is satisfied
+  -- by finishing it rather than becoming unreachable.
+  listen_gate_seconds integer not null default 90,
   constraint exercises_timeframe_order    check (timeframe_min <= timeframe_max),
-  constraint exercises_timeframe_positive check (timeframe_min > 0)
+  constraint exercises_timeframe_positive check (timeframe_min > 0),
+  -- Positive, and no upper bound: the cap belongs to the track, which this
+  -- table cannot see. Zero would mean "no gate", which is a thing somebody
+  -- may want and is not expressible as a negative.
+  constraint exercises_listen_gate_positive check (listen_gate_seconds >= 0)
 );
+
+comment on column public.exercises.listen_gate_seconds is
+  'Seconds of the track that must be behind the listener before the reflection '
+  'unlocks. Capped at the track''s own duration by the app.';
 
 create table public.exercise_i18n (
   exercise_id    text not null references public.exercises (id) on delete cascade,

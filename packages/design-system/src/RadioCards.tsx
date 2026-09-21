@@ -33,11 +33,86 @@ import { RadioGroup } from '@base-ui/react/radio-group';
 import { Radio } from '@base-ui/react/radio';
 import { Fieldset } from '@base-ui/react/fieldset';
 import { Check } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
+import { Hint } from './Hint';
 import { Message } from './Message';
 import { useMusyText } from './locale';
 import type { TypeStep } from './ContentBox';
 import type { RadioAccent } from './RadioGroupText';
+
+/**
+ * One condition the card states as a glyph — how long, what you need, whether
+ * it makes a sound.
+ *
+ * THE SENTENCE IS NEVER ONLY IN THE BUBBLE. `Hint` renders `text` as
+ * visually-hidden content inside the trigger as well as in the hover bubble,
+ * which is what keeps this clear of 1.4.13: nothing appears on hover that is
+ * not already in the accessible name. Coarse pointers get no bubble at all and
+ * lose nothing.
+ *
+ * `shortText` is the only part drawn beside the glyph, and it is optional
+ * because most conditions have no short form worth reading — "2–12 min" does,
+ * "needs your Mindfulness Cards deck" does not, and a card that spelled all
+ * three out would be a paragraph pretending to be a row of chips.
+ */
+export interface RadioCardFact {
+  /** Stable identity. The React key. */
+  id: string;
+  /** The glyph. Required — it is the whole of what a fact shows at a glance. */
+  glyph: LucideIcon;
+  /** The full sentence. Announced, and shown in the hover bubble. */
+  text: string;
+  /** A short visible form beside the glyph. Omit when there is none. */
+  shortText?: string;
+}
+
+/** One row of the glyph key. */
+export interface RadioCardLegendItem {
+  id: string;
+  glyph: LucideIcon;
+  /** The shortest true word for what the glyph means — "Time", "Sound". */
+  label: string;
+}
+
+export interface RadioCardLegendProps {
+  items: RadioCardLegendItem[];
+  className?: string;
+}
+
+/**
+ * The key to the cards' fact glyphs.
+ *
+ * ── ITS OWN COMPONENT, NOT A PROP ON THE GROUP ─────────────────────────────
+ * It began as `RadioCards.glyphLegend`, which put it inside the fieldset and
+ * fixed it directly above the cards. That is the right DEFAULT place — a key
+ * is only useful before the thing it explains — but it is not the only one:
+ * /exercises wants it on one row with the "let Musie pick" escape hatch, which
+ * a prop rendering inside the group cannot express and which a screen cannot
+ * build for itself without emitting `.musy-rcard-legend` from `apps/web`.
+ *
+ * Separate, both arrangements are the consumer's to compose and neither needs
+ * a second copy of the markup.
+ *
+ * A `<dl>` because that IS the relation — each glyph is a term and its word
+ * the definition — and because it gives the icons one authored explanation
+ * instead of repeating a sentence on every card that carries them. The glyph
+ * is aria-hidden and the word beside it is the definition, so each pair
+ * announces as the word alone, which is the whole content of a key.
+ */
+export function RadioCardLegend({ items, className }: RadioCardLegendProps) {
+  if (items.length === 0) return null;
+  return (
+    <dl className={['musy-rcard-legend', className ?? ''].filter(Boolean).join(' ')}>
+      {items.map((item) => (
+        <div key={item.id} className="musy-rcard-legend__item">
+          <dt><Icon glyph={item.glyph} size="sm" /></dt>
+          <dd>{item.label}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 export interface RadioCardOptionRich {
   value: string;
@@ -47,6 +122,15 @@ export interface RadioCardOptionRich {
   /** One or two lines. Longer than that and this is a Content Box with its own
    *  screen, not an option in a chooser. */
   description: string;
+  /**
+   * What the card COSTS and NEEDS, as glyphs. Pinned to the foot of the text
+   * column, so a run of cards compares like with like on one horizontal line.
+   *
+   * Three of them read in the time it takes to read "about 20 minutes ·
+   * headphones", which is the whole reason they are glyphs. Render a
+   * `RadioCardLegend` alongside the group: an unexplained glyph is a rebus.
+   */
+  facts?: RadioCardFact[];
   /**
    * The meta label — duration, level, count. Last in the reading order and
    * de-emphasised: it QUALIFIES the card, it does not name it. Optional,
@@ -66,6 +150,17 @@ export interface RadioCardOptionRich {
 export interface RadioCardsProps {
   name: string;
   legend: string;
+  /**
+   * Hide the legend visually. It stays in the accessible tree — an unnamed
+   * radio group announces as a bare set of options (1.3.1, 4.1.2), so this
+   * never removes it.
+   *
+   * For the case where the SCREEN has already asked the question: /exercises
+   * has "What would you like to start with now?" as its `h1`, and a visible
+   * "Choose an exercise" underneath it is the same question twice. Mirrors
+   * SegmentedControl's prop of the same name.
+   */
+  legendHidden?: boolean;
   hint?: string;
   options: RadioCardOptionRich[];
   value?: string;
@@ -83,7 +178,7 @@ export interface RadioCardsProps {
 }
 
 export function RadioCards({
-  name, legend, hint, options, value, onValueChange, accent = 'primary',
+  name, legend, legendHidden = false, hint, options, value, onValueChange, accent = 'primary',
   headingLevel = 3, headlineStep = 'heading-sm', descriptionStep = 'body-md',
   disabled = false, error, emptyLabel, className,
 }: RadioCardsProps) {
@@ -106,7 +201,11 @@ export function RadioCards({
       className="musy-radio-group"
       data-invalid={error ? '' : undefined}
     >
-      <Fieldset.Legend className="musy-radio-group__legend">{legend}</Fieldset.Legend>
+      <Fieldset.Legend
+        className={legendHidden ? 'musy-sr-only' : 'musy-radio-group__legend'}
+      >
+        {legend}
+      </Fieldset.Legend>
       {hint && <p id={hintId} className="musy-radio-group__hint">{hint}</p>}
 
       <div className={[
@@ -137,6 +236,26 @@ export function RadioCards({
             <span className="musy-rcard__text">
               <H className="musy-rcard__headline" data-type-step={headlineStep}>{opt.headline}</H>
               <p className="musy-rcard__desc" data-type-step={descriptionStep}>{opt.description}</p>
+              {/* FACTS BEFORE THE META LABEL, and the stylesheet depends on the
+                  order: `.musy-rcard__facts` claims the auto margin that pins
+                  the pair to the foot of the column, and
+                  `.musy-rcard__facts + .musy-rcard__label` is what stops the
+                  label claiming it a second time. */}
+              {opt.facts && opt.facts.length > 0 && (
+                <span className="musy-rcard__facts">
+                  {opt.facts.map((fact) => (
+                    <Hint key={fact.id} text={fact.text} className="musy-rcard__fact">
+                      <Icon glyph={fact.glyph} size="sm" />
+                      {/* aria-hidden: `Hint` already renders the full sentence
+                          for AT, and announcing "2–12 min" in front of it would
+                          say the same fact twice in two registers. */}
+                      {fact.shortText !== undefined && (
+                        <span aria-hidden="true">{fact.shortText}</span>
+                      )}
+                    </Hint>
+                  ))}
+                </span>
+              )}
               {opt.label && <span className="musy-rcard__label">{opt.label}</span>}
             </span>
           </Radio.Root>

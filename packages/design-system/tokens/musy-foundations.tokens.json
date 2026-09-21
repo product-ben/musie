@@ -1454,6 +1454,11 @@
         "$value": "{palette.light.sand.edge}",
         "$description": "Boundary for a ghost control that must still read as a control (outline button)."
       },
+      "interactive-ghost-border-hover": {
+        "$type": "color",
+        "$value": "{palette.light.sand.8}",
+        "$description": "The same boundary on hover. Token gap G3."
+      },
       "accent-1": {
         "$type": "color",
         "$value": "{palette.light.terracotta.9}",
@@ -1870,6 +1875,11 @@
         "$type": "color",
         "$value": "{palette.dark.sand.edge}",
         "$description": "Boundary for a ghost control that must still read as a control (outline button)."
+      },
+      "interactive-ghost-border-hover": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.8}",
+        "$description": "The same boundary on hover. Token gap G3."
       },
       "accent-1": {
         "$type": "color",

@@ -40,6 +40,8 @@ import { useAsync } from './useAsync';
 import type { AsyncState } from './useAsync';
 import { isStepId } from '../routeHandle';
 import type { StepId } from '../routeHandle';
+import { activeSteps } from './sessionMachine';
+import type { SessionStatus } from './sessionMachine';
 
 export interface ActiveSession {
   /** The `:id` segment of /session/:id/:step. */
@@ -82,6 +84,274 @@ export async function readActiveSession(): Promise<ActiveSession | null> {
   }
 
   return { id: data.id, step: data.step };
+}
+
+/* ── The session's own row, and every write the flow makes to it ───────────
+ *
+ * ── WHY THE WRITES LIVE HERE AND NOT IN THE SCREEN ─────────────────────────
+ * The reducer in `sessionMachine.ts` is pure and holds no database; the row is
+ * what survives a closed tab. This module is the seam, and keeping it one
+ * module means there is one place where a transition and its persistence are
+ * written down together — a screen that advanced the reducer and forgot the
+ * write would leave a session that resumes at the wrong step, which is the
+ * failure nothing else would catch.
+ *
+ * ── `completed` IS DERIVED, NOT STORED ─────────────────────────────────────
+ * `sessions` has `step` and no `completed` column, and that is deliberate
+ * rather than an omission (D.4). The wizard's own rule is "every earlier step
+ * is completed", so a row's `step` already says which steps are behind it —
+ * and a stored list could contradict the column it was derived from. See
+ * `completedBefore`.
+ */
+
+/** A session row, as the flow reads it back. Column spellings stop here. */
+export interface SessionRow {
+  id: string;
+  exerciseId: string;
+  cardId: string | null;
+  trackId: string | null;
+  status: SessionStatus;
+  step: StepId;
+  startedAt: string;
+  endedAt: string | null;
+}
+
+/**
+ * Which steps are behind this one — derived from `step` and the run's shape.
+ *
+ * THE ALTERNATIVE WAS A COLUMN, and it was rejected for the reason `skipped`
+ * was: a second source of truth for something the first one already implies.
+ * The reachability rule only ever lets you stand on a step whose predecessors
+ * are all complete, so "everything before `step`, minus what is not in the
+ * run" IS the completed set, and no row can disagree with itself.
+ *
+ * The one thing it cannot reconstruct is a step you completed and then jumped
+ * back from — resume puts you at `step` with everything before it done, which
+ * is exactly where a returning user expects to be rather than a replay of a
+ * browsing history they no longer remember. `resumeSession` makes the same
+ * call about the back stack, for the same reason.
+ */
+export function completedBefore(
+  step: StepId,
+  skipped: readonly StepId[] = [],
+): StepId[] {
+  const run = activeSteps(skipped);
+  const index = run.indexOf(step);
+  /* -1 GUARD, AND IT IS NOT DEFENSIVE. A step can genuinely be outside the
+     run: `skipped` is derived from `exercises.needs_cards` on every read, so
+     an exercise edited to draw no cards while somebody's session sits at
+     `scan` produces exactly this call. Without the guard `slice(0, -1)`
+     returns everything but the LAST step — so resuming would report `listen`
+     as completed when it had not been. Caught by a test, not by review. */
+  if (index < 0) return [];
+  return run.slice(0, index) as StepId[];
+}
+
+/** Narrow the two constrained columns, exactly as `readActiveSession` does. */
+function toRow(row: {
+  id: string; exercise_id: string; card_id: string | null; track_id: string | null;
+  status: string; step: string; started_at: string; ended_at: string | null;
+}): SessionRow | null {
+  if (row.status !== 'started' && row.status !== 'finished' && row.status !== 'abandoned') {
+    console.error(`[musie] session ${row.id} has status "${row.status}" — dropped`);
+    return null;
+  }
+  if (!isStepId(row.step)) {
+    console.error(`[musie] session ${row.id} has step "${row.step}" — dropped`);
+    return null;
+  }
+  return {
+    id: row.id,
+    exerciseId: row.exercise_id,
+    cardId: row.card_id,
+    trackId: row.track_id,
+    status: row.status,
+    step: row.step,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+  };
+}
+
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at';
+
+/**
+ * One session by id. Null when there is no such row — which, under RLS, is
+ * indistinguishable from "it is not yours", on purpose.
+ */
+export async function readSession(id: string): Promise<SessionRow | null> {
+  const { data, error } = await getSupabase()
+    .from('sessions')
+    .select(SESSION_COLUMNS)
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error !== null) {
+    throw new Error(`[musie] could not read session ${id}: ${error.message}`);
+  }
+  if (data === null) return null;
+  return toRow(data);
+}
+
+/** Postgres unique violation — what the one-running-session index raises. */
+const UNIQUE_VIOLATION = '23505';
+
+/**
+ * Starting a session, and the one refusal that is not an error.
+ *
+ * `sessions_one_running_per_user` is a partial unique index, so a second
+ * `started` row cannot be created. That is not a failure to report as one: the
+ * session it collides with is this person's own and is one tap away, so the
+ * result says which, and the screen offers to continue it.
+ *
+ * Reading the collision back rather than guessing at it: the index tells us
+ * one exists, not where it is.
+ */
+export type StartResult =
+  | { kind: 'started'; session: ActiveSession }
+  | { kind: 'already-running'; session: ActiveSession | null };
+
+export async function createSession(
+  userId: string,
+  exerciseId: string,
+): Promise<StartResult> {
+  const { data, error } = await getSupabase()
+    .from('sessions')
+    .insert({
+      user_id: userId,
+      exercise_id: exerciseId,
+      /* The first step of every run. `intro` is never skipped — a cardless
+         exercise skips `scan` — so this needs no knowledge of the exercise. */
+      status: 'started',
+      step: 'intro',
+    })
+    .select('id, step')
+    .single();
+
+  if (error !== null) {
+    if (error.code === UNIQUE_VIOLATION) {
+      return { kind: 'already-running', session: await readActiveSession() };
+    }
+    throw new Error(`[musie] could not start a session: ${error.message}`);
+  }
+
+  return { kind: 'started', session: { id: data.id, step: 'intro' } };
+}
+
+/**
+ * Move the row to a step.
+ *
+ * `status` is untouched: advancing is not ending, and the
+ * `sessions_ended_at_matches_status` check would refuse a step write that
+ * tried to carry one.
+ */
+export async function saveStep(id: string, step: StepId): Promise<void> {
+  const { error } = await getSupabase().from('sessions').update({ step }).eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save the step: ${error.message}`);
+  }
+}
+
+/**
+ * What was drawn, and what it plays.
+ *
+ * ONE WRITE, TWO FACTS, deliberately. `card_id` and `track_id` are different
+ * things — what you drew and what you heard — but they are decided by one act,
+ * and writing them separately would allow a row that has a card and no
+ * recording because the second request failed.
+ *
+ * BOTH NULLABLE, because clearing is the same act in reverse: *Scan a
+ * different card* puts the step back to its reader, and a session that kept
+ * the old track while losing the card would be claiming a recording it no
+ * longer has a reason to play.
+ */
+export async function saveCard(
+  id: string,
+  cardId: string | null,
+  trackId: string | null,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ card_id: cardId, track_id: trackId })
+    .eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save the card: ${error.message}`);
+  }
+}
+
+/**
+ * End a session, either way.
+ *
+ * `endedAt` is an INPUT rather than `now()`, for the same reason the reducer
+ * takes one: the two have to agree, and a row whose timestamp came from the
+ * database while the state machine used the clock is a duration nobody can
+ * reproduce.
+ */
+export async function endSession(
+  id: string,
+  status: Exclude<SessionStatus, 'started'>,
+  endedAt: string,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ status, ended_at: endedAt })
+    .eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not end the session: ${error.message}`);
+  }
+}
+
+/**
+ * Delete one session, and its reflection with it.
+ *
+ * ── THE CASCADE DOES THE SECOND HALF ───────────────────────────────────────
+ * `reflections.session_id` is `on delete cascade`, so this is one statement
+ * and there is no orphan to clean up afterwards. Deleting the reflection
+ * separately first would be two round trips with a window between them where
+ * a session exists with its answer already gone.
+ *
+ * ── RLS IS THE BOUNDARY, AGAIN ─────────────────────────────────────────────
+ * No `user_id` filter. `sessions_delete_own` is
+ * `using (user_id = (select auth.uid()))`, so a row that is not yours simply
+ * is not there to delete — and a client-side filter would read as the security
+ * model while being a convenience.
+ *
+ * ── IT IS IRREVERSIBLE, AND NOTHING HERE SOFTENS THAT ──────────────────────
+ * No soft delete, no `deleted_at`. A diary the user asked to forget something
+ * from should forget it; a hidden row that still exists is the opposite of
+ * what the privacy copy promises. The CONFIRMATION lives in the screen, which
+ * is where a person can still change their mind.
+ */
+export async function deleteSession(id: string): Promise<void> {
+  const { error } = await getSupabase().from('sessions').delete().eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not delete the session: ${error.message}`);
+  }
+}
+
+/**
+ * The answer.
+ *
+ * `mode` says HOW THE TEXT WAS PRODUCED — typed, transcribed, or read off a
+ * photograph — because no file is ever attached. `body` is not null by
+ * constraint, so a reflection with nothing in it is refused by the database
+ * rather than stored and puzzled over later.
+ *
+ * `upsert` on `session_id`: the reflect step can be returned to from a later
+ * step, and the second save must update the answer rather than hit
+ * `reflections_one_per_session` with a duplicate. That constraint is exactly
+ * what makes the upsert safe to key on.
+ */
+export async function saveReflection(
+  sessionId: string,
+  mode: 'text' | 'voice' | 'photo',
+  body: string,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('reflections')
+    .upsert({ session_id: sessionId, mode, body }, { onConflict: 'session_id' });
+  if (error !== null) {
+    throw new Error(`[musie] could not save the reflection: ${error.message}`);
+  }
 }
 
 /**

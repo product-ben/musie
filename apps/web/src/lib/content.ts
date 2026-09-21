@@ -44,6 +44,17 @@ export interface Exercise {
   imageUrl: string | null;
   implemented: boolean;
   sort: number;
+  /**
+   * How much of the track has to be behind you before the reflection unlocks,
+   * in seconds. Per exercise, because it varies with the exercise — a
+   * two-minute card draw and a twenty-minute soundwalk do not earn the same
+   * gate.
+   *
+   * `not null` in the schema, so no coalescing here. The listen step still
+   * caps it at the track's own duration: a gate longer than the recording is
+   * satisfied by finishing it rather than being unreachable.
+   */
+  listenGateSeconds: number;
   name: string;
   description: string;
   /** Null for exercises the source has no `needs` for. Absent, not untranslated. */
@@ -172,7 +183,7 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, exercise_i18n(locale, name, description, needs, duration_label, intro_text, scan_text, listen_text, reflect_text, question, image_alt)';
+const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, duration_label, intro_text, scan_text, listen_text, reflect_text, question, image_alt)';
 
 interface ExerciseRow {
   id: string;
@@ -183,6 +194,7 @@ interface ExerciseRow {
   image_url: string | null;
   implemented: boolean;
   sort: number;
+  listen_gate_seconds: number;
   exercise_i18n: {
     locale: string;
     name: string;
@@ -210,6 +222,7 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     imageUrl: row.image_url,
     implemented: row.implemented,
     sort: row.sort,
+    listenGateSeconds: row.listen_gate_seconds,
     name: text.name,
     description: text.description,
     needs: text.needs,
@@ -289,6 +302,92 @@ export async function getCards(locale: Locale): Promise<Card[]> {
   if (error !== null) fail('cards', error.message);
 
   return (data ?? []).flatMap((row) => toCard(row, locale));
+}
+
+/** One card, by id. What the session screen reads back from `sessions.card_id`. */
+export async function getCard(id: string, locale: Locale): Promise<Card | null> {
+  const { data, error } = await getSupabase()
+    .from('cards')
+    .select(CARD_SELECT)
+    .in('card_i18n.locale', wanted(locale))
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error !== null) fail(`cards (id=${id})`, error.message);
+  if (data === null) return null;
+
+  return toCard(data, locale)[0] ?? null;
+}
+
+/**
+ * The recording, and the four columns of it the client is allowed to have.
+ *
+ * `title` and `artist` are NOT GRANTED AT ALL — naming either here does not
+ * return null, it fails the whole request with 42501. That is the design: the
+ * premise of the exercise is a listener who has not been primed by the track
+ * name, and the reveal is E.5's own function. The same four columns the diary
+ * reads, for the same reason and documented at `DiaryTrack`.
+ */
+export interface Track {
+  id: string;
+  /** Repo-relative, as the seed stores it. `trackUrl` in diary.ts resolves it. */
+  src: string;
+  durationSeconds: number;
+  licenceRef: string | null;
+}
+
+/**
+ * WHICH RECORDING PLAYS, for an (exercise, card) pair.
+ *
+ * Two tables, and the split is the point: `tracks` is the recording, stored
+ * once and licensed once; `exercise_tracks` says when it plays. So this reads
+ * the PAIRING and embeds the recording, rather than looking a track up by card.
+ *
+ * `cardId` is nullable because a cardless exercise has its own track — one
+ * pairing row with a null `card_id`, under `unique nulls not distinct`. Null
+ * therefore has to be matched with `is`, not `eq`: PostgREST's `eq.null`
+ * compares with `=`, which is never true of NULL in SQL and would silently
+ * return nothing for exactly the exercises this branch exists for.
+ *
+ * Null for "no pairing row", which is ORDINARY today: Breathing Score and Body
+ * Scan Soundwalk both need sound, draw no card, and the source has no file for
+ * either. The listen step renders its no-recording line rather than an error.
+ */
+export async function getTrackFor(
+  exerciseId: string,
+  cardId: string | null,
+): Promise<Track | null> {
+  const query = getSupabase()
+    .from('exercise_tracks')
+    .select('track_id, tracks(id, src, duration_seconds, licence_ref)')
+    .eq('exercise_id', exerciseId);
+
+  const { data, error } = await (cardId === null
+    ? query.is('card_id', null)
+    : query.eq('card_id', cardId)
+  ).maybeSingle();
+
+  if (error !== null) fail(`exercise_tracks (${exerciseId}, ${cardId ?? 'null'})`, error.message);
+  if (data === null) return null;
+
+  /* PostgREST returns an OBJECT for a to-one embed and an ARRAY for a to-many
+     one, and supabase-js's inference reads the generated relationship rather
+     than the shape on the wire — the same trap diary.ts documents at
+     `Embedded<T>`. Collapsed here, at the boundary. */
+  const embed = data.tracks as unknown;
+  const track = (Array.isArray(embed) ? embed[0] : embed) as Track & {
+    duration_seconds: number;
+    licence_ref: string | null;
+  } | null | undefined;
+
+  if (track === null || track === undefined) return null;
+
+  return {
+    id: track.id,
+    src: track.src,
+    durationSeconds: track.duration_seconds,
+    licenceRef: track.licence_ref,
+  };
 }
 
 /**

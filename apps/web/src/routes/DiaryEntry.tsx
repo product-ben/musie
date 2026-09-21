@@ -82,14 +82,17 @@
  * reason for this route having no loader.
  */
 import * as React from 'react';
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useNavigate, useParams } from 'react-router';
+import { Trash2 } from 'lucide-react';
 import {
-  Badge, BadgeRow, ContentBox, ContentList, Lightbox, Message, TrackButton,
+  Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, CtaButton, IconButton,
+  Lightbox, Message, TrackButton,
 } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { useCloseOverlay } from '../lib/useCloseOverlay';
 import { useDiaryEntry } from '../lib/useDiary';
+import { deleteSession } from '../lib/session';
 import {
   durationMinutes, formatDateTime, sessionPath, stepMessageKey, trackUrl,
 } from '../lib/diary';
@@ -231,6 +234,42 @@ export function DiaryEntry() {
 function Entry({ entry }: { entry: DiaryEntryDetail }) {
   const t = useT();
   const { locale } = useLocale();
+  const navigate = useNavigate();
+
+  /**
+   * DELETION, AND ITS CONFIRMATION, INLINE.
+   *
+   * Not a second Lightbox. This box is already inside one, and a dialog over a
+   * dialog is where focus management stops being base-ui's problem and starts
+   * being ours. The confirm replaces the box's own controls with a `Message`
+   * carrying the two answers, so the decision happens where the thing being
+   * decided about is on screen.
+   *
+   * It IS confirmed, though `Ben` asked only for the button: the row and its
+   * reflection go for good — `reflections` cascades — and BUILD-PLAN G.2 says
+   * deletion is confirmed for exactly that reason. A one-tap irreversible
+   * delete on a diary is the wrong default.
+   */
+  const [confirming, setConfirming] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+
+  async function remove() {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteSession(entry.id);
+      /* A FRESH NAVIGATION, not `useCloseOverlay`'s history pop. Going back
+         would restore the diary exactly as it was — including the row that no
+         longer exists — because the list is kept mounted beneath this overlay
+         and its read is keyed on the arrival, not on a clock. Arriving anew
+         is what makes it re-read. See `useDiary`. */
+      navigate('/diary', { replace: true });
+    } catch (thrown: unknown) {
+      console.error('[musie] could not delete the session:', thrown);
+      setDeleting(false);
+      setConfirming(false);
+    }
+  }
 
   const minutes = durationMinutes(entry.startedAt, entry.endedAt);
   const abandoned = entry.status === 'abandoned';
@@ -341,6 +380,48 @@ function Entry({ entry }: { entry: DiaryEntryDetail }) {
           text={entry.reflection.body}
           outline="sunken"
         />
+      )}
+
+      {confirming ? (
+        <Message
+          variant="warning"
+          /* 'assertive': it was injected by an action and it is asking a
+             question that has to be answered before anything else. L11. */
+          live="assertive"
+          headingLevel={4}
+          headline={t('diary.delete.confirm')}
+          text={t('diary.delete.text')}
+          action={
+            <ButtonGroup align="end">
+              <CtaButton variant="ghost" onClick={() => setConfirming(false)}>
+                {t('common.cancel')}
+              </CtaButton>
+              <CtaButton
+                variant="secondary"
+                loading={deleting}
+                loadingLabel={t('content.loading')}
+                onClick={() => void remove()}
+              >
+                {t('diary.delete.yes')}
+              </CtaButton>
+            </ButtonGroup>
+          }
+        />
+      ) : (
+        /* One icon, at the trailing edge, quiet. Deleting is something a
+           person is entitled to do to their own record and is not what they
+           came to this screen for — so it is present and does not compete
+           with reading. The label is the whole accessible name; IconButton
+           reuses it as the tooltip, so the two cannot disagree. */
+        <ButtonGroup align="end">
+          <IconButton
+            glyph={Trash2}
+            label={t('diary.delete')}
+            variant="ghost"
+            size="primary"
+            onClick={() => setConfirming(true)}
+          />
+        </ButtonGroup>
       )}
     </ContentBox>
   );

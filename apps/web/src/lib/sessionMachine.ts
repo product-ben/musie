@@ -110,7 +110,7 @@ export function isTerminal(status: SessionStatus): boolean {
 
 /**
  * THE SAME REACHABILITY RULE `InteractiveWizard` ENFORCES — and now literally
- * the same function.
+ * the same function, skipping included.
  *
  * It was written out here a second time, because the rule lived in a private
  * closure inside the component and the app could not ask about it. The
@@ -119,14 +119,20 @@ export function isTerminal(status: SessionStatus): boolean {
  * `@musie/design-system`'s `wizardSteps` module, so there is one
  * implementation and no way for the rail and the reducer to drift apart.
  *
+ * D.0 FINISHED THAT JOB. This function used to hold two lines of skip logic of
+ * its own — an early return for a skipped step, and `activeSteps()` filtering
+ * the list it handed over — because the design system had no idea skipping
+ * existed. It does now (D14's fifth wizard state), so both lines are gone and
+ * the full step list goes across with the skipped ids beside it. That matters
+ * beyond tidiness: the RAIL has to draw a skipped step, so it needs the full
+ * list anyway, and a rule that only worked on a pre-filtered list would have
+ * been a second implementation again by another name.
+ *
  * This wrapper stays because it is the app's vocabulary: the component's
  * signature takes loose id arrays, and a screen holds a `SessionState`.
  */
 export function isStepReachable(state: SessionState, step: StepId): boolean {
-  /* A skipped step is not locked — it is not in the run at all, so there is
-     no sequence of completions that would ever open it. */
-  if (state.skipped.includes(step)) return false;
-  return isWizardStepReachable(activeSteps(state.skipped), step, state.step, state.completed);
+  return isWizardStepReachable(STEP_IDS, step, state.step, state.completed, state.skipped);
 }
 
 /**
@@ -149,6 +155,41 @@ export function nextStep(step: StepId, skipped: readonly StepId[] = []): StepId 
 
 export function canGoBack(state: SessionState): boolean {
   return !isTerminal(state.status) && state.history.length > 0;
+}
+
+/**
+ * WHICH TRANSITION GETS A SCREEN FROM `state.step` TO `target`.
+ *
+ * ── WHY THIS EXISTS, AND THE BUG THAT PUT IT HERE ──────────────────────────
+ * D.4 drives the wizard from the URL: every control navigates, and one effect
+ * reconciles the new `:step` into the reducer. The first version of that effect
+ * dispatched `GO_TO` for every change — and the flow did not work at all.
+ *
+ * `GO_TO` is a JUMP. It moves `step` and pushes history and deliberately does
+ * NOT complete anything, because jumping to a step you already finished must
+ * not claim you finished the one you left. So pressing Continue on `intro`
+ * asked to jump to `scan`, `scan` was unreachable (its predecessor was not
+ * complete), the jump was refused, and the run could never leave the first
+ * step. Every step after intro was permanently locked — the same shape as the
+ * D14 bug, and just as invisible to the typechecker.
+ *
+ * MOVING FORWARD ONE STEP IS `NEXT`, and `NEXT` is what completes the step you
+ * are leaving. The distinction is the whole of this function.
+ *
+ *   'next'    — the target is the step immediately after this one, in the run.
+ *   'jump'    — somewhere else that is reachable: a completed step, or the rail.
+ *   'refuse'  — not reachable. The caller sends the person back to `state.step`.
+ *   'stay'    — already there.
+ *
+ * Pure, and separate from the effect that acts on it, because the effect needs
+ * a browser and this needs a test.
+ */
+export type StepTransition = 'stay' | 'next' | 'jump' | 'refuse';
+
+export function stepTransition(state: SessionState, target: StepId): StepTransition {
+  if (target === state.step) return 'stay';
+  if (target === nextStep(state.step, state.skipped)) return 'next';
+  return isStepReachable(state, target) ? 'jump' : 'refuse';
 }
 
 /**

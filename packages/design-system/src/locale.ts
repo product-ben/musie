@@ -85,13 +85,39 @@ export interface MusyTextCatalogue {
   optionsEmpty: string;
 
   /* ── Steps ───────────────────────────────────────────────────────────── */
-  /** ProcessVisualisation's ordinal prefix — "Schritt 1". */
+  /**
+   * The ordinal prefix — "Schritt 1".
+   *
+   * It belonged to ProcessVisualisation, which is retired. It SURVIVES the
+   * retirement because Carousel's dot pill needs exactly this word and would
+   * otherwise have invented a second one; `carouselDot` below is built from it.
+   */
   stepPrefix: string;
-  /** InteractiveWizard's four state words, under each label. */
+  /** InteractiveWizard's five state words, under each label. */
   wizardDisabled: string;
   wizardActive: string;
   wizardSelected: string;
   wizardCompleted: string;
+  /**
+   * NOT PART OF THIS RUN — D14, answered 2026-09-19.
+   *
+   * Distinct from `wizardDisabled` on purpose: locked means *not yet*, and this
+   * means *never, in this run*. Two of the three exercises draw no card, so
+   * their `scan` step is skipped and no sequence of completions will open it.
+   */
+  wizardSkipped: string;
+
+  /* ── Carousel ─────────────────────────────────────────────────────────
+     Positional, so these are functions rather than templates with slots — it
+     is the only way German can put the ordinal where German puts it. */
+  carouselPrevious: string;
+  carouselNext: string;
+  /** (position, total, title) → the slide's accessible name. */
+  carouselSlide: (position: number, total: number, title: string) => string;
+  /** The word riding inside the active dot — "Schritt 3". */
+  carouselDot: (position: number) => string;
+  /** (position, total) → a dot button's accessible name. */
+  carouselGoTo: (position: number, total: number) => string;
 
   /* ── Playback · MusicPlayer ──────────────────────────────────────────── */
   playerPlay: string;
@@ -184,6 +210,15 @@ export const musyTextDe: MusyTextCatalogue = {
   wizardActive: 'verfügbar',
   wizardSelected: 'aktuell',
   wizardCompleted: 'erledigt',
+  /* Participle, like the other four, and lower case for the same reason: it
+     sits under a label rather than standing as a heading. */
+  wizardSkipped: 'übersprungen',
+
+  carouselPrevious: 'Vorheriger Schritt',
+  carouselNext: 'Nächster Schritt',
+  carouselSlide: (position, total, title) => `Schritt ${position} von ${total}: ${title}`,
+  carouselDot: (position) => `Schritt ${position}`,
+  carouselGoTo: (position, total) => `Zu Schritt ${position} von ${total}`,
 
   playerPlay: 'Abspielen',
   playerPause: 'Pause',
@@ -262,6 +297,13 @@ export const musyTextEn: MusyTextCatalogue = {
   wizardActive: 'available',
   wizardSelected: 'current',
   wizardCompleted: 'done',
+  wizardSkipped: 'skipped',
+
+  carouselPrevious: 'Previous step',
+  carouselNext: 'Next step',
+  carouselSlide: (position, total, title) => `Step ${position} of ${total}: ${title}`,
+  carouselDot: (position) => `Step ${position}`,
+  carouselGoTo: (position, total) => `Go to step ${position} of ${total}`,
 
   playerPlay: 'Play',
   playerPause: 'Pause',

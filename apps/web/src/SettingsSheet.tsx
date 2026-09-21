@@ -142,6 +142,24 @@ function ThemeSwitch() {
  * and that flag is deliberately unused here: the brief asks for the four rows
  * and the choice persisted, and disabling three without explaining why is
  * worse than letting someone choose and find out.
+ *
+ * ── /about-you DOES THE OPPOSITE, AND THAT IS A DECISION ───────────────────
+ * The onboarding screen opens a not-implemented lightbox for those same three
+ * and records nothing. The two screens are not inconsistent by accident —
+ * Ben settled it on 2026-09-19:
+ *
+ *   /about-you is a GATE on the way into a session. It has to say why the
+ *   door will not open, and accepting an answer it cannot act on would send
+ *   someone to an exercise list that then has nothing for them.
+ *
+ *   /settings is a PREFERENCE. You are entitled to record who you are here as
+ *   whether or not the product has caught up with it, and a sheet that
+ *   refused the answer would be arguing with the user about their own
+ *   profile.
+ *
+ * Written in both files rather than one, so neither reads as the screen that
+ * forgot. The day the other three paths are built, both behaviours collapse
+ * into the same thing and both comments go.
  */
 function UserTypeChoice() {
   const t = useT();

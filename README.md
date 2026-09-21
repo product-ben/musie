@@ -25,6 +25,26 @@ Create a production build locally with:
 pnpm check && pnpm --filter web build
 ```
 
+### The two suites that are NOT in `pnpm check`
+
+Both need the local Supabase stack running, and CI does not have one. A suite
+that silently skips is worse than no suite, so neither is folded into `check`
+— each fails loudly with a message telling you to start the stack.
+
+```bash
+supabase start
+
+pnpm test:db     # database security + parity, against the local stack
+pnpm test:e2e    # one Playwright walk of a whole session, run once per locale
+```
+
+`test:e2e` starts the dev server itself and reuses one already on :5173. The
+first run needs browsers:
+
+```bash
+pnpm --filter web exec playwright install chromium
+```
+
 ## Environment variables
 
 Web-app environment variables live in `apps/web/.env.local` for local development.

@@ -51,6 +51,15 @@ const meta = {
           'The label weight follows `aria-current` rather than `data-state`, so a run',
           'whose selected step is also completed still shows where you are.',
           '',
+          '**And a fifth that is not on that line — `skipped`** (D14, answered',
+          '2026-09-19). A step that is not part of THIS run: the rail still draws its',
+          'marker, so every run reads structurally alike, but the number becomes a dash',
+          'and the step is not reachable. Neither existing state could say it —',
+          '`completed` draws a check for something nobody did, and `disabled` reads as',
+          '"not yet" about a step that is never opening. Skipped steps are transparent',
+          'to the reachability rule AND to the connector, or every step after one would',
+          'be locked forever and the run could not be finished.',
+          '',
           '**Narrow screens COLLAPSE rather than stack:** the step on screen keeps its',
           'label, every other step shrinks to its marker. Four stacked rows would spend',
           'on chrome exactly the height a phone needs for content. The hidden labels are',
@@ -141,6 +150,24 @@ const meta = {
           'three; nothing recommends one.',
           'Why: picking one would be a design decision.',
           'What I need from Ben: nothing new — this is conflict B12, already open.',
+          '',
+          '## InteractiveWizard — there is no *skipped* state — ANSWERED 2026-09-19',
+          'Ben chose a FIFTH STATE over a deliberate reuse of `disabled`. Landed in D.0:',
+          '`WizardStepState` gains `skipped`, `InteractiveWizardProps` gains `skipped`,',
+          '`wizardStepState()` takes the ids and returns it, and `src/locale.ts` carries',
+          'the word in both languages (übersprungen / skipped).',
+          'The treatment is a DASH in the marker at --on-surface-disabled — the same ink',
+          'as `disabled`, a different glyph. That is deliberate: both states are',
+          'unreachable so neither should compete with the live run, and what tells them',
+          'apart has to survive greyscale and forced colours (1.4.1), which a second grey',
+          'would not. A dashed border and a strike-through were both considered and both',
+          'read as an error rather than an omission.',
+          'The connector is now folded along the run rather than read per step, so a',
+          'skipped step no longer leaves a gap in the line either side of it. A run with',
+          'nothing skipped renders exactly as before.',
+          'It also let `apps/web/src/lib/sessionMachine.ts` delete its own two lines of',
+          'skip logic: there is now one implementation of the rule, which is what',
+          '`wizardSteps.ts` was extracted for.',
         ].join('\n'),
       },
     },
@@ -160,6 +187,7 @@ const meta = {
       description: 'id of the step on screen.',
     },
     completed: { control: false, description: 'ids of finished steps. A completed step is always reachable.' },
+    skipped: { control: false, description: 'ids that are NOT part of this run — D14. Derived by the consumer, never stored. Drawn with a dash, not reachable, and transparent to the reachability rule.' },
     onStepChange: { action: 'stepChange', description: 'Fires with the id of the step that was clicked.' },
     vertical: { control: 'boolean', description: 'Opt-in label-first stacking. Narrow screens collapse instead.' },
     compact: { control: 'boolean', description: 'Force the collapsed run inside a narrow container, which no media query can see.' },
@@ -168,7 +196,7 @@ const meta = {
       // The source comment says "Hide the state word"; true SHOWS it. See Build notes.
       description: 'Show the state word under each label. Default true.',
     },
-    stateWords: { control: false, description: 'Override any of the four state words. Each defaults to the locale catalogue — gesperrt / verfügbar / aktuell / erledigt in German, locked / available / current / done in English.' },
+    stateWords: { control: false, description: 'Override any of the five state words. Each defaults to the locale catalogue — gesperrt / verfügbar / aktuell / erledigt / übersprungen in German, locked / available / current / done / skipped in English.' },
     accent: {
       control: 'inline-radio',
       options: ['primary', 'accent', 'accent-alt'],
@@ -218,7 +246,33 @@ export const CustomStateWords: Story = {
       active: 'verfügbar',
       selected: 'aktuell',
       completed: 'erledigt',
+      skipped: 'übersprungen',
     },
+  },
+};
+
+/**
+ * A SKIPPED STEP — D14's case, and the reason the fifth state exists.
+ *
+ * Two of Musie's three exercises draw no card, so their `scan` step has nothing
+ * to do and is not part of the run. The rail still shows four markers, so every
+ * exercise reads structurally alike; `scan` carries a dash instead of its
+ * number and cannot be reached.
+ *
+ * Note the connector: the line runs THROUGH the skipped step rather than
+ * breaking either side of it, because the run does.
+ */
+export const StepSkipped: Story = {
+  args: { current: 'listen', completed: ['intro'], skipped: ['scan'] },
+};
+
+/** The same run, finished. `scan` never completes — that is the whole point —
+ *  and the run is still finishable, which before D.0 it was not. */
+export const SkippedAndFinished: Story = {
+  args: {
+    current: 'reflect',
+    completed: ['intro', 'listen', 'reflect'],
+    skipped: ['scan'],
   },
 };
 

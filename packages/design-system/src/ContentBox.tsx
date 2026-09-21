@@ -33,7 +33,22 @@ export type TypeStep =
  *  card were doing the same job, and the shadow read as a second, competing
  *  boundary next to the outline. Depth stays with 'sunken'. */
 export type BoxOutline = 'solid' | 'dashed' | 'sunken' | 'plain';
-export type HeadingLevel = 2 | 3 | 4 | 5 | 6;
+/**
+ * 1 IS IN THE UNION, and it was not until D.1 needed it.
+ *
+ * The reference flow's own markup settles this: the onboarding greeting is
+ * `<h1 class="musy-box__headline" data-type-step="display-lg">`, so the
+ * documented anatomy has always had a box whose headline is the page's h1. A
+ * screen whose MAIN CONTENT is one box has nowhere else to put it, and the two
+ * alternatives are both worse — a visually hidden h1 above the box says the
+ * same thing twice in the accessible tree, and a page with no h1 at all is a
+ * real defect rather than a stylistic one.
+ *
+ * It does not relax the rule this prop exists for. The level is still never
+ * guessed and never defaulted to 1: `headingLevel = 3` stays, and a box has to
+ * be asked to be an h1.
+ */
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface ContentBoxProps {
   headline: string;
@@ -44,6 +59,16 @@ export interface ContentBoxProps {
   /** Heading level for the document outline. Never guessed. */
   headingLevel?: HeadingLevel;
   headlineStep?: TypeStep;
+  /**
+   * Ink for the headline. `muted` is for a box whose headline NAMES ITS
+   * CONTEXT rather than announcing itself — the session's framed box, where
+   * the exercise name sits above the step rail as a reminder of what you are
+   * in and at full contrast competes with the step you are doing.
+   *
+   * It changes ink, never structure: the heading level is untouched, so
+   * nothing moves in the document outline.
+   */
+  headlineTone?: 'default' | 'muted';
   text?: string;
   textStep?: TypeStep;
   outline?: BoxOutline;
@@ -58,9 +83,10 @@ export interface ContentBoxProps {
 
 export function ContentBox({
   headline, headlineHidden = false, headingLevel = 3, headlineStep = 'heading-sm',
+  headlineTone = 'default',
   text, textStep = 'body-md', outline = 'solid', header, children, className, render,
 }: ContentBoxProps) {
-  const H = `h${headingLevel}` as 'h2';
+  const H = `h${headingLevel}` as 'h1';
   const head = (
     <>
       {/* Hidden means visually hidden, never absent: the headline IS what puts
@@ -77,6 +103,7 @@ export function ContentBox({
       className: [
         'musy-box',
         outline !== 'solid' ? `musy-box--${outline}` : '',
+        headlineTone !== 'default' ? `musy-box--headline-${headlineTone}` : '',
         header ? 'musy-box--framed' : '',
         className ?? '',
       ].filter(Boolean).join(' '),

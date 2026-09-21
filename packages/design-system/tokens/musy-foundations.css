@@ -281,6 +281,11 @@
   --interactive-ghost-on-disabled: var(--sand-9);
   /* Boundary for a ghost control that must still read as a control (outline button). */
   --interactive-ghost-border: var(--sand-edge);
+  /* The same boundary on hover. Token gap G3, and the name is Ben's choice over
+     --border-strong-hover: both raw references this replaces sit on a control
+     whose hover FILL already comes from --interactive-ghost-hover, so the
+     border now follows its own family rather than borrowing the neutral one. */
+  --interactive-ghost-border-hover: var(--sand-8);
 
   /* ── accent ─────────────────────────────────────────────────────────── */
   /* Accent 1 (terracotta) solid — category colour, chart series, avatar. */
@@ -661,6 +666,10 @@
   :root, [data-theme] {
     --border-subtle: var(--sand-edge);
     --border-strong: var(--sand-11);
+    /* G3 needed its own pair: --interactive-ghost-border has no contrast
+       escape, so without this line an outlined control's hover edge would be
+       the one boundary on screen that does NOT step up. */
+    --interactive-ghost-border-hover: var(--sand-11);
     --on-surface-muted: var(--sand-12);
     --on-surface-disabled: var(--sand-11);
     --elevation-ring: var(--sand-edge);
@@ -674,6 +683,7 @@
   :root, [data-theme] {
     --border-subtle: CanvasText;
     --border-strong: CanvasText;
+    --interactive-ghost-border-hover: CanvasText;
     --border-focus: Highlight;
     --elevation-1: none; --elevation-2: none; --elevation-3: none;
   }

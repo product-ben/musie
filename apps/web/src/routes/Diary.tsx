@@ -2,6 +2,21 @@
  * /diary — every session that is over, newest first, grouped by the day it
  * happened on.
  *
+ * ── THE MOST RECENT ONE LEADS, IN A BOX OF ITS OWN ─────────────────────────
+ * Ben, 2026-09-20. The newest session is lifted out of the list and given a
+ * ContentBox with its facts spelled out; everything older stays in the grouped
+ * list the rest of this file describes.
+ *
+ * WHY IT IS NOT ALSO IN THE LIST: it would be the same entry twice, once
+ * under a heading saying "your last session" and again under today's date.
+ * `rest` is therefore `data.slice(1)`, and the list disappears entirely when
+ * there has only ever been one session — which is the right shape for day one
+ * rather than a heading over an empty run.
+ *
+ * It ALSO lands here from finishing a run: the reflect step navigates to
+ * /diary rather than to /diary/:id, and this box is what makes that a landing
+ * rather than a dispersal — the thing you just did is the first thing you see.
+ *
  * ── TWO COMPONENTS, BECAUSE THEY ARE TWO THINGS ────────────────────────────
  * `Timeline` groups; `LinkList` is a list of destinations. The screen's whole
  * job is to turn rows into those two shapes: `groupByDay` makes the groups and
@@ -34,11 +49,16 @@
  * catalogue is worse. The slot is a column, so two siblings stack.
  */
 import { Link } from 'react-router';
-import { ContentBox, LinkList, Message, Timeline } from '@musie/design-system';
-import type { LinkListItem } from '@musie/design-system';
+import {
+  Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, CtaButton, LinkList,
+  Message, Timeline,
+} from '@musie/design-system';
+import type { ContentListItem, LinkListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { useDiary } from '../lib/useDiary';
-import { durationMinutes, formatDay, groupByDay, stepMessageKey } from '../lib/diary';
+import {
+  durationMinutes, formatDateTime, formatDay, groupByDay, stepMessageKey,
+} from '../lib/diary';
 import type { DiaryEntry } from '../lib/diary';
 
 type Translate = ReturnType<typeof useT>;
@@ -88,6 +108,79 @@ function toItem(entry: DiaryEntry, t: Translate): LinkListItem {
   };
 }
 
+/**
+ * The newest entry, spelled out.
+ *
+ * The same vocabulary the entry page uses — `diary.when`, `diary.howLong`,
+ * `diary.card` are labels; the status and *Stopped at …* are values with no
+ * label written for them, so they are a badge and a quiet line. That split is
+ * the catalogue's, not an invention, and it is why nothing new was written to
+ * fill a layout.
+ *
+ * The duration IS shown for an unfinished run here, as on the entry page and
+ * unlike in the list: it sits under an *Unfinished* badge and beside *Stopped
+ * at Listen*, which is the context a one-line row cannot give it.
+ */
+function LatestEntry({ entry }: { entry: DiaryEntry }) {
+  const t = useT();
+  const { locale } = useLocale();
+
+  const minutes = durationMinutes(entry.startedAt, entry.endedAt);
+  const abandoned = entry.status === 'abandoned';
+
+  const facts: ContentListItem[] = [
+    { label: t('diary.when'), content: formatDateTime(entry.startedAt, locale) },
+  ];
+  if (minutes !== null) {
+    facts.push({
+      label: t('diary.howLong'),
+      content: t('diary.duration', { minutes: String(minutes) }),
+    });
+  }
+  if (entry.cardFeeling !== null) {
+    facts.push({ label: t('diary.card'), content: entry.cardFeeling });
+  }
+
+  return (
+    <ContentBox
+      headline={entry.exerciseName}
+      /* h2, under the screen's h1 — the same level the day headings take, and
+         this box sits beside them in the outline rather than inside one. */
+      headingLevel={2}
+      headlineStep="heading-md"
+      text={entry.exerciseDescription}
+      /* `header` present ⇒ framed, and the hairline divides what this entry IS
+         from what is known about it. Same arrangement as the entry page. */
+      header={
+        <BadgeRow>
+          <Badge variant={abandoned ? 'outline' : 'primary-subtle'}>
+            {t(abandoned ? 'session.status.abandoned' : 'session.status.finished')}
+          </Badge>
+        </BadgeRow>
+      }
+    >
+      {abandoned && (
+        <p className="musie-note">
+          {t('diary.stoppedAt', { step: t(stepMessageKey(entry.step)) })}
+        </p>
+      )}
+
+      <ContentList items={facts} emptyLabel={t('content.empty')} />
+
+      {/* The way into the full entry, which is where the answer and the
+          recording live. A link rather than a button: it is a destination. */}
+      <ButtonGroup align="end">
+        <CtaButton
+          variant="secondary"
+          render={<Link to={`/diary/${encodeURIComponent(entry.id)}`} />}
+        >
+          {t('diary.openEntry')}
+        </CtaButton>
+      </ButtonGroup>
+    </ContentBox>
+  );
+}
+
 export function Diary() {
   const t = useT();
   const { locale } = useLocale();
@@ -120,26 +213,42 @@ export function Diary() {
       />
     );
   } else {
+    const [latest, ...rest] = data;
     body = (
-      <Timeline
-        label={t('diary.timelineLabel')}
-        headingLevel={2}
-        groups={groupByDay(data).map((day) => ({
-          id: day.key,
-          label: formatDay(day.date, locale),
-          children: (
-            <LinkList
-              label={t('diary.listLabel')}
+      <>
+        <LatestEntry entry={latest} />
+
+        {/* Nothing at all when this is the only session there has ever been —
+            a heading over an empty run says less than its absence does. */}
+        {rest.length > 0 && (
+          <>
+            <h2 className="musie-diary__earlier">{t('diary.earlier')}</h2>
+            <Timeline
+              label={t('diary.timelineLabel')}
+              /* h3: the run now sits under the *Earlier* heading rather than
+                 directly under the page title, so its days step down with it
+                 and the rows below them become h4. */
               headingLevel={3}
-              items={day.entries.map((entry) => toItem(entry, t))}
-              /* Unreachable by construction — a day exists because it has
-                 entries — but required, and a required string with no default
-                 is exactly what cannot leak the wrong language. */
-              emptyLabel={t('diary.empty')}
+              groups={groupByDay(rest).map((day) => ({
+                id: day.key,
+                label: formatDay(day.date, locale),
+                children: (
+                  <LinkList
+                    label={t('diary.listLabel')}
+                    headingLevel={4}
+                    items={day.entries.map((entry) => toItem(entry, t))}
+                    /* Unreachable by construction — a day exists because it
+                       has entries — but required, and a required string with
+                       no default is exactly what cannot leak the wrong
+                       language. */
+                    emptyLabel={t('diary.empty')}
+                  />
+                ),
+              }))}
             />
-          ),
-        }))}
-      />
+          </>
+        )}
+      </>
     );
   }
 
