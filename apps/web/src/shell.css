@@ -309,6 +309,22 @@
   gap: var(--space-gap-inline) var(--space-gap-stack);
 }
 
+/* ═══ THE DIARY'S FILTER ROW ════════════════════════════════════════════════
+   G.1. A wrapper around `SegmentedControl`, and nothing but spacing: the
+   control's own geometry is the component's business, and L14's opening rule
+   is that a screen never reaches into it. What the screen owns is where the
+   control sits in the column.
+
+   MARGIN ON BOTH SIDES, because what follows it changes. With the latest
+   entry open the next thing is `.musie-diary__earlier`, whose own top margin
+   collapses with this one to a single --space-gap-group; with a filter set
+   that heading is gone and the Timeline follows directly, and the Timeline
+   carries no margin of its own (`.musy-timeline { margin: 0 }`) — so without
+   a bottom margin here the segments would sit hard against the first date.  */
+.musie-diary__filter {
+  margin-block: var(--space-gap-group);
+}
+
 /* ═══ THE DIARY'S SECOND HEADING ════════════════════════════════════════════
    *Earlier* — what separates the session you just finished from the ones
    before it. heading-sm rather than the page title's step: it labels a region

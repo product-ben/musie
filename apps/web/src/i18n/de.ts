@@ -259,6 +259,35 @@ export const de: Messages = {
   'diary.delete.text': 'Damit sind die Session und alles, was du darin geschrieben hast, endgültig weg. Das lässt sich nicht rückgängig machen.',
   'diary.delete.yes': 'Löschen',
 
+  /* ── Die Timeline im Monatsmaßstab · G.1 ─────────────────────────────── */
+  'diary.today': 'Heute',
+  'diary.yesterday': 'Gestern',
+  /* 'Anzeigen' labels the group of options rather than performing an act, so
+     §3's verb-first rule does not bite here — the segments are the answers to
+     it. 'Beendet' / 'Nicht beendet' come from session.status.*, unchanged. */
+  'diary.filter.legend': 'Anzeigen',
+  'diary.filter.all': 'Alle',
+  /* Both headings are stated positively rather than as a count of nothing:
+     'Keine unbeendeten Sessions' is the literal translation and is the kind of
+     double negative German makes heavier than English does. 'Alles ist
+     beendet' says the same fact and reads as the good news it is. */
+  'diary.filter.noneFinished': 'Noch nichts beendet',
+  'diary.filter.noneFinishedText': 'In deinem Tagebuch ist bisher keine Session beendet.',
+  'diary.filter.noneAbandoned': 'Alles ist beendet',
+  'diary.filter.noneAbandonedText': 'Was du angefangen hast, hast du auch beendet.',
+  'diary.filter.showAll': 'Alle Sessions anzeigen',
+
+  /* ── Das ganze Tagebuch löschen · G.2 ────────────────────────────────────
+     'endgültig weg' carries the finality, the same word diary.delete.text
+     uses, so the two confirmations sound like one product. The Gedankenstrich
+     ' – ' rather than an em dash (§7), and 'Nichts bleibt übrig' rather than a
+     second 'alles', which German would hear as a repetition. */
+  'diary.deleteAll': 'Dein ganzes Tagebuch löschen',
+  'diary.deleteAll.confirm': 'Dein ganzes Tagebuch löschen?',
+  'diary.deleteAll.text': 'Damit sind alle Sessions und alles, was du darin geschrieben hast, endgültig weg – auch eine Session, die gerade läuft. Nichts bleibt übrig, und das lässt sich nicht rückgängig machen.',
+  'diary.deleteAll.yes': 'Alles löschen',
+  'diary.deleteAll.failed': 'Dein Tagebuch konnte nicht gelöscht werden',
+
   /* ── Privacy · C.2 ───────────────────────────────────────────────────────
      Written to docs/GERMAN-UI-WRITING.md: du, sentence case, no 'Bitte'.
      'E-Mail-Adresse' keeps its hyphens (Durchkopplung). See en.ts for what

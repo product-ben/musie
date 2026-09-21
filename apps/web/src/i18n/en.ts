@@ -315,6 +315,46 @@ export const en = {
   'diary.delete.text': 'This removes the session and anything you wrote in it. It cannot be undone.',
   'diary.delete.yes': 'Delete',
 
+  /* ── The timeline at a month's scale · G.1 ───────────────────────────────
+     Two words the catalogue holds because `Intl` cannot: a date formatter can
+     render 'Friday 18 September' in either language, and neither language's
+     word for the day you are standing in is derivable from a date. Every
+     other heading in the run is formatted, not written — see lib/diary.ts. */
+  'diary.today': 'Today',
+  'diary.yesterday': 'Yesterday',
+  /* The filter. 'Finished' and 'Unfinished' are NOT repeated here: the two
+     segments reuse `session.status.*`, which is the same word the badge on
+     the entry card already shows. Two spellings of one status is how a filter
+     and the thing it filters stop agreeing. */
+  'diary.filter.legend': 'Show',
+  'diary.filter.all': 'All',
+  /* THE EMPTY STATE THAT READS WELL AFTER THIRTY SESSIONS, which is a
+     different sentence from the one that reads well on day one. 'No sessions
+     yet' is about a diary that has never held anything; these two are about a
+     diary that holds plenty and none of it matches. Each says which, because
+     "nothing matches this filter" makes the reader do the work. */
+  'diary.filter.noneFinished': 'No finished sessions',
+  'diary.filter.noneFinishedText': 'Nothing in your diary has been finished yet.',
+  'diary.filter.noneAbandoned': 'No unfinished sessions',
+  'diary.filter.noneAbandonedText': 'Everything you started, you finished.',
+  'diary.filter.showAll': 'Show every session',
+
+  /* ── Deleting the whole diary · G.2 ──────────────────────────────────────
+     It lives in /settings rather than on /diary — see SettingsSheet.tsx for
+     why — and its heading is `route.diary.title`, reused rather than written
+     again, so the section can never end up calling the diary something the
+     rest of the app does not.
+
+     THE TEXT NAMES THE RUNNING SESSION ON PURPOSE. `deleteAllSessions` has no
+     status filter, so a session in progress goes with the rest; a sentence
+     that said "every session" while quietly meaning "except that one" would
+     be the one sentence in the product that has to be exactly true. */
+  'diary.deleteAll': 'Delete your whole diary',
+  'diary.deleteAll.confirm': 'Delete your whole diary?',
+  'diary.deleteAll.text': 'This removes every session and everything you wrote in them, including one you are in the middle of. Nothing is kept, and it cannot be undone.',
+  'diary.deleteAll.yes': 'Delete everything',
+  'diary.deleteAll.failed': 'Your diary could not be deleted',
+
   /* ── Privacy · C.2 ───────────────────────────────────────────────────────
      THE PROTOTYPE'S PROMISE WAS "Nothing leaves your device until you share
      it", and a stored diary makes that false. These six strings are what

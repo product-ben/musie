@@ -185,13 +185,55 @@ export function durationMinutes(startedAt: string, endedAt: string | null): numb
   return Math.max(1, Math.round((to - from) / 60_000));
 }
 
-export interface DiaryDay<T> {
-  /** Stable identity for the group — the local calendar day, `2026-09-19`. */
+/* ── G.1 · THE TIMELINE AT A MONTH'S SCALE ────────────────────────────────
+ *
+ * The diary used to group by calendar day and nothing else. At ten entries
+ * that is the right picture; at three hundred it is three hundred headings,
+ * most of them over a single row, and the screen becomes a list of dates with
+ * the sessions hidden between them.
+ *
+ * So the grouping now has TWO resolutions, and how long ago an entry was
+ * decides which one it gets:
+ *
+ *   the last seven days   one group per DAY    'Today', 'Friday 18 September'
+ *   anything older        one group per MONTH  'September 2026'
+ *
+ * Seven is `DAY_SCALE_DAYS` below. A week is the window in which a person
+ * still remembers a session as *a day* — "the one on Tuesday" — and past it
+ * they remember it as *a month*, which is the resolution the heading should
+ * then offer. It also bounds the screen: at most seven day headings, one per
+ * month after that, whatever the diary holds.
+ *
+ * THE CURRENT MONTH IS THEREFORE SPLIT, and that is the design rather than an
+ * oversight: on the 20th, the 19th is 'Yesterday' and the 3rd sits under
+ * 'September 2026'. The alternative — day resolution for the whole current
+ * month — puts thirty-one headings on the screen on the 31st, which is the
+ * thing this change exists to stop.
+ */
+
+export type DiaryPeriodKind = 'day' | 'month';
+
+export interface DiaryPeriod<T> {
+  /** Stable identity — `2026-09-19` for a day, `2026-09` for a month. */
   key: string;
+  kind: DiaryPeriodKind;
   /** The first entry's timestamp, for the screen to format as the heading. */
   date: string;
+  /**
+   * Whole local days back from today: 0 is today, 1 is yesterday. Null on a
+   * month period, and on a day period far enough back to have no name.
+   *
+   * A NUMBER rather than a ready-made label, because the label is copy:
+   * 'Today' and 'Heute' are catalogue strings and this module holds no `t`.
+   * The same boundary that keeps `formatDay` out of the design system keeps
+   * the word out of here.
+   */
+  dayOffset: number | null;
   entries: T[];
 }
+
+/** How far back the day headings reach. Past this, a month heading. */
+export const DAY_SCALE_DAYS = 7;
 
 /**
  * The LOCAL calendar day an instant falls in.
@@ -201,43 +243,143 @@ export interface DiaryDay<T> {
  * diary that filed it under yesterday would be wrong about the one thing a
  * diary is for. The day boundary a person means is the one their device is in.
  */
-function localDayKey(iso: string): string {
-  const date = new Date(iso);
+function localDayKey(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+/** The same, one resolution up. `2026-09`. */
+function localMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
 /**
- * Group entries into calendar days, in the order they arrive.
+ * Whole local days between two instants, counted in CALENDAR days rather than
+ * in elapsed milliseconds.
+ *
+ * Both sides are flattened to their local midnight first, so "yesterday" means
+ * the day before this one and not "between 24 and 48 hours ago" — a session at
+ * 23:00 and one at 01:00 are one day apart on the wall clock and two hours
+ * apart by subtraction.
+ *
+ * `Math.round` over the midnight difference rather than a plain division,
+ * because a DST day is 23 or 25 hours long: dividing by 86 400 000 across the
+ * March change gives 0.958 of a day, and `Math.floor` would report the day
+ * before yesterday as yesterday, twice a year.
+ */
+function dayOffset(now: Date, when: Date): number {
+  const midnight = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  return Math.round((midnight(now) - midnight(when)) / 86_400_000);
+}
+
+/**
+ * Group entries into day periods for the last week and month periods before
+ * that, in the order they arrive.
  *
  * IT DOES NOT SORT. The query orders by `started_at desc`, which the
  * `sessions (user_id, started_at desc)` index answers without a sort step; a
  * client-side re-sort would be a second, weaker statement of the same
- * ordering, and the two can disagree the day the query changes. So the
- * groups come out newest-first because the rows do, and each group holds its
- * day's rows in the same order.
+ * ordering, and the two can disagree the day the query changes. So the periods
+ * come out newest-first because the rows do, and each holds its own rows in
+ * the order they arrived.
+ *
+ * `now` is a parameter with a default rather than a `new Date()` buried in the
+ * body, because "today" is the one input here that a fixture cannot otherwise
+ * pin down — and a test that has to wait for midnight is a test that fails
+ * once a year on somebody else's machine.
  */
-export function groupByDay<T extends { startedAt: string }>(
+export function groupByPeriod<T extends { startedAt: string }>(
   entries: readonly T[],
-): DiaryDay<T>[] {
-  const days: DiaryDay<T>[] = [];
-  const byKey = new Map<string, DiaryDay<T>>();
+  now: Date = new Date(),
+): DiaryPeriod<T>[] {
+  const periods: DiaryPeriod<T>[] = [];
+  const byKey = new Map<string, DiaryPeriod<T>>();
 
   for (const entry of entries) {
-    const key = localDayKey(entry.startedAt);
+    const when = new Date(entry.startedAt);
+    const offset = dayOffset(now, when);
+
+    /* A FUTURE timestamp — a device an hour ahead, a clock corrected after
+       the fact — is a negative offset, and it takes day resolution rather
+       than falling through to a month heading. It is still the newest thing
+       in the diary, and `< DAY_SCALE_DAYS` says that without a second test. */
+    const isDay = offset < DAY_SCALE_DAYS;
+
+    const key = isDay ? localDayKey(when) : localMonthKey(when);
     const existing = byKey.get(key);
     if (existing !== undefined) {
       existing.entries.push(entry);
       continue;
     }
-    const day: DiaryDay<T> = { key, date: entry.startedAt, entries: [entry] };
-    byKey.set(key, day);
-    days.push(day);
+
+    const period: DiaryPeriod<T> = {
+      key,
+      kind: isDay ? 'day' : 'month',
+      date: entry.startedAt,
+      /* Only today and yesterday have names. Two days back is a weekday, and
+         a weekday is a format rather than a word the catalogue holds. */
+      dayOffset: isDay && offset >= 0 && offset <= 1 ? offset : null,
+      entries: [entry],
+    };
+    byKey.set(key, period);
+    periods.push(period);
   }
 
-  return days;
+  return periods;
 }
+
+/* ── G.1 · FILTERING ──────────────────────────────────────────────────────*/
+
+/**
+ * What the diary can be narrowed to.
+ *
+ * The axis is STATUS, and the other candidate was the exercise. Status is the
+ * question a long diary actually raises — *did I leave anything unfinished?* —
+ * and every row already carries the column that answers it. An exercise filter
+ * needs a list that grows with the content: three segments today and eleven
+ * once the Mindfulness Cards spreadsheet lands, which is past the point where
+ * `SegmentedControl` is the right component at all (its own header says 2–4).
+ *
+ * 'all' is a MEMBER of the union rather than `DiaryFilter | null`, because the
+ * control always has exactly one of three answers selected, and a null would
+ * make "showing everything" indistinguishable from "nothing chosen yet".
+ */
+export type DiaryFilter = 'all' | DiaryStatus;
+
+/** The order the segments are drawn in. Widest first. */
+export const DIARY_FILTERS: readonly DiaryFilter[] = ['all', 'finished', 'abandoned'];
+
+/** Narrowing for the component callback, which hands back a bare string. */
+export function isDiaryFilter(value: string): value is DiaryFilter {
+  return (DIARY_FILTERS as readonly string[]).includes(value);
+}
+
+/**
+ * The filter, applied. A copy on BOTH branches, so a caller is never handed
+ * the array it passed in on one and a new one on the other — the kind of
+ * asymmetry that makes an identity check in a consumer accidentally load
+ * bearing.
+ */
+export function filterByStatus<T extends { status: DiaryStatus }>(
+  entries: readonly T[],
+  filter: DiaryFilter,
+): T[] {
+  if (filter === 'all') return [...entries];
+  return entries.filter((entry) => entry.status === filter);
+}
+
+/**
+ * How long the diary has to be before the filter is drawn at all.
+ *
+ * A filter makes a long list shorter, and on day one there is no list to
+ * shorten: three segments over two rows would be chrome explaining itself.
+ * Five is where the run stops fitting under the latest entry's card on a
+ * phone — a judgement rather than a measurement, kept as ONE constant so
+ * moving it is a one-line change. Logged in OPEN-QUESTIONS.md.
+ */
+export const FILTER_FROM_ENTRIES = 5;
 
 /**
  * The schema's step id, as a catalogue key.
@@ -303,27 +445,55 @@ export function trackUrl(src: string): string {
 /* ── Dates on screen ──────────────────────────────────────────────────────*/
 
 /**
- * Timeline never formats a date — by design, because formatting one is
- * locale work and the design system holds no locale. So it happens here, in
- * the app, against the ACTIVE locale: `19 September 2026` / `19. September
- * 2026`, where the point separating the two is exactly the kind of detail
- * `Intl` owns and a hand-rolled formatter gets wrong.
- *
- * `dateStyle: 'long'` rather than day-and-month alone: a diary outlives a
- * year, and a heading that reads "14 September" in two consecutive Septembers
- * is a heading that lies once a year.
- *
- * No "Today" / "Yesterday" wording yet. That is relative-time copy in two
- * languages, and G.1 is where the timeline's presentation is designed.
+ * Timeline never formats a date — by design, because formatting one is locale
+ * work and the design system holds no locale. So it happens here, in the app,
+ * against the ACTIVE locale, where the point separating `19. September` from
+ * `19 September` is exactly the kind of detail `Intl` owns and a hand-rolled
+ * formatter gets wrong.
  *
  * `INTL_LOCALES[locale]`, NOT `locale`. A bare `'en'` resolves to en-US and
  * renders "September 19, 2026 at 2:32 PM" — month-first and a 12-hour clock,
  * neither of which matches the British English the catalogue is written in or
  * the German column beside it. See the map's comment in i18n/index.ts.
+ *
+ * ── THREE FORMATS, ONE PER RESOLUTION — G.1 ───────────────────────────────
+ * The heading says as much as its period knows and no more, so the three are
+ * not one function with options:
+ *
+ *   formatRecentDay   a day inside the last week: 'Friday 18 September'
+ *   formatMonth       everything older, one heading a month: 'September 2026'
+ *   formatDateTime    one entry, to the minute, on the entry card
+ *
+ * NO YEAR on a recent day, and that is the opposite of what this file used to
+ * say. The old `formatDay` carried `dateStyle: 'long'` with the note that "a
+ * diary outlives a year, and a heading that reads '14 September' in two
+ * consecutive Septembers is a heading that lies once a year". True of a day
+ * heading that could be any day; not true of this one, which by construction
+ * is inside the last seven days and therefore cannot be last year's. The
+ * WEEKDAY is what a person recognises a recent session by, and it is what the
+ * year's characters are spent on instead.
+ *
+ * The year has not gone anywhere, either: every heading older than the week is
+ * a month heading, and `formatMonth` carries it.
+ *
+ * 'Today' and 'Yesterday' are NOT here. They are copy, they live in the
+ * catalogue in both languages, and the screen picks them off `dayOffset`
+ * before it reaches either of these.
  */
-export function formatDay(iso: string, locale: Locale): string {
-  return new Intl.DateTimeFormat(INTL_LOCALES[locale], { dateStyle: 'long' })
-    .format(new Date(iso));
+export function formatRecentDay(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALES[locale], {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date(iso));
+}
+
+/** One heading a month, for everything past the week. 'September 2026'. */
+export function formatMonth(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALES[locale], {
+    year: 'numeric',
+    month: 'long',
+  }).format(new Date(iso));
 }
 
 /** The entry page says when, to the minute: the date plus the clock time. */
