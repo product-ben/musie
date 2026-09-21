@@ -148,3 +148,26 @@ export function readFrame(payloads: readonly string[]): FrameReading {
   }
   return sawSomething ? { kind: 'other' } : { kind: 'nothing' };
 }
+
+/**
+ * Whether the screen offers to try the camera again.
+ *
+ * ── THE ANSWER FOR `denied` IS NO, AND IT IS THE WHOLE POINT OF THIS ──────
+ * A person who has just declined a permission prompt is looking at a button
+ * offering to ask them again. Chrome has already remembered the refusal for
+ * the origin, so pressing it re-rejects instantly and the screen says the same
+ * thing a second time; Safari would re-prompt, which is worse — it is the app
+ * declining to take no for an answer. The typed field is right there and it
+ * works. Nothing is lost by not asking twice.
+ *
+ * `missing`, `insecure` and `unsupported` are refused for a duller reason:
+ * none of them can change while this step is on screen. A device does not grow
+ * a camera, and a page cannot re-serve itself over https.
+ *
+ * `busy`, `failed` and `decoder` CAN change, and a retry is the obvious thing
+ * to do about each — close the app holding the camera, or wait for a
+ * connection that will fetch a binary.
+ */
+export function canRetry(problem: CameraProblem): boolean {
+  return problem === 'busy' || problem === 'failed' || problem === 'decoder';
+}

@@ -1,5 +1,5 @@
 /**
- * The camera's three decisions — E.2.
+ * The camera's four decisions — E.2.
  *
  * Everything the in-app scanner DECIDES is in `camera.ts`; everything it does
  * is in a hook that owns a `MediaStream`. These are the decisions, and they
@@ -13,7 +13,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { cameraFailure, cameraSupport, readFrame } from './camera';
+import { cameraFailure, cameraSupport, canRetry, readFrame } from './camera';
 
 describe('cameraSupport', () => {
   it('lets a secure page with mediaDevices through', () => {
@@ -95,5 +95,27 @@ describe('readFrame', () => {
   it('prefers a card over anything else in the same frame', () => {
     expect(readFrame(['https://example.com/ad', 'MC-04'])).toEqual({ kind: 'card', code: 'MC-04' });
     expect(readFrame(['MC-04', 'https://example.com/ad'])).toEqual({ kind: 'card', code: 'MC-04' });
+  });
+});
+
+describe('canRetry', () => {
+  /* The one that is a decision rather than a mechanism. A button offering to
+     ask again is the app declining to take no for an answer, and the typed
+     field is right there. */
+  it('does not offer to ask a second time after somebody said no', () => {
+    expect(canRetry('denied')).toBe(false);
+  });
+
+  /* Nothing a person can do on this screen changes any of these. */
+  it('does not offer a retry for something that cannot change here', () => {
+    expect(canRetry('missing')).toBe(false);
+    expect(canRetry('insecure')).toBe(false);
+    expect(canRetry('unsupported')).toBe(false);
+  });
+
+  it('offers one where trying again is the obvious thing to do', () => {
+    expect(canRetry('busy')).toBe(true);
+    expect(canRetry('failed')).toBe(true);
+    expect(canRetry('decoder')).toBe(true);
   });
 });

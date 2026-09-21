@@ -201,17 +201,21 @@ export const en = {
      simply never rendered once an exercise has its own words. */
   'session.intro.fallback': 'Take a moment to arrive. When you are ready, carry on.',
 
-  /* ── Scan · D.5a, and the real reader · E.0/E.1 ──────────────────────────
+  /* ── Scan · D.5a, and the three ways in · E.0/E.1/E.2/E.3 ───────────────
      THE SIMULATE BUTTON IS GONE, and the three strings that described it went
-     with it. Two real ways in replace it, and the frame names both: the QR
-     code on the card carries a link, so the PHONE'S OWN camera app opens Musie
-     at that card without Musie ever touching a camera — and the code printed
-     beside it can be typed. The in-app reader (E.2, E.3) is still missing and
-     the frame still says so, which is MOCKUPS.md's standard: a surface that
-     does not do what it appears to do says so rather than pretending. */
+     with it. THREE real ways in replace it, and the frame names all of them:
+     the QR code on the card carries a link, so the PHONE'S OWN camera app
+     opens Musie at that card without Musie ever touching a camera; the code
+     printed beside it can be typed; and E.2 opened the camera on this device
+     for the person who had the app open already.
+
+     `readerNote` used to say the in-app camera did not exist. It does, so the
+     sentence changed rather than being deleted — MOCKUPS.md's standard cuts
+     both ways, and a frame still claiming it cannot see is the same defect as
+     one pretending it can. */
   'session.scan.headline': 'Scan the card that describes best how you feel right now.',
   'session.scan.reader': 'Scan the QR code on your card with your phone’s camera app — it opens Musie at that card.',
-  'session.scan.readerNote': 'Musie cannot open the camera itself yet.',
+  'session.scan.readerNote': 'Or use the camera on this device — it reads the same code.',
   'session.scan.codeLabel': 'Card code',
   /* An EXAMPLE, not a label (3.3.2): the label above names the field and this
      shows the shape. `MC-01` is a real code, so it is not translated. */
@@ -232,6 +236,40 @@ export const en = {
   'session.scan.done': 'Card scanned',
   'session.scan.yourCard': 'Your card',
   'session.scan.again': 'Scan a different card',
+
+  /* ── The camera on THIS device · E.2, and E.3's fallback ─────────────────
+     A FALLBACK TO A FALLBACK, and the copy is written from that: the common
+     way in is the phone's own camera app following the printed link, and the
+     typed field below the frame never stops working. So every sentence here
+     that says the camera is unavailable ends by naming the field, and none of
+     them apologises.
+
+     `cameraDenied` is the one that was written twice. A permission prompt
+     answered with no is a person deciding, not a failure — so it states what
+     is now true and moves on, with no 'unfortunately', no instructions for
+     reversing it in browser settings, and no button offering to ask again
+     (`canRetry` in lib/camera.ts). */
+  'session.scan.cameraStart': 'Use the camera',
+  'session.scan.cameraRetry': 'Try the camera again',
+  'session.scan.cameraStop': 'Turn the camera off',
+  'session.scan.cameraStarting': 'Opening the camera…',
+  /* Shown BELOW the frame rather than over the picture: text on top of live
+     video has no contrast that can be checked, because the background is
+     whatever the camera is pointed at. */
+  'session.scan.cameraLive': 'Hold the QR code on your card inside the frame.',
+  'session.scan.cameraLabel': 'Camera, looking for a QR code',
+  /* The difference between a scanner that is wrong and one that is broken: a
+     frame that never reacts looks identical to a frame that cannot see. */
+  'session.scan.cameraOther': 'That QR code is not one of Musie’s. A card’s code looks like MC-01.',
+  'session.scan.cameraDenied': 'The camera stays off. Type the code printed on your card instead.',
+  'session.scan.cameraMissing': 'This device has no camera Musie can use. Type the code printed on your card instead.',
+  'session.scan.cameraBusy': 'Another app is using the camera. Close it and try again, or type the code printed on your card.',
+  'session.scan.cameraInsecure': 'A browser opens the camera only over a secure connection. Type the code printed on your card instead.',
+  'session.scan.cameraUnsupported': 'This browser will not open a camera here. Type the code printed on your card instead.',
+  /* E.3's decoder is fetched the first time the camera is used, so this is a
+     connection problem rather than a camera problem, and it says so. */
+  'session.scan.cameraDecoder': 'The code reader could not be loaded. Check your connection and try again, or type the code printed on your card.',
+  'session.scan.cameraFailed': 'The camera could not be started. Type the code printed on your card instead.',
 
   /* ── Listen · D.5b ───────────────────────────────────────────────────────
      THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:
