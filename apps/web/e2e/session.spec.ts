@@ -21,57 +21,12 @@
  * used ONLY to read back what the client wrote, never to set up state the
  * client should be creating itself.
  */
-import { execFileSync } from 'node:child_process';
-import { createClient } from '@supabase/supabase-js';
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
-
-/** The stack's keys, read from the running stack rather than committed. */
-function stack(): { API_URL: string; SERVICE_ROLE_KEY: string } {
-  let raw: string;
-  try {
-    raw = execFileSync('supabase', ['status', '-o', 'json'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-  } catch {
-    throw new Error(
-      'The local Supabase stack is not reachable. Run `supabase start`, then ' +
-        '`pnpm test:e2e` again. This test is deliberately NOT in `pnpm check` ' +
-        'and is never skipped.',
-    );
-  }
-  const parsed = JSON.parse(raw) as Partial<{ API_URL: string; SERVICE_ROLE_KEY: string }>;
-  if (!parsed.API_URL || !parsed.SERVICE_ROLE_KEY) {
-    throw new Error('`supabase status -o json` returned no keys.');
-  }
-  return { API_URL: parsed.API_URL, SERVICE_ROLE_KEY: parsed.SERVICE_ROLE_KEY };
-}
-
-const service = () => {
-  const { API_URL, SERVICE_ROLE_KEY } = stack();
-  return createClient(API_URL, SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-};
-
-/**
- * Put the locale in before the first paint, exactly where index.html looks for
- * it. This is what makes the German run a German SESSION rather than a German
- * browser looking at an English app.
- */
-async function withLocale(page: Page, locale: 'en' | 'de') {
-  await page.addInitScript((value) => {
-    try {
-      window.localStorage.setItem('musie-locale', value);
-    } catch {
-      /* Private mode. The detection path then decides, which is fine. */
-    }
-  }, locale);
-}
+import { label, reachTheLibrary, service, withLocale } from './support';
+import type { Locale } from './support';
 
 /** The answer we type, per locale, so the assertion can tell the runs apart. */
-const ANSWER = {
+const ANSWER: Record<Locale, string> = {
   en: 'A tightness behind the ribs, and then less of it.',
   de: 'Eine Enge hinter den Rippen, und dann weniger davon.',
 };
@@ -85,86 +40,59 @@ const ANSWER = {
  * once per project — which is what `projects` is for.
  */
 test('a whole session lands in Postgres', async ({ page }, testInfo) => {
-    const locale = testInfo.project.name as 'en' | 'de';
+    const locale = testInfo.project.name as Locale;
     test.setTimeout(120_000);
 
     await withLocale(page, locale);
 
-    /* ── The way in ────────────────────────────────────────────────────────
-       A fresh browser profile has no user type, so `/` is the explainer. The
-       CTA is locked until the last slide has been SEEN — which is the gate
-       D.1 built, and walking it is the only way past. */
-    await page.goto('/');
-
-    const carousel = page.getByRole('group', { name: /.+/ }).first();
-    await expect(carousel).toBeVisible({ timeout: 15_000 });
-
-    /* Press Next until it is disabled. Found by position in the carousel's own
-       controls rather than by its label, so the German run finds the same
-       button without the test knowing German. */
-    const next = page.locator('.musy-carousel__controls button').last();
-    for (let i = 0; i < 10; i += 1) {
-      if (await next.isDisabled()) break;
-      await next.click();
-      await page.waitForTimeout(150);
-    }
-    await expect(next).toBeDisabled();
-
-    /* The stage's single action, now unlocked. */
-    const start = page.locator('.musie-cta-stack button');
-    await expect(start).toBeEnabled();
-    await start.click();
-
-    /* ── About you ─────────────────────────────────────────────────────────
-       "By myself" is PRESELECTED, so Continue is live on arrival and nothing
-       has to be clicked. The walk accepts the default deliberately — that is
-       the path almost everyone takes, and it is the one where Continue has to
-       do the writing, because no pick ever fired. If it did not, the drawer
-       would bounce this session straight back here. */
-    await expect(page).toHaveURL(/\/about-you$/);
-    await expect(page.getByRole('radio').first()).toBeChecked();
-
-    const carryOn = page.locator('.musie-cta-stack button');
-    await expect(carryOn).toBeEnabled();
-    await carryOn.click();
+    /* Explainer → About you → the library. Shared with the cancel walk, so
+       the two cannot disagree about where the product begins. */
+    await reachTheLibrary(page, locale);
 
     /* ── The library ───────────────────────────────────────────────────────
-       The first card is Quick Mindfulness Break, the one exercise that is
-       implemented. Tapping it opens the detail; the detail starts the run. */
-    await expect(page).toHaveURL(/\/exercises$/);
-    await page.locator('.musy-rcard__body').first().click();
+       The first radio is Quick Mindfulness Break, the one implemented
+       exercise. `.first()` is a POSITION and is deliberate here, unlike the
+       ones this walk no longer uses: the order is `exercises.sort`, a column
+       in the database with a `unique` constraint on it, so it is a fact about
+       the content rather than an accident of layout. The name itself cannot
+       be asked for — it comes from `exercise_i18n`, not the catalogue, so
+       naming it here would hardcode seed copy the spreadsheet will replace. */
+    await page.getByRole('radio').first().click();
 
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
-    /* NOT `.last()`. `Lightbox` renders its close X AFTER `children`, so the
-       last button in the dialog is Close — which dismissed the detail and left
-       the walk on /exercises wondering why no session had started. The start
-       control is the only button in the detail's `ButtonGroup`. */
-    await dialog.locator('.musy-btn-group button').click();
+    /* By name. The earlier version took the LAST button in the dialog, which
+       is `Lightbox`'s close X — it renders after `children` — so the walk
+       dismissed the detail it had just opened and then wondered why no session
+       had started. A name cannot be reordered out from under a test. */
+    await dialog.getByRole('button', { name: label(locale, 'exercises.start'), exact: true }).click();
 
     /* ── Intro → scan ──────────────────────────────────────────────────────*/
     await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
     const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
     expect(sessionId).toBeTruthy();
 
-    await page.locator('.musy-wizard__actions button').last().click();
+    await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
     await expect(page).toHaveURL(/\/scan$/);
 
     /* The simulated scan. It writes `card_id` AND `track_id` in one update,
        which is what the assertions at the foot of this test check. */
-    await page.locator('.musy-msg__action button').click();
-    await expect(page.locator('.musy-clist')).toBeVisible({ timeout: 15_000 });
+    const simulate = page.getByRole('button', { name: label(locale, 'session.scan.simulate'), exact: true });
+    const scanned = page.getByText(label(locale, 'session.scan.yourCard'), { exact: true });
+
+    await simulate.click();
+    await expect(scanned).toBeVisible({ timeout: 15_000 });
 
     /* *Scan a different card* RESETS the step rather than re-rolling: the
        reader comes back and the next draw is an act the person takes. Walked
        here because the reset writes nulls to two columns, and a version that
        silently kept the old track would still look right on screen. */
-    await page.locator('.musy-wizard__actions button').nth(1).click();
-    await expect(page.locator('.musy-msg__action button')).toBeVisible({ timeout: 15_000 });
-    await page.locator('.musy-msg__action button').click();
-    await expect(page.locator('.musy-clist')).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('button', { name: label(locale, 'session.scan.again'), exact: true }).click();
+    await expect(simulate).toBeVisible({ timeout: 15_000 });
+    await simulate.click();
+    await expect(scanned).toBeVisible({ timeout: 15_000 });
 
-    await page.locator('.musy-wizard__actions button').last().click();
+    await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
     await expect(page).toHaveURL(/\/listen$/);
 
     /* ── Listen, and the gate ──────────────────────────────────────────────
@@ -182,10 +110,21 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        installed it after the click and sat there watching a disabled button.) */
     await page.clock.install();
 
-    const transport = page.locator('.musy-mbtn');
+    /* `exact: false`: TrackButton's accessible name is its ACTION plus its
+       label — "Start Listening, <label>" — because the action word is what
+       changes as the transport moves and the label is what it is acting on.
+       So the stable half is the label, matched as a substring. */
+    const transport = page.getByRole('button', {
+      name: label(locale, 'session.listen.track'),
+      exact: false,
+    });
     await expect(transport).toBeVisible();
 
-    const onwards = page.locator('.musy-wizard__actions button').last();
+    /* NOT Continue: the listen step's forward control is *Start reflection*,
+       because what it does is named rather than numbered. Finding it by name
+       is what surfaced that — the old `.last()` would have clicked it under
+       any label at all. */
+    const onwards = page.getByRole('button', { name: label(locale, 'session.listen.start'), exact: true });
     await expect(onwards).toBeDisabled();
 
     await transport.click();
@@ -210,11 +149,12 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        interactive mockups and write nothing (MOCKUPS.md 1 and 2). */
     await expect(page).toHaveURL(/\/reflect$/);
 
-    const written = page.getByRole('radio').nth(1);
-    await written.click();
-    await page.locator('textarea').fill(ANSWER[locale]);
+    await page.getByRole('radio', { name: label(locale, 'reflect.mode.text'), exact: true }).click();
+    await page
+      .getByRole('textbox', { name: label(locale, 'reflect.text.label'), exact: true })
+      .fill(ANSWER[locale]);
 
-    const finish = page.locator('.musy-wizard__actions button').last();
+    const finish = page.getByRole('button', { name: label(locale, 'reflect.finish'), exact: true });
     await expect(finish).toBeEnabled();
     await finish.click();
 
@@ -222,7 +162,56 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        Not the entry: finishing hands you your diary rather than one page of
        it, and the list leads with the session you just finished. */
     await expect(page).toHaveURL(/\/diary$/);
-    await expect(page.locator('.musy-box--framed')).toBeVisible({ timeout: 15_000 });
+
+    /* ── THE THREE STATES ──────────────────────────────────────────────────
+       Every entry has a preview, an inline state and a lightbox (Ben,
+       2026-09-21; components/DiaryCard.tsx). The newest one arrives INLINE,
+       which is what makes finishing a landing rather than a dispersal — the
+       thing you just made is the thing you see.
+
+       This used to assert that "a framed box is visible" and nothing else. It
+       would pass against a diary showing the wrong entry, or one whose X did
+       nothing, so it was the one check on this walk that could stay green
+       while the screen was wrong. */
+    const answer = page.getByText(ANSWER[locale], { exact: true });
+    const collapse = page.getByRole('button', {
+      name: label(locale, 'diary.collapse'),
+      exact: true,
+    });
+
+    /* INLINE means the whole card, not a summary of it: the answer just typed
+       is on screen without anything being opened. That is the assertion that
+       distinguishes the inline state from the preview row, which carries a
+       headline and two meta lines and never the reflection. */
+    await expect(answer).toBeVisible({ timeout: 15_000 });
+    await expect(collapse).toBeVisible();
+
+    /* PREVIEW. The X collapses the card; the entry does not disappear with it,
+       because a collapsed card rejoins the run below rather than being held
+       out of it. Both halves are asserted — a version that simply unmounted
+       the card would satisfy the first and lose the session from the screen. */
+    await collapse.click();
+    await expect(answer).toBeHidden();
+
+    /* THIS session's row, found by where it goes rather than by what it looks
+       like. `href` is a semantic attribute, not a design-system class, and it
+       is the one thing about a preview row that cannot be true of the wrong
+       entry — which is what the old "a framed box is visible" could not say. */
+    const row = page.locator(`a[href$="/diary/${sessionId}"]`);
+    await expect(row).toBeVisible();
+
+    /* LIGHTBOX. The row opens the same card in an overlay — the same
+       component, which is the whole point of extracting it — and `/diary/:id`
+       is a real route, so the URL changes and Back would close it. */
+    await row.click();
+    await expect(page).toHaveURL(new RegExp(`/diary/${sessionId}$`));
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('dialog').getByText(ANSWER[locale], { exact: true })).toBeVisible();
+
+    /* Back to the list, so the assertions below read a screen in its resting
+       state rather than one with an overlay open over it. */
+    await page.goBack();
+    await expect(page).toHaveURL(/\/diary$/);
 
     /* ── AND THE ROWS ARE IN POSTGRES ──────────────────────────────────────*/
     const db = service();
