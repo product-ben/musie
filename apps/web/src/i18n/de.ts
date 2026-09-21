@@ -165,7 +165,7 @@ export const de: Messages = {
      Duden gives. 'Kamera-App' the same way. A Gedankenstrich, not an em dash
      (§7); the English key keeps its '—'. */
   'session.scan.reader': 'Scanne den QR-Code auf deiner Karte mit der Kamera-App deines Handys – sie öffnet Musie direkt bei dieser Karte.',
-  'session.scan.readerNote': 'Musie kann die Kamera noch nicht selbst öffnen.',
+  'session.scan.readerNote': 'Oder nimm die Kamera dieses Geräts – sie liest denselben Code.',
   'session.scan.codeLabel': 'Kartencode',
   'session.scan.codePlaceholder': 'MC-01',
   'session.scan.codeHint': 'Der Code steht neben dem QR-Code auf der Karte, zum Beispiel MC-01.',
@@ -181,6 +181,31 @@ export const de: Messages = {
   'session.scan.done': 'Karte gescannt',
   'session.scan.yourCard': 'Deine Karte',
   'session.scan.again': 'Andere Karte scannen',
+
+  /* ── Die Kamera dieses Geräts · E.2/E.3 ──────────────────────────────────
+     'Kamera-App', 'QR-Code', 'Code-Leser' — Durchkopplung throughout (§8), and
+     it is also what gives the hyphenator the break points a compound this long
+     would otherwise not have (§6).
+
+     No 'leider' anywhere below, and no 'Bitte' (§4). The English says what
+     happened and what to do instead; so does this. 'Tippe … ein' is the
+     imperative singular the rest of the app uses (§1). */
+  'session.scan.cameraStart': 'Kamera benutzen',
+  /* 'noch mal', not 'noch einmal': the longer form put this at 1.40× the
+     English and §5 asks for the rewrite before the wrap. */
+  'session.scan.cameraRetry': 'Kamera noch mal versuchen',
+  'session.scan.cameraStop': 'Kamera ausschalten',
+  'session.scan.cameraStarting': 'Kamera wird geöffnet…',
+  'session.scan.cameraLive': 'Halte den QR-Code deiner Karte in den Rahmen.',
+  'session.scan.cameraLabel': 'Kamera, sucht nach einem QR-Code',
+  'session.scan.cameraOther': 'Dieser QR-Code gehört nicht zu Musie. Der Code einer Karte sieht aus wie MC-01.',
+  'session.scan.cameraDenied': 'Die Kamera bleibt aus. Tippe stattdessen den Code ein, der auf deiner Karte steht.',
+  'session.scan.cameraMissing': 'Dieses Gerät hat keine Kamera, die Musie nutzen kann. Tippe stattdessen den Code von deiner Karte ein.',
+  'session.scan.cameraBusy': 'Eine andere App benutzt die Kamera. Schließe sie und versuch es noch einmal, oder tippe den Code von deiner Karte ein.',
+  'session.scan.cameraInsecure': 'Der Browser öffnet die Kamera nur über eine sichere Verbindung. Tippe stattdessen den Code von deiner Karte ein.',
+  'session.scan.cameraUnsupported': 'Dieser Browser öffnet hier keine Kamera. Tippe stattdessen den Code von deiner Karte ein.',
+  'session.scan.cameraDecoder': 'Der Code-Leser ließ sich nicht laden. Prüfe deine Verbindung und versuch es noch einmal, oder tippe den Code von deiner Karte ein.',
+  'session.scan.cameraFailed': 'Die Kamera ließ sich nicht starten. Tippe stattdessen den Code von deiner Karte ein.',
 
   /* ── Listen · D.5b ─────────────────────────────────────────────────────── */
   /* 'Stück', which is what the seed's own German calls a recording — 'höre das

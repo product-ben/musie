@@ -14,6 +14,18 @@
  * Vite and waits for it; the stack has to be running already, and the suite
  * says so rather than starting one behind your back.
  *
+ * ── AND IT HAS A CAMERA, WHICH IS NOT A CAMERA ─────────────────────────────
+ * E.2 opens `getUserMedia`. Chromium takes `--use-fake-device-for-media-stream`
+ * with `--use-file-for-fake-video-capture`, and then a stream really is
+ * created, really is attached to a `<video>` and really is decoded — out of a
+ * file holding a QR code this app generated. `e2e/fakeCamera.ts` writes it in
+ * `globalSetup`, which has to be where it happens: the path is a LAUNCH FLAG,
+ * so it must exist before the first browser starts.
+ *
+ * The flags go on both projects and cost the other walks nothing — a fake
+ * camera nobody asks for is a camera nobody opens. Permission is still granted
+ * per test, so a walk can also exercise a refusal.
+ *
  * ── TWICE, ONCE PER LOCALE ─────────────────────────────────────────────────
  * Two projects, and the German one is the point: it is what catches a string
  * somebody hardcoded in a hurry, because a hardcoded English string renders
@@ -23,6 +35,8 @@
  * user takes rather than a special one.
  */
 import { defineConfig, devices } from '@playwright/test';
+
+import { fakeCameraArgs } from './e2e/fakeCamera';
 
 const PORT = 5173;
 /**
@@ -47,6 +61,10 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
 
+  /* Writes the clip the fake camera plays. Before any browser, because the
+     file's path is one of the launch flags below. */
+  globalSetup: './e2e/fakeCamera.ts',
+
   use: {
     baseURL: BASE_URL,
     /* Kept only for a failure — a passing walk leaves nothing behind. */
@@ -57,11 +75,19 @@ export default defineConfig({
   projects: [
     {
       name: 'en',
-      use: { ...devices['Desktop Chrome'], locale: 'en-GB' },
+      use: {
+        ...devices['Desktop Chrome'],
+        locale: 'en-GB',
+        launchOptions: { args: fakeCameraArgs() },
+      },
     },
     {
       name: 'de',
-      use: { ...devices['Desktop Chrome'], locale: 'de-DE' },
+      use: {
+        ...devices['Desktop Chrome'],
+        locale: 'de-DE',
+        launchOptions: { args: fakeCameraArgs() },
+      },
     },
   ],
 

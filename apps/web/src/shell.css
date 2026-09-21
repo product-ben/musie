@@ -425,6 +425,60 @@
   hyphens: var(--text-hyphens);
 }
 
+/* THE SAME FRAME, WITH A CAMERA IN IT — E.2/E.3.
+   L10 makes a dashed outline mean "a place where something will be". Once the
+   preview is running something IS there, so the border goes solid — and that
+   is the ONLY thing that changes. Same square, same cap, same place on the
+   page, because the frame is the step's anchor and a viewfinder that jumped
+   size when it woke up would read as a different element.
+
+   `display: block` overrides the centring grid above: a preview fills its
+   frame rather than sitting in the middle of it, and the padding that held the
+   explanation has nothing left to hold. `overflow: hidden` is what keeps the
+   picture inside the rounded corner — the video has no radius of its own, and
+   giving it one would leave the frame's border painted over its edge.       */
+.musie-scanner--live {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border-style: var(--border-style-solid);
+}
+
+/* `cover`, not `contain`: a camera hands over a 4:3 or 16:9 frame and the
+   viewport is square, so one of them has to give. Letterboxing a square frame
+   would shrink the QR code the person is holding up — which is the one thing
+   in the picture that has to stay large enough to read.                      */
+.musie-scanner__view {
+  /* ABSOLUTE, against the `position: relative` the frame already carries. A
+     percentage block-size would have to resolve against a height that only
+     exists because of `aspect-ratio`, which is true in current browsers and is
+     the sort of true that fails quietly in one of them. Filling the padding
+     box costs nothing and cannot be argued with.                            */
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* THE RUNNING COMMENTARY, and it is UNDER the frame rather than over the
+   picture. Text on top of live video has no contrast anybody can check,
+   because the background is whatever the camera is pointed at (L15 asks for
+   contrast against every surface an indicator can land on, and a preview is
+   not a surface with a colour). Centred under a centred frame, and held to the
+   same measure as the explanation it replaces.                              */
+.musie-scanner__status {
+  margin: 0 auto;
+  max-inline-size: var(--measure-body);
+  text-align: center;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
 /* ═══ THE CARD CODE, TYPED — E.1 ════════════════════════════════════════════
    A <form>, so Enter submits a five-character code rather than sending
    somebody hunting for the button. The system has a Field and it has a
