@@ -499,6 +499,58 @@ flow on your phone, in both themes, in both languages, next to the prototype.
 That is what this checkpoint was always for, and it is the only thing left in
 Phase D.
 
+## Running E and F in parallel
+
+**Added 2026-09-21.** This plan's own rule is *one step is one Claude Code
+session, and steps inside a phase run in order*. E and F are where that stops
+being the fastest reading of it: the plan already says they do not depend on
+each other. What follows is the only split that survives what they SHARE.
+
+**Two tracks, each in its own git worktree off `main`. Not more than two.**
+
+| | Track A | Track B |
+|---|---|---|
+| Steps | **E.0 + E.1** — payload, generator, dev sheet, `/s/:code`, manual entry | **F.0 + F.3** — the voice POC into `features/voice/`, tests for the two pure files |
+| Touches the database | no | no |
+| Blocked by anyone | no | no |
+| Owns | `SessionScan.tsx`, `Session.tsx`, `content.ts`, i18n under `session.scan.*` | `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `packages/design-system` |
+
+Both are deliberately **database-free**, which is not a coincidence — it is
+the constraint that picked them.
+
+### What they share, and the rule for each
+
+1. **One local Supabase stack, on fixed ports.** Two agents running
+   `supabase db reset` or `pnpm test:db` at once corrupt each other's runs, and
+   the failure looks like a flaky test rather than a collision. *Rule: nothing
+   under `supabase/` goes in a parallel track. E.4 and E.5 run serially,
+   afterwards, in the main session.*
+2. **`pnpm-lock.yaml`.** Both tracks want a dependency — a QR library, the
+   POC's. A lockfile conflict across worktrees is the worst merge available
+   here. *Rule: Track B owns the lockfile. Track A asks before adding anything,
+   and E.3's wasm decoder is deliberately not in Track A for this reason.*
+3. **`apps/web/src/i18n/{en,de}.ts`.** Both add keys, to one file each, in both
+   languages. Mergeable only if they append in different places. *Rule: Track A
+   writes under `session.scan.*` and `scan.*`; Track B under `voice.*`. Neither
+   reorders existing keys.*
+4. **Migration timestamps.** Rule 4 makes these a shared namespace, and two
+   agents both reaching for `20260922…` is a drift bug that passes every check.
+   *Rule: only the main session writes migrations.*
+5. **`pnpm check` needs its own `pnpm install` per worktree**, which is not
+   free. *Rule: budget it once per track, at the start.*
+
+### What is NOT parallelised, and why
+
+**E.2, E.3 and the whole of the audio half stay serial.** E.2 and E.3 are
+sequential by construction — the wasm fallback is a fallback *to* something —
+and both end in a hand test on a real iPhone, which no agent can close.
+**E.4 and E.5 own the Supabase stack**, per rule 1. **F.1 and F.2 are blocked**
+on the OpenAI payment method, and F.4–F.6 follow F.0 rather than run beside it.
+
+The honest expected gain is **one session of wall-clock**, not four. The value
+is that the two things with no blockers and no shared state get done at once;
+everything else in E and F has a real reason to be in order.
+
 ## Phase E · Scan and listen
 
 **Revised 2026-09-21.** The old header read *"scanning needs nothing from
@@ -524,22 +576,47 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   have. A QR carrying the bare code cannot ever do that. Once the deck is
   printed the decision is unreprintable, which is why this is E.0 and not E.4.
 
-  Three deliverables. The `/s/:code` route. A **generator**, committed as a
-  script rather than nine pasted files, so the deck can be regenerated the day
-  the domain is settled. And test codes rendered on screen, because E.2 and E.3
-  cannot be developed or hand-tested without something to point a camera at.
-  The decoder accepts **both** forms — URL and bare code — so all three routes
-  in converge on `getCardByCode()`, which `apps/web/src/lib/content.ts` already
-  has and nothing yet calls.
+  **BUILT WITHOUT A DOMAIN, AND TESTED WITHOUT ONE** (Ben, 2026-09-21 — there
+  is no domain yet). This is a constraint that improves the design rather than
+  bending it, because the domain turns out to matter in exactly one place:
 
-  *Done when:* scanning a generated code with the iPhone camera app opens that
-  card in a session, and typing `MC-01` by hand still does too.
+  - **The decoder never needs it.** It takes whatever was scanned and extracts
+    the code — last path segment for a URL, the whole string for a bare code —
+    then validates the shape. `https://anything/s/MC-01` and `MC-01` both yield
+    `MC-01`, so no host is ever compared and a decoder test needs no network.
+  - **The route never needs it.** `/s/:code` is same-origin, so it resolves on
+    `localhost:5173`, on a Netlify preview, and on the real domain, unchanged.
+  - **Only the PRINTED code needs it**, and that is the one artefact nobody can
+    make yet anyway.
+
+  So the generator takes a base URL rather than containing one, defaulting to
+  `window.location.origin`. The dev-only QR sheet then **generates its codes
+  from whatever origin it was loaded from** — open it on the laptop, scan it
+  with the phone against the LAN dev server, and it works, with no domain and
+  no configuration. Print day is one run of the same script with `--base-url`.
+
+  Three deliverables. The `/s/:code` route. The generator, committed as a
+  script rather than nine pasted files. And the dev-only sheet, because E.2 and
+  E.3 cannot be developed or hand-tested without something to point a camera
+  at. All three ways in — deep link, camera, typed code — converge on
+  `getCardByCode()`, which `apps/web/src/lib/content.ts` already has and
+  nothing yet calls.
+
+  *Done when:* `pnpm test:e2e` walks `/s/MC-01` into a session carrying that
+  card, on localhost, with no domain configured anywhere; the decoder's unit
+  tests cover both payload forms and a malformed one; and scanning the dev
+  sheet with the iPhone camera opens the right card by hand.
 
 - [ ] **E.1 Manual code entry.** A `Field` that takes `MC-01` and loads the
   card. Before the camera, not after. *Done when:* typing a code advances to
   Listen and the simulate button is gone.
 - [ ] **E.2 Camera scanning.** `getUserMedia` + `BarcodeDetector`, with
   permission-denied, no-camera and no-HTTPS states all falling back to E.1.
+  Testable without a camera and without a domain: Chromium takes
+  `--use-fake-device-for-media-stream` and
+  `--use-file-for-fake-video-capture=<file>.y4m`, so a recorded clip of a
+  generated code drives the real decode path under Playwright. E.0's generator
+  is what produces the code in that clip.
 - [ ] **E.3 Safari fallback.** A wasm decoder where `BarcodeDetector` is
   missing. *Done when:* it scans on iPhone Safari.
 - [ ] **E.4 Audio storage and playback.** Tracks into a Supabase bucket, the
@@ -727,14 +804,16 @@ app is functional and live on its own domain, which is the end of A.6's second
 half. Accounts come after that line, not before it.
 
 Phases E and F do not depend on each other. If the music licensing stalls, run
-F first.
+F first — and see **Running E and F in parallel** above for the two tracks that
+can actually run at once, and the five things they share that decide which two
+those are.
 
 ## Still blocked by someone other than Claude Code
 
 | Blocker | Blocks |
 |---|---|
 | **Five more recordings.** Four landed 2026-09-21 (Epidemic Sound), leaving five of the nine deck cards silent, plus one each for Breathing Score and Body Scan Soundwalk still wanted. `count(*) from tracks` is the number to quote | E.4 in full. **E.5 is not blocked by this** — the reveal gates `title` and `artist`, which the seed already carries, so it can be built and its done-when checked with no audio at all |
-| **The domain.** A printed QR code locks it in permanently, and A.6's second half — Netlify and a domain — has not run. Nothing goes to print until it is chosen, and the Netlify build allowance returns the week of 22 September | E.0's print-ready codes, and the deck itself. E.0's code, route and test codes are **not** blocked: the payload shape is known, only the host is not |
+| **The domain.** A printed QR code locks it in permanently, and A.6's second half — Netlify and a domain — has not run. Nothing goes to print until it is chosen, and the Netlify build allowance returns the week of 22 September | **The printed deck, and nothing else.** E.0 is built and end-to-end tested against `window.location.origin`, so no code, route, test or dev sheet waits on this. Print day is one run of the generator with `--base-url` |
 | Which vision model reads handwriting — or ship photo as session-only | D.5 |
 | **Sign-off** on the privacy copy — it is written, in both languages, and waiting | nothing is blocked; it is a promise already in the catalogue |
 | The real Mindfulness Cards spreadsheet | The content is placeholder until it lands; all German content rows are `[DE] `-prefixed. **The re-cut then the step re-cut left TWENTY-EIGHT strings with no source** — four step lists plus one question per exercise, in both locales — which D.4 and D.5 need |
