@@ -18,26 +18,34 @@ Two things this file is *not*. It is not a list of unbuilt screens — an absent
 screen is honest and lives in BUILD-PLAN.md. And it is not a list of known
 defects — a mockup behaves as designed.
 
-**Updated 2026-09-20, after Phase D.** Entries 1–4 described screens that did
-not exist when this file was written; all four are now built, and every one of
-them is still a mockup — which is exactly why they were written down early. The
-text of each now says what you actually see rather than what you would see.
+**Updated 2026-09-20, after Phase D.** Four entries described screens that did
+not exist when this file was written; all four were built, and every one of
+them was still a mockup — which is exactly why they were written down early.
 
-**One entry has been deleted rather than updated.** About Musie's carousel had
-CSS and no component; D.0 built the component, so the entry describing its
-absence is gone. An entry describing something that now works is worse than no
-entry, because it teaches the reader to distrust the rest.
+**Revised 2026-09-21, twice, and the numbering moved. Read this before citing
+an entry by number.**
 
-**Revised again 2026-09-21, after E.0 and E.1, and three entries had gone
-wrong in the same direction — each understating what works.** Entry 4 described
-a simulated scan that no longer exists, so the thing it called fake is now the
-part that works. Entry 11 still said no hosted project was linked, and told the
-reader to edit applied migrations in place, which is the one instruction in
-this repo that fails silently. Entry 10 said the delete confirmation did not
-exist, when Phase D built it the day before. All three are rewritten rather than
-softened, and each now carries a line saying what it used to claim, because an
-entry that quietly changes its mind is the same failure as one that goes stale:
-the reader cannot tell which parts of this file to trust.
+The morning's pass found three entries that had gone wrong in the same
+direction, each understating what works: the scan step's said a simulated
+draw was the only way in, the deploy one still said no hosted project was
+linked and told the reader to edit applied migrations in place — the one
+instruction in this repo that fails silently — and the Diary's said a delete
+confirmation did not exist when Phase D had built it the day before.
+
+The evening's pass **deleted the scan entry outright**, and everything after
+it shifted down by one. E.2 and E.3 landed, the camera works, Ben confirmed
+it on an iPhone, and this file's own closing rule says an entry describing
+something that works is worse than no entry. It had no content left: the last
+thing it could honestly have claimed was "untested on hardware", and hardware
+has now been tested. What survives of it lives in BUILD-PLAN's E.3 and in
+`apps/web/OPEN-QUESTIONS.md` — the `BarcodeDetector` branch that only Android
+Chrome runs, and which nothing tests.
+
+**Two earlier deletions, for the same reason.** About Musie's carousel had CSS
+and no component until D.0 built it. And the numbering has now shifted twice,
+so a citation of the form *MOCKUPS.md 5* is only good against the commit it
+was written in — `SessionListen.tsx` and `scan.ts` were both repointed by hand
+in the same commit as this deletion.
 
 ---
 
@@ -48,14 +56,13 @@ the reader cannot tell which parts of this file to trust.
 | 1 | Voice reflection: record button, meter, timer | Nothing is recorded or transcribed, and the step says so | F.1–F.6 |
 | 2 | Photo reflection: drop zone, picker, preview | Nothing is uploaded or read, and the step says so | blocked |
 | 3 | Listen step's transport and clock | There are no audio files; the clock is simulated | E.4 |
-| 4 | Scan step's dashed frame | Musie cannot open a camera; the QR code is read by the phone's own camera app instead | E.2–E.3 |
-| 5 | Track title and artist | Withheld by design, and no reveal gate yet | E.5 |
-| 6 | Exercise step copy | Columns exist, near-empty — 28 strings owed | blocked |
-| 7 | Situation on a session | Recorded, never filled — nothing asks | open |
-| 8 | The listen step's three scroll views | Only the stage is built; the reveal is not | E.5 |
-| 9 | The four user types | Three unbuilt; no artwork for any | D.2 ✓ / artwork |
-| 10 | The Diary | Minimal by design — day grouping only; deleting one session works, deleting everything does not | G.1, G.2 |
-| 11 | The whole app | The database is hosted; the app is not — no Netlify build, no domain | A.6 half 2 |
+| 4 | Track title and artist | Withheld by design, and no reveal gate yet | E.5 |
+| 5 | Exercise step copy | Columns exist, near-empty — 28 strings owed | blocked |
+| 6 | Situation on a session | Recorded, never filled — nothing asks | open |
+| 7 | The listen step's three scroll views | Only the stage is built; the reveal is not | E.5 |
+| 8 | The four user types | Three unbuilt; no artwork for any | D.2 ✓ / artwork |
+| 9 | The Diary timeline | Grouping, filtering and deletion are done; the rail and markers are not — a design-system step | open |
+| 10 | The whole app | The database is hosted; the app is not — no Netlify build, no domain | A.6 half 2 |
 
 ---
 
@@ -129,62 +136,13 @@ has already refused, and leaving it mounted left it fighting the clock that
 took over, which was a real defect the end-to-end walk found. That fallback is
 the only thing a real file deletes.
 
-No scrubber: this is the stage, and the stage never had one — see entry 8.
+No scrubber: this is the stage, and the stage never had one — see entry 7.
 
 `select count(*) from tracks` is the number to quote when asking. Note the
 schema deliberately stores a recording **once** and points at it, so a
 recording shared between two exercises is one licence, not two. E.4.
 
-## 4 · Musie cannot open your camera
-
-**Rewritten 2026-09-21, and it now says close to the opposite.** This entry used
-to describe a simulated scan — a **Simulate a scan** button that picked one of
-the nine cards at random. E.0 and E.1 deleted it. What the entry called fake is
-the part that now works, which is exactly the situation the *Keeping this file
-honest* rule at the foot exists to prevent.
-
-**What you see.** A dashed square frame with a scan glyph, holding two lines:
-*Scan the QR code on your card with your phone's camera app — it opens Musie at
-that card*, and beneath it *Musie cannot open the camera itself yet*. Below the
-frame, a **Card code** field that takes `MC-01` and a **Use this card** button.
-Nothing picks a card for you.
-
-**What is missing.** The in-app camera: E.2 (`getUserMedia` +
-`BarcodeDetector`) and E.3 (a wasm decoder for Safari). **The dashed frame is
-the slot that camera goes into** — that is the whole of the mockup here, and it
-is why this entry survives rather than being deleted. A square dashed viewport
-is a viewfinder by convention, and this one cannot see anything.
-
-**What is NOT missing, and it is most of what this entry used to claim.** Both
-real ways of naming a card work today:
-
-1. **The QR code on the card**, read by the phone's own camera app. It carries
-   `<origin>/s/MC-01`, and [ScanLink](apps/web/src/routes/ScanLink.tsx) resolves
-   it into the running session. No domain is needed for this — the decoder never
-   compares a host and the route is same-origin (E.0).
-2. **The code printed beside it**, typed into the field (E.1).
-
-`getCardByCode()` in `apps/web/src/lib/content.ts` used to be a real lookup that
-nothing called. It now has three callers, all through `scanCardInto`
-([lib/scan.ts](apps/web/src/lib/scan.ts)), so a deep link and a typed code
-perform one act rather than two implementations of it. E.2's camera will be the
-third route into the same function.
-
-**The consequence worth knowing, and it is a deliberate trade.** The QR route
-works *by leaving Musie* — you scan with the phone's camera app and arrive back
-through `/s/:code`. Somebody who opens the app first, card in hand, is told to
-go and use a different app. **Ben judged that shippable for now (2026-09-21)**:
-the deep link makes the printed deck work end to end today, which the simulate
-button never did, and the second line of copy states the limitation plainly
-rather than leaving it to be discovered. It stops being true at E.2.
-
-**The WRITE was always real, and still is.** Resolving a card — typed or deep
--linked — looks up the (exercise, card) pairing and writes `card_id` AND
-`track_id` to the session in one update. What changed in E.1 is only the
-READ: the card is now the one you are actually holding rather than one drawn
-for you.
-
-## 5 · A track's title and artist are withheld, deliberately
+## 4 · A track's title and artist are withheld, deliberately
 
 **Not a mockup — this one is finished, and the easiest thing in the repo to
 "fix" by mistake.**
@@ -201,7 +159,7 @@ nothing, that is the design working. See CLAUDE.md rule 2.
 **What is missing** is only the reveal: a `reveal-track` Edge Function and the
 scroll-gated reveal at the end of the listen step. E.5.
 
-## 6 · Every exercise's step copy is empty
+## 5 · Every exercise's step copy is empty
 
 **What you see.** Session steps with chrome and almost no words of their own.
 The intro step shows one borrowed sentence; the listen and reflect steps show a
@@ -243,7 +201,7 @@ translation.
 Two exercises — Breathing Score and Body Scan Soundwalk — also have no track at
 all, and each wants one pairing row with a null `card_id`.
 
-## 7 · A session records its situation, and nothing asks
+## 6 · A session records its situation, and nothing asks
 
 `sessions.situation_id` exists, is nullable, and is **null for every row**.
 `situations` and `exercise_situations` are seeded and are how the prototype
@@ -254,7 +212,7 @@ The column is here because it was free to add before the schema deployed and an
 later. "What was I trying to do?" is diary-grade context whenever a picker
 lands.
 
-## 8 · The listen step is the stage, and the reveal is not built
+## 7 · The listen step is the stage, and the reveal is not built
 
 **What you see.** One screen: the exercise's words, the question, the transport
 and the gate copy under it. The gate is `exercises.listen_gate_seconds` — 90s
@@ -266,13 +224,13 @@ recording to tune against; the seed says so where they are set.
 viewports — this stage, a *"it would be better not to get influenced by the
 track name and cover"* interstitial, and a details view with the full
 `MusicPlayer`, the track's title and its artist. **Reaching the third view IS
-the reveal**, which is the whole mechanism entry 5 is waiting on.
+the reveal**, which is the whole mechanism entry 4 is waiting on.
 
 Deliberately not built here: those two views exist to gate `reveal-track`, and
 that function is E.5. Nothing in the stage has to be undone when they arrive —
 they are scroll targets below it.
 
-## 9 · Three of the four user types are not built
+## 8 · Three of the four user types are not built
 
 `user_types.implemented` is true for exactly one. Picking one of the other
 three **on `/about-you`** opens a not-implemented lightbox and records nothing;
@@ -286,27 +244,33 @@ used properly until the four pictures arrive. Four identical images destroy the
 thing that component is for; this is the clickdummy handoff's own open item 1,
 and it is the one part of D.2 still waiting on somebody.
 
-## 10 · The Diary is minimal on purpose
+## 9 · The Diary's timeline has no timeline
 
-`/diary` lists your non-running sessions newest first and `/diary/:id` shows
-one. A cancelled session appears like any other, marked unfinished.
+**Rewritten 2026-09-21, and most of this entry went away.** It used to say the
+diary grouped by calendar day with no filtering, and that deletion was half
+built. G.1 and G.2 both landed; all of that is done.
 
-**What is missing:** it groups by calendar day, which reads well at ten
-entries and badly at three hundred. A month's scale, filtering, and an empty
-state tuned for day thirty rather than day one are G.1.
+**What you see.** `/diary` lists your finished and abandoned sessions, grouped
+by **day for the last week and by month before that** — so the number of
+headings is bounded by the calendar rather than by how long you have used the
+product. Past five entries a filter appears (all / finished / unfinished), and
+a filter that matches nothing gets its own empty state naming which one came
+up empty. Deleting one session is on its card; deleting everything is in
+`/settings`, each with its own confirmation.
 
-**Deletion is half done, and this entry said none of it was (corrected
-2026-09-21).** Deleting ONE session landed in Phase D —
-[DiaryCard](apps/web/src/components/DiaryCard.tsx) has the control, an inline
-confirmation, and the cascade that takes the reflection with it. What is left
-of G.2 is **deleting everything**, with its own confirmation. The old
-done-when's other half, orphaned files in storage, is moot: nothing is ever
-uploaded, so there is nothing to orphan.
+**What is missing, and it is only this:** `Timeline`'s own header promises
+"a rail, a marker per group, sticky headings", and none of those exist. The
+groups are correct and the screen is honest — nothing here pretends to a rail
+it does not have — so this is a **styling gap rather than a mockup**, and it
+is the reason the entry is nearly empty rather than deleted.
 
-`LinkList` and `Timeline` in the design system are deliberately basic for the
-same reason — correct bones, styling detail deferred to G.1.
+**It cannot be fixed in the app**, which is why it is still open. A `musie-`
+pattern in `apps/web` reaching into `.musy-timeline__group` is exactly what
+L14's opening rule and L7 forbid. The rail belongs in
+`packages/design-system/src/Timeline.tsx`, as its own step. Logged in
+`apps/web/OPEN-QUESTIONS.md`.
 
-## 11 · The database is deployed. The app is not
+## 10 · The database is deployed. The app is not
 
 **Rewritten 2026-09-21, and this one had gone dangerous rather than merely
 stale.** It used to say *"No hosted Supabase project is linked… Do not create a

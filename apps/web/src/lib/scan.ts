@@ -11,8 +11,13 @@
  * ── THE WRITE IS THE ONE D.5a ALREADY MADE ────────────────────────────────
  * `card_id` and `track_id` together, through `saveCard`, because what you drew
  * and what it plays are decided by one act. Nothing about that changed when
- * the reader stopped being simulated — only the READ did. MOCKUPS.md 4 said
- * this would be the shape of it, and it is.
+ * the reader stopped being simulated — only the READ did.
+ *
+ * MOCKUPS.md used to carry an entry saying this would be the shape of it. That
+ * entry is GONE, deleted on 2026-09-21 once E.2 and E.3 landed and the camera
+ * was confirmed on a phone: the file's rule is that an entry describing
+ * something that works is worse than none. The prediction was right, which is
+ * why there is nothing left to link to.
  *
  * ── FOUR OUTCOMES, AND THREE OF THEM ARE NOT ERRORS ───────────────────────
  * A typo is not a failure of the app, and neither is a card from another deck.

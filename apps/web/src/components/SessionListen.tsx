@@ -7,7 +7,10 @@
  * not get influenced by the track name" interstitial, and a details view with
  * the full player and the track's identity — and reaching the third view IS the
  * reveal. That machinery belongs with the `reveal-track` Edge Function it
- * exists to gate, which is E.5, and MOCKUPS.md 5 already files it there.
+ * exists to gate, which is E.5. MOCKUPS.md files it under *A track's title and
+ * artist are withheld, deliberately* — named rather than numbered, because
+ * that file's numbering shifts when an entry is deleted, and it has been
+ * twice.
  *
  * So this is the stage: the copy, the transport, the gate, and the way on.
  * Nothing here has to be undone when the other two views arrive — they are

@@ -561,7 +561,7 @@ is neither nine nor none.
 
 Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
 
-- [ ] **E.0 The QR payload, the codes, and the deep link.** NEW. E.1, E.2 and
+- [x] **E.0 The QR payload, the codes, and the deep link.** NEW. E.1, E.2 and
   E.3 all decode something, and nothing in this repo ever said what. `cards.code`
   is `MC-01`, and `20260918150500_content_schema.sql` calls it *"the code
   printed on the paper card, beside its QR code"* — so the QR is a **print
@@ -607,18 +607,39 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   tests cover both payload forms and a malformed one; and scanning the dev
   sheet with the iPhone camera opens the right card by hand.
 
-- [ ] **E.1 Manual code entry.** A `Field` that takes `MC-01` and loads the
+- [x] **E.1 Manual code entry.** A `Field` that takes `MC-01` and loads the
   card. Before the camera, not after. *Done when:* typing a code advances to
   Listen and the simulate button is gone.
-- [ ] **E.2 Camera scanning.** `getUserMedia` + `BarcodeDetector`, with
+- [x] **E.2 Camera scanning.** `getUserMedia` + `BarcodeDetector`, with
   permission-denied, no-camera and no-HTTPS states all falling back to E.1.
   Testable without a camera and without a domain: Chromium takes
   `--use-fake-device-for-media-stream` and
   `--use-file-for-fake-video-capture=<file>.y4m`, so a recorded clip of a
   generated code drives the real decode path under Playwright. E.0's generator
   is what produces the code in that clip.
-- [ ] **E.3 Safari fallback.** A wasm decoder where `BarcodeDetector` is
-  missing. *Done when:* it scans on iPhone Safari.
+- [x] **E.3 Safari fallback.** `zxing-wasm` where `BarcodeDetector` is missing,
+  which is Safari and desktop Chrome on macOS. Lazily loaded and **self-hosted**
+  — the package fetches its binary from jsDelivr by default, overridden with a
+  Vite `?url` import so the 954 kB lands as one of the app's own assets, same
+  origin and same deploy. None of it is in the main bundle; nothing downloads
+  it until the camera is asked for.
+
+  ***Done when:* it scans on iPhone Safari — CONFIRMED BY BEN, 2026-09-21**,
+  through an HTTPS tunnel, which is the only way to test it: `getUserMedia`
+  needs a secure context, and `http://192.168.x.x:5173` is not one. A LAN
+  address makes the step render `cameraInsecure`, correctly, and a tester
+  reads right behaviour as a bug. `vite.config.ts` carries the tunnel note and
+  the `allowedHosts` entry that makes the next device test need no edit.
+
+  **Two things the device pass did not measure**, and they matter before a
+  pilot rather than now: how long the 954 kB binary takes on mobile data rather
+  than wifi, and decode speed on an older phone. Both are first-visit costs
+  only.
+
+  **The native `BarcodeDetector` branch is covered by nothing anywhere** —
+  macOS Chrome does not implement it, so the wasm path is what every test and
+  every hand check has exercised. Only Android Chrome runs the other one.
+  Logged in `apps/web/OPEN-QUESTIONS.md`; an Android phone closes it.
 - [ ] **E.4 Audio storage and playback.** Tracks into a Supabase bucket, the
   transport on signed URLs, the simulated clock kept for missing files.
   Remember there are two tables: `tracks` is the recording and
@@ -677,7 +698,7 @@ Before F.1: add a payment method to the OpenAI account. The free tier allows
 three requests a minute; this feature needs far more, and it fails in a way
 that looks exactly like a bug.
 
-- [ ] **F.0 Bring the POC into the monorepo.** `features/voice/`, imports
+- [x] **F.0 Bring the POC into the monorepo.** `features/voice/`, imports
   repointed at `@musie/design-system`, the private `MusieToast` deleted in
   favour of the real one, the demo scaffolding left behind. *Done when:*
   `pnpm check` passes with it in and nothing imports a relative path into
@@ -688,7 +709,7 @@ that looks exactly like a bug.
 - [ ] **F.2 Wire the core to tokens.** The only edit: `connectRealtime` takes a
   token, not an API key. *Done when:* you speak and words appear, with no key
   field anywhere.
-- [ ] **F.3 Tests for the two pure files.** `segmentation.ts` and
+- [x] **F.3 Tests for the two pure files.** `segmentation.ts` and
   `transcript/fillers.ts` — German abbreviations, the `um`/`äh` split, the
   whole-statement-was-hesitation case.
 - [ ] **F.4 The editor UI.** `MusieTranscriptWorkspace` and
@@ -710,17 +731,36 @@ user-gesture requirement. Budget a session for surprises.
 
 Reduced, because C.7 already built the part the flow depends on.
 
-- [ ] **G.1 The timeline at a month's scale.** Grouping, filtering, and an
+- [x] **G.1 The timeline at a month's scale.** Grouping, filtering, and an
   empty state that reads well after thirty sessions rather than on day one.
-- [ ] **G.2 Deletion — HALF DONE, 2026-09-20.** Deleting ONE session landed in
+- [x] **G.2 Deletion — the first half 2026-09-20, the second 2026-09-21.** Deleting ONE session landed in
   Phase D: a trash control in the diary entry, an inline confirmation, and the
   cascade taking the reflection with it. `useDiary` re-reads on arrival, which
   is what stops the list showing a row that is gone.
 
-  What is left: **deleting everything**, with its own confirmation. The
-  "orphaned files in storage" half of the old done-when is moot — D1 settled
-  that nothing is ever uploaded, so there is no storage to orphan. *Done when:*
-  a delete-everything control leaves no `sessions` and no `reflections` rows.
+  **The other half landed 2026-09-21**, and the "orphaned files in storage"
+  part of the old done-when was moot — D1 settled that nothing is ever
+  uploaded, so there is no storage to orphan.
+
+  **Delete-everything lives in `/settings`, not in the diary**, which is the
+  one decision in this step: `/diary` IS the thing being destroyed, so a
+  control that empties it while you scroll thirty rows past it is the
+  definition of easy to hit by accident. Reaching settings is already two
+  deliberate acts, so the inline confirmation is a third line of defence
+  rather than the only one. The argument is written above `DeleteEverything`
+  in `apps/web/src/SettingsSheet.tsx`.
+
+  It takes a **running** session too, and the navigate to `/diary` afterwards
+  is what stops that stranding you on a step whose row no longer exists.
+
+  ***Done when:* a delete-everything control leaves no `sessions` and no
+  `reflections` rows — PROVEN, and the third test is the one that matters.**
+  `deleteAllSessions` names no row (`.delete().not('id','is',null)`), so RLS
+  is the only thing between it and the whole table. `diary.db.test.ts` now
+  spins up a second anonymous user, runs the unqualified delete as the first,
+  and asserts the stranger's rows survive. That is the test that goes red the
+  day `sessions_delete_own` is weakened — where the app would otherwise start
+  deleting other people's diaries in silence.
 
 **Checkpoint.** Read the privacy copy from C.2 next to what the app actually
 does, line by line. If a sentence is doing work the code does not, fix the

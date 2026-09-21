@@ -62,6 +62,36 @@ function devFonts(): Plugin {
 
 export default defineConfig({
   plugins: [react(), devFonts()],
+
+  /**
+   * ── A TUNNEL, BECAUSE THE CAMERA NEEDS HTTPS AND A LAN ADDRESS IS NOT ────
+   * E.2's camera and E.3's Safari fallback can only be tested on a real phone,
+   * and `getUserMedia` requires a secure context. `http://192.168.x.x:5173` is
+   * NOT one — Safari refuses the camera there, the step correctly renders
+   * `cameraInsecure`, and the tester reads right behaviour as a bug. So the
+   * device test goes through an HTTPS tunnel:
+   *
+   *     cloudflared tunnel --url http://localhost:5173
+   *
+   * Vite then blocks the request, and rightly: `allowedHosts` is DNS-rebinding
+   * protection, which stops a page you visit from resolving its own name to
+   * 127.0.0.1 and reading your dev server through your browser. The default is
+   * localhost only.
+   *
+   * `.trycloudflare.com` — the leading dot means the domain and its
+   * subdomains — rather than `true`, and rather than pasting each tunnel's
+   * name in turn. A quick tunnel gets a fresh random hostname every run, so
+   * naming them one at a time means editing this file before every device
+   * test, which is how it ends up as `true` permanently. This narrows the
+   * opening to one provider used deliberately for this, and it is a DEV
+   * SERVER setting: nothing here reaches a build.
+   *
+   * Add another provider's domain beside it if you tunnel a different way.
+   */
+  server: {
+    allowedHosts: ['.trycloudflare.com'],
+  },
+
   build: {
     rollupOptions: {
       output: {
