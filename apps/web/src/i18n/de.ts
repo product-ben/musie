@@ -261,6 +261,28 @@ export const de: Messages = {
      English is blunt on purpose and the German should not apologise for it. */
   'privacy.browserBound': 'Weil das Konto in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch. Zurückholen lässt es sich nicht.',
 
+  /* ── Voice ───────────────────────────────────────────────────────────────
+     Siehe en.ts für den Grund, warum diese Sätze hier stehen und nicht im
+     Feature-Paket. */
+  'voice.error.micDenied': 'Musie braucht dein Mikrofon, um dich zu hören. Erlaube es in den Browser-Einstellungen und starte neu.',
+  'voice.error.micNotFound': 'Dieses Gerät hat kein Mikrofon, das Musie nutzen kann. Schreibe deine Antwort stattdessen.',
+  'voice.error.micUnavailable': 'Das Mikrofon ließ sich nicht öffnen. Schließe, was es sonst noch benutzt, und starte neu.',
+  'voice.error.recorderFailed': 'Die Aufnahme ließ sich auf diesem Gerät nicht starten. Schreibe deine Antwort stattdessen.',
+  'voice.error.connectionFailed': 'Musie erreicht den Dienst nicht, der deine Worte in Text verwandelt. Prüfe deine Verbindung und starte neu.',
+  /* 'bleibt erhalten', nicht 'ist gespeichert': gespeichert wird erst am Ende
+     der Session, und ein Versprechen, das die App hier nicht halten kann,
+     wäre schlimmer als die abgebrochene Verbindung. */
+  'voice.error.connectionClosed': 'Die Verbindung ist abgebrochen. Alles, was Musie schon gehört hat, bleibt erhalten.',
+  /* Gedankenstrich: im Deutschen der Halbgeviertstrich mit Leerzeichen, wo
+     das Englische den Geviertstrich setzt. */
+  'voice.error.connectionRejected': 'Musie kann gerade nicht zuhören. Das liegt an uns, nicht an dir – schreibe deine Antwort oder versuche es später.',
+  'voice.error.segmentationRejected': 'Musie konnte die Aufnahme nicht einrichten. Das liegt an uns, nicht an dir – schreibe deine Antwort oder versuche es später.',
+  'voice.error.noCredits': 'Musie kann Worte gerade nicht in Text verwandeln. Das liegt an uns, nicht an dir – schreibe deine Antwort stattdessen.',
+  'voice.error.providerError': 'Beim Zuhören ist etwas schiefgegangen. Schreibe deine Antwort oder versuche es noch einmal.',
+  'voice.warning.rateLimited': 'Ein Satz ließ sich nicht in Text verwandeln. Sag ihn noch einmal und mach weiter.',
+  'voice.undo.combined': 'Aussagen zusammengeführt',
+  'voice.undo.deleted': 'Aussage gelöscht',
+
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',

@@ -1,3 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+  # features/* arrived with F.0, which brought the voice proof-of-concept in as
+  # @musie/voice. It is its own workspace package rather than a folder inside
+  # apps/web so that `pnpm -r run typecheck|lint|test` reaches it on its own
+  # terms — the feature has to hold up before a screen consumes it.
+  - "features/*"
