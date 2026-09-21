@@ -501,8 +501,39 @@ Phase D.
 
 ## Phase E · Scan and listen
 
-Unchanged from the original Phase 4. Two independent halves: scanning needs
-nothing from anyone, listening needs nine cleared tracks.
+**Revised 2026-09-21.** The old header read *"scanning needs nothing from
+anyone, listening needs nine cleared tracks"*, and both halves of that turned
+out to be wrong. Scanning needs a decision nobody had made — what the QR code
+on the paper card actually **says** — and listening has four recordings, which
+is neither nine nor none.
+
+Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
+
+- [ ] **E.0 The QR payload, the codes, and the deep link.** NEW. E.1, E.2 and
+  E.3 all decode something, and nothing in this repo ever said what. `cards.code`
+  is `MC-01`, and `20260918150500_content_schema.sql` calls it *"the code
+  printed on the paper card, beside its QR code"* — so the QR is a **print
+  artifact**, and the repo has never held one: no generator, no decoder, no
+  library, no mention outside that comment.
+
+  **The deck is not printed yet (Ben, 2026-09-21), so the payload is ours to
+  choose — and the choice has a tail.** A QR carrying a URL,
+  `https://<domain>/s/MC-01`, deep-links from the phone's own camera app, so
+  the common way in never opens the in-app scanner at all. That demotes E.2 and
+  E.3 from *the* way in to *a* way in, and it needs a route this app does not
+  have. A QR carrying the bare code cannot ever do that. Once the deck is
+  printed the decision is unreprintable, which is why this is E.0 and not E.4.
+
+  Three deliverables. The `/s/:code` route. A **generator**, committed as a
+  script rather than nine pasted files, so the deck can be regenerated the day
+  the domain is settled. And test codes rendered on screen, because E.2 and E.3
+  cannot be developed or hand-tested without something to point a camera at.
+  The decoder accepts **both** forms — URL and bare code — so all three routes
+  in converge on `getCardByCode()`, which `apps/web/src/lib/content.ts` already
+  has and nothing yet calls.
+
+  *Done when:* scanning a generated code with the iPhone camera app opens that
+  card in a session, and typing `MC-01` by hand still does too.
 
 - [ ] **E.1 Manual code entry.** A `Field` that takes `MC-01` and loads the
   card. Before the camera, not after. *Done when:* typing a code advances to
@@ -515,10 +546,44 @@ nothing from anyone, listening needs nine cleared tracks.
   transport on signed URLs, the simulated clock kept for missing files.
   Remember there are two tables: `tracks` is the recording and
   `exercise_tracks` is when it plays. Upload one file per `tracks` row, not
-  per pairing. The licensing ask is **up to eleven** recordings — nine for the
-  deck plus one each for Breathing Score and Body Scan Soundwalk — and fewer
-  if any recording is shared between exercises, which the split now allows.
-  `select count(*) from tracks` is the number to quote.
+  per pairing.
+
+  **PARTLY UNBLOCKED, 2026-09-21 — four recordings landed.** Epidemic Sound,
+  staged in `~/musie-audio/`, which is outside the repository deliberately:
+  licensed masters cannot be taken back out of git history, and anything under
+  `apps/web/public/` ships in the Netlify bundle at a guessable public URL with
+  no access control. Their ID3 tags carry real title, artist and **mood**, so
+  the card assignment is mood-matched rather than arbitrary (Ben chose this
+  over a random draw, same day):
+
+  | Track | Card | Tagged mood |
+  |---|---|---|
+  | Little Yellow Petals — Rachel Sandy, 3:39 | MC-01 Joy | happy, hopeful |
+  | Wait for It — Jon Björk, 1:43 | MC-02 Sadness | sad, marching |
+  | High Sierra Call — Roy Edwin Williams, 3:11 | MC-05 Calm | laid back |
+  | Bats and Rats — Ludvig Moulin, 2:48 | MC-04 Fear | quirky, mysterious |
+
+  The other **five** cards stay silent and keep the simulated clock. Anger,
+  Longing, Gratitude, Hope and Loneliness.
+
+  **Three things the seed has wrong**, all fixed by this step's migration as a
+  NEW file rather than an edit (rule 4): `duration_seconds` is invented
+  throughout — the real values are 219, 102, 191 and 168; `title` and `artist`
+  are invented throughout; and `src` points at `assets/audio/…` paths that must
+  become bucket keys named by **track** id. `trk-01.mp3`, never
+  `mc-01-joy.mp3` — a filename naming the card and the feeling leaks exactly
+  what the opaque `trk-` ids were chosen to protect.
+
+  **Wait for It is 102 seconds against a 90-second gate.** It works, because
+  `SessionListen` caps the gate at the track's own length — but twelve seconds
+  of headroom means one pause puts the reflection out of reach without a
+  replay. Tune `listen_gate_seconds` once you have heard them.
+
+  Epidemic Sound is a **subscription** licence, not the per-track clearance
+  this plan assumed everywhere it says "cleared". `licence_ref` holds the ES
+  track identifier until something better exists.
+  `select count(*) from tracks` is still the number to quote when asking for
+  more.
 - [ ] **E.5 The reveal gate.** The `reveal-track` Edge Function and the
   three-scroll Listen step. *Done when:* the Network tab shows no title or
   artist until you scroll to the reveal.
@@ -648,12 +713,14 @@ is none, so a real session is simply used.
 
 ## Size
 
-Thirty-four steps to the MVP, against the original plan's forty-one with
-eighteen already banked — and three of those thirty-four have shrunk since this
-was written: C.5 is now paths only, C.6 is one query, and B.2 lost one of its
-three API holes. The expensive, easy-to-get-wrong part — the design system and
-its Storybook — is behind you, which is the half of the original plan most
-likely to have been skipped and regretted.
+Thirty-five steps to the MVP, against the original plan's forty-one with
+eighteen already banked — **thirty-four until E.0 was added on 2026-09-21**,
+which is the second time this plan has grown a `.0` entry ticket for work an
+earlier phase assumed somebody had already decided. Three of them have shrunk
+since this was written: C.5 is now paths only, C.6 is one query, and B.2 lost
+one of its three API holes. The expensive, easy-to-get-wrong part — the design
+system and its Storybook — is behind you, which is the half of the original
+plan most likely to have been skipped and regretted.
 
 **Phase H's five steps are not part of that count.** The MVP is done when the
 app is functional and live on its own domain, which is the end of A.6's second
@@ -666,7 +733,8 @@ F first.
 
 | Blocker | Blocks |
 |---|---|
-| Up to **eleven** recordings cleared for commercial use — nine for the deck, plus one each for Breathing Score and Body Scan Soundwalk. Fewer if any is shared; `count(*) from tracks` is the number | E.4, E.5 |
+| **Five more recordings.** Four landed 2026-09-21 (Epidemic Sound), leaving five of the nine deck cards silent, plus one each for Breathing Score and Body Scan Soundwalk still wanted. `count(*) from tracks` is the number to quote | E.4 in full. **E.5 is not blocked by this** — the reveal gates `title` and `artist`, which the seed already carries, so it can be built and its done-when checked with no audio at all |
+| **The domain.** A printed QR code locks it in permanently, and A.6's second half — Netlify and a domain — has not run. Nothing goes to print until it is chosen, and the Netlify build allowance returns the week of 22 September | E.0's print-ready codes, and the deck itself. E.0's code, route and test codes are **not** blocked: the payload shape is known, only the host is not |
 | Which vision model reads handwriting — or ship photo as session-only | D.5 |
 | **Sign-off** on the privacy copy — it is written, in both languages, and waiting | nothing is blocked; it is a promise already in the catalogue |
 | The real Mindfulness Cards spreadsheet | The content is placeholder until it lands; all German content rows are `[DE] `-prefixed. **The re-cut then the step re-cut left TWENTY-EIGHT strings with no source** — four step lists plus one question per exercise, in both locales — which D.4 and D.5 need |
