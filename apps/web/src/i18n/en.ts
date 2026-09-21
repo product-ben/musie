@@ -290,6 +290,7 @@ export const en = {
   /* DELETION. The confirm is not a formality: the row and its answer go for
      good — `reflections` cascades — and there is no undo, because a diary the
      user asked to forget something from should forget it. */
+  'diary.collapse': 'Close this entry',
   'diary.delete': 'Delete this session',
   'diary.delete.confirm': 'Delete this session?',
   'diary.delete.text': 'This removes the session and anything you wrote in it. It cannot be undone.',

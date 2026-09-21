@@ -43,8 +43,8 @@ export const de: Messages = {
   'menu.title': 'Menü',
   'menu.pagesLabel': 'Seiten',
   'menu.closeLabel': 'Menü schließen',
-  'menu.startSession': 'Sitzung starten',
-  'menu.continueSession': 'Sitzung fortsetzen',
+  'menu.startSession': 'Session starten',
+  'menu.continueSession': 'Session fortsetzen',
   'menu.yourDiary': 'Dein Tagebuch',
   'menu.aboutYou': 'Über dich',
   'menu.howItWorks': 'Wie Musie funktioniert',
@@ -73,7 +73,7 @@ export const de: Messages = {
   /* The German chat convention is the bare verb: 'Musie schreibt …'. */
   'about.typing': 'Musie schreibt',
   'about.carouselHeadline': 'Wie wir mit Musik spielen',
-  'about.carouselLabel': 'Wie eine Sitzung abläuft',
+  'about.carouselLabel': 'Wie eine Session abläuft',
   'about.slide.situation': 'Du hilfst mir, deine Situation zu verstehen',
   'about.slide.recommend': 'Ich empfehle dir musikbasierte Methoden für deinen Kontext',
   'about.slide.listen': 'Kuratierte Musik und Anleitungen lösen etwas in dir aus',
@@ -84,7 +84,7 @@ export const de: Messages = {
   'about.slideLabel': 'Schritt {position} von {total}: {title}',
   'about.dotLabel': 'Schritt {position}',
   'about.goToSlide': 'Zu Schritt {position} von {total}',
-  'about.hint.unseen': 'Sieh dir an, wie eine Sitzung abläuft, bevor du startest.',
+  'about.hint.unseen': 'Sieh dir an, wie eine Session abläuft, bevor du startest.',
   'about.hint.next': 'Als Nächstes frage ich dich, als wer du hier bist.',
   /* 'Es kann losgehen.' rather than a literal 'Bereit, wenn du es bist.' —
      the English is an idiom and the German has its own. */
@@ -125,9 +125,9 @@ export const de: Messages = {
   'exercises.detail.needs': 'Du brauchst',
   'exercises.detail.duration': 'Dauer',
   'exercises.start': 'Übung starten',
-  'exercises.alreadyRunning': 'Es läuft schon eine Sitzung',
-  'exercises.alreadyRunningDetail': 'Beende oder schließe die laufende Sitzung, bevor du eine neue startest.',
-  'exercises.goToSession': 'Zu dieser Sitzung',
+  'exercises.alreadyRunning': 'Es läuft schon eine Session',
+  'exercises.alreadyRunningDetail': 'Beende oder schließe die laufende Session, bevor du eine neue startest.',
+  'exercises.goToSession': 'Zu dieser Session',
 
   /* ── The session ─────────────────────────────────────────────────────────
      Noun forms, not imperatives: these name the steps in a rail, they do not
@@ -142,19 +142,19 @@ export const de: Messages = {
   'session.status.abandoned': 'Nicht beendet',
 
   /* ── The session screen · D.4 ─────────────────────────────────────────── */
-  'session.wizardLabel': 'Schritte der Sitzung',
-  'session.notFound': 'Diese Sitzung gibt es nicht',
+  'session.wizardLabel': 'Schritte der Session',
+  'session.notFound': 'Diese Session gibt es nicht',
   'session.notFoundText': 'Vielleicht wurde sie gelöscht, oder sie gehört zu einem anderen Browser.',
   /* Two spellings on purpose: the panel's control names its object ('Diese
-     Sitzung'), the dialog's confirm does not need to repeat it. */
-  'session.close': 'Diese Sitzung schließen',
-  'session.close.title': 'Sitzung schließen?',
+     Session'), the dialog's confirm does not need to repeat it. */
+  'session.close': 'Diese Session schließen',
+  'session.close.title': 'Session schließen?',
   /* Gedankenstrich, not an em dash (§7). 'wie es dir gerade geht' rather than
      a literal 'dem Zustand, in dem du bist' — the English is plain and the
      German should not reach for a register the app does not use anywhere
      else. */
-  'session.close.text': 'Du kannst sie später nicht wieder aufnehmen – die Übung arbeitet damit, wie es dir gerade geht, und das ist beim nächsten Mal anders. Sie bleibt als nicht beendet in deinem Tagebuch, und du kannst jederzeit eine neue Sitzung starten.',
-  'session.close.confirm': 'Sitzung schließen',
+  'session.close.text': 'Du kannst sie später nicht wieder aufnehmen – die Übung arbeitet damit, wie es dir gerade geht, und das ist beim nächsten Mal anders. Sie bleibt als nicht beendet in deinem Tagebuch, und du kannst jederzeit eine neue Session starten.',
+  'session.close.confirm': 'Session schließen',
 
   /* ── Intro · D.5a ──────────────────────────────────────────────────────── */
   'session.intro.fallback': 'Nimm dir einen Moment zum Ankommen. Wenn du so weit bist, geht es weiter.',
@@ -215,19 +215,19 @@ export const de: Messages = {
   /* Verb phrase, §3 — 'Überspringen' alone would name a thing rather than an
      action, and the object is what makes it unambiguous beside 'Beenden'. */
   'reflect.skip': 'Reflexion überspringen',
-  'reflect.finish': 'Sitzung beenden',
+  'reflect.finish': 'Session beenden',
 
   /* ── Diary ─────────────────────────────────────────────────────────────── */
-  /* 'Deine letzte Sitzung' — 'letzte' is the one German would use here and
+  /* 'Deine letzte Session' — 'letzte' is the one German would use here and
      carries no finality in this frame; 'jüngste' would read as a register
      nobody speaks. */
-  'diary.latest': 'Deine letzte Sitzung',
+  'diary.latest': 'Deine letzte Session',
   'diary.openEntry': 'Eintrag öffnen',
   'diary.earlier': 'Früher',
-  'diary.timelineLabel': 'Deine Sitzungen, neueste zuerst',
+  'diary.timelineLabel': 'Deine Sessions, neueste zuerst',
   'diary.listLabel': 'Tagebucheinträge',
-  'diary.empty': 'Noch keine Sitzungen',
-  'diary.emptyText': 'Beende eine Sitzung, dann erscheint sie hier.',
+  'diary.empty': 'Noch keine Sessions',
+  'diary.emptyText': 'Beende eine Session, dann erscheint sie hier.',
   'diary.stoppedAt': 'Aufgehört bei {step}',
   /* 'Min.' with the point: the abbreviation DIN 1301 uses, and it keeps the
      row inside the measure where 'Minuten' would not. */
@@ -242,9 +242,10 @@ export const de: Messages = {
   'diary.notFound': 'Diesen Tagebucheintrag gibt es nicht',
   /* 'endgültig' carries the weight the English gets from 'cannot be undone'
      without a second clause; §5's length budget is tight in a dialog. */
-  'diary.delete': 'Diese Sitzung löschen',
-  'diary.delete.confirm': 'Sitzung löschen?',
-  'diary.delete.text': 'Damit sind die Sitzung und alles, was du darin geschrieben hast, endgültig weg. Das lässt sich nicht rückgängig machen.',
+  'diary.collapse': 'Diesen Eintrag schließen',
+  'diary.delete': 'Diese Session löschen',
+  'diary.delete.confirm': 'Session löschen?',
+  'diary.delete.text': 'Damit sind die Session und alles, was du darin geschrieben hast, endgültig weg. Das lässt sich nicht rückgängig machen.',
   'diary.delete.yes': 'Löschen',
 
   /* ── Privacy · C.2 ───────────────────────────────────────────────────────
@@ -268,7 +269,7 @@ export const de: Messages = {
   'route.exercises.title': 'Übungen',
   /* A Gedankenstrich: German sets a parenthetical dash as an EN dash with
      spaces, where English sets an em dash. The English key keeps its '—'. */
-  'route.session.title': 'Aktuelle Sitzung – {step}',
+  'route.session.title': 'Aktuelle Session – {step}',
   'route.settings.title': 'Einstellungen',
   'route.notFound.title': 'Nicht gefunden',
 };

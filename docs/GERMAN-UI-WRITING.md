@@ -66,7 +66,7 @@ emphasis.
 
 | ✗ | ✓ |
 |---|---|
-| Sitzung Starten | Sitzung starten |
+| Session Starten | Session starten |
 | Noch Nicht Verfügbar | Noch nicht verfügbar |
 | Wie Musie Funktioniert | Wie Musie funktioniert |
 | NICHT GEFUNDEN | Nicht gefunden |
@@ -84,9 +84,9 @@ so "verb-first" here means: **the label is a verb phrase, not a noun.**
 
 | ✗ | Why it is wrong | ✓ |
 |---|---|---|
-| Sitzungsstart | nominalised; a noun names a thing, a button performs an act | Sitzung starten |
-| Du kannst eine Sitzung starten | describes a capability instead of offering it; costs 21 characters to say less | Sitzung starten |
-| Fortsetzung der Sitzung | genitive pile-up for a one-word action | Sitzung fortsetzen |
+| Sessionstart | nominalised; a noun names a thing, a button performs an act | Session starten |
+| Du kannst eine Session starten | describes a capability instead of offering it; costs 21 characters to say less | Session starten |
+| Fortsetzung der Session | genitive pile-up for a one-word action | Session fortsetzen |
 
 The same test applies to an aria-label: *Menü öffnen*, *Profil und
 Einstellungen öffnen*, *Menü schließen*. A screen-reader user hears only the
@@ -266,7 +266,7 @@ Two of these have already caught something in this repo:
 - **The em dash is not.** English `route.session.title` is
   `'Current session — {step}'`, with an em dash, which is correct English
   typesetting. The German took the same character. German uses the
-  Halbgeviertstrich — `'Aktuelle Sitzung – {step}'`. This is the kind of thing
+  Halbgeviertstrich — `'Aktuelle Session – {step}'`. This is the kind of thing
   that only a read against a written standard catches.
 
 **A heading does not end in a full stop.** A sentence does. `content.error`
@@ -291,6 +291,19 @@ Three cases, decided separately:
 3. **Everything else gets German.** *Dunkelmodus*, not *Dark Mode*. *Sprache*,
    not *Language*. *Wird geladen…*, not *Loading…*. An English word in the
    chrome is a string somebody forgot, not a style.
+
+**One decided exception, and it is a product word: a session is a *Session*.**
+Not *Sitzung*. It shipped as *Sitzung* and was changed throughout on
+2026-09-21 (Ben). *Sitzung* is what a therapist has with a patient or a
+committee has on a Tuesday — it is clinical and institutional, and Musie's
+whole posture is that you are not a patient. *Session* is the word German
+already uses for a stretch of time you give to something on purpose, in music
+above all, which is exactly what this is.
+
+It declines like any German feminine noun — **die Session**, *eine Session*,
+*der Session* — so adjective endings are unchanged from *Sitzung* and nothing
+else in a string has to move. The plural takes the English `-s`: **Sessions**,
+never *Sessionen*.
 
 **Joining an English name to a German noun takes hyphens throughout**
 (Durchkopplung): **Mindfulness-Cards-Set**, not *Mindfulness Cards Set* and not
