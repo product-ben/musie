@@ -59,7 +59,6 @@ export interface Exercise {
   description: string;
   /** Null for exercises the source has no `needs` for. Absent, not untranslated. */
   needs: string | null;
-  durationLabel: string | null;
   /**
    * THE FOUR STEPS' COPY, one array each, in step order: intro → scan →
    * listen → reflect. Each element is ONE PARAGRAPH — the array boundary is
@@ -183,7 +182,7 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, duration_label, intro_text, scan_text, listen_text, reflect_text, question, image_alt)';
+const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_text, scan_text, listen_text, reflect_text, question, image_alt)';
 
 interface ExerciseRow {
   id: string;
@@ -200,7 +199,6 @@ interface ExerciseRow {
     name: string;
     description: string;
     needs: string | null;
-    duration_label: string | null;
     intro_text: string[] | null;
     scan_text: string[] | null;
     listen_text: string[] | null;
@@ -226,7 +224,6 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     name: text.name,
     description: text.description,
     needs: text.needs,
-    durationLabel: text.duration_label,
     /* ?? [] is the whole of the null-versus-empty decision: it happens once,
        here, so no screen ever sees the nullable column. */
     introText: text.intro_text ?? [],

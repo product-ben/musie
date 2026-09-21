@@ -153,10 +153,11 @@ export function Exercises() {
             headline: exercise.name,
             description: exercise.description,
             facts: factsFor(exercise, t),
-            /* Null for the two unimplemented exercises — the source has no
-               duration for either — and `label` is optional precisely so a
-               card with nothing to qualify carries no empty line. */
-            label: exercise.durationLabel ?? undefined,
+            /* NO `label`. It carried `duration_label` — "About 15 minutes" —
+               against a `time` fact chip already reading "2–12 minutes" from
+               the timeframe columns, and the two disagreed. The column is gone
+               (20260921120000) and the chip is the survivor: it is the same
+               fact, structured, and it cannot drift from itself. */
             image: exercise.imageUrl ?? '',
             imageAlt: exercise.imageAlt,
           }))}
@@ -289,9 +290,19 @@ function ExerciseDetail({ exercise, starting, onStart, onClose }: {
   if (exercise.needs !== null) {
     facts.push({ label: t('exercises.detail.needs'), content: exercise.needs });
   }
-  if (exercise.durationLabel !== null) {
-    facts.push({ label: t('exercises.detail.duration'), content: exercise.durationLabel });
-  }
+  /* The duration row survives its column. It read `duration_label`, a free-text
+     string that contradicted the timeframe columns beside it; it now reads the
+     timeframe itself, through the same key the card's fact chip uses. So the
+     lightbox still answers "how long is this", and there is one source for the
+     answer instead of two that could disagree. Unconditional, because every
+     exercise has a timeframe — both columns are `not null`. */
+  facts.push({
+    label: t('exercises.detail.duration'),
+    content: t('exercises.timeframe', {
+      min: String(exercise.timeframeMin),
+      max: String(exercise.timeframeMax),
+    }),
+  });
 
   return (
     <Lightbox

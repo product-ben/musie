@@ -87,7 +87,6 @@ export type Database = {
       exercise_i18n: {
         Row: {
           description: string
-          duration_label: string | null
           exercise_id: string
           image_alt: string
           intro_text: string[] | null
@@ -101,7 +100,6 @@ export type Database = {
         }
         Insert: {
           description: string
-          duration_label?: string | null
           exercise_id: string
           image_alt: string
           intro_text?: string[] | null
@@ -115,7 +113,6 @@ export type Database = {
         }
         Update: {
           description?: string
-          duration_label?: string | null
           exercise_id?: string
           image_alt?: string
           intro_text?: string[] | null

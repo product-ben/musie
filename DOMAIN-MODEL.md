@@ -159,7 +159,16 @@ The library. Three rows; one implemented.
 
 Owns `timeframe_min/max`, `needs_cards`, `needs_sound`, `implemented`, `sort`,
 `listen_gate_seconds`, and per locale `name`, `description`, `needs`,
-`duration_label`, `image_alt` — plus the step copy below.
+`image_alt` — plus the step copy below.
+
+**DROPPED 2026-09-21: `duration_label`.** Two fields said how long an exercise
+takes and they disagreed — `timeframe_min/max` said **2–12 minutes**,
+`duration_label` said **"About 15 minutes"**, and both were on the same screen.
+The range wins: it is structured, a number needs no translation, and it cannot
+drift from itself. Where the detail lightbox had a *Duration* row it now reads
+the timeframe through the key the card's fact chip already used, so the fact
+survives and has one source. Migration `20260921120000`, found on the first
+hosted walk-through.
 
 **ADDED 2026-09-20: `listen_gate_seconds`.** How much of the track has to be
 behind you before the reflection unlocks. It was a hardcoded 90 in the listen
