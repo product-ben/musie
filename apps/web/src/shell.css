@@ -92,7 +92,12 @@
    than set to a literal, which is the whole reason <html lang> has to track
    the locale.                                                               */
 .musie-placeholder {
-  margin: 0;
+  /* --space-gap-group below, which is what every other block on these screens
+     uses to separate itself from the next thing (`.musie-steps` above it,
+     `.musie-plain-list` below). It shipped as a bare `margin: 0`, so on /diary
+     the title sat hard against the first entry with no token between them at
+     all — the one place where nothing else supplied the gap. */
+  margin: 0 0 var(--space-gap-group);
   max-inline-size: var(--measure-heading);
   font-family: var(--type-heading-lg-family);
   font-size: var(--type-heading-lg-size);
@@ -102,6 +107,14 @@
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
   hyphens: var(--text-hyphens);
+}
+
+/* IN A SHEET THE GAP IS ALREADY OWNED. `.musie-sheet` is a flex column with
+   `gap: var(--space-gap-group)`, so the margin above would land on top of it
+   and the settings title would sit twice as far from the first control as
+   every other pair in the sheet. One spacing mechanism per container. */
+.musie-sheet .musie-placeholder {
+  margin-block-end: 0;
 }
 
 /* ═══ THE STAGE ═════════════════════════════════════════════════════════════
@@ -417,7 +430,11 @@
   font-weight: var(--font-weight-medium);
   line-height: var(--type-body-xl-line);
   letter-spacing: var(--type-body-xl-tracking);
-  color: var(--on-surface);
+  /* Muted, as the paragraph above always said it was. It shipped as
+     --on-surface, so the two body-xl voices in the session read as different
+     kinds of thing — caught by eye on the hosted walk-through, 2026-09-21.
+     The weight alone separates the question from the instruction. */
+  color: var(--on-surface-muted);
   text-wrap: var(--text-wrap-heading);
   hyphens: var(--text-hyphens);
 }
@@ -637,4 +654,26 @@
   font-size: var(--type-body-sm-size);
   line-height: var(--type-body-sm-line);
   color: var(--on-surface-muted);
+}
+
+/* ═══ A DIARY ENTRY'S HEADER ROW ════════════════════════════════════════════
+   The status badge, and — inline only — the control that collapses the card
+   back to its preview row.
+
+   A PERMITTED CUSTOM PATTERN (L14): the system has no "badge on one side, a
+   control on the other" component, and `.musy-box__header` is a flex COLUMN
+   whose default `align-items: stretch` would take a lone IconButton edge to
+   edge. That is the same trap `BadgeRow` exists to solve for a lone Badge —
+   documented in ContentBox's own header comment — and the answer here is the
+   same shape: a row that lays its children out at their natural width.
+
+   Every declaration resolves to a Layer 1 token. `space-between` rather than
+   a spacer element: same result, one fewer node, direction-agnostic either
+   way. `align-items: flex-start` so a badge that wraps to two lines does not
+   drag the X down with it.                                                 */
+.musie-entry__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
 }

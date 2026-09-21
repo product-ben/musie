@@ -48,18 +48,15 @@
  * a hardcoded '·' is a rendered string literal, and putting punctuation in the
  * catalogue is worse. The slot is a column, so two siblings stack.
  */
+import * as React from 'react';
 import { Link } from 'react-router';
-import {
-  Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, CtaButton, LinkList,
-  Message, Timeline,
-} from '@musie/design-system';
-import type { ContentListItem, LinkListItem } from '@musie/design-system';
+import { ContentBox, LinkList, Message, Timeline } from '@musie/design-system';
+import type { LinkListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
-import { useDiary } from '../lib/useDiary';
-import {
-  durationMinutes, formatDateTime, formatDay, groupByDay, stepMessageKey,
-} from '../lib/diary';
+import { useDiary, useDiaryEntry } from '../lib/useDiary';
+import { durationMinutes, formatDay, groupByDay, stepMessageKey } from '../lib/diary';
 import type { DiaryEntry } from '../lib/diary';
+import { DiaryCard } from '../components/DiaryCard';
 
 type Translate = ReturnType<typeof useT>;
 
@@ -109,75 +106,48 @@ function toItem(entry: DiaryEntry, t: Translate): LinkListItem {
 }
 
 /**
- * The newest entry, spelled out.
+ * The newest entry, inline — the SAME card the lightbox renders, not a
+ * lookalike of it.
  *
- * The same vocabulary the entry page uses — `diary.when`, `diary.howLong`,
- * `diary.card` are labels; the status and *Stopped at …* are values with no
- * label written for them, so they are a badge and a quiet line. That split is
- * the catalogue's, not an invention, and it is why nothing new was written to
- * fill a layout.
+ * Before 2026-09-21 this drew its own lighter version: a ContentBox with three
+ * facts and a link saying *Open entry*. Two renderings of one thing, which is
+ * how they drift — and the reason the answer, the track and the delete control
+ * were reachable in one of them and not the other.
  *
- * The duration IS shown for an unfinished run here, as on the entry page and
- * unlike in the list: it sits under an *Unfinished* badge and beside *Stopped
- * at Listen*, which is the context a one-line row cannot give it.
+ * ── WHY IT FETCHES, AND WHY IT IS ITS OWN COMPONENT ───────────────────────
+ * `useDiary` returns SUMMARIES: enough for a row, and not the reflection, the
+ * track or anything else the card shows. The card needs `DiaryEntryDetail`, so
+ * one more read is unavoidable — and a hook cannot be called conditionally, so
+ * the read lives in a component that is only mounted when there is an id to
+ * read and the card is open. That is also what stops a collapsed card holding
+ * a request nobody is waiting for.
+ *
+ * ── ITS FAILURES ARE QUIET, AND THAT IS THE POINT ─────────────────────────
+ * The run below is already on screen and already lists this session. So a slow
+ * or failed detail read renders NOTHING here rather than an error panel above
+ * a perfectly good list: the entry is still reachable by tapping its row, and
+ * a second failure message for a screen that is working would be the loudest
+ * thing on it. `/diary/:id` is where the failure is worth stating, because
+ * there the card IS the screen.
  */
-function LatestEntry({ entry }: { entry: DiaryEntry }) {
+function LatestEntry({ id, onDismiss }: { id: string; onDismiss: () => void }) {
   const t = useT();
-  const { locale } = useLocale();
+  const { data } = useDiaryEntry(id);
 
-  const minutes = durationMinutes(entry.startedAt, entry.endedAt);
-  const abandoned = entry.status === 'abandoned';
-
-  const facts: ContentListItem[] = [
-    { label: t('diary.when'), content: formatDateTime(entry.startedAt, locale) },
-  ];
-  if (minutes !== null) {
-    facts.push({
-      label: t('diary.howLong'),
-      content: t('diary.duration', { minutes: String(minutes) }),
-    });
-  }
-  if (entry.cardFeeling !== null) {
-    facts.push({ label: t('diary.card'), content: entry.cardFeeling });
-  }
+  /* `DiaryEntryView` also covers "still running", which cannot reach here:
+     the diary reads only sessions that are over. Narrowed rather than
+     asserted — a cast would be a promise this component cannot keep. */
+  if (data === null || data.kind !== 'entry') return null;
 
   return (
-    <ContentBox
-      headline={entry.exerciseName}
-      /* h2, under the screen's h1 — the same level the day headings take, and
-         this box sits beside them in the outline rather than inside one. */
+    <DiaryCard
+      entry={data.entry}
+      /* h2, under the page's h1 — where the lightbox's copy is an h3 under the
+         dialog title. The one thing that genuinely differs between the two. */
       headingLevel={2}
-      headlineStep="heading-md"
-      text={entry.exerciseDescription}
-      /* `header` present ⇒ framed, and the hairline divides what this entry IS
-         from what is known about it. Same arrangement as the entry page. */
-      header={
-        <BadgeRow>
-          <Badge variant={abandoned ? 'outline' : 'primary-subtle'}>
-            {t(abandoned ? 'session.status.abandoned' : 'session.status.finished')}
-          </Badge>
-        </BadgeRow>
-      }
-    >
-      {abandoned && (
-        <p className="musie-note">
-          {t('diary.stoppedAt', { step: t(stepMessageKey(entry.step)) })}
-        </p>
-      )}
-
-      <ContentList items={facts} emptyLabel={t('content.empty')} />
-
-      {/* The way into the full entry, which is where the answer and the
-          recording live. A link rather than a button: it is a destination. */}
-      <ButtonGroup align="end">
-        <CtaButton
-          variant="secondary"
-          render={<Link to={`/diary/${encodeURIComponent(entry.id)}`} />}
-        >
-          {t('diary.openEntry')}
-        </CtaButton>
-      </ButtonGroup>
-    </ContentBox>
+      onDismiss={onDismiss}
+      dismissLabel={t('diary.collapse')}
+    />
   );
 }
 
@@ -185,6 +155,12 @@ export function Diary() {
   const t = useT();
   const { locale } = useLocale();
   const { data, loading, error } = useDiary();
+
+  /* Per visit, deliberately. Arriving at the diary — above all arriving from
+     the reflect step, which lands here rather than on /diary/:id — should show
+     the thing you just made, and a preference remembered from last week would
+     take that away. Closing it is a "not now", not a setting. */
+  const [collapsed, setCollapsed] = React.useState(false);
 
   let body;
   if (loading) {
@@ -213,10 +189,28 @@ export function Diary() {
       />
     );
   } else {
-    const [latest, ...rest] = data;
+    /**
+     * THE NEWEST ENTRY IS INLINE UNTIL IT IS CLOSED.
+     *
+     * Ben, 2026-09-21: every entry has three states — preview (a row in the
+     * run below), inline (this card, in the page) and lightbox (the same card
+     * at /diary/:id). The newest one opens inline; its X collapses it to a
+     * preview, which is when it joins the run with everything else.
+     *
+     * `rest` follows from that and is the whole of the mechanism: while the
+     * card is open the newest entry is held out of the list, because it would
+     * otherwise be the same session twice on one screen. Closed, nothing is
+     * held out and `data` is the run entire — which is also why closing does
+     * not make a row disappear.
+     */
+    const [latest, ...older] = data;
+    const rest = collapsed ? data : older;
+
     body = (
       <>
-        <LatestEntry entry={latest} />
+        {!collapsed && (
+          <LatestEntry id={latest.id} onDismiss={() => setCollapsed(true)} />
+        )}
 
         {/* Nothing at all when this is the only session there has ever been —
             a heading over an empty run says less than its absence does. */}
