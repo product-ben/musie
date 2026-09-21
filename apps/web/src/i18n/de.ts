@@ -191,15 +191,17 @@ export const de: Messages = {
      happened and what to do instead; so does this. 'Tippe … ein' is the
      imperative singular the rest of the app uses (§1). */
   'session.scan.cameraStart': 'Kamera benutzen',
-  'session.scan.cameraRetry': 'Kamera noch einmal versuchen',
+  /* 'noch mal', not 'noch einmal': the longer form put this at 1.40× the
+     English and §5 asks for the rewrite before the wrap. */
+  'session.scan.cameraRetry': 'Kamera noch mal versuchen',
   'session.scan.cameraStop': 'Kamera ausschalten',
-  'session.scan.cameraStarting': 'Die Kamera wird geöffnet…',
+  'session.scan.cameraStarting': 'Kamera wird geöffnet…',
   'session.scan.cameraLive': 'Halte den QR-Code deiner Karte in den Rahmen.',
   'session.scan.cameraLabel': 'Kamera, sucht nach einem QR-Code',
   'session.scan.cameraOther': 'Dieser QR-Code gehört nicht zu Musie. Der Code einer Karte sieht aus wie MC-01.',
   'session.scan.cameraDenied': 'Die Kamera bleibt aus. Tippe stattdessen den Code ein, der auf deiner Karte steht.',
   'session.scan.cameraMissing': 'Dieses Gerät hat keine Kamera, die Musie nutzen kann. Tippe stattdessen den Code von deiner Karte ein.',
-  'session.scan.cameraBusy': 'Eine andere App benutzt gerade die Kamera. Schließe sie und versuch es noch einmal, oder tippe den Code von deiner Karte ein.',
+  'session.scan.cameraBusy': 'Eine andere App benutzt die Kamera. Schließe sie und versuch es noch einmal, oder tippe den Code von deiner Karte ein.',
   'session.scan.cameraInsecure': 'Der Browser öffnet die Kamera nur über eine sichere Verbindung. Tippe stattdessen den Code von deiner Karte ein.',
   'session.scan.cameraUnsupported': 'Dieser Browser öffnet hier keine Kamera. Tippe stattdessen den Code von deiner Karte ein.',
   'session.scan.cameraDecoder': 'Der Code-Leser ließ sich nicht laden. Prüfe deine Verbindung und versuch es noch einmal, oder tippe den Code von deiner Karte ein.',

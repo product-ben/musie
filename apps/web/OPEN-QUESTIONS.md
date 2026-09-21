@@ -1430,3 +1430,212 @@ depends on the design system when it renders nothing. It imports two TYPES —
 shapes §7.24 already owns. Type-only, so nothing reaches the bundle, but it
 does mean `@base-ui/react` and `lucide-react` are dev dependencies of a package
 with no components in it: `tsc` has to resolve the barrel to read two types.
+
+---
+
+# Phase E · E.2 and E.3 — the camera, and the decoder behind it
+
+## MOCKUPS.md 4 is wrong again, in the opposite direction this time
+
+Where: `MOCKUPS.md` entry 4, `src/components/CardScanner.tsx`
+
+What I checked: entry 4 was rewritten on 2026-09-21 — the commit is
+`6bd1603` — and the rewrite is careful and correct about the state it was
+written for. Its whole subject is the gap E.2 fills: *"Musie cannot open your
+camera"*, *"the dashed frame is the slot that camera goes into"*, *"a square
+dashed viewport is a viewfinder by convention, and this one cannot see
+anything"*. The camera is now in the slot. So is the fallback for Safari.
+
+What I did: nothing to that file — it is one of the four a step does not
+rewrite on its own — and I changed the copy it quotes instead.
+`session.scan.readerNote` no longer says *Musie cannot open the camera itself
+yet*; it says *Or use the camera on this device — it reads the same code*.
+That was not optional: MOCKUPS.md's own closing rule cuts both ways, and a
+frame still claiming it cannot see is the same defect as one pretending it can.
+
+What the entry should now say, as precisely as I can put it:
+
+- **The title is now false.** Musie can open your camera. The entry's subject
+  has to change or the entry has to go.
+- **What you see.** The same dashed square, with *Use the camera* under it.
+  Press it and the border goes solid, the preview fills the square, and a line
+  underneath says *Hold the QR code on your card inside the frame*. The code is
+  read, put into the **Card code** field, and submitted — so the code that was
+  read stays visible, which is where an unknown-card error would appear under
+  it. Nothing was clicked between the press and the card.
+- **What is real.** `getUserMedia` plus `BarcodeDetector` where the platform
+  has one (Android Chrome), and zxing-cpp compiled to WebAssembly where it does
+  not (Safari everywhere, Chrome on macOS). Permission-denied, no-camera,
+  camera-busy, no-HTTPS, no-mediaDevices and decoder-failed each have their own
+  sentence, and each names the typed field. A refusal gets no *try again*
+  button — `canRetry` in `lib/camera.ts` says why.
+- **What is still a mockup, and it is narrow.** Nothing about this has run on
+  a phone. See the two entries below: the iPhone Safari test is E.3's actual
+  done-when, and nobody in this session could close it. The entry should say
+  *unverified on a device* rather than *missing*, because those are different
+  claims and the file's rule is about telling them apart.
+- **The consequence entry 4 records as "a deliberate trade" is gone.** It says
+  somebody who opens the app first, card in hand, "is told to go and use a
+  different app". They are not, any more. Ben's 2026-09-21 ruling that the
+  state was shippable can be recorded as spent rather than reversed.
+
+What I need from Ben: the rewrite, and a decision on whether the entry survives
+at all. My reading is that it should, retitled, until a phone has been held up
+— but an entry whose only remaining content is "untested on hardware" may
+belong in BUILD-PLAN's checkpoint instead.
+
+## E.3's done-when cannot be closed by any agent, and here is exactly what is left
+
+Where: `src/lib/qrWasm.ts`, `src/lib/qrDetector.ts`, `src/lib/useCardScanner.ts`
+
+What I checked: E.3 says *done when it scans on iPhone Safari*. What can be
+proved without one has been, and it is more than I expected: the wasm decoder
+has four unit tests that run the real binary against codes `scanLink` minted
+(`qrWasm.test.ts`), and the Playwright walk drives the whole camera path
+through a fake capture device (`camera.spec.ts`, written and unrun — see
+below). What none of that touches is the four things iOS does differently.
+
+What I did: built it, tested the decode, and wrote down the four rather than
+implying they were covered.
+
+1. **Autoplay.** Safari will not play a `<video>` that is not `muted` and
+   `playsInline`. Both are set as attributes, and `useCardScanner` sets
+   `video.muted = true` as a property too, because React does not reliably
+   reflect that one. If this is wrong the preview appears frozen — a black or
+   still square — while the loop happily decodes nothing.
+2. **`facingMode: { ideal: 'environment' }`.** `ideal` rather than `exact`, so
+   a laptop with one camera is not told it has none. On an iPhone this should
+   select the back camera; if it selects the front one, the feature works and
+   is useless, because you cannot point a selfie camera at a card you are
+   holding.
+3. **The wasm fetch.** 954 kB uncompressed, 411 kB over the wire, fetched the
+   first time the camera is used, from this app's own origin. On a phone on
+   mobile data that is a pause with no progress indication — the frame says
+   *Opening the camera…* and then shows the preview once the decoder has
+   landed. Untimed on anything real.
+4. **Decode speed.** Four decodes a second, at 640px on the long side, in
+   WebAssembly, on a phone CPU. Comfortable on this laptop; a guess anywhere
+   else.
+
+What I need from Ben: an iPhone, `pnpm --filter web dev` on the LAN, and five
+minutes. **Note that `http://192.168.x.x:5173` is NOT a secure context**, so
+the in-app camera will correctly refuse there and show
+`session.scan.cameraInsecure` — the LAN test needs a tunnel with a TLS
+certificate (or `localhost` on the device itself). That is E.2 working, not
+failing, and it will look like failing.
+
+## The Safari fallback costs 954 kB of WebAssembly, and I chose where it comes from
+
+Where: `src/lib/qrWasm.ts`, `apps/web/package.json`
+
+What I checked: `zxing-wasm` defaults to fetching its binary from jsDelivr at
+run time. Three things are wrong with that for this app: it makes the Safari
+scanner depend on a host Musie has no relationship with, it would fail outright
+on a dev server with no route out, and it is a third-party origin in a product
+whose whole content model is one Supabase project.
+
+What I did: a `?url` import, so Vite emits the binary as one of this app's own
+assets — same origin, same cache, same deploy. It is lazy: 954 kB as a separate
+asset plus 34.5 kB of glue in its own chunk, fetched the first time anybody
+presses *Use the camera*, and never by anybody who does not. The main bundle
+went from 813.27 kB / 244.75 kB gzipped to 821.45 kB / 246.99 kB, and none of
+that is zxing — it is the component, the hook and fourteen strings.
+
+What I need from Ben: nothing to decide today, but two things worth knowing.
+**First**, Netlify will serve a 954 kB asset on the first Safari scan of each
+visit until it is cached; if that is judged too much, the alternative is a
+pure-JS decoder (`jsQR` is ~40 kB) at a real cost in read reliability on
+angled, low-light and damaged codes, which is precisely the case a paper deck
+produces. I would not make that trade without measuring on a phone first.
+**Second**, `useWasmBinary` in `qrWasm.ts` exists so the decoder can be tested
+in Node, where zxing's web-only fetch fails both ways. It is five lines and it
+is exported from a lazily-imported chunk, so it costs the main bundle nothing —
+but it is a test seam in product code and somebody should know it is there.
+
+## `pnpm test:e2e` has still never run, and there are now four specs
+
+Where: `e2e/camera.spec.ts`, `e2e/fakeCamera.ts`, `playwright.config.ts`
+
+What I checked: the entry above this phase (*The end-to-end suite has never
+been executed against any of this*) is still true, and now more so. This track
+added a third and fourth walk and changed the Playwright config, and the local
+Supabase stack was held by another session throughout — so nothing here has
+been executed either.
+
+What I did: wrote the walks, left them unrun, and proved as much of the fixture
+as could be proved without a browser. `src/lib/fakeCamera.test.ts` generates
+the y4m clip, asserts the header Chromium parses and the byte-exact plane
+layout, pulls the first frame's luma plane out and reads the code back through
+the real wasm decoder. That passes. So if the walk fails, the walk has found
+something real rather than an arithmetic slip in a fixture.
+
+Two specific risks, both stated rather than hidden, because the next session
+will meet them:
+
+- **The denied walk assumes headless Chromium refuses a camera permission
+  nobody granted.** That is Playwright's documented behaviour and it is what
+  `context.clearPermissions()` is for, but it is the one assertion in the file
+  whose premise I could not exercise. If Chromium instead auto-grants, the test
+  fails at `session.scan.cameraDenied` never appearing, and the fix is
+  `--use-fake-ui-for-media-stream` on one project rather than a change to the
+  app.
+- **The walk's decoder is the wasm one**, because `BarcodeDetector` does not
+  exist on macOS Chrome. That is convenient — it means E.2 and E.3 are
+  exercised by one walk — but it also means `qrDetector.ts`'s NATIVE branch is
+  covered by nothing anywhere. Android Chrome is the only place it runs, and
+  this repository has never seen one.
+
+What I need from Ben: `supabase start && pnpm --filter web test:e2e` in a
+session that owns the stack, before any of E.2 or E.3 is called done.
+
+## The scan step's column has never been measured, and L15 says it should be
+
+Where: `src/shell.css` (`.musie-scanner--live`, `.musie-scanner__status`),
+`src/components/CardScanner.tsx`
+
+What I checked: the step now stacks a square frame, a status line, a camera
+button and the code form in one column. L15 asks for layout claims to be
+checked against a rendered page at 393px and 1280px, in that order, and I could
+not render one: the scan step needs a running session, which needs the Supabase
+stack, which another session held for the whole of this work.
+
+What I did: kept every declaration on a Layer 1 token or a geometric identity
+(L14.1) and changed as little as possible — the live frame is the same square
+in the same place, and only its border style and padding differ. The status
+line is deliberately BELOW the frame rather than over the picture, because text
+on live video has no contrast anybody can check: the background is whatever the
+camera is pointed at, and L15 asks for contrast against every surface an
+indicator can land on.
+
+What I need from Ben: an eye on it at 393px, specifically for two things I
+would expect to be the problems if there are any. **The column is now four
+things tall** where it was two, so the code field may be below the fold on a
+phone — which would matter, because the field is the thing that must never
+become hard to reach. And the German status line (*Halte den QR-Code deiner
+Karte in den Rahmen.*) is 45 characters against the English 47, so the two runs
+should wrap identically; if the German takes a line the English does not, the
+frame is narrower than I think it is. The longest German string on the step is
+`cameraDecoder` at 130 characters, which is where a third line would show up
+first.
+
+## The first line of the scan step still sends you to a different app
+
+Where: `src/i18n/en.ts`, `src/i18n/de.ts` (`session.scan.reader`)
+
+What I checked: the frame's first line is still *Scan the QR code on your card
+with your phone's camera app — it opens Musie at that card*, with the in-app
+camera offered second. That ordering was right when the in-app camera did not
+exist. It is arguable now.
+
+What I did: left the order alone. The deep link genuinely is the better path
+when it applies — it needs no permission, no decoder and no megabyte of
+WebAssembly, and it is what somebody holding a printed card does by reflex —
+so demoting it to second place to advertise the thing we just built would be
+building for the builder.
+
+What I need from Ben: a ruling, when there is a printed deck to try it with.
+The case for swapping them is that somebody who has already opened Musie is
+told to leave it before being told they need not; the case against is that
+leaving it is genuinely quicker. This is a copy decision, not a code one —
+both strings exist and swapping two lines in `CardScanner.tsx` is the whole
+change.
