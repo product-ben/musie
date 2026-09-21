@@ -320,11 +320,16 @@ export const en = {
   'reflect.photo.replace': 'Replace',
   'reflect.photo.remove': 'Remove photo',
   'reflect.photo.previewAlt': 'The photo of your handwritten notes',
-  /* VOICE AND PHOTO ARE UI ONLY, and both say so where the answer would go.
-     Voice is Phase F; photo is waiting on which model reads handwriting. Both
-     produce words and neither produces a file — see MOCKUPS.md 1 and 2. */
-  'reflect.voice.notBuilt': 'Recording is not built yet',
-  'reflect.voice.notBuiltText': 'This shows how it will work. Your words will be turned into text and only the text kept — the recording itself is never stored.',
+  /* PHOTO IS UI ONLY and says so where the answer would go — it is waiting on
+     which model reads handwriting (MOCKUPS.md 2).
+
+     VOICE IS NOT, SINCE F.4. It records, transcribes and edits for real, and
+     the only thing missing is the write: `reflections.body` is still filled
+     from the text mode alone, so *Finish session* stays disabled here. These
+     two replace `reflect.voice.notBuilt`, which stopped being true — the
+     sentence now names the step that is missing rather than the feature. */
+  'reflect.voice.notSaved': 'A spoken answer is not saved yet',
+  'reflect.voice.notSavedText': 'Your words become text as you speak, and only the text is kept — the recording itself is never stored. Keeping that text with your session is the next piece to build, so write your answer to finish the session today.',
   'reflect.photo.notBuilt': 'Reading a photo is not built yet',
   'reflect.photo.notBuiltText': 'This shows how it will work. The photo stays on your device and is read back as text; the image is never uploaded.',
   /* NOT a fourth segment — three ways to answer and one way not to are
@@ -516,6 +521,64 @@ export const en = {
      editing has its own Discard and needs no offer. */
   'voice.undo.combined': 'Statements combined',
   'voice.undo.deleted': 'Statement deleted',
+  /* The one word the offer needs. Toast takes exactly one action (§7.23) and
+     this is it — the toast's own text already says what happened. */
+  'voice.undo.action': 'Undo',
+  'voice.undo.dismiss': 'Dismiss',
+
+  /* ── Voice · the editor · F.4 ────────────────────────────────────
+     The screen is §7.24's Draggable List, and §7.24 ships a default for every
+     one of these in the package's own locale catalogue (src/locale.ts). They
+     are passed anyway, all of them, because they are the transcript's words
+     rather than the component's: the noun a statement is called here is what
+     the drag handle, the chevron, the hidden headline and five keyboard
+     announcements are all built from, and the list's own accessible name is
+     `reflect.voice.label` — the answer, not a generic transcript.
+
+     WHAT IS DELIBERATELY LEFT TO THE CATALOGUE: the four row controls (Edit,
+     Delete, Save, Discard) and the five keyboard announcements, which have no
+     props at all. See the note in DiaryCard.tsx for the same call — the
+     catalogue is the floor under the strings a screen cannot pass, and
+     `MusyLocaleProvider` in main.tsx keeps it in the reader's language. */
+  'voice.item.noun': 'statement',
+  'voice.empty.headline': 'Nothing captured yet',
+  'voice.empty.text': 'Finished statements appear here, one box each, in the order you said them.',
+  /* The same box in two more states, so the page does not change shape when
+     words start arriving (L10). One is heard-something-nothing-back, the
+     other is carrying the words as they land. */
+  'voice.listening': 'Listening',
+  'voice.hearing': 'Hearing you',
+  /* Under the finger mid-drag, phrased as what letting go WOULD do. Naming
+     the target's position is the only thing that separates a merge from a
+     reorder before the reader commits. */
+  'voice.drop.combine': 'Join into {position}',
+  'voice.drop.before': 'Move above {position}',
+  'voice.drop.after': 'Move below {position}',
+  'voice.drop.cancel': 'Let go to leave it where it was',
+  /* Not 'Record answer' a second time: recording again APPENDS, and a button
+     still offering to record the answer over five statements reads as start
+     over — which is the one thing it does not do. */
+  'voice.record.more': 'Record more',
+  'voice.record.connecting': 'Connecting…',
+  /* Both cut-offs, every time. A recorder that stops on its own without
+     having said that it would is indistinguishable from a broken one. */
+  'voice.hint.first': 'Each pause finishes a statement. Recording stops on its own after {seconds} seconds, or after {silence} seconds of quiet.',
+  'voice.hint.more': 'New statements are added to the end of the list. Recording stops on its own after {seconds} seconds, or after {silence} seconds of quiet.',
+  /* Shown only when the list can actually be edited, and it names the
+     keyboard route as well as the drag — F.5's behaviour is invisible
+     otherwise, and a control nobody can find is not a control. */
+  'voice.hint.edit': 'Drag a statement to move it, or drop it onto another to join the two. From the keyboard: focus a drag handle, then space to lift, arrow keys to move, M to join it to the one above, escape to put it back.',
+  /* The recorder acting on its own. A manual stop explains itself, and an
+     error already has a Message of its own — see lib/voiceScreen.ts. */
+  'voice.stopped.headline': 'Recording stopped',
+  'voice.stopped.timeout': 'That was the {seconds} seconds. Everything Musie heard is in the list, and you can record more.',
+  'voice.stopped.silence': 'It went quiet for {silence} seconds, so Musie stopped listening. Everything it heard is in the list.',
+  /* The headlines the catalogue deliberately did not have before F.4 — the
+     old note here said the component was still unchosen. It is Message, one
+     for the fatal codes and one for the single non-fatal one, and they are
+     worded apart so a warning is not read as a failure. */
+  'voice.error.headline': 'Recording stopped',
+  'voice.warning.headline': 'One statement was skipped',
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'About Musie',

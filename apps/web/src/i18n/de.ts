@@ -253,8 +253,11 @@ export const de: Messages = {
   'reflect.photo.replace': 'Ersetzen',
   'reflect.photo.remove': 'Foto entfernen',
   'reflect.photo.previewAlt': 'Das Foto deiner handschriftlichen Notizen',
-  'reflect.voice.notBuilt': 'Aufnehmen ist noch nicht gebaut',
-  'reflect.voice.notBuiltText': 'Das zeigt, wie es funktionieren wird. Aus deinen Worten wird Text, und nur der Text bleibt – die Aufnahme selbst wird nie gespeichert.',
+  /* Seit F.4 nimmt der Sprachmodus wirklich auf; was fehlt, ist das
+     Speichern. Die Überschrift benennt deshalb den fehlenden Schritt, nicht
+     das Feature — siehe en.ts. Überschrift ohne Punkt, §7. */
+  'reflect.voice.notSaved': 'Gesprochenes wird noch nicht gespeichert',
+  'reflect.voice.notSavedText': 'Aus deinen Worten wird Text, während du sprichst, und nur der Text bleibt – die Aufnahme selbst wird nie gespeichert. Diesen Text bei deiner Session zu behalten ist das nächste Stück Arbeit; schreibe deine Antwort, um die Session heute zu beenden.',
   'reflect.photo.notBuilt': 'Fotos auslesen ist noch nicht gebaut',
   'reflect.photo.notBuiltText': 'Das zeigt, wie es funktionieren wird. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
   /* Verb phrase, §3 — 'Überspringen' alone would name a thing rather than an
@@ -377,6 +380,37 @@ export const de: Messages = {
   'voice.warning.rateLimited': 'Ein Satz ließ sich nicht in Text verwandeln. Sag ihn noch einmal und mach weiter.',
   'voice.undo.combined': 'Aussagen zusammengeführt',
   'voice.undo.deleted': 'Aussage gelöscht',
+  'voice.undo.action': 'Rückgängig',
+  'voice.undo.dismiss': 'Schließen',
+
+  /* ── Voice · der Editor · F.4 ──────────────────────────────────
+     Alle diese Strings hat §7.24 auch selbst, auf Deutsch, im Katalog des
+     Pakets. Sie werden trotzdem übergeben: es sind die Worte DIESES
+     Transkripts, nicht die der Komponente. Siehe en.ts. */
+  'voice.item.noun': 'Aussage',
+  'voice.empty.headline': 'Noch nichts aufgenommen',
+  'voice.empty.text': 'Fertige Aussagen erscheinen hier, je eine Box, in der Reihenfolge, in der du sie gesagt hast.',
+  'voice.listening': 'Hört zu',
+  'voice.hearing': 'Schreibt mit',
+  /* Verbphrasen, §3: was das Loslassen TÄTE, nicht was gerade passiert. */
+  'voice.drop.combine': 'Mit {position} verbinden',
+  'voice.drop.before': 'Über {position} schieben',
+  'voice.drop.after': 'Unter {position} schieben',
+  'voice.drop.cancel': 'Loslassen, dann bleibt alles, wie es war',
+  'voice.record.more': 'Mehr aufnehmen',
+  /* Auslassungspunkte als ein Zeichen, §7. */
+  'voice.record.connecting': 'Verbindet…',
+  'voice.hint.first': 'Jede Pause beendet eine Aussage. Die Aufnahme stoppt von selbst nach {seconds} Sekunden oder nach {silence} Sekunden Stille.',
+  'voice.hint.more': 'Neue Aussagen kommen ans Ende der Liste. Die Aufnahme stoppt von selbst nach {seconds} Sekunden oder nach {silence} Sekunden Stille.',
+  /* 'Ziehpunkt' für den Griff: kein Nomenstapel (§6), und es ist das Wort,
+     das auch die Komponente im Deutschen benutzt. */
+  'voice.hint.edit': 'Zieh eine Aussage, um sie zu verschieben, oder lass sie auf einer anderen los, um beide zu verbinden. Mit der Tastatur: Ziehpunkt fokussieren, dann Leertaste zum Anheben, Pfeiltasten zum Verschieben, M verbindet sie mit der darüber, Escape legt sie zurück.',
+  /* Überschriften ohne Punkt, Sätze mit. */
+  'voice.stopped.headline': 'Aufnahme beendet',
+  'voice.stopped.timeout': 'Das waren die {seconds} Sekunden. Alles, was Musie gehört hat, steht in der Liste, und du kannst mehr aufnehmen.',
+  'voice.stopped.silence': 'Es war {silence} Sekunden still, darum hat Musie aufgehört zuzuhören. Alles Gehörte steht in der Liste.',
+  'voice.error.headline': 'Aufnahme beendet',
+  'voice.warning.headline': 'Eine Aussage wurde übersprungen',
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'Über Musie',

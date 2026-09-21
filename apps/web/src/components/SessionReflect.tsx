@@ -1,15 +1,21 @@
 /**
  * Step 4 · Reflect — the question again, and the answer.
  *
- * ── THREE DOORS, AND ONLY ONE OF THEM OPENS YET ────────────────────────────
- * Text, voice and photo. Voice is Phase F; photo is waiting on which model
- * reads handwriting. Both are built as interactive mockups so the flow can be
- * walked and reviewed, and both SAY SO where the answer would go — MOCKUPS.md
- * 1 and 2, and the standard that file sets.
+ * ── THREE DOORS, AND TWO OF THEM OPEN ─────────────────────────────────────
+ * Text, voice and photo.
  *
- * Neither writes a row, so neither can complete the step: `Finish` stays
- * disabled until there is text. That is honest rather than obstructive — the
- * alternative was hiding two modes the product has already decided on, which
+ * VOICE IS REAL SINCE F.4. `VoiceTranscript` opens a microphone, a socket and
+ * a transcription session, and the statements it produces can be edited,
+ * reordered, joined and deleted. What it still cannot do is SAVE: nothing
+ * writes `reflections.body` but the text mode, so `Finish` stays disabled
+ * here and the step says why. F.6 is the write.
+ *
+ * PHOTO IS STILL A MOCKUP, waiting on which model reads handwriting, and says
+ * so where the answer would go — MOCKUPS.md 2, and the standard that file
+ * sets. `Finish` stays disabled for it too.
+ *
+ * That each mode announces its own limit is honest rather than obstructive —
+ * the alternative was hiding what the product has already decided on, which
  * would make the screen look finished and be less true.
  *
  * PHOTO AND VOICE ARE ONE FEATURE WITH TWO FRONT DOORS. Both produce words;
@@ -38,10 +44,11 @@
 import * as React from 'react';
 import { Camera, Mic, PenLine } from 'lucide-react';
 import {
-  Field, Message, PhotoUpload, RecordButton, SegmentedControl,
+  Field, Message, PhotoUpload, SegmentedControl,
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
 import { StepText } from './StepText';
+import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import type { ReflectMode } from '../lib/reflect';
@@ -67,18 +74,14 @@ export function SessionReflect({
 }: SessionReflectProps) {
   const t = useT();
 
-  /* The mockup modes hold their state HERE rather than in the session: nothing
-     they capture is ever saved, so lifting it would put something in the
-     session's shape that the session never writes. */
-  const [recording, setRecording] = React.useState(false);
-  const [elapsed, setElapsed] = React.useState(0);
-  const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
+  /* The PHOTO mockup holds its state HERE rather than in the session: nothing
+     it captures is ever saved, so lifting it would put something in the
+     session's shape that the session never writes.
 
-  React.useEffect(() => {
-    if (!recording) return undefined;
-    const timer = setInterval(() => setElapsed((at) => at + 1), 1000);
-    return () => clearInterval(timer);
-  }, [recording]);
+     Voice used to keep a fake elapsed-seconds timer beside it. It is gone:
+     `VoiceTranscript` runs a real session, and `useTranscription` owns the
+     real clock. */
+  const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
 
   return (
     <>
@@ -115,25 +118,21 @@ export function SessionReflect({
 
         {mode === 'voice' && (
           <div className="musie-stack">
-            <RecordButton
-              state={recording ? 'recording' : 'ready'}
-              elapsed={elapsed}
-              onToggle={() => {
-                setRecording((live) => !live);
-                setElapsed(0);
-              }}
-              readyLabel={t('reflect.voice.record')}
-              recordingLabel={t('reflect.voice.recording')}
-              status={(inSeconds, left) =>
-                t('reflect.voice.status', { elapsed: inSeconds, remaining: left })
-              }
-            />
+            <VoiceTranscript />
+            {/* THE ONE THING VOICE STILL CANNOT DO. Everything above is real
+                — the microphone, the transcription, the editing — and none of
+                it reaches `reflections.body`, which is why *Finish session*
+                stays disabled in this mode. Saying so is the honest version
+                of a disabled button, and it is the same shape the photo
+                mockup below uses for a different reason. `live="off"`: it is
+                a standing fact about the step, not something that happened.
+                F.6 deletes this. */}
             <Message
               variant="info"
               live="off"
               headingLevel={3}
-              headline={t('reflect.voice.notBuilt')}
-              text={t('reflect.voice.notBuiltText')}
+              headline={t('reflect.voice.notSaved')}
+              text={t('reflect.voice.notSavedText')}
             />
           </div>
         )}
