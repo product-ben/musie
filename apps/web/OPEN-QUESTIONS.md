@@ -2098,3 +2098,40 @@ thirteen `voice.*` strings written at F.0 all render for the first time, and
 `voice.error.connectionRejected` and `voice.error.noCredits` still carry "That
 is on our side, not yours". F.0 asked for a read on that posture. It is now
 readable on a real screen rather than in a diff.
+
+## Pressing play while the signed URL is in flight does nothing, and says nothing
+
+Where: `src/components/SessionListen.tsx`, `src/lib/audio.ts`
+
+What I checked: E.4 made the track's URL a request rather than a string, so
+three states now reach the listen step where two did before — a file, no file,
+and *not yet known*. `play()` returns early on the third, deliberately:
+starting the simulated clock while a URL is in flight would play a countdown
+over a recording that exists, intermittently and on slow connections, which is
+the worse failure by a distance.
+
+But the early return is silent. The transport is enabled, the press is
+swallowed, nothing moves and nothing says why. No second press is coming,
+because from the outside the control simply did not work.
+
+MEASURED, and it is not theoretical: E.5's walk failed exactly this way inside
+the full suite while passing alone — it pressed play a few milliseconds before
+the element mounted, and then waited sixty seconds for a `duration` that could
+never arrive, because `preload="none"` means an unplayed element fetches
+nothing. The walk now waits for the element first. The person cannot.
+
+Worth knowing what it is NOT: slow storage. The whole 6.9 MB object fetches in
+47 ms against the local stack, and the signing round-trip is one request. The
+window is small — which is what makes it the kind of bug that is reported as
+"it didn't do anything the first time" and never reproduced.
+
+What I did: nothing in the product, deliberately. There are three defensible
+answers and they are not mine to pick: disable the transport while `resolving`
+(honest, but a control that flickers disabled on every arrival reads as broken
+hardware); show the loading state `TrackButton` already has; or queue the press
+and honour it when the URL lands (best behaviour, most state).
+
+What I need from Ben: a ruling, and it is small. My own lean is the third —
+the press is the person's intent and the URL is milliseconds away, so honouring
+it is both the simplest thing to explain and the only one with no visible
+state at all.

@@ -93,9 +93,23 @@ test('the title reaches the browser only at the reveal', async ({ page }, testIn
     name: label(locale, 'session.listen.track'),
     exact: false,
   });
-  await transport.click();
 
+  /* WAIT FOR THE ELEMENT BEFORE PRESSING PLAY, and the reason is a real one
+     rather than test hygiene. The `<audio>` is mounted only once the signed
+     URL has resolved, and `play()` deliberately does NOTHING while one is in
+     flight — otherwise a card with a real recording starts the simulated
+     clock. So a press that lands during the signing round-trip is swallowed,
+     with no second press coming, and `preload="none"` then means the file is
+     never fetched and `duration` stays NaN for ever.
+   
+     That is how this walk failed inside the full suite while passing alone:
+     not slow storage — the whole 6.9 MB fetches in under 50 ms locally — but
+     a press that arrived a few milliseconds early. The swallowed press is
+     logged in OPEN-QUESTIONS as a product question, because a person tapping
+     play in that window gets silence and no explanation either. */
   const audio = page.locator('audio');
+  await expect(audio).toBeAttached({ timeout: 30_000 });
+  await transport.click();
   /* `preload="none"`, so nothing is fetched until the transport is pressed
      and `duration` is NaN until metadata has arrived. Seeking before then
      silently does nothing.

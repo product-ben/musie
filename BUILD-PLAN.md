@@ -764,11 +764,31 @@ that looks exactly like a bug.
 - [x] **F.3 Tests for the two pure files.** `segmentation.ts` and
   `transcript/fillers.ts` — German abbreviations, the `um`/`äh` split, the
   whole-statement-was-hesitation case.
-- [ ] **F.4 The editor UI.** `MusieTranscriptWorkspace` and
-  `MusieStatementCard`, on the real `Toast` and `DraggableList`.
-- [ ] **F.5 Keyboard parity.** Restore what the Musie card lost against the lab
-  version: lift-and-move, merge-with-previous, the `aria-live` announcements.
-  *Done when:* you can reorder and merge without a mouse.
+- [x] **F.4 The editor UI.** Built as `apps/web/src/components/VoiceTranscript.tsx`
+  on the real `Toast` and `DraggableList` — a rewrite against the design
+  system rather than a port, which is what "on the real…" always meant. The
+  POC's `useDragList` (281 lines) and `MusieStatementCard` (194) stayed in the
+  demo repo: they are §7.24 rewritten by hand, and F.0 left them for this
+  reason. The thirteen `voice.*` strings F.0 wrote and never rendered now
+  render.
+- [x] **F.5 Keyboard parity — and most of it was already there.** Space/Enter
+  lifts, arrows move, `M` merges into the row above, Escape cancels, and all
+  five announce themselves in `DraggableList`'s live region, in the reader's
+  language. The app got every one of them by passing `items`, which is the
+  argument F.0 made when it refused to import the POC's card.
+
+  **What was missing was focus**, and it is a change to
+  `packages/design-system/src/DraggableList.tsx`: `M` is pressed on the source
+  row's handle and Delete inside the source row's own menu, so both end the
+  row holding focus. React unmounts that button and focus falls to `<body>` —
+  which made "reorder and merge without a mouse" true exactly once per page
+  load. The surviving neighbour's handle now takes focus after the commit. In
+  the component because a screen cannot reach a row's controls without doing
+  what rule 1 and L7 forbid.
+
+  ***Done when:* you can reorder and merge without a mouse — CODE ONLY.** No
+  screen reader has heard it and nothing in this repo can render a component
+  under test (see `apps/web/OPEN-QUESTIONS.md`, and the ruling it asks for).
 - [ ] **F.6 Persist the statements.** `onSentenceFinal` becomes the Supabase
   write. It fires on four paths, so it must be idempotent. *Done when:* editing
   a statement updates its row rather than inserting a second.
