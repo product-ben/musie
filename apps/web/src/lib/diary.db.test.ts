@@ -34,7 +34,7 @@ import { anonymousUser, serviceClient } from './db.support';
 /**
  * What lib/diary.ts asks for on the entry screen, verbatim — and kept verbatim.
  *
- * It now carries `tracks(id, src, duration_seconds, licence_ref)`, which is
+ * It now carries `tracks(id, src, duration_seconds)`, which is
  * FOUR COLUMNS AND NOT ONE MORE: `public.tracks` grants the client exactly
  * those, so naming `title` or `artist` here fails the whole request with
  * insufficient privilege rather than returning null. Running this select as a
@@ -43,7 +43,7 @@ import { anonymousUser, serviceClient } from './db.support';
  * table and not the grant.
  */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body), tracks(id, src, duration_seconds, licence_ref)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body), tracks(id, src, duration_seconds)';
 
 let client: SupabaseClient;
 let userId: string;

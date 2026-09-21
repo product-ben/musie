@@ -332,7 +332,6 @@ export interface Track {
    *  `useTrackSource` in lib/audio.ts turns it into a signed URL. */
   src: string | null;
   durationSeconds: number;
-  licenceRef: string | null;
 }
 
 /**
@@ -358,7 +357,7 @@ export async function getTrackFor(
 ): Promise<Track | null> {
   const query = getSupabase()
     .from('exercise_tracks')
-    .select('track_id, tracks(id, src, duration_seconds, licence_ref)')
+    .select('track_id, tracks(id, src, duration_seconds)')
     .eq('exercise_id', exerciseId);
 
   const { data, error } = await (cardId === null
@@ -376,7 +375,6 @@ export async function getTrackFor(
   const embed = data.tracks as unknown;
   const track = (Array.isArray(embed) ? embed[0] : embed) as Track & {
     duration_seconds: number;
-    licence_ref: string | null;
   } | null | undefined;
 
   if (track === null || track === undefined) return null;
@@ -385,7 +383,6 @@ export async function getTrackFor(
     id: track.id,
     src: track.src,
     durationSeconds: track.duration_seconds,
-    licenceRef: track.licence_ref,
   };
 }
 

@@ -830,3 +830,52 @@
   justify-content: space-between;
   gap: var(--space-gap-stack);
 }
+
+/* ── The reveal · E.5 ───────────────────────────────────────────────────────
+   A custom pattern under 10-layout.md L14: the system has no component for
+   "a block you scroll to that answers a question you were holding", and
+   ContentBox would frame it as a panel of its own — which is the one thing it
+   must not look like, because the reveal belongs to the track above it rather
+   than standing beside it.
+
+   Every declaration resolves to a Layer 1 token or arithmetic over one (L14.1)
+   and the class is `musie-`, never `musy-` (L14.2). If this recurs it is a
+   component request and not a second copy (L14.3).
+
+   THE TOP MARGIN IS THE POINT. Two sections of space above it is what makes
+   this a scroll target rather than the next paragraph: the stage has to leave
+   the viewport before the answer enters it, which is the whole mechanism E.5
+   exists to build. */
+.musie-reveal {
+  margin-block-start: calc(var(--space-section) * 2);
+  padding-block-start: var(--space-section);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  align-items: flex-start;
+}
+
+.musie-reveal__heading {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--type-body-lg-line);
+  letter-spacing: var(--type-body-lg-tracking);
+  color: var(--on-surface);
+}
+
+/* The answer itself reads as the track's own line rather than as body copy —
+   it is the one fact the whole step was withholding. */
+.musie-reveal__answer {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-xl-family);
+  font-size: var(--type-body-xl-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--type-body-xl-line);
+  letter-spacing: var(--type-body-xl-tracking);
+  color: var(--on-surface);
+}

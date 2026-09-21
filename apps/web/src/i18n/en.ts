@@ -281,6 +281,21 @@ export const en = {
   'session.listen.start': 'Start reflection',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
+  /* ── The reveal · E.5 ──────────────────────────────────────────────────
+     Reached by scrolling past the stage, and NOT rendered until the gate is
+     met: the whole exercise rests on meeting a piece of music without being
+     told what it is, so a name visible while it is still playing would undo
+     the thing the column grant, the opaque ids and the Edge Function are all
+     built to protect. `revealTitle` deliberately does not say "the track" —
+     it asks the question the listener has been holding. */
+  'session.listen.revealHeading': 'What you just heard',
+  'session.listen.revealHint': 'Scroll on when you are ready to know.',
+  'session.listen.revealAction': 'Tell me what it was',
+  'session.listen.revealWorking': 'Looking it up…',
+  'session.listen.revealBy': '{title} — {artist}',
+  'session.listen.revealSilent': 'There was no recording for this card, so there is nothing to name. The clock stood in for one.',
+  'session.listen.revealTooEarly': 'The reveal opens once you have listened.',
+  'session.listen.revealFailed': 'That could not be looked up just now.',
   'session.listen.simulated': 'No recording is bundled yet, so the player runs on a clock at the track’s real length.',
   'session.listen.noTrack': 'This exercise has no recording yet.',
 

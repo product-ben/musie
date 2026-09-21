@@ -96,10 +96,10 @@ describe('profiles · row level isolation between two anonymous users', () => {
 });
 
 describe('tracks · the column grant keeps title and artist off the client', () => {
-  it('reads the four granted columns — the positive control', async () => {
+  it('reads the three granted columns — the positive control', async () => {
     const { data, error } = await alice
       .from('tracks')
-      .select('id, src, duration_seconds, licence_ref')
+      .select('id, src, duration_seconds')
       .limit(1);
 
     expect(error).toBeNull();
@@ -107,9 +107,33 @@ describe('tracks · the column grant keeps title and artist off the client', () 
     expect(Object.keys(data?.[0] ?? {}).sort()).toEqual([
       'duration_seconds',
       'id',
-      'licence_ref',
       'src',
     ]);
+  });
+
+  /**
+   * `licence_ref` WAS GRANTED, AND IT CARRIED THE ANSWER.
+   *
+   * It was null on every row until E.4 filled it in with the only stable
+   * identifier an Epidemic Sound download offers — the track name and the
+   * artist. So a column that was harmless while empty became a second door
+   * onto exactly what `title` and `artist` are withheld to protect, opened by
+   * the migration that made the recordings real.
+   *
+   * Nothing on screen changed and every test above still passed: they assert
+   * that title and artist are unreachable BY NAME, not that no other column
+   * contains them. E.5's network-watching walk is what found it.
+   *
+   * This is the assertion that stops it coming back, and it is deliberately
+   * about the GRANT rather than about the value — a rule that said "licence_ref
+   * must not contain the title" would be a rule nobody could enforce at write
+   * time.
+   */
+  it('refuses licence_ref, which is an operator record and not a listener one', async () => {
+    const { data, error } = await alice.from('tracks').select('licence_ref').limit(1);
+
+    expect(data).toBeNull();
+    expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
   });
 
   /* Four routes to the same answer. PostgREST respects column privileges, so

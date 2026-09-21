@@ -51,10 +51,12 @@
  * re-lock a step somebody has already done.
  */
 import * as React from 'react';
-import { Message, TrackButton } from '@musie/design-system';
+import { CtaButton, Message, TrackButton } from '@musie/design-system';
 import { StepText } from './StepText';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
+import { revealTrack } from '../lib/reveal';
+import type { RevealOutcome } from '../lib/reveal';
 import type { Exercise, Track } from '../lib/content';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
@@ -68,6 +70,8 @@ function clock(seconds: number): string {
 export interface SessionListenProps {
   exercise: Exercise;
   track: Track | null;
+  /** Whose run this is. The reveal asks about a SESSION, never a track. */
+  sessionId: string;
   /** The question, already resolved to the exercise's own or the fallback. */
   question: string;
   /** Sticky across the step, so it is held by the session rather than here. */
@@ -85,7 +89,7 @@ export interface SessionListenProps {
  * threshold ONCE, upward, and keeps the position it counts down from.
  */
 export function SessionListen({
-  exercise, track, question, listened, onListened,
+  exercise, track, question, sessionId, listened, onListened,
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
@@ -311,6 +315,92 @@ export function SessionListen({
             })}
       </p>
 
+      {/* ── THE REVEAL, AND IT HAS TO BE REACHED ────────────────────────────
+          Rendered only once the gate is met, so a name cannot be on screen
+          while the track is still doing its work. Below the gate copy, which
+          is what makes it a scroll target rather than a second panel. */}
+      {met && <TrackReveal sessionId={sessionId} />}
     </>
+  );
+}
+
+/**
+ * What you heard, told only after you have heard it — E.5.
+ *
+ * ── SCROLLED TO, NOT RENDERED INTO ────────────────────────────────────────
+ * The prototype's listen step is three stacked viewports and reaching the
+ * third IS the reveal. This is that third one, and the mechanism is the thing
+ * to get right: the request fires when the block is SCROLLED INTO VIEW, not
+ * when the component mounts. E.5's done-when is that the Network tab shows no
+ * title and no artist until you scroll to the reveal — a fetch on mount would
+ * put both in the tab while the music was still playing, and the screen would
+ * look identical.
+ *
+ * So `IntersectionObserver`, once, and then it disconnects. Scrolling back up
+ * and down again does not re-ask.
+ *
+ * ── AND IT IS STILL A BUTTON ──────────────────────────────────────────────
+ * Arriving at the block does not print the name: it offers to. Scrolling is
+ * not consent — a thumb travelling to the reflection passes through here — and
+ * the one thing this step must never do is tell somebody the answer they were
+ * deliberately not given. The observer gets the ANSWER ready; the press is
+ * what shows it.
+ */
+function TrackReveal({ sessionId }: { sessionId: string }) {
+  const t = useT();
+  const anchor = React.useRef<HTMLDivElement>(null);
+  const [outcome, setOutcome] = React.useState<RevealOutcome | null>(null);
+  const [asked, setAsked] = React.useState(false);
+  const [shown, setShown] = React.useState(false);
+
+  React.useEffect(() => {
+    const element = anchor.current;
+    if (element === null || asked) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      /* Disconnect BEFORE the request, not in its callback: the block can
+         cross the viewport several times while one is in flight. */
+      observer.disconnect();
+      setAsked(true);
+      void revealTrack(sessionId).then(setOutcome);
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [sessionId, asked]);
+
+  return (
+    <div ref={anchor} className="musie-reveal">
+      <h3 className="musie-reveal__heading">{t('session.listen.revealHeading')}</h3>
+
+      {!shown ? (
+        <>
+          <p className="musie-note">{t('session.listen.revealHint')}</p>
+          <div>
+            <CtaButton
+              variant="secondary"
+              loading={asked && outcome === null}
+              loadingLabel={t('session.listen.revealWorking')}
+              onClick={() => setShown(true)}
+            >
+              {t('session.listen.revealAction')}
+            </CtaButton>
+          </div>
+        </>
+      ) : (
+        <p className="musie-reveal__answer">
+          {outcome === null ? t('session.listen.revealWorking')
+            : outcome.kind === 'revealed'
+              ? t('session.listen.revealBy', {
+                  title: outcome.track.title,
+                  artist: outcome.track.artist,
+                })
+            : outcome.kind === 'silent' ? t('session.listen.revealSilent')
+            : outcome.kind === 'tooEarly' ? t('session.listen.revealTooEarly')
+            : t('session.listen.revealFailed')}
+        </p>
+      )}
+    </div>
   );
 }

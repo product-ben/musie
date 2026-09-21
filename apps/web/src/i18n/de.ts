@@ -214,6 +214,15 @@ export const de: Messages = {
   'session.listen.gateMet': 'Genug vom Stück liegt hinter dir. Hör so lange weiter, wie du magst, oder starte jetzt die Reflexion.',
   'session.listen.gateLocked': 'Hör so viel vom Stück, wie du möchtest – {gate} sind das Minimum für diese Übung, {left} fehlen noch.',
   'session.listen.start': 'Reflexion starten',
+  /* ── Die Auflösung · E.5 ───────────────────────────────────────────────*/
+  'session.listen.revealHeading': 'Das hast du gerade gehört',
+  'session.listen.revealHint': 'Scroll weiter, wenn du es wissen möchtest.',
+  'session.listen.revealAction': 'Sag mir, was es war',
+  'session.listen.revealWorking': 'Wird nachgeschlagen …',
+  'session.listen.revealBy': '{title} – {artist}',
+  'session.listen.revealSilent': 'Für diese Karte gibt es noch keine Aufnahme – es gibt also nichts zu benennen. Die Uhr ist eingesprungen.',
+  'session.listen.revealTooEarly': 'Die Auflösung öffnet sich, sobald du zugehört hast.',
+  'session.listen.revealFailed': 'Das ließ sich gerade nicht nachschlagen.',
   'session.listen.simulated': 'Es ist noch keine Aufnahme hinterlegt, deshalb läuft der Player auf einer Uhr in der echten Länge des Stücks.',
   'session.listen.noTrack': 'Für diese Übung gibt es noch keine Aufnahme.',
 

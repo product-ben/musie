@@ -114,7 +114,7 @@ export interface DiaryReflection {
  * list is not a preference.
  *
  * `20260918150500_content_schema.sql` revokes `public.tracks` and grants back
- * `id, src, duration_seconds, licence_ref`. `title` and `artist` are not
+ * `id, src, duration_seconds`. `title` and `artist` are not
  * granted AT ALL, so naming either in the select fails the whole request with
  * insufficient privilege; it does not come back null. That is the shape of the
  * diary's offer: the recording, handed back, by a screen that cannot say what
@@ -127,7 +127,6 @@ export interface DiaryTrack {
    *  recording. `useTrackSource` in lib/audio.ts signs it. */
   src: string | null;
   durationSeconds: number;
-  licenceRef: string | null;
 }
 
 export interface DiaryEntryDetail extends DiaryEntry {
@@ -514,12 +513,12 @@ function wanted(locale: Locale): Locale[] {
 const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling))';
 
 // prettier-ignore
-/* `tracks(id, src, duration_seconds, licence_ref)` AND NOT ONE COLUMN MORE.
+/* `tracks(id, src, duration_seconds)` AND NOT ONE COLUMN MORE.
    Adding `title` or `artist` here does not return null for them — it fails
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body), tracks(id, src, duration_seconds, licence_ref)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -568,7 +567,6 @@ interface DetailRow extends SessionRow {
     id: string;
     src: string;
     duration_seconds: number;
-    licence_ref: string | null;
   }>;
 }
 
@@ -580,7 +578,6 @@ function toTrack(embed: DetailRow['tracks']): DiaryTrack | null {
     id: track.id,
     src: track.src,
     durationSeconds: track.duration_seconds,
-    licenceRef: track.licence_ref,
   };
 }
 

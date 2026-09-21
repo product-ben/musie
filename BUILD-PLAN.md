@@ -682,9 +682,35 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   track identifier until something better exists.
   `select count(*) from tracks` is still the number to quote when asking for
   more.
-- [ ] **E.5 The reveal gate.** The `reveal-track` Edge Function and the
-  three-scroll Listen step. *Done when:* the Network tab shows no title or
-  artist until you scroll to the reveal.
+- [x] **E.5 The reveal gate.** The `reveal-track` Edge Function and the
+  scroll-reached reveal at the foot of the listen step.
+
+  **The endpoint takes a SESSION id and never a track id**, which is the whole
+  design: one accepting a track id would let anyone signed in walk
+  `trk-01`…`trk-09` and collect all nine titles without listening to
+  anything — the column grant undone by the thing built to complete it. The
+  track is read from the row on the server, so there is nowhere to put a
+  question about a recording you were not given. Three checks, each refusing
+  someone different: a valid JWT, the session is yours, and it reached the
+  listening. The third is honestly the weakest — `step` records which screen
+  was reached, not that anyone listened — and the function says so in its own
+  header.
+
+  A row with **no file names nothing**. The five silent cards still carry the
+  seed's invented title and artist, and handing those over would be the one
+  thing this endpoint must never do: a fact somebody cannot check, about a
+  recording that did not play, in the moment the product promised to tell them
+  the truth.
+
+  ***Done when:* the Network tab shows no title or artist until you scroll to
+  the reveal — PROVEN, and it failed first.** `e2e/reveal.spec.ts` records
+  every response body the page receives and asserts on what is IN them, because
+  that done-when is a claim about bytes rather than pixels: a screen can look
+  perfectly withholding while the answer sits in a payload it chose not to
+  render. Standing on the listen step with nothing named on screen, it found
+  the title AND the artist inside `licence_ref` — see `20260921170000`.
+  Fixed by revoking the column; the walk now proves the title arrives in
+  exactly one response, and that response is `reveal-track`.
 
 ---
 
