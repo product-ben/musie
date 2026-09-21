@@ -151,6 +151,28 @@ export async function withLocale(page: Page, locale: Locale) {
 }
 
 /**
+ * Name a card by its printed code, on the scan step — E.1.
+ *
+ * THE SIMULATED SCAN IS GONE, and with it the one control every walk used to
+ * get past the scan step. This replaces it, and it makes the walk stronger
+ * rather than merely different: a random draw could only ever be asserted as
+ * "some card", where a typed code means the row that comes back is known
+ * before the test runs.
+ *
+ * Found by accessible name through `label()`, like everything else here — the
+ * field's label and the button's are catalogue strings, so the German run
+ * types into the German field and a hardcoded English one fails it.
+ */
+export async function enterCode(page: Page, locale: Locale, code: string) {
+  await page
+    .getByRole('textbox', { name: label(locale, 'session.scan.codeLabel'), exact: true })
+    .fill(code);
+  await page
+    .getByRole('button', { name: label(locale, 'session.scan.codeSubmit'), exact: true })
+    .click();
+}
+
+/**
  * Walk a fresh visitor from the explainer to the exercise library.
  *
  * Every walk starts here — a new browser profile has no user type, so `/` is

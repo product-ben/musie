@@ -159,14 +159,25 @@ export const de: Messages = {
   /* ── Intro · D.5a ──────────────────────────────────────────────────────── */
   'session.intro.fallback': 'Nimm dir einen Moment zum Ankommen. Wenn du so weit bist, geht es weiter.',
 
-  /* ── Scan · D.5a ───────────────────────────────────────────────────────── */
+  /* ── Scan · D.5a, und der echte Scanner · E.0/E.1 ──────────────────────── */
   'session.scan.headline': 'Scanne die Karte, die am besten beschreibt, wie du dich gerade fühlst.',
   /* 'QR-Code' with the hyphen — Durchkopplung again, and it is the spelling
-     Duden gives. */
-  'session.scan.reader': 'Halte den QR-Code deiner Karte in den Rahmen.',
-  'session.scan.simulateTitle': 'Der Scanner ist noch nicht gebaut',
-  'session.scan.simulateText': 'Musie nutzt die Kamera noch nicht. Ein simulierter Scan wählt eine der neun Karten für dich aus.',
-  'session.scan.simulate': 'Scan simulieren',
+     Duden gives. 'Kamera-App' the same way. A Gedankenstrich, not an em dash
+     (§7); the English key keeps its '—'. */
+  'session.scan.reader': 'Scanne den QR-Code auf deiner Karte mit der Kamera-App deines Handys – sie öffnet Musie direkt bei dieser Karte.',
+  'session.scan.readerNote': 'Musie kann die Kamera noch nicht selbst öffnen.',
+  'session.scan.codeLabel': 'Kartencode',
+  'session.scan.codePlaceholder': 'MC-01',
+  'session.scan.codeHint': 'Der Code steht neben dem QR-Code auf der Karte, zum Beispiel MC-01.',
+  /* A verb phrase, not 'Diese Karte' (§3) — the button performs an act. */
+  'session.scan.codeSubmit': 'Diese Karte nehmen',
+  'session.scan.codeMalformed': 'Ein Kartencode sieht aus wie MC-01. Schau noch einmal auf deine Karte.',
+  /* 'Set', not 'Deck': §8 keeps the deck's own name — 'Mindfulness-Cards-Set'
+     is how GERMAN-UI-WRITING.md writes it — and 'Kartenspiel' would be a game
+     of cards. */
+  'session.scan.codeUnknown': 'Keine Karte in diesem Set hat den Code {code}.',
+  'session.scan.codeFailed': 'Das ließ sich gerade nicht prüfen. Versuch es gleich noch einmal.',
+  'session.scan.heldHint': 'Das ist die Karte, die du gescannt hast. Nimm sie, oder tippe einen anderen Code ein.',
   'session.scan.done': 'Karte gescannt',
   'session.scan.yourCard': 'Deine Karte',
   'session.scan.again': 'Andere Karte scannen',
@@ -260,6 +271,28 @@ export const de: Messages = {
   /* 'ist auch dein Tagebuch weg' rather than a softer 'geht verloren': the
      English is blunt on purpose and the German should not apologise for it. */
   'privacy.browserBound': 'Weil das Konto in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch. Zurückholen lässt es sich nicht.',
+
+  /* ── Der Deep Link und das Dev-Blatt · E.0 ───────────────────────────────
+     'Kartenset' rather than 'Deck' throughout, as on the scan step above. The
+     headline carries no full stop, the sentence under it does (§7). */
+  'scan.route.title': 'Gescannte Karte',
+  'scan.working': 'Die Karte wird gesucht…',
+  'scan.malformed.title': 'Das ist kein Kartencode',
+  'scan.malformed.text': 'Der Code in diesem Link gehört nicht zu Musie. Ein Kartencode sieht aus wie MC-01.',
+  'scan.unknown.title': 'Keine Karte mit diesem Code',
+  'scan.unknown.text': 'Den Code {code} gibt es in diesem Set nicht.',
+  'scan.noSession.title': 'Du hast {code} gescannt',
+  'scan.noSession.text': 'Es läuft noch nichts. Wähle eine Übung, dann wartet diese Karte beim Scannen auf dich.',
+  'scan.chooseExercise': 'Übung wählen',
+  'scan.cardless.title': 'Diese Übung zieht keine Karten',
+  'scan.cardless.text': 'Die Session, in der du bist, arbeitet ohne das Kartenset – diese Karte hat dort keinen Platz.',
+  'scan.cardless.action': 'Zurück zur Session',
+
+  /* ── Das Dev-Blatt mit den QR-Codes · E.0 ────────────────────────────────
+     'Generator-Skript' with the hyphen (Durchkopplung, §8). */
+  'scan.dev.title': 'QR-Codes für das Kartenset',
+  'scan.dev.text': 'Erzeugt aus {origin}: Jeder Code zeigt auf den Server zurück, der diese Seite ausgeliefert hat. Für den Druck nimmst du dieselben Codes aus dem Generator-Skript, mit der echten Adresse.',
+  'scan.dev.qrLabel': 'QR-Code für Karte {code}',
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'Über Musie',

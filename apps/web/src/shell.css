@@ -409,6 +409,89 @@
   hyphens: var(--text-hyphens);
 }
 
+/* ═══ THE CARD CODE, TYPED — E.1 ════════════════════════════════════════════
+   A <form>, so Enter submits a five-character code rather than sending
+   somebody hunting for the button. The system has a Field and it has a
+   CtaButton; it has no form layout between them, which is the gap this fills —
+   and the whole of the fill is a column and a cap.
+
+   THE CAP IS WHY IT EXISTS AT ALL. `.musy-field__control` is `width: 100%`,
+   correctly — the reflect step's answer box wants the whole column — but the
+   wizard panel is ~930px at 1280px, and a 930px box for `MC-01` reads as a
+   mistake. Held to `--measure-body`: never wider than the sentence explaining
+   it, which is the measure every other piece of prose on this screen answers
+   to. Nothing here touches the component's own geometry (L7).
+
+   The gap is STACK rather than related: a label belongs to its field, but the
+   button is a separate act ON the field's content (L2).                     */
+.musie-code {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+  max-inline-size: var(--measure-body);
+  margin: 0;
+}
+
+/* ═══ THE DEV QR SHEET — E.0 ════════════════════════════════════════════════
+   /dev/qr, which exists so that E.2 and E.3 have something to point a camera
+   at before the deck is printed. A permitted custom pattern: the system has no
+   gallery of generated graphics, and it should not grow one for a page that
+   ships to nobody.
+
+   `1fr` and `auto-fill` are grid units rather than measurements — the only
+   number in the block is the multiplier inside `calc()`, which L14.1 allows.
+   Three guided targets across is the smallest tile a phone camera reliably
+   reads from a laptop screen, measured rather than chosen.                  */
+.musie-qr-sheet {
+  list-style: none;
+  margin: var(--space-gap-group) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--target-guided) * 3), 1fr));
+  gap: var(--space-gap-stack);
+}
+
+.musie-qr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+  padding: var(--space-inset-card);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background-color: var(--surface-raised);
+}
+
+/* THE CODE CARRIES ITS OWN WHITE, in both themes, and that is deliberate: the
+   encoder emits a light background rect, and a QR code inverted for dark mode
+   is one a reader refuses. The quiet zone is inside the SVG for the same
+   reason — it belongs to the code, not to the layout.                       */
+.musie-qr__code svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--radius-input);
+}
+
+.musie-qr__code-label {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  letter-spacing: var(--type-label-md-tracking);
+}
+
+/* A URL is not prose: it has no spaces to break at, and an origin with a port
+   in it is long enough to leave the tile. `anywhere` rather than hyphenation,
+   which would invent characters that are not in the address.                */
+.musie-qr__url {
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  overflow-wrap: anywhere;
+}
+
 /* ═══ THE QUESTION ══════════════════════════════════════════════════════════
    Shown on the listen step and again on the reflect step — ONE column in the
    schema, read twice, so the question you hold while the track plays and the

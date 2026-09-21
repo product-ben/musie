@@ -55,10 +55,11 @@ import { SessionReflect } from '../components/SessionReflect';
 import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
-import { getCard, getCards, getExercise, getTrackFor } from '../lib/content';
+import { getCard, getExercise, getTrackFor } from '../lib/content';
 import type { Card, Exercise, Track } from '../lib/content';
 import { hasAnswered } from '../lib/reflect';
 import type { ReflectMode } from '../lib/reflect';
+import { scanCardInto } from '../lib/scan';
 import {
   completedBefore, endSession, readSession, saveCard, saveReflection, saveStep,
 } from '../lib/session';
@@ -85,8 +86,6 @@ interface SessionData {
   exercise: Exercise;
   card: Card | null;
   track: Track | null;
-  /** The deck, for the simulated scan to pick from. Empty for a cardless run. */
-  deck: Card[];
 }
 
 export function Session() {
@@ -99,12 +98,17 @@ export function Session() {
   const urlStep = params.step as StepId;
 
   /**
-   * ONE READ, FIVE THINGS, AND A VERSION TO RE-RUN IT.
+   * ONE READ, FOUR THINGS, AND A VERSION TO RE-RUN IT.
    *
    * The card and the track follow the row, so a scan has to re-read — but
    * only the scan changes them, and only once per session. A counter in the
    * key is the whole of the invalidation: cheaper than a query library, and
    * there is nothing else in the app that would use one.
+   *
+   * THE DECK USED TO BE READ HERE TOO, and it is not any more. It existed for
+   * one caller: the simulated scan, which picked one of the nine at random.
+   * E.1 deleted that, and a code names its own card — so every session stopped
+   * fetching nine cards and their translations to show one.
    */
   const [version, setVersion] = React.useState(0);
   const run = React.useCallback(async (): Promise<SessionData | null> => {
@@ -114,15 +118,13 @@ export function Session() {
     const exercise = await getExercise(row.exerciseId, locale);
     if (exercise === null) return null;
 
-    /* In parallel: neither depends on the other, and the scan step needs the
-       deck before anyone presses anything. */
-    const [card, track, deck] = await Promise.all([
+    /* In parallel: neither depends on the other. */
+    const [card, track] = await Promise.all([
       row.cardId === null ? Promise.resolve(null) : getCard(row.cardId, locale),
       getTrackFor(row.exerciseId, row.cardId),
-      exercise.needsCards ? getCards(locale) : Promise.resolve<Card[]>([]),
     ]);
 
-    return { row, exercise, card, track, deck };
+    return { row, exercise, card, track };
   }, [id, locale]);
 
   const { data, loading, error } = useAsync(run, `session:${id}:${locale}:${version}`);
@@ -185,6 +187,16 @@ export function Session() {
     });
   }, [data, urlStep, state, id]);
 
+  /**
+   * WHY THE LAST CODE DID NOT LAND — already translated, or null.
+   *
+   * Held here rather than in `SessionScan` because two of the three answers
+   * are facts the lookup discovered (this is not a code; this deck has no such
+   * card) and the third is the query failing. The field renders whichever
+   * sentence it is given and decides nothing.
+   */
+  const [scanError, setScanError] = React.useState<string | null>(null);
+
   const [reflectMode, setReflectMode] = React.useState<ReflectMode>('text');
   const [answer, setAnswer] = React.useState('');
   const [listened, setListened] = React.useState(false);
@@ -221,7 +233,7 @@ export function Session() {
     );
   }
 
-  const { row, exercise, card, track, deck } = data;
+  const { row, exercise, card, track } = data;
 
   /* A session that has ENDED is history, not a run. The diary is where it
      lives, and that screen already knows how to draw it. */
@@ -254,24 +266,39 @@ export function Session() {
   }
 
   /**
-   * THE SIMULATED SCAN — one of the nine cards, and the recording it pairs
-   * with, written together.
+   * A CODE, AND THE CARD IT NAMES — E.1, and the end of the simulated draw.
    *
-   * It picks from the deck rather than from the pairings, because a card is
-   * what a person draws; the track is then looked up for the (exercise, card)
-   * pair. A pair with no recording is ordinary and writes null — the listen
-   * step says so rather than failing here.
+   * This used to pick one of the nine at random and write it. It now takes
+   * what the person typed (or what the deep link held for them) and resolves
+   * the card they are actually holding. The write is unchanged: `card_id` and
+   * `track_id` together, through `scanCardInto`, which is the same function
+   * `/s/:code` calls — so a typed code and a scanned one cannot end up meaning
+   * two different things.
+   *
+   * THREE OUTCOMES, AND ONLY ONE OF THEM IS AN ERROR. A code that is not a
+   * code, and a code no card carries, are answers: they go to the field, which
+   * says them next to what was typed. A THROW is the query failing, and it
+   * gets the third sentence plus the console — it is not the person's typing
+   * that was wrong.
    */
-  async function simulateScan() {
-    if (busy || deck.length === 0) return;
+  async function submitCode(scanned: string) {
+    if (busy) return;
     setBusy(true);
+    setScanError(null);
     try {
-      const drawn = deck[Math.floor(Math.random() * deck.length)];
-      const paired = await getTrackFor(exercise.id, drawn.id);
-      await saveCard(id, drawn.id, paired?.id ?? null);
-      setVersion((n) => n + 1);
+      const outcome = await scanCardInto(id, exercise.id, scanned, locale);
+      if (outcome.kind === 'applied') {
+        setVersion((n) => n + 1);
+        return;
+      }
+      setScanError(
+        outcome.kind === 'malformed'
+          ? t('session.scan.codeMalformed')
+          : t('session.scan.codeUnknown', { code: outcome.code }),
+      );
     } catch (thrown: unknown) {
       console.error('[musie] could not record the scan:', thrown);
+      setScanError(t('session.scan.codeFailed'));
     } finally {
       setBusy(false);
     }
@@ -293,6 +320,7 @@ export function Session() {
   async function clearScan() {
     if (busy) return;
     setBusy(true);
+    setScanError(null);
     try {
       await saveCard(id, null, null);
       setVersion((n) => n + 1);
@@ -501,7 +529,8 @@ export function Session() {
               exercise={exercise}
               card={card}
               scanning={busy}
-              onSimulate={() => void simulateScan()}
+              codeError={scanError}
+              onSubmitCode={(scanned) => void submitCode(scanned)}
             />
           )}
 

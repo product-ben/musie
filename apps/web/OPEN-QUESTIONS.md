@@ -1228,3 +1228,60 @@ What I need from Ben: **this is half of G.2.** "One session" is done, with
 confirmation. "And everything" — a delete-my-whole-diary control — is not, and
 neither is anything about orphaned files, which there are none of because
 nothing is ever uploaded. G.2 should be re-scoped rather than re-planned.
+
+# Phase E · E.0 and E.1
+
+## MOCKUPS.md 4 is now wrong in both directions, and I could not fix it here
+
+Where: `MOCKUPS.md` entry 4, `src/components/SessionScan.tsx`
+
+What I checked: entry 4 describes the scan step as a dashed viewport plus an
+info `Message` carrying **Simulate a scan**, and says in its own words that
+"the simulate button disappears when E.1 lands". E.1 has landed. The button is
+gone, the random draw with it.
+
+What I did: nothing to that file. It is one of the documents a step is not
+supposed to rewrite on its own, and the entry now needs a rewrite rather than a
+line edit — it overstates what is missing (the simulated draw is gone, and a
+real code really does open a real card) and understates it at the same time,
+because the honest gap it should now describe is a different one: **between
+E.1 and E.2 the only in-app way to name a card is to type it.** The QR route
+works, but it works by leaving Musie, scanning with the phone's own camera app
+and coming back through `/s/:code`.
+
+What I need from Ben: **a ruling on whether that is a shippable state or a
+reason to keep the simulate button until E.2.** It is genuinely arguable. The
+deep link makes the paper deck work end to end today, which the simulate button
+never did — but somebody who opens the app first, with a card in their hand and
+no idea the QR code is live, is told to go and use a different app. The copy
+says so plainly (`session.scan.readerNote` — "Musie cannot open the camera
+itself yet"), which is the standard MOCKUPS.md sets, but plain is not the same
+as good.
+
+## The end-to-end suite has never been executed against any of this
+
+Where: `e2e/session.spec.ts`, `e2e/scanlink.spec.ts`, `e2e/support.ts`
+
+What I checked: `pnpm check` passes — 98 unit tests, 10 of them new against
+`decodeScan` — and both bundles build. None of that touches Playwright, and
+`pnpm test:e2e` needs the local Supabase stack, which was a contended resource
+while this was built.
+
+What I did: wrote the walks and left them unrun. `session.spec.ts` now types
+`MC-08` where it used to press Simulate, and its two closing assertions changed
+from shape (`/^mc-\d\d$/`) to identity (`toBe('mc-08')`) — which is the point
+of the change and not a tidy-up, because a typed code is chosen by the test and
+a random draw never was. `scanlink.spec.ts` is new: one walk of `/s/MC-01` into
+a running session, and one of the same link with nothing running, asserting the
+card is held and **no session was invented to hold it**.
+
+Why it matters more than usual here: D.6's checkpoint records that the last
+end-to-end walk found two real defects that `tsc`, lint and 89 unit tests all
+missed, and both were in exactly this area — the seam between what the URL
+says, what the reducer allows and what the row holds. `/s/:code` adds a fourth
+voice to that conversation, arriving from outside the app with no in-memory
+state.
+
+What I need from Ben: nothing, but **the next session must run
+`pnpm test:e2e` before any of this is called done**, and should expect the
+deep-link walks to be where the surprises are.

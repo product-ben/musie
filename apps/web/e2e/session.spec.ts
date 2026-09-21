@@ -22,8 +22,19 @@
  * client should be creating itself.
  */
 import { expect, test } from '@playwright/test';
-import { label, reachTheLibrary, service, withLocale } from './support';
+import { enterCode, label, reachTheLibrary, service, withLocale } from './support';
 import type { Locale } from './support';
+
+/**
+ * THE CARD THIS WALK DRAWS, AND THE RECORDING IT MUST COME BACK HOLDING.
+ *
+ * It used to be whichever of the nine the simulated scan picked, so the walk
+ * could only assert "a card, and some track". E.1 deleted the random draw: a
+ * typed code names one card, `exercise_tracks` pairs it with one recording,
+ * and both are knowable here — which turns a shape assertion into an identity
+ * one. A pairing written the wrong way round would now fail.
+ */
+const CARD = { code: 'MC-08', id: 'mc-08', track: 'trk-08' };
 
 /** The answer we type, per locale, so the assertion can tell the runs apart. */
 const ANSWER: Record<Locale, string> = {
@@ -75,12 +86,19 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
     await expect(page).toHaveURL(/\/scan$/);
 
-    /* The simulated scan. It writes `card_id` AND `track_id` in one update,
-       which is what the assertions at the foot of this test check. */
-    const simulate = page.getByRole('button', { name: label(locale, 'session.scan.simulate'), exact: true });
+    /* THE CODE PRINTED ON THE CARD, TYPED — E.1, and the end of the simulated
+       draw. It writes `card_id` AND `track_id` in one update, which is what
+       the assertions at the foot of this test check.
+
+       The field is the reader's resting state now, so its presence is what
+       says the step is back to accepting a card. */
+    const field = page.getByRole('textbox', {
+      name: label(locale, 'session.scan.codeLabel'),
+      exact: true,
+    });
     const scanned = page.getByText(label(locale, 'session.scan.yourCard'), { exact: true });
 
-    await simulate.click();
+    await enterCode(page, locale, CARD.code);
     await expect(scanned).toBeVisible({ timeout: 15_000 });
 
     /* *Scan a different card* RESETS the step rather than re-rolling: the
@@ -88,8 +106,8 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        here because the reset writes nulls to two columns, and a version that
        silently kept the old track would still look right on screen. */
     await page.getByRole('button', { name: label(locale, 'session.scan.again'), exact: true }).click();
-    await expect(simulate).toBeVisible({ timeout: 15_000 });
-    await simulate.click();
+    await expect(field).toBeVisible({ timeout: 15_000 });
+    await enterCode(page, locale, CARD.code);
     await expect(scanned).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
@@ -226,9 +244,13 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     expect(session!.exercise_id).toBe('mindfulness-cards');
     expect(session!.status).toBe('finished');
     expect(session!.step).toBe('reflect');
-    /* The scan wrote both, together. */
-    expect(session!.card_id).toMatch(/^mc-\d\d$/);
-    expect(session!.track_id).toMatch(/^trk-\d\d$/);
+    /* The scan wrote both, together — and BY IDENTITY now, not by shape. The
+       simulated draw could only ever be asserted as "some card and some
+       track", because the walk did not choose which. A typed code does choose,
+       so this fails if `exercise_tracks` pairs MC-08 with anything but trk-08,
+       or if the one update ever writes its two columns from different rows. */
+    expect(session!.card_id).toBe(CARD.id);
+    expect(session!.track_id).toBe(CARD.track);
     /* `sessions_ended_at_matches_status` guarantees this, and asserting it is
        how we find out the day somebody drops the constraint. */
     expect(session!.ended_at).not.toBeNull();

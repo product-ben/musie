@@ -201,15 +201,34 @@ export const en = {
      simply never rendered once an exercise has its own words. */
   'session.intro.fallback': 'Take a moment to arrive. When you are ready, carry on.',
 
-  /* ── Scan · D.5a ─────────────────────────────────────────────────────────
-     The reader is SIMULATED — no camera, no code entry, both E.1–E.3. The
-     Message says so on screen rather than pretending, which is MOCKUPS.md's
-     own standard. */
+  /* ── Scan · D.5a, and the real reader · E.0/E.1 ──────────────────────────
+     THE SIMULATE BUTTON IS GONE, and the three strings that described it went
+     with it. Two real ways in replace it, and the frame names both: the QR
+     code on the card carries a link, so the PHONE'S OWN camera app opens Musie
+     at that card without Musie ever touching a camera — and the code printed
+     beside it can be typed. The in-app reader (E.2, E.3) is still missing and
+     the frame still says so, which is MOCKUPS.md's standard: a surface that
+     does not do what it appears to do says so rather than pretending. */
   'session.scan.headline': 'Scan the card that describes best how you feel right now.',
-  'session.scan.reader': 'Hold the QR code on your card inside the frame.',
-  'session.scan.simulateTitle': 'The reader is not built yet',
-  'session.scan.simulateText': 'Musie does not use the camera yet. Simulating a scan picks one of the nine cards for you.',
-  'session.scan.simulate': 'Simulate a scan',
+  'session.scan.reader': 'Scan the QR code on your card with your phone’s camera app — it opens Musie at that card.',
+  'session.scan.readerNote': 'Musie cannot open the camera itself yet.',
+  'session.scan.codeLabel': 'Card code',
+  /* An EXAMPLE, not a label (3.3.2): the label above names the field and this
+     shows the shape. `MC-01` is a real code, so it is not translated. */
+  'session.scan.codePlaceholder': 'MC-01',
+  'session.scan.codeHint': 'The code is printed beside the QR code, like MC-01.',
+  'session.scan.codeSubmit': 'Use this card',
+  /* THREE ANSWERS, AND TWO OF THEM ARE NOT FAILURES. A typo and a card from
+     another deck are things a person did, said in the field's own error slot.
+     Only the third is the app failing, and it says so without blaming the code
+     that was typed. */
+  'session.scan.codeMalformed': 'A card code looks like MC-01. Check the one printed on your card.',
+  'session.scan.codeUnknown': 'No card in this deck carries the code {code}.',
+  'session.scan.codeFailed': 'That could not be checked. Try again in a moment.',
+  /* Pre-filled from a code scanned before there was a session to put it in
+     (lib/scan.ts). It says where the code came from, because a field that
+     filled itself without explanation is the app having decided something. */
+  'session.scan.heldHint': 'This is the card you scanned. Use it, or type a different code.',
   'session.scan.done': 'Card scanned',
   'session.scan.yourCard': 'Your card',
   'session.scan.again': 'Scan a different card',
@@ -323,6 +342,44 @@ export const en = {
      living in browser storage is a real limitation, not a detail. Saying it
      plainly is the difference between a private product and a careless one. */
   'privacy.browserBound': 'Because the account lives in this browser, clearing its data also clears your diary. There is no way to get it back.',
+
+  /* ── The deep link and the dev sheet · E.0 ───────────────────────────────
+     `/s/:code` is where a QR code lands: the phone's camera app follows the
+     link, the app finds the card and puts it in the running session, and the
+     person is on the scan step holding what they drew. Four of these five
+     screens are the ways that can fail to happen, and none of them is an
+     error message — each says what is true and offers the one way on.
+
+     THE ROUTE NEVER NAMES A HOST, so none of this copy can either. */
+  'scan.route.title': 'Scanned card',
+  'scan.working': 'Looking up that card…',
+  'scan.malformed.title': 'That is not a card code',
+  'scan.malformed.text': 'The code in that link is not one of Musie’s. A card code looks like MC-01.',
+  'scan.unknown.title': 'No card with that code',
+  'scan.unknown.text': 'The code {code} is not in this deck.',
+  /* NOT AN ERROR, and the commonest one of the five: somebody with the deck in
+     their hands scans a card before starting anything. The code is held and
+     the scan step will have it typed in — see `lib/scan.ts`. */
+  'scan.noSession.title': 'You scanned {code}',
+  'scan.noSession.text': 'Nothing is running yet. Choose an exercise, and this card will be waiting at the scan step.',
+  'scan.chooseExercise': 'Choose an exercise',
+  /* A cardless exercise skips the scan step entirely, so a scanned card has
+     nowhere to go. Said plainly rather than silently ignored. */
+  'scan.cardless.title': 'This exercise draws no cards',
+  'scan.cardless.text': 'The session you are in works without the deck, so this card has nowhere to go.',
+  'scan.cardless.action': 'Back to the session',
+
+  /* ── The dev QR sheet · E.0 ──────────────────────────────────────────────
+     DEV-ONLY, AND LAZILY ROUTED so a visitor downloads none of it. It exists
+     because E.2 and E.3 cannot be built or hand-tested without something to
+     point a camera at, and the deck is not printed.
+
+     It generates its codes from the origin it was LOADED from, which is what
+     makes it work with no domain: open it on the laptop, scan it with the
+     phone against the same dev server, and the link resolves. */
+  'scan.dev.title': 'QR codes for the deck',
+  'scan.dev.text': 'Generated from {origin}, so every code here points back at the server that served this page. Print day is the same codes from the generator script, with the real address.',
+  'scan.dev.qrLabel': 'QR code for card {code}',
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'About Musie',

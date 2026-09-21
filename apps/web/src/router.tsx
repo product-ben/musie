@@ -21,6 +21,7 @@ import { MenuDrawer } from './routes/MenuDrawer';
 import { Diary } from './routes/Diary';
 import { DiaryEntry } from './routes/DiaryEntry';
 import { Exercises } from './routes/Exercises';
+import { ScanLink } from './routes/ScanLink';
 import { Session } from './routes/Session';
 import { Placeholder } from './routes/Placeholder';
 import { isStepId } from './routeHandle';
@@ -125,6 +126,46 @@ export const router = createBrowserRouter([
         loader: sessionLoader,
         element: <Session />,
         handle: handle({ titleKey: 'route.session.title', wide: true }),
+      },
+      {
+        /* WHAT THE QR CODE ON A PAPER CARD POINTS AT — E.0.
+           `/s/:code`, and the path is two characters because it is printed:
+           every character in it is a character of a URL somebody's camera has
+           to resolve and somebody's eye has to check against the card.
+
+           SAME-ORIGIN, deliberately. The route is relative, so it works on
+           localhost, on a LAN address a phone can reach, on a preview and on
+           a domain that does not exist yet — which is what let E.0 be built
+           and tested with no domain at all. The decoder never compares a
+           host; see lib/scanCode.ts.
+
+           NO LOADER, unlike the session below. `sessionLoader` validates a URL
+           segment and nothing else, which is why it can be a loader; this
+           route has to READ — the card, the running session and its exercise —
+           and every one of those reads has a loading, failing and empty state
+           that the screen already knows how to draw. Same argument diary/:id
+           makes above, for the same reason. */
+        path: 's/:code',
+        element: <ScanLink />,
+        handle: handle({ titleKey: 'scan.route.title' }),
+      },
+      {
+        /* THE DEV QR SHEET, AND IT IS LAZY ON PURPOSE — E.0.
+           `lazy` rather than `element`, because this module is the only
+           importer of `qrcode` in the app: loaded this way the encoder lands
+           in its own chunk and a visitor who never types /dev/qr downloads
+           none of it. Measured, not assumed — the main bundle is unchanged by
+           this route's existence.
+
+           It is a TOOL, not a screen: it exists so E.2 and E.3 have something
+           to point a camera at before the deck is printed. It is not linked
+           from anywhere in the product, and nothing should link to it. */
+        path: 'dev/qr',
+        lazy: async () => {
+          const { DevQrSheet } = await import('./routes/DevQrSheet');
+          return { Component: DevQrSheet };
+        },
+        handle: handle({ titleKey: 'scan.dev.title' }),
       },
       /* `/done` IS GONE. The prototype ended on a screen that acknowledged the
          session and offered to share it; C.2 cut sharing, and D.5 routes a
