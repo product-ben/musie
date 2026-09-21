@@ -1866,3 +1866,57 @@ told to leave it before being told they need not; the case against is that
 leaving it is genuinely quicker. This is a copy decision, not a code one —
 both strings exist and swapping two lines in `CardScanner.tsx` is the whole
 change.
+
+## The db suite can fail on an expired JWT, and it looks like a real failure
+
+Where: `src/lib/db.support.ts`, every `*.db.test.ts`
+
+What I checked: on the merged tree, `pnpm test:db` failed once with
+`PGRST303` — PostgREST's code for an expired JWT — at
+`diary.db.test.ts`'s first assertion. An immediate re-run passed 70/70, and
+the same file had passed 70/70 on its branch twenty minutes earlier.
+
+What I did: nothing, beyond writing it down. The suite mints anonymous users
+and holds their tokens for the length of a run, so a slow run can outlive one.
+Nothing in the failure says "your token expired" — it says a query returned an
+error object where the test wanted null, at whichever assertion happened to be
+first past the expiry.
+
+Why it matters more than an ordinary flake: this suite's whole job is to be
+believed about security. A failure mode that is environmental, intermittent
+and unlabelled is exactly the kind that gets re-run until green out of habit —
+and the day one of these tests fails for a REAL reason, that habit is what
+will get it dismissed.
+
+What I need from Ben: nothing yet. If it recurs, the fix is for
+`db.support.ts` to refresh the session between files, or to assert on the
+error code and say plainly that the token expired.
+
+## E.2's walks needed the full Chromium, and the headless shell failed as though the app were broken
+
+Where: `apps/web/playwright.config.ts`
+
+What I checked: all four camera walks failed with "the camera could not be
+started" and a *Try the camera again* button — the `failed` state, which is
+`cameraProblem`'s default branch. A probe in the page found
+`isSecureContext: true`, `videoInputs: 1` — the fake camera WAS there — and
+every shape of `getUserMedia`, `{video:true}` included, throwing
+`NotSupportedError: Not supported`.
+
+What I did: added `channel: 'chromium'` to both projects. Since Playwright
+1.49, a headless `chromium` run uses `chromium_headless_shell`, a stripped
+build with media capture removed; the full browser throws `NotAllowedError`
+without permission and returns a stream with it, which is what the walks are
+written against. All twelve walks now pass, both locales.
+
+Why it is worth an entry rather than a silent fix: the failure pointed at the
+application. The screen said the camera could not be started, which was TRUE
+of that browser, and an agent or a person reading only the failure would have
+gone looking in `camera.ts` for a bug that was not there. The Track E agent
+flagged this exact assumption as unverified — "that headless Chromium refuses
+an ungranted camera permission" — and was right to. It refuses in the full
+browser and does something else entirely in the shell.
+
+What I need from Ben: nothing. Flagging because `channel: 'chromium'` means CI
+must install that browser, which `.github/workflows/ci.yml` does not currently
+do — but CI does not run `test:e2e` at all today, so nothing is broken yet.

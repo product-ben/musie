@@ -77,6 +77,20 @@ export default defineConfig({
       name: 'en',
       use: {
         ...devices['Desktop Chrome'],
+        /* THE FULL BROWSER, NOT THE HEADLESS SHELL — E.2 DOES NOT RUN WITHOUT
+           IT. Since Playwright 1.49 a headless `chromium` run uses
+           `chromium_headless_shell`, a stripped build, and media capture is
+           one of the things stripped out of it. MEASURED: `enumerateDevices`
+           there reports the fake camera (videoInputs: 1), and every shape of
+           `getUserMedia` — `{video:true}` included — then throws
+           `NotSupportedError: Not supported`. That lands in `cameraProblem`'s
+           default branch as `failed`, so the walks reported "the camera could
+           not be started" and looked like an app defect.
+
+           `channel: 'chromium'` selects the full browser, where the same call
+           throws `NotAllowedError` without permission and returns a stream
+           with it — which is what the two walks below are written against. */
+        channel: 'chromium',
         locale: 'en-GB',
         launchOptions: { args: fakeCameraArgs() },
       },
@@ -85,6 +99,7 @@ export default defineConfig({
       name: 'de',
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'chromium',
         locale: 'de-DE',
         launchOptions: { args: fakeCameraArgs() },
       },
