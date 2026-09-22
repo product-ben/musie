@@ -14,9 +14,9 @@ Consequence: anything listed here exists in code and **not** in Figma. A designe
 working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
-**30 properties in `musy-foundations.css` have no JSON expression.**
+**33 properties in `musy-foundations.css` have no JSON expression.**
 **3 more live only in `musy-foundations-amendments.css`.**
-Total: **33**.
+Total: **36**.
 
 | Group | n |
 |---|---|
@@ -29,6 +29,7 @@ Total: **33**.
 | Spacing roles | 2 |
 | Elevation ring | 1 |
 | Grid gap | 1 |
+| The measured viewport | 3 |
 | Amendment tokens | 3 |
 
 ## The `stage` type step
@@ -123,6 +124,34 @@ The JSON records `elevation.darkStrategy` as prose instead. The ring is the actu
 | Token | Declared in CSS |
 |---|---|
 | `--grid-gap` | `var(--sp-4)` |
+
+## The measured viewport
+
+The one group here that the JSON could not express **even in principle**, which
+is why it is worth reading rather than counting.
+
+`--viewport-block` has no static value. It is declared `100svh` as a floor and
+then **overwritten at runtime** by `theme-init.js` with
+`visualViewport.height`, because on a phone none of the three CSS units is the
+number you want: `vh` is the large viewport and hides a view's own buttons
+under Safari's toolbar, `dvh` resizes under the reader as that toolbar slides
+away, and `svh` is stable but is the smallest the window ever gets. A design
+token whose value is a measurement is not a thing Figma has a slot for.
+
+`--chrome-block` is what the app shell takes before any view starts — the
+sticky header plus `<main>`'s insets — and it is **declared per breakpoint**,
+in the same media queries the gutter steps in, even though all four values are
+currently identical. That
+is deliberate: the day the header's control grows, it has to be changeable
+here rather than in a `calc` inside a screen.
+
+`--view-block` is the subtraction, and it is the only one a screen should use.
+
+| Token | Declared in CSS |
+|---|---|
+| `--viewport-block` | `100svh`, then a measured `px` value at runtime |
+| `--chrome-block` | `calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7))` |
+| `--view-block` | `calc(var(--viewport-block) - var(--chrome-block))` |
 
 ## Amendment tokens
 

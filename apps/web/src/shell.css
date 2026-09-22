@@ -122,10 +122,17 @@
    viewport below the chrome — About Musie and About you, both of which the
    prototype composes this way.
 
-   THE SUBTRACTION IS THE PROTOTYPE'S, token for token: the sticky header is
-   --target-guided tall at its largest, and <main> adds --sp-5 above and --sp-7
-   below. Taking all three off 100dvh is what makes the CTA land in the middle
-   of what is actually visible rather than in the middle of the document.
+   THE SUBTRACTION IS NOW MEASURED RATHER THAN ESTIMATED. It used to take
+   --target-guided off 100dvh for the header, and the header is --target-primary
+   tall: 44 + 12 + 12 + 1 = 69px, not 64. Five pixels short, every screen, for
+   as long as this rule has existed — invisible one at a time and exactly the
+   kind of thing that makes a centred stage sit slightly high.
+
+   `--view-block` is the viewport MEASURED at runtime less the shell's real
+   chrome, both declared in the design system and both per breakpoint. It is
+   also `100dvh` no longer: dvh resizes under the reader as the browser's own
+   chrome slides away, which on a stage that is centring something is a
+   visible drift while they are looking at it.
 
    `min-block-size`, not `block-size`: content that outgrows the viewport —
    German at 393px, or a large text size — has to be allowed to push past it
@@ -136,7 +143,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-gap-stack);
-  min-block-size: calc(100dvh - var(--target-guided) - var(--sp-5) - var(--sp-7));
+  min-block-size: var(--view-block);
 }
 
 /* A stage holding ONE box rather than a run of messages. The box takes the
@@ -903,7 +910,13 @@
 .musie-listen__view--warn,
 .musie-listen__view--detail {
   box-sizing: border-box;
-  min-block-size: 100svh;
+  /* MEASURED, AND MINUS THE CHROME. `100svh` sized these to the whole window
+     and then the sticky header sat on top of the first 141px of them, so the
+     Störer's sentence started under the header and the details view's player
+     was pushed below the fold. `--view-block` is the window as measured at
+     runtime, less what the shell actually takes — both from the design
+     system, both per breakpoint. */
+  min-block-size: var(--view-block);
   display: flex;
   flex-direction: column;
   align-items: flex-start;

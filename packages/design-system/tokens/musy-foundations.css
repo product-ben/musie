@@ -632,15 +632,46 @@
   --bp-md: 768px;   /* tablet portrait — the group-of-8 setting */
   --bp-lg: 1024px;  /* tablet landscape / small laptop */
   --bp-xl: 1280px;  /* desktop */
+
+  /* ── viewport & the shell's own chrome ───────────────────────────────────
+     WHAT A FULL-HEIGHT VIEW ACTUALLY GETS, which is never the viewport.
+
+     --viewport-block IS MEASURED AT RUNTIME. `theme-init.js` writes the real
+     number here before first paint and keeps it in step on resize, rotation
+     and — the one that matters — the visual-viewport changes iOS makes when
+     its own chrome slides away. The `100svh` below is the value that renders
+     for the few milliseconds before that runs, and the one that stands if
+     scripting is off; it is a floor, not the answer. `svh` rather than `dvh`
+     as the fallback because the SMALL viewport is the one that is always
+     visible, so a view sized to it is never partly under the browser's UI.
+
+     --chrome-block is what the app shell takes off the top and bottom before
+     a view starts: the sticky header (a --target-primary control with --sp-3
+     above and below it, plus its hairline rule) and <main>'s own insets.
+     MEASURED, not estimated — 69 + 24 + 48 = 141px, which is also why
+     `.musie-stage` in apps/web was five pixels short for months: it subtracted
+     --target-guided for a header that is --target-primary tall.
+
+     PER BREAKPOINT, and today all four are the same number. That is a fact
+     about this shell rather than a redundancy: the header's control does not
+     grow and <main>'s insets do not change with the gutter. They are declared
+     separately anyway, because the day one of them does change it must be
+     changeable HERE and not in a calc buried in a screen.                   */
+  --viewport-block: 100svh;
+  --chrome-block:
+    calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline)
+       + var(--sp-5) + var(--sp-7));
+  --view-block: calc(var(--viewport-block) - var(--chrome-block));
+
   --container-max: 1200px;
   --gutter: var(--sp-4);
   --columns: 4;
   --grid-gap: var(--sp-4);
 }
 
-@media (min-width: 768px)  { :root, [data-theme] { --gutter: var(--sp-5); --columns: 8;  --grid-gap: var(--sp-5); } }
-@media (min-width: 1024px) { :root, [data-theme] { --gutter: var(--sp-6); --columns: 12; --grid-gap: var(--sp-5); } }
-@media (min-width: 1280px) { :root, [data-theme] { --gutter: var(--sp-7); --columns: 12; --grid-gap: var(--sp-6); } }
+@media (min-width: 768px)  { :root, [data-theme] { --gutter: var(--sp-5); --columns: 8;  --grid-gap: var(--sp-5); --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7)); } }
+@media (min-width: 1024px) { :root, [data-theme] { --gutter: var(--sp-6); --columns: 12; --grid-gap: var(--sp-5); --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7)); } }
+@media (min-width: 1280px) { :root, [data-theme] { --gutter: var(--sp-7); --columns: 12; --grid-gap: var(--sp-6); --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7)); } }
 
 /* ═══ PREFERENCE OVERRIDES — honoured at the TOKEN level ══════════════════ */
 

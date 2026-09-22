@@ -41,6 +41,32 @@
           toggle: function () { this.set(this.get() === 'dark' ? 'light' : 'dark'); }
         };
       })();
+
+      /* The measured viewport — same file, same reason it is inlined. The
+         foundations declare `--viewport-block: 100svh` as a floor and this
+         replaces it with the real number before first paint, so a
+         full-height view never renders at a guessed size and then jumps.
+         See theme-init.js for why none of the three CSS units is the
+         answer on a phone. */
+      (function () {
+        var frame = 0;
+        function write() {
+          frame = 0;
+          var vv = window.visualViewport;
+          var h = Math.floor(vv ? vv.height : window.innerHeight);
+          if (h > 0) document.documentElement.style.setProperty('--viewport-block', h + 'px');
+        }
+        function schedule() {
+          if (frame) return;
+          frame = window.requestAnimationFrame(write);
+        }
+        write();
+        window.addEventListener('resize', schedule, { passive: true });
+        window.addEventListener('orientationchange', schedule, { passive: true });
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', schedule, { passive: true });
+        }
+      })();
     </script>
 
     <!--

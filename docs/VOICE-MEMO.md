@@ -293,8 +293,8 @@ while the *audio stays*, owned by an identity nobody can sign in as again.
 **No client-side deletion can ever reach those files.** That, more than
 anything else here, is why expiry is not optional.
 
-**The deleter is built before the capture.** BUILD-PLAN's F.9 comes before
-F.10, which looks inverted and is not: the moment capture ships, files
+**The deleter is built before the capture.** BUILD-PLAN's I.3 comes before
+I.4, which looks inverted and is not: the moment capture ships, files
 accumulate that nothing removes. Built the other way round, nothing a person
 creates is ever un-deletable — and the sweep is testable with no UI at all,
 because the harness can upload its fixtures with the service role.
@@ -366,7 +366,7 @@ makes false.
 | `i18n/en.ts`, `de.ts` | §3, both locales |
 | `MOCKUPS.md` | entry 1 (voice) is retired when F.6 lands; this must not resurrect it |
 | `apps/web/OPEN-QUESTIONS.md` | §11 below |
-| `BUILD-PLAN.md` | **done** — F.7–F.11, added to Phase F after F.6's checkpoint, plus the Size note and a blocked-table row for §2 |
+| `BUILD-PLAN.md` | **done** — **Phase I**, I.1–I.5, a phase of its own rather than an extension of F, plus the Size note and a blocked-table row for §2 |
 
 ---
 

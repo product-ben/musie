@@ -87,7 +87,13 @@ export const GROUPS = {
   icon: (n: string) => n.startsWith('--icon-'),
   'z-index': (n: string) => n.startsWith('--z-'),
   breakpoints: (n: string) =>
-    n.startsWith('--bp-') || ['--container-max', '--gutter', '--columns', '--grid-gap'].includes(n),
+    n.startsWith('--bp-')
+    || ['--container-max', '--gutter', '--columns', '--grid-gap'].includes(n)
+    /* The viewport family belongs with the breakpoints rather than with
+       spacing: `--chrome-block` is declared per breakpoint beside `--gutter`,
+       and `--viewport-block` is the only token in the system whose value is
+       written by script rather than declared. */
+    || ['--viewport-block', '--chrome-block', '--view-block'].includes(n),
 } as const;
 
 export type GroupName = keyof typeof GROUPS;
