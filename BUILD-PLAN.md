@@ -855,7 +855,7 @@ that looks exactly like a bug.
   ***Done when:* you can reorder and merge without a mouse — CODE ONLY.** No
   screen reader has heard it and nothing in this repo can render a component
   under test (see `apps/web/OPEN-QUESTIONS.md`, and the ruling it asks for).
-- [ ] **F.6 Persist the statements.** `onSentenceFinal` becomes the Supabase
+- [x] **F.6 Persist the statements.** `onSentenceFinal` becomes the Supabase
   write. It fires on four paths, so it must be idempotent. *Done when:* editing
   a statement updates its row rather than inserting a second.
 
@@ -903,10 +903,37 @@ that looks exactly like a bug.
   statements assembled at the end do not. That is a durability argument rather
   than a modelling one, and it is the one that actually justifies the table.
 
-  `reflections.body` stays `not null` and is assembled from the rows when the
-  session finishes — so the diary, the e2e walks and D1's own check all keep
-  working unchanged, and `hasAnswered` can finally stop saying a spoken answer
-  is not an answer.
+  `reflections.body` stays `not null` and is assembled from the rows on every
+  write — so the diary, the e2e walks and D1's own check all keep working
+  unchanged, and `hasAnswered` has stopped saying a spoken answer is not an
+  answer.
+
+  ### Built 2026-09-22, and the payload changed on the way
+
+  **The seam takes the WHOLE LIST, not the statement that moved.** Per
+  statement was the obvious shape and could not work: two of the three call
+  sites had no id to write under (`append` mints ids inside the state
+  updater), merging ENDS a statement and a per-statement event cannot say so,
+  and moving changes no text at all — so nothing fired, while `position` is a
+  column and a reordered list never written back reads in the wrong order
+  tomorrow.
+
+  So `useSentences` fires from an effect on the list, and append, edit, merge,
+  move, delete and UNDO are covered by three lines that cannot miss a path
+  because they are not wired per path. Idempotent by construction rather than
+  by care. The cost is writing every row on every change, which for a handful
+  of statements a few times a minute is nothing.
+
+  **`saveStatements` takes its client as an argument**, so `pnpm test:db`
+  drives it as a real signed-in user rather than through the module singleton.
+  For a table RLS reaches through TWO joins — statement → reflection → session
+  → `user_id` — testing the SQL without the policies would have been testing
+  the half that was never the risk.
+
+  *Done when:* four db tests — editing updates the row rather than inserting a
+  second; a merged-away statement's row is GONE; `reflections.body` stays
+  assembled; and another person's statements cannot be read, changed or
+  deleted. 78 db tests pass.
 
 **Checkpoint.** Record a real reflection on an iPhone. iOS is the untested
 surface: nothing documents `AudioContext` under Safari, background tabs or the

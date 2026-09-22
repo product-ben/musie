@@ -198,6 +198,9 @@ export function Session() {
   const [scanError, setScanError] = React.useState<string | null>(null);
 
   const [reflectMode, setReflectMode] = React.useState<ReflectMode>('text');
+  /* Whether the transcript editor holds any words — F.6. It owns the
+     statements, so the step has to be told. */
+  const [spokenWords, setSpokenWords] = React.useState(false);
   const [answer, setAnswer] = React.useState('');
   const [listened, setListened] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -356,7 +359,17 @@ export function Session() {
     if (busy) return;
     setBusy(true);
     try {
-      if (!skip) await saveReflection(id, reflectMode, answer.trim());
+      /* VOICE HAS ALREADY WRITTEN ITSELF — F.6.
+       
+         A spoken reflection is persisted as it is spoken, statement by
+         statement, and `reflections.body` is assembled from those rows on
+         every write. Calling `saveReflection` here would upsert the same row
+         with `answer` — the TYPED box's text, which in voice mode is empty —
+         and replace a finished transcript with nothing at the last possible
+         moment. The row exists and is correct before Finish is ever pressed. */
+      if (!skip && reflectMode !== 'voice') {
+        await saveReflection(id, reflectMode, answer.trim());
+      }
       const at = new Date().toISOString();
       await endSession(id, 'finished', at);
       dispatch({ type: 'FINISH', at });
@@ -468,7 +481,7 @@ export function Session() {
           {t('reflect.skip')}
         </CtaButton>
         <CtaButton
-          disabled={!hasAnswered(reflectMode, answer)}
+          disabled={!hasAnswered(reflectMode, answer, spokenWords)}
           loading={busy}
           loadingLabel={t('content.loading')}
           onClick={() => void finish()}
@@ -549,6 +562,8 @@ export function Session() {
           {state.step === 'reflect' && (
             <SessionReflect
               exercise={exercise}
+              sessionId={id}
+              onSpokenWords={setSpokenWords}
               question={question}
               mode={reflectMode}
               onModeChange={setReflectMode}

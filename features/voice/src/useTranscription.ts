@@ -15,7 +15,6 @@ import { stripFillers } from './transcript/fillers';
 import { MicrophoneError, startRecorder, type Recorder } from './audio/recorder';
 import { connectRealtime, type RealtimeConnection } from './realtime/connection';
 import type { VoiceMessage } from './messages';
-import { onSentenceFinal } from './onSentenceFinal';
 import { useSentences } from './useSentences';
 
 export type Status = 'idle' | 'connecting' | 'recording';
@@ -98,8 +97,9 @@ export function useTranscription() {
         .map((part) => stripFillers(part, language))
         .filter(Boolean);
       if (parts.length === 0) return;
+      /* The write is fired by `useSentences` from the list itself — see
+         onSentenceFinal.ts. Appending IS the change. */
       append(parts, language);
-      parts.forEach((part) => onSentenceFinal(part, language));
     },
     [append],
   );

@@ -2192,3 +2192,46 @@ and `docs/VOICE-MEMO.md` §289 argues I.3's scheduled backstop FROM that same
 promise being true. Whichever lands second rewrites the other's reasoning, not
 just its text. My lean is I.1 first, because it is inside a phase that is
 already sequenced and H.0b is not.
+
+## The three H.0 questions, answered — and the one new decision the answers forced
+
+Where: `BUILD-PLAN.md` Phase H (H.0, H.0b), `src/AuthProvider.tsx`,
+`apps/web/.env.example`
+
+What I checked: appended rather than edited into the entry above, because this
+file is append-only and that entry asked three questions Ben has now answered
+(2026-09-22).
+
+1. **Second device: yes, it is on the list.** So H.0 stands and the cheap
+   alternative — showing each tester their anonymous uuid — is rejected. It
+   bought the identity and not the device.
+2. **"Sign in before your first session": yes, and preferred rather than
+   tolerated.** Not as a workaround for the conversion H.0 gives up, but
+   because it keeps the beta CLOSED, which is what keeps a
+   subscription-licensed Epidemic Sound master and a `[DE] `-prefixed
+   placeholder content set off the open internet while the app sits on a real
+   domain.
+3. **H before I.** The voice memo is an add-on; accounts are what the beta
+   needs to run. This closes the plan's only open scope question and removes
+   the H/I copy collision by ordering rather than by argument.
+
+What I did: wrote all three into the plan, and took answer 2 one step further
+than it was asked — **H.0b is now a gate rather than a screen.**
+
+Why: if signing in first is preferred *because* it keeps the beta closed, then
+anonymous sign-in cannot stay as the silent default beside it. One tester who
+never finds the sign-in control is the entire licensing argument undone. So
+`AuthProvider` renders the gate instead of falling through when there is no
+session — and behind `VITE_REQUIRE_ACCOUNT`, because deleting
+`signInAnonymously()` would delete the first-session-before-we-ask-anything
+behaviour that H.2 proves and H.3 builds on, and going public again would be a
+rewrite rather than a variable. It is one file: `ensureSession()` has exactly
+one caller, `AuthProvider.tsx:20`.
+
+What I need from Ben: **confirmation that "gated" is what you meant**, because
+it is my inference from "preferred — it solves licensing issues before going
+public" rather than something you said. The weaker reading is that testers are
+merely *told* to sign in first and the anonymous path stays reachable. That
+reading is cheaper to build and does not actually close the beta, so I took the
+stronger one. If it is wrong, H.0b loses the flag and the `AuthProvider`
+change and becomes a plain screen — nothing else in the phase moves.

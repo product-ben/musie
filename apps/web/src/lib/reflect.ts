@@ -29,15 +29,18 @@ export type ReflectMode = 'text' | 'voice' | 'photo';
  * never consults this. This is one question only: is there something to write
  * into `reflections.body`, which is `not null`.
  *
- * VOICE AND PHOTO CAN NEVER SATISFY IT, TODAY. Both are interactive mockups
- * (MOCKUPS.md 1 and 2) and neither produces anything to store, so a session
- * finished from either would claim a reflection that does not exist. Each says
- * so on screen rather than being hidden — which is the honest version of a
- * disabled button.
+ * VOICE COUNTS SINCE F.6, and the day this comment anticipated has arrived: a
+ * transcript is words, and words are what this asks for. But it is not the
+ * same words — the typed box is empty in voice mode, because the statements
+ * live in the transcript editor. So voice is asked about SEPARATELY, through
+ * `spokenWords`, which the reflect step reports upward from the list it holds.
  *
- * The day voice lands, `mode === 'voice'` gets the same treatment as text: a
- * transcript is words, and words are what this asks for.
+ * PHOTO STILL CANNOT SATISFY IT. It is an interactive mockup and produces
+ * nothing to store, so a session finished from it would claim a reflection
+ * that does not exist. It says so on screen rather than being hidden — the
+ * honest version of a disabled button.
  */
-export function hasAnswered(mode: ReflectMode, text: string): boolean {
+export function hasAnswered(mode: ReflectMode, text: string, spokenWords = false): boolean {
+  if (mode === 'voice') return spokenWords;
   return mode === 'text' && text.trim().length > 0;
 }

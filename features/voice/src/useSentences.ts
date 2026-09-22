@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CombineOrder } from '@musie/design-system';
 import type { Sentence } from './transcript/types';
 import type { UndoReason } from './messages';
-import { onSentenceFinal } from './onSentenceFinal';
+import { onStatementsChanged } from './onSentenceFinal';
 
 /** How long the undo offer stays on screen after a destructive change. */
 const UNDO_SECONDS = 6;
@@ -50,6 +50,28 @@ export function useSentences() {
     if (undoTimer.current) clearTimeout(undoTimer.current);
   }, []);
 
+  /**
+   * THE PERSISTENCE SEAM, FIRED FROM THE LIST RATHER THAN FROM THE PATHS.
+   *
+   * Every way the list can change ends here — appending, editing, merging,
+   * moving, deleting and undoing — so F.6's write cannot miss one. Wiring it
+   * per path is what left `move` unwritten and gave two call sites no id to
+   * write under; see onSentenceFinal.ts.
+   *
+   * The first run is skipped. The list starts empty and an empty list means
+   * "delete everything I have stored", which is a true statement about a
+   * reflection somebody has cleared and a false one about a component that
+   * has only just mounted.
+   */
+  const seen = useRef(false);
+  useEffect(() => {
+    if (!seen.current) {
+      seen.current = true;
+      return;
+    }
+    onStatementsChanged(sentences);
+  }, [sentences]);
+
   /** Called by the transcriber as each turn finalises. Newest goes last. */
   const append = useCallback((texts: string[], language: string) => {
     const at = new Date().toISOString();
@@ -69,8 +91,6 @@ export function useSentences() {
     setSentences((previous) =>
       previous.map((sentence) => {
         if (sentence.id !== id || sentence.text === trimmed) return sentence;
-        // The corrected text is what downstream logic should judge.
-        onSentenceFinal(trimmed, sentence.language);
         return { ...sentence, text: trimmed };
       }),
     );
@@ -89,7 +109,6 @@ export function useSentences() {
         const parts =
           order === 'sourceFirst' ? [source.text, target.text] : [target.text, source.text];
         const merged = parts.join(' ').replace(/\s+/g, ' ').trim();
-        onSentenceFinal(merged, target.language);
 
         return previous
           .filter((s) => s.id !== sourceId)

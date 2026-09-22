@@ -42,7 +42,10 @@
  */
 import * as React from 'react';
 import { DraggableList, Message, RecordButton, Toast } from '@musie/design-system';
-import { DEFAULT_MODEL, IDLE_STOP_MS, SESSION_SECONDS, useTranscription } from '@musie/voice';
+import {
+  DEFAULT_MODEL, IDLE_STOP_MS, SESSION_SECONDS, setStatementsHandler, useTranscription,
+} from '@musie/voice';
+import { saveStatements } from '../lib/statements';
 import type { VoiceMessageCode } from '@musie/voice';
 import { useLocale, useT } from '../i18n/localeContext';
 import { realtimeToken } from '../lib/realtimeToken';
@@ -53,10 +56,50 @@ import { hasRecorded, hintKey, recordLabelKey, recordPhase, stopNoticeKey } from
 const SECONDS = String(SESSION_SECONDS);
 const SILENCE = String(IDLE_STOP_MS / 1000);
 
-export function VoiceTranscript() {
+export function VoiceTranscript({
+  sessionId, onSpokenWords,
+}: {
+  sessionId: string;
+  /** Reported upward so *Finish session* can open — F.6. The statements live
+   *  in here, and the typed box the step otherwise asks about is empty. */
+  onSpokenWords?: (has: boolean) => void;
+}) {
   const t = useT();
   const { locale } = useLocale();
   const session = useTranscription();
+
+  /**
+   * ── F.6 · THE WRITE, INSTALLED WHILE THIS SCREEN IS ON ───────────────────
+   * `@musie/voice` holds the handler as a module singleton rather than as
+   * context, because the write is not a rendering concern. This is the only
+   * thing that installs it, and it puts back whatever it found on unmount —
+   * so leaving the reflect step stops the writing rather than leaving a
+   * handler pointed at a session that has ended.
+   *
+   * ERRORS ARE LOGGED AND NOT RAISED. This runs behind the screen while
+   * somebody is speaking; throwing here would replace a reflection in progress
+   * with a failure page and lose the words on screen, which is a worse outcome
+   * than a row that did not save. The statements are still in the list, and
+   * the next change writes them all again — because the payload is the whole
+   * list rather than a delta, a failed write is retried by the next sentence.
+   */
+  /* WHETHER THERE IS AN ANSWER, REPORTED UP. `hasAnswered` asks the typed
+     box, which is empty in voice mode, so the step cannot know this without
+     being told. Sent on every change including back to false, because
+     deleting the last statement un-answers the question. */
+  React.useEffect(() => {
+    onSpokenWords?.(session.sentences.some((s) => s.text.trim() !== ''));
+  }, [session.sentences, onSpokenWords]);
+
+  React.useEffect(() => {
+    const previous = setStatementsHandler((statements) => {
+      void saveStatements(sessionId, statements).catch((thrown: unknown) => {
+        console.error('[musie] could not persist the spoken reflection:', thrown);
+      });
+    });
+    return () => { setStatementsHandler(previous); };
+  }, [sessionId]);
+
 
   /**
    * True from the tap until the token comes back.

@@ -54,6 +54,10 @@ import type { Exercise } from '../lib/content';
 import type { ReflectMode } from '../lib/reflect';
 
 export interface SessionReflectProps {
+  /** Whose run this is. F.6 writes the statements against it as they arrive. */
+  sessionId: string;
+  /** Passed straight through from `VoiceTranscript` — F.6. */
+  onSpokenWords?: (has: boolean) => void;
   exercise: Exercise;
   question: string;
   mode: ReflectMode;
@@ -71,6 +75,8 @@ export interface SessionReflectProps {
  */
 export function SessionReflect({
   exercise, question, mode, onModeChange, text, onTextChange,
+  sessionId,
+  onSpokenWords,
 }: SessionReflectProps) {
   const t = useT();
 
@@ -118,7 +124,7 @@ export function SessionReflect({
 
         {mode === 'voice' && (
           <div className="musie-stack">
-            <VoiceTranscript />
+            <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
             {/* THE ONE THING VOICE STILL CANNOT DO. Everything above is real
                 — the microphone, the transcription, the editing — and none of
                 it reaches `reflections.body`, which is why *Finish session*

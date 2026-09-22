@@ -44,8 +44,8 @@ export type { Sentence } from './transcript/types';
 
 export type { VoiceMessage, VoiceMessageCode, UndoReason } from './messages';
 
-export { onSentenceFinal, setSentenceFinalHandler } from './onSentenceFinal';
-export type { SentenceFinalHandler } from './onSentenceFinal';
+export { onStatementsChanged, setStatementsHandler } from './onSentenceFinal';
+export type { StatementsHandler } from './onSentenceFinal';
 
 export { useSentences } from './useSentences';
 export { useTranscription } from './useTranscription';

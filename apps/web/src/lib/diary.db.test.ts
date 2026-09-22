@@ -30,6 +30,7 @@ import { beforeAll, afterEach, describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { anonymousUser, serviceClient } from './db.support';
+import { saveStatements } from './statements';
 
 /**
  * What lib/diary.ts asks for on the entry screen, verbatim — and kept verbatim.
@@ -275,5 +276,151 @@ describe('deleting the whole diary · G.2', () => {
       .delete()
       .eq('user_id', stranger.userId);
     expect(swept, 'the stranger\'s rows were left behind').toBeNull();
+  }, 30_000);
+});
+
+describe('reflection_statements · a spoken answer, written as it is spoken', () => {
+  /**
+   * F.6's DONE-WHEN, AND IT IS ABOUT THE PRIMARY KEY.
+   *
+   * `onSentenceFinal` fires on four paths, and a statement carries the id the
+   * browser gave it, so writing under that id makes the second firing an
+   * update of one row rather than a second row. This is the assertion that
+   * goes red the day somebody swaps the text primary key for a generated uuid
+   * — which would look tidier and would silently break idempotency.
+   */
+  it('editing a statement updates its row rather than inserting a second', async () => {
+    const sessionId = await insertSession({
+      status: 'started', step: 'reflect', started_at: agoISO(10),
+    });
+
+    const first = await saveStatements(sessionId, [
+      { id: 'st-1', text: 'A tightness behind the ribs.', language: 'en', createdAt: agoISO(9) },
+      { id: 'st-2', text: 'And then less of it.', language: 'en', createdAt: agoISO(8) },
+    ], client);
+    expect(first).not.toBeNull();
+
+    /* The same two statements, one of them corrected. */
+    await saveStatements(sessionId, [
+      { id: 'st-1', text: 'A tightness behind the ribs, high up.', language: 'en', createdAt: agoISO(9) },
+      { id: 'st-2', text: 'And then less of it.', language: 'en', createdAt: agoISO(8) },
+    ], client);
+
+    const { data } = await serviceClient()
+      .from('reflection_statements')
+      .select('id, text, position')
+      .eq('reflection_id', first as string)
+      .order('position');
+
+    expect(data?.length, 'the edit inserted a second row').toBe(2);
+    expect(data?.[0].text).toBe('A tightness behind the ribs, high up.');
+  }, 30_000);
+
+  /**
+   * MERGING ENDS A STATEMENT, and a per-statement write could never say so.
+   * This is why the payload is the whole list: the row has to GO, not just
+   * stop being mentioned.
+   */
+  it('removes statements that are no longer in the list', async () => {
+    const sessionId = await insertSession({
+      status: 'started', step: 'reflect', started_at: agoISO(10),
+    });
+
+    const reflectionId = await saveStatements(sessionId, [
+      { id: 'm-1', text: 'One.', language: 'en', createdAt: agoISO(9) },
+      { id: 'm-2', text: 'Two.', language: 'en', createdAt: agoISO(8) },
+    ], client);
+
+    /* Merged: m-2 folded into m-1 and its row is over. */
+    await saveStatements(sessionId, [
+      { id: 'm-1', text: 'One. Two.', language: 'en', createdAt: agoISO(9) },
+    ], client);
+
+    const { data } = await serviceClient()
+      .from('reflection_statements')
+      .select('id')
+      .eq('reflection_id', reflectionId as string);
+
+    expect(data?.map((r) => r.id)).toEqual(['m-1']);
+  }, 30_000);
+
+  /**
+   * `reflections.body` IS STILL THE ANSWER. The diary, the end-to-end walks
+   * and D1's own `not null` check all read it, and none of them knows this
+   * second table exists. Assembled on every write, so it cannot go stale.
+   */
+  it('keeps reflections.body assembled from the rows', async () => {
+    const sessionId = await insertSession({
+      status: 'started', step: 'reflect', started_at: agoISO(10),
+    });
+
+    await saveStatements(sessionId, [
+      { id: 'b-1', text: 'Erst eng.', language: 'de', createdAt: agoISO(9) },
+      { id: 'b-2', text: 'Dann weiter.', language: 'de', createdAt: agoISO(8) },
+    ], client);
+
+    const { data } = await serviceClient()
+      .from('reflections')
+      .select('mode, body')
+      .eq('session_id', sessionId)
+      .single();
+
+    expect(data?.mode).toBe('voice');
+    expect(data?.body).toBe('Erst eng. Dann weiter.');
+  }, 30_000);
+
+  /**
+   * THE ONE THAT MATTERS. RLS reaches this table through TWO joins —
+   * statement → reflection → session → user_id — and a policy written against
+   * `reflections` alone would be one join short. If that ever happens, one
+   * person's statements become readable by another, and nothing on screen
+   * would show it.
+   */
+  it('does not reach another person\'s statements', async () => {
+    const stranger = await anonymousUser();
+    const { data: theirSession } = await stranger.client
+      .from('sessions')
+      .insert({
+        user_id: stranger.userId,
+        exercise_id: 'mindfulness-cards',
+        status: 'started', step: 'reflect', started_at: agoISO(30),
+      })
+      .select('id')
+      .single();
+
+    const { data: theirReflection } = await stranger.client
+      .from('reflections')
+      .insert({ session_id: (theirSession as { id: string }).id, mode: 'voice', body: 'theirs' })
+      .select('id')
+      .single();
+
+    const { error: written } = await stranger.client
+      .from('reflection_statements')
+      .insert({
+        id: 'stranger-1',
+        reflection_id: (theirReflection as { id: string }).id,
+        text: 'theirs', position: 0,
+      });
+    expect(written, 'the stranger could not write their own statement').toBeNull();
+
+    /* Alice, reading and then trying to change it. */
+    const { data: seen } = await client
+      .from('reflection_statements')
+      .select('id')
+      .eq('id', 'stranger-1');
+    expect(seen, 'another person\'s statement is readable').toEqual([]);
+
+    await client.from('reflection_statements').update({ text: 'taken' }).eq('id', 'stranger-1');
+    await client.from('reflection_statements').delete().eq('id', 'stranger-1');
+
+    const { data: survivor } = await serviceClient()
+      .from('reflection_statements')
+      .select('id, text')
+      .eq('id', 'stranger-1')
+      .maybeSingle();
+
+    expect(survivor?.text, 'another person\'s statement was changed or deleted').toBe('theirs');
+
+    await serviceClient().from('sessions').delete().eq('user_id', stranger.userId);
   }, 30_000);
 });

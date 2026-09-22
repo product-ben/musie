@@ -278,6 +278,44 @@ export type Database = {
           },
         ]
       }
+      reflection_statements: {
+        Row: {
+          created_at: string
+          id: string
+          language: string | null
+          meta: Json
+          position: number
+          reflection_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          language?: string | null
+          meta?: Json
+          position: number
+          reflection_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string | null
+          meta?: Json
+          position?: number
+          reflection_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reflection_statements_reflection_id_fkey"
+            columns: ["reflection_id"]
+            isOneToOne: false
+            referencedRelation: "reflections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reflections: {
         Row: {
           body: string
