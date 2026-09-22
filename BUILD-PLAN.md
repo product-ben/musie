@@ -859,6 +859,55 @@ that looks exactly like a bug.
   write. It fires on four paths, so it must be idempotent. *Done when:* editing
   a statement updates its row rather than inserting a second.
 
+  ### The storage decision, settled 2026-09-22
+
+  F.4 reached this and stopped rather than deciding it in passing — the entry
+  in `apps/web/OPEN-QUESTIONS.md` is the handover. The question was whether a
+  spoken reflection produces rows, a document, or both. **Ben's answer: a
+  TABLE for what is known, plus one `jsonb` column for what is not.**
+
+  **YAML was the first instinct and is the one option that was never really
+  available.** Postgres can hold a document in `jsonb` and search inside it;
+  YAML would be text the database cannot see into, so "which reflections have
+  more than five statements" would mean reading and re-parsing every row. The
+  real choice was table versus `jsonb`, and it was never table versus YAML.
+
+  **Three things about this repo decided it**, and none of them is a general
+  argument for tables over documents:
+
+  1. **The security model is per ROW.** Every table here is protected by RLS,
+     and the database itself refuses one person another person's rows. A
+     document is one row, so a reflection's statements would be protected as a
+     block rather than individually. For private diary content that is a real
+     difference, not a stylistic one.
+  2. **F.6's own done-when assumes rows** — *"editing a statement updates its
+     ROW rather than inserting a second"*. With a document, editing one
+     statement rewrites the whole thing, which is exactly the "did that write
+     twice?" problem the step exists to prevent. `onSentenceFinal` fires on
+     four paths.
+  3. **Migrations already stack** (rule 4). The usual case for documents is
+     that schema changes hurt; here every change is a new reviewed file
+     already, so a column added later is an ordinary act rather than an event.
+
+  **And the reason it is BOTH.** The statement's stable parts — its id, its
+  reflection, its text, its order, when it was finalised, its language — are
+  columns, because they are what anything would ever sort or search by and
+  what the database should refuse to accept as missing. Everything still
+  moving — whether it was edited, whether it was merged from two, transcription
+  confidence, timings — goes in one `meta jsonb` column, addable without a
+  migration and still queryable. When a field in `meta` proves permanent it
+  graduates into a real column, and by then there is data to prove it.
+
+  **Why rows at all, which is not the editing.** `onSentenceFinal` fires AS
+  SOMEBODY SPEAKS. Statements written live survive a closed tab mid-reflection;
+  statements assembled at the end do not. That is a durability argument rather
+  than a modelling one, and it is the one that actually justifies the table.
+
+  `reflections.body` stays `not null` and is assembled from the rows when the
+  session finishes — so the diary, the e2e walks and D1's own check all keep
+  working unchanged, and `hasAnswered` can finally stop saying a spoken answer
+  is not an answer.
+
 **Checkpoint.** Record a real reflection on an iPhone. iOS is the untested
 surface: nothing documents `AudioContext` under Safari, background tabs or the
 user-gesture requirement. Budget a session for surprises.
@@ -963,6 +1012,10 @@ Against the five shared things the E/F split named:
 - **I.2 and I.3 key every object on `{user_id}/`**, which is the id H.2 exists
   to prove survives conversion. Those two facts want one session, not two.
 
+**Resolved by ordering, 2026-09-22: H runs before I**, so none of the three is
+a live conflict any more — they are a handover list for whoever writes I.1 and
+I.3. Kept here because the reasoning is what makes the handover legible.
+
 **H.5 and I.3 are both scheduled sweeps** against the same project. Not a
 conflict — an argument for order. Whichever is written second should extend the
 first's scheduler rather than stand up a second one.
@@ -1037,13 +1090,20 @@ is none, so a real session is simply used.
   delivers to members of the project's own organisation, so an external tester
   would never have received the mail whatever the rate limit said.
 
-  **What is given up is the first session, and it is the only thing.** A
-  tester who does three sessions anonymously and then signs in lands in an
-  empty diary, with the old one stranded on an anonymous id nobody can reach.
-  The workaround is procedural: **testers sign in before their first session**,
-  which `auth.ts` already makes work. It is an instruction a tester can get
-  wrong, and when they do it looks exactly like data loss — so it belongs in
-  whatever you hand them alongside the password.
+  **What is given up is the first session — and for the beta Ben wants it given
+  up (2026-09-22).** A tester who does three sessions anonymously and then signs
+  in lands in an empty diary, with the old one stranded on an anonymous id
+  nobody can reach. So testers **sign in before their first session**, which
+  `auth.ts` already makes work: `getSession()` runs first, so a signed-in
+  browser never reaches `signInAnonymously()`.
+
+  That was filed as H.0's cost and it turns out to be its second reason.
+  **Signing in first is what keeps the beta closed**, and a closed beta is what
+  keeps a subscription-licensed recording and a placeholder content set off the
+  open internet while the app sits on a real domain. E.4's own note says the
+  Epidemic Sound licence is a subscription rather than per-track clearance, and
+  every German content row is still `[DE] `-prefixed. Neither of those wants an
+  audience that walked in from a search result.
 
   **Password reset, magic link and email change all still need mail.** For the
   beta you reset a password in the dashboard. That is fine at twenty testers
@@ -1053,10 +1113,24 @@ is none, so a real session is simply used.
   reads the diary written on the first, `supabase/config.toml` is unchanged,
   and no mail, no SMTP provider and no DNS record were involved at any point.
 
-- [ ] **H.0b The sign-in screen, and only it.** Sign in and sign out. No sign
+- [ ] **H.0b The sign-in gate, and only it.** Sign in and sign out. No sign
   up, no reset, no OAuth — those are H.3, and building them now would build
   them against a provider nobody has chosen. Both languages, every string
   through the catalogue, no component default leaking through (rule 7).
+
+  **A gate rather than a screen, which is decision 2 of 2026-09-22 taken to its
+  conclusion.** If signing in first is preferred *because* it keeps the beta
+  closed, then anonymous sign-in cannot stay as the silent default beside it —
+  one person who never finds the sign-in control is the whole licensing
+  argument undone. So `AuthProvider` renders the gate instead of falling
+  through when there is no session.
+
+  **Behind a flag, and the anonymous path is not deleted.** `VITE_REQUIRE_ACCOUNT`
+  in `.env.example`, on for the beta. Deleting `signInAnonymously()` would
+  delete the thing H.2 proves and H.3 builds on — the first session that
+  convinces somebody before it asks them for anything — and going public again
+  would be a rewrite rather than a variable. **One file**: `ensureSession()` has
+  exactly one caller, [AuthProvider.tsx](apps/web/src/AuthProvider.tsx) L20.
 
   **It owes one copy change, and it cannot be deferred to H.4.**
   `privacy.browserBound` promises that clearing browser data clears the diary
@@ -1110,16 +1184,18 @@ is none, so a real session is simply used.
   against the same project; apart they become two schedulers with two failure
   modes, together they are one.
 
-> **Before then, during MVP testing:** anonymous rows piling up is a cleanup
-> query, not an architecture problem — delete anonymous users with no sessions
-> whenever it bothers you. The one thing accounts would buy you *early* is
-> knowing **which tester said what**, since every tester is otherwise an opaque
-> uuid. H.0 is the cheap way to buy it. **The cheaper way is not to** — show
-> the anonymous uuid in the settings sheet and have each tester read it to you
-> once. No accounts, no copy change, no stranded diaries, and no tester who
-> forgot to sign in first. It buys the identity and not the second device, so
-> the question H.0 turns on is whether the second device is part of what the
-> beta is testing.
+> **Decided 2026-09-22, and this is why H.0 exists rather than the cheap
+> alternative.** Showing each tester their anonymous uuid in the settings sheet
+> would have bought *which tester said what* for nothing — no accounts, no copy
+> change, no stranded diaries. It was rejected because it buys the identity and
+> not the second device, **and the second device is on the list.** Ben also
+> wants accounts for testing in their own right, which is the answer to this
+> plan's long-standing "the only reason to pull H forward".
+>
+> **Anonymous rows piling up remains a cleanup query, not an architecture
+> problem** — delete anonymous users with no sessions whenever it bothers you.
+> With `VITE_REQUIRE_ACCOUNT` on there will be very few of them, which is a
+> side effect of the gate rather than a reason for it.
 
 ---
 
@@ -1139,9 +1215,20 @@ person that *"the recording itself is never stored."* An opt-in switch does not
 keep that promise; it makes it conditional. Which is why the first step here is
 the promise, not the column.
 
-**It waits for F.6 and for nothing else.** The letter puts it after H because
-A–H were spoken for, not because accounts come first: nothing in G or H is a
-prerequisite, and this can run the day the transcript saves.
+**It waits for F.6 technically, and for H by decision (2026-09-22).** Nothing
+in G or H is a technical prerequisite — this could run the day the transcript
+saves. It runs after H anyway, because Ben needs accounts to test with and the
+voice memo is an add-on feature. That also removes the collision the section
+**Running H beside E and F** describes: H.0b rewrites `privacy.browserBound`
+and I.1 rewrites `privacy.voice` beside it, and now there is a defined order
+rather than two worktrees editing adjacent lines.
+
+**I.1 and I.3 both inherit an edit because of that order.** `privacy.
+browserBound` will already say something different when I.1 reaches it, and
+[docs/VOICE-MEMO.md](docs/VOICE-MEMO.md) §289 argues I.3's scheduled backstop
+FROM the browser-bound promise — an argument that is still sound for anonymous
+users and no longer sound for a signed-in one. Rewrite the reasoning, do not
+just re-run it.
 
 F.6 is the real dependency because a memo is an attachment to a transcript that
 must already save — `reflections.body` stays `not null`, so a memo can never be
@@ -1284,12 +1371,14 @@ need no domain, so they are available during the beta rather than after it.
 Whether you want them is the question at the foot of Phase H, and it turns on
 one thing: whether the second device is part of what the beta is testing.
 
-**Phase I’s five steps are not in it either, and where they belong is an open
-question.** The voice memo was added on 2026-09-22 — after the count was taken,
-and after the decision it reverses was made. It is the first work in this plan that
-un-decides something rather than building on it, which is why it carries a
-design document of its own. Whether it sits inside the MVP line or after it is
-Ben's, and it is the only scope question this plan currently leaves open.
+**Phase I’s five steps are not in it either, and as of 2026-09-22 that is
+decided rather than open.** The voice memo was added on 2026-09-22 — after the
+count was taken, and after the decision it reverses was made. It is the first
+work in this plan that un-decides something rather than building on it, which
+is why it carries a design document of its own. **It sits after H**, because
+accounts are what the beta needs to run at all and the memo is an add-on.
+Ben's call, same day, and it closes the only scope question this plan had
+open.
 
 Phases E and F do not depend on each other. If the music licensing stalls, run
 F first — and see **Running E and F in parallel** above for the two tracks that
