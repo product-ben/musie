@@ -7,7 +7,7 @@
  * render from here.
  */
 import * as React from 'react';
-import { ensureSession } from './lib/auth';
+import { accountEmail, ensureSession } from './lib/auth';
 import { getSupabase } from './lib/supabase';
 import { AuthContext, INITIAL_AUTH_STATE } from './lib/authContext';
 import type { AuthState } from './lib/authContext';
@@ -52,9 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           : {
               status: 'ready',
               userId: next.user.id,
-              /* undefined for an anonymous user; normalised to null so one
-                 absent-value spelling reaches the UI. */
-              email: next.user.email ?? null,
+              /* `''` for an anonymous user, which `?? null` does not catch.
+                 See accountEmail's docblock — this was a real bug. */
+              email: accountEmail(next.user.email),
               error: null,
             },
       );
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({
           status: 'ready',
           userId: outcome.session.user.id,
-          email: outcome.session.user.email ?? null,
+          email: accountEmail(outcome.session.user.email),
           error: null,
         });
       })

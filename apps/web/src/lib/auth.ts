@@ -53,6 +53,34 @@ export type SessionOutcome =
   /** No session, and this build will not create one. `VITE_REQUIRE_ACCOUNT`. */
   | { kind: 'gate' };
 
+/**
+ * The account's email address, or null when there is not one.
+ *
+ * ── AN ANONYMOUS USER'S `email` IS `''`, NOT null AND NOT undefined ────────
+ * MEASURED against the local stack on 2026-09-22, because the first version of
+ * this code assumed otherwise and shipped `user.email ?? null`. `??` only
+ * catches null and undefined, so an anonymous user's empty string went through
+ * as an email address — and the settings sheet, which decides whether to draw
+ * 'Sign out' by asking whether there is one, drew it. For an anonymous user
+ * that button strands their entire diary on an id nobody can sign in as again,
+ * which is the exact data-loss shape H.0 exists to keep away from testers.
+ *
+ * It read 'Signed in as ' with nothing after it, and it was found by walking
+ * the flag-off path in a browser. Nothing else would have: `tsc` is satisfied
+ * because `string` is what the type says, every test passed, and the anonymous
+ * path is the one the gate's own tests never take.
+ *
+ * So ABSENCE IS NORMALISED ONCE, here, and `null` is the only spelling of it
+ * that reaches the UI. Trimmed as well as emptiness-checked — a whitespace-only
+ * address is not an address either, and it would render as a blank tail on a
+ * sentence that promises to name somebody.
+ */
+export function accountEmail(email: string | null | undefined): string | null {
+  if (email === null || email === undefined) return null;
+  const trimmed = email.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
 let pending: Promise<SessionOutcome> | null = null;
 
 async function resolveSession(): Promise<SessionOutcome> {
