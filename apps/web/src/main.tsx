@@ -33,6 +33,8 @@ import { MusyLocaleProvider } from '@musie/design-system';
 
 import { AuthProvider } from './AuthProvider';
 import { LocaleProvider } from './LocaleProvider';
+import { SignInGate } from './components/SignInGate';
+import { useAuth } from './lib/authContext';
 import { useLocale } from './i18n/localeContext';
 import { ProfileProvider } from './ProfileProvider';
 import { router } from './router';
@@ -64,6 +66,47 @@ function DesignSystemLocale({ children }: { children: React.ReactNode }) {
   return <MusyLocaleProvider locale={locale}>{children}</MusyLocaleProvider>;
 }
 
+/**
+ * The sign-in gate, at the ONE depth where it can be rendered correctly.
+ *
+ * ── WHY NOT IN AuthProvider, WHICH IS WHERE THE PLAN PUT IT ────────────────
+ * BUILD-PLAN's H.0b says `AuthProvider` renders the gate instead of falling
+ * through, and AuthProvider is mounted above everything — deliberately, since
+ * signing in needs no routing. That is the wrong place for a SCREEN, and not
+ * marginally: `useT()` reads LocaleProvider, and the design system's own
+ * defaults read MusyLocaleProvider, and both are mounted BELOW it. A gate
+ * rendered from AuthProvider would therefore throw on the app's first `t(...)`
+ * call, and every design-system label on it would fall back to the package
+ * catalogue's German whatever the locale said — the half-German UI rule 7
+ * exists to prevent, on the first screen a tester ever sees.
+ *
+ * So AuthProvider keeps its job of PUBLISHING the state, including the new
+ * 'signedOut', and the decision about what to render moves here, below the two
+ * providers that make copy work. The substance of the plan is unchanged: there
+ * is a gate, and nothing falls through to anonymous sign-in behind it. Logged
+ * in apps/web/OPEN-QUESTIONS.md.
+ *
+ * ── AND WHY THE PROVIDERS ABOVE IT ARE FINE WITH NO USER ──────────────────
+ * Checked rather than assumed: with `status: 'signedOut'`, ProfileProvider's
+ * effect returns before fetching (it needs a user) and stays 'pending', and
+ * LocaleProvider still resolves a locale, because its initial state is the
+ * cached locale or `navigator.language` and it only OVERRIDES that from
+ * profiles.language once a profile arrives. So the gate is in the right
+ * language for a returning tester and in the browser's language for a new one.
+ *
+ * 'pending' and 'error' keep rendering the app exactly as before: the shell's
+ * own gate in AppShell holds an empty <main> for both, which is a decision
+ * already made and not one to re-take from up here.
+ */
+/* eslint-disable-next-line react-refresh/only-export-components --
+   the same exemption, and the same reason, as DesignSystemLocale above: this
+   is the entry point, it exports nothing, so Fast Refresh never applies to it
+   either way. */
+function SessionGate({ children }: { children: React.ReactNode }) {
+  const { status } = useAuth();
+  return status === 'signedOut' ? <SignInGate /> : <>{children}</>;
+}
+
 const container = document.getElementById('root');
 if (container === null) throw new Error('#root is missing from index.html');
 
@@ -81,7 +124,11 @@ createRoot(container).render(
       <ProfileProvider>
         <LocaleProvider>
           <DesignSystemLocale>
-            <RouterProvider router={router} />
+            {/* INSIDE DesignSystemLocale, so the gate's own labels and the
+                design system's defaults are both in the app's language. */}
+            <SessionGate>
+              <RouterProvider router={router} />
+            </SessionGate>
           </DesignSystemLocale>
         </LocaleProvider>
       </ProfileProvider>

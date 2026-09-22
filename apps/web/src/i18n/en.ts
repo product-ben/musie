@@ -48,6 +48,57 @@ export const en = {
   'common.continue': 'Continue',
   'common.cancel': 'Cancel',
 
+  /* ── The sign-in gate · H.0b ─────────────────────────────────────────────
+     SIGN IN AND SIGN OUT, AND NOTHING ELSE. There is deliberately no 'forgot
+     your password', no 'create an account' and no 'sign in with', because all
+     three need a sending provider and a sending domain, and the domain is
+     undecided (decision 1 at the foot of BUILD-PLAN.md). A control that cannot
+     work must not be drawn: a reset link that sends nothing is worse than no
+     link, because the tester waits for a mail instead of asking for help. For
+     the beta a password is reset in the dashboard by whoever handed it out.
+
+     THE FAILURE IS SPLIT FOUR WAYS, which is not over-engineering: retyping
+     fixes a wrong password and cannot touch an unreachable server, and telling
+     somebody on a train that their password is wrong is a support request that
+     ends in "it was the wifi".
+
+     NO SENTENCE NAMES AN ADDRESS OR A DOMAIN. Testers are handed credentials by
+     hand, so the copy cannot promise a mail will arrive, cannot say where to
+     write, and must not imply anyone can sign themselves up. */
+  'auth.title': 'Sign in',
+  'auth.intro': 'Musie is in closed testing. Sign in with the email address and password you were given.',
+  'auth.email': 'Email address',
+  'auth.password': 'Password',
+  'auth.submit': 'Sign in',
+  /* A HEADING, so no full stop, and it names no cause — the cause is the `text`
+     beneath it and there are four of those. */
+  'auth.failed': 'That did not work',
+  'auth.error.missing': 'Fill in both your email address and your password.',
+  'auth.error.credentials': 'That email address and password do not match an account. Check both and try again.',
+  /* Unreachable while H.0's script passes `email_confirm: true` — and written
+     anyway, because on the day it IS reachable there is no mail to fix it with,
+     so the sentence has to point at a person rather than at an inbox. */
+  'auth.error.notConfirmed': 'That account has not been confirmed yet. Ask whoever gave you the password.',
+  'auth.error.rateLimit': 'Too many attempts. Wait a minute and try again.',
+  'auth.error.unknown': 'Something went wrong signing you in. Try again in a moment.',
+  /* The TRANSPORT failure reuses `content.errorDetail` rather than adding a
+     fifth sentence: 'Check your connection and try again.' is already the app's
+     one way of saying that, and two spellings of it is the drift this catalogue
+     exists to stop. See lib/signIn.ts. */
+
+  /* ── The account, in settings · H.0b ─────────────────────────────────────
+     Shown ONLY to a user who has an email address. An anonymous user has none,
+     and offering them 'Sign out' would draw them a button that strands their
+     whole diary on an id nobody can reach — the data-loss shape H.0 exists to
+     keep away from testers, rendered as a control. See SettingsSheet.
+
+     The address is SHOWN because these accounts are handed out and a workshop
+     phone may be passed between people. "Which of us is this?" has to be
+     answerable without signing out to find out. */
+  'auth.account': 'Account',
+  'auth.signedInAs': 'Signed in as {email}',
+  'auth.signOut': 'Sign out',
+
   /* ── Nav drawer ────────────────────────────────────────────────────────── */
   'menu.title': 'Menu',
   /* The <nav> landmark's name, distinct from the dialog's. */
@@ -434,16 +485,40 @@ export const en = {
 
      AWAITING SIGN-OFF from Ben and his co-founder. It is a promise to users
      rather than a screen, which is why it is written before a screen shows
-     it. */
+     it.
+
+     ── TWO OF THESE WERE REWRITTEN BY H.0b, AND THE SIGN-OFF DOES NOT CARRY ──
+     `privacy.account` and `privacy.browserBound` were written when every
+     account was anonymous and lived in browser storage. A tester signed into an
+     account handed out by `scripts/create-tester.mjs` makes BOTH FALSE: they
+     were asked for an email address (they were given one), their diary is on
+     the server, and the second device reading the same diary is the whole of
+     H.0's done-when. A privacy promise that is false for the people currently
+     testing is exactly the failure phase G's checkpoint exists to catch, so
+     this could not wait for H.4.
+
+     Both now say which case applies rather than describing one of them. That is
+     longer, and the privacy page is the one screen where precision outranks
+     brevity. THE REWRITE IS NEW TEXT AND IS NOT COVERED BY THE SIGN-OFF ABOVE
+     — it needs reading again. Logged in apps/web/OPEN-QUESTIONS.md. */
   'privacy.title': 'What Musie keeps',
-  'privacy.account': 'Musie never asks for your name or your email. This browser holds a private account of its own, and your diary belongs to it.',
+  /* 'never asks for your name' survives unqualified — nothing in either path
+     asks for one. The email half did not: it is now a condition rather than a
+     promise, because for a tester it was handed over, and a promise that holds
+     only for some readers has to say which. */
+  'privacy.account': 'Musie never asks for your name. If you were given an email address and a password for the closed test, your diary belongs to that account. Otherwise this browser holds a private account of its own, and your diary belongs to it.',
   'privacy.written': 'What you write is saved to your diary so you can read it back later. Nobody else can see it.',
   'privacy.voice': 'If you answer out loud, Musie turns your words into text and keeps only the text. The recording itself is never stored.',
   'privacy.photo': 'A photo you take stays on your device. Musie never uploads it.',
   /* The uncomfortable one, and the reason it is here: an anonymous account
      living in browser storage is a real limitation, not a detail. Saying it
-     plainly is the difference between a private product and a careless one. */
-  'privacy.browserBound': 'Because the account lives in this browser, clearing its data also clears your diary. There is no way to get it back.',
+     plainly is the difference between a private product and a careless one.
+
+     STILL SAID PLAINLY, and now conditional, because it stopped being true for
+     everybody. The loss is stated FIRST and the reassurance second: a reader
+     who skims one sentence should come away with the limitation rather than
+     with the exemption. */
+  'privacy.browserBound': 'If your account lives only in this browser, clearing its data also clears your diary, and there is no way to get it back. If you signed in, your diary stays with your account and you can reach it again from another device.',
 
   /* ── The deep link and the dev sheet · E.0 ───────────────────────────────
      `/s/:code` is where a QR code lands: the phone's camera app follows the
