@@ -1,0 +1,75 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // ── AN ASSETS-ONLY WORKER, BESIDE netlify.toml RATHER THAN INSTEAD OF IT ──
+  //
+  // A.6 Half 2 was written as "Netlify and a domain". Cloudflare is now the
+  // primary host and Netlify stays as the spare; both build `main`, and the
+  // domain points at exactly one of them. The reversal and its cost are
+  // logged in apps/web/OPEN-QUESTIONS.md — read that before removing either.
+  //
+  // The two files must not drift. netlify.toml's build command is
+  // `pnpm check && pnpm --filter web build` and its publish dir is
+  // apps/web/dist; the Workers Builds settings in the Cloudflare dashboard
+  // say the same two things, because a host that builds differently is a
+  // second definition of "done" rather than a spare.
+  "name": "musie",
+
+  // Today, per the compatibility-date rule: a new project pins the date it
+  // was created, and moving it later is a deliberate act with a test behind
+  // it. https://developers.cloudflare.com/workers/configuration/compatibility-dates/
+  "compatibility_date": "2026-09-22",
+
+  "assets": {
+    // Vite's output, from the repo root — Workers Builds runs at the root of
+    // the workspace because `pnpm check` is a root script that reaches every
+    // package, not just apps/web.
+    "directory": "./apps/web/dist",
+
+    // ── THE WHOLE REASON THIS FILE EXISTS ─────────────────────────────────
+    //
+    // router.tsx is a `createBrowserRouter`, so /diary, /about-you and
+    // /session/:id/:step are real paths with no file behind them. Without
+    // this, a deep link — or a refresh anywhere but `/` — is a 404 from the
+    // CDN before React ever loads. This is the exact counterpart of
+    // netlify.toml's `from = "/*" to = "/index.html" status = 200`.
+    //
+    // Cloudflare makes it explicit rather than guessing from the presence of
+    // index.html, which is the one behavioural difference from Pages and
+    // from Netlify: forget it and the SPA looks broken only on deep links,
+    // which is precisely what A.6 Half 2 exists to test.
+    "not_found_handling": "single-page-application"
+  },
+
+  // ── PUBLIC, DELIBERATELY, AND NOT FOR LONG ──────────────────────────────
+  //
+  // Both of these default to `true`, so writing them changes nothing today.
+  // They are here because the DEFAULT is the wrong thing to rely on: the app
+  // is on the open internet from the first green build, and
+  // apps/web/OPEN-QUESTIONS.md argues the beta must be CLOSED — a
+  // subscription-licensed Epidemic Sound master and a `[DE] `-prefixed
+  // placeholder content set are the reason. So the exposure is a written
+  // decision with a name on it rather than a setting nobody chose.
+  //
+  // Ben accepted it on 2026-09-22 against H.0b — the account gate — landing
+  // the next day. The window is the point: when the gate ships, the argument
+  // for these two lines expires with it. Flip them to false, or put
+  // Cloudflare Access in front, and the beta is closed again.
+  //
+  // `preview_urls` is the sharper one. Since Wrangler v4.44.0 it follows
+  // `workers_dev` rather than standing alone, so leaving it unwritten gives
+  // EVERY non-production branch build its own public URL as well — which is
+  // the exact surprise Cloudflare changed the default to prevent.
+  //
+  // Changing either in the dashboard alone does not hold: the next
+  // `wrangler deploy` restores whatever this file says, and with Workers
+  // Builds that is every push to `main`. This file is the switch.
+  "workers_dev": true,
+  "preview_urls": true
+
+  // No `main` and no `binding` on purpose. There is no Worker script: every
+  // dynamic thing musie does is a Supabase Edge Function (reveal-track,
+  // realtime-token) called from the browser, and those stay on Supabase.
+  // `binding` is only valid alongside `main`, so adding one without the
+  // other is a config error rather than a no-op.
+}
