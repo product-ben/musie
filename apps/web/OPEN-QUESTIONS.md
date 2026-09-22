@@ -2289,3 +2289,38 @@ What I need from Ben: **two questions, and they are separable.**
    satisfies A.6's third criterion today. If the beta is gated instead, the
    criterion should be rewritten rather than satisfied — and that is a plan
    change, not a dashboard toggle.
+
+## Public on the open internet, for one day, on purpose
+
+Where: `wrangler.jsonc` (`workers_dev`, `preview_urls`), and the entry above,
+whose first question this answers
+
+What I checked: the entry above left the domain open and said nothing about
+`workers.dev`, because I had not yet read what the defaults do. They are both
+`true`: the first green Workers Builds run puts musie at
+`musie.<subdomain>.workers.dev`, publicly, and since Wrangler v4.44.0
+`preview_urls` follows `workers_dev` — so every non-production branch build
+gets its own public URL too. Netlify never forced this question, because Half 2
+never ran.
+
+This collides with the H.0 answer two entries up, which keeps the beta closed
+*because* a subscription-licensed Epidemic Sound master and a `[DE] `-prefixed
+placeholder content set should not sit on the open internet.
+
+What Ben decided (2026-09-22): public is acceptable **for now**, because H.0b —
+the account gate — lands "latest tomorrow". So the exposure is bounded by the
+thing that closes it, and the two settings are written out explicitly rather
+than inherited, so that closing it is an edit to one file rather than a
+discovery.
+
+Why it is written rather than left to default: a dashboard toggle does not
+hold. The next `wrangler deploy` restores whatever `wrangler.jsonc` says, and
+with Workers Builds that is every push to `main`. Turning this off in the
+dashboard tomorrow would look done and revert on the next commit.
+
+What I need from Ben: **when H.0b ships, close this.** Either `workers_dev:
+false` and `preview_urls: false` behind a custom domain, or Cloudflare Access
+in front of both production and preview URLs — Access is the better fit while
+the domain is still parked until print day, because it does not need the
+domain to exist. If H.0b slips, this entry is the record that the window was
+meant to be one day and was not.

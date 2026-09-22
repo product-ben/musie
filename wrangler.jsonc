@@ -39,7 +39,33 @@
     // from Netlify: forget it and the SPA looks broken only on deep links,
     // which is precisely what A.6 Half 2 exists to test.
     "not_found_handling": "single-page-application"
-  }
+  },
+
+  // ── PUBLIC, DELIBERATELY, AND NOT FOR LONG ──────────────────────────────
+  //
+  // Both of these default to `true`, so writing them changes nothing today.
+  // They are here because the DEFAULT is the wrong thing to rely on: the app
+  // is on the open internet from the first green build, and
+  // apps/web/OPEN-QUESTIONS.md argues the beta must be CLOSED — a
+  // subscription-licensed Epidemic Sound master and a `[DE] `-prefixed
+  // placeholder content set are the reason. So the exposure is a written
+  // decision with a name on it rather than a setting nobody chose.
+  //
+  // Ben accepted it on 2026-09-22 against H.0b — the account gate — landing
+  // the next day. The window is the point: when the gate ships, the argument
+  // for these two lines expires with it. Flip them to false, or put
+  // Cloudflare Access in front, and the beta is closed again.
+  //
+  // `preview_urls` is the sharper one. Since Wrangler v4.44.0 it follows
+  // `workers_dev` rather than standing alone, so leaving it unwritten gives
+  // EVERY non-production branch build its own public URL as well — which is
+  // the exact surprise Cloudflare changed the default to prevent.
+  //
+  // Changing either in the dashboard alone does not hold: the next
+  // `wrangler deploy` restores whatever this file says, and with Workers
+  // Builds that is every push to `main`. This file is the switch.
+  "workers_dev": true,
+  "preview_urls": true
 
   // No `main` and no `binding` on purpose. There is no Worker script: every
   // dynamic thing musie does is a Supabase Edge Function (reveal-track,
