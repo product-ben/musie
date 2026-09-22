@@ -53,46 +53,48 @@ in the same commit as this deletion.
 
 | # | What looks real | What is actually missing | Lands in |
 |---|---|---|---|
-| 1 | Voice reflection: record button, meter, timer | Nothing is recorded or transcribed, and the step says so | F.1–F.6 |
+| 1 | Voice reflection | **Works.** Nothing missing — kept as the place D1 is written down: the recording is never stored | done |
 | 2 | Photo reflection: drop zone, picker, preview | Nothing is uploaded or read, and the step says so | blocked |
-| 3 | Listen step's transport and clock | There are no audio files; the clock is simulated | E.4 |
-| 4 | Track title and artist | Withheld by design, and no reveal gate yet | E.5 |
+| 3 | Listen step's transport | Four cards play real audio; five run the simulated clock — five recordings still owed | blocked |
+| 4 | Track title and artist | Withheld by design; the reveal is built. Kept because it is the easiest thing here to undo by mistake | done |
 | 5 | Exercise step copy | Columns exist, near-empty — 28 strings owed | blocked |
 | 6 | Situation on a session | Recorded, never filled — nothing asks | open |
-| 7 | The listen step's three scroll views | Only the stage is built; the reveal is not | E.5 |
+| 7 | The listen step's three views | **Built.** Kept for one rule: the 90s gate is SOFT — scrubbing past it is allowed on purpose | done |
 | 8 | The four user types | Three unbuilt; no artwork for any | D.2 ✓ / artwork |
 | 9 | The Diary timeline | Grouping, filtering and deletion are done; the rail and markers are not — a design-system step | open |
 | 10 | The whole app | The database is hosted; the app is not — no Netlify build, no domain | A.6 half 2 |
 
 ---
 
-## 1 · Voice reflections are UI only
+## 1 · A spoken reflection works, and the recording is never kept
 
-**What you see.** The reflect step offers voice as one of three modes. Pressing
-record starts a timer and animates a level meter; pressing it again stops.
+**Not a mockup any more — Phase F landed on 2026-09-22, and this entry is kept
+rather than deleted because the sentence people most need from it was never
+about what was missing.**
 
-**What is missing.** All of it. No `MediaRecorder`, no upload, no
-transcription — and **no level, either**: the meter runs on the clock, because
-with no microphone there is nothing to measure. The UI is interactive so the
-flow can be walked and reviewed, and it says so on screen rather than
-pretending: an info `Message` sits under the control and states that recording
-is not built and that only the text would ever be kept.
+**What you see.** The reflect step offers voice as one of three modes. Press
+record and speak: an ephemeral token is minted by `realtime-token`, a realtime
+transcription session opens, and each statement appears as a card as you
+finish saying it. The cards can be edited, reordered, merged and deleted — from
+the keyboard as well as the mouse — and *Finish session* opens as soon as there
+are words. Confirmed by Ben on 2026-09-22.
 
-**IT CANNOT COMPLETE THE STEP.** Voice writes no `reflections` row, so *Finish
-session* stays disabled while it is the chosen mode. That is deliberate — the
-alternative was hiding a mode the product has already decided on, which would
-make the screen look finished and be less true.
+**What is stored, and what is not.** The TEXT. Each statement is written to
+`reflection_statements` as it is finalised, so a closed tab loses at most the
+sentence in progress, and `reflections.body` carries the assembled answer.
 
-**How it will work, and why the schema already suits it.** A voice answer is
-**transcribed to text** by OpenAI and only the text is stored — so a voice
-reflection eventually lands as an ordinary `reflections` row with
-`mode = 'voice'` and the transcript in `body`. **Musie never stores a
-recording of anyone's voice.** That is why there is no `media_path` column and
-no Storage bucket: the absence is the design, not an omission.
+**MUSIE NEVER STORES A RECORDING OF ANYONE'S VOICE.** No `media_path` column,
+no audio bucket, nothing on disk and nothing in transit that is kept. The
+absence is the design (decision D1), it is a promise already made in the
+privacy copy, and it is the easiest thing in this product to undo by accident —
+which is why it is still written down here now that the feature around it
+exists.
 
-Decision D1. The voice work itself is Phase F, and the proof-of-concept lives
-outside this repository in `product-ben/musie-voice-to-text-demo` (F.0 brings
-it in).
+**The one thing that is not built:** nothing here. Phase I proposes a voice
+MEMO — an opt-in that would keep the recording for thirty days — and it is a
+separate, deliberate reversal of D1 with its own design document
+([docs/VOICE-MEMO.md](docs/VOICE-MEMO.md)). It is not implemented, and until it
+is, the sentence above is true without qualification.
 
 ## 2 · Photo reflections are UI only, and the image is never kept
 
@@ -117,30 +119,39 @@ the handwriting. BUILD-PLAN.md lists it. Until it lands, the reflect step's
 photo mode captures and shows a preview and writes no row — and, like voice,
 leaves *Finish session* disabled, with an info `Message` saying why.
 
-## 3 · There is no audio
+## 3 · Four cards play, five run a clock
 
-**What you see.** A `TrackButton` — one pill carrying the action word and a
-countdown — that starts, pauses and replays. The listen step's 90-second gate
-unlocks against it.
+**Rewritten 2026-09-22. It used to say "there is no audio", which stopped being
+true when E.4 landed four cleared recordings.**
 
-**What is missing.** The files. `tracks.src` points at recordings that are not
-in the project, because **the licensing is not cleared** — up to eleven
-recordings, and that is a real-world blocker, not an engineering one.
+**What you see.** On the stage a `TrackButton`; two scroll views down, the full
+`MusicPlayer` with a live scrubber. On MC-01 (Joy), MC-02 (Sadness), MC-04
+(Fear) and MC-05 (Calm) it plays a real recording, streamed from a private
+bucket on a signed URL. On the other five it counts down in silence.
 
-**The element is real and is tried first.** There is an `<audio>` with the
-track's `src` on it; when the browser refuses the file, the step falls back to
-a clock at the track's own `duration_seconds`, which the seed carries precisely
-so a countdown can render before anything has loaded. A note appears under the
-control saying the clock is what is running, and the element is unmounted — it
-has already refused, and leaving it mounted left it fighting the clock that
-took over, which was a real defect the end-to-end walk found. That fallback is
-the only thing a real file deletes.
+**What is missing.** Five recordings, plus one each for Breathing Score and
+Body Scan Soundwalk. A real-world blocker rather than an engineering one —
+`select count(*) from tracks` is the number to quote when asking, and the
+schema stores a recording **once**, so a piece shared between two exercises is
+one licence rather than two.
 
-No scrubber: this is the stage, and the stage never had one — see entry 7.
+**AND THE SCHEMA SAYS WHICH IS WHICH.** `tracks.src` is null for a card with no
+recording — absence stated rather than discovered by a browser failing to load
+a path that was never there. That distinction is the point: a null is ordinary,
+and a signed URL that fails for a NON-null `src` is a fault worth logging. The
+simulated clock runs at the track's own `duration_seconds`, which the seed
+carries so a countdown can render before anything has loaded, and a note under
+the control says the clock is what is running.
 
-`select count(*) from tracks` is the number to quote when asking. Note the
-schema deliberately stores a recording **once** and points at it, so a
-recording shared between two exercises is one licence, not two. E.4.
+**The five silent cards are silent all the way through.** Their rows still
+carry the seed's invented title and artist, and `reveal-track` refuses to hand
+those over — naming a piece somebody did not hear, in the moment the product
+promises to tell them what they heard, is the one thing that mechanism must
+never do. The reveal says there was no recording instead.
+
+No scrubber on the stage: that is the stage, and the stage never had one — the
+scrubber is in the details view, two scrolls down, where dragging it past the
+gate is allowed on purpose. See entry 7.
 
 ## 4 · A track's title and artist are withheld, deliberately
 
@@ -156,8 +167,19 @@ readable and a title-derived id would hand over the answer the grant withholds.
 Both halves are asserted by `pnpm test:db`. If a query for a title returns
 nothing, that is the design working. See CLAUDE.md rule 2.
 
-**What is missing** is only the reveal: a `reveal-track` Edge Function and the
-scroll-gated reveal at the end of the listen step. E.5.
+**Nothing is missing — the reveal is built (E.5).** `reveal-track` is the only
+way a title reaches a browser: it takes a SESSION id and never a track id, so
+nobody can walk `trk-01`…`trk-09` and collect all nine names without listening.
+The details view's player carries *Your track* until the gate opens and the
+recording's own name after — so the title CHANGING is the reveal.
+
+**This entry stays because it is still the easiest thing in the repo to undo by
+mistake**, and it nearly was: E.4 filled `licence_ref` with an Epidemic Sound
+reference, which is the track name and the artist, through a column the client
+could read. Every existing test still passed — they assert that `title` and
+`artist` are unreachable BY NAME, not that no other column contains them. The
+network-watching walk in `e2e/reveal.spec.ts` found it; `20260921170000`
+revoked the column.
 
 ## 5 · Every exercise's step copy is empty
 
@@ -212,23 +234,32 @@ The column is here because it was free to add before the schema deployed and an
 later. "What was I trying to do?" is diary-grade context whenever a picker
 lands.
 
-## 7 · The listen step is the stage, and the reveal is not built
+## 7 · The listen step's three views, and the one thing still worth knowing
 
-**What you see.** One screen: the exercise's words, the question, the transport
-and the gate copy under it. The gate is `exercises.listen_gate_seconds` — 90s
-for Quick Mindfulness Break, which is the prototype's measured figure. **The
-other two exercises carry estimates** (60s and 180s), because neither has a
-recording to tune against; the seed says so where they are set.
+**Rewritten 2026-09-22. All three views are built (E.5b), so most of this entry
+is gone; what is left is a rule rather than a gap.**
 
-**What is missing.** Two more. The prototype's listen step is three stacked
-viewports — this stage, a *"it would be better not to get influenced by the
-track name and cover"* interstitial, and a details view with the full
-`MusicPlayer`, the track's title and its artist. **Reaching the third view IS
-the reveal**, which is the whole mechanism entry 4 is waiting on.
+**What you see.** Three stacked views. The stage — the exercise's words, the
+question, the transport and the row. A Störer, a full view that interrupts
+rather than warns: *"For this exercise it is better not to be influenced by the
+track's name or its cover"*, with *Continue the exercise* as the primary and
+*Show details and player* as the quiet secondary. And the details, with the
+full `MusicPlayer`, a live scrubber and the facts beneath it.
 
-Deliberately not built here: those two views exist to gate `reveal-track`, and
-that function is E.5. Nothing in the stage has to be undone when they arrive —
-they are scroll targets below it.
+**THE GATE IS SOFT, AND THAT IS THE RULE.** Ninety seconds —
+`exercises.listen_gate_seconds`, 90s for Quick Mindfulness Break which is the
+prototype's measured figure; the other two carry estimates (60s and 180s)
+because neither has a recording to tune against, and the seed says so where
+they are set.
+
+Dragging the scrubber past that mark OPENS the gate (Ben, 2026-09-22). That is
+deliberate and it is the easiest thing here to "fix" by mistake: the boundary
+keeps people from STUMBLING into the answer, not from CHOOSING it. Somebody who
+skips ahead has decided to, and this product gives people full control of their
+own exercise. The gate latches on position and never asks who moved it.
+
+**Nothing is missing.** The title arrives in the player only once the gate is
+open, which is entry 4's mechanism, and it is built.
 
 ## 8 · Three of the four user types are not built
 

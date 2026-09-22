@@ -25,7 +25,10 @@ describe('hasAnswered', () => {
   });
 
   it('is false for voice, because voice writes nothing yet', () => {
-    /* MOCKUPS.md 1. The recorder is UI only — no MediaRecorder, no upload, no
+    /* PHOTO ONLY, SINCE F.6. Voice now produces words and `hasAnswered` takes
+       them through `spokenWords` — see MOCKUPS.md 1. This still holds for
+       photo, which produces nothing to store. The original note read:
+       "The recorder is UI only — no MediaRecorder, no upload, no
        transcription — so a session finished from it would carry a reflection
        that does not exist. The day Phase F lands, a transcript is words and
        this expectation flips. */

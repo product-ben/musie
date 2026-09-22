@@ -812,7 +812,7 @@ that looks exactly like a bug.
   flattened into a generic failure — the $50 cap fails requests hard when it is
   reached, and "out of budget" reaching a person as "the connection dropped"
   sends them to their wifi rather than to their invoice.
-- [x] **F.2 Wire the core to tokens — THE CODE, NOT YET THE PROOF.**
+- [x] **F.2 Wire the core to tokens.**
   `connectRealtime` takes `token`, and it really was one parameter; the POC's
   own comment predicted that. Renamed rather than left as `apiKey` holding a
   token, because a name that lies is worse than one that is vague — the next
@@ -823,10 +823,9 @@ that looks exactly like a bug.
   speaking, which reads as "the microphone broke".
 
   ***Done when:* you speak and words appear, with no key field anywhere —
-  NOT YET SHOWN.** Nothing renders the voice feature: `@musie/voice` exports
-  hooks and no components, by F.0's design. The wiring is complete and
-  unexercised end to end until F.4 builds the editor, and that is the honest
-  state rather than a tick.
+  SHOWN, by Ben on 2026-09-22.** F.4 built the screen, F.6 made the words
+  persist, and the whole path — tap, token, socket, statement, row — has now
+  been walked by a person rather than only by a typechecker.
 - [x] **F.3 Tests for the two pure files.** `segmentation.ts` and
   `transcript/fillers.ts` — German abbreviations, the `um`/`äh` split, the
   whole-statement-was-hesitation case.
@@ -935,11 +934,55 @@ that looks exactly like a bug.
   assembled; and another person's statements cannot be read, changed or
   deleted. 78 db tests pass.
 
-**Checkpoint.** Record a real reflection on an iPhone. iOS is the untested
-surface: nothing documents `AudioContext` under Safari, background tabs or the
-user-gesture requirement. Budget a session for surprises.
+**Checkpoint — HALF WALKED, 2026-09-22.**
+
+**On a laptop it works, confirmed by Ben**: speak, the statements appear as
+cards, they can be edited and reordered from the keyboard, the rows land in
+`reflection_statements`, and *Finish session* opens once there are words.
+
+**The iPhone half is still owed**, and it is the half the checkpoint was
+written for. iOS is the untested surface: nothing here documents `AudioContext`
+under Safari, background tabs, or the user-gesture requirement. Two specific
+unknowns are already logged rather than assumed — the PCM worklet is loaded
+from a `data:` URI (Vite inlined it under the 4 kB limit) and WebKit's
+`AudioWorklet.addModule()` has never been asked to accept one of those here; if
+it refuses, the symptom is a microphone that opens and produces no audio, and
+`startRecorder`'s `workletUrl` is the one-line lever. Budget a session for
+surprises.
 
 ---
+
+## Phases E and F are done — 2026-09-22
+
+Every step in both is ticked, and both were walked by hand rather than only by
+the suites. What that leaves is written down rather than implied:
+
+**Still owed by someone other than Claude Code**, and neither blocks anything
+that can be built:
+
+- **Five recordings**, plus one each for Breathing Score and Body Scan
+  Soundwalk. Four cards play; five run the simulated clock, and the schema says
+  which is which with a null `src` rather than a path to a file that was never
+  there.
+- **The iPhone half of Phase F's checkpoint.** The laptop half is confirmed.
+
+**Two decisions that are Ben's and are not urgent:**
+
+- `/dev/qr` ships in production — lazily routed, linked from nowhere, and
+  harmless in itself, but it is a live route on whatever domain is chosen. Gate
+  it behind `import.meta.env.DEV`, or keep it as a support tool for somebody
+  holding a card with a smudged code.
+- The **Timeline rail** (entry 9 in MOCKUPS.md): G.1 finished the grouping, the
+  filter and the empty states, and `Timeline`'s own header still promises a
+  rail, markers and sticky headings it does not have. It cannot be built in
+  `apps/web` — a `musie-` pattern reaching into `.musy-timeline__group` is what
+  L14 and L7 forbid — so it is a design-system step whenever it is worth one.
+
+**Hosted is current.** Every migration is pushed, the four audio objects are
+uploaded, both Edge Functions are deployed, and `pnpm test:db` passes 78
+against the hosted project as well as against the local stack — which is the
+check rule 4 exists for, and the one that found the `service_role` hole the
+first time.
 
 ## Phase G · The Diary, finished
 
