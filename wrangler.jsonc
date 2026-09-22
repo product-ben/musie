@@ -64,8 +64,26 @@
   // Changing either in the dashboard alone does not hold: the next
   // `wrangler deploy` restores whatever this file says, and with Workers
   // Builds that is every push to `main`. This file is the switch.
-  "workers_dev": true,
-  "preview_urls": true
+  //
+  // ── THE WINDOW IS CLOSED · 2026-09-22, ON BEN'S CALL ─────────────────────
+  // H.0b shipped, which is the condition the paragraph above set. The account
+  // gate is live behind `VITE_REQUIRE_ACCOUNT`, so the licensing argument no
+  // longer rests on nobody finding the URL.
+  //
+  // READ THIS BEFORE DEPLOYING. There is no `routes` block in this file and no
+  // custom domain attached, so with both of these false the Worker has NO
+  // HOSTNAME: `wrangler deploy` will succeed and nothing will be reachable, by
+  // anyone, including whoever is trying to run the second-device test that H.0
+  // and H.0b are both still waiting on. That is not a failure state to debug —
+  // it is this setting working.
+  //
+  // So one of two things comes next, and the entry in
+  // apps/web/OPEN-QUESTIONS.md names both: a custom domain, or Cloudflare
+  // Access in front of these URLs with them flipped back to true. Access is
+  // the better fit while the domain is parked until print day, because it does
+  // not need the domain to exist.
+  "workers_dev": false,
+  "preview_urls": false
 
   // No `main` and no `binding` on purpose. There is no Worker script: every
   // dynamic thing musie does is a Supabase Edge Function (reveal-track,

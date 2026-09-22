@@ -2465,3 +2465,43 @@ report that implies coverage it does not have.
 What I need from Ben: **a call on one e2e spec for the gate.** My lean is yes —
 it is the only screen in the app whose failure mode is "nobody can get in", and
 it is currently the only screen verified solely by me having looked at it.
+
+## The public window is closed, and closing it left the Worker with no hostname
+
+Where: `wrangler.jsonc` (`workers_dev`, `preview_urls`), answering
+`Public on the open internet, for one day, on purpose` two entries up
+
+What I checked: that entry set one condition — "when H.0b ships, close this" —
+and H.0b has shipped. Ben confirmed on 2026-09-22. So both flags are now false
+in the file rather than in the dashboard, because that entry is right that a
+dashboard toggle does not hold: the next `wrangler deploy` restores whatever
+this file says.
+
+**What the earlier entry got right and I nearly missed.** It offered two ways to
+close the window — `false` *behind a custom domain*, or Cloudflare Access in
+front — and the qualifier is load-bearing. There is no `routes` block in
+`wrangler.jsonc` and no custom domain attached, so with both flags false the
+Worker has **no hostname at all**. `wrangler deploy` succeeds and nothing is
+reachable. Ben asked to deploy in the same breath as closing this, and those two
+cannot both be true yet.
+
+What I did: closed it as asked, and wrote the consequence into `wrangler.jsonc`
+beside the two lines, so that the next person to deploy meets it before the
+silence rather than after it.
+
+Why: of the two failure modes, a deploy nobody can reach is recoverable in one
+line, and a licensed master left open on `workers.dev` is not.
+
+What I need from Ben: **a hostname, and it blocks the deploy rather than the
+merge.** Either attach the domain — which the plan's footer warns is
+effectively permanent once a QR code is printed, so this may not be the moment —
+or flip both flags back to true and put Cloudflare Access in front, which needs
+no domain and is what the earlier entry recommends for exactly this gap.
+
+**A third reading, now that the gate exists.** The exposure was accepted
+*because* there was no gate; there is one now, and with
+`VITE_REQUIRE_ACCOUNT=true` a visitor to a public `workers.dev` URL gets a
+sign-in form and no further. That is a materially weaker exposure than the one
+the earlier entry was written against, and it would leave a URL the
+second-device test can actually use. It is not what was asked for, so it is
+logged rather than done.
