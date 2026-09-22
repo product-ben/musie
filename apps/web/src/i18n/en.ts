@@ -74,7 +74,10 @@ export const en = {
      beneath it and there are four of those. */
   'auth.failed': 'That did not work',
   'auth.error.missing': 'Fill in both your email address and your password.',
-  'auth.error.credentials': 'That email address and password do not match an account. Check both and try again.',
+  /* Names a person, deliberately and temporarily — see the German. There is no
+     password reset in the beta, so asking Ben IS the recovery path, and it goes
+     when H.1 gives it a real one. */
+  'auth.error.credentials': 'That email address and password do not match an account. Check both and try again. If it still will not work, let Ben know.',
   /* Unreachable while H.0's script passes `email_confirm: true` — and written
      anyway, because on the day it IS reachable there is no mail to fix it with,
      so the sentence has to point at a person rather than at an inbox. */

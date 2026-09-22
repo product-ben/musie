@@ -58,7 +58,15 @@ export const de: Messages = {
   /* Überschrift, also kein Punkt — §7. */
   'auth.failed': 'Das hat nicht funktioniert',
   'auth.error.missing': 'Trag deine E-Mail-Adresse und dein Passwort ein.',
-  'auth.error.credentials': 'E-Mail-Adresse und Passwort passen nicht zu einem Konto. Prüfe beides und versuche es erneut.',
+  /* The third sentence names a person, deliberately and temporarily. In the
+     closed beta there IS no password reset — no mail, so no reset link — and
+     the credentials were handed over by Ben in the first place. So the only
+     true next step after retyping is to ask him, and an error that stops at
+     'try again' sends somebody round the same loop instead.
+
+     IT COMES OUT AT H.1. The moment reset mail exists, the honest instruction
+     is the reset link and not a name. */
+  'auth.error.credentials': 'E-Mail-Adresse und Passwort passen nicht zu einem Konto. Prüfe beides und versuche es erneut. Wenn was nicht klappt, gib Ben Bescheid.',
   /* 'Wende dich an die Person …' rather than a passive: there is no inbox to
      point at, so the sentence points at somebody. */
   'auth.error.notConfirmed': 'Dieses Konto ist noch nicht bestätigt. Wende dich an die Person, die dir das Passwort gegeben hat.',
