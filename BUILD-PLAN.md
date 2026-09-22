@@ -640,7 +640,7 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   macOS Chrome does not implement it, so the wasm path is what every test and
   every hand check has exercised. Only Android Chrome runs the other one.
   Logged in `apps/web/OPEN-QUESTIONS.md`; an Android phone closes it.
-- [ ] **E.4 Audio storage and playback.** Tracks into a Supabase bucket, the
+- [x] **E.4 Audio storage and playback — landed in `9a48971`, ticked 2026-09-22.** Tracks into a Supabase bucket, the
   transport on signed URLs, the simulated clock kept for missing files.
   Remember there are two tables: `tracks` is the recording and
   `exercise_tracks` is when it plays. Upload one file per `tracks` row, not
@@ -682,7 +682,18 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   track identifier until something better exists.
   `select count(*) from tracks` is still the number to quote when asking for
   more.
-- [~] **E.5 The reveal gate — HALF DONE, and the tick was wrong (2026-09-22).**
+  **Ticked late, and here is what the tick does and does not cover
+  (2026-09-22).** `20260921160000_track_audio.sql` is the migration — the
+  private bucket, the four real durations, the `trk-NN.mp3` keys, and `src is
+  null` for the five silent cards so their silence is a fact rather than a
+  missing file. `lib/audio.ts` mints the signed URL and `SessionListen` keeps
+  the simulated clock where there is none. What is NOT covered: **the five
+  remaining recordings**, which is Ben's row in the blocker table, and whether
+  the four objects exist in the HOSTED bucket as well as the local one —
+  uploading them is an operator act with files that deliberately never entered
+  this repository, so no check in here can see it.
+
+- [x] **E.5 The reveal gate — WAS half done, and the first tick was wrong (2026-09-22). Closed by E.5b the same day.**
   The `reveal-track` Edge Function is built, deployed and proven. **The
   three-scroll Listen step is not**, and E.5's own sentence names it: *"the
   `reveal-track` Edge Function AND the three-scroll Listen step"*. D.5b
@@ -895,13 +906,86 @@ code rather than softening the sentence.
 
 ---
 
+## Running H beside E and F
+
+**Added 2026-09-22**, when the question was asked again after H.0 took the
+domain out of H's path. The answer changed, and not only because of H.0.
+
+**E is finished, and the plan was not saying so.** E.4 landed in `9a48971` —
+the private bucket, the four real durations, `src is null` for the five silent
+cards, and signed URLs in `lib/audio.ts` — and its checkbox was never ticked.
+E.5's outstanding half was the three-scroll Listen step, and E.5b built it. So
+what is left in phase E is **five recordings**, and those are Ben's, not a
+session's. **What is left in phase F is F.6, and nothing else.**
+
+So the question is no longer *H beside E and F*. It is **H beside F.6**, and
+that pair is cleaner than the E/F split this plan already ran.
+
+| | Track A | Track B |
+|---|---|---|
+| Steps | **H.0 + H.0b** — the admin-created accounts, the proof, the sign-in screen | **F.6** — `onSentenceFinal` becomes the Supabase write, idempotent on four paths |
+| Writes a migration | no | no |
+| Edits anything under `supabase/` | **no** — `config.toml` already permits email signup with confirmations off | no |
+| Blocked by anyone | no — that is what H.0 is for | no |
+| Owns | `lib/auth.ts`, the sign-in route, i18n `auth.*`, `privacy.browserBound` | `features/voice/`, `VoiceTranscript.tsx`, the `reflections` write path |
+
+Against the five shared things the E/F split named:
+
+1. **One local Supabase stack.** The only real contention. H.0's second-device
+   proof and F.6's idempotency test both want the stack, and neither writes a
+   migration — so this is a scheduling problem rather than a corruption one.
+   *Rule: whichever track runs `pnpm test:db` says so first.*
+2. **`pnpm-lock.yaml`.** Neither adds a dependency. Clear.
+3. **i18n.** `auth.*` against `voice.*`, and F.0 already wrote the `voice.*`
+   block. Different regions of the same two files, appended, nothing reordered.
+   Clear.
+4. **Migration timestamps.** Neither writes one — which is not a coincidence
+   again. It is the same constraint that picked E.0 and F.0, and it is why H.0
+   is eligible where H.2 and H.5 are not.
+5. **`pnpm install` per worktree.** Budget it once per track, as before.
+
+### What still cannot run beside H, and it is not a scheduling problem
+
+**Phase I.** Three collisions, and only the first is about files:
+
+- **I.1 and H.0b/H.4 rewrite the same paragraph.** I.1 rewrites
+  `privacy.voice` plus six keys; H.0b and H.4 rewrite `privacy.account` and
+  `privacy.browserBound`. Those are `en.ts:439–446` — adjacent lines, both
+  locales. Rule 3 wants disjoint key namespaces and this is not disjoint.
+- **I.3 is argued FROM a premise H deletes.** [docs/VOICE-MEMO.md](docs/VOICE-MEMO.md)
+  §289 makes the scheduled backstop earn its place *because* accounts are
+  browser-bound: clearing browser data strands audio owned by an identity
+  nobody can sign in as again. A handed-out account is exactly the case where
+  that stops being true. The backstop still earns its place — anonymous users
+  are still browser-bound, and most testers still will be — but the argument
+  has to be rewritten, by whichever of the two lands second, and neither
+  worktree can see the other doing it.
+- **I.2 and I.3 key every object on `{user_id}/`**, which is the id H.2 exists
+  to prove survives conversion. Those two facts want one session, not two.
+
+**H.5 and I.3 are both scheduled sweeps** against the same project. Not a
+conflict — an argument for order. Whichever is written second should extend the
+first's scheduler rather than stand up a second one.
+
+The honest expected gain is **one session of wall-clock**, the same number the
+E/F split quoted and the same reason: the two things with no blockers and no
+shared state get done at once.
+
 ## Phase H · Accounts
 
-**Last, deliberately.** The MVP is a complete, functional product on its own
-domain first; accounts are what turn it from a thing you test into a thing
-people keep. Nothing before this phase is written differently because this
-phase exists — the schema already carries `user_id` everywhere, which is the
-whole reason this is a phase rather than a migration.
+**Last, deliberately — and then partly not, from 2026-09-22.** The MVP is a
+complete, functional product on its own domain first; accounts are what turn it
+from a thing you test into a thing people keep. Nothing before this phase is
+written differently because this phase exists — the schema already carries
+`user_id` everywhere, which is the whole reason this is a phase rather than a
+migration.
+
+**What changed on 2026-09-22.** H.1 was this phase's real blocker, and it was
+never a code blocker: real signup needs a sending provider and a sending
+domain, and the domain is decision 1 at the foot of this file. Ben asked
+whether a BETA could run on accounts he creates himself and hands the
+credentials out for. It can, it needs no domain and no mail on any path, and
+it is H.0. Everything else in the phase is unchanged and still waits.
 
 **The fact the phase rests on:** `updateUser({ email, password })` on an
 anonymous user converts it in place and **keeps the same `auth.users.id`**. So
@@ -911,16 +995,86 @@ That is the right product behaviour — the first session is what convinces
 anyone, and asking for an email before it is how you lose them — and it is
 free only because the schema was written this way from the start.
 
-[auth.ts](apps/web/src/lib/auth.ts) is already compatible: it calls
+**The fact H.0 rests on instead, and it is a different one.** An account
+created by hand is a NEW `auth.users` row with a new id, and none of the
+anonymous diary comes with it. The two are mutually exclusive per person:
+`updateUser` fails when the email already exists, so an account that was
+pre-created can never be converted into. **H.0 buys the second device by
+giving up the first session.** That trade is defensible for twenty testers and
+indefensible for twenty thousand, which is why it is its own step rather than a
+rewrite of H.3.
+
+[auth.ts](apps/web/src/lib/auth.ts) is already compatible with both: it calls
 `getSession()` first and only falls back to `signInAnonymously()` when there
 is none, so a real session is simply used.
 
-- [ ] **H.1 The provider, and who sends the mail.** Email + password, magic
-  link, or OAuth. The second decision is the one with a tail: Supabase's
-  built-in SMTP is rate-limited to a handful of messages an hour and is
-  explicitly not for production, so real signup means a sending provider and a
-  sending domain. If OAuth is wanted, `enable_manual_linking` has to go true —
-  email conversion does not need it.
+- [ ] **H.0 Accounts you hand out — NEW 2026-09-22, and the third `.0` entry
+  ticket this plan has grown.** A script run by hand with the service role:
+  `auth.admin.createUser({ email, password, email_confirm: true })`, one call
+  per tester, never from the app. No mail is sent on any path, so no provider,
+  no sending domain and no DNS record stands between here and a tester signing
+  in on a second device.
+
+  **Four things checked on 2026-09-22 rather than assumed**, because "the
+  schema does not care which kind of user this is" is exactly the sort of claim
+  that is true until one line says otherwise:
+
+  1. Every policy on `sessions` and `reflections` is `to authenticated` with
+     `(select auth.uid())` — `20260919120000_sessions.sql` L232–288. An
+     anonymous user and a signed-in one are **both** role `authenticated`.
+  2. `is_anonymous` appears **nowhere** in `supabase/`, `apps/web/src` or
+     `packages/design-system/src`. Nothing in the app, the schema or either
+     Edge Function distinguishes the two.
+  3. `on_auth_user_created` fires on an admin insert like any other
+     (`20260918142704_profiles.sql` L121), so the `profiles` row arrives the
+     same way and `reveal-track` still finds one.
+  4. `config.toml` already carries `enable_signup = true` and, under
+     `[auth.email]`, `enable_confirmations = false`. **So H.0 writes no
+     migration and edits nothing under `supabase/`** — which is what makes it
+     parallel-safe, per the section above.
+
+  **Supabase's built-in SMTP would not have rescued this anyway**: it only
+  delivers to members of the project's own organisation, so an external tester
+  would never have received the mail whatever the rate limit said.
+
+  **What is given up is the first session, and it is the only thing.** A
+  tester who does three sessions anonymously and then signs in lands in an
+  empty diary, with the old one stranded on an anonymous id nobody can reach.
+  The workaround is procedural: **testers sign in before their first session**,
+  which `auth.ts` already makes work. It is an instruction a tester can get
+  wrong, and when they do it looks exactly like data loss — so it belongs in
+  whatever you hand them alongside the password.
+
+  **Password reset, magic link and email change all still need mail.** For the
+  beta you reset a password in the dashboard. That is fine at twenty testers
+  and it is also the ceiling; the day it stops being fine is H.1.
+
+  *Done when:* an account created by the script signs in on a second device and
+  reads the diary written on the first, `supabase/config.toml` is unchanged,
+  and no mail, no SMTP provider and no DNS record were involved at any point.
+
+- [ ] **H.0b The sign-in screen, and only it.** Sign in and sign out. No sign
+  up, no reset, no OAuth — those are H.3, and building them now would build
+  them against a provider nobody has chosen. Both languages, every string
+  through the catalogue, no component default leaking through (rule 7).
+
+  **It owes one copy change, and it cannot be deferred to H.4.**
+  `privacy.browserBound` promises that clearing browser data clears the diary
+  and there is no way to get it back (`en.ts:446`). For a tester signed into a
+  handed-out account that is false — the diary is on the server and the second
+  device proves it. A privacy promise that is false for the people currently
+  testing is the failure Phase G's checkpoint exists to catch.
+
+  *Done when:* a tester signs in on two devices and sees one diary, and the
+  privacy page reads true for both kinds of user on the same build.
+
+- [ ] **H.1 The provider, and who sends the mail — DEFERRED, not removed.**
+  Email + password, magic link, or OAuth. The second decision is the one with a
+  tail: real signup means a sending provider and a sending domain, and the
+  domain is decision 1 below. **H.0 routes around this for the beta and does
+  not answer it** — the moment signup is self-service, mail is on the critical
+  path again, and so is password reset. If OAuth is wanted,
+  `enable_manual_linking` has to go true — email conversion does not need it.
 
 - [ ] **H.2 Convert, never create — and prove it before building any UI.** A
   test that runs sessions as an anonymous user, converts that user, and reads
@@ -928,17 +1082,23 @@ is none, so a real session is simply used.
   H.3 is built on a wrong assumption. *Done when:* the test passes and the id
   before and after are identical.
 
-- [ ] **H.3 The screens.** Sign up, sign in, sign out, password reset — in
-  both languages, every string through the catalogue, no component default
-  leaking through. *Done when:* a returning user on a second device sees their
-  own diary.
+  **Still worth doing although H.0 does not use it**, and worth doing early:
+  it is the fact that decides whether the beta's handed-out accounts are a
+  stopgap or a dead end. Proven, H.3 is screens on a known mechanism. Unproven,
+  you find out after writing them.
+
+- [ ] **H.3 The rest of the screens.** Sign up, password reset, and conversion
+  — the anonymous-to-real path H.2 proves and H.0 gives up. Both languages,
+  every string through the catalogue. *Done when:* somebody who did three
+  sessions before signing up still has all three afterwards.
 
 - [ ] **H.4 What an account changes elsewhere.** `profiles.theme` stops being
   a write-only column — [SettingsSheet](apps/web/src/SettingsSheet.tsx) says
   it *"becomes readable the day an account spans devices"*, and this is that
   day, which means answering the reconciliation question it flags. The
   settings sheet grows an account section. And the privacy copy changes again:
-  *saved on this device* becomes *saved to your account*.
+  *saved on this device* becomes *saved to your account* — the rest of the
+  change H.0b started.
 
 - [ ] **H.5 Anonymous cleanup, on a schedule.** Every browser that ever opened
   the app left a permanent `auth.users` row, and they count toward monthly
@@ -946,12 +1106,20 @@ is none, so a real session is simply used.
   when:* it runs unattended and an anonymous user with a diary is never
   touched.
 
+  **Write it with I.3 or after it, never before.** Both are scheduled sweeps
+  against the same project; apart they become two schedulers with two failure
+  modes, together they are one.
+
 > **Before then, during MVP testing:** anonymous rows piling up is a cleanup
 > query, not an architecture problem — delete anonymous users with no sessions
 > whenever it bothers you. The one thing accounts would buy you *early* is
 > knowing **which tester said what**, since every tester is otherwise an opaque
-> uuid. If that turns out to matter for the pilot, that is the reason to pull
-> H forward, and the only one.
+> uuid. H.0 is the cheap way to buy it. **The cheaper way is not to** — show
+> the anonymous uuid in the settings sheet and have each tester read it to you
+> once. No accounts, no copy change, no stranded diaries, and no tester who
+> forgot to sign in first. It buys the identity and not the second device, so
+> the question H.0 turns on is whether the second device is part of what the
+> beta is testing.
 
 ---
 
@@ -1108,9 +1276,13 @@ one of its three API holes. The expensive, easy-to-get-wrong part — the design
 system and its Storybook — is behind you, which is the half of the original
 plan most likely to have been skipped and regretted.
 
-**Phase H's five steps are not part of that count.** The MVP is done when the
-app is functional and live on its own domain, which is the end of A.6's second
-half. Accounts come after that line, not before it.
+**Phase H is seven steps now, and two of them moved to the near side of the
+line (2026-09-22).** The MVP is done when the app is functional and live on its
+own domain, which is the end of A.6's second half, and H.1–H.5 still come after
+it. **H.0 and H.0b do not** — they exist precisely because handed-out accounts
+need no domain, so they are available during the beta rather than after it.
+Whether you want them is the question at the foot of Phase H, and it turns on
+one thing: whether the second device is part of what the beta is testing.
 
 **Phase I’s five steps are not in it either, and where they belong is an open
 question.** The voice memo was added on 2026-09-22 — after the count was taken,
@@ -1122,14 +1294,16 @@ Ben's, and it is the only scope question this plan currently leaves open.
 Phases E and F do not depend on each other. If the music licensing stalls, run
 F first — and see **Running E and F in parallel** above for the two tracks that
 can actually run at once, and the five things they share that decide which two
-those are.
+those are. **That section was re-asked on 2026-09-22 with H in the question**,
+and the answer is in **Running H beside E and F**: E is finished, F is F.6, and
+the live pair is H.0 + H.0b against F.6.
 
 ## Still blocked by someone other than Claude Code
 
 | Blocker | Blocks |
 |---|---|
 | **Five more recordings.** Four landed 2026-09-21 (Epidemic Sound), leaving five of the nine deck cards silent, plus one each for Breathing Score and Body Scan Soundwalk still wanted. `count(*) from tracks` is the number to quote | E.4 in full. **E.5 is not blocked by this** — the reveal gates `title` and `artist`, which the seed already carries, so it can be built and its done-when checked with no audio at all |
-| **The domain.** A printed QR code locks it in permanently, and A.6's second half — Netlify and a domain — has not run. Nothing goes to print until it is chosen, and the Netlify build allowance returns the week of 22 September | **The printed deck, and nothing else.** E.0 is built and end-to-end tested against `window.location.origin`, so no code, route, test or dev sheet waits on this. Print day is one run of the generator with `--base-url` |
+| **The domain.** A printed QR code locks it in permanently, and A.6's second half — Netlify and a domain — has not run. Nothing goes to print until it is chosen, and the Netlify build allowance returns the week of 22 September | **The printed deck, and H.1's sending domain.** E.0 is built and end-to-end tested against `window.location.origin`, so no code, route, test or dev sheet waits on this. Print day is one run of the generator with `--base-url`. **H.1 was the second thing this blocked** — real signup needs mail, and mail needs a sending domain — and H.0 routes around it for the beta without answering it |
 | Which vision model reads handwriting — or ship photo as session-only | D.5 |
 | **Sign-off** on the privacy copy — it is written, in both languages, and waiting | nothing is blocked; it is a promise already in the catalogue |
 | The real Mindfulness Cards spreadsheet | The content is placeholder until it lands; all German content rows are `[DE] `-prefixed. **The re-cut then the step re-cut left TWENTY-EIGHT strings with no source** — four step lists plus one question per exercise, in both locales — which D.4 and D.5 need |
@@ -1157,9 +1331,11 @@ sheet mints its codes from whatever origin served it, and the end-to-end walk
 proves the deep link on `localhost` with no domain configured anywhere. Print
 day is one run of `apps/web/scripts/qr-codes.mjs` with `--base-url`.
 
-So this blocks exactly one thing, and it blocks it absolutely: **the deck going
-to print.** A.6's second half — Netlify and a domain — is the step, and the
-build allowance returned the week of 22 September.
+So this blocks two things. **The deck going to print**, absolutely — A.6's
+second half is the step, and the build allowance returned the week of 22
+September. And **self-service signup**, because mail needs a sending domain;
+that one has a way around it for the beta, which is H.0, and no way around it
+after.
 
 ### 2 · The remaining recordings
 

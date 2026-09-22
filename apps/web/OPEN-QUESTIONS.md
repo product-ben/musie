@@ -2135,3 +2135,60 @@ What I need from Ben: a ruling, and it is small. My own lean is the third —
 the press is the person's intent and the URL is milliseconds away, so honouring
 it is both the simplest thing to explain and the only one with no visible
 state at all.
+
+## Beta accounts that Ben creates by hand — three things H.0 cannot decide for itself
+
+Where: `BUILD-PLAN.md` Phase H (H.0, H.0b), `src/lib/auth.ts`,
+`src/i18n/{en,de}.ts` (`privacy.account`, `privacy.browserBound`)
+
+What I checked: whether a beta could run on accounts created in Supabase with
+the credentials handed out, so that H stops waiting on a sending domain. It
+can, and the mechanism needs nothing new — four facts, all read rather than
+assumed:
+
+- Every policy on `sessions` and `reflections` is `to authenticated` with
+  `(select auth.uid())` (`20260919120000_sessions.sql` L232–288). An anonymous
+  user and a signed-in one are both role `authenticated`.
+- `is_anonymous` appears nowhere in `supabase/`, `apps/web/src` or
+  `packages/design-system/src`. Nothing anywhere distinguishes the two kinds of
+  user — not a policy, not a grant, not either Edge Function.
+- `on_auth_user_created` fires on an admin insert like any other
+  (`20260918142704_profiles.sql` L121), so the `profiles` row arrives normally.
+- `config.toml` already has `enable_signup = true` and `[auth.email]
+  enable_confirmations = false`, so no migration and no config edit.
+
+Supabase's built-in SMTP would not have been an alternative: it only delivers
+to members of the project's own organisation, so an external tester would never
+have received the mail whatever the rate limit said.
+
+What I did: wrote it into the plan as H.0 and H.0b, and moved the rest of H
+(H.1–H.5) behind the domain where it already was. I did not build it.
+
+Why: the mechanism is settled and the product question is not, and it is three
+questions rather than one.
+
+What I need from Ben:
+
+**1 · Is the second device part of what the beta tests?** H.0's whole value is
+that a tester can sign in somewhere else and find their diary. If what you
+actually want is only *which tester said what*, the cheaper answer is to show
+the anonymous uuid in the settings sheet and have each tester read it to you
+once — no accounts, no copy change, no stranded diaries. H.0 is worth its cost
+only if the second device is on the list.
+
+**2 · Is "sign in before your first session" an acceptable instruction?** A
+pre-created account cannot be converted into — `updateUser({ email, password })`
+fails when the email already exists — so a tester who does three sessions first
+and then signs in lands in an empty diary, with the old one on an anonymous id
+nobody can reach. `auth.ts` makes the right order work with no change, because
+`getSession()` runs before `signInAnonymously()`. But the wrong order is
+silent, and it looks exactly like data loss. This is the one thing H.0 gives
+up, and it is given up per tester rather than once.
+
+**3 · Which lands first, H.0b or I.1?** They rewrite adjacent lines of the same
+privacy block in both locales, and it is more than a merge: `privacy.
+browserBound` goes half-false the moment a tester signs in on a second device,
+and `docs/VOICE-MEMO.md` §289 argues I.3's scheduled backstop FROM that same
+promise being true. Whichever lands second rewrites the other's reasoning, not
+just its text. My lean is I.1 first, because it is inside a phase that is
+already sequenced and H.0b is not.

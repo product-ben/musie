@@ -304,6 +304,24 @@ export function SessionListen({
   };
 
   /**
+   * BACK TO THE TOP OF THE PAGE, NOT TO THE TOP OF THE STAGE.
+   *
+   * `scrollIntoView` on the stage looked right and was not: the stage begins
+   * ~266px down, under the exercise's name and the four-step rail, so aligning
+   * ITS top with the viewport's put the wizard's own header off screen. You
+   * landed in the middle of the panel with no idea which step you were on, and
+   * how wrong it looked depended on the window height — which is why it read
+   * as intermittent rather than as simply aimed at the wrong thing.
+   *
+   * There is nothing above the stage worth skipping, so the honest target is
+   * zero. `window`, not the element, because the thing being returned to is
+   * the whole step.
+   */
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /**
    * ── THE REVEAL, WHICH IS NOW A REQUEST AND NOT A SCREEN — E.5 ───────────
    * It used to be a block with a heading and a button. Both were removed:
    * the player states the name once the gate is open, so a second block
@@ -523,7 +541,7 @@ export function SessionListen({
       <section ref={warnRef} className="musie-listen__view musie-listen__view--warn">
         <p className="musie-listen__warn">{t('session.listen.warnText')}</p>
         <div className="musie-listen__warn-actions">
-          <CtaButton variant="primary" onClick={() => scrollTo(stageRef)}>
+          <CtaButton variant="primary" onClick={scrollToTop}>
             {t('session.listen.warnBack')}
           </CtaButton>
           <CtaButton variant="secondary" onClick={() => scrollTo(detailRef)}>
@@ -584,7 +602,7 @@ export function SessionListen({
           for the button: the rail spans the column and must not eat taps
           meant for the player under it. */}
       <div className="musie-listen__rail" data-visible={inDetail ? 'true' : 'false'}>
-        <CtaButton variant="ghost" onClick={() => scrollTo(stageRef)}>
+        <CtaButton variant="ghost" onClick={scrollToTop}>
           {t('session.listen.scrollUp')}
         </CtaButton>
       </div>
