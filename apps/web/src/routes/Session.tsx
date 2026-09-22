@@ -129,40 +129,109 @@ export function Session() {
 
   const { data, loading, error } = useAsync(run, `session:${id}:${locale}:${version}`);
 
-  /* ── The state machine, seeded once the row has arrived ─────────────────
-     `skipped` is derived from the exercise, so it cannot be known before the
-     read lands; the reducer is therefore initialised empty and RESUMEd by the
-     effect below. `resumeSession` is exactly the transition for that. */
-  const [state, dispatch] = React.useReducer(
-    sessionReducer,
-    undefined,
-    () => resumeSession({ step: 'intro', status: 'started', completed: [] }),
+  /* ── Failure, absence, and the two redirects ────────────────────────────*/
+  if (loading) return <p className="musie-note">{t('content.loading')}</p>;
+
+  if (error !== null) {
+    return (
+      <Message
+        variant="error"
+        live="assertive"
+        headingLevel={1}
+        headline={t('content.error')}
+        text={t('content.errorDetail')}
+      />
+    );
+  }
+
+  if (data === null) {
+    return (
+      <ContentBox
+        headingLevel={1}
+        headline={t('session.notFound')}
+        text={t('session.notFoundText')}
+        outline="dashed"
+      >
+        <CtaButton variant="secondary" onClick={() => navigate('/exercises')}>
+          {t('common.back')}
+        </CtaButton>
+      </ContentBox>
+    );
+  }
+
+
+  /**
+   * ── THE MACHINE IS MOUNTED WITH ITS ANSWER, NOT SEEDED AFTER IT ─────────
+   * Everything below this line used to live in one component, and the reducer
+   * was initialised EMPTY and `RESUME`d from the row by an effect. Effects run
+   * after render, so there was one frame in which the row had arrived and the
+   * machine had not been told about it — `step: 'intro'`, nothing completed.
+   *
+   * The refusal guard runs during that frame. Resuming at `listen` was read as
+   * unreachable, redirected to `state.step` (which was `intro`), and the
+   * reconciliation then dutifully wrote `intro` back to the row. *Continue
+   * session* did not fail to resume; it REWOUND the session, and the row it
+   * rewound was the only record of where the person had got to. Ben found it
+   * on the first walk; `e2e/resume.spec.ts` is the walk that now finds it.
+   *
+   * A flag saying "not seeded yet" would have fixed this instance. Mounting
+   * the machine only once its initial state is known removes the frame, and
+   * with it the class — there is no longer a moment when `state` can be asked
+   * a question it has no basis to answer.
+   *
+   * KEYED ON THE ROW'S ID, and deliberately not on its step: the step changes
+   * on every advance, and remounting there would throw away `listened`, the
+   * typed answer and the reflect mode every time somebody moved.
+   */
+  return (
+    <SessionRun
+      key={data.row.id}
+      data={data}
+      id={id}
+      urlStep={urlStep}
+      onRescan={() => setVersion((n) => n + 1)}
+    />
   );
+}
+
+interface SessionRunProps {
+  /** Loaded before this mounts — which is the whole point of the split. */
+  data: SessionData;
+  id: string;
+  urlStep: StepId;
+  /** A scan changes the row's card and track, so the read has to happen again. */
+  onRescan: () => void;
+}
+
+function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
+  const t = useT();
+  const { locale } = useLocale();
+  const navigate = useNavigate();
 
   const skipped: StepId[] = React.useMemo(
     () => (data !== null && !data.exercise.needsCards ? ['scan'] : []),
     [data],
   );
 
-  /* Seed from the row, once per row identity. A ref rather than a dependency
-     list, because the row object is new on every re-read and re-seeding would
-     throw away everything the visit has completed. */
-  const seeded = React.useRef<string | null>(null);
-  React.useEffect(() => {
-    if (data === null) return;
-    const key = `${data.row.id}:${data.row.step}:${skipped.join()}`;
-    if (seeded.current === key) return;
-    seeded.current = key;
-    dispatch({
-      type: 'RESUME',
-      session: {
+
+  /* ── The state machine, INITIALISED FROM THE ROW ────────────────────────
+     Not initialised empty and resumed: `data` is already loaded when this
+     component mounts, so the row's step and its derived `completed` are the
+     reducer's first state rather than its second. The `RESUME` effect and the
+     `seeded` ref it needed are both gone. */
+  const [state, dispatch] = React.useReducer(
+    sessionReducer,
+    undefined,
+    () => resumeSession(
+      {
         step: data.row.step,
         status: data.row.status,
         completed: completedBefore(data.row.step, skipped),
         endedAt: data.row.endedAt,
       },
-    });
-  }, [data, skipped]);
+      skipped,
+    ),
+  );
 
   /* ── URL → rules → row. The one reconciliation. ─────────────────────────
      Runs after the seed, so `state` already reflects the row.
@@ -205,36 +274,6 @@ export function Session() {
   const [listened, setListened] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [closing, setClosing] = React.useState(false);
-
-  /* ── Failure, absence, and the two redirects ────────────────────────────*/
-  if (loading) return <p className="musie-note">{t('content.loading')}</p>;
-
-  if (error !== null) {
-    return (
-      <Message
-        variant="error"
-        live="assertive"
-        headingLevel={1}
-        headline={t('content.error')}
-        text={t('content.errorDetail')}
-      />
-    );
-  }
-
-  if (data === null) {
-    return (
-      <ContentBox
-        headingLevel={1}
-        headline={t('session.notFound')}
-        text={t('session.notFoundText')}
-        outline="dashed"
-      >
-        <CtaButton variant="secondary" onClick={() => navigate('/exercises')}>
-          {t('common.back')}
-        </CtaButton>
-      </ContentBox>
-    );
-  }
 
   const { row, exercise, card, track } = data;
 
@@ -291,7 +330,7 @@ export function Session() {
     try {
       const outcome = await scanCardInto(id, exercise.id, scanned, locale);
       if (outcome.kind === 'applied') {
-        setVersion((n) => n + 1);
+        onRescan();
         return;
       }
       setScanError(
@@ -326,7 +365,7 @@ export function Session() {
     setScanError(null);
     try {
       await saveCard(id, null, null);
-      setVersion((n) => n + 1);
+      onRescan();
     } catch (thrown: unknown) {
       console.error('[musie] could not clear the scan:', thrown);
     } finally {

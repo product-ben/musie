@@ -551,7 +551,7 @@ The honest expected gain is **one session of wall-clock**, not four. The value
 is that the two things with no blockers and no shared state get done at once;
 everything else in E and F has a real reason to be in order.
 
-## Phase E · Scan and listen
+## Phase E · Scan and listen — DONE 2026-09-22, minus five recordings
 
 **Revised 2026-09-21.** The old header read *"scanning needs nothing from
 anyone, listening needs nine cleared tracks"*, and both halves of that turned
@@ -780,7 +780,7 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
 
 ---
 
-## Phase F · Voice
+## Phase F · Voice — DONE 2026-09-22, minus its iPhone checkpoint
 
 Old Phase 5, with one addition: **the voice POC is not in this repository.** It
 lives in `product-ben/musie-voice-to-text-demo`, and nothing here references it
@@ -982,76 +982,68 @@ code rather than softening the sentence.
 
 ---
 
-## Running H beside E and F
+## Phase H is next, and the parallel question closed itself
 
-**Added 2026-09-22**, when the question was asked again after H.0 took the
-domain out of H's path. The answer changed, and not only because of H.0.
+**Written 2026-09-22 as *Running H beside E and F*, rewritten the same day.**
+That section asked whether H.0 could run in a second worktree beside the last
+step of F. It could, and it is moot: **F.6 landed in `739f506` before either
+track started, and phase F is complete.** So is phase E. There is nothing left
+to run beside, so H is simply next, serially, in the main session — which is
+this plan's own default and needed no argument in the first place.
 
-**E is finished, and the plan was not saying so.** E.4 landed in `9a48971` —
-the private bucket, the four real durations, `src is null` for the five silent
-cards, and signed URLs in `lib/audio.ts` — and its checkbox was never ticked.
-E.5's outstanding half was the three-scroll Listen step, and E.5b built it. So
-what is left in phase E is **five recordings**, and those are Ben's, not a
-session's. **What is left in phase F is F.6, and nothing else.**
+**Both phases closed on 2026-09-22, and the plan was behind on both.** E.4 had
+landed in `9a48971` — the private bucket, the four real durations, `src is
+null` for the five silent cards, signed URLs in `lib/audio.ts` — with its
+checkbox never ticked. E.5's outstanding half was the three-scroll Listen step,
+which E.5b built. F.6 was the last step in F, and it is in.
 
-So the question is no longer *H beside E and F*. It is **H beside F.6**, and
-that pair is cleaner than the E/F split this plan already ran.
+### What E and F leave behind, and why none of it holds H up
 
-| | Track A | Track B |
+| Debt | Whose | Holds H up? |
 |---|---|---|
-| Steps | **H.0 + H.0b** — the admin-created accounts, the proof, the sign-in screen | **F.6** — `onSentenceFinal` becomes the Supabase write, idempotent on four paths |
-| Writes a migration | no | no |
-| Edits anything under `supabase/` | **no** — `config.toml` already permits email signup with confirmations off | no |
-| Blocked by anyone | no — that is what H.0 is for | no |
-| Owns | `lib/auth.ts`, the sign-in route, i18n `auth.*`, `privacy.browserBound` | `features/voice/`, `VoiceTranscript.tsx`, the `reflections` write path |
+| **Five recordings.** Four of nine deck cards have audio | Ben's, and it is in the blocker table | **No.** Silent cards are honest — `src is null` — and the listen step keeps the simulated clock |
+| **The four objects in the HOSTED bucket**, as opposed to the local one | An operator act, with files that deliberately never entered this repository | **No**, and nothing in here can see it either way. It belongs with A.6's second half |
+| **F's checkpoint — record a real reflection on an iPhone.** iOS is the untested surface: `AudioContext` under Safari, background tabs, the user-gesture requirement | Ben, one hand test | **No, but do it BEFORE H.0b.** See below — this is the one ordering that matters |
+| **F.2's done-when**, filed *NOT YET SHOWN* because nothing rendered the voice feature at the time | Closable by hand now: F.4 built the editor and F.6 writes the row | **No.** The same iPhone pass closes it |
+| **F.5's keyboard parity**, filed *CODE ONLY* — no screen reader has heard it | Blocked on a ruling this repo cannot make, logged in `apps/web/OPEN-QUESTIONS.md` | **No** |
 
-Against the five shared things the E/F split named:
+**The one ordering that matters: F's iPhone checkpoint goes before H.0b.**
+H.0b changes the way into the app — a gate where there was an anonymous
+fall-through. Walk iOS while the entrance is still the one every earlier hand
+test used, or the first iOS surprise arrives with two variables in it rather
+than one. It is a hand test of an hour and it is the cheapest insurance in this
+phase.
 
-1. **One local Supabase stack.** The only real contention. H.0's second-device
-   proof and F.6's idempotency test both want the stack, and neither writes a
-   migration — so this is a scheduling problem rather than a corruption one.
-   *Rule: whichever track runs `pnpm test:db` says so first.*
-2. **`pnpm-lock.yaml`.** Neither adds a dependency. Clear.
-3. **i18n.** `auth.*` against `voice.*`, and F.0 already wrote the `voice.*`
-   block. Different regions of the same two files, appended, nothing reordered.
-   Clear.
-4. **Migration timestamps.** Neither writes one — which is not a coincidence
-   again. It is the same constraint that picked E.0 and F.0, and it is why H.0
-   is eligible where H.2 and H.5 are not.
-5. **`pnpm install` per worktree.** Budget it once per track, as before.
+Everything else about H is unchanged by E and F finishing: H.0 writes no
+migration, edits nothing under `supabase/`, and waits on nobody.
 
-### What still cannot run beside H, and it is not a scheduling problem
+### What H hands over to I
 
-**Phase I.** Three collisions, and only the first is about files:
+Kept from the parallel analysis, because the reasoning is what makes the
+handover legible. **H runs before I** (decided 2026-09-22), so none of these is
+a conflict any more — each is an edit I inherits:
 
-- **I.1 and H.0b/H.4 rewrite the same paragraph.** I.1 rewrites
-  `privacy.voice` plus six keys; H.0b and H.4 rewrite `privacy.account` and
-  `privacy.browserBound`. Those are `en.ts:439–446` — adjacent lines, both
-  locales. Rule 3 wants disjoint key namespaces and this is not disjoint.
-- **I.3 is argued FROM a premise H deletes.** [docs/VOICE-MEMO.md](docs/VOICE-MEMO.md)
+- **I.1 inherits a rewritten paragraph.** I.1 rewrites `privacy.voice` plus six
+  keys; H.0b and H.4 will already have rewritten `privacy.account` and
+  `privacy.browserBound` beside it — `en.ts:439–446`, adjacent lines, both
+  locales. Read them before writing, rather than merging after.
+- **I.3 inherits a premise H has changed.** [docs/VOICE-MEMO.md](docs/VOICE-MEMO.md)
   §289 makes the scheduled backstop earn its place *because* accounts are
   browser-bound: clearing browser data strands audio owned by an identity
-  nobody can sign in as again. A handed-out account is exactly the case where
-  that stops being true. The backstop still earns its place — anonymous users
-  are still browser-bound, and most testers still will be — but the argument
-  has to be rewritten, by whichever of the two lands second, and neither
-  worktree can see the other doing it.
+  nobody can sign in as again. A handed-out account is exactly where that stops
+  being true. The backstop still earns its place — anonymous users are still
+  browser-bound — but the argument is rewritten, not re-run.
 - **I.2 and I.3 key every object on `{user_id}/`**, which is the id H.2 exists
-  to prove survives conversion. Those two facts want one session, not two.
-
-**Resolved by ordering, 2026-09-22: H runs before I**, so none of the three is
-a live conflict any more — they are a handover list for whoever writes I.1 and
-I.3. Kept here because the reasoning is what makes the handover legible.
-
-**H.5 and I.3 are both scheduled sweeps** against the same project. Not a
-conflict — an argument for order. Whichever is written second should extend the
-first's scheduler rather than stand up a second one.
-
-The honest expected gain is **one session of wall-clock**, the same number the
-E/F split quoted and the same reason: the two things with no blockers and no
-shared state get done at once.
+  to prove survives conversion. By the time I.2 is written, that is a fact with
+  a test behind it rather than an assumption.
+- **H.5 and I.3 are both scheduled sweeps** against the same project. I.3
+  should extend H.5's scheduler rather than stand up a second one.
 
 ## Phase H · Accounts
+
+**NEXT, as of 2026-09-22 — E and F are both complete.** See the section above
+for what they leave behind and for the one ordering that matters (F's iPhone
+checkpoint before H.0b).
 
 **Last, deliberately — and then partly not, from 2026-09-22.** The MVP is a
 complete, functional product on its own domain first; accounts are what turn it
@@ -1110,8 +1102,9 @@ is none, so a real session is simply used.
      same way and `reveal-track` still finds one.
   4. `config.toml` already carries `enable_signup = true` and, under
      `[auth.email]`, `enable_confirmations = false`. **So H.0 writes no
-     migration and edits nothing under `supabase/`** — which is what makes it
-     parallel-safe, per the section above.
+     migration and edits nothing under `supabase/`** — no `supabase db reset`,
+     no timestamp to allocate, nothing to push. It is the cheapest start any
+     phase in this plan has had.
 
   **Supabase's built-in SMTP would not have rescued this anyway**: it only
   delivers to members of the project's own organisation, so an external tester
@@ -1410,9 +1403,9 @@ open.
 Phases E and F do not depend on each other. If the music licensing stalls, run
 F first — and see **Running E and F in parallel** above for the two tracks that
 can actually run at once, and the five things they share that decide which two
-those are. **That section was re-asked on 2026-09-22 with H in the question**,
-and the answer is in **Running H beside E and F**: E is finished, F is F.6, and
-the live pair is H.0 + H.0b against F.6.
+those are. **That section is history as of 2026-09-22**: E and F are both
+complete, and **Phase H is next, and the parallel question closed itself** says
+what they leave behind and what H does with it.
 
 ## Still blocked by someone other than Claude Code
 
