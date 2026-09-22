@@ -86,6 +86,16 @@ export interface SessionListenProps {
    * because leaving the step is not a thing you do with the track.
    */
   onAdvance: () => void;
+  /**
+   * The wizard's own Back control, rendered INSIDE this step's row.
+   *
+   * `WizardPanel` puts `actions` after its children, and this step's children
+   * are three full-height views — so Back landed at the foot of the third one,
+   * two screens below the step it leaves. Passing the node in keeps every
+   * control on the stage where the person is, and keeps the decision about
+   * what Back DOES in `Session.tsx`, which is the only place that knows.
+   */
+  back: React.ReactNode;
   /** The question, already resolved to the exercise's own or the fallback. */
   question: string;
   /** Sticky across the step, so it is held by the session rather than here. */
@@ -103,7 +113,7 @@ export interface SessionListenProps {
  * threshold ONCE, upward, and keeps the position it counts down from.
  */
 export function SessionListen({
-  exercise, track, question, sessionId, card, listened, onListened, onAdvance,
+  exercise, track, question, sessionId, card, listened, onListened, onAdvance, back,
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
@@ -278,6 +288,43 @@ export function SessionListen({
   const stageRef = React.useRef<HTMLElement>(null);
   const warnRef = React.useRef<HTMLElement>(null);
   const detailRef = React.useRef<HTMLElement>(null);
+
+  /**
+   * ── HOW MUCH IS ABOVE THE STAGE, MEASURED ────────────────────────────────
+   * `--view-block` is the window less the APP SHELL — the sticky header and
+   * `<main>`'s insets, 141px. It is right for a screen that is the whole page,
+   * and it is not enough here: the listen step sits inside `WizardPanel`,
+   * under the exercise's name and the four-step rail, which together are
+   * another ~125px and grow when a long German exercise name wraps.
+   *
+   * MEASURED on the first walk: the stage started 266px down and was 659px
+   * tall, so its action row — and Back with it — ran 125px past the fold on a
+   * 800px window. A token cannot know this number, because it depends on copy
+   * that changes with the exercise and the locale.
+   *
+   * So the element reports its own offset and sizes itself from it. The
+   * fallback in the CSS is `--chrome-block`, which is what it would have been
+   * without this.
+   */
+  React.useEffect(() => {
+    const element = stageRef.current;
+    if (element === null) return undefined;
+
+    const measure = () => {
+      /* Document offset, not viewport offset: at the top of the page they are
+         the same, and this must not change as the person scrolls. */
+      const top = element.getBoundingClientRect().top + window.scrollY;
+      element.style.setProperty('--musie-stage-offset', `${Math.round(top)}px`);
+    };
+
+    measure();
+    /* The panel's header is what moves — a wrapped exercise name, a font that
+       loaded late, a changed text size. Observing it directly rather than the
+       window, because none of those is a resize. */
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    return () => observer.disconnect();
+  }, []);
 
   const scrollTo = (target: React.RefObject<HTMLElement | null>) => {
     target.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -454,6 +501,7 @@ export function SessionListen({
       {track !== null && (
         <div className="musie-listen__actions">
           <div className="musie-listen__actions-start">
+            {back}
             <TrackButton
               label={t('session.listen.track')}
               duration={track.durationSeconds}

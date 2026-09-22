@@ -871,12 +871,30 @@
 }
 
 /* ── Scroll 1 · the stage ──────────────────────────────────────────────────
-   Natural height. No padding of its own: it is the panel's own first child
-   and the panel already owns that inset. */
+   A FULL VIEW, like the two below it, and it has to be: at its natural height
+   the Störer began a few hundred pixels under the transport and both were on
+   screen at once — which is the one thing a Störer cannot be, since its whole
+   job is to interrupt something you have left behind. Ben, on the second walk.
+
+   It could not be a full view while `WizardPanel` owned the action row,
+   because that row renders after all three views; Back moved into this step's
+   own row for the same reason. Now the stage is a view like the others and
+   every control on it is on the first screen.
+
+   `space-between` rather than `center`: the copy and the question read from
+   the top, and the row sits at the foot of the view where a thumb is. The
+   whole point of the measured `--view-block` is that "the foot of the view"
+   and "the bottom of what you can see" are the same line. */
 .musie-listen__view--stage {
+  box-sizing: border-box;
+  /* Its own measured offset, falling back to the shell's chrome. See the
+     effect in SessionListen.tsx for why a token cannot know this. */
+  min-block-size: calc(var(--viewport-block) - var(--musie-stage-offset, var(--chrome-block)));
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: var(--space-gap-stack);
+  padding-block-end: var(--space-section);
 }
 
 /* ── ONE ROW, TWO ALIGNMENTS ───────────────────────────────────────────────
@@ -889,7 +907,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-gap-related);
-  margin-block-start: var(--space-gap-group);
+  /* Pushed to the foot of the stage rather than sitting under the copy: the
+     view is a full screen now, and a row floating in the middle of it reads
+     as content rather than as the way on. */
+  margin-block-start: auto;
+  padding-block-start: var(--space-gap-group);
 }
 
 .musie-listen__actions-start,
@@ -915,8 +937,11 @@
      Störer's sentence started under the header and the details view's player
      was pushed below the fold. `--view-block` is the window as measured at
      runtime, less what the shell actually takes — both from the design
-     system, both per breakpoint. */
-  min-block-size: var(--view-block);
+     system, both per breakpoint. `--view-block-scrolled` rather than
+     `--view-block`: these two are SCROLLED TO, and by then only the sticky
+     header is over them — subtracting `<main>`'s insets as well would leave
+     each one 72px short of the window. */
+  min-block-size: var(--view-block-scrolled);
   display: flex;
   flex-direction: column;
   align-items: flex-start;

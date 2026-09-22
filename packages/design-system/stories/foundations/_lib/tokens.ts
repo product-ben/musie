@@ -93,7 +93,8 @@ export const GROUPS = {
        spacing: `--chrome-block` is declared per breakpoint beside `--gutter`,
        and `--viewport-block` is the only token in the system whose value is
        written by script rather than declared. */
-    || ['--viewport-block', '--chrome-block', '--view-block'].includes(n),
+    || ['--viewport-block', '--chrome-block', '--view-block',
+        '--sticky-block', '--view-block-scrolled'].includes(n),
 } as const;
 
 export type GroupName = keyof typeof GROUPS;

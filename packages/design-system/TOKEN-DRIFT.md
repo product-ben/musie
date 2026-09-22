@@ -14,9 +14,9 @@ Consequence: anything listed here exists in code and **not** in Figma. A designe
 working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
-**33 properties in `musy-foundations.css` have no JSON expression.**
+**35 properties in `musy-foundations.css` have no JSON expression.**
 **3 more live only in `musy-foundations-amendments.css`.**
-Total: **36**.
+Total: **38**.
 
 | Group | n |
 |---|---|
@@ -29,7 +29,7 @@ Total: **36**.
 | Spacing roles | 2 |
 | Elevation ring | 1 |
 | Grid gap | 1 |
-| The measured viewport | 3 |
+| The measured viewport | 5 |
 | Amendment tokens | 3 |
 
 ## The `stage` type step
@@ -152,6 +152,14 @@ here rather than in a `calc` inside a screen.
 | `--viewport-block` | `100svh`, then a measured `px` value at runtime |
 | `--chrome-block` | `calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7))` |
 | `--view-block` | `calc(var(--viewport-block) - var(--chrome-block))` |
+| `--sticky-block` | `calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline))` |
+| `--view-block-scrolled` | `calc(var(--viewport-block) - var(--sticky-block))` |
+
+There are two subtractions because there are two situations. A view you LAND
+on has the sticky header and `<main>`'s insets above it; a view you SCROLL TO
+has only the sticky header over it by the time you are there. Sizing the
+second kind with the first leaves it short of the window by the insets, and a
+band of the next view shows under it.
 
 ## Amendment tokens
 

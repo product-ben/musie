@@ -663,6 +663,14 @@
        + var(--sp-5) + var(--sp-7));
   --view-block: calc(var(--viewport-block) - var(--chrome-block));
 
+  /* What a view sees when it is SCROLLED TO rather than landed on: only the
+     sticky header is over it by then, not `<main>`'s insets. A view below the
+     fold sized to `--view-block` is 72px short of the window and leaves a band
+     of the one below it showing. */
+  --sticky-block:
+    calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline));
+  --view-block-scrolled: calc(var(--viewport-block) - var(--sticky-block));
+
   --container-max: 1200px;
   --gutter: var(--sp-4);
   --columns: 4;

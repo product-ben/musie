@@ -439,9 +439,13 @@ export function Session() {
        `SessionListen`'s `onAdvance`. The transport, the details detour and
        *Start reflection* are three things you can do with one recording and
        the prototype groups them together; splitting them across two rows made
-       the transport read as content and the CTA as chrome. Leaving the step
-       is not a thing you do with the track, so Back stays here. */
-    actions = back;
+       the transport read as content and the CTA as chrome.
+
+       AND BACK GOES WITH THEM. `WizardPanel` renders `actions` after its
+       children, and this step's children are three full-height views — so
+       Back sat at the foot of the third one, two screens below the step it
+       leaves. The panel gets no row here at all. */
+    actions = null;
   } else {
     /* SKIP sits beside FINISH, as the alternative to it — L6's "two buttons
        that are alternatives to each other" pair. It is `secondary` rather than
@@ -538,6 +542,7 @@ export function Session() {
               listened={listened}
               onListened={() => setListened(true)}
               onAdvance={advance}
+              back={back}
             />
           )}
 
