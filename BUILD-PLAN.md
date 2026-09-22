@@ -1123,7 +1123,7 @@ rewrite of H.3.
 `getSession()` first and only falls back to `signInAnonymously()` when there
 is none, so a real session is simply used.
 
-- [ ] **H.0 Accounts you hand out — NEW 2026-09-22, and the third `.0` entry
+- [x] **H.0 Accounts you hand out — NEW 2026-09-22, and the third `.0` entry
   ticket this plan has grown.** A script run by hand with the service role:
   `auth.admin.createUser({ email, password, email_confirm: true })`, one call
   per tester, never from the app. No mail is sent on any path, so no provider,
@@ -1176,7 +1176,27 @@ is none, so a real session is simply used.
   reads the diary written on the first, `supabase/config.toml` is unchanged,
   and no mail, no SMTP provider and no DNS record were involved at any point.
 
-- [ ] **H.0b The sign-in gate, and only it.** Sign in and sign out. No sign
+  **BUILT 2026-09-22 in `c2da99f` — `apps/web/scripts/create-tester.mjs`.** One
+  `auth.admin.createUser({ email, password, email_confirm: true })` per address,
+  service role read from `supabase status -o json` so no key is written into a
+  file, target printed before anything is created, and `email_confirmed_at` plus
+  the `profiles` row CHECKED after each insert rather than assumed. Passwords are
+  generated per tester from an alphabet with no 0/O, 1/l/I or 5/S, because they
+  are read aloud and typed on phones by people who did not choose them.
+  `config.toml` is untouched and no migration was written.
+
+  **VERIFIED as far as one machine can take it:** the script created an account
+  on the local stack, and a client that had never held that session signed in
+  with the printed password, landed on the same id, and found its own `profiles`
+  row. The gate walk then signed the same account in through a real browser.
+
+  **SECOND-DEVICE HAND TEST OUTSTANDING — Ben's, one pass.** Everything above is
+  one machine. "Signs in on a second device and reads the diary written on the
+  first" is the half that cannot be proved from here, and it is the whole reason
+  this step exists. Do it with a phone and a laptop on one account: write a
+  reflection on one, read it on the other.
+
+- [x] **H.0b The sign-in gate, and only it.** Sign in and sign out. No sign
   up, no reset, no OAuth — those are H.3, and building them now would build
   them against a provider nobody has chosen. Both languages, every string
   through the catalogue, no component default leaking through (rule 7).
@@ -1205,6 +1225,38 @@ is none, so a real session is simply used.
   *Done when:* a tester signs in on two devices and sees one diary, and the
   privacy page reads true for both kinds of user on the same build.
 
+  **BUILT 2026-09-22 in `22244e3` and `d660fc6`.** `VITE_REQUIRE_ACCOUNT` gates
+  it, off by default, and `signInAnonymously()` is untouched behind the flag.
+  Sign-in and sign-out only; no sign-up, no reset, nothing that needs mail. Both
+  locales, every string through the catalogue, and no design-system default
+  leaking: verified on screen, where the German run announced 'Fehler:' and the
+  English run 'Error:' from the package's own locale catalogue.
+
+  **ONE DEPARTURE FROM THIS ENTRY, deliberate and logged.** The gate does NOT
+  render from `AuthProvider`. That file is mounted above `LocaleProvider` and
+  `MusyLocaleProvider`, so a screen rendered there would throw on its first
+  `t(...)` and fall back to the package's German whatever the locale said —
+  rule 7's half-German UI on the first screen a tester ever sees. `AuthProvider`
+  publishes the new `signedOut` state; a `SessionGate` below the two locale
+  providers decides what renders. Nothing falls through to anonymous sign-in
+  either way. See `apps/web/OPEN-QUESTIONS.md`.
+
+  **Verified in a real browser, both locales and both flag states:** the gate
+  renders alone with no app shell, a wrong password gives the retype-both
+  sentence rather than the generic one, the right password enters the app, a
+  reload stays in, sign-out returns to the gate — and with the flag off an
+  anonymous session boots and the account section is absent. That last check is
+  the one that found `d660fc6`: an anonymous user's `email` is `''`, not null, so
+  sign-out was being offered to exactly the users for whom it strands the diary.
+
+  **TWO PIECES OF THE DONE-WHEN ARE NOT MET, and neither is code.** The
+  second-device pass is Ben's, as for H.0. And **there is no privacy page** —
+  `privacy.account` and `privacy.browserBound` are rewritten and true, in both
+  locales, and NOTHING RENDERS THEM: only `privacy.written` and `privacy.photo`
+  are on screen, as field descriptions in the reflect step. So "the privacy page
+  reads true" cannot be checked on this build, because the page does not exist
+  yet. The copy debt is paid; the screen is somebody's later step. Logged.
+
 - [ ] **H.1 The provider, and who sends the mail — DEFERRED, not removed.**
   Email + password, magic link, or OAuth. The second decision is the one with a
   tail: real signup means a sending provider and a sending domain, and the
@@ -1213,7 +1265,7 @@ is none, so a real session is simply used.
   path again, and so is password reset. If OAuth is wanted,
   `enable_manual_linking` has to go true — email conversion does not need it.
 
-- [ ] **H.2 Convert, never create — and prove it before building any UI.** A
+- [x] **H.2 Convert, never create — and prove it before building any UI.** A
   test that runs sessions as an anonymous user, converts that user, and reads
   the same rows back under the same id. If this does not hold, every screen in
   H.3 is built on a wrong assumption. *Done when:* the test passes and the id
@@ -1223,6 +1275,23 @@ is none, so a real session is simply used.
   it is the fact that decides whether the beta's handed-out accounts are a
   stopgap or a dead end. Proven, H.3 is screens on a known mechanism. Unproven,
   you find out after writing them.
+
+  **DONE 2026-09-22, in `a132ff4` — and it PROVED the claim rather than
+  disproving it.** `apps/web/src/lib/auth.convert.db.test.ts`, two tests, run
+  against the local stack. The id before and after the conversion is identical;
+  `user.email` carries the new address immediately with `new_email` empty; and
+  `is_anonymous` flips to false. The assertion that matters is the SECOND
+  client — one that never held the anonymous session — signing in with the new
+  credentials and finding the same id, the same session row, the same reflection
+  and the same profiles row. Reading them back on the converting client would
+  have proved nothing, since it still holds the JWT it held while anonymous, so
+  `auth.uid()` would match either way.
+
+  The second test is the other half and it is the one H.0 rests on: an account
+  created the way H.0's script creates one CANNOT be converted into. A second
+  anonymous user aiming at a taken address is refused with 422 `email_exists`,
+  asserted by code rather than by GoTrue's English prose. So the trade H.0 makes
+  is now a fact with a test behind it. **H.3 is screens on a known mechanism.**
 
 - [ ] **H.3 The rest of the screens.** Sign up, password reset, and conversion
   — the anonymous-to-real path H.2 proves and H.0 gives up. Both languages,

@@ -2235,3 +2235,144 @@ merely *told* to sign in first and the anonymous path stays reachable. That
 reading is cheaper to build and does not actually close the beta, so I took the
 stronger one. If it is wrong, H.0b loses the flag and the `AuthProvider`
 change and becomes a plain screen — nothing else in the phase moves.
+
+## "Gated" was the right reading — and the gate could not live where the plan put it
+
+Where: `src/main.tsx` (`SessionGate`), `src/AuthProvider.tsx`,
+`src/components/SignInGate.tsx`, `src/lib/requireAccount.ts`
+
+What I checked: the entry above asked Ben to confirm that *gated* was what he
+meant, since it was an inference from "preferred — it solves licensing issues
+before going public". H.0b is built on the stronger reading: `VITE_REQUIRE_ACCOUNT`
+on means no anonymous fall-through at all. **That question is still open in the
+sense that nobody has answered it** — it is now open about shipped code rather
+than about a plan, and unwinding it is deleting one component and one branch.
+
+The part I could not follow was WHERE. BUILD-PLAN and the entry above both say
+`AuthProvider` renders the gate, and `ensureSession()` has exactly one caller,
+which is what made that sound like a one-file change. It is not:
+
+- `AuthProvider` is mounted above `ProfileProvider`, `LocaleProvider` and
+  `DesignSystemLocale` (`main.tsx`), deliberately, because signing in needs no
+  routing and a route change must not remount it.
+- `useT()` reads `LocaleContext`. A gate rendered from `AuthProvider` is outside
+  it, so the app's own copy is unreachable from there.
+- Every design-system default is read through `MusyLocaleProvider`, which is
+  lower still, and `DEFAULT_MUSY_LOCALE` is **German**. So an English tester's
+  sign-in form would have announced 'Fehler:' on its error message — rule 7's
+  half-German UI, on the first screen anyone sees, reached by obeying the plan.
+
+What I did: `AuthProvider` publishes the state and gained a `signedOut` status;
+a `SessionGate` inside `DesignSystemLocale` decides what renders. Checked rather
+than assumed, because it is the obvious objection: with no user,
+`ProfileProvider`'s effect returns before fetching and stays `'pending'`, and
+`LocaleProvider` still resolves a locale — it starts from the cached one or
+`navigator.language` and only lets `profiles.language` override it once a profile
+arrives. Confirmed on screen: the German run renders German including 'Fehler:',
+the English run English including 'Error:'.
+
+Why: the substance of the decision is unchanged — there is a gate and nothing
+falls through behind it — and the location was load-bearing for copy in a way
+the plan could not have known without reading three providers.
+
+What I need from Ben: **nothing about the location.** Still the confirmation the
+entry above asked for: that a closed gate is what you want, rather than testers
+merely being *told* to sign in first while the anonymous path stays reachable.
+
+## H.0b's done-when names a privacy page that does not exist
+
+Where: `src/i18n/en.ts` and `de.ts` (`privacy.account`, `privacy.browserBound`),
+`src/components/SessionReflect.tsx:119,153`
+
+What I checked: H.0b is *done when* "a tester signs in on two devices and sees
+one diary, **and the privacy page reads true for both kinds of user on the same
+build**". There is no privacy page. Of the six `privacy.*` strings, exactly two
+are rendered anywhere — `privacy.written` and `privacy.photo`, as `description`
+props on two fields in the reflect step. `privacy.title`, `privacy.account`,
+`privacy.voice` and `privacy.browserBound` are rendered by nothing.
+
+So the copy debt H.0b was told it owed is real, and the check it was given to
+prove the debt was paid cannot be run.
+
+What I did: paid the debt anyway, in both locales. `privacy.account` no longer
+promises Musie never asks for your email — for a tester it was handed over — and
+`privacy.browserBound` no longer promises the diary dies with the browser, which
+the second device disproves. Both now state which case applies, loss first and
+exemption second, so a reader who skims one sentence leaves with the limitation
+rather than the let-off. The comment block above them says the rewrite is new
+text and is **not** covered by the sign-off the old text was awaiting.
+
+Why: rule 6 — a false string is written, not reported — and a privacy promise
+that is false for the people currently testing is what phase G's checkpoint
+exists to catch. Waiting for the screen would have meant shipping the false
+version to the testers the screen does not exist for yet.
+
+What I need from Ben: **a read of the two rewritten strings**, since they are a
+promise to users and the previous sign-off does not carry to new text. And a
+note for whoever builds the privacy screen: the strings are already there and
+already cover both kinds of account.
+
+## A db test that uses the app's own Supabase client tests whichever project `.env.local` names
+
+Where: `src/lib/signIn.db.test.ts`, `src/lib/signIn.ts` (the `client` parameter),
+`src/lib/db.support.ts`
+
+What I checked: `db.support.ts` goes to real trouble to make the db suite's
+target explicit — `supabase status` by default, three environment variables to
+override, all three or none, and the target printed on first use, all because
+"a security net that can only be run against the permissive environment is the
+wrong way round". None of that reaches a test that calls `getSupabase()`. That
+client is built from `VITE_SUPABASE_URL` in `.env.local`, which at this checkout
+was pointed at the **hosted** project while `pnpm test:db` was aimed at the local
+stack.
+
+The first version of my test did exactly that, and how it failed is the part
+worth recording: it created fixtures locally and signed in on hosted, so **both
+wrong-password assertions passed** — an absent account and a wrong password are
+the same refusal, by design, so that the form cannot be used to enumerate
+addresses. Only the right-password test went red. A file shaped slightly
+differently would have been green and testing nothing.
+
+What I did: `signIn()` and `signOut()` take an optional client, and the test
+passes `anonClient()` — the suite's own, aimed wherever the suite is aimed. Not
+a mock: this repo mocks the Supabase client nowhere (`vi.mock` appears in no
+test) and should not start.
+
+Why: the false green `db.support.ts` was written to prevent, arriving through a
+door it does not watch.
+
+What I need from Ben: nothing, just flagging — but it is a trap for the next db
+test somebody writes against app code rather than against the schema. The rule
+is: a db test never calls `getSupabase()`.
+
+## The sign-in gate has no automated test that renders it
+
+Where: `src/components/SignInGate.tsx`, `apps/web/vitest.config.ts`,
+`apps/web/e2e/`
+
+What I checked: both Vitest projects are `environment: 'node'` — "nothing under
+test touches the DOM, and a jsdom dependency bought for nothing is a dependency
+to keep updated". That is still true of everything else, and it means the gate's
+rendering cannot be unit-tested as the config stands. What IS tested is the logic
+under it: the flag's parse (`requireAccount.test.ts`, including `'false'`, which
+`Boolean()` gets backwards), the GoTrue-code→copy table (`signIn.test.ts`), the
+empty-string address (`auth.test.ts`), and the real round trip against the stack
+(`signIn.db.test.ts`).
+
+The form itself I verified by hand, with a throwaway Playwright script, in both
+locales and both flag states — and that walk is what found the empty-string bug
+(`d660fc6`), which nothing else could see. The script was not committed.
+
+What I did: left it uncommitted, and am saying so rather than implying the gate
+is covered. There is an existing Playwright suite with two locale projects and a
+`withLocale` helper, so a permanent walk is a small spec rather than new
+infrastructure — but it needs `VITE_REQUIRE_ACCOUNT` wired into the config for
+one project only, and that is a change to a shared config in service of one
+screen, which I was not asked to make.
+
+Why: a suite that silently does not run is worse than no suite, and so is a
+report that implies coverage it does not have.
+
+What I need from Ben: **a call on one e2e spec for the gate.** My lean is yes —
+it is the only screen in the app whose failure mode is "nobody can get in", and
+it is currently the only screen verified solely by me having looked at it.
