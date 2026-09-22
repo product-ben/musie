@@ -93,6 +93,7 @@ export type {
 /* L5's pointer split, as a hook rather than a media query: the size has to
    reach React, because it also sizes §7.24's float spacer. */
 export { useCoarsePointer, useToolSize } from './useCoarsePointer';
+export { useViewportFill } from './useViewportFill';
 export type { ToolSize } from './useCoarsePointer';
 
 export { Toast } from './Toast';

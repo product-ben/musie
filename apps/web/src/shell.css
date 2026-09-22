@@ -887,9 +887,10 @@
    and "the bottom of what you can see" are the same line. */
 .musie-listen__view--stage {
   box-sizing: border-box;
-  /* Its own measured offset, falling back to the shell's chrome. See the
-     effect in SessionListen.tsx for why a token cannot know this. */
-  min-block-size: calc(var(--viewport-block) - var(--musie-stage-offset, var(--chrome-block)));
+  /* Its own measured offset, from `useViewportFill` in the design system,
+     falling back to the shell's chrome — which is what the offset would be if
+     this were the first thing in <main>. */
+  min-block-size: calc(var(--viewport-block) - var(--musy-fill-offset, var(--chrome-block)));
   display: flex;
   flex-direction: column;
   justify-content: space-between;

@@ -285,6 +285,82 @@ export function ZStack() {
   );
 }
 
+/**
+ * The viewport family is the only group in Layer 1 whose values are a
+ * MEASUREMENT, so the page measures them rather than printing the declaration
+ * — `--viewport-block` reads `100svh` in the stylesheet and is a pixel count
+ * by the time anything paints.
+ */
+export function Viewport() {
+  const live = useProbe(() => {
+    /* A custom property resolves to px only when something USES it, so probe
+       elements rather than getPropertyValue, which returns the raw calc(). */
+    const px = (value: string) => {
+      const probe = document.createElement('div');
+      probe.style.cssText = `position:absolute;visibility:hidden;block-size:${value}`;
+      document.body.append(probe);
+      const h = Math.round(probe.getBoundingClientRect().height);
+      probe.remove();
+      return h;
+    };
+    return {
+      inner: window.innerHeight,
+      viewport: px('var(--viewport-block)'),
+      chrome: px('var(--chrome-block)'),
+      sticky: px('var(--sticky-block)'),
+      view: px('var(--view-block)'),
+      scrolled: px('var(--view-block-scrolled)'),
+    };
+  });
+
+  return (
+    <>
+      <Note>
+        <strong>These are measured, not declared.</strong> `--viewport-block` is
+        written by <code>theme-init.js</code> before first paint from
+        <code> visualViewport.height</code>, and kept in step on resize, rotation
+        and the visual-viewport changes iOS makes as its own chrome slides away.
+        None of the three CSS units is the number you want on a phone:
+        <code> vh</code> is the large viewport and hides a view’s own buttons
+        under Safari’s toolbar, <code>dvh</code> resizes under the reader while
+        they scroll, and <code>svh</code> is stable but the smallest the window
+        ever gets. <code>svh</code> is the declared floor for the milliseconds
+        before the script runs.
+      </Note>
+
+      <Note>
+        <strong>Two subtractions, because there are two situations.</strong>{' '}
+        <code>--view-block</code> is for a view you LAND on, which has the sticky
+        header and <code>&lt;main&gt;</code>’s insets above it.{' '}
+        <code>--view-block-scrolled</code> is for a view you SCROLL TO, where the
+        insets are already behind you and only the header is over it. Using the
+        first for the second leaves it short of the window, with a band of the
+        next view showing under it.
+      </Note>
+
+      {live && (
+        <div style={{ margin: 'var(--sp-4) 0', ...mono, color: 'var(--on-surface)' }}>
+          <div>window.innerHeight — {live.inner}px</div>
+          <div>--viewport-block — {live.viewport}px</div>
+          <div>--chrome-block — {live.chrome}px (header + main insets)</div>
+          <div>--sticky-block — {live.sticky}px (header only)</div>
+          <div>--view-block — {live.view}px</div>
+          <div>--view-block-scrolled — {live.scrolled}px</div>
+        </div>
+      )}
+
+      <Note>
+        <strong>Nested? Neither token fits.</strong> An element inside a panel,
+        under a heading that wraps differently in German, does not start where
+        the page starts — and no token can hold a number that depends on copy.
+        Use <code>useViewportFill()</code>: it writes{' '}
+        <code>--musy-fill-offset</code> onto the element, and the element takes{' '}
+        <code>min-block-size: calc(var(--viewport-block) - var(--musy-fill-offset, 0px))</code>.
+      </Note>
+    </>
+  );
+}
+
 export function Grid() {
   const live = useProbe(() => ({
     cols: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--columns'), 10) || 4,

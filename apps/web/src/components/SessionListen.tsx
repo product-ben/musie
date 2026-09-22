@@ -51,7 +51,9 @@
  * re-lock a step somebody has already done.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Message, MusicPlayer, TrackButton } from '@musie/design-system';
+import {
+  ContentList, CtaButton, Message, MusicPlayer, TrackButton, useViewportFill,
+} from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { StepText } from './StepText';
 import { useT } from '../i18n/localeContext';
@@ -285,47 +287,18 @@ export function SessionListen({
    * `block: 'start'` and smooth behaviour, which respects
    * `prefers-reduced-motion` at the platform level in every current engine.
    */
-  const stageRef = React.useRef<HTMLElement>(null);
+  const stageRef = useViewportFill<HTMLElement>();
   const warnRef = React.useRef<HTMLElement>(null);
   const detailRef = React.useRef<HTMLElement>(null);
 
   /**
-   * ── HOW MUCH IS ABOVE THE STAGE, MEASURED ────────────────────────────────
-   * `--view-block` is the window less the APP SHELL — the sticky header and
-   * `<main>`'s insets, 141px. It is right for a screen that is the whole page,
-   * and it is not enough here: the listen step sits inside `WizardPanel`,
-   * under the exercise's name and the four-step rail, which together are
-   * another ~125px and grow when a long German exercise name wraps.
-   *
-   * MEASURED on the first walk: the stage started 266px down and was 659px
-   * tall, so its action row — and Back with it — ran 125px past the fold on a
-   * 800px window. A token cannot know this number, because it depends on copy
-   * that changes with the exercise and the locale.
-   *
-   * So the element reports its own offset and sizes itself from it. The
-   * fallback in the CSS is `--chrome-block`, which is what it would have been
-   * without this.
+   * HOW MUCH IS ABOVE THE STAGE, MEASURED — and the measuring lives in the
+   * design system now (`useViewportFill`), because none of it was specific to
+   * this step. `--view-block` is the window less the APP SHELL; the stage also
+   * sits under the exercise's name and the four-step rail, which grow when a
+   * long German name wraps. A token cannot hold that number, so the element
+   * reports its own offset and the stylesheet subtracts it.
    */
-  React.useEffect(() => {
-    const element = stageRef.current;
-    if (element === null) return undefined;
-
-    const measure = () => {
-      /* Document offset, not viewport offset: at the top of the page they are
-         the same, and this must not change as the person scrolls. */
-      const top = element.getBoundingClientRect().top + window.scrollY;
-      element.style.setProperty('--musie-stage-offset', `${Math.round(top)}px`);
-    };
-
-    measure();
-    /* The panel's header is what moves — a wrapped exercise name, a font that
-       loaded late, a changed text size. Observing it directly rather than the
-       window, because none of those is a resize. */
-    const observer = new ResizeObserver(measure);
-    observer.observe(document.body);
-    return () => observer.disconnect();
-  }, []);
-
   const scrollTo = (target: React.RefObject<HTMLElement | null>) => {
     target.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
