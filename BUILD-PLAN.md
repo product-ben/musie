@@ -218,12 +218,39 @@ Do not run `supabase link`.
   - [ ] `pnpm test:db` and `pnpm test:e2e`, green against hosted.
   - [ ] Security and Performance Advisors read on the new project.
 
-  **Half 2 — Netlify and a domain.** When the build allowance returns. It
-  tests different things: the SPA redirect on deep links, theme and `lang`
-  landing before first paint on a cold CDN load, the font preload paths in a
-  production build, and the flow on a phone over mobile data. *Done when:* the
-  app is live on its own domain, signs a visitor in, lists three exercises
-  from the hosted database, and a deliberately broken type blocks the deploy.
+  **Half 2 — a host and a domain.** It tests different things from Half 1: the
+  SPA redirect on deep links, theme and `lang` landing before first paint on a
+  cold CDN load, the font preload paths in a production build, and the flow on
+  a phone over mobile data. *Done when:* the app is live on its own domain,
+  signs a visitor in, lists three exercises from the hosted database, and a
+  deliberately broken type blocks the deploy.
+
+  **The host changed on 2026-09-22: Cloudflare Workers is primary, Netlify is
+  the spare.** Both still build `main`; the domain points at one of them. The
+  step's four criteria did not move, and that is the point — they are written
+  about the app being reachable and correct, not about who serves it, so the
+  swap re-targets the work rather than re-opening it. Why it changed, and what
+  keeping two hosts costs, is in `apps/web/OPEN-QUESTIONS.md`.
+
+  - [x] `wrangler.jsonc` at the repo root: an assets-only Worker over
+        `apps/web/dist`, `not_found_handling: "single-page-application"` —
+        which is the deep-link redirect, written explicitly because Cloudflare
+        does not infer it from the presence of `index.html` the way Netlify
+        and Pages do. `wrangler` is pinned in root `devDependencies`, so the
+        deploy does not resolve a new major on its own the way `npx wrangler`
+        would.
+  - [ ] **Workers Builds connected to `product-ben/musie`** — build command
+        `pnpm check && pnpm --filter web build`, which is netlify.toml's
+        command unchanged. This is the fourth criterion: the gate has to run
+        on the host's runner, because a gate that only runs on the laptop is
+        not one. Dashboard work; it cannot be done from here.
+  - [ ] **`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set as Workers
+        Builds variables.** Vite inlines `VITE_*` at BUILD time and
+        `.env.local` is gitignored, so without these the runner builds a
+        bundle whose two values are `undefined` and `src/lib/supabase.ts`
+        refuses to start — a green build and a dead app.
+  - [ ] Deep link, cold-load `lang`, font preloads and a phone over mobile
+        data, checked against the live URL.
 
   **From the moment of `db push`, migrations stack.** The content schema is no
   longer editable in place; every change is its own `alter table`.

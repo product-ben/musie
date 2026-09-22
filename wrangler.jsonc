@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // ── AN ASSETS-ONLY WORKER, BESIDE netlify.toml RATHER THAN INSTEAD OF IT ──
+  //
+  // A.6 Half 2 was written as "Netlify and a domain". Cloudflare is now the
+  // primary host and Netlify stays as the spare; both build `main`, and the
+  // domain points at exactly one of them. The reversal and its cost are
+  // logged in apps/web/OPEN-QUESTIONS.md — read that before removing either.
+  //
+  // The two files must not drift. netlify.toml's build command is
+  // `pnpm check && pnpm --filter web build` and its publish dir is
+  // apps/web/dist; the Workers Builds settings in the Cloudflare dashboard
+  // say the same two things, because a host that builds differently is a
+  // second definition of "done" rather than a spare.
+  "name": "musie",
+
+  // Today, per the compatibility-date rule: a new project pins the date it
+  // was created, and moving it later is a deliberate act with a test behind
+  // it. https://developers.cloudflare.com/workers/configuration/compatibility-dates/
+  "compatibility_date": "2026-09-22",
+
+  "assets": {
+    // Vite's output, from the repo root — Workers Builds runs at the root of
+    // the workspace because `pnpm check` is a root script that reaches every
+    // package, not just apps/web.
+    "directory": "./apps/web/dist",
+
+    // ── THE WHOLE REASON THIS FILE EXISTS ─────────────────────────────────
+    //
+    // router.tsx is a `createBrowserRouter`, so /diary, /about-you and
+    // /session/:id/:step are real paths with no file behind them. Without
+    // this, a deep link — or a refresh anywhere but `/` — is a 404 from the
+    // CDN before React ever loads. This is the exact counterpart of
+    // netlify.toml's `from = "/*" to = "/index.html" status = 200`.
+    //
+    // Cloudflare makes it explicit rather than guessing from the presence of
+    // index.html, which is the one behavioural difference from Pages and
+    // from Netlify: forget it and the SPA looks broken only on deep links,
+    // which is precisely what A.6 Half 2 exists to test.
+    "not_found_handling": "single-page-application"
+  }
+
+  // No `main` and no `binding` on purpose. There is no Worker script: every
+  // dynamic thing musie does is a Supabase Edge Function (reveal-track,
+  // realtime-token) called from the browser, and those stay on Supabase.
+  // `binding` is only valid alongside `main`, so adding one without the
+  // other is a config error rather than a no-op.
+}

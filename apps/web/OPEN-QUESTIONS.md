@@ -2235,3 +2235,57 @@ merely *told* to sign in first and the anonymous path stays reachable. That
 reading is cheaper to build and does not actually close the beta, so I took the
 stronger one. If it is wrong, H.0b loses the flag and the `AuthProvider`
 change and becomes a plain screen — nothing else in the phase moves.
+
+## The host moved to Cloudflare, and A.6 Half 2 kept its criteria
+
+Where: `wrangler.jsonc` (new), `BUILD-PLAN.md` A.6 Half 2, `netlify.toml`
+(unchanged), root `package.json`
+
+What I checked: A.6 Half 2 has said "Netlify and a domain" since Phase A, and
+`netlify.toml` has been in the repo since the first commit. Ben asked for
+Cloudflare on 2026-09-22 — the same week the Netlify build allowance returns,
+which is the thing Half 2 was waiting on. So this is a reversal of a written
+decision at the exact moment the original decision stopped being blocked, and
+it is logged here rather than performed quietly.
+
+What I did: added `wrangler.jsonc` as an assets-only Worker over
+`apps/web/dist`, pinned `wrangler` in root `devDependencies`, and rewrote A.6
+Half 2 to name Cloudflare as primary and Netlify as the spare. `netlify.toml`
+is untouched, on Ben's instruction: **both hosts build `main`.**
+
+Why the app needed no code change: musie is a client-rendered SPA and every
+dynamic thing it does is a Supabase Edge Function called from the browser.
+`reveal-track` and `realtime-token` stay on Supabase, are Deno rather than
+Workers, and send `Access-Control-Allow-Origin: *`, so a new front-end origin
+is not a CORS change either. The host serves files; nothing about the host is
+in the bundle. That is also why Half 2's four criteria did not move.
+
+The one real difference from Netlify, and it is the deep-link redirect.
+Netlify infers nothing — `netlify.toml` states the `/*` → `/index.html` 200
+rewrite outright — but Cloudflare Pages *did* infer SPA mode from the presence
+of `index.html`, and Workers deliberately does not. `not_found_handling:
+"single-page-application"` is that rewrite, written out. Omitting it fails in
+exactly one way: `/` works, every in-app navigation works, and only a refresh
+or a pasted deep link 404s from the CDN before React loads. A smoke test that
+opens the home page and clicks around reports success.
+
+**What is NOT resolved, and it is the older problem.** A.6 Half 2 says the
+live app "signs a visitor in", and Divergence 1 in Half 1 is still open:
+anonymous sign-ins are a *dashboard* setting on the hosted project, and
+`config.toml`'s `enable_anonymous_sign_ins = true` governs only the local
+stack. `POST /auth/v1/signup` returns `anonymous_provider_disabled`. Deploying
+does not touch this. Whichever host serves the bundle, the first thing a
+visitor does still fails until that toggle is flipped — and H.0b, proposed in
+the entry above, may change what the right answer is, because a *gated* beta
+may not want anonymous sign-in enabled at all.
+
+What I need from Ben: **two questions, and they are separable.**
+
+1. **Does the domain go to Cloudflare?** Two hosts building `main` is two
+   build allowances and two candidate URLs, which is fine, but the domain
+   resolves to one. The plan's own footer warns that a printed QR code locks
+   the domain in permanently, so this stays open until print day is near.
+2. **Anonymous sign-in on hosted: on, or does H.0b overtake it?** Enabling it
+   satisfies A.6's third criterion today. If the beta is gated instead, the
+   criterion should be rewritten rather than satisfied — and that is a plan
+   change, not a dashboard toggle.
