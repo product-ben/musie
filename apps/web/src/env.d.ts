@@ -11,6 +11,16 @@
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
+  /**
+   * The sign-in gate. `string | undefined`, never `boolean`.
+   *
+   * Vite hands every variable through as a STRING, so typing this `boolean`
+   * would be a lie the compiler then enforces — and `if (env.FLAG)` on the
+   * string 'false' is permanently true. `undefined` is in the type because an
+   * unset variable really is absent. Parsed in lib/requireAccount.ts, which is
+   * the only place that reads it.
+   */
+  readonly VITE_REQUIRE_ACCOUNT?: string;
 }
 
 interface ImportMeta {

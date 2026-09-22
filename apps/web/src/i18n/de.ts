@@ -39,6 +39,47 @@ export const de: Messages = {
   'common.continue': 'Weiter',
   'common.cancel': 'Abbrechen',
 
+  /* ── Die Anmeldung · H.0b ────────────────────────────────────────────────
+     'Anmelden' for both the heading and the button, and that repetition is
+     correct rather than lazy: §3 wants a verb phrase on an action, German
+     interfaces say 'Anmelden' for this act, and inventing a second word for
+     the heading would make one screen use two names for one thing.
+
+     'E-Mail-Adresse', hyphenated throughout — §8's rule for an English term
+     joined to a German noun. Not 'Email', not 'E-Mail Adresse'.
+
+     No 'Bitte' anywhere (§4), and the instructions are imperative singular:
+     'Melde dich an', 'Prüfe beides', 'Trag … ein'. */
+  'auth.title': 'Anmelden',
+  'auth.intro': 'Musie ist noch im geschlossenen Test. Melde dich mit der E-Mail-Adresse und dem Passwort an, die du bekommen hast.',
+  'auth.email': 'E-Mail-Adresse',
+  'auth.password': 'Passwort',
+  'auth.submit': 'Anmelden',
+  /* Überschrift, also kein Punkt — §7. */
+  'auth.failed': 'Das hat nicht funktioniert',
+  'auth.error.missing': 'Trag deine E-Mail-Adresse und dein Passwort ein.',
+  /* The third sentence names a person, deliberately and temporarily. In the
+     closed beta there IS no password reset — no mail, so no reset link — and
+     the credentials were handed over by Ben in the first place. So the only
+     true next step after retyping is to ask him, and an error that stops at
+     'try again' sends somebody round the same loop instead.
+
+     IT COMES OUT AT H.1. The moment reset mail exists, the honest instruction
+     is the reset link and not a name. */
+  'auth.error.credentials': 'E-Mail-Adresse und Passwort passen nicht zu einem Konto. Prüfe beides und versuche es erneut. Wenn was nicht klappt, gib Ben Bescheid.',
+  /* 'Wende dich an die Person …' rather than a passive: there is no inbox to
+     point at, so the sentence points at somebody. */
+  'auth.error.notConfirmed': 'Dieses Konto ist noch nicht bestätigt. Wende dich an die Person, die dir das Passwort gegeben hat.',
+  'auth.error.rateLimit': 'Zu viele Versuche. Warte eine Minute und versuche es erneut.',
+  'auth.error.unknown': 'Beim Anmelden ist etwas schiefgegangen. Versuche es gleich noch einmal.',
+
+  /* ── Das Konto, in den Einstellungen · H.0b ──────────────────────────────
+     'Konto', not 'Account': §8 keeps an English term only where German has no
+     word people use, and 'Konto' is the word German interfaces use here. */
+  'auth.account': 'Konto',
+  'auth.signedInAs': 'Angemeldet als {email}',
+  'auth.signOut': 'Abmelden',
+
   /* ── Nav drawer ────────────────────────────────────────────────────────── */
   'menu.title': 'Menü',
   'menu.pagesLabel': 'Seiten',
@@ -334,13 +375,20 @@ export const de: Messages = {
      'E-Mail-Adresse' keeps its hyphens (Durchkopplung). See en.ts for what
      each sentence is claiming and why it is true. */
   'privacy.title': 'Was Musie speichert',
-  'privacy.account': 'Musie fragt nie nach deinem Namen oder deiner E-Mail-Adresse. Dieser Browser hat ein eigenes, privates Konto, und dein Tagebuch gehört dazu.',
+  /* Rewritten by H.0b — see the English block for why the old promise went
+     false for a signed-in tester. 'Wenn … sonst …' rather than a relative
+     clause: two short conditions read faster than one long qualification, and
+     §5's length budget has no room for the long one. */
+  'privacy.account': 'Musie fragt nie nach deinem Namen. Wenn du für den geschlossenen Test eine E-Mail-Adresse und ein Passwort bekommen hast, gehört dein Tagebuch zu diesem Konto. Sonst hat dieser Browser ein eigenes, privates Konto, und dein Tagebuch gehört dazu.',
   'privacy.written': 'Was du schreibst, kommt in dein Tagebuch, damit du es später nachlesen kannst. Niemand sonst sieht es.',
   'privacy.voice': 'Wenn du laut antwortest, macht Musie aus deinen Worten Text und behält nur den Text. Die Aufnahme selbst wird nie gespeichert.',
   'privacy.photo': 'Ein Foto bleibt auf deinem Gerät. Musie lädt es nie hoch.',
   /* 'ist auch dein Tagebuch weg' rather than a softer 'geht verloren': the
      English is blunt on purpose and the German should not apologise for it. */
-  'privacy.browserBound': 'Weil das Konto in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch. Zurückholen lässt es sich nicht.',
+  /* The loss first, the exemption second, as in the English. 'Zurückholen
+     lässt es sich nicht' is kept verbatim from the original German — it is the
+     sentence that does the uncomfortable work, and it was already right. */
+  'privacy.browserBound': 'Wenn dein Konto nur in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch, und zurückholen lässt es sich nicht. Wenn du angemeldet bist, bleibt dein Tagebuch bei deinem Konto, und du erreichst es auch von einem anderen Gerät.',
 
   /* ── Der Deep Link und das Dev-Blatt · E.0 ───────────────────────────────
      'Kartenset' rather than 'Deck' throughout, as on the scan step above. The

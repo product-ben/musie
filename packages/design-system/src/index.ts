@@ -109,7 +109,9 @@ export { Logo } from './Logo';
 export type { LogoProps, LogoSize } from './Logo';
 
 export { Field, FieldItem, FieldGroup } from './Field';
-export type { FieldProps, FieldItemProps, FieldGroupProps, FieldType } from './Field';
+export type {
+  FieldProps, FieldItemProps, FieldGroupProps, FieldType, FieldAutoComplete,
+} from './Field';
 
 export { InteractiveWizard, WizardPanel } from './InteractiveWizard';
 export type {

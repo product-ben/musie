@@ -22,15 +22,17 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router';
 import { Dialog } from '@base-ui/react/dialog';
-import { Moon, Sun, Trash2, X } from 'lucide-react';
+import { LogOut, Moon, Sun, Trash2, X } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, IconButton, Message, RadioGroupText, Switch,
 } from '@musie/design-system';
 import { LOCALES, LOCALE_LABELS, isLocale } from './i18n';
 import { useLocale, useT } from './i18n/localeContext';
+import { useAuth } from './lib/authContext';
 import { useCloseOverlay } from './lib/useCloseOverlay';
 import { useProfile } from './lib/profileContext';
 import { deleteAllSessions } from './lib/session';
+import { signOut } from './lib/signIn';
 import { useUserTypes } from './lib/useContent';
 
 export function SettingsSheet() {
@@ -75,6 +77,11 @@ export function SettingsSheet() {
           <ThemeSwitch />
           <UserTypeChoice />
           <LanguageChoice />
+          {/* After the preferences and before the deletion. It is not a
+              preference — it is who you are — but it is also not the one
+              control here that destroys something, and the section that does
+              keeps the last position deliberately. */}
+          <AccountSection />
           {/* LAST, and that is the whole of its position: everything above is
               a preference you set and unset, and this is the one control in
               the sheet that takes something away for good. It goes where a
@@ -84,6 +91,65 @@ export function SettingsSheet() {
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+/**
+ * The account, and signing out of it — H.0b.
+ *
+ * ── IT RENDERS ONLY FOR A USER WITH AN EMAIL ADDRESS ───────────────────────
+ * An anonymous user has none, and this whole section is hidden from them. That
+ * is not tidiness: their account lives in this browser and nowhere else, so
+ * 'Sign out' would be a button that strands an entire diary on an id nobody can
+ * sign in as again — the exact data-loss shape H.0 is written to keep away from
+ * testers, drawn as a control and placed one tap from the theme switch. There
+ * is no confirmation dialog that makes that a reasonable thing to offer.
+ *
+ * So the test is `email !== null`, published by AuthProvider. For a signed-in
+ * tester the diary is on the server and signing out costs them nothing but a
+ * retype.
+ *
+ * ── THE ADDRESS IS SHOWN, DELIBERATELY ─────────────────────────────────────
+ * These accounts are handed out, and a workshop phone gets passed between
+ * people. "Which of us is this?" has to be answerable without signing out to
+ * find out — which, for the person who was not supposed to sign out, is the
+ * expensive way to ask.
+ *
+ * ── AND THERE IS NO CONFIRM STEP ───────────────────────────────────────────
+ * Unlike DeleteEverything below, this is REVERSIBLE: the credentials still
+ * work and the diary is untouched. A confirmation for a reversible act is noise
+ * that teaches people to tap through the ones that are not.
+ */
+function AccountSection() {
+  const t = useT();
+  const { email } = useAuth();
+  const [busy, setBusy] = React.useState(false);
+
+  /* Anonymous, or not resolved yet. Either way there is nothing to sign out
+     of and nothing true to say about an address. */
+  if (email === null) return null;
+
+  return (
+    <ContentBox headline={t('auth.account')} headingLevel={2} text={t('auth.signedInAs', { email })}>
+      <ButtonGroup align="start">
+        <CtaButton
+          variant="ghost"
+          leadingIcon={LogOut}
+          loading={busy}
+          loadingLabel={t('content.loading')}
+          onClick={() => {
+            /* No `finally` that clears this. `signOut()` ends by reloading the
+               tab, so there is no later render to clear it in — and the button
+               staying disabled across the reload is what stops a second tap
+               landing while the page is on its way out. */
+            setBusy(true);
+            void signOut();
+          }}
+        >
+          {t('auth.signOut')}
+        </CtaButton>
+      </ButtonGroup>
+    </ContentBox>
   );
 }
 

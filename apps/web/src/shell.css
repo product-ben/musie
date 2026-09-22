@@ -154,6 +154,31 @@
   max-inline-size: var(--measure-body);
 }
 
+/* ── A STAGE WITH NO CHROME ABOVE IT · H.0b ─────────────────────────────────
+   The sign-in gate renders INSTEAD OF the app shell, so there is no header
+   above it and nothing subtracting a header's height is correct: `--view-block`
+   is `--viewport-block` less `--chrome-block`, so a gate centred in it sits
+   half a header high. `--viewport-block` is the same measurement without that
+   subtraction — the real window, written at runtime by theme-init.js.
+
+   A MODIFIER RATHER THAN A SECOND BLOCK, because everything else about the
+   stage is already right: it is one centred column holding one box, which is
+   what the session's end screens are too.
+
+   IT ALSO OWES THE GUTTER, and the first version forgot it. `.musie-stage`
+   never carried one because it has always rendered inside `.musie-main`, which
+   pays it — so standing the stage on its own silently took it away and the box
+   met both screen edges. `--gutter` is the same token `.musie-main` and
+   `.musie-header` use, so the gate insets by exactly what every other screen
+   does; hardcoding a second value here is how two screens stop lining up.
+
+   ON THE MODIFIER AND NOT ON `.musie-stage`, because the plain stage IS inside
+   `.musie-main`, and adding it there would inset those screens twice.       */
+.musie-stage--full {
+  min-block-size: var(--viewport-block);
+  padding-inline: var(--gutter);
+}
+
 /* ═══ THE CHAT CADENCE ══════════════════════════════════════════════════════
    Musie's two messages arrive in turn, like someone typing. The system has no
    Chat, no Avatar and no typing indicator, which is what makes this a
