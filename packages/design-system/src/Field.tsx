@@ -59,6 +59,36 @@ import { useMusyText } from './locale';
 
 export type FieldType = 'text' | 'email' | 'tel' | 'url' | 'search' | 'password';
 
+/**
+ * The `autocomplete` tokens this set has a use for, rather than `string`.
+ *
+ * ── WHY THE COMPONENT OWNS THIS AT ALL ─────────────────────────────────────
+ * A field could not carry one, so a sign-in form could not tell a password
+ * manager what it was looking at: iOS offers to fill nothing, and a tester
+ * types a generated twelve-character password by hand on a phone, from a
+ * message, every time. That is the defect. The prop is the fix, and it belongs
+ * here rather than in the screen — the screen cannot reach the <input>, which
+ * is exactly the boundary rule this set is built on.
+ *
+ * A UNION AND NOT `string`, because the value is a vocabulary: the whole
+ * mechanism turns off silently on a typo, and 'current_password' or
+ * 'currentPassword' look right in review. Widen it when a form needs a token
+ * that is not here — an address, a one-time code — rather than opening it up.
+ *
+ * `'off'` is included and is the one to think twice about: it is right for a
+ * card code that is different every time, and wrong for anything a browser
+ * could helpfully remember.
+ */
+export type FieldAutoComplete =
+  | 'off'
+  | 'email'
+  | 'username'
+  | 'current-password'
+  | 'new-password'
+  | 'one-time-code'
+  | 'name'
+  | 'tel';
+
 export interface FieldProps {
   /** Visible label. Required — a placeholder is not a label (3.3.2). */
   label: string;
@@ -66,6 +96,9 @@ export interface FieldProps {
   /** Swaps the control for a <textarea>. Same part, one modifier. */
   multiline?: boolean;
   type?: FieldType;
+  /** `autocomplete` on the control. See FieldAutoComplete for why it is a
+   *  union and why the screen cannot set this itself. */
+  autoComplete?: FieldAutoComplete;
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
@@ -88,7 +121,7 @@ export interface FieldProps {
 }
 
 export function Field({
-  label, name, multiline = false, type = 'text',
+  label, name, multiline = false, type = 'text', autoComplete,
   value, defaultValue, onValueChange, placeholder,
   description, error, validMessage,
   required = false, disabled = false, readOnly = false, rows,
@@ -142,6 +175,9 @@ export function Field({
         render={multiline ? <textarea rows={rows} /> : <input type={type} />}
         id={controlId}
         aria-describedby={describedBy}
+        /* Undefined rather than '' when unset: an empty autocomplete attribute
+           is not the same as an absent one, and browsers treat it as 'on'. */
+        autoComplete={autoComplete}
         value={value}
         defaultValue={defaultValue}
         onChange={(e) => onValueChange?.(e.target.value)}
