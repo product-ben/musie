@@ -57,7 +57,6 @@ import { StepText } from './StepText';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
 import { revealTrack } from '../lib/reveal';
-import type { RevealOutcome } from '../lib/reveal';
 import type { Card, Exercise, Track } from '../lib/content';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
@@ -75,6 +74,18 @@ export interface SessionListenProps {
   sessionId: string;
   /** Drawn this session, for the details view. Null where none was. */
   card: Card | null;
+  /**
+   * Forward, out of the step.
+   *
+   * THE STEP OWNS ITS OWN ROW, which is a departure from every other step and
+   * is why it is a prop rather than `WizardPanel`'s `actions`. The prototype
+   * puts the transport, the details link and *Start reflection* in ONE group,
+   * and they belong together: they are three things you can do with the same
+   * recording, and splitting them across two rows makes the transport look
+   * like content and the CTA like chrome. `Back` stays in the panel's row,
+   * because leaving the step is not a thing you do with the track.
+   */
+  onAdvance: () => void;
   /** The question, already resolved to the exercise's own or the fallback. */
   question: string;
   /** Sticky across the step, so it is held by the session rather than here. */
@@ -92,7 +103,7 @@ export interface SessionListenProps {
  * threshold ONCE, upward, and keeps the position it counts down from.
  */
 export function SessionListen({
-  exercise, track, question, sessionId, card, listened, onListened,
+  exercise, track, question, sessionId, card, listened, onListened, onAdvance,
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
@@ -272,12 +283,87 @@ export function SessionListen({
     target.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  /** Lifted out of the reveal so the player can put the real name in its
-   *  title once it is known. Null until the reveal has happened. */
+  /**
+   * ── THE REVEAL, WHICH IS NOW A REQUEST AND NOT A SCREEN — E.5 ───────────
+   * It used to be a block with a heading and a button. Both were removed:
+   * the player states the name once the gate is open, so a second block
+   * announcing it said it twice, and a button asking for something already on
+   * screen asked for nothing.
+   *
+   * What survives is the part that was ever load-bearing — WHEN the request
+   * goes out. Two locks, and they are different things:
+   *
+   *   · `met` is the GATE. Ninety seconds of position, however the position
+   *     got there, which since 2026-09-22 includes dragging the scrubber. The
+   *     boundary keeps people from stumbling into the answer, not from
+   *     choosing it.
+   *   · the observer is the SCROLL. The request fires when the details view
+   *     enters the viewport, so a fetch on mount cannot put the title in the
+   *     Network tab while the stage is still playing — which is E.5's
+   *     done-when, and a claim about bytes rather than pixels.
+   */
   const [revealed, setRevealed] = React.useState<{ title: string; artist: string } | null>(null);
+  const askedRef = React.useRef(false);
 
-  /* The card and the exercise's listening words, for the details view. */
+  React.useEffect(() => {
+    const element = detailRef.current;
+    if (element === null || askedRef.current || !met) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      /* Disconnect BEFORE the request: the view can cross the viewport
+         several times while one is in flight. */
+      observer.disconnect();
+      askedRef.current = true;
+      void revealTrack(sessionId).then((outcome) => {
+        if (outcome.kind === 'revealed') {
+          setRevealed({ title: outcome.track.title, artist: outcome.track.artist });
+        }
+        /* `silent` and the failures leave `revealed` null, which is exactly
+           right: the player keeps saying "Your track" and the facts below
+           carry no artist row. Nothing claims a name that is not there. */
+      });
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [sessionId, met]);
+
+  /**
+   * THE RAIL SHOWS ONLY IN THE DETAILS VIEW (Ben, 2026-09-22).
+   *
+   * On the stage it would offer to scroll up from the top of the step, and on
+   * the Störer it would compete with *Continue the exercise*, which is the
+   * same journey said better. It is for the one view you can be deep inside
+   * with the exercise out of sight.
+   */
+  const [inDetail, setInDetail] = React.useState(false);
+  React.useEffect(() => {
+    const element = detailRef.current;
+    if (element === null) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => setInDetail(entries.some((e) => e.isIntersecting)),
+      /* A third of the view is enough to count as being in it — the rail
+         should arrive with the player rather than once it is centred. */
+      { threshold: 0.33 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  /**
+   * THE DETAILS VIEW'S FACTS, and the order is the answer first.
+   *
+   * The track's own name is NOT here: the player above states it, and saying
+   * it twice on one screen is how a reveal stops feeling like one. What is
+   * here is everything the player cannot hold — the artist, the card that
+   * drew it, and the exercise's listening words.
+   */
   const facts: ContentListItem[] = [
+    ...(revealed === null ? [] : [{
+      label: t('session.listen.aboutArtist'),
+      content: revealed.artist,
+    }]),
     ...(card === null ? [] : [{
       label: t('session.scan.yourCard'),
       content: `${card.code} · ${card.feeling}`,
@@ -333,32 +419,6 @@ export function SessionListen({
             />
           )}
 
-          {/* A PLAIN BLOCK AROUND IT, so the button hugs its own label
-              instead of filling the row. `.musie-stack` is a flex column and
-              its children stretch by default, which took a control sized to
-              "Start Listening 04:14" and stretched it edge to edge. The
-              wrapper stretches instead; `.musy-btn` is inline-flex, so inside
-              a block it sizes to its contents and sits at the leading edge.
-              No CSS, and no reaching into the button's own geometry (L7). */}
-          <div>
-            <TrackButton
-              label={t('session.listen.track')}
-              duration={track.durationSeconds}
-              position={position}
-              playing={playing}
-              /* ONE FILLED PRIMARY, AND IT MOVES WHEN THE GATE OPENS. Listening
-                 is the only thing to do until the step is satisfied, so the
-                 transport holds the filled treatment and the CTA is disabled
-                 beside it; at the threshold they swap. L6 still holds — the
-                 forward action is primary the moment it is a forward action at
-                 all, and before that there is nothing to go forward to. */
-              variant={met ? 'secondary' : 'primary'}
-              size="guided"
-              onTogglePlay={toggle}
-              onRestart={toggle}
-            />
-          </div>
-
           {simulated && (
             <p className="musie-note">{t('session.listen.simulated')}</p>
           )}
@@ -377,19 +437,54 @@ export function SessionListen({
             })}
       </p>
 
-      {/* ── THE WAY DOWN ──────────────────────────────────────────────────
-          The prototype's own wording, and the button that makes the two
-          viewports below reachable at all. Secondary: the forward action out
-          of this step is the reflection, and this is a detour off it. */}
+      {/* ── ONE ROW, AND WHAT IS IN EACH HALF CHANGES AT THE THRESHOLD ─────
+          Three things you can do with the same recording, in one group, as
+          the prototype has them.
+
+          BEFORE THE GATE: listening is the only thing to do, so the transport
+          holds the filled treatment and sits left with the detour beside it;
+          the forward CTA is on the right, disabled, because there is nothing
+          to go forward to yet.
+
+          AFTER IT: the transport drops to secondary and the forward action
+          takes the fill — L6, the moment it becomes a forward action at all.
+          *Track details* crosses to the right group as it goes, because it
+          stops being a footnote to the waiting and becomes one of two real
+          choices about what to do next. */}
       {track !== null && (
-        <div className="musie-listen__more">
-          <CtaButton
-            variant="secondary"
-            size="guided"
-            onClick={() => scrollTo(warnRef)}
-          >
-            {t('session.listen.detailsAction')}
-          </CtaButton>
+        <div className="musie-listen__actions">
+          <div className="musie-listen__actions-start">
+            <TrackButton
+              label={t('session.listen.track')}
+              duration={track.durationSeconds}
+              position={position}
+              playing={playing}
+              variant={met ? 'secondary' : 'primary'}
+              onTogglePlay={toggle}
+              onRestart={toggle}
+            />
+            {!met && (
+              <CtaButton variant="secondary" onClick={() => scrollTo(warnRef)}>
+                {t('session.listen.detailsAction')}
+              </CtaButton>
+            )}
+          </div>
+
+          <div className="musie-listen__actions-end">
+            {met && (
+              <CtaButton variant="secondary" onClick={() => scrollTo(warnRef)}>
+                {t('session.listen.detailsAction')}
+              </CtaButton>
+            )}
+            <CtaButton
+              variant={met ? 'primary' : 'secondary'}
+              disabled={!met}
+              aria-describedby="listen-gate"
+              onClick={onAdvance}
+            >
+              {t('session.listen.start')}
+            </CtaButton>
+          </div>
         </div>
       )}
       </section>
@@ -407,10 +502,10 @@ export function SessionListen({
       <section ref={warnRef} className="musie-listen__view musie-listen__view--warn">
         <p className="musie-listen__warn">{t('session.listen.warnText')}</p>
         <div className="musie-listen__warn-actions">
-          <CtaButton variant="primary" size="guided" onClick={() => scrollTo(stageRef)}>
+          <CtaButton variant="primary" onClick={() => scrollTo(stageRef)}>
             {t('session.listen.warnBack')}
           </CtaButton>
-          <CtaButton variant="secondary" size="guided" onClick={() => scrollTo(detailRef)}>
+          <CtaButton variant="secondary" onClick={() => scrollTo(detailRef)}>
             {t('session.listen.warnOn')}
           </CtaButton>
         </div>
@@ -444,11 +539,17 @@ export function SessionListen({
           />
         )}
 
-        <TrackReveal sessionId={sessionId} met={met} onRevealed={setRevealed} />
+        {/* ── WHAT IT WAS, AS FACTS UNDER THE PLAYER ──────────────────────
+            No heading and no button, because neither had a job. The player
+            above already carries the name once the gate is open — the title
+            CHANGING is the reveal — so a second block announcing "what you
+            just heard" said it twice, and a button to ask for something
+            already on screen asked for nothing.
 
-        {/* The card and the exercise's own listening words, which the
-            prototype lists here beside the identity. `ContentList` because
-            these are label-and-value pairs and the system owns that shape. */}
+            The artist, the card and the listening words are the rest of it,
+            in the same `ContentList` the detail lightbox uses for the same
+            reason: these are label-and-value pairs and the system owns that
+            shape. */}
         <ContentList
           label={t('session.listen.aboutHeading')}
           items={facts}
@@ -461,113 +562,12 @@ export function SessionListen({
           the exercise they left. `pointer-events` is off on the rail and on
           for the button: the rail spans the column and must not eat taps
           meant for the player under it. */}
-      <div className="musie-listen__rail">
+      <div className="musie-listen__rail" data-visible={inDetail ? 'true' : 'false'}>
         <CtaButton variant="ghost" onClick={() => scrollTo(stageRef)}>
           {t('session.listen.scrollUp')}
         </CtaButton>
       </div>
       </div>
     </>
-  );
-}
-
-/**
- * What you heard, told only once you have heard it — E.5.
- *
- * ── THE GATE IS SOFT, AND THIS IS WHERE THAT IS DECIDED ───────────────────
- * The request does not go out until `met`, and `met` is the same latch the
- * stage uses: ninety seconds of POSITION, however the position got there.
- * Somebody who drags the scrubber past the mark has opened the gate, and that
- * is allowed on purpose (Ben, 2026-09-22) — the boundary keeps people from
- * stumbling into the answer, not from choosing it. Full control of their own
- * exercise, and a decision made deliberately is not the failure the gate
- * exists to prevent.
- *
- * ── STILL SCROLLED TO, AND STILL ASKED FOR ────────────────────────────────
- * Two locks, and they are different. `met` is the gate. The observer is the
- * SCROLL: the request fires when this block enters the viewport, so a fetch on
- * mount cannot put the title in the Network tab while the stage is still
- * playing — which is E.5's done-when, and a claim about bytes. And it is still
- * a button, because arriving is not asking: a thumb on its way down the
- * details view passes through here.
- *
- * It reports the name UPWARD so `MusicPlayer` can stop calling the recording
- * "Your track" and start calling it what it is. That is the reveal — the
- * player's own title changing is more of the moment than a line of text.
- */
-function TrackReveal({
-  sessionId, met, onRevealed,
-}: {
-  sessionId: string;
-  met: boolean;
-  onRevealed: (track: { title: string; artist: string }) => void;
-}) {
-  const t = useT();
-  const anchor = React.useRef<HTMLDivElement>(null);
-  const [outcome, setOutcome] = React.useState<RevealOutcome | null>(null);
-  const [asked, setAsked] = React.useState(false);
-  const [shown, setShown] = React.useState(false);
-
-  React.useEffect(() => {
-    const element = anchor.current;
-    /* NOT BEFORE THE GATE. Scrolling here early is ordinary — the details view
-       is reachable throughout — so this simply waits rather than refusing. */
-    if (element === null || asked || !met) return undefined;
-
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return;
-      /* Disconnect BEFORE the request: the block can cross the viewport
-         several times while one is in flight. */
-      observer.disconnect();
-      setAsked(true);
-      void revealTrack(sessionId).then((result) => {
-        setOutcome(result);
-        if (result.kind === 'revealed') {
-          onRevealed({ title: result.track.title, artist: result.track.artist });
-        }
-      });
-    });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [sessionId, asked, met, onRevealed]);
-
-  return (
-    <div ref={anchor} className="musie-reveal">
-      <h3 className="musie-reveal__heading">{t('session.listen.revealHeading')}</h3>
-
-      {!met ? (
-        /* The honest state before the gate: not an error, not a tease. It says
-           what opens it, and the scrubber beside it means that is a choice
-           rather than a wait. */
-        <p className="musie-note">{t('session.listen.revealTooEarly')}</p>
-      ) : !shown ? (
-        <>
-          <p className="musie-note">{t('session.listen.revealHint')}</p>
-          <div>
-            <CtaButton
-              variant="secondary"
-              loading={asked && outcome === null}
-              loadingLabel={t('session.listen.revealWorking')}
-              onClick={() => setShown(true)}
-            >
-              {t('session.listen.revealAction')}
-            </CtaButton>
-          </div>
-        </>
-      ) : (
-        <p className="musie-reveal__answer">
-          {outcome === null ? t('session.listen.revealWorking')
-            : outcome.kind === 'revealed'
-              ? t('session.listen.revealBy', {
-                  title: outcome.track.title,
-                  artist: outcome.track.artist,
-                })
-            : outcome.kind === 'silent' ? t('session.listen.revealSilent')
-            : outcome.kind === 'tooEarly' ? t('session.listen.revealTooEarly')
-            : t('session.listen.revealFailed')}
-        </p>
-      )}
-    </div>
   );
 }

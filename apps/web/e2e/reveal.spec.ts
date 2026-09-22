@@ -131,28 +131,25 @@ test('the title reaches the browser only at the reveal', async ({ page }, testIn
     el.currentTime = Math.max(0, el.duration - 2);
   });
 
-  const reveal = page.getByRole('heading', {
-    name: label(locale, 'session.listen.revealHeading'),
-    exact: true,
-  });
-  await expect(reveal).toBeVisible({ timeout: 30_000 });
+  /* ── SCROLL TO THE DETAILS, WHICH IS WHERE THE REVEAL HAPPENS ─────────
+     Two locks, and this is the second. `met` is the gate, met above by
+     seeking. The observer is the SCROLL: the request fires when this view
+     enters the viewport, which is what E.5's done-when is actually about. */
+  const detail = page.locator('.musie-listen__view--detail');
+  await detail.scrollIntoViewIfNeeded();
 
-  /* STILL NOTHING. The block is rendered and on screen, and the answer has
-     been fetched by the observer — but this assertion is what distinguishes
-     "rendered" from "reached", and the walk has scrolled to it by now. */
-  await reveal.scrollIntoViewIfNeeded();
+  /* ── THE TITLE ARRIVES IN THE PLAYER ITSELF ───────────────────────────
+     There is no reveal button and no "what you just heard" heading any more:
+     the player said "Your track" while the gate was shut and says the
+     recording's name once it is open, so the TITLE CHANGING is the reveal.
+     Asserting on `.musy-mplayer__title` is therefore asserting on the
+     product's actual claim rather than on a label beside it. */
+  await expect(detail.locator('.musy-mplayer__title')).toHaveText(TITLE, { timeout: 30_000 });
 
-  await page.getByRole('button', {
-    name: label(locale, 'session.listen.revealAction'), exact: true,
-  }).click();
+  /* And the artist, which the player cannot hold, in the facts below it. */
+  await expect(detail.getByText(ARTIST, { exact: true })).toBeVisible();
 
-  /* ── AND NOW IT IS THERE, ON SCREEN AND IN EXACTLY ONE RESPONSE ────────*/
-  await expect(
-    page.getByText(label(locale, 'session.listen.revealBy', { title: TITLE, artist: ARTIST }), {
-      exact: true,
-    }),
-  ).toBeVisible({ timeout: 30_000 });
-
+  /* ── EXACTLY ONE RESPONSE CARRIED IT, AND IT WAS reveal-track ─────────*/
   const carrying = leaked();
   expect(carrying.length, 'the title should arrive in exactly one response').toBe(1);
   expect(

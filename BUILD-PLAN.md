@@ -852,6 +852,141 @@ that looks exactly like a bug.
 surface: nothing documents `AudioContext` under Safari, background tabs or the
 user-gesture requirement. Budget a session for surprises.
 
+### The voice memo — F.7–F.11, added 2026-09-22
+
+**New scope, and it reverses a decision rather than extending one.** Ben asked
+for a switch on the reflect step — off by default — that also keeps the
+recording of a spoken answer. The design is
+[docs/VOICE-MEMO.md](docs/VOICE-MEMO.md), written before any of the code, and
+these five steps are that document's edit list.
+
+What it reverses is **D1**, which is not a gap but an answered question: *"No
+`media_path`, no Storage bucket, no retention policy."* It is answered in three
+places — the decision itself, the `sessions` migration's comment on why the
+column is absent rather than nullable, and `privacy.voice`, which promises a
+person that *"the recording itself is never stored."* An opt-in switch does not
+keep that promise; it makes it conditional. Which is why the first step here is
+the promise, not the column.
+
+**These five follow F.6 and do not overlap it.** F.6 writes the transcript, and
+a memo is an attachment to a transcript that must already save —
+`reflections.body` stays `not null`, so a memo can never be an answer on its
+own. That is the part of D1 worth keeping: text is the record.
+
+- [ ] **F.7 The promise, before the code that breaks it.** D16 into
+  DOMAIN-MODEL.md, D1 marked superseded rather than deleted, `privacy.voice`
+  rewritten in both locales, and the six other keys §3 of the design document
+  writes out in full.
+
+  **Alone, and first, deliberately.** If the migration lands before the copy
+  there is a window in which the app can store a recording while the privacy
+  page still says it never does — which is precisely the failure Phase G's
+  checkpoint exists to catch, walked into on purpose. *Done when:* `pnpm check`
+  passes — `de.ts` is typed against `en.ts`, so a key written on one side only
+  is a typecheck error — and the privacy page reads true against a build that
+  still stores nothing.
+
+- [ ] **F.8 The column, the bucket, and four policies.** One new migration;
+  rule 4, they stack. `media_path` and `media_expires_at`, both or neither by
+  check constraint — a path with no expiry is a recording nobody will delete,
+  an expiry with no path is a promise about nothing. The expiry is **stored,
+  not computed** from `created_at`: a row keeps the promise it was written
+  under rather than silently inheriting a new one.
+
+  The bucket follows `20260921160000_track_audio.sql` exactly — created here
+  rather than in `config.toml` so `supabase db push` creates it on the hosted
+  project, private, size- and mime-limited. **What is new is that this is the
+  first bucket a client writes to.** `tracks` has a select policy and nothing
+  else, because uploading there is an operator act; here the person is the
+  uploader, so select, insert, update and delete are all theirs, scoped by
+  `{user_id}/` leading the object key. `update` is granted on purpose: the
+  reflect step can be returned to, which is why `saveReflection` is already an
+  upsert.
+
+  *Done when:* `pnpm test:db` proves a second anonymous user cannot read,
+  write or delete under the first's prefix — four tests, each failing for its
+  own reason — and that **deleting a session leaves the object behind.** That
+  last one asserts an orphan rather than a cascade, because the orphan is the
+  fact F.9 is built on, and a test written expecting a cascade would pass for
+  the wrong reason.
+
+- [ ] **F.9 Deletion and the sweep — BEFORE anything can be captured.** The
+  order looks inverted and is not: the moment F.10 ships, files accumulate that
+  nothing deletes. Building the deleter first means nothing a person creates is
+  ever un-deletable, and it is testable with no UI at all — the harness uploads
+  its fixtures with the service role.
+
+  Three layers, and they are not redundant. The **client** removes the object
+  before the row in `deleteSession` and `deleteAllSessions`, both of which
+  currently carry a paragraph saying *"there is no storage half to this: D1
+  settled that nothing is ever uploaded, so there are no files to orphan"* —
+  that comment goes with the code. The **read** refuses anything past
+  `media_expires_at` whatever is still in the bucket, so the promise is true
+  from the moment the timestamp passes rather than from the moment a sweep
+  happens to run. And a scheduled Edge Function is the **backstop**.
+
+  **The backstop is the layer that earns the phase**, because of a failure mode
+  this app makes uniquely likely: accounts are browser-bound — `privacy.
+  browserBound` — so clearing browser data strands audio owned by an identity
+  nobody can ever sign in as again. No client-side deletion can reach those
+  files. It deletes through the Storage API and never by deleting rows from
+  `storage.objects`, which leaves the file behind and builds a bucket that
+  reports empty and bills full.
+
+  *Done when:* a row past its expiry is not offered even with the file present,
+  and the sweep removes both an expired object and an object with no row.
+
+- [ ] **F.10 Capture: the switch, the WAV, the upload.** `Switch` exists and is
+  exported, with `Mic` / `MicOff` as the `onGlyph` / `offGlyph` pair so the knob
+  says *what* is switching rather than only that something is. It renders above
+  `RecordButton` in `VoiceTranscript.tsx`; `Switch` has no `description` prop,
+  so its sentence goes in the `musie-note` paragraph that file already uses
+  twice.
+
+  **The switch is read before the microphone opens, and locked while it runs.**
+  Retroactive opt-in would mean buffering every session on the chance it is
+  wanted, which is exactly what the promise forbids. `begin()` reads the value
+  once, at the top, so the value governing a recording is the one that was on
+  screen when it started.
+
+  The audio is the PCM that already flows — `recorder.ts` emits base64 PCM16
+  every ~40 ms — accumulated and encoded as WAV in the browser. No new
+  dependency, no second microphone consumer, no new permission. 24 kHz mono is
+  48 KB/s, so the 60 s `SESSION_SECONDS` ceiling is ~2.9 MB, and that ceiling
+  bounds the buffer even if a stop path is missed. `MediaRecorder` / opus is a
+  tenth of the size and is **deferred rather than rejected**: it is the exact
+  iOS Safari surface the checkpoint above already says to budget for, and this
+  feature should not be what discovers it.
+
+  `keepExisting: true` means *Record more* adds to the transcript, so a
+  reflection can be several runs against one `unique (session_id)` row. They
+  concatenate — same format, same rate, append the samples, rewrite one header.
+  Upload **then** write the row: a file with no row is invisible and swept
+  within the day, while a row pointing at a file that never arrived is a
+  visibly broken diary entry.
+
+  *Done when:* the switch off creates no object, the switch on creates one at
+  `{user_id}/{session_id}.wav` that plays back, and the switch cannot be moved
+  mid-recording.
+
+- [ ] **F.11 Playback, which is mostly already built.** `VoiceNote` (§7.19) is
+  in the design system, exported, and **unused by the app** — the reflect step
+  chose `RecordButton` + `DraggableList` because the transcript is the product.
+  Its `recorded` state is the player this needs: a `Progress`-backed position,
+  play/pause and delete, already story-covered and already accessible. So this
+  is wiring in `DiaryEntry`, with a signed URL minted the way `lib/audio.ts`
+  already mints one for a track.
+
+  Rule 7 with teeth: `VoiceNote` defaults **every** copy prop to the package's
+  German locale catalogue. All of them get passed. *Done when:* a memo plays
+  from the diary entry, and an entry whose memo has expired says so rather than
+  quietly losing a control.
+
+**Checkpoint.** The upload, on mobile data, with a stopwatch. §5's size
+question is settled by that number and not by the design document: 2.9 MB after
+a reflection on a train is the most likely first complaint, and it is the one
+thing that sends F.10 back for `MediaRecorder`.
+
 ---
 
 ## Phase G · The Diary, finished
@@ -970,6 +1105,13 @@ plan most likely to have been skipped and regretted.
 app is functional and live on its own domain, which is the end of A.6's second
 half. Accounts come after that line, not before it.
 
+**F.7–F.11 are not in it either, and where they belong is an open question.**
+The voice memo was added on 2026-09-22 — after the count was taken, and after
+the decision it reverses was made. It is the first work in this plan that
+un-decides something rather than building on it, which is why it carries a
+design document of its own. Whether it sits inside the MVP line or after it is
+Ben's, and it is the only scope question this plan currently leaves open.
+
 Phases E and F do not depend on each other. If the music licensing stalls, run
 F first — and see **Running E and F in parallel** above for the two tracks that
 can actually run at once, and the five things they share that decide which two
@@ -987,6 +1129,7 @@ those are.
 | The four user-type artworks | D.2 uses `RadioGroupImage` properly only once they exist |
 | Which vision model reads the handwriting — D13 settled that a photo BECOMES TEXT, so this is now the only thing between photo mode and working | D.5's reflect step |
 | D15 — may the Diary NAME the track you heard, given the column grant withholds the title | the diary entry page's *Listen again* control |
+| **Thirty days or ninety** — how long a voice memo is kept. Thirty is recommended, with the argument in [docs/VOICE-MEMO.md](docs/VOICE-MEMO.md) §2 | **F.8, and everything after it.** It has a clock on it: a retention window changed later changes rows that were written under the old one, so it is settled before the migration or not cheaply at all |
 
 ---
 

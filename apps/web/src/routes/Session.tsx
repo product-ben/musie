@@ -435,19 +435,13 @@ export function Session() {
        recording cannot be listened to, so the gate it would never pass is not
        applied — the step says why there is nothing to play instead of becoming
        a dead end. */
-    actions = (
-      <>
-        {back}
-        <CtaButton
-          variant={listened || track === null ? 'primary' : 'secondary'}
-          disabled={track !== null && !listened}
-          aria-describedby="listen-gate"
-          onClick={advance}
-        >
-          {t('session.listen.start')}
-        </CtaButton>
-      </>
-    );
+    /* BACK ALONE, because the listen step owns its own row — see
+       `SessionListen`'s `onAdvance`. The transport, the details detour and
+       *Start reflection* are three things you can do with one recording and
+       the prototype groups them together; splitting them across two rows made
+       the transport read as content and the CTA as chrome. Leaving the step
+       is not a thing you do with the track, so Back stays here. */
+    actions = back;
   } else {
     /* SKIP sits beside FINISH, as the alternative to it — L6's "two buttons
        that are alternatives to each other" pair. It is `secondary` rather than
@@ -543,6 +537,7 @@ export function Session() {
               question={question}
               listened={listened}
               onListened={() => setListened(true)}
+              onAdvance={advance}
             />
           )}
 
