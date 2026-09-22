@@ -539,6 +539,7 @@ export function Session() {
               exercise={exercise}
               track={track}
               sessionId={id}
+              card={card}
               question={question}
               listened={listened}
               onListened={() => setListened(true)}

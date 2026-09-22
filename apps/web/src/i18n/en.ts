@@ -281,6 +281,24 @@ export const en = {
   'session.listen.start': 'Start reflection',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
+  /* ── The three scroll views · E.5b ──────────────────────────────────────
+     The prototype's listen step is three stacked viewports and this is their
+     copy. The Störer's sentence is the prototype's own, lightly tightened:
+     it interrupts rather than warns, and its measure is narrow so it lands as
+     one thought. */
+  'session.listen.detailsAction': 'Track details and player',
+  'session.listen.warnText': 'For this exercise it is better not to be influenced by the track’s name or its cover.',
+  'session.listen.warnBack': 'Continue the exercise',
+  'session.listen.warnOn': 'Show details and player',
+  'session.listen.scrollUp': 'Scroll up',
+  /* The player's own words. Passed explicitly because the design system's
+     defaults are a mix of languages — CLAUDE.md 7. */
+  'session.listen.play': 'Play',
+  'session.listen.pause': 'Pause',
+  'session.listen.restart': 'Play again',
+  'session.listen.seek': 'Position in the track',
+  'session.listen.aboutHeading': 'About this track',
+  'session.listen.aboutInstructions': 'Listening instructions',
   /* ── The reveal · E.5 ──────────────────────────────────────────────────
      Reached by scrolling past the stage, and NOT rendered until the gate is
      met: the whole exercise rests on meeting a piece of music without being

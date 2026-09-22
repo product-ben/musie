@@ -831,25 +831,123 @@
   gap: var(--space-gap-stack);
 }
 
-/* ── The reveal · E.5 ───────────────────────────────────────────────────────
+/* ── The listen step's three viewports · E.5b ───────────────────────────────
    A custom pattern under 10-layout.md L14: the system has no component for
-   "a block you scroll to that answers a question you were holding", and
-   ContentBox would frame it as a panel of its own — which is the one thing it
-   must not look like, because the reveal belongs to the track above it rather
-   than standing beside it.
+   "three full-height views you move between", and it is a screen's behaviour
+   rather than a reusable shape. Every declaration resolves to a Layer 1 token
+   or arithmetic over one (L14.1); the classes are `musie-`, never `musy-`
+   (L14.2); and if this recurs it is a component request (L14.3).
 
-   Every declaration resolves to a Layer 1 token or arithmetic over one (L14.1)
-   and the class is `musie-`, never `musy-` (L14.2). If this recurs it is a
-   component request and not a second copy (L14.3).
+   NO SCROLL-SNAP, DELIBERATELY. The prototype moves between views with
+   buttons, and that is the better behaviour rather than merely the reproduced
+   one: snap takes the scroll away from the person, so a thumb that wanted to
+   read the middle of the details view gets thrown to its edge. This step's
+   whole posture — down to the gate being soft — is that the person stays in
+   charge of their own exercise.
 
-   THE TOP MARGIN IS THE POINT. Two sections of space above it is what makes
-   this a scroll target rather than the next paragraph: the stage has to leave
-   the viewport before the answer enters it, which is the whole mechanism E.5
-   exists to build. */
+   `100svh` and not `100vh`: on iOS the large viewport unit leaves each view
+   sitting under the browser's own chrome, which is exactly where the buttons
+   are. */
+.musie-listen {
+  position: relative;
+}
+
+.musie-listen__view {
+  box-sizing: border-box;
+  min-block-size: 100svh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+  padding-block: var(--space-section);
+}
+
+/* ── THE STAGE IS THE ONE VIEW THAT IS NOT A FULL VIEWPORT ────────────────
+   And that is not an inconsistency — it is what this app's structure requires
+   where the prototype's did not.
+ 
+   `WizardPanel` owns the action row, and it renders AFTER this component's
+   children. So a stage pinned to 100svh puts *Back* and *Start reflection* —
+   the step's only way forward — below the fold, reachable solely by scrolling
+   past a Störer that exists to discourage scrolling. The prototype does not
+   have this problem because its stage contains its own buttons; it sizes to a
+   computed `listenHeight` for exactly the same reason, which is the same fix
+   expressed in the layout the prototype had.
+ 
+   MEASURED: pinned to 100svh, the forward CTA was one screen down. So the
+   stage flows at its natural height and the panel's actions stay with it,
+   while the two views BELOW keep their full viewport — which is what makes
+   them somewhere you arrive rather than something you scroll past. */
+.musie-listen__view--stage {
+  min-block-size: auto;
+  padding-block: 0;
+}
+
+.musie-listen__more {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ── Scroll 1 · the Störer ─────────────────────────────────────────────────
+   Centred both ways, because it is an interruption and not a section: it has
+   one sentence and two choices, and nothing else is on screen to anchor it. */
+.musie-listen__view--warn {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 26ch is the prototype's measure and it is narrow on purpose — the sentence
+   has to land as one thought rather than as a paragraph. `--measure-body`
+   would be twice this and would read as body copy. */
+.musie-listen__warn {
+  margin: 0;
+  max-inline-size: 26ch;
+  text-wrap: pretty;
+  font-family: var(--type-body-xl-family);
+  font-size: var(--type-body-xl-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--type-body-xl-line);
+  letter-spacing: var(--type-body-xl-tracking);
+  color: var(--on-surface-muted);
+}
+
+.musie-listen__warn-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-related);
+}
+
+/* ── Scroll 2 · the details ────────────────────────────────────────────────
+   Content starts at the top rather than centring: centring absorbs the top
+   padding into the slack, which in the prototype put the player underneath
+   the pinned scroll-up control. */
+.musie-listen__view--detail {
+  justify-content: flex-start;
+}
+
+/* ── The scroll-up rail ────────────────────────────────────────────────────
+   Sticky, so somebody who has scrolled down is never more than one control
+   from the exercise they left. `pointer-events` is off on the rail and on for
+   its button: the rail spans the column and must not swallow taps meant for
+   the player beneath it. */
+.musie-listen__rail {
+  position: sticky;
+  inset-block-end: var(--space-gap-stack);
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-gap-related);
+  pointer-events: none;
+}
+
+.musie-listen__rail > * {
+  pointer-events: auto;
+}
+
+/* ── The reveal ─────────────────────────────────────────────────────────────
+   Now inside the details view rather than at the foot of the stage, so it has
+   no section rule of its own — the viewport boundary is the separation. */
 .musie-reveal {
-  margin-block-start: calc(var(--space-section) * 2);
-  padding-block-start: var(--space-section);
-  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-related);
@@ -867,8 +965,6 @@
   color: var(--on-surface);
 }
 
-/* The answer itself reads as the track's own line rather than as body copy —
-   it is the one fact the whole step was withholding. */
 .musie-reveal__answer {
   margin: 0;
   max-inline-size: var(--measure-body);

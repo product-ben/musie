@@ -214,6 +214,18 @@ export const de: Messages = {
   'session.listen.gateMet': 'Genug vom Stück liegt hinter dir. Hör so lange weiter, wie du magst, oder starte jetzt die Reflexion.',
   'session.listen.gateLocked': 'Hör so viel vom Stück, wie du möchtest – {gate} sind das Minimum für diese Übung, {left} fehlen noch.',
   'session.listen.start': 'Reflexion starten',
+  /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
+  'session.listen.detailsAction': 'Trackdetails und Player',
+  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht vom Namen des Tracks oder vom Cover beeinflussen zu lassen.',
+  'session.listen.warnBack': 'Übung fortsetzen',
+  'session.listen.warnOn': 'Details und Player zeigen',
+  'session.listen.scrollUp': 'Nach oben',
+  'session.listen.play': 'Abspielen',
+  'session.listen.pause': 'Pause',
+  'session.listen.restart': 'Noch einmal',
+  'session.listen.seek': 'Position im Track',
+  'session.listen.aboutHeading': 'Zu diesem Track',
+  'session.listen.aboutInstructions': 'Hinweise zum Hören',
   /* ── Die Auflösung · E.5 ───────────────────────────────────────────────*/
   'session.listen.revealHeading': 'Das hast du gerade gehört',
   'session.listen.revealHint': 'Scroll weiter, wenn du es wissen möchtest.',

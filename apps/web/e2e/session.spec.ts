@@ -132,7 +132,10 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        label — "Start Listening, <label>" — because the action word is what
        changes as the transport moves and the label is what it is acting on.
        So the stable half is the label, matched as a substring. */
-    const transport = page.getByRole('button', {
+    /* SCOPED TO THE STAGE since E.5b: the details view two viewports down
+       carries a `MusicPlayer` announcing the same track, so an unscoped match
+       is ambiguous. */
+    const transport = page.locator('.musie-listen__view--stage').getByRole('button', {
       name: label(locale, 'session.listen.track'),
       exact: false,
     });

@@ -682,8 +682,63 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   track identifier until something better exists.
   `select count(*) from tracks` is still the number to quote when asking for
   more.
-- [x] **E.5 The reveal gate.** The `reveal-track` Edge Function and the
-  scroll-reached reveal at the foot of the listen step.
+- [~] **E.5 The reveal gate — HALF DONE, and the tick was wrong (2026-09-22).**
+  The `reveal-track` Edge Function is built, deployed and proven. **The
+  three-scroll Listen step is not**, and E.5's own sentence names it: *"the
+  `reveal-track` Edge Function AND the three-scroll Listen step"*. D.5b
+  deferred two viewports here by name and MOCKUPS spelled them out. I built a
+  reveal block at the foot of the stage instead, and ticked the step. Ben found
+  it on the first hand walk.
+
+  **What is built:** the function, its three checks, the silent-card refusal,
+  and a walk that watches the network — which also caught the `licence_ref`
+  leak. That half stands.
+
+- [x] **E.5b The three-scroll Listen step.** NEW, 2026-09-22, and only new
+  because E.5 was ticked without it.
+
+  **Scroll 0 · the stage** — unchanged, plus a *Track details and player*
+  button that makes the two views below reachable.
+
+  **Scroll 1 · the Störer** — a full viewport that INTERRUPTS rather than a
+  notice that warns, and the button order is the argument: *Continue the
+  exercise* is primary and goes back up; *Show details and player* is the
+  quiet secondary. The prototype puts the discouraged path second on purpose,
+  and the same words in a `Message` would be a footnote people scroll past.
+
+  **Scroll 2 · the details** — the full `MusicPlayer` with a live scrubber,
+  the reveal, and the card and listening words in a `ContentList`. The player
+  is why this view could not exist before E.5: its `title` is required and
+  VISIBLE, so until `reveal-track` there was nothing truthful to put in it. It
+  carries *Your track* before the gate and the recording's own name after,
+  which makes the title CHANGING the reveal rather than a line of text being
+  the reveal.
+
+  **THE GATE IS SOFT, AND THAT IS THE PRODUCT DECISION IN THIS STEP** (Ben,
+  2026-09-22). Dragging the scrubber past ninety seconds opens the gate. It
+  keeps people from STUMBLING into the answer, not from CHOOSING it — full
+  control of their own exercise, and a deliberate decision is not the failure
+  the gate exists to prevent. It cost nothing because the gate was already
+  written the right way: it latches on position and never asks who moved it,
+  so the element, the clock and now the scrubber are three sources of one fact.
+
+  **No scroll-snap**, deliberately: snap takes the scroll away from the person,
+  and a thumb that wanted the middle of the details view gets thrown to its
+  edge. Buttons offer the jumps; the scroll stays theirs. Same posture as the
+  soft gate.
+
+  **The stage is the one view that is not a full viewport**, and that is
+  structural rather than inconsistent. `WizardPanel` owns the action row and
+  renders it after this component's children, so a 100svh stage puts *Start
+  reflection* one screen down, reachable only by scrolling past a Störer that
+  exists to discourage scrolling. Measured, then fixed. The prototype sizes its
+  stage to a computed height for the same reason.
+
+  *Done when:* the three views are reachable, the scrubber opens the gate, and
+  the title appears in the player only after it. **Two controls now announce
+  the same track** — the stage's `TrackButton` and the details `MusicPlayer` —
+  which Playwright's strict mode caught and a person would not; both walks are
+  scoped to the stage.
 
   **The endpoint takes a SESSION id and never a track id**, which is the whole
   design: one accepting a track id would let anyone signed in walk

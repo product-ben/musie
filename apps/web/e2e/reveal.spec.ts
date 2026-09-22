@@ -89,7 +89,10 @@ test('the title reaches the browser only at the reveal', async ({ page }, testIn
      `label` is announced by TrackButton and never shown, so the button's
      accessible name is "<action>, <label>" — matched loosely for the action
      word, which changes with the transport's state. */
-  const transport = page.getByRole('button', {
+  /* SCOPED TO THE STAGE. Since E.5b the details view carries a `MusicPlayer`
+     that announces the same track, so an unscoped match is ambiguous — which
+     Playwright's strict mode catches and a person would not. */
+  const transport = page.locator('.musie-listen__view--stage').getByRole('button', {
     name: label(locale, 'session.listen.track'),
     exact: false,
   });
