@@ -47,6 +47,7 @@ import {
   Field, Message, PhotoUpload, SegmentedControl,
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
+import { DataLightbox } from './DataLightbox';
 import { StepText } from './StepText';
 import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
@@ -89,6 +90,13 @@ export function SessionReflect({
      real clock. */
   const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
 
+  /* THE DATA PROMISE, and the ref that gets focus back. With no
+     `Dialog.Trigger` there is nothing for base-ui to return focus to, and
+     focus landing on <body> is how a keyboard user loses a reflection they
+     were halfway through writing. `Lightbox` names this cost itself. */
+  const [dataOpen, setDataOpen] = React.useState(false);
+  const dataLink = React.useRef<HTMLButtonElement>(null);
+
   return (
     <>
       <StepText lines={exercise.reflectText} />
@@ -99,7 +107,16 @@ export function SessionReflect({
       <div className="musie-stack">
         <SegmentedControl
           name="reflect-mode"
+          /* THE NAME STAYS; THE HEADING GOES — Ben, 2026-09-23. "How would you
+             like to answer?" sat above three buttons that say *Record audio*,
+             *Write answer* and *Take photo*, which is the question answered in
+             the controls that answer it. `legendHidden` is the component's own
+             prop for exactly this: the group keeps its accessible name, so a
+             screen reader still hears what the three radios are FOR, and the
+             screen stops saying it twice. It is never dropped — an unnamed
+             radio group announces as a bare list of buttons. */
           legend={t('reflect.legend')}
+          legendHidden
           accent="accent"
           options={[
             { value: 'voice', label: t('reflect.mode.voice'), glyph: Mic },
@@ -125,21 +142,31 @@ export function SessionReflect({
         {mode === 'voice' && (
           <div className="musie-stack">
             <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
-            {/* THE ONE THING VOICE STILL CANNOT DO. Everything above is real
-                — the microphone, the transcription, the editing — and none of
-                it reaches `reflections.body`, which is why *Finish session*
-                stays disabled in this mode. Saying so is the honest version
-                of a disabled button, and it is the same shape the photo
-                mockup below uses for a different reason. `live="off"`: it is
-                a standing fact about the step, not something that happened.
-                F.6 deletes this. */}
-            <Message
-              variant="info"
-              live="off"
-              headingLevel={3}
-              headline={t('reflect.voice.notSaved')}
-              text={t('reflect.voice.notSavedText')}
-            />
+
+            {/* ── ONE SENTENCE, NOT A BOX — Ben, 2026-09-23 ──────────────
+                This was a `Message variant="info"` carrying a headline and a
+                four-clause paragraph: what happens to your words, what happens
+                to the recording, and what was still unbuilt. Two of those
+                three stopped being true when F.6 landed the write, and the
+                third was never the thing somebody standing on this screen with
+                a microphone open needed to read.
+
+                What is left is the promise itself — Musie keeps the text and
+                never the voice — with the rest a word away. The `Message` is
+                gone rather than shortened: an info box is a thing that
+                HAPPENED, and this is a standing fact about the product, which
+                is a line of small print. */}
+            <p className="musie-note">
+              {t('privacy.voiceShort')}{' '}
+              <button
+                ref={dataLink}
+                type="button"
+                className="musie-inline-link"
+                onClick={() => setDataOpen(true)}
+              >
+                {t('privacy.more')}
+              </button>
+            </p>
           </div>
         )}
 
@@ -166,6 +193,12 @@ export function SessionReflect({
           </div>
         )}
       </div>
+
+      <DataLightbox
+        open={dataOpen}
+        onClose={() => setDataOpen(false)}
+        finalFocus={dataLink}
+      />
     </>
   );
 }

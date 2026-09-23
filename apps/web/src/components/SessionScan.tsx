@@ -96,6 +96,36 @@ export function SessionScan({
   const [code, setCode] = React.useState(held ?? '');
 
   /**
+   * ── TYPING THE CODE IS THE THIRD WAY IN, AND IT IS FOLDED AWAY ──────────
+   * Ben, 2026-09-23. The field and its button sat open under the frame, so the
+   * step offered a camera and a form at once and the form — a labelled input
+   * with a hint under it and a button under that — was the taller of the two.
+   * The common way in is the QR code; typing is the fallback for a camera that
+   * will not open or a code that will not read.
+   *
+   * A DISCLOSURE, NOT A SWITCH, and the word in the brief was "switch". A
+   * switch reports a setting that stays true — dark mode, the one in settings
+   * — and this turns nothing on: it shows a form that was always going to
+   * work. The accessible difference is real (`aria-expanded` on a button says
+   * "this reveals something below"; `role="switch"` says "this is now on"),
+   * and the visible difference is none, so the button is what it does.
+   *
+   * IT OPENS ITSELF IF IT IS ALREADY NEEDED. A code carried in from a scanned
+   * deep link is IN the field, and folding the field away would hide the one
+   * thing that just happened — same for an error, which appears under the
+   * field it belongs to and would otherwise be reported into a closed box.
+   */
+  const [typing, setTyping] = React.useState(held !== null);
+
+  /* An answer about a code OPENS the form rather than being drawn into a shut
+     one. It sets state rather than being folded into the `open` test, so the
+     toggle keeps working afterwards: a condition that forced it open would
+     leave a button saying `aria-expanded="true"` that nothing could close. */
+  React.useEffect(() => {
+    if (codeError !== null) setTyping(true);
+  }, [codeError]);
+
+  /**
    * WHICH VALUE THE ERROR BELONGS TO.
    *
    * Without it, the message earned by `MC-99` sits under the field while
@@ -151,7 +181,30 @@ export function SessionScan({
               the camera and nothing else; a code it reads comes back here. */}
           <CardScanner onCode={applyCode} busy={scanning} />
 
-          <form className="musie-code" onSubmit={submit}>
+          {/* The disclosure's own control. A plain <div> so it hugs its label
+              — `.musy-btn` is inline-flex and a block parent is all that
+              takes. `aria-controls` names the form below, which is why the
+              form is rendered rather than styled away: `hidden` is
+              `display: none` and `.musie-code` sets `display: flex`, so the
+              attribute would have been overridden and the "closed" form would
+              have sat there in full view. */}
+          <div>
+            <CtaButton
+              variant="ghost"
+              aria-expanded={typing}
+              aria-controls="card-code-form"
+              onClick={() => setTyping((was) => !was)}
+            >
+              {t('session.scan.codeManual')}
+            </CtaButton>
+          </div>
+
+          {typing && (
+          <form
+            id="card-code-form"
+            className="musie-code"
+            onSubmit={submit}
+          >
             <Field
               label={t('session.scan.codeLabel')}
               name="card-code"
@@ -183,6 +236,7 @@ export function SessionScan({
               </CtaButton>
             </div>
           </form>
+          )}
         </div>
       ) : (
         <ContentList

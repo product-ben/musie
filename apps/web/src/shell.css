@@ -761,6 +761,71 @@
   hyphens: var(--text-hyphens);
 }
 
+/* ═══ A WORD IN A SENTENCE THAT OPENS SOMETHING ═════════════════════════════
+   L14: the system has no inline link, and this is not one of its buttons. The
+   reflect step's data promise ends in *More about your data*, which opens a
+   lightbox — so the element has to be a <button> (it opens a dialog; it goes
+   nowhere) that READS as the link beside it, because a pill in the middle of a
+   line of small print is not a sentence any more.
+
+   Every declaration resolves to a Layer 1 token, and the colour and the focus
+   treatment are the ones `styles.css` already gives an <a>: two things that
+   look alike on the same screen must not be able to drift apart.
+
+   `font: inherit` is the load-bearing line. A <button> takes the UA's font at
+   the UA's size, so without it the link inside a body-sm paragraph renders at
+   13px Arial next to 14px Sora and looks like a rendering fault.             */
+.musie-inline-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--interactive-primary-on-subtle);
+  text-decoration: underline;
+  text-underline-offset: var(--border-width-regular);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musie-inline-link:hover { color: var(--on-surface); }
+}
+
+.musie-inline-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
+}
+
+/* ═══ A RUN OF PLAIN PARAGRAPHS ═════════════════════════════════════════════
+   `.musie-steps` is the same shape at body-xl in muted ink, which is a step's
+   INSTRUCTION voice; this is ordinary prose at body-md — the data promise, and
+   whatever else turns out to be several sentences the person reads rather than
+   acts on. L14.3 applies the day there is a third caller: two patterns that
+   differ only by type step are a component request.                          */
+.musie-prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  max-inline-size: var(--measure-body);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+.musie-prose > p { margin: 0; }
+
+/* ═══ THE RECORDER, AND THE WAY TO THE EDITING TIPS ═════════════════════════
+   One row, and it is also what keeps the record button at the width of its own
+   label: `.musie-stack` is a flex column and stretches an inline-flex child
+   edge to edge. `wrap` so a narrow phone stacks the two rather than squeezing
+   them, `align-items: center` because the recorder is the taller of the two
+   and the quiet button should sit against its middle.                        */
+.musie-voice__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-gap-related);
+}
+
 /* ═══ PLAIN LIST ════════════════════════════════════════════════════════════
    L3: a run of repeated items is a list, so the count and position reach
    assistive tech instead of being drawn. Items sit at --space-gap-stack, and
@@ -817,25 +882,45 @@
 }
 
 /* ═══ A DIARY ENTRY'S HEADER ROW ════════════════════════════════════════════
-   The status badge, and — inline only — the control that collapses the card
-   back to its preview row.
+   Inline only, and since 2026-09-23 it holds ONE thing: the control that
+   collapses the card back to its preview row. The status badge used to share
+   it and has moved to `.musie-entry__foot`.
 
-   A PERMITTED CUSTOM PATTERN (L14): the system has no "badge on one side, a
-   control on the other" component, and `.musy-box__header` is a flex COLUMN
-   whose default `align-items: stretch` would take a lone IconButton edge to
-   edge. That is the same trap `BadgeRow` exists to solve for a lone Badge —
+   A PERMITTED CUSTOM PATTERN (L14): `.musy-box__header` is a flex COLUMN whose
+   default `align-items: stretch` would take a lone IconButton edge to edge.
+   That is the same trap `BadgeRow` exists to solve for a lone Badge —
    documented in ContentBox's own header comment — and the answer here is the
-   same shape: a row that lays its children out at their natural width.
+   same shape: a row that lays its child out at its natural width.
 
-   Every declaration resolves to a Layer 1 token. `space-between` rather than
-   a spacer element: same result, one fewer node, direction-agnostic either
-   way. `align-items: flex-start` so a badge that wraps to two lines does not
-   drag the X down with it.                                                 */
+   `justify-content: flex-end` rather than the `space-between` this had while
+   there were two children: with one child, `space-between` puts it at the
+   START, which is the corner an X must never be in.                        */
 .musie-entry__head {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-gap-stack);
+}
+
+/* ═══ A DIARY ENTRY'S FOOT ══════════════════════════════════════════════════
+   What the session WAS, and the one thing you can do to it — on one row at
+   the trailing edge (Ben, 2026-09-23).
+
+   NOT A `ButtonGroup`, though it looks like one: that component lays out
+   buttons, and a badge is a <span> with no role on purpose (Badge.tsx). A
+   group of actions with a label in it announces the label as an action.
+
+   L14 again, and the same argument as the header above: the system has no
+   "a fact and an action, at the trailing edge" component. `align-items:
+   center` because the two are the same line rather than a stack — a badge is
+   shorter than a `--target-primary` control, and the eye reads them as one
+   row only if they share a centre.                                         */
+.musie-entry__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-gap-related);
 }
 
 /* ── The listen step's three viewports · E.5b ───────────────────────────────
@@ -862,12 +947,39 @@
    each view underneath the browser's own chrome, which is where the buttons
    are.
 
-   NO SCROLL-SNAP. Snap takes the scroll away from the person — a thumb that
-   wanted the middle of the details view gets thrown to its edge — and this
-   step's whole posture, down to the gate being soft, is that the person stays
-   in charge. */
+   ── SCROLL-SNAP, AND THIS BLOCK USED TO SAY THE OPPOSITE ─────────────────
+   It said NO SCROLL-SNAP, because snap takes the scroll away from the person —
+   a thumb that wanted the middle of the details view gets thrown to its edge —
+   and this step's whole posture, down to the gate being soft, is that the
+   person stays in charge. A phone showed the other half of it (Ben,
+   2026-09-22): free scrolling did not deliver that either, because a flick
+   sailed straight through the Störer, and being carried past a decision is not
+   being in charge of it.
+
+   So the views snap, one gesture at a time, and NONE OF THAT MECHANISM IS
+   HERE. It is `useScrollSnap` plus `.musy-snap-view` in the design system —
+   `scroll-snap-type` belongs to the scroll container, which for sections in
+   document flow is the document, and no screen should be reaching for `<html>`
+   on its own. That is L14.3 applied before a second copy existed rather than
+   after. What is left below is this step's own geometry, and one variable
+   filled in for the system to read.                                        */
 .musie-listen {
   position: relative;
+}
+
+/* THE ONE THING THE SYSTEM CANNOT KNOW: how much of the window this app's own
+   chrome is sitting on top of. `.musy-snap-view` scrolls to the top of the
+   viewport, and the sticky header would be over the first `--sticky-block` of
+   every view it landed on. Declared against the attribute `useScrollSnap`
+   sets, so it exists only while something is snapping.
+
+   `--sticky-block` is the same subtraction `--view-block-scrolled` already
+   makes for these views' heights — the header alone, without `<main>`'s
+   insets, because by the time a view is scrolled TO the insets are behind
+   it. The two numbers have to be the same one, or a view is inset by an
+   amount it was not sized for.                                             */
+html[data-musy-scroll-snap] {
+  --musy-snap-inset: var(--sticky-block);
 }
 
 /* ── Scroll 1 · the stage ──────────────────────────────────────────────────
@@ -898,6 +1010,32 @@
   padding-block-end: var(--space-section);
 }
 
+/* ── THE STAGE'S ONE GROUP ─────────────────────────────────────────────────
+   The question, its small print, and the control that plays the track — one
+   block at the top of the view rather than three things at three heights with
+   the transport down among the buttons that LEAVE the step.
+
+   A STRETCH COLUMN, not `align-items: flex-start`, although the transport is
+   the one thing in here that has to hug. Starting the whole group would shrink
+   the no-track Message to its own text as well, and a notice narrower than the
+   sentence above it reads as a rendering fault. The button is wrapped in a
+   plain <div> instead — the one line `CardScanner` and the code form already
+   use, which hugs exactly the thing that should hug.
+
+   `--space-gap-related`, not the stack's gap: these three are one thought.  */
+.musie-listen__lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
+/* The question carries its own bottom margin for every other step, where it is
+   followed by whatever the step draws. In here the group's gap is the spacing
+   and the two would add up. */
+.musie-listen__lead > .musie-question {
+  margin-block-end: 0;
+}
+
 /* ── ONE ROW, TWO ALIGNMENTS ───────────────────────────────────────────────
    Everything you can do with the recording, in one group: the transport and
    the detour to the left, the way forward to the right. `wrap` so a narrow
@@ -924,9 +1062,18 @@
 }
 
 /* Pushed to the far edge rather than the row being `space-between`: with one
-   group empty, `space-between` would leave the other in the middle. */
+   group empty, `space-between` would leave the other in the middle.
+
+   `justify-content: flex-end` is the phone half of the same intent, and it is
+   measured rather than defensive: at 393px *Track details and player* and
+   *Start reflection* do not fit on one line, so this group wraps and then
+   fills the row — which leaves `margin-inline-start: auto` no space to work
+   in, and both buttons sit against the LEADING edge under *Back*. With the
+   two stacked, the trailing edge is the only thing that still says which of
+   them is the way on. */
 .musie-listen__actions-end {
   margin-inline-start: auto;
+  justify-content: flex-end;
 }
 
 /* ── Scroll 2 · the Störer, and Scroll 3 · the details ────────────────────*/

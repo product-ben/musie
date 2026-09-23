@@ -125,7 +125,22 @@ export function Lightbox({
             {description && (
               <Dialog.Description className="musy-sr-only">{description}</Dialog.Description>
             )}
-            {children}
+            {/* THE SCROLLER IS IN HERE, NOT ON THE POPUP — and the close button
+                is why. It was absolutely positioned inside a popup that was
+                itself the scroll container, which pins it to the PADDING BOX
+                rather than to the viewport of that box: scroll a long lightbox
+                and the X travels up and out of sight, leaving Escape and the
+                scrim as the only ways out. The stylesheet claimed the opposite
+                ("scrolls internally rather than pushing its close button
+                off-screen"), and that was true of the popup's height and not
+                of the control.
+
+                So the popup is now a flex column that never scrolls, this is
+                the part that does, and the X stays in the corner it was
+                always drawn in. The title stays outside it too, which is the
+                same decision said twice: what names the dialog and what closes
+                it are both always on screen. */}
+            <div className="musy-lightbox__body">{children}</div>
             {!mandatory && (
               <Dialog.Close className="musy-lightbox__close" aria-label={closeLabel ?? t.close}>
                 <Icon glyph={X} size="md" />

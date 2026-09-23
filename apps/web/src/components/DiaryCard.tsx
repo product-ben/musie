@@ -110,6 +110,13 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
    * everything known about the session.
    */
   const facts: ContentListItem[] = [
+    /* THE EXERCISE'S OWN DESCRIPTION, AS A ROW — Ben, 2026-09-23. It was the
+       box's `text` slot: prose directly under the headline, at the top of the
+       card, in front of the thing the person opened the card to read. It is
+       not what this entry IS; it is a fact about the exercise the entry is of,
+       which is what every other row in here already is. First in the list,
+       because it is the one that says what the rest is about. */
+    { label: t('diary.about'), content: entry.exerciseDescription },
     { label: t('diary.when'), content: formatDateTime(entry.startedAt, locale) },
   ];
   if (minutes !== null) {
@@ -130,81 +137,52 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
     <ContentBox
       headline={entry.exerciseName}
       headingLevel={headingLevel}
-      /* The exercise's own description: prose about the exercise, so the
-         box's text slot rather than a `<dl>` row labelled with a name
-         the heading has already said. */
-      text={entry.exerciseDescription}
-      /* `header` present ⇒ the box renders framed, and the full-bleed
-         hairline then divides what this entry IS from what is known
-         about it. That division is the design, not decoration. */
-      header={
-        /* A NON-STATUS variant, deliberately. Badge's `info` / `success`
-           fills each inject a screen-reader status word from the locale
-           catalogue ahead of the label — "Erfolg: Beendet" — and this
-           screen has no key to override it with. A diary fact is not a
-           success message. The two states are told apart by their words,
-           which are text, so 1.4.1 never rests on the fill.
+      /* NO `text`. The description is a `<dl>` row now — see `facts`.
+         ──
+         `header` present ⇒ the box renders framed, and the hairline then
+         divides what this entry IS from what is known about it. It is
+         rendered only when there is something to put in it, which since
+         2026-09-23 means only inline: the status badge moved to the foot
+         of the card, beside the delete control, and what is left up here
+         is the collapse control that only the inline card draws.
 
-           IN A `BadgeRow`, THOUGH THERE IS ONE BADGE, and that is
-           measured rather than tidy. `.musy-box__header` is a flex
-           column, so a lone `.musy-badge` — `inline-flex`, sized to its
-           text — is stretched edge to edge by the default `align-items:
-           stretch` and renders as a full-width bar. BadgeRow is the
-           wrapper ContentBox's own header comment names, and it lays
-           its badges out at their natural width.
-
-           The cost is a `<ul>` of one, announced as "list, 1 item". The
-           fix that would avoid it is an `align-self` inside the design
-           system, which is exactly the kind of thing a screen must not
-           reach in and set (L14, L7). Logged as a gap. */
+         So the lightbox's card is unframed, and the hairline is not
+         missed — it divided the entry from its metadata, and the metadata
+         is no longer the thing directly under it. */
+      header={onDismiss === undefined || dismissLabel === undefined ? undefined : (
         <div className="musie-entry__head">
-          <BadgeRow>
-            <Badge variant={abandoned ? 'outline' : 'primary-subtle'}>
-              {t(abandoned ? 'session.status.abandoned' : 'session.status.finished')}
-            </Badge>
-          </BadgeRow>
-
           {/* COLLAPSE, not close: inline there is no overlay to dismiss, and
-              the card becomes the preview row it sits above. Rendered only
-              when the host asked for it — the lightbox has its own X, which
-              Escape, the scrim and Back all share, and a second control inside
-              it would be a second thing to keep in step.
+              the card becomes the preview row it sits above. The lightbox has
+              its own X, which Escape, the scrim and Back all share, and a
+              second control inside it would be a second thing to keep in step.
 
               `tooltip={false}`: an X in a card header is the case IconButton's
               own docs name for suppressing it. */}
-          {onDismiss !== undefined && dismissLabel !== undefined && (
-            <IconButton
-              glyph={X}
-              label={dismissLabel}
-              variant="ghost"
-              size="primary"
-              tooltip={false}
-              onClick={onDismiss}
-            />
-          )}
+          <IconButton
+            glyph={X}
+            label={dismissLabel}
+            variant="ghost"
+            size="primary"
+            tooltip={false}
+            onClick={onDismiss}
+          />
         </div>
-      }
-    >
-      {/* Where it stopped — a value sentence with no label written for
-          it, so a line and not a row. Only an unfinished session has
-          one: for a finished session the step it ended on is `reflect`
-          every time, which says nothing. */}
-      {abandoned && (
-        <p className="musie-note">
-          {t('diary.stoppedAt', { step: t(stepMessageKey(entry.step)) })}
-        </p>
       )}
+    >
+      {/* ── THE ANSWER FIRST, THEN THE TRACK, THEN THE FACTS ─────────────
+          Ben, 2026-09-23. The card used to open with the labelled facts and
+          reach the person's own words third, under the date, the duration and
+          the card that was drawn. Nobody opens a diary entry to find out when
+          it was: they open it to read what they said, and the metadata is what
+          they check afterwards.
 
-      {/* No `label`: it is optional here and has NO catalogue default,
-          so omitting it leaks nothing, and every written label in the
-          set is already the name of a row rather than of the list. */}
-      <ContentList items={facts} emptyLabel={t('content.empty')} />
-
-      {/* The recording, offered back — above the answer, so the control
-          is in reach while the answer is being read, which is the whole
-          of the designer's "listen again while reading what he/she
-          wrote". Rendered ONLY when there is a track. */}
-      {entry.track !== null && <ListenAgain track={entry.track} />}
+          THE ORDER OF THE FIRST TWO IS A REVERSAL, and the argument it
+          overturns was a good one — *Listen again* sat ABOVE the answer so the
+          control was in reach while the answer was being read, which is the
+          designer's "listen again while reading what he/she wrote". It still
+          is in reach: the button is one line below the box, on a card this
+          short, and it is not worth putting a control in front of the writing
+          it is a control for. */}
 
       {/* The answer, in its own box: it is prose the person wrote, not a
           fact about the session, and a sunken box says that without a
@@ -219,6 +197,32 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
           outline="sunken"
         />
       )}
+
+      {/* The recording, offered back. Rendered ONLY when there is a track.
+          The plain <div> is what makes it hug its own label instead of being
+          stretched the width of the card: `.musy-box__slot` is a flex column,
+          and `TrackButton` is inline-flex. */}
+      {entry.track !== null && (
+        <div>
+          <ListenAgain track={entry.track} />
+        </div>
+      )}
+
+      {/* Where it stopped — a value sentence with no label written for
+          it, so a line and not a row. Only an unfinished session has
+          one: for a finished session the step it ended on is `reflect`
+          every time, which says nothing. With the metadata it belongs to,
+          rather than at the top of the card. */}
+      {abandoned && (
+        <p className="musie-note">
+          {t('diary.stoppedAt', { step: t(stepMessageKey(entry.step)) })}
+        </p>
+      )}
+
+      {/* No `label`: it is optional here and has NO catalogue default,
+          so omitting it leaks nothing, and every written label in the
+          set is already the name of a row rather than of the list. */}
+      <ContentList items={facts} emptyLabel={t('content.empty')} />
 
       {confirming ? (
         <Message
@@ -246,12 +250,53 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
           }
         />
       ) : (
-        /* One icon, at the trailing edge, quiet. Deleting is something a
-           person is entitled to do to their own record and is not what they
-           came to this screen for — so it is present and does not compete
-           with reading. The label is the whole accessible name; IconButton
-           reuses it as the tooltip, so the two cannot disagree. */
-        <ButtonGroup align="end">
+        /* ── THE STATUS AND THE DELETE CONTROL, ON ONE ROW AT THE FOOT ────
+           Ben, 2026-09-23. The badge used to sit in the box's header, above
+           the hairline, where it was the first thing the card said — and what
+           a card in a diary says first should be what is in it, not whether
+           the run that produced it reached the end.
+
+           At the foot it is what it actually is: a fact about the session, in
+           the row of things that are about the session rather than in it. The
+           delete control was already alone down here, at the trailing edge and
+           quiet, because deleting is something a person is entitled to do to
+           their own record and is not what they came for.
+
+           A `BadgeRow` STILL WRAPS THE ONE BADGE, and the reason survives the
+           move: `.musy-badge` is inline-flex, and a lone one in a stretch
+           context renders as a full-width bar. The cost is a `<ul>` of one,
+           announced as "list, 1 item", and the fix that would avoid it is an
+           `align-self` inside the design system — which is exactly what a
+           screen must not reach in and set (L14, L7). Logged as a gap.
+
+           NOT A `ButtonGroup` ANY MORE. That component lays out BUTTONS, and
+           a badge is not one — it is a <span> with a fill and deliberately has
+           no role (Badge.tsx says why). Putting a label in a group of actions
+           would announce it as one. `.musie-entry__foot` is the row, under
+           L14: the system has no component for "a fact and an action, at the
+           trailing edge". */
+        <div className="musie-entry__foot">
+          <BadgeRow>
+            <Badge
+              variant={abandoned ? 'outline' : 'success'}
+              /* THE STATUS FILL, AND THE WORD IT WOULD OTHERWISE INJECT.
+                 `success` reads as what finishing a session is, and Ben asked
+                 for it in those words — "this is something great". What comes
+                 with the variant is a screen-reader status word before the
+                 label, which would announce "Erfolg: Abgeschlossen": the
+                 severity word in front of a label that is already the status,
+                 said twice. An empty string is the prop's documented way to
+                 drop it, and 1.4.1 still holds three times over — the variant
+                 draws its own check glyph, the label is text, and the two
+                 states differ in their words rather than in their fill. */
+              statusWord=""
+            >
+              {t(abandoned ? 'session.status.abandoned' : 'session.status.finished')}
+            </Badge>
+          </BadgeRow>
+
+          {/* The label is the whole accessible name; IconButton reuses it as
+              the tooltip, so the two cannot disagree. */}
           <IconButton
             glyph={Trash2}
             label={t('diary.delete')}
@@ -259,7 +304,7 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
             size="primary"
             onClick={() => setConfirming(true)}
           />
-        </ButtonGroup>
+        </div>
       )}
     </ContentBox>
   );

@@ -171,7 +171,12 @@ export const en = {
   'session.step.scan': 'Scan',
   'session.step.listen': 'Listen',
   'session.step.reflect': 'Reflect',
-  'session.status.finished': 'Finished',
+  /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
+     of them is worth reading: finishing a session is an achievement, and the
+     badge carries the success treatment to say so. 'Finished' is what a
+     progress bar says. The word is shared with the diary's filter segment,
+     which is the point — one state, one name. */
+  'session.status.finished': 'Completed',
   'session.status.abandoned': 'Unfinished',
 
   /* ── The session screen · D.4 ─────────────────────────────────────────── */
@@ -220,6 +225,10 @@ export const en = {
   /* An EXAMPLE, not a label (3.3.2): the label above names the field and this
      shows the shape. `MC-01` is a real code, so it is not translated. */
   'session.scan.codePlaceholder': 'MC-01',
+  /* The disclosure that opens the field. A VERB PHRASE, because it is an
+     action and not the name of a section — the field it reveals is already
+     labelled 'Card code'. */
+  'session.scan.codeManual': 'Enter the code by hand',
   'session.scan.codeHint': 'The code is printed beside the QR code, like MC-01.',
   'session.scan.codeSubmit': 'Use this card',
   /* THREE ANSWERS, AND TWO OF THEM ARE NOT FAILURES. A typo and a card from
@@ -327,13 +336,11 @@ export const en = {
   /* PHOTO IS UI ONLY and says so where the answer would go — it is waiting on
      which model reads handwriting (MOCKUPS.md 2).
 
-     VOICE IS NOT, SINCE F.4. It records, transcribes and edits for real, and
-     the only thing missing is the write: `reflections.body` is still filled
-     from the text mode alone, so *Finish session* stays disabled here. These
-     two replace `reflect.voice.notBuilt`, which stopped being true — the
-     sentence now names the step that is missing rather than the feature. */
-  'reflect.voice.notSaved': 'A spoken answer is not saved yet',
-  'reflect.voice.notSavedText': 'Your words become text as you speak, and only the text is kept — the recording itself is never stored. Keeping that text with your session is the next piece to build, so write your answer to finish the session today.',
+     `reflect.voice.notSaved` AND ITS PARAGRAPH ARE GONE (2026-09-23). They
+     said a spoken answer could not be saved, which F.6 made false, and they
+     said it in a five-line info box on a screen whose job is to get an answer
+     out of somebody. What the step says now is `privacy.voiceShort` — the
+     promise, one line — with the rest behind `privacy.more`. */
   'reflect.photo.notBuilt': 'Reading a photo is not built yet',
   'reflect.photo.notBuiltText': 'This shows how it will work. The photo stays on your device and is read back as text; the image is never uploaded.',
   /* NOT a fourth segment — three ways to answer and one way not to are
@@ -358,6 +365,10 @@ export const en = {
   'diary.emptyText': 'Finish a session and it appears here.',
   'diary.stoppedAt': 'Stopped at {step}',
   'diary.duration': '{minutes} min',
+  /* The exercise's own description, which is a row in the list now rather
+     than prose under the headline. The label is a question the value answers,
+     like the three below it. */
+  'diary.about': 'What this exercise is',
   'diary.when': 'When',
   'diary.howLong': 'How long',
   'diary.card': 'Card',
@@ -438,6 +449,14 @@ export const en = {
   'privacy.title': 'What Musie keeps',
   'privacy.account': 'Musie never asks for your name or your email. This browser holds a private account of its own, and your diary belongs to it.',
   'privacy.written': 'What you write is saved to your diary so you can read it back later. Nobody else can see it.',
+  /* THE PROMISE IN ONE LINE, for the reflect step, where the long version was
+     a box nobody read. It is not an abbreviation of `privacy.voice` so much as
+     the half of it that is a promise — the mechanism is in the lightbox. */
+  'privacy.voiceShort': 'Musie keeps the text, never your voice.',
+  /* The word in that sentence that opens the whole promise. Not 'Learn more':
+     it names what is behind it, which is what a link in running text has to
+     do when the sentence around it is doing the explaining. */
+  'privacy.more': 'More about your data',
   'privacy.voice': 'If you answer out loud, Musie turns your words into text and keeps only the text. The recording itself is never stored.',
   'privacy.photo': 'A photo you take stays on your device. Musie never uploads it.',
   /* The uncomfortable one, and the reason it is here: an anonymous account
@@ -571,6 +590,13 @@ export const en = {
   /* Shown only when the list can actually be edited, and it names the
      keyboard route as well as the drag — F.5's behaviour is invisible
      otherwise, and a control nobody can find is not a control. */
+  /* THE TIPS ARE ASKED FOR NOW, not standing. `voice.hint.edit` is unchanged
+     and is the panel's body; the three around it are the disclosure. The
+     headline names what the panel is about rather than repeating the button,
+     so the two are not the same string read twice. */
+  'voice.hint.editToggle': 'Editing tips',
+  'voice.hint.editHeadline': 'Moving and joining statements',
+  'voice.hint.editHide': 'Hide these tips',
   'voice.hint.edit': 'Drag a statement to move it, or drop it onto another to join the two. From the keyboard: focus a drag handle, then space to lift, arrow keys to move, M to join it to the one above, escape to put it back.',
   /* The recorder acting on its own. A manual stop explains itself, and an
      error already has a Message of its own — see lib/voiceScreen.ts. */

@@ -41,7 +41,7 @@
  * on screen rather than leaving as a dead button.
  */
 import * as React from 'react';
-import { DraggableList, Message, RecordButton, Toast } from '@musie/design-system';
+import { CtaButton, DraggableList, Message, RecordButton, Toast } from '@musie/design-system';
 import {
   DEFAULT_MODEL, IDLE_STOP_MS, SESSION_SECONDS, setStatementsHandler, useTranscription,
 } from '@musie/voice';
@@ -116,12 +116,38 @@ export function VoiceTranscript({
    */
   const [tokenFailure, setTokenFailure] = React.useState<VoiceMessageCode | null>(null);
 
+  /**
+   * ── THE EDITING TIPS, WHICH ARE NOW ASKED FOR ───────────────────────────
+   * Ben, 2026-09-23. F.5's affordance used to be a standing paragraph above
+   * the record button: fifty words about dragging, drop targets, the space
+   * bar, the arrow keys, M and escape. It was the largest block of text on a
+   * screen whose subject is the person's own words, and it was there every
+   * time — including the twentieth time, when nobody reads it.
+   *
+   * It is a disclosure now, beside the record button, and it CLOSES: the
+   * dismiss is the same control as the toggle, said from inside the panel, so
+   * somebody who opened it to check one shortcut can put it away without
+   * hunting for the button that opened it.
+   *
+   * WHAT DOES NOT CHANGE IS THE KEYBOARD PATH ITSELF. The lift announcement
+   * still says the same thing to a screen reader as the list is used, which is
+   * where a screen-reader user meets it; this paragraph was only ever the
+   * sighted keyboard user's copy of that, and an undiscoverable shortcut is
+   * still not a shortcut — which is why the button says what it opens rather
+   * than being an icon.
+   */
+  const [tipsOpen, setTipsOpen] = React.useState(false);
+
   const recorded = hasRecorded(session.sentences.length, session.stopReason);
   const phase = recordPhase(session.status, awaitingToken);
   const running = phase === 'recording';
   /** The hook's own failure wins: it is the later and more specific one. */
   const failure = session.error?.code ?? tokenFailure;
   const stopped = stopNoticeKey(session.stopReason);
+  /* There is something to reorder, and nothing is arriving. The same two facts
+     `DraggableList`'s `editable` is given, named once so the tips button and
+     the tips panel cannot disagree about when they exist. */
+  const editable = !running && session.sentences.length > 1;
 
   async function begin() {
     setTokenFailure(null);
@@ -173,14 +199,15 @@ export function VoiceTranscript({
         }}
       />
 
-      {/* F.5's affordance, in words. The lift announcement says the same thing
-          to a screen reader; a sighted keyboard user has nothing else to go
-          on, and an undiscoverable shortcut is not a shortcut. Only while the
-          list can actually be edited. */}
-      {!running && session.sentences.length > 1 && (
-        <p className="musie-note">{t('voice.hint.edit')}</p>
-      )}
-
+      {/* ── ONE ROW: THE RECORDER, AND THE WAY TO THE TIPS ─────────────────
+          A row rather than two stacked blocks, and it is also what stops the
+          record button being stretched the width of the column: `.musie-stack`
+          is a flex COLUMN, whose `align-items: stretch` pulls an inline-flex
+          button edge to edge, and `RecordButton`'s own `block` prop was
+          already false — the button was never asking to be full width, the
+          column was making it so. Ben asked for it to hug its label; a row is
+          the same fix and the place the tips button belongs. */}
+      <div className="musie-voice__controls">
       <RecordButton
         state={running ? 'recording' : 'ready'}
         /* The app owns the clock and the ceiling, as §7.22 requires; the
@@ -197,6 +224,42 @@ export function VoiceTranscript({
         recordingLabel={t('reflect.voice.recording')}
         status={(elapsed, remaining) => t('reflect.voice.status', { elapsed, remaining })}
       />
+
+      {/* Only while the list can actually be edited — one statement cannot be
+          reordered and nothing is reorderable mid-capture, which is the same
+          test `DraggableList`'s own `editable` takes. */}
+      {editable && (
+        <CtaButton
+          variant="ghost"
+          aria-expanded={tipsOpen}
+          aria-controls="voice-edit-tips"
+          onClick={() => setTipsOpen((was) => !was)}
+        >
+          {t('voice.hint.editToggle')}
+        </CtaButton>
+      )}
+      </div>
+
+      {/* The tips themselves, when they have been asked for — AFTER the
+          button that opens them, which is the whole of why they are not up
+          beside the list they describe. A disclosure whose panel precedes its
+          trigger sends somebody who just pressed it forward past the thing
+          they asked for. `live="off"`: nothing happened; the reader opened a
+          panel and is looking at it. */}
+      {editable && tipsOpen && (
+        <Message
+          id="voice-edit-tips"
+          variant="info"
+          live="off"
+          entering
+          headingLevel={3}
+          headline={t('voice.hint.editHeadline')}
+          text={t('voice.hint.edit')}
+          onDismiss={() => setTipsOpen(false)}
+          dismissLabel={t('voice.hint.editHide')}
+        />
+      )}
+
 
       <p className="musie-note">
         {t(hintKey(recorded), { seconds: SECONDS, silence: SILENCE })}

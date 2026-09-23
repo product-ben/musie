@@ -27,6 +27,14 @@
  * which slide is nearest the centre after a scroll settles (reported through
  * `onIndexChange`), and a `scrollTo` when `index` changes from outside.
  *
+ * ── ONE SWIPE IS ONE SLIDE, AND THAT IS A THIRD CSS DECLARATION ────────────
+ * `scroll-snap-type: x mandatory` promises only that a scroll LANDS on a snap
+ * point, never which one, so a flick's momentum used to carry three or four
+ * slides. `scroll-snap-stop: always` on each slide forbids a gesture passing a
+ * snap point at all. Still no script: the settle handler below sees one step
+ * where it used to see a jump, and `seenMax` in a consuming screen finally
+ * means what it says.
+ *
  * ── NO SMOOTH SCROLL, AND THAT IS THE STYLESHEET'S DECISION ────────────────
  * Section 8 says it: a smooth scroll animation is silently dropped wherever
  * reduced motion is in force, which would leave the dots and the viewport

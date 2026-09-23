@@ -2324,3 +2324,254 @@ in front of both production and preview URLs — Access is the better fit while
 the domain is still parked until print day, because it does not need the
 domain to exist. If H.0b slips, this entry is the record that the window was
 meant to be one day and was not.
+
+## The listen step's three views snap now, and this repo argued they should not
+
+Where: `apps/web/src/components/SessionListen.tsx` (the three-viewports note
+and the `useScrollSnap` call), `apps/web/src/shell.css` (the listen block's
+header, and `html[data-musy-scroll-snap]`), and the new
+`packages/design-system/src/useScrollSnap.ts` with its CSS in the SCROLL SNAP
+section of `musy-components.css`
+
+What I checked: two places said in as many words that this should not be done.
+`shell.css` carried "NO SCROLL-SNAP. Snap takes the scroll away from the
+person — a thumb that wanted the middle of the details view gets thrown to its
+edge", and `SessionListen.tsx` said the same under "THE THREE VIEWPORTS, AND
+WHY SCROLLING IS DONE BY BUTTON", tying it to the step's posture: the gate is
+soft, nothing is enforced, the person stays in charge.
+
+That argument was half right, and the half it missed is the one a phone shows.
+Free scrolling did not leave anyone in charge either: a flick sailed straight
+through the Störer — the one view whose entire job is to interrupt something
+you have left behind — and landed in the details. Being carried past a decision
+is not being in charge of it.
+
+What Ben decided (2026-09-22): both this and the About Musie carousel get
+scroll stops. One swipe moves exactly one state, and going on takes another
+deliberate gesture.
+
+What I did: `scroll-snap-stop: always`, in two places. On
+`.musy-carousel__slide` it is one line — the carousel already had
+`scroll-snap-type: x mandatory`, which promises only that a scroll LANDS on a
+snap point and never which one, so a flick ran through three or four slides.
+That also repairs a quieter defect: About Musie unlocks its CTA on the furthest
+slide *seen*, and a five-step explainer that can be flung past made "seen" a
+lie.
+
+For the listen step the mechanism went into the **design system** rather than
+staying an L14 pattern here, which is the part worth recording. `useScrollSnap`
+owns the mode on `<html>` for as long as the step is mounted, reference-counted
+so two overlapping screens cannot switch it off under each other, and
+`.musy-snap-view` carries the alignment and the stop. `apps/web` keeps its own
+geometry and one variable — `--musy-snap-inset: var(--sticky-block)` — because
+how much fixed chrome sits over the viewport is the host's fact, not the
+system's.
+
+Why it went there rather than here: `scroll-snap-type` belongs to the SCROLL
+CONTAINER, and for sections in normal document flow that container is the
+document. No screen should be reaching for `<html>` on its own, and L14.2's
+whole point is that a `musie-` class is a screen's own business — a mode on the
+root element is not. It also completes `useViewportFill`, which was promoted out
+of this same step for the same reason: that hook answers how tall a view is,
+this one what stops a thumb running past it, and one declaration joins them
+(`.musy-snap-view { scroll-margin-block-start: var(--musy-fill-offset, 0px) }`).
+The first view in a run therefore snaps to the top of what is *above* it, which
+is what keeps the wizard's header on screen — the same defect `scrollToTop` was
+written to avoid.
+
+**This is L14.3 applied before a second copy existed rather than after**, on
+Ben's call when the plan was signed off. Worth naming, because the other live
+example — `.musie-sheet` — recurred first and is still not a component.
+
+What I need from Ben: **nothing blocking, one thing to watch.** `mandatory`
+rather than `proximity` is what makes the stop hold, and a snap area taller than
+the window relaxes its own snapping under the spec — so the details view stays
+readable as it grows. That relaxation is the safety valve for the original
+argument, and it is worth re-checking in German at 393px whenever that view
+gains anything.
+
+## The lightbox scrolled its own close button off the screen, and the fix is in the package
+
+Where: `packages/design-system/src/Lightbox.tsx` (the new
+`.musy-lightbox__body` wrapper) and the LIGHTBOX section of
+`musy-components.css`
+
+What I checked: the brief said "on the diary entry, always display the close X
+top right", which reads as a request for a control that is not drawn. It is
+drawn. It scrolls away.
+
+`.musy-lightbox__popup` was the scroll container **and** the positioning
+context for `.musy-lightbox__close`, which is `position: absolute`. An
+absolutely positioned child is placed against its container's PADDING BOX, not
+against the part of that box you can see — so the X sits at the top of the
+scrollable content rather than at the top of the window onto it, and a diary
+entry long enough to scroll takes its own close button up and out of view.
+Escape and the scrim still worked, which is why this reads as cosmetic and is
+not: on a touch device with no Escape key, the scrim is the only way out left,
+and the popup fills most of the screen.
+
+The stylesheet said the opposite in a comment — "the popup scrolls internally
+rather than pushing its close button off-screen" — and that sentence was true
+of the popup's HEIGHT, which is capped at the viewport, and false of the
+control. A correct claim about the wrong noun.
+
+What I did: the popup is a flex column that does not scroll, the children go in
+a `.musy-lightbox__body` that does, and the title and the close control both
+sit outside it. `min-block-size: 0` on the body is load-bearing — a flex item
+will not shrink below its content without it, and the overflow never engages.
+
+Why it is not in `apps/web`: rule 1 and L7. A screen cannot reposition another
+component's close button, and `DiaryEntry` does not render one — `Lightbox`
+does. `CtaButton`'s `align` prop and F.5's `DraggableList` focus fix are the
+two precedents the guardrails already cite for this shape of change.
+
+What I need from Ben: **the same acknowledgement F.5 asked for, for the same
+reason.** This changes a released component's DOM by one wrapper element, and
+every other consumer — `SettingsSheet`, `NotImplementedLightbox`,
+`Session.tsx`'s close confirmation, `AboutYou`, `Exercises` — inherits it. It
+is additive and no prop changed, but the reference tree under
+`reference/design_system/` does not have it, and a re-sync would drop it.
+
+## The brief said "switch" for the card code, and what is built is a disclosure
+
+Where: `apps/web/src/components/SessionScan.tsx`
+
+What I checked: "put the Kartencode input field, and the respective button
+behind an 'enter code manually' switch". The package HAS a `Switch`, used for
+dark mode in settings, so the literal reading was available.
+
+It is the wrong control, and the difference is not stylistic. `role="switch"`
+says *this setting is now on* and carries `aria-checked`; a button with
+`aria-expanded` says *this reveals something below*. Typing a code turns
+nothing on — the field works whether or not it is on screen — so a switch
+would announce a state the app does not have. The two look near enough
+identical that nothing about the screen argues for one over the other, which
+is exactly when the semantics should decide.
+
+What I did: a ghost `CtaButton` with `aria-expanded` and `aria-controls`. The
+form is conditionally rendered rather than hidden with the `hidden` attribute,
+because `.musie-code` sets `display: flex` and would have overridden it — a
+"closed" form sitting in full view. It opens itself when a code arrived from a
+deep link, and an effect opens it when `codeError` lands, so an answer about a
+code is never reported into a shut box.
+
+What I need from Ben: **nothing, unless you meant the noun literally.** Say so
+and it becomes a `Switch`; the markup is four lines either way.
+
+## The listen step is a dead end for an exercise with no recording, and that is older than this change
+
+Where: `apps/web/src/components/SessionListen.tsx` (`gate`, `met`)
+
+What I checked: found while moving the action row, not looked for. `gate` falls
+back to `exercises.listen_gate_seconds` when there is no track, and `met`
+latches on `position` — which nothing advances when there is no `<audio>` and
+no simulated clock to start. So `met` is never true, *Start reflection* never
+enables, and the step cannot be left forwards. `session.listen.noTrack` — "this
+exercise has no recording yet" — is the screen that says so, and it is a
+sentence in a cul-de-sac.
+
+It is not new. What WAS new for about an hour is that it also had no way
+BACKWARDS: the action row was rendered inside `track !== null`, and `back` is
+rendered in that row, so the no-track screen drew no controls at all. That half
+is fixed — the row renders whether or not there is a track.
+
+What I did NOT do: open the gate for a trackless exercise. The honest
+candidates are "no recording ⇒ the gate is already met" and "no recording ⇒ the
+step is skipped when the session is built", and the second is a question about
+`sessionMachine`, not about this component. Either is a product decision.
+
+What I need from Ben: **which of the two**, or a third. Today's three seeded
+exercises all have recordings on at least some cards, so nothing on screen is
+broken right now — this is reachable only by a card whose `tracks.src` and
+`duration_seconds` are both absent.
+
+## The reveal stopped waiting for the gate, and E.5's done-when still holds
+
+Where: `apps/web/src/components/SessionListen.tsx` (the `IntersectionObserver`
+that calls `revealTrack`)
+
+What I checked: the brief asks that scrolling to the player view shows the
+track's name and details "directly". It did not: the request was locked behind
+BOTH the scroll and `met`, so somebody who scrolled past the Störer eleven
+seconds short of the gate reached a player still captioned *Your track* and a
+facts list with no artist row — and nothing on the screen explained why.
+
+What I did: dropped `met` from the observer's guard. The scroll is the only
+lock now.
+
+Why this does not weaken E.5: its done-when is a claim about BYTES — the title
+must not be in the Network tab while the stage is still playing — and the
+observer is what delivers that. A fetch still cannot happen until the details
+view is in the viewport, which is two deliberate scrolls past a full-viewport
+interstitial whose entire text is *it is better not to be influenced by the
+track's name*. The boundary moved from a clock to a question, which is the
+same direction the scrubber decision (2026-09-22) already went.
+
+What I need from Ben: **nothing, unless the gate was ever meant to protect the
+name rather than the listening.** Nothing in the repo says it was.
+
+## `Badge` cannot take a status fill without a status word, except by passing an empty string
+
+Where: `apps/web/src/components/DiaryCard.tsx` (the footer badge),
+`packages/design-system/src/Badge.tsx`
+
+What I checked: the brief asks for *Abgeschlossen* in the success tokens. The
+card carried `primary-subtle` precisely to avoid `success`, and the old comment
+gave the reason: a status variant injects a screen-reader word from the locale
+catalogue before the label, so the badge would announce "Erfolg: Abgeschlossen"
+— a severity word in front of a label that is already the status.
+
+That comment claimed the screen "has no key to override it with", and that is
+no longer true: `statusWord` is a prop. So the fill is `success` now and
+`statusWord=""` drops the word. 1.4.1 holds three times over — the variant
+draws a check glyph, the label is text, and finished and unfinished differ in
+their words rather than in their fill.
+
+What is unresolved: **an empty string is a sentinel, not an API.** "Give me the
+status treatment and no status word" is a real thing to want — a badge whose
+label IS the status is not an unusual case — and saying it with `""` reads as a
+mistake to the next person and would be silently undone by anyone tidying
+props. `statusWord?: string | false` would say it, or `hideStatusWord`, beside
+the `hideIcon` that already exists for the glyph.
+
+What I need from Ben: **whether that prop is worth a design-system change.**
+The empty string works and is documented at the call site; this is about
+whether the next caller finds it.
+
+## The diary entry's card is unframed inside the lightbox now, and the hairline is not missed
+
+Where: `apps/web/src/components/DiaryCard.tsx`
+
+What I checked: `ContentBox` renders framed — header, hairline, body — only
+when `header` is passed, and the only thing the card put in that header was the
+status badge plus, inline, the collapse X. The badge has moved to the foot of
+the card, beside the delete control, which leaves the lightbox with an empty
+header.
+
+An empty `header` still frames the box, so the choice was a hairline under
+nothing or no hairline. I took the second: `header` is passed only when the
+card draws its own collapse control, which is the inline case on /diary.
+
+The hairline "divided what this entry IS from what is known about it", and that
+division no longer matches the content — the metadata is at the BOTTOM of the
+card now, under the answer and the track, so a rule under the headline would be
+dividing the entry from the person's own words.
+
+What I need from Ben: **a look at it.** This is the one item in this batch that
+is purely a matter of taste, and it is a consequence of moving the badge rather
+than something asked for.
+
+And one more consequence, on the OTHER card — the inline latest entry on
+/diary, which still passes a `header` because it draws its own collapse X.
+That header used to be a row with a badge at one end and the X at the other;
+it is now a row with the X alone, so there is a `--target-primary`-tall band
+under the exercise's name with a single control at its trailing edge and
+nothing beside it. It reads as a gap.
+
+The fix that would close it is putting the control on the HEADLINE's row, and
+a screen cannot: `ContentBox` renders the headline itself, before whatever the
+caller passes as `header`, and `.musy-box__header` is a flex column. Reaching
+in to change that is L7 and rule 1. A `ContentBox` prop for "a control that
+sits on the headline's line" is the shape of the answer, and it is the third
+thing in this batch that wants a design-system change, so I am not making it
+on my own initiative — this entry is the record that it was seen.

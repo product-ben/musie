@@ -1052,6 +1052,15 @@
    swipe work with no script. The consuming app only owns the selected index
    (for the dots and the scale) and calls scrollTo() on the viewport.
 
+   ONE SWIPE IS ONE SLIDE, and that takes a second declaration. `mandatory`
+   promises only that a scroll LANDS on a snap point — never which one — so a
+   flick's momentum ran through three or four slides and settled wherever it
+   ran out of speed. `scroll-snap-stop: always` on the slide forbids a gesture
+   passing a snap point at all; going on takes another swipe. It matters most
+   where the carousel earns its keep: About Musie unlocks its CTA on the
+   furthest slide SEEN, and a five-step explainer that can be flung past makes
+   "seen" a lie.
+
    Geometry is container-relative (cqi), not viewport-relative: the carousel
    sits inside a Content Box on the onboarding screen, and a slide must be 66%
    of THAT, not of the window. Percentages can't be used here — a percentage
@@ -1107,6 +1116,10 @@
   min-inline-size: 0;
   display: flex;
   scroll-snap-align: center;
+  /* The gesture stops here — see the section header. Programmatic moves are
+     unaffected: Carousel's scrollTo() sets the position instantly rather than
+     performing a scrolling operation, so a dot still jumps any distance. */
+  scroll-snap-stop: always;
 }
 
 .musy-carousel__card {
@@ -1814,10 +1827,18 @@
   box-sizing: border-box;
   width: 100%;
   max-width: var(--measure-body);
-  /* Never taller than the viewport minus the positioner's inset — the popup
-     scrolls internally rather than pushing its close button off-screen. */
+  /* Never taller than the viewport minus the positioner's inset. */
   max-height: calc(100dvh - var(--sp-4) * 2);
-  overflow-y: auto;
+  /* THE POPUP ITSELF NO LONGER SCROLLS — `.musy-lightbox__body` does. It used
+     to, and the close button paid for it: an absolutely positioned child of a
+     scroll container is pinned to that container's PADDING BOX, not to the
+     part of it you can see, so a long lightbox scrolled its own X off the top
+     and left Escape and the scrim as the only ways out. A column that cannot
+     scroll, with one child that can, keeps the title and the close control
+     where they are drawn. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: var(--space-inset-card);
   border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   border-radius: var(--radius-panel);
@@ -1856,13 +1877,51 @@
 }
 .musy-lightbox__close:active { background-color: var(--interactive-ghost-active); }
 
-/* Reserve the close button's column so a long title never runs under it. */
-.musy-lightbox__popup > .musy-box:first-child .musy-box__headline,
+/* The one part that scrolls. `min-block-size: 0` is not optional: a flex item
+   defaults to `auto`, which refuses to shrink below its content, and without
+   it the column grows past the popup's max-height and the overflow never
+   engages. */
+.musy-lightbox__body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ── RESERVING THE BAND THE CLOSE CONTROL SITS IN ──────────────────────────
+   The control is pinned to the popup and the body scrolls beneath it, which is
+   the whole point — and it means anything the body holds can pass UNDER the X
+   unless the top band belongs to something else. Reserving the column (below)
+   was enough while the popup itself scrolled and the X went with it; it is not
+   enough now.
+
+   Two cases, and `:has()` tells them apart:
+
+     A VISIBLE TITLE already occupies the band. It only has to be at least as
+     tall as the control beside it, or a one-line title leaves the X
+     overhanging the first line of the body.
+
+     A HIDDEN TITLE is `.musy-sr-only` — absolutely positioned, so it occupies
+     nothing — and the band is empty. The body is pushed down by the control's
+     own height instead. This is the diary entry's case, and the case of every
+     popup whose first child is a Content Box with the headline.               */
+.musy-lightbox__popup:has(> .musy-lightbox__close) > .musy-lightbox__headline {
+  min-block-size: var(--target-primary);
+}
+
+.musy-lightbox__popup:has(> .musy-lightbox__close):not(:has(> .musy-lightbox__headline))
+  > .musy-lightbox__body {
+  margin-block-start: var(--target-primary);
+}
+
+/* Reserve the close button's column so a long title never runs under it. The
+   box's own headline is one level deeper now, inside the scroller. */
+.musy-lightbox__body > .musy-box:first-child .musy-box__headline,
 .musy-lightbox__popup .musy-lightbox__headline { padding-inline-end: var(--target-primary); }
 
 /* Inside the popup the framed box drops its own boundary: two nested outlines
    at the same radius read as a rendering error, not as depth. */
-.musy-lightbox__popup > .musy-box {
+.musy-lightbox__body > .musy-box {
   border-color: transparent;
   background-color: transparent;
   padding: 0;
@@ -4075,3 +4134,47 @@
 }
 
 .musy-timeline__body { min-inline-size: 0; }
+
+/* ═══ SCROLL SNAP ══════════════════════════════════════════════════════════
+   A run of full-viewport views, in normal document flow, moved through one at
+   a time. The CSS half of `useScrollSnap` — read that file's header for why
+   the mechanism is split between a hook and this section.
+
+   NOT A COMPONENT, and could not be: `scroll-snap-type` belongs to the SCROLL
+   CONTAINER, and for views in document flow that container is the document.
+   No component owns `<html>`, so the hook sets a mode on it and the geometry
+   stays here with everything else it has to agree with.
+
+   ── MANDATORY, AND WHY IT IS NOT proximity ─────────────────────────────────
+   The point is that going on takes ANOTHER gesture. `proximity` snaps only
+   when a scroll happens to end near a point, which on a phone is exactly the
+   flick that ran through two views. A snap area TALLER than the viewport —
+   German at 393px, or a large text-size preference — relaxes on its own under
+   the spec, so a long view can still be read through rather than thrown to
+   its edge; that is the case to check by hand whenever a view grows.
+
+   Nothing here is animation, so there is no reduced-motion clause: snapping
+   is where a scroll ENDS, not how it travels, and a consumer's own smooth
+   `scrollIntoView` already defers to the platform's setting.               */
+html[data-musy-scroll-snap='y'] {
+  scroll-snap-type: y mandatory;
+  /* The consumer's own chrome, over the top of every view it scrolls to. The
+     system does not get to assume its host has a sticky header, so the
+     default is 0 and the app declares the variable if it has one. */
+  scroll-padding-block-start: var(--musy-snap-inset, 0px);
+}
+
+/* One class on each view in the run. */
+.musy-snap-view {
+  /* THE JOIN WITH useViewportFill, and the reason the two hooks are one
+     mechanism. A view that measured its own offset carries it here, so it
+     snaps to the top of what is ABOVE it rather than to its own top — which
+     is what the FIRST view in a run needs, since it starts below a heading
+     that nobody wants scrolled off screen. A view that did not measure
+     resolves this to 0 and snaps to itself. */
+  scroll-margin-block-start: var(--musy-fill-offset, 0px);
+  scroll-snap-align: start;
+  /* One gesture, one view. Without it `mandatory` promises only that the
+     scroll lands on SOME view — see section 8, which had the same defect. */
+  scroll-snap-stop: always;
+}

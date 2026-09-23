@@ -266,7 +266,18 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    */
   const [scanError, setScanError] = React.useState<string | null>(null);
 
-  const [reflectMode, setReflectMode] = React.useState<ReflectMode>('text');
+  /**
+   * VOICE IS THE DEFAULT — Ben, 2026-09-23.
+   *
+   * It was `text` for as long as text was the only mode that could be saved.
+   * F.6 ended that: a spoken reflection is written statement by statement as
+   * it is spoken, so the mode the segmented control lands on is now a question
+   * about which answer the product WANTS rather than which one works. Speaking
+   * is the one it wants — it is the shorter path on a phone, and the exercise
+   * has just spent ninety seconds asking the person to be somewhere other than
+   * in a text box.
+   */
+  const [reflectMode, setReflectMode] = React.useState<ReflectMode>('voice');
   /* Whether the transcript editor holds any words — F.6. It owns the
      statements, so the step has to be told. */
   const [spokenWords, setSpokenWords] = React.useState(false);
