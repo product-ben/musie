@@ -46,7 +46,7 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field } from '@musie/design-system';
+import { ContentList, CtaButton, Field, Switch } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { StepText } from './StepText';
@@ -181,23 +181,32 @@ export function SessionScan({
               the camera and nothing else; a code it reads comes back here. */}
           <CardScanner onCode={applyCode} busy={scanning} />
 
-          {/* The disclosure's own control. A plain <div> so it hugs its label
-              — `.musy-btn` is inline-flex and a block parent is all that
-              takes. `aria-controls` names the form below, which is why the
-              form is rendered rather than styled away: `hidden` is
-              `display: none` and `.musie-code` sets `display: flex`, so the
-              attribute would have been overridden and the "closed" form would
-              have sat there in full view. */}
-          <div>
-            <CtaButton
-              variant="ghost"
-              aria-expanded={typing}
-              aria-controls="card-code-form"
-              onClick={() => setTyping((was) => !was)}
-            >
-              {t('session.scan.codeManual')}
-            </CtaButton>
-          </div>
+          {/* THE DISCLOSURE'S OWN CONTROL, AND IT IS A SWITCH — Ben, 2026-09-23.
+              It was a ghost CtaButton. Typing the code instead of scanning it
+              is a MODE you are in until you leave it, not an action you fire,
+              and a switch is the one control in the system that says "this is
+              on now" rather than "this happened". It also states the current
+              state when you arrive at it, which a button can only imply.
+
+              `aria-controls` still names the form below, which is why the form
+              is rendered rather than styled away: `hidden` is `display: none`
+              and `.musie-code` sets `display: flex`, so the attribute would be
+              overridden and the "closed" form would sit there in full view.
+
+              NO `aria-expanded`, which the button carried. `role="switch"`
+              announces through `aria-checked`, and an element that is both
+              checked and expanded says the same fact twice in two vocabularies
+              — so the switch's own state is left to carry it.
+
+              No wrapper `<div>` either: that was there because `.musy-btn` is
+              inline-flex and would have stretched. `.musy-switch` is a flex ROW
+              that owns its own 44px target, so it needs nothing around it. */}
+          <Switch
+            label={t('session.scan.codeManual')}
+            checked={typing}
+            onCheckedChange={setTyping}
+            aria-controls="card-code-form"
+          />
 
           {typing && (
           <form
