@@ -253,11 +253,12 @@ export const en = {
 
   /* ── Intro · D.5a ────────────────────────────────────────────────────────
      A FALLBACK, AND IT IS OURS RATHER THAN THE SPREADSHEET'S. Every exercise
-     is meant to supply its own `intro_text`, and none of the three does yet
-     (28 owed strings, DOMAIN-MODEL.md). This one sentence is what the intro
-     step says when the exercise says nothing — chrome, permanent, and true of
-     every exercise, so it is correct copy rather than a placeholder. It is
-     simply never rendered once an exercise has its own words. */
+     is meant to supply its own `intro_md`, and since 2026-09-23 one of the
+     three does. This one sentence is what the intro step says when the
+     exercise says nothing — chrome, permanent, and true of every exercise, so
+     it is correct copy rather than a placeholder. It renders as a paragraph
+     and never as a headline: naming a step is the exercise's job. Quick
+     Mindfulness Break no longer reaches it. */
   'session.intro.fallback': 'Take a moment to arrive. When you are ready, carry on.',
 
   /* ── Scan · D.5a, and the three ways in · E.0/E.1/E.2/E.3 ───────────────
@@ -367,10 +368,12 @@ export const en = {
   'session.listen.noTrack': 'This exercise has no recording yet.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
-  /* ONE QUESTION, SHOWN ON BOTH the listen and the reflect step — that is the
-     schema's own shape, and this is what stands in until an exercise supplies
-     its own. The prototype had the same fallback, word for word. */
-  'reflect.questionFallback': 'What stayed with you?',
+  /* `reflect.questionFallback` — "What stayed with you?" — is GONE, 2026-09-23.
+     It stood in for `exercise_i18n.question`, one column rendered as the <h2>
+     on both the listen and the reflect step, and that column went when each
+     step got a headline of its own in `*_md`. A step's headline is the
+     exercise's to write; chrome has no business naming it, so there is nothing
+     for this key to fall back to any more. */
   'reflect.legend': 'How would you like to answer?',
   'reflect.mode.voice': 'Record audio',
   'reflect.mode.text': 'Write answer',

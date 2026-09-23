@@ -90,12 +90,9 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        draw. It writes `card_id` AND `track_id` in one update, which is what
        the assertions at the foot of this test check.
 
-       The field is the reader's resting state now, so its presence is what
-       says the step is back to accepting a card. */
-    const field = page.getByRole('textbox', {
-      name: label(locale, 'session.scan.codeLabel'),
-      exact: true,
-    });
+       `enterCode` owns the field itself, including opening the disclosure it
+       is folded behind (2026-09-23). What this walk watches for is the RESULT:
+       the card, named back at you. */
     const scanned = page.getByText(label(locale, 'session.scan.yourCard'), { exact: true });
 
     await enterCode(page, locale, CARD.code);
@@ -106,7 +103,14 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        here because the reset writes nulls to two columns, and a version that
        silently kept the old track would still look right on screen. */
     await page.getByRole('button', { name: label(locale, 'session.scan.again'), exact: true }).click();
-    await expect(field).toBeVisible({ timeout: 15_000 });
+    /* THE READER IS BACK, AND THE FIELD IS NOT — the step's resting state
+       changed on 2026-09-23. Typing the code is folded behind a switch now, so
+       what says the reset happened is the reader's own control returning, not
+       a textbox. This asserted the field and had been failing here ever since;
+       `enterCode` below opens the disclosure the way a person does. */
+    await expect(
+      page.getByRole('switch', { name: label(locale, 'session.scan.codeManual'), exact: true }),
+    ).toBeVisible({ timeout: 15_000 });
     await enterCode(page, locale, CARD.code);
     await expect(scanned).toBeVisible({ timeout: 15_000 });
 

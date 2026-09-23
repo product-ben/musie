@@ -1,5 +1,5 @@
 /**
- * Step 4 · Reflect — the question again, and the answer.
+ * Step 4 · Reflect — the questions, and the answer.
  *
  * ── THREE DOORS, AND TWO OF THEM OPEN ─────────────────────────────────────
  * Text, voice and photo.
@@ -48,7 +48,7 @@ import {
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
 import { DataLightbox } from './DataLightbox';
-import { StepText } from './StepText';
+import { Markdown } from './Markdown';
 import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
@@ -60,7 +60,6 @@ export interface SessionReflectProps {
   /** Passed straight through from `VoiceTranscript` — F.6. */
   onSpokenWords?: (has: boolean) => void;
   exercise: Exercise;
-  question: string;
   mode: ReflectMode;
   onModeChange: (mode: ReflectMode) => void;
   /** The typed answer. The only one that can be saved today. */
@@ -75,7 +74,7 @@ export interface SessionReflectProps {
  * because the session is what writes them.
  */
 export function SessionReflect({
-  exercise, question, mode, onModeChange, text, onTextChange,
+  exercise, mode, onModeChange, text, onTextChange,
   sessionId,
   onSpokenWords,
 }: SessionReflectProps) {
@@ -99,10 +98,13 @@ export function SessionReflect({
 
   return (
     <>
-      <StepText lines={exercise.reflectText} />
-
-      {/* THE SAME QUESTION the listen step held. One column, read twice. */}
-      <h2 className="musie-question">{question}</h2>
+      {/* THE STEP'S OWN WORDS — `reflect_md`: the headline that asks what you
+          were thinking about, and under it the questions to answer if you want
+          to. It used to be a `StepText` plus the shared `question` <h2>; that
+          column is gone (2026-09-23) and each step carries its own headline,
+          because the listen step asks what picture FORMS and this one asks
+          what it was called and what happened in it. */}
+      <Markdown md={exercise.reflectMd} />
 
       <div className="musie-stack">
         <SegmentedControl

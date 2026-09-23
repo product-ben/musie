@@ -89,40 +89,37 @@ export type Database = {
           description: string
           exercise_id: string
           image_alt: string
-          intro_text: string[] | null
-          listen_text: string[] | null
+          intro_md: string | null
+          listen_md: string | null
           locale: string
           name: string
           needs: string | null
-          question: string | null
-          reflect_text: string[] | null
-          scan_text: string[] | null
+          reflect_md: string | null
+          scan_md: string | null
         }
         Insert: {
           description: string
           exercise_id: string
           image_alt: string
-          intro_text?: string[] | null
-          listen_text?: string[] | null
+          intro_md?: string | null
+          listen_md?: string | null
           locale: string
           name: string
           needs?: string | null
-          question?: string | null
-          reflect_text?: string[] | null
-          scan_text?: string[] | null
+          reflect_md?: string | null
+          scan_md?: string | null
         }
         Update: {
           description?: string
           exercise_id?: string
           image_alt?: string
-          intro_text?: string[] | null
-          listen_text?: string[] | null
+          intro_md?: string | null
+          listen_md?: string | null
           locale?: string
           name?: string
           needs?: string | null
-          question?: string | null
-          reflect_text?: string[] | null
-          scan_text?: string[] | null
+          reflect_md?: string | null
+          scan_md?: string | null
         }
         Relationships: [
           {

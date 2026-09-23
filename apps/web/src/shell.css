@@ -93,7 +93,7 @@
    the locale.                                                               */
 .musie-placeholder {
   /* --space-gap-group below, which is what every other block on these screens
-     uses to separate itself from the next thing (`.musie-steps` above it,
+     uses to separate itself from the next thing (`.musie-md` above it,
      `.musie-plain-list` below). It shipped as a bare `margin: 0`, so on /diary
      the title sat hard against the first entry with no token between them at
      all — the one place where nothing else supplied the gap. */
@@ -391,36 +391,117 @@
   justify-content: flex-start;
 }
 
-/* ═══ A STEP'S OWN SENTENCES ════════════════════════════════════════════════
-   `exercise_i18n.intro_text` and its three siblings are `text[]`, and THE
-   ARRAY BOUNDARY IS THE PARAGRAPH BREAK — one element, one line, so no screen
-   ever splits prose on punctuation, which breaks in German at the first
-   abbreviation.
+/* ═══ A STEP'S HEADLINE AND DESCRIPTION ═════════════════════════════════════
+   `exercise_i18n.{intro,scan,listen,reflect}_md`, parsed by lib/markdown.ts
+   and rendered by components/Markdown.tsx. It replaces `.musie-steps`, which
+   typeset a `text[]` as a run of identical paragraphs — a shape that cannot
+   carry a headline, because every line in it was the same thing at the same
+   weight.
 
-   Rendered at body-xl in muted ink, which is the prototype's own treatment and
-   its own reasoning: an instruction at headline size asks rather than asserts,
-   and three imperatives in bold full-contrast ink read as a warning. The muted
-   ink still clears 4.5:1 on this surface.
+   A PERMITTED CUSTOM PATTERN (L14): the system has no prose component, and
+   what it does have — `ContentBox`'s headline, `Message`'s headline and text —
+   are single strings, not a document. Every declaration below resolves to a
+   Layer 1 token; the only bare value is the `0` L14.1 names as a geometric
+   identity. L14.3 is live here: if a second screen ever needs a Markdown
+   document, this is a component request rather than a second copy.
 
-   --space-gap-related between the lines, because they are one instruction set;
-   --space-gap-group below, which is L2's doubling check (32 ≥ 2 × 12).      */
-.musie-steps {
+   ── THE TWO VOICES, AND WHY THEY ARE A STEP APART ─────────────────────────
+   The HEADLINE is the body-xl in muted ink that `.musie-question` carried, and
+   it inherits that block's whole argument: inside a wizard panel the step's
+   question IS the heading, medium weight separates a question from an
+   instruction, and muted keeps it the same VOICE as the prose under it (the
+   full-contrast version shipped once and read as a different kind of thing —
+   caught by eye on the hosted walk-through, 2026-09-21).
+
+   The DESCRIPTION is body-lg. It was body-xl when it was the only thing on the
+   step, and a description at the same size as the headline above it is not a
+   description. One step down is as far as it goes: L8 bars body-sm for prose
+   the user must read in order to act, and this is the instruction itself.
+
+   ── GAPS ──────────────────────────────────────────────────────────────────
+   --space-gap-related between blocks, because a headline and its description
+   are one thought; --space-gap-group below the whole thing, which is L2's
+   doubling check (32 ≥ 2 × 12).                                            */
+.musie-md {
   margin: 0 0 var(--space-gap-group);
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-related);
   max-inline-size: var(--measure-body);
-  font-family: var(--type-body-xl-family);
-  font-size: var(--type-body-xl-size);
-  font-weight: var(--type-body-xl-weight);
-  line-height: var(--type-body-xl-line);
-  letter-spacing: var(--type-body-xl-tracking);
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  font-weight: var(--type-body-lg-weight);
+  line-height: var(--type-body-lg-line);
+  letter-spacing: var(--type-body-lg-tracking);
   color: var(--on-surface-muted);
   text-wrap: var(--text-wrap-body);
   hyphens: var(--text-hyphens);
 }
 
-.musie-steps > p { margin: 0; }
+/* The flex gap is the spacing. A UA margin on <p>, <h2>, <ol> or <ul> would
+   add to it, and unevenly — the three have different defaults. */
+.musie-md > * {
+  margin: 0;
+}
+
+/* THE STEP'S HEADLINE. `h2` is what content writes and what the parser clamps
+   to; h3–h6 are here so a deeper heading is still typeset rather than falling
+   back to the UA's own scale. They step DOWN through the system's headings
+   rather than each getting a token of their own — the copy has never gone
+   below h2, and a table of five sizes nobody uses is drift. */
+.musie-md h2 {
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-body-xl-family);
+  font-size: var(--type-body-xl-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--type-body-xl-line);
+  letter-spacing: var(--type-body-xl-tracking);
+  text-wrap: var(--text-wrap-heading);
+}
+
+.musie-md h3,
+.musie-md h4,
+.musie-md h5,
+.musie-md h6 {
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  text-wrap: var(--text-wrap-heading);
+}
+
+/* ── THE LISTS KEEP THEIR MARKERS ──────────────────────────────────────────
+   An ordered list in this copy is a SEQUENCE — "1. lay the cards out, 2. let
+   them settle" — and the number is the instruction's most useful part. So the
+   marker stays visible, the list keeps its element, and the count and position
+   reach assistive tech without being drawn (L3).
+
+   `padding-inline-start` rather than `list-style-position: inside`, so a step
+   that wraps over two lines aligns under its own text instead of back under
+   the number. --sp-5 is the rung that clears a two-digit marker at body-lg. */
+.musie-md ol,
+.musie-md ul {
+  padding-inline-start: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
+/* `list-item`, not flex: an <li> that is a flex container loses its marker in
+   every engine. The gap above is the list's, not the item's. */
+.musie-md li {
+  display: list-item;
+}
+
+/* `**` in a content string is importance, so it is drawn with weight rather
+   than with a second colour — and at full contrast, which is the one place a
+   step's copy leaves the muted ink. */
+.musie-md strong {
+  font-weight: var(--font-weight-medium);
+  color: var(--on-surface);
+}
 
 /* ═══ THE QR READER ═════════════════════════════════════════════════════════
    A permitted custom pattern: the system has no camera viewport, and it is one
@@ -592,36 +673,6 @@
   line-height: var(--type-body-sm-line);
   color: var(--on-surface-muted);
   overflow-wrap: anywhere;
-}
-
-/* ═══ THE QUESTION ══════════════════════════════════════════════════════════
-   Shown on the listen step and again on the reflect step — ONE column in the
-   schema, read twice, so the question you hold while the track plays and the
-   question you answer afterwards cannot drift apart.
-
-   A REAL HEADING. `14-reflect-step.md` puts it plainly: inside a wizard panel
-   the step's question IS the heading. It is an <h2>, under the exercise name's
-   <h1>, which also gives the two steps an outline entry each rather than a
-   panel of anonymous prose.
-
-   L8 — it is prose the user must read in order to act, so it never drops to
-   body-sm. Same step and same muted ink as `.musie-steps`, because it is the
-   same voice; the weight is what separates a question from an instruction.   */
-.musie-question {
-  margin: 0 0 var(--space-gap-group);
-  max-inline-size: var(--measure-heading);
-  font-family: var(--type-body-xl-family);
-  font-size: var(--type-body-xl-size);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--type-body-xl-line);
-  letter-spacing: var(--type-body-xl-tracking);
-  /* Muted, as the paragraph above always said it was. It shipped as
-     --on-surface, so the two body-xl voices in the session read as different
-     kinds of thing — caught by eye on the hosted walk-through, 2026-09-21.
-     The weight alone separates the question from the instruction. */
-  color: var(--on-surface-muted);
-  text-wrap: var(--text-wrap-heading);
-  hyphens: var(--text-hyphens);
 }
 
 /* ═══ THE STEP RAIL'S CONTAINER ═════════════════════════════════════════════
@@ -822,11 +873,11 @@
 }
 
 /* ═══ A RUN OF PLAIN PARAGRAPHS ═════════════════════════════════════════════
-   `.musie-steps` is the same shape at body-xl in muted ink, which is a step's
-   INSTRUCTION voice; this is ordinary prose at body-md — the data promise, and
-   whatever else turns out to be several sentences the person reads rather than
-   acts on. L14.3 applies the day there is a third caller: two patterns that
-   differ only by type step are a component request.                          */
+   `.musie-md` is the same shape a step up, in muted ink, and it parses its
+   input; this is ordinary prose at body-md written as JSX — the data promise,
+   and whatever else turns out to be several sentences the person reads rather
+   than acts on. L14.3 applies the day there is a third caller: two patterns
+   that differ only by type step are a component request.                     */
 .musie-prose {
   display: flex;
   flex-direction: column;
@@ -1054,10 +1105,10 @@ html[data-musy-scroll-snap] {
   gap: var(--space-gap-related);
 }
 
-/* The question carries its own bottom margin for every other step, where it is
+/* The step's copy carries its own bottom margin everywhere else, where it is
    followed by whatever the step draws. In here the group's gap is the spacing
    and the two would add up. */
-.musie-listen__lead > .musie-question {
+.musie-listen__lead > .musie-md {
   margin-block-end: 0;
 }
 

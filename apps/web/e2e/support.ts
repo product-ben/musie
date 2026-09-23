@@ -170,8 +170,14 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
   });
 
   /* THE FIELD IS FOLDED AWAY UNTIL IT IS ASKED FOR (2026-09-23). Typing the
-     code is the fallback behind *Enter the code by hand*, so the walk opens
-     the disclosure the way a person does.
+     code is the fallback behind *Enter the code by hand*, so the walk opens it
+     the way a person does.
+
+     A SWITCH, NOT A BUTTON. It shipped as a ghost `CtaButton` with
+     `aria-expanded` and became a `Switch` the same day — the control states a
+     MODE you stay in rather than an action you fire. This helper kept asking
+     for a button, so every walk that types a code timed out here looking for
+     a role the screen no longer has.
 
      CONDITIONALLY, because the step remembers: somebody who typed once has the
      form open when *Scan a different card* brings the reader back, and
@@ -179,7 +185,7 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
      is the same question the screen answers. */
   if (!(await field.isVisible())) {
     await page
-      .getByRole('button', { name: label(locale, 'session.scan.codeManual'), exact: true })
+      .getByRole('switch', { name: label(locale, 'session.scan.codeManual'), exact: true })
       .click();
     await expect(field).toBeVisible({ timeout: 15_000 });
   }

@@ -49,7 +49,7 @@ import * as React from 'react';
 import { ContentList, CtaButton, Field, Switch } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
-import { StepText } from './StepText';
+import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import type { Card, Exercise } from '../lib/content';
 import { takeHeldCode } from '../lib/scan';
@@ -167,13 +167,14 @@ export function SessionScan({
 
   return (
     <>
-      {/* The exercise's own card-picking advice. THIS IS THE ONE STEP WHOSE
-          copy actually exists — `scan_text` is the old `guideline`, carried
-          through C.0's rename rather than dropped, so Quick Mindfulness Break
-          really does say "work with the card you are drawn to". No fallback:
-          the two exercises that lack it draw no cards, so they never reach
-          this step at all. */}
-      <StepText lines={exercise.scanText} />
+      {/* The exercise's own headline and card-picking advice — `scan_md`.
+          It is the step that tells you HOW to pick, and since 2026-09-23 it
+          says so in two numbered steps: choose the image, put the rest out of
+          sight, then scan the code.
+
+          No fallback: the two exercises that carry no step copy draw no cards
+          either, so they never reach this step at all. */}
+      <Markdown md={exercise.scanMd} />
 
       {card === null ? (
         <div className="musie-stack">

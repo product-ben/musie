@@ -62,11 +62,10 @@ erDiagram
         bool needs_sound
         bool implemented
         int listen_gate_seconds "seconds of track before the reflection unlocks"
-        text_array intro_text "the intro step's 1-3 sentences — per locale"
-        text_array scan_text "the scan step's — per locale"
-        text_array listen_text "the listen step's — per locale"
-        text_array reflect_text "the reflect step's — per locale"
-        text question "ONE question, shown on listen AND reflect — per locale"
+        text intro_md "the intro step's headline and description, Markdown — per locale"
+        text scan_md "the scan step's — per locale"
+        text listen_md "the listen step's — per locale"
+        text reflect_md "the reflect step's — per locale"
     }
     CARD {
         text id PK
@@ -189,38 +188,50 @@ the seed, because neither exercise has a recording to tune against yet.
 **CHANGED ⑤: the step copy follows the EXERCISE.** Not the card, not the
 track. Used with every card that exercise draws.
 
-**CORRECTED in C.0 — it is FOUR ARRAYS AND ONE QUESTION, not two strings.**
-This document previously said `listening` and `question`, one string each. The
-designer's answer re-cut it again:
+**RE-CUT AGAIN on 2026-09-23 — it is FOUR MARKDOWN COLUMNS, and there is no
+`question`.** C.0 had made it four `text[]` plus one `question`; Ben's answer
+is that every step needs *a headline and a description text*, and neither half
+of that fits an array of equal paragraphs:
 
 | Column | Type | |
 |---|---|---|
-| `intro_text` | `text[]` | the intro step's 1–3 sentences |
-| `scan_text` | `text[]` | the scan step's — **was `guideline`** |
-| `listen_text` | `text[]` | the listen step's — **was `listening`** |
-| `reflect_text` | `text[]` | the reflect step's |
-| `question` | `text` | **ONE question, rendered on BOTH the listen and the reflect step** |
+| `intro_md` | `text` | the intro step's headline and description, as Markdown |
+| `scan_md` | `text` | the scan step's — **was `scan_text`, and `guideline` before that** |
+| `listen_md` | `text` | the listen step's — **was `listen_text`, and `listening` before that** |
+| `reflect_md` | `text` | the reflect step's |
 
-Two things follow from the shape and are easy to get wrong:
+Three things follow from the shape:
 
-- **The array boundary IS the paragraph break.** Each element renders as its
-  own paragraph, so no screen ever splits prose on punctuation — which breaks
-  in German at the first abbreviation.
-- **One question, shown twice, is deliberate.** The question you hold in mind
-  while the track plays and the question you answer afterwards are the same
-  question. Two columns would let them drift apart.
+- **The headline is an `<h2>`.** Content writes `##`; the parser clamps every
+  heading to 2–6 so a content edit can never put a second `<h1>` under the
+  exercise name that `ContentBox` already renders as one.
+- **A list is a list.** The copy is numbered on intro and scan and bulleted on
+  reflect, and it renders as `<ol>` / `<ul>`, so the count and the position
+  reach assistive tech instead of being baked into the prose (L3). This is the
+  half that `text[]` could not express at all.
+- **The subset is bounded, and the bound is a file.**
+  `apps/web/src/lib/markdown.ts` is normative: ATX headings, paragraphs,
+  ordered and unordered lists, `**strong**` and `*emphasis*`. No HTML, no
+  images, no links. Anything else renders as its own literal text — a line is
+  never dropped.
 
-`scan_text` inherits `guideline`'s rename and is the one place the re-cut kept
-real copy: *"Work with the card you are drawn to, not the one you think you
-should pick."*, with hand-written German. Everything else is null.
+**`question` is gone.** One column rendered as the heading of BOTH the listen
+and the reflect step, on the rule that the question you hold while the track
+plays and the question you answer afterwards must not drift apart. The new
+copy makes them different questions on purpose — listen asks what picture
+forms, reflect asks what the scene was called and what happened in it — so
+each step's headline is its own. The column was null in all six rows, so
+nothing written was lost.
 
-> **Twenty-eight strings are owed, and they are not ours to write.** Four
-> lists × 3 exercises × 2 locales = 24, less the two `scan_text` rows carried
-> over, plus one question × 3 × 2 = 6. They come from the Mindfulness Cards
-> spreadsheet. Until they land, no exercise can say what to do while the track
-> plays. `select * from public.missing_translations` stays quiet about them,
-> because it compares locales against each other rather than testing for null —
-> absent from both is data, absent from one is a dropped translation.
+> **The copy has landed for Quick Mindfulness Break, and is still owed for the
+> other two.** All four columns are filled in both locales for
+> `mindfulness-cards` (`20260923120000_exercise_step_markdown.sql`); Breathing
+> Score and Body Scan Soundwalk carry none, in either locale, and are
+> unimplemented. It is provisional either way — the Mindfulness Cards
+> spreadsheet will overwrite it. `select * from public.missing_translations`
+> stays quiet about the two empty exercises, because it compares locales
+> against each other rather than testing for null — absent from both is data,
+> absent from one is a dropped translation.
 
 ### Card — `cards` + `card_i18n`
 
@@ -228,7 +239,7 @@ Nine rows, one deck, **shared across exercises** — card 3 is the same card
 whichever exercise drew it.
 
 A card carries its **feeling** and nothing else that reads. The instruction and
-the question moved to the exercise; the track moved to the pair. What card 3
+the question moved to the exercise's own step copy; the track moved to the pair. What card 3
 sounds like, and what you are asked about it, are not the card's to say.
 
 > **Eighteen strings were dropped in the re-cut.** The nine per-card listening
