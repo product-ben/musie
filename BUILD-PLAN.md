@@ -1217,11 +1217,18 @@ is none, so a real session is simply used.
   with the printed password, landed on the same id, and found its own `profiles`
   row. The gate walk then signed the same account in through a real browser.
 
-  **SECOND-DEVICE HAND TEST OUTSTANDING — Ben's, one pass.** Everything above is
-  one machine. "Signs in on a second device and reads the diary written on the
-  first" is the half that cannot be proved from here, and it is the whole reason
-  this step exists. Do it with a phone and a laptop on one account: write a
-  reflection on one, read it on the other.
+  **PROVED ON PRODUCTION 2026-09-23, as far as one machine reaches.** An account
+  was created on the hosted project with a `sb_secret_` key and then signed in at
+  `musie.lipinskib.workers.dev` from two independent browser contexts — the
+  second having never held the first's session. Both passed the gate, both
+  resolved their profile, both rendered the diary, no console errors. So the
+  script, the hosted project, the build variable and the deployed bundle line up.
+
+  **WHAT IS STILL NOT PROVED IS THE SENTENCE'S SECOND HALF.** Two contexts are
+  not two devices, and nothing was written: "reads the diary written on the
+  first" needs a reflection to exist. That is Ben's pass, and it is now the only
+  thing between here and H.0 being finished — write a reflection on the laptop,
+  read it on the phone, both signed into the same account.
 
 - [x] **H.0b The sign-in gate, and only it.** Sign in and sign out. No sign
   up, no reset, no OAuth — those are H.3, and building them now would build
