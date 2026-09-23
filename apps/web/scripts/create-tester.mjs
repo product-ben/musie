@@ -39,8 +39,11 @@
  * For a hosted project, pass the two variables for ONE run:
  *
  *   SUPABASE_URL=https://xxx.supabase.co \
- *   SUPABASE_SERVICE_ROLE_KEY=… \
+ *   SUPABASE_SECRET_KEY=sb_secret_… \
  *     node scripts/create-tester.mjs ben@example.com
+ *
+ * `SUPABASE_SERVICE_ROLE_KEY` is still accepted; see `target()` for why the
+ * secret key is the one to prefer.
  *
  * Both or neither — a partial set means somebody meant to point this at a
  * hosted project and got it half right, and quietly creating the account on
@@ -117,17 +120,37 @@ function parseArgs(argv) {
  *
  * Throws on a partial override rather than falling through to localhost.
  */
+/**
+ * ── TWO NAMES FOR THE KEY, BECAUSE SUPABASE NOW RECOMMENDS THE OTHER ONE ───
+ * `SUPABASE_SECRET_KEY` is the name to reach for. The dashboard has started
+ * saying so beside the legacy one: "This key has the ability to bypass Row
+ * Level Security … Prefer using Secret API keys instead." A leaked `sb_secret_`
+ * key is revoked on its own; a leaked `service_role` JWT is signed by the
+ * project's JWT secret, so containing it means rotating that secret and
+ * invalidating every token the project has issued.
+ *
+ * `SUPABASE_SERVICE_ROLE_KEY` still works, and is still what `db.support.ts`
+ * and `supabase status` call it. Both accepted rather than one renamed: a
+ * script that stopped taking the old name would break the runs somebody already
+ * has in their shell history, and this is the file you run while handing out
+ * credentials — not the moment to be told your variable is spelled wrong.
+ *
+ * MEASURED, not assumed: an `sb_secret_` key was run through this script
+ * against the local stack on 2026-09-23 and `auth.admin.createUser` accepted it
+ * exactly like the JWT.
+ */
 function target() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (url || key) {
     if (!url || !key) {
       throw new Error(
-        'Pointing this somewhere needs BOTH SUPABASE_URL and ' +
-          'SUPABASE_SERVICE_ROLE_KEY. Set both or neither — a partial set would ' +
-          'silently create the account on the local stack, which looks like it ' +
-          'worked and leaves the tester unable to sign in.',
+        'Pointing this somewhere needs BOTH SUPABASE_URL and a key — ' +
+          'SUPABASE_SECRET_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY. Set ' +
+          'both or neither: a partial set would silently create the account on ' +
+          'the local stack, which looks like it worked and leaves the tester ' +
+          'unable to sign in.',
       );
     }
     return { url, key, where: 'from the environment' };
@@ -142,7 +165,7 @@ function target() {
   } catch {
     throw new Error(
       'The local Supabase stack is not reachable. Run `supabase start`, or set ' +
-        'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to create the account on a ' +
+        'SUPABASE_URL and SUPABASE_SECRET_KEY to create the account on a ' +
         'hosted project.',
     );
   }
