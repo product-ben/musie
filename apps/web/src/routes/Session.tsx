@@ -449,10 +449,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     }
   }
 
-  /* ONE QUESTION, SHOWN TWICE — on listen and again on reflect. Resolved once,
-     here, so the two steps cannot disagree about what it is. */
-  const question = exercise.question ?? t('reflect.questionFallback');
-
   /**
    * THE WAY OUT OF WHICHEVER STEP IS SHOWING.
    *
@@ -601,7 +597,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               track={track}
               sessionId={id}
               card={card}
-              question={question}
               listened={listened}
               onListened={() => setListened(true)}
               onAdvance={advance}
@@ -614,7 +609,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               exercise={exercise}
               sessionId={id}
               onSpokenWords={setSpokenWords}
-              question={question}
               mode={reflectMode}
               onModeChange={setReflectMode}
               text={answer}

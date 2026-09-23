@@ -60,41 +60,36 @@ export interface Exercise {
   /** Null for exercises the source has no `needs` for. Absent, not untranslated. */
   needs: string | null;
   /**
-   * THE FOUR STEPS' COPY, one array each, in step order: intro → scan →
-   * listen → reflect. Each element is ONE PARAGRAPH — the array boundary is
-   * the paragraph break, so a screen maps over it and never splits prose on
-   * punctuation.
+   * THE FOUR STEPS' COPY, one Markdown document each, in step order: intro →
+   * scan → listen → reflect. Each carries that step's HEADLINE and its
+   * DESCRIPTION — Ben, 2026-09-23 — which is why it is one string with a
+   * format rather than the `text[]` of paragraphs this replaced: a headline is
+   * not a paragraph, and the copy is numbered.
    *
-   * `string[]`, NEVER `string[] | null`. The column is nullable and the rows
-   * are null today, but null and `[]` render identically — as nothing — so
-   * handing both shapes to every screen would buy a null check that has no
-   * distinct branch. Coalesced here, at the boundary, with the rest of the
-   * column mapping; a screen asks `.length === 0`.
-   */
-  introText: string[];
-  scanText: string[];
-  listenText: string[];
-  reflectText: string[];
-  /**
-   * ONE question, SHOWN TWICE: on the listen step and again on the reflect
-   * step. Still `string | null`, unlike the arrays above, because a question
-   * is one sentence and its absence is a real branch — there is no question
-   * to show rather than an empty list of them.
+   * What of Markdown actually renders is `lib/markdown.ts`, and the migration
+   * that added the columns names that file as the normative statement of it.
    *
-   * Null until the spreadsheet supplies it — the prototype wrote nine per-card
-   * variants and no exercise-level one.
+   * `string`, NEVER `string | null`. The columns are nullable — two of the
+   * three exercises carry no step copy at all — but null and `''` render
+   * identically, as nothing, so handing both shapes to every screen would buy
+   * a null check with no distinct branch. Coalesced here, at the boundary,
+   * with the rest of the column mapping; a screen asks `=== ''`, or simply
+   * passes it to `Markdown`.
    */
-  question: string | null;
+  introMd: string;
+  scanMd: string;
+  listenMd: string;
+  reflectMd: string;
   imageAlt: string;
 }
 
 /**
  * A card carries its FEELING and nothing else that reads.
  *
- * The listening instruction and the question moved to the exercise, and the
- * track moved to the (exercise, card) pair. Card 3 is Anger in every exercise;
- * what it sounds like, and what you are asked about it, are not the card's to
- * say.
+ * The listening instruction and the question moved to the exercise's own step
+ * copy, and the track moved to the (exercise, card) pair. Card 3 is Anger in
+ * every exercise; what it sounds like, and what you are asked about it, are
+ * not the card's to say.
  */
 export interface Card {
   id: string;
@@ -182,7 +177,7 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_text, scan_text, listen_text, reflect_text, question, image_alt)';
+const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, image_alt)';
 
 interface ExerciseRow {
   id: string;
@@ -199,11 +194,10 @@ interface ExerciseRow {
     name: string;
     description: string;
     needs: string | null;
-    intro_text: string[] | null;
-    scan_text: string[] | null;
-    listen_text: string[] | null;
-    reflect_text: string[] | null;
-    question: string | null;
+    intro_md: string | null;
+    scan_md: string | null;
+    listen_md: string | null;
+    reflect_md: string | null;
     image_alt: string;
   }[];
 }
@@ -224,13 +218,12 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     name: text.name,
     description: text.description,
     needs: text.needs,
-    /* ?? [] is the whole of the null-versus-empty decision: it happens once,
+    /* ?? '' is the whole of the null-versus-empty decision: it happens once,
        here, so no screen ever sees the nullable column. */
-    introText: text.intro_text ?? [],
-    scanText: text.scan_text ?? [],
-    listenText: text.listen_text ?? [],
-    reflectText: text.reflect_text ?? [],
-    question: text.question,
+    introMd: text.intro_md ?? '',
+    scanMd: text.scan_md ?? '',
+    listenMd: text.listen_md ?? '',
+    reflectMd: text.reflect_md ?? '',
     imageAlt: text.image_alt,
   }];
 }

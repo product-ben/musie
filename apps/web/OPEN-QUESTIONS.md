@@ -2796,3 +2796,143 @@ in to change that is L7 and rule 1. A `ContentBox` prop for "a control that
 sits on the headline's line" is the shape of the answer, and it is the third
 thing in this batch that wants a design-system change, so I am not making it
 on my own initiative — this entry is the record that it was seen.
+
+---
+
+# Phase · a headline and a description per step (2026-09-23)
+
+## Markdown is parsed in this repo rather than by a dependency — and the subset is the deliverable
+
+Where: `apps/web/src/lib/markdown.ts`, `apps/web/src/components/Markdown.tsx`
+
+What I checked: the brief is "allow markdown per exercise and render it
+according to the typography tokens from story". Two ways to do that. The
+obvious one is `react-markdown` + `remark-gfm`; the other is to parse the
+subset here.
+
+What I did: parsed it here. About a hundred lines, no new dependency, in an app
+that pins ten.
+
+Why: the deciding reason is not the dependency count, it is that **the output
+has to be typeset, not just rendered**. Every element on a Musie screen
+resolves to a Layer 1 token (L14.1), and a step's headline is a specific
+pairing — the body-xl in muted ink that `.musie-question` carried. Producing a
+block list rather than HTML is what lets the component choose the element AND
+the class, and what lets the heading level be clamped so a content string can
+never emit a second `<h1>` under the one `ContentBox` already renders. A
+general renderer also accepts raw HTML, images and links, which turns "what can
+a content string do to this screen" into a question about a dependency's
+configuration rather than about a file in this repo.
+
+The cost, stated: this is **not CommonMark**. Nested lists, block quotes, code
+fences, tables and links are not implemented. They do not fail — the line
+renders as its own literal text, which is the right failure for content we
+author in a migration, and there is a test that holds it to exactly that.
+
+What I need from Ben: **nothing, unless the content is going to need links or
+images.** Say so and this becomes a dependency rather than a parser — the
+`Block` type is the seam, and nothing above it would change.
+
+## `exercise_i18n.question` is gone, and the rule it carried with it
+
+Where: `supabase/migrations/20260923120000_exercise_step_markdown.sql`,
+`apps/web/src/routes/Session.tsx`
+
+What I checked: `question` was ONE column rendered as the `<h2>` on both the
+listen and the reflect step, and the schema comment gives the reason — *"the
+question you hold while the track plays and the question you answer afterwards
+must not be able to drift apart"*. That is a real rule, and the new copy breaks
+it on purpose: listen asks *what picture forms when the music and the card come
+together*, reflect asks *what name would you give the scene* and *what happened
+in it*.
+
+What I did: dropped the column, and `reflect.questionFallback` with it. Each
+step's headline is now its own, inside its own `_md`.
+
+Why: a brief that gives four steps four headlines has already decided that the
+steps ask different things. Keeping the column would have meant a step with two
+headings — the exercise's and the shared question's — on two of the four steps.
+
+What I need from Ben: **nothing, just flagging that the invariant is gone.** It
+was never exercised: `question` was null in all six rows and the app rendered
+the chrome fallback every time.
+
+## Three edits to the brief's German, and one placeholder shipped verbatim
+
+Where: `supabase/migrations/20260923120000_exercise_step_markdown.sql`
+
+What I checked: `docs/GERMAN-UI-WRITING.md`, which binds content copy as well
+as chrome — held to the standard, though the seed's German stays provisional
+until the spreadsheet lands.
+
+What I did:
+
+1. *"Wähle eine Kart aus"* → *"Karte"*. A typo.
+2. The listen headline lost its full stop — §7: *"A heading does not end in a
+   full stop. A sentence does."*
+3. *"die durch die Verbindung von der Musik mit dem Bild … entstanden ist"* →
+   *"die aus der Verbindung von Musik und Bild … entstanden ist"*. Two
+   prepositions on a relative clause that already runs 25 words.
+
+What I did **not** do: `[X]` in *"Leg die vier Karten mit dem Symbol [X] vor
+dich"* is on screen exactly as written, in both locales. It reads as a
+placeholder for a symbol printed on the deck, and inventing one would be
+authoring content about a physical product I cannot see.
+
+What I need from Ben: **what the symbol is** — a character, a word, or a
+picture the step should show. (3) is the only one of the edits that is a
+judgement rather than a rule; revert it if the phrasing was deliberate.
+
+## The e2e walk had been failing since the morning's switch commit, on two stale assertions
+
+Where: `apps/web/e2e/support.ts`, `apps/web/e2e/session.spec.ts`
+
+What I checked: `session.spec.ts` failed on this branch, so I checked whether I
+had broken it. `git show --stat 87e9c21` — *Typing the code by hand is a switch,
+not a button* — touched neither file. Two things in the walk still described
+the old screen:
+
+- `enterCode` asked for `getByRole('button', …)`; the control announces as
+  `role="switch"` now, so every walk that types a code timed out looking for a
+  role the page no longer has.
+- After *Scan a different card*, the spec asserted the code FIELD was visible,
+  on the premise that it is the reader's resting state. It is folded away
+  behind the switch now, so the reset leaves the switch, not a textbox.
+
+What I did: fixed both, in the walk rather than in the app — the app is right
+and the test was describing a screen that had moved. Both locales pass.
+
+Why it is in this file: it is a fix outside the brief, made because it was
+blocking verification of work inside it.
+
+What I need from Ben: **nothing.** Worth knowing that `pnpm test:e2e` is not in
+`pnpm check` (deliberately — CI has no browser and no Supabase), which is why
+this sat unnoticed between the morning's commit and this afternoon's.
+
+## `supabase db reset` empties the local `tracks` bucket, and the repo cannot refill it — RESOLVED
+
+Where: `apps/web/src/lib/db.content.db.test.ts` (the signed-URL test),
+`apps/web/e2e/reveal.spec.ts`
+
+What I checked: after `supabase db reset` — which this change needed, to apply
+the migration — `storage.objects` is empty, so nothing can sign `trk-NN.mp3`.
+Three tests failed for that one cause, and BUILD-PLAN.md E.4 is explicit that
+uploading the files *"is an operator act with files that deliberately never
+entered this repository"*, so for a while this read as something only Ben could
+undo.
+
+What I did: **copied them back from the hosted bucket, which still had all
+four.** `supabase storage cp ss:///tracks/trk-01.mp3 <tmp> --linked
+--experimental` to download, the same command with `--local` and the arguments
+reversed to upload. `pnpm test:db` is 85/85 and `pnpm test:e2e` is 16/16 again.
+
+Why it is worth writing down: the files never entered the repository, and the
+conclusion everyone reaches from that is that a reset costs an upload from
+somebody's laptop. It does not, as long as the hosted bucket is ahead — which
+it is, and which makes `--linked` the backup nobody declared. The four keys are
+`trk-01`, `trk-02`, `trk-04`, `trk-05`; the other five tracks are silent by
+design and have `src is null`.
+
+What I need from Ben: **nothing.** Worth knowing that this only works while the
+hosted bucket holds them. If a recording ever exists locally and nowhere else,
+a reset really does lose it.

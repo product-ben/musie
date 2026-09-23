@@ -3,8 +3,9 @@
  *
  * The thinnest of the four, and deliberately: its whole job is to let the
  * exercise say "lay the cards out, take a breath" before the run begins. Every
- * word of that belongs to the exercise, so when the exercise has none this is a
- * heading, one borrowed sentence and a way forward.
+ * word of that belongs to the exercise — headline and description both, as
+ * `intro_md` — so when the exercise has none this is one borrowed sentence and
+ * a way forward.
  *
  * BACK LEAVES THE SESSION rather than moving a step, because there is no step
  * behind this one. It goes to the library, and the session stays running — the
@@ -12,7 +13,7 @@
  * the control in the context box. Leaving is not abandoning. That button lives
  * in `Session.tsx` with the rest of the action row.
  */
-import { StepText } from './StepText';
+import { Markdown } from './Markdown';
 import type { Exercise } from '../lib/content';
 
 export interface SessionIntroProps {
@@ -27,5 +28,5 @@ export interface SessionIntroProps {
  * component's geometry (CLAUDE.md rule 1, and 10-layout.md L7).
  */
 export function SessionIntro({ exercise }: SessionIntroProps) {
-  return <StepText lines={exercise.introText} fallbackKey="session.intro.fallback" />;
+  return <Markdown md={exercise.introMd} fallbackKey="session.intro.fallback" />;
 }

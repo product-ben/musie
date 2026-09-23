@@ -56,11 +56,12 @@ import {
   useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
-import { StepText } from './StepText';
+import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
 import { revealTrack } from '../lib/reveal';
 import type { Card, Exercise, Track } from '../lib/content';
+import { parseMarkdown, plainText } from '../lib/markdown';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
 const TICK_MS = 250;
@@ -104,8 +105,6 @@ export interface SessionListenProps {
    * what Back DOES in `Session.tsx`, which is the only place that knows.
    */
   back: React.ReactNode;
-  /** The question, already resolved to the exercise's own or the fallback. */
-  question: string;
   /** Sticky across the step, so it is held by the session rather than here. */
   listened: boolean;
   onListened: () => void;
@@ -121,7 +120,7 @@ export interface SessionListenProps {
  * threshold ONCE, upward, and keeps the position it counts down from.
  */
 export function SessionListen({
-  exercise, track, question, sessionId, card, listened, onListened, onAdvance, back,
+  exercise, track, sessionId, card, listened, onListened, onAdvance, back,
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
@@ -422,6 +421,17 @@ export function SessionListen({
   }, []);
 
   /**
+   * The step's description, as ONE STRING and without its headline — for the
+   * details view below, which lists it as a value rather than rendering it as
+   * prose. Memoised because the parse is per-render work for a string that
+   * changes only with the locale.
+   */
+  const instructions = React.useMemo(
+    () => plainText(parseMarkdown(exercise.listenMd).filter((b) => b.kind !== 'heading')),
+    [exercise.listenMd],
+  );
+
+  /**
    * THE DETAILS VIEW'S FACTS, and the order is the answer first.
    *
    * The track's own name is NOT here: the player above states it, and saying
@@ -438,9 +448,16 @@ export function SessionListen({
       label: t('session.scan.yourCard'),
       content: `${card.code} · ${card.feeling}`,
     }]),
-    ...(exercise.listenText.length === 0 ? [] : [{
+    /* THE DESCRIPTION WITHOUT ITS HEADLINE. `ContentList` takes a label and a
+       VALUE, and the step's headline is already the label's job — "Listen
+       closely, and look at your card" under a heading that says what you were
+       listening for is the same sentence twice, run together without
+       punctuation between them. So the heading blocks are dropped and the
+       prose is flattened; `plainText` is in `lib/markdown.ts` for exactly
+       this, because the raw Markdown would show the reader `##`. */
+    ...(instructions === '' ? [] : [{
       label: t('session.listen.aboutInstructions'),
-      content: exercise.listenText.join(' '),
+      content: instructions,
     }]),
   ];
 
@@ -454,8 +471,6 @@ export function SessionListen({
           puts it, which is the top of the page rather than the top of the
           stage, so the wizard's header is never scrolled off. */}
       <section ref={stageRef} className="musy-snap-view musie-listen__view musie-listen__view--stage">
-      <StepText lines={exercise.listenText} />
-
       {/* ── ONE GROUP AT THE TOP OF THE VIEW — Ben, 2026-09-23 ─────────────
           The question, the line of small print under it, and the control that
           plays the track. They were three things at three heights: the
@@ -469,11 +484,17 @@ export function SessionListen({
           the foot of the view is then only the ways on, which is what an
           action row should be. */}
       <div className="musie-listen__lead">
-      {/* THE QUESTION, held in mind while the track plays. It is the SAME
-          question the reflect step asks — one column, shown twice, which is
-          the schema's own shape and deliberately so: the question you hold and
-          the question you answer must not be able to drift apart. */}
-      <h2 className="musie-question">{question}</h2>
+      {/* THE STEP'S OWN WORDS — `listen_md`, headline and description, at the
+          top of the group rather than above it.
+
+          It used to be a `StepText` up here and a `question` <h2> down in the
+          lead, on the rule that ONE `question` column was rendered on this
+          step and again on the reflect step so the two could not drift apart.
+          That rule is gone with the column (2026-09-23): each step now has its
+          own headline, because this one asks what picture forms while the
+          track plays and the reflection asks what the scene was called — which
+          are deliberately not the same question. */}
+      <Markdown md={exercise.listenMd} />
 
       {/* The gate's own copy, with the sentences it qualifies rather than with
           the buttons it unlocks: it is the small print under the instruction.

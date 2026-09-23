@@ -280,7 +280,6 @@ export const de: Messages = {
   'session.listen.noTrack': 'Für diese Übung gibt es noch keine Aufnahme.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
-  'reflect.questionFallback': 'Was ist bei dir geblieben?',
   'reflect.legend': 'Wie möchtest du antworten?',
   /* ONE WORD EACH, where the English takes two. A segment ellipses at one line
      and German runs ~30% longer, so the English pattern ('Record audio') would
