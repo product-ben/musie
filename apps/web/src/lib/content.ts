@@ -47,8 +47,8 @@ export interface Exercise {
   /**
    * How much of the track has to be behind you before the reflection unlocks,
    * in seconds. Per exercise, because it varies with the exercise — a
-   * two-minute card draw and a twenty-minute soundwalk do not earn the same
-   * gate.
+   * two-minute card draw and a fifteen-minute sound journey do not earn the
+   * same gate.
    *
    * `not null` in the schema, so no coalescing here. The listen step still
    * caps it at the track's own duration: a gate longer than the recording is
@@ -69,8 +69,8 @@ export interface Exercise {
    * What of Markdown actually renders is `lib/markdown.ts`, and the migration
    * that added the columns names that file as the normative statement of it.
    *
-   * `string`, NEVER `string | null`. The columns are nullable — two of the
-   * three exercises carry no step copy at all — but null and `''` render
+   * `string`, NEVER `string | null`. The columns are nullable — three of the
+   * five exercises carry no step copy at all — but null and `''` render
    * identically, as nothing, so handing both shapes to every screen would buy
    * a null check with no distinct branch. Coalesced here, at the boundary,
    * with the rest of the column mapping; a screen asks `=== ''`, or simply
@@ -340,9 +340,15 @@ export interface Track {
  * compares with `=`, which is never true of NULL in SQL and would silently
  * return nothing for exactly the exercises this branch exists for.
  *
- * Null for "no pairing row", which is ORDINARY today: Breathing Score and Body
- * Scan Soundwalk both need sound, draw no card, and the source has no file for
- * either. The listen step renders its no-recording line rather than an error.
+ * Null for "no pairing row", which is ORDINARY today: Mindful Breathing, Sound
+ * Journey and Body Scan all need sound, draw no card, and there is no file for
+ * any of them. The listen step renders its no-recording line rather than an
+ * error.
+ *
+ * NOT null for a SECOND exercise over the same deck. Free Rein draws the same
+ * nine cards as Mindful Pause and plays the same nine recordings, through nine
+ * pairing rows of its own (`20260923150000`) — which is the split working as
+ * designed: one row per recording, one pairing row per place it plays.
  */
 export async function getTrackFor(
   exerciseId: string,

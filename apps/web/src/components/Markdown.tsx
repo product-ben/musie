@@ -8,6 +8,12 @@
  * same kind of thing at the same weight, and because the new copy is NUMBERED.
  * `lib/markdown.ts` says why the format is Markdown and what of it renders.
  *
+ * ── A BULLET IS A PARAGRAPH, SO THERE IS ONE LIST ELEMENT ─────────────────
+ * Ben, 2026-09-23. `lib/markdown.ts` hands a bullet over as a paragraph block
+ * and an <ol> is the only list it emits, which is why nothing below picks
+ * between two list elements from content. The numbers stay drawn: they are the
+ * instruction, where a bullet was only a break between sentences.
+ *
  * ── IT BUILDS ELEMENTS; IT NEVER SETS HTML ────────────────────────────────
  * No `dangerouslySetInnerHTML` anywhere, and the parser has no branch that
  * produces an <a>, an <img> or an element named by the content. The tag is
@@ -73,11 +79,10 @@ export function Markdown({ md, fallbackKey }: MarkdownProps) {
           return <p key={key}>{spans(block.spans)}</p>;
         }
 
-        const List = block.ordered ? 'ol' : 'ul';
         return (
-          <List key={key}>
+          <ol key={key}>
             {block.items.map((item, i) => <li key={i}>{spans(item)}</li>)}
-          </List>
+          </ol>
         );
       })}
     </div>

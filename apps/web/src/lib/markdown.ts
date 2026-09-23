@@ -33,6 +33,19 @@
  * is why the migration that introduced these columns names this file as the
  * normative statement of what renders.
  *
+ * ── A BULLET IS PARAGRAPH TEXT, AND THAT IS THE RENDERER'S DECISION ───────
+ * Ben, 2026-09-23: "always render bullets as paragraph text". `- ` is still
+ * RECOGNISED — the marker is stripped and each bullet line opens its own
+ * paragraph, so the break the writer meant survives — but no <ul> is ever
+ * produced, and the `list` block below is ordered by construction.
+ *
+ * THE CONTENT KEEPS ITS BULLETS. The migrations still write `- `, because
+ * this is a decision about how a step is DRAWN rather than about what it
+ * says; rewriting the copy to bare paragraphs would bury the rule where the
+ * next person to change it cannot find it. An ORDERED list is untouched: its
+ * numbers are the instruction's most useful part, and the count and position
+ * still reach assistive tech (L3).
+ *
  * A line is never dropped. Whatever the input, every non-blank line ends up in
  * some block, which is the one invariant the tests hold this to.
  */
@@ -59,8 +72,11 @@ export type HeadingLevel = 2 | 3 | 4 | 5 | 6;
 export type Block =
   | { kind: 'heading'; level: HeadingLevel; spans: Span[] }
   | { kind: 'paragraph'; spans: Span[] }
-  /** `ordered` picks <ol> or <ul>. Each item is one line of spans. */
-  | { kind: 'list'; ordered: boolean; items: Span[][] };
+  /**
+   * An ORDERED list, and the only kind there is — a bullet is paragraph text,
+   * so nothing here can produce a <ul>. Each item is one line of spans.
+   */
+  | { kind: 'list'; items: Span[][] };
 
 /* ── Inline ───────────────────────────────────────────────────────────────*/
 
@@ -103,7 +119,11 @@ export function parseInline(text: string): Span[] {
 
 /** `## Heading`, one to six hashes, at least one space after them. */
 const HEADING = /^(#{1,6})\s+(.*)$/;
-/** `- item` or `* item`. A `*` bullet needs the space, so `*em*` is not one. */
+/**
+ * `- item` or `* item` — matched so the MARKER CAN BE DROPPED, not so a list
+ * can be built: the line becomes a paragraph. A `*` bullet needs the space,
+ * so `*em*` is not one.
+ */
 const BULLET = /^[-*]\s+(.+)$/;
 /** `1. item` or `1) item`. The number itself is not kept — `<ol>` counts. */
 const NUMBER = /^\d+[.)]\s+(.+)$/;
@@ -113,22 +133,24 @@ const NUMBER = /^\d+[.)]\s+(.+)$/;
  *
  * A LINE-AT-A-TIME WALK with one open block, which is all this subset needs:
  * there is no nesting, so nothing has to be pushed on a stack. A blank line
- * closes whatever is open; a marker line either continues the open list or
- * starts a new one; anything else is paragraph text.
+ * closes whatever is open; a numbered line continues the open list or starts
+ * one; a bullet opens a paragraph; anything else is paragraph text.
  *
  * ── LAZY CONTINUATION, AND ONLY ONE KIND ──────────────────────────────────
- * A plain line directly under a list item joins THAT ITEM rather than starting
- * a paragraph inside the list. It is what a writer means by wrapping a long
- * numbered step over two lines in a migration, and it is the only wrapping
- * rule here: a paragraph's own continuation lines join with a SPACE, never a
- * line break, because a single newline in Markdown is not one.
+ * A plain line directly under a numbered item joins THAT ITEM rather than
+ * starting a paragraph inside the list. It is what a writer means by wrapping
+ * a long step over two lines in a migration, and it is the only wrapping rule
+ * here: a paragraph's own continuation lines join with a SPACE, never a line
+ * break, because a single newline in Markdown is not one. A wrapped BULLET
+ * gets the same treatment for free — it is a paragraph, and that is how a
+ * paragraph continues.
  */
 export function parseMarkdown(md: string): Block[] {
   const blocks: Block[] = [];
 
   /* The block being built, as raw text: spans are parsed on close, once,
      rather than re-parsed on every continuation line. */
-  let openList: { ordered: boolean; items: string[] } | null = null;
+  let openList: { items: string[] } | null = null;
   let openParagraph: string[] = [];
 
   function closeParagraph(): void {
@@ -139,11 +161,7 @@ export function parseMarkdown(md: string): Block[] {
 
   function closeList(): void {
     if (openList === null) return;
-    blocks.push({
-      kind: 'list',
-      ordered: openList.ordered,
-      items: openList.items.map(parseInline),
-    });
+    blocks.push({ kind: 'list', items: openList.items.map(parseInline) });
     openList = null;
   }
 
@@ -170,18 +188,22 @@ export function parseMarkdown(md: string): Block[] {
       continue;
     }
 
+    /* A BULLET OPENS A PARAGRAPH. The marker is dropped, so a run of bullets
+       is a run of paragraphs — one per line, which is the break the writer
+       meant. `closeAll` rather than `closeParagraph`: a bullet under a
+       numbered run ends that run, because it is no longer part of it. */
     const bullet = BULLET.exec(line);
-    const numbered = bullet === null ? NUMBER.exec(line) : null;
-    if (bullet !== null || numbered !== null) {
-      const ordered = numbered !== null;
-      const item = (bullet?.[1] ?? numbered?.[1] ?? '').trim();
+    if (bullet !== null) {
+      closeAll();
+      openParagraph.push(bullet[1].trim());
+      continue;
+    }
+
+    const numbered = NUMBER.exec(line);
+    if (numbered !== null) {
       closeParagraph();
-      /* A bullet under a numbered run is a DIFFERENT list, not a stray item in
-         the open one: <ol> and <ul> are different elements and an item cannot
-         change which it is in. */
-      if (openList !== null && openList.ordered !== ordered) closeList();
-      if (openList === null) openList = { ordered, items: [] };
-      openList.items.push(item);
+      if (openList === null) openList = { items: [] };
+      openList.items.push(numbered[1].trim());
       continue;
     }
 
@@ -212,7 +234,7 @@ export function parseMarkdown(md: string): Block[] {
  * `content` is a string. Rendering blocks there would put a heading inside a
  * definition list; rendering the raw Markdown would show the reader `##`.
  *
- * Blocks are joined with a space and a list's items with " · ", which is the
+ * Blocks are joined with a space and an ordered list's items with " · ", the
  * separator `ContentList` callers already use for a compound value ("MC-01 ·
  * Anger") in this same component.
  */

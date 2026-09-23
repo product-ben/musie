@@ -64,12 +64,12 @@ export interface SessionState extends PersistedSession {
   /**
    * The steps this run does NOT include — D14.
    *
-   * Two of the three exercises draw no cards (`exercises.needs_cards` is
-   * false for Breathing Score and Body Scan Soundwalk), so there is nothing
-   * to scan. Without this the run is unfinishable: the reachability rule
-   * wants every earlier step completed, `scan` never completes, and `listen`
-   * stays locked forever. That bug cannot fire today only because the one
-   * implemented exercise draws cards.
+   * Three of the five exercises draw no cards (`exercises.needs_cards` is
+   * false for Mindful Breathing, Sound Journey and Body Scan), so there is
+   * nothing to scan. Without this the run is unfinishable: the reachability
+   * rule wants every earlier step completed, `scan` never completes, and
+   * `listen` stays locked forever. That bug cannot fire today only because
+   * both implemented exercises draw cards.
    *
    * DERIVED, NOT STORED. It follows from the exercise, so `sessions` has no
    * column for it — the screen computes it from `needs_cards` and hands it in

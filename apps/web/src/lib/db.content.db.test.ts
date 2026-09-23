@@ -108,7 +108,7 @@ describe('exercises · the listen gate', () => {
       .select('id, listen_gate_seconds, timeframe_min');
 
     expect(error).toBeNull();
-    expect(data).toHaveLength(3);
+    expect(data).toHaveLength(5);
     for (const row of data ?? []) {
       expect(typeof row.listen_gate_seconds).toBe('number');
       expect(row.listen_gate_seconds).toBeGreaterThanOrEqual(0);
