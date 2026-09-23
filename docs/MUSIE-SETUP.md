@@ -164,15 +164,23 @@ To change it: **Workers & Pages → musie → Access**, or the app id above.
 mail on any path** — no provider, no sending domain, no DNS record. That is what
 lets the beta run while the domain question is still open.
 
-Get the key from **Supabase → project-musie → Project Settings → API keys →
-`service_role`**. Then, from `apps/web`:
+Get the key from **Supabase → project-musie → Project Settings → API keys**, and
+take a **Secret key** (`sb_secret_…`) rather than the legacy `service_role` JWT.
+The dashboard says why beside the old one, and the difference is what a leak
+costs: a secret key is revoked on its own, while a `service_role` JWT is signed
+by the project's JWT secret, so containing that leak means rotating the secret
+and invalidating every token the project has issued. Verified on 2026-09-23 that
+`auth.admin.createUser` accepts the secret key exactly like the JWT.
+
+Then, from `apps/web`:
 
 ```bash
 SUPABASE_URL=https://xliwtiiopwyfunxkdmxh.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY='…' \
+SUPABASE_SECRET_KEY='sb_secret_…' \
   node scripts/create-tester.mjs tester1@example.com tester2@example.com
 ```
 
+`SUPABASE_SERVICE_ROLE_KEY` is still accepted, so older runs keep working.
 Both variables or neither. A half-set silently creates the accounts on the
 **local** stack instead — which looks like it worked and leaves the tester unable
 to sign in. **The script prints its target before it writes anything; read that
