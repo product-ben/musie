@@ -177,7 +177,12 @@ export const de: Messages = {
   'session.step.scan': 'Scannen',
   'session.step.listen': 'Hören',
   'session.step.reflect': 'Nachdenken',
-  'session.status.finished': 'Beendet',
+  /* 'Abgeschlossen', nicht 'Beendet' (Ben, 2026-09-23). 'Beendet' sagt nur,
+     dass etwas aufgehört hat — das steht auch über einer abgebrochenen Runde.
+     'Abgeschlossen' sagt, dass sie zu Ende gegangen ist, und genau das trägt
+     das Badge jetzt in den Erfolgsfarben. Dasselbe Wort steht im Filter des
+     Tagebuchs: ein Zustand, ein Name. */
+  'session.status.finished': 'Abgeschlossen',
   /* 'Nicht beendet', not 'Abgebrochen': the session was left, and the diary
      records that without judging it. */
   'session.status.abandoned': 'Nicht beendet',
@@ -209,6 +214,9 @@ export const de: Messages = {
   'session.scan.readerNote': 'Oder nimm die Kamera dieses Geräts – sie liest denselben Code.',
   'session.scan.codeLabel': 'Kartencode',
   'session.scan.codePlaceholder': 'MC-01',
+  /* Verbphrase, §3 — das Feld dahinter heißt schon 'Kartencode', die
+     Schaltfläche sagt also, was sie tut, und nicht noch einmal, was kommt. */
+  'session.scan.codeManual': 'Code von Hand eingeben',
   'session.scan.codeHint': 'Der Code steht neben dem QR-Code auf der Karte, zum Beispiel MC-01.',
   /* A verb phrase, not 'Diese Karte' (§3) — the button performs an act. */
   'session.scan.codeSubmit': 'Diese Karte nehmen',
@@ -298,11 +306,10 @@ export const de: Messages = {
   'reflect.photo.replace': 'Ersetzen',
   'reflect.photo.remove': 'Foto entfernen',
   'reflect.photo.previewAlt': 'Das Foto deiner handschriftlichen Notizen',
-  /* Seit F.4 nimmt der Sprachmodus wirklich auf; was fehlt, ist das
-     Speichern. Die Überschrift benennt deshalb den fehlenden Schritt, nicht
-     das Feature — siehe en.ts. Überschrift ohne Punkt, §7. */
-  'reflect.voice.notSaved': 'Gesprochenes wird noch nicht gespeichert',
-  'reflect.voice.notSavedText': 'Aus deinen Worten wird Text, während du sprichst, und nur der Text bleibt – die Aufnahme selbst wird nie gespeichert. Diesen Text bei deiner Session zu behalten ist das nächste Stück Arbeit; schreibe deine Antwort, um die Session heute zu beenden.',
+  /* `reflect.voice.notSaved` und der Absatz darunter sind weg (2026-09-23):
+     Seit F.6 wird Gesprochenes gespeichert, der Text war also falsch — und er
+     stand als fünfzeiliger Kasten auf einem Schritt, der eine Antwort will.
+     Geblieben ist `privacy.voiceShort`, eine Zeile, plus `privacy.more`. */
   'reflect.photo.notBuilt': 'Fotos auslesen ist noch nicht gebaut',
   'reflect.photo.notBuiltText': 'Das zeigt, wie es funktionieren wird. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
   /* Verb phrase, §3 — 'Überspringen' alone would name a thing rather than an
@@ -325,6 +332,10 @@ export const de: Messages = {
   /* 'Min.' with the point: the abbreviation DIN 1301 uses, and it keeps the
      row inside the measure where 'Minuten' would not. */
   'diary.duration': '{minutes} Min.',
+  /* Die Beschreibung der Übung steht jetzt als Zeile in der Liste statt als
+     Fließtext unter der Überschrift. Das Label ist eine Frage, die der Wert
+     beantwortet — wie die drei darunter. */
+  'diary.about': 'Worum es geht',
   'diary.when': 'Wann',
   /* 'Dauer', not 'Wie lange': a label in a facts list is a noun in German
      where English gets away with a question. */
@@ -381,6 +392,13 @@ export const de: Messages = {
      §5's length budget has no room for the long one. */
   'privacy.account': 'Musie fragt nie nach deinem Namen. Wenn du für den geschlossenen Test eine E-Mail-Adresse und ein Passwort bekommen hast, gehört dein Tagebuch zu diesem Konto. Sonst hat dieser Browser ein eigenes, privates Konto, und dein Tagebuch gehört dazu.',
   'privacy.written': 'Was du schreibst, kommt in dein Tagebuch, damit du es später nachlesen kannst. Niemand sonst sieht es.',
+  /* Das Versprechen in einer Zeile, für den Reflexionsschritt. Keine Kürzung
+     von `privacy.voice`, sondern die Hälfte davon, die ein Versprechen ist —
+     wie es funktioniert, steht in der Lightbox. */
+  'privacy.voiceShort': 'Musie behält den Text, nie deine Stimme.',
+  /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
+     Link im Fließtext muss benennen, was hinter ihm liegt. */
+  'privacy.more': 'Mehr zu deinen Daten',
   'privacy.voice': 'Wenn du laut antwortest, macht Musie aus deinen Worten Text und behält nur den Text. Die Aufnahme selbst wird nie gespeichert.',
   'privacy.photo': 'Ein Foto bleibt auf deinem Gerät. Musie lädt es nie hoch.',
   /* 'ist auch dein Tagebuch weg' rather than a softer 'geht verloren': the
@@ -456,6 +474,13 @@ export const de: Messages = {
   'voice.hint.more': 'Neue Aussagen kommen ans Ende der Liste. Die Aufnahme stoppt von selbst nach {seconds} Sekunden oder nach {silence} Sekunden Stille.',
   /* 'Ziehpunkt' für den Griff: kein Nomenstapel (§6), und es ist das Wort,
      das auch die Komponente im Deutschen benutzt. */
+  /* Die Tipps werden jetzt aufgerufen, sie stehen nicht mehr da.
+     `voice.hint.edit` ist unverändert der Text im Kasten; die drei davor sind
+     die Schaltfläche, die Überschrift und das Schließen. Die Überschrift
+     benennt das Thema, statt die Schaltfläche zu wiederholen. */
+  'voice.hint.editToggle': 'Tipps zum Bearbeiten',
+  'voice.hint.editHeadline': 'Aussagen verschieben und verbinden',
+  'voice.hint.editHide': 'Tipps ausblenden',
   'voice.hint.edit': 'Zieh eine Aussage, um sie zu verschieben, oder lass sie auf einer anderen los, um beide zu verbinden. Mit der Tastatur: Ziehpunkt fokussieren, dann Leertaste zum Anheben, Pfeiltasten zum Verschieben, M verbindet sie mit der darüber, Escape legt sie zurück.',
   /* Überschriften ohne Punkt, Sätze mit. */
   'voice.stopped.headline': 'Aufnahme beendet',

@@ -52,7 +52,8 @@
  */
 import * as React from 'react';
 import {
-  ContentList, CtaButton, Message, MusicPlayer, TrackButton, useViewportFill,
+  ContentList, CtaButton, Message, MusicPlayer, TrackButton, useScrollSnap,
+  useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { StepText } from './StepText';
@@ -80,12 +81,17 @@ export interface SessionListenProps {
    * Forward, out of the step.
    *
    * THE STEP OWNS ITS OWN ROW, which is a departure from every other step and
-   * is why it is a prop rather than `WizardPanel`'s `actions`. The prototype
-   * puts the transport, the details link and *Start reflection* in ONE group,
-   * and they belong together: they are three things you can do with the same
-   * recording, and splitting them across two rows makes the transport look
-   * like content and the CTA like chrome. `Back` stays in the panel's row,
-   * because leaving the step is not a thing you do with the track.
+   * is why it is a prop rather than `WizardPanel`'s `actions`. `WizardPanel`
+   * renders `actions` after its children, and this step's children are three
+   * full-height views — so the row would land at the foot of the third one,
+   * two screens below the step it belongs to.
+   *
+   * IT USED TO HOLD THE TRANSPORT AS WELL, on the argument that the transport,
+   * the details link and *Start reflection* are three things you can do with
+   * one recording. They are, but they are not three things of the same KIND:
+   * two of them leave the step and one of them is the step. The transport sits
+   * with the question now (`.musie-listen__lead`), and this row is the ways
+   * out — Ben, 2026-09-23.
    */
   onAdvance: () => void;
   /**
@@ -274,19 +280,39 @@ export function SessionListen({
   }
 
   /**
-   * THE THREE VIEWPORTS, AND WHY SCROLLING IS DONE BY BUTTON.
+   * THE THREE VIEWPORTS, AND HOW YOU MOVE BETWEEN THEM.
    *
-   * The prototype stacks three `100svh` sections and moves between them with
-   * controls rather than with scroll-snap. That is the better behaviour and
-   * not just the reproduced one: snap takes the scroll away from the person —
-   * a thumb that wanted to read the middle of the details view gets thrown to
-   * its edge — and this step's whole posture, from the soft gate down, is that
-   * the person stays in charge. Free scrolling, with buttons that offer the
-   * jumps.
+   * The prototype stacks three `100svh` sections. Buttons offer the jumps, and
+   * since 2026-09-22 the scroll itself stops at each one.
    *
-   * `block: 'start'` and smooth behaviour, which respects
-   * `prefers-reduced-motion` at the platform level in every current engine.
+   * IT DID NOT USED TO, and the argument for that is worth keeping because it
+   * was half right: snap can take the scroll away from the person — a thumb
+   * that wanted the middle of the details view gets thrown to its edge — and
+   * this step's posture, from the soft gate down, is that the person stays in
+   * charge. What a phone showed is that free scrolling did not deliver that
+   * either: a flick sailed straight through the Störer, which is the one view
+   * whose whole job is to interrupt something you have left behind. Being
+   * carried past a decision is not being in charge of it.
+   *
+   * So: `scroll-snap-stop: always` on each view, which caps a gesture at ONE
+   * view and makes going on a second, deliberate one. The half of the old
+   * argument that still holds is protected by the spec — a view taller than
+   * the window relaxes its own snapping, so the details view can still be read
+   * through rather than thrown to an edge.
+   *
+   * `useScrollSnap` rather than a rule in shell.css, because none of the
+   * mechanism is specific to this step: `scroll-snap-type` belongs to the
+   * scroll container, and for sections in document flow that container is the
+   * document. The hook owns `<html>` for exactly as long as this step is
+   * mounted, and `musy-snap-view` on each section below is the other half.
+   * It is the sibling of `useViewportFill` and was promoted at the same time,
+   * on Ben's call, rather than after a second copy existed.
+   *
+   * `block: 'start'` and smooth behaviour on the buttons, which respects
+   * `prefers-reduced-motion` at the platform level in every current engine —
+   * and which now lands on exactly the positions the snap uses.
    */
+  useScrollSnap();
   const stageRef = useViewportFill<HTMLElement>();
   const warnRef = React.useRef<HTMLElement>(null);
   const detailRef = React.useRef<HTMLElement>(null);
@@ -331,21 +357,27 @@ export function SessionListen({
    * What survives is the part that was ever load-bearing — WHEN the request
    * goes out. Two locks, and they are different things:
    *
-   *   · `met` is the GATE. Ninety seconds of position, however the position
-   *     got there, which since 2026-09-22 includes dragging the scrubber. The
-   *     boundary keeps people from stumbling into the answer, not from
-   *     choosing it.
-   *   · the observer is the SCROLL. The request fires when the details view
-   *     enters the viewport, so a fetch on mount cannot put the title in the
-   *     Network tab while the stage is still playing — which is E.5's
-   *     done-when, and a claim about bytes rather than pixels.
+   *   · the observer is the SCROLL, and since 2026-09-23 it is the ONLY lock.
+   *     The request fires when the details view enters the viewport, so a
+   *     fetch on mount cannot put the title in the Network tab while the
+   *     stage is still playing — which is E.5's done-when, and a claim about
+   *     bytes rather than pixels.
+   *   · `met`, the gate, USED TO BE THE SECOND ONE, and it is not any more
+   *     (Ben, 2026-09-23). Somebody who has scrolled past the Störer — a full
+   *     viewport whose only job is to say that the name will influence them —
+   *     has chosen the name, and a details view that answers with "Your track"
+   *     because a clock is eleven seconds short is withholding it from a
+   *     person who already decided. The gate was always soft: it stops you
+   *     stumbling into the answer, not choosing it, which is the same sentence
+   *     that made the scrubber open it. The Störer is the boundary now, and it
+   *     is a better one because it asks rather than counts.
    */
   const [revealed, setRevealed] = React.useState<{ title: string; artist: string } | null>(null);
   const askedRef = React.useRef(false);
 
   React.useEffect(() => {
     const element = detailRef.current;
-    if (element === null || askedRef.current || !met) return undefined;
+    if (element === null || askedRef.current) return undefined;
 
     const observer = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
@@ -365,7 +397,7 @@ export function SessionListen({
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, [sessionId, met]);
+  }, [sessionId]);
 
   /**
    * THE RAIL SHOWS ONLY IN THE DETAILS VIEW (Ben, 2026-09-22).
@@ -415,14 +447,45 @@ export function SessionListen({
   return (
     <>
       <div className="musie-listen">
-      <section ref={stageRef} className="musie-listen__view musie-listen__view--stage">
+      {/* `musy-snap-view` beside the app's own class on all three, and the
+          order matters to nothing but reading: the system class carries the
+          snap, the `musie-` one the geometry. On THIS view the two hooks meet
+          — `useViewportFill` writes the offset that decides where the snap
+          puts it, which is the top of the page rather than the top of the
+          stage, so the wizard's header is never scrolled off. */}
+      <section ref={stageRef} className="musy-snap-view musie-listen__view musie-listen__view--stage">
       <StepText lines={exercise.listenText} />
 
+      {/* ── ONE GROUP AT THE TOP OF THE VIEW — Ben, 2026-09-23 ─────────────
+          The question, the line of small print under it, and the control that
+          plays the track. They were three things at three heights: the
+          question near the copy, the gate sentence adrift below it, and the
+          transport down in the action row with Back and the two ways out of
+          the step — so the one thing the stage is FOR sat among the things
+          that leave it.
+
+          Together they read as what they are: here is what to hold in mind,
+          here is how much of it counts, here is the play button. The row at
+          the foot of the view is then only the ways on, which is what an
+          action row should be. */}
+      <div className="musie-listen__lead">
       {/* THE QUESTION, held in mind while the track plays. It is the SAME
           question the reflect step asks — one column, shown twice, which is
           the schema's own shape and deliberately so: the question you hold and
           the question you answer must not be able to drift apart. */}
       <h2 className="musie-question">{question}</h2>
+
+      {/* The gate's own copy, with the sentences it qualifies rather than with
+          the buttons it unlocks: it is the small print under the instruction.
+          `aria-describedby` on the CTA points here. */}
+      <p id="listen-gate" className="musie-note">
+        {met
+          ? t('session.listen.gateMet')
+          : t('session.listen.gateLocked', {
+              gate: clock(gate),
+              left: clock(Math.max(0, gate - Math.floor(position))),
+            })}
+      </p>
 
       {track === null ? (
         <Message
@@ -460,39 +523,12 @@ export function SessionListen({
           {simulated && (
             <p className="musie-note">{t('session.listen.simulated')}</p>
           )}
-        </div>
-      )}
 
-      {/* The gate's own copy, with the sentences it qualifies rather than with
-          the buttons it unlocks: it is the small print under the instruction.
-          `aria-describedby` on the CTA points here. */}
-      <p id="listen-gate" className="musie-note">
-        {met
-          ? t('session.listen.gateMet')
-          : t('session.listen.gateLocked', {
-              gate: clock(gate),
-              left: clock(Math.max(0, gate - Math.floor(position))),
-            })}
-      </p>
-
-      {/* ── ONE ROW, AND WHAT IS IN EACH HALF CHANGES AT THE THRESHOLD ─────
-          Three things you can do with the same recording, in one group, as
-          the prototype has them.
-
-          BEFORE THE GATE: listening is the only thing to do, so the transport
-          holds the filled treatment and sits left with the detour beside it;
-          the forward CTA is on the right, disabled, because there is nothing
-          to go forward to yet.
-
-          AFTER IT: the transport drops to secondary and the forward action
-          takes the fill — L6, the moment it becomes a forward action at all.
-          *Track details* crosses to the right group as it goes, because it
-          stops being a footnote to the waiting and becomes one of two real
-          choices about what to do next. */}
-      {track !== null && (
-        <div className="musie-listen__actions">
-          <div className="musie-listen__actions-start">
-            {back}
+          {/* A plain <div> so the transport hugs its label instead of being
+              stretched the width of the column: `.musy-btn` is inline-flex,
+              and a block parent is all that takes. The same one line
+              `CardScanner` and the code form already use. */}
+          <div>
             <TrackButton
               label={t('session.listen.track')}
               duration={track.durationSeconds}
@@ -502,30 +538,47 @@ export function SessionListen({
               onTogglePlay={toggle}
               onRestart={toggle}
             />
-            {!met && (
-              <CtaButton variant="secondary" onClick={() => scrollTo(warnRef)}>
-                {t('session.listen.detailsAction')}
-              </CtaButton>
-            )}
-          </div>
-
-          <div className="musie-listen__actions-end">
-            {met && (
-              <CtaButton variant="secondary" onClick={() => scrollTo(warnRef)}>
-                {t('session.listen.detailsAction')}
-              </CtaButton>
-            )}
-            <CtaButton
-              variant={met ? 'primary' : 'secondary'}
-              disabled={!met}
-              aria-describedby="listen-gate"
-              onClick={onAdvance}
-            >
-              {t('session.listen.start')}
-            </CtaButton>
           </div>
         </div>
       )}
+      </div>
+
+      {/* ── THE WAYS OUT OF THE STEP, AND ONLY THOSE ──────────────────────
+          Back at the leading edge; the two ways forward together at the
+          trailing one, *Track details and player* immediately left of *Start
+          reflection* (Ben, 2026-09-23).
+
+          IT USED TO HOLD THE TRANSPORT TOO, and to move *Track details*
+          between the two groups at the threshold. Both are gone. The transport
+          is with the question now, where the thing it plays is; and a button
+          that changes SIDES when a clock passes ninety seconds moves under the
+          thumb that is reaching for it, which is a worse cost than the
+          hierarchy it was buying. What the threshold still changes is the
+          fill — L6 — and that is enough: *Start reflection* takes the filled
+          treatment at the moment it becomes a forward action at all.
+
+          RENDERED WHETHER OR NOT THERE IS A TRACK. The row used to be inside
+          `track !== null`, which meant an exercise with no recording drew no
+          row — and `back` lives in here, so that screen had no way out of the
+          step at all. The forward CTA is still gated; Back never should have
+          been. */}
+      <div className="musie-listen__actions">
+        <div className="musie-listen__actions-start">{back}</div>
+
+        <div className="musie-listen__actions-end">
+          <CtaButton variant="secondary" onClick={() => scrollTo(warnRef)}>
+            {t('session.listen.detailsAction')}
+          </CtaButton>
+          <CtaButton
+            variant={met ? 'primary' : 'secondary'}
+            disabled={!met}
+            aria-describedby="listen-gate"
+            onClick={onAdvance}
+          >
+            {t('session.listen.start')}
+          </CtaButton>
+        </div>
+      </div>
       </section>
 
       {/* ══ SCROLL 1 · THE STÖRER ══════════════════════════════════════════
@@ -538,7 +591,7 @@ export function SessionListen({
 
           26ch, centred, muted: the prototype's measure, and it is narrow so
           the sentence lands as one thought rather than as a paragraph. */}
-      <section ref={warnRef} className="musie-listen__view musie-listen__view--warn">
+      <section ref={warnRef} className="musy-snap-view musie-listen__view musie-listen__view--warn">
         <p className="musie-listen__warn">{t('session.listen.warnText')}</p>
         <div className="musie-listen__warn-actions">
           <CtaButton variant="primary" onClick={scrollToTop}>
@@ -561,7 +614,7 @@ export function SessionListen({
           The scrubber is live throughout, which is what makes the boundary
           soft: drag past ninety seconds and the gate opens, because the gate
           has always latched on position and never asked who moved it. */}
-      <section ref={detailRef} className="musie-listen__view musie-listen__view--detail">
+      <section ref={detailRef} className="musy-snap-view musie-listen__view musie-listen__view--detail">
         {track !== null && (
           <MusicPlayer
             title={revealed?.title ?? t('session.listen.track')}

@@ -94,6 +94,9 @@ export type {
    reach React, because it also sizes §7.24's float spacer. */
 export { useCoarsePointer, useToolSize } from './useCoarsePointer';
 export { useViewportFill } from './useViewportFill';
+/* The other half of the one above — see its header. Fills the viewport;
+   this stops a thumb running past what was filled. */
+export { useScrollSnap } from './useScrollSnap';
 export type { ToolSize } from './useCoarsePointer';
 
 export { Toast } from './Toast';

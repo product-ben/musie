@@ -2435,3 +2435,48 @@ lines) are all deleted. The three defects logged against it above — the German
 needs exactly that string and would otherwise have invented a second one.
 `stories/PROTOTYPE-USAGE.md` still describes the component in two places; it is
 a record of what the prototype used, so it is left alone.
+
+## ScrollSnap — a story for a hook, which CONVENTIONS.md does not describe
+Where: `stories/ScrollSnap.stories.tsx`, against `stories/CONVENTIONS.md` §1,
+§4 and §6
+
+What I checked: every rule in CONVENTIONS.md assumes a component with props.
+§1 names the file after the component, §4 wants one `argTypes` entry per public
+prop and `satisfies Meta<typeof X>` so a misspelt prop is caught, and §7 sources
+the docs text from the component's header. `useScrollSnap` is a hook: it renders
+nothing, takes one optional boolean, and has no component to point `component:`
+at. `useViewportFill` and `useCoarsePointer` have no stories at all, so there is
+no precedent in the folder either.
+
+What I did: `satisfies Meta` with no type argument, no `component`, no
+`argTypes`, and the panels in the file are a harness rather than the subject.
+Docs text still comes from the source — the hook's header and the SCROLL SNAP
+section of `musy-components.css` — so §7 is honoured as written.
+
+Why: the alternative is no story, and this is the one behaviour in the package
+that cannot be exercised anywhere else. In the app it sits on the listen step
+behind a seeded exercise, an audio track and a ninety-second gate.
+
+What I need from Ben: **nothing blocking.** If more hooks get stories,
+CONVENTIONS.md wants a short section saying what a hook story owes — probably
+"no argTypes, and the harness is named in the file header".
+
+## ScrollSnap — singlePane, not the default bothThemes
+Where: `stories/ScrollSnap.stories.tsx` meta, against CONVENTIONS.md §6
+
+What I checked: §6 makes `bothThemes` the default and lists two escapes —
+container-query components take `fixedWidth`, and a component that portals to
+the document root takes `singlePane` because two panes would fight over one
+popup. This is neither, but it is the same shape as the second: the hook sets
+`scroll-snap-type` on `<html>`, and there is one `<html>` per preview. Two
+panes would put two runs of full-viewport views inside one scroller, which
+would snap between panels of both.
+
+What I did: `singlePane`.
+
+Why: the story is about a document-level mode, and §6's own wording for
+`singlePane` — "a story that is *about* the theme mechanism" — is the same
+category, a story about something the document owns rather than the component.
+
+What I need from Ben: **nothing, just flagging.** The colour story is not lost:
+nothing here is themed. Every panel's fill comes from the decorator's pane.

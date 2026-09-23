@@ -164,9 +164,27 @@ export async function withLocale(page: Page, locale: Locale) {
  * types into the German field and a hardcoded English one fails it.
  */
 export async function enterCode(page: Page, locale: Locale, code: string) {
-  await page
-    .getByRole('textbox', { name: label(locale, 'session.scan.codeLabel'), exact: true })
-    .fill(code);
+  const field = page.getByRole('textbox', {
+    name: label(locale, 'session.scan.codeLabel'),
+    exact: true,
+  });
+
+  /* THE FIELD IS FOLDED AWAY UNTIL IT IS ASKED FOR (2026-09-23). Typing the
+     code is the fallback behind *Enter the code by hand*, so the walk opens
+     the disclosure the way a person does.
+
+     CONDITIONALLY, because the step remembers: somebody who typed once has the
+     form open when *Scan a different card* brings the reader back, and
+     pressing the toggle again would SHUT it. Asking whether the field is there
+     is the same question the screen answers. */
+  if (!(await field.isVisible())) {
+    await page
+      .getByRole('button', { name: label(locale, 'session.scan.codeManual'), exact: true })
+      .click();
+    await expect(field).toBeVisible({ timeout: 15_000 });
+  }
+
+  await field.fill(code);
   await page
     .getByRole('button', { name: label(locale, 'session.scan.codeSubmit'), exact: true })
     .click();
