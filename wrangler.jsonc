@@ -65,7 +65,32 @@
   // `wrangler deploy` restores whatever this file says, and with Workers
   // Builds that is every push to `main`. This file is the switch.
   //
-  // ── THE WINDOW IS CLOSED · 2026-09-22, ON BEN'S CALL ─────────────────────
+  // ── AND REOPENED, 2026-09-23, BECAUSE THE GATE NOW DOES THE CLOSING ──────
+  // Both true again, and the argument changed rather than being dropped.
+  //
+  // When they went false there was nothing left to reach: no `routes` block and
+  // no custom domain, so `wrangler deploy` succeeded and no URL answered. What
+  // reopens them is the build variable. `VITE_REQUIRE_ACCOUNT=true` is set on
+  // BOTH Workers Builds triggers, so a visitor to musie.lipinskib.workers.dev
+  // meets the sign-in gate and gets no further without credentials somebody
+  // handed them. An open URL no longer means an open app — the licensed master
+  // and the placeholder content sit behind the gate, not behind obscurity.
+  //
+  // PREVIEWS ARE COVERED SEPARATELY, and that is the half that needed Access.
+  // Production is one URL somebody chose to publish; previews are a URL per
+  // branch, appearing on their own, which nobody is watching. So Cloudflare
+  // Access sits in front of the preview deployments only — a self-hosted app on
+  // a `preview_worker` destination against this Worker, allowing Cloudflare
+  // account members. Attached to the WORKER rather than to a list of hostnames,
+  // so it keeps covering previews as branches come and go.
+  //
+  // Access is deliberately NOT over production: it would make every tester
+  // authenticate twice, once to Cloudflare and once to the app, and put their
+  // addresses in an allowlist as well as in `auth.users`. Revisit when a custom
+  // domain lands — by then the audience may not be twenty people whose accounts
+  // were made by hand. docs/MUSIE-SETUP.md §5.
+  //
+  // ── THE WINDOW WAS CLOSED · 2026-09-22, ON BEN'S CALL ────────────────────
   // H.0b shipped, which is the condition the paragraph above set. The account
   // gate is live behind `VITE_REQUIRE_ACCOUNT`, so the licensing argument no
   // longer rests on nobody finding the URL.
@@ -82,8 +107,8 @@
   // Access in front of these URLs with them flipped back to true. Access is
   // the better fit while the domain is parked until print day, because it does
   // not need the domain to exist.
-  "workers_dev": false,
-  "preview_urls": false
+  "workers_dev": true,
+  "preview_urls": true
 
   // No `main` and no `binding` on purpose. There is no Worker script: every
   // dynamic thing musie does is a Supabase Edge Function (reveal-track,

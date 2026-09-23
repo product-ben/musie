@@ -2505,3 +2505,43 @@ sign-in form and no further. That is a materially weaker exposure than the one
 the earlier entry was written against, and it would leave a URL the
 second-device test can actually use. It is not what was asked for, so it is
 logged rather than done.
+
+## Access is on previews only, and production is closed by the app instead
+
+Where: Cloudflare Access app `6993b74e-c4a1-4554-8345-bff40d825d4a`, the build
+variables on both Workers Builds triggers, `docs/MUSIE-SETUP.md`
+
+What I checked: the earlier entry recommended Cloudflare Access "in front of both
+production and preview URLs" while the domain was parked. That was written when
+there was no account gate, so an open URL meant an open app. There is one now,
+and the two are not the same instrument:
+
+- **Access controls who can REACH the app.** It authenticates against Cloudflare,
+  with an allowlist kept in Cloudflare.
+- **The gate controls who has an ACCOUNT.** It authenticates against
+  `auth.users`, with credentials handed out by `create-tester.mjs`.
+
+Access over production would make every tester do both — a Cloudflare one-time
+PIN and then the app's own sign-in — and their addresses would have to be kept
+in two places that can drift. For twenty external testers that is friction with
+no security the gate does not already provide, since the thing being protected
+is a licensed master and placeholder content, not the perimeter.
+
+What I did (Ben's call, 2026-09-23): Access on **previews only**, via a
+`preview_worker` destination on the Worker itself rather than a hostname list —
+so it keeps covering every preview URL as branches come and go. The policy
+includes *login method = Cloudflare*, whose IdP carries
+`restrict_to_account_members: true`, so it means "whoever can sign in to this
+Cloudflare account" and there is no email list to maintain at all.
+
+`VITE_REQUIRE_ACCOUNT=true` is set on BOTH build triggers, so a branch build is
+gated exactly like production rather than being the soft way in.
+
+Why previews are the half worth protecting: production is one URL that somebody
+chose to publish and that the gate closes. Previews are a URL per branch,
+appearing automatically, which nobody is watching — the exposure that happens by
+default rather than by decision.
+
+What I need from Ben: nothing now. **Revisit when the domain lands**: a custom
+domain is the moment to ask again whether production also wants Access, because
+by then the audience may not be twenty people whose accounts you made by hand.
