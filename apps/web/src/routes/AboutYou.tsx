@@ -44,6 +44,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router';
 import { ContentBox, CtaButton, Message, RadioGroupText } from '@musie/design-system';
+import { AccountSection } from '../components/AccountSection';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { useT } from '../i18n/localeContext';
 import { useProfile } from '../lib/profileContext';
@@ -165,6 +166,18 @@ export function AboutYou() {
       >
         {body}
       </ContentBox>
+
+      {/* THE WAY OUT OF THE ACCOUNT, AT THE FOOT OF THE SCREEN THAT IS ABOUT
+          THE PERSON IN IT — Ben, 2026-09-24. It is the same component the menu
+          drawer renders, not a second copy, so the `email === null` guard that
+          hides it from an anonymous user stays true in one place. It renders
+          nothing at all for that user, which is why it can sit below Continue
+          without pushing a gate's primary action up the page for everyone.
+
+          `.musie-stage__box` because the stage is a centred column and a second
+          box with no measure of its own would be wider than the question
+          above it. */}
+      <AccountSection className="musie-stage__box" />
 
       {/* Rendered only while refused !== null, so the dialog mounts with the
           refusal rather than sitting in the DOM waiting for one. */}

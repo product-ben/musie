@@ -11,7 +11,9 @@
     "gen:types": "supabase gen types typescript --local > apps/web/src/lib/database.types.ts",
     "test": "pnpm -r run test",
     "test:db": "pnpm -r run test:db",
-    "test:e2e": "pnpm -r run test:e2e"
+    "test:e2e": "pnpm -r run test:e2e",
+    "deck:migration": "pnpm --filter web run deck:migration --",
+    "deck:pdf": "pnpm --filter web run deck:pdf --"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

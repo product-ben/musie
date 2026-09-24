@@ -9,3 +9,9 @@ storybook-static
 # Written only when the end-to-end walk fails, and regenerated on every run.
 apps/web/test-results/
 apps/web/playwright-report/
+
+# The deck's print output — the PDF, the HTML it was printed from, and the bare
+# QR svgs from scripts/qr-codes.mjs. Generated, never committed: a print
+# artefact that cannot be regenerated is one nobody can check.
+deck-print/
+qr-codes/

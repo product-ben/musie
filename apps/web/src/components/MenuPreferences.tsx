@@ -24,24 +24,48 @@
  * reason it is a slot rather than three more props on the drawer.
  */
 import * as React from 'react';
-import { LogOut, Moon, Sun } from 'lucide-react';
-import {
-  ButtonGroup, ContentBox, CtaButton, RadioGroupText, Switch,
-} from '@musie/design-system';
+import { Languages, Moon, Sun } from 'lucide-react';
+import { SegmentedControl, Switch } from '@musie/design-system';
+import { AccountSection } from './AccountSection';
 import { LOCALES, LOCALE_LABELS, isLocale } from '../i18n';
 import { useLocale, useT } from '../i18n/localeContext';
-import { useAuth } from '../lib/authContext';
 import { useProfile } from '../lib/profileContext';
-import { signOut } from '../lib/signIn';
 
 export function MenuPreferences() {
   return (
     <>
-      <ThemeSwitch />
-      <LanguageChoice />
-      {/* LAST, and it renders for nobody else: an anonymous user has no account
-          to name and nothing safe to sign out of. See AccountSection. */}
+      {/* FIRST NOW, and it still renders for nobody else: an anonymous user has
+          no account to name and nothing safe to sign out of. See
+          AccountSection. It moved above the two switches on 2026-09-24 because
+          the row below is pinned to the foot of the viewport — see
+          `.musie-prefs-row` in shell.css — and something has to be the thing
+          that is not pinned. */}
       <AccountSection />
+
+      {/* THE TWO SETTINGS THAT ARE NOT ABOUT AN ACCOUNT, SIDE BY SIDE — Ben,
+          2026-09-24. Each is a single control with a short answer, and stacked
+          they spent two full rows of a phone's drawer saying so. In one row
+          the switch keeps its intrinsic width and the segments take what is
+          left, which is the only division that survives a narrow drawer.
+
+          Neither carries a visible name any more: the moon/sun knob says what
+          the switch does, the endonyms say what the segments do, and two
+          labels over two controls in one 393px row is more label than row.
+          Both names are still PASSED — `labelHidden` and `legendHidden` hide
+          them from the eye, not from the accessibility tree, so the switch is
+          still announced as "Dark mode" and the group as "Language" (rule 7,
+          and 1.3.1 / 4.1.2). */}
+      <div className="musie-prefs-row">
+        <ThemeSwitch />
+        {/* The wrapper is the screen's, the control inside it is the system's:
+            L14's opening rule is that a screen never reaches into a
+            component's geometry, so what this app gets to say is how much of
+            the row the control is given, and nothing about what it does with
+            it. The same division `.musie-diary__filter` makes. */}
+        <div className="musie-prefs-row__lang">
+          <LanguageChoice />
+        </div>
+      </div>
     </>
   );
 }
@@ -88,6 +112,18 @@ function ThemeSwitch() {
   return (
     <Switch
       label={t('menu.darkMode')}
+      /* HIDDEN, NOT DROPPED — Ben, 2026-09-24. The label is still the switch's
+         accessible name; what goes is the printed word beside the track, so
+         the control costs the row its own width and nothing more.
+
+         WHICH IS ONLY DEFENSIBLE BECAUSE OF THE NEXT TWO PROPS. Switch's own
+         header calls a visible label strongly preferred, and 2.5.3 wants the
+         visible text to be in the accessible name — with no visible text there
+         is nothing to disagree with it, but there is also nothing to read. The
+         moon/sun knob is what is left carrying the meaning, and it carries it
+         in both directions: it shows the current state AND names the thing
+         being switched, which the generic Check / X default could not. */
+      labelHidden
       checked={dark}
       onCheckedChange={(checked) => {
         const theme = checked ? 'dark' : 'light';
@@ -95,7 +131,10 @@ function ThemeSwitch() {
         setDark(checked);
         update({ theme }); // mirror, for a future real account
       }}
-      reverse
+      /* NO `reverse`. It exists to push a visible label to the far edge of a
+         settings row; with the label hidden it would only flip the order of a
+         track and a clipped span, and `justify-content: space-between` on a
+         one-item flex line does nothing at all. */
       accent="accent"
       /* A domain pair, not the Check / X default: the glyph says WHAT is
          switching. Moon is the checked state because checked means dark. */
@@ -123,91 +162,54 @@ function ThemeSwitch() {
  * using the app — and in a drawer, where the space is a phone's, it pushed the
  * account below the fold to say something no reader can act on. The fact still
  * lives where it is actionable: `20260918150600_content_seed.sql`'s header, and
- * rule 6 in CLAUDE.md. The legend and the two radios are all that is left.
+ * rule 6 in CLAUDE.md.
+ *
+ * ── AND IT IS SEGMENTS NOW, NOT A RADIO LIST — Ben, 2026-09-24 ─────────────
+ * `RadioGroupText` drew two stacked rows plus a legend: three lines of drawer
+ * for a two-way answer, and vertical space is exactly what the foot of a
+ * phone's menu has least of. `SegmentedControl` is specified for 2–4 options
+ * with the answer visible at once, which is this choice precisely, and it fits
+ * beside the dark-mode switch on one line. The behaviour is unchanged — same
+ * `name`, same values, same narrowing, still a radio group underneath (that
+ * component is RadioGroup + Radio, not Tabs), so arrow keys and the single tab
+ * stop survive the swap.
  */
 function LanguageChoice() {
   const { locale, setLocale } = useLocale();
   const t = useT();
 
   return (
-    <RadioGroupText
+    <SegmentedControl
       name="language"
       legend={t('menu.language')}
+      /* The row has no room for a legend over the track, and the answer is
+         self-describing in a way a stacked radio group's is not: two segments
+         reading *English* and *Deutsch*, one of them filled, is a language
+         picker on sight. Hidden visually, never dropped — an unnamed radio
+         group announces as a bare set of options. */
+      legendHidden
       accent="accent"
       value={locale}
-      options={LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] }))}
+      options={LOCALES.map((value) => ({
+        value,
+        label: LOCALE_LABELS[value],
+        /* THE SAME GLYPH ON BOTH, WHICH IS NOT WHAT THE COMPONENT ASKS FOR.
+           SegmentedControl requires a glyph per option because the label may
+           ellipse and the icon is what survives it — so the pair is meant to
+           tell the options apart. A language pair has no such pair to draw:
+           lucide has no per-language mark, and a flag is a country, not a
+           language. The endonym is the only honest cue, and at two segments in
+           this drawer it never clips to begin with (seven characters in a
+           ~130px segment). So the glyph says "language" for both and the words
+           do the distinguishing. Logged in apps/web/OPEN-QUESTIONS.md as a
+           question for the design system, not worked around further here. */
+        glyph: Languages,
+      }))}
       onValueChange={(next) => {
         /* The component's callback is a plain string; narrow it before it
            reaches anything that expects a Locale. */
         if (isLocale(next)) setLocale(next);
       }}
     />
-  );
-}
-
-/**
- * The account, and signing out of it — H.0b.
- *
- * ── IT RENDERS ONLY FOR A USER WITH AN EMAIL ADDRESS ───────────────────────
- * An anonymous user has none, and this whole section is hidden from them. That
- * is not tidiness: their account lives in this browser and nowhere else, so
- * 'Sign out' would be a button that strands an entire diary on an id nobody can
- * sign in as again — the exact data-loss shape H.0 is written to keep away from
- * testers, drawn as a control and placed one tap from the theme switch. There
- * is no confirmation dialog that makes that a reasonable thing to offer.
- *
- * So the test is `email !== null`, published by AuthProvider. For a signed-in
- * tester the diary is on the server and signing out costs them nothing but a
- * retype.
- *
- * ── THE ADDRESS IS SHOWN, DELIBERATELY ─────────────────────────────────────
- * These accounts are handed out, and a workshop phone gets passed between
- * people. "Which of us is this?" has to be answerable without signing out to
- * find out — which, for the person who was not supposed to sign out, is the
- * expensive way to ask.
- *
- * ── AND THERE IS NO CONFIRM STEP ───────────────────────────────────────────
- * Unlike the diary's delete-everything, this is REVERSIBLE: the credentials
- * still work and the diary is untouched. A confirmation for a reversible act is
- * noise that teaches people to tap through the ones that are not.
- *
- * ── h2, AND IT IS THE SAME LEVEL IT HAD IN THE SHEET ───────────────────────
- * The sheet's `Dialog.Title` was an h1 and this sat under it. The drawer has no
- * heading — it is named by `aria-label`, because a drawer whose visible top is a
- * logo has no title to make a heading OF — so this is the first heading inside
- * the dialog. h2 is still right: the page beneath the scrim is still in the
- * document with its own h1, and the level a screen reader reports is the
- * document's, not the dialog's.
- */
-function AccountSection() {
-  const t = useT();
-  const { email } = useAuth();
-  const [busy, setBusy] = React.useState(false);
-
-  /* Anonymous, or not resolved yet. Either way there is nothing to sign out
-     of and nothing true to say about an address. */
-  if (email === null) return null;
-
-  return (
-    <ContentBox headline={t('auth.account')} headingLevel={2} text={t('auth.signedInAs', { email })}>
-      <ButtonGroup align="start">
-        <CtaButton
-          variant="ghost"
-          leadingIcon={LogOut}
-          loading={busy}
-          loadingLabel={t('content.loading')}
-          onClick={() => {
-            /* No `finally` that clears this. `signOut()` ends by reloading the
-               tab, so there is no later render to clear it in — and the button
-               staying disabled across the reload is what stops a second tap
-               landing while the page is on its way out. */
-            setBusy(true);
-            void signOut();
-          }}
-        >
-          {t('auth.signOut')}
-        </CtaButton>
-      </ButtonGroup>
-    </ContentBox>
   );
 }

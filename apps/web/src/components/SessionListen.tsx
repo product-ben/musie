@@ -317,6 +317,41 @@ export function SessionListen({
   const stageRef = useViewportFill<HTMLElement>();
 
   /**
+   * AND IT OPENS ON THE STAGE, WHICHEVER WAY YOU GOT HERE — Ben, 2026-09-24.
+   *
+   * Reported from a card scan: land on `listen` and the page is where the
+   * previous step left it rather than at the top. The stage is this step's
+   * first view — the question to hold and the button that starts the track —
+   * so arriving below it is arriving past the only thing the step asks for.
+   *
+   * THE SHELL ALREADY SCROLLS TO THE TOP ON EVERY ARRIVAL, AND IT LOSES HERE.
+   * `<html>` is a MANDATORY snap container for as long as this step is mounted
+   * (`useScrollSnap`), and the engine pulls a plain `window.scrollTo` back to a
+   * snap position. MEASURED, `e2e/listen.spec.ts` at 390 x 375: carrying 554px
+   * in from the scan step, the shell scrolled to 0 and the page settled at
+   * 195 — and with the shell's scroll taken out as well, at 607, which is the
+   * engine choosing the nearest view rather than the first. It is not a race
+   * the shell can win; the scroll it makes is the scroll snap undoes.
+   *
+   * TWO ARRIVALS HIDE IT, which is why it survived this long. A small offset
+   * snaps to the first view anyway and looks like a reset that worked. And
+   * naming a card re-reads the row (`onRescan`), so the page shrinks to the
+   * loading note on the way past and the offset is clamped off the bottom.
+   * Neither is a guarantee, and neither holds on a landscape phone.
+   *
+   * SO THE JUMP GOES THROUGH `withoutSnapping`, like every other scroll a
+   * control causes on this step: snapping off, scroll, and back on once it has
+   * settled. A LAYOUT EFFECT, like `Carousel`'s, so the reset lands before the
+   * frame is painted rather than a frame after it. And nothing is suspended
+   * when there is nothing to undo — arriving at the top is the common case,
+   * and it leaves snapping alone.
+   */
+  React.useLayoutEffect(() => {
+    if (window.scrollY === 0) return;
+    withoutSnapping(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+  }, [withoutSnapping]);
+
+  /**
    * AND THE HEADER STAYS PUT WHILE IT IS.
    *
    * Everywhere else the shell's header slides away as the reader goes down

@@ -261,11 +261,17 @@ export function NavDrawer(
 
           {/* A SECTION, not a bare div, and unlabelled on purpose: every
               control inside it already names itself (the switch's label, the
-              radio group's legend, the account box's heading), and a wrapper
-              heading would add a fourth name over three things that are not a
-              group of anything except "not navigation". The hairline is what
-              says that much, which is the same argument `.musie-nav__rule`
-              makes between the row groups above. */}
+              segmented control's legend, the account box's heading — the first
+              two hidden from the eye since 2026-09-24, but named all the
+              same), and a wrapper heading would add a fourth name over things
+              that are not a group of anything except "not navigation". The
+              hairline is what says that much, which is the same argument
+              `.musie-nav__rule` makes between the row groups above.
+
+              IT IS ALSO WHAT SITS AT THE FOOT OF THE VIEWPORT NOW: the section
+              is the flex column's last child and `.musie-drawer__prefs` takes
+              an auto top margin, so the pages stay under the logo and the
+              settings stay under the thumb. */}
           {preferences === undefined ? null : (
             <section className="musie-drawer__prefs">{preferences}</section>
           )}

@@ -921,19 +921,82 @@
    the account below the fold. The rule is L2's own answer when it cannot.
 
    The gap INSIDE is --space-gap-group rather than the drawer's own
-   --space-gap-stack. Three unlike controls — a switch, a fieldset, a card —
-   are three groups of one, and the drawer's rhythm is tuned for rows.
+   --space-gap-stack. Two unlike things — an account card, and a row holding a
+   switch and a set of segments — are two groups of one, and the drawer's
+   rhythm is tuned for rows.
 
    `padding-block-start` as well as the margin, because the rule belongs to
    neither side: it is a border on this element, so without the padding the
-   switch would sit hard against a line the last nav row is already clear of. */
+   account box would sit hard against a line the last nav row is already clear
+   of.
+
+   ── `margin-block-start: auto` — THE BLOCK SITS AT THE FOOT (Ben, 2026-09-24)
+   The sheet is `position: fixed; inset-block: 0`, so it is exactly the
+   viewport's height and its flex column always has the whole of it to divide.
+   An auto margin on the LAST child hands that child every pixel the rows above
+   it did not take, which puts the preferences against the bottom edge whatever
+   the menu is: four pages or six, signed in or anonymous.
+
+   It is an auto margin and NOT `position: sticky`, `absolute`, or
+   `justify-content: space-between`, because all three of those lie when the
+   content is taller than the screen — and this one cannot, since an auto
+   margin resolves to ZERO when there is no free space to absorb. The drawer
+   then scrolls as an ordinary column, which is what a 200%-text phone in
+   landscape needs it to do.
+
+   WHAT REPLACES THE OLD --space-gap-related ABOVE THE RULE: the drawer's own
+   `gap` (--space-gap-stack, 16px), which flex applies between the nav and this
+   block whether or not the margin resolves to anything. The minimum separation
+   therefore went UP, not down, in the one case where the margin is 0.        */
 .musie-drawer__prefs {
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-group);
-  margin-block-start: var(--space-gap-related);
+  margin-block-start: auto;
   padding-block-start: var(--space-gap-related);
   border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* ═══ DARK MODE AND LANGUAGE, ON ONE LINE ═══════════════════════════════════
+   The last thing in the drawer and the last thing on the screen — two controls
+   that each hold a short answer, which stacked spent two rows of a phone's
+   menu saying so.
+
+   SPACE-BETWEEN AND NOT A CENTRED PAIR: the switch is a fixed 52px object and
+   the segments stretch, so the two do not read as a pair of equals however
+   they are packed. Pushing them to opposite ends makes the asymmetry
+   deliberate — the thing you toggle at one edge, the thing you choose at the
+   other — and gives the segments the entire remainder, which at 393px is the
+   difference between a readable *Deutsch* and a clipped one.
+
+   `align-items: center` because the two are different heights: the switch row
+   is --target-primary, and a segment whose container is under 30rem stacks its
+   glyph over its label and grows past it. Centre is the only alignment that
+   does not make that difference look like a mistake; `stretch` would drag the
+   switch's 44px row to the segments' height and float its track in the middle
+   of nothing.
+
+   NO WRAP. There is no width at which these two cannot share a line — the
+   switch is 52px and the segments have a floor of nothing, they simply stack
+   internally — and `flex-wrap: wrap` would put the language control on its own
+   row again at some width nobody asked about.                                */
+.musie-prefs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-gap-group);
+}
+
+/* What the SCREEN owns about the language control: how much of the row it is
+   given. Everything inside it is the component's (L14's opening rule, and the
+   same division `.musie-diary__filter` makes).
+
+   `min-inline-size: 0` releases the flex item's min-content floor, which is
+   what lets the segments narrow far enough to trip their own container query
+   and stack — without it the row would overflow the drawer at 393px instead. */
+.musie-prefs-row__lang {
+  flex: 1 1 auto;
+  min-inline-size: 0;
 }
 
 /* ═══ QUIET TEXT STATES ═════════════════════════════════════════════════════

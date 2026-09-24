@@ -4094,3 +4094,460 @@ The pattern itself is verified in a real Chromium at 393px against the running
 dev server: shown at rest, `top: -69` after a read down the page, still hidden
 after an 8px twitch up, back at `top: 0` on a real scroll up. The pin on the
 listen step is the one part argued rather than walked.
+
+# Phase H.x — the deck authoring loop
+
+## The deck is one JSON file now, and four decisions inside that are worth contesting
+
+Where: `supabase/content/deck.json`, `supabase/content/README.md`,
+`apps/web/scripts/deck.mjs`, `deck-migration.mjs`, `deck-pdf.mjs`,
+`src/lib/deck.test.ts`, `src/lib/deck.db.test.ts`
+
+What I checked: how a deck change costs today. Nine cards across `cards`,
+`card_i18n` and `exercise_tracks`, two locales and two exercises, is 45 rows of
+hand-written SQL to rename one feeling — and `20260923150000` had to park a
+non-deferrable unique column to do it without a mid-statement collision. Rule 4
+is right and it is not the thing making that expensive; the retyping is.
+
+What I did: made the deck a single file and generated the migration from it.
+`pnpm deck:migration` writes an ordinary new stacking migration with an
+ordinary new timestamp; nothing edits an applied file and nothing pushes.
+
+Four choices in there that a reviewer should argue with rather than inherit:
+
+**One — every generated migration states the WHOLE deck**, upserting all 45
+rows and deleting what the deck no longer has, rather than carrying the
+difference. A minimal migration would depend on the database already being
+where the generator imagined it, which is the assumption rule 4 exists because
+nobody can make safely. The cost is that a one-word change produces a
+150-line file. I think that is the right way round; it is the decision most
+likely to annoy somebody in review.
+
+**Two — the "what changed" header comes from git**, `git show
+HEAD:supabase/content/deck.json` against the working copy. It is prose for a
+reviewer, not correctness. Commit the deck before generating and the summary is
+empty while the migration is still complete. The thing that actually proves the
+database matches the file is `deck.db.test.ts`, which is in `pnpm test:db` and
+so can be aimed at the hosted project — which is the only way to catch a deck
+applied locally and never pushed.
+
+**Three — `cards.id` is now REQUIRED to be `cards.code` in lower case**, and
+the validator refuses a deck where it is not. That was already true of all
+nine, and it is not enforced by the schema. I enforced it because
+`sessions.card_id` is what a diary row keeps, and a diary row read in a year
+should name the paper card without a join. It does close a door: a card can no
+longer be renamed on the paper without being a different row in the database.
+Given a printed code cannot be changed anyway, I think that door should be
+shut. **Flagging it as a rule I added rather than found.**
+
+**Four — the generator refuses to delete a card without `--allow-removal`.**
+`sessions.card_id` is `on delete set null`, so dropping a card empties the card
+out of every diary entry that ever drew it, silently, while the entry survives.
+That is a product decision wearing the clothes of a content edit.
+
+Why: so that the next deck change is an edit to nine lines of JSON and one
+command, and so that the four ways the file and the database can drift apart
+are all red rather than all invisible.
+
+What I need from Ben: **nothing to unblock it. Three flagged**, the id/code
+rule above, and the two under the PDF entry below.
+
+## The printed card is typographic, because the deck has no artwork
+
+Where: `apps/web/scripts/deck-pdf.mjs`
+
+What I checked: `cards.image_url` is `assets/web/method-card.png` for all nine
+— one shared placeholder, which is a picture OF a card rather than a picture
+FOR one, and `apps/web/public/assets/web/` holds only the logo. So there is
+nothing to put on a card front.
+
+What I did: made the front the feeling, set as large as fits on one line, with
+the other locale beneath it; the back is the QR, the printed code and a
+caption. It is built out of `packages/design-system/tokens/` — the real
+webfonts, the real semantic aliases, `musie-` prefixed classes — and printed
+through the Chromium `@playwright/test` already installs, so no dependency was
+added and the card cannot drift from the system.
+
+Two things a printer would have caught and the first render got wrong, both
+fixed and both worth knowing: the bleed was WHITE, so a cut that drifted would
+have shown paper instead of card; and the single-line fit measured before the
+webfonts loaded, so it sized every word against a fallback face and then let
+the real one wrap. The fit now waits on `document.fonts.ready` and the script
+waits on the page.
+
+Why: a proof you can cut out and scan is worth more than a specification of a
+card nobody has held.
+
+What I need from Ben: **two decisions, neither blocking.**
+
+**One — the caption on the back reads *"Scanne und hör zu · Scan and listen"*,
+and I wrote it.** It is print copy, so it is not in `src/i18n` — nothing renders
+it on a screen — but it is held to `docs/GERMAN-UI-WRITING.md` and it is the
+one string on the deck that is neither a feeling nor a code. It is a constant
+at the top of `deck-pdf.mjs`. Change it there, or tell me and I will.
+
+**Two — the deck is bilingual by default**, German large and English beneath.
+`--locale de` prints German only. Which one goes to a printer is a product
+call and I have not made it.
+
+## The local `tracks` bucket is empty again, and it is not this change
+
+Where: `src/lib/db.content.db.test.ts` — *"lets a signed-in listener sign a
+real object"*
+
+What I checked: `select name from storage.objects where bucket_id = 'tracks'`
+returns nothing, while four rows in `public.tracks` carry a `src`. The signed
+URL then fails with `NoSuchKey`, and `pnpm test:db` is 89/90 for that one
+cause. Nothing in this change touches storage, and no `supabase db reset` was
+run — the deck migration was verified by applying its SQL to the running
+database directly, in one transaction, precisely to avoid emptying the bucket.
+
+What I did: nothing, deliberately. This is the situation the RESOLVED entry
+above — *"`supabase db reset` empties the local `tracks` bucket"* — already
+describes, and its recovery still holds: `supabase storage cp` from the linked
+project, which still has all four. I did not run it because pulling from the
+hosted project is not part of a content change.
+
+Why: recording it as recurring matters more than quietly fixing it. The entry
+above reads as a one-off; this is the second time, which makes it a step in
+whatever runbook follows a reset rather than an accident.
+
+What I need from Ben: **say the word and I will copy the four files back.**
+Until then `pnpm test:db` is 89/90 on this checkout and the failure is that,
+not the deck.
+
+## `image_url` has no leading slash, and that only works one route deep
+
+Where: `public.exercises.image_url`, `public.cards.image_url`,
+`public.user_types.image_url` — and `src/routes/Exercises.tsx` L298, which
+passes the column straight to `RadioCards` as `image`.
+
+What I checked: every value in these three columns is relative —
+`assets/web/exercises/free-rein.webp`, and `assets/web/method-card.png` before
+it. `<img src>` resolves against the **document** URL, so on `/exercises` it
+lands on `/assets/web/exercises/free-rein.webp` and is correct. It is correct
+by accident: `/exercises` is one segment deep, so the segment the browser
+strips is the only one there is. `src/brand.ts` writes the same kind of path
+the other way — `BRAND_MARK_SRC = '/assets/web/musy-logo.png'`, with the
+slash.
+
+What I did: matched the existing convention rather than breaking it, because
+changing it is a data migration over three tables and this change is about
+five pictures. The new rows are relative like every row around them.
+
+Why: the day anything draws an exercise, card or user type from a route with
+two segments — `/session/:id/:step` is already two, and `SessionIntro` is one
+design decision away from wanting the exercise's picture — the image 404s and
+the card silently falls back to an empty `--surface-sunken` box. That is the
+exact failure mode `method-card.png` had for six days without anyone noticing,
+which is the argument for fixing it before it can happen twice.
+
+What I need from Ben: **one call — leading slash, or a resolver in
+`content.ts`.** The slash is one migration over three tables and nothing else
+changes. A resolver keeps the column a bare key and puts the prefix in one
+place, which is the better shape if these ever move to a CDN or to Supabase
+storage the way `tracks.src` did. I lean resolver, and either is ~20 minutes.
+
+## `cards` and `user_types` still point at a file that has never existed
+
+Where: `public.cards.image_url` (nine rows) and `public.user_types.image_url`
+(four rows), both `assets/web/method-card.png`.
+
+What I checked: `apps/web/public/assets/web/` has held exactly one file since
+2026-09-18, `musy-logo.png`. `method-card.png` was seeded as a placeholder and
+never created, so all thirteen rows draw an empty box. The five exercises had
+the same bug and it is fixed in `20260924140000_exercise_artwork.sql`.
+
+What I did: left them. There is no artwork for a card or a user type yet, and
+pointing them at something equally absent would spread the problem rather than
+fix it. `card_i18n.image_alt` is also null in both locales for all nine, which
+the seed argues for deliberately — the source has none and writing it would be
+authoring copy.
+
+Why: the nine card images are the ones that matter. `SessionScan` and the
+reveal are built around a card you are holding, and a card that draws an empty
+box on screen while the paper one in your hand has a picture on it is the
+place this will be noticed first.
+
+What I need from Ben: **nine card images, or a decision that cards show no
+picture.** The second is a real answer — the paper card is the artwork, and the
+screen may not need to repeat it. If they are coming, the same folder and the
+same recipe as `assets/web/exercises/` works; the README there has both.
+
+## The `tracks` bucket emptied again — third time, and expected on this one
+
+Where: `src/lib/db.content.db.test.ts` — *"lets a signed-in listener sign a
+real object"*. `pnpm test:db` is 89/90 on this checkout, that one cause.
+
+What I checked: `storage.objects` has 0 rows. Same `NoSuchKey` as the two
+entries above.
+
+What I did: nothing, again — but this time it was not avoidable. The entry
+above dodged it by applying SQL to the running database directly; a migration
+cannot be verified that way, because CLAUDE.md rule 4 asks for `supabase db
+reset` precisely so that every file is re-applied in order. So the rule that
+verifies a migration is the rule that empties the bucket.
+
+Why: two entries called it recurring. Three makes it structural — any change
+under `supabase/migrations/` costs the four audio files, and the recovery
+(`supabase storage cp` from the linked project) is a manual step nobody is
+reminded of.
+
+What I need from Ben: **say the word and I will write the restore as a
+script** — `pnpm db:tracks` or similar, run after a reset — so it stops being a
+thing you have to remember and starts being a line in the table in CLAUDE.md.
+
+## The card-to-track pairing was re-cut by hand, and it reverses E.4's mood match
+
+Where: `supabase/content/deck.json`, `artwork/cards/README.md`,
+`supabase/migrations/20260924140001_deck_track_repairing.sql`
+
+What I checked: Ben rewrote the mapping table in `artwork/cards/README.md` —
+the table that exists so a human can match a recording to a card, because
+`tracks.id` is opaque and `title`/`artist` are withheld by column grant. Three
+things in it needed answering before anything was generated:
+
+1. **`mc-04` carried two track ids**, `trk-04` and `trk-01`, in a row with six
+   cells where every other row has five. Ben: `trk-01`.
+2. **`trk-02` is assigned to two cards**, `mc-02` and `mc-05`. Legal —
+   `exercise_tracks` is unique on (exercise, card), not on track, which is the
+   entire reason a recording is stored once and pointed at rather than copied.
+   Confirmed as intended.
+3. **It reverses the mood matching BUILD-PLAN records for E.4**, which took the
+   pairing from the files' own ID3 mood tags and says Ben chose that over a
+   random draw. Every pair moves except Sadness. Confirmed as deliberate.
+
+What I did: applied it as written.
+
+| card | was | now | the recording |
+|---|---|---|---|
+| MC-01 Freude | `trk-01` | `trk-04` | Bats and Rats |
+| MC-02 Trauer | `trk-02` | `trk-02` | Wait for It |
+| MC-03 Wut | `trk-03` | `trk-05` | High Sierra Call |
+| MC-04 Angst | `trk-04` | `trk-01` | Little Yellow Petals |
+| MC-05 Ruhe | `trk-05` | `trk-02` | Wait for It |
+
+Applied to BOTH exercises. The table is per CARD and says nothing about
+exercises; `mindfulness-cards` and `free-rein` draw the same deck and have
+always played the same recordings, so splitting them here would have invented a
+distinction nobody asked for.
+
+Why it is safe for the diary: `sessions.track_id` records what ACTUALLY
+PLAYED, separately from `card_id`, and DOMAIN-MODEL says in as many words that
+the three are different facts so a re-pairing cannot rewrite history. Verified
+rather than assumed — the migration touches `exercise_tracks` only.
+
+What I need from Ben: **nothing to proceed. Three consequences flagged.**
+
+**One — `trk-03` is now paired with nothing.** No card plays it. It has no file
+either, so nothing is lost today, but it is a row waiting for both a recording
+and a card that wants it.
+
+**Two — it is now FIVE cards that play and four that run the clock**, not four
+and five. Anger moved onto High Sierra Call. Two planning documents still say
+the old count and now contradict the database: BUILD-PLAN.md's E.4 table with
+its mood column, and MOCKUPS.md §3, whose heading is literally *"Four cards
+play, five run a clock"*. I did not edit either — they are records of what was
+decided when, and rewriting them silently is how a record stops being one. They
+want a superseding line, and that is Ben's call on his own documents.
+
+**Three — Wait for It is 102 seconds and now serves two cards.** BUILD-PLAN
+already flagged it against a 90-second `listen_gate_seconds`: twelve seconds of
+headroom, so one pause puts the reflection out of reach without a replay. That
+now applies to Trauer and Ruhe rather than Trauer alone.
+
+**And the migration's header says its baseline is unknown**, which is correct
+and worth explaining. `deck.json` is not committed yet, so `git show
+HEAD:supabase/content/deck.json` finds nothing and the generator refuses to
+claim what changed — it states the whole deck instead, which is complete either
+way. Commit `deck.json` once and every later migration gets the summary
+automatically.
+
+## The front carries the QR too, which is the one thing allowed over the picture
+
+Where: `scripts/deck-pdf.mjs` — `front()`, `.musie-front-qr`, and the
+`--musie-front-qr-inset` override in `singlePages()`
+
+What I checked:
+
+**The back already had the code, and the brief asked for a second one.** The
+back's `.musie-scan` group is the QR, the printed `MC-0n` and the caption that
+says what the square is for, and none of that moves. What was missing was a way
+to scan a card **without turning it over** — and turning it over is the one move
+that shows the reader which card it is before the reveal, which is the whole
+reason `tracks.id` is opaque and `title`/`artist` are withheld by column grant.
+
+**It contests the same day's call, so it is worth writing down.** 2026-09-24:
+the artwork prints *instead of* the feeling word, because "the picture is the
+card, and a word set over it is the designer arguing with the illustrator". A
+QR over the picture is the same shape of argument. The distinction I drew is
+that the square is a machine's target rather than a graphic element — it says
+nothing to a reader, so it is not a second voice on the card. That is a
+judgement, and it is the one to contest if it is wrong.
+
+**Three geometries, not one.** The inset is measured from the card's own edge,
+which is the trim line on every face except one: in `--layout single` the art
+front is `position: absolute; inset: 0` and so covers trim **plus bleed**, which
+would have put the square `bleed` mm nearer the blade than on a word front. That
+face gets `bleed + 4mm`; everything else gets `4mm`. `--layout sheet` has no
+bleed at all and needs no override.
+
+**A transparent quiet zone would have failed, and only on some cards.** The
+back's QR has `color: { light: '#0000' }` so the sand runs through it, which is
+right on flat sand and wrong on a photograph — it would have produced a deck
+that scanned on four cards and not on the fifth, discovered by a tester holding
+one. The front's sits on an opaque `--surface-raised` panel.
+
+What I did: a ~16 mm square on both fronts, drawn and undrawn, bottom-left,
+4 mm inside the trim. Added a `MIN_MODULE_MM` warning in `main()`, because the
+printed size is fixed in millimetres while the module count grows with
+`--base-url` — and print day runs this with a domain nobody has typed yet, so
+the deck could come back from the press unscannable on the front with nothing
+having changed in this file.
+
+Why: a card on a table should scan face up, and the reveal should survive it.
+
+What I need from Ben: **a look at the corner, and a ruling on two things.**
+(1) Bottom-left was asked for; it is now a reserved 22 × 22 mm of every
+illustration, and `artwork/cards/README.md` says so — confirm that is where it
+should stay before more artwork is drawn against it. (2) It is on the word
+fronts as well as the drawn ones, on the reasoning that a deck where five cards
+scan face up and four do not is a deck nobody can give an instruction about.
+Both are one line to reverse.
+
+Verified: all nine fronts rendered through Chromium at 4× and decoded with the
+app's own `zxing-wasm` reader, in both `88x63` and `63x88` — nine of nine read
+back the right `/s/MC-0n`. At the default base url the square prints 33 modules
+across 16.4 mm, or 0.50 mm per module.
+
+## The language picker is segments now, and it asks the design system for an icon it cannot have
+
+Where: `src/components/MenuPreferences.tsx` — `LanguageChoice`, `ThemeSwitch`,
+and `.musie-prefs-row` / `.musie-drawer__prefs` in `src/shell.css`
+
+What I checked:
+
+**`SegmentedControl` requires a glyph per option, and a language pair has none
+to give.** The requirement is well argued in the component's own header: labels
+ellipse at one line, CSS truncation does not touch the accessibility tree, so
+the icon is the cue that survives a clipped label for a sighted user. That
+reasoning assumes the options can be told apart by picture. *English* and
+*Deutsch* cannot — lucide has no per-language mark, and a flag is a country
+rather than a language (Deutsch is not only Germany's, and English is nobody's
+flag in particular). So both segments get `Languages`, which says what the
+group is and nothing about which option you are looking at.
+
+**It is safe here and I could not prove it safe in general.** Two segments in a
+~270px drawer give each about 130px, and a seven-character endonym at
+label-md never reaches the ellipsis — at that width the container query has
+already stacked the glyph over the label and handed the label the segment's
+full width. So nothing clips, and the cue that was supposed to survive
+clipping is never called on. That is an argument about one drawer at one width,
+not about the component.
+
+What I did: passed `Languages` to both options and said so at the call site.
+
+Why: the alternative was inventing a distinction in pictures where none exists,
+which is the failure the icon requirement is written to prevent, pointed the
+other way.
+
+What I need from Ben: **a ruling on whether `SegmentedControl` should allow a
+text-only option.** Either the glyph stays required and a language picker is
+simply not a segmented control (in which case this reverts to
+`RadioGroupText`), or the component grows a documented case — "all options
+share one glyph, or none has one" — for a set whose labels are short, fixed and
+self-distinguishing. It belongs in the design system either way; this file is
+the wrong place for it to live permanently.
+
+## Dark mode lost its printed label, which is a 2.5.3 judgement rather than a layout one
+
+Where: `src/components/MenuPreferences.tsx` — `ThemeSwitch`, `labelHidden`
+
+What I checked:
+
+**`Switch`'s own header calls a visible label "strongly preferred".** It is
+hidden now, on Ben's instruction, so the switch and the language segments fit
+one row at the foot of the drawer. The name is still passed and still
+announced; what is gone is the word *Dark mode* / *Dunkelmodus* next to the
+track.
+
+**What carries it instead is the knob's moon/sun pair**, and that is the part
+worth recording: the glyphs were already a domain pair rather than the
+Check / X default, so they say *what* is switching and not only that something
+is. With the text gone they are the only thing that does. If those ever revert
+to the default the control becomes an unlabelled toggle, and nothing in the
+type system will notice.
+
+**2.5.3 (Label in Name) is not violated** — there is no visible text to
+disagree with the accessible name — but the spirit of it is thinner: a sighted
+user who does not read the moon as "dark mode" has nothing else to read.
+
+**And the tap target got smaller, which I did not intend and am not fixing
+here.** `Switch`'s focusable element is the track — 52 × 32 — and the label is
+a `<label for>`, so it was part of the hit area. Hiding it leaves the track
+alone: measured 52 × 32, which clears 2.5.8 (24 × 24, AA) comfortably and does
+not reach the 44 the rest of this app aims at. The `.musy-switch` row still
+declares `min-height: var(--target-primary)`, so the 44px is drawn and only the
+middle 32 of it is live. That is the component's geometry, not the screen's,
+which is why it is written down rather than patched from `shell.css`.
+
+What I did: `labelHidden`, dropped `reverse` (it exists to push a *visible*
+label to the far edge), and left the pair in place with a comment saying it is
+now load-bearing.
+
+Why: Ben asked for one row, and one row of 393px does not hold two controls and
+two names.
+
+What I need from Ben: **a look at it on a phone with nothing else on screen.**
+The moon-as-dark-mode reading is familiar to me and I cannot un-know it; a
+tester who has never met this switch is the only real test of whether the word
+was doing work.
+
+## The shell's scroll-to-top is not authoritative on a screen that snaps
+
+Where: `src/components/SessionListen.tsx` — the layout effect beside
+`useScrollSnap`; `src/AppShell.tsx` — the arrival reset it is working around;
+`packages/design-system/src/useScrollSnap.ts` — where the general answer
+probably belongs.
+
+What I checked:
+
+**The reported defect is real and it is the snap engine, not a missing
+reset.** Reaching `listen` from a scrolled `scan` step opened the page
+part-way down. `AppShell` does scroll to the top on every arrival and it does
+fire here; `<html>` is a mandatory snap container for as long as the step is
+mounted, and the engine pulls the shell's `window.scrollTo` back to a snap
+position. Measured in a 390 × 375 window — a phone in landscape — carrying
+554px in: **the shell scrolled to 0 and the page settled at 195**, and with the
+shell's scroll taken out as well, at 607. `e2e/listen.spec.ts` is that walk,
+and it fails on the old code with exactly those numbers.
+
+**Two arrivals hide it, which is why nothing caught it.** A small offset snaps
+to the first view anyway and looks like a reset that worked — a tall phone in
+portrait cannot scroll the scan step far enough to tell the two apart. And
+naming a card re-reads the row (`onRescan`), so the page shrinks to the loading
+note on the way past and the offset is clamped off the bottom before the step
+draws. Neither is a guarantee; both hold in the windows the existing walks use.
+
+**This is a general defect with one victim today.** Any screen that calls
+`useScrollSnap` inherits it: the shell's contract — *arriving at a route means
+arriving at its top* — is silently void wherever mandatory snapping is on, and
+nothing in the type system or the stylesheet says so. `listen` is the only
+caller, so the fix is at the call site.
+
+What I did: reset the scroll from inside the step, on mount, through
+`withoutSnapping` — the hook's own remedy for a scroll the engine would undo —
+in a layout effect so it lands before the frame is painted, and only when the
+page is not already at the top. Plus the walk above, which fails without it.
+
+Why: one caller is not a pattern (L14.3), and the app is where a defect with
+one victim gets fixed first.
+
+What I need from Ben: **a ruling on whether `useScrollSnap` should start its
+consumer at the top itself.** The hook already owns `<html>` for the length of
+a screen and already knows how to hold snapping off; "a screen that snaps opens
+on its first view" is arguably part of what it promises, and the second caller
+will otherwise rediscover this the same way — from a phone, months later. The
+alternative is that the hook stays mechanism-only and every snapping screen
+resets its own scroll, in which case this belongs in `10-layout.md` as a rule
+rather than in a comment on one component.

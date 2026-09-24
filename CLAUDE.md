@@ -20,12 +20,16 @@ pnpm workspace (`pnpm-workspace.yaml`), Node 22, pnpm pinned by `packageManager`
 | `supabase start`, `supabase db reset` | the local stack; reset re-applies every migration |
 | `pnpm gen:types` | regenerates `apps/web/src/lib/database.types.ts` from the local DB |
 | `pnpm storybook` | the design system on :6006 |
+| `pnpm deck:migration` | `supabase/content/deck.json` → a new stacking migration |
+| `pnpm deck:pdf` | the paper deck, print-ready, from the same file |
 
 Planning documents: `BUILD-PLAN.md` (phases, and what "done" means),
 `DOMAIN-MODEL.md` (schema and its open questions),
 `apps/web/OPEN-QUESTIONS.md` (append-only; what was decided and why — read it
 before re-deciding anything), `packages/design-system/docs/10-layout.md`
-(Layer 3), `packages/design-system/README.md`. Local config: copy
+(Layer 3), `packages/design-system/README.md`,
+`supabase/content/README.md` (the deck: one file, and the loop that turns an
+edit of it into a migration and a printed card). Local config: copy
 `apps/web/.env.example` to `.env.local`, anon key only.
 
 ## 1 · The app consumes the design system; it does not reimplement it

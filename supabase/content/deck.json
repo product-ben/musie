@@ -1,0 +1,167 @@
+{
+  "$note": "THE DECK, IN ONE FILE. Edit this; run `pnpm deck:migration` to turn the edit into a migration. Never hand-edit the database or an applied migration — supabase/content/README.md says why, and CLAUDE.md rule 4 is the law it follows.",
+  "cards": [
+    {
+      "id": "mc-01",
+      "code": "MC-01",
+      "sort": 1,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Freude",
+        "en": "Joy"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-04",
+        "free-rein": "trk-04"
+      }
+    },
+    {
+      "id": "mc-02",
+      "code": "MC-02",
+      "sort": 2,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Trauer",
+        "en": "Sadness"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-02",
+        "free-rein": "trk-02"
+      }
+    },
+    {
+      "id": "mc-03",
+      "code": "MC-03",
+      "sort": 3,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Wut",
+        "en": "Anger"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-05",
+        "free-rein": "trk-05"
+      }
+    },
+    {
+      "id": "mc-04",
+      "code": "MC-04",
+      "sort": 4,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Angst",
+        "en": "Fear"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-01",
+        "free-rein": "trk-01"
+      }
+    },
+    {
+      "id": "mc-05",
+      "code": "MC-05",
+      "sort": 5,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Ruhe",
+        "en": "Calm"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-02",
+        "free-rein": "trk-02"
+      }
+    },
+    {
+      "id": "mc-06",
+      "code": "MC-06",
+      "sort": 6,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Sehnsucht",
+        "en": "Longing"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-06",
+        "free-rein": "trk-06"
+      }
+    },
+    {
+      "id": "mc-07",
+      "code": "MC-07",
+      "sort": 7,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Dankbarkeit",
+        "en": "Gratitude"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-07",
+        "free-rein": "trk-07"
+      }
+    },
+    {
+      "id": "mc-08",
+      "code": "MC-08",
+      "sort": 8,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Einsamkeit",
+        "en": "Loneliness"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-08",
+        "free-rein": "trk-08"
+      }
+    },
+    {
+      "id": "mc-09",
+      "code": "MC-09",
+      "sort": 9,
+      "image": "assets/web/method-card.png",
+      "feeling": {
+        "de": "Hoffnung",
+        "en": "Hope"
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "mindfulness-cards": "trk-09",
+        "free-rein": "trk-09"
+      }
+    }
+  ]
+}
