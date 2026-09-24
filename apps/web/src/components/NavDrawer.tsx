@@ -2,16 +2,30 @@
  * The left navigation drawer — a permitted custom pattern.
  *
  * The design system has no Drawer, so this composes existing components (Logo,
- * IconButton, CtaButton) inside a hand-built shell. L14 permits that, and its
- * three conditions hold: every declaration in shell.css resolves to a Layer 1
- * token, the naming is `musie-` rather than `musy-`, and the sheet geometry is
- * shared with the settings sheet through one class rather than copied.
+ * IconButton, CtaButton, and since 2026-09-24 whatever `preferences` holds)
+ * inside a hand-built shell. L14 permits that, and its conditions hold: every
+ * declaration in shell.css resolves to a Layer 1 token, and the naming is
+ * `musie-` rather than `musy-`.
+ *
+ * IT IS THE ONLY SHEET NOW. `.musie-sheet` was parameterised by edge because
+ * /settings anchored to the other one; that route is gone and its `--end`
+ * modifier with it, so the recurrence L14.3 flagged has stopped recurring. The
+ * component request in apps/web/OPEN-QUESTIONS.md stands as history rather than
+ * as a live ask.
  *
  * ── PRESENTATIONAL, WITH A SMALL API ───────────────────────────────────────
- * `open`, `onClose`, `currentPage`, `onNavigate`, and `pages` as DATA. It owns
- * no state and knows nothing about the router beyond the `href` it is handed,
- * so it can be driven by a route (as it is here), by a Storybook story, or by
- * anything else.
+ * `open`, `onClose`, `currentPage`, `onNavigate`, `pages` as DATA, and one
+ * `preferences` slot. It owns no state and knows nothing about the router
+ * beyond the `href` it is handed, so it can be driven by a route (as it is
+ * here), by a Storybook story, or by anything else.
+ *
+ * THE PREFERENCES ARE A SLOT RATHER THAN MORE DATA — 2026-09-24, when
+ * /settings was deleted and dark mode, language and the account moved in here.
+ * A row is a label and a destination, which is why `pages` can be data; a
+ * switch, a radio group and a sign-out button are three different controls
+ * wired to three different stores, and expressing them as data would be
+ * inventing a settings-form language for one caller. So the drawer says WHERE
+ * they go and nothing about what they are, and `MenuPreferences` owns them.
  *
  * ── base-ui's Dialog DOES THE DANGEROUS PARTS ──────────────────────────────
  * Focus moves in on open and is RESTORED to the trigger on close, the
@@ -28,6 +42,7 @@
  * branch here: Layer 1 already collapses every duration to 1ms and
  * --motion-travel-* to 0.
  */
+import type * as React from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 import { X } from 'lucide-react';
 import { CtaButton, IconButton, Logo } from '@musie/design-system';
@@ -40,7 +55,26 @@ export interface NavRow {
   /** Stable identity, matched against `currentPage`. */
   id: string;
   labelKey: MessageKey;
-  href: string;
+  /**
+   * Where the row GOES — and it is optional, because one row does not go
+   * anywhere by itself.
+   *
+   * A row with an `href` is an anchor: the router navigates, the drawer closes
+   * because its route unmounts, and Back behaves. A row WITHOUT one renders as
+   * an ordinary button and does whatever `onSelect` does — which is how *End
+   * session & start a new one* can write to the database first and choose
+   * where to go afterwards. An anchor could not: it would have navigated
+   * before the write, and a `preventDefault` on a link is a button wearing a
+   * costume.
+   */
+  href?: string;
+  /**
+   * What the row DOES, for a row that is not a destination.
+   *
+   * Called before `onNavigate`, so a host that closes the drawer in
+   * `onNavigate` cannot unmount the row out from under its own handler.
+   */
+  onSelect?: () => void;
   /**
    * The drawer's ACTION rather than one of its pages — filled primary in every
    * state, and hugging its label. It never takes a current-page treatment,
@@ -48,15 +82,20 @@ export interface NavRow {
    */
   action?: boolean;
   /**
-   * The row's answer is still being fetched.
+   * The row is busy: either its answer is still being fetched, or the thing it
+   * does is in flight.
    *
-   * Only meaningful on the ACTION row, which is the one row whose identity
-   * depends on a query: *Start a session* and *Continue session* are
-   * alternatives chosen by whether a session is running, and until that is
-   * known neither label is true. Rendering one and swapping it a beat later
-   * would flash the wrong label — and on the action row that is not cosmetic,
+   * IT WAS THE ACTION ROW'S ALONE, and for a reason worth keeping: *Start a
+   * session* and *Continue session* are alternatives chosen by a query, and
+   * until that lands neither label is true. Rendering one and swapping it a
+   * beat later would flash the wrong label — and there that is not cosmetic,
    * because tapping *Start a session* while one is already running is exactly
    * the mistake the database refuses.
+   *
+   * An `onSelect` row uses it for the other sense: the write is running. Same
+   * mechanism, same guarantee — `CtaButton`'s `loading` disables the control —
+   * which is what stops a second press ending a session that is already being
+   * ended.
    *
    * `CtaButton`'s own `loading` sets `disabled` as well as `aria-busy`, so the
    * row cannot be activated in this state.
@@ -65,11 +104,13 @@ export interface NavRow {
   /**
    * Draw a rule above this row.
    *
-   * A rule, not a bigger gap. The rows sit at --sp-1, and L2's doubling check
-   * says a gap only reads as a boundary at double the gap inside the group —
-   * which for groups of one or two rows would need gaps large enough to make
-   * the menu scroll on a phone. L2's own answer when the doubling check cannot
-   * be met is a divider or a shared surface, never just more space.
+   * A rule, not a bigger gap. The rows sit at --space-gap-stack (L3's rung for
+   * list items), and L2's doubling check says a gap only reads as a boundary at
+   * double the gap inside the group — which for groups of one or two rows would
+   * need gaps large enough to make the menu scroll on a phone. L2's own answer
+   * when the doubling check cannot be met is a divider or a shared surface,
+   * never just more space. The rule pays --space-gap-related either side, so a
+   * boundary is 40px against 16px inside: double, and then some.
    */
   separatorBefore?: boolean;
 }
@@ -89,9 +130,20 @@ export interface NavDrawerProps {
    */
   onNavigate: (row: NavRow) => void;
   pages: NavRow[];
+  /**
+   * The preferences, below the pages and behind a rule: what you SET here, as
+   * opposed to where you GO.
+   *
+   * Optional, because the drawer is still a drawer without them — a story or a
+   * test that only cares about navigation passes nothing and gets no empty
+   * bordered block, which is what the `undefined` check below is for.
+   */
+  preferences?: React.ReactNode;
 }
 
-export function NavDrawer({ open, onClose, currentPage, onNavigate, pages }: NavDrawerProps) {
+export function NavDrawer(
+  { open, onClose, currentPage, onNavigate, pages, preferences }: NavDrawerProps,
+) {
   const t = useT();
 
   return (
@@ -157,10 +209,26 @@ export function NavDrawer({ open, onClose, currentPage, onNavigate, pages }: Nav
                          labels form a readable column. `start`, not `left`, so
                          the stack mirrors in RTL without a second rule. */
                       align="start"
-                      /* Outlined for the page you are on, ghost for the others.
-                         An existing variant — no invented selected treatment,
-                         no accent bar, no tinted row. */
-                      variant={row.action === true ? 'primary' : current ? 'secondary' : 'ghost'}
+                      /* THREE TREATMENTS, AND EACH ONE IS AN EXISTING VARIANT
+                         — no invented selected state, no accent bar, no tinted
+                         row:
+
+                           primary   the drawer's action, filled;
+                           secondary the page you are ON, and any row that DOES
+                                     something rather than going somewhere;
+                           ghost     the other destinations.
+
+                         The second is two cases on purpose (Ben, 2026-09-24).
+                         Outlined is this system's "this is a control, not a
+                         label", and a row that writes to the database is
+                         exactly that — it should not sit in the same flat
+                         treatment as the four rows that merely navigate. It
+                         cannot be confused with the current page either: an
+                         `onSelect` row has no `href`, so `current` is false for
+                         it by construction. */
+                      variant={row.action === true
+                        ? 'primary'
+                        : current || row.onSelect !== undefined ? 'secondary' : 'ghost'}
                       /* The action hugs its label; the pages fill the row. A
                          full-width filled button among full-width buttons is
                          just another row — hugging is what makes it read as a
@@ -171,9 +239,17 @@ export function NavDrawer({ open, onClose, currentPage, onNavigate, pages }: Nav
                       wrap
                       loading={row.loading === true}
                       loadingLabel={t('content.loading')}
-                      render={<Link to={row.href} replace />}
+                      /* AN ANCHOR ONLY IF IT GOES SOMEWHERE. `undefined` leaves
+                         base-ui's Button as the <button> it already is, which
+                         is exactly right for a row that acts — see `href`. */
+                      render={row.href === undefined
+                        ? undefined
+                        : <Link to={row.href} replace />}
                       aria-current={current ? 'page' : 'false'}
-                      onClick={() => onNavigate(row)}
+                      onClick={() => {
+                        row.onSelect?.();
+                        onNavigate(row);
+                      }}
                     >
                       {t(row.labelKey)}
                     </CtaButton>
@@ -182,6 +258,17 @@ export function NavDrawer({ open, onClose, currentPage, onNavigate, pages }: Nav
               })}
             </ul>
           </nav>
+
+          {/* A SECTION, not a bare div, and unlabelled on purpose: every
+              control inside it already names itself (the switch's label, the
+              radio group's legend, the account box's heading), and a wrapper
+              heading would add a fourth name over three things that are not a
+              group of anything except "not navigation". The hairline is what
+              says that much, which is the same argument `.musie-nav__rule`
+              makes between the row groups above. */}
+          {preferences === undefined ? null : (
+            <section className="musie-drawer__prefs">{preferences}</section>
+          )}
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

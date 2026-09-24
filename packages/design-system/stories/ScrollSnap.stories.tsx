@@ -23,6 +23,7 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { CtaButton } from '../src/CtaButton';
 import { useScrollSnap } from '../src/useScrollSnap';
 import { useViewportFill } from '../src/useViewportFill';
 import { singlePane } from './_decorators';
@@ -42,16 +43,27 @@ const VIEW: React.CSSProperties = {
 const MUTED: React.CSSProperties = { margin: 0, color: 'var(--on-surface-muted)' };
 
 /** One view in the run. `.musy-snap-view` is the whole of what makes it one. */
-function Panel({ title, body, innerRef }: {
-  title: string; body: string; innerRef?: React.RefObject<HTMLElement | null>;
+function Panel({ title, body, innerRef, children }: {
+  title: string; body: string;
+  innerRef?: React.RefObject<HTMLElement | null>;
+  children?: React.ReactNode;
 }) {
   return (
     <section ref={innerRef} className="musy-snap-view" style={VIEW}>
       <h3 style={{ margin: 0 }}>{title}</h3>
       <p style={MUTED}>{body}</p>
+      {children}
     </section>
   );
 }
+
+/** The two jumps side by side, so the difference is one tap apart. */
+const ROW: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 'var(--space-gap-related)',
+  alignItems: 'center',
+};
 
 /** Three views and nothing above them: each snaps to its own top. */
 function PlainRun() {
@@ -93,6 +105,99 @@ function OffsetRun() {
   );
 }
 
+/**
+ * `withoutSnapping`, AND THE ONLY PLACE IT CAN BE SEEN FAIL.
+ *
+ * A button that scrolls you somewhere and a scroller that insists on a snap
+ * position are two things wanting the same scroll, and on iOS the snap engine
+ * wins: the jump LANDS on the next view and is then animated back to the one
+ * it left. Reported from a phone, 2026-09-24, and fixed by holding the mode
+ * off until the scroll has settled.
+ *
+ * ── IT REPRODUCES ON A PHONE AND NOWHERE ELSE ─────────────────────────────
+ * Not in Chromium, and not in WebKit under automation either — measured at
+ * 393×620, ×660 and ×844, with the toolbar resizing during and after the
+ * scroll, and at a 24px root size. Every one of those lands and stays. So the
+ * pair of buttons below is the test rig: the story cannot assert the
+ * difference, but a thumb on a real iPhone can see it in one tap.
+ *
+ * The FIRST view's jump is the control in the experiment — it works either
+ * way, because `useViewportFill` gives that view a `scroll-margin-block-start`
+ * and therefore a snap RANGE rather than an exact position, and a scroll
+ * leaving a range is not pulled back. Views two and three are exactly one
+ * snapport each, which is where the fight happens.
+ */
+function JumpRun() {
+  const { withoutSnapping } = useScrollSnap();
+  /* THE SHAPE OF THE LISTEN STEP, not three bare panels — the asymmetry only
+     exists if the first view measures itself. `useViewportFill` writes the
+     offset that `.musy-snap-view` reads as `scroll-margin-block-start`, which
+     is what gives that view a snap RANGE instead of an exact position. Without
+     it all three would be exact and all three would fight. */
+  const one = useViewportFill<HTMLElement>();
+  const two = React.useRef<HTMLElement>(null);
+  const three = React.useRef<HTMLElement>(null);
+
+  /* The way every control in the app scrolls. */
+  const guarded = (to: React.RefObject<HTMLElement | null>) => () => {
+    const el = to.current;
+    if (el !== null) withoutSnapping(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
+  /* The same jump with the mode left ON — what the app did before the fix, and
+     what bounces on an iPhone. Here so the two can be compared by thumb. */
+  const fought = (to: React.RefObject<HTMLElement | null>) => () => {
+    to.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <div>
+      <h2 style={{ margin: 0 }}>Something above the run</h2>
+      <p style={{ ...MUTED, marginBlockStart: 'var(--space-gap-related)' }}>
+        The listen step&rsquo;s shape: a heading, then a run of views. Tap a pair of
+        buttons and watch where you end up.
+      </p>
+
+      <Panel
+        innerRef={one}
+        title="View one, offset"
+        body="Both buttons behave from here. This view measured itself, so it has a snap range rather than an exact position, and nothing pulls the jump back."
+      >
+        <div style={ROW}>
+          <CtaButton onClick={guarded(two)}>Jump down · guarded</CtaButton>
+          <CtaButton variant="secondary" onClick={fought(two)}>Jump down · unguarded</CtaButton>
+        </div>
+      </Panel>
+
+      <Panel
+        innerRef={two}
+        title="View two"
+        body="Here is where it shows. On an iPhone the unguarded jump reaches view three and is animated straight back to this one."
+      >
+        <div style={ROW}>
+          <CtaButton onClick={guarded(three)}>Jump down · guarded</CtaButton>
+          <CtaButton variant="secondary" onClick={fought(three)}>Jump down · unguarded</CtaButton>
+        </div>
+      </Panel>
+
+      <Panel
+        innerRef={three}
+        title="View three"
+        body="And the same going back up, which is the rail's case on the listen step."
+      >
+        <div style={ROW}>
+          <CtaButton onClick={() => withoutSnapping(() => window.scrollTo({ top: 0, behavior: 'smooth' }))}>
+            Back to the top · guarded
+          </CtaButton>
+          <CtaButton variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            Back to the top · unguarded
+          </CtaButton>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
 const meta = {
   title: 'Components/ScrollSnap',
   parameters: {
@@ -125,6 +230,20 @@ const meta = {
           'The host declares `--musy-snap-inset` if it has fixed chrome over the top',
           'of the viewport; the system defaults it to `0`.',
           '',
+          '**Scroll from a control through `withoutSnapping`.** The hook returns it,',
+          'and every scroll a BUTTON causes should go through it — a scroll a thumb',
+          'makes should not, since being snapped is the point. It holds the mode off,',
+          'runs the scroll, and puts it back once the scroll has settled (`scrollend`',
+          'where the engine has it, a timer otherwise). Restoring cannot flicker: by',
+          'then the scroll has arrived at a snap position, so there is nothing left to',
+          'correct.',
+          '',
+          'Without it, on iOS, a programmatic smooth scroll away from a view that is',
+          'exactly one snapport tall **lands and is then animated back**. A view with',
+          'a `scroll-margin-block-start` — see **Offset** — has a snap *range* instead',
+          'of an exact position and is not pulled back, which is why the first view of',
+          'a run behaves and the rest do not. See **Jump**.',
+          '',
           '---',
           '### Build notes',
           '',
@@ -156,4 +275,17 @@ export const Default: StoryObj<typeof meta> = {
  */
 export const Offset: StoryObj<typeof meta> = {
   render: () => <OffsetRun />,
+};
+
+/**
+ * `withoutSnapping`, with the unguarded jump beside it for comparison.
+ *
+ * ON A DESKTOP BOTH BUTTONS BEHAVE IDENTICALLY, and that is not the story
+ * failing — the defect is specific to iOS and did not reproduce under
+ * automation in either engine. Open this on an iPhone: from **view two**, the
+ * unguarded jump reaches view three and is animated back, and the guarded one
+ * stays. From view one both behave, because that view has a snap range.
+ */
+export const Jump: StoryObj<typeof meta> = {
+  render: () => <JumpRun />,
 };

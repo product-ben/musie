@@ -23,7 +23,8 @@
  *
  * Theme is the opposite: localStorage owns it, because a flash of the wrong
  * theme is the whole problem theme-init.js exists to prevent, and it has to be
- * decided before the first stylesheet loads. See SettingsSheet's ThemeSwitch.
+ * decided before the first stylesheet loads. See `ThemeSwitch` in
+ * components/MenuPreferences.tsx.
  *
  * Mounted below ProfileProvider, from which this DERIVES — it no longer
  * fetches. The timeout that used to live here moved to lib/profile.ts with the

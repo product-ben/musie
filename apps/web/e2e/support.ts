@@ -169,23 +169,23 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
     exact: true,
   });
 
-  /* THE FIELD IS FOLDED AWAY UNTIL IT IS ASKED FOR (2026-09-23). Typing the
-     code is the fallback behind *Enter the code by hand*, so the walk opens it
-     the way a person does.
+  /* THE FIELD IS A MODE OF THE FRAME, AND IT IS NOT THE ONE ON SHOW (2026-09-24).
+     Typing the code is the fallback behind *Enter the code*, so the walk opens
+     it the way a person does.
 
-     A SWITCH, NOT A BUTTON. It shipped as a ghost `CtaButton` with
-     `aria-expanded` and became a `Switch` the same day — the control states a
-     MODE you stay in rather than an action you fire. This helper kept asking
-     for a button, so every walk that types a code timed out here looking for
-     a role the screen no longer has.
+     A BUTTON AGAIN. It was a ghost `CtaButton`, then a `Switch` beside the
+     frame, and is now a button INSIDE it — the frame shows the viewfinder or
+     the form, one at a time, so the control fires a change rather than
+     reporting a setting that stays true. Each of those three moves broke this
+     helper, which is why it asks for the field first and the role second.
 
-     CONDITIONALLY, because the step remembers: somebody who typed once has the
-     form open when *Scan a different card* brings the reader back, and
-     pressing the toggle again would SHUT it. Asking whether the field is there
-     is the same question the screen answers. */
+     CONDITIONALLY, because the step remembers: somebody who typed once still
+     has the form up when *Scan a different card* brings them back, and
+     pressing the control again would take them to the viewfinder. Asking
+     whether the field is there is the same question the screen answers. */
   if (!(await field.isVisible())) {
     await page
-      .getByRole('switch', { name: label(locale, 'session.scan.codeManual'), exact: true })
+      .getByRole('button', { name: label(locale, 'session.scan.codeManual'), exact: true })
       .click();
     await expect(field).toBeVisible({ timeout: 15_000 });
   }
@@ -194,6 +194,34 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
   await page
     .getByRole('button', { name: label(locale, 'session.scan.codeSubmit'), exact: true })
     .click();
+}
+
+/**
+ * Start an exercise from the library — ONE CLICK, since 2026-09-24.
+ *
+ * Every walk used to do this in three steps: click the card, wait for the
+ * detail `dialog`, then click *Start exercise* inside it by name. The detail
+ * lightbox is gone — a tap on the card starts the run — so the dialog and the
+ * `exercises.start` key both went with it, and a walk still looking for either
+ * hangs until its timeout.
+ *
+ * SHARED, because six walks start an exercise and the next flow change should
+ * find them in one place rather than in six.
+ *
+ * WITH NO NAME it takes the FIRST card, which is a POSITION and deliberate:
+ * the order is `exercises.sort`, a column with a `unique` constraint on it, so
+ * it is a fact about the content rather than an accident of layout. The name
+ * cannot be asked for from the catalogue either — it lives in `exercise_i18n`
+ * — so a walk that needs a particular exercise reads the name from the
+ * database and passes it here. NOT `exact`: a card's accessible name is its
+ * headline followed by its description and its fact chips.
+ */
+export async function startExercise(page: Page, name?: string) {
+  const card = name === undefined
+    ? page.getByRole('radio').first()
+    : page.getByRole('radio', { name });
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await card.click();
 }
 
 /**

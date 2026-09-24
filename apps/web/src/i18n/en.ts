@@ -34,8 +34,9 @@
  */
 export const en = {
   /* ── Shell ─────────────────────────────────────────────────────────────── */
+  /* ONE HEADER BUTTON. `shell.profileLabel` went with /settings on 2026-09-24;
+     the menu is the only overlay, so the only thing to label is opening it. */
   'shell.menuLabel': 'Open menu',
-  'shell.profileLabel': 'Open profile and settings',
 
   /* ── Shared across overlays ────────────────────────────────────────────── */
   'common.closeLabel': 'Close',
@@ -89,11 +90,12 @@ export const en = {
      one way of saying that, and two spellings of it is the drift this catalogue
      exists to stop. See lib/signIn.ts. */
 
-  /* ── The account, in settings · H.0b ─────────────────────────────────────
+  /* ── The account, in the menu · H.0b ─────────────────────────────────────
      Shown ONLY to a user who has an email address. An anonymous user has none,
      and offering them 'Sign out' would draw them a button that strands their
      whole diary on an id nobody can reach — the data-loss shape H.0 exists to
-     keep away from testers, rendered as a control. See SettingsSheet.
+     keep away from testers, rendered as a control. See MenuPreferences (it was
+     SettingsSheet until 2026-09-24).
 
      The address is SHOWN because these accounts are handed out and a workshop
      phone may be passed between people. "Which of us is this?" has to be
@@ -110,18 +112,37 @@ export const en = {
      screen reader user hears only the label. */
   'menu.closeLabel': 'Close menu',
   'menu.startSession': 'Start a session',
+  /* THE SECOND THING YOU CAN DO ABOUT A RUNNING SESSION, under the first.
+     The ampersand is Ben's, and it is kept in both languages — the same call
+     `about.headline` made. 'End', not 'Close': the row ends the run AND opens
+     the library, and 'close' says only the first half. */
+  'menu.endSession': 'End session & start a new one',
   'menu.continueSession': 'Continue session',
   'menu.yourDiary': 'Your diary',
   'menu.aboutYou': 'About you',
   'menu.howItWorks': 'How Musie works',
 
-  /* ── Settings sheet ────────────────────────────────────────────────────── */
-  'settings.darkMode': 'Dark mode',
-  'settings.userType': 'Here as',
-  'settings.language': 'Language',
-  /* Provisional, not placeholder: the content IS translated, but the
-     Mindfulness Cards spreadsheet still owns that copy and will replace it. */
-  'settings.languageHint': 'Content translations are provisional.',
+  /* ── What the drawer SETS, under where it GOES ─────────────────────────────
+     Both keys were `settings.*` and both moved, labels unchanged, when
+     /settings was deleted on 2026-09-24. Renamed with the move: a key naming a
+     route that no longer exists is the kind of thing that gets grepped for and
+     not found.
+
+     THREE KEYS DID NOT SURVIVE THE MOVE, and they are deletions rather than
+     losses in the catalogue:
+
+       `settings.userType` — *Here as*. /about-you asks the same question with
+       `aboutYou.*` and writes the same column; the second spelling is gone with
+       the second control (the behaviour that differed is logged in
+       apps/web/OPEN-QUESTIONS.md, because that part IS a loss).
+       `settings.languageHint` — *Content translations are provisional*. True,
+       and a note about the project rather than about the control: it told a
+       reader something no reader can act on, in a drawer where the space costs
+       the account below it. The fact lives in the seed migration's header and
+       in CLAUDE.md rule 6.
+       `route.settings.title` — there is no route to title. */
+  'menu.darkMode': 'Dark mode',
+  'menu.language': 'Language',
 
   /* ── Loading, failure, emptiness ───────────────────────────────────────── */
   'content.loading': 'Loading…',
@@ -132,30 +153,33 @@ export const en = {
   'content.empty': 'There is nothing here yet.',
 
   /* ── About Musie · D.1 ───────────────────────────────────────────────────
-     THE FIVE SLIDES ARE OURS. The prototype wrote them, they are about the
-     product rather than about any exercise, and no spreadsheet is coming for
-     them — so rule 6 applies and the German below them is written, not owed.
+     THE THREE SLIDES ARE OURS. They are about the product rather than about
+     any exercise, and no spreadsheet is coming for them — so rule 6 applies
+     and the German below them is written, not owed.
 
-     The prototype's slides also carried a second line each; none of them was
-     ever rendered, because `.musy-carousel__card` has a badge and a title and
-     no third part. They are not carried over. Logged in the Carousel's build
-     notes as a copy decision for Ben. */
+     THE GERMAN IS THE ORIGINAL HERE, and the English is the translation. Ben
+     wrote these three lines after the 2026-09-25 user testing, in German; the
+     five prototype slides they replace said the same thing in five beats, and
+     a five-step gate is a five-swipe gate before anybody may start. The names
+     that survive in the ids — choose, guide, understand — are the three beats.
+
+     THE POSTSCRIPT IS THE FOURTH THING THAT USED TO BE A SLIDE and is no
+     longer one: the diary is not a step of a session, it is what is there
+     afterwards, so it sits under the CTA as an aside rather than as a gate
+     somebody has to swipe past. Written for Ben's own 'P.S.'. */
   'about.greeting': "Hi, I'm Musie.",
   'about.pitch': 'I help you feel and act more mindful, aware, connected and safe through the power of music',
   /* The typing indicator's accessible name. The dots are decorative; this is
      what a screen reader gets while the second message is on its way. */
   'about.typing': 'Musie is typing',
-  'about.carouselHeadline': 'How we play with music',
+  'about.carouselHeadline': 'What Musie can do',
   'about.carouselLabel': 'How a session works',
-  'about.slide.situation': 'You help me understand your situation',
-  'about.slide.recommend': 'I recommend you music based methods for your context',
-  'about.slide.listen': 'Curated music and instructions will trigger some things in you',
-  'about.slide.reflect': 'I guide you through a reflection',
-  'about.slide.share': 'If you want to, I help you share your thoughts',
+  'about.slide.choose': 'Choose the exercise that draws you in, with Musie',
+  'about.slide.guide': 'Musie guides you through the exercise and a reflection',
+  'about.slide.understand': 'Feel & understand yourself better',
   'about.previousSlide': 'Previous step',
   'about.nextSlide': 'Next step',
   'about.slideLabel': 'Step {position} of {total}: {title}',
-  'about.dotLabel': 'Step {position}',
   'about.goToSlide': 'Go to step {position} of {total}',
   /* Three hints under one CTA, and which one shows is the whole of the gate:
      locked until the last slide has been SEEN, then either "next I'll ask" or
@@ -163,6 +187,10 @@ export const en = {
   'about.hint.unseen': 'Check out how a session will work before starting.',
   'about.hint.next': "Next I'll ask who you are here as.",
   'about.hint.ready': 'Ready when you are.',
+  /* The aside under the CTA. 'P.S.' survives the translation because it is
+     the same abbreviation in both languages and it is doing the work of a
+     whole clause: this is an extra, not a step. */
+  'about.postscript': 'P.S. Your diary in Musie keeps an overview of every past session, and what you saw in your own reflections.',
 
   /* ── About you · D.2 ─────────────────────────────────────────────────────
      "Methods" became "exercises" everywhere in the product, so the prototype's
@@ -174,18 +202,22 @@ export const en = {
   'aboutYou.hint.ready': 'Ready when you are.',
 
   /* ── Not implemented · D.2 ───────────────────────────────────────────────
-     Shown when someone picks one of the three unbuilt user types ON THE
-     ONBOARDING SCREEN. /settings deliberately does NOT show it — see the
-     comment on SettingsSheet's UserTypeChoice. The two screens differ on
-     purpose: this one is a gate on the way into a session and has to say why
-     it will not open, where settings is a preference you are entitled to
-     record whether or not it does anything yet. */
+     Shown when someone picks one of the three unbuilt user types. THIS IS THE
+     ONLY SCREEN THAT ASKS NOW: /settings had the same four options and accepted
+     all of them, on the argument that a preference is yours to record whether
+     or not the product has caught up. That screen is gone (2026-09-24) and the
+     asymmetry with it — so this lightbox is the app's single answer about the
+     three unbuilt paths, and an unimplemented type cannot be recorded at all.
+     Logged in apps/web/OPEN-QUESTIONS.md. */
   'notImplemented.title': 'Not implemented yet',
   'notImplemented.text': 'Musie only builds the “By myself” path so far, with the Mindful Pause and Free Rein exercises.',
   'notImplemented.back': 'Back to the choice',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
-  'exercises.timeframe': '{min}–{max} minutes',
+  /* NO 'exercises.timeframe', 'exercises.detail.*' OR 'exercises.start'. They
+     were the detail lightbox's, and a tap on a card now starts the run
+     (2026-09-24). The duration survives as the fact chip below — same fact,
+     on the card, where it can be read without opening anything. */
   'exercises.notImplemented': 'Not available yet',
   'exercises.headline': 'What would you like to start with now?',
   'exercises.legend': 'Choose an exercise',
@@ -205,9 +237,6 @@ export const en = {
      IMPLEMENTED exercises only — the prototype picked among all three and then
      opened the not-implemented lightbox two times in three. */
   'exercises.surpriseMe': 'Let Musie pick an exercise',
-  'exercises.detail.needs': 'You need',
-  'exercises.detail.duration': 'Duration',
-  'exercises.start': 'Start exercise',
   /* The database refuses a second running session (a partial unique index), so
      this is a real outcome rather than a defensive branch. It is a Message
      with a way forward, not an error: the session it collides with is the
@@ -215,13 +244,44 @@ export const en = {
   'exercises.alreadyRunning': 'A session is already running',
   'exercises.alreadyRunningDetail': 'Finish or close the one you are in before starting another.',
   'exercises.goToSession': 'Continue that session',
+  /* THE OTHER WAY OUT, and it names the exercise rather than saying "this
+     one": the message sits above a list of five cards, and the one it is
+     talking about is greyed out with the rest of them. The session it ends is
+     recorded as abandoned, which is what the diary already calls a run that
+     stopped before its reflection — so 'end' is the honest verb and 'finish'
+     would be a lie about the row. */
+  'exercises.endAndStart': 'Start {name} and end the previous session',
+  /* NOT `content.error`. That one says "This content could not be loaded",
+     which is true of a list that did not arrive and false of a tap that did
+     not start anything — and this is the only thing on the screen that says
+     why a tapped card did nothing. `content.errorDetail` carries the second
+     line, because "check your connection and try again" is the same advice. */
+  'exercises.startFailed': 'The session could not be started',
 
   /* ── The session ─────────────────────────────────────────────────────────
      The four step ids are `intro · scan · listen · reflect` (routeHandle.ts).
      These are their DISPLAY names, and the split is the point: the ids are
      English slugs in the URL and in `sessions.step`, the copy is per locale.
-     The same split the schema uses everywhere else. */
-  'session.step.intro': 'Intro',
+     The same split the schema uses everywhere else.
+
+     'Start', NOT 'Intro', since 2026-09-24 — the English half of the German
+     move from 'Einstieg' to 'Einsteigen'. Both were the odd one out in their
+     own set: German had a plain noun among three verbal nouns, English had a
+     clipped noun among three bare verbs, and both named the SECTION where the
+     other three name what you do in it.
+
+     'Start' and not 'Begin', 'Step in' or 'Get started', which all say the
+     sense better in the rail and fail the moment the word is interpolated:
+     `diary.stoppedAt` and `route.session.title` put it in a sentence, and
+     'Stopped at Begin' is not English. 'Start' is the one form that is both a
+     bare verb like its three neighbours and a noun that survives 'Stopped at
+     {step}'.
+
+     It is deliberately the same word `menu.startSession` uses as its verb.
+     That is a button that STARTS a session from outside it; this names the
+     first step of one already running, and nothing puts the two on a screen
+     together. */
+  'session.step.intro': 'Start',
   'session.step.scan': 'Scan',
   'session.step.listen': 'Listen',
   'session.step.reflect': 'Reflect',
@@ -274,16 +334,28 @@ export const en = {
      both ways, and a frame still claiming it cannot see is the same defect as
      one pretending it can. */
   'session.scan.headline': 'Scan the card that describes best how you feel right now.',
-  'session.scan.reader': 'Scan the QR code on your card with your phone’s camera app — it opens Musie at that card.',
-  'session.scan.readerNote': 'Or use the camera on this device — it reads the same code.',
+  /* NO 'reader' OR 'readerNote' — Ben, 2026-09-24. Both sentences stood in the
+     empty frame, which now holds nothing but its two buttons.
+
+     The first of them was the one that mattered — it named the COMMON way in,
+     a printed card read by the phone's own camera app — so it was moved rather
+     than dropped: it is part of the exercise's own `scan_md` now, beside the
+     rest of the instructions for picking a card (migration
+     20260924…_scan_md_phone_camera.sql). The second is what the primary button
+     says. */
   'session.scan.codeLabel': 'Card code',
   /* An EXAMPLE, not a label (3.3.2): the label above names the field and this
      shows the shape. `MC-01` is a real code, so it is not translated. */
   'session.scan.codePlaceholder': 'MC-01',
-  /* The disclosure that opens the field. A VERB PHRASE, because it is an
-     action and not the name of a section — the field it reveals is already
-     labelled 'Card code'. */
-  'session.scan.codeManual': 'Enter the code by hand',
+  /* A VERB PHRASE, because it is an action and not the name of a section — the
+     field it opens is already labelled 'Card code'.
+
+     'Enter the code', no longer 'Enter the code by hand' (2026-09-24). 'By
+     hand' earned its place while the form sat open beside the reader and the
+     two had to be told apart; the frame now shows one or the other, and this
+     string is also the icon control's tooltip over the live picture, where
+     five words is a paragraph. */
+  'session.scan.codeManual': 'Enter the code',
   'session.scan.codeHint': 'The code is printed beside the QR code, like MC-01.',
   'session.scan.codeSubmit': 'Use this card',
   /* THREE ANSWERS, AND TWO OF THEM ARE NOT FAILURES. A typo and a card from
@@ -313,9 +385,20 @@ export const en = {
      is now true and moves on, with no 'unfortunately', no instructions for
      reversing it in browser settings, and no button offering to ask again
      (`canRetry` in lib/camera.ts). */
-  'session.scan.cameraStart': 'Use the camera',
+  /* 'Scan the card', not 'Use the camera' (2026-09-24). It is the step's
+     primary action now, and it names the thing being done rather than the
+     device doing it. Translated from Ben's German, which is where this one was
+     written first. */
+  'session.scan.scanCard': 'Scan the card',
   'session.scan.cameraRetry': 'Try the camera again',
-  'session.scan.cameraStop': 'Turn the camera off',
+  /* 'Hide', not 'Turn off': the control is an icon button sitting in the
+     picture and what it does, from where the person is standing, is take the
+     preview away. The stream really is stopped — 'turn off' would suggest the
+     device's camera as a whole. */
+  'session.scan.cameraHide': 'Hide the camera',
+  /* Out of the form and back to the viewfinder. Both are modes of one frame,
+     so the button names where it goes. */
+  'session.scan.codeBack': 'Back to scanning',
   'session.scan.cameraStarting': 'Opening the camera…',
   /* Shown BELOW the frame rather than over the picture: text on top of live
      video has no contrast that can be checked, because the background is
@@ -340,9 +423,15 @@ export const en = {
      `tracks.title` and `.artist` are not granted to the client at all. The
      reveal is E.5. */
   'session.listen.track': 'Your track',
-  'session.listen.gateMet': 'Enough of the track is behind you. Listen on as long as you like, or start the reflection now.',
-  'session.listen.gateLocked': 'Listen to as much of the track as you want — {gate} is the minimum for this exercise, {left} to go.',
-  'session.listen.start': 'Start reflection',
+  /* THE GATE IS SAID BY THE BUTTON NOW, AND ONLY THERE — 2026-09-24.
+     There used to be a `#listen-gate` paragraph above the transport carrying
+     one sentence while the gate was shut and another once it opened, and the
+     CTA below it read *Start reflection* in both states. Two places said one
+     thing, and the button — the control the sentence was about — was the one
+     that said nothing. Now the button carries its own condition and the
+     paragraph is gone. */
+  'session.listen.startLocked': 'Focus for at least {countdown} minutes more',
+  'session.listen.start': 'Start reflecting whenever you are ready',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
   /* ── The three scroll views · E.5b ──────────────────────────────────────
@@ -350,7 +439,7 @@ export const en = {
      copy. The Störer's sentence is the prototype's own, lightly tightened:
      it interrupts rather than warns, and its measure is narrow so it lands as
      one thought. */
-  'session.listen.detailsAction': 'Track details and player',
+  'session.listen.detailsAction': 'About the track',
   'session.listen.warnText': 'For this exercise it is better not to be influenced by the track’s name or its cover.',
   'session.listen.warnBack': 'Continue the exercise',
   'session.listen.warnOn': 'Show details and player',
@@ -364,6 +453,11 @@ export const en = {
   'session.listen.aboutHeading': 'About this track',
   'session.listen.aboutArtist': 'Artist',
   'session.listen.aboutInstructions': 'Listening instructions',
+  /* THE SIMULATED-PLAYBACK NOTICE, at the foot of the last view since
+     2026-09-24. It is a headline plus a line, because it is a `Message`
+     now rather than a paragraph of small print — and a warning, because
+     what it reports is that the thing on screen is not the real one. */
+  'session.listen.simulatedHeadline': 'Test mode: no recording',
   'session.listen.simulated': 'No recording is bundled yet, so the player runs on a clock at the track’s real length.',
   'session.listen.noTrack': 'This exercise has no recording yet.',
 
@@ -396,8 +490,9 @@ export const en = {
      `reflect.voice.notSaved` AND ITS PARAGRAPH ARE GONE (2026-09-23). They
      said a spoken answer could not be saved, which F.6 made false, and they
      said it in a five-line info box on a screen whose job is to get an answer
-     out of somebody. What the step says now is `privacy.voiceShort` — the
-     promise, one line — with the rest behind `privacy.more`. */
+     out of somebody. It became `privacy.voiceShort` — the promise, one line,
+     with the rest behind `privacy.more` — and on 2026-09-24 that line went too:
+     the step now says nothing about data at all. See the privacy block. */
   'reflect.photo.notBuilt': 'Reading a photo is not built yet',
   'reflect.photo.notBuiltText': 'This shows how it will work. The photo stays on your device and is read back as text; the image is never uploaded.',
   /* NOT a fourth segment — three ways to answer and one way not to are
@@ -470,10 +565,11 @@ export const en = {
   'diary.filter.showAll': 'Show every session',
 
   /* ── Deleting the whole diary · G.2 ──────────────────────────────────────
-     It lives in /settings rather than on /diary — see SettingsSheet.tsx for
-     why — and its heading is `route.diary.title`, reused rather than written
-     again, so the section can never end up calling the diary something the
-     rest of the app does not.
+     IT LIVES ON /diary SINCE 2026-09-24, which reverses where G.2 put it — see
+     `DeleteEverything` in routes/Diary.tsx for the argument and for what is
+     kept of the old one. There is no section heading any more: it sat under
+     `route.diary.title` in the sheet because a button among preferences has to
+     name what it acts on, and on the diary that headline is the h1 above it.
 
      THE TEXT NAMES THE RUNNING SESSION ON PURPOSE. `deleteAllSessions` has no
      status filter, so a session in progress goes with the rest; a sentence
@@ -525,8 +621,20 @@ export const en = {
      only for some readers has to say which. */
   'privacy.account': 'Musie never asks for your name. If you were given an email address and a password for the closed test, your diary belongs to that account. Otherwise this browser holds a private account of its own, and your diary belongs to it.',
   'privacy.written': 'What you write is saved to your diary so you can read it back later. Nobody else can see it.',
-  /* THE PROMISE IN ONE LINE, for the reflect step, where the long version was
-     a box nobody read. It is not an abbreviation of `privacy.voice` so much as
+  /* ── THESE TWO ARE PARKED, NOT WRONG — Ben, 2026-09-24 ──────────────────
+     Nothing renders them today. They were the reflect step's one-line promise
+     and the link beside it, and Ben took both off that step: the transcript is
+     what somebody is there for, and the small print under it was competing
+     with it.
+
+     They stay in the catalogue because `DataLightbox` stays built and still
+     holds the long promise — what is missing is a door to it, which is Ben's to
+     place (apps/web/OPEN-QUESTIONS.md). These are that door's two strings, in
+     both languages, for whenever it is hung. `voice.hint.more` went the other
+     way, deleted outright, because that sentence was judged redundant rather
+     than homeless.
+
+     THE PROMISE IN ONE LINE: not an abbreviation of `privacy.voice` so much as
      the half of it that is a promise — the mechanism is in the lightbox. */
   'privacy.voiceShort': 'Musie keeps the text, never your voice.',
   /* The word in that sentence that opens the whole promise. Not 'Learn more':
@@ -664,10 +772,15 @@ export const en = {
      over — which is the one thing it does not do. */
   'voice.record.more': 'Record more',
   'voice.record.connecting': 'Connecting…',
-  /* Both cut-offs, every time. A recorder that stops on its own without
-     having said that it would is indistinguishable from a broken one. */
-  'voice.hint.first': 'Each pause finishes a statement. Recording stops on its own after {seconds} seconds, or after {silence} seconds of quiet.',
-  'voice.hint.more': 'New statements are added to the end of the list. Recording stops on its own after {seconds} seconds, or after {silence} seconds of quiet.',
+  /* ── BOTH STANDING HINTS ARE GONE (2026-09-24, Ben, in two passes) ───────
+     `voice.hint.more` first, then `voice.hint.first`. They sat under the
+     record button and ended in the same two cut-offs: sixty seconds, six of
+     quiet. A recorder that stops on its own without having said it would is
+     indistinguishable from a broken one — but `voice.stopped.timeout` and
+     `voice.stopped.silence` say exactly that, at the moment it happens, with
+     the number in the sentence. Saying it in advance as well was a third block
+     of small print under a transcript, on a screen whose subject is the
+     person's own words. `hintKey` went with them (lib/voiceScreen.ts). */
   /* Shown only when the list can actually be edited, and it names the
      keyboard route as well as the drag — F.5's behaviour is invisible
      otherwise, and a control nobody can find is not a control. */
@@ -678,7 +791,7 @@ export const en = {
   'voice.hint.editToggle': 'Editing tips',
   'voice.hint.editHeadline': 'Moving and joining statements',
   'voice.hint.editHide': 'Hide these tips',
-  'voice.hint.edit': 'Drag a statement to move it, or drop it onto another to join the two. From the keyboard: focus a drag handle, then space to lift, arrow keys to move, M to join it to the one above, escape to put it back.',
+  'voice.hint.edit': 'Drag a statement to move it, or drop it onto another to join the two. On a touchscreen, swipe a statement to the left to delete it. From the keyboard: focus a drag handle, then space to lift, arrow keys to move, M to join it to the one above, escape to put it back.',
   /* The recorder acting on its own. A manual stop explains itself, and an
      error already has a Message of its own — see lib/voiceScreen.ts. */
   'voice.stopped.headline': 'Recording stopped',
@@ -698,7 +811,6 @@ export const en = {
   'route.diaryEntry.title': 'Diary entry',
   'route.exercises.title': 'Exercises',
   'route.session.title': 'Current session — {step}',
-  'route.settings.title': 'Settings',
   'route.notFound.title': 'Not found',
 } as const;
 

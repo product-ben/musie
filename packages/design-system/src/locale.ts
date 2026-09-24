@@ -85,14 +85,12 @@ export interface MusyTextCatalogue {
   optionsEmpty: string;
 
   /* ── Steps ───────────────────────────────────────────────────────────── */
-  /**
-   * The ordinal prefix — "Schritt 1".
-   *
-   * It belonged to ProcessVisualisation, which is retired. It SURVIVES the
-   * retirement because Carousel's dot pill needs exactly this word and would
-   * otherwise have invented a second one; `carouselDot` below is built from it.
-   */
-  stepPrefix: string;
+  /* `stepPrefix` — the bare ordinal word, "Schritt" — is GONE (2026-09-25).
+     It outlived ProcessVisualisation only because Carousel's dot pill printed
+     it, and that pill no longer prints anything; the note in
+     stories/OPEN-QUESTIONS.md recording why it was kept is now the record of
+     why it went. `carouselSlide` and `carouselGoTo` spell the word out in
+     their own sentences, which is where an ordinal belongs. */
   /** InteractiveWizard's five state words, under each label. */
   wizardDisabled: string;
   wizardActive: string;
@@ -114,8 +112,6 @@ export interface MusyTextCatalogue {
   carouselNext: string;
   /** (position, total, title) → the slide's accessible name. */
   carouselSlide: (position: number, total: number, title: string) => string;
-  /** The word riding inside the active dot — "Schritt 3". */
-  carouselDot: (position: number) => string;
   /** (position, total) → a dot button's accessible name. */
   carouselGoTo: (position: number, total: number) => string;
 
@@ -172,6 +168,25 @@ export interface MusyTextCatalogue {
   dragShowActions: (noun: string, position: number) => string;
   dragHideActions: (noun: string, position: number) => string;
 
+  /* ── DraggableList · swipe to delete, on a thumb ─────────────────────── */
+  /** The revealed panel's accessible name — "Aussage 2 löschen". The word
+   *  PAINTED on it is `dragDelete`, the same one the row's menu uses: one
+   *  gesture and one menu entry that do the same thing must not be two
+   *  different words. */
+  dragDeleteItem: (noun: string, position: number) => string;
+  /**
+   * What the panel says once the swipe has gone far enough that letting go
+   * deletes rather than parks — what a release WOULD do, while the finger is
+   * still down and the decision is still open.
+   *
+   * ONE SHORT VERB, AND THE LENGTH IS A CONSTRAINT RATHER THAN A STYLE. It
+   * shares a strip half a row wide with the trash glyph, so `dropCancel`'s
+   * fuller phrasing ("Zum Abbrechen loslassen") does not fit: measured at a
+   * 393px viewport the strip is ~168px, of which the glyph and the inset take
+   * 60. The glyph is already saying *delete*; this only has to say *now*.
+   */
+  dragSwipeArmed: string;
+
   /* ── DraggableList · the drag hint under the finger ──────────────────── */
   dropCombine: (position: number) => string;
   dropBefore: (position: number) => string;
@@ -184,6 +199,10 @@ export interface MusyTextCatalogue {
   dragCancelled: string;
   dragMoved: (noun: string, position: number) => string;
   dragMerged: (noun: string, position: number) => string;
+  /** Announced for BOTH routes out of a row — the menu's Delete and the
+   *  swipe — because a row leaving the list is the same event whichever hand
+   *  ended it, and the swipe has no button left behind to speak for it. */
+  dragDeleted: (noun: string, position: number) => string;
 }
 
 /**
@@ -203,7 +222,6 @@ export const musyTextDe: MusyTextCatalogue = {
   listEmpty: 'Noch keine Einträge',
   optionsEmpty: 'Keine Optionen verfügbar',
 
-  stepPrefix: 'Schritt',
   /* Adjectives, so lower case even in German, and they sit under a label
      rather than standing as headings. */
   wizardDisabled: 'gesperrt',
@@ -217,7 +235,6 @@ export const musyTextDe: MusyTextCatalogue = {
   carouselPrevious: 'Vorheriger Schritt',
   carouselNext: 'Nächster Schritt',
   carouselSlide: (position, total, title) => `Schritt ${position} von ${total}: ${title}`,
-  carouselDot: (position) => `Schritt ${position}`,
   carouselGoTo: (position, total) => `Zu Schritt ${position} von ${total}`,
 
   playerPlay: 'Abspielen',
@@ -265,6 +282,9 @@ export const musyTextDe: MusyTextCatalogue = {
   dragShowActions: (noun, position) => `Aktionen für ${noun} ${position} anzeigen`,
   dragHideActions: (noun, position) => `Aktionen für ${noun} ${position} ausblenden`,
 
+  dragDeleteItem: (noun, position) => `${noun} ${position} löschen`,
+  dragSwipeArmed: 'Loslassen',
+
   dropCombine: (position) => `Mit ${position} zusammenführen`,
   dropBefore: (position) => `Vor ${position} einfügen`,
   dropAfter: (position) => `Nach ${position} einfügen`,
@@ -276,6 +296,7 @@ export const musyTextDe: MusyTextCatalogue = {
   dragCancelled: 'Verschieben abgebrochen.',
   dragMoved: (noun, position) => `${noun} auf Position ${position} verschoben.`,
   dragMerged: (noun, position) => `Mit ${noun} ${position} zusammengeführt.`,
+  dragDeleted: (noun, position) => `${noun} ${position} gelöscht.`,
 };
 
 /** English. */
@@ -292,7 +313,6 @@ export const musyTextEn: MusyTextCatalogue = {
   listEmpty: 'No entries yet',
   optionsEmpty: 'No options available',
 
-  stepPrefix: 'Step',
   wizardDisabled: 'locked',
   wizardActive: 'available',
   wizardSelected: 'current',
@@ -302,7 +322,6 @@ export const musyTextEn: MusyTextCatalogue = {
   carouselPrevious: 'Previous step',
   carouselNext: 'Next step',
   carouselSlide: (position, total, title) => `Step ${position} of ${total}: ${title}`,
-  carouselDot: (position) => `Step ${position}`,
   carouselGoTo: (position, total) => `Go to step ${position} of ${total}`,
 
   playerPlay: 'Play',
@@ -348,6 +367,9 @@ export const musyTextEn: MusyTextCatalogue = {
   dragShowActions: (noun, position) => `Show actions for ${noun} ${position}`,
   dragHideActions: (noun, position) => `Hide actions for ${noun} ${position}`,
 
+  dragDeleteItem: (noun, position) => `Delete ${noun} ${position}`,
+  dragSwipeArmed: 'Let go',
+
   dropCombine: (position) => `Merge into ${position}`,
   dropBefore: (position) => `Insert before ${position}`,
   dropAfter: (position) => `Insert after ${position}`,
@@ -359,6 +381,7 @@ export const musyTextEn: MusyTextCatalogue = {
   dragCancelled: 'Move cancelled.',
   dragMoved: (noun, position) => `${noun} moved to position ${position}.`,
   dragMerged: (noun, position) => `Merged into ${noun} ${position}.`,
+  dragDeleted: (noun, position) => `${noun} ${position} deleted.`,
 };
 
 /** The four status-word keys, so a component can map a variant onto one and

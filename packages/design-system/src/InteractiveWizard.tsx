@@ -24,7 +24,14 @@
  * Four states, and they are a progression rather than a palette:
  *   disabled → active → selected → completed
  * Selection changes the marker FILL and the label WEIGHT; completion changes
- * the GLYPH (number → check). No state rests on hue (1.4.1).
+ * the GLYPH (the step's own marker → check). No state rests on hue (1.4.1).
+ *
+ * WHAT THE MARKER DRAWS is the step's `icon` where it has one and its position
+ * number where it does not — the icon arrived 2026-09-24, the number is what
+ * every earlier consumer still gets. Either way it is the SAME glyph across
+ * disabled, active and selected, and either way completion and skipping
+ * replace it. The 1.4.1 argument is unchanged by the switch, because it never
+ * rested on the number being a number: it rests on the glyph CHANGING.
  *
  * AND A FIFTH THAT IS NOT ON THAT LINE — `skipped`, D14. A step that is not
  * part of this run at all: the rail still draws its marker, so every run reads
@@ -33,14 +40,50 @@
  * say it — `completed` draws a check for something nobody did, and `disabled`
  * reads as "not yet" about a step that is never opening. The GLYPH is what
  * distinguishes it from `disabled`, not the ink, for the same 1.4.1 reason the
- * check distinguishes `completed`.
+ * check distinguishes `completed`. With icons on, the dash is telling a step's
+ * own glyph apart from itself-greyed-out, which is exactly the job it had
+ * against the number.
  *
  * Narrow screens COLLAPSE rather than stack: the step on screen keeps its
  * label, every other step shrinks to its marker. The hidden labels are moved
  * out of sight, not removed, so a marker-only step still announces its name.
+ *
+ * THE STATE WORD IS SPOKEN, NEVER DRAWN — changed 2026-09-24, from user
+ * testing. It used to render as a second line under every label, saying what
+ * the marker already says in ink: the check IS "erledigt", the filled marker
+ * IS "aktuell", the greyed one IS "gesperrt". Every step read as two things
+ * where there was one.
+ *
+ * IT COST NO HEIGHT, WHICH IS WORTH KNOWING BEFORE ANYONE RE-ARGUES THIS.
+ * Measured in the app, both locales, before and after: the trigger is 60px
+ * either way. The 44px marker sets the height and two short lines fit inside
+ * it, so the second line was free in space and expensive only in reading. The
+ * case for removing it is redundancy, not room.
+ *
+ * It is not deleted, because the marker is the ONLY carrier for a user who
+ * cannot see it — `aria-disabled` is absent by design (the button is really
+ * disabled) and nothing else distinguishes 'active' from 'completed' in
+ * speech. So the word moves into the trigger's `aria-label`: "Hören, aktuell".
+ * Same words, same locale catalogue, same override prop — a different sense.
+ *
+ * AN `aria-label` RATHER THAN THE `.musy-sr-only` SPAN this package uses
+ * everywhere else, and it was measured before it was chosen. A hidden span is
+ * absolutely positioned, and the name computation then inserts a space between
+ * the label's text node and it — Chromium computed "Intro , current", comma
+ * adrift, in both locales. There is no markup that takes the space back out.
+ * The trigger can afford the stronger tool because its only other content is
+ * the marker, which is `aria-hidden`: nothing visible is being overridden, and
+ * the name still OPENS with the visible label, so 2.5.3 Label in Name holds
+ * for anyone driving it by voice.
+ *
+ * With the second line gone, the label is a single line and the trigger's own
+ * `align-items: center` centres it against the 44px marker. That is why there
+ * is no vertical-centring rule to write: there was never anything wrong with
+ * the centring, only with what was being centred.
  */
 import * as React from 'react';
-import { Check, Minus } from 'lucide-react';
+import { Check, Dot, Minus } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
 import { useMusyText } from './locale';
 import { wizardStepState } from './wizardSteps';
@@ -52,10 +95,31 @@ export type { WizardStepState } from './wizardSteps';
 export interface WizardStep {
   id: string;
   label: string;
+  /**
+   * The glyph this step's marker carries INSTEAD OF ITS NUMBER — added
+   * 2026-09-24, from user testing.
+   *
+   * Optional, and the number is what a step without one still draws, so a
+   * wizard that passes no icons renders exactly as it did. Mixing the two
+   * inside one run is possible and is a mistake: half a rail of numbers reads
+   * as a count with holes in it. Pass all of them or none.
+   *
+   * IT ONLY EVER REPLACES THE NUMBER. `completed` still swaps to a check and
+   * `skipped` still swaps to a dash, because that swap is what keeps the five
+   * states apart without hue (1.4.1) — an icon that stayed put through
+   * completion would leave `active` and `completed` differing by fill alone.
+   * So a step's own glyph says WHICH step, and the two universal glyphs say
+   * what happened to it.
+   *
+   * A component, not a name string: a name string forces the whole icon set
+   * into the bundle (see Icon's `glyph`).
+   */
+  icon?: LucideIcon;
 }
 
-/** The state word appended under each label. Each one defaults to the locale
- *  catalogue (src/locale.ts); pass any subset to override. */
+/** The state word appended to each step's ACCESSIBLE NAME — screen-reader-only
+ *  since 2026-09-24, see the header. Each one defaults to the locale catalogue
+ *  (src/locale.ts); pass any subset to override. */
 export interface WizardStateWords {
   disabled: string;
   active: string;
@@ -94,8 +158,13 @@ export interface InteractiveWizardProps {
   /** Force the collapsed run inside a narrow container, which no media query
    *  can see. */
   compact?: boolean;
-  /** Hide the state word under each label. */
-  showStateWords?: boolean;
+  /**
+   * Override any of the five state words a step announces. There is no prop to
+   * SUPPRESS them: `showStateWords` is gone, because what it controlled —
+   * whether the word was drawn — no longer happens either way, and a switch
+   * that took the word out of the accessible name would be an accessibility
+   * regression offered as an option.
+   */
   stateWords?: Partial<WizardStateWords>;
   /**
    * Which solved accent family paints the markers, the current label and the
@@ -112,7 +181,7 @@ export interface InteractiveWizardProps {
 export function InteractiveWizard({
   label, steps, current, completed = [], skipped = [], onStepChange,
   vertical = false, compact = false,
-  showStateWords = true, stateWords, accent = 'primary', className,
+  stateWords, accent = 'primary', className,
 }: InteractiveWizardProps) {
   const t = useMusyText();
   const words: WizardStateWords = {
@@ -171,6 +240,11 @@ export function InteractiveWizard({
                 /* A skipped step is never the one on screen, so it never
                    carries aria-current even if a caller passes it as both. */
                 aria-current={step.id === current && state !== 'skipped' ? 'step' : undefined}
+                /* The visible name first, then the state the marker draws.
+                   See the header for why this is a label and not a hidden
+                   span, and note what it does NOT do: it never replaces the
+                   label, only extends it. */
+                aria-label={`${step.label}, ${words[state]}`}
                 disabled={state === 'disabled' || state === 'skipped'}
                 onClick={() => onStepChange?.(step.id)}
               >
@@ -178,26 +252,38 @@ export function InteractiveWizard({
                     decides which one shows, so a step never re-renders its
                     marker from a different tree. */}
                 <span className="musy-wizard__marker" aria-hidden="true">
-                  <span className="musy-wizard__num">{i + 1}</span>
+                  {/* The step's own glyph where it has one, its position where
+                      it does not. Decorative either way — the marker is
+                      aria-hidden and the trigger's aria-label carries the
+                      name and the state. */}
+                  <span className="musy-wizard__num">
+                    {step.icon ? <Icon glyph={step.icon} size="sm" /> : i + 1}
+                  </span>
                   <span className="musy-wizard__check"><Icon glyph={Check} size="sm" /></span>
                   {/* A DIFFERENT GLYPH, not a different colour: greyed-out is
                       what `disabled` already is, and the two states have to be
                       told apart without hue (1.4.1). */}
                   <span className="musy-wizard__skip"><Icon glyph={Minus} size="sm" /></span>
                 </span>
-                <span className="musy-wizard__label">
-                  {step.label}
-                  {showStateWords && (
-                    <span className="musy-wizard__hint">{words[state]}</span>
-                  )}
-                </span>
+                {/* Visible text only. A collapsed step clips this out of
+                    sight and keeps announcing its name, which is now the
+                    trigger's own label rather than the clipped span's. */}
+                <span className="musy-wizard__label">{step.label}</span>
               </button>
               {!isLast && (
                 <span
                   className="musy-wizard__connector"
                   data-complete={connectorComplete[i] ? '' : undefined}
                   aria-hidden="true"
-                />
+                >
+                  {/* A DOT, NOT A RULE — 2026-09-24, from user testing on a
+                      phone. The element itself is unchanged: it is still the
+                      flex spacer every width rule above sizes, still
+                      decorative, and still the only thing that carries the
+                      run's completion between two markers. What changed is
+                      what it draws inside that space. */}
+                  <Icon glyph={Dot} size="md" />
+                </span>
               )}
             </li>
           );

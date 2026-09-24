@@ -362,7 +362,9 @@ export async function deleteSession(id: string): Promise<void> {
  * `reflections` rows — and it is also the only answer that matches the copy:
  * "your whole diary" cannot quietly mean "all of it except the one you are in
  * the middle of". The caller is responsible for not leaving the person on
- * /session/:id/:step afterwards; SettingsSheet navigates to /diary.
+ * /session/:id/:step afterwards; its one caller — `DeleteEverything` on /diary
+ * — navigates to /diary, which both re-reads the list and leaves nothing
+ * pointing at a step whose row is gone.
  *
  * ── THE CASCADE DOES THE SECOND HALF ───────────────────────────────────────
  * `reflections.session_id` is `on delete cascade`, so this is one statement

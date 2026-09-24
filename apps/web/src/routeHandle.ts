@@ -41,11 +41,11 @@ export interface RouteHandle {
    * no page was ever rendered to hold on to. Shape mirrors AppShell's
    * `beneath` ref, because it fills exactly that ref's job.
    *
-   * Only an overlay that BELONGS to one page can answer this. /menu and
-   * /settings cover whatever page you were on and belong to none, so they omit
-   * it and a cold deep-link to either keeps its current behaviour: an empty
-   * main behind the sheet. /diary/:id is one entry OF the diary, so pasting
-   * its URL opens the entry over the list rather than over nothing.
+   * Only an overlay that BELONGS to one page can answer this. /menu covers
+   * whatever page you were on and belongs to none, so it omits this and a cold
+   * deep-link to it keeps its current behaviour: an empty main behind the
+   * drawer. /diary/:id is one entry OF the diary, so pasting its URL opens the
+   * entry over the list rather than over nothing.
    *
    * `path` is what `usePagePath` reports, so the nav drawer marks the right
    * row current; `wide` matches the page's own handle so the column does not

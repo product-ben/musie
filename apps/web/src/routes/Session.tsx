@@ -45,6 +45,8 @@
  */
 import * as React from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
+import { DoorOpen, Headphones, MessageCircleQuestion, ScanLine } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
   WizardPanel,
@@ -78,6 +80,41 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
   scan: 'session.step.scan',
   listen: 'session.step.listen',
   reflect: 'session.step.reflect',
+};
+
+/**
+ * Every step's marker glyph, replacing the position number in the rail
+ * (2026-09-24, from user testing).
+ *
+ * A `Record` for the same reason `STEP_LABEL` is one: a fifth step fails the
+ * typecheck rather than quietly falling back to a number beside four icons.
+ *
+ * TWO OF THE FOUR ARE NOT CHOICES — they are the glyph this product already
+ * uses for that idea, and one idea with two glyphs is worse than either glyph:
+ *
+ *   scan    ScanLine    what the card scanner itself shows (CardScanner.tsx)
+ *   listen  Headphones  the `sound` fact chip on every exercise card
+ *                       (Exercises.tsx) — the same promise, earlier
+ *
+ * The other two had nothing to inherit:
+ *
+ *   intro   DoorOpen    the step is the way in, and it is the German word
+ *                       the rail now uses for it — 'Einsteigen', getting in.
+ *                       BookOpen was the alternative, reading the step as the
+ *                       explainer you read; the door won because the label
+ *                       names the act, not the page.
+ *   reflect MessageCircleQuestion
+ *                       the step ASKS, and the question is the constant part
+ *                       of it. Deliberately NOT PenLine, Mic or Camera: those
+ *                       three are the answer MODES inside this very step
+ *                       (SessionReflect.tsx), so any of them in the rail would
+ *                       promise one of the three before you have chosen.
+ */
+const STEP_ICON: Record<StepId, LucideIcon> = {
+  intro: DoorOpen,
+  scan: ScanLine,
+  listen: Headphones,
+  reflect: MessageCircleQuestion,
 };
 
 /** Everything one session screen needs, in one read. */
@@ -333,6 +370,25 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    * says them next to what was typed. A THROW is the query failing, and it
    * gets the third sentence plus the console — it is not the person's typing
    * that was wrong.
+   *
+   * ── A CARD THAT LANDS MOVES THE PERSON ON — Ben, 2026-09-24 ─────────────
+   * It used to write the card and stay, so the step redrew itself as "your
+   * card is MC-08" with Continue underneath: a screen whose only content was
+   * the answer to a question already asked, and a tap to leave it. Naming the
+   * card IS finishing this step, so finishing it is what naming the card now
+   * does.
+   *
+   * `advance()` rather than `go('listen')`, so this asks the run which step
+   * comes next instead of knowing — the same call Continue made, from the same
+   * place in the same state.
+   *
+   * THE RE-READ FIRST. `onRescan` is what fetches the card and the track the
+   * next step is about to play; navigating without it would land on `listen`
+   * with `track` still null and the step saying there is nothing to play.
+   *
+   * CHANGING THE CARD IS STILL THERE, one step back: the scan step keeps its
+   * drawn-card state and *Scan a different card*, which is what Back from
+   * `listen` returns to.
    */
   async function submitCode(scanned: string) {
     if (busy) return;
@@ -342,6 +398,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       const outcome = await scanCardInto(id, exercise.id, scanned, locale);
       if (outcome.kind === 'applied') {
         onRescan();
+        advance();
         return;
       }
       setScanError(
@@ -556,7 +613,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
             <InteractiveWizard
               label={t('session.wizardLabel')}
               accent="accent"
-              steps={STEP_IDS.map((step) => ({ id: step, label: t(STEP_LABEL[step]) }))}
+              steps={STEP_IDS.map((step) => ({
+                id: step,
+                label: t(STEP_LABEL[step]),
+                icon: STEP_ICON[step],
+              }))}
               current={state.step}
               completed={[...state.completed]}
               skipped={skipped}

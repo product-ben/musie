@@ -1052,6 +1052,34 @@
    swipe work with no script. The consuming app only owns the selected index
    (for the dots and the scale) and calls scrollTo() on the viewport.
 
+   THREE THINGS SAY IT CAN BE SWIPED, and all three are geometry or motion
+   rather than copy — 2026-09-25, after user testing found that none of the
+   people in it discovered the gesture. A budgeted PEEK of the next card (see
+   the narrow-container rule), a one-time NUDGE of the track on mount, and a
+   `grab` CURSOR with a real mouse drag behind it. Each covers a case the
+   others miss: the peek is always there and survives reduced motion, the
+   nudge is the one that actually moves, and the cursor is the only one of the
+   three a mouse user can act on.
+
+   A FOURTH IS A SUBTRACTION, AND IT IS NOT IN THIS FILE. The chevrons' ink
+   follows the consuming screen's GATE — `primary` forward while going on is
+   the only thing to do, `ghost` once the screen's own CTA lights up — and
+   that lives in Carousel.tsx because it is a variant choice rather than a
+   rule. Two earlier cuts tied it to the pointer instead, and a phone showed
+   why that was wrong: quiet controls from the first slide cost the sequence
+   its forward momentum. Emphasis is a gate decision; the nudge and the `grab`
+   cursor above stay pointer decisions, because a GESTURE really does differ
+   by pointer.
+
+   DEMOTED, NEVER HIDDEN, through every cut: the dots are `--target-min` and a
+   chevron is `--target-primary`, and L5 is explicit that 24px is tight under
+   a thumb, so taking the 44px control away on touch would be the one change
+   here that costs access instead of noise. At every rung the target, the tab
+   stop, the name and the disabled logic are identical; `ghost` drops the fill
+   and the border, and the glyph keeps `--interactive-ghost-on` (`--sand-12`),
+   so what identifies the control is full-contrast ink and 1.4.11 never rested
+   on the box that went.
+
    ONE SWIPE IS ONE SLIDE, and that takes a second declaration. `mandatory`
    promises only that a scroll LANDS on a snap point — never which one — so a
    flick's momentum ran through three or four slides and settled wherever it
@@ -1067,31 +1095,70 @@
    basis inside a padded track resolves against the padded box and compounds.
 
    2.5.8: dots are 12px visually but carry a --target-min (24px) hit area.
-   2.3.3 / 2.3.1: the only motion is the scale and the snap scroll, both on
-   --motion-toggle, and Layer 1 collapses every duration under
-   prefers-reduced-motion.                                                  */
+   2.3.3 / 2.3.1: the motion is the scale, the snap scroll and the one-shot
+   nudge. The first two are --motion-toggle; the nudge is built out of
+   --motion-travel-lg, and Layer 1 zeroes that token and collapses every
+   duration under prefers-reduced-motion, so none of the three survives it. */
 
 .musy-carousel {
   /* One slide's share of the carousel's own inline size. */
   --musy-carousel-slide: 66cqi;
+  /* THE OTHER TWO HALVES OF THE PEEK BUDGET, AS CUSTOM PROPERTIES FOR THE
+     REASON THE SLIDE WIDTH IS ONE. The narrow-container rule below sits
+     ABOVE the two base rules that consume these, and an `@container` block
+     adds no specificity — so a plain `gap` or `padding` declared in there is
+     simply overridden by the later rule of equal weight, silently and only
+     at narrow widths. MEASURED: it cost 12px of the 27px peek and pushed the
+     card's title into an extra line. A custom property is read where it is
+     used, so the cascade cannot quietly undo it. */
+  --musy-carousel-gap: var(--sp-5);
+  --musy-carousel-card-inset: var(--sp-5);
   container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-/* Narrow container: a 66% slide leaves too little for the headline once the
-   German string is 30% longer, so the slide takes more of the width and the
-   peek shrinks to a hint. */
+/* ── NARROW CONTAINER: THE PEEK IS THE AFFORDANCE, SO IT IS BUDGETED ───────
+   This rule used to read `82cqi`, to give the German headline more of the
+   width and let "the peek shrink to a hint". MEASURED ON THE REAL SCREEN,
+   2026-09-24, at 393px: the carousel is 311px, `82cqi` makes the slide 255px,
+   and with an `--sp-5` gap the geometric sliver of the next card was 4px —
+   which `transform: scale(0.9)` below then pulled 12.75px further out, so the
+   neighbour's PAINTED edge began 8.8px past the frame. Not a hint. Nothing.
+
+   THE PEEK IS BUDGETED AFTER THE SCALE, and that is the lesson: a sliver
+   thinner than 5% of a slide is not a sliver, it is the rounding error left
+   over from a transform nobody subtracted.
+
+   What it cost is in the 2026-09-25 user testing. With no second card on
+   screen, a dot row, and a FILLED chevron beside it, the screen reads as a
+   stepper — so nobody swiped. They pressed the button, correctly. Desktop
+   never showed it: at the 1024px reference the same CSS peeks 60px, which is
+   why this survived review.
+
+   `68cqi` with an `--sp-3` gap paints 27px of the next card: an edge, its
+   border, and the beginning of its badge.
+
+   PAID FOR IN WIDTH, NOT IN TYPE. The card hands back 16px of inline padding
+   so the title keeps its measure rather than its line count — German holds at
+   3 lines, English grows one line on the longest slide. That is height, and
+   height is the cheap axis on a screen that already scrolls.
+
+   ABOVE 420px NOTHING CHANGES.                                             */
 @container (max-width: 420px) {
-  .musy-carousel__viewport { --musy-carousel-slide: 82cqi; }
+  .musy-carousel__viewport {
+    --musy-carousel-slide: 68cqi;
+    --musy-carousel-gap: var(--sp-3);
+    --musy-carousel-card-inset: var(--sp-4);
+  }
 }
 
 .musy-carousel__viewport {
   position: relative;
   display: flex;
   align-items: stretch;
-  gap: var(--sp-5);
+  gap: var(--musy-carousel-gap);
   /* Centres the first and last slide too — without the end padding they can
      only ever snap to an edge. */
   padding-inline: calc(50cqi - var(--musy-carousel-slide) / 2);
@@ -1111,6 +1178,34 @@
 }
 .musy-carousel__viewport::-webkit-scrollbar { display: none; }
 
+/* ── A MOUSE CAN DRAG IT TOO, AND THE CURSOR IS WHAT SAYS SO ───────────────
+   A finger and a trackpad scroll this natively. A MOUSE HAS NO GESTURE FOR A
+   HORIZONTAL SCROLLER AT ALL — no wheel axis, no scrollbar, this one being
+   hidden — so before this the swipe was a touch-only secret and the desktop
+   story was "press the chevron". `grab` is the one affordance a cursor reads
+   without being told, and Carousel.tsx turns the drag into `scrollLeft`.
+
+   MORE SPECIFIC WINS, AND THAT IS THE RIGHT WAY ROUND: the peeking-card rule
+   below sets `cursor: pointer` on the card element, so a neighbour still says
+   "click me here" while the centred card says "drag me". Two gestures, each
+   advertised where it works.
+
+   SNAPPING IS OFF FOR THE LENGTH OF THE DRAG. `mandatory` re-snaps after
+   every `scrollLeft` assignment, so a dragged scroller jumps between snap
+   points instead of following the hand. The component restores it on release,
+   having put the scroller on a slide itself — see `endDrag`.
+
+   `user-select` goes with it, or a drag across a card selects its title.   */
+@media (hover: hover) and (pointer: fine) {
+  .musy-carousel__viewport { cursor: grab; }
+  .musy-carousel__viewport[data-dragging="true"] { cursor: grabbing; }
+}
+.musy-carousel__viewport[data-dragging="true"] {
+  scroll-snap-type: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .musy-carousel__slide {
   flex: 0 0 var(--musy-carousel-slide);
   min-inline-size: 0;
@@ -1129,7 +1224,9 @@
   justify-content: center;
   gap: var(--space-gap-stack);
   inline-size: 100%;
-  padding: var(--sp-5);
+  /* Inline inset is part of the peek budget — see `--musy-carousel-card-inset`.
+     A narrow slide buys its title's measure back here rather than in type. */
+  padding: var(--sp-5) var(--musy-carousel-card-inset);
   text-align: center;
   background-color: var(--surface-raised);
   border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
@@ -1146,6 +1243,39 @@
 .musy-carousel__slide[data-current="true"] .musy-carousel__card {
   transform: scale(1);
   border-color: var(--musy-rest-border);
+}
+
+/* ── THE NUDGE: THE CAROUSEL SHOWS ITSELF BEING SWIPED, ONCE ───────────────
+   A peek says there is more. A moment of movement says how to get it, and it
+   says it without a word of copy — which is the whole brief, because the one
+   thing an explainer screen cannot afford is a sentence explaining its own
+   controls. The track drifts one `--motion-travel-lg` toward the next slide
+   and settles back, once, when the component mounts.
+
+   ON THE SLIDES, NEVER ON THE SCROLLER. A transform on the viewport would
+   fight `scrollLeft`: the settle handler reads a position the animation is
+   lying about, and reports a slide nobody moved to. Transforming each `<li>`
+   moves exactly the same pixels and touches no scroll state at all. Nothing
+   reflows either — a transform never does.
+
+   2.3.3, AND WITHOUT A BRANCH IN THE COMPONENT: the travel is
+   `--motion-travel-lg`, which Layer 1 sets to 0px under prefers-reduced-
+   motion, so the whole animation flattens to a no-op — the same bargain
+   Message's `entering` makes. That is only safe because the peek above
+   carries the affordance on its own; the nudge points at it, it is not the
+   thing being pointed at.
+
+   It runs on a COARSE POINTER ONLY. A cursor gets `grab` instead, which is
+   permanent and available on every slide rather than once at the start.   */
+@keyframes musy-carousel-nudge {
+  0%   { transform: translateX(0); }
+  45%  { transform: translateX(calc(var(--motion-travel-lg) * -1)); }
+  100% { transform: translateX(0); }
+}
+.musy-carousel[data-nudge="true"] .musy-carousel__slide {
+  animation-name: musy-carousel-nudge;
+  animation-duration: var(--motion-duration-slower);
+  animation-timing-function: var(--motion-ease-emphasis);
 }
 
 /* A peeking neighbour is a shortcut to itself — tapping the visible frame is
@@ -1204,7 +1334,25 @@
   gap: var(--sp-1);
 }
 
-/* 2.5.8: the mark is 12px, the button is 24px. */
+/* 2.5.8: the mark is 12px, the button is 24px.
+
+   THE ORDINAL USED TO RIDE INSIDE THE ACTIVE DOT — "Schritt 1" in a pill —
+   and it is gone (2026-09-25, Ben). It was the only place in the component
+   where a control carried running copy, it put a German word at the centre of
+   a row of dots, and it said what `aria-current` and the dot's own accessible
+   name already say. NOTHING MOVED TO THE ARIA LAYER, because it was already
+   there and always had been: the button's `aria-label` is `carouselGoTo`
+   ("Zu Schritt 1 von 3"), and the span was `aria-hidden` — a screen reader
+   never heard it. Removing it subtracts from the eye only.
+
+   SO THE SELECTED STATE IS WIDTH AND FILL, NOT FILL ALONE. Losing the label
+   would otherwise have left colour as the only difference between current and
+   not (1.4.1) — the pill's SHAPE was carrying that, incidentally, all along.
+   The active mark keeps a pill at 2:1, exactly `--target-min` wide, so it is
+   the same silhouette one word narrower rather than a new idea.
+
+   The `--measure-heading` cap the label needed is gone with it, and so is the
+   reason the dots row could ever have wrapped. */
 .musy-carousel__dot {
   display: inline-grid;
   place-items: center;
@@ -1217,36 +1365,15 @@
   cursor: pointer;
 }
 .musy-carousel__dot-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   block-size: var(--sp-3);
-  min-inline-size: var(--sp-3);
+  inline-size: var(--sp-3);
   border-radius: var(--radius-full);
   background-color: var(--border-strong);
-  overflow: hidden;
 }
 .musy-carousel__dot[aria-current="true"] .musy-carousel__dot-mark {
-  block-size: var(--target-min);
-  padding-inline: var(--sp-3);
+  inline-size: var(--target-min);
   background-color: var(--musy-sel-fill);
-  color: var(--musy-sel-on);
-}
-/* The label rides inside the active pill. Capped at --measure-heading so a
-   long German ordinal cannot push the dots row into a second line. */
-.musy-carousel__dot-label {
-  max-inline-size: 0;
-  opacity: 0;
-  white-space: nowrap;
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  letter-spacing: var(--type-label-md-tracking);
-}
-.musy-carousel__dot[aria-current="true"] .musy-carousel__dot-label {
-  max-inline-size: var(--measure-heading);
-  opacity: 1;
 }
 @media (hover: hover) and (pointer: fine) {
   .musy-carousel__dot:hover:not([aria-current="true"]) .musy-carousel__dot-mark {
@@ -1367,7 +1494,16 @@
 .musy-msg__main { display: flex; flex-direction: column; gap: var(--space-gap-related); min-width: 0; }
 .musy-msg__headline { margin: 0; color: inherit; text-wrap: var(--text-wrap-heading); }
 .musy-msg__text { margin: 0; color: inherit; text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); max-width: var(--measure-body); }
-.musy-msg__action { margin-block-start: var(--sp-1); align-self: flex-start; }
+/* STRETCHED, NOT SHRINK-WRAPPED — 2026-09-24.
+   It was `align-self: flex-start`, which made this box as wide as its content.
+   A LONE BUTTON looks identical either way: `.musy-btn` is inline-flex and
+   hugs its label whatever width it is given. A BUTTON GROUP does not — below
+   --bp-md it stacks and every action takes `inline-size: 100%`, and 100% of a
+   shrink-wrapped box is 100% of the longest label, so a two-action message
+   drew two narrow ovals with the text wrapped four lines deep inside them.
+   Stretching costs the single-action case nothing and lets the group's own
+   stacking rule mean what it says. */
+.musy-msg__action { margin-block-start: var(--sp-1); align-self: stretch; }
 
 /* Dismiss is a ghost icon button at --target-min, spaced per 2.5.8. It sits in
    the third grid column so it never reflows the text. */
@@ -2308,6 +2444,142 @@
 .musy-dlist__handle { cursor: grab; touch-action: none; }
 .musy-dlist__handle:active { cursor: grabbing; }
 
+/* ── L13 · SWIPE TO DELETE, ON A THUMB ────────────────────────────────────
+   The iOS gesture: the row slides left, a Delete panel is underneath it, and
+   past half the row's width letting go deletes. Two rules make it live
+   alongside a page that scrolls and a handle that drags.
+
+   `touch-action: pan-y` IS THE WHOLE BARGAIN. The browser keeps the vertical
+   scroll — which it does better than script ever will, with momentum and
+   rubber-banding intact — and hands us the horizontal axis it has no use for
+   inside a column of cards. `none` here would be the L13 failure by name: the
+   card swallows every attempt to scroll the page, which on a phone is most of
+   what people do. The .tsx still decides the axis in script, because
+   `pan-y` permits a horizontal gesture, it does not identify one.
+
+   ONLY WHERE THE GESTURE EXISTS. Off a coarse pointer, mid-capture, or with
+   no `onDelete` to call, the attribute is absent and the row is an ordinary
+   block again — including its touch behaviour, which is the part that would
+   otherwise be paid for by people who never get the feature. */
+.musy-dlist__swipe {
+  position: relative;
+  /* The card's own radius, so the panel underneath needs no corners of its
+     own to keep in step with it. `clip` and not `hidden`: nothing in here
+     scrolls, and `hidden` would make this a scroll container. */
+  border-radius: var(--radius-card);
+  overflow: clip;
+}
+.musy-dlist__swipe[data-swipeable="true"] { touch-action: pan-y; }
+
+/* THE CARD IS THE LID. `translate` rather than `transform`, so the value is
+   the one thing the component writes and nothing else on the card's transform
+   can be clobbered by it. */
+.musy-dlist__swipe > .musy-dlist__item {
+  position: relative;
+  translate: var(--musy-dlist-swipe-x, 0);
+  transition: translate var(--motion-toggle);
+}
+/* WHILE THE FINGER IS DOWN THERE IS NO TRANSITION. A card that eases toward
+   the finger lags behind it, and a gesture that lags is a gesture people let
+   go of. The transition exists for the two moments the finger is NOT driving:
+   the spring back, and the park. */
+.musy-dlist__swipe[data-swiping="true"] > .musy-dlist__item { transition: none; }
+
+/* ── The panel under the card ─────────────────────────────────────────────
+   FULL-BLEED, NOT A STRIP. Sized to the row rather than to its own content,
+   so the further the card travels the more of it shows — the reveal IS the
+   feedback, and it is continuous rather than a thing that appears at a
+   threshold. Its CONTENT is what has a width, and that width is what the
+   gesture measures its park position from.
+
+   THE ERROR FAMILY, AT THE -surface STEP. §7.19's recording state borrows the
+   same family for the same reason: this is the system's vocabulary for
+   something that has gone or is about to go. Not a solid step-9 fill — Layer 1
+   has no semantic alias for one, and the sandy palette's step-2 surface under
+   step-12 ink is both quieter than iOS red and past 7:1, which a word that
+   only ever appears mid-gesture needs more than a poster does. */
+.musy-dlist__swipe-action {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background-color: var(--feedback-error-surface);
+  color: var(--feedback-error-text);
+  cursor: pointer;
+  /* L13 — the panel is part of a gesture surface, and a marquee starting
+     under the finger beats the gesture to it. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.musy-dlist__swipe-action > .musy-icon { color: var(--feedback-error-icon); }
+
+/* The content, and the only thing here with a width of its own: it is what
+   the row parks against, so the park distance is this rule's arithmetic
+   rather than a number in the script. `--target-primary * 2` is the floor
+   because a parked panel is a button a thumb has to hit — one target for the
+   glyph, one for the word beside it. */
+.musy-dlist__swipe-zone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-gap-inline);
+  min-inline-size: calc(var(--target-primary) * 2);
+  block-size: 100%;
+  padding-inline: var(--space-gap-stack);
+  /* NEVER TWO LINES. The strip is as wide as the swipe has travelled, so a
+     word that wraps would change this cluster's height and width mid-gesture
+     — and the width is what the row parks against. It stays one line and the
+     catalogue keeps the words short enough to earn it. */
+  white-space: nowrap;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  letter-spacing: var(--type-label-md-tracking);
+}
+
+/* ARMED — past the commit point, where letting go deletes rather than parks.
+   The word changes, which is the part that carries the meaning, and the panel
+   takes the family's -border step as an inset ring so the change survives
+   being read without colour (1.4.1) and reaches 3:1 as a boundary (1.4.11).
+   An inset ring rather than a border: a border here would move the content it
+   surrounds by a pixel and a half at exactly the moment the user is judging
+   distance. */
+.musy-dlist__swipe[data-armed="true"] .musy-dlist__swipe-action {
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--feedback-error-border);
+}
+
+/* ── THE PEEK: THE LIST SHOWS ITSELF BEING SWIPED, ONCE ───────────────────
+   A swipe with no standing affordance is a secret, and the row has nowhere to
+   put one — every pixel of it is either the person's own words or the two
+   controls L4 already reserves room for. So the first row drifts one
+   `--motion-travel-lg` left, the panel behind it comes into view, and it
+   settles back. Once per list, on the first row, on a coarse pointer, and
+   only once the list is actually editable.
+
+   2.3.3 WITHOUT A BRANCH IN THE COMPONENT: the travel is `--motion-travel-lg`,
+   which Layer 1 sets to 0px under prefers-reduced-motion, so the whole thing
+   flattens to a no-op — the same bargain §7.11's nudge and Message's
+   `entering` make. Affordable only because the peek POINTS AT the row menu's
+   Delete rather than being the only way to reach it.
+
+   IT IS NOT A LOOP, so it is flattened rather than removed (L10's exception
+   is for continuous animation, which strobes at 1ms). It plays once and the
+   component spends the latch on `animationend`. */
+@keyframes musy-dlist-peek {
+  0%, 20% { translate: 0; }
+  55%     { translate: calc(var(--motion-travel-lg) * -1); }
+  100%    { translate: 0; }
+}
+.musy-dlist__swipe[data-peek="true"] > .musy-dlist__item {
+  animation-name: musy-dlist-peek;
+  animation-duration: var(--motion-duration-slower);
+  animation-timing-function: var(--motion-ease-emphasis);
+}
+
 /* The dragged item STAYS IN PLACE and dims, so the list never reflows and the
    rects measured at drag start stay valid. */
 .musy-dlist__item--dragging { opacity: 0.4; }
@@ -2457,6 +2729,16 @@
      Highlight — the same escape §19's fill and §21's fill take. */
   .musy-dlist__drop { background-color: Highlight; }
   .musy-dlist__item--merge-target { border-color: Highlight; }
+  /* The delete panel loses its fill entirely, which would leave a card
+     sliding off nothing. A system boundary puts it back as a shape: the word
+     and the glyph were always carrying the meaning, and now they carry it
+     alone. `box-shadow` is dropped in forced colours, so the armed ring is
+     re-stated as an outline, which is not. */
+  .musy-dlist__swipe-action { border: var(--border-width-regular) var(--border-style-solid) CanvasText; }
+  .musy-dlist__swipe[data-armed="true"] .musy-dlist__swipe-action {
+    outline: var(--border-width-thick) var(--border-style-solid) Highlight;
+    outline-offset: calc(var(--border-width-thick) * -1);
+  }
 }
 
 
@@ -3113,22 +3395,24 @@
   color: var(--on-surface);
   text-wrap: pretty;
 }
-.musy-wizard__hint {
-  display: block;
-  font-family: var(--type-body-sm-family);
-  font-size: var(--type-body-sm-size);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--type-body-sm-line);
-  color: var(--on-surface-muted);
-}
+
+/* ONE LINE, AND CENTRED AGAINST THE MARKER. Until 2026-09-24 the label carried
+   a second line under it — `.musy-wizard__hint`, the state word, "aktuell" /
+   "gesperrt" / "erledigt" — and the pair was centred rather than the name. The
+   word is now spoken only — it lives in the trigger's `aria-label` (see the
+   component) — so the trigger's own `align-items: center` centres a single
+   line against the 44px marker and there is nothing further to declare here.
+   The rule is DELETED rather than hidden: a `display: none` on a line that had
+   already moved into the label would have left an element with no job, and a
+   `.musy-sr-only` on it put a stray space before the comma in the computed
+   name, which is the measurement that sent the word to `aria-label`. */
 
 /* DISABLED — an earlier step is still open. */
 .musy-wizard__trigger[data-state="disabled"] .musy-wizard__marker {
   border-color: transparent;
   color: var(--on-surface-disabled);
 }
-.musy-wizard__trigger[data-state="disabled"] .musy-wizard__label,
-.musy-wizard__trigger[data-state="disabled"] .musy-wizard__hint { color: var(--on-surface-disabled); }
+.musy-wizard__trigger[data-state="disabled"] .musy-wizard__label { color: var(--on-surface-disabled); }
 
 /* SKIPPED — not part of THIS run (D14). Two of the three exercises draw no
    card, so their `scan` step is never reachable and never will be, however many
@@ -3136,11 +3420,12 @@
 
    THE INK IS THE SAME AS DISABLED AND THE GLYPH IS NOT, deliberately. Both
    states are unreachable, so both sit at --on-surface-disabled and neither
-   competes with the live run; what tells them apart is the marker — a NUMBER
-   for a step that is waiting its turn, a DASH for one that has none. That is
-   the same device `completed` uses (number → check) and it survives greyscale
-   and forced colours (1.4.1), where a second grey would not. The state word
-   under the label says it in words as well.
+   competes with the live run; what tells them apart is the marker — the step's
+   OWN glyph, its number where it has no icon, for a step that is waiting its
+   turn, and a DASH for one that has no turn coming. That is the same device
+   `completed` uses (glyph → check) and it survives greyscale and forced
+   colours (1.4.1), where a second grey would not. The trigger's `aria-label`
+   says it in words as well.
 
    No dashed border, no strike-through: both were tried on paper and both read
    as an error state rather than an omission. */
@@ -3149,8 +3434,7 @@
   background-color: transparent;
   color: var(--on-surface-disabled);
 }
-.musy-wizard__trigger[data-state="skipped"] .musy-wizard__label,
-.musy-wizard__trigger[data-state="skipped"] .musy-wizard__hint { color: var(--on-surface-disabled); }
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__label { color: var(--on-surface-disabled); }
 /* Same cursor as disabled: the button IS disabled, so the pointer must not
    promise a destination. */
 .musy-wizard__trigger[data-state="skipped"] { cursor: not-allowed; }
@@ -3225,6 +3509,10 @@
    Written as three "show exactly one" pairs rather than a cascade of
    :not()s — the number hides for completed AND skipped, and stating that twice
    is clearer than one compound selector nobody can read. */
+/* The three sibling glyphs. `__num` holds the step's icon where it has one and
+   its position number where it does not — both centre the same way, and the
+   icon takes its colour from `.musy-wizard__marker` like the number does,
+   which is what keeps every state rule above written once. */
 .musy-wizard__num, .musy-wizard__check, .musy-wizard__skip { display: grid; place-items: center; }
 .musy-wizard__trigger[data-state="completed"] .musy-wizard__num,
 .musy-wizard__trigger[data-state="skipped"] .musy-wizard__num { display: none; }
@@ -3234,22 +3522,127 @@
 /* Connector. Decorative — it is not in the reading order, and it carries the
    completed colour only when the step BEFORE it is done.
 
-   HAIRLINE, NOT REGULAR. --border-subtle is already the softest border colour
-   the system has (the neutrals are subtle and strong, and strong is reserved
-   for a control boundary at ≥3:1), so the weight was the part still shouting:
+   A DOT, NOT A RULE — 2026-09-24, from user testing on a phone. It was a
+   hairline rule, and the hairline was already the second attempt at making it
+   quiet: --border-subtle is the softest border colour the system has, and
    --border-width-hairline is what Layer 1 reserves for "dividers, subtle
-   outlines", which is precisely what this is. Nothing is lost — the connector
-   carries no state a user has to read; the markers either side do. */
+   outlines". Quiet was not the problem. On a collapsed run the markers sit
+   close together, so three rules in the gaps between four circles read as a
+   diagram of something — the eye follows the line looking for where it goes,
+   and it goes nowhere. A dot has no direction to follow. It separates without
+   drawing a path.
+
+   Nothing else about the element moves. It is the same flex spacer every width
+   rule above sizes, so the run's proportions are untouched; the colour still
+   swaps on `data-complete`, only as `color` for the glyph rather than
+   `border-color` for the rule. Nothing is lost by the connector being quiet —
+   it carries no state a user has to read; the markers either side do.
+
+   Forced colours: a `color` is forced the same way a `border-color` was, so
+   the completed and incomplete dots stop differing there. That was already
+   true of the rules, and it is why the sentence above is written down. */
+/* THE GLYPH IS TAKEN OUT OF THE LAYOUT, and this is the part the switch from a
+   rule to a dot actually costs. A rule filled whatever box it was given, so the
+   floors below — --sp-2 on a phone, --sp-4 above the breakpoint — only decided
+   how SHORT it got. A dot does not shrink, and a 20px glyph in a 9px box is
+   start-aligned by the grid rather than centred: it slides out from under its
+   own box and under the next marker's filled circle, invisible. MEASURED on a
+   390px viewport: three boxes of 9px, two of the three dots gone.
+
+   Raising the floor to --icon-size-md fixed that and broke something better
+   hidden. The collapsed run is width-bound on a phone — four 44px markers and
+   three gaps inside ~316px — so 12px × 3 taken for the gaps comes straight out
+   of the one label still on screen, and `Einsteigen` (which `word-break:
+   normal` will not break, correctly) then OVERFLOWED its box by ~29px and
+   painted over the very dot the floor was raised to reveal. Measured the same
+   way: label box [105,156], text to ~185, dot at 174.
+
+   So the floors stay where they were and the glyph stops being a layout box.
+   It is ~3px of ink in a 20px square; centring it on the connector and letting
+   the empty square overflow costs nothing, because what it overflows into is
+   the triggers' own padding either side. The dot lands on the centre of the gap
+   at every width, and the gap is the width it always was.
+
+   ── AND IT IS THE COLLAPSED RUN'S SEPARATOR, NOT THE RUN'S ────────────────
+   Both drawings ship, and which one shows follows the SAME condition the
+   collapse does. An expanded run has room: four labels spread across the width,
+   the gaps between them are long, and a long gap wants a line — it says these
+   are one sequence, and there is space for it to say so. A collapsed run is
+   four circles almost touching, and three rules in those gaps read as a diagram
+   of something; the eye follows a line looking for where it goes, and over 9px
+   it goes nowhere. A dot has no direction to follow.
+
+   So: the rule is the default and the dot is what replaces it under
+   --bp-md and wherever `compact` forces the collapse in a container no media
+   query can see. `vertical` is the deliberate exception — it is the variant for
+   a rail with height to spend and labels visible at every width, which is the
+   opposite of tight, so it keeps its rule even on a phone. */
 .musy-wizard__connector {
+  position: relative;
   flex: 1 1 auto;
   align-self: center;
   min-width: var(--sp-2);
+  color: var(--border-subtle);
   border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }
 @media (min-width: 768px) {
   .musy-wizard__connector { min-width: var(--sp-4); }
 }
-.musy-wizard__connector[data-complete] { border-color: var(--musy-wizard-accent-border); }
+/* Absolutely placed so it never costs the run width — see above. Hidden until
+   something turns the collapse on. */
+.musy-wizard__connector > .musy-icon {
+  display: none;
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* THE SWAP. Written twice, once per collapse trigger, for the same reason
+   every other collapsed rule above is: a media query cannot see a narrow
+   container, and `compact` is how a screen says so.
+
+   ── AND THE TWO RULES THAT CENTRE IT ──────────────────────────────────────
+   A dot has a centre and a line does not, so the switch made visible two
+   asymmetries the rule had been hiding. Both were MEASURED on a 393px
+   viewport, marker edge to marker edge, before either was touched:
+
+   1. THE GAP WAS NOT SYMMETRIC AROUND THE CONNECTOR. A collapsed trigger pads
+      --sp-1 inline and the current one pads --sp-2, so every gap that touched
+      the step on screen was 8px on one side of the connector and 4px on the
+      other. The dot, centred on the connector, therefore sat 2px off the
+      centre of the gap — measured +2.0px beside the label at both the first
+      and the last step, and −1.4px on the other side of the current marker.
+      Beside a word, 2px reads as attached to it. Every trigger now pads the
+      same --sp-1 while collapsed, which also hands 8px back to the one label
+      still on screen.
+
+   2. THE CONNECTOR OVERFLOWED ITS OWN ALLOCATION. `min-width: --sp-2` is what
+      a RULE needs to stay drawable, and it meant that when flex had less than
+      8px to give — measured: 4.5px between two collapsed markers — the box
+      still reported 8px and spilled the difference rightward, carrying the dot
+      1.7px with it. The floor is for the line; a dot is absolutely placed and
+      needs no width at all, so while collapsed there is no floor.
+
+   With both gone the arithmetic is exact rather than tuned: the gap is
+   `--sp-1 + connector + --sp-1`, so the connector's centre IS the gap's
+   centre, at any width and whatever flex leaves. */
+@media (max-width: 767.98px) {
+  .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector { border-block-start: 0; }
+  .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; }
+  .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector { min-width: 0; }
+  .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__trigger { padding-inline: var(--sp-1); }
+}
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__connector { border-block-start: 0; }
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; }
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__connector { min-width: 0; }
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__trigger { padding-inline: var(--sp-1); }
+/* Both drawings take the completed colour from one declaration: the rule reads
+   `border-color`, the dot inherits `color`. */
+.musy-wizard__connector[data-complete] {
+  color: var(--musy-wizard-accent-border);
+  border-color: var(--musy-wizard-accent-border);
+}
 
 /* VERTICAL — opt-in, and no longer what narrow screens do (they collapse; see
    above). This is for the case where the labels themselves are the point and
@@ -3258,6 +3651,10 @@
    markers and no meaning. */
 .musy-wizard--vertical .musy-wizard__list { flex-direction: column; }
 .musy-wizard--vertical .musy-wizard__step { flex: 0 0 auto; flex-direction: column; align-items: stretch; }
+/* The vertical run keeps the RULE at every width, and the selectors above say
+   so rather than this block undoing them. It is the variant for a rail with
+   height to spend and every label visible — the case the dot exists for is the
+   opposite one. Its rule runs down the marker column instead of across. */
 .musy-wizard--vertical .musy-wizard__connector {
   align-self: stretch;
   min-height: var(--sp-4);
@@ -3266,7 +3663,12 @@
   border-block-start: 0;
   border-inline-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }
-.musy-wizard--vertical .musy-wizard__connector[data-complete] { border-color: var(--musy-wizard-accent-border); }
+.musy-wizard--vertical /* Both drawings take the completed colour from one declaration: the rule reads
+   `border-color`, the dot inherits `color`. */
+.musy-wizard__connector[data-complete] {
+  color: var(--musy-wizard-accent-border);
+  border-color: var(--musy-wizard-accent-border);
+}
 .musy-wizard--vertical .musy-wizard__trigger:not([aria-current="step"]) { flex: 1 1 auto; padding-inline: var(--sp-2); }
 .musy-wizard--vertical .musy-wizard__trigger:not([aria-current="step"]) .musy-wizard__label {
   position: static;
@@ -4177,4 +4579,280 @@ html[data-musy-scroll-snap='y'] {
   /* One gesture, one view. Without it `mandatory` promises only that the
      scroll lands on SOME view — see section 8, which had the same defect. */
   scroll-snap-stop: always;
+}
+
+/* ═══ QR SCANNER ═══════════════════════════════════════════════════════════
+   The viewfinder a paper card is held up to. Five modes, and only one of them
+   is a picture.
+
+   ── THE FRAME IS THE STEP'S ANCHOR, AND TWO MODES CHANGE ITS SHAPE ────────
+   A square dashed viewport is a viewfinder by convention, and L10 makes a
+   dashed outline mean "a place where something will be". Once the preview is
+   running something IS there, so the border goes solid. Between idle, starting
+   and blocked that is the only thing that changes: same square, same cap, same
+   place on the page.
+
+   `live` is TALLER than the square, by one inset, one target and one inset —
+   the band that holds the two controls (Ben, 2026-09-24). It is a real
+   exception to "a viewfinder that jumped size when it woke up would read as a
+   different element", taken deliberately: the alternative was controls lying
+   across the window's own corner, over the undimmed picture. The window inside
+   it is the same square in the same place on the inline axis, which is what
+   the eye actually tracks.
+
+   `manual` is the other exception and has to be: the cap is five guided targets
+   (320px) and a label, a field, a hint and two buttons do not fit in a 320px
+   square on a phone. There the square is dropped and the box fits its form.
+   The square matters while this is a viewfinder; a form has no reason to be
+   one.                                                                      */
+.musy-scanner {
+  display: flex;
+  flex-direction: column;
+  /* Frame and commentary are one molecule — the line belongs TO the picture
+     above it (L2), which is also why it is not --space-gap-stack. */
+  gap: var(--space-gap-related);
+}
+
+.musy-scanner__frame {
+  /* The anchor every absolutely-positioned part below resolves against: the
+     preview, the mask, and the two controls over it. */
+  position: relative;
+  aspect-ratio: 1;
+  inline-size: 100%;
+  max-inline-size: calc(var(--target-guided) * 5);
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-gap-related);
+  padding: var(--space-inset-card);
+  border-radius: var(--radius-panel);
+  border: var(--border-width-thick) var(--border-style-dashed) var(--border-subtle);
+  background-color: var(--surface-sunken);
+  text-align: center;
+  color: var(--on-surface-muted);
+
+  /* THE WINDOW'S SIZE, DECLARED ONCE. The mask is this wide and the two
+     controls are positioned from it, so the band they sit in is derived from
+     the window rather than guessed at beside it. Change this and both follow.
+     See `__mask` for why 62%. */
+  --musy-scanner-window: 62%;
+}
+
+/* THE ONE MODE THAT IS NOT A SQUARE, AND THE HEIGHT IS ARITHMETIC — Ben,
+   2026-09-24. The frame is exactly as tall as it has to be to hold the window
+   plus, under it, one inset, one target and one inset: the band below the
+   window is the padding, so the two controls sitting in it are one
+   --space-inset-card from the frame's edge and one from the window's, with no
+   number written anywhere that could drift.
+
+   The padding is symmetric, so the window stays CENTRED in the picture rather
+   than riding high in it — the band above is the same band, simply with
+   nothing in it. `padding-inline: 0` because the picture goes edge to edge on
+   that axis; there is nothing beside the window to make room for.
+
+   `overflow: hidden` does two jobs: it keeps the picture inside the rounded
+   corner (the video has no radius of its own, and giving it one would leave
+   the frame's border painted over its edge), and it clips the mask's scrim,
+   which is drawn far larger than the frame on purpose. See `__mask`.
+
+   The preview still fills ALL of this, padding included — `__view` is
+   absolutely positioned, and an abspos child resolves `inset: 0` against the
+   padding box. So the band is a band of PICTURE, dimmed by the scrim, not a
+   margin cut out of it.                                                     */
+.musy-scanner__frame--live {
+  aspect-ratio: auto;
+  padding-block: calc(2 * var(--space-inset-card) + var(--target-primary));
+  padding-inline: 0;
+  overflow: hidden;
+  border-style: var(--border-style-solid);
+}
+
+/* SOLID, and not square. Solid for the same reason live is: something is in
+   the box now. `aspect-ratio: auto` lets it grow down to its form; `stretch`
+   and a start-aligned text block because a form is read as a column, not
+   centred like a pair of buttons.                                           */
+.musy-scanner__frame--manual {
+  aspect-ratio: auto;
+  border-style: var(--border-style-solid);
+  place-items: stretch;
+  text-align: start;
+}
+
+/* The two ways in, stacked and centred. --space-gap-stack rather than
+   -related: these are two separate acts on the same thing, not a label and
+   its control (L2).                                                         */
+.musy-scanner__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-stack);
+}
+
+/* The form, and the way back out of it. */
+.musy-scanner__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+/* One type step, and it does NOT drop to body-sm: the sentence in a blocked
+   frame is the only thing in it that says anything, so it is body copy (L8). */
+.musy-scanner__text {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* THE RUNNING COMMENTARY, and it is UNDER the frame rather than over the
+   picture — text on live video has no contrast anybody can check, because the
+   background is whatever the camera is pointed at. Centred under a centred
+   frame, and held to the same measure as the sentence it replaces.          */
+.musy-scanner__status {
+  margin: 0 auto;
+  max-inline-size: var(--measure-body);
+  text-align: center;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* `cover`, not `contain`: a camera hands over a 4:3 or 16:9 frame and the
+   viewport is square, so one of them has to give. Letterboxing would shrink
+   the QR code the person is holding up — the one thing in the picture that has
+   to stay large enough to read.
+
+   ABSOLUTE, against the frame's `position: relative`. A percentage block-size
+   would have to resolve against a height that only exists because of
+   `aspect-ratio`, which is true in current browsers and is the sort of true
+   that fails quietly in one of them.                                        */
+.musy-scanner__view {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* ── THE WINDOW ────────────────────────────────────────────────────────────
+   A square in the middle of the picture, and everything outside it dimmed.
+   The dimming is the whole mechanism, not styling: it is what gives the corner
+   brackets and the two controls a surface with a known colour to sit on, so
+   L15's "contrast against every surface an indicator can land on" becomes a
+   question that has an answer. Without it, white brackets are invisible on a
+   white table and dark ones are invisible on a dark floor.
+
+   `box-shadow` with a 100vmax spread rather than four dimming rectangles: one
+   element, no arithmetic, and it can never leave a seam between panels. It is
+   drawn far outside the frame and clipped by `--live`'s `overflow: hidden`.
+
+   62%: the window is the part of the picture a card's QR code should fill, and
+   a card held at arm's length in a square frame lands near two thirds of it.
+   Aspect-ratio 1 because a QR code is square.                               */
+.musy-scanner__mask {
+  /* IN FLOW, not absolute, and that is what makes the frame the right height:
+     it is the frame's only flow child, so the frame's block size is this
+     square plus the padding above and below it. Centred by the frame's own
+     `place-items: center`.
+
+     `relative` is not decoration. The four brackets are absolute against THIS
+     box, and when this one stopped being absolute it stopped being their
+     containing block — they resolved against the frame instead, landed one
+     stroke outside ITS corners, and were clipped away by `overflow: hidden`.
+     Measured, in both themes: the window lost its corners entirely. */
+  position: relative;
+  inline-size: var(--musy-scanner-window);
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 100vmax var(--alpha-scrim);
+  /* Decorative and aria-hidden in the markup; this keeps it out of the way of
+     the controls underneath it too. */
+  pointer-events: none;
+}
+
+/* Four brackets rather than a full outline: an unbroken square would read as a
+   border on the picture, where two strokes meeting at a corner read as a
+   target. --on-scrim is the light-in-both-themes ink the scrim asks for
+   (amendments, G3).
+
+   THEY SIT JUST OUTSIDE THE WINDOW, NOT ON ITS EDGE, and that is the whole
+   reason they are legible. Inside the window the picture is UNDIMMED — that is
+   what the window is — so a pale stroke drawn there is a pale stroke on
+   whatever the camera sees, and it disappears against a white table. Measured,
+   not guessed: the first version put them on the boundary and the light theme
+   lost them completely.
+
+   Offset by exactly the stroke width, so each arm lands in the scrim with its
+   inner edge flush against the window. The window keeps its full size and the
+   brackets keep a background whose colour is known.                         */
+.musy-scanner__corner {
+  position: absolute;
+  inline-size: var(--sp-5);
+  block-size: var(--sp-5);
+  border: 0 var(--border-style-solid) var(--on-scrim);
+}
+.musy-scanner__corner--tl {
+  inset-block-start: calc(var(--border-width-thick) * -1);
+  inset-inline-start: calc(var(--border-width-thick) * -1);
+  border-block-start-width: var(--border-width-thick);
+  border-inline-start-width: var(--border-width-thick);
+  border-start-start-radius: var(--radius-sm);
+}
+.musy-scanner__corner--tr {
+  inset-block-start: calc(var(--border-width-thick) * -1);
+  inset-inline-end: calc(var(--border-width-thick) * -1);
+  border-block-start-width: var(--border-width-thick);
+  border-inline-end-width: var(--border-width-thick);
+  border-start-end-radius: var(--radius-sm);
+}
+.musy-scanner__corner--bl {
+  inset-block-end: calc(var(--border-width-thick) * -1);
+  inset-inline-start: calc(var(--border-width-thick) * -1);
+  border-block-end-width: var(--border-width-thick);
+  border-inline-start-width: var(--border-width-thick);
+  border-end-start-radius: var(--radius-sm);
+}
+.musy-scanner__corner--br {
+  inset-block-end: calc(var(--border-width-thick) * -1);
+  inset-inline-end: calc(var(--border-width-thick) * -1);
+  border-block-end-width: var(--border-width-thick);
+  border-inline-end-width: var(--border-width-thick);
+  border-end-end-radius: var(--radius-sm);
+}
+
+/* The two controls over the picture: one --space-inset-card from the frame's
+   bottom edge and one from its trailing edge, which — because the band they
+   sit in is exactly `inset + target + inset` of padding — puts exactly the
+   same inset between them and the window above them. Three equal gaps, none
+   of them a number.
+
+   They started in the corner, where they lay across the window's bottom-right
+   bracket: over the undimmed picture, on top of the very corner the bracket is
+   there to mark. Ben, 2026-09-24, twice — first out of the corner, then with
+   the frame grown to give them a band of their own.
+
+   They are §7.2 `secondary`, the one variant that carries an opaque
+   --surface-raised and a --border-strong edge: a ghost control over live video
+   is a glyph with nothing behind it.                                        */
+.musy-scanner__tools {
+  position: absolute;
+  inset-block-end: var(--space-inset-card);
+  inset-inline-end: var(--space-inset-card);
+  display: flex;
+  gap: var(--space-gap-related);
+}
+
+/* FORCED COLOURS. A scrim is a colour the mode replaces with nothing, so the
+   dimming goes and the brackets have to carry the window on their own —
+   CanvasText is the only ink there is, and it is guaranteed against Canvas. */
+@media (forced-colors: active) {
+  .musy-scanner__mask { box-shadow: none; }
+  .musy-scanner__corner { border-color: CanvasText; }
 }

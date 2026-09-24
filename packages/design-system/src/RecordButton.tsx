@@ -52,7 +52,12 @@ export interface RecordButtonProps {
   levels?: number[];
   bars?: number;
   onToggle?: () => void;
-  variant?: 'primary' | 'accent' | 'accent-alt';
+  /** Button family — §7.4's, unchanged. `secondary` is here because a screen
+   *  can carry the recorder as its SECOND action: on Musie's reflect step the
+   *  button says *Record more* over a list that is already an answer, and the
+   *  primary action there is finishing the session. Still the same control in
+   *  the same two states; only the family it borrows is quieter. */
+  variant?: 'primary' | 'secondary' | 'accent' | 'accent-alt';
   /** Raises the TARGET, not the type step — §7.4's ladder. */
   size?: 'primary' | 'comfort' | 'guided';
   disabled?: boolean;

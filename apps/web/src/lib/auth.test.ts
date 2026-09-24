@@ -2,9 +2,10 @@
  * `accountEmail` — and it exists because the obvious version was wrong.
  *
  * An anonymous Supabase user's `email` is the EMPTY STRING, not null and not
- * undefined, so `user.email ?? null` passes it straight through. The settings
- * sheet asks "is there an email address?" to decide whether to offer 'Sign
- * out', and for an anonymous user that button strands their whole diary on an
+ * undefined, so `user.email ?? null` passes it straight through. The account
+ * section — in the menu drawer since 2026-09-24, the settings sheet before it —
+ * asks "is there an email address?" to decide whether to offer 'Sign out', and
+ * for an anonymous user that button strands their whole diary on an
  * id nobody can sign in as again. It rendered 'Signed in as ' with nothing
  * after it and was found by walking the flag-off path in a browser — not by
  * `tsc`, which is satisfied because `string` is what the type says.

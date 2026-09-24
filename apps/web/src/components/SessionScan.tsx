@@ -10,7 +10,8 @@
  *      `<origin>/s/MC-01`, so it opens Musie at that card without Musie ever
  *      touching a camera — and that is the common way in for somebody holding
  *      a printed card. `routes/ScanLink.tsx` is where it lands.
- *   2. THE CODE PRINTED BESIDE IT, typed into the field below.
+ *   2. THE CODE PRINTED BESIDE IT, typed into the form the frame holds
+ *      when somebody asks for it.
  *   3. THE CAMERA ON THIS DEVICE, for the person who opened Musie first —
  *      `CardScanner`, E.2, with E.3's WebAssembly decoder under it on Safari.
  *
@@ -26,11 +27,16 @@
  * under it; and there is exactly one submit path, so the camera cannot acquire
  * behaviour the typed field does not have.
  *
- * ── THE FRAME STAYS, AND IT STOPPED BEING A SLOT ───────────────────────────
+ * ── THE FRAME IS THE STEP, AND IT IS THE SYSTEM'S NOW ──────────────────────
  * The dashed viewport was where E.2's camera would go. The camera is in it —
  * same square, same place, and the border goes solid while it is running,
  * because L10's dashed outline means "a place where something will be" and
  * something now is.
+ *
+ * Since 2026-09-24 the frame is `QrScanner`, a Layer 2 component, and the
+ * typed-code form is one of its modes rather than a second block under it. So
+ * all three ways of naming a card happen in ONE box, one at a time, and the
+ * step is a square and a sentence instead of a square, a switch and a form.
  *
  * ── ONE PANEL, TWO STATES ──────────────────────────────────────────────────
  * The reader, and the card that was drawn. They are the same step rather than
@@ -46,7 +52,7 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field, Switch } from '@musie/design-system';
+import { ContentList, CtaButton, Field } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
@@ -96,31 +102,31 @@ export function SessionScan({
   const [code, setCode] = React.useState(held ?? '');
 
   /**
-   * ── TYPING THE CODE IS THE THIRD WAY IN, AND IT IS FOLDED AWAY ──────────
-   * Ben, 2026-09-23. The field and its button sat open under the frame, so the
-   * step offered a camera and a form at once and the form — a labelled input
-   * with a hint under it and a button under that — was the taller of the two.
-   * The common way in is the QR code; typing is the fallback for a camera that
-   * will not open or a code that will not read.
+   * ── TYPING THE CODE IS THE THIRD WAY IN, AND IT IS A MODE OF THE FRAME ──
+   * Ben, 2026-09-23, then again 2026-09-24. The field and its button first sat
+   * open under the frame, so the step offered a camera and a form at once and
+   * the form was the taller of the two; then they folded away behind a switch
+   * under the frame. Both versions put the form BESIDE the reader, which made
+   * the step two things at once however it was dressed.
    *
-   * A DISCLOSURE, NOT A SWITCH, and the word in the brief was "switch". A
-   * switch reports a setting that stays true — dark mode, the one in settings
-   * — and this turns nothing on: it shows a form that was always going to
-   * work. The accessible difference is real (`aria-expanded` on a button says
-   * "this reveals something below"; `role="switch"` says "this is now on"),
-   * and the visible difference is none, so the button is what it does.
+   * It is now the fifth mode of the frame itself — the same box, holding the
+   * form instead of the viewfinder, with a way back to the scanner under it.
+   * One place where a card gets named, three ways of naming it, and only one
+   * of them on screen at a time.
    *
    * IT OPENS ITSELF IF IT IS ALREADY NEEDED. A code carried in from a scanned
-   * deep link is IN the field, and folding the field away would hide the one
-   * thing that just happened — same for an error, which appears under the
-   * field it belongs to and would otherwise be reported into a closed box.
+   * deep link is IN the field, and showing the viewfinder over it would hide
+   * the one thing that just happened — same for an error, which appears under
+   * the field it belongs to and would otherwise be reported into a frame that
+   * is not showing it.
    */
   const [typing, setTyping] = React.useState(held !== null);
 
-  /* An answer about a code OPENS the form rather than being drawn into a shut
-     one. It sets state rather than being folded into the `open` test, so the
-     toggle keeps working afterwards: a condition that forced it open would
-     leave a button saying `aria-expanded="true"` that nothing could close. */
+  /* An answer about a code OPENS the form rather than being drawn into a
+     frame that is showing something else. It sets state rather than being
+     folded into the mode test, so *Zurück zum Scannen* keeps working
+     afterwards: a condition that forced the form open would leave a control
+     that nothing could leave. */
   React.useEffect(() => {
     if (codeError !== null) setTyping(true);
   }, [codeError]);
@@ -177,44 +183,24 @@ export function SessionScan({
       <Markdown md={exercise.scanMd} />
 
       {card === null ? (
-        <div className="musie-stack">
-          {/* The frame, its control and its commentary — E.2/E.3. It owns
-              the camera and nothing else; a code it reads comes back here. */}
-          <CardScanner onCode={applyCode} busy={scanning} />
-
-          {/* THE DISCLOSURE'S OWN CONTROL, AND IT IS A SWITCH — Ben, 2026-09-23.
-              It was a ghost CtaButton. Typing the code instead of scanning it
-              is a MODE you are in until you leave it, not an action you fire,
-              and a switch is the one control in the system that says "this is
-              on now" rather than "this happened". It also states the current
-              state when you arrive at it, which a button can only imply.
-
-              `aria-controls` still names the form below, which is why the form
-              is rendered rather than styled away: `hidden` is `display: none`
-              and `.musie-code` sets `display: flex`, so the attribute would be
-              overridden and the "closed" form would sit there in full view.
-
-              NO `aria-expanded`, which the button carried. `role="switch"`
-              announces through `aria-checked`, and an element that is both
-              checked and expanded says the same fact twice in two vocabularies
-              — so the switch's own state is left to carry it.
-
-              No wrapper `<div>` either: that was there because `.musy-btn` is
-              inline-flex and would have stretched. `.musy-switch` is a flex ROW
-              that owns its own 44px target, so it needs nothing around it. */}
-          <Switch
-            label={t('session.scan.codeManual')}
-            checked={typing}
-            onCheckedChange={setTyping}
-            aria-controls="card-code-form"
-          />
-
-          {typing && (
-          <form
-            id="card-code-form"
-            className="musie-code"
-            onSubmit={submit}
-          >
+        /* THE FRAME, AND EVERYTHING THAT NAMES A CARD IS IN IT — E.2/E.3, and
+           2026-09-24's move of the typed form inside. `CardScanner` owns the
+           camera and the join to the design system's `QrScanner`; this owns
+           the form, which is passed to it and rendered in the frame's `manual`
+           mode. A code the camera reads still comes back here. */
+        <CardScanner
+          onCode={applyCode}
+          busy={scanning}
+          manual={typing}
+          onManual={() => setTyping(true)}
+          onBack={() => setTyping(false)}
+        >
+          {/* A REAL <form>, so Enter submits. No id and no `aria-controls`
+              any more: the form is not disclosed by a control beside it, it
+              IS the frame's content while the frame is in that mode, and an
+              `aria-controls` pointing at something in the same box would
+              describe a relationship that no longer exists. */}
+          <form className="musie-code" onSubmit={submit}>
             <Field
               label={t('session.scan.codeLabel')}
               name="card-code"
@@ -234,10 +220,17 @@ export function SessionScan({
                 across the column: `.musy-btn` is inline-flex, and a block
                 parent is all that takes. No CSS, and nothing reaching into the
                 component's own geometry. */}
+            {/* PRIMARY, because it is the way on. Ben, 2026-09-24, as a rule for
+                the system rather than a note about this button: within one
+                semantic unit and one state of it, the action that carries the
+                person onward takes the filled treatment. In this state the
+                frame IS the unit and taking the card is the only way out of
+                it — *Zurück zum Scannen* goes back, and going back is never
+                the primary. Written up in the CTA Button and Button Group
+                docs. */}
             <div>
               <CtaButton
                 type="submit"
-                variant="secondary"
                 loading={scanning}
                 loadingLabel={t('content.loading')}
                 disabled={code.trim() === ''}
@@ -246,8 +239,7 @@ export function SessionScan({
               </CtaButton>
             </div>
           </form>
-          )}
-        </div>
+        </CardScanner>
       ) : (
         <ContentList
           label={t('session.scan.done')}

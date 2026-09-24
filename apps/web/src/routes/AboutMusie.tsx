@@ -48,7 +48,7 @@
  * the reason `Carousel` is controlled from out here.
  */
 import * as React from 'react';
-import { MessageSquare, Music, Send, Sparkles, User } from 'lucide-react';
+import { Heart, Music, Sparkles } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { Carousel, ContentBox, CtaButton } from '@musie/design-system';
 import type { CarouselSlide } from '@musie/design-system';
@@ -58,20 +58,27 @@ import type { MessageKey } from '../i18n';
 import { useProfile } from '../lib/profileContext';
 
 /**
- * The five slides, as ids plus glyphs. THE COPY IS NOT HERE — every title is a
+ * The three slides, as ids plus glyphs. THE COPY IS NOT HERE — every title is a
  * catalogue key, so nothing user-visible is written inline (rule 7) and the
- * German is written rather than owed (rule 6): these five lines are ours, not
+ * German is written rather than owed (rule 6): these three lines are ours, not
  * the Mindfulness Cards spreadsheet's.
  *
- * The glyphs are the prototype's own inline `path` data, resolved back to the
- * Lucide components they were traced from.
+ * THREE, NOT THE PROTOTYPE'S FIVE. The CTA below is gated on having SEEN the
+ * last slide, so the number of slides is the number of swipes anybody owes
+ * before they may start — five beats of explanation cost four of them. The
+ * three that remain are the arc: choose, be guided, understand yourself.
+ *
+ * The sixth beat, the diary, is no longer a slide at all — it is the
+ * postscript under the CTA, because it is what is there after a session
+ * rather than a step inside one.
+ *
+ * The glyphs stay Lucide's, one per beat: the pick, the exercise, the person
+ * it happened to.
  */
 const SLIDES: { id: string; titleKey: MessageKey; glyph: CarouselSlide['glyph'] }[] = [
-  { id: 'situation', titleKey: 'about.slide.situation', glyph: User },
-  { id: 'recommend', titleKey: 'about.slide.recommend', glyph: Sparkles },
-  { id: 'listen', titleKey: 'about.slide.listen', glyph: Music },
-  { id: 'reflect', titleKey: 'about.slide.reflect', glyph: MessageSquare },
-  { id: 'share', titleKey: 'about.slide.share', glyph: Send },
+  { id: 'choose', titleKey: 'about.slide.choose', glyph: Sparkles },
+  { id: 'guide', titleKey: 'about.slide.guide', glyph: Music },
+  { id: 'understand', titleKey: 'about.slide.understand', glyph: Heart },
 ];
 
 /** The greeting, then the carousel. Milliseconds, and the prototype's own. */
@@ -196,11 +203,24 @@ export function AboutMusie() {
               }))}
               index={index}
               onIndexChange={onIndexChange}
-              /* THE FILLED TREATMENT MOVES. Until the run has been seen, going
-                 on is the only thing to do and Next holds it; the moment the
-                 CTA unlocks, two filled primaries on one screen would compete,
-                 so Next steps back. */
-              nextVariant={seenAll ? 'secondary' : 'primary'}
+              /* THE FILLED TREATMENT MOVES, AND THIS LINE IS THE WHOLE OF IT
+                 ON EVERY POINTER. Until the run has been seen, going on is the
+                 only thing to do and Next holds the emphasis and says so; the
+                 moment the CTA below unlocks, the chevrons get out of its way.
+
+                 `ghost`, NOT `secondary`, at the far end — and the difference
+                 was measured on a phone on 2026-09-25. `secondary` leaves an
+                 outlined circle on each side of the dots, and a box bracketing
+                 a dot row still reads as the chrome of a stepper. Ghost keeps
+                 the chevron and takes the container.
+
+                 THE HAND-OVER IS EXACTLY THE CTA'S OWN GATE, `seenAll`, so the
+                 two happen in the same render: the chevrons go quiet in the
+                 frame where `Session starten` lights up. One thing takes the
+                 emphasis from the other rather than both being loud or both
+                 being quiet, which is what a phone showed was missing when the
+                 carousel demoted its controls on its own. */
+              nextVariant={seenAll ? 'ghost' : 'primary'}
               previousLabel={t('about.previousSlide')}
               nextLabel={t('about.nextSlide')}
               slideLabel={(position, count, title) =>
@@ -210,7 +230,6 @@ export function AboutMusie() {
                   title,
                 })
               }
-              dotLabel={(position) => t('about.dotLabel', { position: String(position) })}
               dotAriaLabel={(position, count) =>
                 t('about.goToSlide', { position: String(position), total: String(count) })
               }
@@ -229,6 +248,10 @@ export function AboutMusie() {
               </CtaButton>
               <p id="about-hint" className="musie-cta-stack__hint">{t(hintKey)}</p>
             </div>
+
+            {/* After the sign-off, which is what a P.S. is: the diary is not a
+                step of a session and does not belong in the gate above it. */}
+            <p className="musie-postscript">{t('about.postscript')}</p>
           </ContentBox>
         </div>
       )}

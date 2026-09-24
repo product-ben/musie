@@ -22,7 +22,7 @@
  * client should be creating itself.
  */
 import { expect, test } from '@playwright/test';
-import { enterCode, label, reachTheLibrary, service, withLocale } from './support';
+import { enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /**
@@ -61,22 +61,10 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     await reachTheLibrary(page, locale);
 
     /* ── The library ───────────────────────────────────────────────────────
-       The first radio is Quick Mindfulness Break, the one implemented
-       exercise. `.first()` is a POSITION and is deliberate here, unlike the
-       ones this walk no longer uses: the order is `exercises.sort`, a column
-       in the database with a `unique` constraint on it, so it is a fact about
-       the content rather than an accident of layout. The name itself cannot
-       be asked for — it comes from `exercise_i18n`, not the catalogue, so
-       naming it here would hardcode seed copy the spreadsheet will replace. */
-    await page.getByRole('radio').first().click();
-
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    /* By name. The earlier version took the LAST button in the dialog, which
-       is `Lightbox`'s close X — it renders after `children` — so the walk
-       dismissed the detail it had just opened and then wondered why no session
-       had started. A name cannot be reordered out from under a test. */
-    await dialog.getByRole('button', { name: label(locale, 'exercises.start'), exact: true }).click();
+       One click. The card is the control since 2026-09-24 — there is no detail
+       lightbox between the library and the session — and `startExercise` is
+       where that is said once for every walk. */
+    await startExercise(page);
 
     /* ── Intro → scan ──────────────────────────────────────────────────────*/
     await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
@@ -96,26 +84,38 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     const scanned = page.getByText(label(locale, 'session.scan.yourCard'), { exact: true });
 
     await enterCode(page, locale, CARD.code);
-    await expect(scanned).toBeVisible({ timeout: 15_000 });
 
-    /* *Scan a different card* RESETS the step rather than re-rolling: the
+    /* NAMING THE CARD FINISHES THE STEP — 2026-09-24. The code lands and the
+       listen step is on screen with nothing tapped in between, which is the
+       assertion for the second half of that change. */
+    await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
+
+    /* ── AND CHANGING YOUR MIND IS STILL ONE STEP BACK ──────────────────────
+       The scan step keeps both its states, so Back from `listen` is the card
+       you drew with *Scan a different card* under it — which is the route the
+       flow change deliberately left open, and therefore the one this walk has
+       to prove is still there.
+
+       *Scan a different card* RESETS the step rather than re-rolling: the
        reader comes back and the next draw is an act the person takes. Walked
        here because the reset writes nulls to two columns, and a version that
        silently kept the old track would still look right on screen. */
-    await page.getByRole('button', { name: label(locale, 'session.scan.again'), exact: true }).click();
-    /* THE READER IS BACK, AND THE FIELD IS NOT — the step's resting state
-       changed on 2026-09-23. Typing the code is folded behind a switch now, so
-       what says the reset happened is the reader's own control returning, not
-       a textbox. This asserted the field and had been failing here ever since;
-       `enterCode` below opens the disclosure the way a person does. */
-    await expect(
-      page.getByRole('switch', { name: label(locale, 'session.scan.codeManual'), exact: true }),
-    ).toBeVisible({ timeout: 15_000 });
-    await enterCode(page, locale, CARD.code);
+    await page.getByRole('button', { name: label(locale, 'common.back'), exact: true }).click();
+    await expect(page).toHaveURL(/\/scan$/);
     await expect(scanned).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
-    await expect(page).toHaveURL(/\/listen$/);
+    await page.getByRole('button', { name: label(locale, 'session.scan.again'), exact: true }).click();
+    /* THE READER IS BACK, AND THE FIELD IS NOT — the step's resting state
+       changed on 2026-09-23 and again on 2026-09-24. Typing the code is a mode
+       of the frame now, so what says the reset happened is the frame's own two
+       ways in returning, not a textbox. Asserted on the primary one, *Karte
+       scannen*, which exists in no other state of this step; `enterCode` below
+       opens the form the way a person does. */
+    await expect(
+      page.getByRole('button', { name: label(locale, 'session.scan.scanCard'), exact: true }),
+    ).toBeVisible({ timeout: 15_000 });
+    await enterCode(page, locale, CARD.code);
+    await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
 
     /* ── Listen, and the gate ──────────────────────────────────────────────
        Ninety seconds of a ~200-second track is ninety real seconds, which no
@@ -145,12 +145,31 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     });
     await expect(transport).toBeVisible();
 
-    /* NOT Continue: the listen step's forward control is *Start reflection*,
-       because what it does is named rather than numbered. Finding it by name
-       is what surfaced that — the old `.last()` would have clicked it under
-       any label at all. */
+    /* NOT Continue: the listen step's forward control is the reflection
+       button, because what it does is named rather than numbered. Finding it
+       by name is what surfaced that — the old `.last()` would have clicked it
+       under any label at all.
+
+       IT ANSWERS TO TWO NAMES SINCE 2026-09-24, and that is the point of the
+       change rather than an inconvenience: the button carries the gate itself
+       now, so while it is shut it is named for the condition and once it opens
+       it is named for the act. A single locator would have to match both, and
+       a locator loose enough to do that would match the transport too.
+
+       The shut name interpolates a LIVE countdown, so it cannot be matched
+       exactly — the clock ticks between locating and asserting. A sentinel is
+       interpolated instead and the stable half taken from in front of it,
+       which keeps this out of the business of knowing any literal. */
+    const lockedName = label(locale, 'session.listen.startLocked', { countdown: '\u0000' })
+      .split('\u0000')[0]
+      .trim();
+    const locked = page.locator('.musie-listen__view--stage').getByRole('button', {
+      name: lockedName,
+      exact: false,
+    });
+    await expect(locked).toBeDisabled();
+
     const onwards = page.getByRole('button', { name: label(locale, 'session.listen.start'), exact: true });
-    await expect(onwards).toBeDisabled();
 
     await transport.click();
     /* WAIT FOR PLAYBACK TO ACTUALLY START BEFORE RUNNING THE CLOCK. `play()`
@@ -211,12 +230,36 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     await expect(answer).toBeVisible({ timeout: 15_000 });
     await expect(collapse).toBeVisible();
 
+    /* ── AND THE WAY BACK INTO ANOTHER ONE, BEHIND THE CARD ────────────────
+       Ben, 2026-09-24. The landing offers the only forward move this screen
+       has, under the entry rather than above it or at the foot of the page.
+       A LINK, not a button: it goes to the library, which is the one screen
+       that writes a session — so this walk checks where it points rather than
+       pressing it, and the start it would reach is the one the walk already
+       took at the top of this file.
+
+       Its name is `menu.startSession`, the same words the drawer and the
+       explainer use for the same act, so a screen that invented a third
+       spelling fails here. */
+    const startAnother = page.getByRole('link', {
+      name: label(locale, 'menu.startSession'),
+      exact: true,
+    });
+    await expect(startAnother).toBeVisible();
+    await expect(startAnother).toHaveAttribute('href', '/exercises');
+
     /* PREVIEW. The X collapses the card; the entry does not disappear with it,
        because a collapsed card rejoins the run below rather than being held
        out of it. Both halves are asserted — a version that simply unmounted
        the card would satisfy the first and lose the session from the screen. */
     await collapse.click();
     await expect(answer).toBeHidden();
+
+    /* The offer goes with the card. Collapsing turns the diary from a landing
+       into a list, and the drawer is where *Start a session* lives from then
+       on — asserted because the alternative, a control that outlives the thing
+       it belongs to, is invisible in a screenshot. */
+    await expect(startAnother).toBeHidden();
 
     /* THIS session's row, found by where it goes rather than by what it looks
        like. `href` is a semantic attribute, not a design-system class, and it

@@ -42,9 +42,19 @@ import { saveStatements } from './statements';
  * real `authenticated` user is what proves the grant covers what the diary
  * asks for — a type cannot say that, because the generated types describe the
  * table and not the grant.
+ *
+ * AND SINCE 2026-09-24 IT REACHES THROUGH THE REFLECTION to the statements,
+ * so the entry can show a spoken answer in the pieces it was spoken in. That
+ * is a THIRD level of embed and a second table's grant and policy on the same
+ * request: `reflection_statements` is reached from `sessions` through
+ * `reflections`, and its policy is written across two joins to `user_id`
+ * (`20260922100000_reflection_statements.sql`). A select that the client is
+ * not allowed to make fails the WHOLE request — the entry screen would show
+ * its error state and nothing would say which embed caused it — so the select
+ * is run here as a real user rather than trusted.
  */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 let client: SupabaseClient;
 let userId: string;
@@ -144,7 +154,13 @@ describe('the diary read · the one-to-one embed is an OBJECT, not an array', ()
        still copes — but anybody who replaced it with a bare property access
        finds out here instead of in the Diary. */
     expect(Array.isArray(row.reflections)).toBe(false);
-    expect(row.reflections).toEqual({ mode: 'text', body: 'Quieter than when I sat down.' });
+    /* `reflection_statements` IS an array, and an empty one — a typed answer
+       has no statements, which is what `answerParagraphs` falls back to the
+       body for. The two embeds on one row are the two shapes this file is
+       about, side by side: to-one is an object, to-many is a list. */
+    expect(row.reflections).toEqual({
+      mode: 'text', body: 'Quieter than when I sat down.', reflection_statements: [],
+    });
   }, 30_000);
 
   it('returns null for a session nobody answered, rather than an empty object', async () => {
@@ -367,6 +383,62 @@ describe('reflection_statements · a spoken answer, written as it is spoken', ()
 
     expect(data?.mode).toBe('voice');
     expect(data?.body).toBe('Erst eng. Dann weiter.');
+  }, 30_000);
+
+  /**
+   * AND THE DIARY READS THE ROWS, NOT ONLY THE BODY — Ben, 2026-09-24.
+   *
+   * `body` is the four sentences glued with spaces; the statements are where
+   * the pauses still are, and the entry card now draws one paragraph each. So
+   * the detail select reaches through the reflection to them, which is what
+   * this asserts — as the `authenticated` user who owns them, through the
+   * two-join policy, in `position` order.
+   *
+   * The ORDER is asserted although `toReflection` sorts client-side anyway.
+   * The sort is there because PostgREST promises nothing about an embed's
+   * order; this says the request the app actually makes comes back readable,
+   * so a day when the sort is questioned has an answer that is not a guess.
+   */
+  it('comes back through the entry select, in the order it was spoken', async () => {
+    const sessionId = await insertSession({
+      status: 'started', step: 'reflect', started_at: agoISO(10),
+    });
+
+    await saveStatements(sessionId, [
+      { id: 'd-1', text: 'Erst eng.', language: 'de', createdAt: agoISO(9) },
+      { id: 'd-2', text: 'Dann weiter.', language: 'de', createdAt: agoISO(8) },
+    ], client);
+
+    /* The session has to be OVER to be an entry. The reflect step writes the
+       statements while it is still running, so this is the same order the app
+       does it in. */
+    const { error: ended } = await client
+      .from('sessions')
+      .update({ status: 'finished', ended_at: agoISO(7) })
+      .eq('id', sessionId);
+    expect(ended).toBeNull();
+
+    const { data, error } = await client
+      .from('sessions')
+      .select(DETAIL_SELECT)
+      .eq('id', sessionId)
+      .maybeSingle();
+
+    expect(error, 'the entry select was refused — a grant or a policy, not a bug').toBeNull();
+
+    /* Through `unknown`, as every other assertion in this file does: the
+       generated row type says the embed is an array (see `Embedded`), and
+       `one()` is what the app collapses it with. Here the shape under test is
+       the statements, so the reflection is narrowed in one step. */
+    const reflection = (data as { reflections: unknown }).reflections as {
+      reflection_statements: { id: string; text: string; position: number }[];
+    };
+
+    expect([...reflection.reflection_statements].sort((a, b) => a.position - b.position))
+      .toEqual([
+        { id: 'd-1', text: 'Erst eng.', position: 0 },
+        { id: 'd-2', text: 'Dann weiter.', position: 1 },
+      ]);
   }, 30_000);
 
   /**

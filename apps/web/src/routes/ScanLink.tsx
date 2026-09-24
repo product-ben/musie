@@ -18,10 +18,24 @@
  *
  * ── IT IS A RESOLVER, NOT A SCREEN ────────────────────────────────────────
  * The happy path renders nothing: it writes the card to the running session
- * and replaces itself with that session's scan step. The four states below are
- * the ways that cannot happen, and none of them is dressed as an error —
+ * and replaces itself with that session's LISTEN step. The four states below
+ * are the ways that cannot happen, and none of them is dressed as an error —
  * "nothing is running yet" is the commonest of them and is simply what
  * happens when somebody with the deck in their hands scans a card first.
+ *
+ * ── IT LANDS ON `listen`, AND IT WRITES THE STEP TO GET THERE ─────────────
+ * Ben, 2026-09-24: scanning a card successfully IS finishing the scan step, so
+ * a scan takes the person to the recording rather than to a screen that tells
+ * them which card they are holding. It used to land on `scan`.
+ *
+ * The write is not optional and it is not bookkeeping. The session this link
+ * lands on may be standing anywhere — commonly `intro`, because the deck is in
+ * somebody's hand before they have pressed Continue — and `listen` is
+ * unreachable from there by the reachability rule, so the session screen's
+ * guard would bounce them straight back. `saveStep` is what makes the step
+ * they are being sent to the step the session is actually on; the machine then
+ * derives `completed` from it on arrival (`completedBefore`), which is the
+ * same path *Continue session* takes.
  *
  * `replace`, so Back from the session does not land on a resolver that would
  * resolve all over again.
@@ -32,13 +46,13 @@ import { useLocale, useT } from '../i18n/localeContext';
 import { getCardByCode, getExercise } from '../lib/content';
 import { holdCode, scanCardInto } from '../lib/scan';
 import { decodeScan } from '../lib/scanCode';
-import { readActiveSession, readSession } from '../lib/session';
+import { readActiveSession, readSession, saveStep } from '../lib/session';
 import { useAsync } from '../lib/useAsync';
 import type { StepId } from '../routeHandle';
 
 /** What the link turned out to mean. */
 type Landing =
-  /** Written to the running session; the scan step is where the person goes. */
+  /** Written to the running session; the listen step is where the person goes. */
   | { kind: 'applied'; sessionId: string }
   /** The link did not carry a card code at all. */
   | { kind: 'malformed' }
@@ -107,6 +121,12 @@ export function ScanLink() {
       return outcome.kind === 'malformed' ? { kind: 'malformed' } : { kind: 'unknown', code };
     }
 
+    /* THE STEP, WRITTEN BEFORE THE REDIRECT. Awaited rather than fired off:
+       the session screen reads the row the moment it mounts, and a step still
+       saying `intro` when it does is a session that refuses `listen` and
+       redirects back to where it was. */
+    await saveStep(row.id, 'listen');
+
     return { kind: 'applied', sessionId: row.id };
   }, `scan:${scanned}:${locale}`);
 
@@ -124,11 +144,13 @@ export function ScanLink() {
     );
   }
 
-  /* THE HAPPY PATH RENDERS NOTHING. The card is already on the row, and the
-     scan step is where it is on screen — going anywhere else would mean
-     reading back what was just written in a second place. */
+  /* THE HAPPY PATH RENDERS NOTHING. The card is written, the step is written,
+     and the listen step is what the person came for — the card they scanned is
+     the one thing they already know, so a screen naming it back at them is a
+     tap they have to spend to leave. Going back one step is where changing it
+     lives. */
   if (data.kind === 'applied') {
-    return <Navigate to={`/session/${encodeURIComponent(data.sessionId)}/scan`} replace />;
+    return <Navigate to={`/session/${encodeURIComponent(data.sessionId)}/listen`} replace />;
   }
 
   if (data.kind === 'cardless') {

@@ -32,7 +32,16 @@
  * the five keyboard announcements, which have NO props — they come from the
  * package's own locale catalogue through the `MusyLocaleProvider` main.tsx
  * mounts, in the reader's language. Same call as `DiaryCard`'s transport
- * verbs, and for the same reason.
+ * verbs, and for the same reason. The swipe panel's two words join that
+ * second group: the panel says *Delete*, which must be the SAME word the row
+ * menu says, and a prop here would be a second place for it to drift.
+ *
+ * ── SWIPE TO DELETE IS LEFT ON ─────────────────────────────────────────────
+ * `swipeToDelete` defaults true and is not passed. The prop exists for lists
+ * whose deletion cannot be taken back; this one's can — `useSentences` holds
+ * the snapshot and the six-second window, and the `Toast` at the foot of this
+ * file is already wired to it. Deleting by swipe lands in the same undo as
+ * deleting from the menu, because it is the same `onDelete`.
  *
  * ── WHAT IT CANNOT DO YET ──────────────────────────────────────────────────
  * Nothing here writes a row. `onSentenceFinal` is F.6's seam and is left
@@ -50,9 +59,11 @@ import type { VoiceMessageCode } from '@musie/voice';
 import { useLocale, useT } from '../i18n/localeContext';
 import { realtimeToken } from '../lib/realtimeToken';
 import { VOICE_MESSAGE_KEYS, VOICE_UNDO_KEYS } from '../lib/voiceMessages';
-import { hasRecorded, hintKey, recordLabelKey, recordPhase, stopNoticeKey } from '../lib/voiceScreen';
+import { hasRecorded, recordLabelKey, recordPhase, stopNoticeKey } from '../lib/voiceScreen';
 
-/** The two cut-offs, as strings, for the sentences that name them. */
+/** The two cut-offs, as strings, for the ONE sentence that still names them —
+ *  `voice.stopped.*`, said when a cut-off actually fires. The two standing
+ *  hints that used to carry them are gone (lib/voiceScreen.ts says why). */
 const SECONDS = String(SESSION_SECONDS);
 const SILENCE = String(IDLE_STOP_MS / 1000);
 
@@ -148,6 +159,22 @@ export function VoiceTranscript({
      `DraggableList`'s `editable` is given, named once so the tips button and
      the tips panel cannot disagree about when they exist. */
   const editable = !running && session.sentences.length > 1;
+  /**
+   * WHETHER THE TRANSCRIPT SURFACE IS ON SCREEN AT ALL — Ben, 2026-09-24.
+   *
+   * The empty state is a dashed box saying that finished statements will appear
+   * in it. On arrival at the step, with the microphone untouched, that box was
+   * the largest thing on the screen and it described a list that did not exist
+   * yet — an instruction where the answer goes. Ben's call: show it while
+   * recording, which is when it is a place to watch rather than a caption.
+   *
+   * `phase !== 'ready'` rather than `running`, so it appears on the TAP — the
+   * token round trip is the slow half on a phone, and a box that arrives a
+   * second after the press reads as the press having done something else.
+   * `sentences.length > 0` keeps it for as long as there are words in it,
+   * which is the whole of the editing and the finishing.
+   */
+  const transcriptVisible = session.sentences.length > 0 || phase !== 'ready';
 
   async function begin() {
     setTokenFailure(null);
@@ -172,32 +199,40 @@ export function VoiceTranscript({
           change shape as words arrive (L10). `editable` is false while a
           session runs — nothing is reorderable mid-capture, and the component
           drops every row control rather than leaving them to fight the
-          incoming statements. */}
-      <DraggableList
-        items={session.sentences}
-        editable={!running}
-        onEdit={session.editSentence}
-        onCombine={session.combineSentences}
-        onMove={session.moveSentence}
-        onDelete={session.deleteSentence}
-        pending={session.pending}
-        partial={session.interim}
-        /* The step's question is the h2 above this, so a row's hidden headline
-           is an h3 — the same level the two Messages in this step take. */
-        headingLevel={3}
-        label={t('reflect.voice.label')}
-        itemNoun={t('voice.item.noun')}
-        emptyHeadline={t('voice.empty.headline')}
-        emptyText={t('voice.empty.text')}
-        listeningLabel={t('voice.listening')}
-        hearingLabel={t('voice.hearing')}
-        dropHints={{
-          combine: (position) => t('voice.drop.combine', { position: String(position) }),
-          before: (position) => t('voice.drop.before', { position: String(position) }),
-          after: (position) => t('voice.drop.after', { position: String(position) }),
-          cancel: t('voice.drop.cancel'),
-        }}
-      />
+          incoming statements.
+
+          L10 HOLDS WHERE IT WAS AIMED. The three states the component keeps in
+          one box are the three it reaches once recording has started, and
+          those still never move each other about. What `transcriptVisible`
+          decides is something else: whether the step opens with an empty box
+          on it. */}
+      {transcriptVisible && (
+        <DraggableList
+          items={session.sentences}
+          editable={!running}
+          onEdit={session.editSentence}
+          onCombine={session.combineSentences}
+          onMove={session.moveSentence}
+          onDelete={session.deleteSentence}
+          pending={session.pending}
+          partial={session.interim}
+          /* The step's question is the h2 above this, so a row's hidden headline
+             is an h3 — the same level the two Messages in this step take. */
+          headingLevel={3}
+          label={t('reflect.voice.label')}
+          itemNoun={t('voice.item.noun')}
+          emptyHeadline={t('voice.empty.headline')}
+          emptyText={t('voice.empty.text')}
+          listeningLabel={t('voice.listening')}
+          hearingLabel={t('voice.hearing')}
+          dropHints={{
+            combine: (position) => t('voice.drop.combine', { position: String(position) }),
+            before: (position) => t('voice.drop.before', { position: String(position) }),
+            after: (position) => t('voice.drop.after', { position: String(position) }),
+            cancel: t('voice.drop.cancel'),
+          }}
+        />
+      )}
 
       {/* ── ONE ROW: THE RECORDER, AND THE WAY TO THE TIPS ─────────────────
           A row rather than two stacked blocks, and it is also what stops the
@@ -216,6 +251,14 @@ export function VoiceTranscript({
         maxSeconds={SESSION_SECONDS}
         levels={session.levels}
         disabled={phase === 'connecting'}
+        /* SECOND RECORDING, SECOND-RANK BUTTON — Ben, 2026-09-24. *Record
+           more* stands over a list that is already an answer, and by then the
+           screen's loudest action is *Finish session* in the action row. Two
+           solid primaries arguing about which one ends the step is how
+           somebody taps the wrong one. It follows `recorded`, not `running`,
+           so the family does not change under the finger mid-session —
+           §7.22's own rule that the state is never carried by hue. */
+        variant={recorded ? 'secondary' : 'primary'}
         onToggle={() => {
           if (running) session.stop('manual');
           else void begin();
@@ -260,10 +303,6 @@ export function VoiceTranscript({
         />
       )}
 
-
-      <p className="musie-note">
-        {t(hintKey(recorded), { seconds: SECONDS, silence: SILENCE })}
-      </p>
 
       {/* THE RECORDER STOPPING ON ITS OWN IS NEWS. Polite, not assertive: it
           is an explanation, not an interruption, and the transcript above is

@@ -18,7 +18,7 @@
  * searched for is a real one: `Little Yellow Petals`.
  */
 import { expect, test } from '@playwright/test';
-import { enterCode, label, reachTheLibrary, withLocale } from './support';
+import { enterCode, label, reachTheLibrary, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /** MC-01 → trk-01 → a recording that exists and is named this. */
@@ -51,20 +51,16 @@ test('the title reaches the browser only at the reveal', async ({ page }, testIn
   await withLocale(page, locale);
   await reachTheLibrary(page, locale);
 
-  await page.getByRole('radio').first().click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: label(locale, 'exercises.start'), exact: true }).click();
+  await startExercise(page);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
   await expect(page).toHaveURL(/\/scan$/);
 
+  /* The code lands and the listen step is on screen: naming the card finishes
+     the scan step since 2026-09-24, so there is no Continue to press. */
   await enterCode(page, locale, CARD);
-  await expect(page.getByText(label(locale, 'session.scan.yourCard'), { exact: true }))
-    .toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
-  await expect(page).toHaveURL(/\/listen$/);
+  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
 
   /* ── THE CLAIM, AT THE MOMENT IT MATTERS MOST ──────────────────────────
      Standing on the listen step, with the track loaded and playable. If the

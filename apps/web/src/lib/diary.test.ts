@@ -25,8 +25,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DAY_SCALE_DAYS, DIARY_FILTERS, durationMinutes, filterByStatus, groupByPeriod,
-  isDiaryFilter, sessionPath,
+  DAY_SCALE_DAYS, DIARY_FILTERS, answerParagraphs, durationMinutes, filterByStatus,
+  groupByPeriod, isDiaryFilter, sessionPath,
 } from './diary';
 
 /** An entry, reduced to the one field `groupByPeriod` reads. */
@@ -208,6 +208,59 @@ describe('filterByStatus', () => {
 
   it('can come back empty, which is a state the screen has copy for', () => {
     expect(filterByStatus([finished, finished], 'abandoned')).toEqual([]);
+  });
+});
+
+/**
+ * ── THE ANSWER, IN THE PIECES IT WAS GIVEN IN ──────────────────────────────
+ * The card used to hand `reflection.body` to one `<p>`, so a spoken answer
+ * arrived as four sentences glued with spaces. This is the function that
+ * decides what a paragraph is, and both of its sources are worth pinning: the
+ * statements are the units the person edited, and a typed body's line breaks
+ * are the only thing a typed answer has to say about its own shape.
+ */
+describe('answerParagraphs', () => {
+  it('prefers the statements, exactly as they arrived', () => {
+    const reflection = {
+      mode: 'voice',
+      body: 'Erst eng. Dann weiter.',
+      statements: ['Erst eng.', 'Dann weiter.'],
+    };
+
+    /* NOT the body re-split on full stops. "Dr. Müller" would become two
+       statements, and the pauses somebody actually took are already recorded. */
+    expect(answerParagraphs(reflection)).toEqual(['Erst eng.', 'Dann weiter.']);
+  });
+
+  it('falls back to the body, split on the line breaks the person pressed', () => {
+    const reflection = {
+      mode: 'text',
+      body: 'Quieter than when I sat down.\n\nAnd then tired.',
+      statements: [],
+    };
+
+    expect(answerParagraphs(reflection))
+      .toEqual(['Quieter than when I sat down.', 'And then tired.']);
+  });
+
+  it('keeps a typed answer with no line breaks as one paragraph', () => {
+    expect(answerParagraphs({ mode: 'text', body: 'One sentence.', statements: [] }))
+      .toEqual(['One sentence.']);
+  });
+
+  it('drops blank runs rather than drawing empty paragraphs', () => {
+    /* A trailing Enter, a Windows line ending, and a line of spaces — three
+       ways to reach a `<p>` with nothing in it. */
+    const reflection = { mode: 'text', body: '  First.  \r\n \n\nSecond.\n\n', statements: [] };
+
+    expect(answerParagraphs(reflection)).toEqual(['First.', 'Second.']);
+  });
+
+  it('comes back empty for a body that is nothing but whitespace', () => {
+    /* Unreachable through the database — `body` is `not null` and the writes
+       refuse an empty answer — and the card tests this rather than the
+       reflection being null, so the two cases need no branch of their own. */
+    expect(answerParagraphs({ mode: 'text', body: '\n  \n', statements: [] })).toEqual([]);
   });
 });
 

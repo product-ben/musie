@@ -47,7 +47,6 @@ import {
   Field, Message, PhotoUpload, SegmentedControl,
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
-import { DataLightbox } from './DataLightbox';
 import { Markdown } from './Markdown';
 import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
@@ -88,13 +87,6 @@ export function SessionReflect({
      `VoiceTranscript` runs a real session, and `useTranscription` owns the
      real clock. */
   const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
-
-  /* THE DATA PROMISE, and the ref that gets focus back. With no
-     `Dialog.Trigger` there is nothing for base-ui to return focus to, and
-     focus landing on <body> is how a keyboard user loses a reflection they
-     were halfway through writing. `Lightbox` names this cost itself. */
-  const [dataOpen, setDataOpen] = React.useState(false);
-  const dataLink = React.useRef<HTMLButtonElement>(null);
 
   return (
     <>
@@ -141,35 +133,25 @@ export function SessionReflect({
           />
         )}
 
+        {/* ── AND NOW NOT EVEN A SENTENCE — Ben, 2026-09-24 ────────────────
+            The step carried the data promise twice over. It was a `Message`
+            with a four-clause paragraph until 2026-09-23, then one line of
+            small print — *Musie keeps the text, never your voice* — with
+            *More about your data* beside it opening `DataLightbox`.
+
+            Both are gone. The transcript is what the reader came to this step
+            for, and everything under it was competing with it: the promise,
+            the second hint, the link. The promise is not withdrawn — it is
+            still true, and `DataLightbox` still holds all six sentences of it
+            — but this is no longer the place that says so.
+
+            WHICH LEAVES THE LIGHTBOX WITH NO DOOR. Nothing in the app opens it
+            any more, and that is the one thing about this change that is not
+            finished: logged in apps/web/OPEN-QUESTIONS.md, because where the
+            data promise lives is Ben's to place and not something to invent a
+            nav item for. The component stays built. */}
         {mode === 'voice' && (
-          <div className="musie-stack">
-            <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
-
-            {/* ── ONE SENTENCE, NOT A BOX — Ben, 2026-09-23 ──────────────
-                This was a `Message variant="info"` carrying a headline and a
-                four-clause paragraph: what happens to your words, what happens
-                to the recording, and what was still unbuilt. Two of those
-                three stopped being true when F.6 landed the write, and the
-                third was never the thing somebody standing on this screen with
-                a microphone open needed to read.
-
-                What is left is the promise itself — Musie keeps the text and
-                never the voice — with the rest a word away. The `Message` is
-                gone rather than shortened: an info box is a thing that
-                HAPPENED, and this is a standing fact about the product, which
-                is a line of small print. */}
-            <p className="musie-note">
-              {t('privacy.voiceShort')}{' '}
-              <button
-                ref={dataLink}
-                type="button"
-                className="musie-inline-link"
-                onClick={() => setDataOpen(true)}
-              >
-                {t('privacy.more')}
-              </button>
-            </p>
-          </div>
+          <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
         )}
 
         {mode === 'photo' && (
@@ -195,12 +177,6 @@ export function SessionReflect({
           </div>
         )}
       </div>
-
-      <DataLightbox
-        open={dataOpen}
-        onClose={() => setDataOpen(false)}
-        finalFocus={dataLink}
-      />
     </>
   );
 }

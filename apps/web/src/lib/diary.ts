@@ -107,6 +107,50 @@ export interface DiaryReflection {
   /** 'text' or 'voice'. A voice answer is stored as its transcript. */
   mode: string;
   body: string;
+  /**
+   * THE ANSWER AS IT WAS GIVEN, IN PIECES — Ben, 2026-09-24.
+   *
+   * `body` is one string: `joinStatements` glues a spoken answer together with
+   * spaces (lib/statements.ts), and a typed one arrives with whatever line
+   * breaks the person pressed. Either way the diary used to render it as a
+   * single paragraph, so four spoken sentences came back as a wall — the
+   * pauses the person actually took were in the database and not on the
+   * screen.
+   *
+   * `reflection_statements` is where they still are: one row per statement,
+   * ordered by `position`, which is exactly the list the reflect step let them
+   * edit, reorder and merge. So the entry shows the same units the person
+   * arranged rather than a re-run of the join.
+   *
+   * EMPTY FOR A TYPED ANSWER, and that is not a gap — there are no statements,
+   * there is a paragraph somebody wrote. `answerParagraphs` is what turns
+   * either case into the lines to draw, and it is the only thing a screen
+   * should read.
+   */
+  statements: string[];
+}
+
+/**
+ * The answer, as the lines to put on the screen.
+ *
+ * TWO SOURCES, ONE SHAPE, and the order of preference is the whole of it:
+ *
+ *   spoken   the statements, in `position` order. They are the units the
+ *            person spoke and then edited; `body` is their concatenation and
+ *            knows nothing about where one ended.
+ *   typed    `body`, split on its own line breaks. Somebody who pressed Enter
+ *            twice meant two paragraphs, and a `<p>` per run of newlines is
+ *            that, where the single `text` slot flattened it.
+ *
+ * Blank runs are dropped rather than rendered as empty paragraphs, so a
+ * trailing Enter costs nothing. A body that is nothing but whitespace cannot
+ * reach the database at all — `body` is `not null` and `saveStatements`
+ * refuses an empty one — but an empty array here is still the honest answer
+ * for it, and the card draws no box rather than an empty one.
+ */
+export function answerParagraphs(reflection: DiaryReflection): string[] {
+  if (reflection.statements.length > 0) return reflection.statements;
+  return reflection.body.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== '');
 }
 
 /**
@@ -518,7 +562,7 @@ const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exer
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -562,12 +606,47 @@ interface SessionRow {
  * answers are shown rather than in whether any appears at all.
  */
 interface DetailRow extends SessionRow {
-  reflections: Embedded<DiaryReflection>;
+  reflections: Embedded<{
+    mode: string;
+    body: string;
+    /* A TO-MANY EMBED UNDER A TO-ONE ONE, and the only array in this row that
+       really is one: `reflection_statements.reflection_id` is a plain foreign
+       key with no unique on it, so PostgREST returns the rows as a list and
+       supabase-js types them as one. */
+    reflection_statements: { id: string; text: string; position: number }[] | null;
+  }>;
   tracks: Embedded<{
     id: string;
     src: string;
     duration_seconds: number;
   }>;
+}
+
+/**
+ * Column spellings stop here, and so does the ordering.
+ *
+ * SORTED IN THE CLIENT rather than with `.order('position', { foreignTable:
+ * … })`. An embedded order is one more thing the select has to keep true, and
+ * the list is a handful of sentences somebody spoke — where the cost of
+ * sorting is nothing and the cost of a silently unordered answer is the
+ * person's own words in the wrong sequence. `position` is unique per
+ * reflection by index, so the sort is total.
+ *
+ * Blank text is dropped. `saveStatements` already filters it on the way in, so
+ * this is the second of two guards rather than the only one — but a row that
+ * reached the table some other way should not draw an empty paragraph in
+ * somebody's diary.
+ */
+function toReflection(embed: DetailRow['reflections']): DiaryReflection | null {
+  const reflection = one(embed);
+  if (reflection === null) return null;
+
+  const statements = [...reflection.reflection_statements ?? []]
+    .sort((left, right) => left.position - right.position)
+    .map((statement) => statement.text.trim())
+    .filter((text) => text !== '');
+
+  return { mode: reflection.mode, body: reflection.body, statements };
 }
 
 /** Column spellings stop here, like every other join in this module. */
@@ -705,6 +784,6 @@ export async function readDiaryEntry(
 
   return {
     kind: 'entry',
-    entry: { ...entry, reflection: one(row.reflections), track: toTrack(row.tracks) },
+    entry: { ...entry, reflection: toReflection(row.reflections), track: toTrack(row.tracks) },
   };
 }

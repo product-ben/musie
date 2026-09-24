@@ -3090,3 +3090,1007 @@ being a copy.
 
 What I need from Ben: **nothing, just flagging** that the second implemented
 exercise has no automated walk.
+
+---
+
+# Usertesting 260925 · UX improvements
+
+## The step's headline goes to full contrast, which reverses a decision this file records
+
+Where: `apps/web/src/shell.css`, the `.musie-md` block
+
+What I checked: the pairing shipped on 2026-09-23 as body-xl in **muted** ink
+over body-lg in muted ink, and the muted half was not an accident — the comment
+in that block records that the full-contrast version shipped once and "read as a
+different kind of thing", caught by eye on the hosted walk-through of
+2026-09-21. So this change undoes something that was tried, seen and rejected.
+
+What I did: what Ben asked for. Headline `--type-heading-md` + `--on-surface`,
+description `--type-body-md` + `--on-surface-muted`. Two things came with it
+that he did not name, and I am flagging both rather than burying them:
+
+1. **h3–h6 took `--on-surface` too.** They are the fallback for a heading
+   deeper than the parser's clamp, and leaving them muted would have made a
+   deeper heading the only heading in the block that reads as prose.
+2. **The `<strong>` comment's claim is no longer true.** It said full contrast
+   was "the one place a step's copy leaves the muted ink". The headline is now
+   the other place, and the comment says so instead.
+
+Why it is defensible on its own terms and not only as an instruction: the
+earlier argument was that the headline should stay the same VOICE as the prose,
+because inside a wizard panel the step's question IS the heading. In front of
+actual people the consequence was that headline and description read as one
+undifferentiated block. The new pairing also uses the **more honest token** —
+Layer 1 states in as many words that body-xl "is not a heading", and this
+element is an `<h2>` — and it does the separating with contrast while the size
+comes DOWN a step (26–34px → 22–26px) rather than up.
+
+What I need from Ben: **nothing, unless the 2026-09-21 observation recurs.** It
+was a real observation about a real screen; what changed is the rest of the
+block around it, not the eye that made it. If the headline now reads as a
+different kind of thing again, the lever is the ink, not the size.
+
+## `.musie-md` and `.musie-prose` now differ only in ink, and that makes the component request overdue
+
+Where: `apps/web/src/shell.css`, both blocks
+
+What I checked: `.musie-prose` declares no type of its own — body-md reaches it
+from `body` in `styles.css` — so it did not move when `.musie-md` came down to
+meet it. Its own comment already invoked L14.3 ("two patterns that differ only
+by type step are a component request") as a thing that would apply at a third
+caller.
+
+What I did: nothing to either pattern's structure, and I updated the comment to
+state the new relationship rather than the old one. The two callers are
+`components/Markdown.tsx` (four session steps) and `DataLightbox.tsx`.
+
+Why I did not merge them: they still differ in ink and in whether they parse
+their input, and merging them is a design-system change — the prose component
+L14 says the system does not have. That is rule 1's "a fix belonging in the
+design system rather than the app", and I am not making it on my own
+initiative.
+
+What I need from Ben: **a decision the next time either one is touched.** The
+shape of the answer is one Layer 2 prose component taking the document and a
+tone, which would delete both custom patterns. Until then this entry is the
+record that they converged.
+
+## The step headline's gap now equals the block's own bottom margin
+
+Where: `apps/web/src/shell.css`, the `.musie-md` block
+
+What I checked: Ben, on the 260925 round — in a text list the items must sit
+closer together than the headline sits to them. They did not, and the reason
+was not the declared gap. Both were `--space-gap-related`; what differs is
+LEADING. heading-md is line-height 1.25, body-md is 1.6, so the same 12px buys
+20.3px of white under the headline and 22.6px between two items. The headline
+was measurably the tighter join — ratio 0.90.
+
+What I did: the headline's gap goes to `--space-gap-group`, as the difference
+added on top of the container's gap, since a flex `gap` is one value for the
+whole column. Items and sibling blocks stay at `--space-gap-related`, one rung
+in both places so a bulleted run (paragraphs) and a numbered run (`<li>`s)
+still read identically. Ratio 0.90 → 1.78, measured in both locales.
+
+`--space-gap-stack` is the semantically neater fit — a headline and its body
+are one molecule — and I tried it first. It is **invisible**: it moves the
+headline 4px, and on a step whose first item wraps, the 4px the headline gains
+is given straight back by the tighter items below, so the two renderings are
+the same picture. Ratio 1.08. The semantic ladder has no gap alias between 16
+and 32, so the choice was a rung that does not read or one that does.
+
+The cost, stated: **the headline's gap now equals the block's own bottom
+margin** (32 = 32). L2's doubling check still holds where it is about atoms in
+a group — 32 ≥ 2 × 12 for the items — but the split inside the block is no
+longer smaller than the split that ends it. What keeps the block reading as one
+thing is the TYPE, heading-md at full contrast over body-md muted, rather than
+the space. It reads correctly on all four steps at 393px and 1024px, in both
+locales; I looked before believing the numbers.
+
+What I need from Ben: **nothing unless the block stops cohering.** If it does,
+the lever is the bottom margin — `--space-section` below the block would
+restore the ordering — not this gap, because shrinking this gap is what the
+round asked to undo. The other way out is a `--space-gap-prose` rung at 24px in
+Layer 1, which is a design-system change and so not mine to make.
+
+## Where Ben's "P.S." goes, since the brief did not say
+
+Where: `apps/web/src/routes/AboutMusie.tsx`, `apps/web/src/i18n/{en,de}.ts`,
+`apps/web/src/shell.css`
+
+What I checked: the 260925 brief cut the explainer carousel from five slides to
+three, gave the three lines and the new headline ("Was Musie kann"), and then
+said *Replace "P.S: Du bekommt einen Überblick über alle vergangenen Session
+und Einblicke in deine Reflektonen in deinem Tagebuch in Musie"*. There is no
+"P.S." anywhere in the app to replace — `grep -rn "P\.S" apps/web/src` is
+empty — so the sentence is new copy, and the word "replace" is about the two
+slides the cut removed rather than about a string.
+
+What I did: made it `about.postscript`, one line under the CTA on `/`, in a
+`.musie-postscript` L14 pattern. The reasoning, so it can be overruled cheaply:
+the CTA is gated on having SEEN the last slide, so anything that is a slide is
+a swipe somebody owes before they may start — and the diary is not a step of a
+session, it is what is there afterwards. A P.S. sits after the sign-off.
+
+Two spellings are corrected against `docs/GERMAN-UI-WRITING.md` and the rest of
+`de.ts`: *bekommt* → *bekommst*, *Reflektonen* → *Reflexionen* (`de.ts` already
+writes *Reflexion* everywhere else). The word order is turned so the sentence
+opens on the diary instead of ending on three stacked prepositional phrases.
+The ampersand in *Fühle & verstehe dich selbst besser* is Ben's and is kept,
+in the English too.
+
+What I need from Ben: **confirmation of the placement**, when the screen is
+looked at. If it should be a fourth card after all, it is one line in `SLIDES`
+plus a glyph — but then the gate costs a fourth swipe, which is the thing the
+cut was for.
+
+## The intro step is called `Einsteigen` / `Start`, and one surface still says `intro`
+
+Where: `apps/web/src/i18n/de.ts`, `apps/web/src/i18n/en.ts`, and the defect in
+`apps/web/src/AppShell.tsx:106`
+
+What I checked: the four step names as a set. German ran `Einstieg · Scannen ·
+Hören · Nachdenken` — one plain noun among three substantivierte Infinitive.
+English ran `Intro · Scan · Listen · Reflect` — one clipped noun among three
+bare verbs. In both languages the odd word named the SECTION where the other
+three name what you do in it.
+
+What I did: Ben's `Einsteigen` for German, and `Start` for English. Two keys,
+both catalogues, nothing else — `session.step.*` is referenced by key only
+(`lib/diary.ts`, `routes/Session.tsx`), so no literal moved with it. Walked the
+rail in both locales: "Einsteigen, aktuell" and "Start, current".
+
+Why `Start` and not `Begin`, `Step in` or `Get started`, all of which say the
+sense better in the rail: the word is INTERPOLATED in two places —
+`diary.stoppedAt` ("Stopped at {step}") and `route.session.title`. *Stopped at
+Begin* is not English. `Start` is the only candidate that is both a bare verb
+like its three neighbours and a noun that survives the sentence. It is the same
+word `menu.startSession` and `exercises.start` use as their verb; those are
+buttons that start a session from outside it, this names the first step of one
+already running, and nothing puts the two on a screen together.
+
+What I need from Ben: **nothing about the words** — but the rename turned up a
+defect beside them, and it is not mine to fold into a copy change:
+
+**The document title renders the raw step slug, in both locales.** The tab
+reads *Aktuelle Session – intro · Musie* and *Current session — intro · Musie*,
+never *Einsteigen* or *Start*. `AppShell.tsx:106` is
+`t(handle.titleKey, leaf?.params)` — it feeds the ROUTE PARAMS into the
+interpolation, and `:step` in the URL is the English slug by design
+(`router.tsx:125`). So `{step}` has always been `intro` / `scan` / `listen` /
+`reflect`, lower case, untranslated. `routes/Placeholder.tsx` does the same
+thing and its own comment describes it as the feature. It predates this change
+and nothing else on the screen is affected: only the tab, the window list and
+what a screen reader announces on navigation.
+
+Not fixed here, because the fix is a decision rather than a substitution —
+`AppShell` would have to map a `:step` param onto `session.step.*` before
+translating, which means the shell learning about steps, or the handle carrying
+a per-route params translator. Both are shapes worth choosing on purpose. One
+line of scope, one line of blast radius, and it is Ben's call which.
+
+## The exercise detail is gone, and `exercise_i18n.needs` went with it
+
+Where: `apps/web/src/routes/Exercises.tsx`, `apps/web/src/i18n/{en,de}.ts`
+
+What I checked: what the detail lightbox carried that the card underneath does
+not. Four things were in it — the name, the description, a *You need* row and a
+*Duration* row. The name and the description are the card's own headline and
+text, and the duration is already a fact chip on the card (`exercises.fact.time`,
+which is the same two timeframe columns the row read since `20260921120000`
+deleted `duration_label`). That leaves ONE fact that only the popup had:
+`exercise_i18n.needs`. Read rather than assumed, and it is thinner than I
+expected: it is `'Your physical Mindfulness Cards deck'` for Achtsame Pause
+(`20260918150600`) and `'Mindfulness Cards deck'` for both exercises after
+`20260923150000`. That is the `cards` fact chip — *Needs your Mindfulness Cards
+deck* — written out longhand.
+
+What I did: removed the lightbox; a tap on a card starts the session. Deleted
+`exercises.start`, `exercises.detail.needs`, `exercises.detail.duration` and
+`exercises.timeframe` from both catalogues, since nothing reads them any more —
+`src/i18n/index.test.ts` used `exercises.timeframe` as its two-slot fixture and
+now uses `exercises.fact.time`, which carries the same two slots.
+
+Why: the brief is about clicks, and this was a whole screen charging a tap for
+one sentence. Nothing about starting needs confirming — the session is closable
+from every step of it.
+
+What I need from Ben: **whether `needs` is now simply dead.** On today's
+content the answer looks like yes — both exercises say *Mindfulness Cards deck*
+in it and the `cards` chip says the same thing on the card — and then the column
+should be dropped in a later migration rather than left looking used. It is
+Ben's to say, because the column is the spreadsheet's and the spreadsheet may
+intend to put something in it that the chips cannot say (somewhere quiet, thirty
+minutes undisturbed, a pen). If it does, the place for it is the INTRO step,
+which is inside the session and a tap away from the exercise rather than a
+commitment to it — not the card, where it would be a fourth line and roughly
+double the card's height.
+
+One consequence that cannot be tidied: `20260923150000_exercise_library_freie_bahn.sql:97`
+describes `needs` as "the *Du brauchst* row in the detail lightbox", and that
+lightbox no longer exists. The migration is applied, so under rule 4 it is not
+edited — the comment is a true record of why the column was filled on the day it
+was filled, and this entry is where it is corrected.
+
+One more, smaller, and mine rather than Ben's: **there is no longer anything on
+screen between the tap and the session.** The busy state used to be the
+lightbox's CTA spinner; the card is checked while `createSession` is in flight
+and that is all. Locally the insert is under 100 ms and the refusal path already
+renders a Message, so I have left it alone rather than inventing a loader for a
+gap nobody has seen yet. If it reads as a dead tap on a real phone on mobile
+data, the honest fix is a `loading` state on the card, which is a `RadioCards`
+change and so not mine to make.
+
+## A card that lands goes straight to `listen`, and the deep link writes the step
+
+Where: `apps/web/src/routes/Session.tsx` (`submitCode`), `apps/web/src/routes/ScanLink.tsx`
+
+What I checked: the three ways a card gets named — the typed code, the camera,
+and `/s/:code` from a phone's own camera app — and what each one did afterwards.
+All three stopped on the scan step, which then redrew itself as *Your card ·
+MC-08 · Anger* with Continue under it: a screen whose only content is the answer
+to a question the person had already answered by holding the card up.
+
+What I did: the first two `advance()` the moment `scanCardInto` comes back
+`applied`, after the re-read that fetches the card and the track. The deep link
+`saveStep(row.id, 'listen')` before redirecting, which is not bookkeeping: the
+session it lands on is usually standing on `intro` (the deck is in somebody's
+hand before they have pressed Continue), `listen` is unreachable from `intro` by
+the reachability rule, and the session screen's guard would redirect them
+straight back. `e2e/scanlink.spec.ts` asserts the column for that reason.
+
+Why: naming the card IS finishing the scan step, so finishing it is what naming
+the card now does.
+
+What I need from Ben: **nothing about the flow** — going back one step is where
+changing the card lives, exactly as the brief says, and the scan step keeps both
+of its states plus *Scan a different card* for that. Two consequences worth
+having in writing, neither of them a question:
+
+- **The scan step's second state is now reachable only by going back.** It was
+  the step's resting state after a scan and is now the thing you return to. It
+  is unchanged and walked by `e2e/session.spec.ts`, which presses Back from
+  `listen` to reach it.
+- **A deep link scanned from `reflect` rewinds the row to `listen`.** It already
+  rewound it to `scan`, because every step change writes `sessions.step` and the
+  resolver sent the person back to the scan step; the new behaviour rewinds one
+  step less. Nobody has done this on purpose, but somebody who scans a second
+  card while writing their reflection will.
+
+## The filled `Next` chevron is the loudest thing on the explainer, and it is a prop
+
+Where: `apps/web/src/routes/AboutMusie.tsx`, the `nextVariant` prop
+
+What I checked: the carousel now has three swipe affordances (peek, nudge,
+grab — logged in `packages/design-system/stories/OPEN-QUESTIONS.md`), so the
+gesture is discoverable. What remains pointing the other way is the screen's
+own composition: until the gate opens this page passes
+`nextVariant={seenAll ? 'secondary' : 'primary'}`, so while somebody is
+deciding how to move through the carousel, the forward chevron is a **filled
+terracotta circle** — measurably the highest-contrast element on the screen,
+beside a dot row. That reads as a stepper, which is exactly what the 260925
+testers acted on.
+
+What I did: **nothing.** The filled Next is a deliberate prototype decision,
+documented in `Carousel`'s own prop: "until the run has been seen, going on is
+the only thing to do and Next holds it". It was right when pressing the button
+was the only way through. It is the one thing I would not change on my own
+initiative, because it is a composition decision on Ben's screen rather than a
+defect in a component.
+
+What I need from Ben: **a yes or no to `nextVariant="secondary"` throughout.**
+Nothing about clicking gets worse — same hit areas, same dots, same labels,
+same keyboard, same `--target-min` — it only stops the button being the one
+obviously-pressable thing on a screen that now wants a drag. It is one word in
+this file, and reversible in one word. The measured arguments on the other
+side: the CTA below is disabled until the run has been seen, so the chevron is
+currently the only filled control on the screen, and handing it to `secondary`
+leaves the screen with no filled control at all until the gate opens.
+
+## The rail's markers carry glyphs instead of numbers, and two of the four were not chosen
+
+Where: `apps/web/src/routes/Session.tsx` (`STEP_ICON`), and the prop it needs in
+`packages/design-system/src/InteractiveWizard.tsx`
+
+What I checked: whether this belonged in the app or the component. The number
+is `i + 1` inside `InteractiveWizard` — positional, computed, and nothing a
+screen can reach. CLAUDE.md §1 is explicit that a screen never reaches into a
+component's geometry and that the fix goes into the component, the way
+`CtaButton` got `align`. So `WizardStep` gained an optional `icon`, and the app
+passes four.
+
+What I did: `icon?: LucideIcon` on `WizardStep`, drawn in place of the number.
+**Optional**, so a run that passes none renders exactly as before — the stories
+still do. And it replaces the NUMBER only: `completed` still swaps to a check
+and `skipped` to a dash. That is not tidiness, it is 1.4.1 — an icon that
+stayed put through completion would leave `active` and `completed` differing by
+fill alone. Verified by eye in the app: at the scan step, Einsteigen shows the
+check, not its door.
+
+Two of the four glyphs were not a choice — they are what this product already
+uses for that idea, and one idea with two glyphs is worse than either:
+
+| step | glyph | where it already lives |
+|---|---|---|
+| scan | `ScanLine` | the card scanner's own glyph, `CardScanner.tsx:90` |
+| listen | `Headphones` | the `sound` fact chip on every exercise card, `Exercises.tsx:53` |
+
+The other two had nothing to inherit, so they are mine and they are the part
+worth a second opinion:
+
+- **intro → `DoorOpen`.** The step is the way in, and it is the word the rail
+  now uses for it — *Einsteigen*. `BookOpen` was the alternative, reading the
+  step as the explainer you read rather than the act of entering. The door won
+  because the label names the act.
+- **reflect → `MessageCircleQuestion`.** The step asks, and the question is its
+  constant part. Deliberately **not** `PenLine`, `Mic` or `Camera`: those three
+  are the answer MODES inside this very step (`SessionReflect.tsx:124-126`), so
+  any of them in the rail would promise one of the three before the person has
+  picked.
+
+What I need from Ben: **a look at those two**, and nothing else. Both are one
+line in `STEP_ICON`.
+
+One consequence, flagged rather than solved: **the rail no longer states a
+step's position.** The number was the only place it was written down — the
+marker is `aria-hidden`, so screen-reader users never had it, and order in the
+rail is what everyone else reads it from. Nothing in the product refers to "step
+3", so nothing breaks. It is worth knowing before anyone writes copy that does.
+
+## ANSWERED — the filled `Next` chevron, and where the answer went
+
+Where: `apps/web/src/routes/AboutMusie.tsx`, the `nextVariant` prop
+
+The entry above asked for a yes or no to `nextVariant="secondary"` throughout.
+Ben, 2026-09-25: **yes on touch, no on a cursor — and do it in the component.**
+
+So this screen's line is unchanged, and that is the point. The carousel now
+renders its forward control `secondary` on any coarse pointer whatever it is
+passed, so `nextVariant={seenAll ? 'secondary' : 'primary'}` still says the
+true thing where a cursor is the only way through, and says nothing at all on
+a phone. The pointer is the component's business to read, not this screen's —
+which is why the answer is not in this file.
+
+The reasoning, the measurements and the two things it leaves open are logged
+in `packages/design-system/stories/OPEN-QUESTIONS.md` under "Carousel — the
+forward chevron demotes on touch, and does not disappear". The short version:
+hiding the chevrons would have left a thumb with nothing but 24px dots on a
+screen that gates its CTA on reaching the last slide.
+
+## The listen step's buttons sit under Safari's toolbar, and the scroll that would reach them is forbidden
+
+Where: `apps/web/src/components/SessionListen.tsx`, `apps/web/src/shell.css`,
+`packages/design-system/src/musy-components.css`, and the viewport tokens in
+`packages/design-system/tokens/musy-foundations.css`
+
+**UNRESOLVED.** A fix was written on 2026-09-24 and reverted the same day — Ben
+did not like the shape of it. The measurements below cost a day's tooling and
+are true whatever gets built next, so they are kept and the solution is not.
+
+Reported from a phone (Ben, 2026-09-24): on `/listen`, *Track details and
+player* and *Start reflection* sat underneath the browser's own bar, and the
+snapping made them impossible to reach. Two independent faults.
+
+**One — the view is sized to a window that no longer exists.**
+`--viewport-block` is `visualViewport.height`, written by `theme-init.js`. That
+number is true at the instant it is read and false a moment later: on iOS it
+GROWS as the toolbar collapses, so a full-height view measured mid-scroll is
+taller than the window becomes when the toolbar slides back. The stage pins its
+action row to its own foot (`.musie-listen__actions`, `margin-block-start:
+auto`), which is precisely the line that then goes under the chrome.
+
+**Two — `mandatory` snap forbids the only scroll offset that would help.**
+This is the part worth reading, because the code asserts the opposite in two
+places. Both `musy-components.css` and `SessionListen.tsx` say a view taller
+than the window relaxes its own snapping under the spec, so a long view can
+still be read through. That is what css-scroll-snap-1 says. **It is not what
+WebKit does.** Those two comments are still in the tree and are still wrong.
+
+Measured, Playwright WebKit and Chromium, a three-view run at 393×620, ×660 and
+×844, overflowing by 0, 150 and 300px, and again against the app's own
+stylesheets:
+
+| | asked to rest 152px down, to clear the bar | |
+|---|---|---|
+| WebKit | thrown back to **0** | the reported bug |
+| Chromium | honours the range | why it never showed on desktop |
+
+Three further facts, each measured, that constrain anything built next:
+
+1. **`scroll-snap-align: none` on the stage does not work.** It is the obvious
+   fix. In **both** engines the document then snaps to the SECOND view on load:
+   the top of the page stops being a snap position, `mandatory` insists on one,
+   and the nearest is a screen down — so the reader lands on the Störer having
+   never seen the step.
+2. **WebKit's threshold for relaxing an oversized view is a flat 150px** of
+   `scroll-margin-block-end`. Swept in 25px steps, it is identical at every
+   viewport height, every overflow and every distance asked for, so it is an
+   engine constant and nothing explains it.
+3. **Nothing in CI can catch this class of defect.** `playwright.config.ts` has
+   two projects and both are Chromium, where the bug is invisible. A WebKit
+   project would have caught it; adding one doubles the walk's runtime, and the
+   suite is already deliberately outside `pnpm check`.
+
+What I need from Ben: **what was wrong with the shape of the reverted fix**, so
+the next one does not repeat it. The two halves were independent and could be
+judged separately — capping the measured viewport at `100svh` in Layer 1, and a
+`.musy-snap-view--free` modifier that extended a view's snap area past its own
+foot. Either could be kept without the other.
+
+# Phase E — the scan step becomes one frame (2026-09-24)
+
+## The scanner is a design-system component now, and `.musie-scanner` is gone
+
+Where: `packages/design-system/src/QrScanner.tsx`, `src/components/CardScanner.tsx`,
+`src/shell.css` (the deleted `THE QR READER` block)
+
+What I checked: rule 1 — a custom `musie-` pattern is permitted only where the
+system has no component, and a pattern that recurs is a component request. The
+frame had grown from a dashed placeholder to five states with a camera, a mask,
+two icon controls and a form in it; "a square you hold a code up to" is not
+this screen's idea, it is the same object anywhere a code is ever read.
+
+What I did: moved the whole of it into Layer 2 as `QrScanner`, with the split
+`RecordButton` already makes — the component draws the frame and never calls
+`getUserMedia`. `CardScanner` is now the adapter: four camera phases to five
+modes, a `CameraProblem` to a sentence, `canRetry` to whether a retry is
+offered. Every label is a required prop with no default (rule 7).
+
+Why: the app was carrying 100 lines of CSS for something the system should own,
+and no state of it could be looked at without a session and a camera. All five
+are in Storybook now.
+
+What I need from Ben: nothing, just flagging — but the component is new and has
+had one reviewer.
+
+## The brackets over a live picture were invisible in light theme, and the fix is measured but not phone-tested
+
+Where: `packages/design-system/src/musy-components.css` (`.musy-scanner__mask`,
+`__corner`), `tokens/musy-foundations-amendments.css` (G3)
+
+What I checked: L15 asks for contrast against every surface an indicator can
+land on, and a camera preview is not a surface with a colour. The first version
+dimmed the picture outside the card window and drew the corner brackets ON the
+window edge — so half of each bracket sat in the UNDIMMED part, where a pale
+stroke over a white table is nothing. Storybook's `LiveOverAPicture` (half
+near-white, half near-black) showed it immediately in the light theme.
+
+What I did: two things. The brackets now sit one stroke-width OUTSIDE the
+window, so every arm lands on the scrim; and `--on-scrim` was added as token
+gap G3, because Layer 1 names an ink for every surface except `--alpha-scrim` —
+`--on-surface-inverse` cannot do it, since it flips with the theme while the
+scrim is dark in both. Computed worst case, ink on scrim over a white picture:
+**3.88:1 in light, 7.6:1 in dark**, against 1.4.11's 3:1 for a non-text
+indicator.
+
+Why: a number beats an opinion, and the failing case was the one the story was
+built to show.
+
+What I need from Ben: **an eye on it at 393px with a real camera**, which is
+the part no runner reaches. Specifically: the brackets against a white table in
+a bright room — the 3.88:1 is arithmetic on the token values, not a photograph
+— and whether the two icon controls bottom-right are comfortable for a thumb
+while the other hand holds a card.
+
+## Dropping `session.scan.reader` moved a sentence into content that will be overwritten
+
+Where: `src/i18n/en.ts`, `src/i18n/de.ts`,
+`supabase/migrations/20260924120000_scan_md_phone_camera.sql`
+
+What I checked: the empty frame carried two sentences and the redesign empties
+it. `readerNote` is now what the primary button says, so it simply goes. But
+`reader` was the ONLY place the product ever mentioned the common way in — a
+printed card read by the phone's own camera app, which is what E.0 bought — and
+deleting it would quietly stop teaching the fastest route.
+
+What I did: Ben's call, asked and answered before this was written — the
+sentence moves into the exercise's own `scan_md`, as a clause on the step that
+already says to scan the code, for `mindfulness-cards` and `free-rein` in both
+locales.
+
+Why: instructions for a step belong with the other instructions for that step.
+
+What I need from Ben: **it is now content, and content here is provisional.**
+`scan_md` is the Mindfulness Cards spreadsheet's column and the seed says it
+will be overwritten. If the real copy lands without that clause, Musie stops
+mentioning the phone's camera app anywhere at all. The sentence has to go into
+the spreadsheet, not just into this migration.
+
+## The typed form inside the frame breaks the square, and that was the choice
+
+Where: `packages/design-system/src/musy-components.css`
+(`.musy-scanner__frame--manual`), `src/components/SessionScan.tsx`
+
+What I checked: the frame is capped at five guided targets (320px) with
+`aspect-ratio: 1`. The form is a label, a field, a hint, a submit and a way
+back — five things, which do not fit in a 320px square on a phone.
+
+What I did: `manual` drops `aspect-ratio` and the box grows to its form; the
+border goes solid there, as it does when the camera is live, because something
+is in the box. Rendered at 393px: the form fits with the German hint wrapping
+to three lines and nothing clipped.
+
+Why: the square is what makes it read as a viewfinder, and a form is not one.
+
+What I need from Ben: nothing, just flagging — the step's height now changes
+when the form opens, which it did before too (the form used to appear below the
+frame). It is one box changing rather than a column growing.
+
+## The four audio masters are gone from the LOCAL bucket, and `supabase db reset` did it
+
+Where: `src/lib/db.content.db.test.ts` ("lets a signed-in listener sign a real
+object"), `e2e/reveal.spec.ts`
+
+What I checked: the migration above needed `supabase db reset` to apply, and a
+reset wipes storage as well as the database. The `trk-NN.mp3` objects are an
+operator act with files that "deliberately never entered this repository"
+(BUILD-PLAN, E.4), so nothing in the repo can put them back.
+
+What I did: nothing — there is nothing here to do it with. `pnpm test:db` is
+**84 passed, 1 failed** and `pnpm test:e2e` is **14 passed, 2 failed**, and all
+three failures are that one missing object (`NoSuchKey`, then no `<audio>` to
+wait for). Every other walk passes, including both camera walks in both
+locales.
+
+Why: a reset was the only way to apply a content migration locally.
+
+What I need from Ben: **re-upload the four recordings to the local `tracks`
+bucket**, after which those three should pass again. Worth knowing for next
+time: any content change means a reset means re-uploading them.
+
+## The already-running message has two ways out, and it needed two things from the system
+
+Where: `apps/web/src/routes/Exercises.tsx`, `apps/web/src/i18n/{en,de}.ts`,
+`packages/design-system/src/musy-components.css` (`.musy-msg__action`)
+
+What I checked: what the refusal could offer. `sessions_one_running_per_user`
+is a partial unique index, so a second start comes back 23505 and the screen
+reads the running session back. Until now that bought one link — *Continue that
+session* — and the person who wanted the OTHER exercise had to go there, close
+it, come back and find the card again: four screens to undo one tap.
+
+What I did, to Ben's brief: the link is the PRIMARY action; a second,
+`secondary` action reads *{name} starten und vorherige Session beenden* and
+ends the running session (`abandoned`, with `ended_at`) before creating the new
+one; and the list behind the message is `disabled` while the question is open
+and keeps its selection, so the card the message is about stays on screen,
+checked. `e2e/cancel.spec.ts` walks both halves — the frozen, still-checked card
+in the existing walk, and the end-and-start in a second one that asserts both
+rows.
+
+Why `abandoned` and not `finished`: DOMAIN-MODEL's diagram reads
+`started --> finished : completes the reflection`, and `sessionMachine`'s FINISH
+guard enforces it. A session ended from the library to make room for another one
+has not been reflected, and the diary already draws an abandoned run as
+unfinished, at the step it stopped on.
+
+What I need from Ben: **three things, none of them blocking.**
+
+1. **`Message` says "exactly one action. Two actions means this is a dialog,
+   not a message"** (`Message.tsx`, `MessageProps.action`). This screen now
+   passes a `ButtonGroup` with two. I did not widen the prop — composing two
+   Layer 2 components is not the app reaching into the component's geometry —
+   but the comment is now describing a rule the app has a live exception to,
+   and it is the system's comment to change or to defend. The exception is
+   real: this is not a dialog, it is a message the person can ignore, and both
+   ways out of it belong where the sentence is.
+
+2. **`.musy-msg__action` was `align-self: flex-start`, and I changed it to
+   `stretch`.** A lone button looks identical either way — `.musy-btn` is
+   inline-flex and hugs its label — but `ButtonGroup` stacks below `--bp-md`
+   with `inline-size: 100%` on each action, and 100% of a shrink-wrapped box is
+   100% of the longest label. That is a Layer 2 fix in the Layer 2 file, which
+   rule 1 puts there.
+
+   **What is left, measured at 393px:** the message's grid is
+   `auto minmax(0,1fr) auto`, so the icon column and the 44px dismiss target
+   leave the main column **189px of the message's 311px**. The long action is
+   then four lines tall (128px in German, 108px in English). It is legible and
+   it is the same geometry every Message has always had — but an action row
+   that spanned all three columns would give it 311px and two lines. That is a
+   structural change to `Message` (the action would move out of `__main` and
+   become a second grid row), so it is the system's call, not mine.
+
+3. **`exercises.alreadyRunningDetail` still reads "Finish or close the one you
+   are in before starting another."** It is not false — the new button closes
+   it and starts another — but it was written when going elsewhere was the only
+   option, and it now reads as an instruction sitting directly above the button
+   that carries it out. One sentence, both catalogues, and it is Ben's copy.
+
+One measurement worth keeping, found while walking this: **`saveStep` is
+fire-and-forget** (`void saveStep(...)` in `Session.tsx`), so a navigation
+issued in the same breath as a step change aborts the PATCH and the row keeps
+the old step. The new walk hit it by going to `/exercises` immediately after
+Continue, and now polls the row before leaving — as `e2e/resume.spec.ts`
+already did, for the same reason. Nobody moves that fast by hand, and the
+deliberate not-awaiting is what keeps the wizard from stalling on a slow write,
+so this is a note rather than a bug report.
+
+## A card that keeps its selection cannot be tapped again — RESOLVED, and the rule is written down
+
+Where: `apps/web/src/routes/Exercises.tsx` (`releaseChoice`), `apps/web/e2e/cancel.spec.ts`
+
+What I checked: Ben, 2026-09-24 — *"I can't start a session anymore"*, on
+localhost, on /exercises. Reproduced in one walk: with a session already
+running, tap a card → the refusal appears → dismiss it → tap the SAME card →
+**nothing at all**. No message, no navigation, no request. The only way out was
+a reload.
+
+The cause is one sentence: **`RadioCards` reports CHANGES.** `value` is the
+tapped card and it was deliberately kept through a refusal — Ben's own brief,
+so the message can name the exercise it is asking about and the card stays on
+screen beneath it. But once the message is dismissed the card is STILL the
+group's value, so tapping it is not a change, `onValueChange` never fires, and
+`choose()` is never called. The card is dead while looking entirely normal.
+
+It was introduced in this session, in two halves: removing the detail lightbox
+made `value` a held state instead of one derived from the open popup (it had
+been derived precisely so nothing could stay checked with no question open),
+and the refusal then kept that state alive on screen. `NotImplementedLightbox`
+already cleared it on close; the refusal did not. One of the two paths had the
+rule and the other did not, which is the drift.
+
+What I did: `releaseChoice()` — one function, called by every way of closing a
+question about a card (the refusal's dismiss, the not-implemented lightbox's
+close, and a start that threw). The argument lives in its docstring rather than
+in three comments. `e2e/cancel.spec.ts` now dismisses the refusal and presses
+the same card a second time, expecting the same answer back: a refusal that
+returns is a start that was attempted, and it is the only on-screen proof that
+the tap was heard at all.
+
+Two things came out of the same report, and both are fixed here rather than
+logged:
+
+- **A failed start said nothing.** `start()` returned silently when `userId`
+  was null and only wrote the console when the insert threw. That was survivable
+  while the detail lightbox had a spinner in front of the person; with the card
+  as the control, a failure is a tap that evaporates. There is now an `error`
+  Message with `exercises.startFailed` ("Die Session konnte nicht gestartet
+  werden"), including for the no-user case that `AuthProvider` documents as
+  having no UI.
+- **The lesson generalises.** Any controlled selection in this app that
+  survives the thing it was selected FOR has to be released when that thing
+  closes, or the control is one tap from dead. It is written on `releaseChoice`
+  because that is where the next person will be standing.
+
+What I need from Ben: **nothing** — but worth knowing while testing: the
+`tracks` bucket is empty on the local stack (a `db reset` this morning
+recreated it at 06:49 and the nine audio files are an operator upload that
+never entered the repo, BUILD-PLAN:720). So the listen step has nothing to
+play, and `e2e/reveal.spec.ts` fails on its `<audio>` element for that reason
+and no other. Everything else in the suite is green, both locales.
+
+## Ending the session from the menu, and a nav row that acts instead of navigating
+
+Where: `apps/web/src/components/NavDrawer.tsx` (`NavRow.href`, `NavRow.onSelect`),
+`apps/web/src/routes/MenuDrawer.tsx`, `apps/web/src/i18n/{en,de}.ts`,
+`apps/web/e2e/cancel.spec.ts`
+
+What I checked: what the drawer offered somebody mid-session. One thing — go
+back into it. Starting something else meant going back in, closing it there,
+and coming out again, which is the same four-screen detour the library's
+refusal had before this morning. Ben's brief: a ghost row under *Session
+fortsetzen* that ends the run, puts it in the diary, and hands back a fresh
+`/exercises`.
+
+What I did: `menu.endSession` — *Session beenden & neu beginnen* — directly
+under the action, with no rule between them, so the two things you can do about
+the run you are in read as a pair and the existing rule above *Dein Tagebuch*
+separates that pair from the pages. It went in as a ghost row and Ben moved it
+to `secondary` the same hour: outlined is this system's "this is a control, not
+a label", and a row that writes to the database should not share the flat
+treatment of four rows that merely navigate. That is now the drawer's rule
+rather than a one-off — `current || onSelect !== undefined` — and the two
+cases cannot collide, because a row with an `onSelect` has no `href` and is
+therefore never the current page. It only exists
+when a session is confirmed running; while the read is in flight there is
+nothing to end, so there is no row.
+
+The write is `endSession(id, 'abandoned', now)` — the same write *Close
+session* makes from inside the run and the same one the library's refusal
+makes. **Three doors, one act**, which is why the diary does not have to know
+which one was used, and why `e2e/cancel.spec.ts` now holds all three.
+
+**The one thing that needed a decision: every nav row was an anchor.** The
+drawer renders each row as a `CtaButton` with `render={<Link to={href} />}`,
+and this row cannot be a link — it writes first and decides where to go
+afterwards. A link with `preventDefault` is a button wearing a costume, and it
+would keep an href that Cmd-click and "open in new tab" would honour, skipping
+the write entirely. So `NavRow.href` is now optional and `NavRow.onSelect`
+exists beside it: with an href the row is a destination, without one it is a
+button that does something. That is the app's own component (L14 pattern, no
+Drawer in the system), so no design-system decision is involved.
+
+What I need from Ben: **nothing.** Two notes from walking it:
+
+- **A failure keeps the row rather than navigating.** If the end write throws,
+  the drawer stays open with the row live and the reason on the console — going
+  to the library with the session still running would just be the refusal
+  message one tap later, blaming the person for something that already went
+  wrong here. There is no Message surface in the drawer, which is why this is a
+  console log and a restored button rather than a sentence.
+- **`e2e/scanlink.spec.ts`'s "nothing running" walk counts ALL sessions** in the
+  table and asserts the delta is zero. It therefore fails whenever anything
+  else touches the local stack during that window — my own concurrent run
+  earlier, and once while Ben was clicking through localhost. It passes alone,
+  every time. Scoping the count to the browser's own user would fix it
+  properly; that is a change to an assertion I did not write, so it is flagged
+  rather than made.
+
+# Phase · /settings is deleted, and the menu is the only overlay (2026-09-24)
+
+## Three preferences moved into the drawer, and one did not move at all
+
+Where: `src/components/MenuPreferences.tsx` (new), `src/components/NavDrawer.tsx`
+(the `preferences` slot), `src/routes/MenuDrawer.tsx`, `src/SettingsSheet.tsx`
+(deleted), `src/AppShell.tsx` (the profile icon), `src/router.tsx`
+
+What I checked: the brief named four moves — language to /menu with the legend
+and the radios but no hint, dark mode to /menu, *Your diary* to /diary, and
+/settings and its nav icon gone. The sheet held FIVE things, so two of them had
+no instruction attached:
+
+- **the account section** (*Signed in as …* and *Sign out*, H.0b). Deleting it
+  with the route would leave a signed-in tester no way to sign out at all —
+  and the address is shown for a reason: a workshop phone gets passed around
+  and "which of us is this?" has to be answerable. It moved into the drawer
+  with the other two.
+- **`UserTypeChoice`** — *Here as* / *Hier als*, the four user types. It did
+  not move, and that is the one judgement call in this piece of work.
+
+What I did: the four rows first, a hairline, then dark mode, language, and the
+account. `NavDrawer` takes them as one `preferences` node rather than as more
+row data — a row is a label and a destination, which is why `pages` can be
+data; a switch, a fieldset and a card are not that shape, and inventing a
+settings-form language for one caller would be the wrong kind of generality.
+
+Why *Here as* went instead of moving: /about-you asks the same question, writes
+the same `profiles.user_type_id`, and is a row in the very drawer the copy
+would have landed in. Two controls for one column, one tap apart, is the thing
+a simplification is for.
+
+**What that costs, exactly, because it is not nothing.** Ben settled on
+2026-09-19 that the two screens should DISAGREE: /about-you refuses the three
+unimplemented types with a lightbox, because it is a gate into a session and
+must say why the door will not open; /settings accepted all four, because a
+preference is yours to record whether or not the product has caught up. The
+second half of that decision is now unimplementable — there is no screen where
+an unbuilt type can be recorded, so `user_types.implemented` is effectively a
+filter again rather than a distinction. The comment that explained the
+asymmetry in `AboutYou.tsx` says so rather than being deleted.
+
+What I need from Ben: **one decision, not blocking.** If being able to record
+*With a therapist* as a preference mattered, it needs a home — the honest one
+is /about-you accepting the pick and keeping the lightbox as an explanation
+rather than a refusal, which is a change to that screen and not to this drawer.
+Say the word and it is four lines there.
+
+## Delete-everything moved to /diary, which reverses G.2's one decision
+
+Where: `src/routes/Diary.tsx` (`DeleteEverything`), `src/shell.css`
+(`.musie-diary__danger`)
+
+What I checked: G.2 put this control in /settings and wrote the argument down
+in three numbered points — /diary IS the thing being destroyed, reaching
+settings is already two deliberate acts, and "delete my data" is a settings
+question in every product a person has used. The brief moves it to /diary, so
+the first and third points are now being spent rather than kept.
+
+What I did: moved it, and kept what answered the old argument:
+
+- it is **below everything**, behind a hairline, at `--space-section` — the
+  same distance `.musie-main` ends the page with;
+- it is **not rendered at all when the diary is empty**, so the one state where
+  it could be reached without scrolling is the state it is absent from (that
+  also stops *Delete your whole diary* appearing under *No sessions yet*, which
+  is an offer to destroy nothing);
+- the **inline confirmation is unchanged**. It was the third line of defence
+  and is now the second, which is the honest cost of the move.
+
+It reads `data`, not the filtered list, because the act has never been about
+the visible subset: it takes every session including a running one. And the
+navigate to /diary afterwards does three jobs in one call — `useDiary` keys on
+`location.key`, so the list re-reads; the screen becoming empty IS the
+confirmation, with no toast to write; and nothing is left pointing at a step
+whose row is gone.
+
+The section has **no heading**. In the sheet it was a `ContentBox` headlined
+`route.diary.title`, because a button among preferences has to name what it
+acts on; on this screen that headline is the h1 at the top of the page, and
+repeating it would put *Your diary* on the screen twice and add an outline
+entry that says nothing.
+
+What I need from Ben: **nothing, one thing to watch.** At 393px `ButtonGroup`
+stacks and gives the ghost button the full width — the system's rule, the same
+one it applied in the sheet. A full-width control at the end of the diary is
+more present than the same control was in a sheet you had to open. If it reads
+as too loud there, the fix is in the design system (a `hug` on the group, or a
+variant that does not stretch), not a width in `shell.css` — L7.
+
+## The header has one button, and the empty grid column stays
+
+Where: `src/AppShell.tsx`, `src/shell.css` (`.musie-header`)
+
+What I checked: `1fr auto 1fr` was chosen so the logo centres against the
+VIEWPORT rather than against the space left beside the hamburger. With the
+profile button gone the third column is empty, and the obvious tidy-up —
+`1fr auto` — would move the logo visibly off-axis.
+
+What I did: left the three columns, said so in the stylesheet, and changed
+`.musie-header > :last-child` to `:nth-child(3)`. The logo is `:last-child`
+now, and `justify-self: end` on an `auto` track does nothing — a rule that is
+silently inert is a rule that misleads the next reader. Named by column, so it
+still applies if the header ever takes a third child again.
+
+`shell.profileLabel` is deleted from both catalogues with the button, and
+`route.settings.title` with the route.
+
+What I need from Ben: **nothing, just flagging.** Nothing redirects /settings;
+a stale URL lands on the not-found route. It was linked from one icon in our
+own header, never printed and never sent anywhere, so there is nothing out
+there holding it.
+
+## The data promise has no door left
+
+Where: `src/components/SessionReflect.tsx`, `src/components/DataLightbox.tsx`,
+`src/i18n/{en,de}.ts` (`privacy.voiceShort`, `privacy.more`)
+
+What I checked: the reflect step was the only place in the app that opened
+`DataLightbox`. It carried one line of small print — *Musie keeps the text,
+never your voice* — with *More about your data* beside it as the link. Nothing
+else reaches the lightbox: /about-musie does not, the menu drawer does not, and
+nothing links `privacy.*` anywhere outside that paragraph.
+
+What I did: removed the line and the link, as asked, and left both the
+component and its two strings in place rather than deleting a promise the
+product still makes. `DataLightbox` is now built, tested by nothing, and
+unreachable. The five sentences inside it — the account, the voice, the written
+answer, the photo, and what clearing this browser costs — are still the truest
+thing the app says about itself, and they are currently unsayable.
+
+What I need from Ben: **one decision, not blocking.** Where does the data
+promise live now? Three candidates, and all three are small:
+
+- **/about-musie**, as a section rather than a lightbox. It is the screen whose
+  job is already explaining what this is, and a promise about data reads as
+  part of that rather than as an interruption.
+- **the menu drawer**, as a row that opens the existing lightbox. One line of
+  JSX plus one label, and it is reachable from every screen.
+- **the closed-test welcome**, once, where consent belongs if it is ever
+  consent rather than reassurance.
+
+Say which and it is done in one pass. Until then the lightbox stays where it
+is: deleting it would mean rewriting five sentences of Ben's own copy when the
+answer arrives.
+
+## The diary's answer is a third caller of the prose pattern
+
+Where: `src/components/DiaryCard.tsx`, `src/shell.css` (`.musie-prose`)
+
+What I checked: the entry card handed `reflection.body` to `ContentBox`'s
+`text` prop, which is one `<p>`. A spoken answer reaches it as
+`joinStatements`' output — every statement glued with a space — so four
+sentences somebody paused between came back as a wall, and a typed answer lost
+every line break the person pressed. The statements themselves were never lost:
+`reflection_statements` has held one row each, in `position` order, since
+`20260922100000`. The diary was the screen that threw them away again.
+
+What I did: the detail read now embeds them
+(`reflections(mode, body, reflection_statements(id, text, position))`), a
+`statements` array rides on `DiaryReflection`, and `answerParagraphs` decides
+what a paragraph is — the statements when there are any, otherwise the body
+split on its own line breaks. The card draws a `<p>` each inside
+`.musie-prose`, which is the app's existing column-of-paragraphs pattern.
+
+Why that made the entry above ("`.musie-md` and `.musie-prose` now differ only
+in ink") sharper rather than answering it: `.musie-prose` has a second caller
+now, and the family has a third. L14.3's "a pattern that recurs is a component
+request" is no longer a thing that WOULD apply at a third caller — it applies.
+I did not merge them, for the reason that entry gives: it is a design-system
+change, and rule 1 says a fix that belongs in the system does not get made in
+the app.
+
+What I need from Ben: **nothing new, but the prose component is now overdue by
+its own rule.** Two Layer 3 patterns and three callers, all drawing the same
+column of paragraphs at the same type step.
+
+## *Start a session* on /diary disappears while a session is running
+
+Where: `src/routes/Diary.tsx` (`StartAnother`)
+
+What I checked: the request was a start button behind the newest entry. Three
+places in the product already start one — the explainer's CTA, the drawer's
+action row, and the library itself — and the drawer's rule is that while a
+session runs *Start a session* is REPLACED by *Continue session*, because a
+second `started` row is refused by a partial unique index.
+
+What I did: the diary's control follows that rule by being ABSENT while a
+session runs, rather than by growing its own *Continue session*. It reads
+`useActiveSession`, renders busy and disabled until that read lands, and only
+then offers the link. It also goes with the card: collapsing the newest entry,
+or setting a filter, removes it, because that is the moment the diary stops
+being a landing and becomes a query.
+
+Why I did not add the second branch: *Continue session* would be a second copy
+of the drawer's row, and the drawer is one tap away on every screen. Two
+renderings of one offer is how they drift — the same argument that put
+`DiaryCard` in one file.
+
+What I need from Ben: **a look at it in use.** Two things are guesses I would
+rather have watched than argued: whether the control should survive collapsing
+the card, and whether somebody mid-session who lands on /diary expects to see
+*Continue session* here rather than reaching for the menu.
+
+## The header hides on the way down — and one screen had to be allowed to say no
+
+Where: `src/lib/headerReveal.ts`, `src/lib/useHeaderReveal.ts`,
+`src/AppShell.tsx`, `src/shell.css` (`.musie-header[data-hidden]`),
+`src/components/SessionListen.tsx`
+
+What I checked: three levels, and each had something to say.
+
+- **Layer 1** has the motion. `--motion-enter` and `--motion-exit` are the
+  named semantic pair for something arriving and something leaving, and
+  `prefers-reduced-motion` collapses both to 1ms at the token level — so the
+  slide becomes a cut without a media query in `shell.css`.
+- **Layer 2** has no Header and no App Shell, which is what makes this a
+  permitted L14 pattern rather than a component request. `.musie-header` was
+  already one.
+- **The app's own geometry** had the objection. `--chrome-block`,
+  `--sticky-block`, `--view-block` and `--view-block-scrolled` are all the
+  header's height, and half the app is sized from them. Hiding it with
+  `display: none` or a zero height would shorten the document by 69px under a
+  reader halfway down it and make every one of those numbers wrong for a
+  frame.
+
+What I did: the header travels and never leaves the flow —
+`transform: translateY(-100%)`, which is one of the geometric identities L14
+allows and the only honest way to say "its own height, whatever it is today".
+Every token keeps its meaning while the header is off screen.
+
+The decision is a reducer in `headerReveal.ts` with 17 tests, because the
+`unit` project has no DOM and what can be wrong here is judgement, not wiring:
+travel from a turning point rather than direction, a threshold each way (56px
+down, 14px back), a top band, a floor on how short a page may be, and clamped
+readings so iOS's overscroll bounce is not mistaken for a gesture. Two of
+those tests failed on the first run and were right to: one scroll event can
+cover more ground than one frame of gesture, so the header went at 70px on a
+page the reader had barely entered.
+
+Why: on a 393px phone the header is 69px of every screen, held for as long as
+you are on it, and the diary, the library and the reflect step are all longer
+than a window.
+
+What I need from Ben: **nothing on the pattern. Two things flagged.**
+
+**One — the listen step pins the header, and that is a new app concept.** Its
+three views are sized `--view-block-scrolled` and snap `--sticky-block` from
+the top of the window; a header that comes and goes leaves a header's worth of
+the previous view showing above the one you just snapped to, in a band the
+snap will not let you scroll away. So `usePinnedHeader()` lets a screen say
+"not on me" for as long as it is mounted, counted the way `useScrollSnap`
+counts its consumers. It could not be detected instead of declared:
+`data-musy-scroll-snap` is absent for the length of a programmatic jump, which
+is exactly when a button scrolls you down a whole view.
+
+It is the right shape for one caller. If a second screen ever pins, that is
+the moment to ask whether the answer is really "this screen scrolls itself"
+and belongs in the route handle beside `wide` and `overlay`.
+
+**Two — `HIDE_AFTER` and `REVEAL_AFTER` are 56 and 14, and neither is a
+token.** They are in pixels, and Layer 1 has pixel tokens that look adjacent —
+`--motion-travel-lg` is 32px. It is not the same measurement: travel tokens
+say how far a THING MOVES, and these say how much GESTURE counts as intent,
+which is a behaviour constant like a long-press duration. So they are named
+constants in the app with the argument written above them rather than a token
+gap reported against Layer 1. Reported here in case the system would rather
+own a scale for it.
+
+**And one thing I could not do:** verify it in a walk. `pnpm test:e2e` refuses
+to run — `.env.local` points at the hosted project and the walks guard against
+addressing two databases (`e2e/support.ts`), so 18 of 20 fail in `stack()`
+before a browser opens. That is the state of the checkout, not this change.
+The pattern itself is verified in a real Chromium at 393px against the running
+dev server: shown at rest, `top: -69` after a read down the page, still hidden
+after an 8px twitch up, back at `top: 0` on a real scroll up. The pin on the
+listen step is the one part argued rather than walked.

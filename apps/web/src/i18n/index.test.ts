@@ -21,7 +21,10 @@ import { en } from './en';
 /* Keys that carry slots today. If a rewrite removes the slots from one of
    these, the guard assertions below fail LOUDLY rather than letting the test
    quietly assert nothing. */
-const TWO_SLOT_KEY = 'exercises.timeframe';
+/* It was `exercises.timeframe` until that key went with the exercise detail
+   (2026-09-24). Its replacement is the fact chip that states the same range on
+   the card itself, and it carries the same two slots. */
+const TWO_SLOT_KEY = 'exercises.fact.time';
 const ONE_SLOT_KEY = 'route.session.title';
 
 describe('translate', () => {

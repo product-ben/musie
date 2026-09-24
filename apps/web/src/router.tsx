@@ -4,17 +4,23 @@
  * A data router (`createBrowserRouter`), which is what makes the step
  * validation below a loader redirect rather than a render-time one.
  *
- * Every screen is a real route. There is no modal-only navigation: /settings
- * presents as a sheet but IS a route, so Back closes it and the URL is
- * linkable. The nav drawer arrives the same way in 2.5, and /diary/:id — a
- * lightbox over the diary — the same way again. `handle.overlay` is the whole
- * of the difference between a screen that replaces the page and one that
- * comes forward over it.
+ * Every screen is a real route. There is no modal-only navigation: /menu
+ * presents as a drawer but IS a route, so Back closes it and the URL is
+ * linkable, and /diary/:id — a lightbox over the diary — arrives the same way.
+ * `handle.overlay` is the whole of the difference between a screen that
+ * replaces the page and one that comes forward over it.
+ *
+ * /settings WAS THE THIRD, and it is gone (Ben, 2026-09-24): its three
+ * preferences moved into the drawer, delete-everything moved onto /diary, and
+ * *Here as* went entirely — /about-you already asks it. One overlay to find
+ * instead of two, and one fewer icon in the header. Nothing redirects /settings
+ * to anything: it was two weeks old, linked from one icon in our own header and
+ * never printed or sent anywhere, so a stale URL lands on the not-found route
+ * like any other typo.
  */
 import { createBrowserRouter, redirect } from 'react-router';
 import type { LoaderFunctionArgs } from 'react-router';
 import { AppShell } from './AppShell';
-import { SettingsSheet } from './SettingsSheet';
 import { AboutMusie } from './routes/AboutMusie';
 import { AboutYou } from './routes/AboutYou';
 import { MenuDrawer } from './routes/MenuDrawer';
@@ -109,10 +115,10 @@ export const router = createBrowserRouter([
           titleKey: 'route.diaryEntry.title',
           overlay: true,
           /* And on a COLD deep-link there is no held page, so the route names
-             the one it belongs to. /menu and /settings cannot: they cover
-             whatever page you were on. An entry can — it is an entry OF this
-             list, and pasting its URL should open it over the diary rather
-             than over nothing. Same element the `diary` route renders. */
+             the one it belongs to. /menu cannot: it covers whatever page you
+             were on and belongs to none of them. An entry can — it is an entry
+             OF this list, and pasting its URL should open it over the diary
+             rather than over nothing. Same element the `diary` route renders. */
           beneath: { element: <Diary />, path: '/diary' },
         }),
       },
@@ -174,15 +180,10 @@ export const router = createBrowserRouter([
          screen between the two would be a page whose only content is that it
          is not the diary yet. */
       {
-        /* An overlay route, like settings: linkable, and Back closes it. */
+        /* An overlay route: linkable, and Back closes it. */
         path: 'menu',
         element: <MenuDrawer />,
         handle: handle({ titleKey: 'menu.title', overlay: true }),
-      },
-      {
-        path: 'settings',
-        element: <SettingsSheet />,
-        handle: handle({ titleKey: 'route.settings.title', overlay: true }),
       },
       {
         path: '*',

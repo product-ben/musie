@@ -5,18 +5,19 @@
  * either that order or a consequence of it.
  */
 import * as React from 'react';
-import { Menu, User } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { IconButton, Logo, MusyTooltipProvider } from '@musie/design-system';
 import { useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
 import { BRAND_NAME } from './brand';
 import { useLocale, useT } from './i18n/localeContext';
 import { useAuth } from './lib/authContext';
 import { PagePathContext } from './lib/shellContext';
+import { HeaderPinContext, useHeaderReveal } from './lib/useHeaderReveal';
+import type { PinHeader } from './lib/useHeaderReveal';
 import type { RouteHandle } from './routeHandle';
 
 const MAIN_ID = 'main';
 
-const SETTINGS_PATH = '/settings';
 const MENU_PATH = '/menu';
 
 export function AppShell() {
@@ -85,8 +86,8 @@ export function AppShell() {
    * A COLD DEEP-LINK HAS NOTHING TO KEEP. Paste an overlay's URL into a fresh
    * tab and the ref above has never been written: the overlay IS the first
    * render, so there is no previous page, and `main` would be empty behind the
-   * scrim. For /menu and /settings that is honest — they cover whatever page
-   * you were on and belong to no one page — so they say nothing and get it.
+   * scrim. For /menu that is honest — it covers whatever page you were on and
+   * belongs to no one page — so it says nothing and gets it.
    *
    * An overlay that belongs to exactly one page says which, in its handle, and
    * gets that page drawn beneath instead. It is the same three values the ref
@@ -130,13 +131,49 @@ export function AppShell() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [isOverlay, location.pathname, location.search]);
 
+  /**
+   * THE HEADER GETS OUT OF THE WAY WHILE YOU READ.
+   *
+   * On a phone the sticky header costs 69px of every screen for as long as
+   * you are on it, and the diary, the exercise library and the reflect step
+   * are all longer than a window. So it slides out while the reader goes down
+   * the page and comes back as soon as they come up. `useHeaderReveal` holds
+   * the listener and `headerReveal.ts` every rule it applies; what belongs
+   * here is only the three things the SHELL knows.
+   *
+   * WHICH PAGE COUNTS AS ARRIVING: `pagePath`, not the location — it is
+   * already the path of the page underneath an overlay, so opening the drawer
+   * over a scrolled page is not an arrival and closing it changes nothing.
+   *
+   * WHO MAY PIN IT: any screen that does its own scrolling, through
+   * `usePinnedHeader`. Counted rather than set, because two screens overlap
+   * for a frame during a route change; see the hook.
+   *
+   * WHERE THE ANSWER GOES: one attribute. The slide itself is a transform in
+   * shell.css, so nothing here reflows and no geometry moves — the header is
+   * drawn in the same place either way and only travels.
+   */
+  const headerRef = React.useRef<HTMLElement>(null);
+  const [pins, setPins] = React.useState(0);
+  const pinHeader = React.useCallback<PinHeader>(() => {
+    setPins((count) => count + 1);
+    return () => setPins((count) => count - 1);
+  }, []);
+  const headerHidden = useHeaderReveal(headerRef, pins > 0, pagePath ?? '');
+
   return (
-    /* Mounted once, so moving between the two header buttons does not re-run
-       the open delay. */
+    /* Mounted once, so a tooltip's open delay is not re-run per control. It was
+       written for the two header buttons; the header has one now, and the
+       provider still has to sit above everything that renders an IconButton. */
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
+      <HeaderPinContext.Provider value={pinHeader}>
       <div className="musie-app">
-        <header className="musie-header">
+        <header
+          ref={headerRef}
+          className="musie-header"
+          data-hidden={headerHidden ? 'true' : 'false'}
+        >
           <IconButton
             glyph={Menu}
             label={t('shell.menuLabel')}
@@ -145,15 +182,14 @@ export function AppShell() {
             aria-expanded={location.pathname === MENU_PATH}
             onClick={() => navigate(MENU_PATH)}
           />
+          {/* AND NOTHING AFTER IT. The profile button went with /settings on
+              2026-09-24: the preferences it opened are in the drawer now, so a
+              second icon would open the same overlay the first one does. The
+              header's third grid column is left in place and empty — `1fr auto
+              1fr` is what centres the logo against the VIEWPORT, and dropping
+              the column would centre it against the space left over beside the
+              hamburger instead. See .musie-header. */}
           <Logo size="nav" showWordmark alt={BRAND_NAME} />
-          <IconButton
-            glyph={User}
-            label={t('shell.profileLabel')}
-            variant="ghost"
-            size="primary"
-            aria-expanded={location.pathname === SETTINGS_PATH}
-            onClick={() => navigate(SETTINGS_PATH)}
-          />
         </header>
 
         {/* NO SKIP LINK, and it is a removal rather than an omission — Ben,
@@ -165,8 +201,9 @@ export function AppShell() {
             an id, so screen-reader users reach it by landmark navigation,
             which is how most of them actually move. What is lost is the
             KEYBOARD-ONLY, SIGHTED user, who has no landmark list — on this app
-            that is two tab stops of header to walk past, which is why the cost
-            is small. It is a cost, though, and it is logged as one.
+            that is one tab stop of header to walk past (two, until the profile
+            button went with /settings), which is why the cost is small. It is a
+            cost, though, and it is logged as one.
 
             `tabIndex={-1}` went with the link: it existed so the skip target
             could take programmatic focus, and nothing focuses main any more. */}
@@ -186,6 +223,7 @@ export function AppShell() {
             rather than two that can disagree. */}
         {isOverlay && contentReady ? outlet : null}
       </div>
+      </HeaderPinContext.Provider>
       </PagePathContext.Provider>
     </MusyTooltipProvider>
   );

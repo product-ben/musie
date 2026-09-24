@@ -15,7 +15,7 @@
  * ── STILL A ROUTE, AND THAT IS THE POINT ───────────────────────────────────
  * This is NOT a modal rendered from the list's state. `/diary/:id` is a real
  * route that declares `overlay: true` (router.tsx), which is the same thing
- * /menu and /settings do: Back closes it, the URL is linkable, and AppShell
+ * /menu does: Back closes it, the URL is linkable, and AppShell
  * keeps the last non-overlay page mounted beneath and re-renders it. The rule
  * router.tsx opens with — every screen is a real route, there is no modal-only
  * navigation — is what made a lightbox affordable here at all.
@@ -96,12 +96,12 @@ export function DiaryEntry() {
   const t = useT();
   const params = useParams();
   /**
-   * Closing, and the ONE thing this overlay needed that the other two did not.
+   * Closing, and the ONE thing this overlay needs that /menu does not.
    *
    * `useCloseOverlay` goes back a history entry, and falls back to a path when
    * there is nothing to go back to — a cold deep-link, where React Router
-   * labels the only entry 'default'. /menu and /settings take the default '/',
-   * because they cover whatever page you were on and belong to no one page.
+   * labels the only entry 'default'. /menu takes the default '/', because it
+   * covers whatever page you were on and belongs to no one page.
    * An ENTRY belongs to the list it is an entry of, so this one passes
    * '/diary': closing it lands where closing it means to land, whether the
    * person clicked a row to get here or pasted the URL.
@@ -193,8 +193,9 @@ export function DiaryEntry() {
    * story shows.
    *
    * The string IS still in the accessible tree twice — an sr-only h2 (the
-   * dialog's name) and the visible h3 — which SettingsSheet avoided by making
-   * Dialog.Title the h1 itself. Lightbox offers no way to do that, since it
+   * dialog's name) and the visible h3 — which the settings sheet avoided by
+   * making Dialog.Title the h1 itself. Lightbox offers no way to do that, since
+   * it
    * renders Dialog.Title for you. Logged as a gap rather than worked around
    * with a second heading level of invention.
    *

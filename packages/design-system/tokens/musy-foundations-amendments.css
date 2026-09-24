@@ -1,12 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    MUSY — LAYER 1 AMENDMENTS, STAGED BY LAYER 2 · NOT YET PART OF FOUNDATIONS
    ═══════════════════════════════════════════════════════════════════════════
-   Layer 1 is [LOCKED] and this pass does not amend it (brief §9). These two
-   tokens are the pass's only genuine token gaps (docs/08-token-gaps.md, G1/G2).
+   Layer 1 is [LOCKED] and this pass does not amend it (brief §9). These are the
+   genuine token gaps (docs/08-token-gaps.md, G1/G2; G3 is later).
    The brief instructs, per gap:
      G1 §2.2  "Add --icon-stroke-sm: 1.5px as a Layer 1 token gap; flag it,
                don't invent it locally"
      G2 §5.9  "Outline should be dashed. Create a new token for that."
+   G3 has no brief line: it was found by QR Scanner, 2026-09-24, and is argued
+   in full at its declaration below.
 
    They are declared HERE rather than in musy-foundations.css so that:
      · foundations stays byte-identical to the signed-off Layer 1;
@@ -47,6 +49,28 @@
      solid one was solved for. */
   --border-style-solid: solid;
   --border-style-dashed: dashed;
+
+  /* ── G3 · ink on a scrim ─────────────────────────────────────────────────
+     Belongs beside --on-surface-inverse in Layer 1 §Colour.
+     Layer 1 has an ink for every SURFACE it names, and --alpha-scrim is the
+     one surface it names no ink for — understandably, since until now nothing
+     was ever drawn on top of a scrim: the Lightbox puts its panel over one and
+     writes on the panel.
+
+     QR Scanner writes on the scrim itself. It dims a camera preview outside
+     the card window and draws the corner brackets over the dimmed part,
+     because a preview is not a surface with a colour — it is whatever the
+     phone is pointed at — and the scrim is what makes its contrast checkable
+     at all (L15).
+
+     --on-surface-inverse CANNOT do this job, and the reason is the whole point
+     of the token: it is --sand-1, which FLIPS with the theme, so it is near
+     white in light and near black in dark. --alpha-scrim does NOT flip — it is
+     dark in both themes, deeper in dark — so ink over it must be light in
+     both. Hence a pair of scale steps chosen from opposite ends: --sand-1 in
+     light, --sand-12 in dark, both of which are the pale one in their own
+     theme. No new hex; the value is the existing scale, read the other way. */
+  --on-scrim: light-dark(var(--sand-1), var(--sand-12));
 }
 
 /* prefers-contrast: more — Layer 1 already steps --border-subtle up to

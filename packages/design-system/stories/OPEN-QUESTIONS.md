@@ -2480,3 +2480,528 @@ category, a story about something the document owns rather than the component.
 
 What I need from Ben: **nothing, just flagging.** The colour story is not lost:
 nothing here is themed. Every panel's fill comes from the decorator's pane.
+
+---
+
+# User testing 2026-09-24 — the rail's second line
+
+## InteractiveWizard — the state word is spoken, not drawn
+Where: `src/InteractiveWizard.tsx`, `src/musy-components.css` §17
+What I checked: two entries in this log, both from Batch C and both about this
+one prop. The first said `showStateWords`'s doc comment described the inverse
+prop; the second said the default was `true` while the prototype rendered none,
+and asked for a decision. Both were waiting on the same answer.
+What I did: Ben's answer from user testing is that the word is not drawn at
+all. Removed the visible `.musy-wizard__hint` line and the `showStateWords`
+prop; the word is now the tail of the trigger's `aria-label` — "Hören,
+aktuell" — and nothing else. Deleted both entries from the stories file's
+Build-notes block, which says to delete an entry once it is answered; they are
+preserved above.
+Why: the marker already says the state in ink to anyone who can see it — the
+check IS "erledigt" — so the line was a second telling. It is the only telling
+for anyone who cannot see it, which is why it moved rather than went.
+
+Two measurements, both in the app on the local stack, both locales, because
+neither was what I assumed:
+
+1. **It cost no height.** The trigger is 60px with the second line and 60px
+   without it — the 44px marker sets the height and two short lines fit inside
+   it. Anything arguing this change from vertical space is arguing from
+   something that was not true. It is a redundancy fix.
+2. **`.musy-sr-only` was the obvious implementation and it was wrong.** A
+   hidden span is absolutely positioned, and Chromium then computes the name
+   with a space in front of the comma: "Intro , current". No markup takes that
+   space out. The word went to `aria-label` instead, which the trigger can
+   afford because its only other content is the `aria-hidden` marker — nothing
+   visible is overridden, and the name still opens with the visible label, so
+   2.5.3 Label in Name holds. Worth knowing the next time a component in this
+   package needs a word spoken and not drawn: the span is right when it sits
+   BEFORE the visible text (Badge, Message, Field all do), and wrong when it
+   trails it.
+
+Also worth recording: before this change the name was "Intro current", with no
+punctuation at all, because two adjacent inline boxes concatenate. The comma is
+new.
+What I need from Ben: **nothing.** One thing is deliberate and worth knowing:
+the selected step still announces its position twice, once from the state word
+and once from `aria-current="step"` — "Select Card, aktuell" plus the
+platform's own "current step". The Batch C entry flagged it; removing the word
+for the selected state alone would make the five words four and leave one state
+with no spoken form of its own, so it stays. Say the word if a screen reader
+makes it grating in practice.
+
+## InteractiveWizard — no vertical-centring rule was needed
+Where: `src/musy-components.css`, `.musy-wizard__trigger`
+What I checked: the brief asked for the remaining text to be vertically
+centred. `.musy-wizard__trigger` is already `display: flex; align-items:
+center`, and `.musy-wizard__list` / `.musy-wizard__step` are `align-items:
+stretch` so every trigger takes the height of the tallest.
+What I did: nothing beyond deleting the hint rule. What was centred before was
+the label AND the state word as a pair, which put the name above the marker's
+centre; with the pair down to one line the existing rule centres the name
+itself. Checked the `vertical` variant too — it restacks the list, not the
+trigger, so the trigger keeps `align-items: center` there as well.
+Why: a rule that restates what the cascade already does is a rule that can
+later disagree with it.
+What I need from Ben: **nothing, just flagging** that the fix was a deletion.
+
+## Carousel — the swipe had no affordance at all, and the cause was arithmetic
+Where: `src/musy-components.css` section 8, `src/Carousel.tsx`
+What I checked: the 260925 user testing — nobody swiped the onboarding
+carousel. Measured in the running app at 393px before changing anything: the
+carousel is 311px, the `@container (max-width: 420px)` rule made a slide 82cqi
+= 255px, and with an `--sp-5` gap the geometric sliver of the next card was
+4px — which `transform: scale(0.9)` on the off-centre card then pulled 12.75px
+further out. **The neighbour's painted edge began 8.8px past the frame.** At
+430px, −6.9px. At 1024px, +59.6px, which is why nobody caught it: the defect
+only exists on a phone, and it is invisible in a desktop review and in
+Storybook's own canvas unless the decorator is the 393px one.
+What I did: three affordances, no copy. `68cqi` + `--sp-3` gap + 16px of card
+inset gives a **measured 27.2px** of painted peek, in both locales, both
+themes, at 393 and 430. A one-shot nudge animates the `<li>`s on mount, coarse
+pointer only. A mouse drag on the scroller, with `grab` / `grabbing`.
+Why: the peek is the affordance and it was zero. The other two cover what it
+cannot: the nudge is the one that actually moves, and the cursor is the only
+one of the three a mouse user can act on.
+What I need from Ben: **nothing on the three. Two things to know.**
+
+**1 · The nudge does not run under reduced motion.** It is built from
+`--motion-travel-lg`, which Layer 1 zeroes, so it flattens with no branch in
+the component — deliberate, and only acceptable because the peek carries the
+affordance alone. If that turns out to be too little for someone who has
+reduced motion on AND a touch device, the lever is the peek, not the nudge.
+
+**2 · The English card grew a line.** A 68cqi slide at 393px puts the longest
+English title on 4 lines where German stays at 3 (229px vs 204px). Paid on
+purpose: the alternative was to buy the peek out of the type, and the body
+floor is an accessibility token. If the extra line ever matters, `72cqi` with
+an `--sp-4` gap is free — it holds 3 lines in both languages — but it only
+peeks 16.4px, which is the weaker of the two affordances.
+
+## Carousel — capturing the pointer on pointerdown silently killed tap-to-jump
+Where: `src/Carousel.tsx`, `onPointerMove`
+What I checked: the first cut of the mouse drag called `setPointerCapture` in
+`onPointerDown`, which is the obvious place for it. While a pointer is
+captured the browser dispatches the following `click` to the CAPTURING
+element — so every click landed on the `<ol>` and `.musy-carousel__card`'s own
+handler never ran. Measured: clicking the peeking sliver did nothing, on a
+component whose stylesheet has given that card a `pointer` cursor since the
+first pass.
+What I did: capture at the drag slop (6px) instead. Past the slop there is no
+click left to protect, and capture still does its real job — keeping a drag
+that leaves the carousel from being dropped mid-gesture. Re-measured: click
+the sliver 0 → 1 → 2, drag one slide, a 900px sweep still moves exactly one,
+and a drag out-and-back does not register as a click.
+Why: the peeking card being clickable is older than the drag and is the
+gesture people try first. A new affordance may not cost an existing one.
+What I need from Ben: **nothing, just flagging** that this is the kind of
+defect a unit test would not have caught — `click` retargeting is a browser
+behaviour, and it took driving a real one to see it.
+
+## Carousel — the ordinal inside the active dot is cut, and nothing moved to aria
+Where: `src/Carousel.tsx`, `src/musy-components.css` section 8, `src/locale.ts`
+What I checked: Ben, 2026-09-25 — get rid of the "Schritt 1" label in the
+dots, and move it to the aria layer if necessary. **It was not necessary, and
+that is worth writing down rather than assuming.** The span was
+`aria-hidden="true"` and the dot `<button>` already carried
+`aria-label={carouselGoTo(i + 1, total)}` — "Zu Schritt 1 von 3". No screen
+reader has ever heard the pill. The position is also still on the slide
+itself (`carouselSlide`, "Schritt 1 von 3: …") and the current one is still
+`aria-current="true"`. Three announcements of the ordinal, none of them the
+one that was deleted.
+What I did: deleted the span, `.musy-carousel__dot-label`, the `dotLabel`
+prop, `carouselDot` and `stepPrefix`; the app stopped passing `dotLabel` and
+`about.dotLabel` went with it. The active mark is now the same 12px dot at
+2:1 — `--target-min` wide, 24px — filled with `--musy-sel-fill`.
+Why the pill keeps a SHAPE and not just a fill: the label was, incidentally,
+the thing making current-vs-not visible without colour. Deleting it and
+leaving fill alone would have walked into 1.4.1 on the way out of a copy
+change. Width carries it now, deliberately rather than by accident.
+Measured after: the dots row renders no text at all (`innerText` is empty),
+marks are 24×12 current / 12×12 not, the row is one 24px line, and clicking
+the third dot still moves to the third slide.
+What I need from Ben: **nothing.** One correction to the record: the
+ProcessVisualisation entry above says `locale.ts` keeps `stepPrefix` because
+"Carousel's dot pill needs exactly that string". That was true and is no
+longer — the pill prints nothing, so the word had no reader left and is
+deleted. This log is append-only, so that entry stays as written and this is
+the amendment.
+
+## Carousel — the forward chevron demotes on touch, and does not disappear
+Where: `src/Carousel.tsx` (`forwardVariant`), `src/musy-components.css`
+section 8 header, `stories/Carousel.stories.tsx`
+What I checked: Ben asked whether to HIDE the chevrons on touch, so the swipe
+would lead. Against L5: the dots are `--target-min` (24px) and a chevron is
+`--target-primary` (44px), and L5 says in as many words that 24px is
+"comfortable under a cursor and tight under a thumb" — so hiding the 44px
+control on exactly the pointer that needs 44px inverts the rule it is meant to
+serve. Worse on this screen than in general: `/` gates its CTA on reaching the
+last slide, so a reader who cannot advance cannot start a session at all.
+WCAG 2.5.7 would still pass — the dots are a single-pointer alternative that
+reaches every slide — but passing 2.5.7 on 24px targets that many people read
+as a position indicator is a thin result.
+What I did: demoted instead. On a coarse pointer the trailing control renders
+`secondary` whatever `nextVariant` says; the prop is now documented as the
+FINE-pointer variant. Measured on the running app at 393px: touch renders
+`musy-icon-btn--secondary`, pale fill, **44×44, still a `<button>`, still
+named "Nächster Schritt", not disabled**; a mouse renders
+`musy-icon-btn--primary`, terracotta. Only the ink moves.
+Why it is in the component and not in the screen: it is a pointer decision,
+which is where L5 puts `useToolSize` too, and the same reason the nudge reads
+the pointer in here rather than through a prop the app must remember.
+What I need from Ben: **nothing. Two notes.**
+
+**1 · No escape hatch, deliberately.** A consumer cannot ask for a filled
+forward control under a thumb. A prop to turn that back on is a prop to
+reintroduce the defect the 260925 testing found. Say so if a second consumer
+ever genuinely needs one; it should be an argued exception, not a default.
+
+**2 · The dots still do not follow the pointer.** They are hardcoded to
+`--target-min` on both, which is the one place in this component that does not
+do what L5 says. It was masked by the chevrons standing beside them and it is
+still masked, because the chevrons are still there — but if the question of
+hiding them ever comes back, growing the dots to `--target-primary` on a
+coarse pointer is the prerequisite, not an afterthought.
+
+# QR Scanner — a new Layer 2 component (2026-09-24)
+
+## QrScanner — a component the brief never specified, built from the app's own pattern
+Where: `src/QrScanner.tsx`, `src/musy-components.css` (QR SCANNER),
+`stories/QrScanner.stories.tsx`
+What I checked: Layer 3 L14 — a custom pattern is permitted only where the
+system has no component, and one that recurs is a component request. The app
+had grown `.musie-scanner` from a dashed placeholder into five states with a
+camera, a mask, two icon controls and a form in it. Nothing in §7 covers a
+viewfinder.
+What I did: built it here, composed on §7.4 CTA Button and §7.2 Icon Button,
+holding no media — `mode` is a prop, `videoRef` is attached to the `<video>`
+this renders, every press goes back out. Same split §7.22 Record Button makes
+with the recorder, and for the same reason: all five states are then reachable
+in Storybook with no camera and no permission.
+Why: it is the app's pattern, promoted, not a new idea.
+What I need from Ben: **a decision on the number.** It has no §7.x — the docs
+this repo carries are `10-layout.md` and `15-layout-evidence.md`, and
+`07-components.md` is referenced by several components but is not here, so I
+could not add a section to it or find out what the next free number is.
+
+## QrScanner — every label is required, against the set's own convention
+Where: `src/QrScanner.tsx` (`QrScannerProps`)
+What I checked: Lightbox defaults `closeLabel` to `'Schließen'`, Photo Upload,
+Radio Group and Content List all default their copy to the locale catalogue
+(`src/locale.ts`). This component defaults none of it.
+What I did: made all five labels required props with no fallback.
+Why: the app's rule 7 exists because those defaults are a mix of German and
+English, and this is a screen somebody reaches while holding a physical card —
+a control saying the wrong thing there is worse than one saying nothing.
+What I need from Ben: **a decision** — either this is the convention the set
+should have been following (in which case the other components are the ones out
+of step), or it is an exception that should be argued in the component's header
+rather than just done. I did the latter.
+
+## QrScanner — G3, a fourth amendment token, for ink on a scrim
+Where: `tokens/musy-foundations-amendments.css`, `TOKEN-DRIFT.md`
+What I checked: Layer 1 names an ink for every surface it declares except
+`--alpha-scrim`, which until now nothing was ever drawn on — the Lightbox puts
+a panel over its backdrop and writes on the panel. `--on-surface-inverse`
+cannot serve: it is `--sand-1`, which FLIPS with the theme, while `--alpha-scrim`
+is dark in both.
+What I did: added `--on-scrim: light-dark(var(--sand-1), var(--sand-12))` — the
+existing scale read the other way, so no new hex — and listed it in
+`TOKEN-DRIFT.md` beside G1 and G2.
+Why: a component-level literal would be a defect under §4, and this is exactly
+what the amendments file is for.
+What I need from Ben: **nothing on the value, a decision on the process.** G1
+and G2 each cite a line of the brief; this one was found by a component and
+cites nothing, so the amendments file's own header now says so. If Layer 1 is
+still `[LOCKED]`, G3 waits there with the other two.
+
+## QrScanner — the mask's contrast is computed, not photographed
+Where: `src/musy-components.css` (`.musy-scanner__mask`, `__corner`),
+`stories/QrScanner.stories.tsx` (`LiveOverAPicture`)
+What I checked: the first version drew the corner brackets on the window edge,
+which put half of each arm in the UNDIMMED window — invisible in the light
+theme over a pale picture, which the story showed at once. Moving them one
+stroke-width outside puts every arm on the scrim. Computed worst case, ink on
+scrim over a near-white picture: 3.88:1 light, 7.6:1 dark, against 1.4.11's 3:1.
+What I did: shipped the offset, and built the story that catches it — a
+two-tone stand-in with no mid-tone, because a photograph with a comfortable
+mid-grey would hide the only failure worth looking at.
+What I need from Ben: nothing here; the phone check is logged in the app's own
+file, where the camera is.
+
+## Carousel — the touch demotion went one rung further, to `ghost`
+Where: `src/Carousel.tsx` (`backVariant` / `forwardVariant`)
+What I checked: the entry above landed the coarse-pointer demotion on
+`secondary`. Ben, 2026-09-25, looking at it on a phone: go to `ghost`, and
+both chevrons rather than only the trailing one. He is right about what
+`secondary` was still doing — an outlined 44px circle is quieter than a filled
+one but it is still a BOX, and two boxes bracketing the dots still draw the
+chrome of a stepper. Ghost leaves the chevron and takes the container.
+What I did: on a coarse pointer both controls render `ghost`. Measured on the
+running app at 393px: fill `rgba(0,0,0,0)`, border `rgba(0,0,0,0)`, **44×44,
+named, glyph present, and the leading one still `disabled` on slide 1**. A
+mouse is unchanged — `secondary` back, `primary` forward.
+Why it is still not hiding: everything the entry above says. The target is the
+accessibility-relevant part and it did not move; what went is the fill and the
+border.
+What I need from Ben: **nothing. One check I did rather than assume.**
+1.4.11 asks for 3:1 on what identifies a control, and ghost has no box left to
+carry it — so it rests entirely on the glyph. `--interactive-ghost-on` is
+`--sand-12`, measured `rgb(28,26,23)` on the card surface, which is the body
+ink and far past 3:1. The disabled leading chevron sits at
+`--interactive-ghost-on-disabled` (`--sand-9`) and is exempt. Nothing here
+relied on the border that was removed.
+
+## DraggableList — a thumb can now delete by swiping, and the affordance is motion
+Where: `src/DraggableList.tsx` (THE SWIPE blocks), `src/musy-components.css`
+(§24, "SWIPE TO DELETE, ON A THUMB"), `src/locale.ts` (`dragDeleteItem`,
+`dragSwipeArmed`, `dragDeleted`)
+What I checked: the list's only way out of a row was the chevron menu — two
+taps behind a 24px-at-rest disclosure, on a screen whose whole content is
+rows. The iOS gesture was asked for. Measured in Chromium at 393px with touch
+emulation, against the real component: the row parks at the panel's own width
+(122px with "Löschen" beside the glyph, floored at `--target-primary * 2`),
+arms past half the row plus the 12px slop, and a release there deletes. A
+vertical drag never sets `data-swiping` and never moves the card; a fine
+pointer gets no panel, no `data-peek` and `touch-action: auto`. Drag, merge and
+the drop indicator are unchanged with a mouse.
+What I did: the gesture decides its axis rather than claiming one — past a
+12px slop the larger of dx and dy wins, a tie goes to the page, and the row
+takes `touch-action: pan-y` so the browser keeps the vertical scroll. The
+panel is the error family at its `-surface` step, the same family §19's
+recording state borrows. The affordance is a one-shot peek: the first row
+drifts `--motion-travel-lg` left, shows the panel and settles, once per list,
+on a coarse pointer, once the list is editable. Measured peak: −31.9997px, and
+0px under `prefers-reduced-motion`, where the latch is still spent.
+Why: the menu's Delete stays on every pointer, so nothing is gated behind a
+gesture a cursor, a keyboard or a screen reader cannot perform — which is what
+makes a motion-only affordance affordable, and is the same bargain §7.11's
+nudge makes.
+What I need from Ben: **two things to look at on a real phone, and one
+decision.**
+1. `dragSwipeArmed` is "Loslassen" / "Let go", not `dropCancel`'s fuller "Zum
+   Abbrechen loslassen". It shares a ~168px strip with the trash glyph and the
+   longer phrasing pushed the glyph under the card — measured, not guessed.
+   The glyph says *delete*; the word only has to say *now*. If the short verb
+   reads as abrupt in German, the alternative is dropping the glyph when
+   armed, which costs the icon mid-gesture.
+2. The parked panel is full-bleed, so its hit box extends under the card while
+   only the strip is painted. No pointer can reach the covered part (the card
+   is opaque and above, and a touch there closes the panel), but it means an
+   "activate this element" from assistive tech would delete from anywhere in
+   the row. The menu's Delete remains the canonical path and this one is
+   `aria-hidden` until it is parked open.
+3. Still not verified with a screen reader — same gap the keyboard path has
+   carried since F.5. `dragDeleted` now announces a removal by either route,
+   which is new and is a construction rather than a measurement.
+
+## L2 — the gap ladder is audited by eye, and that is why the corrections are manual
+
+Where: `docs/10-layout.md` L2/L3, `scripts/verify-layout.mjs`,
+`tokens/musy-foundations-amendments.css`, and every `gap` in
+`src/musy-components.css` and `apps/web/src/shell.css`
+
+What I checked: Ben asked why spacing keeps needing manual correction, after
+finding the nav drawer's rows sitting at 4px. I measured rather than guessed —
+every `gap`, `row-gap` and `column-gap` declaration in both stylesheets,
+classified against L2's ladder:
+
+| | gaps | on the ladder | raw `--sp-N` | literal |
+| --- | --- | --- | --- | --- |
+| `musy-components.css` | 81 | 50 | 25 | 3 (`0`) |
+| `apps/web/shell.css` | 30 | 28 | **2** | 0 |
+
+**The app is nearly clean, and both of its exceptions are interesting.**
+`.musie-nav` was `--sp-1` — 4px between controls 44px tall, where L3 says list
+items sit at `--space-gap-stack`. That is the defect Ben found by eye, and it
+is the only true violation in 30 declarations. The other, `.musie-typing`, is
+`--sp-2` between three animated dots: the same VALUE as `--space-gap-inline`,
+but not the same relationship — the ladder's bottom rung is "an icon and its
+own label", and these are parts of one atom.
+
+**The design system's 25 raw gaps are almost all that second kind.**
+`.musy-field__label`, `.musy-badge`, `.musy-rcard__fact`, `.musy-clist__row`,
+`.musy-mplayer__times`, `.musy-rec__meter`, `.musy-llist__meta` — twenty of the
+twenty-five are 4px or 8px *inside* an atom. They are not sloppiness. **The
+ladder starts at 8px and names nothing below it**, so every sub-atomic
+relationship in the system is written as a number.
+
+What I checked, second: where this branch's spacing corrections actually landed.
+Three of them, and two point at the same hole:
+
+1. **The nav rows** — a raw rung where a named one existed. A rule violation.
+2. **The step headline's gap** (`apps/web/OPEN-QUESTIONS.md`): the correction
+   wanted something between `--space-gap-stack` (16) and `--space-gap-group`
+   (32), settled for 32, and logged the cost — *"the headline's gap now equals
+   the block's own bottom margin"* — with the note that the real fix is "a
+   `--space-gap-prose` rung at 24px in Layer 1, which is a design-system change
+   and so not mine to make."
+3. **The Carousel's peek** — moved between `--sp-5` (24) and `--sp-3` (12)
+   looking for the gap that leaves a visible sliver of the next card, and
+   landed on raw rungs both times, because there is nothing named in between.
+
+**So the ladder has two holes, and every correction on this branch fell into
+one of them:** nothing below 8px, and nothing between 16 and 32. Its steps run
+8 → 12 → 16 → 32 → 48 → 96: three ratios of about 1.4, then one of 2.0.
+
+What I did: fixed the nav (`--space-gap-stack`, and the rule above *Dein
+Tagebuch* still clears L2's doubling check at 40 against 16). Left
+`.musie-typing` alone — swapping in `--space-gap-inline` would match the pixels
+and misname the relationship, which is the habit the ladder exists to break.
+
+What I need from Ben: **a decision on which of these three to do, in this
+order. The first is cheap and I can do it today; the third is not mine.**
+
+**A · `scripts/verify-spacing.mjs`, wired into `pnpm check`.** L2 says *"After
+laying a screen out, read the gaps off the computed styles and verify it"* — an
+audit, done by a person, in a browser, after the fact. That is exactly the loop
+that produced this round of corrections. The repo already has the machinery for
+the other half: `verify-tokens.mjs` and `verify-layout.mjs` run on every
+`pnpm check` and print PASS/FAIL lines. A third script would parse both
+stylesheets and assert that every `gap` resolves to a ladder token or `calc()`
+over one. Today it would report **2 findings in the app and 25 in the system** —
+so it ships with an allowlist of the 25, each line carrying the reason it is
+sub-atomic, and the allowlist shrinks to nothing the day proposal B lands. Cost:
+one file, about 60 lines, no new dependency. It would have caught `.musie-nav`
+before it was ever rendered.
+
+**B · G4 · the ladder's two missing rungs**, in
+`tokens/musy-foundations-amendments.css`, which is precisely the mechanism this
+repo already uses for a Layer 1 gap found by Layer 2 (G1 stroke, G2 dashed, G3
+ink on a scrim — all three declared there rather than invented locally):
+
+```css
+/* G4 · the rungs the ladder has no name for.
+   --space-gap-tight  4px   parts of ONE atom: a dot and its neighbour, a
+                            glyph and the number beside it, a label and its
+                            required mark. Below --space-gap-inline, which is
+                            an icon and its own LABEL.
+   --space-gap-prose  24px  the rung between "inside one molecule" (16) and
+                            "molecules that do not belong together" (32).
+                            Ben's own name for it, from the headline round. */
+--space-gap-tight: var(--sp-1);
+--space-gap-prose: var(--sp-5);
+```
+
+No new values — both are existing `--sp-` rungs, which is what makes this a
+naming change rather than a spacing change. Nothing moves on screen. What
+changes is that 27 declarations stop being numbers and start being
+relationships, and the next person reaching for 24px finds a name instead of a
+decision.
+
+**C · L2's own text.** Two lines would carry B into the rule — a row in the
+ladder table for each new rung — and one more would replace *"read the gaps off
+the computed styles and verify it"* with *"`pnpm check` reads them for you;
+this table is what it checks against."* **I did not touch it, and cannot
+quietly:** `verify-layout.mjs` asserts `docs/10-layout.md` is byte-identical to
+`reference/design_system/docs/10-layout.md`, so editing the page means editing
+the signed-off Layer 3 reference. That is Ben's to authorise, and it should
+follow B rather than lead it.
+
+## Carousel — the emphasis is a GATE decision, not a pointer decision
+Where: `src/Carousel.tsx` (`forwardVariant` / `backVariant`),
+`apps/web/src/routes/AboutMusie.tsx`
+What I checked: Ben, 2026-09-25, having tested the `ghost`-on-touch build on a
+phone — "we loose the nice flow this way". He is right and the two entries
+above are both wrong about the axis. Quiet controls from the FIRST slide take
+away the thing that makes three slides feel like progress; the defect the
+260925 testing found was a filled chevron competing with a swipe people had no
+reason to try, and the peek and the nudge have since given them one.
+What I did: removed the coarse-pointer override entirely. `nextVariant` is
+honoured on every pointer and gained `ghost` as the rung below `secondary`;
+the screen passes `seenAll ? 'ghost' : 'primary'`, so the chevrons go quiet in
+the same render its own CTA lights up. `previousVariant` is DERIVED, one rung
+below forward, so back can never be louder than forward — and there is no
+second prop for a screen to get that wrong with.
+Measured on the running app at 393px, identical on touch and mouse:
+gate closed → prev `secondary` (disabled), next `primary`, CTA disabled;
+gate open → both `ghost`, CTA `primary` + `guided`; and walking BACK to slide
+1 does not re-lock any of it, because `seenMax` is monotonic.
+Why it is better than either pointer rule: it is one hand-over rather than two
+independent states. Neither moment has both things loud or both things quiet.
+What I need from Ben: **nothing. One thing to watch, stated once.**
+The forward chevron is filled during exactly the window where the swipe is
+being discovered, which is the window the testing failed in. What is different
+now is the peek and the nudge, which did not exist then. If a later round of
+testing finds people still pressing rather than swiping on the first two
+slides, the lever is this line in `AboutMusie.tsx` and not the component —
+and the third rung, `secondary`, is in the union for that.
+
+**The pointer still decides two things, and should:** the nudge and the `grab`
+cursor. A gesture genuinely differs by pointer. Emphasis does not, and that is
+the mistake these three entries record making twice.
+
+## InteractiveWizard — the connector is a rule expanded and a dot collapsed
+Where: `src/musy-components.css`, `.musy-wizard__connector`;
+`src/InteractiveWizard.tsx` (the glyph)
+What I checked: Ben's phone screenshot of the collapsed run — four markers
+almost touching with three hairline rules in the gaps between them. The rule
+had already been quietened once (`--border-subtle` at
+`--border-width-hairline`, the softest the system has), so quiet was not the
+problem: over a 9px gap a line still reads as a path, and the eye follows it to
+find where it goes.
+What I did: both drawings ship, and which one shows follows the SAME condition
+the collapse does — under `--bp-md`, and wherever `compact` forces it in a
+container no media query can see. `vertical` keeps its rule at every width: it
+is the variant for a rail with height to spend and every label visible, which
+is the opposite of the case the dot exists for.
+Why: expanded, the gaps are long and a line earns them — it says these four are
+one sequence. Collapsed, there is nothing for a line to say that the markers do
+not already say by sitting in a row.
+What I need from Ben: **nothing.** Two measurements are worth keeping, because
+the first fix was wrong and the second is not obvious:
+
+1. **A dot cannot be a layout box here.** `Dot` is ~3px of ink in a 20px
+   square. The rule filled whatever box it was given, so the connector's floors
+   (`--sp-2`, `--sp-4`) only ever decided how SHORT the line got. A 20px glyph
+   in a 9px box is start-aligned rather than centred, so it slid out from under
+   its own box and under the next marker's filled circle: measured at 390px,
+   three boxes of 9px and two of the three dots invisible.
+2. **Raising the floor to `--icon-size-md` fixed that and broke something
+   better hidden.** The collapsed run is width-bound on a phone — four 44px
+   markers and three gaps inside ~316px — so 12px × 3 came straight out of the
+   one label still on screen, and `Einsteigen` (which `word-break: normal` will
+   not break, correctly) then overflowed its box by ~29px and painted over the
+   very dot the floor was raised to reveal. Measured: label box [105,156], text
+   to ~185, dot at 174.
+
+   So the floors stayed and the glyph left the layout — absolutely centred on
+   the connector, its empty square overflowing into the triggers' own padding,
+   which costs nothing. **The general form, for the next component that puts a
+   Lucide glyph in a tight gap: an icon's box is mostly air, so sizing a layout
+   off it buys padding nobody asked for and takes the width from whatever was
+   already tightest.**
+
+## InteractiveWizard — the dots are centred on the space they have, not on their own box
+Where: `src/musy-components.css`, the collapsed-run block
+What I checked: Ben's two phone screenshots — the first step and the last step,
+where the dot beside the label looked stuck to the word while the dots between
+two bare markers looked right. Measured every box in the rail at 393px, marker
+edge to marker edge, before changing anything. The dot was off the centre of
+its gap by **+2.0px** beside the label at both the first and the last step,
+**−1.4px** on the other side of the current marker, and **+1.7px** between two
+collapsed markers. Small, and beside a word 2px reads as attached to it.
+What I did: fixed the two causes rather than nudging the dot.
+
+1. **The gap was not symmetric around the connector.** A collapsed trigger pads
+   `--sp-1` inline; the current one pads `--sp-2` from the base rule. So every
+   gap touching the step on screen was 8px one side of the connector and 4px
+   the other, and a dot centred on the connector cannot be centred in that.
+   Every trigger now pads the same `--sp-1` while collapsed.
+2. **The connector overflowed its own allocation.** `min-width: --sp-2` is what
+   a RULE needs to stay drawable. Measured: flex had 4.5px to give between two
+   collapsed markers, the box still reported 8px, and it spilled the difference
+   rightward carrying the dot 1.7px with it. A dot is absolutely placed and
+   needs no width, so while collapsed there is no floor.
+
+Measured again after, at 393px, first / middle / last step selected: **0.00px**
+off for every gap, including the one that contains the label. Expanded, nothing
+moved — at 1280px the connector is still a 1px rule with `min-width: 16px` and
+the triggers still pad `--sp-2`.
+Why both, rather than an offset on the dot: the arithmetic is now exact instead
+of tuned. The gap is `--sp-1 + connector + --sp-1`, so the connector's centre IS
+the gap's centre at any width and whatever flex leaves. An offset would have
+been right at one viewport.
+What I need from Ben: **nothing.** Worth knowing: equalising the padding also
+handed ~15px back to the one label still on screen, which is what the collapsed
+run is always shortest of.
