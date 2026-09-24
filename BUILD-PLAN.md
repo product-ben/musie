@@ -452,9 +452,12 @@ carried a Share step that C.2 cut.
 - [x] **D.2 About you.** The four user types from the database, writing
   `profiles.user_type_id` on the pick rather than on Continue, so the choice
   survives whether or not anyone presses it. The three unbuilt types open a
-  not-implemented lightbox **here** and are accepted **in /settings** — Ben's
-  decision, commented in both files. Still `RadioGroupText`: the artwork is the
-  one part of this step still waiting on somebody.
+  not-implemented lightbox **here**, and that is now the app's only answer:
+  they were accepted in /settings, and that screen was deleted on 2026-09-24 —
+  so Ben's 2026-09-19 asymmetry is half gone and an unimplemented type can no
+  longer be recorded anywhere. Logged in `apps/web/OPEN-QUESTIONS.md`. Still
+  `RadioGroupText`: the artwork is the one part of this step still waiting on
+  somebody.
 
 - [x] **D.3 Exercises.** `RadioCards` with the fact chips and the glyph legend
   D.0 built, "Let Musie pick an exercise" (among the IMPLEMENTED ones — the
@@ -1026,13 +1029,15 @@ Reduced, because C.7 already built the part the flow depends on.
   part of the old done-when was moot — D1 settled that nothing is ever
   uploaded, so there is no storage to orphan.
 
-  **Delete-everything lives in `/settings`, not in the diary**, which is the
-  one decision in this step: `/diary` IS the thing being destroyed, so a
-  control that empties it while you scroll thirty rows past it is the
-  definition of easy to hit by accident. Reaching settings is already two
-  deliberate acts, so the inline confirmation is a third line of defence
-  rather than the only one. The argument is written above `DeleteEverything`
-  in `apps/web/src/SettingsSheet.tsx`.
+  **Delete-everything lived in `/settings`, and lives on `/diary` since
+  2026-09-24**, when that route was deleted. The original decision was the one
+  call in this step — `/diary` IS the thing being destroyed, so a control that
+  empties it while you scroll thirty rows past it is easy to hit by accident —
+  and what answered it survives the move: the control sits below everything
+  behind a rule at `--space-section`, it is not drawn at all for an empty
+  diary, and the inline confirmation is unchanged (third line of defence then,
+  second now). The argument, including the half it reverses, is written above
+  `DeleteEverything` in `apps/web/src/routes/Diary.tsx`.
 
   It takes a **running** session too, and the navigate to `/diary` afterwards
   is what stops that stranding you on a step whose row no longer exists.
@@ -1333,12 +1338,13 @@ is none, so a real session is simply used.
   sessions before signing up still has all three afterwards.
 
 - [ ] **H.4 What an account changes elsewhere.** `profiles.theme` stops being
-  a write-only column — [SettingsSheet](apps/web/src/SettingsSheet.tsx) says
-  it *"becomes readable the day an account spans devices"*, and this is that
-  day, which means answering the reconciliation question it flags. The
-  settings sheet grows an account section. And the privacy copy changes again:
-  *saved on this device* becomes *saved to your account* — the rest of the
-  change H.0b started.
+  a write-only column — [MenuPreferences](apps/web/src/components/MenuPreferences.tsx)
+  says it *"becomes readable the day an account spans devices"*, and this is
+  that day, which means answering the reconciliation question it flags. The
+  account section H.0b asked for exists already, in the menu drawer (it was in
+  the settings sheet until that route was deleted on 2026-09-24). And the
+  privacy copy changes again: *saved on this device* becomes *saved to your
+  account* — the rest of the change H.0b started.
 
 - [ ] **H.5 Anonymous cleanup, on a schedule.** Every browser that ever opened
   the app left a permanent `auth.users` row, and they count toward monthly

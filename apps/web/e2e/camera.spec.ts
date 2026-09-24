@@ -26,7 +26,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
 import { SCANNED_CARD } from './fakeCamera';
-import { enterCode, label, reachTheLibrary, service, withLocale } from './support';
+import { enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /** A card neither other walk uses, so the three of them together prove the
@@ -41,10 +41,7 @@ async function reachTheScanStep(page: Page, locale: Locale): Promise<string> {
   await withLocale(page, locale);
   await reachTheLibrary(page, locale);
 
-  await page.getByRole('radio').first().click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: label(locale, 'exercises.start'), exact: true }).click();
+  await startExercise(page);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
@@ -71,7 +68,7 @@ test('the camera reads a card and the session takes it', async ({ page, context 
      Nothing has asked for a camera yet, and that is the design: arriving at
      the step must not produce a permission prompt. The button is what does. */
   await page
-    .getByRole('button', { name: label(locale, 'session.scan.cameraStart'), exact: true })
+    .getByRole('button', { name: label(locale, 'session.scan.scanCard'), exact: true })
     .click();
 
   /* The preview runs, and the line under the frame says what to do with it.
@@ -80,17 +77,17 @@ test('the camera reads a card and the session takes it', async ({ page, context 
   await expect(page.getByText(label(locale, 'session.scan.cameraLive'), { exact: true }))
     .toBeVisible({ timeout: 30_000 });
 
-  /* ── AND THEN IT READS THE CODE ─────────────────────────────────────────
+  /* ── AND THEN IT READS THE CODE, AND THE SESSION MOVES ON ───────────────
      Nothing is clicked from here on. The loop decodes the frame, the code is
-     put in the field, the field is submitted, and the card arrives — which is
-     the whole of E.2 in one assertion that nobody helped along. */
-  await expect(page.getByText(label(locale, 'session.scan.yourCard'), { exact: true }))
-    .toBeVisible({ timeout: 60_000 });
+     put in the field, the field is submitted, the card is written and the
+     listen step arrives — which is the whole of E.2, plus 2026-09-24's second
+     half, in one assertion that nobody helped along. */
+  await expect(page).toHaveURL(/\/listen$/, { timeout: 60_000 });
 
-  /* The card's own code, on screen, beside its feeling. It proves WHICH card
-     was read rather than that some card was — the clip holds MC-03 and no
-     other walk uses it. */
-  await expect(page.getByText(new RegExp(SCANNED_CARD.code))).toBeVisible();
+  /* The card's own code, on screen, beside its feeling — the listen step's
+     details carry it. It proves WHICH card was read rather than that some card
+     was: the clip holds MC-03 and no other walk uses it. */
+  await expect(page.getByText(new RegExp(SCANNED_CARD.code)).first()).toBeVisible();
 
   /* ── THE ROW ────────────────────────────────────────────────────────────
      By identity, and both columns: `card_id` and `track_id` are written in one
@@ -99,14 +96,17 @@ test('the camera reads a card and the session takes it', async ({ page, context 
   const db = service();
   const { data: session } = await db
     .from('sessions')
-    .select('id, card_id, track_id, status')
+    .select('id, card_id, track_id, step, status')
     .eq('id', sessionId)
     .single();
 
   expect(session).toBeTruthy();
   expect(session!.card_id).toBe(SCANNED_CARD.id);
   expect(session!.track_id).toBe(SCANNED_CARD.track);
-  /* Reading a card must not advance the session past the step that shows it. */
+  /* Reading a card DOES advance the session now, and exactly one step: the
+     scan step is finished by naming the card, and the row says so — which is
+     what brings somebody back to the recording rather than to the reader. */
+  expect(session!.step).toBe('listen');
   expect(session!.status).toBe('started');
 
   await expect(page.locator('html')).toHaveAttribute('lang', locale);
@@ -125,7 +125,7 @@ test('saying no to the camera costs nothing', async ({ page, context }, testInfo
   const sessionId = await reachTheScanStep(page, locale);
 
   await page
-    .getByRole('button', { name: label(locale, 'session.scan.cameraStart'), exact: true })
+    .getByRole('button', { name: label(locale, 'session.scan.scanCard'), exact: true })
     .click();
 
   /* It says what is true and stops. No apology, and — asserted below — no
@@ -142,8 +142,7 @@ test('saying no to the camera costs nothing', async ({ page, context }, testInfo
      that left the step unable to name a card would be the camera having taken
      something away by being added. */
   await enterCode(page, locale, TYPED_INSTEAD.code);
-  await expect(page.getByText(label(locale, 'session.scan.yourCard'), { exact: true }))
-    .toBeVisible({ timeout: 15_000 });
+  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
 
   const db = service();
   const { data: session } = await db

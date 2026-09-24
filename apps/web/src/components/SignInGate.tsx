@@ -30,8 +30,8 @@
  * ── EVERY STRING IS PASSED (rule 7) ────────────────────────────────────────
  * `Field`'s `errorWord` and `Message`'s `statusWord` are the two screen-reader
  * status words left to the design system's own catalogue, which follows the
- * app's locale through `MusyLocaleProvider` — the same thing SettingsSheet
- * does, and the boundary main.tsx describes. Every string the APP has a word
+ * app's locale through `MusyLocaleProvider` — the same thing every other
+ * screen relies on, and the boundary main.tsx describes. Every string the APP has a word
  * for is passed here explicitly.
  */
 import * as React from 'react';

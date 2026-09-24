@@ -60,8 +60,10 @@ export type SessionOutcome =
  * MEASURED against the local stack on 2026-09-22, because the first version of
  * this code assumed otherwise and shipped `user.email ?? null`. `??` only
  * catches null and undefined, so an anonymous user's empty string went through
- * as an email address — and the settings sheet, which decides whether to draw
- * 'Sign out' by asking whether there is one, drew it. For an anonymous user
+ * as an email address — and the account section, which decides whether to draw
+ * 'Sign out' by asking whether there is one, drew it. (It was in the settings
+ * sheet then; it is in the menu drawer now. The bug and the guard are the
+ * same.) For an anonymous user
  * that button strands their entire diary on an id nobody can sign in as again,
  * which is the exact data-loss shape H.0 exists to keep away from testers.
  *

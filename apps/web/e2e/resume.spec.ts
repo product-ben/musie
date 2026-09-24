@@ -21,7 +21,7 @@
  * green while the damage was done.
  */
 import { expect, test } from '@playwright/test';
-import { enterCode, label, reachTheLibrary, service, withLocale } from './support';
+import { enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 test('continue session returns to the step you stopped on', async ({ page }, testInfo) => {
@@ -31,10 +31,7 @@ test('continue session returns to the step you stopped on', async ({ page }, tes
   await withLocale(page, locale);
   await reachTheLibrary(page, locale);
 
-  await page.getByRole('radio').first().click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: label(locale, 'exercises.start'), exact: true }).click();
+  await startExercise(page);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
@@ -50,11 +47,10 @@ test('continue session returns to the step you stopped on', async ({ page }, tes
   await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
   await expect(page).toHaveURL(/\/scan$/);
 
+  /* Naming the card finishes the scan step since 2026-09-24, so the listen
+     step arrives on its own and there is no Continue to press. */
   await enterCode(page, locale, 'MC-01');
-  await expect(page.getByText(label(locale, 'session.scan.yourCard'), { exact: true }))
-    .toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
-  await expect(page).toHaveURL(/\/listen$/);
+  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
 
   /* The row has to agree before leaving, or the rest of this proves nothing:
      a resume that lands on `intro` is correct if `intro` is what was stored. */

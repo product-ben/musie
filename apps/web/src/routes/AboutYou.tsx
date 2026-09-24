@@ -5,8 +5,8 @@
  * ── PICKING WRITES; CONTINUE COMMITS AND NAVIGATES ─────────────────────────
  * A pick writes immediately, so the choice survives a closed tab whether or not
  * anyone presses Continue — and because it is the same `profiles.user_type_id`
- * the drawer and /settings already read, there is one write path and no local
- * copy to reconcile.
+ * the drawer already forks on, there is one write path and no local copy to
+ * reconcile.
  *
  * Continue also writes, for the one case a pick cannot cover: the reader who
  * accepts the PRESELECTED answer without touching it. "By myself" is offered
@@ -14,17 +14,20 @@
  * navigated would send that reader to /exercises with nothing recorded — where
  * the drawer, which forks on this column, would send them straight back here.
  *
- * ── THE UNBUILT THREE OPEN A LIGHTBOX HERE, AND NOT IN SETTINGS ────────────
+ * ── THE UNBUILT THREE OPEN A LIGHTBOX, AND THIS IS NOW THE ONLY ANSWER ─────
  * `user_types.implemented` is true for exactly one row. Picking one of the
  * other three opens a not-implemented lightbox and RECORDS NOTHING: this
  * screen is a gate on the way into a session, so it has to say why it will not
  * open rather than accept an answer it cannot act on.
  *
- * /settings does the opposite on purpose — every type is selectable there and
- * the flag is ignored, because a preference is something you are entitled to
- * record whether or not the product has caught up with it. Ben settled the
- * asymmetry on 2026-09-19 and it is written down in both places rather than
- * left looking like one of the two screens forgot.
+ * /settings USED TO DO THE OPPOSITE, on purpose: every type was selectable
+ * there and the flag ignored, because a preference is something you are
+ * entitled to record whether or not the product has caught up with it. Ben
+ * settled that asymmetry on 2026-09-19 and unsettled it on 2026-09-24 by
+ * deleting the screen — the question is asked in one place now, and an
+ * unimplemented type cannot be recorded anywhere. That is a real loss of the
+ * 2026-09-19 decision and it is logged in apps/web/OPEN-QUESTIONS.md rather
+ * than left to be discovered here.
  *
  * The refused pick does not stick, and that needs no code: `value` is bound to
  * the profile, so a selection the profile never took is simply not there on

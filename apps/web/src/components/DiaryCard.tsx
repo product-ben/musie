@@ -34,7 +34,7 @@ import {
 import type { ContentListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { deleteSession } from '../lib/session';
-import { durationMinutes, formatDateTime, stepMessageKey } from '../lib/diary';
+import { answerParagraphs, durationMinutes, formatDateTime, stepMessageKey } from '../lib/diary';
 import { useTrackSource } from '../lib/audio';
 import type { DiaryEntryDetail, DiaryTrack } from '../lib/diary';
 
@@ -90,6 +90,11 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
 
   const minutes = durationMinutes(entry.startedAt, entry.endedAt);
   const abandoned = entry.status === 'abandoned';
+
+  /* The answer, as the lines to draw. Empty for an entry with no reflection —
+     a declined one, or an abandoned run — which is the same absence the box
+     below tests for, so the two cases need no branch of their own. */
+  const answer = entry.reflection === null ? [] : answerParagraphs(entry.reflection);
 
   /**
    * The labelled facts, in the order a person asks for them: when, how long,
@@ -188,14 +193,44 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
           fact about the session, and a sunken box says that without a
           new class. `diary.yourAnswer` is its heading. A voice answer is
           here too, as the transcript the reflect step stored; nothing
-          else was ever kept. */}
-      {entry.reflection !== null && (
+          else was ever kept.
+
+          ── IN THE PIECES IT WAS GIVEN IN — Ben, 2026-09-24 ──────────────
+          It was the box's `text` slot, which is ONE `<p>`: a spoken answer
+          arrived here as four sentences glued with spaces and a typed one
+          lost every line break the person pressed. The statements survive in
+          `reflection_statements` and the diary was the one screen that threw
+          them away again — so the card renders a paragraph per statement and
+          `answerParagraphs` decides what a statement is.
+
+          `.musie-prose` rather than four `text` props or a `<br>` run: it is
+          the app's existing pattern for a column of plain paragraphs (L14).
+          This is its second caller and the prose family's third, which is
+          L14.3 exactly — appended to OPEN-QUESTIONS.md rather than merged
+          here, because the answer is a Layer 2 component and not an app
+          class. The box keeps its heading and its sunken fill; what changed
+          is that the slot holds the answer instead of the text line.
+
+          NOTHING TO SHOW IS NO BOX. A reflection row cannot have an empty
+          body — `body` is `not null` — but a body of nothing but whitespace
+          would otherwise draw a heading over silence. */}
+      {answer.length > 0 && (
         <ContentBox
           headline={t('diary.yourAnswer')}
           headingLevel={(headingLevel + 1) as 3 | 4}
-          text={entry.reflection.body}
           outline="sunken"
-        />
+        >
+          <div className="musie-prose">
+            {/* The index is in the key because two statements CAN be the same
+                sentence — "Und dann?" twice is a person repeating themselves,
+                not a duplicate to collapse. The list is re-read, never
+                reordered in place, so the index is stable for as long as it
+                is rendered. */}
+            {answer.map((paragraph, index) => (
+              <p key={`${String(index)}-${paragraph}`}>{paragraph}</p>
+            ))}
+          </div>
+        </ContentBox>
       )}
 
       {/* The recording, offered back. Rendered ONLY when there is a track.

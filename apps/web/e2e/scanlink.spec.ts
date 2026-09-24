@@ -22,7 +22,7 @@
  * be invisible in the English run.
  */
 import { expect, test } from '@playwright/test';
-import { label, reachTheLibrary, service, withLocale } from './support';
+import { label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /**
@@ -45,10 +45,7 @@ test('a deep link puts its card on the running session', async ({ page }, testIn
   /* Start the one implemented exercise, exactly as the other walks do. The
      deep link needs something RUNNING to write to — that is the whole
      difference between its happy path and its commonest unhappy one. */
-  await page.getByRole('radio').first().click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: label(locale, 'exercises.start'), exact: true }).click();
+  await startExercise(page);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
@@ -61,11 +58,17 @@ test('a deep link puts its card on the running session', async ({ page }, testIn
      already loaded would pass a click and fail this. */
   await page.goto(`/s/${CARD.code}`);
 
-  /* It resolves and replaces itself. `replace`, so Back does not land on a
-     resolver that would resolve all over again — asserted below. */
-  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/scan$`), { timeout: 15_000 });
-  await expect(page.getByText(label(locale, 'session.scan.yourCard'), { exact: true }))
-    .toBeVisible({ timeout: 15_000 });
+  /* It resolves and replaces itself — ONTO THE LISTEN STEP since 2026-09-24.
+     A scan that lands is a finished scan step, so the link goes to the
+     recording rather than to a screen naming the card back at somebody who is
+     holding it. `replace`, so Back does not land on a resolver that would
+     resolve all over again — asserted below.
+
+     THE SESSION WAS STANDING ON `intro` when the link arrived, which is the
+     case this assertion is really about: `listen` is unreachable from `intro`
+     by the reachability rule, so a resolver that redirected without writing
+     the step would be bounced straight back here and this would fail. */
+  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/listen$`), { timeout: 15_000 });
 
   /* ── THE ROW ────────────────────────────────────────────────────────────
      By identity. The deep link chose the card, so "some card" would not be an
@@ -81,8 +84,11 @@ test('a deep link puts its card on the running session', async ({ page }, testIn
   expect(session).toBeTruthy();
   expect(session!.card_id).toBe(CARD.id);
   expect(session!.track_id).toBe(CARD.track);
-  /* Still running, and still on the step the link landed on: resolving a card
-     must not advance the session past the step that shows it. */
+  /* Still running, and STANDING WHERE THE PERSON IS. The row is not
+     bookkeeping here: it is what makes `listen` reachable at all, and a
+     version that navigated without writing it would show the right URL for one
+     frame and then redirect. Asserting the column is what tells those apart. */
+  expect(session!.step).toBe('listen');
   expect(session!.status).toBe('started');
 
   /* THE ONE LOCALE-SPECIFIC ASSERTION, for the same reason as every other

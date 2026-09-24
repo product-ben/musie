@@ -51,6 +51,24 @@ const meta = {
           '**Undo is the consumer\'s.** This reports the change; whoever owns the data',
           'owns the snapshot and the window.',
           '',
+          '**A thumb deletes by swiping the row left**, and that is the only gesture',
+          'in here that is pointer-conditional: a fine pointer never sees it. The row',
+          'menu still holds Delete on every pointer, so nothing is gated behind a',
+          'gesture a cursor, a keyboard or a screen reader cannot perform. The axis is',
+          '**decided, not assumed** — past a 12px slop, whichever of dx and dy is',
+          'larger wins and the loser is abandoned, and the row takes `touch-action:',
+          'pan-y` so the browser keeps the vertical scroll it is good at. Past half the',
+          'row\'s width the panel arms and a release deletes; short of that it parks',
+          'open, where it is a real, focusable Delete button.',
+          '',
+          '**The peek is the affordance.** A swipe with no standing affordance is a',
+          'secret, and the row has nowhere to put one — every pixel is either the',
+          'person\'s own words or the two controls L4 reserves room for. So the first',
+          'row drifts one `--motion-travel-lg` left, once, showing the panel behind it,',
+          'and settles back. Under `prefers-reduced-motion` Layer 1 sets that travel to',
+          '0px and the whole thing is a no-op, which is affordable only because the',
+          'peek *points at* the menu\'s Delete rather than being the way to reach it.',
+          '',
           '---',
           '### Build notes',
           '',
@@ -99,6 +117,12 @@ const meta = {
           'page. The handle of the surviving neighbour takes focus instead. Still',
           'not reachable from a story — CONVENTIONS §5 — so it is read, not seen.',
           '',
+          '**DraggableList — the swipe cannot be reached from a story either.**',
+          'The gesture needs a coarse pointer and a sequence of pointer events;',
+          '`offset`, `swiping` and `armed` are internal, so the panel, its armed',
+          'state and the parked-open button are only visible in a device emulator',
+          'with touch on. Same gap as the drag states above, same cause.',
+          '',
           '**DraggableList — `dense` defaults to false, against L8.** The header',
           'records this as a deliberate departure logged as conflict B23: L8 grants a',
           'per-item size exception that made a merge re-size text the user had just',
@@ -129,6 +153,7 @@ const meta = {
     label: { control: 'text', description: 'Accessible name for the list itself. Defaults to the locale catalogue — “Transkript” / “Transcript”.' },
     dropHints: { control: false, description: 'The drag hint’s wording, any subset of it. Each hint defaults to the locale catalogue, as do the four row controls and every keyboard announcement — none of which had a prop before C.10.' },
     dense: { control: 'boolean', description: 'Opt into L8’s dense-list exception as L8 states it: body-sm at 80 characters or fewer, body-md above. Default false — see Build notes.' },
+    swipeToDelete: { control: 'boolean', description: 'The iOS delete gesture, on a coarse pointer only. Default true. Pass false where a deletion cannot be taken back — the gesture has no confirm step by design, and §7.23’s toast is the undo.' },
     className: { control: false },
   },
 } satisfies Meta<typeof DraggableList>;
@@ -190,6 +215,12 @@ export const LongStatement: Story = {
     ],
   },
 };
+
+/** `swipeToDelete={false}` — the row keeps its menu and loses the gesture.
+ *  Indistinguishable from `Default` under a cursor, which is the point: the
+ *  gesture only ever existed on a coarse pointer. Open the toolbar's device
+ *  emulator with touch enabled to tell the two apart. */
+export const NoSwipeToDelete: Story = { args: { swipeToDelete: false } };
 
 /** `itemNoun` renames the thing in every control's accessible name. */
 export const CustomItemNoun: Story = {

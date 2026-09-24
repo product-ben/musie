@@ -56,12 +56,14 @@ import {
   useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
+import { ArrowDown } from 'lucide-react';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
 import { revealTrack } from '../lib/reveal';
 import type { Card, Exercise, Track } from '../lib/content';
 import { parseMarkdown, plainText } from '../lib/markdown';
+import { usePinnedHeader } from '../lib/useHeaderReveal';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
 const TICK_MS = 250;
@@ -311,8 +313,27 @@ export function SessionListen({
    * `prefers-reduced-motion` at the platform level in every current engine —
    * and which now lands on exactly the positions the snap uses.
    */
-  useScrollSnap();
+  const { withoutSnapping } = useScrollSnap();
   const stageRef = useViewportFill<HTMLElement>();
+
+  /**
+   * AND THE HEADER STAYS PUT WHILE IT IS.
+   *
+   * Everywhere else the shell's header slides away as the reader goes down
+   * the page and comes back when they come up (`useHeaderReveal`). Not here,
+   * and the reason is the geometry directly above: these three views are
+   * sized `--view-block-scrolled` and land `--sticky-block` from the top of
+   * the window, and both of those numbers ARE the header's height. Let it
+   * leave and a view snaps into place with a header's worth of the previous
+   * one showing above it, in a band the snap will not let the reader scroll
+   * away.
+   *
+   * Declared rather than detected: `useScrollSnap` drops its attribute on
+   * `<html>` for the length of a programmatic jump, so the one signal that
+   * looks like it would do this is absent at precisely the moment a button
+   * scrolls a whole view downwards. The hook's own header has the rest.
+   */
+  usePinnedHeader();
   const warnRef = React.useRef<HTMLElement>(null);
   const detailRef = React.useRef<HTMLElement>(null);
 
@@ -325,7 +346,14 @@ export function SessionListen({
    * reports its own offset and the stylesheet subtracts it.
    */
   const scrollTo = (target: React.RefObject<HTMLElement | null>) => {
-    target.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const element = target.current;
+    if (element === null) return;
+    /* THROUGH `withoutSnapping`, OR IT LANDS AND COMES STRAIGHT BACK.
+       Ben's phone, 2026-09-24: *Details und Player zeigen* reached the details
+       view and was then animated back to the Störer. The hook's header has the
+       diagnosis; what matters here is that every scroll a BUTTON causes goes
+       through this, and a scroll a thumb makes does not. */
+    withoutSnapping(() => element.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
   /**
@@ -343,7 +371,7 @@ export function SessionListen({
    * the whole step.
    */
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    withoutSnapping(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
   };
 
   /**
@@ -496,18 +524,6 @@ export function SessionListen({
           are deliberately not the same question. */}
       <Markdown md={exercise.listenMd} />
 
-      {/* The gate's own copy, with the sentences it qualifies rather than with
-          the buttons it unlocks: it is the small print under the instruction.
-          `aria-describedby` on the CTA points here. */}
-      <p id="listen-gate" className="musie-note">
-        {met
-          ? t('session.listen.gateMet')
-          : t('session.listen.gateLocked', {
-              gate: clock(gate),
-              left: clock(Math.max(0, gate - Math.floor(position))),
-            })}
-      </p>
-
       {track === null ? (
         <Message
           variant="info"
@@ -541,10 +557,6 @@ export function SessionListen({
             />
           )}
 
-          {simulated && (
-            <p className="musie-note">{t('session.listen.simulated')}</p>
-          )}
-
           {/* A plain <div> so the transport hugs its label instead of being
               stretched the width of the column: `.musy-btn` is inline-flex,
               and a block parent is all that takes. The same one line
@@ -562,44 +574,68 @@ export function SessionListen({
           </div>
         </div>
       )}
+
+      {/* ── THE WAY ON, DIRECTLY UNDER THE THING IT WAITS FOR — 2026-09-24 ──
+          It used to sit in the action row at the foot of the view, beside
+          *Back* and the detour. Ben moved it here: the reflection is what the
+          listening is FOR, so the control that starts it belongs under the
+          control that plays the track, not among the ways out of the step.
+
+          THE BUTTON IS THE GATE NOW. There was a paragraph above the
+          transport saying how much was left, and a CTA below saying *Start
+          reflection* whatever the clock said — so the condition and the
+          control it governed were in two different places, and the button
+          named the one thing it could not yet do. One string, on the control
+          itself, in both states. `aria-describedby` went with the paragraph:
+          the accessible name carries the condition now, which is stronger
+          than a description pointing at it.
+
+          The STATE DYNAMICS are untouched. `met` is the same latch, still
+          reading POSITION and still not asking who moved it, so the scrubber
+          in the details view opens this button exactly as before.
+
+          Wrapped in a plain <div> so it hugs its label rather than stretching
+          the column — the same one line the transport above it uses. `wrap`
+          because the locked label is a sentence, and German at 393px needs
+          two lines for it. */}
+      <div>
+        <CtaButton
+          variant={met ? 'primary' : 'secondary'}
+          disabled={!met}
+          wrap
+          onClick={onAdvance}
+        >
+          {met
+            ? t('session.listen.start')
+            : t('session.listen.startLocked', {
+                countdown: clock(Math.max(0, gate - Math.floor(position))),
+              })}
+        </CtaButton>
       </div>
 
-      {/* ── THE WAYS OUT OF THE STEP, AND ONLY THOSE ──────────────────────
-          Back at the leading edge; the two ways forward together at the
-          trailing one, *Track details and player* immediately left of *Start
-          reflection* (Ben, 2026-09-23).
+      {/* ── THE DETOUR, UNDER THE WAY ON — 2026-09-24 ──────────────────────
+          Third in a column of three, and the order is the argument: play the
+          track, start the reflection, or — below both — go and read about it.
+          It was at the foot of the view opposite *Back*, which made it look
+          like a way OUT of the step. It is not. It is a sideways move within
+          the step, and it belongs with the other things you can do to the
+          recording.
 
-          IT USED TO HOLD THE TRANSPORT TOO, and to move *Track details*
-          between the two groups at the threshold. Both are gone. The transport
-          is with the question now, where the thing it plays is; and a button
-          that changes SIDES when a clock passes ninety seconds moves under the
-          thumb that is reaching for it, which is a worse cost than the
-          hierarchy it was buying. What the threshold still changes is the
-          fill — L6 — and that is enough: *Start reflection* takes the filled
-          treatment at the moment it becomes a forward action at all.
+          A GHOST WITH A DOWN ARROW, and the arrow is the honest part: the
+          button does not open anything, it SCROLLS, to the Störer one viewport
+          below. Ghost because it is the quietest of the three — a second
+          outlined control under the CTA would read as an equal choice.
 
-          RENDERED WHETHER OR NOT THERE IS A TRACK. The row used to be inside
-          `track !== null`, which meant an exercise with no recording drew no
-          row — and `back` lives in here, so that screen had no way out of the
-          step at all. The forward CTA is still gated; Back never should have
-          been. */}
-      <div className="musie-listen__actions">
-        <div className="musie-listen__actions-start">{back}</div>
-
-        <div className="musie-listen__actions-end">
-          <CtaButton variant="secondary" onClick={() => scrollTo(warnRef)}>
-            {t('session.listen.detailsAction')}
-          </CtaButton>
-          <CtaButton
-            variant={met ? 'primary' : 'secondary'}
-            disabled={!met}
-            aria-describedby="listen-gate"
-            onClick={onAdvance}
-          >
-            {t('session.listen.start')}
-          </CtaButton>
-        </div>
+          `leadingIcon`, because CtaButton takes no trailing one: a trailing
+          icon in this system means "this opens something else", which is
+          exactly what this button does not do. */}
+      <div>
+        <CtaButton variant="ghost" leadingIcon={ArrowDown} onClick={() => scrollTo(warnRef)}>
+          {t('session.listen.detailsAction')}
+        </CtaButton>
       </div>
+      </div>
+
       </section>
 
       {/* ══ SCROLL 1 · THE STÖRER ══════════════════════════════════════════
@@ -668,6 +704,32 @@ export function SessionListen({
           items={facts}
           emptyLabel={t('content.empty')}
         />
+
+        {/* ── THE SIMULATED-PLAYBACK NOTICE, LAST ON THE PAGE — 2026-09-24 ──
+            It used to sit between the step's words and the transport, in the
+            lead of the stage — which put a sentence about the BUILD in the
+            middle of the one thing the step is for, and a tester reading top
+            to bottom met it before they met the play button.
+
+            Here it is the last thing on the last view: still findable, still
+            true, and no longer in the natural flow of the exercise. `warning`
+            rather than a paragraph of small print because what it reports is
+            that the player is not playing the real recording — the icon and
+            the status word say so before the sentence does.
+
+            `live="off"`: it is in the markup from the moment the file is
+            refused, and an alert on arrival announces on a view nobody has
+            scrolled to yet. */}
+        {simulated && (
+          <Message
+            className="musie-listen__simulated"
+            variant="warning"
+            live="off"
+            headingLevel={3}
+            headline={t('session.listen.simulatedHeadline')}
+            text={t('session.listen.simulated')}
+          />
+        )}
       </section>
 
       {/* THE SCROLL-UP RAIL, sticky and pinned where the viewports meet, so a
@@ -680,6 +742,40 @@ export function SessionListen({
           {t('session.listen.scrollUp')}
         </CtaButton>
       </div>
+
+      {/* ── THE WAY BACK, AT THE FOOT OF THE WHOLE STEP — Ben, 2026-09-24 ───
+          Not at the foot of the first view, which is where it was and which
+          looked like the bottom of the page without being it: below it were
+          two more viewports the reader had not been told about, so the one
+          control that says "this is the end of the screen" was sitting two
+          screens above the end of the screen.
+
+          AFTER THE LAST VIEW, AND DELIBERATELY NOT INSIDE IT. The three
+          sections are snap views sized to the window; a fourth thing inside
+          one of them makes that view taller than the snapport, which is the
+          state WebKit refuses to let a reader rest in. Out here it is ordinary
+          document flow after the run, which is the only place a control can
+          sit without joining the snapping.
+
+          AND IT IS A SNAP VIEW, THOUGH IT IS ONLY A ROW. That is not
+          decoration — without it the control is UNREACHABLE. Measured in
+          WebKit at 393×660: `scroll-snap-type: y mandatory` insists the
+          document rest on a snap position, and with the run ending at the
+          details view the last one is 1198 while the document runs to 1594.
+          Asked to scroll to the end, WebKit came back to 1198, the row never
+          came on screen, and a click on it timed out. Marked as a member of
+          the run, the same scroll rests at 1594 and the row is on screen.
+
+          Short, where the other three are a window tall, and that is fine:
+          `scroll-snap-align: start` puts its snap position past the document's
+          maximum scroll, which the engine clamps to the end. The run's last
+          stop becomes the end of the step, which is what this row is.
+
+          RENDERED WHETHER OR NOT THERE IS A TRACK. It used to be inside
+          `track !== null`, which meant an exercise with no recording drew no
+          row at all — and `back` lives in here, so that screen had no way out
+          of the step. */}
+      <div className="musy-snap-view musie-listen__actions">{back}</div>
       </div>
     </>
   );

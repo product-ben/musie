@@ -61,6 +61,11 @@
  *                         way back, because a dead end with a control that
  *                         caused it and no undo is a trap.
  *
+ * ── AND AT THE BOTTOM, THE CONTROL THAT EMPTIES IT — 2026-09-24 ────────────
+ * Delete-everything moved here from /settings when that route was deleted. It
+ * is below everything, behind a rule, and absent entirely from an empty diary;
+ * `DeleteEverything` holds the argument, including the one it reverses.
+ *
  * ── AN ABANDONED SESSION IS AN ENTRY ───────────────────────────────────────
  * It appears in the list like any other, carrying *Unfinished* and where it
  * stopped. That is D7 and it is the designer's call: a diary that recorded
@@ -79,8 +84,8 @@
  * catalogue is worse. The slot is a column, so two siblings stack.
  */
 import * as React from 'react';
-import { Link } from 'react-router';
-import { CircleCheck, CircleDashed, List } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import { CircleCheck, CircleDashed, List, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, LinkList, Message, SegmentedControl, Timeline,
@@ -88,6 +93,8 @@ import {
 import type { LinkListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { Locale, MessageKey } from '../i18n';
+import { useProfile } from '../lib/profileContext';
+import { deleteAllSessions, useActiveSession } from '../lib/session';
 import { useDiary, useDiaryEntry } from '../lib/useDiary';
 import {
   DIARY_FILTERS, FILTER_FROM_ENTRIES, durationMinutes, filterByStatus, formatMonth,
@@ -239,6 +246,80 @@ function LatestEntry({ id, onDismiss }: { id: string; onDismiss: () => void }) {
 }
 
 /**
+ * START ANOTHER ONE — Ben, 2026-09-24, and it sits BEHIND THE NEWEST ENTRY.
+ *
+ * ── WHY HERE AND NOT AT THE TOP OR THE BOTTOM ─────────────────────────────
+ * The diary is where a finished run lands: the reflect step navigates to
+ * /diary and the newest entry opens inline, so the first thing on this screen
+ * is the thing you just did. Directly under it is where somebody has finished
+ * reading it — which is the moment the only forward move on this screen is
+ * worth offering. Above the card it would interrupt the landing; at the foot
+ * of the page it would sit next to *Delete your whole diary*, which is the one
+ * neighbour a start button must not have.
+ *
+ * ── IT GOES WITH THE CARD ──────────────────────────────────────────────────
+ * Rendered only while the latest entry is open, for the reason the card itself
+ * is: collapsing it, or setting a filter, turns the diary from a landing into
+ * a query, and a query about last month's sessions is not a moment to be
+ * offered a new one. The drawer's *Start a session* is always there and is not
+ * going anywhere.
+ *
+ * ── IT NAVIGATES; IT DOES NOT START ANYTHING ──────────────────────────────
+ * Two gates, the same two the drawer applies and for the same reasons: no user
+ * type recorded → /about-you asks who they are here as first; otherwise
+ * /exercises, which is the only screen that writes a session. So this is a
+ * `Link`, and every way a start can fail — no account, a session already
+ * running, a refused insert — is answered where it is already answered rather
+ * than in a second copy here.
+ *
+ * ── EXCEPT ONE, WHICH IS WHY IT READS THE RUNNING SESSION ─────────────────
+ * While a session is running there is no *Start a session* anywhere in the
+ * product: the drawer offers *Continue session* instead, because starting a
+ * second one is refused by a partial unique index. This follows that rule
+ * rather than restating it — with a run in progress the control is simply
+ * absent, and the drawer's row is the one place that offers the way back in.
+ * Two copies of "continue or start" is how the two drift.
+ *
+ * UNTIL THE READ LANDS, THE BUTTON IS BUSY AND DISABLED — the drawer's third
+ * branch, for the drawer's reason. Guessing *Start a session* and removing it
+ * a beat later moves the page under a thumb that is already travelling toward
+ * it; a failed read is treated as "we do not know", and the honest answer to
+ * not knowing is not to offer.
+ */
+function StartAnother() {
+  const t = useT();
+  const { profile } = useProfile();
+  const { data: running, loading, error } = useActiveSession();
+
+  const unknown = loading || error !== null;
+  if (!unknown && running !== null) return null;
+
+  /* /about-you while the profile is still loading, for the drawer's reason:
+     asking who somebody is here as a second time is recoverable, and skipping
+     the question is not. */
+  const href = profile?.user_type_id ? '/exercises' : '/about-you';
+
+  return (
+    /* WRAPPED, like the filter row below it: what the screen owns is where the
+       control sits in the column, and the group's own geometry is the
+       component's (L14). The margins collapse with the filter's, so the two
+       are one gap apart and not two. */
+    <div className="musie-diary__start">
+      <ButtonGroup align="start">
+        <CtaButton
+          variant="primary"
+          loading={unknown}
+          loadingLabel={t('content.loading')}
+          render={<Link to={href} />}
+        >
+          {t('menu.startSession')}
+        </CtaButton>
+      </ButtonGroup>
+    </div>
+  );
+}
+
+/**
  * A filter that matched nothing — the empty state for a diary that is full.
  *
  * It names WHICH filter came up empty rather than saying "no results", because
@@ -276,6 +357,154 @@ function FilterEmpty(
         </CtaButton>
       </ButtonGroup>
     </ContentBox>
+  );
+}
+
+/**
+ * DELETE MY WHOLE DIARY — G.2's second half, and since 2026-09-24 it is HERE.
+ *
+ * ── THE ARGUMENT THAT PUT IT IN /settings, AND WHY IT LOST ─────────────────
+ * It lived in the settings sheet, and the reasoning above it there was that
+ * /diary IS the thing being destroyed — so a control that empties the diary,
+ * sitting under the diary, is a control adjacent to thirty rows the user is
+ * scrolling past. Ben reversed it with /settings itself: a sheet holding three
+ * preferences and one destructive button is a second place to look, and the
+ * cost of keeping it was a header icon, a route and an overlay that existed for
+ * four controls.
+ *
+ * The old argument was not wrong, so what answered it is kept rather than
+ * dropped:
+ *
+ *   IT IS BELOW EVERYTHING, behind a rule, past the last entry — the end of a
+ *   scroll rather than anywhere a thumb arrives on the way to something else.
+ *   IT IS NOT DRAWN AT ALL FOR AN EMPTY DIARY, so the one screen where it could
+ *   be tapped without scrolling is the one screen it is absent from. (It also
+ *   stops *Delete your whole diary* sitting under *No sessions yet*, which is
+ *   an offer to destroy nothing.)
+ *   AND THE INLINE CONFIRMATION IS UNCHANGED. It was the third line of defence
+ *   and is now the second, which is the honest cost of the move.
+ *
+ * ── THE CONFIRMATION IS INLINE, AS THE ENTRY CARD'S IS ─────────────────────
+ * A `Message variant="warning"` replacing this section's own control, not a
+ * dialog. The decision happens where the thing being decided about is on
+ * screen — and here that is the entire screen behind it, which is the strongest
+ * version of that argument this control has ever had.
+ *
+ * The affirmative is `secondary`, not `primary`, matching the entry card: the
+ * loudest button on a screen should not be the irreversible one.
+ *
+ * ── WHERE IT LEAVES YOU ────────────────────────────────────────────────────
+ * /diary — the screen you are already on, navigated to again with `replace`.
+ * That is not a no-op, and it is doing three jobs:
+ *
+ *   THE LIST RE-READS, because `useDiary` keys on `location.key` and every
+ *   navigation mints a new one. It is the same mechanism that stops a deleted
+ *   row lingering after a single delete (lib/useDiary.ts) — and now that the
+ *   control is on this screen, the re-read is what turns the diary into its
+ *   own empty state in front of the person who emptied it.
+ *   IT IS ALSO THE CONFIRMATION. There is no toast and no dialog saying it
+ *   worked; the screen says so by becoming empty.
+ *   AND IT LEAVES NO ROUTE POINTING AT A ROW THAT IS GONE. `deleteAllSessions`
+ *   takes a running session with the rest, so a /session/:id/:step somewhere
+ *   back in the history is already dead — `replace` means Back does not return
+ *   to the list that still showed these entries.
+ *
+ * ── A FAILURE IS SAID OUT LOUD ─────────────────────────────────────────────
+ * Unlike the latest entry's quiet failure above, which has a working list
+ * beside it to infer from. A destructive action that silently did nothing is
+ * the worst of the three possible endings: the person believes their diary is
+ * gone and it is not.
+ *
+ * The text does NOT claim nothing was deleted. A single `delete` is atomic in
+ * Postgres, but a connection lost after it commits looks exactly like one lost
+ * before, and this is not the screen to guess on. It says what to do instead.
+ */
+function DeleteEverything() {
+  const t = useT();
+  const navigate = useNavigate();
+
+  /* One state rather than three booleans: 'confirming and failed' and
+     'deleting and idle' are not states this control has, and a union cannot
+     represent them. */
+  const [status, setStatus] = React.useState<'idle' | 'confirming' | 'deleting' | 'failed'>(
+    'idle',
+  );
+
+  async function removeEverything() {
+    if (status === 'deleting') return;
+    setStatus('deleting');
+    try {
+      await deleteAllSessions();
+      navigate('/diary', { replace: true });
+    } catch (thrown: unknown) {
+      console.error('[musie] could not delete the diary:', thrown);
+      setStatus('failed');
+    }
+  }
+
+  const deciding = status === 'confirming' || status === 'deleting';
+
+  return (
+    /* NO HEADING, where the sheet's version had one.
+       There it was a `ContentBox` headlined `route.diary.title` — *Your diary* —
+       because a button in a sheet full of preferences has to name what it acts
+       on. On this screen that headline is the h1 two hundred pixels up, and
+       repeating it as an h2 would put the same three words on the page twice and
+       add a section to the outline that says nothing the page has not said.
+
+       So the section is the rule above it plus the control, and what it acts on
+       is everything the reader just scrolled through. */
+    <section className="musie-diary__danger">
+      {status === 'failed' && (
+        <Message
+          variant="error"
+          /* 'assertive': it answers an action the person took and is the only
+             thing on screen that says how it went. L11. */
+          live="assertive"
+          headingLevel={2}
+          headline={t('diary.deleteAll.failed')}
+          text={t('content.errorDetail')}
+        />
+      )}
+
+      {deciding ? (
+        <Message
+          variant="warning"
+          live="assertive"
+          headingLevel={2}
+          headline={t('diary.deleteAll.confirm')}
+          text={t('diary.deleteAll.text')}
+          action={
+            <ButtonGroup align="end">
+              <CtaButton variant="ghost" onClick={() => setStatus('idle')}>
+                {t('common.cancel')}
+              </CtaButton>
+              <CtaButton
+                variant="secondary"
+                loading={status === 'deleting'}
+                loadingLabel={t('content.loading')}
+                onClick={() => void removeEverything()}
+              >
+                {t('diary.deleteAll.yes')}
+              </CtaButton>
+            </ButtonGroup>
+          }
+        />
+      ) : (
+        /* A LABELLED BUTTON, not the entry card's bare trash icon. That icon is
+           unambiguous because it sits inside the card it deletes; here there is
+           no object beside it, and a glyph alone would be a control whose scope
+           you have to guess at. The glyph stays as the leading icon, so the two
+           controls still read as the same kind of act.
+
+           `ghost`, and at the start edge: it is not what this screen is for. */
+        <ButtonGroup align="start">
+          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={() => setStatus('confirming')}>
+            {t('diary.deleteAll')}
+          </CtaButton>
+        </ButtonGroup>
+      )}
+    </section>
   );
 }
 
@@ -360,7 +589,10 @@ export function Diary() {
     body = (
       <>
         {showLatest && (
-          <LatestEntry id={data[0].id} onDismiss={() => setCollapsed(true)} />
+          <>
+            <LatestEntry id={data[0].id} onDismiss={() => setCollapsed(true)} />
+            <StartAnother />
+          </>
         )}
 
         {showFilter && (
@@ -427,6 +659,14 @@ export function Diary() {
     <>
       <h1 className="musie-placeholder">{t('route.diary.title')}</h1>
       {body}
+      {/* LAST ON THE SCREEN, AND ONLY WHEN THERE IS A DIARY TO DELETE.
+          `data` rather than `visible`: a filter narrows what you are LOOKING
+          at, and this control has never been about the visible subset — it
+          takes every session, including the ones the segments are hiding and
+          including one that is still running. So it appears whenever the diary
+          holds anything at all, and the sentence inside the confirmation is
+          what says how much "anything" is. */}
+      {data !== null && data.length > 0 && <DeleteEverything />}
     </>
   );
 }

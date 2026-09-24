@@ -33,8 +33,18 @@
  * the obvious implementation and is wrong on a slow drag that crosses back over
  * itself.
  *
+ * A THUMB DELETES BY SWIPING THE ROW LEFT, and that is the ONLY gesture in
+ * here that is pointer-conditional. The row's menu still holds Delete, on
+ * every pointer; the swipe is a second route to the same call, so nothing is
+ * gated behind a gesture that a cursor, a keyboard or a screen reader cannot
+ * perform. See THE SWIPE below for why the axis is decided rather than
+ * assumed, and for the three things that make an invisible gesture visible.
+ *
  * UNDO IS THE CONSUMER'S. This reports the change; whoever owns the data owns
- * the snapshot and the window. Same split as §7.19, §7.22 and §7.23.
+ * the snapshot and the window. Same split as §7.19, §7.22 and §7.23. It is
+ * what makes the swipe affordable at all: a gesture that deletes with no
+ * confirm is only honest if the deletion is cheap to take back, and §7.23's
+ * toast is already wired to the same `onDelete`.
  *
  * EVERY WORD IT SPEAKS COMES FROM THE LOCALE CATALOGUE (src/locale.ts). Four of
  * them — Discard, Save, Delete, Edit — used to be hardcoded English in the JSX
@@ -52,8 +62,9 @@ import * as React from 'react';
 import { ChevronDown, GripVertical, Pencil, Trash2 } from 'lucide-react';
 import { ContentBox } from './ContentBox';
 import { CtaButton } from './CtaButton';
+import { Icon } from './Icon';
 import { IconButton } from './IconButton';
-import { useToolSize } from './useCoarsePointer';
+import { useCoarsePointer, useToolSize } from './useCoarsePointer';
 import { useMusyText } from './locale';
 import type { MusyTextCatalogue } from './locale';
 import type { ToolSize } from './useCoarsePointer';
@@ -126,6 +137,18 @@ export interface DraggableListProps {
   itemNoun?: string;
   /** Accessible name for the list itself. Defaults to the catalogue's. */
   label?: string;
+  /**
+   * The iOS delete gesture: on a COARSE POINTER, dragging a row to the left
+   * reveals a Delete panel behind it, and dragging it past half its own width
+   * deletes on release. Default true, and it costs nothing where it does not
+   * apply — a fine pointer never sees it, and neither does a list with no
+   * `onDelete` or with `editable` false.
+   *
+   * Pass false where a deletion is not cheap to take back. The gesture has no
+   * confirm step by design (§7.23's toast is the undo), so a consumer that
+   * cannot offer an undo should not offer the gesture either.
+   */
+  swipeToDelete?: boolean;
   className?: string;
 }
 
@@ -142,6 +165,36 @@ const SCANNABLE_CHARS = 80;
 export const itemTypeStep = (text: string, dense = false) =>
   dense ? (text.length <= SCANNABLE_CHARS ? 'body-sm' : 'body-md') : 'body-sm';
 
+/**
+ * ── THE SWIPE · the numbers ───────────────────────────────────────────────
+ *
+ * THE AXIS IS DECIDED, NEVER ASSUMED. A finger that lands on a row is far
+ * more often starting to scroll the page than starting to delete something,
+ * so the gesture watches the first few pixels and commits to ONE axis: past
+ * the slop, whichever of dx and dy is larger wins, and the loser is abandoned
+ * for the rest of the gesture. Deciding on `pointerdown` — which is what
+ * `touch-action: none` on the row would amount to — makes a list of cards
+ * swallow the scroll, which on a phone is most of what people do (L13).
+ *
+ * The CSS carries the other half of the same bargain: the row takes
+ * `touch-action: pan-y`, so the browser keeps the vertical scroll it is good
+ * at and hands us the horizontal one it has no use for.
+ */
+const SWIPE_SLOP_PX = 12;
+
+/**
+ * How far past the panel's own width the row has to go before a release
+ * deletes rather than parks. Expressed against the ROW's width rather than
+ * the panel's: the commit point should scale with the thing being swiped, and
+ * half a row is the distance iOS has taught every thumb.
+ */
+const SWIPE_COMMIT_RATIO = 0.5;
+
+/** Under half the panel, a release springs back; over it, the panel parks
+ *  open. Half is the only ratio that makes the gesture reversible in the
+ *  direction it came from. */
+const SWIPE_OPEN_RATIO = 0.5;
+
 /** Outer quarters reorder, middle half merges. The ratio is the component's. */
 function zoneFor(rect: DOMRect, y: number): DropMode {
   const offset = (y - rect.top) / rect.height;
@@ -154,7 +207,7 @@ export function DraggableList({
   items, editable = true, onEdit, onCombine, onMove, onDelete,
   pending = false, partial, headingLevel = 3,
   emptyHeadline, emptyText, listeningLabel, hearingLabel,
-  itemNoun, label,
+  itemNoun, label, swipeToDelete = true,
   dropHints, dense = false, className,
 }: DraggableListProps) {
   const t = useMusyText();
@@ -171,8 +224,44 @@ export function DraggableList({
   const [pointer, setPointer] = React.useState<{ x: number; y: number } | null>(null);
   /** One item's actions open at a time, so the list stays scannable. */
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+  /** And one item's swipe panel at a time, for the same reason — plus one
+   *  more: two rows parked open is two Delete buttons a thumb can hit by
+   *  accident, at two different places on the same screen. */
+  const [swipedId, setSwipedId] = React.useState<string | null>(null);
   const [liveMessage, setLiveMessage] = React.useState('');
   const toolSize = useToolSize();
+  const coarse = useCoarsePointer();
+
+  /**
+   * ── THE SWIPE · when it exists at all ────────────────────────────────────
+   * A thumb, a list that can be edited, and somewhere for the deletion to go.
+   * It is a POINTER decision, so it is taken here rather than in a prop the
+   * consumer has to remember — the same call L5 makes for target size and
+   * §7.11 makes for its chevrons.
+   */
+  const swipeAvailable = coarse && editable && swipeToDelete && Boolean(onDelete);
+
+  /**
+   * THE PEEK, latched at mount and spent by the animation that plays it.
+   *
+   * A swipe with no standing affordance is a secret, and the row has nowhere
+   * to put one: every pixel of it is either the person's own words or the two
+   * controls L4 already reserves room for. So the list shows the gesture
+   * being performed, once — the first row drifts one `--motion-travel-lg`
+   * left, the Delete panel behind it comes into view, and it settles back.
+   *
+   * ONCE PER LIST, ON THE FIRST ROW, AND ONLY WHERE THE GESTURE EXISTS.
+   * `swipeAvailable` is false while a source is still producing items, so on
+   * the reference screen the peek lands at the moment capture stops and the
+   * list becomes editable — which is the moment it is worth knowing.
+   *
+   * Under reduced motion `--motion-travel-lg` is 0px and the whole thing is a
+   * no-op. That is affordable here for the same reason it is affordable in
+   * §7.11: the peek POINTS AT the row menu's Delete, it is not the only way
+   * to reach it.
+   */
+  const [peekSpent, setPeekSpent] = React.useState(false);
+  const peekNow = swipeAvailable && !peekSpent && items.length > 0;
 
   const nodes = React.useRef(new Map<string, HTMLElement>());
   const registerItem = (id: string, el: HTMLElement | null) => {
@@ -213,6 +302,8 @@ export function DraggableList({
     nodes.current.get(id)?.querySelector<HTMLElement>('.musy-dlist__handle')?.focus();
   });
 
+  const indexOf = (id: string) => items.findIndex((i) => i.id === id);
+
   /** The row that should hold focus once `id` is gone: the one above it, or
    *  the one below when `id` was first. Undefined when it was the only one. */
   const neighbourOf = (id: string) => {
@@ -220,17 +311,30 @@ export function DraggableList({
     return (items[i - 1] ?? items[i + 1])?.id;
   };
 
-  /** Delete, with the focus hand-off the plain callback cannot do. The guard
-   *  matters: with no `onDelete` the row does not go anywhere, and moving
-   *  focus off the button that was pressed would be a jump with no cause. */
-  const removeItem = (id: string) => {
+  /**
+   * Delete, with the focus hand-off the plain callback cannot do. The guard
+   * matters: with no `onDelete` the row does not go anywhere, and moving
+   * focus off the button that was pressed would be a jump with no cause.
+   *
+   * `moveFocus` IS FALSE FOR THE SWIPE, and that is the whole difference
+   * between the two routes. The menu's Delete is a button inside the row it
+   * ends, so focus has to be caught (see `refocus` above); a swipe never
+   * focused anything, and parking focus on a neighbour would scroll the page
+   * under somebody's finger for no reason — the same call the pointer drop
+   * already makes.
+   *
+   * THE ANNOUNCEMENT IS SHARED, THOUGH. A row leaving the list is the same
+   * event whichever hand ended it, and the swipe leaves no button behind to
+   * speak for it.
+   */
+  const removeItem = (id: string, moveFocus = true) => {
     if (!onDelete) return;
-    refocus.current = neighbourOf(id) ?? null;
+    if (moveFocus) refocus.current = neighbourOf(id) ?? null;
+    setLiveMessage(t.dragDeleted(noun, indexOf(id) + 1));
     setOpenMenuId(null);
+    setSwipedId(null);
     onDelete(id);
   };
-
-  const indexOf = (id: string) => items.findIndex((i) => i.id === id);
 
   /** Direction from list position, never from the gesture — see the header. */
   const combine = (sourceId: string, targetId: string) => {
@@ -387,9 +491,24 @@ export function DraggableList({
                   toolSize={toolSize}
                   onSave={(text) => onEdit?.(item.id, text)}
                   onDelete={() => removeItem(item.id)}
-                  onLift={() => setDraggingId(item.id)}
+                  onLift={() => {
+                    /* A lift beats a parked panel: the row is about to be
+                       carried around the list, and it must not carry a
+                       Delete button with it. */
+                    setSwipedId(null);
+                    setDraggingId(item.id);
+                  }}
                   onHandleKeyDown={onHandleKeyDown(item.id)}
                   registerRef={(el) => registerItem(item.id, el)}
+                  /* Never while something is in the air: one row following a
+                     finger sideways while another follows it down is two
+                     gestures reading the same pointer. */
+                  swipeEnabled={swipeAvailable && draggingId === null}
+                  swipeOpen={swipedId === item.id}
+                  onSwipeOpenChange={(open) => setSwipedId(open ? item.id : null)}
+                  onSwipeDelete={() => removeItem(item.id, false)}
+                  peek={peekNow && index === 0}
+                  onPeekEnd={() => setPeekSpent(true)}
                 />
                 {mode === 'after' && <div className="musy-dlist__drop" aria-hidden="true" />}
               </li>
@@ -459,12 +578,36 @@ interface RowProps {
   onLift: () => void;
   onHandleKeyDown: (event: React.KeyboardEvent) => void;
   registerRef: (el: HTMLElement | null) => void;
+  swipeEnabled: boolean;
+  /** Parked open — the panel is showing and its button is a tab stop. */
+  swipeOpen: boolean;
+  onSwipeOpenChange: (open: boolean) => void;
+  onSwipeDelete: () => void;
+  peek: boolean;
+  onPeekEnd: () => void;
+}
+
+/** What one swipe knows about itself while the finger is still down. */
+interface SwipeGesture {
+  x: number;
+  y: number;
+  /** `undecided` until the slop is cleared; then the winning axis, and `y`
+   *  means this gesture is the page scrolling and we are out of it. */
+  axis: 'undecided' | 'x' | 'y';
+  /** Measured once, at `pointerdown`: the row, and the panel behind it. */
+  row: number;
+  panel: number;
+  /** Where the card was left, mirrored off state. `pointerup` can arrive in
+   *  the same task as the last `pointermove`, and a decision as final as a
+   *  delete must not be taken against a render that has not happened. */
+  travelled: number;
 }
 
 function DraggableListRow({
   item, position, itemNoun, text: t, headingLevel, dense, editable, dragging, mergeTarget,
   menuOpen, onToggleMenu, toolSize, onSave, onDelete, onLift, onHandleKeyDown,
-  registerRef,
+  registerRef, swipeEnabled, swipeOpen, onSwipeOpenChange, onSwipeDelete,
+  peek, onPeekEnd,
 }: RowProps) {
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(item.text);
@@ -483,89 +626,277 @@ function DraggableListRow({
   const dirty = draft.trim() !== item.text && draft.trim() !== '';
   const controls = editable && !editing;
 
+  /**
+   * ── THE SWIPE · the gesture ──────────────────────────────────────────────
+   *
+   * `offset` is where the card is, in pixels, and it is the only thing the
+   * stylesheet reads: negative while the panel behind it shows, 0 at rest.
+   * `swiping` is the finger being down, and it is what turns the card's
+   * transition OFF — a card that eases toward the finger lags behind it, and
+   * a gesture that lags is a gesture people let go of.
+   *
+   * THE LIVE OFFSET IS THE ROW'S AND THE PARKED STATE IS THE LIST'S, which is
+   * the one split worth spelling out. A finger moving fires a state change
+   * every frame; keeping that in the row means those frames re-render ONE
+   * card rather than the whole transcript. Only the parked-open flag goes up,
+   * once, because "one panel at a time" is a fact about the list.
+   */
+  const [offset, setOffset] = React.useState(0);
+  const [swiping, setSwiping] = React.useState(false);
+  const [armed, setArmed] = React.useState(false);
+  const gesture = React.useRef<SwipeGesture | null>(null);
+  /** The panel's content, which is what the reveal width is measured from:
+   *  the geometry stays in the stylesheet, where it resolves to tokens. */
+  const zone = React.useRef<HTMLSpanElement>(null);
+
+  /** The list closed this row — or the gesture stopped existing under it, by
+   *  a capture starting, an editor opening or a drag being lifted. Either way
+   *  the card goes back where it was. */
+  React.useEffect(() => {
+    if (swipeOpen && swipeEnabled) return;
+    gesture.current = null;
+    setOffset(0);
+    setArmed(false);
+    setSwiping(false);
+  }, [swipeOpen, swipeEnabled]);
+
+  const closeSwipe = () => {
+    setOffset(0);
+    setArmed(false);
+    onSwipeOpenChange(false);
+  };
+
+  const onSwipePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipeEnabled || editing) return;
+    /* A MOUSE IS NOT A THUMB. The cursor already has the row menu two clicks
+       away and a drag handle it can see; giving it a hidden horizontal drag
+       as well would mostly surprise people mid-text-selection. */
+    if (event.pointerType === 'mouse') return;
+    /* The panel's own button speaks for itself. */
+    if ((event.target as Element).closest('.musy-dlist__swipe-action')) return;
+    /* Parked open, and a finger landed anywhere on the card: put it away.
+       Not `preventDefault`ed — a thumb that came down on the chevron meant
+       the chevron, and closing the panel is not a reason to eat the tap. */
+    if (swipeOpen) { closeSwipe(); return; }
+    /* The drag handle owns `pointerdown` for the vertical gesture and has
+       `touch-action: none` to prove it. Two gestures reading one pointer is
+       how a list ends up reordering and deleting at the same time. */
+    if ((event.target as Element).closest('.musy-dlist__tools')) return;
+
+    gesture.current = {
+      x: event.clientX,
+      y: event.clientY,
+      axis: 'undecided',
+      row: event.currentTarget.getBoundingClientRect().width,
+      panel: zone.current?.offsetWidth ?? 0,
+      travelled: 0,
+    };
+  };
+
+  const onSwipePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const g = gesture.current;
+    if (g === null || g.axis === 'y') return;
+    const dx = event.clientX - g.x;
+    const dy = event.clientY - g.y;
+
+    if (g.axis === 'undecided') {
+      /* WHICHEVER CLEARS THE SLOP FIRST WINS, and a tie goes to the page. A
+         vertical win is final: the browser is already scrolling, and a row
+         that joins in halfway through is a row that jumps. */
+      if (Math.abs(dy) > SWIPE_SLOP_PX && Math.abs(dy) >= Math.abs(dx)) {
+        g.axis = 'y';
+        return;
+      }
+      if (Math.abs(dx) <= SWIPE_SLOP_PX) return;
+      g.axis = 'x';
+      setSwiping(true);
+      /* Captured only once the axis is settled, so a tap that never moved
+         still reaches the control it landed on — the lesson §7.11's carousel
+         drag records at length. */
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    /* LEFT ONLY, and never further than the row is wide. The slop is added
+       back so the card starts from under the finger rather than jumping the
+       twelve pixels that were spent deciding. */
+    const travelled = Math.min(0, Math.max(-g.row, dx + SWIPE_SLOP_PX));
+    g.travelled = -travelled;
+    setOffset(travelled);
+    setArmed(g.travelled >= g.row * SWIPE_COMMIT_RATIO);
+  };
+
+  const endSwipe = (event: React.PointerEvent<HTMLDivElement>) => {
+    const g = gesture.current;
+    gesture.current = null;
+    if (g === null || g.axis !== 'x') return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setSwiping(false);
+    const { travelled } = g;
+    if (travelled >= g.row * SWIPE_COMMIT_RATIO) { onSwipeDelete(); return; }
+    setArmed(false);
+    if (travelled >= g.panel * SWIPE_OPEN_RATIO) {
+      setOffset(-g.panel);
+      onSwipeOpenChange(true);
+      return;
+    }
+    closeSwipe();
+  };
+
+  /** A cancel is the browser taking the pointer back — a scroll winning, a
+   *  call arriving. Nothing was decided, so nothing is committed. */
+  const cancelSwipe = () => {
+    gesture.current = null;
+    setSwiping(false);
+    closeSwipe();
+  };
+
   return (
-    <ContentBox
-      headline={t.dragItemLabel(itemNoun, position)}
-      headlineHidden
-      headingLevel={headingLevel}
-      className={[
-        'musy-dlist__item',
-        dragging ? 'musy-dlist__item--dragging' : '',
-        mergeTarget ? 'musy-dlist__item--merge-target' : '',
-      ].filter(Boolean).join(' ')}
-      /* base-ui composition: the measurement ref goes onto the element the
-         system already renders, not a wrapper around it. The rect measured at
-         drag start has to be the card's own. */
-      render={<article ref={registerRef as never} />}
+    /**
+     * ── THE SWIPE · the track ────────────────────────────────────────────
+     * The card is the lid and this is what is under it. It clips at the
+     * card's own radius, so the panel has no corners of its own to keep in
+     * step, and it carries the gesture rather than the card: `pointerdown`
+     * has to be heard on the panel's side of the card too, or a finger that
+     * lands in the revealed strip is a finger the row never hears from.
+     *
+     * It is ALWAYS RENDERED, on every pointer, even where the gesture does
+     * not exist. A wrapper that comes and goes with `editable` would remount
+     * the Content Box under it — and a remount mid-list drops the editor's
+     * draft, which is somebody's sentence.
+     */
+    <div
+      className="musy-dlist__swipe"
+      data-swipeable={swipeEnabled ? 'true' : undefined}
+      data-swiping={swiping ? 'true' : undefined}
+      data-open={swipeOpen ? 'true' : undefined}
+      data-armed={armed ? 'true' : undefined}
+      data-peek={peek ? 'true' : undefined}
+      style={{ '--musy-dlist-swipe-x': `${offset}px` } as React.CSSProperties}
+      onPointerDown={onSwipePointerDown}
+      onPointerMove={onSwipePointerMove}
+      onPointerUp={endSwipe}
+      onPointerCancel={cancelSwipe}
+      /* The peek is spent by the thing that finished it rather than by a
+         duration written twice. Named explicitly because Message's entrance
+         and anything else inside a row bubbles through here too. */
+      onAnimationEnd={(event) => {
+        if (event.animationName === 'musy-dlist-peek') onPeekEnd();
+      }}
     >
-      <div className="musy-dlist__row" data-size={toolSize}>
-        {editing ? (
-          <div className="musy-dlist__editor">
-            <div className="musy-field">
-              <label className="musy-field__label" htmlFor={fieldId}>
-                {t.dragItemLabel(itemNoun, position)}
-              </label>
-              <textarea
-                id={fieldId}
-                className="musy-field__control musy-field__control--textarea"
-                rows={3}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                data-filled={draft ? '' : undefined}
+      {swipeEnabled && (
+        /**
+         * NOT A TAB STOP UNTIL IT IS VISIBLE. Parked open it is a real
+         * button with a real name; behind the card it is `aria-hidden` and
+         * unfocusable, because the row menu's Delete is the same action
+         * already in the tab order and announcing it twice per row is how a
+         * transcript of twelve statements becomes twenty-four buttons.
+         */
+        <button
+          type="button"
+          className="musy-dlist__swipe-action"
+          aria-label={t.dragDeleteItem(itemNoun, position)}
+          aria-hidden={swipeOpen ? undefined : true}
+          tabIndex={swipeOpen ? undefined : -1}
+          onClick={onSwipeDelete}
+        >
+          <span className="musy-dlist__swipe-zone" ref={zone}>
+            <Icon glyph={Trash2} size="md" />
+            {/* The word the panel says, which is `dragDelete` — the SAME word
+                the row menu uses, because one action must not have two names.
+                Past the commit point it becomes what a release would do, the
+                way the drag hint under the finger does. */}
+            <span className="musy-dlist__swipe-word">
+              {armed ? t.dragSwipeArmed : t.dragDelete}
+            </span>
+          </span>
+        </button>
+      )}
+
+      <ContentBox
+        headline={t.dragItemLabel(itemNoun, position)}
+        headlineHidden
+        headingLevel={headingLevel}
+        className={[
+          'musy-dlist__item',
+          dragging ? 'musy-dlist__item--dragging' : '',
+          mergeTarget ? 'musy-dlist__item--merge-target' : '',
+        ].filter(Boolean).join(' ')}
+        /* base-ui composition: the measurement ref goes onto the element the
+           system already renders, not a wrapper around it. The rect measured at
+           drag start has to be the card's own. */
+        render={<article ref={registerRef as never} />}
+      >
+        <div className="musy-dlist__row" data-size={toolSize}>
+          {editing ? (
+            <div className="musy-dlist__editor">
+              <div className="musy-field">
+                <label className="musy-field__label" htmlFor={fieldId}>
+                  {t.dragItemLabel(itemNoun, position)}
+                </label>
+                <textarea
+                  id={fieldId}
+                  className="musy-field__control musy-field__control--textarea"
+                  rows={3}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  data-filled={draft ? '' : undefined}
+                />
+              </div>
+              {/* L6: right-aligned, Save outermost, Discard leading in the DOM so
+                  tab order matches the screen. */}
+              <div className="musy-dlist__actions musy-dlist__actions--end">
+                <CtaButton variant="secondary" onClick={discard}>{t.dragDiscard}</CtaButton>
+                <CtaButton variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
+                  {t.dragSave}
+                </CtaButton>
+              </div>
+            </div>
+          ) : (
+            /* A PLAIN BLOCK, deliberately — see the header. */
+            <p className="musy-dlist__text" data-type-step={itemTypeStep(item.text, dense)}>
+              {item.text}
+            </p>
+          )}
+
+          {controls && (
+            <div className="musy-dlist__tools" data-size={toolSize}>
+              <IconButton
+                glyph={GripVertical}
+                label={t.dragHandleLabel(itemNoun, position)}
+                variant="ghost"
+                size={toolSize}
+                className="musy-dlist__handle"
+                onPointerDown={onLift}
+                onKeyDown={onHandleKeyDown}
+              />
+              <IconButton
+                glyph={ChevronDown}
+                label={menuOpen ? t.dragHideActions(itemNoun, position)
+                                : t.dragShowActions(itemNoun, position)}
+                variant="ghost"
+                size={toolSize}
+                className="musy-dlist__chevron"
+                aria-expanded={menuOpen}
+                aria-controls={menuOpen ? menuId : undefined}
+                onClick={onToggleMenu}
               />
             </div>
-            {/* L6: right-aligned, Save outermost, Discard leading in the DOM so
-                tab order matches the screen. */}
-            <div className="musy-dlist__actions musy-dlist__actions--end">
-              <CtaButton variant="secondary" onClick={discard}>{t.dragDiscard}</CtaButton>
-              <CtaButton variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
-                {t.dragSave}
-              </CtaButton>
-            </div>
-          </div>
-        ) : (
-          /* A PLAIN BLOCK, deliberately — see the header. */
-          <p className="musy-dlist__text" data-type-step={itemTypeStep(item.text, dense)}>
-            {item.text}
-          </p>
-        )}
-
-        {controls && (
-          <div className="musy-dlist__tools" data-size={toolSize}>
-            <IconButton
-              glyph={GripVertical}
-              label={t.dragHandleLabel(itemNoun, position)}
-              variant="ghost"
-              size={toolSize}
-              className="musy-dlist__handle"
-              onPointerDown={onLift}
-              onKeyDown={onHandleKeyDown}
-            />
-            <IconButton
-              glyph={ChevronDown}
-              label={menuOpen ? t.dragHideActions(itemNoun, position)
-                              : t.dragShowActions(itemNoun, position)}
-              variant="ghost"
-              size={toolSize}
-              className="musy-dlist__chevron"
-              aria-expanded={menuOpen}
-              aria-controls={menuOpen ? menuId : undefined}
-              onClick={onToggleMenu}
-            />
-          </div>
-        )}
-      </div>
-
-      {controls && menuOpen && (
-        /* L6 again: Edit outermost, Delete leading in the DOM. That puts a
-           destructive action first in the tab order, which is accepted —
-           Toast's undo (L11) is a better safety net than a confirm dialog
-           nobody reads. */
-        <div className="musy-dlist__actions musy-dlist__actions--end" id={menuId}>
-          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={onDelete}>{t.dragDelete}</CtaButton>
-          <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>{t.dragEdit}</CtaButton>
+          )}
         </div>
-      )}
-    </ContentBox>
+
+        {controls && menuOpen && (
+          /* L6 again: Edit outermost, Delete leading in the DOM. That puts a
+             destructive action first in the tab order, which is accepted —
+             Toast's undo (L11) is a better safety net than a confirm dialog
+             nobody reads. */
+          <div className="musy-dlist__actions musy-dlist__actions--end" id={menuId}>
+            <CtaButton variant="ghost" leadingIcon={Trash2} onClick={onDelete}>{t.dragDelete}</CtaButton>
+            <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>{t.dragEdit}</CtaButton>
+          </div>
+        )}
+      </ContentBox>
+    </div>
   );
 }

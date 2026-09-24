@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 import { de } from '../i18n/de';
 import { en } from '../i18n/en';
 import {
-  hasRecorded, hintKey, recordLabelKey, recordPhase, stopNoticeKey,
+  hasRecorded, recordLabelKey, recordPhase, stopNoticeKey,
 } from './voiceScreen';
 import type { RecordPhase } from './voiceScreen';
 
@@ -72,29 +72,11 @@ describe('recordLabelKey', () => {
   });
 });
 
-describe('hintKey', () => {
-  it('explains where statements come from before there are any', () => {
-    expect(hintKey(false)).toBe('voice.hint.first');
-  });
-
-  it('explains where the next one lands once there are some', () => {
-    expect(hintKey(true)).toBe('voice.hint.more');
-  });
-
-  it('carries both cut-offs in both languages', () => {
-    /* A recorder that stops on its own without having said it would reads as
-       broken. The two numbers are interpolated, so they must survive into the
-       German string — parity.test.ts checks the slots match, this checks they
-       are there at all. */
-    for (const key of ['voice.hint.first', 'voice.hint.more'] as const) {
-      expect(en[key]).toContain('{seconds}');
-      expect(en[key]).toContain('{silence}');
-      expect(de[key]).toContain('{seconds}');
-      expect(de[key]).toContain('{silence}');
-    }
-  });
-});
-
+/* `hintKey` AND ITS THREE CASES ARE GONE (Ben, 2026-09-24). The standing
+   sentence under the record button went with them; what still explains the two
+   cut-offs is `stopNoticeKey`, when one of them fires. The cut-offs are
+   therefore checked below rather than here — same assertion, moved to the
+   sentence that now carries it. */
 describe('stopNoticeKey', () => {
   it('says nothing when the reader pressed Stop', () => {
     expect(stopNoticeKey('manual')).toBeNull();
@@ -111,6 +93,18 @@ describe('stopNoticeKey', () => {
   it('explains the two cut-offs that act on their own', () => {
     expect(stopNoticeKey('timeout')).toBe('voice.stopped.timeout');
     expect(stopNoticeKey('silence')).toBe('voice.stopped.silence');
+  });
+
+  it('carries its cut-off number in both languages', () => {
+    /* A recorder that stops on its own without saying WHICH limit it hit reads
+       as broken, and these two sentences are now the only place either number
+       appears. The number is interpolated, so it has to survive into the
+       German string — parity.test.ts checks the slots match, this checks they
+       are there at all. */
+    expect(en['voice.stopped.timeout']).toContain('{seconds}');
+    expect(de['voice.stopped.timeout']).toContain('{seconds}');
+    expect(en['voice.stopped.silence']).toContain('{silence}');
+    expect(de['voice.stopped.silence']).toContain('{silence}');
   });
 });
 

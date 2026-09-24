@@ -18,7 +18,7 @@
  *
  * Import the stylesheets once, in this order, at the app root:
  *   import 'tokens/musy-foundations.css';
- *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1, G2
+ *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1–G3
  *   import 'components/musy-components.css';
  */
 export {
@@ -97,6 +97,7 @@ export { useViewportFill } from './useViewportFill';
 /* The other half of the one above — see its header. Fills the viewport;
    this stops a thumb running past what was filled. */
 export { useScrollSnap } from './useScrollSnap';
+export type { ScrollSnapControls } from './useScrollSnap';
 export type { ToolSize } from './useCoarsePointer';
 
 export { Toast } from './Toast';
@@ -135,6 +136,11 @@ export type { RecordButtonProps, RecordButtonState } from './RecordButton';
 
 export { LinkList } from './LinkList';
 export type { LinkListProps, LinkListItem } from './LinkList';
+
+/* The scan step's viewfinder. It draws the frame and holds no camera — the
+   same split Record Button makes with the recorder. */
+export { QrScanner } from './QrScanner';
+export type { QrScannerProps, QrScannerMode } from './QrScanner';
 
 export { Timeline } from './Timeline';
 export type { TimelineProps, TimelineGroup } from './Timeline';

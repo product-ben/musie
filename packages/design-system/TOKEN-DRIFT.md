@@ -15,8 +15,8 @@ working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
 **35 properties in `musy-foundations.css` have no JSON expression.**
-**3 more live only in `musy-foundations-amendments.css`.**
-Total: **38**.
+**4 more live only in `musy-foundations-amendments.css`.**
+Total: **39**.
 
 | Group | n |
 |---|---|
@@ -30,7 +30,7 @@ Total: **38**.
 | Elevation ring | 1 |
 | Grid gap | 1 |
 | The measured viewport | 5 |
-| Amendment tokens | 3 |
+| Amendment tokens | 4 |
 
 ## The `stage` type step
 
@@ -165,15 +165,16 @@ band of the next view shows under it.
 
 These are in neither `musy-foundations.css` nor the JSON. They live in
 `musy-foundations-amendments.css` **by design** — Layer 1 is `[LOCKED]` and
-byte-identical to sign-off, so the two token gaps Layer 2 needed were staged
-beside it rather than edited into it. They are listed here because the effect is
-the same for anyone reading the JSON: the tokens are invisible.
+byte-identical to sign-off, so the token gaps Layer 2 needed were staged beside
+it rather than edited into it. They are listed here because the effect is the
+same for anyone reading the JSON: the tokens are invisible.
 
 | Token | Declared | Gap |
 |---|---|---|
 | `--border-style-dashed` | `dashed` | G2 |
 | `--border-style-solid` | `solid` | G2 |
 | `--icon-stroke-sm` | `1.5px` | G1 |
+| `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
 
 ## What is NOT drift
 

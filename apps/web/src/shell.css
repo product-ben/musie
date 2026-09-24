@@ -47,8 +47,14 @@
    Three columns rather than the prototype's flex row, because the brief puts
    the Logo in the CENTRE and the prototype does not — it groups the logo
    beside the hamburger and pushes the profile button out with an auto margin.
-   `1fr auto 1fr` centres the logo against the viewport whatever the two
-   buttons' labels do, which a flex row cannot promise.                      */
+   `1fr auto 1fr` centres the logo against the viewport whatever the buttons'
+   labels do, which a flex row cannot promise.
+
+   THE THIRD COLUMN IS EMPTY SINCE 2026-09-24, when /settings and its profile
+   icon were deleted, and it stays. The two 1fr tracks are what make the middle
+   one land on the viewport's centre line; with one button and `1fr auto` the
+   logo would centre in whatever room is left beside the hamburger and sit
+   visibly off-axis.                                                         */
 .musie-header {
   position: sticky;
   inset-block-start: 0;
@@ -60,13 +66,53 @@
   padding: var(--sp-3) var(--gutter);
   background-color: var(--surface-raised);
   border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  /* The slide. `--motion-enter` is the COMING BACK — L1's named motion for
+     something arriving, which decelerates — and the going away is
+     `--motion-exit` on the modifier below, which accelerates and is quicker.
+     They are asymmetric in exactly the way the thresholds in headerReveal.ts
+     are, and for the same reason: chrome should leave discreetly and return
+     without being waited for.
+
+     `will-change` because this is the one transform in the shell that runs
+     during a scroll. Promoting the header once, up front, is cheaper than
+     promoting it at the start of every slide — and a mid-scroll promotion is
+     visible on a phone as exactly the stutter this pattern exists to avoid. */
+  transition: transform var(--motion-enter);
+  will-change: transform;
+}
+
+/* ── HIDDEN IS A TRANSFORM, NOT A LAYOUT CHANGE ────────────────────────────
+   `translateY(-100%)` — one of the geometric identities L14 allows, and the
+   only honest way to say "its own height, whatever that is today".
+
+   IT MUST NOT BE `display: none`, and not `block-size: 0` either. The header
+   is sticky, so it takes its space at the TOP OF THE DOCUMENT and nowhere
+   else; taking it out of flow would shorten the page by 69px under a reader
+   who is halfway down it, and every `--view-block` on screen would be wrong
+   for a frame. Transformed, the header keeps its place in the document
+   exactly and only travels out of the window — so `--chrome-block`,
+   `--sticky-block` and every view sized from them stay true while it is gone.
+
+   Under `prefers-reduced-motion` Layer 1 collapses the durations to 1ms, so
+   this becomes a cut rather than a slide. That is the right answer rather
+   than a degraded one: the complaint against moving chrome is the movement,
+   and a header that is simply there or not is still one less thing taking up
+   a small screen.                                                           */
+.musie-header[data-hidden='true'] {
+  transform: translateY(-100%);
+  transition: transform var(--motion-exit);
 }
 
 .musie-header > :first-child {
   justify-self: start;
 }
 
-.musie-header > :last-child {
+/* `:nth-child(3)` rather than `:last-child`, which the logo now is. On an
+   `auto` track the two resolve identically — the grid area is exactly the
+   item's width, so `end` has nothing to move it within — and a rule that is
+   silently inert is a rule that misleads whoever reads it next. Named by
+   COLUMN, so it applies to a third child if the header ever takes one again. */
+.musie-header > :nth-child(3) {
   justify-self: end;
 }
 
@@ -320,6 +366,29 @@
   hyphens: var(--text-hyphens);
 }
 
+/* ═══ THE P.S. UNDER THE SIGN-OFF ═══════════════════════════════════════════
+   One sentence of running prose, below the CTA on `/`, saying that the diary
+   is there afterwards. The system has no prose-paragraph component — a
+   ContentBox would put a second framed article inside the first, and a
+   Message would announce a status word before a sentence that is not one — so
+   this is a permitted L14 pattern, and every declaration is a Layer 1 token.
+
+   IT IS NOT A SECOND HINT, and the two sit one above the other, so they have
+   to read as different things: the hint is centred under the button it
+   describes, this is set flush to the box's own text, which is what a
+   paragraph of the box's copy looks like. It sits in the box's slot, so the
+   space above it is the slot's gap and there is no margin here to fight it. */
+.musie-postscript {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
 /* ═══ THE GLYPH KEY AND THE ESCAPE HATCH, ON ONE ROW ════════════════════════
    /exercises puts `RadioCardLegend` and "let Musie pick an exercise" on the
    same line: the key explains what the cards say, and the escape hatch is the
@@ -339,6 +408,25 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-gap-inline) var(--space-gap-stack);
+}
+
+/* ═══ THE WAY OUT OF THE DIARY, AND BACK INTO A SESSION ═════════════════════
+   Ben, 2026-09-24. *Start a session*, directly under the newest entry: the
+   diary is where a finished run lands, and under the card is where somebody
+   has finished reading it.
+
+   A WRAPPER AROUND `ButtonGroup`, and nothing but spacing — the same split the
+   filter row below states: where a control sits in the column is the screen's,
+   everything inside it is the component's (L14).
+
+   --space-gap-group ON BOTH SIDES, and both are load-bearing. Above, because
+   the card it follows is a different kind of thing and must not look like part
+   of it. Below, because what comes next changes: the filter row's own top
+   margin collapses with this one to a single gap, and with no filter drawn
+   *Earlier* or the Timeline follows instead — the Timeline carrying no margin
+   at all.                                                                   */
+.musie-diary__start {
+  margin-block: var(--space-gap-group);
 }
 
 /* ═══ THE DIARY'S FILTER ROW ════════════════════════════════════════════════
@@ -369,6 +457,27 @@
   line-height: var(--type-heading-sm-line);
   letter-spacing: var(--type-heading-sm-tracking);
   color: var(--on-surface-muted);
+}
+
+/* ═══ THE END OF THE DIARY ══════════════════════════════════════════════════
+   Delete-everything, which moved here from /settings on 2026-09-24. This class
+   is the whole of what the screen adds: a rule, and distance.
+
+   --space-section, WHICH IS THE POINT AND NOT JUST A BIG NUMBER. The control
+   empties the screen above it, so the one thing the layout owes it is that
+   nobody reaches it while aiming at an entry. Layer 1's own word for this
+   distance is "between sections" (--sp-7, the same step .musie-main ends the
+   page with), and this is the only place on the screen where the next thing is
+   a different kind of thing. A hairline on top of that says to the eye what
+   <section> says to the outline: what follows is not more diary.
+
+   Not `role="separator"` on an <hr> like the drawer's: the border belongs to a
+   region that already exists, and a landmark-free <section> with a rule needs
+   no extra element to carry it.                                             */
+.musie-diary__danger {
+  margin-block-start: var(--space-section);
+  padding-block-start: var(--space-gap-group);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }
 
 /* ═══ THE SESSION ═══════════════════════════════════════════════════════════
@@ -406,33 +515,73 @@
    document, this is a component request rather than a second copy.
 
    ── THE TWO VOICES, AND WHY THEY ARE A STEP APART ─────────────────────────
-   The HEADLINE is the body-xl in muted ink that `.musie-question` carried, and
-   it inherits that block's whole argument: inside a wizard panel the step's
-   question IS the heading, medium weight separates a question from an
-   instruction, and muted keeps it the same VOICE as the prose under it (the
-   full-contrast version shipped once and read as a different kind of thing —
-   caught by eye on the hosted walk-through, 2026-09-21).
+   The HEADLINE is heading-md at full contrast. Both halves are Ben's call out
+   of the 260925 user-testing round (2026-09-24), and both reverse what shipped
+   before: it was body-xl in muted ink, inherited from `.musie-question` on the
+   argument that a step's question IS the heading and should stay the same VOICE
+   as the prose under it. In front of people the pair read as one
+   undifferentiated block of type. heading-md is also the more honest token —
+   Layer 1 says in so many words that body-xl "is not a heading", and this
+   element is an <h2> — and the size comes DOWN a step doing it (26–34px →
+   22–26px), so the contrast does the separating rather than the scale. The note
+   that the full-contrast version "read as a different kind of thing" (hosted
+   walk-through, 2026-09-21) is superseded: that is what it is for.
 
-   The DESCRIPTION is body-lg. It was body-xl when it was the only thing on the
-   step, and a description at the same size as the headline above it is not a
-   description. One step down is as far as it goes: L8 bars body-sm for prose
-   the user must read in order to act, and this is the instruction itself.
+   The DESCRIPTION is body-md in muted ink. It has come down two steps — it was
+   body-xl when it was the only thing on the step, then body-lg once there was
+   a headline above it — and body-md is the floor: L8 bars body-sm for prose the
+   user must read in order to act, and this is the instruction itself.
 
-   ── GAPS ──────────────────────────────────────────────────────────────────
-   --space-gap-related between blocks, because a headline and its description
-   are one thought; --space-gap-group below the whole thing, which is L2's
-   doubling check (32 ≥ 2 × 12).                                            */
+   ── GAPS, AND WHY THE HEADLINE'S IS TWO RUNGS WIDER ───────────────────────
+   Ben, on the 260925 round: in a text list of any kind the ITEMS must sit
+   closer together than the headline sits to them. They did not — measured on
+   the intro step, the headline was 20.3px of white space above the list while
+   the items were 22.6px apart, so the headline was fractionally the TIGHTER
+   join. It read as the first line of the list rather than as its heading.
+
+   The cause is leading, not the declared gap: both were --space-gap-related.
+   A line box carries half its leading above and below the ink, and the two
+   voices lead very differently — heading-md is line-height 1.25 (~3px a side),
+   body-md is 1.6 (~5px a side). So the same 12px buys 20px of white under a
+   headline and 23px between two body lines. Matching the DECLARED gaps
+   un-matches the SEEN ones.
+
+   Hence three gaps rather than two:
+
+   · item ↔ item, and block ↔ block — --space-gap-related. Unchanged, and the
+     same value in both places on purpose: `lib/markdown.ts` hands a bullet
+     over as a paragraph, so a bulleted run is a run of siblings on the
+     container's gap while a numbered run is <li>s on the list's. They are one
+     rung so that the two read identically, which is the invariant the <ol>
+     block below already records.
+   · headline ↔ the block under it — --space-gap-group, applied as the
+     difference on top of the container's gap, because a flex `gap` is one
+     value for the whole column. Arithmetic over two Layer 1 tokens, which is
+     L14.1's other permitted form. --space-gap-stack was tried first and is
+     the semantically neater fit; it moves the headline 4px and is invisible on
+     a step whose first item wraps, because the 4px it gains the headline the
+     tighter items give straight back. Measured, not guessed: it took the ratio
+     to 1.08, where this takes it to 1.78.
+   · below the whole thing — --space-gap-group, unchanged.
+
+   THE ONE THING TO KNOW: the headline's gap now EQUALS the block's own bottom
+   margin. L2's doubling check still holds where it is about atoms in a group
+   (32 ≥ 2 × 12 for the items), but the headline split is no longer smaller
+   than the split that ends the block. What keeps the block reading as one is
+   the TYPE — heading-md at full contrast over body-md muted — rather than the
+   space. Logged in OPEN-QUESTIONS.md; if it ever stops holding, the lever is
+   the bottom margin, not this gap.                                         */
 .musie-md {
   margin: 0 0 var(--space-gap-group);
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-related);
   max-inline-size: var(--measure-body);
-  font-family: var(--type-body-lg-family);
-  font-size: var(--type-body-lg-size);
-  font-weight: var(--type-body-lg-weight);
-  line-height: var(--type-body-lg-line);
-  letter-spacing: var(--type-body-lg-tracking);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  letter-spacing: var(--type-body-md-tracking);
   color: var(--on-surface-muted);
   text-wrap: var(--text-wrap-body);
   hyphens: var(--text-hyphens);
@@ -444,6 +593,19 @@
   margin: 0;
 }
 
+/* …except the one margin that is the spacing: whatever FOLLOWS a headline
+   makes the container's gap up to --space-gap-group. Written as five
+   selectors rather than one `:is()` because nothing else in this repo's CSS
+   uses `:is()`, and on the adjacent-sibling combinator so a headline that
+   ends a block cannot leave a trailing margin to add to the block's own. */
+.musie-md h2 + *,
+.musie-md h3 + *,
+.musie-md h4 + *,
+.musie-md h5 + *,
+.musie-md h6 + * {
+  margin-block-start: calc(var(--space-gap-group) - var(--space-gap-related));
+}
+
 /* THE STEP'S HEADLINE. `h2` is what content writes and what the parser clamps
    to; h3–h6 are here so a deeper heading is still typeset rather than falling
    back to the UA's own scale. They step DOWN through the system's headings
@@ -451,11 +613,12 @@
    below h2, and a table of five sizes nobody uses is drift. */
 .musie-md h2 {
   max-inline-size: var(--measure-heading);
-  font-family: var(--type-body-xl-family);
-  font-size: var(--type-body-xl-size);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--type-body-xl-line);
-  letter-spacing: var(--type-body-xl-tracking);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
 }
 
@@ -469,6 +632,7 @@
   font-weight: var(--type-heading-sm-weight);
   line-height: var(--type-heading-sm-line);
   letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
 }
 
@@ -487,7 +651,7 @@
 
    `padding-inline-start` rather than `list-style-position: inside`, so a step
    that wraps over two lines aligns under its own text instead of back under
-   the number. --sp-5 is the rung that clears a two-digit marker at body-lg. */
+   the number. --sp-5 is the rung that clears a two-digit marker at body-md. */
 .musie-md ol {
   padding-inline-start: var(--sp-5);
   display: flex;
@@ -502,100 +666,12 @@
 }
 
 /* `**` in a content string is importance, so it is drawn with weight rather
-   than with a second colour — and at full contrast, which is the one place a
-   step's copy leaves the muted ink. */
+   than with a second colour — and at full contrast, the same ink the headings
+   above take, so emphasis inside the prose reads as emphasis rather than as a
+   third voice. */
 .musie-md strong {
   font-weight: var(--font-weight-medium);
   color: var(--on-surface);
-}
-
-/* ═══ THE QR READER ═════════════════════════════════════════════════════════
-   A permitted custom pattern: the system has no camera viewport, and it is one
-   of the three the clickdummy handoff already names.
-
-   SQUARE, because a QR code is. Capped at five guided targets across so it
-   does not become a wall on a tablet, and dashed — L10's "a place where
-   something will be" — because nothing is in it yet.                       */
-.musie-scanner {
-  position: relative;
-  aspect-ratio: 1;
-  inline-size: 100%;
-  max-inline-size: calc(var(--target-guided) * 5);
-  margin-inline: auto;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: var(--space-gap-related);
-  padding: var(--space-inset-card);
-  border-radius: var(--radius-panel);
-  border: var(--border-width-thick) var(--border-style-dashed) var(--border-subtle);
-  background-color: var(--surface-sunken);
-  text-align: center;
-  color: var(--on-surface-muted);
-}
-
-.musie-scanner__text {
-  margin: 0;
-  max-inline-size: var(--measure-body);
-  font-family: var(--type-body-md-family);
-  font-size: var(--type-body-md-size);
-  line-height: var(--type-body-md-line);
-  text-wrap: var(--text-wrap-body);
-  hyphens: var(--text-hyphens);
-}
-
-/* THE SAME FRAME, WITH A CAMERA IN IT — E.2/E.3.
-   L10 makes a dashed outline mean "a place where something will be". Once the
-   preview is running something IS there, so the border goes solid — and that
-   is the ONLY thing that changes. Same square, same cap, same place on the
-   page, because the frame is the step's anchor and a viewfinder that jumped
-   size when it woke up would read as a different element.
-
-   `display: block` overrides the centring grid above: a preview fills its
-   frame rather than sitting in the middle of it, and the padding that held the
-   explanation has nothing left to hold. `overflow: hidden` is what keeps the
-   picture inside the rounded corner — the video has no radius of its own, and
-   giving it one would leave the frame's border painted over its edge.       */
-.musie-scanner--live {
-  display: block;
-  padding: 0;
-  overflow: hidden;
-  border-style: var(--border-style-solid);
-}
-
-/* `cover`, not `contain`: a camera hands over a 4:3 or 16:9 frame and the
-   viewport is square, so one of them has to give. Letterboxing a square frame
-   would shrink the QR code the person is holding up — which is the one thing
-   in the picture that has to stay large enough to read.                      */
-.musie-scanner__view {
-  /* ABSOLUTE, against the `position: relative` the frame already carries. A
-     percentage block-size would have to resolve against a height that only
-     exists because of `aspect-ratio`, which is true in current browsers and is
-     the sort of true that fails quietly in one of them. Filling the padding
-     box costs nothing and cannot be argued with.                            */
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
-}
-
-/* THE RUNNING COMMENTARY, and it is UNDER the frame rather than over the
-   picture. Text on top of live video has no contrast anybody can check,
-   because the background is whatever the camera is pointed at (L15 asks for
-   contrast against every surface an indicator can land on, and a preview is
-   not a surface with a colour). Centred under a centred frame, and held to the
-   same measure as the explanation it replaces.                              */
-.musie-scanner__status {
-  margin: 0 auto;
-  max-inline-size: var(--measure-body);
-  text-align: center;
-  font-family: var(--type-body-md-family);
-  font-size: var(--type-body-md-size);
-  line-height: var(--type-body-md-line);
-  color: var(--on-surface-muted);
-  text-wrap: var(--text-wrap-body);
-  hyphens: var(--text-hyphens);
 }
 
 /* ═══ THE CARD CODE, TYPED — E.1 ════════════════════════════════════════════
@@ -610,6 +686,11 @@
    mistake. Held to `--measure-body`: never wider than the sentence explaining
    it, which is the measure every other piece of prose on this screen answers
    to. Nothing here touches the component's own geometry (L7).
+
+   SINCE 2026-09-24 IT LIVES INSIDE THE FRAME, as `QrScanner`'s `manual` mode,
+   and the frame's own 320px cap is what it meets first. The cap here is kept
+   rather than deleted: it is what this form is worth on any surface, and the
+   day it is used outside a 320px box it should still not be 930px wide.
 
    The gap is STACK rather than related: a label belongs to its field, but the
    button is a separate act ON the field's content (L2).                     */
@@ -713,15 +794,17 @@
   background-color: var(--alpha-scrim);
 }
 
-/* ═══ SIDE SHEET — BOTH SIDES ═══════════════════════════════════════════════
-   /settings anchors to the inline END, /menu to the inline START. One pattern
-   with a modifier, NOT a second copy.
+/* ═══ SIDE SHEET ════════════════════════════════════════════════════════════
+   ONE SHEET AGAIN, since 2026-09-24. There were two — /settings anchored to
+   the inline END, /menu to the inline START — and the pair is what made this a
+   base class with an edge modifier rather than one block of declarations. That
+   is why `--start` survives its sibling: the drawer's markup names it, and
+   the edge is still a fact about this sheet rather than the only way a sheet
+   can be. `.musie-sheet--end` is DELETED with the route that used it, because
+   dead CSS is the kind of thing a later reader mistakes for a decision.
 
-   L14.3 says a pattern that recurs is a component request rather than a
-   second copy. It now recurs, so it is parameterised here AND requested
-   properly — see apps/web/OPEN-QUESTIONS.md. Everything the two sides share
-   lives in the base class; the modifiers carry only the two declarations that
-   genuinely differ, the edge and the border that faces the page.
+   L14.3's component request in apps/web/OPEN-QUESTIONS.md stands as history:
+   the recurrence that justified it has stopped recurring.
 
    No entrance animation. The prototype's sheets have none, and an animation
    driven by base-ui's own enter/exit attributes is the kind of thing that
@@ -738,11 +821,6 @@
   overflow-y: auto;
   background-color: var(--surface-overlay);
   box-shadow: var(--elevation-3);
-}
-
-.musie-sheet--end {
-  inset-inline-end: 0;
-  border-inline-start: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
 }
 
 .musie-sheet--start {
@@ -771,10 +849,9 @@
 }
 
 /* ═══ THE DRAWER ════════════════════════════════════════════════════════════
-   Shares every sheet declaration with /settings through .musie-sheet and
-   .musie-sheet--start; only the inner rhythm differs. Both classes are named
-   so the rule cannot be beaten by source order the way two single-class
-   selectors can.                                                            */
+   Takes every sheet declaration from .musie-sheet and .musie-sheet--start;
+   only the inner rhythm differs. Both classes are named so the rule cannot be
+   beaten by source order the way two single-class selectors can.            */
 .musie-sheet.musie-drawer {
   gap: var(--space-gap-stack);
 }
@@ -791,7 +868,20 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  /* L3: "a run of repeated items is a list… items sit at --space-gap-stack".
+     It sat at --sp-1 — 4px, a RAW rung, between controls that are 44px tall.
+     Two faults in one declaration, and L2 names both: a gap picked as a number
+     rather than as a relationship, and a relationship ("controls inside one
+     molecule") whose own token is 16px. Ben spotted it by eye on 2026-09-24,
+     which is the manual audit L2 asks for doing its job the expensive way —
+     see the design system's OPEN-QUESTIONS for the check that would have
+     caught it for free.
+
+     WHAT IT COSTS THE RULES ABOVE IT: `.musie-nav__rule` adds
+     --space-gap-related either side, so a boundary is now 16 + 12 + hairline
+     + 12 = 40px against 16px inside the groups. L2's doubling check wants at
+     least double the largest inner gap; 40 ≥ 32 holds. */
+  gap: var(--space-gap-stack);
 }
 
 /* The list item is left as a PLAIN BLOCK, deliberately.
@@ -819,6 +909,30 @@
 .musie-nav__rule {
   margin-block: var(--space-gap-related);
   border: 0;
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* ═══ THE DRAWER'S PREFERENCES ══════════════════════════════════════════════
+   What you SET, under the places you GO — dark mode, the language and the
+   account, which moved in here when /settings was deleted (2026-09-24).
+
+   A HAIRLINE AND NOT A GAP, for the reason the nav rules above give: L2's
+   doubling check cannot be met on a phone without spacing large enough to push
+   the account below the fold. The rule is L2's own answer when it cannot.
+
+   The gap INSIDE is --space-gap-group rather than the drawer's own
+   --space-gap-stack. Three unlike controls — a switch, a fieldset, a card —
+   are three groups of one, and the drawer's rhythm is tuned for rows.
+
+   `padding-block-start` as well as the margin, because the rule belongs to
+   neither side: it is a border on this element, so without the padding the
+   switch would sit hard against a line the last nav row is already clear of. */
+.musie-drawer__prefs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  margin-block-start: var(--space-gap-related);
+  padding-block-start: var(--space-gap-related);
   border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }
 
@@ -879,11 +993,14 @@
 }
 
 /* ═══ A RUN OF PLAIN PARAGRAPHS ═════════════════════════════════════════════
-   `.musie-md` is the same shape a step up, in muted ink, and it parses its
-   input; this is ordinary prose at body-md written as JSX — the data promise,
-   and whatever else turns out to be several sentences the person reads rather
-   than acts on. L14.3 applies the day there is a third caller: two patterns
-   that differ only by type step are a component request.                     */
+   `.musie-md` is the same shape and, since 2026-09-24, the same type step: it
+   differs only in ink and in parsing its input. This is ordinary prose written
+   as JSX — the data promise, and whatever else turns out to be several
+   sentences the person reads rather than acts on. It declares no type at all;
+   body-md reaches it from `body` in styles.css, which is why nothing here moved
+   when `.musie-md` came down to meet it. L14.3 was already live at two patterns
+   that differed only by type step; now that they do not differ by that either,
+   the component request is overdue — logged in OPEN-QUESTIONS.md.            */
 .musie-prose {
   display: flex;
   flex-direction: column;
@@ -1118,44 +1235,37 @@ html[data-musy-scroll-snap] {
   margin-block-end: 0;
 }
 
-/* ── ONE ROW, TWO ALIGNMENTS ───────────────────────────────────────────────
-   Everything you can do with the recording, in one group: the transport and
-   the detour to the left, the way forward to the right. `wrap` so a narrow
-   phone stacks them rather than squeezing, and `row-gap` so the stacked form
-   is not cramped. */
+/* ── ONE ROW, ONE CONTROL, BELOW EVERYTHING ────────────────────────────────
+   The way back, at the foot of the STEP — after all three snap views, in
+   ordinary document flow.
+
+   IT USED TO BE TWO GROUPS — `__actions-start` and `__actions-end`, with the
+   transport and the detour at one edge and the way forward at the other. Every
+   one of those has moved up into the lead beside the thing it acts on
+   (2026-09-24), so there are no longer two edges to argue about and both
+   wrappers are gone from the markup and from here.
+
+   That also ended a measured defect rather than only tidying: at 393px in
+   German `Zurück` (107px) and `Über den Track` (204px) came to exactly the
+   row's own 311px, so the `--space-gap-related` gap tipped the group onto a
+   second line — in German and not in English, which made the two locales
+   differ by twelve pixels for no reason anyone could see.
+
+   `flex-wrap` survives the simplification: one control cannot wrap, but a
+   German label that outgrows the row should still break rather than squeeze.
+
+   NO `margin-block-start: auto` ANY MORE. That pinned the row to the bottom of
+   the stage, and the stage is not where it lives: it sits after the last view
+   now, so there is no flex column left to push it down and the declaration
+   would be inert. Its spacing is its own padding instead, above and below,
+   because nothing follows it — without the bottom padding the control ends
+   flush with the document and reads as cut off. */
 .musie-listen__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-gap-related);
-  /* Pushed to the foot of the stage rather than sitting under the copy: the
-     view is a full screen now, and a row floating in the middle of it reads
-     as content rather than as the way on. */
-  margin-block-start: auto;
-  padding-block-start: var(--space-gap-group);
-}
-
-.musie-listen__actions-start,
-.musie-listen__actions-end {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-gap-related);
-}
-
-/* Pushed to the far edge rather than the row being `space-between`: with one
-   group empty, `space-between` would leave the other in the middle.
-
-   `justify-content: flex-end` is the phone half of the same intent, and it is
-   measured rather than defensive: at 393px *Track details and player* and
-   *Start reflection* do not fit on one line, so this group wraps and then
-   fills the row — which leaves `margin-inline-start: auto` no space to work
-   in, and both buttons sit against the LEADING edge under *Back*. With the
-   two stacked, the trailing edge is the only thing that still says which of
-   them is the way on. */
-.musie-listen__actions-end {
-  margin-inline-start: auto;
-  justify-content: flex-end;
+  padding-block: var(--space-section) var(--space-section-lg);
 }
 
 /* ── Scroll 2 · the Störer, and Scroll 3 · the details ────────────────────*/
@@ -1220,6 +1330,14 @@ html[data-musy-scroll-snap] {
    measure so the list does not run the full width beside it. */
 .musie-listen__view--detail > * {
   inline-size: 100%;
+}
+
+/* PUSHED TO THE FOOT OF THE VIEW. The column is a flex column with a measured
+   minimum height, so `auto` at the block start takes whatever space is left
+   and the notice sits at the bottom of the page rather than trailing the
+   facts — which is the whole point of moving it off the stage. */
+.musie-listen__simulated {
+  margin-block-start: auto;
 }
 
 /* ── The scroll-up rail ────────────────────────────────────────────────────

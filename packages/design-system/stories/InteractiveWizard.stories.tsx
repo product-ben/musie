@@ -5,6 +5,7 @@
  * docs/07-components.md §7.17. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { DoorOpen, Headphones, MessageCircleQuestion, ScanLine } from 'lucide-react';
 import { InteractiveWizard } from '../src/InteractiveWizard';
 import { bothThemes, Stack } from './_decorators';
 
@@ -68,6 +69,42 @@ const meta = {
           'media query can see; `vertical` is the opt-in label-first variant for wide',
           'rails.',
           '',
+          '**The state word is spoken, never drawn** (changed 2026-09-24, from user',
+          'testing). Every label used to carry a second line under it — gesperrt /',
+          'verfügbar / aktuell / erledigt / übersprungen — saying what the marker',
+          'already says in ink, so every step read as two things where there was one.',
+          'It cost no HEIGHT: measured before and after, the trigger is 60px either',
+          'way, because the 44px marker sets the height and two short lines fit inside',
+          'it. The case is redundancy, not room. The word now lives in the trigger’s',
+          '`aria-label` —',
+          '"Listen, current" — where it is the only carrier of state for a user who',
+          'cannot see the marker. An `aria-label` rather than this package’s usual',
+          'hidden span, because a hidden span is absolutely positioned and the name',
+          'computation puts a space in front of the comma: "Listen , current",',
+          'measured in Chromium. `stateWords`',
+          'still overrides the five; `showStateWords` is gone, and so is the second',
+          'line, which is why the remaining label sits centred against the marker.',
+          '',
+          '**A step can carry its own glyph instead of its number** (`icon`, added',
+          '2026-09-24 from user testing). It replaces the NUMBER only: `completed`',
+          'still swaps to a check and `skipped` to a dash, because that swap is what',
+          'keeps the states apart without hue (1.4.1) — an icon that stayed put through',
+          'completion would leave `active` and `completed` differing by fill alone. So',
+          'a step’s own glyph says WHICH step it is, and the two universal glyphs say',
+          'what happened to it. The 1.4.1 argument never rested on the number being a',
+          'number; it rests on the glyph CHANGING.',
+          '',
+          '**The connector is a rule when the run is expanded and a DOT when it',
+          'collapses** (2026-09-24, from user testing on a phone). Same element,',
+          'same completion colour, two drawings. A long gap wants a line — it says',
+          'these are one sequence and there is room to say it. A collapsed run is four',
+          'circles almost touching, and three rules in those gaps read as a diagram:',
+          'the eye follows a line looking for where it goes, and over 9px it goes',
+          'nowhere. The swap follows the same condition the collapse does — under',
+          '`--bp-md`, and wherever `compact` forces it — so `Compact` below shows dots',
+          'at any width. `vertical` is the exception and keeps its rule, being the',
+          'variant for a rail with room rather than one without.',
+          '',
           '**Accent families are whole families, not a hue swap:** ocher and purple are',
           'LIGHT solids and take dark ink where terracotta is a dark solid and takes',
           'light ink, so `-on` travels with `-subtle` or the selected marker’s number',
@@ -83,34 +120,15 @@ const meta = {
           '_Temporary review scaffolding, added 2026-09-17. Delete once answered.',
           'This is not documentation._',
           '',
-          '## InteractiveWizard — `showStateWords`’s doc comment describes the opposite prop',
-          'Where: `src/InteractiveWizard.tsx:70-71`',
-          'What I checked: Level 1. The comment reads "Hide the state word under each',
-          'label." The prop is `showStateWords`, it defaults to `true`, and `true` SHOWS',
-          'the word: `{showStateWords && <span className="musy-wizard__hint">…}`. So the',
-          'comment describes a `hideStateWords` prop that does not exist. Level 3’s props',
-          'table gives the type and default correctly and offers no prose.',
-          'What I did: wrote the argTypes description from the behaviour, not from the',
-          'comment, and said so here.',
-          'Why: CONVENTIONS §4 says the description is the prop’s own doc comment — but',
-          'copying this one would document the inverse of what the prop does.',
-          'What I need from Ben: **a fix in the source comment** (one line). This is the',
-          'only place in Batch C where I could not use a doc comment verbatim.',
-          '',
-          '## InteractiveWizard — state words default ON, and the prototype renders none',
-          'Where: `src/InteractiveWizard.tsx:88` vs PROTOTYPE-USAGE.md, "InteractiveWizard"',
-          'What I checked: Level 1 defaults `showStateWords = true`. Level 2 says',
-          'explicitly: "The prototype does **not** render state words under the labels."',
-          'Level 3 lists the default as `true` without comment.',
-          'What I did: `Default` shows the component default (words on) and',
-          '`StateWordsHidden` shows the prototype’s actual appearance.',
-          'Why: stories document what the component does; the default is the component’s.',
-          'What I need from Ben: **a decision.** The system’s only consumer turns this off,',
-          'which usually means the default is wrong. Note also that the state word is',
-          'visible text INSIDE the trigger, so it joins the button’s accessible name —',
-          '"Intro done", "Listen current" — and the selected step announces its position',
-          'twice, once from the word and once from `aria-current="step"`. Flagging only;',
-          'not fixed.',
+          '## InteractiveWizard — the two state-word questions, answered 2026-09-24',
+          'Both entries that stood here are resolved and deleted per this block’s own',
+          'rule. The doc comment described a `hideStateWords` prop that did not exist,',
+          'and the default rendered a line the prototype never showed. Ben’s answer to',
+          'both: the word is not drawn at all. It is screen-reader-only text now,',
+          '`showStateWords` is removed, and the duplication this block flagged — the',
+          'selected step announcing its position from the word AND from',
+          '`aria-current="step"` — is unchanged and deliberate. See',
+          'stories/OPEN-QUESTIONS.md for the entry.',
           '',
           '## InteractiveWizard — no whole-component `disabled`, `error` or `emptyLabel`',
           'Where: `src/InteractiveWizard.tsx:60-84` (props)',
@@ -180,7 +198,7 @@ const meta = {
   },
   argTypes: {
     label: { control: 'text', description: 'Names the navigation region. Required (4.1.2).' },
-    steps: { control: false, description: 'The ordered steps. Each is { id, label }.' },
+    steps: { control: false, description: 'The ordered steps. Each is { id, label, icon? } — `icon` is any Lucide component and replaces that step’s position NUMBER in the marker. Optional: a step without one draws its number, so an existing run is unchanged. Pass all of them or none; half a rail of numbers reads as a count with holes in it.' },
     current: {
       control: 'select',
       options: ['intro', 'scan', 'listen', 'reflect'],
@@ -191,12 +209,7 @@ const meta = {
     onStepChange: { action: 'stepChange', description: 'Fires with the id of the step that was clicked.' },
     vertical: { control: 'boolean', description: 'Opt-in label-first stacking. Narrow screens collapse instead.' },
     compact: { control: 'boolean', description: 'Force the collapsed run inside a narrow container, which no media query can see.' },
-    showStateWords: {
-      control: 'boolean',
-      // The source comment says "Hide the state word"; true SHOWS it. See Build notes.
-      description: 'Show the state word under each label. Default true.',
-    },
-    stateWords: { control: false, description: 'Override any of the five state words. Each defaults to the locale catalogue — gesperrt / verfügbar / aktuell / erledigt / übersprungen in German, locked / available / current / done / skipped in English.' },
+    stateWords: { control: false, description: 'Override any of the five state words a step ANNOUNCES — they are screen-reader-only, never drawn. Each defaults to the locale catalogue — gesperrt / verfügbar / aktuell / erledigt / übersprungen in German, locked / available / current / done / skipped in English.' },
     accent: {
       control: 'inline-radio',
       options: ['primary', 'accent', 'accent-alt'],
@@ -225,20 +238,52 @@ export const Accents: Story = {
   ),
 };
 
+/**
+ * ICONS INSTEAD OF NUMBERS, with Musie's own four. Step 1 is completed, so it
+ * shows the CHECK rather than its door — which is the point of the rule that
+ * the icon replaces only the number.
+ */
+export const Icons: Story = {
+  args: {
+    steps: [
+      { id: 'intro', label: 'Intro', icon: DoorOpen },
+      { id: 'scan', label: 'Select Card', icon: ScanLine },
+      { id: 'listen', label: 'Listen', icon: Headphones },
+      { id: 'reflect', label: 'Reflect', icon: MessageCircleQuestion },
+    ],
+  },
+};
+
 /** `vertical` is the opt-in label-first variant for wide rails. */
 export const Vertical: Story = { args: { vertical: true } };
 
 /** `compact` forces the collapsed run — the current step keeps its label, every
  *  other step shrinks to its marker. The hidden labels are moved out of sight,
- *  not removed. */
+ *  not removed. It is also what swaps the connecting rules for dots at a width
+ *  where the media query would not: the two go together, because they answer
+ *  the same question about how much room the run has. */
 export const Compact: Story = { args: { compact: true } };
 
-/** The prototype's actual appearance: no state words under the labels. */
-export const StateWordsHidden: Story = { args: { showStateWords: false } };
+/**
+ * WHAT EACH STEP ANNOUNCES. There is nothing to see here that `Default` does
+ * not show — that is the point, and it is why the story is kept rather than
+ * deleted with the `showStateWords` prop it used to set. The state word is the
+ * tail of each trigger's `aria-label`, so the four buttons below carry the
+ * accessible names:
+ *
+ *   "Intro, erledigt" · "Select Card, aktuell" · "Listen, verfügbar" ·
+ *   "Reflect, gesperrt"
+ *
+ * Read them with the accessibility panel, or with a screen reader. A step that
+ * has collapsed to its marker announces the same thing — the name is on the
+ * button, so clipping the visible label cannot take it away.
+ */
+export const SpokenStateWords: Story = { args: { compact: true } };
 
 /** The state words now default to the locale catalogue, so this story passes
  *  the same German the catalogue ships — what it demonstrates is that a
- *  per-call override still wins. */
+ *  per-call override still wins. Nothing here is visible: an override changes
+ *  what the step ANNOUNCES. */
 export const CustomStateWords: Story = {
   args: {
     stateWords: {

@@ -6,9 +6,9 @@
  * project runs in `environment: 'node'` with no jsdom and no testing-library
  * (apps/web/vitest.config.ts says why, and the reason is good). So the parts
  * of the screen that can be WRONG — which label the record button carries,
- * which sentence sits under it, whether an ended session owes the reader an
- * explanation — are pulled out here, where a test can drive them with fixture
- * values instead of a microphone.
+ * whether an ended session owes the reader an explanation — are pulled out
+ * here, where a test can drive them with fixture values instead of a
+ * microphone.
  *
  * What is left in the component is JSX and one `await`. That is deliberate:
  * the only thing F.4 cannot exercise without a real microphone is the wiring,
@@ -53,18 +53,22 @@ export function recordLabelKey(phase: RecordPhase, hasRecorded: boolean): Messag
   return hasRecorded ? 'voice.record.more' : 'reflect.voice.record';
 }
 
-/**
- * The sentence under the button.
+/*
+ * ── `hintKey` IS GONE, AND SO IS THE SENTENCE UNDER THE BUTTON ─────────────
+ * Ben, 2026-09-24, in two passes. There were two of them: `voice.hint.more`
+ * for the recorded state and `voice.hint.first` before it, both ending in the
+ * same two cut-offs. The second went first, then the first.
  *
- * Two of them, not one: before the first statement the thing to explain is
- * where statements come from, and after it the thing to explain is where the
- * next one will land. Both carry the two cut-offs, because a recorder that
- * stops on its own without having said it would is indistinguishable from a
- * broken one.
+ * What is left in its place is NOT nothing. The cut-offs are still explained,
+ * by `stopNoticeKey` below — at the moment one of them fires, in a Message,
+ * with the numbers in it. That is the honest place for them: the earlier
+ * version said in advance what the recorder MIGHT do, above a button nobody
+ * had pressed yet, and it was one of three blocks of small print competing
+ * with the transcript for a screen whose subject is the person's own words.
+ *
+ * So the screen no longer warns; it explains, once, when there is something to
+ * explain. A recorder that stops on its own is still never silent about it.
  */
-export function hintKey(hasRecorded: boolean): MessageKey {
-  return hasRecorded ? 'voice.hint.more' : 'voice.hint.first';
-}
 
 /**
  * What to say about a session that ended, or `null` when nothing is owed.

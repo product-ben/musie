@@ -27,7 +27,6 @@ import type { Messages } from './en';
 export const de: Messages = {
   /* ── Shell ─────────────────────────────────────────────────────────────── */
   'shell.menuLabel': 'Menü öffnen',
-  'shell.profileLabel': 'Profil und Einstellungen öffnen',
 
   /* ── Shared across overlays ────────────────────────────────────────────── */
   'common.closeLabel': 'Schließen',
@@ -73,7 +72,7 @@ export const de: Messages = {
   'auth.error.rateLimit': 'Zu viele Versuche. Warte eine Minute und versuche es erneut.',
   'auth.error.unknown': 'Beim Anmelden ist etwas schiefgegangen. Versuche es gleich noch einmal.',
 
-  /* ── Das Konto, in den Einstellungen · H.0b ──────────────────────────────
+  /* ── Das Konto, im Menü · H.0b ───────────────────────────────────────────
      'Konto', not 'Account': §8 keeps an English term only where German has no
      word people use, and 'Konto' is the word German interfaces use here. */
   'auth.account': 'Konto',
@@ -85,18 +84,20 @@ export const de: Messages = {
   'menu.pagesLabel': 'Seiten',
   'menu.closeLabel': 'Menü schließen',
   'menu.startSession': 'Session starten',
+  /* Bens Wortlaut, 2026-09-24. Kaufmanns-Und wie im Englischen. */
+  'menu.endSession': 'Session beenden & neu beginnen',
   'menu.continueSession': 'Session fortsetzen',
   'menu.yourDiary': 'Dein Tagebuch',
   'menu.aboutYou': 'Über dich',
   'menu.howItWorks': 'Wie Musie funktioniert',
 
-  /* ── Settings sheet ────────────────────────────────────────────────────── */
-  'settings.darkMode': 'Dunkelmodus',
-  'settings.userType': 'Hier als',
-  'settings.language': 'Sprache',
-  /* Provisional, not placeholder: the content IS German now, but the
-     Mindfulness Cards spreadsheet still owns it and will replace it. */
-  'settings.languageHint': 'Die Übersetzungen der Inhalte sind vorläufig.',
+  /* ── Was das Menü EINSTELLT, unter dem, wohin es FÜHRT ────────────────────
+     Beide Wörter sind unverändert; nur die Schlüssel heißen jetzt `menu.*`,
+     weil es /settings nicht mehr gibt (2026-09-24). 'Hier als' und der Hinweis
+     zu den Übersetzungen sind mit dem Panel weggefallen — warum, steht in
+     en.ts. */
+  'menu.darkMode': 'Dunkelmodus',
+  'menu.language': 'Sprache',
 
   /* ── Loading, failure, emptiness ───────────────────────────────────────── */
   'content.loading': 'Wird geladen…',
@@ -113,23 +114,31 @@ export const de: Messages = {
   'about.pitch': 'Ich helfe dir, achtsamer, bewusster, verbundener und sicherer zu fühlen und zu handeln – mit der Kraft der Musik',
   /* The German chat convention is the bare verb: 'Musie schreibt …'. */
   'about.typing': 'Musie schreibt',
-  'about.carouselHeadline': 'Wie wir mit Musik spielen',
+  /* 'Was Musie kann' — a noun-ish heading naming the section, which §3's
+     exception allows; the three lines under it are the answer. */
+  'about.carouselHeadline': 'Was Musie kann',
   'about.carouselLabel': 'Wie eine Session abläuft',
-  'about.slide.situation': 'Du hilfst mir, deine Situation zu verstehen',
-  'about.slide.recommend': 'Ich empfehle dir musikbasierte Methoden für deinen Kontext',
-  'about.slide.listen': 'Kuratierte Musik und Anleitungen lösen etwas in dir aus',
-  'about.slide.reflect': 'Ich führe dich durch eine Reflexion',
-  'about.slide.share': 'Wenn du magst, helfe ich dir, deine Gedanken zu teilen',
+  /* BEN'S OWN THREE LINES, kept word for word. Two spelling corrections and
+     nothing else: 'Reflektion' → 'Reflexion' (the form the rest of de.ts
+     already uses — see session.reflect.*), and the ampersand in the third
+     line is his, so it stays in the English too. */
+  'about.slide.choose': 'Wähle mit Musie die Übung, die dich anzieht',
+  'about.slide.guide': 'Musie führt dich durch die Übung und eine Reflexion',
+  'about.slide.understand': 'Fühle & verstehe dich selbst besser',
   'about.previousSlide': 'Vorheriger Schritt',
   'about.nextSlide': 'Nächster Schritt',
   'about.slideLabel': 'Schritt {position} von {total}: {title}',
-  'about.dotLabel': 'Schritt {position}',
   'about.goToSlide': 'Zu Schritt {position} von {total}',
   'about.hint.unseen': 'Sieh dir an, wie eine Session abläuft, bevor du startest.',
   'about.hint.next': 'Als Nächstes frage ich dich, als wer du hier bist.',
   /* 'Es kann losgehen.' rather than a literal 'Bereit, wenn du es bist.' —
      the English is an idiom and the German has its own. */
   'about.hint.ready': 'Es kann losgehen.',
+  /* 'bekommst', not Ben's typed 'bekommt', and 'Sessions' in the plural the
+     sentence asks for. The word order is turned so the sentence opens on the
+     thing that is new — the diary — rather than ending on a pile of three
+     prepositional phrases, which is where the German original was heading. */
+  'about.postscript': 'P.S. In deinem Tagebuch in Musie bekommst du einen Überblick über alle vergangenen Sessions und Einblicke in deine Reflexionen.',
 
   /* ── About you · D.2 ───────────────────────────────────────────────────── */
   'aboutYou.headline': 'Und als wer bist du hier?',
@@ -147,8 +156,6 @@ export const de: Messages = {
   'notImplemented.back': 'Zurück zur Auswahl',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
-  /* An en dash, as in English: German uses the same range notation. */
-  'exercises.timeframe': '{min}–{max} Minuten',
   'exercises.notImplemented': 'Noch nicht verfügbar',
   'exercises.headline': 'Womit möchtest du jetzt anfangen?',
   'exercises.legend': 'Übung wählen',
@@ -163,17 +170,31 @@ export const de: Messages = {
   'exercises.fact.cards': 'Braucht dein Mindfulness-Cards-Set',
   'exercises.fact.sound': 'Ton an – Kopfhörer empfohlen',
   'exercises.surpriseMe': 'Musie eine Übung aussuchen lassen',
-  'exercises.detail.needs': 'Du brauchst',
-  'exercises.detail.duration': 'Dauer',
-  'exercises.start': 'Übung starten',
   'exercises.alreadyRunning': 'Es läuft schon eine Session',
   'exercises.alreadyRunningDetail': 'Beende oder schließe die laufende Session, bevor du eine neue startest.',
   'exercises.goToSession': 'Zu dieser Session',
+  /* Bens Wortlaut, 2026-09-24. Der Übungsname steht vorn, weil er das ist,
+     wonach man den Knopf sucht — und weil die Karte darunter ausgegraut ist,
+     während diese Frage offen steht. 'Vorherige' statt 'laufende': in dem
+     Moment, in dem der Knopf wirkt, ist sie die vorherige. */
+  'exercises.endAndStart': '{name} starten und vorherige Session beenden',
+  /* Passiv, weil hier niemand schuld ist: die Anfrage kam nicht durch. Kein
+     „Fehler“ im Text — das Wort steht schon unsichtbar im Status-Präfix der
+     Message, und zweimal gesagt klingt es nach mehr, als es ist. */
+  'exercises.startFailed': 'Die Session konnte nicht gestartet werden',
 
   /* ── The session ─────────────────────────────────────────────────────────
      Noun forms, not imperatives: these name the steps in a rail, they do not
-     ask for an action. §3's verb-first rule is about buttons. */
-  'session.step.intro': 'Einstieg',
+     ask for an action. §3's verb-first rule is about buttons.
+
+     FOUR SUBSTANTIVIERTE INFINITIVE, and since 2026-09-24 that is true of all
+     four. 'Einstieg' was a plain noun among three verbal nouns — it named the
+     place you arrive at where the others name what you do there. Ben's word
+     out of the 260925 round is 'Einsteigen', which makes the set one shape.
+     Still a noun phrase, so §3's exception for non-actions is untouched, and
+     it still reads in the two sentences that interpolate it: 'Aufgehört bei
+     Einsteigen' and 'Aktuelle Session – Einsteigen'. */
+  'session.step.intro': 'Einsteigen',
   'session.step.scan': 'Scannen',
   'session.step.listen': 'Hören',
   'session.step.reflect': 'Nachdenken',
@@ -207,16 +228,24 @@ export const de: Messages = {
 
   /* ── Scan · D.5a, und der echte Scanner · E.0/E.1 ──────────────────────── */
   'session.scan.headline': 'Scanne die Karte, die am besten beschreibt, wie du dich gerade fühlst.',
-  /* 'QR-Code' with the hyphen — Durchkopplung again, and it is the spelling
-     Duden gives. 'Kamera-App' the same way. A Gedankenstrich, not an em dash
-     (§7); the English key keeps its '—'. */
-  'session.scan.reader': 'Scanne den QR-Code auf deiner Karte mit der Kamera-App deines Handys – sie öffnet Musie direkt bei dieser Karte.',
-  'session.scan.readerNote': 'Oder nimm die Kamera dieses Geräts – sie liest denselben Code.',
+  /* KEIN 'reader'/'readerNote' MEHR — Ben, 2026-09-24. Die beiden Sätze standen
+     im leeren Rahmen; der Rahmen zeigt jetzt nur noch die zwei Schaltflächen.
+     Der Hinweis auf die Kamera-App des Handys ist damit nicht verschwunden,
+     sondern dahin gewandert, wo die Anleitung steht: in `scan_md` der Übung
+     (Migration 20260924…_scan_md_phone_camera.sql). Das zweite Satzpaar sagt
+     jetzt die Schaltfläche selbst. */
   'session.scan.codeLabel': 'Kartencode',
   'session.scan.codePlaceholder': 'MC-01',
   /* Verbphrase, §3 — das Feld dahinter heißt schon 'Kartencode', die
-     Schaltfläche sagt also, was sie tut, und nicht noch einmal, was kommt. */
-  'session.scan.codeManual': 'Code von Hand eingeben',
+     Schaltfläche sagt also, was sie tut, und nicht noch einmal, was kommt.
+
+     'Code eingeben', nicht mehr 'Code von Hand eingeben' (Ben, 2026-09-24).
+     Der Zusatz 'von Hand' trennte das Tippen vom Scannen, solange beides
+     nebeneinander auf dem Schirm stand; im Rahmen selbst steht jeweils nur
+     eins von beiden, und die kürzere Fassung ist zugleich der Name des
+     Icon-Buttons über dem Kamerabild, wo drei Wörter als Tooltip zu viel
+     wären. */
+  'session.scan.codeManual': 'Code eingeben',
   'session.scan.codeHint': 'Der Code steht neben dem QR-Code auf der Karte, zum Beispiel MC-01.',
   /* A verb phrase, not 'Diese Karte' (§3) — the button performs an act. */
   'session.scan.codeSubmit': 'Diese Karte nehmen',
@@ -239,11 +268,22 @@ export const de: Messages = {
      No 'leider' anywhere below, and no 'Bitte' (§4). The English says what
      happened and what to do instead; so does this. 'Tippe … ein' is the
      imperative singular the rest of the app uses (§1). */
-  'session.scan.cameraStart': 'Kamera benutzen',
+  /* 'Karte scannen', nicht 'Kamera benutzen' (Ben, 2026-09-24). Der Knopf ist
+     jetzt die primäre Handlung des Schritts und nennt das Ziel — die Karte —
+     statt des Geräts, das dabei hilft. Kleinschreibung des Verbs nach §2, auch
+     wenn die Vorlage 'Karte Scannen' schrieb. */
+  'session.scan.scanCard': 'Karte scannen',
   /* 'noch mal', not 'noch einmal': the longer form put this at 1.40× the
      English and §5 asks for the rewrite before the wrap. */
   'session.scan.cameraRetry': 'Kamera noch mal versuchen',
-  'session.scan.cameraStop': 'Kamera ausschalten',
+  /* 'ausblenden', nicht 'ausschalten': der Knopf sitzt als Icon-Button im Bild
+     und räumt die Vorschau weg; der Stream wird dabei wirklich beendet, aber
+     was die Person tut, ist das Bild wegnehmen. 'Ausschalten' klänge nach der
+     Kamera des Geräts insgesamt. */
+  'session.scan.cameraHide': 'Kamera ausblenden',
+  /* Der Weg aus dem Eingabefeld zurück in den Sucher — beides sind Modi
+     desselben Rahmens, also sagt der Knopf, wohin er führt. */
+  'session.scan.codeBack': 'Zurück zum Scannen',
   'session.scan.cameraStarting': 'Kamera wird geöffnet…',
   'session.scan.cameraLive': 'Halte den QR-Code deiner Karte in den Rahmen.',
   'session.scan.cameraLabel': 'Kamera, sucht nach einem QR-Code',
@@ -260,11 +300,10 @@ export const de: Messages = {
   /* 'Stück', which is what the seed's own German calls a recording — 'höre das
      Stück dahinter'. 'Track' would be an English word nobody chose. */
   'session.listen.track': 'Dein Stück',
-  'session.listen.gateMet': 'Genug vom Stück liegt hinter dir. Hör so lange weiter, wie du magst, oder starte jetzt die Reflexion.',
-  'session.listen.gateLocked': 'Hör so viel vom Stück, wie du möchtest – {gate} sind das Minimum für diese Übung, {left} fehlen noch.',
-  'session.listen.start': 'Reflexion starten',
+  'session.listen.startLocked': 'Fokussiere dich noch mindestens für {countdown} Minuten',
+  'session.listen.start': 'Nachdenken starten, sobald du bereit bist',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
-  'session.listen.detailsAction': 'Trackdetails und Player',
+  'session.listen.detailsAction': 'Über den Track',
   'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht vom Namen des Tracks oder vom Cover beeinflussen zu lassen.',
   'session.listen.warnBack': 'Übung fortsetzen',
   'session.listen.warnOn': 'Details und Player zeigen',
@@ -276,6 +315,7 @@ export const de: Messages = {
   'session.listen.aboutHeading': 'Zu diesem Track',
   'session.listen.aboutArtist': 'Interpretin oder Interpret',
   'session.listen.aboutInstructions': 'Hinweise zum Hören',
+  'session.listen.simulatedHeadline': 'Testmodus: keine Aufnahme',
   'session.listen.simulated': 'Es ist noch keine Aufnahme hinterlegt, deshalb läuft der Player auf einer Uhr in der echten Länge des Stücks.',
   'session.listen.noTrack': 'Für diese Übung gibt es noch keine Aufnahme.',
 
@@ -391,9 +431,19 @@ export const de: Messages = {
      §5's length budget has no room for the long one. */
   'privacy.account': 'Musie fragt nie nach deinem Namen. Wenn du für den geschlossenen Test eine E-Mail-Adresse und ein Passwort bekommen hast, gehört dein Tagebuch zu diesem Konto. Sonst hat dieser Browser ein eigenes, privates Konto, und dein Tagebuch gehört dazu.',
   'privacy.written': 'Was du schreibst, kommt in dein Tagebuch, damit du es später nachlesen kannst. Niemand sonst sieht es.',
-  /* Das Versprechen in einer Zeile, für den Reflexionsschritt. Keine Kürzung
-     von `privacy.voice`, sondern die Hälfte davon, die ein Versprechen ist —
-     wie es funktioniert, steht in der Lightbox. */
+  /* ── DIESE ZWEI LIEGEN AUF HALDE — Ben, 2026-09-24 ──────────────────────
+     Nichts zeigt sie derzeit an. Sie waren die eine Zeile im
+     Reflexionsschritt und der Link daneben; beides ist dort weg, weil das
+     Transkript der Grund ist, warum jemand auf diesem Schritt steht, und das
+     Kleingedruckte darunter dagegen angetreten ist.
+
+     Sie bleiben im Katalog, weil `DataLightbox` gebaut bleibt und das lange
+     Versprechen weiter enthält. Was fehlt, ist die Tür dorthin, und wo die
+     hingehört, entscheidet Ben (apps/web/OPEN-QUESTIONS.md).
+
+     Das Versprechen in einer Zeile: keine Kürzung von `privacy.voice`, sondern
+     die Hälfte davon, die ein Versprechen ist — wie es funktioniert, steht in
+     der Lightbox. */
   'privacy.voiceShort': 'Musie behält den Text, nie deine Stimme.',
   /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
      Link im Fließtext muss benennen, was hinter ihm liegt. */
@@ -469,8 +519,12 @@ export const de: Messages = {
   'voice.record.more': 'Mehr aufnehmen',
   /* Auslassungspunkte als ein Zeichen, §7. */
   'voice.record.connecting': 'Verbindet…',
-  'voice.hint.first': 'Jede Pause beendet eine Aussage. Die Aufnahme stoppt von selbst nach {seconds} Sekunden oder nach {silence} Sekunden Stille.',
-  'voice.hint.more': 'Neue Aussagen kommen ans Ende der Liste. Die Aufnahme stoppt von selbst nach {seconds} Sekunden oder nach {silence} Sekunden Stille.',
+  /* Beide Hinweise unter der Aufnahmeschaltfläche sind weg (2026-09-24, Ben,
+     in zwei Schritten): erst `voice.hint.more`, dann `voice.hint.first`. Beide
+     endeten auf denselben zwei Grenzen. Was von selbst stoppt, sagen
+     `voice.stopped.timeout` und `voice.stopped.silence` — in dem Moment, in
+     dem es passiert, und mit der Zahl im Satz. Vorher noch einmal davor zu
+     warnen war Kleingedrucktes unter dem Transkript. */
   /* 'Ziehpunkt' für den Griff: kein Nomenstapel (§6), und es ist das Wort,
      das auch die Komponente im Deutschen benutzt. */
   /* Die Tipps werden jetzt aufgerufen, sie stehen nicht mehr da.
@@ -480,7 +534,7 @@ export const de: Messages = {
   'voice.hint.editToggle': 'Tipps zum Bearbeiten',
   'voice.hint.editHeadline': 'Aussagen verschieben und verbinden',
   'voice.hint.editHide': 'Tipps ausblenden',
-  'voice.hint.edit': 'Zieh eine Aussage, um sie zu verschieben, oder lass sie auf einer anderen los, um beide zu verbinden. Mit der Tastatur: Ziehpunkt fokussieren, dann Leertaste zum Anheben, Pfeiltasten zum Verschieben, M verbindet sie mit der darüber, Escape legt sie zurück.',
+  'voice.hint.edit': 'Zieh eine Aussage, um sie zu verschieben, oder lass sie auf einer anderen los, um beide zu verbinden. Auf dem Touchscreen wischst du eine Aussage nach links, um sie zu löschen. Mit der Tastatur: Ziehpunkt fokussieren, dann Leertaste zum Anheben, Pfeiltasten zum Verschieben, M verbindet sie mit der darüber, Escape legt sie zurück.',
   /* Überschriften ohne Punkt, Sätze mit. */
   'voice.stopped.headline': 'Aufnahme beendet',
   'voice.stopped.timeout': 'Das waren die {seconds} Sekunden. Alles, was Musie gehört hat, steht in der Liste, und du kannst mehr aufnehmen.',
@@ -497,6 +551,5 @@ export const de: Messages = {
   /* A Gedankenstrich: German sets a parenthetical dash as an EN dash with
      spaces, where English sets an em dash. The English key keeps its '—'. */
   'route.session.title': 'Aktuelle Session – {step}',
-  'route.settings.title': 'Einstellungen',
   'route.notFound.title': 'Nicht gefunden',
 };
