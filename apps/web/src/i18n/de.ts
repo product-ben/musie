@@ -139,11 +139,11 @@ export const de: Messages = {
   'aboutYou.hint.ready': 'Es kann losgehen.',
 
   /* ── Not implemented · D.2 ───────────────────────────────────────────────
-     „Allein“ and 'Kurze Achtsamkeitspause' are quoted from the content tables
-     rather than translated here, so the lightbox names the same two things the
-     screen behind it does. German quotation marks, per §7. */
+     „Allein“, „Achtsame Pause“ and „Freie Bahn“ are quoted from the content
+     tables rather than translated here, so the lightbox names the same things
+     the screen behind it does. German quotation marks, per §7. */
   'notImplemented.title': 'Noch nicht umgesetzt',
-  'notImplemented.text': 'Musie baut bisher nur den Weg „Allein“ aus, mit der Übung Kurze Achtsamkeitspause.',
+  'notImplemented.text': 'Musie baut bisher nur den Weg „Allein“ aus, mit den Übungen Achtsame Pause und Freie Bahn.',
   'notImplemented.back': 'Zurück zur Auswahl',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */

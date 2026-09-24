@@ -181,7 +181,7 @@ export const en = {
      it will not open, where settings is a preference you are entitled to
      record whether or not it does anything yet. */
   'notImplemented.title': 'Not implemented yet',
-  'notImplemented.text': 'Musie only builds the “By myself” path so far, with the Quick Mindfulness Break exercise.',
+  'notImplemented.text': 'Musie only builds the “By myself” path so far, with the Mindful Pause and Free Rein exercises.',
   'notImplemented.back': 'Back to the choice',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
@@ -253,12 +253,12 @@ export const en = {
 
   /* ── Intro · D.5a ────────────────────────────────────────────────────────
      A FALLBACK, AND IT IS OURS RATHER THAN THE SPREADSHEET'S. Every exercise
-     is meant to supply its own `intro_md`, and since 2026-09-23 one of the
-     three does. This one sentence is what the intro step says when the
-     exercise says nothing — chrome, permanent, and true of every exercise, so
-     it is correct copy rather than a placeholder. It renders as a paragraph
-     and never as a headline: naming a step is the exercise's job. Quick
-     Mindfulness Break no longer reaches it. */
+     is meant to supply its own `intro_md`, and two of the five do. This one
+     sentence is what the intro step says when the exercise says nothing —
+     chrome, permanent, and true of every exercise, so it is correct copy
+     rather than a placeholder. It renders as a paragraph and never as a
+     headline: naming a step is the exercise's job. Neither of the two
+     implemented exercises reaches it. */
   'session.intro.fallback': 'Take a moment to arrive. When you are ready, carry on.',
 
   /* ── Scan · D.5a, and the three ways in · E.0/E.1/E.2/E.3 ───────────────

@@ -20,9 +20,9 @@
  * load-bearing — starting the simulated clock because a URL had not arrived
  * yet would be indistinguishable from starting it because there is no file.
  *
- * ── AN HOUR, BECAUSE A SOUNDWALK IS TWENTY MINUTES ────────────────────────
- * Long enough that no session outlives its own URL — Body Scan Soundwalk runs
- * 15–20 minutes and somebody may pause in the middle of it — and short enough
+ * ── AN HOUR, BECAUSE THE LONGEST EXERCISE IS A QUARTER OF ONE ─────────────
+ * Long enough that no session outlives its own URL — Sound Journey runs 12–15
+ * minutes and somebody may pause in the middle of it — and short enough
  * that a URL pasted out of a network tab stops working the same afternoon.
  * The URL is minted per mount, so a returning listener gets a fresh one.
  */

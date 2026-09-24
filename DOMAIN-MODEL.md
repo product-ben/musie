@@ -154,7 +154,14 @@ Created by a trigger on `auth.users` insert, never by the client.
 
 ### Exercise — `exercises` + `exercise_i18n` + `exercise_situations`
 
-The library. Three rows; one implemented.
+The library. Five rows; two implemented — Achtsame Pause / Mindful Pause
+(`mindfulness-cards`) and Freie Bahn / Free Rein (`free-rein`), which draws the
+same deck and plays the same recordings.
+
+**The ids and the names are not the same thing, and one pair proves it.**
+`body-scan-soundwalk` reads *Bodyscan* on screen since `20260923150000`: an id
+is a stable handle that `sessions.exercise_id` and every diary row point at, so
+it does not move when the copy does.
 
 Owns `timeframe_min/max`, `needs_cards`, `needs_sound`, `implemented`, `sort`,
 `listen_gate_seconds`, and per locale `name`, `description`, `needs`,
@@ -180,10 +187,11 @@ which is the same reasoning that puts `timeframe_min` there. `not null default
 90`; the app caps it at the track's own duration, so a gate longer than the
 recording is satisfied by finishing it rather than being unreachable.
 
-Only Quick Mindfulness Break's 90 is MEASURED — it is the prototype's figure,
-arrived at against the real card tracks. The other two are estimates
-proportional to their own timeframes (60s and 180s) and are flagged as such in
-the seed, because neither exercise has a recording to tune against yet.
+Only Mindful Pause's 90 is MEASURED — it is the prototype's figure, arrived at
+against the real card tracks. Free Rein takes the same 90 rather than an
+estimate of its own, because it plays those same recordings. The other three
+are estimates proportional to their own timeframes (60s, 180s and 180s) and are
+flagged as such, because none of them has a recording to tune against yet.
 
 **CHANGED ⑤: the step copy follows the EXERCISE.** Not the card, not the
 track. Used with every card that exercise draws.
@@ -205,15 +213,17 @@ Three things follow from the shape:
 - **The headline is an `<h2>`.** Content writes `##`; the parser clamps every
   heading to 2–6 so a content edit can never put a second `<h1>` under the
   exercise name that `ContentBox` already renders as one.
-- **A list is a list.** The copy is numbered on intro and scan and bulleted on
-  reflect, and it renders as `<ol>` / `<ul>`, so the count and the position
-  reach assistive tech instead of being baked into the prose (L3). This is the
-  half that `text[]` could not express at all.
+- **A numbered list is a list; a bullet is not.** The copy is numbered on
+  intro and reflect, and it renders as `<ol>`, so the count and the position
+  reach assistive tech instead of being baked into the prose (L3) — the half
+  that `text[]` could not express at all. A `-` bullet renders as **paragraph
+  text** (Ben, 2026-09-23): the marker is dropped and each bullet becomes its
+  own paragraph, so the break survives and no `<ul>` is ever produced. The
+  content keeps its bullets; it is the renderer that decides.
 - **The subset is bounded, and the bound is a file.**
   `apps/web/src/lib/markdown.ts` is normative: ATX headings, paragraphs,
-  ordered and unordered lists, `**strong**` and `*emphasis*`. No HTML, no
-  images, no links. Anything else renders as its own literal text — a line is
-  never dropped.
+  ordered lists, `**strong**` and `*emphasis*`. No HTML, no images, no links.
+  Anything else renders as its own literal text — a line is never dropped.
 
 **`question` is gone.** One column rendered as the heading of BOTH the listen
 and the reflect step, on the rule that the question you hold while the track
@@ -223,15 +233,20 @@ forms, reflect asks what the scene was called and what happened in it — so
 each step's headline is its own. The column was null in all six rows, so
 nothing written was lost.
 
-> **The copy has landed for Quick Mindfulness Break, and is still owed for the
-> other two.** All four columns are filled in both locales for
-> `mindfulness-cards` (`20260923120000_exercise_step_markdown.sql`); Breathing
-> Score and Body Scan Soundwalk carry none, in either locale, and are
-> unimplemented. It is provisional either way — the Mindfulness Cards
-> spreadsheet will overwrite it. `select * from public.missing_translations`
-> stays quiet about the two empty exercises, because it compares locales
-> against each other rather than testing for null — absent from both is data,
-> absent from one is a dropped translation.
+> **The copy has landed for the two implemented exercises, and is still owed
+> for the other three.** All four columns are filled in both locales for
+> `mindfulness-cards` (`20260923120000_exercise_step_markdown.sql`) and for
+> `free-rein` (`20260923150000_exercise_library_freie_bahn.sql`); Mindful
+> Breathing, Sound Journey and Body Scan carry none, in either locale, and are
+> unimplemented. `select * from public.missing_translations` stays quiet about
+> the three empty exercises, because it compares locales against each other
+> rather than testing for null — absent from both is data, absent from one is a
+> dropped translation.
+>
+> **It is no longer provisional.** The library copy and Freie Bahn's four steps
+> are Ben's own words rather than the Mindfulness Cards spreadsheet's, so the
+> seed's PROVISIONAL GERMAN caveat has stopped applying to `exercise_i18n`.
+> It still holds for `card_i18n` and the rest of the seed.
 
 ### Card — `cards` + `card_i18n`
 
@@ -294,9 +309,15 @@ the exercise is a listener who is not primed by the track name.
 `exercise_tracks` needs no column grant at all, because it holds only ids and
 `tracks.id` says nothing.
 
-> **Two exercises are still silent.** Breathing Score and Body Scan Soundwalk
-> each want a pairing row with a null `card_id`, and the source has no file for
-> either.
+> **Three exercises are still silent.** Mindful Breathing, Sound Journey and
+> Body Scan each want a pairing row with a null `card_id`, and there is no file
+> for any of them.
+>
+> **And one deck now plays twice.** Free Rein draws the same nine cards as
+> Mindful Pause and pairs them with the same nine recordings
+> (`20260923150000`), which is the split doing the job it was built for: nine
+> new rows in `exercise_tracks`, none in `tracks`, and one credit per
+> recording rather than two that could disagree.
 
 ### Situation — `situations` + `exercise_situations`
 
@@ -665,19 +686,26 @@ landed first), and the tables were built once, after it.
 
 ## What the content still owes
 
+This table named `intro_text`, `scan_text`, `listen_text`, `reflect_text` and
+`question` until 2026-09-23, and all five columns are gone — replaced by the
+four `_md` documents. What is owed is smaller than it was, and it is now owed
+by three exercises rather than by all of them.
+
 | Missing | Count | Why it is missing |
 |---|---|---|
-| `exercise_i18n.intro_text` | 3 exercises × 2 locales | the source only ever wrote per-card variants |
-| `exercise_i18n.scan_text` | 2 exercises × 2 locales | mindfulness-cards has it — it is the old `guideline` |
-| `exercise_i18n.listen_text` | 3 exercises × 2 locales | as above |
-| `exercise_i18n.reflect_text` | 3 exercises × 2 locales | as above |
-| `exercise_i18n.question` | 3 exercises × 2 locales | as above |
-| A track for Breathing Score | 1 file | needs sound, draws no card, no file in the source |
-| A track for Body Scan Soundwalk | 1 file | same |
+| `exercise_i18n.intro_md` | 3 exercises × 2 locales | Mindful Breathing, Sound Journey and Body Scan; nobody has written their steps |
+| `exercise_i18n.scan_md` | 3 × 2 | as above — and all three are cardless, so their scan step is skipped anyway |
+| `exercise_i18n.listen_md` | 3 × 2 | as above |
+| `exercise_i18n.reflect_md` | 3 × 2 | as above |
+| `card_i18n.image_alt` | 9 cards × 2 locales | the source has no per-card alt text, and writing it is authoring |
+| A track for Mindful Breathing | 1 file | needs sound, draws no card, no file yet |
+| A track for Sound Journey | 1 file | same |
+| A track for Body Scan | 1 file | same |
+| Five card recordings | 5 files | `trk-03`, `trk-06`…`trk-09`; silent by design until they land |
 
-**Twenty-eight strings**, and the count grew from six because the step re-cut
-asked each of the four steps for its own copy rather than asking the exercise
-for one instruction. That was the designer's decision knowing the cost.
+**Twenty-four step documents**, all three of them unimplemented exercises — so
+nothing owed here is reachable from `/exercises` today. The two implemented
+exercises are complete in both locales.
 
 None of this blocks the schema — the columns and the rows exist and are
 nullable. It blocks the screens: an exercise that cannot say what to do while

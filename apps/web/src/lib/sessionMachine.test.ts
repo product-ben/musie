@@ -288,12 +288,12 @@ describe('nextStep', () => {
  * D14 — a cardless exercise. THE REGRESSION SUITE FOR A BUG THAT COULD NOT FIRE
  * YET.
  *
- * `needs_cards` is false for Breathing Score and Body Scan Soundwalk, so there
- * is nothing to scan. Before `skipped` existed, `listen` was permanently
- * unreachable for both: the rule wants every earlier step completed, and `scan`
- * could never complete. The only implemented exercise draws cards, so nothing
- * in the app would have caught it — which is exactly why it is tested here
- * rather than waited for.
+ * `needs_cards` is false for Mindful Breathing, Sound Journey and Body Scan, so
+ * there is nothing to scan. Before `skipped` existed, `listen` was permanently
+ * unreachable for all three: the rule wants every earlier step completed, and
+ * `scan` could never complete. Both implemented exercises draw cards, so
+ * nothing in the app would have caught it — which is exactly why it is tested
+ * here rather than waited for.
  *
  * The designer's decision is that the RAIL still shows four markers with scan
  * skipped. None of that is asserted here: the rail is D.4's, and this module

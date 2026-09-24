@@ -30,8 +30,8 @@ describe('completedBefore', () => {
   });
 
   it('leaves out a skipped step, so a cardless run reads right', () => {
-    /* Breathing Score and Body Scan Soundwalk draw no card. Resuming one of
-       them at `listen` means intro is done and scan was never part of the run
+    /* Mindful Breathing, Sound Journey and Body Scan draw no card. Resuming
+       one at `listen` means intro is done and scan was never part of the run
        — reporting scan as completed would put a check mark on the rail for
        something nobody did. */
     expect(completedBefore('listen', ['scan'])).toEqual(['intro']);

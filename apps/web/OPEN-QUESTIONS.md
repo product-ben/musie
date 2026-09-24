@@ -2936,3 +2936,157 @@ design and have `src is null`.
 What I need from Ben: **nothing.** Worth knowing that this only works while the
 hosted bucket holds them. If a recording ever exists locally and nowhere else,
 a reset really does lose it.
+
+# Phase H.x — the library in Ben's own words, and Freie Bahn
+
+## The brief names five exercises and the database had three — RESOLVED
+
+Where: `supabase/migrations/20260923150000_exercise_library_freie_bahn.sql`
+
+What I checked: the brief's five headings against `public.exercises`. Achtsame
+Pause and Achtsam Atmen are plainly `mindfulness-cards` and `breathing-score`.
+The brief lists both **Klangreise** and **Bodyscan** where the database has one
+row, `body-scan-soundwalk` — "Body Scan als Soundwalk" — and the covering note
+in the brief calls the existing placeholders "Achtsam Atmen, Soundwalk and
+Bodyscan", which is three names for two rows.
+
+What I did: **asked, and Ben chose.** `body-scan-soundwalk` becomes **Bodyscan**
+— its seeded description already read "a guided walk through the body, one
+sound at a time", which is the exercise Ben's new copy describes — and
+**Klangreise** is a new row, `sound-journey`.
+
+Why the ids did not move with the names: `sessions.exercise_id` and every diary
+entry point at `body-scan-soundwalk`, so renaming the key would orphan them.
+An id here is a stable handle; the name is `exercise_i18n`'s.
+
+What I need from Ben: **nothing.** Worth knowing that `body-scan-soundwalk` now
+reads "Bodyscan" everywhere on screen and only in the database does it still
+say soundwalk.
+
+## Four cards or five, and what the `[X]` symbol was — RESOLVED
+
+Where: the same migration; supersedes *"Three edits to the brief's German, and
+one placeholder shipped verbatim"* above.
+
+What I checked: the replacement line Ben sent — *"Ziehe vier zufällige Karten
+aus dem Deck"* — says four, and the library copy for the same exercise in the
+same brief says *"Wähle 5 zufällige Karten"*. Both would have shipped, one
+screen apart.
+
+What I did: asked. **Five everywhere.** The step now reads *"Ziehe fünf
+zufällige Karten aus dem Deck."* The digit on the library card and the word in
+the step are both Ben's own forms, kept as written — `docs/GERMAN-UI-WRITING.md`
+has no rule on numerals, so there is nothing to make them agree with.
+
+This also closes the `[X]` question logged on 2026-09-23: there is no symbol
+printed on the deck to name. The cards are drawn at random, which is what the
+placeholder was standing in for.
+
+What I need from Ben: **nothing.**
+
+## Freie Bahn's card says "clock only", but `needs_cards` is not a display flag
+
+Where: `apps/web/src/routes/Session.tsx:212`,
+`apps/web/src/routes/ScanLink.tsx:95`
+
+What I checked: the brief lists only the clock beside Freie Bahn — no card-deck
+icon and no "Du brauchst" line — where Achtsame Pause lists both. Taken
+literally that is `needs_cards = false`, and that column is **not** cosmetic:
+`Session.tsx` derives *this run skips the scan step* from it, and `ScanLink.tsx`
+decides with it what a QR deep link does. False would have deleted the scan
+step from an exercise whose whole instruction is "scan a random card".
+
+What I did: asked. Ben's answer: **clock + deck + sound, everywhere as today** —
+the chip logic is untouched for all five, and Freie Bahn carries the same
+`needs` string as Achtsame Pause. The brief's icon lists were shorthand for the
+copy, not a specification for the chips.
+
+What I need from Ben: **nothing**, but it is worth writing down that the fact
+chips and `needs_cards` are the same column. If the deck chip should ever come
+off one card without the scan step going with it, that is a schema change —
+a `shows_deck_chip` beside it, or the chips driven by `needs` being non-null.
+
+## Four mechanical corrections to the German, and one pronoun left alone
+
+Where: the same migration, `free-rein` and the library copy
+
+What I checked: `docs/GERMAN-UI-WRITING.md`, which binds content copy as well
+as chrome.
+
+What I did, and nothing else:
+
+1. *"Wähle eine Kart aus"* → *"Karte"*. A typo, and the same one corrected in
+   this exercise's model on 2026-09-23.
+2. *"deine Stimmung in ihr wiederfinde"* → *"wiederfinden"*. A dropped n.
+3. *"Wie fühlt sich der Moment an"* → *"…an?"*. §7: a sentence that asks gets
+   the mark.
+4. *"schweifen ohne ihnen zu folgen"* → *"schweifen, ohne ihnen zu folgen"*.
+   An `ohne … zu` clause takes the comma.
+
+What I did **not** do: *"deine Stimmung in **ihr** wiederfinden"* refers back to
+*die Karte* across a sentence whose nearest noun is *das Bild* (neuter). It
+reads, and changing a pronoun is a judgement about what Ben meant rather than a
+rule. Left as written.
+
+What I need from Ben: **nothing**, unless *ihr* should be *ihm* — the image
+rather than the card.
+
+## Freie Bahn is one draw, and five of the nine cards are silent
+
+Where: `supabase/migrations/20260918150600_content_seed.sql` (the tracks),
+`apps/web/src/components/SessionListen.tsx`
+
+What I checked: `tracks.src` is null for `trk-03`, `trk-06`, `trk-07`, `trk-08`
+and `trk-09` — silent by design, the four recordings that exist are 01, 02, 04
+and 05, and the listen step renders its no-recording line rather than an error.
+
+What I did: seeded all nine pairings for `free-rein` anyway, because the
+alternative — pairing only the four that play — would encode "which recordings
+exist today" in the content model and quietly break the day a fifth arrives.
+
+Why it is flagged: Achtsame Pause draws five cards and lets the person pick one
+of them, so a silent card is one of five and they can choose another. Freie
+Bahn is a single random draw and promises *"springe direkt in die Übung"* — so
+better than half the time, today, it jumps straight into silence.
+
+What I need from Ben: **a decision, eventually** — either the remaining five
+recordings (already tracked in BUILD-PLAN.md as one of the two things only Ben
+can do), or Freie Bahn stays behind them. It is live either way; this is about
+what it feels like until the files land.
+
+## `listen_gate_seconds` for the two exercises whose timing moved
+
+Where: the same migration
+
+What I checked: `db.content.db.test.ts` holds the column to two invariants —
+shorter than `timeframe_min × 60`, and shorter than every track it gates.
+
+What I did: `free-rein` takes **90**, copied rather than estimated — it plays
+the same nine recordings the 90 was measured against, and 90 < 2 × 60 still
+holds at the new exercise's shorter timeframe. `sound-journey` takes **180**, an
+estimate in the same proportion the seed used for the placeholder it sits
+beside. Bodyscan keeps its 180 under the shorter 10–12 timeframe.
+
+What I need from Ben: **nothing until a recording exists** for Achtsam Atmen,
+Klangreise or Bodyscan. The moment one does, listen to it and set the number.
+
+## Nothing tests Freie Bahn, and I did not add a walk
+
+Where: `apps/web/e2e/session.spec.ts`
+
+What I checked: the walk clicks `getByRole('radio').first()`, which is
+`exercises.sort = 1` — still Achtsame Pause, so the suite is unaffected by a
+second implemented exercise. Nothing exercises the second one.
+
+What I did: drove Freie Bahn through intro → scan → listen by hand in both
+locales, in a throwaway spec, and deleted it. It resolves MC-01's recording
+through its own pairing row, gates at 01:30, and both bulleted lines render as
+paragraphs.
+
+Why I did not keep it: it would be `session.spec.ts` again with `.nth(1)`, and
+the two exercises are the same four steps over the same tables — the walk that
+exists already covers the spine. It is worth adding the day Freie Bahn stops
+being a copy.
+
+What I need from Ben: **nothing, just flagging** that the second implemented
+exercise has no automated walk.

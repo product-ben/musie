@@ -472,17 +472,23 @@
   text-wrap: var(--text-wrap-heading);
 }
 
-/* ── THE LISTS KEEP THEIR MARKERS ──────────────────────────────────────────
-   An ordered list in this copy is a SEQUENCE — "1. lay the cards out, 2. let
+/* ── THE ONE LIST KEEPS ITS MARKERS ────────────────────────────────────────
+   An ordered list in this copy is a SEQUENCE — "1. draw five cards, 2. let
    them settle" — and the number is the instruction's most useful part. So the
    marker stays visible, the list keeps its element, and the count and position
    reach assistive tech without being drawn (L3).
 
+   THERE IS NO `ul` RULE, and that is not an omission. Ben, 2026-09-23: a
+   bullet renders as paragraph text, so `lib/markdown.ts` emits a paragraph for
+   it and no <ul> can reach this stylesheet. The gap between two of them is the
+   container's --space-gap-related, which is the same gap this list gives its
+   items — so the copy that was bulleted reads exactly as it did, without the
+   marker.
+
    `padding-inline-start` rather than `list-style-position: inside`, so a step
    that wraps over two lines aligns under its own text instead of back under
    the number. --sp-5 is the rung that clears a two-digit marker at body-lg. */
-.musie-md ol,
-.musie-md ul {
+.musie-md ol {
   padding-inline-start: var(--sp-5);
   display: flex;
   flex-direction: column;
