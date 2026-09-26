@@ -23,7 +23,7 @@ Where a value is quoted it was fetched; where something is unverified it says so
 | Cloudflare account | `ad53c20621825a671e3095c9ecf37c51` | |
 | workers.dev subdomain | `lipinskib` | So production is `musie.lipinskib.workers.dev` |
 | Zero Trust org | `dry-dew-8f76.cloudflareaccess.com` | Enabled 2026-09-23 |
-| Spare host | `netlify.toml`, untouched | Both hosts build `main` by design |
+| Spare host | None | Removed 2026-09-26. Cloudflare is the only host, and the only URL that answers |
 
 There is **no custom domain**. The domain is still undecided, and
 `BUILD-PLAN.md`'s footer warns that printing a QR code fixes it permanently, so

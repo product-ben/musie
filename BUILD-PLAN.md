@@ -27,7 +27,7 @@ Not "started" — done, in the working tree, and verified by `pnpm check`.
 |---|---|
 | 0.1 Monorepo skeleton | Done, **minus `CLAUDE.md`, Prettier and tests in `pnpm check`** |
 | 0.2 Supabase project | Local stack only. **No hosted project linked** |
-| 0.3 Deploy pipeline | Netlify for the app, GitHub Pages for Storybook. **No test step** |
+| 0.3 Deploy pipeline | A hosted build for the app, GitHub Pages for Storybook. **No test step** |
 | 1.1 Inventory + move in | Done — see `reference/INVENTORY.md` |
 | 1.2 Self-host the fonts | Done, with a documented preload and a 221 KB budget |
 | 1.3 Storybook boots | Done |
@@ -104,8 +104,8 @@ The things phases 0–2 skipped. None of them adds a feature; all of them make
 every later step reviewable.
 
 **Localhost only, and that is now a decision rather than a constraint.** The
-Netlify build allowance is exhausted until the week of 22 September, so nothing
-deploys in this phase. Separately and more usefully: D12 records that every
+host's build-minute allowance is exhausted until the week of 22 September, so
+nothing deploys in this phase. Separately and more usefully: D12 records that every
 content change so far has been made by **editing the existing migrations in
 place** and re-running `supabase db reset`, which is safe only while no hosted
 project is linked. The schema is still moving — `sessions`, `reflections` and
@@ -225,23 +225,28 @@ Do not run `supabase link`.
   signs a visitor in, lists three exercises from the hosted database, and a
   deliberately broken type blocks the deploy.
 
-  **The host changed on 2026-09-22: Cloudflare Workers is primary, Netlify is
-  the spare.** Both still build `main`; the domain points at one of them. The
-  step's four criteria did not move, and that is the point — they are written
-  about the app being reachable and correct, not about who serves it, so the
-  swap re-targets the work rather than re-opening it. Why it changed, and what
-  keeping two hosts costs, is in `apps/web/OPEN-QUESTIONS.md`.
+  **The host changed on 2026-09-22 to Cloudflare Workers**, with the previous
+  host kept as a spare that also built `main`. **The spare was removed on
+  2026-09-26** — it had silently stopped building `main` and was answering on a
+  live URL with an older bundle, which is a second, stale answer rather than a
+  spare. Cloudflare is now the only host and `wrangler.jsonc` the only
+  deployment config in the repo.
+
+  The step's four criteria did not move through either change, and that is the
+  point — they are written about the app being reachable and correct, not about
+  who serves it, so a host swap re-targets the work rather than re-opening it.
+  Both changes are logged in `apps/web/OPEN-QUESTIONS.md`.
 
   - [x] `wrangler.jsonc` at the repo root: an assets-only Worker over
         `apps/web/dist`, `not_found_handling: "single-page-application"` —
         which is the deep-link redirect, written explicitly because Cloudflare
-        does not infer it from the presence of `index.html` the way Netlify
-        and Pages do. `wrangler` is pinned in root `devDependencies`, so the
+        Workers does not infer it from the presence of `index.html` the way
+        Pages and most SPA hosts do. `wrangler` is pinned in root `devDependencies`, so the
         deploy does not resolve a new major on its own the way `npx wrangler`
         would.
   - [ ] **Workers Builds connected to `product-ben/musie`** — build command
-        `pnpm check && pnpm --filter web build`, which is netlify.toml's
-        command unchanged. This is the fourth criterion: the gate has to run
+        `pnpm check && pnpm --filter web build`, the full gate. This is the
+        fourth criterion: the gate has to run
         on the host's runner, because a gate that only runs on the laptop is
         not one. Dashboard work; it cannot be done from here.
   - [ ] **`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set as Workers
@@ -615,7 +620,8 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
     then validates the shape. `https://anything/s/MC-01` and `MC-01` both yield
     `MC-01`, so no host is ever compared and a decoder test needs no network.
   - **The route never needs it.** `/s/:code` is same-origin, so it resolves on
-    `localhost:5173`, on a Netlify preview, and on the real domain, unchanged.
+    `localhost:5173`, on a branch preview URL, and on the real domain,
+    unchanged.
   - **Only the PRINTED code needs it**, and that is the one artefact nobody can
     make yet anyway.
 
@@ -679,8 +685,8 @@ Two independent halves still. **E.0 is new, and is this phase's entry ticket.**
   **PARTLY UNBLOCKED, 2026-09-21 — four recordings landed.** Epidemic Sound,
   staged in `~/musie-audio/`, which is outside the repository deliberately:
   licensed masters cannot be taken back out of git history, and anything under
-  `apps/web/public/` ships in the Netlify bundle at a guessable public URL with
-  no access control. Their ID3 tags carry real title, artist and **mood**, so
+  `apps/web/public/` ships in the deployed bundle at a guessable public URL
+  with no access control. Their ID3 tags carry real title, artist and **mood**, so
   the card assignment is mood-matched rather than arbitrary (Ben chose this
   over a random draw, same day):
 
@@ -1564,7 +1570,7 @@ what they leave behind and what H does with it.
 | Blocker | Blocks |
 |---|---|
 | **Five more recordings.** Four landed 2026-09-21 (Epidemic Sound), leaving five of the nine deck cards silent, plus one each for Breathing Score and Body Scan Soundwalk still wanted. `count(*) from tracks` is the number to quote | E.4 in full. **E.5 is not blocked by this** — the reveal gates `title` and `artist`, which the seed already carries, so it can be built and its done-when checked with no audio at all |
-| **The domain.** A printed QR code locks it in permanently, and A.6's second half — Netlify and a domain — has not run. Nothing goes to print until it is chosen, and the Netlify build allowance returns the week of 22 September | **The printed deck, and H.1's sending domain.** E.0 is built and end-to-end tested against `window.location.origin`, so no code, route, test or dev sheet waits on this. Print day is one run of the generator with `--base-url`. **H.1 was the second thing this blocked** — real signup needs mail, and mail needs a sending domain — and H.0 routes around it for the beta without answering it |
+| **The domain.** A printed QR code locks it in permanently, and A.6's second half — a host and a domain — is only half done: the app is hosted on Cloudflare Workers, on a `workers.dev` URL, and no custom domain is chosen. Nothing goes to print until it is | **The printed deck, and H.1's sending domain.** E.0 is built and end-to-end tested against `window.location.origin`, so no code, route, test or dev sheet waits on this. Print day is one run of the generator with `--base-url`. **H.1 was the second thing this blocked** — real signup needs mail, and mail needs a sending domain — and H.0 routes around it for the beta without answering it |
 | Which vision model reads handwriting — or ship photo as session-only | D.5 |
 | **Sign-off** on the privacy copy — it is written, in both languages, and waiting | nothing is blocked; it is a promise already in the catalogue |
 | The real Mindfulness Cards spreadsheet | The content is placeholder until it lands; all German content rows are `[DE] `-prefixed. **The re-cut then the step re-cut left TWENTY-EIGHT strings with no source** — four step lists plus one question per exercise, in both locales — which D.4 and D.5 need |

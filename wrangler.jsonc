@@ -1,18 +1,21 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
 
-  // ── AN ASSETS-ONLY WORKER, BESIDE netlify.toml RATHER THAN INSTEAD OF IT ──
+  // ── AN ASSETS-ONLY WORKER, AND THE ONLY HOST ─────────────────────────────
   //
-  // A.6 Half 2 was written as "Netlify and a domain". Cloudflare is now the
-  // primary host and Netlify stays as the spare; both build `main`, and the
-  // domain points at exactly one of them. The reversal and its cost are
-  // logged in apps/web/OPEN-QUESTIONS.md — read that before removing either.
+  // A.6 Half 2 was re-aimed at Cloudflare on 2026-09-22, with the previous
+  // host kept as a spare that also built `main`. The spare is gone as of
+  // 2026-09-26: it had quietly stopped building `main` and was
+  // answering with an older bundle on a URL that still resolved, which is not
+  // a spare but a second, stale answer to the same question. This file is now
+  // the only deployment configuration in the repository. The reversal, the
+  // stale build and the removal are all logged in apps/web/OPEN-QUESTIONS.md.
   //
-  // The two files must not drift. netlify.toml's build command is
-  // `pnpm check && pnpm --filter web build` and its publish dir is
-  // apps/web/dist; the Workers Builds settings in the Cloudflare dashboard
-  // say the same two things, because a host that builds differently is a
-  // second definition of "done" rather than a spare.
+  // This file and the Workers Builds settings in the Cloudflare dashboard
+  // must not drift. The dashboard's build command is
+  // `pnpm check && pnpm --filter web build` from the repo root, which is the
+  // full gate — a host that builds differently is a second definition of
+  // "done".
   "name": "musie",
 
   // Today, per the compatibility-date rule: a new project pins the date it
@@ -31,13 +34,13 @@
     // router.tsx is a `createBrowserRouter`, so /diary, /about-you and
     // /session/:id/:step are real paths with no file behind them. Without
     // this, a deep link — or a refresh anywhere but `/` — is a 404 from the
-    // CDN before React ever loads. This is the exact counterpart of
-    // netlify.toml's `from = "/*" to = "/index.html" status = 200`.
+    // CDN before React ever loads. It is the `/*` → `/index.html` 200 rewrite
+    // that every SPA host needs, written out.
     //
     // Cloudflare makes it explicit rather than guessing from the presence of
-    // index.html, which is the one behavioural difference from Pages and
-    // from Netlify: forget it and the SPA looks broken only on deep links,
-    // which is precisely what A.6 Half 2 exists to test.
+    // index.html, which is the one behavioural difference from Pages and from
+    // hosts that infer it: forget it and the SPA looks broken only on deep
+    // links, which is precisely what A.6 Half 2 exists to test.
     "not_found_handling": "single-page-application"
   },
 

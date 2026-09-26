@@ -13,7 +13,7 @@ Open the local URL shown by Vite (usually `http://localhost:5173`).
 
 ## Run checks
 
-Run the same checks required before a Netlify build:
+Run the same checks the Cloudflare Workers build runs before it deploys:
 
 ```bash
 pnpm check
@@ -49,8 +49,11 @@ pnpm --filter web exec playwright install chromium
 
 Web-app environment variables live in `apps/web/.env.local` for local development.
 Use `apps/web/.env.example` as the template. Vite exposes browser variables only
-when their names start with `VITE_`. For Netlify builds, configure the same
-variables in the site's **Project configuration > Environment variables**.
+when their names start with `VITE_`. For the hosted build, configure the same
+variables per build trigger under **Workers & Pages > musie > Settings > Build >
+Variables and secrets**. They are read at BUILD time and compiled into the
+bundle, so changing one means rebuilding — see `docs/MUSIE-SETUP.md` section 3,
+which lists the exact three and why none of them is a secret.
 
 ## Storybook
 
@@ -69,9 +72,9 @@ pnpm build:storybook    # static build into packages/design-system/storybook-sta
 `packages/design-system/`.
 
 Pages and Actions are free with no build-minute allowance on a public
-repository, which is why the docs live here and not on Netlify. It also
-decouples them: a broken app build no longer stops Storybook publishing, and
-vice versa.
+repository, which is why the docs live here rather than on the app's host. It
+also decouples them: a broken app build no longer stops Storybook publishing,
+and vice versa.
 
 **One-time setup:** Settings → Pages → Build and deployment → Source:
 **GitHub Actions**.
@@ -98,21 +101,36 @@ mkdir -p /tmp/pages/musie && cp -R storybook-static/. /tmp/pages/musie/
 cd /tmp/pages && python3 -m http.server 8080   # then open /musie/
 ```
 
-## Connect Netlify
+## Where the app is deployed
 
-After pushing this repository to GitHub:
+**Cloudflare Workers**, as an assets-only Worker named `musie` serving
+`apps/web/dist`. Workers Builds is connected to the GitHub repository, so a
+push to `main` builds and deploys on its own — there is no deploy step to run
+and no GitHub Actions workflow for it.
 
-1. Sign in to [Netlify](https://app.netlify.com/).
-2. Select **Add new project**, then **Import an existing project**.
-3. Choose **GitHub** and authorize Netlify if prompted.
-4. Select the `product-ben/musie` repository.
-5. On the setup screen, confirm the branch is `main`.
-6. Confirm the build settings are read from `netlify.toml`:
-   - Build command: `pnpm check && pnpm --filter web build`
-   - Publish directory: `apps/web/dist`
-   - Node version: `22`
-7. Select **Deploy `product-ben/musie`**.
+```
+build:  pnpm check && pnpm --filter web build
+deploy: npx wrangler deploy
+root:   /
+```
 
-Netlify will deploy on every push to `main`. The first successful deployment
-provides the Netlify URL, and the redirect in `netlify.toml` keeps future
-single-page-app deep links working.
+The build command is the full gate, so a red test stops a deploy.
+
+`wrangler.jsonc` at the repo root is the whole configuration, and two things in
+it are load-bearing:
+
+- `not_found_handling: "single-page-application"` — the `/*` to `/index.html`
+  rewrite. `router.tsx` is a `createBrowserRouter`, so `/diary` and
+  `/session/:id/:step` are real paths with no file behind them. Cloudflare does
+  not infer this from the presence of `index.html`; omit it and only deep links
+  and refreshes break.
+- `workers_dev` and `preview_urls` — production at
+  `musie.lipinskib.workers.dev`, plus a public URL per non-production branch
+  build. A dashboard toggle does not hold; the next deploy restores whatever
+  this file says.
+
+Cloudflare Access sits in front of the preview URLs only. Production is closed
+by the app's own sign-in gate instead.
+
+**`docs/MUSIE-SETUP.md` is the full account** — the accounts, the ids, the
+environment variables, the gate and the tester script.

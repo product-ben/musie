@@ -1,10 +1,11 @@
 # Publish Storybook to GitHub Pages.
 #
-# WHY HERE AND NOT NETLIFY. This repository is public, so Pages and Actions are
-# free with no build-minute allowance to exhaust — which is what paused the
-# Netlify deploys. Storybook is internal documentation; the app keeps Netlify.
-# Keeping them apart also means a broken app build no longer stops the docs
-# from publishing.
+# WHY HERE AND NOT ON THE APP'S HOST. This repository is public, so Pages and
+# Actions are free with no build-minute allowance to exhaust — an allowance is
+# what paused the app's deploys once already. Storybook is internal
+# documentation; the app is built and served by Cloudflare Workers. Keeping
+# them apart also means a broken app build no longer stops the docs from
+# publishing.
 #
 # ONE-TIME SETUP: Settings > Pages > Build and deployment > Source: GitHub Actions.
 name: Storybook

@@ -1,8 +1,8 @@
 # The pre-merge gate: typecheck, lint, and prove both bundles still build.
 #
 # WHY THIS EXISTS. Until this file, every check in the repo ran only AFTER a
-# merge — Netlify builds `main`, and storybook.yml is a `push` workflow behind a
-# path filter, so a pull request touching apps/web ran nothing at all. Breakage
+# merge — the host builds `main`, and storybook.yml is a `push` workflow behind
+# a path filter, so a pull request touching apps/web ran nothing at all. Breakage
 # was found on main, by the next person, instead of on the branch, by its
 # author. This moves the same commands to the branch.
 #
