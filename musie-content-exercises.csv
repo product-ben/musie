@@ -1,0 +1,87 @@
+﻿URL / Route,Key,DE,EN
+/exercises · /session/:id/* · /diary · /diary/:id,exercise_i18n.mindfulness-cards.name,Achtsame Pause,Mindful Pause
+/exercises,exercise_i18n.mindfulness-cards.description,"Wähle 5 zufällige Karten. Scanne eine, die dich spontan anspricht. Höre das Stück dahinter. Wenn du magst, denke dabei über die Frage nach.","Pick 5 random cards. Scan the one that speaks to you. Listen to the piece behind it. If you like, think about the question while you listen."
+/exercises (alt text on the card image),exercise_i18n.mindfulness-cards.image_alt,"Fünf aufgefächerte Karten des Mindfulness-Cards-Sets, eine Hand nimmt die vorderste heraus","Five Mindfulness Cards fanned out, with a hand taking the nearest one"
+not rendered — no surface since 2026-09-24,exercise_i18n.mindfulness-cards.needs,Mindfulness-Cards-Set,Mindfulness Cards deck
+/session/:id/intro,exercise_i18n.mindfulness-cards.intro_md,"## So legen wir los
+
+1. Ziehe fünf zufällige Karten aus dem Deck.
+2. Lass die Bilder einen Moment auf dich wirken.","## Here is how we start
+
+1. Draw five random cards from the deck.
+2. Let the images settle for a moment."
+/session/:id/scan,exercise_i18n.mindfulness-cards.scan_md,"## Wähle eine Karte aus
+
+1. Wähle das Bild aus, das dich gerade am meisten anspricht, aus welchen Gründen auch immer. Lege die anderen Karten außer Sichtweite.
+2. Scanne den QR-Code deiner ausgewählten Karte – mit der Kamera-App deines Handys, die Musie direkt bei dieser Karte öffnet, oder hier in Musie.","## Choose a card
+
+1. Pick the image that speaks to you most right now, for whatever reason. Put the other cards out of sight.
+2. Scan the QR code on the card you picked — with your phone's camera app, which opens Musie at that card, or here in Musie."
+/session/:id/listen,exercise_i18n.mindfulness-cards.listen_md,"## Höre bewusst zu, und schau dir die Karte an
+
+Welches Bild entsteht vor deinem inneren Auge, wenn Musik und Karte zusammenkommen?","## Listen closely, and look at your card
+
+What picture forms in your mind’s eye when the music and the card come together?"
+/session/:id/reflect,exercise_i18n.mindfulness-cards.reflect_md,"## Worüber hast du nachgedacht?
+
+Wenn du magst, beantworte diese Fragen:
+
+- Was für einen Namen würdest du der Szene geben, die aus der Verbindung von Musik und Bild vor deinem inneren Auge entstanden ist?
+- Was ist dabei passiert?","## What were you thinking about?
+
+If you like, answer these questions:
+
+- What name would you give the scene that the music and the image made in your mind’s eye?
+- What happened in it?"
+/exercises · /session/:id/* · /diary · /diary/:id,exercise_i18n.free-rein.name,Freie Bahn,Free Rein
+/exercises,exercise_i18n.free-rein.description,Scanne eine zufällige Karte und springe direkt in die Übung.,Scan a random card and jump straight into the exercise.
+/exercises (alt text on the card image),exercise_i18n.free-rein.image_alt,Ein Stapel des Mindfulness-Cards-Sets mit einer einzelnen Karte davor,A stack of Mindfulness Cards with a single card standing in front of it
+not rendered — no surface since 2026-09-24,exercise_i18n.free-rein.needs,Mindfulness-Cards-Set,Mindfulness Cards deck
+/session/:id/intro,exercise_i18n.free-rein.intro_md,"## So legen wir los
+
+Lege den Stapel Karten verdeckt vor dich.","## Here is how we start
+
+Lay the deck face down in front of you."
+/session/:id/scan,exercise_i18n.free-rein.scan_md,"## Wähle eine Karte aus
+
+- Ziehe eine zufällige Karte vom Stapel. Nimm dir einen Augenblick Zeit, um das Bild auf dich wirken zu lassen. Vielleicht kannst du deine Stimmung in ihr wiederfinden, vielleicht wirst du die Darstellung aber auch eher distanziert betrachten. Alles ist in Ordnung.
+- Wenn du soweit bist, scanne den QR-Code – mit der Kamera-App deines Handys, die Musie direkt bei dieser Karte öffnet, oder hier in Musie.","## Choose a card
+
+- Draw a random card from the deck. Take a moment to let the image work on you. Maybe you will find your own mood in it, maybe you will look at it from more of a distance. Either is fine.
+- When you are ready, scan the QR code — with your phone's camera app, which opens Musie at that card, or here in Musie."
+/session/:id/listen,exercise_i18n.free-rein.listen_md,"## Nimm die Klänge wahr und sieh die Karte an
+
+Lass dich von ihnen mitnehmen und Gedanken kommen und gehen.","## Notice the sounds and look at your card
+
+Let them carry you, and let thoughts come and go."
+/session/:id/reflect,exercise_i18n.free-rein.reflect_md,"## Spüre und reflektiere
+
+1. Lass die Töne innerlich ausklingen. Atme noch einmal tief durch die Nase ein und durch den Mund wieder aus. Spüre noch einen Augenblick nach.
+2. Wie fühlst du dich? Wie fühlt sich der Moment an?","## Feel it, and reflect
+
+1. Let the notes fade out inside you. Breathe in deeply through your nose once more, and out through your mouth. Stay with it for a moment.
+2. How do you feel? How does this moment feel?"
+/exercises · /session/:id/* · /diary · /diary/:id,exercise_i18n.breathing-score.name,Achtsam Atmen,Mindful Breathing
+/exercises,exercise_i18n.breathing-score.description,"Nutze das Metrum der Musik, um deinen Atem zur Ruhe kommen zu lassen. Wenn du magst, leg deine Hände dafür auf deinen Bauch oder deinen unteren Rücken. Schicke deinen Atem dorthin.","Use the pulse of the music to let your breath settle. If you like, rest your hands on your belly or your lower back, and send your breath there."
+/exercises (alt text on the card image),exercise_i18n.breathing-score.image_alt,"Zwei Hände liegen ruhig auf einem Bauch, direkt unterhalb der Rippen","Two hands resting on a belly, just below the ribs"
+not rendered — no surface since 2026-09-24,exercise_i18n.breathing-score.needs,,
+/session/:id/intro,exercise_i18n.breathing-score.intro_md,,
+/session/:id/scan,exercise_i18n.breathing-score.scan_md,,
+/session/:id/listen,exercise_i18n.breathing-score.listen_md,,
+/session/:id/reflect,exercise_i18n.breathing-score.reflect_md,,
+/exercises · /session/:id/* · /diary · /diary/:id,exercise_i18n.sound-journey.name,Klangreise,Sound Journey
+/exercises,exercise_i18n.sound-journey.description,"Lass dich von der Stimme durch die Klänge führen und mit deinem Körper verbinden. Oder lass einfach die Gedanken schweifen, ohne ihnen zu folgen.",Let the voice guide you through the sounds and connect you with your body. Or simply let your thoughts wander without following them.
+/exercises (alt text on the card image),exercise_i18n.sound-journey.image_alt,"Eine Person sitzt mit Kopfhörern im Schneidersitz, von hinten gesehen, in der Mitte konzentrischer Klangwellen","Someone sitting cross-legged in headphones, seen from behind at the centre of concentric waves of sound"
+not rendered — no surface since 2026-09-24,exercise_i18n.sound-journey.needs,,
+/session/:id/intro,exercise_i18n.sound-journey.intro_md,,
+/session/:id/scan,exercise_i18n.sound-journey.scan_md,,
+/session/:id/listen,exercise_i18n.sound-journey.listen_md,,
+/session/:id/reflect,exercise_i18n.sound-journey.reflect_md,,
+/exercises · /session/:id/* · /diary · /diary/:id,exercise_i18n.body-scan-soundwalk.name,Bodyscan,Body Scan
+/exercises,exercise_i18n.body-scan-soundwalk.description,"Suche dir eine bequeme Position. Wenn du magst, lass dich von der Stimme durch deinen Körper führen.","Find a comfortable position. If you like, let the voice guide you through your body."
+/exercises (alt text on the card image),exercise_i18n.body-scan-soundwalk.image_alt,"Eine Person liegt mit geschlossenen Augen auf dem Rücken, eine leuchtende Linie verläuft vom Kopf bis zu den Füßen","Someone lying on their back with eyes closed, a line of light running from head to feet"
+not rendered — no surface since 2026-09-24,exercise_i18n.body-scan-soundwalk.needs,,
+/session/:id/intro,exercise_i18n.body-scan-soundwalk.intro_md,,
+/session/:id/scan,exercise_i18n.body-scan-soundwalk.scan_md,,
+/session/:id/listen,exercise_i18n.body-scan-soundwalk.listen_md,,
+/session/:id/reflect,exercise_i18n.body-scan-soundwalk.reflect_md,,

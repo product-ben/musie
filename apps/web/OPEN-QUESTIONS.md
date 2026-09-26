@@ -4551,3 +4551,55 @@ will otherwise rediscover this the same way — from a phone, months later. The
 alternative is that the hook stays mechanism-only and every snapping screen
 resets its own scroll, in which case this belongs in `10-layout.md` as a rule
 rather than in a comment on one component.
+
+## The Netlify spare has stopped building `main`, and nothing says so
+
+Where: `netlify.toml`; `wrangler.jsonc`, the header block that says both hosts
+build `main`; `docs/MUSIE-SETUP.md` §4.
+
+What I checked: Ben pushed `a850b7e` and reported the new exercise artwork and
+the other changes missing in production. **Cloudflare was already correct.**
+`musie.lipinskib.workers.dev` serves `musie-prefs-row` — a class that exists
+only in `a850b7e` — in its CSS, and `/assets/web/exercises/free-rein.webp`
+comes back as a real `image/webp`.
+
+**Netlify is serving something older.** No `musie-prefs-row` in its CSS, and
+every new `.webp` path falls through to the SPA rewrite: `content-type:
+text/html` where Cloudflare returns `image/webp`. So the spare is not a spare
+— it is a second, stale answer to the same question, on a URL that still
+resolves, with no sign on it saying which it is.
+
+That is the exact failure `wrangler.jsonc` was written to prevent. Its header
+says the two files must not drift *because a host that builds differently is a
+second definition of "done"* — and the case it argues against is the two build
+commands disagreeing. This is the other half of it: one host not building at
+all. A stale host is indistinguishable from a broken deploy from the outside,
+which is how an hour went into a deployment that had already succeeded.
+
+Unrelated and worth knowing: **`www.musie.app` is not this project.** It is a
+different site on Vercel, titled "musie - Your Music Universe". Nothing here
+points at it and nothing should.
+
+What I did: nothing to either host. I pushed the one genuinely missing
+migration — `20260924150000_free_rein_listen_headline`, the only one of the
+twenty not applied on `project-musie` — after `supabase db reset` locally.
+`supabase migration list --linked` now reports 0 pending.
+
+Why: which host is authoritative is Ben's call and a five-minute one in a
+dashboard, and guessing at it from here would settle it by accident.
+
+What I need from Ben: **a decision on whether Netlify stays.** If it is still
+the spare, its build hook needs reconnecting and §4 needs a line on how to tell
+a stale spare from a failed deploy — a version string in the footer would do
+it, and would have answered this in one look. If it is not, delete the site and
+`netlify.toml` with it, because a URL that answers is a claim that it is
+current.
+
+Also open, and local-only: **the local `tracks` bucket is empty**, so
+`db.content.db.test.ts` fails one assertion — *a signed-in listener cannot sign
+a track object* — against the local stack. The four objects are uploaded by
+hand with the service role (`20260921160000_track_audio.sql`) and the `.mp3`
+files are not in the repo. The storage volume is empty **on disk**, which
+`supabase db reset` does not cause — it clears `storage.objects` rows, not the
+volume — so this predates today's reset and has been failing unnoticed, since
+`pnpm test:db` is deliberately outside `pnpm check` and CI never runs it.
