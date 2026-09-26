@@ -4603,3 +4603,70 @@ files are not in the repo. The storage volume is empty **on disk**, which
 `supabase db reset` does not cause — it clears `storage.objects` rows, not the
 volume — so this predates today's reset and has been failing unnoticed, since
 `pnpm test:db` is deliberately outside `pnpm check` and CI never runs it.
+
+## The spare host is gone — RESOLVED, and one mention is deliberately left behind
+
+Where: `netlify.toml` (deleted); `wrangler.jsonc` header; `README.md`;
+`BUILD-PLAN.md` 0.3, Phase A, A.6 Half 2, E.0, E.4, the blocker table;
+`MOCKUPS.md` entry 10 and the at-a-glance row; `docs/MUSIE-SETUP.md` §1;
+`.github/workflows/ci.yml` and `storybook.yml` headers;
+`src/lib/scanCode.ts`; `src/routes/ScanLink.tsx`
+
+What I checked: the entry directly above this one asked Ben for **a decision on
+whether the spare host stays**, and said that if it does not, the site and its
+config should go together, *because a URL that answers is a claim that it is
+current*. Ben answered on 2026-09-26: remove it. So this entry closes that one
+rather than opening anything.
+
+Fourteen files mentioned it. Grep now reports two, and the difference between
+them is the only thing in here worth reading.
+
+What I did: deleted `netlify.toml` and rewrote every prose and comment
+reference, on a branch named `remove-netlify`. Three of those rewrites were not
+renames, because the surrounding sentence had gone false on its own:
+
+- **`MOCKUPS.md` entry 10** was titled *"The database is deployed. The app is
+  not"* and said no hosted build runs. That has been untrue since 2026-09-23.
+  It now says both are deployed and names the domain as the thing still
+  missing.
+- **`BUILD-PLAN.md`'s blocker table** said A.6's second half "has not run" and
+  that the build allowance returns the week of 22 September. Half of it ran:
+  the app is hosted, on a `workers.dev` URL, with no custom domain. The blocker
+  is the domain alone now, and it says so.
+- **`README.md`'s "Connect Netlify"** was a seven-step dashboard walkthrough for
+  a host that no longer exists. It is now "Where the app is deployed", pointing
+  at `docs/MUSIE-SETUP.md` for the full account rather than restating it.
+
+**What I did NOT do, and this is the part that needs a ruling.**
+`supabase/migrations/20260921160000_track_audio.sql` still names the old host,
+in a comment, in its list of the three places a licensed master must never go:
+
+```
+--   2. The bundle. Everything under `apps/web/public/` ships to Netlify at a
+--      guessable public URL with no access control and no expiry.
+```
+
+It is an **applied** migration — pushed to `project-musie` — and CLAUDE.md rule
+4 says never edit one. The rule's stated mechanism is schema drift, and a
+comment cannot drift a schema, so the edit is harmless in fact; but rule 4 is
+written absolutely, and the file it protects is a record of what was applied,
+not a document that is kept current. Editing it would also be the first time
+this repo edits an applied migration since the rule inverted, which sets the
+precedent, not the diff.
+
+Why: the sentence is still **true in substance** — anything under
+`apps/web/public/` ships in the deployed bundle at a guessable public URL with
+no access control, and that is as true of Cloudflare as it was of the old host.
+Only the host's name is stale, and the warning it carries does not depend on
+the name.
+
+What I need from Ben: **one of two rulings.** Either the comment stays as a
+historical record and rule 4 keeps its absolute form, or comment-only edits to
+applied migrations are declared out of scope for rule 4 — in which case rule 4
+should say so in CLAUDE.md, and I will make the edit. I have not guessed,
+because the second option changes a rule rather than a file.
+
+Also worth knowing: no code, test or build input referenced the old host. Every
+one of the fourteen files was prose or a comment, which is why `pnpm check` is
+the whole verification here and why nothing in `apps/web/src` changed except
+two doc blocks.

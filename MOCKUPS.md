@@ -62,7 +62,7 @@ in the same commit as this deletion.
 | 7 | The listen step's three views | **Built.** Kept for one rule: the 90s gate is SOFT — scrubbing past it is allowed on purpose | done |
 | 8 | The four user types | Three unbuilt; no artwork for any | D.2 ✓ / artwork |
 | 9 | The Diary timeline | Grouping, filtering and deletion are done; the rail and markers are not — a design-system step | open |
-| 10 | The whole app | The database is hosted; the app is not — no Netlify build, no domain | A.6 half 2 |
+| 10 | The whole app | Database and app are both hosted; the domain is not chosen, so the deck cannot go to print | A.6 half 2 |
 
 ---
 
@@ -301,7 +301,7 @@ L14's opening rule and L7 forbid. The rail belongs in
 `packages/design-system/src/Timeline.tsx`, as its own step. Logged in
 `apps/web/OPEN-QUESTIONS.md`.
 
-## 10 · The database is deployed. The app is not
+## 10 · Both are deployed. The domain is what is missing
 
 **Rewritten 2026-09-21, and this one had gone dangerous rather than merely
 stale.** It used to say *"No hosted Supabase project is linked… Do not create a
@@ -317,10 +317,18 @@ linked, and every migration has been pushed. So **migrations stack now.** Never
 edit an applied one; each change is a new file with `alter table`. That is
 CLAUDE.md rule 4, and rule 4 is where the full reasoning lives.
 
-**What is not deployed.** The app itself. No Netlify build runs and there is no
-domain — [BUILD-PLAN.md](BUILD-PLAN.md) A.6's second half, waiting on the build
-allowance. `pnpm --filter web dev` against `supabase start` is still how the
-product is looked at.
+**Updated 2026-09-26.** The app is deployed too, and the entry's old heading —
+*"The database is deployed. The app is not"* — had gone stale in the other
+direction. Cloudflare Workers serves it at `musie.lipinskib.workers.dev`, built
+from `main` by Workers Builds; `docs/MUSIE-SETUP.md` is the account of it. A
+second host was kept as a spare for four days and removed on 2026-09-26, having
+quietly stopped building `main` — a URL that still answered with an older
+bundle, which is worse than no spare.
+
+**What is still not done** is the domain — [BUILD-PLAN.md](BUILD-PLAN.md) A.6's
+second half. `pnpm --filter web dev` against `supabase start` remains how the
+product is looked at day to day, because the hosted build is gated behind
+`VITE_REQUIRE_ACCOUNT` and a hand-made account.
 
 **The domain is not only a deploy question, and that is the part worth knowing
 here.** A QR code printed on a paper card carries an absolute URL, so the

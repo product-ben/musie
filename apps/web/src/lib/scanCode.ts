@@ -19,8 +19,8 @@
  *     validates its SHAPE. `https://musie.app/s/MC-01`, `http://192.168.0.4:
  *     5173/s/MC-01` and a bare `MC-01` all yield `MC-01`. Nothing here knows
  *     or cares where the code was printed to point.
- *   · THE ROUTE IS SAME-ORIGIN. `/s/:code` resolves on localhost, on a Netlify
- *     preview and on the real domain, unchanged.
+ *   · THE ROUTE IS SAME-ORIGIN. `/s/:code` resolves on localhost, on a branch
+ *     preview URL and on the real domain, unchanged.
  *   · ONLY THE PRINTED CODE NEEDS AN ORIGIN, which is why `scanLink` takes one
  *     as an argument rather than holding one. The dev sheet passes
  *     `window.location.origin` and is therefore self-hosting; print day passes

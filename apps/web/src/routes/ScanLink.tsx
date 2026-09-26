@@ -10,7 +10,7 @@
  *
  * ── SAME-ORIGIN, WHICH IS WHY NO DOMAIN IS NEEDED ─────────────────────────
  * The route is relative. It resolves on `localhost:5173`, on a LAN address a
- * phone can reach, on a Netlify preview and on whatever domain eventually
+ * phone can reach, on a branch preview URL and on whatever domain eventually
  * exists, with nothing configured anywhere. The decoder never compares a host
  * (lib/scanCode.ts), so a code printed for one origin still decodes at
  * another — which matters exactly once, on the day the domain changes and the
