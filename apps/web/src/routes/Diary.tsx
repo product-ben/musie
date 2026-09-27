@@ -84,11 +84,11 @@
  * catalogue is worse. The slot is a column, so two siblings stack.
  */
 import * as React from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { CircleCheck, CircleDashed, List, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  ButtonGroup, ContentBox, CtaButton, LinkList, Message, SegmentedControl, Timeline,
+  ButtonGroup, ContentBox, CtaButton, LinkList, Message, SegmentedControl, Timeline, Toast,
 } from '@musie/design-system';
 import type { LinkListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
@@ -97,13 +97,19 @@ import { useProfile } from '../lib/profileContext';
 import { deleteAllSessions, useActiveSession } from '../lib/session';
 import { useDiary, useDiaryEntry } from '../lib/useDiary';
 import {
-  DIARY_FILTERS, FILTER_FROM_ENTRIES, durationMinutes, filterByStatus, formatMonth,
-  formatRecentDay, groupByPeriod, isDiaryFilter, stepMessageKey,
+  DIARY_FILTERS, FILTER_FROM_ENTRIES, dayAnchorId, durationMinutes, filterByStatus, formatMonth,
+  formatRecentDay, formatShortDateTime, groupByPeriod, isDiaryFilter, stepMessageKey,
 } from '../lib/diary';
 import type { DiaryEntry, DiaryFilter, DiaryPeriod } from '../lib/diary';
 import { DiaryCard } from '../components/DiaryCard';
+import { DiaryGraph } from '../components/DiaryGraph';
 
 type Translate = ReturnType<typeof useT>;
+
+/** How long the after-a-session confirmation stays up. Six seconds, which is
+ *  the window `VoiceTranscript` already gives its undo offer — one number for
+ *  "how long a toast stays", not two. */
+const SAVED_TOAST_MS = 6_000;
 
 /**
  * The supporting lines, as SIBLINGS rather than one joined string. The slot is
@@ -117,11 +123,22 @@ type Translate = ReturnType<typeof useT>;
  * measures the gap before the tab was closed, not the session.
  */
 function entryMeta(entry: DiaryEntry, t: Translate) {
-  const lines: string[] = [];
+  /* THE EXERCISE, FIRST — 2026-09-26. The row's headline is the session now
+     ('Session vom 26.09.26, 10:04'), so the exercise name moved down here,
+     which is the same move the card made: the headline says WHICH session, and
+     the exercise is the first fact about it. Without this the rows would be a
+     column of timestamps with no clue what any of them was. */
+  const lines: string[] = [entry.exerciseName];
 
   if (entry.status === 'abandoned') {
     lines.push(t('session.status.abandoned'));
-    lines.push(t('diary.stoppedAt', { step: t(stepMessageKey(entry.step)) }));
+    /* `diary.stoppedAt` is a <dl> LABEL since 2026-09-26 — 'Aufgehört bei',
+       with the step as the value. A meta line is neither, so the two halves
+       are joined here with the one separator this screen already uses for a
+       label and its value. NOT a new catalogue string: the pair reads the same
+       in both languages, and a third spelling of 'stopped at X' is a third
+       thing to keep in step. */
+    lines.push(`${t('diary.stoppedAt')}: ${t(stepMessageKey(entry.step))}`);
   } else {
     if (entry.cardFeeling !== null) lines.push(entry.cardFeeling);
     const minutes = durationMinutes(entry.startedAt, entry.endedAt);
@@ -135,13 +152,21 @@ function entryMeta(entry: DiaryEntry, t: Translate) {
      that simply has nothing more to say. */
   if (lines.length === 0) return undefined;
 
-  return <>{lines.map((line) => <span key={line}>{line}</span>)}</>;
+  /* The index joins the key: two lines CAN now be the same string — an
+     exercise called the same thing as a status word is unlikely, but the list
+     is built from three independent sources and a duplicate key is a silent
+     React bug rather than a loud one. The lines are never reordered, so the
+     index is stable for as long as they are rendered. */
+  return <>{lines.map((line, index) => <span key={`${String(index)}-${line}`}>{line}</span>)}</>;
 }
 
-function toItem(entry: DiaryEntry, t: Translate): LinkListItem {
+function toItem(entry: DiaryEntry, t: Translate, locale: Locale): LinkListItem {
   return {
     id: entry.id,
-    headline: entry.exerciseName,
+    /* THE SAME STRING THE CARD'S HEADLINE IS, from the same catalogue key —
+       Ben asked for the rows to change too, and one key is what stops the row
+       and the card it opens disagreeing about what the session is called. */
+    headline: t('diary.sessionTitle', { when: formatShortDateTime(entry.startedAt, locale) }),
     meta: entryMeta(entry, t),
     /* THE ROUTER BOUNDARY. The design system never imports react-router; the
        row becomes whatever element the screen hands it, and here that is a
@@ -508,6 +533,86 @@ function DeleteEverything() {
   );
 }
 
+/**
+ * THE CONFIRMATION AFTER A SESSION — Ben, 2026-09-26.
+ *
+ * "Im Tagebuch findest du einen Eintrag für jede beendete Übung", at the top
+ * of the screen, in success colours, dismissable — shown when you ARRIVE here
+ * from a session, and never when you come through the nav.
+ *
+ * ── THE SIGNAL IS ROUTE STATE, AND THAT IS WHAT MAKES THE RULE FREE ──────
+ * `Session.tsx` navigates with `state: { sessionSaved: true }` on both ways
+ * out of a run. Nothing else in the app sets it — so "only when you come from
+ * a session" is not a rule this screen enforces, it is the only way the flag
+ * can exist. A drawer link, a typed URL, a Back into the diary: none of them
+ * carry it, and none of them need a check.
+ *
+ * ── AND WHY IT IS CLEARED WITH `history.replaceState` ────────────────────
+ * React Router keeps route state in the history entry, so it SURVIVES A
+ * RELOAD: without clearing, refreshing /diary would re-confirm a session
+ * finished an hour ago.
+ *
+ * The obvious clear — `navigate(pathname, { replace: true, state: null })` —
+ * is wrong here for a reason specific to this screen: `useDiary` keys its
+ * cache on `location.key`, and every navigation mints a new one. A tidy-up
+ * would silently re-read the whole diary. `window.history.replaceState` edits
+ * the entry in place, leaves the key alone, and React Router picks the change
+ * up on its next read. It is the platform call rather than the router's, and
+ * that is exactly why it costs nothing.
+ *
+ * ── THE TIMER IS HERE, NOT IN THE COMPONENT ──────────────────────────────
+ * §7.23's contract: `label` going null is what removes a Toast, so the
+ * consumer's window is the single source of truth and a second timer inside
+ * the component could only disagree with it. Six seconds, which is the window
+ * `VoiceTranscript` already uses for its undo offer — one number for "how long
+ * a toast stays" rather than two.
+ *
+ * It is also gone the moment this screen unmounts, which is the "and on
+ * navigation" half of what was asked for, with no listener: leaving /diary
+ * unmounts the component and the toast with it.
+ *
+ * ── `statusWord=""`, AND THE SAME ARGUMENT THE BADGE MAKES ───────────────
+ * Not passed. The badge on the card drops its status word because its label
+ * IS the status — "Erfolg: Abgeschlossen" says it twice. This label is a
+ * sentence about the diary, not a status, so "Erfolg: Im Tagebuch findest
+ * du…" is the announcement doing its job rather than repeating itself.
+ */
+function SessionSaved() {
+  const t = useT();
+  const location = useLocation();
+
+  /* Read ONCE, on the render that arrives. Held in state rather than read from
+     `location` each time, because the clear below removes it from history
+     immediately — and a component that read it live would show the toast for
+     exactly one frame. */
+  const [showing, setShowing] = React.useState(
+    () => (location.state as { sessionSaved?: boolean } | null)?.sessionSaved === true,
+  );
+
+  React.useEffect(() => {
+    if (!showing) return undefined;
+
+    /* Out of the history entry, so a reload does not re-confirm. In place, so
+       `location.key` is untouched and `useDiary` does not re-read. */
+    window.history.replaceState(null, '');
+
+    const timer = window.setTimeout(() => setShowing(false), SAVED_TOAST_MS);
+    return () => window.clearTimeout(timer);
+  }, [showing]);
+
+  return (
+    <Toast
+      /* `null` is how a Toast is hidden — it has no visibility state of its
+         own, which is the whole of §7.23's no-timer contract. */
+      label={showing ? t('diary.saved') : null}
+      tone="success"
+      placement="top"
+      onDismiss={() => setShowing(false)}
+      dismissLabel={t('diary.saved.dismiss')}
+    />
+  );
+}
+
 export function Diary() {
   const t = useT();
   const { locale } = useLocale();
@@ -603,7 +708,18 @@ export function Diary() {
           <div className="musie-diary__filter">
             <SegmentedControl
               name="diary-filter"
+              /* HIDDEN, NOT DROPPED — Ben, 2026-09-26: "get rid of the
+                 'Anzeigen' label". The word leaves the screen; the group keeps
+                 its accessible name, because an unnamed radio group announces
+                 as a bare list of buttons and a screen reader would hear three
+                 options with nothing saying what they are FOR.
+
+                 `legendHidden` is the component's own prop for exactly this,
+                 and the reflect step already uses it for the same reason. The
+                 string stays in both catalogues: it is still said, just not
+                 drawn. */
               legend={t('diary.filter.legend')}
+              legendHidden
               accent="accent"
               value={active}
               options={DIARY_FILTERS.map((value) => ({
@@ -627,13 +743,20 @@ export function Diary() {
             label={t('diary.timelineLabel')}
             headingLevel={periodLevel}
             groups={groupByPeriod(rest).map((period) => ({
-              id: period.key,
+              /* THE ANCHOR THE GRAPH'S OVERFLOW CHIP POINTS AT. `dayAnchorId`
+                 is built from the same local day key `groupByPeriod` uses, so
+                 the two agree by construction rather than by a convention
+                 someone has to remember. A MONTH period gets the same
+                 treatment and is simply never linked to — the chip only ever
+                 appears on a day inside the graph's reach, and an id that is
+                 not a target costs nothing. */
+              id: dayAnchorId(period.key),
               label: periodLabel(period, locale, t),
               children: (
                 <LinkList
                   label={t('diary.listLabel')}
                   headingLevel={(periodLevel + 1) as 3 | 4}
-                  items={period.entries.map((entry) => toItem(entry, t))}
+                  items={period.entries.map((entry) => toItem(entry, t, locale))}
                   /* Unreachable by construction — a period exists because it
                      has entries — but required, and a required string with
                      no default is exactly what cannot leak the wrong
@@ -657,7 +780,30 @@ export function Diary() {
 
   return (
     <>
+      {/* THE CONFIRMATION, ABOVE EVERYTHING — see `SessionSaved`. First in the
+          DOM as well as at the top of the screen: it is `position: fixed`, so
+          the order is about reading order rather than painting, and a
+          confirmation of the thing that brought you here belongs before the
+          thing it confirms. */}
+      <SessionSaved />
+
       <h1 className="musie-placeholder">{t('route.diary.title')}</h1>
+
+      {/* THE GRAPH, UNDER THE TITLE AND ABOVE EVERYTHING ELSE — Ben's call.
+          It is an overview; the card below it is the landing and the list
+          below that is the record.
+
+          `data` rather than `visible`: the graph deliberately does not listen
+          to the filter (DiaryGraph's header says why), so it is handed every
+          session including the ones the segments are hiding.
+
+          Drawn while LOADING too, as an empty week — the columns and the axis
+          are the same whatever the read returns, and a graph that appeared a
+          beat after the title would move the page under a thumb. It is not
+          drawn on a FAILED read, because a week of empty days is a claim that
+          nothing happened, and a failed read knows nothing at all. */}
+      {error === null && !loading && <DiaryGraph entries={data ?? []} />}
+
       {body}
       {/* LAST ON THE SCREEN, AND ONLY WHEN THERE IS A DIARY TO DELETE.
           `data` rather than `visible`: a filter narrows what you are LOOKING

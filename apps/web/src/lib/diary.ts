@@ -58,6 +58,7 @@ import { isStepId } from '../routeHandle';
 import type { StepId } from '../routeHandle';
 import { INTL_LOCALES } from '../i18n';
 import type { Locale, MessageKey } from '../i18n';
+import { parseMarkdown, plainText } from './markdown';
 import type { SessionStatus } from './sessionMachine';
 
 /* ── Shapes the screens see ────────────────────────────────────────────────*/
@@ -99,6 +100,37 @@ export interface DiaryEntry {
    * row shape and one pick.
    */
   exerciseDescription: string;
+  /**
+   * THE QUESTION THE PERSON WAS ANSWERING, and it is DERIVED rather than
+   * stored — Ben, 2026-09-26.
+   *
+   * There is no `exercise_i18n.question` any more. It was dropped on
+   * 2026-09-23 by `20260923120000_exercise_step_markdown.sql`, on the argument
+   * that the listen step and the reflect step ask DIFFERENT questions on
+   * purpose — listen asks what picture forms, reflect asks what the scene was
+   * called. One column shown twice could only make those two the same.
+   *
+   * So the question lives inside `reflect_md`, as that block's own `##`
+   * heading, and this is that heading as plain text. `lib/markdown.ts` already
+   * parses the block for the reflect step and already flattens spans to text,
+   * so nothing new is parsed here — the two screens read the same string
+   * through the same parser, which is what stops the diary quoting a question
+   * the session never asked.
+   *
+   * NULL is ordinary, twice over: an exercise whose `reflect_md` is still
+   * unwritten, and one whose block opens with a paragraph rather than a
+   * heading. The card draws no line at all for either, which is honest —
+   * inventing a question over somebody's own words would be this screen
+   * writing copy.
+   */
+  reflectQuestion: string | null;
+  /** The exercise's artwork, for the graph on /diary. Relative, no leading
+   *  slash — `assets/web/exercises/...` — and null for an exercise with none. */
+  imageUrl: string | null;
+  /** Its alt text, in the active locale. NOT used inside a link that already
+   *  names the session (the graph): there it is `alt=""`, because a link whose
+   *  text and image say the same thing announces it twice. */
+  imageAlt: string;
   /** Null when the exercise drew no card, which two of the three do not. */
   cardFeeling: string | null;
 }
@@ -151,6 +183,32 @@ export interface DiaryReflection {
 export function answerParagraphs(reflection: DiaryReflection): string[] {
   if (reflection.statements.length > 0) return reflection.statements;
   return reflection.body.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== '');
+}
+
+/**
+ * The reflect step's question, out of the step's own Markdown.
+ *
+ * THE FIRST HEADING AND NOTHING ELSE. `reflect_md` is a heading, usually an
+ * invitation line, and sometimes a short list of prompts — all of which the
+ * reflect step renders, because somebody about to answer needs the whole of
+ * it. Somebody RE-READING their answer a week later needs the question, and
+ * the invitation ('Wenn du magst, beantworte diese Fragen:') is an instruction
+ * to a person who is no longer there.
+ *
+ * `plainText` rather than the spans: this lands in `ContentBox.text`, which is
+ * a `string` — and `lib/markdown.ts` says exactly that about this function,
+ * because rendering blocks into that slot would put a heading inside a
+ * paragraph.
+ *
+ * NULL for a block with no heading, and for no block at all. Both are the same
+ * absence to a screen, and both are ordinary rather than a fault.
+ */
+export function reflectQuestionOf(md: string | null): string | null {
+  if (md === null) return null;
+  const heading = parseMarkdown(md).find((block) => block.kind === 'heading');
+  if (heading === undefined) return null;
+  const text = plainText([heading]).trim();
+  return text === '' ? null : text;
 }
 
 /**
@@ -390,6 +448,169 @@ export function groupByPeriod<T extends { startedAt: string }>(
  * control always has exactly one of three answers selected, and a null would
  * make "showing everything" indistinguishable from "nothing chosen yet".
  */
+/* -- THE GRAPH: A WEEK AT A TIME ------------------------------------------
+ *
+ * Ben, 2026-09-26. /diary opens with a picture of the practice: every day is a
+ * column, and the sessions of that day stack up it as their exercise artwork.
+ *
+ * -- WHY WEEKS, AND WHY THEY ARE BUILT RATHER THAN DERIVED -----------------
+ * The scroller shows the CURRENT week and scrolls back a week at a time. That
+ * needs whole weeks including their empty days, which is the opposite of what
+ * `groupByPeriod` does — that function groups the entries there ARE, and a day
+ * nobody practised simply has no period. Here the empty days are the point:
+ * the gaps are what make a run of sessions read as a run.
+ *
+ * So this builds a calendar and files entries into it, rather than grouping
+ * entries and reading a calendar off them.
+ *
+ * -- IT COUNTS BACK FROM TODAY, NOT FROM MONDAY ---------------------------
+ * The last column is always today. A week here is 'the seven days ending
+ * today', then the seven before that, and so on — NOT an ISO calendar week.
+ *
+ * Two reasons, and the second is the one that settles it. A calendar week puts
+ * today in the middle of the last column on a Wednesday, so the plus control
+ * and three empty days sit to the right of it and the screen opens looking
+ * half-used. And an ISO week starts on a Monday in Germany and a Sunday in
+ * much of the English-speaking world, which would make the columns' meaning
+ * depend on the locale — a formatting decision leaking into the data.
+ *
+ * -- IT REACHES BACK TO THE FIRST SESSION AND NO FURTHER ------------------
+ * `weeksFrom` returns whole weeks from the oldest entry up to today, oldest
+ * first, so the scroller's last page is the current week and its first page is
+ * the one the diary starts in. An empty diary is ONE week — this one — which
+ * is what the empty state draws on, and why that state needs no separate
+ * shape.
+ */
+
+/** How many days a column-week holds. Seven, and it is the scroll page. */
+export const GRAPH_WEEK_DAYS = 7;
+
+/**
+ * The id the timeline gives one day's group, so the graph's overflow chip can
+ * point at it.
+ *
+ * HERE RATHER THAN IN THE COMPONENT, because it is the one thing the graph and
+ * the list have to agree about and neither of them owns it. Both are built
+ * from the same local day key — `groupByPeriod` keys a day period with it and
+ * `weeksFrom` builds its columns with it — so the agreement is by construction
+ * rather than by a convention somebody has to remember at two call sites.
+ */
+export function dayAnchorId(dayKey: string): string {
+  return `diary-day-${dayKey}`;
+}
+
+/**
+ * How many sessions stack in one day before the rest become a count.
+ *
+ * FOUR, so the graph keeps a height a phone can hold. The overflow is not
+ * hidden — it is a counted chip that takes the reader to that day in the list
+ * below, which is the one place every session is reachable in full.
+ */
+export const GRAPH_STACK_CAP = 4;
+
+export interface DiaryDay<T> {
+  /** `2026-09-26`, the local day. Same spelling `groupByPeriod` uses. */
+  key: string;
+  /** Midday local, as an ISO string, for the screen to format. MIDDAY rather
+   *  than midnight so a formatter can never tip the date across a DST hour. */
+  date: string;
+  /** Whole local days back from `now`. 0 is today. Never negative — a day
+   *  after today is not built. */
+  dayOffset: number;
+  /** Newest first, like the query. */
+  entries: T[];
+}
+
+export interface DiaryWeek<T> {
+  /** The key of the week's LAST day, which is stable and unique per week. */
+  key: string;
+  days: DiaryDay<T>[];
+}
+
+/**
+ * Calendar weeks of days, oldest week first, each day carrying its entries.
+ *
+ * `now` is a parameter with a default, for the reason `groupByPeriod` states:
+ * "today" is the one input a fixture cannot otherwise pin down, and a test
+ * that has to wait for midnight fails once a year on somebody else's machine.
+ *
+ * -- DST IS WHY THIS WALKS RATHER THAN MULTIPLIES -------------------------
+ * Days are stepped with `setDate(n - 1)`, which is calendar arithmetic the
+ * engine does correctly across a 23- or 25-hour day. Subtracting
+ * `i * 86_400_000` from a timestamp does not: twice a year it lands an hour
+ * either side of midnight and produces the same day twice, or skips one.
+ */
+export function weeksFrom<T extends { startedAt: string }>(
+  entries: readonly T[],
+  now: Date = new Date(),
+): DiaryWeek<T>[] {
+  /* Entries by the local day they fall in. `localDayKey` is the same function
+     the timeline groups with, so the graph and the list can never disagree
+     about which day a session belongs to. */
+  const byDay = new Map<string, T[]>();
+  let oldest: Date | null = null;
+
+  for (const entry of entries) {
+    const when = new Date(entry.startedAt);
+    if (Number.isNaN(when.getTime())) continue;
+    const key = localDayKey(when);
+    const bucket = byDay.get(key);
+    if (bucket === undefined) byDay.set(key, [entry]);
+    else bucket.push(entry);
+    if (oldest === null || when.getTime() < oldest.getTime()) oldest = when;
+  }
+
+  /* How many whole weeks the scroller spans. At least one — an empty diary
+     still draws this week, which is what the empty state is. A session in the
+     FUTURE (a clock set wrong) yields a negative offset, which `Math.max`
+     absorbs rather than building a negative number of weeks. */
+  const span = oldest === null ? 0 : Math.max(0, dayOffset(now, oldest));
+  const weeks = Math.floor(span / GRAPH_WEEK_DAYS) + 1;
+
+  const out: DiaryWeek<T>[] = [];
+
+  /* Oldest week first, so the scroller's natural end is the current week and
+     "scroll back" is "scroll towards the start" in both writing directions. */
+  for (let week = weeks - 1; week >= 0; week -= 1) {
+    const days: DiaryDay<T>[] = [];
+    for (let slot = GRAPH_WEEK_DAYS - 1; slot >= 0; slot -= 1) {
+      const offset = week * GRAPH_WEEK_DAYS + slot;
+      const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset, 12);
+      const key = localDayKey(date);
+      days.push({
+        key,
+        date: date.toISOString(),
+        dayOffset: offset,
+        entries: byDay.get(key) ?? [],
+      });
+    }
+    out.push({ key: days[days.length - 1].key, days });
+  }
+
+  return out;
+}
+
+/**
+ * One day's stack: what is drawn, and how many are not.
+ *
+ * NEWEST FIRST IS REVERSED HERE, and that is the one thing worth saying. The
+ * query orders newest first and every list in this app keeps that order — but
+ * a STACK grows upward, and the session you did first is the one at the
+ * bottom of it. So the drawn entries are oldest-first within the day, and the
+ * cap takes the most recent `GRAPH_STACK_CAP` rather than the earliest: a day
+ * with six sessions shows the last four and counts the two before them, which
+ * is the direction a person reads a day in.
+ */
+export function stackOf<T>(
+  entries: readonly T[],
+  cap: number = GRAPH_STACK_CAP,
+): { shown: T[]; overflow: number } {
+  const overflow = Math.max(0, entries.length - cap);
+  /* `slice(0, cap)` off a newest-first list is the most recent `cap`; the
+     reverse then puts the oldest of those at the bottom of the stack. */
+  return { shown: entries.slice(0, cap).reverse(), overflow };
+}
+
 export type DiaryFilter = 'all' | DiaryStatus;
 
 /** The order the segments are drawn in. Widest first. */
@@ -531,6 +752,47 @@ export function formatDateTime(iso: string, locale: Locale): string {
   }).format(new Date(iso));
 }
 
+/**
+ * The same instant, SHORT — what a card's headline is made of.
+ *
+ * `dateStyle: 'short'` rather than `'long'`, and it is the headline that
+ * decides: 'Session vom 26. September 2026 um 10:04' is two lines at
+ * heading-sm on a 320px screen before the close control takes its 44px. The
+ * short form — '26.09.26, 10:04' / '26/09/2026, 10:04' — is one line at every
+ * width this app supports, and the LONG form is still on the card, as the
+ * *Wann* row, where there is a whole line for it.
+ *
+ * So the two are not redundant: the headline IDENTIFIES the session and the
+ * row STATES it. That is also why the row was not deleted when the headline
+ * started carrying the date.
+ *
+ * -- THE PREPOSITION IS NOT HERE --------------------------------------------
+ * This returns the timestamp and nothing else. 'Session vom {when}' is a
+ * catalogue string, in both languages, because German owns 'vom' and English
+ * is free to say something that is not a translation of it. A formatter that
+ * returned the whole headline would be choosing copy in whichever language it
+ * was written in -- the same boundary that keeps `Intl` out of the design
+ * system.
+ */
+export function formatShortDateTime(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALES[locale], {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(iso));
+}
+
+/** One short weekday for a graph column -- 'Mo', 'Tue'. Short, because seven
+ *  of them share the width of a phone. */
+export function formatWeekday(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'short' }).format(new Date(iso));
+}
+
+/** The day-of-month number under it -- '26'. Formatted rather than sliced off
+ *  the key, so a locale that numbers days differently is not our problem. */
+export function formatDayOfMonth(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALES[locale], { day: 'numeric' }).format(new Date(iso));
+}
+
 /* ── Queries ──────────────────────────────────────────────────────────────*/
 
 /**
@@ -554,7 +816,7 @@ function wanted(locale: Locale): Locale[] {
    the row to GenericStringError and every field access below becomes an
    error. */
 // prettier-ignore
-const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling))';
+const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), cards(id, card_i18n(locale, feeling))';
 
 // prettier-ignore
 /* `tracks(id, src, duration_seconds)` AND NOT ONE COLUMN MORE.
@@ -562,7 +824,7 @@ const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exer
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), cards(id, card_i18n(locale, feeling)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -593,7 +855,17 @@ interface SessionRow {
   ended_at: string | null;
   exercises: Embedded<{
     id: string;
-    exercise_i18n: { locale: string; name: string; description: string }[];
+    image_url: string | null;
+    exercise_i18n: {
+      locale: string;
+      name: string;
+      description: string;
+      image_alt: string;
+      /* Nullable in the table and nullable in fact: the four `_md` columns
+         arrive from the Mindfulness Cards spreadsheet and not every exercise
+         has been written yet. */
+      reflect_md: string | null;
+    }[];
   }>;
   cards: Embedded<{ id: string; card_i18n: { locale: string; feeling: string }[] }>;
 }
@@ -717,6 +989,9 @@ function toEntry(row: SessionRow, locale: Locale): DiaryEntry[] {
     endedAt: row.ended_at,
     exerciseName: name.name,
     exerciseDescription: name.description,
+    reflectQuestion: reflectQuestionOf(name.reflect_md),
+    imageUrl: exercise.image_url,
+    imageAlt: name.image_alt,
     cardFeeling: feeling,
   }];
 }

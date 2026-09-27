@@ -482,8 +482,15 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       dispatch({ type: 'FINISH', at });
       /* THE LIST, not the entry. Ben, 2026-09-20: finishing hands you your
          diary rather than one page of it — and the list now leads with the
-         session you just finished, so nothing is lost by landing a level up. */
-      navigate('/diary', { replace: true });
+         session you just finished, so nothing is lost by landing a level up.
+
+         `sessionSaved` is what /diary's confirmation toast keys on (2026-09-26).
+         ROUTE STATE rather than a query string or a flag in a store, and that
+         choice is what makes "no toast when you arrive through the nav" free:
+         nothing else in the app sets it, so the diary has no rule to enforce.
+         /diary clears it out of the history entry on arrival, so a reload does
+         not re-confirm a session finished an hour ago. */
+      navigate('/diary', { replace: true, state: { sessionSaved: true } });
     } catch (thrown: unknown) {
       console.error('[musie] could not finish the session:', thrown);
       setBusy(false);
@@ -498,8 +505,19 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       await endSession(id, 'abandoned', at);
       dispatch({ type: 'CANCEL', at });
       /* THE LIST, exactly as finishing does. Both ways out of a session end in
-         the same place, and the diary leads with the one you just left. */
-      navigate('/diary', { replace: true });
+         the same place, and the diary leads with the one you just left.
+
+         AND IT CARRIES `sessionSaved` TOO — Ben's call, 2026-09-26: closing
+         early writes an entry just as finishing does, which is exactly what
+         the confirmation promises.
+
+         The cost is stated rather than hidden. The German copy says 'für jede
+         BEENDETE Übung' and `session.status.abandoned` is 'Nicht beendet', so
+         after this path the toast sits above an entry badged with the negation
+         of its own adjective. Ben chose the wording and the both-paths
+         behaviour together; logged in OPEN-QUESTIONS.md, because the fix is a
+         wording decision and not a code one. */
+      navigate('/diary', { replace: true, state: { sessionSaved: true } });
     } catch (thrown: unknown) {
       console.error('[musie] could not close the session:', thrown);
       setBusy(false);

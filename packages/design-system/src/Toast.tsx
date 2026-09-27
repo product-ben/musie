@@ -31,17 +31,47 @@
  * recorder.
  *
  * Dismiss follows §7.10's precedent: a bare base-ui Button dressed by
- * .musy-toast__dismiss, not an Icon Button, so the two dismiss affordances in
+ * .musy-toast__dismiss, not an Icon Button, so the three dismiss affordances in
  * the system stay identical and no tooltip appears under a thumb.
+ *
+ * ── TONE AND PLACEMENT — 2026-09-26 ───────────────────────────────────────
+ * Two props, both defaulted to what this component already did, because the
+ * one caller in the product (VoiceTranscript's undo offer) must not move a
+ * pixel for a change made on another screen's behalf.
+ *
+ * `tone="success"` takes the feedback family Layer 1 already ships. THE FILL
+ * IS NOT THE MESSAGE (1.4.1): it draws a check glyph, the sentence says what
+ * happened, and a screen-reader status word goes in front of the text — the
+ * same three-way redundancy §7.10 uses, through the same catalogue keys. A
+ * caller whose label already IS the status passes `statusWord=""` and drops
+ * the duplication, exactly as Badge allows.
+ *
+ * `placement="top"` flips the fixed insets: top and centred on a phone,
+ * top-TRAILING from --bp-md up. The stylesheet holds both, because which edge
+ * a fixed element takes is geometry and geometry lives in the CSS.
+ *
+ * WHAT THIS COMPONENT CANNOT KNOW is how tall the consuming app's header is.
+ * --z-toast outranks --z-sticky, by Layer 1's own design, so a top toast paints
+ * OVER a sticky header unless something says how far down to start. So the
+ * component publishes one custom property — --musy-toast-inset-block-start —
+ * and the app sets it. That is a contract this component offers, not a screen
+ * reaching into geometry it does not own: the fallback is a token, and an app
+ * that says nothing gets a correct toast.
  */
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';
-import { X } from 'lucide-react';
+import { CircleCheck, X } from 'lucide-react';
 import { Icon } from './Icon';
 import { CtaButton } from './CtaButton';
 import { useMusyText } from './locale';
 
 export type ToastLive = 'polite' | 'off';
+
+/** What the toast is reporting. `neutral` is this component as it shipped. */
+export type ToastTone = 'neutral' | 'success';
+
+/** Which edge it is fixed to. `bottom` is this component as it shipped. */
+export type ToastPlacement = 'bottom' | 'top';
 
 export interface ToastAction {
   label: string;
@@ -58,6 +88,21 @@ export interface ToastProps {
   /** Announced while it is up. 'off' for a toast that repeats a change the
    *  user has already been told about some other way. */
   live?: ToastLive;
+  /**
+   * `success` draws a check glyph, the success feedback fill, and a
+   * screen-reader status word — so the meaning survives without the colour.
+   */
+  tone?: ToastTone;
+  /**
+   * Which edge it is fixed to. `top` is top-centre on a phone and
+   * top-trailing from --bp-md up. See the header for
+   * --musy-toast-inset-block-start, which is how an app with a sticky header
+   * says how far down `top` starts.
+   */
+  placement?: ToastPlacement;
+  /** Overrides the announced status word. `''` drops it — for a label that
+   *  already IS the status. Ignored when `tone` is `neutral`, which has none. */
+  statusWord?: string;
   dismissLabel?: string;
   id?: string;
   className?: string;
@@ -68,6 +113,9 @@ export function Toast({
   action,
   onDismiss,
   live = 'polite',
+  tone = 'neutral',
+  placement = 'bottom',
+  statusWord,
   dismissLabel,
   id,
   className,
@@ -75,14 +123,31 @@ export function Toast({
   const t = useMusyText();
   if (!label) return null;
 
+  const success = tone === 'success';
+
   return (
     <div
       id={id}
-      className={['musy-toast', className ?? ''].filter(Boolean).join(' ')}
+      className={[
+        'musy-toast',
+        success ? 'musy-toast--success' : '',
+        placement === 'top' ? 'musy-toast--top' : '',
+        className ?? '',
+      ].filter(Boolean).join(' ')}
       role={live === 'polite' ? 'status' : undefined}
       aria-live={live === 'off' ? undefined : live}
     >
+      {/* Decorative: the status WORD beside it is what carries the tone to a
+          screen reader, so the meaning never depends on an icon's alt text.
+          §7.10 makes the same split with the same two elements. */}
+      {success && (
+        <span className="musy-toast__icon">
+          <Icon glyph={CircleCheck} size="md" />
+        </span>
+      )}
+
       <p className="musy-toast__text" data-type-step="body-sm">
+        {success && <span className="musy-sr-only">{statusWord ?? t.statusSuccess}: </span>}
         {label}
       </p>
 

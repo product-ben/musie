@@ -52,11 +52,20 @@ const meta = {
           'Toast. Stories show the component default unchanged; see the session-level',
           'language entry in OPEN-QUESTIONS.md.',
           '',
-          '**Toast — `.musy-toast` is not positioned by the component.** §7.23 and',
-          'Layer 1 both say the toast occupies `--z-toast` above an open sheet, but',
-          'the component renders a plain `<div>` with no portal and no fixed',
-          'positioning; §24 of the stylesheet carries the placement. In a story it',
-          'therefore renders inline, which is not where it appears in the app.',
+          '**Toast — where it is positioned, answered 2026-09-26.** The note that used',
+          'to sit here said the component "is not positioned by the component" and that',
+          'a story therefore renders it inline. Half of that was always wrong —',
+          '`.musy-toast` is `position: fixed` in §23 of the stylesheet, so a story does',
+          'render it where the app does — and the other half is now a prop: `placement`',
+          'picks the edge, and the stories below are decorated to make the fixed',
+          'placement visible rather than pretending it is inline.',
+          '',
+          '**`--musy-toast-inset-block-start` is a hook, not a leak.** `--z-toast`',
+          'outranks `--z-sticky` by Layer 1’s own design, so a `top` toast paints over a',
+          'consuming app’s sticky header — and only the app knows how tall its header',
+          'is. The component publishes the property and falls back to a token, so an app',
+          'that says nothing still gets a correct toast; the hook buys clearance, never',
+          'correctness.',
           '',
           '**Toast — no `id` is wired to anything.** `id` is accepted and spread onto',
           'the root, but nothing in the component references it and there is no',
@@ -79,6 +88,20 @@ const meta = {
       control: 'inline-radio',
       options: ['polite', 'off'],
       description: "Announced while it is up. 'off' for a toast that repeats a change the user has already been told about some other way.",
+    },
+    tone: {
+      control: 'inline-radio',
+      options: ['neutral', 'success'],
+      description: '`success` draws a check glyph, the success feedback fill and a screen-reader status word — so the meaning survives without the colour.',
+    },
+    placement: {
+      control: 'inline-radio',
+      options: ['bottom', 'top'],
+      description: 'Which edge it is fixed to. `top` is top-centre on a phone and top-trailing from --bp-md up.',
+    },
+    statusWord: {
+      control: 'text',
+      description: 'Overrides the announced status word. `\'\'` drops it — for a label that already IS the status. Ignored when `tone` is `neutral`.',
     },
     dismissLabel: { control: 'text', description: 'Accessible name for the dismiss control.' },
     id: { control: false },
@@ -139,4 +162,67 @@ export const LongLabel: Story = {
 /** The dismiss label is overridable; the default is German. */
 export const DismissLabelOverridden: Story = {
   args: { label: 'Session saved', onDismiss: () => {}, dismissLabel: 'Dismiss message' },
+};
+
+/**
+ * SUCCESS — the fill is not the message.
+ *
+ * Three things carry the tone without colour: the check glyph, the sentence
+ * itself, and a screen-reader status word ("Erfolg: " / "Success: ") that the
+ * component puts in front of the text. Inspect the element to see the third.
+ */
+export const Success: Story = {
+  args: {
+    label: 'Im Tagebuch findest du einen Eintrag für jede beendete Übung',
+    tone: 'success',
+    onDismiss: () => {},
+  },
+};
+
+/**
+ * SUCCESS, AT THE TOP — the diary's case.
+ *
+ * `placement="top"` is top-centre on a phone and top-trailing from `--bp-md`
+ * up. Resize the frame across 768px to see it move; it is one modifier and one
+ * media query, with no width hardcoded to decide which.
+ *
+ * The entrance travels the other way too — a toast arriving at the top comes
+ * from above it, which is a second keyframe rather than a negated token at the
+ * call site.
+ */
+export const SuccessTopRight: Story = {
+  args: {
+    label: 'Im Tagebuch findest du einen Eintrag für jede beendete Übung',
+    tone: 'success',
+    placement: 'top',
+    onDismiss: () => {},
+  },
+  decorators: [
+    /* The toast is `position: fixed`, so it needs a frame with height to be
+       seen in the right place rather than pinned to the docs viewport. */
+    (Story) => (
+      <div style={{ position: 'relative', minHeight: '18rem' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/** `statusWord=""` drops the announced word, for a label that already IS the
+ *  status. Badge's own escape hatch, and for the same reason: "Erfolg:
+ *  Gespeichert" says the same thing twice. */
+export const SuccessWithoutStatusWord: Story = {
+  args: { label: 'Gespeichert', tone: 'success', statusWord: '', onDismiss: () => {} },
+};
+
+/** A success toast still takes an action, and the degradation order is
+ *  unchanged: at the `--measure-heading` cap the TEXT gives, never the action
+ *  or the dismiss. */
+export const SuccessWithUndo: Story = {
+  args: {
+    label: 'Im Tagebuch findest du einen Eintrag für jede beendete Übung',
+    tone: 'success',
+    action: { label: 'Rückgängig', onAction: () => {} },
+    onDismiss: () => {},
+  },
 };

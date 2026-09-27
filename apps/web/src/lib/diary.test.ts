@@ -25,8 +25,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DAY_SCALE_DAYS, DIARY_FILTERS, answerParagraphs, durationMinutes, filterByStatus,
-  groupByPeriod, isDiaryFilter, sessionPath,
+  DAY_SCALE_DAYS, DIARY_FILTERS, GRAPH_STACK_CAP, GRAPH_WEEK_DAYS, answerParagraphs,
+  dayAnchorId, durationMinutes, filterByStatus, groupByPeriod, isDiaryFilter,
+  reflectQuestionOf, sessionPath, stackOf, weeksFrom,
 } from './diary';
 
 /** An entry, reduced to the one field `groupByPeriod` reads. */
@@ -326,3 +327,190 @@ describe('sessionPath', () => {
   });
 });
 
+
+/* ══ THE GRAPH ═════════════════════════════════════════════════════════════
+   `weeksFrom` builds a CALENDAR and files entries into it, which is the
+   opposite of what `groupByPeriod` does — so the cases that matter are the
+   empty days, the week boundary and the DST day, none of which a grouping
+   function can get wrong because it never invents a day that has no entries.
+
+   Every fixture is built in LOCAL time, for the reason the header gives. */
+
+describe('weeksFrom · the calendar it builds', () => {
+  it('is one week of seven days for an empty diary', () => {
+    const weeks = weeksFrom([], NOW);
+
+    expect(weeks).toHaveLength(1);
+    expect(weeks[0].days).toHaveLength(GRAPH_WEEK_DAYS);
+    /* Every day empty, and every day PRESENT — the gaps are the point. */
+    expect(weeks[0].days.every((day) => day.entries.length === 0)).toBe(true);
+  });
+
+  it('ends on today, whatever weekday that is', () => {
+    const weeks = weeksFrom([], NOW);
+    const days = weeks[weeks.length - 1].days;
+
+    /* The LAST column is today. Not a Sunday, not a Monday: a week here is
+       "the seven days ending today", which is what keeps the plus control at
+       the right-hand edge instead of stranded mid-row on a Wednesday. */
+    expect(days[days.length - 1].dayOffset).toBe(0);
+    expect(days[0].dayOffset).toBe(GRAPH_WEEK_DAYS - 1);
+  });
+
+  it('files an entry onto its own local day', () => {
+    const weeks = weeksFrom([at(2026, 8, 18, 9, 0)], NOW);
+    const days = weeks[weeks.length - 1].days;
+
+    const filled = days.filter((day) => day.entries.length > 0);
+    expect(filled).toHaveLength(1);
+    /* 18 September, standing on the 20th, is two days back. */
+    expect(filled[0].dayOffset).toBe(2);
+  });
+
+  it('files a session just after local midnight onto that day, not the one before', () => {
+    /* The bug a UTC day key would produce: 00:30 in Berlin is the PREVIOUS
+       day in UTC, and a graph that drew it in yesterday's column would be
+       wrong about the one thing a diary is for. */
+    const weeks = weeksFrom([at(2026, 8, 20, 0, 30)], NOW);
+    const days = weeks[weeks.length - 1].days;
+    const today = days[days.length - 1];
+
+    expect(today.dayOffset).toBe(0);
+    expect(today.entries).toHaveLength(1);
+  });
+
+  it('reaches back to the oldest entry and no further', () => {
+    /* Eight days back is one day past the current week, so the run is two
+       weeks: the boundary case, where an off-by-one shows. */
+    const weeks = weeksFrom([at(2026, 8, 12, 9, 0)], NOW);
+
+    expect(weeks).toHaveLength(2);
+    /* OLDEST FIRST, so the scroller's natural end is the current week. */
+    expect(weeks[0].days[0].dayOffset).toBeGreaterThan(weeks[1].days[0].dayOffset);
+    expect(weeks[weeks.length - 1].days[GRAPH_WEEK_DAYS - 1].dayOffset).toBe(0);
+  });
+
+  it('keeps exactly one week while the oldest entry is inside it', () => {
+    /* Six days back is still this week; seven is the first day of the next
+       one back. Both sides of the boundary, because `Math.floor(span / 7) + 1`
+       is the line that decides and it is easy to write as `Math.ceil`. */
+    expect(weeksFrom([at(2026, 8, 14, 9, 0)], NOW)).toHaveLength(1);
+    expect(weeksFrom([at(2026, 8, 13, 9, 0)], NOW)).toHaveLength(2);
+  });
+
+  it('builds seven distinct days across a DST change', () => {
+    /* Europe/Berlin springs forward on 29 March 2026. Stepping days by
+       subtracting 86_400_000ms lands an hour either side of midnight and
+       produces the same day twice; `setDate` arithmetic does not. The
+       assertion is deliberately about DISTINCTNESS rather than about any one
+       date, so it holds in a runner on UTC too — where there is no DST and
+       seven distinct days is simply still true. */
+    const weeks = weeksFrom([], new Date(2026, 2, 30, 10, 0));
+    const keys = weeks[0].days.map((day) => day.key);
+
+    expect(new Set(keys).size).toBe(GRAPH_WEEK_DAYS);
+  });
+
+  it('ignores an unparseable timestamp rather than building a NaN week', () => {
+    const weeks = weeksFrom([{ startedAt: 'not a date' }], NOW);
+
+    expect(weeks).toHaveLength(1);
+    expect(weeks[0].days.every((day) => day.entries.length === 0)).toBe(true);
+  });
+
+  it('does not build a negative run for a session dated in the future', () => {
+    /* A device clock set wrong. `Math.max(0, …)` is what absorbs it; without
+       it the loop count goes negative and the graph renders nothing at all. */
+    const weeks = weeksFrom([at(2026, 8, 25, 9, 0)], NOW);
+
+    expect(weeks).toHaveLength(1);
+  });
+});
+
+describe('stackOf', () => {
+  it('shows everything and counts nothing below the cap', () => {
+    const { shown, overflow } = stackOf([1, 2, 3]);
+
+    expect(overflow).toBe(0);
+    expect(shown).toHaveLength(3);
+  });
+
+  it('keeps the most recent and counts the rest', () => {
+    /* Newest first in, as the query orders them. Six sessions, cap of four:
+       the two OLDEST become the count, because a day is read from its most
+       recent session backwards. */
+    const newestFirst = ['f', 'e', 'd', 'c', 'b', 'a'];
+    const { shown, overflow } = stackOf(newestFirst);
+
+    expect(overflow).toBe(6 - GRAPH_STACK_CAP);
+    expect(shown).toHaveLength(GRAPH_STACK_CAP);
+    expect(shown).not.toContain('a');
+    expect(shown).not.toContain('b');
+  });
+
+  it('reverses within the day, because a stack grows upward', () => {
+    /* The one place this app reverses the query order: the session you did
+       FIRST is at the bottom of the stack. */
+    const { shown } = stackOf(['c', 'b', 'a']);
+
+    expect(shown).toEqual(['a', 'b', 'c']);
+  });
+
+  it('is empty and counts nothing for a day with no sessions', () => {
+    expect(stackOf([])).toEqual({ shown: [], overflow: 0 });
+  });
+});
+
+describe('dayAnchorId', () => {
+  it('is built from the same day key the timeline groups by', () => {
+    /* The graph's overflow chip links to this id and `groupByPeriod` puts it
+       on the group. One function, two call sites — which is why it lives in
+       this module and not in either component. */
+    const [period] = groupByPeriod([at(2026, 8, 19, 9, 0)], NOW);
+
+    expect(dayAnchorId(period.key)).toBe('diary-day-2026-09-19');
+  });
+});
+
+describe('reflectQuestionOf', () => {
+  it('takes the first heading, without its hashes', () => {
+    const md = [
+      '## Worüber hast du nachgedacht?',
+      '',
+      'Wenn du magst, beantworte diese Fragen:',
+      '',
+      '- Was ist dabei passiert?',
+    ].join('\n');
+
+    expect(reflectQuestionOf(md)).toBe('Worüber hast du nachgedacht?');
+  });
+
+  it('drops the invitation and the prompts', () => {
+    /* The reflect step renders all of it, because somebody about to answer
+       needs the whole block. Somebody re-reading needs the question; the
+       invitation is an instruction to a person who is no longer there. */
+    const md = '## What were you thinking about?\n\nIf you like, answer these questions:';
+
+    expect(reflectQuestionOf(md)).toBe('What were you thinking about?');
+  });
+
+  it('flattens emphasis rather than rendering it', () => {
+    /* It lands in `ContentBox.text`, which is a string — markup in it would
+       be printed rather than rendered. */
+    expect(reflectQuestionOf('## What **really** happened?')).toBe('What really happened?');
+  });
+
+  it('is null for a block with no heading', () => {
+    expect(reflectQuestionOf('Just a paragraph, no heading at all.')).toBeNull();
+  });
+
+  it('is null for an exercise whose copy is not written yet', () => {
+    /* `reflect_md` is nullable and genuinely null for some exercises. The
+       card draws no line at all rather than inventing a question. */
+    expect(reflectQuestionOf(null)).toBeNull();
+  });
+
+  it('is null for a heading that is only whitespace', () => {
+    expect(reflectQuestionOf('##   ')).toBeNull();
+  });
+});

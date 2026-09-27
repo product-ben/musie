@@ -23,10 +23,61 @@
  * the scrim and Back, and a second one inside it would be a second thing to
  * keep in step. Inline there is no dialog to close, so the card draws the X
  * itself and collapsing is all it does.
+ *
+ * ══ THE 2026-09-26 ITERATION ══════════════════════════════════════════════
+ *
+ * Four changes, and they are one change: the card used to be a list of facts
+ * with the person's own words somewhere inside it, and it is now the person's
+ * words with the facts folded away behind a control.
+ *
+ * ── THE HEADLINE IS THE SESSION, NOT THE EXERCISE ────────────────────────
+ * `Session vom 26.09.26, 10:04`. The exercise name moved down into the
+ * labelled rows, where it is what it actually is: a fact ABOUT this session,
+ * like the card that was drawn and how long it took.
+ *
+ * What that buys is identity. Three sessions of Achtsame Pause used to be
+ * three cards with one headline between them, and the only thing telling them
+ * apart was a *Wann* row four lines down. The diary is a record of occasions,
+ * and an occasion is named by when it happened.
+ *
+ * The same string is the row in the timeline, the inline card's headline, the
+ * lightbox card's headline and the lightbox's own accessible title — one
+ * catalogue key, `diary.sessionTitle`, so the four cannot drift.
+ *
+ * ── THE QUESTION, THEN THE ANSWER ────────────────────────────────────────
+ * The reflect step's own question, at `body-lg`, directly under the headline —
+ * so the answer below it is read as an answer rather than as a paragraph that
+ * starts from nowhere.
+ *
+ * IT IS DERIVED, NOT STORED. There is no `exercise_i18n.question` any more; it
+ * was dropped on 2026-09-23 because the listen step and the reflect step ask
+ * different questions on purpose. `reflectQuestionOf` in `lib/diary.ts` takes
+ * the first `##` out of `reflect_md`, which is the heading the person was
+ * actually looking at while they wrote. Null renders as nothing.
+ *
+ * ── THE FACTS ARE BEHIND A CONTROL ───────────────────────────────────────
+ * *Session-Details* reveals the labelled rows and the status badge. The
+ * question, the answer, the recording and the DELETE control stay on the card
+ * at all times — the first three because they are what the card is for, and
+ * the fourth because a destructive action hidden behind a disclosure is worse
+ * than one in plain sight, not better.
+ *
+ * This is also half the fix for the card being CUT OFF in the lightbox. The
+ * other half is in `musy-components.css` §14, where the popup was painting its
+ * scrolling child through its own bottom inset; but a card that is only as
+ * long as the thing you came to read is what stops the scroll happening at
+ * all on a phone.
+ *
+ * ── *AUFGEHÖRT BEI* IS A ROW ─────────────────────────────────────────────
+ * It was a quiet sentence under the answer, built from one string that held
+ * the preposition and the step together. It is a `<dl>` row now, with the rest
+ * of what is known about the session, which meant splitting `diary.stoppedAt`
+ * into a label and leaving the step as the value: the old string as a row's
+ * content would have read *Aufgehört bei: Aufgehört bei Einsteigen*.
  */
 import * as React from 'react';
 import { useNavigate } from 'react-router';
-import { Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import {
   Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, CtaButton, IconButton,
   Message, TrackButton,
@@ -34,7 +85,9 @@ import {
 import type { ContentListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { deleteSession } from '../lib/session';
-import { answerParagraphs, durationMinutes, formatDateTime, stepMessageKey } from '../lib/diary';
+import {
+  answerParagraphs, durationMinutes, formatDateTime, formatShortDateTime, stepMessageKey,
+} from '../lib/diary';
 import { useTrackSource } from '../lib/audio';
 import type { DiaryEntryDetail, DiaryTrack } from '../lib/diary';
 
@@ -70,6 +123,21 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
   const [confirming, setConfirming] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
 
+  /**
+   * THE DISCLOSURE, AND IT OPENS CLOSED EVERY TIME.
+   *
+   * Per card, not per screen, and not remembered across visits — Ben's call.
+   * A card is a thing you open to read what you wrote; the facts are what you
+   * check afterwards, and a diary that remembered you once wanted the metadata
+   * would show it over your own words for ever after.
+   *
+   * `aria-controls` needs an id that is unique on a page that can hold two of
+   * these at once (the inline card and, over it, the lightbox's). The session
+   * id is the only thing here that is unique by construction.
+   */
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const detailsId = `diary-details-${entry.id}`;
+
   async function remove() {
     if (deleting) return;
     setDeleting(true);
@@ -97,31 +165,39 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
   const answer = entry.reflection === null ? [] : answerParagraphs(entry.reflection);
 
   /**
-   * The labelled facts, in the order a person asks for them: when, how long,
-   * and what was drawn.
+   * The labelled facts, in the order a person asks for them: which exercise,
+   * what it is, when, how long, what was drawn, and — for a run that stopped —
+   * where.
    *
-   * BUILT, NOT WRITTEN OUT, because two of the three can be absent and an
+   * BUILT, NOT WRITTEN OUT, because three of the six can be absent and an
    * absent fact must not leave an empty row. A card is ordinary to lack — two
-   * of the three exercises draw none — and a duration is unknowable when the
-   * timestamps cannot be subtracted, which is the one thing `durationMinutes`
-   * returns null to say.
+   * of the three exercises draw none — a duration is unknowable when the
+   * timestamps cannot be subtracted, and *Aufgehört bei* is meaningless for a
+   * finished session, whose last step is `reflect` every time.
    *
    * THE DURATION IS SHOWN FOR AN ABANDONED SESSION TOO, which is the opposite
-   * of what /diary does, on purpose. The list withholds it because a duration
-   * for a run that was walked away from measures the gap before the tab was
-   * closed, and in a one-line row it would read as how long the session took.
-   * Here it cannot: it sits under an *Unfinished* badge and beside *Stopped at
-   * Listen*, which is the context the row lacked — and this screen's brief is
-   * everything known about the session.
+   * of what /diary's rows do, on purpose. The list withholds it because a
+   * duration for a run that was walked away from measures the gap before the
+   * tab was closed, and in a one-line row it would read as how long the
+   * session took. Here it cannot: it sits beside *Aufgehört bei — Einsteigen*
+   * and under an *Unfinished* badge, which is the context the row lacked.
    */
   const facts: ContentListItem[] = [
+    /* FIRST, because it is the one fact the other five are about. It was the
+       box's headline until 2026-09-26; the headline is the session now, and
+       the exercise is a fact about it. */
+    { label: t('diary.exercise'), content: entry.exerciseName },
     /* THE EXERCISE'S OWN DESCRIPTION, AS A ROW — Ben, 2026-09-23. It was the
        box's `text` slot: prose directly under the headline, at the top of the
        card, in front of the thing the person opened the card to read. It is
        not what this entry IS; it is a fact about the exercise the entry is of,
-       which is what every other row in here already is. First in the list,
-       because it is the one that says what the rest is about. */
+       which is what every other row in here already is. (The `text` slot now
+       carries the reflect step's question, which IS what the entry is of.) */
     { label: t('diary.about'), content: entry.exerciseDescription },
+    /* THE LONG FORM, where the headline carries the short one. Not a
+       duplicate: the headline IDENTIFIES the session — it has to fit one line
+       beside a close control at 320px — and this STATES it, with a whole row
+       to do it in. */
     { label: t('diary.when'), content: formatDateTime(entry.startedAt, locale) },
   ];
   if (minutes !== null) {
@@ -133,53 +209,49 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
   if (entry.cardFeeling !== null) {
     facts.push({ label: t('diary.card'), content: entry.cardFeeling });
   }
+  if (abandoned) {
+    /* The step, translated, as the VALUE — the label holds the preposition.
+       Only an unfinished session has one: for a finished session the step it
+       ended on is `reflect` every time, which says nothing. */
+    facts.push({ label: t('diary.stoppedAt'), content: t(stepMessageKey(entry.step)) });
+  }
 
-  /* The box, and nothing around it. The lightbox's own title is the h2 inside
-     the popup, so the box is h3 and the answer inside it h4 — the same two
-     levels the Timeline's day heading used to leave room for, now left by the
-     dialog title instead. */
+  const title = t('diary.sessionTitle', { when: formatShortDateTime(entry.startedAt, locale) });
+
   return (
     <ContentBox
-      headline={entry.exerciseName}
+      headline={title}
       headingLevel={headingLevel}
-      /* NO `text`. The description is a `<dl>` row now — see `facts`.
-         ──
-         `header` present ⇒ the box renders framed, and the hairline then
-         divides what this entry IS from what is known about it. It is
-         rendered only when there is something to put in it, which since
-         2026-09-23 means only inline: the status badge moved to the foot
-         of the card, beside the delete control, and what is left up here
-         is the collapse control that only the inline card draws.
-
-         So the lightbox's card is unframed, and the hairline is not
-         missed — it divided the entry from its metadata, and the metadata
-         is no longer the thing directly under it. */
-      header={onDismiss === undefined || dismissLabel === undefined ? undefined : (
-        <div className="musie-entry__head">
-          {/* COLLAPSE, not close: inline there is no overlay to dismiss, and
-              the card becomes the preview row it sits above. The lightbox has
-              its own X, which Escape, the scrim and Back all share, and a
-              second control inside it would be a second thing to keep in step.
-
-              `tooltip={false}`: an X in a card header is the case IconButton's
-              own docs name for suppressing it. */}
-          <IconButton
-            glyph={X}
-            label={dismissLabel}
-            variant="ghost"
-            size="primary"
-            tooltip={false}
-            onClick={onDismiss}
-          />
-        </div>
-      )}
+      /**
+       * THE QUESTION, AT body-lg. The reflect step's own `##`, which is what
+       * the person was looking at while they wrote the paragraph below it.
+       *
+       * `undefined` rather than an empty string when there is none: the slot
+       * is skipped entirely, where `''` would render an empty `<p>` and take
+       * its gap. Two exercises have no `reflect_md` written yet.
+       */
+      text={entry.reflectQuestion ?? undefined}
+      textStep="body-lg"
+      /**
+       * CLOSEABLE, NOT FRAMED — 2026-09-26.
+       *
+       * This used to pass `header={<div className="musie-entry__head">…}` with
+       * an `IconButton` in it, which forced the box framed: a header band, the
+       * X on its own line under the headline, and a hairline under the pair.
+       * `ContentBox` draws the control in the headline row itself now, which
+       * is the same two props `Message` and `Toast` have always taken.
+       *
+       * Both or neither, and the box tests the same pair: a close control with
+       * no accessible name announces as "button".
+       */
+      onDismiss={onDismiss}
+      dismissLabel={dismissLabel}
     >
-      {/* ── THE ANSWER FIRST, THEN THE TRACK, THEN THE FACTS ─────────────
-          Ben, 2026-09-23. The card used to open with the labelled facts and
-          reach the person's own words third, under the date, the duration and
-          the card that was drawn. Nobody opens a diary entry to find out when
-          it was: they open it to read what they said, and the metadata is what
-          they check afterwards.
+      {/* ── THE ANSWER FIRST, THEN THE TRACK, THEN THE DISCLOSURE ────────
+          Ben, 2026-09-23, and unchanged by the 09-26 pass except that what
+          follows the track is now a control rather than the facts themselves.
+          Nobody opens a diary entry to find out when it was: they open it to
+          read what they said.
 
           THE ORDER OF THE FIRST TWO IS A REVERSAL, and the argument it
           overturns was a good one — *Listen again* sat ABOVE the answer so the
@@ -243,21 +315,84 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
         </div>
       )}
 
-      {/* Where it stopped — a value sentence with no label written for
-          it, so a line and not a row. Only an unfinished session has
-          one: for a finished session the step it ended on is `reflect`
-          every time, which says nothing. With the metadata it belongs to,
-          rather than at the top of the card. */}
-      {abandoned && (
-        <p className="musie-note">
-          {t('diary.stoppedAt', { step: t(stepMessageKey(entry.step)) })}
-        </p>
-      )}
+      {/**
+        * ── SESSION-DETAILS ──────────────────────────────────────────────
+        *
+        * A disclosure, spelled out rather than taken from a component: the
+        * system has no disclosure, and L14 permits a custom pattern exactly
+        * where it has none. What is custom is ONE class for the row; the
+        * control is a `CtaButton` and the revealed region is a `ContentList`
+        * and a `BadgeRow`, which are three components doing what they do.
+        *
+        * THE LABEL CHANGES AND `aria-expanded` CARRIES THE STATE. Ben asked
+        * for the label to change; both are here because a control whose name
+        * changes under the cursor is a known screen-reader annoyance, and the
+        * attribute costs nothing. `aria-controls` points at the region, which
+        * is why it has an id built from the session's.
+        *
+        * NOT RENDERED AT ALL WHEN THERE IS NOTHING BEHIND IT — which cannot
+        * happen today, because `diary.exercise` and `diary.when` are always
+        * pushed. It is guarded anyway: a control that opens onto nothing is
+        * the kind of thing a later change makes true without noticing.
+        */}
+      {facts.length > 0 && (
+        <div className="musie-entry__details">
+          <ButtonGroup align="start">
+            <CtaButton
+              variant="ghost"
+              leadingIcon={detailsOpen ? ChevronUp : ChevronDown}
+              aria-expanded={detailsOpen}
+              aria-controls={detailsId}
+              onClick={() => setDetailsOpen((open) => !open)}
+            >
+              {t(detailsOpen ? 'diary.detailsHide' : 'diary.details')}
+            </CtaButton>
+          </ButtonGroup>
 
-      {/* No `label`: it is optional here and has NO catalogue default,
-          so omitting it leaks nothing, and every written label in the
-          set is already the name of a row rather than of the list. */}
-      <ContentList items={facts} emptyLabel={t('content.empty')} />
+          {/* `hidden` rather than unmounting: the id `aria-controls` names has
+              to exist for the relationship to resolve, and a region that comes
+              and goes leaves the attribute pointing at nothing half the time.
+              It also means the rows are in the DOM for a find-in-page. */}
+          <div id={detailsId} hidden={!detailsOpen} className="musie-entry__facts">
+            {/* No `label`: it is optional here and has NO catalogue default,
+                so omitting it leaks nothing, and every written label in the
+                set is already the name of a row rather than of the list. */}
+            <ContentList items={facts} emptyLabel={t('content.empty')} />
+
+            {/* ── THE STATUS, INSIDE THE DISCLOSURE ──────────────────────
+                It sat at the foot of the card beside the delete control from
+                2026-09-23. It is metadata — whether the run reached the end —
+                and on 09-26 the metadata went behind the control, so it went
+                with it rather than being the one fact left outside.
+
+                A `BadgeRow` STILL WRAPS THE ONE BADGE, and the reason is
+                unchanged: `.musy-badge` is inline-flex, and a lone one in a
+                stretch context renders as a full-width bar. The cost is a
+                `<ul>` of one, announced as "list, 1 item", and the fix that
+                would avoid it is an `align-self` inside the design system —
+                which is exactly what a screen must not reach in and set (L14,
+                L7). Logged as a gap. */}
+            <BadgeRow>
+              <Badge
+                variant={abandoned ? 'outline' : 'success'}
+                /* THE STATUS FILL, AND THE WORD IT WOULD OTHERWISE INJECT.
+                   `success` reads as what finishing a session is, and Ben asked
+                   for it in those words — "this is something great". What comes
+                   with the variant is a screen-reader status word before the
+                   label, which would announce "Erfolg: Abgeschlossen": the
+                   severity word in front of a label that is already the status,
+                   said twice. An empty string is the prop's documented way to
+                   drop it, and 1.4.1 still holds three times over — the variant
+                   draws its own check glyph, the label is text, and the two
+                   states differ in their words rather than in their fill. */
+                statusWord=""
+              >
+                {t(abandoned ? 'session.status.abandoned' : 'session.status.finished')}
+              </Badge>
+            </BadgeRow>
+          </div>
+        </div>
+      )}
 
       {confirming ? (
         <Message
@@ -285,51 +420,23 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
           }
         />
       ) : (
-        /* ── THE STATUS AND THE DELETE CONTROL, ON ONE ROW AT THE FOOT ────
-           Ben, 2026-09-23. The badge used to sit in the box's header, above
-           the hairline, where it was the first thing the card said — and what
-           a card in a diary says first should be what is in it, not whether
-           the run that produced it reached the end.
+        /* ── THE DELETE CONTROL, ALONE AT THE FOOT ───────────────────────
+           The badge that used to share this row moved into the disclosure on
+           2026-09-26, and the delete control deliberately did NOT go with it.
+           Hiding a destructive action behind a disclosure does not protect
+           anybody: it makes it harder to find when you want it and no harder
+           to hit when you do not, and the inline confirmation is what actually
+           protects the row.
 
-           At the foot it is what it actually is: a fact about the session, in
-           the row of things that are about the session rather than in it. The
-           delete control was already alone down here, at the trailing edge and
-           quiet, because deleting is something a person is entitled to do to
-           their own record and is not what they came for.
+           It stays at the trailing edge and quiet, because deleting is
+           something a person is entitled to do to their own record and is not
+           what they came for.
 
-           A `BadgeRow` STILL WRAPS THE ONE BADGE, and the reason survives the
-           move: `.musy-badge` is inline-flex, and a lone one in a stretch
-           context renders as a full-width bar. The cost is a `<ul>` of one,
-           announced as "list, 1 item", and the fix that would avoid it is an
-           `align-self` inside the design system — which is exactly what a
-           screen must not reach in and set (L14, L7). Logged as a gap.
-
-           NOT A `ButtonGroup` ANY MORE. That component lays out BUTTONS, and
-           a badge is not one — it is a <span> with a fill and deliberately has
-           no role (Badge.tsx says why). Putting a label in a group of actions
-           would announce it as one. `.musie-entry__foot` is the row, under
-           L14: the system has no component for "a fact and an action, at the
-           trailing edge". */
+           `.musie-entry__foot` survives the badge's departure as a one-item
+           row, and it is still not a `ButtonGroup`: that component lays out a
+           GROUP of buttons, and the trailing-edge alignment of a single
+           destructive control is this screen's layout decision (L14). */
         <div className="musie-entry__foot">
-          <BadgeRow>
-            <Badge
-              variant={abandoned ? 'outline' : 'success'}
-              /* THE STATUS FILL, AND THE WORD IT WOULD OTHERWISE INJECT.
-                 `success` reads as what finishing a session is, and Ben asked
-                 for it in those words — "this is something great". What comes
-                 with the variant is a screen-reader status word before the
-                 label, which would announce "Erfolg: Abgeschlossen": the
-                 severity word in front of a label that is already the status,
-                 said twice. An empty string is the prop's documented way to
-                 drop it, and 1.4.1 still holds three times over — the variant
-                 draws its own check glyph, the label is text, and the two
-                 states differ in their words rather than in their fill. */
-              statusWord=""
-            >
-              {t(abandoned ? 'session.status.abandoned' : 'session.status.finished')}
-            </Badge>
-          </BadgeRow>
-
           {/* The label is the whole accessible name; IconButton reuses it as
               the tooltip, so the two cannot disagree. */}
           <IconButton

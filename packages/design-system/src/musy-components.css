@@ -69,6 +69,7 @@
 .musy-rcard__body:focus-visible,
 .musy-lightbox__close:focus-visible,
 .musy-msg__dismiss:focus-visible,
+.musy-box__dismiss:focus-visible,
 .musy-carousel__dot:focus-visible,
 .musy-carousel__slide:focus-visible,
 [data-force~="focus"] {
@@ -1438,6 +1439,65 @@
 }
 
 .musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+
+/* ── CLOSEABLE: THE HEADLINE AND THE X, ON ONE ROW ────────────────────────
+   Added 2026-09-26. Before it, a consuming screen got this X by passing a
+   `header`, which made the card FRAMED — a header band, a hairline and the
+   control on its own line below the headline — for a card that wanted none
+   of the three.
+
+   THE HEADLINE IS THE ELASTIC PART AND THE CONTROL IS NOT. That is §23's
+   degradation order, and it is not decoration here either: the control is
+   --target-primary because a thumb depends on it, and a flex item's default
+   `min-width: auto` refuses to shrink below its content — so without the
+   `min-inline-size: 0` a German compound pushes the X off the row rather
+   than wrapping under itself. `align-items: start` keeps the control level
+   with the FIRST line of a headline that wrapped, not centred against all
+   of them.
+
+   The row carries the headline's own `max-width` instead of the heading, or
+   the measure cap would be applied to the text and the control would then
+   sit at the far edge of a card it has no relationship to. */
+.musy-box__headrow {
+  display: flex;
+  align-items: start;
+  gap: var(--space-gap-related);
+  max-width: var(--measure-heading);
+}
+.musy-box__headrow > .musy-box__headline { flex: 1 1 auto; min-inline-size: 0; max-width: none; }
+/* A hidden headline occupies nothing (it is absolutely positioned), so the
+   row would collapse to the control alone and the `margin-inline-start: auto`
+   below is what still pushes it to the trailing edge. */
+.musy-box__headrow > .musy-sr-only { flex: 0 0 auto; }
+
+/* Identical to §10's and §23's dismiss, deliberately: the three dismiss
+   affordances in the system should not differ by a pixel. Ghost, at
+   --target-primary, pulled back by --sp-2 so the glyph lines up with the
+   headline rather than the target's edge. */
+.musy-box__dismiss {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--target-primary);
+  height: var(--target-primary);
+  margin: calc(var(--sp-2) * -1);
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-toggle);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musy-box__dismiss:hover,
+  .musy-box__dismiss[data-force~="hover"] { background-color: var(--interactive-ghost-hover); }
+}
+.musy-box__dismiss:active { background-color: var(--interactive-ghost-active); }
+
+/* A framed card's header is already a column; the row inside it still works,
+   and the hairline still divides the two regions. Nothing to add. */
 /* MUTED HEADLINE — opt-in, for a box whose headline NAMES ITS CONTEXT rather
    than announcing itself. The session's framed box is the case: the exercise
    name sits above the step rail as a reminder of what you are in, and at full
@@ -1975,7 +2035,23 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: var(--space-inset-card);
+  /* ── THE BLOCK INSET IS NOT HERE, AND THAT IS THE FIX ──────────────────
+     Measured 2026-09-26, at 320x900 with a full diary entry in it: the last
+     line of the card was sliced through the middle of its glyphs at the
+     popup's outer edge, with no inset under it and no sign that anything
+     was scrollable.
+
+     CSS clips overflow at the PADDING BOX, not the content box. So a popup
+     that carries its own block padding AND `overflow: hidden` paints its
+     scrolling child straight through that padding: the inset is drawn and
+     then not respected. It is invisible whenever the content fits, which is
+     every desktop viewport and every story — which is why it survived.
+
+     The inline inset stays here, because nothing scrolls horizontally. The
+     block inset moves onto `.musy-lightbox__body`, where it belongs to the
+     scroller and travels with it: the first line starts below the inset and
+     the last line ends above it, at every scroll position. */
+  padding-inline: var(--space-inset-card);
   border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   border-radius: var(--radius-panel);
   background-color: var(--surface-overlay);
@@ -2022,6 +2098,10 @@
   min-block-size: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The popup's block inset, moved onto the scroller — see the popup above.
+     `padding-block` rather than a margin, so it is INSIDE the scrollport and
+     the last line clears the edge at the bottom of the scroll. */
+  padding-block: var(--space-inset-card);
 }
 
 /* ── RESERVING THE BAND THE CLOSE CONTROL SITS IN ──────────────────────────
@@ -2045,9 +2125,12 @@
   min-block-size: var(--target-primary);
 }
 
+/* The body now carries the popup's block inset itself (see above), so the band
+   it has to clear is the control's height LESS that inset — `max()` keeps it at
+   zero rather than negative if the inset ever grows past the target. */
 .musy-lightbox__popup:has(> .musy-lightbox__close):not(:has(> .musy-lightbox__headline))
   > .musy-lightbox__body {
-  margin-block-start: var(--target-primary);
+  padding-block-start: max(var(--space-inset-card), var(--target-primary));
 }
 
 /* Reserve the close button's column so a long title never runs under it. The
@@ -2314,6 +2397,70 @@
 @keyframes musy-toast-in {
   from { opacity: 0; transform: translateY(var(--motion-travel-sm)); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TONE: SUCCESS ────────────────────────────────────────────────────────
+   The feedback family Layer 1 already ships, used exactly as §10 uses it —
+   surface, a ≥3:1 boundary, ≥7:1 text, and the icon at its own token. Token
+   only; not one literal.
+
+   THE FILL IS NOT THE MESSAGE (1.4.1). Three things carry it without colour:
+   the check glyph, the sentence itself, and the screen-reader status word the
+   component puts in front of the text. Remove the fill and nothing is lost but
+   the fill.                                                                 */
+.musy-toast--success {
+  border-color: var(--feedback-success-border);
+  background-color: var(--feedback-success-surface);
+  color: var(--feedback-success-text);
+}
+.musy-toast__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  align-self: start;
+  /* Optically level with the first line of the text rather than with the row,
+     which is what --target-min buys over `center` when the label wraps to two
+     lines. §10's icon does the same with the same value. */
+  min-block-size: var(--target-min);
+}
+.musy-toast--success .musy-toast__icon { color: var(--feedback-success-icon); }
+
+/* ── PLACEMENT: TOP ───────────────────────────────────────────────────────
+   Top and centred on a phone; top-TRAILING from --bp-md up, which is the one
+   thing this modifier owes the desktop case.
+
+   --musy-toast-inset-block-start is the component's published hook, and the
+   reason is in the .tsx: --z-toast outranks --z-sticky by Layer 1's own
+   design, so a top toast paints OVER a consuming app's sticky header. The app
+   is the only thing that knows how tall its header is. The FALLBACK is a
+   token, so an app that says nothing still gets a correct toast — the hook
+   buys clearance, never correctness.
+
+   The entrance travels the other way too: --motion-travel-sm is a distance,
+   and a toast that arrives at the top should arrive from above it.          */
+.musy-toast--top {
+  inset-block-end: auto;
+  inset-block-start: var(--musy-toast-inset-block-start, var(--space-gap-group));
+  animation-name: musy-toast-in-top;
+}
+
+@keyframes musy-toast-in-top {
+  from { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 768px) {
+  /* --bp-md. A media query cannot read a custom property, so every breakpoint
+     in this file is a literal by necessity — the same 768 the two queries
+     further down already use. */
+  .musy-toast--top {
+    /* The trailing edge, not the centre: `auto` on the start inset plus a
+       fixed end inset is what takes an edge without knowing the width, which
+       is the same trick `margin-inline: auto` plays for the centred case. */
+    inset-inline-start: auto;
+    inset-inline-end: var(--space-gap-group);
+    margin-inline: 0;
+  }
 }
 
 

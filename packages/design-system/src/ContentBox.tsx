@@ -11,6 +11,22 @@
  * The heading LEVEL is also a prop, because the correct level depends on where
  * the box sits in the page, which the box cannot know (1.3.1).
  *
+ * CLOSEABLE (onDismiss). Passing `onDismiss` draws an X **in the headline
+ * row**, and does NOT make the card framed. Added 2026-09-26, and the name is
+ * the point: Ben asked for a `dismissable` VARIANT, and this is deliberately
+ * not one. It is a CAPABILITY — the same capability §7.10 Message and §7.23
+ * Toast already spell `onDismiss` + `dismissLabel` — and a third spelling for
+ * the third component doing one thing is how a set drifts. So: no variant, the
+ * same two props, one more consumer.
+ *
+ * WHAT IT REPLACES. `apps/web` drew this X by passing a `header` holding an
+ * Icon Button, which forced the card FRAMED: a tall header band with the
+ * headline top-left, the X on its own line below it, and a hairline under the
+ * pair — for a card that wanted none of those three. That is also why the
+ * inline diary card and the lightbox one were structurally different objects.
+ * The two props coexist: a framed card with an `onDismiss` puts the X in the
+ * header row, beside whatever else the header holds.
+ *
  * FRAMED (header slot). Passing `header` splits the card into two regions
  * divided by a full-bleed hairline. The line is full-bleed on purpose: an
  * inset line reads as a rule under the text above it, an edge-to-edge line
@@ -21,6 +37,9 @@
  */
 import * as React from 'react';
 import { useRender } from '@base-ui/react/use-render';
+import { Button } from '@base-ui/react/button';
+import { X } from 'lucide-react';
+import { Icon } from './Icon';
 
 export type TypeStep =
   | 'display-xl' | 'display-lg'
@@ -74,6 +93,15 @@ export interface ContentBoxProps {
   outline?: BoxOutline;
   /** Header region. Present ⇒ the card renders framed: header, hairline, body. */
   header?: React.ReactNode;
+  /**
+   * Present ⇒ the card draws a close control in its headline row. What
+   * closing MEANS is the consumer's: this component only reports the press.
+   */
+  onDismiss?: () => void;
+  /** The close control's whole accessible name. Required when `onDismiss` is
+   *  — there is no catalogue default here, because a box does not know whether
+   *  it is being closed, collapsed or put away. */
+  dismissLabel?: string;
   /** Arbitrary content, below the text. */
   children?: React.ReactNode;
   className?: string;
@@ -84,15 +112,41 @@ export interface ContentBoxProps {
 export function ContentBox({
   headline, headlineHidden = false, headingLevel = 3, headlineStep = 'heading-sm',
   headlineTone = 'default',
-  text, textStep = 'body-md', outline = 'solid', header, children, className, render,
+  text, textStep = 'body-md', outline = 'solid', header, onDismiss, dismissLabel,
+  children, className, render,
 }: ContentBoxProps) {
   const H = `h${headingLevel}` as 'h1';
+
+  /* BOTH, or neither. A close control with no accessible name is a button
+     announced as "button", which is worse than no control — so the pair is
+     tested together rather than `onDismiss` alone. Same guard the consuming
+     screen used to apply for itself. */
+  const closeable = onDismiss !== undefined && dismissLabel !== undefined;
+
+  const heading = (
+    /* Hidden means visually hidden, never absent: the headline IS what puts
+       this box in the document outline. */
+    <H className={headlineHidden ? 'musy-sr-only' : 'musy-box__headline'}
+       data-type-step={headlineHidden ? undefined : headlineStep}>{headline}</H>
+  );
+
   const head = (
     <>
-      {/* Hidden means visually hidden, never absent: the headline IS what puts
-          this box in the document outline. */}
-      <H className={headlineHidden ? 'musy-sr-only' : 'musy-box__headline'}
-         data-type-step={headlineHidden ? undefined : headlineStep}>{headline}</H>
+      {closeable ? (
+        /* ONE ROW, and the headline is the part that gives. The control holds
+           --target-primary and the heading shrinks and wraps beside it, which
+           is what makes this work at 320px with a German compound in it — the
+           degradation order §23 states for the toast, applied to a card. */
+        <div className="musy-box__headrow">
+          {heading}
+          {/* A bare base-ui Button dressed by .musy-box__dismiss, NOT an Icon
+              Button — §7.10's precedent, so the dismiss affordances in the set
+              stay identical and no tooltip appears under a thumb. */}
+          <Button className="musy-box__dismiss" onClick={onDismiss} aria-label={dismissLabel}>
+            <Icon glyph={X} size="md" />
+          </Button>
+        </div>
+      ) : heading}
       {text && <p className="musy-box__text" data-type-step={textStep}>{text}</p>}
     </>
   );
