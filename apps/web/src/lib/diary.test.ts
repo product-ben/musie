@@ -448,12 +448,22 @@ describe('stackOf', () => {
     expect(shown).not.toContain('b');
   });
 
-  it('reverses within the day, because a stack grows upward', () => {
-    /* The one place this app reverses the query order: the session you did
-       FIRST is at the bottom of the stack. */
-    const { shown } = stackOf(['c', 'b', 'a']);
+  it('keeps the query order, because the column is drawn top to bottom', () => {
+    /* Newest first in, newest first out — which the caller renders as newest
+       at the TOP of the column and the day's earliest at the bottom, resting
+       on the axis. A stack that grows upward.
 
-    expect(shown).toEqual(['a', 'b', 'c']);
+       This asserted the opposite until 2026-09-28, and was green the whole
+       time: `stackOf` reversed, and the comment above it claimed the reverse
+       was what put the first session at the bottom. Reversing a newest-first
+       list gives oldest-first, which renders oldest at the top — so the day
+       read upside down and a passing test said it did not. A unit test cannot
+       see which way up a column is; this one is now written to the order the
+       caller consumes rather than to a picture it cannot check. */
+    const newestFirst = ['c', 'b', 'a'];
+    const { shown } = stackOf(newestFirst);
+
+    expect(shown).toEqual(['c', 'b', 'a']);
   });
 
   it('is empty and counts nothing for a day with no sessions', () => {

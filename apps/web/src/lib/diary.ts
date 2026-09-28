@@ -593,22 +593,32 @@ export function weeksFrom<T extends { startedAt: string }>(
 /**
  * One day's stack: what is drawn, and how many are not.
  *
- * NEWEST FIRST IS REVERSED HERE, and that is the one thing worth saying. The
- * query orders newest first and every list in this app keeps that order — but
- * a STACK grows upward, and the session you did first is the one at the
- * bottom of it. So the drawn entries are oldest-first within the day, and the
- * cap takes the most recent `GRAPH_STACK_CAP` rather than the earliest: a day
- * with six sessions shows the last four and counts the two before them, which
- * is the direction a person reads a day in.
+ * NEWEST FIRST, WHICH IS THE QUERY'S ORDER AND ALSO THE PICTURE'S.
+ *
+ * The caller renders `shown` top to bottom into a column, so newest-first puts
+ * the day's EARLIEST session at the bottom and each later one above it — a
+ * stack that grows upward, which is what a stack does and what this graph is a
+ * picture of.
+ *
+ * It was reversed here until 2026-09-28, under a comment claiming the reverse
+ * was what put the first session at the bottom. It did the opposite: reversing
+ * a newest-first list gives oldest-first, which renders the oldest at the TOP
+ * of the column. The day read upside down and the comment asserted it did not.
+ * Caught by looking at it.
+ *
+ * THE CAP TAKES THE MOST RECENT `GRAPH_STACK_CAP`, so a day with six sessions
+ * draws the last four and counts the two earliest — and `overflow` is
+ * therefore a count of the OLDEST, which is why the caller draws its chip
+ * under the stack rather than over it.
  */
 export function stackOf<T>(
   entries: readonly T[],
   cap: number = GRAPH_STACK_CAP,
 ): { shown: T[]; overflow: number } {
   const overflow = Math.max(0, entries.length - cap);
-  /* `slice(0, cap)` off a newest-first list is the most recent `cap`; the
-     reverse then puts the oldest of those at the bottom of the stack. */
-  return { shown: entries.slice(0, cap).reverse(), overflow };
+  /* `slice(0, cap)` off a newest-first list is the most recent `cap`, in the
+     order they arrived. No reverse: see above. */
+  return { shown: entries.slice(0, cap), overflow };
 }
 
 export type DiaryFilter = 'all' | DiaryStatus;

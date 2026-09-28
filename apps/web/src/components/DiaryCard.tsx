@@ -1,28 +1,39 @@
 /**
- * ONE ENTRY, IN THREE STATES.
+ * ONE ENTRY, IN TWO STATES.
  *
  * Extracted from `routes/DiaryEntry.tsx` on 2026-09-21 (Ben) so that a diary
  * entry is the SAME card wherever it appears. Before this it existed once, in
  * the lightbox, and /diary drew a lighter lookalike of it with a link — two
  * renderings of one thing, which is how they drift.
  *
- * The three states, and only the first two live here:
+ * The two states, and only the second is this component:
  *
- *   preview   a row in the Timeline's LinkList. Not this component.
- *   inline    this card, in the page, for the newest entry. Collapsible.
+ *   preview   a row in the Timeline's LinkList, and a tile in the graph.
+ *             Marked, when it is the most recent one. Not this component.
  *   lightbox  this card, in the overlay at /diary/:id.
  *
- * ── WHAT DIFFERS BETWEEN INLINE AND LIGHTBOX IS TWO PROPS ─────────────────
- * `headingLevel`, because the outline above the card is not the same in both:
- * inside the lightbox the dialog's own title is the h2, so the card is h3;
- * on /diary the page title is the h1 and the card is h2. The box has never
- * guessed this and does not start now (§7.9, 1.3.1).
+ * ── THERE WAS A THIRD, AND IT WENT ON 2026-09-28 ──────────────────────────
+ * `inline` — this card drawn into /diary itself, open, for the newest entry,
+ * with an X that collapsed it. Ben: "get rid of the full card being displayed
+ * inline in any state. Instead, highlight the latest one in the calendar and
+ * in the list below." `routes/Diary.tsx` holds the argument; the short version
+ * is that the graph does the landing better and the two together said the same
+ * session twice.
  *
- * `onDismiss`, which decides whether the card draws a close control at all.
- * The lightbox passes none — `Lightbox` renders its own X, wired to Escape,
+ * ── THE TWO PROPS THAT STATE CARRIED ──────────────────────────────────────
+ * `headingLevel` stays REQUIRED and is still never guessed (§7.9, 1.3.1).
+ * Inside the lightbox the dialog's own title is the h2, so the card is h3 —
+ * which is what every caller passes today, and exactly why it is a prop rather
+ * than a default: the day a card appears under something else, the level is
+ * the caller's to say.
+ *
+ * `onDismiss` / `dismissLabel` are kept and are currently UNUSED by the app.
+ * The lightbox passes neither — `Lightbox` renders its own X, wired to Escape,
  * the scrim and Back, and a second one inside it would be a second thing to
- * keep in step. Inline there is no dialog to close, so the card draws the X
- * itself and collapsing is all it does.
+ * keep in step. They are kept rather than deleted because they are two lines
+ * that forward to `ContentBox`'s own contract, and the next surface to hold a
+ * closeable entry should not have to re-derive them. If that surface never
+ * arrives, they go.
  *
  * ══ THE 2026-09-26 ITERATION ══════════════════════════════════════════════
  *

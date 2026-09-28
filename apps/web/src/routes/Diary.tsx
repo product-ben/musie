@@ -2,20 +2,31 @@
  * /diary — every session that is over, newest first, grouped by when it
  * happened.
  *
- * ── THE MOST RECENT ONE LEADS, IN A BOX OF ITS OWN ─────────────────────────
- * Ben, 2026-09-20. The newest session is lifted out of the list and given a
- * ContentBox with its facts spelled out; everything older stays in the grouped
- * list the rest of this file describes.
+ * ── THE SHAPE OF THE SCREEN ────────────────────────────────────────────────
+ * A graph, then the filter, then the run — and every entry is a ROW. Opening
+ * one is /diary/:id, a lightbox over this page.
  *
- * WHY IT IS NOT ALSO IN THE LIST: it would be the same entry twice, once
- * under a heading saying "your last session" and again under today's date.
- * `rest` is therefore `data.slice(1)`, and the list disappears entirely when
- * there has only ever been one session — which is the right shape for day one
- * rather than a heading over an empty run.
+ * ── THE MOST RECENT ONE IS MARKED, NOT OPENED — Ben, 2026-09-28 ───────────
+ * From 2026-09-20 the newest session was lifted out of the list and drawn as
+ * a full `DiaryCard`, open, at the top of the screen. It was the landing:
+ * the reflect step lands here rather than on /diary/:id, and the card made
+ * that an arrival at the thing you just did rather than a dispersal.
  *
- * It ALSO lands here from finishing a run: the reflect step navigates to
- * /diary rather than to /diary/:id, and this box is what makes that a landing
- * rather than a dispersal — the thing you just did is the first thing you see.
+ * The graph does that job better and in one glance, and with both on screen
+ * the diary said the same session twice — once as a whole card and again as a
+ * row underneath. On a phone the card was most of the first screen, so the
+ * diary opened on one session instead of on the diary.
+ *
+ * So the newest entry is now MARKED in the two places it already appears: a
+ * ring on its tile in the graph, and a filled row with a leading bar in the
+ * run. `latestId` carries it to both. Colour is never the only signal —
+ * `diary.latest` goes into the row's meta and into the tile's accessible name,
+ * because a mark nobody can see is not a mark (1.4.1).
+ *
+ * What went with the card: the `collapsed` state, the split that held the
+ * newest entry out of the run, the *Earlier* heading, and one read per
+ * arrival — `useDiaryEntry` was fetching the newest session's detail every
+ * time this screen opened, for a card many people closed without reading.
  *
  * ── TWO RESOLUTIONS, BECAUSE THIRTY SESSIONS IS NOT TEN — G.1 ──────────────
  * The run used to be grouped by calendar day and nothing else, which reads
@@ -35,13 +46,15 @@
  * way of making a long list shorter and on day one there is no list to
  * shorten.
  *
- * CHOOSING ONE PUTS THE LATEST CARD AWAY, and that is deliberate rather than
- * incidental. The card is a landing — *here is the thing you just did* — and
- * a filter is a question about the whole diary. Keeping a finished session
- * open at the top of a screen that says *Unfinished* would be the screen
- * answering two questions at once and contradicting itself in the gap. So
- * filtering turns the diary from a landing into a query, and clearing it
- * turns it back.
+ * IT NARROWS THE GRAPH TOO, since 2026-09-28 (Ben). It did not before, on the
+ * argument that the graph is a constant overview while the segments ask about
+ * the list. What changed is that the graph is now the top of this screen
+ * rather than a band under a card — and a screen whose picture and whose list
+ * answered different questions would contradict itself in the gap between
+ * them. Filtering turns the diary from a landing into a query, and clearing it
+ * turns it back; *Start a session* goes away for the same reason, because a
+ * query about last month's unfinished runs is not a moment to be offered a
+ * new one.
  *
  * ── TWO COMPONENTS, BECAUSE THEY ARE TWO THINGS ────────────────────────────
  * `Timeline` groups; `LinkList` is a list of destinations. The screen's whole
@@ -72,12 +85,11 @@
  * only completions would flatter, and the session still happened.
  *
  * ── HEADING LEVELS ARE DECIDED HERE, NOT GUESSED ───────────────────────────
- * h1 is the screen title. The *Earlier* heading, when there is one, is h2 and
- * pushes the period headings to h3 and the rows to h4; with no *Earlier* above
- * it the run sits directly under the page title and takes h2 / h3 instead.
- * LinkList has NO default for this on purpose — thirty diary rows as thirty
- * headings is an outline nobody can use unless the screen has decided they
- * should be one.
+ * h1 is the screen title, h2 the graph's name and each period heading, h3 the
+ * rows. One case since the *Earlier* heading went with the card, where there
+ * used to be two. LinkList has NO default for this on purpose — thirty diary
+ * rows as thirty headings is an outline nobody can use unless the screen has
+ * decided they should be one.
  *
  * As on /exercises, there is no separator punctuation between the meta lines:
  * a hardcoded '·' is a rendered string literal, and putting punctuation in the
@@ -95,13 +107,12 @@ import { useLocale, useT } from '../i18n/localeContext';
 import type { Locale, MessageKey } from '../i18n';
 import { useProfile } from '../lib/profileContext';
 import { deleteAllSessions, useActiveSession } from '../lib/session';
-import { useDiary, useDiaryEntry } from '../lib/useDiary';
+import { useDiary } from '../lib/useDiary';
 import {
   DIARY_FILTERS, FILTER_FROM_ENTRIES, dayAnchorId, durationMinutes, filterByStatus, formatMonth,
   formatRecentDay, formatShortDateTime, groupByPeriod, isDiaryFilter, stepMessageKey,
 } from '../lib/diary';
 import type { DiaryEntry, DiaryFilter, DiaryPeriod } from '../lib/diary';
-import { DiaryCard } from '../components/DiaryCard';
 import { DiaryGraph } from '../components/DiaryGraph';
 
 type Translate = ReturnType<typeof useT>;
@@ -122,13 +133,18 @@ const SAVED_TOAST_MS = 6_000;
  * where it stopped, because a duration for a run that was walked away from
  * measures the gap before the tab was closed, not the session.
  */
-function entryMeta(entry: DiaryEntry, t: Translate) {
+function entryMeta(entry: DiaryEntry, t: Translate, latest: boolean) {
   /* THE EXERCISE, FIRST — 2026-09-26. The row's headline is the session now
      ('Session vom 26.09.26, 10:04'), so the exercise name moved down here,
      which is the same move the card made: the headline says WHICH session, and
      the exercise is the first fact about it. Without this the rows would be a
      column of timestamps with no clue what any of them was. */
   const lines: string[] = [entry.exerciseName];
+
+  /* FIRST, and in words. The mark on the row is a fill and a bar, which is a
+     visual difference and nothing else; this line is what carries the same
+     fact to a screen reader and into a greyscale print. */
+  if (latest) lines.unshift(t('diary.latest'));
 
   if (entry.status === 'abandoned') {
     lines.push(t('session.status.abandoned'));
@@ -160,14 +176,24 @@ function entryMeta(entry: DiaryEntry, t: Translate) {
   return <>{lines.map((line, index) => <span key={`${String(index)}-${line}`}>{line}</span>)}</>;
 }
 
-function toItem(entry: DiaryEntry, t: Translate, locale: Locale): LinkListItem {
+function toItem(
+  entry: DiaryEntry,
+  t: Translate,
+  locale: Locale,
+  latestId: string | null,
+): LinkListItem {
   return {
     id: entry.id,
+    /* THE ONE YOU MOST RECENTLY FINISHED — Ben, 2026-09-28, replacing the
+       inline card. `LinkList` draws the fill and the leading bar; the WORD
+       that says why is in `entryMeta`, because a row that differed only by a
+       colour would fail 1.4.1 for anybody who cannot see it. */
+    marked: entry.id === latestId,
     /* THE SAME STRING THE CARD'S HEADLINE IS, from the same catalogue key —
        Ben asked for the rows to change too, and one key is what stops the row
        and the card it opens disagreeing about what the session is called. */
     headline: t('diary.sessionTitle', { when: formatShortDateTime(entry.startedAt, locale) }),
-    meta: entryMeta(entry, t),
+    meta: entryMeta(entry, t, entry.id === latestId),
     /* THE ROUTER BOUNDARY. The design system never imports react-router; the
        row becomes whatever element the screen hands it, and here that is a
        Link. Nothing in the package fabricates an anchor. */
@@ -224,51 +250,34 @@ const FILTER_GLYPH: Record<DiaryFilter, LucideIcon> = {
   abandoned: CircleDashed,
 };
 
-/**
- * The newest entry, inline — the SAME card the lightbox renders, not a
- * lookalike of it.
- *
- * Before 2026-09-21 this drew its own lighter version: a ContentBox with three
- * facts and a link saying *Open entry*. Two renderings of one thing, which is
- * how they drift — and the reason the answer, the track and the delete control
- * were reachable in one of them and not the other.
- *
- * ── WHY IT FETCHES, AND WHY IT IS ITS OWN COMPONENT ───────────────────────
- * `useDiary` returns SUMMARIES: enough for a row, and not the reflection, the
- * track or anything else the card shows. The card needs `DiaryEntryDetail`, so
- * one more read is unavoidable — and a hook cannot be called conditionally, so
- * the read lives in a component that is only mounted when there is an id to
- * read and the card is open. That is also what stops a collapsed card holding
- * a request nobody is waiting for.
- *
- * ── ITS FAILURES ARE QUIET, AND THAT IS THE POINT ─────────────────────────
- * The run below is already on screen and already lists this session. So a slow
- * or failed detail read renders NOTHING here rather than an error panel above
- * a perfectly good list: the entry is still reachable by tapping its row, and
- * a second failure message for a screen that is working would be the loudest
- * thing on it. `/diary/:id` is where the failure is worth stating, because
- * there the card IS the screen.
- */
-function LatestEntry({ id, onDismiss }: { id: string; onDismiss: () => void }) {
-  const t = useT();
-  const { data } = useDiaryEntry(id);
+/* ── THE INLINE CARD IS GONE — Ben, 2026-09-28 ────────────────────────────
+   "Get rid of the full card being displayed inline in any state. Instead,
+   highlight the latest one in the calendar and in the list below."
 
-  /* `DiaryEntryView` also covers "still running", which cannot reach here:
-     the diary reads only sessions that are over. Narrowed rather than
-     asserted — a cast would be a promise this component cannot keep. */
-  if (data === null || data.kind !== 'entry') return null;
+   `LatestEntry` lived here: it re-read the newest session as a
+   `DiaryEntryDetail` and drew the same `DiaryCard` the lightbox draws, open
+   by default, collapsible by an X.
 
-  return (
-    <DiaryCard
-      entry={data.entry}
-      /* h2, under the page's h1 — where the lightbox's copy is an h3 under the
-         dialog title. The one thing that genuinely differs between the two. */
-      headingLevel={2}
-      onDismiss={onDismiss}
-      dismissLabel={t('diary.collapse')}
-    />
-  );
-}
+   WHAT WAS WRONG WITH IT, now that the graph exists. The card was a LANDING —
+   "here is the thing you just did" — written when this screen's first element
+   was a list of dates. The graph answers that better and in one glance, and
+   between the two the screen said the same session twice: once as a card with
+   the whole entry in it, and again in the run below. On a phone the card was
+   most of the first screen, so the diary opened on one session rather than on
+   the diary.
+
+   WHAT REPLACES IT IS A MARK, IN BOTH PLACES the session already appears —
+   `latestId` below. The entry is one tap away at /diary/:id, which is where
+   the card belongs and where it is already the whole screen.
+
+   WHAT WENT WITH IT: the `collapsed` state, the `showLatest` / `rest` split
+   that held the newest entry out of the run, and the *Earlier* heading, which
+   was a relative word that needed the card to be earlier THAN. The run is now
+   the whole diary and its periods sit directly under the page title.
+
+   ONE READ FEWER, TOO. `useDiaryEntry` was fetching the newest session's
+   detail on every arrival at /diary, for a card that many people closed
+   without reading. The list read is now the only read this screen makes. */
 
 /**
  * START ANOTHER ONE — Ben, 2026-09-24, and it sits BEHIND THE NEWEST ENTRY.
@@ -282,12 +291,17 @@ function LatestEntry({ id, onDismiss }: { id: string; onDismiss: () => void }) {
  * of the page it would sit next to *Delete your whole diary*, which is the one
  * neighbour a start button must not have.
  *
- * ── IT GOES WITH THE CARD ──────────────────────────────────────────────────
- * Rendered only while the latest entry is open, for the reason the card itself
- * is: collapsing it, or setting a filter, turns the diary from a landing into
- * a query, and a query about last month's sessions is not a moment to be
- * offered a new one. The drawer's *Start a session* is always there and is not
- * going anywhere.
+ * ── IT GOES WITH THE UNFILTERED DIARY ─────────────────────────────────────
+ * It used to be rendered only while the latest entry's card was open. That
+ * card is gone (2026-09-28), so what is left of the condition is the half
+ * that was about the SCREEN rather than about the card: setting a filter turns
+ * the diary from a landing into a query, and a query about last month's
+ * unfinished sessions is not a moment to be offered a new one.
+ *
+ * It sits under the graph now, which is where somebody has finished taking in
+ * what they have done — the same position relative to the landing that it held
+ * under the card. The drawer's *Start a session* is always there and is not
+ * going anywhere, and so is the plus on today's column.
  *
  * ── IT NAVIGATES; IT DOES NOT START ANYTHING ──────────────────────────────
  * Two gates, the same two the drawer applies and for the same reasons: no user
@@ -618,15 +632,54 @@ export function Diary() {
   const { locale } = useLocale();
   const { data, loading, error } = useDiary();
 
-  /* Per visit, deliberately. Arriving at the diary — above all arriving from
-     the reflect step, which lands here rather than on /diary/:id — should show
-     the thing you just made, and a preference remembered from last week would
-     take that away. Closing it is a "not now", not a setting. */
-  const [collapsed, setCollapsed] = React.useState(false);
-
-  /* Per visit for the same reason, and one rung stronger: a filter remembered
-     across visits is a diary that hides sessions and does not say why. */
+  /* Per visit, deliberately, and one rung stronger than a collapsed card was:
+     a filter remembered across visits is a diary that hides sessions and does
+     not say why. */
   const [filter, setFilter] = React.useState<DiaryFilter>('all');
+
+  /**
+   * THE FILTER IS RESOLVED ONCE, UP HERE, BECAUSE TWO THINGS READ IT NOW.
+   *
+   * It used to live inside the branch that draws the list, which was fine
+   * while the list was the only thing it narrowed. Since 2026-09-28 the GRAPH
+   * takes it too (Ben), and the graph is rendered outside that branch — above
+   * the page's body, under the title.
+   *
+   * ── THE GRAPH FOLLOWS THE FILTER, WHICH REVERSES A CALL ─────────────────
+   * It did not, and the reasoning was that the graph is a constant overview
+   * while the segments are a question about the list. Ben's call on
+   * 2026-09-28 reverses it, and the new arrangement is what makes it right:
+   * with the inline card gone, the graph IS the top of this screen, and a
+   * screen whose picture and whose list answered different questions would
+   * contradict itself in the gap between them.
+   */
+  const rows = data ?? [];
+
+  /* The control is what clears the filter, so a filter surviving the control
+     going away would be a hidden narrowing with nothing to undo it. It CAN
+     happen: deleting entries re-reads the list, and a diary that drops back
+     under FILTER_FROM_ENTRIES loses the segments. Reading through this
+     constant rather than `filter` means the state can never outlive its
+     control by more than the render that removed it. */
+  const showFilter = rows.length >= FILTER_FROM_ENTRIES;
+  const active: DiaryFilter = showFilter ? filter : 'all';
+  const visible = filterByStatus(rows, active);
+
+  /**
+   * THE SESSION YOU MOST RECENTLY FINISHED, marked in both places it appears —
+   * the graph and the run. It replaces the inline card (see the note above
+   * `StartAnother`).
+   *
+   * `rows[0]`, not `visible[0]`: it is the newest session there IS, not the
+   * newest one that survived a filter. Marking "the latest unfinished session"
+   * as *the latest* would be this screen answering the filter's question with
+   * the word for a different one. When a filter hides it, nothing is marked,
+   * which is honest.
+   *
+   * The query orders by `started_at desc`, so index 0 is it — the same
+   * ordering `groupByPeriod` relies on and deliberately does not re-sort.
+   */
+  const latestId = rows[0]?.id ?? null;
 
   let body;
   if (loading) {
@@ -656,49 +709,23 @@ export function Diary() {
     );
   } else {
     /**
-     * THE NEWEST ENTRY IS INLINE UNTIL IT IS CLOSED — OR UNTIL A FILTER IS SET.
+     * EVERY ENTRY IS A ROW NOW — Ben, 2026-09-28.
      *
-     * Ben, 2026-09-21: every entry has three states — preview (a row in the
-     * run below), inline (this card, in the page) and lightbox (the same card
-     * at /diary/:id). The newest one opens inline; its X collapses it to a
-     * preview, which is when it joins the run with everything else.
-     *
-     * `rest` follows from that and is the whole of the mechanism: while the
-     * card is open the newest entry is held out of the list, because it would
-     * otherwise be the same session twice on one screen. Closed — or hidden by
-     * a filter — nothing is held out and the run is entire, which is also why
-     * closing does not make a row disappear.
+     * An entry has two states since the inline card went: a preview (a row in
+     * the run, and a mark in the graph) and the lightbox at /diary/:id. There
+     * is nothing to hold out of the list any more, so `visible` IS the run.
      */
-    const showFilter = data.length >= FILTER_FROM_ENTRIES;
-
-    /* The control is what clears the filter, so a filter surviving the control
-       going away would be a hidden narrowing with nothing to undo it. It CAN
-       happen: deleting entries re-reads the list, and a diary that drops back
-       under FILTER_FROM_ENTRIES loses the segments. Reading through this
-       constant rather than `filter` means the state can never outlive its
-       control by more than the render that removed it. */
-    const active: DiaryFilter = showFilter ? filter : 'all';
-
-    const visible = filterByStatus(data, active);
-    const showLatest = !collapsed && active === 'all';
-    const rest = showLatest ? visible.slice(1) : visible;
-
-    /* *Earlier* is a relative word and needs something to be earlier THAN.
-       With the card on screen it separates the session you just finished from
-       the ones before it; with the card away the run is the whole diary and
-       the heading would be claiming a division that is not there — so it goes,
-       and the periods step up a level to sit under the page title instead. */
-    const earlier = showLatest && rest.length > 0;
-    const periodLevel = earlier ? 3 : 2;
+    /* The run sits directly under the page title: *Earlier* is gone with the
+       card it was earlier THAN, so the period headings take h2 and their rows
+       h3. No ternary, because there is no longer a second case. */
+    const periodLevel = 2 as const;
 
     body = (
       <>
-        {showLatest && (
-          <>
-            <LatestEntry id={data[0].id} onDismiss={() => setCollapsed(true)} />
-            <StartAnother />
-          </>
-        )}
+        {/* Under the graph, not under a card — see StartAnother. Absent while
+            a filter is set, which is the half of its old condition that was
+            about this screen rather than about the card. */}
+        {active === 'all' && <StartAnother />}
 
         {showFilter && (
           /* WRAPPED rather than given a className. The gap between this control
@@ -736,13 +763,11 @@ export function Diary() {
           </div>
         )}
 
-        {earlier && <h2 className="musie-diary__earlier">{t('diary.earlier')}</h2>}
-
-        {rest.length > 0 && (
+        {visible.length > 0 && (
           <Timeline
             label={t('diary.timelineLabel')}
             headingLevel={periodLevel}
-            groups={groupByPeriod(rest).map((period) => ({
+            groups={groupByPeriod(visible).map((period) => ({
               /* THE ANCHOR THE GRAPH'S OVERFLOW CHIP POINTS AT. `dayAnchorId`
                  is built from the same local day key `groupByPeriod` uses, so
                  the two agree by construction rather than by a convention
@@ -756,7 +781,7 @@ export function Diary() {
                 <LinkList
                   label={t('diary.listLabel')}
                   headingLevel={(periodLevel + 1) as 3 | 4}
-                  items={period.entries.map((entry) => toItem(entry, t, locale))}
+                  items={period.entries.map((entry) => toItem(entry, t, locale, latestId))}
                   /* Unreachable by construction — a period exists because it
                      has entries — but required, and a required string with
                      no default is exactly what cannot leak the wrong
@@ -771,7 +796,7 @@ export function Diary() {
         {/* Nothing matched. Only reachable with a filter set: an empty run
             under 'all' means this is the only session there has ever been,
             and a heading over an empty list says less than its absence. */}
-        {rest.length === 0 && active !== 'all' && (
+        {visible.length === 0 && active !== 'all' && (
           <FilterEmpty filter={active} onShowAll={() => setFilter('all')} />
         )}
       </>
@@ -802,7 +827,12 @@ export function Diary() {
           beat after the title would move the page under a thumb. It is not
           drawn on a FAILED read, because a week of empty days is a claim that
           nothing happened, and a failed read knows nothing at all. */}
-      {error === null && !loading && <DiaryGraph entries={data ?? []} />}
+      {error === null && !loading && (
+        /* `visible`, not `rows` — the segments narrow the picture and the run
+           together since 2026-09-28. `latestId` is still the true newest, so a
+           filter that hides it simply leaves nothing marked. */
+        <DiaryGraph entries={visible} latestId={latestId} />
+      )}
 
       {body}
       {/* LAST ON THE SCREEN, AND ONLY WHEN THERE IS A DIARY TO DELETE.

@@ -4934,3 +4934,68 @@ whose width is known before layout — i.e. columns at a fixed `--target-primary
 rather than `1fr`, so `scrollWidth` is computable and the pin cannot be
 clamped against a stale maximum. That trades the seven-columns-fit-the-screen
 property, which is why I did not do it unasked.
+
+## The inline diary card is gone, and three things went with it
+
+Where: `src/routes/Diary.tsx` (the note where `LatestEntry` was);
+`src/components/DiaryCard.tsx` header; `src/shell.css`
+(`.musie-diary__earlier`, deleted).
+
+What Ben asked, 2026-09-28: *"Get rid of the full card being displayed inline
+in any state. Instead, highlight the latest one in the calendar and in the list
+below. Also, make the segmented control also filter the calendar."*
+
+What I did, and the three consequences worth knowing:
+
+**`useDiaryEntry` is no longer called on /diary.** The inline card needed the
+newest session's full detail — reflection, statements, track — so every arrival
+at the diary made a second read for a card many people closed without reading
+it. The list read is now the only read this screen makes.
+
+**The filter reaches the graph, which reverses a call Ben made on 09-26.** It
+did not before, on the argument that the graph is a constant overview while the
+segments ask about the list. That argument depended on the graph being a band
+under a card; now the graph IS the top of the screen, and a screen whose
+picture and whose list answered different questions would contradict itself in
+the gap. Verified: five finished sessions, *Nicht beendet* selected → four
+marks become zero, and the list shows its own empty state.
+
+**`diary.earlier`, `diary.latest` and `diary.collapse` are now partly
+unused copy.** `diary.latest` found a new job — it is the word on the marked
+row and in the marked tile's accessible name, which is what keeps the highlight
+from being colour alone. `diary.earlier` and `diary.collapse` are dead. I left
+both in the catalogues rather than deleting copy Ben wrote; they are one grep
+away if either heading comes back, and `de.ts` is typed against `en.ts` so an
+unused pair cannot drift.
+
+**`DiaryCard`'s `onDismiss` / `dismissLabel` are dead in the app too.** Kept,
+because they are two lines forwarding to `ContentBox`'s own contract and the
+`Closeable` stories exercise that contract. If no second surface ever wants a
+closeable entry, they should go.
+
+---
+
+## The diary graph's stacks were upside down, and a green test said they were not
+
+Where: `src/lib/diary.ts` — `stackOf`; `src/lib/diary.test.ts` — the ordering
+test; `src/components/DiaryGraph.tsx` — the overflow chip's position.
+
+What I checked: Ben's brief says the exercises "stack up" on the y axis. They
+did not. `stackOf` reversed its newest-first input, and the comment above it
+said the reverse was what put the first session of the day at the bottom.
+
+Reversing a newest-first list gives oldest-first, and the caller renders that
+top to bottom — so the OLDEST sat at the top of the column and the newest
+rested on the axis. The day read upside down. The `+N` chip made it worse: the
+cap keeps the most recent four, so the overflow is the day's EARLIEST sessions,
+and the chip was drawn above the stack, where it read as "and more after these"
+about sessions that came before them.
+
+**A unit test asserted the reverse and had been green since it was written.**
+That is the part worth keeping: it tested the array, and which way up a column
+is drawn is not a fact about an array. It is rewritten to assert the order the
+caller consumes, with the reason in it, but the honest conclusion is that this
+class of bug is only ever caught by looking — which is how it was caught.
+
+Fixed: `stackOf` returns the query's order untouched, and the chip is drawn
+under the stack.

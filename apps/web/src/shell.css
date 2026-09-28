@@ -445,9 +445,8 @@
    --space-gap-group ON BOTH SIDES, and both are load-bearing. Above, because
    the card it follows is a different kind of thing and must not look like part
    of it. Below, because what comes next changes: the filter row's own top
-   margin collapses with this one to a single gap, and with no filter drawn
-   *Earlier* or the Timeline follows instead — the Timeline carrying no margin
-   at all.                                                                   */
+   margin collapses with this one to a single gap, and with no filter drawn the
+   Timeline follows instead, carrying no margin at all.                       */
 .musie-diary__start {
   margin-block: var(--space-gap-group);
 }
@@ -458,29 +457,24 @@
    is that a screen never reaches into it. What the screen owns is where the
    control sits in the column.
 
-   MARGIN ON BOTH SIDES, because what follows it changes. With the latest
-   entry open the next thing is `.musie-diary__earlier`, whose own top margin
-   collapses with this one to a single --space-gap-group; with a filter set
-   that heading is gone and the Timeline follows directly, and the Timeline
-   carries no margin of its own (`.musy-timeline { margin: 0 }`) — so without
-   a bottom margin here the segments would sit hard against the first date.  */
+   MARGIN ON BOTH SIDES. The Timeline follows it directly and carries no margin
+   of its own (`.musy-timeline { margin: 0 }`), so without a bottom margin here
+   the segments would sit hard against the first date. (Until 2026-09-28 the
+   next thing could also be `.musie-diary__earlier`, whose top margin collapsed
+   with this one; that heading went with the inline card.)                    */
 .musie-diary__filter {
   margin-block: var(--space-gap-group);
 }
 
-/* ═══ THE DIARY'S SECOND HEADING ════════════════════════════════════════════
-   *Earlier* — what separates the session you just finished from the ones
-   before it. heading-sm rather than the page title's step: it labels a region
-   inside the screen, not the screen.                                       */
-.musie-diary__earlier {
-  margin: var(--space-gap-group) 0 0;
-  font-family: var(--type-heading-sm-family);
-  font-size: var(--type-heading-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-heading-sm-line);
-  letter-spacing: var(--type-heading-sm-tracking);
-  color: var(--on-surface-muted);
-}
+/* ═══ THE DIARY'S SECOND HEADING — DELETED 2026-09-28 ═══════════════════════
+   `.musie-diary__earlier` drew *Earlier*, which separated the session you had
+   just finished — open as a card at the top of the screen — from the ones
+   before it. The card is gone (Ben), and *Earlier* is a relative word with
+   nothing left to be earlier THAN: the run is the whole diary now and its
+   period headings sit directly under the page title.
+
+   `diary.earlier` stays in both catalogues, unused. Deleting copy is not this
+   change's business and it is one grep away if the heading ever comes back. */
 
 /* ═══ THE END OF THE DIARY ══════════════════════════════════════════════════
    Delete-everything, which moved here from /settings on 2026-09-24. This class
@@ -1388,6 +1382,25 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .musie-graph__mark:hover { border-color: var(--border-strong); }
+}
+
+/* ── THE ONE YOU MOST RECENTLY FINISHED ───────────────────────────────────
+   Ben, 2026-09-28: the inline card is gone, and the latest session is marked
+   where it already appears instead — here and in the run below.
+
+   A RING OUTSIDE THE MARK, not a fill over it: the artwork IS the mark, and
+   tinting it would change the picture rather than point at it. `box-shadow`
+   rather than an outline or a border so nothing in the layout moves — a
+   44px column has no room to give a marked tile two more pixels of box.
+
+   `--interactive-accent`, the same ink the marked row in the list uses, so
+   the two places this session appears are marked the same way.
+
+   NOT COLOUR ALONE (1.4.1): the link's accessible name carries *neueste
+   Session* in words, which is what a greyscale print and a screen reader
+   get. The component does that, not this rule. */
+.musie-graph__mark[data-latest] {
+  box-shadow: 0 0 0 var(--border-width-thick) var(--interactive-accent);
 }
 
 /* ── AN UNFINISHED SESSION: DASHED, AND SAID IN WORDS ────────────────────

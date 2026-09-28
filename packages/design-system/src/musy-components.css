@@ -1455,16 +1455,24 @@
    with the FIRST line of a headline that wrapped, not centred against all
    of them.
 
-   The row carries the headline's own `max-width` instead of the heading, or
-   the measure cap would be applied to the text and the control would then
-   sit at the far edge of a card it has no relationship to. */
+   ── THE CONTROL TAKES THE CARD'S EDGE, AND THE MEASURE STAYS ON THE TEXT ──
+   Fixed 2026-09-28 (Ben: "the X should always be on the top right of the
+   card"). The row used to carry `max-width: --measure-heading` itself, with
+   the cap lifted off the heading — so on any card wider than 26ch the whole
+   row stopped at the measure and the X sat in the MIDDLE of the card, pushed
+   there by a `margin-inline-start: auto` that had nothing left to push
+   against.
+
+   The row is full width now and the CAP GOES BACK ON THE HEADING, which is
+   where it was always meant to be: a measure is a limit on a LINE LENGTH, not
+   on the width of a layout. The heading wraps at 26ch, the control sits at the
+   card's trailing edge, and the two facts stop fighting. */
 .musy-box__headrow {
   display: flex;
   align-items: start;
   gap: var(--space-gap-related);
-  max-width: var(--measure-heading);
 }
-.musy-box__headrow > .musy-box__headline { flex: 1 1 auto; min-inline-size: 0; max-width: none; }
+.musy-box__headrow > .musy-box__headline { flex: 1 1 auto; min-inline-size: 0; }
 /* A hidden headline occupies nothing (it is absolutely positioned), so the
    row would collapse to the control alone and the `margin-inline-start: auto`
    below is what still pushes it to the trailing edge. */
@@ -4594,6 +4602,27 @@
   text-decoration: none;
   text-align: start;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ── ONE ROW, MARKED ──────────────────────────────────────────────────────
+   Added 2026-09-28 for the diary, which highlights the session you most
+   recently finished in a list of thirty.
+
+   AN EDGE AND A FILL, NEVER THE FILL ALONE. A tinted row is a colour
+   difference and nothing else, which is exactly what 1.4.1 forbids as a sole
+   carrier — so the mark is a bar at the leading edge, which survives
+   greyscale and forced colours. The consumer is still expected to say WHY the
+   row is marked in its own words; this draws the mark, it does not name it.
+   §7's `LinkListItem.marked` says the same thing in the .tsx.
+
+   `--interactive-accent` is Layer 1's accent ink, which is what the diary's
+   own filter segments already select with. NOT `--musy-sel-fill`: that is
+   declared per-component inside §15 and §20 and resolves to nothing out
+   here — a box-shadow with an undefined colour draws no bar at all, which is
+   precisely the 1.4.1 failure this rule is built to avoid. */
+.musy-llist__row--marked {
+  background-color: var(--surface-sunken);
+  box-shadow: inset var(--border-width-thick) 0 0 0 var(--interactive-accent);
 }
 
 /* The thumbnail is a square at the row's own target height, so a row with

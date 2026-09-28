@@ -101,7 +101,12 @@ function measureEdges(element: HTMLElement): { atNewest: boolean; atOldest: bool
   };
 }
 
-export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
+export function DiaryGraph({ entries, latestId }: {
+  entries: readonly DiaryEntry[];
+  /** The session most recently finished, drawn with a ring. Null when a
+   *  filter is hiding it, which leaves nothing marked — see Diary.tsx. */
+  latestId: string | null;
+}) {
   const t = useT();
   const { locale } = useLocale();
   const scroller = React.useRef<HTMLDivElement>(null);
@@ -315,7 +320,7 @@ export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
             })}
           >
             {week.days.map((day) => (
-              <Day key={day.key} day={day} />
+              <Day key={day.key} day={day} latestId={latestId} />
             ))}
           </ol>
         ))}
@@ -347,7 +352,10 @@ export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
  * why the column is a flex column reversed rather than ordered by hand: the
  * DOM order is stack-then-label, which is what a screen reader should hear.
  */
-function Day({ day }: { day: { key: string; date: string; dayOffset: number; entries: DiaryEntry[] } }) {
+function Day({ day, latestId }: {
+  day: { key: string; date: string; dayOffset: number; entries: DiaryEntry[] };
+  latestId: string | null;
+}) {
   const t = useT();
   const { locale } = useLocale();
   const { shown, overflow } = stackOf(day.entries);
@@ -359,11 +367,48 @@ function Day({ day }: { day: { key: string; date: string; dayOffset: number; ent
         {/* The plus, on top of today's stack and nowhere else. */}
         {today && <StartToday />}
 
-        {/* THE COUNT, ABOVE THE FOUR IT COUNTS. A `Badge` rather than a
-            number in a div: it is a small labelled token, which is what a
-            badge is, and it inherits the set's own geometry and contrast.
-            It is a Link, so the way out of a capped day is the list below —
-            the one place every session is reachable in full. */}
+        {/* A DAY WITH NOTHING ON IT STILL GETS A BOX — Ben, 2026-09-28.
+            "The calendar looks weird when empty."
+
+            It was blank, and a blank column has no floor: seven days of
+            nothing read as a missing element rather than as seven days of
+            nothing. One filled shape per empty day gives the row a baseline,
+            and the stacks then visibly rise off it.
+
+            FILL ONLY, NO OUTLINE — Ben's words, and the reason is that an
+            outline is what a MARK has. A bordered empty box would read as a
+            session whose picture failed to load; an unbordered one reads as
+            the space a session would occupy.
+
+            `aria-hidden`, and it is not in the `<ol>`: the list is sessions,
+            and an empty day has none. A screen reader hears nothing here,
+            which is exactly what happened that day. */}
+        {shown.length === 0 && <div className="musie-graph__blank" aria-hidden="true" />}
+
+        {/* `stackOf` returns these NEWEST FIRST — the query's own order, which
+            rendered top to bottom puts the day's earliest session at the
+            bottom and each later one above it. A stack that grows upward. */}
+        {shown.length > 0 && (
+          <ol className="musie-graph__sessions">
+            {shown.map((entry) => (
+              <li key={entry.id}>
+                <SessionMark entry={entry} latest={entry.id === latestId} />
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {/* THE COUNT, UNDER THE FOUR IT COUNTS — and under them because of
+            WHAT it counts. The cap keeps the most recent four, so the
+            overflow is the day's EARLIEST sessions, and a stack that grows
+            upward puts those beneath the ones that are drawn. It sat on top
+            until 2026-09-28, where it read as "and more after these" about
+            sessions that came before them.
+
+            A `Badge` rather than a number in a div: it is a small labelled
+            token, which is what a badge is, and it inherits the set's own
+            geometry and contrast. It takes the reader to that day in the list
+            below — the one place every session is reachable in full. */}
         {overflow > 0 && (
           /* ── A BUTTON THAT SCROLLS, NOT A LINK THAT NAVIGATES ──────────
              It was `<Link to={'#' + dayAnchorId(...)}>`, and that was wrong
@@ -431,36 +476,6 @@ function Day({ day }: { day: { key: string; date: string; dayOffset: number; ent
           </button>
         )}
 
-        {/* A DAY WITH NOTHING ON IT STILL GETS A BOX — Ben, 2026-09-28.
-            "The calendar looks weird when empty."
-
-            It was blank, and a blank column has no floor: seven days of
-            nothing read as a missing element rather than as seven days of
-            nothing. One filled shape per empty day gives the row a baseline,
-            and the stacks then visibly rise off it.
-
-            FILL ONLY, NO OUTLINE — Ben's words, and the reason is that an
-            outline is what a MARK has. A bordered empty box would read as a
-            session whose picture failed to load; an unbordered one reads as
-            the space a session would occupy.
-
-            `aria-hidden`, and it is not in the `<ol>`: the list is sessions,
-            and an empty day has none. A screen reader hears nothing here,
-            which is exactly what happened that day. */}
-        {shown.length === 0 && <div className="musie-graph__blank" aria-hidden="true" />}
-
-        {/* `stackOf` returns these OLDEST FIRST within the day, which is the
-            one place this app reverses the query's order: a stack grows
-            upward, and the session you did first is at the bottom of it. */}
-        {shown.length > 0 && (
-          <ol className="musie-graph__sessions">
-            {shown.map((entry) => (
-              <li key={entry.id}>
-                <SessionMark entry={entry} />
-              </li>
-            ))}
-          </ol>
-        )}
       </div>
 
       {/* The axis. `aria-hidden`: the weekday and the number are a visual
@@ -494,7 +509,7 @@ function Day({ day }: { day: { key: string; date: string; dayOffset: number; ent
  * in the stack. The session happened either way, and the stack is a count of
  * sessions before it is a gallery.
  */
-function SessionMark({ entry }: { entry: DiaryEntry }) {
+function SessionMark({ entry, latest }: { entry: DiaryEntry; latest: boolean }) {
   const t = useT();
   const { locale } = useLocale();
   const abandoned = entry.status === 'abandoned';
@@ -502,9 +517,9 @@ function SessionMark({ entry }: { entry: DiaryEntry }) {
   const name = t('diary.graph.session', {
     title: t('diary.sessionTitle', { when: formatShortDateTime(entry.startedAt, locale) }),
     exercise: entry.exerciseName,
-    /* THE STATUS IN WORDS, because the dim and the dash do not survive a
-       colour-blind reading, a high-contrast mode or a screen reader. 1.4.1,
-       and the same three-way redundancy the status badge on the card uses. */
+    /* THE STATUS IN WORDS, because the dash does not survive a colour-blind
+       reading, a high-contrast mode or a screen reader. 1.4.1, and the same
+       three-way redundancy the status badge on the card uses. */
     status: t(abandoned ? 'session.status.abandoned' : 'session.status.finished'),
   });
 
@@ -512,8 +527,14 @@ function SessionMark({ entry }: { entry: DiaryEntry }) {
     <Link
       className="musie-graph__mark"
       to={`/diary/${encodeURIComponent(entry.id)}`}
-      aria-label={name}
+      /* THE MARK IS A RING; THE NAME SAYS WHY — Ben, 2026-09-28, replacing the
+         inline card. The ring is a colour and a width, so the word goes into
+         the accessible name beside it or the highlight exists only for people
+         who can see it (1.4.1). Appended rather than prefixed: which session
+         it is comes first, and *neueste Session* is a qualifier on it. */
+      aria-label={latest ? `${name}, ${t('diary.latest')}` : name}
       data-status={entry.status}
+      data-latest={latest ? '' : undefined}
     >
       {entry.imageUrl === null ? (
         /* The initial, as a stand-in. `aria-hidden` because the link is
