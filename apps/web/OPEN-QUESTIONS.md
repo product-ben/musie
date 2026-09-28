@@ -4887,3 +4887,50 @@ it was written.
 Until then the message is legible and transient, and a shorter sentence would
 also fix it — see the *beendete Übung* entry above, which may change this copy
 anyway.
+
+## The graph's weeks run newest-first, so scrolling back in time moves RIGHT
+
+Where: `src/components/DiaryGraph.tsx` — the `pages` memo and the note above
+it; `src/shell.css` — `.musie-graph__scroller`.
+
+What I checked: the graph should open on the current week. The obvious way is
+to render the weeks oldest-first and push the scroller to its far end on
+mount. **Three versions of that lost a race with the layout engine**, and the
+numbers are in the component:
+
+- `scrollLeft = scrollWidth` in a layout effect left it at **118px of a 361px
+  maximum**. The assignment is clamped to the maximum at that instant, and at
+  that instant the weeks are not yet at full width.
+- The same, re-run from a `ResizeObserver` — the pin ran three times and set
+  361 each time, and **2.5 seconds later the scroller was back at 118**. I
+  patched the `scrollLeft` setter and `scrollIntoView` across the whole page
+  and captured stacks: there were exactly three programmatic scrolls, all
+  mine. The engine re-clamped it during a relayout no observer of mine saw.
+- `flex-direction: row-reverse`, to make the engine rest there by itself —
+  **Chrome rests a reversed row at `scrollLeft: 0` regardless**, which showed
+  the oldest week. The trick works for `column-reverse` and does not transfer.
+
+What I did: stopped moving the scroller and changed the ORDER instead. The
+weeks render newest-first, so the current week is the first page at
+`scrollLeft: 0` — where every browser rests a fresh scroller, with nothing to
+re-run and nothing to race. Verified: `scrolls=NONE pins=NONE`, correct on
+arrival, after a rotate and after a slow read resolves.
+
+**The cost, and it is the part Ben should rule on: scrolling back in time
+moves right.** A calendar usually puts the past on the left. What was bought
+is a graph that is correct on arrival every time instead of three-quarters of
+the time — which was the bug actually in front of me. The chevrons are
+labelled *Woche davor* / *Woche danach* rather than by direction, and the left
+glyph still means "back", so what they do is said in words either way; only
+the swipe is inverted.
+
+Two things that also got better and are worth weighing in: the reading order
+now reaches the current week first instead of walking a year of empty weeks to
+get to it, and it matches the rest of the diary, which is newest-first
+everywhere.
+
+If Ben wants past-on-the-left back, the honest way is a fixed-width track
+whose width is known before layout — i.e. columns at a fixed `--target-primary`
+rather than `1fr`, so `scrollWidth` is computable and the pin cannot be
+clamped against a stale maximum. That trades the seven-columns-fit-the-screen
+property, which is why I did not do it unasked.

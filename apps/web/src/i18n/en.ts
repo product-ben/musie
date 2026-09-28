@@ -607,6 +607,11 @@ export const en = {
   'diary.graph.session': '{title} — {exercise}, {status}',
   'diary.graph.more': '{count} more on this day',
   'diary.graph.start': 'Start a session today',
+  /* The pagination chevrons. Named for the WEEK they move to, not for the
+     direction they point — 'Back' and 'Forward' would be true of the glyph
+     and useless as an announcement. */
+  'diary.graph.prevWeek': 'The week before',
+  'diary.graph.nextWeek': 'The week after',
   'diary.graph.empty': 'Your sessions will stack up here, one picture a day.',
 
   'diary.collapse': 'Close this entry',

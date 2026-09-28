@@ -443,6 +443,11 @@ export const de: Messages = {
   'diary.graph.session': '{title} — {exercise}, {status}',
   'diary.graph.more': 'Noch {count} an diesem Tag',
   'diary.graph.start': 'Heute eine Session starten',
+  /* Benannt nach der Woche, zu der sie führen, nicht nach der Richtung, in
+     die der Pfeil zeigt: 'Zurück' wäre wahr für das Symbol und nutzlos als
+     Ansage. */
+  'diary.graph.prevWeek': 'Woche davor',
+  'diary.graph.nextWeek': 'Woche danach',
   'diary.graph.empty': 'Hier stapeln sich deine Sessions, ein Bild pro Tag.',
 
   'diary.collapse': 'Diesen Eintrag schließen',

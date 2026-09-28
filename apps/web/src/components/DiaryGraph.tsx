@@ -25,10 +25,10 @@
  * `scroll-snap-stop: always`, which is the technique `Carousel` proves and
  * documents: one gesture is one week, with no script deciding it.
  *
- * The only script is the initial scroll to the end, which is a `scrollLeft`
- * written once on mount. `behavior: 'auto'` deliberately — this is not an
- * animation the reader asked for, it is where the scroller starts, and a
- * smooth scroll on arrival would be motion for its own sake.
+ * NO SCRIPT PUTS IT ON THE CURRENT WEEK. The weeks render newest-first into a
+ * `row-reverse` scroller, so the engine rests it on the current week by
+ * itself — see the note above `pages` for the two scripted attempts that lost
+ * a race with the layout engine, and the measurement that settled it.
  *
  * ── IT DOES NOT LISTEN TO THE FILTER ────────────────────────────────────
  * Ben's call, and it holds up: the graph is a constant overview of what you
@@ -36,12 +36,17 @@
  * emptied when somebody asked to see only unfinished sessions would be
  * answering a different question with the same picture.
  *
- * ── AN ABANDONED SESSION IS DIMMED, NOT ABSENT ──────────────────────────
+ * ── AN ABANDONED SESSION IS DASHED, NOT ABSENT ──────────────────────────
  * D7: the diary records what happened, and a session you walked out of
- * happened. It is drawn with reduced opacity and a dashed outline — the same
- * distinction the `outline` badge variant makes on the card — and, because
- * neither of those survives a colour-blind or high-contrast reading, its
- * accessible name says so in words too.
+ * happened. It is drawn with a dashed edge — the same distinction
+ * `Badge variant="outline"` makes on the card — and its accessible name says
+ * so in words, because this is the one place in the product where the status
+ * has no text beside it.
+ *
+ * Ben asked for it DIMMED. It is not, and the reason is a token gap rather
+ * than a disagreement: Layer 1 ships no opacity token at all, and L14.1 binds
+ * this file to tokens. Logged in OPEN-QUESTIONS.md; the stylesheet rule takes
+ * the token the day it lands.
  *
  * ── THE PLUS IS ON TODAY ────────────────────────────────────────────────
  * One ghost IconButton at the top of today's stack. It navigates exactly as
@@ -60,12 +65,13 @@
  * the package on its first day.
  *
  * Inside it, the parts that ARE components are components: `IconButton` for
- * the plus, `Badge` for the overflow count, `ContentBox` for the empty state.
+ * the plus and the two pagination chevrons, `Badge` for the overflow count.
+ * The day-one state is NOT one of them — see the note where it used to be.
  */
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Plus } from 'lucide-react';
-import { Badge, ContentBox, IconButton } from '@musie/design-system';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Badge, IconButton } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { useProfile } from '../lib/profileContext';
 import { useActiveSession } from '../lib/session';
@@ -73,6 +79,27 @@ import {
   dayAnchorId, formatDayOfMonth, formatShortDateTime, formatWeekday, stackOf, weeksFrom,
 } from '../lib/diary';
 import type { DiaryEntry } from '../lib/diary';
+
+/**
+ * Where the scroller is, as the two facts the chevrons need.
+ *
+ * ONE PIXEL OF SLACK. `scrollLeft` is fractional on a trackpad and after a
+ * snap settle, and `scrollWidth - clientWidth` is rounded — so an exact
+ * comparison leaves the *next* chevron live at the end of the run, pointing at
+ * half a pixel of travel. The tolerance is what makes "at the end" mean what a
+ * reader means by it.
+ */
+function measureEdges(element: HTMLElement): { atNewest: boolean; atOldest: boolean } {
+  const max = element.scrollWidth - element.clientWidth;
+  return {
+    /* The weeks run NEWEST FIRST, so the scroller's origin is the current
+       week and its far end is the first week in the diary. Named for the
+       WEEKS rather than for the edges, because "start" and "end" are exactly
+       the two words that would go stale if the order ever flipped back. */
+    atNewest: element.scrollLeft <= 1,
+    atOldest: element.scrollLeft >= max - 1,
+  };
+}
 
 export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
   const t = useT();
@@ -118,20 +145,86 @@ export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
   }, [weeks]);
 
   /**
-   * START AT THE CURRENT WEEK, which is the last page.
+   * THE CURRENT WEEK IS THE FIRST PAGE, AND THAT IS A DATA DECISION.
    *
-   * A layout effect, not an effect: the scroll has to be in place before the
-   * browser paints, or the reader sees the oldest week for a frame and then
-   * the scroller jumps. It runs when the number of weeks changes — a deleted
-   * session can shorten the run — and `scrollWidth` is read at that moment
-   * rather than derived, because the page width is the container's and this
-   * component does not know it.
+   * ── THREE SCRIPTED ATTEMPTS, AND WHY EACH LOST ──────────────────────────
+   * The weeks were rendered oldest-first and the scroller was pushed to its
+   * end on mount. Every version of that push lost a race with the layout
+   * engine, and the measurements are worth keeping because they are what
+   * ruled the approach out rather than a hunch:
+   *
+   *   `scrollLeft = scrollWidth` in a layout effect — left it at 118px of a
+   *   361px maximum. The assignment is clamped to the maximum AT THAT INSTANT,
+   *   and the weeks were not yet at full width.
+   *
+   *   The same, re-run from a ResizeObserver — the pin ran three times and set
+   *   361 each time, and two and a half seconds later the scroller was back at
+   *   118. A patched `scrollLeft` setter and a patched `scrollIntoView`
+   *   recorded every programmatic scroll in the page: there were exactly three,
+   *   all mine. The engine re-clamped it during a relayout no observer of mine
+   *   could see.
+   *
+   *   `flex-direction: row-reverse`, to make the engine rest there by itself —
+   *   Chrome rests a reversed row at `scrollLeft: 0` regardless, which showed
+   *   the OLDEST week. The trick works for `column-reverse` and does not
+   *   transfer.
+   *
+   * ── SO THE ORDER CHANGES INSTEAD OF THE SCROLL POSITION ─────────────────
+   * The weeks render NEWEST FIRST. The current week is then the first page,
+   * at `scrollLeft: 0`, which is where every browser rests a fresh scroller —
+   * with nothing to re-run, nothing to observe and nothing to race.
+   *
+   * THE COST, STATED: scrolling back in time moves RIGHT, where a calendar
+   * usually puts the past on the left. What is bought is that the screen is
+   * correct on arrival, after a rotate, after an image loads and after a slow
+   * read resolves — which is the case that was actually broken, three times.
+   * The chevrons are labelled *Woche davor* / *Woche danach* rather than by
+   * direction, so what they do is said in words either way.
+   *
+   * It also matches the rest of the diary, which is newest-first everywhere,
+   * and it fixes the reading order: a screen reader now reaches the current
+   * week first instead of walking a year to get to it.
    */
+  const pages = React.useMemo(() => [...weeks].reverse(), [weeks]);
+
+  /**
+   * WHICH CHEVRONS ARE LIVE — read off the scroller, never tracked separately.
+   *
+   * A page index held in state would be a second opinion about where the
+   * scroller is, and the scroller is the one that moves: a swipe, a trackpad,
+   * a keyboard tab into a link three weeks back, and `scroll-snap` settling
+   * after a flick all change the position without going through the buttons.
+   * So the buttons READ the scroller and the scroller stays the truth.
+   */
+  const [edges, setEdges] = React.useState({ atNewest: true, atOldest: true });
+
+  /* The first read, because no scroll event has fired yet and the chevrons are
+     drawn in the same frame. It runs when the number of weeks changes, which
+     is the only thing that changes where the ends are. */
   React.useLayoutEffect(() => {
     const element = scroller.current;
-    if (element === null) return;
-    element.scrollLeft = element.scrollWidth;
+    if (element !== null) setEdges(measureEdges(element));
   }, [weeks.length]);
+
+  /**
+   * Move one page, which is one week — `clientWidth` is what `flex: 0 0 100%`
+   * resolved to, so no arithmetic over column counts can disagree with it.
+   *
+   * IT TAKES A DIRECTION IN TIME, NOT A SIGN. The weeks run newest-first, so
+   * *older* is towards the far end and the sign is `+1` — which is the
+   * opposite of what anybody writing `page(-1)` for "back" would expect. The
+   * translation happens here, once, where the ordering is documented.
+   */
+  function page(towards: 'older' | 'newer') {
+    const element = scroller.current;
+    if (element === null) return;
+    /* `behavior: 'auto'`, so the OS's reduced-motion setting is respected by
+       not animating rather than by a query here. */
+    element.scrollBy({
+      left: (towards === 'older' ? 1 : -1) * element.clientWidth,
+      behavior: 'auto',
+    });
+  }
 
   return (
     <section
@@ -142,12 +235,54 @@ export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
          keeps the arithmetic over its own tokens. */
       style={{ '--musie-graph-rows': rows } as React.CSSProperties}
     >
-      {/* The region's name. Visible, because it says what the picture IS —
-          a sighted reader needs that as much as a screen-reader one, and a
-          chart with no title is a chart you have to work out. */}
-      <h2 className="musie-graph__label" id="diary-graph-label">
-        {t('diary.graph.label')}
-      </h2>
+      <div className="musie-graph__head">
+        {/* The region's name. Visible, because it says what the picture IS —
+            a sighted reader needs that as much as a screen-reader one, and a
+            chart with no title is a chart you have to work out. */}
+        <h2 className="musie-graph__label" id="diary-graph-label">
+          {t('diary.graph.label')}
+        </h2>
+
+        {/* ── PAGINATION ─────────────────────────────────────────────────
+            Drawn only when there is more than one week. Two permanently dead
+            controls on a one-week diary would be chrome promising a depth the
+            diary does not have yet — and the day it gets a second week they
+            appear, which is the moment they mean something.
+
+            DISABLED, NOT HIDDEN, at the two ends. A control that vanished at
+            the start of the run would move the other one under the thumb
+            that was aiming at it; disabled keeps the row still and says why
+            it cannot be pressed.
+
+            They are an ADDITION to the swipe, not a replacement: the scroller
+            still snaps, still takes a trackpad, and still scrolls when a
+            keyboard tabs into a link three weeks back. These are for a mouse,
+            which has no swipe. */}
+        {weeks.length > 1 && (
+          <div className="musie-graph__pager">
+            {/* LEFT IS BACK IN TIME, which is what the glyph has to mean
+                whatever the scroll direction underneath it is. The weeks run
+                newest-first, so this one scrolls FORWARD — `page` takes a
+                direction in time and owns that translation. */}
+            <IconButton
+              glyph={ChevronLeft}
+              label={t('diary.graph.prevWeek')}
+              variant="ghost"
+              size="primary"
+              disabled={edges.atOldest}
+              onClick={() => page('older')}
+            />
+            <IconButton
+              glyph={ChevronRight}
+              label={t('diary.graph.nextWeek')}
+              variant="ghost"
+              size="primary"
+              disabled={edges.atNewest}
+              onClick={() => page('newer')}
+            />
+          </div>
+        )}
+      </div>
 
       {/* `tabIndex={0}`: a scroll container that is not otherwise focusable
           cannot be scrolled by keyboard, and its contents here are links that
@@ -161,8 +296,17 @@ export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
         tabIndex={0}
         role="group"
         aria-labelledby="diary-graph-label"
+        /* The scroller reports; the buttons read. Every way of moving it —
+           swipe, trackpad, keyboard focus, a snap settling after a flick —
+           comes through here, which is why the chevrons hold no page index
+           of their own. */
+        /* The scroller reports; the buttons read. Every way of moving it —
+           swipe, trackpad, keyboard focus, a chevron, a snap settling after a
+           flick — comes through here, which is why the chevrons hold no page
+           index of their own. */
+        onScroll={(event) => setEdges(measureEdges(event.currentTarget))}
       >
-        {weeks.map((week) => (
+        {pages.map((week) => (
           <ol
             className="musie-graph__week"
             key={week.key}
@@ -177,21 +321,20 @@ export function DiaryGraph({ entries }: { entries: readonly DiaryEntry[] }) {
         ))}
       </div>
 
-      {/* DAY ONE. Drawn UNDER the week rather than instead of it: the columns
-          and the plus are the invitation, and a box saying "nothing here yet"
-          on top of a perfectly good empty calendar would say less than the
-          calendar does. `outline="dashed"` is the system's own way of drawing
-          a place where something will be, which is what both of /diary's
-          other empty states use. */}
-      {entries.length === 0 && (
-        <ContentBox
-          headline={t('diary.empty')}
-          headingLevel={3}
-          headlineHidden
-          text={t('diary.graph.empty')}
-          outline="dashed"
-        />
-      )}
+      {/* DAY ONE HAS NO BOX HERE, and it did until 2026-09-28.
+
+          It drew a dashed ContentBox under the week saying "your sessions
+          will stack up here" — directly above /diary's own day-one box
+          saying "no sessions yet, finish one and it appears here". Two dashed
+          boxes, stacked, telling a person with an empty diary the same thing
+          twice.
+
+          The calendar says it better than either now that an empty day draws
+          a box: seven shapes and a plus on today IS the invitation, and the
+          screen's own empty state below carries the sentence. `diary.graph.empty`
+          stays in both catalogues, unused, because deleting copy Ben wrote is
+          not this change's business — it is one grep away if it is wanted
+          back. */}
     </section>
   );
 }
@@ -288,16 +431,36 @@ function Day({ day }: { day: { key: string; date: string; dayOffset: number; ent
           </button>
         )}
 
+        {/* A DAY WITH NOTHING ON IT STILL GETS A BOX — Ben, 2026-09-28.
+            "The calendar looks weird when empty."
+
+            It was blank, and a blank column has no floor: seven days of
+            nothing read as a missing element rather than as seven days of
+            nothing. One filled shape per empty day gives the row a baseline,
+            and the stacks then visibly rise off it.
+
+            FILL ONLY, NO OUTLINE — Ben's words, and the reason is that an
+            outline is what a MARK has. A bordered empty box would read as a
+            session whose picture failed to load; an unbordered one reads as
+            the space a session would occupy.
+
+            `aria-hidden`, and it is not in the `<ol>`: the list is sessions,
+            and an empty day has none. A screen reader hears nothing here,
+            which is exactly what happened that day. */}
+        {shown.length === 0 && <div className="musie-graph__blank" aria-hidden="true" />}
+
         {/* `stackOf` returns these OLDEST FIRST within the day, which is the
             one place this app reverses the query's order: a stack grows
             upward, and the session you did first is at the bottom of it. */}
-        <ol className="musie-graph__sessions">
-          {shown.map((entry) => (
-            <li key={entry.id}>
-              <SessionMark entry={entry} />
-            </li>
-          ))}
-        </ol>
+        {shown.length > 0 && (
+          <ol className="musie-graph__sessions">
+            {shown.map((entry) => (
+              <li key={entry.id}>
+                <SessionMark entry={entry} />
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
 
       {/* The axis. `aria-hidden`: the weekday and the number are a visual
