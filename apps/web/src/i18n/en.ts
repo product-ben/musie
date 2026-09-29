@@ -564,23 +564,20 @@ export const en = {
   'diary.detailsHide': 'Hide details',
 
   /* THE CONFIRMATION AFTER A SESSION, as a toast at the top of the screen.
-     Shown on BOTH ways out of a session -- finishing and closing early --
-     because both write an entry, which is what the sentence promises.
+     Ben's words, 2026-09-29, replacing "Im Tagebuch findest du einen Eintrag
+     fuer jede beendete Uebung".
 
-     Ben chose the German wording and the both-paths behaviour together, with
-     the tension stated -- and the tension is sharper than it was put to him.
-     German `session.status.abandoned` is 'Nicht beendet', so after a session
-     closed early the toast's 'fuer jede BEENDETE Uebung' sits directly above a
-     badge reading 'NICHT beendet'. That is a contradiction in one word, not a
-     shade of emphasis. Written as chosen, because Ben chose it knowing the
-     shape of the problem; logged in OPEN-QUESTIONS.md with the two keys named,
-     because the fix is a wording decision and not a code one.
+     IT NAMES THE REFLECTION, WHICH NARROWS WHERE IT MAY APPEAR. The old
+     sentence was about the diary in general and was true after any session,
+     which is why it was shown on both ways out of one. This one promises that
+     a specific thing is there, so it is shown only where that thing was
+     written: a finished session whose reflection was not skipped. Session.tsx
+     decides, and says so.
 
-     The English is written to the German rather than the reverse, which is
-     this catalogue's rule wherever Ben wrote the German first -- and it is
-     free of the clash, because 'complete' and 'Unfinished' do not share a
-     stem. */
-  'diary.saved': 'Your diary has an entry for every exercise you complete',
+     It also retires the clash the old wording carried -- *beendete Uebung*
+     over an entry badged *Nicht beendet* -- without needing the ruling that
+     was logged for it. No adjective, no contradiction. */
+  'diary.saved': 'You can find your reflection in the latest diary entry',
   'diary.saved.dismiss': 'Dismiss this message',
 
   /* -- THE GRAPH ---------------------------------------------------------

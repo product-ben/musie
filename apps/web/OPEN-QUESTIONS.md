@@ -4672,7 +4672,7 @@ the whole verification here and why nothing in `apps/web/src` changed except
 two doc blocks.
 
 
-## The success toast says *beendete* over an entry badged *Nicht beendet*
+## The success toast says *beendete* over an entry badged *Nicht beendet* — RESOLVED 2026-09-29
 
 Where: `src/i18n/de.ts` — `diary.saved`, and `session.status.abandoned` four
 hundred lines above it; `src/routes/Session.tsx` — the `close()` navigation
@@ -4999,3 +4999,45 @@ class of bug is only ever caught by looking — which is how it was caught.
 
 Fixed: `stackOf` returns the query's order untouched, and the chip is drawn
 under the stack.
+
+
+## The *beendete Übung* clash is closed, and the toast got narrower
+
+Where: `src/i18n/en.ts` and `de.ts` — `diary.saved`; `src/routes/Session.tsx` —
+`finish()` and `close()`. Closes the entry above rather than opening anything.
+
+Ben rewrote the sentence on 2026-09-29:
+
+> **"You can find your reflection in the latest diary entry"**
+> **"Deine Reflexion findest du im neuesten Tagebucheintrag"**
+
+That answers the ruling I asked for — there is no adjective left to contradict
+*Nicht beendet* — and it is close to the first of the three options I
+suggested. Ben wrote this one in English, so `en.ts` is the original here and
+the German is the translation, which is the reverse of this catalogue's usual
+direction; both files say so.
+
+**It also narrowed where the toast may appear, and that is a behaviour change I
+made rather than one Ben asked for.** The old sentence was about the diary in
+general and was true after any session, which is why he had asked for it on
+both ways out of one. The new sentence promises that a *specific thing* is in
+the entry. Two paths would have made it false:
+
+- **`close()`** — an abandoned session has no reflection, which is what
+  abandoning it means. The flag is gone from that navigation.
+- **`finish(skip)`** — *Überspringen* on the reflect step finishes the session
+  and writes nothing. Confirming one anyway would send somebody to an entry to
+  look for something they had just declined to write. The flag now rides on
+  `!skip`.
+
+If Ben wants the confirmation back on both ways out, the sentence has to go
+back to being about the entry rather than about the reflection — the two
+decisions are the same decision.
+
+**One edge left alone: photo mode.** `finish()` calls `saveReflection` for any
+non-voice mode, so finishing in *photo* writes a reflection row with an empty
+body — the photo itself never leaves the device (MOCKUPS.md), and the typed box
+is empty. The toast fires and the entry shows no answer. I did not build a
+special case around it, because photo is an interactive mockup that writes
+nothing by design and a branch for it would be logic maintaining a fiction. It
+is worth knowing the day photo becomes real.

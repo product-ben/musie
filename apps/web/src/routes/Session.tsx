@@ -489,8 +489,23 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
          choice is what makes "no toast when you arrive through the nav" free:
          nothing else in the app sets it, so the diary has no rule to enforce.
          /diary clears it out of the history entry on arrival, so a reload does
-         not re-confirm a session finished an hour ago. */
-      navigate('/diary', { replace: true, state: { sessionSaved: true } });
+         not re-confirm a session finished an hour ago.
+
+         ── AND ONLY WHEN THERE IS A REFLECTION TO FIND — 2026-09-29 ────────
+         The toast said "Im Tagebuch findest du einen Eintrag für jede beendete
+         Übung", which was true after ANY session, so it was shown on both ways
+         out of one. Ben's new wording names the REFLECTION — "Deine Reflexion
+         findest du im neuesten Tagebucheintrag" — and that is a promise about
+         a specific thing being there.
+
+         `skip` is *Überspringen* on the reflect step: the session finishes and
+         no reflection is written. Confirming one anyway would send somebody to
+         an entry to look for something they had just declined to write. So the
+         flag rides on `!skip`, and `close()` below drops it entirely. */
+      navigate('/diary', {
+        replace: true,
+        state: skip ? undefined : { sessionSaved: true },
+      });
     } catch (thrown: unknown) {
       console.error('[musie] could not finish the session:', thrown);
       setBusy(false);
@@ -507,17 +522,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       /* THE LIST, exactly as finishing does. Both ways out of a session end in
          the same place, and the diary leads with the one you just left.
 
-         AND IT CARRIES `sessionSaved` TOO — Ben's call, 2026-09-26: closing
-         early writes an entry just as finishing does, which is exactly what
-         the confirmation promises.
+         ── NO `sessionSaved` HERE ANY MORE — 2026-09-29 ───────────────────
+         It carried the flag from 2026-09-26, on Ben's call that closing early
+         writes an entry just as finishing does, which is what the confirmation
+         then promised.
 
-         The cost is stated rather than hidden. The German copy says 'für jede
-         BEENDETE Übung' and `session.status.abandoned` is 'Nicht beendet', so
-         after this path the toast sits above an entry badged with the negation
-         of its own adjective. Ben chose the wording and the both-paths
-         behaviour together; logged in OPEN-QUESTIONS.md, because the fix is a
-         wording decision and not a code one. */
-      navigate('/diary', { replace: true, state: { sessionSaved: true } });
+         Ben's new wording promises something narrower: that a REFLECTION is in
+         the latest entry. An abandoned session has none — that is what
+         abandoning it means — so the sentence would be false on exactly this
+         path. The flag goes rather than the sentence.
+
+         This also settles the clash logged in OPEN-QUESTIONS.md, which was
+         that 'für jede BEENDETE Übung' sat above an entry badged 'Nicht
+         beendet'. There is no adjective left to contradict, and no toast on
+         this path to contradict it with. */
+      navigate('/diary', { replace: true });
     } catch (thrown: unknown) {
       console.error('[musie] could not close the session:', thrown);
       setBusy(false);

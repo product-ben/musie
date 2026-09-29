@@ -416,17 +416,25 @@ export const de: Messages = {
   'diary.details': 'Session-Details',
   'diary.detailsHide': 'Details ausblenden',
 
-  /* Die Bestätigung nach einer Session, als Toast oben am Bildschirm. Auf
-     BEIDEN Wegen aus einer Session — beenden und vorzeitig schließen — weil
-     beide einen Eintrag schreiben, was der Satz verspricht.
+  /* Die Bestätigung nach einer Session, als Toast oben am Bildschirm.
+     Bens Formulierung vom 29.09.2026; vorher stand hier "Im Tagebuch findest
+     du einen Eintrag für jede beendete Übung".
 
-     ACHTUNG, und es ist bewusst so geschrieben: `session.status.abandoned`
-     heißt 'Nicht beendet'. Nach einer vorzeitig geschlossenen Session steht
-     dieser Satz also über einem Eintrag, der 'Nicht beendet' trägt — 'jede
-     beendete Übung' direkt über 'Nicht beendet'. Ben hat Wortlaut und
-     Beide-Wege-Verhalten zusammen entschieden; in OPEN-QUESTIONS.md
-     protokolliert, weil die Lösung eine Formulierungsfrage ist. */
-  'diary.saved': 'Im Tagebuch findest du einen Eintrag für jede beendete Übung',
+     ENGLISCH IST HIER DAS ORIGINAL, ausnahmsweise: Ben hat diesen Satz auf
+     Englisch geschrieben, also ist `en.ts` die Vorlage und dies die
+     Übersetzung. Sonst läuft es in diesem Katalog andersherum.
+
+     Verb an zweiter Stelle statt "Du findest deine Reflexion …", damit der
+     Satz mit dem Ding anfängt, um das es geht — und weil er damit denselben
+     Rhythmus behält wie der Satz, den er ersetzt.
+
+     Der Satz benennt jetzt die REFLEXION, und damit ist er nur noch dort
+     wahr, wo eine geschrieben wurde: bei einer beendeten Session ohne
+     übersprungene Reflexion. Session.tsx entscheidet das.
+
+     Nebenbei erledigt sich damit der Widerspruch des alten Wortlauts —
+     "beendete Übung" über einem Eintrag mit dem Etikett "Nicht beendet". */
+  'diary.saved': 'Deine Reflexion findest du im neuesten Tagebucheintrag',
   'diary.saved.dismiss': 'Meldung schließen',
 
   /* ── Der Graph ────────────────────────────────────────────────────────
