@@ -515,12 +515,23 @@ export const en = {
   'diary.listLabel': 'Diary entries',
   'diary.empty': 'No sessions yet',
   'diary.emptyText': 'Finish a session and it appears here.',
-  'diary.stoppedAt': 'Stopped at {step}',
+  /* WHERE IT STOPPED, AS A LABEL AND A VALUE -- 2026-09-26.
+     It was one string, 'Stopped at {step}', rendered as a quiet line under the
+     answer. It is a `<dl>` row now, with the rest of what is known about the
+     session, and a row is a LABEL and its content -- so the preposition goes
+     in the label and the step stands alone as the value. Keeping the old
+     string as the content would have produced a row reading
+     'Stopped at: Stopped at Listen'. */
+  'diary.stoppedAt': 'Stopped at',
   'diary.duration': '{minutes} min',
   /* The exercise's own description, which is a row in the list now rather
      than prose under the headline. The label is a question the value answers,
      like the three below it. */
   'diary.about': 'What this exercise is',
+  /* The exercise's NAME, which was the card's headline until 2026-09-26 and is
+     a labelled row now. The headline says which session this is; the exercise
+     is a fact about it, like the card and the duration. */
+  'diary.exercise': 'Exercise',
   'diary.when': 'When',
   'diary.howLong': 'How long',
   'diary.card': 'Card',
@@ -534,6 +545,72 @@ export const en = {
   /* DELETION. The confirm is not a formality: the row and its answer go for
      good — `reflections` cascades — and there is no undo, because a diary the
      user asked to forget something from should forget it. */
+  /* THE CARD'S HEADLINE. `{when}` is a formatted timestamp, short form, from
+     `formatShortDateTime` -- the preposition lives here and not in the
+     formatter, because German owns 'vom' and English is free not to translate
+     it. 'Session' is the word this product already uses for a run, in both
+     languages, so it is not translated either.
+
+     One string, four places: the inline card, the lightbox card, the
+     lightbox's own accessible title, and the row in the timeline. */
+  'diary.sessionTitle': 'Session from {when}',
+
+  /* THE COLLAPSE, behind which everything that is ABOUT the session sits --
+     the labelled rows and the status -- while the question, the answer and the
+     recording stay on the card. Two strings rather than one, because the
+     control's name should say what pressing it does, and `aria-expanded`
+     carries the state for anyone who cannot see the chevron. */
+  'diary.details': 'Session details',
+  'diary.detailsHide': 'Hide details',
+
+  /* THE CONFIRMATION AFTER A SESSION, as a toast at the top of the screen.
+     Ben's words, 2026-09-29, replacing "Im Tagebuch findest du einen Eintrag
+     fuer jede beendete Uebung".
+
+     IT NAMES THE REFLECTION, WHICH NARROWS WHERE IT MAY APPEAR. The old
+     sentence was about the diary in general and was true after any session,
+     which is why it was shown on both ways out of one. This one promises that
+     a specific thing is there, so it is shown only where that thing was
+     written: a finished session whose reflection was not skipped. Session.tsx
+     decides, and says so.
+
+     It also retires the clash the old wording carried -- *beendete Uebung*
+     over an entry badged *Nicht beendet* -- without needing the ruling that
+     was logged for it. No adjective, no contradiction. */
+  'diary.saved': 'You can find your reflection in the latest diary entry',
+  'diary.saved.dismiss': 'Dismiss this message',
+
+  /* -- THE GRAPH ---------------------------------------------------------
+     A week of days, each session drawn as its exercise's artwork.
+
+     `diary.graph.label` names the whole region and `diary.graph.weekLabel`
+     each scroll page, because a horizontal scroller with no name announces as
+     a run of links from nowhere.
+
+     `diary.graph.session` is the accessible name of ONE image-link, and it is
+     the whole name: the headline, the exercise and the status, in that order.
+     The image inside it is `alt=""` — a link whose text and image say the same
+     thing announces it twice.
+
+     `diary.graph.more` is the counted chip over a capped stack. `{count}` is a
+     number the screen formats; the chip is a link to that day in the list
+     below, so its name says where it goes rather than just how many there are.
+
+     `diary.graph.empty` is the day-one state, drawn INSIDE the week rather
+     than instead of it: the columns and the plus are the invitation, and a
+     sentence over an empty box would say less. */
+  'diary.graph.label': 'Your sessions, day by day',
+  'diary.graph.weekLabel': 'Week ending {when}',
+  'diary.graph.session': '{title} — {exercise}, {status}',
+  'diary.graph.more': '{count} more on this day',
+  'diary.graph.start': 'Start a session today',
+  /* The pagination chevrons. Named for the WEEK they move to, not for the
+     direction they point — 'Back' and 'Forward' would be true of the glyph
+     and useless as an announcement. */
+  'diary.graph.prevWeek': 'The week before',
+  'diary.graph.nextWeek': 'The week after',
+  'diary.graph.empty': 'Your sessions will stack up here, one picture a day.',
+
   'diary.collapse': 'Close this entry',
   'diary.delete': 'Delete this session',
   'diary.delete.confirm': 'Delete this session?',

@@ -367,7 +367,10 @@ export const de: Messages = {
   'diary.listLabel': 'Tagebucheinträge',
   'diary.empty': 'Noch keine Sessions',
   'diary.emptyText': 'Beende eine Session, dann erscheint sie hier.',
-  'diary.stoppedAt': 'Aufgehört bei {step}',
+  /* Jetzt Label einer <dl>-Zeile statt ganzer Satz: die Präposition steht im
+     Label, der Schritt ist der Wert. Mit der alten Fassung als Inhalt stünde
+     dort 'Aufgehört bei: Aufgehört bei Einsteigen'. */
+  'diary.stoppedAt': 'Aufgehört bei',
   /* 'Min.' with the point: the abbreviation DIN 1301 uses, and it keeps the
      row inside the measure where 'Minuten' would not. */
   'diary.duration': '{minutes} Min.',
@@ -375,6 +378,10 @@ export const de: Messages = {
      Fließtext unter der Überschrift. Das Label ist eine Frage, die der Wert
      beantwortet — wie die drei darunter. */
   'diary.about': 'Worum es geht',
+  /* Der Name der Übung war bis zum 26.09.2026 die Überschrift der Karte und
+     ist jetzt eine Zeile in der Liste. Die Überschrift sagt, WELCHE Session
+     das ist; die Übung ist eine Angabe darüber — wie Karte und Dauer. */
+  'diary.exercise': 'Übung',
   'diary.when': 'Wann',
   /* 'Dauer', not 'Wie lange': a label in a facts list is a noun in German
      where English gets away with a question. */
@@ -385,6 +392,72 @@ export const de: Messages = {
   'diary.notFound': 'Diesen Tagebucheintrag gibt es nicht',
   /* 'endgültig' carries the weight the English gets from 'cannot be undone'
      without a second clause; §5's length budget is tight in a dialog. */
+  /* Die Überschrift der Karte. '{when}' ist ein kurz formatierter Zeitstempel
+     aus `formatShortDateTime`. 'vom' steht hier und nicht im Formatierer:
+     Deutsch braucht die Präposition, Englisch nicht zwingend dieselbe — und
+     ein Formatierer, der den ganzen Satz zurückgäbe, würde Copy in der
+     Sprache wählen, in der er geschrieben wurde.
+
+     'Session' ist das Produktwort (§8), die Session, Plural Sessions. */
+  'diary.sessionTitle': 'Session vom {when}',
+
+  /* Der Umschalter, hinter dem alles liegt, was ÜBER die Session ist — die
+     beschrifteten Zeilen und der Status. Frage, Antwort und Aufnahme bleiben
+     immer sichtbar.
+
+     'Session-Details' mit Bindestrich, nicht 'Session Details': §8 verlangt
+     Durchkopplung, und 'Session' ist laut derselben Regel ein deutsches
+     Substantiv. Bens Briefing schrieb es mit Leerzeichen; das ist im Deutschen
+     ein Deppenleerzeichen und dieses Dokument ist genau dafür da.
+
+     Zwei Strings statt einem, weil der Name einer Schaltfläche sagen soll, was
+     das Drücken tut; `aria-expanded` trägt den Zustand für alle, die das
+     Chevron nicht sehen. */
+  'diary.details': 'Session-Details',
+  'diary.detailsHide': 'Details ausblenden',
+
+  /* Die Bestätigung nach einer Session, als Toast oben am Bildschirm.
+     Bens Formulierung vom 29.09.2026; vorher stand hier "Im Tagebuch findest
+     du einen Eintrag für jede beendete Übung".
+
+     ENGLISCH IST HIER DAS ORIGINAL, ausnahmsweise: Ben hat diesen Satz auf
+     Englisch geschrieben, also ist `en.ts` die Vorlage und dies die
+     Übersetzung. Sonst läuft es in diesem Katalog andersherum.
+
+     Verb an zweiter Stelle statt "Du findest deine Reflexion …", damit der
+     Satz mit dem Ding anfängt, um das es geht — und weil er damit denselben
+     Rhythmus behält wie der Satz, den er ersetzt.
+
+     Der Satz benennt jetzt die REFLEXION, und damit ist er nur noch dort
+     wahr, wo eine geschrieben wurde: bei einer beendeten Session ohne
+     übersprungene Reflexion. Session.tsx entscheidet das.
+
+     Nebenbei erledigt sich damit der Widerspruch des alten Wortlauts —
+     "beendete Übung" über einem Eintrag mit dem Etikett "Nicht beendet". */
+  'diary.saved': 'Deine Reflexion findest du im neuesten Tagebucheintrag',
+  'diary.saved.dismiss': 'Meldung schließen',
+
+  /* ── Der Graph ────────────────────────────────────────────────────────
+     Eine Woche aus Tagen, jede Session als Bild ihrer Übung.
+
+     `diary.graph.session` ist der ganze zugängliche Name EINES Bild-Links:
+     Überschrift, Übung, Status. Das Bild darin hat alt="" — ein Link, dessen
+     Text und Bild dasselbe sagen, sagt es zweimal.
+
+     'Noch 3 an diesem Tag' statt '+3': die Chip ist ein Link auf diesen Tag in
+     der Liste darunter, und ihr Name soll sagen, wohin er führt. */
+  'diary.graph.label': 'Deine Sessions, Tag für Tag',
+  'diary.graph.weekLabel': 'Woche bis {when}',
+  'diary.graph.session': '{title} — {exercise}, {status}',
+  'diary.graph.more': 'Noch {count} an diesem Tag',
+  'diary.graph.start': 'Heute eine Session starten',
+  /* Benannt nach der Woche, zu der sie führen, nicht nach der Richtung, in
+     die der Pfeil zeigt: 'Zurück' wäre wahr für das Symbol und nutzlos als
+     Ansage. */
+  'diary.graph.prevWeek': 'Woche davor',
+  'diary.graph.nextWeek': 'Woche danach',
+  'diary.graph.empty': 'Hier stapeln sich deine Sessions, ein Bild pro Tag.',
+
   'diary.collapse': 'Diesen Eintrag schließen',
   'diary.delete': 'Diese Session löschen',
   'diary.delete.confirm': 'Session löschen?',

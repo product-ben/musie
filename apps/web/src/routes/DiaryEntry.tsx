@@ -37,31 +37,31 @@
  * return to it. A fourth affordance doing what the X does would read, at the
  * bottom of a card, as an action on the card.
  *
- * ── WHAT IS A ROW AND WHAT IS NOT ──────────────────────────────────────────
- * `ContentList` is a `<dl>`, and a `<dl>` row is a LABEL and its content. So
- * the facts the catalogue has WRITTEN a label for are rows — when, how long,
- * the card — and the facts it has written as values are rendered as what they
- * are: the exercise name is the box's heading, its description the box's
- * supporting text, the status a badge, and *Stopped at …* a quiet line.
+ * ── WHAT THE CARD IS MADE OF LIVES IN `DiaryCard` ─────────────────────────
+ * Since 2026-09-21 this route is the FRAME and the four states around it, and
+ * nothing else. The card's own anatomy — what is a `<dl>` row and what is not,
+ * why the answer sits above the recording, what hides behind *Session-Details*
+ * — is argued in `components/DiaryCard.tsx`, where it belongs, because /diary
+ * renders the same card inline.
  *
- * That split is the catalogue's own, not an invention. `diary.when`,
- * `diary.howLong` and `diary.card` are labels; `diary.duration`,
- * `diary.stoppedAt`, `session.status.finished` and `session.status.abandoned`
- * are values with no label written beside them. Inventing a "Status" key to
- * make every fact a row would be writing copy this step was told not to write,
- * and labelling a row with a value reads as a definition of the wrong term.
+ * Two things that WERE described here and have moved, recorded so the change
+ * is findable from this end too (2026-09-26): the box is no longer FRAMED —
+ * it takes `onDismiss` for its close control instead of a `header` slot — and
+ * its headline is the SESSION, `Session vom {when}`, not the exercise name.
+ * The exercise is a labelled row now.
  *
  * ── STRUCTURE FROM COMPONENTS, NOT FROM A NEW CLASS ────────────────────────
- * `Lightbox` + `ContentBox` (framed, via `header`) + `ContentList` +
- * `Badge` / `BadgeRow` + `TrackButton`, with a nested `sunken` `ContentBox`
- * for the answer. Not one `musie-` block was added, because a custom pattern
- * is permitted only where the system has NO component (10-layout.md L14) and
- * here it has six. Nothing below styles a component from outside — where the
- * layout needed something the box does not do, the answer was another
- * component rather than a class. The one thing the system could NOT do was
- * be opened by a URL, and that went into the system: `Lightbox.trigger` is
- * now optional, which is L14's own instruction and CtaButton's `align` all
- * over again. The only app class left here is the shell's `.musie-note`.
+ * `Lightbox` + `ContentBox` + `ContentList` + `Badge` / `BadgeRow` +
+ * `TrackButton`, with a nested `sunken` `ContentBox` for the answer. Not one
+ * `musie-` block was added HERE, because a custom pattern is permitted only
+ * where the system has NO component (10-layout.md L14) and here it has six.
+ * The one thing the system could NOT do was be opened by a URL, and that went
+ * into the system: `Lightbox.trigger` is now optional, which is L14's own
+ * instruction and CtaButton's `align` all over again. The X in the card's
+ * headline row went the same way on 2026-09-26 — `ContentBox` takes
+ * `onDismiss` now, and `.musie-entry__head` is deleted rather than kept.
+ *
+ * The only app class left in this file is the shell's `.musie-note`.
  *
  * ── EVERY STRING IS PASSED ─────────────────────────────────────────────────
  * `ContentList`'s `emptyLabel` is passed even on a list that cannot be empty
@@ -83,10 +83,10 @@
  */
 import { Navigate, useParams } from 'react-router';
 import { Lightbox, Message } from '@musie/design-system';
-import { useT } from '../i18n/localeContext';
+import { useLocale, useT } from '../i18n/localeContext';
 import { useCloseOverlay } from '../lib/useCloseOverlay';
 import { useDiaryEntry } from '../lib/useDiary';
-import { sessionPath } from '../lib/diary';
+import { formatShortDateTime, sessionPath } from '../lib/diary';
 /* THE CARD ITSELF LIVES IN A COMPONENT, because /diary renders the same one
    inline for the newest entry. This route is now the frame and the four
    states around it, and nothing else. */
@@ -94,6 +94,7 @@ import { DiaryCard } from '../components/DiaryCard';
 
 export function DiaryEntry() {
   const t = useT();
+  const { locale } = useLocale();
   const params = useParams();
   /**
    * Closing, and the ONE thing this overlay needs that /menu does not.
@@ -182,8 +183,10 @@ export function DiaryEntry() {
    * entry rather than reserving a box-shaped hole.
    *
    * ── ONE STRING, AND THE BOX'S HEADLINE WON ───────────────────────────────
-   * `title` is required and the exercise name is already the ContentBox's
-   * headline, so one of the two has to go. The BOX's wins, and `titleHidden`
+   * `title` is required and the session's own title is already the
+   * ContentBox's headline, so one of the two has to go. (It was the EXERCISE
+   * name until 2026-09-26; both halves moved together, and the point of the
+   * shared catalogue key is that they cannot move apart.) The BOX's wins, and `titleHidden`
    * keeps the name as the dialog's accessible name without drawing it twice:
    * the box's headline is the one the framed header is built around — it sits
    * above the hairline with the status badge and the exercise's description.
@@ -206,7 +209,16 @@ export function DiaryEntry() {
   return (
     <Lightbox
       open
-      title={entry === null ? t('route.diaryEntry.title') : entry.exerciseName}
+      /* THE SAME STRING THE CARD'S HEADLINE IS — 2026-09-26. It was the
+         exercise name; the card's headline is the session now, and the dialog's
+         accessible name has to be what the dialog visibly says or the two
+         disagree in the accessible tree. One catalogue key, four places: this,
+         the card inline, the card here, and the row that opened it. */
+      title={
+        entry === null
+          ? t('route.diaryEntry.title')
+          : t('diary.sessionTitle', { when: formatShortDateTime(entry.startedAt, locale) })
+      }
       titleHidden={entry !== null}
       /* Rule 7: the package's catalogue would answer in the right language
          here, and it is still passed — the app owns this word. */

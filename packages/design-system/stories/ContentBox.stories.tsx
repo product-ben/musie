@@ -54,6 +54,26 @@ const meta = {
           'accessible name. Mirrors Switch’s `labelHidden`. Never remove the headline to',
           'hide it.',
           '',
+          '**Closeable (`onDismiss`).** Passing `onDismiss` **and** `dismissLabel` draws',
+          'an X in the headline row. It does **not** make the card framed.',
+          '',
+          'Ben asked for a `dismissable` *variant*; this is deliberately not one. It is a',
+          '**capability** — the same capability §7.10 Message and §7.23 Toast already',
+          'spell `onDismiss` + `dismissLabel` — and a third spelling for the third',
+          'component doing one thing is how a set drifts. So: no variant, the same two',
+          'props, one more consumer.',
+          '',
+          'What it replaces: `apps/web` drew this X by passing a `header` holding an Icon',
+          'Button, which forced the card framed — a header band, a hairline, and the',
+          'control on its own line below the headline, for a card that wanted none of the',
+          'three. The two props coexist: a framed card with an `onDismiss` puts the X in',
+          'the header row.',
+          '',
+          '**The headline is the part that gives.** The control holds `--target-primary`',
+          'because a thumb depends on it; the heading shrinks and wraps beside it. That is',
+          '§23’s degradation order applied to a card, and it is what makes the row survive',
+          '320px with a German compound in it.',
+          '',
           '**Framed (header slot).** Passing `header` splits the card into two regions',
           'divided by a full-bleed hairline. The line is full-bleed on purpose: an inset',
           'line reads as a rule under the text above it, an edge-to-edge line reads as',
@@ -192,6 +212,14 @@ const meta = {
     header: {
       control: false,
       description: 'Header region. Present ⇒ the card renders framed: header, hairline, body.',
+    },
+    onDismiss: {
+      action: 'dismiss',
+      description: 'Present (with `dismissLabel`) ⇒ the card draws a close control in its headline row. What closing MEANS is the consumer’s; the box only reports the press.',
+    },
+    dismissLabel: {
+      control: 'text',
+      description: 'The close control’s whole accessible name. Required when `onDismiss` is — there is no catalogue default, because a box does not know whether it is being closed, collapsed or put away.',
     },
     children: { control: false, description: 'Arbitrary content, below the text.' },
     className: { control: false },
@@ -391,5 +419,66 @@ export const LongCopy: Story = {
     headlineStep: 'display-lg',
     text: 'Work with the card you are drawn to, not the one you think you should pick. Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.',
     textStep: 'body-lg',
+  },
+};
+
+/**
+ * CLOSEABLE — the X on the headline's own row.
+ *
+ * `onDismiss` and `dismissLabel` together; either alone draws nothing, because
+ * a close control with no accessible name announces as "button" and is worse
+ * than no control at all.
+ */
+export const Closeable: Story = {
+  args: {
+    headline: 'Session vom 26. September 2026 um 10:04',
+    dismissLabel: 'Close this entry',
+    text: 'The X sits in the headline row, not in a header band above a hairline — which is what passing an Icon Button as `header` used to produce.',
+  },
+};
+
+/**
+ * THE CASE THE ROW HAS TO SURVIVE: a German compound at phone width.
+ *
+ * The heading shrinks and wraps; the control keeps `--target-primary` and stays
+ * on the first line. Narrow the viewport to see the degradation order hold —
+ * if the X ever moves below the headline or drops under 44px, this story is
+ * where it shows.
+ */
+export const CloseableLongHeadline: Story = {
+  args: {
+    headline: 'Aufmerksamkeitsfokussierungsschwierigkeiten in der Achtsamkeitsübung',
+    dismissLabel: 'Diesen Eintrag schließen',
+  },
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' },
+    docs: { description: { story: 'Shown at phone width on purpose.' } },
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ maxWidth: 320 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/** Closeable AND framed. The X joins the header row rather than replacing it —
+ *  the two props are orthogonal, which is why neither had to become a variant. */
+export const CloseableFramed: Story = {
+  args: {
+    headline: 'Session vom 26. September 2026',
+    dismissLabel: 'Close this entry',
+    header: <CtaButton variant="ghost">Session details</CtaButton>,
+    children: (
+      <ContentList
+        label="About this session"
+        emptyLabel="Nothing recorded"
+        items={[
+          { label: 'Exercise', content: 'Achtsame Pause' },
+          { label: 'Duration', content: '12 min' },
+        ]}
+      />
+    ),
   },
 };

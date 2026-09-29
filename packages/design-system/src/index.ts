@@ -101,7 +101,7 @@ export type { ScrollSnapControls } from './useScrollSnap';
 export type { ToolSize } from './useCoarsePointer';
 
 export { Toast } from './Toast';
-export type { ToastProps, ToastAction, ToastLive } from './Toast';
+export type { ToastProps, ToastAction, ToastLive, ToastTone, ToastPlacement } from './Toast';
 
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlProps, SegmentedOption } from './SegmentedControl';

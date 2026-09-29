@@ -1022,7 +1022,8 @@ first time.
 
 ## Phase G · The Diary, finished
 
-Reduced, because C.7 already built the part the flow depends on.
+Reduced, because C.7 already built the part the flow depends on. G.3 was
+added on 2026-09-26, after the second usability test.
 
 - [x] **G.1 The timeline at a month's scale.** Grouping, filtering, and an
   empty state that reads well after thirty sessions rather than on day one.
@@ -1056,6 +1057,67 @@ Reduced, because C.7 already built the part the flow depends on.
   and asserts the stranger's rows survive. That is the test that goes red the
   day `sessions_delete_own` is weakened — where the app would otherwise start
   deleting other people's diaries in silence.
+
+- [x] **G.3 The diary, iterated after the second usability test — 2026-09-26.**
+  Ben's brief, on branch `diary-iteration`. Four things, and the first three
+  are one thing: the card used to be a list of facts with the person's own
+  words somewhere inside it, and it is now the person's words with the facts
+  folded away.
+
+  **The card is about a SESSION, not an exercise.** The headline is `Session
+  vom {when}` — one catalogue key, `diary.sessionTitle`, used in four places
+  (the inline card, the lightbox card, the lightbox's accessible title, and
+  the row in the timeline) so they cannot drift. The exercise name moved into
+  the labelled rows. What this buys is identity: three sessions of Achtsame
+  Pause used to be three cards with one headline between them.
+
+  **The reflect step's question, at `body-lg`, above the answer** — so the
+  answer reads as an answer. It is DERIVED, not stored: there is no
+  `exercise_i18n.question` any more (dropped 2026-09-23, because listen and
+  reflect ask different questions on purpose), so `reflectQuestionOf` takes the
+  first `##` out of `reflect_md` through the same parser the reflect step uses.
+
+  **`Session-Details` folds the metadata away.** The labelled rows, *Aufgehört
+  bei* (a `<dl>` row now, which split `diary.stoppedAt` into a label and a
+  value) and the status badge. The question, the answer, the recording and the
+  DELETE control stay out — a destructive action hidden behind a disclosure is
+  harder to find when you want it and no harder to hit when you do not.
+
+  **A graph above everything**, `components/DiaryGraph.tsx`: a week of days,
+  each day's sessions stacked as their exercise artwork, scrolled a week at a
+  time back to the first session. It is an `<ol>` of links drawn as a chart —
+  no SVG, no library — so keyboard, focus and find-in-page work with no script
+  beyond the initial scroll. It does NOT listen to the filter, by Ben's call:
+  the graph is a constant overview and the segments are a question about the
+  list.
+
+  **Two design-system changes, both additive.** `ContentBox` takes `onDismiss`
+  + `dismissLabel` and draws the X in the headline row — Ben asked for a
+  `dismissable` variant and it is deliberately not one, because that capability
+  is already spelled this way on `Message` and `Toast`. `Toast` takes `tone`
+  and `placement`, both defaulted to what it already did, so
+  `VoiceTranscript`'s undo offer does not move. Four new stories.
+
+  ***Done when:* the confirmation appears coming from a session and never from
+  the nav — DONE, and it is free rather than enforced.** The signal is route
+  state set by `Session.tsx`; nothing else in the app sets it, so there is no
+  rule for the diary to apply. It is cleared with `window.history.replaceState`
+  rather than a `navigate`, because `useDiary` keys its cache on
+  `location.key` and a tidy-up would silently re-read the whole diary.
+
+  **It also fixed a Lightbox defect that had nothing to do with the diary.**
+  `.musy-lightbox__popup` carried both `padding` and `overflow: hidden`, and
+  CSS clips at the PADDING box — so a tall popup painted its scrolling child
+  through its own bottom inset and sliced the last line through the glyphs.
+  Measured at 320 × 900 before anything was changed; invisible whenever the
+  content fits, which is every desktop viewport and every story. Affects every
+  Lightbox in the product.
+
+  **Four entries in `apps/web/OPEN-QUESTIONS.md`**, one of which needs Ben: the
+  German toast says *für jede **beendete** Übung* and
+  `session.status.abandoned` is ***Nicht** beendet*, so on the close-early path
+  the sentence sits above its own negation. Written as chosen; the fix is a
+  wording call.
 
 **Checkpoint.** Read the privacy copy from C.2 next to what the app actually
 does, line by line. If a sentence is doing work the code does not, fix the

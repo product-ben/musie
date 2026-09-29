@@ -55,6 +55,29 @@
    one land on the viewport's centre line; with one button and `1fr auto` the
    logo would centre in whatever room is left beside the hamburger and sit
    visibly off-axis.                                                         */
+/* ── HOW FAR DOWN A TOP-PLACED TOAST STARTS ───────────────────────────────
+   `--z-toast` (500) outranks `--z-sticky` (100) by Layer 1's own design, so a
+   `placement="top"` Toast paints OVER this header unless something says
+   otherwise. The component publishes this property and falls back to a token;
+   only the app knows how tall its own header is, so the app answers.
+
+   MEASURED BY CONSTRUCTION, not by a number somebody read off a screenshot.
+   The header is `align-items: center` with `padding: var(--sp-3) …`, and its
+   tallest child is the menu control at `--target-primary` — the Logo's nav
+   mark is `--icon-size-lg`, well under it. So the height IS
+   `--sp-3 * 2 + --target-primary`, and it stays right the day either token
+   moves. `--space-gap-stack` on top is the toast's own clearance below the
+   hairline. (AppShell's comment says "69px", which is this plus the border.)
+
+   IT DOES NOT FOLLOW THE HEADER WHEN IT HIDES. The header slides away on
+   scroll, and a toast that chased it would be a second thing moving on a
+   screen somebody is reading. It holds the position the header occupies when
+   it is there, which is the only position that is correct in both states. */
+.musie-app {
+  --musy-toast-inset-block-start:
+    calc(var(--sp-3) * 2 + var(--target-primary) + var(--space-gap-stack));
+}
+
 .musie-header {
   position: sticky;
   inset-block-start: 0;
@@ -422,9 +445,8 @@
    --space-gap-group ON BOTH SIDES, and both are load-bearing. Above, because
    the card it follows is a different kind of thing and must not look like part
    of it. Below, because what comes next changes: the filter row's own top
-   margin collapses with this one to a single gap, and with no filter drawn
-   *Earlier* or the Timeline follows instead — the Timeline carrying no margin
-   at all.                                                                   */
+   margin collapses with this one to a single gap, and with no filter drawn the
+   Timeline follows instead, carrying no margin at all.                       */
 .musie-diary__start {
   margin-block: var(--space-gap-group);
 }
@@ -435,29 +457,24 @@
    is that a screen never reaches into it. What the screen owns is where the
    control sits in the column.
 
-   MARGIN ON BOTH SIDES, because what follows it changes. With the latest
-   entry open the next thing is `.musie-diary__earlier`, whose own top margin
-   collapses with this one to a single --space-gap-group; with a filter set
-   that heading is gone and the Timeline follows directly, and the Timeline
-   carries no margin of its own (`.musy-timeline { margin: 0 }`) — so without
-   a bottom margin here the segments would sit hard against the first date.  */
+   MARGIN ON BOTH SIDES. The Timeline follows it directly and carries no margin
+   of its own (`.musy-timeline { margin: 0 }`), so without a bottom margin here
+   the segments would sit hard against the first date. (Until 2026-09-28 the
+   next thing could also be `.musie-diary__earlier`, whose top margin collapsed
+   with this one; that heading went with the inline card.)                    */
 .musie-diary__filter {
   margin-block: var(--space-gap-group);
 }
 
-/* ═══ THE DIARY'S SECOND HEADING ════════════════════════════════════════════
-   *Earlier* — what separates the session you just finished from the ones
-   before it. heading-sm rather than the page title's step: it labels a region
-   inside the screen, not the screen.                                       */
-.musie-diary__earlier {
-  margin: var(--space-gap-group) 0 0;
-  font-family: var(--type-heading-sm-family);
-  font-size: var(--type-heading-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-heading-sm-line);
-  letter-spacing: var(--type-heading-sm-tracking);
-  color: var(--on-surface-muted);
-}
+/* ═══ THE DIARY'S SECOND HEADING — DELETED 2026-09-28 ═══════════════════════
+   `.musie-diary__earlier` drew *Earlier*, which separated the session you had
+   just finished — open as a card at the top of the screen — from the ones
+   before it. The card is gone (Ben), and *Earlier* is a relative word with
+   nothing left to be earlier THAN: the run is the whole diary now and its
+   period headings sit directly under the page title.
+
+   `diary.earlier` stays in both catalogues, unused. Deleting copy is not this
+   change's business and it is one grep away if the heading ever comes back. */
 
 /* ═══ THE END OF THE DIARY ══════════════════════════════════════════════════
    Delete-everything, which moved here from /settings on 2026-09-24. This class
@@ -1143,40 +1160,429 @@
   color: var(--on-surface-muted);
 }
 
-/* ═══ A DIARY ENTRY'S HEADER ROW ════════════════════════════════════════════
-   Inline only, and since 2026-09-23 it holds ONE thing: the control that
-   collapses the card back to its preview row. The status badge used to share
-   it and has moved to `.musie-entry__foot`.
+/* ═══ A DIARY ENTRY'S HEADER ROW — DELETED 2026-09-26 ═══════════════════════
+   `.musie-entry__head` was a flex row inside `ContentBox`'s `header` slot,
+   holding the one control that collapses the card. Passing `header` at all is
+   what made the card FRAMED — a header band, a hairline, and the X on its own
+   line under the headline, because `.musy-box__header` is a flex COLUMN.
 
-   A PERMITTED CUSTOM PATTERN (L14): `.musy-box__header` is a flex COLUMN whose
-   default `align-items: stretch` would take a lone IconButton edge to edge.
-   That is the same trap `BadgeRow` exists to solve for a lone Badge —
-   documented in ContentBox's own header comment — and the answer here is the
-   same shape: a row that lays its child out at its natural width.
+   The box takes `onDismiss` + `dismissLabel` now and draws the control in the
+   headline row itself, which is the same pair `Message` and `Toast` have
+   always taken. So this block is not moved or renamed: it is gone, and the
+   geometry it was working around is the design system's again.
 
-   `justify-content: flex-end` rather than the `space-between` this had while
-   there were two children: with one child, `space-between` puts it at the
-   START, which is the corner an X must never be in.                        */
-.musie-entry__head {
+   This is L14.3 arriving at its stated destination rather than being worked
+   around one more time — "a pattern that recurs is a component request".   */
+
+/* ═══ THE DIARY GRAPH ═══════════════════════════════════════════════════════
+   Ben, 2026-09-26. A week of days; the sessions of each day stacked up it as
+   their exercise's artwork.
+
+   A PERMITTED CUSTOM PATTERN (L14): the system has no component for this.
+   Every declaration below resolves to a Layer 1 token or arithmetic over one
+   (L14.1); every class is `musie-` (L14.2); it has one caller, so it is a
+   COMPONENT CANDIDATE and not yet a component (L14.3, logged).
+
+   ── THE WEEK IS THE SCROLL PAGE, AND CSS DECIDES IT ──────────────────────
+   Each `.musie-graph__week` is exactly the scroller's width, so one page is
+   one week at every viewport with no width written down anywhere. Snapping is
+   `scroll-snap-type: x mandatory` plus `scroll-snap-stop: always` on each
+   week — the pair `Carousel` documents: the first promises a scroll LANDS on
+   a snap point, the second forbids a flick passing one, so a hard swipe moves
+   one week rather than three.
+
+   ── THE COLUMN HEIGHT IS ARITHMETIC OVER ONE TOKEN ───────────────────────
+   A mark is square and capped at `--target-primary`, which is not a picked
+   size: it is the set's own touch target. From 393px up a column is wider
+   than that and the cap holds it steady; below 393px the mark fills its
+   column and is smaller, which is argued at the rule itself.
+
+   Every column in every week is the SAME height, or the graph resizes as the
+   reader scrolls from a quiet week into a busy one. That height is the
+   BUSIEST DAY the diary actually holds, handed in as `--musie-graph-rows` —
+   not the cap, which reserved most of a phone screen for four sessions
+   nobody had yet.                                                          */
+
+.musie-graph {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+  /* The section's own separation from the card below it. Margins collapse
+     with the card's, so the two are one gap apart and not two — the same
+     treatment `.musie-diary__filter` takes. */
+  margin-block-end: var(--space-gap-group);
+}
+
+/* The name and the pager share a row: the controls belong to the thing they
+   page, and putting them at the trailing edge of its heading is the smallest
+   way to say so (L6). `wrap` because a long German name plus two 44px targets
+   does not fit 320px on one line — and when it wraps the pager keeps its
+   edge. */
+.musie-graph__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-gap-stack);
 }
 
+/* Pulled back by --sp-2 so the glyphs line up with the text's edge rather
+   than the targets' — the same correction §10's and §23's dismiss make. */
+.musie-graph__pager {
+  display: flex;
+  align-items: center;
+  /* `--space-gap-related`, the token for "atoms that belong together" — the
+     two chevrons are one control in two halves. NOT `--space-gap-inline`,
+     whose own comment reserves it for an icon and its label and says never to
+     widen it. */
+  gap: var(--space-gap-related);
+  margin-inline-end: calc(var(--sp-2) * -1);
+}
+
+.musie-graph__label {
+  margin: 0;
+  /* It gives, and the two controls do not: a name can wrap, a touch target
+     cannot shrink. The same degradation order §23 states for the toast. */
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  line-height: var(--type-label-lg-line);
+  letter-spacing: var(--type-label-lg-tracking);
+  color: var(--on-surface-muted);
+}
+
+.musie-graph__scroller {
+  display: flex;
+  /* NORMAL ORDER, and the weeks arrive newest-first instead — see `pages` in
+     DiaryGraph.tsx for the three scripted attempts at starting this scroller
+     at its far end, and the measurements that ruled each one out.
+     `row-reverse` was the third: Chrome rests a reversed row at
+     `scrollLeft: 0` anyway, which showed the oldest week. */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  /* The scrollbar is chrome on a picture. Hidden on the platforms that let it
+     be, and the region is still keyboard-scrollable because it is focusable —
+     which is what `tabIndex={0}` on it is for. */
+  scrollbar-width: none;
+  /* 2.4.11: a focused mark inside an overflow container needs room for its
+     ring, or the ring is clipped by the scrollport. */
+  padding-block: var(--focus-ring-clearance);
+}
+.musie-graph__scroller::-webkit-scrollbar { display: none; }
+
+.musie-graph__week {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: grid;
+  /* Seven equal columns, whatever the container is. `1fr` and not the mark's
+     own width: a 320px phone gives each day ~44px and the mark fills it; a
+     desktop gives each ~90px and the mark stays --target-primary, centred. */
+  /* `minmax(0, 1fr)`, NOT `1fr`. A bare `1fr` is `minmax(auto, 1fr)`, and
+     `auto` refuses to go below its content — so a column whose mark is wider
+     than its share pushes the grid past the scroller instead of shrinking.
+     Same trap as `min-width: auto` on a flex item, one layout mode over. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /* --sp-2, not --space-gap-stack (--sp-4). Seven columns and six gaps share
+     one phone: at 320px, 16px gaps leave 27px a column and the marks
+     overflowed their cells and clipped at the scroller's edge — measured.
+     At 8px they leave 34px, and at 393px they leave the full
+     --target-primary. This is the one place in the app where the gap is
+     load-bearing for a touch target rather than for rhythm. */
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.musie-graph__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-stack);
+}
+
+/* THE STACK GROWS UPWARD, which is what `justify-content: flex-end` says: the
+   marks sit at the BOTTOM of a column that is always the same height, so the
+   axis under them is a baseline and a busy day is visibly taller than a quiet
+   one. Reserving the height is what stops the graph resizing as the reader
+   scrolls from a quiet week into a busy one. */
+.musie-graph__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-gap-stack);
+  /* IT FILLS ITS COLUMN, and without this the empty days had no box.
+     `.musie-graph__day` is a flex column with `align-items: center`, so this
+     is a flex item whose cross size is SHRINK-TO-FIT. An empty day's stack
+     held nothing but a `inline-size: 100%` blank, which resolved against a
+     parent whose width was being derived from it — circular, so zero, so
+     invisible. Today's column happened to work only because the plus control
+     gave the stack a width to inherit. Measured at 393px: six blanks missing,
+     one drawn. */
+  inline-size: 100%;
+  /* THE HEIGHT IS THE BUSIEST DAY, NOT THE CAP. `--musie-graph-rows` is a
+     count the component works out from the data — see its `rows` memo — and
+     the arithmetic stays here, over this file's own tokens.
+
+     It was a hardcoded 6 (GRAPH_STACK_CAP + 2) and that drew ~380px of empty
+     column above a diary with one session in it. The fallback keeps the rule
+     standing on its own if the property is ever missing.
+
+     Below 393px the marks are narrower than --target-primary (see the mark
+     rule), so this reserves slightly MORE than the stack needs. Generous, not
+     wrong: the columns stay level with each other and with the axis, which is
+     what the reservation is for. */
+  min-block-size: calc(
+    (var(--target-primary) + var(--space-gap-stack)) * var(--musie-graph-rows, 2)
+  );
+}
+
+.musie-graph__sessions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-stack);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── ONE SESSION ──────────────────────────────────────────────────────────
+   A square the size of a touch target, with the exercise's picture in it. The
+   radius is --radius-card rather than --radius-full: these are pictures of
+   the exercise cards, and a circle would crop the artwork to its centre. */
+.musie-graph__mark {
+  display: block;
+  /* IT FILLS ITS COLUMN, UP TO THE TOUCH TARGET — it does not impose its own
+     width on the grid.
+
+     It was `inline-size: var(--target-primary)` flat, and that is what broke
+     320px: a 44px mark in a 27px column overflowed into its neighbours and
+     the last column's mark was sliced by the scroller's edge. From 393px up
+     a column is wider than --target-primary, so the cap is what holds the
+     marks at a consistent size instead of stretching them across a desktop.
+
+     `aspect-ratio` rather than a matching `block-size`, so the square
+     survives the shrink: the artwork is square (every source is centred and
+     cropped, per 20260924140000) and a mark that squashed would crop it
+     twice. */
+  inline-size: 100%;
+  max-inline-size: var(--target-primary);
+  aspect-ratio: 1;
+  border-radius: var(--radius-card);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  background-color: var(--surface-sunken);
+  overflow: hidden;
+  transition: transform var(--motion-toggle), border-color var(--motion-toggle);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musie-graph__mark:hover { border-color: var(--border-strong); }
+}
+
+/* ── THE ONE YOU MOST RECENTLY FINISHED ───────────────────────────────────
+   Ben, 2026-09-28: the inline card is gone, and the latest session is marked
+   where it already appears instead — here and in the run below.
+
+   A RING OUTSIDE THE MARK, not a fill over it: the artwork IS the mark, and
+   tinting it would change the picture rather than point at it. `box-shadow`
+   rather than an outline or a border so nothing in the layout moves — a
+   44px column has no room to give a marked tile two more pixels of box.
+
+   `--interactive-accent`, the same ink the marked row in the list uses, so
+   the two places this session appears are marked the same way.
+
+   NOT COLOUR ALONE (1.4.1): the link's accessible name carries *neueste
+   Session* in words, which is what a greyscale print and a screen reader
+   get. The component does that, not this rule. */
+.musie-graph__mark[data-latest] {
+  box-shadow: 0 0 0 var(--border-width-thick) var(--interactive-accent);
+}
+
+/* ── AN UNFINISHED SESSION: DASHED, AND SAID IN WORDS ────────────────────
+   Ben asked for it "dimmed". It is NOT dimmed, and the reason is a token gap
+   rather than a design disagreement.
+
+   Dimming means an opacity, and LAYER 1 SHIPS NO OPACITY TOKEN AT ALL — not
+   one, in either foundations file. L14.1 binds every declaration in an app
+   pattern to a Layer 1 token or arithmetic over one, so the alternatives were
+   a literal `0.55` invented here, or no dim. A number picked in a screen file
+   is exactly what L14.1 exists to stop, and it would be the first opacity in
+   the app with nothing behind it. Logged in OPEN-QUESTIONS.md as a Layer 1
+   request; the moment there is a muted-opacity token this rule takes it and
+   the picture becomes the one Ben asked for.
+
+   WHAT CARRIES THE STATUS MEANWHILE, and it is not one thing:
+
+     the DASH, which is a border STYLE and so survives greyscale, a colour
+     deficiency and forced-colours mode — where an opacity does not. It is
+     also the same distinction `Badge variant="outline"` makes on the card, so
+     the two places the status appears say it the same way.
+     the BORDER COLOUR stepping to --border-strong, which is the supporting
+     signal rather than the carrier.
+     the WORD, in the link's own accessible name — 'Nicht beendet' — because
+     this is the one place in the product where the status has no text beside
+     it. 1.4.1 is met by the dash alone; the word is what makes it honest.  */
+.musie-graph__mark[data-status="abandoned"] {
+  border-style: var(--border-style-dashed);
+  border-color: var(--border-strong);
+}
+
+/* ── A DAY WITH NOTHING ON IT ──────────────────────────────────────────────
+   Ben, 2026-09-28: "the calendar looks weird when empty". A blank column has
+   no floor, so seven empty days read as a missing element rather than as
+   seven empty days. This is the shape a session would occupy.
+
+   FILL ONLY, NO OUTLINE, which is the whole of what makes it read as absence.
+   A bordered empty box is what a mark whose picture failed to load looks
+   like; an unbordered fill is a space. It takes `--surface-sunken`, the same
+   fill a mark sits on, so the two are the same object with and without
+   something in it.
+
+   Sized exactly like a mark, through the same three declarations, because a
+   baseline that did not line up with the stacks above it would be worse than
+   no baseline. */
+.musie-graph__blank {
+  inline-size: 100%;
+  max-inline-size: var(--target-primary);
+  aspect-ratio: 1;
+  border-radius: var(--radius-card);
+  background-color: var(--surface-sunken);
+}
+
+.musie-graph__image {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* The stand-in for an exercise with no artwork — `image_url` is nullable, and
+   `cards` and `user_types` still point at a file that was never created. A
+   filled tile with the exercise's initial, not a broken image and not a gap:
+   the session happened either way. */
+.musie-graph__initial {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  color: var(--on-surface-muted);
+}
+
+/* The overflow chip and the plus both sit in the stack's flow, above the
+   marks. Neither is given a size: the Badge and the IconButton carry their
+   own, which is the point of using them.
+
+   The chip is a BUTTON that scrolls, not a link that navigates — the
+   component says why — so it needs the resets a bare button always needs.
+   The Badge inside it draws everything visible; this element is the target
+   and nothing else. `--radius-full` matches the Badge's own edge so the focus
+   ring follows the shape the reader sees rather than a rectangle around it. */
+.musie-graph__more {
+  display: block;
+  /* IT HAS TO FIT ITS COLUMN. At 393px a seven-column grid gives each day
+     about 44px, and a chip wider than that spills across its neighbours and
+     out through the scroller's edge — measured, and it read as a clipped
+     label rather than as a control. So the VISIBLE text is `+1`, short enough
+     for the narrowest column the graph has, and the sentence a screen reader
+     hears lives in the button's `aria-label`. `max-inline-size` is the guard
+     that keeps that true if the copy ever grows. */
+  max-inline-size: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.musie-graph__more:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.musie-graph__start { display: grid; place-items: center; }
+
+/* ── THE AXIS ─────────────────────────────────────────────────────────────
+   Two lines under each column, `aria-hidden` in the markup because every link
+   above already names its own date. `tabular-nums` so the day numbers line up
+   across seven columns — a proportional '11' beside a '28' makes the row look
+   mis-set. */
+.musie-graph__axis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* TODAY IS NAMED BY WEIGHT, not by a fill: a coloured pill under one column
+   competes with the pictures above it, which are the thing the eye is for. */
+.musie-graph__day[data-today] .musie-graph__axis { color: var(--on-surface); }
+.musie-graph__day[data-today] .musie-graph__weekday { font-weight: var(--font-weight-bold); }
+
+/* ═══ SESSION DETAILS · THE DISCLOSURE ══════════════════════════════════════
+   Ben, 2026-09-26. Everything that is ABOUT the session — the labelled rows
+   and the status — behind one control, so the card is the question, the
+   answer and the recording until somebody asks for more.
+
+   A PERMITTED CUSTOM PATTERN (L14): the system has no disclosure component,
+   and what is custom here is ONE stacking context. The control is a
+   `CtaButton`, the region holds a `ContentList` and a `BadgeRow`, and the
+   open/closed state is `hidden` on the region plus `aria-expanded` on the
+   control — markup, not styling. There is no height animation and no
+   `max-height` trick: a measured collapse would need JS to know the content's
+   height, and an unmeasured one picks a number that is wrong for a card with
+   six rows or for one with three.
+
+   The gap is `--space-gap-stack` rather than the slot's own, so the revealed
+   rows read as belonging to the control above them rather than as the next
+   thing in the card.                                                       */
+.musie-entry__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+/* `hidden` is what closes it, and a `display` elsewhere in this sheet would
+   silently override the attribute — so the region says so itself rather than
+   relying on the UA default surviving. `[hidden]` outranks the flex above by
+   specificity, which is the whole mechanism. */
+.musie-entry__facts[hidden] { display: none; }
+
+.musie-entry__facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
 /* ═══ A DIARY ENTRY'S FOOT ══════════════════════════════════════════════════
-   What the session WAS, and the one thing you can do to it — on one row at
-   the trailing edge (Ben, 2026-09-23).
+   The one thing you can do to the entry, at the trailing edge (Ben,
+   2026-09-23; the badge that shared this row moved into the disclosure above
+   on 2026-09-26).
 
-   NOT A `ButtonGroup`, though it looks like one: that component lays out
-   buttons, and a badge is a <span> with no role on purpose (Badge.tsx). A
-   group of actions with a label in it announces the label as an action.
+   THE DELETE CONTROL DELIBERATELY DID NOT GO WITH IT. Hiding a destructive
+   action behind a disclosure does not protect anybody — it makes it harder to
+   find when you want it and no harder to hit when you do not. The inline
+   confirmation is what protects the row.
 
-   L14 again, and the same argument as the header above: the system has no
-   "a fact and an action, at the trailing edge" component. `align-items:
-   center` because the two are the same line rather than a stack — a badge is
-   shorter than a `--target-primary` control, and the eye reads them as one
-   row only if they share a centre.                                         */
+   STILL NOT A `ButtonGroup`, now that it holds exactly one button and looks
+   even more like one. That component lays out a GROUP; this is a single
+   control whose alignment is this screen's decision about where a quiet
+   destructive action sits on a card (L14). `flex-wrap` and `align-items` are
+   kept rather than pruned: they cost nothing and they are what the row needs
+   again the day a second fact joins it.                                    */
 .musie-entry__foot {
   display: flex;
   flex-wrap: wrap;

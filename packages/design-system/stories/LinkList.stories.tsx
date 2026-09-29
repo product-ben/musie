@@ -259,3 +259,66 @@ export const LongHeadline: Story = {
 /** Edge case: one row. The rule between rows is an adjacent-sibling rule, so a
  *  single row has no line above or below it. */
 export const SingleItem: Story = { args: { items: [LINKED[0]] } };
+
+/**
+ * ONE ROW, MARKED — `marked`, and the word that goes with it.
+ *
+ * The diary uses this for the session you most recently finished, so it is
+ * findable in a run of thirty without being lifted out of the list.
+ *
+ * **The mark is an edge and a fill, never a fill alone.** A tinted row is a
+ * colour difference and nothing else, which is what 1.4.1 forbids as a sole
+ * carrier — so there is a bar at the leading edge, which survives greyscale
+ * and forced colours.
+ *
+ * **And the component does not name it.** Why a row is marked is the
+ * consumer\u2019s to say, in the consumer\u2019s language — here the first meta
+ * line. Without it, the one audience that cannot see the bar is told nothing.
+ *
+ * **No `aria-current`.** That attribute means *the current item in a set* —
+ * the page you are on, the step you are in — and a diary\u2019s most recent entry
+ * is not the one you are looking at.
+ */
+export const Marked: Story = {
+  args: {
+    label: 'Diary entries',
+    emptyLabel: 'Nothing yet.',
+    items: [
+      {
+        id: 'a',
+        headline: 'Session from 28/09/2026, 11:52',
+        marked: true,
+        meta: (
+          <>
+            <span>Your last session</span>
+            <span>Mindful Pause</span>
+            <span>12 min</span>
+          </>
+        ),
+        render: <a href="#/diary/a" />,
+      },
+      {
+        id: 'b',
+        headline: 'Session from 27/09/2026, 08:15',
+        meta: (
+          <>
+            <span>Free Rein</span>
+            <span>4 min</span>
+          </>
+        ),
+        render: <a href="#/diary/b" />,
+      },
+      {
+        id: 'c',
+        headline: 'Session from 24/09/2026, 19:40',
+        meta: (
+          <>
+            <span>Mindful Pause</span>
+            <span>9 min</span>
+          </>
+        ),
+        render: <a href="#/diary/c" />,
+      },
+    ],
+  },
+};

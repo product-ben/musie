@@ -482,8 +482,30 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       dispatch({ type: 'FINISH', at });
       /* THE LIST, not the entry. Ben, 2026-09-20: finishing hands you your
          diary rather than one page of it — and the list now leads with the
-         session you just finished, so nothing is lost by landing a level up. */
-      navigate('/diary', { replace: true });
+         session you just finished, so nothing is lost by landing a level up.
+
+         `sessionSaved` is what /diary's confirmation toast keys on (2026-09-26).
+         ROUTE STATE rather than a query string or a flag in a store, and that
+         choice is what makes "no toast when you arrive through the nav" free:
+         nothing else in the app sets it, so the diary has no rule to enforce.
+         /diary clears it out of the history entry on arrival, so a reload does
+         not re-confirm a session finished an hour ago.
+
+         ── AND ONLY WHEN THERE IS A REFLECTION TO FIND — 2026-09-29 ────────
+         The toast said "Im Tagebuch findest du einen Eintrag für jede beendete
+         Übung", which was true after ANY session, so it was shown on both ways
+         out of one. Ben's new wording names the REFLECTION — "Deine Reflexion
+         findest du im neuesten Tagebucheintrag" — and that is a promise about
+         a specific thing being there.
+
+         `skip` is *Überspringen* on the reflect step: the session finishes and
+         no reflection is written. Confirming one anyway would send somebody to
+         an entry to look for something they had just declined to write. So the
+         flag rides on `!skip`, and `close()` below drops it entirely. */
+      navigate('/diary', {
+        replace: true,
+        state: skip ? undefined : { sessionSaved: true },
+      });
     } catch (thrown: unknown) {
       console.error('[musie] could not finish the session:', thrown);
       setBusy(false);
@@ -498,7 +520,22 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       await endSession(id, 'abandoned', at);
       dispatch({ type: 'CANCEL', at });
       /* THE LIST, exactly as finishing does. Both ways out of a session end in
-         the same place, and the diary leads with the one you just left. */
+         the same place, and the diary leads with the one you just left.
+
+         ── NO `sessionSaved` HERE ANY MORE — 2026-09-29 ───────────────────
+         It carried the flag from 2026-09-26, on Ben's call that closing early
+         writes an entry just as finishing does, which is what the confirmation
+         then promised.
+
+         Ben's new wording promises something narrower: that a REFLECTION is in
+         the latest entry. An abandoned session has none — that is what
+         abandoning it means — so the sentence would be false on exactly this
+         path. The flag goes rather than the sentence.
+
+         This also settles the clash logged in OPEN-QUESTIONS.md, which was
+         that 'für jede BEENDETE Übung' sat above an entry badged 'Nicht
+         beendet'. There is no adjective left to contradict, and no toast on
+         this path to contradict it with. */
       navigate('/diary', { replace: true });
     } catch (thrown: unknown) {
       console.error('[musie] could not close the session:', thrown);

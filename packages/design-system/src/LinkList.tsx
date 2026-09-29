@@ -66,6 +66,21 @@ export interface LinkListItem {
    *  beside a meaning-bearing headline, so a decorative image would be a lie.
    *  Mirrors ContentList's media shape. */
   media?: { src: string; alt: string } | { node: React.ReactNode };
+  /**
+   * Draw this row as the marked one — a fill and a bar at the leading edge.
+   *
+   * IT DRAWS THE MARK AND DOES NOT NAME IT. Why a row is marked is the
+   * consumer's to say, in the consumer's language, and it must be said: a
+   * fill and a bar are a visual difference, and a list where one row differs
+   * only visually fails 1.4.1 for anybody who cannot see it. Put the reason
+   * in `meta`, where it is text.
+   *
+   * NO `aria-current`. That attribute means "the current item in a set" —
+   * the page you are on, the step you are in — and a diary's most recent
+   * entry is not the one you are looking at. Claiming it would mislead the
+   * one audience the `meta` line is for.
+   */
+  marked?: boolean;
   /** base-ui composition: what the row IS. `render={<Link to="/diary/abc" />}`
    *  makes the whole row navigable. Omitted, the row is a static `<div>`. */
   render?: useRender.RenderProp;
@@ -105,7 +120,8 @@ function LinkListRow({ item, headingLevel }: {
        :focus-visible. */
     render: item.render ?? <div />,
     props: {
-      className: 'musy-llist__row musy-focusable',
+      className: ['musy-llist__row musy-focusable', item.marked ? 'musy-llist__row--marked' : '']
+        .filter(Boolean).join(' '),
       children: (
         <>
           {item.media && (

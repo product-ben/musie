@@ -35,7 +35,18 @@ import * as React from 'react';
 import type { HeadingLevel } from './ContentBox';
 
 export interface TimelineGroup {
-  /** Stable identity. The React key. */
+  /**
+   * Stable identity. The React key, AND the group's DOM id — so a consumer
+   * can send the reader to one group.
+   *
+   * IT REACHES THE DOM SINCE 2026-09-26, and before that it did not: it was
+   * the React key alone, which meant a screen that wrote `id` expecting an
+   * anchor got an element with no id and a link to nowhere. That happened.
+   *
+   * The consumer therefore owns whether it is a valid, unique DOM id. Both
+   * were already true of every caller — a key has to be unique on the list —
+   * and a key that is not a legal id was never going to be one.
+   */
   id: string;
   /** The group heading, ALREADY FORMATTED — '14 September', 'Heute'. This
    *  component never formats a date. */
@@ -63,7 +74,7 @@ export function Timeline({ label, groups, headingLevel = 3, className }: Timelin
   return (
     <ol className={['musy-timeline', className ?? ''].filter(Boolean).join(' ')} aria-label={label}>
       {groups.map((group) => (
-        <li key={group.id} className="musy-timeline__group">
+        <li key={group.id} id={group.id} className="musy-timeline__group">
           <H className="musy-timeline__heading" data-type-step="heading-sm">{group.label}</H>
           <div className="musy-timeline__body">{group.children}</div>
         </li>

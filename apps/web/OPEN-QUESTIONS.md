@@ -4670,3 +4670,374 @@ Also worth knowing: no code, test or build input referenced the old host. Every
 one of the fourteen files was prose or a comment, which is why `pnpm check` is
 the whole verification here and why nothing in `apps/web/src` changed except
 two doc blocks.
+
+
+## The success toast says *beendete* over an entry badged *Nicht beendet* — RESOLVED 2026-09-29
+
+Where: `src/i18n/de.ts` — `diary.saved`, and `session.status.abandoned` four
+hundred lines above it; `src/routes/Session.tsx` — the `close()` navigation
+that carries the flag; `src/routes/Diary.tsx` — `SessionSaved`.
+
+What I checked: Ben chose both halves of this in the question round on
+2026-09-26 — the wording *"Im Tagebuch findest du einen Eintrag für jede
+beendete Übung"*, and showing it after **both** ways out of a session, not
+only after finishing.
+
+I flagged a tension when he chose it, **and I named the wrong key.** I told him
+`beendet` was this app's word for *finished*. It is not:
+
+```
+'session.status.finished':  'Abgeschlossen'
+'session.status.abandoned': 'Nicht beendet'
+```
+
+So the clash is sharper than it was put to him. After a session closed early,
+the toast sits at the top of the screen saying *für jede **beendete** Übung*
+while the entry immediately below it carries a badge reading ***Nicht**
+beendet*. That is a sentence and its own negation, eight lines apart, about the
+same session — not a shade of emphasis.
+
+What I did: wrote it exactly as chosen, on both paths, and put the clash in the
+comment above the string in `de.ts` and above the `close()` navigation in
+`Session.tsx` so it is findable from either end. The English is unaffected —
+*complete* and *Unfinished* share no stem — which is itself worth noting,
+because it means this will not show up in an English-language review.
+
+**What I need from Ben: a wording, not a decision about behaviour.** Showing it
+on both paths is right; an abandoned run does write an entry, which is what the
+sentence promises. Three ways out, in the order I would take them:
+
+1. **Say *Session* rather than *Übung*, and drop the adjective.** *"Im Tagebuch
+   findest du einen Eintrag für jede Session"* — true of both paths, no
+   adjective to contradict, and *Session* is already the product's word for a
+   run (`docs/GERMAN-UI-WRITING.md` §8). This is the one I would pick.
+2. **Keep the adjective and show it only after finishing.** Costs the
+   confirmation on the path where it arguably matters more — somebody who left
+   early is the one who does not know an entry was kept.
+3. **Two strings, one per path.** Honest, and it is two strings to keep in step
+   for a six-second message.
+
+I did not guess, because all three change copy Ben wrote himself.
+
+---
+
+## Layer 1 ships no opacity token, so the graph cannot dim anything
+
+Where: `src/shell.css` — `.musie-graph__mark[data-status="abandoned"]`;
+`packages/design-system/tokens/musy-foundations.css` — where the token is not.
+
+What I checked: Ben asked for an unfinished session to be **dimmed** in the
+diary graph. Dimming means an `opacity`, and `grep -i opacity` over both
+foundations files returns **nothing**. There is no `--opacity-muted`, no
+`--opacity-disabled`, no alpha token that is not a colour.
+
+CLAUDE.md rule 1 and `10-layout.md` L14.1 bind every declaration in an app
+pattern to a Layer 1 token or arithmetic over one. So the choice was a literal
+`0.55` invented in a screen file, or no dim. A number picked in `shell.css`
+with nothing behind it is exactly what L14.1 exists to stop, and it would be
+the first opacity in the app.
+
+What I did: **did not dim.** An unfinished mark is drawn with
+`--border-style-dashed` at `--border-strong`, and its link's accessible name
+says *Nicht beendet* in words. That is arguably the better answer on its own
+merits — an opacity is a contrast difference, which 1.4.1 forbids as a sole
+carrier, and a border STYLE survives greyscale, a colour deficiency and
+forced-colours mode where an opacity does not. It is also the same distinction
+`Badge variant="outline"` already makes on the card, so the two places the
+status appears say it the same way.
+
+But it is not what was asked for, and the reason is a gap rather than a
+judgement.
+
+**What I need: a Layer 1 opacity token.** One value would do —
+`--opacity-muted`, for "present but not the subject" — and there are at least
+two other consumers waiting for it that currently cannot express themselves
+either. The rule in `shell.css` takes it the day it lands and the picture
+becomes the one Ben asked for; the comment there says so.
+
+---
+
+## `.musie-graph` is a component candidate, and it is the third one
+
+Where: `src/components/DiaryGraph.tsx`; `src/shell.css` — the
+`.musie-graph__*` block.
+
+What I checked: L14 permits a custom pattern where the system has no
+component, and it has none for "a horizontally scrolled calendar whose columns
+are stacks of images". Every declaration resolves to a Layer 1 token or
+arithmetic over one (L14.1); every class is `musie-` (L14.2).
+
+L14.3 says a pattern that **recurs** is a component request. This one has
+exactly one caller, so it stays in the app — pushing it into the package on its
+first day would be inventing an API from a single example.
+
+What is worth knowing for the day it does recur: the scroll-snap mechanism is
+**already** in the package twice, as `Carousel`'s CSS and as `useScrollSnap`.
+What is genuinely new here is only the column stack and the reserved height.
+So the eventual component is smaller than the file looks.
+
+Two smaller gaps this surfaced, both logged here rather than worked around:
+
+- **`IconButton` omits `render`**, so the plus on today's column is a button
+  that calls `navigate()` rather than a link. `AppShell`'s menu button already
+  does this, so it is the app's existing answer rather than a new one — but the
+  cost is real: no middle-click, no *open in new tab*, no href in the status
+  bar. Acceptable for a control that starts something; it would be wrong for
+  the four image links in a stack, which is why those **are** `Link`s. The
+  component omits `render` because it owns its Tooltip composition, so this is
+  a real design decision and not an oversight — it just has a consequence.
+- **A scroll container with no visible affordance.** The week scroller hides
+  its scrollbar and there is nothing at either edge saying more weeks exist to
+  the left. It is discoverable by dragging and by tabbing, and the graph is
+  supplementary to a complete list below it, so nothing is unreachable. A
+  gradient or an edge control would be the fix if it tests badly.
+
+---
+
+## The lightbox was painting through its own bottom inset, and it had nothing to do with the diary
+
+Where: `packages/design-system/src/musy-components.css` §14 —
+`.musy-lightbox__popup` and `.musy-lightbox__body`.
+
+What I checked: Ben reported the diary card being **cut off** and guessed the
+cause was the lightbox being "embedded in the page". I reproduced it with a
+Playwright walk at 320 / 393 / 768 / 1280 × 900 before changing any layout,
+measuring `scrollWidth` against `clientWidth` on every element inside the
+popup.
+
+**There is no horizontal overflow anywhere**, at any width. The only hit is
+`.musy-sr-only` (208 > 1), which is what a visually hidden element *is*. So the
+`min-inline-size: 0` audit I had planned was chasing nothing.
+
+The cut-off is **vertical, and it is a CSS clipping rule**:
+
+```
+320 × 900 — body scrollH=888 clientH=774
+```
+
+`.musy-lightbox__popup` carried **both** `padding: var(--space-inset-card)` and
+`overflow: hidden`. CSS clips overflow at the **padding box**, not the content
+box — so the scrolling `.musy-lightbox__body` painted straight through the
+popup's own bottom inset, and the last line was sliced through the middle of
+its glyphs at the popup's outer edge with no inset under it.
+
+It is invisible whenever the content fits, which is every desktop viewport and
+every Storybook story. That is why it survived: the component is correct until
+something inside it is tall, and nothing in the stories ever is.
+
+What I did: the popup keeps its **inline** padding, and the **block** padding
+moved onto `.musy-lightbox__body`, where it belongs to the scroller and travels
+with it — the first line starts below the inset and the last line ends above
+it, at every scroll position. The `:has()` rule that reserves the close
+control's band takes `max(--space-inset-card, --target-primary)` now, because
+the body has its own inset to count against. Re-measured: the slice is gone.
+
+**This is a design-system fix that a diary brief happened to find, and it
+affects every Lightbox in the product** — the nav drawer, the data sheet, the
+not-implemented sheet. None of them is currently tall enough to have shown it.
+Worth knowing rather than worth acting on.
+
+Two things I did NOT do, and both are judgement calls Ben may want to reverse:
+
+- **No scroll affordance.** A long card in a short window still gives no sign
+  that there is more below. The card is much shorter now that *Session-Details*
+  folds the metadata away, so on a phone the scroll mostly does not happen at
+  all — which is a fix by removal rather than by an edge gradient. If it still
+  reads as cut off in use, a fade at the scrollport's end is the answer and it
+  belongs in §14, not in the diary.
+- **`.musy-lightbox__body > .musy-box` still strips the box's border,
+  background and padding.** That rule exists so a framed box does not draw a
+  second outline inside the popup. The diary card is no longer framed, so the
+  rule is doing less than it was written for — but it is still right for any
+  box in any lightbox, and narrowing it on the diary's account would be this
+  screen editing a general rule.
+
+## The success toast wraps to four lines, and the cap is not mine to move
+
+Where: `packages/design-system/src/musy-components.css` §23 — `.musy-toast`'s
+`max-width` and `.musy-toast__text`'s flex basis; `src/i18n/de.ts` —
+`diary.saved`.
+
+What I checked: on a 393px phone and on a 1280px desktop, *"Im Tagebuch
+findest du einen Eintrag für jede beendete Übung"* renders as **four short
+lines** in a ~280px box. Measured in the running app, both widths.
+
+It is not a defect, it is §23 working as written. `.musy-toast` is
+`width: fit-content` capped at `--measure-heading` (26ch), and the text has a
+floor of half that; the dismiss holds `--target-primary`. The section's own
+comment states the degradation order — *the TEXT gives, never the action or
+the dismiss* — and that order was derived from a 393px screen with a German
+label and an **undo action** on it.
+
+This toast has no action, so it has 150px more room than the case the cap was
+tuned for, and it does not use it.
+
+What I did NOT do: widen the cap. `--measure-heading` is right for the one
+toast already in the product (`VoiceTranscript`'s undo offer, a three-word
+label plus a button), and a screen must not change a component's geometry for
+its own sentence.
+
+What I would suggest, for Ben or whoever owns §23: let the cap depend on
+whether there is an action — `max-width: var(--measure-body)` for an
+actionless toast, `--measure-heading` when the row also has to hold a button.
+One rule, no new prop, and it is the same "three parts do not fit this cap"
+argument §23 already makes, applied to the two-part case it did not have when
+it was written.
+
+Until then the message is legible and transient, and a shorter sentence would
+also fix it — see the *beendete Übung* entry above, which may change this copy
+anyway.
+
+## The graph's weeks run newest-first, so scrolling back in time moves RIGHT
+
+Where: `src/components/DiaryGraph.tsx` — the `pages` memo and the note above
+it; `src/shell.css` — `.musie-graph__scroller`.
+
+What I checked: the graph should open on the current week. The obvious way is
+to render the weeks oldest-first and push the scroller to its far end on
+mount. **Three versions of that lost a race with the layout engine**, and the
+numbers are in the component:
+
+- `scrollLeft = scrollWidth` in a layout effect left it at **118px of a 361px
+  maximum**. The assignment is clamped to the maximum at that instant, and at
+  that instant the weeks are not yet at full width.
+- The same, re-run from a `ResizeObserver` — the pin ran three times and set
+  361 each time, and **2.5 seconds later the scroller was back at 118**. I
+  patched the `scrollLeft` setter and `scrollIntoView` across the whole page
+  and captured stacks: there were exactly three programmatic scrolls, all
+  mine. The engine re-clamped it during a relayout no observer of mine saw.
+- `flex-direction: row-reverse`, to make the engine rest there by itself —
+  **Chrome rests a reversed row at `scrollLeft: 0` regardless**, which showed
+  the oldest week. The trick works for `column-reverse` and does not transfer.
+
+What I did: stopped moving the scroller and changed the ORDER instead. The
+weeks render newest-first, so the current week is the first page at
+`scrollLeft: 0` — where every browser rests a fresh scroller, with nothing to
+re-run and nothing to race. Verified: `scrolls=NONE pins=NONE`, correct on
+arrival, after a rotate and after a slow read resolves.
+
+**The cost, and it is the part Ben should rule on: scrolling back in time
+moves right.** A calendar usually puts the past on the left. What was bought
+is a graph that is correct on arrival every time instead of three-quarters of
+the time — which was the bug actually in front of me. The chevrons are
+labelled *Woche davor* / *Woche danach* rather than by direction, and the left
+glyph still means "back", so what they do is said in words either way; only
+the swipe is inverted.
+
+Two things that also got better and are worth weighing in: the reading order
+now reaches the current week first instead of walking a year of empty weeks to
+get to it, and it matches the rest of the diary, which is newest-first
+everywhere.
+
+If Ben wants past-on-the-left back, the honest way is a fixed-width track
+whose width is known before layout — i.e. columns at a fixed `--target-primary`
+rather than `1fr`, so `scrollWidth` is computable and the pin cannot be
+clamped against a stale maximum. That trades the seven-columns-fit-the-screen
+property, which is why I did not do it unasked.
+
+## The inline diary card is gone, and three things went with it
+
+Where: `src/routes/Diary.tsx` (the note where `LatestEntry` was);
+`src/components/DiaryCard.tsx` header; `src/shell.css`
+(`.musie-diary__earlier`, deleted).
+
+What Ben asked, 2026-09-28: *"Get rid of the full card being displayed inline
+in any state. Instead, highlight the latest one in the calendar and in the list
+below. Also, make the segmented control also filter the calendar."*
+
+What I did, and the three consequences worth knowing:
+
+**`useDiaryEntry` is no longer called on /diary.** The inline card needed the
+newest session's full detail — reflection, statements, track — so every arrival
+at the diary made a second read for a card many people closed without reading
+it. The list read is now the only read this screen makes.
+
+**The filter reaches the graph, which reverses a call Ben made on 09-26.** It
+did not before, on the argument that the graph is a constant overview while the
+segments ask about the list. That argument depended on the graph being a band
+under a card; now the graph IS the top of the screen, and a screen whose
+picture and whose list answered different questions would contradict itself in
+the gap. Verified: five finished sessions, *Nicht beendet* selected → four
+marks become zero, and the list shows its own empty state.
+
+**`diary.earlier`, `diary.latest` and `diary.collapse` are now partly
+unused copy.** `diary.latest` found a new job — it is the word on the marked
+row and in the marked tile's accessible name, which is what keeps the highlight
+from being colour alone. `diary.earlier` and `diary.collapse` are dead. I left
+both in the catalogues rather than deleting copy Ben wrote; they are one grep
+away if either heading comes back, and `de.ts` is typed against `en.ts` so an
+unused pair cannot drift.
+
+**`DiaryCard`'s `onDismiss` / `dismissLabel` are dead in the app too.** Kept,
+because they are two lines forwarding to `ContentBox`'s own contract and the
+`Closeable` stories exercise that contract. If no second surface ever wants a
+closeable entry, they should go.
+
+---
+
+## The diary graph's stacks were upside down, and a green test said they were not
+
+Where: `src/lib/diary.ts` — `stackOf`; `src/lib/diary.test.ts` — the ordering
+test; `src/components/DiaryGraph.tsx` — the overflow chip's position.
+
+What I checked: Ben's brief says the exercises "stack up" on the y axis. They
+did not. `stackOf` reversed its newest-first input, and the comment above it
+said the reverse was what put the first session of the day at the bottom.
+
+Reversing a newest-first list gives oldest-first, and the caller renders that
+top to bottom — so the OLDEST sat at the top of the column and the newest
+rested on the axis. The day read upside down. The `+N` chip made it worse: the
+cap keeps the most recent four, so the overflow is the day's EARLIEST sessions,
+and the chip was drawn above the stack, where it read as "and more after these"
+about sessions that came before them.
+
+**A unit test asserted the reverse and had been green since it was written.**
+That is the part worth keeping: it tested the array, and which way up a column
+is drawn is not a fact about an array. It is rewritten to assert the order the
+caller consumes, with the reason in it, but the honest conclusion is that this
+class of bug is only ever caught by looking — which is how it was caught.
+
+Fixed: `stackOf` returns the query's order untouched, and the chip is drawn
+under the stack.
+
+
+## The *beendete Übung* clash is closed, and the toast got narrower
+
+Where: `src/i18n/en.ts` and `de.ts` — `diary.saved`; `src/routes/Session.tsx` —
+`finish()` and `close()`. Closes the entry above rather than opening anything.
+
+Ben rewrote the sentence on 2026-09-29:
+
+> **"You can find your reflection in the latest diary entry"**
+> **"Deine Reflexion findest du im neuesten Tagebucheintrag"**
+
+That answers the ruling I asked for — there is no adjective left to contradict
+*Nicht beendet* — and it is close to the first of the three options I
+suggested. Ben wrote this one in English, so `en.ts` is the original here and
+the German is the translation, which is the reverse of this catalogue's usual
+direction; both files say so.
+
+**It also narrowed where the toast may appear, and that is a behaviour change I
+made rather than one Ben asked for.** The old sentence was about the diary in
+general and was true after any session, which is why he had asked for it on
+both ways out of one. The new sentence promises that a *specific thing* is in
+the entry. Two paths would have made it false:
+
+- **`close()`** — an abandoned session has no reflection, which is what
+  abandoning it means. The flag is gone from that navigation.
+- **`finish(skip)`** — *Überspringen* on the reflect step finishes the session
+  and writes nothing. Confirming one anyway would send somebody to an entry to
+  look for something they had just declined to write. The flag now rides on
+  `!skip`.
+
+If Ben wants the confirmation back on both ways out, the sentence has to go
+back to being about the entry rather than about the reflection — the two
+decisions are the same decision.
+
+**One edge left alone: photo mode.** `finish()` calls `saveReflection` for any
+non-voice mode, so finishing in *photo* writes a reflection row with an empty
+body — the photo itself never leaves the device (MOCKUPS.md), and the typed box
+is empty. The toast fires and the entry shows no answer. I did not build a
+special case around it, because photo is an interactive mockup that writes
+nothing by design and a branch for it would be logic maintaining a fiction. It
+is worth knowing the day photo becomes real.
