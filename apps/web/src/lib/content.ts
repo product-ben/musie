@@ -346,7 +346,7 @@ export interface Track {
  * error.
  *
  * NOT null for a SECOND exercise over the same deck. Free Rein draws the same
- * nine cards as Mindful Pause and plays the same nine recordings, through nine
+ * nine cards as Mindful Break and plays the same nine recordings, through nine
  * pairing rows of its own (`20260923150000`) — which is the split working as
  * designed: one row per recording, one pairing row per place it plays.
  */
