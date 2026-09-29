@@ -210,7 +210,7 @@ export const en = {
      three unbuilt paths, and an unimplemented type cannot be recorded at all.
      Logged in apps/web/OPEN-QUESTIONS.md. */
   'notImplemented.title': 'Not implemented yet',
-  'notImplemented.text': 'Musie only builds the “By myself” path so far, with the Mindful Pause and Free Rein exercises.',
+  'notImplemented.text': 'Musie only builds the “By myself” path so far, with the Mindful Break and Free Rein exercises.',
   'notImplemented.back': 'Back to the choice',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
@@ -308,7 +308,7 @@ export const en = {
      and an hour later that is a different state. Resuming would be finishing
      somebody else's session. Better to say so here than to let someone close
      it expecting to come back. */
-  'session.close.text': 'You cannot pick this one up again — the exercise works from how you feel right now, and that will have moved on by the time you come back. It stays in your diary marked unfinished, and you can start a fresh session whenever you like.',
+  'session.close.text': 'You cannot pick this one up again — the exercise works from how you feel right now, and that will have changed by the time you come back. The session stays in your diary marked unfinished. You can start a fresh session whenever you like.',
   'session.close.confirm': 'Close the session',
 
   /* ── Intro · D.5a ────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ export const en = {
      sentence changed rather than being deleted — MOCKUPS.md's standard cuts
      both ways, and a frame still claiming it cannot see is the same defect as
      one pretending it can. */
-  'session.scan.headline': 'Scan the card that describes best how you feel right now.',
+  'session.scan.headline': 'Scan the card that describes best how you are doing right now.',
   /* NO 'reader' OR 'readerNote' — Ben, 2026-09-24. Both sentences stood in the
      empty frame, which now holds nothing but its two buttons.
 
@@ -430,7 +430,7 @@ export const en = {
      thing, and the button — the control the sentence was about — was the one
      that said nothing. Now the button carries its own condition and the
      paragraph is gone. */
-  'session.listen.startLocked': 'Focus for at least {countdown} minutes more',
+  'session.listen.startLocked': 'Focus for {countdown} minutes more',
   'session.listen.start': 'Start reflecting whenever you are ready',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
@@ -440,7 +440,7 @@ export const en = {
      it interrupts rather than warns, and its measure is narrow so it lands as
      one thought. */
   'session.listen.detailsAction': 'About the track',
-  'session.listen.warnText': 'For this exercise it is better not to be influenced by the track’s name or its cover.',
+  'session.listen.warnText': 'For this exercise it is better not to be influenced by the track’s metadata.',
   'session.listen.warnBack': 'Continue the exercise',
   'session.listen.warnOn': 'Show details and player',
   'session.listen.scrollUp': 'Scroll up',

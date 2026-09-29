@@ -167,7 +167,7 @@ export const de: Messages = {
   'exercises.fact.time': 'Dauert {min} bis {max} Minuten',
   'exercises.fact.timeShort': '{min}–{max} Min.',
   /* Durchkopplung, as everywhere else this product name meets a German noun. */
-  'exercises.fact.cards': 'Braucht dein Mindfulness-Cards-Set',
+  'exercises.fact.cards': 'Braucht dein Mindfulness-Karten-Set',
   'exercises.fact.sound': 'Ton an – Kopfhörer empfohlen',
   'exercises.surpriseMe': 'Musie eine Übung aussuchen lassen',
   'exercises.alreadyRunning': 'Es läuft schon eine Session',
@@ -220,14 +220,14 @@ export const de: Messages = {
      a literal 'dem Zustand, in dem du bist' — the English is plain and the
      German should not reach for a register the app does not use anywhere
      else. */
-  'session.close.text': 'Du kannst sie später nicht wieder aufnehmen – die Übung arbeitet damit, wie es dir gerade geht, und das ist beim nächsten Mal anders. Sie bleibt als nicht beendet in deinem Tagebuch, und du kannst jederzeit eine neue Session starten.',
+  'session.close.text': 'Du kannst später nicht hierher zurückkehren – in der Übung geht es darum, wie es dir gerade geht, das ist beim nächsten Mal anders. Die Session bleibt als nicht beendet in deinem Tagebuch. Du kannst jederzeit eine neue Session starten.',
   'session.close.confirm': 'Session schließen',
 
   /* ── Intro · D.5a ──────────────────────────────────────────────────────── */
-  'session.intro.fallback': 'Nimm dir einen Moment zum Ankommen. Wenn du so weit bist, geht es weiter.',
+  'session.intro.fallback': 'Nimm dir einen Moment Zeit zum Ankommen. Wenn du so weit bist, geht es weiter.',
 
   /* ── Scan · D.5a, und der echte Scanner · E.0/E.1 ──────────────────────── */
-  'session.scan.headline': 'Scanne die Karte, die am besten beschreibt, wie du dich gerade fühlst.',
+  'session.scan.headline': 'Scanne die Karte, die gerade am besten zu deiner Stimmung passt.',
   /* KEIN 'reader'/'readerNote' MEHR — Ben, 2026-09-24. Die beiden Sätze standen
      im leeren Rahmen; der Rahmen zeigt jetzt nur noch die zwei Schaltflächen.
      Der Hinweis auf die Kamera-App des Handys ist damit nicht verschwunden,
@@ -250,9 +250,10 @@ export const de: Messages = {
   /* A verb phrase, not 'Diese Karte' (§3) — the button performs an act. */
   'session.scan.codeSubmit': 'Diese Karte nehmen',
   'session.scan.codeMalformed': 'Ein Kartencode sieht aus wie MC-01. Schau noch einmal auf deine Karte.',
-  /* 'Set', not 'Deck': §8 keeps the deck's own name — 'Mindfulness-Cards-Set'
-     is how GERMAN-UI-WRITING.md writes it — and 'Kartenspiel' would be a game
-     of cards. */
+  /* 'Set', not 'Deck': 'Mindfulness-Karten-Set' is how GERMAN-UI-WRITING.md
+     writes it since Ben's copy pass of 2026-09-29 — §8.1, which now records
+     that the deck's name IS Germanised — and 'Kartenspiel' would be a game of
+     cards. */
   'session.scan.codeUnknown': 'Keine Karte in diesem Set hat den Code {code}.',
   'session.scan.codeFailed': 'Das ließ sich gerade nicht prüfen. Versuch es gleich noch einmal.',
   'session.scan.heldHint': 'Das ist die Karte, die du gescannt hast. Nimm sie, oder tippe einen anderen Code ein.',
@@ -300,11 +301,11 @@ export const de: Messages = {
   /* 'Stück', which is what the seed's own German calls a recording — 'höre das
      Stück dahinter'. 'Track' would be an English word nobody chose. */
   'session.listen.track': 'Dein Stück',
-  'session.listen.startLocked': 'Fokussiere dich noch mindestens für {countdown} Minuten',
-  'session.listen.start': 'Nachdenken starten, sobald du bereit bist',
+  'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
+  'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
   'session.listen.detailsAction': 'Über den Track',
-  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht vom Namen des Tracks oder vom Cover beeinflussen zu lassen.',
+  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten des Tracks beeinflussen zu lassen.',
   'session.listen.warnBack': 'Übung fortsetzen',
   'session.listen.warnOn': 'Details und Player zeigen',
   'session.listen.scrollUp': 'Nach oben',
@@ -350,7 +351,7 @@ export const de: Messages = {
      stand als fünfzeiliger Kasten auf einem Schritt, der eine Antwort will.
      Geblieben ist `privacy.voiceShort`, eine Zeile, plus `privacy.more`. */
   'reflect.photo.notBuilt': 'Fotos auslesen ist noch nicht gebaut',
-  'reflect.photo.notBuiltText': 'Das zeigt, wie es funktionieren wird. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
+  'reflect.photo.notBuiltText': 'So funktioniert es. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
   /* Verb phrase, §3 — 'Überspringen' alone would name a thing rather than an
      action, and the object is what makes it unambiguous beside 'Beenden'. */
   'reflect.skip': 'Reflexion überspringen',
@@ -461,7 +462,7 @@ export const de: Messages = {
   'diary.collapse': 'Diesen Eintrag schließen',
   'diary.delete': 'Diese Session löschen',
   'diary.delete.confirm': 'Session löschen?',
-  'diary.delete.text': 'Damit sind die Session und alles, was du darin geschrieben hast, endgültig weg. Das lässt sich nicht rückgängig machen.',
+  'diary.delete.text': 'Damit wird die Session und alles, was du darin geschrieben hast, endgültig gelöscht. Das lässt sich nicht rückgängig machen.',
   'diary.delete.yes': 'Löschen',
 
   /* ── Die Timeline im Monatsmaßstab · G.1 ─────────────────────────────── */
@@ -477,7 +478,7 @@ export const de: Messages = {
      double negative German makes heavier than English does. 'Alles ist
      beendet' says the same fact and reads as the good news it is. */
   'diary.filter.noneFinished': 'Noch nichts beendet',
-  'diary.filter.noneFinishedText': 'In deinem Tagebuch ist bisher keine Session beendet.',
+  'diary.filter.noneFinishedText': 'In deinem Tagebuch ist bisher keine beendete Session gespeichert.',
   'diary.filter.noneAbandoned': 'Alles ist beendet',
   'diary.filter.noneAbandonedText': 'Was du angefangen hast, hast du auch beendet.',
   'diary.filter.showAll': 'Alle Sessions anzeigen',
@@ -489,7 +490,7 @@ export const de: Messages = {
      second 'alles', which German would hear as a repetition. */
   'diary.deleteAll': 'Dein ganzes Tagebuch löschen',
   'diary.deleteAll.confirm': 'Dein ganzes Tagebuch löschen?',
-  'diary.deleteAll.text': 'Damit sind alle Sessions und alles, was du darin geschrieben hast, endgültig weg – auch eine Session, die gerade läuft. Nichts bleibt übrig, und das lässt sich nicht rückgängig machen.',
+  'diary.deleteAll.text': 'Damit werden alle Sessions und alles, was du darin geschrieben hast, endgültig gelöscht. Auch Sessions, die gerade laufen, werden gelöscht. Nichts bleibt übrig, und das lässt sich nicht rückgängig machen.',
   'diary.deleteAll.yes': 'Alles löschen',
   'diary.deleteAll.failed': 'Dein Tagebuch konnte nicht gelöscht werden',
 
@@ -521,14 +522,14 @@ export const de: Messages = {
   /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
      Link im Fließtext muss benennen, was hinter ihm liegt. */
   'privacy.more': 'Mehr zu deinen Daten',
-  'privacy.voice': 'Wenn du laut antwortest, macht Musie aus deinen Worten Text und behält nur den Text. Die Aufnahme selbst wird nie gespeichert.',
+  'privacy.voice': 'Wenn du laut antwortest, macht Musie aus deinen Worten Text. Die Aufnahme selbst wird nie gespeichert.',
   'privacy.photo': 'Ein Foto bleibt auf deinem Gerät. Musie lädt es nie hoch.',
   /* 'ist auch dein Tagebuch weg' rather than a softer 'geht verloren': the
      English is blunt on purpose and the German should not apologise for it. */
   /* The loss first, the exemption second, as in the English. 'Zurückholen
      lässt es sich nicht' is kept verbatim from the original German — it is the
      sentence that does the uncomfortable work, and it was already right. */
-  'privacy.browserBound': 'Wenn dein Konto nur in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch, und zurückholen lässt es sich nicht. Wenn du angemeldet bist, bleibt dein Tagebuch bei deinem Konto, und du erreichst es auch von einem anderen Gerät.',
+  'privacy.browserBound': 'Wenn dein Konto nur in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch. Das kann nicht rückgängig gemacht werden. Wenn du angemeldet bist, bleibt dein Tagebuch in deinem Konto. Du erreichst es auch von einem anderen Gerät.',
 
   /* ── Der Deep Link und das Dev-Blatt · E.0 ───────────────────────────────
      'Kartenset' rather than 'Deck' throughout, as on the scan step above. The
@@ -555,8 +556,8 @@ export const de: Messages = {
      Siehe en.ts für den Grund, warum diese Sätze hier stehen und nicht im
      Feature-Paket. */
   'voice.error.micDenied': 'Musie braucht dein Mikrofon, um dich zu hören. Erlaube es in den Browser-Einstellungen und starte neu.',
-  'voice.error.micNotFound': 'Dieses Gerät hat kein Mikrofon, das Musie nutzen kann. Schreibe deine Antwort stattdessen.',
-  'voice.error.micUnavailable': 'Das Mikrofon ließ sich nicht öffnen. Schließe, was es sonst noch benutzt, und starte neu.',
+  'voice.error.micNotFound': 'Dieses Gerät hat kein Mikrofon, das Musie nutzen kann. Schreibe stattdessen deine Antwort.',
+  'voice.error.micUnavailable': 'Das Mikrofon ließ sich nicht öffnen. Schließe Anwendungen, die das Mikrofon benutzen, und starte neu.',
   'voice.error.recorderFailed': 'Die Aufnahme ließ sich auf diesem Gerät nicht starten. Schreibe deine Antwort stattdessen.',
   'voice.error.connectionFailed': 'Musie erreicht den Dienst nicht, der deine Worte in Text verwandelt. Prüfe deine Verbindung und starte neu.',
   /* 'bleibt erhalten', nicht 'ist gespeichert': gespeichert wird erst am Ende
@@ -581,7 +582,7 @@ export const de: Messages = {
      Transkripts, nicht die der Komponente. Siehe en.ts. */
   'voice.item.noun': 'Aussage',
   'voice.empty.headline': 'Noch nichts aufgenommen',
-  'voice.empty.text': 'Fertige Aussagen erscheinen hier, je eine Box, in der Reihenfolge, in der du sie gesagt hast.',
+  'voice.empty.text': 'Fertige Aussagen erscheinen hier, in je einer Box, in der Reihenfolge, in der du sie gesagt hast.',
   'voice.listening': 'Hört zu',
   'voice.hearing': 'Schreibt mit',
   /* Verbphrasen, §3: was das Loslassen TÄTE, nicht was gerade passiert. */
@@ -610,7 +611,7 @@ export const de: Messages = {
   'voice.hint.edit': 'Zieh eine Aussage, um sie zu verschieben, oder lass sie auf einer anderen los, um beide zu verbinden. Auf dem Touchscreen wischst du eine Aussage nach links, um sie zu löschen. Mit der Tastatur: Ziehpunkt fokussieren, dann Leertaste zum Anheben, Pfeiltasten zum Verschieben, M verbindet sie mit der darüber, Escape legt sie zurück.',
   /* Überschriften ohne Punkt, Sätze mit. */
   'voice.stopped.headline': 'Aufnahme beendet',
-  'voice.stopped.timeout': 'Das waren die {seconds} Sekunden. Alles, was Musie gehört hat, steht in der Liste, und du kannst mehr aufnehmen.',
+  'voice.stopped.timeout': 'Das waren {seconds} Sekunden. Alles, was Musie gehört hat, steht in der Liste. Du kannst mehr aufnehmen.',
   'voice.stopped.silence': 'Es war {silence} Sekunden still, darum hat Musie aufgehört zuzuhören. Alles Gehörte steht in der Liste.',
   'voice.error.headline': 'Aufnahme beendet',
   'voice.warning.headline': 'Eine Aussage wurde übersprungen',

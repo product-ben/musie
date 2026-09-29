@@ -217,7 +217,7 @@ and the word goes over the edge as one unbreakable box.
 | ✗ | ✓ |
 |---|---|
 | Inhaltsübersetzungsplatzhalter | Übersetzungen der Inhalte |
-| Achtsamkeitskartensetzusammenstellung | Dein gedrucktes Mindfulness-Cards-Set |
+| Achtsamkeitskartensetzusammenstellung | Dein gedrucktes Mindfulness-Karten-Set |
 | Platzhalterbildbeschreibungstext | Platzhalterbild: Musie allein nutzen |
 
 Two nouns is usually fine. Five is a word nobody has ever typed into a search
@@ -279,10 +279,24 @@ punctuated accordingly.
 
 Three cases, decided separately:
 
-1. **Product names do not translate.** *Musie* is *Musie*. *Mindfulness Cards*
-   is the name of a physical deck and stays *Mindfulness Cards*. Track titles
-   and artist names are not translated either — which is why `public.tracks`
-   has no `_i18n` sibling at all. *Morgenlicht* stays *Morgenlicht*.
+1. **Product names do not translate.** *Musie* is *Musie*. Track titles and
+   artist names are not translated either — which is why `public.tracks` has no
+   `_i18n` sibling at all. *Morgenlicht* stays *Morgenlicht*.
+
+   **One exception, and it is the deck: the German is *Mindfulness-Karten-Set*.**
+   This section said the opposite until 2026-09-29 — that *Mindfulness Cards* is
+   the name of a physical object and stays English. Ben's copy pass of that day
+   Germanised it, in `exercise_i18n` and in `de.ts`, and a standard that argues
+   with the data is worse than no standard, so it is written down rather than
+   litigated. The reasoning against it is still worth knowing, because it
+   returns the moment the deck has a printed box: a name on a product a person
+   can hold is not a string, and the English half of the name is on the
+   cardboard. If the box ships reading *Mindfulness Cards*, this decision is
+   worth re-opening — with the **one name everywhere** rule below intact either
+   way.
+
+   The English strings keep *Mindfulness Cards deck*. Nothing about an English
+   name in German copy touches what the English copy calls it.
 2. **Terms of art keep the form the German-speaking field actually uses.**
    *Body Scan* and *Soundwalk* are the words German mindfulness and acoustic-
    ecology practice use; inventing *Körperabtastung* would be a translation
@@ -306,9 +320,18 @@ else in a string has to move. The plural takes the English `-s`: **Sessions**,
 never *Sessionen*.
 
 **Joining an English name to a German noun takes hyphens throughout**
-(Durchkopplung): **Mindfulness-Cards-Set**, not *Mindfulness Cards Set* and not
-*Mindfulnesscardsset*. This is also a §6 fix — the hyphens give the hyphenator
-break points it would otherwise not have.
+(Durchkopplung): **Mindfulness-Karten-Set**, not *Mindfulness Karten Set* and
+not *Mindfulnesskartenset*. This is also a §6 fix — the hyphens give the
+hyphenator break points it would otherwise not have, and it is why the
+Germanisation above cost the layout nothing: *Karten* replaced *Cards* between
+two hyphens that were already there.
+
+**And one name, everywhere.** Whatever the deck is called, it is called that in
+every German string at once. The workbook of 2026-09-29 renamed it in four
+`exercise_i18n` rows and left `exercises.fact.cards` in `de.ts` — the only one
+of the five a user reads today — on the old name; that pair was caught before it
+shipped, and is the §1 rule ("consistency outranks the choice") applied to a
+noun instead of a register.
 
 **Endonyms in a language picker are not copy.** `LOCALE_LABELS` is
 `{ en: 'English', de: 'Deutsch' }` and deliberately does not go through `t()`:

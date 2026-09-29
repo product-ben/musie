@@ -5041,3 +5041,146 @@ is empty. The toast fires and the entry shows no answer. I did not build a
 special case around it, because photo is an interactive mockup that writes
 nothing by design and a branch for it would be logic maintaining a fiction. It
 is worth knowing the day photo becomes real.
+
+## The copy round trip has no command, so the sheet Ben edits goes stale in silence
+
+Where: `musie-locales.csv`, `musie-content-exercises.csv` (repo root, committed
+by `4e4c930` on 2026-09-26); `package.json`, which has no script that produces
+them.
+
+What I checked: Ben's `musie keys .xlsx` of 2026-09-29 holds 294 rows in the two
+sheets the export left behind, and the structure is intact — same keys, same
+`URL / Route` column, nothing added or removed, 25 German and 9 English strings
+rewritten. So the round trip works *as a convention*.
+
+**What it does not have is a generator.** Nothing in `package.json` builds those
+CSVs; `4e4c930` wrote them once, by hand, alongside a commit about Netlify.
+There is a `pnpm deck:migration` and a `pnpm deck:pdf` for the deck's one file,
+and nothing of the kind for the 294 strings — so the snapshot drifts the moment
+anybody edits `de.ts`, and nothing reports it.
+
+**It had already drifted.** `diary.stoppedAt` is `'Aufgehört bei {step}'` /
+`'Stopped at {step}'` in the export and `'Aufgehört bei'` / `'Stopped at'` in
+the code: `f2cd89b` made it the label of a `<dl>` row and dropped the slot, four
+days after the export and three days before Ben filled the workbook. Harmless
+this time — Ben did not touch that row, so nothing of his was written against a
+value that no longer existed. It would not have been harmless on a row he did
+touch: the workbook is the only record of what the old value was, and a stale
+old value is indistinguishable from an intentional edit.
+
+What I did: refreshed both CSVs from what actually shipped, so the next diff
+starts clean — the locales sheet regenerated from `de.ts` / `en.ts` directly
+(which is also how the drift surfaced), the exercises sheet patched with the
+values `20260929100000` leaves behind. Preserved each file's dialect, which are
+not the same file twice: locales is CRLF and fully quoted, exercises is LF and
+minimally quoted, both with a BOM. Two keys — `about.greeting`, `about.hint.next`
+— are multi-line in `de.ts` and were carried across from the old CSV untouched.
+
+Why: by hand for the second time is the answer that ships this pass; a generator
+is a separate change and would want the `URL / Route` column, which is a human
+judgement (`not rendered (unused key)`) and not derivable from the source.
+
+What I need from Ben: **nothing to decide, one thing to know** — the CSVs in the
+repo root are a hand-made snapshot, not a build output, and they are only as
+fresh as the last person who remembered. If this workbook round trip is going to
+be the way content copy arrives, a `pnpm export:copy` that regenerates both
+files is worth an hour, and `pnpm check` failing when the export is stale is
+worth another. Until then: re-export immediately before sending the sheet out,
+not from whatever is committed.
+
+## Ben's copy pass rewrote three strings that no surface renders
+
+Where: `session.scan.headline`, `privacy.voice`, `privacy.browserBound` in
+`src/i18n/de.ts` and `en.ts`; marked `not rendered (unused key)` in the export's
+own `URL / Route` column.
+
+What I checked: all three are still in both locale files, still typed, and still
+unreferenced outside them. `session.scan.headline` was superseded by the
+per-exercise `scan_md` (`20260924120000`); the two `privacy.*` strings never got
+a surface — the privacy posture they state is in the briefing as a positioning
+asset and in the data model as a fact, and nowhere in the UI as a sentence.
+
+What I did: applied all three, exactly as the sheet has them.
+
+Why: the export column told Ben they were unrendered and he rewrote them anyway,
+which reads as intent rather than oversight — and a string that is about to be
+given a surface is better written than not. Deleting them would also have been a
+product decision disguised as a cleanup.
+
+What I need from Ben: **a decision, at your leisure.** Either these three get a
+surface — the two `privacy.*` lines in particular are the only place the app
+would say its data posture in its own voice, and rule 6's `missing_translations`
+cannot see a key with no screen — or they get deleted, because a key nothing
+renders is copy that can rot without anybody noticing, and you have now paid to
+edit it twice.
+
+## Alt text that instructs rather than describes — a rule, not a one-off
+
+Where: `exercise_i18n.image_alt` for `mindfulness-cards` / `de`;
+`supabase/migrations/20260929100000_therapeutic_copy_pass.sql`, the WHAT I DID
+NOT TAKE VERBATIM block.
+
+What I checked: the workbook had `Fünf aufgefächerte Karten des
+Mindfulness-Karten-Sets. Nimm die Vorderste heraus` — the sighted reader gets a
+picture and the screen-reader user gets an order. The instruction to draw a card
+is already the step's own copy (`scan_md`), so the alt text was repeating it in
+the one place that cannot be acted on: a description of what the image shows.
+`20260924140000`'s comment shows the original was written deliberately the other
+way — "the alt says a hand is TAKING one rather than that a hand is present".
+
+What I did: asked, and Ben kept the existing sentence. Only the deck name moved
+in that row, and the English did not move at all — leaving `en` at `taking the
+nearest one` while `de` still says a hand is taking it would have the two
+locales describing different pictures, which is the failure `20260924140000` was
+careful to avoid for `free-rein`.
+
+Also fixed without asking: `die aus durch Musik und Bild` in the same exercise's
+`reflect_md`, where `aus der Verbindung von` was replaced by `durch` and the old
+preposition stayed behind. That is a half-finished edit, not a phrasing.
+
+What I need from Ben: **nothing on this row — a rule for the next sheet.** Alt
+text describes the picture; it never tells the reader what to do, because the
+reader who depends on it is the one reader who cannot see what it refers to. It
+is not in `docs/GERMAN-UI-WRITING.md`, which is about German rather than about
+alt text, and it should be written down somewhere before a nine-card deck's worth
+of `cards_i18n.image_alt` arrives from the same workbook.
+
+## The deck's German name is now Germanised, and §8.1 said the opposite
+
+Where: `docs/GERMAN-UI-WRITING.md` §6 and §8 (amended);
+`exercises.fact.cards` in `src/i18n/de.ts`;
+`supabase/migrations/20260929100000_therapeutic_copy_pass.sql`.
+
+What I checked: the workbook renamed the deck to `Mindfulness-Karten-Set` in
+four `exercise_i18n` rows — both exercises' `needs` and both `image_alt` — and
+left `exercises.fact.cards` in `de.ts` reading `Braucht dein
+Mindfulness-Cards-Set`. **That one string is the only one of the five a user
+reads today**: `needs` has had no surface since 2026-09-24, and the two
+`image_alt` values are heard, not read. So the sheet applied verbatim would have
+renamed four invisible strings and left the visible one on the old name.
+
+§8.1 also said the deck does not translate — *"Mindfulness Cards is the name of
+a physical deck and stays Mindfulness Cards"* — so the workbook inverted a
+written standard, in four rows, without saying so.
+
+What I did: asked, and Ben chose the rename everywhere. `de.ts` moves with the
+four content rows, §6's example and §8's Durchkopplung paragraph are rewritten
+to the new name, and §8.1 now records the inversion and the date rather than
+contradicting the data. Added a **one name, everywhere** rule under §8 for the
+next time a rename arrives spread across a sheet. The English strings are
+untouched: `Mindfulness Cards deck` is what the English copy calls it and the
+German decision does not reach it.
+
+Durchkopplung cost nothing: `Karten` replaced `Cards` between two hyphens that
+were already there, so §6's break points are unchanged and no measure moves.
+
+Why: two names for one object in one language is the failure §1 calls a bug
+report, and a standard that argues with shipped data is worse than no standard.
+
+What I need from Ben: **nothing now — one trigger to remember.** The argument
+§8.1 used to make is still the good argument, and it comes back the day the deck
+has a printed box, because the name on cardboard a person is holding is not a
+string we control. `deck.json` carries no deck-level name today — only the nine
+cards — so nothing in the printed PDF says either name, and the box is the first
+place it will have to. If that box ships reading *Mindfulness Cards*, re-open
+this; the one-name-everywhere rule holds either way.
