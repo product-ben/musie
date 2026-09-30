@@ -15,20 +15,37 @@
  * reply — after the block has been scrolled to.
  *
  * The card is MC-01, whose recording really exists (E.4), so the title being
- * searched for is a real one: `Little Yellow Petals`.
+ * searched for is a real one.
+ *
+ * ── THE TITLE IS READ BACK, NOT RETYPED — 2026-09-30 ──────────────────────
+ * It used to be the literal `Little Yellow Petals`, and on 2026-09-24 the deck
+ * was repaired: MC-01 plays `trk-04` now and `trk-01` moved to MC-04. So this
+ * walk spent six days looking for MC-04's title on MC-01's card and reporting
+ * it as a leak failure.
+ *
+ * The pairing now comes from `deck.json` through `card()` and the title from
+ * the database through `trackIdentity()`, with the service role — which is the
+ * one place in these walks where reading the answer out of the database is
+ * exactly right. The assertion is that the title does not reach the BROWSER
+ * before the reveal, so the test has to know the true title by some route the
+ * page did not provide.
  */
 import { expect, test } from '@playwright/test';
-import { enterCode, label, reachTheLibrary, startExercise, withLocale } from './support';
+import {
+  card, enterCode, label, reachTheLibrary, startExercise, trackIdentity, withLocale,
+} from './support';
 import type { Locale } from './support';
 
-/** MC-01 → trk-01 → a recording that exists and is named this. */
-const CARD = 'MC-01';
-const TITLE = 'Little Yellow Petals';
-const ARTIST = 'Rachel Sandy';
+/** MC-01, and whatever `deck.json` says it plays — a recording that exists. */
+const CARD = card('MC-01');
 
 test('the title reaches the browser only at the reveal', async ({ page }, testInfo) => {
   const locale = testInfo.project.name as Locale;
   test.setTimeout(120_000);
+
+  /* The truth about this card's recording, before the page has said anything.
+     Read first so a failure here is a data problem rather than a leak. */
+  const { title: TITLE, artist: ARTIST } = await trackIdentity(CARD.track);
 
   /* EVERY BODY THE PAGE RECEIVES, kept as text. Recorded from before the
      first navigation so the auth and content requests are in it too — the
@@ -59,7 +76,7 @@ test('the title reaches the browser only at the reveal', async ({ page }, testIn
 
   /* The code lands and the listen step is on screen: naming the card finishes
      the scan step since 2026-09-24, so there is no Continue to press. */
-  await enterCode(page, locale, CARD);
+  await enterCode(page, locale, CARD.code);
   await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
 
   /* ── THE CLAIM, AT THE MOMENT IT MATTERS MOST ──────────────────────────

@@ -26,12 +26,14 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
 import { SCANNED_CARD } from './fakeCamera';
-import { enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
+import { card, enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /** A card neither other walk uses, so the three of them together prove the
  *  pairing is looked up per card rather than defaulted. */
-const TYPED_INSTEAD = { code: 'MC-06', id: 'mc-06', track: 'trk-06' };
+/* Read from deck.json by `card()` rather than retyped — support.ts says why.
+   The literal that used to be here went stale in the 2026-09-24 deck repair. */
+const TYPED_INSTEAD = card('MC-06');
 
 /**
  * Explainer → About you → library → the one implemented exercise → intro →

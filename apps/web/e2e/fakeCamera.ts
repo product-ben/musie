@@ -39,6 +39,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 
+import { card } from './support';
 import { scanLink } from '../src/lib/scanCode';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -51,7 +52,14 @@ const HERE = dirname(fileURLToPath(import.meta.url));
  * proved to be looked up per card rather than defaulted, which one card shared
  * by all of them could not tell apart from a hardcoded answer.
  */
-export const SCANNED_CARD = { code: 'MC-03', id: 'mc-03', track: 'trk-03' } as const;
+/**
+ * The card the fake camera holds up.
+ *
+ * READ FROM deck.json, not retyped — `support.ts`'s `card()` says why. This
+ * line used to claim MC-03 played `trk-03`; the 2026-09-24 deck repair moved
+ * it to `trk-05` and nothing told the walk.
+ */
+export const SCANNED_CARD = card('MC-03');
 
 /**
  * The base URL the code in the clip points at.
