@@ -41,8 +41,18 @@ export type VoiceMessageCode =
   | 'micDenied'
   | 'micNotFound'
   | 'micUnavailable'
-  /* getUserMedia worked and the capture graph still did not start. */
+  /* getUserMedia worked and the capture graph still did not start.
+     REACHABLE SINCE 2026-09-30. It was documented from F.0 and no code path
+     could produce it without a thrown exception, so the one failure it names
+     — a microphone that opens and delivers nothing — arrived as
+     `stop('silence')` instead, and the app told the person they had gone
+     quiet. `startRecorder`'s liveness gate is what says it now. */
   | 'recorderFailed'
+  /* Capture was live and then stopped: the track was muted or ended under us.
+     A call arriving, a Bluetooth route change, an iOS audio-session
+     interruption, a page frozen by the OS. Distinct from `recorderFailed`,
+     which says *could not start* — this one did start. */
+  | 'micInterrupted'
   /* The socket never opened, or dropped mid-session. */
   | 'connectionFailed'
   | 'connectionClosed'

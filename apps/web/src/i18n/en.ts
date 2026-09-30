@@ -792,6 +792,13 @@ export const en = {
   'voice.error.micNotFound': 'This device has no microphone Musie can use. Write your answer instead.',
   'voice.error.micUnavailable': 'The microphone could not be opened. Close whatever else is using it, then start again.',
   'voice.error.recorderFailed': 'Recording could not start on this device. Write your answer instead.',
+  /* THE ONE THAT DID START, AND THEN STOPPED — 2026-09-30. `recorderFailed`
+     above says *could not start*, which is the wrong sentence for a call
+     arriving, a Bluetooth headset taking the microphone, or iOS freezing the
+     page mid-answer. What the reader needs first is that their words survived,
+     which is why that clause leads — the same order `connectionClosed` uses
+     for the same reason. */
+  'voice.error.micInterrupted': 'The microphone stopped part-way through. Everything Musie had already heard was kept — start again when you are ready.',
   'voice.error.connectionFailed': 'Musie cannot reach the service that turns your words into text. Check your connection and start again.',
   /* Not an apology and not a warning: the words already heard are still
      there, and saying so is the only thing the reader needs. */
@@ -814,6 +821,12 @@ export const en = {
      this is it — the toast's own text already says what happened. */
   'voice.undo.action': 'Undo',
   'voice.undo.dismiss': 'Dismiss',
+  /* THE FAILURE TOAST'S X — 2026-09-30, when errors moved off the page and
+     into §7.23. Not `voice.undo.dismiss`: that one dismisses an OFFER and
+     leaves the change standing, this one puts away a report of something that
+     has already happened. Two different promises, so two different strings,
+     even though today they are one word apart. */
+  'voice.error.dismiss': 'Dismiss this message',
 
   /* ── Voice · the editor · F.4 ────────────────────────────────────
      The screen is §7.24's Draggable List, and §7.24 ships a default for every
@@ -874,12 +887,17 @@ export const en = {
   'voice.stopped.headline': 'Recording stopped',
   'voice.stopped.timeout': 'That was the {seconds} seconds. Everything Musie heard is in the list, and you can record more.',
   'voice.stopped.silence': 'It went quiet for {silence} seconds, so Musie stopped listening. Everything it heard is in the list.',
-  /* The headlines the catalogue deliberately did not have before F.4 — the
-     old note here said the component was still unchosen. It is Message, one
-     for the fatal codes and one for the single non-fatal one, and they are
-     worded apart so a warning is not read as a failure. */
-  'voice.error.headline': 'Recording stopped',
-  'voice.warning.headline': 'One statement was skipped',
+  /* ── THE TWO ERROR HEADLINES ARE GONE — 2026-09-30 ────────────────────
+     F.4 chose Message for a failure and these were its headlines. A failure
+     is a Toast now (VoiceTranscript.tsx says why), and §7.23 has no headline:
+     a toast is one sentence, and the sentence is the `voice.error.*` copy
+     above. Two strings nothing could render would be exactly the invisible
+     rot the note at the top of this file warns about — so they are deleted
+     rather than kept against a component that may never come back.
+
+     `voice.stopped.headline` above STAYS: the stop notice is still a Message,
+     because a recorder that reached its own limit is part of the flow rather
+     than something that went wrong. */
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'About Musie',

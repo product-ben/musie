@@ -32,6 +32,7 @@ export const VOICE_MESSAGE_KEYS: Record<VoiceMessageCode, MessageKey> = {
   micNotFound: 'voice.error.micNotFound',
   micUnavailable: 'voice.error.micUnavailable',
   recorderFailed: 'voice.error.recorderFailed',
+  micInterrupted: 'voice.error.micInterrupted',
   connectionFailed: 'voice.error.connectionFailed',
   connectionClosed: 'voice.error.connectionClosed',
   connectionRejected: 'voice.error.connectionRejected',

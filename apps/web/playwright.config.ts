@@ -75,6 +75,9 @@ export default defineConfig({
   projects: [
     {
       name: 'en',
+      /* The WebKit spec is not a walk and not a locale: it belongs to the
+         project below, which is the only one running the right engine. */
+      testIgnore: /\.webkit\.spec\.ts$/,
       use: {
         ...devices['Desktop Chrome'],
         /* THE FULL BROWSER, NOT THE HEADLESS SHELL — E.2 DOES NOT RUN WITHOUT
@@ -97,12 +100,38 @@ export default defineConfig({
     },
     {
       name: 'de',
+      testIgnore: /\.webkit\.spec\.ts$/,
       use: {
         ...devices['Desktop Chrome'],
         channel: 'chromium',
         locale: 'de-DE',
         launchOptions: { args: fakeCameraArgs() },
       },
+    },
+
+    /**
+     * ── THE ONE PROJECT THAT IS NOT A WALK — 2026-09-30 ────────────────────
+     *
+     * `apps/web/OPEN-QUESTIONS.md` recorded that this file was Chromium twice
+     * over, "where the bug is invisible", and docs/VOICE-CAPTURE-FIX.md is the
+     * bug it was invisible to: an iPhone report whose every candidate cause
+     * turned on WebKit behaviour nobody had measured. WebKit is the engine
+     * EVERY browser on iOS runs, Chrome included, so this is the closest a
+     * runner gets to the device.
+     *
+     * It has NO fake-camera flags, and that is not an omission: those are
+     * Chromium command-line switches and WebKit has no equivalent. What the
+     * spec needs instead is no capture device at all — it drives the real
+     * worklet with an OscillatorNode, so the only thing it wants from the
+     * browser is a secure context and a Web Audio implementation.
+     *
+     * `testMatch` rather than a directory, so a WebKit test lives beside the
+     * walk it relates to and says in its filename which engine it needs.
+     */
+    {
+      name: 'webkit',
+      testMatch: /\.webkit\.spec\.ts$/,
+      use: { ...devices['Desktop Safari'], locale: 'en-GB' },
     },
   ],
 

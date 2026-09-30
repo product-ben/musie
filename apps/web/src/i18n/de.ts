@@ -559,6 +559,11 @@ export const de: Messages = {
   'voice.error.micNotFound': 'Dieses Gerät hat kein Mikrofon, das Musie nutzen kann. Schreibe stattdessen deine Antwort.',
   'voice.error.micUnavailable': 'Das Mikrofon ließ sich nicht öffnen. Schließe Anwendungen, die das Mikrofon benutzen, und starte neu.',
   'voice.error.recorderFailed': 'Die Aufnahme ließ sich auf diesem Gerät nicht starten. Schreibe deine Antwort stattdessen.',
+  /* 'mitten in der Aufnahme', nicht 'unterbrochen': das Wort beschreibt, was
+     die Person erlebt hat, und nicht, was technisch passiert ist. Und wie bei
+     `connectionClosed` steht zuerst, dass die Worte noch da sind — das ist
+     die Frage, die sich in dem Moment wirklich stellt. */
+  'voice.error.micInterrupted': 'Das Mikrofon hat mitten in der Aufnahme aufgehört. Alles, was Musie schon gehört hat, bleibt erhalten – starte neu, wenn du bereit bist.',
   'voice.error.connectionFailed': 'Musie erreicht den Dienst nicht, der deine Worte in Text verwandelt. Prüfe deine Verbindung und starte neu.',
   /* 'bleibt erhalten', nicht 'ist gespeichert': gespeichert wird erst am Ende
      der Session, und ein Versprechen, das die App hier nicht halten kann,
@@ -575,6 +580,9 @@ export const de: Messages = {
   'voice.undo.deleted': 'Aussage gelöscht',
   'voice.undo.action': 'Rückgängig',
   'voice.undo.dismiss': 'Schließen',
+  /* Nicht `voice.undo.dismiss`: das schließt ein ANGEBOT, das hier schließt
+     eine Meldung über etwas, das schon passiert ist. Siehe en.ts. */
+  'voice.error.dismiss': 'Meldung schließen',
 
   /* ── Voice · der Editor · F.4 ──────────────────────────────────
      Alle diese Strings hat §7.24 auch selbst, auf Deutsch, im Katalog des
@@ -613,8 +621,8 @@ export const de: Messages = {
   'voice.stopped.headline': 'Aufnahme beendet',
   'voice.stopped.timeout': 'Das waren {seconds} Sekunden. Alles, was Musie gehört hat, steht in der Liste. Du kannst mehr aufnehmen.',
   'voice.stopped.silence': 'Es war {silence} Sekunden still, darum hat Musie aufgehört zuzuhören. Alles Gehörte steht in der Liste.',
-  'voice.error.headline': 'Aufnahme beendet',
-  'voice.warning.headline': 'Eine Aussage wurde übersprungen',
+  /* `voice.error.headline` und `voice.warning.headline` sind weg — siehe
+     en.ts: Fehler sind jetzt ein Toast, und ein Toast hat keine Überschrift. */
 
   /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'Über Musie',
