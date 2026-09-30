@@ -5184,3 +5184,96 @@ string we control. `deck.json` carries no deck-level name today — only the nin
 cards — so nothing in the printed PDF says either name, and the box is the first
 place it will have to. If that box ships reading *Mindfulness Cards*, re-open
 this; the one-name-everywhere rule holds either way.
+
+---
+
+# POC — the deck as a pile you can throw cards off (`/dev/deck`)
+
+A proof of concept, on the terms `/dev/qr` set: a tool, not a screen. Not
+linked from the product, not imported by it, and deletable in one commit —
+`src/routes/DeckPoc.tsx`, `src/poc-deck.css`, the `poc.deck.*` block in both
+catalogues and one route in `src/router.tsx`. Three questions came out of it.
+
+## Layer 2 has no Card Deck, and L14.3 says this one is a component request
+
+Where: `src/poc-deck.css` (the whole file), `src/routes/DeckPoc.tsx`
+
+What I checked: `packages/design-system/src/` has `Carousel` (§7.11) and
+`DraggableList` (§7.24), and neither is this. Carousel is a scroll-snapped
+viewport — it moves a strip past a window, and the thing you touch is the
+strip, not an item. DraggableList has the closest gesture in the system, and
+its swipe is a *shortcut to a delete the row menu already offers*: it opens a
+panel, it is refused for `pointerType === 'mouse'`, and it never moves the item
+out of the list. A deck is the third thing: one card, under the finger, that
+leaves.
+
+What I did: built it as an L14 custom pattern in the app, with every number
+resolving to a Layer 1 token or to arithmetic over one, the class prefixed
+`musie-`, and the geometry kept entirely in CSS — the TSX sets unitless custom
+properties and multiplies nothing.
+
+Why: L14 permits a custom pattern exactly where the system has no component,
+and this is that case. It is also L14.3's case: if a deck is wanted in the
+product, the second copy is the moment it becomes `MusyCardDeck`, not the
+moment somebody copies this file.
+
+What I need from Ben: **nothing yet — flagging that this is a component request
+the day the deck is wanted in a real screen.** Three things in here are the
+component's and not a screen's, and are why it should not be copied: the
+axis-decision (a pile must not swallow the page's vertical scroll), the
+velocity threshold (a flick is a throw even when it travelled 40px), and the
+departing-card layer that lets the pile rotate before the animation ends.
+
+## Layer 1 has no rotation scale, and a deck needs two angles and a card size
+
+Where: `src/poc-deck.css`, the flagged block at the top (`--musie-deck-*`)
+
+What I checked: every token in `musy-foundations.css`. There is no rotation
+family at all — nothing that means "a few degrees off square" — and no
+card-sized length. `--bp-sm` is 480px, which is a *breakpoint*: multiplying it
+by 0.6 to get a card width satisfies L14.1's letter and lies about what the
+token means. `--motion-travel-*` is the nearest thing to a scatter distance and
+is wrong for it, because Layer 1 collapses those to 0 under
+`prefers-reduced-motion` — a resting pile would go flat, and the scatter is
+layout, not motion.
+
+What I did: declared four named constants in one flagged block —
+`--musie-deck-card-inline`, `--musie-deck-card-ratio`, `--musie-deck-tilt-max`,
+`--musie-deck-swing-max` — on the same terms `--musie-main-wide` is declared in
+`shell.css`: once, named, and reported.
+
+Why: a named gap is a find-and-replace when Layer 1 grows the token. An
+unnamed one is a hunt.
+
+What I need from Ben: **nothing, just flagging.** Two of the four are probably
+only ever a deck's business (the ratio and the swing). A rotation scale might
+not be: a "dropped paper" tilt is the sort of thing a brand this tactile uses
+more than once, and if it is wanted twice it belongs in Layer 1.
+
+## The POC reads `deck.json` directly, where every other screen reads the database
+
+Where: `src/routes/DeckPoc.tsx`, the import of
+`../../../../supabase/content/deck.json`
+
+What I checked: `lib/content.ts` is how content reaches every screen, and
+`/dev/qr` — the closest precedent — uses `getCards(locale)` for the stated
+reason that a hardcoded list of nine strings would be silently invalidated by a
+tenth card. Everything in the product is gated behind `SignInGate`
+(`src/main.tsx:107`), so a screen that reads the database needs a running
+stack and a session before it will paint at all.
+
+What I did: imported the JSON. The route is `lazy`, so the deck's content lands
+in its own chunk and never reaches the product's first paint.
+
+Why: the question this POC exists to answer is about MOTION, and gating it on
+`supabase start` makes it a worse instrument for that. The drift the usual
+argument buys is small here — CLAUDE.md rule 4 names `deck.json` as the deck's
+single source of truth and `pnpm deck:migration` generates the migration from
+the same file, so a tenth card reaches both from one edit. What it does not
+track is an edit made to the database directly, which rule 4 forbids anyway.
+
+What I need from Ben: **nothing, and nothing in the product should copy it.**
+If a deck ever becomes a real screen it reads `getCards(locale)` like
+everything else. Noted here because it is a deliberate departure from the
+pattern the repo is otherwise consistent about, and a silent one would look
+like an oversight.

@@ -616,7 +616,19 @@ export const de: Messages = {
   'voice.error.headline': 'Aufnahme beendet',
   'voice.warning.headline': 'Eine Aussage wurde übersprungen',
 
-  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
+  /* ── /dev/deck · PROOF OF CONCEPT ───────────────────────────────────────
+     Die Gefühle der Karten stehen NICHT hier: die sind Inhalt und liegen in
+     supabase/content/deck.json. */
+  'poc.deck.title': 'Das Deck',
+  'poc.deck.text': 'Neun Karten auf einem losen Stapel. Zieh die oberste, und sie folgt deinem Finger. Lässt du sie nach einem Drittel ihrer Breite los oder schnippst sie weg, wandert sie nach unten.',
+  'poc.deck.hint': 'Pfeiltasten und Schaltflächen tun dasselbe.',
+  'poc.deck.stage': 'Das Deck. Zieh die oberste Karte weg oder blättere mit den Pfeiltasten.',
+  /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
+     `route.session.title`. */
+  'poc.deck.position': '{feeling} – Karte {index} von {total}',
+  'poc.deck.previous': 'Vorige Karte zeigen',
+  'poc.deck.next': 'Nächste Karte zeigen',
+  'poc.deck.shuffle': 'Karten mischen',  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',

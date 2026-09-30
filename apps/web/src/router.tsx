@@ -173,6 +173,22 @@ export const router = createBrowserRouter([
         },
         handle: handle({ titleKey: 'scan.dev.title' }),
       },
+      {
+        /* THE CARD-DECK PROOF OF CONCEPT, on the same terms as /dev/qr above:
+           a tool, not a screen. Nothing links to it and nothing in the product
+           imports it, so deleting it is deleting three files and this block.
+
+           `lazy` for the same reason the QR sheet is lazy, with a different
+           payload: this module is the only importer of deck.json, and an
+           ordinary import would put the whole deck's content in the first
+           paint of a product that reads its cards from the database. */
+        path: 'dev/deck',
+        lazy: async () => {
+          const { DeckPoc } = await import('./routes/DeckPoc');
+          return { Component: DeckPoc };
+        },
+        handle: handle({ titleKey: 'poc.deck.title' }),
+      },
       /* `/done` IS GONE. The prototype ended on a screen that acknowledged the
          session and offered to share it; C.2 cut sharing, and D.5 routes a
          finished run straight into its own diary entry — which already says

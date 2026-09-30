@@ -1,0 +1,397 @@
+/**
+ * THE DECK, AS A PILE YOU CAN THROW CARDS OFF — /dev/deck. An L14 custom
+ * pattern, and a PROOF OF CONCEPT: it is not linked from the product and
+ * nothing in the product imports it.
+ *
+ * The system has no Card Deck, which is what makes this permitted. L14's three
+ * conditions apply exactly as they do in shell.css:
+ *
+ *   1. Every declaration resolves to a Layer 1 token or to arithmetic over
+ *      one. The only bare values are the geometric identities L14 allows
+ *      (0, 100%, 100vw) and unitless multipliers inside calc().
+ *      FOUR EXCEPTIONS, flagged loudly below.
+ *   2. Naming is `.musie-<block>[__<part>]` — deliberately NOT `musy-`.
+ *   3. Anything here that recurs is a component request, not a second copy.
+ *      This one IS a component request already; see apps/web/OPEN-QUESTIONS.md.
+ *
+ * ── THE GEOMETRY IS ALL HERE, AND NONE OF IT IS IN THE TSX ─────────────────
+ * The component sets UNITLESS NUMBERS as custom properties and nothing else:
+ * how deep a card sits in the pile, how far the finger has travelled, which
+ * way it was thrown. Every one of those numbers is multiplied by a token in
+ * this file. That split is the whole reason a screen full of transforms can
+ * still honour L14.1 — a `transform` assembled in JavaScript is a pile of raw
+ * pixels wherever it is written down.
+ *
+ * ── MOTION IS LAYER 1'S, INCLUDING THE DECISION NOT TO MOVE ────────────────
+ * Nothing here tests `prefers-reduced-motion`. Layer 1 already collapses every
+ * duration to 1ms and every travel token to 0 under it, so the throw becomes a
+ * cut and the spring-back becomes a jump — which is the correct answer and
+ * arrives for free. A media query here would be a second opinion about a
+ * question Layer 1 has already settled.
+ */
+
+/* ═══ THE FOUR NUMBERS THAT ARE NOT TOKENS ═══════════════════════════════════
+   A deck of paper cards needs a card size, a ratio, and two angles, and Layer 1
+   has none of the four. It has no rotation scale at all — there is no token
+   that means "a few degrees off square" — and no card-sized length: --bp-sm is
+   480px, which is a BREAKPOINT, and multiplying a breakpoint by 0.6 to get a
+   card width would be arithmetic over a token in the letter of L14.1 and a lie
+   in its spirit. A breakpoint is not a card.
+
+   So they are declared once, here, named, and reported. THESE ARE REAL TOKEN
+   GAPS. Absorbing them into Layer 1 is a find-and-replace rather than a hunt,
+   which is the same bargain --musie-main-wide strikes in shell.css.          */
+.musie-deck {
+  /* A card, in the hand. Sized so two thumbs can hold it at 393px and it still
+     reads as a card rather than a panel on a laptop, and capped by the column
+     it sits in so it never outgrows a narrow phone. */
+  --musie-deck-card-inline: min(100%, 17.5rem);
+  /* 5:7 — a playing card. Dimensionless, so it is arguably not an exception at
+     all; it is here because the other three are. */
+  --musie-deck-card-ratio: 5 / 7;
+  /* HOW SLOPPY THE PILE IS. The most a resting card leans off square. Found by
+     looking rather than by reasoning: at 5deg the pile reads as a printing
+     misalignment, and somewhere past 9 it stops reading as "dropped on a
+     table" and starts reading as "broken layout". 7 is the middle of the band
+     where it looks deliberate. */
+  --musie-deck-tilt-max: 7deg;
+  /* HOW MUCH A DRAGGED CARD LEANS INTO THE THROW, at full travel. Larger than
+     the resting tilt on purpose: the lean is what makes the card feel picked
+     up rather than slid. */
+  --musie-deck-swing-max: 18deg;
+}
+
+/* ═══ THE STAGE ══════════════════════════════════════════════════════════════
+   `overflow: clip` rather than `hidden`: clip does not create a scroll
+   container, so a card flying off the side cannot leave the page scrollable
+   sideways — the one bug every card-throwing UI ships at least once. The
+   padding is what keeps the clip off the resting pile, whose scattered corners
+   stick out past the top card on every side.                                */
+.musie-deck {
+  display: grid;
+  place-items: center;
+  gap: var(--space-gap-stack);
+  min-block-size: var(--view-block);
+  padding: var(--sp-6) var(--gutter);
+  overflow: clip;
+  /* The pile is the page's one touch surface. Vertical scrolling still belongs
+     to the browser — see THE AXIS IS DECIDED in DeckPoc.tsx — so this is
+     `pan-y` and not `none`. */
+  touch-action: pan-y;
+}
+
+/* ═══ THE PILE ═══════════════════════════════════════════════════════════════
+   A grid with ONE cell, and every card in it. Not `position: absolute`: an
+   absolutely positioned stack has no height of its own, so the page would
+   collapse around it and every card would need its own inset. Stacked in one
+   grid cell they all take the cell's size, the cell takes the biggest card,
+   and the layout is honest with no coordinates in it.                       */
+.musie-deck__pile {
+  display: grid;
+  grid-template-areas: 'card';
+  inline-size: var(--musie-deck-card-inline);
+  aspect-ratio: var(--musie-deck-card-ratio);
+  /* The focus ring belongs to the pile, because the pile is what takes focus:
+     the cards are data, the pile is the control. `--focus-ring-clearance`
+     keeps the ring off the topmost card's corners. */
+  border-radius: var(--radius-xl);
+}
+
+.musie-deck__pile:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-clearance);
+}
+
+/* ═══ ONE CARD ═══════════════════════════════════════════════════════════════
+   THE TRANSFORM IS THE WHOLE COMPONENT, so it is worth reading slowly. Four
+   numbers arrive from the TSX, all unitless, and each is multiplied by a token
+   here:
+
+     --musie-card-depth    0 for the top card, 1 for the one under it, …
+     --musie-card-scatter-x/y/tilt   -1…1, hashed from the card's id
+     --musie-drag-x/y      pixels the finger has travelled, as plain numbers
+     --musie-card-swing    -1…1, the drag as a fraction of the card's width
+
+   `--musie-deck-progress` is the odd one out: it lives on the PILE, not on a
+   card, and it is how far the top card has been dragged toward leaving. Every
+   card reads it and subtracts it from its own depth, so the whole pile rises
+   by one place as the top card goes — the cards underneath start arriving
+   before the top one has left, which is the difference between a stack that
+   animates and a stack that feels connected to the finger.                  */
+.musie-deck__card {
+  grid-area: card;
+  /* Defaults, so a card that is not being dragged needs no inline style at all
+     and the front card's are simply set back to 0 on release. */
+  --musie-drag-x: 0;
+  --musie-drag-y: 0;
+  --musie-card-swing: 0;
+  /* Depth, less however far the top card has already travelled, floored at 0
+     so the top card never inverts, and capped so a nine-card pile does not
+     recede into nothing. Past the cap the cards sit at one depth with their
+     own scatter, which is what gives the pile its ragged fringe. */
+  --musie-card-rise:
+    clamp(0, calc(var(--musie-card-depth) - var(--musie-deck-progress)), 4);
+
+  display: grid;
+  /* L13 — no text selection: the whole card is a drag surface, and a marquee
+     starting under the finger beats the gesture to it. Caught by looking: a
+     mouse drag across the pile left "Joy" selected and highlighted in blue
+     behind the card it had just thrown. Both spellings, which is what the
+     system's own drag surfaces do (musy-components.css, §7.11 and §7.24). */
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-raised);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  box-shadow: var(--elevation-2);
+  /* Deeper cards paint behind. FROM THE DEPTH, NEVER FROM THE RISE, which is
+     the whole bug this line used to have: the rise is fractional while a drag
+     is in progress, `z-index` takes an integer, and `calc(10 - 0.35)` rounds
+     to the same 10 the card being dragged has. Tied, DOM order decides, and
+     the card under the finger goes BEHIND the one rising to meet it — visible
+     only mid-gesture, which is the one moment nobody is screenshotting. The
+     depth is an integer and does not move until the pile actually rotates.
+
+     --z-raised is 10 and a nine-card deck reaches 1, so every card stays above
+     --z-base and below anything the shell puts over the page. */
+  z-index: calc(var(--z-raised) - var(--musie-card-depth));
+
+  transform:
+    translate3d(
+      calc(var(--sp-4) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
+      calc(
+        var(--sp-4) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px +
+        var(--sp-3) * var(--musie-card-rise)
+      ),
+      0
+    )
+    rotate(
+      calc(
+        var(--musie-deck-tilt-max) * var(--musie-card-scatter-tilt) +
+        var(--musie-deck-swing-max) * var(--musie-card-swing)
+      )
+    )
+    /* BARELY ANY. An earlier 0.05 per step was the Tinder-stack idiom, and on a
+       SLOPPY pile it is actively wrong: shrinking a card pulls its edges in by
+       more than the scatter pushes them out, so the messier the pile was told
+       to be, the neater it looked. 0.02 is enough to separate the layers and
+       little enough to leave the corners where the scatter put them. */
+    scale(calc(1 - 0.02 * var(--musie-card-rise)));
+
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-emphasis),
+    box-shadow var(--motion-enter);
+}
+
+/* ── WHILE THE FINGER IS DOWN, THERE IS NO TRANSITION ──────────────────────
+   A card that eases toward the finger lags behind it, and a gesture that lags
+   is a gesture people let go of. The same call DraggableList's swipe makes,
+   for the same reason.
+
+   `will-change` is set HERE and not on the card at rest: promoting nine cards
+   to their own layers for the whole life of the page costs memory for eight
+   cards that are not moving, and promoting one card at the moment it starts to
+   move is exactly what will-change is for.                                  */
+.musie-deck__card[data-swiping='true'] {
+  transition: none;
+  will-change: transform;
+}
+
+/* The top card is the only one that can be picked up, and says so. */
+.musie-deck__card[data-front='true'] {
+  cursor: grab;
+  box-shadow: var(--elevation-3);
+}
+
+.musie-deck__card[data-front='true'][data-swiping='true'] {
+  cursor: grabbing;
+}
+
+/* ── THE THROW ─────────────────────────────────────────────────────────────
+   A card that has been let go of hard enough leaves, and it leaves as its OWN
+   element in its own layer — the pile has already rotated underneath it and
+   the next card is already live. That is what makes the deck swipeable as fast
+   as a thumb can move: nothing waits for the animation that is still running.
+
+   `from` repeats the resting transform exactly, scatter and all, so the card
+   starts the throw from precisely where the finger left it rather than
+   snapping back to centre for one frame first.
+
+   100vw is a geometric identity, not a measurement: the card starts centred,
+   so a viewport's width of travel puts it off the screen at any size.       */
+@keyframes musie-deck-throw {
+  from {
+    transform:
+      translate3d(
+        calc(var(--sp-4) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
+        calc(var(--sp-4) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px),
+        0
+      )
+      rotate(
+        calc(
+          var(--musie-deck-tilt-max) * var(--musie-card-scatter-tilt) +
+          var(--musie-deck-swing-max) * var(--musie-card-swing)
+        )
+      );
+    opacity: 1;
+  }
+
+  to {
+    transform:
+      translate3d(
+        calc(100vw * var(--musie-throw-dir)),
+        /* The vertical travel carries on in the direction it was already
+           going, tripled: a card thrown up-and-right should leave up-and-right
+           rather than turning to level on release. */
+        calc(var(--musie-drag-y) * 3px),
+        0
+      )
+      rotate(
+        calc(
+          var(--musie-deck-tilt-max) * var(--musie-card-scatter-tilt) +
+          var(--musie-deck-swing-max) * var(--musie-card-swing) * 2.5
+        )
+      );
+    opacity: 0;
+  }
+}
+
+.musie-deck__card[data-throwing='true'] {
+  /* `forwards`, but the element is removed on animationend anyway — the fill
+     only covers the frames between the last keyframe and React unmounting it,
+     which is where a card would otherwise flash back into the middle of the
+     screen at full opacity. */
+  animation: musie-deck-throw var(--motion-duration-slow) var(--motion-ease-exit) forwards;
+  /* It is leaving. It cannot be grabbed, and it must not eat the pointer that
+     is already reaching for the card underneath. */
+  pointer-events: none;
+  z-index: var(--z-raised);
+}
+
+/* ── AND THE WAY BACK IN ───────────────────────────────────────────────────
+   Previous plays the SAME keyframes in reverse: the card starts a viewport
+   away, at the angle a thrown card ends at, and lands in the pile. Reusing the
+   throw rather than writing an entrance is not only shorter — it guarantees
+   the two are exact opposites, so a card taken back retraces the path it left
+   by instead of arriving on a second, nearly-identical curve.
+
+   `--motion-enter` rather than the exit pair the throw uses: something
+   arriving decelerates, something leaving accelerates. Layer 1 names both. */
+.musie-deck__card[data-arriving='true'] {
+  animation: musie-deck-throw var(--motion-duration-base) var(--motion-ease-entrance) reverse;
+}
+
+/* ═══ THE FACE ═══════════════════════════════════════════════════════════════
+   A wash of the card's own accent over the raised surface, rather than the
+   accent as the background: the surface token still carries the light/dark
+   answer, and the accent only tints it. Three accents across nine cards, fixed
+   by the card's place in the printed deck and NOT by its place in the pile —
+   a card keeps its colour when the deck is shuffled, because the colour
+   belongs to the card.                                                      */
+.musie-deck__face {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-gap-related);
+  padding: var(--space-inset-card);
+  border-radius: inherit;
+  background-color: var(--musie-card-accent-wash);
+  /* The face must clip to the card's corners: without this the wash paints
+     square corners over the card's rounded ones. */
+  overflow: clip;
+}
+
+.musie-deck__card[data-accent='1'] .musie-deck__face {
+  --musie-card-accent-wash: var(--accent-1-subtle);
+  --musie-card-accent-text: var(--accent-1-text);
+  --musie-card-accent-rule: var(--accent-1-border);
+}
+
+.musie-deck__card[data-accent='2'] .musie-deck__face {
+  --musie-card-accent-wash: var(--accent-2-subtle);
+  --musie-card-accent-text: var(--accent-2-text);
+  --musie-card-accent-rule: var(--accent-2-border);
+}
+
+.musie-deck__card[data-accent='3'] .musie-deck__face {
+  --musie-card-accent-wash: var(--accent-3-subtle);
+  --musie-card-accent-text: var(--accent-3-text);
+  --musie-card-accent-rule: var(--accent-3-border);
+}
+
+/* The printed code, in the corner, the way it is on the paper card. */
+.musie-deck__code {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  /* A code is a serial number, not a word: it takes tracking a word would not
+     want, and it is the one string on the card that is never translated. */
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+}
+
+/* The feeling. The card's whole reason to exist, so it takes the display face
+   and the middle row, optically centred rather than top-aligned. */
+.musie-deck__feeling {
+  margin: 0;
+  align-self: center;
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+  letter-spacing: var(--type-display-lg-tracking);
+  color: var(--musie-card-accent-text);
+  text-wrap: var(--text-wrap-heading);
+  /* Sehnsucht, Dankbarkeit, Einsamkeit — German compounds in display type at
+     393px, which is exactly the case Layer 1 turned hyphenation on for. It
+     only works while <html lang> tracks the locale, which LocaleProvider
+     guarantees. */
+  hyphens: var(--text-hyphens);
+}
+
+/* A rule along the foot, in the card's accent: the one mark that tells you a
+   card has a colour at all once the wash is this pale. */
+.musie-deck__rule {
+  block-size: var(--border-width-thick);
+  border-radius: var(--radius-full);
+  background-color: var(--musie-card-accent-rule);
+}
+
+/* ═══ THE CHROME UNDER THE PILE ══════════════════════════════════════════════
+   The buttons are the reason the gesture is allowed to be invisible. Nothing
+   in here is reachable ONLY by dragging: a cursor, a keyboard and a screen
+   reader all get to the same three actions through real controls, which is the
+   rule DraggableList's swipe is written to and it holds here too.           */
+.musie-deck__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-gap-inline);
+}
+
+.musie-deck__counter {
+  margin: 0;
+  min-inline-size: var(--sp-9);
+  text-align: center;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line);
+  color: var(--on-surface-muted);
+  /* The counter changes on every throw while the buttons beside it do not, so
+     it is the one thing here that would make the row jump. Tabular figures
+     hold the width of "1 / 9" and "9 / 9" the same. */
+  font-variant-numeric: tabular-nums;
+}
+
+.musie-deck__hint {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  text-align: center;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}

@@ -881,7 +881,19 @@ export const en = {
   'voice.error.headline': 'Recording stopped',
   'voice.warning.headline': 'One statement was skipped',
 
-  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
+  /* ── /dev/deck · PROOF OF CONCEPT ───────────────────────────────────────
+     A tool route, like the QR sheet, and deletable in one commit: nothing in
+     the product links to it or imports it. The card FEELINGS are not here —
+     they are content, they live in supabase/content/deck.json, and this
+     catalogue is for the words the screen says in its own voice. */
+  'poc.deck.title': 'The deck',
+  'poc.deck.text': 'Nine cards in a loose pile. Drag the top one and it follows your finger. Let go past a third of its width, or flick it, and it goes to the bottom.',
+  'poc.deck.hint': 'Arrow keys and the buttons do the same thing.',
+  'poc.deck.stage': 'The deck. Drag the top card, or move through it with the arrow keys.',
+  'poc.deck.position': '{feeling} — card {index} of {total}',
+  'poc.deck.previous': 'Show the previous card',
+  'poc.deck.next': 'Show the next card',
+  'poc.deck.shuffle': 'Shuffle the deck',  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',
