@@ -26,6 +26,16 @@
  * camera nobody asks for is a camera nobody opens. Permission is still granted
  * per test, so a walk can also exercise a refusal.
  *
+ * ── AND IT HAS RECORDINGS, WHICH ARE NOT RECORDINGS ───────────────────────
+ * Same bargain, added 2026-10-01. `reveal.spec.ts` cannot start without a
+ * playable track, and the four masters are a licensed operator upload that is
+ * not in this repository — so on a fresh `supabase start` the walk timed out
+ * waiting for an `<audio>` that could never mount. `e2e/fakeTracks.ts` writes
+ * a silent placeholder for any track whose `src` is set and which has no object
+ * yet; it never overwrites, and it refuses outright to touch anything but
+ * loopback. The storage API, the signed URL, the RLS policy, the decode and the
+ * listen gate are all real. Only the music is not.
+ *
  * ── TWICE, ONCE PER LOCALE ─────────────────────────────────────────────────
  * Two projects, and the German one is the point: it is what catches a string
  * somebody hardcoded in a hurry, because a hardcoded English string renders
@@ -61,9 +71,12 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
 
-  /* Writes the clip the fake camera plays. Before any browser, because the
-     file's path is one of the launch flags below. */
-  globalSetup: './e2e/fakeCamera.ts',
+  /* Two fixtures now, so one entry point — `e2e/globalSetup.ts` says why it is
+     not `fakeCamera.ts` any more. It writes the clip the fake camera plays
+     (before any browser, because that file's path is one of the launch flags
+     below) and gives every track that claims a recording something playable,
+     because the real masters are an operator upload and are not in this repo. */
+  globalSetup: './e2e/globalSetup.ts',
 
   use: {
     baseURL: BASE_URL,
