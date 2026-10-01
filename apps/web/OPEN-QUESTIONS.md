@@ -5371,3 +5371,55 @@ I did not touch `10-layout.md`: it is byte-checked against a reference copy by
 behind it. Either L11 grows a row distinguishing *a condition that persists*
 from *an event that has ended*, or this screen goes back inline. Logged on the
 system side too, in `packages/design-system/stories/OPEN-QUESTIONS.md`.
+
+## The walks play silence now, and that is worth knowing before it is forgotten
+Where: `e2e/fakeTracks.ts`, `e2e/globalSetup.ts`, `playwright.config.ts`
+
+What I checked: `pnpm test:e2e` was 20 red of 22 on 2026-09-30, and after the
+deck-pairing fix two were left — `reveal.spec.ts`, both locales. The cause was
+not code. `select count(*) from storage.objects where bucket_id = 'tracks'`
+returned **0**: the local bucket was empty, so no card had a recording, the
+`<audio>` never mounted, and the walk timed out on a precondition rather than an
+assertion. The masters are an operator upload (`20260921160000_track_audio.sql`
+grants the client nothing but `select`), they are licensed from Epidemic Sound,
+and they are not in this repository — so this is the state of every fresh
+`supabase start`, not a local accident.
+
+What I did: generated them, the way `fakeCamera.ts` generates a camera. A silent
+8 kHz 8-bit mono PCM WAV per track whose `src` is set, each matching its row's
+`duration_seconds` so the listen gate and the element agree. It never
+overwrites and it refuses any target that is not loopback.
+
+Why: the walk's subject is whether the title reaches the browser before the
+reveal. That is a claim about bytes on a wire, and it is not made truer by the
+bytes being music.
+
+What I need from Ben: **nothing to decide — one thing not to misread.** A green
+`reveal.spec.ts` now says the plumbing works: the storage API, the signed URL,
+the RLS policy, the decode, the position, the gate. It says NOTHING about the
+recordings. BUILD-PLAN's *"five recordings, plus one each for Breathing Score
+and Body Scan Soundwalk"* is exactly as owed as it was, and a walk that passes
+against silence is the one thing that could make that look finished. The
+fixture prints a line saying so whenever it writes.
+
+## `test:e2e` looks broken on this machine, and it is `.env.local` saying no
+Where: `apps/web/.env.local`, `e2e/support.ts:113`
+
+What I checked: `.env.local` points the app at the HOSTED project
+(`VITE_SUPABASE_URL=https://xliwtiiopwyfunxkdmxh.supabase.co`, with the
+`127.0.0.1` line commented out below it). The walks assert through the service
+role against the local stack, so `stack()` refuses: *"This walk would address
+two different databases and prove nothing."* That guard is correct and it is the
+reason three walks failed before any of the real staleness was reachable.
+
+What I did: nothing permanent. Flipped it to local to verify, and restored it
+byte-for-byte afterwards — `shasum -a 256` checked against the original both
+times, on Ben's instruction to leave his environment as it was.
+
+Why: which database a dev server talks to is the developer's choice, not a test
+suite's.
+
+What I need from Ben: nothing to decide, but **the walks are red on this
+machine until that line is flipped**, and the failure does not say so in a way
+anybody would read as a configuration problem — it names two databases and
+stops. Worth a line in `docs/MUSIE-SETUP.md` next time that file is opened.
