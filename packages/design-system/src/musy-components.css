@@ -2268,18 +2268,43 @@
    comes in with the height — a 24px segment with 12px of side padding reads as
    a pill that lost its middle — and the gap closes to match, so the glyph and
    its label stay one object rather than two things sharing a box. */
+/* ── THE `min` RUNG LINES UP WITH A `min` CtaButton ───────────────────────
+   A segmented control is a bordered TRACK around its controls; a button IS the
+   control. At every other rung that difference is invisible, because the two
+   are never asked to stand in the same row. Here they are, and the track came
+   out 4px taller — 2px of its own padding and 1px of border on each side, less
+   the 2px by which a 16px glyph falls short of an 18px line box.
+
+   So at this rung the track gives up its padding and its border and lets the
+   segments be the whole control. It still reads as a track: `--surface-sunken`
+   behind segments that are not filled is what did that work anyway, and the
+   hairline was never doing much at 24px.
+
+   AND THE HEIGHT COMES FROM THE FLOOR, NOT FROM THE PADDING. `--target-min`
+   plus one step is 28px, which is exactly a `min` button, and a floor gives
+   the same answer whether the segment holds a line of text or a glyph — where
+   padding gives two answers 2px apart and only one of them lines up. */
+.musy-seg--min .musy-seg__track {
+  padding: 0;
+  border-width: 0;
+}
+
 .musy-seg--min .musy-seg__option {
-  min-block-size: var(--target-min);
+  min-block-size: calc(var(--target-min) + var(--sp-1));
   /* One step up the scale on BOTH axes, 2026-10-02, matching the move on
      CtaButton's `min` rung: the two sit in the same rows as each other, and a
      pair of small controls with different breathing room reads as one of them
-     being broken. Same as there, the block padding takes the height just past
-     --target-min rather than under it. */
+     being broken.
+
+     The block step is BELT AND BRACES here, not the mechanism: the floor above
+     already settles the height at 28px, and this only matters if a consumer
+     puts something taller than a line box in a segment. The floor is what
+     makes the rung the same height for a glyph and for a word. */
   padding-block: var(--sp-1);
   padding-inline: var(--sp-3);
   gap: var(--sp-1);
 }
-.musy-seg--min .musy-seg__track { padding: calc(var(--border-width-hairline) * 2); }
+
 
 /* ── ICON ONLY ─────────────────────────────────────────────────────────────
    It stops stretching. The default track is `grid-auto-columns: 1fr` inside a
