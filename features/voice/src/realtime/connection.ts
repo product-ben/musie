@@ -18,6 +18,8 @@ export type RealtimeConnection = {
   /** Ends the current turn. Only needed when the model has no server VAD. */
   commit: () => void;
   close: () => void;
+  /** Counters worth having in a bug report. Never rendered. */
+  diagnostics: () => { emptyCommits: number };
 };
 
 /**
@@ -62,12 +64,21 @@ export function connectRealtime(
   const partials = new Map<string, string>();
   let opened = false;
   let closedByUs = false;
+  /**
+   * How many turns OpenAI answered with "you committed an empty buffer".
+   *
+   * Not a banner and not an error — it is the ordinary result of stopping in a
+   * pause. It is COUNTED because a session where every commit was empty is a
+   * session whose audio never arrived, which is precisely the bug that took a
+   * day to find with nothing recorded anywhere. Read through `diagnostics()`.
+   */
+  let emptyCommits = 0;
 
   socket.addEventListener('open', () => {
     opened = true;
   });
 
-  socket.addEventListener('message', (message) => {
+  const onMessage = (message: MessageEvent) => {
     const event = JSON.parse(message.data as string);
 
     switch (event.type) {
@@ -103,7 +114,15 @@ export function connectRealtime(
           // Some models report a detected language; most echo back what we asked for.
           const detected = event.language ?? event.languages?.[0]?.code;
           onEvent({ type: 'final', text, language: detected ?? language });
+          break;
         }
+        /* AN EMPTY TURN IS STILL A TURN THAT CLOSED. This used to emit nothing,
+           and `awaitingStatement` is only ever cleared by an event — so one
+           empty commit left the session waiting forever: the idle cut-off
+           disabled, `pending` stuck on, and nothing to stop it before the
+           60-second ceiling. `cleared` says "stop waiting" and shows nobody
+           anything. */
+        onEvent({ type: 'cleared' });
         break;
       }
 
@@ -115,16 +134,33 @@ export function connectRealtime(
       }
 
       case 'error': {
-        // Committing an empty buffer is the ordinary outcome of pressing Stop
-        // during a pause: there was nothing left to transcribe. Not a problem,
-        // and a banner for it would be noise.
-        if ((event.error?.code ?? '').startsWith('input_audio_buffer')) break;
+        /* Committing an empty buffer is the ordinary outcome of pressing Stop
+           during a pause: there was nothing left to transcribe. Not a problem,
+           and a banner for it would be noise.
+
+           NARROWED FROM A PREFIX TO A SET — 2026-09-30. This was
+           `.startsWith('input_audio_buffer')`, which swallowed a whole family
+           of provider errors: no banner, no warning, no log, nothing. Among
+           them is the one event that is OpenAI saying THE BROWSER SENT NO
+           AUDIO, which would have diagnosed the reported bug in a line. An
+           empty commit is still silent, and its sibling is still counted —
+           but an `input_audio_buffer` error nobody anticipated now reaches a
+           person instead of the floor. Logged as L3 in
+           docs/VOICE-CAPTURE-FIX.md. */
+        const code = event.error?.code ?? '';
+        if (code === 'input_audio_buffer_commit_empty') {
+          emptyCommits += 1;
+          onEvent({ type: 'cleared' });
+          break;
+        }
         const { fatal, message } = classifyError(event.error);
         onEvent({ type: fatal ? 'error' : 'warning', message });
         break;
       }
     }
-  });
+  };
+
+  socket.addEventListener('message', onMessage);
 
   socket.addEventListener('error', () => {
     if (!closedByUs) {
@@ -158,7 +194,18 @@ export function connectRealtime(
     },
     close() {
       closedByUs = true;
+      /* DETACHED, not just flagged. The `close` and `error` handlers have
+         guarded on `closedByUs` since F.2 and the `message` handler never did,
+         so a `session.updated` already in the buffer could still fire
+         `ready` — flipping an idle session back into record mode for one
+         250ms tick, which is literally "record mode, and quickly after that it
+         ended". Logged as L6 in docs/VOICE-CAPTURE-FIX.md. */
+      socket.removeEventListener('message', onMessage);
       socket.close();
+    },
+    /** The four numbers that separate "nobody spoke" from "nothing arrived". */
+    diagnostics() {
+      return { emptyCommits };
     },
   };
 }

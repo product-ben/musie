@@ -86,13 +86,13 @@ const meta = {
     onDismiss: { action: 'dismiss', description: 'Renders the dismiss control when supplied.' },
     live: {
       control: 'inline-radio',
-      options: ['polite', 'off'],
-      description: "Announced while it is up. 'off' for a toast that repeats a change the user has already been told about some other way.",
+      options: ['polite', 'off', 'assertive'],
+      description: "Announced while it is up. 'off' for a toast that repeats a change the user has already been told about some other way. 'assertive' is role=alert, for a failure that has already stopped something — never for an offer.",
     },
     tone: {
       control: 'inline-radio',
-      options: ['neutral', 'success'],
-      description: '`success` draws a check glyph, the success feedback fill and a screen-reader status word — so the meaning survives without the colour.',
+      options: ['neutral', 'success', 'warning', 'error'],
+      description: 'Each non-neutral tone draws §7.10\'s glyph, the matching feedback fill and a screen-reader status word — so the meaning survives without the colour.',
     },
     placement: {
       control: 'inline-radio',
@@ -224,5 +224,90 @@ export const SuccessWithUndo: Story = {
     tone: 'success',
     action: { label: 'Rückgängig', onAction: () => {} },
     onDismiss: () => {},
+  },
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WARNING AND ERROR, AND THE SWIPE
+
+   Both tones exist because a failure is reported HERE now rather than inline.
+   §7.10's own source makes the argument: a Message is part of the flow and
+   pushes layout when it appears, which is the wrong shape for something
+   arriving while somebody is reading their own words. Musie's voice step moved
+   its failures across on 2026-09-30.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/** A failure that has already stopped something. `assertive` is right here and
+ *  wrong for every other story in this file: the recording has ended and the
+ *  reader is mid-thought with a microphone that is no longer listening. */
+export const Error: Story = {
+  args: {
+    label: 'Die Aufnahme ließ sich auf diesem Gerät nicht starten. Schreibe deine Antwort stattdessen.',
+    tone: 'error',
+    live: 'assertive',
+    onDismiss: () => {},
+    dismissLabel: 'Meldung schließen',
+  },
+};
+
+/** The non-fatal one. Polite, because recording is still running and the thing
+ *  to do is carry on talking — the tone carries "keep going", not "stop". */
+export const Warning: Story = {
+  args: {
+    label: 'Ein Satz konnte nicht in Text verwandelt werden. Sag ihn noch einmal und mach weiter.',
+    tone: 'warning',
+    live: 'polite',
+    onDismiss: () => {},
+    dismissLabel: 'Meldung schließen',
+  },
+};
+
+/**
+ * SWIPE LEFT TO DISMISS — touch only, and only where `onDismiss` exists.
+ *
+ * Use the toolbar's touch simulation, or open this story on a phone: a toast
+ * is fixed over the content, so the one thing a thumb can do with it without
+ * aiming is push it away. Past half its own width it goes; short of that it
+ * springs back.
+ *
+ * The numbers are §7.24's, deliberately not re-tuned — a thumb that has
+ * learned to throw a statement card away should not have to learn a second
+ * distance to throw a toast away. So is the axis discipline: the gesture
+ * watches the first twelve pixels and commits to ONE axis, and a tie goes to
+ * the page, because a toast sits over content somebody may be scrolling.
+ *
+ * A MOUSE IS NOT A THUMB. With a cursor nothing happens — the dismiss button
+ * is right there, and a hidden horizontal drag would mostly surprise people
+ * mid-text-selection.
+ */
+export const SwipeToDismiss: Story = {
+  args: {
+    label: 'Wische nach links, um diese Meldung zu schließen',
+    tone: 'error',
+    live: 'polite',
+    onDismiss: () => {},
+    dismissLabel: 'Meldung schließen',
+  },
+};
+
+/**
+ * No `onDismiss`, so no gesture: a toast whose consumer owns the lifetime is
+ * one the component must not take off screen on its own. It keeps exactly the
+ * geometry it shipped with — no `data-swipeable`, no transform, and
+ * `touch-action` left alone so the page scrolls normally under a thumb.
+ *
+ * `onDismiss: undefined` IS THE POINT OF THIS STORY AND HAS TO BE EXPLICIT.
+ * `argTypes.onDismiss` above is `{ action: 'dismiss' }`, and a Storybook action
+ * argType SYNTHESISES an arg — so every story in this file is handed an
+ * `onDismiss` spy whether it asks for one or not, and a story that simply
+ * omitted it would render the dismiss button and the gesture while claiming to
+ * show neither. Measured, not assumed: it reported `data-swipeable="true"`
+ * until this line was added.
+ */
+export const NotSwipeableWithoutDismiss: Story = {
+  args: {
+    label: 'Ohne onDismiss gibt es keine Wischgeste',
+    tone: 'warning',
+    onDismiss: undefined,
   },
 };

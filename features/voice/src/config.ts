@@ -92,11 +92,66 @@ export const SESSION_SECONDS = 60;
 
 /**
  * Recording also stops once nobody has said anything for this long, so an
- * abandoned session does not keep paying for silence. Measured from the start
- * of recording, and never while a statement is still being transcribed —
- * cutting the socket then would throw that statement away.
+ * abandoned session does not keep paying for silence.
+ *
+ * MEASURED FROM THE MOMENT CAPTURE IS PROVEN LIVE — which is what this comment
+ * always claimed and, until 2026-09-30, was not true. The clock used to be
+ * armed at the top of `start()`, so the WebSocket handshake, the session
+ * round trip, `getUserMedia` and any permission dialog were all charged
+ * against the person's silence: the six seconds were really four to five and a
+ * half, and on a slow start they could run out before the microphone existed.
+ * That is the bug docs/VOICE-CAPTURE-FIX.md was written about.
+ *
+ * Never while a statement is still being transcribed — cutting the socket then
+ * would throw that statement away.
  */
 export const IDLE_STOP_MS = 6000;
+
+/**
+ * How long capture has to prove itself before `startRecorder` gives up.
+ *
+ * The worklet posts a chunk every ~40 ms whatever the loudness, so ~37 of them
+ * is a generous window and a microphone that has produced NOTHING in it is not
+ * a quiet room — it is a capture graph that never started. That distinction is
+ * the whole point: before this existed, both arrived as `stop('silence')` and
+ * the app told the person they had gone quiet when it had never heard them.
+ */
+export const CAPTURE_PROOF_MS = 1500;
+
+/**
+ * How long a RUNNING session tolerates no chunks at all before it reports the
+ * capture lost.
+ *
+ * Distinct from IDLE_STOP_MS, and the difference is the fix: IDLE_STOP_MS
+ * measures the newest LOUD chunk and means *the room is quiet*. This measures
+ * the newest chunk of ANY loudness and means *we stopped hearing*. One
+ * mechanism covers the iOS page freeze, a Bluetooth route change, an
+ * audio-session interruption and a context suspended after it had been
+ * running.
+ *
+ * 1500 and not the 1000 that suggests itself: 37 consecutive missed chunks is
+ * unambiguous, while a second is within reach of a long GC pause or a blocked
+ * main thread — and a watchdog that cries wolf gets raised until it is
+ * useless. UNMEASURED ON A PHONE; see the doc's §5.
+ */
+export const CAPTURE_LOST_MS = 1500;
+
+/**
+ * How long `connecting` may last — the socket coming up AND capture proving
+ * itself — before the attempt is reported as a failure.
+ *
+ * It exists because arming IDLE_STOP_MS at capture leaves the connecting phase
+ * with no ceiling at all, and `await getUserMedia` is an unbounded wait on a
+ * finger: on Chrome for iOS a first use can need the OS-level microphone grant
+ * AND a per-origin prompt.
+ *
+ * Eight seconds, not the fifteen first proposed: a healthy start is about one,
+ * and fifteen seconds of a disabled *Connecting…* is a worse wait than the
+ * wrong answer it replaces. Whichever half is late reports itself — the socket
+ * as `connectionFailed`, the microphone as `recorderFailed` — so this is a
+ * ceiling on the honest message, not a generic timeout.
+ */
+export const CONNECT_TIMEOUT_MS = 8000;
 
 /**
  * How long Stop waits for the sentence you were part-way through.

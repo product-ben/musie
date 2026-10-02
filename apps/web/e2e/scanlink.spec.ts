@@ -22,7 +22,7 @@
  * be invisible in the English run.
  */
 import { expect, test } from '@playwright/test';
-import { label, reachTheLibrary, service, startExercise, withLocale } from './support';
+import { card, label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /**
@@ -33,7 +33,9 @@ import type { Locale } from './support';
  * than defaulted, which a single card used by both could not tell apart from a
  * hardcoded answer.
  */
-const CARD = { code: 'MC-01', id: 'mc-01', track: 'trk-01' };
+/* Read from deck.json by `card()` rather than retyped — support.ts says why.
+   The literal that used to be here went stale in the 2026-09-24 deck repair. */
+const CARD = card('MC-01');
 
 test('a deep link puts its card on the running session', async ({ page }, testInfo) => {
   const locale = testInfo.project.name as Locale;

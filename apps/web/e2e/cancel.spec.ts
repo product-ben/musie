@@ -250,9 +250,14 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      screen rather than one tap further in.
 
      Both are TEXT, not controls, so they are matched as text. They still come
-     from the catalogue: `diary.stoppedAt` is a template, and the step inside
-     it is `session.step.scan` translated first, which is precisely what the
-     screen does with it. */
+     from the catalogue, both halves of it.
+
+     `diary.stoppedAt` USED TO BE A TEMPLATE with the step inside it, and this
+     walk still asked for it that way until 2026-09-30. It became a `<dl>`
+     LABEL on 2026-09-26 — 'Stopped at', with the step as a separate value —
+     and `routes/Diary.tsx` joins the two with ': ' for a meta line, because a
+     row is neither a label nor a value. So the walk joins them the same way
+     rather than carrying a third spelling of 'stopped at X'. */
   await expect(page).toHaveURL(/\/diary$/);
 
   await expect(
@@ -261,7 +266,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
 
   await expect(
     page.getByText(
-      label(locale, 'diary.stoppedAt', { step: label(locale, `session.step.${STOPPED_AT}`) }),
+      `${label(locale, 'diary.stoppedAt')}: ${label(locale, `session.step.${STOPPED_AT}`)}`,
       { exact: true },
     ),
   ).toBeVisible();
@@ -540,7 +545,7 @@ test('the menu ends the running session and hands back the library', async ({ pa
   ).toBeVisible({ timeout: 15_000 });
   await expect(
     page.getByText(
-      label(locale, 'diary.stoppedAt', { step: label(locale, `session.step.${STOPPED_AT}`) }),
+      `${label(locale, 'diary.stoppedAt')}: ${label(locale, `session.step.${STOPPED_AT}`)}`,
       { exact: true },
     ),
   ).toBeVisible();

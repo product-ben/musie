@@ -5187,6 +5187,242 @@ this; the one-name-everywhere rule holds either way.
 
 ---
 
+# Phase F revisited — the iPhone recording that heard nothing (2026-09-30)
+
+## The recorder said "it went quiet" when it had never heard anything — RESOLVED
+Where: `features/voice/src/useTranscription.ts:317` (as it was), now
+`features/voice/src/capture/health.ts`; the whole argument is in
+`docs/VOICE-CAPTURE-FIX.md`
+
+What I checked: one beta tester, iPhone, Chrome for iOS, 2026-09-29 between
+17:00 and 18:00: record mode entered, ended on its own a moment later with
+*"It went quiet for 6 seconds"*, and no words ever appeared.
+
+One predicate answered two different questions. `lastSound` only moved on a
+chunk louder than `CLIENT_SILENCE_LEVEL`, so the idle branch was true both when
+the room was quiet and when no audio had arrived at all — and the app reported
+the flattering one. The worklet posts a chunk every ~40 ms **regardless of
+loudness**, so the two were separable for free and nobody had separated them.
+
+Two platform suspects were measured rather than argued about, against
+Playwright's WebKit 2359 (same WebCore autoplay gate as iOS, no AVAudioSession):
+
+- **The `data:` URI worklet is not the cause.** The entry above at L2034
+  pre-registered it in the exact words of this report — *"if it refuses, the
+  symptom will be a microphone that opens and produces no audio"*. WebKit
+  accepts it: `addModule` resolved and the processor constructed. **That entry
+  is closed**, and it earned its keep by naming the right place to look first.
+- **The suspended `AudioContext` is not the cause either**, which was the
+  surprise. A capturing document is EXEMPT from WebKit's gate, so constructing
+  the context *after* the `getUserMedia` await — which `recorder.ts` does,
+  apparently by accident — is the one ordering that starts on its own with no
+  activation at all. And `state` reads `suspended` immediately after
+  construction on **every** engine including a fresh gesture, because rendering
+  starts asynchronously: so the confirming test that suggests itself is
+  worthless, which is why the fix proves capture by chunk arrival instead.
+
+What I did: two clocks where there was one — `lastSound` for *the person is
+speaking*, `lastChunk` for *capture is alive* — and moved the decision into a
+pure `captureVerdict`, tested in `features/voice/src/capture/health.test.ts`
+beside `segmentation.test.ts`. `startRecorder` now waits for a first chunk
+before resolving, so a dead graph throws `recorderFailed` — a code documented
+since F.0 that no path could reach. The clocks are armed at capture-live rather
+than at `connecting`, so the handshake and the permission dialog no longer eat
+the person's six seconds, and `config.ts`'s claim that `IDLE_STOP_MS` is
+*"measured from the start of recording"* is true for the first time.
+
+Why: every candidate cause converged on one observable — no chunk carrying
+sound reached the callback — and the app's only response was to conclude the
+room was quiet and say so. Fixing the distinction fixes all of them, including
+the case where nothing was broken.
+
+What I need from Ben: **the iPhone hand test.** Nothing in this commit closes
+Phase F's checkpoint, and `BUILD-PLAN.md:1149` still owns it. Six questions for
+the tester are in `docs/VOICE-CAPTURE-FIX.md` §7 — the first two decide which
+cause it actually was, and **the report never says he spoke**, so the null
+hypothesis is still live.
+
+## The idle cut-off now waits for the first sound — a product change, taken
+Where: `features/voice/src/capture/health.ts` (`heardAnySound`)
+
+What I checked: the cut-off could not tell *"you stopped talking"* from *"you
+never started"*. For a question about how somebody feels, taking eight seconds
+to begin is ordinary rather than abandonment, and the old behaviour cut the
+microphone for it.
+
+The objection is cost, and it does not survive arithmetic: an abandoned session
+holds the microphone to the 60-second ceiling, and `gpt-live-transcribe` is
+$0.017 a minute (`config.ts`), so the worst case is **1.7 cents** against a $50
+cap. Battery and a lit microphone indicator are the real costs, and the
+60-second ceiling already bounds both.
+
+What I did: armed it on the first loud chunk. `CAPTURE_LOST_MS` still fires
+before any sound, because a dead microphone is a failure rather than patience.
+
+Why: the recorder should wait for you to begin, then measure your silence.
+
+What I need from Ben: **a yes or a no on the behaviour**, not on the number.
+This is the one change in the batch that alters how the step FEELS rather than
+how honest it is, and it is easy to revert — one field.
+
+## `CAPTURE_LOST_MS` is 1500 and has never met a phone
+Where: `features/voice/src/config.ts`
+
+What I checked: the watchdog is a NEW way for a session to end mid-sentence, and
+a false positive interrupting somebody who was talking is worse than the bug it
+prevents. 1500 ms is 37 consecutive missed chunks, which should be unambiguous;
+1000 is within reach of a long GC pause or a blocked main thread.
+
+What I did: 1500, and wrote "UNMEASURED ON A PHONE" next to it.
+
+What I need from Ben: nothing to decide — **one thing to watch** on the hand
+test. If a recording ever stops mid-sentence saying the microphone was
+interrupted, this number is why, and the diagnostics line names the chunk gap.
+
+## Getting the diagnostics off a tester's phone is still unsolved
+Where: `features/voice/src/useTranscription.ts` (the `console.info` on stop)
+
+What I checked: the reported bug took a day to find because
+`features/voice/src` held **no logging at all**, and the one on-screen signal is
+ambiguous by construction — §7.22's meter pads an empty `levels` with zeroes and
+floors every bar at 10%, so "no audio" and "silent audio" draw the identical
+picture. "Watch the level meter" is not a diagnostic.
+
+What I did: nine numbers, logged on every stop. That closes the laptop case and
+**does nothing for a phone**, which has no console.
+
+Why: half a fix that costs nothing beats a whole one that needs a migration.
+
+What I need from Ben: **a decision, because the honest options all cost
+something.** A dev-only readout is free and invisible where the testers are; a
+`?debug=voice` panel reaches them but puts visible text outside the catalogue
+(CLAUDE.md 7); a column on the session row reaches them properly and is a new
+migration under rules 2 and 4. I did not pick one.
+
+## Twenty end-to-end walks were already failing before this branch
+Where: `apps/web/e2e/` — `camera`, `cancel`, `resume`, `reveal`, `scanlink`,
+`session`, both locales
+
+What I checked: `pnpm test:e2e` reports 20 failures. I stashed this branch
+entirely and ran it again on a clean tree: **the same 20, by name.** So they are
+not this work. The visible symptom is content, not code — `reveal.spec.ts`
+expects *Little Yellow Petals* and the page says *Bats and Rats*, i.e. the local
+database's card-to-track mapping is not what the walks were written against.
+Most likely a `supabase db reset` is owed after a content migration.
+
+What I did: nothing, deliberately — it is outside this branch and I did not want
+a content fix hidden inside a voice fix. Recorded here so the next person does
+not spend the afternoon I nearly did.
+
+What I need from Ben: nothing to decide. **Worth knowing that `test:e2e` is
+currently red for an unrelated reason**, which is exactly the state in which a
+real regression would go unnoticed.
+
+## Failures moved from Message to Toast — which CONTRADICTS 10-layout.md L11
+Where: `src/components/VoiceTranscript.tsx`;
+`packages/design-system/docs/10-layout.md:354,357`; and the RESOLVED entry
+*"Errors — the app needs a persistent inline error presentation, and Toast is
+not it"* earlier in this file
+
+What I checked: **this repository has already decided the opposite, twice, and
+I am recording that rather than working around it.** Ben asked on 2026-09-30
+for voice failures to appear in a dismissable toast rather than inline. Against
+that:
+
+- **10-layout.md L11 is explicit**, and it is Layer 3, which the app consumes
+  rather than overrules: *"A fatal problem, injected after load | `Message
+  variant="error"`, inline where it happened | `live="assertive"`"*, with Toast
+  scoped on the next row to *"a completed action that can be undone"*,
+  `role="status"`.
+- **The earlier entry in this file argued the same thing on the merits** —
+  that a Toast would put *"a dismissible, self-hiding notice in place of a
+  condition that is still true after it disappears"*.
+
+Two things separate this case from the one those were written about, and I do
+not think they are special pleading:
+
+1. **That entry is about a failed content LOAD, where the condition persists** —
+   the content is still missing after the notice goes. A voice failure is a
+   report of something that has ENDED: the recording stopped, the words are
+   kept, and the way forward is to tap record again. Nothing about the screen
+   is still broken once it is read.
+2. **§7.23 has no timer** — *"`label` going null is what removes it"* — so the
+   "self-hiding" objection does not apply to it as built. The error toast
+   persists until the person dismisses it or starts another recording. I also
+   gave Toast `live="assertive"`, so the assertive announcement L11 asks for is
+   not lost in the move.
+
+What I did: implemented what Ben asked. One `Toast` with a precedence —
+failure, then warning, then the undo offer — because §7.23's own rule is one at
+a time and three of them would replace each other unpredictably. Toast gained
+`warning` and `error` tones from Layer 1's feedback family, §7.10's glyphs and
+status words, and `live="assertive"`. The two inline `Message` boxes are gone,
+and so are `voice.error.headline` and `voice.warning.headline` in both locales,
+which nothing could render any more.
+
+Why: it is Ben's call to make, and the layout argument is genuinely weaker for
+an ended recording than for a missing page — but a rule this explicit should not
+be contradicted silently.
+
+What I need from Ben: **L11 and the earlier entry now disagree with shipped
+behaviour, and reconciling them is a Layer 3 decision rather than an app one.**
+I did not touch `10-layout.md`: it is byte-checked against a reference copy by
+`pnpm check`, deliberately, so editing it is a design-system act with a test
+behind it. Either L11 grows a row distinguishing *a condition that persists*
+from *an event that has ended*, or this screen goes back inline. Logged on the
+system side too, in `packages/design-system/stories/OPEN-QUESTIONS.md`.
+
+## The walks play silence now, and that is worth knowing before it is forgotten
+Where: `e2e/fakeTracks.ts`, `e2e/globalSetup.ts`, `playwright.config.ts`
+
+What I checked: `pnpm test:e2e` was 20 red of 22 on 2026-09-30, and after the
+deck-pairing fix two were left — `reveal.spec.ts`, both locales. The cause was
+not code. `select count(*) from storage.objects where bucket_id = 'tracks'`
+returned **0**: the local bucket was empty, so no card had a recording, the
+`<audio>` never mounted, and the walk timed out on a precondition rather than an
+assertion. The masters are an operator upload (`20260921160000_track_audio.sql`
+grants the client nothing but `select`), they are licensed from Epidemic Sound,
+and they are not in this repository — so this is the state of every fresh
+`supabase start`, not a local accident.
+
+What I did: generated them, the way `fakeCamera.ts` generates a camera. A silent
+8 kHz 8-bit mono PCM WAV per track whose `src` is set, each matching its row's
+`duration_seconds` so the listen gate and the element agree. It never
+overwrites and it refuses any target that is not loopback.
+
+Why: the walk's subject is whether the title reaches the browser before the
+reveal. That is a claim about bytes on a wire, and it is not made truer by the
+bytes being music.
+
+What I need from Ben: **nothing to decide — one thing not to misread.** A green
+`reveal.spec.ts` now says the plumbing works: the storage API, the signed URL,
+the RLS policy, the decode, the position, the gate. It says NOTHING about the
+recordings. BUILD-PLAN's *"five recordings, plus one each for Breathing Score
+and Body Scan Soundwalk"* is exactly as owed as it was, and a walk that passes
+against silence is the one thing that could make that look finished. The
+fixture prints a line saying so whenever it writes.
+
+## `test:e2e` looks broken on this machine, and it is `.env.local` saying no
+Where: `apps/web/.env.local`, `e2e/support.ts:113`
+
+What I checked: `.env.local` points the app at the HOSTED project
+(`VITE_SUPABASE_URL=https://xliwtiiopwyfunxkdmxh.supabase.co`, with the
+`127.0.0.1` line commented out below it). The walks assert through the service
+role against the local stack, so `stack()` refuses: *"This walk would address
+two different databases and prove nothing."* That guard is correct and it is the
+reason three walks failed before any of the real staleness was reachable.
+
+What I did: nothing permanent. Flipped it to local to verify, and restored it
+byte-for-byte afterwards — `shasum -a 256` checked against the original both
+times, on Ben's instruction to leave his environment as it was.
+
+Why: which database a dev server talks to is the developer's choice, not a test
+suite's.
+
+What I need from Ben: nothing to decide, but **the walks are red on this
+machine until that line is flipped**, and the failure does not say so in a way
+anybody would read as a configuration problem — it names two databases and
+stops. Worth a line in `docs/MUSIE-SETUP.md` next time that file is opened.
 # POC — the deck as a pile you can throw cards off (`/dev/deck`)
 
 A proof of concept, on the terms `/dev/qr` set: a tool, not a screen. Not

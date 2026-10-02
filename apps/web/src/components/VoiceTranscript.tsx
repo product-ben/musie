@@ -318,39 +318,59 @@ export function VoiceTranscript({
         />
       )}
 
-      {/* Assertive, because recording has ended and the reader is mid-thought
-          with a microphone that is no longer listening. */}
-      {failure && (
-        <Message
-          variant="error"
-          live="assertive"
-          headingLevel={3}
-          headline={t('voice.error.headline')}
-          text={t(VOICE_MESSAGE_KEYS[failure])}
-        />
-      )}
+      {/* ── WHAT GOES WRONG IS A TOAST NOW, NOT A MESSAGE — 2026-09-30 ─────
+          Ben's call, and §7.10's own source already made the argument: a
+          Message is part of the flow and PUSHES LAYOUT when it appears, which
+          is the wrong shape for something arriving while the reader is looking
+          at their own words. A failure used to open a box between the record
+          button and the bottom of the page — below the fold on a phone, which
+          is how the iPhone bug came in as "no error was shown" when the
+          investigation could not rule out that one had been.
 
-      {/* The non-fatal one. Polite: recording is still running and the thing
-          to do is carry on talking. */}
-      {session.warning && (
-        <Message
-          variant="warning"
-          live="polite"
-          headingLevel={3}
-          headline={t('voice.warning.headline')}
-          text={t(VOICE_MESSAGE_KEYS[session.warning.code])}
-        />
-      )}
+          It is also the honest place for it: a failure has already happened
+          and needs acknowledging, not a permanent seat on the screen.
 
-      {/* UNDO IS THE CONSUMER'S, and the consumer is `useSentences` — it holds
-          the snapshot and the six-second window, and `undoReason` going null
-          is what takes the toast away. §7.23 ships no timer of its own so
-          that there is only ever one clock. */}
+          ONE TOAST AT A TIME IS THE COMPONENT'S OWN RULE (§7.23), so this is
+          one element with a precedence rather than three that would replace
+          each other unpredictably. The order is the order of consequence:
+
+            failure   the session has ENDED. Nothing else on this screen
+                      matters as much, and it outranks an undo offer whose
+                      window is about to lapse anyway.
+            warning   one statement was lost and recording continues.
+            undo      a change the reader made, and can take back.
+
+          Each keeps the live-region politeness it had as a Message: a failure
+          interrupts because the microphone has stopped and the reader is
+          mid-thought; the other two do not. */}
       <Toast
-        label={session.undoReason ? t(VOICE_UNDO_KEYS[session.undoReason]) : null}
-        action={{ label: t('voice.undo.action'), onAction: session.undo }}
-        onDismiss={session.dismissUndo}
-        dismissLabel={t('voice.undo.dismiss')}
+        {...(failure
+          ? {
+              label: t(VOICE_MESSAGE_KEYS[failure]),
+              tone: 'error' as const,
+              live: 'assertive' as const,
+              onDismiss: session.error ? session.dismissError : () => setTokenFailure(null),
+              dismissLabel: t('voice.error.dismiss'),
+            }
+          : session.warning
+            ? {
+                label: t(VOICE_MESSAGE_KEYS[session.warning.code]),
+                tone: 'warning' as const,
+                live: 'polite' as const,
+                onDismiss: session.dismissWarning,
+                dismissLabel: t('voice.error.dismiss'),
+              }
+            : {
+                /* UNDO IS THE CONSUMER'S, and the consumer is `useSentences` —
+                   it holds the snapshot and the six-second window, and
+                   `undoReason` going null is what takes the toast away. §7.23
+                   ships no timer of its own so that there is only ever one
+                   clock. */
+                label: session.undoReason ? t(VOICE_UNDO_KEYS[session.undoReason]) : null,
+                action: { label: t('voice.undo.action'), onAction: session.undo },
+                onDismiss: session.dismissUndo,
+                dismissLabel: t('voice.undo.dismiss'),
+              })}
       />
     </div>
   );

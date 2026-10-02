@@ -136,6 +136,84 @@ export const service = () => {
 };
 
 /**
+ * ── WHICH TRACK A CARD PLAYS, READ FROM THE DECK RATHER THAN RETYPED ──────
+ *
+ * Every walk that scans or types a card needs the track it maps to, and until
+ * 2026-09-30 each one carried that pairing as a literal — `{ code: 'MC-01',
+ * id: 'mc-01', track: 'trk-01' }`. On 2026-09-24 the deck was REPAIRED and
+ * the pairings moved: MC-01 plays `trk-04` now, and `trk-01` belongs to
+ * MC-04. Nothing told the walks, because nothing could, and six of them went
+ * red at once for a reason none of them named.
+ *
+ * `supabase/content/deck.json` is the single source the generated migration
+ * is built from — its own header says so, and `deck.db.test.ts` goes red when
+ * the database drifts from it. So the walks read it too, and the next repair
+ * moves them with it instead of past them.
+ *
+ * NOT read from the database, deliberately: a walk that asked the DB what to
+ * expect would agree with whatever is in there, including a mapping that is
+ * wrong. The JSON is what the deck is SUPPOSED to be, which is the thing a
+ * test should hold the app against.
+ */
+interface DeckCard {
+  id: string;
+  code: string;
+  plays: Record<string, string>;
+}
+
+const deck = (): DeckCard[] => {
+  const file = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..',
+    'supabase', 'content', 'deck.json');
+  return (JSON.parse(readFileSync(file, 'utf8')) as { cards: DeckCard[] }).cards;
+};
+
+/**
+ * The card, with the track it plays — by CODE, as a person holding one reads
+ * it. `exercise` because the pairing is per exercise: the same card can play
+ * different things in two exercises, which is what `exercise_tracks` is for.
+ */
+export function card(code: string, exercise = 'mindfulness-cards'): {
+  code: string;
+  id: string;
+  track: string;
+} {
+  const found = deck().find((each) => each.code === code);
+  if (found === undefined) {
+    throw new Error(
+      `deck.json has no card ${code}. The walks read the deck rather than ` +
+      'retyping it, so a code that is not in it is a test bug, not a data one.',
+    );
+  }
+  const track = found.plays[exercise];
+  if (track === undefined) {
+    throw new Error(`deck.json's ${code} does not play anything in ${exercise}.`);
+  }
+  return { code: found.code, id: found.id, track };
+}
+
+/**
+ * What a track is actually called, read back with the service role.
+ *
+ * ONLY the reveal walk needs this, and it is the one place reading the answer
+ * from the database is right: the assertion is that the title does not reach
+ * the browser before the reveal, so the test has to know the true title
+ * without the page having told it. Retyping it as a literal is what made that
+ * walk go red when the deck was repaired — it was still looking for MC-04's
+ * title on MC-01's card.
+ */
+export async function trackIdentity(trackId: string): Promise<{ title: string; artist: string }> {
+  const { data, error } = await service()
+    .from('tracks')
+    .select('title, artist')
+    .eq('id', trackId)
+    .single();
+  if (error !== null || data === null) {
+    throw new Error(`could not read ${trackId} back: ${error?.message ?? 'no row'}`);
+  }
+  return { title: data.title as string, artist: data.artist as string };
+}
+
+/**
  * Put the locale in before the first paint, exactly where index.html looks for
  * it. This is what makes the German run a German SESSION rather than a German
  * browser looking at an English app.

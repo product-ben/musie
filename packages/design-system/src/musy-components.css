@@ -2603,6 +2603,67 @@
 }
 .musy-toast--success .musy-toast__icon { color: var(--feedback-success-icon); }
 
+/* ── TONES: WARNING AND ERROR ─────────────────────────────────────────────
+   The same three-token shape as --success above, from the same Layer 1
+   feedback family §10 uses, because a failure is reported HERE now rather
+   than inline: a Message that pushes the transcript down to say the
+   microphone stopped is the layout shift §7.10's own source warns about.
+
+   THE FILL IS STILL NOT THE MESSAGE (1.4.1). Each tone draws §7.10's glyph,
+   the sentence says what happened, and the component puts the status word in
+   front of the text for a screen reader. Remove the fill and nothing is lost
+   but the fill.                                                             */
+.musy-toast--warning {
+  border-color: var(--feedback-warning-border);
+  background-color: var(--feedback-warning-surface);
+  color: var(--feedback-warning-text);
+}
+.musy-toast--warning .musy-toast__icon { color: var(--feedback-warning-icon); }
+
+.musy-toast--error {
+  border-color: var(--feedback-error-border);
+  background-color: var(--feedback-error-surface);
+  color: var(--feedback-error-text);
+}
+.musy-toast--error .musy-toast__icon { color: var(--feedback-error-icon); }
+
+/* ── THE SWIPE ────────────────────────────────────────────────────────────
+   §7.24's bargain, on a smaller element: the component decides the axis after
+   a slop, and the CSS hands over only the horizontal scroll the browser has
+   no use for here. `pan-y` keeps the vertical scroll it is good at, so a
+   finger that lands on a toast while reading a long transcript still scrolls
+   the page (L13).
+
+   Scoped to [data-swipeable] so a toast whose consumer owns the lifetime —
+   no `onDismiss`, no gesture — keeps exactly the geometry it shipped with,
+   transform and all.
+
+   THE TRANSFORM IS THE COMPONENT'S OWN, set from the gesture in the .tsx,
+   which is the one place that knows where the finger is. The entrance
+   keyframes also animate `transform`; they win while they run and this
+   applies afterwards, which is the right way round — a swipe cannot
+   meaningfully begin inside a 200ms entrance.
+
+   The transition is OFF while the finger is down (`data-swiping`): a toast
+   that eases toward the thumb lags behind it, and a gesture that lags is one
+   people let go of. It is ON for the release, which is what makes a
+   springback read as a springback rather than a jump.                        */
+.musy-toast[data-swipeable="true"] {
+  touch-action: pan-y;
+  transform: translateX(var(--musy-toast-swipe-x, 0px));
+  opacity: calc(1 - var(--musy-toast-swipe-progress, 0) * 0.55);
+  /* --motion-exit is the pair Layer 1 already ships for a thing leaving, and
+     it collapses to 1ms under prefers-reduced-motion with no query here. */
+  transition: transform var(--motion-exit), opacity var(--motion-exit);
+}
+
+.musy-toast[data-swiping="true"] {
+  transition: none;
+  /* A thumb is on it; nothing should be easing anywhere, including the
+     entrance if it is somehow still running. */
+  animation: none;
+}
+
 /* ── PLACEMENT: TOP ───────────────────────────────────────────────────────
    Top and centred on a phone; top-TRAILING from --bp-md up, which is the one
    thing this modifier owes the desktop case.

@@ -127,6 +127,35 @@ export function SessionListen({
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
+
+  /**
+   * ── THE TRACK IS RELEASED ON THE WAY OUT — 2026-09-30 ────────────────────
+   *
+   * The next step opens a microphone. This one has just been playing audio
+   * through an `<audio>` element, and on iOS those two facts share one audio
+   * session: a capture request renegotiates the route from playback to
+   * play-and-record, which is the first domino in the Bluetooth branch of
+   * docs/VOICE-CAPTURE-FIX.md §3.2.
+   *
+   * THIS IS NOT A PROVEN BUG AND IS NOT WRITTEN UP AS ONE. React detaches the
+   * element and nulls the ref on unmount, and detaching normally stops
+   * playback on its own — the only `pause()` before this was the reader's, in
+   * `toggle()`. What this buys is DETERMINISM instead of garbage collection:
+   * three lines that release the iOS audio session at a moment this file
+   * chooses, rather than whenever the element is collected. Cheap, and it
+   * removes the question rather than answering it.
+   *
+   * `removeAttribute('src')` as well as `pause()`, because a paused element
+   * with a source can still hold the session; emptying it is what actually
+   * lets go. `load()` after it is what makes WebKit act on the change.
+   */
+  React.useEffect(() => () => {
+    const element = media.current;
+    if (element === null) return;
+    element.pause();
+    element.removeAttribute('src');
+    element.load();
+  }, []);
   /**
    * THE SIGNED URL, AND WHY THE STEP WAITS FOR IT — E.4.
    *

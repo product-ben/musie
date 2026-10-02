@@ -3008,6 +3008,54 @@ run is always shortest of.
 
 ---
 
+# Phase F revisited — Toast carries failures now (2026-09-30)
+
+## Toast — error and warning tones, and swipe to dismiss, against L11's grain
+Where: `src/Toast.tsx`, `src/musy-components.css` (`.musy-toast--warning`,
+`.musy-toast--error`, `[data-swipeable]`), `stories/Toast.stories.tsx`,
+`docs/10-layout.md:354,357`
+
+What I checked: L11 scopes Toast to *"a completed action that can be undone"*
+with `role="status"`, and sends *"a fatal problem, injected after load"* to
+`Message variant="error"`, **inline where it happened**. Ben asked on
+2026-09-30 for Musie's voice failures to be a dismissable toast instead, so the
+component needed tones it did not have — and the rule it is now used against is
+still in the docs saying otherwise.
+
+Three things made the change defensible as a COMPONENT change, whatever L11
+settles on:
+
+- The tones are Layer 1's existing feedback family, used exactly as §10 uses
+  it — surface, a ≥3:1 boundary, ≥7:1 text, icon at its own token. No new
+  tokens, not one literal.
+- 1.4.1 survives: the glyph record and the status-word record are §7.10's own,
+  read from the same catalogue keys, so the two feedback components cannot
+  drift about what an error looks like or is called.
+- `live` gained `assertive`. The header's *"role=status, NEVER role=alert"* was
+  written about an UNDO OFFER and is still right about one; a recording that
+  has stopped is not an offer, and the consumer says which it has.
+
+What I did: added `warning` and `error` tones, `live="assertive"`, and
+swipe-to-dismiss. The gesture is **§7.24's, reused rather than re-tuned** —
+same `SWIPE_SLOP_PX`, same axis decision with a tie going to the page, same
+half-the-width commit — because a thumb that has learned to throw a statement
+card away should not have to learn a second distance to throw a toast away. It
+does NOT copy the parked panel: there is nothing behind a toast to reveal, so a
+swipe either dismisses or springs back. Touch only, and only where `onDismiss`
+exists — a toast whose consumer owns the lifetime is one the component must not
+take off screen on its own.
+
+Why: a toast is fixed over the content, so the one thing a thumb can do with it
+without aiming is push it away.
+
+What I need from Ben: **L11 needs a row, or this needs reverting.** The
+distinction the table is missing is between *a condition that is still true
+after the notice goes* — a failed content load, which is what L11 and the app's
+own RESOLVED entry were written about — and *an event that has ended*, which is
+what a stopped recording is. I did not edit `10-layout.md`: `pnpm check`
+asserts it byte-identical to a reference copy, which is the system saying a
+layout rule changes deliberately and with a test, not as a side effect of a
+screen's needs.
 # Card Deck, and the three parts it needed (2026-10-02)
 
 ## CardDeck — Layer 1 has no rotation scale, and a deck needs two angles and a card width

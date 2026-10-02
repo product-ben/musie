@@ -22,7 +22,7 @@
  * client should be creating itself.
  */
 import { expect, test } from '@playwright/test';
-import { enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
+import { card, enterCode, label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
 /**
@@ -34,7 +34,9 @@ import type { Locale } from './support';
  * and both are knowable here — which turns a shape assertion into an identity
  * one. A pairing written the wrong way round would now fail.
  */
-const CARD = { code: 'MC-08', id: 'mc-08', track: 'trk-08' };
+/* Read from deck.json by `card()` rather than retyped — support.ts says why.
+   The literal that used to be here went stale in the 2026-09-24 deck repair. */
+const CARD = card('MC-08');
 
 /** The answer we type, per locale, so the assertion can tell the runs apart. */
 const ANSWER: Record<Locale, string> = {
@@ -207,36 +209,38 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        it, and the list leads with the session you just finished. */
     await expect(page).toHaveURL(/\/diary$/);
 
-    /* ── THE THREE STATES ──────────────────────────────────────────────────
-       Every entry has a preview, an inline state and a lightbox (Ben,
-       2026-09-21; components/DiaryCard.tsx). The newest one arrives INLINE,
-       which is what makes finishing a landing rather than a dispersal — the
-       thing you just made is the thing you see.
+    /* ── EVERY ENTRY IS A ROW NOW — Ben, 2026-09-28 ────────────────────────
+       There were three states until then: a preview, an INLINE card for the
+       newest entry, and the lightbox. The middle one is gone — "get rid of the
+       full card being displayed inline in any state. Instead, highlight the
+       latest one in the calendar and in the list below" — and this walk went
+       on asserting it for two days, which is why it was red.
 
-       This used to assert that "a framed box is visible" and nothing else. It
-       would pass against a diary showing the wrong entry, or one whose X did
-       nothing, so it was the one check on this walk that could stay green
-       while the screen was wrong. */
-    const answer = page.getByText(ANSWER[locale], { exact: true });
-    const collapse = page.getByRole('button', {
-      name: label(locale, 'diary.collapse'),
-      exact: true,
-    });
+       What replaced it is asserted here, in the same spirit the old block was
+       written in: not "a framed box is visible" but the two facts that could
+       not be true of the wrong screen. FIRST, the reflection is NOT on /diary
+       — finishing hands you your diary rather than one page of it, and a card
+       drawn inline is exactly what Ben removed. */
+    await expect(page.getByText(ANSWER[locale], { exact: true })).toHaveCount(0);
 
-    /* INLINE means the whole card, not a summary of it: the answer just typed
-       is on screen without anything being opened. That is the assertion that
-       distinguishes the inline state from the preview row, which carries a
-       headline and two meta lines and never the reflection. */
-    await expect(answer).toBeVisible({ timeout: 15_000 });
-    await expect(collapse).toBeVisible();
+    /* SECOND, THE MARK, AND IN WORDS. The row's fill and leading bar are a
+       visual difference and nothing else; `diary.latest` is the line that
+       carries the same fact to a screen reader and into a greyscale print
+       (routes/Diary.tsx says so where it unshifts it). So the assertion is the
+       sentence, never the class — and it is what makes "the thing you just
+       made is the thing you see" still checkable with no card to look at. */
+    await expect(
+      page.getByText(label(locale, 'diary.latest'), { exact: true }),
+    ).toBeVisible({ timeout: 15_000 });
 
-    /* ── AND THE WAY BACK INTO ANOTHER ONE, BEHIND THE CARD ────────────────
-       Ben, 2026-09-24. The landing offers the only forward move this screen
-       has, under the entry rather than above it or at the foot of the page.
-       A LINK, not a button: it goes to the library, which is the one screen
-       that writes a session — so this walk checks where it points rather than
-       pressing it, and the start it would reach is the one the walk already
-       took at the top of this file.
+    /* ── AND THE WAY INTO ANOTHER ONE ──────────────────────────────────────
+       Ben, 2026-09-24, and it outlived the card it used to sit behind: with
+       the inline state gone it belongs to the screen rather than to an entry,
+       and `routes/Diary.tsx` renders it under the graph whenever no filter is
+       set. A LINK, not a button: it goes to the library, which is the one
+       screen that writes a session — so this walk checks where it points
+       rather than pressing it, and the start it would reach is the one the
+       walk already took at the top of this file.
 
        Its name is `menu.startSession`, the same words the drawer and the
        explainer use for the same act, so a screen that invented a third
@@ -248,24 +252,20 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     await expect(startAnother).toBeVisible();
     await expect(startAnother).toHaveAttribute('href', '/exercises');
 
-    /* PREVIEW. The X collapses the card; the entry does not disappear with it,
-       because a collapsed card rejoins the run below rather than being held
-       out of it. Both halves are asserted — a version that simply unmounted
-       the card would satisfy the first and lose the session from the screen. */
-    await collapse.click();
-    await expect(answer).toBeHidden();
-
-    /* The offer goes with the card. Collapsing turns the diary from a landing
-       into a list, and the drawer is where *Start a session* lives from then
-       on — asserted because the alternative, a control that outlives the thing
-       it belongs to, is invisible in a screenshot. */
-    await expect(startAnother).toBeHidden();
-
     /* THIS session's row, found by where it goes rather than by what it looks
        like. `href` is a semantic attribute, not a design-system class, and it
        is the one thing about a preview row that cannot be true of the wrong
-       entry — which is what the old "a framed box is visible" could not say. */
-    const row = page.locator(`a[href$="/diary/${sessionId}"]`);
+       entry — which is what the old "a framed box is visible" could not say.
+
+       SCOPED TO THE RUN, because since 2026-09-28 the entry is a link TWICE:
+       a row here and a mark in the graph, both pointing at `/diary/:id`. That
+       is the change that replaced the inline card, so an unscoped `href`
+       match now resolves to two elements and fails on strictness rather than
+       on anything being wrong. The scope is the list's own accessible NAME —
+       `diary.listLabel`, which LinkList puts on the `<ul>` as `aria-label` —
+       so this is still a semantic handle and not a class. */
+    const run = page.getByRole('list', { name: label(locale, 'diary.listLabel') });
+    const row = run.locator(`a[href$="/diary/${sessionId}"]`);
     await expect(row).toBeVisible();
 
     /* LIGHTBOX. The row opens the same card in an overlay — the same

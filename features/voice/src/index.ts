@@ -58,8 +58,14 @@ export type { TranscriptEvent } from './realtime/types';
 export { MicrophoneError, startRecorder } from './audio/recorder';
 export type { Recorder } from './audio/recorder';
 
+/* The capture decision, pure and separately testable — the part that was
+   wrong. See capture/health.ts for why it is not inside the hook. */
+export { captureVerdict } from './capture/health';
+export type { CaptureState, CaptureVerdict } from './capture/health';
+
 export {
   DEFAULT_MODEL, MODELS, SESSION_SECONDS, IDLE_STOP_MS, SAMPLE_RATE,
+  CAPTURE_PROOF_MS, CAPTURE_LOST_MS, CONNECT_TIMEOUT_MS,
 } from './config';
 export type {
   LanguageChoice, ModelSpec, SegmentationMode, TranscriptionModel,
