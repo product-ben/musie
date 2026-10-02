@@ -399,15 +399,19 @@
      that inset, and for a long time it did so with a flat zero, which left the
      24px floor setting the height exactly as §7.2's min rung reaches 24px.
 
-     IT IS --sp-1 NOW, not zero (Ben, 2026-10-02). One step on both axes, where
-     the first pass moved the inline one alone and left a control padded at the
-     sides and flush at the top and bottom. 4px over an 18.61px line box is
-     26.61px, so the floor is no longer what sets the height — but the height
-     is now ABOVE --target-min rather than below it, so 2.5.8 is satisfied by a
-     wider margin than before, not a narrower one. What must never come back is
-     --space-inset-control's 12px, which is three steps further up and is where
-     the 47px came from. */
-  padding-block: var(--sp-1);
+     IT IS --sp-2 NOW, not zero (Ben, 2026-10-02, in two steps: zero → --sp-1
+     when the rung was flush top and bottom, then --sp-1 → --sp-2 for the
+     height). 8px over an 18px line box plus 2px of border is 36px, so the
+     floor stops being what sets the height — but the height is now well ABOVE
+     --target-min rather than at it, so 2.5.8 is satisfied by a wider margin
+     than before, not a narrower one. What must never come back is
+     --space-inset-control's 12px, which is one step further up again and is
+     where the 47px came from.
+
+     36px IS ALSO WHAT A `min` SegmentedControl COMES TO, by its own
+     construction rather than by copying this number. The two stand in the same
+     rows and have to agree; see the rung note over there. */
+  padding-block: var(--sp-2);
   /* One step up the scale from --sp-3, to match. The rung is used as page
      furniture — a quiet control in a row above something else — and at 12px
      the label sat too close to its own border to read as a button at all. */
@@ -2268,39 +2272,40 @@
    comes in with the height — a 24px segment with 12px of side padding reads as
    a pill that lost its middle — and the gap closes to match, so the glyph and
    its label stay one object rather than two things sharing a box. */
-/* ── THE `min` RUNG LINES UP WITH A `min` CtaButton ───────────────────────
+/* ── THE `min` RUNG, BUILT LIKE EVERY OTHER RUNG ──────────────────────────
    A segmented control is a bordered TRACK around its controls; a button IS the
    control. At every other rung that difference is invisible, because the two
-   are never asked to stand in the same row. Here they are, and the track came
-   out 4px taller — 2px of its own padding and 1px of border on each side, less
-   the 2px by which a 16px glyph falls short of an 18px line box.
+   are never asked to stand in the same row — here they are, and the track came
+   out taller by exactly its own chrome.
 
-   So at this rung the track gives up its padding and its border and lets the
-   segments be the whole control. It still reads as a track: `--surface-sunken`
-   behind segments that are not filled is what did that work anyway, and the
-   hairline was never doing much at 24px.
+   An earlier pass answered that by taking the track's padding and border away
+   at this rung, which lined the two up and made the small control a different
+   OBJECT from the large one — the thing a size variant must never be (Ben,
+   2026-10-02). The chrome is back. The track is padded and bordered here
+   exactly as it is at `primary`, and the rung is declared as an outer height
+   instead:
 
-   AND THE HEIGHT COMES FROM THE FLOOR, NOT FROM THE PADDING. `--target-min`
-   plus one step is 28px, which is exactly a `min` button, and a floor gives
-   the same answer whether the segment holds a line of text or a glyph — where
-   padding gives two answers 2px apart and only one of them lines up. */
-.musy-seg--min .musy-seg__track {
-  padding: 0;
-  border-width: 0;
+     --musy-seg-rung is what the CONTROL measures, and the segments inside it
+     are that less the track's own padding and border. So the number this rung
+     agrees with a `min` CtaButton on is stated once, and it stays true if the
+     track's chrome ever changes.
+
+   THE SEGMENT'S HEIGHT COMES FROM ITS FLOOR, with no block padding — which is
+   how `primary` does it too, and is what makes a segment the same height
+   whether it holds a word or a glyph. Padding gives two answers 2px apart,
+   because a 16px glyph is not an 18px line box, and only one of them lines up.
+   At 36px the segment itself is 26px, comfortably past 2.5.8's 24. */
+.musy-seg--min {
+  --musy-seg-rung: calc(var(--target-min) + var(--sp-3));
 }
 
 .musy-seg--min .musy-seg__option {
-  min-block-size: calc(var(--target-min) + var(--sp-1));
-  /* One step up the scale on BOTH axes, 2026-10-02, matching the move on
-     CtaButton's `min` rung: the two sit in the same rows as each other, and a
-     pair of small controls with different breathing room reads as one of them
-     being broken.
-
-     The block step is BELT AND BRACES here, not the mechanism: the floor above
-     already settles the height at 28px, and this only matters if a consumer
-     puts something taller than a line box in a segment. The floor is what
-     makes the rung the same height for a glyph and for a word. */
-  padding-block: var(--sp-1);
+  min-block-size:
+    calc(var(--musy-seg-rung) - var(--sp-1) * 2 - var(--border-width-hairline) * 2);
+  /* NO BLOCK PADDING, exactly as at `primary`: the floor above is what gives
+     the segment its height, and the track's own padding is what gives the
+     segments room inside the control. Adding it here as well would be the
+     third thing spending space on the same axis. */
   padding-inline: var(--sp-3);
   gap: var(--sp-1);
 }
