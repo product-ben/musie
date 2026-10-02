@@ -82,6 +82,21 @@
    padding is what keeps the clip off the resting pile, whose scattered corners
    stick out past the top card on every side.                                */
 .musie-deck {
+  /* ── FULL-BLEED, OUT OF THE MAIN COLUMN'S GUTTER ────────────────────────
+     `.musie-main` sets `padding: … var(--gutter)`, so a stage that sits
+     inside it clips 16px short of the page on each side — and `overflow:
+     clip` then SLICED a card being dragged toward the edge, straight down a
+     vertical line at the gutter, with the card still mid-screen. The pile's
+     scattered corners were cut off at the same line.
+
+     The margin is exactly the padding it is cancelling, so the stage's box
+     becomes the main column's OUTER box: the full width of the page on a
+     phone, and `--bp-md` on anything wider. Then the padding is put back on
+     the stage itself, so the pile is still inset from the edge while the
+     clip box is not. Nothing here knows a number — it negates a token the
+     shell already set, and follows it to the pixel when the gutter changes
+     at 768px. */
+  margin-inline: calc(var(--gutter) * -1);
   display: grid;
   place-items: center;
   gap: var(--space-gap-stack);

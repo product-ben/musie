@@ -195,6 +195,12 @@ function Deck({ cards }: { cards: DeckCard[] }) {
 
   const gesture = React.useRef<Gesture | null>(null);
   const throwKey = React.useRef(0);
+  /** The pile, measured. The gesture is read off the STAGE — the full width of
+   *  the page — but every distance in it is a fraction of the CARD, so the two
+   *  cannot be the same element any more. `offsetWidth` rather than a rect:
+   *  the pile carries no transform, and a rect would start reporting the
+   *  cards' rotation the day it did. */
+  const pile = React.useRef<HTMLDivElement>(null);
 
   const byId = React.useMemo(
     () => new Map(cards.map((card) => [card.exercise.id, card])),
@@ -288,7 +294,7 @@ function Deck({ cards }: { cards: DeckCard[] }) {
       x: event.clientX,
       y: event.clientY,
       axis: 'undecided',
-      width: event.currentTarget.getBoundingClientRect().width,
+      width: pile.current?.offsetWidth ?? event.currentTarget.offsetWidth,
       lastX: event.clientX,
       lastT: event.timeStamp,
       vx: 0,
@@ -377,7 +383,19 @@ function Deck({ cards }: { cards: DeckCard[] }) {
   };
 
   return (
-    <div className="musie-deck">
+    /* THE WHOLE STAGE IS THE DRAG SURFACE, not just the card. A pile 305px
+       wide on a 393px page left a dead margin down each side where a thumb
+       that started slightly wide of the card did nothing at all — and the
+       edges are exactly where a thumb reaching across a phone lands. The
+       handlers sit on the full-bleed stage; `touch-action: pan-y` and the
+       axis decision still hand every vertical gesture back to the page. */
+    <div
+      className="musie-deck"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
       {/*
         THE PILE IS THE CONTROL, which is why it is what takes focus and holds
         the keyboard handler rather than each card doing so. Five focusable
@@ -390,14 +408,11 @@ function Deck({ cards }: { cards: DeckCard[] }) {
       */}
       <div
         className="musie-deck__pile"
+        ref={pile}
         role="group"
         tabIndex={0}
         aria-label={t('poc.deck.stage')}
         style={cssVars({ '--musie-deck-progress': drag?.progress ?? 0 })}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
       >
         {order.map((id, depth) => {
