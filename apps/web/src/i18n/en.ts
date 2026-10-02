@@ -890,17 +890,27 @@ export const en = {
      which the card borrows from `exercises.fact.time*` below rather than
      saying a second way. */
   'poc.deck.title': 'The deck',
-  'poc.deck.text': 'Every exercise as a card, in a loose pile. Drag the top one away, or flick it.',
-  'poc.deck.hint': 'Arrow keys and the buttons do the same thing.',
-  'poc.deck.stage': 'The deck. Drag the top card, or move through it with the arrow keys.',
-  /* DRAWN: just the numbers, so the control row stays one line whatever an
-     exercise is called. ANNOUNCED: the sentence below, which names the card
-     that is now on top — "3 / 5" alone says the pile moved but not to what. */
-  'poc.deck.counter': '{index} / {total}',
+  'poc.deck.text': 'Every exercise as a card. Swipe right to start it, left for another one.',
+  /* The pile's accessible name. A screen-reader user hears only this, so it
+     has to contain both actions and which way each one goes. */
+  'poc.deck.stage': 'The deck. Swipe the top card right to start that exercise, left to see another.',
+  /* The two actions, on the drag chips and on the buttons beside the deck. */
+  'poc.deck.start': 'Start',
+  'poc.deck.another': 'Another exercise',
+  /* Announced when the top card changes — "3 / 5" alone would say the pile
+     moved but not what it moved to. */
   'poc.deck.position': '{name} — card {index} of {total}',
-  'poc.deck.previous': 'Show the previous card',
-  'poc.deck.next': 'Show the next card',
-  'poc.deck.shuffle': 'Shuffle the deck',  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
+  /* The view switch. Icon-only, so the labels are never drawn — which is
+     exactly why they have to be written: they are the only thing naming each
+     segment for a screen reader. */
+  /* THE SHORT FORM of `exercises.surpriseMe`. The same action, and the long
+     one is right where it is — a full-width CTA on /exercises. On a 24px
+     button in a row of furniture it ellipses, and the German ellipses sooner.
+     Long form / short form is the pair `exercises.fact.time*` already makes. */
+  'poc.deck.random': 'Pick one for me',
+  'poc.deck.view.legend': 'How to show the exercises',
+  'poc.deck.view.deck': 'Card stack',
+  'poc.deck.view.list': 'List',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',

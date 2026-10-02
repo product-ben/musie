@@ -107,6 +107,7 @@ import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
+import { Dots } from './Dots';
 import { IconButton } from './IconButton';
 import { useCoarsePointer } from './useCoarsePointer';
 import { useMusyText } from './locale';
@@ -477,28 +478,17 @@ export function Carousel({
           onClick={() => go(index - 1)}
         />
 
-        <div className="musy-carousel__dots">
-          {slides.map((slide, i) => (
-            <button
-              key={slide.id}
-              type="button"
-              className="musy-carousel__dot"
-              /* 'false', not undefined: the stylesheet's selected rules key off
-                 [aria-current="true"], and the hover rule off :not() of it. */
-              aria-current={i === index ? 'true' : 'false'}
-              aria-label={(dotAriaLabel ?? t.carouselGoTo)(i + 1, total)}
-              onClick={() => go(i)}
-            >
-              {/* Empty on purpose. The mark IS the state — a 12px dot, or a
-                  24px pill when it is the current one — and the button's own
-                  aria-label says where it goes. The ordinal used to be
-                  printed inside the active pill and was `aria-hidden`, so
-                  cutting it (2026-09-25, Ben) took nothing from the aria
-                  layer: there was never anything there to move. */}
-              <span className="musy-carousel__dot-mark" />
-            </button>
-          ))}
-        </div>
+        {/* THE DOTS ARE A PART NOW, shared with the Card Deck — same markup,
+            same sizes, same 2.5.8 bargain, in src/Dots.tsx. Nothing about the
+            row changed when it moved; `dotAriaLabel` and the catalogue
+            fallback are still this component's to supply. */}
+        <Dots
+          total={total}
+          index={index}
+          ids={slides.map((slide) => slide.id)}
+          label={dotAriaLabel ?? t.carouselGoTo}
+          onSelect={go}
+        />
 
         <IconButton
           glyph={ChevronRight}

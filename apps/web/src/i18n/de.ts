@@ -620,19 +620,19 @@ export const de: Messages = {
      Was auf einer Karte steht, steht NICHT hier: Name, Beschreibung und Bild
      gehören der Übung und kommen aus derselben Tabelle wie auf /exercises. */
   'poc.deck.title': 'Das Deck',
-  'poc.deck.text': 'Jede Übung als Karte, auf einem losen Stapel. Zieh die oberste weg oder schnipp sie fort.',
-  'poc.deck.hint': 'Pfeiltasten und Schaltflächen tun dasselbe.',
-  'poc.deck.stage': 'Das Deck. Zieh die oberste Karte weg oder blättere mit den Pfeiltasten.',
+  'poc.deck.text': 'Jede Übung als Karte. Wisch nach rechts, um sie zu starten, nach links für eine andere.',
+  'poc.deck.stage': 'Das Deck. Wisch die oberste Karte nach rechts, um die Übung zu starten, nach links für die nächste.',
+  'poc.deck.start': 'Starten',
+  /* Bens Wort, 2026-10-02. */
+  'poc.deck.another': 'Andere Übung',
   /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
      `route.session.title`. */
-  /* Gezeichnet wird nur die Zahl, damit die Zeile einzeilig bleibt; angesagt
-     wird der Satz darunter. Die Zahlenform ist in beiden Sprachen dieselbe und
-     steht trotzdem im Katalog — nichts Sichtbares wird inline geschrieben. */
-  'poc.deck.counter': '{index} / {total}',
   'poc.deck.position': '{name} – Karte {index} von {total}',
-  'poc.deck.previous': 'Vorige Karte zeigen',
-  'poc.deck.next': 'Nächste Karte zeigen',
-  'poc.deck.shuffle': 'Karten mischen',  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
+  /* Kurzform von `exercises.surpriseMe`, für die kleine Schaltfläche. */
+  'poc.deck.random': 'Such mir eine aus',
+  'poc.deck.view.legend': 'Wie die Übungen gezeigt werden',
+  'poc.deck.view.deck': 'Kartenstapel',
+  'poc.deck.view.list': 'Liste',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',

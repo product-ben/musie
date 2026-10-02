@@ -37,6 +37,17 @@ import type { LucideIcon } from 'lucide-react';
 export type CtaVariant =
   | 'primary'
   | 'secondary'
+  /**
+   * The border and the label, and nothing behind them.
+   *
+   * NOT THE SAME AS `secondary`, which is the one to reach for first: that
+   * rung paints `--surface-raised` and sits ON the page. This one is
+   * transparent, so whatever is behind it shows through — which is the point
+   * when it sits on a tinted panel, over an image, or inside a card whose own
+   * surface should stay unbroken. On a plain `--surface` page the two are
+   * nearly indistinguishable and `secondary` is the better-trodden path.
+   */
+  | 'outline'
   | 'ghost'
   /** Literal placeholder names, per Decision 3 — renaming later is a
    *  find-replace, not a redesign. */

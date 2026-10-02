@@ -40,6 +40,16 @@ export interface SegmentedOption {
   disabled?: boolean;
 }
 
+/**
+ * The rung the segments stand on.
+ *
+ * `min` and `primary` are the system's own names for these two heights — the
+ * same words `CtaButton` and `IconButton` use — so "the small one" means the
+ * same thing in every component. `guided` is the third rung and keeps its own
+ * boolean, because it predates this prop.
+ */
+export type SegmentedSize = 'min' | 'primary';
+
 export interface SegmentedControlProps {
   name: string;
   /**
@@ -54,6 +64,33 @@ export interface SegmentedControlProps {
   value?: string;
   onValueChange?: (value: string) => void;
   accent?: RadioAccent;
+  /**
+   * The segment height. `primary` (44px) by default; `min` is the 24px rung,
+   * for a control that sits in a row of page furniture rather than in a form.
+   * L5 picks between them from the POINTER, not from the viewport — see
+   * useCoarsePointer — so a screen that uses `min` under a thumb is making a
+   * deliberate exception, not following the rule.
+   *
+   * `guided` outranks this: it is the third rung and the two must not be asked
+   * for at once.
+   */
+  size?: SegmentedSize;
+  /**
+   * Draw the glyphs alone and hide the labels visually.
+   *
+   * THE LABEL IS NOT DROPPED, it moves to `.musy-sr-only` — the text is what
+   * names each radio, and without it the group announces as an unnamed set
+   * (4.1.2). This is a presentation switch, never a content one.
+   *
+   * The track also stops stretching: an icon-only control is page furniture,
+   * so it takes the width of its glyphs instead of the width on offer.
+   *
+   * It is only honest where the glyphs are already unambiguous. This component
+   * requires a glyph per option precisely so that the icon can carry the
+   * option when the label is clipped — `iconOnly` is that same bet, made all
+   * the way.
+   */
+  iconOnly?: boolean;
   /** Raise each segment to --target-guided. */
   guided?: boolean;
   disabled?: boolean;
@@ -62,7 +99,8 @@ export interface SegmentedControlProps {
 
 export function SegmentedControl({
   name, legend, legendHidden = false, options, value, onValueChange,
-  accent = 'primary', guided = false, disabled = false, className,
+  accent = 'primary', size = 'primary', iconOnly = false, guided = false,
+  disabled = false, className,
 }: SegmentedControlProps) {
   if (process.env.NODE_ENV !== 'production' && (options.length < 2 || options.length > 4)) {
     console.warn(
@@ -84,6 +122,8 @@ export function SegmentedControl({
       className={[
         'musy-seg',
         accent !== 'primary' ? `musy-seg--${accent}` : '',
+        size !== 'primary' ? `musy-seg--${size}` : '',
+        iconOnly ? 'musy-seg--icon-only' : '',
         guided ? 'musy-seg--guided' : '',
         className ?? '',
       ].filter(Boolean).join(' ')}
@@ -102,8 +142,9 @@ export function SegmentedControl({
             render={<button type="button" />}
             className="musy-seg__option"
           >
-            <Icon glyph={opt.glyph} size="md" />
-            <span className="musy-seg__label">{opt.label}</span>
+            <Icon glyph={opt.glyph} size={size === 'min' ? 'sm' : 'md'} />
+            {/* Visually hidden, never absent — see `iconOnly`. */}
+            <span className={iconOnly ? 'musy-sr-only' : 'musy-seg__label'}>{opt.label}</span>
           </Radio.Root>
         ))}
       </div>

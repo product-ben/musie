@@ -37,6 +37,10 @@ export { wizardStepState, isWizardStepReachable } from './wizardSteps';
 export { Icon } from './Icon';
 export type { IconProps, IconSize, IconTone } from './Icon';
 
+export { CardDeck } from './CardDeck';
+export type { CardDeckProps, CardDeckItem } from './CardDeck';
+export { Dots } from './Dots';
+export type { DotsProps } from './Dots';
 export { IconButton, MusyTooltipProvider } from './IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './IconButton';
 
@@ -104,7 +108,7 @@ export { Toast } from './Toast';
 export type { ToastProps, ToastAction, ToastLive, ToastTone, ToastPlacement } from './Toast';
 
 export { SegmentedControl } from './SegmentedControl';
-export type { SegmentedControlProps, SegmentedOption } from './SegmentedControl';
+export type { SegmentedSize, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
 
 export { Lightbox } from './Lightbox';
 export type { LightboxProps } from './Lightbox';

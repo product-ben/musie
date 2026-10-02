@@ -5361,3 +5361,77 @@ clipping bug, and it is less code.
 What I need from Ben: **nothing, just flagging** — if a Card Deck is ever a
 real component, this is the part worth keeping. The ratio is the obvious API
 and it is the wrong one.
+
+---
+
+# POC — the deck chooses an exercise (`/dev/deck`, third pass)
+
+The deck became the choice itself: swipe RIGHT to start the exercise, LEFT to
+see another. Most of it left the app — the pile is `CardDeck` in the design
+system now, logged on that side. Three decisions are the app's.
+
+## The two swipes are not peers, and the right one is a one-way door
+
+Where: `packages/design-system/src/CardDeck.tsx`, `src/routes/DeckPoc.tsx`
+
+What I checked: starting is `createSession()` — the same call /exercises makes.
+It writes a row, navigates into the session, and the database refuses a second
+running one through a partial unique index. §7.24's rule for its own swipe is
+that a gesture committing with no confirm is only honest if what it commits is
+cheap to take back. Left qualifies; right does not.
+
+What I did: made right harder to perform, in three ways rather than one. It
+needs more travel (half the card against under a third); **a flick cannot do it
+at all**, because velocity arms the left swipe only; and it announces itself
+before the finger lifts, with dragging back under the threshold un-arming it.
+Ben chose on 2026-10-02 that it MAY end a running session.
+
+Why: a fast, short gesture is the one people make by accident, and it is the
+one that must never open the one-way door. Measured: a flick right starts
+nothing, a flick left defers.
+
+What I need from Ben: **nothing** — this records the shape the answer took.
+
+## The refusal is a dialog here and a Message on /exercises, deliberately
+
+Where: `src/components/SessionRunningLightbox.tsx`
+
+What I checked: /exercises renders this refusal inline, above the list, and
+that is right there — the person TAPPED a card, the list is still on screen,
+and the notice sits beside the thing it is about. The deck cannot do that: the
+gesture has already thrown the card off the screen, so there is nothing left
+for an inline notice to sit beside, and the question would be a paragraph
+competing with a pile the person can still swipe.
+
+What I did: a `Lightbox`, with every string taken from the keys /exercises
+already uses — `exercises.alreadyRunning`, `…Detail`, `…goToSession`,
+`…endAndStart`. The destructive answer is second and `secondary`; *Continue
+that session* is first and `accent`.
+
+Why: Ben asked for the Message to become a proper dialog. Two screens asking
+one question in two voices is how a product stops sounding like one product, so
+the presentation changed and not a word of the copy.
+
+What I need from Ben: **a decision, when this stops being a POC.** If the deck
+ever replaces /exercises, one of the two presentations should go. I would keep
+the dialog only where a gesture caused the refusal.
+
+## The deck shows all five exercises, including the three that are not built
+
+Where: `src/routes/DeckPoc.tsx`
+
+What I checked: an earlier pass filtered to `implemented`, on the theory that a
+deck whose cards cannot be started lies about its one gesture. It did something
+worse: the POC quietly showed two exercises where the product has five, so it
+stopped being a prototype of the real choice. /exercises shows all five and
+refuses the other three with `NotImplementedLightbox`.
+
+What I did: all five, and a right swipe on an unbuilt one opens that same
+lightbox. *Pick one for me* still draws from the built ones only, which is the
+rule /exercises already records for the same escape hatch.
+
+Why: "not yet" is an honest answer; a card that was never dealt is not.
+
+What I need from Ben: **nothing, just flagging** that three of the five cards
+cannot currently be swiped right to any effect, which makes the deck feel
+emptier than the design will once the exercises land.

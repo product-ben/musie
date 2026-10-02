@@ -76,6 +76,15 @@ const meta = {
       options: ['primary', 'accent', 'accent-alt'],
       description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
     },
+    size: {
+      control: 'inline-radio',
+      options: ['min', 'primary'],
+      description: 'The segment height. `primary` (44px) by default; `min` is the 24px rung, for a control that sits in a row of page furniture rather than in a form.',
+    },
+    iconOnly: {
+      control: 'boolean',
+      description: 'Draw the glyphs alone and hide the labels visually. The label is not dropped — it moves to .musy-sr-only.',
+    },
     guided: { control: 'boolean', description: 'Raise each segment to --target-guided (64px).' },
     disabled: { control: 'boolean', description: 'Disables the whole group.' },
     className: { control: false },
@@ -87,6 +96,40 @@ type Story = StoryObj<typeof meta>;
 
 /** Component defaults, with the prototype's own copy. */
 export const Default: Story = {};
+
+/** The two rungs. `guided` is the third and keeps its own boolean. */
+export const Sizes: Story = {
+  render: (args) => (
+    <Stack>
+      <SegmentedControl {...args} name="s-primary" size="primary" legend="size: primary — 44px (default)" />
+      <SegmentedControl {...args} name="s-min" size="min" legend="size: min — 24px" />
+    </Stack>
+  ),
+};
+
+/**
+ * Glyphs alone, labels visually hidden and still announced.
+ *
+ * The track stops stretching: an icon-only control is page furniture, so it
+ * takes the width of its own segments instead of the width on offer. Only
+ * honest where the glyphs are unambiguous — this component requires one per
+ * option precisely so the icon can carry the option, and this is that bet made
+ * all the way.
+ */
+export const IconOnly: Story = {
+  render: (args) => (
+    <Stack>
+      <SegmentedControl {...args} name="i-primary" iconOnly legend="iconOnly — primary rung" />
+      <SegmentedControl {...args} name="i-min" iconOnly size="min" legend="iconOnly — min rung, the row-of-furniture case" />
+    </Stack>
+  ),
+  args: {
+    options: [
+      { value: 'voice', label: 'Record audio', glyph: Mic },
+      { value: 'write', label: 'Write answer', glyph: Pencil },
+    ],
+  },
+};
 
 /** All three accent families. The prototype uses `accent`. */
 export const Accents: Story = {

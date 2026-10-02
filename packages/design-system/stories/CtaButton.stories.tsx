@@ -160,7 +160,7 @@ const meta = {
     children: { control: 'text', description: 'The button label.' },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'ghost', 'accent', 'accent-alt'],
+      options: ['primary', 'secondary', 'outline', 'ghost', 'accent', 'accent-alt'],
       description:
         'Fill family. Literal placeholder names, per Decision 3 — renaming later is a find-replace, not a redesign.',
     },
@@ -195,11 +195,17 @@ type Story = StoryObj<typeof meta>;
  *  copy. */
 export const Default: Story = {};
 
-/** All five variants. The prototype uses `primary` for the one way forward,
+/** All six variants. The prototype uses `primary` for the one way forward,
  *  `secondary` for a real but lesser action, `ghost` for Back and anything that
  *  does not advance the flow, and `accent` exactly twice — both
  *  times for start over / go back to choosing. `accent-alt` does not
- *  appear in the prototype at all. */
+ *  appear in the prototype at all.
+ *
+ *  `outline` is NOT in the prototype either. Reach for `secondary` first: the
+ *  two are nearly indistinguishable on a plain page, because `secondary`
+ *  paints `--surface-raised` and this one paints nothing. The difference only
+ *  shows where something is behind the button — a tinted panel, an image, a
+ *  card whose own surface should stay unbroken. */
 export const Variants: Story = {
   render: (args) => (
     <Stack>
@@ -208,6 +214,9 @@ export const Variants: Story = {
       </Row>
       <Row label="variant: secondary">
         <CtaButton {...args} variant="secondary">Simulate scan</CtaButton>
+      </Row>
+      <Row label="variant: outline">
+        <CtaButton {...args} variant="outline">Let Musie pick</CtaButton>
       </Row>
       <Row label="variant: ghost">
         <CtaButton {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
@@ -234,6 +243,22 @@ export const Sizes: Story = {
       <CtaButton {...args} size="comfort">comfort</CtaButton>
       <CtaButton {...args} size="guided">guided</CtaButton>
     </Row>
+  ),
+};
+
+/** The combination `outline` was added for: the `min` rung, as a quiet piece
+ *  of page furniture sitting in a row with other controls rather than in a
+ *  form. Shown against both themes so the transparency is visible. */
+export const OutlineSmall: Story = {
+  render: (args) => (
+    <Stack>
+      <Row label="outline + size: min">
+        <CtaButton {...args} variant="outline" size="min">Let Musie pick</CtaButton>
+      </Row>
+      <Row label="secondary + size: min — the filled sibling, for comparison">
+        <CtaButton {...args} variant="secondary" size="min">Let Musie pick</CtaButton>
+      </Row>
+    </Stack>
   ),
 };
 

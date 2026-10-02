@@ -3005,3 +3005,91 @@ been right at one viewport.
 What I need from Ben: **nothing.** Worth knowing: equalising the padding also
 handed ~15px back to the one label still on screen, which is what the collapsed
 run is always shortest of.
+
+---
+
+# Card Deck, and the three parts it needed (2026-10-02)
+
+## CardDeck — Layer 1 has no rotation scale, and a deck needs two angles and a card width
+Where: `src/musy-components.css`, the flagged block at the top of CARD DECK
+What I checked: every token in `musy-foundations.css`. There is no rotation
+family at all — nothing that means "a few degrees off square" — and no
+card-sized length. `--bp-sm` is 480px, a BREAKPOINT: multiplying it to get a
+card width satisfies L14.1's letter and lies about what the token means.
+`--motion-travel-*` is the nearest thing to a scatter distance and is wrong for
+it, because Layer 1 collapses those to 0 under `prefers-reduced-motion` — a
+resting pile would go flat, and the scatter is layout, not motion.
+What I did: three named constants in one flagged block —
+`--musy-deck-card-inline`, `--musy-deck-tilt-max`, `--musy-deck-swing-max` — on
+the terms `--musie-main-wide` is declared in the app's shell.css: once, named,
+reported.
+Why: a named gap is a find-and-replace when Layer 1 grows the token; an unnamed
+one is a hunt.
+What I need from Ben: **nothing, just flagging.** The swing is probably only
+ever a deck's business. A rotation scale might not be — a "dropped paper" tilt
+is the sort of thing a brand this tactile uses more than once.
+
+## CardDeck — L13 asks for a short hold on a coarse pointer; this decides the axis instead
+Where: `src/CardDeck.tsx`, THE SWIPE · the numbers
+What I checked: L13 says a drag surface "requires a short hold on a coarse
+pointer, or the card swallows every attempt to scroll the page". §7.24's swipe
+does not do that: it watches the first few pixels, commits to whichever of dx
+and dy is larger, and pairs that with `touch-action: pan-y`. Its own comment
+says deciding on `pointerdown` — which a hold amounts to — "makes a list of
+cards swallow the scroll".
+What I did: followed §7.24. Measured: a vertical drag on the deck scrolls the
+page and leaves the card where it was.
+Why: it is the same bargain bought without making the person wait.
+What I need from Ben: **a decision, eventually.** Either L13 grows the axis
+decision as a second sanctioned answer, or both components are wrong. Two
+components now disagree with it, which is a majority of the gesture surfaces in
+the system. I did not touch `10-layout.md`: it is byte-checked against a
+reference copy by `pnpm check`, so editing it is a design-system act with a
+test behind it.
+
+## SegmentedControl — `iconOnly` could not shrink to its content, and the second segment left the screen
+Where: `src/musy-components.css`, `.musy-seg--icon-only`
+What I checked: `.musy-seg` sets `container-type: inline-size` for the query
+that stacks a label under its icon below ~30rem. Inline-size containment means
+the box is sized WITHOUT looking at its contents — so `inline-size: max-content`
+resolved to **0**, the root measured 0px wide, and the two segments overflowed
+it and landed outside the viewport. The first still looked right, sitting at
+the left edge of a zero-width box; the second could not be pressed at all.
+What I did: `container-type: normal` on the icon-only variant. An icon-only
+control has no visible label, so the query it contains for has nothing to do.
+Why: the containment and the variant want opposite things, and only one of them
+is doing any work here.
+What I need from Ben: **nothing, just flagging** — but it is worth knowing that
+`container-type` silently breaks intrinsic sizing on the element that carries
+it. It cost an hour, and it failed in the one way that looks like a z-index bug.
+
+## Dots — extracted from Carousel rather than copied
+Where: `src/Dots.tsx`, `src/Carousel.tsx`
+What I checked: §7.11 owned the only dot row in the system, and the deck needs
+the same one for the same reason — "which of how many, and roughly where".
+Nothing outside `Carousel.tsx` and the stylesheet referenced the classes.
+What I did: moved the markup and the styles to a part, renamed
+`.musy-carousel__dot*` to `.musy-dot*`, and pointed Carousel at it. The 2.5.8
+bargain (12px mark, 24px target) and the 1.4.1 one (width AND fill, not fill
+alone) moved unchanged. The deck's dots take no `onSelect` — there is nowhere
+to jump to in a pile — so they render inert and `aria-hidden`, and the deck
+carries its own live region instead.
+Why: L14.3 one layer up. Two copies of a dot row drift exactly as two copies of
+a stylesheet block do.
+What I need from Ben: **nothing.** `Carousel`'s rendered output is unchanged
+apart from the class names.
+
+## CtaButton — `outline` is a fourth quiet variant, and `secondary` is still the one to reach for
+Where: `src/CtaButton.tsx`, `src/musy-components.css`
+What I checked: `secondary` is `--surface-raised` plus `--border-strong`, which
+is already a bordered button. What it is not is TRANSPARENT: on a tinted panel,
+over an image, or inside a card whose surface should stay unbroken, it paints a
+pale rectangle.
+What I did: added `outline` — the same border, no background — with its own
+hover, active and disabled states. `min` is already the system's small rung, so
+no size was added; the story shows the two together for comparison.
+Why: asked for, and the difference is real where there is something behind the
+button.
+What I need from Ben: **nothing, just flagging** that two variants now look
+nearly identical on a plain page. If that turns out to be a trap in use, the
+answer is to delete one rather than to document the difference harder.
