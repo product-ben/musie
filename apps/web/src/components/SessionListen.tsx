@@ -61,6 +61,7 @@ import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
 import { revealTrack } from '../lib/reveal';
+import { markListened } from '../lib/session';
 import type { Card, Exercise, Track } from '../lib/content';
 import { parseMarkdown, plainText } from '../lib/markdown';
 import { usePinnedHeader } from '../lib/useHeaderReveal';
@@ -209,6 +210,22 @@ export function SessionListen({
        with the first press, which is intermittent, connection-dependent, and
        looks exactly like correct behaviour. */
     if (resolving) return;
+
+    /* THE PRESS IS RECORDED — 2026-10-02, for *Discovered music*, which lists
+       only the recordings somebody actually played.
+
+       BELOW THE `resolving` GUARD, so a press that does nothing records
+       nothing — this is "the track started", not "a finger landed here".
+
+       ABOVE the simulated branch, so a press on a silent card is stamped too,
+       and that is the right place to draw it: whether a recording EXISTS is
+       `tracks.src`, which the listing already filters on, and asking this one
+       call to also judge that would put the same rule in two places.
+
+       NOT AWAITED. Playback must not wait on a round trip, and `markListened`
+       does not throw — a failure is a warning and a missing row on one screen,
+       never an interrupted exercise. First press wins, enforced in SQL. */
+    void markListened(sessionId);
 
     /* NO FILE, AND WE KNOW IT UP FRONT — so the clock has to be started
        DELIBERATELY here.

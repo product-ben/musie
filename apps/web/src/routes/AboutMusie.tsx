@@ -1,5 +1,5 @@
 /**
- * `/` — About Musie. The explainer, and the way into a first session.
+ * `/about` — About Musie. The explainer, and the way into a first session.
  *
  * ── THE CADENCE IS THE SCREEN ──────────────────────────────────────────────
  * Musie's two messages arrive in turn, like someone typing: the greeting at
@@ -13,33 +13,17 @@
  * that only ever played once would leave a returning reader looking at a
  * screen that had already finished happening.
  *
- * ── A RETURNING VISITOR SKIPS IT — BUT ONLY ON THE WAY IN ──────────────────
- * "Returning" is `profiles.user_type_id is not null`, and that choice is Ben's
- * (D.1, answered): the nav drawer already forks on exactly that column to
- * decide where *Start a session* goes, so using it here means one source of
- * truth rather than a second one in localStorage that can disagree with it.
+ * ── IT NO LONGER SKIPS ITSELF — 2026-10-02 ────────────────────────────────
+ * This screen used to redirect a returning visitor to /exercises on a cold
+ * arrival, because it WAS `/` and had nowhere else to put that decision. It is
+ * `/about` now, and the decision lives at the index: routes/Entry.tsx and
+ * lib/entry.ts, where the condition it depends on is true by construction.
  *
- * THE SKIP FIRES ONLY ON A COLD ARRIVAL, and that distinction is the whole of
- * the fix for a real bug: the drawer's *How Musie works* row pointed here and
- * bounced straight to /exercises, so the explainer was unreachable the moment
- * anyone had answered "who are you here as". A row that silently goes
- * somewhere else is worse than a row that is not there.
- *
- * `location.key === 'default'` is what tells the two apart. React Router
- * labels the FIRST entry in a history stack 'default', so it means "this page
- * is where the app was opened" — a typed URL, a bookmark, a reload — rather
- * than "somebody navigated here". Opening Musie takes you to the library;
- * asking to see how it works shows you how it works.
- *
- * It is the same idiom `useCloseOverlay` already uses to spot a cold
- * deep-link, which is why it is this rather than a flag threaded through the
- * drawer's Link.
- *
- * ONE MEASURED CONSEQUENCE, and it is the right one: RELOADING this page keeps
- * you on it. A reload restores React Router's own history state, so the key is
- * the one the in-app navigation gave it rather than 'default' — which means
- * "you asked for this page" survives a refresh. Being bounced off a page you
- * deliberately opened because you pressed F5 would be the worse behaviour.
+ * What that buys, beyond tidiness: this route is unconditional. Ask for
+ * /about and you get the explainer — reloading it, deep-linking it, sending it
+ * to somebody, or tapping *How Musie works* in the drawer. A page that
+ * sometimes silently goes somewhere else was the bug the old skip was patched
+ * twice to avoid, and it cannot recur here now because there is no branch left.
  *
  * ── THE CTA IS LOCKED UNTIL THE WHOLE FLOW HAS BEEN SEEN ───────────────────
  * `seenMax` only ever moves forward, so it is "the furthest slide you have
@@ -48,8 +32,8 @@
  * the reason `Carousel` is controlled from out here.
  */
 import * as React from 'react';
-import { Heart, Music, Sparkles } from 'lucide-react';
-import { Navigate, useLocation, useNavigate } from 'react-router';
+import { BookOpen, Music, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { Carousel, ContentBox, CtaButton } from '@musie/design-system';
 import type { CarouselSlide } from '@musie/design-system';
 import { BRAND_MARK_SRC } from '../brand';
@@ -68,17 +52,22 @@ import { useProfile } from '../lib/profileContext';
  * before they may start — five beats of explanation cost four of them. The
  * three that remain are the arc: choose, be guided, understand yourself.
  *
- * The sixth beat, the diary, is no longer a slide at all — it is the
- * postscript under the CTA, because it is what is there after a session
- * rather than a step inside one.
+ * THE THIRD BEAT IS THE DIARY — 2026-10-02, and it is a reversal. The diary
+ * was a slide, then a postscript under the CTA on the argument that it is what
+ * is there AFTER a session rather than a step inside one. That argument is
+ * still true and it lost anyway: user testing showed the postscript was not
+ * read (U1, U2 — both surprised by the diary later), while the diary itself
+ * was the thing a tester named as what he liked here (U3). A promise nobody
+ * sees is not a quieter promise. So the arc is now: choose, be guided, keep
+ * the thread.
  *
- * The glyphs stay Lucide's, one per beat: the pick, the exercise, the person
- * it happened to.
+ * The glyphs stay Lucide's, one per beat: the pick, the exercise, the book it
+ * is written in.
  */
 const SLIDES: { id: string; titleKey: MessageKey; glyph: CarouselSlide['glyph'] }[] = [
   { id: 'choose', titleKey: 'about.slide.choose', glyph: Sparkles },
   { id: 'guide', titleKey: 'about.slide.guide', glyph: Music },
-  { id: 'understand', titleKey: 'about.slide.understand', glyph: Heart },
+  { id: 'diary', titleKey: 'about.slide.diary', glyph: BookOpen },
 ];
 
 /** The greeting, then the carousel. Milliseconds, and the prototype's own. */
@@ -88,30 +77,7 @@ const CAROUSEL_AT = 4000;
 export function AboutMusie() {
   const t = useT();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { profile, status } = useProfile();
-
-  /**
-   * THE SKIP DECISION, LATCHED ON THE FIRST RENDER THAT KNOWS THE ANSWER.
-   *
-   * Two conditions, and both matter:
-   *
-   *   `location.key === 'default'` — this page is where the app was OPENED,
-   *   not somewhere the reader asked to go. Read once, at mount, for the same
-   *   reason the profile is: it is a fact about how we got here.
-   *
-   *   a recorded user type — they have been here before.
-   *
-   * `undefined` means the profile has not arrived yet; once it has, the answer
-   * is frozen. Without the latch, picking a user type mid-session would make
-   * this page redirect out from under someone reading it — the column changes,
-   * the render re-runs, and the page disappears.
-   */
-  const arrivedCold = React.useRef(location.key === 'default');
-  const skip = React.useRef<boolean | undefined>(undefined);
-  if (skip.current === undefined && status !== 'pending') {
-    skip.current = arrivedCold.current && Boolean(profile?.user_type_id);
-  }
+  const { profile } = useProfile();
 
   const [phase, setPhase] = React.useState(0);
   const [index, setIndex] = React.useState(0);
@@ -133,8 +99,6 @@ export function AboutMusie() {
        whole flow, and looking cannot be undone by scrolling back. */
     setSeenMax((furthest) => Math.max(furthest, next));
   }, []);
-
-  if (skip.current === true) return <Navigate to="/exercises" replace />;
 
   const total = SLIDES.length;
   const seenAll = seenMax >= total - 1;
@@ -248,10 +212,6 @@ export function AboutMusie() {
               </CtaButton>
               <p id="about-hint" className="musie-cta-stack__hint">{t(hintKey)}</p>
             </div>
-
-            {/* After the sign-off, which is what a P.S. is: the diary is not a
-                step of a session and does not belong in the gate above it. */}
-            <p className="musie-postscript">{t('about.postscript')}</p>
           </ContentBox>
         </div>
       )}

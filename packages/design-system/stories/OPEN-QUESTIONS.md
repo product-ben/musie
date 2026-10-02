@@ -3093,3 +3093,35 @@ button.
 What I need from Ben: **nothing, just flagging** that two variants now look
 nearly identical on a plain page. If that turns out to be a trap in use, the
 answer is to delete one rather than to document the difference harder.
+
+## CardDeck — the verdict overlay uses a TEXT token as a fill, because the brief's colour pair fails contrast
+Where: `src/musy-components.css`, `.musy-deck__verdict`
+What I checked: the brief was "overlay the card with the purple interactive
+colour and write on it in white". `--interactive-accent-alt` is `--purple-9`,
+a pale dusty fill, and `--on-surface-inverse` over it measures **2.01:1** —
+under even the 3:1 that large text is allowed, let alone 4.5. The two halves of
+that instruction cannot both be had.
+What I did: used `--accent-3-text` (`--purple-11`, the dark end of the same
+purple) as the fill, with `--on-surface-inverse` as the ink. 6.46:1 in light,
+6.72:1 in dark. The design intent survives — purple, white type, emphatic — and
+the contrast is legal.
+Why: a token used off-role is a smaller lie than a state nobody can read.
+What I need from Ben: **a token, when Layer 1 next grows.** There is no dark
+purple SURFACE in Layer 1 — `--accent-3` is the pale fill and `--accent-3-text`
+is ink — so an emphatic purple panel has nothing correct to stand on. This is
+the first thing that should move to it. Until then the inversion is flagged in
+the rule itself.
+
+## CardDeck — the verdict label overrides Layer 1's hyphenation
+Where: `src/musy-components.css`, `.musy-deck__verdict-label`
+What I checked: Layer 1 sets `--text-hyphens: auto`, which is right for a
+paragraph at `--measure-body`. At display size in a column half a card wide it
+broke *starten* into *star-* / *ten* across three lines.
+What I did: `hyphens: none` on this one element. These are two labels of two
+words each; the space between them is the only break either needs.
+Why: the same reasoning the app's own stage-type fix records — a hyphen at
+display size reads as a broken word rather than as wrapping, and German takes
+the worst of it.
+What I need from Ben: **nothing, just flagging** that this is the second place
+to turn Layer 1's hyphenation off at display size. A third would mean
+`--text-hyphens` wants to be per type step rather than global.

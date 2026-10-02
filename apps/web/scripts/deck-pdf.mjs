@@ -2,11 +2,19 @@
  * `supabase/content/deck.json` → a print-ready PDF of the paper deck.
  *
  * ── WHAT IT MAKES ─────────────────────────────────────────────────────────
- * Two faces per card. The FRONT is the feeling, set large — the card's whole
- * job is to be the one you are drawn to, and the deck has no artwork yet
- * (`cards.image_url` is still the shared `method-card.png` placeholder, which
- * is a picture of a card and not a picture for one). The BACK is the QR code
- * and, beside it, the printed code the schema has always said belongs there.
+ * Two faces per card. The FRONT is the picture, and nothing else — no word
+ * over it and, since 2026-10-02, no code either. The BACK carries the whole
+ * machine-readable half: a small QR stamp in the bottom-left corner with the
+ * printed code directly under it.
+ *
+ * ── WHY THE FRONT LOST ITS CORNER SQUARE ──────────────────────────────────
+ * It had one from 2026-09-24, so that a card lying face down could be scanned
+ * without being turned over — turning it over being the one move that gives
+ * away which card it is before the reveal. Ben reversed that on 2026-10-02:
+ * the square could be made small and it could be made pretty, but it could
+ * not be made to stop being a machine's target sitting on somebody's
+ * illustration. The reveal cost is real and is logged in
+ * `apps/web/OPEN-QUESTIONS.md`; the picture won.
  *
  * ── WHY CHROMIUM AND NOT A PDF LIBRARY ────────────────────────────────────
  * Because the card should look like Musie, and Musie's look is three CSS files
@@ -78,24 +86,42 @@ const MASTERS = join(HERE, '..', '..', '..', 'artwork', 'cards');
 const MASTER_EXT = ['.png', '.webp', '.jpg', '.jpeg', '.tif', '.tiff'];
 
 /**
- * THE FRONT'S CORNER QR — size and placement, in one place because two of them
- * need it: the stylesheet draws it and `main` checks it is still scannable.
+ * THE BACK'S STAMP — size and placement, in one place because two of them need
+ * it: the stylesheet draws it and `main` checks it is still scannable.
  *
  * Keyed to the SHORT edge, like every other size in this file, so a landscape
  * card and a portrait one print the same physical square.
+ *
+ * 0.26 of the short edge is 16.4 mm on an 88 × 63 card — about half the 31.5 mm
+ * the back used to give it. Small is the brief, and the arithmetic below is
+ * what says how small it is allowed to get: the module count comes from the
+ * url, the url comes from `--base-url`, and `main` refuses to be quiet if the
+ * two stop fitting.
  */
-const FRONT_QR_FRACTION = 0.26;
+const STAMP_FRACTION = 0.26;
 
 /**
- * How far the square sits inside the TRIM line, in millimetres.
+ * How far the stamp sits inside the TRIM line, in millimetres.
  *
  * `artwork/cards/README.md` puts the floor at 3 mm — "anything that must
  * survive belongs at least 3 mm inside the trim line" — and this is a machine's
  * target rather than a human's, so it takes the floor plus a millimetre. A
  * drifting cut that clips a word costs a word; one that clips a QR's quiet zone
- * costs the card its only job.
+ * costs the deck its only way off paper.
  */
-const FRONT_QR_INSET = 4;
+const STAMP_INSET = 4;
+
+/**
+ * The quiet zone, in modules, and it is FOUR rather than the two this file
+ * used to pass the encoder.
+ *
+ * ISO/IEC 18004 asks for four clear modules on every side. Two worked while
+ * the code was 31 mm of near-black on flat sand, which is a long way past what
+ * any reader needs — but the stamp is half that size now, and the margin that
+ * was spare is the margin being spent. It costs 8 modules of width, which at
+ * this size is about 3 mm, and it is the cheapest reliability in the file.
+ */
+const STAMP_QUIET = 4;
 
 /**
  * Below this, a printed module is too fine for a phone to resolve at the
@@ -106,8 +132,8 @@ const FRONT_QR_INSET = 4;
  */
 const MIN_MODULE_MM = 0.4;
 
-function frontQrSize(card) {
-  return Math.min(card.width, card.height) * FRONT_QR_FRACTION;
+function stampSize(card) {
+  return Math.min(card.width, card.height) * STAMP_FRACTION;
 }
 
 /** The dev server, so the default output is scannable with no argument — the
@@ -165,6 +191,80 @@ function scanLink(code, baseUrl) {
   return `${baseUrl.trim().replace(/\/+$/, '')}/s/${code.trim().toUpperCase()}`;
 }
 
+/**
+ * THE RISO STAMP — the card's QR, drawn here rather than taken from the
+ * encoder's own SVG.
+ *
+ * ── WHY NOT `QRCode.toString` ─────────────────────────────────────────────
+ * Because the deck is a riso print and the encoder emits a grid of hard
+ * squares, which is the one graphic on the card that looks like it arrived
+ * from a different printer. `QRCode.create` hands over the module matrix and
+ * the rest is arithmetic: soft-cornered modules where the corner has no
+ * neighbour, and finder patterns drawn as a rounded ring with a rounded pupil.
+ * No new dependency — the same `qrcode` the dev sheet and `qr-codes.mjs` use,
+ * read one level lower.
+ *
+ * ── THE SHAPE IS DECORATION; THE GEOMETRY IS NOT ──────────────────────────
+ * A finder pattern is detected by the 1 : 1 : 3 : 1 : 1 run of dark and light
+ * across its middle, so the ring is stroked one module wide from the CENTRE of
+ * that band — inset half a module, six across. An earlier pass drew it as a
+ * seven-wide rect with a centred stroke, which spills half a module beyond the
+ * pattern and shifts every ratio; three of the five cards stopped decoding and
+ * two did not, which is exactly the kind of failure that reaches a press.
+ * Rounding the corners is free. Moving an edge is not.
+ *
+ * ── COLOUR COMES FROM THE PAGE ────────────────────────────────────────────
+ * `currentColor` throughout, so the ink is set in CSS as `--on-surface` and
+ * this function never names one. Rule 1 holds here: semantic aliases only, and
+ * a hex literal in a print script is the same violation as a raw scale token
+ * in a screen. The light modules stay unpainted, so the card's own sand runs
+ * through the quiet zone — a white square on a sand card is a sticker.
+ */
+function stamp(url) {
+  const symbol = QRCode.create(url, {});
+  const size = symbol.modules.size;
+  const data = symbol.modules.data;
+  const at = (x, y) => (x < 0 || y < 0 || x >= size || y >= size ? 0 : data[y * size + x]);
+  const isFinder = (x, y) =>
+    (x < 7 && y < 7) || (x >= size - 7 && y < 7) || (x < 7 && y >= size - 7);
+
+  /* In module units. Past about 0.45 the modules stop touching their diagonal
+     neighbours and the code starts reading as dots rather than as a pattern. */
+  const radius = 0.42;
+
+  let path = '';
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      if (at(x, y) === 0 || isFinder(x, y)) continue;
+      /* A corner is rounded only where BOTH of its edges are free. Rounding a
+         corner that continues into a neighbour would notch the join. */
+      const up = at(x, y - 1), down = at(x, y + 1), left = at(x - 1, y), right = at(x + 1, y);
+      const tl = up === 0 && left === 0 ? radius : 0;
+      const tr = up === 0 && right === 0 ? radius : 0;
+      const br = down === 0 && right === 0 ? radius : 0;
+      const bl = down === 0 && left === 0 ? radius : 0;
+      path += `M${x + tl} ${y}`
+        + `h${1 - tl - tr}${tr === 0 ? '' : `a${tr} ${tr} 0 0 1 ${tr} ${tr}`}`
+        + `v${1 - tr - br}${br === 0 ? '' : `a${br} ${br} 0 0 1 ${-br} ${br}`}`
+        + `h${-(1 - br - bl)}${bl === 0 ? '' : `a${bl} ${bl} 0 0 1 ${-bl} ${-bl}`}`
+        + `v${-(1 - bl - tl)}${tl === 0 ? '' : `a${tl} ${tl} 0 0 1 ${tl} ${-tl}`}z`;
+    }
+  }
+
+  const eye = (cx, cy) => `
+      <rect x="${cx + 0.5}" y="${cy + 0.5}" width="6" height="6" rx="1.9"
+            fill="none" stroke="currentColor" stroke-width="1" />
+      <rect x="${cx + 2}" y="${cy + 2}" width="3" height="3" rx="1.05" fill="currentColor" />`;
+
+  const span = size + STAMP_QUIET * 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${span} ${span}"
+     shape-rendering="geometricPrecision" role="img" aria-label="${escape(url)}">
+    <g transform="translate(${STAMP_QUIET} ${STAMP_QUIET})">
+      <path d="${path}" fill="currentColor" />${eye(0, 0)}${eye(size - 7, 0)}${eye(0, size - 7)}
+    </g>
+  </svg>`;
+}
+
 /* ── the two faces ────────────────────────────────────────────────────── */
 
 /**
@@ -180,26 +280,13 @@ function scanLink(code, baseUrl) {
  * So a half-drawn deck prints correctly: five pictures and four words, rather
  * than five pictures and four blanks.
  */
-function front(card, locales, artwork, qr) {
-  /* THE SAME CODE AS THE BACK, small and in the corner.
-     Ben, 2026-09-24. A card face down on a table is the common case and
-     turning it over to scan it is the one move that gives away which card it
-     is before the reveal. The back keeps the large code, the printed pair of
-     characters and the caption that says what the square is for; this is the
-     square alone, at the size where it is still a machine's target and not yet
-     a graphic element.
-
-     ON BOTH FRONTS, drawn and undrawn. A deck where five cards scan from the
-     front and four do not is a deck nobody can give an instruction about. */
-  const scan = `<div class="musie-front-qr">${qr}</div>`;
-
+function front(card, locales, artwork) {
   if (artwork !== null) {
     /* alt from `card_i18n.image_alt` where it exists. A PDF carries alt text
        and a screen reader reads it, so this is not decoration. */
     const alt = card.imageAlt?.[locales[0]] ?? '';
     return `<div class="musie-card musie-card--art">
   <img class="musie-art" src="${artwork}" alt="${escape(alt)}" />
-  ${scan}
 </div>`;
   }
 
@@ -207,22 +294,29 @@ function front(card, locales, artwork, qr) {
   return `<div class="musie-card musie-card--front">
   <p class="musie-feeling">${escape(card.feeling[primary])}</p>
   ${rest.map((locale) => `<p class="musie-feeling-alt">${escape(card.feeling[locale])}</p>`).join('\n  ')}
-  ${scan}
 </div>`;
 }
 
 function back(card, locales, qr) {
-  /* TWO groups, not four things spread down a column. The code and the caption
-     both belong TO the QR — one is the same fact for a pair of eyes, the other
-     says what the square is for — so they travel with it, and the only thing
-     the card's foot holds is the name. */
+  /* ONE group, in the bottom-left corner, and the name alone in the middle.
+     Ben, 2026-10-02.
+
+     BOTTOM-LEFT because most people are right-handed: a card held in the left
+     hand and a phone in the right puts the stamp furthest from the hand that
+     is covering it, and nearest the camera that is not.
+
+     The code and the caption still belong TO the stamp — one is the same fact
+     for a pair of eyes, the other says what the square is for — so the three
+     travel together, reading down, with the code DIRECTLY under the square and
+     the caption under that. The card's middle holds the name and nothing
+     else. */
   return `<div class="musie-card musie-card--back">
+  <p class="musie-wordmark">Musie</p>
   <div class="musie-scan">
     <div class="musie-qr">${qr}</div>
     <p class="musie-code">${escape(card.code)}</p>
     <p class="musie-caption">${locales.map((locale) => escape(CAPTION[locale])).join(' · ')}</p>
   </div>
-  <p class="musie-wordmark">Musie</p>
 </div>`;
 }
 
@@ -256,15 +350,10 @@ function singlePages(faces, card, bleed) {
        hairline of each card's artwork landed along the top of the back behind
        it. Pinning inset:0 to a positioned page is the same rectangle by
        construction, with nothing to clip and nothing to round. */
-    .musie-page .musie-card--art { position: absolute; inset: 0; width: auto; height: auto;
-      /* THE ONE FACE WHOSE OWN EDGE IS NOT THE TRIM LINE. Everything else on
-         this page sits inside the safe area above, so its edge and the cut line
-         are the same rectangle. The art front is pinned to the whole sheet —
-         trim PLUS ${bleed} mm of bleed on every side — so an inset measured from
-         ITS edge starts that much further out. Adding the bleed back is what
-         keeps the square the same distance inside the cut as it is on a word
-         front, rather than sitting ${bleed} mm nearer the blade. */
-      --musie-front-qr-inset: ${(bleed + FRONT_QR_INSET).toFixed(2)}mm; }`;
+    /* Nothing is inset from this face's edge any more — the stamp is on the
+       back, which sits inside the safe area — so the art front is simply the
+       whole sheet. */
+    .musie-page .musie-card--art { position: absolute; inset: 0; width: auto; height: auto; }`;
 
   return { css, html: faces.map((face) => `<section class="musie-page">${face}</section>`).join('\n') };
 }
@@ -334,15 +423,11 @@ function document_(body, layoutCss, card, meta) {
    */
   const unit = Math.min(card.width, card.height);
 
-  /* The QR is bounded BOTH ways: 62% of the width, as it always was, and never
-     more than half the height — which binds only in landscape, where the stack
-     of code, caption and wordmark underneath has 63 mm to live in rather than
-     88 mm. */
-  const qr = Math.min(card.width * 0.62, card.height * 0.5);
-
-  /* The front's corner square, from the same helper `main` checks against, so
-     the drawn size and the checked size cannot drift apart. */
-  const frontQr = frontQrSize(card);
+  /* The back's stamp, from the same helper `main` checks against, so the drawn
+     size and the checked size cannot drift apart. It is no longer bounded by
+     the card's width the way the centred code was: a 16 mm square in a corner
+     has nothing to collide with. */
+  const stampMm = stampSize(card);
 
   return `<!doctype html>
 <html lang="de">
@@ -378,53 +463,26 @@ function document_(body, layoutCss, card, meta) {
         gap: 2mm; padding: 6mm; text-align: center;
         background: var(--surface-raised);
         color: var(--on-surface);
-        /* The containing block for the front's corner QR, which is positioned
+        /* The containing block for the back's stamp, which is positioned
            against the CARD rather than laid out in the flow — it has to ignore
-           this padding, because that padding is type's safe area and the QR
+           this padding, because that padding is type's safe area and the stamp
            carries its own, smaller one. */
         position: relative;
-        /* Measured from the card's own edge, which on every face but one IS
-           the trim line. The exception overrides this; see singlePages. */
-        --musie-front-qr-inset: ${FRONT_QR_INSET}mm;
+        /* Measured from the card's own edge, which on the back IS the trim
+           line: the back sits inside the page's bleed padding, unlike the art
+           front, which is pinned to the whole sheet. */
+        --musie-stamp-inset: ${STAMP_INSET}mm;
       }
-      /* A grid, not space-between: the scan group should be optically centred
-         in the space it has, and the name should sit on the foot of the card.
-         space-between does neither — it hangs the group from the top edge and
-         opens a hole under it. */
-      .musie-card--back {
-        display: grid; grid-template-rows: 1fr auto;
-        justify-items: center; align-items: center;
-        padding: 5mm;
-      }
+      /* Nothing is in the flow on this face: the stamp group and the name are
+         both pinned to the foot, at the same inset, in opposite corners. The
+         name kept the card's foot — it always had it — and dead centre is
+         where it cannot stay, because the stamp group now reaches to about
+         mid-card and a centred word hovers two millimetres over it, which
+         reads as a collision rather than as a composition. */
+      .musie-card--back { display: block; }
 
       .musie-card--art { padding: 0; gap: 0; overflow: hidden; }
       .musie-art { display: block; width: 100%; height: 100%; object-fit: cover; }
-
-      /* ── the front's corner QR ─────────────────────────────────────────
-         ON AN OPAQUE PANEL, and that is the one way it differs from the back's.
-
-         The back's quiet zone is transparent so the card colour runs through it
-         (see .musie-qr), which works because the back is flat sand and the
-         contrast against the code's near-black is far past what a reader needs.
-         A front is a photograph. Transparent light modules over an illustration
-         is not a low-contrast QR, it is an unreadable one — and it would fail
-         on exactly the card whose artwork happens to be dark, which is a thing
-         nobody discovers until the deck is printed.
-
-         So the panel puts a known light field behind a known dark code. The
-         encoder's own two-module quiet zone is already inside the SVG; the
-         padding here is optical, giving the square a little air so it reads as
-         placed rather than dropped. */
-      .musie-front-qr {
-        position: absolute;
-        left: var(--musie-front-qr-inset);
-        bottom: var(--musie-front-qr-inset);
-        width: ${frontQr.toFixed(2)}mm;
-        padding: 0.8mm;
-        background: var(--surface-raised);
-        border-radius: var(--radius-xs);
-      }
-      .musie-front-qr svg { display: block; width: 100%; height: auto; }
 
       .musie-feeling {
         margin: 0;
@@ -449,18 +507,28 @@ function document_(body, layoutCss, card, meta) {
         color: var(--on-surface-muted);
       }
 
+      /* BOTTOM-LEFT, out of the flow, and left-aligned down the whole group so
+         the code and the caption hang off the stamp's own left edge rather
+         than being centred under a square they are wider than. */
       .musie-scan {
-        display: flex; flex-direction: column; align-items: center; gap: 2.5mm;
-        width: 100%;
+        position: absolute;
+        left: var(--musie-stamp-inset);
+        bottom: var(--musie-stamp-inset);
+        display: flex; flex-direction: column; align-items: flex-start;
+        gap: 1.2mm;
       }
-      .musie-qr { width: ${qr.toFixed(2)}mm; }
+      .musie-qr { width: ${stampMm.toFixed(2)}mm; }
       .musie-qr svg { display: block; width: 100%; height: auto; }
-      /* The QR's own quiet zone is drawn by the encoder (margin: 2 modules) and
+      /* THE INK IS SET HERE, not in the SVG: stamp() draws in currentColor
+         so this file names the colour once, as a semantic alias, and rule 1
+         holds in a print script exactly as it does in a screen. */
+      .musie-qr { color: var(--on-surface); }
+      /* The stamp's quiet zone is drawn by stamp() (STAMP_QUIET modules) and
          is TRANSPARENT, so the card colour runs through it — a white square on
          a sand card is a sticker, not a card. The quiet zone is still there and
          still does its work: a reader needs the contrast, which sand-1 against
          the code's near-black is far past, and it needs the clear space, which
-         is what the two modules are. */
+         is what the four modules are. */
 
       .musie-code {
         margin: 0;
@@ -474,9 +542,16 @@ function document_(body, layoutCss, card, meta) {
         font-family: var(--font-text);
         font-size: ${(unit * 0.035).toFixed(2)}mm;
         color: var(--on-surface-muted);
+        /* It is wider than the stamp it sits under, and that is fine — it runs
+           to the right into empty card. Wrapping it to the square's width
+           would set a two-word line in four lines of 2 mm type. */
+        white-space: nowrap;
       }
       .musie-wordmark {
-        margin: 0 0 1mm;
+        position: absolute;
+        right: var(--musie-stamp-inset);
+        bottom: var(--musie-stamp-inset);
+        margin: 0;
         font-family: var(--font-display);
         font-weight: var(--font-weight-medium);
         font-size: ${(unit * 0.04).toFixed(2)}mm;
@@ -559,23 +634,13 @@ async function main() {
     cards = cards.filter((c) => only.has(c.code));
   }
 
-  /* `margin` is the quiet zone, in modules — the same 2 the dev sheet and
-     qr-codes.mjs use, so all three print the same code. */
+  /* `stamp` rather than `QRCode.toString`: same encoder, same payload, drawn
+     to look like the rest of the deck. The dev sheet and `qr-codes.mjs` still
+     emit the encoder's plain squares, which is right — one is a screen for
+     pointing a camera at and the other is a contact sheet, and neither is a
+     printed card. All three encode the identical url. */
   const qr = new Map();
-  for (const c of cards) {
-    qr.set(
-      c.id,
-      await QRCode.toString(scanLink(c.code, baseUrl), {
-        type: 'svg',
-        margin: 2,
-        /* Transparent light modules — see .musie-qr. The dark modules stay the
-           encoder's black rather than an ink token: a QR is read by a machine
-           at whatever contrast the paper gives it, and that is not a place to
-           spend the brand. */
-        color: { light: '#0000' },
-      }),
-    );
-  }
+  for (const c of cards) qr.set(c.id, stamp(scanLink(c.code, baseUrl)));
 
   /**
    * IS THE CORNER SQUARE STILL A MACHINE'S TARGET? Asked, not assumed.
@@ -591,18 +656,22 @@ async function main() {
    * The encoder's grid excludes the quiet zone; the SVG adds `margin: 2` each
    * side and the two share one physical box, so the four go into the divisor.
    */
-  const frontQrMm = frontQrSize(card);
+  const stampMm = stampSize(card);
   let widest = 0;
   for (const c of cards) {
-    widest = Math.max(widest, QRCode.create(scanLink(c.code, baseUrl), {}).modules.size + 4);
+    widest = Math.max(
+      widest,
+      QRCode.create(scanLink(c.code, baseUrl), {}).modules.size + STAMP_QUIET * 2,
+    );
   }
-  const moduleMm = frontQrMm / widest;
+  const moduleMm = stampMm / widest;
   if (moduleMm < MIN_MODULE_MM) {
     console.warn(
-      `[musie] the front's corner QR prints at ${moduleMm.toFixed(2)} mm per module ` +
-        `(${widest} modules across ${frontQrMm.toFixed(1)} mm), under the ${MIN_MODULE_MM} mm a ` +
-        `phone needs to resolve one. The back's full-size code is unaffected. A shorter ` +
-        `--base-url is the cheap fix; raising FRONT_QR_FRACTION is the other one.`,
+      `[musie] the stamp prints at ${moduleMm.toFixed(2)} mm per module ` +
+        `(${widest} modules across ${stampMm.toFixed(1)} mm), under the ${MIN_MODULE_MM} mm a ` +
+        `phone needs to resolve one. THIS IS NOW THE DECK'S ONLY CODE — the front has none ` +
+        `— so a card that fails here cannot be scanned at all. A shorter --base-url is the ` +
+        `cheap fix; raising STAMP_FRACTION is the other one.`,
     );
   }
 
@@ -645,7 +714,7 @@ async function main() {
     );
   }
 
-  const renderFront = (c) => front(c, locales, artwork.get(c.id), qr.get(c.id));
+  const renderFront = (c) => front(c, locales, artwork.get(c.id));
   const renderBack = (c) => back(c, locales, qr.get(c.id));
 
   const { css, html } =

@@ -118,13 +118,20 @@ export const de: Messages = {
      exception allows; the three lines under it are the answer. */
   'about.carouselHeadline': 'Was Musie kann',
   'about.carouselLabel': 'Wie eine Session abläuft',
-  /* BEN'S OWN THREE LINES, kept word for word. Two spelling corrections and
+  /* BEN'S OWN THREE LINES, kept word for word. One spelling correction and
      nothing else: 'Reflektion' → 'Reflexion' (the form the rest of de.ts
-     already uses — see session.reflect.*), and the ampersand in the third
-     line is his, so it stays in the English too. */
+     already uses — see session.reflect.*).
+
+     THE THIRD LINE IS THE DIARY NOW — Ben, 2026-10-02, after the second round
+     of user testing. It said 'Fühle & verstehe dich selbst besser', which U3
+     liked for the reason it was replaced: what the testers actually valued was
+     knowing the diary keeps their sessions, and that was being carried by a
+     P.S. under the CTA that U1 and U2 both failed to see at all. So the
+     promise moves out of the postscript and into the gate everybody swipes
+     through, in Ben's own words. `about.postscript` is gone with it. */
   'about.slide.choose': 'Wähle mit Musie die Übung, die dich anzieht',
   'about.slide.guide': 'Musie führt dich durch die Übung und eine Reflexion',
-  'about.slide.understand': 'Fühle & verstehe dich selbst besser',
+  'about.slide.diary': 'Überblicke deinen Fortschritt im Tagebuch',
   'about.previousSlide': 'Vorheriger Schritt',
   'about.nextSlide': 'Nächster Schritt',
   'about.slideLabel': 'Schritt {position} von {total}: {title}',
@@ -134,11 +141,34 @@ export const de: Messages = {
   /* 'Es kann losgehen.' rather than a literal 'Bereit, wenn du es bist.' —
      the English is an idiom and the German has its own. */
   'about.hint.ready': 'Es kann losgehen.',
-  /* 'bekommst', not Ben's typed 'bekommt', and 'Sessions' in the plural the
-     sentence asks for. The word order is turned so the sentence opens on the
-     thing that is new — the diary — rather than ending on a pile of three
-     prepositional phrases, which is where the German original was heading. */
-  'about.postscript': 'P.S. In deinem Tagebuch in Musie bekommst du einen Überblick über alle vergangenen Sessions und Einblicke in deine Reflexionen.',
+  /* ── Entdeckte Musik · 2026-10-02 ────────────────────────────────────────
+     'Entdeckte Musik', not 'Entdeckte Stücke': the place is about music as a
+     thing you keep, and the plural of 'Stück' would make it a count of items.
+     'Dein Stück' stays the word for ONE recording, as on the listen step.
+
+     DU-FORM throughout, like the rest of the product, and no imperative in the
+     intro's first sentence — it is a statement about what this place does, and
+     the invitation comes second. */
+  'route.discoveredMusic.title': 'Entdeckte Musik',
+  'menu.discoveredMusic': 'Entdeckte Musik',
+  'discovered.headline': 'Entdeckte Musik',
+  /* 'Hör es wieder' rather than 'Spiel es wieder ab': the sentence is about
+     listening, and the German for the act is the shorter verb. The three
+     reasons keep Ben's open third one — 'einfach so' is what German says
+     where the English has 'for no reason at all'. */
+  'discovered.intro': 'Jedes Stück, das du in einer Übung gehört hast, bleibt hier. Hör es wieder, wann du magst – zum Ankommen, zum Konzentrieren oder einfach so.',
+  'discovered.empty': 'Hier ist noch keine Musik.',
+  /* Not 'Du hast noch nichts gehört': the sentence says where music comes
+     from, which is the thing somebody standing on an empty page needs. */
+  'discovered.emptyDetail': 'Musik landet hier, sobald du sie in einer Übung gehört hast.',
+  'discovered.unnamed': 'Dein Stück',
+  /* Gedankenstrich with spaces, which is the German dash, and the same one
+     about.pitch uses. */
+  'discovered.trackLabel': '{title} – {artist}',
+  'discovered.play': 'Abspielen',
+  'discovered.pause': 'Pause',
+  'discovered.restart': 'Noch einmal',
+  'discovered.seek': 'Position im Track',
 
   /* ── About you · D.2 ───────────────────────────────────────────────────── */
   'aboutYou.headline': 'Und als wer bist du hier?',
@@ -157,7 +187,6 @@ export const de: Messages = {
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
   'exercises.notImplemented': 'Noch nicht verfügbar',
-  'exercises.headline': 'Womit möchtest du jetzt anfangen?',
   'exercises.legend': 'Übung wählen',
   'exercises.legend.time': 'Dauer',
   /* 'Kartenset', one word: it is a compound with a dictionary break point, so
@@ -169,7 +198,6 @@ export const de: Messages = {
   /* Durchkopplung, as everywhere else this product name meets a German noun. */
   'exercises.fact.cards': 'Braucht dein Mindfulness-Karten-Set',
   'exercises.fact.sound': 'Ton an – Kopfhörer empfohlen',
-  'exercises.surpriseMe': 'Musie eine Übung aussuchen lassen',
   'exercises.alreadyRunning': 'Es läuft schon eine Session',
   'exercises.alreadyRunningDetail': 'Beende oder schließe die laufende Session, bevor du eine neue startest.',
   'exercises.goToSession': 'Zu dieser Session',
@@ -616,23 +644,30 @@ export const de: Messages = {
   'voice.error.headline': 'Aufnahme beendet',
   'voice.warning.headline': 'Eine Aussage wurde übersprungen',
 
-  /* ── /dev/deck · PROOF OF CONCEPT ───────────────────────────────────────
+  /* ── Das Deck · /exercises ──────────────────────────────────────────────
      Was auf einer Karte steht, steht NICHT hier: Name, Beschreibung und Bild
-     gehören der Übung und kommen aus derselben Tabelle wie auf /exercises. */
-  'poc.deck.title': 'Das Deck',
-  'poc.deck.text': 'Jede Übung als Karte. Wisch nach rechts, um sie zu starten, nach links für eine andere.',
-  'poc.deck.stage': 'Das Deck. Wisch die oberste Karte nach rechts, um die Übung zu starten, nach links für die nächste.',
-  'poc.deck.start': 'Starten',
-  /* Bens Wort, 2026-10-02. */
-  'poc.deck.another': 'Andere Übung',
+     gehören der Übung und kommen aus den Inhaltstabellen. */
+  /* Bens Zeile, 2026-10-02, mit einem zugefügten 'für': 'X Übungen dich' ist
+     kein deutscher Satz. Die Zahl wird eingesetzt, nicht geschrieben — das
+     Deck zeigt alle Übungen, die es gibt. */
+  'exercises.headline': '{count} Übungen für dich',
+  'exercises.intro': 'Wisch nach rechts, um eine Übung zu starten, nach links für eine andere. Oder sieh dir alle Übungen in einer Liste an.',
+  'exercises.deckLabel': 'Das Deck. Wisch die oberste Karte nach rechts, um die Übung zu starten, nach links für die nächste.',
+  'exercises.start': 'Übung starten',
+  /* Bens Worte, 2026-10-02. */
+  'exercises.another': 'Nächste Übung',
+  /* Bens Worte, 2026-10-02. Kleinschreibung am Anfang mit Absicht: die Zeile
+     setzt die Überschrift darüber fort, sie beginnt keinen neuen Satz. */
+  'exercises.startSubline': 'oder links swipen für nächste Übung',
+  'exercises.anotherSubline': 'oder rechts swipen zum starten',
   /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
      `route.session.title`. */
-  'poc.deck.position': '{name} – Karte {index} von {total}',
+  'exercises.deckPosition': '{name} – Karte {index} von {total}',
   /* Kurzform von `exercises.surpriseMe`, für die kleine Schaltfläche. */
-  'poc.deck.random': 'Such mir eine aus',
-  'poc.deck.view.legend': 'Wie die Übungen gezeigt werden',
-  'poc.deck.view.deck': 'Kartenstapel',
-  'poc.deck.view.list': 'Liste',
+  'exercises.surpriseMeShort': 'Such mir eine Karte aus',
+  'exercises.view.legend': 'Wie die Übungen gezeigt werden',
+  'exercises.view.deck': 'Kartenstapel',
+  'exercises.view.list': 'Liste',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',

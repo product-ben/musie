@@ -161,8 +161,11 @@ export function MenuDrawer() {
       }]
       : []),
     { id: 'diary', labelKey: 'menu.yourDiary', href: '/diary', separatorBefore: true },
+    /* Beside the diary, not beside the explainer: both are places your own
+       past sessions leave something behind. */
+    { id: 'discovered', labelKey: 'menu.discoveredMusic', href: '/discovered-music' },
     { id: 'about', labelKey: 'menu.aboutYou', href: '/about-you' },
-    { id: 'how', labelKey: 'menu.howItWorks', href: '/', separatorBefore: true },
+    { id: 'how', labelKey: 'menu.howItWorks', href: '/about', separatorBefore: true },
   ];
 
   /**

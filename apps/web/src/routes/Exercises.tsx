@@ -1,104 +1,68 @@
 /**
- * `/exercises` — the library, and the only screen that starts a session.
+ * `/exercises` — choosing an exercise from a pile you deal with.
  *
- * ── A TAP ON A CARD STARTS THE RUN — Ben, 2026-09-24 ───────────────────────
- * It used to open a detail lightbox, and that lightbox carried the only
- * control that wrote anything: two taps and a scrim between the library and
- * the session. What it added over the card underneath was one labelled row —
- * *You need* — because the name, the description and the duration are all on
- * the card already, the last of them as a fact chip. A popup that repeats the
- * thing you just tapped is a confirmation step, and nothing here needs
- * confirming: starting is reversible from inside the session, and *Close
- * session* is on every step of it.
+ * ── IT REPLACED A LIST, AND THE LIST IS STILL HERE ────────────────────────
+ * This screen was five cards in a column, all visible, each a radio. It is a
+ * deck now: one card at a time under a thumb, swipe RIGHT to start it and LEFT
+ * to see another. The column did not go — the switch at the top of the actions
+ * turns it back on, and it is `RadioCards`, the same component the screen used
+ * to be built from. So the two ways of choosing differ in layout and in
+ * nothing else, which is what made the comparison worth keeping.
  *
- * So the card IS the control. `onValueChange` starts the run, and the
- * conditions somebody weighs before committing are the fact chips, which can
- * be read without opening anything.
+ * It began as /dev/deck, a proof of concept beside the list rather than
+ * instead of it. Ben took the swap on 2026-10-02.
  *
- * WHAT WENT WITH IT: `exercise_i18n.needs` has no surface left. It is the one
- * fact the detail carried that the card does not, and it is logged in
- * `OPEN-QUESTIONS.md` rather than quietly moved onto the card — where it goes,
- * and whether it goes anywhere, is a content decision.
+ * ── THE DECK IS THE DESIGN SYSTEM'S; THE CARD IS THIS SCREEN'S ────────────
+ * `CardDeck` owns the pile, the gesture, the thresholds, the chips, the
+ * verdict overlay and the buttons. This file owns what is ON a card — picture,
+ * name, description, time — and what the two actions MEAN. That split is why
+ * the deck has a Storybook story at all: nothing in it knows what an exercise
+ * is.
  *
- * ── "LET MUSIE PICK" PICKS AMONG THE IMPLEMENTED ONES ──────────────────────
- * The prototype picked among all three and then opened the not-implemented
- * lightbox two times in three, which is a coin toss that usually loses. It
- * still routes through the same `choose()` as a tapped card, so a random start
- * and a chosen one are one event and nothing downstream has to know which.
+ * ── RIGHT IS THE ONE-WAY DOOR, AND IT CAN BE REFUSED ──────────────────────
+ * Starting is `createSession()`: it writes a row, navigates into the session,
+ * and the database refuses a second running one through a partial unique
+ * index. So the swipe has three outcomes and all three are drawn:
  *
- * ── STARTING CAN BE REFUSED, AND THE REFUSAL IS A FORK ─────────────────────
- * `sessions_one_running_per_user` is a partial unique index, so the insert can
- * come back 23505. That is a real outcome rather than a defensive branch: the
- * session it collides with is this person's own.
+ *   started  → /session/:id/intro.
+ *   refused  → the card FLIES BACK and SessionRunningLightbox asks the
+ *              question. A dialog, not a Message: the gesture already threw
+ *              the card off screen, so there is nothing left for an inline
+ *              notice to sit beside.
+ *   failed   → the card flies back and the failure is named.
  *
- * Ben, 2026-09-24: it used to be a dead end with a way back to the old session
- * and nothing else — the person had to go there, close it, come back, and find
- * the exercise again. So the Message now carries BOTH ways forward, and the
- * screen behind it holds still while it is open:
+ * `busy` is what holds the card out there. CardDeck's contract is that the
+ * card returns when `busy` falls with the item still in `items`, so every path
+ * that does not navigate simply stops being busy and the deck puts itself
+ * back.
  *
- *   CARRY ON WITH THE RUNNING ONE — the primary, because it is what most
- *   people who hit this want and because the other one throws work away.
- *   END IT AND START THIS ONE — named after the exercise that was refused, so
- *   the button says which one it means rather than "this one".
- *   THE LIST IS DISABLED AND KEEPS ITS SELECTION, so the card the message is
- *   talking about stays on screen, checked, while the question is open.
+ * ── ALL FIVE EXERCISES, INCLUDING THE THREE THAT ARE NOT BUILT ────────────
+ * A right swipe on an unbuilt one opens `NotImplementedLightbox`, which is the
+ * same refusal the list gave. Filtering them out would quietly show two
+ * exercises where the product has five.
  *
- * Ending is `abandoned`, never `finished`: `finished` means reflected
- * (DOMAIN-MODEL.md's state diagram, and `sessionMachine`'s FINISH guard), and a
- * session ended from the library to make room for another one has not been.
- * The diary already draws it as unfinished.
+ * ── NOTHING ON A CARD GOES THROUGH THE CATALOGUE ──────────────────────────
+ * The name, the description, the picture and the timeframe are the exercise's,
+ * read through `useExercises()`. The two time strings are the exception that
+ * proves it: they are CHROME wrapped around a content number, and they are the
+ * catalogue's own `exercises.fact.time*`.
  */
 import * as React from 'react';
-import { GalleryHorizontalEnd, Headphones, Shuffle, Timer } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
-import {
-  ButtonGroup, ContentBox, CtaButton, Message, RadioCardLegend, RadioCards,
-} from '@musie/design-system';
-import type { RadioCardFact } from '@musie/design-system';
+import { GalleryHorizontalEnd, Headphones, LayoutList, Layers, Play, Shuffle, SkipForward, Timer } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { CardDeck, CtaButton, Icon, RadioCardLegend, RadioCards, SegmentedControl } from '@musie/design-system';
+import type { CardDeckItem, RadioCardFact } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
+import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useT } from '../i18n/localeContext';
 import { useAuth } from '../lib/authContext';
 import { createSession, endSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
 import { useExercises } from '../lib/useContent';
 import type { Exercise } from '../lib/content';
+import '../exercises.css';
 
-/** What the three fact glyphs mean, as a key above the cards. */
-const LEGEND_GLYPHS = [
-  { id: 'time', glyph: Timer, labelKey: 'exercises.legend.time' },
-  { id: 'cards', glyph: GalleryHorizontalEnd, labelKey: 'exercises.legend.cards' },
-  { id: 'sound', glyph: Headphones, labelKey: 'exercises.legend.sound' },
-] as const;
-
-/**
- * What the lightbox is doing — ONE thing now, where it used to do two.
- *
- * The detail is gone, so the only popup this screen still opens is the refusal
- * for an exercise that is not built. Kept as a union rather than collapsed to
- * `Exercise | null`: the next popup this screen acquires is then a third
- * member rather than a second piece of state that can contradict the first.
- */
-type Open =
-  | { kind: 'none' }
-  | { kind: 'refused'; exercise: Exercise };
-
-/**
- * A START THE DATABASE REFUSED, and everything the way out of it needs.
- *
- * Both halves, because the two buttons need different ones: carrying on needs
- * the RUNNING session's id and step, and ending-and-starting needs that id AND
- * the exercise that was refused — which the screen would otherwise have to
- * re-derive from `chosen` and hope the list had not reloaded underneath it.
- *
- * `session` is null only when reading the collision back ALSO failed. Then
- * neither button can be honest — one would link nowhere and the other would
- * end nothing — so the message stands with no actions at all, which is what it
- * did before either of them existed.
- */
-interface Refused {
-  exercise: Exercise;
-  session: ActiveSession | null;
-}
+type View = 'deck' | 'list';
 
 export function Exercises() {
   const t = useT();
@@ -106,316 +70,251 @@ export function Exercises() {
   const { userId } = useAuth();
   const { data, loading, error } = useExercises();
 
-  const [open, setOpen] = React.useState<Open>({ kind: 'none' });
-  /** The start that was refused, or null. See `Refused`. */
-  const [refused, setRefused] = React.useState<Refused | null>(null);
-  const [starting, setStarting] = React.useState(false);
-  /**
-   * WHICH CARD IS CHECKED, and it has to be held now.
-   *
-   * It used to be DERIVED from the open lightbox — the card you were reading
-   * about was checked while you read about it, and nothing was checked once
-   * the popup closed. There is no popup on the way to a session any more, so
-   * the derivation has nothing left to read: this is the tapped card, and it
-   * is cleared only when the tap comes to nothing that can still be acted on.
-   *
-   * A REFUSED START IS NOT THAT. The card stays checked and the list goes
-   * disabled beneath the message, because the message is a question ABOUT that
-   * card — "carry on with the other one, or end it and start this one" — and a
-   * question about a card the screen has stopped showing as chosen is a
-   * question about nothing.
-   *
-   * Still a controlled value, and still `''` for "none". An unset `value`
-   * makes base-ui's RadioGroup UNCONTROLLED, which is how a dismissed popup
-   * used to leave a card filled and claiming a choice the session never made.
-   */
-  const [chosen, setChosen] = React.useState('');
-  /**
-   * A START THAT WENT NOWHERE AND WAS NOT A REFUSAL — the insert threw, or
-   * there is no user to insert for.
-   *
-   * It has a Message because otherwise it has NOTHING. The detail lightbox
-   * used to carry a spinner, so a start that failed at least stopped spinning
-   * in front of somebody; a card that starts the run on tap has no such
-   * surface, and a failure was a tap that did nothing at all, explained only
-   * on the console. Ben, 2026-09-24, reporting exactly that symptom.
-   */
+  const [view, setView] = React.useState<View>('deck');
+  const [busy, setBusy] = React.useState(false);
+  const [refused, setRefused] =
+    React.useState<{ exercise: Exercise; session: ActiveSession | null } | null>(null);
   const [failed, setFailed] = React.useState(false);
+  /** Swiped an exercise that is not built yet. Names it, nothing more. */
+  const [unbuilt, setUnbuilt] = React.useState<string | null>(null);
+
+  /* ALL FIVE, not just the built ones.
+     An earlier pass filtered to `implemented` on the theory that a deck whose
+     cards cannot be started lies about its one gesture. It did something
+     worse: it silently showed two exercises where the product has five, so the
+     POC stopped being a prototype of the real choice. /exercises shows all
+     five and refuses the three that are not built yet, and the deck does the
+     same — a right swipe on one opens the same lightbox, which is the honest
+     "not yet" rather than a card that was never dealt. */
+  const exercises = React.useMemo(() => data ?? [], [data]);
 
   /**
-   * LET THE TAPPED CARD GO — and every way of closing a question about a card
-   * has to call this.
+   * Start it, with the running session's fate already decided by the caller.
    *
-   * THE BUG IT EXISTS TO PREVENT, because it is not obvious and it bit:
-   * `RadioCards` reports CHANGES. Tapping the card that is already the group's
-   * value is not a change, so `onValueChange` never fires and `choose()` is
-   * never called. Leave a card checked after its question is answered and that
-   * card is dead — the person taps it, nothing happens, and the only way out
-   * is a reload.
-   *
-   * Measured on 2026-09-24: start refused → dismiss the message → tap the same
-   * card → nothing at all. `NotImplementedLightbox` had the clear and the
-   * refusal did not, which is the drift this one function removes.
+   * THE ORDER IS END THEN CREATE and it is not reversible: creating first is
+   * what the database refuses. Lifted from /exercises, which is the only other
+   * caller of this sequence — see the note at the top of that file.
    */
-  function releaseChoice() {
-    setChosen('');
-  }
-
-  /* One entry point for a tapped card AND for the random pick, so the two
-     cannot diverge. */
-  function choose(exercise: Exercise) {
-    setRefused(null);
+  const start = React.useCallback(async (exercise: Exercise, replacing: ActiveSession | null) => {
+    /* NO USER, NO SESSION — and it says so. `sessions.user_id` is not null, so
+       there is nothing to insert, and a swipe that evaporated would be
+       indistinguishable from a broken deck. */
+    if (userId === null) { setBusy(false); setFailed(true); return; }
     setFailed(false);
-    setChosen(exercise.id);
-    if (!exercise.implemented) {
-      setOpen({ kind: 'refused', exercise });
-      return;
-    }
-    void start(exercise);
-  }
-
-  function surpriseMe() {
-    const available = (data ?? []).filter((exercise) => exercise.implemented);
-    if (available.length === 0) return;
-    choose(available[Math.floor(Math.random() * available.length)]);
-  }
-
-  /**
-   * THE ONLY THING ON THIS SCREEN THAT WRITES, and it has two callers that are
-   * one act apart: a tapped card, and *end the running one and start this*.
-   *
-   * `replacing` is why they are ONE function rather than two. The refusal is a
-   * partial unique index, so the insert can only succeed once the row it
-   * collides with is no longer `started` — the end and the start are a
-   * sequence, not two independent buttons, and splitting them across two
-   * handlers is how you get a screen that ends somebody's session and then
-   * fails to start anything because a second `starting` guard was already
-   * true. One flag, one path, one refusal branch.
-   *
-   * THE ORDER IS END THEN CREATE, and it is not reversible: creating first is
-   * the thing the database refuses.
-   */
-  async function start(exercise: Exercise, replacing: ActiveSession | null = null) {
-    if (starting) return;
-    /* NO USER, NO SESSION — and it says so. This used to return silently,
-       which is indistinguishable from a broken button: `sessions.user_id` is
-       not null, so there is nothing to insert, and the person is owed the
-       reason rather than a tap that evaporates. `AuthProvider` publishes
-       `status: 'error'` for exactly this and documents that there is no UI for
-       it; this is the UI for the one place it stops somebody. */
-    if (userId === null) {
-      releaseChoice();
-      setFailed(true);
-      return;
-    }
-    setStarting(true);
+    setBusy(true);
     try {
       if (replacing !== null) {
-        /* `abandoned`, not `finished` — see the note at the top of the file.
-           If this throws, nothing was ended and nothing is started: the catch
-           below leaves the message standing and the person can press again. */
+        /* `abandoned`, not `finished`: the diary already calls a run that
+           stopped before its reflection abandoned. */
         await endSession(replacing.id, 'abandoned', new Date().toISOString());
       }
-
       const result = await createSession(userId, exercise.id);
       if (result.kind === 'started') {
+        /* The one path that does NOT clear `busy`: the deck is about to
+           unmount, and dropping busy first would fly the card back in for a
+           frame on the way out. */
         navigate(`/session/${encodeURIComponent(result.session.id)}/intro`);
         return;
       }
-
-      /* Refused. The card STAYS CHOSEN — the message below is a question about
-         it, and both of its answers need to know which exercise was asked for.
-         `result.session` is the running one, or null if reading it back also
-         failed; `Refused` says what that costs. */
+      /* Refused. `busy` falls, so CardDeck flies the card back in, and the
+         dialog asks the question over the returned deck. */
       setRefused({ exercise, session: result.session });
+      setBusy(false);
     } catch (thrown: unknown) {
       console.error('[musie] could not start a session:', thrown);
-      releaseChoice();
       setRefused(null);
       setFailed(true);
-    } finally {
-      setStarting(false);
+      setBusy(false);
     }
-  }
+  }, [navigate, userId]);
 
-  let body;
-  if (loading) {
-    body = <p className="musie-note">{t('content.loading')}</p>;
-  } else if (error !== null) {
-    body = (
-      <Message
-        variant="error"
-        live="assertive"
-        headingLevel={2}
-        headline={t('content.error')}
-        text={t('content.errorDetail')}
-      />
-    );
-  } else if (data === null || data.length === 0) {
-    body = <p className="musie-note">{t('content.empty')}</p>;
-  } else {
-    body = (
-      <>
-        {/* ONE ROW: the key, and the alternative to reading it.
-            The key explains what the cards say; the escape hatch is for
-            somebody who came to do something rather than to choose. Both
-            belong WITH the instruction to choose rather than stacked above and
-            below it — the prototype puts them on one line for the same reason.
-            At 393px the row wraps and the button goes under the key. */}
-        <div className="musie-legend-row">
-          <RadioCardLegend
-            items={LEGEND_GLYPHS.map((item) => ({
-              id: item.id,
-              glyph: item.glyph,
-              label: t(item.labelKey),
-            }))}
-          />
-          <CtaButton variant="ghost" leadingIcon={Shuffle} onClick={surpriseMe}>
-            {t('exercises.surpriseMe')}
-          </CtaButton>
-        </div>
+  const byId = React.useMemo(
+    () => new Map(exercises.map((exercise) => [exercise.id, exercise])),
+    [exercises],
+  );
 
-        <RadioCards
-          name="exercise"
-          /* The h1 above already asks the question, so the legend is the same
-             question twice. Hidden, never removed: an unnamed radio group
-             announces as a bare set of options. */
-          legend={t('exercises.legend')}
-          legendHidden
-          accent="accent"
-          /* h2, under the page's h1. */
-          headingLevel={2}
-          options={data.map((exercise) => ({
-            value: exercise.id,
-            headline: exercise.name,
-            description: exercise.description,
-            facts: factsFor(exercise, t),
-            /* NO `label`. It carried `duration_label` — "About 15 minutes" —
-               against a `time` fact chip already reading "2–12 minutes" from
-               the timeframe columns, and the two disagreed. The column is gone
-               (20260921120000) and the chip is the survivor: it is the same
-               fact, structured, and it cannot drift from itself. */
-            image: exercise.imageUrl ?? '',
-            imageAlt: exercise.imageAlt,
-          }))}
-          /* THE SELECTION IS THE TAP THAT IS STILL IN FLIGHT — or the one the
-             message above is asking about. See `chosen`. */
-          value={chosen}
-          /* FROZEN WHILE A REFUSAL IS ON SCREEN — Ben, 2026-09-24.
-             Tapping a second card while the message is up would start a
-             different exercise than the one the message names, or (more
-             likely) collide again and rewrite the question mid-read. The list
-             keeps its selection, greys, and comes back the moment the message
-             is dismissed or acted on.
+  const onAccept = React.useCallback((id: string) => {
+    const exercise = byId.get(id);
+    if (exercise === undefined) return;
+    /* NOT BUILT YET — the same refusal /exercises gives, from the same
+       component, so the two screens say it in one voice. `busy` is never set,
+       so CardDeck returns the card immediately and the lightbox opens over a
+       deck that is back where it was. */
+    if (!exercise.implemented) { setUnbuilt(exercise.name); return; }
+    void start(exercise, null);
+  }, [byId, start]);
 
-             The group's own prop, not a pointer-events trick: base-ui puts
-             `disabled` on every radio, so the cards leave the tab order and
-             announce as disabled instead of silently swallowing taps. */
-          disabled={refused !== null}
-          onValueChange={(id) => {
-            const exercise = data.find((row) => row.id === id);
-            if (exercise !== undefined) choose(exercise);
-          }}
-          emptyLabel={t('content.empty')}
-        />
-      </>
-    );
-  }
+  /* Left is free and reports nothing: CardDeck has already put the card at the
+     back of its own pile, and this screen keeps no order of its own to update.
+     The handler exists because the component requires one — a deck whose left
+     swipe went nowhere would be a deck with one action. */
+  const onDefer = React.useCallback(() => {}, []);
+
+  /** Pick one for me. The same escape hatch /exercises offers, and the same
+   *  rule: among the IMPLEMENTED ones only. */
+  const pickForMe = React.useCallback(() => {
+    /* Among the BUILT ones only — the prototype picked among all three and
+       then opened the not-implemented lightbox two times in three, which is
+       the note /exercises records against this same escape hatch. */
+    const available = exercises.filter((exercise) => exercise.implemented);
+    const exercise = available[Math.floor(Math.random() * available.length)];
+    if (exercise !== undefined) void start(exercise, null);
+  }, [exercises, start]);
+
+  /* ONE SWITCH, TWO HOMES. In the deck it rides in CardDeck's top row beside
+     the dots; in the list there are no dots — a list has no position to show —
+     so it stands in a row of its own. Declared once either way, because two
+     copies of a control are two controls that will disagree. */
+  const viewSwitch = (
+    <SegmentedControl
+      name="exercises-view"
+      legend={t('exercises.view.legend')}
+      legendHidden
+      size="min"
+      iconOnly
+      value={view}
+      onValueChange={(next) => setView(next === 'list' ? 'list' : 'deck')}
+      options={[
+        { value: 'deck', label: t('exercises.view.deck'), glyph: Layers },
+        { value: 'list', label: t('exercises.view.list'), glyph: LayoutList },
+      ]}
+    />
+  );
+
+  const items: CardDeckItem[] = exercises.map((exercise, index) => ({
+    id: exercise.id,
+    /* Fixed by the exercise's place in the printed order, NOT by its place in
+       the pile, so a card keeps its colour as the deck is dealt. */
+    accent: ((index % 3) + 1) as 1 | 2 | 3,
+    content: <ExerciseFace exercise={exercise} />,
+  }));
 
   return (
     <>
-      <ContentBox
-        headingLevel={1}
-        headlineStep="display-xl"
-        headline={t('exercises.headline')}
-      >
-        {/* THE REFUSAL, AND BOTH WAYS OUT OF IT.
-            Above the list, because it is about the action the person just took
-            rather than about the list — and because the list behind it is
-            disabled while this is open, so this is the only thing on the screen
-            that can be acted on.
+      {/* HEADLINE AND SUBLINE ARE ONE MOLECULE, so they are wrapped as one:
+          `--space-gap-related` between them, which Layer 1 documents as
+          "title+subtitle", and `--space-gap-group` below the pair, which it
+          documents as "molecules that do NOT belong together". The deck is
+          the other molecule. */}
+      <div className="musie-deck-intro">
+        <h1 className="musie-placeholder">
+          {t('exercises.headline', { count: String(exercises.length) })}
+        </h1>
+        <p className="musie-note">{t('exercises.intro')}</p>
+      </div>
 
-            `ButtonGroup` rather than two buttons loose in `action`: `Message`
-            takes exactly one node and says so, and the group is the system's
-            own answer to "a row of actions that has to stack on a phone" (it
-            goes to one full-width column below --bp-md, in DOM order). The
-            tension with that prop's stated contract is logged in
-            OPEN-QUESTIONS.md.
+      {loading && <p className="musie-note">{t('content.loading')}</p>}
+      {error !== null && <p className="musie-note">{t('content.errorDetail')}</p>}
+      {data !== null && exercises.length === 0 && <p className="musie-note">{t('content.empty')}</p>}
+      {/* NOT `content.error`, which says a list did not load — this says a
+          swipe did not start anything, which is a different sentence. */}
+      {failed && <p className="musie-note" role="alert">{t('exercises.startFailed')}</p>}
 
-            THE PRIMARY IS *Continue that session*. It is what most people who
-            reach this want, it is first in the DOM so it is the top of the
-            stacked column, and the alternative throws a run away — a filled
-            button is not what that should be. Ben, 2026-09-24.
-
-            NO ACTIONS AT ALL when the collision could not be read back: one
-            button would link nowhere and the other would end nothing. */}
-        {/* A START THAT FAILED, which is not a refusal: a refusal is the
-            database saying no for a reason the person can act on, and this is
-            the request not landing at all. Error rather than warning, and
-            dismissible, because there is nothing to do about it here but try
-            again. */}
-        {failed && (
-          <Message
-            variant="error"
-            live="assertive"
-            headingLevel={2}
-            headline={t('exercises.startFailed')}
-            text={t('content.errorDetail')}
-            onDismiss={() => setFailed(false)}
-            dismissLabel={t('common.closeLabel')}
-          />
-        )}
-
-        {refused !== null && (
-          <Message
-            variant="warning"
-            live="assertive"
-            headingLevel={2}
-            headline={t('exercises.alreadyRunning')}
-            text={t('exercises.alreadyRunningDetail')}
-            onDismiss={() => {
-              setRefused(null);
-              /* AND THE CARD GOES WITH IT. See `releaseChoice`: a card left
-                 checked after its question is closed cannot be tapped again,
-                 because tapping the current value is not a change. */
-              releaseChoice();
-            }}
-            dismissLabel={t('common.closeLabel')}
-            action={refused.session === null ? undefined : (
-              <ButtonGroup>
-                <CtaButton
-                  render={(
-                    <Link
-                      to={`/session/${encodeURIComponent(refused.session.id)}/${refused.session.step}`}
-                    />
-                  )}
-                >
-                  {t('exercises.goToSession')}
+      {exercises.length > 0 && (
+        <>
+          {view === 'deck' ? (
+            <CardDeck
+              className="musie-deck-stage"
+              items={items}
+              busy={busy}
+              onAccept={onAccept}
+              onDefer={onDefer}
+              acceptLabel={t('exercises.start')}
+              deferLabel={t('exercises.another')}
+              acceptSubline={t('exercises.startSubline')}
+              deferSubline={t('exercises.anotherSubline')}
+              acceptGlyph={Play}
+              /* SkipForward, not RotateCcw. The old glyph was an undo arrow,
+                 which is what this action is NOT: the card is not being put
+                 back, it is being passed over for the next one. */
+              deferGlyph={SkipForward}
+              label={t('exercises.deckLabel')}
+              /* THE SWITCH SITS WITH THE DOTS, in the deck's own top row:
+                 both say where you are among the five, one as a position and
+                 one as a way of looking at them. */
+              toolbar={viewSwitch}
+              /* Under the deck's own two, in the same column. It acts on the
+                 deck as a whole rather than on the card in front, which is why
+                 it is last and why it is the quiet one. */
+              actions={
+                <CtaButton variant="ghost" leadingIcon={Shuffle} disabled={busy} onClick={pickForMe}>
+                  {t('exercises.surpriseMeShort')}
                 </CtaButton>
-                <CtaButton
-                  variant="secondary"
-                  loading={starting}
-                  loadingLabel={t('content.loading')}
-                  onClick={() => void start(refused.exercise, refused.session)}
-                >
-                  {t('exercises.endAndStart', { name: refused.exercise.name })}
-                </CtaButton>
-              </ButtonGroup>
-            )}
-          />
-        )}
-        {body}
-      </ContentBox>
+              }
+              positionLabel={(position, total, id) =>
+                t('exercises.deckPosition', {
+                  name: byId.get(id)?.name,
+                  index: String(position),
+                  total: String(total),
+                })}
+            />
+          ) : (
+            /* THE LIST IS /exercises' OWN COMPONENT. RadioCards is what that
+               screen chooses an exercise with, down to the facts row, so the
+               two halves of this comparison differ in the one thing being
+               compared — a pile you deal with against a column you read — and
+               in nothing else. A bespoke list here would have compared the
+               deck against something nobody is proposing to ship. */
+            <>
+            <div className="musie-deck-toolbar">{viewSwitch}</div>
+            {/* WHAT THE THREE GLYPHS MEAN. It was a key above the cards on the
+                screen this replaced, and it belongs here rather than over the
+                deck: a card in the pile carries only the timeframe, and these
+                are the facts the LIST shows. Dropping it with the old screen
+                would have been a quiet subtraction. */}
+            <RadioCardLegend
+              className="musie-legend-row"
+              items={[
+                { id: 'time', glyph: Timer, label: t('exercises.legend.time') },
+                { id: 'cards', glyph: GalleryHorizontalEnd, label: t('exercises.legend.cards') },
+                { id: 'sound', glyph: Headphones, label: t('exercises.legend.sound') },
+              ]}
+            />
+            <RadioCards
+              name="exercises-list"
+              /* THE SCREEN'S OWN QUESTION, not the view switch's name. The
+                 switch borrowed this slot while the deck was a POC beside the
+                 list; now that the list IS this screen's other half it gets
+                 the legend the screen always had. */
+              legend={t('exercises.legend')}
+              legendHidden
+              accent="accent"
+              headingLevel={2}
+              options={exercises.map((exercise) => ({
+                value: exercise.id,
+                headline: exercise.name,
+                description: exercise.description,
+                facts: factsFor(exercise, t),
+                image: exercise.imageUrl === null ? '' : fromRoot(exercise.imageUrl),
+                imageAlt: exercise.imageAlt,
+              }))}
+              /* Choosing IS starting, exactly as on /exercises: there is no
+                 second confirming tap there and there is none here. */
+              onValueChange={(id) => {
+                const exercise = byId.get(id);
+                if (exercise === undefined) return;
+                if (!exercise.implemented) { setUnbuilt(exercise.name); return; }
+                void start(exercise, null);
+              }}
+              disabled={busy}
+              emptyLabel={t('content.empty')}
+            />
+            </>
+          )}
+        </>
+      )}
 
-      {open.kind === 'refused' && (
-        <NotImplementedLightbox
-          what={open.exercise.name}
-          onClose={() => {
-            setOpen({ kind: 'none' });
-            /* The card goes with it — same rule, same reason as the message's
-               dismiss above. `releaseChoice` is where both are argued. */
-            releaseChoice();
-          }}
+      {unbuilt !== null && (
+        <NotImplementedLightbox what={unbuilt} onClose={() => setUnbuilt(null)} />
+      )}
+
+      {refused !== null && (
+        <SessionRunningLightbox
+          name={refused.exercise.name}
+          session={refused.session}
+          starting={busy}
+          onEndAndStart={() => void start(refused.exercise, refused.session)}
+          onClose={() => setRefused(null)}
         />
       )}
     </>
@@ -423,16 +322,12 @@ export function Exercises() {
 }
 
 /**
- * The three conditions, built from the row rather than written out.
+ * The three conditions, built from the row rather than written out — the same
+ * shape /exercises builds, from the same keys.
  *
  * TIME IS ALWAYS THERE; the other two are flags. A card states what is true of
  * it, and padding the row to a fixed three would mean drawing a crossed-out
  * headphone for an exercise that simply makes no sound.
- *
- * Only the duration has a short form drawn beside its glyph. The other two are
- * conditions rather than measurements — "needs your deck" has no useful
- * abbreviation — so the glyph plus the legend is the whole of what they show,
- * and the full sentence is what a screen reader gets either way.
  */
 function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact[] {
   const min = String(exercise.timeframeMin);
@@ -444,13 +339,71 @@ function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact
     text: t('exercises.fact.time', { min, max }),
     shortText: t('exercises.fact.timeShort', { min, max }),
   }];
-
   if (exercise.needsCards) {
     facts.push({ id: 'cards', glyph: GalleryHorizontalEnd, text: t('exercises.fact.cards') });
   }
   if (exercise.needsSound) {
     facts.push({ id: 'sound', glyph: Headphones, text: t('exercises.fact.sound') });
   }
-
   return facts;
+}
+
+/**
+ * The face: picture, name, description, time. All four are the exercise's own,
+ * straight off the row.
+ *
+ * THE PICTURE IS FULL-BLEED TO THREE EDGES and cropped to 16:9 by the
+ * stylesheet. `alt` is the row's `image_alt`, which is real alt text written
+ * per exercise ("Two hands resting on a belly, just below the ribs"), so it is
+ * passed through rather than replaced with the name.
+ *
+ * THE TIME IS SAID TWICE, which is the system's own pattern for a fact with a
+ * long form and a short one (the facts row in §7.14): the short form beside
+ * the glyph for the eye, the whole sentence as visually-hidden text for a
+ * screen reader, which would otherwise meet a bare "2–12 min" and a decorative
+ * icon with no word saying what was measured.
+ */
+function ExerciseFace({ exercise }: { exercise: Exercise }) {
+  const t = useT();
+  const min = String(exercise.timeframeMin);
+  const max = String(exercise.timeframeMax);
+
+  return (
+    <div className="musie-exercise-card">
+      {exercise.imageUrl !== null && (
+        <img
+          className="musie-exercise-card__image"
+          src={fromRoot(exercise.imageUrl)}
+          alt={exercise.imageAlt}
+          decoding="async"
+        />
+      )}
+      <div className="musie-exercise-card__body">
+        <h2 className="musie-exercise-card__headline">{exercise.name}</h2>
+        <p className="musie-exercise-card__text">{exercise.description}</p>
+      </div>
+      <p className="musie-exercise-card__foot">
+        <Icon glyph={Timer} size="sm" inline />
+        <span aria-hidden="true">{t('exercises.fact.timeShort', { min, max })}</span>
+        <span className="musy-sr-only">{t('exercises.fact.time', { min, max })}</span>
+      </p>
+    </div>
+  );
+}
+
+/**
+ * A content image path, made root-relative.
+ *
+ * THE ROW STORES IT RELATIVE — `assets/web/exercises/body-scan.webp`, with no
+ * leading slash — so the browser resolves it against the CURRENT PATH. On
+ * `/exercises` that happens to be right: one segment, so it lands on
+ * `/assets/web/…`. On `/dev/deck` it is two segments and the same string
+ * resolves to `/dev/assets/web/…`, which is a 404 and an empty band where the
+ * picture should be. Nothing in the product renders one below the first path
+ * segment today, so nothing is broken — but it is luck rather than design, and
+ * this POC is what found it. Logged in OPEN-QUESTIONS.md.
+ */
+function fromRoot(url: string): string {
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('/')) return url;
+  return `/${url}`;
 }

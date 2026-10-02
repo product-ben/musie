@@ -61,17 +61,17 @@ drifts. Anything that must survive — a signature, an edge someone meant to be
 an edge — belongs at least 3 mm inside the trim line, so 6 mm in from the file
 edge.
 
-**Keep the bottom-left corner clear.** Since 2026-09-24 the card's own QR code
-is printed there as well as on the back, so a card lying on a table can be
-scanned without being turned over — and turning it over is the one move that
-gives away which card it is before the reveal. The square is about 16 mm, set
-4 mm inside the trim, so with its panel it takes the lower-left **22 × 22 mm of
-the trimmed card**.
+**The whole front is yours.** Between 2026-09-24 and 2026-10-02 a QR code was
+printed in the bottom-left corner as well as on the back, so a card lying on a
+table could be scanned without being turned over. Ben removed it on
+2026-10-02: it could be made small and it could be made pretty, but it could
+not be made to stop being a machine's target sitting on somebody's
+illustration. **Nothing is reserved on the front any more** — no corner, no
+panel, no safe square. Draw the whole card.
 
-It sits on an opaque sand panel, because a QR whose quiet zone lets the picture
-through is unreadable on exactly the card whose artwork happens to be dark. So
-nothing behind it shows: what a busy corner costs is the composition, not the
-scan. An illustration whose subject lives down there will have it covered.
+What that costs is logged in `apps/web/OPEN-QUESTIONS.md`: the only code is now
+on the back, so a card has to be turned over to be scanned, and turning it over
+is the move that gives away which card it is before the reveal.
 
 `.png` for flat colour and illustration, `.jpg` for a photograph, `.webp` if
 that is what the source is. Lossless is fine here: these never reach a browser.
@@ -83,9 +83,9 @@ A portrait deck is still one flag away — `pnpm --filter web deck:pdf -- --card
 
 `pnpm deck:pdf` finds it by card id and prints the artwork **instead of** the
 feeling word — Ben's call, 2026-09-24: the picture is the card, and a word set
-over it is the designer arguing with the illustrator. The corner QR is the one
-thing that does go over it, and it is there because it is a machine's target
-rather than a graphic element.
+over it is the designer arguing with the illustrator. Since 2026-10-02 nothing
+goes over it at all: the front is the picture, edge to edge, and the back
+carries the code.
 
 Nothing else needs doing. No column, no migration:
 

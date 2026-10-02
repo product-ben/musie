@@ -23,8 +23,10 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { AppShell } from './AppShell';
 import { AboutMusie } from './routes/AboutMusie';
 import { AboutYou } from './routes/AboutYou';
+import { Entry } from './routes/Entry';
 import { MenuDrawer } from './routes/MenuDrawer';
 import { Diary } from './routes/Diary';
+import { DiscoveredMusic } from './routes/DiscoveredMusic';
 import { DiaryEntry } from './routes/DiaryEntry';
 import { Exercises } from './routes/Exercises';
 import { ScanLink } from './routes/ScanLink';
@@ -60,17 +62,37 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       {
-        /* `/` IS About Musie, rather than a redirect to `/about-musie`. A root
-           that only redirects costs a round trip and leaves the site with no
-           home — and the pair then reads right: `/` is about the product,
-           `/about-you` is about the reader. */
+        /* `/` WAS About Musie ITSELF until 2026-10-02, on the argument that a
+           root which only redirects costs a round trip and leaves the site with
+           no home. User testing replaced that argument with a plainer one: the
+           explainer is a page people are sent to, come back to and talk about,
+           and a page like that has a name. So `/about` is the page and `/` is
+           the decision about where opening Musie takes you — which is not the
+           same thing as the explainer and never was. It paints nothing; see
+           routes/Entry.tsx and lib/entry.ts. */
         index: true,
+        element: <Entry />,
+        handle: handle({ titleKey: 'route.aboutMusie.title' }),
+      },
+      {
+        /* THE EXPLAINER, AND IT IS UNCONDITIONAL NOW. Every skip it used to
+           perform moved to the index above, which means this route shows the
+           explainer to whoever asks for it, every time. That is what the nav
+           drawer's *How Musie works* row has always promised. */
+        path: 'about',
         element: <AboutMusie />,
         handle: handle({ titleKey: 'route.aboutMusie.title' }),
       },
       {
-        /* `about-you`, not `about`: one spelling per route, and the path now
-           says which "about" it is. */
+        /* `about-you`, AND NOW IT SITS BESIDE `about`.
+           This comment used to read "`about-you`, not `about`: one spelling per
+           route" — written when the explainer had no path of its own and the
+           only risk was two spellings for one page. 2026-10-02 gave the
+           explainer `/about` (user testing: the page is worth addressing), so
+           the pair is deliberate rather than accidental: `/about` is about the
+           product, `/about-you` is about the reader. Logged in
+           apps/web/OPEN-QUESTIONS.md, because retiring the old rule outright is
+           Ben's call and not this branch's. */
         path: 'about-you',
         element: <AboutYou />,
         handle: handle({ titleKey: 'route.aboutYou.title' }),
@@ -123,6 +145,21 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        /* THE MUSIC, GIVEN BACK — 2026-10-02, from user testing. U5 arrived
+           expecting "pick a track and listen to it" and met a product that
+           hands you music inside an exercise and never gives it back. This is
+           a PLACE rather than a step, which is why it is a route in the drawer
+           beside the diary and not a view inside a session. */
+        path: 'discovered-music',
+        element: <DiscoveredMusic />,
+        handle: handle({ titleKey: 'route.discoveredMusic.title' }),
+      },
+      {
+        /* THE DECK, since 2026-10-02. This was five cards in a column and is
+           now a pile you deal with — the list is still a press away, inside
+           the screen, rather than a second route. `wide` because the deck puts
+           its actions beside the card and at --bp-md the German labels miss by
+           a single pixel. */
         path: 'exercises',
         element: <Exercises />,
         handle: handle({ titleKey: 'route.exercises.title', wide: true }),
@@ -172,22 +209,6 @@ export const router = createBrowserRouter([
           return { Component: DevQrSheet };
         },
         handle: handle({ titleKey: 'scan.dev.title' }),
-      },
-      {
-        /* THE CARD-DECK PROOF OF CONCEPT, on the same terms as /dev/qr above:
-           a tool, not a screen. Nothing links to it and nothing in the product
-           imports it, so deleting it is deleting three files and this block.
-
-           `lazy` because a POC should cost a visitor who never opens it
-           nothing at all. It reads the exercises through the same hook
-           /exercises uses, so there is no second content path to keep in step
-           — only a screen's worth of gesture code, in its own chunk. */
-        path: 'dev/deck',
-        lazy: async () => {
-          const { DeckPoc } = await import('./routes/DeckPoc');
-          return { Component: DeckPoc };
-        },
-        handle: handle({ titleKey: 'poc.deck.title' }),
       },
       /* `/done` IS GONE. The prototype ended on a screen that acknowledged the
          session and offered to share it; C.2 cut sharing, and D.5 routes a

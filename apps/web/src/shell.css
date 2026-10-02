@@ -389,29 +389,6 @@
   hyphens: var(--text-hyphens);
 }
 
-/* ═══ THE P.S. UNDER THE SIGN-OFF ═══════════════════════════════════════════
-   One sentence of running prose, below the CTA on `/`, saying that the diary
-   is there afterwards. The system has no prose-paragraph component — a
-   ContentBox would put a second framed article inside the first, and a
-   Message would announce a status word before a sentence that is not one — so
-   this is a permitted L14 pattern, and every declaration is a Layer 1 token.
-
-   IT IS NOT A SECOND HINT, and the two sit one above the other, so they have
-   to read as different things: the hint is centred under the button it
-   describes, this is set flush to the box's own text, which is what a
-   paragraph of the box's copy looks like. It sits in the box's slot, so the
-   space above it is the slot's gap and there is no margin here to fight it. */
-.musie-postscript {
-  margin: 0;
-  max-inline-size: var(--measure-body);
-  font-family: var(--type-body-sm-family);
-  font-size: var(--type-body-sm-size);
-  line-height: var(--type-body-sm-line);
-  color: var(--on-surface-muted);
-  text-wrap: var(--text-wrap-body);
-  hyphens: var(--text-hyphens);
-}
-
 /* ═══ THE GLYPH KEY AND THE ESCAPE HATCH, ON ONE ROW ════════════════════════
    /exercises puts `RadioCardLegend` and "let Musie pick an exercise" on the
    same line: the key explains what the cards say, and the escape hatch is the
@@ -1839,3 +1816,43 @@ html[data-musy-scroll-snap] {
   pointer-events: auto;
 }
 
+
+/* ═══ DISCOVERED MUSIC ══════════════════════════════════════════════════════
+   A list of players and an empty state. L14 permits both: the system has no
+   list-of-players component — `ContentList` is label-and-value pairs, and
+   `LinkList` goes somewhere — and every declaration here resolves to a Layer 1
+   token or to nothing at all.
+
+   SHOULD THIS RECUR, it is a component request and not a second copy (L14.3).
+   One screen renders a stack of `MusicPlayer`s today.                       */
+.musie-discovered {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  /* --space-gap-related, not --space-gap-stack: each row is a control with a
+     tap target, and the rungs below this one put two players close enough to
+     read as one object. */
+  gap: var(--space-gap-related);
+}
+
+/* The <audio> is `display: none` by default and the player is the only visible
+   child, so the row needs no box of its own — it is here so the list item is
+   a named part rather than an anonymous one, and so a future row with a second
+   line has somewhere to put it. */
+.musie-discovered__row {
+  display: flex;
+  flex-direction: column;
+}
+
+/* THE OPENING SCREEN FOR EVERY EXISTING ACCOUNT, so it is a stack with room to
+   breathe rather than a line of grey text: two sentences and the one act that
+   produces some music. The button hugs its label — it is an invitation, not
+   the page's primary control. */
+.musie-discovered__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-gap-stack);
+}

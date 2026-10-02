@@ -279,6 +279,42 @@ export async function saveCard(
 }
 
 /**
+ * STAMP THE SESSION AS HAVING PLAYED SOMETHING — 2026-10-02.
+ *
+ * ── WHY THE ROW HAS TO SAY THIS AT ALL ─────────────────────────────────────
+ * `step` records which screen a run reached, never that anybody listened —
+ * `reveal-track` has said so in its own header since E.5, and the listen
+ * step's `playing`/`position` are React state that is thrown away. *Discovered
+ * music* lists the recordings a person has actually met, and Ben's rule for it
+ * is that only sessions where play was pressed count. Nothing in the schema
+ * could express that, so this writes it.
+ *
+ * ── FIRST PRESS ONLY, ENFORCED IN SQL ──────────────────────────────────────
+ * `.is('listened_at', null)` is the whole of the "once" — not a flag in the
+ * component, which would be reset by leaving the step and coming back, and not
+ * a read-then-write, which races with itself on a double tap. A second press
+ * matches no row and writes nothing. The timestamp therefore means *when this
+ * session first played*, which is the only reading of it that stays true.
+ *
+ * ── IT NEVER THROWS, AND THAT IS DELIBERATE ────────────────────────────────
+ * Every other writer here throws, because every other one is saving something
+ * the person is waiting on. This one is called from a play button. A rejected
+ * promise would mean a thrown error inside a click handler, mid-exercise, over
+ * a fact that exists so a listing screen can be tidy. The honest failure is a
+ * missing row on one page, logged — not an interrupted exercise.
+ */
+export async function markListened(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ listened_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('listened_at', null);
+  if (error !== null) {
+    console.warn(`[musie] could not record that the track played: ${error.message}`);
+  }
+}
+
+/**
  * End a session, either way.
  *
  * `endedAt` is an INPUT rather than `now()`, for the same reason the reducer

@@ -5435,3 +5435,226 @@ Why: "not yet" is an honest answer; a card that was never dealt is not.
 What I need from Ben: **nothing, just flagging** that three of the five cards
 cannot currently be swiped right to any effect, which makes the deck feel
 emptier than the design will once the exercises land.
+
+## The front lost its QR code, so the reveal is spoiled by the one move that scans a card
+
+Where: `scripts/deck-pdf.mjs` (`stamp`, `front`, `back`), `artwork/cards/README.md`
+
+What I checked: the front has carried a corner QR since 2026-09-24, and the
+reason is recorded in `front()`'s own comment — *a card face down on a table is
+the common case and turning it over to scan it is the one move that gives away
+which card it is before the reveal.* Nothing about that has stopped being true.
+What changed is that Ben saw the square on the finished artwork and did not
+want it there at any size: user feedback was that it reads as big, and three
+rounds of making it smaller and prettier did not make it stop being a machine's
+target on an illustration.
+
+I measured the alternatives before removing it rather than after. The corner
+square could go from 18 mm to 13.8 mm on payload alone (an all-caps short url
+encodes in QR's alphanumeric mode: 29 modules → 25, and 21 at EC-L); it could
+be drawn in the card's own ink as a soft stamp and still measure 9–14:1, well
+past the 4:1 print floor; and the artwork itself can carry a code at card size,
+where a 1.9 mm module leaves enough error budget to push the picture only 35%.
+All of that works. None of it answers "I do not want a QR code on the picture",
+which is the actual feedback.
+
+What I did: removed it from both fronts, drawn and undrawn. The back's code
+moved to the bottom-left corner at the same 16.4 mm the front square was, drawn
+as a soft-cornered stamp in `--on-surface`, with `MC-01` directly under it and
+the caption under that. The name moved to the opposite corner, because the
+stamp group now reaches to about mid-card and a centred word hovers two
+millimetres over it.
+
+Two things went in with it that were not asked for and are cheap insurance now
+that this is the deck's **only** code: the quiet zone went from 2 modules to
+the 4 ISO/IEC 18004 asks for, and the module-size warning in `main` now
+measures the stamp instead of the square that no longer exists. Every back
+decodes to its own card, clean and at roughly phone-at-20 cm resolution; no
+front decodes to anything.
+
+Why: the picture won, and the cost is real rather than theoretical.
+
+What I need from Ben: **a ruling on the reveal, before the deck is printed.**
+A card now has to be turned over to be scanned, and turning it over shows the
+artwork — which is the card. Three ways out, none of them free:
+
+1. **Accept it.** If people pick a card face up, drawn to the one they want,
+   there is nothing to spoil. `BUILD-PLAN.md` does not say which way the deck
+   is dealt and I could not find anywhere that does.
+2. **Scan in-app instead.** E.2/E.3's camera already exists and a card being
+   scanned is a card in somebody's hand; the phone-camera-app path off a
+   face-down card is the one that breaks.
+3. **Put something non-obvious on the front.** Not a QR — a short printed code
+   the typed field already accepts would do it, and `MC-01` on a corner is a
+   great deal quieter than a square. It still names the card to anyone who has
+   read the deck, so it only half solves it.
+
+My read is (1), and that it should be written down rather than assumed. The one
+thing I would not do is leave it undecided until a press run makes it permanent.
+
+---
+
+# Start page iteration — 2026-10-02, from the second round of user testing
+
+## `/about` and `/about-you` are now a pair, and the router used to say that was the thing to avoid
+Where: `src/router.tsx` (the index and the two `about` routes),
+`docs/START-PAGE-ITERATION.md` action 1
+
+What I checked: the comment on the `about-you` route read *"`about-you`, not
+`about`: one spelling per route, and the path now says which 'about' it is."*
+It was written when the explainer had no path of its own — `/` WAS
+`AboutMusie` — so the only risk in sight was two spellings for one page. Ben's
+action from the testing board names the new path explicitly: *"Give the 'how
+musie works' page its own route '/about'."*
+
+What I did: implemented `/about` as asked, and rewrote the comment to say what
+is now true — `/about` is about the product, `/about-you` is about the reader —
+rather than leaving a rule in the file that the file no longer follows. The
+index is now a decision, not a page (`routes/Entry.tsx`, `lib/entry.ts`).
+
+Why: a comment that contradicts the code two routes below it is worse than
+either spelling, and quietly picking a different path to preserve the comment
+would have been overruling the brief rather than raising it.
+
+What I need from Ben: **is the one-spelling rule retired, or does `/about-you`
+get renamed with it?** A third route in the family (`/discovered-music`) landed
+on the same branch, so this is the moment the naming either becomes a
+convention or stops being one. Nothing is blocked either way.
+
+## `public.sessions` has no explicit `service_role` grant, and `reveal-track` reads it with the service role
+Where: `supabase/migrations/20260919120000_sessions.sql` (the ACCESS block),
+`20260921100000_service_role_grants.sql`, `20260921103000_service_role_content_writes.sql`,
+`supabase/functions/reveal-track/index.ts`
+
+What I checked: found while writing the grant paragraph for
+`20261002100000_sessions_listened_at.sql`, and it is rule 2's own story
+repeating. `20260919120000` revokes from `anon` and `authenticated` and grants
+back to `authenticated` only — `service_role` is never named. Neither of the
+two service-role migrations names `sessions` or `reflections`; both enumerate
+the CONTENT tables and nothing else. Measured locally:
+
+    select grantee, privilege_type from information_schema.table_privileges
+    where table_name = 'sessions' and table_schema = 'public';
+
+`service_role` holds all seven privileges here — but by the local stack's
+default privileges, not by any migration. The hosted project was created with
+*Automatically expose new tables* OFF, which is the same switch that turns that
+default off, which is exactly how the September 21 hole was found.
+
+If the grant is missing on hosted, `reveal-track` — which reads
+`public.sessions` with the service role — fails with 42501 and returns
+`lookup_failed`. E.5's reveal would be silently broken there, and the new
+*Discovered music* screen would show players with no titles.
+
+What I did: nothing but document it, in the migration's header and here. It is
+a pre-existing hole unrelated to the column that found it, and it cannot be
+confirmed from this machine: the hosted service-role key is not in a file and
+should not be.
+
+Why: a blind `grant` inside a migration about something else is how the next
+person loses the thread, and a fix nobody can verify is not a fix.
+
+What I need from Ben: **run the suite against hosted once, which is the check
+that answers it** — `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` and
+`SUPABASE_TEST_SERVICE_ROLE_KEY` set for one run of `pnpm test:db`, per rule 4.
+If `sessions` is bare there, it wants its own migration granting
+`select, insert, update, delete` to `service_role` on `sessions` and
+`reflections`, on the parity argument `20260921103000` already makes.
+
+## Two names on carousel slide 3 stopped being true, and I changed both
+Where: `src/routes/AboutMusie.tsx` (`SLIDES`), `src/i18n/en.ts`, `src/i18n/de.ts`
+
+What I checked: the action was a rephrase only — *"Fühle und verstehe dich
+selbst besser"* → *"Überblicke deinen Fortschritt im Tagebuch"*. But the slide's
+id was `understand` and its glyph was `Heart`, both named after the promise the
+line no longer makes.
+
+What I did: renamed the id and the catalogue key to `diary`, and changed the
+glyph to `BookOpen` — which `Session.tsx` already records as the diary reading
+in its own glyph note. Both are one-line changes and both are reversible.
+
+Why: a catalogue key called `about.slide.understand` holding a sentence about
+the diary is how a catalogue stops being readable, and a heart beside a line
+about progress names nothing on the screen.
+
+What I need from Ben: **confirm the glyph.** `BookOpen` reads the slide as the
+diary; `LineChart` would read it as the progress. I picked the first because
+the sentence's noun is the diary, but it is a look, not a fact.
+
+## The reveal is one request per row on `/discovered-music`
+Where: `src/routes/DiscoveredMusic.tsx`, `src/lib/reveal.ts`
+
+What I checked: a title cannot be read from the browser at all — `tracks.title`
+and `.artist` are withheld by column grant — and `reveal-track` takes a SESSION
+id and never a track id, deliberately, so that nobody can walk `trk-01…trk-09`
+and collect nine names without listening. So a listing of N discovered tracks
+is N calls, by construction rather than by sloppiness.
+
+What I did: one call per row, and said so in the file. Nine recordings exist, so
+the worst case today is nine requests on a screen nobody opens in a loop.
+
+Why: the alternatives are worse. A client-side cache spreads the same number of
+calls across more screens and adds a staleness question to a title that never
+changes; a reveal taking a list of sessions is a change to the one endpoint
+whose narrowness is the whole security argument, and it was not asked for.
+
+What I need from Ben: nothing, just flagging. **If the deck grows past the
+current nine**, this is the line that wants revisiting, and the answer is a
+batched reveal rather than a cache.
+
+---
+
+# The deck replaced the list on /exercises (2026-10-02)
+
+Ben's call. `/dev/deck` is gone and `/exercises` is the deck; the POC names
+went with it — `DeckPoc` → `Exercises`, `poc-deck.css` → `exercises.css`, and
+the `poc.deck.*` keys into the `exercises.*` namespace they now belong to.
+
+## What the old screen had that the deck does not, and what happened to each
+
+Where: `src/routes/Exercises.tsx`, `src/i18n/*`
+
+What I checked: every key the old screen called, against every key the new one
+does.
+
+What I did:
+- **The glyph legend is KEPT**, moved into the list view. It explained the
+  three fact icons, and the list is where those icons still are — a card in
+  the pile carries only the timeframe. Dropping it with the old screen would
+  have been a quiet subtraction.
+- **`exercises.legend` went back to being the list's legend.** The view switch
+  had borrowed that slot while the deck was a POC beside the list.
+- **`exercises.surpriseMe` is deleted.** The long form was written for a
+  full-width CTA; the deck's button is one of three in a column and uses the
+  short `exercises.surpriseMeShort`. Two forms of one sentence with one caller
+  is one too many.
+- **`exercises.headline` now carries the deck's headline** and interpolates the
+  count. The old "What would you like to start with now?" is gone: the screen
+  says "5 Übungen für dich" and then says what to do with them.
+
+Why: a replacement that silently drops things is how a screen gets worse
+without anybody deciding that it should.
+
+What I need from Ben: **nothing** — but note that `exercises.notImplemented`
+("Not available yet") has had no caller for some time, before this change and
+after it. Three of the five exercises are unbuilt and nothing on a card says so
+until you swipe it. That was true of the list too; the deck makes it more
+visible, because you meet one card at a time.
+
+## The deck's own open questions are now a shipped screen's
+
+Where: the three entries under "POC — the deck chooses an exercise"
+
+What I did: nothing to them — this log is append-only and they record how the
+screen was arrived at.
+
+Why: they are still true. The one that changes meaning is the note that
+"nothing in the product should copy" the deck's reading of `deck.json` — that
+was answered when the POC moved to `useExercises()`, and the screen ships on
+the same hook every other content screen uses.
+
+What I need from Ben: **nothing, just flagging** that the CardDeck entries in
+`packages/design-system/stories/OPEN-QUESTIONS.md` are now about a component in
+the product rather than one in a prototype — in particular the verdict
+overlay's fill, which uses a text token because Layer 1 has no dark purple
+surface. That was a POC's compromise and is now a shipped one.

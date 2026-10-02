@@ -6,7 +6,8 @@
  */
 import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Play, RotateCcw } from 'lucide-react';
+import { Play, Shuffle, SkipForward } from 'lucide-react';
+import { CtaButton } from '../src/CtaButton';
 import { CardDeck } from '../src/CardDeck';
 import { bothThemes } from './_decorators';
 
@@ -96,10 +97,12 @@ const meta = {
        The `action` argTypes below are what actually report the calls. */
     onAccept: () => {},
     onDefer: () => {},
-    acceptLabel: 'Start',
-    deferLabel: 'Another one',
+    acceptLabel: 'Start the exercise',
+    deferLabel: 'Next exercise',
+    acceptSubline: 'or swipe left for the next exercise',
+    deferSubline: 'or swipe right to start it',
     acceptGlyph: Play,
-    deferGlyph: RotateCcw,
+    deferGlyph: SkipForward,
     label: 'The deck. Drag the top card right to start it, left to send it to the back.',
     positionLabel: (position: number, total: number) =>
       `${FACES[position - 1]?.name ?? ''} — card ${position} of ${total}`,
@@ -110,9 +113,13 @@ const meta = {
     onDefer: { action: 'defer', description: 'Swiped left, pressed, or Arrow Left. Sends the card to the back.' },
     acceptLabel: { control: 'text', description: 'The right action’s name, on the chip and the button. Required.' },
     deferLabel: { control: 'text', description: 'The left action’s name. Required.' },
+    acceptSubline: { control: 'text', description: 'The line under the accept verdict, naming the other way out. Required.' },
+    deferSubline: { control: 'text', description: 'The line under the defer verdict. Required.' },
     acceptGlyph: { control: false, description: 'Lucide component for the right action.' },
     deferGlyph: { control: false, description: 'Lucide component for the left action.' },
     label: { control: 'text', description: 'The pile’s accessible name.' },
+    toolbar: { control: false, description: 'Rendered at the head of the action stack, above the deck’s own two. A view switch is the reference case.' },
+    actions: { control: false, description: 'Extra controls under the deck’s own two, in the same stack.' },
     positionLabel: { control: false, description: 'What the live region says when the top card changes. The deck knows the position, the consumer knows the name.' },
     busy: { control: 'boolean', description: 'True while an accept is in flight. The deck goes inert.' },
     className: { control: false },
@@ -132,6 +139,21 @@ export const Default: Story = {};
  * what a refusal looks like.
  */
 export const Busy: Story = { args: { busy: true } };
+
+/**
+ * Both slots in use: something beside the dots, and a third action under the
+ * deck's own two.
+ *
+ * Resize the frame to watch the actions move from beside the card to under it.
+ * It is a WRAP, not a breakpoint — the deck can be put in a narrow column on a
+ * wide screen, and a media query would get that case exactly backwards.
+ */
+export const WithToolbarAndActions: Story = {
+  args: {
+    toolbar: <span style={{ font: 'var(--type-label-md-weight) var(--type-label-md-size) var(--type-label-md-family)', color: 'var(--on-surface-muted)' }}>Your toolbar here</span>,
+    actions: <CtaButton variant="ghost" leadingIcon={Shuffle}>Pick a card for me</CtaButton>,
+  },
+};
 
 /** Two cards: the floor at which a pile still reads as a pile. */
 export const TwoCards: Story = { args: { items: ITEMS.slice(0, 2) } };

@@ -47,8 +47,8 @@
  */
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { CtaButton } from './CtaButton';
-import { Dots } from './Dots';
 import { Icon } from './Icon';
 
 /**
@@ -99,6 +99,16 @@ export interface CardDeckProps {
   acceptLabel: string;
   /** The left action's name. REQUIRED. */
   deferLabel: string;
+  /**
+   * The line under each verdict, naming the OTHER way out.
+   *
+   * It is the undo: past the threshold the card has stopped asking, and this
+   * is what says the decision is still reversible and how. Each one describes
+   * its opposite — the accept subline points left, the defer subline right —
+   * so whichever verdict is up, the way back is on it.
+   */
+  acceptSubline: string;
+  deferSubline: string;
   acceptGlyph: LucideIcon;
   deferGlyph: LucideIcon;
   /** The pile's accessible name. */
@@ -109,6 +119,28 @@ export interface CardDeckProps {
    * consumer is given both and returns the sentence.
    */
   positionLabel: (position: number, total: number, id: string) => string;
+  /**
+   * Rendered at the HEAD of the action stack, above the deck's own two.
+   *
+   * It had a row of its own above the card while the dots were there to share
+   * it with; with the dots gone that row held one control and a lot of space.
+   * A view switch is the reference case, and it belongs with the other things
+   * you can press rather than floating over the deck on its own.
+   *
+   * Above `onAccept`'s button rather than below, because it does not act on
+   * the card in front — it changes what you are looking at altogether, which
+   * is a decision you make before the ones underneath it.
+   */
+  toolbar?: React.ReactNode;
+  /**
+   * Extra controls under the deck's own two, in the same stack.
+   *
+   * The deck owns accept and defer because it owns what they do to the pile.
+   * Anything else a screen offers about the deck as a whole — pick one for me,
+   * and nothing else so far — has no business being a prop here, and every
+   * business being in the same column so it reads as one set of choices.
+   */
+  actions?: React.ReactNode;
   /** True while an accept is in flight. See the contract at the top. */
   busy?: boolean;
   className?: string;
@@ -145,8 +177,9 @@ interface Departing {
 }
 
 export function CardDeck({
-  items, onAccept, onDefer, acceptLabel, deferLabel, acceptGlyph, deferGlyph,
-  label, positionLabel, busy = false, className,
+  items, onAccept, onDefer, acceptLabel, deferLabel,
+  acceptSubline, deferSubline, acceptGlyph, deferGlyph,
+  label, positionLabel, toolbar, actions, busy = false, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
   const [drag, setDrag] = React.useState<Drag | null>(null);
@@ -305,32 +338,25 @@ export function CardDeck({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
-      <div className="musy-deck__row">
-        <CtaButton
-          variant="ghost"
-          size="min"
-          leadingIcon={deferGlyph}
-          className="musy-deck__act musy-deck__act--defer"
-          disabled={inert}
-          onClick={() => defer(frontId, { x: 0, y: 0, progress: 0, swing: 0 })}
-        >
-          {deferLabel}
-        </CtaButton>
-
-        <div className="musy-deck__stage">
+      <div className="musy-deck__body">
+        <div className="musy-deck__stage" data-armed={drag?.armed ?? undefined}>
           {/* THE INTENT CHIPS. Nothing at rest — the deck's initial state is
               the deck — and they fade in the moment a horizontal axis is
               decided. The one you are travelling toward lights; the other
               stays dim. This is the whole of "what will happen if I let go". */}
-          <div className="musy-deck__chip musy-deck__chip--defer" data-on={drag !== null || undefined}
-               data-armed={drag?.armed === 'defer' || undefined} aria-hidden="true">
-            <Icon glyph={deferGlyph} size="sm" />
+          <div className="musy-deck__chips" data-on={drag !== null || undefined} aria-hidden="true">
+          <div className="musy-deck__chip musy-deck__chip--defer">
+            {/* AN ARROW, NOT THE ACTION'S OWN GLYPH. These two say which WAY,
+                and the way is the whole of what is being chosen while the card
+                is in somebody's hand; the action's glyph belongs on the button,
+                where there is no direction to state. */}
+            <Icon glyph={ArrowLeft} size="sm" />
             <span>{deferLabel}</span>
           </div>
-          <div className="musy-deck__chip musy-deck__chip--accept" data-on={drag !== null || undefined}
-               data-armed={drag?.armed === 'accept' || undefined} aria-hidden="true">
-            <Icon glyph={acceptGlyph} size="sm" />
+          <div className="musy-deck__chip musy-deck__chip--accept">
+            <Icon glyph={ArrowRight} size="sm" />
             <span>{acceptLabel}</span>
+          </div>
           </div>
 
           <div
@@ -363,6 +389,26 @@ export function CardDeck({
                   } as never)}
                 >
                   {face(item)}
+                  {/* ── THE VERDICT ───────────────────────────────────────
+                      Past the threshold the card stops asking and starts
+                      answering: the whole face goes over to one colour with
+                      one word on it, and the two chips get out of the way.
+                      Nothing is left on screen to compare — which is the
+                      point, because by then there is nothing left to choose.
+
+                      `aria-hidden`: this is the visible half of a state the
+                      live region already announces, and a screen reader
+                      driving the deck by its buttons never reaches it. */}
+                  {isFront && (
+                    <div className="musy-deck__verdict" data-armed={drag?.armed ?? undefined} aria-hidden="true">
+                      <span className="musy-deck__verdict-label">
+                        {drag?.armed === 'accept' ? acceptLabel : deferLabel}
+                      </span>
+                      <span className="musy-deck__verdict-subline">
+                        {drag?.armed === 'accept' ? acceptSubline : deferSubline}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -402,24 +448,40 @@ export function CardDeck({
           </div>
         </div>
 
-        <CtaButton
-          variant="primary"
-          size="min"
-          leadingIcon={acceptGlyph}
-          className="musy-deck__act musy-deck__act--accept"
-          disabled={inert}
-          onClick={() => accept(frontId)}
-        >
-          {acceptLabel}
-        </CtaButton>
+        {/* ── THE ACTIONS ─────────────────────────────────────────────
+            One column, in the order they carry weight: the way forward, the
+            way past, then whatever the screen adds. Beside the card where
+            there is room and under it where there is not — a wrap, not a
+            breakpoint, so it answers to the space the deck actually has.
+
+            NORMAL SIZE, not the small rung. These are the screen's real
+            choices; the row above is furniture. */}
+        <div className="musy-deck__actions">
+          {toolbar}
+          <CtaButton
+            variant="primary"
+            leadingIcon={acceptGlyph}
+            className="musy-deck__act musy-deck__act--accept"
+            disabled={inert}
+            onClick={() => accept(frontId)}
+          >
+            {acceptLabel}
+          </CtaButton>
+          <CtaButton
+            variant="secondary"
+            leadingIcon={deferGlyph}
+            className="musy-deck__act musy-deck__act--defer"
+            disabled={inert}
+            onClick={() => defer(frontId, { x: 0, y: 0, progress: 0, swing: 0 })}
+          >
+            {deferLabel}
+          </CtaButton>
+          {actions}
+        </div>
       </div>
 
-      {/* Position, twice: as marks for the eye and as a sentence for the ear.
-          The dots take no `onSelect` — there is nowhere to jump to in a pile —
-          so they render inert and `aria-hidden`, and this carries the
-          announcement instead. */}
-      <Dots total={items.length} index={Math.max(0, position - 1)} ids={items.map((i) => i.id)}
-            label={(p, total) => positionLabel(p, total, frontId ?? '')} />
+      {/* The position as a sentence. The dots carry it for the eye; this is
+          what a screen reader is told when the top card changes. */}
       <p className="musy-sr-only" aria-live="polite">
         {frontId === undefined ? '' : positionLabel(position, items.length, frontId)}
       </p>

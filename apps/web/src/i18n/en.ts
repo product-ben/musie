@@ -163,10 +163,15 @@ export const en = {
      a five-step gate is a five-swipe gate before anybody may start. The names
      that survive in the ids — choose, guide, understand — are the three beats.
 
-     THE POSTSCRIPT IS THE FOURTH THING THAT USED TO BE A SLIDE and is no
-     longer one: the diary is not a step of a session, it is what is there
-     afterwards, so it sits under the CTA as an aside rather than as a gate
-     somebody has to swipe past. Written for Ben's own 'P.S.'. */
+     AND THE DIARY CAME BACK INTO THE CAROUSEL — 2026-10-02. It had been a
+     slide, then a postscript under the CTA on the argument that it is not a
+     step of a session. User testing settled it the other way: U1 and U2 both
+     failed to perceive the postscript at all and were surprised by the diary
+     later, while U3 named "the diary captures my sessions" as the thing he
+     liked about the page. An aside nobody reads is not a lighter touch, it is
+     an absence — so the third slide says it instead and the postscript is
+     gone. `about.slide.understand` is `about.slide.diary` for the same
+     reason: the key named a promise the line no longer makes. */
   'about.greeting': "Hi, I'm Musie.",
   'about.pitch': 'I help you feel and act more mindful, aware, connected and safe through the power of music',
   /* The typing indicator's accessible name. The dots are decorative; this is
@@ -176,7 +181,7 @@ export const en = {
   'about.carouselLabel': 'How a session works',
   'about.slide.choose': 'Choose the exercise that draws you in, with Musie',
   'about.slide.guide': 'Musie guides you through the exercise and a reflection',
-  'about.slide.understand': 'Feel & understand yourself better',
+  'about.slide.diary': 'Keep track of your progress in your diary',
   'about.previousSlide': 'Previous step',
   'about.nextSlide': 'Next step',
   'about.slideLabel': 'Step {position} of {total}: {title}',
@@ -187,10 +192,41 @@ export const en = {
   'about.hint.unseen': 'Check out how a session will work before starting.',
   'about.hint.next': "Next I'll ask who you are here as.",
   'about.hint.ready': 'Ready when you are.',
-  /* The aside under the CTA. 'P.S.' survives the translation because it is
-     the same abbreviation in both languages and it is doing the work of a
-     whole clause: this is an extra, not a step. */
-  'about.postscript': 'P.S. Your diary in Musie keeps an overview of every past session, and what you saw in your own reflections.',
+  /* ── Discovered music · 2026-10-02 ───────────────────────────────────────
+     A PLACE, not a feature of the session. User testing found U5 arriving with
+     a meditation app's model — "pick a track and listen to it" — and meeting a
+     product that hands you music inside an exercise and never gives it back.
+     This is where it is given back: the recordings you have actually played,
+     so you can go and use them for your own purposes.
+
+     WHAT IS ON SCREEN IS A PLAYER AND NOTHING ELSE, which is Ben's own brief.
+     The title is the only text per row, and it is here at all because the
+     reveal already named it — see lib/reveal.ts for why a browser cannot
+     otherwise learn what a recording is called. */
+  'route.discoveredMusic.title': 'Discovered music',
+  'menu.discoveredMusic': 'Discovered music',
+  'discovered.headline': 'Discovered music',
+  /* WHAT THIS MUSIC IS AND WHAT IT IS FOR, in that order, because somebody
+     landing here from the menu has had neither explained. The second sentence
+     is the permission: this is yours to use away from Musie. */
+  'discovered.intro': 'Every piece you have listened to in an exercise is kept here. Play it again whenever you like — to settle, to focus, or for no reason at all.',
+  /* THE EMPTY STATE IS THE OPENING SCREEN for everybody on the day this ships,
+     so it says what is missing AND how to get some, rather than reporting a
+     count of zero. */
+  'discovered.empty': 'There is no music here yet.',
+  'discovered.emptyDetail': 'Music arrives here once you have listened to it in an exercise.',
+  /* The reveal failed — the recording is still playable and we simply cannot
+     name it. The same words the listen step uses when it is in that position:
+     what the control IS, rather than a title standing in for one. */
+  'discovered.unnamed': 'Your track',
+  /* Title and artist on the player's one line. An artist is why this is
+     re-usable at all: a title alone is not enough to find a piece again
+     anywhere else. */
+  'discovered.trackLabel': '{title} — {artist}',
+  'discovered.play': 'Play',
+  'discovered.pause': 'Pause',
+  'discovered.restart': 'Play again',
+  'discovered.seek': 'Position in the track',
 
   /* ── About you · D.2 ─────────────────────────────────────────────────────
      "Methods" became "exercises" everywhere in the product, so the prototype's
@@ -219,7 +255,6 @@ export const en = {
      (2026-09-24). The duration survives as the fact chip below — same fact,
      on the card, where it can be read without opening anything. */
   'exercises.notImplemented': 'Not available yet',
-  'exercises.headline': 'What would you like to start with now?',
   'exercises.legend': 'Choose an exercise',
   /* THE GLYPH LEGEND — the shortest true word for each of the three fact
      glyphs, above the cards. A key is only useful before the thing it
@@ -236,7 +271,6 @@ export const en = {
   /* The escape hatch for "I don't want to choose". It picks among the
      IMPLEMENTED exercises only — the prototype picked among all three and then
      opened the not-implemented lightbox two times in three. */
-  'exercises.surpriseMe': 'Let Musie pick an exercise',
   /* The database refuses a second running session (a partial unique index), so
      this is a real outcome rather than a defensive branch. It is a Message
      with a way forward, not an error: the session it collides with is the
@@ -881,36 +915,44 @@ export const en = {
   'voice.error.headline': 'Recording stopped',
   'voice.warning.headline': 'One statement was skipped',
 
-  /* ── /dev/deck · PROOF OF CONCEPT ───────────────────────────────────────
-     A tool route, like the QR sheet, and deletable in one commit: nothing in
-     the product links to it or imports it. NOTHING ON THE FACE OF A CARD is
-     here — the name, the description and the picture are the exercise's, read
-     from the same table /exercises reads. This catalogue is for the words the
-     screen says in its OWN voice. The one apparent exception is the time,
-     which the card borrows from `exercises.fact.time*` below rather than
-     saying a second way. */
-  'poc.deck.title': 'The deck',
-  'poc.deck.text': 'Every exercise as a card. Swipe right to start it, left for another one.',
+  /* ── The deck · /exercises ──────────────────────────────────────────────
+     It was a proof of concept at /dev/deck and it is the screen now (Ben,
+     2026-10-02). NOTHING ON THE FACE OF A CARD is here — the name, the
+     description and the picture are the exercise's, read from the content
+     tables. This catalogue is for the words the screen says in its OWN voice.
+     The one apparent exception is the time, which the card borrows from
+     `exercises.fact.time*` rather than saying a second way. */
+  /* The ROUTE's name, for the document title. The screen's own headline is
+     below and says something else — a route title is a noun phrase that has to
+     work in a tab, and "5 exercises for you" is not that. */
+  /* THE COUNT IS INTERPOLATED, not written out: the deck shows every exercise
+     there is, so the headline would start lying the day a sixth lands. */
+  'exercises.headline': '{count} exercises for you',
+  'exercises.intro': 'Swipe right to start an exercise, left for another one. Or see all of them in a list.',
   /* The pile's accessible name. A screen-reader user hears only this, so it
      has to contain both actions and which way each one goes. */
-  'poc.deck.stage': 'The deck. Swipe the top card right to start that exercise, left to see another.',
+  'exercises.deckLabel': 'The deck. Swipe the top card right to start that exercise, left to see another.',
   /* The two actions, on the drag chips and on the buttons beside the deck. */
-  'poc.deck.start': 'Start',
-  'poc.deck.another': 'Another exercise',
+  'exercises.start': 'Start the exercise',
+  'exercises.another': 'Next exercise',
+  /* THE LINE UNDER EACH VERDICT, naming the other way out. Each one points the
+     OPPOSITE way to the verdict it sits under: past the threshold the card has
+     stopped asking, and this is what says the decision is still reversible. */
+  'exercises.startSubline': 'or swipe left for the next exercise',
+  'exercises.anotherSubline': 'or swipe right to start it',
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
-  'poc.deck.position': '{name} — card {index} of {total}',
+  'exercises.deckPosition': '{name} — card {index} of {total}',
   /* The view switch. Icon-only, so the labels are never drawn — which is
      exactly why they have to be written: they are the only thing naming each
      segment for a screen reader. */
-  /* THE SHORT FORM of `exercises.surpriseMe`. The same action, and the long
-     one is right where it is — a full-width CTA on /exercises. On a 24px
-     button in a row of furniture it ellipses, and the German ellipses sooner.
-     Long form / short form is the pair `exercises.fact.time*` already makes. */
-  'poc.deck.random': 'Pick one for me',
-  'poc.deck.view.legend': 'How to show the exercises',
-  'poc.deck.view.deck': 'Card stack',
-  'poc.deck.view.list': 'List',
+  /* A SHORTER FORM of `exercises.surpriseMe`. The same action; the long one
+     is right where it is, as a full-width CTA on /exercises. Here it is the
+     third button in a column and has to read at a glance beside two others. */
+  'exercises.surpriseMeShort': 'Pick a card for me',
+  'exercises.view.legend': 'How to show the exercises',
+  'exercises.view.deck': 'Card stack',
+  'exercises.view.list': 'List',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',

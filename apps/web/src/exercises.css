@@ -1,6 +1,8 @@
 /**
- * `/dev/deck` — what this SCREEN owns. An L14 custom pattern, and a PROOF OF
- * CONCEPT: not linked from the product and nothing in the product imports it.
+ * `/exercises` — what this SCREEN owns. An L14 custom pattern.
+ *
+ * It was `/dev/deck`, a proof of concept beside the list; it is the screen
+ * now (Ben, 2026-10-02).
  *
  * ── MOST OF THE DECK IS NOT IN HERE ANY MORE ──────────────────────────────
  * The pile, the gesture, the scatter, the throw, the intent chips, the dots
@@ -22,37 +24,41 @@
  *   3. Anything here that recurs is a component request, not a second copy.
  */
 
-/* ═══ THE ROW ABOVE THE DECK ════════════════════════════════════════════════
-   Pick-one-for-me on the left, the view switch on the right, pushed apart. It
-   is page furniture and it is sized like it: both controls are the `min` rung,
-   so the row is 24px of chrome rather than a toolbar competing with the deck.
+/* ═══ THE INTRO ════════════════════════════════════════════════════════════
+   A headline and the line under it, then the deck. The two gaps are Layer 1's
+   own words for exactly these two relationships: `--space-gap-related` is
+   "atoms that belong together: label+field, title+subtitle", and
+   `--space-gap-group` is "between molecules that do NOT belong together".
 
-   `--space-gap-group` below it, not `--space-gap-stack`: the row and the deck
-   are two different things on the page, where a label and its field are one.
-   Above it the heading's own margin already supplies the separation.        */
-.musie-deck-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+   The shell's own `.musie-placeholder` carries `--space-gap-group` below
+   itself, which is right when a heading is followed by the screen's content
+   and wrong when it is followed by its own subline — so the pair is wrapped
+   and the heading's margin is given back to the wrapper. Nothing about the
+   shell's classes changes; only this screen's arrangement of them does.    */
+.musie-deck-intro {
+  display: grid;
   gap: var(--space-gap-related);
   margin-block-end: var(--space-gap-group);
 }
 
-/* THE BUTTON YIELDS, THE SWITCH DOES NOT. Both children may wrap to a second
-   line, but only one of them can usefully SHRINK: the switch is two glyphs at
-   a fixed size and clipping it would take a control away, where the button's
-   label can ellipse and still be a button. Without `min-inline-size: 0` a flex
-   item refuses to go below its own content — which is how the German label,
-   half again the length of the English, pushed the switch off the edge of the
-   page instead of wrapping under it. */
-.musie-deck-toolbar > .musy-btn {
-  min-inline-size: 0;
-  /* The margin the `min` rung carries is for a button sitting in a line of
-     text. In a row of its own it doubles a gap that is already a token. */
-  margin: 0;
+.musie-deck-intro > .musie-placeholder { margin-block-end: 0; }
+
+/* ═══ THE VIEW SWITCH, IN THE LIST ═════════════════════════════════════════
+   In the DECK view the switch rides in CardDeck's own top row, beside the
+   dots. The list has no dots — a list has no position to show — so there it
+   stands in a row of its own, left-aligned with everything else.           */
+.musie-deck-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-block-end: var(--space-gap-group);
 }
-.musie-deck-toolbar > .musy-seg { flex: 0 0 auto; }
+
+/* Centred on the smallest tier, on the same threshold the deck centres on —
+   the switch is the one control the two views share, and it should not move
+   to a different side of the page when you press it. */
+@media (max-width: 767.98px) {
+  .musie-deck-toolbar { justify-content: center; }
+}
 
 /* ═══ WHERE THE DECK SITS ═══════════════════════════════════════════════════
    FULL-BLEED, OUT OF THE MAIN COLUMN'S GUTTER. `.musie-main` sets
@@ -72,13 +78,25 @@
    jobs is how the cards silently grew by two gutters the first time this was
    made full-bleed.                                                          */
 .musie-deck-stage {
-  margin-inline: calc(var(--gutter) * -1);
-  padding-inline: var(--gutter);
-  /* NO `--musy-deck-card-inline` OVERRIDE. The component measures the card
-     from the viewport now, which is what keeps it the same size here and in
-     Storybook — and what stopped the card growing by two gutters every time
-     this stage's own width changed. */
+  /* ── THE BOX IS THE SCREEN; THE CONTENTS ARE THE COLUMN ──────────────────
+     A thrown card is clipped by the deck's own box, and on a wide route that
+     box used to be the main column — capped at `--musie-main-wide` and centred
+     — so the card was sliced off with half the screen still empty beside it.
+
+     So the box spans the viewport and the padding puts the contents back where
+     the column is. The padding is the real distance from the screen's edge to
+     the column's content edge, floored at the gutter for every viewport
+     narrower than the column — which is why the card and the buttons still
+     line up with the heading above them at every width.
+
+     `overflow-clip-margin` is what this looks like it should use, and cannot:
+     it takes a plain <length> and rejects calc()/max(), failing silently to 0.
+     Widening the box is the spelling that works. */
+  inline-size: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding-inline: max(var(--gutter), calc((100vw - var(--musie-main-wide)) / 2));
 }
+
 
 /* ═══ THE FACE OF A CARD ════════════════════════════════════════════════════
    Three rows: the picture, the words, the time. The picture is full-bleed to
@@ -97,29 +115,23 @@
   grid-template-rows: auto 1fr auto;
   block-size: 100%;
   border-radius: inherit;
-  background-color: var(--musie-card-wash);
+  /* WHITE, not the accent (Ben, 2026-10-02). The wash was a tint of the card's
+     own accent, which gave the pile its colour — and put a second colour
+     behind a photograph that already has one. The raised surface lets the
+     picture be the only thing on the card with a hue, and the pile keeps its
+     depth from elevation and the scatter rather than from five tints. */
+  background-color: var(--surface-raised);
   overflow: clip;
 }
 
-/* The accent is the DECK's `data-accent`, resolved here because the palette is
-   the app's business and the component only carries the number. Three accents
-   across five exercises, fixed by the printed order, so a card keeps its
-   colour as the deck is dealt. */
-.musy-deck__card[data-accent='1'] .musie-exercise-card,
-.musie-exercise-list__item[data-accent='1'] .musie-exercise-card {
-  --musie-card-wash: var(--accent-1-subtle);
-  --musie-card-ink: var(--accent-1-text);
-}
-.musy-deck__card[data-accent='2'] .musie-exercise-card,
-.musie-exercise-list__item[data-accent='2'] .musie-exercise-card {
-  --musie-card-wash: var(--accent-2-subtle);
-  --musie-card-ink: var(--accent-2-text);
-}
-.musy-deck__card[data-accent='3'] .musie-exercise-card,
-.musie-exercise-list__item[data-accent='3'] .musie-exercise-card {
-  --musie-card-wash: var(--accent-3-subtle);
-  --musie-card-ink: var(--accent-3-text);
-}
+/* The accent survives as INK, on the one line that is not the content's own:
+   the timeframe. Resolved here because the palette is the app's business and
+   the component only carries the number — three accents across five
+   exercises, fixed by the printed order, so a card keeps its colour as the
+   deck is dealt. */
+.musy-deck__card[data-accent='1'] .musie-exercise-card { --musie-card-ink: var(--accent-1-text); }
+.musy-deck__card[data-accent='2'] .musie-exercise-card { --musie-card-ink: var(--accent-2-text); }
+.musy-deck__card[data-accent='3'] .musie-exercise-card { --musie-card-ink: var(--accent-3-text); }
 
 /* ── THE PICTURE ───────────────────────────────────────────────────────────
    Flush to the top, the left and the right: no padding on the face, 100% of
@@ -211,34 +223,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ═══ THE SAME CARD, IN A COLUMN ════════════════════════════════════════════
-   The other half of the comparison the segmented control offers. It is the
-   IDENTICAL face — same component, same classes — so the only thing that
-   differs between the two views is the layout, which is the only way the
-   comparison means anything.
+/* THE LIST VIEW HAS NO STYLES HERE AT ALL, and that is the point of it: it is
+   `RadioCards`, the component /exercises chooses an exercise with, so the two
+   halves of the comparison differ in the one thing being compared — a pile you
+   deal with against a column you read — and in nothing else. The bespoke list
+   that used to live here compared the deck against something nobody was
+   proposing to ship. */
 
-   The one addition a list has room for is the action stated outright: a column
-   has no gesture, so every row carries its own way forward.                 */
-.musie-exercise-list {
-  display: grid;
-  gap: var(--space-gap-group);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.musie-exercise-list__item {
-  display: grid;
-  border-radius: var(--radius-lg);
-  background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
-  box-shadow: var(--elevation-1);
-  overflow: clip;
-}
-
-.musie-exercise-list__action {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 var(--space-inset-card) var(--space-inset-card);
-  background-color: var(--musie-card-wash);
+/* The glyph key, above the list. Its own gap from the cards below, because it
+   explains them rather than belonging to them. */
+.musie-legend-row {
+  margin-block-end: var(--space-gap-group);
 }
