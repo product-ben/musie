@@ -202,6 +202,22 @@
      own scatter, which is what gives the pile its ragged fringe. */
   --musie-card-rise:
     clamp(0, calc(var(--musie-card-depth) - var(--musie-deck-progress)), 4);
+  /* ── HOW MUCH OF ITS SCATTER A CARD IS CURRENTLY SPENDING ───────────────
+     1 anywhere in the pile, 0 once it reaches the top, and every value
+     between while it is on its way there.
+
+     THE TOP CARD IS ALWAYS DEAD CENTRE. It was not: the front card wore the
+     same hashed offset as the rest, so where the deck sat depended on which
+     exercise happened to be first — a different ~20px off-centre on every
+     shuffle, and off-centre on first paint. The mess belongs BEHIND the card
+     you are reading, not to it.
+
+     `min(1, rise)` rather than a `[data-front]` rule, because it also makes
+     the settling continuous: as the top card is dragged away the next one
+     rises, and its scatter unwinds to nothing over the same travel, so it
+     slides into the centre under your thumb instead of snapping there when
+     you let go. A selector could only have switched it. */
+  --musie-card-settle: min(1, var(--musie-card-rise));
 
   display: grid;
   /* L13 — no text selection: the whole card is a drag surface, and a marquee
@@ -229,9 +245,9 @@
 
   transform:
     translate3d(
-      calc(var(--sp-3) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
+      calc(var(--sp-3) * var(--musie-card-scatter-x) * var(--musie-card-settle) + var(--musie-drag-x) * 1px),
       calc(
-        var(--sp-2) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px +
+        var(--sp-2) * var(--musie-card-scatter-y) * var(--musie-card-settle) + var(--musie-drag-y) * 1px +
         var(--sp-2) * var(--musie-card-rise)
       ),
       0
@@ -294,8 +310,8 @@
   from {
     transform:
       translate3d(
-        calc(var(--sp-3) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
-        calc(var(--sp-2) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px),
+        calc(var(--sp-3) * var(--musie-card-scatter-x) * var(--musie-card-settle) + var(--musie-drag-x) * 1px),
+        calc(var(--sp-2) * var(--musie-card-scatter-y) * var(--musie-card-settle) + var(--musie-drag-y) * 1px),
         0
       )
       rotate(
