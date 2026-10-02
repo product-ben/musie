@@ -109,7 +109,22 @@
      and the hint were pushed past the fold by a box that was too tall for a
      deck that fitted. Content-sized, the whole thing lands above the fold at
      393×852 in both languages. */
-  padding: var(--sp-5) var(--gutter);
+  /* ── HOW FAR THE PILE SITS FROM THE EDGE OF THE PAGE ──────────────────
+     The shell's gutter, PLUS room for the scatter to show. It is not just
+     cosmetic spacing: the card is sized `100% - …` of this box, so the
+     padding is what decides how big a card is.
+
+     That coupling bit once already. Going full-bleed above widened this box
+     by two gutters, and the card — which is measured from it — silently grew
+     from 305px to 337px, filling the page and flattening the pile. The clip
+     box and the card's width both came off the same number, and only one of
+     them was meant to change.
+
+     They are separate now: the margin above sets where the stage CLIPS (the
+     page edge, because `overflow: clip` clips at the padding box whatever
+     the padding is), and this sets how wide the CARD is. Changing one no
+     longer moves the other. */
+  padding: var(--sp-5) calc(var(--gutter) + var(--sp-4));
   overflow: clip;
   /* The pile is the page's one touch surface. Vertical scrolling still belongs
      to the browser — see THE AXIS IS DECIDED in DeckPoc.tsx — so this is
