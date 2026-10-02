@@ -5894,3 +5894,51 @@ What I need from Ben: **nothing, just flagging** that the CardDeck entries in
 the product rather than one in a prototype — in particular the verdict
 overlay's fill, which uses a text token because Layer 1 has no dark purple
 surface. That was a POC's compromise and is now a shipped one.
+
+---
+
+# The H.2 conversion test cannot pass against hosted (2026-10-02)
+
+## `auth.convert.db.test.ts` mints `@musie.test` addresses, and hosted GoTrue refuses them
+
+Where: `src/lib/auth.convert.db.test.ts:83` (`testEmail`), failing at line 136
+
+What I checked: `pnpm test:db` against the hosted project after pushing
+`20260929100000` and `20261002100000`. 89 of 90 passed — including all 28
+security tests, all 29 sessions tests, and the storage test that fails locally
+for want of an uploaded object. The one failure is the H.2 conversion:
+
+```
+AuthApiError: Email address "" is invalid   (email_address_invalid)
+```
+
+Nothing is empty on our side: `testEmail('convert')` returns
+`h2-convert-<ms>-<rand>@musie.test`. The `""` is GoTrue's own message after it
+has normalised an address it rejected.
+
+**The sibling test in the same file passed, and that is the whole diagnosis.**
+It uses the same address shape and does not fail, because it creates its
+account through `auth.admin.createUser` with the SERVICE ROLE, which skips the
+user-facing email validation. The failing one is the only test here that
+converts through the CLIENT path. Same address, different door. Locally both
+doors are open, because the local GoTrue does not check whether a domain could
+receive mail; `.test` is reserved by RFC 2606 precisely so that it cannot.
+
+What I did: nothing to the test. It is correct about the behaviour it asserts —
+H.2's promise is that a conversion keeps the user's id and their diary — and it
+passes against the local stack, which is what `pnpm test:db` runs bare.
+
+Why: changing the address to a deliverable domain would mean every hosted run
+creating a real account on a domain somebody owns, and the test deliberately
+leaves its users behind for `created.push` to clean up. That is a decision
+about where test accounts may land, not a bug to patch.
+
+What I need from Ben: **a decision, before the next hosted run.** Either
+
+  1. the db suite learns which tests are local-only, and this one says so — in
+     which case the hosted run is 89 of 89 and a failure means something; or
+  2. `testEmail` takes a deliverable domain from an env var when one is set, so
+     hosted runs convert onto an address that is really ours.
+
+Until one of those happens, a hosted `pnpm test:db` returns exit 1 on a green
+suite, which is the state in which people stop reading the output.
