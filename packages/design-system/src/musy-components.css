@@ -391,15 +391,27 @@
    text against the edge. */
 .musy-btn--min {
   --musy-btn-target: var(--target-min);
-  /* PADDING-BLOCK MUST GO TO ZERO, and that is the whole trick. --musy-btn-target
-     drives min-block-size, which is a FLOOR: the base rule's --space-inset-control
-     already puts 12px above and below a 18.61px line box, so lowering the target
-     to 24px changed nothing and the rung rendered at 47px — one pixel under the
-     44px rung beside it. With no block padding the line box is 18.61px and the
-     24px floor is what sets the height, exactly as §7.2's min rung reaches 24px.
-     The inline padding stays: it is what keeps the label off the edge. */
-  padding-block: 0;
-  padding-inline: var(--sp-3);
+  /* ── THE BLOCK PADDING IS THE DELICATE ONE ──────────────────────────────
+     --musy-btn-target drives min-block-size, which is a FLOOR, and the base
+     rule's --space-inset-control puts 12px above and below a 18.61px line box
+     — so lowering the target to 24px changed nothing and the rung rendered at
+     47px, one pixel under the 44px rung beside it. This rule has to override
+     that inset, and for a long time it did so with a flat zero, which left the
+     24px floor setting the height exactly as §7.2's min rung reaches 24px.
+
+     IT IS --sp-1 NOW, not zero (Ben, 2026-10-02). One step on both axes, where
+     the first pass moved the inline one alone and left a control padded at the
+     sides and flush at the top and bottom. 4px over an 18.61px line box is
+     26.61px, so the floor is no longer what sets the height — but the height
+     is now ABOVE --target-min rather than below it, so 2.5.8 is satisfied by a
+     wider margin than before, not a narrower one. What must never come back is
+     --space-inset-control's 12px, which is three steps further up and is where
+     the 47px came from. */
+  padding-block: var(--sp-1);
+  /* One step up the scale from --sp-3, to match. The rung is used as page
+     furniture — a quiet control in a row above something else — and at 12px
+     the label sat too close to its own border to read as a button at all. */
+  padding-inline: var(--sp-4);
   gap: var(--sp-1);
   margin: var(--sp-2);
   font-family: var(--type-label-md-family);
@@ -2258,7 +2270,13 @@
    its label stay one object rather than two things sharing a box. */
 .musy-seg--min .musy-seg__option {
   min-block-size: var(--target-min);
-  padding-inline: var(--sp-2);
+  /* One step up the scale on BOTH axes, 2026-10-02, matching the move on
+     CtaButton's `min` rung: the two sit in the same rows as each other, and a
+     pair of small controls with different breathing room reads as one of them
+     being broken. Same as there, the block padding takes the height just past
+     --target-min rather than under it. */
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-3);
   gap: var(--sp-1);
 }
 .musy-seg--min .musy-seg__track { padding: calc(var(--border-width-hairline) * 2); }
@@ -2311,7 +2329,10 @@
    touch surface is making L5's exception deliberately. */
 .musy-seg--icon-only.musy-seg--min .musy-seg__option {
   min-inline-size: var(--target-min);
-  padding-inline: var(--sp-1);
+  /* One step up from --sp-1. A glyph with 4px beside it is a glyph in a box,
+     not a segment — and the extra width is the one that buys the combination
+     a target a thumb can find, which at the `min` rung it badly needs. */
+  padding-inline: var(--sp-2);
 }
 
 /* The icon never truncates. It is the cue that survives a clipped label, which
