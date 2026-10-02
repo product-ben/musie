@@ -5277,3 +5277,87 @@ If a deck ever becomes a real screen it reads `getCards(locale)` like
 everything else. Noted here because it is a deliberate departure from the
 pattern the repo is otherwise consistent about, and a silent one would look
 like an oversight.
+
+---
+
+# POC — the deck carries the exercises (`/dev/deck`, second pass)
+
+The cards were the printed Mindfulness Cards and are now the five exercises:
+16:9 picture full-bleed to three edges, name, description, and the timeframe
+at the foot. Two entries above are affected, and one new thing came out of it.
+
+## `cards.image_url` and `exercises.image_url` are RELATIVE, and that only works one segment deep — RESOLVED, but it is a trap
+
+Where: `src/routes/DeckPoc.tsx` (`fromRoot`), and the column itself —
+`exercises.image_url` holds `assets/web/exercises/body-scan-soundwalk.webp`
+
+What I checked: `/exercises` renders `image_url` straight into `RadioCards`
+and the picture appears. It appears because that route is ONE segment deep: a
+relative URL resolves against the current path, so `assets/web/…` lands on
+`/assets/web/…` and is correct by coincidence. On `/dev/deck` the same string
+resolves to `/dev/assets/web/…`, which is a 404 and an empty band where the
+photograph should be. That is how this was found — five broken images, and
+nothing in the console except the 404s.
+
+`DiaryGraph` is the only other renderer of a content image and it is on
+`/diary`, also one segment. So **nothing in the product is broken today.**
+
+What I did: `fromRoot()` in this screen, which prefixes a leading slash and
+passes absolute URLs through. The POC fixes its own reading of the column; it
+does not touch the column.
+
+Why: a POC is the wrong place to migrate content, and the column is seeded by
+a migration that rule 4 says stacks rather than edits.
+
+What I need from Ben: **a decision, when a content image is next rendered
+somewhere deeper than one segment** — `/session/:id/:step` is the obvious
+candidate and is three deep. Either the seeded values gain a leading slash in
+a new migration, or `lib/content.ts` normalises them once on the way out so no
+screen has to remember. The second is better: it is one place, it covers
+`cards`, `exercises` and `user_types` together, and it cannot be forgotten by
+the next screen. I did not do it because it changes a shared module for every
+screen on behalf of a POC, which is not a trade a POC gets to make.
+
+## The entry above — "the POC reads deck.json directly" — is ANSWERED
+
+Where: `src/routes/DeckPoc.tsx`
+
+What I checked: the reason given for reading the JSON was that a POC about
+motion should not need `supabase start`. That reason did not survive the cards
+becoming exercises: the image, the name, the description and the timeframe are
+four columns of a row, there is no JSON file holding them, and inventing one
+would have been a second content path to keep in step.
+
+What I did: it reads `useExercises()` — the same hook `/exercises` uses — and
+draws the loading, failing and empty states that come with it.
+
+Why: the POC is now prototyping a screen against the data that screen would
+actually have, which is the whole value of putting real content on it. The
+cost is the one the earlier entry was trying to avoid: this screen needs a
+session and a reachable database, exactly like every other screen.
+
+What I need from Ben: **nothing.** The earlier entry stands as written; this
+records that its trade was taken back rather than left in place.
+
+## The card has no fixed aspect ratio, and that is deliberate
+
+Where: `src/poc-deck.css`, `.musie-deck__pile`
+
+What I checked: it had one — 5:8, chosen by measuring the longest German
+description at 393px. It was wrong at every other width. A fixed ratio on a box
+full of reflowing prose makes the card SHORTER exactly as the text inside it
+gets taller: at 360px the same sentence takes one line more and the card has
+less room for it. The German copy is the binding case throughout (the longest
+card is *Achtsam Atmen* at 431px against the English 407px), which is the same
+direction Layer 1's measures were derived in.
+
+What I did: removed the ratio. Every card is in one grid cell, so the cell is
+already as tall as the tallest card in it — the deck is exactly tall enough for
+the longest description, in whatever language, at whatever width.
+
+Why: it deletes a number, the breakpoint it was true at, and a whole class of
+clipping bug, and it is less code.
+
+What I need from Ben: **nothing, just flagging** — if a Card Deck is ever a
+real component, this is the part worth keeping. The ratio is the obvious API
+and it is the wrong one.

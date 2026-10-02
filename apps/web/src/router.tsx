@@ -178,10 +178,10 @@ export const router = createBrowserRouter([
            a tool, not a screen. Nothing links to it and nothing in the product
            imports it, so deleting it is deleting three files and this block.
 
-           `lazy` for the same reason the QR sheet is lazy, with a different
-           payload: this module is the only importer of deck.json, and an
-           ordinary import would put the whole deck's content in the first
-           paint of a product that reads its cards from the database. */
+           `lazy` because a POC should cost a visitor who never opens it
+           nothing at all. It reads the exercises through the same hook
+           /exercises uses, so there is no second content path to keep in step
+           — only a screen's worth of gesture code, in its own chunk. */
         path: 'dev/deck',
         lazy: async () => {
           const { DeckPoc } = await import('./routes/DeckPoc');

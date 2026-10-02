@@ -30,9 +30,9 @@
  * question Layer 1 has already settled.
  */
 
-/* ═══ THE FOUR NUMBERS THAT ARE NOT TOKENS ═══════════════════════════════════
-   A deck of paper cards needs a card size, a ratio, and two angles, and Layer 1
-   has none of the four. It has no rotation scale at all — there is no token
+/* ═══ THE THREE NUMBERS THAT ARE NOT TOKENS ═══════════════════════════════════
+   A deck of cards needs a card size, a crop and two angles, and Layer 1 has
+   none of the four. It has no rotation scale at all — there is no token
    that means "a few degrees off square" — and no card-sized length: --bp-sm is
    480px, which is a BREAKPOINT, and multiplying a breakpoint by 0.6 to get a
    card width would be arithmetic over a token in the letter of L14.1 and a lie
@@ -44,11 +44,25 @@
 .musie-deck {
   /* A card, in the hand. Sized so two thumbs can hold it at 393px and it still
      reads as a card rather than a panel on a laptop, and capped by the column
-     it sits in so it never outgrows a narrow phone. */
-  --musie-deck-card-inline: min(100%, 17.5rem);
-  /* 5:7 — a playing card. Dimensionless, so it is arguably not an exception at
-     all; it is here because the other three are. */
-  --musie-deck-card-ratio: 5 / 7;
+     it sits in so it never outgrows a narrow phone.
+
+     WIDER THAN IT WAS once the cards carried real copy. A narrower card does
+     not hold less text, it holds the same text in more lines — and every line
+     it adds comes off the card's height, which is the dimension already under
+     pressure from a 16:9 picture.
+
+     IT IS NOT THE WHOLE COLUMN, THOUGH, and the subtraction is the sloppiness:
+     a card as wide as the space it sits in has nowhere to be scattered TO. The
+     stage clips, so the corners that are supposed to stick out past the top
+     card were being cut off at the gutter instead, and the pile came out
+     looking neatly squared up — the one thing it is not meant to look. */
+  --musie-deck-card-inline: min(100% - var(--sp-5), 22.5rem);
+  /* NO CARD RATIO. There was one, and it is gone — the pile takes its height
+     from the tallest card in it. See .musie-deck__pile. */
+  /* The crop the pictures are presented at. Five photographs of five
+     different shapes, shown as one shape. Dimensionless, like the card's own
+     ratio. */
+  --musie-deck-image-ratio: 16 / 9;
   /* HOW SLOPPY THE PILE IS. The most a resting card leans off square. Found by
      looking rather than by reasoning: at 5deg the pile reads as a printing
      misalignment, and somewhere past 9 it stops reading as "dropped on a
@@ -71,8 +85,16 @@
   display: grid;
   place-items: center;
   gap: var(--space-gap-stack);
-  min-block-size: var(--view-block);
-  padding: var(--sp-6) var(--gutter);
+  /* NO `min-block-size: var(--view-block)`, which this had and which was
+     wrong. `--view-block` is the viewport less the SHELL's chrome, so it is
+     the right height for something that starts at the top of the page — and
+     this stage starts below a heading and a paragraph. It was claiming that
+     space twice: the stage came out taller than the room actually left, the
+     `place-items: center` then centred the pile inside it, and the controls
+     and the hint were pushed past the fold by a box that was too tall for a
+     deck that fitted. Content-sized, the whole thing lands above the fold at
+     393×852 in both languages. */
+  padding: var(--sp-5) var(--gutter);
   overflow: clip;
   /* The pile is the page's one touch surface. Vertical scrolling still belongs
      to the browser — see THE AXIS IS DECIDED in DeckPoc.tsx — so this is
@@ -90,7 +112,26 @@
   display: grid;
   grid-template-areas: 'card';
   inline-size: var(--musie-deck-card-inline);
-  aspect-ratio: var(--musie-deck-card-ratio);
+  /* NO `aspect-ratio`, AND THAT IS THE POINT. Every card is in this one cell,
+     so the cell is already as tall as the tallest of them — which means the
+     deck is exactly tall enough for the longest description, in whatever
+     language is on, at whatever width the column happens to be.
+
+     It was a fixed 5:8 first, and a fixed ratio on a box full of reflowing
+     prose is a promise you cannot keep: the ratio was set at 393px against the
+     German copy, and at 360px the same sentence takes one line more while the
+     card has got SHORTER. Letting the content state its own height removes the
+     number, the breakpoint it was true at, and the clipping. */
+  /* ROOM FOR THE FRINGE. The cards are scattered and the deeper ones sit lower,
+     so the pile PAINTS further down than its box goes — and with nothing
+     reserved, the bottom of the second card landed on top of the counter and
+     the buttons, showing its time row under the front card's as if the deck
+     were giving two answers.
+
+     Derived, not measured: it is the furthest a card can be pushed down, which
+     is its own scatter plus the deepest rise — the same two terms the
+     transform adds, so it stays true if either is retuned. */
+  margin-block-end: calc(var(--sp-2) * 2 + var(--sp-2) * 4);
   /* The focus ring belongs to the pile, because the pile is what takes focus:
      the cards are data, the pile is the control. `--focus-ring-clearance`
      keeps the ring off the topmost card's corners. */
@@ -158,10 +199,10 @@
 
   transform:
     translate3d(
-      calc(var(--sp-4) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
+      calc(var(--sp-3) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
       calc(
-        var(--sp-4) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px +
-        var(--sp-3) * var(--musie-card-rise)
+        var(--sp-2) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px +
+        var(--sp-2) * var(--musie-card-rise)
       ),
       0
     )
@@ -223,8 +264,8 @@
   from {
     transform:
       translate3d(
-        calc(var(--sp-4) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
-        calc(var(--sp-4) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px),
+        calc(var(--sp-3) * var(--musie-card-scatter-x) + var(--musie-drag-x) * 1px),
+        calc(var(--sp-2) * var(--musie-card-scatter-y) + var(--musie-drag-y) * 1px),
         0
       )
       rotate(
@@ -282,81 +323,118 @@
 }
 
 /* ═══ THE FACE ═══════════════════════════════════════════════════════════════
-   A wash of the card's own accent over the raised surface, rather than the
-   accent as the background: the surface token still carries the light/dark
-   answer, and the accent only tints it. Three accents across nine cards, fixed
-   by the card's place in the printed deck and NOT by its place in the pile —
-   a card keeps its colour when the deck is shuffled, because the colour
-   belongs to the card.                                                      */
+   Three rows: the picture, the words, the time. The picture is full-bleed to
+   three edges and the other two are inset, so the face itself carries NO
+   padding — `--space-inset-card` is spent by the body and the foot
+   individually. A padded face with a negatively-margined image is the other
+   way to write this and it is the one that breaks the moment the inset token
+   changes.
+
+   The wash is the card's own accent over the raised surface, rather than the
+   accent AS the background: the surface token still carries the light/dark
+   answer, and the accent only tints it. Three accents across five cards, fixed
+   by the exercise's `sort` and NOT by its place in the pile — a card keeps its
+   colour when the deck is shuffled, because the colour belongs to the card. */
 .musie-deck__face {
   display: grid;
+  /* The body takes 1fr, which on the TALLEST card is exactly its content and
+     on the others is a little slack that pushes the time row to the foot.
+     `min-block-size: 0` on the body is a safety net rather than load-bearing
+     now that nothing fixes the card's height: it means a description long
+     enough to overrun is clipped by the card instead of pushing the time row
+     out through the bottom of it. */
   grid-template-rows: auto 1fr auto;
-  gap: var(--space-gap-related);
-  padding: var(--space-inset-card);
   border-radius: inherit;
   background-color: var(--musie-card-accent-wash);
-  /* The face must clip to the card's corners: without this the wash paints
-     square corners over the card's rounded ones. */
+  /* The face must clip to the card's corners: without this the wash — and the
+     image's own square top corners — paint over the card's rounded ones. This
+     one line is what makes the picture meet the card's edge cleanly on all
+     three sides with no radius repeated anywhere. */
   overflow: clip;
 }
 
-.musie-deck__card[data-accent='1'] .musie-deck__face {
-  --musie-card-accent-wash: var(--accent-1-subtle);
-  --musie-card-accent-text: var(--accent-1-text);
-  --musie-card-accent-rule: var(--accent-1-border);
+/* ── THE PICTURE ───────────────────────────────────────────────────────────
+   Flush to the top, the left and the right: no padding on the face, `100%` of
+   the card's width, and the face's `overflow: clip` rounding its top corners
+   to the card's own radius. There is nothing to keep in step — the image has
+   no radius of its own to go stale when `--radius-lg` moves.
+
+   CROPPED, NOT FITTED. `object-fit: cover` with a fixed ratio, so five
+   photographs of different shapes present as one shape. `object-position` is
+   left at its centre default: these are centred compositions (hands on a
+   belly, someone cross-legged seen from behind), so the middle is the subject
+   in all five. A set where it was not would need a per-image focal point,
+   which is a column in the content table and not a decision for a POC.      */
+.musie-deck__image {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: var(--musie-deck-image-ratio);
+  object-fit: cover;
+  /* The images are photographs on a tinted card. While one is still arriving,
+     this is what occupies its band — the sunken surface rather than the wash,
+     so the gap reads as a hole in the card rather than part of its colour. */
+  background-color: var(--surface-sunken);
 }
 
-.musie-deck__card[data-accent='2'] .musie-deck__face {
-  --musie-card-accent-wash: var(--accent-2-subtle);
-  --musie-card-accent-text: var(--accent-2-text);
-  --musie-card-accent-rule: var(--accent-2-border);
+/* ── THE WORDS ─────────────────────────────────────────────────────────────
+   `min-block-size: 0` is the half of the 1fr row that does the work; see the
+   note on `grid-template-rows` above.                                      */
+.musie-deck__body {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-gap-related);
+  min-block-size: 0;
+  padding: var(--space-inset-card) var(--space-inset-card) var(--space-gap-stack);
+  overflow: clip;
 }
 
-.musie-deck__card[data-accent='3'] .musie-deck__face {
-  --musie-card-accent-wash: var(--accent-3-subtle);
-  --musie-card-accent-text: var(--accent-3-text);
-  --musie-card-accent-rule: var(--accent-3-border);
-}
-
-/* The printed code, in the corner, the way it is on the paper card. */
-.musie-deck__code {
+.musie-deck__headline {
   margin: 0;
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  /* A code is a serial number, not a word: it takes tracking a word would not
-     want, and it is the one string on the card that is never translated. */
-  letter-spacing: var(--type-label-md-tracking);
-  color: var(--on-surface-muted);
-}
-
-/* The feeling. The card's whole reason to exist, so it takes the display face
-   and the middle row, optically centred rather than top-aligned. */
-.musie-deck__feeling {
-  margin: 0;
-  align-self: center;
-  font-family: var(--type-display-lg-family);
-  font-size: var(--type-display-lg-size);
-  font-weight: var(--type-display-lg-weight);
-  line-height: var(--type-display-lg-line);
-  letter-spacing: var(--type-display-lg-tracking);
-  color: var(--musie-card-accent-text);
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
-  /* Sehnsucht, Dankbarkeit, Einsamkeit — German compounds in display type at
+  /* Achtsamkeitspause, Körperreise — German compounds in heading type at
      393px, which is exactly the case Layer 1 turned hyphenation on for. It
      only works while <html lang> tracks the locale, which LocaleProvider
      guarantees. */
   hyphens: var(--text-hyphens);
 }
 
-/* A rule along the foot, in the card's accent: the one mark that tells you a
-   card has a colour at all once the wash is this pale. */
-.musie-deck__rule {
-  block-size: var(--border-width-thick);
-  border-radius: var(--radius-full);
-  background-color: var(--musie-card-accent-rule);
+.musie-deck__text {
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
 }
+
+/* ── THE TIME ──────────────────────────────────────────────────────────────
+   Bottom left, and the row is `start`-aligned rather than spread: there is one
+   thing in it, and a `space-between` row with one child is a row that will put
+   the next thing somebody adds in the wrong place.                          */
+.musie-deck__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-gap-inline);
+  margin: 0;
+  padding: 0 var(--space-inset-card) var(--space-inset-card);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  color: var(--musie-card-accent-text);
+  /* "2–12 min" and "10–12 min" sit at different widths and the card is a
+     fixed size, so the row would shift under a shuffle without this. */
+  font-variant-numeric: tabular-nums;
+}
+
 
 /* ═══ THE CHROME UNDER THE PILE ══════════════════════════════════════════════
    The buttons are the reason the gesture is allowed to be invisible. Nothing
@@ -374,6 +452,12 @@
   margin: 0;
   min-inline-size: var(--sp-9);
   text-align: center;
+  /* IT MUST NOT WRAP. It used to show the exercise's name as well as the
+     number — "Mindful Pause — card 1 of 5" — which took two lines, made the
+     control row twice as tall and left the chevrons floating against its
+     middle. The name is still announced; it is just not drawn. See the
+     counter in DeckPoc.tsx. */
+  white-space: nowrap;
   font-family: var(--type-label-md-family);
   font-size: var(--type-label-md-size);
   line-height: var(--type-label-md-line);

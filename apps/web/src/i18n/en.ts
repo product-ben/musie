@@ -883,14 +883,21 @@ export const en = {
 
   /* ── /dev/deck · PROOF OF CONCEPT ───────────────────────────────────────
      A tool route, like the QR sheet, and deletable in one commit: nothing in
-     the product links to it or imports it. The card FEELINGS are not here —
-     they are content, they live in supabase/content/deck.json, and this
-     catalogue is for the words the screen says in its own voice. */
+     the product links to it or imports it. NOTHING ON THE FACE OF A CARD is
+     here — the name, the description and the picture are the exercise's, read
+     from the same table /exercises reads. This catalogue is for the words the
+     screen says in its OWN voice. The one apparent exception is the time,
+     which the card borrows from `exercises.fact.time*` below rather than
+     saying a second way. */
   'poc.deck.title': 'The deck',
-  'poc.deck.text': 'Nine cards in a loose pile. Drag the top one and it follows your finger. Let go past a third of its width, or flick it, and it goes to the bottom.',
+  'poc.deck.text': 'Every exercise as a card, in a loose pile. Drag the top one away, or flick it.',
   'poc.deck.hint': 'Arrow keys and the buttons do the same thing.',
   'poc.deck.stage': 'The deck. Drag the top card, or move through it with the arrow keys.',
-  'poc.deck.position': '{feeling} — card {index} of {total}',
+  /* DRAWN: just the numbers, so the control row stays one line whatever an
+     exercise is called. ANNOUNCED: the sentence below, which names the card
+     that is now on top — "3 / 5" alone says the pile moved but not to what. */
+  'poc.deck.counter': '{index} / {total}',
+  'poc.deck.position': '{name} — card {index} of {total}',
   'poc.deck.previous': 'Show the previous card',
   'poc.deck.next': 'Show the next card',
   'poc.deck.shuffle': 'Shuffle the deck',  /* ── Route titles · PLACEHOLDER SCAFFOLDING ────────────────────────────── */
