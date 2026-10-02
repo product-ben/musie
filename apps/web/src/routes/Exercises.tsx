@@ -48,9 +48,9 @@
  * catalogue's own `exercises.fact.time*`.
  */
 import * as React from 'react';
-import { GalleryHorizontalEnd, Headphones, LayoutList, Layers, Play, Shuffle, SkipForward, Timer } from 'lucide-react';
+import { LayoutList, Layers, Play, Shuffle, SkipForward, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { CardDeck, CtaButton, Icon, RadioCardLegend, RadioCards, SegmentedControl } from '@musie/design-system';
+import { CardDeck, CtaButton, Icon, RadioCards, SegmentedControl } from '@musie/design-system';
 import type { CardDeckItem, RadioCardFact } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
@@ -257,19 +257,6 @@ export function Exercises() {
                deck against something nobody is proposing to ship. */
             <>
             <div className="musie-deck-toolbar">{viewSwitch}</div>
-            {/* WHAT THE THREE GLYPHS MEAN. It was a key above the cards on the
-                screen this replaced, and it belongs here rather than over the
-                deck: a card in the pile carries only the timeframe, and these
-                are the facts the LIST shows. Dropping it with the old screen
-                would have been a quiet subtraction. */}
-            <RadioCardLegend
-              className="musie-legend-row"
-              items={[
-                { id: 'time', glyph: Timer, label: t('exercises.legend.time') },
-                { id: 'cards', glyph: GalleryHorizontalEnd, label: t('exercises.legend.cards') },
-                { id: 'sound', glyph: Headphones, label: t('exercises.legend.sound') },
-              ]}
-            />
             <RadioCards
               name="exercises-list"
               /* THE SCREEN'S OWN QUESTION, not the view switch's name. The
@@ -322,30 +309,28 @@ export function Exercises() {
 }
 
 /**
- * The three conditions, built from the row rather than written out — the same
- * shape /exercises builds, from the same keys.
+ * THE TIME, AND NOTHING ELSE.
  *
- * TIME IS ALWAYS THERE; the other two are flags. A card states what is true of
- * it, and padding the row to a fixed three would mean drawing a crossed-out
- * headphone for an exercise that simply makes no sound.
+ * There were three facts here — the duration, "needs your deck" and "sound on"
+ * — each with its own glyph, and a legend above the list saying what the three
+ * glyphs meant. Ben cut the deck and headphone glyphs and the legend with them
+ * (2026-10-02). The duration is the one that varies in a way worth comparing
+ * two exercises on; the other two were true of almost all of them, so they
+ * spent a row of every card and a block of chrome to say very little.
+ *
+ * `needsCards` and `needsSound` are still on the row and still read by the
+ * session — this screen just stops drawing them.
  */
 function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact[] {
   const min = String(exercise.timeframeMin);
   const max = String(exercise.timeframeMax);
 
-  const facts: RadioCardFact[] = [{
+  return [{
     id: 'time',
     glyph: Timer,
     text: t('exercises.fact.time', { min, max }),
     shortText: t('exercises.fact.timeShort', { min, max }),
   }];
-  if (exercise.needsCards) {
-    facts.push({ id: 'cards', glyph: GalleryHorizontalEnd, text: t('exercises.fact.cards') });
-  }
-  if (exercise.needsSound) {
-    facts.push({ id: 'sound', glyph: Headphones, text: t('exercises.fact.sound') });
-  }
-  return facts;
 }
 
 /**

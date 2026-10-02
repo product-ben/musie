@@ -229,9 +229,3 @@
    deal with against a column you read — and in nothing else. The bespoke list
    that used to live here compared the deck against something nobody was
    proposing to ship. */
-
-/* The glyph key, above the list. Its own gap from the cards below, because it
-   explains them rather than belonging to them. */
-.musie-legend-row {
-  margin-block-end: var(--space-gap-group);
-}

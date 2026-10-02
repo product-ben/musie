@@ -259,15 +259,10 @@ export const en = {
   /* THE GLYPH LEGEND — the shortest true word for each of the three fact
      glyphs, above the cards. A key is only useful before the thing it
      explains. */
-  'exercises.legend.time': 'Time',
-  'exercises.legend.cards': 'Card deck',
-  'exercises.legend.sound': 'Sound',
   /* The facts themselves. Each is announced in full; only the duration has a
      short form worth drawing beside its glyph. */
   'exercises.fact.time': 'Takes {min} to {max} minutes',
   'exercises.fact.timeShort': '{min}–{max} min',
-  'exercises.fact.cards': 'Needs your Mindfulness Cards deck',
-  'exercises.fact.sound': 'Sound on — headphones recommended',
   /* The escape hatch for "I don't want to choose". It picks among the
      IMPLEMENTED exercises only — the prototype picked among all three and then
      opened the not-implemented lightbox two times in three. */

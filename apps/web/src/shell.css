@@ -389,26 +389,6 @@
   hyphens: var(--text-hyphens);
 }
 
-/* ═══ THE GLYPH KEY AND THE ESCAPE HATCH, ON ONE ROW ════════════════════════
-   /exercises puts `RadioCardLegend` and "let Musie pick an exercise" on the
-   same line: the key explains what the cards say, and the escape hatch is the
-   alternative to reading them, so both belong with the instruction to choose
-   rather than stacked above and below it. The prototype does the same.
-
-   The system has no legend-and-action row, which is what makes this a
-   permitted L14 pattern — and both halves ARE components; only the row is new.
-
-   `wrap` with `space-between`: at 393px the key and the button do not fit on
-   one line, and wrapping puts the button under the key rather than squeezing
-   either. `align-items: baseline` so the key's words and the button's label
-   sit on one line when they do share it.                                    */
-.musie-legend-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-gap-inline) var(--space-gap-stack);
-}
 
 /* ═══ THE WAY OUT OF THE DIARY, AND BACK INTO A SESSION ═════════════════════
    Ben, 2026-09-24. *Start a session*, directly under the newest entry: the

@@ -188,16 +188,11 @@ export const de: Messages = {
   /* ── Exercises ───────────────────────────────────────────────────────────── */
   'exercises.notImplemented': 'Noch nicht verfügbar',
   'exercises.legend': 'Übung wählen',
-  'exercises.legend.time': 'Dauer',
   /* 'Kartenset', one word: it is a compound with a dictionary break point, so
      --text-hyphens: auto handles it and there is nothing to rephrase. */
-  'exercises.legend.cards': 'Kartenset',
-  'exercises.legend.sound': 'Ton',
   'exercises.fact.time': 'Dauert {min} bis {max} Minuten',
   'exercises.fact.timeShort': '{min}–{max} Min.',
   /* Durchkopplung, as everywhere else this product name meets a German noun. */
-  'exercises.fact.cards': 'Braucht dein Mindfulness-Karten-Set',
-  'exercises.fact.sound': 'Ton an – Kopfhörer empfohlen',
   'exercises.alreadyRunning': 'Es läuft schon eine Session',
   'exercises.alreadyRunningDetail': 'Beende oder schließe die laufende Session, bevor du eine neue startest.',
   'exercises.goToSession': 'Zu dieser Session',
