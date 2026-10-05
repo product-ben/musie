@@ -266,20 +266,57 @@ export const en = {
   /* The escape hatch for "I don't want to choose". It picks among the
      IMPLEMENTED exercises only — the prototype picked among all three and then
      opened the not-implemented lightbox two times in three. */
-  /* The database refuses a second running session (a partial unique index), so
-     this is a real outcome rather than a defensive branch. It is a Message
-     with a way forward, not an error: the session it collides with is the
-     user's own and is one tap away. */
-  'exercises.alreadyRunning': 'A session is already running',
-  'exercises.alreadyRunningDetail': 'Finish or close the one you are in before starting another.',
-  'exercises.goToSession': 'Continue that session',
-  /* THE OTHER WAY OUT, and it names the exercise rather than saying "this
-     one": the message sits above a list of five cards, and the one it is
-     talking about is greyed out with the rest of them. The session it ends is
-     recorded as abandoned, which is what the diary already calls a run that
-     stopped before its reflection — so 'end' is the honest verb and 'finish'
-     would be a lie about the row. */
-  'exercises.endAndStart': 'Start {name} and end the previous session',
+  /* ── A SESSION THAT IS ALREADY RUNNING · rewritten 2026-10-05 ────────────
+     The database refuses a second running one (a partial unique index), so
+     this is a real outcome rather than a defensive branch.
+
+     IT IS SAID TWICE ON ONE SCREEN NOW, and the same way both times: as a
+     notice at the top of /exercises while a run is open, and in the dialog if
+     somebody presses a card anyway. One sentence for both — two voices for one
+     fact is how a product stops sounding like one product.
+
+     'A SESSION IS ALREADY RUNNING' IS GONE, with the sentence under it. The
+     old pair answered a collision and nothing else: a flat statement, then
+     'Finish or close the one you are in before starting another' — homework,
+     set directly above the button that does it for you. The headline names the
+     exercise instead, because that is the thing somebody has to recognise
+     before they can decide anything about it. */
+  'exercises.running.headline': '{name} is still running',
+  /* WHAT GOES IN `{name}` WHEN THE CATALOGUE HAS NO ROW for the running
+     session's exercise — content that was retired, or a locale that never had
+     it. A generic noun rather than an id nobody has ever seen: "A session is
+     still running" is the old headline, kept for exactly the case it was
+     written for. */
+  'exercises.running.fallback': 'A session',
+  /* Only in the notice. 'Stopped at' is the diary's own phrase for this exact
+     fact (`diary.stoppedAt`), and `session.step.*` supplies the word — which is
+     why `session.step.intro` is 'Start' rather than 'Begin'. It is NOT in the
+     dialog: that one carries a button reading 'Start {name} and end this one',
+     and 'You stopped at Start' beside it reads as a riddle. */
+  'exercises.running.stoppedAt': 'You stopped at {step}.',
+  /* The notice's quiet way out, for somebody who came here to start something
+     else. 'End', not 'close': the row is written `abandoned`, which is what the
+     diary already calls a run that stopped before its reflection. */
+  'exercises.running.end': 'End that session',
+  /* Only in the dialog, where a choice is actually being asked for. The last
+     sentence is the honest one and it is new: `session.close.text` has always
+     said a closed run cannot be picked up again, and the dialog whose second
+     button does exactly that never mentioned it. */
+  'exercises.running.choice': 'You can pick it up where you left it, or end it and start {name} instead. A session you end cannot be picked up again.',
+  /* THE SAME WORDS THE DRAWER USES (`menu.continueSession`), deliberately: two
+     doors to one running session that name it differently are two doors people
+     have to learn separately. Two keys rather than one because they are
+     different things to the eye — a row in a nav list, and the primary answer
+     of a dialog. If a third place ever needs this sentence, it moves to
+     `common.`. */
+  'exercises.goToSession': 'Continue session',
+  /* THE OTHER WAY OUT, and the exercise's name stays at the FRONT (Ben,
+     2026-09-24: it is what you look for when you reach for this button). What
+     went is the description of the other session — 'and end the previous
+     session' — now that the headline above names it. The session it ends is
+     recorded as abandoned, so 'end' is the honest verb and 'finish' would be a
+     lie about the row. */
+  'exercises.endAndStart': 'Start {name} and end this one',
   /* NOT `content.error`. That one says "This content could not be loaded",
      which is true of a list that did not arrive and false of a tap that did
      not start anything — and this is the only thing on the screen that says
@@ -952,9 +989,14 @@ export const en = {
      than the swipe, because a swipe is not what this reader is going to
      make. */
   'exercises.deckLabel': 'The deck. Enter starts the exercise on the top card; the arrow keys show the next one and the one before.',
-  /* The accept, twice: in full on the button beside the deck, and as short as
-     a card's own corner has room for. */
-  'exercises.start': 'Start the exercise',
+  /* THE ACCEPT, ONCE. `exercises.start` — "Start the exercise" — went with the
+     big button beside the deck on 2026-10-05: the card carries this action now,
+     and the long form had no second place to be said. The comment further up
+     this file saying there is no `exercises.start` is true again.
+
+     As short as a card's own corner has room for, and the corner is why: at
+     label size on a 297px card, "Übung starten" and the time do not share a
+     row. */
   'exercises.startShort': 'Start',
   /* NO 'exercises.startHint'. It was the overlay's second line — "Press a card
      to start it" — and the card now carries a button that says the same thing
@@ -971,15 +1013,22 @@ export const en = {
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',
-  /* The view switch. Icon-only, so the labels are never drawn — which is
-     exactly why they have to be written: they are the only thing naming each
-     segment for a screen reader. */
   /* A SHORTER FORM of `exercises.surpriseMe`. The same action; the long one
      is right where it is, as a full-width CTA on /exercises. Here it is the
      third button in a column and has to read at a glance beside two others. */
   'exercises.surpriseMeShort': 'Pick a card for me',
+  /* The view switch. ONE OF THESE TWO IS NOW DRAWN, not neither: the segmented
+     control gives its word to the view you are NOT in (`labels="unchecked"`),
+     so whichever half you might press says what pressing it would get you —
+     and the other is read off the glyph you are already on. Both are still the
+     accessible name of their segment, which is why both had to be written even
+     while neither was drawn.
+
+     ONE WORD EACH. The drawn one sits in a 36px track beside a glyph, so this
+     is the shortest true name for each view rather than its description —
+     'Stack', not 'Card stack'. */
   'exercises.view.legend': 'How to show the exercises',
-  'exercises.view.deck': 'Card stack',
+  'exercises.view.deck': 'Stack',
   'exercises.view.list': 'List',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',

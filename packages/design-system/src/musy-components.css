@@ -527,52 +527,22 @@
   background-color: var(--interactive-ghost-active);
 }
 
-/* ── accent-styled solids ────────────────────────────────────────────────────
-   Literal placeholder names (Decision 3). Same six states as primary, from the
-   accent families' own solved tokens — note -on differs per family: ocher and
-   purple are light solids, so their foreground is theme-conditional where
-   terracotta's is not. That is exactly why these are separate variants and not
-   a hue swap on primary. */
-.musy-btn--accent {
-  background-color: var(--interactive-accent);
-  border-color: var(--interactive-accent-border);
-  color: var(--interactive-accent-on);
-}
-.musy-btn--accent-alt {
-  background-color: var(--interactive-accent-alt);
-  border-color: var(--interactive-accent-alt-border);
-  color: var(--interactive-accent-alt-on);
-}
-@media (hover: hover) and (pointer: fine) {
-  .musy-btn--accent:hover:not(:disabled):not([data-loading]),
-  .musy-btn--accent[data-force~="hover"] {
-    background-color: var(--interactive-accent-hover);
-  }
-  .musy-btn--accent-alt:hover:not(:disabled):not([data-loading]),
-  .musy-btn--accent-alt[data-force~="hover"] {
-    background-color: var(--interactive-accent-alt-hover);
-  }
-}
-.musy-btn--accent:active:not(:disabled),
-.musy-btn--accent[data-pressed]:not(:disabled),
-.musy-btn--accent[data-force~="active"] {
-  background-color: var(--interactive-accent-active);
-}
-.musy-btn--accent-alt:active:not(:disabled),
-.musy-btn--accent-alt[data-pressed]:not(:disabled),
-.musy-btn--accent-alt[data-force~="active"] {
-  background-color: var(--interactive-accent-alt-active);
-}
-.musy-btn--accent:disabled, .musy-btn--accent[data-disabled] {
-  background-color: var(--interactive-accent-disabled);
-  border-color: transparent;
-  color: var(--interactive-accent-on-disabled);
-}
-.musy-btn--accent-alt:disabled, .musy-btn--accent-alt[data-disabled] {
-  background-color: var(--interactive-accent-alt-disabled);
-  border-color: transparent;
-  color: var(--interactive-accent-alt-on-disabled);
-}
+/* ── THE TWO ACCENT SOLIDS ARE GONE (Ben, 2026-10-05) ─────────────────────
+   `.musy-btn--accent` (ocher) and `.musy-btn--accent-alt` (purple) stood here
+   with the same six states as primary. The brief is "CTAs in primary
+   terracotta, secondary and ghost — not the yellow one any more", and the
+   variants went with their only two call sites.
+
+   IT ALSO SETTLES A QUESTION THAT HAD BEEN OPEN FOR MONTHS, by removing its
+   subject: conflict B12 / open question 7 asked WHICH accent a screen should
+   reach for, and nothing in the system ever answered it. For buttons there is
+   no longer anything to answer — a CTA is the way on or it is quiet.
+
+   THE ACCENT FAMILIES THEMSELVES ARE UNTOUCHED. `--interactive-accent*` still
+   dresses Switch, RadioCards, RadioGroupText, Carousel, InteractiveWizard,
+   SegmentedControl and FilterChips through their own `accent` PROP, and
+   `TrackButton` and `RecordButton` keep their accent variants: those are not
+   CTAs. Flagged in stories/OPEN-QUESTIONS.md.                              */
 
 .musy-btn:disabled, .musy-btn[data-disabled] { cursor: not-allowed; }
 .musy-btn--primary:disabled, .musy-btn--primary[data-disabled] {

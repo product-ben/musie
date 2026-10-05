@@ -35,8 +35,19 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { label, reachTheLibrary, service, startExercise, withLocale } from './support';
 import type { Locale } from './support';
 
-/** The one implemented exercise, and the one the row must come back holding. */
+/** The exercise these walks start, and the one the row must come back holding. */
 const EXERCISE = 'mindfulness-cards';
+
+/**
+ * A SECOND implemented exercise, and it is what makes the refusal reachable.
+ *
+ * Pressing the card of the exercise that is ALREADY RUNNING no longer refuses
+ * anything (2026-10-05): it continues that session, because "end Mindful Break
+ * and start Mindful Break instead" is a sentence rather than a question. So a
+ * walk that wants the collision has to ask for a different exercise, and this
+ * is the other one the seed marks `implemented`.
+ */
+const OTHER_EXERCISE = 'free-rein';
 
 /**
  * The exercise's own name, in the run's language.
@@ -46,11 +57,15 @@ const EXERCISE = 'mindfulness-cards';
  * by both walks in this file — the second one needs it twice over, because the
  * button it presses has the name INSIDE it.
  */
-async function exerciseName(db: SupabaseClient, locale: Locale): Promise<string> {
+async function exerciseName(
+  db: SupabaseClient,
+  locale: Locale,
+  exercise: string = EXERCISE,
+): Promise<string> {
   const { data } = await db
     .from('exercise_i18n')
     .select('name')
-    .eq('exercise_id', EXERCISE)
+    .eq('exercise_id', exercise)
     .eq('locale', locale)
     .single();
   expect(data, 'the exercise has no name in this locale').toBeTruthy();
@@ -90,6 +105,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
   await reachTheLibrary(page, locale);
 
   const name = await exerciseName(db, locale);
+  const other = await exerciseName(db, locale, OTHER_EXERCISE);
 
   /* ── Start it ────────────────────────────────────────────────────────────
      THE CARD IS THE CONTROL since 2026-09-24: one click, no detail lightbox.
@@ -97,7 +113,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      is asserting about — `startExercise` matches on a substring, since a card's
      accessible name is its headline followed by its description and its fact
      chips. */
-  await startExercise(page, name);
+  await startExercise(page, locale, name);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
@@ -147,13 +163,21 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      BACKWARDS, and every step change writes `sessions.step`. That would
      rewrite the one column this walk exists to assert. */
   await page.goto('/exercises');
-  await startExercise(page, name);
+  /* THE OTHER EXERCISE, because asking for the running one is no longer a
+     question — see OTHER_EXERCISE. */
+  await startExercise(page, locale, other);
 
-  /* NOT `exact`. `Message` puts a screen-reader status word inside the
-     heading — "Warning: A session is already running" — so the accessible name
-     is the sentence with a word in front of it. */
+  /* `exact`, WHICH IT COULD NOT BE BEFORE. The refusal was a `Message`, whose
+     heading carries a screen-reader status word — "Warning: A session is
+     already running" — and the dialog that replaced it drew the same sentence
+     twice, as its own hidden title and again as the box's headline. Both are
+     gone: one heading, one name, and it NAMES THE RUNNING EXERCISE, which is
+     the half a hardcoded English string would fail in the German run. */
   await expect(
-    page.getByRole('heading', { name: label(locale, 'exercises.alreadyRunning') }),
+    page.getByRole('heading', {
+      name: label(locale, 'exercises.running.headline', { name }),
+      exact: true,
+    }),
   ).toBeVisible({ timeout: 15_000 });
 
   /* ── THE LIST HOLDS STILL, AND IT KEEPS WHAT WAS CHOSEN ─────────────────
@@ -162,7 +186,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      than the one the message is talking about, and a card that lost its
      selection would leave that message asking about nothing. Asserted on the
      same element, because it is one requirement. */
-  const refusedCard = page.getByRole('radio', { name });
+  const refusedCard = page.getByRole('radio', { name: other });
   await expect(refusedCard, 'the refused card lost its selection').toBeChecked();
   await expect(refusedCard, 'the list stayed live under the refusal').toBeDisabled();
 
@@ -171,7 +195,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      which is the half of it that a hardcoded English label would fail. */
   await expect(
     page.getByRole('button', {
-      name: label(locale, 'exercises.endAndStart', { name }),
+      name: label(locale, 'exercises.endAndStart', { name: other }),
       exact: true,
     }),
   ).toBeVisible();
@@ -195,7 +219,10 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
 
   await refusedCard.click();
   await expect(
-    page.getByRole('heading', { name: label(locale, 'exercises.alreadyRunning') }),
+    page.getByRole('heading', {
+      name: label(locale, 'exercises.running.headline', { name }),
+      exact: true,
+    }),
     'tapping the same card a second time did nothing',
   ).toBeVisible({ timeout: 15_000 });
 
@@ -297,7 +324,10 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
   await startRow.click();
   await expect(page).toHaveURL(/\/exercises$/);
   await expect(
-    page.getByRole('heading', { name: label(locale, 'exercises.alreadyRunning') }),
+    page.getByRole('heading', {
+      name: label(locale, 'exercises.running.headline', { name }),
+      exact: true,
+    }),
   ).toHaveCount(0);
 
   /* ── AND THE ROW IS IN POSTGRES ──────────────────────────────────────────*/
@@ -359,12 +389,13 @@ test('the library ends the running session and starts the one that was asked for
 
   await reachTheLibrary(page, locale);
   const name = await exerciseName(db, locale);
+  const other = await exerciseName(db, locale, OTHER_EXERCISE);
 
   /* ── One running session, one step in ───────────────────────────────────
      A step in, so the row that gets ended is a row with something in it — an
      end that only ever happened on `intro` would not prove that `step` is left
      alone, and the diary reads that column for an unfinished run. */
-  await startExercise(page, name);
+  await startExercise(page, locale, name);
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const firstId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
   expect(firstId).toBeTruthy();
@@ -391,10 +422,15 @@ test('the library ends the running session and starts the one that was asked for
      above gives: walking backwards would rewrite `sessions.step`, and this
      test asserts that the end left that column alone. */
   await page.goto('/exercises');
-  await startExercise(page, name);
+  /* A DIFFERENT exercise, because asking for the running one continues it
+     now rather than refusing — see OTHER_EXERCISE. */
+  await startExercise(page, locale, other);
 
   await expect(
-    page.getByRole('heading', { name: label(locale, 'exercises.alreadyRunning') }),
+    page.getByRole('heading', {
+      name: label(locale, 'exercises.running.headline', { name }),
+      exact: true,
+    }),
   ).toBeVisible({ timeout: 15_000 });
 
   /* THE BUTTON NAMES THE EXERCISE, and `exact` is carrying that: the label is
@@ -403,7 +439,7 @@ test('the library ends the running session and starts the one that was asked for
      forgot to say which exercise it means. */
   await page
     .getByRole('button', {
-      name: label(locale, 'exercises.endAndStart', { name }),
+      name: label(locale, 'exercises.endAndStart', { name: other }),
       exact: true,
     })
     .click();
@@ -472,7 +508,7 @@ test('the menu ends the running session and hands back the library', async ({ pa
   await reachTheLibrary(page, locale);
   const name = await exerciseName(db, locale);
 
-  await startExercise(page, name);
+  await startExercise(page, locale, name);
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
   expect(sessionId).toBeTruthy();
@@ -518,7 +554,10 @@ test('the menu ends the running session and hands back the library', async ({ pa
      that the end actually landed before the navigation did. */
   await expect(page).toHaveURL(/\/exercises$/, { timeout: 15_000 });
   await expect(
-    page.getByRole('heading', { name: label(locale, 'exercises.alreadyRunning') }),
+    page.getByRole('heading', {
+      name: label(locale, 'exercises.running.headline', { name }),
+      exact: true,
+    }),
   ).toHaveCount(0);
 
   /* ── THE ROW ────────────────────────────────────────────────────────────*/
@@ -553,7 +592,7 @@ test('the menu ends the running session and hands back the library', async ({ pa
   /* ── AND STARTING WORKS AGAIN ───────────────────────────────────────────
      The end is only worth anything if the next start is not refused. */
   await page.goto('/exercises');
-  await startExercise(page, name);
+  await startExercise(page, locale, name);
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
   expect((/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1]).not.toBe(sessionId);
 

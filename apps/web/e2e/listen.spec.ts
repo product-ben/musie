@@ -45,7 +45,7 @@ test('the listen step opens at the top of its stage', async ({ page }, testInfo)
 
   await withLocale(page, locale);
   await reachTheLibrary(page, locale);
-  await startExercise(page);
+  await startExercise(page, locale);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();

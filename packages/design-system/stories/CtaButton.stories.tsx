@@ -43,11 +43,17 @@ const meta = {
           'the target cannot be made illegal by placing it. Named `min` rather than `small`',
           'so the ladder reads identically on this component and on Icon Button.',
           '',
-          '**The two accent variants are NOT a hue swap on primary**: ocher and purple are',
-          'light solids and take dark ink, where terracotta is a dark solid and takes light',
-          'ink. Each family carries its own solved `-hover` / `-active` / `-on` tokens.',
-          'There is still no rule in the system for WHEN to pick an accent over primary —',
-          'see conflict B12 and open question 7.',
+          '**There are no accent CTAs any more** (Ben, 2026-10-05). `accent` (ocher) and',
+          '`accent-alt` (purple) were variants of this component and are deleted: CTAs are',
+          'primary terracotta, secondary, outline or ghost. Between them they had two call',
+          'sites in the app, and `accent-alt` had none anywhere in the system.',
+          '',
+          'That closes **conflict B12 / open question 7 for this component** by removing',
+          'its subject rather than by answering it: they asked which accent a screen should',
+          'reach for, and nothing ever said. A button is now the way on, or it is quiet.',
+          'The accent *families* are untouched — the components with an `accent` prop still',
+          'offer all three, and TrackButton and RecordButton keep their accent variants.',
+          'Neither of those is a CTA.',
           '',
           '`leadingIcon` is a leading icon **only**. A trailing icon means "this opens',
           'something else", which is a different component.',
@@ -125,18 +131,18 @@ const meta = {
           'What I need from Ben: nothing, just flagging — the gap in the `Sizes` story is',
           'correct and should not be "fixed".',
           '',
-          '## CtaButton — nothing says when to reach for an accent variant instead of `primary`',
-          'Where: `src/CtaButton.tsx:29-31` header, `docs/07-components.md` §7.4 "Accent variants"',
-          'What I checked: Level 1 says outright "There is still no rule in the system for',
-          'WHEN to pick an accent over primary — see conflict B12 and open question 7".',
-          'Level 2, the prototype, uses `accent` exactly twice, both for',
-          '*start over / go back to choosing*, and never uses `accent-alt` at all.',
-          'Level 3 repeats the same open question.',
-          'What I did: the `Variants` story shows all five; the per-story note records only',
-          'the prototype’s observed usage, with no rationale attached.',
-          'Why: CONVENTIONS §7 forbids inventing rationale.',
-          'What I need from Ben: **the missing rule** (open question 7 / conflict B12).',
-          '`accent-alt` currently has no use anywhere in the system.',
+          '## CtaButton — nothing said when to reach for an accent variant — ANSWERED BY DELETION',
+          'Where: `src/CtaButton.tsx` (`CtaVariant`), `src/musy-components.css`',
+          'What I checked: Level 1 said outright "There is still no rule in the system for',
+          'WHEN to pick an accent over primary — see conflict B12 and open question 7", and',
+          'the prototype used `accent` exactly twice — both for *start over / go back to',
+          'choosing* — and `accent-alt` never.',
+          'What I did: removed both variants (Ben, 2026-10-05) and the two app call sites',
+          'with them. The question has no subject left for buttons.',
+          'Why: a variant nobody can say when to use is a variant picked by taste, which is',
+          'the drift a design system exists to prevent.',
+          'What I need from Ben: nothing for CtaButton. B12 stays open for the components',
+          'that take an `accent` PROP, which still offer all three.',
           '',
           '## CtaButton — `loadingLabel` defaults to German and `loading` is never used in the prototype',
           'Where: `src/CtaButton.tsx:70` (`loadingLabel = \'Wird geladen\'`)',
@@ -160,7 +166,7 @@ const meta = {
     children: { control: 'text', description: 'The button label.' },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'outline', 'ghost', 'accent', 'accent-alt'],
+      options: ['primary', 'secondary', 'outline', 'ghost'],
       description:
         'Fill family. Literal placeholder names, per Decision 3 — renaming later is a find-replace, not a redesign.',
     },
@@ -195,11 +201,10 @@ type Story = StoryObj<typeof meta>;
  *  copy. */
 export const Default: Story = {};
 
-/** All six variants. The prototype uses `primary` for the one way forward,
- *  `secondary` for a real but lesser action, `ghost` for Back and anything that
- *  does not advance the flow, and `accent` exactly twice — both
- *  times for start over / go back to choosing. `accent-alt` does not
- *  appear in the prototype at all.
+/** All four variants. The prototype uses `primary` for the one way forward,
+ *  `secondary` for a real but lesser action, and `ghost` for Back and anything
+ *  that does not advance the flow. The two accent variants were deleted on
+ *  2026-10-05; the app's two uses of them are `primary` now.
  *
  *  `outline` is NOT in the prototype either. Reach for `secondary` first: the
  *  two are nearly indistinguishable on a plain page, because `secondary`
@@ -220,12 +225,6 @@ export const Variants: Story = {
       </Row>
       <Row label="variant: ghost">
         <CtaButton {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
-      </Row>
-      <Row label="variant: accent">
-        <CtaButton {...args} variant="accent">Start again</CtaButton>
-      </Row>
-      <Row label="variant: accent-alt">
-        <CtaButton {...args} variant="accent-alt">Start again</CtaButton>
       </Row>
     </Stack>
   ),
@@ -327,19 +326,16 @@ export const LoadingBlock: Story = { args: { loading: true, block: true } };
  *  been seen and "Continue" until a type is picked. */
 export const Disabled: Story = { args: { disabled: true } };
 
-/** Every variant crossed with disabled — each family carries its own `-disabled`
- *  fill and `-on-disabled` ink. */
+/** Every variant crossed with disabled — each carries its own `-disabled` fill
+ *  and `-on-disabled` ink. */
 export const DisabledVariants: Story = {
   render: (args) => (
     <Stack>
       <Row label="disabled">
         <CtaButton {...args} variant="primary" disabled>Continue</CtaButton>
         <CtaButton {...args} variant="secondary" disabled>Simulate scan</CtaButton>
+        <CtaButton {...args} variant="outline" disabled>Let Musie pick</CtaButton>
         <CtaButton {...args} variant="ghost" disabled>Back</CtaButton>
-      </Row>
-      <Row label="disabled — accents">
-        <CtaButton {...args} variant="accent" disabled>Start again</CtaButton>
-        <CtaButton {...args} variant="accent-alt" disabled>Start again</CtaButton>
       </Row>
     </Stack>
   ),

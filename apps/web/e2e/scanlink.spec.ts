@@ -47,7 +47,7 @@ test('a deep link puts its card on the running session', async ({ page }, testIn
   /* Start the one implemented exercise, exactly as the other walks do. The
      deep link needs something RUNNING to write to — that is the whole
      difference between its happy path and its commonest unhappy one. */
-  await startExercise(page);
+  await startExercise(page, locale);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];

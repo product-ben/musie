@@ -56,7 +56,7 @@ export function NotImplementedLightbox({ what, onClose }: NotImplementedLightbox
         {/* The way back is the only action, so it is the box's single control.
             Escape, the close X and the scrim all do the same thing — this is
             the affordance for someone who reads before they reach for one. */}
-        <CtaButton variant="accent" onClick={onClose}>
+        <CtaButton variant="primary" onClick={onClose}>
           {t('notImplemented.back')}
         </CtaButton>
       </ContentBox>

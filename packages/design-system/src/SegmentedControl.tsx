@@ -19,6 +19,13 @@
  * cue that survives a clipped label for a sighted user. Below ~30rem of
  * CONTAINER width the label stacks under the icon and gets the segment's full
  * width, which recovers far more characters than shrinking the type would.
+ *
+ * WHICH SEGMENTS DRAW THEIR WORD is one prop, `labels`, with three values —
+ * `all`, `unchecked`, `none`. The middle one is the interesting one: the
+ * chosen segment stands as its glyph alone and every OFF segment keeps its
+ * word. The selected state is already told three ways over there (fill, border
+ * weight, ink), so the word is spent where it still has something to say —
+ * what pressing would get you. See `SegmentedLabels`.
  */
 import * as React from 'react';
 import { RadioGroup } from '@base-ui/react/radio-group';
@@ -50,6 +57,39 @@ export interface SegmentedOption {
  */
 export type SegmentedSize = 'min' | 'primary';
 
+/**
+ * Which segments draw their label.
+ *
+ * `all` is the component as specified: every segment shows its glyph AND its
+ * word, and the track stretches to the width on offer, because that is a
+ * control answering a question inside a form.
+ *
+ * `unchecked` is the two-option toggle: the chosen segment stands as its glyph
+ * alone and every OFF segment keeps its word. The chosen one is already told
+ * three ways — fill, border weight, ink — so the word is spent on the segment
+ * that still has something to say with it, which is the one you might press:
+ * it names what you would get, not where you already are. /exercises is the
+ * live case — `[▥] [☰ Liste]`, and `[▥ Stapel] [☰]` once you have pressed it.
+ *
+ * `none` draws the glyphs alone. Only honest where the glyphs are already
+ * unambiguous: this component requires one per option precisely so the icon
+ * can carry the option when the label is clipped, and `none` is that same bet
+ * made all the way.
+ *
+ * THE LABEL IS NEVER DROPPED in any of the three. The text is what names each
+ * radio, and without it the group announces as an unnamed set (4.1.2), so a
+ * label the control does not draw is hidden with the `.musy-sr-only`
+ * declarations instead — from the stylesheet rather than by swapping the class
+ * here, because `unchecked` has to read the selected state and base-ui
+ * publishes that as `[data-checked]`. This is a presentation switch, never a
+ * content one.
+ *
+ * `unchecked` and `none` also both stop the track stretching: a control that
+ * names at most one of its options is page furniture, so it takes the width of
+ * its own segments rather than the width on offer. See §15 of the stylesheet.
+ */
+export type SegmentedLabels = 'all' | 'unchecked' | 'none';
+
 export interface SegmentedControlProps {
   name: string;
   /**
@@ -76,21 +116,9 @@ export interface SegmentedControlProps {
    */
   size?: SegmentedSize;
   /**
-   * Draw the glyphs alone and hide the labels visually.
-   *
-   * THE LABEL IS NOT DROPPED, it moves to `.musy-sr-only` — the text is what
-   * names each radio, and without it the group announces as an unnamed set
-   * (4.1.2). This is a presentation switch, never a content one.
-   *
-   * The track also stops stretching: an icon-only control is page furniture,
-   * so it takes the width of its glyphs instead of the width on offer.
-   *
-   * It is only honest where the glyphs are already unambiguous. This component
-   * requires a glyph per option precisely so that the icon can carry the
-   * option when the label is clipped — `iconOnly` is that same bet, made all
-   * the way.
+   * Which segments draw their label. `all` by default — see `SegmentedLabels`.
    */
-  iconOnly?: boolean;
+  labels?: SegmentedLabels;
   /** Raise each segment to --target-guided. */
   guided?: boolean;
   disabled?: boolean;
@@ -99,7 +127,7 @@ export interface SegmentedControlProps {
 
 export function SegmentedControl({
   name, legend, legendHidden = false, options, value, onValueChange,
-  accent = 'primary', size = 'primary', iconOnly = false, guided = false,
+  accent = 'primary', size = 'primary', labels = 'all', guided = false,
   disabled = false, className,
 }: SegmentedControlProps) {
   if (process.env.NODE_ENV !== 'production' && (options.length < 2 || options.length > 4)) {
@@ -123,7 +151,7 @@ export function SegmentedControl({
         'musy-seg',
         accent !== 'primary' ? `musy-seg--${accent}` : '',
         size !== 'primary' ? `musy-seg--${size}` : '',
-        iconOnly ? 'musy-seg--icon-only' : '',
+        labels !== 'all' ? `musy-seg--labels-${labels}` : '',
         guided ? 'musy-seg--guided' : '',
         className ?? '',
       ].filter(Boolean).join(' ')}
@@ -143,8 +171,13 @@ export function SegmentedControl({
             className="musy-seg__option"
           >
             <Icon glyph={opt.glyph} size={size === 'min' ? 'sm' : 'md'} />
-            {/* Visually hidden, never absent — see `iconOnly`. */}
-            <span className={iconOnly ? 'musy-sr-only' : 'musy-seg__label'}>{opt.label}</span>
+            {/* ALWAYS RENDERED, AND ALWAYS THE SAME CLASS. Whether it is drawn
+                is `labels`' business, and the stylesheet's: §0's `.musy-sr-only`
+                rule names the two selectors that hide it, so the one mode that
+                depends on the selected state can be written as `[data-checked]`
+                rather than guessed from the `value` prop — which a group
+                holding its own value would not have given us. */}
+            <span className="musy-seg__label">{opt.label}</span>
           </Radio.Root>
         ))}
       </div>

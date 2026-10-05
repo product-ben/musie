@@ -253,7 +253,7 @@ export const MinimalContent: Story = {
     children: (
       <>
         <p data-type-step="body-md">With a group</p>
-        <CtaButton variant="accent">Back to the choice</CtaButton>
+        <CtaButton variant="primary">Back to the choice</CtaButton>
       </>
     ),
   },
@@ -297,7 +297,7 @@ export const Mandatory: Story = {
     children: (
       <>
         <p data-type-step="body-md">With a group</p>
-        <CtaButton variant="accent">Back to the choice</CtaButton>
+        <CtaButton variant="primary">Back to the choice</CtaButton>
       </>
     ),
   },

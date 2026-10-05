@@ -84,6 +84,24 @@ export interface MusyTextCatalogue {
   /** RadioGroupText, RadioGroupImage and RadioCards with no options. */
   optionsEmpty: string;
 
+  /* ── Filters · FilterChips ───────────────────────────────────────────────
+     Neither of these has a prop, for the reason this file exists: both are
+     SENTENCES THE PACKAGE COMPOSES out of a word the screen already passed.
+     The screen owns the dimension's label and the selection; it does not own
+     the grammar that puts them together, and in German that grammar is not
+     the English one with the words swapped. */
+  /** (dimension) → the clear button's accessible name. */
+  filterClear: (dimension: string) => string;
+  /**
+   * (count) → the screen-reader-only tail on an active dimension's chip.
+   *
+   * Spoken, never painted: with its values row closed, the count is the one
+   * thing a sighted user reads off the clear button and a screen-reader user
+   * has no way to reach. Lower case, like the wizard's state words — it sits
+   * inside a name rather than standing as one.
+   */
+  filterSelected: (count: number) => string;
+
   /* ── Steps ───────────────────────────────────────────────────────────── */
   /* `stepPrefix` — the bare ordinal word, "Schritt" — is GONE (2026-09-25).
      It outlived ProcessVisualisation only because Carousel's dot pill printed
@@ -222,6 +240,9 @@ export const musyTextDe: MusyTextCatalogue = {
   listEmpty: 'Noch keine Einträge',
   optionsEmpty: 'Keine Optionen verfügbar',
 
+  filterClear: (dimension) => `Filter ${dimension} zurücksetzen`,
+  filterSelected: (count) => `${count} ausgewählt`,
+
   /* Adjectives, so lower case even in German, and they sit under a label
      rather than standing as headings. */
   wizardDisabled: 'gesperrt',
@@ -312,6 +333,9 @@ export const musyTextEn: MusyTextCatalogue = {
   loading: 'Loading',
   listEmpty: 'No entries yet',
   optionsEmpty: 'No options available',
+
+  filterClear: (dimension) => `Clear ${dimension} filter`,
+  filterSelected: (count) => `${count} selected`,
 
   wizardDisabled: 'locked',
   wizardActive: 'available',

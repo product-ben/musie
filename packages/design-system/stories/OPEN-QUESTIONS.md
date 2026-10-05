@@ -3588,3 +3588,87 @@ have to remember rather than feel.
 What I need from Ben: **nothing.** `onPrevious` now only ever fires from the
 button or Arrow Left, and `onNext` from either swipe, the forward button or
 Arrow Right.
+
+## CardDeck — the deck draws no accept of its own any more, and the toolbar slot went with it
+Where: `src/CardDeck.tsx` (`acceptLabel`, `acceptGlyph` and `toolbar`, all
+removed), `stories/CardDeck.stories.tsx`
+What I checked: the action column headed with a full-size *Start the exercise*,
+and the face has carried the same action on the card since this morning. Ben,
+looking at both at once: *"remove the big Übung starten CTA from the component
+and page, as it's now redundant. Only the one in the cards stays."* He is
+right — it is one action in two sizes a hand's width apart, and the small one is
+on the thing it acts on.
+What I did: removed the button and the two props that fed it. The deck's half of
+"nothing is gated behind the gesture" is now Enter on the pile, which a keyboard
+and a screen reader both reach; the VISIBLE half belongs to the face, through
+the accept it is handed. The app's exercise card draws it at every width now —
+it was below `--bp-md` only, on the argument that the deck's button was already
+beside the card above it, and that argument left with the button.
+
+`toolbar` went too. Its documented reference case was a view switch, and the
+app's moved out of the column the same afternoon (Ben: the one control the two
+views share was the one thing that MOVED when you pressed it — in the deck it
+rode in the action column, in the list it had a row of its own). A slot with no
+case is a slot that will be filled with the wrong thing.
+Why: a component that draws an action it cannot place well is a component
+arguing with its own consumer.
+What I need from Ben: **one thing to know.** A consumer that neither draws an
+accept on the face nor tells its users about Enter now has an action reachable
+by press and key but named nowhere. The pile's `label` is where that is said,
+and it is still required — but it is the only guard rail left, where there used
+to be a button. If a second consumer ever gets this wrong, the answer is
+probably a dev-time warning rather than putting the button back.
+
+---
+
+# The accent CTAs are gone, and a dialog is still hand-built (2026-10-05)
+
+## CtaButton — `accent` and `accent-alt` are deleted, which answers B12 for buttons by removing its subject
+Where: `src/CtaButton.tsx` (`CtaVariant`), `src/musy-components.css` (the
+accent-styled solids), `stories/CtaButton.stories.tsx`,
+`stories/Lightbox.stories.tsx`
+What I checked: Ben — "CTAs only in primary terracotta, secondary and ghost. Not
+the yellow one any more." The two variants had **two call sites in the app
+between them** (`NotImplementedLightbox`, `SessionRunningLightbox`) and
+`accent-alt` had none anywhere in the system, which is what the entry further up
+this file records: "`accent-alt` currently has no use anywhere in the system."
+What I did: removed both from `CtaVariant`, deleted their CSS block and their
+story rows, and switched the two app buttons to `primary` — each is the way on
+in its own dialog, which is the rule the stories already carry ("one primary per
+unit, and it is the way on").
+Why: a variant nobody can say when to use is a variant picked by taste.
+What I need from Ben: **nothing for CtaButton, and one thing to know.** Conflict
+B12 / open question 7 stay open for everything else: the `accent` PROP on Switch,
+RadioCards, RadioGroupText, Carousel, InteractiveWizard, SegmentedControl and
+FilterChips still offers all three, and `TrackButton` and `RecordButton` keep
+their own `variant="accent"` — none of those is a CTA, so the brief does not
+reach them. If the ocher is to leave the product entirely, that is a second
+decision and a bigger one.
+
+## Lightbox — the house pattern puts two headings with one name in the tree, every time
+Where: `src/Lightbox.tsx:35-43`, `src/ContentBox.tsx:72-77`, and all five
+lightboxes in `apps/web`
+What I checked: `Lightbox` requires `title` and renders it as `Dialog.Title`;
+`titleHidden` keeps that `<h2>` and gives it `.musy-sr-only`, which hides it from
+the eye and from nothing else. The documented pattern is to put a `ContentBox`
+inside carrying the same sentence as its headline — and `ContentBox.headline` is
+required, with "Never remove the headline to hide it" in its own docs, because
+the headline is the article's accessible name.
+
+So every dialog in this app has **two headings with the identical accessible
+name**: a screen reader navigating by heading hears the sentence twice, and
+`getByRole('heading', { name })` matches two elements — which is a strict-mode
+violation that had been failing the end-to-end walks.
+What I did: in `SessionRunningLightbox` I dropped the `ContentBox` and used the
+system's own `MinimalContent` shape instead — the dialog's visible title, a line
+of body copy, the actions. Measured after: one heading in the tree. The other
+four lightboxes still carry the pair.
+Why: the frame earns its place where it means something; in a dialog whose whole
+content it wrapped, it was repeating the dialog's name back to it.
+What I need from Ben: **a decision about the component, not about my screen.**
+Either `Lightbox` grows the confirm-dialog sibling its own header has been
+describing since it was written ("A confirm-or-cancel decision is a different
+component with a mandatory action row"), or `ContentBox` gets a documented way
+to be the body of something that already has a name. Four hand-built
+confirmations in one app is the L14.3 signal, and this is the second time the
+same seam has produced a defect.

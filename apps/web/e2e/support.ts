@@ -294,10 +294,35 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
  * database and passes it here. NOT `exact`: a card's accessible name is its
  * headline followed by its description and its fact chips.
  */
-export async function startExercise(page: Page, name?: string) {
+export async function startExercise(page: Page, locale: Locale, name?: string) {
+  /* ── IT SWITCHES TO THE LIST FIRST, AND THAT IS NEW (2026-10-05) ─────────
+     /exercises opened on a column of radios until the deck replaced it. The
+     deck shows ONE card at a time, so "click the card called X" there means
+     dealing until X is in front — a walk about the pile rather than about the
+     session it is trying to start. Worse, it had stopped working silently:
+     `getByRole('radio').first()` in deck view matches the VIEW SWITCH, which
+     is itself a pair of radios, so every walk in this suite was clicking
+     *Stack* and waiting for a session that was never started.
+
+     The list is the same five exercises, name-addressable in one press, and
+     the switch to it is a control with an accessible name like everything else
+     here. What it does NOT cover is the deck's own press — logged in
+     apps/web/OPEN-QUESTIONS.md. */
+  const toList = page.getByRole('radio', {
+    name: label(locale, 'exercises.view.list'),
+    exact: true,
+  });
+  await expect(toList).toBeVisible({ timeout: 15_000 });
+  await toList.click();
+
+  /* SCOPED TO THE LIST'S OWN GROUP. Two radio groups are on this screen — the
+     exercises and the view switch — and an unscoped `.first()` is how the
+     switch got clicked instead. `exercises.legend` is the group's accessible
+     name; it is visually hidden and still the thing to ask for. */
+  const group = page.getByRole('radiogroup', { name: label(locale, 'exercises.legend') });
   const card = name === undefined
-    ? page.getByRole('radio').first()
-    : page.getByRole('radio', { name });
+    ? group.getByRole('radio').first()
+    : group.getByRole('radio', { name });
   await expect(card).toBeVisible({ timeout: 15_000 });
   await card.click();
 }

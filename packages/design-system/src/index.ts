@@ -38,7 +38,11 @@ export { Icon } from './Icon';
 export type { IconProps, IconSize, IconTone } from './Icon';
 
 export { CardDeck } from './CardDeck';
-export type { CardDeckProps, CardDeckItem } from './CardDeck';
+/* `CardDeckCard` is already public: it is the argument `CardDeckItem.content`
+   is handed when a face places the deck's own accept itself, so a consumer
+   cannot type that function without it. Missing from this list until
+   2026-10-05, which broke `tsc` in apps/web rather than in here. */
+export type { CardDeckProps, CardDeckItem, CardDeckCard } from './CardDeck';
 export { Dots } from './Dots';
 export type { DotsProps } from './Dots';
 export { IconButton, MusyTooltipProvider } from './IconButton';
@@ -108,7 +112,16 @@ export { Toast } from './Toast';
 export type { ToastProps, ToastAction, ToastLive, ToastTone, ToastPlacement } from './Toast';
 
 export { SegmentedControl } from './SegmentedControl';
-export type { SegmentedSize, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
+export type { SegmentedSize, SegmentedLabels, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
+
+/* Two levels, and §15's build-up with none of its semantics — a CheckboxGroup
+   per dimension rather than one RadioGroup, scrolled rather than divided. The
+   header of FilterChips.tsx is where the two are told apart. */
+export { FilterChips } from './FilterChips';
+export type {
+  FilterChipsProps, FilterChipsSize, FilterChipDimension, FilterChipValue,
+  FilterChipSelection,
+} from './FilterChips';
 
 export { Lightbox } from './Lightbox';
 export type { LightboxProps } from './Lightbox';

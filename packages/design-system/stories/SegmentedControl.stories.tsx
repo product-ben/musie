@@ -47,13 +47,33 @@ const meta = {
           'CONTAINER width the label stacks under the icon and gets the segment\'s',
           'full width, which recovers far more characters than shrinking the type.',
           '',
+          '**Which segments draw their word** is one prop, `labels`, with three',
+          'values. `all` is the component as specified. `unchecked` stands the',
+          'chosen segment as its glyph alone and leaves every OFF segment its word:',
+          'the chosen one is already told three ways — fill, border weight, ink — so',
+          'the word is spent on the segment you might press, naming what you would',
+          'get rather than where you are. `none` draws the glyphs alone.',
+          '',
+          '**The label is never dropped** in any of the three. The text is what names',
+          'each radio, and without it the group announces as an unnamed set (4.1.2),',
+          'so a label the control does not draw is hidden with the `.musy-sr-only`',
+          'declarations instead. A presentation switch, never a content one.',
+          '',
+          '`unchecked` and `none` also both stop the track stretching: a control that',
+          'names at most one option is page furniture, so it takes the width of its',
+          'own segments rather than the width on offer.',
+          '',
           '---',
           '### Build notes',
           '',
           '_Temporary review scaffolding, added 2026-09-17. Delete once answered.',
           'This is not documentation._',
           '',
-          'No open questions.',
+          'Two entries in stories/OPEN-QUESTIONS.md: `iconOnly` — now `labels:',
+          'none` — could not shrink to its content while the root carried',
+          '`container-type: inline-size`, and the segments still take the user',
+          'agent\'s focus ring rather than the system\'s. A third notes that',
+          '`labels: unchecked` steps the track\'s width on selection.',
         ].join('\n'),
       },
     },
@@ -81,9 +101,10 @@ const meta = {
       options: ['min', 'primary'],
       description: 'The segment height. `primary` (44px) by default; `min` is the 24px rung, for a control that sits in a row of page furniture rather than in a form.',
     },
-    iconOnly: {
-      control: 'boolean',
-      description: 'Draw the glyphs alone and hide the labels visually. The label is not dropped — it moves to .musy-sr-only.',
+    labels: {
+      control: 'inline-radio',
+      options: ['all', 'unchecked', 'none'],
+      description: 'Which segments draw their label. `unchecked` gives the word to the segments that are off; `none` draws the glyphs alone. The text is never dropped — it is hidden with the .musy-sr-only declarations.',
     },
     guided: { control: 'boolean', description: 'Raise each segment to --target-guided (64px).' },
     disabled: { control: 'boolean', description: 'Disables the whole group.' },
@@ -108,19 +129,23 @@ export const Sizes: Story = {
 };
 
 /**
- * Glyphs alone, labels visually hidden and still announced.
+ * The three label modes, on the two-option toggle each of them is for.
  *
- * The track stops stretching: an icon-only control is page furniture, so it
- * takes the width of its own segments instead of the width on offer. Only
- * honest where the glyphs are unambiguous — this component requires one per
- * option precisely so the icon can carry the option, and this is that bet made
- * all the way.
+ * `unchecked` is shown twice — once selected either way — because which word
+ * is on show is the state, and a story documents a state rather than
+ * simulating a session (CONVENTIONS §5). `none` and `unchecked` both stop the
+ * track stretching: a control that names at most one option is page furniture,
+ * so it takes the width of its own segments instead of the width on offer.
  */
-export const IconOnly: Story = {
+export const Labels: Story = {
   render: (args) => (
     <Stack>
-      <SegmentedControl {...args} name="i-primary" iconOnly legend="iconOnly — primary rung" />
-      <SegmentedControl {...args} name="i-min" iconOnly size="min" legend="iconOnly — min rung, the row-of-furniture case" />
+      <SegmentedControl {...args} name="l-all" legend="labels: all (default)" />
+      <SegmentedControl {...args} name="l-off-1" labels="unchecked" legend="labels: unchecked — the word is on the segment you might press" />
+      <SegmentedControl {...args} name="l-off-2" labels="unchecked" value="write" legend="labels: unchecked — the same control, selected the other way" />
+      <SegmentedControl {...args} name="l-none" labels="none" legend="labels: none — glyphs alone, still announced" />
+      <SegmentedControl {...args} name="l-off-min" labels="unchecked" size="min" legend="labels: unchecked at the min rung — /exercises' own case" />
+      <SegmentedControl {...args} name="l-none-min" labels="none" size="min" legend="labels: none at the min rung" />
     </Stack>
   ),
   args: {

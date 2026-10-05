@@ -22,11 +22,22 @@
  * placing it. Named `min` rather than `small` so the ladder reads identically
  * on this component and on Icon Button.
  *
- * The two accent variants are NOT a hue swap on primary: ocher and purple are
- * light solids and take dark ink, where terracotta is a dark solid and takes
- * light ink. Each family carries its own solved -hover / -active / -on tokens.
- * There is still no rule in the system for WHEN to pick an accent over primary —
- * see conflict B12 and open question 7.
+ * ── THERE ARE NO ACCENT CTAs ANY MORE (Ben, 2026-10-05) ───────────────────
+ * `accent` (ocher) and `accent-alt` (purple) were variants of this component
+ * and are deleted: "CTAs in primary terracotta, secondary and ghost — not the
+ * yellow one any more". They had two call sites in the app between them and
+ * `accent-alt` had none anywhere.
+ *
+ * It closes conflict B12 / open question 7 FOR THIS COMPONENT by removing the
+ * subject rather than by answering it. That pair asked which accent a screen
+ * should reach for, and the system never said; a button is now the way on
+ * (`primary`) or it is quiet (`secondary`, `outline`, `ghost`), which is the
+ * rule that was already written down in the stories — one primary per unit,
+ * and it is the way on.
+ *
+ * The accent FAMILIES are untouched: the components that take an `accent`
+ * prop still offer all three, and TrackButton and RecordButton keep their own
+ * accent variants. Neither of those is a CTA.
  */
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';
@@ -48,11 +59,7 @@ export type CtaVariant =
    * nearly indistinguishable and `secondary` is the better-trodden path.
    */
   | 'outline'
-  | 'ghost'
-  /** Literal placeholder names, per Decision 3 — renaming later is a
-   *  find-replace, not a redesign. */
-  | 'accent'
-  | 'accent-alt';
+  | 'ghost';
 
 export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
 

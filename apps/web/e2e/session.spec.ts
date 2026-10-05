@@ -66,7 +66,7 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
        One click. The card is the control since 2026-09-24 — there is no detail
        lightbox between the library and the session — and `startExercise` is
        where that is said once for every walk. */
-    await startExercise(page);
+    await startExercise(page, locale);
 
     /* ── Intro → scan ──────────────────────────────────────────────────────*/
     await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);

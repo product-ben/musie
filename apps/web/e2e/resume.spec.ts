@@ -31,7 +31,7 @@ test('continue session returns to the step you stopped on', async ({ page }, tes
   await withLocale(page, locale);
   await reachTheLibrary(page, locale);
 
-  await startExercise(page);
+  await startExercise(page, locale);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
   const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];

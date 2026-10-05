@@ -192,15 +192,53 @@ export const de: Messages = {
      --text-hyphens: auto handles it and there is nothing to rephrase. */
   'exercises.fact.time': 'Dauert {min} bis {max} Minuten',
   'exercises.fact.timeShort': '{min}–{max} Min.',
-  /* Durchkopplung, as everywhere else this product name meets a German noun. */
-  'exercises.alreadyRunning': 'Es läuft schon eine Session',
-  'exercises.alreadyRunningDetail': 'Beende oder schließe die laufende Session, bevor du eine neue startest.',
-  'exercises.goToSession': 'Zu dieser Session',
-  /* Bens Wortlaut, 2026-09-24. Der Übungsname steht vorn, weil er das ist,
-     wonach man den Knopf sucht — und weil die Karte darunter ausgegraut ist,
-     während diese Frage offen steht. 'Vorherige' statt 'laufende': in dem
-     Moment, in dem der Knopf wirkt, ist sie die vorherige. */
-  'exercises.endAndStart': '{name} starten und vorherige Session beenden',
+  /* ── Es läuft schon eine Session · neu geschrieben 2026-10-05 ────────────
+     Steht jetzt zweimal auf einem Screen und beide Male gleich: als Hinweis
+     oben auf /exercises, solange ein Lauf offen ist, und im Dialog, wenn
+     trotzdem eine Karte gedrückt wird. Ein Satz für beides.
+
+     'Es läuft schon eine Session' ist weg, zusammen mit der Zeile darunter.
+     Das alte Paar beantwortete nur die Kollision: eine Feststellung, und
+     darunter 'Beende oder schließe die laufende Session, bevor du eine neue
+     startest' — eine Hausaufgabe, direkt über dem Knopf, der sie erledigt. Die
+     Überschrift nennt stattdessen die Übung, denn das ist das Erste, was man
+     wiedererkennen muss, bevor man darüber entscheiden kann. */
+  'exercises.running.headline': '{name} läuft noch',
+  /* Was in `{name}` steht, wenn der Katalog die Übung der laufenden Session
+     nicht kennt — zurückgezogener Inhalt, oder eine Sprache, die ihn nie
+     hatte. Ein Gattungswort statt einer id, die noch nie jemand gesehen hat:
+     'Eine Session läuft noch' ist die alte Überschrift, aufgehoben für genau
+     den Fall, für den sie geschrieben war. */
+  'exercises.running.fallback': 'Eine Session',
+  /* Nur im Hinweis. 'Aufgehört bei' ist die Formulierung des Tagebuchs für
+     genau diese Angabe (`diary.stoppedAt`), das Wort kommt aus
+     `session.step.*`. NICHT im Dialog: dort steht ein Knopf '{Übung} starten
+     und diese beenden', und 'Du hast bei Einsteigen aufgehört' daneben liest
+     sich wie ein Rätsel. */
+  'exercises.running.stoppedAt': 'Du hast bei {step} aufgehört.',
+  /* Der leise Ausgang im Hinweis, für jemanden, der etwas anderes anfangen
+     will. 'Beenden', nicht 'schließen': die Zeile wird als `abandoned`
+     geschrieben, und so nennt das Tagebuch einen Lauf, der vor seiner
+     Reflexion aufgehört hat. */
+  'exercises.running.end': 'Session beenden',
+  /* Nur im Dialog, wo tatsächlich eine Wahl verlangt wird. Der letzte Satz ist
+     neu und ist der ehrliche: `session.close.text` sagt seit jeher, dass eine
+     beendete Session nicht wieder aufgenommen werden kann — der Dialog, dessen
+     zweiter Knopf genau das tut, sagte es nie. Gedankenstrich als
+     Halbgeviertstrich mit Leerzeichen (§7). */
+  'exercises.running.choice': 'Du kannst dort weitermachen oder sie beenden und stattdessen {name} starten – eine beendete Session lässt sich nicht wieder aufnehmen.',
+  /* DIESELBEN WORTE WIE IM MENÜ (`menu.continueSession`), mit Absicht: zwei
+     Türen zu einer laufenden Session, die sie verschieden benennen, sind zwei
+     Türen, die man getrennt lernen muss. Zwei Schlüssel statt einem, weil es
+     fürs Auge zwei Dinge sind — eine Zeile in einer Navigationsliste und die
+     primäre Antwort eines Dialogs. Beim dritten Ort wandert der Satz nach
+     `common.`. */
+  'exercises.goToSession': 'Session fortsetzen',
+  /* Bens Wortlaut, 2026-09-24, gekürzt am 2026-10-05. Der Übungsname steht
+     weiter vorn, weil er das ist, wonach man den Knopf sucht. Weg ist die
+     Beschreibung der anderen Session — 'vorherige Session' —, seit die
+     Überschrift darüber sie beim Namen nennt. */
+  'exercises.endAndStart': '{name} starten und diese beenden',
   /* Passiv, weil hier niemand schuld ist: die Anfrage kam nicht durch. Kein
      „Fehler“ im Text — das Wort steht schon unsichtbar im Status-Präfix der
      Message, und zweimal gesagt klingt es nach mehr, als es ist. */
@@ -663,9 +701,13 @@ export const de: Messages = {
      visueller Zustand und aria-hidden. Es nennt die Tasten und nicht das
      Wischen — wischen wird diese Leserin nicht. */
   'exercises.deckLabel': 'Das Deck. Enter startet die Übung auf der obersten Karte, die Pfeiltasten blättern vor und zurück.',
-  'exercises.start': 'Übung starten',
-  /* Dieselbe Handlung, kurz: in die Ecke einer 360px breiten Karte passt
-     'Übung starten' nicht, und ein abgeschnittenes Label ist kein Label. */
+  /* 'exercises.start' ist weg (Ben, 2026-10-05), zusammen mit der großen
+     Schaltfläche neben dem Deck: die Karte trägt diese Handlung jetzt, und für
+     die Langform gab es keinen zweiten Ort mehr.
+
+     Die Kurzform bleibt, und die Ecke ist der Grund: in die Ecke einer 297px
+     breiten Karte passt 'Übung starten' neben der Zeitangabe nicht, und ein
+     abgeschnittenes Label ist kein Label. */
   'exercises.startShort': 'Starten',
   /* Kein 'exercises.startHint' mehr. Das war die zweite Zeile im Overlay —
      'Antippen startet die Übung' — und auf der Karte sitzt jetzt eine
@@ -689,8 +731,12 @@ export const de: Messages = {
   'exercises.deckPosition': '{name} – Karte {index} von {total}',
   /* Kurzform von `exercises.surpriseMe`, für die kleine Schaltfläche. */
   'exercises.surpriseMeShort': 'Such mir eine Karte aus',
+  /* ONE OF THESE TWO IS NOW DRAWN: the switch labels the view you are NOT in,
+     so the half you might press says what pressing it would get you.
+     'Stapel', not 'Kartenstapel' — one word beside a glyph in a 36px track,
+     and 'Stapel' already says it while 'Liste' stands next to it. */
   'exercises.view.legend': 'Wie die Übungen gezeigt werden',
-  'exercises.view.deck': 'Kartenstapel',
+  'exercises.view.deck': 'Stapel',
   'exercises.view.list': 'Liste',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',

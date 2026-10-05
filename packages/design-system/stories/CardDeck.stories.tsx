@@ -108,9 +108,14 @@ const meta = {
           'further on. It leaves **upward**, because both sideways directions now mean',
           '"another card".',
           '',
-          '**Nothing is gated behind the gesture.** Every action is a real button,',
-          'always in the DOM: the accept, and back and forward as a pair of icon',
-          'buttons under it. Arrow Right deals, Arrow Left goes back, Enter accepts.',
+          '**Nothing is gated behind the gesture.** Back and forward are real',
+          'buttons, always in the DOM; Arrow Right deals and Arrow Left goes back.',
+          '',
+          '**The deck draws no accept of its own.** It had a primary button in the',
+          'action column until 2026-10-05, and once a face could put one on the card',
+          'that was the same action twice in two sizes a hand’s width apart. The',
+          'deck’s half of the promise is Enter on the pile; the visible half belongs',
+          'to the face, through the accept it is handed.',
           '',
           '**Every word it speaks is the consumer’s.** There are no label defaults,',
           'not even from the locale catalogue: a deck whose action is "start" in one',
@@ -139,10 +144,8 @@ const meta = {
     onAccept: () => {},
     onNext: () => {},
     onPrevious: () => {},
-    acceptLabel: 'Start the exercise',
     nextLabel: 'Next exercise',
     previousLabel: 'Previous exercise',
-    acceptGlyph: ArrowRight,
     label: 'The deck. Enter starts the exercise on the top card; the arrow keys show the next one and the one before.',
     positionLabel: (position: number, total: number) =>
       `${FACES[position - 1]?.name ?? ''} — card ${position} of ${total}`,
@@ -152,12 +155,9 @@ const meta = {
     onAccept: { action: 'accept', description: 'Pressed — the card, the button on it, the primary button, or Enter. The consequential one, and the only one no gesture can reach.' },
     onNext: { action: 'next', description: 'Swiped left, pressed, or Arrow Right. The card goes to the back of the pile.' },
     onPrevious: { action: 'previous', description: 'Swiped right, pressed, or Arrow Left. The card at the back comes to the top.' },
-    acceptLabel: { control: 'text', description: 'The accept’s name, on the button beside the deck. Required.' },
     nextLabel: { control: 'text', description: 'What the overlay says, either way, and the right-hand icon button’s accessible name and tooltip. Required.' },
     previousLabel: { control: 'text', description: 'The back button’s accessible name and tooltip, and nothing else — the overlay says nextLabel both ways. Required.' },
-    acceptGlyph: { control: false, description: 'Lucide component for the accept. The directions have none — the deck owns its own arrows.' },
     label: { control: 'text', description: 'The pile’s accessible name, and the only place the keys are named: the overlay is aria-hidden.' },
-    toolbar: { control: false, description: 'Rendered at the head of the action stack, above the deck’s own controls. A view switch is the reference case.' },
     actions: { control: false, description: 'Extra controls under the deck’s own, in the same stack.' },
     positionLabel: { control: false, description: 'What the live region says when the top card changes. The deck knows the position, the consumer knows the name.' },
     busy: { control: 'boolean', description: 'True while an accept is in flight. The deck goes inert.' },
@@ -202,16 +202,20 @@ export const Default: Story = {};
 export const Busy: Story = { args: { busy: true } };
 
 /**
- * Both slots in use: something at the head of the action column, and a further
- * action under the deck's own.
+ * A screen's own control under the deck's two.
  *
  * Resize the frame to watch the actions move from beside the card to under it.
  * It is a WRAP, not a breakpoint — the deck can be put in a narrow column on a
  * wide screen, and a media query would get that case exactly backwards.
+ *
+ * There was a `toolbar` slot above this one, for something at the HEAD of the
+ * column, and a view switch was its only case. It is gone with the deck's own
+ * accept button (Ben, 2026-10-05): a control that changes what you are looking
+ * at altogether belongs above the deck rather than inside its action column,
+ * which is where the app moved its own.
  */
-export const WithToolbarAndActions: Story = {
+export const WithActions: Story = {
   args: {
-    toolbar: <span style={{ font: 'var(--type-label-md-weight) var(--type-label-md-size) var(--type-label-md-family)', color: 'var(--on-surface-muted)' }}>Your toolbar here</span>,
     actions: <CtaButton variant="ghost" leadingIcon={Shuffle}>Pick a card for me</CtaButton>,
   },
 };

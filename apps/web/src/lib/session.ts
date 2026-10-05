@@ -48,6 +48,20 @@ export interface ActiveSession {
   id: string;
   /** Which of the four steps the user stopped at — where to resume. */
   step: StepId;
+  /**
+   * WHICH exercise is running — the id, never the name.
+   *
+   * Added 2026-10-05, for the one thing every screen that mentions a running
+   * session had to do without: naming it. /exercises offered to end "the
+   * previous session" and the dialog that asked could not say what it was,
+   * because this type carried a route and a step and nothing about the run.
+   *
+   * THE ID AND NOT THE NAME, because the name is CONTENT: it lives in
+   * `exercise_i18n`, it is per locale, and every screen that needs it already
+   * holds the catalogue it comes from (`useExercises()`). A name on this
+   * interface would be a second copy of a row this module does not read.
+   */
+  exerciseId: string;
 }
 
 /**
@@ -62,7 +76,7 @@ export interface ActiveSession {
 export async function readActiveSession(): Promise<ActiveSession | null> {
   const { data, error } = await getSupabase()
     .from('sessions')
-    .select('id, step')
+    .select('id, step, exercise_id')
     .eq('status', 'started')
     .maybeSingle();
 
@@ -80,10 +94,10 @@ export async function readActiveSession(): Promise<ActiveSession | null> {
     console.error(
       `[musie] session ${data.id} carries an unknown step "${data.step}" — resuming at intro`,
     );
-    return { id: data.id, step: 'intro' };
+    return { id: data.id, step: 'intro', exerciseId: data.exercise_id };
   }
 
-  return { id: data.id, step: data.step };
+  return { id: data.id, step: data.step, exerciseId: data.exercise_id };
 }
 
 /* ── The session's own row, and every write the flow makes to it ───────────
@@ -234,7 +248,10 @@ export async function createSession(
     throw new Error(`[musie] could not start a session: ${error.message}`);
   }
 
-  return { kind: 'started', session: { id: data.id, step: 'intro' } };
+  /* `exerciseId` from the ARGUMENT, not from the row: it is what was just
+     inserted, and selecting it back would be a round trip to be told something
+     this function already knows. */
+  return { kind: 'started', session: { id: data.id, step: 'intro', exerciseId } };
 }
 
 /**

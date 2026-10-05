@@ -5942,3 +5942,479 @@ What I need from Ben: **a decision, before the next hosted run.** Either
 
 Until one of those happens, a hosted `pnpm test:db` returns exit 1 on a green
 suite, which is the state in which people stop reading the output.
+
+---
+
+# The test deck against workers.dev (2026-10-02)
+
+## The QR is one byte over the size that fits, and the deck has no other code
+
+Where: `scripts/deck-pdf.mjs` — `STAMP_FRACTION` (0.26), `MIN_MODULE_MM` (0.4),
+and the warning `main` prints at line 670
+
+What I checked: Ben asked for a deck whose codes point at
+`https://musie.lipinskib.workers.dev` so the nine cards can be tested in the
+deployed environment. The generator warned:
+
+```
+[musie] the stamp prints at 0.40 mm per module (41 modules across 16.4 mm),
+under the 0.4 mm a phone needs to resolve one.
+```
+
+I measured the encoder rather than arguing with the warning. The payload is
+`https://musie.lipinskib.workers.dev/s/MC-01` — **43 bytes. QR version 3 at
+error-correction M holds 42.** One byte over, so every card jumps to version 4
+and gains four modules it has no millimetres for:
+
+| base url | bytes | version | modules + quiet | mm/module |
+|---|---|---|---|---|
+| `http://localhost:5173` (the last deck) | 29 | 3 | 37 | 0.443 ✓ |
+| `https://musie.lipinskib.workers.dev` | 43 | **4** | 41 | **0.400 ✗** |
+| `http://musie.lipinskib.workers.dev` | 42 | 3 | 37 | 0.443 ✓ |
+| a short custom domain, e.g. `https://musie.app` | 25 | 2 | 33 | 0.496 ✓ |
+
+The deck has carried no code on the front since 2026-10-02, so this stamp is
+the only way off paper. The script warns rather than throws, and that is right:
+0.400 against a 0.4 floor is a rounding hair, and the real floor depends on the
+printer and the phone.
+
+What I did: wrote **both**, side by side in `apps/web/deck-print/`.
+`deck.pdf` is the `https://` deck Ben asked for, at 0.400 mm.
+`deck-fallback-http.pdf` is the identical deck at `http://`, which drops one
+byte, fits version 3 and prints at 0.443 mm. All nine codes in both were
+decoded out of the rendered SVG with Chromium's `BarcodeDetector` and return
+the right url. workers.dev answers 200 and redirects `http` to `https`, so the
+fallback reaches the same place.
+
+Why: the point of the deck is that somebody can scan it today, and I cannot
+test a printed module size from here. Two files cost nothing; a print run that
+will not scan costs the afternoon.
+
+What I need from Ben: **which of the three, before this goes to a printer.**
+
+  1. Print `deck.pdf` and scan one card off the office printer. If it reads,
+     the floor was conservative and nothing needs deciding.
+  2. Print `deck-fallback-http.pdf`. Costs the `https` scheme in the printed
+     code — no credentials are in that first request, the path is the card code
+     that is printed on the card anyway, and Cloudflare upgrades it — but it is
+     a downgrade written onto paper.
+  3. Raise `STAMP_FRACTION` above 0.26. This is the only one that survives a
+     longer url, and it is the one I did not take: 0.26 is Ben's own number
+     from 2026-10-02 — "small is the brief" — and a bigger stamp is a design
+     change, not a print setting.
+
+The custom domain in BUILD-PLAN.md's blocker table ends this permanently: at 25
+bytes the code drops to version 2 and the question stops being close.
+
+## Four cards cannot play anything in the deployed environment until the migration is pushed
+
+Where: `supabase/migrations/20261002153212_deck_test_deck_tracks.sql`,
+`supabase/content/deck.json`
+
+What I checked: MC-06…MC-09 pointed at `trk-06`…`trk-09`, and
+`20260921160000_track_audio.sql` sets `src = null` on exactly those plus
+`trk-03` — only `trk-01`, `-02`, `-04`, `-05` have a file. So the four cards
+whose artwork arrived today were paired with silence. Ben asked for a random
+existing track per new artwork; I drew a random permutation of the four real
+recordings rather than four independent draws, because two cards on the same
+track are indistinguishable to whoever is testing. MC-01's artwork was replaced
+too, but it already played `trk-04`, so I left it: re-drawing a mapping that
+works is churn in a migration.
+
+Verified locally — `supabase db reset`, then all nine cards resolve to a real
+`src`, `pnpm test:db` 90/90, `pnpm check` green.
+
+What I did: generated the migration and stopped there. **Nothing was pushed.**
+
+Why: `supabase db push` writes the hosted project that the workers.dev build
+reads, and CLAUDE.md rule 4 is explicit that nothing pushes on its own. That is
+Ben's hand on the key, not mine, and he was away from the desk.
+
+What I need from Ben: **run `supabase db push`.** Until then the printed deck
+is correct and scannable, and MC-06…MC-09 open a card in the deployed app with
+no audio behind it — which looks like a broken deck and is a stale database.
+
+## `card_i18n.image_alt` is null on all nine, and the artwork has now landed
+
+Where: `supabase/content/deck.json` (`imageAlt`), `artwork/cards/README.md`
+
+What I checked: that README says null alt text "was honest while there was no
+artwork" and "stops being honest" once the pictures exist. All nine now do, and
+`deck-pdf.mjs:287` reads `card_i18n.image_alt` into the printed `<img alt>` —
+so the PDF currently carries nine empty alt attributes.
+
+What I did: nothing, deliberately, and did not fold it into today's migration.
+
+Why: the README says "the feeling is what the alt text should say", but the
+feeling is already its own column, and an alt text that repeats it is not a
+description of a drawing. Writing nine of them in two locales is authoring
+about pictures whose intent I was not told — which is the one thing rule 6 does
+not cover, because this is content rather than chrome.
+
+What I need from Ben: **both locales for nine cards**, written into
+`deck.json` and landed with `pnpm deck:migration`. One migration, whenever the
+copy exists. It does not block the print run.
+
+---
+
+# The deck's second iteration — the fix was the design system's (2026-10-05)
+
+## The brief is about this screen and almost none of it could be answered here
+
+Where: `packages/design-system/src/CardDeck.tsx`,
+`packages/design-system/src/musy-components.css`, against
+`src/routes/Exercises.tsx`
+
+What I checked: Ben's four asks — swipe left and right for next and previous,
+press a card to start it, a small *Start* on the card on mobile, and the purple
+overlay arriving much sooner. Every one of them is `CardDeck`'s: the component
+owns the pile, the thresholds, the overlay and the buttons, and this file owns
+the face of a card and what the actions MEAN. The app's share of the work was
+five catalogue strings, three renamed props and one line of CSS.
+
+The one thing this screen did have to answer for: the LIST view has started a
+run on a tap since 2026-09-24, and the deck did not. So /exercises shipped two
+views that disagreed about what pressing a card does, which is most of why the
+deck's swipe read as a trap.
+
+What I did: the component change is logged where it belongs, in
+`packages/design-system/stories/OPEN-QUESTIONS.md` — five entries under *Card
+Deck · the gesture stopped deciding*. Here: `exercises.intro` and
+`exercises.deckLabel` rewritten, `exercises.another` → `exercises.next` with
+`exercises.previous` beside it, `exercises.startShort` for the card's own corner
+and `exercises.startHint` for the overlay's second line, and the two verdict
+sublines deleted — they pointed at the opposite swipe, and the opposite swipe is
+no longer an action.
+
+`.musie-exercise-card__body` grew one declaration, which is the only place the
+screen touches the component's new geometry and does it the published way:
+`max(var(--space-gap-stack), var(--musy-deck-card-act-block, 0px))`. The deck
+draws its own *Start* into the card's corner on the small tier and says what
+that costs; the face gives it up rather than being drawn over. It is a measured
+fix — at 393px the German *Achtsam Atmen* is seven lines and its last line sat
+under the button for 10px of a 19px line, where the English five lines cleared
+it.
+
+Why: L14.3 one layer up, and rule 1 in this repo's CLAUDE.md. A screen that
+answered this brief in `exercises.css` would have built a second card deck.
+
+What I need from Ben: **two words on the German, and one on the direction.**
+
+  1. `exercises.previous` is **Vorige Übung**, not *Vorherige*, and that is
+     measured rather than preferred: in the overlay the label is display type
+     capped at half the card, and *Vorherige* is an unbreakable 155px word in
+     148px of room — at deep travel its last letter ran off the screen edge.
+     Hyphenation is off there for the reason the design system's log records.
+  2. `exercises.startHint` is **Antippen startet die Übung**, a statement, where
+     the English is an instruction (*Press a card to start it*). The instruction
+     in German — *Tipp eine Karte an, um sie zu starten* — is 37 characters
+     against 24 and took a third line in the overlay at 393px where English
+     takes two, which is the one thing `docs/GERMAN-UI-WRITING.md` §5 says not
+     to do. 26 characters say the same thing in two lines.
+  3. Dragging LEFT advances and the RIGHT arrow key advances, which are opposite
+     spellings of the same move. Both are the convention — see the design
+     system's log.
+
+## Six end-to-end walks have been looking for a radio on /exercises since the deck replaced the list
+
+Where: `e2e/support.ts:297` (`startExercise`), called from `camera.spec.ts`,
+`cancel.spec.ts`, `listen.spec.ts`, `resume.spec.ts`, `reveal.spec.ts` and
+`session.spec.ts`
+
+What I checked: `startExercise` finds a card with
+`page.getByRole('radio').first()`, which was right while /exercises was
+`RadioCards`. The deck replaced it on 2026-10-02 and the deck has no radios —
+measured in the browser just now: **two** `role=radio` nodes on /exercises in
+deck view, and both of them are the view switch's own segments. So the helper
+clicks *Card stack*, nothing happens, and the walk times out; with a name it
+matches nothing at all.
+
+I could not run the suite to confirm the timeout, and the reason is its own
+finding: `.env.local` currently points at the hosted project, so
+`globalSetup` refuses the run outright — *"this walk would address two different
+databases and prove nothing"*. That guard is working exactly as designed.
+
+What I did: nothing to the walks. Logged it.
+
+Why: the fix is now one line, because pressing the front card starts an
+exercise — I verified that in a browser against the deck, both locales. But it
+is a change to the one helper six walks share, and I cannot run a single walk
+from here to see it pass. A plausible fix to shared test code that nobody has
+executed is worse than a known breakage.
+
+What I need from Ben: **point `.env.local` back at the local stack and run
+`pnpm test:e2e`.** If the six walks fail where I say they do, `startExercise`
+should press the deck's front card when there is one and fall back to the radio
+for the list view — which keeps both halves of the screen covered rather than
+pinning the walks to whichever view happens to be the default.
+
+## The verification ran against the hosted project, because that is where `.env.local` points
+
+Where: `apps/web/.env.local`, unchanged by me
+
+What I checked: `supabase start` is up and the deck was driven through
+`pnpm --filter web dev` as rule 8 requires — but the dev server reads
+`.env.local`, and it names `xliwtiiopwyfunxkdmxh.supabase.co`. So every press
+that started an exercise during the measurements wrote to the HOSTED database.
+
+What I did: left the file alone and said so here. The UI findings are unaffected
+— the screen does not care which Postgres answered — but the hosted project now
+holds this afternoon's measurements: on the order of a dozen anonymous sign-ins,
+six of which started a session and then either navigated into it or were refused
+by the partial unique index. The local stack holds none of them.
+
+Why: `.env.local` is not mine to repoint, and the pending test-deck work is the
+reason it is where it is.
+
+What I need from Ben: **nothing, unless the hosted rows matter.** They are
+anonymous sign-ups with one `running` or `abandoned` session each.
+
+## Correction to the entry above — `exercises.startHint` never survived the afternoon
+
+Where: `src/i18n/en.ts`, `src/i18n/de.ts`
+
+What I checked: the entry above lists `exercises.startHint` as added for the
+overlay's second line. Ben cut that line after seeing the deck on a phone, so
+both keys are deleted rather than added — the card's own *Start* says the same
+thing in one word and can be pressed, and a key nothing renders is the invisible
+rot `en.ts` warns about at the top.
+
+Two more words moved with it: the overlay now says `exercises.next` in BOTH
+directions, so `exercises.previous` is only ever heard — the back button's name
+and tooltip — and it goes back to **Vorherige Übung**. The short form was chosen
+against the overlay's half-card cap, and there is no cap on a tooltip.
+
+What I did: deleted both keys, restored the longer word, and logged the
+component half in `packages/design-system/stories/OPEN-QUESTIONS.md`.
+
+Why: an append-only log is only worth keeping if the appends include the ones
+that undo an entry from an hour earlier.
+
+What I need from Ben: **nothing.**
+
+## The deck's button moved into the card's own bottom row, and the clearance it needed went with it
+
+Where: `src/exercises.css` (`.musie-exercise-card__foot`,
+`.musie-exercise-card__time`), `src/routes/Exercises.tsx` (`ExerciseFace`)
+
+What I checked: Ben's screenshots showed *2–12 Min.* cut off by the Start button
+the deck drew over the card. Measured at the narrow end: at 320px the German
+time ran **18px under the button**, where English cleared it by 4px — the card
+is 224px wide there and the button takes 107 of them.
+
+The screen's half of the earlier fix was one declaration,
+`padding-block-end: max(var(--space-gap-stack), var(--musy-deck-card-act-block))`,
+and it was answering the wrong axis: the words above the button were safe, the
+row beside it was not.
+
+What I did: the face takes the deck's accept (`CardDeckItem`'s function form)
+and puts it in its own bottom row, beside the time. The row is `space-between`
+with `align-items: center`, the time has `min-inline-size: 0`, and the button is
+`size="min"`. The body's clearance declaration is deleted — there is nothing
+overhead to dodge any more.
+
+Measured after: 16px of air at 320px in German and the time wrapping inside its
+own share rather than meeting the button; **0px baseline offset** where there
+was 9px, because the time and the rung's label are the same type step and two
+line boxes of one height centred in one row share a baseline. `align-items:
+baseline` would have been the obvious spelling and the wrong one — `.musy-btn`
+is an `inline-flex` box whose items are centred, so it exposes no text baseline
+and the row would have hung it by its bottom edge.
+
+The row's trailing and bottom padding give back the `--sp-2` the `min` rung
+bakes in, so the button's visible edge lands on `--space-inset-card` — measured
+25px from the card's bottom and trailing edges, against the time's 25px from the
+leading edge. The screen reduces its own padding rather than overriding the
+component's margin, which is the L7 line.
+
+Why: two boxes in one flex row cannot overlap. Every other fix — a min-width, a
+max-width, a reserved fraction — moves the failure to a narrower screen or a
+longer word.
+
+What I need from Ben: **nothing.** `exercises.startShort` now names this
+screen's own button rather than a prop of the deck's, which is where it belongs:
+this row is the one that knows how much corner it has.
+
+## The view switch stands above both views now, and the big CTA is gone
+
+Where: `src/routes/Exercises.tsx`, `src/exercises.css` (`.musie-deck-toolbar`,
+`.musie-exercise-card__start`), `src/i18n/*` (`exercises.start`, deleted)
+
+What I checked: two of Ben's, and they are the same observation twice — a
+control that moves is a control you have to look for.
+
+  1. The view switch rode in `CardDeck`'s action column in the deck view and in
+     a row of its own in the list. So the ONE control the two views share was
+     the one thing that moved when you pressed it, and on a phone it moved from
+     under the card to above the list.
+  2. The deck's own *Übung starten* and the card's *Starten* are one action in
+     two sizes, a hand's width apart.
+
+What I did: the switch is rendered once, above whichever view is on —
+`.musie-deck-toolbar`, same row, same place, measured identical at 393px and
+1280px across a view change. The deck's CTA is gone with the props that fed it
+(`acceptLabel`, `acceptGlyph`), and the card's own *Starten* is drawn at every
+width rather than below `--bp-md` only, since it is now the only one there is.
+`exercises.start` is deleted from both catalogues: nothing renders it, and a key
+nothing renders is the rot `en.ts` warns about at the top.
+
+Why: the card is the thing being started, so the button belongs on it; the
+switch changes what you are looking at altogether, so it belongs above both
+things it switches between.
+
+What I need from Ben: **nothing.**
+
+## This afternoon's deck work shares a working tree with another run
+
+Where: the whole repo, uncommitted
+
+What I checked: `git status` carries work that is not mine and is not Ben's
+hand either — a `labels="unchecked"` mode on `SegmentedControl` (component,
+story, `locale.ts`, `index.ts`), a new `FilterChips` component and story, and
+the i18n rename of `exercises.view.deck` to *Stack* / *Stapel*. My own change to
+`Exercises.tsx` sits in the same file as theirs.
+
+What I did: left every one of those files alone except `Exercises.tsx`, where I
+edited around their block and kept their comment verbatim. **Nothing is
+committed for this round.** The three deck commits before it are on
+`deck-tap-to-start`; this last step is in the working tree only.
+
+Why: `Exercises.tsx` cannot be committed without carrying their switch change,
+and that change does not compile without their `SegmentedControl` — so a commit
+of "my" files is either broken or is quietly a commit of someone else's
+unfinished work. Neither is mine to choose.
+
+What I need from Ben: **say which.** Either commit their SegmentedControl and
+FilterChips work first and I will commit mine on top, or tell me to take the lot
+in one commit and I will name both halves in the message.
+
+---
+
+# „Es läuft schon eine Session", rebuilt (2026-10-05)
+
+## The refusal was a dead end, and the screen now says so before anything is pressed
+
+Where: `src/routes/Exercises.tsx`, `src/components/SessionRunningLightbox.tsx`,
+`src/lib/session.ts`, both catalogues
+
+What I checked: Ben asked for a redesign of the already-running moment — flow,
+UI and copy — because it felt unrund. Four reasons, all in the code:
+
+1. **The text and the buttons disagreed.** `exercises.alreadyRunningDetail` read
+   *"Finish or close the one you are in before starting another"* — homework,
+   set directly above the button that does it for you. Already flagged in this
+   file on 2026-09-24; it had survived two redesigns.
+2. **The dialog could not name the thing it was about.** `ActiveSession` carried
+   `{ id, step }`, so it offered to end "the previous session" without knowing
+   which exercise that was.
+3. **It was the first anybody heard of the running session** — a modal, after a
+   press, in answer to a database refusal.
+4. **Two headings, one name.** `Lightbox` + `ContentBox` draw the sentence twice
+   in the accessibility tree; see the design system's log.
+
+What I did:
+
+- `ActiveSession` gained `exerciseId` (the id — the NAME is content, and
+  `useExercises()` already holds it). One extra column in a query that was
+  already being made.
+- **The screen reads the running session on arrival** and draws a notice above
+  the view switch: the exercise by name, where it stopped, *Session fortsetzen*
+  and *Session beenden*. Nothing is drawn while either read is in flight, which
+  is `DiaryGraph`'s rule — not knowing is answered by not offering.
+- **The dialog is a choice, not a refusal.** It names the running exercise, says
+  what ending costs in the sentence `session.close.text` has always carried —
+  *a session you end cannot be picked up again* — and offers three answers in
+  L6's order: *Abbrechen* (ghost), *{Übung} starten und diese beenden*
+  (secondary), *Session fortsetzen* (primary, and the one that loses nothing).
+- `exercises.alreadyRunning` and `…Detail` are deleted; `exercises.running.*` is
+  one voice for the notice and the dialog.
+
+Why: a collision you can see coming is not a collision. The dialog is now the
+second place the same fact is stated, not the first.
+
+What I need from Ben: **nothing, and two things to read.** The German is new in
+four strings (`running.headline`, `.stoppedAt`, `.end`, `.choice`), and two of
+yours were edited: `exercises.endAndStart` is shortened to *{name} starten und
+diese beenden* now that the headline names the other session, and
+`exercises.goToSession` takes the drawer's words — *Session fortsetzen* — so the
+two doors to one running session sound alike.
+
+## Pressing the exercise that is already running is not a question, so it is not asked
+
+Where: `src/routes/Exercises.tsx` (`onAccept`, and the refused branch of `start`)
+
+What I checked: found by pressing the front card twice, which is the most
+ordinary thing anybody does on this screen. The dialog came up offering to *end
+Achtsame Pause and start Achtsame Pause instead* — a sentence, not a question.
+
+What I did: pressing the card of the running exercise continues that session, at
+the step it stopped on. Twice over: once in `onAccept`, where the screen already
+knows, and once in the refusal branch, which is the same rule for the race where
+the read had not landed when the press happened. Starting that exercise FRESH is
+still one press away and is said out loud — end it in the notice, then press the
+card.
+
+Why: the one-running-session index exists to stop two runs, not to stop somebody
+returning to their own.
+
+What I need from Ben: **nothing.**
+
+## The notice is a ContentBox where L11's table says Message — on purpose
+
+Where: `src/routes/Exercises.tsx`, against
+`packages/design-system/docs/10-layout.md:350-362`
+
+What I checked: L11 sends "context present on load" to `Message variant="info"`,
+inline, `live="off"`. I built it that way first and screenshotted it: the info
+variant is a BLUE panel, and a blue panel at the top of a sand page full of
+terracotta cards reads as a system notification about something going wrong.
+Nothing is wrong — it is the person's own open session.
+
+What I did: a `ContentBox` in the product's own frame, with the same two actions
+and no live region (which is the half of L11 that does apply: present on load,
+so nothing is announced).
+
+Why: L11's table is about FEEDBACK — what just happened, or what is broken. A
+run in progress is neither.
+
+What I need from Ben: **nothing, just flagging.** If the table is meant to cover
+state as well as feedback, it needs a row that says so; if it is not, the row
+named "context present on load" is the one that invites this mistake.
+
+## The end-to-end walks are rewritten and I could not run them
+
+Where: `e2e/cancel.spec.ts`, `e2e/support.ts`, and every spec that starts an
+exercise
+
+What I checked: `startExercise` found a card with `getByRole('radio').first()`.
+The deck replaced the list on 2026-10-02 and the deck has no radios — but the
+**view switch does**, so in deck view that helper has been clicking *Stack* and
+then waiting for a session nobody started. Every walk in this suite goes through
+it. It is not a new break; it is a break that was invisible because the suite
+cannot run here at all (`.env.local` points at the hosted project, and
+`globalSetup` refuses outright — correctly).
+
+What I did, all of it unverified by a run:
+
+- `startExercise(page, locale, name?)` switches to the LIST view and takes its
+  radio from the group named `exercises.legend`, which is scoped so the view
+  switch cannot be mistaken for it again. Six specs updated for the new
+  signature.
+- `cancel.spec.ts` asks for a SECOND exercise (`free-rein`) wherever it wants
+  the refusal, because asking for the running one now continues it.
+- Every heading match moved to `exercises.running.headline` with the running
+  exercise interpolated, and is `exact` now that there is one heading rather
+  than two and no `Message` status word in front of it.
+- `exercises.endAndStart` matches with the OTHER exercise's name.
+
+What I need from Ben: **point `.env.local` at `http://127.0.0.1:54321` and run
+`pnpm test:e2e`.** I did not repoint it myself: you were testing the deck on
+your phone against the hosted project while this was being written, and pulling
+that out from under a live test is worse than a suite I cannot run. The browser
+verification of this work was done against hosted, as the rest of today's was.
+
+**What no walk covers: starting an exercise from the DECK.** The helper now
+takes the list on purpose — the deck shows one card at a time, so "click the
+card called X" means dealing until X is in front, which is a walk about the pile
+rather than about the session. A deck-native walk is worth having and is not
+this change.

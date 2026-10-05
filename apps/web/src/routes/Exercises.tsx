@@ -57,20 +57,39 @@
  */
 import * as React from 'react';
 import { ArrowRight, LayoutList, Layers, Shuffle, Timer } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import { CardDeck, CtaButton, Icon, RadioCards, SegmentedControl } from '@musie/design-system';
+import { Link, useNavigate } from 'react-router';
+import {
+  ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, RadioCards, SegmentedControl,
+} from '@musie/design-system';
 import type { CardDeckCard, CardDeckItem, RadioCardFact } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useT } from '../i18n/localeContext';
+import type { MessageKey } from '../i18n';
+import type { StepId } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
-import { createSession, endSession } from '../lib/session';
+import { createSession, endSession, useActiveSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
 import { useExercises } from '../lib/useContent';
 import type { Exercise } from '../lib/content';
 import '../exercises.css';
 
 type View = 'deck' | 'list';
+
+/**
+ * A step id, as the catalogue says it.
+ *
+ * The four ids are the URL's and the row's; these are their display names, and
+ * the split is the schema's own (`session.step.*` in en.ts). A map rather than
+ * four branches, and typed by `StepId` so a fifth step fails the typecheck here
+ * rather than rendering a key.
+ */
+const STEP_LABEL: Record<StepId, MessageKey> = {
+  intro: 'session.step.intro',
+  scan: 'session.step.scan',
+  listen: 'session.step.listen',
+  reflect: 'session.step.reflect',
+};
 
 export function Exercises() {
   const t = useT();
@@ -85,6 +104,33 @@ export function Exercises() {
   const [failed, setFailed] = React.useState(false);
   /** Pressed an exercise that is not built yet. Names it, nothing more. */
   const [unbuilt, setUnbuilt] = React.useState<string | null>(null);
+
+  /* ── THE RUNNING SESSION, READ ON ARRIVAL (2026-10-05) ───────────────────
+     This screen used to learn about a running session the hard way: you
+     pressed a card, the database refused the insert, and a dialog explained.
+     That is a dead end dressed as an answer — the first anybody heard of it
+     was the moment it stopped them.
+
+     So the screen asks. `useActiveSession()` is the same read the drawer and
+     the diary already make, and it costs one query on mount.
+
+     NOTHING IS DRAWN WHILE THE ANSWER IS UNKNOWN. `loading` and a failed read
+     both render no notice, which is the answer `DiaryGraph` gives for the same
+     question: not knowing is answered by not offering, never by a control that
+     appears under a thumb already travelling.
+
+     AND IT CANNOT REFETCH. `AsyncState` has no reload, so ending the run from
+     here is remembered locally — the screen holds what it did rather than
+     asking the server to agree with it. */
+  const { data: activeSession, loading: sessionLoading } = useActiveSession();
+  const [endedHere, setEndedHere] = React.useState(false);
+  const [endingRunning, setEndingRunning] = React.useState(false);
+  /* IT WAITS FOR THE CATALOGUE TOO, not just for the session. The notice names
+     the running exercise, and the name comes from `useExercises()` — so a
+     notice drawn before that lands says "A session is still running" and then
+     changes its own headline a moment later. Measured, in English, on a cold
+     load. Both reads are in flight at once, so the wait costs nothing. */
+  const running = endedHere || sessionLoading || loading ? null : activeSession;
 
   /* ALL FIVE, not just the built ones.
      An earlier pass filtered to `implemented` on the theory that a deck whose
@@ -124,8 +170,23 @@ export function Exercises() {
         navigate(`/session/${encodeURIComponent(result.session.id)}/intro`);
         return;
       }
-      /* Refused. `busy` falls, so CardDeck brings the card back, and the
-         dialog asks the question over the returned deck. */
+      /* ── PRESSING THE ONE THAT IS ALREADY RUNNING IS NOT A CHOICE ────────
+         It is the same exercise, so there is nothing to decide between: the
+         dialog would have offered to "end Mindful Break and start Mindful
+         Break instead", which is a sentence, not a question. Found by pressing
+         the front card twice in a row, which is the most ordinary thing
+         anybody does here.
+
+         It CONTINUES instead — the run you already have of the exercise you
+         just asked for. Starting it fresh is still one press away and is said
+         out loud: end it in the notice above the deck, then press the card. */
+      if (result.session !== null && result.session.exerciseId === exercise.id) {
+        navigate(`/session/${encodeURIComponent(result.session.id)}/${result.session.step}`);
+        return;
+      }
+      /* Refused, and by a different exercise. `busy` falls, so CardDeck brings
+         the card back, and the dialog asks the question over the returned
+         deck. */
       setRefused({ exercise, session: result.session });
       setBusy(false);
     } catch (thrown: unknown) {
@@ -141,16 +202,49 @@ export function Exercises() {
     [exercises],
   );
 
+  /* THE RUNNING EXERCISE'S NAME, out of the catalogue this screen already
+     holds. `ActiveSession` carries the id and never the name — the name is
+     content, per locale, and `useExercises()` is where it lives. Null until
+     the catalogue arrives, or for a row this locale has no name for; both
+     callers below have an answer for null. */
+  const runningName = running === null ? null : byId.get(running.exerciseId)?.name ?? null;
+
+  /** End the running session from the notice, and stay here to choose. */
+  const endRunning = React.useCallback(async () => {
+    if (running === null) return;
+    setEndingRunning(true);
+    try {
+      /* `abandoned` with a timestamp — the same write the menu's row makes and
+         the same one the dialog's second button makes. Three doors, one act, so
+         the diary cannot tell them apart and does not have to. */
+      await endSession(running.id, 'abandoned', new Date().toISOString());
+      setEndedHere(true);
+    } catch (thrown: unknown) {
+      console.error('[musie] could not end the running session:', thrown);
+      setFailed(true);
+    } finally {
+      setEndingRunning(false);
+    }
+  }, [running]);
+
   const onAccept = React.useCallback((id: string) => {
     const exercise = byId.get(id);
     if (exercise === undefined) return;
+    /* THE ONE THAT IS ALREADY RUNNING GOES STRAIGHT BACK IN, without asking
+       the database a question whose answer is on screen. The same rule the
+       refusal branch of `start` applies — this is the half that does not need
+       a round trip to know. */
+    if (running !== null && running.exerciseId === exercise.id) {
+      navigate(`/session/${encodeURIComponent(running.id)}/${running.step}`);
+      return;
+    }
     /* NOT BUILT YET — the same refusal /exercises gives, from the same
        component, so the two screens say it in one voice. `busy` is never set,
        so CardDeck returns the card immediately and the lightbox opens over a
        deck that is back where it was. */
     if (!exercise.implemented) { setUnbuilt(exercise.name); return; }
     void start(exercise, null);
-  }, [byId, start]);
+  }, [byId, navigate, running, start]);
 
   /* BOTH DIRECTIONS ARE FREE AND REPORT NOTHING. CardDeck has already turned
      its own pile, and this screen keeps no order of its own to update. The
@@ -171,17 +265,25 @@ export function Exercises() {
     if (exercise !== undefined) void start(exercise, null);
   }, [exercises, start]);
 
-  /* ONE SWITCH, TWO HOMES. In the deck it rides at the head of CardDeck's
-     action column; in the list there is no column to ride in, so it stands in
-     a row of its own. Declared once either way, because two copies of a
-     control are two controls that will disagree. */
+  /* ONE SWITCH, ONE HOME (Ben, 2026-10-05). It used to ride in CardDeck's
+     action column in the deck view and in a row of its own in the list — so
+     the one control the two views SHARE was the one thing that moved when you
+     pressed it, and on a phone it moved from under the card to above the list.
+     It stands above both now, in the same place whichever view is on.
+
+     THE VIEW YOU ARE NOT IN CARRIES THE WORD — `labels="unchecked"`, the
+     component's own mode since 2026-10-05. Two glyphs alone asked the screen to
+     teach that a pile means a pile; this way the half you might press says
+     "Stapel" or "Liste" and the half you are on is the glyph that is already
+     lit. The control is still as narrow as its own content, which is what the
+     `min` rung and both of these homes need. */
   const viewSwitch = (
     <SegmentedControl
       name="exercises-view"
       legend={t('exercises.view.legend')}
       legendHidden
       size="min"
-      iconOnly
+      labels="unchecked"
       value={view}
       onValueChange={(next) => setView(next === 'list' ? 'list' : 'deck')}
       options={[
@@ -224,6 +326,66 @@ export function Exercises() {
           press did not start anything, which is a different sentence. */}
       {failed && <p className="musie-note" role="alert">{t('exercises.startFailed')}</p>}
 
+      {/* ── A RUN THAT IS STILL OPEN, SAID BEFORE ANYTHING IS PRESSED ───────
+          UNDER THE INTRO AND ABOVE THE SWITCH, which is the one position that
+          is the same in both views and keeps the heading order honest: the
+          page's h1 is above it and this is an h2.
+
+          A CONTENT BOX, NOT A `Message variant="info"`. L11's table sends
+          "context present on load" to an info Message, and that is what this
+          was first — measured, screenshotted, and wrong on this screen: the
+          info variant is a blue panel, and a blue panel over a sand page full
+          of terracotta cards reads as a system notification about something
+          going wrong. Nothing is wrong. This is the person's own open session,
+          so it is drawn in the product's own frame, like the content it is
+          about. Flagged against L11 in OPEN-QUESTIONS.md.
+
+          NOTHING IS ANNOUNCED, which is the half of L11 that does apply: this
+          is present on load, so there is no live region. A `Message` would have
+          carried `live="off"` for the same reason.
+
+          NEITHER ACTION IS `primary`, and that is Ben's own rule rather than
+          modesty: one primary per unit, and it is the way ON. On this screen
+          the way on is the deck, and the filled button belongs to the card.
+          Inside the dialog there is no deck, which is why *Continue session* is
+          primary there and secondary here — the same rule, read twice. */}
+      {running !== null && (
+        <ContentBox
+          className="musie-running"
+          headingLevel={2}
+          headline={t('exercises.running.headline', {
+            name: runningName ?? t('exercises.running.fallback'),
+          })}
+          text={t('exercises.running.stoppedAt', { step: t(STEP_LABEL[running.step]) })}
+        >
+          <ButtonGroup align="end">
+            <CtaButton
+              variant="ghost"
+              loading={endingRunning}
+              loadingLabel={t('content.loading')}
+              onClick={() => void endRunning()}
+            >
+              {t('exercises.running.end')}
+            </CtaButton>
+            <CtaButton
+              variant="secondary"
+              /* It renders an `<a>`; base-ui asks to be told so, and warns in
+                 the console when it is not. */
+              nativeButton={false}
+              render={
+                <Link to={`/session/${encodeURIComponent(running.id)}/${running.step}`} />
+              }
+            >
+              {t('exercises.goToSession')}
+            </CtaButton>
+          </ButtonGroup>
+        </ContentBox>
+      )}
+
+      {/* ABOVE BOTH VIEWS, in the one row it keeps. Inside the length guard: a
+          switch between two ways of showing nothing is furniture. */}
+      {exercises.length > 0 && <div className="musie-deck-toolbar">{viewSwitch}</div>}
+
       {exercises.length > 0 && (
         <>
           {view === 'deck' ? (
@@ -234,28 +396,20 @@ export function Exercises() {
               onAccept={onAccept}
               onNext={onNext}
               onPrevious={onPrevious}
-              acceptLabel={t('exercises.start')}
               /* ONE WORD FOR BOTH DIRECTIONS, which is the component's own
                  arrangement since 2026-10-05: the overlay says `nextLabel`
                  whichever way the card is going, and `previousLabel` is read
                  by a screen reader off the back button rather than seen. */
               nextLabel={t('exercises.next')}
               previousLabel={t('exercises.previous')}
-              /* The only glyph the deck is given, and an ARROW since
-                 2026-10-05 (Ben) rather than a play triangle: this starts an
-                 exercise, it does not play a file, and the card's own button
-                 says it with the same glyph. The deck's two directions carry
-                 CHEVRONS for that reason — one screen cannot have → meaning
-                 "the next card" beside → meaning "start this one". */
-              acceptGlyph={ArrowRight}
               label={t('exercises.deckLabel')}
-              /* AT THE HEAD OF THE ACTION COLUMN. It does not act on the card
-                 in front — it changes what you are looking at altogether,
-                 which is a decision you make before the ones underneath it. */
-              toolbar={viewSwitch}
-              /* Under the deck's own controls, in the same column. It acts on
-                 the deck as a whole rather than on the card in front, which is
-                 why it is last and why it is the quiet one. */
+              /* Under the deck's two directions, in the same column. It acts
+                 on the deck as a whole rather than on the card in front, which
+                 is why it is last and why it is the quiet one. The big *Übung
+                 starten* that used to head this column is gone (Ben,
+                 2026-10-05): the card carries that action now, and the same
+                 thing twice in two sizes is redundancy rather than
+                 reassurance. */
               actions={
                 <CtaButton variant="ghost" leadingIcon={Shuffle} disabled={busy} onClick={pickForMe}>
                   {t('exercises.surpriseMeShort')}
@@ -275,8 +429,6 @@ export function Exercises() {
                compared — a pile you deal with against a column you read — and
                in nothing else. A bespoke list here would have compared the
                deck against something nobody is proposing to ship. */
-            <>
-            <div className="musie-deck-toolbar">{viewSwitch}</div>
             <RadioCards
               name="exercises-list"
               /* THE SCREEN'S OWN QUESTION, not the view switch's name. The
@@ -306,7 +458,6 @@ export function Exercises() {
               disabled={busy}
               emptyLabel={t('content.empty')}
             />
-            </>
           )}
         </>
       )}
@@ -318,6 +469,11 @@ export function Exercises() {
       {refused !== null && (
         <SessionRunningLightbox
           name={refused.exercise.name}
+          runningName={
+            refused.session === null
+              ? null
+              : byId.get(refused.session.exerciseId)?.name ?? null
+          }
           session={refused.session}
           starting={busy}
           onEndAndStart={() => void start(refused.exercise, refused.session)}

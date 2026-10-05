@@ -84,15 +84,17 @@
  * saying the one thing the gesture no longer says.
  *
  * ── NOTHING IS GATED BEHIND THE GESTURE ──────────────────────────────────
- * Every action is a real button, always in the DOM: the accept in the action
- * column, and the two directions as a pair of icon buttons under it. The arrow
- * keys do the same two things — RIGHT for the next card, LEFT for the one
- * before, which is the reading order and therefore the mirror of the swipe
- * that does the same job, exactly as in every carousel. Enter accepts.
+ * Both ways round the pile are real buttons, always in the DOM, and Arrow
+ * Right and Arrow Left do the same two things.
  *
- * What a FACE puts on itself is in addition to all of that and never instead:
- * a consumer that ignores `CardDeckItem`'s function form loses nothing, which
- * is the test that arrangement has to pass.
+ * THE ACCEPT IS THE ONE THE DECK NO LONGER DRAWS (Ben, 2026-10-05). It had a
+ * primary button in the action column, and once a face could put one on the
+ * card that was the same action twice in two sizes a hand's width apart. So
+ * the deck's half of the promise is now Enter on the pile — which a keyboard
+ * and a screen reader both reach — and the VISIBLE half belongs to the face,
+ * through the accept it is handed. The app's exercise card draws it; a
+ * consumer that draws nothing still has the press, the key, and a pile that
+ * says so in its own label.
  *
  * ── EVERY WORD IT SPEAKS IS THE CONSUMER'S ───────────────────────────────
  * There are no label defaults here, not even from the locale catalogue. A deck
@@ -102,9 +104,7 @@
  * arrows, because which way is back is not a product decision.
  */
 import * as React from 'react';
-import type { LucideIcon } from 'lucide-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { CtaButton } from './CtaButton';
 import { IconButton } from './IconButton';
 
 /**
@@ -207,11 +207,6 @@ export interface CardDeckProps {
    *  comes back to the top, which is the undo for a card dealt past. Carries
    *  the id of the card that was on top when it happened. */
   onPrevious: (id: string) => void;
-  /** The accept's name, on the button beside the deck. REQUIRED.
-   *
-   *  THE ONLY ACCEPT LABEL THE DECK OWNS. A face that places the accept itself
-   *  names it itself — it is the one that knows how much corner it has. */
-  acceptLabel: string;
   /**
    * What the overlay says while a card is being dealt — the card you are going
    * TO, which is the same card whichever way the hand went — and the right-hand
@@ -226,8 +221,6 @@ export interface CardDeckProps {
    *  tooltip, and nothing else: the overlay says `nextLabel` both ways, so this
    *  is read rather than seen, and no measure binds it. REQUIRED. */
   previousLabel: string;
-  /** The accept's glyph. The DIRECTIONS have none — see the note at the top. */
-  acceptGlyph: LucideIcon;
   /** The pile's accessible name.
    *
    *  It is also the only place a keyboard or screen-reader user is told what
@@ -240,19 +233,6 @@ export interface CardDeckProps {
    * consumer is given both and returns the sentence.
    */
   positionLabel: (position: number, total: number, id: string) => string;
-  /**
-   * Rendered at the HEAD of the action stack, above the deck's own controls.
-   *
-   * It had a row of its own above the card while the dots were there to share
-   * it with; with the dots gone that row held one control and a lot of space.
-   * A view switch is the reference case, and it belongs with the other things
-   * you can press rather than floating over the deck on its own.
-   *
-   * Above the accept rather than below, because it does not act on the card in
-   * front — it changes what you are looking at altogether, which is a decision
-   * you make before the ones underneath it.
-   */
-  toolbar?: React.ReactNode;
   /**
    * Extra controls under the deck's own, in the same stack.
    *
@@ -323,8 +303,8 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  acceptLabel, nextLabel, previousLabel,
-  acceptGlyph, label, positionLabel, toolbar, actions, busy = false, className,
+  nextLabel, previousLabel,
+  label, positionLabel, actions, busy = false, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
   const [drag, setDrag] = React.useState<Drag | null>(null);
@@ -779,24 +759,18 @@ export function CardDeck({
         </div>
 
         {/* ── THE ACTIONS ─────────────────────────────────────────────
-            One column, in the order they carry weight: the way in, the two
-            ways round, then whatever the screen adds. Beside the card where
-            there is room and under it where there is not — a wrap, not a
-            breakpoint, so it answers to the space the deck actually has.
+            The two ways round the pile, then whatever the screen adds. Beside
+            the card where there is room and under it where there is not — a
+            wrap, not a breakpoint, so it answers to the space the deck
+            actually has.
 
-            NORMAL SIZE, not the small rung. These are the screen's real
-            choices; the row above is furniture. */}
+            THE DECK'S OWN ACCEPT BUTTON STOOD HERE and is gone (Ben,
+            2026-10-05): the face carries one now, on the card, and the same
+            action a hand's width apart in two sizes was the redundancy rather
+            than the reassurance. What the deck keeps is the pile's own
+            business — which card is in front — and nothing about what taking
+            one means. */}
         <div className="musy-deck__actions">
-          {toolbar}
-          <CtaButton
-            variant="primary"
-            leadingIcon={acceptGlyph}
-            className="musy-deck__act musy-deck__act--accept"
-            disabled={inert}
-            onClick={() => accept(frontId)}
-          >
-            {acceptLabel}
-          </CtaButton>
           {/* ── THE TWO DIRECTIONS, AS A PAIR ─────────────────────────
               One row, in reading order: back, then forward. They are a PAIR
               rather than two more rows in the column because that is what
