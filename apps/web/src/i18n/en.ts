@@ -956,14 +956,16 @@ export const en = {
      a card's own corner has room for. */
   'exercises.start': 'Start the exercise',
   'exercises.startShort': 'Start',
-  /* UNDER THE DIRECTION ON THE OVERLAY. The overlay is up for the whole of a
-     browse, which makes it the one moment when somebody looking for a way in
-     is looking at the card — so it is where the press gets said. 'Press',
-     not 'tap': a mouse drag raises the same overlay. */
-  'exercises.startHint': 'Press a card to start it',
-  /* The two directions, on the overlay and as the names of the pair of icon
-     buttons under the primary one. NOT 'another one': the deck goes both ways
-     now, and two labels that both said "another" would not say which. */
+  /* NO 'exercises.startHint'. It was the overlay's second line — "Press a card
+     to start it" — and the card now carries a button that says the same thing
+     in one word and can be pressed (Ben, 2026-10-05). A key nothing renders is
+     the invisible rot the note at the top of this file warns about, so it is
+     deleted rather than kept against a line that may not come back.
+
+     The two directions. The overlay says the FORWARD one whichever way the
+     finger goes — both ways deal another card — so `exercises.previous` is now
+     only ever heard, as the back button's name and tooltip. NOT 'another one'
+     for either: two labels that both said "another" would not say which. */
   'exercises.next': 'Next exercise',
   'exercises.previous': 'Previous exercise',
   /* Announced when the top card changes — "3 / 5" alone would say the pile

@@ -667,26 +667,23 @@ export const de: Messages = {
   /* Dieselbe Handlung, kurz: in die Ecke einer 360px breiten Karte passt
      'Übung starten' nicht, und ein abgeschnittenes Label ist kein Label. */
   'exercises.startShort': 'Starten',
-  /* Unter der Richtung im Overlay. 'Antippen' statt 'Drücken': auf dem Gerät,
-     für das dieses Deck gebaut ist, ist es ein Finger — und eine Maus versteht
-     die Zeile trotzdem.
+  /* Kein 'exercises.startHint' mehr. Das war die zweite Zeile im Overlay —
+     'Antippen startet die Übung' — und auf der Karte sitzt jetzt eine
+     Schaltfläche, die dasselbe in einem Wort sagt und sich drücken lässt (Ben,
+     2026-10-05). Ein Schlüssel, den nichts rendert, ist genau die unsichtbare
+     Fäulnis, vor der der Kopf dieser Datei warnt.
 
-     ALS AUSSAGE, NICHT ALS AUFFORDERUNG, und das ist die Längenregel (§5):
-     'Tipp eine Karte an, um sie zu starten' sind 37 Zeichen gegen 24 englische
-     und brach im Overlay auf 393px in eine dritte Zeile, wo das Englische zwei
-     braucht. 26 Zeichen sagen dasselbe in zwei. */
-  'exercises.startHint': 'Antippen startet die Übung',
-  /* Die zwei Richtungen. Bens Wort von 2026-10-02 für die eine, und die
+     Die zwei Richtungen. Bens Wort von 2026-10-02 für die eine, und die
      Gegenrichtung dazu — nicht 'andere Übung', weil zwei Labels mit 'andere'
      nicht sagen würden, welche.
 
-     'Vorige', NICHT 'Vorherige', und das ist gemessen: im Overlay steht das
-     Label in Display-Größe auf halber Kartenbreite, und 'Vorherige' ist ein
-     unteilbares Wort von 155px gegen 148px Platz — bei weitem Zug lief der
-     letzte Buchstabe über den Bildschirmrand. 'Vorige' passt und ist dasselbe
-     Wort. Silbentrennung ist hier aus (siehe .musy-deck__overlay-label). */
+     'Vorherige' und nicht 'Vorige': das Overlay zeigt jetzt in beide
+     Richtungen die NÄCHSTE Übung, also steht dieses Wort nur noch als Name und
+     Tooltip der Zurück-Schaltfläche. Dort hält es kein Maß — der Grund für die
+     Kurzform war ein unteilbares Wort von 155px gegen 148px Platz im Overlay,
+     und den Platz gibt es nicht mehr zu messen. */
   'exercises.next': 'Nächste Übung',
-  'exercises.previous': 'Vorige Übung',
+  'exercises.previous': 'Vorherige Übung',
   /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
      `route.session.title`. */
   'exercises.deckPosition': '{name} – Karte {index} von {total}',

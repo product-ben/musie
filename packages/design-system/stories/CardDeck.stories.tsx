@@ -69,9 +69,14 @@ const meta = {
           '**The overlay is not a verdict any more.** It used to appear *at* the',
           'threshold — half the card for the accept — so it arrived with the card half',
           'off the stage and the decision already made. It now fades in with the',
-          'gesture and is fully opaque at a **tenth** of the card, naming the card you',
-          'are heading for while you can still change your mind. The two intent chips',
+          'gesture and is fully opaque at a **tenth** of the card. The two intent chips',
           'went with it: there is no longer a pair of outcomes to compare.',
+          '',
+          'It says **`nextLabel` whichever way the finger is going** — both ways deal',
+          'another card, and a word that changed under the thumb made a browse feel',
+          'like a decision. Which way is still said by the two buttons, and by the',
+          'SIDE the word sits on: the trailing edge, so it is whole for the whole of',
+          'the gesture rather than sliding off with the card it belongs to.',
           '',
           '**What happens after an accept is the consumer’s, and it can fail.**',
           '`onAccept` fires, the card lifts off the pile and fades, and the deck goes',
@@ -116,7 +121,6 @@ const meta = {
     onPrevious: () => {},
     acceptLabel: 'Start the exercise',
     acceptShortLabel: 'Start',
-    acceptHint: 'Press a card to start it',
     nextLabel: 'Next exercise',
     previousLabel: 'Previous exercise',
     acceptGlyph: Play,
@@ -131,9 +135,8 @@ const meta = {
     onPrevious: { action: 'previous', description: 'Swiped right, pressed, or Arrow Left. The card at the back comes to the top.' },
     acceptLabel: { control: 'text', description: 'The accept’s name, on the button beside the deck. Required.' },
     acceptShortLabel: { control: 'text', description: 'The same action in as few words as a card’s corner has room for. Required — a label cut to fit ends mid-word in German.' },
-    acceptHint: { control: 'text', description: 'The line under the direction on the overlay, naming how to take a card. Required.' },
-    nextLabel: { control: 'text', description: 'The forward direction’s name: on the overlay, and as the right-hand icon button’s accessible name and tooltip. Required.' },
-    previousLabel: { control: 'text', description: 'The same, backward. Required.' },
+    nextLabel: { control: 'text', description: 'What the overlay says, either way, and the right-hand icon button’s accessible name and tooltip. Required.' },
+    previousLabel: { control: 'text', description: 'The back button’s accessible name and tooltip, and nothing else — the overlay says nextLabel both ways. Required.' },
     acceptGlyph: { control: false, description: 'Lucide component for the accept. The directions have none — the deck owns its own arrows.' },
     label: { control: 'text', description: 'The pile’s accessible name, and the only place the keys are named: the overlay is aria-hidden.' },
     toolbar: { control: false, description: 'Rendered at the head of the action stack, above the deck’s own controls. A view switch is the reference case.' },
@@ -156,6 +159,16 @@ type Story = StoryObj<typeof meta>;
  * the button beside the deck.
  */
 export const Default: Story = {};
+
+/**
+ * THE CONDENSED RUNG IS WHAT THE CARD CARRIES, and it is a deliberate
+ * exception rather than a choice of size: §5.4 permits `min` for a card
+ * control and forbids it for a primary action, and the card's *Start* is both
+ * at once. Ben took it on 2026-10-05 — narrow the frame below 768px to see it.
+ * It renders at 36px: over 2.5.8's 24, under §5.4's 44, with the margin the
+ * class bakes in earning the spacing exception. Logged in
+ * stories/OPEN-QUESTIONS.md.
+ */
 
 /**
  * The deck inert. `busy` is the consumer saying "I am still deciding", and

@@ -237,7 +237,10 @@ export function Exercises() {
                  label cut to fit is a label that ends mid-word in the language
                  that runs 30% longer. */
               acceptShortLabel={t('exercises.startShort')}
-              acceptHint={t('exercises.startHint')}
+              /* ONE WORD FOR BOTH DIRECTIONS, which is the component's own
+                 arrangement since 2026-10-05: the overlay says `nextLabel`
+                 whichever way the card is going, and `previousLabel` is read
+                 by a screen reader off the back button rather than seen. */
               nextLabel={t('exercises.next')}
               previousLabel={t('exercises.previous')}
               /* The only glyph the deck is given. The two directions carry its

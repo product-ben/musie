@@ -5486,7 +5486,8 @@ html[data-musy-scroll-snap='y'] {
      have won and the face would have reserved nothing. It did, for one
      measurement. */
   --musy-deck-card-act-block:
-    calc(var(--target-primary) + var(--border-width-regular) * 2);
+    calc(var(--type-label-md-line) * var(--type-label-md-size)
+         + var(--sp-2) * 2 + var(--border-width-regular) * 2);
   --musy-card-rise:
     clamp(0, calc(var(--musy-card-depth) - var(--musy-deck-progress, 0)), 4);
   /* HOW MUCH OF ITS SCATTER A CARD IS SPENDING: all of it in the pile, none
@@ -5649,11 +5650,24 @@ html[data-musy-scroll-snap='y'] {
    10px of a 19px line — in English the same card has five lines and clears it,
    which is exactly the shape of defect that ships. Only the block axis is
    published: nothing needs the inline one yet, because the only thing the
-   reference face puts in that row is a short time on the LEADING edge.     */
+   reference face puts in that row is a short time on the LEADING edge.
+
+   ── THE CONDENSED RUNG (Ben, 2026-10-05) ───────────────────────────────────
+   `size="min"`, which §5.4 permits for a card control and forbids for a
+   primary action — and this is both. The deviation is Ben's, it is logged in
+   stories/OPEN-QUESTIONS.md, and the number that matters is 36px: over
+   2.5.8's 24px, under §5.4's 44px, with the class's own --sp-2 margin earning
+   the spacing exception the same way §7.2's rung does.                     */
 .musy-deck__card-act {
   position: absolute;
-  inset-block-end: var(--space-inset-card);
-  inset-inline-end: var(--space-inset-card);
+  /* THE INSET GIVES THE RUNG'S MARGIN BACK. `.musy-btn--min` bakes in --sp-2
+     all round to earn 2.5.8's exception, and on an absolutely positioned box
+     that margin ADDS to the inset — so the button would have sat 32px off two
+     edges of a card whose own inset is 24. Subtracting it puts the VISIBLE
+     edge on --space-inset-card, level with whatever the face sets in that row,
+     and leaves the margin doing its real job of keeping other targets away. */
+  inset-block-end: calc(var(--space-inset-card) - var(--sp-2));
+  inset-inline-end: calc(var(--space-inset-card) - var(--sp-2));
   /* Under the overlay, which is +1: a browse covers the card, and the button
      for the card you are leaving has no business sitting on top of the name of
      the one you are going to. */
@@ -5697,8 +5711,9 @@ html[data-musy-scroll-snap='y'] {
   inset: 0;
   z-index: calc(var(--z-raised) + 1);
   display: grid;
-  /* Two rows — where you are going, and how to stay — centred as a pair
-     rather than each in its own half of the card. */
+  /* ONE ROW NOW (Ben, 2026-10-05). It carried a second line naming the press,
+     and the press has a button on the card to name it; `align-content` and the
+     gap stay because one centred child is the same declaration as two. */
   align-content: center;
   gap: var(--space-gap-related);
   /* ── THE WORDS SIT ON THE EDGE THAT STAYS ON SCREEN ──────────────────────
@@ -5707,7 +5722,13 @@ html[data-musy-scroll-snap='y'] {
      middle — "Übung s". The text is pulled to the trailing edge instead,
      which is the half still in view: start when the card is going right, end
      when it is going left. `start` is the resting value because `previous` is
-     the direction that moves the card rightward. */
+     the direction that moves the card rightward.
+
+     THE SIDES STAY, and they are now the only thing on the overlay that says
+     which way the finger is going — the word is the same both ways (Ben,
+     2026-10-05). They are not decoration for that reason: left-aligning both
+     directions puts the word on the edge of the card that is LEAVING, and a
+     left swipe then slides its own label off the screen. */
   justify-items: start;
   padding: var(--space-inset-card);
   border-radius: inherit;
@@ -5729,8 +5750,7 @@ html[data-musy-scroll-snap='y'] {
 .musy-deck__overlay[data-dir] { transition: none; }
 
 .musy-deck__overlay[data-dir='next'] { justify-items: end; }
-.musy-deck__overlay[data-dir='next'] .musy-deck__overlay-label,
-.musy-deck__overlay[data-dir='next'] .musy-deck__overlay-hint { text-align: end; }
+.musy-deck__overlay[data-dir='next'] .musy-deck__overlay-label { text-align: end; }
 
 .musy-deck__overlay-label {
   font-family: var(--type-display-lg-family);
@@ -5758,31 +5778,13 @@ html[data-musy-scroll-snap='y'] {
   hyphens: none;
 }
 
-/* ── HOW TO TAKE A CARD, UNDER THE DIRECTION ──────────────────────────────
-   The label says which card you are going to; this says what to do when you
-   have found the one you want. Body type under display type, so the two read
-   as a statement and its footnote rather than as two competing lines.
-
-   IT IS THE REASON THE OVERLAY CARRIES A SECOND LINE AT ALL. The press is the
-   one action no gesture reaches, and a browse is exactly when somebody is
-   looking for it — so the moment the overlay is up is the moment to say it.
-
-   SAME INK, NOT A FADED ONE. The obvious move is to drop the opacity, and on a
-   fill chosen for 6.46:1 against this exact ink that would spend the margin
-   the whole overlay was built around. It is held back by SIZE instead, which
-   costs no contrast at all.
-
-   The same width cap as the label, for the same reason.                    */
-.musy-deck__overlay-hint {
-  max-inline-size: calc(var(--musy-deck-card-inline) / 2);
-  font-family: var(--type-body-sm-family);
-  font-size: var(--type-body-sm-size);
-  line-height: var(--type-body-sm-line);
-  color: var(--on-surface-inverse);
-  text-align: start;
-  text-wrap: var(--text-wrap-body);
-  hyphens: none;
-}
+/* THE SECOND LINE IS GONE (Ben, 2026-10-05). It was body type under the
+   display word, naming the press — "Press a card to start it" — on the
+   argument that a browse is when somebody is looking for a way in. The card
+   now carries a button that says the same thing in two words and can be
+   pressed, which is one way of saying it too many. Its catalogue keys went
+   with it rather than being left for a component that no longer renders
+   them. */
 
 /* ── THE TWO DIRECTIONS ───────────────────────────────────────────────────
    A row, not two rows: back and forward are one control with two ends, and a

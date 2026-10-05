@@ -36,12 +36,25 @@
  * decision had been made. Ben, 2026-10-05: "it is only visible once the user
  * already swiped it away."
  *
- * So it is no longer a verdict but the answer to "which card am I going to",
- * and it fades in WITH the gesture — fully opaque at OVERLAY_FULL_AT, a tenth
- * of the card, well under half of SWIPE_RATIO. The two intent chips went with
- * it: they existed to let somebody COMPARE two outcomes before choosing one,
- * and with both directions free and the overlay up at a tenth of a card they
+ * So it is no longer a verdict but the answer to "another card is coming", and
+ * it fades in WITH the gesture — fully opaque at OVERLAY_FULL_AT, a tenth of
+ * the card, well under half of SWIPE_RATIO. The two intent chips went with it:
+ * they existed to let somebody COMPARE two outcomes before choosing one, and
+ * with both directions free and the overlay up at a tenth of a card they
  * answered a question nobody is asking and were covered a frame later.
+ *
+ * ── IT SAYS THE SAME WORD BOTH WAYS (Ben, 2026-10-05) ─────────────────────
+ * `nextLabel`, whichever way the finger is going. It named the direction for
+ * half a day and Ben asked for one word: both ways deal another card, so
+ * "another exercise" is true in both, and a label that changed under the thumb
+ * made a browse feel like a decision again. WHICH way is still said, twice,
+ * where it is a fact rather than a mood — by the two buttons, and by the SIDE
+ * the overlay's word sits on, which stays the trailing edge so the word is
+ * whole for the whole of the gesture.
+ *
+ * It is one line now. The second line named the press, and the press has a
+ * button on the card to name it — a sentence under a verb is what you write
+ * when there is nothing to point at.
  *
  * ── WHAT HAPPENS AFTER AN ACCEPT IS THE CONSUMER'S, AND IT CAN FAIL ───────
  * `onAccept` fires, the card lifts off the pile and fades, and the deck goes
@@ -156,19 +169,17 @@ export interface CardDeckProps {
    */
   acceptShortLabel: string;
   /**
-   * The line under the direction on the overlay, naming how to take a card.
+   * What the overlay says, EITHER WAY, and the right-hand icon button's
+   * accessible name and tooltip. REQUIRED.
    *
-   * The overlay is up for the whole of a browse, which makes it the one place
-   * the press can be taught at the moment somebody is looking for it. It is
-   * read mid-gesture — a touch screen more often than not, but a pointer drag
-   * raises it too, so a word that covers both ("Press a card…") is the safer
-   * one.
+   * It is `nextLabel` rather than a word of its own because the two are the
+   * same claim — another card is coming — and a deck with two strings for it
+   * is a deck where they will disagree.
    */
-  acceptHint: string;
-  /** The forward direction's name: on the overlay, and as the accessible name
-   *  and tooltip of the right-hand icon button. REQUIRED. */
   nextLabel: string;
-  /** The same, backward. REQUIRED. */
+  /** The backward direction's name. The icon button's accessible name and
+   *  tooltip, and nothing else: the overlay says `nextLabel` both ways, so this
+   *  is read rather than seen, and no measure binds it. REQUIRED. */
   previousLabel: string;
   /** The accept's glyph. The DIRECTIONS have none — see the note at the top. */
   acceptGlyph: LucideIcon;
@@ -257,7 +268,7 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  acceptLabel, acceptShortLabel, acceptHint, nextLabel, previousLabel,
+  acceptLabel, acceptShortLabel, nextLabel, previousLabel,
   acceptGlyph, label, positionLabel, toolbar, actions, busy = false, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
@@ -579,10 +590,23 @@ export function CardDeck({
                       It is here rather than beside the deck because a press
                       is now the action, and the card is the thing being
                       pressed: a button ON it says so where a button under it
-                      only says the deck can do this. */}
+                      only says the deck can do this.
+
+                      THE CONDENSED RUNG, and it is the one rule in this file
+                      that is being broken on purpose (Ben, 2026-10-05: "lass
+                      uns die condensed button variante probieren"). §5.4
+                      permits `min` for a card control and NEVER for a primary
+                      action, and this is both at once — the card's own control
+                      and the screen's consequential one. It is logged in
+                      stories/OPEN-QUESTIONS.md with what it costs: the rung
+                      renders at 36px, so the target is under the 44px §5.4
+                      asks of a primary action, and clears 2.5.8's 24px with
+                      the margin the class bakes in. The full-size button
+                      beside the deck is unchanged and is the same action. */}
                   {isFront && (
                     <CtaButton
                       variant="primary"
+                      size="min"
                       leadingIcon={acceptGlyph}
                       className="musy-deck__card-act"
                       disabled={inert}
@@ -599,17 +623,18 @@ export function CardDeck({
                       a verdict on this one — nothing is being decided, so
                       there is nothing to decide between.
 
-                      NO DIRECTION GLYPH, deliberately. The arrow here would
-                      have to mean "the way the finger is going", and the
-                      arrows on the two buttons mean "back and forward in a
-                      sequence" — which for the backward direction are
-                      opposite arrows for the same move. One of them has to
-                      go, and it is the one the finger is already saying.
+                      ONE WORD BOTH WAYS, and NO DIRECTION GLYPH. The arrow
+                      here would have to mean "the way the finger is going",
+                      and the arrows on the two buttons mean "back and forward
+                      in a sequence" — which for the backward direction are
+                      opposite arrows for the same move. `data-dir` stays, and
+                      earns its keep twice over: it is what puts the word on
+                      the edge of the card that is still on screen, and what
+                      holds the fade off while a finger is down.
 
                       `aria-hidden`: this is the visible half of a state the
                       live region already announces, and a screen reader
-                      driving the deck by its buttons never reaches it. The
-                      press it teaches is in the pile's own label instead. */}
+                      driving the deck by its buttons never reaches it. */}
                   {isFront && (
                     <div
                       className="musy-deck__overlay"
@@ -617,10 +642,7 @@ export function CardDeck({
                       aria-hidden="true"
                       style={vars({ '--musy-card-reveal': drag?.reveal ?? 0 } as never)}
                     >
-                      <span className="musy-deck__overlay-label">
-                        {drag?.dir === 'previous' ? previousLabel : nextLabel}
-                      </span>
-                      <span className="musy-deck__overlay-hint">{acceptHint}</span>
+                      <span className="musy-deck__overlay-label">{nextLabel}</span>
                     </div>
                   )}
                 </div>

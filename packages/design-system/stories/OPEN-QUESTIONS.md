@@ -3282,3 +3282,46 @@ Why: a deck that deals a card it still has is a deck that has lost count.
 What I need from Ben: **nothing, just flagging** that `OneCard` now shows two
 disabled controls, which is the first story in this file to show a deck that
 cannot be browsed.
+
+## CardDeck — the overlay says one word both ways, its second line is gone, and the card's accept is the condensed rung
+Where: `src/CardDeck.tsx` (the overlay, `.musy-deck__card-act`),
+`src/musy-components.css` (`.musy-deck__overlay*`, `--musy-deck-card-act-block`)
+What I checked: three asks from Ben the same afternoon the entries above landed,
+after he had the deck on a phone over the hotspot.
+
+  1. **One word, either direction.** The overlay named the direction —
+     *Nächste Übung* / *Vorige Übung* — and a label that changed under the thumb
+     made a browse read as a decision again. Both directions deal another card,
+     so `nextLabel` is true in both.
+  2. **The sides stay.** He asked for the word left-aligned first and took it
+     back in the same breath, which is the right call and worth recording why:
+     left-aligning both directions anchors the word to the edge of the card that
+     is LEAVING, so a left swipe slides its own label off the screen. End for
+     forward, start for backward — measured whole at 25% and 50% of travel, both
+     locales, 393 and 1280.
+  3. **The second line goes**, and its catalogue keys with it
+     (`exercises.startHint`). It named the press, and the press now has a button
+     on the card that says the same thing in one word and can be pressed.
+
+What I did: all three, plus `size="min"` on the card's own accept — *"da der
+Starten Button jetzt in der Karte ist, lass uns die condensed button variante
+probieren"*. The published clearance follows the rung rather than a number:
+`--musy-deck-card-act-block` is now the line box plus the block padding plus the
+two borders, the same arithmetic `.musy-btn--min` performs, which measures 37px
+against the full rung's 47. The inset gives the class's baked-in `--sp-2` margin
+back, so the visible edge still lands on `--space-inset-card` and sits level
+with whatever the face puts in that row: measured 25px off both edges, 126px of
+air between the German time string and the button.
+Why: asked for, and every one of them takes something off the card rather than
+adding to it.
+What I need from Ben: **nothing to decide, one thing to know.** The condensed
+rung is the only rule in this component being broken on purpose. §5.4 permits
+`--target-min` for *card controls on a fine pointer* and **never for a primary
+action**, and the card's *Start* is both at once — a card control, and the
+screen's consequential one, on the tier where the pointer is a thumb. It renders
+at 36px: over 2.5.8's 24px with the margin earning the exception, under the 44px
+§5.4 asks of a primary action. The full-size button beside the deck is the same
+`onAccept` and is untouched, so nothing is unreachable — this is a target that
+is smaller than the rule, not an action that is missing. If it stays, §5.4 needs
+a sentence about a card's own primary control, or the ladder needs a rung
+between `min` and `primary`.
