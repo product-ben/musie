@@ -3517,3 +3517,74 @@ Why: two meanings for one glyph on one screen is a glyph that means neither.
 What I need from Ben: **nothing, just flagging** that `acceptGlyph` is now an
 arrow in the app and the card's own button uses the same one, so the two ways in
 read as one action.
+
+## SegmentedControl — the off segment carries the word, and the track's width steps on selection
+Where: `src/SegmentedControl.tsx` (`SegmentedLabels`), `src/musy-components.css`
+§15 and §0's `.musy-sr-only` rule
+What I checked: §7.25's review note says the selected edge was lightened so
+that "the width no longer steps on selection". That sentence is about the
+border, but what it buys is a control whose layout does not move when you press
+it — and `labels: unchecked` moves it: the word that leaves and the word that
+arrives are different lengths, in a track deliberately sized to its own
+content. Measured in headless Chrome against the real three stylesheets, at the
+`min` rung with /exercises' own two words: **128px** with 'Stapel' chosen and
+**139px** with 'Liste' chosen, an 11px step. Measuring it also found a second
+thing, which was already true of `iconOnly`: `auto` grid columns absorb
+whatever makes the fieldset wider than its track, and a VISIBLE legend does
+exactly that — a glyph-only segment under "Wie die Übungen gezeigt werden" came
+out **116px** wide instead of its square 44. The track is sized to its content
+now (147px there, segment 44px), which is what the mode always claimed.
+Also checked the brief for a third label mode and there is none — `iconOnly`
+was already past it, logged above.
+What I did: made it ONE prop with three values — `labels: 'all' | 'unchecked' |
+'none'` — and deleted `iconOnly` rather than adding a second boolean beside it.
+`unchecked` draws the chosen segment as its glyph alone and leaves every off
+segment its word. Two consequences worth knowing: `.musy-seg--icon-only` is now
+`.musy-seg--labels-none`, so the entry above names a class that no longer
+exists; and the undrawn label is hidden from the STYLESHEET — §0's
+`.musy-sr-only` rule lists §15's two selectors — because `unchecked` has to
+read the selected state, and base-ui publishes that as `[data-checked]`, which
+is true for a group holding its own value as well as for a controlled one. The
+`value` prop would only have been true for the second.
+Why: three presentations of one thing (which segments show their word) is one
+prop. `iconOnly` plus a second boolean would have been four combinations, two
+of them meaningless, and this component already says of `size` and `guided`
+that two rungs "must not be asked for at once".
+What I need from Ben: **nothing on the mode** — asked for on 2026-10-05, and
+/exercises uses it. Two things to know. The width step above is inherent to the
+mode and the only ways out are worse than it: reserving the widest label's room
+in every segment gives the control a permanent hole, and equal `1fr` columns
+make the glyph-only segment as wide as its neighbour's word. Both of
+/exercises' homes for the switch justify it to the start of a row (centred
+below `--bp-md`), so the step moves the control's own trailing edge and nothing
+else. And the focus-ring entry above is now slightly more pressing: at
+`unchecked` the chosen segment is a bare glyph box, so a keyboard user has less
+to look at than before while the ring is still the user agent's.
+
+## CardDeck — both swipes deal now, and the hand only chooses where the card lands
+Where: `src/CardDeck.tsx` (`next`, `onPointerUp`, `Drag.dir`),
+`src/musy-components.css` (`musy-deck-throw`)
+What I checked: the right swipe turned the pile BACK for half a day — the entry
+above gave it a flight of its own to make that readable. Ben, with it in his
+hand: *"now it's way worse. When I swipe a card to the right, I expect it to fade
+away with a slight rotation, as right now perfectly implemented for swipe left,
+and the card I see below becoming active."* A pile you deal with has one way
+through it. The hand decides where the card goes, not which way the pile turns —
+and the overlay had already been saying so in one word since he asked for that
+(*Nächste Übung*, either direction).
+What I did: both directions deal. The throw takes `--musy-throw-dir` back, so a
+card leaves the way the hand went and leans into it — `--musy-card-swing` is
+signed by the drag, so the rotation needed no second rule. The pile closes up
+behind either swipe now; it was forward-only while a right swipe meant something
+else. Measured, the two are mirrors to the pixel: left runs x −118 → −384 and
+−7° → −18°, right runs +118 → +384 and +7° → +18°, both fading 1.00 → 0.03 over
+340ms, with the card underneath live from the first frame.
+
+`previous` and its arrival keep their place: going back is the one move no
+gesture makes — the undo for a card dealt past — so it is a button and a key,
+which is where a move nobody can swipe to belongs.
+Why: a gesture that means two different things to the pile is a gesture people
+have to remember rather than feel.
+What I need from Ben: **nothing.** `onPrevious` now only ever fires from the
+button or Arrow Left, and `onNext` from either swipe, the forward button or
+Arrow Right.

@@ -1,9 +1,9 @@
 /**
  * Card Deck — Layer 2
  *
- * A pile of cards you deal with one at a time. SWIPE SIDEWAYS TO BROWSE IT —
- * left for the next card, right for the one before — and PRESS A CARD TO TAKE
- * IT.
+ * A pile of cards you deal with one at a time. SWIPE SIDEWAYS TO DEAL THE TOP
+ * CARD AWAY — either way, and it leaves the way your hand went — and PRESS A
+ * CARD TO TAKE IT.
  *
  * ── IT WAS BUILT THE OTHER WAY ROUND (Ben, 2026-10-05) ────────────────────
  * Until today the gesture carried both actions: a right swipe TOOK the card
@@ -17,11 +17,26 @@
  *
  * The two kinds of input are now split by what they cost:
  *
- *   SIDEWAYS IS FREE, AND SYMMETRIC. Left is the next card, right is the one
- *   before, and neither decides anything — the pile rotates and comes round
- *   again. So there is ONE threshold for both (SWIPE_RATIO) and a flick arms
+ *   SIDEWAYS DEALS, WHICHEVER WAY. A swipe throws the top card off the stage
+ *   the way the finger went — rotating, fading — and the card under it is
+ *   live before it lands. Both directions do the same thing to the pile,
+ *   which is what the overlay has been saying in one word since Ben asked for
+ *   it: another card. One threshold for both (SWIPE_RATIO), and a flick arms
  *   either. The three asymmetries that used to protect the right swipe are
  *   gone with the door they were protecting.
+ *
+ *   The right swipe TURNED THE PILE BACK for half a day instead, and Ben had
+ *   it on a phone: "when I swipe a card to the right, I expect it to fade away
+ *   with a slight rotation, as right now perfectly implemented for swipe left,
+ *   and the card I see below becoming active." A pile you deal with has one
+ *   way through it; the hand decides which way the card is thrown, not which
+ *   way the pile turns.
+ *
+ *   GOING BACK IS A BUTTON AND A KEY, and the one thing the gesture does not
+ *   do. It is the undo for a card dealt past, drawn as the opposite of a deal:
+ *   the card at the bottom of the pile comes back in over the leading edge.
+ *   Nothing is gated behind it — a pile comes round again, so going back is a
+ *   shortcut and never the only way to a card.
  *
  *   A PRESS COMMITS. `onAccept` is a press and never a swipe: on the card in
  *   front, on whatever the FACE puts the accept on (see `CardDeckItem`), or on
@@ -184,13 +199,13 @@ export interface CardDeckProps {
    * one no gesture can reach.
    */
   onAccept: (id: string) => void;
-  /** Swiped LEFT, pressed, or Arrow Right. The card goes to the back of the
-   *  pile and the next one comes up. Carries the id of the card that was on
-   *  top, which is the one that moved. */
+  /** Swiped — EITHER WAY — pressed, or Arrow Right. The card is thrown off the
+   *  stage and goes to the back of the pile; the next one comes up. Carries the
+   *  id of the card that was dealt. */
   onNext: (id: string) => void;
-  /** Swiped RIGHT, pressed, or Arrow Left. The card at the BACK of the pile
-   *  comes back to the top — so the pile turns the other way rather than
-   *  dealing. Carries the id of the card that was on top. */
+  /** Pressed, or Arrow Left — never swiped. The card at the BACK of the pile
+   *  comes back to the top, which is the undo for a card dealt past. Carries
+   *  the id of the card that was on top when it happened. */
   onPrevious: (id: string) => void;
   /** The accept's name, on the button beside the deck. REQUIRED.
    *
@@ -198,8 +213,9 @@ export interface CardDeckProps {
    *  names it itself — it is the one that knows how much corner it has. */
   acceptLabel: string;
   /**
-   * What the overlay says, EITHER WAY, and the right-hand icon button's
-   * accessible name and tooltip. REQUIRED.
+   * What the overlay says while a card is being dealt — the card you are going
+   * TO, which is the same card whichever way the hand went — and the right-hand
+   * icon button's accessible name and tooltip. REQUIRED.
    *
    * It is `nextLabel` rather than a word of its own because the two are the
    * same claim — another card is coming — and a deck with two strings for it
@@ -274,14 +290,21 @@ interface Flight {
 }
 
 /** A throw from a standstill, for the button and the key that do the same job
- *  as the gesture. */
+ *  as the gesture. It leaves the way a dealt card leaves when nobody has said
+ *  otherwise: off the leading edge. */
 const STILL: Flight = { x: 0, y: 0, swing: 0 };
 
 interface Drag extends Flight {
-  /** How far the pile behind has closed up, 0…1. Forward only. */
+  /** How far the pile behind has closed up, 0…1. */
   progress: number;
-  /** Which way the finger is going, from the first pixel past the slop. */
-  dir: 'next' | 'previous';
+  /**
+   * Which way the finger is going, from the first pixel past the slop.
+   *
+   * THE HAND'S DIRECTION, NOT AN ACTION. Both ways deal the same card off the
+   * same pile; this is what the card is thrown along and which edge the
+   * overlay's word sits on, and nothing else.
+   */
+  dir: 'left' | 'right';
   /** How much of the overlay is showing, 0…1. Full long before `armed`. */
   reveal: number;
   /** True once a release would move the pile. */
@@ -293,6 +316,9 @@ interface Departing extends Flight {
    *  twice, once per lap of a short deck. */
   key: number;
   id: string;
+  /** -1 off the leading edge, 1 off the trailing one — whichever way the hand
+   *  threw it. The stylesheet multiplies a viewport's width by it. */
+  dir: 1 | -1;
 }
 
 export function CardDeck({
@@ -370,7 +396,7 @@ export function CardDeck({
     onAccept(id);
   }, [inert, onAccept]);
 
-  const next = React.useCallback((id: string | undefined, from: Flight) => {
+  const next = React.useCallback((id: string | undefined, from: Flight, dir: 1 | -1 = -1) => {
     if (id === undefined || inert) return;
     setDrag(null);
     /* ONE CARD IS ITS OWN NEXT. Without this the deck threw a copy of the only
@@ -383,7 +409,7 @@ export function CardDeck({
     /* The order rotates IMMEDIATELY and the card carries on in its own layer,
        so the next card is live the instant this one is released rather than
        after an animation nobody is watching. Several can be in the air. */
-    setDeparting((flying) => [...flying, { key: throwKey.current, id, ...from }]);
+    setDeparting((flying) => [...flying, { key: throwKey.current, id, ...from, dir }]);
     setOrder((current) => [...current.filter((x) => x !== id), id]);
     onNext(id);
   }, [browsable, inert, onNext]);
@@ -490,18 +516,16 @@ export function CardDeck({
        than jumping the twelve pixels spent deciding. */
     const travelled = dx - Math.sign(dx) * SLOP_PX;
     const reach = Math.abs(travelled) / g.width;
-    const forward = travelled < 0;
     setDrag({
       x: travelled,
       y: dy,
       swing: Math.max(-1, Math.min(1, travelled / g.width)),
-      /* THE PILE ONLY CLOSES UP GOING FORWARD. The rise is a preview of the
-         card about to be on top, and going back that card is the one at the
-         BOTTOM of the pile rather than the one at depth 1 — so a rise here
-         would promise the wrong card. A pile does not open up when you are
-         putting a card back into it. */
-      progress: forward ? Math.min(1, reach / PILE_CLOSES_AT) : 0,
-      dir: forward ? 'next' : 'previous',
+      /* THE PILE CLOSES UP EITHER WAY, because either way the card under this
+         one is the card about to be on top. It was forward-only while a right
+         swipe turned the pile back, where the rise would have promised the
+         wrong card. */
+      progress: Math.min(1, reach / PILE_CLOSES_AT),
+      dir: travelled < 0 ? 'left' : 'right',
       reveal: Math.min(1, reach / OVERLAY_FULL_AT),
       armed: reach >= SWIPE_RATIO,
     });
@@ -529,8 +553,10 @@ export function CardDeck({
        changing their mind, and the sign test is what hears that. */
     const flicked = Math.abs(g.vx) >= FLICK_PX_PER_MS && Math.sign(g.vx) === Math.sign(drag.x);
     if (drag.armed || flicked) {
-      if (drag.dir === 'next') next(frontId, drag);
-      else previous(frontId);
+      /* THE CARD IS THROWN THE WAY THE HAND WENT, and the pile turns the one
+         way it turns. The direction is the only thing the two swipes differ
+         in. */
+      next(frontId, drag, drag.dir === 'left' ? -1 : 1);
       return;
     }
     setDrag(null);
@@ -557,11 +583,10 @@ export function CardDeck({
        the click — which it does today, and which is not a thing to leave a
        one-way door standing on. */
     if ((event.target as Element).closest('button') !== null) return;
-    /* ENTER TAKES THE CARD, and the arrow keys browse in READING ORDER —
-       right for the next card, left for the one before. That is the mirror of
-       the swipe that does the same job, and it is right both times: a swipe
-       moves the card, a key moves the position. Every carousel ever shipped
-       makes the same pair of promises. */
+    /* ENTER TAKES THE CARD, and the two arrow keys are the two buttons: Right
+       deals the next card, Left brings back the one dealt before it. The
+       gesture only goes forward — both swipes deal — so Left is the one move
+       no gesture makes, which is exactly why it has a key and a button. */
     if (event.key === 'Enter') {
       event.preventDefault();
       accept(frontId);
@@ -743,7 +768,7 @@ export function CardDeck({
                   style={vars({
                     '--musy-card-depth': 0, '--musy-card-seed': seedFor(flight.id),
                     '--musy-drag-x': flight.x, '--musy-drag-y': flight.y,
-                    '--musy-card-swing': flight.swing,
+                    '--musy-card-swing': flight.swing, '--musy-throw-dir': flight.dir,
                   } as never)}
                 >
                   {face(item, false)}

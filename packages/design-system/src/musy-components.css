@@ -2351,45 +2351,70 @@
 }
 
 
-/* ── ICON ONLY ─────────────────────────────────────────────────────────────
-   It stops stretching. The default track is `grid-auto-columns: 1fr` inside a
-   full-width fieldset, which is right for a control answering a question in a
-   form and wrong for page furniture: two glyphs spread across 300px read as a
-   broken toolbar. `max-content` on the root is what takes the control down to
-   the width of its own segments, and the track follows.
+/* ── WHICH SEGMENTS CARRY THEIR WORD ──────────────────────────────────────
+   Three presentations, one prop, and the default needs no class: at
+   `labels: all` every segment draws its glyph and its word, and the track
+   stretches to the width on offer, because that is a control answering a
+   question inside a form.
 
-   The segments stay SQUARE rather than letting the glyph set the width, so the
-   two sit as a pair instead of as two different-sized boxes when one glyph is
-   wider than the other. */
-.musy-seg--icon-only {
-  /* `container-type: inline-size` ON THE ROOT HAS TO GO FIRST, and that is the
-     whole bug this line used to have. Inline-size containment means the box is
-     sized WITHOUT looking at its contents — so `max-content` resolved to 0, the
-     root measured 0px wide, and the two segments overflowed it and landed
-     outside the viewport entirely. The first one still looked right, because it
-     sits at the left edge of a zero-width box; the second was simply off the
-     screen and could not be pressed at all.
+   The other two are the same control as PAGE FURNITURE — one names the option
+   you are not on, the other names none — and the two things that follow from
+   being furniture are declared once, for both.
 
-     The containment is there for the query that stacks a label under its icon
-     below ~30rem, and an icon-only control HAS no visible label — so there is
-     nothing for the query to do and nothing lost in switching it off. */
+   THE TRACK STOPS STRETCHING. `grid-auto-columns: 1fr` inside a full-width
+   fieldset is right in a form and wrong in a row of furniture: two glyphs
+   spread across 300px read as a broken toolbar. `max-content` on the root takes
+   the control down to the width of its own segments, and `auto` columns let the
+   track follow — so the segment showing a word is as wide as the word, and the
+   one beside it is not.
+
+   THE CONTAINMENT GOES, and that is the whole bug these two lines used to have.
+   `container-type: inline-size` on the root means the box is sized WITHOUT
+   looking at its contents — so `max-content` resolved to 0, the root measured
+   0px wide, and the segments overflowed it and landed outside the viewport
+   entirely. The first one still looked right, because it sits at the left edge
+   of a zero-width box; the second was simply off the screen and could not be
+   pressed at all.
+
+   The containment is there for the query that stacks a label under its icon
+   below ~30rem. At these two settings the control is already as narrow as its
+   own content and shows at most one word per press, so there is nothing for
+   that query to do and nothing lost in switching it off.                    */
+.musy-seg--labels-none,
+.musy-seg--labels-unchecked {
   container-type: normal;
   inline-size: max-content;
 }
-.musy-seg--icon-only .musy-seg__track {
+.musy-seg--labels-none .musy-seg__track,
+.musy-seg--labels-unchecked .musy-seg__track {
   grid-auto-flow: column;
   grid-auto-columns: auto;
-  inline-size: auto;
+  /* MAX-CONTENT HERE TOO, NOT `auto`. `auto` is the available width, and the
+     root's own `max-content` is not the only thing that sets that: a VISIBLE
+     legend widens the fieldset all by itself. Measured at the primary rung
+     under "Wie die Übungen gezeigt werden" — a 291px legend gave an `auto`
+     track 291px, and because `auto` COLUMNS stretch into whatever is left, the
+     glyph-only segment came out 116px wide. Sized to its content the track is
+     147px and the segment is its square 44px, whatever the box around it does.
+     Safe to ask for here, unlike on the root: the containment that turned
+     `max-content` into 0 is the root's, and this element has none. */
+  inline-size: max-content;
 }
-/* SQUARE BY A MINIMUM WIDTH, NOT BY `aspect-ratio`. The ratio was the obvious
+
+/* ── GLYPHS ALONE ─────────────────────────────────────────────────────────
+   The segments stay SQUARE rather than letting the glyph set the width, so the
+   two sit as a pair instead of as two different-sized boxes when one glyph is
+   wider than the other.
+
+   SQUARE BY A MINIMUM WIDTH, NOT BY `aspect-ratio`. The ratio was the obvious
    way to write this and it made the second segment unclickable: with
    `grid-auto-columns: auto` the column is sized from the CONTENT, the ratio
    then derives the inline size from the block size instead, and the segment
    overflowed its own column and sat on top of its neighbour — which still
    looked right, because the two are the same size and the overlap is exactly
    the padding. A minimum width participates in the column sizing, so the track
-   is as wide as the segments actually are. */
-.musy-seg--icon-only .musy-seg__option {
+   is as wide as the segments actually are.                                  */
+.musy-seg--labels-none .musy-seg__option {
   min-inline-size: var(--target-primary);
   padding-inline: var(--sp-2);
   gap: 0;
@@ -2397,12 +2422,45 @@
 /* The `min` rung alone is 24px square, which clears WCAG 2.2 SC 2.5.8 and is
    tight under a thumb (Layer 1 §5.4). A screen putting this combination on a
    touch surface is making L5's exception deliberately. */
-.musy-seg--icon-only.musy-seg--min .musy-seg__option {
+.musy-seg--labels-none.musy-seg--min .musy-seg__option {
   min-inline-size: var(--target-min);
   /* One step up from --sp-1. A glyph with 4px beside it is a glyph in a box,
      not a segment — and the extra width is the one that buys the combination
      a target a thumb can find, which at the `min` rung it badly needs. */
   padding-inline: var(--sp-2);
+}
+
+/* ── THE OFF SEGMENT CARRIES THE WORD ─────────────────────────────────────
+   The chosen segment stands as its glyph alone; every other one keeps its word.
+   Three cues already say which one is chosen — fill, border weight, ink — so
+   the word is spent on the segment that still has something to say with it: the
+   one you might press, naming what you would get rather than where you are.
+   On a two-option toggle that is the entire control, and it is how /exercises
+   names both of its views in a row with room for neither.
+
+   THE CHOSEN SEGMENT KEEPS A SQUARE FLOOR — the same minimum `labels: none`
+   gives every segment, for the same reason. Without it the glyph-only box is
+   the width of a 16px glyph and its padding, a sliver beside its neighbour, and
+   the two stop reading as one pair. Its padding closes to --sp-2 as well: it is
+   a glyph in a box here, not a segment with a word in it.
+
+   NOTHING HIDES THE WORD HERE. §0's `.musy-sr-only` rule lists the selector,
+   so the text is hidden by the same declarations as everything else that is
+   announced and not drawn.
+
+   THE WIDTH STEPS ON SELECTION, and there is no way round it: the word that
+   leaves and the word that arrives are different lengths, and a track sized to
+   its content is the whole point of the mode. Both of /exercises' homes for the
+   switch place it at the START of a row — centred below --bp-md — so the step
+   moves the control's own trailing edge and moves nothing else. Measured at the
+   `min` rung with its own two words: 128px on 'Stapel', 139px on 'Liste'.
+   Logged.                                                                   */
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] {
+  min-inline-size: var(--target-primary);
+  padding-inline: var(--sp-2);
+}
+.musy-seg--labels-unchecked.musy-seg--min .musy-seg__option[data-checked] {
+  min-inline-size: var(--target-min);
 }
 
 /* The icon never truncates. It is the cue that survives a clipped label, which
@@ -2430,6 +2488,18 @@
     padding-block: var(--sp-2);
   }
   .musy-seg__label { max-inline-size: 100%; }
+  /* NEITHER FURNITURE SETTING STACKS. Both switch their own containment off,
+     so this query can only reach them through an OUTER container — a rail, a
+     carousel — where it would stack a row that is already as narrow as its own
+     content, and at `labels: none` would push a 24px square into a 40px one
+     around a hidden word. Flex direction and the block padding are the two the
+     query adds; the gap and the inline padding are each already answered by a
+     heavier selector above. */
+  .musy-seg--labels-none .musy-seg__option,
+  .musy-seg--labels-unchecked .musy-seg__option {
+    flex-direction: row;
+    padding-block: 0;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -5568,10 +5638,10 @@ html[data-musy-scroll-snap='y'] {
    100vw is a geometric identity — the card starts centred, so a viewport's
    width of travel puts it off screen at any size.
 
-   ALWAYS LEFTWARD, so the direction is written here rather than arriving as a
-   custom property. Only the FORWARD direction throws: going back puts the card
-   into the pile instead of taking it off (see `previous` in CardDeck.tsx), and
-   a card that is staying has nothing to animate separately.               */
+   EITHER WAY, through --musy-throw-dir. Both swipes deal the same card off the
+   same pile and differ only in where it is thrown (Ben, 2026-10-05), and the
+   rotation needs no second rule to follow it: --musy-card-swing is signed by
+   the drag, so a card thrown right leans right on its way out.            */
 @keyframes musy-deck-throw {
   from {
     transform:
@@ -5581,7 +5651,7 @@ html[data-musy-scroll-snap='y'] {
   }
   to {
     transform:
-      translate3d(-100vw, calc(var(--musy-drag-y) * 3px), 0)
+      translate3d(calc(100vw * var(--musy-throw-dir)), calc(var(--musy-drag-y) * 3px), 0)
       rotate(calc(var(--musy-deck-swing-max) * var(--musy-card-swing) * 2.5));
     opacity: 0;
   }
@@ -5595,8 +5665,9 @@ html[data-musy-scroll-snap='y'] {
 }
 
 /* ── THE ARRIVAL ──────────────────────────────────────────────────────────
-   Going back, the card from the bottom of the pile comes in the way a dealt
-   card leaves — the throw, run backwards.
+   Going back — the button and the key, never the gesture — the card from the
+   bottom of the pile comes in over the leading edge: the throw run backwards,
+   and the way a dealt card goes when nobody throws it anywhere else.
 
    ONE KEYFRAME, AND THAT IS THE WHOLE TRICK. There is no `to`, so the browser
    interpolates to the element's OWN computed transform — which is its resting
@@ -5715,12 +5786,12 @@ html[data-musy-scroll-snap='y'] {
      the threshold is half off the stage, and a centred word is cut down the
      middle — "Übung s". The text is pulled to the trailing edge instead,
      which is the half still in view: start when the card is going right, end
-     when it is going left. `start` is the resting value because `previous` is
-     the direction that moves the card rightward.
+     when it is going left. `start` is the resting value, so a card with no
+     direction yet reads the way the rest of the card does.
 
-     THE SIDES STAY, and they are now the only thing on the overlay that says
-     which way the finger is going — the word is the same both ways (Ben,
-     2026-10-05). They are not decoration for that reason: left-aligning both
+     THE SIDES STAY (Ben, 2026-10-05), and they are the only thing on the
+     overlay that says which way the hand is going — the word is the same both
+     ways. They are not decoration for that reason: left-aligning both
      directions puts the word on the edge of the card that is LEAVING, and a
      left swipe then slides its own label off the screen. */
   justify-items: start;
@@ -5743,8 +5814,8 @@ html[data-musy-scroll-snap='y'] {
 
 .musy-deck__overlay[data-dir] { transition: none; }
 
-.musy-deck__overlay[data-dir='next'] { justify-items: end; }
-.musy-deck__overlay[data-dir='next'] .musy-deck__overlay-label { text-align: end; }
+.musy-deck__overlay[data-dir='left'] { justify-items: end; }
+.musy-deck__overlay[data-dir='left'] .musy-deck__overlay-label { text-align: end; }
 
 .musy-deck__overlay-label {
   font-family: var(--type-display-lg-family);
@@ -5920,11 +5991,18 @@ html[data-musy-scroll-snap='y'] {
   .musy-filter__values::-webkit-scrollbar { display: initial; }
 }
 
-/* The level-1 row carries no fill, so the ring clearance is its whole padding.
-   The cost is that the first chip sits --focus-ring-clearance in from the
-   component's edge, where the legend sits at 0. An uncut ring is worth 5px. */
+/* ONE RAIL FOR BOTH ROWS. The level-1 row carries no fill, so its padding is
+   invisible and exists only for the ring — but if it took the ring's 5px while
+   the tray below takes its own 8px, the two rows of chips would start 3px
+   apart, which is exactly the kind of misalignment that reads as a mistake
+   without ever being identifiable as one. Both take the same value, so every
+   chip in the component stands on one left edge.
+
+   What this costs is an 8px indent from the legend, which sits at 0. That is
+   the cheaper of the two: an indent under a heading reads as deliberate, and
+   two rails 3px apart never do. */
 .musy-filter__row {
-  padding: var(--focus-ring-clearance);
+  padding: max(var(--sp-2), var(--focus-ring-clearance));
 }
 
 /* ── LEVEL 2 · THE TRAY ────────────────────────────────────────────────────
@@ -5968,9 +6046,18 @@ html[data-musy-scroll-snap='y'] {
   justify-content: center;
   gap: var(--musy-filter-gap);
   box-sizing: border-box;
-  /* The floor, matched to the pill's, so the target fills the boundary rather
-     than sitting in the middle of it. No block padding — see the rung note. */
-  min-block-size: var(--musy-filter-rung);
+  /* ── THE RUNG, LESS THE PILL'S OWN BORDER ───────────────────────────────
+     The toggle fills the boundary rather than sitting in the middle of it, so
+     the TOGGLE is what the pill measures — and `--musy-filter-rung` is the
+     height of the PILL. Asking for the rung here instead would put the rung
+     inside the border and render a 47px control where 44 was declared, which
+     is exactly the mistake `.musy-btn--min`'s own comment is a record of.
+
+     NO BLOCK PADDING, exactly as at §15: the floor is what gives the chip its
+     height, which is what makes a chip holding one word the same height as a
+     chip holding four. Padding would give two answers a pixel or two apart,
+     because a 20px glyph is not an 18.61px line box. */
+  min-block-size: calc(var(--musy-filter-rung) - var(--border-width-regular) * 2);
   padding-inline: var(--musy-filter-inset);
   border: 0;
   border-radius: inherit;
@@ -6159,6 +6246,19 @@ html[data-musy-scroll-snap='y'] {
   color: var(--on-surface-disabled);
   border-color: var(--border-subtle);
   cursor: not-allowed;
+}
+
+/* A DISABLED CHIP THAT IS STILL ON KEEPS ITS STATE AND LOSES ITS VOICE. The
+   fill is what carries "this is on", so it stays — but at the accent's full
+   strength it made the one chip nobody can press the loudest thing in the row.
+   `--interactive-primary-disabled` is the same swap §15 makes for exactly this
+   pair (`[data-disabled][data-checked]`), and it is deliberately NOT per
+   accent family: a disabled control has no family left to belong to. */
+.musy-filter__dimension[data-disabled][data-active],
+.musy-filter__value[data-disabled][data-checked] {
+  background-color: var(--interactive-primary-disabled);
+  border-color: var(--border-subtle);
+  color: var(--on-surface-disabled);
 }
 
 /* Under prefers-contrast: more a tinted fill is not a cue, so the selection
