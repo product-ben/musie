@@ -88,7 +88,7 @@
  */
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CtaButton } from './CtaButton';
 import { IconButton } from './IconButton';
 
@@ -303,11 +303,16 @@ export function CardDeck({
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
   const [drag, setDrag] = React.useState<Drag | null>(null);
   const [departing, setDeparting] = React.useState<Departing[]>([]);
+  /** The card on its way back in from the bottom of the pile. One at a time:
+   *  it is the card in front by the time it lands, and there is only ever one
+   *  of those. */
+  const [arriving, setArriving] = React.useState<{ key: number; id: string } | null>(null);
   /** The card that was accepted and is waiting on the consumer. */
   const [sent, setSent] = React.useState<string | null>(null);
 
   const gesture = React.useRef<Gesture | null>(null);
   const throwKey = React.useRef(0);
+  const arriveKey = React.useRef(0);
   const pile = React.useRef<HTMLDivElement>(null);
 
   const byId = React.useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -336,25 +341,27 @@ export function CardDeck({
   }, [busy, sent, byId]);
 
   /**
-   * The pile, with the accepted card still in it.
+   * ── EVERY CARD STAYS THE SAME ELEMENT FOR AS LONG AS IT IS IN `items` ────
+   * `order` is the PILE's order and nothing else: it is never what the cards
+   * are rendered in, and the accepted card is never dropped out of it. Both
+   * halves of that are the same lesson, learned twice.
    *
-   * IT HAS TO BE THE SAME ELEMENT, which is the whole reason this is `order`
-   * and not `order.filter(…)`. The accepted card used to be rendered as a
-   * second element of its own while the stack dropped it, and a freshly
-   * inserted element has nothing to transition FROM — so the card did not lift
-   * and fade, it simply vanished, and came back the same way. (The thrown
-   * cards get away with being their own element because they ANIMATE, and an
-   * animation does run on insertion. A transition does not.) Keeping the id in
-   * place keeps React's element in place, and the transition is real in both
-   * directions — which is what the refusal contract at the top of the file
-   * promises.
+   * The accepted card used to be rendered as a second element while the pile
+   * dropped its id, and a freshly inserted element has nothing to transition
+   * FROM — so it did not lift and fade, it vanished, and came back the same
+   * way. (The thrown cards get away with being their own element because they
+   * ANIMATE, and an animation does run on insertion. A transition does not.)
+   *
+   * And the list was rendered in `order` itself, so turning the pile reordered
+   * the DOM — which React does by MOVING nodes, and a move is a remove and an
+   * insert, and an element that leaves the document loses every transition it
+   * had running. See `depthOf` further down.
    */
-  const stack = order;
   /** The card you are dealing with: the first one that is not on its way out. */
-  const frontId = stack.find((id) => id !== sent);
+  const frontId = order.find((id) => id !== sent);
   const inert = busy || sent !== null;
   /** A pile of one has no other card to go to, in either direction. */
-  const browsable = stack.filter((id) => id !== sent).length > 1;
+  const browsable = order.filter((id) => id !== sent).length > 1;
 
   const accept = React.useCallback((id: string | undefined) => {
     if (id === undefined || inert) return;
@@ -382,25 +389,45 @@ export function CardDeck({
   }, [browsable, inert, onNext]);
 
   /**
-   * BACKWARD, AND WITH NO THROW — which is not an omission.
+   * BACKWARD: the card at the bottom of the pile comes back in, the way a
+   * dealt one leaves.
    *
-   * Going forward takes the top card off the pile, so it leaves. Going back
-   * PUTS IT BACK: the card under the finger becomes the second card rather
-   * than the last, and the card from the bottom of the pile rises to the top.
-   * `setDrag(null)` restores the card's own transition, so it eases from
-   * wherever the finger left it down into its new place. The reorder IS the
-   * animation, and there is nothing left to animate separately.
+   * ── A REORDER IS NOT AN ANIMATION, WHICH IS EXACTLY WHAT IT LOOKED LIKE ──
+   * This did nothing but reorder for half a day, on the theory that the cards'
+   * own transitions would carry it: the card under the finger eases back into
+   * the pile, the bottom card eases up to the top, nothing to write. Ben:
+   * "swiping right feels cut off — the card just disappears abruptly and the
+   * next one appears."
+   *
+   * The reason is z-index, which is NOT interpolated. The arriving card is on
+   * top from the first frame, covering the one easing back behind it, and its
+   * own journey from the bottom of the pile is 32px and a 4% scale — nothing
+   * to watch. All the motion there was, was hidden behind the one card that
+   * barely moved.
+   *
+   * So the arrival is the THROW RUN BACKWARDS: in from the leading edge, where
+   * a dealt card went, landing square. The card under the finger still eases
+   * back into the pile at depth 1, and now you can see it do it, because the
+   * card coming in is crossing the stage rather than sitting on it.
    */
   const previous = React.useCallback((id: string | undefined) => {
     if (id === undefined || inert) return;
     setDrag(null);
     if (!browsable) return;
+    const back = order[order.length - 1];
+    if (back === undefined) return;
     setOrder((current) => {
       const last = current[current.length - 1];
       return last === undefined ? current : [last, ...current.slice(0, -1)];
     });
+    /* KEYED PER ARRIVAL. A CSS animation restarts when the attribute that
+       carries it is added, and on a two-card pile the same id arrives twice in
+       a row — the key is what makes the second one a new state rather than an
+       attribute that never changed. */
+    arriveKey.current += 1;
+    setArriving({ key: arriveKey.current, id: back });
     onPrevious(id);
-  }, [browsable, inert, onPrevious]);
+  }, [browsable, inert, onPrevious, order]);
 
   /* ── THE GESTURE ───────────────────────────────────────────────────────
      THE HANDLERS ARE ON THE STAGE, not on the card. The stage outlives every
@@ -569,9 +596,38 @@ export function CardDeck({
 
   const vars = (extra: Record<string, number>) => extra as React.CSSProperties;
 
-  /* The pile's depth counter, spent by the map below. It starts at -1 because
-     the first card that is not on its way out is depth 0. */
-  let depth = -1;
+  /**
+   * HOW DEEP EACH CARD IS — and the reason it is a MAP rather than the index
+   * of the loop below.
+   *
+   * ── THE DOM ORDER IS THE CONSUMER'S, AND THE PILE'S ORDER IS A NUMBER ────
+   * The cards used to be rendered in `order`, so turning the pile reordered the
+   * DOM. React reconciles a keyed list by MOVING nodes, a move is a remove and
+   * an insert, and an element that leaves the document loses every running
+   * transition — so the card that had just been let go of snapped into its new
+   * place instead of easing there. Measured: 130px of travel gone in one frame,
+   * where the same card springing back from a drag that did not reorder
+   * anything eases over 220ms like everything else. It was invisible going
+   * forward, because the card that leaves has a throw layer of its own, and it
+   * was the whole of Ben's "swiping right feels cut off".
+   *
+   * So the list below is `items` — the consumer's order, which only changes
+   * when the consumer changes it — and the pile is expressed entirely by
+   * `--musy-card-depth` and the z-index built from it. Nothing moves, so
+   * nothing is interrupted, and the cards behind now settle into their new
+   * depths as well.
+   */
+  const depthOf = new Map<string, number>();
+  {
+    let d = -1;
+    for (const id of order) {
+      const leaving = id === sent;
+      if (!leaving) d += 1;
+      /* The card on its way out keeps depth 0 — it is leaving from the top —
+         and the pile closes up as though it had already gone. */
+      depthOf.set(id, leaving ? 0 : d);
+    }
+  }
 
   return (
     <div
@@ -594,16 +650,14 @@ export function CardDeck({
             style={vars({ '--musy-deck-progress': drag?.progress ?? 0 } as never)}
             onKeyDown={onKeyDown}
           >
-            {/* THE DEPTH IS COUNTED, NOT INDEXED, because the card on its way
-                out is still in this list and no longer has a place in the
-                pile: it keeps depth 0 and its own `data-sent` geometry, and
-                the cards behind it close up as though it had gone. */}
-            {stack.map((id) => {
-              const item = byId.get(id);
-              if (item === undefined) return null;
+            {items.map((item) => {
+              const id = item.id;
               const isSent = id === sent;
-              if (!isSent) depth += 1;
               const isFront = id === frontId;
+              /* An item the pile has not taken in yet — one render, at most,
+                 before the effect above puts it at the back. It is drawn there
+                 in the meantime rather than on top of everything. */
+              const depth = depthOf.get(id) ?? items.length;
               return (
                 <div
                   key={id}
@@ -613,6 +667,9 @@ export function CardDeck({
                   aria-hidden={isSent || undefined}
                   data-accent={item.accent ?? 1}
                   data-swiping={isFront && drag !== null}
+                  data-arriving={arriving?.id === id || undefined}
+                  onAnimationEnd={() =>
+                    setArriving((current) => (current?.id === id ? null : current))}
                   /* ── EVERY CARD BUT THE ONE IN FRONT IS INERT ──────────────
                      A face may now put a button on itself, and four more of
                      them stacked behind the top card would be four tab stops
@@ -722,13 +779,15 @@ export function CardDeck({
               because two more full-width labels under the primary button
               would have read as three things to decide between.
 
-              ICON-ONLY, which is the one place the deck owns a glyph: an
-              arrow for back and an arrow for forward are not a product
-              decision. The labels are still the consumer's, as the
-              accessible name and the tooltip. */}
+              ICON-ONLY, which is the one place the deck owns a glyph: back
+              and forward are not a product decision. CHEVRONS, not arrows
+              (Ben, 2026-10-05, when the accept took an arrow): one screen
+              cannot have → meaning "the next card" beside → meaning "start
+              this one". Chevrons browse, arrows act — which is the way round
+              every other set does it too. */}
           <div className="musy-deck__nav">
             <IconButton
-              glyph={ArrowLeft}
+              glyph={ChevronLeft}
               label={previousLabel}
               variant="secondary"
               className="musy-deck__act musy-deck__act--previous"
@@ -736,7 +795,7 @@ export function CardDeck({
               onClick={() => previous(frontId)}
             />
             <IconButton
-              glyph={ArrowRight}
+              glyph={ChevronRight}
               label={nextLabel}
               variant="secondary"
               className="musy-deck__act musy-deck__act--next"

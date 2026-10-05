@@ -3376,3 +3376,144 @@ flagged in that earlier entry are gone with the mechanism — there is no
 clearance to respect and no axis left unpublished. The condensed rung stays, and
 stays logged: it is the FACE's choice now rather than the deck's, which is the
 other half of handing the action over.
+
+## FilterChips — a two-level chip bar the brief specified in four sentences, and the four things it did not say
+Where: `src/FilterChips.tsx`, `src/musy-components.css` (§FILTER CHIPS),
+`src/locale.ts` (`filterClear`, `filterSelected`), `src/index.ts`
+What I checked: the brief is Ben's own, in answer to a shape question: *"Level 1
+chips extend; the level 2 chips next to them when opened. They scroll
+horizontally, below the L1 chip(s). When activated, a level one chip gets a
+little x on the right side"*, multi-select, *"same buildup and sizes segmented
+control (Normal and S)"*. Level 1 is specified, level 2 is specified, the scroll
+axis is specified, the × is specified. Four things are not, and each had to be
+decided to build it at all:
+
+**1 · One dimension open at a time.** The level-2 row sits below the WHOLE
+level-1 row, which the brief says explicitly — so two open dimensions would
+have to share one strip. One at a time is the only reading the stated geometry
+leaves.
+
+**2 · The chevron stays when the × arrives.** The brief names one trailing
+affordance, the ×. A chip that expands needs a cue that it expands, and the
+cue has to survive the hue being removed (1.4.1) — so there is a chevron that
+rotates on open, and the × is ADDITIVE rather than a replacement. Replacing it
+would leave an active-and-open chip with its fill as the only open cue, which
+is the one thing 1.4.1 rules out. The cost is two glyphs in one small pill at
+the `min` rung; the chevron is `--on-surface-muted` so it recedes.
+
+**3 · The selection is controlled; which chip is open is not.** §15's rule is
+that the answer belongs to the screen, and a filter is a query — so `value` and
+`onValueChange` are the screen's. Which chip a thumb last expanded is
+presentation, and the component owns it unless `open` is passed. The asymmetry
+is deliberate and is in the component header.
+
+**4 · Nothing truncates.** §15 ellipses because it divides a fixed width
+between equal segments; a chip row scrolls, so width is the cheap axis and
+every label stays whole. That is also why the glyph is REQUIRED at level 1 and
+optional at level 2: a chip can be cut by the scroller's trailing edge, and the
+glyph sits at the leading edge, so on the dimension it is the part that
+survives.
+What I did: built it. `CheckboxGroup` + `Checkbox` per dimension, a plain
+disclosure button per chip, one level-2 row per dimension with all but the open
+one `hidden` — `aria-controls` names ONE element, so a single shared strip would
+have every chip pointing at the same id and `aria-expanded` describing someone
+else's region. The `min` rung is `calc(var(--target-min) + var(--sp-3))`, the
+same 36px a `min` CtaButton and a `min` SegmentedControl come to, written as
+the arithmetic so the three cannot drift.
+Why: the four gaps all have one answer available from what the system has
+already decided; none of them needed a new token, a new colour or a new rung.
+What I need from Ben: **nothing on these four.** One separate question below.
+
+## FilterChips — a closed chip says IT is filtering, not how much, and a screen reader is told both
+Where: `src/FilterChips.tsx` (`t.filterSelected`), `src/locale.ts`
+What I checked: with its values row closed, an active level-1 chip carries the
+tinted fill and the × — so a sighted user reads "this dimension is filtering"
+and cannot read "on two of five values" without opening it again. Every real
+filter bar I can check (search engines, booking, shops) paints the count in the
+chip: *Duration · 2*.
+What I did: wrote the count for screen readers only — `filterSelected(count)`,
+`"2 ausgewählt"` / `"2 selected"`, in a `.musy-sr-only` span inside the chip's
+own name — and did NOT paint it. The brief names one thing on the trailing edge
+and it is the ×; a number beside it changes the chip's anatomy past what was
+asked for, and it is the anatomy that would then have to hold at the 36px rung
+with a glyph, a label, a count, a chevron and an ×.
+Why: the hole was an accessibility one as much as a design one — the fill and
+the × are both visual, so without this a screen-reader user had no route to the
+state at all. That half is not a design decision and is fixed. The visible half
+is.
+What I need from Ben: **whether a closed active chip paints its count.** If
+yes it is one span and one token-free `label-md` number, and the sr-only span
+goes away in the same change because the painted count is in the name already.
+
+## SegmentedControl — the segments take no system focus ring, and this is the first component to notice
+Where: `src/musy-components.css:61-77` (the shared focus list), `.musy-seg__option`
+What I checked: §0's own words are *"The single focus indicator. Defined once,
+referenced by every control"*, and the list names fourteen selectors.
+`.musy-seg__option` is not one of them, and grep finds no `:focus-visible` rule
+for it anywhere in the file — so a keyboard user on a segmented control gets
+the user agent's ring, not `--focus-ring`, and on Safari a `<button>` with a
+custom background can draw very little. `.musy-dot` and
+`.musy-carousel__slide` are in the list; the segment that sits beside them is
+not.
+What I did: added this component's three — `.musy-filter__toggle`,
+`.musy-filter__clear`, `.musy-filter__value` — to the same list, which is the
+extension point §0 describes, and **left `.musy-seg__option` alone.** A
+one-line addition there changes the appearance of a shipped component in a way
+nobody asked for in this change.
+Why: a filter bar and a segmented control stand in the same rows; the two
+rings being different would be the next entry in this file. But fixing §15's
+belongs to §15, not to a change that adds a component beside it.
+What I need from Ben: **one line** — `.musy-seg__option:focus-visible,` in the
+shared list at `src/musy-components.css:61`. Then the set has one ring again.
+It is a visual change to a shipped component, which is why it is a question
+rather than a commit.
+
+## CardDeck — going back had no animation at all, and the reason was that the pile was the DOM order
+Where: `src/CardDeck.tsx` (`depthOf`, `previous`, `arriving`),
+`src/musy-components.css` (`@keyframes musy-deck-arrive`)
+What I checked: Ben, on a phone — *"swiping left is nice and smooth. Swiping
+right feels cut off: the animation is missing, the card just disappears abruptly
+and the next one appears."* Two causes, and the second one is the one worth
+writing down.
+
+**One.** `previous` only reordered, on the theory that the cards' own
+transitions would carry it. They cannot: z-index is not interpolated, so the
+arriving card is on top from the first frame and hides the card easing back
+behind it — and its own trip up from the bottom of the pile is 32px and a 4%
+scale, which is nothing to watch.
+
+**Two, and this is the general one.** The cards were rendered in the PILE's
+order, so turning the pile reordered the list. React reconciles a keyed list by
+MOVING DOM nodes — and for `[A,B,C,D] → [D,A,B,C]` it moves three of them, not
+one — and a move is a remove and an insert, so every transition running on those
+nodes is cancelled. Measured: the card let go of at +118px was at its resting
++3px in the next frame, where the identical card springing back from a drag that
+reordered nothing eases over 220ms. **A keyed reorder silently cancels the
+animation of everything it moves.**
+What I did: the list is rendered in `items` — the consumer's order, which only
+changes when the consumer changes it — and the pile is expressed entirely by
+`--musy-card-depth` and the z-index built from it. Nothing moves, so nothing is
+interrupted. Then `previous` got a flight of its own: `musy-deck-arrive`, the
+throw run backwards, in from the leading edge with ONE keyframe so the browser
+interpolates to the card's own resting transform rather than to a restatement of
+it. Measured frame by frame: the arriving card crosses -393 → 0 over ~330ms
+while the card let go of eases 118 → 3 over ~180ms, both at once.
+Why: the fix for "this does not animate" is almost never a longer duration.
+What I need from Ben: **nothing.** The same change makes every card behind the
+top one settle into its new depth on a deal, which is what the pile was supposed
+to do all along and had been losing to the same cancellation.
+
+## CardDeck — arrows act, chevrons browse
+Where: `src/CardDeck.tsx` (the two `IconButton`s),
+`apps/web/src/routes/Exercises.tsx` (`acceptGlyph`, the card's own button)
+What I checked: Ben asked for an arrow on *Starten* rather than a play triangle
+— it starts an exercise, it does not play a file. That put → on the accept, and
+the deck's two direction buttons were already ← and →. One screen cannot have →
+meaning "the next card" beside → meaning "start this one".
+What I did: the directions are `ChevronLeft` / `ChevronRight` now, which is the
+way round every other set does it: chevrons for browsing, arrows for acting. The
+deck owns those two glyphs, so nothing changed for the consumer.
+Why: two meanings for one glyph on one screen is a glyph that means neither.
+What I need from Ben: **nothing, just flagging** that `acceptGlyph` is now an
+arrow in the app and the card's own button uses the same one, so the two ways in
+read as one action.

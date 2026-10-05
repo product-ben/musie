@@ -6,7 +6,7 @@
  */
 import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Play, Shuffle } from 'lucide-react';
+import { ArrowRight, Shuffle } from 'lucide-react';
 import { CtaButton } from '../src/CtaButton';
 import { CardDeck } from '../src/CardDeck';
 import type { CardDeckCard } from '../src/CardDeck';
@@ -39,7 +39,7 @@ function Face({ name, text, time, card }: { name: string; text: string; time: st
       <p style={{ margin: 0, fontFamily: 'var(--type-body-sm-family)', fontSize: 'var(--type-body-sm-size)', lineHeight: 'var(--type-body-sm-line)', color: 'var(--on-surface-muted)' }}>{text}</p>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-gap-inline)' }}>
         <p style={{ margin: 0, minInlineSize: 0, fontFamily: 'var(--type-label-md-family)', fontSize: 'var(--type-label-md-size)', color: 'var(--on-surface-muted)' }}>{time}</p>
-        <CtaButton variant="primary" size="min" leadingIcon={Play} disabled={card.disabled} onClick={card.accept}>
+        <CtaButton variant="primary" size="min" leadingIcon={ArrowRight} disabled={card.disabled} onClick={card.accept}>
           Start
         </CtaButton>
       </div>
@@ -141,7 +141,7 @@ const meta = {
     acceptLabel: 'Start the exercise',
     nextLabel: 'Next exercise',
     previousLabel: 'Previous exercise',
-    acceptGlyph: Play,
+    acceptGlyph: ArrowRight,
     label: 'The deck. Enter starts the exercise on the top card; the arrow keys show the next one and the one before.',
     positionLabel: (position: number, total: number) =>
       `${FACES[position - 1]?.name ?? ''} — card ${position} of ${total}`,

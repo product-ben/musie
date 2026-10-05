@@ -56,7 +56,7 @@
  * catalogue's own `exercises.fact.time*`.
  */
 import * as React from 'react';
-import { LayoutList, Layers, Play, Shuffle, Timer } from 'lucide-react';
+import { ArrowRight, LayoutList, Layers, Shuffle, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { CardDeck, CtaButton, Icon, RadioCards, SegmentedControl } from '@musie/design-system';
 import type { CardDeckCard, CardDeckItem, RadioCardFact } from '@musie/design-system';
@@ -241,10 +241,13 @@ export function Exercises() {
                  by a screen reader off the back button rather than seen. */
               nextLabel={t('exercises.next')}
               previousLabel={t('exercises.previous')}
-              /* The only glyph the deck is given. The two directions carry its
-                 own arrows — which way is back is not this screen's decision,
-                 and `SkipForward` used to sit here saying it was. */
-              acceptGlyph={Play}
+              /* The only glyph the deck is given, and an ARROW since
+                 2026-10-05 (Ben) rather than a play triangle: this starts an
+                 exercise, it does not play a file, and the card's own button
+                 says it with the same glyph. The deck's two directions carry
+                 CHEVRONS for that reason — one screen cannot have → meaning
+                 "the next card" beside → meaning "start this one". */
+              acceptGlyph={ArrowRight}
               label={t('exercises.deckLabel')}
               /* AT THE HEAD OF THE ACTION COLUMN. It does not act on the card
                  in front — it changes what you are looking at altogether,
@@ -413,7 +416,7 @@ function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCa
         <CtaButton
           variant="primary"
           size="min"
-          leadingIcon={Play}
+          leadingIcon={ArrowRight}
           className="musie-exercise-card__start"
           disabled={card.disabled}
           onClick={card.accept}

@@ -72,14 +72,30 @@
 .musy-box__dismiss:focus-visible,
 .musy-dot:focus-visible,
 .musy-carousel__slide:focus-visible,
+.musy-filter__toggle:focus-visible,
+.musy-filter__clear:focus-visible,
+.musy-filter__value:focus-visible,
 [data-force~="focus"] {
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Screen-reader-only. Used for the loading announcement and for a Switch whose
-   visible label is suppressed by the consuming app. */
-.musy-sr-only {
+/* Screen-reader-only. Used for the loading announcement, for a Switch whose
+   visible label is suppressed by the consuming app, and — as the focus list
+   above is extended by the components that need the one ring — for the
+   segmented control's label wherever `labels` does not draw it: all of them at
+   `labels: none`, the chosen one at `labels: unchecked`.
+
+   WHY §15's TWO SELECTORS ARE HERE RATHER THAN THERE. The label text is what
+   names each radio (4.1.2), so it is never removed — it is hidden exactly as
+   this class hides anything, and there is one definition of that. Hiding it
+   from the stylesheet rather than by swapping the class in the component is
+   what lets the second selector read `[data-checked]`: base-ui publishes the
+   selected segment as an attribute, which is true for a group that holds its
+   own value as well as for a controlled one. */
+.musy-sr-only,
+.musy-seg--labels-none .musy-seg__label,
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] .musy-seg__label {
   position: absolute;
   width: var(--border-width-hairline);
   height: var(--border-width-hairline);
@@ -5578,6 +5594,38 @@ html[data-musy-scroll-snap='y'] {
   z-index: var(--z-raised);
 }
 
+/* ── THE ARRIVAL ──────────────────────────────────────────────────────────
+   Going back, the card from the bottom of the pile comes in the way a dealt
+   card leaves — the throw, run backwards.
+
+   ONE KEYFRAME, AND THAT IS THE WHOLE TRICK. There is no `to`, so the browser
+   interpolates to the element's OWN computed transform — which is its resting
+   place in the pile, assembled from four custom properties it would be a
+   nightmare to restate here and a worse one to keep in step. `from` names
+   where the card comes from and nothing else.
+
+   IT ANIMATES WHERE THE REORDER ONLY TRANSITIONED. Going back used to be a
+   reorder and nothing more, and it read as a cut (Ben, 2026-10-05): z-index
+   is not interpolated, so the arriving card was on top from the first frame,
+   hiding the card easing back behind it, and its own trip up the pile is 32px
+   and a 4% scale. See `previous` in CardDeck.tsx.
+
+   NO `forwards`. The card is staying, so the animation has to let go of it —
+   a fill would freeze it at a transform that stops tracking the pile the
+   moment the next card is dealt.                                          */
+@keyframes musy-deck-arrive {
+  from {
+    transform:
+      translate3d(-100vw, 0, 0)
+      rotate(calc(var(--musy-deck-swing-max) * -1));
+    opacity: 0;
+  }
+}
+
+.musy-deck__card[data-arriving] {
+  animation: musy-deck-arrive var(--motion-duration-slow) var(--motion-ease-entrance);
+}
+
 /* Accepted: lifted off the pile, faded, and held there until the consumer
    decides. It TRANSITIONS rather than animating, because it may have to come
    back — see the contract in CardDeck.tsx — and a transition reverses for free.
@@ -5759,3 +5807,383 @@ html[data-musy-scroll-snap='y'] {
    the small tier. That is not the same compromise: both are visible, both are
    in the tree, and each is where its own input expects it — the card for a
    thumb, the column for everything else.                                   */
+
+
+/* ═══ FILTER CHIPS ═════════════════════════════════════════════════════════
+   Two levels. Level 1 is the DIMENSION — a disclosure chip that opens its own
+   row of values underneath; level 2 is the VALUES, a CheckboxGroup, several of
+   which can be on at once. One dimension open at a time, because there is one
+   strip below the row for all of them to use.
+
+   BUILT LIKE §15 AND SEMANTICALLY ITS OPPOSITE. The rungs, the accent
+   families, the glyph-plus-label anatomy and the two-cue selection are §15's,
+   copied deliberately so a filter bar and a segmented control can stand in one
+   screen without looking like two systems. What is NOT shared is the geometry:
+   §15 DIVIDES a track's width between equal segments and ellipses what will
+   not fit; a chip row SCROLLS, so every chip takes the width its own label
+   needs and nothing truncates.
+
+   WHY THESE KEEP AN EDGE AT REST, where "LIGHTER SELECTION BOUNDARIES" above
+   took §06, §07, §13 and §15's away. Those four each sit INSIDE something
+   bordered — a track, a card — which draws the boundary for them, so their own
+   edge was a second line saying the same thing. A level-1 chip stands on the
+   page surface with nothing around it. Remove its edge and there is no chip,
+   only a label and a glyph floating in a row.                               */
+
+.musy-filter {
+  /* The rung, stated once as an outer height. The chip IS the control here —
+     there is no track around it, unlike §15 — so the height comes straight
+     from the floor with no block padding, which is what makes a chip holding
+     one word exactly as tall as a chip holding four. */
+  --musy-filter-rung: var(--target-primary);
+  --musy-filter-inset: var(--sp-4);
+  --musy-filter-gap: var(--space-gap-inline);
+  /* The selected pair, so the three accent families are three declarations
+     rather than three rules per state — the same shape as the tinted-rest
+     modifier above. */
+  --musy-filter-sel-fill: var(--interactive-primary-subtle);
+  --musy-filter-sel-border: var(--interactive-primary-border);
+  --musy-filter-sel-on: var(--interactive-primary-on-subtle);
+  /* The root renders AS the fieldset, so the three fieldset defaults have to
+     go here; min-inline-size releases fieldset's min-content floor. */
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.musy-filter--accent {
+  --musy-filter-sel-fill: var(--interactive-accent-subtle);
+  --musy-filter-sel-border: var(--interactive-accent-border);
+  --musy-filter-sel-on: var(--interactive-accent-on-subtle);
+}
+.musy-filter--accent-alt {
+  --musy-filter-sel-fill: var(--interactive-accent-alt-subtle);
+  --musy-filter-sel-border: var(--interactive-accent-alt-border);
+  --musy-filter-sel-on: var(--interactive-accent-alt-on-subtle);
+}
+
+/* ── THE `min` RUNG ────────────────────────────────────────────────────────
+   36px, and it is the SAME 36px a `min` CtaButton and a `min` SegmentedControl
+   come to — stated here as the arithmetic rather than as the number, so the
+   three cannot drift. --target-min (24px) is the floor 2.5.8 asks for and
+   --sp-3 is what carries it clear of it; a chip at 36px needs none of the
+   spacing exception .musy-btn--min and .musy-icon-btn--min bake a margin in
+   for, which is why there is no margin here.
+
+   The insets come down with the height. A 36px pill with 16px of side padding
+   reads as a pill that lost its middle, and the gap closes to match so the
+   glyph and its label stay one object rather than two things sharing a box. */
+.musy-filter--min {
+  --musy-filter-rung: calc(var(--target-min) + var(--sp-3));
+  --musy-filter-inset: var(--sp-3);
+  --musy-filter-gap: var(--sp-1);
+}
+
+/* ── THE TWO SCROLLERS ─────────────────────────────────────────────────────
+   Both rows scroll on the inline axis, and neither snaps: a chip is not a
+   slide, and `scroll-snap-type` on a row of controls fights the scroll a
+   focused chip performs to bring itself into view.
+
+   2.4.11 — THE PADDING IS THE FOCUS RING'S, NOT A STYLE. `overflow-x: auto`
+   computes overflow-y to `auto` as well, so a scroller clips its children's
+   rings on BOTH axes; the padding is what stops the ring on the first, last,
+   top or bottom chip being cut. `max()` rather than a flat value so a row
+   that already has padding of its own spends it twice over.
+
+   A MOUSE HAS NO HORIZONTAL GESTURE AT ALL — no wheel axis, and an overlay
+   scrollbar that never appears. §8 found this the hard way and answered it
+   with a `grab` cursor and a JavaScript drag, which is right for a carousel
+   of cards and far too much for a row of buttons: a drag that starts on a chip
+   either scrolls or presses, and it cannot know which. So the scrollbar is
+   what carries it, and it is shown ONLY where there is a pointer to use it. */
+.musy-filter__row,
+.musy-filter__values {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  box-sizing: border-box;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  /* Keeps a chip the keyboard scrolled to clear of the scroller's own edge,
+     ring included. */
+  scroll-padding-inline: var(--focus-ring-clearance);
+}
+.musy-filter__row::-webkit-scrollbar,
+.musy-filter__values::-webkit-scrollbar { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-filter__row,
+  .musy-filter__values { scrollbar-width: thin; }
+  .musy-filter__row::-webkit-scrollbar,
+  .musy-filter__values::-webkit-scrollbar { display: initial; }
+}
+
+/* The level-1 row carries no fill, so the ring clearance is its whole padding.
+   The cost is that the first chip sits --focus-ring-clearance in from the
+   component's edge, where the legend sits at 0. An uncut ring is worth 5px. */
+.musy-filter__row {
+  padding: var(--focus-ring-clearance);
+}
+
+/* ── LEVEL 2 · THE TRAY ────────────────────────────────────────────────────
+   Sunken, like §15's track and for the same reason: a set of controls in a
+   container, and the container is what says "these belong to the chip above".
+   It is also what the value chips' tinted selection reads against.
+
+   `hidden` IS THE MECHANISM, and it only works while nothing overrides it —
+   `display: flex` on this class would beat the UA's `display: none` and leave
+   every closed row drawn. So the attribute wins explicitly. */
+.musy-filter__values {
+  margin-block-start: var(--sp-2);
+  padding: max(var(--sp-2), var(--focus-ring-clearance));
+  border-radius: var(--radius-panel);
+  background-color: var(--surface-sunken);
+}
+.musy-filter__values[hidden] { display: none; }
+
+/* ── LEVEL 1 · THE PILL ────────────────────────────────────────────────────
+   Two controls in one boundary: the disclosure, and the clear button the brief
+   asks for on the trailing edge. The pill owns the edge and the fill; its two
+   children own the inset, so every pixel inside the boundary belongs to one
+   target or the other.                                                      */
+.musy-filter__dimension {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-block-size: var(--musy-filter-rung);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong);
+  border-radius: var(--radius-control);
+  background-color: transparent;
+  color: var(--on-surface);
+  transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle);
+}
+
+.musy-filter__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--musy-filter-gap);
+  box-sizing: border-box;
+  /* The floor, matched to the pill's, so the target fills the boundary rather
+     than sitting in the middle of it. No block padding — see the rung note. */
+  min-block-size: var(--musy-filter-rung);
+  padding-inline: var(--musy-filter-inset);
+  border: 0;
+  border-radius: inherit;
+  background-color: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+}
+
+/* With the clear button beside it the toggle hands its trailing inset over:
+   a round 24px glyph reads as inset against a pill already, exactly as §Badge
+   steps its leading inset down for a leading icon, and the two insets must not
+   add up to a gap wider than the button they frame. */
+.musy-filter__dimension:has(> .musy-filter__clear) > .musy-filter__toggle {
+  padding-inline-end: var(--musy-filter-gap);
+}
+
+/* The disclosure cue, and it is a SHAPE so the state survives with the hue
+   removed (1.4.1). Muted, because it reports rather than invites — the chip's
+   own glyph and label are what invite. */
+.musy-filter__chevron {
+  flex: 0 0 auto;
+  color: var(--on-surface-muted);
+  transition: transform var(--motion-toggle);
+}
+.musy-filter__dimension[data-open] .musy-filter__chevron { transform: rotate(180deg); }
+
+/* The clear button. 24px square inside a 36px or 44px rung, so 2.5.8 is met by
+   the target's own size and needs no spacing exception — which is the whole
+   reason this is not an IconButton: `.musy-icon-btn--min` bakes a margin in to
+   earn that exception, and inside a pill that margin is what breaks the pill. */
+.musy-filter__clear {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  inline-size: var(--target-min);
+  block-size: var(--target-min);
+  margin-inline-end: var(--musy-filter-gap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-toggle);
+}
+
+/* ── LEVEL 2 · THE VALUE CHIP ──────────────────────────────────────────────
+   Checkbox.Root rendered as a button — the chip IS the control, exactly as a
+   segment is in §15. Same rung, same type step, same insets; what differs is
+   that it never truncates and that its glyph is optional.                   */
+.musy-filter__value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--musy-filter-gap);
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-block-size: var(--musy-filter-rung);
+  padding-inline: var(--musy-filter-inset);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong);
+  border-radius: var(--radius-control);
+  background-color: transparent;
+  color: var(--on-surface);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle);
+}
+
+/* Labels stay whole, on one line. The row scrolls, so width is the cheap axis
+   here — the opposite trade from §15, which divides a fixed width and ellipses
+   what will not fit. */
+.musy-filter__label { text-wrap: nowrap; }
+.musy-filter__dimension > .musy-filter__toggle > .musy-icon,
+.musy-filter__value > .musy-icon { flex: 0 0 auto; }
+
+/* The second selection cue, so a ticked chip never rests on its fill alone
+   (1.4.1) — the same bet §13 makes with its check glyph.
+
+   IT IS ALWAYS IN THE BOX, hidden rather than absent: a chip that grows by a
+   glyph when it is ticked shifts every chip after it along a row the finger is
+   still in, and the one thing a selection must never do is move its
+   neighbours. `visibility` keeps the space; `display: none` would not. */
+.musy-filter__check {
+  flex: 0 0 auto;
+  visibility: hidden;
+}
+.musy-filter__value[data-checked] .musy-filter__check { visibility: visible; }
+
+/* A dimension with no values. It should not happen — the component warns in
+   development — but an empty tray with nothing in it is a dead end, so it says
+   so in the same words §06, §07 and §13 use for the same hole. */
+.musy-filter__empty {
+  margin: 0;
+  padding-inline: var(--sp-2);
+  color: var(--on-surface-muted);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line);
+  letter-spacing: var(--type-body-sm-tracking);
+}
+
+/* ── STATES ────────────────────────────────────────────────────────────────
+   Three things can be true of a level-1 chip at once — open, filtering,
+   disabled — so each takes a cue that does not need the others' channel:
+   OPEN is the chevron's rotation plus the sunken fill it shares with its own
+   tray; FILTERING is the tinted accent fill plus the clear button; DISABLED is
+   the ink. An open AND filtering chip keeps the accent fill and still reads as
+   open, because the rotation is not a colour.                               */
+/* HOVER AND PRESS ARE THE QUIET CHIP'S ONLY, which is §15's rule here too
+   (`[data-unchecked]:hover`): a chip that already carries a state fill would
+   have to drop it for a grey one to show a hover, and flashing the accent away
+   under the cursor is worse feedback than none. What the loud chips have
+   instead is an answer that is not a fill — the chevron turns, the tray opens
+   or shuts, the check appears.
+
+   THE PILL LIGHTS FROM ITS TOGGLE, not from itself: `:has(> …:hover)` means
+   the cursor on the clear button lights the clear button alone, which is the
+   honest picture of two targets in one boundary. */
+.musy-filter__dimension:not([data-disabled]):not([data-open]):not([data-active]):has(> .musy-filter__toggle:active),
+.musy-filter__value[data-unchecked]:active:not([data-disabled]),
+.musy-filter__dimension[data-force~="active"],
+.musy-filter__value[data-force~="active"] {
+  background-color: var(--interactive-ghost-active);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musy-filter__dimension:not([data-disabled]):not([data-open]):not([data-active]):has(> .musy-filter__toggle:hover),
+  .musy-filter__dimension[data-force~="hover"] {
+    background-color: var(--interactive-ghost-hover);
+  }
+  .musy-filter__value[data-unchecked]:hover:not([data-disabled]),
+  .musy-filter__value[data-force~="hover"] {
+    background-color: var(--interactive-ghost-hover);
+  }
+  /* The clear button is its own target and keeps its own hover whatever the
+     pill is doing — it is the one control here that is always "loud". */
+  .musy-filter__clear:hover:not(:disabled) {
+    background-color: var(--interactive-ghost-active);
+  }
+}
+
+/* Open: the chip takes its tray's own fill, so the two read as one object
+   rather than as a chip with a strip under it. */
+.musy-filter__dimension[data-open] {
+  background-color: var(--surface-sunken);
+}
+
+/* Filtering: the tinted accent fill, the accent edge, the accent ink — and the
+   clear button, which is the shape half of the pair. Last of the three fills,
+   so it wins over `open` on a chip that is both. */
+.musy-filter__dimension[data-active] {
+  background-color: var(--musy-filter-sel-fill);
+  border-color: var(--musy-filter-sel-border);
+  color: var(--musy-filter-sel-on);
+}
+.musy-filter__dimension[data-active] .musy-filter__chevron { color: inherit; }
+
+.musy-filter__value[data-checked] {
+  background-color: var(--musy-filter-sel-fill);
+  border-color: var(--musy-filter-sel-border);
+  color: var(--musy-filter-sel-on);
+}
+
+.musy-filter__dimension[data-disabled] {
+  color: var(--on-surface-disabled);
+  border-color: var(--border-subtle);
+}
+.musy-filter__dimension[data-disabled] .musy-filter__chevron { color: inherit; }
+.musy-filter__toggle:disabled,
+.musy-filter__clear:disabled { cursor: not-allowed; }
+.musy-filter__value[data-disabled] {
+  color: var(--on-surface-disabled);
+  border-color: var(--border-subtle);
+  cursor: not-allowed;
+}
+
+/* Under prefers-contrast: more a tinted fill is not a cue, so the selection
+   boundary steps up — Layer 1 has already promoted --border-strong by this
+   point, so this is the system's own contrast escape rather than a second
+   decision. */
+@media (prefers-contrast: more) {
+  .musy-filter__dimension[data-active],
+  .musy-filter__value[data-checked] {
+    border-width: var(--border-width-thick);
+  }
+}
+
+/* Forced colours: every fill is repainted away, so the three state cues that
+   survive are the ones that were never fills — the boundary, the ink, and the
+   two glyphs. The chevron's rotation and the check carry on untouched. */
+@media (forced-colors: active) {
+  .musy-filter__dimension,
+  .musy-filter__value { border-color: CanvasText; }
+  .musy-filter__dimension[data-active],
+  .musy-filter__value[data-checked] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+  .musy-filter__values { border: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
+  .musy-filter__dimension[data-disabled],
+  .musy-filter__value[data-disabled] { border-color: GrayText; color: GrayText; }
+}
