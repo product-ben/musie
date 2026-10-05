@@ -59,7 +59,7 @@ import * as React from 'react';
 import { LayoutList, Layers, Play, Shuffle, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { CardDeck, CtaButton, Icon, RadioCards, SegmentedControl } from '@musie/design-system';
-import type { CardDeckItem, RadioCardFact } from '@musie/design-system';
+import type { CardDeckCard, CardDeckItem, RadioCardFact } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useT } from '../i18n/localeContext';
@@ -196,7 +196,11 @@ export function Exercises() {
     /* Fixed by the exercise's place in the printed order, NOT by its place in
        the pile, so a card keeps its colour as the deck is dealt. */
     accent: ((index % 3) + 1) as 1 | 2 | 3,
-    content: <ExerciseFace exercise={exercise} />,
+    /* A FUNCTION, SO THE FACE CAN PLACE THE DECK'S ACCEPT ITSELF. The deck
+       drew that button into the card's corner until 2026-10-05 and could not
+       know how wide this card's own bottom row was — see the note over
+       `.musie-exercise-card__foot`. */
+    content: (card: CardDeckCard) => <ExerciseFace exercise={exercise} card={card} />,
   }));
 
   return (
@@ -231,12 +235,6 @@ export function Exercises() {
               onNext={onNext}
               onPrevious={onPrevious}
               acceptLabel={t('exercises.start')}
-              /* THE SHORT ONE IS FOR THE CARD'S OWN CORNER, and it is a
-                 separate string rather than a truncation: "Übung starten" at
-                 label size does not fit the corner of a 360px card, and a
-                 label cut to fit is a label that ends mid-word in the language
-                 that runs 30% longer. */
-              acceptShortLabel={t('exercises.startShort')}
               /* ONE WORD FOR BOTH DIRECTIONS, which is the component's own
                  arrangement since 2026-10-05: the overlay says `nextLabel`
                  whichever way the card is going, and `previousLabel` is read
@@ -353,8 +351,18 @@ function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact
 }
 
 /**
- * The face: picture, name, description, time. All four are the exercise's own,
- * straight off the row.
+ * The face: picture, name, description, and a bottom row carrying the time and
+ * the way in. The first four are the exercise's own, straight off the row.
+ *
+ * ── THE START BUTTON IS IN THIS ROW, AND THAT IS THE POINT ────────────────
+ * `CardDeck` drew it itself for half a day, absolutely positioned in the
+ * card's bottom-trailing corner, and it could not be made safe from there: at
+ * 320px the German *5–8 Min.* ran 18px under it and the English *5–8 min*
+ * cleared it by four. A button's width is its label's width, and no token
+ * knows that — so the component now hands the action over (`CardDeckItem`'s
+ * function form) and this row lays the two out together. They cannot overlap,
+ * the time wraps inside its own share if it ever has to, and one `align-items`
+ * puts the two on the same baseline because both sit at the same type step.
  *
  * THE PICTURE IS FULL-BLEED TO THREE EDGES and cropped to 16:9 by the
  * stylesheet. `alt` is the row's `image_alt`, which is real alt text written
@@ -367,7 +375,7 @@ function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact
  * screen reader, which would otherwise meet a bare "2–12 min" and a decorative
  * icon with no word saying what was measured.
  */
-function ExerciseFace({ exercise }: { exercise: Exercise }) {
+function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCard }) {
   const t = useT();
   const min = String(exercise.timeframeMin);
   const max = String(exercise.timeframeMax);
@@ -386,11 +394,33 @@ function ExerciseFace({ exercise }: { exercise: Exercise }) {
         <h2 className="musie-exercise-card__headline">{exercise.name}</h2>
         <p className="musie-exercise-card__text">{exercise.description}</p>
       </div>
-      <p className="musie-exercise-card__foot">
-        <Icon glyph={Timer} size="sm" inline />
-        <span aria-hidden="true">{t('exercises.fact.timeShort', { min, max })}</span>
-        <span className="musy-sr-only">{t('exercises.fact.time', { min, max })}</span>
-      </p>
+      <div className="musie-exercise-card__foot">
+        <p className="musie-exercise-card__time">
+          <Icon glyph={Timer} size="sm" inline />
+          <span aria-hidden="true">{t('exercises.fact.timeShort', { min, max })}</span>
+          <span className="musy-sr-only">{t('exercises.fact.time', { min, max })}</span>
+        </p>
+        {/* THE CONDENSED RUNG (Ben, 2026-10-05). §5.4 permits --target-min for
+            a card control and never for a primary action, and this is both at
+            once; it renders at 36px, over 2.5.8's 24 and under §5.4's 44. The
+            full-size button beside the deck is the same action, so nothing is
+            out of reach — logged in OPEN-QUESTIONS.md.
+
+            `card.accept` rather than `start()` directly: the deck owns what an
+            accept DOES to the pile — the card lifts, the deck goes inert, a
+            refusal brings it back — and a screen that reached past that would
+            be the one place the card did not move when it was taken. */}
+        <CtaButton
+          variant="primary"
+          size="min"
+          leadingIcon={Play}
+          className="musie-exercise-card__start"
+          disabled={card.disabled}
+          onClick={card.accept}
+        >
+          {t('exercises.startShort')}
+        </CtaButton>
+      </div>
     </div>
   );
 }

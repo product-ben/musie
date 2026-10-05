@@ -3325,3 +3325,54 @@ at 36px: over 2.5.8's 24px with the margin earning the exception, under the 44px
 is smaller than the rule, not an action that is missing. If it stays, §5.4 needs
 a sentence about a card's own primary control, or the ladder needs a rung
 between `min` and `primary`.
+
+## CardDeck — the inline clearance I flagged as "nothing needs it yet" was the defect, and the answer was to stop drawing the button
+Where: `src/CardDeck.tsx` (`CardDeckItem.content`, `CardDeckCard`, `inert`),
+`src/musy-components.css` (`.musy-deck__card-act` and
+`--musy-deck-card-act-block`, both deleted)
+What I checked: the entry three above this one publishes a BLOCK clearance for
+the button the deck drew into the card's bottom-trailing corner, and flags that
+only the block axis is published "because the only thing the reference face puts
+in that row is a short time on the LEADING edge". Ben sent screenshots of that
+row with the time cut off. Measured, at the narrow end nobody had looked at:
+
+| viewport | the row | |
+|---|---|---|
+| 393px, English | *2–12 min* ends 67px short of the button | fine |
+| 393px, German | *2–12 Min.* ends 45px short | fine |
+| 360px, German | 22px short | fine |
+| **320px, German** | **runs 18px UNDER the button** | cut |
+| 320px, English | 4px short | one character from cut |
+
+A button's inline size is its LABEL's inline size. No token knows that, so the
+inline axis could not be published the way the block axis was, and every fix
+available from inside the deck — a reserved fraction of the row, a max-width on
+the face's text, a pixel count measured in JavaScript and written back as a
+custom property — is arithmetic between two boxes that were never laid out
+together.
+What I did: deleted the button, the clearance and `acceptShortLabel`, and gave
+the face the action instead. `CardDeckItem.content` now also takes a FUNCTION,
+handed `{ accept, disabled }`; a face that wants the accept on it puts it in a
+row it already owns. The app's exercise card does exactly that, and the two
+numbers Ben asked about both fall out of ordinary layout: 16px of air at 320px
+in German where there was an 18px overlap, because flex items cannot overlap;
+and a **0px baseline offset** where there was 9px, because the time and the
+rung's label sit at the same type step and `align-items: center` puts two line
+boxes of one height on one line. At 320px the time wraps to two lines inside its
+own share rather than meeting the button, which is the fallback arriving by
+itself rather than being configured.
+
+Every card but the one in front is now `inert`. A face may put controls on
+itself, and four more Start buttons stacked behind the top card would have been
+four invisible tab stops; it also takes the four hidden faces out of the
+accessibility tree, which is right for a deck that deals one card at a time and
+announces the top one in a live region. The gesture is untouched — the handlers
+are on the stage, so a thumb landing on a card behind still swipes the pile.
+Why: the robustness belongs in the layout, not in the numbers. A component that
+cannot measure the box it is drawing into should hand over the action rather
+than guess the geometry.
+What I need from Ben: **nothing, and one thing retracted.** The "two limits"
+flagged in that earlier entry are gone with the mechanism — there is no
+clearance to respect and no axis left unpublished. The condensed rung stays, and
+stays logged: it is the FACE's choice now rather than the deck's, which is the
+other half of handing the action over.

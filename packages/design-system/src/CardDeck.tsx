@@ -24,11 +24,11 @@
  *   gone with the door they were protecting.
  *
  *   A PRESS COMMITS. `onAccept` is a press and never a swipe: on the card in
- *   front, on the button the deck draws in that card's bottom-trailing corner,
- *   or on the primary button in the action column. §7.24's rule still binds it
- *   — a commit with no confirm is only honest if what it commits is cheap to
- *   take back — and a press being the only way in is also what makes an
- *   accidental one unlikely: a press is a place, not a direction.
+ *   front, on whatever the FACE puts the accept on (see `CardDeckItem`), or on
+ *   the primary button in the action column. §7.24's rule still binds it — a
+ *   commit with no confirm is only honest if what it commits is cheap to take
+ *   back — and a press being the only way in is also what makes an accidental
+ *   one unlikely: a press is a place, not a direction.
  *
  * ── THE OVERLAY IS NOT A VERDICT ANY MORE, AND IT ARRIVES AT ONCE ─────────
  * It used to appear AT the threshold, which for the accept was half the card's
@@ -74,6 +74,10 @@
  * keys do the same two things — RIGHT for the next card, LEFT for the one
  * before, which is the reading order and therefore the mirror of the swipe
  * that does the same job, exactly as in every carousel. Enter accepts.
+ *
+ * What a FACE puts on itself is in addition to all of that and never instead:
+ * a consumer that ignores `CardDeckItem`'s function form loses nothing, which
+ * is the test that arrangement has to pass.
  *
  * ── EVERY WORD IT SPEAKS IS THE CONSUMER'S ───────────────────────────────
  * There are no label defaults here, not even from the locale catalogue. A deck
@@ -133,10 +137,40 @@ const OVERLAY_FULL_AT = 0.1;
  *  FORWARD ONLY — see `progress` in onPointerMove. */
 const PILE_CLOSES_AT = 0.6;
 
+/**
+ * What a face is handed when it is written as a FUNCTION — the deck's own
+ * accept, for a face that would rather place it than be drawn over.
+ */
+export interface CardDeckCard {
+  /** Take this card. The same accept a press on the card makes: the card
+   *  lifts, the deck goes inert, and a refusal brings it back. */
+  accept: () => void;
+  /** True when this card cannot be taken — the deck is busy, or this is not
+   *  the card in front. Pass it to whatever you render. */
+  disabled: boolean;
+}
+
 export interface CardDeckItem {
   id: string;
-  /** The card's face. The deck owns the stack; the consumer owns the card. */
-  content: React.ReactNode;
+  /**
+   * The card's face. The deck owns the stack; the consumer owns the card.
+   *
+   * ── A FUNCTION, IF THE FACE WANTS THE ACCEPT ON IT (Ben, 2026-10-05) ─────
+   * The deck drew its own small button into the card's bottom-trailing corner
+   * for half a day, and absolutely positioned over a face it knows nothing
+   * about is a bad place for a button to live: at 320px the German time string
+   * on the reference card ran 18px UNDER it, and the English one had 4px to
+   * spare. Everything that could have saved it — a published inline clearance,
+   * a reserved fraction of the row, a width on the text — is arithmetic
+   * between two boxes that were never laid out together.
+   *
+   * So the deck hands the action over instead. A face written as a function
+   * gets `accept` and `disabled` and puts the control in its OWN row, where
+   * ordinary layout keeps the two apart and ordinary alignment puts them on
+   * one baseline. Nothing is lost by ignoring it: the accept is still a press
+   * on the card, still a button in the action column, still Enter.
+   */
+  content: React.ReactNode | ((card: CardDeckCard) => React.ReactNode);
   /** 1, 2 or 3 — Layer 1's accent family. Fixed by the consumer, so a card
    *  keeps its colour when the pile is reordered. */
   accent?: 1 | 2 | 3;
@@ -158,16 +192,11 @@ export interface CardDeckProps {
    *  comes back to the top — so the pile turns the other way rather than
    *  dealing. Carries the id of the card that was on top. */
   onPrevious: (id: string) => void;
-  /** The accept's name, on the button beside the deck. REQUIRED. */
-  acceptLabel: string;
-  /**
-   * The same action in as few words as a card's corner has room for — "Start"
-   * where `acceptLabel` says "Start the exercise".
+  /** The accept's name, on the button beside the deck. REQUIRED.
    *
-   * REQUIRED, and a second string rather than a truncation: a label cut to fit
-   * is a label that ends mid-word in the language that runs 30% longer.
-   */
-  acceptShortLabel: string;
+   *  THE ONLY ACCEPT LABEL THE DECK OWNS. A face that places the accept itself
+   *  names it itself — it is the one that knows how much corner it has. */
+  acceptLabel: string;
   /**
    * What the overlay says, EITHER WAY, and the right-hand icon button's
    * accessible name and tooltip. REQUIRED.
@@ -268,7 +297,7 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  acceptLabel, acceptShortLabel, nextLabel, previousLabel,
+  acceptLabel, nextLabel, previousLabel,
   acceptGlyph, label, positionLabel, toolbar, actions, busy = false, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
@@ -522,8 +551,20 @@ export function CardDeck({
 
   const position = items.findIndex((i) => i.id === frontId) + 1;
 
-  const face = (item: CardDeckItem) => (
-    <div className="musy-deck__face">{item.content}</div>
+  const face = (item: CardDeckItem, isFront: boolean) => (
+    <div className="musy-deck__face">
+      {typeof item.content === 'function'
+        ? item.content({
+            accept: () => accept(item.id),
+            /* A CARD THAT IS NOT IN FRONT CANNOT BE TAKEN, and the face is
+               told so rather than left to work it out from a position it is
+               not given. Belt and braces with the `inert` below: this is what
+               makes the control LOOK unavailable, that is what stops it being
+               reached. */
+            disabled: inert || !isFront,
+          })
+        : item.content}
+    </div>
   );
 
   const vars = (extra: Record<string, number>) => extra as React.CSSProperties;
@@ -572,6 +613,20 @@ export function CardDeck({
                   aria-hidden={isSent || undefined}
                   data-accent={item.accent ?? 1}
                   data-swiping={isFront && drag !== null}
+                  /* ── EVERY CARD BUT THE ONE IN FRONT IS INERT ──────────────
+                     A face may now put a button on itself, and four more of
+                     them stacked behind the top card would be four tab stops
+                     nobody can see. `inert` takes the whole subtree out of the
+                     tab order AND out of the accessibility tree, which is also
+                     the right answer for the text: this deck deals one card at
+                     a time, and a screen reader hearing five faces at once was
+                     hearing the pile rather than the card. The live region
+                     names the one in front as it changes.
+
+                     It does not touch the gesture: the handlers are on the
+                     stage, so a thumb landing on a card behind still swipes
+                     the pile — it simply no longer lands on a card. */
+                  inert={!isFront || isSent}
                   style={vars({
                     '--musy-card-depth': isSent ? 0 : depth,
                     '--musy-card-seed': seedFor(id),
@@ -580,41 +635,7 @@ export function CardDeck({
                       : {}),
                   } as never)}
                 >
-                  {face(item)}
-
-                  {/* ── THE CARD'S OWN ACCEPT ─────────────────────────────
-                      In the corner of the card in front, and drawn only on
-                      the small tier — above it the primary button sits beside
-                      the deck with room for the whole label (Ben, 2026-10-05).
-
-                      It is here rather than beside the deck because a press
-                      is now the action, and the card is the thing being
-                      pressed: a button ON it says so where a button under it
-                      only says the deck can do this.
-
-                      THE CONDENSED RUNG, and it is the one rule in this file
-                      that is being broken on purpose (Ben, 2026-10-05: "lass
-                      uns die condensed button variante probieren"). §5.4
-                      permits `min` for a card control and NEVER for a primary
-                      action, and this is both at once — the card's own control
-                      and the screen's consequential one. It is logged in
-                      stories/OPEN-QUESTIONS.md with what it costs: the rung
-                      renders at 36px, so the target is under the 44px §5.4
-                      asks of a primary action, and clears 2.5.8's 24px with
-                      the margin the class bakes in. The full-size button
-                      beside the deck is unchanged and is the same action. */}
-                  {isFront && (
-                    <CtaButton
-                      variant="primary"
-                      size="min"
-                      leadingIcon={acceptGlyph}
-                      className="musy-deck__card-act"
-                      disabled={inert}
-                      onClick={() => accept(id)}
-                    >
-                      {acceptShortLabel}
-                    </CtaButton>
-                  )}
+                  {face(item, isFront && !isSent)}
 
                   {/* ── THE OVERLAY ───────────────────────────────────────
                       Where the swipe is going, named, from the first pixel of
@@ -668,7 +689,7 @@ export function CardDeck({
                     '--musy-card-swing': flight.swing,
                   } as never)}
                 >
-                  {face(item)}
+                  {face(item, false)}
                 </div>
               );
             })}

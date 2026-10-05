@@ -5466,28 +5466,13 @@ html[data-musy-scroll-snap='y'] {
    --musy-card-reveal lives on the OVERLAY and is how much of it is showing. */
 .musy-deck__card {
   grid-area: card;
-  /* The overlay and the card's own accept button are laid over this. A
-     transformed box is already a containing block for an absolutely positioned
-     child, and every card here is transformed — but saying so is cheaper than
-     relying on it. */
+  /* The overlay is laid over this. A transformed box is already a containing
+     block for an absolutely positioned child, and every card here is
+     transformed — but saying so is cheaper than relying on it. */
   position: relative;
   --musy-drag-x: 0;
   --musy-drag-y: 0;
   --musy-card-swing: 0;
-  /* WHAT THE DECK'S OWN BUTTON TAKES OUT OF THE FACE, for a face that needs to
-     keep its words out from under it. The button's box, not the corner it sits
-     in: the target plus its two borders, which is how `.musy-btn` arrives at
-     46px. It is zeroed on the wide tier beside the rule that stops drawing the
-     button, so a consumer writes one declaration and no media query of its own.
-
-     IT IS DECLARED HERE AND ZEROED LATER, not the other way round, and that is
-     the trap this file already records against the small-tier query above: a
-     media query is not more specific than anything, so a 0px base would simply
-     have won and the face would have reserved nothing. It did, for one
-     measurement. */
-  --musy-deck-card-act-block:
-    calc(var(--type-label-md-line) * var(--type-label-md-size)
-         + var(--sp-2) * 2 + var(--border-width-regular) * 2);
   --musy-card-rise:
     clamp(0, calc(var(--musy-card-depth) - var(--musy-deck-progress, 0)), 4);
   /* HOW MUCH OF ITS SCATTER A CARD IS SPENDING: all of it in the pile, none
@@ -5621,64 +5606,25 @@ html[data-musy-scroll-snap='y'] {
 }
 
 
-/* ── THE CARD'S OWN ACCEPT ────────────────────────────────────────────────
-   A small primary button in the bottom-trailing corner of the card in front
-   (Ben, 2026-10-05): "users expect … to click on the card to start an
-   exercise", and a card that can be pressed should say so without being
-   touched first.
+/* ── THE CARD'S OWN ACCEPT IS THE FACE'S, NOT THE DECK'S ──────────────────
+   There was a `.musy-deck__card-act` here for half a day: a small primary
+   button absolutely positioned in the card's bottom-trailing corner, with a
+   `--musy-deck-card-act-block` clearance published so the face could keep its
+   words out from under it. Both are gone (Ben, 2026-10-05).
 
-   ONLY ON THE SMALL TIER. Above --bp-md the actions sit BESIDE the card, where
-   the same action is already a full-width button with room for the whole
-   label; two of it a hand's width apart is clutter, not reassurance. Hiding it
-   gates nothing — the button beside the deck is the same `onAccept`, which is
-   the condition the arrangement above has to meet.
+   WHAT KILLED IT WAS A MEASUREMENT. At 320px the German time string on the
+   reference card ran 18px UNDER the button, and the English one cleared it by
+   4px — because the block axis could be published and the inline axis could
+   not: a button's width is its LABEL's width, which no token knows. Every fix
+   available from here is arithmetic between two boxes that were never laid out
+   together — a reserved fraction of the row, a max-width on the words, a pixel
+   count measured in JavaScript and written back as a custom property.
 
-   The threshold is stated as its complement — `min-width: 768px` rather than
-   the `max-width: 767.98px` the rest of this section uses — because the
-   button's visible state is `.musy-btn`'s own `inline-flex`, and restating
-   that here is how it goes stale when the base rule moves.
-
-   IT IS DRAWN OVER THE CONSUMER'S FACE, which is the one place this component
-   reaches into the card it was given — so the room it takes is PUBLISHED and
-   not merely taken. `--musy-deck-card-act-block` (on the card, so it inherits
-   into the face) is the button's own block size where it is drawn and 0px where
-   it is not, and a face whose words reach the bottom of the card gives up that
-   much at its own end. The app's exercise card does, in `.musie-exercise-card__body`.
-
-   IT IS NOT DECORATION. Measured at 393px: the German description of *Achtsam
-   Atmen* is seven lines, and its last line ran under the button for the bottom
-   10px of a 19px line — in English the same card has five lines and clears it,
-   which is exactly the shape of defect that ships. Only the block axis is
-   published: nothing needs the inline one yet, because the only thing the
-   reference face puts in that row is a short time on the LEADING edge.
-
-   ── THE CONDENSED RUNG (Ben, 2026-10-05) ───────────────────────────────────
-   `size="min"`, which §5.4 permits for a card control and forbids for a
-   primary action — and this is both. The deviation is Ben's, it is logged in
-   stories/OPEN-QUESTIONS.md, and the number that matters is 36px: over
-   2.5.8's 24px, under §5.4's 44px, with the class's own --sp-2 margin earning
-   the spacing exception the same way §7.2's rung does.                     */
-.musy-deck__card-act {
-  position: absolute;
-  /* THE INSET GIVES THE RUNG'S MARGIN BACK. `.musy-btn--min` bakes in --sp-2
-     all round to earn 2.5.8's exception, and on an absolutely positioned box
-     that margin ADDS to the inset — so the button would have sat 32px off two
-     edges of a card whose own inset is 24. Subtracting it puts the VISIBLE
-     edge on --space-inset-card, level with whatever the face sets in that row,
-     and leaves the margin doing its real job of keeping other targets away. */
-  inset-block-end: calc(var(--space-inset-card) - var(--sp-2));
-  inset-inline-end: calc(var(--space-inset-card) - var(--sp-2));
-  /* Under the overlay, which is +1: a browse covers the card, and the button
-     for the card you are leaving has no business sitting on top of the name of
-     the one you are going to. */
-  z-index: var(--z-raised);
-}
-
-@media (min-width: 768px) {
-  .musy-deck__card-act { display: none; }
-  /* Nothing is drawn into the corner here, so nothing is owed for it. */
-  .musy-deck__card { --musy-deck-card-act-block: 0px; }
-}
+   So the deck hands the action to the face instead (`CardDeckItem`'s function
+   form), and the face puts it in its own bottom row beside its own content.
+   Two boxes in one flex row cannot overlap, and `align-items: center` across
+   one type step puts their baselines on the same line for nothing. The
+   robustness is in the layout rather than in the numbers.                   */
 
 /* ── THE OVERLAY ──────────────────────────────────────────────────────────
    The whole card, one colour, one word: the card the swipe is going TO.

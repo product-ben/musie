@@ -168,29 +168,16 @@
    the card's height, so this only means a description long enough to overrun
    is clipped by the card instead of pushing the time row out of the bottom.
 
-   ── THE LAST LINE GIVES WAY TO THE DECK'S BUTTON (2026-10-05) ──────────────
-   `CardDeck` draws its own *Start* into the card's bottom-trailing corner on
-   the small tier, and publishes what that costs as
-   `--musy-deck-card-act-block` — the button's own box, 0px wherever it is not
-   drawn. This is the face giving it up.
-
-   IT IS A MEASURED FIX, NOT A PRECAUTION. At 393px the German *Achtsam Atmen*
-   runs to seven lines, and its last line sat under the button for the bottom
-   10px of a 19px line; the English five lines on the same card cleared it.
-   `max()` rather than an addition, because the two are the same room asked for
-   by two different things — the gap below the words, and the band the button
-   needs — and the card only has to honour the larger.
-
-   NO MEDIA QUERY HERE, deliberately. The component publishes 0px above its own
-   threshold, so the screen states the relationship once and the breakpoint
-   stays the component's business. One declaration, one owner.             */
+   IT RESERVED A BAND FOR THE DECK'S BUTTON FOR HALF A DAY, and does not any
+   more: that button is in the row below now, in this card's own layout, so
+   there is nothing overhead to dodge. The history is over
+   `.musie-exercise-card__foot`.                                            */
 .musie-exercise-card__body {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: var(--space-gap-related);
   min-block-size: 0;
-  padding: var(--space-inset-card) var(--space-inset-card)
-           max(var(--space-gap-stack), var(--musy-deck-card-act-block, 0px));
+  padding: var(--space-inset-card) var(--space-inset-card) var(--space-gap-stack);
   overflow: clip;
 }
 
@@ -220,17 +207,49 @@
   hyphens: var(--text-hyphens);
 }
 
-/* ── THE TIME ──────────────────────────────────────────────────────────────
-   Bottom left, and the row is `start`-aligned rather than spread: there is one
-   thing in it, and a `space-between` row with one child is a row that will put
-   the next thing somebody adds in the wrong place.                          */
+/* ── THE BOTTOM ROW: THE TIME, AND THE WAY IN ──────────────────────────────
+   The time at the leading end, the deck's accept at the trailing end, laid out
+   by one flex row.
+
+   ── WHY THE BUTTON IS IN HERE AND NOT OVER THE CARD (2026-10-05) ───────────
+   `CardDeck` drew it itself, absolutely positioned in the card's
+   bottom-trailing corner, and published a BLOCK clearance so the words above
+   could keep out of its way. The inline axis could not be published the same
+   way — a button's width is its label's width, and no token knows that — and
+   the measurement said so: at 320px the German *5–8 Min.* ran **18px under the
+   button**, where the English *5–8 min* cleared it by four. A min-width, a
+   max-width or a reserved fraction of the row would each have moved the
+   failure rather than removed it.
+
+   Two boxes in one flex row cannot overlap. That is the whole fix, and it is
+   why the deck now hands the action over instead (`CardDeckItem`'s function
+   form) rather than reaching into a face it cannot measure.
+
+   `align-items: center` IS THE BASELINE FIX, which is not obvious and is worth
+   writing down: the time and the button's label sit at the SAME type step —
+   `--type-label-md-*`, which is also what `.musy-btn--min` steps down to — so
+   two line boxes of identical height centred in the same row put their
+   baselines on the same line. Asking for `baseline` would have been the
+   obvious spelling and the wrong one: the button is an `inline-flex` box whose
+   own items are centred, so it exposes no text baseline to align to and the
+   row would have hung it by its bottom edge.                               */
 .musie-exercise-card__foot {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: var(--space-gap-inline);
-  margin: 0;
   padding: 0 var(--space-inset-card) var(--space-inset-card);
+}
+
+/* The leading end. `min-inline-size: 0` is what makes the row honest: a time
+   string long enough to meet the button wraps inside its own share instead of
+   pushing the button off the card. */
+.musie-exercise-card__time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  min-inline-size: 0;
+  margin: 0;
   font-family: var(--type-label-md-family);
   font-size: var(--type-label-md-size);
   font-weight: var(--type-label-md-weight);
@@ -239,6 +258,34 @@
   /* "2–12 min" and "10–12 min" sit at different widths and the deck is a fixed
      size, so the row would shift under a deal without this. */
   font-variant-numeric: tabular-nums;
+  text-wrap: var(--text-wrap-body);
+}
+
+.musie-exercise-card__time > .musy-icon { flex: 0 0 auto; }
+
+/* ── THE WAY IN, AT THE TRAILING END ───────────────────────────────────────
+   It never gives way: the words beside it wrap first.
+
+   THE INSET GIVES THE RUNG'S MARGIN BACK. `.musy-btn--min` carries --sp-2 all
+   round — the margin that earns 2.5.8's spacing exception — so without this
+   the button would sit 32px off the card's edges where the time sits at 24.
+   The row's padding is reduced rather than the button's margin overridden,
+   because the margin is the component's geometry and this is the screen's.
+
+   BELOW --bp-md ONLY. Above it the deck's own primary button sits beside the
+   card with room for the whole label, and the same action twice a hand's width
+   apart is clutter. Hiding it gates nothing — that button is the same accept. */
+.musie-exercise-card__start { flex: 0 0 auto; }
+
+@media (max-width: 767.98px) {
+  .musie-exercise-card__foot {
+    padding-inline-end: calc(var(--space-inset-card) - var(--sp-2));
+    padding-block-end: calc(var(--space-inset-card) - var(--sp-2));
+  }
+}
+
+@media (min-width: 768px) {
+  .musie-exercise-card__start { display: none; }
 }
 
 /* THE LIST VIEW HAS NO STYLES HERE AT ALL, and that is the point of it: it is

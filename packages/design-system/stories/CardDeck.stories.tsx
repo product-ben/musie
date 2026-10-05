@@ -9,6 +9,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Play, Shuffle } from 'lucide-react';
 import { CtaButton } from '../src/CtaButton';
 import { CardDeck } from '../src/CardDeck';
+import type { CardDeckCard } from '../src/CardDeck';
 import { bothThemes } from './_decorators';
 
 /**
@@ -24,13 +25,24 @@ const FACES = [
 ];
 
 /* A stand-in for a consumer's card. Deliberately plain: the story is about the
-   deck, and a photograph here would be a story about the photograph. */
-function Face({ name, text, time }: { name: string; text: string; time: string }) {
+   deck, and a photograph here would be a story about the photograph.
+   
+   ITS BOTTOM ROW IS THE POINT OF THE `card` ARGUMENT. The deck hands the face
+   its own accept, and the face puts it in a row it already owns — beside the
+   time, on one baseline, where nothing can be drawn over anything. The deck
+   used to position that button itself and could not be told how wide this row
+   was; see the component's header. */
+function Face({ name, text, time, card }: { name: string; text: string; time: string; card: CardDeckCard }) {
   return (
     <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: 'var(--space-gap-related)', padding: 'var(--space-inset-card)', minBlockSize: '18rem' }}>
       <h3 style={{ margin: 0, fontFamily: 'var(--type-heading-sm-family)', fontSize: 'var(--type-heading-sm-size)', lineHeight: 'var(--type-heading-sm-line)', color: 'var(--on-surface)' }}>{name}</h3>
       <p style={{ margin: 0, fontFamily: 'var(--type-body-sm-family)', fontSize: 'var(--type-body-sm-size)', lineHeight: 'var(--type-body-sm-line)', color: 'var(--on-surface-muted)' }}>{text}</p>
-      <p style={{ margin: 0, fontFamily: 'var(--type-label-md-family)', fontSize: 'var(--type-label-md-size)', color: 'var(--on-surface-muted)' }}>{time}</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-gap-inline)' }}>
+        <p style={{ margin: 0, minInlineSize: 0, fontFamily: 'var(--type-label-md-family)', fontSize: 'var(--type-label-md-size)', color: 'var(--on-surface-muted)' }}>{time}</p>
+        <CtaButton variant="primary" size="min" leadingIcon={Play} disabled={card.disabled} onClick={card.accept}>
+          Start
+        </CtaButton>
+      </div>
     </div>
   );
 }
@@ -38,7 +50,7 @@ function Face({ name, text, time }: { name: string; text: string; time: string }
 const ITEMS = FACES.map((f) => ({
   id: f.id,
   accent: f.accent,
-  content: <Face name={f.name} text={f.text} time={f.time} />,
+  content: (card: CardDeckCard) => <Face name={f.name} text={f.text} time={f.time} card={card} />,
 }));
 
 const meta = {
@@ -62,9 +74,16 @@ const meta = {
           'press did nothing while a long swipe started something nobody had chosen.',
           '',
           '**Sideways is free and symmetric.** One threshold for both directions, and',
-          'a flick arms either. **A press commits:** the card itself, the button the',
-          'deck draws in its bottom-trailing corner on a narrow screen, the primary',
-          'button in the action column, or Enter.',
+          'a flick arms either. **A press commits:** the card itself, whatever the',
+          'FACE puts the accept on, the primary button in the action column, or Enter.',
+          '',
+          '**A face written as a function gets the accept** — `content: (card) => …`,',
+          'with `card.accept` and `card.disabled`. The deck drew a small button into',
+          'the card’s corner itself for half a day and could not be made safe there:',
+          'at 320px the German time string on the reference card ran 18px *under* it,',
+          'because a button’s width is its label’s width and no token knows that. Two',
+          'boxes in one flex row cannot overlap, so the action is handed over instead',
+          'of the geometry being guessed. Ignoring it loses nothing.',
           '',
           '**The overlay is not a verdict any more.** It used to appear *at* the',
           'threshold — half the card for the accept — so it arrived with the card half',
@@ -120,7 +139,6 @@ const meta = {
     onNext: () => {},
     onPrevious: () => {},
     acceptLabel: 'Start the exercise',
-    acceptShortLabel: 'Start',
     nextLabel: 'Next exercise',
     previousLabel: 'Previous exercise',
     acceptGlyph: Play,
@@ -129,12 +147,11 @@ const meta = {
       `${FACES[position - 1]?.name ?? ''} — card ${position} of ${total}`,
   },
   argTypes: {
-    items: { control: false, description: 'Each item carries an id, the card’s face as a node, and an optional 1–3 accent.' },
+    items: { control: false, description: 'Each item carries an id, the card’s face — a node, or a function given the deck’s own accept — and an optional 1–3 accent.' },
     onAccept: { action: 'accept', description: 'Pressed — the card, the button on it, the primary button, or Enter. The consequential one, and the only one no gesture can reach.' },
     onNext: { action: 'next', description: 'Swiped left, pressed, or Arrow Right. The card goes to the back of the pile.' },
     onPrevious: { action: 'previous', description: 'Swiped right, pressed, or Arrow Left. The card at the back comes to the top.' },
     acceptLabel: { control: 'text', description: 'The accept’s name, on the button beside the deck. Required.' },
-    acceptShortLabel: { control: 'text', description: 'The same action in as few words as a card’s corner has room for. Required — a label cut to fit ends mid-word in German.' },
     nextLabel: { control: 'text', description: 'What the overlay says, either way, and the right-hand icon button’s accessible name and tooltip. Required.' },
     previousLabel: { control: 'text', description: 'The back button’s accessible name and tooltip, and nothing else — the overlay says nextLabel both ways. Required.' },
     acceptGlyph: { control: false, description: 'Lucide component for the accept. The directions have none — the deck owns its own arrows.' },
@@ -154,20 +171,20 @@ type Story = StoryObj<typeof meta>;
  * Component defaults. Press the top card to take it; drag it either way to
  * browse, or use the buttons and the arrow keys.
  *
- * The card's own accept button is drawn below 768px only — narrow the frame to
- * see it appear in the corner, and widen it to watch the same action move to
- * the button beside the deck.
+ * The *Start* in each card's bottom row is the FACE's, placed through the
+ * accept the deck hands it — and the cards behind the top one are `inert`, so
+ * four more of those buttons are neither focusable nor announced.
  */
 export const Default: Story = {};
 
 /**
- * THE CONDENSED RUNG IS WHAT THE CARD CARRIES, and it is a deliberate
+ * THE CONDENSED RUNG IS WHAT THESE FACES CARRY, and it is a deliberate
  * exception rather than a choice of size: §5.4 permits `min` for a card
- * control and forbids it for a primary action, and the card's *Start* is both
- * at once. Ben took it on 2026-10-05 — narrow the frame below 768px to see it.
- * It renders at 36px: over 2.5.8's 24, under §5.4's 44, with the margin the
- * class bakes in earning the spacing exception. Logged in
- * stories/OPEN-QUESTIONS.md.
+ * control and forbids it for a primary action, and a card's *Start* is both at
+ * once. Ben took it on 2026-10-05. It renders at 36px: over 2.5.8's 24, under
+ * §5.4's 44, with the margin the class bakes in earning the spacing exception.
+ * Logged in stories/OPEN-QUESTIONS.md. The deck has no opinion about it — the
+ * face chose that rung, which is the other half of handing the action over.
  */
 
 /**
