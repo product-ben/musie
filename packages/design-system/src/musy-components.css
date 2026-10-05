@@ -5266,11 +5266,15 @@ html[data-musy-scroll-snap='y'] {
 
 
 /* ═══ CARD DECK ════════════════════════════════════════════════════════════
-   A pile you deal with one card at a time. The component sets UNITLESS
-   NUMBERS as custom properties and nothing else — depth, seed, how far the
-   finger has gone — and every one of them is multiplied by a token here. A
-   transform assembled in JavaScript is a pile of raw pixels wherever it is
-   written down.
+   A pile you deal with one card at a time: SWIPE SIDEWAYS TO BROWSE IT, PRESS
+   A CARD TO TAKE IT. The gesture carried the accept until 2026-10-05 and the
+   consequences of that change are all over this section — see the header of
+   CardDeck.tsx for why, and the blocks marked with the date for where.
+
+   The component sets UNITLESS NUMBERS as custom properties and nothing else —
+   depth, seed, how far the finger has gone, how much of the overlay is showing
+   — and every one of them is multiplied by a token here. A transform assembled
+   in JavaScript is a pile of raw pixels wherever it is written down.
 
    MOTION IS LAYER 1'S, INCLUDING THE DECISION NOT TO MOVE. Nothing here tests
    prefers-reduced-motion: Layer 1 already collapses every duration to 1ms
@@ -5383,8 +5387,15 @@ html[data-musy-scroll-snap='y'] {
 }
 
 /* ── THE STAGE ─────────────────────────────────────────────────────────────
-   Sized by the pile. The chips are positioned against it, so they land beside
-   the CARD rather than at the edges of the page. */
+   Sized by the pile, and the surface the gesture is read from: it is as wide
+   as whatever the consumer gives the deck, so a thumb landing beside a card
+   still swipes that card.
+
+   It carried the two intent chips until 2026-10-05 and now carries nothing of
+   its own — the overlay is positioned against the CARD, which is the thing it
+   covers. The element stays because the gesture's surface and the pile's width
+   are two different boxes, and collapsing them would tie the slop to the card
+   rather than to the space around it.                                      */
 .musy-deck__stage {
   position: relative;
   display: grid;
@@ -5443,21 +5454,39 @@ html[data-musy-scroll-snap='y'] {
    from the id), --musy-drag-x/y (pixels the finger has gone) and
    --musy-card-swing (that drag as a fraction of the card).
 
-   --musy-deck-progress is the odd one out: it lives on the PILE and is how far
-   the top card has been dragged toward leaving. Every card subtracts it from
-   its own depth, so the pile rises by one place as the top card goes — the
-   cards underneath start arriving before the top one has left, which is the
-   difference between a stack that animates and one that feels connected to
-   the finger.                                                             */
+   Two more are set elsewhere and both are fractions of the gesture rather than
+   of the card. --musy-deck-progress lives on the PILE and is how far the top
+   card has been dragged toward leaving: every card subtracts it from its own
+   depth, so the pile rises by one place as the top card goes — the cards
+   underneath start arriving before the top one has left, which is the
+   difference between a stack that animates and one that feels connected to the
+   finger. It is zero going BACKWARD, because the card that is about to be on
+   top then is the one at the bottom of the pile rather than the one at depth 1.
+
+   --musy-card-reveal lives on the OVERLAY and is how much of it is showing. */
 .musy-deck__card {
   grid-area: card;
-  /* The verdict is laid over this. A transformed box is already a containing
-     block for an absolutely positioned child, and every card here is
-     transformed — but saying so is cheaper than relying on it. */
+  /* The overlay and the card's own accept button are laid over this. A
+     transformed box is already a containing block for an absolutely positioned
+     child, and every card here is transformed — but saying so is cheaper than
+     relying on it. */
   position: relative;
   --musy-drag-x: 0;
   --musy-drag-y: 0;
   --musy-card-swing: 0;
+  /* WHAT THE DECK'S OWN BUTTON TAKES OUT OF THE FACE, for a face that needs to
+     keep its words out from under it. The button's box, not the corner it sits
+     in: the target plus its two borders, which is how `.musy-btn` arrives at
+     46px. It is zeroed on the wide tier beside the rule that stops drawing the
+     button, so a consumer writes one declaration and no media query of its own.
+
+     IT IS DECLARED HERE AND ZEROED LATER, not the other way round, and that is
+     the trap this file already records against the small-tier query above: a
+     media query is not more specific than anything, so a 0px base would simply
+     have won and the face would have reserved nothing. It did, for one
+     measurement. */
+  --musy-deck-card-act-block:
+    calc(var(--target-primary) + var(--border-width-regular) * 2);
   --musy-card-rise:
     clamp(0, calc(var(--musy-card-depth) - var(--musy-deck-progress, 0)), 4);
   /* HOW MUCH OF ITS SCATTER A CARD IS SPENDING: all of it in the pile, none
@@ -5499,6 +5528,11 @@ html[data-musy-scroll-snap='y'] {
 
   transition:
     transform var(--motion-duration-base) var(--motion-ease-emphasis),
+    /* THE ACCEPTED CARD FADES, and it is declared HERE rather than on
+       [data-sent] because it has to interpolate BOTH WAYS. A transition
+       declared on the state being entered no longer applies on the way out,
+       so the card that comes back after a refusal would have snapped. */
+    opacity var(--motion-duration-base) var(--motion-ease-standard),
     box-shadow var(--motion-enter);
 }
 
@@ -5508,7 +5542,12 @@ html[data-musy-scroll-snap='y'] {
    mid-gesture promotion is visible on a phone as the stutter this avoids. */
 .musy-deck__card[data-swiping='true'] { transition: none; will-change: transform; }
 
-.musy-deck__card[data-front='true'] { cursor: grab; box-shadow: var(--elevation-3); }
+/* `pointer`, NOT `grab` (Ben, 2026-10-05). The card is still draggable and the
+   cursor no longer says so, which is the right trade: a press is what the card
+   is for, and `grab` on the one element whose primary action is a click reads
+   as "this does not do anything until you move it" — which is the misreading
+   the whole iteration is about. */
+.musy-deck__card[data-front='true'] { cursor: pointer; box-shadow: var(--elevation-3); }
 .musy-deck__card[data-front='true'][data-swiping='true'] { cursor: grabbing; }
 .musy-deck[data-busy] .musy-deck__card[data-front='true'] { cursor: default; }
 
@@ -5525,7 +5564,12 @@ html[data-musy-scroll-snap='y'] {
    what lets the deck be dealt as fast as a thumb moves. `from` repeats the
    resting transform exactly so the card starts where the finger left it.
    100vw is a geometric identity — the card starts centred, so a viewport's
-   width of travel puts it off screen at any size.                         */
+   width of travel puts it off screen at any size.
+
+   ALWAYS LEFTWARD, so the direction is written here rather than arriving as a
+   custom property. Only the FORWARD direction throws: going back puts the card
+   into the pile instead of taking it off (see `previous` in CardDeck.tsx), and
+   a card that is staying has nothing to animate separately.               */
 @keyframes musy-deck-throw {
   from {
     transform:
@@ -5535,7 +5579,7 @@ html[data-musy-scroll-snap='y'] {
   }
   to {
     transform:
-      translate3d(calc(100vw * var(--musy-throw-dir)), calc(var(--musy-drag-y) * 3px), 0)
+      translate3d(-100vw, calc(var(--musy-drag-y) * 3px), 0)
       rotate(calc(var(--musy-deck-swing-max) * var(--musy-card-swing) * 2.5));
     opacity: 0;
   }
@@ -5548,85 +5592,89 @@ html[data-musy-scroll-snap='y'] {
   z-index: var(--z-raised);
 }
 
-/* Accepted: off to the right and held there until the consumer decides. It
-   TRANSITIONS rather than animating, because it may have to come back — see
-   the contract in CardDeck.tsx — and a transition reverses for free. */
+/* Accepted: lifted off the pile, faded, and held there until the consumer
+   decides. It TRANSITIONS rather than animating, because it may have to come
+   back — see the contract in CardDeck.tsx — and a transition reverses for free.
+
+   ── UP AND OUT, NOT OFF TO THE RIGHT (Ben, 2026-10-05) ──────────────────────
+   It used to fly a viewport's width to the right, which was the accept's own
+   direction when the accept was a right swipe. Both sideways directions now
+   mean "another card", so the old exit said the one thing the gesture has
+   stopped saying. Up is the axis nothing else on this component uses.
+
+   A LIFT AND A FADE RATHER THAN A FLIGHT. The deck's box clips sideways and
+   not vertically, so a card thrown a screen's height upward would be drawn
+   over the heading above the deck on its way out. --sp-6 of rise with the
+   opacity carrying the rest reads as the card being taken off the pile, and
+   stays inside the component's own space while doing it. */
 .musy-deck__card[data-sent='true'] {
-  transform: translate3d(100vw, 0, 0) rotate(var(--musy-deck-swing-max));
+  transform: translate3d(0, calc(var(--sp-6) * -1), 0) scale(1.02);
+  opacity: 0;
   pointer-events: none;
+  /* ABOVE THE CARD THAT IS REPLACING IT, by one. The accepted card keeps
+     depth 0 while it leaves and so does the card coming up behind it, and
+     `calc(var(--z-raised) - 0)` for both is a TIE — which DOM order breaks the
+     wrong way, because the card leaving was in front and is therefore earlier
+     in the pile's order. */
+  z-index: calc(var(--z-raised) + 1);
+}
+
+
+/* ── THE CARD'S OWN ACCEPT ────────────────────────────────────────────────
+   A small primary button in the bottom-trailing corner of the card in front
+   (Ben, 2026-10-05): "users expect … to click on the card to start an
+   exercise", and a card that can be pressed should say so without being
+   touched first.
+
+   ONLY ON THE SMALL TIER. Above --bp-md the actions sit BESIDE the card, where
+   the same action is already a full-width button with room for the whole
+   label; two of it a hand's width apart is clutter, not reassurance. Hiding it
+   gates nothing — the button beside the deck is the same `onAccept`, which is
+   the condition the arrangement above has to meet.
+
+   The threshold is stated as its complement — `min-width: 768px` rather than
+   the `max-width: 767.98px` the rest of this section uses — because the
+   button's visible state is `.musy-btn`'s own `inline-flex`, and restating
+   that here is how it goes stale when the base rule moves.
+
+   IT IS DRAWN OVER THE CONSUMER'S FACE, which is the one place this component
+   reaches into the card it was given — so the room it takes is PUBLISHED and
+   not merely taken. `--musy-deck-card-act-block` (on the card, so it inherits
+   into the face) is the button's own block size where it is drawn and 0px where
+   it is not, and a face whose words reach the bottom of the card gives up that
+   much at its own end. The app's exercise card does, in `.musie-exercise-card__body`.
+
+   IT IS NOT DECORATION. Measured at 393px: the German description of *Achtsam
+   Atmen* is seven lines, and its last line ran under the button for the bottom
+   10px of a 19px line — in English the same card has five lines and clears it,
+   which is exactly the shape of defect that ships. Only the block axis is
+   published: nothing needs the inline one yet, because the only thing the
+   reference face puts in that row is a short time on the LEADING edge.     */
+.musy-deck__card-act {
+  position: absolute;
+  inset-block-end: var(--space-inset-card);
+  inset-inline-end: var(--space-inset-card);
+  /* Under the overlay, which is +1: a browse covers the card, and the button
+     for the card you are leaving has no business sitting on top of the name of
+     the one you are going to. */
   z-index: var(--z-raised);
 }
 
-/* ── THE INTENT CHIPS ──────────────────────────────────────────────────────
-   NOTHING AT REST. The deck's initial state is the deck; these appear the
-   moment a horizontal axis is decided and go when the finger lifts. They name
-   the two outcomes and which WAY each one lies, which is the whole of "what
-   happens if I let go now".
-
-   ONE ROW, NOT TWO ANCHORED CORNERS. Each chip used to be positioned against
-   its own edge of the card, and on a 297px card they simply overlapped: two
-   labels of two German words each need more room than a phone-width card has,
-   so the left one was drawn under the right one and lost its last syllable.
-   Sharing a row with `space-between` makes them divide the width rather than
-   compete for it, and a long label wraps inside its own half.
-
-   ABOVE THE CARDS, not behind them. Behind was the first idea and it is
-   exactly backwards: the chip you need to read is the one on the side you are
-   dragging TOWARD, which is precisely the side the card has just moved over.
-
-   AT THE TOP OF THE CARD, not across its middle. The middle is where the words
-   are, and a chip there covers the headline at exactly the moment somebody is
-   deciding whether this is the exercise they want.                         */
-.musy-deck__chips {
-  position: absolute;
-  inset-block-start: var(--sp-4);
-  inset-inline: var(--sp-2);
-  z-index: calc(var(--z-raised) + 2);
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--motion-enter);
+@media (min-width: 768px) {
+  .musy-deck__card-act { display: none; }
+  /* Nothing is drawn into the corner here, so nothing is owed for it. */
+  .musy-deck__card { --musy-deck-card-act-block: 0px; }
 }
 
-.musy-deck__chips[data-on] { opacity: 1; }
-.musy-deck__chips[data-on] .musy-deck__chip { transform: scale(1); }
+/* ── THE OVERLAY ──────────────────────────────────────────────────────────
+   The whole card, one colour, one word: the card the swipe is going TO.
 
-/* ONCE THERE IS A VERDICT, THE QUESTION GOES. The pair exists to let somebody
-   compare two outcomes; past the threshold one of them has been chosen and the
-   card itself says so, so leaving them up would be offering a choice that has
-   already been made. */
-.musy-deck__stage[data-armed] .musy-deck__chips { opacity: 0; }
-
-.musy-deck__chip {
-  /* Half the row at most, less its share of the gap, so whichever label is
-     longer wraps instead of pushing the other one over. */
-  max-inline-size: calc(50% - var(--sp-1));
-  display: flex;
-  align-items: center;
-  gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-lg);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
-  background-color: var(--surface-sunken);
-  color: var(--on-surface-muted);
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  transform: scale(0.9);
-  transition: transform var(--motion-enter);
-}
-
-/* The glyph never shrinks; the label is what gives way. */
-.musy-deck__chip > .musy-icon { flex: 0 0 auto; }
-.musy-deck__chip > span { min-inline-size: 0; }
-
-/* ── THE VERDICT ──────────────────────────────────────────────────────────
-   The whole card, one colour, one word. It is the answer to "what happens if I
-   let go now", and it replaces the two chips rather than joining them.
+   ── IT WAS A VERDICT AND IT IS NOT ONE NOW (Ben, 2026-10-05) ───────────────
+   It used to appear at the commit threshold — half the card's width for the
+   accept — so it arrived with the card half off the stage and the decision
+   already made: "it is only visible once the user already swiped it away". It
+   now fades in with the gesture, driven frame by frame by --musy-card-reveal,
+   which the component takes to 1 at a TENTH of the card.
 
    THE FILL IS `--accent-3-text`, WHICH IS A TEXT TOKEN, and that is a
    deliberate inversion worth justifying. The brief asked for "the purple
@@ -5644,38 +5692,47 @@ html[data-musy-scroll-snap='y'] {
    `pointer-events: none` because the gesture that raised it is still running:
    the finger is on the card underneath, and a new element appearing under it
    mid-drag must not become the thing being dragged.                        */
-.musy-deck__verdict {
+.musy-deck__overlay {
   position: absolute;
   inset: 0;
   z-index: calc(var(--z-raised) + 1);
   display: grid;
-  /* Two rows now — the verdict and the way out of it — centred as a pair
+  /* Two rows — where you are going, and how to stay — centred as a pair
      rather than each in its own half of the card. */
   align-content: center;
   gap: var(--space-gap-related);
-  /* ── THE WORD SITS ON THE EDGE THAT STAYS ON SCREEN ──────────────────────
-     Centred was the obvious choice and it clipped: the card arms at HALF its
-     own width of travel, so by the time the verdict appears the card is half
-     off the stage and a centred word is cut down the middle — "Übung s". The
-     text is pulled to the trailing edge instead, which is the half still in
-     view: left when the card is going right, right when it is going left. The
-     word is whole for the whole of the gesture. */
+  /* ── THE WORDS SIT ON THE EDGE THAT STAYS ON SCREEN ──────────────────────
+     Centred was the obvious choice and it clipped: a card dragged well past
+     the threshold is half off the stage, and a centred word is cut down the
+     middle — "Übung s". The text is pulled to the trailing edge instead,
+     which is the half still in view: start when the card is going right, end
+     when it is going left. `start` is the resting value because `previous` is
+     the direction that moves the card rightward. */
   justify-items: start;
   padding: var(--space-inset-card);
   border-radius: inherit;
   background-color: var(--accent-3-text);
   color: var(--on-surface-inverse);
-  opacity: 0;
+  /* THE OPACITY IS THE DRAG. No threshold selector and no transition while a
+     finger is down — the overlay is exactly as present as the gesture has made
+     it, which is the whole of what Ben asked for. */
+  opacity: var(--musy-card-reveal, 0);
+  /* ON THE WAY OUT ONLY, and that is what the [data-dir] rule below buys: the
+     attribute is set for as long as a direction is decided, so this transition
+     is in force only once the finger has gone — when --musy-card-reveal drops
+     to 0 in the same frame as the attribute, and the overlay fades instead of
+     cutting. In: exact. Out: eased. */
+  transition: opacity var(--motion-exit);
   pointer-events: none;
-  transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-.musy-deck__verdict[data-armed] { opacity: 1; }
-.musy-deck__verdict[data-armed='defer'] { justify-items: end; }
-.musy-deck__verdict[data-armed='defer'] .musy-deck__verdict-label,
-.musy-deck__verdict[data-armed='defer'] .musy-deck__verdict-subline { text-align: end; }
+.musy-deck__overlay[data-dir] { transition: none; }
 
-.musy-deck__verdict-label {
+.musy-deck__overlay[data-dir='next'] { justify-items: end; }
+.musy-deck__overlay[data-dir='next'] .musy-deck__overlay-label,
+.musy-deck__overlay[data-dir='next'] .musy-deck__overlay-hint { text-align: end; }
+
+.musy-deck__overlay-label {
   font-family: var(--type-display-lg-family);
   font-size: var(--type-display-lg-size);
   font-weight: var(--type-display-lg-weight);
@@ -5683,15 +5740,13 @@ html[data-musy-scroll-snap='y'] {
   letter-spacing: var(--type-display-lg-tracking);
   text-align: start;
   /* ── IT WRAPS INTO THE HALF THAT IS STILL ON SCREEN ──────────────────────
-     The card arms at half its own width of travel, so the verdict appears
-     with half the card already past the edge. Anchoring the word to the
-     trailing side was not enough on its own: "Übung starten" is 232px of
-     display type and the sliver left in view is about 148 of card less its
-     inset. Capped at half the card it breaks into two lines that fit —
-     "Übung / starten" — and stays whole for the whole of the gesture.
+     A card can be dragged much further than the threshold commits at, so the
+     cap is set for the deepest travel anybody makes rather than for the
+     threshold: at half the card, "Nächste Übung" breaks into two lines that
+     fit and stays whole however far the card has gone.
 
-     Half the card, not a measured width, because it is the same half the
-     threshold is defined against: if ACCEPT_RATIO ever moves, this follows. */
+     Half the card, not a measured width, because half is the geometry — the
+     visible sliver is what is left of the card's own width.                */
   max-inline-size: calc(var(--musy-deck-card-inline) / 2);
   text-wrap: var(--text-wrap-heading);
   /* HYPHENATION OFF, which is the one place in this file that overrides Layer
@@ -5703,20 +5758,22 @@ html[data-musy-scroll-snap='y'] {
   hyphens: none;
 }
 
-/* ── THE WAY OUT, UNDER THE VERDICT ───────────────────────────────────────
-   The verdict says what is about to happen; this says it has not happened yet
-   and how to choose the other thing. Body type under display type, so the two
-   read as a statement and its footnote rather than as two competing lines.
+/* ── HOW TO TAKE A CARD, UNDER THE DIRECTION ──────────────────────────────
+   The label says which card you are going to; this says what to do when you
+   have found the one you want. Body type under display type, so the two read
+   as a statement and its footnote rather than as two competing lines.
+
+   IT IS THE REASON THE OVERLAY CARRIES A SECOND LINE AT ALL. The press is the
+   one action no gesture reaches, and a browse is exactly when somebody is
+   looking for it — so the moment the overlay is up is the moment to say it.
 
    SAME INK, NOT A FADED ONE. The obvious move is to drop the opacity, and on a
    fill chosen for 6.46:1 against this exact ink that would spend the margin
    the whole overlay was built around. It is held back by SIZE instead, which
    costs no contrast at all.
 
-   The same width cap as the label: this is the half of the card that is still
-   on screen when the verdict appears, and a line that ran past it would be a
-   way out nobody could read.                                              */
-.musy-deck__verdict-subline {
+   The same width cap as the label, for the same reason.                    */
+.musy-deck__overlay-hint {
   max-inline-size: calc(var(--musy-deck-card-inline) / 2);
   font-family: var(--type-body-sm-family);
   font-size: var(--type-body-sm-size);
@@ -5725,6 +5782,17 @@ html[data-musy-scroll-snap='y'] {
   text-align: start;
   text-wrap: var(--text-wrap-body);
   hyphens: none;
+}
+
+/* ── THE TWO DIRECTIONS ───────────────────────────────────────────────────
+   A row, not two rows: back and forward are one control with two ends, and a
+   column of three labelled buttons under the card read as three unrelated
+   choices. `--space-gap-inline` is the token for two controls that belong
+   together on one line.                                                    */
+.musy-deck__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
 }
 
 /* ── THE BUTTONS ARE ALWAYS DRAWN ─────────────────────────────────────────
@@ -5737,4 +5805,9 @@ html[data-musy-scroll-snap='y'] {
    It also retires the one compromise in that arrangement — buttons present in
    the accessibility tree but invisible, which is operable and still a thing
    nobody can point at. Now a thumb, a cursor, a keyboard and a screen reader
-   all reach the same three controls in the same place.                      */
+   all reach the same controls in the same place.
+
+   THE ONE DUPLICATE IS THE ACCEPT, which is also drawn on the card itself on
+   the small tier. That is not the same compromise: both are visible, both are
+   in the tree, and each is where its own input expects it — the card for a
+   thumb, the column for everything else.                                   */

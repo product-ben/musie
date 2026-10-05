@@ -941,18 +941,31 @@ export const en = {
   /* THE COUNT IS INTERPOLATED, not written out: the deck shows every exercise
      there is, so the headline would start lying the day a sixth lands. */
   'exercises.headline': '{count} exercises for you',
-  'exercises.intro': 'Swipe right to start an exercise, left for another one. Or see all of them in a list.',
-  /* The pile's accessible name. A screen-reader user hears only this, so it
-     has to contain both actions and which way each one goes. */
-  'exercises.deckLabel': 'The deck. Swipe the top card right to start that exercise, left to see another.',
-  /* The two actions, on the drag chips and on the buttons beside the deck. */
+  /* THE SWIPE DOES NOT START ANYTHING ANY MORE (Ben, 2026-10-05). It browses,
+     and a press is what starts an exercise — so this line leads with the
+     press, which is the action, and mentions the swipe second, which is only
+     how you get to the card you want. */
+  'exercises.intro': 'Press a card to start that exercise, or swipe sideways to see another. Or see all of them in a list.',
+  /* The pile's accessible name, and the ONLY place the keys are named: the
+     overlay that teaches the press is a visual state and is aria-hidden, so a
+     screen-reader user hears this and nothing else. It names the keys rather
+     than the swipe, because a swipe is not what this reader is going to
+     make. */
+  'exercises.deckLabel': 'The deck. Enter starts the exercise on the top card; the arrow keys show the next one and the one before.',
+  /* The accept, twice: in full on the button beside the deck, and as short as
+     a card's own corner has room for. */
   'exercises.start': 'Start the exercise',
-  'exercises.another': 'Next exercise',
-  /* THE LINE UNDER EACH VERDICT, naming the other way out. Each one points the
-     OPPOSITE way to the verdict it sits under: past the threshold the card has
-     stopped asking, and this is what says the decision is still reversible. */
-  'exercises.startSubline': 'or swipe left for the next exercise',
-  'exercises.anotherSubline': 'or swipe right to start it',
+  'exercises.startShort': 'Start',
+  /* UNDER THE DIRECTION ON THE OVERLAY. The overlay is up for the whole of a
+     browse, which makes it the one moment when somebody looking for a way in
+     is looking at the card — so it is where the press gets said. 'Press',
+     not 'tap': a mouse drag raises the same overlay. */
+  'exercises.startHint': 'Press a card to start it',
+  /* The two directions, on the overlay and as the names of the pair of icon
+     buttons under the primary one. NOT 'another one': the deck goes both ways
+     now, and two labels that both said "another" would not say which. */
+  'exercises.next': 'Next exercise',
+  'exercises.previous': 'Previous exercise',
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',

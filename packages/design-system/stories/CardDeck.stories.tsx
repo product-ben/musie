@@ -6,7 +6,7 @@
  */
 import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Play, Shuffle, SkipForward } from 'lucide-react';
+import { Play, Shuffle } from 'lucide-react';
 import { CtaButton } from '../src/CtaButton';
 import { CardDeck } from '../src/CardDeck';
 import { bothThemes } from './_decorators';
@@ -49,34 +49,49 @@ const meta = {
     docs: {
       description: {
         component: [
-          'A pile of cards you deal with one at a time: swipe **right** to take the',
-          'one on top, **left** to send it to the back.',
+          'A pile of cards you deal with one at a time: **swipe sideways to browse**',
+          'it — left for the next card, right for the one before — and **press a card',
+          'to take it**.',
           '',
-          '**The two swipes are not peers, and the component is built around that.**',
-          'Left is free — the card goes to the back and comes round again. Right is a',
-          'one-way door, so it is deliberately harder to do, in three separate ways:',
-          'it needs more travel (half the card, against under a third); a **flick',
-          'cannot do it** at all, because velocity arms the left swipe only and a',
-          'fast short gesture is the one people make by accident; and it announces',
-          'itself first, because the accept chip lights before the finger lifts and',
-          'dragging back under the threshold un-arms it.',
+          '**It was built the other way round, and that was the thing to fix**',
+          '(Ben, 2026-10-05). A right swipe used to TAKE the card and a left one sent',
+          'it to the back, with the right swipe made deliberately harder because it',
+          'was a one-way door. Nobody read it that way: a pile on a touch screen says',
+          '"there are more of these, and they are sideways", so people swiped both',
+          'ways looking for the next card and pressed the one they wanted — and the',
+          'press did nothing while a long swipe started something nobody had chosen.',
+          '',
+          '**Sideways is free and symmetric.** One threshold for both directions, and',
+          'a flick arms either. **A press commits:** the card itself, the button the',
+          'deck draws in its bottom-trailing corner on a narrow screen, the primary',
+          'button in the action column, or Enter.',
+          '',
+          '**The overlay is not a verdict any more.** It used to appear *at* the',
+          'threshold — half the card for the accept — so it arrived with the card half',
+          'off the stage and the decision already made. It now fades in with the',
+          'gesture and is fully opaque at a **tenth** of the card, naming the card you',
+          'are heading for while you can still change your mind. The two intent chips',
+          'went with it: there is no longer a pair of outcomes to compare.',
           '',
           '**What happens after an accept is the consumer’s, and it can fail.**',
-          '`onAccept` fires, the card flies out, and the deck goes inert while `busy`',
-          'is true. If `busy` goes false with the item still in `items`, the card',
-          'flies back in — a swipe makes a promise, and a promise that cannot be kept',
-          'has to visibly return rather than leaving the deck one card further on.',
+          '`onAccept` fires, the card lifts off the pile and fades, and the deck goes',
+          'inert while `busy` is true. If `busy` goes false with the item still in',
+          '`items`, the card comes back — a press makes a promise, and a promise that',
+          'cannot be kept has to visibly return rather than leaving the deck one card',
+          'further on. It leaves **upward**, because both sideways directions now mean',
+          '"another card".',
           '',
-          '**Nothing is gated behind the gesture.** Both actions are real buttons,',
-          'always in the DOM. On a wide viewport *or* a fine pointer they flank the',
-          'deck; on a narrow touch screen the stylesheet reduces them to',
-          '`.musy-sr-only` — invisible, still operable. The arrow keys do the same',
-          'two things, and Enter accepts.',
+          '**Nothing is gated behind the gesture.** Every action is a real button,',
+          'always in the DOM: the accept, and the two directions as a pair of icon',
+          'buttons under it. The arrow keys browse in **reading order** — right for',
+          'the next card, left for the one before, which is the mirror of the swipe',
+          'that does the same job, exactly as in every carousel. Enter accepts.',
           '',
           '**Every word it speaks is the consumer’s.** There are no label defaults,',
-          'not even from the locale catalogue: a deck whose actions are "start" and',
-          '"later" in one product and "keep" and "discard" in the next cannot have a',
-          'sensible default for either.',
+          'not even from the locale catalogue: a deck whose action is "start" in one',
+          'product and "keep" in the next cannot have a sensible default for it. The',
+          'two *directions* carry the deck’s own arrows — which way is back is not a',
+          'product decision.',
           '',
           '---',
           '### Build notes',
@@ -86,7 +101,8 @@ const meta = {
           '',
           'The resting tilt, the swing and the card width are three numbers Layer 1',
           'has no token for — there is no rotation scale, and `--bp-sm` is a',
-          'breakpoint, not a card. Logged in stories/OPEN-QUESTIONS.md.',
+          'breakpoint, not a card. Logged in stories/OPEN-QUESTIONS.md, along with',
+          'the corner of the card the deck now draws its own button into.',
         ].join('\n'),
       },
     },
@@ -96,30 +112,32 @@ const meta = {
     /* Required props, so they have to be here for `satisfies Meta` to hold.
        The `action` argTypes below are what actually report the calls. */
     onAccept: () => {},
-    onDefer: () => {},
+    onNext: () => {},
+    onPrevious: () => {},
     acceptLabel: 'Start the exercise',
-    deferLabel: 'Next exercise',
-    acceptSubline: 'or swipe left for the next exercise',
-    deferSubline: 'or swipe right to start it',
+    acceptShortLabel: 'Start',
+    acceptHint: 'Press a card to start it',
+    nextLabel: 'Next exercise',
+    previousLabel: 'Previous exercise',
     acceptGlyph: Play,
-    deferGlyph: SkipForward,
-    label: 'The deck. Drag the top card right to start it, left to send it to the back.',
+    label: 'The deck. Enter starts the exercise on the top card; the arrow keys show the next one and the one before.',
     positionLabel: (position: number, total: number) =>
       `${FACES[position - 1]?.name ?? ''} — card ${position} of ${total}`,
   },
   argTypes: {
     items: { control: false, description: 'Each item carries an id, the card’s face as a node, and an optional 1–3 accent.' },
-    onAccept: { action: 'accept', description: 'Swiped right, pressed, or Arrow Right. The consequential one.' },
-    onDefer: { action: 'defer', description: 'Swiped left, pressed, or Arrow Left. Sends the card to the back.' },
-    acceptLabel: { control: 'text', description: 'The right action’s name, on the chip and the button. Required.' },
-    deferLabel: { control: 'text', description: 'The left action’s name. Required.' },
-    acceptSubline: { control: 'text', description: 'The line under the accept verdict, naming the other way out. Required.' },
-    deferSubline: { control: 'text', description: 'The line under the defer verdict. Required.' },
-    acceptGlyph: { control: false, description: 'Lucide component for the right action.' },
-    deferGlyph: { control: false, description: 'Lucide component for the left action.' },
-    label: { control: 'text', description: 'The pile’s accessible name.' },
-    toolbar: { control: false, description: 'Rendered at the head of the action stack, above the deck’s own two. A view switch is the reference case.' },
-    actions: { control: false, description: 'Extra controls under the deck’s own two, in the same stack.' },
+    onAccept: { action: 'accept', description: 'Pressed — the card, the button on it, the primary button, or Enter. The consequential one, and the only one no gesture can reach.' },
+    onNext: { action: 'next', description: 'Swiped left, pressed, or Arrow Right. The card goes to the back of the pile.' },
+    onPrevious: { action: 'previous', description: 'Swiped right, pressed, or Arrow Left. The card at the back comes to the top.' },
+    acceptLabel: { control: 'text', description: 'The accept’s name, on the button beside the deck. Required.' },
+    acceptShortLabel: { control: 'text', description: 'The same action in as few words as a card’s corner has room for. Required — a label cut to fit ends mid-word in German.' },
+    acceptHint: { control: 'text', description: 'The line under the direction on the overlay, naming how to take a card. Required.' },
+    nextLabel: { control: 'text', description: 'The forward direction’s name: on the overlay, and as the right-hand icon button’s accessible name and tooltip. Required.' },
+    previousLabel: { control: 'text', description: 'The same, backward. Required.' },
+    acceptGlyph: { control: false, description: 'Lucide component for the accept. The directions have none — the deck owns its own arrows.' },
+    label: { control: 'text', description: 'The pile’s accessible name, and the only place the keys are named: the overlay is aria-hidden.' },
+    toolbar: { control: false, description: 'Rendered at the head of the action stack, above the deck’s own controls. A view switch is the reference case.' },
+    actions: { control: false, description: 'Extra controls under the deck’s own, in the same stack.' },
     positionLabel: { control: false, description: 'What the live region says when the top card changes. The deck knows the position, the consumer knows the name.' },
     busy: { control: 'boolean', description: 'True while an accept is in flight. The deck goes inert.' },
     className: { control: false },
@@ -129,20 +147,32 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Component defaults. Drag the top card, or use the buttons and arrow keys. */
+/**
+ * Component defaults. Press the top card to take it; drag it either way to
+ * browse, or use the buttons and the arrow keys.
+ *
+ * The card's own accept button is drawn below 768px only — narrow the frame to
+ * see it appear in the corner, and widen it to watch the same action move to
+ * the button beside the deck.
+ */
 export const Default: Story = {};
 
 /**
- * An accept in flight. The card is held off to the right and the deck is
- * inert — no gesture, no buttons, no keys — until the consumer resolves it.
- * Turn `busy` off in the controls to watch the card fly back, which is exactly
- * what a refusal looks like.
+ * The deck inert. `busy` is the consumer saying "I am still deciding", and
+ * until it falls nothing answers: no gesture, no button, no key.
+ *
+ * IT DOES NOT SHOW THE LIFTED CARD, and cannot — the lift belongs to the card
+ * that was accepted, which is the deck's own state rather than a prop. Press a
+ * card in the story above to see both halves at once: with `busy` left false
+ * and the item still in `items`, the deck reads that as a refusal the moment it
+ * happens, so the card lifts and comes straight back. That is the whole
+ * contract, in one press.
  */
 export const Busy: Story = { args: { busy: true } };
 
 /**
- * Both slots in use: something beside the dots, and a third action under the
- * deck's own two.
+ * Both slots in use: something at the head of the action column, and a further
+ * action under the deck's own.
  *
  * Resize the frame to watch the actions move from beside the card to under it.
  * It is a WRAP, not a breakpoint — the deck can be put in a narrow column on a
@@ -159,7 +189,12 @@ export const WithToolbarAndActions: Story = {
 export const TwoCards: Story = { args: { items: ITEMS.slice(0, 2) } };
 
 /** One card. There is nothing behind it, so the scatter has nothing to show
- *  and the deck is just a card — correct, and worth seeing. */
+ *  and the deck is just a card — correct, and worth seeing.
+ *
+ *  BOTH DIRECTIONS ARE DISABLED HERE, which is the honest state: a pile of one
+ *  has no other card to go to either way. The swipe springs back for the same
+ *  reason, and the consumer is not told about a move that did not happen —
+ *  which it used to be, while a copy of the only card flew off the screen. */
 export const OneCard: Story = { args: { items: ITEMS.slice(0, 1) } };
 
 /** The deck narrowed by the consumer. The width is published as

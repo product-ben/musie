@@ -166,13 +166,31 @@
 /* ── THE WORDS ─────────────────────────────────────────────────────────────
    `min-block-size: 0` is a safety net rather than load-bearing: nothing fixes
    the card's height, so this only means a description long enough to overrun
-   is clipped by the card instead of pushing the time row out of the bottom. */
+   is clipped by the card instead of pushing the time row out of the bottom.
+
+   ── THE LAST LINE GIVES WAY TO THE DECK'S BUTTON (2026-10-05) ──────────────
+   `CardDeck` draws its own *Start* into the card's bottom-trailing corner on
+   the small tier, and publishes what that costs as
+   `--musy-deck-card-act-block` — the button's own box, 0px wherever it is not
+   drawn. This is the face giving it up.
+
+   IT IS A MEASURED FIX, NOT A PRECAUTION. At 393px the German *Achtsam Atmen*
+   runs to seven lines, and its last line sat under the button for the bottom
+   10px of a 19px line; the English five lines on the same card cleared it.
+   `max()` rather than an addition, because the two are the same room asked for
+   by two different things — the gap below the words, and the band the button
+   needs — and the card only has to honour the larger.
+
+   NO MEDIA QUERY HERE, deliberately. The component publishes 0px above its own
+   threshold, so the screen states the relationship once and the breakpoint
+   stays the component's business. One declaration, one owner.             */
 .musie-exercise-card__body {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: var(--space-gap-related);
   min-block-size: 0;
-  padding: var(--space-inset-card) var(--space-inset-card) var(--space-gap-stack);
+  padding: var(--space-inset-card) var(--space-inset-card)
+           max(var(--space-gap-stack), var(--musy-deck-card-act-block, 0px));
   overflow: clip;
 }
 

@@ -3,33 +3,41 @@
  *
  * ── IT REPLACED A LIST, AND THE LIST IS STILL HERE ────────────────────────
  * This screen was five cards in a column, all visible, each a radio. It is a
- * deck now: one card at a time under a thumb, swipe RIGHT to start it and LEFT
- * to see another. The column did not go — the switch at the top of the actions
- * turns it back on, and it is `RadioCards`, the same component the screen used
- * to be built from. So the two ways of choosing differ in layout and in
- * nothing else, which is what made the comparison worth keeping.
+ * deck now: one card at a time under a thumb, swipe either way to see another
+ * and PRESS the one you want. The column did not go — the switch at the top of
+ * the actions turns it back on, and it is `RadioCards`, the same component the
+ * screen used to be built from. So the two ways of choosing differ in layout
+ * and in nothing else, which is what made the comparison worth keeping.
  *
  * It began as /dev/deck, a proof of concept beside the list rather than
  * instead of it. Ben took the swap on 2026-10-02.
  *
- * ── THE DECK IS THE DESIGN SYSTEM'S; THE CARD IS THIS SCREEN'S ────────────
- * `CardDeck` owns the pile, the gesture, the thresholds, the chips, the
- * verdict overlay and the buttons. This file owns what is ON a card — picture,
- * name, description, time — and what the two actions MEAN. That split is why
- * the deck has a Storybook story at all: nothing in it knows what an exercise
- * is.
+ * ── AND THE TWO VIEWS NOW AGREE ABOUT WHAT A PRESS DOES (2026-10-05) ──────
+ * The list has started a run on a tap since 2026-09-24 — the note against
+ * `exercises.start` in en.ts is where that is written down. The deck did not:
+ * a press went nowhere and a right swipe started the exercise, which is what
+ * Ben reported as unintuitive. Pressing a card starts it in both views now,
+ * and the deck's swipe browses the pile instead; `CardDeck`'s own header
+ * carries the reasoning for the component half of the change.
  *
- * ── RIGHT IS THE ONE-WAY DOOR, AND IT CAN BE REFUSED ──────────────────────
+ * ── THE DECK IS THE DESIGN SYSTEM'S; THE CARD IS THIS SCREEN'S ────────────
+ * `CardDeck` owns the pile, the gesture, the thresholds, the overlay that
+ * names where a swipe is going, and every button. This file owns what is ON a
+ * card — picture, name, description, time — and what the three actions MEAN.
+ * That split is why the deck has a Storybook story at all: nothing in it knows
+ * what an exercise is.
+ *
+ * ── THE PRESS IS THE ONE-WAY DOOR, AND IT CAN BE REFUSED ──────────────────
  * Starting is `createSession()`: it writes a row, navigates into the session,
  * and the database refuses a second running one through a partial unique
- * index. So the swipe has three outcomes and all three are drawn:
+ * index. So the press has three outcomes and all three are drawn:
  *
  *   started  → /session/:id/intro.
- *   refused  → the card FLIES BACK and SessionRunningLightbox asks the
- *              question. A dialog, not a Message: the gesture already threw
- *              the card off screen, so there is nothing left for an inline
- *              notice to sit beside.
- *   failed   → the card flies back and the failure is named.
+ *   refused  → the card COMES BACK and SessionRunningLightbox asks the
+ *              question. A dialog, not a Message: the card has already lifted
+ *              off the pile, so there is nothing left for an inline notice to
+ *              sit beside.
+ *   failed   → the card comes back and the failure is named.
  *
  * `busy` is what holds the card out there. CardDeck's contract is that the
  * card returns when `busy` falls with the item still in `items`, so every path
@@ -37,9 +45,9 @@
  * back.
  *
  * ── ALL FIVE EXERCISES, INCLUDING THE THREE THAT ARE NOT BUILT ────────────
- * A right swipe on an unbuilt one opens `NotImplementedLightbox`, which is the
- * same refusal the list gave. Filtering them out would quietly show two
- * exercises where the product has five.
+ * A press on an unbuilt one opens `NotImplementedLightbox`, which is the same
+ * refusal the list gives. Filtering them out would quietly show two exercises
+ * where the product has five.
  *
  * ── NOTHING ON A CARD GOES THROUGH THE CATALOGUE ──────────────────────────
  * The name, the description, the picture and the timeframe are the exercise's,
@@ -48,7 +56,7 @@
  * catalogue's own `exercises.fact.time*`.
  */
 import * as React from 'react';
-import { LayoutList, Layers, Play, Shuffle, SkipForward, Timer } from 'lucide-react';
+import { LayoutList, Layers, Play, Shuffle, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { CardDeck, CtaButton, Icon, RadioCards, SegmentedControl } from '@musie/design-system';
 import type { CardDeckItem, RadioCardFact } from '@musie/design-system';
@@ -75,7 +83,7 @@ export function Exercises() {
   const [refused, setRefused] =
     React.useState<{ exercise: Exercise; session: ActiveSession | null } | null>(null);
   const [failed, setFailed] = React.useState(false);
-  /** Swiped an exercise that is not built yet. Names it, nothing more. */
+  /** Pressed an exercise that is not built yet. Names it, nothing more. */
   const [unbuilt, setUnbuilt] = React.useState<string | null>(null);
 
   /* ALL FIVE, not just the built ones.
@@ -84,7 +92,7 @@ export function Exercises() {
      worse: it silently showed two exercises where the product has five, so the
      POC stopped being a prototype of the real choice. /exercises shows all
      five and refuses the three that are not built yet, and the deck does the
-     same — a right swipe on one opens the same lightbox, which is the honest
+     same — a press on one opens the same lightbox, which is the honest
      "not yet" rather than a card that was never dealt. */
   const exercises = React.useMemo(() => data ?? [], [data]);
 
@@ -97,7 +105,7 @@ export function Exercises() {
    */
   const start = React.useCallback(async (exercise: Exercise, replacing: ActiveSession | null) => {
     /* NO USER, NO SESSION — and it says so. `sessions.user_id` is not null, so
-       there is nothing to insert, and a swipe that evaporated would be
+       there is nothing to insert, and a press that evaporated would be
        indistinguishable from a broken deck. */
     if (userId === null) { setBusy(false); setFailed(true); return; }
     setFailed(false);
@@ -111,12 +119,12 @@ export function Exercises() {
       const result = await createSession(userId, exercise.id);
       if (result.kind === 'started') {
         /* The one path that does NOT clear `busy`: the deck is about to
-           unmount, and dropping busy first would fly the card back in for a
+           unmount, and dropping busy first would bring the card back for a
            frame on the way out. */
         navigate(`/session/${encodeURIComponent(result.session.id)}/intro`);
         return;
       }
-      /* Refused. `busy` falls, so CardDeck flies the card back in, and the
+      /* Refused. `busy` falls, so CardDeck brings the card back, and the
          dialog asks the question over the returned deck. */
       setRefused({ exercise, session: result.session });
       setBusy(false);
@@ -144,11 +152,13 @@ export function Exercises() {
     void start(exercise, null);
   }, [byId, start]);
 
-  /* Left is free and reports nothing: CardDeck has already put the card at the
-     back of its own pile, and this screen keeps no order of its own to update.
-     The handler exists because the component requires one — a deck whose left
-     swipe went nowhere would be a deck with one action. */
-  const onDefer = React.useCallback(() => {}, []);
+  /* BOTH DIRECTIONS ARE FREE AND REPORT NOTHING. CardDeck has already turned
+     its own pile, and this screen keeps no order of its own to update. The
+     handlers exist because the component requires them — a deck that could not
+     tell its consumer the top card had changed is a deck nothing could be
+     counted on — and here there is nothing to count. */
+  const onNext = React.useCallback(() => {}, []);
+  const onPrevious = React.useCallback(() => {}, []);
 
   /** Pick one for me. The same escape hatch /exercises offers, and the same
    *  rule: among the IMPLEMENTED ones only. */
@@ -161,10 +171,10 @@ export function Exercises() {
     if (exercise !== undefined) void start(exercise, null);
   }, [exercises, start]);
 
-  /* ONE SWITCH, TWO HOMES. In the deck it rides in CardDeck's top row beside
-     the dots; in the list there are no dots — a list has no position to show —
-     so it stands in a row of its own. Declared once either way, because two
-     copies of a control are two controls that will disagree. */
+  /* ONE SWITCH, TWO HOMES. In the deck it rides at the head of CardDeck's
+     action column; in the list there is no column to ride in, so it stands in
+     a row of its own. Declared once either way, because two copies of a
+     control are two controls that will disagree. */
   const viewSwitch = (
     <SegmentedControl
       name="exercises-view"
@@ -207,7 +217,7 @@ export function Exercises() {
       {error !== null && <p className="musie-note">{t('content.errorDetail')}</p>}
       {data !== null && exercises.length === 0 && <p className="musie-note">{t('content.empty')}</p>}
       {/* NOT `content.error`, which says a list did not load — this says a
-          swipe did not start anything, which is a different sentence. */}
+          press did not start anything, which is a different sentence. */}
       {failed && <p className="musie-note" role="alert">{t('exercises.startFailed')}</p>}
 
       {exercises.length > 0 && (
@@ -218,24 +228,30 @@ export function Exercises() {
               items={items}
               busy={busy}
               onAccept={onAccept}
-              onDefer={onDefer}
+              onNext={onNext}
+              onPrevious={onPrevious}
               acceptLabel={t('exercises.start')}
-              deferLabel={t('exercises.another')}
-              acceptSubline={t('exercises.startSubline')}
-              deferSubline={t('exercises.anotherSubline')}
+              /* THE SHORT ONE IS FOR THE CARD'S OWN CORNER, and it is a
+                 separate string rather than a truncation: "Übung starten" at
+                 label size does not fit the corner of a 360px card, and a
+                 label cut to fit is a label that ends mid-word in the language
+                 that runs 30% longer. */
+              acceptShortLabel={t('exercises.startShort')}
+              acceptHint={t('exercises.startHint')}
+              nextLabel={t('exercises.next')}
+              previousLabel={t('exercises.previous')}
+              /* The only glyph the deck is given. The two directions carry its
+                 own arrows — which way is back is not this screen's decision,
+                 and `SkipForward` used to sit here saying it was. */
               acceptGlyph={Play}
-              /* SkipForward, not RotateCcw. The old glyph was an undo arrow,
-                 which is what this action is NOT: the card is not being put
-                 back, it is being passed over for the next one. */
-              deferGlyph={SkipForward}
               label={t('exercises.deckLabel')}
-              /* THE SWITCH SITS WITH THE DOTS, in the deck's own top row:
-                 both say where you are among the five, one as a position and
-                 one as a way of looking at them. */
+              /* AT THE HEAD OF THE ACTION COLUMN. It does not act on the card
+                 in front — it changes what you are looking at altogether,
+                 which is a decision you make before the ones underneath it. */
               toolbar={viewSwitch}
-              /* Under the deck's own two, in the same column. It acts on the
-                 deck as a whole rather than on the card in front, which is why
-                 it is last and why it is the quiet one. */
+              /* Under the deck's own controls, in the same column. It acts on
+                 the deck as a whole rather than on the card in front, which is
+                 why it is last and why it is the quiet one. */
               actions={
                 <CtaButton variant="ghost" leadingIcon={Shuffle} disabled={busy} onClick={pickForMe}>
                   {t('exercises.surpriseMeShort')}

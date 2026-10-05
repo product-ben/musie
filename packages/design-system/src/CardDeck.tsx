@@ -1,55 +1,79 @@
 /**
  * Card Deck — Layer 2
  *
- * A pile of cards you deal with one at a time: swipe RIGHT to take the one on
- * top, LEFT to send it to the back. The pile is scattered, the top card is
- * always square to the page, and the card under your finger follows it.
+ * A pile of cards you deal with one at a time. SWIPE SIDEWAYS TO BROWSE IT —
+ * left for the next card, right for the one before — and PRESS A CARD TO TAKE
+ * IT.
  *
- * ── THE TWO SWIPES ARE NOT PEERS, AND THE COMPONENT IS BUILT AROUND THAT ──
- * Left is free: the card goes to the back and comes round again. Right is a
- * one-way door — it is the consumer's consequential action, and §7.24's rule
- * applies: a gesture that commits with no confirm is only honest if what it
- * commits is cheap to take back. So right is deliberately harder to do than
- * left, in three separate ways:
+ * ── IT WAS BUILT THE OTHER WAY ROUND (Ben, 2026-10-05) ────────────────────
+ * Until today the gesture carried both actions: a right swipe TOOK the card
+ * and a left one sent it to the back, and right was made deliberately harder
+ * because it was the one-way door — more travel than left, no flick, and a
+ * chip that announced itself first. Nobody read it that way. A pile of cards
+ * on a touch screen says "there are more of these, and they are sideways", so
+ * people swiped both ways looking for the next one and PRESSED the card they
+ * wanted. The press did nothing, and a long swipe started an exercise nobody
+ * had chosen.
  *
- *   1. It needs more travel. ACCEPT_RATIO is half the card's width; DEFER_RATIO
- *      is under a third.
- *   2. A FLICK CANNOT DO IT. Velocity arms the left swipe only. A fast, short
- *      gesture is the one people make by accident, and it must never be able
- *      to open the one-way door.
- *   3. It announces itself first. The accept chip only lights once the gesture
- *      is past the point of commitment, so "this will start it" is on screen
- *      before the finger lifts, and lifting is still not the last word —
- *      dragging back under the threshold un-arms it.
+ * The two kinds of input are now split by what they cost:
+ *
+ *   SIDEWAYS IS FREE, AND SYMMETRIC. Left is the next card, right is the one
+ *   before, and neither decides anything — the pile rotates and comes round
+ *   again. So there is ONE threshold for both (SWIPE_RATIO) and a flick arms
+ *   either. The three asymmetries that used to protect the right swipe are
+ *   gone with the door they were protecting.
+ *
+ *   A PRESS COMMITS. `onAccept` is a press and never a swipe: on the card in
+ *   front, on the button the deck draws in that card's bottom-trailing corner,
+ *   or on the primary button in the action column. §7.24's rule still binds it
+ *   — a commit with no confirm is only honest if what it commits is cheap to
+ *   take back — and a press being the only way in is also what makes an
+ *   accidental one unlikely: a press is a place, not a direction.
+ *
+ * ── THE OVERLAY IS NOT A VERDICT ANY MORE, AND IT ARRIVES AT ONCE ─────────
+ * It used to appear AT the threshold, which for the accept was half the card's
+ * width: by the time it could be read the card was half off the screen and the
+ * decision had been made. Ben, 2026-10-05: "it is only visible once the user
+ * already swiped it away."
+ *
+ * So it is no longer a verdict but the answer to "which card am I going to",
+ * and it fades in WITH the gesture — fully opaque at OVERLAY_FULL_AT, a tenth
+ * of the card, well under half of SWIPE_RATIO. The two intent chips went with
+ * it: they existed to let somebody COMPARE two outcomes before choosing one,
+ * and with both directions free and the overlay up at a tenth of a card they
+ * answered a question nobody is asking and were covered a frame later.
  *
  * ── WHAT HAPPENS AFTER AN ACCEPT IS THE CONSUMER'S, AND IT CAN FAIL ───────
- * `onAccept` fires, the card flies out, and the deck goes inert while `busy`
- * is true. If `busy` goes false with the item still in `items`, THE CARD FLIES
- * BACK IN. That is the whole contract for a refusal: the swipe made a promise,
- * and if the promise cannot be kept the card has to visibly return rather than
- * the deck quietly sitting one card further on. A consumer that navigates away
- * instead simply unmounts, and nothing animates.
+ * `onAccept` fires, the card lifts off the pile and fades, and the deck goes
+ * inert while `busy` is true. If `busy` goes false with the item still in
+ * `items`, THE CARD COMES BACK. That is the whole contract for a refusal: the
+ * press made a promise, and if the promise cannot be kept the card has to
+ * visibly return rather than the deck quietly sitting one card further on. A
+ * consumer that navigates away instead simply unmounts, and nothing animates.
+ *
+ * IT LEAVES UPWARD, which is new and is the point: both sideways directions
+ * now mean "another card", so a taken card flying off to the right would be
+ * saying the one thing the gesture no longer says.
  *
  * ── NOTHING IS GATED BEHIND THE GESTURE ──────────────────────────────────
- * Both actions are real buttons, always in the DOM. On a wide viewport or a
- * fine pointer they flank the deck; on a narrow touch screen the stylesheet
- * reduces them to `.musy-sr-only` — invisible, still operable. §7.24's rule is
- * that nothing may be reachable only by a gesture a cursor, a keyboard or a
- * screen reader cannot perform, and a deck that hid its buttons on a phone
- * would be exactly that. The arrow keys do the same two things.
+ * Every action is a real button, always in the DOM: the accept in the action
+ * column, and the two directions as a pair of icon buttons under it. The arrow
+ * keys do the same two things — RIGHT for the next card, LEFT for the one
+ * before, which is the reading order and therefore the mirror of the swipe
+ * that does the same job, exactly as in every carousel. Enter accepts.
  *
  * ── EVERY WORD IT SPEAKS IS THE CONSUMER'S ───────────────────────────────
  * There are no label defaults here, not even from the locale catalogue. A deck
- * whose two actions are "start" and "later" in one product and "keep" and
- * "discard" in the next cannot have a sensible default for either, and a
- * component that guessed would be wrong in a way nobody noticed until it
- * shipped.
+ * whose action is "start" in one product and "keep" in the next cannot have a
+ * sensible default for it, and a component that guessed would be wrong in a
+ * way nobody noticed until it shipped. The two DIRECTIONS carry the deck's own
+ * arrows, because which way is back is not a product decision.
  */
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { CtaButton } from './CtaButton';
-import { Icon } from './Icon';
+import { IconButton } from './IconButton';
 
 /**
  * ── THE SWIPE · the numbers ───────────────────────────────────────────────
@@ -63,21 +87,37 @@ import { Icon } from './Icon';
  * L13 asks for a short hold on a coarse pointer instead. The axis decision is
  * the same bargain bought differently, and §7.24 already takes this side of
  * it; the disagreement is logged in stories/OPEN-QUESTIONS.md.
+ *
+ * IT IS ALSO WHAT TELLS A PRESS FROM A SWIPE. A gesture that never clears the
+ * slop has no direction, and a gesture with no direction on the card in front
+ * is the accept — which is why the number is load-bearing twice over now.
  */
 const SLOP_PX = 12;
 
-/** How far across its own width a card goes before a release sends it to the
- *  back. Against the CARD, not the viewport, so the gesture means the same
- *  thing on a phone and on a laptop. */
-const DEFER_RATIO = 0.3;
+/** How far across its own width a card goes before a release moves the pile.
+ *  ONE NUMBER FOR BOTH WAYS: neither direction commits to anything, so there
+ *  is nothing left for an asymmetry to protect. Against the CARD, not the
+ *  viewport, so the gesture means the same thing on a phone and on a laptop. */
+const SWIPE_RATIO = 0.25;
 
-/** Half, for the one-way door. See the note at the top of the file. */
-const ACCEPT_RATIO = 0.5;
-
-/** …or this fast, in px/ms. LEFT ONLY — a flick must not be able to accept. */
+/** …or this fast, in px/ms. EITHER WAY, which is also new. A flick used to arm
+ *  the left swipe only, because a fast short gesture is the one people make by
+ *  accident and it must never open a one-way door. There is no door on this
+ *  axis any more, and flicking through a pile is exactly what a flick is for. */
 const FLICK_PX_PER_MS = 0.45;
 
-/** How far the top card travels before the pile behind it has closed up. */
+/** Where the overlay has finished fading in, as a fraction of the CARD: a
+ *  tenth, so about 36px of the 360 a phone gives it, and well under half of
+ *  SWIPE_RATIO.
+ *
+ *  DELIBERATELY NOT TIED TO THE THRESHOLD. The overlay's job is to name the
+ *  card you are heading for while you can still change your mind, and a number
+ *  derived from the commit point is a number that arrives when the decision
+ *  does — which is the thing that was wrong with it. */
+const OVERLAY_FULL_AT = 0.1;
+
+/** How far the top card travels before the pile behind it has closed up.
+ *  FORWARD ONLY — see `progress` in onPointerMove. */
 const PILE_CLOSES_AT = 0.6;
 
 export interface CardDeckItem {
@@ -91,27 +131,52 @@ export interface CardDeckItem {
 
 export interface CardDeckProps {
   items: CardDeckItem[];
-  /** Swiped right, pressed, or Arrow Right. The consequential one. */
-  onAccept: (id: string) => void;
-  /** Swiped left, pressed, or Arrow Left. Sends the card to the back. */
-  onDefer: (id: string) => void;
-  /** The right action's name, on the chip and the button. REQUIRED. */
-  acceptLabel: string;
-  /** The left action's name. REQUIRED. */
-  deferLabel: string;
   /**
-   * The line under each verdict, naming the OTHER way out.
-   *
-   * It is the undo: past the threshold the card has stopped asking, and this
-   * is what says the decision is still reversible and how. Each one describes
-   * its opposite — the accept subline points left, the defer subline right —
-   * so whichever verdict is up, the way back is on it.
+   * Pressed — the card itself, the button the deck draws on it, the primary
+   * button in the action column, or Enter. The consequential one, and the only
+   * one no gesture can reach.
    */
-  acceptSubline: string;
-  deferSubline: string;
+  onAccept: (id: string) => void;
+  /** Swiped LEFT, pressed, or Arrow Right. The card goes to the back of the
+   *  pile and the next one comes up. Carries the id of the card that was on
+   *  top, which is the one that moved. */
+  onNext: (id: string) => void;
+  /** Swiped RIGHT, pressed, or Arrow Left. The card at the BACK of the pile
+   *  comes back to the top — so the pile turns the other way rather than
+   *  dealing. Carries the id of the card that was on top. */
+  onPrevious: (id: string) => void;
+  /** The accept's name, on the button beside the deck. REQUIRED. */
+  acceptLabel: string;
+  /**
+   * The same action in as few words as a card's corner has room for — "Start"
+   * where `acceptLabel` says "Start the exercise".
+   *
+   * REQUIRED, and a second string rather than a truncation: a label cut to fit
+   * is a label that ends mid-word in the language that runs 30% longer.
+   */
+  acceptShortLabel: string;
+  /**
+   * The line under the direction on the overlay, naming how to take a card.
+   *
+   * The overlay is up for the whole of a browse, which makes it the one place
+   * the press can be taught at the moment somebody is looking for it. It is
+   * read mid-gesture — a touch screen more often than not, but a pointer drag
+   * raises it too, so a word that covers both ("Press a card…") is the safer
+   * one.
+   */
+  acceptHint: string;
+  /** The forward direction's name: on the overlay, and as the accessible name
+   *  and tooltip of the right-hand icon button. REQUIRED. */
+  nextLabel: string;
+  /** The same, backward. REQUIRED. */
+  previousLabel: string;
+  /** The accept's glyph. The DIRECTIONS have none — see the note at the top. */
   acceptGlyph: LucideIcon;
-  deferGlyph: LucideIcon;
-  /** The pile's accessible name. */
+  /** The pile's accessible name.
+   *
+   *  It is also the only place a keyboard or screen-reader user is told what
+   *  the keys do, because the overlay that teaches the press is a visual state
+   *  and is `aria-hidden`. Say both there. */
   label: string;
   /**
    * What the live region says when the top card changes: the card's own name
@@ -120,25 +185,26 @@ export interface CardDeckProps {
    */
   positionLabel: (position: number, total: number, id: string) => string;
   /**
-   * Rendered at the HEAD of the action stack, above the deck's own two.
+   * Rendered at the HEAD of the action stack, above the deck's own controls.
    *
    * It had a row of its own above the card while the dots were there to share
    * it with; with the dots gone that row held one control and a lot of space.
    * A view switch is the reference case, and it belongs with the other things
    * you can press rather than floating over the deck on its own.
    *
-   * Above `onAccept`'s button rather than below, because it does not act on
-   * the card in front — it changes what you are looking at altogether, which
-   * is a decision you make before the ones underneath it.
+   * Above the accept rather than below, because it does not act on the card in
+   * front — it changes what you are looking at altogether, which is a decision
+   * you make before the ones underneath it.
    */
   toolbar?: React.ReactNode;
   /**
-   * Extra controls under the deck's own two, in the same stack.
+   * Extra controls under the deck's own, in the same stack.
    *
-   * The deck owns accept and defer because it owns what they do to the pile.
-   * Anything else a screen offers about the deck as a whole — pick one for me,
-   * and nothing else so far — has no business being a prop here, and every
-   * business being in the same column so it reads as one set of choices.
+   * The deck owns the accept and the two directions because it owns what they
+   * do to the pile. Anything else a screen offers about the deck as a whole —
+   * pick one for me, and nothing else so far — has no business being a prop
+   * here, and every business being in the same column so it reads as one set
+   * of choices.
    */
   actions?: React.ReactNode;
   /** True while an accept is in flight. See the contract at the top. */
@@ -154,32 +220,45 @@ interface Gesture {
   lastX: number;
   lastT: number;
   vx: number;
+  /** Whether the pointer went down on the card in FRONT, which is the only
+   *  place a press means the accept. */
+  onFront: boolean;
 }
 
-interface Drag {
+/** Where a card is when it is let go of — the three numbers the stylesheet
+ *  needs to carry on from under the finger. */
+interface Flight {
   x: number;
   y: number;
   swing: number;
-  progress: number;
-  /** Which action a release would perform right now, or null for neither. */
-  armed: 'accept' | 'defer' | null;
 }
 
-interface Departing {
+/** A throw from a standstill, for the button and the key that do the same job
+ *  as the gesture. */
+const STILL: Flight = { x: 0, y: 0, swing: 0 };
+
+interface Drag extends Flight {
+  /** How far the pile behind has closed up, 0…1. Forward only. */
+  progress: number;
+  /** Which way the finger is going, from the first pixel past the slop. */
+  dir: 'next' | 'previous';
+  /** How much of the overlay is showing, 0…1. Full long before `armed`. */
+  reveal: number;
+  /** True once a release would move the pile. */
+  armed: boolean;
+}
+
+interface Departing extends Flight {
   /** Unique per throw, NOT the id: a fast thumb can have one card in flight
    *  twice, once per lap of a short deck. */
   key: number;
   id: string;
-  dir: 1 | -1;
-  x: number;
-  y: number;
-  swing: number;
 }
 
 export function CardDeck({
-  items, onAccept, onDefer, acceptLabel, deferLabel,
-  acceptSubline, deferSubline, acceptGlyph, deferGlyph,
-  label, positionLabel, toolbar, actions, busy = false, className,
+  items, onAccept, onNext, onPrevious,
+  acceptLabel, acceptShortLabel, acceptHint, nextLabel, previousLabel,
+  acceptGlyph, label, positionLabel, toolbar, actions, busy = false, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
   const [drag, setDrag] = React.useState<Drag | null>(null);
@@ -206,15 +285,36 @@ export function CardDeck({
   }, [items, byId]);
 
   /* THE CARD COMES BACK. `busy` falling with the card still in `items` is a
-     refusal — see the contract at the top of the file. */
+     refusal — see the contract at the top of the file.
+     …AND IT STOPS WAITING IF THE CARD IS TAKEN AWAY. A consumer that removes
+     the accepted item means it for good, and there is nothing to bring back; if
+     this only watched `busy` the deck would hold an id it can no longer draw
+     and stay inert for the rest of its life. */
   React.useEffect(() => {
-    if (!busy && sent !== null && byId.has(sent)) setSent(null);
+    if (sent === null) return;
+    if (!byId.has(sent) || !busy) setSent(null);
   }, [busy, sent, byId]);
 
-  /** The pile, less whatever is mid-accept. */
-  const stack = order.filter((id) => id !== sent);
-  const frontId = stack[0];
+  /**
+   * The pile, with the accepted card still in it.
+   *
+   * IT HAS TO BE THE SAME ELEMENT, which is the whole reason this is `order`
+   * and not `order.filter(…)`. The accepted card used to be rendered as a
+   * second element of its own while the stack dropped it, and a freshly
+   * inserted element has nothing to transition FROM — so the card did not lift
+   * and fade, it simply vanished, and came back the same way. (The thrown
+   * cards get away with being their own element because they ANIMATE, and an
+   * animation does run on insertion. A transition does not.) Keeping the id in
+   * place keeps React's element in place, and the transition is real in both
+   * directions — which is what the refusal contract at the top of the file
+   * promises.
+   */
+  const stack = order;
+  /** The card you are dealing with: the first one that is not on its way out. */
+  const frontId = stack.find((id) => id !== sent);
   const inert = busy || sent !== null;
+  /** A pile of one has no other card to go to, in either direction. */
+  const browsable = stack.filter((id) => id !== sent).length > 1;
 
   const accept = React.useCallback((id: string | undefined) => {
     if (id === undefined || inert) return;
@@ -223,17 +323,44 @@ export function CardDeck({
     onAccept(id);
   }, [inert, onAccept]);
 
-  const defer = React.useCallback((id: string | undefined, from: Omit<Drag, 'armed'>) => {
+  const next = React.useCallback((id: string | undefined, from: Flight) => {
     if (id === undefined || inert) return;
+    setDrag(null);
+    /* ONE CARD IS ITS OWN NEXT. Without this the deck threw a copy of the only
+       card off the screen while the same card sat in the pile underneath it,
+       because the throw layer and the order are two places the same id can
+       be. Nothing moves, and the consumer is not told about a move that did
+       not happen. */
+    if (!browsable) return;
     throwKey.current += 1;
     /* The order rotates IMMEDIATELY and the card carries on in its own layer,
        so the next card is live the instant this one is released rather than
        after an animation nobody is watching. Several can be in the air. */
-    setDeparting((flying) => [...flying, { key: throwKey.current, id, dir: -1, ...from }]);
+    setDeparting((flying) => [...flying, { key: throwKey.current, id, ...from }]);
     setOrder((current) => [...current.filter((x) => x !== id), id]);
+    onNext(id);
+  }, [browsable, inert, onNext]);
+
+  /**
+   * BACKWARD, AND WITH NO THROW — which is not an omission.
+   *
+   * Going forward takes the top card off the pile, so it leaves. Going back
+   * PUTS IT BACK: the card under the finger becomes the second card rather
+   * than the last, and the card from the bottom of the pile rises to the top.
+   * `setDrag(null)` restores the card's own transition, so it eases from
+   * wherever the finger left it down into its new place. The reorder IS the
+   * animation, and there is nothing left to animate separately.
+   */
+  const previous = React.useCallback((id: string | undefined) => {
+    if (id === undefined || inert) return;
     setDrag(null);
-    onDefer(id);
-  }, [inert, onDefer]);
+    if (!browsable) return;
+    setOrder((current) => {
+      const last = current[current.length - 1];
+      return last === undefined ? current : [last, ...current.slice(0, -1)];
+    });
+    onPrevious(id);
+  }, [browsable, inert, onPrevious]);
 
   /* ── THE GESTURE ───────────────────────────────────────────────────────
      THE HANDLERS ARE ON THE STAGE, not on the card. The stage outlives every
@@ -242,14 +369,28 @@ export function CardDeck({
      distance is measured from the PILE, through the ref, because a threshold
      is a fraction of the card and not of the surface it is read from. */
 
+  const release = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (inert || frontId === undefined) return;
-    /* A button speaks for itself. */
+    /* A button speaks for itself. The card's own accept is one, which makes
+       its corner a dead spot for the gesture — small, inset, and the one
+       place on the card where a press is already the right answer. */
     if ((event.target as Element).closest('button') !== null) return;
+    const card = (event.target as Element).closest('.musy-deck__card');
     gesture.current = {
       x: event.clientX, y: event.clientY, axis: 'undecided',
       width: pile.current?.offsetWidth ?? event.currentTarget.offsetWidth,
       lastX: event.clientX, lastT: event.timeStamp, vx: 0,
+      /* WHETHER A PRESS HERE MEANS THE CARD. The stage is wider than the pile
+         on purpose, and a thumb that lands beside a card still swipes it; it
+         must not also START it. A consequential action does not get an
+         invisible target either side of the thing it acts on. */
+      onFront: card !== null && card.getAttribute('data-front') === 'true',
     };
   };
 
@@ -282,42 +423,89 @@ export function CardDeck({
        than jumping the twelve pixels spent deciding. */
     const travelled = dx - Math.sign(dx) * SLOP_PX;
     const reach = Math.abs(travelled) / g.width;
+    const forward = travelled < 0;
     setDrag({
       x: travelled,
       y: dy,
       swing: Math.max(-1, Math.min(1, travelled / g.width)),
-      progress: Math.min(1, reach / PILE_CLOSES_AT),
-      armed:
-        travelled > 0
-          ? (reach >= ACCEPT_RATIO ? 'accept' : null)
-          : (reach >= DEFER_RATIO ? 'defer' : null),
+      /* THE PILE ONLY CLOSES UP GOING FORWARD. The rise is a preview of the
+         card about to be on top, and going back that card is the one at the
+         BOTTOM of the pile rather than the one at depth 1 — so a rise here
+         would promise the wrong card. A pile does not open up when you are
+         putting a card back into it. */
+      progress: forward ? Math.min(1, reach / PILE_CLOSES_AT) : 0,
+      dir: forward ? 'next' : 'previous',
+      reveal: Math.min(1, reach / OVERLAY_FULL_AT),
+      armed: reach >= SWIPE_RATIO,
     });
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     const g = gesture.current;
     gesture.current = null;
-    if (g === null || g.axis !== 'x' || drag === null) { setDrag(null); return; }
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    release(event);
+    if (g === null) { setDrag(null); return; }
+
+    /* A PRESS, NOT A SWIPE. The axis was never decided, so nothing travelled
+       far enough to mean a direction — and on the card in front that is the
+       accept. It is the same twelve pixels the axis is decided by, which is
+       why a press can be made with a slightly unsteady thumb. */
+    if (g.axis === 'undecided') {
+      setDrag(null);
+      if (g.onFront) accept(frontId);
+      return;
     }
-    /* A FLICK ARMS THE LEFT SWIPE ONLY. Accept is never reachable by speed —
-       see the three asymmetries at the top of the file. */
-    const flickedLeft = g.vx <= -FLICK_PX_PER_MS && drag.x < 0;
-    if (drag.armed === 'accept') { accept(frontId); return; }
-    if (drag.armed === 'defer' || flickedLeft) { defer(frontId, drag); return; }
+
+    if (g.axis !== 'x' || drag === null) { setDrag(null); return; }
+    /* A FLICK ARMS EITHER DIRECTION, as long as it is still going the way the
+       card has travelled: a throw that reverses at the last moment is somebody
+       changing their mind, and the sign test is what hears that. */
+    const flicked = Math.abs(g.vx) >= FLICK_PX_PER_MS && Math.sign(g.vx) === Math.sign(drag.x);
+    if (drag.armed || flicked) {
+      if (drag.dir === 'next') next(frontId, drag);
+      else previous(frontId);
+      return;
+    }
+    setDrag(null);
+  };
+
+  /* A CANCEL IS NOT A RELEASE, and it gets its own handler for one reason: a
+     cancelled pointer must never be read as a press. The browser cancels when
+     it takes the gesture over — the page starts panning, a system gesture
+     begins — and those arrive having moved nothing on this axis, which is
+     exactly the shape of a press. */
+  const onPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    gesture.current = null;
+    release(event);
     setDrag(null);
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (inert) return;
-    if (event.key === 'ArrowRight' || event.key === 'Enter') {
+    /* A BUTTON SPEAKS FOR ITSELF — the same rule the pointer follows, and it is
+       here for a reason that only arrived with the card's own accept: that
+       button is INSIDE the pile, so Enter on it raises the button's click AND
+       bubbles to this handler. Both call `accept`, and whether the second one
+       is refused depends on React having flushed `sent` between the keydown and
+       the click — which it does today, and which is not a thing to leave a
+       one-way door standing on. */
+    if ((event.target as Element).closest('button') !== null) return;
+    /* ENTER TAKES THE CARD, and the arrow keys browse in READING ORDER —
+       right for the next card, left for the one before. That is the mirror of
+       the swipe that does the same job, and it is right both times: a swipe
+       moves the card, a key moves the position. Every carousel ever shipped
+       makes the same pair of promises. */
+    if (event.key === 'Enter') {
       event.preventDefault();
       accept(frontId);
     }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      next(frontId, STILL);
+    }
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      defer(frontId, { x: 0, y: 0, swing: 0, progress: 0 });
+      previous(frontId);
     }
   };
 
@@ -329,6 +517,10 @@ export function CardDeck({
 
   const vars = (extra: Record<string, number>) => extra as React.CSSProperties;
 
+  /* The pile's depth counter, spent by the map below. It starts at -1 because
+     the first card that is not on its way out is depth 0. */
+  let depth = -1;
+
   return (
     <div
       className={['musy-deck', className ?? ''].filter(Boolean).join(' ')}
@@ -336,29 +528,10 @@ export function CardDeck({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
       <div className="musy-deck__body">
-        <div className="musy-deck__stage" data-armed={drag?.armed ?? undefined}>
-          {/* THE INTENT CHIPS. Nothing at rest — the deck's initial state is
-              the deck — and they fade in the moment a horizontal axis is
-              decided. The one you are travelling toward lights; the other
-              stays dim. This is the whole of "what will happen if I let go". */}
-          <div className="musy-deck__chips" data-on={drag !== null || undefined} aria-hidden="true">
-          <div className="musy-deck__chip musy-deck__chip--defer">
-            {/* AN ARROW, NOT THE ACTION'S OWN GLYPH. These two say which WAY,
-                and the way is the whole of what is being chosen while the card
-                is in somebody's hand; the action's glyph belongs on the button,
-                where there is no direction to state. */}
-            <Icon glyph={ArrowLeft} size="sm" />
-            <span>{deferLabel}</span>
-          </div>
-          <div className="musy-deck__chip musy-deck__chip--accept">
-            <Icon glyph={ArrowRight} size="sm" />
-            <span>{acceptLabel}</span>
-          </div>
-          </div>
-
+        <div className="musy-deck__stage">
           <div
             className="musy-deck__pile"
             ref={pile}
@@ -369,19 +542,27 @@ export function CardDeck({
             style={vars({ '--musy-deck-progress': drag?.progress ?? 0 } as never)}
             onKeyDown={onKeyDown}
           >
-            {stack.map((id, depth) => {
+            {/* THE DEPTH IS COUNTED, NOT INDEXED, because the card on its way
+                out is still in this list and no longer has a place in the
+                pile: it keeps depth 0 and its own `data-sent` geometry, and
+                the cards behind it close up as though it had gone. */}
+            {stack.map((id) => {
               const item = byId.get(id);
               if (item === undefined) return null;
-              const isFront = depth === 0;
+              const isSent = id === sent;
+              if (!isSent) depth += 1;
+              const isFront = id === frontId;
               return (
                 <div
                   key={id}
                   className="musy-deck__card"
                   data-front={isFront}
+                  data-sent={isSent || undefined}
+                  aria-hidden={isSent || undefined}
                   data-accent={item.accent ?? 1}
                   data-swiping={isFront && drag !== null}
                   style={vars({
-                    '--musy-card-depth': depth,
+                    '--musy-card-depth': isSent ? 0 : depth,
                     '--musy-card-seed': seedFor(id),
                     ...(isFront && drag !== null
                       ? { '--musy-drag-x': drag.x, '--musy-drag-y': drag.y, '--musy-card-swing': drag.swing }
@@ -389,38 +570,62 @@ export function CardDeck({
                   } as never)}
                 >
                   {face(item)}
-                  {/* ── THE VERDICT ───────────────────────────────────────
-                      Past the threshold the card stops asking and starts
-                      answering: the whole face goes over to one colour with
-                      one word on it, and the two chips get out of the way.
-                      Nothing is left on screen to compare — which is the
-                      point, because by then there is nothing left to choose.
+
+                  {/* ── THE CARD'S OWN ACCEPT ─────────────────────────────
+                      In the corner of the card in front, and drawn only on
+                      the small tier — above it the primary button sits beside
+                      the deck with room for the whole label (Ben, 2026-10-05).
+
+                      It is here rather than beside the deck because a press
+                      is now the action, and the card is the thing being
+                      pressed: a button ON it says so where a button under it
+                      only says the deck can do this. */}
+                  {isFront && (
+                    <CtaButton
+                      variant="primary"
+                      leadingIcon={acceptGlyph}
+                      className="musy-deck__card-act"
+                      disabled={inert}
+                      onClick={() => accept(id)}
+                    >
+                      {acceptShortLabel}
+                    </CtaButton>
+                  )}
+
+                  {/* ── THE OVERLAY ───────────────────────────────────────
+                      Where the swipe is going, named, from the first pixel of
+                      it. The whole face goes over to one colour with one word
+                      on it, and the word is the CARD YOU WILL GET rather than
+                      a verdict on this one — nothing is being decided, so
+                      there is nothing to decide between.
+
+                      NO DIRECTION GLYPH, deliberately. The arrow here would
+                      have to mean "the way the finger is going", and the
+                      arrows on the two buttons mean "back and forward in a
+                      sequence" — which for the backward direction are
+                      opposite arrows for the same move. One of them has to
+                      go, and it is the one the finger is already saying.
 
                       `aria-hidden`: this is the visible half of a state the
                       live region already announces, and a screen reader
-                      driving the deck by its buttons never reaches it. */}
+                      driving the deck by its buttons never reaches it. The
+                      press it teaches is in the pile's own label instead. */}
                   {isFront && (
-                    <div className="musy-deck__verdict" data-armed={drag?.armed ?? undefined} aria-hidden="true">
-                      <span className="musy-deck__verdict-label">
-                        {drag?.armed === 'accept' ? acceptLabel : deferLabel}
+                    <div
+                      className="musy-deck__overlay"
+                      data-dir={drag?.dir ?? undefined}
+                      aria-hidden="true"
+                      style={vars({ '--musy-card-reveal': drag?.reveal ?? 0 } as never)}
+                    >
+                      <span className="musy-deck__overlay-label">
+                        {drag?.dir === 'previous' ? previousLabel : nextLabel}
                       </span>
-                      <span className="musy-deck__verdict-subline">
-                        {drag?.armed === 'accept' ? acceptSubline : deferSubline}
-                      </span>
+                      <span className="musy-deck__overlay-hint">{acceptHint}</span>
                     </div>
                   )}
                 </div>
               );
             })}
-
-            {/* Accepted, and gone until the consumer says otherwise. */}
-            {sent !== null && byId.get(sent) !== undefined && (
-              <div className="musy-deck__card" data-sent="true" aria-hidden="true"
-                   data-accent={byId.get(sent)?.accent ?? 1}
-                   style={vars({ '--musy-card-depth': 0, '--musy-card-seed': seedFor(sent) } as never)}>
-                {face(byId.get(sent) as CardDeckItem)}
-              </div>
-            )}
 
             {/* In the air. Outside the stack — the pile closed up behind them. */}
             {departing.map((flight) => {
@@ -438,7 +643,7 @@ export function CardDeck({
                   style={vars({
                     '--musy-card-depth': 0, '--musy-card-seed': seedFor(flight.id),
                     '--musy-drag-x': flight.x, '--musy-drag-y': flight.y,
-                    '--musy-card-swing': flight.swing, '--musy-throw-dir': flight.dir,
+                    '--musy-card-swing': flight.swing,
                   } as never)}
                 >
                   {face(item)}
@@ -449,8 +654,8 @@ export function CardDeck({
         </div>
 
         {/* ── THE ACTIONS ─────────────────────────────────────────────
-            One column, in the order they carry weight: the way forward, the
-            way past, then whatever the screen adds. Beside the card where
+            One column, in the order they carry weight: the way in, the two
+            ways round, then whatever the screen adds. Beside the card where
             there is room and under it where there is not — a wrap, not a
             breakpoint, so it answers to the space the deck actually has.
 
@@ -467,21 +672,41 @@ export function CardDeck({
           >
             {acceptLabel}
           </CtaButton>
-          <CtaButton
-            variant="secondary"
-            leadingIcon={deferGlyph}
-            className="musy-deck__act musy-deck__act--defer"
-            disabled={inert}
-            onClick={() => defer(frontId, { x: 0, y: 0, progress: 0, swing: 0 })}
-          >
-            {deferLabel}
-          </CtaButton>
+          {/* ── THE TWO DIRECTIONS, AS A PAIR ─────────────────────────
+              One row, in reading order: back, then forward. They are a PAIR
+              rather than two more rows in the column because that is what
+              they are — the same move twice, in opposite directions — and
+              because two more full-width labels under the primary button
+              would have read as three things to decide between.
+
+              ICON-ONLY, which is the one place the deck owns a glyph: an
+              arrow for back and an arrow for forward are not a product
+              decision. The labels are still the consumer's, as the
+              accessible name and the tooltip. */}
+          <div className="musy-deck__nav">
+            <IconButton
+              glyph={ArrowLeft}
+              label={previousLabel}
+              variant="secondary"
+              className="musy-deck__act musy-deck__act--previous"
+              disabled={inert || !browsable}
+              onClick={() => previous(frontId)}
+            />
+            <IconButton
+              glyph={ArrowRight}
+              label={nextLabel}
+              variant="secondary"
+              className="musy-deck__act musy-deck__act--next"
+              disabled={inert || !browsable}
+              onClick={() => next(frontId, STILL)}
+            />
+          </div>
           {actions}
         </div>
       </div>
 
-      {/* The position as a sentence. The dots carry it for the eye; this is
-          what a screen reader is told when the top card changes. */}
+      {/* The position as a sentence. This is what a screen reader is told when
+          the top card changes. */}
       <p className="musy-sr-only" aria-live="polite">
         {frontId === undefined ? '' : positionLabel(position, items.length, frontId)}
       </p>

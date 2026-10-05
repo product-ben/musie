@@ -654,15 +654,39 @@ export const de: Messages = {
      kein deutscher Satz. Die Zahl wird eingesetzt, nicht geschrieben — das
      Deck zeigt alle Übungen, die es gibt. */
   'exercises.headline': '{count} Übungen für dich',
-  'exercises.intro': 'Wisch nach rechts, um eine Übung zu starten, nach links für eine andere. Oder sieh dir alle Übungen in einer Liste an.',
-  'exercises.deckLabel': 'Das Deck. Wisch die oberste Karte nach rechts, um die Übung zu starten, nach links für die nächste.',
+  /* Gewischt wird jetzt nur noch geblättert, gestartet wird mit einem Tipp
+     (Ben, 2026-10-05) — darum steht der Tipp vorn: er ist die Handlung, das
+     Wischen ist nur der Weg zur richtigen Karte. */
+  'exercises.intro': 'Tipp eine Karte an, um die Übung zu starten, oder wisch zur Seite für eine andere. Oder sieh dir alle Übungen in einer Liste an.',
+  /* Der Name des Stapels für Screenreader, und die einzige Stelle, an der die
+     Tasten genannt werden: das Overlay, das den Tipp erklärt, ist ein
+     visueller Zustand und aria-hidden. Es nennt die Tasten und nicht das
+     Wischen — wischen wird diese Leserin nicht. */
+  'exercises.deckLabel': 'Das Deck. Enter startet die Übung auf der obersten Karte, die Pfeiltasten blättern vor und zurück.',
   'exercises.start': 'Übung starten',
-  /* Bens Worte, 2026-10-02. */
-  'exercises.another': 'Nächste Übung',
-  /* Bens Worte, 2026-10-02. Kleinschreibung am Anfang mit Absicht: die Zeile
-     setzt die Überschrift darüber fort, sie beginnt keinen neuen Satz. */
-  'exercises.startSubline': 'oder links swipen für nächste Übung',
-  'exercises.anotherSubline': 'oder rechts swipen zum starten',
+  /* Dieselbe Handlung, kurz: in die Ecke einer 360px breiten Karte passt
+     'Übung starten' nicht, und ein abgeschnittenes Label ist kein Label. */
+  'exercises.startShort': 'Starten',
+  /* Unter der Richtung im Overlay. 'Antippen' statt 'Drücken': auf dem Gerät,
+     für das dieses Deck gebaut ist, ist es ein Finger — und eine Maus versteht
+     die Zeile trotzdem.
+
+     ALS AUSSAGE, NICHT ALS AUFFORDERUNG, und das ist die Längenregel (§5):
+     'Tipp eine Karte an, um sie zu starten' sind 37 Zeichen gegen 24 englische
+     und brach im Overlay auf 393px in eine dritte Zeile, wo das Englische zwei
+     braucht. 26 Zeichen sagen dasselbe in zwei. */
+  'exercises.startHint': 'Antippen startet die Übung',
+  /* Die zwei Richtungen. Bens Wort von 2026-10-02 für die eine, und die
+     Gegenrichtung dazu — nicht 'andere Übung', weil zwei Labels mit 'andere'
+     nicht sagen würden, welche.
+
+     'Vorige', NICHT 'Vorherige', und das ist gemessen: im Overlay steht das
+     Label in Display-Größe auf halber Kartenbreite, und 'Vorherige' ist ein
+     unteilbares Wort von 155px gegen 148px Platz — bei weitem Zug lief der
+     letzte Buchstabe über den Bildschirmrand. 'Vorige' passt und ist dasselbe
+     Wort. Silbentrennung ist hier aus (siehe .musy-deck__overlay-label). */
+  'exercises.next': 'Nächste Übung',
+  'exercises.previous': 'Vorige Übung',
   /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
      `route.session.title`. */
   'exercises.deckPosition': '{name} – Karte {index} von {total}',

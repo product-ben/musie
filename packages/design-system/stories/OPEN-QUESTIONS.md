@@ -3173,3 +3173,112 @@ the worst of it.
 What I need from Ben: **nothing, just flagging** that this is the second place
 to turn Layer 1's hyphenation off at display size. A third would mean
 `--text-hyphens` wants to be per type step rather than global.
+
+---
+
+# Card Deck · the gesture stopped deciding (2026-10-05)
+
+## CardDeck — the swipe no longer accepts, and the three asymmetries that protected it are gone
+Where: `src/CardDeck.tsx` (header, `SWIPE_RATIO`, `FLICK_PX_PER_MS`,
+`onPointerUp`), `src/musy-components.css` (`.musy-deck*`)
+What I checked: the component was built around the right swipe being a one-way
+door, and three rules followed from that — half the card's width of travel
+against under a third for the left swipe, no flick, and a chip that lit before
+the finger lifted. Ben's report is that nobody reads a pile that way: people
+swipe both ways to look for the next card and PRESS the one they want. The list
+view on the same screen has started a run on a tap since 2026-09-24, so the two
+halves of /exercises disagreed about what a press does.
+What I did: split the inputs by what they cost. Sideways browses — left for the
+next card, right for the one before, one threshold for both (0.25 of the card),
+a flick arms either. A press takes the card: on the card itself, on the button
+the deck now draws into its bottom-trailing corner on the small tier, on the
+primary button, or Enter. The three asymmetries went with the door.
+Why: an asymmetry that protects nothing is a gesture that is harder to make for
+no reason, and the flick is what makes a long pile bearable.
+What I need from Ben: **confirm which way is which.** Dragging LEFT advances,
+which is the carousel convention — the content moves the way the finger does —
+and the ARROW KEYS are its mirror: Right advances, because that is reading
+order. Both are standard and both are drawn here, but they are opposite
+spellings of the same move and I chose rather than measured. The buttons follow
+the keys (◀ back, ▶ forward) and the overlay deliberately carries no arrow at
+all, because the arrow it would need mid-gesture is the opposite of the one on
+the button for the same action.
+
+## CardDeck — the verdict overlay is now a direction, the intent chips are deleted, and the classes were renamed with them
+Where: `src/musy-components.css` (`.musy-deck__overlay*`, formerly
+`.musy-deck__verdict*`), `src/CardDeck.tsx`
+What I checked: the overlay appeared AT the commit threshold, which for the
+accept was half the card — so Ben's "it is only visible once the user already
+swiped it away" is a description of the arithmetic. The two chips existed to let
+somebody compare two outcomes before committing to one.
+What I did: the overlay's opacity is now the drag — `--musy-card-reveal`, a
+0…1 number from the component, full at a TENTH of the card (measured at 393px:
+0.07 at 14px of travel, 0.47 at 26, 1.00 by 50). It names the card you are
+heading for, with a second line naming the press. The chips are gone: with both
+directions free there is no pair of outcomes to compare, and at a tenth of a
+card they would have flashed for a frame before the overlay covered them.
+The transition is declared for the way OUT only — `[data-dir]` kills it while a
+finger is down — so the overlay tracks the gesture exactly and still fades
+rather than cutting when the hand goes.
+Why: an affordance that arrives with the decision is not an affordance.
+What I need from Ben: **nothing, just flagging** that the two CardDeck entries
+above this section — the text token used as a fill, and the hyphenation
+override — now name `.musy-deck__overlay` and `.musy-deck__overlay-label`. Both
+decisions survive the rename unchanged.
+
+## CardDeck — the deck draws into the card's bottom-trailing corner, and publishes what that costs
+Where: `src/musy-components.css` (`.musy-deck__card-act`,
+`--musy-deck-card-act-block`), consumed in
+`apps/web/src/exercises.css` (`.musie-exercise-card__body`)
+What I checked: the card's own *Start* is the one place this component reaches
+into the face it was given, and the first measurement said that matters. At
+393px the German description of *Achtsam Atmen* runs to seven lines, and its
+last line sat under the button for the bottom 10px of a 19px line. The same
+card in English is five lines and clears it — which is the shape of defect that
+ships, because the language it breaks in is not the one it is checked in.
+What I did: published `--musy-deck-card-act-block` on the card — the button's
+own box where it is drawn, `0px` where it is not — and had the app's face give
+up that much at the end of its words. One declaration on the consumer's side
+and no second copy of the breakpoint. Re-measured: no line of any of the five
+cards is covered, in either locale, at 393px.
+Why: a component that takes room out of somebody else's box has to say how much.
+What I need from Ben: **nothing, just flagging two limits.** Only the BLOCK axis
+is published, because the one thing the reference face puts in that row is a
+short time on the leading edge — a face with something at the trailing edge
+would need the inline axis too, and that is a second property rather than a
+guess. And the overlay's words are guaranteed whole to half the card's travel
+(measured at 25% and 50%, both locales, 393 and 1280); past that the word runs
+off the trailing edge, which is twice the distance the threshold commits at.
+
+## CardDeck — the accepted card only started animating once it stopped being its own element
+Where: `src/CardDeck.tsx` (`stack`, the depth counter in the pile's map)
+What I checked: the file's refusal contract says the card "flies back in", and
+it did not — measured. The accepted card was rendered as a SECOND element while
+the stack dropped its id, and a freshly inserted element has nothing to
+transition from, so the card vanished and reappeared. The thrown cards get away
+with the same structure because they ANIMATE, and an animation does run on
+insertion.
+What I did: kept the id in the pile and marked the same element `data-sent`,
+counting depth rather than indexing it so the cards behind close up as though it
+had gone. Measured mid-accept at 90ms: opacity 0.32, scale 1.019, 30px of lift —
+and back to identity when `busy` falls. It also needed `z-index` +1, because the
+leaving card and the card replacing it both sit at depth 0 and DOM order broke
+that tie the wrong way.
+Why: the component's own documentation was describing an animation that did not
+exist.
+What I need from Ben: **nothing.** The accepted card also leaves UPWARD now
+rather than off to the right: both sideways directions mean "another card", so
+the old exit said the one thing the gesture has stopped saying.
+
+## CardDeck — one card could be dealt to itself, and the two directions now say so
+Where: `src/CardDeck.tsx` (`browsable`, `next`, `previous`)
+What I checked: with a single item, the old left swipe pushed the card into the
+throw layer AND left the same id at depth 0, so a copy flew off the screen while
+the card sat in the pile underneath it. The `OneCard` story is exactly that case.
+What I did: both directions do nothing below two cards — the card springs back,
+and the consumer is not told about a move that did not happen. Both buttons are
+disabled there, which is the honest state: a pile of one has nowhere to go.
+Why: a deck that deals a card it still has is a deck that has lost count.
+What I need from Ben: **nothing, just flagging** that `OneCard` now shows two
+disabled controls, which is the first story in this file to show a deck that
+cannot be browsed.
