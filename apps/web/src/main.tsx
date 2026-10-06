@@ -33,9 +33,12 @@ import { MusyLocaleProvider } from '@musie/design-system';
 
 import { AuthProvider } from './AuthProvider';
 import { LocaleProvider } from './LocaleProvider';
+import { PublicLocaleProvider } from './PublicLocaleProvider';
+import { BetaSignup } from './components/BetaSignup';
 import { SignInGate } from './components/SignInGate';
 import { useAuth } from './lib/authContext';
 import { useLocale } from './i18n/localeContext';
+import { isPublicPath } from './lib/publicRoute';
 import { ProfileProvider } from './ProfileProvider';
 import { router } from './router';
 
@@ -110,28 +113,73 @@ function SessionGate({ children }: { children: React.ReactNode }) {
 const container = document.getElementById('root');
 if (container === null) throw new Error('#root is missing from index.html');
 
-createRoot(container).render(
-  <StrictMode>
-    {/* Above the router: signing in needs no routing, and this way a route
-        change cannot remount it. The gate that decides what renders while it
-        is pending is in AppShell. */}
-    <AuthProvider>
-      {/* ProfileProvider reads the profiles row ONCE — reading it needs a
-          user, so it sits inside AuthProvider. LocaleProvider then derives the
-          locale from that row instead of fetching it again, and the theme
-          mirror and "Here as" write through the same place. The gate that
-          waits for auth and locale together is in AppShell. */}
-      <ProfileProvider>
-        <LocaleProvider>
-          <DesignSystemLocale>
-            {/* INSIDE DesignSystemLocale, so the gate's own labels and the
-                design system's defaults are both in the app's language. */}
-            <SessionGate>
-              <RouterProvider router={router} />
-            </SessionGate>
-          </DesignSystemLocale>
-        </LocaleProvider>
-      </ProfileProvider>
-    </AuthProvider>
-  </StrictMode>,
-);
+const root = createRoot(container);
+
+/**
+ * ══ THE PUBLIC PAGE IS DECIDED HERE, ABOVE EVERYTHING ELSE ═════════════════
+ *
+ * `/beta` — the closed-beta sign-up — is the one URL this app answers without
+ * an account, and it gets a tree of its own rather than a route in the table
+ * below. The reason is one line up: `AuthProvider` is the next thing to mount,
+ * and it is not passive. With `VITE_REQUIRE_ACCOUNT` off, no session means
+ * `signInAnonymously()`, so a landing page mounted ANYWHERE inside it would
+ * create a real `auth.users` row for every stranger who read the pitch and
+ * left. The flag is on today and the flag is meant to come off again
+ * (lib/requireAccount.ts is explicit that the anonymous path is not dead
+ * code), so "the marketing page does not create accounts" must not be a
+ * property that rests on a deploy variable.
+ *
+ * So this branch is the whole mechanism: above the session, above the profile,
+ * above the router. `lib/publicRoute.ts` holds the path and the match, and
+ * says what the page gives up by not being a route.
+ *
+ * WHAT IT KEEPS is everything that makes copy work: `PublicLocaleProvider`
+ * publishes the same `LocaleContext` that `LocaleProvider` does — from the
+ * cache and the browser rather than from `profiles.language`, since there is
+ * no profile — so `useT()`, `<html lang>` and `DesignSystemLocale` behave
+ * exactly as they do in the app. The gate taught this lesson the hard way:
+ * a screen rendered above those providers throws on its first `t(...)` and
+ * falls back to the package's German, which is the half-German UI rule 7
+ * exists to prevent, on the first screen somebody ever sees.
+ *
+ * The four stylesheets are imported at the top of this file and so load for
+ * both branches, in the order the README fixes. That is deliberate: it is the
+ * one thing the public page must not be allowed to get wrong on its own.
+ */
+if (isPublicPath(window.location.pathname)) {
+  root.render(
+    <StrictMode>
+      <PublicLocaleProvider>
+        <DesignSystemLocale>
+          <BetaSignup />
+        </DesignSystemLocale>
+      </PublicLocaleProvider>
+    </StrictMode>,
+  );
+} else {
+  root.render(
+    <StrictMode>
+      {/* Above the router: signing in needs no routing, and this way a route
+          change cannot remount it. The gate that decides what renders while it
+          is pending is in AppShell. */}
+      <AuthProvider>
+        {/* ProfileProvider reads the profiles row ONCE — reading it needs a
+            user, so it sits inside AuthProvider. LocaleProvider then derives the
+            locale from that row instead of fetching it again, and the theme
+            mirror and "Here as" write through the same place. The gate that
+            waits for auth and locale together is in AppShell. */}
+        <ProfileProvider>
+          <LocaleProvider>
+            <DesignSystemLocale>
+              {/* INSIDE DesignSystemLocale, so the gate's own labels and the
+                  design system's defaults are both in the app's language. */}
+              <SessionGate>
+                <RouterProvider router={router} />
+              </SessionGate>
+            </DesignSystemLocale>
+          </LocaleProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </StrictMode>,
+  );
+}

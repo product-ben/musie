@@ -34,6 +34,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      beta_signups: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          reason_code: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          reason_code: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          reason_code?: string
+        }
+        Relationships: []
+      }
       card_i18n: {
         Row: {
           card_id: string

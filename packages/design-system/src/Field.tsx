@@ -87,6 +87,13 @@ export type FieldAutoComplete =
   | 'new-password'
   | 'one-time-code'
   | 'name'
+  /* WIDENED for a form that asks for a FIRST name only — the closed-beta
+     sign-up. `'name'` is the whole name, so a browser filling it puts
+     "Firstname Lastname" into a field labelled *First name*: the mechanism
+     works and the answer is wrong, which is worse than it being off. The
+     union exists to be widened for precisely this (see above) rather than
+     opened up to `string`. */
+  | 'given-name'
   | 'tel';
 
 export interface FieldProps {

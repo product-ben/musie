@@ -132,5 +132,12 @@ it are load-bearing:
 Cloudflare Access sits in front of the preview URLs only. Production is closed
 by the app's own sign-in gate instead.
 
+**One path is open: `/beta`**, the closed-beta sign-up — the logo, what Musie
+is, and a form that writes a first name, an email address and how they heard
+about it to `public.beta_signups`. It is served by the same Worker and the same
+bundle, and it is decided above `AuthProvider` in `main.tsx`, so reading it
+creates no account even with the gate off. `docs/MUSIE-SETUP.md` §7 is how to
+read the list and how to add a reason to the radio.
+
 **`docs/MUSIE-SETUP.md` is the full account** — the accounts, the ids, the
 environment variables, the gate and the tester script.

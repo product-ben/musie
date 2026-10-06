@@ -205,7 +205,84 @@ choose them.
 
 ---
 
-## 7 · Running it locally
+## 7 · The beta waiting list
+
+`/beta` is the one page this app serves to somebody with no account. It says
+what Musie is and takes a first name, an email address and how they heard about
+it. It creates nothing, sends nothing and signs nobody in — it writes one row.
+
+| | |
+|---|---|
+| Page | `musie.lipinskib.workers.dev/beta` — public, no session, no mail |
+| Table | `public.beta_signups` — `first_name`, `email`, `reason_code`, `created_at` |
+| Who may write | anyone holding the anon key: `insert` on those three columns, nothing else |
+| Who may read | **nobody with a browser key.** `postgres` (the dashboard) and `service_role` |
+| Migration | `supabase/migrations/20261006120000_beta_signups.sql` |
+
+### Reading the list
+
+**Supabase → project-musie → Table Editor → `beta_signups`**, newest first. Or
+in the SQL editor:
+
+```sql
+select created_at, first_name, email, reason_code
+from public.beta_signups
+order by created_at desc;
+```
+
+The anon key in the shipped bundle cannot run that query — there is no select
+policy and no select grant for `anon` or `authenticated`, and
+`apps/web/src/lib/betaSignup.db.test.ts` proves it on every `pnpm test:db` run.
+A stranger can join the list; a stranger cannot read it.
+
+### Adding a reason to the radio
+
+No migration, and no deploy of anything but the app. `reason_code` holds a slug
+and the column checks its SHAPE rather than which slugs exist, which is what
+makes this three lines:
+
+1. a row in `apps/web/src/lib/betaReasons.ts` with a new code — lower case,
+   ascii, no spaces;
+2. `'beta.reason.<code>'` in `apps/web/src/i18n/en.ts`;
+3. the same key in `de.ts`. **Not optional**: `de.ts` is typed against `en.ts`,
+   so an English label with no German fails `pnpm check`.
+
+Removing one is safe in the other direction: rows already written keep a code
+that is no longer offered, nothing references it, and it simply stops being
+drawn. Keep the catalogue key, so whoever reads the list later can still find
+out what `uxdx` meant.
+
+### What it deliberately does not do
+
+- **No mail.** Nobody is written to automatically, and the page never promises
+  they will be — the thank-you says somebody will write, and that somebody is
+  you. Same reason as §9: no provider, no sending domain.
+- **No account.** The page is mounted above `AuthProvider`, so reading it
+  creates no `auth.users` row even when `VITE_REQUIRE_ACCOUNT` is off. Verified
+  with the gate off: `/beta` added no user, `/` added one.
+- **No duplicate.** A second submit of the same address is refused by a unique
+  index and shown the same thank-you, because that person *is* on the list.
+- **No rate limit.** Postgres cannot see an IP, so anyone who reads the bundle
+  can submit in a loop. The caps and shape checks on the columns keep the junk
+  small; if it is ever actually abused, the remedy is Cloudflare Turnstile in
+  front of the submit or an Edge Function holding the write. Logged in
+  `apps/web/OPEN-QUESTIONS.md`.
+
+### It needs its migration pushed
+
+Nothing pushes automatically (`CLAUDE.md` rule 4), and `pnpm check` does not
+touch the database. Until `supabase db push` has run against `project-musie`,
+the page renders on the hosted build and every submit fails: the table is not
+there.
+
+```bash
+supabase db push                 # from the repo root, with the project linked
+pnpm test:db                     # against hosted, with all three variables set
+```
+
+---
+
+## 8 · Running it locally
 
 ```bash
 cd apps/web
@@ -234,7 +311,7 @@ unaffected. Recording has to be tested over HTTPS — a deployed URL or a tunnel
 
 ---
 
-## 8 · What is deliberately absent
+## 9 · What is deliberately absent
 
 Not missing, not forgotten — each needs a sending provider and a sending domain,
 and the domain is undecided:
@@ -247,13 +324,18 @@ and the domain is undecided:
 They are H.1 and H.3. Until then a pre-created account is one-way: it can be
 signed into and never converted into.
 
+**The beta form on `/beta` is not an exception to this** (§7). It takes an
+address and writes it to a table; it creates no account, sends no mail and
+signs nobody in. Self-service sign-up is still absent, and the waiting list is
+what stands in for it until it is not.
+
 **A person's name is in the copy.** The wrong-password message ends "gib Ben
 Bescheid" / "let Ben know", because in a beta with no reset that is the only
 true next step. It comes out at H.1, and both catalogue entries say so.
 
 ---
 
-## 9 · Still open
+## 10 · Still open
 
 - **The second-device test.** H.0 and H.0b are both *done when* one account reads
   one diary on two devices. Everything so far was verified on one machine.

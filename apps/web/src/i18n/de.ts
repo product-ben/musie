@@ -79,6 +79,52 @@ export const de: Messages = {
   'auth.signedInAs': 'Angemeldet als {email}',
   'auth.signOut': 'Abmelden',
 
+  /* ── Die Landingpage zur geschlossenen Beta · /beta ───────────────────────
+     Musies Stimme, erste Person Singular — dieselbe wie in `about.*`:
+     'ich schreibe dir', nicht 'wir melden uns'. Die Seite beginnt mit 'Hallo,
+     ich bin Musie.', und ein Satz später auf ein 'wir' zu wechseln wäre eine
+     zweite Stimme, die niemand angekündigt hat.
+
+     Die Optionen des Radios sind die AUSNAHME und stehen in der Stimme der
+     lesenden Person — sie antwortet damit auf eine Frage, genau wie bei den
+     Nutzungsarten (`aboutYou.*`). §1 des Standards nennt diesen Fall.
+
+     'E-Mail-Adresse' durchgehend mit Bindestrichen (§8), wie bei `auth.email`.
+     Kein 'Bitte' (§4), Fehlermeldungen im Imperativ Singular.
+
+     'Geschlossene Beta', nicht 'Closed Beta': §8 behält einen englischen
+     Begriff nur, wo das Deutsche kein benutztes Wort hat, und 'geschlossener
+     Test' steht schon in `auth.intro`. 'Beta' selbst bleibt — das Wort benutzt
+     auch das Deutsche so. */
+  'beta.route.title': 'Geschlossene Beta',
+  /* Je das Verb der Zeile aus `about.slide.*`, über der der Begriff steht:
+     wählen, geführt werden, Überblick behalten. */
+  'beta.how.choose': 'Wählen',
+  'beta.how.guide': 'Geführt werden',
+  'beta.how.diary': 'Überblick behalten',
+  'beta.headline': 'Für die geschlossene Beta anmelden',
+  'beta.intro': 'Musie wird erst mit einer kleinen Gruppe getestet. Lass mir deinen Vornamen und deine E-Mail-Adresse da, und ich schreibe dir, sobald ein Platz frei ist.',
+  'beta.firstName': 'Vorname',
+  'beta.email': 'E-Mail-Adresse',
+  'beta.reason.legend': 'Wie hast du von Musie erfahren?',
+  /* 'Über', nicht 'Via': das deutsche Wort für genau diese Angabe. */
+  'beta.reason.ben': 'Über Ben',
+  'beta.reason.lucy': 'Über Lucy',
+  'beta.reason.uxdx': 'Über UXDX',
+  /* Antwortet auf die gestellte Frage — woher, nicht was. 'Woanders' statt
+     'Sonstiges', das eine Kategorie benennt statt einen Ort. */
+  'beta.reason.other': 'Woanders',
+  'beta.submit': 'Für die Beta anmelden',
+  'beta.privacy': 'Dein Name und deine Adresse werden nur für die Einladung zur Beta benutzt, für nichts anderes.',
+  'beta.error.firstName': 'Gib deinen Vornamen ein.',
+  'beta.error.email': 'Gib eine E-Mail-Adresse ein, zum Beispiel du@beispiel.de.',
+  'beta.error.reason': 'Wähle aus, wie du von Musie erfahren hast.',
+  /* Überschrift, also kein Punkt — §7, wie bei `auth.failed`. */
+  'beta.failed': 'Das hat nicht funktioniert',
+  'beta.error.unknown': 'Bei mir ist etwas schiefgegangen. Versuche es gleich noch einmal.',
+  'beta.done.headline': 'Du bist auf der Liste',
+  'beta.done.text': 'Danke, {name}. Ich schreibe dir an diese Adresse, sobald ein Platz in der Beta frei ist.',
+
   /* ── Nav drawer ────────────────────────────────────────────────────────── */
   'menu.title': 'Menü',
   'menu.pagesLabel': 'Seiten',

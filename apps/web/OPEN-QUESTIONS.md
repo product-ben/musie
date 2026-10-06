@@ -6418,3 +6418,226 @@ takes the list on purpose — the deck shows one card at a time, so "click the
 card called X" means dealing until X is in front, which is a walk about the pile
 rather than about the session. A deck-native walk is worth having and is not
 this change.
+
+---
+
+# The closed-beta landing page, `/beta` (2026-10-06)
+
+Ben asked for a responsive page with no login — the logo, what Musie is, and a
+"register for closed beta" form taking a first name, an email address and a
+sign-up reason as radios ("Via Ben", "Via Lucy", "Via UXDX", and more later),
+with the addresses stored somewhere he can reach out from. "Keep it super
+simple."
+
+## The page is not a route, and `router.tsx` opens by saying every screen is
+
+Where: `src/main.tsx` (the branch above `AuthProvider`), `src/lib/publicRoute.ts`,
+`src/components/BetaSignup.tsx`
+
+What I checked: `AuthProvider` is mounted above the router deliberately, and it
+is not passive — `ensureSession()` calls `signInAnonymously()` whenever there is
+no session and `VITE_REQUIRE_ACCOUNT` is off (`lib/auth.ts`,
+`lib/requireAccount.ts`). So a public page rendered anywhere inside the router
+would create a real `auth.users` row for every stranger who read the pitch and
+left. With the flag on today nothing would happen; the flag exists to come off
+again, and `requireAccount.ts` is explicit that the anonymous path is not dead
+code.
+
+What I did: branched on `window.location.pathname` in `main.tsx`, above
+`AuthProvider`, and gave the page its own small tree —
+`PublicLocaleProvider` → `DesignSystemLocale` → `BetaSignup`. The page sets its
+own `document.title` because it has no `handle.titleKey`.
+
+Why: "the marketing page does not create accounts" must not be a property that
+rests on a deploy variable.
+
+Measured rather than argued, with the gate OFF: `/beta` added no `auth.users`
+row and stored no session, and `/` added one in the same run as the positive
+control. Without that control, "no user was created" would also be what a
+broken anonymous sign-in looks like.
+
+What I need from Ben: **nothing, just flagging.** It is the one exception to
+`router.tsx`'s opening rule and it is written down in three places. If a second
+public page ever lands, this is a `publicRoutes` list and probably a second
+router.
+
+## Where the page lives — `/beta`, and not the root
+
+Where: `src/lib/publicRoute.ts`
+
+What I checked: with the gate on, a signed-out visitor to `/` meets the sign-in
+form. The alternative was to make the landing page the public face at `/` and
+let testers reach the app by signing in from a link on it.
+
+What I did: `/beta` only, on Ben's call. `/` is unchanged.
+
+Why: the root is the address testers already have, and the first thing a tester
+sees should be the way in, not the pitch.
+
+The match is forgiving about case and one trailing slash (`/Beta`, `/beta/`),
+because Cloudflare answers every unmatched path with `index.html` — so the
+alternative to accepting those is not a 404, it is the sign-in gate appearing
+for somebody who typed the address correctly and capitalised it. It is not
+forgiving about prefixes: `/beta-test` reaches the app's not-found route.
+
+What I need from Ben: **nothing, just flagging.**
+
+## `beta_signups` is the first table `anon` can write, and it cannot be rate limited
+
+Where: `supabase/migrations/20261006120000_beta_signups.sql`,
+`src/lib/betaSignup.db.test.ts`
+
+What I checked: every table before this one gives `anon` nothing, and
+`20260921100000`'s header says so twice. This one cannot: the form is on a page
+with no sign-in, so the only credential the browser holds is the anon key,
+which is public the moment the bundle ships.
+
+What I did: narrowed it in every direction that is available —
+
+- `insert` and nothing else, as a COLUMN grant on `first_name, email,
+  reason_code`, so a caller cannot pick an id or backdate a row;
+- no select policy for `anon` or `authenticated`, and no select grant, so the
+  list cannot be read back with the key that writes it;
+- shape checks with length caps on all three columns, which are the half of
+  validation a client cannot skip;
+- a unique index on `lower(email)`.
+
+Twenty db tests hold all of it, each with a positive control.
+
+Why: a stranger joining the list is the point; a stranger reading it is a list
+of email addresses on the open internet.
+
+**What is left open, and cannot be closed in Postgres:** there is no rate
+limit. A policy cannot see an IP. Anyone who reads the bundle can submit in a
+loop, and the cost is junk rows to delete rather than anything leaking. The
+remedies are Cloudflare Turnstile in front of the submit, or an Edge Function
+holding the write — both change how the form POSTs and neither needs this
+schema to move.
+
+What I need from Ben: **nothing unless it is abused.** If the list starts
+filling with rubbish, say so and the Turnstile is an afternoon.
+
+## A second submit of the same address is answered with success
+
+Where: `src/lib/betaSignup.ts`
+
+What I checked: the unique index refuses it and PostgREST answers 23505.
+
+What I did: the screen says thank you anyway.
+
+Why: it is true — the person is on the list, which is all the sentence claims —
+and the commonest way to get there is a reload or a second tap by somebody who
+was not sure. "You are already on the list" would also be an answer to "is this
+address on the list?", asked by anyone holding the public key, which is exactly
+what the missing select policy refuses.
+
+**The HTTP status still differs**, so the distinction is visible to somebody
+reading the network tab on purpose. Closing that gap means putting the write
+behind an Edge Function, which is a bigger change than the leak is worth at
+twenty testers.
+
+What I need from Ben: **nothing, just flagging.**
+
+## The reason list grows without a migration, which is a deliberate hole in the schema
+
+Where: `src/lib/betaReasons.ts`, the `reason_code` column
+
+What I checked: the three ways to hold a list of options — a check constraint,
+a lookup table, or a shape check — are not equally cheap to grow. A check
+constraint makes every new reason a migration that has to be pushed in step
+with a deploy. A lookup table makes it a migration AND a row AND an `_i18n`
+sibling for its German (rule 6), plus a read the public page would have to wait
+on before it could draw its own radio group.
+
+What I did: `reason_code` is `text` with a shape check — a lower-case ascii slug
+— and the list of codes lives in `lib/betaReasons.ts` beside the catalogue keys
+it is drawn with. Adding the fifth reason is one line there and two strings.
+`betaReasons.test.ts` asserts every code against a copy of the column's regex,
+so the two cannot drift silently, and a db test inserts a code the build does
+not offer to prove the column still accepts it.
+
+Why: Ben said the list is meant to grow, and a schema that makes growing it a
+deploy is a schema that will be worked around.
+
+What I need from Ben: **nothing, just flagging.** The cost is that the database
+cannot tell you which codes are live; `lib/betaReasons.ts` is the only place
+that knows.
+
+## `Field` gained an `autoComplete` token — the fix went into the design system
+
+Where: `packages/design-system/src/Field.tsx`
+
+What I checked: `FieldAutoComplete` is a union of eight tokens and has no
+`given-name`. The nearest, `name`, is the WHOLE name — a browser filling it puts
+"Firstname Lastname" into a field labelled *First name*, which is the mechanism
+working and the answer being wrong. The union's own docblock says to widen it
+when a form needs a token that is not there, rather than opening it to `string`.
+
+What I did: added `'given-name'`, with the reason beside it. One token, nothing
+else touched, no story and no CSS.
+
+Why: rule 1 — when a component cannot do what a screen needs, the fix goes into
+the component.
+
+What I need from Ben: **nothing, just flagging**, but it is a Layer 2 change
+made from the app's side and it belongs in a review of the system rather than
+of this page.
+
+## No end-to-end walk covers `/beta`, and I still could not run the suite
+
+Where: `apps/web/e2e/`
+
+What I checked: the same wall as the 2026-10-05 entry below — `.env.local`
+points at the hosted project and `globalSetup` refuses outright, correctly. I
+did not repoint it.
+
+What I did instead: drove the real page in a real browser against the local
+stack, with the dev server on a shell-level env override, and checked what a
+walk would have: it renders at 320, 393 and 1280 with no horizontal overflow,
+in light and dark, in both languages; `<html lang>` follows the locale (rule 5,
+and the German hyphenation visibly depends on it); an empty submit draws three
+field-level messages and writes nothing; fixing one field clears one message
+without a second press; a real submit writes exactly one row with the name
+trimmed; a second submit of the same address leaves one row; and `/` and
+`/beta-test` both still reach the app.
+
+What I need from Ben: **point `.env.local` at `http://127.0.0.1:54321` and run
+`pnpm test:e2e`** when the deck testing is over — the same ask the entry below
+makes, now with one more page that has no walk.
+
+## `supabase db reset` empties the local tracks bucket
+
+Where: `src/lib/db.content.db.test.ts`, the storage test
+
+What I checked: verifying the migration the documented way (rule 4) reset the
+local database, and `storage.objects` went to zero with it — so "lets a
+signed-in listener sign a real object" failed with `NoSuchKey`. Nothing to do
+with this change: the four masters are a licensed operator upload that is not
+in this repository, and `e2e/fakeTracks.ts` is what normally puts placeholders
+back. It refuses to run while `.env.local` names a different database than the
+walk would address, which is correct and which I did not defeat.
+
+What I did: wrote the same silent WAV placeholders to the local bucket with the
+service key, from a throwaway script outside the repository, and re-ran
+`pnpm test:db` — 105 passed, 8 files.
+
+What I need from Ben: **nothing, just flagging.** It will happen to the next
+person who runs `supabase db reset`, and the fix is `pnpm test:e2e` once
+`.env.local` is local, because `globalSetup` seeds them.
+
+## The migration is not pushed
+
+Where: `supabase/migrations/20261006120000_beta_signups.sql`
+
+What I checked: nothing pushes automatically, `pnpm check` does not touch the
+database, and `project-musie` is linked.
+
+What I did: **nothing.** The migration is applied and verified locally only.
+
+Why: pushing creates a table on the hosted project that real people will write
+to, and that is Ben's to run, not mine to do on his behalf.
+
+What I need from Ben: **run `supabase db push`.** Until it has run, the page
+renders on the hosted build and every submit fails, because the table is not
+there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
+beside it.

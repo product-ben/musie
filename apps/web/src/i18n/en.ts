@@ -104,6 +104,86 @@ export const en = {
   'auth.signedInAs': 'Signed in as {email}',
   'auth.signOut': 'Sign out',
 
+  /* ── The closed-beta landing page · /beta ─────────────────────────────────
+     THE ONE PAGE IN THIS APP NOBODY SIGNS IN TO. It sits beside the gate above
+     rather than with the screens below it, because that is what it is: the
+     other thing a person who has no account can see. The gate is for somebody
+     who was given one; this is for somebody asking.
+
+     ── IT REUSES THE PITCH RATHER THAN RESTATING IT ────────────────────────
+     `about.greeting` and `about.pitch` ARE what Musie is, in Musie's own
+     words, and the three beats under them are `about.slide.*` — so there is
+     one spelling of the pitch in this catalogue and a rewrite of it changes
+     both pages. What is written here is only what this page ADDS: the three
+     terms over those beats, and everything the form says.
+
+     ── THE VOICE IS MUSIE'S, FIRST PERSON SINGULAR ─────────────────────────
+     'I will write to you', not 'we will be in touch'. The page opens with
+     "Hi, I'm Musie." and a sentence later switching to a company's 'we' would
+     be a second speaker arriving unannounced. The mail itself will be sent by
+     a person, which is why `beta.done.text` promises a message rather than a
+     sender.
+
+     THE RADIO OPTIONS ARE THE EXCEPTION, and they are in the READER'S voice:
+     they are the reader's answer to a question, like the user type labels
+     (`aboutYou.*`). docs/GERMAN-UI-WRITING.md §1 names exactly this case.
+
+     ── THE OPTIONS ARE A LIST THAT GROWS ───────────────────────────────────
+     One `beta.reason.<code>` per entry in `lib/betaReasons.ts`, and adding the
+     fourth, fifth and sixth is a line there plus a key here and in de.ts. No
+     migration: `beta_signups.reason_code` holds a slug and checks its SHAPE,
+     not its membership. That file's header has the reasoning. */
+  'beta.route.title': 'Closed beta',
+  /* The three terms over `about.slide.*`, each one the slide's own verb: the
+     arc is choose, be guided, keep track. */
+  'beta.how.choose': 'Choose',
+  'beta.how.guide': 'Be guided',
+  'beta.how.diary': 'Keep track',
+  'beta.headline': 'Register for the closed beta',
+  'beta.intro': 'Musie is being tested with a small group first. Leave your first name and your email address and I will write to you as soon as there is a place.',
+  'beta.firstName': 'First name',
+  /* The same two words as `auth.email`, and deliberately its own key: this
+     page's copy is edited by whoever is sharing the link, and the sign-in form
+     of a closed beta must not change because a landing page was reworded. */
+  'beta.email': 'Email address',
+  'beta.reason.legend': 'How did you hear about Musie?',
+  'beta.reason.ben': 'Via Ben',
+  'beta.reason.lucy': 'Via Lucy',
+  'beta.reason.uxdx': 'Via UXDX',
+  /* The catch-all, and it is last on purpose — see the comment on BETA_REASONS
+     in lib/betaReasons.ts. 'Somewhere else' rather than 'Other': it answers
+     the question that was asked, which is where, not what. */
+  'beta.reason.other': 'Somewhere else',
+  'beta.submit': 'Register for the beta',
+  /* WHAT HAPPENS TO THE ADDRESS, SAID ON THE PAGE THAT TAKES IT. A form that
+     collects an email address and says nothing about it is asking for trust it
+     has not earned, and this one is aimed at a German audience. It is one
+     sentence because that is all that is true: the list is three columns, it
+     is not readable with the key the browser holds (the table refuses it), and
+     nothing is sent anywhere else. */
+  'beta.privacy': 'Your name and address are used for the beta invitation and nothing else.',
+  /* Field-level, each one next to the control it is about. Imperative, naming
+     the next action rather than the rule that was broken. */
+  'beta.error.firstName': 'Enter your first name.',
+  'beta.error.email': 'Enter an email address, like you@example.com.',
+  'beta.error.reason': 'Pick how you heard about Musie.',
+  /* A HEADING, so no full stop, and it names no cause — the cause is the text
+     beneath it. The same shape as `auth.failed`, and its own key for the same
+     reason `beta.email` is. */
+  'beta.failed': 'That did not work',
+  /* ONE SENTENCE FOR EVERY REFUSAL THE SERVER CAN GIVE, which is not laziness:
+     each of them — a check constraint, a missing grant, a table that was never
+     pushed — is ours and not the reader's, and none is something they can act
+     on. lib/betaSignup.ts says so where somebody would otherwise add four.
+     A connection failure is NOT one of them; it gets
+     `content.errorDetail`, the app's one sentence about a connection. */
+  'beta.error.unknown': 'Something went wrong at my end. Try again in a moment.',
+  /* Shown INSTEAD OF the form, and it is also what a second submit of the same
+     address gets: that person is on the list, which is the whole of what this
+     says. lib/betaSignup.ts has the argument. */
+  'beta.done.headline': "You're on the list",
+  'beta.done.text': 'Thanks, {name}. I will write to you at that address as soon as there is a place in the beta.',
+
   /* ── Nav drawer ────────────────────────────────────────────────────────── */
   'menu.title': 'Menu',
   /* The <nav> landmark's name, distinct from the dialog's. */
