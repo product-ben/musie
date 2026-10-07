@@ -168,6 +168,59 @@
 
 .musie-deck-toolbar::-webkit-scrollbar { display: none; }
 
+/* ── THE ROW FADES OUT WHERE THERE IS MORE OF IT ──────────────────────────
+   Ben, 2026-10-07. A row that scrolls was cutting its contents off against a
+   hard edge, so a chip half out of the window looked like a chip that had been
+   clipped rather than one you can scroll to.
+
+   `mask-image`, NOT a pair of gradient overlays. An overlay has to be painted
+   in the page's own colour to fade INTO it, which means knowing the surface
+   behind this row — and the deck below it has a different one in dark mode. A
+   mask makes the row transparent at its ends and is right on any background,
+   in either theme, with nothing to keep in step.
+
+   ONLY THE ENDS THAT HAVE SOMETHING PAST THEM. `data-fade` comes from
+   `useEdgeFade`, which reads the scroller's actual position: always-on
+   gradients would soften the leading chip before anything had been scrolled,
+   which is the fade saying "there is more this way" about an edge that is
+   flush against the window. Four states, three rules, and the default — a row
+   that fits — carries no mask at all.
+
+   `--space-section` IS THE WIDTH, which is a token rather than a picked
+   number, and a wide one on purpose: a short fade reads as a smudge on the
+   last glyph, where a long one reads as the row continuing. The `transparent`
+   stop is at 0 and `black` at the fade's width, so the chip under it goes to
+   nothing exactly at the row's edge.
+
+   LOGICAL, VIA `to right` AND `scrollLeft`'s SIGN. `mask-image` has no logical
+   gradient direction, so the start/end naming lives in the hook — which reads
+   the distance from the LEADING edge and is therefore already correct in RTL.
+   What is left here is one physical axis, and the two rules below name the
+   sides the hook means rather than the sides a left-to-right reader sees. */
+.musie-deck-toolbar {
+  --musie-fade: var(--space-section);
+}
+
+.musie-deck-toolbar[data-fade='end'] {
+  mask-image: linear-gradient(
+    to right, black calc(100% - var(--musie-fade)), transparent 100%
+  );
+}
+
+.musie-deck-toolbar[data-fade='start'] {
+  mask-image: linear-gradient(to right, transparent 0, black var(--musie-fade));
+}
+
+.musie-deck-toolbar[data-fade='both'] {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black var(--musie-fade),
+    black calc(100% - var(--musie-fade)),
+    transparent 100%
+  );
+}
+
 .musie-deck-toolbar > * { flex: 0 0 auto; }
 
 /* ── THE RUNG'S OWN MARGIN, GIVEN BACK ─────────────────────────────────────
@@ -586,3 +639,123 @@
    `backdrop-filter` IS NOT UNIVERSAL, and the degradation is right without a
    fallback: where it is unsupported the fill alone still covers the card at
    82%, which is legible — it is the shimmer that is lost, not the legend.   */
+.musie-deck-guide {
+  /* It is a <button>, so the UA's own button styling has to go first. */
+  appearance: none;
+  border: 0;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-gap-group);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding: var(--space-inset-card);
+  border-radius: inherit;
+
+  background-color: color-mix(in oklab, var(--interactive-accent-alt) 82%, transparent);
+  backdrop-filter: blur(var(--sp-2));
+  color: var(--interactive-accent-alt-on);
+
+  /* IT ARRIVES, TOO. The legend appearing instantly over a pile that has just
+     dealt itself in reads as a misdraw. `--motion-enter` is Layer 1's own
+     entrance pair, and reduced motion flattens it to 1ms. */
+  animation: musie-guide-in var(--motion-enter) both;
+}
+
+/* ── AND IT DISSOLVES ─────────────────────────────────────────────────────
+   Not a disappearance: the card underneath is where the eye is going, so the
+   legend thins out onto it rather than being cut away. The component ends on
+   `animationend`, so this duration is the only copy of that number.
+
+   `--motion-exit` is the shorter of the two pairs, which is the right way
+   round — leaving should not be slower than arriving. `pointer-events: none`
+   from the first frame, so a second press during the fade cannot land on a
+   control that is on its way out. */
+.musie-deck-guide[data-leaving] {
+  animation: musie-guide-out var(--motion-exit) both;
+  pointer-events: none;
+}
+
+@keyframes musie-guide-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Travel comes from a token, so reduced motion flattens the lift to a plain
+   fade rather than the legend jumping as it goes. */
+@keyframes musie-guide-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
+}
+
+/* ── ONE ROW OF THE LEGEND ────────────────────────────────────────────────
+   The picture of a control, then what it gets you. `align-items: center` so a
+   one-line sentence sits level with its glyph and a two-line one is centred
+   against it — the alternative, `start`, leaves a wrapped sentence hanging
+   below a glyph that is pinned to its first line. */
+.musie-deck-guide__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-stack);
+}
+
+/* THE GLYPH COLUMN IS A FIXED WIDTH, so three rows whose pictures are
+   different widths — two chevrons, a pill, one funnel — still line their
+   sentences up. `--target-primary` is the token the pictures are already about
+   the size of, and it is what the stylised button comes to in height. */
+.musie-deck-guide__glyph {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-inline-size: var(--target-primary);
+}
+
+/* ── A PICTURE OF THE START BUTTON ────────────────────────────────────────
+   The card's own control, drawn in the legend's foreground colour so the eye
+   matches it to the thing underneath. NOT a CtaButton: it is a picture, it
+   cannot be pressed, and a real button inside a button is both invalid and a
+   second thing to hit.
+
+   The radius, the rung and the inline inset are the ones `.musy-btn--min`
+   uses, so the picture is the control's shape rather than an approximation of
+   it. */
+.musie-deck-guide__cta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-control);
+  /* ── WHITE, AND IT IS THE CARD'S OWN WHITE ────────────────────────────
+     `--surface-raised` is the surface the real Start button sits on, so the
+     picture is the control on its own card rather than a white invented for
+     this overlay — and it is the token that stays legible when the theme
+     flips, where a literal white would be a bright chip on a dark page.
+
+     NOT `--interactive-accent-alt-on`, which was the first answer and is the
+     wrong one: that token is the foreground SOLVED AGAINST the purple solid,
+     so it is near-black in light mode. A dark pill is not a white one. */
+  background-color: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+}
+
+/* The sentence. `body-sm`, because three of them share a card with a
+   photograph behind them and body-md at this measure wrapped every one to
+   three lines. */
+.musie-deck-guide__text {
+  text-wrap: pretty;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}

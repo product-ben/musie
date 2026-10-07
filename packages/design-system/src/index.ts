@@ -124,7 +124,7 @@ export type {
 } from './FilterChips';
 
 export { Lightbox } from './Lightbox';
-export type { LightboxProps } from './Lightbox';
+export type { LightboxProps, LightboxOrigin } from './Lightbox';
 
 export { Logo } from './Logo';
 export type { LogoProps, LogoSize } from './Logo';

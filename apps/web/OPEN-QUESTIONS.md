@@ -6642,6 +6642,132 @@ renders on the hosted build and every submit fails, because the table is not
 there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
 beside it.
 
+
+# Branch `listen-experiments` — the listen step's full-screen listening view
+
+## `Lightbox` gained a full-screen surface — the fix went into the design system
+
+Where: `packages/design-system/src/Lightbox.tsx`, `src/musy-components.css`
+(§14), `stories/Lightbox.stories.tsx`
+
+What I checked: the brief is that the Listen control should *become* a
+full-screen overlay. The system has a modal — `Lightbox` — and it owns
+everything that is hard and invisible when it is wrong: focus moved in and
+restored, the background made inert, the page scroll locked, Escape, the
+portal. What it does not have is a frame that fills the viewport: the popup is
+`max-width: var(--measure-body)`, inset in a centred positioner, with a border,
+a radius and `--elevation-3`.
+
+The app could have reached that shape from outside, through `className`. That
+is a screen styling a component's own geometry, which rule 1 and L7 both
+forbid, and the repo's own precedent is `CtaButton.align` — added to the
+component rather than overridden by the app.
+
+What I did: added `surface?: 'panel' | 'immersive'` and
+`origin?: LightboxOrigin | null`. `panel` is the default and is byte-for-byte
+the old behaviour; `immersive` fills the viewport on `--surface`, drops the
+border, radius and shadow, moves its insets to `--space-inset-sheet`, and gives
+its only child the full height to arrange. `origin` is the opening control's
+rect, and the sheet's `clip-path` opens out of it.
+
+A CLIP AND NOT A TRANSFORM, which is the one decision in here worth arguing
+with: scaling a 261x46 button up to a 393x852 viewport is a NON-UNIFORM scale,
+so every word inside arrives stretched and un-stretches as it lands. A clip
+moves nothing — the sheet is laid out at full size on the first frame and is
+simply not all visible yet, which is why the copy is readable throughout.
+`inset()` resolves percentages against the reference box, which is the
+viewport, so the keyframe does its own arithmetic and the component never reads
+`window`. Measured in Chromium at 393x852: first frame
+`inset(32px calc(7.8% - 23px) calc(7.8% - 36px) 3px round 78px)`, last frame
+`inset(0 0 0 0)` filling 393x852.
+
+Reduced motion needed nothing: Layer 1 collapses every duration token to 1ms,
+and the clip is verifiably over before a frame is painted
+(`prefers-reduced-motion: reduce`, measured at 110ms: already `inset(0px 0% 0%
+0px)`).
+
+Why: rule 1 — when a component cannot do what a screen needs, the fix goes into
+the component.
+
+What I need from Ben: **nothing, just flagging**, but it is the second Layer 2
+change made from the app's side (after `Field`'s `given-name`) and it is a
+bigger one: a new variant with its own motion. It belongs in a review of the
+SYSTEM rather than of this screen. Two stories are in Storybook — *Immersive*
+and *Immersive From A Control*.
+
+## Three things about the listening view are my call, not yours — all reversible
+
+Where: `apps/web/src/components/SessionListen.tsx`, `src/shell.css`
+(`.musie-immersive*`)
+
+What I checked: the brief names three things for the sheet — the listening
+instruction, the minimum-time timer, and a Continue that activates when the
+time is up. All three are there. Three further decisions were not in the brief
+and had to be made for the screen to work at all:
+
+1. **Leaving the sheet pauses the track.** The stage's transport now OPENS the
+   sheet rather than toggling playback, so playback lives in the sheet; a sheet
+   that closed over a playing track would leave music coming out of a screen
+   with no pause control on it, and the only way back to one would be to
+   re-open the sheet. Nothing is lost by it — `listened` latches the moment the
+   gate is met and is held by the SESSION, so going out and back in resets the
+   position but not the fact that you listened.
+2. **The sheet carries a transport and no scrubber.** `TrackButton`, not
+   `MusicPlayer`, for the reason the whole step uses it (`tracks.title` is not
+   granted to the client, and the player's title is required and visible) — and
+   because a scrubber is the wrong offer on a screen whose subject is a
+   MINIMUM. The details view below keeps its scrubber, so the gate stays as
+   soft as it was: `met` still latches on position and still does not ask who
+   moved it.
+3. **The figure stops at 00:00 and does not go on to count the track out.** One
+   number with one meaning. The caption under it carries the meaning the figure
+   cannot — that it is a floor and not a length — and changes once the floor is
+   reached, which is also the only thing announced.
+
+What I did: all three, written up at the call sites.
+
+Why: each is load-bearing for the screen working, and each is a sentence long
+to reverse.
+
+What I need from Ben: **a look at the three, and one more thing I did NOT
+build.** There is no progress indication for the gate other than the figure —
+no ring, no bar. It would help, and it is the obvious next iteration; it is
+also a pattern the system has no component for, so it is a component request
+before it is a screen.
+
+## No walk covers the listening view, and I still could not run the suite
+
+Where: `apps/web/e2e/listen.spec.ts`
+
+What I checked: the same wall as the two entries below. `apps/web/.env.local`
+names the hosted project and `e2e/support.ts` refuses outright, correctly,
+because the browser and the assertions would address two different databases.
+I did not repoint it.
+
+What I did instead: drove the real step in a real browser against the local
+stack, with the dev server on a shell-level env override, and checked what a
+walk would: the sheet opens out of the transport's own rect and fills the
+viewport; the instruction, the countdown and the way on are all on it; the
+countdown ticks while the track plays; Escape leaves the sheet, pauses the
+track and returns focus to the transport; moving the position past the gate
+enables the way on, rests the figure at 00:00 and changes the caption; and the
+way on advances to `/reflect`. Eighteen checks, in English and German, light
+and dark, at 393x852, 320x720 and 390x375 — the short landscape case is the
+one that matters, and there the sheet's body scrolls (375 shown, 395 tall) with
+no horizontal overflow and the way on reachable.
+
+ONE MORE TIME, THE BUCKET WAS EMPTY. `storage.objects` had zero rows again, so
+every card fell to the simulated clock and the `<audio>` half of this change
+was not being exercised at all. I wrote one silent placeholder back with the
+service key, from a throwaway script outside the repository, and re-ran — which
+is the second entry in this file to say so.
+
+What I need from Ben: **point `.env.local` at `http://127.0.0.1:54321` and run
+`pnpm test:e2e`**, and then a walk for the sheet. It is the same ask the two
+entries below make, now with one more screen that has no walk.
+
+---
+
 # Goals on /exercises (2026-10-07)
 
 ## situations became goals rather than a second taxonomy beside them — RESOLVED
@@ -6891,6 +7017,99 @@ the row fits with room to spare. It bites in a NARROW DESKTOP WINDOW, where
 the switch is half visible and a mouse cannot reach it. Say the word and it
 gets the carousel's drag treatment.
 
+
+# The listening view, second pass (2026-10-07)
+
+## A disabled button is carrying the instruction, and nobody who needs it can reach it
+
+Where: `src/components/SessionListen.tsx`, the sheet's way on
+
+What I checked: the locked label is now a sentence — *Fokussiere dich, bis der
+Counter abgelaufen ist. Dann geht's weiter* — on a `disabled` `CtaButton`. A
+disabled control is removed from the tab order and, in every engine, from the
+accessibility tree's reachable content: a keyboard user cannot land on it and a
+screen-reader user navigating by control never meets it. So the one sentence
+that says what to do during those ninety seconds is available only to somebody
+looking at the screen.
+
+The sheet is not silent for them — the figure is a `role="timer"` and the
+caption says what it counts — but neither says *and then you can carry on*.
+
+What I did: built it as asked. It is right visually, and the alternative
+(`aria-disabled` plus a no-op handler, so the control keeps its name and its
+place in the order) changes how the button behaves on a press, which is a
+product decision rather than a fix.
+
+Why: the instruction is the thing you asked for, and I would rather flag the
+gap than quietly redesign the control.
+
+What I need from Ben: **a decision, when you next look at the sheet.** Either
+the sentence moves out of the button and becomes a line of its own under the
+caption, or the button becomes `aria-disabled` and refuses the press instead of
+declining it.
+
+## „Counter" is an English word in a German string
+
+Where: `src/i18n/de.ts`, `session.listen.immersiveLocked`
+
+What I checked: GERMAN-UI-WRITING §8 keeps an English term only where German
+has no word people actually use. German interfaces say *Countdown* for this,
+and *Zähler* for a counter that counts up. Your wording says *Counter*.
+
+What I did: **kept your word, verbatim.** It is copy you wrote, and §8 is a
+standard to argue the change in, not a licence to rewrite a string somebody
+chose. The three clear slips went the other way — *Fussiere* → *Fokussiere*,
+*gehts* → *geht's*, *fokusssiert* → *fokussiert* — because those are typos
+rather than choices.
+
+What I need from Ben: **nothing, just flagging.** Say the word and it becomes
+*Countdown*.
+
+## The clip stays rounded for most of its travel
+
+Where: `packages/design-system/src/musy-components.css`, `@keyframes
+musy-lb-grow`
+
+What I checked: the sheet's corner interpolates `--radius-full` (999px) → 0
+across the whole 340ms. The engine clamps `round` to half the shorter side, so
+at the first frame it is exactly the button's own 23px corner — correct — but
+by mid-animation the shape is most of a phone wide and 500px of radius is still
+being clamped to fully round. Caught in a screenshot at ~50%: a stadium, not a
+sheet with corners. It squares off only in the last fraction.
+
+What I did: **nothing.** It is a detail of the motion rather than a defect in
+it, the whole thing is over in 340ms, and Ben has watched it several times
+without it reading as wrong.
+
+The fix, if it is wanted, is one more number across the boundary: the component
+already measures the opening control's rect, so it can pass that control's own
+corner (`min(width, height) / 2`) as a fourth custom property and interpolate
+from 23px rather than from 999px.
+
+What I need from Ben: **a look at the opening animation in slow motion**, and
+a yes or no.
+
+## The content migration is not pushed
+
+Where: `supabase/migrations/20261007120000_listen_copy_two_states.sql`
+
+What I checked: nothing pushes automatically and `pnpm check` does not touch
+the database. Applied locally with `supabase db reset`; `pnpm test:db` is green
+(118 passed, 8 files).
+
+What I did: **nothing.** It rewrites `exercise_i18n.listen_md` for two
+exercises in two locales on whichever database it is pointed at, and the hosted
+one is the beta testers'.
+
+What I need from Ben: **run `supabase db push`** when the wording is settled.
+Until then the hosted build shows the old sentence on the stage AND in the
+sheet, which reads as the same line twice rather than as two states.
+
+AND THE BUCKET EMPTIED AGAIN. `supabase db reset` took all four track objects
+with it, which is the third entry in this file to say so — one db test needs a
+real object, and it went red until I wrote silent placeholders back for
+trk-01, trk-02, trk-04 and trk-05 at their declared lengths.
+
 ## The toolbar centres below --bp-md and stays left above it, and `safe` is what makes both true
 Where: `apps/web/src/exercises.css` (`.musie-deck-toolbar`)
 
@@ -6945,6 +7164,127 @@ What I need from Ben: nothing, just flagging — **every scrolling row will have
 this**, because ring clearance and the gap ladder are two different mechanisms
 spending the same axis. A `--space-gap-*` that already contained the clearance
 would solve it once, but that is a Layer 1 change and this is one row.
+
+
+# A token outliving its user (2026-10-07)
+
+## The app now signs itself out when the database has never heard of it — FIXED
+
+Where: `src/lib/identity.ts` (new), `src/lib/profile.ts`, `src/ProfileProvider.tsx`
+
+What I checked: `supabase.auth.getSession()` reads the stored token out of
+localStorage and never asks the server whether the user behind it still
+exists. So a signed JWT whose `sub` has been deleted is indistinguishable from
+a healthy session: the app boots, the gate opens, every screen renders, and the
+first thing that notices is a foreign key.
+
+MEASURED, after the `supabase db reset` that rule 4 asks for — it empties
+`auth.users` along with everything else, and the tab that was open through it
+walked the entire flow before dying on the one press that matters:
+
+```
+HTTP 409 /rest/v1/sessions
+23503: insert or update on table "sessions" violates foreign key constraint
+"sessions_user_id_fkey" — Key is not present in table "profiles".
+```
+
+On screen: *Die Session konnte nicht gestartet werden*, which is true and says
+nothing. The only cure anybody found was clearing site data by hand. It is not
+a local-stack curiosity: deleting one beta tester does this to whatever tab
+they have open, and the sign-in gate will not even be offered, because as far
+as the app is concerned they are signed in.
+
+I also got the first diagnosis WRONG and should write that down: I reported the
+app as stuck on the explainer, because my reproduction waited three seconds
+against an animation that takes twelve. It is not stuck. It renders fine and
+fails only on the press.
+
+What I did: caught it on boot instead. `profiles` is created by a trigger on
+`auth.users` insert and cascades on delete, so zero rows for `auth.uid()` is
+not a row that failed to load — it is the identity being gone. `getProfile`
+now reports that as an ANSWER (`{ kind: 'missing' }`) rather than throwing, and
+everything else still throws: a timeout and a blocked network are "we could not
+ask", and signing somebody out because their train went into a tunnel is the
+bug that distinction prevents. Proven with the profile request aborted: no
+sign-out, no new user, the app still renders.
+
+The recovery is the existing `signOut()` — clear the token, reset the session
+cache, reload — so a deleted ACCOUNT lands at the sign-in form and a deleted
+anonymous user is simply replaced, whichever `VITE_REQUIRE_ACCOUNT` says.
+
+AND IT IS CLAIMED, NOT DECIDED, which is the only part worth reviewing. The
+recovery reloads, so a second failure would reload again, forever, minting an
+anonymous user on every pass — a worse failure than the one being fixed, and
+one that writes rows. `claimIdentityRecovery` is true at most once per tab and
+records the claim before the caller acts on it; the boot after the reload finds
+it taken and reports the problem instead. It is released only by a profile that
+actually reads, so a browser left open across two resets recovers from both.
+Seven unit tests, all of them asking whether a second yes is possible.
+
+Verified in a real browser, four consecutive runs: one recovery, one sign-in,
+two document loads, and the session starts.
+
+ONE THING THAT COST ME AN HOUR AND IS WORTH KNOWING: `select count(*) from
+auth.users` is a USELESS instrument on this stack. The local database is shared
+with whatever else is running browser walks against it, so a global count
+measures other people's users too — it reported five phantom sign-ins that the
+page's own log showed had never happened. Count from the page.
+
+What I need from Ben: **a look at the claim-once rule.** Everything else here
+is mechanical; that is the part with a judgement in it, and the failure mode it
+guards against is the expensive one.
+
+## `supabase db reset` logs you out, as well as emptying the bucket
+
+Where: the three entries above about the tracks bucket
+
+What I checked: the reset drops `auth.users`, so every browser holding an
+anonymous session is holding a dead one. That is now self-healing (above), but
+it still costs a reload and a new anonymous user, and the diary of whatever
+that user had done is gone with the row.
+
+What I did: nothing beyond the fix.
+
+What I need from Ben: **nothing, just flagging** — when the entries above say
+the reset empties the track bucket, read it as "and signs out every open tab".
+
+
+## A third measure in the app, written out rather than tokenised
+
+Where: `src/shell.css`, `.musie-immersive__lead .musie-md h2`
+
+What I checked: the sheet's merged headline was breaking into four short lines
+with two thirds of a 1280px window empty beside it, and TWO Layer 1 defaults
+were doing it, both of them right for the thing this `<h2>` normally is — a
+short title above a step:
+
+  · `.musie-md h2` caps at `--measure-heading`, which is **26ch**. Measured:
+    "What picture forms in your" is exactly 26 characters.
+  · `text-wrap` is `--text-wrap-heading`, which is **balance** — it does not
+    fill lines, it EVENS them, so even inside a wider cap it would keep handing
+    back tidy short lines rather than full ones.
+
+A third rule turned out to be the one that actually bound: `.musie-md` caps
+ITSELF at `--measure-body`, 62ch at body size — 698px at 1280px wide, against
+the heading's new 818px. The narrower wins, so raising the heading alone moved
+nothing until the container's cap was lifted too.
+
+What I did: 50ch and `--text-wrap-body` on the sheet's heading, and
+`max-inline-size: none` on its container. Measured after: 320px → 5 lines at
+the full 256px available; 393px → 4 lines at 329px; 768px → 2 lines at the full
+704px; 1280px → 2 lines at 818px, which is the 50ch cap exactly. Fills the
+width, stops at 50ch.
+
+Why 50ch is written out: Layer 1 has exactly two measures, 26ch for a heading
+and 62ch for body copy, and this is deliberately neither — it is a heading at
+heading size that has to read like a sentence. The app already carries one raw
+`ch` measure for the same kind of reason (`.musie-listen__warn`, 26ch).
+
+What I need from Ben: **a token, if a third screen wants this.** Two literals
+is a coincidence; three is a measure Layer 1 is missing, and L14.3 says that is
+a request rather than a third copy. Also worth knowing: `ch` is the width of
+the zero glyph, not a character count — German at this size fits ~53 characters
+on a 50ch line, not 50.
 
 ## The goals migrations are on hosted, and restoring a lost file exposed a deck drift
 Where: `supabase/migrations/20261002153212_deck_test_deck_tracks.sql`

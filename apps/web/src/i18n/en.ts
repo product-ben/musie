@@ -578,6 +578,54 @@ export const en = {
      paragraph is gone. */
   'session.listen.startLocked': 'Focus for {countdown} minutes more',
   'session.listen.start': 'Start reflecting whenever you are ready',
+
+  /* ── The listening view · the LISTEN-EXPERIMENTS branch ──────────────────
+     The press on the stage's transport opens a full-screen sheet and the track
+     plays in there: the exercise's own words, the minimum time counting down,
+     and the way on once it has run out. The stage keeps the same three strings
+     it had — this is a second place to read them, not a replacement — and what
+     is new is the frame and the clock.
+
+     `immersiveTitle` is the SHEET'S ACCESSIBLE NAME and is never seen: the
+     exercise's own headline is what the sheet shows (4.1.2 still wants a name,
+     and a noun phrase is what a view is called). The two are deliberately
+     different strings — a chrome name that repeated the content's heading would
+     put two headings with one name in the tree, which is the stutter
+     `SessionRunningLightbox` is written up for. */
+  'session.listen.immersiveTitle': 'Listening',
+  /* THE X ENDS THE LISTENING, it does not only close a window — leaving the
+     sheet pauses the track, so the label says the thing that happens rather
+     than the thing that is clicked. */
+  'session.listen.immersiveClose': 'End listening',
+  /* The caption UNDER the big figure, so it does not have to repeat it. "This
+     much" is the number above; what the caption adds is that the number is a
+     floor and not a length. */
+  'session.listen.immersiveCountdown': 'minimum listening for this exercise',
+  /* ── ONCE THE MINIMUM IS DONE — Ben, 2026-10-07 ────────────────────────
+     It replaces `immersiveReady` ("You have listened long enough"), which
+     reported a threshold and stopped there. This says what was achieved and
+     then hands the rest of the track back as an OFFER rather than as a
+     requirement, which is the same soft-gate posture as the scrubber.
+
+     BOTH FIGURES ARE MM:SS, Ben's call over rounded words: the gate is the
+     same number the counter above just finished counting, so saying it in a
+     different unit here would read as a different number.
+
+     `{gate}` is interpolated and never written out, because it is
+     `exercises.listen_gate_seconds` and varies — 60, 90 and 180 across the
+     five exercises. */
+  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate}. Carry on for another {remaining} if you like.',
+  /* THE TRACK CAN ALREADY BE OVER when the gate opens — a short recording, or
+     somebody who scrubbed to the end. "Carry on for another 00:00" is the
+     sentence that gets written when nobody checks. No dash, at Ben's request;
+     two sentences carry it. */
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {gate}. The track has finished. Play it again if you like.',
+  /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
+     `startLocked` does on the stage — the figure is already the largest thing
+     on the sheet, and saying it twice on one screen is how a number stops
+     being read. So the disabled button says what to do instead of what to
+     wait for. */
+  'session.listen.immersiveLocked': 'Focus until the counter runs out. Then you can carry on',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
   /* ── The three scroll views · E.5b ──────────────────────────────────────

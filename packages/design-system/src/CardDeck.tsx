@@ -244,6 +244,41 @@ export interface CardDeckProps {
    * of choices.
    */
   actions?: React.ReactNode;
+  /**
+   * Extra ICON controls in the nav row, beside the two directions.
+   *
+   * `actions` is a column of labelled buttons under the deck; this is the row
+   * the chevrons are in. The difference is not cosmetic — a third icon-only
+   * control beside back and forward reads as another thing you can do to the
+   * PILE, and the same control as a labelled row underneath reads as another
+   * thing you can do to the exercise.
+   *
+   * The deck does not say what belongs here, only where it goes. It owns the
+   * two directions because it owns what they do to the pile; a screen's help
+   * control, which is what put this slot here, is the screen's own business
+   * down to its glyph.
+   */
+  navActions?: React.ReactNode;
+  /**
+   * ── AN EXTRA CARD ON TOP OF THE PILE ────────────────────────────────────
+   *
+   * Rendered in the pile's one grid cell, above every card and at the card's
+   * own size and radius. For something that is ABOUT the pile and has to be
+   * seen against it — the first-use legend on /exercises, which is what this
+   * is for.
+   *
+   * NOT `children` AND NOT A PORTAL. The pile is the only box that knows how
+   * wide a card is (`--musy-deck-card-inline`) and how tall the tallest face
+   * came out, and a consumer positioning something over the deck from outside
+   * would be measuring both — in a layout that reflows with the copy, in two
+   * languages. Handing the slot the card's own cell costs the consumer
+   * nothing and cannot drift.
+   *
+   * WHAT IT DOES NOT DO: it carries no dismissal, no state and no styling of
+   * its own. Whatever goes in here owns all three, because the deck has no
+   * opinion about when an extra card has been read.
+   */
+  cover?: React.ReactNode;
   /** True while an accept is in flight. See the contract at the top. */
   busy?: boolean;
   /**
@@ -322,7 +357,7 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  nextLabel, previousLabel,
+  nextLabel, previousLabel, navActions, cover,
   label, positionLabel, actions, busy = false, dealKey, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
@@ -808,6 +843,19 @@ export function CardDeck({
               );
             })}
 
+            {/* ── THE EXTRA CARD ─────────────────────────────────────────
+                Last in the pile and in its one cell, so it is over every card
+                including one mid-flight. The deck gives it the card's box and
+                nothing else: no dismissal, no state, no styling — see the
+                prop.
+
+                WRAPPED, and that is not ceremony: the cell is claimed by
+                `grid-area: card`, and a consumer's node cannot carry that
+                without being handed a design-system class to put on itself.
+                Measured before the wrapper existed — the legend landed BELOW
+                the card at its own content height instead of over it. The
+                wrapper is the grid item; what goes inside it stretches. */}
+            {cover !== undefined && <div className="musy-deck__cover">{cover}</div>}
           </div>
 
           {/* ── WHERE YOU ARE IN THE PILE, FOR THE EYE ──────────────────
@@ -887,6 +935,10 @@ export function CardDeck({
               disabled={inert || !browsable}
               onClick={() => next(frontId, STILL)}
             />
+            {/* Third and after, never between: back and forward are a pair and
+                a stranger inserted into the middle of them would break the
+                one thing their order says. */}
+            {navActions}
           </div>
           {actions}
         </div>

@@ -56,10 +56,11 @@
  * catalogue's own `exercises.fact.time*`.
  */
 import * as React from 'react';
-import { ArrowRight, LayoutList, Layers, Shuffle, Timer } from 'lucide-react';
+import { ArrowRight, HelpCircle, LayoutList, Layers, Shuffle, Timer } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import {
-  ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, RadioCards, SegmentedControl,
+  ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, IconButton, RadioCards,
+  SegmentedControl,
 } from '@musie/design-system';
 import type { CardDeckCard, CardDeckItem, RadioCardFact } from '@musie/design-system';
 import { GoalBox, GoalPill } from '../components/GoalPicker';
@@ -74,6 +75,9 @@ import type { ActiveSession } from '../lib/session';
 import { useExercises, useGoals } from '../lib/useContent';
 import type { Exercise } from '../lib/content';
 import { cacheGoal, filterByGoal, goalIdFor, readCachedGoal } from '../lib/goals';
+import { useEdgeFade } from '../lib/useEdgeFade';
+import { guideStore, noteDeckGuideSeen, shouldShowDeckGuide } from '../lib/deckGuide';
+import { DeckGuide } from '../components/DeckGuide';
 import type { GoalChoice } from '../lib/goals';
 import '../exercises.css';
 
@@ -127,6 +131,40 @@ export function Exercises() {
     setChoice(next);
     cacheGoal(next);
     setPicking(false);
+  }, []);
+
+  /* The toolbar scrolls sideways when its controls outgrow the row, and fades
+     at whichever end still has something past it. */
+  const toolbar = useEdgeFade<HTMLDivElement>();
+
+  /**
+   * ── THE LEGEND, ONCE PER BROWSER — Ben, 2026-10-07 ──────────────────────
+   *
+   * READ IN AN EFFECT AND NOT IN THE INITIALISER, which is not fussiness: the
+   * initialiser runs during the first render, and `guideStore()` touches
+   * `window`. Every other cached answer on this screen is read the same way
+   * for the same reason (`readCachedGoal` above).
+   *
+   * `seen` IS WRITTEN WHEN IT IS DISMISSED, not when it is shown. Somebody who
+   * arrives and leaves before pressing anything has not read it, and the next
+   * visit should still offer it.
+   *
+   * THE `?` BUTTON DOES NOT CLEAR THE FLAG. Asking to see it again is not the
+   * same as never having seen it — the flag answers "has this browser been
+   * offered the legend", and it has.
+   */
+  const [guide, setGuide] = React.useState(false);
+  const guideAsked = React.useRef(false);
+
+  React.useEffect(() => {
+    if (guideAsked.current) return;
+    guideAsked.current = true;
+    if (shouldShowDeckGuide(guideStore())) setGuide(true);
+  }, []);
+
+  const closeGuide = React.useCallback(() => {
+    setGuide(false);
+    noteDeckGuideSeen(guideStore());
   }, []);
 
   const [view, setView] = React.useState<View>('deck');
@@ -519,7 +557,11 @@ export function Exercises() {
           the two will not fit — which at 393px in German they do not, because
           *Ziel: Achtsamkeit stärken* is most of a phone wide on its own. */}
       {(pillShown || switchShown) && (
-        <div className="musie-deck-toolbar">
+        /* `useEdgeFade` keeps `data-fade` in step with where the row has been
+           scrolled to, and the stylesheet turns that into a mask — so the ends
+           soften only where there is more of the row past them. See
+           lib/edgeFade.ts for why this is not an always-on gradient. */
+        <div className="musie-deck-toolbar" ref={toolbar}>
           {pillShown && (
             <GoalPill goals={goals} choice={choice} onOpen={() => setPicking(true)} />
           )}
@@ -612,6 +654,36 @@ export function Exercises() {
               nextLabel={t('exercises.next')}
               previousLabel={t('exercises.previous')}
               label={t('exercises.deckLabel')}
+              /* ── THE LEGEND, AS AN EXTRA CARD ON THE PILE ──────────────
+                 The deck's `cover` slot puts it in the card's own cell, so it
+                 is exactly as wide as a card and as tall as the tallest face —
+                 two numbers this screen would otherwise be measuring in a
+                 layout that reflows with the copy, in two languages.
+
+                 ONLY WHILE THE DECK IS LIVE. Drawn over the goal question, or
+                 over a start already in flight, it would explain controls that
+                 are inert at that moment. */
+              cover={guide && !busy && !picking
+                ? <DeckGuide onDismiss={closeGuide} />
+                : undefined}
+              /* ── AND THE WAY BACK TO IT ────────────────────────────────
+                 Third in the row the chevrons are in, because it is the same
+                 KIND of thing they are: something you do to the pile rather
+                 than to the exercise. `ghost`, where they are `secondary` —
+                 it is the quietest control on the screen and the only one
+                 nobody needs twice.
+
+                 It does not toggle. Pressing it while the legend is up would
+                 be a second way to dismiss something that already dismisses on
+                 any press, so it only ever shows. */
+              navActions={(
+                <IconButton
+                  glyph={HelpCircle}
+                  label={t('exercises.guide.show')}
+                  variant="ghost"
+                  onClick={() => setGuide(true)}
+                />
+              )}
               /* Under the deck's two directions, in the same column. It acts
                  on the deck as a whole rather than on the card in front, which
                  is why it is last and why it is the quiet one. The big *Übung

@@ -410,6 +410,33 @@ export const de: Messages = {
   'session.listen.track': 'Dein Stück',
   'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
   'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
+
+  /* ── Die Hör-Ansicht · Branch LISTEN-EXPERIMENTS ────────────────────────
+     'Hören' als Substantivierung, weil die Ansicht ein Name braucht und kein
+     Befehl ist (§3's Ausnahme für Überschriften). 'Hören beenden' ist dagegen
+     eine Handlung und steht als Verbphrase da — und sie ist wahr: das Verlassen
+     der Ansicht pausiert das Stück. */
+  'session.listen.immersiveTitle': 'Hören',
+  'session.listen.immersiveClose': 'Hören beenden',
+  /* Die Bildunterschrift steht UNTER der Zahl und wiederholt sie nicht.
+     'Noch mindestens so lange' — 24 Zeichen gegen 25 im Englischen, also
+     unter dem Budget aus §5. */
+  'session.listen.immersiveCountdown': 'mindestens hören für diese Übung',
+  /* Bens Wortlaut, 2026-10-07. Ersetzt `immersiveReady`, das nur eine Schwelle
+     meldete: dieser Satz sagt, was geschafft ist, und gibt den Rest des Stücks
+     als ANGEBOT zurück, nicht als Auflage.
+
+     Beide Zahlen als MM:SS, Bens Entscheidung — `{gate}` ist dieselbe Zahl,
+     die der Zähler darüber gerade heruntergezählt hat, und eine andere Einheit
+     an dieser Stelle läse sich als andere Zahl. Interpoliert, weil
+     `listen_gate_seconds` je Übung 60, 90 oder 180 ist. */
+  'session.listen.immersiveDone': 'Super, dass du dich {gate} fokussiert hast. Mach noch {remaining} weiter, wenn du magst.',
+  /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
+     Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {gate} fokussiert hast. Das Stück ist zu Ende. Wenn du magst, hör es noch einmal.',
+  /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
+     §8 ist der Ort, an dem das zu diskutieren wäre. */
+  'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
   'session.listen.detailsAction': 'Über den Track',
   'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten des Tracks beeinflussen zu lassen.',

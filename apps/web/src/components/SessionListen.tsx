@@ -52,18 +52,19 @@
  */
 import * as React from 'react';
 import {
-  ContentList, CtaButton, Message, MusicPlayer, TrackButton, useScrollSnap,
-  useViewportFill,
+  ContentList, CtaButton, Lightbox, Message, MusicPlayer, TrackButton,
+  useScrollSnap, useViewportFill,
 } from '@musie/design-system';
-import type { ContentListItem } from '@musie/design-system';
+import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
 import { ArrowDown } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
 import { revealTrack } from '../lib/reveal';
 import { markListened } from '../lib/session';
 import type { Card, Exercise, Track } from '../lib/content';
-import { parseMarkdown, plainText } from '../lib/markdown';
+import { bodyOnly, headingOnly, parseMarkdown, plainText } from '../lib/markdown';
 import { usePinnedHeader } from '../lib/useHeaderReveal';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
@@ -72,6 +73,45 @@ const TICK_MS = 250;
 function clock(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds));
   return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
+}
+
+/**
+ * ── THE STEP'S TWO VIEWS, IN THE URL — Ben, 2026-10-07 ─────────────────────
+ *
+ * `/session/:id/listen?overview` is the stage and `?focus` is the full-screen
+ * listening sheet. Valueless tokens, which is what Ben asked for and what they
+ * are: this is a MODE, not a value, and `?view=focus` would invite a third
+ * value that does not exist. `URLSearchParams` reads a bare token as a key
+ * with an empty value, so `.has()` answers it without any parsing of our own.
+ *
+ * WHY IT IS IN THE URL AT ALL. Three things fall out of it and none of them
+ * are free otherwise: the browser's own Back closes the sheet, a tester can be
+ * sent straight to the thing being tested, and the sheet survives a reload
+ * instead of dropping somebody back on the stage mid-exercise.
+ *
+ * `?overview` IS WRITTEN ON ARRIVAL, by replace rather than push — the step
+ * has a view whether or not the URL says so, and the address should say which.
+ * Replace, so Back from the stage still leaves the step rather than cycling
+ * through a parameter the person never set.
+ */
+const FOCUS = 'focus';
+const OVERVIEW = 'overview';
+
+/**
+ * The same search string with exactly one of the two view tokens on it.
+ *
+ * Both are dropped before one is added, so the two can never both be present —
+ * a hand-typed `?focus&overview` resolves rather than rendering two states.
+ * Anything else in the query is preserved and goes back in front, because this
+ * step does not own the whole query string and a later campaign parameter
+ * should survive a press on the transport.
+ */
+function withView(search: string, view: typeof FOCUS | typeof OVERVIEW): string {
+  const rest = new URLSearchParams(search);
+  rest.delete(FOCUS);
+  rest.delete(OVERVIEW);
+  const others = rest.toString();
+  return others === '' ? `?${view}` : `?${others}&${view}`;
 }
 
 export interface SessionListenProps {
@@ -192,6 +232,82 @@ export function SessionListen({
   }, []);
 
   /**
+   * ── THE LISTENING VIEW — the LISTEN-EXPERIMENTS branch ───────────────────
+   *
+   * The press on the transport does not just start a track any more: the
+   * control becomes a full-screen sheet, and the track plays in there with the
+   * exercise's words, the minimum time counting down, and the way on.
+   *
+   * WHY A SHEET AND NOT A FOURTH SNAP VIEW. The three views below this one are
+   * places you can BE in the step, reachable by a thumb, and what you left is
+   * always one scroll above you. This is not that. It is the step's one task,
+   * with everything else taken off the screen for the length of it — which is
+   * a modal's job and not a scroll position's. It also has to be impossible to
+   * flick past, and a snap view is exactly as flickable as its neighbours.
+   *
+   * `Lightbox surface="immersive"`, SO THE APP OWNS NONE OF THE HARD PART.
+   * Focus moves in and comes back to this button, the three views behind it go
+   * inert, the page scroll locks, Escape closes. The frame is the design
+   * system's because a screen styling a panel popup into a full-screen one is
+   * reaching into a component's geometry (rule 1, L7) — so the variant went
+   * into the component, which is where `CtaButton.align` came from too.
+   *
+   * ── THE ORIGIN IS MEASURED AT THE PRESS ──────────────────────────────────
+   * `origin` is the transport's rect and the sheet's clip opens out of it, so
+   * the button becomes the screen rather than summoning one. A rect is
+   * viewport-relative and this step is three viewports tall, so measuring on
+   * mount would open the sheet out of a button that has since scrolled away.
+   * Hence: in the handler, every time.
+   *
+   * NULL IS FINE and is not a failure path — the sheet opens from the centre
+   * of the viewport, which is what the design system does when no control
+   * claims to have opened it.
+   */
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  /* DERIVED, NOT HELD. The sheet being open IS `?focus` being on the address,
+     so there is no second boolean to disagree with it — and the browser's own
+     Back closes the sheet for free, because it changes the one thing that
+     decides. */
+  const immersive = searchParams.has(FOCUS);
+
+  /* THE ADDRESS SAYS WHICH VIEW, even when nobody chose one. Replace, not
+     push: arriving is not a step the Back button should have to walk through.
+     It leaves `?focus` alone, so a deep link opens the sheet.
+
+     ── AND IT ONLY SPEAKS FOR ITS OWN STEP ───────────────────────────────
+     MEASURED, and it shipped wrong for one run: pressing *Start reflecting*
+     left the address at `/reflect?overview`. The step is URL-DRIVEN, so the
+     path changes a render before this component unmounts — and in that frame
+     the effect saw a location with no view token on it and dutifully wrote one
+     onto the step it was leaving. A parameter this file owns had leaked onto a
+     screen that has never heard of it.
+
+     So the guard is the one thing that makes the question meaningful: these
+     two views belong to `/listen`, and anywhere else the answer is that there
+     is nothing to normalise. */
+  React.useEffect(() => {
+    if (!location.pathname.endsWith('/listen')) return;
+    if (searchParams.has(FOCUS) || searchParams.has(OVERVIEW)) return;
+    navigate({ search: withView(location.search, OVERVIEW) }, { replace: true });
+  }, [searchParams, location.pathname, location.search, navigate]);
+
+  const [origin, setOrigin] = React.useState<LightboxOrigin | null>(null);
+  /**
+   * The transport's own box, for that measurement.
+   *
+   * ON THE WRAPPER AND NOT ON THE BUTTON, because `TrackButton` forwards no
+   * ref — and the wrapper is `inline-size: fit-content`, so the two rects are
+   * the same one. That is also why the `<div>` that used to be there only to
+   * make the button hug now carries a class: reaching through it with
+   * `querySelector('button')` would be this screen asking about a component's
+   * internals, and a wrapper that hugs is this screen's own box to measure.
+   */
+  const transportRef = React.useRef<HTMLDivElement>(null);
+
+  /**
    * THE GATE COMES FROM THE EXERCISE, and the cap comes from the track.
    *
    * `exercises.listen_gate_seconds` was a hardcoded 90 here until Ben settled
@@ -208,6 +324,16 @@ export function SessionListen({
     ? Math.min(exercise.listenGateSeconds, duration)
     : exercise.listenGateSeconds;
   const met = listened || Math.floor(position) >= gate;
+  /* WHAT THE LISTENING VIEW COUNTS DOWN. The same number the stage's locked CTA
+     interpolates, hoisted because two controls now read it. `Math.floor` on the
+     position rather than `Math.round`, so the figure only reaches 00:00 at the
+     moment `met` flips — a rounded one shows 00:00 for half a second while the
+     way on is still disabled, which reads as a stuck button. */
+  const remaining = Math.max(0, gate - Math.floor(position));
+  /* WHAT IS LEFT OF THE TRACK, which is a different number from the one above:
+     the counter counts the EXERCISE's minimum down, and this is the recording.
+     They are only the same when the gate is the whole piece. */
+  const trackLeft = Math.max(0, duration - Math.floor(position));
 
   /* Latch the gate upward, in an effect rather than in the handlers: three
      different things move the position — the element, the clock and the reset
@@ -289,23 +415,122 @@ export function SessionListen({
     });
   }
 
-  function toggle() {
+  /**
+   * PAUSE AND RESTART, LIFTED OUT OF `toggle` — because three things pause now
+   * and two restart, where one of each did before.
+   *
+   * Pausing: the transport inside the listening view, and LEAVING that view,
+   * which is the new one — a sheet that closes while the track plays on leaves
+   * music coming out of a screen that is not showing a player. Restarting: the
+   * transport, and entering the view on a track that has already ended.
+   *
+   * Three copies of `if (element !== null && !simulated)` is three places to
+   * forget the `simulated` half, and forgetting it is how the clock and the
+   * element end up both driving `position`.
+   */
+  const pause = React.useCallback(() => {
     const element = media.current;
-    /* Ended restarts from zero: the glyph promised a restart, so resuming from
-       the end would be a lie. */
+    /* THE REF, NOT THE STATE. This is held by an effect that fires on a URL
+       change, so it can be called from a closure older than the last render —
+       which is the same reason the element's own handlers read the ref. */
+    if (element !== null && !simulatedRef.current) element.pause();
+    setPlaying(false);
+  }, []);
+
+  /* Ended restarts from zero: the glyph promised a restart, so resuming from
+     the end would be a lie. */
+  function restart() {
+    const element = media.current;
+    setPosition(0);
+    if (element !== null && !simulated) element.currentTime = 0;
+    play();
+  }
+
+  function toggle() {
     if (duration > 0 && position >= duration) {
-      setPosition(0);
-      if (element !== null && !simulated) element.currentTime = 0;
-      play();
+      restart();
       return;
     }
     if (playing) {
-      if (element !== null && !simulated) element.pause();
-      setPlaying(false);
+      pause();
       return;
     }
     play();
   }
+
+  /**
+   * ── INTO THE LISTENING VIEW, AND OUT OF IT ───────────────────────────────
+   *
+   * THE STAGE'S TRANSPORT NO LONGER TOGGLES ANYTHING. It opens the view, and
+   * the view is where the track is played, paused and restarted. That is the
+   * whole move: one control that means "start listening", and a screen that
+   * means "you are listening".
+   *
+   * It follows that LEAVING PAUSES — the X, Escape, the scrim, all of them
+   * through `onOpenChange`. Three reasons, in order:
+   *
+   *   · a sheet that closes over a track still playing leaves music coming out
+   *     of a screen with no transport on it, and the only way back to a pause
+   *     button is to re-open the sheet;
+   *   · it makes the stage's button honest. With playback confined to the
+   *     sheet, `playing` is always false behind it, so the glyph is the
+   *     invitation it reads as rather than a Pause that opens a window;
+   *   · and nothing is lost by it. `listened` is latched upward the moment the
+   *     gate is met and is held by the SESSION, so coming back out and going
+   *     back in resets neither the position nor the fact that you listened.
+   *
+   * ENTERING NEVER PAUSES, which is why this is not `toggle`: a press that is
+   * meant to begin something must not stop it, and an ended track restarts
+   * rather than opening a sheet with 00:00 and nothing happening.
+   */
+  function enterImmersive() {
+    const rect = transportRef.current?.getBoundingClientRect() ?? null;
+    setOrigin(rect === null ? null : {
+      top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left,
+    });
+    /* PUSHED, so the browser's Back is one of the ways out of the sheet. */
+    navigate({ search: withView(location.search, FOCUS) });
+
+    if (duration > 0 && position >= duration) restart();
+    else if (!playing) play();
+  }
+
+  /**
+   * CLOSING IS A NAVIGATION AND NOTHING ELSE — the pause is the effect below.
+   *
+   * There are four ways out of the sheet: the X, Escape, the scrim, and the
+   * browser's Back. Only the first three come through `onOpenChange`, so a
+   * close that paused HERE would leave the track playing on the one route that
+   * does not. One rule, hung on the thing all four change.
+   *
+   * `location.key === 'default'` is `useCloseOverlay`'s test, for the same
+   * case: a cold deep link straight to `?focus` has nothing behind it, so
+   * going back would leave the app. Then the view is replaced instead.
+   */
+  function leaveImmersive() {
+    if (location.key === 'default') {
+      navigate({ search: withView(location.search, OVERVIEW) }, { replace: true });
+      return;
+    }
+    navigate(-1);
+  }
+
+  /**
+   * THE TRACK IS RELEASED WHEN THE SHEET GOES, however it went.
+   *
+   * Playback lives in the sheet, so a sheet that closes over a running track
+   * leaves music coming out of a screen with no transport on it — and the only
+   * way back to a pause button would be to open the sheet again.
+   *
+   * It fires on the FALLING EDGE only. Hung on `immersive` alone it would also
+   * run on mount, pausing a track nobody had started yet and clearing `playing`
+   * under the stage's own transport.
+   */
+  const wasImmersive = React.useRef(false);
+  React.useEffect(() => {
+    if (wasImmersive.current && !immersive) pause();
+    wasImmersive.current = immersive;
+  }, [immersive, pause]);
 
   /**
    * SCRUBBING, AND IT IS A PRODUCT DECISION RATHER THAN A CONTROL.
@@ -541,6 +766,30 @@ export function SessionListen({
   );
 
   /**
+   * ── WHAT THE SHEET SAYS ONCE THE MINIMUM IS DONE — Ben, 2026-10-07 ──────
+   *
+   * Two sentences: what was achieved, and the rest of the track offered back
+   * rather than required. BOTH FIGURES ARE MM:SS, Ben's call — the gate is the
+   * same number the counter above has just finished counting, so saying it
+   * here in a different unit would read as a different number.
+   *
+   * `{gate}` IS INTERPOLATED AND NEVER WRITTEN OUT. It is
+   * `exercises.listen_gate_seconds` and it varies: 90 for the two built
+   * exercises, 60 and 180 for the three that are not. A hardcoded "90 Sekunden"
+   * is correct today and silently wrong the first time somebody opens Sound
+   * Journey.
+   *
+   * AND THE TRACK CAN ALREADY BE OVER. A recording shorter than the gate is
+   * capped to its own length, and the scrubber in the details view can be
+   * dragged to the end — so "carry on for another 00:00" is a real state and
+   * not a hypothetical. The second sentence then says so and points at the
+   * replay the transport is already offering.
+   */
+  const doneText = trackLeft <= 0
+    ? t('session.listen.immersiveDoneEnded', { gate: clock(gate) })
+    : t('session.listen.immersiveDone', { gate: clock(gate), remaining: clock(trackLeft) });
+
+  /**
    * THE DETAILS VIEW'S FACTS, and the order is the answer first.
    *
    * The track's own name is NOT here: the player above states it, and saying
@@ -603,7 +852,12 @@ export function SessionListen({
           own headline, because this one asks what picture forms while the
           track plays and the reflection asks what the scene was called — which
           are deliberately not the same question. */}
-      <Markdown md={exercise.listenMd} />
+      {/* THE INSTRUCTION ALONE — `headingOnly`, since 2026-10-07.
+          The question that used to sit under it has moved into the sheet,
+          where it is the headline. It is withheld here on purpose: on the
+          stage nothing has been listened to yet, so a question about what you
+          are hearing has nothing to be asked about. */}
+      <Markdown md={exercise.listenMd} arrange={headingOnly} />
 
       {track === null ? (
         <Message
@@ -638,19 +892,33 @@ export function SessionListen({
             />
           )}
 
-          {/* A plain <div> so the transport hugs its label instead of being
-              stretched the width of the column: `.musy-btn` is inline-flex,
-              and a block parent is all that takes. The same one line
-              `CardScanner` and the code form already use. */}
-          <div>
+          {/* THE WRAPPER HUGS, AND NOW IT IS ALSO WHAT GETS MEASURED.
+              It was a plain <div> so the transport hugged its label instead of
+              being stretched the width of the column — `.musy-btn` is
+              inline-flex, and a block parent is all that takes, the same one
+              line `CardScanner` and the code form already use.
+
+              It has a class now because the listening view opens OUT OF this
+              control and needs its rect. `TrackButton` forwards no ref, and
+              reaching through to the `<button>` with a `querySelector` would be
+              this screen asking about a component's internals (L7). So the
+              wrapper is `inline-size: fit-content` instead: it hugs exactly as
+              before, its box and the button's are the same box, and the one
+              being measured is this screen's own.
+
+              `onTogglePlay` AND `onRestart` BOTH ENTER THE VIEW, and neither
+              toggles. The press means "start listening" in all three transport
+              states; what it does about the track — begin, resume, start over —
+              is `enterImmersive`'s to decide. */}
+          <div ref={transportRef} className="musie-listen__transport">
             <TrackButton
               label={t('session.listen.track')}
               duration={track.durationSeconds}
               position={position}
               playing={playing}
               variant={met ? 'secondary' : 'primary'}
-              onTogglePlay={toggle}
-              onRestart={toggle}
+              onTogglePlay={enterImmersive}
+              onRestart={enterImmersive}
             />
           </div>
         </div>
@@ -858,6 +1126,171 @@ export function SessionListen({
           of the step. */}
       <div className="musy-snap-view musie-listen__actions">{back}</div>
       </div>
+
+      {/* ══ THE LISTENING VIEW ═════════════════════════════════════════════
+          A SIBLING OF THE THREE VIEWS, NOT A FOURTH ONE — and portaled out of
+          here anyway, so where it sits in this tree is a statement about what
+          it IS rather than about where it lands. The three above are places
+          you can be in the step; this is the step's one task with everything
+          else taken off the screen for the length of it.
+
+          IT IS MOUNTED WITH `track !== null` AND NOT WITH `immersive`. base-ui
+          renders nothing while `open` is false, so keeping it here costs a
+          closed Dialog.Root and buys the sheet its enter animation — a node
+          that appears in the same frame it is asked to animate has no first
+          frame to animate FROM. With no recording there is no transport to
+          open it and nothing to play, so then it is genuinely absent.
+
+          `titleHidden`: the sheet's visible heading is the exercise's own, out
+          of `listen_md`. The dialog still needs a NAME (4.1.2) and that name is
+          chrome — a different string on purpose, because two headings with one
+          accessible name read as a stutter and make `getByRole('heading')`
+          ambiguous, which is what `SessionRunningLightbox` is written up for.
+
+          NO `trigger` AND NO `finalFocus`, which is the same call
+          `SessionRunningLightbox` makes: a press opened this, the control that
+          took the press is still mounted behind the sheet, and base-ui returns
+          focus to the element it came from. The Lightbox's own docblock calls
+          that fallback "lucky" rather than guaranteed — it is guaranteed here
+          precisely because the stage is still there, inert, under the sheet. */}
+      {track !== null && (
+        <Lightbox
+          open={immersive}
+          surface="immersive"
+          origin={origin}
+          title={t('session.listen.immersiveTitle')}
+          titleHidden
+          closeLabel={t('session.listen.immersiveClose')}
+          onOpenChange={(next) => {
+            if (!next) leaveImmersive();
+          }}
+        >
+          {/* ONE ELEMENT, because the immersive surface gives its only child
+              the full height to arrange and leaves the arranging to the
+              caller. Three siblings here would get the ordinary stacking and
+              the foot of the sheet would sit under the instruction. */}
+          <div className="musie-immersive">
+            {/* THE QUESTION ALONE — `bodyOnly`, the mirror of the stage's
+                `headingOnly`, since 2026-10-07.
+
+                Between them the two states split one `listen_md`: the stage
+                shows the INSTRUCTION, because nothing has been listened to yet
+                and a question about what you are hearing has nothing to be
+                asked about; the sheet shows the QUESTION, because the track is
+                playing and that is the thing to hold.
+
+                IT USED TO SHOW BOTH, run together into one heading. The
+                instruction has already been read on the stage, and saying it
+                again here in display type made the question the smaller half
+                of its own screen. */}
+            <div className="musie-immersive__lead">
+              <Markdown md={exercise.listenMd} arrange={bodyOnly} />
+            </div>
+
+            {/* ── THE MINIMUM, AS THE LARGEST THING ON THE SHEET ──────────
+                `role="timer"` rather than a live region, and the two are
+                opposites: a timer's implicit `aria-live` is OFF, so the figure
+                is there to be read when somebody asks for it and is not
+                announced four times a second over the track it is counting.
+
+                THE CAPTION CARRIES THE MEANING, because the figure cannot. A
+                number alone on a listening screen reads as how long is LEFT;
+                what this is, is how much longer is the floor. So the caption
+                says so, and says the other thing once the floor is reached —
+                which is also the only announcement here, and it happens once.
+
+                The figure stops at 00:00 and does not go on to count the rest
+                of the track. It is one number with one meaning: a second
+                meaning arriving when the gate opened would be a worse clock
+                than no clock. */}
+            {/* ── THE COUNTDOWN, AND THE TRANSPORT BESIDE IT ─────────────
+                One row: the figure, then the control, to its right — Ben,
+                2026-10-07. The transport used to stand at the foot of the
+                sheet with the way on; it belongs with the thing it moves.
+
+                THE FIGURE GOES QUIET AT 00:00. It has finished its job, and a
+                figure still shouting 00:00 in display type keeps the eye on a
+                number that has stopped meaning anything. Muted, not removed:
+                the layout holds, and what it says is now a RESULT rather than
+                a demand. `data-done` rather than a second class, because it is
+                a state of this element and not a different element. */}
+            <div className="musie-immersive__clock">
+              <div className="musie-immersive__meter">
+                <p
+                  className="musie-immersive__time"
+                  role="timer"
+                  data-done={met ? 'true' : undefined}
+                >
+                  {clock(remaining)}
+                </p>
+
+                {/* THE `min` RUNG, so it stands exactly as high as a `min` CTA
+                    — 36px by the same construction, not by a copied number.
+                    Beside a 40–64px figure it is the quiet half of the row,
+                    which is right: the figure is what is being read and this
+                    is what interrupts it.
+
+                    GHOST AND NO READOUT, as before. The sheet is already
+                    counting, larger and for a different reason, and the
+                    track's own remainder is said once the minimum is done, in
+                    a sentence. */}
+                <TrackButton
+                  label={t('session.listen.track')}
+                  duration={track.durationSeconds}
+                  position={position}
+                  playing={playing}
+                  variant="ghost"
+                  size="min"
+                  hideTimer
+                  onTogglePlay={toggle}
+                  onRestart={toggle}
+                  playLabel={t('session.listen.play')}
+                  pauseLabel={t('session.listen.pause')}
+                  restartLabel={t('session.listen.restart')}
+                />
+              </div>
+
+              <p className="musie-immersive__caption">
+                {met ? doneText : t('session.listen.immersiveCountdown')}
+              </p>
+            </div>
+
+            {/* ── THE WAY ON, AT THE TRAILING EDGE — Ben, 2026-10-07 ──────
+                Right-aligned, and alone in its row now that the transport has
+                moved up beside the countdown. The alignment is the ROW's, not
+                the button's: `CtaButton.align` moves the LABEL inside the
+                control, which is a different thing and would leave the box
+                where it was.
+
+                Gated by the same latch as the stage's — `met`, which still
+                reads POSITION and still does not ask who moved it, so the
+                scrubber in the details view opens this button too.
+
+                IT DOES NOT REPEAT THE COUNTDOWN. `startLocked` out on the
+                stage interpolates the figure because the stage has nowhere
+                else to say it; here the figure is the largest thing on the
+                screen, and saying it twice is how a number stops being read.
+                So the locked label says what to do instead.
+
+                `onAdvance` NAVIGATES, and the step it navigates to has no view
+                parameter — so the sheet closes because the address it was
+                reading is gone. Closing it first as well would push a second
+                history entry between the two. */}
+            <div className="musie-immersive__actions">
+              <CtaButton
+                variant={met ? 'primary' : 'secondary'}
+                disabled={!met}
+                wrap
+                onClick={onAdvance}
+              >
+                {met
+                  ? t('session.listen.start')
+                  : t('session.listen.immersiveLocked')}
+              </CtaButton>
+            </div>
+          </div>
+        </Lightbox>
+      )}
     </>
   );
 }
