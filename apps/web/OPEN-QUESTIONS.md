@@ -6641,3 +6641,66 @@ What I need from Ben: **run `supabase db push`.** Until it has run, the page
 renders on the hosted build and every submit fails, because the table is not
 there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
 beside it.
+
+## All nine cards have artwork now, and `image_alt` is still null in both locales
+
+Where: `supabase/content/deck.json` (`image_alt`), `card_i18n.image_alt`,
+`artwork/cards/README.md` §"The alt text, when the web copies come"
+
+What I checked: `artwork/cards/README.md` already answers this in advance —
+null alt text "was honest while there was no artwork", and "once these exist it
+stops being honest". With `mc-06`–`mc-09` landing in this commit, all nine
+masters exist, so the condition the README set has been met. The earlier entry
+above ("The printed card is typographic, because the deck has no artwork") left
+the nulls alone on the stated grounds that there was no artwork for a card yet.
+That premise is now false.
+
+Nothing is broken *today*: `cards.image_url` still claims
+`assets/web/method-card.png`, which has never existed on disk, and no screen in
+the app renders card artwork — so there is no `<img>` whose alt text is missing.
+The hole opens the moment a screen draws one.
+
+What I did: **nothing, deliberately.** Writing nine German and nine English
+descriptions of nine illustrations is authoring, not seeding, and the one rule
+this repo has already written down about `image_alt` — the entry above,
+"Alt text that instructs rather than describes" — says the values are *heard,
+not read*, and that the rule should exist "before a nine-card deck's worth of
+`cards_i18n.image_alt` arrives". That rule is the thing to settle first.
+
+Why: inventing descriptions of pictures I cannot see would be worse than the
+null, which at least reports itself through `public.missing_translations`.
+
+What I need from Ben: **two things, before a screen renders card artwork.**
+(1) Say what a card's alt text is *for* — the feeling word is already on the
+card's own row, so a literal description of the illustration would repeat it,
+which is exactly the fault logged above for `exercise_i18n`. (2) Then the nine
+pairs go into `deck.json` and `pnpm deck:migration` lands them. Until then any
+screen drawing card artwork must treat alt as absent, not as present-and-empty.
+
+## The deck's last four pairs are cut against availability, not against mood
+
+Where: `supabase/content/deck.json`, `artwork/cards/README.md` §"The nine",
+`supabase/migrations/20261002153212_deck_test_deck_tracks.sql`
+
+What I checked: `mc-06`–`mc-09` pointed at `trk-06`–`trk-09`, and all four of
+those have `src` null — placeholder rows that were never real recordings. So
+four of the nine cards drew silence, and the listening is the exercise. The
+re-cut moves them onto the four tracks that do have files: `trk-05`, `trk-04`,
+`trk-02`, `trk-01`.
+
+What I did: applied it as the deck generator wrote it, and re-cut the mapping
+table in `artwork/cards/README.md` to match — the table a human uses to match a
+recording to a card, because `tracks.id` is opaque and `title`/`artist` are
+withheld by column grant.
+
+Why: a card that plays nothing cannot be listened to, and that is worse than a
+card whose recording is not the one its feeling would have chosen.
+
+What I need from Ben: **nothing to proceed. One consequence flagged.** The
+first five pairs were cut by hand against the mood (entry above: "The
+card-to-track pairing was re-cut by hand"). These four are cut against *what
+exists* — Sehnsucht and Wut now share High Sierra Call because there were four
+files and nine cards, not because longing and anger sound alike, and `trk-02`
+now carries three cards. When the five missing recordings land, the table wants
+re-cutting against the mood again. `trk-03` and `trk-06`–`trk-09` are paired
+with nothing until then.

@@ -5,6 +5,13 @@ The id is the primary key in `public.cards` and the lower case of the code
 printed on the card, so naming the file after it makes the wiring a lookup
 rather than a decision.
 
+**A file whose name is anything but a bare card id is ignored**, which is what
+makes `mc-01_alt.png` safe to keep here. `deck-pdf.mjs` looks for exactly
+`<card id><ext>` — not a prefix — so a superseded master can sit beside the one
+in use without a chance of being printed instead of it. Keep an alternate only
+while the choice between the two is still open; the folder is the print run's
+input, not an archive.
+
 **This folder is outside `apps/web/public/` on purpose.** Everything under
 `public/` is copied into the web build verbatim, and a print master is the one
 file that must never be: it is landscape, 300 dpi, and several megabytes that no
@@ -20,10 +27,10 @@ press gets these.
 | `mc-03.*` | MC-03 | Wut · Anger | `trk-05` | High Sierra Call — Roy Edwin Williams |
 | `mc-04.*` | MC-04 | Angst · Fear | `trk-01` | Little Yellow Petals — Rachel Sandy |
 | `mc-05.*` | MC-05 | Ruhe · Calm | `trk-02` | Wait for It — Jon Björk |
-| `mc-06.*` | MC-06 | Sehnsucht · Longing | `trk-06` | — no file yet |
-| `mc-07.*` | MC-07 | Dankbarkeit · Gratitude | `trk-07` | — no file yet |
-| `mc-08.*` | MC-08 | Einsamkeit · Loneliness | `trk-08` | — no file yet |
-| `mc-09.*` | MC-09 | Hoffnung · Hope | `trk-09` | — no file yet |
+| `mc-06.*` | MC-06 | Sehnsucht · Longing | `trk-05` | High Sierra Call — Roy Edwin Williams |
+| `mc-07.*` | MC-07 | Dankbarkeit · Gratitude | `trk-04` | Bats and Rats — Ludvig Moulin |
+| `mc-08.*` | MC-08 | Einsamkeit · Loneliness | `trk-02` | Wait for It — Jon Björk |
+| `mc-09.*` | MC-09 | Hoffnung · Hope | `trk-01` | Little Yellow Petals — Rachel Sandy |
 
 **The last column is `tracks.licence_ref`, and it is the only place the deck
 keeps the name you would recognise.** `tracks.id` is opaque on purpose —
@@ -31,18 +38,29 @@ keeps the name you would recognise.** `tracks.id` is opaque on purpose —
 by the client and a readable id would hand a listener the answer before the
 reveal. `title` and `artist` are withheld by column grant for the same reason.
 So when a recording needs to be matched to a card by a human, this table is the
-bridge. Only four are cleared Epidemic Sound tracks; the five with no file
-carry placeholder titles in the database that were never real recordings.
+bridge. Only four recordings are cleared Epidemic Sound tracks, and since
+2026-10-02 the deck plays nothing else: **every card now points at a track with
+a file.** No row in this table says "no file yet" any more, which is the point
+of the re-cut — a card that drew silence could not be listened to, and the
+listening is the exercise.
 
-*"No file yet" means `tracks.src` is null — the recording has not landed. It
-has nothing to do with the artwork; a silent card still prints.*
+**So four recordings cover nine cards, and five tracks are paired with
+nothing.** `trk-02` — Wait for It — plays for Trauer, Ruhe and Einsamkeit;
+`trk-01`, `trk-04` and `trk-05` each play for two. The schema allows it:
+`exercise_tracks` is unique on (exercise, card), not on track, which is the
+whole reason a recording is stored once and pointed at rather than copied.
+`trk-03` and `trk-06`–`trk-09` are now paired with no card at all. None of
+them has a file either, so nothing is lost today; they are five rows waiting
+for a recording and a card to want it, and they carry placeholder titles that
+were never real recordings.
 
-**Two recordings do double duty and one is unused.** `trk-02` — Wait for It —
-plays for both Trauer and Ruhe, which the schema allows: `exercise_tracks` is
-unique on (exercise, card), not on track, which is the whole reason the
-recording is stored once and pointed at. And `trk-03` is now paired with no
-card at all. It has no file either, so nothing is lost today; it is a row
-waiting for a recording and a card to want it.
+**A feeling and its recording are no longer matched, and that is the cost.**
+The first five pairs were cut by hand against the mood (`trk-05` High Sierra
+Call for Wut, and so on, logged in `apps/web/OPEN-QUESTIONS.md`). The last four
+are cut against *availability* — Sehnsucht and Wut now share one recording
+because there were four files and nine cards, not because longing and anger
+sound alike. When the missing recordings land, re-cut this table against the
+mood and `pnpm deck:migration` lands it.
 
 **The card-to-track mapping is not set here.** It lives in
 `supabase/content/deck.json` under each card's `plays`, one entry per exercise,
