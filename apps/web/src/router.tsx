@@ -210,6 +210,21 @@ export const router = createBrowserRouter([
         },
         handle: handle({ titleKey: 'scan.dev.title' }),
       },
+      {
+        /* GOAL MAPPINGS — a tool, like /dev/qr above, and lazy for the same
+           reason: `FilterChips` is used nowhere else in the app, so loading
+           it this way keeps it out of everybody's first paint.
+
+           NOT UNDER /dev, because Ben asked for this path. It is still linked
+           from nowhere and still writes nothing — it emits a config that
+           becomes a migration. See the header of routes/GoalMappings.tsx. */
+        path: 'goal-mappings',
+        lazy: async () => {
+          const { GoalMappings } = await import('./routes/GoalMappings');
+          return { Component: GoalMappings };
+        },
+        handle: handle({ titleKey: 'route.goalMappings.title' }),
+      },
       /* `/done` IS GONE. The prototype ended on a screen that acknowledged the
          session and offered to share it; C.2 cut sharing, and D.5 routes a
          finished run straight into its own diary entry — which already says

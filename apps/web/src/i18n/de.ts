@@ -410,6 +410,33 @@ export const de: Messages = {
   'session.listen.track': 'Dein Stück',
   'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
   'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
+
+  /* ── Die Hör-Ansicht · Branch LISTEN-EXPERIMENTS ────────────────────────
+     'Hören' als Substantivierung, weil die Ansicht ein Name braucht und kein
+     Befehl ist (§3's Ausnahme für Überschriften). 'Hören beenden' ist dagegen
+     eine Handlung und steht als Verbphrase da — und sie ist wahr: das Verlassen
+     der Ansicht pausiert das Stück. */
+  'session.listen.immersiveTitle': 'Hören',
+  'session.listen.immersiveClose': 'Hören beenden',
+  /* Die Bildunterschrift steht UNTER der Zahl und wiederholt sie nicht.
+     'Noch mindestens so lange' — 24 Zeichen gegen 25 im Englischen, also
+     unter dem Budget aus §5. */
+  'session.listen.immersiveCountdown': 'mindestens hören für diese Übung',
+  /* Bens Wortlaut, 2026-10-07. Ersetzt `immersiveReady`, das nur eine Schwelle
+     meldete: dieser Satz sagt, was geschafft ist, und gibt den Rest des Stücks
+     als ANGEBOT zurück, nicht als Auflage.
+
+     Beide Zahlen als MM:SS, Bens Entscheidung — `{gate}` ist dieselbe Zahl,
+     die der Zähler darüber gerade heruntergezählt hat, und eine andere Einheit
+     an dieser Stelle läse sich als andere Zahl. Interpoliert, weil
+     `listen_gate_seconds` je Übung 60, 90 oder 180 ist. */
+  'session.listen.immersiveDone': 'Super, dass du dich {gate} fokussiert hast. Mach noch {remaining} weiter, wenn du magst.',
+  /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
+     Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {gate} fokussiert hast. Das Stück ist zu Ende. Wenn du magst, hör es noch einmal.',
+  /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
+     §8 ist der Ort, an dem das zu diskutieren wäre. */
+  'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
   'session.listen.detailsAction': 'Über den Track',
   'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten des Tracks beeinflussen zu lassen.',
@@ -781,14 +808,54 @@ export const de: Messages = {
      so the half you might press says what pressing it would get you.
      'Stapel', not 'Kartenstapel' — one word beside a glyph in a 36px track,
      and 'Stapel' already says it while 'Liste' stands next to it. */
+  /* ── Die Legende beim ersten Mal · die Extra-Karte des Stapels ──────────
+     Bens Wortlaut, 2026-10-07, mit zwei Korrekturen: 'finden' statt 'funen',
+     und 'passendere' bleibt — der Komparativ ist richtig, weil die Übungen
+     ohne Ziel schon passen und mit Ziel besser.
+
+     Jede Zeile sagt, was die Bedienung EINBRINGT, nicht wie sie heißt.
+     Imperativ Singular und du, wie überall (§1).
+
+     `guide.dismiss` wird nie gesehen: die Zeile nur für Screenreader, weil die
+     Legende ein einziger Button ist und ihr zugänglicher Name sonst aus drei
+     Erklärungssätzen ohne Verb besteht. */
+  'exercises.guide.next': 'Nächste Übung',
+  'exercises.guide.start': 'Zum Starten auf die Karte oder den Button drücken',
+  'exercises.guide.goal': 'Wähle dein Ziel aus, um noch passendere Übungen zu finden',
+  'exercises.guide.dismiss': 'Zum Fortfahren drücken',
+  /* Verbphrase (§3). */
+  'exercises.guide.show': 'Zeigen, wie diese Seite funktioniert',
   'exercises.view.legend': 'Wie die Übungen gezeigt werden',
   'exercises.view.deck': 'Stapel',
   'exercises.view.list': 'Liste',
+  /* Überschrift, also eine Nominalphrase — §3's exception: a heading is not
+     an action. 'Wähle ein Ziel' would be the verb phrase and is the one thing
+     a heading does not take. */
+  'exercises.goal.headline': 'Dein Ziel',
+  /* du, and NO 'gerade heute': the brief had both and they say the same
+     thing twice — 'gerade' is right now, 'heute' is today. 'heute' is the one
+     that matches a choice you make once a day. Flagged in OPEN-QUESTIONS. */
+  'exercises.goal.question': 'Was möchtest du heute erreichen?',
+  'exercises.goal.none': 'Musie entdecken',
+  'exercises.goal.pill': 'Ziel: {goal}',
+  'exercises.goal.empty': 'Für dieses Ziel gibt es noch keine Übung.',
+  /* Verbphrase, Infinitiv — ein Button sagt, was er tut (§3). */
+  'exercises.goal.emptyAction': 'Anderes Ziel wählen',
+  /* /goal-mappings — ein Werkzeug, kein Screen. Trotzdem im Katalog, aus dem
+     Grund, den en.ts nennt. */
+  'goalMap.headline': 'Ziel-Zuordnungen',
+  'goalMap.intro': 'Wähle aus, welche Ziele jede Übung bedient, erzeuge die Konfiguration und füge sie im Chat wieder ein. Hier wird nichts gespeichert – die Zuordnung ändert sich per Migration.',
+  'goalMap.legend': 'Welche Ziele jede Übung bedient',
+  'goalMap.submit': 'Konfiguration erzeugen',
+  'goalMap.outputLabel': 'Konfiguration',
+  'goalMap.copy': 'Kopieren',
+  'goalMap.copied': 'Kopiert',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',
   'route.diaryEntry.title': 'Tagebucheintrag',
   'route.exercises.title': 'Übungen',
+  'route.goalMappings.title': 'Ziel-Zuordnungen',
   /* A Gedankenstrich: German sets a parenthetical dash as an EN dash with
      spaces, where English sets an em dash. The English key keeps its '—'. */
   'route.session.title': 'Aktuelle Session – {step}',

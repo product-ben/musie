@@ -93,7 +93,7 @@ function startedSession(userId: string) {
     user_id: userId,
     exercise_id: 'mindfulness-cards',
     card_id: 'mc-03',
-    situation_id: 'feel-feelings',
+    goal_id: 'mindfulness',
     track_id: 'trk-03',
     status: 'started',
     step: 'intro',

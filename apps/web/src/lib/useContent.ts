@@ -11,8 +11,8 @@
  * dead code that still has to be maintained.
  */
 import * as React from 'react';
-import { getExercises, getUserTypes } from './content';
-import type { Exercise, UserType } from './content';
+import { getExercises, getGoals, getUserTypes } from './content';
+import type { Exercise, Goal, UserType } from './content';
 import { useAsync } from './useAsync';
 import type { AsyncState } from './useAsync';
 import { useLocale } from '../i18n/localeContext';
@@ -33,4 +33,19 @@ export function useUserTypes(): AsyncState<UserType[]> {
   const run = React.useCallback(() => getUserTypes(locale), [locale]);
 
   return useAsync(run, `user-types:${locale}`);
+}
+
+/**
+ * The goals, for the picker on /exercises.
+ *
+ * Keyed on the locale like every other content hook, so switching language
+ * re-reads the labels with no reload. The `sort` is the content's and does
+ * not change with the locale, so the order survives the swap.
+ */
+export function useGoals(): AsyncState<Goal[]> {
+  const { locale } = useLocale();
+
+  const run = React.useCallback(() => getGoals(locale), [locale]);
+
+  return useAsync(run, `goals:${locale}`);
 }

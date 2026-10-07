@@ -28,10 +28,10 @@ erDiagram
     PERSON ||--o{ SESSION : "runs"
     SESSION }o--|| EXERCISE : "is one run of"
     SESSION }o--o| CARD : "drew"
-    SESSION }o--o| SITUATION : "came from"
+    SESSION }o--o| GOAL : "was run for"
     SESSION ||--o| REFLECTION : "ends in"
     SESSION }o--o| TRACK : "played"
-    EXERCISE }o--o{ SITUATION : "is offered for"
+    EXERCISE }o--o{ GOAL : "serves"
     EXERCISE ||--o{ EXERCISE_TRACK : "sounds like"
     CARD ||--o{ EXERCISE_TRACK : "is paired in"
     EXERCISE_TRACK }o--|| TRACK : "plays"
@@ -47,7 +47,7 @@ erDiagram
         uuid user_id FK
         text exercise_id FK
         text card_id FK "null unless a card was drawn"
-        text situation_id FK "open — D6"
+        text goal_id FK "null = no goal, deliberately"
         text track_id FK "what actually played — TEXT, not uuid. Null before the listen step"
         text status "started | finished | abandoned"
         text step "intro | scan | listen | reflect"
@@ -85,7 +85,7 @@ erDiagram
         text card_id FK "null = the exercise's own track"
         text track_id FK "which recording plays"
     }
-    SITUATION {
+    GOAL {
         text id PK
         text label "per locale"
     }
@@ -152,7 +152,7 @@ last step.
 
 Created by a trigger on `auth.users` insert, never by the client.
 
-### Exercise — `exercises` + `exercise_i18n` + `exercise_situations`
+### Exercise — `exercises` + `exercise_i18n` + `exercise_goals`
 
 The library. Five rows; two implemented — Achtsame Pause / Mindful Pause
 (`mindfulness-cards`) and Freie Bahn / Free Rein (`free-rein`), which draws the
@@ -319,10 +319,41 @@ the exercise is a listener who is not primed by the track name.
 > new rows in `exercise_tracks`, none in `tracks`, and one credit per
 > recording rather than two that could disagree.
 
-### Situation — `situations` + `exercise_situations`
+### Goal — `goals` + `goal_i18n` + `exercise_goals`
 
-Three situations, seven pairs. How the prototype narrows which exercise to
-offer.
+**RENAMED FROM `situations` ON 2026-10-07, and it was free.** The three tables
+had been built on 2026-09-18 and read by nothing: no file under `apps/web` had
+ever selected from them, `20260923150000` says so in a comment of its own, and
+`sessions.situation_id` was null on every row that had ever existed. So the
+shape this feature wanted already existed — a taxonomy, an N:M against
+exercises, a nullable column on the session — and the only thing wrong with it
+was its name.
+
+A situation is where you are coming from (*"what can I do about this
+feeling?"*); a goal is what you are after (*„Was möchtest du heute
+erreichen?"*). Structurally identical, and the product asks the second one.
+
+Three rows, and the fourth option on screen is **not one of them**:
+
+| id | sort | de | en |
+|---|---|---|---|
+| `mindfulness` | 1 | Achtsamkeit stärken | Strengthen mindfulness |
+| `relax` | 2 | Entspannen | Relax |
+| `wake-up` | 3 | Aufwachen | Wake up |
+
+**„Musie entdecken" is the ABSENCE of a goal**, not a row — it writes null to
+`sessions.goal_id`. A row would have to be mapped to every exercise, and the
+first exercise added without remembering to map it would vanish from the one
+option that promises everything. Absence cannot fall out of step with the
+catalogue. `apps/web/src/lib/goals.ts` owns that distinction and is where the
+sentinel turns back into null.
+
+> **The mapping is provisional and says so.** All five exercises are mapped to
+> `mindfulness` alone (Ben, 2026-10-07), so **Entspannen and Aufwachen offer
+> nothing** — a real state of the mapping, drawn as its own sentence rather
+> than as an empty pile. `/goal-mappings` is the tool that replaces it: it
+> reads the mapping, lets it be edited, and emits a config that becomes the
+> next migration. It writes nothing itself; content changes by migration only.
 
 ---
 
@@ -341,7 +372,7 @@ One run of one exercise by one person.
 | `user_id` | uuid | → `profiles`, **on delete cascade** |
 | `exercise_id` | text | → `exercises`, **on delete restrict** |
 | `card_id` | text, **nullable** | → `cards`, **on delete set null** |
-| `situation_id` | text, **nullable** | → `situations`, **on delete set null**. Recorded, never yet filled — D6 |
+| `goal_id` | text, **nullable** | → `goals`, **on delete set null**. Written since 2026-10-07; **null is a real answer** — see D6 |
 | `track_id` | **text**, nullable | → `tracks`, **on delete restrict**. What actually played |
 | `status` | text | `started` · `finished` · `abandoned`, by check constraint |
 | `step` | text | `intro` · `scan` · `listen` · `reflect`, by check constraint |
@@ -360,7 +391,7 @@ did, which points three different ways:
 - `exercise_id` and `track_id` **restrict** — retiring an exercise or a
   recording somebody has already done fails loudly rather than deleting their
   history or quietly unhooking it.
-- `card_id` and `situation_id` **set null** — retiring one of those loses the
+- `card_id` and `goal_id` **set null** — retiring one of those loses the
   detail, not the entry.
 - `user_id` **cascade** — a session dies with its person, and only that way.
 
@@ -632,12 +663,22 @@ twice). See the Exercise section above.
 and now in `sessions.step`'s check constraint. See D14 for the one case that
 still needs an answer.
 
-### D6 · Does a session record its situation? — YES, ASKED LATER
+### D6 · Does a session record its situation? — YES, AND IT IS NOW A GOAL
 
-`situation_id` is on the table, nullable, and null for every row: nothing in
-the flow puts the question to anyone yet. The column is there because it was
-free before the schema deployed and an `alter table` against live rows
-afterwards.
+**Answered on 2026-10-07, three weeks after the column was built on the
+argument that it was free now and an `alter table` later.** That bet paid: the
+column, the taxonomy, the N:M and every grant and policy around them were
+already in place when the product finally asked the question, so shipping it
+cost a rename and a re-seed rather than a schema.
+
+What it records changed with the question. `/exercises` asks *„Was möchtest du
+heute erreichen?"* before it deals a single card, and `sessions.goal_id` keeps
+the answer — so the column holds what the run was FOR rather than where it was
+found. See the Goal section above.
+
+**Null is a real answer, not a gap.** „Musie entdecken" is one of the four
+options and it means no goal, so a null here says *this run had none* rather
+than *we forgot to ask*. The diary must not read the two as the same thing.
 
 ### D7 · What does the Diary show for an abandoned session? — IN THE LIST, MARKED UNFINISHED
 

@@ -578,6 +578,54 @@ export const en = {
      paragraph is gone. */
   'session.listen.startLocked': 'Focus for {countdown} minutes more',
   'session.listen.start': 'Start reflecting whenever you are ready',
+
+  /* ── The listening view · the LISTEN-EXPERIMENTS branch ──────────────────
+     The press on the stage's transport opens a full-screen sheet and the track
+     plays in there: the exercise's own words, the minimum time counting down,
+     and the way on once it has run out. The stage keeps the same three strings
+     it had — this is a second place to read them, not a replacement — and what
+     is new is the frame and the clock.
+
+     `immersiveTitle` is the SHEET'S ACCESSIBLE NAME and is never seen: the
+     exercise's own headline is what the sheet shows (4.1.2 still wants a name,
+     and a noun phrase is what a view is called). The two are deliberately
+     different strings — a chrome name that repeated the content's heading would
+     put two headings with one name in the tree, which is the stutter
+     `SessionRunningLightbox` is written up for. */
+  'session.listen.immersiveTitle': 'Listening',
+  /* THE X ENDS THE LISTENING, it does not only close a window — leaving the
+     sheet pauses the track, so the label says the thing that happens rather
+     than the thing that is clicked. */
+  'session.listen.immersiveClose': 'End listening',
+  /* The caption UNDER the big figure, so it does not have to repeat it. "This
+     much" is the number above; what the caption adds is that the number is a
+     floor and not a length. */
+  'session.listen.immersiveCountdown': 'minimum listening for this exercise',
+  /* ── ONCE THE MINIMUM IS DONE — Ben, 2026-10-07 ────────────────────────
+     It replaces `immersiveReady` ("You have listened long enough"), which
+     reported a threshold and stopped there. This says what was achieved and
+     then hands the rest of the track back as an OFFER rather than as a
+     requirement, which is the same soft-gate posture as the scrubber.
+
+     BOTH FIGURES ARE MM:SS, Ben's call over rounded words: the gate is the
+     same number the counter above just finished counting, so saying it in a
+     different unit here would read as a different number.
+
+     `{gate}` is interpolated and never written out, because it is
+     `exercises.listen_gate_seconds` and varies — 60, 90 and 180 across the
+     five exercises. */
+  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate}. Carry on for another {remaining} if you like.',
+  /* THE TRACK CAN ALREADY BE OVER when the gate opens — a short recording, or
+     somebody who scrubbed to the end. "Carry on for another 00:00" is the
+     sentence that gets written when nobody checks. No dash, at Ben's request;
+     two sentences carry it. */
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {gate}. The track has finished. Play it again if you like.',
+  /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
+     `startLocked` does on the stage — the figure is already the largest thing
+     on the sheet, and saying it twice on one screen is how a number stops
+     being read. So the disabled button says what to do instead of what to
+     wait for. */
+  'session.listen.immersiveLocked': 'Focus until the counter runs out. Then you can carry on',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
   /* ── The three scroll views · E.5b ──────────────────────────────────────
@@ -1107,14 +1155,71 @@ export const en = {
      ONE WORD EACH. The drawn one sits in a 36px track beside a glyph, so this
      is the shortest true name for each view rather than its description —
      'Stack', not 'Card stack'. */
+  /* ── THE FIRST-USE LEGEND · the deck's extra card ───────────────────────
+     Three rows, one per control the screen offers and none of which says what
+     it is on its own: two chevrons, a card you press, and a funnel. Shown
+     once per browser and brought back by the `?` beside the chevrons.
+
+     EACH LINE NAMES WHAT THE CONTROL GETS YOU, not what it is. "The next
+     exercise", not "browse"; "press the card", not "tap target". A legend that
+     named the parts would be a glossary for a screen with three controls on
+     it.
+
+     `guide.dismiss` IS NEVER SEEN. It is the sr-only line that tells a screen
+     reader what pressing this does, because the legend is one big button and
+     its accessible name is otherwise three sentences of explanation with no
+     verb among them. */
+  'exercises.guide.next': 'The next exercise',
+  'exercises.guide.start': 'Press the card or the button to start',
+  'exercises.guide.goal': 'Choose your goal to find exercises that suit you better',
+  'exercises.guide.dismiss': 'Press to continue',
+  /* The `?` beside the chevrons. A verb phrase, because it is an action and
+     not a label for a thing. */
+  'exercises.guide.show': 'Show how this page works',
   'exercises.view.legend': 'How to show the exercises',
   'exercises.view.deck': 'Stack',
   'exercises.view.list': 'List',
+  /* ── THE GOAL, AND THE FOUR THINGS IT NEEDS TO SAY ──────────────────────
+     The three goal LABELS are content and live in `goal_i18n` — they are the
+     product's own words and change by migration. Everything here is chrome:
+     the question, the pill, the fourth option, and the sentence for a goal
+     nothing serves.
+
+     `exercises.goal.none` IS CHROME and the other three labels are not, which
+     looks inconsistent and is not: "Musie entdecken" has no row to be the
+     label of. It means the absence of a goal (see lib/goals.ts), so there is
+     nowhere else for it to live. */
+  'exercises.goal.headline': 'Your goal',
+  /* THE FIELDSET'S LEGEND, not the box's headline — RadioGroupText has no
+     `legendHidden`, so a visible headline above it would ask the question
+     twice. The ContentBox keeps the same string as a hidden headline for the
+     document outline. */
+  'exercises.goal.question': 'What would you like to achieve today?',
+  'exercises.goal.none': 'Discover Musie',
+  'exercises.goal.pill': 'Goal: {goal}',
+  /* NOT `content.empty`, which says the catalogue did not load. This says it
+     loaded and has nothing for this goal — a true sentence about a mapping,
+     not a failure. */
+  'exercises.goal.empty': 'No exercise serves this goal yet.',
+  'exercises.goal.emptyAction': 'Choose a different goal',
+  /* ── /goal-mappings — A TOOL, NOT A SCREEN ──────────────────────────────
+     Linked from nowhere and reachable only by typing the path. It still goes
+     through the catalogue, exactly as /dev/qr does: rule 7 is about where
+     strings live, not about who is expected to read them, and a tool with
+     inline strings is the one place the next inline string gets added. */
+  'goalMap.headline': 'Goal mappings',
+  'goalMap.intro': 'Tick which goals each exercise serves, then generate the config and paste it back into the chat. Nothing here is saved — the mapping changes by migration.',
+  'goalMap.legend': 'Which goals each exercise serves',
+  'goalMap.submit': 'Generate config',
+  'goalMap.outputLabel': 'Config',
+  'goalMap.copy': 'Copy',
+  'goalMap.copied': 'Copied',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',
   'route.diaryEntry.title': 'Diary entry',
   'route.exercises.title': 'Exercises',
+  'route.goalMappings.title': 'Goal mappings',
   'route.session.title': 'Current session — {step}',
   'route.notFound.title': 'Not found',
 } as const;

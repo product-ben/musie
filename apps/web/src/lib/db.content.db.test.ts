@@ -81,7 +81,7 @@ describe('tracks · the ids are opaque, and that is the security model', () => {
     const checks = await Promise.all([
       service.from('card_i18n').select('card_id, feeling').like('feeling', '[[]DE] %'),
       service.from('exercise_i18n').select('exercise_id, name').like('name', '[[]DE] %'),
-      service.from('situation_i18n').select('situation_id, label').like('label', '[[]DE] %'),
+      service.from('goal_i18n').select('goal_id, label').like('label', '[[]DE] %'),
       service.from('user_type_i18n').select('user_type_id, label').like('label', '[[]DE] %'),
     ]);
 

@@ -5,6 +5,7 @@
  * invented.
  */
 import type * as React from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowRight, Shuffle } from 'lucide-react';
 import { CtaButton } from '../src/CtaButton';
@@ -175,6 +176,14 @@ type Story = StoryObj<typeof meta>;
  * The *Start* in each card's bottom row is the FACE's, placed through the
  * accept the deck hands it — and the cards behind the top one are `inert`, so
  * four more of those buttons are neither focusable nor announced.
+ *
+ * THE DOTS UNDER THE PILE ARE THE DECK'S, not the story's (added 2026-10-08).
+ * Drawn whenever there is more than one card, centred under the pile rather
+ * than under the deck, and `aria-hidden` spans rather than buttons — `Dots`'
+ * own documented Card Deck case, because a row of unpressable buttons tells a
+ * screen reader only that they cannot be pressed. The live region keeps
+ * carrying `positionLabel`, which is also the string the dots are labelled
+ * from: the deck asks for no second prop.
  */
 export const Default: Story = {};
 
@@ -223,8 +232,9 @@ export const WithActions: Story = {
 /** Two cards: the floor at which a pile still reads as a pile. */
 export const TwoCards: Story = { args: { items: ITEMS.slice(0, 2) } };
 
-/** One card. There is nothing behind it, so the scatter has nothing to show
- *  and the deck is just a card — correct, and worth seeing.
+/** One card. There is nothing behind it, so the scatter has nothing to show,
+ *  the dots are not drawn, and the deck is just a card — correct, and worth
+ *  seeing.
  *
  *  BOTH DIRECTIONS ARE DISABLED HERE, which is the honest state: a pile of one
  *  has no other card to go to either way. The swipe springs back for the same
@@ -241,4 +251,46 @@ export const Narrow: Story = {
       <CardDeck {...args} />
     </div>
   ),
+};
+
+/**
+ * THE DEAL. `dealKey` is a KEY, not a trigger: change it and the pile deals
+ * itself in, staggered by depth, landing on each card's own resting place in
+ * the stack.
+ *
+ * It is a key rather than a boolean so the consumer never owns the
+ * animation's lifetime — it says only "this is a different pile from the one
+ * before", and the deck decides what that costs and when it is over. Press
+ * the button to change it.
+ *
+ * Undefined never deals, which is why `Default` above is still. Any defined
+ * value that differs from the last one deals, INCLUDING the first — a deck
+ * mounted in answer to a choice is the common case and must not be the silent
+ * one. /exercises passes the chosen goal, so picking a goal deals the pile and
+ * nothing else does.
+ *
+ * UNDER `prefers-reduced-motion` the cards arrive together with no travel:
+ * Layer 1 collapses the duration and the travel, and `--musy-deck-deal-stagger`
+ * is a token so that the WAIT collapses too. Turn reduced motion on and press
+ * the button again — that is the check a literal delay would have failed.
+ */
+export const Dealt: Story = {
+  render: (args) => {
+    /* eslint-disable-next-line react-hooks/rules-of-hooks -- a story body is a
+       component; Storybook renders it as one. */
+    const [key, setKey] = useState('deal-1');
+    return (
+      <div style={{ display: 'grid', gap: 'var(--space-gap-group)', justifyItems: 'start' }}>
+        <CtaButton
+          variant="secondary"
+          size="min"
+          leadingIcon={Shuffle}
+          onClick={() => setKey(`deal-${String(Date.now())}`)}
+        >
+          Deal again
+        </CtaButton>
+        <CardDeck {...args} dealKey={key} />
+      </div>
+    );
+  },
 };

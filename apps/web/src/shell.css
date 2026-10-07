@@ -1661,6 +1661,26 @@ html[data-musy-scroll-snap] {
   margin-block-end: 0;
 }
 
+/* ── THE TRANSPORT'S WRAPPER, WHICH IS ALSO THE MEASURED BOX ───────────────
+   One declaration, and it does two jobs with one mechanism.
+
+   IT HUGS. `.musy-btn` is inline-flex, so a block parent is all it takes to
+   stop the button being stretched the width of a stretch flex column — which
+   is what the plain <div> here was always for.
+
+   AND IT IS WHAT THE LISTENING VIEW OPENS OUT OF. The sheet is clipped to the
+   control's rect on its first frame, and `TrackButton` forwards no ref, so the
+   rect has to come from a box this screen owns. `fit-content` is what makes
+   that box the same box: a full-width wrapper would open the sheet out of a
+   band the width of the column with a button somewhere inside it.
+
+   `inline-size` BEATS THE COLUMN'S STRETCH without `align-self`: a flex item
+   with a definite cross size is not stretched, so the one property settles it
+   rather than two properties agreeing.                                      */
+.musie-listen__transport {
+  inline-size: fit-content;
+}
+
 /* ── ONE ROW, ONE CONTROL, BELOW EVERYTHING ────────────────────────────────
    The way back, at the foot of the STEP — after all three snap views, in
    ordinary document flow.
@@ -1794,6 +1814,249 @@ html[data-musy-scroll-snap] {
 
 .musie-listen__rail > * {
   pointer-events: auto;
+}
+
+
+/* ═══ THE LISTENING VIEW ════════════════════════════════════════════════════
+   What the step's full-screen sheet holds, from the top: the exercise's own
+   words, the minimum time, and the two controls.
+
+   A PERMITTED CUSTOM PATTERN (L14), and a narrow one. The FRAME is the design
+   system's — `Lightbox surface="immersive"` owns the scrim, the edge-to-edge
+   surface, the clip that opens out of the control and the insets, because a
+   screen styling a panel popup into a full-screen one is reaching into a
+   component's geometry (L7, rule 1). What is left here is the ARRANGEMENT of
+   this step's three things inside the single element the sheet hands over, and
+   the system has no component for that. Every declaration resolves to a Layer 1
+   token or to a keyword (L14.1); the classes are `musie-` (L14.2); a second
+   screen wanting this column is a component request (L14.3).
+
+   ── THE MIDDLE TAKES THE SLACK ──────────────────────────────────────────
+   Three children and `margin-block: auto` on the middle one, rather than
+   `justify-content: space-between` on the column. The difference shows on a
+   short screen: `space-between` distributes what is left between all three
+   gaps, so a 568px landscape phone gets the instruction, a figure a third of
+   the way down and the buttons — none of them where the design puts them. An
+   auto margin takes the remainder and collapses to the gap when there is none,
+   so the order degrades to a plain stack instead of to a different layout.
+
+   The column gets its full height from the component (`:only-child` inside
+   `.musy-lightbox__body`); what it does with it is here.                    */
+.musie-immersive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+/* The step's copy carries its own bottom margin wherever it is followed by
+   whatever a step draws. In here the column's gap is the spacing and the two
+   would add up — the same line `.musie-listen__lead` needs for the same
+   reason. */
+.musie-immersive__lead > .musie-md {
+  margin-block-end: 0;
+  /* ── THE CONTAINER'S CAP IS LIFTED, OR THE HEADING'S NEVER BINDS ───────
+     `.musie-md` caps itself at `--measure-body`, which is 62ch AT BODY SIZE —
+     measured 698px at 1280px wide, against the heading's own 50ch cap of
+     818px. The narrower of the two wins and it was always the parent, so
+     raising the heading alone moved nothing at all.
+
+     Safe here and nowhere else: this lead holds the heading and nothing else
+     since the subline was dropped, so there is no body copy left inside it for
+     a reading measure to protect. The heading carries its own cap below. */
+  max-inline-size: none;
+}
+
+/* ── THIS HEADING IS NOT A STEP HEADLINE ANY MORE ─────────────────────────
+   `.musie-md h2` is typeset for the thing it almost always is: a short title
+   above a step. Two Layer 1 defaults do that work, and on this sheet both of
+   them are wrong for the shape the copy now has.
+
+   `--measure-heading` IS 26ch, AND THAT IS THE HARD CAP. Measured: "What
+   picture forms in your" is exactly 26 characters, which is why the merged
+   sentence pair came apart into four short lines with two thirds of a 1280px
+   window empty beside it. A title wants a narrow measure so it lands as one
+   thought; this is a question AND an instruction run together, and it wants a
+   reading measure.
+
+   `--text-wrap-heading` IS `balance`, which is the other half and the less
+   obvious one. Balance does not fill lines — it EVENS them, so even inside a
+   wider cap it would keep handing back four tidy short lines rather than three
+   full ones. `--text-wrap-body` is `pretty`: fill each line, and only lift the
+   last word down if the line would otherwise be left orphaned.
+
+   50ch IS BEN'S NUMBER, 2026-10-07, and it is written out rather than taken
+   from a token because Layer 1 has only two measures — 26ch for a heading and
+   62ch for body copy — and this is deliberately neither. The app already sets
+   one raw `ch` measure for the same kind of reason (`.musie-listen__warn`).
+   Logged in OPEN-QUESTIONS.md: a THIRD measure in the app is a token request,
+   not a third literal.
+
+   Scoped to the sheet. The stage's headline is still one short sentence and is
+   still a step headline, so it keeps both defaults.                         */
+.musie-immersive__lead .musie-md h2 {
+  max-inline-size: 50ch;
+  text-wrap: var(--text-wrap-body);
+}
+
+/* ── THE HEADING STEPS AROUND THE CLOSE CONTROL ───────────────────────────
+   The X is absolutely positioned in the sheet's top-trailing corner and the
+   heading now runs to 50ch, so the two met: the first line ran under the
+   glyph.
+
+   A FLOAT, NOT A PADDING, and that is the whole of why this is three lines
+   instead of one. `padding-inline-end` on the heading would shorten EVERY
+   line by the control's width, including the ones nowhere near it — which
+   undoes the thing this heading was just widened for. A float is a notch: the
+   lines beside the control wrap short, and every line below it runs the full
+   measure.
+
+   AND THE CONTROL STAYS IN THE HEADING'S FIRST ROW, which is the other half of
+   the brief. Clearing it vertically instead — starting the heading below the
+   X — would have been one declaration, and it would have put a 60px hole above
+   a sheet that is already inset from the window.
+
+   THE SIZE IS THE COMPONENT'S, through `--musy-lightbox-close-reserve-*`: how
+   far its close control reaches past the content's own inset, published by the
+   Lightbox because the Lightbox is what declares the control's width, margin
+   and inset. This screen knows only that something occupies that corner. Two
+   properties because only the inline one carries a gap — there is nothing
+   beside the control vertically. The fallback is 0, so a sheet with no close
+   control loses nothing.
+
+   `inline-end` rather than `right`, like every other logical property here, so
+   the notch mirrors in RTL without a second rule. On the h2 itself and not on
+   `.musie-md`, which is a flex container — a float inside one is ignored, and
+   a float that is ignored is a silent return of the bug.                    */
+.musie-immersive__lead .musie-md h2::before {
+  content: '';
+  float: inline-end;
+  inline-size: var(--musy-lightbox-close-reserve-inline, 0);
+  block-size: var(--musy-lightbox-close-reserve-block, 0);
+}
+
+/* ── THE MINIMUM, AS THE LARGEST THING ON THE SHEET ───────────────────────
+   LEFT-ALIGNED, with the instruction above it and the buttons below it, and
+   that is this step's house style rather than an oversight: the Störer and the
+   details view are both top-left for the reason written in their own block —
+   centred, a sentence floats in the middle of nothing with its controls adrift.
+   A centred figure on a left-aligned sheet would be the one element not on the
+   column everything else is on.
+
+   VERTICALLY centred, though, which is what the auto margin is. The figure
+   belongs in the middle of the screen; it does not belong in the middle of the
+   measure.                                                                  */
+.musie-immersive__clock {
+  margin-block: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+}
+
+/* ── THE FIGURE AND THE CONTROL THAT MOVES IT, IN ONE ROW ─────────────────
+   The transport sat at the foot of the sheet with the way on, which put the
+   thing that pauses the track two blocks away from the thing counting it.
+
+   `center`, not `baseline`. Baseline reads better under a fixed heading size
+   and this one is not fixed: `--type-display-xl-size` clamps 40px → 64px
+   across the breakpoints, so a baseline-aligned 36px control would sit at a
+   different height on a phone than on a laptop. Centred, it tracks the figure
+   whatever the clamp resolves to.
+
+   `fit-content` on the inline axis so the row is as wide as its two children
+   and the control sits beside the figure rather than being pushed out by a
+   stretched row — the column it is in is `align-items: stretch`.
+
+   THE GAP IS SMALLER THAN IT LOOKS. `.musy-btn--min` bakes in `margin: 8px`
+   of its own (the system calls it the rung's spacing exception), so
+   `--space-gap-inline` here lands ~8px wider than the token says. Left as the
+   token rather than hand-corrected: the correction would be a number this
+   screen invented, and L14.1 wants every declaration to resolve to a Layer 1
+   token or to arithmetic over one.                                          */
+.musie-immersive__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  inline-size: fit-content;
+}
+
+/* `display-xl`, which is the largest step Layer 1 has and clamps 40px → 64px
+   across the breakpoints — a countdown somebody reads from arm's length with
+   their eyes half closed.
+
+   `tabular-nums` IS LOAD-BEARING AND NOT POLISH. Proportional digits change
+   width as they tick, so `01:11` to `01:10` shifts every glyph after the one
+   that changed and the whole figure jitters once a second for ninety seconds.
+   The same line `.musie-graph__axis` needs for the same reason. */
+.musie-immersive__time {
+  margin: 0;
+  transition: color var(--motion-toggle);
+  font-family: var(--type-display-xl-family);
+  font-size: var(--type-display-xl-size);
+  font-weight: var(--type-display-xl-weight);
+  line-height: var(--type-display-xl-line);
+  letter-spacing: var(--type-display-xl-tracking);
+  font-variant-numeric: tabular-nums;
+  color: var(--on-surface);
+}
+
+/* ── AND IT GOES QUIET AT 00:00 ───────────────────────────────────────────
+   The figure has finished its job. Left at full contrast it keeps the eye on a
+   number that has stopped meaning anything, next to a sentence that now
+   carries everything worth reading — so it steps back to the same muted tone
+   the caption uses and the sentence becomes the loudest thing on the screen.
+
+   MUTED RATHER THAN REMOVED, so the column does not reflow under a reader
+   mid-sentence, and so what it says reads as a RESULT (you did this) rather
+   than vanishing as if it had never been asked for.
+
+   Transitioned, because the moment it happens is the moment the gate opens and
+   the way on lights up — three things changing in one frame with no motion
+   between them reads as a glitch. `--motion-toggle` is Layer 1's own word for
+   a state change on a control, and reduced motion flattens it to 1ms. */
+.musie-immersive__time[data-done] {
+  color: var(--on-surface-muted);
+}
+
+/* The caption carries the meaning the figure cannot — that the number is a
+   floor and not a length. Muted and small, because it is read once and the
+   figure is read throughout.
+
+   ONCE THE MINIMUM IS DONE it is two sentences rather than a label, and it is
+   the thing being read — so it takes the reading measure instead of the
+   heading's, which would break "Mach noch 01:42 weiter, wenn du magst" across
+   four short lines. */
+.musie-immersive__caption {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  text-wrap: pretty;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+/* ── THE FOOT ─────────────────────────────────────────────────────────────
+   One control now: the transport has moved up beside the countdown, so what is
+   left here is the way on, at the TRAILING edge (Ben, 2026-10-07).
+
+   `justify-content: flex-end` and not `CtaButton.align`. The two sound alike
+   and are not: `align` moves the LABEL inside the control and would leave the
+   box exactly where it is. Where the box sits in a row is the row's business,
+   which is this screen's (L14) — and the button keeps its own geometry, which
+   is what L7 asks.
+
+   `flex-end`, not `right`: the system is built for German as well as English
+   and mirrors in RTL without a second rule, so this follows the same logical
+   axis as the rest of the stylesheet.
+
+   `flex-wrap` survives with one child, for the same reason it does in
+   `.musie-listen__actions`: a German label that outgrows the row should break
+   rather than squeeze.                                                      */
+.musie-immersive__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-gap-related);
 }
 
 

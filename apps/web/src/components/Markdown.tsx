@@ -42,20 +42,40 @@
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { parseMarkdown } from '../lib/markdown';
-import type { Span } from '../lib/markdown';
+import type { Block, Span } from '../lib/markdown';
 
 export interface MarkdownProps {
   /** The step's Markdown. Already coalesced from null at the boundary. */
   md: string;
   /** Shown as a single paragraph when `md` is empty. Omit to render nothing. */
   fallbackKey?: MessageKey;
+  /**
+   * WHICH BLOCKS, IN WHICH ORDER — a pure function of the parsed blocks.
+   *
+   * Added 2026-10-07, because the listen step reads ONE `listen_md` in two
+   * orders: the stage draws the instruction alone, and the full-screen sheet
+   * leads with the question and puts the instruction under it.
+   *
+   * A FUNCTION RATHER THAN A MODE. `only="heading"` or `order="body-first"`
+   * would put one screen's two states into the vocabulary of every screen's
+   * renderer, and the third state would add a third enum member. This way the
+   * renderer keeps one job — turn blocks into elements — and the arrangement
+   * belongs to whoever is arranging. `lib/markdown.ts` carries the two the
+   * listen step uses, as pure functions with tests, rather than as a
+   * `.filter()` inside some JSX.
+   *
+   * Omitted, the blocks render as written, which is what every other caller
+   * wants and what this component did before.
+   */
+  arrange?: (blocks: Block[]) => Block[];
 }
 
-export function Markdown({ md, fallbackKey }: MarkdownProps) {
+export function Markdown({ md, fallbackKey, arrange }: MarkdownProps) {
   const t = useT();
 
   const fallback = fallbackKey === undefined ? '' : t(fallbackKey);
-  const blocks = parseMarkdown(md.trim() === '' ? fallback : md);
+  const parsed = parseMarkdown(md.trim() === '' ? fallback : md);
+  const blocks = arrange === undefined ? parsed : arrange(parsed);
 
   /* Nothing at all, rather than an empty block that still takes its margin. */
   if (blocks.length === 0) return null;

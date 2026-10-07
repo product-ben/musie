@@ -30,7 +30,37 @@ export type ProfilePatch = Database['public']['Tables']['profiles']['Update'];
  */
 export const PROFILE_TIMEOUT_MS = 2500;
 
-export async function getProfile(userId: string): Promise<Profile> {
+/**
+ * PostgREST's code for "`.single()` wanted one row and got none".
+ *
+ * The same shape `session.ts` uses for `23505` and `betaSignup.ts` for the
+ * unique violation: the code, named once, rather than a string match on a
+ * message that is not ours and can be reworded.
+ */
+const NO_ROWS = 'PGRST116';
+
+/**
+ * WHAT CAME BACK, and the two outcomes are not two kinds of failure.
+ *
+ *   `row`     — the profile, as always.
+ *   `missing` — the server ANSWERED, and the answer is that this user has no
+ *               profiles row. That is not an error anybody can retry: the row
+ *               is created by a trigger on `auth.users` insert and cascades on
+ *               delete, so zero rows for `auth.uid()` means the user behind
+ *               this token is gone. `lib/identity.ts` has the whole story and
+ *               the recovery.
+ *
+ * EVERYTHING ELSE STILL THROWS — a timeout, a blocked network, a policy that
+ * stopped matching. Those are "we could not ask", and the difference from "we
+ * asked and there is none" is the whole reason this is a result and not a
+ * row-or-throw. Treating them alike would sign somebody out because their
+ * train went into a tunnel.
+ */
+export type ProfileRead =
+  | { kind: 'row'; profile: Profile }
+  | { kind: 'missing' };
+
+export async function getProfile(userId: string): Promise<ProfileRead> {
   const { data, error } = await getSupabase()
     .from('profiles')
     .select('*')
@@ -38,8 +68,11 @@ export async function getProfile(userId: string): Promise<Profile> {
     .abortSignal(AbortSignal.timeout(PROFILE_TIMEOUT_MS))
     .single();
 
-  if (error !== null) throw new Error(`[musie] could not read the profile: ${error.message}`);
-  return data;
+  if (error !== null) {
+    if (error.code === NO_ROWS) return { kind: 'missing' };
+    throw new Error(`[musie] could not read the profile: ${error.message}`);
+  }
+  return { kind: 'row', profile: data };
 }
 
 /**

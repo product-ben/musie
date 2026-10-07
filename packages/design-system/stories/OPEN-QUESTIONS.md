@@ -3672,3 +3672,309 @@ component with a mandatory action row"), or `ContentBox` gets a documented way
 to be the body of something that already has a name. Four hand-built
 confirmations in one app is the L14.3 signal, and this is the second time the
 same seam has produced a defect.
+
+---
+
+# CardDeck deals itself in (2026-10-07)
+
+## CardDeck — `dealKey` is the system's first prop that exists to TRIGGER an animation
+Where: `src/CardDeck.tsx` (`dealKey`, the `dealt` ref, `data-dealing`),
+`src/musy-components.css` (`@keyframes musy-deck-deal`,
+`--musy-deck-deal-stagger`), `stories/CardDeck.stories.tsx` (`Dealt`)
+
+What I checked: three levels.
+
+- **Layer 2.** Nothing else in this system animates on command. Every
+  animation we ship is a consequence of a state the component already owns —
+  `data-throwing` follows a gesture, `data-arriving` follows `previous()`,
+  `musy-msg-in` follows mounting. `/exercises` needs the pile to deal when a
+  GOAL is chosen, and the deck cannot know what a goal is.
+- **The alternatives.** A boolean `dealing` makes the consumer own the
+  animation's lifetime — set it true, then guess when to set it false. Dealing
+  whenever `items` changes identity animates on every refetch. Neither is a
+  statement about what happened.
+- **Layer 3.** L7 and L14's opening rule put this in the component rather than
+  the screen: the deck owns every transform on a card, and `Exercises.tsx`
+  reaching into `.musy-deck__card` would be the app animating someone else's
+  geometry.
+
+What I did: `dealKey?: string`. Undefined never deals. Any defined value that
+differs from the last deals once — **including the first**, because a deck
+mounted in answer to a choice is the common case and must not be the silent
+one. The deck clears the state itself, on the deepest card's `animationend`,
+matched by `event.animationName` because three animations can end on that same
+element and they mean different things.
+
+The stagger is `--musy-deck-deal-stagger`, a token on `.musy-deck`, zeroed in
+a `prefers-reduced-motion` block. This is the one thing Layer 1's collapse
+cannot reach on its own: it zeroes `--motion-duration-*` and
+`--motion-travel-*`, but it knows nothing about an `animation-delay`, so a
+literal `60ms` would have survived reduced motion and dealt the pile slowly
+and invisibly in exactly the setting that asked it not to.
+
+Why: a key says what happened and lets the component decide what it costs; a
+boolean makes the consumer run the animation.
+
+What I need from Ben: **nothing yet, but the pattern wants a second opinion
+before it spreads.** If anything else in the system grows an on-command
+animation — a list re-ordering, a wizard advancing — it should take this
+shape or we should pick a different one once, rather than ending up with
+`dealKey`, `animateKey` and `replayToken` in three components.
+
+## FilterChips — a `<fieldset>` leaks its scroller's overflow to the page — RESOLVED
+Where: `src/musy-components.css` `.musy-filter` (`contain: layout`), found by
+`apps/web/src/routes/GoalMappings.tsx`, the component's first consumer
+
+What I checked: three levels, and the first two both said the component was
+fine.
+
+- **The component.** `.musy-filter__row` is a correct scroll container:
+  `overflow-x: auto`, `clientWidth` 361, `scrollWidth` 1083 at 393px with five
+  dimensions. Every chip is inside it. Walking the ancestors of every element
+  whose rect exceeded the viewport found a scroll container every single time
+  — **nothing was unclipped.**
+- **The page.** And the document scrolled sideways anyway:
+  `document.scrollingElement.scrollWidth` 986 against a 393 viewport, and
+  `window.scrollTo(500, 0)` really moved it. L0 forbids that and L15's
+  `scrollWidth` vs `clientWidth` check is exactly the measurement that caught
+  it.
+- **The cause.** `.musy-filter` is a `<fieldset>`, and Chromium does not let
+  one contain a descendant scroller's scrollable overflow the way an ordinary
+  block does. The row reports 361px and its 1083px of content reaches the
+  viewport regardless.
+
+What I did: `contain: layout` on `.musy-filter`.
+
+Measured, and these do NOT fix it — all still 986: `display: flow-root`,
+`display: grid`, `min-inline-size: 0`, `overflow-x: clip` on the fieldset,
+`max-inline-size: 100%` on the row, and wrapping the row in a plain div.
+`contain: layout`, `contain: paint` and `contain: content` all do.
+
+`layout` rather than `paint`: both work, and paint containment would also
+CLIP, cutting the focus ring off a chip at the row's edge. Layout containment
+is the smaller claim and is the whole of what is wrong.
+
+Why: the component's header says the row scrolls because "width is the cheap
+axis here" — the fieldset was quietly spending it on the page instead.
+
+What I need from Ben: nothing, it is fixed and the row still scrolls
+(`scrollLeft` 400 accepted, values open, selection round-trips, at 393 and
+1280). **Worth knowing for every other fieldset in the system**: `RadioGroupText`,
+`RadioCards`, `RadioGroupImage` and `SegmentedControl` all render as
+`Fieldset.Root` too.
+
+> **AMENDED 2026-10-08, because the condition above is too narrow and cost a
+> second afternoon.** I wrote that none of them could hit this because none
+> has a scrolling CHILD. `SegmentedControl` hit it anyway, from the other
+> direction: it was a fieldset INSIDE a scroller — /exercises' toolbar — and
+> leaked that scroller's overflow to the page just the same.
+>
+> The rule is simply: **a `<fieldset>` and a horizontal scroller in the same
+> ancestry leak, whichever one is inside the other.** It only bites once the
+> fieldset extends past the scroller's visible box, so the same controls in a
+> different order do not reproduce it — which is what makes it look like a
+> bug belonging to whatever moved last. `.musy-seg` now carries
+> `contain: layout` for the same reason `.musy-filter` does.
+
+## CtaButton — `size="min"` still carries a 2.5.8 margin the rung outgrew
+Where: `src/musy-components.css` `.musy-btn--min` (`margin: var(--sp-2)`),
+found by `.musie-deck-toolbar` in apps/web — a row holding one `min` CtaButton
+and one `min` SegmentedControl
+
+What I checked: three controls in this system reach the same 36px `min` rung,
+and only one of them carries a margin.
+
+- **`.musy-btn--min`** — `margin: var(--sp-2)`, all four sides.
+- **`.musy-seg--min`** — no margin.
+- **`.musy-filter--min`** — no margin, and its comment says why in so many
+  words: *"a chip at 36px needs none of the spacing exception .musy-btn--min
+  and .musy-icon-btn--min bake a margin in for, which is why there is no
+  margin here."*
+
+That margin is a leftover from when the rung was 24px and the 2.5.8 spacing
+exception genuinely applied. `.musy-btn--min`'s own comment records the rung
+growing — *"8px over an 18px line box plus 2px of border is 36px … the height
+is now well ABOVE --target-min rather than at it"* — but the margin stayed.
+**2.5.8's spacing exception applies to targets under 24px; at 36px it does not
+apply at all.**
+
+A row of nothing but `min` buttons hides this, because the margin IS the
+spacing there and L5 says not to add a gap. **A MIXED row cannot hide it.**
+Measured at 1280 with the goal pill beside the view switch:
+
+```
+the pill's edge   158 against a headline and a deck at 150   (8px in)
+the gap between    24 where the ladder says 16               (16 + 8)
+block gap above    40 where the ladder says 32               (32 + 8)
+```
+
+What I did: zeroed it from the app, on the screen's own class on that one
+control (`.musie-goal-pill { margin: 0 }`), not with a rule against
+`.musy-btn--min`. Compensating on the container — which is what
+`.musie-exercise-card__foot` does for this same margin — is wrong for a row
+whose CONTENTS CHANGE: with the goal question open the pill is gone and only
+the margin-less switch is left, and a container correcting for a margin that
+is no longer there pulls the switch 8px too close on every edge.
+
+Why: three controls at one rung should space themselves the same way, and two
+of the three already agree with each other.
+
+What I need from Ben: **a decision, and it is a one-line change with a blast
+radius.** Dropping `margin: var(--sp-2)` from `.musy-btn--min` makes the three
+`min` controls consistent and lets L5 go back to meaning what it says. It
+would also need `.musie-exercise-card__foot` to stop giving the margin back
+(`calc(var(--space-inset-card) - var(--sp-2))` ×2) and
+`.musy-btn--min.musy-btn--block`'s `margin-inline: 0` to become unnecessary.
+Until then every mixed `min` row has to zero it the way this one does.
+
+## SegmentedControl — an accent family changes the ink and nothing else, because B25 ate the rest
+Where: `src/musy-components.css` §15 (`.musy-seg--accent`) against the B25
+neutralising block, `stories/SegmentedControl.stories.tsx` (`Accents`), found
+by `/exercises` passing `accent="accent"` to its view switch
+
+What I checked: `.musy-seg--accent` sets two properties on the checked
+segment — `border-color: var(--interactive-accent-border)` and
+`color: var(--interactive-accent-on-subtle)`. Only one of them lands.
+
+The B25 block further down the stylesheet neutralises selected-state edges
+across `.musy-radio__body`, `.musy-radio-card__body`, `.musy-rcard__body` and
+`.musy-seg__option`, **and names the accent modifiers explicitly** so their
+`-border` step cannot win on specificity. Measured on the running app, the
+rendered border is `rgba(0, 0, 0, 0)` at `--border-width-regular`.
+
+So an accent family on a segmented control is an INK SWAP and nothing more:
+
+| pair | light | dark | bar |
+|---|---|---|---|
+| checked ink on its own fill | 6.37 | 5.17 | 4.5 |
+| unchecked ink on the track | 5.27 | 6.71 | 4.5 |
+| checked FILL on the track | **1.22** | **1.30** | — |
+
+What I did: used it on /exercises anyway, because it is what Ben asked for
+and it is **contrast-neutral** — primary scores the same two numbers to
+within a rounding error. Corrected the story to describe what renders rather
+than what the rule says, and recorded the figures there.
+
+Why: a rule whose declarations are half dead is worse than a rule with one
+declaration, because the dead half reads as a guarantee.
+
+What I need from Ben: **two things, neither urgent.**
+
+1. **`.musy-seg--accent` and `--accent-alt` could drop their `border-color`
+   line entirely.** It cannot take effect, and leaving it in is what made me
+   claim the variant passes 1.4.11 on a border that is not drawn. Same for the
+   three radio-group accent rules the B25 block lists.
+2. **B25's own trade-off is sharper on this component than the note admits.**
+   With the edge gone, the checked segment's lifted fill is 1.22:1 against the
+   track — the selected state has no non-text cue that reaches 3:1. On
+   /exercises it survives because `labels="unchecked"` makes the LABEL the
+   cue: the selected option is the one showing only a glyph. A segmented
+   control at `labels="all"` has no such structural difference, and there the
+   selection rests on 1.22:1 of fill plus the ink step alone.
+
+## tokens — the accent ink on `--surface-raised` is not audited, and two components paint it
+Where: `tokens/proof-manifest.json` (the `audit` list), `tokens/_audit.json`
+
+What I checked: the manifest audits `interactive-accent-on-subtle` on
+`surface`, on `interactive-accent-subtle` and on that tint's hover and active
+steps. It does not audit it on **`surface-raised`** — which is the surface a
+checked segmented-control option actually paints, and the one /exercises now
+depends on.
+
+Computed from the palette: **6.37 light, 5.17 dark**, against a 4.5 bar, so
+the pair passes comfortably. `interactive-primary-on-subtle` on the same
+surface is 6.40 / 5.20 and is equally unaudited.
+
+What I did: nothing to the data files. There is no generator for
+`_audit.json` in `scripts/` — `typecheck` runs `verify-tokens` and
+`verify-layout` and neither writes it — so a hand-added manifest pair would
+have no recorded ratio behind it and the Contrast page's drift check would
+have nothing to compare against.
+
+Why: adding half of a generated pair is worse than a documented gap.
+
+What I need from Ben: **where `_audit.json` comes from.** If it is a one-off,
+these two pairs want adding by whatever made it; if it is hand-kept, say so
+and I will add them with the computed figures.
+
+## RadioGroupText + ContentBox — two gaps that together stranded a close control
+Where: `src/RadioGroupText.tsx` (`legendHidden`), `src/ContentBox.tsx` +
+`src/musy-components.css` (`headlineWide` / `.musy-box__headline--wide`),
+stories for both; found by the goal question on `/exercises`
+
+What I checked: Ben reported two visual bugs in one box — the question and the
+X were on separate rows, and the question wrapped to two short lines inside a
+930px card. They turned out to be one cause and two missing escapes.
+
+**`ContentBox.__headrow` already does what was asked.** Its own comment says
+"THE HEADLINE AND THE X, ON ONE ROW". The screen was not using it: because
+`RadioGroupText` had no `legendHidden`, a visible box headline plus a visible
+legend would have asked the same question twice — so the screen passed
+`headlineHidden` and put the question in the legend instead. A hidden headline
+is absolutely positioned and occupies nothing, so the row collapsed to the
+control alone, which the `margin-inline-start: auto` then pushed to the
+trailing edge with the question stranded underneath it.
+
+What I did, both additive and both with a sibling precedent:
+
+- **`RadioGroupText.legendHidden`** — same name, same `musy-sr-only` swap and
+  same reasoning `RadioCards` and `SegmentedControl` have carried since they
+  were built. This was the only one of the three that could not do it.
+- **`ContentBox.headlineWide`** — releases `max-width: var(--measure-heading)`
+  (26ch). Measured at 1280: the headline went from 347px over two balanced
+  half-lines to 882px on one line, with the X still at the trailing edge; at
+  393 it still wraps, because the room genuinely runs out. The prop stops the
+  CAP forcing a wrap; it does not forbid one, and `text-wrap: balance` is
+  untouched.
+
+Why: CLAUDE.md §1 — when a component cannot do what a screen needs the fix
+goes into the component, which is why `CtaButton` has `align` rather than the
+app overriding `justify-content`. The alternative here was `apps/web`
+restyling `.musy-box__headline`, which is the reach into another component's
+geometry L7 forbids.
+
+What I need from Ben: **one judgement, not urgent.** `headlineWide` is a
+measure escape on a readability rule, and measure escapes multiply. It is
+documented as "only where the headline is a label for what follows rather
+than prose to be read" — if a second consumer wants it for prose, the right
+answer is probably a wider `--measure-heading` for that type step rather than
+a second opt-out.
+
+## CardDeck — the pile now says where you are to the eye as well as to a screen reader
+Where: `src/CardDeck.tsx` (the `Dots` render inside `.musy-deck__stage`),
+`src/musy-components.css` (`.musy-deck__stage` gap, `.musy-deck__dots`)
+
+What I checked: the deck has carried a `positionLabel` live region since it
+was built, so a screen reader has always been told "card 2 of 5" when the top
+card changes. A sighted user was told nothing: a pile shows one card by
+definition, and the only clue that four more exist was the scatter behind the
+top one.
+
+`Dots` was built for this and never wired to it. Its own prop documentation
+names the case: *"a host that hides them this way owes its own announcement of
+the position; the Card Deck's live region is the reference case."*
+`.musy-deck` has also published `--musy-sel-fill` — "the dots' current mark,
+which Dots reads off its host" — since before anything read it.
+
+What I did: rendered them, with three decisions worth keeping.
+
+- **No new prop.** `Dots` requires a `label` even on the path that never
+  reads it, and the consumer has already handed the deck that exact sentence
+  as `positionLabel`. A second string prop would be a second way to say one
+  thing, and the two could disagree.
+- **Inside `.musy-deck__stage`, not after `.musy-deck__body`.** At --bp-md and
+  up the body is a row and the stage is only its first column, so dots after
+  the body would sit under the stage and the action column together and
+  belong to neither. Measured: centred on the pile to the pixel at 393 and
+  1280 (197/197, 330/330).
+- **Only while `browsable`.** A deck of one card draws no dots.
+
+Why: the position was a fact the component already knew and only told half
+its audience.
+
+What I need from Ben: nothing. **One thing deliberately not done:** the dots
+are not pressable. `Dots` supports `onSelect`, and jumping to an arbitrary
+card would mean reordering the pile to an index the deck has no gesture for —
+it deals forward and undoes backward, and that is the whole model. If the
+dots should become a way to jump, that is a change to what the pile can do,
+not a prop.
