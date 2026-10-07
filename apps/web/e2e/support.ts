@@ -295,6 +295,26 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
  * headline followed by its description and its fact chips.
  */
 export async function startExercise(page: Page, locale: Locale, name?: string) {
+  /* ── IT ANSWERS THE GOAL QUESTION FIRST, AND THAT IS NEW (2026-10-07) ────
+     /exercises asks for a goal before it deals anything: with none chosen
+     there is no deck, no list and no view switch, so every step below would
+     wait for a control that is not going to appear.
+
+     "Musie entdecken" is the answer every walk wants — it is the option that
+     filters nothing, so the five exercises stay name-addressable and no walk
+     has to know which goals its exercise is mapped to. A real goal here would
+     make this helper fail the day the mapping changed.
+
+     CONDITIONAL, because the choice is remembered in localStorage: a context
+     that has already answered lands on the pill instead, and the question is
+     not on screen to answer twice. */
+  const goals = page.getByRole('radiogroup', {
+    name: label(locale, 'exercises.goal.question'),
+  });
+  if (await goals.isVisible().catch(() => false)) {
+    await goals.getByRole('radio', { name: label(locale, 'exercises.goal.none') }).click();
+  }
+
   /* ── IT SWITCHES TO THE LIST FIRST, AND THAT IS NEW (2026-10-05) ─────────
      /exercises opened on a column of radios until the deck replaced it. The
      deck shows ONE card at a time, so "click the card called X" there means

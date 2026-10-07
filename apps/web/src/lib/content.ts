@@ -35,6 +35,23 @@ export interface UserType {
   imageAlt: string;
 }
 
+/**
+ * What a person is after when they start a session.
+ *
+ * Three rows — Achtsamkeit stärken, Entspannen, Aufwachen — and the fourth
+ * option on screen is not one of them: "Musie entdecken" is the ABSENCE of a
+ * goal, so it has no row here and writes null to `sessions.goal_id`. See
+ * `lib/goals.ts`, which owns that distinction, and the header of
+ * `20261007100100_goals_seed.sql`, which owns the reason.
+ *
+ * Was `Situation` in the schema until 2026-10-07, and never read by anything.
+ */
+export interface Goal {
+  id: string;
+  sort: number;
+  label: string;
+}
+
 export interface Exercise {
   id: string;
   timeframeMin: number;
@@ -80,7 +97,31 @@ export interface Exercise {
   scanMd: string;
   listenMd: string;
   reflectMd: string;
+  /**
+   * THE REFLECT FIELD'S PROMPT — this exercise's own questions, shown inside
+   * the box they are answered in rather than as body copy above it.
+   *
+   * `string | null`, AND THE NULL IS KEPT, which is the opposite of the four
+   * `*_md` columns directly above. There, null and `''` both render as
+   * nothing, so coalescing buys a null check with no branch behind it. Here
+   * the two answers are different things: null means this exercise asks
+   * nothing specific, and the screen falls back to the catalogue's own
+   * sentence — `''` would be a field with no prompt at all.
+   *
+   * Plain text, never Markdown. A placeholder is an attribute on an <input>,
+   * so there is nothing there to render and `##` would reach the reader.
+   */
+  reflectPlaceholder: string | null;
   imageAlt: string;
+  /**
+   * The goals this exercise serves — 1..N of them, and the join is read in
+   * the same round trip as the row.
+   *
+   * NOT nullable and not optional: an exercise mapped to no goal is reachable
+   * only through "Musie entdecken", which is a real state the seed can be in,
+   * so the empty array is the honest answer rather than a missing field.
+   */
+  goalIds: string[];
 }
 
 /**
@@ -172,12 +213,42 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
   });
 }
 
+/**
+ * The goals, in the order they are offered.
+ *
+ * Ordered by `sort` rather than by label: the order is a content decision
+ * (the schema's `sort integer not null unique`), and sorting by a translated
+ * string would put the list in a different order in each locale.
+ *
+ * "Musie entdecken" is NOT in here. It is the absence of a goal, it has no
+ * row, and the picker appends it — see `lib/goals.ts`.
+ */
+export async function getGoals(locale: Locale): Promise<Goal[]> {
+  const { data, error } = await getSupabase()
+    .from('goals')
+    .select('id, sort, goal_i18n(locale, label)')
+    .in('goal_i18n.locale', wanted(locale))
+    .order('sort');
+
+  if (error !== null) fail('goals', error.message);
+
+  return (data ?? []).flatMap((row) => {
+    const text = pickTranslation(row.goal_i18n, locale, 'goal_i18n', row.id);
+    if (text === null) return [];
+    return [{
+      id: row.id,
+      sort: row.sort,
+      label: text.label,
+    }];
+  });
+}
+
 /* ONE STRING LITERAL, NOT A CONCATENATION. supabase-js parses this select at
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, image_alt)';
+const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
 
 interface ExerciseRow {
   id: string;
@@ -198,8 +269,12 @@ interface ExerciseRow {
     scan_md: string | null;
     listen_md: string | null;
     reflect_md: string | null;
+    reflect_placeholder: string | null;
     image_alt: string;
   }[];
+  /* A to-many embed, so PostgREST returns an array — never an object. The
+     collapse `getTrackFor` has to perform does not apply here. */
+  exercise_goals: { goal_id: string }[];
 }
 
 function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
@@ -224,7 +299,15 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     scanMd: text.scan_md ?? '',
     listenMd: text.listen_md ?? '',
     reflectMd: text.reflect_md ?? '',
+    /* NOT coalesced, unlike the four above: null is the answer "this exercise
+       has no questions of its own", and the screen has a different thing to
+       draw for it. See the field's docblock. */
+    reflectPlaceholder: text.reflect_placeholder,
     imageAlt: text.image_alt,
+    /* Sorted so two renders of the same row cannot disagree about order —
+       PostgREST does not promise one for an embed, and this array reaches a
+       `useMemo` dependency in Exercises.tsx. */
+    goalIds: row.exercise_goals.map((pair) => pair.goal_id).sort(),
   }];
 }
 

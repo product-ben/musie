@@ -62,6 +62,7 @@ import {
   ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, RadioCards, SegmentedControl,
 } from '@musie/design-system';
 import type { CardDeckCard, CardDeckItem, RadioCardFact } from '@musie/design-system';
+import { GoalBox, GoalPill } from '../components/GoalPicker';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useT } from '../i18n/localeContext';
@@ -70,8 +71,10 @@ import type { StepId } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
 import { createSession, endSession, useActiveSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
-import { useExercises } from '../lib/useContent';
+import { useExercises, useGoals } from '../lib/useContent';
 import type { Exercise } from '../lib/content';
+import { cacheGoal, filterByGoal, goalIdFor, readCachedGoal } from '../lib/goals';
+import type { GoalChoice } from '../lib/goals';
 import '../exercises.css';
 
 type View = 'deck' | 'list';
@@ -96,6 +99,35 @@ export function Exercises() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { data, loading, error } = useExercises();
+  const { data: goalData, loading: goalsLoading } = useGoals();
+  const goals = React.useMemo(() => goalData ?? [], [goalData]);
+
+  /* ── THE GOAL, AND WHY NULL IS NOT "NO GOAL" ─────────────────────────────
+     `choice` has three states and the screen draws three screens from them:
+     null is nobody-has-chosen (the question IS the screen, and no card is
+     dealt), NO_GOAL is "Musie entdecken" (every exercise), and an id filters.
+     lib/goals.ts carries the reasoning.
+
+     READ ONCE THE GOALS HAVE LANDED, never before: `readCachedGoal` validates
+     the stored id against the goals that actually exist, and run against an
+     empty list every stored goal looks retired — so the question would be
+     asked again on every cold load. `restored` is what stops the effect
+     running a second time and overwriting a choice made in the meantime. */
+  const [choice, setChoice] = React.useState<GoalChoice | null>(null);
+  const [picking, setPicking] = React.useState(false);
+  const restored = React.useRef(false);
+
+  React.useEffect(() => {
+    if (restored.current || goalsLoading || goals.length === 0) return;
+    restored.current = true;
+    setChoice(readCachedGoal(goals));
+  }, [goals, goalsLoading]);
+
+  const choose = React.useCallback((next: GoalChoice) => {
+    setChoice(next);
+    cacheGoal(next);
+    setPicking(false);
+  }, []);
 
   const [view, setView] = React.useState<View>('deck');
   const [busy, setBusy] = React.useState(false);
@@ -130,7 +162,7 @@ export function Exercises() {
      notice drawn before that lands says "A session is still running" and then
      changes its own headline a moment later. Measured, in English, on a cold
      load. Both reads are in flight at once, so the wait costs nothing. */
-  const running = endedHere || sessionLoading || loading ? null : activeSession;
+  const running = endedHere || sessionLoading || loading || goalsLoading ? null : activeSession;
 
   /* ALL FIVE, not just the built ones.
      An earlier pass filtered to `implemented` on the theory that a deck whose
@@ -141,6 +173,39 @@ export function Exercises() {
      same — a press on one opens the same lightbox, which is the honest
      "not yet" rather than a card that was never dealt. */
   const exercises = React.useMemo(() => data ?? [], [data]);
+
+  /* WHAT THE GOAL LEAVES. `exercises` stays whole — the running-session
+     notice names an exercise by id and must still find one the filter hides —
+     and every count, every card and every list row below reads `visible`. */
+  const visible = React.useMemo(() => filterByGoal(exercises, choice), [exercises, choice]);
+
+  /* Chosen, and not being changed. The three states of the screen, named
+     once: nothing is dealt until a goal exists, and the pile goes inert while
+     the question is back on screen. */
+  const chosen = choice !== null;
+  const showDeck = chosen && !loading && error === null;
+  /* THE HEADLINE ONLY COUNTS WHEN THERE IS SOMETHING TO COUNT. A goal nothing
+     serves would otherwise read "0 exercises for you" over the sentence
+     explaining why — the same discouraging line the unchosen state exists to
+     avoid, arriving by a different door. Found on screen, not in review.
+
+     It stays counted while the question is REOPENED over a working deck:
+     `picking` is not in here, because the pile behind the box has not
+     changed and a headline that flickered as you opened the question would
+     be reporting the question rather than the pile. */
+  const counted = chosen && visible.length > 0;
+
+  /* ── WHAT IS IN THE TOOLBAR, AND WHEN ────────────────────────────────────
+     The pill and the view switch share one row (Ben, 2026-10-07), and they
+     come and go for different reasons — so the row's own visibility is the
+     OR of its two children rather than a third rule that could disagree with
+     both and leave an empty 44px band on the page.
+
+     The pill goes while the question is open, because the question IS the
+     expanded pill. The switch goes when there is nothing to switch between —
+     a goal that offers no exercise has no deck and no list. */
+  const pillShown = chosen && !picking;
+  const switchShown = showDeck && visible.length > 0;
 
   /**
    * Start it, with the running session's fate already decided by the caller.
@@ -162,7 +227,10 @@ export function Exercises() {
            stopped before its reflection abandoned. */
         await endSession(replacing.id, 'abandoned', new Date().toISOString());
       }
-      const result = await createSession(userId, exercise.id);
+      /* THE GOAL AS IT WAS WHEN THE CARD WAS PRESSED. `goalIdFor` is the one
+         place NO_GOAL turns back into null, so the sentinel cannot reach the
+         column through this path or any other. */
+      const result = await createSession(userId, exercise.id, goalIdFor(choice));
       if (result.kind === 'started') {
         /* The one path that does NOT clear `busy`: the deck is about to
            unmount, and dropping busy first would bring the card back for a
@@ -195,7 +263,7 @@ export function Exercises() {
       setFailed(true);
       setBusy(false);
     }
-  }, [navigate, userId]);
+  }, [choice, navigate, userId]);
 
   const byId = React.useMemo(
     () => new Map(exercises.map((exercise) => [exercise.id, exercise])),
@@ -260,10 +328,13 @@ export function Exercises() {
     /* Among the BUILT ones only — the prototype picked among all three and
        then opened the not-implemented lightbox two times in three, which is
        the note /exercises records against this same escape hatch. */
-    const available = exercises.filter((exercise) => exercise.implemented);
+    /* AMONG THE VISIBLE ONES, not the whole catalogue: a goal that offers two
+       exercises must not have "pick one for me" reach past it into a third.
+       The `implemented` filter is the older half of the same rule. */
+    const available = visible.filter((exercise) => exercise.implemented);
     const exercise = available[Math.floor(Math.random() * available.length)];
     if (exercise !== undefined) void start(exercise, null);
-  }, [exercises, start]);
+  }, [visible, start]);
 
   /* ONE SWITCH, ONE HOME (Ben, 2026-10-05). It used to ride in CardDeck's
      action column in the deck view and in a row of its own in the list — so
@@ -284,6 +355,31 @@ export function Exercises() {
       legendHidden
       size="min"
       labels="unchecked"
+      /* OCHER, so the row is one family (Ben, 2026-10-08). The goal question
+         beside it is `accent` and this was the last control on the screen
+         still answering in terracotta, which left the toolbar reading as two
+         unrelated widgets that happened to share a line.
+
+         IT IS A QUIET CHANGE, AND THAT IS THE WHOLE OF IT (measured, not
+         assumed). `.musy-seg--accent`'s rule sets a border as well, and that
+         border is not drawn — conflict B25 neutralises selected-state edges
+         across this component and the radio groups, accent modifiers
+         included. So the only rendered difference is the checked segment's
+         INK, one dark brown for another: 6.37 light / 5.17 dark against a 4.5
+         bar, which is what `primary` scores in the same slots to within a
+         rounding error. Contrast-neutral, and subtle to look at. Ben took it
+         on those terms on 2026-10-08, over a solid ocher fill that would have
+         needed B25's edge back to be identifiable at all (1.41:1 against the
+         track in light).
+
+         THE CARD'S *STARTEN* IS STILL TERRACOTTA, and that is the point of
+         the pairing: the way ON stays primary, and the two controls that only
+         narrow what you are looking at share the other colour. */
+      accent="accent"
+      /* While the question is open, everything the answer governs is inert —
+         and the view switch governs which of the two filtered views you are
+         looking at, so it is one of them. */
+      disabled={picking}
       value={view}
       onValueChange={(next) => setView(next === 'list' ? 'list' : 'deck')}
       options={[
@@ -293,7 +389,7 @@ export function Exercises() {
     />
   );
 
-  const items: CardDeckItem[] = exercises.map((exercise, index) => ({
+  const items: CardDeckItem[] = visible.map((exercise, index) => ({
     id: exercise.id,
     /* Fixed by the exercise's place in the printed order, NOT by its place in
        the pile, so a card keeps its colour as the deck is dealt. */
@@ -306,17 +402,33 @@ export function Exercises() {
   }));
 
   return (
-    <>
+    /* ONE STACK, SO THE GAPS ARE THE SCREEN'S RATHER THAN EACH BLOCK'S.
+       Four of the children below are conditional and each used to carry its
+       own `margin-block-end`, which meant a new block was spaced correctly
+       only if somebody remembered to give it one — and the empty-goal notice
+       below is spaced today only because it borrows `.musie-running`'s class.
+       A `gap` skips an absent child for free. See `.musie-exercises`. */
+    <div className="musie-exercises">
       {/* HEADLINE AND SUBLINE ARE ONE MOLECULE, so they are wrapped as one:
           `--space-gap-related` between them, which Layer 1 documents as
-          "title+subtitle", and `--space-gap-group` below the pair, which it
-          documents as "molecules that do NOT belong together". The deck is
-          the other molecule. */}
+          "title+subtitle". The distance to whatever follows is the stack's. */}
+      {/* TWO HEADLINES, BECAUSE THERE ARE TWO SCREENS HERE. Before a goal is
+          chosen there is no pile, so `{count} exercises for you` would read
+          "0 exercises for you" over a question — a true count of a list
+          nobody has asked for yet, and the most discouraging possible first
+          sentence. It is a noun phrase either way (GERMAN-UI-WRITING §3).
+
+          The subline explains the swipe, so it waits for something to swipe. */}
       <div className="musie-deck-intro">
         <h1 className="musie-placeholder">
-          {t('exercises.headline', { count: String(exercises.length) })}
+          {counted
+            ? t('exercises.headline', { count: String(visible.length) })
+            : t('exercises.goal.headline')}
         </h1>
-        <p className="musie-note">{t('exercises.intro')}</p>
+        {/* The subline explains the swipe, so it waits for something to
+            swipe. Drawn over an empty stage it taught a gesture that had
+            nothing to act on. */}
+        {counted && <p className="musie-note">{t('exercises.intro')}</p>}
       </div>
 
       {loading && <p className="musie-note">{t('content.loading')}</p>}
@@ -382,17 +494,114 @@ export function Exercises() {
         </ContentBox>
       )}
 
-      {/* ABOVE BOTH VIEWS, in the one row it keeps. Inside the length guard: a
-          switch between two ways of showing nothing is furniture. */}
-      {exercises.length > 0 && <div className="musie-deck-toolbar">{viewSwitch}</div>}
+      {/* ── THE QUESTION, AND THE PILL IT BECOMES ──────────────────────────
+          One home for both states — see the note at the top of GoalPicker.
+          Above the toolbar and below the running notice, so the order down
+          the page is: what is already open, what you are here for, how you
+          want to look at it, and then the pile.
 
-      {exercises.length > 0 && (
+          It waits for the goals, like everything else that would otherwise
+          re-label itself a moment after it was drawn. */}
+      {!goalsLoading && goals.length > 0 && (!chosen || picking) && (
+        <GoalBox
+          goals={goals}
+          choice={choice}
+          /* NOTHING TO CANCEL BACK TO on the first ask: dismissing it would
+             leave a screen with a headline and no content. */
+          onCancel={chosen ? () => setPicking(false) : null}
+          onChoose={choose}
+        />
+      )}
+
+      {/* ── ONE ROW, TWO CONTROLS (Ben, 2026-10-07) ────────────────────────
+          The goal and the way you look at what it offers, side by side, above
+          whichever view is on. It scrolls sideways rather than wrapping when
+          the two will not fit — which at 393px in German they do not, because
+          *Ziel: Achtsamkeit stärken* is most of a phone wide on its own. */}
+      {(pillShown || switchShown) && (
+        <div className="musie-deck-toolbar">
+          {pillShown && (
+            <GoalPill goals={goals} choice={choice} onOpen={() => setPicking(true)} />
+          )}
+          {/* ── PICK ONE FOR ME, MOVED OUT OF THE DECK (Ben, 2026-10-08) ──
+              It stood in `CardDeck`'s `actions` slot, which at --bp-md and up
+              is a column BESIDE the card and below it on a phone — so the one
+              control that acts on the pile as a whole moved house at the
+              breakpoint while the two that filter it stayed put.
+
+              SECOND IN THE ROW, beside the goal (Ben, 2026-10-08). The two
+              controls that decide WHICH exercises are in front of you sit
+              together — pick a goal, or hand the pick over entirely — and the
+              view switch, which only changes how the same set is drawn, comes
+              after them.
+
+              `secondary`, not `ghost`: it is a real action on the pile rather
+              than a quiet aside, and at the `min` rung a ghost reads as a
+              label with a hover state. The way on is still the card, so it is
+              not `primary`. */}
+          {switchShown && (
+            <CtaButton
+              variant="secondary"
+              size="min"
+              leadingIcon={Shuffle}
+              disabled={busy || picking}
+              onClick={pickForMe}
+            >
+              {t('exercises.surpriseMeShort')}
+            </CtaButton>
+          )}
+          {switchShown && viewSwitch}
+        </div>
+      )}
+
+      {/* ── A GOAL NOTHING SERVES ───────────────────────────────────────────
+          BELOW THE TOOLBAR, which is the same place the deck sits — the row
+          names the goal, and this says what that goal leaves. Drawn above it
+          the screen told you there was nothing before it told you what for,
+          and the pill then sat under the box explaining it. Found on screen.
+          Today every exercise is mapped to `mindfulness` alone, so Entspannen
+          and Aufwachen land here — which is why this is a written sentence
+          and a way out rather than a blank stage. NOT `content.empty`: the
+          catalogue loaded, and it has nothing for this goal.
+
+          `exercises.length > 0` is what keeps the two empties apart — an
+          empty catalogue is already reported above, and saying both would
+          blame the goal for a failed load. */}
+      {chosen && !picking && !loading && error === null
+        && exercises.length > 0 && visible.length === 0 && (
+        <ContentBox
+          className="musie-running"
+          headingLevel={2}
+          headline={t('exercises.goal.empty')}
+          headlineHidden
+          text={t('exercises.goal.empty')}
+        >
+          <ButtonGroup align="end">
+            <CtaButton variant="secondary" onClick={() => setPicking(true)}>
+              {t('exercises.goal.emptyAction')}
+            </CtaButton>
+          </ButtonGroup>
+        </ContentBox>
+      )}
+
+
+      {showDeck && visible.length > 0 && (
         <>
           {view === 'deck' ? (
             <CardDeck
               className="musie-deck-stage"
               items={items}
-              busy={busy}
+              /* ONE EXPRESSION FOR TWO REASONS THE PILE GOES INERT: a start
+                 in flight, and the goal question back on screen. CardDeck's
+                 `busy` already means "do not take a card from me", and both
+                 are that. Written as one so they cannot drift — the deck's
+                 contract is that a card held out comes back when `busy`
+                 falls, and two independent flags could strand it. */
+              busy={busy || picking}
+              /* THE GOAL IS THE KEY. Choosing deals the pile; changing the
+                 goal deals it again; nothing else does, which is why this is
+                 the choice rather than `visible.length` or the item ids. */
+              dealKey={choice ?? undefined}
               onAccept={onAccept}
               onNext={onNext}
               onPrevious={onPrevious}
@@ -410,11 +619,6 @@ export function Exercises() {
                  2026-10-05): the card carries that action now, and the same
                  thing twice in two sizes is redundancy rather than
                  reassurance. */
-              actions={
-                <CtaButton variant="ghost" leadingIcon={Shuffle} disabled={busy} onClick={pickForMe}>
-                  {t('exercises.surpriseMeShort')}
-                </CtaButton>
-              }
               positionLabel={(position, total, id) =>
                 t('exercises.deckPosition', {
                   name: byId.get(id)?.name,
@@ -439,7 +643,7 @@ export function Exercises() {
               legendHidden
               accent="accent"
               headingLevel={2}
-              options={exercises.map((exercise) => ({
+              options={visible.map((exercise) => ({
                 value: exercise.id,
                 headline: exercise.name,
                 description: exercise.description,
@@ -455,7 +659,7 @@ export function Exercises() {
                 if (!exercise.implemented) { setUnbuilt(exercise.name); return; }
                 void start(exercise, null);
               }}
-              disabled={busy}
+              disabled={busy || picking}
               emptyLabel={t('content.empty')}
             />
           )}
@@ -480,7 +684,7 @@ export function Exercises() {
           onClose={() => setRefused(null)}
         />
       )}
-    </>
+    </div>
   );
 }
 

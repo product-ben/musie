@@ -1474,6 +1474,18 @@
 
 .musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
 
+/* ── THE MEASURE, RELEASED ────────────────────────────────────────────────
+   `--measure-heading` is right for a heading you read and then track back
+   from, and wrong for one that is a QUESTION with its own answers directly
+   under it: there is nothing to track back to, the eye goes straight down
+   into the options, and 26ch turns a 32-character question into two balanced
+   half-lines stranded in the corner of a wide row.
+
+   `text-wrap: balance` stays. It is what makes the two lines even when the
+   headline DOES wrap, which it still does at 393px — releasing the cap does
+   not force one line, it stops the cap forcing two. See `headlineWide`.  */
+.musy-box__headline--wide { max-width: none; }
+
 /* ── CLOSEABLE: THE HEADLINE AND THE X, ON ONE ROW ────────────────────────
    Added 2026-09-26. Before it, a consuming screen got this X by passing a
    `header`, which made the card FRAMED — a header band, a hairline and the
@@ -2226,6 +2238,26 @@
    not to the container around it.                                           */
 
 .musy-seg {
+  /* ── A <fieldset> LEAKS SCROLLABLE OVERFLOW TO THE PAGE ─────────────────
+     The same Chromium behaviour `.musy-filter` carries this declaration for,
+     reached from the other direction: there the scroller was INSIDE the
+     fieldset, here the fieldset is inside the scroller.
+
+     MEASURED on /exercises at 393px, where this control is the third item in
+     a horizontally scrolling toolbar: `document.scrollWidth` 550 against a
+     393 viewport and `window.scrollTo(300, 0)` really moved the page, while
+     walking every overflowing element's ancestors found a scroll container
+     every time — nothing was unclipped. Hiding this one element returned the
+     page to 393, and so did `contain: layout` on it.
+
+     It only bites once the fieldset itself extends past the scroller's
+     visible box: the same three controls in a different order, with this one
+     second instead of third, did not leak. That is what makes it look like a
+     layout bug belonging to whatever moved last.
+
+     `layout` and not `paint`: both fix it, and paint containment would clip
+     the focus ring off the segment at the control's edge. */
+  contain: layout;
   /* The segments answer to the CONTROL's width, not the viewport's — the same
      control is legal in a 320px sheet and a 720px panel on one screen, and a
      media query cannot tell those apart. */
@@ -5362,6 +5394,16 @@ html[data-musy-scroll-snap='y'] {
      the resting tilt on purpose: the lean is what makes the card feel picked
      up rather than slid. */
   --musy-deck-swing-max: 18deg;
+  /* How far apart two cards land when the pile deals itself in. Per step of
+     --musy-card-depth, so the stagger is the pile's own depth read as time.
+
+     A TOKEN RATHER THAN A LITERAL, and the reduced-motion block below is the
+     whole reason. Layer 1 collapses every --motion-duration-* to 1ms and
+     every --motion-travel-* to 0 under prefers-reduced-motion, but it knows
+     nothing about an animation-delay — so a literal 60ms here would survive
+     the collapse and the deck would deal, slowly and invisibly, in exactly
+     the setting that asked it not to. */
+  --musy-deck-deal-stagger: 55ms;
   /* The dots' current mark, which Dots reads off its host. */
   --musy-sel-fill: var(--interactive-primary);
 
@@ -5428,7 +5470,19 @@ html[data-musy-scroll-snap='y'] {
 .musy-deck__body {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  /* ── `end`, NOT `start` — Ben, 2026-10-07 ─────────────────────────────
+     It was `start`, on the argument that "the first of them is the way
+     forward, and the way forward belongs where the eye lands after the card's
+     own headline". That argument died with the deck's own accept button: the
+     face carries the way forward now, and what is left in this column is two
+     chevrons that BROWSE. Browsing controls floating beside a card's shoulder
+     were the leftover of a layout that no longer exists.
+
+     At the foot they line up with the bottom of the pile and its dots, which
+     is the other thing on this screen saying where you are in the deck. Only
+     where the two sit side by side: below --bp-md the body is a centred column
+     and the query further down owns the alignment. */
+  align-items: end;
   gap: var(--space-gap-group);
 }
 
@@ -5456,6 +5510,21 @@ html[data-musy-scroll-snap='y'] {
   position: relative;
   display: grid;
   place-items: center;
+  /* Two rows now — the pile, and the dots under it. `--space-gap-stack` is
+     Layer 1's word for controls inside one molecule, and a pile and the marks
+     saying where you are in it are exactly that. It costs nothing while the
+     stage has one child, which is every deck of one card.
+
+     The doubling check holds against the body's own `--space-gap-group`:
+     32 >= 2 x 16. */
+  gap: var(--space-gap-stack);
+}
+
+/* The dots belong to the pile, not to the page, so they take the deck's own
+   accent — `--musy-sel-fill` is published on `.musy-deck` for exactly this and
+   has been since before anything read it. */
+.musy-deck__dots {
+  grid-row: 2;
 }
 
 /* ── THE SMALLEST TIER: STACKED, AND CENTRED ──────────────────────────────
@@ -5667,6 +5736,51 @@ html[data-musy-scroll-snap='y'] {
   animation: musy-deck-arrive var(--motion-duration-slow) var(--motion-ease-entrance);
 }
 
+/* ── THE DEAL ─────────────────────────────────────────────────────────────
+   The pile putting itself together, once, in answer to something the person
+   just chose. /exercises deals when a goal is picked: the question is the
+   screen until it is answered, and the cards arrive BECAUSE it was.
+
+   SAME ONE-KEYFRAME TRICK AS THE ARRIVAL ABOVE, for the same reason and it is
+   worth saying twice: there is no `to`, so the browser interpolates to each
+   card's OWN computed transform — its resting place in the pile, assembled
+   from --musy-card-depth, --musy-card-seed, --musy-card-rise and
+   --musy-card-settle. Restating that here would be four properties to keep in
+   step with a stylesheet that already says them, and the first edit to the
+   pile's geometry would leave the deal landing somewhere the cards are not.
+
+   THE STAGGER IS THE DEPTH. The card in front is at depth 0 and lands first;
+   everything behind it follows one step later per card. That is the gesture a
+   hand makes dealing a pile, and it needs no per-card state to express
+   because the depth is already a custom property on every card.
+
+   `backwards`, so a card waiting out its delay is held at the keyframe's
+   `from` — off the top and transparent — rather than sitting in its final
+   place for 200ms and then jumping up to animate down into it. Without it the
+   stagger reads as a flicker.
+
+   NO `forwards`, for the arrival's reason: the cards are staying, so the
+   animation must let go of them. A fill would freeze each card at a transform
+   that stops tracking the pile the moment the next card is dealt.           */
+@keyframes musy-deck-deal {
+  from {
+    transform: translate3d(0, calc(var(--motion-travel-lg) * -1), 0) scale(0.96);
+    opacity: 0;
+  }
+}
+
+.musy-deck__card[data-dealing] {
+  animation: musy-deck-deal var(--motion-duration-base) var(--motion-ease-entrance) backwards;
+  animation-delay: calc(var(--musy-card-depth) * var(--musy-deck-deal-stagger));
+}
+
+/* The one thing Layer 1's collapse cannot reach. Every card deals at once,
+   with no travel and no scale, because the durations are already 1ms and
+   --motion-travel-lg is already 0 — all that is left to zero is the wait. */
+@media (prefers-reduced-motion: reduce) {
+  .musy-deck { --musy-deck-deal-stagger: 0ms; }
+}
+
 /* Accepted: lifted off the pile, faded, and held there until the consumer
    decides. It TRANSITIONS rather than animating, because it may have to come
    back — see the contract in CardDeck.tsx — and a transition reverses for free.
@@ -5872,6 +5986,34 @@ html[data-musy-scroll-snap='y'] {
    only a label and a glyph floating in a row.                               */
 
 .musy-filter {
+  /* ── A <fieldset> LEAKS ITS SCROLLER'S OVERFLOW TO THE PAGE ──────────────
+     MEASURED, at 393px, with five dimensions: `.musy-filter__row` is a proper
+     scroll container — `overflow-x: auto`, clientWidth 361, scrollWidth 1083,
+     every chip correctly inside it — and the DOCUMENT still scrolled
+     sideways to 986px. `window.scrollTo(500, 0)` really moved the page.
+
+     It is the fieldset. Chromium does not let a `<fieldset>` contain the
+     scrollable overflow of a descendant scroller the way an ordinary block
+     does, so the row's 1083px reached the viewport past a container that
+     reports itself as 361px wide. Nothing in the chain is unclipped — walking
+     every overflowing element's ancestors finds a scroll container every
+     time — which is why this is invisible to inspection and only shows up as
+     a page that scrolls.
+
+     `contain: layout` and not `contain: paint`: both fix it, and paint
+     containment would also CLIP, which would cut the focus ring off a chip at
+     the row's edge. Layout containment is the smaller claim — this subtree's
+     layout does not escape — and it is the whole of what is wrong here.
+
+     Ruled out by measurement, all still 986: `display: flow-root`,
+     `display: grid`, `min-inline-size: 0`, `overflow-x: clip` on the
+     fieldset, `max-inline-size: 100%` on the row, and wrapping the row in a
+     plain div. The legend is what makes a fieldset a fieldset, so it stays
+     one — L3 and 1.3.1 want the group named — and this is the containment it
+     needs to behave like a box.
+
+     Found by /goal-mappings, the component's first consumer in the app. */
+  contain: layout;
   /* The rung, stated once as an outer height. The chip IS the control here —
      there is no track around it, unlike §15 — so the height comes straight
      from the floor with no block padding, which is what makes a chip holding

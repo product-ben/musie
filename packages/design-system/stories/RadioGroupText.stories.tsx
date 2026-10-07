@@ -196,6 +196,19 @@ export const Empty: Story = { args: { options: [], value: undefined } };
 /** Whole group disabled. */
 export const Disabled: Story = { args: { disabled: true } };
 
+/** Something ABOVE has already asked the question — a step headline, or a
+ *  ContentBox headline sharing its row with a close control — so the legend is
+ *  hidden rather than repeated. It is still in the accessible tree, because a
+ *  fieldset needs its own name (1.3.1, 4.1.2) and a heading above it does not
+ *  supply one.
+ *
+ *  Added 2026-10-08, closing a gap rather than adding an idea: `RadioCards`
+ *  and `SegmentedControl` have had this prop, under this name, since they were
+ *  built — this was the only one of the three that could not do it, which is
+ *  what forced /exercises to put its question in the legend and leave the
+ *  box's close control stranded on a row of its own. */
+export const LegendHidden: Story = { args: { legendHidden: true } };
+
 /** A single option disabled, the rest live. */
 export const OptionDisabled: Story = {
   args: {

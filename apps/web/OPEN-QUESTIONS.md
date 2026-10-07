@@ -6641,3 +6641,406 @@ What I need from Ben: **run `supabase db push`.** Until it has run, the page
 renders on the hosted build and every submit fails, because the table is not
 there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
 beside it.
+
+# Goals on /exercises (2026-10-07)
+
+## situations became goals rather than a second taxonomy beside them — RESOLVED
+Where: `supabase/migrations/20261007100000_goals_rename.sql`,
+`DOMAIN-MODEL.md` D6
+
+What I checked: three levels, and they agreed.
+
+- **The schema.** `situations`, `situation_i18n` and `exercise_situations`
+  were built on 2026-09-18 with RLS, policies, revoke/grant, `service_role`
+  grants, a place in `missing_translations`, and an index on
+  `exercise_situations.situation_id` written specifically for the
+  lookup-by-situation direction. `sessions.situation_id` followed on
+  2026-09-19.
+- **The app.** No file under `apps/web/src` has ever selected from any of
+  them. `20260923150000` says so itself: *"Nothing in the app reads
+  `exercise_situations` yet."*
+- **The data.** `select count(*) from sessions where situation_id is not null`
+  was 0 and had never been anything else.
+
+So the shape the goal feature needs already existed, unread, and building a
+second one beside it would have shipped two overlapping content concepts with
+one of them as furniture.
+
+What I did: renamed the three tables, the column, the two plain indexes, the
+three policies and the ten constraints; replaced `missing_translations`
+because the literal `'situations'` in its three CTEs is a string rather than a
+reference and does not follow a rename; re-seeded three goals and the mapping.
+
+Why: a situation is where you are coming from and a goal is what you are
+after — the same shape, a different question, and the product asks the second.
+
+What I need from Ben: nothing. D6 is answered and DOMAIN-MODEL.md is updated.
+
+## Two of the three goals offer nothing at all, by instruction
+Where: `supabase/migrations/20261007100100_goals_seed.sql`,
+`apps/web/src/routes/Exercises.tsx` (the `exercises.goal.empty` branch)
+
+What I checked: Ben's instruction was "for now, map all to Achtsamkeit
+stärken", with `/goal-mappings` built to replace it. Taken literally that
+means **Entspannen and Aufwachen offer zero exercises** — a third of the
+picker leads to an empty screen on the day it ships.
+
+What I did: built it as instructed, and made the empty state load-bearing
+rather than incidental — its own sentence (`exercises.goal.empty`, NOT
+`content.empty`, which claims a failed load) and a `secondary` CTA back to the
+question. The deck and the toolbar are not drawn at all in that state, so
+there is no empty pile to look at.
+
+Why: a goal that offers nothing is a true state of the mapping, and the screen
+should say so plainly rather than look broken.
+
+What I need from Ben: **the real mapping.** Open `/goal-mappings`, tick, press
+*Konfiguration erzeugen*, paste the JSON back. It becomes one migration.
+
+## The goal is remembered forever, and the question says „heute"
+Where: `apps/web/src/lib/goals.ts` (`GOAL_STORAGE_KEY`),
+`apps/web/src/i18n/de.ts` (`exercises.goal.question`)
+
+What I checked: Ben chose localStorage persistence, so a returning visitor
+lands on the collapsed pill with the goal they last picked. The question that
+goal answered is *„Was möchtest du heute erreichen?"* — and `heute` is a day,
+while localStorage is forever.
+
+What I did: persisted it with no expiry, as chosen, and validated the stored
+id against the goals that still exist so a retired goal asks again.
+
+Why: an expiry nobody asked for is a behaviour that cannot be discovered from
+the code that sets it.
+
+What I need from Ben: **a decision, not urgent.** Three readings — keep it
+forever; reset at local midnight so `heute` stays true; or drop `heute` from
+the copy and ask „Was möchtest du gerade erreichen?". The third is the
+cheapest and the first is what is built.
+
+## A remembered goal deals the pile on arrival, and nobody chose anything
+Where: `packages/design-system/src/CardDeck.tsx` (`dealKey`),
+`apps/web/src/routes/Exercises.tsx`
+
+What I checked: `dealKey` deals on the first defined value as well as on every
+change, because the deck is MOUNTED by the choice on /exercises and a
+first-value-is-silent rule would make the one deal anybody asked for the one
+that did not happen.
+
+The side effect is that a reload also deals — the goal is restored from
+localStorage, the deck mounts with it, and the cards fly in for a choice made
+yesterday.
+
+What I did: left it dealing. It is one 220ms animation on a screen you have
+just loaded, and the alternative needs the deck to be told the difference
+between a choice and a restoration — a second prop, to suppress an animation.
+
+Why: the deal reads as "here is your pile" as readily as "you just chose", and
+a prop whose only job is to turn something off is a prop that gets passed
+wrong.
+
+What I need from Ben: nothing, just flagging. Verification step 6 is where to
+look at it.
+
+## The brief's German said „gerade heute", which is today twice
+Where: `apps/web/src/i18n/de.ts` (`exercises.goal.question`)
+
+What I checked: the brief asked for *„Was möchtest du gerade heute
+erreichen?"*. `gerade` is *right now*; `heute` is *today*. Both in one
+sentence is the same adverbial slot filled twice, and the sketch itself has a
+word crossed out in that position.
+
+What I did: wrote **„Was möchtest du heute erreichen?"**.
+
+Why: `heute` matches a choice that is remembered across a day; `gerade` would
+be the right word if the goal reset every session.
+
+What I need from Ben: confirm, or send the other one back.
+
+## /goal-mappings has no permission gate, by instruction
+Where: `apps/web/src/routes/GoalMappings.tsx`, `apps/web/src/router.tsx`
+
+What I checked: Ben asked for it URL-only with "no permissions needed for
+now". It sits inside `AppShell`, so it needs a signed-in session to read
+`goals` and `exercises` at all — but any signed-in user who types the path
+reaches it.
+
+What I did: built it as asked, and made it **write nothing**. It reads the
+mapping, edits it in the browser and emits JSON. There is no insert policy on
+`exercise_goals`, so even a deliberate attempt to write from here is refused
+by the privilege check before RLS is consulted.
+
+Why: a tool that cannot change the database needs no gate to be safe; the
+worst a stranger can do is read the mapping, which they can already infer from
+which exercises the deck offers them.
+
+What I need from Ben: nothing while it stays read-only. The day it writes, it
+needs a gate first.
+
+## Layer 1 has no monospace family, and a tool that emits JSON wants one
+Where: `apps/web/src/exercises.css` (`.musie-goal-config`)
+
+What I checked: `musy-foundations.css` declares exactly two families —
+`--font-display` and `--font-text`. There is no monospace token. L14.1 says
+every declaration in a `musie-` pattern resolves to a Layer 1 token, so a bare
+`ui-monospace` stack would be the app inventing a typeface the system does not
+have.
+
+What I did: set `--font-text` and let `white-space: pre-wrap` carry the
+structure. The JSON is readable; the indentation survives.
+
+Why: L14.1 with no exception is worth more than a monospaced dev tool.
+
+What I need from Ben: **a token request, low priority.** `--font-mono` would
+serve this, any future code sample in Storybook, and the QR sheet's URLs.
+Logged against the design system rather than fixed here.
+
+## The goal pill and the goal box share one home, against the plan
+Where: `apps/web/src/components/GoalPicker.tsx`, `apps/web/src/exercises.css`
+
+What I checked: the plan put the collapsed pill in `.musie-deck-toolbar`
+beside the view switch, which is tidier as a row. `Exercises.tsx` already
+carries the note against exactly that: *"ONE SWITCH, ONE HOME (Ben,
+2026-10-05) … the one control the two views SHARE was the one thing that moved
+when you pressed it."*
+
+What I did: both states render in the same slot, above the toolbar. Pressing
+the pill expands it where it already is.
+
+Why: the screen learned this once in October and should not learn it twice.
+
+What I need from Ben: nothing, just flagging the deviation.
+
+## `supabase db reset` destroys the local track audio, and one db test needs it
+Where: `apps/web/src/lib/db.content.db.test.ts:188` ("lets a signed-in listener
+sign a real object")
+
+What I checked: this went red after the `db reset` that CLAUDE.md rule 4
+prescribes. The cause is not the goals work — the test picks the first track
+with a non-null `src` (`trk-01`) and signs it, and local storage holds one
+object, `trk-02.mp3`. `tracks.src` names four files. **No mp3 is in the
+repository** (`git ls-files | grep mp3` is empty): the audio exists only as
+hand-uploaded objects in the local and hosted buckets, and no migration
+recreates it.
+
+So `supabase db reset` and `pnpm test:db` are in tension: the reset is how
+rule 4 says to verify a migration, and it leaves this one test unable to pass
+until the files are re-uploaded by hand.
+
+**And the fix already exists, one directory away.** `apps/web/e2e/fakeTracks.ts`
+writes a silent placeholder for any track whose `src` is set and which has no
+object yet — it never overwrites, and it refuses to touch anything but
+loopback. `playwright.config.ts` runs it in `globalSetup` for exactly this
+reason, recorded in its header: *"on a fresh `supabase start` the walk timed
+out waiting for an `<audio>` that could never mount."*
+
+So the e2e walks solved this on 2026-10-01 and the db suite never learned.
+`vitest.config.ts`'s `db` project has no setup file at all.
+
+What I did: nothing — it is outside this feature, and the fix is a decision
+about the db suite's setup rather than a line to slip into a goals branch.
+Reported rather than worked around, and rather than left to look like mine.
+
+Why: a suite that is red for an environmental reason trains people to ignore
+red, and this one goes red on the exact command rule 4 tells you to run.
+
+What I need from Ben: **a yes, and it is about fifteen minutes.** Give the
+`db` project a `setupFiles` that calls the same `fakeTracks` helper e2e
+already uses — it is loopback-guarded and non-destructive, so it is safe to
+run before every db run. Until then the suite reads 117 passed / 1 failed on
+a fresh reset, and that one failure is not a bug in anything.
+
+## The pill and the view switch share a row after all — the entry above is superseded
+Where: `apps/web/src/components/GoalPicker.tsx` (now `GoalPill` + `GoalBox`),
+`apps/web/src/exercises.css` (`.musie-deck-toolbar`),
+`apps/web/src/routes/Exercises.tsx`
+
+What I checked: the entry above records me keeping the pill out of
+`.musie-deck-toolbar` on the strength of the note in `Exercises.tsx` — *"ONE
+SWITCH, ONE HOME (Ben, 2026-10-05) … the one control the two views SHARE was
+the one thing that moved when you pressed it."* Ben asked for them in one row
+anyway, knowing it.
+
+What I did: split the component in two — `GoalPill` renders inside the
+toolbar, `GoalBox` above it — and made the row a scroller.
+
+Three things fell out of it that the plan had not anticipated:
+
+- **The row does not fit a phone.** *Ziel: Achtsamkeit stärken* plus the
+  switch measures 408px against 371 of usable width in German, 431 in English.
+  It scrolls (`overflow-x: auto`, so it costs nothing where it fits) rather
+  than wrapping, which would have given the row two heights depending on the
+  locale and the chosen goal.
+- **The row's visibility is the OR of its two children**, not a third rule.
+  The pill goes while the question is open; the switch goes when a goal offers
+  no exercises. Either alone still draws the row; neither draws nothing, where
+  a single `chosen` guard would have left an empty 44px band.
+- **The empty-goal box had to move below the toolbar.** With the pill in the
+  row, the old order told you there was nothing for this goal and only then,
+  underneath, what the goal was. Found on screen, not in review.
+
+Why: Ben asked, having been shown the precedent, and the cost here is smaller
+than the one the 2026-10-05 note describes — the toolbar keeps its place and
+its other control whichever state the goal is in.
+
+What I need from Ben: **one thing to look at.** A horizontal scroller has no
+affordance for a MOUSE — no wheel axis, no scrollbar (hidden, as
+`.musy-carousel__viewport` hides its own) — which the carousel solves with a
+grab cursor and drag-to-scroll. It does not bite on a phone (a finger
+scrolls) or on a keyboard (focus scrolls the switch into view), and at 1280
+the row fits with room to spare. It bites in a NARROW DESKTOP WINDOW, where
+the switch is half visible and a mouse cannot reach it. Say the word and it
+gets the carousel's drag treatment.
+
+## The toolbar centres below --bp-md and stays left above it, and `safe` is what makes both true
+Where: `apps/web/src/exercises.css` (`.musie-deck-toolbar`)
+
+What I checked: Ben sketched the row centred at M–L and scrolling at S, then
+corrected it out loud — *"behalte alles in L viewports links aligned. Erst
+beim 768er breakpoint zentrieren."* That is the threshold and the two states
+`.musy-deck` already turns on, so `CardDeck` was not touched and the earlier
+idea of centring the deck at M–L was dropped.
+
+Measured first: at ≥768 the row's content edge was already flush with the
+headline and the deck (24 / 32 / 150 at 768 / 1024 / 1280), so the M–L half of
+the sketch needed nothing. Only the S half was missing — the row lost its
+centring when it became a scroller.
+
+What I did: `justify-content: safe center` inside `@media (max-width:
+767.98px)`.
+
+**Not a plain `center`, and this is the whole entry.** On a flex container
+that overflows, `center` pushes the LEADING item out past the scroll origin
+where no gesture can reach it — the pill would become unreachable at exactly
+the widths the row has to scroll. `safe` falls back to `start` the moment the
+content would overflow, so one declaration states both halves of the sketch.
+Measured: 408px of German content and 431 of English against 371 of room at
+393, so a phone always takes the `start` branch; the centred branch is the
+large-phone and tablet-portrait band up to 767.
+
+Why: one threshold for both, which is the argument `.musy-deck`'s own comment
+makes — tie them to `--bp-md` or the two disagree across a 70px band.
+
+What I need from Ben: nothing. **It is the first `safe` in this repository**,
+so it is flagged here: the next scrolling row will want it, and the failure it
+prevents is invisible until somebody tries to reach the first control.
+
+## `--focus-ring-clearance` sits outside the gap, so a scrolling row is 5px further from everything
+Where: `apps/web/src/exercises.css` (`.musie-deck-toolbar`)
+
+What I checked: the row carries `padding: var(--focus-ring-clearance)` so a
+focused control at its edge is not clipped by the scroller — the same reason
+`.musy-carousel__viewport` carries it. That padding is OUTSIDE the stack's
+gap, so the measured distance from the block above to the controls, and from
+the controls to the deck, was `32 + 5 = 37` on both edges. The row sat further
+from its neighbours than the ladder says and nothing on screen said why.
+
+What I did: `margin-block: calc(var(--focus-ring-clearance) * -1)` — the stack
+still supplies the 32 and the row's border box is pulled back into the gap by
+exactly what the padding spends. Measured 32.0 on both edges at five widths in
+both locales.
+
+Why: a gap the ladder names should measure what the ladder says.
+
+What I need from Ben: nothing, just flagging — **every scrolling row will have
+this**, because ring clearance and the gap ladder are two different mechanisms
+spending the same axis. A `--space-gap-*` that already contained the clearance
+would solve it once, but that is a Layer 1 change and this is one row.
+
+## The goals migrations are on hosted, and restoring a lost file exposed a deck drift
+Where: `supabase/migrations/20261002153212_deck_test_deck_tracks.sql`
+(reconstructed), `supabase/content/deck.json`,
+`apps/web/src/lib/deck.db.test.ts`
+
+What I checked: Ben reported that starting a session had stopped working. It
+was not a code regression — `.env.local` points at hosted and the goals
+migrations had never been pushed, so `useExercises()` and `useGoals()` both
+failed there (`PGRST200` on the `exercise_goals` join, `PGRST205` on `goals`).
+With no goals the question never renders, `chosen` never becomes true, and the
+screen draws no deck at all. Nothing to press.
+
+`supabase migration list` then showed two things neither of us expected:
+
+- **four** migrations pending, not two — the other two belong to the parallel
+  session in this tree (`listen_copy_two_states`,
+  `reflect_questions_into_the_field`), and `db push` cannot send a subset;
+- **`20261002153212` applied on the remote with no local file.** It was
+  untracked here when this session began and vanished during it, so a fresh
+  `supabase db reset` could not reproduce hosted.
+
+What I did, both on Ben's instruction: pushed all four, and reconstructed the
+orphan from the remote rather than from memory — `supabase db dump
+--data-only --schema supabase_migrations` carries each applied migration's own
+statements, so the file is what actually ran. Verified byte-for-byte against
+its header (the four `trk-06..09 → trk-05/04/02/01` lines) before writing it.
+
+Hosted now verified as an authenticated reader: three goals with both locales,
+all five exercises mapped, the app's exact join resolving, `missing_translations`
+empty, `situations` gone, and `anon` refused on every new table with `42501`
+rather than `404` — so rule 2's revoke survived the rename.
+
+What I need from Ben: **which deck mapping is true.** Restoring the file made
+local honest about hosted and therefore made a real disagreement visible —
+`deck.db.test.ts` now fails on `pairs each card with the same track in each
+exercise`, because:
+
+| | mc-06 | mc-07 | mc-08 | mc-09 |
+|---|---|---|---|---|
+| `deck.json` (committed) | trk-06 | trk-07 | trk-08 | trk-09 |
+| hosted **and** local DB | trk-05 | trk-04 | trk-02 | trk-01 |
+
+The migration calls itself a TEST deck: it re-pointed the four silent cards at
+recordings that have files, because `trk-06`…`trk-09` have no audio. Three
+ways out — update `deck.json` to match and accept the test mapping as the
+deck; run `pnpm deck:migration` to generate a migration putting hosted back to
+`trk-06..09` and accept four silent cards; or leave it failing. It is a
+content call, so I have made none of them.
+
+Also: verifying hosted left **one throwaway anonymous auth user** there. The
+app creates one per visitor anyway, and removing it needs the service-role key.
+
+The prescribed hosted check — `pnpm test:db` with `SUPABASE_TEST_URL`,
+`SUPABASE_TEST_ANON_KEY` and `SUPABASE_TEST_SERVICE_ROLE_KEY`, which is how the
+rule-2 `service_role` hole was found — was NOT run, because the service-role
+key is not in any file and should not be. Worth one run from Ben's shell.
+
+## The deck mapping — RESOLVED: deck.json accepts the test mapping
+Where: `supabase/content/deck.json`
+
+What I checked: the entry above left three ways out of the disagreement
+between `deck.json` and the database. Ben chose the first — `deck.json` takes
+the mapping that is already applied, rather than a migration putting hosted
+back to four silent cards.
+
+What I did: edited the four `plays` pairs and nothing else, as a targeted text
+change so the file's formatting is untouched.
+
+**No migration, and that is the point.** The database — local and hosted —
+already holds this state from `20261002153212`; the file was the only thing
+disagreeing. The proof is the generator's own output: run against the edited
+file it reports exactly the eight `CHANGED` lines that migration's header
+carries, so the two now say the same thing. `--dry-run`, so nothing was
+written.
+
+> **Do not run `pnpm deck:migration` on this before committing.** It diffs the
+> working copy against `git show HEAD:…/deck.json`, and HEAD still holds the
+> old mapping — so it would happily generate a migration re-applying what is
+> already applied. Once `deck.json` is committed, HEAD matches and the
+> generator correctly reports no diff.
+
+`deck.db.test.ts` passes. `pnpm test:db` is 117 passed, 1 failed, and the one
+is the unrelated storage test that needs the local bucket refilled.
+
+What I need from Ben: **nothing to decide, one thing to know.** Nine cards now
+share five recordings, so four of them are duplicates by design:
+
+| recording | cards |
+|---|---|
+| trk-01 | mc-04, mc-09 |
+| trk-02 | mc-02, mc-05, mc-08 |
+| trk-04 | mc-01, mc-07 |
+| trk-05 | mc-03, mc-06 |
+
+Every card plays something, which is what the test deck was for, and drawing
+mc-02 after mc-05 now plays the same piece twice. That is the state until
+`trk-06`…`trk-09` have files — at which point the four `plays` edits reverse
+and `pnpm deck:migration` generates the migration that puts them back.

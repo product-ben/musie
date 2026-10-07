@@ -156,7 +156,39 @@ export const Labels: Story = {
   },
 };
 
-/** All three accent families. The prototype uses `accent`. */
+/**
+ * All three accent families. The prototype uses `accent`, and so does
+ * /exercises since 2026-10-08, where the view switch answers in the same
+ * ocher as the goal question beside it.
+ *
+ * ── IN PRACTICE IT CHANGES THE INK AND NOTHING ELSE ──────────────────────
+ * The rule at §15 sets a `-border` as well, and **that border is not drawn**:
+ * conflict B25 neutralises selected-state edges across this component,
+ * RadioGroupText and both radio cards, including the accent modifiers by
+ * name. So the only thing an accent family changes on a rendered segmented
+ * control is the checked segment's INK. Measured on a real one rather than
+ * read off the rule:
+ *
+ * | pair | light | dark | bar |
+ * |---|---|---|---|
+ * | checked ink on its own fill | 6.37 | 5.17 | 4.5 · 1.4.3 |
+ * | unchecked ink on the track | 5.27 | 6.71 | 4.5 · 1.4.3 |
+ * | *(the same two under `primary`)* | 6.37 · 5.27 | 5.17 · 6.71 | — |
+ *
+ * **The accent is contrast-neutral**: it swaps one dark brown for another and
+ * moves nothing by more than a rounding error. That is also why it is a quiet
+ * change to look at — do not expect it to read as yellow.
+ *
+ * Neither pair is in `tokens/_audit.json`: the audit covers this ink on
+ * `surface` and on its own tint, but not on the raised surface the checked
+ * segment actually paints. Logged in OPEN-QUESTIONS.md.
+ *
+ * WHAT CARRIES SELECTION, since it is not the edge: the lifted fill and the
+ * ink step (B25's own account), plus — in `labels="unchecked"` — the label
+ * itself, which is the one cue that survives both the hue and the fill going.
+ * The lifted fill alone is 1.22:1 against the track, so it is the structural
+ * difference doing the work, not the colour.
+ */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
