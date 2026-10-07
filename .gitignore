@@ -15,3 +15,8 @@ apps/web/playwright-report/
 # artefact that cannot be regenerated is one nobody can check.
 deck-print/
 qr-codes/
+
+# Per-machine Claude Code permissions. `.claude/settings.json` is shared and
+# committed; the `.local` sibling is personal and must never be, or one
+# developer's allowlist silently becomes everyone's.
+.claude/settings.local.json

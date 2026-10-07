@@ -165,6 +165,51 @@ neither CSS imports nor the font-pinning Vite plugin (`.github/workflows/ci.yml`
 Verify against `supabase start` and `pnpm --filter web dev`, never a URL —
 nothing deploys in this phase.
 
+## 9 · A worktree isolates files and nothing else
+
+Parallel sessions run in `../musie.worktrees/*`. Each gets its own checkout;
+they share one machine, and the shared half is invisible to git — nothing in
+`git status` reports that another agent moved it.
+
+**There is one Supabase stack.** `supabase/config.toml` declares `project_id =
+"musie"` and fixed ports (54321 api, 54322 db, 54323 studio), so every
+worktree's `supabase` command drives the same Docker containers. A `db reset`
+run from one branch re-applies *that branch's* migrations over whatever another
+agent is testing against; its `pnpm test:db` then fails against a schema that
+exists nowhere in its own tree, and it goes hunting for the bug in its own
+migration. `supabase db reset`, `supabase db push` and `pnpm gen:types` are
+denied in `.claude/settings.json` for that reason. Run them yourself, from one
+session, knowing the others are affected.
+
+`pnpm gen:types` reads the shared database and writes the local
+`apps/web/src/lib/database.types.ts`, so it will commit another branch's tables
+to this one and typecheck will pass right up to the merge.
+
+**There is one port 5173.** `apps/web/playwright.config.ts` reuses whatever is
+already serving it (L154, and the comment above it says why). Rule 8 sends every
+agent to `pnpm --filter web dev` to verify its work; with two servers up, the
+walk verifies the other branch's app. Check what is on the port before believing
+a result.
+
+**Migration timestamps order the schema; merges do not.** Two branches minting
+`2026…` filenames in parallel interleave by wall clock: a fresh `db reset`
+applies them in one order, and `db push` applies them in the order they reached
+the remote. A migration that assumes the other branch's `alter table` already
+ran is correct in exactly one of those. Rule 4 is why it cannot be repaired by
+editing the file afterwards.
+
+**A stale worktree reads like a confused agent.** Before trusting one, ask what
+it is: `git rev-list --left-right --count main...HEAD`. A worktree 76 commits
+behind reports a file missing that exists on `main`, re-implements what already
+landed, and applies an older copy of this file.
+
+**A subagent inherits the directory, not the conversation.** Its whole world is
+its prompt plus this file, so a constraint established by talking — which
+migration is half-written, which package to leave alone — does not exist unless
+the prompt restates it. Prefer `Explore` and `Plan` for fan-out: neither can
+write, so neither can collide. Do the writing in one session, where a single
+context holds the whole tree.
+
 ## Log what you could not resolve
 
 `apps/web/OPEN-QUESTIONS.md` is append-only, and an empty log is a failure
