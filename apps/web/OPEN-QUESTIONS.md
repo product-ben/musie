@@ -6641,3 +6641,33 @@ What I need from Ben: **run `supabase db push`.** Until it has run, the page
 renders on the hosted build and every submit fails, because the table is not
 there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
 beside it.
+
+## The listen step's picture ships as a 2.9 MB PNG
+
+Where: `apps/web/public/assets/web/infographics/infographic-listen-and-see.png`,
+drawn by `INFOGRAPHIC_SRC` in `src/components/SessionListen.tsx`
+
+What I checked: everything under `public/` is copied into the build verbatim
+and served to anyone who opens the app, and this file is 1672 × 941 at 2.9 MB —
+heavier than every other asset in the tree put together. It is also **above the
+fold on a phone-first step**: the stage is a measured full view, so the picture
+is on screen before anything is scrolled. `public/assets/web/exercises/README.md`
+records the identical mistake being made and undone — five 1254 × 1254 PNGs at
+~3.3 MB each, 17 MB for one screen, re-encoded to 748 KB of WebP with one
+`sharp` call.
+
+What I did: **copied the master as delivered and wired it up**, which is what
+Ben asked for. The `<img>` declares `width`/`height` so the column reserves its
+band and the transport underneath does not move while it loads, and the folder's
+own README carries the re-encode line ready to run.
+
+Why not just re-encode it: the artwork is still moving — this is the first step
+picture and there is no second one yet to set a size or a format against — and
+silently shipping a file that is not the one handed over is how a master and a
+build drift. The compression is also lossy and this is a drawing with large flat
+areas and fine engraving lines, which is the case where a default quality is
+worth looking at rather than assuming.
+
+What I need from Ben: **say the word and it becomes a WebP** — one line, same
+dimensions, and the only edit is the extension in `INFOGRAPHIC_SRC`. Before
+anything is deployed it has to happen either way.

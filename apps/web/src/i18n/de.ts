@@ -410,6 +410,9 @@ export const de: Messages = {
   'session.listen.track': 'Dein Stück',
   'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
   'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
+  /* Beschreibend, kein Satzzeichen-Deutsch: was zu sehen ist, in einem Satz.
+     'Smartphone', weil 'Handy' in diesem Deck sonst nirgends steht. */
+  'session.listen.infographicAlt': 'Eine Hand hält eine Karte über einen Tisch, daneben liegt ein Smartphone, aus dem Musik klingt.',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
   'session.listen.detailsAction': 'Über den Track',
   'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten des Tracks beeinflussen zu lassen.',
@@ -738,10 +741,6 @@ export const de: Messages = {
      kein deutscher Satz. Die Zahl wird eingesetzt, nicht geschrieben — das
      Deck zeigt alle Übungen, die es gibt. */
   'exercises.headline': '{count} Übungen für dich',
-  /* Gewischt wird jetzt nur noch geblättert, gestartet wird mit einem Tipp
-     (Ben, 2026-10-05) — darum steht der Tipp vorn: er ist die Handlung, das
-     Wischen ist nur der Weg zur richtigen Karte. */
-  'exercises.intro': 'Tipp eine Karte an, um die Übung zu starten, oder wisch zur Seite für eine andere. Oder sieh dir alle Übungen in einer Liste an.',
   /* Der Name des Stapels für Screenreader, und die einzige Stelle, an der die
      Tasten genannt werden: das Overlay, das den Tipp erklärt, ist ein
      visueller Zustand und aria-hidden. Es nennt die Tasten und nicht das

@@ -578,6 +578,17 @@ export const en = {
      paragraph is gone. */
   'session.listen.startLocked': 'Focus for {countdown} minutes more',
   'session.listen.start': 'Start reflecting whenever you are ready',
+  /* THE PICTURE BETWEEN THE WORDS AND THE CONTROLS — 2026-10-07.
+     DESCRIBED, NOT SILENT. The diary's marks take `alt=""` because the link
+     around them already says which session; nothing says this one. The step's
+     own copy is about the sounds, and the drawing is about the room they are
+     heard in, so a reader who cannot see it would otherwise be told only that
+     something is there.
+
+     WHAT IS IN IT, AND NOTHING MORE. Not what it means — an alt text that
+     said *the calm of an unnamed track* would be writing the step's copy a
+     second time, in a place nobody can check it against the picture. */
+  'session.listen.infographicAlt': 'A hand holding a card over a table, beside a phone lying flat with music drifting from it.',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
   /* ── The three scroll views · E.5b ──────────────────────────────────────
@@ -1058,11 +1069,6 @@ export const en = {
   /* THE COUNT IS INTERPOLATED, not written out: the deck shows every exercise
      there is, so the headline would start lying the day a sixth lands. */
   'exercises.headline': '{count} exercises for you',
-  /* THE SWIPE DOES NOT START ANYTHING ANY MORE (Ben, 2026-10-05). It browses,
-     and a press is what starts an exercise — so this line leads with the
-     press, which is the action, and mentions the swipe second, which is only
-     how you get to the card you want. */
-  'exercises.intro': 'Press a card to start that exercise, or swipe sideways to see another. Or see all of them in a list.',
   /* The pile's accessible name, and the ONLY place the keys are named: the
      overlay that teaches the press is a visual state and is aria-hidden, so a
      screen-reader user hears this and nothing else. It names the keys rather
