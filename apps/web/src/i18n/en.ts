@@ -589,6 +589,54 @@ export const en = {
      said *the calm of an unnamed track* would be writing the step's copy a
      second time, in a place nobody can check it against the picture. */
   'session.listen.infographicAlt': 'A hand holding a card over a table, beside a phone lying flat with music drifting from it.',
+
+  /* ── The listening view · the LISTEN-EXPERIMENTS branch ──────────────────
+     The press on the stage's transport opens a full-screen sheet and the track
+     plays in there: the exercise's own words, the minimum time counting down,
+     and the way on once it has run out. The stage keeps the same three strings
+     it had — this is a second place to read them, not a replacement — and what
+     is new is the frame and the clock.
+
+     `immersiveTitle` is the SHEET'S ACCESSIBLE NAME and is never seen: the
+     exercise's own headline is what the sheet shows (4.1.2 still wants a name,
+     and a noun phrase is what a view is called). The two are deliberately
+     different strings — a chrome name that repeated the content's heading would
+     put two headings with one name in the tree, which is the stutter
+     `SessionRunningLightbox` is written up for. */
+  'session.listen.immersiveTitle': 'Listening',
+  /* THE X ENDS THE LISTENING, it does not only close a window — leaving the
+     sheet pauses the track, so the label says the thing that happens rather
+     than the thing that is clicked. */
+  'session.listen.immersiveClose': 'End listening',
+  /* The caption UNDER the big figure, so it does not have to repeat it. "This
+     much" is the number above; what the caption adds is that the number is a
+     floor and not a length. */
+  'session.listen.immersiveCountdown': 'minimum listening for this exercise',
+  /* ── ONCE THE MINIMUM IS DONE — Ben, 2026-10-07 ────────────────────────
+     It replaces `immersiveReady` ("You have listened long enough"), which
+     reported a threshold and stopped there. This says what was achieved and
+     then hands the rest of the track back as an OFFER rather than as a
+     requirement, which is the same soft-gate posture as the scrubber.
+
+     BOTH FIGURES ARE MM:SS, Ben's call over rounded words: the gate is the
+     same number the counter above just finished counting, so saying it in a
+     different unit here would read as a different number.
+
+     `{gate}` is interpolated and never written out, because it is
+     `exercises.listen_gate_seconds` and varies — 60, 90 and 180 across the
+     five exercises. */
+  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate}. Carry on for another {remaining} if you like.',
+  /* THE TRACK CAN ALREADY BE OVER when the gate opens — a short recording, or
+     somebody who scrubbed to the end. "Carry on for another 00:00" is the
+     sentence that gets written when nobody checks. No dash, at Ben's request;
+     two sentences carry it. */
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {gate}. The track has finished. Play it again if you like.',
+  /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
+     `startLocked` does on the stage — the figure is already the largest thing
+     on the sheet, and saying it twice on one screen is how a number stops
+     being read. So the disabled button says what to do instead of what to
+     wait for. */
+  'session.listen.immersiveLocked': 'Focus until the counter runs out. Then you can carry on',
   /* There are no audio files (E.4), so the transport runs on a clock at the
      track's real length. Said on screen, for the same reason as the scanner. */
   /* ── The three scroll views · E.5b ──────────────────────────────────────
@@ -1069,6 +1117,11 @@ export const en = {
   /* THE COUNT IS INTERPOLATED, not written out: the deck shows every exercise
      there is, so the headline would start lying the day a sixth lands. */
   'exercises.headline': '{count} exercises for you',
+  /* THE SWIPE DOES NOT START ANYTHING ANY MORE (Ben, 2026-10-05). It browses,
+     and a press is what starts an exercise — so this line leads with the
+     press, which is the action, and mentions the swipe second, which is only
+     how you get to the card you want. */
+  'exercises.intro': 'Press a card to start that exercise, or swipe sideways to see another. Or see all of them in a list.',
   /* The pile's accessible name, and the ONLY place the keys are named: the
      overlay that teaches the press is a visual state and is aria-hidden, so a
      screen-reader user hears this and nothing else. It names the keys rather
@@ -1099,10 +1152,17 @@ export const en = {
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',
-  /* A SHORTER FORM of `exercises.surpriseMe`. The same action; the long one
-     is right where it is, as a full-width CTA on /exercises. Here it is the
-     third button in a column and has to read at a glance beside two others. */
-  'exercises.surpriseMeShort': 'Pick a card for me',
+  /* THE ONLY FORM NOW. It was the short one of a pair — the long
+     `exercises.surpriseMe` was a full-width CTA on this screen — and that
+     one went when the control moved into the toolbar. The key keeps its name
+     rather than being renamed across two locales for tidiness.
+
+     "AN EXERCISE", NOT "A CARD" — Ben, 2026-10-07, in German first ("Such mir
+     eine Übung aus"), and the English follows it: the two locales cannot
+     name the same thing differently. The pile is cards and what it offers is
+     exercises, which is what this button hands you — and it is the word the
+     headline, the legend and the deck's own next/previous labels all use. */
+  'exercises.surpriseMeShort': 'Pick an exercise for me',
   /* The view switch. ONE OF THESE TWO IS NOW DRAWN, not neither: the segmented
      control gives its word to the view you are NOT in (`labels="unchecked"`),
      so whichever half you might press says what pressing it would get you —
@@ -1113,14 +1173,92 @@ export const en = {
      ONE WORD EACH. The drawn one sits in a 36px track beside a glyph, so this
      is the shortest true name for each view rather than its description —
      'Stack', not 'Card stack'. */
+  /* ── THE FIRST-USE LEGEND · the deck's extra card ───────────────────────
+     Three rows, one per control the screen offers and none of which says what
+     it is on its own: the goal above the pile, the two directions a card
+     goes, and the card you press. Shown once per browser and brought back by
+     the `?` beside the chevrons.
+
+     EVERY LINE IS NOW AN INSTRUCTION (Ben's wireframe, 2026-10-07). They were
+     three descriptions of what each control gets you — "The next exercise",
+     "Choose your goal to find exercises that suit you better" — read in the
+     order the controls happened to sit in. Each one names the MOVE instead:
+     change, swipe, press. Three verbs in three rows, in the order the eye goes
+     down the card, and each one beside the picture of the control it is about,
+     which is what carries the half the sentence no longer has to say.
+
+     SHORTER FOR THE SAME REASON. A line that describes a benefit has to earn
+     its length; a line that names a gesture is done in four words, and three
+     of them share a card with a photograph behind it.
+
+     `guide.dismiss` IS NEVER SEEN. It is the sr-only line that tells a screen
+     reader what pressing this does, because the legend is one big button and
+     its accessible name is otherwise three sentences of explanation with no
+     verb among them. */
+  'exercises.guide.goal': 'Change your goal',
+  'exercises.guide.next': 'Swipe for the next exercise',
+  'exercises.guide.start': 'Press an exercise to start it',
+  'exercises.guide.dismiss': 'Press to continue',
+  /* The `?` beside the chevrons. A verb phrase, because it is an action and
+     not a label for a thing. */
+  'exercises.guide.show': 'Show how this page works',
+  /* ── THE TOOLBAR'S TWO CHEVRONS ────────────────────────────────────────
+     Icon-only, so these ARE the controls — the accessible name and the
+     tooltip are one string in `IconButton`, and without them a screen reader
+     meets two buttons called nothing.
+
+     NAMED BY DIRECTION, not by what is over there. "More controls" would be
+     the same name twice, and the one thing a person needs to know about two
+     chevrons is which way each goes. The row they scroll is the subject and
+     is left unsaid: both locales are LTR, the button sits against the row,
+     and "Scroll the controls to the left" spends six words on a 24px
+     target's tooltip to say what the glyph already said. */
+  'exercises.toolbar.left': 'Scroll left',
+  'exercises.toolbar.right': 'Scroll right',
   'exercises.view.legend': 'How to show the exercises',
   'exercises.view.deck': 'Stack',
   'exercises.view.list': 'List',
+  /* ── THE GOAL, AND THE FOUR THINGS IT NEEDS TO SAY ──────────────────────
+     The three goal LABELS are content and live in `goal_i18n` — they are the
+     product's own words and change by migration. Everything here is chrome:
+     the question, the pill, the fourth option, and the sentence for a goal
+     nothing serves.
+
+     `exercises.goal.none` IS CHROME and the other three labels are not, which
+     looks inconsistent and is not: "Musie entdecken" has no row to be the
+     label of. It means the absence of a goal (see lib/goals.ts), so there is
+     nowhere else for it to live. */
+  'exercises.goal.headline': 'Your goal',
+  /* THE FIELDSET'S LEGEND, not the box's headline — RadioGroupText has no
+     `legendHidden`, so a visible headline above it would ask the question
+     twice. The ContentBox keeps the same string as a hidden headline for the
+     document outline. */
+  'exercises.goal.question': 'What would you like to achieve today?',
+  'exercises.goal.none': 'Discover Musie',
+  'exercises.goal.pill': 'Goal: {goal}',
+  /* NOT `content.empty`, which says the catalogue did not load. This says it
+     loaded and has nothing for this goal — a true sentence about a mapping,
+     not a failure. */
+  'exercises.goal.empty': 'No exercise serves this goal yet.',
+  'exercises.goal.emptyAction': 'Choose a different goal',
+  /* ── /goal-mappings — A TOOL, NOT A SCREEN ──────────────────────────────
+     Linked from nowhere and reachable only by typing the path. It still goes
+     through the catalogue, exactly as /dev/qr does: rule 7 is about where
+     strings live, not about who is expected to read them, and a tool with
+     inline strings is the one place the next inline string gets added. */
+  'goalMap.headline': 'Goal mappings',
+  'goalMap.intro': 'Tick which goals each exercise serves, then generate the config and paste it back into the chat. Nothing here is saved — the mapping changes by migration.',
+  'goalMap.legend': 'Which goals each exercise serves',
+  'goalMap.submit': 'Generate config',
+  'goalMap.outputLabel': 'Config',
+  'goalMap.copy': 'Copy',
+  'goalMap.copied': 'Copied',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',
   'route.diaryEntry.title': 'Diary entry',
   'route.exercises.title': 'Exercises',
+  'route.goalMappings.title': 'Goal mappings',
   'route.session.title': 'Current session — {step}',
   'route.notFound.title': 'Not found',
 } as const;

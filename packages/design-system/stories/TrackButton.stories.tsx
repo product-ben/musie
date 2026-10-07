@@ -11,6 +11,7 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TrackButton } from '../src/MusicPlayer';
+import { CtaButton } from '../src/CtaButton';
 import { bothThemes, Stack } from './_decorators';
 
 /* "Your track" is §7.21's own example accessible name ("Pause, Your track").
@@ -124,12 +125,16 @@ const meta = {
     onRestart: { action: 'restart', description: 'Called instead of onTogglePlay once the track has ended.' },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'accent', 'accent-alt'],
-      description: 'Button family. Defaults to `secondary`.',
+      options: ['primary', 'secondary', 'accent', 'accent-alt', 'ghost'],
+      description: 'Button family. Defaults to `secondary`. `ghost` is for a transport that must not be the loudest thing on its screen.',
+    },
+    hideTimer: {
+      control: 'boolean',
+      description: 'Drop the MM:SS readout — and with it the number in the accessible name. Only where something ELSE on screen already carries the time; a transport that does not say how long it is asking for is what this component was built to avoid.',
     },
     size: {
       control: 'inline-radio',
-      options: ['primary', 'guided', 'comfort'],
+      options: ['min', 'primary', 'guided', 'comfort'],
       description: '--target-guided (64px) for assisted use.',
     },
     disabled: { control: 'boolean', description: 'Disables the button.' },
@@ -148,8 +153,11 @@ type Story = StoryObj<typeof meta>;
  *  is "Start Listening"; the accessible name appends the track. */
 export const Default: Story = {};
 
-/** All four button families. The prototype uses the base primary for the main
- *  listen control and `secondary` for the compact one. */
+/** All five button families. The prototype uses the base primary for the main
+ *  listen control and `secondary` for the compact one; `ghost` arrived on
+ *  2026-10-07 for the listen step's full-screen sheet, where the filled
+ *  control is the way ON and the transport only pauses what is already
+ *  playing. */
 export const Variants: Story = {
   render: (args) => (
     <Stack>
@@ -157,6 +165,7 @@ export const Variants: Story = {
       <TrackButton {...args} variant="secondary" />
       <TrackButton {...args} variant="accent" />
       <TrackButton {...args} variant="accent-alt" />
+      <TrackButton {...args} variant="ghost" />
     </Stack>
   ),
 };
@@ -166,6 +175,7 @@ export const Variants: Story = {
 export const Sizes: Story = {
   render: (args) => (
     <Stack>
+      <TrackButton {...args} size="min" />
       <TrackButton {...args} size="primary" />
       <TrackButton {...args} size="comfort" />
       <TrackButton {...args} size="guided" />
@@ -209,4 +219,65 @@ export const CopyOverrides: Story = {
     pauseLabel: 'Pause',
     restartLabel: 'Noch einmal',
   },
+};
+
+/**
+ * ── `hideTimer` ────────────────────────────────────────────────────────────
+ * The countdown is this control's best idea, and the reason to turn it off is
+ * narrow: a screen that is ALREADY counting, larger and for a different
+ * reason. The listen step's full-screen sheet shows the minimum the exercise
+ * asks for in display type; the transport's own remaining-track time beside it
+ * is two clocks disagreeing in one glance.
+ *
+ * THE BUTTON HUGS AGAIN when it is off. `min-inline-size: 18ch` and
+ * `justify-content: flex-start` both exist FOR the readout — one reserves a
+ * column so the digits do not resize the button, the other makes the pair read
+ * as two columns — so with no readout they are dropped and it is an ordinary
+ * CTA Button around its label.
+ *
+ * The number leaves the ACCESSIBLE NAME with it, which is the point: the
+ * readout is plain text inside the button, so a hidden-but-announced time
+ * would be read to one person and not another.
+ */
+export const TimerHidden: Story = {
+  args: { position: 72, playing: true, hideTimer: true },
+};
+
+/** The two side by side, which is the only way the width difference reads. */
+export const TimerShownAndHidden: Story = {
+  render: (args) => (
+    <Stack>
+      <TrackButton {...args} />
+      <TrackButton {...args} hideTimer />
+    </Stack>
+  ),
+  args: { position: 72, playing: true },
+};
+
+/** How the listen step's sheet draws it: ghost, no readout, because the sheet
+ *  counts the exercise's minimum in display type directly above. */
+export const InTheListeningSheet: Story = {
+  args: { position: 72, playing: true, variant: 'ghost', hideTimer: true },
+};
+
+
+/**
+ * ── THE `min` RUNG, BESIDE A `min` CTA ─────────────────────────────────────
+ * The two stand in the same row and have to agree, so they are shown that way:
+ * both come to 36px by their own construction rather than by a copied number
+ * (see `.musy-btn--min`'s note in the stylesheet).
+ *
+ * It arrived for the listen step's sheet, where the transport sits beside the
+ * countdown rather than standing on its own. Where a transport IS the control
+ * on offer, `primary` is the floor — 36px is below what 2.5.8 wants of a lone
+ * target.
+ */
+export const MinRungBesideACta: Story = {
+  render: (args) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <TrackButton {...args} size="min" variant="ghost" hideTimer />
+      <CtaButton size="min" variant="secondary">Weiter</CtaButton>
+    </div>
+  ),
+  args: { position: 72, playing: true },
 };

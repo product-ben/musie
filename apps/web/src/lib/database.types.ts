@@ -108,6 +108,36 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_goals: {
+        Row: {
+          exercise_id: string
+          goal_id: string
+        }
+        Insert: {
+          exercise_id: string
+          goal_id: string
+        }
+        Update: {
+          exercise_id?: string
+          goal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_goals_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_goals_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_i18n: {
         Row: {
           description: string
@@ -119,6 +149,7 @@ export type Database = {
           name: string
           needs: string | null
           reflect_md: string | null
+          reflect_placeholder: string | null
           scan_md: string | null
         }
         Insert: {
@@ -131,6 +162,7 @@ export type Database = {
           name: string
           needs?: string | null
           reflect_md?: string | null
+          reflect_placeholder?: string | null
           scan_md?: string | null
         }
         Update: {
@@ -143,6 +175,7 @@ export type Database = {
           name?: string
           needs?: string | null
           reflect_md?: string | null
+          reflect_placeholder?: string | null
           scan_md?: string | null
         }
         Relationships: [
@@ -151,36 +184,6 @@ export type Database = {
             columns: ["exercise_id"]
             isOneToOne: false
             referencedRelation: "exercises"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      exercise_situations: {
-        Row: {
-          exercise_id: string
-          situation_id: string
-        }
-        Insert: {
-          exercise_id: string
-          situation_id: string
-        }
-        Update: {
-          exercise_id?: string
-          situation_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "exercise_situations_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "exercises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exercise_situations_situation_id_fkey"
-            columns: ["situation_id"]
-            isOneToOne: false
-            referencedRelation: "situations"
             referencedColumns: ["id"]
           },
         ]
@@ -261,6 +264,47 @@ export type Database = {
           sort?: number
           timeframe_max?: number
           timeframe_min?: number
+        }
+        Relationships: []
+      }
+      goal_i18n: {
+        Row: {
+          goal_id: string
+          label: string
+          locale: string
+        }
+        Insert: {
+          goal_id: string
+          label: string
+          locale: string
+        }
+        Update: {
+          goal_id?: string
+          label?: string
+          locale?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_i18n_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          id: string
+          sort: number
+        }
+        Insert: {
+          id: string
+          sort: number
+        }
+        Update: {
+          id?: string
+          sort?: number
         }
         Relationships: []
       }
@@ -374,9 +418,9 @@ export type Database = {
           card_id: string | null
           ended_at: string | null
           exercise_id: string
+          goal_id: string | null
           id: string
           listened_at: string | null
-          situation_id: string | null
           started_at: string
           status: string
           step: string
@@ -387,9 +431,9 @@ export type Database = {
           card_id?: string | null
           ended_at?: string | null
           exercise_id: string
+          goal_id?: string | null
           id?: string
           listened_at?: string | null
-          situation_id?: string | null
           started_at?: string
           status: string
           step: string
@@ -400,9 +444,9 @@ export type Database = {
           card_id?: string | null
           ended_at?: string | null
           exercise_id?: string
+          goal_id?: string | null
           id?: string
           listened_at?: string | null
-          situation_id?: string | null
           started_at?: string
           status?: string
           step?: string
@@ -425,10 +469,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sessions_situation_id_fkey"
-            columns: ["situation_id"]
+            foreignKeyName: "sessions_goal_id_fkey"
+            columns: ["goal_id"]
             isOneToOne: false
-            referencedRelation: "situations"
+            referencedRelation: "goals"
             referencedColumns: ["id"]
           },
           {
@@ -446,47 +490,6 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
-      }
-      situation_i18n: {
-        Row: {
-          label: string
-          locale: string
-          situation_id: string
-        }
-        Insert: {
-          label: string
-          locale: string
-          situation_id: string
-        }
-        Update: {
-          label?: string
-          locale?: string
-          situation_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "situation_i18n_situation_id_fkey"
-            columns: ["situation_id"]
-            isOneToOne: false
-            referencedRelation: "situations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      situations: {
-        Row: {
-          id: string
-          sort: number
-        }
-        Insert: {
-          id: string
-          sort: number
-        }
-        Update: {
-          id?: string
-          sort?: number
-        }
-        Relationships: []
       }
       tracks: {
         Row: {

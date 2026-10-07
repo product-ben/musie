@@ -68,10 +68,48 @@ export interface TrackButtonProps {
   onTogglePlay?: () => void;
   /** Called instead of onTogglePlay once the track has ended. */
   onRestart?: () => void;
-  variant?: 'primary' | 'secondary' | 'accent' | 'accent-alt';
-  /** --target-guided (64px) for assisted use. */
-  size?: 'primary' | 'guided' | 'comfort';
+  /**
+   * `ghost` joined the four on 2026-10-07, for a transport that must not be
+   * the loudest thing on its screen — the listen step's full-screen sheet,
+   * where the way ON is the filled control and this one only pauses what is
+   * already playing. Nothing new was needed to support it: this button is
+   * composed on CTA Button, `.musy-btn--ghost` has existed since §04, and
+   * `.musy-mbtn` only sets layout.
+   */
+  variant?: 'primary' | 'secondary' | 'accent' | 'accent-alt' | 'ghost';
+  /**
+   * The target ladder, and it is CTA Button's own — this control is composed
+   * on it, so the rungs are the same rungs and a `min` transport stands
+   * exactly as high as a `min` CTA beside it (36px, by the same construction
+   * rather than by a copied number; see `.musy-btn--min`'s note).
+   *
+   * `min` joined the three on 2026-10-07, for a transport that sits in a row
+   * with something else rather than standing on its own — the listen step's
+   * sheet puts it beside the countdown. Everywhere a transport IS the control
+   * on offer, `primary` (44px) is the floor, and `min` would be below what
+   * 2.5.8 wants of a lone target.
+   */
+  size?: 'min' | 'primary' | 'guided' | 'comfort';
   disabled?: boolean;
+  /**
+   * DROP THE MM:SS READOUT.
+   *
+   * The countdown is this control's best idea and the reason to turn it off is
+   * narrow: a screen that is ALREADY counting, larger and for a different
+   * reason. The listen step's sheet shows the minimum the exercise asks for in
+   * display type; the transport's own remaining-track time beside it makes two
+   * clocks disagreeing in the same glance, and the smaller one wins nothing.
+   *
+   * IT LEAVES THE ACCESSIBLE NAME TOO, and that is the point rather than a
+   * side effect: the readout is plain text inside the button, so while it is
+   * drawn it is announced. Hiding it visually and keeping it in the name would
+   * read out a number nobody can see, next to one they can.
+   *
+   * So only pass it where something else on screen carries the time. The
+   * default is the countdown, because a transport that does not say how long
+   * it is asking for is the thing this component was built to avoid.
+   */
+  hideTimer?: boolean;
   /** The three transport words. Each defaults to the locale catalogue's
    *  TRACK wording — "Jetzt anhören" invites, where the player's "Abspielen"
    *  is a transport control. */
@@ -85,6 +123,7 @@ export function TrackButton({
   label, duration, position = 0, playing = false,
   onTogglePlay, onRestart,
   variant = 'secondary', size = 'primary', disabled = false,
+  hideTimer = false,
   playLabel, pauseLabel, restartLabel,
   className,
 }: TrackButtonProps) {
@@ -100,18 +139,27 @@ export function TrackButton({
       className={[
         'musy-btn', `musy-btn--${variant}`, 'musy-mbtn',
         size === 'primary' ? '' : `musy-btn--${size}`,
+        hideTimer ? 'musy-mbtn--no-timer' : '',
         className ?? '',
       ].filter(Boolean).join(' ')}
       data-state={state}
       disabled={disabled}
       onClick={state === 'ended' ? (onRestart ?? onTogglePlay) : onTogglePlay}
     >
-      <Icon glyph={glyph} size="md" />
+      {/* THE GLYPH STEPS DOWN WITH THE RUNG, exactly as CTA Button's leading
+          icon does — `md` inside a 36px button with a label-md line box is a
+          glyph taller than the words beside it. Composed on that component, so
+          it follows that component's rule rather than inventing a second one. */}
+      <Icon glyph={glyph} size={size === 'min' ? 'sm' : 'md'} />
       {/* Visible: the action. Announced: the action and the track. */}
       <span className="musy-btn__label">{action}</span>
       <span className="musy-sr-only">{`, ${label}`}</span>
-      {/* Remaining, not elapsed — see the file header. */}
-      <span className="musy-mbtn__time">{trackClock(Math.max(0, duration - position))}</span>
+      {/* Remaining, not elapsed — see the file header. Absent entirely rather
+          than visually hidden: a time in the accessible name and not on screen
+          is a number announced to one reader and not another. */}
+      {!hideTimer && (
+        <span className="musy-mbtn__time">{trackClock(Math.max(0, duration - position))}</span>
+      )}
       <span className="musy-spinner" aria-hidden="true" />
     </Button>
   );

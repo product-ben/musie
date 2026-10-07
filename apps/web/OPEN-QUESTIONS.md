@@ -6642,6 +6642,844 @@ renders on the hosted build and every submit fails, because the table is not
 there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
 beside it.
 
+# Branch `listen-experiments` — the listen step's full-screen listening view
+
+## `Lightbox` gained a full-screen surface — the fix went into the design system
+
+Where: `packages/design-system/src/Lightbox.tsx`, `src/musy-components.css`
+(§14), `stories/Lightbox.stories.tsx`
+
+What I checked: the brief is that the Listen control should *become* a
+full-screen overlay. The system has a modal — `Lightbox` — and it owns
+everything that is hard and invisible when it is wrong: focus moved in and
+restored, the background made inert, the page scroll locked, Escape, the
+portal. What it does not have is a frame that fills the viewport: the popup is
+`max-width: var(--measure-body)`, inset in a centred positioner, with a border,
+a radius and `--elevation-3`.
+
+The app could have reached that shape from outside, through `className`. That
+is a screen styling a component's own geometry, which rule 1 and L7 both
+forbid, and the repo's own precedent is `CtaButton.align` — added to the
+component rather than overridden by the app.
+
+What I did: added `surface?: 'panel' | 'immersive'` and
+`origin?: LightboxOrigin | null`. `panel` is the default and is byte-for-byte
+the old behaviour; `immersive` fills the viewport on `--surface`, drops the
+border, radius and shadow, moves its insets to `--space-inset-sheet`, and gives
+its only child the full height to arrange. `origin` is the opening control's
+rect, and the sheet's `clip-path` opens out of it.
+
+A CLIP AND NOT A TRANSFORM, which is the one decision in here worth arguing
+with: scaling a 261x46 button up to a 393x852 viewport is a NON-UNIFORM scale,
+so every word inside arrives stretched and un-stretches as it lands. A clip
+moves nothing — the sheet is laid out at full size on the first frame and is
+simply not all visible yet, which is why the copy is readable throughout.
+`inset()` resolves percentages against the reference box, which is the
+viewport, so the keyframe does its own arithmetic and the component never reads
+`window`. Measured in Chromium at 393x852: first frame
+`inset(32px calc(7.8% - 23px) calc(7.8% - 36px) 3px round 78px)`, last frame
+`inset(0 0 0 0)` filling 393x852.
+
+Reduced motion needed nothing: Layer 1 collapses every duration token to 1ms,
+and the clip is verifiably over before a frame is painted
+(`prefers-reduced-motion: reduce`, measured at 110ms: already `inset(0px 0% 0%
+0px)`).
+
+Why: rule 1 — when a component cannot do what a screen needs, the fix goes into
+the component.
+
+What I need from Ben: **nothing, just flagging**, but it is the second Layer 2
+change made from the app's side (after `Field`'s `given-name`) and it is a
+bigger one: a new variant with its own motion. It belongs in a review of the
+SYSTEM rather than of this screen. Two stories are in Storybook — *Immersive*
+and *Immersive From A Control*.
+
+## Three things about the listening view are my call, not yours — all reversible
+
+Where: `apps/web/src/components/SessionListen.tsx`, `src/shell.css`
+(`.musie-immersive*`)
+
+What I checked: the brief names three things for the sheet — the listening
+instruction, the minimum-time timer, and a Continue that activates when the
+time is up. All three are there. Three further decisions were not in the brief
+and had to be made for the screen to work at all:
+
+1. **Leaving the sheet pauses the track.** The stage's transport now OPENS the
+   sheet rather than toggling playback, so playback lives in the sheet; a sheet
+   that closed over a playing track would leave music coming out of a screen
+   with no pause control on it, and the only way back to one would be to
+   re-open the sheet. Nothing is lost by it — `listened` latches the moment the
+   gate is met and is held by the SESSION, so going out and back in resets the
+   position but not the fact that you listened.
+2. **The sheet carries a transport and no scrubber.** `TrackButton`, not
+   `MusicPlayer`, for the reason the whole step uses it (`tracks.title` is not
+   granted to the client, and the player's title is required and visible) — and
+   because a scrubber is the wrong offer on a screen whose subject is a
+   MINIMUM. The details view below keeps its scrubber, so the gate stays as
+   soft as it was: `met` still latches on position and still does not ask who
+   moved it.
+3. **The figure stops at 00:00 and does not go on to count the track out.** One
+   number with one meaning. The caption under it carries the meaning the figure
+   cannot — that it is a floor and not a length — and changes once the floor is
+   reached, which is also the only thing announced.
+
+What I did: all three, written up at the call sites.
+
+Why: each is load-bearing for the screen working, and each is a sentence long
+to reverse.
+
+What I need from Ben: **a look at the three, and one more thing I did NOT
+build.** There is no progress indication for the gate other than the figure —
+no ring, no bar. It would help, and it is the obvious next iteration; it is
+also a pattern the system has no component for, so it is a component request
+before it is a screen.
+
+## No walk covers the listening view, and I still could not run the suite
+
+Where: `apps/web/e2e/listen.spec.ts`
+
+What I checked: the same wall as the two entries below. `apps/web/.env.local`
+names the hosted project and `e2e/support.ts` refuses outright, correctly,
+because the browser and the assertions would address two different databases.
+I did not repoint it.
+
+What I did instead: drove the real step in a real browser against the local
+stack, with the dev server on a shell-level env override, and checked what a
+walk would: the sheet opens out of the transport's own rect and fills the
+viewport; the instruction, the countdown and the way on are all on it; the
+countdown ticks while the track plays; Escape leaves the sheet, pauses the
+track and returns focus to the transport; moving the position past the gate
+enables the way on, rests the figure at 00:00 and changes the caption; and the
+way on advances to `/reflect`. Eighteen checks, in English and German, light
+and dark, at 393x852, 320x720 and 390x375 — the short landscape case is the
+one that matters, and there the sheet's body scrolls (375 shown, 395 tall) with
+no horizontal overflow and the way on reachable.
+
+ONE MORE TIME, THE BUCKET WAS EMPTY. `storage.objects` had zero rows again, so
+every card fell to the simulated clock and the `<audio>` half of this change
+was not being exercised at all. I wrote one silent placeholder back with the
+service key, from a throwaway script outside the repository, and re-ran — which
+is the second entry in this file to say so.
+
+What I need from Ben: **point `.env.local` at `http://127.0.0.1:54321` and run
+`pnpm test:e2e`**, and then a walk for the sheet. It is the same ask the two
+entries below make, now with one more screen that has no walk.
+
+---
+
+# Goals on /exercises (2026-10-07)
+
+## situations became goals rather than a second taxonomy beside them — RESOLVED
+Where: `supabase/migrations/20261007100000_goals_rename.sql`,
+`DOMAIN-MODEL.md` D6
+
+What I checked: three levels, and they agreed.
+
+- **The schema.** `situations`, `situation_i18n` and `exercise_situations`
+  were built on 2026-09-18 with RLS, policies, revoke/grant, `service_role`
+  grants, a place in `missing_translations`, and an index on
+  `exercise_situations.situation_id` written specifically for the
+  lookup-by-situation direction. `sessions.situation_id` followed on
+  2026-09-19.
+- **The app.** No file under `apps/web/src` has ever selected from any of
+  them. `20260923150000` says so itself: *"Nothing in the app reads
+  `exercise_situations` yet."*
+- **The data.** `select count(*) from sessions where situation_id is not null`
+  was 0 and had never been anything else.
+
+So the shape the goal feature needs already existed, unread, and building a
+second one beside it would have shipped two overlapping content concepts with
+one of them as furniture.
+
+What I did: renamed the three tables, the column, the two plain indexes, the
+three policies and the ten constraints; replaced `missing_translations`
+because the literal `'situations'` in its three CTEs is a string rather than a
+reference and does not follow a rename; re-seeded three goals and the mapping.
+
+Why: a situation is where you are coming from and a goal is what you are
+after — the same shape, a different question, and the product asks the second.
+
+What I need from Ben: nothing. D6 is answered and DOMAIN-MODEL.md is updated.
+
+## Two of the three goals offer nothing at all, by instruction
+Where: `supabase/migrations/20261007100100_goals_seed.sql`,
+`apps/web/src/routes/Exercises.tsx` (the `exercises.goal.empty` branch)
+
+What I checked: Ben's instruction was "for now, map all to Achtsamkeit
+stärken", with `/goal-mappings` built to replace it. Taken literally that
+means **Entspannen and Aufwachen offer zero exercises** — a third of the
+picker leads to an empty screen on the day it ships.
+
+What I did: built it as instructed, and made the empty state load-bearing
+rather than incidental — its own sentence (`exercises.goal.empty`, NOT
+`content.empty`, which claims a failed load) and a `secondary` CTA back to the
+question. The deck and the toolbar are not drawn at all in that state, so
+there is no empty pile to look at.
+
+Why: a goal that offers nothing is a true state of the mapping, and the screen
+should say so plainly rather than look broken.
+
+What I need from Ben: **the real mapping.** Open `/goal-mappings`, tick, press
+*Konfiguration erzeugen*, paste the JSON back. It becomes one migration.
+
+## The goal is remembered forever, and the question says „heute"
+Where: `apps/web/src/lib/goals.ts` (`GOAL_STORAGE_KEY`),
+`apps/web/src/i18n/de.ts` (`exercises.goal.question`)
+
+What I checked: Ben chose localStorage persistence, so a returning visitor
+lands on the collapsed pill with the goal they last picked. The question that
+goal answered is *„Was möchtest du heute erreichen?"* — and `heute` is a day,
+while localStorage is forever.
+
+What I did: persisted it with no expiry, as chosen, and validated the stored
+id against the goals that still exist so a retired goal asks again.
+
+Why: an expiry nobody asked for is a behaviour that cannot be discovered from
+the code that sets it.
+
+What I need from Ben: **a decision, not urgent.** Three readings — keep it
+forever; reset at local midnight so `heute` stays true; or drop `heute` from
+the copy and ask „Was möchtest du gerade erreichen?". The third is the
+cheapest and the first is what is built.
+
+## A remembered goal deals the pile on arrival, and nobody chose anything
+Where: `packages/design-system/src/CardDeck.tsx` (`dealKey`),
+`apps/web/src/routes/Exercises.tsx`
+
+What I checked: `dealKey` deals on the first defined value as well as on every
+change, because the deck is MOUNTED by the choice on /exercises and a
+first-value-is-silent rule would make the one deal anybody asked for the one
+that did not happen.
+
+The side effect is that a reload also deals — the goal is restored from
+localStorage, the deck mounts with it, and the cards fly in for a choice made
+yesterday.
+
+What I did: left it dealing. It is one 220ms animation on a screen you have
+just loaded, and the alternative needs the deck to be told the difference
+between a choice and a restoration — a second prop, to suppress an animation.
+
+Why: the deal reads as "here is your pile" as readily as "you just chose", and
+a prop whose only job is to turn something off is a prop that gets passed
+wrong.
+
+What I need from Ben: nothing, just flagging. Verification step 6 is where to
+look at it.
+
+## The brief's German said „gerade heute", which is today twice
+Where: `apps/web/src/i18n/de.ts` (`exercises.goal.question`)
+
+What I checked: the brief asked for *„Was möchtest du gerade heute
+erreichen?"*. `gerade` is *right now*; `heute` is *today*. Both in one
+sentence is the same adverbial slot filled twice, and the sketch itself has a
+word crossed out in that position.
+
+What I did: wrote **„Was möchtest du heute erreichen?"**.
+
+Why: `heute` matches a choice that is remembered across a day; `gerade` would
+be the right word if the goal reset every session.
+
+What I need from Ben: confirm, or send the other one back.
+
+## /goal-mappings has no permission gate, by instruction
+Where: `apps/web/src/routes/GoalMappings.tsx`, `apps/web/src/router.tsx`
+
+What I checked: Ben asked for it URL-only with "no permissions needed for
+now". It sits inside `AppShell`, so it needs a signed-in session to read
+`goals` and `exercises` at all — but any signed-in user who types the path
+reaches it.
+
+What I did: built it as asked, and made it **write nothing**. It reads the
+mapping, edits it in the browser and emits JSON. There is no insert policy on
+`exercise_goals`, so even a deliberate attempt to write from here is refused
+by the privilege check before RLS is consulted.
+
+Why: a tool that cannot change the database needs no gate to be safe; the
+worst a stranger can do is read the mapping, which they can already infer from
+which exercises the deck offers them.
+
+What I need from Ben: nothing while it stays read-only. The day it writes, it
+needs a gate first.
+
+## Layer 1 has no monospace family, and a tool that emits JSON wants one
+Where: `apps/web/src/exercises.css` (`.musie-goal-config`)
+
+What I checked: `musy-foundations.css` declares exactly two families —
+`--font-display` and `--font-text`. There is no monospace token. L14.1 says
+every declaration in a `musie-` pattern resolves to a Layer 1 token, so a bare
+`ui-monospace` stack would be the app inventing a typeface the system does not
+have.
+
+What I did: set `--font-text` and let `white-space: pre-wrap` carry the
+structure. The JSON is readable; the indentation survives.
+
+Why: L14.1 with no exception is worth more than a monospaced dev tool.
+
+What I need from Ben: **a token request, low priority.** `--font-mono` would
+serve this, any future code sample in Storybook, and the QR sheet's URLs.
+Logged against the design system rather than fixed here.
+
+## The goal pill and the goal box share one home, against the plan
+Where: `apps/web/src/components/GoalPicker.tsx`, `apps/web/src/exercises.css`
+
+What I checked: the plan put the collapsed pill in `.musie-deck-toolbar`
+beside the view switch, which is tidier as a row. `Exercises.tsx` already
+carries the note against exactly that: *"ONE SWITCH, ONE HOME (Ben,
+2026-10-05) … the one control the two views SHARE was the one thing that moved
+when you pressed it."*
+
+What I did: both states render in the same slot, above the toolbar. Pressing
+the pill expands it where it already is.
+
+Why: the screen learned this once in October and should not learn it twice.
+
+What I need from Ben: nothing, just flagging the deviation.
+
+## `supabase db reset` destroys the local track audio, and one db test needs it
+Where: `apps/web/src/lib/db.content.db.test.ts:188` ("lets a signed-in listener
+sign a real object")
+
+What I checked: this went red after the `db reset` that CLAUDE.md rule 4
+prescribes. The cause is not the goals work — the test picks the first track
+with a non-null `src` (`trk-01`) and signs it, and local storage holds one
+object, `trk-02.mp3`. `tracks.src` names four files. **No mp3 is in the
+repository** (`git ls-files | grep mp3` is empty): the audio exists only as
+hand-uploaded objects in the local and hosted buckets, and no migration
+recreates it.
+
+So `supabase db reset` and `pnpm test:db` are in tension: the reset is how
+rule 4 says to verify a migration, and it leaves this one test unable to pass
+until the files are re-uploaded by hand.
+
+**And the fix already exists, one directory away.** `apps/web/e2e/fakeTracks.ts`
+writes a silent placeholder for any track whose `src` is set and which has no
+object yet — it never overwrites, and it refuses to touch anything but
+loopback. `playwright.config.ts` runs it in `globalSetup` for exactly this
+reason, recorded in its header: *"on a fresh `supabase start` the walk timed
+out waiting for an `<audio>` that could never mount."*
+
+So the e2e walks solved this on 2026-10-01 and the db suite never learned.
+`vitest.config.ts`'s `db` project has no setup file at all.
+
+What I did: nothing — it is outside this feature, and the fix is a decision
+about the db suite's setup rather than a line to slip into a goals branch.
+Reported rather than worked around, and rather than left to look like mine.
+
+Why: a suite that is red for an environmental reason trains people to ignore
+red, and this one goes red on the exact command rule 4 tells you to run.
+
+What I need from Ben: **a yes, and it is about fifteen minutes.** Give the
+`db` project a `setupFiles` that calls the same `fakeTracks` helper e2e
+already uses — it is loopback-guarded and non-destructive, so it is safe to
+run before every db run. Until then the suite reads 117 passed / 1 failed on
+a fresh reset, and that one failure is not a bug in anything.
+
+## The pill and the view switch share a row after all — the entry above is superseded
+Where: `apps/web/src/components/GoalPicker.tsx` (now `GoalPill` + `GoalBox`),
+`apps/web/src/exercises.css` (`.musie-deck-toolbar`),
+`apps/web/src/routes/Exercises.tsx`
+
+What I checked: the entry above records me keeping the pill out of
+`.musie-deck-toolbar` on the strength of the note in `Exercises.tsx` — *"ONE
+SWITCH, ONE HOME (Ben, 2026-10-05) … the one control the two views SHARE was
+the one thing that moved when you pressed it."* Ben asked for them in one row
+anyway, knowing it.
+
+What I did: split the component in two — `GoalPill` renders inside the
+toolbar, `GoalBox` above it — and made the row a scroller.
+
+Three things fell out of it that the plan had not anticipated:
+
+- **The row does not fit a phone.** *Ziel: Achtsamkeit stärken* plus the
+  switch measures 408px against 371 of usable width in German, 431 in English.
+  It scrolls (`overflow-x: auto`, so it costs nothing where it fits) rather
+  than wrapping, which would have given the row two heights depending on the
+  locale and the chosen goal.
+- **The row's visibility is the OR of its two children**, not a third rule.
+  The pill goes while the question is open; the switch goes when a goal offers
+  no exercises. Either alone still draws the row; neither draws nothing, where
+  a single `chosen` guard would have left an empty 44px band.
+- **The empty-goal box had to move below the toolbar.** With the pill in the
+  row, the old order told you there was nothing for this goal and only then,
+  underneath, what the goal was. Found on screen, not in review.
+
+Why: Ben asked, having been shown the precedent, and the cost here is smaller
+than the one the 2026-10-05 note describes — the toolbar keeps its place and
+its other control whichever state the goal is in.
+
+What I need from Ben: **one thing to look at.** A horizontal scroller has no
+affordance for a MOUSE — no wheel axis, no scrollbar (hidden, as
+`.musy-carousel__viewport` hides its own) — which the carousel solves with a
+grab cursor and drag-to-scroll. It does not bite on a phone (a finger
+scrolls) or on a keyboard (focus scrolls the switch into view), and at 1280
+the row fits with room to spare. It bites in a NARROW DESKTOP WINDOW, where
+the switch is half visible and a mouse cannot reach it. Say the word and it
+gets the carousel's drag treatment.
+
+
+# The listening view, second pass (2026-10-07)
+
+## A disabled button is carrying the instruction, and nobody who needs it can reach it
+
+Where: `src/components/SessionListen.tsx`, the sheet's way on
+
+What I checked: the locked label is now a sentence — *Fokussiere dich, bis der
+Counter abgelaufen ist. Dann geht's weiter* — on a `disabled` `CtaButton`. A
+disabled control is removed from the tab order and, in every engine, from the
+accessibility tree's reachable content: a keyboard user cannot land on it and a
+screen-reader user navigating by control never meets it. So the one sentence
+that says what to do during those ninety seconds is available only to somebody
+looking at the screen.
+
+The sheet is not silent for them — the figure is a `role="timer"` and the
+caption says what it counts — but neither says *and then you can carry on*.
+
+What I did: built it as asked. It is right visually, and the alternative
+(`aria-disabled` plus a no-op handler, so the control keeps its name and its
+place in the order) changes how the button behaves on a press, which is a
+product decision rather than a fix.
+
+Why: the instruction is the thing you asked for, and I would rather flag the
+gap than quietly redesign the control.
+
+What I need from Ben: **a decision, when you next look at the sheet.** Either
+the sentence moves out of the button and becomes a line of its own under the
+caption, or the button becomes `aria-disabled` and refuses the press instead of
+declining it.
+
+## „Counter" is an English word in a German string
+
+Where: `src/i18n/de.ts`, `session.listen.immersiveLocked`
+
+What I checked: GERMAN-UI-WRITING §8 keeps an English term only where German
+has no word people actually use. German interfaces say *Countdown* for this,
+and *Zähler* for a counter that counts up. Your wording says *Counter*.
+
+What I did: **kept your word, verbatim.** It is copy you wrote, and §8 is a
+standard to argue the change in, not a licence to rewrite a string somebody
+chose. The three clear slips went the other way — *Fussiere* → *Fokussiere*,
+*gehts* → *geht's*, *fokusssiert* → *fokussiert* — because those are typos
+rather than choices.
+
+What I need from Ben: **nothing, just flagging.** Say the word and it becomes
+*Countdown*.
+
+## The clip stays rounded for most of its travel
+
+Where: `packages/design-system/src/musy-components.css`, `@keyframes
+musy-lb-grow`
+
+What I checked: the sheet's corner interpolates `--radius-full` (999px) → 0
+across the whole 340ms. The engine clamps `round` to half the shorter side, so
+at the first frame it is exactly the button's own 23px corner — correct — but
+by mid-animation the shape is most of a phone wide and 500px of radius is still
+being clamped to fully round. Caught in a screenshot at ~50%: a stadium, not a
+sheet with corners. It squares off only in the last fraction.
+
+What I did: **nothing.** It is a detail of the motion rather than a defect in
+it, the whole thing is over in 340ms, and Ben has watched it several times
+without it reading as wrong.
+
+The fix, if it is wanted, is one more number across the boundary: the component
+already measures the opening control's rect, so it can pass that control's own
+corner (`min(width, height) / 2`) as a fourth custom property and interpolate
+from 23px rather than from 999px.
+
+What I need from Ben: **a look at the opening animation in slow motion**, and
+a yes or no.
+
+## The content migration is not pushed
+
+Where: `supabase/migrations/20261007120000_listen_copy_two_states.sql`
+
+What I checked: nothing pushes automatically and `pnpm check` does not touch
+the database. Applied locally with `supabase db reset`; `pnpm test:db` is green
+(118 passed, 8 files).
+
+What I did: **nothing.** It rewrites `exercise_i18n.listen_md` for two
+exercises in two locales on whichever database it is pointed at, and the hosted
+one is the beta testers'.
+
+What I need from Ben: **run `supabase db push`** when the wording is settled.
+Until then the hosted build shows the old sentence on the stage AND in the
+sheet, which reads as the same line twice rather than as two states.
+
+AND THE BUCKET EMPTIED AGAIN. `supabase db reset` took all four track objects
+with it, which is the third entry in this file to say so — one db test needs a
+real object, and it went red until I wrote silent placeholders back for
+trk-01, trk-02, trk-04 and trk-05 at their declared lengths.
+
+## The toolbar centres below --bp-md and stays left above it, and `safe` is what makes both true
+Where: `apps/web/src/exercises.css` (`.musie-deck-toolbar`)
+
+What I checked: Ben sketched the row centred at M–L and scrolling at S, then
+corrected it out loud — *"behalte alles in L viewports links aligned. Erst
+beim 768er breakpoint zentrieren."* That is the threshold and the two states
+`.musy-deck` already turns on, so `CardDeck` was not touched and the earlier
+idea of centring the deck at M–L was dropped.
+
+Measured first: at ≥768 the row's content edge was already flush with the
+headline and the deck (24 / 32 / 150 at 768 / 1024 / 1280), so the M–L half of
+the sketch needed nothing. Only the S half was missing — the row lost its
+centring when it became a scroller.
+
+What I did: `justify-content: safe center` inside `@media (max-width:
+767.98px)`.
+
+**Not a plain `center`, and this is the whole entry.** On a flex container
+that overflows, `center` pushes the LEADING item out past the scroll origin
+where no gesture can reach it — the pill would become unreachable at exactly
+the widths the row has to scroll. `safe` falls back to `start` the moment the
+content would overflow, so one declaration states both halves of the sketch.
+Measured: 408px of German content and 431 of English against 371 of room at
+393, so a phone always takes the `start` branch; the centred branch is the
+large-phone and tablet-portrait band up to 767.
+
+Why: one threshold for both, which is the argument `.musy-deck`'s own comment
+makes — tie them to `--bp-md` or the two disagree across a 70px band.
+
+What I need from Ben: nothing. **It is the first `safe` in this repository**,
+so it is flagged here: the next scrolling row will want it, and the failure it
+prevents is invisible until somebody tries to reach the first control.
+
+## `--focus-ring-clearance` sits outside the gap, so a scrolling row is 5px further from everything
+Where: `apps/web/src/exercises.css` (`.musie-deck-toolbar`)
+
+What I checked: the row carries `padding: var(--focus-ring-clearance)` so a
+focused control at its edge is not clipped by the scroller — the same reason
+`.musy-carousel__viewport` carries it. That padding is OUTSIDE the stack's
+gap, so the measured distance from the block above to the controls, and from
+the controls to the deck, was `32 + 5 = 37` on both edges. The row sat further
+from its neighbours than the ladder says and nothing on screen said why.
+
+What I did: `margin-block: calc(var(--focus-ring-clearance) * -1)` — the stack
+still supplies the 32 and the row's border box is pulled back into the gap by
+exactly what the padding spends. Measured 32.0 on both edges at five widths in
+both locales.
+
+Why: a gap the ladder names should measure what the ladder says.
+
+What I need from Ben: nothing, just flagging — **every scrolling row will have
+this**, because ring clearance and the gap ladder are two different mechanisms
+spending the same axis. A `--space-gap-*` that already contained the clearance
+would solve it once, but that is a Layer 1 change and this is one row.
+
+
+# A token outliving its user (2026-10-07)
+
+## The app now signs itself out when the database has never heard of it — FIXED
+
+Where: `src/lib/identity.ts` (new), `src/lib/profile.ts`, `src/ProfileProvider.tsx`
+
+What I checked: `supabase.auth.getSession()` reads the stored token out of
+localStorage and never asks the server whether the user behind it still
+exists. So a signed JWT whose `sub` has been deleted is indistinguishable from
+a healthy session: the app boots, the gate opens, every screen renders, and the
+first thing that notices is a foreign key.
+
+MEASURED, after the `supabase db reset` that rule 4 asks for — it empties
+`auth.users` along with everything else, and the tab that was open through it
+walked the entire flow before dying on the one press that matters:
+
+```
+HTTP 409 /rest/v1/sessions
+23503: insert or update on table "sessions" violates foreign key constraint
+"sessions_user_id_fkey" — Key is not present in table "profiles".
+```
+
+On screen: *Die Session konnte nicht gestartet werden*, which is true and says
+nothing. The only cure anybody found was clearing site data by hand. It is not
+a local-stack curiosity: deleting one beta tester does this to whatever tab
+they have open, and the sign-in gate will not even be offered, because as far
+as the app is concerned they are signed in.
+
+I also got the first diagnosis WRONG and should write that down: I reported the
+app as stuck on the explainer, because my reproduction waited three seconds
+against an animation that takes twelve. It is not stuck. It renders fine and
+fails only on the press.
+
+What I did: caught it on boot instead. `profiles` is created by a trigger on
+`auth.users` insert and cascades on delete, so zero rows for `auth.uid()` is
+not a row that failed to load — it is the identity being gone. `getProfile`
+now reports that as an ANSWER (`{ kind: 'missing' }`) rather than throwing, and
+everything else still throws: a timeout and a blocked network are "we could not
+ask", and signing somebody out because their train went into a tunnel is the
+bug that distinction prevents. Proven with the profile request aborted: no
+sign-out, no new user, the app still renders.
+
+The recovery is the existing `signOut()` — clear the token, reset the session
+cache, reload — so a deleted ACCOUNT lands at the sign-in form and a deleted
+anonymous user is simply replaced, whichever `VITE_REQUIRE_ACCOUNT` says.
+
+AND IT IS CLAIMED, NOT DECIDED, which is the only part worth reviewing. The
+recovery reloads, so a second failure would reload again, forever, minting an
+anonymous user on every pass — a worse failure than the one being fixed, and
+one that writes rows. `claimIdentityRecovery` is true at most once per tab and
+records the claim before the caller acts on it; the boot after the reload finds
+it taken and reports the problem instead. It is released only by a profile that
+actually reads, so a browser left open across two resets recovers from both.
+Seven unit tests, all of them asking whether a second yes is possible.
+
+Verified in a real browser, four consecutive runs: one recovery, one sign-in,
+two document loads, and the session starts.
+
+ONE THING THAT COST ME AN HOUR AND IS WORTH KNOWING: `select count(*) from
+auth.users` is a USELESS instrument on this stack. The local database is shared
+with whatever else is running browser walks against it, so a global count
+measures other people's users too — it reported five phantom sign-ins that the
+page's own log showed had never happened. Count from the page.
+
+What I need from Ben: **a look at the claim-once rule.** Everything else here
+is mechanical; that is the part with a judgement in it, and the failure mode it
+guards against is the expensive one.
+
+## `supabase db reset` logs you out, as well as emptying the bucket
+
+Where: the three entries above about the tracks bucket
+
+What I checked: the reset drops `auth.users`, so every browser holding an
+anonymous session is holding a dead one. That is now self-healing (above), but
+it still costs a reload and a new anonymous user, and the diary of whatever
+that user had done is gone with the row.
+
+What I did: nothing beyond the fix.
+
+What I need from Ben: **nothing, just flagging** — when the entries above say
+the reset empties the track bucket, read it as "and signs out every open tab".
+
+
+## A third measure in the app, written out rather than tokenised
+
+Where: `src/shell.css`, `.musie-immersive__lead .musie-md h2`
+
+What I checked: the sheet's merged headline was breaking into four short lines
+with two thirds of a 1280px window empty beside it, and TWO Layer 1 defaults
+were doing it, both of them right for the thing this `<h2>` normally is — a
+short title above a step:
+
+  · `.musie-md h2` caps at `--measure-heading`, which is **26ch**. Measured:
+    "What picture forms in your" is exactly 26 characters.
+  · `text-wrap` is `--text-wrap-heading`, which is **balance** — it does not
+    fill lines, it EVENS them, so even inside a wider cap it would keep handing
+    back tidy short lines rather than full ones.
+
+A third rule turned out to be the one that actually bound: `.musie-md` caps
+ITSELF at `--measure-body`, 62ch at body size — 698px at 1280px wide, against
+the heading's new 818px. The narrower wins, so raising the heading alone moved
+nothing until the container's cap was lifted too.
+
+What I did: 50ch and `--text-wrap-body` on the sheet's heading, and
+`max-inline-size: none` on its container. Measured after: 320px → 5 lines at
+the full 256px available; 393px → 4 lines at 329px; 768px → 2 lines at the full
+704px; 1280px → 2 lines at 818px, which is the 50ch cap exactly. Fills the
+width, stops at 50ch.
+
+Why 50ch is written out: Layer 1 has exactly two measures, 26ch for a heading
+and 62ch for body copy, and this is deliberately neither — it is a heading at
+heading size that has to read like a sentence. The app already carries one raw
+`ch` measure for the same kind of reason (`.musie-listen__warn`, 26ch).
+
+What I need from Ben: **a token, if a third screen wants this.** Two literals
+is a coincidence; three is a measure Layer 1 is missing, and L14.3 says that is
+a request rather than a third copy. Also worth knowing: `ch` is the width of
+the zero glyph, not a character count — German at this size fits ~53 characters
+on a 50ch line, not 50.
+
+## The goals migrations are on hosted, and restoring a lost file exposed a deck drift
+Where: `supabase/migrations/20261002153212_deck_test_deck_tracks.sql`
+(reconstructed), `supabase/content/deck.json`,
+`apps/web/src/lib/deck.db.test.ts`
+
+What I checked: Ben reported that starting a session had stopped working. It
+was not a code regression — `.env.local` points at hosted and the goals
+migrations had never been pushed, so `useExercises()` and `useGoals()` both
+failed there (`PGRST200` on the `exercise_goals` join, `PGRST205` on `goals`).
+With no goals the question never renders, `chosen` never becomes true, and the
+screen draws no deck at all. Nothing to press.
+
+`supabase migration list` then showed two things neither of us expected:
+
+- **four** migrations pending, not two — the other two belong to the parallel
+  session in this tree (`listen_copy_two_states`,
+  `reflect_questions_into_the_field`), and `db push` cannot send a subset;
+- **`20261002153212` applied on the remote with no local file.** It was
+  untracked here when this session began and vanished during it, so a fresh
+  `supabase db reset` could not reproduce hosted.
+
+What I did, both on Ben's instruction: pushed all four, and reconstructed the
+orphan from the remote rather than from memory — `supabase db dump
+--data-only --schema supabase_migrations` carries each applied migration's own
+statements, so the file is what actually ran. Verified byte-for-byte against
+its header (the four `trk-06..09 → trk-05/04/02/01` lines) before writing it.
+
+Hosted now verified as an authenticated reader: three goals with both locales,
+all five exercises mapped, the app's exact join resolving, `missing_translations`
+empty, `situations` gone, and `anon` refused on every new table with `42501`
+rather than `404` — so rule 2's revoke survived the rename.
+
+What I need from Ben: **which deck mapping is true.** Restoring the file made
+local honest about hosted and therefore made a real disagreement visible —
+`deck.db.test.ts` now fails on `pairs each card with the same track in each
+exercise`, because:
+
+| | mc-06 | mc-07 | mc-08 | mc-09 |
+|---|---|---|---|---|
+| `deck.json` (committed) | trk-06 | trk-07 | trk-08 | trk-09 |
+| hosted **and** local DB | trk-05 | trk-04 | trk-02 | trk-01 |
+
+The migration calls itself a TEST deck: it re-pointed the four silent cards at
+recordings that have files, because `trk-06`…`trk-09` have no audio. Three
+ways out — update `deck.json` to match and accept the test mapping as the
+deck; run `pnpm deck:migration` to generate a migration putting hosted back to
+`trk-06..09` and accept four silent cards; or leave it failing. It is a
+content call, so I have made none of them.
+
+Also: verifying hosted left **one throwaway anonymous auth user** there. The
+app creates one per visitor anyway, and removing it needs the service-role key.
+
+The prescribed hosted check — `pnpm test:db` with `SUPABASE_TEST_URL`,
+`SUPABASE_TEST_ANON_KEY` and `SUPABASE_TEST_SERVICE_ROLE_KEY`, which is how the
+rule-2 `service_role` hole was found — was NOT run, because the service-role
+key is not in any file and should not be. Worth one run from Ben's shell.
+
+## The deck mapping — RESOLVED: deck.json accepts the test mapping
+Where: `supabase/content/deck.json`
+
+What I checked: the entry above left three ways out of the disagreement
+between `deck.json` and the database. Ben chose the first — `deck.json` takes
+the mapping that is already applied, rather than a migration putting hosted
+back to four silent cards.
+
+What I did: edited the four `plays` pairs and nothing else, as a targeted text
+change so the file's formatting is untouched.
+
+**No migration, and that is the point.** The database — local and hosted —
+already holds this state from `20261002153212`; the file was the only thing
+disagreeing. The proof is the generator's own output: run against the edited
+file it reports exactly the eight `CHANGED` lines that migration's header
+carries, so the two now say the same thing. `--dry-run`, so nothing was
+written.
+
+> **Do not run `pnpm deck:migration` on this before committing.** It diffs the
+> working copy against `git show HEAD:…/deck.json`, and HEAD still holds the
+> old mapping — so it would happily generate a migration re-applying what is
+> already applied. Once `deck.json` is committed, HEAD matches and the
+> generator correctly reports no diff.
+
+`deck.db.test.ts` passes. `pnpm test:db` is 117 passed, 1 failed, and the one
+is the unrelated storage test that needs the local bucket refilled.
+
+What I need from Ben: **nothing to decide, one thing to know.** Nine cards now
+share five recordings, so four of them are duplicates by design:
+
+| recording | cards |
+|---|---|
+| trk-01 | mc-04, mc-09 |
+| trk-02 | mc-02, mc-05, mc-08 |
+| trk-04 | mc-01, mc-07 |
+| trk-05 | mc-03, mc-06 |
+
+Every card plays something, which is what the test deck was for, and drawing
+mc-02 after mc-05 now plays the same piece twice. That is the state until
+`trk-06`…`trk-09` have files — at which point the four `plays` edits reverse
+and `pnpm deck:migration` generates the migration that puts them back.
+
+## The first-use legend — the app is now the second place with no dark purple surface to stand on
+Where: `src/exercises.css`, `.musie-deck-guide`
+
+What I checked: Ben's wireframe of 2026-10-07 moved the legend's three hints to
+where their controls are and asked for it to be styled "according to how the
+purple *Next exercise* state looks" — that state being `.musy-deck__overlay`,
+which the deck raises while a card is being dealt. That overlay is
+`--accent-3-text` as a FILL with `--on-surface-inverse` on it, and the design
+system's own log already records why — "CardDeck — the verdict overlay uses a
+TEXT token as a fill, because the brief's colour pair fails contrast", in
+`packages/design-system/stories/OPEN-QUESTIONS.md`: there is no dark purple
+SURFACE in Layer 1, so an emphatic purple panel has nothing correct to stand on.
+`--accent-3` is the pale fill, `--accent-3-text` is ink, and white over the
+pale one measures 2.01:1.
+
+What I did: took the overlay's pair exactly — fill and ink — so the screen's
+two purple states are one purple. Verified in the browser at 393px and 1280px
+in both locales, against the local stack: the legend and the swipe overlay
+sample the same colour.
+
+The legend's translucency went with it, and that is worth knowing because it
+reverses something Ben asked for on 2026-10-05: the card used to shimmer
+through a pale purple at 82% behind a blur. A photograph coming through a DARK
+fill at 82% reads as dirt rather than as shimmer, so the fill is flat now. The
+reasoning is in the stylesheet above the rule, with the way back written down.
+
+Why: an app-level copy of a design-system workaround is still the design
+system's problem, and this is now the second place it has to be solved.
+
+What I need from Ben: **nothing to decide, one thing to know.** This doubles
+the claim on the Layer 1 gap the system's log already opened. When a dark
+purple surface token arrives, two rules move to it and not one — and if the
+shimmer is wanted back on the legend, it comes back with the pale solid and
+that solid's own foreground, not by thinning this one.
+
+## The toolbar row — a `min` control brings a margin, and a flex gap cannot see it
+Where: `src/exercises.css`, `.musie-deck-toolbar` / `.musie-toolbar-control`
+
+What I checked: Ben asked for the row's gap to be `--space-gap-stack` and read
+the current one as "about 24". The stylesheet said `--space-gap-related`, 12px.
+Both were right about something: the rendered distances were **20px**, measured
+in the browser at 393px in both locales. `.musy-btn--min` ships
+`margin: var(--sp-2)` — Layer 2's own note says the rung "exists to sit inside
+a line of text" — so the shuffle button was adding 8px at each end on top of
+the row's gap. The goal pill was already cancelling it through a one-control
+class, `.musie-goal-pill`, added when the pill was the only thing in the row.
+
+What I did: renamed that class `.musie-toolbar-control`, named for the place
+rather than the control, and put it on both `min` buttons. The gap is now
+`--space-gap-stack` and it is the whole of the spacing: 16px on screen, in both
+locales, which is the first time this row's number has matched its token.
+
+Why: a control that brings its own margin cannot be laid out with a gap — the
+two add, and the one that is invisible in the stylesheet wins the argument.
+
+What I need from Ben: **nothing to decide, one thing to flag upward.** This is
+the second time this margin has had to be taken back by hand, and the next row
+that holds a `min` button will be the third. The system's own answer is already
+written in `musy-components.css` over `.musy-icon-btn--min` — the margin is
+baked in because `--target-min` is 24px and 2.5.8 only permits that *with*
+spacing — so it cannot simply be deleted. What is missing is a way to say "this
+one is in a laid-out row, the row owns its spacing": a `spacing="none"` prop, a
+`--musy-btn-margin` custom property, or a documented rule that a consumer zeroes
+it. Logged here rather than in the system's own log because the app is where it
+keeps costing something.
+
+## The toolbar's scroll chevrons — an app-level scroller is growing a component's worth of parts
+Where: `src/exercises.css` (`.musie-deck-toolbar-row`), `src/routes/Exercises.tsx`,
+`src/lib/useEdgeFade.ts`
+
+What I checked: Ben, 2026-10-07 — "add the xs icon button w. chevrons to the
+left and right, to make the component accessible". The row scrolls, and until
+now the only ways to scroll it were a finger, a trackpad and a wheel with a
+modifier key: a keyboard cannot scroll a container it cannot focus. Two
+`IconButton size="min"` chevrons outside the scroller fix that. `min` is the
+smallest rung the system has (24px, with `--sp-2` baked in for 2.5.8); there is
+no `xs`.
+
+What I did: a wrapper row holds the two buttons and the scroller. They are
+drawn only when the row overflows and each is disabled at the end it points at,
+both read from `fadeEdges` — the same measurement the fade mask already used,
+which is why `useEdgeFade` now returns its answer as well as writing it to a
+`data-` attribute. The scroll itself is `scrollBy` with no `behavior`, so
+`scroll-behavior` in the stylesheet decides, and reduced motion is a media
+query rather than a branch.
+
+Why: one measurement, two readers. A second `scrollWidth` read in the component
+would be the thing that eventually disagrees with the mask.
+
+What I need from Ben: **nothing to decide, one thing to know.** That is now a
+scroller, an edge-fade mask, a `safe center`, a pair of scroll buttons and a
+hook — a component's worth of parts living in a screen under L14's "the system
+has no component for this". It is still one screen, so by L14.3 it is not a
+component request yet. The second screen that wants a scrolling toolbar is the
+moment it becomes one, and this entry is the note to point at then.
+
 ## The listen step's picture ships as a 2.9 MB PNG
 
 Where: `apps/web/public/assets/web/infographics/infographic-listen-and-see.png`,

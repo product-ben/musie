@@ -463,6 +463,35 @@ export const CloseableLongHeadline: Story = {
   ],
 };
 
+/**
+ * `headlineWide` releases the headline from `--measure-heading` (26ch).
+ *
+ * The cap is right by default and stays the default — a heading that runs the
+ * width of a wide card is one nobody tracks back from, which is why Layer 1
+ * names a measure for headings at all.
+ *
+ * It is wrong for a headline that is a QUESTION with its own answers directly
+ * beneath it. /exercises asks "Was möchtest du heute erreichen?" above four
+ * radio rows: 32 characters, which 26ch broke into two balanced half-lines
+ * stranded in the corner of a 930px row while the close control sat alone at
+ * the far end. Released, it is one line across the row at 1280 and still two
+ * at 393, where the room genuinely runs out — the prop stops the CAP forcing
+ * a wrap; it does not forbid one.
+ *
+ * Shown with `onDismiss`, because the pairing is where it matters: the
+ * headline is the elastic item in `__headrow` and the cap was what stopped it
+ * being elastic.
+ */
+export const HeadlineWide: Story = {
+  args: {
+    headline: 'Was möchtest du heute erreichen?',
+    headlineWide: true,
+    headingLevel: 2,
+    dismissLabel: 'Schließen',
+    text: undefined,
+  },
+};
+
 /** Closeable AND framed. The X joins the header row rather than replacing it —
  *  the two props are orthogonal, which is why neither had to become a variant. */
 export const CloseableFramed: Story = {

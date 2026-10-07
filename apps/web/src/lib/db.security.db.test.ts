@@ -169,7 +169,7 @@ describe('tracks · the column grant keeps title and artist off the client', () 
 });
 
 describe('content tables · readable, never writable', () => {
-  const tables = ['exercises', 'cards', 'situations', 'user_types', 'tracks'] as const;
+  const tables = ['exercises', 'cards', 'goals', 'user_types', 'tracks'] as const;
 
   it.each(tables)('lets a signed-in user READ %s', async (table) => {
     const { error } = await alice.from(table).select('id').limit(1);
@@ -192,5 +192,61 @@ describe('content tables · readable, never writable', () => {
       .update({ name: 'rewritten by a test' })
       .eq('exercise_id', 'mindfulness-cards');
     expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
+  });
+});
+
+/**
+ * The three tables that were `situations`, `situation_i18n` and
+ * `exercise_situations` until 2026-10-07.
+ *
+ * ── A RENAME IS EXACTLY THE CHANGE THIS FILE EXISTS TO CATCH ──────────────
+ * Privileges and policies hang off a table's OID, so they are SUPPOSED to
+ * survive `alter table … rename`. That is a claim about Postgres, and the
+ * migration asserts it in a comment. This is where it stops being a claim.
+ *
+ * The failure it guards against is silent and total: had the grants not
+ * followed, every signed-in user would get `42501` on the goal picker and the
+ * screen would show no goals — which reads as "the content is empty", not as
+ * "the security model moved".
+ */
+describe('goals · the renamed content tables keep the access they had', () => {
+  const renamed = ['goals', 'goal_i18n', 'exercise_goals'] as const;
+
+  it.each(renamed)('lets a signed-in user READ %s', async (table) => {
+    const { data, error } = await alice.from(table).select('*').limit(1);
+    expect(error).toBeNull();
+    /* The positive control is the ROW, not the absence of an error: an empty
+       table would also return `error: null`, and a rename that lost its data
+       would pass a test that only checked the error. */
+    expect(data?.length).toBe(1);
+  });
+
+  it.each(renamed)('gives the anon role nothing of %s', async (table) => {
+    const { data, error } = await anonClient().from(table).select('*').limit(1);
+    expect(data).toBeNull();
+    expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
+  });
+
+  it('refuses an INSERT into exercise_goals', async () => {
+    const { error } = await alice
+      .from('exercise_goals')
+      .insert({ exercise_id: 'free-rein', goal_id: 'relax' });
+    expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
+  });
+
+  it('refuses an INSERT into goal_i18n', async () => {
+    const { error } = await alice
+      .from('goal_i18n')
+      .insert({ goal_id: 'relax', locale: 'de', label: 'injected by a test' });
+    expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
+  });
+
+  /* THE OLD NAMES ARE GONE, which is the other half of a rename and the half
+     a `create table` would have left undone. Were `situations` still there,
+     `exercise_goals` could be reading a second, stale copy of the mapping and
+     nothing above would notice. */
+  it('no longer answers to the old names', async () => {
+    const { error } = await alice.from('situations' as never).select('*').limit(1);
+    expect(error).not.toBeNull();
   });
 });

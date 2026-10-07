@@ -88,6 +88,24 @@ export interface ContentBoxProps {
    * nothing moves in the document outline.
    */
   headlineTone?: 'default' | 'muted';
+  /**
+   * Let the headline use the whole row instead of capping at
+   * `--measure-heading` (26ch).
+   *
+   * THE CAP IS RIGHT BY DEFAULT and stays the default: a heading that runs
+   * the width of a wide card is a heading nobody tracks back from, which is
+   * the entire reason Layer 1 names a measure for one.
+   *
+   * It is wrong for a headline that is a QUESTION with its own answers
+   * directly beneath it — /exercises asks "Was möchtest du heute erreichen?"
+   * above four radio rows, and 26ch broke 32 characters into two balanced
+   * half-lines stranded in the corner of a 930px row. There is nothing to
+   * track back from: the eye goes straight down into the options.
+   *
+   * Added 2026-10-08. Reach for it only where the headline is a label for
+   * what follows rather than prose to be read.
+   */
+  headlineWide?: boolean;
   text?: string;
   textStep?: TypeStep;
   outline?: BoxOutline;
@@ -111,7 +129,7 @@ export interface ContentBoxProps {
 
 export function ContentBox({
   headline, headlineHidden = false, headingLevel = 3, headlineStep = 'heading-sm',
-  headlineTone = 'default',
+  headlineTone = 'default', headlineWide = false,
   text, textStep = 'body-md', outline = 'solid', header, onDismiss, dismissLabel,
   children, className, render,
 }: ContentBoxProps) {
@@ -126,7 +144,13 @@ export function ContentBox({
   const heading = (
     /* Hidden means visually hidden, never absent: the headline IS what puts
        this box in the document outline. */
-    <H className={headlineHidden ? 'musy-sr-only' : 'musy-box__headline'}
+    <H className={[
+      headlineHidden ? 'musy-sr-only' : 'musy-box__headline',
+      /* Ignored while hidden: a visually-hidden heading has no measure to
+         release, and `.musy-sr-only` would fight the modifier for the same
+         properties. */
+      !headlineHidden && headlineWide ? 'musy-box__headline--wide' : '',
+    ].filter(Boolean).join(' ')}
        data-type-step={headlineHidden ? undefined : headlineStep}>{headline}</H>
   );
 

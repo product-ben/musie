@@ -41,6 +41,22 @@ export interface RadioGroupTextProps {
   /** Identifies the field when a form is submitted. */
   name: string;
   legend: string;
+  /**
+   * Hide the legend visually. It stays in the accessible name — an unnamed
+   * radio group announces as a bare set of options (1.3.1, 4.1.2), so this
+   * never removes it.
+   *
+   * For the case where something ABOVE has already asked the question:
+   * /exercises puts "Was möchtest du heute erreichen?" in its ContentBox
+   * headline, on one row with the box's close control, and a visible legend
+   * underneath would be the same question twice.
+   *
+   * ADDED 2026-10-08, and it is a gap being closed rather than a new idea:
+   * `RadioCards` and `SegmentedControl` have carried this prop, under this
+   * name and with this behaviour, since they were built. This component was
+   * the only one of the three that could not do it.
+   */
+  legendHidden?: boolean;
   /** Optional supporting sentence under the legend. */
   hint?: string;
   options: RadioOption[];
@@ -60,7 +76,7 @@ export interface RadioGroupTextProps {
 }
 
 export function RadioGroupText({
-  name, legend, hint, options, value, onValueChange,
+  name, legend, legendHidden = false, hint, options, value, onValueChange,
   accent = 'primary', guided = false, disabled = false,
   error, emptyLabel, className,
 }: RadioGroupTextProps) {
@@ -98,7 +114,9 @@ export function RadioGroupText({
       ].filter(Boolean).join(' ')}
       data-invalid={error ? '' : undefined}
     >
-      <Fieldset.Legend className="musy-radio-group__legend">{legend}</Fieldset.Legend>
+      <Fieldset.Legend className={legendHidden ? 'musy-sr-only' : 'musy-radio-group__legend'}>
+        {legend}
+      </Fieldset.Legend>
       {hint && <p id={hintId} className="musy-radio-group__hint">{hint}</p>}
 
       {options.length === 0 ? (

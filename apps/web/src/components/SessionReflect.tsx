@@ -126,7 +126,21 @@ export function SessionReflect({
             multiline
             rows={5}
             label={t('reflect.text.label')}
-            placeholder={t('reflect.text.placeholder')}
+            /* ── THE EXERCISE'S OWN QUESTIONS, IN THE BOX — Ben, 2026-10-07 ─
+               They were body copy above this field, which left the reader
+               holding them in their head while typing into something that said
+               nothing about them. A prompt belongs in the box being answered:
+               it is there while the answer is being written and gone the
+               moment it has been.
+
+               THE FALLBACK IS CHROME AND THE QUESTIONS ARE NOT. These are
+               Achtsame Pause's — a named scene, and what happened in it — and
+               Freie Bahn asks something else entirely, so a catalogue key here
+               would print one exercise's questions under every exercise's
+               field. `reflect_placeholder` is null for an exercise with no
+               questions of its own, and then the catalogue's sentence is the
+               honest thing to show. */
+            placeholder={exercise.reflectPlaceholder ?? t('reflect.text.placeholder')}
             description={t('privacy.written')}
             value={text}
             onValueChange={onTextChange}

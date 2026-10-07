@@ -227,12 +227,27 @@ export type StartResult =
 export async function createSession(
   userId: string,
   exerciseId: string,
+  /**
+   * The goal chosen on /exercises, or null.
+   *
+   * NULL IS A REAL ANSWER, not a missing one: "Musie entdecken" is a choice
+   * the picker offers and it means this run had no goal. The column is
+   * nullable for exactly that, and the diary must not later read a null as
+   * "we forgot to ask".
+   *
+   * REQUIRED rather than defaulted. A default would let a future caller start
+   * a session that silently records no goal, which is the one mistake this
+   * argument exists to make impossible — the caller has the answer and has to
+   * say it.
+   */
+  goalId: string | null,
 ): Promise<StartResult> {
   const { data, error } = await getSupabase()
     .from('sessions')
     .insert({
       user_id: userId,
       exercise_id: exerciseId,
+      goal_id: goalId,
       /* The first step of every run. `intro` is never skipped — a cardless
          exercise skips `scan` — so this needs no knowledge of the exercise. */
       status: 'started',

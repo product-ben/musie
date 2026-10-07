@@ -105,6 +105,7 @@
  */
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dots } from './Dots';
 import { IconButton } from './IconButton';
 
 /**
@@ -243,8 +244,61 @@ export interface CardDeckProps {
    * of choices.
    */
   actions?: React.ReactNode;
+  /**
+   * Extra ICON controls in the nav row, beside the two directions.
+   *
+   * `actions` is a column of labelled buttons under the deck; this is the row
+   * the chevrons are in. The difference is not cosmetic — a third icon-only
+   * control beside back and forward reads as another thing you can do to the
+   * PILE, and the same control as a labelled row underneath reads as another
+   * thing you can do to the exercise.
+   *
+   * The deck does not say what belongs here, only where it goes. It owns the
+   * two directions because it owns what they do to the pile; a screen's help
+   * control, which is what put this slot here, is the screen's own business
+   * down to its glyph.
+   */
+  navActions?: React.ReactNode;
+  /**
+   * ── AN EXTRA CARD ON TOP OF THE PILE ────────────────────────────────────
+   *
+   * Rendered in the pile's one grid cell, above every card and at the card's
+   * own size and radius. For something that is ABOUT the pile and has to be
+   * seen against it — the first-use legend on /exercises, which is what this
+   * is for.
+   *
+   * NOT `children` AND NOT A PORTAL. The pile is the only box that knows how
+   * wide a card is (`--musy-deck-card-inline`) and how tall the tallest face
+   * came out, and a consumer positioning something over the deck from outside
+   * would be measuring both — in a layout that reflows with the copy, in two
+   * languages. Handing the slot the card's own cell costs the consumer
+   * nothing and cannot drift.
+   *
+   * WHAT IT DOES NOT DO: it carries no dismissal, no state and no styling of
+   * its own. Whatever goes in here owns all three, because the deck has no
+   * opinion about when an extra card has been read.
+   */
+  cover?: React.ReactNode;
   /** True while an accept is in flight. See the contract at the top. */
   busy?: boolean;
+  /**
+   * Change it and the pile deals itself in.
+   *
+   * ── IT IS A KEY, NOT A TRIGGER ──────────────────────────────────────────
+   * A boolean `dealing` would make the consumer own the animation's LIFETIME
+   * — set it true, then remember to set it false, and guess when. A key says
+   * only what happened: this is a different pile from the one before. The
+   * deck decides what that costs and when it is over.
+   *
+   * Undefined never deals, so a deck that simply exists does not animate.
+   * Any defined value that differs from the last one deals — INCLUDING the
+   * first, because a deck mounted in answer to a choice is the common case
+   * and it must not be the silent one. /exercises passes the chosen goal.
+   *
+   * Changing `items` does NOT deal on its own: a pile that re-dealt whenever
+   * a card was added would animate on every refetch.
+   */
+  dealKey?: string;
   className?: string;
 }
 
@@ -303,8 +357,8 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  nextLabel, previousLabel,
-  label, positionLabel, actions, busy = false, className,
+  nextLabel, previousLabel, navActions, cover,
+  label, positionLabel, actions, busy = false, dealKey, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
   const [drag, setDrag] = React.useState<Drag | null>(null);
@@ -315,10 +369,17 @@ export function CardDeck({
   const [arriving, setArriving] = React.useState<{ key: number; id: string } | null>(null);
   /** The card that was accepted and is waiting on the consumer. */
   const [sent, setSent] = React.useState<string | null>(null);
+  /** The whole pile is dealing itself in. Cleared when the deepest card lands. */
+  const [dealing, setDealing] = React.useState(false);
 
   const gesture = React.useRef<Gesture | null>(null);
   const throwKey = React.useRef(0);
   const arriveKey = React.useRef(0);
+  /* STARTS UNDEFINED RATHER THAN AT `dealKey`, which is what makes the first
+     defined value deal. Initialising it to the prop would mean a deck mounted
+     with a key already set never animated — and that is precisely the moment
+     /exercises wants the deal, because the deck is mounted BY the choice. */
+  const dealt = React.useRef<string | undefined>(undefined);
   const pile = React.useRef<HTMLDivElement>(null);
 
   const byId = React.useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -345,6 +406,15 @@ export function CardDeck({
     if (sent === null) return;
     if (!byId.has(sent) || !busy) setSent(null);
   }, [busy, sent, byId]);
+
+  /* A NEW KEY DEALS THE PILE. The ref holds the key the current pile was
+     dealt for, so a re-render with the same key is not a second deal — which
+     matters because this component re-renders on every frame of a drag. */
+  React.useEffect(() => {
+    if (dealKey === undefined || dealKey === dealt.current) return;
+    dealt.current = dealKey;
+    setDealing(true);
+  }, [dealKey]);
 
   /**
    * ── EVERY CARD STAYS THE SAME ELEMENT FOR AS LONG AS IT IS IN `items` ────
@@ -634,6 +704,12 @@ export function CardDeck({
     }
   }
 
+  /* The last card to land when the pile deals, because the stagger is the
+     depth. Its animationend is what ends the deal — counting every card's
+     would need a tally, and a timeout would need this file to know a duration
+     that lives in the stylesheet. */
+  const deepest = Math.max(0, ...depthOf.values());
+
   return (
     <div
       className={['musy-deck', className ?? ''].filter(Boolean).join(' ')}
@@ -673,8 +749,19 @@ export function CardDeck({
                   data-accent={item.accent ?? 1}
                   data-swiping={isFront && drag !== null}
                   data-arriving={arriving?.id === id || undefined}
-                  onAnimationEnd={() =>
-                    setArriving((current) => (current?.id === id ? null : current))}
+                  data-dealing={dealing || undefined}
+                  onAnimationEnd={(event) => {
+                    /* BY NAME, because three animations can end on this same
+                       element and they mean different things. Without the
+                       check a deal landing on the arriving card would clear
+                       the arrival early, and the card would cut rather than
+                       fly. */
+                    if (event.animationName === 'musy-deck-deal') {
+                      if (depth === deepest) setDealing(false);
+                      return;
+                    }
+                    setArriving((current) => (current?.id === id ? null : current));
+                  }}
                   /* ── EVERY CARD BUT THE ONE IN FRONT IS INERT ──────────────
                      A face may now put a button on itself, and four more of
                      them stacked behind the top card would be four tab stops
@@ -755,7 +842,54 @@ export function CardDeck({
                 </div>
               );
             })}
+
+            {/* ── THE EXTRA CARD ─────────────────────────────────────────
+                Last in the pile and in its one cell, so it is over every card
+                including one mid-flight. The deck gives it the card's box and
+                nothing else: no dismissal, no state, no styling — see the
+                prop.
+
+                WRAPPED, and that is not ceremony: the cell is claimed by
+                `grid-area: card`, and a consumer's node cannot carry that
+                without being handed a design-system class to put on itself.
+                Measured before the wrapper existed — the legend landed BELOW
+                the card at its own content height instead of over it. The
+                wrapper is the grid item; what goes inside it stretches. */}
+            {cover !== undefined && <div className="musy-deck__cover">{cover}</div>}
           </div>
+
+          {/* ── WHERE YOU ARE IN THE PILE, FOR THE EYE ──────────────────
+              The deck has always said this to a screen reader — the live
+              region below carries `positionLabel` on every change — and said
+              nothing at all to anyone looking at it. A pile shows one card by
+              definition, so without these the only clue that more exist is
+              the scatter behind the top one.
+
+              INSIDE THE STAGE, which is what centres them under the PILE
+              rather than under the deck: at --bp-md and up the body is a row
+              and the stage is only its first column, so dots placed after the
+              body would sit under the stage and the action column together
+              and read as belonging to neither.
+
+              NON-INTERACTIVE, which is `Dots`' own documented Card Deck case:
+              with no `onSelect` it renders spans and marks the row
+              `aria-hidden`, because a row of unpressable buttons teaches a
+              screen reader only that they cannot be pressed. The host then
+              owes the announcement, and the live region below is it.
+
+              `positionLabel` RATHER THAN A PROP OF ITS OWN. `Dots` requires a
+              label even on the path that never reads it, and the consumer has
+              already handed this component that exact sentence. A second
+              string prop would be a second way to say one thing. */}
+          {browsable && frontId !== undefined && (
+            <Dots
+              className="musy-deck__dots"
+              total={items.length}
+              index={position - 1}
+              ids={items.map((item) => item.id)}
+              label={(at, of) => positionLabel(at, of, items[at - 1]?.id ?? frontId)}
+            />
+          )}
         </div>
 
         {/* ── THE ACTIONS ─────────────────────────────────────────────
@@ -785,10 +919,16 @@ export function CardDeck({
               this one". Chevrons browse, arrows act — which is the way round
               every other set does it too. */}
           <div className="musy-deck__nav">
+            {/* `outline`, NOT `secondary` — Ben, 2026-10-07. A secondary
+                IconButton is a RAISED SURFACE with a border, which is also
+                what a card is: three of them in a row beside the pile read as
+                more cards rather than as the controls for one. The outline
+                keeps the border and drops the fill, so the only raised thing
+                on this component is the thing you can take. */}
             <IconButton
               glyph={ChevronLeft}
               label={previousLabel}
-              variant="secondary"
+              variant="outline"
               className="musy-deck__act musy-deck__act--previous"
               disabled={inert || !browsable}
               onClick={() => previous(frontId)}
@@ -796,11 +936,15 @@ export function CardDeck({
             <IconButton
               glyph={ChevronRight}
               label={nextLabel}
-              variant="secondary"
+              variant="outline"
               className="musy-deck__act musy-deck__act--next"
               disabled={inert || !browsable}
               onClick={() => next(frontId, STILL)}
             />
+            {/* Third and after, never between: back and forward are a pair and
+                a stranger inserted into the middle of them would break the
+                one thing their order says. */}
+            {navActions}
           </div>
           {actions}
         </div>

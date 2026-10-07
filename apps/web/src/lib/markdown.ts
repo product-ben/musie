@@ -227,6 +227,75 @@ export function parseMarkdown(md: string): Block[] {
 }
 
 /**
+ * ── ONE BLOB, READ IN TWO ORDERS — the listen step, 2026-10-07 ────────────
+ *
+ * `listen_md` is a `##` heading and a paragraph: an INSTRUCTION and a
+ * QUESTION. The listen step has two states, and neither wants the pair the way
+ * the other does:
+ *
+ *   the STAGE shows the instruction alone. The question is withheld because
+ *     nothing has been listened to yet — it has nothing to be asked about.
+ *   the SHEET shows the question alone, as its heading. The track is playing
+ *     by then, and the instruction has already been read on the stage —
+ *     repeating it here only makes the question the smaller half of its own
+ *     screen.
+ *
+ * THESE ARE PURE BLOCK OPERATIONS AND THEY LIVE HERE, not in the screen,
+ * because that is the difference between a rule with a test and a `.filter()`
+ * inside some JSX. They say nothing about the listen step; they say what to do
+ * with a heading and a body.
+ *
+ * NEITHER INVENTS A BLOCK. Given content that does not have the shape they
+ * expect — all heading, all prose, empty — each returns something the renderer
+ * can draw rather than throwing, because the content is provisional and a
+ * spreadsheet will overwrite it (CLAUDE.md 6). An exercise whose copy is one
+ * paragraph must not take the step down.
+ */
+
+/** The heading, alone. Nothing else, and nothing if there is no heading. */
+export function headingOnly(blocks: Block[]): Block[] {
+  const heading = blocks.find((block) => block.kind === 'heading');
+  return heading === undefined ? [] : [heading];
+}
+
+/**
+ * THE BODY ALONE, ITS FIRST BLOCK DRAWN AS THE HEADING.
+ *
+ * The mirror of `headingOnly`, and between them they are the listen step's two
+ * states: the stage shows the INSTRUCTION, the sheet shows the QUESTION, and
+ * neither shows both.
+ *
+ * It replaces `oneHeading`, which ran the pair together into a single heading
+ * — the question and then the instruction, one sentence after the other. Ben,
+ * 2026-10-07: the instruction has already been read on the stage, and
+ * repeating it on the sheet in display type made the question the smaller half
+ * of its own screen.
+ *
+ * THE PROMOTED BLOCK TAKES THE HEADING'S LEVEL, so the outline does not change
+ * depth between the two states. With no heading to borrow one from it takes 2,
+ * which is what the parser clamps a bare `##` to.
+ *
+ * ONLY THE FIRST body block is promoted; anything after it follows as prose,
+ * in order. A list is never promoted — an `<ol>` is not a heading — and copy
+ * whose body is a list keeps the list and loses only the heading, which is the
+ * honest reading of "the body alone".
+ */
+export function bodyOnly(blocks: Block[]): Block[] {
+  const heading = blocks.find((block) => block.kind === 'heading');
+  const body = blocks.filter((block) => block !== heading);
+
+  const lead = body.find((block) => block.kind === 'paragraph');
+  if (lead === undefined) return body;
+
+  const level: HeadingLevel = heading?.kind === 'heading' ? heading.level : 2;
+
+  return [
+    { kind: 'heading', level, spans: lead.spans },
+    ...body.filter((block) => block !== lead),
+  ];
+}
+
+/**
  * The same words with the formatting thrown away, as one string.
  *
  * For the places that need a step's copy as a VALUE rather than as a block of

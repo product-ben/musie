@@ -15,7 +15,7 @@
  * lose copy in a way nothing on screen could reveal.
  */
 import { describe, expect, it } from 'vitest';
-import { parseInline, parseMarkdown, plainText } from './markdown';
+import { bodyOnly, headingOnly, parseInline, parseMarkdown, plainText } from './markdown';
 
 /** The live German intro copy for Achtsame Pause, verbatim. */
 const INTRO = `## So legen wir los
@@ -191,5 +191,80 @@ describe('plainText', () => {
 
     expect(out).toContain('Wenn du magst, beantworte diese Fragen:');
     expect(out).not.toContain(' · ');
+  });
+});
+
+/**
+ * ── THE TWO ORDERS THE LISTEN STEP READS ONE BLOB IN ─────────────────────
+ * The live German listen copy for Achtsame Pause, as the 2026-10-07 migration
+ * leaves it. The stage draws the instruction alone; the sheet leads with the
+ * question and puts the instruction under it.
+ */
+const LISTEN = `## Höre bewusst zu, und schau dir dabei die Karte intensiv an
+
+Welches Bild entsteht vor deinem inneren Auge?`;
+
+describe('headingOnly', () => {
+  it('keeps the instruction and drops the question', () => {
+    const out = headingOnly(parseMarkdown(LISTEN));
+
+    expect(out).toHaveLength(1);
+    expect(out[0].kind).toBe('heading');
+    expect(plainText(out)).toBe('Höre bewusst zu, und schau dir dabei die Karte intensiv an');
+  });
+
+  /* Content is provisional and a spreadsheet will overwrite it, so the shapes
+     it might arrive in are the test rather than the happy path alone. */
+  it('returns nothing when the copy has no heading, rather than inventing one', () => {
+    expect(headingOnly(parseMarkdown('Just a line of prose.'))).toEqual([]);
+  });
+});
+
+describe('bodyOnly', () => {
+  it('keeps the question and drops the instruction', () => {
+    const out = bodyOnly(parseMarkdown(LISTEN));
+
+    expect(out.map((block) => block.kind)).toEqual(['heading']);
+    expect(plainText(out)).toBe('Welches Bild entsteht vor deinem inneren Auge?');
+  });
+
+  /* THE OUTLINE DOES NOT CHANGE DEPTH between the stage and the sheet — the
+     promoted block takes the level the heading it replaced was drawn at. */
+  it('gives the promoted block the heading’s own level', () => {
+    const out = bodyOnly(parseMarkdown('### Deeper\n\nThe body.'));
+
+    expect(out[0]).toMatchObject({ kind: 'heading', level: 3 });
+  });
+
+  it('carries emphasis across rather than flattening it', () => {
+    const out = bodyOnly(parseMarkdown('## Head\n\nA **bold** word.'));
+
+    expect(out[0].kind === 'heading' && out[0].spans.some((s) => s.strong === true)).toBe(true);
+  });
+
+  /* Content is provisional and a spreadsheet will overwrite it, so the shapes
+     it might arrive in are the test rather than the happy path alone. */
+  it('gives back nothing when there is no body to show', () => {
+    expect(bodyOnly(parseMarkdown('## Only a heading'))).toEqual([]);
+    expect(bodyOnly(parseMarkdown(''))).toEqual([]);
+  });
+
+  it('promotes prose that has no heading above it', () => {
+    expect(plainText(bodyOnly(parseMarkdown('Only prose.')))).toBe('Only prose.');
+  });
+
+  /* An <ol> is not a heading. Body that is only a list keeps the list and
+     loses the heading, which is what "the body alone" means. */
+  it('never promotes a list', () => {
+    const out = bodyOnly(parseMarkdown('## Steps\n\n1. First\n2. Second'));
+
+    expect(out.map((block) => block.kind)).toEqual(['list']);
+  });
+
+  /* Anything after the promoted paragraph follows it as prose, in order. */
+  it('keeps the rest of the body behind the promoted block', () => {
+    const out = bodyOnly(parseMarkdown('## Head\n\nOne.\n\nTwo.'));
+
+    expect(out.map((block) => plainText([block]))).toEqual(['One.', 'Two.']);
   });
 });

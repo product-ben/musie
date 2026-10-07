@@ -203,6 +203,13 @@
   border-color: var(--border-strong);
   color: var(--on-surface);
 }
+/* The border and the glyph, and nothing behind them — `.musy-btn--outline`'s
+   own declarations, so the two components cannot drift. */
+.musy-icon-btn--outline {
+  background-color: transparent;
+  border-color: var(--border-strong);
+  color: var(--on-surface);
+}
 .musy-icon-btn--ghost {
   background-color: var(--interactive-ghost);
   border-color: transparent;
@@ -214,8 +221,12 @@
   .musy-icon-btn--primary[data-force~="hover"] {
     background-color: var(--interactive-primary-hover);
   }
+  /* One rule, both variants — `.musy-btn`'s own pair, for the reason given
+     over there. */
   .musy-icon-btn--secondary:hover:not(:disabled):not([data-loading]),
-  .musy-icon-btn--secondary[data-force~="hover"] {
+  .musy-icon-btn--secondary[data-force~="hover"],
+  .musy-icon-btn--outline:hover:not(:disabled):not([data-loading]),
+  .musy-icon-btn--outline[data-force~="hover"] {
     background-color: var(--interactive-ghost-hover);
     border-color: var(--interactive-ghost-border-hover);
   }
@@ -232,6 +243,9 @@
 }
 .musy-icon-btn--secondary:active:not(:disabled),
 .musy-icon-btn--secondary[data-pressed]:not(:disabled),
+.musy-icon-btn--outline:active:not(:disabled),
+.musy-icon-btn--outline[data-pressed]:not(:disabled),
+.musy-icon-btn--outline[data-force~="active"],
 .musy-icon-btn--ghost:active:not(:disabled),
 .musy-icon-btn--ghost[data-pressed]:not(:disabled),
 .musy-icon-btn--secondary[data-force~="active"],
@@ -253,6 +267,15 @@
 .musy-icon-btn--secondary[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: transparent;
+  color: var(--on-surface-disabled);
+}
+/* The border goes QUIET and stays, for the reason `.musy-btn--outline` gives:
+   an outline control whose border vanished when disabled would lose its shape
+   entirely, and here there is not even a label left to say where it was. */
+.musy-icon-btn--outline:disabled,
+.musy-icon-btn--outline[data-disabled] {
+  background-color: transparent;
+  border-color: var(--border-subtle);
   color: var(--on-surface-disabled);
 }
 .musy-icon-btn--ghost:disabled,
@@ -491,16 +514,21 @@
   .musy-btn--primary[data-force~="hover"] {
     background-color: var(--interactive-primary-hover);
   }
+  /* ── OUTLINE HOVERS EXACTLY AS SECONDARY DOES — Ben, 2026-10-07 ───────
+     One rule for both, which is the only way to say "the exact same one" and
+     have it stay true: a second copy of the pair is a second thing to forget.
+
+     IT WAS `--interactive-primary-subtle` WITH `--border-strong-hover`, on
+     the argument that an outline button has no background to darken so
+     hovering should fill it in. The fill it reached for was a tinted one, and
+     against a secondary beside it the two hovers read as two different kinds
+     of control rather than one posture with and without a resting fill. The
+     ghost hover is the quieter answer and it is already the one the rest of
+     the system gives. */
+  .musy-btn--secondary:hover:not(:disabled):not([data-loading]),
+  .musy-btn--secondary[data-force~="hover"],
   .musy-btn--outline:hover:not(:disabled):not([data-loading]),
   .musy-btn--outline[data-force~="hover"] {
-    /* The SUBTLE fill, not the raised surface: hovering an outline button
-       should fill it in, which is the one state change it has available
-       without a background to darken. */
-    background-color: var(--interactive-primary-subtle);
-    border-color: var(--border-strong-hover);
-  }
-  .musy-btn--secondary:hover:not(:disabled):not([data-loading]),
-  .musy-btn--secondary[data-force~="hover"] {
     background-color: var(--interactive-ghost-hover);
     border-color: var(--interactive-ghost-border-hover);
   }
@@ -1474,6 +1502,18 @@
 
 .musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
 
+/* ── THE MEASURE, RELEASED ────────────────────────────────────────────────
+   `--measure-heading` is right for a heading you read and then track back
+   from, and wrong for one that is a QUESTION with its own answers directly
+   under it: there is nothing to track back to, the eye goes straight down
+   into the options, and 26ch turns a 32-character question into two balanced
+   half-lines stranded in the corner of a wide row.
+
+   `text-wrap: balance` stays. It is what makes the two lines even when the
+   headline DOES wrap, which it still does at 393px — releasing the cap does
+   not force one line, it stops the cap forcing two. See `headlineWide`.  */
+.musy-box__headline--wide { max-width: none; }
+
 /* ── CLOSEABLE: THE HEADLINE AND THE X, ON ONE ROW ────────────────────────
    Added 2026-09-26. Before it, a consuming screen got this X by passing a
    `header`, which made the card FRAMED — a header band, a hairline and the
@@ -2134,6 +2174,129 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ── THE IMMERSIVE SURFACE ─────────────────────────────────────────────────
+   The whole viewport, edge to edge, for a sheet that REPLACES the screen it
+   came from rather than sitting over it. Same dialog, same focus handling,
+   different frame — see Lightbox.tsx.
+
+   THE POSITIONER STOPS POSITIONING. A panel is inset and centred inside it and
+   scrolls as a whole when it outgrows the window; an immersive sheet is the
+   window, so the inset would draw a scrim-coloured hairline around all four
+   edges and the `overflow-y: auto` would hand the sheet a second scroll
+   container outside the one its own body already has. `grid` stays — one cell,
+   stretched — because changing the display type here would re-run layout on a
+   box that is already correct in every other respect.                        */
+.musy-lightbox__positioner[data-surface="immersive"] {
+  padding: 0;
+  place-items: stretch;
+  overflow: hidden;
+}
+
+/* THE SCRIM STILL FADES IN UNDER IT, and it is not redundant: for the length
+   of the clip the sheet does not yet cover the screen, and what shows around a
+   button growing into a page should be the page going quiet. By the time the
+   clip reaches the edges the scrim is behind an opaque surface and costs
+   nothing. */
+
+.musy-lightbox__popup[data-surface="immersive"] {
+  /* No measure and no ceiling: the sheet IS the viewport. `100%` of the
+     positioner, which is `position: fixed; inset: 0` — so this follows the
+     SMALL viewport on iOS the way a fixed box does, rather than reaching under
+     the browser's own chrome the way `100vh` would. */
+  max-width: none;
+  max-height: none;
+  min-block-size: 100%;
+  /* The frame is gone, because there is nothing left for it to separate the
+     sheet FROM. A border and a radius at the edge of the window read as a
+     rendering fault, and a shadow casts onto nothing. */
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  /* `--surface`, not `--surface-overlay`: the sheet is the page while it is
+     open, and the overlay tone exists to lift a panel off the page behind it.
+     There is no page behind this one. */
+  background-color: var(--surface);
+  padding-inline: var(--space-inset-sheet);
+  animation: musy-lb-grow var(--motion-sheet-slide) both;
+}
+.musy-lightbox__popup[data-surface="immersive"][data-closed] {
+  animation: musy-lb-grow var(--motion-exit) both reverse;
+}
+
+/* ── THE CLIP, WHICH IS WHAT MAKES IT A TRANSFORMATION ────────────────────
+   From the opening control's rect to all four edges. `inset()` resolves its
+   percentages against the reference box — the popup, which is the viewport —
+   so the two end edges are `100%` less the rect's own edge and this stylesheet
+   needs no window measurement from JavaScript.
+
+   A CLIP AND NOT A TRANSFORM, and that is the whole argument: scaling a 200x44
+   button up to a 393x852 viewport is a non-uniform scale, so every word inside
+   arrives stretched and un-stretches as it lands. A clip moves nothing. The
+   sheet is laid out at full size on the first frame and is simply not all
+   visible yet, which is also why the text inside is readable throughout
+   instead of being readable at the end.
+
+   THE RADIUS TRAVELS WITH IT, from the pill the control was to the square
+   corner of a window — `inset()` interpolates `round` component-wise, so one
+   keyframe carries both. At the first frame `--radius-full` is clamped by the
+   engine to half the rect's short side, which is exactly the control's own
+   corner.
+
+   NO ORIGIN GIVEN — the fallbacks put all four edges at the centre of the
+   viewport, so a sheet that no control opened opens from the middle. Honest for
+   a route-driven one, and nothing has to special-case it.
+
+   REDUCED MOTION IS ALREADY HANDLED, in Layer 1: every duration token collapses
+   to 1ms, so the clip is over before a frame is painted and the sheet simply
+   appears. Nothing here opts out, because there is nothing here to opt out of. */
+@keyframes musy-lb-grow {
+  from {
+    opacity: 0;
+    clip-path: inset(
+      var(--musy-lightbox-origin-top, 50%)
+      calc(100% - var(--musy-lightbox-origin-right, 50%))
+      calc(100% - var(--musy-lightbox-origin-bottom, 50%))
+      var(--musy-lightbox-origin-left, 50%)
+      round var(--radius-full)
+    );
+  }
+  /* Opaque EARLY, not at the end. The clip is what reveals the sheet; a fade
+     running the full length of it would leave the page showing through a
+     surface that is already most of the window. The fade is only there to stop
+     the first frame being a hard-edged pill appearing out of nothing. */
+  20% { opacity: 1; }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 0);
+  }
+}
+
+/* ── WHAT THE SHEET FRAMES, FILLING IT ────────────────────────────────────
+   An immersive sheet is a height as much as it is a width: a view whose job is
+   to be the only thing on screen has a top, a middle and a foot, and content
+   hugging the top of a 852px column is not that.
+
+   So the body becomes a column — and the caller's own element is what grows,
+   not each of several children. `:only-child` is the guard that makes that
+   safe: it applies exactly when the sheet frames ONE element, which is the
+   immersive reference case, and a caller who passes three siblings gets the
+   ordinary stacking rather than three boxes silently fighting over the height.
+   Arranging the inside of that one element is the caller's business; giving it
+   the full height to arrange is this component's.                            */
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body > :only-child {
+  flex: 1 1 auto;
+  /* Not optional, for the same reason the body itself carries it: a flex item
+     defaults to `min-block-size: auto` and refuses to shrink below its
+     content, so without this a long instruction pushes the foot of the sheet
+     off the bottom instead of scrolling. */
+  min-block-size: 0;
+}
+
 /* The close control. A ghost icon button pinned to the popup's inset, in the
    corner the content flows away from. */
 .musy-lightbox__close {
@@ -2212,6 +2375,78 @@
   padding: 0;
 }
 
+/* ── THE IMMERSIVE SHEET'S INSETS ──────────────────────────────────────────
+   `--space-inset-sheet`, which is the token named for exactly this and which
+   the panel does not use — a panel is a Content Box and takes the card's.
+   Declared down here, after the two rules they override, so the cascade is
+   read in one place rather than guessed from specificity.
+
+   THE CLOSE CONTROL MOVES WITH THEM. It is pinned to the popup's inset, so
+   leaving it on the card's would put the X four pixels in from the sheet's
+   edge and out of line with every word under it.                            */
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__close {
+  inset-block-start: var(--space-inset-sheet);
+  inset-inline-end: var(--space-inset-sheet);
+}
+
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body {
+  padding-block: var(--space-inset-sheet);
+}
+
+/* ── THE SHEET FLOWS AROUND THE CLOSE CONTROL, IT DOES NOT START BELOW IT ──
+   The panel pushes its body down by the control's height, which is right for a
+   box: a panel's first line is a title, and a title that began in the X's row
+   would be a title with a hole in it.
+
+   AN IMMERSIVE SHEET IS THE WHOLE WINDOW, and pushing its first line 44px down
+   from an edge it is already inset from reads as a sheet that failed to align
+   — while buying nothing, because the control still reaches 16px further down
+   than that padding does. Measured: the control spans 16px→60px from the top
+   of the popup (its inset, less its own negative margin, plus its height), and
+   the pushed-down body starts at 44px. It overlapped anyway, which is how the
+   X came to sit on top of a heading.
+
+   So the sheet keeps its own inset and the CONTENT steps around the corner
+   instead — see `--musy-lightbox-close-reserve` below. The selector is the
+   panel's own, one attribute longer, because the panel's version is four
+   classes deep and would otherwise win. */
+.musy-lightbox__popup[data-surface="immersive"]:has(> .musy-lightbox__close):not(
+  :has(> .musy-lightbox__headline)
+) > .musy-lightbox__body {
+  padding-block-start: var(--space-inset-sheet);
+}
+
+/* ── HOW FAR THE CLOSE CONTROL REACHES PAST THE CONTENT'S OWN INSET ───────
+   Published for the framed content, because the content is the only thing that
+   knows WHICH of its parts sits in that corner — a heading has to step around
+   it, a right-aligned button at the foot of the sheet must not.
+
+   It is the component's number to publish and not the app's to work out: it
+   comes from this control's width, this control's negative margin and this
+   sheet's inset, all three of which are declared here and none of which a
+   screen should be reading off a stylesheet it does not own (L7).
+
+     content's trailing edge   = --space-inset-sheet          (the body's)
+     control's leading edge    = --space-inset-sheet − --sp-2 + --target-primary
+     so the overlap            = --target-primary − --sp-2
+
+   TWO PROPERTIES, NOT ONE, and the difference is a token wide. The control is
+   square and its two insets are the same token, so its REACH is identical on
+   both axes — but only the inline one wants `--space-gap-inline` on top, so
+   words stop short of the glyph rather than against it. Nothing is beside the
+   control vertically; adding a horizontal gap to a vertical dimension would be
+   a number doing a job it was not named for, and the next person would have to
+   work out which of the two was the mistake.
+
+   Absent when there is no close control, so `var(…, 0)` at the call site is
+   the honest default rather than a guess.                                   */
+.musy-lightbox__popup[data-surface="immersive"]:has(> .musy-lightbox__close) {
+  --musy-lightbox-close-reserve-block: calc(var(--target-primary) - var(--sp-2));
+  --musy-lightbox-close-reserve-inline: calc(
+    var(--target-primary) - var(--sp-2) + var(--space-gap-inline)
+  );
+}
+
 
 /* ═══ 15 · SEGMENTED CONTROL ═══════════════════════════════════════════════
    2–4 mutually exclusive options, each icon + text, shown all at once. A
@@ -2226,6 +2461,26 @@
    not to the container around it.                                           */
 
 .musy-seg {
+  /* ── A <fieldset> LEAKS SCROLLABLE OVERFLOW TO THE PAGE ─────────────────
+     The same Chromium behaviour `.musy-filter` carries this declaration for,
+     reached from the other direction: there the scroller was INSIDE the
+     fieldset, here the fieldset is inside the scroller.
+
+     MEASURED on /exercises at 393px, where this control is the third item in
+     a horizontally scrolling toolbar: `document.scrollWidth` 550 against a
+     393 viewport and `window.scrollTo(300, 0)` really moved the page, while
+     walking every overflowing element's ancestors found a scroll container
+     every time — nothing was unclipped. Hiding this one element returned the
+     page to 393, and so did `contain: layout` on it.
+
+     It only bites once the fieldset itself extends past the scroller's
+     visible box: the same three controls in a different order, with this one
+     second instead of third, did not leak. That is what makes it look like a
+     layout bug belonging to whatever moved last.
+
+     `layout` and not `paint`: both fix it, and paint containment would clip
+     the focus ring off the segment at the control's edge. */
+  contain: layout;
   /* The segments answer to the CONTROL's width, not the viewport's — the same
      control is legal in a 320px sheet and a 720px panel on one screen, and a
      media query cannot tell those apart. */
@@ -4607,6 +4862,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── `hideTimer`: THE TWO DECLARATIONS ABOVE STOP EARNING THEIR KEEP ───────
+   Both exist FOR the readout. `min-inline-size: 18ch` reserves a column so the
+   button does not resize as the digits tick, and `flex-start` makes the
+   glyph+label pair and the time read as two columns. With no time there is one
+   column and nothing ticking, so an 18ch button around the word "Pause" is a
+   control that looks like it failed to size itself, with its label adrift at
+   the leading edge.
+
+   So it goes back to being an ordinary CTA Button: hugging its label, centred.
+   Declared here rather than by leaving the base rule off, because the two
+   variations share one class and only one of them opts out.                */
+.musy-btn.musy-mbtn--no-timer {
+  min-inline-size: 0;
+  justify-content: center;
+}
+
 /* ── B · Player ───────────────────────────────────────────────────────── */
 
 .musy-mplayer {
@@ -5362,6 +5633,16 @@ html[data-musy-scroll-snap='y'] {
      the resting tilt on purpose: the lean is what makes the card feel picked
      up rather than slid. */
   --musy-deck-swing-max: 18deg;
+  /* How far apart two cards land when the pile deals itself in. Per step of
+     --musy-card-depth, so the stagger is the pile's own depth read as time.
+
+     A TOKEN RATHER THAN A LITERAL, and the reduced-motion block below is the
+     whole reason. Layer 1 collapses every --motion-duration-* to 1ms and
+     every --motion-travel-* to 0 under prefers-reduced-motion, but it knows
+     nothing about an animation-delay — so a literal 60ms here would survive
+     the collapse and the deck would deal, slowly and invisibly, in exactly
+     the setting that asked it not to. */
+  --musy-deck-deal-stagger: 55ms;
   /* The dots' current mark, which Dots reads off its host. */
   --musy-sel-fill: var(--interactive-primary);
 
@@ -5428,7 +5709,21 @@ html[data-musy-scroll-snap='y'] {
 .musy-deck__body {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  /* ── `end`, NOT `start` — Ben, 2026-10-07 ─────────────────────────────
+     It was `start`, on the argument that "the first of them is the way
+     forward, and the way forward belongs where the eye lands after the card's
+     own headline". That argument died with the deck's own accept button: the
+     face carries the way forward now, and what is left in this column is two
+     chevrons that BROWSE. Browsing controls floating beside a card's shoulder
+     were the leftover of a layout that no longer exists.
+
+     At the foot they line up with the pile — with the pile alone, since the
+     same day: `end` here means the bottom of the STAGE, which is the dots, and
+     the rule under `.musy-deck__actions` is what lifts the column the last 40
+     pixels to the bottom edge of the card stack itself. Only where the two sit
+     side by side: below --bp-md the body is a centred column and the query
+     further down owns the alignment. */
+  align-items: end;
   gap: var(--space-gap-group);
 }
 
@@ -5440,6 +5735,38 @@ html[data-musy-scroll-snap='y'] {
   display: grid;
   justify-items: start;
   gap: var(--space-gap-stack);
+}
+
+/* ── LEVEL WITH THE PILE, NOT WITH THE STAGE (Ben, 2026-10-07) ────────────
+   "align the three item buttons with the bottom edge of the card stack (so
+   they are on the bottom right of the card stack)".
+
+   `align-items: end` on the body lines this column up with the bottom of the
+   STAGE, and the stage's last row is the dots — so the buttons sat level with
+   the position marks, one row below the thing they act on, with the card's
+   own bottom edge 40px above them.
+
+   THE 40 IS COMPOSED, NOT MEASURED. What sits between the two edges is the
+   stage's row gap and the dots' own box: `--space-gap-stack`, and
+   `--target-min`, which is what `.musy-dot` sizes to in both axes (2.5.8 —
+   "the mark is 12px, the button is 24px"). Both are Layer 1, so the alignment
+   survives a change to either, the way Layer 1 composes `--chrome-block` out
+   of the parts of the chrome rather than stating its height.
+
+   AND IT CLEARS THE FRINGE TOO (Ben, 2026-10-07: "move the icon buttons 32px
+   up"). The first pass stopped at the pile's MARGIN box — the bottom of the
+   deepest card in the fringe — and the edge the eye reads as the stack's is
+   the TOP card's, which is where the face, its Start button and the shadow
+   all end. That last step is `--sp-2 * 4`, which is not a third number but
+   the pile's own fringe reserve, written the way `.musy-deck__pile` writes
+   it. 32px, and it is the fringe's 32.
+
+   ONLY WHERE THERE ARE DOTS. A deck of one card draws none — `browsable` in
+   CardDeck.tsx — and there the stage's bottom already IS the pile's, so this
+   margin would lift the buttons clear of the only thing on the stage. `:has()`
+   asks the question rather than a second prop carrying the answer down. */
+.musy-deck__stage:has(.musy-deck__dots) + .musy-deck__actions {
+  margin-block-end: calc(var(--space-gap-stack) + var(--target-min) + (var(--sp-2) * 4));
 }
 
 /* ── THE STAGE ─────────────────────────────────────────────────────────────
@@ -5456,6 +5783,21 @@ html[data-musy-scroll-snap='y'] {
   position: relative;
   display: grid;
   place-items: center;
+  /* Two rows now — the pile, and the dots under it. `--space-gap-stack` is
+     Layer 1's word for controls inside one molecule, and a pile and the marks
+     saying where you are in it are exactly that. It costs nothing while the
+     stage has one child, which is every deck of one card.
+
+     The doubling check holds against the body's own `--space-gap-group`:
+     32 >= 2 x 16. */
+  gap: var(--space-gap-stack);
+}
+
+/* The dots belong to the pile, not to the page, so they take the deck's own
+   accent — `--musy-sel-fill` is published on `.musy-deck` for exactly this and
+   has been since before anything read it. */
+.musy-deck__dots {
+  grid-row: 2;
 }
 
 /* ── THE SMALLEST TIER: STACKED, AND CENTRED ──────────────────────────────
@@ -5481,7 +5823,25 @@ html[data-musy-scroll-snap='y'] {
 @media (max-width: 767.98px) {
   .musy-deck { justify-items: center; }
   .musy-deck__body { flex-direction: column; align-items: center; }
-  .musy-deck__actions { justify-items: center; }
+  /* ── STACKED: UNDER THE CARD, AGAINST ITS TRAILING EDGE ────────────────
+     Ben's "bottom right of the card stack", read at the width where there is
+     no right of the card to stand beside. They were centred, which put three
+     browsing controls on the page's own axis as though they were its subject.
+
+     THE BOX TAKES THE CARD'S WIDTH, which the deck publishes as
+     `--musy-deck-card-inline`, so `end` lands them on the CARD's trailing
+     edge. Without it the column shrinks to its content and `end` would mean
+     the deck's own edge — a gutter further out, and on a full-bleed stage
+     that is the side of the screen.
+
+     AND THE DESKTOP OFFSET GOES. There is no column beside the pile here:
+     the buttons are below the dots, and there is nothing above them to climb
+     level with. */
+  .musy-deck__actions {
+    inline-size: var(--musy-deck-card-inline);
+    justify-items: end;
+  }
+  .musy-deck__stage:has(.musy-deck__dots) + .musy-deck__actions { margin-block-end: 0; }
 }
 
 /* ── THE PILE ──────────────────────────────────────────────────────────────
@@ -5520,6 +5880,41 @@ html[data-musy-scroll-snap='y'] {
    top then is the one at the bottom of the pile rather than the one at depth 1.
 
    --musy-card-reveal lives on the OVERLAY and is how much of it is showing. */
+/* ── AN EXTRA CARD ON TOP OF THE PILE ──────────────────────────────────────
+   The `cover` slot. It takes the card's own cell, so it is exactly as wide as
+   a card and exactly as tall as the tallest face — the two numbers a consumer
+   would otherwise have to measure, in a layout that reflows with the copy, in
+   two languages.
+
+   ABOVE EVERY CARD INCLUDING ONE IN FLIGHT, and that takes a number rather
+   than document order. An earlier version of this comment claimed the cards
+   stack in tree order and that being last was enough; it is not, and the
+   legend rendered UNDERNEATH the card it was explaining. The cards carry
+   `z-index: calc(var(--z-raised) - var(--musy-card-depth))`, so the top one is
+   at `--z-raised` exactly and a card in flight is too.
+
+   `calc(var(--z-raised) + 1)` is therefore the first value that clears the
+   pile, written as arithmetic over the same token the cards use so it follows
+   them if the layer moves (L14.1). Not `--z-sticky`: this is an extra card in
+   a pile, not page furniture, and borrowing the shell's layer would put it
+   over things it has no business over.
+
+   NO `isolation`, because an explicit z-index already makes this a stacking
+   context — the two together would be one of them doing nothing and the next
+   reader working out which.
+
+   THE RADIUS IS THE PILE'S, inherited, so an extra card has the same corner as
+   a real one without the consumer naming a token. Everything else — fill,
+   blur, how it leaves — belongs to whatever is put in here.                 */
+.musy-deck__cover {
+  grid-area: card;
+  z-index: calc(var(--z-raised) + 1);
+  border-radius: inherit;
+  /* One cell, one child, stretched both ways — so whatever is put in here is
+     the card's size without being told what that size is. */
+  display: grid;
+}
+
 .musy-deck__card {
   grid-area: card;
   /* The overlay is laid over this. A transformed box is already a containing
@@ -5665,6 +6060,51 @@ html[data-musy-scroll-snap='y'] {
 
 .musy-deck__card[data-arriving] {
   animation: musy-deck-arrive var(--motion-duration-slow) var(--motion-ease-entrance);
+}
+
+/* ── THE DEAL ─────────────────────────────────────────────────────────────
+   The pile putting itself together, once, in answer to something the person
+   just chose. /exercises deals when a goal is picked: the question is the
+   screen until it is answered, and the cards arrive BECAUSE it was.
+
+   SAME ONE-KEYFRAME TRICK AS THE ARRIVAL ABOVE, for the same reason and it is
+   worth saying twice: there is no `to`, so the browser interpolates to each
+   card's OWN computed transform — its resting place in the pile, assembled
+   from --musy-card-depth, --musy-card-seed, --musy-card-rise and
+   --musy-card-settle. Restating that here would be four properties to keep in
+   step with a stylesheet that already says them, and the first edit to the
+   pile's geometry would leave the deal landing somewhere the cards are not.
+
+   THE STAGGER IS THE DEPTH. The card in front is at depth 0 and lands first;
+   everything behind it follows one step later per card. That is the gesture a
+   hand makes dealing a pile, and it needs no per-card state to express
+   because the depth is already a custom property on every card.
+
+   `backwards`, so a card waiting out its delay is held at the keyframe's
+   `from` — off the top and transparent — rather than sitting in its final
+   place for 200ms and then jumping up to animate down into it. Without it the
+   stagger reads as a flicker.
+
+   NO `forwards`, for the arrival's reason: the cards are staying, so the
+   animation must let go of them. A fill would freeze each card at a transform
+   that stops tracking the pile the moment the next card is dealt.           */
+@keyframes musy-deck-deal {
+  from {
+    transform: translate3d(0, calc(var(--motion-travel-lg) * -1), 0) scale(0.96);
+    opacity: 0;
+  }
+}
+
+.musy-deck__card[data-dealing] {
+  animation: musy-deck-deal var(--motion-duration-base) var(--motion-ease-entrance) backwards;
+  animation-delay: calc(var(--musy-card-depth) * var(--musy-deck-deal-stagger));
+}
+
+/* The one thing Layer 1's collapse cannot reach. Every card deals at once,
+   with no travel and no scale, because the durations are already 1ms and
+   --motion-travel-lg is already 0 — all that is left to zero is the wait. */
+@media (prefers-reduced-motion: reduce) {
+  .musy-deck { --musy-deck-deal-stagger: 0ms; }
 }
 
 /* Accepted: lifted off the pile, faded, and held there until the consumer
@@ -5872,6 +6312,34 @@ html[data-musy-scroll-snap='y'] {
    only a label and a glyph floating in a row.                               */
 
 .musy-filter {
+  /* ── A <fieldset> LEAKS ITS SCROLLER'S OVERFLOW TO THE PAGE ──────────────
+     MEASURED, at 393px, with five dimensions: `.musy-filter__row` is a proper
+     scroll container — `overflow-x: auto`, clientWidth 361, scrollWidth 1083,
+     every chip correctly inside it — and the DOCUMENT still scrolled
+     sideways to 986px. `window.scrollTo(500, 0)` really moved the page.
+
+     It is the fieldset. Chromium does not let a `<fieldset>` contain the
+     scrollable overflow of a descendant scroller the way an ordinary block
+     does, so the row's 1083px reached the viewport past a container that
+     reports itself as 361px wide. Nothing in the chain is unclipped — walking
+     every overflowing element's ancestors finds a scroll container every
+     time — which is why this is invisible to inspection and only shows up as
+     a page that scrolls.
+
+     `contain: layout` and not `contain: paint`: both fix it, and paint
+     containment would also CLIP, which would cut the focus ring off a chip at
+     the row's edge. Layout containment is the smaller claim — this subtree's
+     layout does not escape — and it is the whole of what is wrong here.
+
+     Ruled out by measurement, all still 986: `display: flow-root`,
+     `display: grid`, `min-inline-size: 0`, `overflow-x: clip` on the
+     fieldset, `max-inline-size: 100%` on the row, and wrapping the row in a
+     plain div. The legend is what makes a fieldset a fieldset, so it stays
+     one — L3 and 1.3.1 want the group named — and this is the containment it
+     needs to behave like a box.
+
+     Found by /goal-mappings, the component's first consumer in the app. */
+  contain: layout;
   /* The rung, stated once as an outer height. The chip IS the control here —
      there is no track around it, unlike §15 — so the height comes straight
      from the floor with no block padding, which is what makes a chip holding

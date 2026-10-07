@@ -197,6 +197,15 @@ const meta = {
       control: 'boolean',
       description: 'Remove the close button and the click-outside dismissal. Use ONLY when the lightbox is blocking on a decision the framed content itself resolves.',
     },
+    surface: {
+      control: 'inline-radio',
+      options: ['panel', 'immersive'],
+      description: 'The frame. `panel` (default) is a box centred over a scrim; `immersive` fills the viewport, for a sheet that REPLACES the screen it came from. Only the frame differs — focus, inertness, scroll lock, Escape and the portal are the same in both.',
+    },
+    origin: {
+      control: false,
+      description: 'The rect an `immersive` sheet grows out of — `getBoundingClientRect()` on the control that opened it, measured at the press. Omitted, it opens from the centre. Ignored by `panel`.',
+    },
     className: { control: false },
   },
 } satisfies Meta<typeof Lightbox>;
@@ -300,5 +309,59 @@ export const Mandatory: Story = {
         <CtaButton variant="primary">Back to the choice</CtaButton>
       </>
     ),
+  },
+};
+
+
+/**
+ * ── THE IMMERSIVE SURFACE ───────────────────────────────────────────────────
+ * Edge to edge, no border, no radius, no shadow, on `--surface` rather than
+ * `--surface-overlay` — because while it is open it IS the page, and the
+ * overlay tone exists to lift a panel off a page that is still there.
+ *
+ * `titleHidden`, because a sheet that fills the window shows its own heading as
+ * content. The name still has to exist (4.1.2); it is the content's job to show
+ * it, not the frame's.
+ *
+ * NO `origin` HERE, so it opens from the centre of the viewport — the shape a
+ * sheet takes when no control opened it. The story below gives it one.
+ */
+export const Immersive: Story = {
+  args: {
+    trigger: undefined,
+    open: true,
+    surface: 'immersive',
+    titleHidden: true,
+    title: 'Listening',
+    children: (
+      <ContentBox headline="What picture forms while you listen?" headlineStep="heading-md">
+        {DETAIL_CONTENT}
+      </ContentBox>
+    ),
+  },
+};
+
+/**
+ * ── OPENED OUT OF A CONTROL ─────────────────────────────────────────────────
+ * `origin` is the opening control's rect, so the sheet is clipped to it on the
+ * first frame and the clip opens to all four edges: the button does not summon
+ * a screen, it becomes one.
+ *
+ * A CLIP AND NOT A TRANSFORM. Scaling a 200x44 control up to the viewport is a
+ * non-uniform scale, so every word inside would arrive stretched; a clip moves
+ * nothing and the sheet is readable from the first frame it is visible on.
+ *
+ * The rect here is a FIXED one, because a story has no press to measure. In an
+ * app it is measured at the press and never on mount — a rect is
+ * viewport-relative, and a stale one opens the sheet out of a button that has
+ * since scrolled away.
+ *
+ * Reduced motion needs nothing: Layer 1 collapses every duration token to 1ms,
+ * so the clip is over before a frame is painted and the sheet simply appears.
+ */
+export const ImmersiveFromAControl: Story = {
+  args: {
+    ...Immersive.args,
+    origin: { top: 520, right: 236, bottom: 564, left: 24 },
   },
 };

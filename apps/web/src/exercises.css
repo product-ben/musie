@@ -24,21 +24,45 @@
  *   3. Anything here that recurs is a component request, not a second copy.
  */
 
+/* ═══ THE SCREEN'S STACK ═══════════════════════════════════════════════════
+   ONE GAP, DECLARED ONCE. Four blocks down this page — the intro, a running
+   session's notice, the goal question, the toolbar — each carried its own
+   `margin-block-end: var(--space-gap-group)`, which is four declarations of
+   one intent on blocks that are CONDITIONALLY RENDERED. Every new block had
+   to remember, and the empty-goal notice added on 2026-10-07 only spaced
+   correctly because it borrowed `.musie-running`'s class to get the margin.
+
+   A `gap` skips an absent child for free, which is the whole reason it beats
+   margins here: the rhythm is a property of the screen rather than a promise
+   each block makes separately.
+
+   `--space-gap-group` is Layer 1's word for "between molecules that do NOT
+   belong together", and that is what every pair of these is — a headline and
+   a pile, a notice about another session and the controls for this one.
+
+   THE DECK STAYS FULL-BLEED INSIDE IT. `.musie-deck-stage` sets
+   `inline-size: 100vw; margin-inline: calc(50% - 50vw)`, and as a grid item
+   that `50%` resolves against the grid area — which IS the column, so the
+   escape lands exactly where it did in block flow. Measured at 393 / 768 /
+   1024 / 1280 rather than assumed.                                         */
+.musie-exercises {
+  display: grid;
+  gap: var(--space-gap-group);
+}
+
 /* ═══ THE INTRO ════════════════════════════════════════════════════════════
-   A headline and the line under it, then the deck. The two gaps are Layer 1's
-   own words for exactly these two relationships: `--space-gap-related` is
-   "atoms that belong together: label+field, title+subtitle", and
-   `--space-gap-group` is "between molecules that do NOT belong together".
+   A headline and the line under it. `--space-gap-related` is Layer 1's word
+   for "atoms that belong together: label+field, title+subtitle", which is
+   exactly this pair; the distance to whatever comes next is the stack's.
 
    The shell's own `.musie-placeholder` carries `--space-gap-group` below
    itself, which is right when a heading is followed by the screen's content
    and wrong when it is followed by its own subline — so the pair is wrapped
-   and the heading's margin is given back to the wrapper. Nothing about the
+   and the heading's margin is given back to the stack. Nothing about the
    shell's classes changes; only this screen's arrangement of them does.    */
 .musie-deck-intro {
   display: grid;
   gap: var(--space-gap-related);
-  margin-block-end: var(--space-gap-group);
 }
 
 .musie-deck-intro > .musie-placeholder { margin-block-end: 0; }
@@ -60,14 +84,14 @@
 }
 
 /* ═══ A RUN THAT IS STILL OPEN ═════════════════════════════════════════════
-   The notice between the intro and the view switch. It owns nothing but the
-   gap under itself: `Message` brings its own box, and `--space-gap-group` is
-   Layer 1's word for the distance between molecules that do not belong
-   together — which is exactly what a notice about another session and a
-   switch between two views of this one are.                                */
-.musie-running {
-  margin-block-end: var(--space-gap-group);
-}
+   The notice between the intro and the toolbar. IT NOW OWNS NOTHING AT ALL —
+   `ContentBox` brings its own box and `.musie-exercises` brings the gap, so
+   the rule that used to carry a `margin-block-end` has no declarations left
+   and is gone.
+
+   The class stays on the element in Exercises.tsx: it names which box this is
+   for anyone reading the markup, and the empty-goal notice uses it for the
+   same reason. A hook with no styles is cheaper than a box nobody can find. */
 
 /* ═══ THE VIEW SWITCH ══════════════════════════════════════════════════════
    ONE ROW, ABOVE WHICHEVER VIEW IS ON (Ben, 2026-10-05). It used to ride in
@@ -76,15 +100,270 @@
    it does not: same row, same place, both views.                           */
 .musie-deck-toolbar {
   display: flex;
-  justify-content: flex-start;
-  margin-block-end: var(--space-gap-group);
+  align-items: center;
+  /* ── THE STACK'S OWN RUNG, AND WHY IT LOOKED LIKE MORE ─────────────────
+     `--space-gap-stack` (16px) is Layer 1's word for "between controls
+     inside one molecule", which is exactly what these three are.
+
+     IT WAS `--space-gap-related` (12px) FOR A DAY, picked by eye against a
+     row that measured wrong. `.musy-btn--min` ships `margin: var(--sp-2)` —
+     "the rung exists to sit inside a line of text" — so the shuffle button
+     was adding 8px of its own at each end and the real distances on screen
+     were 20px, not the 12 this file claimed. Measured in the browser at
+     393px: 20 and 20. Ben read it as "about 24" and was right about the
+     thing that mattered, which is that the row was not on a rung at all.
+
+     `.musie-toolbar-control` below takes those margins back, so this gap is
+     now the whole of the spacing and the number on screen is the token's. */
+  gap: var(--space-gap-stack);
+
+  /* ── IT SCROLLS RATHER THAN WRAPPING (Ben, 2026-10-07) ──────────────────
+     Two controls now, and in German they do not fit a phone: *Ziel:
+     Achtsamkeit stärken* measures most of 393px on its own, before the view
+     switch beside it. Wrapping would put the switch on a line of its own and
+     give the row two heights depending on the locale and the goal; scrolling
+     keeps one row that is always one rung tall.
+
+     `auto`, so this costs nothing where it fits — the row only becomes a
+     scroller on the viewports that need one, which is the behaviour asked
+     for rather than a breakpoint guessing at it.
+
+     `overflow-y: hidden` is not optional: declaring one axis makes the other
+     compute to `auto`, and a vertical scrollbar on a 44px row is the kind of
+     thing that only appears on someone else's machine.
+
+     `flex: 0 0 auto` on the children, or a flex row with room to spare would
+     shrink the pill's label instead of scrolling. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+
+  /* ── THE RING'S CLEARANCE, AND GIVING THE RHYTHM BACK ───────────────────
+     2.4.11 — the focus ring on a control at the row's edge must not be
+     clipped by the scroller, which is the carousel viewport's reason for the
+     same padding.
+
+     EVERY EDGE OF IT IS THEN CANCELLED, on both axes and for two different
+     reasons:
+
+     INLINE, so the row's contents line up with the headline above and the
+     deck below rather than sitting five pixels in. Measured: content edge and
+     `h1` agree at 16 / 24 / 32 / 150 across 393 / 768 / 1024 / 1280.
+
+     BLOCK, because the padding sits OUTSIDE `.musie-exercises`'s gap — so the
+     distance from the block above to the controls, and from the controls to
+     the deck, was `32 + 5 = 37` on both edges. The row sat further from its
+     neighbours than the ladder says and nothing on screen said why.
+
+     The stack still supplies the 32; these two pull the row's border box back
+     into the gap by exactly what the padding spends, so content-to-content is
+     the ladder's number on both edges. Arithmetic over one Layer 1 token
+     (L14.1), so it stays true if the clearance moves. */
+  padding: var(--focus-ring-clearance);
+  /* THE INLINE HALF IS THE ROW'S NOW (2026-10-07). It lives on
+     `.musie-deck-toolbar-row` so that the leftmost thing lines up with the
+     headline whether that thing is this scroller or a chevron beside it;
+     cancelling it here would align the scroller and leave the buttons
+     hanging outside the column. The block half stays, because the row above
+     and the deck below are this element's neighbours either way. */
+  margin-block: calc(var(--focus-ring-clearance) * -1);
+
+  /* ── THE BUTTONS SCROLL IT, AND THE STYLESHEET OWNS HOW ─────────────────
+     `scrollBy` with no `behavior` takes this, so the one place that decides
+     whether the row glides or jumps is here with the rest of the motion —
+     and reduced motion turns it off below rather than in an event handler.
+     Layer 1 cannot do it from a token: there is no duration in
+     `scroll-behavior` to collapse to 1ms. */
+  scroll-behavior: smooth;
+
+  /* No visible scrollbar: it would sit under a row of controls and read as a
+     divider. The same pair `.musy-carousel__viewport` uses. */
+  scrollbar-width: none;
 }
 
-/* Centred on the smallest tier, on the same threshold the deck centres on —
-   the deck is a column on the page there, and a left-aligned control over a
-   centred pile reads as belonging to something else. */
+.musie-deck-toolbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .musie-deck-toolbar { scroll-behavior: auto; }
+}
+
+/* ── THE ROW THAT HOLDS THE SCROLLER AND ITS TWO BUTTONS ──────────────────
+   Ben, 2026-10-07: "add the xs icon button w. chevrons to the left and right,
+   to make the component accessible". A row that scrolls and offers nothing to
+   scroll it with is reachable by a finger, a trackpad and a mouse wheel, and
+   by nothing else — a keyboard cannot scroll a container it cannot focus, and
+   on a desktop with a wheel-only mouse the horizontal axis is a modifier key
+   nobody is told about. The buttons are that axis, drawn.
+
+   THEY ARE OUTSIDE THE SCROLLER, which is the whole reason this element
+   exists: a control inside a scrolling row scrolls away with it, and the one
+   at the far end is the one you would need when you cannot reach the far end.
+
+   NO GAP, AND THAT IS NOT AN OMISSION. `.musy-icon-btn--min` bakes in
+   `margin: var(--sp-2)` because --target-min is 24px and 2.5.8 only permits
+   that WITH the spacing — Layer 2's own note says "two of these margins meet
+   at --space-gap-stack, so a row of them needs no gap of its own". A gap here
+   would be spacing on top of spacing that is already load-bearing.
+
+   THE CLEARANCE IS CANCELLED HERE rather than on the scroller — see the note
+   over there. */
+.musie-deck-toolbar-row {
+  display: flex;
+  align-items: center;
+  margin-inline: calc(var(--focus-ring-clearance) * -1);
+  /* ── IT IS A GRID ITEM, AND A GRID ITEM'S FLOOR IS ITS CONTENT ─────────
+     `.musie-exercises` is a one-column grid, where `min-inline-size: auto`
+     resolves to the content's own minimum — so a row holding a scroller full
+     of controls sizes to all of them and hangs out of the column, taking the
+     trailing chevron off the side of the screen with it. Measured at 393px
+     before this line: a 474px row in a 361px column.
+
+     THE SCROLLER NEVER NEEDED IT, which is why the row is the first place in
+     this file to say it: `overflow-x: auto` already resolves that automatic
+     minimum to zero. This row's overflow is visible, so it has to say so. */
+  min-inline-size: 0;
+}
+
+/* The scroller takes what the buttons leave. `min-inline-size: 0` is what
+   lets it: a flex item's floor is its content, so without this the row would
+   push the trailing button off the page instead of scrolling. */
+.musie-deck-toolbar-row > .musie-deck-toolbar {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* ── A CONTROL IN THE TOOLBAR BRINGS NO SPACING OF ITS OWN ────────────────
+   `.musy-btn--min` carries `margin: var(--sp-2)` for the case the rung was
+   drawn for — a quiet control sitting inside a line of text — and in a flex
+   row with a gap that margin is a second helping nobody asked for. It was
+   `.musie-goal-pill`, which took it back for the pill alone; the shuffle
+   button arrived later without one and put 8px into two of the row's gaps.
+
+   SO IT IS NAMED FOR THE PLACE, NOT THE CONTROL. Anything that joins this row
+   wears it, and the row's gap stays the only thing between its children.
+
+   NOT A RULE AGAINST `.musy-btn`. The app does not reach into a component's
+   own selectors — the same boundary L7 draws around its geometry — so the
+   class is passed through `className` and the component decides where it
+   lands. And NOT `.musie-deck-toolbar > *`, which would have been shorter and
+   would have stripped the margin off the two chevrons as well, where it is
+   what makes a 24px target legal. */
+.musie-toolbar-control {
+  margin: 0;
+}
+
+/* ── THE ROW FADES OUT WHERE THERE IS MORE OF IT ──────────────────────────
+   Ben, 2026-10-07. A row that scrolls was cutting its contents off against a
+   hard edge, so a chip half out of the window looked like a chip that had been
+   clipped rather than one you can scroll to.
+
+   `mask-image`, NOT a pair of gradient overlays. An overlay has to be painted
+   in the page's own colour to fade INTO it, which means knowing the surface
+   behind this row — and the deck below it has a different one in dark mode. A
+   mask makes the row transparent at its ends and is right on any background,
+   in either theme, with nothing to keep in step.
+
+   ONLY THE ENDS THAT HAVE SOMETHING PAST THEM. `data-fade` comes from
+   `useEdgeFade`, which reads the scroller's actual position: always-on
+   gradients would soften the leading chip before anything had been scrolled,
+   which is the fade saying "there is more this way" about an edge that is
+   flush against the window. Four states, three rules, and the default — a row
+   that fits — carries no mask at all.
+
+   `--space-section` IS THE WIDTH, which is a token rather than a picked
+   number, and a wide one on purpose: a short fade reads as a smudge on the
+   last glyph, where a long one reads as the row continuing. The `transparent`
+   stop is at 0 and `black` at the fade's width, so the chip under it goes to
+   nothing exactly at the row's edge.
+
+   LOGICAL, VIA `to right` AND `scrollLeft`'s SIGN. `mask-image` has no logical
+   gradient direction, so the start/end naming lives in the hook — which reads
+   the distance from the LEADING edge and is therefore already correct in RTL.
+   What is left here is one physical axis, and the two rules below name the
+   sides the hook means rather than the sides a left-to-right reader sees. */
+.musie-deck-toolbar {
+  --musie-fade: var(--space-section);
+}
+
+.musie-deck-toolbar[data-fade='end'] {
+  mask-image: linear-gradient(
+    to right, black calc(100% - var(--musie-fade)), transparent 100%
+  );
+}
+
+.musie-deck-toolbar[data-fade='start'] {
+  mask-image: linear-gradient(to right, transparent 0, black var(--musie-fade));
+}
+
+.musie-deck-toolbar[data-fade='both'] {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black var(--musie-fade),
+    black calc(100% - var(--musie-fade)),
+    transparent 100%
+  );
+}
+
+.musie-deck-toolbar > * { flex: 0 0 auto; }
+
+/* ── THE RUNG'S OWN MARGIN, GIVEN BACK ─────────────────────────────────────
+   `.musy-btn--min` carries `margin: var(--sp-2)` on all four sides. In a row
+   of nothing but min buttons that margin IS the spacing — L5's "never add a
+   gap to a row of `min` buttons" — but this row holds one min CtaButton and
+   one min SegmentedControl, and `.musy-seg--min` carries NO margin. The row
+   is therefore asymmetric by construction, and all three measurements came
+   out wrong at 1280:
+
+     the pill's edge   158 against a headline and a deck at 150   (8px in)
+     the gap between    24 where the ladder says 16               (16 + 8)
+     intro → controls   40 where the ladder says 32               (32 + 8)
+
+   THE SYSTEM'S OWN ARGUMENT SAYS THE MARGIN IS THE PART THAT IS WRONG.
+   `.musy-filter--min`'s comment: "a chip at 36px needs none of the spacing
+   exception .musy-btn--min and .musy-icon-btn--min bake a margin in for,
+   which is why there is no margin here." The pill measures 37px. 2.5.8's
+   spacing exception applies to targets UNDER 24px; at 37px it does not apply
+   at all, and the row's own 16px gap is more separation than the 8px margin
+   was giving anyway. Nothing is lost.
+
+   SO IT IS ZEROED HERE RATHER THAN COMPENSATED ON THE CONTAINER. Subtracting
+   --sp-2 from the row's padding — which is what `.musie-exercise-card__foot`
+   does for the same margin — is wrong here because this row's CONTENTS
+   CHANGE: with the question open the pill is gone and only the margin-less
+   switch remains, and a container compensating for a margin that is no longer
+   there would pull the switch 8px too close on every edge.
+
+   Logged as a component request (L14.3) in the design system's own
+   OPEN-QUESTIONS: `CtaButton size="min"` should drop the margin now that the
+   rung renders at 36px, which is what `SegmentedControl` and `FilterChips`
+   already do at the same height. Until it does, this is one screen's class on
+   its own control rather than a rule against a `musy-` selector.           */
+/* ── CENTRED BELOW --bp-md, LEFT-ALIGNED ABOVE IT (Ben, 2026-10-07) ────────
+   "Behalte alles in L viewports links aligned. Erst beim 768er breakpoint
+   zentrieren." The same threshold and the same two states `.musy-deck` itself
+   turns on, which is the component's own argument read once more: tie them to
+   --bp-md and the deck is left-aligned beside its actions, or centred above
+   them, and never half of each. A row centred over a left-aligned pile would
+   be exactly that half.
+
+   `safe center`, NEVER a plain `center`. On a flex container that overflows,
+   `center` pushes the LEADING item out past the scroll origin, where no
+   gesture can reach it — the pill would become unscrollable-to at precisely
+   the widths this row has to scroll. `safe` falls back to `start` the moment
+   the content would overflow, so one declaration states both halves of the
+   sketch: centred where it fits, scrolled from the start where it does not.
+
+   Measured: 408px of German content and 431 of English against 371 of room at
+   393, so a phone always takes the `start` branch and scrolls; the centred
+   branch is the large-phone and tablet-portrait band up to 767.
+
+   THE ONE `safe` IN THIS REPOSITORY. Logged in OPEN-QUESTIONS.md, because the
+   next scrolling row will want it and the failure it prevents is invisible
+   until someone tries to reach the first control.                          */
 @media (max-width: 767.98px) {
-  .musie-deck-toolbar { justify-content: center; }
+  .musie-deck-toolbar { justify-content: safe center; }
 }
 
 /* ═══ WHERE THE DECK SITS ═══════════════════════════════════════════════════
@@ -318,3 +597,302 @@
    deal with against a column you read — and in nothing else. The bespoke list
    that used to live here compared the deck against something nobody was
    proposing to ship. */
+
+/* ═══ THE GOAL ═════════════════════════════════════════════════════════════
+   NEITHER HALF OF IT HAS A RULE HERE ANY MORE.
+
+   The pill lives in `.musie-deck-toolbar` above, beside the view switch (Ben,
+   2026-10-07), which owns that row's gap, alignment and scrolling. The box is
+   a `ContentBox` and brings its own; the distance to whatever is under it is
+   `.musie-exercises`'s gap, like every other block on this screen.
+
+   `.musie-goal-box` is still passed as a className so the box can be found —
+   in the markup, in a measurement, and in a devtools pane full of `musy-`
+   classes that all belong to the system rather than to this screen.        */
+
+
+
+/* The emitted config, on /goal-mappings. */
+.musie-goal-config {
+  margin: 0;
+  /* ── NOT MONOSPACED, AND THAT IS A GAP RATHER THAN A CHOICE ─────────────
+     Layer 1 has exactly two families — --font-display and --font-text — and
+     no monospace stack. L14.1 says every declaration here resolves to a
+     Layer 1 token, so a bare `ui-monospace` would be the app inventing a
+     typeface the system does not have. JSON in a proportional font is worse
+     and still perfectly readable, and `pre-wrap` is doing the work that
+     actually matters: the structure survives.
+
+     Logged in OPEN-QUESTIONS.md as a token request.
+
+     body-md rather than body-sm: L8 bars body-sm from essential prose, and a
+     config you are about to copy and paste exactly is as essential as text
+     on this screen gets, whatever else it is. */
+  font-family: var(--font-text);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  /* The whole reason this is a <pre>: the indentation carries the structure.
+     It wraps rather than scrolling sideways — the point is to select all of
+     it, and a horizontal scroller hides half of what you are copying. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The tool's own stack, on /goal-mappings. `.musie-main` supplies no gap
+   between children, so the screens that need one bring it — the same thing
+   `.musie-exercises` above does.
+
+   TWO RUNGS, NOT ONE. The outer stack separates the tool from the prose above
+   it: `--space-gap-group`, Layer 1's word for molecules that do not belong
+   together. The INNER stack holds the chip row and the button that reads it,
+   and those are controls inside one molecule — `--space-gap-stack`. They were
+   both `--space-gap-group` until 2026-10-07, which spaced a button and the
+   thing it acts on as strangers.
+
+   The ladder's doubling check passes either way: 32 ≥ 2 × 16.
+
+   ── minmax(0, 1fr), AND IT IS NOT DECORATION ────────────────────────────
+   A grid's implicit column is `auto`, which resolves toward MAX-CONTENT — so
+   `FilterChips`, whose row is built to scroll inside itself, instead sized to
+   all five chips at once and took the page with it. Measured at 393px: the
+   fieldset came out 1083px wide and `document.scrollWidth` was 1099 against a
+   393 viewport, which is the horizontal page scroll L15 checks for and L0
+   forbids.
+
+   `minmax(0, 1fr)` pins the column to the container and lets its children
+   shrink below their content, which is what hands the overflow back to the
+   component that knows how to handle it. */
+.musie-goal-admin {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-gap-group);
+}
+
+/* The chip row and the button that reads it. Nested, so the inner rung does
+   not have to be undone on every other child of the outer one. */
+.musie-goal-admin > .musie-goal-admin {
+  gap: var(--space-gap-stack);
+}
+
+/* The one child that should be as wide as its label. Stretched, a full-width
+   *Konfiguration erzeugen* would read as the page's primary action rather
+   than as one step of a tool.
+
+   A `musie-` class passed through `className` rather than a rule against
+   `.musy-btn`: the app does not reach into a component's own selectors, which
+   is the same boundary L7 draws around its geometry. */
+.musie-goal-admin__action {
+  justify-self: start;
+}
+
+.musie-goal-admin > .musie-placeholder { margin-block-end: 0; }
+
+/* ═══ THE FIRST-USE LEGEND · AN EXTRA CARD ON THE PILE ══════════════════════
+   A permitted custom pattern (L14): the system has no "explain this screen"
+   component, every declaration resolves to a Layer 1 token or to a keyword,
+   and the classes are `musie-`. Should a second screen want one, it is a
+   component request and not a second copy (L14.3).
+
+   THE BOX IS THE DECK'S. `CardDeck`'s `cover` slot puts this in the pile's one
+   grid cell, so it is exactly as wide as a card and as tall as the tallest
+   face, with the pile's own radius inherited. Nothing here sets a size.
+
+   ── IT IS THE SWIPE OVERLAY'S PURPLE NOW (Ben, 2026-10-07) ────────────────
+   It was `--interactive-accent-alt` at 82% behind a blur, so the card shimmered
+   through — the thing being explained visible behind its own explanation. Ben
+   asked for the legend to look like the other purple state on this screen, the
+   one the deck raises while a card is being dealt, and that state is opaque:
+   `--accent-3-text` as a FILL with `--on-surface-inverse` on it, which is
+   `.musy-deck__overlay`'s own pair and carries its own justification for
+   inverting a text token (musy-components.css, above that rule).
+
+   THE SHIMMER GOES WITH IT, and that is a consequence rather than a second
+   decision. The two cannot both be had: white on the pale purple solid
+   measures 2.01:1, which is why the overlay reached for the dark end of the
+   scale in the first place — and a photograph coming through a DARK fill at
+   82% reads as dirt rather than as shimmer. So the fill is flat and the blur
+   is gone with it, and the screen's two purple states are the same purple.
+
+   IF THE SHIMMER IS WANTED BACK it returns with the pale solid and that
+   solid's own foreground — never by thinning this one.                      */
+.musie-deck-guide {
+  /* It is a <button>, so the UA's own button styling has to go first. */
+  appearance: none;
+  border: 0;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  /* ── EACH ROW SITS WHERE ITS CONTROL IS (Ben, 2026-10-07) ─────────────
+     Centred as a block, the three rows were a list of facts about the
+     screen. Spread to the card's own top, middle and bottom they are a MAP
+     of it: the goal pill is in the row above the pile, the two directions
+     are across the card's waist, and Start is in the bottom-right corner of
+     the face underneath — which is the corner the last row's picture of it
+     sits in. The gap stays as the floor, so a tall card spreads the rows
+     and a short one never closes them up tighter than a group gap. */
+  justify-content: space-between;
+  gap: var(--space-gap-group);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding: var(--space-inset-card);
+  border-radius: inherit;
+
+  background-color: var(--accent-3-text);
+  color: var(--on-surface-inverse);
+
+  /* IT ARRIVES, TOO. The legend appearing instantly over a pile that has just
+     dealt itself in reads as a misdraw. `--motion-enter` is Layer 1's own
+     entrance pair, and reduced motion flattens it to 1ms. */
+  animation: musie-guide-in var(--motion-enter) both;
+}
+
+/* ── AND IT DISSOLVES ─────────────────────────────────────────────────────
+   Not a disappearance: the card underneath is where the eye is going, so the
+   legend thins out onto it rather than being cut away. The component ends on
+   `animationend`, so this duration is the only copy of that number.
+
+   `--motion-exit` is the shorter of the two pairs, which is the right way
+   round — leaving should not be slower than arriving. `pointer-events: none`
+   from the first frame, so a second press during the fade cannot land on a
+   control that is on its way out. */
+.musie-deck-guide[data-leaving] {
+  animation: musie-guide-out var(--motion-exit) both;
+  pointer-events: none;
+}
+
+@keyframes musie-guide-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Travel comes from a token, so reduced motion flattens the lift to a plain
+   fade rather than the legend jumping as it goes. */
+@keyframes musie-guide-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
+}
+
+/* ── ONE ROW OF THE LEGEND ────────────────────────────────────────────────
+   A sentence and the picture of the control it is about. `align-items:
+   center` so a one-line sentence sits level with its glyph and a two-line one
+   is centred against it — the alternative, `start`, leaves a wrapped sentence
+   hanging below a glyph that is pinned to its first line.
+
+   THE THREE ROWS ARE NOT ONE SHAPE, and that is the point of the rewrite: a
+   shared shape would have had to pick one of the three controls to be honest
+   about. The modifiers below are the other two. */
+.musie-deck-guide__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-stack);
+}
+
+/* THE GOAL IS THE PLAIN ROW — a leading glyph and a sentence — and it needs
+   no modifier of its own. The arrow in it points up, out of the card, which
+   is where the pill is; `--goal` is on the element for the next person who
+   has to find this row from the markup. */
+
+/* ── BOTH DIRECTIONS, AT BOTH EDGES ───────────────────────────────────────
+   The chevrons go to the card's two sides rather than sitting together in a
+   column: the gesture is the pair, and two glyphs in one corner describe a
+   control instead of a movement. The sentence takes the middle and is centred
+   against them, because a start-aligned sentence between two centred glyphs
+   reads as belonging to the left one. */
+.musie-deck-guide__row--swipe {
+  justify-content: space-between;
+}
+
+.musie-deck-guide__row--swipe .musie-deck-guide__text {
+  text-align: center;
+}
+
+/* ── THE PRESS, AND ITS PICTURE IN THE CORNER THE REAL ONE IS IN ──────────
+   A column, not a row. The sentence gets the card's full width and the
+   picture sits below it at the end, which is where `.musie-exercise-card__
+   start` is on the face underneath. Side by side the two would share about
+   250px and the sentence would wrap into a four-line column beside a pill. */
+.musie-deck-guide__row--start {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-gap-stack);
+}
+
+.musie-deck-guide__row--start .musie-deck-guide__cta {
+  align-self: end;
+}
+
+/* The pictures of the controls, at the size the controls draw them.
+   NO FIXED COLUMN WIDTH: the three rows no longer line their sentences up
+   against a shared gutter — one leads with a glyph, one puts a glyph at each
+   end, and one has none — so `--target-primary` as a minimum here would only
+   be an indent nothing is measured against. */
+.musie-deck-guide__glyph {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+}
+
+/* ── A PICTURE OF THE START BUTTON ────────────────────────────────────────
+   The card's own control, drawn as a chip of the card it sits on, so the eye
+   matches it to the thing underneath. NOT a CtaButton: it is a picture, it
+   cannot be pressed, and a real button inside a button is both invalid and a
+   second thing to hit.
+
+   The radius, the rung and the inline inset are the ones `.musy-btn--min`
+   uses, so the picture is the control's shape rather than an approximation of
+   it. */
+.musie-deck-guide__cta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-control);
+  /* ── THE CARD'S SURFACE, NOT THE BUTTON'S FILL ────────────────────────
+     `--surface-raised` and `--on-surface` are the card the real Start button
+     sits on, and the pair survived the fill going dark: against
+     `--accent-3-text` the chip measures about 6.4:1 in light and 5.2:1 in
+     dark, so it holds its shape as a graphic (1.4.11) in both themes.
+
+     `--interactive-primary` — the real button's own terracotta — is the
+     obvious answer now that the legend is dark, and it is the wrong one: that
+     fill against this one is 1.4:1, so the pill would lose its edges and
+     survive only as floating white type.
+
+     NOT `--interactive-accent-alt-on` either, which was the first answer back
+     when the fill was the pale solid: that token is the foreground solved
+     against the purple SOLID, so it is near-black in light mode. */
+  background-color: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+}
+
+/* ── THE SENTENCE, AT `body-xl` (Ben, 2026-10-07) ─────────────────────────
+   It was `body-sm`, chosen when the legend was a translucent pane over a
+   photograph and three small sentences were all that would sit on it. The
+   pane is opaque now, so the card underneath is no longer competing for the
+   same pixels, and the step that was prudent reads as timid beside the
+   overlay this legend is meant to match.
+
+   `body-xl` IS LAYER 1'S LEAD STEP, not a heading: display family, medium
+   weight, heading-lg's size — and it takes no place in the document outline,
+   which is exactly right for three spans inside a button. The whole step is
+   taken, all five properties, because weight and family are what make it that
+   step rather than body-md set larger. */
+.musie-deck-guide__text {
+  text-wrap: pretty;
+  font-family: var(--type-body-xl-family);
+  font-size: var(--type-body-xl-size);
+  font-weight: var(--type-body-xl-weight);
+  line-height: var(--type-body-xl-line);
+  letter-spacing: var(--type-body-xl-tracking);
+}

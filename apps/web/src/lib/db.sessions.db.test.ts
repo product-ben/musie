@@ -82,7 +82,7 @@ function startedSession(userId: string) {
     user_id: userId,
     exercise_id: 'mindfulness-cards',
     card_id: 'mc-03',
-    situation_id: 'feel-feelings',
+    goal_id: 'mindfulness',
     track_id: 'trk-03',
     status: 'started',
     step: 'intro',
@@ -601,5 +601,91 @@ describe('sessions · the catalogue cannot be edited out from under a diary', ()
     /* The detail is gone; the entry is not. */
     expect(after.data?.card_id).toBeNull();
     expect(after.data?.exercise_id).toBe('mindfulness-cards');
+  });
+});
+
+/**
+ * The goal a session was run for.
+ *
+ * `goal_id` was `situation_id` until 2026-10-07 and was null on every row
+ * that had ever existed, because nothing wrote it. It is written now, so the
+ * three things it can be — a goal, deliberately nothing, and a goal that was
+ * later retired — are three different states the diary has to tell apart.
+ */
+describe('sessions · the goal is recorded, and null is a real answer', () => {
+  const GOAL = 'zz-test-retire-me';
+
+  afterEach(async () => {
+    const { error } = await serviceClient().from('goals').delete().eq('id', GOAL);
+    expect(error, 'fixture cleanup was refused — the throwaway goal is stranded').toBeNull();
+  });
+
+  it('records the goal that was chosen', async () => {
+    const { data, error } = await alice
+      .from('sessions')
+      .insert({ ...startedSession(aliceId), goal_id: 'relax' })
+      .select('goal_id')
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.goal_id).toBe('relax');
+  });
+
+  /* "MUSIE ENTDECKEN" IS A CHOICE, NOT A GAP. It writes null, and the column
+     has to accept it — a `not null` here would have forced the picker to
+     invent a row meaning "no goal", which is the design lib/goals.ts argues
+     against at length. */
+  it('accepts a session with no goal at all', async () => {
+    const { data, error } = await alice
+      .from('sessions')
+      .insert({ ...startedSession(aliceId), goal_id: null })
+      .select('goal_id')
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.goal_id).toBeNull();
+  });
+
+  it('refuses a goal that does not exist', async () => {
+    const { error } = await alice
+      .from('sessions')
+      .insert({ ...startedSession(aliceId), goal_id: 'no-such-goal' });
+
+    expect(error?.code).toBe(FOREIGN_KEY_VIOLATION);
+  });
+
+  /* SET NULL, LIKE THE CARD AND UNLIKE THE EXERCISE. Retiring a goal loses
+     the detail from old entries; it does not invalidate them, and it must not
+     delete them. A throwaway row for the same reason the card test uses one:
+     deleting a seeded goal would leave the suite one goal short for every
+     later run. */
+  it('keeps the entry when the goal it named is retired', async () => {
+    const service = serviceClient();
+
+    await service.from('goals').insert({ id: GOAL, sort: 99 });
+    await service.from('goal_i18n').insert([
+      { goal_id: GOAL, locale: 'en', label: 'Test' },
+      { goal_id: GOAL, locale: 'de', label: 'Test' },
+    ]);
+
+    const session = await alice
+      .from('sessions')
+      .insert({ ...startedSession(aliceId), goal_id: GOAL })
+      .select('id')
+      .single();
+    expect(session.error).toBeNull();
+
+    const retired = await service.from('goals').delete().eq('id', GOAL);
+    expect(retired.error).toBeNull();
+
+    const after = await alice
+      .from('sessions')
+      .select('id, goal_id')
+      .eq('id', session.data?.id ?? '')
+      .single();
+
+    /* The entry survives; only the goal's name is gone from it. */
+    expect(after.error).toBeNull();
+    expect(after.data?.goal_id).toBeNull();
   });
 });
