@@ -22,12 +22,20 @@
  * `null` and `NO_GOAL` are different answers and the screen draws them
  * differently:
  *
- *   null      nobody has chosen yet → the question is the screen, no cards
- *   NO_GOAL   chose "Musie entdecken" → every exercise, pile dealt
- *   an id     chose a goal → the exercises mapped to it
+ *   null      not known yet → the goals are still in flight, nothing drawn
+ *   NO_GOAL   "Musie entdecken" → every exercise, pile dealt
+ *   an id     a goal → the exercises mapped to it
  *
- * Collapsing the first two would deal the deck before the question had been
- * asked, which is the one thing the design is built to avoid.
+ * WHAT `null` MEANT CHANGED ON 2026-10-07, and this file did not. It meant
+ * "nobody has chosen yet", and /exercises drew the question over an empty
+ * stage for it; Ben's call is that the screen opens on NO_GOAL instead and
+ * keeps the question behind the pill. So `null` is now only the window before
+ * the goals have landed — a state the screen waits out rather than draws.
+ *
+ * NOTHING HERE MOVED, which is the point of the split: `readCachedGoal` still
+ * answers "what was stored" and still says null for nothing-stored. Which
+ * state the screen OPENS in is the screen's decision, and it is made in
+ * `Exercises.tsx` where the rest of the drawing is decided.
  */
 import type { Exercise, Goal } from './content';
 
@@ -54,8 +62,8 @@ export type GoalChoice = string;
  * in a returning visitor's browser, and trusting it would filter the deck by
  * something that is no longer offered — an empty screen with a pill naming a
  * goal the picker cannot show as checked. An unknown value reads as "never
- * chosen", so the question is asked again. Same discipline `isLocale` applies
- * to a stored locale.
+ * chosen", which the screen turns into *Musie entdecken* and a full pile.
+ * Same discipline `isLocale` applies to a stored locale.
  *
  * Call it only once `goals` has loaded; before that there is nothing to
  * validate against and the answer would be a false null.
@@ -76,7 +84,8 @@ export function cacheGoal(choice: GoalChoice): void {
   try {
     localStorage.setItem(GOAL_STORAGE_KEY, choice);
   } catch {
-    /* Losing it costs one extra question on the next visit, not correctness. */
+    /* Losing it costs the next visit its filter — it opens on *Musie
+       entdecken* and every exercise — not correctness. */
   }
 }
 

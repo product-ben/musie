@@ -18,7 +18,17 @@ import { Icon, type IconSize } from './Icon';
 import { useMusyText } from './locale';
 import type { LucideIcon } from 'lucide-react';
 
-export type IconButtonVariant = 'primary' | 'secondary' | 'ghost';
+/**
+ * `outline` ARRIVED LAST (2026-10-07), to match `CtaButton`'s own.
+ *
+ * The deck's two chevrons asked for it: beside a card they were `secondary`,
+ * a raised surface with a border, and three raised chips sitting next to a
+ * raised card read as a fourth and fifth card rather than as controls. The
+ * outline is the same border with nothing behind it — the quiet rung that
+ * `CtaButton` has had all along, and the two now agree about what the word
+ * means so a row mixing the two shapes cannot drift apart.
+ */
+export type IconButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 export type IconButtonSize = 'min' | 'primary' | 'comfort' | 'guided';
 
 export interface IconButtonProps

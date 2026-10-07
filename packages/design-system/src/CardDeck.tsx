@@ -919,10 +919,16 @@ export function CardDeck({
               this one". Chevrons browse, arrows act — which is the way round
               every other set does it too. */}
           <div className="musy-deck__nav">
+            {/* `outline`, NOT `secondary` — Ben, 2026-10-07. A secondary
+                IconButton is a RAISED SURFACE with a border, which is also
+                what a card is: three of them in a row beside the pile read as
+                more cards rather than as the controls for one. The outline
+                keeps the border and drops the fill, so the only raised thing
+                on this component is the thing you can take. */}
             <IconButton
               glyph={ChevronLeft}
               label={previousLabel}
-              variant="secondary"
+              variant="outline"
               className="musy-deck__act musy-deck__act--previous"
               disabled={inert || !browsable}
               onClick={() => previous(frontId)}
@@ -930,7 +936,7 @@ export function CardDeck({
             <IconButton
               glyph={ChevronRight}
               label={nextLabel}
-              variant="secondary"
+              variant="outline"
               className="musy-deck__act musy-deck__act--next"
               disabled={inert || !browsable}
               onClick={() => next(frontId, STILL)}

@@ -124,7 +124,7 @@ const meta = {
     },
     variant: {
       control: 'inline-radio',
-      options: ['primary', 'secondary', 'ghost'],
+      options: ['primary', 'secondary', 'outline', 'ghost'],
       description: 'Fill posture. Defaults to ghost.',
     },
     size: {
@@ -155,13 +155,20 @@ type Story = StoryObj<typeof meta>;
  *  NAVBAR posture, with the prototype's copy. */
 export const Default: Story = {};
 
-/** All three fill postures. `ghost` is the default and the one the prototype
- *  reaches for most; `primary` is the Listen-step transport control. */
+/** All four fill postures. `ghost` is the default and the one the prototype
+ *  reaches for most; `primary` is the Listen-step transport control.
+ *
+ *  `secondary` AND `outline` ARE ONE BORDER APART, which is the whole of the
+ *  difference and the reason both exist: secondary fills with
+ *  `--surface-raised`, outline fills with nothing. On a page of raised cards
+ *  the fill is what makes a control read as another card — which is why the
+ *  Card Deck's two chevrons took the outline on 2026-10-07. */
 export const Variants: Story = {
   render: (args) => (
     <Row label="variant">
       <IconButton {...args} variant="primary" label="Play" glyph={Play} />
       <IconButton {...args} variant="secondary" label="Previous slide" glyph={ChevronLeft} />
+      <IconButton {...args} variant="outline" label="Previous exercise" glyph={ChevronLeft} />
       <IconButton {...args} variant="ghost" label="Next slide" glyph={ChevronRight} />
     </Row>
   ),
@@ -209,6 +216,9 @@ export const DisabledVariants: Story = {
       <Row label="disabled">
         <IconButton {...args} variant="primary" disabled label="Play" glyph={Play} />
         <IconButton {...args} variant="secondary" disabled label="Previous slide" glyph={ChevronLeft} />
+        {/* The outline's border goes QUIET and stays: with no fill behind it,
+            a border that vanished would take the control's shape with it. */}
+        <IconButton {...args} variant="outline" disabled label="Previous exercise" glyph={ChevronLeft} />
         <IconButton {...args} variant="ghost" disabled label="Next slide" glyph={ChevronRight} />
       </Row>
     </Stack>

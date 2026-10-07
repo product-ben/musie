@@ -9,6 +9,18 @@
  * split `.musie-listen__rail` and `.musie-immersive__time` already use. A hook
  * writing `mask-image` would put a gradient's geometry into TypeScript.
  *
+ * ── AND IT IS RETURNED AS WELL AS WRITTEN (2026-10-07) ────────────────────
+ * The fade was the only consumer until the row grew a pair of scroll buttons,
+ * and a button cannot read a `data-` attribute: it has to know whether there
+ * is anything that way to BE disabled, and whether there is anything either
+ * way to be drawn at all. Same answer, two readers — so it is React state as
+ * well as an attribute rather than a second measurement that could disagree
+ * with the first.
+ *
+ * `setEdges` WITH AN UNCHANGED VALUE IS FREE: React bails out before
+ * re-rendering, so a scroll that does not cross an end costs nothing beyond
+ * the comparison.
+ *
  * ── THREE THINGS CHANGE THE ANSWER, AND ONLY ONE OF THEM IS A SCROLL ──────
  * Scrolling, obviously. But also the row RESIZING — a rotated phone, a goal
  * whose label is twice as long — and its CONTENTS changing, which on this row
@@ -19,18 +31,29 @@
  */
 import * as React from 'react';
 import { fadeEdges } from './edgeFade';
+import type { FadeEdges } from './edgeFade';
 
-export function useEdgeFade<T extends HTMLElement>(): React.RefObject<T | null> {
+export interface EdgeFade<T extends HTMLElement> {
+  /** Put this on the scroller. */
+  ref: React.RefObject<T | null>;
+  /** Which ends have more past them. `none` is a row that fits. */
+  edges: FadeEdges;
+}
+
+export function useEdgeFade<T extends HTMLElement>(): EdgeFade<T> {
   const ref = React.useRef<T>(null);
+  const [edges, setEdges] = React.useState<FadeEdges>('none');
 
   React.useEffect(() => {
     const element = ref.current;
     if (element === null) return undefined;
 
     const apply = () => {
-      element.dataset.fade = fadeEdges(
+      const next = fadeEdges(
         element.scrollLeft, element.scrollWidth, element.clientWidth,
       );
+      element.dataset.fade = next;
+      setEdges(next);
     };
 
     apply();
@@ -48,5 +71,5 @@ export function useEdgeFade<T extends HTMLElement>(): React.RefObject<T | null> 
     };
   });
 
-  return ref;
+  return { ref, edges };
 }

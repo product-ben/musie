@@ -203,6 +203,13 @@
   border-color: var(--border-strong);
   color: var(--on-surface);
 }
+/* The border and the glyph, and nothing behind them — `.musy-btn--outline`'s
+   own declarations, so the two components cannot drift. */
+.musy-icon-btn--outline {
+  background-color: transparent;
+  border-color: var(--border-strong);
+  color: var(--on-surface);
+}
 .musy-icon-btn--ghost {
   background-color: var(--interactive-ghost);
   border-color: transparent;
@@ -214,8 +221,12 @@
   .musy-icon-btn--primary[data-force~="hover"] {
     background-color: var(--interactive-primary-hover);
   }
+  /* One rule, both variants — `.musy-btn`'s own pair, for the reason given
+     over there. */
   .musy-icon-btn--secondary:hover:not(:disabled):not([data-loading]),
-  .musy-icon-btn--secondary[data-force~="hover"] {
+  .musy-icon-btn--secondary[data-force~="hover"],
+  .musy-icon-btn--outline:hover:not(:disabled):not([data-loading]),
+  .musy-icon-btn--outline[data-force~="hover"] {
     background-color: var(--interactive-ghost-hover);
     border-color: var(--interactive-ghost-border-hover);
   }
@@ -232,6 +243,9 @@
 }
 .musy-icon-btn--secondary:active:not(:disabled),
 .musy-icon-btn--secondary[data-pressed]:not(:disabled),
+.musy-icon-btn--outline:active:not(:disabled),
+.musy-icon-btn--outline[data-pressed]:not(:disabled),
+.musy-icon-btn--outline[data-force~="active"],
 .musy-icon-btn--ghost:active:not(:disabled),
 .musy-icon-btn--ghost[data-pressed]:not(:disabled),
 .musy-icon-btn--secondary[data-force~="active"],
@@ -253,6 +267,15 @@
 .musy-icon-btn--secondary[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: transparent;
+  color: var(--on-surface-disabled);
+}
+/* The border goes QUIET and stays, for the reason `.musy-btn--outline` gives:
+   an outline control whose border vanished when disabled would lose its shape
+   entirely, and here there is not even a label left to say where it was. */
+.musy-icon-btn--outline:disabled,
+.musy-icon-btn--outline[data-disabled] {
+  background-color: transparent;
+  border-color: var(--border-subtle);
   color: var(--on-surface-disabled);
 }
 .musy-icon-btn--ghost:disabled,
@@ -491,16 +514,21 @@
   .musy-btn--primary[data-force~="hover"] {
     background-color: var(--interactive-primary-hover);
   }
+  /* ── OUTLINE HOVERS EXACTLY AS SECONDARY DOES — Ben, 2026-10-07 ───────
+     One rule for both, which is the only way to say "the exact same one" and
+     have it stay true: a second copy of the pair is a second thing to forget.
+
+     IT WAS `--interactive-primary-subtle` WITH `--border-strong-hover`, on
+     the argument that an outline button has no background to darken so
+     hovering should fill it in. The fill it reached for was a tinted one, and
+     against a secondary beside it the two hovers read as two different kinds
+     of control rather than one posture with and without a resting fill. The
+     ghost hover is the quieter answer and it is already the one the rest of
+     the system gives. */
+  .musy-btn--secondary:hover:not(:disabled):not([data-loading]),
+  .musy-btn--secondary[data-force~="hover"],
   .musy-btn--outline:hover:not(:disabled):not([data-loading]),
   .musy-btn--outline[data-force~="hover"] {
-    /* The SUBTLE fill, not the raised surface: hovering an outline button
-       should fill it in, which is the one state change it has available
-       without a background to darken. */
-    background-color: var(--interactive-primary-subtle);
-    border-color: var(--border-strong-hover);
-  }
-  .musy-btn--secondary:hover:not(:disabled):not([data-loading]),
-  .musy-btn--secondary[data-force~="hover"] {
     background-color: var(--interactive-ghost-hover);
     border-color: var(--interactive-ghost-border-hover);
   }
@@ -5689,10 +5717,12 @@ html[data-musy-scroll-snap='y'] {
      chevrons that BROWSE. Browsing controls floating beside a card's shoulder
      were the leftover of a layout that no longer exists.
 
-     At the foot they line up with the bottom of the pile and its dots, which
-     is the other thing on this screen saying where you are in the deck. Only
-     where the two sit side by side: below --bp-md the body is a centred column
-     and the query further down owns the alignment. */
+     At the foot they line up with the pile — with the pile alone, since the
+     same day: `end` here means the bottom of the STAGE, which is the dots, and
+     the rule under `.musy-deck__actions` is what lifts the column the last 40
+     pixels to the bottom edge of the card stack itself. Only where the two sit
+     side by side: below --bp-md the body is a centred column and the query
+     further down owns the alignment. */
   align-items: end;
   gap: var(--space-gap-group);
 }
@@ -5705,6 +5735,38 @@ html[data-musy-scroll-snap='y'] {
   display: grid;
   justify-items: start;
   gap: var(--space-gap-stack);
+}
+
+/* ── LEVEL WITH THE PILE, NOT WITH THE STAGE (Ben, 2026-10-07) ────────────
+   "align the three item buttons with the bottom edge of the card stack (so
+   they are on the bottom right of the card stack)".
+
+   `align-items: end` on the body lines this column up with the bottom of the
+   STAGE, and the stage's last row is the dots — so the buttons sat level with
+   the position marks, one row below the thing they act on, with the card's
+   own bottom edge 40px above them.
+
+   THE 40 IS COMPOSED, NOT MEASURED. What sits between the two edges is the
+   stage's row gap and the dots' own box: `--space-gap-stack`, and
+   `--target-min`, which is what `.musy-dot` sizes to in both axes (2.5.8 —
+   "the mark is 12px, the button is 24px"). Both are Layer 1, so the alignment
+   survives a change to either, the way Layer 1 composes `--chrome-block` out
+   of the parts of the chrome rather than stating its height.
+
+   AND IT CLEARS THE FRINGE TOO (Ben, 2026-10-07: "move the icon buttons 32px
+   up"). The first pass stopped at the pile's MARGIN box — the bottom of the
+   deepest card in the fringe — and the edge the eye reads as the stack's is
+   the TOP card's, which is where the face, its Start button and the shadow
+   all end. That last step is `--sp-2 * 4`, which is not a third number but
+   the pile's own fringe reserve, written the way `.musy-deck__pile` writes
+   it. 32px, and it is the fringe's 32.
+
+   ONLY WHERE THERE ARE DOTS. A deck of one card draws none — `browsable` in
+   CardDeck.tsx — and there the stage's bottom already IS the pile's, so this
+   margin would lift the buttons clear of the only thing on the stage. `:has()`
+   asks the question rather than a second prop carrying the answer down. */
+.musy-deck__stage:has(.musy-deck__dots) + .musy-deck__actions {
+  margin-block-end: calc(var(--space-gap-stack) + var(--target-min) + (var(--sp-2) * 4));
 }
 
 /* ── THE STAGE ─────────────────────────────────────────────────────────────
@@ -5761,7 +5823,25 @@ html[data-musy-scroll-snap='y'] {
 @media (max-width: 767.98px) {
   .musy-deck { justify-items: center; }
   .musy-deck__body { flex-direction: column; align-items: center; }
-  .musy-deck__actions { justify-items: center; }
+  /* ── STACKED: UNDER THE CARD, AGAINST ITS TRAILING EDGE ────────────────
+     Ben's "bottom right of the card stack", read at the width where there is
+     no right of the card to stand beside. They were centred, which put three
+     browsing controls on the page's own axis as though they were its subject.
+
+     THE BOX TAKES THE CARD'S WIDTH, which the deck publishes as
+     `--musy-deck-card-inline`, so `end` lands them on the CARD's trailing
+     edge. Without it the column shrinks to its content and `end` would mean
+     the deck's own edge — a gutter further out, and on a full-bleed stage
+     that is the side of the screen.
+
+     AND THE DESKTOP OFFSET GOES. There is no column beside the pile here:
+     the buttons are below the dots, and there is nothing above them to climb
+     level with. */
+  .musy-deck__actions {
+    inline-size: var(--musy-deck-card-inline);
+    justify-items: end;
+  }
+  .musy-deck__stage:has(.musy-deck__dots) + .musy-deck__actions { margin-block-end: 0; }
 }
 
 /* ── THE PILE ──────────────────────────────────────────────────────────────
