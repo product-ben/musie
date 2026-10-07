@@ -54,9 +54,14 @@ export type CtaVariant =
    * NOT THE SAME AS `secondary`, which is the one to reach for first: that
    * rung paints `--surface-raised` and sits ON the page. This one is
    * transparent, so whatever is behind it shows through — which is the point
-   * when it sits on a tinted panel, over an image, or inside a card whose own
-   * surface should stay unbroken. On a plain `--surface` page the two are
-   * nearly indistinguishable and `secondary` is the better-trodden path.
+   * when it sits on a tinted panel, over an image, or beside a card whose own
+   * surface it must not be mistaken for. On a plain `--surface` page the two
+   * are nearly indistinguishable and `secondary` is the better-trodden path.
+   *
+   * THE RESTING FILL IS THE WHOLE DIFFERENCE (Ben, 2026-10-07). The two hover
+   * identically — one rule in the stylesheet carries both — so what separates
+   * them is whether the control is painted when nobody is pointing at it, and
+   * nothing else.
    */
   | 'outline'
   | 'ghost';

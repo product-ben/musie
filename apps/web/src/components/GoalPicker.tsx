@@ -1,5 +1,13 @@
 /**
- * The goal, asked once and then worn as a pill.
+ * The goal, worn as a pill and changed in a box.
+ *
+ * ── IT IS NO LONGER ASKED COLD (Ben, 2026-10-07) ─────────────────────────
+ * The box was the first thing /exercises drew for a browser that had never
+ * been here: a question with an empty stage behind it. The screen opens on
+ * *Musie entdecken* now and deals the pile, so every appearance of this box
+ * is somebody pressing the pill to change their mind. `Exercises.tsx` carries
+ * the reasoning; what it costs this file is the nullable `onCancel`, which is
+ * gone.
  *
  * ── TWO EXPORTS, BECAUSE THEY SIT IN TWO PLACES (Ben, 2026-10-07) ─────────
  * `GoalPill` rides in `.musie-deck-toolbar` beside the view switch;
@@ -49,7 +57,7 @@ import { useT } from '../i18n/localeContext';
 
 interface GoalPillProps {
   goals: Goal[];
-  /** Null until something has been chosen — the question has not been asked. */
+  /** Null until the goals have landed and the choice is known. */
   choice: GoalChoice | null;
   onOpen: () => void;
 }
@@ -57,8 +65,15 @@ interface GoalPillProps {
 interface GoalBoxProps {
   goals: Goal[];
   choice: GoalChoice | null;
-  /** Dismissed without choosing. Null when there is nothing to go back to. */
-  onCancel: (() => void) | null;
+  /**
+   * Dismissed without choosing.
+   *
+   * REQUIRED SINCE 2026-10-07, where it used to be nullable for the first
+   * ask. There is no first ask: the screen opens on *Musie entdecken* and
+   * this box is only ever the pill reopened, so there is always a pile behind
+   * it to close back to.
+   */
+  onCancel: () => void;
   onChoose: (choice: GoalChoice) => void;
 }
 
@@ -79,22 +94,33 @@ export function GoalPill({ goals, choice, onOpen }: GoalPillProps) {
 
      `size="min"` is the small rung; there is no `size="small"` in this system,
      and `min` is also what the view switch beside it uses, so the two controls
-     share a height. `secondary` rather than `primary`: the way ON from this
-     screen is the card, and one primary per unit is the rule Exercises.tsx
-     already applies to the running-session notice. */
+     share a height.
+
+     `outline` RATHER THAN `secondary` — Ben, 2026-10-07. Both are quiet and
+     both are the same border; the difference is the fill, and `secondary`'s
+     is `--surface-raised`, the card's own. A raised chip above a pile of
+     raised cards reads as a small card. Not `primary` either: the way ON from
+     this screen is the card, and one primary per unit is the rule
+     Exercises.tsx already applies to the running-session notice. */
   return (
     <CtaButton
-      variant="secondary"
+      variant="outline"
       size="min"
       /* A FUNNEL, NOT A TARGET — Ben, 2026-10-07. `Target` drew the goal as
          the thing being aimed at, which is what the word says and not what the
          control does: pressing it narrows five exercises to the ones that
-         serve the goal. A filter glyph says that, and it is the same glyph the
-         first-use legend uses to point here. */
+         serve the goal. A filter glyph says that.
+
+         THE LEGEND NO LONGER ECHOES IT (same day, later). It carried a funnel
+         of its own to name this control; it carries an arrow pointing up at it
+         instead, because the one thing a first-time reader does not know is
+         WHERE the goal is — and it is the only control the legend explains
+         that is not on the card the legend is drawn over. */
       leadingIcon={Filter}
-      /* The row owns the spacing around this control — see `.musie-goal-pill`
-         in exercises.css for what that class does and why it has to. */
-      className="musie-goal-pill"
+      /* The row owns the spacing around this control — see
+         `.musie-toolbar-control` in exercises.css for what that class takes
+         back and why it has to. */
+      className="musie-toolbar-control"
       onClick={onOpen}
     >
       {t('exercises.goal.pill', { goal: label })}
@@ -118,10 +144,11 @@ export function GoalBox({ goals, choice, onCancel, onChoose }: GoalBoxProps) {
          room genuinely runs out. */
       headlineWide
       /* BOTH OR NEITHER — ContentBox requires `dismissLabel` whenever
-         `onDismiss` is passed. Absent on the first ask, because there is no
-         previous choice to close back to and a dismissable question with no
-         answer behind it is a way to reach a screen with nothing on it. */
-      {...(onCancel === null ? {} : { onDismiss: onCancel, dismissLabel: t('common.closeLabel') })}
+         `onDismiss` is passed, and rule 7 is why the label is passed at all:
+         `Lightbox`'s own default is the German 'Schließen', which an English
+         screen would wear without a word of warning. */
+      onDismiss={onCancel}
+      dismissLabel={t('common.closeLabel')}
     >
       <RadioGroupText
         name="exercise-goal"

@@ -7384,3 +7384,99 @@ Every card plays something, which is what the test deck was for, and drawing
 mc-02 after mc-05 now plays the same piece twice. That is the state until
 `trk-06`…`trk-09` have files — at which point the four `plays` edits reverse
 and `pnpm deck:migration` generates the migration that puts them back.
+
+## The first-use legend — the app is now the second place with no dark purple surface to stand on
+Where: `src/exercises.css`, `.musie-deck-guide`
+
+What I checked: Ben's wireframe of 2026-10-07 moved the legend's three hints to
+where their controls are and asked for it to be styled "according to how the
+purple *Next exercise* state looks" — that state being `.musy-deck__overlay`,
+which the deck raises while a card is being dealt. That overlay is
+`--accent-3-text` as a FILL with `--on-surface-inverse` on it, and the design
+system's own log already records why — "CardDeck — the verdict overlay uses a
+TEXT token as a fill, because the brief's colour pair fails contrast", in
+`packages/design-system/stories/OPEN-QUESTIONS.md`: there is no dark purple
+SURFACE in Layer 1, so an emphatic purple panel has nothing correct to stand on.
+`--accent-3` is the pale fill, `--accent-3-text` is ink, and white over the
+pale one measures 2.01:1.
+
+What I did: took the overlay's pair exactly — fill and ink — so the screen's
+two purple states are one purple. Verified in the browser at 393px and 1280px
+in both locales, against the local stack: the legend and the swipe overlay
+sample the same colour.
+
+The legend's translucency went with it, and that is worth knowing because it
+reverses something Ben asked for on 2026-10-05: the card used to shimmer
+through a pale purple at 82% behind a blur. A photograph coming through a DARK
+fill at 82% reads as dirt rather than as shimmer, so the fill is flat now. The
+reasoning is in the stylesheet above the rule, with the way back written down.
+
+Why: an app-level copy of a design-system workaround is still the design
+system's problem, and this is now the second place it has to be solved.
+
+What I need from Ben: **nothing to decide, one thing to know.** This doubles
+the claim on the Layer 1 gap the system's log already opened. When a dark
+purple surface token arrives, two rules move to it and not one — and if the
+shimmer is wanted back on the legend, it comes back with the pale solid and
+that solid's own foreground, not by thinning this one.
+
+## The toolbar row — a `min` control brings a margin, and a flex gap cannot see it
+Where: `src/exercises.css`, `.musie-deck-toolbar` / `.musie-toolbar-control`
+
+What I checked: Ben asked for the row's gap to be `--space-gap-stack` and read
+the current one as "about 24". The stylesheet said `--space-gap-related`, 12px.
+Both were right about something: the rendered distances were **20px**, measured
+in the browser at 393px in both locales. `.musy-btn--min` ships
+`margin: var(--sp-2)` — Layer 2's own note says the rung "exists to sit inside
+a line of text" — so the shuffle button was adding 8px at each end on top of
+the row's gap. The goal pill was already cancelling it through a one-control
+class, `.musie-goal-pill`, added when the pill was the only thing in the row.
+
+What I did: renamed that class `.musie-toolbar-control`, named for the place
+rather than the control, and put it on both `min` buttons. The gap is now
+`--space-gap-stack` and it is the whole of the spacing: 16px on screen, in both
+locales, which is the first time this row's number has matched its token.
+
+Why: a control that brings its own margin cannot be laid out with a gap — the
+two add, and the one that is invisible in the stylesheet wins the argument.
+
+What I need from Ben: **nothing to decide, one thing to flag upward.** This is
+the second time this margin has had to be taken back by hand, and the next row
+that holds a `min` button will be the third. The system's own answer is already
+written in `musy-components.css` over `.musy-icon-btn--min` — the margin is
+baked in because `--target-min` is 24px and 2.5.8 only permits that *with*
+spacing — so it cannot simply be deleted. What is missing is a way to say "this
+one is in a laid-out row, the row owns its spacing": a `spacing="none"` prop, a
+`--musy-btn-margin` custom property, or a documented rule that a consumer zeroes
+it. Logged here rather than in the system's own log because the app is where it
+keeps costing something.
+
+## The toolbar's scroll chevrons — an app-level scroller is growing a component's worth of parts
+Where: `src/exercises.css` (`.musie-deck-toolbar-row`), `src/routes/Exercises.tsx`,
+`src/lib/useEdgeFade.ts`
+
+What I checked: Ben, 2026-10-07 — "add the xs icon button w. chevrons to the
+left and right, to make the component accessible". The row scrolls, and until
+now the only ways to scroll it were a finger, a trackpad and a wheel with a
+modifier key: a keyboard cannot scroll a container it cannot focus. Two
+`IconButton size="min"` chevrons outside the scroller fix that. `min` is the
+smallest rung the system has (24px, with `--sp-2` baked in for 2.5.8); there is
+no `xs`.
+
+What I did: a wrapper row holds the two buttons and the scroller. They are
+drawn only when the row overflows and each is disabled at the end it points at,
+both read from `fadeEdges` — the same measurement the fade mask already used,
+which is why `useEdgeFade` now returns its answer as well as writing it to a
+`data-` attribute. The scroll itself is `scrollBy` with no `behavior`, so
+`scroll-behavior` in the stylesheet decides, and reduced motion is a media
+query rather than a branch.
+
+Why: one measurement, two readers. A second `scrollWidth` read in the component
+would be the thing that eventually disagrees with the mask.
+
+What I need from Ben: **nothing to decide, one thing to know.** That is now a
+scroller, an edge-fade mask, a `safe center`, a pair of scroll buttons and a
+hook — a component's worth of parts living in a screen under L14's "the system
+has no component for this". It is still one screen, so by L14.3 it is not a
+component request yet. The second screen that wants a scrolling toolbar is the
+moment it becomes one, and this entry is the note to point at then.

@@ -1141,10 +1141,17 @@ export const en = {
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',
-  /* A SHORTER FORM of `exercises.surpriseMe`. The same action; the long one
-     is right where it is, as a full-width CTA on /exercises. Here it is the
-     third button in a column and has to read at a glance beside two others. */
-  'exercises.surpriseMeShort': 'Pick a card for me',
+  /* THE ONLY FORM NOW. It was the short one of a pair — the long
+     `exercises.surpriseMe` was a full-width CTA on this screen — and that
+     one went when the control moved into the toolbar. The key keeps its name
+     rather than being renamed across two locales for tidiness.
+
+     "AN EXERCISE", NOT "A CARD" — Ben, 2026-10-07, in German first ("Such mir
+     eine Übung aus"), and the English follows it: the two locales cannot
+     name the same thing differently. The pile is cards and what it offers is
+     exercises, which is what this button hands you — and it is the word the
+     headline, the legend and the deck's own next/previous labels all use. */
+  'exercises.surpriseMeShort': 'Pick an exercise for me',
   /* The view switch. ONE OF THESE TWO IS NOW DRAWN, not neither: the segmented
      control gives its word to the view you are NOT in (`labels="unchecked"`),
      so whichever half you might press says what pressing it would get you —
@@ -1157,25 +1164,46 @@ export const en = {
      'Stack', not 'Card stack'. */
   /* ── THE FIRST-USE LEGEND · the deck's extra card ───────────────────────
      Three rows, one per control the screen offers and none of which says what
-     it is on its own: two chevrons, a card you press, and a funnel. Shown
-     once per browser and brought back by the `?` beside the chevrons.
+     it is on its own: the goal above the pile, the two directions a card
+     goes, and the card you press. Shown once per browser and brought back by
+     the `?` beside the chevrons.
 
-     EACH LINE NAMES WHAT THE CONTROL GETS YOU, not what it is. "The next
-     exercise", not "browse"; "press the card", not "tap target". A legend that
-     named the parts would be a glossary for a screen with three controls on
-     it.
+     EVERY LINE IS NOW AN INSTRUCTION (Ben's wireframe, 2026-10-07). They were
+     three descriptions of what each control gets you — "The next exercise",
+     "Choose your goal to find exercises that suit you better" — read in the
+     order the controls happened to sit in. Each one names the MOVE instead:
+     change, swipe, press. Three verbs in three rows, in the order the eye goes
+     down the card, and each one beside the picture of the control it is about,
+     which is what carries the half the sentence no longer has to say.
+
+     SHORTER FOR THE SAME REASON. A line that describes a benefit has to earn
+     its length; a line that names a gesture is done in four words, and three
+     of them share a card with a photograph behind it.
 
      `guide.dismiss` IS NEVER SEEN. It is the sr-only line that tells a screen
      reader what pressing this does, because the legend is one big button and
      its accessible name is otherwise three sentences of explanation with no
      verb among them. */
-  'exercises.guide.next': 'The next exercise',
-  'exercises.guide.start': 'Press the card or the button to start',
-  'exercises.guide.goal': 'Choose your goal to find exercises that suit you better',
+  'exercises.guide.goal': 'Change your goal',
+  'exercises.guide.next': 'Swipe for the next exercise',
+  'exercises.guide.start': 'Press an exercise to start it',
   'exercises.guide.dismiss': 'Press to continue',
   /* The `?` beside the chevrons. A verb phrase, because it is an action and
      not a label for a thing. */
   'exercises.guide.show': 'Show how this page works',
+  /* ── THE TOOLBAR'S TWO CHEVRONS ────────────────────────────────────────
+     Icon-only, so these ARE the controls — the accessible name and the
+     tooltip are one string in `IconButton`, and without them a screen reader
+     meets two buttons called nothing.
+
+     NAMED BY DIRECTION, not by what is over there. "More controls" would be
+     the same name twice, and the one thing a person needs to know about two
+     chevrons is which way each goes. The row they scroll is the subject and
+     is left unsaid: both locales are LTR, the button sits against the row,
+     and "Scroll the controls to the left" spends six words on a 24px
+     target's tooltip to say what the glyph already said. */
+  'exercises.toolbar.left': 'Scroll left',
+  'exercises.toolbar.right': 'Scroll right',
   'exercises.view.legend': 'How to show the exercises',
   'exercises.view.deck': 'Stack',
   'exercises.view.list': 'List',

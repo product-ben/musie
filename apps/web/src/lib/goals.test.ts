@@ -88,7 +88,7 @@ describe('readCachedGoal', () => {
     expect(readCachedGoal([])).toBe(NO_GOAL);
   });
 
-  it('asks again when nothing was ever stored', () => {
+  it('reports nothing when nothing was ever stored', () => {
     withStorage({});
     expect(readCachedGoal(GOALS)).toBeNull();
   });
@@ -96,12 +96,12 @@ describe('readCachedGoal', () => {
   /* THE ONE THIS FUNCTION EXISTS FOR. A goal retired from the content leaves
      a stale id in a returning visitor's browser; trusting it would filter the
      deck by something the picker cannot even show as checked. */
-  it('asks again when the stored goal has been retired', () => {
+  it('reports nothing when the stored goal has been retired', () => {
     withStorage({ [GOAL_STORAGE_KEY]: 'feel-feelings' });
     expect(readCachedGoal(GOALS)).toBeNull();
   });
 
-  it('asks again when site data is blocked rather than throwing', () => {
+  it('reports nothing when site data is blocked rather than throwing', () => {
     withStorage(null);
     expect(readCachedGoal(GOALS)).toBeNull();
   });
