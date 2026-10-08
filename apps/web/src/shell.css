@@ -1679,9 +1679,21 @@ html[data-musy-scroll-snap] {
    load rather than as a picture. `--surface-sunken` is what occupies the band
    until the file arrives, for the reason `.musie-exercise-card__image` gives:
    a hole, not a change in the page's colour. */
+/* IT STOPS WHERE THE COPY STOPS (Ben, 2026-10-08). `inline-size: 100%` alone
+   had no ceiling, and the lead is not a measured column — so on a session
+   route, whose `<main>` is capped at --musie-main-wide rather than --bp-md,
+   the picture ran to 980px while the sentence directly above it stopped at
+   --measure-body: 704px measured, about 276px of overhang. Invisible on a
+   phone, where both are 100% of the same narrow column, which is why it took
+   a wide window to show.
+
+   --measure-body AND NOT A WIDTH OF ITS OWN: the picture illustrates that
+   copy, so the two belong in one column, and a second number here would be a
+   measure nobody could trace back to the text it has to match. */
 .musie-listen__infographic {
   display: block;
   inline-size: 100%;
+  max-inline-size: var(--measure-body);
   block-size: auto;
   margin-block: calc(var(--space-inset-card) - var(--space-gap-related));
   border-radius: var(--radius-md);
