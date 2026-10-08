@@ -1113,15 +1113,49 @@ export const en = {
      `exercises.fact.time*` rather than saying a second way. */
   /* The ROUTE's name, for the document title. The screen's own headline is
      below and says something else — a route title is a noun phrase that has to
-     work in a tab, and "5 exercises for you" is not that. */
-  /* THE COUNT IS INTERPOLATED, not written out: the deck shows every exercise
-     there is, so the headline would start lying the day a sixth lands. */
-  'exercises.headline': '{count} exercises for you',
-  /* THE SWIPE DOES NOT START ANYTHING ANY MORE (Ben, 2026-10-05). It browses,
-     and a press is what starts an exercise — so this line leads with the
-     press, which is the action, and mentions the swipe second, which is only
-     how you get to the card you want. */
-  'exercises.intro': 'Press a card to start that exercise, or swipe sideways to see another. Or see all of them in a list.',
+     work in a tab, and a question Musie asks is not that. */
+  /* ── MUSIE ASKS, AND THE COUNT IS GONE (Ben, 2026-10-08) ────────────────
+     It was '{count} exercises for you', and the count was interpolated so the
+     line could not go stale as the deck grew. The goal filter is what ended
+     it: the number now moves with the filter, and this catalogue has no
+     plural machinery by design (see i18n/index.ts) — so a goal serving one
+     exercise would have read *1 exercises for you*. The three-state headline
+     in Exercises.tsx existed to work around the same number and goes with it.
+
+     A QUESTION, WHERE THE REST OF THIS SCREEN IS NOUN PHRASES. It names
+     nothing, it asks — `aboutYou.headline` is the precedent, the other screen
+     where the person answers the heading rather than reading it.
+
+     *WE*, NOT *YOU* (Ben, 2026-10-08). The card is pressed alone, but Musie
+     comes along for the session — so the question is asked in the first person
+     plural. The German does the same with *wir*, which is not a breach of §1:
+     that rule is du against Sie, and this is a different axis.
+
+     *EXERCISE* AND NOT *SESSION*, because that is the word on the cards and
+     the name of the table they come from. The cards are the answer to this
+     question and should be called what the question calls them.
+
+     ONE LINE, AND IT IS MEASURED. At 393px — the width this product is
+     designed against, which GERMAN-UI-WRITING §5 names — the heading has 361px
+     after the two gutters. This is 345px, with 16px to spare; the German is
+     332px with 29. *Which exercise shall we start?* was the first phrasing and
+     is 370px, nine over, so it would have wrapped.
+
+     THE MEASURE IS NOT WHAT BINDS, the device is: `--measure-heading` resolves
+     to 438px and never comes into play on a phone. The font size that would
+     have fitted the longer draft on one line is 17.8px — body size — and
+     `--type-heading-lg-size` lives in Layer 1, which is `[LOCKED]`. So the
+     copy was the only place this could be solved. */
+  'exercises.headline': 'Which exercise do we start?',
+  /* NO 'exercises.intro'. It was the subline — "Press a card to start that
+     exercise, or swipe sideways to see another. Or see all of them in a list."
+     — and it went with the header rewrite (Ben, 2026-10-08), unreplaced.
+
+     `DeckGuide` teaches the press and the swipe over the card itself, which
+     is where a gesture hint belongs and is why the subline was the second
+     place to say them. IT DOES NOT TEACH THE LIST, which is the half this
+     deletion loses: logged in OPEN-QUESTIONS rather than patched here,
+     because the legend's content is not that change's to rewrite. */
   /* The pile's accessible name, and the ONLY place the keys are named: the
      overlay that teaches the press is a visual state and is aria-hidden, so a
      screen-reader user hears this and nothing else. It names the keys rather
@@ -1228,7 +1262,13 @@ export const en = {
      looks inconsistent and is not: "Musie entdecken" has no row to be the
      label of. It means the absence of a goal (see lib/goals.ts), so there is
      nowhere else for it to live. */
-  'exercises.goal.headline': 'Your goal',
+  /* NO 'exercises.goal.headline'. It was *Your goal*, and it was never the
+     goal box's own headline — it was one of /exercises' three h1 states, the
+     one worn when a goal served nothing so a count would have read zero. The
+     headline is a single question now and that state is gone, which leaves
+     this string with nothing drawing it. A key nothing renders is the
+     invisible rot the note at the top of this file warns about, so it is
+     deleted rather than kept against a state that is not coming back. */
   /* THE FIELDSET'S LEGEND, not the box's headline — RadioGroupText has no
      `legendHidden`, so a visible headline above it would ask the question
      twice. The ContentBox keeps the same string as a hidden headline for the

@@ -267,33 +267,26 @@ export function Exercises() {
      back on screen. */
   const settled = choice !== null;
   const showDeck = settled && !loading && error === null;
-  /* THE HEADLINE ONLY COUNTS WHEN THERE IS SOMETHING TO COUNT. A goal nothing
-     serves would otherwise read "0 exercises for you" over the sentence
-     explaining why. Found on screen, not in review — and it is now the only
-     door that line could come through, since the screen no longer opens on a
-     question with an empty stage behind it.
+  /* ── ONE HEADLINE NOW, AND IT IS A QUESTION (Ben, 2026-10-08) ────────────
+     There were THREE, and all three existed to manage a COUNT: *N exercises
+     for you* when there was a pile, *Your goal* when a goal served nothing so
+     the count would have read zero, and the route's own title while the
+     catalogue was in flight. The goal filter is what made that count a moving
+     number, and a moving number is what the three states were working around.
 
-     It stays counted while the question is REOPENED over a working deck:
-     `picking` is not in here, because the pile behind the box has not
-     changed and a headline that flickered as you opened the question would
-     be reporting the question rather than the pile. */
-  const counted = settled && visible.length > 0;
+     Musie asks instead, and the question is true in every one of those states
+     — before the goals land, over five cards, over none. So the state machine
+     goes with the count rather than being ported to a new string, and
+     `exercises.goal.headline` goes with it: nothing else drew it.
 
-  /* ── WHICH OF THE THREE HEADLINES, AND WHY THERE ARE THREE ───────────────
-     A count when there is a pile to count. *Your goal* when there is not —
-     which since the question stopped being the door means one thing only: a
-     goal nothing serves, drawn over the sentence and the way out of it.
+     IT IS ALSO THE SCREEN'S ONE QUESTION. The goal row underneath is the
+     answer to it, which is why the pill, the shuffle and the view switch sit
+     directly below with nothing between — no subline, and no frame around
+     the heading either. `.musie-exercises` in exercises.css owns that gap.
 
-     AND THE ROUTE'S OWN TITLE IN BETWEEN, which is the headline this screen
-     wears while the catalogue is in flight. It used to wear *Your goal* there
-     and that was true then — the question really was coming. It is not any
-     more, so a headline promising one over *Loading…* would be the screen
-     describing a version of itself that no longer exists. `route.exercises
-     .title` is already this screen's name in the document title; nothing else
-     draws it, so there is nothing for it to collide with. */
-  const headline = counted
-    ? t('exercises.headline', { count: String(visible.length) })
-    : settled ? t('exercises.goal.headline') : t('route.exercises.title');
+     THE PILE STILL SAYS HOW MANY. `CardDeck` draws `Dots` and announces
+     `exercises.deckPosition`, which is where a count belongs: beside the
+     thing being counted, and in a form that cannot say "1 exercises". */
 
   /* ── WHAT IS IN THE TOOLBAR, AND WHEN ────────────────────────────────────
      The pill and the view switch share one row (Ben, 2026-10-07), and they
@@ -509,21 +502,24 @@ export function Exercises() {
        below is spaced today only because it borrows `.musie-running`'s class.
        A `gap` skips an absent child for free. See `.musie-exercises`. */
     <div className="musie-exercises">
-      {/* HEADLINE AND SUBLINE ARE ONE MOLECULE, so they are wrapped as one:
-          `--space-gap-related` between them, which Layer 1 documents as
-          "title+subtitle". The distance to whatever follows is the stack's. */}
-      {/* THREE HEADLINES FOR THREE STATES — chosen above, where the reasoning
-          is. A noun phrase in every case (GERMAN-UI-WRITING §3), and never a
-          count of a pile that is not there: "0 exercises for you" over a
-          sentence explaining why is the most discouraging possible opening,
-          and it is the line this screen is built to never write. */}
-      <div className="musie-deck-intro">
-        <h1 className="musie-placeholder">{headline}</h1>
-        {/* The subline explains the swipe, so it waits for something to
-            swipe. Drawn over an empty stage it taught a gesture that had
-            nothing to act on. */}
-        {counted && <p className="musie-note">{t('exercises.intro')}</p>}
-      </div>
+      {/* ── MUSIE ASKS, AND THE ROW BELOW ANSWERS (Ben, 2026-10-08) ────────
+          One heading and nothing around it. The question is the whole header:
+          the goal pill and the shuffle sit directly under it and read as the
+          answer to it, which is the arrangement, and it needs no frame to say
+          so.
+
+          THE AVATAR AND THE BOX ARE BOTH OUT, same day and on second look.
+          A 32px mark beside the line and a hairline box around it were each
+          another thing in the one part of this screen whose job is to ask
+          something short — on a page whose subject is a pile of cards, the
+          quietest header is the one that competes with them least.
+
+          THE SUBLINE IS GONE and is not replaced. It taught the tap, the
+          swipe and the list; `DeckGuide` teaches the first two over the card
+          itself, which is where a gesture hint belongs. The list view is the
+          half it does NOT cover — logged in OPEN-QUESTIONS rather than
+          patched here, because the guide's content is not this change's. */}
+      <h1 className="musie-placeholder">{t('exercises.headline')}</h1>
 
       {loading && <p className="musie-note">{t('content.loading')}</p>}
       {error !== null && <p className="musie-note">{t('content.errorDetail')}</p>}

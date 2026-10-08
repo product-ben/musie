@@ -764,14 +764,40 @@ export const de: Messages = {
   /* ── Das Deck · /exercises ──────────────────────────────────────────────
      Was auf einer Karte steht, steht NICHT hier: Name, Beschreibung und Bild
      gehören der Übung und kommen aus den Inhaltstabellen. */
-  /* Bens Zeile, 2026-10-02, mit einem zugefügten 'für': 'X Übungen dich' ist
-     kein deutscher Satz. Die Zahl wird eingesetzt, nicht geschrieben — das
-     Deck zeigt alle Übungen, die es gibt. */
-  'exercises.headline': '{count} Übungen für dich',
-  /* Gewischt wird jetzt nur noch geblättert, gestartet wird mit einem Tipp
-     (Ben, 2026-10-05) — darum steht der Tipp vorn: er ist die Handlung, das
-     Wischen ist nur der Weg zur richtigen Karte. */
-  'exercises.intro': 'Tipp eine Karte an, um die Übung zu starten, oder wisch zur Seite für eine andere. Oder sieh dir alle Übungen in einer Liste an.',
+  /* ── Musie fragt, und die Zahl ist weg (Ben, 2026-10-08) ────────────────
+     Vorher '{count} Übungen für dich'. Der Ziel-Filter hat die Zahl beweglich
+     gemacht, und dieser Katalog kennt keine Pluralformen (siehe i18n/index.ts)
+     — bei einem Ziel mit genau einer Übung hätte da '1 Übungen für dich'
+     gestanden. Die drei Überschrift-Zustände in Exercises.tsx gab es nur wegen
+     dieser Zahl; sie gehen mit ihr.
+
+     EINE FRAGE, wo dieser Bildschirm sonst Nominalphrasen setzt. §3's Ausnahme
+     gilt für Überschriften, die etwas benennen — diese benennt nicht, sie
+     fragt. `aboutYou.headline` ist der Präzedenzfall: auch dort fragt Musie
+     und die Antwort steht darunter.
+
+     'WIR', NICHT 'DU' — und das ist kein Verstoß gegen §1 (Ben, 2026-10-08).
+     §1 regelt du gegen Sie; die erste Person Plural ist eine dritte Sache und
+     hier die Absicht: die Karte wird zwar allein gedrückt, aber Musie begleitet
+     die Session. 'Übung' und nicht 'Session', weil genau das auf den Karten
+     steht und in `exercises` die Zeile heißt — die Karten sind die Antwort auf
+     diese Frage, und sie sollen so heißen, wie die Frage sie nennt.
+
+     EINE ZEILE, UND DAS IST GEMESSEN. Bens Wortlaut war 'Mit welcher Übung
+     starten wir?' und misst 386px — bei 393px Breite stehen 361px zur
+     Verfügung (zwei Mal --gutter ab), also 25px zu viel und damit zwei Zeilen.
+     Gestrichen ist nur 'Mit': diese Fassung misst 332px und hat 29px Luft.
+
+     DAS MASS IST NICHT DIE SCHRANKE, das Gerät ist es: --measure-heading löst
+     zu 438px auf und greift auf dem Telefon nie. Eine Schriftgröße, die den
+     langen Satz einzeilig gemacht hätte, wäre 17.8px gewesen — Fließtextgröße,
+     und --type-heading-lg-size ist Layer 1, also [LOCKED]. Kürzen war die
+     einzige Stelle, an der das zu lösen war. */
+  'exercises.headline': 'Welche Übung starten wir?',
+  /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
+     sie ist ersatzlos weg (Ben, 2026-10-08). `DeckGuide` erklärt Tippen und
+     Wischen auf der Karte selbst; die Liste erklärt er nicht, und genau diese
+     Hälfte geht verloren — in OPEN-QUESTIONS notiert, nicht hier geflickt. */
   /* Der Name des Stapels für Screenreader, und die einzige Stelle, an der die
      Tasten genannt werden: das Overlay, das den Tipp erklärt, ist ein
      visueller Zustand und aria-hidden. Es nennt die Tasten und nicht das
@@ -861,10 +887,12 @@ export const de: Messages = {
   'exercises.view.legend': 'Wie die Übungen gezeigt werden',
   'exercises.view.deck': 'Stapel',
   'exercises.view.list': 'Liste',
-  /* Überschrift, also eine Nominalphrase — §3's exception: a heading is not
-     an action. 'Wähle ein Ziel' would be the verb phrase and is the one thing
-     a heading does not take. */
-  'exercises.goal.headline': 'Dein Ziel',
+  /* KEIN 'exercises.goal.headline' mehr. Das war 'Dein Ziel' und nie die
+     Überschrift der Ziel-Box, sondern einer der drei h1-Zustände von
+     /exercises — der für ein Ziel, das keine Übung bedient. Die Überschrift
+     ist jetzt eine einzige Frage, der Zustand ist weg, und ein Schlüssel, den
+     nichts mehr zeichnet, ist genau die unsichtbare Fäulnis, vor der der Kopf
+     dieser Datei warnt. Also gelöscht statt aufgehoben. */
   /* du, and NO 'gerade heute': the brief had both and they say the same
      thing twice — 'gerade' is right now, 'heute' is today. 'heute' is the one
      that matches a choice you make once a day. Flagged in OPEN-QUESTIONS. */

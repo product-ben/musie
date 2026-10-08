@@ -7509,3 +7509,32 @@ worth looking at rather than assuming.
 What I need from Ben: **say the word and it becomes a WebP** — one line, same
 dimensions, and the only edit is the extension in `INFOGRAPHIC_SRC`. Before
 anything is deployed it has to happen either way.
+
+## The subline is gone and the legend never taught the list view
+
+Where: `src/i18n/{en,de}.ts` (`exercises.intro`, deleted),
+`src/components/DeckGuide.tsx`, `src/routes/Exercises.tsx`
+
+What I checked: `exercises.intro` said three things — press a card to start it,
+swipe sideways for another, and *"Oder sieh dir alle Übungen in einer Liste
+an."* Ben's header rewrite (2026-10-08) removes it unreplaced. `DeckGuide`
+covers the first two over the card itself, which is the better home for a
+gesture hint and is why the subline was the second place they were said.
+
+It does **not** cover the third. Its three rows are `guide.goal`,
+`guide.next` and `guide.start`; nothing in it names the view switch or the
+list. So with the subline gone, the list view is announced by a segmented
+control whose own label is the view you are *not* in — and by nothing else.
+It is also worth saying that the legend shows **once per browser**
+(`shouldShowDeckGuide`), where the subline was permanent: what moved into the
+guide is now seen once rather than every visit.
+
+What I did: deleted the subline as asked, and nothing to the legend. Its
+content was explicitly out of scope for this change, and a fourth row added
+without the wireframe that placed the other three would be guessing at a card
+whose whole design is that each row sits where its control is.
+
+What I need from Ben: **a decision on the list.** Either a fourth legend row
+pointing at the view switch — which is in the toolbar row, so it would take an
+arrow like `guide.goal`'s rather than a glyph of its own — or the deliberate
+answer that the switch is self-evident and the list needs no teaching.

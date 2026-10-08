@@ -50,22 +50,24 @@
   gap: var(--space-gap-group);
 }
 
-/* ═══ THE INTRO ════════════════════════════════════════════════════════════
-   A headline and the line under it. `--space-gap-related` is Layer 1's word
-   for "atoms that belong together: label+field, title+subtitle", which is
-   exactly this pair; the distance to whatever comes next is the stack's.
+/* ═══ THE HEADER — MUSIE ASKS, AND NOTHING FRAMES IT ═══════════════════════
+   There is no header ELEMENT any more: the h1 is a direct child of the stack.
+   `.musie-deck-intro` wrapped a headline and its subline, and the subline is
+   gone (Ben, 2026-10-08); a row with an avatar and a hairline box replaced it
+   for an afternoon and went the same day, on second look — the quietest
+   header is the one that competes least with a screen made of cards.
 
-   The shell's own `.musie-placeholder` carries `--space-gap-group` below
-   itself, which is right when a heading is followed by the screen's content
-   and wrong when it is followed by its own subline — so the pair is wrapped
-   and the heading's margin is given back to the stack. Nothing about the
-   shell's classes changes; only this screen's arrangement of them does.    */
-.musie-deck-intro {
-  display: grid;
-  gap: var(--space-gap-related);
-}
+   SO ONLY THIS RULE IS LEFT, and it is load-bearing rather than tidy. The
+   shell's `.musie-placeholder` carries `--space-gap-group` BELOW itself,
+   which is right on every screen where a title is followed by content and
+   wrong here: `.musie-exercises` is a grid already spending exactly that
+   token as its gap, so the heading and the toolbar under it would be pushed
+   apart twice — 64px where the stack asked for 32.
 
-.musie-deck-intro > .musie-placeholder { margin-block-end: 0; }
+   It is the same correction `.musie-deck-intro` made for the same reason and
+   the same rule `.musie-sheet .musie-placeholder` states in shell.css: one
+   spacing mechanism per container, and here the container's is the grid's. */
+.musie-exercises > .musie-placeholder { margin-block-end: 0; }
 
 /* ═══ A DIALOG'S BODY ══════════════════════════════════════════════════════
    Two declarations, for the one lightbox in this screen that carries no
