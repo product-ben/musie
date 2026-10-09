@@ -113,10 +113,30 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 
 | | Item | Status | Test |
 |---|---|---|---|
-| G1 | New stacking migration on `sessions` | ☐ | |
-| G2 | Write path in `lib/session.ts` | ☐ | |
-| G3 | Exposed in the diary | ☐ | |
-| G4 | Database tests | ☐ | |
+| G1 | New stacking migration on `sessions` | ◐ | written — **needs `supabase db reset`** |
+| G2 | Write path in `lib/session.ts` | ☑ | finish a session with the scale answered |
+| G3 | Exposed in the diary | ☑ | [/diary](http://localhost:5175/diary) → entry → *Session-Details* → **Danach** |
+| G4 | Database tests | ◐ | written — fail until the migration is applied, **by design** |
+
+### ⚠ Phase G is written but NOT APPLIED — Ben's four commands
+
+`pnpm check` is green and `pnpm test:db` is **6 failing**, which is correct:
+five of them are "Could not find the 'feeling_change' column", and the sixth is
+the pre-existing empty `tracks` bucket. They go green in this order:
+
+```
+supabase db reset      # applies 20261009100000 and 20261009110000
+pnpm test:db           # expect 123/124 — the bucket one stays
+pnpm gen:types         # confirms the hand-added column (see below)
+supabase db push       # sends both migrations to project-musie
+```
+
+**`database.types.ts` was hand-edited**, which it says it never should be.
+`gen:types` reads the shared local stack and is denied to the agent (rule 9),
+so the three `feeling_change` lines were added by hand to keep the branch
+typechecking. They match what the generator produces, alphabetically placed —
+but the authority is `pnpm gen:types`, and running it is what makes that true
+rather than hoped.
 
 **Phase G needs Ben's own commands.** `supabase db reset`, `supabase db push`
 and `pnpm gen:types` are denied to the agent (rule 9 — one shared stack, every
@@ -191,6 +211,7 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **G written.** `sessions.feeling_change` — nullable `text` with a CHECK over the scale's three. Named for a CHANGE rather than a mood (every answer is a comparison) and kept apart from `card_i18n.feeling`. Written at finish beside the reflection, and it survives `skip`, because the scale may be the only answer somebody gave. Exposed in the diary as **Danach**, reusing the scale's own three labels. Tests fail until the migration is applied, which is the point. |
 | 2026-10-09 | **F landed.** Toast 6s → 10s (an undo window and a reading time are different numbers). Graph named as a record. Empty days fade upward via a gradient to `transparent` — no opacity literal, which L14.1 forbids and the board forbids again for the abandoned mark. Chevron paging animates through CSS `scroll-behavior`, so the handler stays a statement about direction and reduced motion is one declaration. **Unverified:** the visible week label needs two weeks of sessions and this account has one. |
 | 2026-10-09 | **D + E landed.** The scan hint names the back of the card; the `MC-01` placeholder is gone with its key. Card labels are the code alone at all four render sites, display-only — no migration, so `deck:pdf` still prints the feeling on the four cards that have no artwork. The diary's card fact went entirely, and with it the `cards` join in both selects and its mirror in `diary.db.test.ts`. |
 | 2026-10-09 | **R1/R2 landed.** The reflect body is three sections at `--space-section` (48px, measured both gaps). `--measure-heading` raised 26ch → 50ch in Layer 1 — a second deliberate break of the lock, recorded in the design system README — with `--measure-compact: 26ch` added so the toast's arithmetic cap and the drag preview keep what they were tuned against. The raw `50ch` literal in shell.css is gone, absorbed by the token it was waiting for. |

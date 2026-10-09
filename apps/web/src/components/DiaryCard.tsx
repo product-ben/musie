@@ -101,6 +101,7 @@ import {
 } from '../lib/diary';
 import { useTrackSource } from '../lib/audio';
 import type { DiaryEntryDetail, DiaryTrack } from '../lib/diary';
+import type { MessageKey } from '../i18n';
 
 export interface DiaryCardProps {
   entry: DiaryEntryDetail;
@@ -111,6 +112,14 @@ export interface DiaryCardProps {
   /** The close control's whole accessible name. Required when `onDismiss` is. */
   dismissLabel?: string;
 }
+
+/** The scale's three, as the catalogue says them. `MessageKey` is
+ *  `keyof typeof en`, so a fourth value fails the typecheck here. */
+const FEELING_KEY: Record<'worse' | 'same' | 'better', MessageKey> = {
+  worse: 'reflect.feeling.worse',
+  same: 'reflect.feeling.same',
+  better: 'reflect.feeling.better',
+};
 
 export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: DiaryCardProps) {
   const t = useT();
@@ -217,6 +226,16 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
       content: t('diary.duration', { minutes: String(minutes) }),
     });
   }
+  /* HOW IT LEFT YOU, where the card used to be. The three labels are the
+     scale's own — the same words somebody chose on the reflect step, so the
+     entry reads back what they answered rather than a second phrasing of it. */
+  if (entry.feelingChange !== null) {
+    facts.push({
+      label: t('diary.feeling'),
+      content: t(FEELING_KEY[entry.feelingChange]),
+    });
+  }
+
   /* NO CARD FACT — Ben, 2026-10-09. It read the feeling word alone, which is
      the one thing the deck is no longer named by anywhere else; and the diary
      never selected `cards.code`, so there was nothing true left to put in its

@@ -61,7 +61,7 @@ import { saveStatements } from './statements';
  * `db.security.db.test.ts`'s "content tables · readable, never writable".
  */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, exercises(id, exercise_i18n(locale, name, description)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 let client: SupabaseClient;
 let userId: string;

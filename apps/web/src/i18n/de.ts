@@ -598,6 +598,9 @@ export const de: Messages = {
      where English gets away with a question. */
   'diary.howLong': 'Dauer',
   'diary.card': 'Karte',
+  /* Substantiv wie jede andere Faktenzeile auf dieser Karte. Den Vergleich
+     trägt der WERT ('Besser als vorher'), das Label nennt nur die Frage. */
+  'diary.feeling': 'Danach',
   'diary.listenAgain': 'Nochmal hören',
   'diary.yourAnswer': 'Deine Antwort',
   'diary.notFound': 'Diesen Tagebucheintrag gibt es nicht',

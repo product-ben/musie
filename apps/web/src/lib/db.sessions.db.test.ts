@@ -612,6 +612,53 @@ describe('sessions · the catalogue cannot be edited out from under a diary', ()
  * three things it can be — a goal, deliberately nothing, and a goal that was
  * later retired — are three different states the diary has to tell apart.
  */
+describe('sessions · how the session left you, and null is a real answer', () => {
+  /* THE SHAPE IS THE STATUS COLUMN'S, not the goal's: a CHECK over a small set
+     of words, with no table behind it. So the two tests that matter are the
+     ones `sessions_status_known` has — every legal value is accepted, and an
+     illegal one is refused by the database rather than by the screen. */
+  it('records every value the scale can produce', async () => {
+    for (const value of ['worse', 'same', 'better'] as const) {
+      const { data, error } = await alice
+        .from('sessions')
+        .insert({ ...startedSession(aliceId), feeling_change: value })
+        .select('id, feeling_change')
+        .single();
+
+      expect(error, `the scale's own "${value}" was refused`).toBeNull();
+      expect(data?.feeling_change).toBe(value);
+
+      /* One running session per person is enforced by a partial unique index,
+         so the row has to go before the next insert. Deleted rather than
+         finished: this block is about the column, and a finished row left
+         behind would leak into whatever asserts on Alice's diary next. */
+      await serviceClient().from('sessions').delete().eq('user_id', aliceId);
+    }
+  });
+
+  /* UNANSWERED IS AN OUTCOME, NOT A GAP. The save button is never disabled;
+     leaving the scale alone opens a dialog that offers to save anyway. A
+     `not null` here would have made that offer a lie. */
+  it('accepts a session the scale was never answered on', async () => {
+    const { data, error } = await alice
+      .from('sessions')
+      .insert({ ...startedSession(aliceId), feeling_change: null })
+      .select('feeling_change')
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.feeling_change).toBeNull();
+  });
+
+  it('refuses a value the scale cannot produce', async () => {
+    const { error } = await alice
+      .from('sessions')
+      .insert({ ...startedSession(aliceId), feeling_change: 'amazing' });
+
+    expect(error, 'an unknown feeling was stored').not.toBeNull();
+  });
+});
+
 describe('sessions · the goal is recorded, and null is a real answer', () => {
   const GOAL = 'zz-test-retire-me';
 

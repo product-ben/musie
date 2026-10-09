@@ -64,6 +64,7 @@ import { INTL_LOCALES } from '../i18n';
 import type { Locale, MessageKey } from '../i18n';
 import { parseMarkdown, plainText } from './markdown';
 import type { SessionStatus } from './sessionMachine';
+import type { FeelingChange } from './session';
 
 /* ── Shapes the screens see ────────────────────────────────────────────────*/
 
@@ -135,7 +136,9 @@ export interface DiaryEntry {
    *  names the session (the graph): there it is `alt=""`, because a link whose
    *  text and image say the same thing announces it twice. */
   imageAlt: string;
-  /** Null when the exercise drew no card, which two of the three do not. */
+  /** How the session left them, or null where the scale went unanswered —
+   *  which is an ordinary outcome: the reflect step offers to save without it. */
+  feelingChange: FeelingChange | null;
 }
 
 export interface DiaryReflection {
@@ -829,7 +832,10 @@ function wanted(locale: Locale): Locale[] {
    the row to GenericStringError and every field access below becomes an
    error. */
 // prettier-ignore
-const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md))';
+/** The three the column's CHECK allows, for narrowing a row's bare string. */
+const FEELING_CHANGES: readonly FeelingChange[] = ['worse', 'same', 'better'];
+
+const ENTRY_SELECT = 'id, status, step, started_at, ended_at, feeling_change, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md))';
 
 // prettier-ignore
 /* `tracks(id, src, duration_seconds)` AND NOT ONE COLUMN MORE.
@@ -837,7 +843,7 @@ const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, imag
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -866,6 +872,7 @@ interface SessionRow {
   step: string;
   started_at: string;
   ended_at: string | null;
+  feeling_change: string | null;
   exercises: Embedded<{
     id: string;
     image_url: string | null;
@@ -995,6 +1002,11 @@ function toEntry(row: SessionRow, locale: Locale): DiaryEntry[] {
     reflectQuestion: reflectQuestionOf(name.reflect_md),
     imageUrl: exercise.image_url,
     imageAlt: name.image_alt,
+    /* NARROWED, NOT CAST. `feeling_change` is `text` with a CHECK, so the
+       generated type is a bare string and TypeScript cannot see the
+       constraint. A row written before it existed, or by hand, reads as null
+       here rather than as a value no screen knows how to render. */
+    feelingChange: FEELING_CHANGES.find((f) => f === row.feeling_change) ?? null,
   }];
 }
 

@@ -63,9 +63,10 @@ import { hasAnswered } from '../lib/reflect';
 import type { ReflectMode } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
-  completedBefore, endSession, readSession, saveCard, saveReflection, saveStep,
+  completedBefore, endSession, readSession, saveCard, saveFeelingChange,
+  saveReflection, saveStep,
 } from '../lib/session';
-import type { SessionRow } from '../lib/session';
+import type { FeelingChange, SessionRow } from '../lib/session';
 import {
   activeSteps, resumeSession, sessionReducer, stepTransition,
 } from '../lib/sessionMachine';
@@ -328,7 +329,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    * remounted by the rail. A value kept inside `SessionReflect` would be lost
    * by stepping back to listen and forward again.
    */
-  const [feeling, setFeeling] = React.useState<string | null>(null);
+  const [feelingChange, setFeelingChange] = React.useState<FeelingChange | null>(null);
 
   /** The completion dialog, opened by saving while something is unanswered. */
   const [confirmingIncomplete, setConfirmingIncomplete] = React.useState(false);
@@ -507,6 +508,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       if (!skip && reflectMode !== 'voice') {
         await saveReflection(id, reflectMode, answer.trim());
       }
+      /* HOW THE SESSION LEFT YOU, written in the same act as the reflection
+         and for the same reason: the scale sits on a step that can be walked
+         back out of, so saving on every press would record a mind being
+         changed rather than an answer being given.
+
+         IT SURVIVES `skip`, which the reflection does not. Saving without a
+         written answer is a real outcome the dialog offers by name, and the
+         scale may well be the only thing somebody chose to give — dropping it
+         because the text box is empty would discard the answer they did make.
+
+         NOT WRITTEN WHEN UNANSWERED. Null is the column's own resting state,
+         so a write of null would be a round trip that says nothing. */
+      if (feelingChange !== null) {
+        await saveFeelingChange(id, feelingChange);
+      }
       const at = new Date().toISOString();
       await endSession(id, 'finished', at);
       dispatch({ type: 'FINISH', at });
@@ -647,7 +663,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        WHAT COUNTS AS COMPLETE is the written answer AND the scale. Either one
        open opens the dialog; the dialog's second button saves anyway, so this
        is a speed bump rather than a gate. */
-    const complete = hasAnswered(reflectMode, answer, spokenWords) && feeling !== null;
+    const complete = hasAnswered(reflectMode, answer, spokenWords) && feelingChange !== null;
     actions = (
       <>
         {back}
@@ -744,8 +760,8 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               onModeChange={setReflectMode}
               text={answer}
               onTextChange={setAnswer}
-              feeling={feeling}
-              onFeelingChange={setFeeling}
+              feeling={feelingChange}
+              onFeelingChange={setFeelingChange}
             />
           )}
         </WizardPanel>

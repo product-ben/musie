@@ -822,6 +822,10 @@ export const en = {
   'diary.when': 'When',
   'diary.howLong': 'How long',
   'diary.card': 'Card',
+  /* HOW THE SESSION LEFT THEM. A noun, like every other fact label on this
+     card — the VALUE carries the comparison ("Better than before"), so the
+     label only has to say which question is being answered. */
+  'diary.feeling': 'Afterwards',
   /* No track NAME beside it, and that is the column grant rather than an
      omission: `tracks.title` and `.artist` are not granted to the client at
      all, so the diary can offer the recording back without being able to say

@@ -52,6 +52,7 @@ import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import type { ReflectMode } from '../lib/reflect';
+import type { FeelingChange } from '../lib/session';
 
 export interface SessionReflectProps {
   /** Whose run this is. F.6 writes the statements against it as they arrive. */
@@ -65,8 +66,8 @@ export interface SessionReflectProps {
    * are written by the same `finish()` and because the rail unmounts this
    * step when you walk back to listen.
    */
-  feeling: string | null;
-  onFeelingChange: (value: string) => void;
+  feeling: FeelingChange | null;
+  onFeelingChange: (value: FeelingChange) => void;
   mode: ReflectMode;
   onModeChange: (mode: ReflectMode) => void;
   /** The typed answer. The only one that can be saved today. */
@@ -96,6 +97,15 @@ export function SessionReflect({
      `VoiceTranscript` runs a real session, and `useTranscription` owns the
      real clock. */
   const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
+
+  /* THE SCALE'S THREE, IN ORDER, AND THE ONLY LIST OF THEM ON THIS SCREEN.
+     `FeelingsScale` is generic over its points — a scale does not know what it
+     is measuring — so the narrowing from its `string` back to `FeelingChange`
+     happens here, against this array rather than against three literals
+     written a second time. A value that is not one of them cannot reach the
+     column, which is the same set `sessions_feeling_change_known` enforces at
+     the other end. */
+  const FEELINGS: readonly FeelingChange[] = ['worse', 'same', 'better'];
 
   return (
     <>
@@ -231,7 +241,10 @@ export function SessionReflect({
             { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
           ]}
           value={feeling ?? undefined}
-          onValueChange={onFeelingChange}
+          onValueChange={(picked) => {
+            const known = FEELINGS.find((f) => f === picked);
+            if (known !== undefined) onFeelingChange(known);
+          }}
           accent="accent"
         />
       </section>
