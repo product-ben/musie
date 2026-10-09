@@ -6642,7 +6642,6 @@ renders on the hosted build and every submit fails, because the table is not
 there. `docs/MUSIE-SETUP.md` §7 has the command and the hosted `pnpm test:db`
 beside it.
 
-
 # Branch `listen-experiments` — the listen step's full-screen listening view
 
 ## `Lightbox` gained a full-screen surface — the fix went into the design system
@@ -7480,3 +7479,85 @@ hook — a component's worth of parts living in a screen under L14's "the system
 has no component for this". It is still one screen, so by L14.3 it is not a
 component request yet. The second screen that wants a scrolling toolbar is the
 moment it becomes one, and this entry is the note to point at then.
+
+## The listen step's picture ships as a 2.9 MB PNG — RESOLVED
+
+Where: `apps/web/public/assets/web/infographics/infographic-listen-and-see.png`,
+drawn by `INFOGRAPHIC_SRC` in `src/components/SessionListen.tsx`
+
+What I checked: everything under `public/` is copied into the build verbatim
+and served to anyone who opens the app, and this file is 1672 × 941 at 2.9 MB —
+heavier than every other asset in the tree put together. It is also **above the
+fold on a phone-first step**: the stage is a measured full view, so the picture
+is on screen before anything is scrolled. `public/assets/web/exercises/README.md`
+records the identical mistake being made and undone — five 1254 × 1254 PNGs at
+~3.3 MB each, 17 MB for one screen, re-encoded to 748 KB of WebP with one
+`sharp` call.
+
+What I did: **copied the master as delivered and wired it up**, which is what
+Ben asked for. The `<img>` declares `width`/`height` so the column reserves its
+band and the transport underneath does not move while it loads, and the folder's
+own README carries the re-encode line ready to run.
+
+Why not just re-encode it: the artwork is still moving — this is the first step
+picture and there is no second one yet to set a size or a format against — and
+silently shipping a file that is not the one handed over is how a master and a
+build drift. The compression is also lossy and this is a drawing with large flat
+areas and fine engraving lines, which is the case where a default quality is
+worth looking at rather than assuming.
+
+What I need from Ben: **say the word and it becomes a WebP** — one line, same
+dimensions, and the only edit is the extension in `INFOGRAPHIC_SRC`. Before
+anything is deployed it has to happen either way.
+
+**RESOLVED 2026-10-09.** Ben said the word, and it happened before the first
+deploy that would have served it — the build of `59aabab` reached production
+for about seventy seconds on 2026-10-09, which is as close to shipping it as
+this got.
+
+198 KB at quality 80, 1672 × 941 unchanged: **93% off**. The lossy half was
+checked at 1:1 against the master rather than assumed, because this is the
+case the entry above flagged — a drawing with flat areas and fine engraving
+lines. Lines, glyphs and edges survive; only the paper grain softens, and
+`.musie-listen__infographic` caps the display at `--measure-body` (704px), so
+a 1672px source renders downscaled 2.4× and the grain sits below the rendered
+resolution.
+
+The master moved to `~/Documents/musie-artwork/infographics/`, beside the
+exercise set's, for the reason `../exercises/README.md` already gives: a
+master under `public/` ships to every visitor without being requested.
+
+**The 2.9 MB blob is still in this branch's history** (`9a6d4f3`), and
+deleting the file does not take it out. It is NOT yet on `main` — the rewind
+on 2026-10-09 took it back off — so the only way to keep it out of `main`
+permanently is to rewrite the branch before merging. Not done, and not
+recommended for 2.9 MB; recorded so the choice is a choice.
+
+## The subline is gone and the legend never taught the list view
+
+Where: `src/i18n/{en,de}.ts` (`exercises.intro`, deleted),
+`src/components/DeckGuide.tsx`, `src/routes/Exercises.tsx`
+
+What I checked: `exercises.intro` said three things — press a card to start it,
+swipe sideways for another, and *"Oder sieh dir alle Übungen in einer Liste
+an."* Ben's header rewrite (2026-10-08) removes it unreplaced. `DeckGuide`
+covers the first two over the card itself, which is the better home for a
+gesture hint and is why the subline was the second place they were said.
+
+It does **not** cover the third. Its three rows are `guide.goal`,
+`guide.next` and `guide.start`; nothing in it names the view switch or the
+list. So with the subline gone, the list view is announced by a segmented
+control whose own label is the view you are *not* in — and by nothing else.
+It is also worth saying that the legend shows **once per browser**
+(`shouldShowDeckGuide`), where the subline was permanent: what moved into the
+guide is now seen once rather than every visit.
+
+What I did: deleted the subline as asked, and nothing to the legend. Its
+content was explicitly out of scope for this change, and a fourth row added
+without the wireframe that placed the other three would be guessing at a card
+whose whole design is that each row sits where its control is.
+
+What I need from Ben: **a decision on the list.** Either a fourth legend row
+pointing at the view switch — which is in the toolbar row, so it would take an
+arrow like `guide.goal`'s rather than a glyph of its own — or the deliberate
+answer that the switch is self-evident and the list needs no teaching.

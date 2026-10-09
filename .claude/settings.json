@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(supabase db reset)",
+      "Bash(supabase db reset:*)",
+      "Bash(supabase db push)",
+      "Bash(supabase db push:*)",
+      "Bash(pnpm gen:types)",
+      "Bash(pnpm gen:types:*)",
+
+      "Bash(git add -A)",
+      "Bash(git add -A:*)",
+      "Bash(git add --all)",
+      "Bash(git add --all:*)",
+      "Bash(git commit -a)",
+      "Bash(git commit -a:*)",
+      "Bash(git commit --all)",
+      "Bash(git commit --all:*)",
+
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git stash:*)",
+      "Bash(git reset --hard)",
+      "Bash(git reset --hard:*)"
+    ]
+  }
+}

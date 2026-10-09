@@ -70,6 +70,19 @@ import { usePinnedHeader } from '../lib/useHeaderReveal';
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
 const TICK_MS = 250;
 
+/**
+ * The step's picture, as a bare path — the same shape and the same reason as
+ * `BRAND_MARK_SRC`: the app serves `public/assets/**` at `/assets/**`, and a
+ * document-relative URL would resolve against whatever route is showing.
+ *
+ * NOT A CONTENT COLUMN. The exercise images on `/exercises` come from
+ * `exercises.image_url` because there is one per exercise and the row decides
+ * which. This is one picture belonging to one STEP of the flow, the same for
+ * every exercise, so it is the app's own asset and not the content's — no
+ * column, no migration, no per-locale alt in the database.
+ */
+const INFOGRAPHIC_SRC = '/assets/web/infographics/infographic-listen-and-see.webp';
+
 function clock(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds));
   return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
@@ -858,6 +871,37 @@ export function SessionListen({
           stage nothing has been listened to yet, so a question about what you
           are hearing has nothing to be asked about. */}
       <Markdown md={exercise.listenMd} arrange={headingOnly} />
+
+      {/* ── THE PICTURE, BETWEEN THE WORDS AND THE CONTROLS — Ben, 2026-10-07 ─
+          A card in one hand and the phone playing on the table: the whole
+          step in one image, directly under the sentence that asks for it and
+          directly above the button that starts it.
+
+          ITS OWN SEPARATION, NOT THE GROUP'S. The lead is a column at
+          `--space-gap-related` because its three parts are one thought; a
+          picture at that distance touches the copy above and the transport
+          below. `--space-inset-card` is the spacing Ben asked for, and the
+          margin is the DIFFERENCE between the two — the flex gap is already
+          there and the two would otherwise add up. §L14.1: arithmetic over
+          Layer 1 tokens, never a literal.
+
+          `alt` from the catalogue like every other string (CLAUDE.md 7), and
+          described rather than silent: unlike the diary's marks, nothing
+          beside it says what is in it — the step's own copy is about the
+          sounds, not about the scene. */}
+      <img
+        className="musie-listen__infographic"
+        src={INFOGRAPHIC_SRC}
+        alt={t('session.listen.infographicAlt')}
+        /* Width and height so the column does not reflow around it while it
+           loads — the stage is a measured full view, and a picture that
+           arrives late would shift the transport under a thumb already on its
+           way to it. The CSS gives it the column's width; these two only fix
+           the ratio it reserves. */
+        width={1672}
+        height={941}
+        decoding="async"
+      />
 
       {track === null ? (
         <Message
