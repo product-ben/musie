@@ -5,7 +5,7 @@
       "id": "mc-01",
       "code": "MC-01",
       "sort": 1,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-01.webp",
       "feeling": {
         "de": "Freude",
         "en": "Joy"
@@ -23,7 +23,7 @@
       "id": "mc-02",
       "code": "MC-02",
       "sort": 2,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-02.webp",
       "feeling": {
         "de": "Trauer",
         "en": "Sadness"
@@ -41,7 +41,7 @@
       "id": "mc-03",
       "code": "MC-03",
       "sort": 3,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-03.webp",
       "feeling": {
         "de": "Wut",
         "en": "Anger"
@@ -59,7 +59,7 @@
       "id": "mc-04",
       "code": "MC-04",
       "sort": 4,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-04.webp",
       "feeling": {
         "de": "Angst",
         "en": "Fear"
@@ -77,7 +77,7 @@
       "id": "mc-05",
       "code": "MC-05",
       "sort": 5,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-05.webp",
       "feeling": {
         "de": "Ruhe",
         "en": "Calm"
@@ -95,7 +95,7 @@
       "id": "mc-06",
       "code": "MC-06",
       "sort": 6,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-06.webp",
       "feeling": {
         "de": "Sehnsucht",
         "en": "Longing"
@@ -113,7 +113,7 @@
       "id": "mc-07",
       "code": "MC-07",
       "sort": 7,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-07.webp",
       "feeling": {
         "de": "Dankbarkeit",
         "en": "Gratitude"
@@ -131,7 +131,7 @@
       "id": "mc-08",
       "code": "MC-08",
       "sort": 8,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-08.webp",
       "feeling": {
         "de": "Einsamkeit",
         "en": "Loneliness"
@@ -149,7 +149,7 @@
       "id": "mc-09",
       "code": "MC-09",
       "sort": 9,
-      "image": "assets/web/method-card.png",
+      "image": "assets/web/cards/mc-09.webp",
       "feeling": {
         "de": "Hoffnung",
         "en": "Hope"

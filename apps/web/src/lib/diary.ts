@@ -139,6 +139,15 @@ export interface DiaryEntry {
   /** How the session left them, or null where the scale went unanswered —
    *  which is an ordinary outcome: the reflect step offers to save without it. */
   feelingChange: FeelingChange | null;
+  /** The code stamped on the card that was drawn — `MC-08` — or null where the
+   *  exercise draws none, which two of the three do not. It is TEXT beside the
+   *  artwork rather than alt text on it; see `cardImageUrl`. */
+  cardCode: string | null;
+  /** The card's artwork. Relative, no leading slash — `assets/web/cards/…` —
+   *  and null where there is no card. Drawn with `alt=""`: the code above sits
+   *  in the same figure, and a picture whose neighbour already names it
+   *  announces it twice. The diary graph states the same rule. */
+  cardImageUrl: string | null;
 }
 
 export interface DiaryReflection {
@@ -843,7 +852,7 @@ const ENTRY_SELECT = 'id, status, step, started_at, ended_at, feeling_change, ex
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, cards(id, code, image_url), exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -873,6 +882,14 @@ interface SessionRow {
   started_at: string;
   ended_at: string | null;
   feeling_change: string | null;
+  /* BACK ON 2026-10-09, and narrower than it was. It carried
+     `card_i18n(locale, feeling)` until the feeling word left every screen; it
+     now carries the two things the entry actually draws, neither of which is
+     translated. */
+  /* OPTIONAL, because the two selects differ here and only here: the ENTRY
+     select feeds the list, which draws no card, and paying for a join per row
+     to render nothing is the cost this `?` avoids. */
+  cards?: Embedded<{ id: string; code: string; image_url: string | null }>;
   exercises: Embedded<{
     id: string;
     image_url: string | null;
@@ -1007,6 +1024,10 @@ function toEntry(row: SessionRow, locale: Locale): DiaryEntry[] {
        constraint. A row written before it existed, or by hand, reads as null
        here rather than as a value no screen knows how to render. */
     feelingChange: FEELING_CHANGES.find((f) => f === row.feeling_change) ?? null,
+    /* A NULL CARD IS ORDINARY: two of the three exercises draw none, and
+       `card_id` is SET NULL so a retired card leaves the entry standing. */
+    cardCode: row.cards === undefined ? null : one(row.cards)?.code ?? null,
+    cardImageUrl: row.cards === undefined ? null : one(row.cards)?.image_url ?? null,
   }];
 }
 

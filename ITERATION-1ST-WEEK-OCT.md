@@ -125,8 +125,9 @@ five of them are "Could not find the 'feeling_change' column", and the sixth is
 the pre-existing empty `tracks` bucket. They go green in this order:
 
 ```
-supabase db reset      # applies 20261009100000 and 20261009110000
-pnpm test:db           # expect 123/124 — the bucket one stays
+supabase db reset      # applies 20261009100000, …110000 and …110001
+pnpm test:db           # expect 123/124 — the bucket one stays; deck parity
+                       # also needs …110001 applied
 pnpm gen:types         # confirms the hand-added column (see below)
 supabase db push       # sends both migrations to project-musie
 ```
@@ -193,16 +194,23 @@ print four blank cards. Four render sites change; no migration.
 
 ---
 
-## Blocked
+## Unblocked, 2026-10-09
 
-**Show the scanned card in the diary entry.** There is no card image to show.
-`cards.image_url` is `assets/web/method-card.png` for all nine cards and that
-file **has never existed**; `public/assets/web/` holds only `exercises/`,
-`infographics/` and the logo. The print masters in `artwork/cards/` cover
-**MC-01…MC-05 only** and are outside `public/`.
+**Show the scanned card in the diary entry — DONE.** It was blocked because
+`cards.image_url` named `assets/web/method-card.png`, a file that has never
+existed, and `artwork/cards/` held print masters for MC-01…MC-05 only.
 
-Needs either four more artworks plus a web rendition pass, or a decision to show
-it for the five that exist. Left out of this iteration.
+All nine exist now, as 1420 × 1040 print exports in `apps/web/deck-print/
+cards-jpg/` — which is **gitignored build output**, so they are not repo
+sources. They are also not what `deck:pdf` would have produced on the day they
+were written: on 4 October `artwork/cards/` held five masters, so MC-06…MC-09
+would have printed the feeling word in type. They are real artwork that arrived
+another way.
+
+Re-encoded to 768px WebP (**8.3 MB → 869 KB** for the set) into
+`public/assets/web/cards/`, pointed at from `deck.json`, and the migration
+generated from it. `supabase/content/deck.json` stays the only hand-written
+source.
 
 ---
 
@@ -211,6 +219,7 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **The diary entry shows the card.** Nine artworks found in the gitignored `deck-print/cards-jpg/`, re-encoded to 768px WebP (8.3 MB → 869 KB), `deck.json` repointed and `20261009110001_deck_card_artwork.sql` generated from it. `cards.image_url` stops naming a file that never existed. Drawn below the answer as a figure with the code as its caption and `alt=""` — the diary graph's own rule. `fromRoot` moved out of `Exercises.tsx` into `lib/assets.ts` on its second consumer. |
 | 2026-10-09 | **G written.** `sessions.feeling_change` — nullable `text` with a CHECK over the scale's three. Named for a CHANGE rather than a mood (every answer is a comparison) and kept apart from `card_i18n.feeling`. Written at finish beside the reflection, and it survives `skip`, because the scale may be the only answer somebody gave. Exposed in the diary as **Danach**, reusing the scale's own three labels. Tests fail until the migration is applied, which is the point. |
 | 2026-10-09 | **F landed.** Toast 6s → 10s (an undo window and a reading time are different numbers). Graph named as a record. Empty days fade upward via a gradient to `transparent` — no opacity literal, which L14.1 forbids and the board forbids again for the abandoned mark. Chevron paging animates through CSS `scroll-behavior`, so the handler stays a statement about direction and reduced motion is one declaration. **Unverified:** the visible week label needs two weeks of sessions and this account has one. |
 | 2026-10-09 | **D + E landed.** The scan hint names the back of the card; the `MC-01` placeholder is gone with its key. Card labels are the code alone at all four render sites, display-only — no migration, so `deck:pdf` still prints the feeling on the four cards that have no artwork. The diary's card fact went entirely, and with it the `cards` join in both selects and its mirror in `diary.db.test.ts`. |

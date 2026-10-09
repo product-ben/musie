@@ -800,6 +800,51 @@
   margin-block-start: var(--space-section);
 }
 
+/* ═══ THE CARD IN A DIARY ENTRY ═════════════════════════════════════════════
+   The artwork of the card that was drawn, under the answer it prompted.
+
+   THE CAP IS SIXTY PERCENT OF THE BODY MEASURE, which is arithmetic over a
+   Layer 1 token rather than a number (L14.1) and lands near 420px. Two reasons
+   it is not the full measure: a card is an OBJECT beside prose rather than a
+   hero, and at 1.37:1 the full measure would make it 515px tall in an entry
+   whose subject is somebody's own sentences. It also keeps the shipped 768px
+   file at roughly 1.8× the largest slot — the retina margin, which the folder's
+   README records so a future widening knows to re-encode first.
+
+   `--surface-sunken` under it for the reason `.musie-exercise-card__image`
+   gives: while the file is in flight the band should read as a hole, not as a
+   change in the page's colour. The intrinsic `width`/`height` on the element
+   reserve the ratio so nothing below it moves when the image lands.          */
+.musie-diary__card {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  align-items: flex-start;
+}
+
+.musie-diary__card-art {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: calc(var(--measure-body) * 0.6);
+  block-size: auto;
+  border-radius: var(--radius-card);
+  background-color: var(--surface-sunken);
+}
+
+/* The code, as TEXT. Tabular figures because it is a part number being matched
+   against a stamp on a physical card, and label weight because it names the
+   picture rather than saying anything about it. */
+.musie-diary__card-code {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ═══ SCRIM ═════════════════════════════════════════════════════════════════
    Shared by every overlay, exactly as the prototype shares one.             */
 .musie-scrim {

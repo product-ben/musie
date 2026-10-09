@@ -75,6 +75,7 @@ import { useAuth } from '../lib/authContext';
 import { createSession, endSession, useActiveSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
 import { useExercises, useGoals } from '../lib/useContent';
+import { fromRoot } from '../lib/assets';
 import type { Exercise } from '../lib/content';
 import { cacheGoal, filterByGoal, goalIdFor, NO_GOAL, readCachedGoal } from '../lib/goals';
 import { useEdgeFade } from '../lib/useEdgeFade';
@@ -963,19 +964,3 @@ function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCa
   );
 }
 
-/**
- * A content image path, made root-relative.
- *
- * THE ROW STORES IT RELATIVE — `assets/web/exercises/body-scan.webp`, with no
- * leading slash — so the browser resolves it against the CURRENT PATH. On
- * `/exercises` that happens to be right: one segment, so it lands on
- * `/assets/web/…`. On `/dev/deck` it is two segments and the same string
- * resolves to `/dev/assets/web/…`, which is a 404 and an empty band where the
- * picture should be. Nothing in the product renders one below the first path
- * segment today, so nothing is broken — but it is luck rather than design, and
- * this POC is what found it. Logged in OPEN-QUESTIONS.md.
- */
-function fromRoot(url: string): string {
-  if (/^(https?:)?\/\//.test(url) || url.startsWith('/')) return url;
-  return `/${url}`;
-}
