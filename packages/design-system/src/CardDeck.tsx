@@ -153,6 +153,73 @@ const OVERLAY_FULL_AT = 0.1;
  *  FORWARD ONLY — see `progress` in onPointerMove. */
 const PILE_CLOSES_AT = 0.6;
 
+/** How far a horizontal scroll travels before the pile moves one card.
+ *
+ *  NOT `SLOP_PX`, and not a fraction of the card either. A trackpad reports
+ *  distance the hand never travelled — one short two-finger flick is a burst
+ *  of events summing to several hundred px — so this is a number about the
+ *  INPUT, not about the card, and it is the only threshold here that is.
+ *  60px is roughly the smallest deliberate nudge that is not a tremor. */
+const WHEEL_STEP_PX = 60;
+
+/** How long the wheel stream must be quiet before the next card can move.
+ *
+ *  A FALLBACK, NOT THE MAIN RULE — and it was the main rule for one commit,
+ *  which is why repeating the gesture quickly did nothing (Ben, 2026-10-09).
+ *  A trackpad coasts for up to a second after the fingers lift, every coasting
+ *  event rearms this timer, and so a second flick arriving mid-coast was
+ *  swallowed by a latch waiting for a silence that the FIRST flick was still
+ *  preventing. Silence only arrives when somebody stops scrolling altogether,
+ *  which is the one case this still covers. */
+const WHEEL_SETTLE_MS = 140;
+
+/** How much bigger than the event before it a delta must be to count as a new
+ *  push rather than the tail of the last one.
+ *
+ *  MOMENTUM ONLY EVER DECAYS. That is the whole discriminator, and it is a
+ *  fact about the hardware rather than a tuned number: a coasting trackpad
+ *  hands back a monotonically shrinking delta at ~60fps, so anything that
+ *  climbs is a hand that pushed again. The ratio is the tolerance for a stream
+ *  that is not perfectly monotonic — 1.6 is comfortably above the jitter and
+ *  comfortably below a real second flick, which arrives several times the size
+ *  of whatever the tail had decayed to. */
+const WHEEL_RISE_RATIO = 1.6;
+
+/** How far below its own peak the stream must fall before a rise is allowed to
+ *  mean anything.
+ *
+ *  A RISE ALONE IS NOT ENOUGH, and this is the half that was missing. A single
+ *  flick is not monotonic while the fingers are still moving — a push of
+ *  30, 70, 110 climbs 1.57× on its own, a hair under the ratio above, and a
+ *  slightly harder flick clears it and deals a second card nobody asked for.
+ *  Measured: 3 flicks dealt 26 cards before this existed.
+ *
+ *  Coasting is the thing that cannot be faked: whatever the fingers did, the
+ *  tail that follows them falls away. So a rise only counts once the stream
+ *  has dropped under half of this gesture's own biggest delta, which is the
+ *  shape of a flick ending and nothing else. */
+const WHEEL_DECAY_RATIO = 0.5;
+
+/** The least time that can separate two cards, in ms.
+ *
+ *  THE ONLY THING HERE THAT IS NOT A GUESS ABOUT THE STREAM. Everything above
+ *  reads gesture boundaries out of delta sizes, and sizes cannot carry that
+ *  meaning on their own: inside ONE swipe the fingers slow and speed up again,
+ *  which is indistinguishable from a tail followed by a fresh push — so a
+ *  variable-speed flick dealt two or three cards (Ben, 2026-10-09).
+ *
+ *  A SECOND GESTURE COSTS A HAND. Fingers have to leave the pad and come back,
+ *  and that takes longer than any wobble inside a single swipe. So no two
+ *  cards may be dealt closer together than this, whatever the deltas say, and
+ *  nothing accumulates while it is running — otherwise a long tail banks up
+ *  and spends itself the moment the window closes.
+ *
+ *  280ms is comfortably under a real lift-and-replace and comfortably over the
+ *  tens of milliseconds a mid-swipe speed change takes. It is a floor on the
+ *  gesture, not a cooldown on the deck: one card per gesture is Ben's rule,
+ *  AT ANY SPEED. */
+const WHEEL_GESTURE_MIN_MS = 280;
+
 /**
  * What a face is handed when it is written as a FUNCTION — the deck's own
  * accept, for a face that would rather place it than be drawn over.
@@ -381,6 +448,34 @@ export function CardDeck({
      /exercises wants the deal, because the deck is mounted BY the choice. */
   const dealt = React.useRef<string | undefined>(undefined);
   const pile = React.useRef<HTMLDivElement>(null);
+  /**
+   * The scroll gesture's latch, on a ref because it MUST OUTLIVE THE LISTENER.
+   *
+   * FOUND BY DRIVING A REAL BURST, not by reading. These three were locals
+   * inside the effect, which looked right and dealt five cards on one flick:
+   * the effect depends on `frontId`, dealing a card changes `frontId`, so the
+   * effect tore down and re-attached with `spent` back to false — and the
+   * momentum still arriving spent itself one card at a time. The pile cycled
+   * back to where it started, which is why it read as nothing happening.
+   *
+   * A ref is the whole fix: the listener may be rebuilt as often as it likes
+   * and the gesture it is halfway through is still the same gesture.
+   */
+  const wheeling = React.useRef<{
+    travelled: number;
+    spent: boolean;
+    /** The last delta seen, SIGNED: its size is what a new push has to climb
+     *  above, and its sign is what a reversal is measured against. */
+    last: number;
+    /** The biggest delta this gesture has produced, and whether the stream has
+     *  since fallen away from it. Together they are "the flick has ended". */
+    peak: number;
+    decayed: boolean;
+    /** When the last card was dealt, on the event clock. Survives `rearm`:
+     *  it is a fact about the deck, not about the gesture in progress. */
+    dealtAt: number;
+    settle: ReturnType<typeof setTimeout> | undefined;
+  }>({ travelled: 0, spent: false, last: 0, peak: 0, decayed: false, dealtAt: 0, settle: undefined });
 
   const byId = React.useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
@@ -504,6 +599,171 @@ export function CardDeck({
     setArriving({ key: arriveKey.current, id: back });
     onPrevious(id);
   }, [browsable, inert, onPrevious, order]);
+
+  /**
+   * ── STRAIGHT TO A CARD, WHICH THE PILE COULD NOT DO UNTIL NOW ────────
+   * The dots become controls. Ben, 2026-10-09, answering the question
+   * stories/OPEN-QUESTIONS.md left open when they were drawn: `Dots` has
+   * always had `onSelect` and this component withheld it, because jumping
+   * means reaching a position the pile had no move for — it dealt forward and
+   * undid backward, and that was the whole model. This is the move, so it is a
+   * change to what the pile can DO and not a prop that was missing.
+   *
+   * ── A ROTATION, SO THE PILE IS STILL A LOOP ─────────────────────
+   * `order` is brought round until the chosen card is in front, and the cards
+   * it passes keep their sequence. NOT a splice to the top: that would make
+   * the dots a reordering tool, the pile would read differently after every
+   * press, and the position the dots themselves report would stop meaning
+   * anything. Deal on from any card and the rest follow in the order they
+   * always had — which is what `next` and `previous` already do, one step at a
+   * time, and this is the same rotation by more than one.
+   *
+   * ── THE SHORT WAY ROUND, AND THAT IS ONLY THE ANIMATION ────────────
+   * Both branches set the SAME order — there is one rotation that puts a card
+   * in front and no choice about it. What the distance decides is which way
+   * the move is drawn: a card ahead leaves like a deal, a card behind arrives
+   * like an undo. Going to the last dot of five therefore comes IN from the
+   * leading edge rather than throwing four cards off, because one step back is
+   * what it is.
+   *
+   * ── WHAT IT TELLS THE CONSUMER ────────────────────────────
+   * `onNext` or `onPrevious`, once, with the id of the card being LEFT — which
+   * is the argument both already carry. No `onJump`: a third callback would
+   * make every consumer handle a third case to learn the one thing it already
+   * learns from these two, that the pile moved and which way. The live region
+   * reads `positionLabel` off the new order, so the announcement needs nothing
+   * from here.
+   */
+  const jump = React.useCallback((at: number) => {
+    const target = items[at]?.id;
+    if (target === undefined || inert) return;
+    setDrag(null);
+    if (!browsable) return;
+
+    const from = order.indexOf(target);
+    /* Already in front, or not in the pile at all. Pressing the current dot is
+       a no-op rather than a lap of the deck. */
+    if (from <= 0) return;
+
+    const leaving = order[0];
+    const rotate = (current: string[]) => [...current.slice(from), ...current.slice(0, from)];
+
+    if (from <= order.length - from) {
+      throwKey.current += 1;
+      setDeparting((flying) => [...flying, { key: throwKey.current, id: leaving, ...STILL, dir: -1 }]);
+      setOrder(rotate);
+      if (leaving !== undefined) onNext(leaving);
+      return;
+    }
+
+    setOrder(rotate);
+    arriveKey.current += 1;
+    setArriving({ key: arriveKey.current, id: target });
+    if (leaving !== undefined) onPrevious(leaving);
+  }, [browsable, inert, items, onNext, onPrevious, order]);
+
+  /**
+   * ── THE SCROLL GESTURE ────────────────────────────────────────
+   * A trackpad's two-finger sideways scroll moves the pile. Ben, 2026-10-09.
+   *
+   * ── IT IS DIRECTIONAL, AND THE SWIPE IS NOT ──────────────────────
+   * The file header says both swipes deal the next card, and that going back
+   * "is a button and a key, and the one thing the gesture does not do". That
+   * still holds for the SWIPE, and it was decided on a phone: a pile of cards
+   * under a thumb is a thing you throw, and the hand picks which way the card
+   * goes, not which way the pile turns.
+   *
+   * A WHEEL IS NOT A THROW. Nothing leaves your hand, nothing has a direction
+   * to be thrown in, and the mental model is a track you move ALONG — which is
+   * why every horizontal scroller on the machine, this package's own Carousel
+   * included, answers a rightward scroll with the next thing. So this gesture
+   * is read the way the ARROW KEYS are read, which is the mapping this
+   * component already has: right is `next`, left is `previous`.
+   *
+   * THE TWO CAN DISAGREE ON ONE LAPTOP, and that is the cost: a mouse DRAG
+   * deals forward whichever way it goes, while a trackpad SCROLL goes back if
+   * it goes left. Logged in stories/OPEN-QUESTIONS.md rather than resolved
+   * here, because resolving it means re-opening a decision Ben made on a
+   * device and this is not that change.
+   *
+   * ── A NATIVE LISTENER, BECAUSE REACT'S IS PASSIVE ────────────────
+   * `onWheel` goes through React's root delegation, where `wheel` is attached
+   * passively — `preventDefault()` from there is ignored and warns. It has to
+   * be prevented: on macOS a horizontal overscroll is the BROWSER'S BACK
+   * GESTURE, so without this a scroll that runs past the end of the pile
+   * leaves the app. That is also why the listener sits on the pile rather than
+   * on the stage: the smallest surface that owns the gesture.
+   *
+   * ── WHAT IT DECLINES TO TAKE ──────────────────────────────
+   * A gesture more vertical than horizontal is the page's, and is not
+   * prevented — a deck sits mid-page and a thumb scrolling past it must not
+   * be caught. Neither is a gesture the pile could not answer: `inert`, or a
+   * pile with nothing to turn to. Swallowing those would stop the page doing
+   * what it would have done and give nothing back.
+   */
+  React.useEffect(() => {
+    const element = pile.current;
+    if (element === null) return undefined;
+
+    const w = wheeling.current;
+
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+      if (inert || !browsable) return;
+
+      event.preventDefault();
+
+      const size = Math.abs(event.deltaX);
+      const rearm = () => {
+        w.travelled = 0; w.spent = false; w.last = 0; w.peak = 0; w.decayed = false;
+      };
+
+      clearTimeout(w.settle);
+      w.settle = setTimeout(rearm, WHEEL_SETTLE_MS);
+
+      /* INSIDE THE FLOOR NOTHING COUNTS — not the latch, not the distance. The
+         travel is dropped rather than held so a tail cannot bank up and spend
+         itself the instant the window closes. */
+      if (event.timeStamp - w.dealtAt < WHEEL_GESTURE_MIN_MS) {
+        w.travelled = 0;
+        w.last = event.deltaX;
+        return;
+      }
+
+      if (size < w.peak * WHEEL_DECAY_RATIO) w.decayed = true;
+
+      if (w.spent) {
+        /* COASTING, OR PUSHED AGAIN? A reversal is a hand and needs no ratio:
+           nothing coasting changes sign. Otherwise it takes BOTH halves — the
+           stream has to have fallen away from this gesture's peak, and then
+           climbed back past the event before it. One without the other is a
+           flick that is still going. */
+        const reversed = Math.sign(event.deltaX) !== Math.sign(w.last);
+        const pushedAgain = w.decayed && size > Math.abs(w.last) * WHEEL_RISE_RATIO;
+        if (!reversed && !pushedAgain) {
+          w.last = event.deltaX;
+          return;
+        }
+        rearm();
+      }
+
+      w.last = event.deltaX;
+      w.peak = Math.max(w.peak, size);
+      w.travelled += event.deltaX;
+      if (Math.abs(w.travelled) < WHEEL_STEP_PX) return;
+
+      /* Latched here and not at the end of the burst, so the card moves while
+         the fingers are still down and the coast that follows is spent on a
+         gesture that has already been answered. */
+      w.spent = true;
+      w.dealtAt = event.timeStamp;
+      if (w.travelled > 0) next(frontId, STILL);
+      else previous(frontId);
+    };
+
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, [browsable, frontId, inert, next, previous]);
 
   /* ── THE GESTURE ───────────────────────────────────────────────────────
      THE HANDLERS ARE ON THE STAGE, not on the card. The stage outlives every
@@ -888,6 +1148,7 @@ export function CardDeck({
               index={position - 1}
               ids={items.map((item) => item.id)}
               label={(at, of) => positionLabel(at, of, items[at - 1]?.id ?? frontId)}
+              onSelect={jump}
             />
           )}
         </div>

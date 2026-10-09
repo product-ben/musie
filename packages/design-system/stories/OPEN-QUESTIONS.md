@@ -3978,3 +3978,160 @@ card would mean reordering the pile to an index the deck has no gesture for —
 it deals forward and undoes backward, and that is the whole model. If the
 dots should become a way to jump, that is a change to what the pile can do,
 not a prop.
+
+## Two horizontal gestures on one laptop now mean different things — OPEN
+
+Where: `src/CardDeck.tsx`, the scroll gesture (2026-10-09) against the pointer
+drag above it.
+
+What Ben asked for: next and previous by scrolling sideways. Delivered, mapped
+the way the ARROW KEYS are mapped, because that mapping already exists in this
+component — right deals, left brings back.
+
+What that costs: on a laptop the deck now answers two horizontal gestures with
+two different rules.
+
+| gesture | left | right |
+|---|---|---|
+| drag (mouse, finger) | deal next | deal next |
+| scroll (trackpad) | **previous** | next |
+
+Neither half is arbitrary. The swipe is symmetric because Ben settled it on a
+phone on 2026-10-05 — *"when I swipe a card to the right, I expect it to fade
+away with a slight rotation"* — a pile under a thumb is a thing you throw, and
+the hand picks where the card goes, not which way the pile turns. The scroll is
+directional because a wheel is not a throw: nothing leaves your hand, the model
+is a track you move along, and every horizontal scroller on the machine —
+`Carousel` in this package included — answers a rightward scroll with the next
+thing. A symmetric scroll would also make *previous* unreachable by the gesture
+Ben asked to reach it with.
+
+So the two rules are each right about their own input and visibly disagree on
+the one device that has both. A touch screen never sees it; a phone has no
+wheel, and the trackpad user is the only person who can hold both models at
+once.
+
+What I need from Ben: **whether the mouse DRAG should become directional too**,
+so a laptop has one rule. It would leave touch alone — a drag with a mouse is
+not the gesture the phone decision was about — and it would cost the symmetry
+on the input where symmetry was never tested. Not done here: it reopens a call
+made on a device, and this change was not that.
+
+Worth recording separately, because it is the second time this component has
+been bitten the same way: the latch that makes one flick one card lives on a
+**ref** and not in the effect. As a local it looked right and dealt five cards
+per flick — the effect depends on `frontId`, dealing changes `frontId`, the
+effect re-attached with the latch cleared, and the momentum still arriving
+spent itself one card at a time. On a five-card pile that is a full cycle, so
+it read as the gesture doing nothing at all. Found by driving a real burst in a
+browser; reading it would not have found it.
+
+### Follow-up, same day: "one gesture" cannot be measured by silence — RESOLVED
+
+Ben, on the branch: *"It works for the first card, but doesn't work when I
+scroll multiple times fast after each other."*
+
+The first cut ended a gesture when the wheel stream went quiet for 140ms. It
+never does. A trackpad coasts for up to a second after the fingers lift, every
+coasting event rearmed the timer, and so a second flick arriving mid-coast was
+swallowed by a latch waiting for a silence the FIRST flick was still
+preventing. One card per burst, and then nothing until you stopped scrolling
+altogether.
+
+What ends a gesture is not silence but DECAY: whatever the fingers did, the
+tail that follows them falls away, and nothing coasting climbs. So a new push
+is a delta that has fallen under half this gesture's peak and then climbed back
+past the event before it by more than jitter — or any reversal of sign, which
+needs no ratio because nothing coasting changes direction.
+
+BOTH HALVES ARE LOAD-BEARING, and the first attempt had only the rise. A push
+of 30, 70, 110 climbs 1.57× while the fingers are still moving, a hair under
+the 1.6 ratio, so a slightly harder flick cleared it: **three flicks dealt 26
+cards.** The decay gate is what tells a flick that is still going from one that
+has ended.
+
+Worth recording about the TESTING, because it cost two wrong fixes: a synthetic
+burst must be ONE stream. Modelling a second flick as a second stream firing
+alongside the first's tail produces oscillating deltas that exist on no
+hardware — the OS merges a new push into the single wheel stream and cancels
+the coast. Measured against the honest model: 1 flick 1 card, 3 at 180ms 3
+cards, 4 at 80ms 4 cards, gentle and hard flicks alike, two runs of eight
+scenarios clean.
+
+### The dots became controls, which was a change to the pile and not a prop — RESOLVED
+
+Ben, 2026-10-09: *"jetzt mach noch die pagination dots klickbar"* — answering
+the question left open when the dots were drawn on 2026-10-08.
+
+That entry said the dots were deliberately not pressable: `Dots` has always had
+`onSelect`, and withholding it was the honest call while the pile had no move
+that reached an arbitrary card. It dealt forward and undid backward, one step
+at a time, and that was the whole model. So this is the move, added as
+`jump(at)`, and the prop follows from it rather than the other way round.
+
+**A rotation, not a splice.** `order` is brought round until the chosen card is
+in front and everything else keeps its sequence, so the pile is still a loop:
+press the third dot, deal on, and the fourth card follows exactly as it would
+have. Splicing the chosen card to the top would have made the dots a
+reordering tool and left the position they report meaning nothing.
+
+**The distance decides the animation and nothing else.** There is one rotation
+that puts a card in front; what the short way round picks is how the move is
+drawn — a card ahead leaves like a deal, a card behind arrives like an undo.
+The last dot of five therefore arrives over the leading edge rather than
+throwing four cards off screen, because one step back is what it is.
+
+**No `onJump`.** It reports `onNext` or `onPrevious` with the id of the card
+being left, which is the argument both already carry. A third callback would
+make every consumer handle a third case to learn the one thing the other two
+already tell it.
+
+Verified in a browser: five real buttons where there were five `aria-hidden`
+spans, each dot brings its own card to the front, the loop survives a jump,
+pressing the current dot is a no-op, Enter on a focused dot fires once and
+does not also reach the pile's own key handler, the live region reads "Sound
+Journey — card 4 of 5", and the hit area is 24×24 at 1440px and at 393px.
+
+What I need from Ben: **nothing.**
+
+### Follow-up: delta size cannot tell you where a gesture ends — RESOLVED
+
+Ben, same day: *"Sometimes we now flick through multiple cards per gesture…
+Whatever the speed, only one card per gesture."*
+
+The decay-then-rise rule was still a guess about the stream, and the guess was
+wrong in a way the first round hid. **Inside one physical swipe the fingers
+slow and speed up again**, and that is byte-for-byte what a tail followed by a
+fresh push looks like. So a wobbly flick rearmed itself mid-swipe and dealt
+two; a long slow flick dealt three. Reproduced before fixing, and the
+scenarios are kept as the shape of the bug:
+
+| gesture | before | after |
+|---|---|---|
+| one wobbly flick (speed up, down, up) | **2 cards** | 1 |
+| one long slow flick | **3 cards** | 1 |
+
+What was missing is the one fact that is not a guess: **a second gesture costs
+a hand.** Fingers have to leave the pad and come back, which takes far longer
+than any wobble inside a single swipe. `WHEEL_GESTURE_MIN_MS` (280ms) is a
+floor on how close two cards can be, whatever the deltas say, and nothing
+accumulates while it runs — a tail that banked up during the window would
+otherwise spend itself the moment the window closed.
+
+The decay and rise rules stay. They are what lets a repeat land as soon as the
+floor is clear, and the floor is what stops one swipe pretending to be two.
+
+Verified four runs clean over seven scenarios: wobbly, long-slow, hard-fast and
+gentle flicks each deal exactly one; three flicks 400ms apart deal three;
+three at 300ms deal three; two backward deal two back. Proved the suite catches
+the regression by setting the floor to 0 and watching the first two scenarios
+fail again.
+
+Worth recording about the harness: the FIRST measured gesture after load was
+flaky at zero, and it was the test rather than the deck — verified in isolation
+that a first flick moves a card at both 1.8s and 3.5s after load. The suite
+now throws one gesture away before it starts measuring.
+
+What I need from Ben: **nothing**, unless a flick on his own trackpad still
+doubles. The floor is the number to move if so, and it is the only one in here
+that is about hands rather than hardware.

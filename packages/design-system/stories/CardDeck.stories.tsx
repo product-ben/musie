@@ -81,6 +81,17 @@ const meta = {
           '**A press commits:** the card itself, whatever the FACE puts the accept on,',
           'the primary button in the action column, or Enter.',
           '',
+          '**A trackpad scroll is the one gesture that goes both ways** (2026-10-09).',
+          'Two fingers sideways moves the pile — right for the next card, left for the',
+          'one before — which is the arrow keys\u2019 mapping, not the swipe\u2019s. A wheel is',
+          'not a throw: nothing leaves your hand, so the model is a track you move',
+          'along rather than a card you send somewhere, and every horizontal scroller',
+          'answers a rightward scroll with the next thing. One flick is one card',
+          'however long its momentum runs, and the next flick deals the next card',
+          'however soon it arrives \u2014 a trackpad coasts for up to a second, so',
+          'waiting for the stream to fall silent would have swallowed every quick',
+          'repeat. A gesture more vertical than horizontal is left to the page.',
+          '',
           '**A face written as a function gets the accept** — `content: (card) => …`,',
           'with `card.accept` and `card.disabled`. The deck drew a small button into',
           'the card’s corner itself for half a day and could not be made safe there:',
@@ -179,11 +190,25 @@ type Story = StoryObj<typeof meta>;
  *
  * THE DOTS UNDER THE PILE ARE THE DECK'S, not the story's (added 2026-10-08).
  * Drawn whenever there is more than one card, centred under the pile rather
- * than under the deck, and `aria-hidden` spans rather than buttons — `Dots`'
- * own documented Card Deck case, because a row of unpressable buttons tells a
- * screen reader only that they cannot be pressed. The live region keeps
- * carrying `positionLabel`, which is also the string the dots are labelled
- * from: the deck asks for no second prop.
+ * than under the deck. The live region keeps carrying `positionLabel`, which
+ * is also the string the dots are labelled from: the deck asks for no second
+ * prop.
+ *
+ * THEY ARE CONTROLS SINCE 2026-10-09, and were `aria-hidden` spans until then
+ * — `Dots`' own documented Card Deck case, because a row of unpressable
+ * buttons tells a screen reader only that they cannot be pressed. What
+ * changed is not the prop but what the pile can DO: it dealt forward and undid
+ * backward, and had no move that reached a card three along. It has one now.
+ *
+ * A press brings `order` ROUND until that card is in front, so the pile stays
+ * a loop and everything after it keeps its sequence — deal on from the third
+ * card and the fourth follows, exactly as it would have. The distance decides
+ * only how the move is DRAWN: a card ahead leaves like a deal, a card behind
+ * arrives like an undo, so the last dot of five comes in over the leading edge
+ * instead of throwing four cards off. Pressing the current dot does nothing.
+ * The deck reports it as `onNext` or `onPrevious` with the card being left;
+ * there is no third callback, because the only thing a consumer learns from
+ * one is that the pile moved and which way.
  */
 export const Default: Story = {};
 
