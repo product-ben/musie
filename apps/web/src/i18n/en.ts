@@ -886,7 +886,11 @@ export const en = {
      `diary.graph.empty` is the day-one state, drawn INSIDE the week rather
      than instead of it: the columns and the plus are the invitation, and a
      sentence over an empty box would say less. */
-  'diary.graph.label': 'Your sessions, day by day',
+  /* A RECORD, NOT A CADENCE — 2026-10-09. "day by day" read as a rhythm the
+     product was asking for, and user testing found somebody taking it as
+     advice that one session a day is expected. The screen's job is to say what
+     HAS happened. "so far" says the same picture without the instruction. */
+  'diary.graph.label': 'Your sessions so far',
   'diary.graph.weekLabel': 'Week ending {when}',
   'diary.graph.session': '{title} — {exercise}, {status}',
   'diary.graph.more': '{count} more on this day',

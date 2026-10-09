@@ -89,9 +89,21 @@ import type { DiaryEntry } from '../lib/diary';
  * half a pixel of travel. The tolerance is what makes "at the end" mean what a
  * reader means by it.
  */
-function measureEdges(element: HTMLElement): { atNewest: boolean; atOldest: boolean } {
+function measureEdges(element: HTMLElement): {
+  atNewest: boolean; atOldest: boolean; index: number;
+} {
   const max = element.scrollWidth - element.clientWidth;
   return {
+    /* WHICH WEEK IS ON SCREEN, read off the same scroller in the same pass —
+       not tracked beside it. A page is `clientWidth` wide by `flex: 0 0 100%`,
+       so rounding the ratio is the index, and `scroll-snap` guarantees it
+       settles on a whole one. Derived here rather than held in state for the
+       reason the whole block below gives: the scroller moves without going
+       through the buttons, and a second opinion about where it is would be
+       wrong exactly when somebody swiped. */
+    index: element.clientWidth === 0
+      ? 0
+      : Math.round(element.scrollLeft / element.clientWidth),
     /* The weeks run NEWEST FIRST, so the scroller's origin is the current
        week and its far end is the first week in the diary. Named for the
        WEEKS rather than for the edges, because "start" and "end" are exactly
@@ -201,7 +213,7 @@ export function DiaryGraph({ entries, latestId }: {
    * after a flick all change the position without going through the buttons.
    * So the buttons READ the scroller and the scroller stays the truth.
    */
-  const [edges, setEdges] = React.useState({ atNewest: true, atOldest: true });
+  const [edges, setEdges] = React.useState({ atNewest: true, atOldest: true, index: 0 });
 
   /* The first read, because no scroll event has fired yet and the chevrons are
      drawn in the same frame. It runs when the number of weeks changes, which
@@ -223,8 +235,10 @@ export function DiaryGraph({ entries, latestId }: {
   function page(towards: 'older' | 'newer') {
     const element = scroller.current;
     if (element === null) return;
-    /* `behavior: 'auto'`, so the OS's reduced-motion setting is respected by
-       not animating rather than by a query here. */
+    /* `behavior: 'auto'` means "use the element's CSS `scroll-behavior`", and
+       the stylesheet sets that to `smooth` with a reduced-motion override. So
+       the animation and the opt-out are both one declaration away from the
+       token layer, and this function stays a statement about direction. */
     element.scrollBy({
       left: (towards === 'older' ? 1 : -1) * element.clientWidth,
       behavior: 'auto',
@@ -247,6 +261,27 @@ export function DiaryGraph({ entries, latestId }: {
         <h2 className="musie-graph__label" id="diary-graph-label">
           {t('diary.graph.label')}
         </h2>
+
+        {/* ── WHICH WEEK YOU ARE LOOKING AT ──────────────────────────────
+            `diary.graph.weekLabel` has existed since the graph did, as the
+            `aria-label` on every week's <ol> and nothing else — so a screen
+            reader was told which week it had reached and a sighted reader was
+            not. The axis says "Mo 22" but never which month or year, and after
+            two chevron presses that is not enough to place yourself.
+
+            It names the week IN VIEW, so it stays beside the controls that
+            change it. The per-week `aria-label` stays too: this one says where
+            you are, those say what you are moving between. */}
+        {weeks.length > 1 && (
+          <p className="musie-graph__week-label" aria-live="polite">
+            {t('diary.graph.weekLabel', {
+              when: formatShortDateTime(
+                (pages[edges.index] ?? pages[0]).days.at(-1)!.date,
+                locale,
+              ),
+            })}
+          </p>
+        )}
 
         {/* ── PAGINATION ─────────────────────────────────────────────────
             Drawn only when there is more than one week. Two permanently dead

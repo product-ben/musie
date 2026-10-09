@@ -1278,6 +1278,13 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
+  /* THE CHEVRONS ANIMATE, AND THE SWIPE IS UNTOUCHED. `page()` scrolls with
+     `behavior: 'auto'`, which means "use this element's `scroll-behavior`" —
+     so the animation lives here and the handler stays a statement about
+     direction. A finger still moves the scroller directly; this only governs
+     a programmatic jump, which is the one that arrives with no travel to
+     explain where a week went. */
+  scroll-behavior: smooth;
   /* The scrollbar is chrome on a picture. Hidden on the platforms that let it
      be, and the region is still keyboard-scrollable because it is focusable —
      which is what `tabIndex={0}` on it is for. */
@@ -1287,6 +1294,27 @@
   padding-block: var(--focus-ring-clearance);
 }
 .musie-graph__scroller::-webkit-scrollbar { display: none; }
+
+/* Layer 1 flattens its motion tokens under reduced motion, and
+   `scroll-behavior` is not a token it can reach — so this is the one place the
+   query has to be written out. */
+@media (prefers-reduced-motion: reduce) {
+  .musie-graph__scroller { scroll-behavior: auto; }
+}
+
+/* The week in view, beside the chevrons. Label weight: it is a readout, not a
+   heading, and the <h2> two elements away is what names the region. */
+.musie-graph__week-label {
+  margin: 0;
+  margin-inline-start: auto;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
 
 .musie-graph__week {
   flex: 0 0 100%;
@@ -1461,12 +1489,23 @@
    Sized exactly like a mark, through the same three declarations, because a
    baseline that did not line up with the stacks above it would be worse than
    no baseline. */
+/* ── AN EMPTY DAY FADES OUT UPWARD — Ben, 2026-10-09 ──────────────────────
+   It was a solid --surface-sunken square, the same box a session's mark sits
+   in, and user testing read the column as "one per day, and this one is
+   missing". The stack grows UPWARD from the axis, so a square that is solid at
+   the bottom and dissolves at the top says two things at once: nothing
+   happened here, and there is room above for more than one.
+
+   A GRADIENT TO `transparent`, NOT AN OPACITY. Layer 1 ships no opacity token
+   and L14.1 forbids inventing one; `transparent` is a colour keyword, and the
+   stop it fades to is the surface the page already is. The same reasoning the
+   board records against dimming the abandoned mark with a literal 0.55. */
 .musie-graph__blank {
   inline-size: 100%;
   max-inline-size: var(--target-primary);
   aspect-ratio: 1;
   border-radius: var(--radius-card);
-  background-color: var(--surface-sunken);
+  background-image: linear-gradient(to top, var(--surface-sunken), transparent);
 }
 
 .musie-graph__image {

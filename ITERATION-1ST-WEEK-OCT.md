@@ -104,10 +104,10 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 
 | | Item | Status | Test |
 |---|---|---|---|
-| F1 | `SAVED_TOAST_MS` 6000 → 10000 | ☐ | |
-| F2 | Graph named as a record; the week shown visibly | ☐ | |
-| F3 | Week paging animated; timespan beside the chevrons | ☐ | |
-| F4 | Empty day cells fade out to the top | ☐ | |
+| F1 | `SAVED_TOAST_MS` 6000 → 10000 | ☑ | finish a session → the diary toast now stays 10s |
+| F2 | Graph named as a record; the week shown visibly | ☑ | [/diary](http://localhost:5175/diary) — *Deine Sessions bisher* |
+| F3 | Week paging animated; timespan beside the chevrons | ☑ | ⚠ needs **two weeks** of sessions to show |
+| F4 | Empty day cells fade out to the top | ☑ | [/diary](http://localhost:5175/diary) — empty days fade upward |
 
 ### Phase G · The feeling, recorded
 
@@ -191,6 +191,7 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **F landed.** Toast 6s → 10s (an undo window and a reading time are different numbers). Graph named as a record. Empty days fade upward via a gradient to `transparent` — no opacity literal, which L14.1 forbids and the board forbids again for the abandoned mark. Chevron paging animates through CSS `scroll-behavior`, so the handler stays a statement about direction and reduced motion is one declaration. **Unverified:** the visible week label needs two weeks of sessions and this account has one. |
 | 2026-10-09 | **D + E landed.** The scan hint names the back of the card; the `MC-01` placeholder is gone with its key. Card labels are the code alone at all four render sites, display-only — no migration, so `deck:pdf` still prints the feeling on the four cards that have no artwork. The diary's card fact went entirely, and with it the `cards` join in both selects and its mirror in `diary.db.test.ts`. |
 | 2026-10-09 | **R1/R2 landed.** The reflect body is three sections at `--space-section` (48px, measured both gaps). `--measure-heading` raised 26ch → 50ch in Layer 1 — a second deliberate break of the lock, recorded in the design system README — with `--measure-compact: 26ch` added so the toast's arithmetic cap and the drag preview keep what they were tuned against. The raw `50ch` literal in shell.css is gone, absorbed by the token it was waiting for. |
 | 2026-10-09 | **Phase C landed** (C1–C8). One way out of /reflect with its completion dialog, the feelings scale on the step, the Störer's forward swap, the glyph corrections, and `privacy.voiceShort` rendered for the first time since it was written. |

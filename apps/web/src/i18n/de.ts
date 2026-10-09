@@ -657,7 +657,11 @@ export const de: Messages = {
 
      'Noch 3 an diesem Tag' statt '+3': die Chip ist ein Link auf diesen Tag in
      der Liste darunter, und ihr Name soll sagen, wohin er führt. */
-  'diary.graph.label': 'Deine Sessions, Tag für Tag',
+  /* Ein Protokoll, keine Taktvorgabe (2026-10-09). 'Tag für Tag' las sich wie
+     ein Rhythmus, den das Produkt verlangt — im Usertesting als Empfehlung
+     verstanden, eine Session pro Tag sei vorgesehen. Der Bildschirm sagt, was
+     WAR. 'bisher' sagt dasselbe Bild ohne die Aufforderung. */
+  'diary.graph.label': 'Deine Sessions bisher',
   'diary.graph.weekLabel': 'Woche bis {when}',
   'diary.graph.session': '{title} — {exercise}, {status}',
   'diary.graph.more': 'Noch {count} an diesem Tag',
