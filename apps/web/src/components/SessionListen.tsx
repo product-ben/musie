@@ -83,6 +83,19 @@ const TICK_MS = 250;
  */
 const INFOGRAPHIC_SRC = '/assets/web/infographics/infographic-listen-and-see.webp';
 
+/**
+ * M:SS inside a sentence — `clock` unpadded.
+ *
+ * The same split the design system makes in `MusicPlayer.tsx`: padding holds a
+ * READOUT still as it crosses a minute, and prose has no column to hold. "1:30
+ * Minuten" is how a minimum is said; "01:30 Minuten" is how a stopwatch says
+ * it. Seconds stay padded, because 1:5 is not a time.
+ */
+function spoken(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds));
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+}
+
 function clock(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds));
   return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
@@ -798,9 +811,14 @@ export function SessionListen({
    * not a hypothetical. The second sentence then says so and points at the
    * replay the transport is already offering.
    */
+  /* THE ENDED SENTENCE NAMES THE WHOLE TRACK, not the minimum (Ben,
+     2026-10-09). It used to congratulate you for `{gate}` however far you had
+     actually gone — so somebody who heard a four-minute recording end was told
+     they had stayed with it for ninety seconds. If the track is over, what was
+     heard is the track, and `{total}` is that. */
   const doneText = trackLeft <= 0
-    ? t('session.listen.immersiveDoneEnded', { gate: clock(gate) })
-    : t('session.listen.immersiveDone', { gate: clock(gate), remaining: clock(trackLeft) });
+    ? t('session.listen.immersiveDoneEnded', { total: spoken(duration > 0 ? duration : gate) })
+    : t('session.listen.immersiveDone', { gate: spoken(gate), remaining: spoken(trackLeft) });
 
   /**
    * THE DETAILS VIEW'S FACTS, and the order is the answer first.
@@ -817,7 +835,17 @@ export function SessionListen({
     }]),
     ...(card === null ? [] : [{
       label: t('session.scan.yourCard'),
-      content: `${card.code} · ${card.feeling}`,
+      /* THE CODE ALONE — Ben, 2026-10-09. It read `MC-08 · Einsamkeit`: the
+         printed code and the feeling word the card is named for. The feeling
+         goes from every screen; what identifies a card to somebody holding the
+         deck is the code stamped on its back.
+
+         DISPLAY ONLY, AND DELIBERATELY SO. `card_i18n.feeling` is `not null`,
+         `deck.mjs` refuses an empty one, and `deck:pdf` prints the word on the
+         physical FRONT of MC-06…MC-09, which have no artwork master — emptying
+         the data would print four blank cards. So four render sites change and
+         no migration does. */
+      content: card.code,
     }]),
     /* THE DESCRIPTION WITHOUT ITS HEADLINE. `ContentList` takes a label and a
        VALUE, and the step's headline is already the label's job — "Listen
@@ -955,12 +983,27 @@ export function SessionListen({
               states; what it does about the track — begin, resume, start over —
               is `enterImmersive`'s to decide. */}
           <div ref={transportRef} className="musie-listen__transport">
+            {/* IT CARRIES THE MINIMUM NOW, AND THAT IS WHY THERE IS ONE
+                CLOCK (2026-10-09). This button used to print duration-minus-
+                position while the CTA under it printed gate-minus-position:
+                02:48 beside 01:30, two countdowns disagreeing in one glance.
+                Passing `gateSeconds` moves the number INTO the word and
+                suppresses the trailing readout by construction — see the prop's
+                own note. Every visible string is passed (rule 7): without the
+                three transport words this fell through to the design system's
+                GERMAN catalogue defaults on an English screen. */}
             <TrackButton
               label={t('session.listen.track')}
               duration={track.durationSeconds}
               position={position}
               playing={playing}
+              gateSeconds={gate}
               variant={met ? 'secondary' : 'primary'}
+              pauseLabel={t('session.listen.pause')}
+              restartLabel={t('session.listen.restart')}
+              unstartedLabel={t('session.listen.listenUnstarted')}
+              belowMinimumLabel={t('session.listen.listenBelow')}
+              pastMinimumLabel={t('session.listen.listenPast')}
               onTogglePlay={enterImmersive}
               onRestart={enterImmersive}
             />
@@ -998,11 +1041,7 @@ export function SessionListen({
           wrap
           onClick={onAdvance}
         >
-          {met
-            ? t('session.listen.start')
-            : t('session.listen.startLocked', {
-                countdown: clock(Math.max(0, gate - Math.floor(position))),
-              })}
+          {met ? t('session.listen.start') : t('session.listen.startLocked')}
         </CtaButton>
       </div>
 
@@ -1043,10 +1082,32 @@ export function SessionListen({
           the sentence lands as one thought rather than as a paragraph. */}
       <section ref={warnRef} className="musy-snap-view musie-listen__view musie-listen__view--warn">
         <p className="musie-listen__warn">{t('session.listen.warnText')}</p>
+        {/* ── THE PRIMARY SWAPS ONCE THE MINIMUM IS MET (Ben, 2026-10-09) ──
+            *Zurück zum Hören* is the right offer while there is still
+            listening owed, and the wrong one after: the name used to say
+            *Übung fortsetzen* and scroll you upward, which is the only place
+            in the wizard where Continue does not advance a step. Renamed, and
+            then replaced — past the gate the forward offer is the reflection,
+            and the back-to-listening button is what it replaces.
+
+            IT IS A SWAP, NOT A SECOND CONTROL, and that distinction is the
+            whole licence for putting it here. The board forbids *Start
+            reflection* standing BESIDE the back button — "a second forward
+            control re-creates the exact split that was removed" — and there is
+            never more than one primary in this row.
+
+            `session.listen.start` is the stage's own forward word, said here
+            rather than invented again: one offer, one sentence, two places. */}
         <div className="musie-listen__warn-actions">
-          <CtaButton variant="primary" onClick={scrollToTop}>
-            {t('session.listen.warnBack')}
-          </CtaButton>
+          {met ? (
+            <CtaButton variant="primary" onClick={onAdvance}>
+              {t('session.listen.start')}
+            </CtaButton>
+          ) : (
+            <CtaButton variant="primary" onClick={scrollToTop}>
+              {t('session.listen.warnBack')}
+            </CtaButton>
+          )}
           <CtaButton variant="secondary" onClick={() => scrollTo(detailRef)}>
             {t('session.listen.warnOn')}
           </CtaButton>

@@ -50,6 +50,38 @@ function transportOf(playing: boolean, position: number, duration: number): Musi
 }
 
 /**
+ * Where the listener stands relative to the minimum an exercise asks for.
+ *
+ * Named for the MINIMUM rather than for the transport, because that is the
+ * only question these four answer: have you started, are you short of it, are
+ * you past it, is there anything left to play. `MusicTransport` above still
+ * answers the other question — what the glyph and the click should do — and
+ * the two are deliberately separate: a paused button can be past the minimum,
+ * and a playing one can be short of it.
+ */
+export type TrackGateState = 'unstarted' | 'below-minimum' | 'past-minimum' | 'ended';
+
+/**
+ * M:SS inside a sentence — the same clock as `trackClock`, unpadded.
+ *
+ * `trackClock` pads so the trailing readout never changes width as it crosses
+ * a minute, and that argument is about a COLUMN. A gated label has no column:
+ * the whole word changes between states, so nothing is held still by a leading
+ * zero — and "mindestens 01:30" is not how the minimum is said out loud.
+ * Seconds stay padded, because 1:5 is not a time.
+ */
+function spokenClock(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function gateStateOf(position: number, duration: number, gate: number): TrackGateState {
+  if (duration > 0 && position >= duration) return 'ended';
+  if (position <= 0) return 'unstarted';
+  return Math.floor(position) >= gate ? 'past-minimum' : 'below-minimum';
+}
+
+/**
  * THE LABEL NAMES THE ACTION, NOT THE TRACK. A fixed label is the safer
  * default, but the flows this button exists for withhold the track name on
  * purpose, which left the label with nothing true to say. So the visible label
@@ -110,12 +142,43 @@ export interface TrackButtonProps {
    * it is asking for is the thing this component was built to avoid.
    */
   hideTimer?: boolean;
+  /**
+   * THE MINIMUM THE EXERCISE ASKS FOR, in seconds. Pass it and this button
+   * stops being a transport that happens to show a clock, and becomes the one
+   * control that says how far there is to go.
+   *
+   * WHY IT TAKES THE NUMBER RATHER THAN A READY-MADE LABEL. The three gated
+   * words differ only in WHICH time they name — the minimum, what is left of
+   * it, what is left of the track — and the consumer cannot pick between them
+   * without re-deriving the state this component already holds. So it takes
+   * the threshold and the three templates, and does the choosing.
+   *
+   * IT ALSO ENDS THE SECOND CLOCK, by construction rather than by a flag. The
+   * number moves INTO the label, so the separate `.musy-mbtn__time` readout is
+   * suppressed whenever this is set — there was never a reading where a button
+   * saying "1:25 to go" should also carry "02:48" at its trailing edge.
+   * `hideTimer` is untouched and still governs the ungated button.
+   *
+   * Leave it undefined for a transport with no minimum behind it: the button
+   * then behaves exactly as it did before this prop existed.
+   */
+  gateSeconds?: number;
   /** The three transport words. Each defaults to the locale catalogue's
    *  TRACK wording — "Jetzt anhören" invites, where the player's "Abspielen"
    *  is a transport control. */
   playLabel?: string;
   pauseLabel?: string;
   restartLabel?: string;
+  /**
+   * The three GATED words, used only when `gateSeconds` is set. Each may carry
+   * `{time}` once, replaced with MM:SS — the minimum, what is left of it, and
+   * what is left of the track, in that order. A template with no `{time}` is
+   * rendered as written, so a locale that would rather not say a number can
+   * simply leave it out.
+   */
+  unstartedLabel?: string;
+  belowMinimumLabel?: string;
+  pastMinimumLabel?: string;
   className?: string;
 }
 
@@ -124,25 +187,57 @@ export function TrackButton({
   onTogglePlay, onRestart,
   variant = 'secondary', size = 'primary', disabled = false,
   hideTimer = false,
+  gateSeconds,
   playLabel, pauseLabel, restartLabel,
+  unstartedLabel, belowMinimumLabel, pastMinimumLabel,
   className,
 }: TrackButtonProps) {
   const t = useMusyText();
   const state = transportOf(playing, position, duration);
   const glyph = state === 'playing' ? Pause : state === 'ended' ? RotateCcw : Play;
-  const action = state === 'playing' ? (pauseLabel ?? t.trackPause)
+
+  /* THE MINIMUM IS OPTIONAL, AND EVERYTHING BELOW BRANCHES ON IT ONCE.
+     Ungated, this is the control it has always been. Gated, three of the four
+     words carry a time and the trailing readout goes. */
+  const gated = gateSeconds !== undefined;
+  const gate = gateStateOf(position, duration, gateSeconds ?? 0);
+
+  /* PAUSE STILL WINS WHILE IT IS PLAYING, gated or not: the gated words invite
+     you to listen, and inviting somebody to start a thing already running is
+     the one reading none of them can carry. */
+  const gatedWord = gate === 'ended' ? (restartLabel ?? t.trackRestart)
+    : gate === 'past-minimum' ? (pastMinimumLabel ?? t.trackPastMinimum)
+    : gate === 'below-minimum' ? (belowMinimumLabel ?? t.trackBelowMinimum)
+    : (unstartedLabel ?? t.trackUnstarted);
+
+  /* WHICH TIME EACH WORD NAMES. Unstarted names the minimum itself — the
+     commitment being asked for. Below names what is left OF that minimum.
+     Past names what is left of the track, because the minimum is spent and
+     the only number still falling is the recording's. */
+  const gatedSeconds = gate === 'below-minimum'
+    ? Math.max(0, (gateSeconds ?? 0) - Math.floor(position))
+    : gate === 'past-minimum'
+      ? Math.max(0, duration - Math.floor(position))
+      : (gateSeconds ?? 0);
+
+  const ungatedWord = state === 'playing' ? (pauseLabel ?? t.trackPause)
     : state === 'ended' ? (restartLabel ?? t.trackRestart)
     : (playLabel ?? t.trackPlay);
+
+  const action = !gated ? ungatedWord
+    : state === 'playing' ? (pauseLabel ?? t.trackPause)
+      : gatedWord.replace('{time}', spokenClock(gatedSeconds));
 
   return (
     <Button
       className={[
         'musy-btn', `musy-btn--${variant}`, 'musy-mbtn',
         size === 'primary' ? '' : `musy-btn--${size}`,
-        hideTimer ? 'musy-mbtn--no-timer' : '',
+        hideTimer || gated ? 'musy-mbtn--no-timer' : '',
         className ?? '',
       ].filter(Boolean).join(' ')}
       data-state={state}
+      data-gate={gated ? gate : undefined}
       disabled={disabled}
       onClick={state === 'ended' ? (onRestart ?? onTogglePlay) : onTogglePlay}
     >
@@ -157,7 +252,7 @@ export function TrackButton({
       {/* Remaining, not elapsed — see the file header. Absent entirely rather
           than visually hidden: a time in the accessible name and not on screen
           is a number announced to one reader and not another. */}
-      {!hideTimer && (
+      {!hideTimer && !gated && (
         <span className="musy-mbtn__time">{trackClock(Math.max(0, duration - position))}</span>
       )}
       <span className="musy-spinner" aria-hidden="true" />

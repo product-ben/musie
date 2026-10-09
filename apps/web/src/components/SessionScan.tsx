@@ -143,7 +143,9 @@ export function SessionScan({
   const [errored, setErrored] = React.useState<string | null>(null);
 
   const facts: ContentListItem[] = card === null ? [] : [
-    { label: t('session.scan.yourCard'), content: `${card.code} · ${card.feeling}` },
+    /* The code alone — see SessionListen's note. The feeling is content the
+       screens stopped showing on 2026-10-09; the column stays. */
+    { label: t('session.scan.yourCard'), content: card.code },
   ];
 
   /**
@@ -206,7 +208,13 @@ export function SessionScan({
               name="card-code"
               value={code}
               onValueChange={setCode}
-              placeholder={t('session.scan.codePlaceholder')}
+              /* NO PLACEHOLDER — 2026-10-09. It said `MC-01` and rendered in
+                 `--on-surface-muted` at opacity 1, one ink step off a real
+                 value, above a submit that is disabled while the field is
+                 empty. So an empty field looked filled and the button looked
+                 broken, which is what user testing reported. The hint below
+                 already carries the example, where it cannot be mistaken for
+                 input. */
               /* The held hint REPLACES the how-to-find-it line while the field
                  still carries the scanned code: somebody who just scanned the
                  card does not need to be told where the code is printed. */

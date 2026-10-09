@@ -42,9 +42,9 @@
  * behind is a separate fact the diary reports on its own.
  */
 import * as React from 'react';
-import { Camera, Mic, PenLine } from 'lucide-react';
+import { ArrowDown, ArrowUp, Camera, Mic, Minus, PenLine } from 'lucide-react';
 import {
-  Field, Message, PhotoUpload, SegmentedControl,
+  Field, FeelingsScale, Message, PhotoUpload, SegmentedControl,
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
 import { Markdown } from './Markdown';
@@ -52,6 +52,7 @@ import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import type { ReflectMode } from '../lib/reflect';
+import type { FeelingChange } from '../lib/session';
 
 export interface SessionReflectProps {
   /** Whose run this is. F.6 writes the statements against it as they arrive. */
@@ -59,6 +60,14 @@ export interface SessionReflectProps {
   /** Passed straight through from `VoiceTranscript` — F.6. */
   onSpokenWords?: (has: boolean) => void;
   exercise: Exercise;
+  /**
+   * How the session left you, on the three-point scale — `null` until it is
+   * answered. Held by `Session.tsx` beside the written answer, because both
+   * are written by the same `finish()` and because the rail unmounts this
+   * step when you walk back to listen.
+   */
+  feeling: FeelingChange | null;
+  onFeelingChange: (value: FeelingChange) => void;
   mode: ReflectMode;
   onModeChange: (mode: ReflectMode) => void;
   /** The typed answer. The only one that can be saved today. */
@@ -74,6 +83,7 @@ export interface SessionReflectProps {
  */
 export function SessionReflect({
   exercise, mode, onModeChange, text, onTextChange,
+  feeling, onFeelingChange,
   sessionId,
   onSpokenWords,
 }: SessionReflectProps) {
@@ -88,6 +98,15 @@ export function SessionReflect({
      real clock. */
   const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
 
+  /* THE SCALE'S THREE, IN ORDER, AND THE ONLY LIST OF THEM ON THIS SCREEN.
+     `FeelingsScale` is generic over its points — a scale does not know what it
+     is measuring — so the narrowing from its `string` back to `FeelingChange`
+     happens here, against this array rather than against three literals
+     written a second time. A value that is not one of them cannot reach the
+     column, which is the same set `sessions_feeling_change_known` enforces at
+     the other end. */
+  const FEELINGS: readonly FeelingChange[] = ['worse', 'same', 'better'];
+
   return (
     <>
       {/* THE STEP'S OWN WORDS — `reflect_md`: the headline that asks what you
@@ -96,9 +115,15 @@ export function SessionReflect({
           column is gone (2026-09-23) and each step carries its own headline,
           because the listen step asks what picture FORMS and this one asks
           what it was called and what happened in it. */}
-      <Markdown md={exercise.reflectMd} />
+      {/* ── SECTION 1 · THE QUESTION, AND HOW YOU ANSWER IT ────────────────
+          The step's own words and the three ways to reply are ONE section:
+          the modes are not a separate subject, they are the apparatus for the
+          question directly above them. Splitting them would section the
+          sentence away from the box you write in. */}
+      <section className="musie-reflect__section">
+        <Markdown md={exercise.reflectMd} />
 
-      <div className="musie-stack">
+        <div className="musie-stack">
         <SegmentedControl
           name="reflect-mode"
           /* THE NAME STAYS; THE HEADING GOES — Ben, 2026-09-23. "How would you
@@ -190,7 +215,39 @@ export function SessionReflect({
             />
           </div>
         )}
-      </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 2 · HOW THE SESSION LEFT YOU ─────────────────────────────
+          AFTER the answer, not before it: the question is about the session
+          that has just happened, and asking it above the reflection would put
+          a summary before the thing being summarised.
+
+          A SCALE, NOT A SEGMENTED CONTROL, and the component's own header is
+          where that is argued — the three points are ordered and the order is
+          the information, where a segmented control's options are alternatives
+          with no order at all.
+
+          It is OPTIONAL in the sense that the session saves without it, and
+          the completion dialog in `Session.tsx` is what says so out loud
+          rather than a disabled button that explains nothing. */}
+      <section className="musie-reflect__section">
+        <FeelingsScale
+          name="session-feeling"
+          legend={t('reflect.feeling.legend')}
+          points={[
+            { value: 'worse', label: t('reflect.feeling.worse'), glyph: ArrowDown },
+            { value: 'same', label: t('reflect.feeling.same'), glyph: Minus },
+            { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
+          ]}
+          value={feeling ?? undefined}
+          onValueChange={(picked) => {
+            const known = FEELINGS.find((f) => f === picked);
+            if (known !== undefined) onFeelingChange(known);
+          }}
+          accent="accent"
+        />
+      </section>
     </>
   );
 }

@@ -202,19 +202,19 @@ export const de: Messages = {
      listening, and the German for the act is the shorter verb. The three
      reasons keep Ben's open third one — 'einfach so' is what German says
      where the English has 'for no reason at all'. */
-  'discovered.intro': 'Jedes Stück, das du in einer Übung gehört hast, bleibt hier. Hör es wieder, wann du magst – zum Ankommen, zum Konzentrieren oder einfach so.',
+  'discovered.intro': 'Alle Musik, die du in einer Übung gehört hast, bleibt hier. Hör sie wieder, wann du magst – zum Ankommen, zum Konzentrieren oder einfach so.',
   'discovered.empty': 'Hier ist noch keine Musik.',
   /* Not 'Du hast noch nichts gehört': the sentence says where music comes
      from, which is the thing somebody standing on an empty page needs. */
   'discovered.emptyDetail': 'Musik landet hier, sobald du sie in einer Übung gehört hast.',
-  'discovered.unnamed': 'Dein Stück',
+  'discovered.unnamed': 'Deine Musik',
   /* Gedankenstrich with spaces, which is the German dash, and the same one
      about.pitch uses. */
   'discovered.trackLabel': '{title} – {artist}',
   'discovered.play': 'Abspielen',
   'discovered.pause': 'Pause',
   'discovered.restart': 'Noch einmal',
-  'discovered.seek': 'Position im Track',
+  'discovered.seek': 'Position in der Musik',
 
   /* ── About you · D.2 ───────────────────────────────────────────────────── */
   'aboutYou.headline': 'Und als wer bist du hier?',
@@ -342,7 +342,13 @@ export const de: Messages = {
      (Migration 20260924…_scan_md_phone_camera.sql). Das zweite Satzpaar sagt
      jetzt die Schaltfläche selbst. */
   'session.scan.codeLabel': 'Kartencode',
-  'session.scan.codePlaceholder': 'MC-01',
+  /* KEIN 'session.scan.codePlaceholder' mehr. Es stand `MC-01` darin, ein
+     Beispiel und kein Label (3.3.2) — und das Beispiel war das Problem: ein
+     Platzhalter wird in `--on-surface-muted` bei Deckkraft 1 gezeichnet, eine
+     Tonstufe neben einem echten Wert, und darunter lag ein Absenden, das bei
+     leerem Feld gesperrt ist. Das leere Feld sah gefüllt aus und der Knopf
+     kaputt. Der Hinweis darunter nennt das Beispiel an einer Stelle, an der es
+     niemand für eine Eingabe hält. */
   /* Verbphrase, §3 — das Feld dahinter heißt schon 'Kartencode', die
      Schaltfläche sagt also, was sie tut, und nicht noch einmal, was kommt.
 
@@ -353,7 +359,11 @@ export const de: Messages = {
      Icon-Buttons über dem Kamerabild, wo drei Wörter als Tooltip zu viel
      wären. */
   'session.scan.codeManual': 'Code eingeben',
-  'session.scan.codeHint': 'Der Code steht neben dem QR-Code auf der Karte, zum Beispiel MC-01.',
+  /* Wo der Code wirklich steht (2026-10-09). Vorher: 'neben dem QR-Code' —
+     das stimmt seit dem 2026-10-02 nicht mehr, seit der QR-Code die Vorderseite
+     ganz verlassen hat. Beide stehen jetzt auf der Rückseite, der Code direkt
+     unter dem Stempel. Gedankenstrich mit Leerzeichen, §7. */
+  'session.scan.codeHint': 'Der Code steht auf der Rückseite, direkt unter dem QR-Code – zum Beispiel MC-01.',
   /* A verb phrase, not 'Diese Karte' (§3) — the button performs an act. */
   'session.scan.codeSubmit': 'Diese Karte nehmen',
   'session.scan.codeMalformed': 'Ein Kartencode sieht aus wie MC-01. Schau noch einmal auf deine Karte.',
@@ -405,10 +415,32 @@ export const de: Messages = {
   'session.scan.cameraFailed': 'Die Kamera ließ sich nicht starten. Tippe stattdessen den Code von deiner Karte ein.',
 
   /* ── Listen · D.5b ─────────────────────────────────────────────────────── */
-  /* 'Stück', which is what the seed's own German calls a recording — 'höre das
-     Stück dahinter'. 'Track' would be an English word nobody chose. */
-  'session.listen.track': 'Dein Stück',
-  'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
+  /* ── EIN WORT FÜR DIE MUSIK, UND ES IST 'die Musik' (Ben, 2026-10-09) ────
+     Vorher standen hier VIER Wörter für eine Sache: 'Stück' fünfmal, 'Track'
+     fünfmal, 'Musik' siebenmal, 'Aufnahme' zweimal. Die alte Regel an dieser
+     Stelle — "'Stück', weil der Seed selbst so spricht; 'Track' wäre ein
+     englisches Wort, das niemand gewählt hat" — galt nur noch für ihre eigene
+     Hälfte, denn direkt daneben stand fünfmal genau dieses 'Track'.
+
+     'die Musik' gewinnt, weil es das Wort ist, das ohnehin am häufigsten
+     dastand, weil es keine Übersetzung ist (§8) und weil es nicht zählt: ein
+     Stück kann man zählen, Musik nicht — und gezählt wird hier nie.
+
+     WAS NICHT MITGEHT: 'Aufnahme' im Sinne der SPRACHAUFNAHME (reflect.voice.*,
+     privacy.voice, voice.*). Das ist eine andere Sache und bleibt.
+
+     Die Schlüsselnamen bleiben ebenfalls — `session.listen.track`,
+     `discovered.trackLabel`, `noTrack`. Sie heißen nach der Tabelle `tracks`
+     und der Spalte `track_id`, und das ist weiterhin wahr. */
+  'session.listen.track': 'Deine Musik',
+  /* Keine Zahl mehr (2026-10-09). Vorher: 'Fokussiere dich für {countdown}
+     Minuten' — zwei Fehler in einer Zeile. Es war der ZWEITE Countdown auf der
+     Bühne und widersprach dem des Transports, und es setzte MM:SS in einen
+     Satz, der 'Minuten' sagt: aus neunzig Sekunden wurde '01:30 Minuten'.
+
+     Die Uhr gehört jetzt dem Knopf darüber, der das Minimum in seiner eigenen
+     Beschriftung nennt. Dieser hier sagt nur noch, worauf er wartet. */
+  'session.listen.startLocked': 'Zuerst hören, dann reflektieren',
   'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
   /* Beschreibend, kein Satzzeichen-Deutsch: was zu sehen ist, in einem Satz.
      'Smartphone', weil 'Handy' in diesem Deck sonst nirgends steht. */
@@ -433,29 +465,43 @@ export const de: Messages = {
      die der Zähler darüber gerade heruntergezählt hat, und eine andere Einheit
      an dieser Stelle läse sich als andere Zahl. Interpoliert, weil
      `listen_gate_seconds` je Übung 60, 90 oder 180 ist. */
-  'session.listen.immersiveDone': 'Super, dass du dich {gate} fokussiert hast. Mach noch {remaining} weiter, wenn du magst.',
+  'session.listen.immersiveDone': 'Super, dass du dich {gate} Minuten fokussiert hast. Die Musik läuft noch {remaining}, wenn du magst.',
   /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
      Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
-  'session.listen.immersiveDoneEnded': 'Super, dass du dich {gate} fokussiert hast. Das Stück ist zu Ende. Wenn du magst, hör es noch einmal.',
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {total} Minuten fokussiert hast. Die Musik ist zu Ende. Wenn du magst, höre sie noch einmal.',
   /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
      §8 ist der Ort, an dem das zu diskutieren wäre. */
   'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
-  'session.listen.detailsAction': 'Über den Track',
-  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten des Tracks beeinflussen zu lassen.',
-  'session.listen.warnBack': 'Übung fortsetzen',
+  'session.listen.detailsAction': 'Über die Musik',
+  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten der Musik beeinflussen zu lassen.',
+  'session.listen.warnBack': 'Zurück zum Hören',
   'session.listen.warnOn': 'Details und Player zeigen',
   'session.listen.scrollUp': 'Nach oben',
+  /* Bens Wortlaut, 2026-10-09. Der Knopf auf der Bühne trägt jetzt das
+     Minimum, also sagt seine Beschriftung, wie weit es noch ist — und der
+     Bildschirm zeigt nicht länger zwei Countdowns, die sich widersprechen.
+     `{time}` setzt `TrackButton` aus `gateSeconds` ein: erst das Minimum
+     selbst, dann was davon übrig ist, dann was von der Musik übrig ist.
+
+     Ohne führende Null, weil das hier Sätze sind und keine Anzeige, die beim
+     Minutenwechsel still stehen muss: 'mindestens 1:30' sagt man so.
+
+     Ein viertes Wort gibt es nicht — das Ende sagt `session.listen.restart`,
+     geteilt mit dem ungetakteten Knopf. */
+  'session.listen.listenUnstarted': 'Jetzt anhören (mindestens {time})',
+  'session.listen.listenBelow': 'Weiter hören (mindestens {time})',
+  'session.listen.listenPast': 'Noch weiter hören ({time})',
   'session.listen.play': 'Abspielen',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Noch einmal',
-  'session.listen.seek': 'Position im Track',
-  'session.listen.aboutHeading': 'Zu diesem Track',
+  'session.listen.seek': 'Position in der Musik',
+  'session.listen.aboutHeading': 'Zu dieser Musik',
   'session.listen.aboutArtist': 'Interpretin oder Interpret',
   'session.listen.aboutInstructions': 'Hinweise zum Hören',
-  'session.listen.simulatedHeadline': 'Testmodus: keine Aufnahme',
-  'session.listen.simulated': 'Es ist noch keine Aufnahme hinterlegt, deshalb läuft der Player auf einer Uhr in der echten Länge des Stücks.',
-  'session.listen.noTrack': 'Für diese Übung gibt es noch keine Aufnahme.',
+  'session.listen.simulatedHeadline': 'Testmodus: keine Musik',
+  'session.listen.simulated': 'Es ist noch keine Musik hinterlegt, deshalb läuft der Player auf einer Uhr in ihrer echten Länge.',
+  'session.listen.noTrack': 'Für diese Übung gibt es noch keine Musik.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
   'reflect.legend': 'Wie möchtest du antworten?',
@@ -463,7 +509,7 @@ export const de: Messages = {
      and German runs ~30% longer, so the English pattern ('Record audio') would
      clip before the glyph did. The field below each one carries the long
      version as its own label. */
-  'reflect.mode.voice': 'Aufnehmen',
+  'reflect.mode.voice': 'Transkribieren',
   'reflect.mode.text': 'Schreiben',
   'reflect.mode.photo': 'Fotografieren',
   'reflect.text.label': 'Deine geschriebene Antwort',
@@ -489,10 +535,37 @@ export const de: Messages = {
      Geblieben ist `privacy.voiceShort`, eine Zeile, plus `privacy.more`. */
   'reflect.photo.notBuilt': 'Fotos auslesen ist noch nicht gebaut',
   'reflect.photo.notBuiltText': 'So funktioniert es. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
-  /* Verb phrase, §3 — 'Überspringen' alone would name a thing rather than an
-     action, and the object is what makes it unambiguous beside 'Beenden'. */
-  'reflect.skip': 'Reflexion überspringen',
-  'reflect.finish': 'Session beenden',
+  /* Drei geordnete Punkte, der niedrigste zuerst — die Reihenfolge IST die
+     Frage. Jeder nennt den Vergleich ausdrücklich ('als vorher'), weil hier
+     eine VERÄNDERUNG gemessen wird; ein Punkt namens 'gut' würde eine Stimmung
+     messen. */
+  'reflect.feeling.legend': 'Wie fühlst du dich jetzt?',
+  'reflect.feeling.worse': 'Schlechter als vorher',
+  'reflect.feeling.same': 'Genau wie vorher',
+  'reflect.feeling.better': 'Besser als vorher',
+
+  /* ── EIN WEG HINAUS, UND ER SAGT, WOHIN (Ben, 2026-10-09) ────────────────
+     KEIN 'reflect.skip' UND KEIN 'reflect.finish' mehr. Der Schritt hatte drei
+     Ausgänge gleichzeitig — überspringen, beenden und das stille *Diese
+     Session schließen*. Jetzt ist es ein Knopf, immer aktiv, und er nennt das
+     Ziel statt der Handlung.
+
+     Nebenbei löst das eine Doppelung auf: 'Session beenden' stand hier UND in
+     `exercises.running.end` — einmal für ein beendetes, einmal für ein
+     abgebrochenes Ende. Dieselben zwei Wörter für zwei Gegenteile. */
+  'reflect.save': 'Session im Tagebuch speichern',
+
+  /* Der Dialog, wenn Antwort oder Skala noch offen sind. EIN Satz zum Warum,
+     und er argumentiert mit dem, was die Person davon hat. */
+  'reflect.incomplete.title': 'Reflexion abschließen',
+  'reflect.incomplete.text': 'Eine Session, die du beantwortet hast, findest du später wieder — die Worte machen sie zu deiner und nicht zu einem Datum in einer Liste.',
+  /* Primär ist der Weg zurück zur Arbeit, denn dafür gibt es den Dialog.
+     Benennt die Handlung, nicht den Kasten: 'Abbrechen' beschriebe das
+     Verlassen dieses Fensters, nicht die Rückkehr zur Reflexion. */
+  'reflect.incomplete.continue': 'Reflexion fortsetzen',
+  /* Der Ausgang bleibt offen, im zweiten Rang — und sagt 'unvollständig'
+     laut, damit klar ist, was im Tagebuch landet. */
+  'reflect.incomplete.save': 'Unvollständig im Tagebuch speichern',
 
   /* ── Diary ─────────────────────────────────────────────────────────────── */
   /* 'Deine letzte Session' — 'letzte' is the one German would use here and
@@ -525,6 +598,9 @@ export const de: Messages = {
      where English gets away with a question. */
   'diary.howLong': 'Dauer',
   'diary.card': 'Karte',
+  /* Substantiv wie jede andere Faktenzeile auf dieser Karte. Den Vergleich
+     trägt der WERT ('Besser als vorher'), das Label nennt nur die Frage. */
+  'diary.feeling': 'Danach',
   'diary.listenAgain': 'Nochmal hören',
   'diary.yourAnswer': 'Deine Antwort',
   'diary.notFound': 'Diesen Tagebucheintrag gibt es nicht',
@@ -584,7 +660,11 @@ export const de: Messages = {
 
      'Noch 3 an diesem Tag' statt '+3': die Chip ist ein Link auf diesen Tag in
      der Liste darunter, und ihr Name soll sagen, wohin er führt. */
-  'diary.graph.label': 'Deine Sessions, Tag für Tag',
+  /* Ein Protokoll, keine Taktvorgabe (2026-10-09). 'Tag für Tag' las sich wie
+     ein Rhythmus, den das Produkt verlangt — im Usertesting als Empfehlung
+     verstanden, eine Session pro Tag sei vorgesehen. Der Bildschirm sagt, was
+     WAR. 'bisher' sagt dasselbe Bild ohne die Aufforderung. */
+  'diary.graph.label': 'Deine Sessions bisher',
   'diary.graph.weekLabel': 'Woche bis {when}',
   'diary.graph.session': '{title} — {exercise}, {status}',
   'diary.graph.more': 'Noch {count} an diesem Tag',
@@ -655,7 +735,7 @@ export const de: Messages = {
      Das Versprechen in einer Zeile: keine Kürzung von `privacy.voice`, sondern
      die Hälfte davon, die ein Versprechen ist — wie es funktioniert, steht in
      der Lightbox. */
-  'privacy.voiceShort': 'Musie behält den Text, nie deine Stimme.',
+  'privacy.voiceShort': 'Musie speichert nur den Text, nie die Sprachnachricht.',
   /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
      Link im Fließtext muss benennen, was hinter ihm liegt. */
   'privacy.more': 'Mehr zu deinen Daten',

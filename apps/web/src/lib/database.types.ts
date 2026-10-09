@@ -418,6 +418,7 @@ export type Database = {
           card_id: string | null
           ended_at: string | null
           exercise_id: string
+          feeling_change: string | null
           goal_id: string | null
           id: string
           listened_at: string | null
@@ -431,6 +432,7 @@ export type Database = {
           card_id?: string | null
           ended_at?: string | null
           exercise_id: string
+          feeling_change?: string | null
           goal_id?: string | null
           id?: string
           listened_at?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           card_id?: string | null
           ended_at?: string | null
           exercise_id?: string
+          feeling_change?: string | null
           goal_id?: string | null
           id?: string
           listened_at?: string | null

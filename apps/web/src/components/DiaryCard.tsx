@@ -100,7 +100,9 @@ import {
   answerParagraphs, durationMinutes, formatDateTime, formatShortDateTime, stepMessageKey,
 } from '../lib/diary';
 import { useTrackSource } from '../lib/audio';
+import { fromRoot } from '../lib/assets';
 import type { DiaryEntryDetail, DiaryTrack } from '../lib/diary';
+import type { MessageKey } from '../i18n';
 
 export interface DiaryCardProps {
   entry: DiaryEntryDetail;
@@ -111,6 +113,14 @@ export interface DiaryCardProps {
   /** The close control's whole accessible name. Required when `onDismiss` is. */
   dismissLabel?: string;
 }
+
+/** The scale's three, as the catalogue says them. `MessageKey` is
+ *  `keyof typeof en`, so a fourth value fails the typecheck here. */
+const FEELING_KEY: Record<'worse' | 'same' | 'better', MessageKey> = {
+  worse: 'reflect.feeling.worse',
+  same: 'reflect.feeling.same',
+  better: 'reflect.feeling.better',
+};
 
 export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: DiaryCardProps) {
   const t = useT();
@@ -217,9 +227,22 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
       content: t('diary.duration', { minutes: String(minutes) }),
     });
   }
-  if (entry.cardFeeling !== null) {
-    facts.push({ label: t('diary.card'), content: entry.cardFeeling });
+  /* HOW IT LEFT YOU, where the card used to be. The three labels are the
+     scale's own — the same words somebody chose on the reflect step, so the
+     entry reads back what they answered rather than a second phrasing of it. */
+  if (entry.feelingChange !== null) {
+    facts.push({
+      label: t('diary.feeling'),
+      content: t(FEELING_KEY[entry.feelingChange]),
+    });
   }
+
+  /* NO CARD FACT — Ben, 2026-10-09. It read the feeling word alone, which is
+     the one thing the deck is no longer named by anywhere else; and the diary
+     never selected `cards.code`, so there was nothing true left to put in its
+     place without widening two selects for one row of metadata. The entry
+     records the exercise, the question and the answer; which card fell out of
+     the pack is not what somebody comes back for. */
   if (abandoned) {
     /* The step, translated, as the VALUE — the label holds the preposition.
        Only an unfinished session has one: for a finished session the step it
@@ -324,6 +347,37 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
         <div>
           <ListenAgain track={entry.track} />
         </div>
+      )}
+
+      {/* ── THE CARD THAT WAS DRAWN ─────────────────────────────────────────
+          BELOW THE ANSWER, which is Ben's placement and the right one: the
+          entry is read for what the person wrote, and the card is what the
+          writing was about. Above it, a picture would be the first thing on a
+          screen whose subject is somebody's own words.
+
+          A FIGURE, SO THE CODE IS TEXT. `alt=""` on the image and `MC-08` in
+          the caption, rather than the code as alt — the diary graph states the
+          same rule for the same reason: a picture whose neighbour already
+          names it announces it twice. It also means the code is selectable,
+          which an alt attribute is not, and somebody holding the deck is
+          matching it against a stamp on a physical card.
+
+          BOTH OR NEITHER. `card_id` is SET NULL so a retired card leaves the
+          entry standing, and two of the three exercises draw no card at all —
+          so this is absent far more often than it is present. */}
+      {entry.cardCode !== null && entry.cardImageUrl !== null && (
+        <figure className="musie-diary__card">
+          <img
+            className="musie-diary__card-art"
+            src={fromRoot(entry.cardImageUrl)}
+            alt=""
+            width={768}
+            height={562}
+            decoding="async"
+            loading="lazy"
+          />
+          <figcaption className="musie-diary__card-code">{entry.cardCode}</figcaption>
+        </figure>
       )}
 
       {/**

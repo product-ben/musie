@@ -307,6 +307,13 @@ export function Toast({
       ].filter(Boolean).join(' ')}
       role={live === 'assertive' ? 'alert' : live === 'polite' ? 'status' : undefined}
       aria-live={live === 'off' ? undefined : live}
+      /* THE CAP DEPENDS ON WHETHER THERE IS AN ACTION, and this is how the
+         stylesheet finds out. §23's one cap was tuned for the three-part row —
+         text, a ghost action, a dismiss — which is the case that genuinely
+         runs out of width. A toast with only a sentence has ~150px it never
+         uses, and was wrapping to four lines inside a 280px box because of a
+         constraint belonging to a layout it does not have. */
+      data-has-action={action ? 'true' : undefined}
       /* The stylesheet reads these three and nothing else about the gesture. */
       data-swipeable={swipeable ? 'true' : undefined}
       data-swiping={swiping ? 'true' : undefined}

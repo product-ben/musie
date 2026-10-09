@@ -289,7 +289,7 @@ export const en = {
   /* WHAT THIS MUSIC IS AND WHAT IT IS FOR, in that order, because somebody
      landing here from the menu has had neither explained. The second sentence
      is the permission: this is yours to use away from Musie. */
-  'discovered.intro': 'Every piece you have listened to in an exercise is kept here. Play it again whenever you like — to settle, to focus, or for no reason at all.',
+  'discovered.intro': 'All the music you have listened to in an exercise is kept here. Play it again whenever you like — to settle, to focus, or for no reason at all.',
   /* THE EMPTY STATE IS THE OPENING SCREEN for everybody on the day this ships,
      so it says what is missing AND how to get some, rather than reporting a
      count of zero. */
@@ -298,7 +298,7 @@ export const en = {
   /* The reveal failed — the recording is still playable and we simply cannot
      name it. The same words the listen step uses when it is in that position:
      what the control IS, rather than a title standing in for one. */
-  'discovered.unnamed': 'Your track',
+  'discovered.unnamed': 'Your music',
   /* Title and artist on the player's one line. An artist is why this is
      re-usable at all: a title alone is not enough to find a piece again
      anywhere else. */
@@ -306,7 +306,7 @@ export const en = {
   'discovered.play': 'Play',
   'discovered.pause': 'Pause',
   'discovered.restart': 'Play again',
-  'discovered.seek': 'Position in the track',
+  'discovered.seek': 'Position in the music',
 
   /* ── About you · D.2 ─────────────────────────────────────────────────────
      "Methods" became "exercises" everywhere in the product, so the prototype's
@@ -490,9 +490,12 @@ export const en = {
      20260924…_scan_md_phone_camera.sql). The second is what the primary button
      says. */
   'session.scan.codeLabel': 'Card code',
-  /* An EXAMPLE, not a label (3.3.2): the label above names the field and this
-     shows the shape. `MC-01` is a real code, so it is not translated. */
-  'session.scan.codePlaceholder': 'MC-01',
+  /* NO 'session.scan.codePlaceholder'. It was `MC-01`, an example rather than
+     a label (3.3.2) — and the example is the problem rather than the wording:
+     a placeholder renders in `--on-surface-muted` at opacity 1, one ink step
+     from a real value, and it sat above a submit disabled on an empty field.
+     An empty field looked filled and the button looked broken. The hint below
+     says "for example MC-01" where nothing can mistake it for input. */
   /* A VERB PHRASE, because it is an action and not the name of a section — the
      field it opens is already labelled 'Card code'.
 
@@ -502,7 +505,11 @@ export const en = {
      string is also the icon control's tooltip over the live picture, where
      five words is a paragraph. */
   'session.scan.codeManual': 'Enter the code',
-  'session.scan.codeHint': 'The code is printed beside the QR code, like MC-01.',
+  /* WHERE THE CODE ACTUALLY IS — 2026-10-09. It said "beside the QR code",
+     which stopped being true on 2026-10-02 when the QR left the card front
+     entirely: there is no code beside it because there is no it. Both are on
+     the BACK now, the code directly under the stamp. */
+  'session.scan.codeHint': 'The code is on the back of the card, right under the QR code — for example MC-01.',
   'session.scan.codeSubmit': 'Use this card',
   /* THREE ANSWERS, AND TWO OF THEM ARE NOT FAILURES. A typo and a card from
      another deck are things a person did, said in the field's own error slot.
@@ -567,16 +574,42 @@ export const en = {
   /* ── Listen · D.5b ───────────────────────────────────────────────────────
      THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:
      `tracks.title` and `.artist` are not granted to the client at all. The
-     reveal is E.5. */
-  'session.listen.track': 'Your track',
+     reveal is E.5.
+
+     ── ONE WORD FOR THE MUSIC, AND IT IS "music" (Ben, 2026-10-09) ──────────
+     The German carried FOUR words for one thing — Stück ×5, Track ×5, Musik
+     ×7, Aufnahme ×2 — and the English was no better: track, piece and
+     recording all named the same object. Both sides are now "music" / "die
+     Musik", which is the word that was already commonest on each, is not a
+     translation of the other, and does not count: you can count a piece, you
+     cannot count music, and nothing here ever counts it.
+
+     NOT SWEPT UP: "recording" in the sense of a VOICE recording — reflect
+     .voice.*, privacy.voice, voice.*. Different object, unchanged.
+
+     The KEY NAMES stay — `session.listen.track`, `discovered.trackLabel`,
+     `noTrack`. They are named for the `tracks` table and the `track_id`
+     column, and that is still what they read from. */
+  'session.listen.track': 'Your music',
   /* THE GATE IS SAID BY THE BUTTON NOW, AND ONLY THERE — 2026-09-24.
      There used to be a `#listen-gate` paragraph above the transport carrying
      one sentence while the gate was shut and another once it opened, and the
      CTA below it read *Start reflection* in both states. Two places said one
      thing, and the button — the control the sentence was about — was the one
      that said nothing. Now the button carries its own condition and the
-     paragraph is gone. */
-  'session.listen.startLocked': 'Focus for {countdown} minutes more',
+     paragraph is gone.
+
+     AND IT NO LONGER CARRIES A NUMBER — 2026-10-09. It read "Focus for
+     {countdown} minutes more", which was two faults in one line: it was the
+     SECOND countdown on the stage, disagreeing with the transport's, and it
+     interpolated MM:SS into a sentence that says "minutes", so a ninety-second
+     gate rendered as "Focus for 01:30 minutes more".
+
+     The transport above it owns the clock now — it says the minimum inside its
+     own label — so this one says only what it is waiting for. The gate is
+     still said by a button, which is the rule above; it is just said by the
+     button that is counting rather than by the one that is disabled. */
+  'session.listen.startLocked': 'Listen first, then reflect',
   'session.listen.start': 'Start reflecting whenever you are ready',
   /* THE PICTURE BETWEEN THE WORDS AND THE CONTROLS — 2026-10-07.
      DESCRIBED, NOT SILENT. The diary's marks take `alt=""` because the link
@@ -625,12 +658,12 @@ export const en = {
      `{gate}` is interpolated and never written out, because it is
      `exercises.listen_gate_seconds` and varies — 60, 90 and 180 across the
      five exercises. */
-  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate}. Carry on for another {remaining} if you like.',
+  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate} minutes. The music plays on for {remaining} if you like.',
   /* THE TRACK CAN ALREADY BE OVER when the gate opens — a short recording, or
      somebody who scrubbed to the end. "Carry on for another 00:00" is the
      sentence that gets written when nobody checks. No dash, at Ben's request;
      two sentences carry it. */
-  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {gate}. The track has finished. Play it again if you like.',
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {total} minutes. The music has finished. Play it again if you like.',
   /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
      `startLocked` does on the stage — the figure is already the largest thing
      on the sheet, and saying it twice on one screen is how a number stops
@@ -644,27 +677,45 @@ export const en = {
      copy. The Störer's sentence is the prototype's own, lightly tightened:
      it interrupts rather than warns, and its measure is narrow so it lands as
      one thought. */
-  'session.listen.detailsAction': 'About the track',
-  'session.listen.warnText': 'For this exercise it is better not to be influenced by the track’s metadata.',
-  'session.listen.warnBack': 'Continue the exercise',
+  'session.listen.detailsAction': 'About the music',
+  'session.listen.warnText': 'For this exercise it is better not to be influenced by the music’s metadata.',
+  'session.listen.warnBack': 'Back to listening',
   'session.listen.warnOn': 'Show details and player',
   'session.listen.scrollUp': 'Scroll up',
+  /* ── THE STAGE TRANSPORT'S THREE GATED WORDS (Ben, 2026-10-09) ──────────
+     The button on the stage carries the minimum now, so its label says how far
+     there is to go and the screen stopped showing two countdowns that
+     disagreed — 02:48 beside 01:30. `{time}` is filled by `TrackButton` from
+     `gateSeconds`: the minimum itself before anything plays, what is left of
+     it below the threshold, what is left of the MUSIC above it.
+
+     UNPADDED, which is the component's `spokenClock` rather than its
+     `trackClock`: padding holds a readout still as it crosses a minute, and
+     these are sentences with nothing to hold still. "mindestens 1:30" is how
+     a minimum is said.
+
+     There is no fourth here — the ended word is `session.listen.restart`,
+     shared with the ungated button, because "play it again" is the same offer
+     either way. */
+  'session.listen.listenUnstarted': 'Listen now (at least {time})',
+  'session.listen.listenBelow': 'Keep listening (at least {time})',
+  'session.listen.listenPast': 'Listen on ({time})',
   /* The player's own words. Passed explicitly because the design system's
      defaults are a mix of languages — CLAUDE.md 7. */
   'session.listen.play': 'Play',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Play again',
-  'session.listen.seek': 'Position in the track',
-  'session.listen.aboutHeading': 'About this track',
+  'session.listen.seek': 'Position in the music',
+  'session.listen.aboutHeading': 'About this music',
   'session.listen.aboutArtist': 'Artist',
   'session.listen.aboutInstructions': 'Listening instructions',
   /* THE SIMULATED-PLAYBACK NOTICE, at the foot of the last view since
      2026-09-24. It is a headline plus a line, because it is a `Message`
      now rather than a paragraph of small print — and a warning, because
      what it reports is that the thing on screen is not the real one. */
-  'session.listen.simulatedHeadline': 'Test mode: no recording',
-  'session.listen.simulated': 'No recording is bundled yet, so the player runs on a clock at the track’s real length.',
-  'session.listen.noTrack': 'This exercise has no recording yet.',
+  'session.listen.simulatedHeadline': 'Test mode: no music',
+  'session.listen.simulated': 'No music is bundled yet, so the player runs on a clock at its real length.',
+  'session.listen.noTrack': 'This exercise has no music yet.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
   /* `reflect.questionFallback` — "What stayed with you?" — is GONE, 2026-09-23.
@@ -674,7 +725,7 @@ export const en = {
      exercise's to write; chrome has no business naming it, so there is nothing
      for this key to fall back to any more. */
   'reflect.legend': 'How would you like to answer?',
-  'reflect.mode.voice': 'Record audio',
+  'reflect.mode.voice': 'Transcribe',
   'reflect.mode.text': 'Write answer',
   'reflect.mode.photo': 'Take photo',
   'reflect.text.label': 'Your written answer',
@@ -700,12 +751,43 @@ export const en = {
      the step now says nothing about data at all. See the privacy block. */
   'reflect.photo.notBuilt': 'Reading a photo is not built yet',
   'reflect.photo.notBuiltText': 'This shows how it will work. The photo stays on your device and is read back as text; the image is never uploaded.',
-  /* NOT a fourth segment — three ways to answer and one way not to are
-     different kinds of choice, and a segment would make refusal look like a
-     method. It sits in the action row beside Finish, as the alternative to it,
-     and it ENDS the session: no `reflections` row, `status = 'finished'`. */
-  'reflect.skip': 'Skip reflection',
-  'reflect.finish': 'Finish session',
+  /* ── HOW THE SESSION LEFT YOU ────────────────────────────────────────────
+     Three ordered points, lowest first, and the order is the question: this is
+     a scale, not a set of alternatives. Each names the comparison outright —
+     "than before" — because the thing being measured is a CHANGE, and a point
+     labelled only "good" would be measuring a mood instead. */
+  'reflect.feeling.legend': 'How do you feel now?',
+  'reflect.feeling.worse': 'Worse than before',
+  'reflect.feeling.same': 'Exactly as before',
+  'reflect.feeling.better': 'Better than before',
+
+  /* ── ONE WAY OUT, AND IT SAYS WHERE THE SESSION GOES (Ben, 2026-10-09) ────
+     NO 'reflect.skip' AND NO 'reflect.finish'. The step carried three exits at
+     once — skip, finish, and the ghost *Close this session* — which user
+     testing found and which two doors added elsewhere had not fixed. There is
+     one button now, it is always enabled, and it names the destination rather
+     than the act: "Finish session" said what happened to the run, not what
+     happened to the answer.
+
+     ALWAYS ENABLED, which is the half that needed the dialog below. A disabled
+     primary explains nothing — it just stops. This one accepts the press and
+     then says what is still open, which is the same information delivered
+     where somebody is looking. */
+  'reflect.save': 'Save the session to your diary',
+
+  /* The dialog, when the answer or the scale is still open. ONE SENTENCE on
+     why, and it argues from what the person gets rather than from what the
+     product wants — the exercise is the listening, and the reflection is what
+     makes it findable again. */
+  'reflect.incomplete.title': 'Complete the reflection',
+  'reflect.incomplete.text': 'A session you have answered is one you can find your way back into later — the words are what make it yours rather than a date in a list.',
+  /* PRIMARY is the way back to the work, because that is what the dialog is
+     for. Naming the act, not the dialog: "Cancel" would describe leaving this
+     box rather than returning to the reflection. */
+  'reflect.incomplete.continue': 'Continue reflecting',
+  /* And the way out stays open, in the second rank. It says INCOMPLETE out
+     loud: somebody choosing it should know what the diary will hold. */
+  'reflect.incomplete.save': 'Save to the diary, incomplete',
 
   /* ── Diary ───────────────────────────────────────────────────────────────
      `{step}` takes a `session.step.*` value, already translated — the diary
@@ -740,6 +822,10 @@ export const en = {
   'diary.when': 'When',
   'diary.howLong': 'How long',
   'diary.card': 'Card',
+  /* HOW THE SESSION LEFT THEM. A noun, like every other fact label on this
+     card — the VALUE carries the comparison ("Better than before"), so the
+     label only has to say which question is being answered. */
+  'diary.feeling': 'Afterwards',
   /* No track NAME beside it, and that is the column grant rather than an
      omission: `tracks.title` and `.artist` are not granted to the client at
      all, so the diary can offer the recording back without being able to say
@@ -804,7 +890,11 @@ export const en = {
      `diary.graph.empty` is the day-one state, drawn INSIDE the week rather
      than instead of it: the columns and the plus are the invitation, and a
      sentence over an empty box would say less. */
-  'diary.graph.label': 'Your sessions, day by day',
+  /* A RECORD, NOT A CADENCE — 2026-10-09. "day by day" read as a rhythm the
+     product was asking for, and user testing found somebody taking it as
+     advice that one session a day is expected. The screen's job is to say what
+     HAS happened. "so far" says the same picture without the instruction. */
+  'diary.graph.label': 'Your sessions so far',
   'diary.graph.weekLabel': 'Week ending {when}',
   'diary.graph.session': '{title} — {exercise}, {status}',
   'diary.graph.more': '{count} more on this day',
@@ -903,22 +993,32 @@ export const en = {
      only for some readers has to say which. */
   'privacy.account': 'Musie never asks for your name. If you were given an email address and a password for the closed test, your diary belongs to that account. Otherwise this browser holds a private account of its own, and your diary belongs to it.',
   'privacy.written': 'What you write is saved to your diary so you can read it back later. Nobody else can see it.',
-  /* ── THESE TWO ARE PARKED, NOT WRONG — Ben, 2026-09-24 ──────────────────
-     Nothing renders them today. They were the reflect step's one-line promise
-     and the link beside it, and Ben took both off that step: the transcript is
-     what somebody is there for, and the small print under it was competing
-     with it.
+  /* ── ONE OF THESE IS HUNG AGAIN, AND THE OTHER IS STILL PARKED ──────────
+     Parked by Ben on 2026-09-24: both were the reflect step's one-line promise
+     and the link beside it, taken off because the transcript is what somebody
+     is there for and the small print under it was competing with it.
 
-     They stay in the catalogue because `DataLightbox` stays built and still
-     holds the long promise — what is missing is a door to it, which is Ben's to
-     place (apps/web/OPEN-QUESTIONS.md). These are that door's two strings, in
-     both languages, for whenever it is hung. `voice.hint.more` went the other
-     way, deleted outright, because that sentence was judged redundant rather
-     than homeless.
+     `privacy.voiceShort` CAME BACK ON 2026-10-09, in a different place and for
+     a reason the first placement did not have. User testing found that voice
+     mode shows nothing about transcription until the tap — so the one sentence
+     that would have predicted it only arrived after the person had already
+     committed. It now sits BESIDE the record button rather than under the
+     transcript: next to the control it is about, where it is read before the
+     finger moves rather than after. VoiceTranscript.tsx renders it.
+
+     `privacy.more` IS STILL PARKED, and the argument for it is unchanged:
+     `DataLightbox` stays built and still holds the long promise, and what is
+     missing is a door to it, which is Ben's to place
+     (apps/web/OPEN-QUESTIONS.md). `voice.hint.more` went the other way,
+     deleted outright, because that sentence was judged redundant rather than
+     homeless.
 
      THE PROMISE IN ONE LINE: not an abbreviation of `privacy.voice` so much as
-     the half of it that is a promise — the mechanism is in the lightbox. */
-  'privacy.voiceShort': 'Musie keeps the text, never your voice.',
+     the half of it that is a promise — the mechanism is in the lightbox. It
+     says SPRACHNACHRICHT rather than Stimme since 2026-10-09: what is not kept
+     is a recording, and "deine Stimme" promised something larger and vaguer
+     than the system actually does. */
+  'privacy.voiceShort': 'Musie saves only the text, never the voice message.',
   /* The word in that sentence that opens the whole promise. Not 'Learn more':
      it names what is behind it, which is what a link in running text has to
      do when the sentence around it is doing the explaining. */

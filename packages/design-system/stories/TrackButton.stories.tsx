@@ -12,7 +12,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TrackButton } from '../src/MusicPlayer';
 import { CtaButton } from '../src/CtaButton';
-import { bothThemes, Stack } from './_decorators';
+import { bothThemes, Row, Stack } from './_decorators';
 
 /* "Your track" is §7.21's own example accessible name ("Pause, Your track").
    The prototype records that the label IS the track name but never carries the
@@ -132,6 +132,10 @@ const meta = {
       control: 'boolean',
       description: 'Drop the MM:SS readout — and with it the number in the accessible name. Only where something ELSE on screen already carries the time; a transport that does not say how long it is asking for is what this component was built to avoid.',
     },
+    gateSeconds: {
+      control: 'number',
+      description: 'The minimum the exercise asks for, in seconds. Set it and the button names how far there is to go, in its own label — and the separate MM:SS readout goes, because the number moved into the word. Leave undefined for a transport with no minimum behind it.',
+    },
     size: {
       control: 'inline-radio',
       options: ['min', 'primary', 'guided', 'comfort'],
@@ -140,7 +144,10 @@ const meta = {
     disabled: { control: 'boolean', description: 'Disables the button.' },
     playLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue’s track wording — “Jetzt anhören” in German, “Start Listening” in English.' },
     pauseLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Pause” in both.' },
-    restartLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Noch einmal” / “Replay”.' },
+    restartLabel: { control: 'text', description: 'Copy. Defaults to the locale catalogue — “Nochmal hören” / “Listen again”. Shared with the gated ended state.' },
+    unstartedLabel: { control: 'text', description: 'Gated copy, `gateSeconds` only. `{time}` is the minimum itself. Catalogue: “Jetzt anhören (mindestens {time})”.' },
+    belowMinimumLabel: { control: 'text', description: 'Gated copy. `{time}` is what is left OF the minimum. Catalogue: “Weiter hören (mindestens {time})”.' },
+    pastMinimumLabel: { control: 'text', description: 'Gated copy. `{time}` is what is left of the TRACK — the minimum is spent. Catalogue: “Noch weiter hören ({time})”.' },
     className: { control: false },
   },
 } satisfies Meta<typeof TrackButton>;
@@ -193,6 +200,43 @@ export const Playing: Story = { args: { position: 72, playing: true } };
  *  `position === duration`; there is no `state` prop. `onRestart` is called
  *  instead of `onTogglePlay` from here. */
 export const Ended: Story = { args: { position: DURATION, playing: false } };
+
+/**
+ * ── `gateSeconds` · the four the listen step actually shows ────────────────
+ * An exercise asks for a minimum, and until this prop existed the only control
+ * that could say so was a sentence somewhere else on the screen. That sentence
+ * was deleted on purpose — "two places said one thing, and the button, the
+ * control the sentence was about, was the one that said nothing."
+ *
+ * So the button says it. Four states, named for the MINIMUM rather than for
+ * the transport, because that is the only question they answer:
+ *
+ * | state | the time it names |
+ * |---|---|
+ * | `unstarted` | the minimum itself — the commitment being asked for |
+ * | `below-minimum` | what is left of that minimum |
+ * | `past-minimum` | what is left of the track; the minimum is spent |
+ * | `ended` | nothing; `trackRestart` is shared with the ungated button |
+ *
+ * **One clock, by construction.** The trailing MM:SS readout is suppressed
+ * whenever `gateSeconds` is set — the number is in the word now, and a button
+ * reading "1:25 to go" should never also carry "02:48" at its edge.
+ *
+ * Pause still wins while it is playing: inviting somebody to start a thing
+ * already running is the one reading none of these four can carry.
+ */
+export const GatedStates: Story = {
+  render: (args) => (
+    <Stack>
+      <Row label="unstarted — names the minimum"><TrackButton {...args} position={0} /></Row>
+      <Row label="below-minimum — names what is left of it"><TrackButton {...args} position={5} /></Row>
+      <Row label="past-minimum — names what is left of the track"><TrackButton {...args} position={190} /></Row>
+      <Row label="ended — shares trackRestart"><TrackButton {...args} position={DURATION} /></Row>
+      <Row label="playing — pause still wins"><TrackButton {...args} position={5} playing /></Row>
+    </Stack>
+  ),
+  args: { gateSeconds: 90, variant: 'primary' },
+};
 
 /** Disabled, from §7.4's inherited state model. */
 export const Disabled: Story = { args: { position: 72, disabled: true } };

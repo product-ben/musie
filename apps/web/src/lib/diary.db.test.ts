@@ -52,9 +52,16 @@ import { saveStatements } from './statements';
  * not allowed to make fails the WHOLE request — the entry screen would show
  * its error state and nothing would say which embed caused it — so the select
  * is run here as a real user rather than trusted.
+ *
+ * THE `cards` EMBED LEFT ON 2026-10-09, with the module's. The diary showed
+ * the card's feeling word alone; that word left every screen, and the join had
+ * nothing left to carry. This copy follows the module's because its whole job
+ * is to be the same string — a select tested here and not made there proves
+ * nothing about the screen. The cards tables' own grants stay covered by
+ * `db.security.db.test.ts`'s "content tables · readable, never writable".
  */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, exercise_i18n(locale, name, description)), cards(id, card_i18n(locale, feeling)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, cards(id, code, image_url), exercises(id, exercise_i18n(locale, name, description)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 let client: SupabaseClient;
 let userId: string;

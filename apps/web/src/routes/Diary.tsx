@@ -117,10 +117,18 @@ import { DiaryGraph } from '../components/DiaryGraph';
 
 type Translate = ReturnType<typeof useT>;
 
-/** How long the after-a-session confirmation stays up. Six seconds, which is
- *  the window `VoiceTranscript` already gives its undo offer — one number for
- *  "how long a toast stays", not two. */
-const SAVED_TOAST_MS = 6_000;
+/**
+ * How long the after-a-session confirmation stays up.
+ *
+ * TEN SECONDS, AND NO LONGER SIX — 2026-10-09. Six was taken from the window
+ * `VoiceTranscript` gives its undo offer, on the rule that there should be one
+ * number for "how long a toast stays". The two are not the same thing: an UNDO
+ * WINDOW is how long you have to act, and it is six seconds because a longer
+ * one makes the offer stale. This toast has no action at all. Nothing is
+ * waiting on it, so its only job is to be read, and the number for that is
+ * reading time rather than a deadline borrowed from a decision.
+ */
+const SAVED_TOAST_MS = 10_000;
 
 /**
  * The supporting lines, as SIBLINGS rather than one joined string. The slot is
@@ -156,7 +164,8 @@ function entryMeta(entry: DiaryEntry, t: Translate, latest: boolean) {
        thing to keep in step. */
     lines.push(`${t('diary.stoppedAt')}: ${t(stepMessageKey(entry.step))}`);
   } else {
-    if (entry.cardFeeling !== null) lines.push(entry.cardFeeling);
+    /* The card's feeling used to lead this line. Gone with the fact in
+       `DiaryCard` — see its note. */
     const minutes = durationMinutes(entry.startedAt, entry.endedAt);
     if (minutes !== null) lines.push(t('diary.duration', { minutes: String(minutes) }));
   }

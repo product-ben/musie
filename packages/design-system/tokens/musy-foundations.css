@@ -617,10 +617,37 @@
   --type-body-min-size: var(--type-body-md-size);
 
   /* Line length. German runs ~30% longer than English, so measures are set
-     from the German string; headings get a tighter measure so compounds do
-     not strand a single word on the last line.                              */
+     from the German string.
+
+     ── THE HEADING MEASURE WENT FROM 26ch TO 50ch — Ben, 2026-10-09 ────────
+     26ch was set so German compounds would not strand a single word on the
+     last line, and `--text-wrap-heading: balance` was already doing that job
+     on its own. What 26ch actually did was break headings that had no reason
+     to break: "Welches Bild ist vor deinem inneren Auge entstanden?" wants
+     656px, got 425px, and came apart into two half-lines inside a 1076px
+     column.
+
+     It had been worked around twice rather than fixed — `.musie-immersive__
+     lead .musie-md h2` carried a raw `50ch`, and `ContentBox` grew a
+     `headlineWide` prop that sets `max-width: none`. 50ch IS that workaround's
+     number, promoted: the app had already chosen it and lived with it since
+     2026-10-07.
+
+     BALANCE IS WHAT KEEPS IT TIDY above the cap. It evens lines rather than
+     filling them, so a heading that genuinely needs two lines still gets two
+     even ones — which is the behaviour 26ch was bought for, and it was always
+     coming from the other token.                                            */
   --measure-body: 62ch;
-  --measure-heading: 26ch;
+  --measure-heading: 50ch;
+  /* The OLD heading measure, kept for the two things that were using it as a
+     width budget rather than as a measure: a toast row and a drag preview.
+     Neither is a heading — §23's cap is arithmetic ("a 150px ghost action, a
+     44px dismiss, two gaps and the inset — sum to 274px against a 262px cap")
+     and the drag preview is stopping a long statement becoming a full-width
+     sheet mid-gesture. Both were tuned by measurement against 26ch, so they
+     keep 26ch and say so, rather than silently following a token that now
+     means something else.                                                   */
+  --measure-compact: 26ch;
   --text-wrap-heading: balance;  /* display + heading steps */
   --text-wrap-body: pretty;      /* body steps and 2-line labels */
   --text-hyphens: auto;          /* required for German compounds at 393px */

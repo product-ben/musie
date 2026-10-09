@@ -200,7 +200,22 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
       .getByRole('textbox', { name: label(locale, 'reflect.text.label'), exact: true })
       .fill(ANSWER[locale]);
 
-    const finish = page.getByRole('button', { name: label(locale, 'reflect.finish'), exact: true });
+    /* ── AND THE SCALE, WHICH IS THE SECOND HALF OF "COMPLETE" ────────────
+       Since 2026-10-09 the step asks how the session left you, and the save
+       button opens a completion dialog when either the written answer or the
+       scale is still open. Answering both is what keeps this walk on the
+       straight path; the dialog has its own coverage in the unit tests.
+
+       The scale is a radio group like the mode switch above it, so it is found
+       the same way — by the accessible name its catalogue string gives it. */
+    await page
+      .getByRole('radio', { name: label(locale, 'reflect.feeling.better'), exact: true })
+      .click();
+
+    /* ALWAYS ENABLED NOW, and the assertion stays because that is the claim:
+       the old primary was disabled until the answer existed, which stopped
+       people without telling them why. */
+    const finish = page.getByRole('button', { name: label(locale, 'reflect.save'), exact: true });
     await expect(finish).toBeEnabled();
     await finish.click();
 

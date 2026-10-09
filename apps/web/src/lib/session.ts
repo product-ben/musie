@@ -475,6 +475,40 @@ export async function saveReflection(
   }
 }
 
+/** The three the scale can produce. Mirrors `sessions_feeling_change_known`. */
+export type FeelingChange = 'worse' | 'same' | 'better';
+
+/**
+ * How the session left the person, relative to how they arrived.
+ *
+ * A CHANGE, NOT A MOOD, which is why the values are comparisons: somebody who
+ * came in low and left slightly less low answers `better`, and so does somebody
+ * who came in fine. The column's own comment carries the same warning for
+ * whoever queries it first.
+ *
+ * WRITTEN AT FINISH, NOT ON SELECTION. The scale is answered on a step that can
+ * be walked back out of, and an answer saved on every press would record a mind
+ * being changed as three sessions' worth of edits. It goes with the reflection,
+ * in the same act.
+ *
+ * NULL IS NEVER WRITTEN HERE. The question is optional, and `finish()` simply
+ * does not call this when nothing was chosen — a write of null would be
+ * indistinguishable from the column's own default and would cost a round trip
+ * to say nothing.
+ */
+export async function saveFeelingChange(
+  sessionId: string,
+  feelingChange: FeelingChange,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ feeling_change: feelingChange })
+    .eq('id', sessionId);
+  if (error !== null) {
+    throw new Error(`[musie] could not save how the session left you: ${error.message}`);
+  }
+}
+
 /**
  * The hook the drawer uses.
  *

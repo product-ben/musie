@@ -18,7 +18,6 @@
       "Bash(git commit --all:*)",
 
       "Bash(git checkout:*)",
-      "Bash(git switch:*)",
       "Bash(git stash:*)",
       "Bash(git reset --hard)",
       "Bash(git reset --hard:*)"

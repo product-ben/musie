@@ -268,6 +268,19 @@ export function VoiceTranscript({
         status={(elapsed, remaining) => t('reflect.voice.status', { elapsed, remaining })}
       />
 
+      {/* ── SAY THAT SPEECH BECOMES TEXT, BEFORE THE FINGER COMMITS ─────────
+          `privacy.voiceShort` has been in both catalogues since 2026-09-24 and
+          rendered NOWHERE: it was half of a door to a data sheet that was
+          never hung, and the sentence went with the door. User testing found
+          the hole from the other side — the one line that would have predicted
+          transcription only appeared after the person had already tapped.
+
+          BESIDE THE BUTTON, AND UNDER IT WHEN THERE IS NO ROOM. The row is
+          `flex-wrap: wrap` already, so this needs no breakpoint of its own:
+          wide enough and it sits next to the control it is about, narrow and
+          it falls underneath it. Ben's placement, 2026-10-09. */}
+      <p className="musie-voice__privacy">{t('privacy.voiceShort')}</p>
+
       {/* Only while the list can actually be edited — one statement cannot be
           reordered and nothing is reorderable mid-capture, which is the same
           test `DraggableList`'s own `editable` takes. */}

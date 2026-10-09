@@ -7561,3 +7561,78 @@ What I need from Ben: **a decision on the list.** Either a fourth legend row
 pointing at the view switch — which is in the toolbar row, so it would take an
 arrow like `guide.goal`'s rather than a glyph of its own — or the deliberate
 answer that the switch is self-evident and the list needs no teaching.
+
+# User testing, first week of October — the visual pass
+
+## A carousel in a shrink-to-fit box collapses, and the carousel is the victim — RESOLVED
+
+Where: `packages/design-system/src/musy-components.css` §8,
+`apps/web/src/shell.css:289`.
+
+What I checked: Ben reported the `/about` carousel going narrow on the third
+slide and staying narrow. The obvious suspect was the chevrons — they go
+`ghost` on exactly that slide, because `seenAll` flips `nextVariant` — and the
+obvious suspect was wrong. Measured instead, at 1440px:
+
+| | slide 2 | slide 3 |
+|---|---|---|
+| `article.musy-box` | 430.5px | 299.7px |
+| `.musy-carousel` | 380.5px | 249.7px |
+| the card | 232.9px | 152.8px |
+
+Everything above the box held at 672px. So the box shrank and the carousel
+merely followed it.
+
+TWO CORRECT THINGS MAKE THE TRAP. `.musie-message` is a column flex with
+`align-items: flex-start`, which is right — a chat bubble hugs its text. And
+`.musy-carousel` carries `container-type: inline-size`, which is right, because
+the slide geometry is `cqi` so a slide is 66% of the CAROUSEL rather than of
+the window. But `container-type: inline-size` carries `contain: inline-size`:
+**the element is sized as if it had no contents, so its max-content
+contribution is zero.** The scroller inside it contributes nothing either.
+
+The box therefore hugged its *other* children, and the widest of those is the
+caption. On the last slide the caption swaps `about.hint.unseen` — one long
+sentence — for `about.hint.ready`, "Es kann losgehen.". The box hugged the
+shorter string, and the carousel read its geometry off the result. It never
+came back because the caption never gets long again.
+
+What I did: `align-self: stretch` on `.musy-carousel`, and on
+`.musy-box:has(.musy-carousel)`. `align-self` rather than `inline-size: 100%`
+because `box-sizing` is per-component in this file rather than global, so a
+percentage width on a padded box overflows by its own inset. Scoped with
+`:has()` so a box with no carousel still hugs — the greeting bubble is
+unchanged, and hugging is the chat shape.
+
+Verified at 1440px and 393px: box 672px and card 369.5px on every slide, the
+phone keeps its 27px peek, and the German title stops hyphenating to six lines.
+
+What I need from Ben: **nothing.** Worth knowing for anything else built on a
+container query: a `container-type` element cannot be shrink-wrapped by an
+ancestor, and the failure is silent and looks like a bug in the component.
+
+## Two figure caps now exist and they are 6px apart — OPEN
+
+Where: `apps/web/src/shell.css` — `.musie-listen__infographic` and
+`.musie-diary__card-art`.
+
+What I checked: Ben asked for 416px on the listen infographic. There was no
+measure token near it: Layer 1 has `--measure-body` (62ch) and
+`--measure-compact` (26ch), both reading measures in `ch`, and `ch` is a
+property of the TYPE — the right unit for a column of sentences and the wrong
+one for a picture. So this is G4, `--measure-figure: 416px`, in the amendments
+file, px on purpose and argued at its declaration.
+
+What I did NOT do: touch the diary's card artwork, which caps at
+`calc(var(--measure-body) * 0.6)` ≈ 422px. That is the same intent — *how wide
+does a picture get* — reached by different arithmetic, six pixels apart, and
+it would silently resize if the body font were ever swapped while the
+infographic would not.
+
+L14.3 says a pattern that recurs is a component request rather than a second
+copy, and this is the second copy.
+
+What I need from Ben: **whether the diary's card art should move to
+`--measure-figure` too.** It is a 6px change nobody would notice, and it would
+leave one answer to the question instead of two. I did not do it unasked
+because it is a visual change to a screen that was not under review.

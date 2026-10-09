@@ -759,6 +759,92 @@
   gap: var(--space-gap-stack);
 }
 
+/* ═══ THE REFLECT STEP'S THREE SECTIONS ═════════════════════════════════════
+   The box body is a question with its answer, then how the session left you,
+   then the way out. Three subjects, and until 2026-10-09 they ran together at
+   one gap: the scale sat --space-gap-stack from the answer box above it and
+   the same from the save row below, so the one question that is NOT about the
+   reflection read as part of it.
+
+   --space-section IS THE TOKEN FOR THIS, and Layer 1 names it exactly: "between
+   sections". --space-gap-group is the rung below — "molecules that do NOT
+   belong together" — and it is what separates the question from the mode
+   switch INSIDE a section. So the two distances say which is which rather than
+   both saying "some space".
+
+   AN ADJACENT-SIBLING RULE, NOT A WRAPPER. `WizardPanel` renders its action row
+   after this component's children and outside anything this file could wrap, so
+   a flex container with a `gap` would section the first two and leave the third
+   at the component's own margin. A margin between sections composes with what
+   the panel does next instead of fighting it.                                */
+.musie-reflect__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+}
+
+.musie-reflect__section + .musie-reflect__section {
+  margin-block-start: var(--space-section);
+}
+
+/* The section owns the gap now, so the markdown's own trailing margin would be
+   a second one. Same rule `.musie-sheet .musie-placeholder` states: one spacing
+   mechanism per container. */
+.musie-reflect__section > .musie-md { margin-block-end: 0; }
+
+/* And the way out is the third section, so it stands at a section's distance
+   rather than at the panel's default --space-gap-stack. Scoped to this step:
+   every other wizard step has one subject in its panel and wants the component's
+   own spacing. */
+.musie-reflect__section + .musy-wizard__actions {
+  margin-block-start: var(--space-section);
+}
+
+/* ═══ THE CARD IN A DIARY ENTRY ═════════════════════════════════════════════
+   The artwork of the card that was drawn, under the answer it prompted.
+
+   THE CAP IS SIXTY PERCENT OF THE BODY MEASURE, which is arithmetic over a
+   Layer 1 token rather than a number (L14.1) and lands near 420px. Two reasons
+   it is not the full measure: a card is an OBJECT beside prose rather than a
+   hero, and at 1.37:1 the full measure would make it 515px tall in an entry
+   whose subject is somebody's own sentences. It also keeps the shipped 768px
+   file at roughly 1.8× the largest slot — the retina margin, which the folder's
+   README records so a future widening knows to re-encode first.
+
+   `--surface-sunken` under it for the reason `.musie-exercise-card__image`
+   gives: while the file is in flight the band should read as a hole, not as a
+   change in the page's colour. The intrinsic `width`/`height` on the element
+   reserve the ratio so nothing below it moves when the image lands.          */
+.musie-diary__card {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  align-items: flex-start;
+}
+
+.musie-diary__card-art {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: calc(var(--measure-body) * 0.6);
+  block-size: auto;
+  border-radius: var(--radius-card);
+  background-color: var(--surface-sunken);
+}
+
+/* The code, as TEXT. Tabular figures because it is a part number being matched
+   against a stamp on a physical card, and label weight because it names the
+   picture rather than saying anything about it. */
+.musie-diary__card-code {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ═══ SCRIM ═════════════════════════════════════════════════════════════════
    Shared by every overlay, exactly as the prototype shares one.             */
 .musie-scrim {
@@ -1062,6 +1148,23 @@
   gap: var(--space-gap-related);
 }
 
+/* The transcription promise, beside the recorder. Caption weight: it is the
+   smallest true thing on the row and must not compete with the control it
+   describes. `--measure-heading` rather than the body measure because it
+   shares a line with a button — a 62ch sentence next to a 44px target reads
+   as a paragraph that happens to have a control in it. */
+.musie-voice__privacy {
+  margin: 0;
+  flex: 1 1 var(--measure-heading);
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
 /* ═══ PLAIN LIST ════════════════════════════════════════════════════════════
    L3: a run of repeated items is a list, so the count and position reach
    assistive tech instead of being drawn. Items sit at --space-gap-stack, and
@@ -1220,6 +1323,13 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
+  /* THE CHEVRONS ANIMATE, AND THE SWIPE IS UNTOUCHED. `page()` scrolls with
+     `behavior: 'auto'`, which means "use this element's `scroll-behavior`" —
+     so the animation lives here and the handler stays a statement about
+     direction. A finger still moves the scroller directly; this only governs
+     a programmatic jump, which is the one that arrives with no travel to
+     explain where a week went. */
+  scroll-behavior: smooth;
   /* The scrollbar is chrome on a picture. Hidden on the platforms that let it
      be, and the region is still keyboard-scrollable because it is focusable —
      which is what `tabIndex={0}` on it is for. */
@@ -1229,6 +1339,27 @@
   padding-block: var(--focus-ring-clearance);
 }
 .musie-graph__scroller::-webkit-scrollbar { display: none; }
+
+/* Layer 1 flattens its motion tokens under reduced motion, and
+   `scroll-behavior` is not a token it can reach — so this is the one place the
+   query has to be written out. */
+@media (prefers-reduced-motion: reduce) {
+  .musie-graph__scroller { scroll-behavior: auto; }
+}
+
+/* The week in view, beside the chevrons. Label weight: it is a readout, not a
+   heading, and the <h2> two elements away is what names the region. */
+.musie-graph__week-label {
+  margin: 0;
+  margin-inline-start: auto;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
 
 .musie-graph__week {
   flex: 0 0 100%;
@@ -1403,12 +1534,23 @@
    Sized exactly like a mark, through the same three declarations, because a
    baseline that did not line up with the stacks above it would be worse than
    no baseline. */
+/* ── AN EMPTY DAY FADES OUT UPWARD — Ben, 2026-10-09 ──────────────────────
+   It was a solid --surface-sunken square, the same box a session's mark sits
+   in, and user testing read the column as "one per day, and this one is
+   missing". The stack grows UPWARD from the axis, so a square that is solid at
+   the bottom and dissolves at the top says two things at once: nothing
+   happened here, and there is room above for more than one.
+
+   A GRADIENT TO `transparent`, NOT AN OPACITY. Layer 1 ships no opacity token
+   and L14.1 forbids inventing one; `transparent` is a colour keyword, and the
+   stop it fades to is the surface the page already is. The same reasoning the
+   board records against dimming the abandoned mark with a literal 0.55. */
 .musie-graph__blank {
   inline-size: 100%;
   max-inline-size: var(--target-primary);
   aspect-ratio: 1;
   border-radius: var(--radius-card);
-  background-color: var(--surface-sunken);
+  background-image: linear-gradient(to top, var(--surface-sunken), transparent);
 }
 
 .musie-graph__image {
@@ -1693,7 +1835,10 @@ html[data-musy-scroll-snap] {
 .musie-listen__infographic {
   display: block;
   inline-size: 100%;
-  max-inline-size: var(--measure-body);
+  /* G4, not `--measure-body`: a picture is not a column of sentences, and at
+     62ch this ran the full reading width and dominated a step whose subject
+     is the audio. Ben's number, from the screen, 2026-10-09. */
+  max-inline-size: var(--measure-figure);
   block-size: auto;
   margin-block: calc(var(--space-inset-card) - var(--space-gap-related));
   border-radius: var(--radius-md);
@@ -1933,7 +2078,12 @@ html[data-musy-scroll-snap] {
    Scoped to the sheet. The stage's headline is still one short sentence and is
    still a step headline, so it keeps both defaults.                         */
 .musie-immersive__lead .musie-md h2 {
-  max-inline-size: 50ch;
+  /* THE 50ch LITERAL IS GONE — it became `--measure-heading` on 2026-10-09.
+     This rule asked for it first, and the note above is the argument that was
+     eventually applied to every heading rather than to this one sheet. What is
+     left is the other half, which is NOT the default: `balance` evens lines
+     instead of filling them, so a question-and-instruction run together wants
+     the body's `pretty` even now the cap is wide enough. */
   text-wrap: var(--text-wrap-body);
 }
 
