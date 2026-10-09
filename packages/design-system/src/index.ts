@@ -146,7 +146,14 @@ export type { VoiceNoteProps, VoiceNoteState } from './VoiceNote';
 
 export { TrackButton, MusicPlayer, trackClock } from './MusicPlayer';
 
-export type { TrackButtonProps, MusicPlayerProps, MusicTransport } from './MusicPlayer';
+export type {
+  TrackButtonProps, MusicPlayerProps, MusicTransport, TrackGateState,
+} from './MusicPlayer';
+
+/* An ORDERED set of points, not a set of alternatives — which is what keeps it
+   out of §15. FeelingsScale.tsx's header tells the two apart. */
+export { FeelingsScale } from './FeelingsScale';
+export type { FeelingsScaleProps, FeelingsScalePoint } from './FeelingsScale';
 
 export { RecordButton, recordClock } from './RecordButton';
 export type { RecordButtonProps, RecordButtonState } from './RecordButton';

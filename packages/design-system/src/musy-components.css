@@ -2798,7 +2798,15 @@
   inset-inline: var(--space-gap-stack);
   margin-inline: auto;
   width: fit-content;
-  max-width: var(--measure-heading);
+  /* THE ACTIONLESS CAP IS THE BODY MEASURE (2026-10-09). --measure-heading was
+     tuned for the three-part row below — text, a ghost action, a dismiss —
+     which is the case that genuinely runs out of width. A toast carrying only
+     a sentence has roughly 150px it never uses, and was wrapping to four lines
+     inside a ~280px box against a constraint belonging to a layout it does not
+     have. Measured and argued in apps/web/OPEN-QUESTIONS.md L4855; the request
+     was for exactly this rule rather than a new prop, and the screen that
+     wanted it was told not to widen the component from its own stylesheet. */
+  max-width: var(--measure-body);
 
   display: flex;
   /* IT WRAPS, and that is the fix rather than a shrink tuning. The RIGID parts
@@ -2822,6 +2830,12 @@
 
   animation: musy-toast-in var(--motion-duration-base) var(--motion-ease-entrance);
 }
+
+/* And back to the heading measure when the row also has to hold a button —
+   the case the paragraph above describes, and the only one the original cap
+   was ever measuring. Written as an override rather than as two full rules so
+   the shared geometry stays in one place. */
+.musy-toast[data-has-action] { max-width: var(--measure-heading); }
 
 .musy-toast__text {
   margin: 0;
@@ -6724,4 +6738,146 @@ html[data-musy-scroll-snap='y'] {
   .musy-filter__values { border: var(--border-width-hairline) var(--border-style-solid) CanvasText; }
   .musy-filter__dimension[data-disabled],
   .musy-filter__value[data-disabled] { border-color: GrayText; color: GrayText; }
+}
+
+
+/* ═══ 25 · FEELINGS SCALE ══════════════════════════════════════════════════
+   An ORDERED set of points, not a set of alternatives. §15 looks like this
+   and means something else — FeelingsScale.tsx's header is where the two are
+   told apart, and the short version is that reordering a segmented control
+   changes nothing while reordering a scale asks a different question.
+
+   THE AXIS IS A ::before ON THE TRACK, for the reason the component says: a
+   line between the points is not selectable, so it should not be a node. It
+   is inset by half a mark so it begins and ends under the first and last
+   glyph rather than running past them into the gutter — `calc()` over the
+   target token, never a literal (L14.1).
+
+   THE MARK IS --target-primary, which is the floor 2.5.8 wants of a lone
+   target and is also what makes the row read as points rather than as a bar:
+   each one is a circle with clear space around it, where §15's segments share
+   one continuous track. Same reason the gap is --space-gap-stack and not the
+   seg track's zero.
+
+   SELECTION IS CARRIED THREE WAYS, as §7.7 requires and for the same reason:
+   fill, a thickened edge, and the label going to full ink. None of the three
+   is colour alone (1.4.1).                                                  */
+.musy-scale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.musy-scale__track {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-gap-stack);
+  align-items: start;
+}
+
+/* The axis. Behind the marks, inset by half a mark at each end so it connects
+   the points instead of overhanging them. */
+.musy-scale__track::before {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(var(--target-primary) / 2);
+  inset-inline: calc(var(--target-primary) / 2);
+  block-size: var(--border-width-hairline);
+  background-color: var(--border-subtle);
+  pointer-events: none;
+}
+
+.musy-scale__point {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--on-surface-muted);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  transition: color var(--motion-toggle);
+}
+
+.musy-scale__mark {
+  display: grid;
+  place-items: center;
+  inline-size: var(--target-primary);
+  block-size: var(--target-primary);
+  border-radius: var(--radius-full);
+  background-color: var(--surface);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  color: var(--on-surface-muted);
+  transition:
+    background-color var(--motion-toggle),
+    border-color var(--motion-toggle),
+    color var(--motion-toggle);
+}
+
+.musy-scale__label { text-align: center; text-wrap: balance; }
+
+/* ── SELECTED ───────────────────────────────────────────────────────────── */
+.musy-scale__point[data-checked] { color: var(--on-surface); }
+
+.musy-scale__point[data-checked] .musy-scale__mark {
+  background-color: var(--interactive-primary-subtle);
+  border-color: var(--interactive-primary);
+  border-width: var(--border-width-thick);
+  color: var(--interactive-primary-on-subtle);
+}
+
+.musy-scale--accent .musy-scale__point[data-checked] .musy-scale__mark {
+  background-color: var(--interactive-accent-subtle);
+  border-color: var(--interactive-accent-border);
+  color: var(--interactive-accent-on-subtle);
+}
+
+.musy-scale--accent-alt .musy-scale__point[data-checked] .musy-scale__mark {
+  background-color: var(--interactive-accent-alt-subtle);
+  border-color: var(--interactive-accent-alt-border);
+  color: var(--interactive-accent-alt-on-subtle);
+}
+
+/* ── HOVER, FOCUS, DISABLED ─────────────────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .musy-scale__point:not([data-disabled]):hover .musy-scale__mark {
+    border-color: var(--border-strong);
+  }
+}
+
+.musy-scale__point:focus-visible { outline: none; }
+
+.musy-scale__point:focus-visible .musy-scale__mark {
+  outline: var(--focus-ring-width) var(--border-style-solid) var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.musy-scale__point[data-disabled] {
+  color: var(--on-surface-disabled);
+  cursor: not-allowed;
+}
+
+.musy-scale__point[data-disabled] .musy-scale__mark {
+  color: var(--on-surface-disabled);
+  border-color: var(--border-subtle);
+}
+
+@media (forced-colors: active) {
+  .musy-scale__mark { border: var(--border-width-regular) var(--border-style-solid) CanvasText; }
+  .musy-scale__point[data-checked] .musy-scale__mark { border-color: Highlight; }
+  .musy-scale__point[data-disabled] .musy-scale__mark { border-color: GrayText; }
+  .musy-scale__track::before { background-color: CanvasText; }
 }

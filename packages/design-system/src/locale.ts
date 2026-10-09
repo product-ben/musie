@@ -146,6 +146,15 @@ export interface MusyTextCatalogue {
   trackPause: string;
   trackRestart: string;
 
+  /* ── Playback · TrackButton, with a minimum behind it ─────────────────
+     Used only when `gateSeconds` is set. Each may carry `{time}` once — the
+     minimum, what is left of it, what is left of the track. The ENDED word is
+     `trackRestart` above, shared: "play it again" is the same offer whether or
+     not an exercise asked for a minimum. */
+  trackUnstarted: string;
+  trackBelowMinimum: string;
+  trackPastMinimum: string;
+
   /* ── Capture · RecordButton ──────────────────────────────────────────── */
   recordReady: string;
   recordRecording: string;
@@ -265,7 +274,11 @@ export const musyTextDe: MusyTextCatalogue = {
 
   trackPlay: 'Jetzt anhören',
   trackPause: 'Pause',
-  trackRestart: 'Noch einmal',
+  trackRestart: 'Nochmal hören',
+
+  trackUnstarted: 'Jetzt anhören (mindestens {time})',
+  trackBelowMinimum: 'Weiter hören (mindestens {time})',
+  trackPastMinimum: 'Noch weiter hören ({time})',
 
   recordReady: 'Jetzt aufnehmen',
   recordRecording: 'Aufnahme läuft',
@@ -355,7 +368,11 @@ export const musyTextEn: MusyTextCatalogue = {
 
   trackPlay: 'Start Listening',
   trackPause: 'Pause',
-  trackRestart: 'Replay',
+  trackRestart: 'Listen again',
+
+  trackUnstarted: 'Listen now (at least {time})',
+  trackBelowMinimum: 'Keep listening (at least {time})',
+  trackPastMinimum: 'Listen on ({time})',
 
   recordReady: 'Record Now',
   recordRecording: 'Recording',
