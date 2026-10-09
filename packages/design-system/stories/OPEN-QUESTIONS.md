@@ -4025,3 +4025,35 @@ effect re-attached with the latch cleared, and the momentum still arriving
 spent itself one card at a time. On a five-card pile that is a full cycle, so
 it read as the gesture doing nothing at all. Found by driving a real burst in a
 browser; reading it would not have found it.
+
+### Follow-up, same day: "one gesture" cannot be measured by silence — RESOLVED
+
+Ben, on the branch: *"It works for the first card, but doesn't work when I
+scroll multiple times fast after each other."*
+
+The first cut ended a gesture when the wheel stream went quiet for 140ms. It
+never does. A trackpad coasts for up to a second after the fingers lift, every
+coasting event rearmed the timer, and so a second flick arriving mid-coast was
+swallowed by a latch waiting for a silence the FIRST flick was still
+preventing. One card per burst, and then nothing until you stopped scrolling
+altogether.
+
+What ends a gesture is not silence but DECAY: whatever the fingers did, the
+tail that follows them falls away, and nothing coasting climbs. So a new push
+is a delta that has fallen under half this gesture's peak and then climbed back
+past the event before it by more than jitter — or any reversal of sign, which
+needs no ratio because nothing coasting changes direction.
+
+BOTH HALVES ARE LOAD-BEARING, and the first attempt had only the rise. A push
+of 30, 70, 110 climbs 1.57× while the fingers are still moving, a hair under
+the 1.6 ratio, so a slightly harder flick cleared it: **three flicks dealt 26
+cards.** The decay gate is what tells a flick that is still going from one that
+has ended.
+
+Worth recording about the TESTING, because it cost two wrong fixes: a synthetic
+burst must be ONE stream. Modelling a second flick as a second stream firing
+alongside the first's tail produces oscillating deltas that exist on no
+hardware — the OS merges a new push into the single wheel stream and cancels
+the coast. Measured against the honest model: 1 flick 1 card, 3 at 180ms 3
+cards, 4 at 80ms 4 cards, gentle and hard flicks alike, two runs of eight
+scenarios clean.

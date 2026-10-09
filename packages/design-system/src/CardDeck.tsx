@@ -164,12 +164,41 @@ const WHEEL_STEP_PX = 60;
 
 /** How long the wheel stream must be quiet before the next card can move.
  *
- *  THIS IS WHAT MAKES ONE GESTURE ONE CARD. A trackpad keeps firing for half a
- *  second after the fingers lift — momentum, decaying, and indistinguishable
- *  from a deliberate second push by delta alone — so the gesture is latched
- *  the moment it spends itself and only a genuine pause unlatches it. Without
- *  it, one flick deals the whole pile. */
+ *  A FALLBACK, NOT THE MAIN RULE — and it was the main rule for one commit,
+ *  which is why repeating the gesture quickly did nothing (Ben, 2026-10-09).
+ *  A trackpad coasts for up to a second after the fingers lift, every coasting
+ *  event rearms this timer, and so a second flick arriving mid-coast was
+ *  swallowed by a latch waiting for a silence that the FIRST flick was still
+ *  preventing. Silence only arrives when somebody stops scrolling altogether,
+ *  which is the one case this still covers. */
 const WHEEL_SETTLE_MS = 140;
+
+/** How much bigger than the event before it a delta must be to count as a new
+ *  push rather than the tail of the last one.
+ *
+ *  MOMENTUM ONLY EVER DECAYS. That is the whole discriminator, and it is a
+ *  fact about the hardware rather than a tuned number: a coasting trackpad
+ *  hands back a monotonically shrinking delta at ~60fps, so anything that
+ *  climbs is a hand that pushed again. The ratio is the tolerance for a stream
+ *  that is not perfectly monotonic — 1.6 is comfortably above the jitter and
+ *  comfortably below a real second flick, which arrives several times the size
+ *  of whatever the tail had decayed to. */
+const WHEEL_RISE_RATIO = 1.6;
+
+/** How far below its own peak the stream must fall before a rise is allowed to
+ *  mean anything.
+ *
+ *  A RISE ALONE IS NOT ENOUGH, and this is the half that was missing. A single
+ *  flick is not monotonic while the fingers are still moving — a push of
+ *  30, 70, 110 climbs 1.57× on its own, a hair under the ratio above, and a
+ *  slightly harder flick clears it and deals a second card nobody asked for.
+ *  Measured: 3 flicks dealt 26 cards before this existed.
+ *
+ *  Coasting is the thing that cannot be faked: whatever the fingers did, the
+ *  tail that follows them falls away. So a rise only counts once the stream
+ *  has dropped under half of this gesture's own biggest delta, which is the
+ *  shape of a flick ending and nothing else. */
+const WHEEL_DECAY_RATIO = 0.5;
 
 /**
  * What a face is handed when it is written as a FUNCTION — the deck's own
@@ -415,8 +444,15 @@ export function CardDeck({
   const wheeling = React.useRef<{
     travelled: number;
     spent: boolean;
+    /** The last delta seen, SIGNED: its size is what a new push has to climb
+     *  above, and its sign is what a reversal is measured against. */
+    last: number;
+    /** The biggest delta this gesture has produced, and whether the stream has
+     *  since fallen away from it. Together they are "the flick has ended". */
+    peak: number;
+    decayed: boolean;
     settle: ReturnType<typeof setTimeout> | undefined;
-  }>({ travelled: 0, spent: false, settle: undefined });
+  }>({ travelled: 0, spent: false, last: 0, peak: 0, decayed: false, settle: undefined });
 
   const byId = React.useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
@@ -592,16 +628,39 @@ export function CardDeck({
 
       event.preventDefault();
 
-      clearTimeout(w.settle);
-      w.settle = setTimeout(() => { w.travelled = 0; w.spent = false; }, WHEEL_SETTLE_MS);
-      if (w.spent) return;
+      const size = Math.abs(event.deltaX);
+      const rearm = () => {
+        w.travelled = 0; w.spent = false; w.last = 0; w.peak = 0; w.decayed = false;
+      };
 
+      clearTimeout(w.settle);
+      w.settle = setTimeout(rearm, WHEEL_SETTLE_MS);
+
+      if (size < w.peak * WHEEL_DECAY_RATIO) w.decayed = true;
+
+      if (w.spent) {
+        /* COASTING, OR PUSHED AGAIN? A reversal is a hand and needs no ratio:
+           nothing coasting changes sign. Otherwise it takes BOTH halves — the
+           stream has to have fallen away from this gesture's peak, and then
+           climbed back past the event before it. One without the other is a
+           flick that is still going. */
+        const reversed = Math.sign(event.deltaX) !== Math.sign(w.last);
+        const pushedAgain = w.decayed && size > Math.abs(w.last) * WHEEL_RISE_RATIO;
+        if (!reversed && !pushedAgain) {
+          w.last = event.deltaX;
+          return;
+        }
+        rearm();
+      }
+
+      w.last = event.deltaX;
+      w.peak = Math.max(w.peak, size);
       w.travelled += event.deltaX;
       if (Math.abs(w.travelled) < WHEEL_STEP_PX) return;
 
       /* Latched here and not at the end of the burst, so the card moves while
-         the fingers are still down and the momentum that follows is spent on
-         a gesture that has already been answered. */
+         the fingers are still down and the coast that follows is spent on a
+         gesture that has already been answered. */
       w.spent = true;
       if (w.travelled > 0) next(frontId, STILL);
       else previous(frontId);
