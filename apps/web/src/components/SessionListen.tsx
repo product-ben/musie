@@ -81,7 +81,7 @@ const TICK_MS = 250;
  * every exercise, so it is the app's own asset and not the content's — no
  * column, no migration, no per-locale alt in the database.
  */
-const INFOGRAPHIC_SRC = '/assets/web/infographics/infographic-listen-and-see.png';
+const INFOGRAPHIC_SRC = '/assets/web/infographics/infographic-listen-and-see.webp';
 
 function clock(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds));

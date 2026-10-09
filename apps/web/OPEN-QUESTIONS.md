@@ -7480,7 +7480,7 @@ has no component for this". It is still one screen, so by L14.3 it is not a
 component request yet. The second screen that wants a scrolling toolbar is the
 moment it becomes one, and this entry is the note to point at then.
 
-## The listen step's picture ships as a 2.9 MB PNG
+## The listen step's picture ships as a 2.9 MB PNG — RESOLVED
 
 Where: `apps/web/public/assets/web/infographics/infographic-listen-and-see.png`,
 drawn by `INFOGRAPHIC_SRC` in `src/components/SessionListen.tsx`
@@ -7509,6 +7509,29 @@ worth looking at rather than assuming.
 What I need from Ben: **say the word and it becomes a WebP** — one line, same
 dimensions, and the only edit is the extension in `INFOGRAPHIC_SRC`. Before
 anything is deployed it has to happen either way.
+
+**RESOLVED 2026-10-09.** Ben said the word, and it happened before the first
+deploy that would have served it — the build of `59aabab` reached production
+for about seventy seconds on 2026-10-09, which is as close to shipping it as
+this got.
+
+198 KB at quality 80, 1672 × 941 unchanged: **93% off**. The lossy half was
+checked at 1:1 against the master rather than assumed, because this is the
+case the entry above flagged — a drawing with flat areas and fine engraving
+lines. Lines, glyphs and edges survive; only the paper grain softens, and
+`.musie-listen__infographic` caps the display at `--measure-body` (704px), so
+a 1672px source renders downscaled 2.4× and the grain sits below the rendered
+resolution.
+
+The master moved to `~/Documents/musie-artwork/infographics/`, beside the
+exercise set's, for the reason `../exercises/README.md` already gives: a
+master under `public/` ships to every visitor without being requested.
+
+**The 2.9 MB blob is still in this branch's history** (`9a6d4f3`), and
+deleting the file does not take it out. It is NOT yet on `main` — the rewind
+on 2026-10-09 took it back off — so the only way to keep it out of `main`
+permanently is to rewrite the branch before merging. Not done, and not
+recommended for 2.9 MB; recorded so the choice is a choice.
 
 ## The subline is gone and the legend never taught the list view
 

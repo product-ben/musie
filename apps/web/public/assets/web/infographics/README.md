@@ -25,19 +25,28 @@ Three edits, and no migration:
 
 ## The shipped file
 
-`infographic-listen-and-see.png` is **1672 × 941, 2.9 MB**, the master as
-delivered.
+`infographic-listen-and-see.webp` is **1672 × 941, 198 KB**, quality 80.
 
-That is heavier than anything else under `public/`, and everything under
-`public/` is copied into the build verbatim and served to every visitor. The
-exercise set next door was re-encoded for exactly this reason — 17 MB of PNG
-for one screen became 748 KB of WebP — and the one line that did it is in
-`../exercises/README.md`:
+It shipped as the delivered PNG for two days — 2.9 MB, heavier than everything
+else under `public/` put together — because the artwork was still moving and
+there was no second step picture to set a format against. Re-encoded on
+2026-10-09, before the first deploy that would have served it. The line is the
+exercise set's, unchanged but for the dimensions:
 
 ```js
 sharp(src).resize(1672, 941, { fit: 'inside' }).webp({ quality: 80, effort: 6 })
 ```
 
-The listen step is phone-first and the picture is above the fold, so this is a
-real cost on a real screen. It is kept as the delivered PNG for now because the
-artwork is still moving; re-encode before anything ships.
+**93% off, and the loss is invisible where it is used.** Checked at 1:1 against
+the master rather than assumed, which is what the paragraph this replaces asked
+for: the engraving lines, the note glyphs and the card edges are intact, and
+only the paper grain is softened — lossy compression doing its job on noise.
+`.musie-listen__infographic` caps the display at `--measure-body`, 704px, so
+the 1672px source renders downscaled 2.4× and the grain is below the rendered
+resolution either way.
+
+**The master lives outside the repo**, at
+`~/Documents/musie-artwork/infographics/` on Ben's machine, beside the exercise
+set's. Everything under `public/` is copied into the build verbatim, so a
+master kept here ships to every visitor without ever being requested — which is
+exactly what happened to this one.
