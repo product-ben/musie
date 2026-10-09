@@ -153,6 +153,24 @@ const OVERLAY_FULL_AT = 0.1;
  *  FORWARD ONLY — see `progress` in onPointerMove. */
 const PILE_CLOSES_AT = 0.6;
 
+/** How far a horizontal scroll travels before the pile moves one card.
+ *
+ *  NOT `SLOP_PX`, and not a fraction of the card either. A trackpad reports
+ *  distance the hand never travelled — one short two-finger flick is a burst
+ *  of events summing to several hundred px — so this is a number about the
+ *  INPUT, not about the card, and it is the only threshold here that is.
+ *  60px is roughly the smallest deliberate nudge that is not a tremor. */
+const WHEEL_STEP_PX = 60;
+
+/** How long the wheel stream must be quiet before the next card can move.
+ *
+ *  THIS IS WHAT MAKES ONE GESTURE ONE CARD. A trackpad keeps firing for half a
+ *  second after the fingers lift — momentum, decaying, and indistinguishable
+ *  from a deliberate second push by delta alone — so the gesture is latched
+ *  the moment it spends itself and only a genuine pause unlatches it. Without
+ *  it, one flick deals the whole pile. */
+const WHEEL_SETTLE_MS = 140;
+
 /**
  * What a face is handed when it is written as a FUNCTION — the deck's own
  * accept, for a face that would rather place it than be drawn over.
@@ -381,6 +399,24 @@ export function CardDeck({
      /exercises wants the deal, because the deck is mounted BY the choice. */
   const dealt = React.useRef<string | undefined>(undefined);
   const pile = React.useRef<HTMLDivElement>(null);
+  /**
+   * The scroll gesture's latch, on a ref because it MUST OUTLIVE THE LISTENER.
+   *
+   * FOUND BY DRIVING A REAL BURST, not by reading. These three were locals
+   * inside the effect, which looked right and dealt five cards on one flick:
+   * the effect depends on `frontId`, dealing a card changes `frontId`, so the
+   * effect tore down and re-attached with `spent` back to false — and the
+   * momentum still arriving spent itself one card at a time. The pile cycled
+   * back to where it started, which is why it read as nothing happening.
+   *
+   * A ref is the whole fix: the listener may be rebuilt as often as it likes
+   * and the gesture it is halfway through is still the same gesture.
+   */
+  const wheeling = React.useRef<{
+    travelled: number;
+    spent: boolean;
+    settle: ReturnType<typeof setTimeout> | undefined;
+  }>({ travelled: 0, spent: false, settle: undefined });
 
   const byId = React.useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
@@ -504,6 +540,76 @@ export function CardDeck({
     setArriving({ key: arriveKey.current, id: back });
     onPrevious(id);
   }, [browsable, inert, onPrevious, order]);
+
+  /**
+   * ── THE SCROLL GESTURE ────────────────────────────────────────
+   * A trackpad's two-finger sideways scroll moves the pile. Ben, 2026-10-09.
+   *
+   * ── IT IS DIRECTIONAL, AND THE SWIPE IS NOT ──────────────────────
+   * The file header says both swipes deal the next card, and that going back
+   * "is a button and a key, and the one thing the gesture does not do". That
+   * still holds for the SWIPE, and it was decided on a phone: a pile of cards
+   * under a thumb is a thing you throw, and the hand picks which way the card
+   * goes, not which way the pile turns.
+   *
+   * A WHEEL IS NOT A THROW. Nothing leaves your hand, nothing has a direction
+   * to be thrown in, and the mental model is a track you move ALONG — which is
+   * why every horizontal scroller on the machine, this package's own Carousel
+   * included, answers a rightward scroll with the next thing. So this gesture
+   * is read the way the ARROW KEYS are read, which is the mapping this
+   * component already has: right is `next`, left is `previous`.
+   *
+   * THE TWO CAN DISAGREE ON ONE LAPTOP, and that is the cost: a mouse DRAG
+   * deals forward whichever way it goes, while a trackpad SCROLL goes back if
+   * it goes left. Logged in stories/OPEN-QUESTIONS.md rather than resolved
+   * here, because resolving it means re-opening a decision Ben made on a
+   * device and this is not that change.
+   *
+   * ── A NATIVE LISTENER, BECAUSE REACT'S IS PASSIVE ────────────────
+   * `onWheel` goes through React's root delegation, where `wheel` is attached
+   * passively — `preventDefault()` from there is ignored and warns. It has to
+   * be prevented: on macOS a horizontal overscroll is the BROWSER'S BACK
+   * GESTURE, so without this a scroll that runs past the end of the pile
+   * leaves the app. That is also why the listener sits on the pile rather than
+   * on the stage: the smallest surface that owns the gesture.
+   *
+   * ── WHAT IT DECLINES TO TAKE ──────────────────────────────
+   * A gesture more vertical than horizontal is the page's, and is not
+   * prevented — a deck sits mid-page and a thumb scrolling past it must not
+   * be caught. Neither is a gesture the pile could not answer: `inert`, or a
+   * pile with nothing to turn to. Swallowing those would stop the page doing
+   * what it would have done and give nothing back.
+   */
+  React.useEffect(() => {
+    const element = pile.current;
+    if (element === null) return undefined;
+
+    const w = wheeling.current;
+
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+      if (inert || !browsable) return;
+
+      event.preventDefault();
+
+      clearTimeout(w.settle);
+      w.settle = setTimeout(() => { w.travelled = 0; w.spent = false; }, WHEEL_SETTLE_MS);
+      if (w.spent) return;
+
+      w.travelled += event.deltaX;
+      if (Math.abs(w.travelled) < WHEEL_STEP_PX) return;
+
+      /* Latched here and not at the end of the burst, so the card moves while
+         the fingers are still down and the momentum that follows is spent on
+         a gesture that has already been answered. */
+      w.spent = true;
+      if (w.travelled > 0) next(frontId, STILL);
+      else previous(frontId);
+    };
+
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, [browsable, frontId, inert, next, previous]);
 
   /* ── THE GESTURE ───────────────────────────────────────────────────────
      THE HANDLERS ARE ON THE STAGE, not on the card. The stage outlives every

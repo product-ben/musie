@@ -3978,3 +3978,50 @@ card would mean reordering the pile to an index the deck has no gesture for —
 it deals forward and undoes backward, and that is the whole model. If the
 dots should become a way to jump, that is a change to what the pile can do,
 not a prop.
+
+## Two horizontal gestures on one laptop now mean different things — OPEN
+
+Where: `src/CardDeck.tsx`, the scroll gesture (2026-10-09) against the pointer
+drag above it.
+
+What Ben asked for: next and previous by scrolling sideways. Delivered, mapped
+the way the ARROW KEYS are mapped, because that mapping already exists in this
+component — right deals, left brings back.
+
+What that costs: on a laptop the deck now answers two horizontal gestures with
+two different rules.
+
+| gesture | left | right |
+|---|---|---|
+| drag (mouse, finger) | deal next | deal next |
+| scroll (trackpad) | **previous** | next |
+
+Neither half is arbitrary. The swipe is symmetric because Ben settled it on a
+phone on 2026-10-05 — *"when I swipe a card to the right, I expect it to fade
+away with a slight rotation"* — a pile under a thumb is a thing you throw, and
+the hand picks where the card goes, not which way the pile turns. The scroll is
+directional because a wheel is not a throw: nothing leaves your hand, the model
+is a track you move along, and every horizontal scroller on the machine —
+`Carousel` in this package included — answers a rightward scroll with the next
+thing. A symmetric scroll would also make *previous* unreachable by the gesture
+Ben asked to reach it with.
+
+So the two rules are each right about their own input and visibly disagree on
+the one device that has both. A touch screen never sees it; a phone has no
+wheel, and the trackpad user is the only person who can hold both models at
+once.
+
+What I need from Ben: **whether the mouse DRAG should become directional too**,
+so a laptop has one rule. It would leave touch alone — a drag with a mouse is
+not the gesture the phone decision was about — and it would cost the symmetry
+on the input where symmetry was never tested. Not done here: it reopens a call
+made on a device, and this change was not that.
+
+Worth recording separately, because it is the second time this component has
+been bitten the same way: the latch that makes one flick one card lives on a
+**ref** and not in the effect. As a local it looked right and dealt five cards
+per flick — the effect depends on `frontId`, dealing changes `frontId`, the
+effect re-attached with the latch cleared, and the momentum still arriving
+spent itself one card at a time. On a five-card pile that is a full cycle, so
+it read as the gesture doing nothing at all. Found by driving a real burst in a
+browser; reading it would not have found it.
