@@ -90,15 +90,15 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 
 | | Item | Status | Test |
 |---|---|---|---|
-| D1 | `codeHint` names the back of the card | ☐ | |
-| D2 | Drop the `MC-01` placeholder and its key | ☐ | |
+| D1 | `codeHint` names the back of the card | ☑ | scan step → *Code eingeben* — the hint under the field |
+| D2 | Drop the `MC-01` placeholder and its key | ☑ | same field, empty — no grey `MC-01` inside it |
 
 ### Phase E · Card names — display only
 
 | | Item | Status | Test |
 |---|---|---|---|
-| E1 | Strip the feeling from the two composed labels | ☐ | |
-| E2 | Drop the card fact from the diary | ☐ | |
+| E1 | Strip the feeling from the two composed labels | ☑ | scan result, and the listen step's details view |
+| E2 | Drop the card fact from the diary | ☑ | [/diary](http://localhost:5175/diary) → any entry → *Session-Details* |
 
 ### Phase F · Diary
 
@@ -191,6 +191,7 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **D + E landed.** The scan hint names the back of the card; the `MC-01` placeholder is gone with its key. Card labels are the code alone at all four render sites, display-only — no migration, so `deck:pdf` still prints the feeling on the four cards that have no artwork. The diary's card fact went entirely, and with it the `cards` join in both selects and its mirror in `diary.db.test.ts`. |
 | 2026-10-09 | **R1/R2 landed.** The reflect body is three sections at `--space-section` (48px, measured both gaps). `--measure-heading` raised 26ch → 50ch in Layer 1 — a second deliberate break of the lock, recorded in the design system README — with `--measure-compact: 26ch` added so the toast's arithmetic cap and the drag preview keep what they were tuned against. The raw `50ch` literal in shell.css is gone, absorbed by the token it was waiting for. |
 | 2026-10-09 | **Phase C landed** (C1–C8). One way out of /reflect with its completion dialog, the feelings scale on the step, the Störer's forward swap, the glyph corrections, and `privacy.voiceShort` rendered for the first time since it was written. |
 | 2026-10-09 | **C3 finished properly.** Walking the real app showed the stage CTA *still* printing a second countdown — "Fokussiere dich für 01:30 Minuten", which was both the second clock and an mm:ss value in a sentence saying "Minuten". It now reads *Zuerst hören, dann reflektieren* and the transport owns the number. Verified: one countdown on the stage, zero trailing readouts. |

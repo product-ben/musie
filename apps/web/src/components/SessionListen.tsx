@@ -835,7 +835,17 @@ export function SessionListen({
     }]),
     ...(card === null ? [] : [{
       label: t('session.scan.yourCard'),
-      content: `${card.code} · ${card.feeling}`,
+      /* THE CODE ALONE — Ben, 2026-10-09. It read `MC-08 · Einsamkeit`: the
+         printed code and the feeling word the card is named for. The feeling
+         goes from every screen; what identifies a card to somebody holding the
+         deck is the code stamped on its back.
+
+         DISPLAY ONLY, AND DELIBERATELY SO. `card_i18n.feeling` is `not null`,
+         `deck.mjs` refuses an empty one, and `deck:pdf` prints the word on the
+         physical FRONT of MC-06…MC-09, which have no artwork master — emptying
+         the data would print four blank cards. So four render sites change and
+         no migration does. */
+      content: card.code,
     }]),
     /* THE DESCRIPTION WITHOUT ITS HEADLINE. `ContentList` takes a label and a
        VALUE, and the step's headline is already the label's job — "Listen

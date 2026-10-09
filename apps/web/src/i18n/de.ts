@@ -342,7 +342,13 @@ export const de: Messages = {
      (Migration 20260924…_scan_md_phone_camera.sql). Das zweite Satzpaar sagt
      jetzt die Schaltfläche selbst. */
   'session.scan.codeLabel': 'Kartencode',
-  'session.scan.codePlaceholder': 'MC-01',
+  /* KEIN 'session.scan.codePlaceholder' mehr. Es stand `MC-01` darin, ein
+     Beispiel und kein Label (3.3.2) — und das Beispiel war das Problem: ein
+     Platzhalter wird in `--on-surface-muted` bei Deckkraft 1 gezeichnet, eine
+     Tonstufe neben einem echten Wert, und darunter lag ein Absenden, das bei
+     leerem Feld gesperrt ist. Das leere Feld sah gefüllt aus und der Knopf
+     kaputt. Der Hinweis darunter nennt das Beispiel an einer Stelle, an der es
+     niemand für eine Eingabe hält. */
   /* Verbphrase, §3 — das Feld dahinter heißt schon 'Kartencode', die
      Schaltfläche sagt also, was sie tut, und nicht noch einmal, was kommt.
 
@@ -353,7 +359,11 @@ export const de: Messages = {
      Icon-Buttons über dem Kamerabild, wo drei Wörter als Tooltip zu viel
      wären. */
   'session.scan.codeManual': 'Code eingeben',
-  'session.scan.codeHint': 'Der Code steht neben dem QR-Code auf der Karte, zum Beispiel MC-01.',
+  /* Wo der Code wirklich steht (2026-10-09). Vorher: 'neben dem QR-Code' —
+     das stimmt seit dem 2026-10-02 nicht mehr, seit der QR-Code die Vorderseite
+     ganz verlassen hat. Beide stehen jetzt auf der Rückseite, der Code direkt
+     unter dem Stempel. Gedankenstrich mit Leerzeichen, §7. */
+  'session.scan.codeHint': 'Der Code steht auf der Rückseite, direkt unter dem QR-Code – zum Beispiel MC-01.',
   /* A verb phrase, not 'Diese Karte' (§3) — the button performs an act. */
   'session.scan.codeSubmit': 'Diese Karte nehmen',
   'session.scan.codeMalformed': 'Ein Kartencode sieht aus wie MC-01. Schau noch einmal auf deine Karte.',

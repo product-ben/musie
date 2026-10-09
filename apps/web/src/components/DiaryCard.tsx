@@ -217,9 +217,12 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
       content: t('diary.duration', { minutes: String(minutes) }),
     });
   }
-  if (entry.cardFeeling !== null) {
-    facts.push({ label: t('diary.card'), content: entry.cardFeeling });
-  }
+  /* NO CARD FACT — Ben, 2026-10-09. It read the feeling word alone, which is
+     the one thing the deck is no longer named by anywhere else; and the diary
+     never selected `cards.code`, so there was nothing true left to put in its
+     place without widening two selects for one row of metadata. The entry
+     records the exercise, the question and the answer; which card fell out of
+     the pack is not what somebody comes back for. */
   if (abandoned) {
     /* The step, translated, as the VALUE — the label holds the preposition.
        Only an unfinished session has one: for a finished session the step it

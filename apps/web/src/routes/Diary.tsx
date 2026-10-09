@@ -156,7 +156,8 @@ function entryMeta(entry: DiaryEntry, t: Translate, latest: boolean) {
        thing to keep in step. */
     lines.push(`${t('diary.stoppedAt')}: ${t(stepMessageKey(entry.step))}`);
   } else {
-    if (entry.cardFeeling !== null) lines.push(entry.cardFeeling);
+    /* The card's feeling used to lead this line. Gone with the fact in
+       `DiaryCard` — see its note. */
     const minutes = durationMinutes(entry.startedAt, entry.endedAt);
     if (minutes !== null) lines.push(t('diary.duration', { minutes: String(minutes) }));
   }

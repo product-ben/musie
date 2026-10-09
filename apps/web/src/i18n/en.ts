@@ -490,9 +490,12 @@ export const en = {
      20260924…_scan_md_phone_camera.sql). The second is what the primary button
      says. */
   'session.scan.codeLabel': 'Card code',
-  /* An EXAMPLE, not a label (3.3.2): the label above names the field and this
-     shows the shape. `MC-01` is a real code, so it is not translated. */
-  'session.scan.codePlaceholder': 'MC-01',
+  /* NO 'session.scan.codePlaceholder'. It was `MC-01`, an example rather than
+     a label (3.3.2) — and the example is the problem rather than the wording:
+     a placeholder renders in `--on-surface-muted` at opacity 1, one ink step
+     from a real value, and it sat above a submit disabled on an empty field.
+     An empty field looked filled and the button looked broken. The hint below
+     says "for example MC-01" where nothing can mistake it for input. */
   /* A VERB PHRASE, because it is an action and not the name of a section — the
      field it opens is already labelled 'Card code'.
 
@@ -502,7 +505,11 @@ export const en = {
      string is also the icon control's tooltip over the live picture, where
      five words is a paragraph. */
   'session.scan.codeManual': 'Enter the code',
-  'session.scan.codeHint': 'The code is printed beside the QR code, like MC-01.',
+  /* WHERE THE CODE ACTUALLY IS — 2026-10-09. It said "beside the QR code",
+     which stopped being true on 2026-10-02 when the QR left the card front
+     entirely: there is no code beside it because there is no it. Both are on
+     the BACK now, the code directly under the stamp. */
+  'session.scan.codeHint': 'The code is on the back of the card, right under the QR code — for example MC-01.',
   'session.scan.codeSubmit': 'Use this card',
   /* THREE ANSWERS, AND TWO OF THEM ARE NOT FAILURES. A typo and a card from
      another deck are things a person did, said in the field's own error slot.

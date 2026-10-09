@@ -4,9 +4,13 @@
  * It follows content.ts's rules rather than restating them:
  *
  *   1. SCREENS NEVER SEE THE JOIN. A `sessions` row arrives joined to
- *      `exercises` and `cards`, each of those joined to its own `_i18n`
+ *      `exercises`, joined to its own `_i18n`
  *      table; what leaves this module is `entry.exerciseName` and
- *      `entry.cardFeeling`. Three tables of column spellings stop here.
+ *      flat fields. Two tables of column spellings stop here.
+ *
+ *      The `cards` join went on 2026-10-09 with the card fact it fed: the
+ *      diary showed the feeling word alone, that word left every screen, and
+ *      nothing was left for the join to carry.
  *
  *   2. A MISSING TRANSLATION IS NEVER SILENT. `pickTranslation` is IMPORTED
  *      from content.ts, not copied: a second copy is a second place for the
@@ -132,7 +136,6 @@ export interface DiaryEntry {
    *  text and image say the same thing announces it twice. */
   imageAlt: string;
   /** Null when the exercise drew no card, which two of the three do not. */
-  cardFeeling: string | null;
 }
 
 export interface DiaryReflection {
@@ -826,7 +829,7 @@ function wanted(locale: Locale): Locale[] {
    the row to GenericStringError and every field access below becomes an
    error. */
 // prettier-ignore
-const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), cards(id, card_i18n(locale, feeling))';
+const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md))';
 
 // prettier-ignore
 /* `tracks(id, src, duration_seconds)` AND NOT ONE COLUMN MORE.
@@ -834,7 +837,7 @@ const ENTRY_SELECT = 'id, status, step, started_at, ended_at, exercises(id, imag
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), cards(id, card_i18n(locale, feeling)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -877,7 +880,6 @@ interface SessionRow {
       reflect_md: string | null;
     }[];
   }>;
-  cards: Embedded<{ id: string; card_i18n: { locale: string; feeling: string }[] }>;
 }
 
 /**
@@ -982,15 +984,6 @@ function toEntry(row: SessionRow, locale: Locale): DiaryEntry[] {
   );
   if (name === null) return [];
 
-  /* A null card is ORDINARY: two of the three exercises draw none, and
-     `card_id` is SET NULL so a retired card leaves the entry standing. Only a
-     card that exists and has no translation at all is a problem, and
-     pickTranslation has already said so by the time we read null here. */
-  const card = one(row.cards);
-  const feeling = card === null
-    ? null
-    : pickTranslation(card.card_i18n, locale, 'card_i18n', card.id)?.feeling ?? null;
-
   return [{
     id: row.id,
     status: row.status,
@@ -1002,7 +995,6 @@ function toEntry(row: SessionRow, locale: Locale): DiaryEntry[] {
     reflectQuestion: reflectQuestionOf(name.reflect_md),
     imageUrl: exercise.image_url,
     imageAlt: name.image_alt,
-    cardFeeling: feeling,
   }];
 }
 
@@ -1011,7 +1003,6 @@ export async function readDiary(locale: Locale): Promise<DiaryEntry[]> {
     .from('sessions')
     .select(ENTRY_SELECT)
     .in('exercises.exercise_i18n.locale', wanted(locale))
-    .in('cards.card_i18n.locale', wanted(locale))
     .neq('status', 'started')
     .order('started_at', { ascending: false });
 
@@ -1035,7 +1026,6 @@ export async function readDiaryEntry(
     .from('sessions')
     .select(DETAIL_SELECT)
     .in('exercises.exercise_i18n.locale', wanted(locale))
-    .in('cards.card_i18n.locale', wanted(locale))
     .eq('id', id)
     .maybeSingle();
 
