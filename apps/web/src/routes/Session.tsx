@@ -521,7 +521,27 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
          NOT WRITTEN WHEN UNANSWERED. Null is the column's own resting state,
          so a write of null would be a round trip that says nothing. */
       if (feelingChange !== null) {
-        await saveFeelingChange(id, feelingChange);
+        /* ITS OWN CATCH, AND THE SESSION SURVIVES IT. Everything else in this
+           block is the session: the reflection somebody wrote, and the status
+           that makes it an entry. This is one optional field on a nullable
+           column, answering a question the save dialog already offers to skip
+           — so losing it must cost the answer, never the session.
+
+           Without this, the shared `catch` below would swallow the whole
+           finish: no `endSession`, no navigation, `busy` cleared, and somebody
+           standing on /reflect pressing a button that does nothing while the
+           only explanation is in the console. A column that is missing, a
+           constraint that rejects, or a dropped connection would all land
+           there.
+
+           STILL LOGGED, never silent. The answer is gone and the console says
+           so, which is the same bargain `markListened` makes on the step
+           before this one. */
+        try {
+          await saveFeelingChange(id, feelingChange);
+        } catch (thrown: unknown) {
+          console.error('[musie] the session was saved without how it left you:', thrown);
+        }
       }
       const at = new Date().toISOString();
       await endSession(id, 'finished', at);

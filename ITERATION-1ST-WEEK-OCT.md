@@ -118,6 +118,24 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 | G3 | Exposed in the diary | ☑ | [/diary](http://localhost:5175/diary) → entry → *Session-Details* → **Danach** |
 | G4 | Database tests | ◐ | written — fail until the migration is applied, **by design** |
 
+### ⚠ THE DIARY IS DOWN UNTIL THE MIGRATIONS LAND
+
+`/diary` and `/diary/:id` return **`42703 column sessions.feeling_change does
+not exist`** and render their error state. Both selects now name the column,
+and PostgREST fails the WHOLE request for one unknown name — which is the
+failure `diary.db.test.ts`'s own header predicts in as many words.
+
+`apps/web/.env.local` points at the **hosted** project, so a local `db reset`
+alone will not fix it. Either:
+
+* `supabase db push` — the hosted project gets all three migrations, or
+* swap the two blocks in `apps/web/.env.local` to the local stack, then
+  `supabase db reset`.
+
+Everything up to and including `/reflect` works now. Finishing a session works
+too: the feeling write has its own `catch`, so a missing column costs the
+answer and never the session.
+
 ### ⚠ Phase G is written but NOT APPLIED — Ben's four commands
 
 `pnpm check` is green and `pnpm test:db` is **6 failing**, which is correct:
