@@ -190,11 +190,25 @@ type Story = StoryObj<typeof meta>;
  *
  * THE DOTS UNDER THE PILE ARE THE DECK'S, not the story's (added 2026-10-08).
  * Drawn whenever there is more than one card, centred under the pile rather
- * than under the deck, and `aria-hidden` spans rather than buttons — `Dots`'
- * own documented Card Deck case, because a row of unpressable buttons tells a
- * screen reader only that they cannot be pressed. The live region keeps
- * carrying `positionLabel`, which is also the string the dots are labelled
- * from: the deck asks for no second prop.
+ * than under the deck. The live region keeps carrying `positionLabel`, which
+ * is also the string the dots are labelled from: the deck asks for no second
+ * prop.
+ *
+ * THEY ARE CONTROLS SINCE 2026-10-09, and were `aria-hidden` spans until then
+ * — `Dots`' own documented Card Deck case, because a row of unpressable
+ * buttons tells a screen reader only that they cannot be pressed. What
+ * changed is not the prop but what the pile can DO: it dealt forward and undid
+ * backward, and had no move that reached a card three along. It has one now.
+ *
+ * A press brings `order` ROUND until that card is in front, so the pile stays
+ * a loop and everything after it keeps its sequence — deal on from the third
+ * card and the fourth follows, exactly as it would have. The distance decides
+ * only how the move is DRAWN: a card ahead leaves like a deal, a card behind
+ * arrives like an undo, so the last dot of five comes in over the leading edge
+ * instead of throwing four cards off. Pressing the current dot does nothing.
+ * The deck reports it as `onNext` or `onPrevious` with the card being left;
+ * there is no third callback, because the only thing a consumer learns from
+ * one is that the pile moved and which way.
  */
 export const Default: Story = {};
 

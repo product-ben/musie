@@ -4057,3 +4057,39 @@ hardware — the OS merges a new push into the single wheel stream and cancels
 the coast. Measured against the honest model: 1 flick 1 card, 3 at 180ms 3
 cards, 4 at 80ms 4 cards, gentle and hard flicks alike, two runs of eight
 scenarios clean.
+
+### The dots became controls, which was a change to the pile and not a prop — RESOLVED
+
+Ben, 2026-10-09: *"jetzt mach noch die pagination dots klickbar"* — answering
+the question left open when the dots were drawn on 2026-10-08.
+
+That entry said the dots were deliberately not pressable: `Dots` has always had
+`onSelect`, and withholding it was the honest call while the pile had no move
+that reached an arbitrary card. It dealt forward and undid backward, one step
+at a time, and that was the whole model. So this is the move, added as
+`jump(at)`, and the prop follows from it rather than the other way round.
+
+**A rotation, not a splice.** `order` is brought round until the chosen card is
+in front and everything else keeps its sequence, so the pile is still a loop:
+press the third dot, deal on, and the fourth card follows exactly as it would
+have. Splicing the chosen card to the top would have made the dots a
+reordering tool and left the position they report meaning nothing.
+
+**The distance decides the animation and nothing else.** There is one rotation
+that puts a card in front; what the short way round picks is how the move is
+drawn — a card ahead leaves like a deal, a card behind arrives like an undo.
+The last dot of five therefore arrives over the leading edge rather than
+throwing four cards off screen, because one step back is what it is.
+
+**No `onJump`.** It reports `onNext` or `onPrevious` with the id of the card
+being left, which is the argument both already carry. A third callback would
+make every consumer handle a third case to learn the one thing the other two
+already tell it.
+
+Verified in a browser: five real buttons where there were five `aria-hidden`
+spans, each dot brings its own card to the front, the loop survives a jump,
+pressing the current dot is a no-op, Enter on a focused dot fires once and
+does not also reach the pile's own key handler, the live region reads "Sound
+Journey — card 4 of 5", and the hit area is 24×24 at 1440px and at 393px.
+
+What I need from Ben: **nothing.**

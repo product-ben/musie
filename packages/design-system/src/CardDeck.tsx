@@ -578,6 +578,68 @@ export function CardDeck({
   }, [browsable, inert, onPrevious, order]);
 
   /**
+   * ── STRAIGHT TO A CARD, WHICH THE PILE COULD NOT DO UNTIL NOW ────────
+   * The dots become controls. Ben, 2026-10-09, answering the question
+   * stories/OPEN-QUESTIONS.md left open when they were drawn: `Dots` has
+   * always had `onSelect` and this component withheld it, because jumping
+   * means reaching a position the pile had no move for — it dealt forward and
+   * undid backward, and that was the whole model. This is the move, so it is a
+   * change to what the pile can DO and not a prop that was missing.
+   *
+   * ── A ROTATION, SO THE PILE IS STILL A LOOP ─────────────────────
+   * `order` is brought round until the chosen card is in front, and the cards
+   * it passes keep their sequence. NOT a splice to the top: that would make
+   * the dots a reordering tool, the pile would read differently after every
+   * press, and the position the dots themselves report would stop meaning
+   * anything. Deal on from any card and the rest follow in the order they
+   * always had — which is what `next` and `previous` already do, one step at a
+   * time, and this is the same rotation by more than one.
+   *
+   * ── THE SHORT WAY ROUND, AND THAT IS ONLY THE ANIMATION ────────────
+   * Both branches set the SAME order — there is one rotation that puts a card
+   * in front and no choice about it. What the distance decides is which way
+   * the move is drawn: a card ahead leaves like a deal, a card behind arrives
+   * like an undo. Going to the last dot of five therefore comes IN from the
+   * leading edge rather than throwing four cards off, because one step back is
+   * what it is.
+   *
+   * ── WHAT IT TELLS THE CONSUMER ────────────────────────────
+   * `onNext` or `onPrevious`, once, with the id of the card being LEFT — which
+   * is the argument both already carry. No `onJump`: a third callback would
+   * make every consumer handle a third case to learn the one thing it already
+   * learns from these two, that the pile moved and which way. The live region
+   * reads `positionLabel` off the new order, so the announcement needs nothing
+   * from here.
+   */
+  const jump = React.useCallback((at: number) => {
+    const target = items[at]?.id;
+    if (target === undefined || inert) return;
+    setDrag(null);
+    if (!browsable) return;
+
+    const from = order.indexOf(target);
+    /* Already in front, or not in the pile at all. Pressing the current dot is
+       a no-op rather than a lap of the deck. */
+    if (from <= 0) return;
+
+    const leaving = order[0];
+    const rotate = (current: string[]) => [...current.slice(from), ...current.slice(0, from)];
+
+    if (from <= order.length - from) {
+      throwKey.current += 1;
+      setDeparting((flying) => [...flying, { key: throwKey.current, id: leaving, ...STILL, dir: -1 }]);
+      setOrder(rotate);
+      if (leaving !== undefined) onNext(leaving);
+      return;
+    }
+
+    setOrder(rotate);
+    arriveKey.current += 1;
+    setArriving({ key: arriveKey.current, id: target });
+    if (leaving !== undefined) onPrevious(leaving);
+  }, [browsable, inert, items, onNext, onPrevious, order]);
+
+  /**
    * ── THE SCROLL GESTURE ────────────────────────────────────────
    * A trackpad's two-finger sideways scroll moves the pile. Ben, 2026-10-09.
    *
@@ -1053,6 +1115,7 @@ export function CardDeck({
               index={position - 1}
               ids={items.map((item) => item.id)}
               label={(at, of) => positionLabel(at, of, items[at - 1]?.id ?? frontId)}
+              onSelect={jump}
             />
           )}
         </div>
