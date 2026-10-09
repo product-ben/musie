@@ -200,6 +200,26 @@ const WHEEL_RISE_RATIO = 1.6;
  *  shape of a flick ending and nothing else. */
 const WHEEL_DECAY_RATIO = 0.5;
 
+/** The least time that can separate two cards, in ms.
+ *
+ *  THE ONLY THING HERE THAT IS NOT A GUESS ABOUT THE STREAM. Everything above
+ *  reads gesture boundaries out of delta sizes, and sizes cannot carry that
+ *  meaning on their own: inside ONE swipe the fingers slow and speed up again,
+ *  which is indistinguishable from a tail followed by a fresh push — so a
+ *  variable-speed flick dealt two or three cards (Ben, 2026-10-09).
+ *
+ *  A SECOND GESTURE COSTS A HAND. Fingers have to leave the pad and come back,
+ *  and that takes longer than any wobble inside a single swipe. So no two
+ *  cards may be dealt closer together than this, whatever the deltas say, and
+ *  nothing accumulates while it is running — otherwise a long tail banks up
+ *  and spends itself the moment the window closes.
+ *
+ *  280ms is comfortably under a real lift-and-replace and comfortably over the
+ *  tens of milliseconds a mid-swipe speed change takes. It is a floor on the
+ *  gesture, not a cooldown on the deck: one card per gesture is Ben's rule,
+ *  AT ANY SPEED. */
+const WHEEL_GESTURE_MIN_MS = 280;
+
 /**
  * What a face is handed when it is written as a FUNCTION — the deck's own
  * accept, for a face that would rather place it than be drawn over.
@@ -451,8 +471,11 @@ export function CardDeck({
      *  since fallen away from it. Together they are "the flick has ended". */
     peak: number;
     decayed: boolean;
+    /** When the last card was dealt, on the event clock. Survives `rearm`:
+     *  it is a fact about the deck, not about the gesture in progress. */
+    dealtAt: number;
     settle: ReturnType<typeof setTimeout> | undefined;
-  }>({ travelled: 0, spent: false, last: 0, peak: 0, decayed: false, settle: undefined });
+  }>({ travelled: 0, spent: false, last: 0, peak: 0, decayed: false, dealtAt: 0, settle: undefined });
 
   const byId = React.useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
@@ -698,6 +721,15 @@ export function CardDeck({
       clearTimeout(w.settle);
       w.settle = setTimeout(rearm, WHEEL_SETTLE_MS);
 
+      /* INSIDE THE FLOOR NOTHING COUNTS — not the latch, not the distance. The
+         travel is dropped rather than held so a tail cannot bank up and spend
+         itself the instant the window closes. */
+      if (event.timeStamp - w.dealtAt < WHEEL_GESTURE_MIN_MS) {
+        w.travelled = 0;
+        w.last = event.deltaX;
+        return;
+      }
+
       if (size < w.peak * WHEEL_DECAY_RATIO) w.decayed = true;
 
       if (w.spent) {
@@ -724,6 +756,7 @@ export function CardDeck({
          the fingers are still down and the coast that follows is spent on a
          gesture that has already been answered. */
       w.spent = true;
+      w.dealtAt = event.timeStamp;
       if (w.travelled > 0) next(frontId, STILL);
       else previous(frontId);
     };

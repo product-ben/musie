@@ -4093,3 +4093,45 @@ does not also reach the pile's own key handler, the live region reads "Sound
 Journey — card 4 of 5", and the hit area is 24×24 at 1440px and at 393px.
 
 What I need from Ben: **nothing.**
+
+### Follow-up: delta size cannot tell you where a gesture ends — RESOLVED
+
+Ben, same day: *"Sometimes we now flick through multiple cards per gesture…
+Whatever the speed, only one card per gesture."*
+
+The decay-then-rise rule was still a guess about the stream, and the guess was
+wrong in a way the first round hid. **Inside one physical swipe the fingers
+slow and speed up again**, and that is byte-for-byte what a tail followed by a
+fresh push looks like. So a wobbly flick rearmed itself mid-swipe and dealt
+two; a long slow flick dealt three. Reproduced before fixing, and the
+scenarios are kept as the shape of the bug:
+
+| gesture | before | after |
+|---|---|---|
+| one wobbly flick (speed up, down, up) | **2 cards** | 1 |
+| one long slow flick | **3 cards** | 1 |
+
+What was missing is the one fact that is not a guess: **a second gesture costs
+a hand.** Fingers have to leave the pad and come back, which takes far longer
+than any wobble inside a single swipe. `WHEEL_GESTURE_MIN_MS` (280ms) is a
+floor on how close two cards can be, whatever the deltas say, and nothing
+accumulates while it runs — a tail that banked up during the window would
+otherwise spend itself the moment the window closed.
+
+The decay and rise rules stay. They are what lets a repeat land as soon as the
+floor is clear, and the floor is what stops one swipe pretending to be two.
+
+Verified four runs clean over seven scenarios: wobbly, long-slow, hard-fast and
+gentle flicks each deal exactly one; three flicks 400ms apart deal three;
+three at 300ms deal three; two backward deal two back. Proved the suite catches
+the regression by setting the floor to 0 and watching the first two scenarios
+fail again.
+
+Worth recording about the harness: the FIRST measured gesture after load was
+flaky at zero, and it was the test rather than the deck — verified in isolation
+that a first flick moves a card at both 1.8s and 3.5s after load. The suite
+now throws one gesture away before it starts measuring.
+
+What I need from Ben: **nothing**, unless a flick on his own trackpad still
+doubles. The floor is the number to move if so, and it is the only one in here
+that is about hands rather than hardware.
