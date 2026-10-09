@@ -202,19 +202,19 @@ export const de: Messages = {
      listening, and the German for the act is the shorter verb. The three
      reasons keep Ben's open third one — 'einfach so' is what German says
      where the English has 'for no reason at all'. */
-  'discovered.intro': 'Jedes Stück, das du in einer Übung gehört hast, bleibt hier. Hör es wieder, wann du magst – zum Ankommen, zum Konzentrieren oder einfach so.',
+  'discovered.intro': 'Alle Musik, die du in einer Übung gehört hast, bleibt hier. Hör sie wieder, wann du magst – zum Ankommen, zum Konzentrieren oder einfach so.',
   'discovered.empty': 'Hier ist noch keine Musik.',
   /* Not 'Du hast noch nichts gehört': the sentence says where music comes
      from, which is the thing somebody standing on an empty page needs. */
   'discovered.emptyDetail': 'Musik landet hier, sobald du sie in einer Übung gehört hast.',
-  'discovered.unnamed': 'Dein Stück',
+  'discovered.unnamed': 'Deine Musik',
   /* Gedankenstrich with spaces, which is the German dash, and the same one
      about.pitch uses. */
   'discovered.trackLabel': '{title} – {artist}',
   'discovered.play': 'Abspielen',
   'discovered.pause': 'Pause',
   'discovered.restart': 'Noch einmal',
-  'discovered.seek': 'Position im Track',
+  'discovered.seek': 'Position in der Musik',
 
   /* ── About you · D.2 ───────────────────────────────────────────────────── */
   'aboutYou.headline': 'Und als wer bist du hier?',
@@ -405,9 +405,24 @@ export const de: Messages = {
   'session.scan.cameraFailed': 'Die Kamera ließ sich nicht starten. Tippe stattdessen den Code von deiner Karte ein.',
 
   /* ── Listen · D.5b ─────────────────────────────────────────────────────── */
-  /* 'Stück', which is what the seed's own German calls a recording — 'höre das
-     Stück dahinter'. 'Track' would be an English word nobody chose. */
-  'session.listen.track': 'Dein Stück',
+  /* ── EIN WORT FÜR DIE MUSIK, UND ES IST 'die Musik' (Ben, 2026-10-09) ────
+     Vorher standen hier VIER Wörter für eine Sache: 'Stück' fünfmal, 'Track'
+     fünfmal, 'Musik' siebenmal, 'Aufnahme' zweimal. Die alte Regel an dieser
+     Stelle — "'Stück', weil der Seed selbst so spricht; 'Track' wäre ein
+     englisches Wort, das niemand gewählt hat" — galt nur noch für ihre eigene
+     Hälfte, denn direkt daneben stand fünfmal genau dieses 'Track'.
+
+     'die Musik' gewinnt, weil es das Wort ist, das ohnehin am häufigsten
+     dastand, weil es keine Übersetzung ist (§8) und weil es nicht zählt: ein
+     Stück kann man zählen, Musik nicht — und gezählt wird hier nie.
+
+     WAS NICHT MITGEHT: 'Aufnahme' im Sinne der SPRACHAUFNAHME (reflect.voice.*,
+     privacy.voice, voice.*). Das ist eine andere Sache und bleibt.
+
+     Die Schlüsselnamen bleiben ebenfalls — `session.listen.track`,
+     `discovered.trackLabel`, `noTrack`. Sie heißen nach der Tabelle `tracks`
+     und der Spalte `track_id`, und das ist weiterhin wahr. */
+  'session.listen.track': 'Deine Musik',
   'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
   'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
   /* Beschreibend, kein Satzzeichen-Deutsch: was zu sehen ist, in einem Satz.
@@ -436,26 +451,26 @@ export const de: Messages = {
   'session.listen.immersiveDone': 'Super, dass du dich {gate} fokussiert hast. Mach noch {remaining} weiter, wenn du magst.',
   /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
      Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
-  'session.listen.immersiveDoneEnded': 'Super, dass du dich {gate} fokussiert hast. Das Stück ist zu Ende. Wenn du magst, hör es noch einmal.',
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {gate} fokussiert hast. Die Musik ist zu Ende. Wenn du magst, höre sie noch einmal.',
   /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
      §8 ist der Ort, an dem das zu diskutieren wäre. */
   'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
-  'session.listen.detailsAction': 'Über den Track',
-  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten des Tracks beeinflussen zu lassen.',
+  'session.listen.detailsAction': 'Über die Musik',
+  'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten der Musik beeinflussen zu lassen.',
   'session.listen.warnBack': 'Übung fortsetzen',
   'session.listen.warnOn': 'Details und Player zeigen',
   'session.listen.scrollUp': 'Nach oben',
   'session.listen.play': 'Abspielen',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Noch einmal',
-  'session.listen.seek': 'Position im Track',
-  'session.listen.aboutHeading': 'Zu diesem Track',
+  'session.listen.seek': 'Position in der Musik',
+  'session.listen.aboutHeading': 'Zu dieser Musik',
   'session.listen.aboutArtist': 'Interpretin oder Interpret',
   'session.listen.aboutInstructions': 'Hinweise zum Hören',
-  'session.listen.simulatedHeadline': 'Testmodus: keine Aufnahme',
-  'session.listen.simulated': 'Es ist noch keine Aufnahme hinterlegt, deshalb läuft der Player auf einer Uhr in der echten Länge des Stücks.',
-  'session.listen.noTrack': 'Für diese Übung gibt es noch keine Aufnahme.',
+  'session.listen.simulatedHeadline': 'Testmodus: keine Musik',
+  'session.listen.simulated': 'Es ist noch keine Musik hinterlegt, deshalb läuft der Player auf einer Uhr in ihrer echten Länge.',
+  'session.listen.noTrack': 'Für diese Übung gibt es noch keine Musik.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
   'reflect.legend': 'Wie möchtest du antworten?',

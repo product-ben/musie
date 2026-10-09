@@ -289,7 +289,7 @@ export const en = {
   /* WHAT THIS MUSIC IS AND WHAT IT IS FOR, in that order, because somebody
      landing here from the menu has had neither explained. The second sentence
      is the permission: this is yours to use away from Musie. */
-  'discovered.intro': 'Every piece you have listened to in an exercise is kept here. Play it again whenever you like — to settle, to focus, or for no reason at all.',
+  'discovered.intro': 'All the music you have listened to in an exercise is kept here. Play it again whenever you like — to settle, to focus, or for no reason at all.',
   /* THE EMPTY STATE IS THE OPENING SCREEN for everybody on the day this ships,
      so it says what is missing AND how to get some, rather than reporting a
      count of zero. */
@@ -298,7 +298,7 @@ export const en = {
   /* The reveal failed — the recording is still playable and we simply cannot
      name it. The same words the listen step uses when it is in that position:
      what the control IS, rather than a title standing in for one. */
-  'discovered.unnamed': 'Your track',
+  'discovered.unnamed': 'Your music',
   /* Title and artist on the player's one line. An artist is why this is
      re-usable at all: a title alone is not enough to find a piece again
      anywhere else. */
@@ -306,7 +306,7 @@ export const en = {
   'discovered.play': 'Play',
   'discovered.pause': 'Pause',
   'discovered.restart': 'Play again',
-  'discovered.seek': 'Position in the track',
+  'discovered.seek': 'Position in the music',
 
   /* ── About you · D.2 ─────────────────────────────────────────────────────
      "Methods" became "exercises" everywhere in the product, so the prototype's
@@ -567,8 +567,23 @@ export const en = {
   /* ── Listen · D.5b ───────────────────────────────────────────────────────
      THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:
      `tracks.title` and `.artist` are not granted to the client at all. The
-     reveal is E.5. */
-  'session.listen.track': 'Your track',
+     reveal is E.5.
+
+     ── ONE WORD FOR THE MUSIC, AND IT IS "music" (Ben, 2026-10-09) ──────────
+     The German carried FOUR words for one thing — Stück ×5, Track ×5, Musik
+     ×7, Aufnahme ×2 — and the English was no better: track, piece and
+     recording all named the same object. Both sides are now "music" / "die
+     Musik", which is the word that was already commonest on each, is not a
+     translation of the other, and does not count: you can count a piece, you
+     cannot count music, and nothing here ever counts it.
+
+     NOT SWEPT UP: "recording" in the sense of a VOICE recording — reflect
+     .voice.*, privacy.voice, voice.*. Different object, unchanged.
+
+     The KEY NAMES stay — `session.listen.track`, `discovered.trackLabel`,
+     `noTrack`. They are named for the `tracks` table and the `track_id`
+     column, and that is still what they read from. */
+  'session.listen.track': 'Your music',
   /* THE GATE IS SAID BY THE BUTTON NOW, AND ONLY THERE — 2026-09-24.
      There used to be a `#listen-gate` paragraph above the transport carrying
      one sentence while the gate was shut and another once it opened, and the
@@ -630,7 +645,7 @@ export const en = {
      somebody who scrubbed to the end. "Carry on for another 00:00" is the
      sentence that gets written when nobody checks. No dash, at Ben's request;
      two sentences carry it. */
-  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {gate}. The track has finished. Play it again if you like.',
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {gate}. The music has finished. Play it again if you like.',
   /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
      `startLocked` does on the stage — the figure is already the largest thing
      on the sheet, and saying it twice on one screen is how a number stops
@@ -644,8 +659,8 @@ export const en = {
      copy. The Störer's sentence is the prototype's own, lightly tightened:
      it interrupts rather than warns, and its measure is narrow so it lands as
      one thought. */
-  'session.listen.detailsAction': 'About the track',
-  'session.listen.warnText': 'For this exercise it is better not to be influenced by the track’s metadata.',
+  'session.listen.detailsAction': 'About the music',
+  'session.listen.warnText': 'For this exercise it is better not to be influenced by the music’s metadata.',
   'session.listen.warnBack': 'Continue the exercise',
   'session.listen.warnOn': 'Show details and player',
   'session.listen.scrollUp': 'Scroll up',
@@ -654,17 +669,17 @@ export const en = {
   'session.listen.play': 'Play',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Play again',
-  'session.listen.seek': 'Position in the track',
-  'session.listen.aboutHeading': 'About this track',
+  'session.listen.seek': 'Position in the music',
+  'session.listen.aboutHeading': 'About this music',
   'session.listen.aboutArtist': 'Artist',
   'session.listen.aboutInstructions': 'Listening instructions',
   /* THE SIMULATED-PLAYBACK NOTICE, at the foot of the last view since
      2026-09-24. It is a headline plus a line, because it is a `Message`
      now rather than a paragraph of small print — and a warning, because
      what it reports is that the thing on screen is not the real one. */
-  'session.listen.simulatedHeadline': 'Test mode: no recording',
-  'session.listen.simulated': 'No recording is bundled yet, so the player runs on a clock at the track’s real length.',
-  'session.listen.noTrack': 'This exercise has no recording yet.',
+  'session.listen.simulatedHeadline': 'Test mode: no music',
+  'session.listen.simulated': 'No music is bundled yet, so the player runs on a clock at its real length.',
+  'session.listen.noTrack': 'This exercise has no music yet.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
   /* `reflect.questionFallback` — "What stayed with you?" — is GONE, 2026-09-23.

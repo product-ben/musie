@@ -56,8 +56,8 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 
 | | Item | Status | Test |
 |---|---|---|---|
-| B1 | Chrome catalogue → **die Musik** (~12 keys, both locales) | ☐ | |
-| B2 | Content strings in a new stacking migration | ☐ | |
+| B1 | Chrome catalogue → **die Musik** (12 keys × 2 locales) | ☑ | [Listen step](http://localhost:5173/exercises) · the Störer, the details view, [/discovered-music](http://localhost:5173/discovered-music) |
+| B2 | Content strings in a new stacking migration | ◐ | written — **needs `supabase db reset`** to apply |
 
 ### Phase C · Session flow
 
@@ -177,6 +177,8 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **B1 landed.** Four German nouns for one object (Stück ×5, Track ×5, Musik ×7, Aufnahme ×2) unified on **die Musik**; English unified on **music**. 24 strings, both catalogues. The stale comment recording the old "Stück" rule is rewritten in both. Voice-recording *Aufnahme* deliberately untouched. |
+| 2026-10-09 | **B2 written.** `20261009100000_one_word_for_the_music.sql` — the two `mindfulness-cards` descriptions. Not applied: needs Ben's `supabase db reset`. `pnpm test:db` 117/118, the one failure pre-existing (empty `tracks` bucket). |
 | 2026-10-09 | **A2 landed.** `FeelingsScale` — ordered points on a drawn axis, base-ui radio group, 3–5 points, no default copy. Verified in both themes; selection carried by fill + edge weight + ink. |
 | 2026-10-09 | **A3 landed.** `data-has-action` on the toast root; actionless caps at `--measure-body` (496px measured), action-bearing stays `--measure-heading` (208px). |
 | 2026-10-09 | **A1 landed.** `gateSeconds` + three gated label templates on `TrackButton`; `TrackGateState` exported. Verified in Storybook: all four words render and **zero** trailing readouts remain. |
