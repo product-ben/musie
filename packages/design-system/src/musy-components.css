@@ -1179,6 +1179,40 @@
   gap: var(--sp-4);
 }
 
+/* ── A CAROUSEL CANNOT BE SHRINK-WRAPPED, AND NOW SAYS SO ───────────────
+   `container-type: inline-size` above carries `contain: inline-size`, which
+   means THE ELEMENT IS SIZED AS IF IT HAD NO CONTENTS. Its max-content
+   contribution is zero. The scroller inside it would contribute nothing
+   either — an `overflow` box has no intrinsic width worth the name.
+
+   Both are correct in isolation and together they are a trap: put a carousel
+   in a shrink-to-fit parent and the parent sizes around everything EXCEPT the
+   carousel, and the carousel then reads `cqi` off that result. The geometry
+   above is container-relative by design, so the whole component inherits
+   whatever width its siblings' text happened to need.
+
+   MEASURED on /about, 2026-10-09, at a 1440px window. `.musie-message` is a
+   column flex with `align-items: flex-start`, so the Content Box hugs. On the
+   last slide the caption swaps `about.hint.unseen` — one long sentence — for
+   `about.hint.ready`, "Es kann losgehen.". Nothing about the carousel
+   changed, and yet:
+
+     box   430.5px → 299.7px
+     card  232.9px → 152.8px, where the German title hyphenated to six lines
+
+   It never came back, because the caption never gets long again.
+
+   TWO DECLARATIONS, BECAUSE THE COLLAPSE HAPPENS AT AN ANCESTOR and `:has()`
+   is the only way CSS can reach one. `align-self`, not `inline-size: 100%`:
+   `box-sizing` is per-component in this file rather than global, so a
+   percentage width on a padded box overflows it by its own inset.
+
+   SCOPED TO BOXES THAT ACTUALLY CONTAIN ONE. A Content Box with no carousel
+   in it still hugs, so /about's greeting bubble is untouched — the hugging is
+   the chat shape and only the carousel cannot survive it.                  */
+.musy-carousel { align-self: stretch; }
+.musy-box:has(.musy-carousel) { align-self: stretch; }
+
 /* ── NARROW CONTAINER: THE PEEK IS THE AFFORDANCE, SO IT IS BUDGETED ───────
    This rule used to read `82cqi`, to give the German headline more of the
    width and let "the peek shrink to a hint". MEASURED ON THE REAL SCREEN,

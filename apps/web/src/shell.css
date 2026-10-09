@@ -1835,7 +1835,10 @@ html[data-musy-scroll-snap] {
 .musie-listen__infographic {
   display: block;
   inline-size: 100%;
-  max-inline-size: var(--measure-body);
+  /* G4, not `--measure-body`: a picture is not a column of sentences, and at
+     62ch this ran the full reading width and dominated a step whose subject
+     is the audio. Ben's number, from the screen, 2026-10-09. */
+  max-inline-size: var(--measure-figure);
   block-size: auto;
   margin-block: calc(var(--space-inset-card) - var(--space-gap-related));
   border-radius: var(--radius-md);

@@ -71,6 +71,30 @@
      light, --sand-12 in dark, both of which are the pale one in their own
      theme. No new hex; the value is the existing scale, read the other way. */
   --on-scrim: light-dark(var(--sand-1), var(--sand-12));
+
+  /* ── G4 · the widest a figure gets ─────────────────────────────────
+     Belongs beside --measure-body and --measure-compact in Layer 1
+     §Dimension. Found by the listen step, 2026-10-09; Ben's number, from the
+     screen.
+
+     EVERY MEASURE TOKEN LAYER 1 HAS IS A READING MEASURE, in `ch`, and `ch`
+     is a property of the TYPE: 62ch is "about 62 characters", which is a
+     statement about how far an eye tracks before it loses the line. That is
+     the right unit for a column of sentences and the wrong one for a picture.
+     A figure has no measure. It has a size at which it reads, and that size
+     does not change when the body font does.
+
+     So this is px, deliberately, and it is the first measure token here that
+     is. Held against `--measure-body`'s 62ch — 704px at today's body font —
+     an infographic was running the full width of the reading column and
+     dominating a step whose subject is the audio, not the picture.
+
+     NOT EXPRESSED AS ARITHMETIC OVER --measure-body, though two app patterns
+     already do that (`* 0.82`, `* 0.6`). The fraction that lands on 416px is
+     0.5909, which is not a ratio anybody chose; and because the base is `ch`,
+     every one of those patterns silently resizes if the body font is ever
+     swapped. A figure cap should not.                                       */
+  --measure-figure: 416px;
 }
 
 /* prefers-contrast: more — Layer 1 already steps --border-subtle up to

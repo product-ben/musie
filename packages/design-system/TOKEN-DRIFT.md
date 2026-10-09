@@ -175,6 +175,7 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--border-style-dashed` | `dashed` | G2 |
 | `--border-style-solid` | `solid` | G2 |
 | `--icon-stroke-sm` | `1.5px` | G1 |
+| `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
 
 ## What is NOT drift
