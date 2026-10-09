@@ -1062,6 +1062,23 @@
   gap: var(--space-gap-related);
 }
 
+/* The transcription promise, beside the recorder. Caption weight: it is the
+   smallest true thing on the row and must not compete with the control it
+   describes. `--measure-heading` rather than the body measure because it
+   shares a line with a button — a 62ch sentence next to a 44px target reads
+   as a paragraph that happens to have a control in it. */
+.musie-voice__privacy {
+  margin: 0;
+  flex: 1 1 var(--measure-heading);
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
 /* ═══ PLAIN LIST ════════════════════════════════════════════════════════════
    L3: a run of repeated items is a list, so the count and position reach
    assistive tech instead of being drawn. Items sit at --space-gap-stack, and

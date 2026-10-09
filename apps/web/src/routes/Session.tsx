@@ -45,7 +45,7 @@
  */
 import * as React from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { DoorOpen, Headphones, MessageCircleQuestion, ScanLine } from 'lucide-react';
+import { DoorOpen, Headphones, Quote, ScanQrCode } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
@@ -92,9 +92,19 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
  * TWO OF THE FOUR ARE NOT CHOICES — they are the glyph this product already
  * uses for that idea, and one idea with two glyphs is worse than either glyph:
  *
- *   scan    ScanLine    what the card scanner itself shows (CardScanner.tsx)
+ *   scan    ScanQrCode  what the card scanner itself shows (QrScanner.tsx,
+ *                       its `leadingIcon` in all three modes)
  *   listen  Headphones  the `sound` fact chip on every exercise card
  *                       (Exercises.tsx) — the same promise, earlier
+ *
+ * THE SCAN LINE WAS WRONG ON BOTH HALVES, and the comment above is the
+ * corrected one (2026-10-09). It used to read `ScanLine … what the card
+ * scanner itself shows (CardScanner.tsx)`. CardScanner.tsx imports no glyph at
+ * all — it is an adapter over QrScanner and says so in its own header — and
+ * what the scanner draws is ScanQrCode. So the rail and the scanner were two
+ * glyphs for one idea, which is the exact thing this paragraph forbids, while
+ * citing a file that could not have settled it either way. ScanLine is now
+ * used nowhere in the repo.
  *
  * The other two had nothing to inherit:
  *
@@ -103,18 +113,22 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
  *                       BookOpen was the alternative, reading the step as the
  *                       explainer you read; the door won because the label
  *                       names the act, not the page.
- *   reflect MessageCircleQuestion
- *                       the step ASKS, and the question is the constant part
- *                       of it. Deliberately NOT PenLine, Mic or Camera: those
- *                       three are the answer MODES inside this very step
- *                       (SessionReflect.tsx), so any of them in the rail would
- *                       promise one of the three before you have chosen.
+ *   reflect Quote       the step gives you your own words back, which is what
+ *                       a quotation mark is for. It replaced
+ *                       MessageCircleQuestion on 2026-10-09: that glyph reads
+ *                       as "do you have a question" — a help desk — where this
+ *                       step is Nachdenken, and user testing produced the
+ *                       first field evidence against it. Still deliberately
+ *                       NOT PenLine, Mic or Camera: those three are the answer
+ *                       MODES inside this very step (SessionReflect.tsx), so
+ *                       any of them in the rail would promise one of the three
+ *                       before you have chosen.
  */
 const STEP_ICON: Record<StepId, LucideIcon> = {
   intro: DoorOpen,
-  scan: ScanLine,
+  scan: ScanQrCode,
   listen: Headphones,
-  reflect: MessageCircleQuestion,
+  reflect: Quote,
 };
 
 /** Everything one session screen needs, in one read. */
@@ -302,6 +316,22 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    * sentence it is given and decides nothing.
    */
   const [scanError, setScanError] = React.useState<string | null>(null);
+
+  /**
+   * HOW THE SESSION LEFT YOU, on the three-point scale the reflect step asks
+   * for. `null` until somebody answers, and that is a real state rather than a
+   * missing one: the question is optional in the sense that a session can be
+   * saved without it, and the completion dialog is what says so out loud.
+   *
+   * HELD HERE, beside `answer` and `reflectMode`, because it is written in the
+   * same `finish()` as they are and because the step itself is unmounted and
+   * remounted by the rail. A value kept inside `SessionReflect` would be lost
+   * by stepping back to listen and forward again.
+   */
+  const [feeling, setFeeling] = React.useState<string | null>(null);
+
+  /** The completion dialog, opened by saving while something is unanswered. */
+  const [confirmingIncomplete, setConfirmingIncomplete] = React.useState(false);
 
   /**
    * VOICE IS THE DEFAULT — Ben, 2026-09-23.
@@ -600,33 +630,36 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        leaves. The panel gets no row here at all. */
     actions = null;
   } else {
-    /* SKIP sits beside FINISH, as the alternative to it — L6's "two buttons
-       that are alternatives to each other" pair. It is `secondary` rather than
-       ghost so it reads as a real way out rather than as a link, and it comes
-       FIRST in the DOM so the likely action stays outermost and tab order
-       matches the screen.
+    /* ── ONE WAY OUT (Ben, 2026-10-09) ────────────────────────────────────
+       This row carried TWO exits — *Skip reflection* beside *Finish session* —
+       and the step carried a third, the ghost *Close this session* below the
+       panel. Three doors out of one step, which is what user testing reported
+       and what the board still lists as open. The ghost is hidden on this step
+       now and skip is gone; what is left is one button that names where the
+       session goes.
 
-       It does not toggle a mode and wait for a second press: skipping IS a
-       way to end the run, so it finishes the session and writes no
-       `reflections` row. Both buttons take the same path — `finish(skip)` —
-       so the session cannot end two different ways. */
+       IT IS NEVER DISABLED, and that is the change that needed a dialog. The
+       old primary was disabled until `hasAnswered`, which stops somebody
+       without telling them anything — the control that knows what is missing
+       says nothing, and the one asking has no way to ask. Now the press is
+       always accepted and the answer comes back as a sentence.
+
+       WHAT COUNTS AS COMPLETE is the written answer AND the scale. Either one
+       open opens the dialog; the dialog's second button saves anyway, so this
+       is a speed bump rather than a gate. */
+    const complete = hasAnswered(reflectMode, answer, spokenWords) && feeling !== null;
     actions = (
       <>
         {back}
         <CtaButton
-          variant="secondary"
-          disabled={busy}
-          onClick={() => void finish(true)}
-        >
-          {t('reflect.skip')}
-        </CtaButton>
-        <CtaButton
-          disabled={!hasAnswered(reflectMode, answer, spokenWords)}
           loading={busy}
           loadingLabel={t('content.loading')}
-          onClick={() => void finish()}
+          onClick={() => {
+            if (complete) void finish();
+            else setConfirmingIncomplete(true);
+          }}
         >
-          {t('reflect.finish')}
+          {t('reflect.save')}
         </CtaButton>
       </>
     );
@@ -711,6 +744,8 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               onModeChange={setReflectMode}
               text={answer}
               onTextChange={setAnswer}
+              feeling={feeling}
+              onFeelingChange={setFeeling}
             />
           )}
         </WizardPanel>
@@ -725,11 +760,25 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           gone (Ben, 2026-09-20) — the rail already says which step you are on
           and the panel header already names the exercise, so it restated the
           screen rather than adding to it. */}
-      <div className="musie-session__exit">
-        <CtaButton variant="ghost" onClick={() => setClosing(true)}>
-          {t('session.close')}
-        </CtaButton>
-      </div>
+      {/* ── EVERY STEP BUT REFLECT (Ben, 2026-10-09) ───────────────────────
+          /reflect used to carry THREE exits at once — skip, finish, and this
+          ghost — which user testing found and the board records as still open
+          after two doors were added elsewhere. Reflect now has exactly one way
+          out, and it is the filled button that saves; a quiet third door
+          beside it is the ambiguity that was being complained about.
+
+          IT STAYS ON THE OTHER THREE. On intro, scan and listen nothing else
+          ends a run from inside it, and the drawer is a tap further away. The
+          board's own reading: "session exit is done three ways over, one act…
+          nothing on this board asks for more" — so this removes a door rather
+          than adding one. */}
+      {state.step !== 'reflect' && (
+        <div className="musie-session__exit">
+          <CtaButton variant="ghost" onClick={() => setClosing(true)}>
+            {t('session.close')}
+          </CtaButton>
+        </div>
+      )}
 
       {closing && (
         <Lightbox
@@ -762,6 +811,55 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                 onClick={() => void close()}
               >
                 {t('session.close.confirm')}
+              </CtaButton>
+            </ButtonGroup>
+          </ContentBox>
+        </Lightbox>
+      )}
+
+      {/* ── SOMETHING IS STILL OPEN, AND THE PRESS SAYS SO ──────────────────
+          The save button is never disabled (see the action row), so this is
+          where "not finished yet" is delivered — as a sentence, at the moment
+          somebody asked to leave, rather than as a dead control they have to
+          work out for themselves.
+
+          THE PRIMARY GOES BACK TO THE WORK. It is the likely intent of anybody
+          who reads the sentence and the only one of the two that is not a
+          decision; saving incomplete stays available in the second rank and
+          says `unvollständig` out loud, so the diary holds nothing the person
+          was not told about.
+
+          ONE SENTENCE, and it argues from what they get rather than from what
+          the product wants — `reflect.incomplete.text`. */}
+      {confirmingIncomplete && (
+        <Lightbox
+          open
+          title={t('reflect.incomplete.title')}
+          closeLabel={t('common.closeLabel')}
+          onOpenChange={(next) => {
+            if (!next) setConfirmingIncomplete(false);
+          }}
+        >
+          <ContentBox
+            headingLevel={3}
+            headlineHidden
+            headline={t('reflect.incomplete.title')}
+            text={t('reflect.incomplete.text')}
+          >
+            <ButtonGroup align="end">
+              <CtaButton
+                variant="ghost"
+                loading={busy}
+                loadingLabel={t('content.loading')}
+                onClick={() => {
+                  setConfirmingIncomplete(false);
+                  void finish(!hasAnswered(reflectMode, answer, spokenWords));
+                }}
+              >
+                {t('reflect.incomplete.save')}
+              </CtaButton>
+              <CtaButton onClick={() => setConfirmingIncomplete(false)}>
+                {t('reflect.incomplete.continue')}
               </CtaButton>
             </ButtonGroup>
           </ContentBox>

@@ -42,9 +42,9 @@
  * behind is a separate fact the diary reports on its own.
  */
 import * as React from 'react';
-import { Camera, Mic, PenLine } from 'lucide-react';
+import { ArrowDown, ArrowUp, Camera, Mic, Minus, PenLine } from 'lucide-react';
 import {
-  Field, Message, PhotoUpload, SegmentedControl,
+  Field, FeelingsScale, Message, PhotoUpload, SegmentedControl,
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
 import { Markdown } from './Markdown';
@@ -59,6 +59,14 @@ export interface SessionReflectProps {
   /** Passed straight through from `VoiceTranscript` — F.6. */
   onSpokenWords?: (has: boolean) => void;
   exercise: Exercise;
+  /**
+   * How the session left you, on the three-point scale — `null` until it is
+   * answered. Held by `Session.tsx` beside the written answer, because both
+   * are written by the same `finish()` and because the rail unmounts this
+   * step when you walk back to listen.
+   */
+  feeling: string | null;
+  onFeelingChange: (value: string) => void;
   mode: ReflectMode;
   onModeChange: (mode: ReflectMode) => void;
   /** The typed answer. The only one that can be saved today. */
@@ -74,6 +82,7 @@ export interface SessionReflectProps {
  */
 export function SessionReflect({
   exercise, mode, onModeChange, text, onTextChange,
+  feeling, onFeelingChange,
   sessionId,
   onSpokenWords,
 }: SessionReflectProps) {
@@ -191,6 +200,32 @@ export function SessionReflect({
           </div>
         )}
       </div>
+
+      {/* ── HOW THE SESSION LEFT YOU ────────────────────────────────────────
+          AFTER the answer, not before it: the question is about the session
+          that has just happened, and asking it above the reflection would put
+          a summary before the thing being summarised.
+
+          A SCALE, NOT A SEGMENTED CONTROL, and the component's own header is
+          where that is argued — the three points are ordered and the order is
+          the information, where a segmented control's options are alternatives
+          with no order at all.
+
+          It is OPTIONAL in the sense that the session saves without it, and
+          the completion dialog in `Session.tsx` is what says so out loud
+          rather than a disabled button that explains nothing. */}
+      <FeelingsScale
+        name="session-feeling"
+        legend={t('reflect.feeling.legend')}
+        points={[
+          { value: 'worse', label: t('reflect.feeling.worse'), glyph: ArrowDown },
+          { value: 'same', label: t('reflect.feeling.same'), glyph: Minus },
+          { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
+        ]}
+        value={feeling ?? undefined}
+        onValueChange={onFeelingChange}
+        accent="accent"
+      />
     </>
   );
 }

@@ -448,19 +448,33 @@ export const de: Messages = {
      die der Zähler darüber gerade heruntergezählt hat, und eine andere Einheit
      an dieser Stelle läse sich als andere Zahl. Interpoliert, weil
      `listen_gate_seconds` je Übung 60, 90 oder 180 ist. */
-  'session.listen.immersiveDone': 'Super, dass du dich {gate} fokussiert hast. Mach noch {remaining} weiter, wenn du magst.',
+  'session.listen.immersiveDone': 'Super, dass du dich {gate} Minuten fokussiert hast. Die Musik läuft noch {remaining}, wenn du magst.',
   /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
      Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
-  'session.listen.immersiveDoneEnded': 'Super, dass du dich {gate} fokussiert hast. Die Musik ist zu Ende. Wenn du magst, höre sie noch einmal.',
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {total} Minuten fokussiert hast. Die Musik ist zu Ende. Wenn du magst, höre sie noch einmal.',
   /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
      §8 ist der Ort, an dem das zu diskutieren wäre. */
   'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',
   /* ── Die drei Scroll-Ansichten · E.5b ───────────────────────────────────*/
   'session.listen.detailsAction': 'Über die Musik',
   'session.listen.warnText': 'Für diese Übung ist es besser, dich nicht von den Metadaten der Musik beeinflussen zu lassen.',
-  'session.listen.warnBack': 'Übung fortsetzen',
+  'session.listen.warnBack': 'Zurück zum Hören',
   'session.listen.warnOn': 'Details und Player zeigen',
   'session.listen.scrollUp': 'Nach oben',
+  /* Bens Wortlaut, 2026-10-09. Der Knopf auf der Bühne trägt jetzt das
+     Minimum, also sagt seine Beschriftung, wie weit es noch ist — und der
+     Bildschirm zeigt nicht länger zwei Countdowns, die sich widersprechen.
+     `{time}` setzt `TrackButton` aus `gateSeconds` ein: erst das Minimum
+     selbst, dann was davon übrig ist, dann was von der Musik übrig ist.
+
+     Ohne führende Null, weil das hier Sätze sind und keine Anzeige, die beim
+     Minutenwechsel still stehen muss: 'mindestens 1:30' sagt man so.
+
+     Ein viertes Wort gibt es nicht — das Ende sagt `session.listen.restart`,
+     geteilt mit dem ungetakteten Knopf. */
+  'session.listen.listenUnstarted': 'Jetzt anhören (mindestens {time})',
+  'session.listen.listenBelow': 'Weiter hören (mindestens {time})',
+  'session.listen.listenPast': 'Noch weiter hören ({time})',
   'session.listen.play': 'Abspielen',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Noch einmal',
@@ -478,7 +492,7 @@ export const de: Messages = {
      and German runs ~30% longer, so the English pattern ('Record audio') would
      clip before the glyph did. The field below each one carries the long
      version as its own label. */
-  'reflect.mode.voice': 'Aufnehmen',
+  'reflect.mode.voice': 'Transkribieren',
   'reflect.mode.text': 'Schreiben',
   'reflect.mode.photo': 'Fotografieren',
   'reflect.text.label': 'Deine geschriebene Antwort',
@@ -504,10 +518,37 @@ export const de: Messages = {
      Geblieben ist `privacy.voiceShort`, eine Zeile, plus `privacy.more`. */
   'reflect.photo.notBuilt': 'Fotos auslesen ist noch nicht gebaut',
   'reflect.photo.notBuiltText': 'So funktioniert es. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
-  /* Verb phrase, §3 — 'Überspringen' alone would name a thing rather than an
-     action, and the object is what makes it unambiguous beside 'Beenden'. */
-  'reflect.skip': 'Reflexion überspringen',
-  'reflect.finish': 'Session beenden',
+  /* Drei geordnete Punkte, der niedrigste zuerst — die Reihenfolge IST die
+     Frage. Jeder nennt den Vergleich ausdrücklich ('als vorher'), weil hier
+     eine VERÄNDERUNG gemessen wird; ein Punkt namens 'gut' würde eine Stimmung
+     messen. */
+  'reflect.feeling.legend': 'Wie fühlst du dich jetzt?',
+  'reflect.feeling.worse': 'Schlechter als vorher',
+  'reflect.feeling.same': 'Genau wie vorher',
+  'reflect.feeling.better': 'Besser als vorher',
+
+  /* ── EIN WEG HINAUS, UND ER SAGT, WOHIN (Ben, 2026-10-09) ────────────────
+     KEIN 'reflect.skip' UND KEIN 'reflect.finish' mehr. Der Schritt hatte drei
+     Ausgänge gleichzeitig — überspringen, beenden und das stille *Diese
+     Session schließen*. Jetzt ist es ein Knopf, immer aktiv, und er nennt das
+     Ziel statt der Handlung.
+
+     Nebenbei löst das eine Doppelung auf: 'Session beenden' stand hier UND in
+     `exercises.running.end` — einmal für ein beendetes, einmal für ein
+     abgebrochenes Ende. Dieselben zwei Wörter für zwei Gegenteile. */
+  'reflect.save': 'Session im Tagebuch speichern',
+
+  /* Der Dialog, wenn Antwort oder Skala noch offen sind. EIN Satz zum Warum,
+     und er argumentiert mit dem, was die Person davon hat. */
+  'reflect.incomplete.title': 'Reflexion abschließen',
+  'reflect.incomplete.text': 'Eine Session, die du beantwortet hast, findest du später wieder — die Worte machen sie zu deiner und nicht zu einem Datum in einer Liste.',
+  /* Primär ist der Weg zurück zur Arbeit, denn dafür gibt es den Dialog.
+     Benennt die Handlung, nicht den Kasten: 'Abbrechen' beschriebe das
+     Verlassen dieses Fensters, nicht die Rückkehr zur Reflexion. */
+  'reflect.incomplete.continue': 'Reflexion fortsetzen',
+  /* Der Ausgang bleibt offen, im zweiten Rang — und sagt 'unvollständig'
+     laut, damit klar ist, was im Tagebuch landet. */
+  'reflect.incomplete.save': 'Unvollständig im Tagebuch speichern',
 
   /* ── Diary ─────────────────────────────────────────────────────────────── */
   /* 'Deine letzte Session' — 'letzte' is the one German would use here and
@@ -670,7 +711,7 @@ export const de: Messages = {
      Das Versprechen in einer Zeile: keine Kürzung von `privacy.voice`, sondern
      die Hälfte davon, die ein Versprechen ist — wie es funktioniert, steht in
      der Lightbox. */
-  'privacy.voiceShort': 'Musie behält den Text, nie deine Stimme.',
+  'privacy.voiceShort': 'Musie speichert nur den Text, nie die Sprachnachricht.',
   /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
      Link im Fließtext muss benennen, was hinter ihm liegt. */
   'privacy.more': 'Mehr zu deinen Daten',
