@@ -1031,11 +1031,7 @@ export function SessionListen({
           wrap
           onClick={onAdvance}
         >
-          {met
-            ? t('session.listen.start')
-            : t('session.listen.startLocked', {
-                countdown: clock(Math.max(0, gate - Math.floor(position))),
-              })}
+          {met ? t('session.listen.start') : t('session.listen.startLocked')}
         </CtaButton>
       </div>
 

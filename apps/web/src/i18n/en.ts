@@ -590,8 +590,19 @@ export const en = {
      CTA below it read *Start reflection* in both states. Two places said one
      thing, and the button — the control the sentence was about — was the one
      that said nothing. Now the button carries its own condition and the
-     paragraph is gone. */
-  'session.listen.startLocked': 'Focus for {countdown} minutes more',
+     paragraph is gone.
+
+     AND IT NO LONGER CARRIES A NUMBER — 2026-10-09. It read "Focus for
+     {countdown} minutes more", which was two faults in one line: it was the
+     SECOND countdown on the stage, disagreeing with the transport's, and it
+     interpolated MM:SS into a sentence that says "minutes", so a ninety-second
+     gate rendered as "Focus for 01:30 minutes more".
+
+     The transport above it owns the clock now — it says the minimum inside its
+     own label — so this one says only what it is waiting for. The gate is
+     still said by a button, which is the rule above; it is just said by the
+     button that is counting rather than by the one that is disabled. */
+  'session.listen.startLocked': 'Listen first, then reflect',
   'session.listen.start': 'Start reflecting whenever you are ready',
   /* THE PICTURE BETWEEN THE WORDS AND THE CONTROLS — 2026-10-07.
      DESCRIBED, NOT SILENT. The diary's marks take `alt=""` because the link

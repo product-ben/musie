@@ -17,9 +17,16 @@ One dev server, one Storybook. Check what is already on the port before
 believing a result (CLAUDE.md rule 9):
 
 ```
-pnpm --filter web dev        # http://localhost:5173
-pnpm storybook               # http://localhost:6006
+# From THIS worktree, on its own port — 5173 is the main checkout's
+pnpm --filter web dev --port 5175 --strictPort   # http://localhost:5175
+pnpm storybook                                   # http://localhost:6006
 ```
+
+**This branch lives in a worktree.** `../musie.worktrees/1st-week-oct`, so the
+main checkout stays free for other work. One Supabase stack is shared by all of
+them (rule 9), and the ports are not: 5173 is the main checkout, 5174 is
+`listen-infographic`, and this one takes 5175. Vite binds IPv6 `localhost`
+here — `127.0.0.1:5175` will not answer, `localhost:5175` will.
 
 `apps/web/.env.local` currently points at the **hosted** Supabase project, not
 the local stack — so the data you see is hosted. Swap the two blocks in that
@@ -27,13 +34,13 @@ file to go local.
 
 | Screen | How to reach it |
 |---|---|
-| Exercises | http://localhost:5173/exercises |
+| Exercises | http://localhost:5175/exercises |
 | Listen · stage | start any exercise → scan a card (type `MC-01`) → listen |
 | Listen · Störer | on the stage, press *Über die Musik* and scroll one view |
 | Listen · focus sheet | on the stage, press the transport |
 | Reflect | from the listen step, press the forward CTA |
-| Diary | http://localhost:5173/diary |
-| Diary entry | http://localhost:5173/diary → press any entry |
+| Diary | http://localhost:5175/diary |
+| Diary entry | http://localhost:5175/diary → press any entry |
 | Scan (typed) | in a session's scan step, choose *Code eingeben* |
 
 Storybook links are filled in per item as they land.
@@ -63,14 +70,14 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 
 | | Item | Status | Test |
 |---|---|---|---|
-| C1 | `warnBack` → *Zurück zum Hören* | ☐ | |
-| C2 | Gate passed → swap to the reflect CTA | ☐ | |
-| C3 | One clock on the stage — **absorbed into A1**; the app passes `gateSeconds` + labels | ☐ | |
-| C4 | Focus-sheet copy: minutes and seconds said correctly | ☐ | |
-| C5 | `session.close` hidden on reflect only | ☐ | |
-| C6 | One way out: *Session im Tagebuch speichern* + completion modal | ☐ | |
-| C7 | *Transkribieren*, and `privacy.voiceShort` finally rendered | ☐ | |
-| C8 | Glyphs: rail scan → `ScanQrCode`, reflect → `Quote` | ☐ | |
+| C1 | `warnBack` → *Zurück zum Hören* | ☑ | listen → *Über die Musik* → scroll one view |
+| C2 | Gate passed → swap to the reflect CTA | ☑ | same view, after 1:30 of listening |
+| C3 | One clock on the stage — **absorbed into A1**; the app passes `gateSeconds` + labels | ☑ | listen stage — transport names the minimum, CTA names no number |
+| C4 | Focus-sheet copy: minutes and seconds said correctly | ☑ | press the transport → the focus sheet |
+| C5 | `session.close` hidden on reflect only | ☑ | compare intro/scan/listen with reflect |
+| C6 | One way out: *Session im Tagebuch speichern* + completion modal | ☑ | reflect → press save with the answer or the scale still open |
+| C7 | *Transkribieren*, and `privacy.voiceShort` finally rendered | ☑ | reflect → the voice segment |
+| C8 | Glyphs: rail scan → `ScanQrCode`, reflect → `Quote` | ☑ | the rail, on any step |
 
 ### Phase D · Scan
 
@@ -177,6 +184,8 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **Phase C landed** (C1–C8). One way out of /reflect with its completion dialog, the feelings scale on the step, the Störer's forward swap, the glyph corrections, and `privacy.voiceShort` rendered for the first time since it was written. |
+| 2026-10-09 | **C3 finished properly.** Walking the real app showed the stage CTA *still* printing a second countdown — "Fokussiere dich für 01:30 Minuten", which was both the second clock and an mm:ss value in a sentence saying "Minuten". It now reads *Zuerst hören, dann reflektieren* and the transport owns the number. Verified: one countdown on the stage, zero trailing readouts. |
 | 2026-10-09 | **B1 landed.** Four German nouns for one object (Stück ×5, Track ×5, Musik ×7, Aufnahme ×2) unified on **die Musik**; English unified on **music**. 24 strings, both catalogues. The stale comment recording the old "Stück" rule is rewritten in both. Voice-recording *Aufnahme* deliberately untouched. |
 | 2026-10-09 | **B2 written.** `20261009100000_one_word_for_the_music.sql` — the two `mindfulness-cards` descriptions. Not applied: needs Ben's `supabase db reset`. `pnpm test:db` 117/118, the one failure pre-existing (empty `tracks` bucket). |
 | 2026-10-09 | **A2 landed.** `FeelingsScale` — ordered points on a drawn axis, base-ui radio group, 3–5 points, no default copy. Verified in both themes; selection carried by fill + edge weight + ink. |

@@ -423,7 +423,14 @@ export const de: Messages = {
      `discovered.trackLabel`, `noTrack`. Sie heißen nach der Tabelle `tracks`
      und der Spalte `track_id`, und das ist weiterhin wahr. */
   'session.listen.track': 'Deine Musik',
-  'session.listen.startLocked': 'Fokussiere dich für {countdown} Minuten',
+  /* Keine Zahl mehr (2026-10-09). Vorher: 'Fokussiere dich für {countdown}
+     Minuten' — zwei Fehler in einer Zeile. Es war der ZWEITE Countdown auf der
+     Bühne und widersprach dem des Transports, und es setzte MM:SS in einen
+     Satz, der 'Minuten' sagt: aus neunzig Sekunden wurde '01:30 Minuten'.
+
+     Die Uhr gehört jetzt dem Knopf darüber, der das Minimum in seiner eigenen
+     Beschriftung nennt. Dieser hier sagt nur noch, worauf er wartet. */
+  'session.listen.startLocked': 'Zuerst hören, dann reflektieren',
   'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
   /* Beschreibend, kein Satzzeichen-Deutsch: was zu sehen ist, in einem Satz.
      'Smartphone', weil 'Handy' in diesem Deck sonst nirgends steht. */
