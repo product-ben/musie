@@ -2835,7 +2835,7 @@
    the case the paragraph above describes, and the only one the original cap
    was ever measuring. Written as an override rather than as two full rules so
    the shared geometry stays in one place. */
-.musy-toast[data-has-action] { max-width: var(--measure-heading); }
+.musy-toast[data-has-action] { max-width: var(--measure-compact); }
 
 .musy-toast__text {
   margin: 0;
@@ -2849,8 +2849,8 @@
      collapse. Without it, min-inline-size: 0 crushed the label to 1px and the
      squeeze was invisible to L15's scrollWidth check, which reported 259/259
      "fits" on a visibly broken layout. */
-  flex: 1 1 calc(var(--measure-heading) / 2);
-  min-inline-size: calc(var(--measure-heading) / 2);
+  flex: 1 1 calc(var(--measure-compact) / 2);
+  min-inline-size: calc(var(--measure-compact) / 2);
 }
 
 /* Both controls hold their size, and the pair takes the trailing edge — on one
@@ -3326,8 +3326,11 @@
 .musy-dlist__drop:first-child { margin-block-start: calc(var(--sp-1) - var(--space-gap-stack)); }
 .musy-dlist__drop:last-child  { margin-block-end:   calc(var(--sp-1) - var(--space-gap-stack)); }
 
-/* The thing under the finger. Capped at --measure-heading so a long statement
-   does not become a full-width sheet mid-gesture.
+/* The thing under the finger. Capped at --measure-compact so a long statement
+   does not become a full-width sheet mid-gesture. It was --measure-heading
+   until 2026-10-09, when that token went to 50ch for headings that were
+   breaking for no reason — this cap is a width budget for a floating preview,
+   not a measure for prose, so it keeps the 26ch it was tuned against.
 
    IT CARRIES BOTH HALVES OF THE GESTURE: which item is moving, and what
    releasing would do. The second half is the one that is easy to leave out and
@@ -3339,7 +3342,7 @@
   z-index: var(--z-tooltip);
   translate: var(--space-gap-inline) var(--space-gap-inline);
   pointer-events: none;
-  max-width: var(--measure-heading);
+  max-width: var(--measure-compact);
   padding: var(--space-inset-control);
   border-radius: var(--radius-card);
   background-color: var(--surface-overlay);

@@ -2375,6 +2375,10 @@
       },
       "measureHeading": {
         "$type": "other",
+        "$value": "50ch"
+      },
+      "measureCompact": {
+        "$type": "other",
         "$value": "26ch"
       }
     }

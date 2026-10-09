@@ -759,6 +759,47 @@
   gap: var(--space-gap-stack);
 }
 
+/* ═══ THE REFLECT STEP'S THREE SECTIONS ═════════════════════════════════════
+   The box body is a question with its answer, then how the session left you,
+   then the way out. Three subjects, and until 2026-10-09 they ran together at
+   one gap: the scale sat --space-gap-stack from the answer box above it and
+   the same from the save row below, so the one question that is NOT about the
+   reflection read as part of it.
+
+   --space-section IS THE TOKEN FOR THIS, and Layer 1 names it exactly: "between
+   sections". --space-gap-group is the rung below — "molecules that do NOT
+   belong together" — and it is what separates the question from the mode
+   switch INSIDE a section. So the two distances say which is which rather than
+   both saying "some space".
+
+   AN ADJACENT-SIBLING RULE, NOT A WRAPPER. `WizardPanel` renders its action row
+   after this component's children and outside anything this file could wrap, so
+   a flex container with a `gap` would section the first two and leave the third
+   at the component's own margin. A margin between sections composes with what
+   the panel does next instead of fighting it.                                */
+.musie-reflect__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+}
+
+.musie-reflect__section + .musie-reflect__section {
+  margin-block-start: var(--space-section);
+}
+
+/* The section owns the gap now, so the markdown's own trailing margin would be
+   a second one. Same rule `.musie-sheet .musie-placeholder` states: one spacing
+   mechanism per container. */
+.musie-reflect__section > .musie-md { margin-block-end: 0; }
+
+/* And the way out is the third section, so it stands at a section's distance
+   rather than at the panel's default --space-gap-stack. Scoped to this step:
+   every other wizard step has one subject in its panel and wants the component's
+   own spacing. */
+.musie-reflect__section + .musy-wizard__actions {
+  margin-block-start: var(--space-section);
+}
+
 /* ═══ SCRIM ═════════════════════════════════════════════════════════════════
    Shared by every overlay, exactly as the prototype shares one.             */
 .musie-scrim {
@@ -1950,7 +1991,12 @@ html[data-musy-scroll-snap] {
    Scoped to the sheet. The stage's headline is still one short sentence and is
    still a step headline, so it keeps both defaults.                         */
 .musie-immersive__lead .musie-md h2 {
-  max-inline-size: 50ch;
+  /* THE 50ch LITERAL IS GONE — it became `--measure-heading` on 2026-10-09.
+     This rule asked for it first, and the note above is the argument that was
+     eventually applied to every heading rather than to this one sheet. What is
+     left is the other half, which is NOT the default: `balance` evens lines
+     instead of filling them, so a question-and-instruction run together wants
+     the body's `pretty` even now the cap is wide enough. */
   text-wrap: var(--text-wrap-body);
 }
 

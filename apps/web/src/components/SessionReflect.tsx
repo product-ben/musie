@@ -105,9 +105,15 @@ export function SessionReflect({
           column is gone (2026-09-23) and each step carries its own headline,
           because the listen step asks what picture FORMS and this one asks
           what it was called and what happened in it. */}
-      <Markdown md={exercise.reflectMd} />
+      {/* ── SECTION 1 · THE QUESTION, AND HOW YOU ANSWER IT ────────────────
+          The step's own words and the three ways to reply are ONE section:
+          the modes are not a separate subject, they are the apparatus for the
+          question directly above them. Splitting them would section the
+          sentence away from the box you write in. */}
+      <section className="musie-reflect__section">
+        <Markdown md={exercise.reflectMd} />
 
-      <div className="musie-stack">
+        <div className="musie-stack">
         <SegmentedControl
           name="reflect-mode"
           /* THE NAME STAYS; THE HEADING GOES — Ben, 2026-09-23. "How would you
@@ -199,9 +205,10 @@ export function SessionReflect({
             />
           </div>
         )}
-      </div>
+        </div>
+      </section>
 
-      {/* ── HOW THE SESSION LEFT YOU ────────────────────────────────────────
+      {/* ── SECTION 2 · HOW THE SESSION LEFT YOU ─────────────────────────────
           AFTER the answer, not before it: the question is about the session
           that has just happened, and asking it above the reflection would put
           a summary before the thing being summarised.
@@ -214,18 +221,20 @@ export function SessionReflect({
           It is OPTIONAL in the sense that the session saves without it, and
           the completion dialog in `Session.tsx` is what says so out loud
           rather than a disabled button that explains nothing. */}
-      <FeelingsScale
-        name="session-feeling"
-        legend={t('reflect.feeling.legend')}
-        points={[
-          { value: 'worse', label: t('reflect.feeling.worse'), glyph: ArrowDown },
-          { value: 'same', label: t('reflect.feeling.same'), glyph: Minus },
-          { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
-        ]}
-        value={feeling ?? undefined}
-        onValueChange={onFeelingChange}
-        accent="accent"
-      />
+      <section className="musie-reflect__section">
+        <FeelingsScale
+          name="session-feeling"
+          legend={t('reflect.feeling.legend')}
+          points={[
+            { value: 'worse', label: t('reflect.feeling.worse'), glyph: ArrowDown },
+            { value: 'same', label: t('reflect.feeling.same'), glyph: Minus },
+            { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
+          ]}
+          value={feeling ?? undefined}
+          onValueChange={onFeelingChange}
+          accent="accent"
+        />
+      </section>
     </>
   );
 }

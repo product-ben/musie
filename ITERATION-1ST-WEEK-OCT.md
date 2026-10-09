@@ -79,6 +79,13 @@ Legend: ☐ not started · ◐ in progress · ☑ landed (`pnpm check` green) ·
 | C7 | *Transkribieren*, and `privacy.voiceShort` finally rendered | ☑ | reflect → the voice segment |
 | C8 | Glyphs: rail scan → `ScanQrCode`, reflect → `Quote` | ☑ | the rail, on any step |
 
+### Phase C2 · /reflect, iterated (Ben, 2026-10-09)
+
+| | Item | Status | Test |
+|---|---|---|---|
+| R1 | Three sections in the box body, separated at `--space-section` | ☑ | reflect — question+answer, feelings, actions |
+| R2 | `--measure-heading` 26ch → **50ch**; `--measure-compact: 26ch` added for the two non-headings that used it as a width budget | ☑ | any long heading; the reflect question is now one line on desktop |
+
 ### Phase D · Scan
 
 | | Item | Status | Test |
@@ -184,6 +191,7 @@ it for the five that exist. Left out of this iteration.
 | When | What |
 |---|---|
 | 2026-10-09 | Plan agreed; board read; rulings above taken. |
+| 2026-10-09 | **R1/R2 landed.** The reflect body is three sections at `--space-section` (48px, measured both gaps). `--measure-heading` raised 26ch → 50ch in Layer 1 — a second deliberate break of the lock, recorded in the design system README — with `--measure-compact: 26ch` added so the toast's arithmetic cap and the drag preview keep what they were tuned against. The raw `50ch` literal in shell.css is gone, absorbed by the token it was waiting for. |
 | 2026-10-09 | **Phase C landed** (C1–C8). One way out of /reflect with its completion dialog, the feelings scale on the step, the Störer's forward swap, the glyph corrections, and `privacy.voiceShort` rendered for the first time since it was written. |
 | 2026-10-09 | **C3 finished properly.** Walking the real app showed the stage CTA *still* printing a second countdown — "Fokussiere dich für 01:30 Minuten", which was both the second clock and an mm:ss value in a sentence saying "Minuten". It now reads *Zuerst hören, dann reflektieren* and the transport owns the number. Verified: one countdown on the stage, zero trailing readouts. |
 | 2026-10-09 | **B1 landed.** Four German nouns for one object (Stück ×5, Track ×5, Musik ×7, Aufnahme ×2) unified on **die Musik**; English unified on **music**. 24 strings, both catalogues. The stale comment recording the old "Stück" rule is rewritten in both. Voice-recording *Aufnahme* deliberately untouched. |

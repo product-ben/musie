@@ -51,6 +51,21 @@ Layer 1 was `[LOCKED]` — byte-identical to the signed-off version — until
 and `--interactive-accent-alt-*`. Nothing else changed: no value, no alias, no
 override. The lock is re-established from that version.
 
+**Broken a second time on 2026-10-09, on Ben's call, and this one changed a
+VALUE.** `--measure-heading` went from `26ch` to `50ch`: the tight measure was
+bought to stop German compounds stranding a word on the last line, a job
+`--text-wrap-heading: balance` was already doing, and what it actually did was
+break headings that had no reason to break — a 52-character question wanting
+656px was given 425px inside a 1076px column. It had been worked around twice
+rather than fixed (a raw `50ch` in `shell.css`, and `ContentBox`'s
+`headlineWide`), and 50ch is that workaround's own number promoted.
+
+One token was ADDED in the same act: `--measure-compact: 26ch`, for the two
+places that were using the old value as a width budget rather than as a
+measure — a toast row whose cap is arithmetic, and a drag preview. Neither is
+a heading, both were tuned by measurement, and both now say so. The lock is
+re-established from this version.
+
 The rename was taken in Layer 1 rather than aliased in the amendments file
 because "placeholder" was in the public API of nine components, and an alias
 would have left both names live and both greppable. See
