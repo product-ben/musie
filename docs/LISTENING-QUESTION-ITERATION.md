@@ -54,26 +54,29 @@ in this document that was genuinely open.
 
 ## 3 · Decisions — the contract
 
-Eleven questions were put to Ben on 2026-10-11. These are his answers, and
-anything in the sections below that disagrees with this table is a drafting
-error in the section.
+Put to Ben on 2026-10-11, in three rounds. These are his answers, and anything
+in the sections below that disagrees with this table is a drafting error in the
+section.
 
 | # | Question | Decision |
 |---|---|---|
 | D1 | Where does the question set live? | **Repo files, plus columns on `sessions`.** Not new content tables. §5 |
 | D2 | Which exercises get the rotating set? | **Achtsame Pause *and* Freie Bahn** (`mindfulness-cards`, `free-rein`) |
-| D3 | What spends a question? | **Only a saved reflection.** A question shown but not written about stays in the pool |
+| D3 | What spends a question? | **The session finished with it** — written answer or not. ⚠️ *Revised.* The first answer was "only a saved reflection"; §6.1 is why it changed and what the brief's own words said |
 | D4 | Where does the re-roll button live? | **`/listen?focus` only.** The question is locked by the time you reach `/reflect` |
 | D5 | Markdown in the questions? | **Yes, rendered where it can be.** The helper degrades to plain text inside a `placeholder` |
-| D6 | Tie-breaker on the rotation | **Never the same question twice running** |
+| D6 | Tie-breaker on the rotation | **Never the same question twice running.** Still earns its keep under the revised D3 — see §6 |
 | D7 | The broccoli icon | **Bump `lucide-react` to 1.x** and use the real `Broccoli`. §9 |
 | D8 | 30 seconds of what? | **Wall clock**, from when the question appears on the sheet |
 | D9 | Re-roll budget | **Unlimited, and the 30 s does not re-arm** |
 | D10 | A reworded question and an old diary entry | **Snapshot the question text onto the session.** History stays true |
-| D11 | Record the rejections? | **Yes — `rejected_question_ids text[]` on `sessions`** |
+| D11 | Record the rejections? | **Yes**, on `sessions`. Shape settled by D17 |
 | D12 | Freie Bahn's reflect heading | **The rotating question replaces it.** Consequence logged in §11 |
-| D13 | The pool-empty dead end | **Disabled button that says so**, and the event is logged. §7.4, §5.4 |
+| D13 | The pool-empty dead end | **Disabled button that says so** — *and* a **Fragen zurücksetzen** button beside it (D16). §7.4, §5.4 |
 | D14 | Four copy corrections | **All four applied.** §4.1 |
+| D15 | Does the `?` helper stay open? | **Yes — a one-way reveal.** The helper appears under the headline at `body-sm` and **the `?` disappears**. No hide affordance, so no hide label. §7.3 |
+| D16 | The dead end's way out | **A *Fragen zurücksetzen* button**, which puts every question back in reach inside this session. §7.4 |
+| D17 | Reset vs. the rejection log | **Two arrays on `sessions`** — delegated to me, on "easiest to explain, no architectural bloat". Reasoning, and the two rejected shapes, in §5.3.1 |
 
 ---
 
@@ -279,7 +282,7 @@ exercise has no questions" and nothing complains. That check belongs in
 parity for the deck: **every key in `QUESTION_SETS` is a row in
 `public.exercises`.**
 
-### 5.3 · Three columns on `sessions`
+### 5.3 · Four columns on `sessions`
 
 One stacking migration. No new table, no foreign key, and — checked rather than
 assumed (rule 2) — **no grant and no policy**:
@@ -292,7 +295,8 @@ policies are row-level and already filter by `user_id`.
 alter table public.sessions
   add column listening_question_id text,
   add column listening_question    text,
-  add column rejected_question_ids text[] not null default '{}';
+  add column rejected_question_ids text[] not null default '{}',
+  add column rejected_this_round   text[] not null default '{}';
 
 alter table public.sessions
   add constraint sessions_listening_question_pairs
@@ -303,11 +307,43 @@ alter table public.sessions
 |---|---|
 | `listening_question_id` | The id as shown. Null for a session on an exercise with no set, and for every session that existed before this change. **No FK** — the catalogue is in the app (§5.1) |
 | `listening_question` | **D10's snapshot**: the *reflect* phrasing, in the locale it was shown, written at the same moment as the id. This is what the diary renders, so rewording Q3 never relabels anybody's history |
-| `rejected_question_ids` | **D11.** Appended on each re-roll. Needed anyway so a mid-session reload does not re-offer the question just rejected, and it is the only place the product learns which questions do not work |
+| `rejected_question_ids` | **The log.** Append-only, never cleared. Every question turned down in this session, for all time. This is what §5.4's view reads |
+| `rejected_this_round` | **The working set.** What a re-roll will not offer right now. *Fragen zurücksetzen* empties it; nothing else ever does |
 
 The pairing constraint is written as one equality between two booleans, which
 is the same construction `sessions_ended_at_matches_status` uses and for the
 same reason: both halves are equally wrong and equally easy to write.
+
+### 5.3.1 · Why two arrays and not one (D17)
+
+Ben delegated this on *"whatever is technically easiest to explain and
+understand and doesn't bloat the architecture"*, so the reasoning is recorded
+rather than the conclusion alone.
+
+**One array cannot do both jobs.** It is the working exclusion list, which
+*Fragen zurücksetzen* has to clear, **and** the rejection log, which must never
+be cleared — because a reset happens in exactly the sessions whose signal is
+loudest. Clearing it would make the users Ben most wants to contact the ones the
+log under-reports.
+
+Two places are therefore unavoidable, and there were three candidates:
+
+| | Verdict |
+|---|---|
+| **Two arrays on `sessions`** | **Chosen.** Zero new objects in the schema — no table, no RLS, no policy, no grant. Each column is one sentence (see the table above). Behaviour is identical across a reload, because both facts are durable |
+| A child table `session_question_rejections` | Rejected as bloat. Correct shape, and it would carry a timestamp per rejection, but it costs a table plus four policies plus revoke-and-grant — which is the architecture D1 exists to avoid for five strings |
+| One array + an integer index into it | Rejected as unexplainable. `rejected_question_ids[reset_at+1:]` is one slice to implement and a paragraph to explain. "An integer that means a position in another column" fails the brief it was chosen under |
+
+**There is no third column counting resets.** It is derivable, and the
+derivation is as clear as a column would be: after a reset, new rejections
+append to **both** arrays, so
+
+```
+cardinality(rejected_question_ids) > cardinality(rejected_this_round)
+```
+
+is true if and only if this session was reset at least once. §5.4's view
+reports it as `was_reset`.
 
 ### 5.4 · Where the rejections are read (D13, and Ben's "I want to contact these users")
 
@@ -326,6 +362,11 @@ select s.user_id,
        s.status,
        s.rejected_question_ids,
        cardinality(s.rejected_question_ids) as rejected_count,
+       -- TRUE iff Fragen zurücksetzen was pressed: after a reset, every new
+       -- rejection appends to BOTH arrays, so the log can only run ahead of
+       -- the working set by what a reset discarded. §5.3.1.
+       cardinality(s.rejected_question_ids)
+         > cardinality(s.rejected_this_round) as was_reset,
        s.listening_question_id              as left_with,
        p.language
 from public.sessions s
@@ -358,9 +399,12 @@ Two queries this is for:
 select unnest(rejected_question_ids) as question_id, count(*)
 from public.question_rejections group by 1 order by 2 desc;
 
--- The people to contact: they rejected everything we had.
-select user_id, language, started_at, exercise_id
-from public.question_rejections where rejected_count >= 5 order by started_at desc;
+-- The people to contact: they rejected everything we had, or reset and
+-- started over. `was_reset` is the loudest signal in the table.
+select user_id, language, started_at, exercise_id, rejected_count, was_reset
+from public.question_rejections
+where rejected_count >= 5 or was_reset
+order by started_at desc;
 ```
 
 ### 5.5 · When the question is assigned
@@ -376,22 +420,22 @@ nothing was shown, so nothing should appear in the rotation or the log.
 
 ## 6 · The rotation (problem 1)
 
-Three rules, in order. `answered` means **a `reflections` row exists for a
-session that used that question** (D3).
+Three rules, in order. **`spent` means a session that used that question
+reached `status = 'finished'`** — whether or not words were written (D3).
 
-1. **Unspent first, in `QUESTION_ORDER`.** The lowest-ordered question with no
-   saved reflection behind it.
+1. **Unspent first, in `QUESTION_ORDER`.** The lowest-ordered question the user
+   has not yet finished a session with.
 2. **Never the same question twice running** (D6). If rule 1 picks the question
-   the user's *previous* session used, take the next one instead. Only applies
-   while two or more candidates exist.
+   the *previous* session used, take the next one instead. Only applies while
+   two or more candidates exist.
 3. **Everything spent → random**, excluding the previous session's question for
    the same reason.
 
 Both facts come from the user's own rows, so it works across devices for free
-and needs no new table:
+and needs no new table and no join:
 
 ```
-answered  = distinct listening_question_id over my sessions that have a reflection
+spent     = distinct listening_question_id over my FINISHED sessions
 previous  = listening_question_id of my most recent session that had one
 ```
 
@@ -399,20 +443,48 @@ RLS filters both to the caller. Neither reads the catalogue, so the queries do
 not change when a sixth question is written.
 
 **No backfill.** Pre-change sessions have a null `listening_question_id`, so
-they contribute nothing to `answered` and nothing to `previous` — which is
-exactly the brief's *"doesn't have to work for any past session, but only new
-ones."*
+they contribute nothing to `spent` and nothing to `previous` — which is exactly
+the brief's *"doesn't have to work for any past session, but only new ones."*
 
-### 6.1 · The consequence of D3, stated plainly
+**Rule 2 still earns its keep**, which is not obvious once rule 1 advances on
+its own: an **abandoned** session spends nothing. Without rule 2, abandoning a
+session on Q1 and starting another would serve Q1 straight back.
 
-Ben chose the literal reading: a question is spent **only** when a reflection
-was saved. So a user who always skips the writing never spends anything, and
-rule 1 would hand them Q1 every single session. **Rule 2 is what stops that**
-— they cycle Q1 → Q2 → Q1 → Q2 instead of Q1 forever, which satisfies problem
-1's "not every time" without touching D3.
+### 6.1 · Why D3 changed
 
-It does mean a persistent skipper sees two questions rather than five. If that
-turns out to be the common case, the lever is D3, not rule 2 — logged in §12.
+D3's first answer was the brief's literal wording — *"the questions the user
+hasn't answered in any reflection"*. Traced against the brief's **other**
+sentence, *"the same question should not be there every time"*, the two pull
+apart, because **spending is the only thing that shrinks the pool.** A user who
+never writes spends nothing, so rule 1 keeps returning Q1 and rule 2 can only
+push it one place:
+
+| Session | Spent | Rule 1 picks | Previous | **Shown** |
+|---|---|---|---|---|
+| 1 | `{}` | Q1 | — | **Q1** |
+| 2 | `{}` | Q1 | Q1 | **Q2** |
+| 3 | `{}` | Q1 | Q2 | **Q1** |
+| 4 | `{}` | Q1 | Q1 | **Q2** |
+
+Q3, Q4 and Q5 unreachable except through the re-roll button. **Ben's call,
+2026-10-11: spending means the session finished with it.** A skipper and a
+writer now behave identically — Q1, Q2, Q3, Q4, Q5, then random — and the
+brief's second sentence holds for everyone.
+
+Two things this bought beyond the fix:
+
+- **The query lost a join.** `spent` reads `sessions.status` instead of
+  `exists (select 1 from reflections …)`, and `status` is already covered by
+  `sessions_user_id_started_at_idx`'s leading column.
+- **"Answered" stops being load-bearing**, so nothing in the rotation depends
+  on whether the reflection was typed, spoken or declined — which matters,
+  because voice cannot save yet (F.6) and declining is a real answer.
+
+**What it costs**, stated so it is not found later as a bug: a question shown
+in a session somebody finished is spent **even if they wrote nothing about it**.
+Pressing *Weiter* through the reflect step uses a question up. That is the
+intended trade — it is what makes rotation work for the people who do that —
+and §11 records it.
 
 ---
 
@@ -428,12 +500,12 @@ the question they answer.
 Top to bottom, inside `.musie-immersive`:
 
 ```
+Before the `?` is pressed:
+
+```
 ┌─ .musie-immersive__lead ──────────────────────────────┐
 │  Welches Bild entsteht vor deinem         ⟨ ? ⟩       │   ← headline row
 │  inneren Auge?                                        │
-│                                                       │
-│  Was für einen Namen würdest du der Szene geben?      │   ← helper, when revealed
-│  Was passiert darin?                                  │
 └───────────────────────────────────────────────────────┘
           ↕  --space-inset-card
    ⟨ 🥦 Gib der Frage 30 Sek. eine Chance ⟩                 ← S, ghost, disabled
@@ -441,6 +513,20 @@ Top to bottom, inside `.musie-immersive`:
   00:42   ⟨▶⟩                                               ← existing clock row
   mindestens hören für diese Übung
                                    ⟨ Weiter ⟩               ← existing way on
+```
+
+After the `?` is pressed — **the helper appears and the `?` goes** (D15):
+
+```
+┌─ .musie-immersive__lead ──────────────────────────────┐
+│  Welches Bild entsteht vor deinem                     │   ← no control beside it
+│  inneren Auge?                                        │
+│                                                       │
+│  Was für einen Namen würdest du der Szene geben?      │   ← body-sm
+│  Was passiert darin?                                  │
+└───────────────────────────────────────────────────────┘
+          ↕  --space-inset-card
+   ⟨ 🥦 Gib der Frage 30 Sek. eine Chance ⟩
 ```
 
 After 30 seconds of wall clock (D8), that one button becomes:
@@ -467,16 +553,37 @@ ContentBox. Under `10-layout.md` L14 that makes it a permitted app pattern —
 call site (D4 keeps it off `/reflect`), so it stays an app pattern for now, and
 §12 logs it so the request exists when a second one appears.
 
-The `?` is an `IconButton`, `size="min"`, `variant="ghost"`, with both toggle
-labels passed explicitly (rule 7 — `IconButton` has no catalogue default for
-this and an unnamed icon-only control is a 4.1.2 failure).
+The `?` is an `IconButton`, `size="min"`, `variant="ghost"`, with its label
+passed explicitly (rule 7 — `IconButton` has no catalogue default for this and
+an unnamed icon-only control is a 4.1.2 failure). **One label, not two:** D15
+makes this a one-way reveal, so there is no hide state to name.
 
-### 7.3 · The helper
+### 7.3 · The helper (D15)
 
-Revealed by the `?`, **between the headline row and the button** — collapsed
-when the sheet opens, and not remembered (§12 logs that as an assumption).
+**A one-way reveal, not a toggle.** Pressing `?` puts the helper under the
+headline, between the headline row and the button, and **removes the `?`
+itself** — it has nothing left to do. There is no way to put the helper away
+again, which is the point: it is a sentence of help, not a panel.
 
-Markdown (D5), rendered through the existing `Markdown` component.
+- **`body-sm`.** Smaller than the question it supports, which is the one thing
+  on this sheet that should be large.
+- **Markdown** (D5), through the existing `Markdown` component.
+- **Scoped to the question, not the sheet.** A re-roll brings a new question
+  with its helper collapsed and its `?` back. Revealing Q3's helper says
+  nothing about Q4's.
+
+**Where the revealed flag lives: `sessionStorage`, keyed by session id and
+question id.** Not the database — a disclosure state is not worth a column —
+and not component state alone, which would re-collapse the helper every time
+the sheet is closed and reopened. `lib/scan.ts` already holds a scanned code
+this way, with the reasoning that it belongs to the tab that produced it, and
+`lib/identity.ts` has the guarded accessor to copy. It dies with the tab, which
+is the right lifetime for "I have read this".
+
+One consequence worth stating: **removing the `?` on press moves focus.** The
+control that took the press stops existing, so focus has to be sent somewhere
+deliberately — the helper itself, as a focusable region, rather than left to
+fall to `<body>`.
 
 ### 7.4 · The button, in three states
 
@@ -485,6 +592,7 @@ Markdown (D5), rendered through the existing `Markdown` component.
 | Before 30 s | `Gib der Frage 30 Sek. eine Chance` | `Broccoli` | no |
 | After 30 s | `Das klappt für mich gerade nicht` | `RefreshCw` | **yes** |
 | Nothing left to offer | `Keine weitere Frage übrig` | `RefreshCw` | no |
+| …**and beside it** (D16) | `Fragen zurücksetzen` | `RotateCcw` | **yes** |
 
 `CtaButton`, `variant="ghost"`, **`size="min"`** — the system's sizes are
 `min | primary | comfort | guided` and `min` is the S rung. `wrap` is on:
@@ -503,6 +611,32 @@ Markdown (D5), rendered through the existing `Markdown` component.
 - **Third state** when that pool is empty (D13). The user keeps the last
   question they rejected, the button says there is nothing else, and
   `question_rejections` has the row that says it happened (§5.4).
+
+### 7.5 · *Fragen zurücksetzen* (D16)
+
+The dead end gets a way out. It appears **only in the third state**, beside the
+disabled button rather than instead of it — Ben's *"also show a button"*. The
+disabled one explains the state; this one is the way out of it.
+
+```
+   ⟨ ⟳ Keine weitere Frage übrig ⟩     ⟨ ↺ Fragen zurücksetzen ⟩
+       S, ghost, disabled                  S, ghost, enabled
+```
+
+Pressing it **empties `rejected_this_round` and nothing else.** Every question
+is offerable again, the next re-roll works, and `rejected_question_ids` keeps
+every rejection — which is what makes a reset the loudest row in §5.4's view
+rather than the one that erases itself. §5.3.1 is why that is two columns.
+
+`RotateCcw` and not `RefreshCw`: the repo already imports `RotateCcw`, and a
+second circular arrow identical to the one on the button next to it would make
+two different actions look like one.
+
+**Two S ghost buttons in a row on a listening sheet is more furniture than this
+screen normally carries**, and the alternative is one button whose third state
+simply *is* `Fragen zurücksetzen` — pressable, so it needs no sentence to
+explain that something can be done. Specced as Ben asked; the alternative is
+logged in §12 as the thing to try if the row reads busy on a phone.
 
 ---
 
@@ -544,6 +678,30 @@ the consequence so it is not discovered later as a bug.
 on the sheet, `reflect_md`'s heading on reflect, `reflect_placeholder` in the
 field, no `?`, no button. The fallback path is the current path, untouched, so
 the three unbuilt exercises get questions when they get copy and not before.
+
+### 8.2 · Chrome strings
+
+Five new keys. **Chrome, not content** — they are the app's own words about the
+apparatus, they are permanent, and nobody else will ever supply them. So they
+go in `apps/web/src/i18n/{en,de}.ts` and not in §5.2's catalogue, keyed in the
+flat `session.listen.*` style the file already uses.
+
+| Key | de | en |
+|---|---|---|
+| `session.listen.questionChance` | Gib der Frage 30 Sek. eine Chance | Give the question 30 seconds |
+| `session.listen.questionReroll` | Das klappt für mich gerade nicht | This isn’t working for me right now |
+| `session.listen.questionExhausted` | Keine weitere Frage übrig | No other question left |
+| `session.listen.questionReset` | Fragen zurücksetzen | Reset questions |
+| `session.listen.questionHelp` | Hilfe zur Frage zeigen | Show help for this question |
+
+Held against `docs/GERMAN-UI-WRITING.md`: du throughout (§1), sentence case
+(§2), every label a verb phrase including the `?`'s accessible name (§3), no
+*Bitte* (§4), no full stop on a label (§7). German runs 1.00–1.18× the English
+here, well inside the budget (§5) — and `Gib der Frage 30 Sek. eine Chance` is
+33 characters, which is why §7.4 passes `wrap`.
+
+**`questionHelp` is one string, not two** (D15). A one-way reveal has no hide
+state, so there is no second label to drift out of sync.
 
 ---
 
@@ -614,7 +772,11 @@ Three, each a decision's known cost rather than a defect:
 
 **Two sets of questions on Freie Bahn's reflect step** (D12). §8's third note.
 
-**A persistent skipper sees two questions, not five** (D3 + D6). §6.1.
+**Finishing the reflect step without writing anything still spends the
+question** (D3, as revised). Pressing *Weiter* past an empty answer field uses
+Q1 up, and it will not come back until all five are spent. That is the trade
+that makes rotation work for people who do not write — §6.1 has the arithmetic
+of the alternative, which was two questions forever.
 
 **`listening_question_id` has no referential integrity** (D1). A question id
 that stops existing leaves session rows pointing at a string nothing resolves.
@@ -632,12 +794,14 @@ rather than decided, in that file's format.
 
 | | Assumed | Needs |
 |---|---|---|
-| **Helper disclosure state** | Collapsed each time the sheet opens; toggled by `?`; not remembered across opens or sessions | Ben, if it should persist. Nothing in the brief says |
+| **The helper's revealed flag in `sessionStorage`** | Survives a reload and a sheet reopen; dies with the tab; never reaches the database | Nothing, unless somebody expects it to persist across devices — which would make it a column, and a disclosure state is not worth one |
+| **Focus after the `?` disappears** | Sent to the helper as a focusable region, because the control that took the press stops existing (§7.3) | A keyboard pass. Nothing in the repo has removed the control that was just pressed before, so there is no precedent to copy |
+| **Two buttons in the dead-end row** | Specced as Ben asked (§7.5): disabled explanation plus enabled *Fragen zurücksetzen* | Ben's eye on a 320px screen. The one-button alternative is in §7.5 |
 | **Helper in photo mode** | Shown above `PhotoUpload`, as in voice mode | Nothing — photo is a mockup (MOCKUPS.md 2) and `Finish` is disabled there anyway |
 | **The headline row as a component** | An app pattern under L14, because D4 leaves it one call site | L14.3 — the second call site makes it a component request, and the `?`-beside-a-heading shape will probably get one |
 | **Locale switched mid-session** | The snapshot is written in the locale active when the question was assigned, so switching language before `/reflect` leaves the diary with the old locale's wording | Ben. The alternative is re-writing the snapshot at save time, which is a second write for an edge case |
 | **The spreadsheet** | The five questions are ours, in the repo, under rule 6's *chrome* half | Ben, if the Mindfulness Cards spreadsheet is going to own them. That reopens D1 |
-| **D3's threshold** | A question is spent only by a saved reflection | Measurement. If most sessions skip the writing, §6.1's two-question cycle is the real behaviour and D3 is the lever |
+| **A cross-session reset** | There is none. *Fragen zurücksetzen* clears one session's rejections; the `spent` set from §6 is never resettable | Ben, if "give me all five again" should also exist as an account-level action. Today the random branch is what a fully-spent user gets |
 
 ---
 
@@ -647,9 +811,10 @@ Against §2's three problems, plus what the change must not break.
 
 **Problem 1 — not the same question every time**
 
-- [ ] A new account's first five sessions, each with a saved reflection, get Q1, Q2, Q3, Q4, Q5 in that order
+- [ ] A new account's first five **finished** sessions get Q1, Q2, Q3, Q4, Q5 in that order
+- [ ] **The same is true when every reflection is skipped** — finishing is what advances it, not writing (D3)
 - [ ] The sixth gets a random one that is not the fifth's
-- [ ] An account that saves *no* reflections alternates between two questions rather than repeating one
+- [ ] An **abandoned** session spends nothing, and the next session does not serve the same question back (D6)
 - [ ] The question survives a reload, and a second device mid-session shows the same one
 
 **Problem 2 — a question that does not work**
@@ -657,8 +822,16 @@ Against §2's three problems, plus what the change must not break.
 - [ ] The button is disabled for 30 s with the broccoli label, then enabled with the refresh label
 - [ ] A press swaps both phrasings and the helper, and `/reflect` shows the swapped question
 - [ ] A rejected question is never re-offered inside the same session, including after a reload
-- [ ] With everything rejected, the button is disabled and says so
+- [ ] With everything rejected, the button is disabled and says so, and *Fragen zurücksetzen* appears beside it
+- [ ] Pressing it makes every question offerable again **and leaves `rejected_question_ids` untouched** — `was_reset` is true in the view afterwards
 - [ ] `select * from public.question_rejections` as `service_role` returns the session; as `authenticated` it is refused
+
+**The helper**
+
+- [ ] `?` reveals the helper at `body-sm` under the headline and **removes itself**
+- [ ] It stays revealed across closing and reopening the sheet, and across a reload
+- [ ] A re-roll collapses it and brings the `?` back, because it belongs to the question
+- [ ] Focus lands somewhere deliberate after the `?` disappears, not on `<body>`
 
 **Problem 3 — architecture**
 
