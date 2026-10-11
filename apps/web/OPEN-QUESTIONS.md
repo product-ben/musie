@@ -7636,3 +7636,237 @@ What I need from Ben: **whether the diary's card art should move to
 `--measure-figure` too.** It is a 6px change nobody would notice, and it would
 leave one answer to the question instead of two. I did not do it unasked
 because it is a visual change to a screen that was not under review.
+
+## A selected RadioCard's facts row keeps the unselected ink — OPEN
+
+Where: `packages/design-system/src/musy-components.css`, the `[data-checked]`
+block at the foot of the file (the one under *lighter selection boundaries*,
+around L3733).
+
+What I checked: building the three components in Figma meant rendering the real
+stylesheets in a browser and reading the computed values back, rather than
+transcribing the CSS — which is the only reason this turned up. The rule that
+recolours a selected card names three children:
+
+```css
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__headline,
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__desc,
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__label {
+  color: var(--musy-sel-on);
+}
+```
+
+`.musy-rcard__fact` is not in that list, and it has its own `color:
+var(--on-surface-muted)` further up. So on a selected card the headline and the
+description step to the selected ink and the facts row stays sand-11, sitting
+on `--musy-sel-fill`. Measured in the browser, light theme:
+
+| accent | selected fill | fact ink | ratio |
+|---|---|---|---|
+| primary | terracotta-9 `#B55634` | sand-11 `#615A4D` | **1.41:1** |
+| accent | ocher-9 `#E9B86C` | sand-11 | 3.75:1 |
+| accent-alt | purple-9 `#CCA6C7` | sand-11 | 3.20:1 |
+
+`label-md` is 15px at 393px, so none of the three is large text and 4.5:1 is
+the bar. The headline and description are fine — 4.56, 9.54 and 8.14 — which is
+what makes it easy to miss: the card looks right, and the one row that fails is
+the one carrying the number.
+
+Reachable today on `/exercises` in the list view, where `RadioCards` is drawn
+with `accent="accent"` and a single fact, the timeframe. The selected state is
+brief there — choosing starts the session — but "brief" is not a contrast
+exemption, and nothing stops the next consumer holding a selection.
+
+What I did: **nothing to the stylesheet.** It is a Layer 2 component and the
+brief was a Figma file. I reproduced the defect as-is in the Figma library
+rather than quietly correcting it there, and said so in that file's read-me and
+in the component's description — a library that silently disagrees with the
+code is worse than one that documents the disagreement.
+
+What I need from Ben: **whether `.musy-rcard__fact` joins that selector list.**
+It is a one-line change and it would make the facts row match the headline it
+sits under. The alternative reading — that a fact is deliberately quieter than
+the title even when selected — is defensible on the two accents that clear 3:1,
+but not on `primary` at 1.41.
+
+---
+
+# Branch `ds-experiment` — the W2 colour + type direction
+
+## W2 — eight Figma colours and seven type steps do not cover the system's surface area
+
+Where: `packages/design-system/tokens/musy-experiment-w2.css`,
+`packages/design-system/tokens/musy-fonts-w2.css`, their two import lines in
+`src/main.tsx` and the matching pair in `packages/design-system/.storybook/preview.ts`
+
+What I checked: the Figma frame "RESULT · Onest × Literata in W2 Wald & helle
+Terrakotta" (file `5PHqMVXWPppbOsaIczf5wV`, node `23:2`) against Layer 1's
+actual token surface. The frame names **eight colours and seven type steps**.
+Layer 1 declares **four 12-step colour scales and eleven type steps**, and
+Layer 2 hangs ~90 semantic aliases off them. So the frame underdetermines the
+system, and every gap below is a place where the experiment had to decide
+something the design did not say.
+
+What I did: a separate override file rather than an edit. `musy-foundations.css`
+is [LOCKED], `musy-foundations-amendments.css` is reserved for the argued gaps
+G1–G4, and `scripts/verify-tokens.mjs` reads both — a token in either must be
+claimed by a Storybook page group and listed in `TOKEN-DRIFT.md`. An experiment
+is neither a gap nor a documented token. The new file is read by no script;
+reverting is deleting it plus four import lines.
+
+Every foreground/background pair the override can produce was contrast-checked
+in **both** themes before it was looked at — 40 pairs, all passing. Two fixes
+came out of that check rather than out of the design: `--accent-1-on` and
+`--accent-3-on` needed `light-dark()` rather than a single value, and the
+`sage` solid steps had to be lightened off the curve (the hover step landed at
+3.95:1 under ink, short of 4.5).
+
+Why: the brief was "touch only colour and typography", and these are the places
+where staying inside that line meant leaving a question open.
+
+What I need from Ben — **eight decisions, roughly in order of how much they
+change the look:**
+
+**1 · `stage` — Musie's own voice is the one step with no W2 equivalent, and it
+is the first screen anyone sees.** Layer 1 defines `stage` as "the same display
+family and the same 26px step as heading-lg, but regular weight and an open
+line height", so under W2 it is Onest. The consequence is on `/about`: the
+headline, the paragraph and the chrome are **all sans**, and Literata — the
+entire point of the pairing — does not appear on that screen at all. The W2
+logic says the serif reads and the sans labels, and Musie speaking a full
+sentence is reading. I kept it on display, because changing which family a step
+uses is a structural call and not a value to read off a frame. This is the one
+I would most like overturned.
+
+**2 · The third accent has no source.** W2 names one accent (`#D99673`, "nur
+Fläche"); the system has three — terracotta, ocher, purple — and `--accent-*`
+is consumed 27+ times in `musy-components.css`. I mapped primary→`forest`,
+accent→`clay`, and invented `sage` out of `green-soft` so a three-series chart
+still reads as one family. `sage` is the only scale in that file with no Figma
+behind it.
+
+**3 · Terracotta outshouts green.** W2 says green is the brand (buttons, links,
+focus) and terracotta is "nur Fläche". On `/about-you` the selected `RadioCards`
+fill is `clay-9` and it is the loudest thing on the screen — louder than the
+green primary CTA directly under it. That is W2 applied correctly and still
+reading as a hierarchy inversion. Either the selected-card fill should move off
+the accent, or W2's "surface only" needs to mean "not at this size".
+
+**4 · The secondary button label.** W2 draws the outline button with a green
+border *and* a green label. `--interactive-ghost-on` is ink and also dresses
+every plain ghost icon button in the app, so greening it would green far more
+than one button. Left on ink; the outline buttons are therefore green-bordered
+with ink labels, which is not quite what the frame shows.
+
+**5 · `label-md` stays 15–16px, not W2's 14.** Family and weight follow W2
+(Onest Regular, 140%); the size does not. This step sets chips and compact
+controls whose touch target is solved against `--target-primary` at the current
+size, and shrinking it is a geometry change, which the brief excluded. W2's
+14px may well be a desktop spec-sheet value rather than a phone one.
+
+**6 · `success` is now green, and so is the brand.** The four feedback scales
+are untouched — W2 says nothing about status — but `--feedback-success-*` and
+`--interactive-primary` are now the same hue. A green "saved" banner next to a
+green primary button is a 1.4.1 question (status not carried by colour alone),
+and it did not exist while the brand was terracotta.
+
+**7 · W2 makes the known `.musy-rcard__fact` defect worse, not better.** The
+entry above this one measured the facts row on a selected card at 1.41 / 3.75 /
+3.20:1 for primary / accent / accent-alt. Re-measured under W2 with the same
+`--on-surface-muted`: **1.45 / 2.44 / 2.26:1** — all three now fail 3:1, where
+two used to clear it. Nothing here caused that and nothing here fixes it; it is
+the same missing selector, and this direction removes the margin that made it
+survivable on two of the three accents.
+
+**8 · The scrim retint reads as olive over the artwork.** `--alpha-scrim` moved
+from warm brown to the same green-black as the ink, so a scrim over the linen
+canvas reads as shade rather than sepia — which is right on a surface. Over the
+terracotta exercise artwork on `/exercises` it is not: the front card reads as a
+solid olive panel rather than as a dimmed photograph. The artwork was shot for
+the old palette, which is outside what colour tokens can fix.
+
+Also flagged, and not a question: `--font-weight-semibold: 600` exists in that
+file and Layer 1 forbids it. Layer 1's argument is specific — Space Grotesk
+ships 400/500/700, so a 600 would be synthesised. Onest's `wght` axis is
+continuous 100–900 and `musy-fonts-w2.css` ships it as `font-weight: 400 700`,
+so under this pairing 600 is a real instance, and W2 spends it on exactly two
+steps (H3 and the button label). If the pairing is rejected, the token goes
+with it.
+
+---
+
+# W2 adopted — green is the default, and seven of the eight questions above are answered
+
+## Colour — the app stops choosing an accent, because the system now has an answer
+
+Where: twelve call sites across `src/components/BetaSignup.tsx`,
+`SessionReflect.tsx` (×2), `GoalPicker.tsx`, `MenuPreferences.tsx` (×2),
+`src/routes/AboutMusie.tsx`, `AboutYou.tsx`, `Session.tsx`, `Diary.tsx`,
+`Exercises.tsx` (×2); plus `src/exercises.css` and `src/main.tsx`.
+
+What I checked: Ben's instruction on 2026-10-10 — stay with W2, keep `sand`,
+`green` and `terracotta` in Layer 1, drop `ocher`, `purple` and `info`, move
+`success` off the brand green, and make **every** interactive element green by
+default, with `accent` reserved for cases he picks.
+
+What I did:
+
+**Removed `accent="accent"` from all twelve call sites.** Every component that
+takes the prop already defaulted to `accent = 'primary'`, so the app was
+overriding a default it now wants. Nothing replaced it: the screens pass
+nothing and inherit green. `GoalPicker`'s comment — which argued at length for
+passing `accent` so the one question before a session matched the other six
+screens — is rewritten, because the consistency it was buying is now the
+system's own.
+
+**The exercise deck cycles two accents, not three.** `((index % 3) + 1)` is
+`((index % 2) + 1)`, `CardDeck`'s `accent` prop is `1 | 2`, and the
+`[data-accent='3']` rule in `exercises.css` is gone with `--accent-3-text`.
+
+**`.musie-deck-guide` is the brand green.** It painted itself with
+`--accent-3-text` — a TEXT token used as a fill — because the purple family
+had no dark surface and white over `--purple-9` measured 2.01:1. That was
+copied from `.musy-deck__overlay`, which had the same problem for the same
+reason. Both now use `--interactive-primary` with `--interactive-primary-on`,
+which Layer 1 solves at 7.52:1 light / 5.28:1 dark.
+
+**The four stylesheets are back to four.** The `ds-experiment` override file
+and its imports are deleted; the values live in Layer 1, and
+`musy-fonts.css` is Onest × Literata.
+
+### What this resolves from the entry above
+
+1. **`stage` is still Onest** — unresolved, and now the only one. See below.
+2. **The third accent** — gone. `sage` was never needed: Ben's answer was two
+   chromatic scales, not three.
+3. **Terracotta outshouts green** — resolved by removing it from the default
+   path. The selected card on `/about-you` is now the green solid with the
+   page colour on it, and it no longer competes with the CTA beneath it
+   because it IS the same family.
+4. **The secondary button label** — resolved. `--interactive-ghost-border` is
+   green now, so an outline button reads as an action.
+5. **`label-md` at 15–16px** — unchanged and still deliberate. W2's 14px is a
+   spec-sheet value and this step sets touch targets.
+6. **`success` is green and so is the brand** — addressed. Success moved from
+   hue 136° to 99°, 52° off the brand instead of 15°.
+7. **`.musy-rcard__fact`** — **fixed, not flagged this time.** The palette
+   change took it from 1.41:1 to 1.45:1 on primary, and primary is now what
+   every screen uses, so the defect moved onto the main path. No accent clears
+   3:1 any more, which removes the only reading under which leaving it was
+   defensible. The selector now gets `--musy-sel-on`: 7.52:1. Argued in full
+   above the rule in `musy-components.css`.
+8. **The olive scrim over the exercise artwork** — unchanged, and now more
+   visible, because the card behind the legend is green too. The artwork was
+   shot for the terracotta palette; that is a photography question, not a
+   token one.
+
+What I need from Ben:
+
+- **`stage` — Musie's own voice is still Onest, and `/about` is still 100%
+  sans.** This is the one question from the entry above that the palette did
+  not answer, because it is about which family READS rather than about colour.
+  Layer 1 defines `stage` as sharing the display family with `heading-lg`;
+  W2's logic says a spoken sentence is reading and belongs in Literata. Still
+  a one-line change.
+- **`accent` now has no consumer anywhere.** Kept because Ben said he would
+  pick cases for it. Worth revisiting if none arrive.

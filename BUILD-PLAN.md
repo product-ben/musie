@@ -322,7 +322,7 @@ that block them.
   language**), `--border-strong-hover`
   replacing both raw `--sand-8` references, and ~~a `statusWord?: string` prop on
   `Message`~~ — **C.10 added that prop, and the same one on `Badge`.** *Done when:* a grep
-  for `--sand-`, `--terracotta-`, `--ocher-` and `--purple-` in component CSS
+  for `--sand-`, `--green-` and `--terracotta-` in component CSS
   returns nothing, `accent-placeholder` appears nowhere, and the app passes
   `t('status.error')` to `Message`.
 
@@ -444,7 +444,7 @@ carried a Share step that C.2 cut.
   **fifth `skipped` state** (D14 — a dash, not a second grey, so it survives
   greyscale), and **G3** (`--interactive-ghost-border-hover`), which retires the
   last two raw scale tokens in component CSS. `ProcessVisualisation` is deleted.
-  *Done:* `grep -nE '\-\-(sand|terracotta|ocher|purple)-[0-9]'` on
+  *Done:* `grep -nE '\-\-(sand|green|terracotta)-[0-9]'` on
   `musy-components.css` returns nothing.
 
 - [x] **D.1 About Musie.** The chat cadence (greeting at 1s, typing dots, the
