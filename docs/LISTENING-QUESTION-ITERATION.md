@@ -6,9 +6,101 @@ Branch `listening-question-iteration`, worktree
 decisions he took while this document was being written (§3 — they are the
 contract, not a summary of it).
 
-**This is the PRD. The implementation plan is the next document and is not in
-here.** What follows says what the product does, where the data lives and why,
-and carries every string that has to ship. It does not sequence the work.
+**This was the PRD, and it is now also the record of what was built.** The
+specification below is kept as written, so the decisions can be read against
+the code. §0 is what happened to it.
+
+---
+
+## 0 · Status — built 2026-10-11
+
+Ben was away and asked for every remaining call to be made without him, on
+"done is better than perfect". All of §4–§10 is implemented.
+
+| | |
+|---|---|
+| `pnpm check` | **green** — 410 tests, 29 of them new |
+| `pnpm --filter web build` | **green** |
+| `pnpm build:storybook` | **green** |
+| The migration's SQL | **validated** in a rolled-back transaction (see below) |
+| `pnpm test:db` | **5 of 8 new assertions fail**, because the migration is not applied |
+| The app, running | **not walked.** This is the one gate not passed |
+
+### What needs Ben, and it is one command
+
+`supabase db reset`, `supabase db push` and `pnpm gen:types` are denied in
+`.claude/settings.json`, and rule 9 is why: one Supabase stack, fixed ports,
+**nine other worktrees** driving the same containers. A reset from here
+re-applies this branch's migrations over whatever another session is testing
+against, so it is not a call to make on somebody else's behalf.
+
+The consequence is not subtle. `SESSION_COLUMNS` now names the four new
+columns, so **`readSession` fails and every `/session/:id` screen shows its
+error state until the migration is applied.** `/exercises`, `/diary` and the
+rest are unaffected.
+
+```
+supabase db reset     # from ONE session, knowing the other nine are affected
+pnpm gen:types        # optional — confirms the hand-edited types match
+pnpm test:db          # the 8 assertions in questions.db.test.ts
+pnpm --filter web dev --port 5176 --strictPort
+```
+
+### The SQL was validated the furthest way available without it
+
+Applied inside a transaction against the local stack, inspected, rolled back.
+Nothing persisted and no other worktree touched. Proven that way: the four
+columns land with the intended types, nullability and `'{}'` defaults;
+`sessions_listening_question_pairs` refuses an id with no snapshot *and* a
+snapshot with no id, and accepts both together; the view is created
+`security_invoker=true` and runs; grants end at `service_role | SELECT`;
+`was_reset` is false while log and round agree and true once the round is
+emptied.
+
+**That validation found a real rule 2 bug**, which is the one thing here worth
+reading even if nothing else is: the view's grants were written exactly like
+`missing_translations`' — `revoke … from anon, authenticated` then
+`grant select … to service_role` — and measured as
+
+```
+service_role | SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+```
+
+because the local stack's `alter default privileges … grant all on tables`
+**covers views too**. The `grant select` was adding to a grant already there.
+`service_role` is now in the revoke, and it measures `SELECT` alone.
+`missing_translations` has the same latent grants and is deliberately not
+fixed here — logged in `apps/web/OPEN-QUESTIONS.md`.
+
+### Two things that changed during the build
+
+**`lucide-react` went 0.470 → 1.55** as its own commit with its own gate (§9),
+because D7 asked for the real broccoli. Seven glyph renames across 67 files,
+all 1:1; the four face glyphs turned out to be story-only, so nothing a user
+sees changed. `CircleHelp` is gone in 1.x and the `?` uses
+`CircleQuestionMark`.
+
+**`database.types.ts` was hand-edited** rather than regenerated, and that is
+the safer of the two: `pnpm gen:types` reads the *shared* database, so running
+it here would commit another branch's tables into this one and typecheck would
+pass right up to the merge (rule 9). Four columns and one view, nothing else
+touched.
+
+### Where the code is
+
+| | |
+|---|---|
+| The five questions | `apps/web/src/content/questions.ts` |
+| The rules, pure and tested | `apps/web/src/lib/questions.ts`, `questions.test.ts` (21) |
+| Per-run state and the three writes | `apps/web/src/lib/useQuestion.ts` |
+| The migration | `supabase/migrations/20261011120000_listening_question_rotation.sql` |
+| The sheet | `apps/web/src/components/SessionListen.tsx` |
+| The reflect step | `apps/web/src/components/SessionReflect.tsx` |
+| `withoutHeading` | `apps/web/src/lib/markdown.ts`, `markdown.test.ts` (+6) |
+| The diary's snapshot | `apps/web/src/lib/diary.ts` |
+| CSS | `apps/web/src/shell.css` — `.musie-question__*` |
+
+Five entries were appended to `apps/web/OPEN-QUESTIONS.md`.
 
 ---
 

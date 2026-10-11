@@ -15,7 +15,9 @@
  * lose copy in a way nothing on screen could reveal.
  */
 import { describe, expect, it } from 'vitest';
-import { bodyOnly, headingOnly, parseInline, parseMarkdown, plainText } from './markdown';
+import {
+  bodyOnly, headingOnly, parseInline, parseMarkdown, plainText, withoutHeading,
+} from './markdown';
 
 /** The live German intro copy for Achtsame Pause, verbatim. */
 const INTRO = `## So legen wir los
@@ -266,5 +268,61 @@ describe('bodyOnly', () => {
     const out = bodyOnly(parseMarkdown('## Head\n\nOne.\n\nTwo.'));
 
     expect(out.map((block) => plainText([block]))).toEqual(['One.', 'Two.']);
+  });
+});
+
+/**
+ * `withoutHeading` — the reflect step's half, since the question rotated.
+ *
+ * The one thing worth testing hard is the difference from `bodyOnly`: these
+ * two take the same input and differ by one promotion, and picking the wrong
+ * one gives the reflect step two headings with the invitation line in display
+ * type. That is a visual bug a unit test can catch and a typecheck cannot.
+ */
+describe('withoutHeading', () => {
+  it('drops the heading and keeps the prose', () => {
+    const out = withoutHeading(parseMarkdown(
+      '## Welches Bild ist entstanden?\n\nWenn du magst, beantworte diese Fragen.',
+    ));
+
+    expect(out.map((block) => block.kind)).toEqual(['paragraph']);
+    expect(plainText(out)).toBe('Wenn du magst, beantworte diese Fragen.');
+  });
+
+  it('does NOT promote, which is the whole difference from bodyOnly', () => {
+    const md = '## Head\n\nOne.\n\nTwo.';
+
+    expect(bodyOnly(parseMarkdown(md)).map((b) => b.kind))
+      .toEqual(['heading', 'paragraph']);
+    expect(withoutHeading(parseMarkdown(md)).map((b) => b.kind))
+      .toEqual(['paragraph', 'paragraph']);
+  });
+
+  it('keeps Freie Bahn’s numbered list intact', () => {
+    /* Its reflect copy is a heading plus an <ol> of two steps, and the second
+       step asks its own questions. Dropping the heading must not touch it. */
+    const out = withoutHeading(parseMarkdown(
+      '## Spüre und reflektiere\n\n1. Lass die Töne ausklingen.\n2. Wie fühlst du dich?',
+    ));
+
+    expect(out.map((block) => block.kind)).toEqual(['list']);
+  });
+
+  it('returns nothing for a heading on its own', () => {
+    expect(withoutHeading(parseMarkdown('## Only a heading'))).toEqual([]);
+  });
+
+  it('is the identity on copy that has no heading', () => {
+    const blocks = parseMarkdown('Only prose.');
+
+    expect(withoutHeading(blocks)).toEqual(blocks);
+  });
+
+  it('drops only the FIRST heading', () => {
+    /* Same rule as its two siblings: `find` takes one. A second `##` is body
+       as far as this is concerned, and the renderer draws it. */
+    const out = withoutHeading(parseMarkdown('## One\n\n## Two'));
+
+    expect(out.map((block) => plainText([block]))).toEqual(['Two']);
   });
 });

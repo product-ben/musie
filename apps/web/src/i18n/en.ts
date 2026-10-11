@@ -623,6 +623,26 @@ export const en = {
      second time, in a place nobody can check it against the picture. */
   'session.listen.infographicAlt': 'A hand holding a card over a table, beside a phone lying flat with music drifting from it.',
 
+  /* ── THE ROTATING QUESTION'S APPARATUS ─────────────────────────────────────
+     The questions themselves are NOT here. They are content, keyed by question
+     id, in `src/content/questions.ts` — see that file's header for why, and
+     `docs/LISTENING-QUESTION-ITERATION.md` §5 for the argument.
+
+     These five are chrome: the app's own words ABOUT the apparatus, permanent,
+     and nobody else will ever supply them.
+
+     `questionChance` names the wait and not the mechanism — "give it a chance"
+     is an invitation to stay with something, which is the whole point of
+     making the control wait thirty seconds before it will do anything.
+
+     ONE HELP LABEL AND NOT TWO: the `?` is a one-way reveal, so there is no
+     hide state to name and no second string to drift out of sync with it. */
+  'session.listen.questionChance': 'Give the question 30 seconds',
+  'session.listen.questionReroll': 'This isn’t working for me right now',
+  'session.listen.questionExhausted': 'No other question left',
+  'session.listen.questionReset': 'Reset questions',
+  'session.listen.questionHelp': 'Show help for this question',
+
   /* ── The listening view · the LISTEN-EXPERIMENTS branch ──────────────────
      The press on the stage's transport opens a full-screen sheet and the track
      plays in there: the exercise's own words, the minimum time counting down,

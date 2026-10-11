@@ -127,6 +127,14 @@ export interface DiaryEntry {
    * heading. The card draws no line at all for either, which is honest —
    * inventing a question over somebody's own words would be this screen
    * writing copy.
+   *
+   * ── TWO SOURCES SINCE THE ROTATION — 2026-10-11 ─────────────────────────
+   * `sessions.listening_question` where the run recorded one, and
+   * `reflectQuestionOf(reflect_md)` where it did not. The first is a SNAPSHOT
+   * taken when the question was assigned, which is what keeps this field
+   * honest: five questions rotate, and a reflection must stay under the
+   * question it was actually asked rather than under whichever one the
+   * exercise carries today.
    */
   reflectQuestion: string | null;
   /** The exercise's artwork, for the graph on /diary. Relative, no leading
@@ -844,7 +852,7 @@ function wanted(locale: Locale): Locale[] {
 /** The three the column's CHECK allows, for narrowing a row's bare string. */
 const FEELING_CHANGES: readonly FeelingChange[] = ['worse', 'same', 'better'];
 
-const ENTRY_SELECT = 'id, status, step, started_at, ended_at, feeling_change, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md))';
+const ENTRY_SELECT = 'id, status, step, started_at, ended_at, feeling_change, listening_question, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md))';
 
 // prettier-ignore
 /* `tracks(id, src, duration_seconds)` AND NOT ONE COLUMN MORE.
@@ -852,7 +860,7 @@ const ENTRY_SELECT = 'id, status, step, started_at, ended_at, feeling_change, ex
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
 // prettier-ignore
-const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, cards(id, code, image_url), exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
+const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, listening_question, cards(id, code, image_url), exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**
  * ONE EMBED, TWO SHAPES, AND BOTH HAVE TO BE ACCEPTED.
@@ -882,6 +890,16 @@ interface SessionRow {
   started_at: string;
   ended_at: string | null;
   feeling_change: string | null;
+  /* ── THE QUESTION THIS ENTRY ANSWERED, AS IT WAS ASKED — 2026-10-11 ──────
+     A SNAPSHOT on the session row, not a lookup through the exercise. Five
+     questions rotate now, so `reflect_md`'s heading is no longer the question
+     any given session was given — and even for the one it matches, rewording
+     it would relabel every answer already written under it.
+
+     NULL for every session that predates the rotation, and for exercises with
+     no question set. `toEntry` falls back to `reflectQuestionOf` for exactly
+     those, which is still the question they were actually asked. */
+  listening_question: string | null;
   /* BACK ON 2026-10-09, and narrower than it was. It carried
      `card_i18n(locale, feeling)` until the feeling word left every screen; it
      now carries the two things the entry actually draws, neither of which is
@@ -1016,7 +1034,11 @@ function toEntry(row: SessionRow, locale: Locale): DiaryEntry[] {
     endedAt: row.ended_at,
     exerciseName: name.name,
     exerciseDescription: name.description,
-    reflectQuestion: reflectQuestionOf(name.reflect_md),
+    /* THE SNAPSHOT WINS, and the exercise's own heading is the fallback. Two
+       rungs, and each is the truth for the sessions it covers: a run that
+       recorded its question shows that one forever, and a run from before the
+       rotation shows the one question its exercise had at the time. */
+    reflectQuestion: row.listening_question ?? reflectQuestionOf(name.reflect_md),
     imageUrl: exercise.image_url,
     imageAlt: name.image_alt,
     /* NARROWED, NOT CAST. `feeling_change` is `text` with a CHECK, so the

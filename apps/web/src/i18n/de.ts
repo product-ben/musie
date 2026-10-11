@@ -446,6 +446,25 @@ export const de: Messages = {
      'Smartphone', weil 'Handy' in diesem Deck sonst nirgends steht. */
   'session.listen.infographicAlt': 'Eine Hand hält eine Karte über einen Tisch, daneben liegt ein Smartphone, aus dem Musik klingt.',
 
+  /* ── DIE APPARATUR DER ROTIERENDEN FRAGE ───────────────────────────────────
+     Ben's own wording, with one correction he approved: `30 S.` → `30 Sek.`.
+     `S.` is the abbreviation for *Seite*; the one for *Sekunden* is `Sek.`
+     (docs/GERMAN-UI-WRITING.md §7, and the same read that caught the em dash
+     in `route.session.title`).
+
+     `Gib der Frage 30 Sek. eine Chance` is 33 characters, which is why the
+     button passes `wrap` — at 320px with a German compound beside it there is
+     no second option (§5 of that file, step 3: accept the wrap).
+
+     `Fragen zurücksetzen` is a verb phrase and not `Zurücksetzen der Fragen`
+     (§3), and `Hilfe zur Frage zeigen` carries its verb because a screen
+     reader user hears the label and nothing else. */
+  'session.listen.questionChance': 'Gib der Frage 30 Sek. eine Chance',
+  'session.listen.questionReroll': 'Das klappt für mich gerade nicht',
+  'session.listen.questionExhausted': 'Keine weitere Frage übrig',
+  'session.listen.questionReset': 'Fragen zurücksetzen',
+  'session.listen.questionHelp': 'Hilfe zur Frage zeigen',
+
   /* ── Die Hör-Ansicht · Branch LISTEN-EXPERIMENTS ────────────────────────
      'Hören' als Substantivierung, weil die Ansicht ein Name braucht und kein
      Befehl ist (§3's Ausnahme für Überschriften). 'Hören beenden' ist dagegen

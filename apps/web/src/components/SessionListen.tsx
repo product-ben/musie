@@ -52,14 +52,18 @@
  */
 import * as React from 'react';
 import {
-  ContentList, CtaButton, Lightbox, Message, MusicPlayer, TrackButton,
+  ContentList, CtaButton, IconButton, Lightbox, Message, MusicPlayer, TrackButton,
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
-import { ArrowDown } from 'lucide-react';
+import {
+  ArrowDown, Broccoli, CircleQuestionMark, RefreshCw, RotateCcw,
+} from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
+import { isHelperRevealed, rememberHelperRevealed } from '../lib/questions';
+import type { SessionQuestion } from '../lib/useQuestion';
 import { useTrackSource } from '../lib/audio';
 import { revealTrack } from '../lib/reveal';
 import { markListened } from '../lib/session';
@@ -177,6 +181,15 @@ export interface SessionListenProps {
   /** Sticky across the step, so it is held by the session rather than here. */
   listened: boolean;
   onListened: () => void;
+  /**
+   * The rotating question, held by `Session.tsx` because the reflect step asks
+   * it again in the past tense (`lib/useQuestion.ts`).
+   *
+   * `question.rotates` is false for an exercise with no set, and then this step
+   * draws exactly what it drew before: `bodyOnly(listen_md)` on the sheet, no
+   * `?`, no re-roll button.
+   */
+  question: SessionQuestion;
 }
 
 /**
@@ -190,6 +203,7 @@ export interface SessionListenProps {
  */
 export function SessionListen({
   exercise, track, sessionId, card, listened, onListened, onAdvance, back,
+  question,
 }: SessionListenProps) {
   const t = useT();
   const media = React.useRef<HTMLAudioElement>(null);
@@ -298,6 +312,63 @@ export function SessionListen({
      Back closes the sheet for free, because it changes the one thing that
      decides. */
   const immersive = searchParams.has(FOCUS);
+
+  /* ── THIRTY SECONDS BEFORE THE QUESTION CAN BE TURNED DOWN ───────────────
+     "Gib der Frage 30 Sek. eine Chance" — the control exists to make somebody
+     sit with the question before deciding it does not work for them.
+
+     WALL CLOCK, NOT PLAYBACK (D8). The sheet already tracks `position` for the
+     gate, so counting only while the music plays was a one-line alternative
+     and was considered; Ben chose the wall clock. It is the easier of the two
+     to explain, and it cannot strand somebody who paused to think.
+
+     IT DOES NOT RE-ARM (D9). One timer per visit to the sheet, started when
+     the question is first on screen and never restarted — so the second and
+     third questions can be turned down at once. That is deliberate: the thirty
+     seconds buys a considered first rejection, and making every subsequent
+     question wait again would punish somebody already looking for a way out.
+
+     The timeout is cleared on unmount, so leaving the step mid-count does not
+     fire a `setState` into an unmounted tree. */
+  const [chanceOver, setChanceOver] = React.useState(false);
+  const CHANCE_MS = 30_000;
+
+  React.useEffect(() => {
+    if (!immersive || chanceOver || question.id === null) return;
+    const timer = window.setTimeout(() => setChanceOver(true), CHANCE_MS);
+    return () => { window.clearTimeout(timer); };
+    /* `question.id` is read as a GATE and not as a key: a re-roll must not
+       restart the clock (D9), and once `chanceOver` is true this effect never
+       runs again. */
+  }, [immersive, chanceOver, question.id]);
+
+  /* ── THE HELPER'S ONE-WAY REVEAL (D15) ──────────────────────────────────
+     `revealedFor` is this render's answer and `sessionStorage` is the durable
+     one — see `isHelperRevealed` in lib/questions.ts for why a disclosure
+     state is neither a column nor component state alone. Read on every render,
+     which is one `getItem`, so closing and reopening the sheet does not
+     re-collapse a helper somebody has already read.
+
+     KEYED BY QUESTION, so a re-roll brings the new question's `?` back. */
+  const [revealedFor, setRevealedFor] = React.useState<string | null>(null);
+  const helperRef = React.useRef<HTMLDivElement>(null);
+
+  const helperShown = question.id !== null
+    && (revealedFor === question.id || isHelperRevealed(sessionId, question.id));
+
+  const revealHelper = React.useCallback(() => {
+    if (question.id === null) return;
+    rememberHelperRevealed(sessionId, question.id);
+    setRevealedFor(question.id);
+  }, [question.id, sessionId]);
+
+  /* FOCUS FOLLOWS THE HELPER, because the `?` has just unmounted. Nothing else
+     in this repo removes the control that was pressed, so there is no
+     precedent to copy: without this, focus falls to <body> and a keyboard
+     reader loses the sheet. */
+  React.useEffect(() => {
+    if (helperShown && revealedFor !== null) helperRef.current?.focus();
+  }, [helperShown, revealedFor]);
 
   /* THE ADDRESS SAYS WHICH VIEW, even when nobody chose one. Replace, not
      push: arriving is not a step the Back button should have to walk through.
@@ -1288,9 +1359,114 @@ export function SessionListen({
                 instruction has already been read on the stage, and saying it
                 again here in display type made the question the smaller half
                 of its own screen. */}
+            {/* ── THE QUESTION, AND THE TWO THINGS BESIDE IT ─────────────
+                The question is no longer the exercise's: five of them rotate,
+                and which one this run got is `sessions.listening_question_id`
+                (`lib/useQuestion.ts`). `bodyOnly(listen_md)` is the FALLBACK,
+                for the three exercises with no set — their screens are
+                untouched by all of this.
+
+                RENDERED AS `## …` RATHER THAN AS A BARE <h2>, so it goes
+                through the same renderer the column did: the question is
+                Markdown (D5), and the sheet's typography is already keyed to
+                `.musie-immersive__lead .musie-md h2` — including the float
+                that steps the first line around the Lightbox's close control.
+                A hand-rolled heading would need both rules copied. */}
             <div className="musie-immersive__lead">
-              <Markdown md={exercise.listenMd} arrange={bodyOnly} />
+              {question.text === null ? (
+                <Markdown md={exercise.listenMd} arrange={bodyOnly} />
+              ) : (
+                <>
+                  {/* THE `?` FOLLOWS THE TEXT, IT DOES NOT SIT IN THE CORNER.
+                      `align-items: flex-end` on a wrapping row, so it lands
+                      after the question's LAST line — which is also what keeps
+                      it away from the sheet's top-trailing corner, where the
+                      Lightbox's own close X already is. A control pushed to
+                      the trailing edge of this row would stack under that X on
+                      a short question. */}
+                  <div className="musie-question__headrow">
+                    <Markdown md={`## ${question.text.listen}`} />
+                    {/* IT GOES WHEN IT HAS BEEN USED (D15). A one-way reveal,
+                        so there is no hide state, no second label, and nothing
+                        to put the helper away with — it is a sentence of help,
+                        not a panel. */}
+                    {!helperShown && (
+                      <IconButton
+                        glyph={CircleQuestionMark}
+                        label={t('session.listen.questionHelp')}
+                        variant="ghost"
+                        size="min"
+                        onClick={revealHelper}
+                      />
+                    )}
+                  </div>
+
+                  {/* FOCUSABLE, because the control that revealed it has just
+                      stopped existing. Without somewhere deliberate to send
+                      focus it falls to <body>, and a keyboard reader loses
+                      their place on the sheet. `tabIndex={-1}` so it takes
+                      focus programmatically without joining the tab order. */}
+                  {helperShown && (
+                    <div
+                      ref={helperRef}
+                      className="musie-question__helper"
+                      tabIndex={-1}
+                    >
+                      <Markdown md={question.text.helper} />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+
+            {/* ── THE WAY OUT OF A QUESTION THAT DOES NOT WORK ────────────
+                One control in three states, and `--space-inset-card` below the
+                question (§7.1). Absent entirely for an exercise with no set,
+                and while the first assignment is still in flight — a button
+                offering to change a question that has not arrived yet would be
+                a control with nothing behind it. */}
+            {question.rotates && (question.id !== null || question.exhausted) && (
+              <div className="musie-question__swap">
+                {/* ── ONE CONTROL, THREE STATES, AND `canSwap` IS READ FIRST ─
+                    The thirty seconds is a gate on a CONSIDERED rejection, so
+                    it only applies while there is something to reject in
+                    favour of. Testing `chanceOver` first instead would make a
+                    reload at the dead end show "Gib der Frage 30 Sek. eine
+                    Chance" for thirty seconds — over a question that is not
+                    there, with the way out hidden behind a timer. */}
+                <CtaButton
+                  variant="ghost"
+                  size="min"
+                  wrap
+                  leadingIcon={question.canSwap && !chanceOver ? Broccoli : RefreshCw}
+                  disabled={!question.canSwap || !chanceOver}
+                  onClick={question.reject}
+                >
+                  {!question.canSwap
+                    ? t('session.listen.questionExhausted')
+                    : chanceOver
+                      ? t('session.listen.questionReroll')
+                      : t('session.listen.questionChance')}
+                </CtaButton>
+
+                {/* BESIDE THE DISABLED ONE AND NOT INSTEAD OF IT — Ben asked
+                    for "also show a button" (D16). The disabled control
+                    explains the state; this one is the way out of it. Only
+                    here: everywhere else there is still a question to swap
+                    to. */}
+                {!question.canSwap && (
+                  <CtaButton
+                    variant="ghost"
+                    size="min"
+                    wrap
+                    leadingIcon={RotateCcw}
+                    onClick={question.reset}
+                  >
+                    {t('session.listen.questionReset')}
+                  </CtaButton>
+                )}
+              </div>
+            )}
 
             {/* ── THE MINIMUM, AS THE LARGEST THING ON THE SHEET ──────────
                 `role="timer"` rather than a live region, and the two are

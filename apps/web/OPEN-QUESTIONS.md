@@ -7870,3 +7870,261 @@ What I need from Ben:
   a one-line change.
 - **`accent` now has no consumer anywhere.** Kept because Ben said he would
   pick cases for it. Worth revisiting if none arrive.
+
+## `service_role` arrives holding ALL privileges on a VIEW, not just on a table — FIXED
+
+Where: `supabase/migrations/20261011120000_listening_question_rotation.sql`
+(the ACCESS block at the foot), and `20260918150500_content_schema.sql`'s
+`missing_translations`
+
+What I checked: the view `public.question_rejections` was written with the same
+two lines `missing_translations` ends with —
+
+```sql
+revoke all on public.question_rejections from anon, authenticated;
+grant select on public.question_rejections to service_role;
+```
+
+— on the reading that CLAUDE.md rule 2's revoke concerns TABLES, and that a
+view created by a migration starts with no grants of its own.
+
+**Measured, and that reading is wrong.** Applied in a transaction against the
+local stack and inspected before rolling back,
+`information_schema.role_table_grants` reported
+
+```
+service_role | SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+```
+
+The local stack's `alter default privileges in schema public grant all on
+tables to postgres, anon, authenticated, service_role` **covers views**, so the
+view arrived fully granted and the `grant select` was adding to a grant that
+was already there. Rule 2's "looks implemented while doing nothing", one layer
+further out than the column grant on `public.tracks` that the rule is written
+from.
+
+What I did: put `service_role` in the revoke —
+
+```sql
+revoke all on public.question_rejections from anon, authenticated, service_role;
+grant select on public.question_rejections to service_role;
+```
+
+— re-measured, and it now reports `service_role | SELECT` and nothing else.
+`postgres` keeps everything, which is correct: it owns the view.
+
+Why: nothing leaked and nothing was exploitable — `anon` and `authenticated`
+were correctly stripped, and a view with a join is not auto-updatable, so the
+write privileges could not have been exercised. But they stated the wrong
+intent, and the next person to read the file would have believed them.
+
+What I need from Ben: **`missing_translations` has the same latent grants and
+is not fixed here.** It is `20260918150500`, which is applied and pushed, so
+the fix is a new migration (rule 4) against a view that is working correctly
+today — a tidy-up, not a defect, and it is not in this iteration's scope.
+Measured: `service_role` and `authenticated` both hold all seven privileges on
+it. `authenticated` is the one worth a second look, because that view IS
+granted to the client on purpose.
+
+## The rotating question's `?` is a heading-with-a-control, and the system has that shape only for dismissal
+
+Where: `apps/web/src/shell.css` (`.musie-question__headrow`),
+`apps/web/src/components/SessionListen.tsx`
+
+What I checked: `ContentBox` draws `musy-box__headrow` — a heading that shrinks
+and wraps beside a control holding `--target-primary` — and it is reachable
+only by passing `onDismiss`. There is no slot for an arbitrary control beside a
+heading, in `ContentBox` or anywhere else, and the listen sheet is a `Lightbox`
+rather than a `ContentBox` in any case.
+
+What I did: an app pattern, `.musie-question__headrow`, under §L14 — the system
+has no component, every declaration resolves to a Layer 1 token, and the class
+is `musie-` prefixed (L14.1, L14.2).
+
+Two things in it are not obvious and are worth reading before it is reused:
+
+1. **`align-items: flex-end` puts the `?` after the question's LAST line**,
+   rather than at the trailing edge of the row. That is not a style preference:
+   the `Lightbox`'s own close X is in the sheet's top-trailing corner, and a
+   control pushed to the end of this row stacks under it whenever the question
+   is short enough to fit one line. The heading already carries a `::before`
+   float to step its first line around that X.
+2. **It re-declares two lines the lead used to make directly.**
+   `.musie-immersive__lead > .musie-md` is a CHILD selector and the headrow is
+   now the child, so without `.musie-question__headrow > .musie-md` the heading
+   gets its bottom margin back on top of the column gap and `.musie-md`'s
+   `--measure-body` starts beating the heading's wider cap again.
+
+Why: §L14.3 says a pattern that recurs is a component request, and there is
+exactly ONE call site — D4 keeps the `?` off the reflect step — so it does not
+qualify yet.
+
+What I need from Ben: nothing, just flagging. **The second call site makes this
+a component request**, and the `?`-beside-a-heading shape is likely to get one:
+the obvious next homes are the reflect step, if the helper ever needs a
+disclosure there too, and the exercise library's goal headings.
+
+## Focus has to be sent somewhere when the control that was pressed unmounts
+
+Where: `apps/web/src/components/SessionListen.tsx` (the `helperShown` effect),
+`.musie-question__helper` in `shell.css`
+
+What I checked: the helper's `?` is a ONE-WAY reveal (Ben, D15) — pressing it
+shows the helper and removes the button. Nothing else in this repo removes the
+control that took the press, so there was no precedent to copy. `Lightbox` and
+`NotImplementedLightbox` both rely on base-ui returning focus to a trigger that
+is still mounted behind them, and `SessionRunningLightbox`'s docblock calls
+that fallback "lucky" rather than guaranteed.
+
+What I did: made the helper a focus target — `tabIndex={-1}`, focused in an
+effect when it appears, with `outline: none` on `:focus` so a region nobody
+tabbed to does not draw a ring. `:focus-visible` is left alone, so a keyboard
+arrival still shows one.
+
+Why: without it, focus falls to `<body>` and a keyboard or screen-reader user
+loses their place on a full-screen sheet mid-exercise.
+
+What I need from Ben: **this is reasoned, not tested.** No screen reader has
+heard it, which is the same limit F.5's keyboard parity is filed under. The
+question it raises and cannot answer: should the helper be announced when it
+appears — `role="status"`, or a live region — rather than silently focused?
+Focusing it reads the text, which may be enough; announcing it as well would
+say it twice.
+
+## Freie Bahn's reflect step now carries two sets of questions
+
+Where: `apps/web/src/components/SessionReflect.tsx`, and
+`20260923150000_exercise_library_freie_bahn.sql:245`
+
+What I checked: Achtsame Pause's `reflect_md` is a question headline plus an
+invitation line, so replacing the headline with the rotating question is a
+clean swap. **Freie Bahn's is not the same shape.** Its heading is an
+instruction — *Spüre und reflektiere* — and its body is a numbered list of two
+steps whose second step asks its own two questions: *Wie fühlst du dich? Wie
+fühlt sich der Moment an?*
+
+So with the rotating question as the headline, that step reads:
+
+```
+## Hat der Klang in deinem Körper resoniert?
+
+1. Lass die Töne innerlich ausklingen. Atme noch einmal tief …
+2. Wie fühlst du dich? Wie fühlt sich der Moment an?
+```
+
+Two questions, two lines apart, and the answer field below them takes one
+answer.
+
+What I did: shipped it. Ben was shown this exact composition against two
+alternatives — Freie Bahn keeping its heading with the rotating question moved
+down to the field, and Freie Bahn getting the rotation on the listen step only
+— and chose *rotating question replaces the heading* (D12).
+
+Why: it is his call and he made it with the consequence in front of him, and
+the alternative was two structurally different reflect steps decided by whether
+an exercise's heading happens to be a question.
+
+What I need from Ben: nothing blocking. Worth a look on a phone once the
+migration is applied, because the thing to judge is whether the numbered list
+reads as *how to get to the answer* or as *a second question competing with the
+first*. If it is the second, the fix is content rather than code: Freie Bahn's
+`reflect_md` step 2 becomes an instruction instead of a question, in a new
+migration.
+
+## The question catalogue is a repo file, which is a second home for content
+
+Where: `apps/web/src/content/questions.ts`, and CLAUDE.md rule 6's two-way
+split
+
+What I checked: rule 6 divides user-visible copy in two — **chrome** in
+`apps/web/src/i18n/*`, ours and permanent, typed so a missing German key fails
+`pnpm check`; and **content** in the content tables, the spreadsheet's and
+provisional, with `missing_translations` as the completeness check.
+
+The five rotating questions are content by character and chrome by mechanism:
+they are an exercise's words, they will probably be reworded by whoever owns
+the Mindfulness Cards copy, and they now live in a typed TS module.
+
+What I did: a third location, `src/content/`, deliberately separate from
+`src/i18n/`. `Record<QuestionId, QuestionText>` is the completeness check and
+it is STRICTER than the view it replaces — a missing locale and a missing field
+are both compile errors, caught by `pnpm check` on the machine and in CI, where
+`missing_translations` only answers when somebody runs it and `pnpm check`
+never touches the database (rule 8).
+
+Ben chose this over two new content tables, having been given the up- and
+downsides (D1). The argument is written out in §5.1 of
+`docs/LISTENING-QUESTION-ITERATION.md` and the short form is: content lives in
+the content tables because of the ROWS the text hangs off — `cards.code` is
+printed on paper, `exercise_tracks` says which recording plays — and this is
+the first content in the repo that is only text.
+
+Why: logged because it bends the letter of rule 6 while keeping its purpose,
+and because the rule as written would send the next person to a migration.
+
+What I need from Ben: **two things, neither blocking.**
+
+1. **Rule 6 and `docs/GERMAN-UI-WRITING.md`'s "what it binds" table now have a
+   third row and do not know it.** Both name exactly two homes for copy. One
+   line in each.
+2. **If the spreadsheet is going to own these five questions, D1 should be
+   re-opened.** A non-developer editing a repo file means a PR instead of a
+   cell, and that is the one downside of this choice that cannot be mitigated
+   from inside the repo.
+
+## The migration is written and validated but NOT applied — BLOCKED on Ben
+
+Where: `supabase/migrations/20261011120000_listening_question_rotation.sql`
+
+What I checked: `supabase db reset`, `supabase db push` and `pnpm gen:types`
+are all denied in `.claude/settings.json`, and rule 9 says why: there is one
+Supabase stack behind fixed ports and **nine other worktrees** drive the same
+containers. A reset from here re-applies this branch's migrations over whatever
+another session is testing against.
+
+So the migration is unapplied, and the consequence is not subtle:
+`SESSION_COLUMNS` in `lib/session.ts` now names the four new columns, so
+**`readSession` fails and every `/session/:id` screen shows its error state
+until the migration is applied.** `/exercises`, `/diary` and the rest are
+unaffected.
+
+What I did: validated the SQL the furthest way available without touching
+anybody's schema — applied it inside a transaction against the local stack,
+inspected the result, and rolled back. Proven that way:
+
+- the four columns land with the intended types, nullability and `'{}'`
+  defaults;
+- `sessions_listening_question_pairs` refuses an id with no snapshot AND a
+  snapshot with no id, and accepts both together;
+- the view is created with `security_invoker=true` and runs;
+- grants end at `service_role | SELECT`, with `anon` and `authenticated`
+  holding nothing — which is how the bug in the first entry above was caught;
+- `was_reset` is false while the log and the round agree, true once the round
+  is emptied, and a session with no rejections never appears in the view.
+
+Also hand-edited `apps/web/src/lib/database.types.ts` rather than running the
+generator. That is deliberate and is the safer of the two: `pnpm gen:types`
+reads the SHARED database, so running it here would commit another branch's
+tables into this one and typecheck would pass right up to the merge (rule 9).
+Four columns and one view were added by hand, and nothing else in the file was
+touched.
+
+What I need from Ben: **one command, and the feature is live.**
+
+```
+supabase db reset        # from ONE session, knowing the other nine are affected
+pnpm gen:types           # optional — confirms the hand-edit matches
+pnpm test:db             # 8 new assertions in questions.db.test.ts
+pnpm --filter web dev --port 5176 --strictPort
+```
+
+`pnpm test:db` currently reports 5 of 8 failures in that file, all `PGRST205`
+("relation does not exist") or a missing column — which is the suite correctly
+reporting an unapplied migration rather than a defect. The three that pass are
+the `QUESTION_SETS`-to-`exercises` parity checks, which need no new schema.
+
+**Nothing in this branch has been seen running.** `pnpm check` is green (410
+tests, 29 of them new), both bundle builds are green, and the SQL is validated
+— but the UI has not been walked, because walking it needs the migration. Rule
+8's "verify against `pnpm --filter web dev`" is the one gate this iteration has
+not passed.
