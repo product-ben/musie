@@ -5,14 +5,14 @@
     "req": 4.5,
     "why": "Body + headings · 1.4.3",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#F5EEE1",
-      "r": 15.05
+      "fg": "#1A1F1C",
+      "bg": "#F3EEE4",
+      "r": 14.45
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#1D1A14",
-      "r": 14.78
+      "fg": "#EDF0EC",
+      "bg": "#191D1A",
+      "r": 14.83
     }
   },
   {
@@ -21,110 +21,110 @@
     "req": 4.5,
     "why": "Secondary text · 1.4.3",
     "light": {
-      "fg": "#615A4D",
-      "bg": "#F5EEE1",
-      "r": 5.91
-    },
-    "dark": {
-      "fg": "#A0998C",
-      "bg": "#1D1A14",
-      "r": 6.14
-    }
-  },
-  {
-    "fg": "on-surface-disabled",
-    "bg": "surface",
-    "req": 0,
-    "why": "Disabled text — exempt from 1.4.3",
-    "light": {
-      "fg": "#8F8572",
-      "bg": "#F5EEE1",
-      "r": 3.16
-    },
-    "dark": {
-      "fg": "#7C7364",
-      "bg": "#1D1A14",
-      "r": 3.71
-    }
-  },
-  {
-    "fg": "border-strong",
-    "bg": "surface",
-    "req": 3,
-    "why": "Control boundary · 1.4.11",
-    "light": {
-      "fg": "#83745A",
-      "bg": "#F5EEE1",
-      "r": 3.95
-    },
-    "dark": {
-      "fg": "#847A67",
-      "bg": "#1D1A14",
-      "r": 4.1
-    }
-  },
-  {
-    "fg": "border-focus",
-    "bg": "surface",
-    "req": 3,
-    "why": "Focus indicator · 1.4.11 + 2.4.7",
-    "light": {
-      "fg": "#90462B",
-      "bg": "#F5EEE1",
-      "r": 5.88
-    },
-    "dark": {
-      "fg": "#F08B68",
-      "bg": "#1D1A14",
-      "r": 7.11
-    }
-  },
-  {
-    "fg": "border-subtle",
-    "bg": "surface",
-    "req": 0,
-    "why": "Decorative divider — exempt",
-    "light": {
-      "fg": "#DFD3BD",
-      "bg": "#F5EEE1",
-      "r": 1.28
-    },
-    "dark": {
-      "fg": "#3D372C",
-      "bg": "#1D1A14",
-      "r": 1.47
-    }
-  },
-  {
-    "fg": "on-surface",
-    "bg": "surface-raised",
-    "req": 4.5,
-    "why": "Body + headings · 1.4.3",
-    "light": {
-      "fg": "#1C1A17",
-      "bg": "#FBF8F2",
-      "r": 16.38
-    },
-    "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#2D281F",
-      "r": 12.46
-    }
-  },
-  {
-    "fg": "on-surface-muted",
-    "bg": "surface-raised",
-    "req": 4.5,
-    "why": "Secondary text · 1.4.3",
-    "light": {
-      "fg": "#615A4D",
-      "bg": "#FBF8F2",
-      "r": 6.44
-    },
-    "dark": {
-      "fg": "#A0998C",
-      "bg": "#2D281F",
+      "fg": "#62645E",
+      "bg": "#F3EEE4",
       "r": 5.18
+    },
+    "dark": {
+      "fg": "#9EA59F",
+      "bg": "#191D1A",
+      "r": 6.77
+    }
+  },
+  {
+    "fg": "on-surface-disabled",
+    "bg": "surface",
+    "req": 0,
+    "why": "Disabled text — exempt from 1.4.3",
+    "light": {
+      "fg": "#8A8C82",
+      "bg": "#F3EEE4",
+      "r": 2.95
+    },
+    "dark": {
+      "fg": "#79807A",
+      "bg": "#191D1A",
+      "r": 4.21
+    }
+  },
+  {
+    "fg": "border-strong",
+    "bg": "surface",
+    "req": 3,
+    "why": "Control boundary · 1.4.11",
+    "light": {
+      "fg": "#678271",
+      "bg": "#F3EEE4",
+      "r": 3.63
+    },
+    "dark": {
+      "fg": "#6B8F79",
+      "bg": "#191D1A",
+      "r": 4.73
+    }
+  },
+  {
+    "fg": "border-focus",
+    "bg": "surface",
+    "req": 3,
+    "why": "Focus indicator · 1.4.11 + 2.4.7",
+    "light": {
+      "fg": "#2B5340",
+      "bg": "#F3EEE4",
+      "r": 7.52
+    },
+    "dark": {
+      "fg": "#6FA688",
+      "bg": "#191D1A",
+      "r": 6.08
+    }
+  },
+  {
+    "fg": "border-subtle",
+    "bg": "surface",
+    "req": 0,
+    "why": "Decorative divider — exempt",
+    "light": {
+      "fg": "#CFCEC2",
+      "bg": "#F3EEE4",
+      "r": 1.37
+    },
+    "dark": {
+      "fg": "#3B413C",
+      "bg": "#191D1A",
+      "r": 1.63
+    }
+  },
+  {
+    "fg": "on-surface",
+    "bg": "surface-raised",
+    "req": 4.5,
+    "why": "Body + headings · 1.4.3",
+    "light": {
+      "fg": "#1A1F1C",
+      "bg": "#FAF7F1",
+      "r": 15.63
+    },
+    "dark": {
+      "fg": "#EDF0EC",
+      "bg": "#2A2F2B",
+      "r": 11.87
+    }
+  },
+  {
+    "fg": "on-surface-muted",
+    "bg": "surface-raised",
+    "req": 4.5,
+    "why": "Secondary text · 1.4.3",
+    "light": {
+      "fg": "#62645E",
+      "bg": "#FAF7F1",
+      "r": 5.61
+    },
+    "dark": {
+      "fg": "#9EA59F",
+      "bg": "#2A2F2B",
+      "r": 5.41
     }
   },
   {
@@ -133,14 +133,14 @@
     "req": 0,
     "why": "Disabled text — exempt from 1.4.3",
     "light": {
-      "fg": "#8F8572",
-      "bg": "#FBF8F2",
-      "r": 3.44
+      "fg": "#8A8C82",
+      "bg": "#FAF7F1",
+      "r": 3.19
     },
     "dark": {
-      "fg": "#7C7364",
-      "bg": "#2D281F",
-      "r": 3.13
+      "fg": "#79807A",
+      "bg": "#2A2F2B",
+      "r": 3.36
     }
   },
   {
@@ -149,14 +149,14 @@
     "req": 3,
     "why": "Control boundary · 1.4.11",
     "light": {
-      "fg": "#83745A",
-      "bg": "#FBF8F2",
-      "r": 4.3
+      "fg": "#678271",
+      "bg": "#FAF7F1",
+      "r": 3.92
     },
     "dark": {
-      "fg": "#847A67",
-      "bg": "#2D281F",
-      "r": 3.46
+      "fg": "#6B8F79",
+      "bg": "#2A2F2B",
+      "r": 3.79
     }
   },
   {
@@ -165,14 +165,14 @@
     "req": 3,
     "why": "Focus indicator · 1.4.11 + 2.4.7",
     "light": {
-      "fg": "#90462B",
-      "bg": "#FBF8F2",
-      "r": 6.4
+      "fg": "#2B5340",
+      "bg": "#FAF7F1",
+      "r": 8.14
     },
     "dark": {
-      "fg": "#F08B68",
-      "bg": "#2D281F",
-      "r": 5.99
+      "fg": "#6FA688",
+      "bg": "#2A2F2B",
+      "r": 4.86
     }
   },
   {
@@ -181,14 +181,14 @@
     "req": 0,
     "why": "Decorative divider — exempt",
     "light": {
-      "fg": "#DFD3BD",
-      "bg": "#FBF8F2",
-      "r": 1.4
+      "fg": "#CFCEC2",
+      "bg": "#FAF7F1",
+      "r": 1.48
     },
     "dark": {
-      "fg": "#3D372C",
-      "bg": "#2D281F",
-      "r": 1.24
+      "fg": "#3B413C",
+      "bg": "#2A2F2B",
+      "r": 1.3
     }
   },
   {
@@ -197,14 +197,14 @@
     "req": 4.5,
     "why": "Body + headings · 1.4.3",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#EBE1D0",
-      "r": 13.4
+      "fg": "#1A1F1C",
+      "bg": "#E5E3D9",
+      "r": 12.99
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#13100C",
-      "r": 16.16
+      "fg": "#EDF0EC",
+      "bg": "#111412",
+      "r": 16.14
     }
   },
   {
@@ -213,14 +213,14 @@
     "req": 4.5,
     "why": "Secondary text · 1.4.3",
     "light": {
-      "fg": "#615A4D",
-      "bg": "#EBE1D0",
-      "r": 5.27
+      "fg": "#62645E",
+      "bg": "#E5E3D9",
+      "r": 4.66
     },
     "dark": {
-      "fg": "#A0998C",
-      "bg": "#13100C",
-      "r": 6.71
+      "fg": "#9EA59F",
+      "bg": "#111412",
+      "r": 7.36
     }
   },
   {
@@ -229,14 +229,14 @@
     "req": 0,
     "why": "Disabled text — exempt from 1.4.3",
     "light": {
-      "fg": "#8F8572",
-      "bg": "#EBE1D0",
-      "r": 2.81
+      "fg": "#8A8C82",
+      "bg": "#E5E3D9",
+      "r": 2.65
     },
     "dark": {
-      "fg": "#7C7364",
-      "bg": "#13100C",
-      "r": 4.06
+      "fg": "#79807A",
+      "bg": "#111412",
+      "r": 4.57
     }
   },
   {
@@ -245,14 +245,14 @@
     "req": 3,
     "why": "Control boundary · 1.4.11",
     "light": {
-      "fg": "#83745A",
-      "bg": "#EBE1D0",
-      "r": 3.52
+      "fg": "#678271",
+      "bg": "#E5E3D9",
+      "r": 3.26
     },
     "dark": {
-      "fg": "#847A67",
-      "bg": "#13100C",
-      "r": 4.48
+      "fg": "#6B8F79",
+      "bg": "#111412",
+      "r": 5.15
     }
   },
   {
@@ -261,14 +261,14 @@
     "req": 3,
     "why": "Focus indicator · 1.4.11 + 2.4.7",
     "light": {
-      "fg": "#90462B",
-      "bg": "#EBE1D0",
-      "r": 5.24
+      "fg": "#2B5340",
+      "bg": "#E5E3D9",
+      "r": 6.76
     },
     "dark": {
-      "fg": "#F08B68",
-      "bg": "#13100C",
-      "r": 7.77
+      "fg": "#6FA688",
+      "bg": "#111412",
+      "r": 6.61
     }
   },
   {
@@ -277,14 +277,14 @@
     "req": 0,
     "why": "Decorative divider — exempt",
     "light": {
-      "fg": "#DFD3BD",
-      "bg": "#EBE1D0",
-      "r": 1.14
+      "fg": "#CFCEC2",
+      "bg": "#E5E3D9",
+      "r": 1.23
     },
     "dark": {
-      "fg": "#3D372C",
-      "bg": "#13100C",
-      "r": 1.61
+      "fg": "#3B413C",
+      "bg": "#111412",
+      "r": 1.77
     }
   },
   {
@@ -293,14 +293,14 @@
     "req": 4.5,
     "why": "Tooltip text",
     "light": {
-      "fg": "#FBF8F2",
-      "bg": "#1C1A17",
-      "r": 16.38
+      "fg": "#FAF7F1",
+      "bg": "#1A1F1C",
+      "r": 15.63
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#F3ECE0",
-      "r": 16.16
+      "fg": "#111412",
+      "bg": "#EDF0EC",
+      "r": 16.14
     }
   },
   {
@@ -309,14 +309,14 @@
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
-      "fg": "#FBF8F2",
-      "bg": "#B55634",
-      "r": 4.56
+      "fg": "#F3EEE4",
+      "bg": "#2B5340",
+      "r": 7.52
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#DF7D5A",
-      "r": 6.52
+      "fg": "#111412",
+      "bg": "#5E9478",
+      "r": 5.28
     }
   },
   {
@@ -325,14 +325,14 @@
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
-      "fg": "#FBF8F2",
-      "bg": "#A64926",
-      "r": 5.5
+      "fg": "#F3EEE4",
+      "bg": "#22442F",
+      "r": 9.38
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#F08B68",
-      "r": 7.77
+      "fg": "#111412",
+      "bg": "#6FA688",
+      "r": 6.61
     }
   },
   {
@@ -341,14 +341,14 @@
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
-      "fg": "#FBF8F2",
-      "bg": "#9A3E1B",
-      "r": 6.43
+      "fg": "#F3EEE4",
+      "bg": "#1C3827",
+      "r": 11.04
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#D2714E",
-      "r": 5.61
+      "fg": "#111412",
+      "bg": "#538A6C",
+      "r": 4.61
     }
   },
   {
@@ -357,14 +357,14 @@
     "req": 0,
     "why": "Fill vs page — if <3:1 the -border token is MANDATORY",
     "light": {
-      "fg": "#B55634",
-      "bg": "#F5EEE1",
-      "r": 4.19
+      "fg": "#2B5340",
+      "bg": "#F3EEE4",
+      "r": 7.52
     },
     "dark": {
-      "fg": "#DF7D5A",
-      "bg": "#1D1A14",
-      "r": 5.97
+      "fg": "#5E9478",
+      "bg": "#191D1A",
+      "r": 4.86
     }
   },
   {
@@ -373,14 +373,14 @@
     "req": 3,
     "why": "Fill boundary · 1.4.11",
     "light": {
-      "fg": "#A56751",
-      "bg": "#F5EEE1",
-      "r": 3.91
+      "fg": "#678271",
+      "bg": "#F3EEE4",
+      "r": 3.63
     },
     "dark": {
-      "fg": "#A96C57",
-      "bg": "#1D1A14",
-      "r": 4.11
+      "fg": "#6B8F79",
+      "bg": "#191D1A",
+      "r": 4.73
     }
   },
   {
@@ -389,14 +389,14 @@
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
-      "fg": "#90462B",
-      "bg": "#F6DCD3",
-      "r": 5.2
+      "fg": "#1A1F1C",
+      "bg": "#E3E7DE",
+      "r": 13.33
     },
     "dark": {
-      "fg": "#D1886E",
-      "bg": "#2F1D16",
-      "r": 5.7
+      "fg": "#EDF0EC",
+      "bg": "#16281E",
+      "r": 13.47
     }
   },
   {
@@ -405,14 +405,14 @@
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
-      "fg": "#90462B",
-      "bg": "#F4D4C8",
-      "r": 4.88
+      "fg": "#1A1F1C",
+      "bg": "#D5DBD0",
+      "r": 11.83
     },
     "dark": {
-      "fg": "#D1886E",
-      "bg": "#3B231B",
-      "r": 5.17
+      "fg": "#EDF0EC",
+      "bg": "#1B3224",
+      "r": 11.96
     }
   },
   {
@@ -421,14 +421,14 @@
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
-      "fg": "#90462B",
-      "bg": "#F2CCBE",
-      "r": 4.57
+      "fg": "#1A1F1C",
+      "bg": "#C7CCC0",
+      "r": 10.21
     },
     "dark": {
-      "fg": "#D1886E",
-      "bg": "#45281F",
-      "r": 4.73
+      "fg": "#EDF0EC",
+      "bg": "#203B2B",
+      "r": 10.61
     }
   },
   {
@@ -437,14 +437,14 @@
     "req": 4.5,
     "why": "Tinted-fill text used bare on the page",
     "light": {
-      "fg": "#90462B",
-      "bg": "#F5EEE1",
-      "r": 5.88
+      "fg": "#1A1F1C",
+      "bg": "#F3EEE4",
+      "r": 14.45
     },
     "dark": {
-      "fg": "#D1886E",
-      "bg": "#1D1A14",
-      "r": 6.16
+      "fg": "#EDF0EC",
+      "bg": "#191D1A",
+      "r": 14.83
     }
   },
   {
@@ -453,14 +453,14 @@
     "req": 4.5,
     "why": "Body text inside a tinted card",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#F6DCD3",
-      "r": 13.31
+      "fg": "#1A1F1C",
+      "bg": "#E3E7DE",
+      "r": 13.33
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#2F1D16",
-      "r": 13.67
+      "fg": "#EDF0EC",
+      "bg": "#16281E",
+      "r": 13.47
     }
   },
   {
@@ -469,14 +469,14 @@
     "req": 4.5,
     "why": "Muted text inside a tinted card",
     "light": {
-      "fg": "#615A4D",
-      "bg": "#F6DCD3",
-      "r": 5.23
+      "fg": "#62645E",
+      "bg": "#E3E7DE",
+      "r": 4.78
     },
     "dark": {
-      "fg": "#A0998C",
-      "bg": "#2F1D16",
-      "r": 5.68
+      "fg": "#9EA59F",
+      "bg": "#16281E",
+      "r": 6.15
     }
   },
   {
@@ -485,14 +485,14 @@
     "req": 0,
     "why": "Disabled label — exempt",
     "light": {
-      "fg": "#817866",
-      "bg": "#E2D6C2",
-      "r": 3.04
+      "fg": "#62645E",
+      "bg": "#C7CCC0",
+      "r": 3.66
     },
     "dark": {
-      "fg": "#8A8273",
-      "bg": "#352F25",
-      "r": 3.48
+      "fg": "#9EA59F",
+      "bg": "#203B2B",
+      "r": 4.84
     }
   },
   {
@@ -501,14 +501,14 @@
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#E9B86C",
-      "r": 9.54
+      "fg": "#1A1F1C",
+      "bg": "#D99673",
+      "r": 6.81
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#E9B86C",
-      "r": 10.42
+      "fg": "#111412",
+      "bg": "#D99673",
+      "r": 7.56
     }
   },
   {
@@ -517,14 +517,14 @@
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#DAA95D",
-      "r": 8.11
+      "fg": "#1A1F1C",
+      "bg": "#CE8865",
+      "r": 5.84
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#F9C77B",
-      "r": 12.18
+      "fg": "#111412",
+      "bg": "#E6A684",
+      "r": 8.96
     }
   },
   {
@@ -533,14 +533,14 @@
     "req": 4.5,
     "why": "Label on solid fill · 1.4.3",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#CE9E52",
-      "r": 7.14
+      "fg": "#1A1F1C",
+      "bg": "#C47C58",
+      "r": 5.07
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#DCAB5F",
-      "r": 9.06
+      "fg": "#111412",
+      "bg": "#C9875F",
+      "r": 6.28
     }
   },
   {
@@ -549,14 +549,14 @@
     "req": 0,
     "why": "Fill vs page — if <3:1 the -border token is MANDATORY",
     "light": {
-      "fg": "#E9B86C",
-      "bg": "#F5EEE1",
-      "r": 1.58
+      "fg": "#D99673",
+      "bg": "#F3EEE4",
+      "r": 2.12
     },
     "dark": {
-      "fg": "#E9B86C",
-      "bg": "#1D1A14",
-      "r": 9.53
+      "fg": "#D99673",
+      "bg": "#191D1A",
+      "r": 6.95
     }
   },
   {
@@ -565,14 +565,14 @@
     "req": 3,
     "why": "Fill boundary · 1.4.11",
     "light": {
-      "fg": "#8F7244",
-      "bg": "#F5EEE1",
-      "r": 3.91
+      "fg": "#B5704F",
+      "bg": "#F3EEE4",
+      "r": 3.37
     },
     "dark": {
-      "fg": "#93764A",
-      "bg": "#1D1A14",
-      "r": 4.07
+      "fg": "#A2694B",
+      "bg": "#191D1A",
+      "r": 3.78
     }
   },
   {
@@ -581,14 +581,14 @@
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
-      "fg": "#785514",
-      "bg": "#ECE0CF",
-      "r": 5.19
+      "fg": "#824429",
+      "bg": "#F4DFD2",
+      "r": 5.82
     },
     "dark": {
-      "fg": "#B79460",
-      "bg": "#292113",
-      "r": 5.61
+      "fg": "#D0937A",
+      "bg": "#2F1F16",
+      "r": 6.12
     }
   },
   {
@@ -597,14 +597,14 @@
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
-      "fg": "#785514",
-      "bg": "#E8D9C4",
-      "r": 4.88
+      "fg": "#824429",
+      "bg": "#F0D5C4",
+      "r": 5.35
     },
     "dark": {
-      "fg": "#B79460",
-      "bg": "#332817",
-      "r": 5.09
+      "fg": "#D0937A",
+      "bg": "#3A271C",
+      "r": 5.47
     }
   },
   {
@@ -613,14 +613,14 @@
     "req": 4.5,
     "why": "Text on tinted fill · 1.4.3",
     "light": {
-      "fg": "#785514",
-      "bg": "#E5D3B9",
-      "r": 4.62
+      "fg": "#824429",
+      "bg": "#ECCBB7",
+      "r": 4.91
     },
     "dark": {
-      "fg": "#B79460",
-      "bg": "#3C2E1A",
-      "r": 4.64
+      "fg": "#D0937A",
+      "bg": "#442E21",
+      "r": 4.91
     }
   },
   {
@@ -629,14 +629,14 @@
     "req": 4.5,
     "why": "Tinted-fill text used bare on the page",
     "light": {
-      "fg": "#785514",
-      "bg": "#F5EEE1",
-      "r": 5.86
+      "fg": "#824429",
+      "bg": "#F3EEE4",
+      "r": 6.47
     },
     "dark": {
-      "fg": "#B79460",
-      "bg": "#1D1A14",
-      "r": 6.13
+      "fg": "#D0937A",
+      "bg": "#191D1A",
+      "r": 6.6
     }
   },
   {
@@ -645,14 +645,14 @@
     "req": 4.5,
     "why": "Body text inside a tinted card",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#ECE0CF",
-      "r": 13.34
+      "fg": "#1A1F1C",
+      "bg": "#F4DFD2",
+      "r": 13.0
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#292113",
-      "r": 13.54
+      "fg": "#EDF0EC",
+      "bg": "#2F1F16",
+      "r": 13.76
     }
   },
   {
@@ -661,14 +661,14 @@
     "req": 4.5,
     "why": "Muted text inside a tinted card",
     "light": {
-      "fg": "#615A4D",
-      "bg": "#ECE0CF",
-      "r": 5.24
+      "fg": "#62645E",
+      "bg": "#F4DFD2",
+      "r": 4.66
     },
     "dark": {
-      "fg": "#A0998C",
-      "bg": "#292113",
-      "r": 5.62
+      "fg": "#9EA59F",
+      "bg": "#2F1F16",
+      "r": 6.28
     }
   },
   {
@@ -677,206 +677,14 @@
     "req": 0,
     "why": "Disabled label — exempt",
     "light": {
-      "fg": "#817866",
-      "bg": "#E2D6C2",
-      "r": 3.04
+      "fg": "#7C7E74",
+      "bg": "#D6D5C9",
+      "r": 2.79
     },
     "dark": {
-      "fg": "#8A8273",
-      "bg": "#352F25",
-      "r": 3.48
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on",
-    "bg": "interactive-accent-alt",
-    "req": 4.5,
-    "why": "Label on solid fill · 1.4.3",
-    "light": {
-      "fg": "#1C1A17",
-      "bg": "#CCA6C7",
-      "r": 8.14
-    },
-    "dark": {
-      "fg": "#13100C",
-      "bg": "#C09CBC",
-      "r": 7.88
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on",
-    "bg": "interactive-accent-alt-hover",
-    "req": 4.5,
-    "why": "Label on solid fill · 1.4.3",
-    "light": {
-      "fg": "#1C1A17",
-      "bg": "#BD99B9",
-      "r": 6.96
-    },
-    "dark": {
-      "fg": "#13100C",
-      "bg": "#D0ABCB",
-      "r": 9.37
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on",
-    "bg": "interactive-accent-alt-active",
-    "req": 4.5,
-    "why": "Label on solid fill · 1.4.3",
-    "light": {
-      "fg": "#1C1A17",
-      "bg": "#B28EAE",
-      "r": 6.1
-    },
-    "dark": {
-      "fg": "#13100C",
-      "bg": "#B490B0",
-      "r": 6.83
-    }
-  },
-  {
-    "fg": "interactive-accent-alt",
-    "bg": "surface",
-    "req": 0,
-    "why": "Fill vs page — if <3:1 the -border token is MANDATORY",
-    "light": {
-      "fg": "#CCA6C7",
-      "bg": "#F5EEE1",
-      "r": 1.85
-    },
-    "dark": {
-      "fg": "#C09CBC",
-      "bg": "#1D1A14",
-      "r": 7.21
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-border",
-    "bg": "surface",
-    "req": 3,
-    "why": "Fill boundary · 1.4.11",
-    "light": {
-      "fg": "#867084",
-      "bg": "#F5EEE1",
-      "r": 3.9
-    },
-    "dark": {
-      "fg": "#8A7487",
-      "bg": "#1D1A14",
-      "r": 4.07
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on-subtle",
-    "bg": "interactive-accent-alt-subtle",
-    "req": 4.5,
-    "why": "Text on tinted fill · 1.4.3",
-    "light": {
-      "fg": "#6D526A",
-      "bg": "#E8DFE7",
-      "r": 5.27
-    },
-    "dark": {
-      "fg": "#AC92A9",
-      "bg": "#262026",
-      "r": 5.65
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on-subtle",
-    "bg": "interactive-accent-alt-subtle-hover",
-    "req": 4.5,
-    "why": "Text on tinted fill · 1.4.3",
-    "light": {
-      "fg": "#6D526A",
-      "bg": "#E3D8E2",
-      "r": 4.95
-    },
-    "dark": {
-      "fg": "#AC92A9",
-      "bg": "#2F272E",
-      "r": 5.13
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on-subtle",
-    "bg": "interactive-accent-alt-subtle-active",
-    "req": 4.5,
-    "why": "Text on tinted fill · 1.4.3",
-    "light": {
-      "fg": "#6D526A",
-      "bg": "#DED1DD",
-      "r": 4.66
-    },
-    "dark": {
-      "fg": "#AC92A9",
-      "bg": "#372D36",
-      "r": 4.68
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on-subtle",
-    "bg": "surface",
-    "req": 4.5,
-    "why": "Tinted-fill text used bare on the page",
-    "light": {
-      "fg": "#6D526A",
-      "bg": "#F5EEE1",
-      "r": 5.94
-    },
-    "dark": {
-      "fg": "#AC92A9",
-      "bg": "#1D1A14",
-      "r": 6.15
-    }
-  },
-  {
-    "fg": "on-surface",
-    "bg": "interactive-accent-alt-subtle",
-    "req": 4.5,
-    "why": "Body text inside a tinted card",
-    "light": {
-      "fg": "#1C1A17",
-      "bg": "#E8DFE7",
-      "r": 13.34
-    },
-    "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#262026",
-      "r": 13.58
-    }
-  },
-  {
-    "fg": "on-surface-muted",
-    "bg": "interactive-accent-alt-subtle",
-    "req": 4.5,
-    "why": "Muted text inside a tinted card",
-    "light": {
-      "fg": "#615A4D",
-      "bg": "#E8DFE7",
-      "r": 5.24
-    },
-    "dark": {
-      "fg": "#A0998C",
-      "bg": "#262026",
-      "r": 5.64
-    }
-  },
-  {
-    "fg": "interactive-accent-alt-on-disabled",
-    "bg": "interactive-accent-alt-disabled",
-    "req": 0,
-    "why": "Disabled label — exempt",
-    "light": {
-      "fg": "#817866",
-      "bg": "#E2D6C2",
-      "r": 3.04
-    },
-    "dark": {
-      "fg": "#8A8273",
-      "bg": "#352F25",
-      "r": 3.48
+      "fg": "#868D87",
+      "bg": "#323833",
+      "r": 3.53
     }
   },
   {
@@ -885,14 +693,14 @@
     "req": 4.5,
     "why": "Ghost label on hover fill",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#EBE1D0",
-      "r": 13.4
+      "fg": "#1A1F1C",
+      "bg": "#E5E3D9",
+      "r": 12.99
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#2D281F",
-      "r": 12.46
+      "fg": "#EDF0EC",
+      "bg": "#2A2F2B",
+      "r": 11.87
     }
   },
   {
@@ -901,14 +709,14 @@
     "req": 4.5,
     "why": "Ghost label on pressed fill",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#E5DAC8",
-      "r": 12.56
+      "fg": "#1A1F1C",
+      "bg": "#DEDCD1",
+      "r": 12.15
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#352F25",
-      "r": 11.29
+      "fg": "#EDF0EC",
+      "bg": "#323833",
+      "r": 10.45
     }
   },
   {
@@ -917,14 +725,14 @@
     "req": 3,
     "why": "Ghost outline boundary · 1.4.11",
     "light": {
-      "fg": "#83745A",
-      "bg": "#F5EEE1",
-      "r": 3.95
+      "fg": "#2B5340",
+      "bg": "#F3EEE4",
+      "r": 7.52
     },
     "dark": {
-      "fg": "#847A67",
-      "bg": "#1D1A14",
-      "r": 4.1
+      "fg": "#6FA688",
+      "bg": "#191D1A",
+      "r": 6.08
     }
   },
   {
@@ -933,14 +741,14 @@
     "req": 4.5,
     "why": "Foreground on accent solid",
     "light": {
-      "fg": "#FBF8F2",
-      "bg": "#B55634",
-      "r": 4.56
+      "fg": "#F3EEE4",
+      "bg": "#2B5340",
+      "r": 7.52
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#DF7D5A",
-      "r": 6.52
+      "fg": "#111412",
+      "bg": "#5E9478",
+      "r": 5.28
     }
   },
   {
@@ -949,14 +757,14 @@
     "req": 4.5,
     "why": "Accent as text",
     "light": {
-      "fg": "#90462B",
-      "bg": "#F5EEE1",
-      "r": 5.88
+      "fg": "#2B5340",
+      "bg": "#F3EEE4",
+      "r": 7.52
     },
     "dark": {
-      "fg": "#D1886E",
-      "bg": "#1D1A14",
-      "r": 6.16
+      "fg": "#8FBCA2",
+      "bg": "#191D1A",
+      "r": 8.02
     }
   },
   {
@@ -965,14 +773,14 @@
     "req": 3,
     "why": "Accent boundary · 1.4.11",
     "light": {
-      "fg": "#A56751",
-      "bg": "#F5EEE1",
-      "r": 3.91
+      "fg": "#678271",
+      "bg": "#F3EEE4",
+      "r": 3.63
     },
     "dark": {
-      "fg": "#A96C57",
-      "bg": "#1D1A14",
-      "r": 4.11
+      "fg": "#6B8F79",
+      "bg": "#191D1A",
+      "r": 4.73
     }
   },
   {
@@ -981,14 +789,14 @@
     "req": 4.5,
     "why": "Accent text on its own tint",
     "light": {
-      "fg": "#90462B",
-      "bg": "#F6DCD3",
-      "r": 5.2
+      "fg": "#2B5340",
+      "bg": "#E3E7DE",
+      "r": 6.94
     },
     "dark": {
-      "fg": "#D1886E",
-      "bg": "#2F1D16",
-      "r": 5.7
+      "fg": "#8FBCA2",
+      "bg": "#16281E",
+      "r": 7.29
     }
   },
   {
@@ -997,14 +805,14 @@
     "req": 4.5,
     "why": "Foreground on accent solid",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#E9B86C",
-      "r": 9.54
+      "fg": "#1A1F1C",
+      "bg": "#D99673",
+      "r": 6.81
     },
     "dark": {
-      "fg": "#13100C",
-      "bg": "#E9B86C",
-      "r": 10.42
+      "fg": "#111412",
+      "bg": "#D99673",
+      "r": 7.56
     }
   },
   {
@@ -1013,14 +821,14 @@
     "req": 4.5,
     "why": "Accent as text",
     "light": {
-      "fg": "#785514",
-      "bg": "#F5EEE1",
-      "r": 5.86
+      "fg": "#824429",
+      "bg": "#F3EEE4",
+      "r": 6.47
     },
     "dark": {
-      "fg": "#B79460",
-      "bg": "#1D1A14",
-      "r": 6.13
+      "fg": "#D0937A",
+      "bg": "#191D1A",
+      "r": 6.6
     }
   },
   {
@@ -1029,14 +837,14 @@
     "req": 3,
     "why": "Accent boundary · 1.4.11",
     "light": {
-      "fg": "#8F7244",
-      "bg": "#F5EEE1",
-      "r": 3.91
+      "fg": "#B5704F",
+      "bg": "#F3EEE4",
+      "r": 3.37
     },
     "dark": {
-      "fg": "#93764A",
-      "bg": "#1D1A14",
-      "r": 4.07
+      "fg": "#A2694B",
+      "bg": "#191D1A",
+      "r": 3.78
     }
   },
   {
@@ -1045,78 +853,14 @@
     "req": 4.5,
     "why": "Accent text on its own tint",
     "light": {
-      "fg": "#785514",
-      "bg": "#ECE0CF",
-      "r": 5.19
+      "fg": "#824429",
+      "bg": "#F4DFD2",
+      "r": 5.82
     },
     "dark": {
-      "fg": "#B79460",
-      "bg": "#292113",
-      "r": 5.61
-    }
-  },
-  {
-    "fg": "accent-3-on",
-    "bg": "accent-3",
-    "req": 4.5,
-    "why": "Foreground on accent solid",
-    "light": {
-      "fg": "#1C1A17",
-      "bg": "#CCA6C7",
-      "r": 8.14
-    },
-    "dark": {
-      "fg": "#13100C",
-      "bg": "#C09CBC",
-      "r": 7.88
-    }
-  },
-  {
-    "fg": "accent-3-text",
-    "bg": "surface",
-    "req": 4.5,
-    "why": "Accent as text",
-    "light": {
-      "fg": "#6D526A",
-      "bg": "#F5EEE1",
-      "r": 5.94
-    },
-    "dark": {
-      "fg": "#AC92A9",
-      "bg": "#1D1A14",
-      "r": 6.15
-    }
-  },
-  {
-    "fg": "accent-3-border",
-    "bg": "surface",
-    "req": 3,
-    "why": "Accent boundary · 1.4.11",
-    "light": {
-      "fg": "#867084",
-      "bg": "#F5EEE1",
-      "r": 3.9
-    },
-    "dark": {
-      "fg": "#8A7487",
-      "bg": "#1D1A14",
-      "r": 4.07
-    }
-  },
-  {
-    "fg": "accent-3-text",
-    "bg": "accent-3-subtle",
-    "req": 4.5,
-    "why": "Accent text on its own tint",
-    "light": {
-      "fg": "#6D526A",
-      "bg": "#E8DFE7",
-      "r": 5.27
-    },
-    "dark": {
-      "fg": "#AC92A9",
-      "bg": "#262026",
-      "r": 5.65
+      "fg": "#D0937A",
+      "bg": "#2F1F16",
+      "r": 6.12
     }
   },
   {
@@ -1125,14 +869,14 @@
     "req": 4.5,
     "why": "Message text in banner · 1.4.3",
     "light": {
-      "fg": "#193550",
-      "bg": "#E5F0FB",
-      "r": 10.91
+      "fg": "#1A1F1C",
+      "bg": "#E5E3D9",
+      "r": 12.99
     },
     "dark": {
-      "fg": "#C9E1FA",
-      "bg": "#121A23",
-      "r": 13.05
+      "fg": "#EDF0EC",
+      "bg": "#222723",
+      "r": 13.22
     }
   },
   {
@@ -1141,14 +885,14 @@
     "req": 4.5,
     "why": "Message text inline on the page",
     "light": {
-      "fg": "#193550",
-      "bg": "#F5EEE1",
-      "r": 10.92
+      "fg": "#1A1F1C",
+      "bg": "#F3EEE4",
+      "r": 14.45
     },
     "dark": {
-      "fg": "#C9E1FA",
-      "bg": "#1D1A14",
-      "r": 12.92
+      "fg": "#EDF0EC",
+      "bg": "#191D1A",
+      "r": 14.83
     }
   },
   {
@@ -1157,14 +901,14 @@
     "req": 3,
     "why": "Status icon · 1.4.11",
     "light": {
-      "fg": "#205D96",
-      "bg": "#E5F0FB",
-      "r": 5.93
+      "fg": "#62645E",
+      "bg": "#E5E3D9",
+      "r": 4.66
     },
     "dark": {
-      "fg": "#689ED5",
-      "bg": "#121A23",
-      "r": 6.21
+      "fg": "#9EA59F",
+      "bg": "#222723",
+      "r": 6.03
     }
   },
   {
@@ -1173,14 +917,14 @@
     "req": 3,
     "why": "Status icon inline · 1.4.11",
     "light": {
-      "fg": "#205D96",
-      "bg": "#F5EEE1",
-      "r": 5.93
+      "fg": "#62645E",
+      "bg": "#F3EEE4",
+      "r": 5.18
     },
     "dark": {
-      "fg": "#689ED5",
-      "bg": "#1D1A14",
-      "r": 6.15
+      "fg": "#9EA59F",
+      "bg": "#191D1A",
+      "r": 6.77
     }
   },
   {
@@ -1189,14 +933,14 @@
     "req": 3,
     "why": "Banner boundary · 1.4.11",
     "light": {
-      "fg": "#4C7AA9",
-      "bg": "#F5EEE1",
-      "r": 3.9
+      "fg": "#6E7068",
+      "bg": "#F3EEE4",
+      "r": 4.34
     },
     "dark": {
-      "fg": "#517EAC",
-      "bg": "#1D1A14",
-      "r": 4.07
+      "fg": "#7F867F",
+      "bg": "#191D1A",
+      "r": 4.56
     }
   },
   {
@@ -1205,14 +949,14 @@
     "req": 4.5,
     "why": "Body text inside a banner",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#E5F0FB",
-      "r": 15.04
+      "fg": "#1A1F1C",
+      "bg": "#E5E3D9",
+      "r": 12.99
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#121A23",
-      "r": 14.93
+      "fg": "#EDF0EC",
+      "bg": "#222723",
+      "r": 13.22
     }
   },
   {
@@ -1238,13 +982,13 @@
     "why": "Message text inline on the page",
     "light": {
       "fg": "#4C2903",
-      "bg": "#F5EEE1",
-      "r": 11.19
+      "bg": "#F3EEE4",
+      "r": 11.17
     },
     "dark": {
       "fg": "#F8D7BC",
-      "bg": "#1D1A14",
-      "r": 12.76
+      "bg": "#191D1A",
+      "r": 12.53
     }
   },
   {
@@ -1270,13 +1014,13 @@
     "why": "Status icon inline · 1.4.11",
     "light": {
       "fg": "#894C00",
-      "bg": "#F5EEE1",
-      "r": 5.88
+      "bg": "#F3EEE4",
+      "r": 5.86
     },
     "dark": {
       "fg": "#D08A48",
-      "bg": "#1D1A14",
-      "r": 6.12
+      "bg": "#191D1A",
+      "r": 6.02
     }
   },
   {
@@ -1286,13 +1030,13 @@
     "why": "Banner boundary · 1.4.11",
     "light": {
       "fg": "#A5692F",
-      "bg": "#F5EEE1",
+      "bg": "#F3EEE4",
       "r": 3.9
     },
     "dark": {
       "fg": "#A86E37",
-      "bg": "#1D1A14",
-      "r": 4.09
+      "bg": "#191D1A",
+      "r": 4.02
     }
   },
   {
@@ -1301,14 +1045,14 @@
     "req": 4.5,
     "why": "Body text inside a banner",
     "light": {
-      "fg": "#1C1A17",
+      "fg": "#1A1F1C",
       "bg": "#FAECE0",
-      "r": 15
+      "r": 14.43
     },
     "dark": {
-      "fg": "#F3ECE0",
+      "fg": "#EDF0EC",
       "bg": "#22170D",
-      "r": 14.95
+      "r": 15.28
     }
   },
   {
@@ -1317,14 +1061,14 @@
     "req": 4.5,
     "why": "Message text in banner · 1.4.3",
     "light": {
-      "fg": "#1F3A25",
-      "bg": "#E7F2E9",
-      "r": 10.81
+      "fg": "#24400F",
+      "bg": "#EDF4E6",
+      "r": 10.29
     },
     "dark": {
-      "fg": "#CEE5D1",
-      "bg": "#131C15",
-      "r": 13.08
+      "fg": "#DCEBCB",
+      "bg": "#141C0D",
+      "r": 13.97
     }
   },
   {
@@ -1333,14 +1077,14 @@
     "req": 4.5,
     "why": "Message text inline on the page",
     "light": {
-      "fg": "#1F3A25",
-      "bg": "#F5EEE1",
-      "r": 10.77
+      "fg": "#24400F",
+      "bg": "#F3EEE4",
+      "r": 10.0
     },
     "dark": {
-      "fg": "#CEE5D1",
-      "bg": "#1D1A14",
-      "r": 13.02
+      "fg": "#DCEBCB",
+      "bg": "#191D1A",
+      "r": 13.63
     }
   },
   {
@@ -1349,14 +1093,14 @@
     "req": 3,
     "why": "Status icon · 1.4.11",
     "light": {
-      "fg": "#2B673B",
-      "bg": "#E7F2E9",
-      "r": 5.88
+      "fg": "#3F6E23",
+      "bg": "#EDF4E6",
+      "r": 5.39
     },
     "dark": {
-      "fg": "#70A67B",
-      "bg": "#131C15",
-      "r": 6.17
+      "fg": "#9ACB6F",
+      "bg": "#141C0D",
+      "r": 9.28
     }
   },
   {
@@ -1365,14 +1109,14 @@
     "req": 3,
     "why": "Status icon inline · 1.4.11",
     "light": {
-      "fg": "#2B673B",
-      "bg": "#F5EEE1",
-      "r": 5.86
+      "fg": "#3F6E23",
+      "bg": "#F3EEE4",
+      "r": 5.24
     },
     "dark": {
-      "fg": "#70A67B",
-      "bg": "#1D1A14",
-      "r": 6.14
+      "fg": "#9ACB6F",
+      "bg": "#191D1A",
+      "r": 9.05
     }
   },
   {
@@ -1381,14 +1125,14 @@
     "req": 3,
     "why": "Banner boundary · 1.4.11",
     "light": {
-      "fg": "#53815C",
-      "bg": "#F5EEE1",
-      "r": 3.9
+      "fg": "#638A42",
+      "bg": "#F3EEE4",
+      "r": 3.46
     },
     "dark": {
-      "fg": "#588561",
-      "bg": "#1D1A14",
-      "r": 4.08
+      "fg": "#679050",
+      "bg": "#191D1A",
+      "r": 4.61
     }
   },
   {
@@ -1397,14 +1141,14 @@
     "req": 4.5,
     "why": "Body text inside a banner",
     "light": {
-      "fg": "#1C1A17",
-      "bg": "#E7F2E9",
-      "r": 15.11
+      "fg": "#1A1F1C",
+      "bg": "#EDF4E6",
+      "r": 14.87
     },
     "dark": {
-      "fg": "#F3ECE0",
-      "bg": "#131C15",
-      "r": 14.85
+      "fg": "#EDF0EC",
+      "bg": "#141C0D",
+      "r": 15.21
     }
   },
   {
@@ -1430,13 +1174,13 @@
     "why": "Message text inline on the page",
     "light": {
       "fg": "#551F1D",
-      "bg": "#F5EEE1",
-      "r": 11.37
+      "bg": "#F3EEE4",
+      "r": 11.35
     },
     "dark": {
       "fg": "#FFD2CD",
-      "bg": "#1D1A14",
-      "r": 12.69
+      "bg": "#191D1A",
+      "r": 12.46
     }
   },
   {
@@ -1462,13 +1206,13 @@
     "why": "Status icon inline · 1.4.11",
     "light": {
       "fg": "#A53231",
-      "bg": "#F5EEE1",
-      "r": 5.87
+      "bg": "#F3EEE4",
+      "r": 5.86
     },
     "dark": {
       "fg": "#E87A73",
-      "bg": "#1D1A14",
-      "r": 6.17
+      "bg": "#191D1A",
+      "r": 6.06
     }
   },
   {
@@ -1478,13 +1222,13 @@
     "why": "Banner boundary · 1.4.11",
     "light": {
       "fg": "#B85B55",
-      "bg": "#F5EEE1",
-      "r": 3.9
+      "bg": "#F3EEE4",
+      "r": 3.89
     },
     "dark": {
       "fg": "#BB605A",
-      "bg": "#1D1A14",
-      "r": 4.08
+      "bg": "#191D1A",
+      "r": 4.0
     }
   },
   {
@@ -1493,14 +1237,14 @@
     "req": 4.5,
     "why": "Body text inside a banner",
     "light": {
-      "fg": "#1C1A17",
+      "fg": "#1A1F1C",
       "bg": "#FFE9E6",
-      "r": 14.92
+      "r": 14.36
     },
     "dark": {
-      "fg": "#F3ECE0",
+      "fg": "#EDF0EC",
       "bg": "#261412",
-      "r": 15.01
+      "r": 15.34
     }
   }
 ]

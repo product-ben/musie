@@ -31,101 +31,111 @@
    Do not consume these directly. Layer 2 is the API.                        */
 :root, [data-theme] {
 
-  /* ── sand — terracotta-toned neutral; carries all five Figma neutral variables */
-  --sand-1: light-dark(#FBF8F2, #13100C);                 /* App canvas — deepest surface in the theme */
-  --sand-2: light-dark(#F5EEE1, #1D1A14);                 /* Default surface — page background */
-  --sand-3: light-dark(#EBE1D0, #26221A);                 /* Subtle surface — component background at rest */
-  --sand-4: light-dark(#E5DAC8, #2D281F);                 /* Component background — hover */
-  --sand-5: light-dark(#E2D6C2, #352F25);                 /* Component background — active / selected */
-  --sand-6: light-dark(#DFD3BD, #3D372C);                 /* Subtle border — separators, dividers, decorative outlines */
-  --sand-7: light-dark(#D0C2A9, #4F4738);                 /* Component border — decorative, non-load-bearing */
-  --sand-8: light-dark(#C8B89C, #635948);                 /* Component border — hover */
-  --sand-9: light-dark(#8F8572, #7C7364);                 /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
-  --sand-10: light-dark(#817866, #8A8273);                /* Solid fill — hover */
-  --sand-11: light-dark(#615A4D, #A0998C);                /* Accessible text + meaningful icons (solved ≥4.5:1) */
-  --sand-12: light-dark(#1C1A17, #F3ECE0);                /* High-contrast text — headings, emphasis (solved ≥7:1) */
-  --sand-edge: light-dark(#83745A, #847A67);              /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
-  --sand-press: light-dark(#8C816E, #847B6C);             /* Solid fill — pressed; keeps the step-9 foreground legal */
+  /* ── sand — linen neutral with a green-black ink. Carries all five Figma
+     neutral variables. Steps 1/2/3, 11 and 12 are read off the W2 frame:
+       1  #FAF7F1  the card fill — LIGHTER than the page, so the
+                   paper-on-canvas model holds under W2
+       2  #F3EEE4  W2 `bg`      — Hintergrund (Leinen)
+       3  #E5E3D9  W2 `surface` — the grouping panel a card sits on
+       11 #62645E  W2 `muted`   — 5.2:1 on bg, clears the 4.5:1 contract
+       12 #1A1F1C  W2 `ink`     — 14.5:1 on bg (AAA)
+     4–10, edge and press are interpolated between them on the same curve. */
+  --sand-1: light-dark(#FAF7F1, #111412);                 /* App canvas — deepest surface in the theme */
+  --sand-2: light-dark(#F3EEE4, #191D1A);                 /* Default surface — page background */
+  --sand-3: light-dark(#E5E3D9, #222723);                 /* Subtle surface — component background at rest */
+  --sand-4: light-dark(#DEDCD1, #2A2F2B);                 /* Component background — hover */
+  --sand-5: light-dark(#D6D5C9, #323833);                 /* Component background — active / selected */
+  --sand-6: light-dark(#CFCEC2, #3B413C);                 /* Subtle border — separators, dividers, decorative outlines */
+  --sand-7: light-dark(#BDBCAF, #4C534E);                 /* Component border — decorative, non-load-bearing */
+  --sand-8: light-dark(#A7A89B, #616862);                 /* Component border — hover */
+  --sand-9: light-dark(#8A8C82, #79807A);                 /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
+  --sand-10: light-dark(#7C7E74, #868D87);                /* Solid fill — hover */
+  --sand-11: light-dark(#62645E, #9EA59F);                /* Accessible text + meaningful icons (solved ≥4.5:1) */
+  --sand-12: light-dark(#1A1F1C, #EDF0EC);                /* High-contrast text — headings, emphasis (solved ≥7:1) */
+  --sand-edge: light-dark(#6E7068, #7F867F);              /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
+  --sand-press: light-dark(#808278, #828981);             /* Solid fill — pressed; keeps the step-9 foreground legal */
 
-  /* ── terracotta */
-  --terracotta-1: light-dark(#FBF7F6, #160F0C);           /* App canvas — deepest surface in the theme */
-  --terracotta-2: light-dark(#FAEBE5, #221612);           /* Default surface — page background */
-  --terracotta-3: light-dark(#F6DCD3, #2F1D16);           /* Subtle surface — component background at rest */
-  --terracotta-4: light-dark(#F4D4C8, #3B231B);           /* Component background — hover */
-  --terracotta-5: light-dark(#F2CCBE, #45281F);           /* Component background — active / selected */
-  --terracotta-6: light-dark(#F1C4B5, #513024);           /* Subtle border — separators, dividers, decorative outlines */
-  --terracotta-7: light-dark(#EBB5A2, #673C2D);           /* Component border — decorative, non-load-bearing */
-  --terracotta-8: light-dark(#DF9C85, #854B37);           /* Component border — hover */
-  --terracotta-9: light-dark(#B55634, #DF7D5A);           /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
-  --terracotta-10: light-dark(#A64926, #F08B68);          /* Solid fill — hover */
-  --terracotta-11: light-dark(#90462B, #D1886E);          /* Accessible text + meaningful icons (solved ≥4.5:1) */
-  --terracotta-12: light-dark(#4C281B, #F8D5C9);          /* High-contrast text — headings, emphasis (solved ≥7:1) */
-  --terracotta-edge: light-dark(#A56751, #A96C57);        /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
-  --terracotta-press: light-dark(#9A3E1B, #D2714E);       /* Solid fill — pressed; keeps the step-9 foreground legal */
+  /* ── green — THE BRAND. Buttons, links, focus, wordmark, and the default
+     for every interactive element in the app. W2 `green`:
+       5    #C7CCC0  W2 `green-soft` — the SELECTED chip, the selection fill
+                     and the disabled button fill. It sits at step 5 rather
+                     than step 3, which is where W2's own words put it:
+                     "Chips, Auswahl-Flächen" is a chosen surface, not a
+                     resting one. It also has to: muted ink on it measures
+                     3.66:1, so a card tinted with it could not carry
+                     secondary text. Step 3 is the lighter rest tint that can.
+       9    #2B5340  W2 `green` — 7.5:1 on bg (AAA)
+       10   #22442F  the frame's own hover fill
+       11   #2B5340  the same green as text — W2 sets links and the secondary
+                     button label in it, and 7.5:1 clears the text contract
+                     without needing a second value
+       edge #678271  W2 `border-ui` — the card and field outline, 3.6:1 on bg
+     Named `green` rather than `forest` because that is what it is called
+     everywhere else now: Layer 1 carries sand, green and terracotta.       */
+  --green-1: light-dark(#F5F8F5, #0E1512);                /* App canvas — deepest surface in the theme */
+  --green-2: light-dark(#E9EFE9, #121E18);                /* Default surface — page background */
+  --green-3: light-dark(#E3E7DE, #16281E);                /* Subtle surface — component background at rest */
+  --green-4: light-dark(#D5DBD0, #1B3224);                /* Component background — hover */
+  --green-5: light-dark(#C7CCC0, #203B2B);                /* Component background — active / selected */
+  --green-6: light-dark(#A3AB9B, #264633);                /* Subtle border — separators, dividers, decorative outlines */
+  --green-7: light-dark(#8C9785, #325A42);                /* Component border — decorative, non-load-bearing */
+  --green-8: light-dark(#768372, #427355);                /* Component border — hover */
+  --green-9: light-dark(#2B5340, #5E9478);                /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
+  --green-10: light-dark(#22442F, #6FA688);               /* Solid fill — hover */
+  --green-11: light-dark(#2B5340, #8FBCA2);               /* Accessible text + meaningful icons (solved ≥4.5:1) */
+  --green-12: light-dark(#16281D, #D8E8DF);               /* High-contrast text — headings, emphasis (solved ≥7:1) */
+  --green-edge: light-dark(#678271, #6B8F79);             /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
+  --green-press: light-dark(#1C3827, #538A6C);            /* Solid fill — pressed; keeps the step-9 foreground legal */
 
-  /* ── ocher */
-  --ocher-1: light-dark(#FAF8F6, #13100B);                /* App canvas — deepest surface in the theme */
-  --ocher-2: light-dark(#F4EDE3, #1E1810);                /* Default surface — page background */
-  --ocher-3: light-dark(#ECE0CF, #292113);                /* Subtle surface — component background at rest */
-  --ocher-4: light-dark(#E8D9C4, #332817);                /* Component background — hover */
-  --ocher-5: light-dark(#E5D3B9, #3C2E1A);                /* Component background — active / selected */
-  --ocher-6: light-dark(#E1CCAF, #46361E);                /* Subtle border — separators, dividers, decorative outlines */
-  --ocher-7: light-dark(#D9BF9A, #5A4525);                /* Component border — decorative, non-load-bearing */
-  --ocher-8: light-dark(#C9A97A, #73582C);                /* Component border — hover */
-  --ocher-9: light-dark(#E9B86C, #E9B86C);                /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
-  --ocher-10: light-dark(#DAA95D, #F9C77B);               /* Solid fill — hover */
-  --ocher-11: light-dark(#785514, #B79460);               /* Accessible text + meaningful icons (solved ≥4.5:1) */
-  --ocher-12: light-dark(#412F14, #ECDCC5);               /* High-contrast text — headings, emphasis (solved ≥7:1) */
-  --ocher-edge: light-dark(#8F7244, #93764A);             /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
-  --ocher-press: light-dark(#CE9E52, #DCAB5F);            /* Solid fill — pressed; keeps the step-9 foreground legal */
+  /* ── terracotta — W2 `accent` #D99673, "Terrakotta hell, nur Fläche".
+     THE OPT-IN ACCENT, never the default: a component reaches for it only
+     where a screen asks, and the app's default is green.
+     The frame is explicit that this colour is a FILL and never ink — step 9
+     carries ink at 6.8:1, and step 11 is a separate, much darker value that
+     exists so --accent-1-text has something legal to resolve to.           */
+  --terracotta-1: light-dark(#FDF8F5, #160F0B);           /* App canvas — deepest surface in the theme */
+  --terracotta-2: light-dark(#F9EDE5, #221711);           /* Default surface — page background */
+  --terracotta-3: light-dark(#F4DFD2, #2F1F16);           /* Subtle surface — component background at rest */
+  --terracotta-4: light-dark(#F0D5C4, #3A271C);           /* Component background — hover */
+  --terracotta-5: light-dark(#ECCBB7, #442E21);           /* Component background — active / selected */
+  --terracotta-6: light-dark(#E8C1AA, #513726);           /* Subtle border — separators, dividers, decorative outlines */
+  --terracotta-7: light-dark(#E3B294, #67462F);           /* Component border — decorative, non-load-bearing */
+  --terracotta-8: light-dark(#DEA37F, #85593B);           /* Component border — hover */
+  --terracotta-9: light-dark(#D99673, #D99673);           /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
+  --terracotta-10: light-dark(#CE8865, #E6A684);          /* Solid fill — hover */
+  --terracotta-11: light-dark(#824429, #D0937A);          /* Accessible text + meaningful icons (solved ≥4.5:1) */
+  --terracotta-12: light-dark(#4A2718, #F6DACB);          /* High-contrast text — headings, emphasis (solved ≥7:1) */
+  --terracotta-edge: light-dark(#B5704F, #A2694B);        /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
+  --terracotta-press: light-dark(#C47C58, #C9875F);       /* Solid fill — pressed; keeps the step-9 foreground legal */
 
-  /* ── purple */
-  --purple-1: light-dark(#F9F8F9, #121012);               /* App canvas — deepest surface in the theme */
-  --purple-2: light-dark(#F2ECF1, #1C181C);               /* Default surface — page background */
-  --purple-3: light-dark(#E8DFE7, #262026);               /* Subtle surface — component background at rest */
-  --purple-4: light-dark(#E3D8E2, #2F272E);               /* Component background — hover */
-  --purple-5: light-dark(#DED1DD, #372D36);               /* Component background — active / selected */
-  --purple-6: light-dark(#DACAD8, #413540);               /* Subtle border — separators, dividers, decorative outlines */
-  --purple-7: light-dark(#D0BCCE, #534351);               /* Component border — decorative, non-load-bearing */
-  --purple-8: light-dark(#BEA6BB, #6A5568);               /* Component border — hover */
-  --purple-9: light-dark(#CCA6C7, #C09CBC);               /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
-  --purple-10: light-dark(#BD99B9, #D0ABCB);              /* Solid fill — hover */
-  --purple-11: light-dark(#6D526A, #AC92A9);              /* Accessible text + meaningful icons (solved ≥4.5:1) */
-  --purple-12: light-dark(#3B2E3A, #E6DAE4);              /* High-contrast text — headings, emphasis (solved ≥7:1) */
-  --purple-edge: light-dark(#867084, #8A7487);            /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
-  --purple-press: light-dark(#B28EAE, #B490B0);           /* Solid fill — pressed; keeps the step-9 foreground legal */
+  /* ── success — GRASS, AND THE HUE IS THE WHOLE POINT (Ben, 2026-10-10).
+     The brand is green, so a success green that merely differs in lightness
+     is a status nobody can read at a glance. The old value sat at hue 136°
+     against the brand's 151° — fifteen degrees apart, both mid-greens, and
+     indistinguishable on a page that has a green button on it.
 
-  /* ── info */
-  --info-1: light-dark(#F6F9FC, #0C1117);                 /* App canvas — deepest surface in the theme */
-  --info-2: light-dark(#E5F0FB, #121A23);                 /* Default surface — page background */
-  --info-3: light-dark(#D3E5F8, #162331);                 /* Subtle surface — component background at rest */
-  --info-4: light-dark(#C8DEF6, #1A2B3D);                 /* Component background — hover */
-  --info-5: light-dark(#BED9F5, #1D3248);                 /* Component background — active / selected */
-  --info-6: light-dark(#B4D3F4, #233B55);                 /* Subtle border — separators, dividers, decorative outlines */
-  --info-7: light-dark(#A1C8F0, #2B4B6C);                 /* Component border — decorative, non-load-bearing */
-  --info-8: light-dark(#83B3E5, #34608C);                 /* Component border — hover */
-  --info-9: light-dark(#2675BD, #3D8AD4);                 /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
-  --info-10: light-dark(#1368AF, #4C99E4);                /* Solid fill — hover */
-  --info-11: light-dark(#205D96, #689ED5);                /* Accessible text + meaningful icons (solved ≥4.5:1) */
-  --info-12: light-dark(#193550, #C9E1FA);                /* High-contrast text — headings, emphasis (solved ≥7:1) */
-  --info-edge: light-dark(#4C7AA9, #517EAC);              /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
-  --info-press: light-dark(#025DA2, #317FC8);             /* Solid fill — pressed; keeps the step-9 foreground legal */
+     Step 9 is now hue 99°: fifty-two degrees off the brand, yellow-green
+     rather than blue-green, and twenty points more saturated. It still reads
+     as "green means done" — the convention survives — but it can no longer be
+     mistaken for the brand, which is what 1.4.1 is actually asking for when
+     status and brand share a family.
 
-  /* ── success */
-  --success-1: light-dark(#F7F9F7, #0D120E);              /* App canvas — deepest surface in the theme */
-  --success-2: light-dark(#E7F2E9, #131C15);              /* Default surface — page background */
-  --success-3: light-dark(#D6E8D9, #18261B);              /* Subtle surface — component background at rest */
-  --success-4: light-dark(#CCE3D0, #1D2F21);              /* Component background — hover */
-  --success-5: light-dark(#C3DEC7, #223726);              /* Component background — active / selected */
-  --success-6: light-dark(#BAD9BF, #28402D);              /* Subtle border — separators, dividers, decorative outlines */
-  --success-7: light-dark(#A9CFAF, #315238);              /* Component border — decorative, non-load-bearing */
-  --success-8: light-dark(#8CBD95, #3D6947);              /* Component border — hover */
-  --success-9: light-dark(#348149, #53A066);              /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
-  --success-10: light-dark(#24733D, #62AF74);             /* Solid fill — hover */
-  --success-11: light-dark(#2B673B, #70A67B);             /* Accessible text + meaningful icons (solved ≥4.5:1) */
-  --success-12: light-dark(#1F3A25, #CEE5D1);             /* High-contrast text — headings, emphasis (solved ≥7:1) */
-  --success-edge: light-dark(#53815C, #588561);           /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
-  --success-press: light-dark(#176933, #48945B);          /* Solid fill — pressed; keeps the step-9 foreground legal */
+     `-edge` is #638A42 rather than the curve's own value: at #6F9550 the
+     boundary measured 2.98:1 on the linen page, and 1.4.11 wants 3.          */
+  --success-1: light-dark(#F8FAF5, #0D1208);              /* App canvas — deepest surface in the theme */
+  --success-2: light-dark(#EDF4E6, #141C0D);              /* Default surface — page background */
+  --success-3: light-dark(#E1EDD6, #1B2612);              /* Subtle surface — component background at rest */
+  --success-4: light-dark(#D8E8C9, #212E16);              /* Component background — hover */
+  --success-5: light-dark(#CEE2BC, #27371A);              /* Component background — active / selected */
+  --success-6: light-dark(#C4DCAF, #2E411F);              /* Subtle border — separators, dividers, decorative outlines */
+  --success-7: light-dark(#B2D097, #3A5327);              /* Component border — decorative, non-load-bearing */
+  --success-8: light-dark(#98BE77, #4C6C33);              /* Component border — hover */
+  --success-9: light-dark(#4C8B2B, #7CB451);              /* Solid fill — buttons, filled chips. A graphic that stands alone on a surface takes -edge, solved to 3:1 vs every surface (1.4.11) */
+  --success-10: light-dark(#417A22, #8CC460);             /* Solid fill — hover */
+  --success-11: light-dark(#3F6E23, #9ACB6F);             /* Accessible text + meaningful icons (solved ≥4.5:1) */
+  --success-12: light-dark(#24400F, #DCEBCB);             /* High-contrast text — headings, emphasis (solved ≥7:1) */
+  --success-edge: light-dark(#638A42, #679050);           /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
+  --success-press: light-dark(#3A6D1C, #6EA544);          /* Solid fill — pressed; keeps the step-9 foreground legal */
 
   /* ── warning */
   --warning-1: light-dark(#FBF8F5, #160F09);              /* App canvas — deepest surface in the theme */
@@ -159,10 +169,12 @@
   --error-edge: light-dark(#B85B55, #BB605A);             /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
   --error-press: light-dark(#B31B24, #DB4746);            /* Solid fill — pressed; keeps the step-9 foreground legal */
 
-  /* ── alpha primitives — the only four in the system ───────────────────── */
-  --alpha-scrim: light-dark(rgb(28 26 23 / 0.55), rgb(8 6 4 / 0.72));/* Modal / sheet backdrop. Deeper in dark because the canvas is already dark. */
-  --alpha-shadow-key: light-dark(rgb(60 46 30 / 0.10), rgb(0 0 0 / 0.46));/* Tight contact shadow. Warm-tinted in light so elevation reads as sunlight, not grey. */
-  --alpha-shadow-ambient: light-dark(rgb(60 46 30 / 0.06), rgb(0 0 0 / 0.32));/* Wide diffuse shadow. */
+  /* ── alpha primitives — the only four in the system ─────────────────────
+     Retinted from warm brown to the same green-black as the ink, so a scrim
+     over the linen canvas reads as shade rather than as sepia.             */
+  --alpha-scrim: light-dark(rgb(26 31 28 / 0.55), rgb(6 9 7 / 0.72));/* Modal / sheet backdrop. Deeper in dark because the canvas is already dark. */
+  --alpha-shadow-key: light-dark(rgb(32 44 36 / 0.10), rgb(0 0 0 / 0.46));/* Tight contact shadow. Green-tinted in light so elevation reads as shade on linen, not grey. */
+  --alpha-shadow-ambient: light-dark(rgb(32 44 36 / 0.06), rgb(0 0 0 / 0.32));/* Wide diffuse shadow. */
 }
 
 /* ═══ LAYER 2 — SEMANTIC ALIASES ═══════════════════════════════════════════
@@ -195,78 +207,77 @@
   /* ── border ─────────────────────────────────────────────────────────── */
   /* Dividers and decorative outlines ONLY. Never permitted on an interactive boundary. */
   --border-subtle: var(--sand-6);
-  /* The only neutral border allowed to carry a control boundary — solved to ≥3:1 (1.4.11). */
-  --border-strong: var(--sand-edge);
-  /* Focus indicator colour. ≥3:1 against every surface token in both themes. */
-  --border-focus: light-dark(var(--terracotta-11), var(--terracotta-10));
+  /* The only border allowed to carry a control boundary — solved to ≥3:1 (1.4.11).
+     NO LONGER NEUTRAL. W2 names `border-ui` #678271 for "Konturen interaktiver
+     Elemente", and that is what draws the interactive card and the text field,
+     so the token follows the brand rather than the sand scale. A control edge
+     now says "control" by hue as well as by contrast. */
+  --border-strong: var(--green-edge);
+  /* Focus indicator colour. ≥3:1 against every surface token in both themes.
+     W2: "Fokus-Ring Grün". 7.5:1 on the page in light. */
+  --border-focus: light-dark(var(--green-9), var(--green-10));
 
-  /* ── interactive ─────────────────────────────────────────────────────────── */
-  /* Terracotta solid fill — the family's resting state. */
-  --interactive-primary: var(--terracotta-9);
+  /* ── interactive ─────────────────────────────────────────────────────────
+     TWO FAMILIES, NOT THREE (Ben, 2026-10-10). `primary` is green and it is
+     the default for every interactive element in the app; `accent` is
+     terracotta and a screen opts into it deliberately. The purple
+     `accent-alt` family is gone with the purple scale — it was declared on
+     eight component APIs and used at zero call sites, which CtaButton's own
+     header had already noticed.                                            */
+  /* Green solid fill — the family's resting state. THE DEFAULT. */
+  --interactive-primary: var(--green-9);
+  /* Green solid fill on hover. */
+  --interactive-primary-hover: var(--green-10);
+  /* Green solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill. */
+  --interactive-primary-active: var(--green-press);
+  /* Disabled fill. W2 fills the disabled button with `green-soft`, not with a
+     neutral, so the state stays inside the family — the label and the cursor
+     carry "unavailable", not the hue. Step 5 is that exact value. */
+  --interactive-primary-disabled: var(--green-5);
+  /* Foreground on the green solid. W2: "auf Grün in BG-Farbe" — the label on a
+     green button is the PAGE colour, not the card colour, so this is sand-2
+     and not sand-1. Theme-conditional: dark mode brightens the solid, so the
+     foreground flips. This is the clearest case of dark mode not being an inversion. */
+  --interactive-primary-on: light-dark(var(--sand-2), var(--sand-1));
+  /* Foreground on a disabled fill. W2 sets it in `muted`. Exempt from 1.4.3 — pair with a non-colour cue. */
+  --interactive-primary-on-disabled: var(--sand-11);
+  /* Green tinted fill at rest — chips, tags, rows. Light enough to carry
+     secondary text; the SELECTED value is -subtle-active below. */
+  --interactive-primary-subtle: var(--green-3);
+  /* Green tinted fill on hover. */
+  --interactive-primary-subtle-hover: var(--green-4);
+  /* Green tinted fill while pressed. */
+  --interactive-primary-subtle-active: var(--green-5);
+  /* Text and icons on the green tinted fill, at any of its three states.
+     INK, NOT green-11. W2 states "green-soft · Ink darauf 10.2:1"; green on
+     green-soft would measure 2.1:1. */
+  --interactive-primary-on-subtle: var(--sand-12);
+  /* Green boundary at ≥3:1. MANDATORY on any green fill that is not itself 3:1 against the surface. */
+  --interactive-primary-border: var(--green-edge);
+  /* Terracotta solid fill — the family's resting state. OPT-IN ONLY. */
+  --interactive-accent: var(--terracotta-9);
   /* Terracotta solid fill on hover. */
-  --interactive-primary-hover: var(--terracotta-10);
+  --interactive-accent-hover: var(--terracotta-10);
   /* Terracotta solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill. */
-  --interactive-primary-active: var(--terracotta-press);
-  /* Disabled fill — neutral, so no family reads as available. */
-  --interactive-primary-disabled: var(--sand-5);
-  /* Foreground on the terracotta solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion. */
-  --interactive-primary-on: var(--sand-1);
-  /* Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue. */
-  --interactive-primary-on-disabled: var(--sand-10);
-  /* Terracotta tinted fill — chips, tags, selected rows. */
-  --interactive-primary-subtle: var(--terracotta-3);
-  /* Terracotta tinted fill on hover. */
-  --interactive-primary-subtle-hover: var(--terracotta-4);
-  /* Terracotta tinted fill while pressed. */
-  --interactive-primary-subtle-active: var(--terracotta-5);
-  /* Text and icons on the terracotta tinted fill, at any of its three states. */
-  --interactive-primary-on-subtle: var(--terracotta-11);
-  /* Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface. */
-  --interactive-primary-border: var(--terracotta-edge);
-  /* Ocher solid fill — the family's resting state. */
-  --interactive-accent: var(--ocher-9);
-  /* Ocher solid fill on hover. */
-  --interactive-accent-hover: var(--ocher-10);
-  /* Ocher solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill. */
-  --interactive-accent-active: var(--ocher-press);
+  --interactive-accent-active: var(--terracotta-press);
   /* Disabled fill — neutral, so no family reads as available. */
   --interactive-accent-disabled: var(--sand-5);
-  /* Foreground on the ocher solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion. */
+  /* Foreground on the terracotta solid. W2 draws this colour as a FILL that
+     carries ink. terracotta-9 does not flip with the theme, so the ink over it
+     must not either: both halves are the dark one of their own theme. */
   --interactive-accent-on: light-dark(var(--sand-12), var(--sand-1));
   /* Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue. */
   --interactive-accent-on-disabled: var(--sand-10);
-  /* Ocher tinted fill — chips, tags, selected rows. */
-  --interactive-accent-subtle: var(--ocher-3);
-  /* Ocher tinted fill on hover. */
-  --interactive-accent-subtle-hover: var(--ocher-4);
-  /* Ocher tinted fill while pressed. */
-  --interactive-accent-subtle-active: var(--ocher-5);
-  /* Text and icons on the ocher tinted fill, at any of its three states. */
-  --interactive-accent-on-subtle: var(--ocher-11);
-  /* Ocher boundary at ≥3:1. MANDATORY on any ocher fill that is not itself 3:1 against the surface. */
-  --interactive-accent-border: var(--ocher-edge);
-  /* Purple solid fill — the family's resting state. */
-  --interactive-accent-alt: var(--purple-9);
-  /* Purple solid fill on hover. */
-  --interactive-accent-alt-hover: var(--purple-10);
-  /* Purple solid fill while pressed. Solved so the SAME -on foreground still holds 4.5:1 — a plain step-11 swap would have put dark text on a dark fill. */
-  --interactive-accent-alt-active: var(--purple-press);
-  /* Disabled fill — neutral, so no family reads as available. */
-  --interactive-accent-alt-disabled: var(--sand-5);
-  /* Foreground on the purple solid. Theme-conditional: dark mode brightens the solid, so the foreground flips. This is the clearest case of dark mode not being an inversion. */
-  --interactive-accent-alt-on: light-dark(var(--sand-12), var(--sand-1));
-  /* Foreground on a disabled fill. Exempt from 1.4.3 — pair with a non-colour cue. */
-  --interactive-accent-alt-on-disabled: var(--sand-10);
-  /* Purple tinted fill — chips, tags, selected rows. */
-  --interactive-accent-alt-subtle: var(--purple-3);
-  /* Purple tinted fill on hover. */
-  --interactive-accent-alt-subtle-hover: var(--purple-4);
-  /* Purple tinted fill while pressed. */
-  --interactive-accent-alt-subtle-active: var(--purple-5);
-  /* Text and icons on the purple tinted fill, at any of its three states. */
-  --interactive-accent-alt-on-subtle: var(--purple-11);
-  /* Purple boundary at ≥3:1. MANDATORY on any purple fill that is not itself 3:1 against the surface. */
-  --interactive-accent-alt-border: var(--purple-edge);
+  /* Terracotta tinted fill — chips, tags, selected rows. */
+  --interactive-accent-subtle: var(--terracotta-3);
+  /* Terracotta tinted fill on hover. */
+  --interactive-accent-subtle-hover: var(--terracotta-4);
+  /* Terracotta tinted fill while pressed. */
+  --interactive-accent-subtle-active: var(--terracotta-5);
+  /* Text and icons on the terracotta tinted fill, at any of its three states. */
+  --interactive-accent-on-subtle: var(--terracotta-11);
+  /* Terracotta boundary at ≥3:1. MANDATORY on any terracotta fill that is not itself 3:1 against the surface. */
+  --interactive-accent-border: var(--terracotta-edge);
   /* Ghost control at rest — no fill. */
   --interactive-ghost: transparent;
   /* Ghost hover fill. */
@@ -279,55 +290,54 @@
   --interactive-ghost-on: var(--sand-12);
   /* Disabled ghost label. Exempt from 1.4.3. */
   --interactive-ghost-on-disabled: var(--sand-9);
-  /* Boundary for a ghost control that must still read as a control (outline button). */
-  --interactive-ghost-border: var(--sand-edge);
+  /* Boundary for a ghost control that must still read as a control (outline
+     button). GREEN NOW: W2 draws the secondary button with a green border, and
+     an outline button is the one ghost that has to read as an action. */
+  --interactive-ghost-border: light-dark(var(--green-9), var(--green-10));
   /* The same boundary on hover. Token gap G3, and the name is Ben's choice over
      --border-strong-hover: both raw references this replaces sit on a control
      whose hover FILL already comes from --interactive-ghost-hover, so the
      border now follows its own family rather than borrowing the neutral one. */
-  --interactive-ghost-border-hover: var(--sand-8);
+  --interactive-ghost-border-hover: var(--green-10);
 
-  /* ── accent ─────────────────────────────────────────────────────────── */
-  /* Accent 1 (terracotta) solid — category colour, chart series, avatar. */
-  --accent-1: var(--terracotta-9);
+  /* ── accent ───────────────────────────────────────────────────────────────
+     TWO CATEGORY COLOURS, NOT THREE. Layer 1 carries two chromatic scales, so
+     there is no honest third series — `accent-3` went with the purple scale.
+     Ordered as the system ranks them now: the brand first.                  */
+  /* Accent 1 (green) solid — category colour, chart series, avatar. */
+  --accent-1: var(--green-9);
   /* Accent 1 tinted background. */
-  --accent-1-subtle: var(--terracotta-3);
+  --accent-1-subtle: var(--green-3);
   /* Accent 1 boundary at ≥3:1. */
-  --accent-1-border: var(--terracotta-edge);
+  --accent-1-border: var(--green-edge);
   /* Accent 1 as accessible text. */
-  --accent-1-text: var(--terracotta-11);
+  --accent-1-text: var(--green-11);
   /* Foreground on the accent 1 solid. */
-  --accent-1-on: var(--sand-1);
-  /* Accent 2 (ocher) solid — category colour, chart series, avatar. */
-  --accent-2: var(--ocher-9);
+  --accent-1-on: light-dark(var(--sand-2), var(--sand-1));
+  /* Accent 2 (terracotta) solid — category colour, chart series, avatar. */
+  --accent-2: var(--terracotta-9);
   /* Accent 2 tinted background. */
-  --accent-2-subtle: var(--ocher-3);
+  --accent-2-subtle: var(--terracotta-3);
   /* Accent 2 boundary at ≥3:1. */
-  --accent-2-border: var(--ocher-edge);
+  --accent-2-border: var(--terracotta-edge);
   /* Accent 2 as accessible text. */
-  --accent-2-text: var(--ocher-11);
+  --accent-2-text: var(--terracotta-11);
   /* Foreground on the accent 2 solid. */
   --accent-2-on: light-dark(var(--sand-12), var(--sand-1));
-  /* Accent 3 (purple) solid — category colour, chart series, avatar. */
-  --accent-3: var(--purple-9);
-  /* Accent 3 tinted background. */
-  --accent-3-subtle: var(--purple-3);
-  /* Accent 3 boundary at ≥3:1. */
-  --accent-3-border: var(--purple-edge);
-  /* Accent 3 as accessible text. */
-  --accent-3-text: var(--purple-11);
-  /* Foreground on the accent 3 solid. */
-  --accent-3-on: light-dark(var(--sand-12), var(--sand-1));
 
   /* ── feedback ─────────────────────────────────────────────────────────── */
-  /* info banner / inline-message background. */
-  --feedback-info-surface: var(--info-2);
+  /* info banner / inline-message background. NEUTRAL (Ben, 2026-10-10): the
+     blue `info` scale is gone, and info is the one status that is not an
+     outcome — it has nothing to be green or red about. Built on sand, it
+     recedes, and success / warning / error are left as the only chromatic
+     statuses, which makes each of them mean more. */
+  --feedback-info-surface: var(--sand-3);
   /* info banner boundary at ≥3:1 — part of how status survives without colour (1.4.1). */
-  --feedback-info-border: var(--info-edge);
+  --feedback-info-border: var(--sand-edge);
   /* info status icon. A meaningful graphic, so ≥3:1 required; lands at ≥4.5:1. */
-  --feedback-info-icon: var(--info-11);
+  --feedback-info-icon: var(--sand-11);
   /* info message text at ≥7:1. */
-  --feedback-info-text: var(--info-12);
+  --feedback-info-text: var(--sand-12);
   /* warning banner / inline-message background. */
   --feedback-warning-surface: var(--warning-2);
   /* warning banner boundary at ≥3:1 — part of how status survives without colour (1.4.1). */
@@ -482,27 +492,44 @@
   --icon-optical-nudge: -0.055em;
 
   /* ── typography ──────────────────────────────────────────────────────────
-     Two families. Fluid between 393px (iPhone 16) and 1440px (desktop).     */
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-text: Inter, ui-sans-serif, system-ui, sans-serif;
+     Two families, and which one READS is the point of the pairing: Onest
+     labels and heads, Literata reads. Literata is a serif built for long-form
+     screen reading, which is most of what a session asks of a user.
+     Fluid between 393px (iPhone 16) and 1440px (desktop).
+     Body line heights are 1.5, not 1.6: Literata's x-height is taller than a
+     grotesque's, and 1.6 opens the column until the paragraph stops holding
+     together.                                                               */
+  --font-display: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  /* 600 — A REAL RUNG, BECAUSE THE FACE ACTUALLY CONTAINS IT.
+     This slot was barred while the display face was Space Grotesk, which ships
+     400/500/700: a 600 would have been synthesised by the browser — uneven
+     strokes, no hinting. That argument was about the font, not about the
+     number. Onest's wght axis is continuous 100–900 and musy-fonts.css ships
+     it as `font-weight: 400 700`, so 600 is an instance the file contains.
+     Spent on exactly two steps, heading-sm and label-lg, which is what a
+     semibold is for. */
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
   /* display-xl — Hero / launch headline. One per screen, ≤6 words.
      iPhone 16 393px → 40px · tablet 834px → 50.1px · desktop 1440px → 64px */
   --type-display-xl-size: clamp(40px, calc(30.991px + 2.2923vw), 64px);
-  --type-display-xl-line: 1.04;
-  --type-display-xl-tracking: -0.022em;
+  --type-display-xl-line: 1.0;
+  --type-display-xl-tracking: -0.018em;
   --type-display-xl-weight: var(--font-weight-bold);
   --type-display-xl-family: var(--font-display);
 
   /* display-lg — Session titles, empty-state headlines.
      iPhone 16 393px → 32px · tablet 834px → 37.1px · desktop 1440px → 44px */
   --type-display-lg-size: clamp(32px, calc(27.496px + 1.1461vw), 44px);
-  --type-display-lg-line: 1.08;
-  --type-display-lg-tracking: -0.018em;
-  --type-display-lg-weight: var(--font-weight-bold);
+  --type-display-lg-line: 1.1;
+  --type-display-lg-tracking: -0.014em;
+  /* MEDIUM, NOT BOLD. The pairing heads in Medium throughout and lets the
+     serif body carry the texture, so a title asserts without shouting. */
+  --type-display-lg-weight: var(--font-weight-medium);
   --type-display-lg-family: var(--font-display);
 
   /* stage — Musie speaking. The second line of a stage headline: same display
@@ -511,17 +538,17 @@
      than as a title. Not a heading step — it never carries the heading role.
      iPhone 16 393px → 26px · tablet 834px → 29.4px · desktop 1440px → 34px */
   --type-stage-size: clamp(26px, calc(22.997px + 0.7641vw), 34px);
-  --type-stage-line: 1.28;
-  --type-stage-tracking: -0.008em;
+  --type-stage-line: 1.3;
+  --type-stage-tracking: -0.004em;
   --type-stage-weight: var(--font-weight-regular);
   --type-stage-family: var(--font-display);
 
   /* heading-lg — Primary screen headline — the Figma 26px step.
      iPhone 16 393px → 26px · tablet 834px → 29.4px · desktop 1440px → 34px */
   --type-heading-lg-size: clamp(26px, calc(22.997px + 0.7641vw), 34px);
-  --type-heading-lg-line: 1.18;
-  --type-heading-lg-tracking: -0.012em;
-  --type-heading-lg-weight: var(--font-weight-bold);
+  --type-heading-lg-line: 1.2;
+  --type-heading-lg-tracking: -0.008em;
+  --type-heading-lg-weight: var(--font-weight-medium);
   --type-heading-lg-family: var(--font-display);
 
   /* body-xl — the largest BODY step, and the only one at display scale. Not a
@@ -551,7 +578,7 @@
      reason to be an <h2>. */
   --type-body-xl-size: var(--type-heading-lg-size);
   --type-body-xl-line: var(--type-heading-lg-line);
-  --type-body-xl-tracking: var(--type-heading-lg-tracking);
+  --type-body-xl-tracking: -0.008em;
   --type-body-xl-weight: var(--font-weight-medium);
   --type-body-xl-family: var(--font-display);
 
@@ -559,7 +586,7 @@
      iPhone 16 393px → 22px · tablet 834px → 23.7px · desktop 1440px → 26px */
   --type-heading-md-size: clamp(22px, calc(20.499px + 0.3820vw), 26px);
   --type-heading-md-line: 1.25;
-  --type-heading-md-tracking: -0.008em;
+  --type-heading-md-tracking: -0.004em;
   --type-heading-md-weight: var(--font-weight-medium);
   --type-heading-md-family: var(--font-display);
 
@@ -567,14 +594,16 @@
      iPhone 16 393px → 19px · tablet 834px → 19.8px · desktop 1440px → 21px */
   --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
   --type-heading-sm-line: 1.3;
-  --type-heading-sm-tracking: -0.004em;
-  --type-heading-sm-weight: var(--font-weight-medium);
+  --type-heading-sm-tracking: 0;
+  /* The one step that moves UP in weight: at 19–21px Medium stops separating
+     a card title from the serif body underneath it. */
+  --type-heading-sm-weight: var(--font-weight-semibold);
   --type-heading-sm-family: var(--font-display);
 
   /* body-lg — Guided-exercise prose — the reading size during a session.
      iPhone 16 393px → 19px · tablet 834px → 19.4px · desktop 1440px → 20px */
   --type-body-lg-size: clamp(19px, calc(18.625px + 0.0955vw), 20px);
-  --type-body-lg-line: 1.6;
+  --type-body-lg-line: 1.5;
   --type-body-lg-tracking: 0;
   --type-body-lg-weight: var(--font-weight-regular);
   --type-body-lg-family: var(--font-text);
@@ -582,7 +611,7 @@
   /* body-md — Default body. The MINIMUM body size in the system.
      iPhone 16 393px → 17px · tablet 834px → 17.4px · desktop 1440px → 18px */
   --type-body-md-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
-  --type-body-md-line: 1.6;
+  --type-body-md-line: 1.5;
   --type-body-md-tracking: 0;
   --type-body-md-weight: var(--font-weight-regular);
   --type-body-md-family: var(--font-text);
@@ -590,8 +619,8 @@
   /* body-sm — Metadata, timestamps, captions. NEVER essential prose.
      iPhone 16 393px → 15px · tablet 834px → 15.4px · desktop 1440px → 16px */
   --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
-  --type-body-sm-line: 1.55;
-  --type-body-sm-tracking: 0.002em;
+  --type-body-sm-line: 1.5;
+  --type-body-sm-tracking: 0;
   --type-body-sm-weight: var(--font-weight-regular);
   --type-body-sm-family: var(--font-text);
 
@@ -599,17 +628,18 @@
      iPhone 16 393px → 17px · tablet 834px → 17.4px · desktop 1440px → 18px */
   --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
   --type-label-lg-line: 1.2;
-  --type-label-lg-tracking: 0.002em;
-  --type-label-lg-weight: var(--font-weight-medium);
-  --type-label-lg-family: var(--font-text);
+  --type-label-lg-tracking: 0;
+  --type-label-lg-weight: var(--font-weight-semibold);
+  /* The sans labels and the serif reads, so a button label is the display face. */
+  --type-label-lg-family: var(--font-display);
 
   /* label-md — Compact controls, chips, table headers.
      iPhone 16 393px → 15px · tablet 834px → 15.4px · desktop 1440px → 16px */
   --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
-  --type-label-md-line: 1.2;
-  --type-label-md-tracking: 0.006em;
-  --type-label-md-weight: var(--font-weight-medium);
-  --type-label-md-family: var(--font-text);
+  --type-label-md-line: 1.4;
+  --type-label-md-tracking: 0.002em;
+  --type-label-md-weight: var(--font-weight-regular);
+  --type-label-md-family: var(--font-display);
 
   /* Body-copy floor: 17px at the 393px reference. Any step whose 393px value
      falls below that is label/metadata only — body-sm and label-md are
