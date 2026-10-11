@@ -29,7 +29,7 @@ import { Icon } from './Icon';
 import { Message } from './Message';
 import { useMusyText } from './locale';
 
-export type RadioAccent = 'primary' | 'accent' | 'accent-alt';
+export type RadioAccent = 'primary' | 'accent';
 
 export interface RadioOption {
   value: string;

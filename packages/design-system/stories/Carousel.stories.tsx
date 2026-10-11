@@ -231,7 +231,7 @@ const meta = {
     },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
+      options: ['primary', 'accent'],
       description: 'Which solved accent family paints the badge and the active dot.',
     },
     nudge: {
@@ -300,11 +300,9 @@ export const GateOpened: Story = {
   args: { ...ABOUT_MUSIE, index: 2, nextVariant: 'ghost' },
 };
 
-/** All three accent families. Musie's onboarding uses `accent`. */
+/** Both accent families. Musie's onboarding uses `accent`. */
 export const Accents: Story = { args: { index: 1, accent: 'accent' } };
 
-/** `accent-alt` — the warning-safe family. */
-export const AccentAlt: Story = { args: { index: 1, accent: 'accent-alt' } };
 
 /** Two slides: the shortest run that is still a sequence. */
 export const TwoSlides: Story = {

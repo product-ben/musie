@@ -212,8 +212,8 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
-      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
+      options: ['primary', 'accent'],
+      description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
     headingLevel: {
       control: 'inline-radio',
@@ -263,13 +263,12 @@ export const LegendHidden: Story = { args: { legendHidden: true } };
  *  component's own defaults. */
 export const Default: Story = {};
 
-/** All three accent families. The prototype's usage is `accent`. */
+/** Both accent families. The prototype's usage is `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <RadioCards {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
       <RadioCards {...args} name="a-p1" accent="accent" legend="accent: accent" />
-      <RadioCards {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
 };

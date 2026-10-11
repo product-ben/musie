@@ -136,8 +136,8 @@ const meta = {
     onOpenChange: { action: 'openChange', description: 'Fires with the dimension now expanded, or null.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
-      description: 'Solved accent family. `accent-alt` is for contexts where warnings are common.',
+      options: ['primary', 'accent'],
+      description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
     size: {
       control: 'inline-radio',
@@ -175,7 +175,6 @@ export const Accents: Story = {
     <Stack>
       <FilterChips {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
       <FilterChips {...args} name="a-p1" accent="accent" legend="accent: accent" />
-      <FilterChips {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
   args: { defaultOpen: 'length', value: { length: ['s', 'm'] } },

@@ -25,7 +25,7 @@ import type { LucideIcon } from 'lucide-react';
 export type BadgeVariant =
   | 'neutral' | 'outline'
   | 'primary' | 'primary-subtle'
-  | 'accent' | 'accent-alt'
+  | 'accent'
   | 'info' | 'warning' | 'success' | 'error';
 
 const STATUS_GLYPH: Partial<Record<BadgeVariant, LucideIcon>> = {

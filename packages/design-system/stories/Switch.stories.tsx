@@ -149,8 +149,8 @@ const meta = {
     },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
-      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
+      options: ['primary', 'accent'],
+      description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
     guided: { control: 'boolean', description: 'Raise the row to --target-guided for assisted use.' },
     showStateIcons: {
@@ -191,8 +191,6 @@ export const Accents: Story = {
       <Switch {...args} accent="primary" label="accent: primary (default) — on" checked />
       <Switch {...args} accent="accent" label="accent: accent — off" checked={false} />
       <Switch {...args} accent="accent" label="accent: accent — on" checked />
-      <Switch {...args} accent="accent-alt" label="accent: accent-alt — off" checked={false} />
-      <Switch {...args} accent="accent-alt" label="accent: accent-alt — on" checked />
     </Stack>
   ),
 };

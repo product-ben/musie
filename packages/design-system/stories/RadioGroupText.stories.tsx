@@ -136,8 +136,8 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
-      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
+      options: ['primary', 'accent'],
+      description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
     guided: { control: 'boolean', description: 'Raise each row to --target-guided.' },
     disabled: { control: 'boolean', description: 'Disables the whole group.' },
@@ -157,13 +157,12 @@ type Story = StoryObj<typeof meta>;
  *  passes `accent`; `primary` is the component's default. */
 export const Default: Story = {};
 
-/** All three accent families. Every prototype usage is `accent`. */
+/** Both accent families. Every prototype usage is `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <RadioGroupText {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
       <RadioGroupText {...args} name="a-p1" accent="accent" legend="accent: accent" />
-      <RadioGroupText {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
 };
