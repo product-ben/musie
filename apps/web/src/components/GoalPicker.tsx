@@ -158,18 +158,22 @@ export function GoalBox({ goals, choice, onCancel, onChoose }: GoalBoxProps) {
            once. */
         legend={t('exercises.goal.question')}
         legendHidden
-        /* OCHER, like every other choice in this app. `accent` is
-           `--interactive-accent` → `--ocher-9`, and it is what AboutYou,
-           MenuPreferences, BetaSignup, SessionReflect, Diary and AboutMusie
-           all pass — this group was the only one left on the terracotta
-           default, which made the one question the app asks before a session
-           look like a different app's.
+        /* NO `accent` PROP, LIKE EVERY OTHER CHOICE IN THIS APP (2026-10-10).
+           This group used to pass `accent="accent"` to match the six screens
+           that also did — AboutYou, MenuPreferences, BetaSignup,
+           SessionReflect, Diary and AboutMusie — because leaving it on the
+           default made the one question the app asks before a session look
+           like a different app's.
 
-           IT DOES NOT REACH THE PILL. `CtaButton` has no accent variants —
-           they were deleted on 2026-10-05, "no CTA is yellow" — so the
-           collapsed state stays `secondary`. The yellow is the colour of
-           CHOOSING here, not of the answer you are carrying around. */
-        accent="accent"
+           All seven now pass nothing. The default is `primary`, primary is
+           green, and green is the interactive colour everywhere: the
+           consistency that prop was buying is now the system's own, so the
+           prop is noise. `accent` still exists and is still terracotta — it
+           is opt-in for a screen that has a reason, and this screen does not.
+
+           IT NEVER REACHED THE PILL ANYWAY. `CtaButton` has no accent
+           variants — deleted 2026-10-05 — so the collapsed state stays
+           `secondary`. */
         options={[
           ...goals.map((goal) => ({ value: goal.id, label: goal.label })),
           /* LAST, ALWAYS. The three above are ordered by the content's `sort`;

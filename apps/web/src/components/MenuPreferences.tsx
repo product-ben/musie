@@ -135,7 +135,6 @@ function ThemeSwitch() {
          settings row; with the label hidden it would only flip the order of a
          track and a clipped span, and `justify-content: space-between` on a
          one-item flex line does nothing at all. */
-      accent="accent"
       /* A domain pair, not the Check / X default: the glyph says WHAT is
          switching. Moon is the checked state because checked means dark. */
       onGlyph={Moon}
@@ -188,7 +187,6 @@ function LanguageChoice() {
          picker on sight. Hidden visually, never dropped — an unnamed radio
          group announces as a bare set of options. */
       legendHidden
-      accent="accent"
       value={locale}
       options={LOCALES.map((value) => ({
         value,

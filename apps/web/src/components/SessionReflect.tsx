@@ -136,7 +136,6 @@ export function SessionReflect({
              radio group announces as a bare list of buttons. */
           legend={t('reflect.legend')}
           legendHidden
-          accent="accent"
           options={[
             { value: 'voice', label: t('reflect.mode.voice'), glyph: Mic },
             { value: 'text', label: t('reflect.mode.text'), glyph: PenLine },
@@ -245,7 +244,6 @@ export function SessionReflect({
             const known = FEELINGS.find((f) => f === picked);
             if (known !== undefined) onFeelingChange(known);
           }}
-          accent="accent"
         />
       </section>
     </>
