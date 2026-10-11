@@ -157,7 +157,6 @@ export function AboutMusie() {
           >
             <Carousel
               label={t('about.carouselLabel')}
-              accent="accent"
               /* h3, under the box's h2, under the greeting's h1. */
               headingLevel={3}
               slides={SLIDES.map((slide) => ({

@@ -120,7 +120,6 @@ export function AboutYou() {
         <RadioGroupText
           name="user-type"
           legend={t('aboutYou.legend')}
-          accent="accent"
           /* undefined, not null: an uncontrolled group has no selection, which
              is exactly the state of a profile that has not answered yet. */
           value={shown ?? undefined}

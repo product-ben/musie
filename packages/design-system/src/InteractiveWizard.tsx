@@ -129,7 +129,7 @@ export interface WizardStateWords {
 }
 
 /** The three solved accent families, named verbatim per Decision 3. */
-export type WizardAccent = 'primary' | 'accent' | 'accent-alt';
+export type WizardAccent = 'primary' | 'accent';
 
 export interface InteractiveWizardProps {
   /** Names the navigation region. Required (4.1.2). */
@@ -168,11 +168,15 @@ export interface InteractiveWizardProps {
   stateWords?: Partial<WizardStateWords>;
   /**
    * Which solved accent family paints the markers, the current label and the
-   * completed connectors. Whole families, not a hue swap: ocher and purple are
-   * LIGHT solids and take dark ink where terracotta is a dark solid and takes
-   * light ink, so `-on` travels with `-subtle` or the selected marker's number
-   * fails 1.4.3. Which of the three a screen should use is still undefined —
-   * conflict B12, open question 7.
+   * completed connectors. Whole families, not a hue swap: terracotta is a
+   * LIGHT solid and takes dark ink where green is a dark solid and takes the
+   * page colour, so `-on` travels with `-subtle` or the selected marker's
+   * number fails 1.4.3.
+   *
+   * Which one a screen should use is no longer undefined (Ben, 2026-10-10):
+   * `primary` — green — is the default and nothing passes anything else.
+   * `accent` is terracotta and opt-in. That answers conflict B12 / open
+   * question 7 by making one of the two the standing answer.
    */
   accent?: WizardAccent;
   className?: string;

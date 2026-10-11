@@ -311,7 +311,6 @@ export function BetaSignup() {
           name="language"
           legend={t('menu.language')}
           legendHidden
-          accent="accent"
           value={locale}
           options={LOCALES.map((value) => ({
             value,

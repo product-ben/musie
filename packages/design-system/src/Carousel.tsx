@@ -163,7 +163,7 @@ export interface CarouselProps {
    * passed.
    */
   nextVariant?: 'primary' | 'secondary' | 'ghost';
-  accent?: 'primary' | 'accent' | 'accent-alt';
+  accent?: 'primary' | 'accent';
   /**
    * The one-shot nudge on mount. On by default, and off is for a carousel
    * that is not the first thing a reader meets — a second one further down a

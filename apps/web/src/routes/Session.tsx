@@ -718,7 +718,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           <div className="musie-rail">
             <InteractiveWizard
               label={t('session.wizardLabel')}
-              accent="accent"
               steps={STEP_IDS.map((step) => ({
                 id: step,
                 label: t(STEP_LABEL[step]),

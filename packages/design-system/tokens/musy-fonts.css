@@ -5,6 +5,13 @@
    file every token in musy-foundations.css still resolves, but every step
    renders in a system fallback.
 
+   ONEST × LITERATA since 2026-10-10, replacing Space Grotesk × Inter. The
+   pairing inverts which family does which job: Onest labels and heads,
+   LITERATA READS. Literata is a serif built for long-form screen reading,
+   which is most of what a session asks of a user, so the change is not a skin.
+   Source: Figma "RESULT · Onest × Literata in W2 Wald & helle Terrakotta"
+   (file 5PHqMVXWPppbOsaIczf5wV, node 23:2).
+
    SELF-HOSTED. No request ever leaves the app's own origin: no Google Fonts
    <link>, no fonts.gstatic.com, no preconnect. The woff2 files in ./fonts/
    were fetched once from Google's CSS API and committed. Both families are
@@ -18,92 +25,93 @@
    element that needs a face.
 
    WHY A SEPARATE FILE
-     musy-foundations.css is [LOCKED] and byte-identical to the signed-off
-     Layer 1. musy-foundations-amendments.css is scoped to token gaps G1/G2.
-     A @font-face is a resource declaration, not a token, so it lives here.
+     A @font-face is a resource declaration, not a token, so it does not belong
+     in the token files even though it is what makes them render.
 
    VARIABLE, NOT STATIC — AND THIS IS NOT A PREFERENCE
-     Google's API returns the SAME file for `wght@400;500;700` as for
-     `wght@400..700`; requesting "statics" yields three @font-face blocks all
-     pointing at one variable file. Shipping statics would mean committing the
-     identical bytes three times — 120.8 KB instead of 40.3 KB for Space
-     Grotesk, 453.1 KB instead of 270.7 KB for Inter.
+     Google's API returns the SAME file for `wght@400;500;600;700` as for
+     `wght@400..700`; requesting "statics" yields four @font-face blocks all
+     pointing at one variable file, which would mean committing identical bytes
+     four times.
 
-   WEIGHTS SHIPPED — 400 to 700, because that is what the system consumes
-     Space Grotesk (--font-display)
-       400  stage
-       500  heading-md · heading-sm · body-xl
-       700  display-xl · display-lg · heading-lg
-     Inter (--font-text)
+   WEIGHTS SHIPPED — 400 to 700, and 600 IS A REAL RUNG HERE
+     Onest (--font-display)
+       400  label-md
+       500  display-lg · heading-lg · heading-md · body-xl
+       600  heading-sm · label-lg  ← the semibold
+       700  display-xl
+     Literata (--font-text)
        400  body-lg · body-md · body-sm
-       500  label-lg · label-md
        700  NOT in the type scale — musy-components.css only, on the wizard's
             selected / aria-current="step" label
        400 italic  NOT in the type scale — musy-components.css only, one rule
             on the DraggableList empty-state text
-   Nothing consumes 100–300 or 800–900, so the axis is clamped at 400–700.
-   Dropping Inter's opsz axis as well took the family from 423.0 KB to
-   270.7 KB. Space Grotesk ships no italic; nothing in the system asks for one.
+   Layer 1 used to bar a 600 because Space Grotesk ships 400/500/700 and a 600
+   would be synthesised. Onest's wght axis is continuous 100–900, so under this
+   pairing 600 is an instance the file actually contains — see
+   --font-weight-semibold in musy-foundations.css. Nothing consumes 100–300 or
+   800–900, so the axis is clamped at 400–700.
 
    SUBSETS — latin + latin-ext, split on Google's own unicode-range
      German umlauts (ä ö ü Ä Ö Ü ß) are U+00C4–U+00FC and live entirely in
-     LATIN, so ordinary German costs only the two latin files (69.1 KB). The
+     LATIN, so ordinary German costs only the two latin files (71.3 KB). The
      latin-ext files are fetched by the browser only when a Central or Eastern
      European character actually appears — that is what unicode-range is for.
-     Inter's italic ships LATIN ONLY: it serves exactly one CSS rule, and the
-     latin-ext italic would have added 89.7 KB (45% of the payload) for it.
+     Literata's italic ships LATIN ONLY: it serves exactly one CSS rule.
+     Literata also carries an `opsz` axis, which is deliberately NOT requested
+     — it doubles the payload for an axis nothing in the type scale varies.
 
    PRELOADING — see README.md. Preload the two LATIN files only: <link rel=
    "preload"> ignores unicode-range, so preloading latin-ext would fetch
-   173 KB that most sessions never render a glyph from.
+   60 KB that most sessions never render a glyph from.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ═══ SPACE GROTESK — var(--font-display) ══════════════════════════════════ */
-/* latin — carries German. 21.8 KB */
+/* ═══ ONEST — var(--font-display) ══════════════════════════════════════════ */
+/* latin — carries German. 33.0 KB */
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: 'Onest';
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('./fonts/space-grotesk-latin.woff2') format('woff2');
+  src: url('./fonts/onest-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-/* latin-ext — Central / Eastern European. Fetched on demand. 18.5 KB */
+/* latin-ext — Central / Eastern European. Fetched on demand. 27.8 KB */
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: 'Onest';
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('./fonts/space-grotesk-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url('./fonts/onest-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* ═══ INTER — var(--font-text) ═════════════════════════════════════════════ */
-/* latin — carries German. 47.3 KB */
+/* ═══ LITERATA — var(--font-text) ══════════════════════════════════════════ */
+/* latin — carries German. 38.3 KB */
 @font-face {
-  font-family: 'Inter';
+  font-family: 'Literata';
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('./fonts/inter-latin.woff2') format('woff2');
+  src: url('./fonts/literata-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-/* latin-ext — Central / Eastern European. Fetched on demand. 83.3 KB */
+/* latin-ext — Central / Eastern European. Fetched on demand. 31.5 KB */
 @font-face {
-  font-family: 'Inter';
+  font-family: 'Literata';
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('./fonts/inter-latin-ext.woff2') format('woff2');
+  src: url('./fonts/literata-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-/* latin italic — one rule: the DraggableList empty state. latin-ext
-   italic is deliberately not shipped; see the header. 50.4 KB */
+/* latin italic — one rule: the DraggableList empty state. latin-ext italic is
+   deliberately not shipped; see the header. 39.2 KB */
 @font-face {
-  font-family: 'Inter';
+  font-family: 'Literata';
   font-style: italic;
   font-weight: 400 700;
   font-display: swap;
-  src: url('./fonts/inter-italic-latin.woff2') format('woff2');
+  src: url('./fonts/literata-italic-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }

@@ -21,8 +21,8 @@ import { bothThemes } from './_decorators';
 const FACES = [
   { id: 'pause', accent: 1 as const, name: 'Mindful Pause', text: 'Pick 5 random cards. Scan the one that speaks to you. Listen to the piece behind it.', time: '2–12 min' },
   { id: 'free', accent: 2 as const, name: 'Free Rein', text: 'Scan a random card and jump straight into the exercise.', time: '2–5 min' },
-  { id: 'breath', accent: 3 as const, name: 'Mindful Breathing', text: 'Use the pulse of the music to let your breath settle.', time: '5–8 min' },
-  { id: 'scan', accent: 1 as const, name: 'Body Scan', text: 'Find a comfortable position. If you like, let the voice guide you through your body.', time: '10–12 min' },
+  { id: 'breath', accent: 1 as const, name: 'Mindful Breathing', text: 'Use the pulse of the music to let your breath settle.', time: '5–8 min' },
+  { id: 'scan', accent: 2 as const, name: 'Body Scan', text: 'Find a comfortable position. If you like, let the voice guide you through your body.', time: '10–12 min' },
 ];
 
 /* A stand-in for a consumer's card. Deliberately plain: the story is about the

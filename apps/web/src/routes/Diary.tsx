@@ -756,7 +756,6 @@ export function Diary() {
                  drawn. */
               legend={t('diary.filter.legend')}
               legendHidden
-              accent="accent"
               value={active}
               options={DIARY_FILTERS.map((value) => ({
                 value,

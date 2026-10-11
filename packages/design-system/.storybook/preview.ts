@@ -4,7 +4,7 @@ import type { Preview } from '@storybook/react-vite';
  * ORDER IS LOAD-BEARING. ESM evaluates imports in source order, so these four
  * statements ARE the cascade. Reordering them is not a style question.
  *
- *   1 musy-fonts.css                   @font-face for Space Grotesk + Inter.
+ *   1 musy-fonts.css                   @font-face for Onest + Literata.
  *                                      Omit it and every token still resolves,
  *                                      but everything renders in a system
  *                                      fallback — the failure looks like a

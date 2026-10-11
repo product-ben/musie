@@ -42,13 +42,13 @@ const RULES: Array<{ q: string; answer: string; token: string; why: string }> = 
     q: 'Is it an interactive boundary, at rest?',
     answer: 'Colour --border-strong, width --border-width-regular',
     token: '--border-strong',
-    why: 'The only neutral border allowed to carry a control boundary — solved to ≥3:1 (1.4.11). 1.5px rather than 1px so it clears that ratio without reading heavy.',
+    why: 'The only border allowed to carry a control boundary — solved to ≥3:1 (1.4.11). 1.5px rather than 1px so it clears that ratio without reading heavy. No longer neutral: it is green-edge, so a control boundary says "control" by hue as well as by contrast.',
   },
   {
     q: '…and the control is in an accent or feedback family?',
     answer: 'The family\'s own -border token, same width',
     token: '--interactive-primary-border',
-    why: 'Each family carries a solved boundary. Never swap the hue on --border-strong: ocher and purple are light solids and terracotta is a dark one, so the -on foreground travels with it.',
+    why: 'Each family carries a solved boundary. Never swap the hue on --border-strong: terracotta is a light solid that carries ink and green is a dark one that carries the page colour, so the -on foreground travels with the family.',
   },
   {
     q: 'Is it selected, current, invalid, valid or live?',

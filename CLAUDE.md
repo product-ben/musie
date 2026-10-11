@@ -35,7 +35,8 @@ edit of it into a migration and a printed card). Local config: copy
 ## 1 · The app consumes the design system; it does not reimplement it
 
 Import from `@musie/design-system` and pass props. Never reference a raw scale
-token (`--sand-*`, `--terracotta-*`, `--ocher-*`, `--purple-*`) from `apps/web`:
+token (`--sand-*`, `--green-*`, `--terracotta-*`, and the `--success-*` /
+`--warning-*` / `--error-*` status scales) from `apps/web`:
 semantic aliases only. There are zero raw-scale references today; keep it so.
 
 A custom pattern is permitted **only where the system has no component**

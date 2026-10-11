@@ -84,7 +84,7 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the selected point’s value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
+      options: ['primary', 'accent'],
       description: 'The shared radio accent union — `primary` unless the screen says otherwise.',
     },
     disabled: { control: 'boolean', description: 'Disables every point.' },
@@ -108,7 +108,6 @@ export const Accents: Story = {
     <Stack>
       <Row label="accent: primary (default)"><FeelingsScale {...args} name="s-a" accent="primary" /></Row>
       <Row label="accent: accent"><FeelingsScale {...args} name="s-b" accent="accent" /></Row>
-      <Row label="accent: accent-alt"><FeelingsScale {...args} name="s-c" accent="accent-alt" /></Row>
     </Stack>
   ),
   args: { value: 'same' },

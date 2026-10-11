@@ -108,7 +108,8 @@ back to choosing* — a restart, not a primary. `guided` (64px) is used only in
 the Listen step, where the user may be across the room.
 
 `loading` is never used in the prototype. Neither is `size="min"`,
-`size="comfort"`, `block`, `wrap`, or `accent-alt`.
+`size="comfort"`, `block` or `wrap`. `accent-alt` was never used either, and on
+2026-10-10 it was removed from the system for exactly that reason.
 
 ---
 

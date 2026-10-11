@@ -162,35 +162,40 @@ export const SEMANTIC_GROUPS: Array<{
   { id: 'surface', title: 'Surfaces', match: (n) => n.startsWith('--surface') },
   { id: 'text', title: 'Text', match: (n) => n.startsWith('--on-surface') },
   { id: 'border', title: 'Borders', match: (n) => n.startsWith('--border-') },
-  { id: 'primary', title: 'Interactive — primary (terracotta)', match: (n) => n.startsWith('--interactive-primary') },
-  /* ORDER AND EXCLUSION BOTH MATTER. `--interactive-accent-alt-*` also starts
-     with `--interactive-accent`, so the plain predicate has to exclude it
-     explicitly: semanticGroupOf takes the FIRST match, and verify-tokens.mjs
-     fails a token claimed twice. Written as an exclusion rather than relying
-     on array order, so reordering this list cannot silently break it. */
+  {
+    id: 'primary',
+    title: 'Interactive — primary (green)',
+    match: (n) => n.startsWith('--interactive-primary'),
+    usage: 'THE DEFAULT, and the whole of the answer for almost every screen '
+      + '(Ben, 2026-10-10). Every component that takes an `accent` prop '
+      + 'already defaults to `primary`, and the app passes nothing — so a '
+      + 'button, a chip, a selected card, a switch, a focus ring and a link '
+      + 'are all this green unless somebody deliberately says otherwise. If '
+      + 'you are choosing a colour for an interactive element, you are '
+      + 'choosing this one.',
+  },
   {
     id: 'accent',
-    title: 'Interactive — accent (ocher)',
-    match: (n) => n.startsWith('--interactive-accent') && !n.startsWith('--interactive-accent-alt'),
-    usage: 'THE standard accent for interactive elements — the stepper, cards, '
-      + 'and in practice almost every form control. Reach for this one by '
-      + 'default; `primary` (terracotta) stays the one way forward through a '
-      + 'flow, and this is what everything else that needs colour takes.',
-  },
-  {
-    id: 'accent-alt',
-    title: 'Interactive — accent alt (purple)',
-    match: (n) => n.startsWith('--interactive-accent-alt'),
-    usage: 'The backup accent, for components where WARNINGS are common — the '
-      + 'draggable list, where statements can be combined, is the case it '
-      + 'exists for. `--interactive-accent` resolves to `--ocher-9` (#E9B86C) '
-      + 'and `--warning-9` is #FEA247: two warm ambers. Put the ocher accent '
-      + 'next to a warning and the accent reads as a warning state, so use '
-      + 'this instead. That is the only reason to choose it — it is not a '
-      + 'second decorative option.',
+    title: 'Interactive — accent (terracotta)',
+    match: (n) => n.startsWith('--interactive-accent'),
+    usage: 'OPT-IN ONLY. Nothing reaches for this by default and no screen in '
+      + 'the app passes it today; it is here for the case Ben decides wants '
+      + 'it. W2 calls the colour "nur Fläche" — a FILL that carries ink, never '
+      + 'ink itself — so use `--interactive-accent` as a surface and let '
+      + '`--interactive-accent-on` put the ink on it. The purple `accent-alt` '
+      + 'family that used to sit here was dropped on 2026-10-10: it had zero '
+      + 'call sites on any component.',
   },
   { id: 'ghost', title: 'Interactive — ghost', match: (n) => n.startsWith('--interactive-ghost') },
-  { id: 'accent', title: 'Accent rotation', match: (n) => /^--accent-\d/.test(n) },
+  {
+    id: 'accent-rotation',
+    title: 'Accent rotation',
+    match: (n) => /^--accent-\d/.test(n),
+    usage: 'Category colours, chart series, avatars — a rotation, not a '
+      + 'hierarchy. TWO, not three: Layer 1 carries two chromatic scales, so '
+      + '`accent-1` is the brand green and `accent-2` is terracotta. '
+      + '`accent-3` went with the purple scale.',
+  },
   { id: 'feedback', title: 'Feedback', match: (n) => n.startsWith('--feedback-') },
 ];
 

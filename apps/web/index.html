@@ -111,7 +111,7 @@
     <!--
       ══ FONT PRELOAD ═══════════════════════════════════════════════════════
       LATIN ONLY, on purpose: <link rel="preload"> ignores unicode-range, so
-      preloading the latin-ext files would fetch 173 KB that most sessions
+      preloading the latin-ext files would fetch 59.3 KB that most sessions
       never render a glyph from. They load on demand.
 
       `crossorigin` is required even same-origin — fonts are always fetched in
@@ -123,9 +123,9 @@
       request the stylesheet makes — two fetches, and a preload warning.
     -->
     <link rel="preload" as="font" type="font/woff2" crossorigin
-          href="/fonts/space-grotesk-latin.woff2" />
+          href="/fonts/onest-latin.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin
-          href="/fonts/inter-latin.woff2" />
+          href="/fonts/literata-latin.woff2" />
 
     <!-- Replaced per route by the shell. This is the pre-JS default. -->
     <title>Musie</title>

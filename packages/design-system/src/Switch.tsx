@@ -19,7 +19,7 @@ import { Check, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
 
-export type SwitchAccent = 'primary' | 'accent' | 'accent-alt';
+export type SwitchAccent = 'primary' | 'accent';
 
 export interface SwitchProps
   extends Omit<React.ComponentPropsWithoutRef<typeof BaseSwitch.Root>, 'className' | 'render' | 'nativeButton'> {
