@@ -116,7 +116,7 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
  *                       names the act, not the page.
  *   reflect Quote       the step gives you your own words back, which is what
  *                       a quotation mark is for. It replaced
- *                       MessageCircleQuestion on 2026-10-09: that glyph reads
+ *                       MessageCircleQuestionMark on 2026-10-09: that glyph reads
  *                       as "do you have a question" — a help desk — where this
  *                       step is Nachdenken, and user testing produced the
  *                       first field evidence against it. Still deliberately
