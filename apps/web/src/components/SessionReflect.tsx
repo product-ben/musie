@@ -51,7 +51,7 @@ import { Markdown } from './Markdown';
 import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
-import { parseMarkdown, plainText, withoutHeading } from '../lib/markdown';
+import { withoutHeading } from '../lib/markdown';
 import type { ReflectMode } from '../lib/reflect';
 import type { FeelingChange } from '../lib/session';
 import type { SessionQuestion } from '../lib/useQuestion';
@@ -86,6 +86,12 @@ export interface SessionReflectProps {
    * NO RE-ROLL ON THIS STEP (D4). By the time somebody is here the question is
    * what they listened for, and swapping it would leave them answering one
    * they never held.
+   *
+   * AND NO HELPER EITHER, since 2026-10-12. Only `question.text.reflect` is
+   * read here. The help belongs to the listen step, where somebody is stuck in
+   * front of a question with nothing to do but think; by this step they have
+   * heard the music and are being asked to write, and a prompt-for-the-prompt
+   * competes with the answer rather than unblocking it.
    */
   question: SessionQuestion;
 }
@@ -104,18 +110,6 @@ export function SessionReflect({
   question,
 }: SessionReflectProps) {
   const t = useT();
-
-  /* ── THE HELPER, FLATTENED ONCE ──────────────────────────────────────────
-     Markdown everywhere else, PLAIN TEXT here, and that is not a preference: a
-     `placeholder` is an attribute on a <textarea>, so there is nothing there
-     to render and a `**` would reach the reader as two asterisks. The voice
-     mode's line below renders the same string properly, through `Markdown`.
-
-     Null when the exercise has no question set, and then the field falls back
-     to `reflect_placeholder` exactly as it did before. */
-  const helperText = question.text === null
-    ? null
-    : plainText(parseMarkdown(question.text.helper));
 
   /* The PHOTO mockup holds its state HERE rather than in the session: nothing
      it captures is ever saved, so lifting it would put something in the
@@ -218,14 +212,16 @@ export function SessionReflect({
                field. `reflect_placeholder` is null for an exercise with no
                questions of its own, and then the catalogue's sentence is the
                honest thing to show. */
-            /* THE ROTATING QUESTION'S HELPER FIRST, then the exercise's own
-               placeholder, then the catalogue's sentence. Three rungs, and
-               each is a real state: a rotating question brings its own help,
-               an exercise without one may still have questions of its own, and
-               an exercise with neither falls back to chrome. */
-            placeholder={helperText
-              ?? exercise.reflectPlaceholder
-              ?? t('reflect.text.placeholder')}
+            /* ── NO HELPER HERE — Ben, 2026-10-12 ─────────────────────────
+               The help belongs to the LISTEN step, where somebody is stuck in
+               front of a question with nothing to do but think. By the reflect
+               step they have heard the music and are being asked to write; a
+               prompt-for-the-prompt in the box competes with the answer rather
+               than unblocking it.
+
+               So this is the two rungs it always had: the exercise's own
+               questions, else the catalogue's sentence. */
+            placeholder={exercise.reflectPlaceholder ?? t('reflect.text.placeholder')}
             description={t('privacy.written')}
             value={text}
             onValueChange={onTextChange}
@@ -250,36 +246,11 @@ export function SessionReflect({
             data promise lives is Ben's to place and not something to invent a
             nav item for. The component stays built. */}
         {mode === 'voice' && (
-          <div className="musie-stack">
-            {/* ── THE SAME HELP, ABOVE THE TRANSCRIBE BUTTON ──────────────
-                In text mode the helper is the field's placeholder; there is no
-                field to put it in here, so it stands above the control that
-                starts the recording — which is the last thing somebody reads
-                before they begin talking.
-
-                `body-sm`, the same step as on the listen sheet and the one L8
-                names for a helper line. Rendered rather than flattened: unlike
-                a placeholder, this is a real element. */}
-            {question.text !== null && (
-              <div className="musie-question__helper">
-                <Markdown md={question.text.helper} />
-              </div>
-            )}
-            <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
-          </div>
+          <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
         )}
 
         {mode === 'photo' && (
           <div className="musie-stack">
-            {/* Same line as voice mode, for the same reason: no field to put
-                it in. Photo is still a mockup (MOCKUPS.md 2) and `Finish` is
-                disabled for it, but the help is about the QUESTION and not
-                about the mode, so withholding it here would be arbitrary. */}
-            {question.text !== null && (
-              <div className="musie-question__helper">
-                <Markdown md={question.text.helper} />
-              </div>
-            )}
             <PhotoUpload
               label={t('reflect.photo.label')}
               value={photo}

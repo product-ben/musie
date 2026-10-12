@@ -817,8 +817,18 @@ was asked for.
 |---|---|---|
 | Headline | `reflect_md`'s `##` | **the question's `reflect` phrasing** |
 | Under it | `reflect_md`'s invitation / list | unchanged |
-| `Deine geschriebene Antwort` placeholder | `reflect_placeholder`, else `reflect.text.placeholder` | **the question's `helper`, as plain text** |
-| Voice mode | nothing above `RecordButton` | **the helper, above the transcribe button** |
+| `Deine geschriebene Antwort` placeholder | `reflect_placeholder`, else `reflect.text.placeholder` | **unchanged** |
+| Voice mode | nothing above `RecordButton` | **unchanged** |
+
+**THE HELPER IS NOT ON THIS STEP** — Ben, 2026-10-12. It was the field's
+placeholder and a line above the transcribe button for a day, and both are
+gone. The help is for somebody stuck in front of a question with nothing to do
+but think; by the reflect step they have heard the music and are being asked
+to write, and a prompt-for-the-prompt in the box competes with the answer
+rather than unblocking it.
+
+So this step reads exactly one field of the question — `reflect` — and the
+answer field keeps the two rungs it always had.
 
 Three things that follow from that table:
 

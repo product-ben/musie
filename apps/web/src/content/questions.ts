@@ -88,10 +88,14 @@ export interface QuestionText {
   /**
    * The help, for a listener who cannot get started.
    *
-   * Three places, one string: behind the `?` on the listen sheet, as the
-   * reflect field's placeholder, and above the transcribe button in voice
-   * mode. It is a nudge with a smaller surface than the question — two short
-   * concrete prompts rather than the question again in other words.
+   * ONE PLACE: behind *Hilf mir bitte* on the listen sheet. It was also the
+   * reflect field's placeholder and a line above the transcribe button until
+   * 2026-10-12 — removed, because the help is for somebody stuck in front of a
+   * question with nothing to do but think, and by the reflect step they have
+   * heard the music and are being asked to write.
+   *
+   * A nudge with a smaller surface than the question: two short concrete
+   * prompts, rather than the question again in other words.
    */
   helper: string;
 }
