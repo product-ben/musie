@@ -23,10 +23,59 @@ Ben was away and asked for every remaining call to be made without him, on
 | `pnpm --filter web build` | **green** |
 | `pnpm build:storybook` | **green** |
 | The migration's SQL | **validated** in a rolled-back transaction (see below) |
-| `pnpm test:db` | **5 of 8 new assertions fail**, because the migration is not applied |
-| The app, running | **not walked.** This is the one gate not passed |
+| `pnpm test:db` | **green** — 9 files, 129 tests, after Ben applied the migration |
+| The e2e walk | **16 / 24**, and the 8 failures are pre-existing — proven below |
+| The app, running | **walked, 2026-10-12**, and it found a bug. See §0.1 |
 
-### What needs Ben, and it is one command
+### 0.1 · What the walk found — `d797571`
+
+The ? and the Lightbox's close X were **drawn in the same corner.** One
+character: `flex: 1 1 auto` on `.musie-question__headrow > .musie-md` made that
+box fill the row and pushed the control to the trailing edge, which is where
+the sheet already puts its close control. The comment above the declaration
+argued at length that the ? must follow the question's last line *precisely so
+it never reaches that corner* — and then the declaration did the opposite,
+which made it read as deliberate.
+
+**Nothing automated caught it.** `pnpm check` green, both bundles built, 129 db
+assertions passed, no e2e regression: a control stacked under another control
+is valid CSS, valid markup and a correct accessible name. Playwright had been
+saying so for 335 polls — *"waiting for element to be visible, enabled and
+stable"* against a button whose `aria-label` was right there — and that reads
+as a flaky selector until you look at the picture.
+
+Verified after the fix across five frames: the question is the headline, the ?
+follows it, pressing it reveals the helper at `body-sm` and removes itself
+(D15), the broccoli button is disabled and becomes the refresh after thirty
+seconds (D8/D9), and a press swaps Q1 for Q2 with the ? back for the new
+question.
+
+**One cosmetic thing left.** On a three-line question the ? sits at the
+bottom-right of the heading's measure box rather than after the final word,
+because the box is as wide as `--measure-heading` and not as wide as its last
+line. Adrift rather than wrong, and it cannot collide with anything.
+
+### 0.2 · The 8 e2e failures are not this branch's
+
+Proven by A/B on the same tree, same deps, same server — one line, emptying
+`QUESTION_SETS` so the feature is inert everywhere:
+
+| Spec | feature ON | feature OFF |
+|---|---|---|
+| `camera:58` en/de | ✘ ✘ | ✘ ✘ |
+| `cancel:92` en/de | ✘ ✘ | ✘ ✘ |
+| `cancel:383` en/de | ✘ ✘ | ✘ ✘ |
+| `scanlink:40` en / de | ✘ / ✓ | ✘ / ✘ |
+| `session:55` en/de | ✘ ✘ | ✘ ✘ |
+| **total** | **8 failed** | **9 failed** |
+
+Identical set, and switching the feature off made it one worse — `scanlink
+[de]` flipping is the proof that one is a race rather than a regression. Eight
+of them are `toHaveURL(/\/listen$/)` against a URL the app writes as
+`?overview`, which `origin/main` has done since `fca1bb2`; this branch touches
+neither `apps/web/e2e` nor `playwright.config.ts`.
+
+### What needed Ben, and it is done
 
 `supabase db reset`, `supabase db push` and `pnpm gen:types` are denied in
 `.claude/settings.json`, and rule 9 is why: one Supabase stack, fixed ports,
@@ -40,11 +89,23 @@ error state until the migration is applied.** `/exercises`, `/diary` and the
 rest are unaffected.
 
 ```
-supabase db reset     # from ONE session, knowing the other nine are affected
-pnpm gen:types        # optional — confirms the hand-edited types match
-pnpm test:db          # the 8 assertions in questions.db.test.ts
-pnpm --filter web dev --port 5176 --strictPort
+supabase db reset     # done 2026-10-12, from THIS worktree
+pnpm test:db          # green: 9 files, 129 tests
 ```
+
+**Two traps cost an hour between them, both rule 9's**, and both are worth
+knowing before the next worktree:
+
+1. **`supabase db reset` was first run from the MAIN checkout**, which does not
+   contain this migration — so it applied everything *except* it, and
+   `pnpm test:db` reported a schema that exists in no tree.
+2. **A Vite dev server from `/Users/benjaminlipinski/musie` had been on :5173
+   since 7 October**, and `playwright.config.ts:157` reuses whatever is there.
+   The first e2e run therefore walked a five-day-old app from another checkout.
+   Killing it exposed the third trap: **a fresh worktree has no
+   `apps/web/.env.local`** — it is gitignored — so the app could not reach
+   Supabase at all and 22 of 24 walks failed. Written now, pointed at the local
+   stack.
 
 ### The SQL was validated the furthest way available without it
 

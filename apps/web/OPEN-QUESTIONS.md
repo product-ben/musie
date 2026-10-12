@@ -8128,3 +8128,93 @@ tests, 29 of them new), both bundle builds are green, and the SQL is validated
 — but the UI has not been walked, because walking it needs the migration. Rule
 8's "verify against `pnpm --filter web dev`" is the one gate this iteration has
 not passed.
+
+## A fresh worktree has no `.env.local`, and the symptom is the whole app — RESOLVED
+
+Where: `apps/web/.env.local` (gitignored), `apps/web/playwright.config.ts:51,157`
+
+What I checked: after `supabase db reset` put this branch's migration on the
+stack, `pnpm test:e2e` reported **22 of 24 failures**. The two that passed are
+the WebKit capture specs, which are the only two that never touch the database.
+
+Three traps, in the order they fired, and all three are rule 9's:
+
+1. **`supabase db reset` was first run from the MAIN checkout.** That tree does
+   not contain `20261011120000`, so the reset applied every migration except
+   this branch's and `pnpm test:db` then reported a schema that exists in no
+   tree at all. `schema_migrations` topped out at `20261009140000`.
+2. **A Vite dev server had been listening on :5173 since 7 October**, cwd
+   `/Users/benjaminlipinski/musie/apps/web`. `playwright.config.ts:157` is
+   `reuseExistingServer: !process.env.CI` and `PORT` is the literal `5173` on
+   line 51, so the first walk tested a five-day-old app from another checkout.
+   Proven rather than assumed: that server's `SessionListen.tsx` had zero
+   occurrences of `musie-question__swap` and still contained the old sheet.
+3. **Killing it removed the crutch and exposed the real gap** — this worktree
+   had no `apps/web/.env.local`. It is `.env.*` in the root `.gitignore`, so
+   `git worktree add` does not bring one, and the app had no `VITE_SUPABASE_URL`
+   at all. The e2e harness was unaffected throughout, because `e2e/support.ts`
+   reads the stack directly, which is why `globalSetup` could cheerfully seed
+   four track placeholders into a bucket for an app that could not reach it.
+
+What I did: wrote `apps/web/.env.local` from `.env.example`, pointed at the
+LOCAL stack, anon key read out of `supabase status -o env` rather than pasted
+from memory, `VITE_REQUIRE_ACCOUNT=false`. The walk went from 2/24 to 16/24.
+
+Why: CLAUDE.md's Orientation section does say "copy `apps/web/.env.example` to
+`.env.local`", and I did not do it when creating the worktree. Logged because
+the SYMPTOM points nowhere near the cause — every walk fails on a different
+assertion, several of them deep inside a flow, and none of them says "no
+database URL".
+
+What I need from Ben: **nothing blocking, one suggestion.** Rule 9's worktree
+section lists the shared Supabase stack and the shared port 5173; it does not
+mention that `.env.local` is per-worktree and absent by default. One line
+there would have saved this. The sharper fix is `src/lib/supabase.ts` failing
+loudly on a missing `VITE_SUPABASE_URL` — it already refuses a service-role
+key, so the guard exists and this is one more condition in it.
+
+## The e2e suite is 8 red on `main`, and they are not this branch's
+
+Where: `apps/web/e2e/camera.spec.ts:87`, `cancel.spec.ts:190,477`,
+`scanlink.spec.ts:73`, `session.spec.ts:184`
+
+What I checked: with `.env.local` in place the walk is **16 / 24**. To find out
+whether the 8 are mine I ran the suite twice on the same tree, same deps, same
+server, with one line changed — `QUESTION_SETS` emptied, which makes the
+feature inert on every exercise:
+
+| Spec | feature ON | feature OFF |
+|---|---|---|
+| `camera:58` en/de | ✘ ✘ | ✘ ✘ |
+| `cancel:92` en/de | ✘ ✘ | ✘ ✘ |
+| `cancel:383` en/de | ✘ ✘ | ✘ ✘ |
+| `scanlink:40` en / de | ✘ / ✓ | ✘ / ✘ |
+| `session:55` en/de | ✘ ✘ | ✘ ✘ |
+| **total** | **8 failed** | **9 failed** |
+
+Identical set, and switching the feature OFF made it one worse. `scanlink [de]`
+flipping between the two runs is the proof that it is a race rather than a
+regression.
+
+Three distinct causes, as far as the output goes:
+
+- **Five of them are `toHaveURL(/\/listen$/)` against `listen?overview`.** The
+  app writes `?overview` by `replace` on arrival and has since `fca1bb2`; the
+  assertion races that effect, which is why the same line passes in one locale
+  and fails in the other. A stale spec, not a defect in the app.
+- **`cancel.spec.ts:190` / `:477`** are about the exercise library — a radio
+  keeping its selection after the running-session dialog closes, and the wrong
+  exercise ending up `started`. Nothing on this branch touches `/exercises`.
+- **`session.spec.ts:184`** waits for the transport to reach
+  `data-state="playing"` and it stays `paused`. The track is a silent WAV
+  placeholder written by `fakeTracks.ts`; worth a look on its own.
+
+What I did: nothing. This branch touches neither `apps/web/e2e` nor
+`playwright.config.ts` — `git diff origin/main...HEAD` over both is empty.
+
+What I need from Ben: **a ruling on whether `main` is allowed to be red here.**
+The suite is not in `pnpm check` and not in CI (`ci.yml` runs `check` plus both
+builds), so nothing enforces it and it has clearly drifted. Either the five
+`?overview` assertions get updated to `/\/listen/` — a five-minute change, and
+the honest one, since `?overview` is deliberate — or the walk stops being
+something a branch is asked to run before it is called done.
