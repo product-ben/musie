@@ -2063,34 +2063,42 @@ html[data-musy-scroll-snap] {
    so the request exists the moment a second one appears.
    ═════════════════════════════════════════════════════════════════════════ */
 
-/* ── THE HELPER, AT THE QUESTION'S OWN SIZE ──────────────────────────────
-   `--type-heading-md-*`, which is exactly what `.musie-md h2` uses — Ben's
-   correction, 2026-10-12.
+/* ── THE HELPER, AT `body-lg` ────────────────────────────────────────────
+   Three steps in two days, and the argument moved each time:
 
-   It shipped at `body-sm` on L8's reading that this is a "helper line", filed
-   with captions and timestamps. That was the wrong shelf. A caption annotates
-   something you are already reading; this REPLACES the question for somebody
-   who could not get started with it, and it is the sentence they will actually
-   work from. L8's floor is a minimum, so reading up is never the rule it
-   bends.
+     body-sm        L8 files "helper lines" with captions and timestamps.
+                    Wrong shelf — a caption annotates something you are
+                    already reading, and this REPLACES the question for
+                    somebody who could not start with it.
+     heading-md     the question's own token, so the two read as one voice.
+                    True, but it made the help as loud as the thing it was
+                    helping with, and the sheet then had two display-sized
+                    sentences competing at the top of it.
+     body-lg        Ben, 2026-10-12. The largest step that is still BODY:
+                    prose to be read rather than a title to be scanned, which
+                    is what this is — it is two concrete prompts, and prompts
+                    are read start to finish.
 
-   WHICH LEAVES INK TO CARRY THE HIERARCHY, and that is the whole reason
-   `--on-surface-muted` stays. At the same scale and the same weight, the quiet
-   one is the quiet one because of contrast — the same bargain the stage's
-   description makes two hundred lines above.
+   `--font-text` AND A REGULAR WEIGHT come with the token, and that is the
+   half `heading-md` could not give: the question stays the display voice and
+   the help is plainly an answer to it rather than a second question.
 
-   `--measure-heading`, matching the question, so the two stack as one column
-   rather than as a heading with a wider paragraph under it. */
+   INK STILL CARRIES THE REST. `--on-surface-muted` was doing the whole job of
+   the hierarchy while the scale matched; now it is doing the smaller half of
+   it, which is the right amount of work for a colour.
+
+   `--measure-body`, not the heading's, now that this is body copy — a
+   reading measure is what 62ch exists for. */
 .musie-question__helper {
   margin: 0;
-  max-inline-size: var(--measure-heading);
+  max-inline-size: var(--measure-body);
   text-wrap: var(--text-wrap-body);
   color: var(--on-surface-muted);
-  font-family: var(--type-heading-md-family);
-  font-size: var(--type-heading-md-size);
-  font-weight: var(--type-heading-md-weight);
-  line-height: var(--type-heading-md-line);
-  letter-spacing: var(--type-heading-md-tracking);
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  font-weight: var(--type-body-lg-weight);
+  line-height: var(--type-body-lg-line);
+  letter-spacing: var(--type-body-lg-tracking);
 }
 
 /* ── THIS HEADING IS NOT A STEP HEADLINE ANY MORE ─────────────────────────

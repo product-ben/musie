@@ -699,18 +699,26 @@ corner that produced `d797571`.
 
 ### 7.3 · The helper
 
-Revealed under the question, in **`--type-heading-md-*` — the question's own
-type token** (Ben, 2026-10-12).
+Revealed under the question, at **`body-lg`** — three steps in two days, and
+the argument moved each time:
 
-It shipped at `body-sm` on L8's reading that this is a "helper line", filed
-with captions and timestamps. That was the wrong shelf: a caption annotates
-something you are already reading, and this **replaces** the question for
-somebody who could not get started with it. L8's floor is a minimum, so reading
-*up* never bends it.
+| | |
+|---|---|
+| `body-sm` | L8 files "helper lines" with captions and timestamps. Wrong shelf: a caption annotates something you are already reading, and this **replaces** the question for somebody who could not start with it |
+| `heading-md` | the question's own token, so the two read as one voice. True, but it made the help as loud as the thing it was helping with, and the sheet had two display-sized sentences competing at the top |
+| **`body-lg`** | Ben, 2026-10-12. The largest step that is still **body** — prose to be read rather than a title to be scanned, which is what two concrete prompts are |
 
-Which leaves **ink to carry the hierarchy** — `--on-surface-muted`, at the same
-scale and weight, so the quiet one is quiet by contrast. `--measure-heading`,
-matching the question, so the two read as one column.
+`body-lg` brings `--font-text` and a regular weight, which is the half
+`heading-md` could not give: measured on the sheet, the question is **Onest
+25.4px / 500** and the help is **Literata 19.8px / 400**. The question keeps
+the display voice and the help is plainly an answer to it rather than a second
+question — and it now shares a voice with the sheet's other quiet line,
+*mindestens hören für diese Übung*.
+
+Ink still carries the rest: `--on-surface-muted` was doing the whole job of the
+hierarchy while the scale matched; now it does the smaller half, which is the
+right amount of work for a colour. `--measure-body`, not the heading's, now
+that this is body copy.
 
 The revealed flag stays in `sessionStorage`, keyed by session and question
 (§5.2 of `lib/questions.ts`): closing and reopening the sheet does not put
