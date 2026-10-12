@@ -150,3 +150,131 @@ files nobody can regenerate are nine files nobody can check.
 - **The German is provisional.** The Mindfulness Cards spreadsheet owns this
   copy and will overwrite it. When it lands, it lands *here* — one file — and
   the loop above turns it into one migration.
+
+---
+
+# The music
+
+`music.json` is the music library: every licensed **piece** — its credit and
+the music as released — and every produced **cut** of a listening
+exercise. It is the only place either is written by hand. The migration that
+lands them in the database is generated from it, the same way the deck's is.
+
+It owns `public.tracks` and `public.exercise_cuts`, and **nothing else**.
+`exercise_tracks` belongs to `deck.json` above: *the deck says which piece a
+card plays; this file says what the pieces are and how the exercises are
+rendered.* Neither generator writes a row the other owns, so neither can delete
+the other's work.
+
+## The loop
+
+```
+drop the audio in ~/Documents/musie-audio/   (outside the repo, always)
+  ↓
+edit music.json                              the piece, or one entry per cut
+  ↓
+pnpm music:upload                            uploads, measures, writes keys and
+                                             durations back into music.json
+  ↓
+pnpm music:migration                         writes supabase/migrations/<stamp>_music_<name>.sql
+  ↓
+supabase db reset                             re-applies every migration, the new one last
+pnpm test:db                                  music.db.test.ts proves the database matches the file
+  ↓
+supabase db push                              sends it to the hosted project
+```
+
+Nothing in that list happens on its own, and `pnpm check` touches none of it
+(CLAUDE.md rule 8).
+
+## What a piece looks like
+
+```json
+{
+  "id": "trk-01",
+  "title": "Little Yellow Petals",
+  "artist": "Rachel Sandy",
+  "licenceRef": "Epidemic Sound · Little Yellow Petals · Rachel Sandy",
+  "file": "trk-01.mp3",
+  "durationSeconds": 219
+}
+```
+
+| Field | Lands in | Rules |
+|---|---|---|
+| `id` | `tracks.id` | `trk-01`. **Opaque on purpose.** It reaches the client through `exercise_cuts`, so a title-derived slug would hand over the answer the column grant on `title` exists to withhold |
+| `title`, `artist` | `tracks.title`, `.artist` | The credit. **Answers** — never granted to the client; `reveal-track` is the only door |
+| `licenceRef` | `tracks.licence_ref` | Whatever identifies the licence. Withheld from the client too, since 21 Sept: it named the track |
+| `file` | `tracks.src` | An object key, or `null` where there is no recording. **This is the unducked original** — the fallback when a cut is missing, and what `/discovered-music` hands back |
+| `durationSeconds` | `tracks.duration_seconds` | Written by `music:upload`, never typed. `not null` and positive: it is what the simulated clock counts down from |
+
+## What a cut looks like
+
+```json
+{
+  "exercise": "body-scan-soundwalk",
+  "locale": "de",
+  "mixedSource": "BodyScan - mit Hintergrund.mp3",
+  "voiceSource": "BodyScan - ohne Hintergrund.mp3",
+  "durationSeconds": 183
+}
+```
+
+That is the whole of Bodyscan: **no `posture` and no `ending`**, because one
+recording serves every answer. Klangreise is two entries that name an `ending`
+and still say nothing about posture. Writing eight entries for four files would
+be the same fact four times over, and a lie about how specific the audio is.
+
+| Field | Lands in | Rules |
+|---|---|---|
+| `exercise` | `exercise_cuts.exercise_id` | Must be a `listening_only` exercise. The FK catches a missing one; `music.db.test.ts` catches the wrong kind |
+| `locale` | `locale` | `de` or `en`, and **required**. Nothing ever crosses locales |
+| `posture`, `ending` | the same columns | `sitting`/`lying` and `day`/`sleep` — or **omitted, meaning this recording serves any answer**, which is the usual case. A more specific entry always wins over a wildcard, so a posture-specific cut can be added later without deleting anything. The id is derived from all four (`…-de-any-sleep`) and never written by hand |
+| `mixed` | `mixed_src` | **The exercise as mixed** — guidance over music. Required: it is the recording that plays. Written by `music:upload` from `mixedSource` |
+| `voice` | `voice_src` | The same cut **with the music removed** — what the *Musik stumm* switch hands over to. `null` means the exercise has no switch, which is a decision and not a gap: Klangreise "makes no sense with one of the stems muted" (Ben, 2026-10-12) |
+| `piece` | `track_id` | The music credited **inside** the mix, once we hold its own unducked file. `null` until that export lands, and then nothing of the cut reaches `/discovered-music` |
+| `durationSeconds` | `duration_seconds` | Both files, which are the same length. `music:upload` refuses a pair more than 250 ms apart — the switch reads a position off one and writes it to the other, so a mismatch hands over to the wrong moment |
+| `mixedSource`, `voiceSource` | — | The **local filenames** to read from. Never keys: a studio's file is called `BodyScan - mit Hintergrund.mp3`, and a key is lower case with a content hash. The upload bridges the two and removes these once it has |
+
+### Adding a cut
+
+Drop the files anywhere, name them in `mixedSource` / `voiceSource`, append the
+entry and run the two commands. The filenames are the studio's business —
+`music:upload` reads them by name and mints the key itself.
+
+**The two files must be the same cut at the same length.** The switch reads the
+position off whichever file is sounding and writes it to the other one, so a
+pair that differs hands over to the wrong moment, and the further in the worse
+it gets. The upload refuses a pair more than 250 ms apart.
+
+**A cut with no `voiceSource` has no switch**, permanently and by design
+where the music *is* the exercise. Nothing warns about it; the control simply
+does not render.
+
+### A combination with no cut
+
+The listen step runs its **simulated clock** — a countdown with no audio, which
+is what it already does for the five silent deck cards. That is the locale rule
+as much as the content rule: **nothing ever crosses locales**, so an English
+session does not play German guidance, it plays nothing.
+
+`select * from public.missing_cuts` is the list, and it reads a null
+posture or ending as covering every one of them.
+
+The day a piece has its own unducked original, that becomes the better fallback
+— real music with no guidance — and `track_id` is where it hangs.
+
+### Removing a piece or a cut
+
+`pnpm music:migration` refuses unless you pass `--allow-removal`, and Postgres
+refuses anyway if a session ever played it: both tables are referenced by
+`sessions` with `on delete restrict`. A journal does not lose what it says you
+did.
+
+### One thing to know about re-keying
+
+The four existing masters keep their unhashed keys (`trk-01.mp3`) because they
+are already in the bucket and are not in the drop folder. Put one of them in
+the folder and it is re-uploaded under a hashed key, `tracks.src` moves with it,
+and the old object is left behind — harmless, and worth knowing before you
+wonder where the duplicate came from.
