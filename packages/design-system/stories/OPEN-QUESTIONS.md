@@ -4135,3 +4135,23 @@ now throws one gesture away before it starts measuring.
 What I need from Ben: **nothing**, unless a flick on his own trackpad still
 doubles. The floor is the number to move if so, and it is the only one in here
 that is about hands rather than hardware.
+
+## ButtonGroup — L2's table and L6's prose name different gaps for two alternatives
+Where: `docs/10-layout.md:78` (the gap ladder) against `docs/10-layout.md:231`
+(action rows), and `src/musy-components.css` `.musy-btn-group`
+What I checked: Level 1, both documents and the implementation. The TABLE puts
+"two buttons that are alternatives" at `--space-gap-related` (12). The PROSE
+eleven sections later says they "sit at `--space-gap-inline` — they read as one
+control pair, not two controls" (8). The stylesheet does both: 8 in a row, 12
+once the group stacks below `--bp-md`.
+What I did: nothing to either number. Added `relation="molecule"` for the third
+case, which neither line covers — a group whose children are not alternatives
+at all (the listening sheet's mute switch beside the way on, Ben 2026-10-12) —
+and spent `--space-gap-stack` there, which is the rung L2 names for "controls
+inside one molecule".
+Why: the new case needed a gap and had no rule; the contradiction between the
+two existing rules needs a decision, and both readings are already shipped, so
+changing either silently would move every action row in the product.
+What I need from Ben: **which of the two is the rule for alternatives** — 8 as
+L6 says, or 12 as the table says. Whichever it is, the other document is wrong
+and one of the two `.musy-btn-group` gaps changes with it.

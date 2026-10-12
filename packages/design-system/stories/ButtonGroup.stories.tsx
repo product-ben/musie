@@ -6,9 +6,10 @@
  * docs/07-components.md §7.4a. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { ButtonGroup } from '../src/ButtonGroup';
 import { CtaButton } from '../src/CtaButton';
+import { Switch } from '../src/Switch';
 import { bothThemes, Stack, Row } from './_decorators';
 
 /* The prototype's own wizard action row — METHOD FLOW, align="end". The
@@ -51,6 +52,14 @@ const meta = {
           'step that has not been finished yet — simply has no primary in it, which is',
           'also why the primary comes FIRST in the markup: DOM order is priority order',
           'once the group stacks.',
+          '',
+          '**The gap is the relationship.** Two alternatives — Discard · Save, Back ·',
+          'Continue — read as one control pair and sit at `--space-gap-inline` (L6),',
+          'which is the default. A group holding controls of different **kinds**, there',
+          'because the step ends and not because they are choices between each other,',
+          'is L2’s "controls inside one molecule" and takes `relation="molecule"`:',
+          '`--space-gap-stack`, in the row and in the stacked column alike. Which of',
+          'the two a row holds is the caller’s to say — it is the only one who knows.',
           '',
           '**What it is NOT.** Not a toolbar (no `role`, no arrow-key navigation), not a',
           'segmented control, not a split button, not a sticky action bar — pinning the',
@@ -102,8 +111,9 @@ const meta = {
           '',
           '## ButtonGroup — no rest-prop passthrough',
           'Where: src/ButtonGroup.tsx:19-24',
-          'What I checked: Level 1. The props are `children`, `align`, `className` and',
-          'nothing else — no `...rest`, no `render`. Most of the set (Icon, Logo,',
+          'What I checked: Level 1. The props are `children`, `align`, `relation`,',
+          '`className` and nothing else — no `...rest`, no `render`. Most of the set',
+          '(Icon, Logo,',
           'ContentBox) takes base-ui’s `render`; this one does not.',
           'What I did: nothing. No story needs it.',
           'Why: it is an API observation, not a blocker for this component.',
@@ -119,12 +129,17 @@ const meta = {
   argTypes: {
     children: {
       control: false,
-      description: '2–3 CTA Buttons. The primary action comes first in the markup, because DOM order is priority order once the group stacks.',
+      description: '2–3 CTA Buttons — or, with relation="molecule", the controls a step ends with. Among alternatives the primary comes first in the markup, because DOM order is priority order once the group stacks; in a molecule it is reading order and the way on comes last.',
     },
     align: {
       control: 'inline-radio',
       options: ['start', 'center', 'end'],
       description: 'Row alignment at --bp-md and up. Ignored once stacked.',
+    },
+    relation: {
+      control: 'inline-radio',
+      options: ['alternatives', 'molecule'],
+      description: 'What the children are to each other, which is what the gap ladder keys on: two alternatives at --space-gap-inline (default), controls inside one molecule at --space-gap-stack.',
     },
     className: { control: false },
   },
@@ -145,6 +160,31 @@ export const Alignments: Story = {
       <Row label="align: start (default)"><ButtonGroup {...args} align="start" /></Row>
       <Row label="align: center"><ButtonGroup {...args} align="center" /></Row>
       <Row label="align: end — the wizard action row"><ButtonGroup {...args} align="end" /></Row>
+    </Stack>
+  ),
+};
+
+/** Both gaps, and the second one is the listening step's sheet: a mute switch
+ *  beside the way on. They are not alternatives — pressing one is not
+ *  declining the other — so the row spends one rung more between them. */
+export const Relations: Story = {
+  render: (args) => (
+    <Stack>
+      <Row label="relation: alternatives (default) — --space-gap-inline">
+        <ButtonGroup {...args} align="end" />
+      </Row>
+      <Row label="relation: molecule — --space-gap-stack">
+        <ButtonGroup align="end" relation="molecule">
+          <Switch
+            label="Mute the sounds"
+            checked={false}
+            onCheckedChange={() => {}}
+            onGlyph={VolumeX}
+            offGlyph={Volume2}
+          />
+          <CtaButton variant="primary">Start reflection</CtaButton>
+        </ButtonGroup>
+      </Row>
     </Stack>
   ),
 };
