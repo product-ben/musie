@@ -610,7 +610,9 @@ export const en = {
      still said by a button, which is the rule above; it is just said by the
      button that is counting rather than by the one that is disabled. */
   'session.listen.startLocked': 'Listen first, then reflect',
-  'session.listen.start': 'Start reflecting whenever you are ready',
+  /* Same cut as the German: the conditional clause is one word now, and the
+     question mark is what keeps the imperative an invitation. */
+  'session.listen.start': 'Ready? Start reflecting',
   /* THE PICTURE BETWEEN THE WORDS AND THE CONTROLS — 2026-10-07.
      DESCRIBED, NOT SILENT. The diary's marks take `alt=""` because the link
      around them already says which session; nothing says this one. The step's
@@ -622,6 +624,23 @@ export const en = {
      said *the calm of an unnamed track* would be writing the step's copy a
      second time, in a place nobody can check it against the picture. */
   'session.listen.infographicAlt': 'A hand holding a card over a table, beside a phone lying flat with music drifting from it.',
+
+  /* ── THE ROTATING QUESTION'S APPARATUS ─────────────────────────────────────
+     The questions themselves are NOT here. They are content, keyed by question
+     id, in `src/content/questions.ts` — see that file's header for why, and
+     `docs/LISTENING-QUESTION-ITERATION.md` §5 for the argument.
+
+     These five are chrome: the app's own words ABOUT the apparatus, permanent,
+     and nobody else will ever supply them.
+
+
+  /* ONE BUTTON, TWO PRESSES. The first label is the reader asking for
+     something optional; the second says the QUESTION does not work, rather
+     than that this moment does not — which is what the rejection log counts. */
+  'session.listen.questionHelp': 'Please help me',
+  'session.listen.questionReroll': 'This question isn’t working for me',
+  'session.listen.questionExhausted': 'No other question left',
+  'session.listen.questionReset': 'Reset questions',
 
   /* ── The listening view · the LISTEN-EXPERIMENTS branch ──────────────────
      The press on the stage's transport opens a full-screen sheet and the track
@@ -658,12 +677,12 @@ export const en = {
      `{gate}` is interpolated and never written out, because it is
      `exercises.listen_gate_seconds` and varies — 60, 90 and 180 across the
      five exercises. */
-  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate} minutes. The music plays on for {remaining} if you like.',
+  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate} minutes. The music plays on for {remaining}.',
   /* THE TRACK CAN ALREADY BE OVER when the gate opens — a short recording, or
      somebody who scrubbed to the end. "Carry on for another 00:00" is the
      sentence that gets written when nobody checks. No dash, at Ben's request;
      two sentences carry it. */
-  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {total} minutes. The music has finished. Play it again if you like.',
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {total} minutes.',
   /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
      `startLocked` does on the stage — the figure is already the largest thing
      on the sheet, and saying it twice on one screen is how a number stops

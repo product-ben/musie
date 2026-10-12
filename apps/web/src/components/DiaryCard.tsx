@@ -88,7 +88,7 @@
  */
 import * as React from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
 import {
   Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, CtaButton, IconButton,
   Message, TrackButton,
@@ -505,7 +505,7 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
           {/* The label is the whole accessible name; IconButton reuses it as
               the tooltip, so the two cannot disagree. */}
           <IconButton
-            glyph={Trash2}
+            glyph={Trash}
             label={t('diary.delete')}
             variant="ghost"
             size="primary"

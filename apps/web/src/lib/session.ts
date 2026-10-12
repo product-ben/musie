@@ -128,6 +128,27 @@ export interface SessionRow {
   step: StepId;
   startedAt: string;
   endedAt: string | null;
+  /**
+   * ── THE ROTATING LISTENING QUESTION — 2026-10-11 ─────────────────────────
+   * Which of the five this run was given, what it said, and what was turned
+   * down on the way. `lib/questions.ts` owns every rule about them; this is
+   * only the row.
+   *
+   * `listeningQuestionId` is NULL for an exercise with no question set and for
+   * every session that predates the feature, and the two need no telling
+   * apart — neither contributes to the rotation.
+   *
+   * `listeningQuestion` is the snapshot the DIARY renders: the reflect
+   * phrasing as it was shown. Not coalesced to `''`, unlike the `*_md`
+   * columns in `content.ts`, because null here means "no question was asked"
+   * and the diary has a different thing to draw for it.
+   */
+  listeningQuestionId: string | null;
+  listeningQuestion: string | null;
+  /** Append-only log of rejections. Never cleared, including by the reset. */
+  rejectedQuestionIds: string[];
+  /** What a re-roll will not offer right now. Emptied by the reset. */
+  rejectedThisRound: string[];
 }
 
 /**
@@ -165,6 +186,8 @@ export function completedBefore(
 function toRow(row: {
   id: string; exercise_id: string; card_id: string | null; track_id: string | null;
   status: string; step: string; started_at: string; ended_at: string | null;
+  listening_question_id: string | null; listening_question: string | null;
+  rejected_question_ids: string[]; rejected_this_round: string[];
 }): SessionRow | null {
   if (row.status !== 'started' && row.status !== 'finished' && row.status !== 'abandoned') {
     console.error(`[musie] session ${row.id} has status "${row.status}" — dropped`);
@@ -181,12 +204,18 @@ function toRow(row: {
     trackId: row.track_id,
     status: row.status,
     step: row.step,
+    listeningQuestionId: row.listening_question_id,
+    listeningQuestion: row.listening_question,
+    /* `not null default '{}'` in the schema, so these are arrays and never
+       null — no coalesce, and every caller can map and spread freely. */
+    rejectedQuestionIds: row.rejected_question_ids,
+    rejectedThisRound: row.rejected_this_round,
     startedAt: row.started_at,
     endedAt: row.ended_at,
   };
 }
 
-const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at';
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round';
 
 /**
  * One session by id. Null when there is no such row — which, under RLS, is

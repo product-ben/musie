@@ -48,7 +48,7 @@
  * distinction — this file only draws it last, after the content's own `sort`.
  */
 import * as React from 'react';
-import { Filter } from 'lucide-react';
+import { Funnel } from 'lucide-react';
 import { ContentBox, CtaButton, RadioGroupText } from '@musie/design-system';
 import type { Goal } from '../lib/content';
 import type { GoalChoice } from '../lib/goals';
@@ -116,7 +116,7 @@ export function GoalPill({ goals, choice, onOpen }: GoalPillProps) {
          instead, because the one thing a first-time reader does not know is
          WHERE the goal is — and it is the only control the legend explains
          that is not on the card the legend is drawn over. */
-      leadingIcon={Filter}
+      leadingIcon={Funnel}
       /* The row owns the spacing around this control — see
          `.musie-toolbar-control` in exercises.css for what that class takes
          back and why it has to. */

@@ -5,7 +5,7 @@
  * docs/07-components.md §7.17. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DoorOpen, Headphones, MessageCircleQuestion, ScanLine } from 'lucide-react';
+import { DoorOpen, Headphones, MessageCircleQuestionMark, ScanLine } from 'lucide-react';
 import { InteractiveWizard } from '../src/InteractiveWizard';
 import { bothThemes, Stack } from './_decorators';
 
@@ -249,7 +249,7 @@ export const Icons: Story = {
       { id: 'intro', label: 'Intro', icon: DoorOpen },
       { id: 'scan', label: 'Select Card', icon: ScanLine },
       { id: 'listen', label: 'Listen', icon: Headphones },
-      { id: 'reflect', label: 'Reflect', icon: MessageCircleQuestion },
+      { id: 'reflect', label: 'Reflect', icon: MessageCircleQuestionMark },
     ],
   },
 };

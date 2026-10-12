@@ -6,7 +6,7 @@
  * invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowDown, ArrowUp, Minus, Smile, Meh, Frown, Laugh } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, FaceSlightlySmiling, FaceNeutral, FaceSlightlyFrowning, FaceGrinning } from 'lucide-react';
 import { FeelingsScale } from '../src/FeelingsScale';
 import { bothThemes, Row, Stack } from './_decorators';
 
@@ -135,11 +135,11 @@ export const PointDisabled: Story = {
 export const FivePoints: Story = {
   args: {
     points: [
-      { value: '1', label: 'Viel schlechter', glyph: Frown },
+      { value: '1', label: 'Viel schlechter', glyph: FaceSlightlyFrowning },
       { value: '2', label: 'Schlechter', glyph: ArrowDown },
-      { value: '3', label: 'Gleich', glyph: Meh },
-      { value: '4', label: 'Besser', glyph: Smile },
-      { value: '5', label: 'Viel besser', glyph: Laugh },
+      { value: '3', label: 'Gleich', glyph: FaceNeutral },
+      { value: '4', label: 'Besser', glyph: FaceSlightlySmiling },
+      { value: '5', label: 'Viel besser', glyph: FaceGrinning },
     ],
     value: '4',
   },

@@ -441,10 +441,50 @@ export const de: Messages = {
      Die Uhr gehört jetzt dem Knopf darüber, der das Minimum in seiner eigenen
      Beschriftung nennt. Dieser hier sagt nur noch, worauf er wartet. */
   'session.listen.startLocked': 'Zuerst hören, dann reflektieren',
-  'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
+  /* ── SHORTER, AND THE QUESTION IS WHY IT WORKS — Ben, 2026-10-12 ─────────
+     Was 'Wenn du bereit bist, beginne zu reflektieren'. The conditional spent
+     four words before reaching the verb, on a control that is only shown once
+     the gate has opened — so it was asking permission to offer the thing it
+     was already offering.
+
+     `Bereit?` keeps the whole of that courtesy in one word. It is the only
+     question mark on a button in this catalogue, and it earns it: the label
+     asks and answers in the same breath, which is what makes the imperative
+     after it read as an invitation rather than an order (§3). */
+  'session.listen.start': 'Bereit? Beginne zu reflektieren',
   /* Beschreibend, kein Satzzeichen-Deutsch: was zu sehen ist, in einem Satz.
      'Smartphone', weil 'Handy' in diesem Deck sonst nirgends steht. */
   'session.listen.infographicAlt': 'Eine Hand hält eine Karte über einen Tisch, daneben liegt ein Smartphone, aus dem Musik klingt.',
+
+  /* ── DIE APPARATUR DER ROTIERENDEN FRAGE ───────────────────────────────────
+     Ben's own wording, with one correction he approved: `30 S.` → `30 Sek.`.
+     `S.` is the abbreviation for *Seite*; the one for *Sekunden* is `Sek.`
+     (docs/GERMAN-UI-WRITING.md §7, and the same read that caught the em dash
+     in `route.session.title`).
+
+     `Gib der Frage 30 Sek. eine Chance` is 33 characters, which is why the
+     button passes `wrap` — at 320px with a German compound beside it there is
+     no second option (§5 of that file, step 3: accept the wrap).
+
+     `Fragen zurücksetzen` is a verb phrase and not `Zurücksetzen der Fragen`
+     (§3), and `Hilfe zur Frage zeigen` carries its verb because a screen
+     reader user hears the label and nothing else. */
+  /* ── ONE BUTTON, TWO PRESSES — Ben, 2026-10-12 ───────────────────────────
+     `questionHelp` is a VISIBLE LABEL now, not an icon button's accessible
+     name, so it reads as something you ask rather than as what the control is.
+     `bitte` is the one place this catalogue keeps it: §4 bars *Bitte* at the
+     START of an instruction the reader cannot decline, and this is the
+     opposite — the READER asking, in their own voice, for something entirely
+     optional. Dropping it would make a plea read as a command.
+
+     `questionReroll` says the FRAGE does not work, not that the moment does.
+     It replaces *Das klappt für mich gerade nicht*, whose `gerade` put the
+     fault on the listener's hour; this one puts it on the question, which is
+     the honest reading and the one the rejection log is counting. */
+  'session.listen.questionHelp': 'Hilf mir bitte',
+  'session.listen.questionReroll': 'Die Frage funktioniert für mich nicht',
+  'session.listen.questionExhausted': 'Keine weitere Frage übrig',
+  'session.listen.questionReset': 'Fragen zurücksetzen',
 
   /* ── Die Hör-Ansicht · Branch LISTEN-EXPERIMENTS ────────────────────────
      'Hören' als Substantivierung, weil die Ansicht ein Name braucht und kein
@@ -465,10 +505,21 @@ export const de: Messages = {
      die der Zähler darüber gerade heruntergezählt hat, und eine andere Einheit
      an dieser Stelle läse sich als andere Zahl. Interpoliert, weil
      `listen_gate_seconds` je Übung 60, 90 oder 180 ist. */
-  'session.listen.immersiveDone': 'Super, dass du dich {gate} Minuten fokussiert hast. Die Musik läuft noch {remaining}, wenn du magst.',
+  /* ── BOTH SHORTENED — Ben, 2026-10-12 ────────────────────────────────────
+     The praise is the sentence; everything after it was the screen explaining
+     itself. `, wenn du magst` invited a decision nobody is being asked to
+     make — the music is already playing — and the caption sits under a figure
+     in display type, where a second clause is read as a second instruction.
+
+     The slot stays: how much is left is the one fact this line carries that
+     the figure above it does not. */
+  'session.listen.immersiveDone': 'Super, dass du dich {gate} Minuten fokussiert hast. Die Musik läuft noch {remaining}.',
   /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
      Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
-  'session.listen.immersiveDoneEnded': 'Super, dass du dich {total} Minuten fokussiert hast. Die Musik ist zu Ende. Wenn du magst, höre sie noch einmal.',
+  /* Nothing after the praise at all. `Die Musik ist zu Ende` is said by the
+     transport, which has turned into a replay control; `Wenn du magst, höre
+     sie noch einmal` is that control's label in prose. */
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {total} Minuten fokussiert hast.',
   /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
      §8 ist der Ort, an dem das zu diskutieren wäre. */
   'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',

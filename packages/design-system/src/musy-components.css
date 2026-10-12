@@ -2262,6 +2262,35 @@
 .musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body {
   display: flex;
   flex-direction: column;
+  /* ── THE INLINE INSET MOVES ONTO THE SCROLLER — 2026-10-12 ──────────────
+     The same move the BLOCK inset already made (see `.musy-lightbox__body`
+     below, "moved onto the scroller"), for the same reason and now on the
+     other axis.
+
+     WHY IT MATTERS HERE. This body is `overflow-y: auto`, and a scroll
+     container cannot keep the other axis visible — `overflow-x` computes to
+     `auto` and CLIPS AT THE PADDING BOX. With the inset on the popup, the
+     body's padding box edge sat exactly on the content edge, so anything a
+     screen pulled into the gutter was cut rather than crowded. Measured: an
+     app-level control nudged 24px leading rendered its box at 16 and was
+     sliced flat at 32.
+
+     Padding, not position: `padding-inline` is INSIDE the scrollport, so a
+     child may sit in it and remain visible, exactly as the block padding lets
+     the last line clear the bottom of the scroll.
+
+     THE NEGATIVE MARGIN IS WHY THE POPUP KEEPS ITS OWN PADDING. The headline
+     is a SIBLING of this body, a direct child of the popup, and the close
+     control is positioned against the popup's padding box; stripping the
+     popup's inset would move the first and is no business of the second. So
+     the body alone reaches back out to the popup's border edge and re-applies
+     the inset itself — its content lands exactly where it always did, and
+     only the clip boundary moves.
+
+     The gutter this opens is `--space-inset-sheet` (32px), and that is the
+     budget for any optical pull a screen makes inside this sheet. */
+  margin-inline: calc(var(--space-inset-sheet) * -1);
+  padding-inline: var(--space-inset-sheet);
 }
 
 .musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body > :only-child {
@@ -4772,6 +4801,34 @@
 }
 .musy-btn-group--center { justify-content: center; }
 .musy-btn-group--end { justify-content: flex-end; }
+
+/* ── A BUTTON IS NEVER SQUEEZED; THE ROW WRAPS INSTEAD — 2026-10-12 ────────
+   This is the rule the component's header always claimed and never enforced:
+   "below --bp-md it either wraps into a ragged staircase or SQUEEZES THE
+   LABELS". The stacking covered the first half at a viewport threshold, and
+   nothing covered the second — so between "both labels fit" and "the viewport
+   is phone-sized" a flex item would shrink below its own label rather than
+   wrap, because `.musy-btn--wrap` sets `white-space: normal` and a wrapping
+   label's min-content width is one word.
+
+   MEASURED on the listen sheet at a 1680px viewport: the row needs 787px with
+   a short label and 990px with a long one. In that band the long state wrapped
+   and the short state did not, so changing the label MOVED THE OTHER BUTTON —
+   and below 787px the way on was squeezed instead of wrapping, which is how a
+   label ends up clipped at the sheet's edge.
+
+   `flex-shrink: 0` says: do not take width off this control to make the row
+   fit. Flex's answer is then to wrap, which is the honest one — not enough
+   horizontal space IS the condition for stacking.
+
+   `max-inline-size: 100%` is the other half and stops the cure being worse
+   than the disease: a single label longer than the whole group would otherwise
+   overflow it. Capped, the button fills the line and the label wraps INSIDE
+   it, which is the stacked shape anyway.                                    */
+.musy-btn-group > .musy-btn {
+  flex-shrink: 0;
+  max-inline-size: 100%;
+}
 @media (max-width: 767.98px) {
   .musy-btn-group {
     flex-direction: column;
@@ -4781,6 +4838,26 @@
   /* Stacked, every action is full width; the track button's countdown keeps
      its own column because the label sits left and the time is pushed right. */
   .musy-btn-group > .musy-btn { inline-size: 100%; }
+
+  /* ── stacked="hug" — THE ONE WAY OUT OF FULL WIDTH (2026-10-12) ──────────
+     A column of full-width buttons reads as a list of equal commitments, which
+     is right at the END of a step and wrong for a group that merely sits
+     BESIDE the way on.
+
+     TWO DECLARATIONS, AND BOTH ARE NEEDED. `align-items` undoes the stretch —
+     which is an ALIGNMENT, not a width — and `inline-size: auto` undoes the
+     100% the rule above has already put on every child. Either one alone
+     leaves the buttons full width.
+
+     AND IT IS WHAT MAKES `align` MEAN SOMETHING IN THE COLUMN. Hugging buttons
+     have an alignment to have, so the three modifiers below carry the same
+     intent down from the row: a group that is trailing on a wide screen stays
+     trailing on a phone rather than silently becoming two full-width rows.
+     `flex-start` is the base case, matching `align`'s own default. */
+  .musy-btn-group--stacked-hug { align-items: flex-start; }
+  .musy-btn-group--stacked-hug > .musy-btn { inline-size: auto; }
+  .musy-btn-group--center.musy-btn-group--stacked-hug { align-items: center; }
+  .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; }
 }
 
 /* ═══ MUSIC PLAYER ═════════════════════════════════════════════════════════
