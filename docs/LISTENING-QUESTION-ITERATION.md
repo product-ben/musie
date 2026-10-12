@@ -733,6 +733,29 @@ Which makes it **the caption's token set exactly** — the same as
 `.musie-immersive__caption` under the countdown. That is the point rather than
 a coincidence: the sheet has two quiet lines and they should be the same quiet.
 
+**A newly loaded question always arrives collapsed, on the first rung** — Ben,
+2026-10-12. Measured before and after:
+
+| | question | helper | first button |
+|---|---|---|---|
+| fresh | Q1 | — | `Hilf mir bitte` |
+| helped | Q1 | shown | `Die Frage funktioniert…` |
+| after a swap | Q2 | — | `Hilf mir bitte` |
+| at the dead end | Q5 | — | `Keine weitere Frage übrig` + reset |
+| **after the reset** | **Q2** | **—** | **`Hilf mir bitte`** |
+
+A plain swap already did this: `helperShown` compares the revealed id against
+the current one, and a swap changes it. **The reset did not**, and that is the
+case the rule exists for: the ladder means a question cannot be rejected before
+its helper has been revealed, so by the time the pool is empty **all five carry
+a reveal flag** — and the question handed back would have arrived with its
+helper open and the button already on the rejection rung.
+
+Fixed in both stores of that fact, because there are two: `forgetHelperRevealed`
+clears the durable half in `sessionStorage` when a question is handed over, and
+an effect on `question.id` clears the render's half. Neither survives a new
+question.
+
 The revealed flag stays in `sessionStorage`, keyed by session and question
 (§5.2 of `lib/questions.ts`): closing and reopening the sheet does not put
 somebody back on the first rung, and a swap collapses it for the new question.

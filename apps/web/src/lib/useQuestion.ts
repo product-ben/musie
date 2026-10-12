@@ -18,8 +18,8 @@
  */
 import * as React from 'react';
 import {
-  canReroll, hasQuestionSet, isKnownQuestion, nextQuestion, questionText,
-  readQuestionHistory, rejectQuestion, resetQuestionRound, saveQuestion,
+  canReroll, forgetHelperRevealed, hasQuestionSet, isKnownQuestion, nextQuestion,
+  questionText, readQuestionHistory, rejectQuestion, resetQuestionRound, saveQuestion,
 } from './questions';
 import type { QuestionHistory } from './questions';
 import type { QuestionId, QuestionText } from '../content/questions';
@@ -147,6 +147,11 @@ export function useSessionQuestion(
     const nextRound = [...round, id];
     const picked = nextQuestion(exerciseId, history.current, nextRound);
 
+    /* A QUESTION YOU ARE BEING HANDED IS COLLAPSED (Ben, 2026-10-12). See
+       `forgetHelperRevealed` for why this is here rather than only on the
+       reset, which is the one path that can actually hit it. */
+    if (picked !== null) forgetHelperRevealed(sessionId, picked);
+
     /* OPTIMISTIC, and the write is what persists it. A re-roll is a press on a
        listening screen; waiting for a round trip before the question changes
        would make the control feel broken on a slow connection. If the write
@@ -167,6 +172,13 @@ export function useSessionQuestion(
        reason there are two arrays, and the reason a reset is the loudest row
        in `question_rejections` rather than the one that erases itself. */
     const picked = nextQuestion(exerciseId, history.current, []);
+
+    /* THE PATH THIS ACTUALLY MATTERS ON. The ladder means a question cannot be
+       rejected before its helper has been revealed, so by the time the pool is
+       empty every question carries a reveal flag — and without this the one
+       handed back would arrive with its helper already open and the button
+       already on the rejection rung. */
+    if (picked !== null) forgetHelperRevealed(sessionId, picked);
 
     setRound([]);
     setId(picked);

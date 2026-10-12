@@ -349,6 +349,19 @@ export function SessionListen({
     setRevealedFor(question.id);
   }, [question.id, sessionId]);
 
+  /* ── A NEW QUESTION ARRIVES COLLAPSED, ON THE FIRST RUNG ────────────────
+     Ben, 2026-10-12. `helperShown` already fails its id comparison when the
+     question changes, so a plain swap resets without this — measured. What it
+     covers is the one case where the incoming id can EQUAL the revealed one:
+     *Fragen zurücksetzen* puts every rejected question back in play, and the
+     one handed back may be the very question whose helper was last opened.
+
+     The hook clears the durable half (`forgetHelperRevealed`); this clears
+     the render's half. Both are needed because they are two different stores
+     of the same fact, and the whole point is that neither survives a new
+     question. */
+  React.useEffect(() => { setRevealedFor(null); }, [question.id]);
+
   /* THE ADDRESS SAYS WHICH VIEW, even when nobody chose one. Replace, not
      push: arriving is not a step the Back button should have to walk through.
      It leaves `?focus` alone, so a deep link opens the sheet.

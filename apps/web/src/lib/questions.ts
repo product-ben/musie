@@ -222,6 +222,33 @@ export function rememberHelperRevealed(sessionId: string, questionId: string): v
   }
 }
 
+/**
+ * Forget that a question's helper was ever revealed.
+ *
+ * CALLED WHEN A QUESTION IS HANDED TO SOMEBODY, not when one is put away — a
+ * newly loaded question starts collapsed, on the first rung, whatever happened
+ * to it earlier in this session (Ben, 2026-10-12).
+ *
+ * It only matters on one path, and that path is reachable: *Fragen
+ * zurücksetzen*. The ladder means a question cannot be rejected before its
+ * helper has been revealed, so by the time the pool is empty ALL FIVE carry a
+ * reveal flag. Without this, the question the reset hands back would arrive
+ * with its helper already open and the button already on the rejection rung —
+ * which reads as the app having given up on its own offer of help.
+ *
+ * A re-roll cannot hit it today, because the next question is one the round
+ * has not shown yet. Called there anyway: the guarantee is "a question you are
+ * being handed is collapsed", and making it true in one place rather than two
+ * is what stops it drifting when the exclusion rules next change.
+ */
+export function forgetHelperRevealed(sessionId: string, questionId: string): void {
+  try {
+    helperStore()?.removeItem(helperKey(sessionId, questionId));
+  } catch {
+    /* Same bargain as above. */
+  }
+}
+
 /* ── The database ───────────────────────────────────────────────────────────*/
 
 /**
