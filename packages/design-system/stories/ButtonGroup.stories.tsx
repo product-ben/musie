@@ -232,3 +232,32 @@ export const LongLabels: Story = {
     ),
   },
 };
+
+/**
+ * `stacked="hug"` — trailing on a wide screen, and still trailing on a phone.
+ *
+ * The one way out of full width below `--bp-md`, added 2026-10-12. Narrow the
+ * viewport to see what it is for: the default stretches every action across
+ * the column, which is right at the END of a step and wrong for a group that
+ * merely sits beside the way on — two full-width buttons there read as two
+ * equal commitments.
+ *
+ * It is also what lets `align` survive the stack. Hugging buttons have an
+ * alignment to have, so `end` keeps meaning `end` in both directions instead
+ * of being ignored once the row becomes a column.
+ *
+ * Compare with `LongLabels` directly above: same `align="end"`, default
+ * `stacked="fill"`.
+ */
+export const StackedHug: Story = {
+  args: {
+    align: 'end',
+    stacked: 'hug',
+    children: (
+      <>
+        <CtaButton variant="outline" wrap>Die Frage funktioniert für mich nicht</CtaButton>
+        <CtaButton variant="primary" wrap>Wenn du bereit bist, beginne zu reflektieren</CtaButton>
+      </>
+    ),
+  },
+};

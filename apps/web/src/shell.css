@@ -2093,25 +2093,6 @@ html[data-musy-scroll-snap] {
   letter-spacing: var(--type-heading-md-tracking);
 }
 
-/* ── THE ACTION ROW CARRIES THE LADDER NOW ───────────────────────────────
-   *Hilf mir bitte* sits LEADING of the way on, and ABOVE it on a phone.
-
-   The row is already `flex-wrap: wrap` with the help button first in the DOM,
-   so on a narrow screen the two German labels stop fitting and it wraps to the
-   line above on its own. This query only makes that DETERMINISTIC instead of a
-   consequence of how long a label happens to be: below `--bp-md` the row is a
-   column, so the order is the same at 320px and at 767px.
-
-   768px is `--bp-md`, written out because a custom property cannot be read
-   inside a media query — the same reason `musy-components.css` writes it four
-   times rather than once. */
-@media (max-width: 767px) {
-  .musie-immersive__actions {
-    flex-direction: column;
-    align-items: flex-end;
-  }
-}
-
 /* ── THIS HEADING IS NOT A STEP HEADLINE ANY MORE ─────────────────────────
    `.musie-md h2` is typeset for the thing it almost always is: a short title
    above a step. Two Layer 1 defaults do that work, and on this sheet both of
@@ -2286,29 +2267,19 @@ html[data-musy-scroll-snap] {
   color: var(--on-surface-muted);
 }
 
-/* ── THE FOOT ─────────────────────────────────────────────────────────────
-   One control now: the transport has moved up beside the countdown, so what is
-   left here is the way on, at the TRAILING edge (Ben, 2026-10-07).
+/* ── THE FOOT IS A `ButtonGroup` NOW — 2026-10-12 ────────────────────────
+   `.musie-immersive__actions` is gone, and with it a hand-written flex row,
+   its wrap, its `justify-content` and the media query that had just been
+   added beside it. The system has a component for the actions a step ends
+   with, and the one thing it could not do — stay TRAILING once it stacks,
+   rather than becoming two full-width rows — went INTO the component as
+   `stacked="hug"` instead of staying here as a second copy (rule 1, L14.3).
 
-   `justify-content: flex-end` and not `CtaButton.align`. The two sound alike
-   and are not: `align` moves the LABEL inside the control and would leave the
-   box exactly where it is. Where the box sits in a row is the row's business,
-   which is this screen's (L14) — and the button keeps its own geometry, which
-   is what L7 asks.
-
-   `flex-end`, not `right`: the system is built for German as well as English
-   and mirrors in RTL without a second rule, so this follows the same logical
-   axis as the rest of the stylesheet.
-
-   `flex-wrap` survives with one child, for the same reason it does in
-   `.musie-listen__actions`: a German label that outgrows the row should break
-   rather than squeeze.                                                      */
-.musie-immersive__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-gap-related);
-}
+   What the old block argued is still true and now lives in `ButtonGroup`:
+   `justify-content` and not `CtaButton.align`, because the two sound alike
+   and are not — `align` moves the LABEL inside the control and leaves the box
+   where it is. Where the box sits in a row was this screen's business under
+   L14; it is the component's now, which is the better home for it.          */
 
 
 /* ═══ DISCOVERED MUSIC ══════════════════════════════════════════════════════

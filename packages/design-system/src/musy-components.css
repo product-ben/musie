@@ -4781,6 +4781,26 @@
   /* Stacked, every action is full width; the track button's countdown keeps
      its own column because the label sits left and the time is pushed right. */
   .musy-btn-group > .musy-btn { inline-size: 100%; }
+
+  /* ── stacked="hug" — THE ONE WAY OUT OF FULL WIDTH (2026-10-12) ──────────
+     A column of full-width buttons reads as a list of equal commitments, which
+     is right at the END of a step and wrong for a group that merely sits
+     BESIDE the way on.
+
+     TWO DECLARATIONS, AND BOTH ARE NEEDED. `align-items` undoes the stretch —
+     which is an ALIGNMENT, not a width — and `inline-size: auto` undoes the
+     100% the rule above has already put on every child. Either one alone
+     leaves the buttons full width.
+
+     AND IT IS WHAT MAKES `align` MEAN SOMETHING IN THE COLUMN. Hugging buttons
+     have an alignment to have, so the three modifiers below carry the same
+     intent down from the row: a group that is trailing on a wide screen stays
+     trailing on a phone rather than silently becoming two full-width rows.
+     `flex-start` is the base case, matching `align`'s own default. */
+  .musy-btn-group--stacked-hug { align-items: flex-start; }
+  .musy-btn-group--stacked-hug > .musy-btn { inline-size: auto; }
+  .musy-btn-group--center.musy-btn-group--stacked-hug { align-items: center; }
+  .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; }
 }
 
 /* ═══ MUSIC PLAYER ═════════════════════════════════════════════════════════

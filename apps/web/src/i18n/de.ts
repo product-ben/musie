@@ -495,10 +495,21 @@ export const de: Messages = {
      die der Zähler darüber gerade heruntergezählt hat, und eine andere Einheit
      an dieser Stelle läse sich als andere Zahl. Interpoliert, weil
      `listen_gate_seconds` je Übung 60, 90 oder 180 ist. */
-  'session.listen.immersiveDone': 'Super, dass du dich {gate} Minuten fokussiert hast. Die Musik läuft noch {remaining}, wenn du magst.',
+  /* ── BOTH SHORTENED — Ben, 2026-10-12 ────────────────────────────────────
+     The praise is the sentence; everything after it was the screen explaining
+     itself. `, wenn du magst` invited a decision nobody is being asked to
+     make — the music is already playing — and the caption sits under a figure
+     in display type, where a second clause is read as a second instruction.
+
+     The slot stays: how much is left is the one fact this line carries that
+     the figure above it does not. */
+  'session.listen.immersiveDone': 'Super, dass du dich {gate} Minuten fokussiert hast. Die Musik läuft noch {remaining}.',
   /* Das Stück kann schon zu Ende sein, wenn die Zeit abläuft. Kein
      Gedankenstrich (Ben, 2026-10-07) — zwei Sätze statt einem. */
-  'session.listen.immersiveDoneEnded': 'Super, dass du dich {total} Minuten fokussiert hast. Die Musik ist zu Ende. Wenn du magst, höre sie noch einmal.',
+  /* Nothing after the praise at all. `Die Musik ist zu Ende` is said by the
+     transport, which has turned into a replay control; `Wenn du magst, höre
+     sie noch einmal` is that control's label in prose. */
+  'session.listen.immersiveDoneEnded': 'Super, dass du dich {total} Minuten fokussiert hast.',
   /* Bens Wortlaut. 'Counter' statt 'Zähler' ist seine Wahl und bleibt stehen;
      §8 ist der Ort, an dem das zu diskutieren wäre. */
   'session.listen.immersiveLocked': 'Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter',

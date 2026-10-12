@@ -729,18 +729,41 @@ only changes its label.
 | Nothing left to offer | `Keine weitere Frage übrig` | no |
 | …**and beside it** (D16) | `Fragen zurücksetzen` + `RotateCcw` | yes |
 
-`variant="secondary"`, because the primary rung in that row belongs to the way
-on: this is the alternative to continuing, not a competitor for it.
+`variant="outline"` on both rungs — Ben, 2026-10-12. The primary rung in that
+row belongs to the way on; this is the alternative to continuing, not a
+competitor for it, and `outline` is the one that does not paint a surface
+beside it.
 
 **`canSwap` is read before anything else.** At the dead end there is no
 question to ask for help with, so offering help would be offering nothing.
 
-**Leading on a wide screen, above on a phone.** The row is already
-`flex-wrap: wrap` with this button first in the DOM, so the two German labels
-stop fitting and it wraps on its own; the `max-width: 767px` query only makes
-that deterministic instead of a consequence of how long a label happens to be.
-768px is `--bp-md`, written out because a custom property cannot be read inside
-a media query.
+**The row is `ButtonGroup`, not an app pattern** (2026-10-12).
+`.musie-immersive__actions` is gone, and with it a hand-written flex row, its
+`justify-content` and a media query. The system has a component for the actions
+a step ends with, and the one thing it could not do went INTO it rather than
+staying here as a second copy (rule 1, L14.3):
+
+> **`stacked="hug"`** — below `--bp-md` the group stacks, and the actions keep
+> their own width instead of going full width. That is also what lets `align`
+> survive the stack: hugging buttons have an alignment to have, so `end` keeps
+> meaning `end` in both directions rather than becoming two full-width rows.
+
+Used here as `align="end" stacked="hug"` — **trailing at every width**, which
+is what Ben asked for. Measured rather than eyeballed, at three widths:
+
+| viewport | direction | help button | way on |
+|---|---|---|---|
+| 390px | column, `flex-end` | 326px | 326px |
+| 600px | column, `flex-end` | **345px** | 536px |
+| 900px | row, trailing | 350px | 606px |
+
+At 390px both labels exceed the column, so they fill — that is the German, not
+the stretch, and 600px is where the hugging shows.
+
+**DOM order is not priority order in this one group.** The component's header
+says the primary action comes first; the help rung sits leading of the way on,
+which is first in the DOM — and stacked, that puts it above, which is also what
+was asked for.
 
 ## 8 · The reflect step
 

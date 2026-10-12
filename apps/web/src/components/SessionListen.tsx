@@ -52,7 +52,7 @@
  */
 import * as React from 'react';
 import {
-  ContentList, CtaButton, Lightbox, Message, MusicPlayer, TrackButton,
+  ButtonGroup, ContentList, CtaButton, Lightbox, Message, MusicPlayer, TrackButton,
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
@@ -1469,7 +1469,22 @@ export function SessionListen({
                 parameter — so the sheet closes because the address it was
                 reading is gone. Closing it first as well would push a second
                 history entry between the two. */}
-            <div className="musie-immersive__actions">
+            {/* ── THE SYSTEM'S GROUP, NOT A ROW OF THIS SCREEN'S OWN ─────
+                `.musie-immersive__actions` was an app pattern with its own
+                wrap and its own media query, and `ButtonGroup` is the
+                component for exactly this (rule 1). The one thing it could not
+                do — stay TRAILING once it stacks, instead of turning into two
+                full-width rows — went INTO the component as `stacked="hug"`
+                rather than being reimplemented here. Same call `CtaButton`
+                made with `align`.
+
+                DOM ORDER IS NOT PRIORITY ORDER HERE, deliberately. The
+                component's header says the primary action comes first; Ben
+                asked for the help rung to sit LEADING of the way on, and
+                leading in a row is first in the DOM. Stacked, that puts help
+                above the way on, which is also what he asked for — so the two
+                agree once the convention is set aside for this one group. */}
+            <ButtonGroup align="end" stacked="hug">
               {/* ── THE LADDER, BESIDE THE WAY ON — Ben, 2026-10-12 ────────
                   LEADING of the forward CTA on a wide screen and ABOVE it on a
                   narrow one, which the row gets for free: it already wraps, and
@@ -1493,7 +1508,7 @@ export function SessionListen({
               {question.rotates && (question.id !== null || question.exhausted) && (
                 <>
                   <CtaButton
-                    variant="secondary"
+                    variant="outline"
                     wrap
                     disabled={!question.canSwap}
                     onClick={helperShown ? question.reject : revealHelper}
@@ -1508,7 +1523,7 @@ export function SessionListen({
                   {/* The way out of the dead end, and only there (D16). */}
                   {!question.canSwap && (
                     <CtaButton
-                      variant="secondary"
+                      variant="outline"
                       wrap
                       leadingIcon={RotateCcw}
                       onClick={question.reset}
@@ -1529,7 +1544,7 @@ export function SessionListen({
                   ? t('session.listen.start')
                   : t('session.listen.immersiveLocked')}
               </CtaButton>
-            </div>
+            </ButtonGroup>
           </div>
         </Lightbox>
       )}

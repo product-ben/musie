@@ -675,12 +675,12 @@ export const en = {
      `{gate}` is interpolated and never written out, because it is
      `exercises.listen_gate_seconds` and varies — 60, 90 and 180 across the
      five exercises. */
-  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate} minutes. The music plays on for {remaining} if you like.',
+  'session.listen.immersiveDone': 'Well done, you stayed with it for {gate} minutes. The music plays on for {remaining}.',
   /* THE TRACK CAN ALREADY BE OVER when the gate opens — a short recording, or
      somebody who scrubbed to the end. "Carry on for another 00:00" is the
      sentence that gets written when nobody checks. No dash, at Ben's request;
      two sentences carry it. */
-  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {total} minutes. The music has finished. Play it again if you like.',
+  'session.listen.immersiveDoneEnded': 'Well done, you stayed with it for {total} minutes.',
   /* THE LOCKED WAY ON. It does NOT repeat the countdown the way
      `startLocked` does on the stage — the figure is already the largest thing
      on the sheet, and saying it twice on one screen is how a number stops
