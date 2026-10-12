@@ -211,6 +211,29 @@ export const router = createBrowserRouter([
         handle: handle({ titleKey: 'scan.dev.title' }),
       },
       {
+        /* THE TWO-STREAMS SPIKE — and it has a delete date.
+
+           It answers one question that cannot be reasoned about: does iOS keep
+           two simultaneous `<audio>` elements playing with the screen locked?
+           That decides whether the listening type ships two stems or a
+           pre-mixed master plus a dry voice — see
+           LISTENING-EXERCISES-PLAN.md §4.10 — and therefore decides what gets
+           recorded, so it is settled before anybody records.
+
+           Lazy like /dev/qr, and for a stronger reason: this route exists to
+           be deleted, and nothing that ships should carry a byte of it.
+
+           `titleKey` borrows the dev sheet's own, because the spike adds no
+           catalogue keys — see the file's header for why it is exempt from
+           rules 6 and 7, and apps/web/OPEN-QUESTIONS.md for the record of it. */
+        path: 'dev/two-streams',
+        lazy: async () => {
+          const { DevTwoStreams } = await import('./routes/DevTwoStreams');
+          return { Component: DevTwoStreams };
+        },
+        handle: handle({ titleKey: 'scan.dev.title' }),
+      },
+      {
         /* GOAL MAPPINGS — a tool, like /dev/qr above, and lazy for the same
            reason: `FilterChips` is used nowhere else in the app, so loading
            it this way keeps it out of everybody's first paint.

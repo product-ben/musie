@@ -874,8 +874,9 @@ export function Exercises() {
  * two exercises on; the other two were true of almost all of them, so they
  * spent a row of every card and a block of chrome to say very little.
  *
- * `needsCards` and `needsSound` are still on the row and still read by the
- * session — this screen just stops drawing them.
+ * `needsSound` is still on the row; `needs_cards` was superseded by
+ * `exercises.kind` on 2026-10-11 and is now a mirror of it. Either way this
+ * screen stops drawing both.
  */
 function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact[] {
   const min = String(exercise.timeframeMin);

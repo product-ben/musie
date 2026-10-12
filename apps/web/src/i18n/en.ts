@@ -467,6 +467,32 @@ export const en = {
      implemented exercises reaches it. */
   'session.intro.fallback': 'Take a moment to arrive. When you are ready, carry on.',
 
+  /* ── THE TWO ANSWERS A LISTENING RUN ASKS FOR · 2026-10-11 ─────────────
+     Both preselected (Ben): a first screen that blocks on an unanswered
+     question is a first screen that stops people.
+
+     THE SECOND QUESTION IS ABOUT THE ENDING, not about the purpose, and that
+     is not a stylistic choice. `goals` already carries a row labelled
+     *Entspannen* / *Relax*, which the library asked about two taps earlier and
+     `sessions.goal_id` already holds — so *Relax / Fall asleep* here would put
+     one word on two screens meaning two different things. What actually
+     differs is audible: the fall-asleep cut ends by letting you go, the
+     other one brings you back. So the question asks that.
+
+     'Lying down' rather than 'laying': one is a posture, the other is what you
+     do to a carpet. */
+  'session.intro.posture.legend': 'How do you want to listen?',
+  'session.intro.posture.sitting': 'Sitting',
+  'session.intro.posture.lying': 'Lying down',
+  /* Ben, 2026-10-12: it asks what the PERSON does next rather than what the
+     recording does — the same decision from the other side, and one that
+     cannot be read as a claim about what the exercise will do to you
+     (LISTENING-EXERCISES.md §6). It still cannot collide with the goal called
+     *Relax* that the library asked about two taps earlier. */
+  'session.intro.ending.legend': 'What are you doing after this?',
+  'session.intro.ending.day': 'Back into the day',
+  'session.intro.ending.sleep': 'Going to sleep',
+
   /* ── Scan · D.5a, and the three ways in · E.0/E.1/E.2/E.3 ───────────────
      THE SIMULATE BUTTON IS GONE, and the three strings that described it went
      with it. THREE real ways in replace it, and the frame names all of them:
@@ -645,6 +671,16 @@ export const en = {
      much" is the number above; what the caption adds is that the number is a
      floor and not a length. */
   'session.listen.immersiveCountdown': 'minimum listening for this exercise',
+  /* ── THE SWITCH, UNDER THE COUNTDOWN · 2026-10-11 ──────────────────────
+     It silences the music and leaves the guidance talking. The label names
+     WHAT YOU GET by pressing it, which is the convention the segmented
+     control's `unchecked` labels follow and the opposite of naming the state
+     you are in — a switch labelled *Music* would be read as a question about
+     whether there is any.
+
+     'Instructions', not 'narration' or 'voice': it is what the person is being
+     given, in their words rather than ours. */
+  'session.listen.musicOff': 'Mute the sounds',
   /* ── ONCE THE MINIMUM IS DONE — Ben, 2026-10-07 ────────────────────────
      It replaces `immersiveReady` ("You have listened long enough"), which
      reported a threshold and stopped there. This says what was achieved and
@@ -755,8 +791,16 @@ export const en = {
      Three ordered points, lowest first, and the order is the question: this is
      a scale, not a set of alternatives. Each names the comparison outright —
      "than before" — because the thing being measured is a CHANGE, and a point
-     labelled only "good" would be measuring a mood instead. */
-  'reflect.feeling.legend': 'How do you feel now?',
+     labelled only "good" would be measuring a mood instead.
+
+     ── THE LEGEND ASKS ABOUT THE MOOD — Ben, 2026-10-12 ──────────────────
+     *How do you feel now?* is the question a therapist asks, and this is a
+     music product (LISTENING-EXERCISES.md §6). *How is your mood now?* asks
+     for something somebody can read off themselves in a second and answer on
+     a three-point scale, which is the whole control. The CHANGE still lives
+     in the three labels, so naming the mood in the legend costs nothing the
+     note above was protecting. */
+  'reflect.feeling.legend': 'How is your mood now?',
   'reflect.feeling.worse': 'Worse than before',
   'reflect.feeling.same': 'Exactly as before',
   'reflect.feeling.better': 'Better than before',
