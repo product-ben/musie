@@ -1393,6 +1393,55 @@ export function SessionListen({
               )}
             </div>
 
+            {/* ── THE LADDER, UNDER THE TEXT — Ben, 2026-10-12 ───────────
+                It sat beside the way on for a day. Under the question is where
+                it belongs: it is about THIS QUESTION, and a control that acts
+                on the thing above it should not be in the row that leaves the
+                step.
+
+                `size="min"` — the S rung, and the quiet one. Beside the way on
+                it had to hold its own against a primary; under the question it
+                is an aside, and an aside at the same weight as the heading's
+                own actions would read as a second instruction.
+
+                THREE STATES, AND `canSwap` IS READ FIRST, because at the dead
+                end there is no question to ask for help with — offering help
+                would be offering nothing.
+
+                  not revealed   → Hilf mir bitte              (enabled)
+                  revealed       → Die Frage funktioniert …    (enabled)
+                  nothing left   → Keine weitere Frage übrig   (disabled)   */}
+            {question.rotates && (question.id !== null || question.exhausted) && (
+              <div className="musie-question__swap">
+                <CtaButton
+                  variant="outline"
+                  size="min"
+                  wrap
+                  disabled={!question.canSwap}
+                  onClick={helperShown ? question.reject : revealHelper}
+                >
+                  {!question.canSwap
+                    ? t('session.listen.questionExhausted')
+                    : helperShown
+                      ? t('session.listen.questionReroll')
+                      : t('session.listen.questionHelp')}
+                </CtaButton>
+
+                {/* The way out of the dead end, and only there (D16). */}
+                {!question.canSwap && (
+                  <CtaButton
+                    variant="outline"
+                    size="min"
+                    wrap
+                    leadingIcon={RotateCcw}
+                    onClick={question.reset}
+                  >
+                    {t('session.listen.questionReset')}
+                  </CtaButton>
+                )}
+              </div>
+            )}
+
             {/* ── THE MINIMUM, AS THE LARGEST THING ON THE SHEET ──────────
                 `role="timer"` rather than a live region, and the two are
                 opposites: a timer's implicit `aria-live` is OFF, so the figure
@@ -1491,62 +1540,12 @@ export function SessionListen({
                 rather than being reimplemented here. Same call `CtaButton`
                 made with `align`.
 
-                DOM ORDER IS NOT PRIORITY ORDER HERE, deliberately. The
-                component's header says the primary action comes first; Ben
-                asked for the help rung to sit LEADING of the way on, and
-                leading in a row is first in the DOM. Stacked, that puts help
-                above the way on, which is also what he asked for — so the two
-                agree once the convention is set aside for this one group. */}
+                IT HOLDS ONE CHILD AGAIN since 2026-10-12, because the ladder
+                moved up under the question. Kept rather than unwound back into
+                a div: `stacked="hug"` is still what stops a long German label
+                stretching across a phone, and the group is where the next
+                action in this row will go. */}
             <ButtonGroup align="end" stacked="hug">
-              {/* ── THE LADDER, BESIDE THE WAY ON — Ben, 2026-10-12 ────────
-                  LEADING of the forward CTA on a wide screen and ABOVE it on a
-                  narrow one, which the row gets for free: it already wraps, and
-                  this button is first in the DOM, so the two German labels stop
-                  fitting on one line long before a phone does and it lands on
-                  the line above. The media query below `--bp-md` only makes
-                  that deterministic rather than a consequence of label length.
-
-                  THREE STATES, AND `canSwap` IS READ FIRST, for the same
-                  reason the old control read it first: at the dead end there is
-                  no question to ask for help with, so offering help would be
-                  offering nothing.
-
-                    not revealed   → Hilf mir bitte              (enabled)
-                    revealed       → Die Frage funktioniert …    (enabled)
-                    nothing left   → Keine weitere Frage übrig   (disabled)
-
-                  SECONDARY, because the primary rung in this row belongs to
-                  the way on. This is the alternative to continuing, not a
-                  competitor for it. */}
-              {question.rotates && (question.id !== null || question.exhausted) && (
-                <>
-                  <CtaButton
-                    variant="outline"
-                    wrap
-                    disabled={!question.canSwap}
-                    onClick={helperShown ? question.reject : revealHelper}
-                  >
-                    {!question.canSwap
-                      ? t('session.listen.questionExhausted')
-                      : helperShown
-                        ? t('session.listen.questionReroll')
-                        : t('session.listen.questionHelp')}
-                  </CtaButton>
-
-                  {/* The way out of the dead end, and only there (D16). */}
-                  {!question.canSwap && (
-                    <CtaButton
-                      variant="outline"
-                      wrap
-                      leadingIcon={RotateCcw}
-                      onClick={question.reset}
-                    >
-                      {t('session.listen.questionReset')}
-                    </CtaButton>
-                  )}
-                </>
-              )}
-
               <CtaButton
                 variant={met ? 'primary' : 'secondary'}
                 disabled={!met}

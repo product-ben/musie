@@ -2278,6 +2278,31 @@ html[data-musy-scroll-snap] {
   color: var(--on-surface-muted);
 }
 
+/* ── THE LADDER, UNDER THE QUESTION ──────────────────────────────────────
+   *Hilf mir bitte*, and whatever it becomes, below the text it is about —
+   Ben, 2026-10-12. It spent a day in the action row beside the way on; a
+   control that acts on the question belongs under the question, not in the
+   row that leaves the step.
+
+   `--space-inset-card` OF SEPARATION, AND THE MARGIN IS NOT IT. `.musie-
+   immersive` is a column with `--space-gap-stack` between its children, so
+   the gap is already there and the two would add up. The margin is the
+   DIFFERENCE — the same arithmetic `.musie-listen__infographic` does, and
+   §L14.1's rule that a value resolves to a Layer 1 token or arithmetic over
+   one rather than to a literal.
+
+   A ROW THAT WRAPS, because the dead end puts two controls here: the disabled
+   line that explains the state and *Fragen zurücksetzen* beside it (D16). At
+   320px with German labels they take two lines, which is the honest
+   degradation — both are `min`-sized outlines and neither is what the screen
+   is for.                                                                   */
+.musie-question__swap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gap-related);
+  margin-block-start: calc(var(--space-inset-card) - var(--space-gap-stack));
+}
+
 /* ── THE FOOT IS A `ButtonGroup` NOW — 2026-10-12 ────────────────────────
    `.musie-immersive__actions` is gone, and with it a hand-written flex row,
    its wrap, its `justify-content` and the media query that had just been

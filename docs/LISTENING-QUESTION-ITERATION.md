@@ -663,7 +663,17 @@ sat next to the question and the thirty-second broccoli button under it.
   01:28   ⟨▮▮ Pause⟩                                        ← existing clock row
   mindestens hören für diese Übung
 
-            ⟨ Hilf mir bitte ⟩  ⟨ Wenn du bereit bist… ⟩   ← secondary, leading
+                                   ⟨ Bereit? Beginne… ⟩     ← the way on, alone
+```
+
+…with the ladder up under the text:
+
+```
+┌───────────────────────────────────────────────────────┐
+│  Welches Bild entsteht vor deinem inneren Auge?       │
+└───────────────────────────────────────────────────────┘
+          ↕  --space-inset-card
+   ⟨ Hilf mir bitte ⟩                                      ← outline, S rung
 ```
 
 Press once — the helper appears under the question and the label changes:
@@ -773,15 +783,22 @@ only changes its label.
 | Nothing left to offer | `Keine weitere Frage übrig` | no |
 | …**and beside it** (D16) | `Fragen zurücksetzen` + `RotateCcw` | yes |
 
-`variant="outline"` on both rungs — Ben, 2026-10-12. The primary rung in that
-row belongs to the way on; this is the alternative to continuing, not a
-competitor for it, and `outline` is the one that does not paint a surface
-beside it.
+`variant="outline"`, **`size="min"`** — the S rung — and **under the question,
+not in the action row** (Ben, 2026-10-12). It spent a day beside the way on;
+a control that acts on the question belongs under the question, not in the row
+that leaves the step. The smaller rung follows from the move: beside a primary
+it had to hold its own, and under the question it is an aside.
 
 **`canSwap` is read before anything else.** At the dead end there is no
 question to ask for help with, so offering help would be offering nothing.
 
-**The row is `ButtonGroup`, not an app pattern** (2026-10-12).
+`.musie-question__swap` is the row it sits in — an app pattern under L14,
+separated from the text by `--space-inset-card`, written as the difference
+between that and `.musie-immersive`'s own `--space-gap-stack` so the two do not
+add up (§L14.1). It wraps, because the dead end puts *Fragen zurücksetzen*
+beside the disabled line.
+
+**The action row below is `ButtonGroup`, not an app pattern** (2026-10-12).
 `.musie-immersive__actions` is gone, and with it a hand-written flex row, its
 `justify-content` and a media query. The system has a component for the actions
 a step ends with, and the one thing it could not do went INTO it rather than
@@ -792,8 +809,10 @@ staying here as a second copy (rule 1, L14.3):
 > survive the stack: hugging buttons have an alignment to have, so `end` keeps
 > meaning `end` in both directions rather than becoming two full-width rows.
 
-Used here as `align="end" stacked="hug"` — **trailing at every width**, which
-is what Ben asked for. Measured rather than eyeballed, at three widths:
+Used here as `align="end" stacked="hug"`, now holding **one child** since the
+ladder moved up — kept rather than unwound back into a div, because
+`stacked="hug"` is still what stops a long German label stretching across a
+phone. **Trailing at every width**, which is what Ben asked for. Measured rather than eyeballed, at three widths:
 
 | viewport | direction | help button | way on |
 |---|---|---|---|
