@@ -459,11 +459,22 @@ export const de: Messages = {
      `Fragen zurücksetzen` is a verb phrase and not `Zurücksetzen der Fragen`
      (§3), and `Hilfe zur Frage zeigen` carries its verb because a screen
      reader user hears the label and nothing else. */
-  'session.listen.questionChance': 'Gib der Frage 30 Sek. eine Chance',
-  'session.listen.questionReroll': 'Das klappt für mich gerade nicht',
+  /* ── ONE BUTTON, TWO PRESSES — Ben, 2026-10-12 ───────────────────────────
+     `questionHelp` is a VISIBLE LABEL now, not an icon button's accessible
+     name, so it reads as something you ask rather than as what the control is.
+     `bitte` is the one place this catalogue keeps it: §4 bars *Bitte* at the
+     START of an instruction the reader cannot decline, and this is the
+     opposite — the READER asking, in their own voice, for something entirely
+     optional. Dropping it would make a plea read as a command.
+
+     `questionReroll` says the FRAGE does not work, not that the moment does.
+     It replaces *Das klappt für mich gerade nicht*, whose `gerade` put the
+     fault on the listener's hour; this one puts it on the question, which is
+     the honest reading and the one the rejection log is counting. */
+  'session.listen.questionHelp': 'Hilf mir bitte',
+  'session.listen.questionReroll': 'Die Frage funktioniert für mich nicht',
   'session.listen.questionExhausted': 'Keine weitere Frage übrig',
   'session.listen.questionReset': 'Fragen zurücksetzen',
-  'session.listen.questionHelp': 'Hilfe zur Frage zeigen',
 
   /* ── Die Hör-Ansicht · Branch LISTEN-EXPERIMENTS ────────────────────────
      'Hören' als Substantivierung, weil die Ansicht ein Name braucht und kein

@@ -220,15 +220,16 @@ section.
 | D5 | Markdown in the questions? | **Yes, rendered where it can be.** The helper degrades to plain text inside a `placeholder` |
 | D6 | Tie-breaker on the rotation | **Never the same question twice running.** Still earns its keep under the revised D3 — see §6 |
 | D7 | The broccoli icon | **Bump `lucide-react` to 1.x** and use the real `Broccoli`. §9 |
-| D8 | 30 seconds of what? | **Wall clock**, from when the question appears on the sheet |
-| D9 | Re-roll budget | **Unlimited, and the 30 s does not re-arm** |
+| D8 | 30 seconds of what? | ~~Wall clock~~ — **retired 2026-10-12 (D18).** The help rung is the gate now |
+| D9 | Re-roll budget | **Unlimited.** The 30 s it did not re-arm no longer exists (D18) |
 | D10 | A reworded question and an old diary entry | **Snapshot the question text onto the session.** History stays true |
 | D11 | Record the rejections? | **Yes**, on `sessions`. Shape settled by D17 |
 | D12 | Freie Bahn's reflect heading | **The rotating question replaces it.** Consequence logged in §11 |
 | D13 | The pool-empty dead end | **Disabled button that says so** — *and* a **Fragen zurücksetzen** button beside it (D16). §7.4, §5.4 |
 | D14 | Four copy corrections | **All four applied.** §4.1 |
-| D15 | Does the `?` helper stay open? | **Yes — a one-way reveal.** The helper appears under the headline at `body-sm` and **the `?` disappears**. No hide affordance, so no hide label. §7.3 |
+| D15 | Does the helper stay open? | **Yes — one-way.** Revealed under the headline, and the control relabels rather than disappearing (D18). At the **question's own type token**, not `body-sm` — Ben, 2026-10-12. §7.3 |
 | D16 | The dead end's way out | **A *Fragen zurücksetzen* button**, which puts every question back in reach inside this session. §7.4 |
+| D18 | The `?` and the broccoli button | **Both replaced by one two-press control** beside the way on: *Hilf mir bitte* → *Die Frage funktioniert für mich nicht*. Ben, 2026-10-12. §7 |
 | D17 | Reset vs. the rejection log | **Two arrays on `sessions`** — delegated to me, on "easiest to explain, no architectural bloat". Reasoning, and the two rejected shapes, in §5.3.1 |
 
 ---
@@ -648,150 +649,98 @@ only screen that gets the re-roll button** (D4). By the time `/reflect` is
 reached the question is locked, so the question somebody listened for is always
 the question they answer.
 
-### 7.1 · Composition
+### 7.1 · Composition (D18, 2026-10-12)
 
-Top to bottom, inside `.musie-immersive`:
-
-```
-Before the `?` is pressed:
+**One control, two presses, beside the way on.** It replaces both the `?` that
+sat next to the question and the thirty-second broccoli button under it.
 
 ```
 ┌─ .musie-immersive__lead ──────────────────────────────┐
-│  Welches Bild entsteht vor deinem         ⟨ ? ⟩       │   ← headline row
+│  Welches Bild entsteht vor deinem                     │   ← the question
 │  inneren Auge?                                        │
 └───────────────────────────────────────────────────────┘
-          ↕  --space-inset-card
-   ⟨ 🥦 Gib der Frage 30 Sek. eine Chance ⟩                 ← S, ghost, disabled
-          ↕
-  00:42   ⟨▶⟩                                               ← existing clock row
+
+  01:28   ⟨▮▮ Pause⟩                                        ← existing clock row
   mindestens hören für diese Übung
-                                   ⟨ Weiter ⟩               ← existing way on
+
+            ⟨ Hilf mir bitte ⟩  ⟨ Wenn du bereit bist… ⟩   ← secondary, leading
 ```
 
-After the `?` is pressed — **the helper appears and the `?` goes** (D15):
+Press once — the helper appears under the question and the label changes:
 
 ```
-┌─ .musie-immersive__lead ──────────────────────────────┐
-│  Welches Bild entsteht vor deinem                     │   ← no control beside it
-│  inneren Auge?                                        │
-│                                                       │
-│  Was für einen Namen würdest du der Szene geben?      │   ← body-sm
-│  Was passiert darin?                                  │
+┌───────────────────────────────────────────────────────┐
+│  Welches Bild entsteht vor deinem inneren Auge?       │
+│  Was für einen Namen würdest du der Szene geben?      │   ← same type token,
+│  Was passiert darin?                                  │     muted ink
 └───────────────────────────────────────────────────────┘
-          ↕  --space-inset-card
-   ⟨ 🥦 Gib der Frage 30 Sek. eine Chance ⟩
+
+  ⟨ Die Frage funktioniert für mich nicht ⟩  ⟨ Wenn du… ⟩
 ```
 
-After 30 seconds of wall clock (D8), that one button becomes:
+Press again and the question swaps, the helper collapses, and the label is
+*Hilf mir bitte* for the new one.
 
-```
-   ⟨ ⟳ Das klappt für mich gerade nicht ⟩                    ← S, ghost, enabled
-```
+**On a phone it stacks**, help above the way on — §7.4.
 
-It is **one control in two states**, not two controls. Label, icon and
-`disabled` change together; nothing moves.
+### 7.2 · Why the ladder replaced the timer
 
-### 7.2 · The headline row
+D8 bought a considered rejection with thirty seconds of wall clock. **The
+ladder buys it with the shape of the control instead**: the rejection does not
+exist until help has been asked for and read, so nobody turns down a question
+they have not engaged with. That is the same guarantee, without a label that
+changes on a clock rather than on a press — and *Hilf mir bitte* is available
+immediately, because there is no reason to make somebody wait for help.
 
-The question, with a `?` icon button beside it. The question is already an
-`<h2>` on this sheet — `bodyOnly` in `lib/markdown.ts` promotes `listen_md`'s
-first paragraph to a heading precisely so the sheet leads with the question.
-What changes is only **where the string comes from**.
+It also removed three things rather than adding one: the timer and its effect,
+the `?` icon button, and `.musie-question__headrow` — the app pattern that
+existed only to keep a control out of the Lightbox's close corner, which is the
+corner that produced `d797571`.
 
-A heading with a control beside it is a shape the system has once, as
-`ContentBox`'s `musy-box__headrow`, and only for dismissal. This sheet is not a
-ContentBox. Under `10-layout.md` L14 that makes it a permitted app pattern —
-`musie-`-prefixed, every declaration resolving to a Layer 1 token — and under
-**L14.3 a second call site makes it a component request**. There is only one
-call site (D4 keeps it off `/reflect`), so it stays an app pattern for now, and
-§12 logs it so the request exists when a second one appears.
+### 7.3 · The helper
 
-The `?` is an `IconButton`, `size="min"`, `variant="ghost"`, with its label
-passed explicitly (rule 7 — `IconButton` has no catalogue default for this and
-an unnamed icon-only control is a 4.1.2 failure). **One label, not two:** D15
-makes this a one-way reveal, so there is no hide state to name.
+Revealed under the question, in **`--type-heading-md-*` — the question's own
+type token** (Ben, 2026-10-12).
 
-### 7.3 · The helper (D15)
+It shipped at `body-sm` on L8's reading that this is a "helper line", filed
+with captions and timestamps. That was the wrong shelf: a caption annotates
+something you are already reading, and this **replaces** the question for
+somebody who could not get started with it. L8's floor is a minimum, so reading
+*up* never bends it.
 
-**A one-way reveal, not a toggle.** Pressing `?` puts the helper under the
-headline, between the headline row and the button, and **removes the `?`
-itself** — it has nothing left to do. There is no way to put the helper away
-again, which is the point: it is a sentence of help, not a panel.
+Which leaves **ink to carry the hierarchy** — `--on-surface-muted`, at the same
+scale and weight, so the quiet one is quiet by contrast. `--measure-heading`,
+matching the question, so the two read as one column.
 
-- **`body-sm`.** Smaller than the question it supports, which is the one thing
-  on this sheet that should be large.
-- **Markdown** (D5), through the existing `Markdown` component.
-- **Scoped to the question, not the sheet.** A re-roll brings a new question
-  with its helper collapsed and its `?` back. Revealing Q3's helper says
-  nothing about Q4's.
+The revealed flag stays in `sessionStorage`, keyed by session and question
+(§5.2 of `lib/questions.ts`): closing and reopening the sheet does not put
+somebody back on the first rung, and a swap collapses it for the new question.
 
-**Where the revealed flag lives: `sessionStorage`, keyed by session id and
-question id.** Not the database — a disclosure state is not worth a column —
-and not component state alone, which would re-collapse the helper every time
-the sheet is closed and reopened. `lib/scan.ts` already holds a scanned code
-this way, with the reasoning that it belongs to the tab that produced it, and
-`lib/identity.ts` has the guarded accessor to copy. It dies with the tab, which
-is the right lifetime for "I have read this".
+**No focus management any more.** The `?` used to unmount itself on press, and
+focus had to be sent somewhere deliberately; this control stays mounted and
+only changes its label.
 
-One consequence worth stating: **removing the `?` on press moves focus.** The
-control that took the press stops existing, so focus has to be sent somewhere
-deliberately — the helper itself, as a focusable region, rather than left to
-fall to `<body>`.
+### 7.4 · The three states, and the row
 
-### 7.4 · The button, in three states
+| State | Label | Enabled |
+|---|---|---|
+| Helper not revealed | `Hilf mir bitte` | yes |
+| Helper revealed, something left | `Die Frage funktioniert für mich nicht` | yes |
+| Nothing left to offer | `Keine weitere Frage übrig` | no |
+| …**and beside it** (D16) | `Fragen zurücksetzen` + `RotateCcw` | yes |
 
-| State | Label | Icon | Enabled |
-|---|---|---|---|
-| Before 30 s | `Gib der Frage 30 Sek. eine Chance` | `Broccoli` | no |
-| After 30 s | `Das klappt für mich gerade nicht` | `RefreshCw` | **yes** |
-| Nothing left to offer | `Keine weitere Frage übrig` | `RefreshCw` | no |
-| …**and beside it** (D16) | `Fragen zurücksetzen` | `RotateCcw` | **yes** |
+`variant="secondary"`, because the primary rung in that row belongs to the way
+on: this is the alternative to continuing, not a competitor for it.
 
-`CtaButton`, `variant="ghost"`, **`size="min"`** — the system's sizes are
-`min | primary | comfort | guided` and `min` is the S rung. `wrap` is on:
-*"Gib der Frage 30 Sek. eine Chance"* is 33 characters on a 320px screen.
+**`canSwap` is read before anything else.** At the dead end there is no
+question to ask for help with, so offering help would be offering nothing.
 
-- **The 30 seconds is wall clock** (D8), from when the question appears on the
-  sheet. It does not pause with the music and it does not re-arm (D9).
-- **Unlimited re-rolls, no re-arm** (D9). Once the first 30 s is past the
-  button stays enabled until the pool is empty.
-- **A re-roll rewrites `listening_question_id` and its snapshot, and appends
-  the rejected id to `rejected_question_ids`** — one write, so a reload never
-  re-offers what was just rejected.
-- **Within a session, a re-roll never re-offers a rejected question.** The
-  candidate pool is the exercise's set minus `rejected_question_ids`, ordered
-  by §6's rules.
-- **Third state** when that pool is empty (D13). The user keeps the last
-  question they rejected, the button says there is nothing else, and
-  `question_rejections` has the row that says it happened (§5.4).
-
-### 7.5 · *Fragen zurücksetzen* (D16)
-
-The dead end gets a way out. It appears **only in the third state**, beside the
-disabled button rather than instead of it — Ben's *"also show a button"*. The
-disabled one explains the state; this one is the way out of it.
-
-```
-   ⟨ ⟳ Keine weitere Frage übrig ⟩     ⟨ ↺ Fragen zurücksetzen ⟩
-       S, ghost, disabled                  S, ghost, enabled
-```
-
-Pressing it **empties `rejected_this_round` and nothing else.** Every question
-is offerable again, the next re-roll works, and `rejected_question_ids` keeps
-every rejection — which is what makes a reset the loudest row in §5.4's view
-rather than the one that erases itself. §5.3.1 is why that is two columns.
-
-`RotateCcw` and not `RefreshCw`: the repo already imports `RotateCcw`, and a
-second circular arrow identical to the one on the button next to it would make
-two different actions look like one.
-
-**Two S ghost buttons in a row on a listening sheet is more furniture than this
-screen normally carries**, and the alternative is one button whose third state
-simply *is* `Fragen zurücksetzen` — pressable, so it needs no sentence to
-explain that something can be done. Specced as Ben asked; the alternative is
-logged in §12 as the thing to try if the row reads busy on a phone.
-
----
+**Leading on a wide screen, above on a phone.** The row is already
+`flex-wrap: wrap` with this button first in the DOM, so the two German labels
+stop fitting and it wraps on its own; the `max-width: 767px` query only makes
+that deterministic instead of a consequence of how long a label happens to be.
+768px is `--bp-md`, written out because a custom property cannot be read inside
+a media query.
 
 ## 8 · The reflect step
 
@@ -841,11 +790,10 @@ flat `session.listen.*` style the file already uses.
 
 | Key | de | en |
 |---|---|---|
-| `session.listen.questionChance` | Gib der Frage 30 Sek. eine Chance | Give the question 30 seconds |
-| `session.listen.questionReroll` | Das klappt für mich gerade nicht | This isn’t working for me right now |
+| `session.listen.questionReroll` | Die Frage funktioniert für mich nicht | This question isn’t working for me |
 | `session.listen.questionExhausted` | Keine weitere Frage übrig | No other question left |
 | `session.listen.questionReset` | Fragen zurücksetzen | Reset questions |
-| `session.listen.questionHelp` | Hilfe zur Frage zeigen | Show help for this question |
+| `session.listen.questionHelp` | Hilf mir bitte | Please help me |
 
 Held against `docs/GERMAN-UI-WRITING.md`: du throughout (§1), sentence case
 (§2), every label a verb phrase including the `?`'s accessible name (§3), no
@@ -853,8 +801,18 @@ Held against `docs/GERMAN-UI-WRITING.md`: du throughout (§1), sentence case
 here, well inside the budget (§5) — and `Gib der Frage 30 Sek. eine Chance` is
 33 characters, which is why §7.4 passes `wrap`.
 
-**`questionHelp` is one string, not two** (D15). A one-way reveal has no hide
-state, so there is no second label to drift out of sync.
+**`questionHelp` is a VISIBLE LABEL now**, not an icon button's accessible
+name, so it reads as something you ask rather than as what the control is.
+
+**`bitte` is the one place this catalogue keeps it.** §4 bars *Bitte* at the
+start of an instruction the reader cannot decline; this is the opposite — the
+reader asking, in their own voice, for something entirely optional. Dropping it
+would make a plea read as a command.
+
+**`questionReroll` says the FRAGE does not work**, not that the moment does. It
+replaced *Das klappt für mich gerade nicht*, whose `gerade` put the fault on
+the listener's hour; this puts it on the question, which is the honest reading
+and the one the rejection log is counting.
 
 ---
 
@@ -891,6 +849,23 @@ Build risk is low and was checked, not assumed: `package.json` shape is
 near-identical across the two versions — same `main`, same `module` (`.js` →
 `.mjs`, which Vite resolves), no `exports` map in either, `sideEffects: false`
 in both, and React 19 in `peerDependencies`.
+
+### 9.1 · And then D18 removed its reason — 2026-10-12
+
+**Nothing in this branch needs lucide 1.x any more.** The bump existed for
+`Broccoli`; D18 retired the broccoli button, and the same change retired the
+`?` that used `CircleQuestionMark`. The only glyph the feature still draws is
+`RotateCcw` on *Fragen zurücksetzen*, and that has been in 0.470.0 all along.
+
+Left in place rather than reverted, and that is a judgement rather than an
+oversight: the bump is landed, green on `pnpm check` and both builds, and its
+seven renames are spread across eleven files. Backing it out is a second
+67-file change with its own risk, to return to an older dependency, for no
+behavioural gain.
+
+**It is Ben's call and it is cheap to make**, because the bump is one commit
+(`5c0bc30`) and nothing after it depends on a 1.x-only name. Revert it and the
+only edits needed are the seven glyph names going back.
 
 **This is its own step with its own gate.** `pnpm check` plus both bundle
 builds plus a Storybook pass over every component that draws a glyph, landing

@@ -631,17 +631,14 @@ export const en = {
      These five are chrome: the app's own words ABOUT the apparatus, permanent,
      and nobody else will ever supply them.
 
-     `questionChance` names the wait and not the mechanism — "give it a chance"
-     is an invitation to stay with something, which is the whole point of
-     making the control wait thirty seconds before it will do anything.
 
-     ONE HELP LABEL AND NOT TWO: the `?` is a one-way reveal, so there is no
-     hide state to name and no second string to drift out of sync with it. */
-  'session.listen.questionChance': 'Give the question 30 seconds',
-  'session.listen.questionReroll': 'This isn’t working for me right now',
+  /* ONE BUTTON, TWO PRESSES. The first label is the reader asking for
+     something optional; the second says the QUESTION does not work, rather
+     than that this moment does not — which is what the rejection log counts. */
+  'session.listen.questionHelp': 'Please help me',
+  'session.listen.questionReroll': 'This question isn’t working for me',
   'session.listen.questionExhausted': 'No other question left',
   'session.listen.questionReset': 'Reset questions',
-  'session.listen.questionHelp': 'Show help for this question',
 
   /* ── The listening view · the LISTEN-EXPERIMENTS branch ──────────────────
      The press on the stage's transport opens a full-screen sheet and the track
