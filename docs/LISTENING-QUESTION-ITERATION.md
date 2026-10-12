@@ -806,7 +806,31 @@ look for what it was overriding. The arithmetic itself is still live on
 `.musie-listen__infographic`, which does want a different number.
 
 It wraps, because the dead end puts *Fragen zurücksetzen* beside the disabled
-line.
+line — and it is **pulled 24px leading**, which is an optical correction and
+Ben's number from the screen (2026-10-12).
+
+A bordered pill starts its *label* well inside its own box, so a button whose
+box lines up with the text above reads as indented. Measured before: text at
+32, label at 57. After: label at 33.
+
+**Not derived from the button's geometry**, deliberately. The 25px between
+those two is `.musy-btn--min`'s margin plus border plus inline padding, and a
+screen computing its offset from those three would be reaching into a
+component's internals — exactly what L7 and rule 1's opening forbid, and it
+would break silently the next time the rung is re-padded. So it is one Layer 1
+step, a pixel off the arithmetic and right by eye.
+
+**And it clears the mask.** `.musy-lightbox__popup` is `overflow: hidden`, so a
+control pulled past its padding is *cut*, not merely crowded. Measured at four
+widths:
+
+| viewport | popup padding | button box | focus ring reaches |
+|---|---|---|---|
+| 1280 · 768 · 390 · 320 | 32px | **16** | **11** |
+
+Eleven pixels of daylight at the narrowest width the app supports, and the
+padding does not change with the viewport. That margin is the budget: a larger
+pull than `--sp-5` has to be measured again, not assumed.
 
 **The action row below is `ButtonGroup`, not an app pattern** (2026-10-12).
 `.musie-immersive__actions` is gone, and with it a hand-written flex row, its
