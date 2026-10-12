@@ -2063,42 +2063,45 @@ html[data-musy-scroll-snap] {
    so the request exists the moment a second one appears.
    ═════════════════════════════════════════════════════════════════════════ */
 
-/* ── THE HELPER, AT `body-lg` ────────────────────────────────────────────
-   Three steps in two days, and the argument moved each time:
+/* ── THE HELPER ──────────────────────────────────────────────────────────
+   `body-sm`, set off from the question by `--space-gap-related`. Four sizes in
+   two days; this is where it landed, and the two moves that got here are the
+   ones worth keeping:
 
-     body-sm        L8 files "helper lines" with captions and timestamps.
-                    Wrong shelf — a caption annotates something you are
-                    already reading, and this REPLACES the question for
-                    somebody who could not start with it.
-     heading-md     the question's own token, so the two read as one voice.
-                    True, but it made the help as loud as the thing it was
-                    helping with, and the sheet then had two display-sized
-                    sentences competing at the top of it.
-     body-lg        Ben, 2026-10-12. The largest step that is still BODY:
-                    prose to be read rather than a title to be scanned, which
-                    is what this is — it is two concrete prompts, and prompts
-                    are read start to finish.
+     · body-lg proved the VOICE, not the scale. The token carries
+       `--font-text`, so dropping out of `heading-md` swapped Onest for
+       Literata — and that is what stopped the help reading as a second
+       question. The serif survives this change; only the step moves.
+     · the gap was the other half. At `margin: 0` the help sat hard against
+       the question and the two read as one wrapped sentence, which is the
+       failure a smaller step makes worse rather than better.
 
-   `--font-text` AND A REGULAR WEIGHT come with the token, and that is the
-   half `heading-md` could not give: the question stays the display voice and
-   the help is plainly an answer to it rather than a second question.
+   SO IT IS THE CAPTION'S TOKEN SET EXACTLY — `--type-body-sm-*` in
+   `--on-surface-muted`, the same as `.musie-immersive__caption` under the
+   countdown. That is the point rather than a coincidence: the sheet has two
+   quiet lines and they should be the same quiet.
 
-   INK STILL CARRIES THE REST. `--on-surface-muted` was doing the whole job of
-   the hierarchy while the scale matched; now it is doing the smaller half of
-   it, which is the right amount of work for a colour.
+   L8 lists "captions, helper lines, counts, timestamps" at `body-sm`, so this
+   is the step the layer always prescribed. The route here went through
+   body-lg and heading-md because the question was whether this is a helper
+   line at all; having been read at three sizes, it is.
 
-   `--measure-body`, not the heading's, now that this is body copy — a
-   reading measure is what 62ch exists for. */
+   `--space-gap-related` is Layer 1's own name for atoms that belong together —
+   "label+field, title+subtitle" — which is what a question and its help are.
+
+   `--measure-body`, because this is body copy and 62ch is what a reading
+   measure is for.                                                           */
 .musie-question__helper {
   margin: 0;
+  margin-block-start: var(--space-gap-related);
   max-inline-size: var(--measure-body);
   text-wrap: var(--text-wrap-body);
   color: var(--on-surface-muted);
-  font-family: var(--type-body-lg-family);
-  font-size: var(--type-body-lg-size);
-  font-weight: var(--type-body-lg-weight);
-  line-height: var(--type-body-lg-line);
-  letter-spacing: var(--type-body-lg-tracking);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line);
+  letter-spacing: var(--type-body-sm-tracking);
 }
 
 /* ── THIS HEADING IS NOT A STEP HEADLINE ANY MORE ─────────────────────────

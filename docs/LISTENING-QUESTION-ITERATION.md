@@ -699,26 +699,39 @@ corner that produced `d797571`.
 
 ### 7.3 · The helper
 
-Revealed under the question, at **`body-lg`** — three steps in two days, and
-the argument moved each time:
+Revealed under the question at **`body-sm`**, set off by
+**`--space-gap-related`**. Four sizes in two days, and the route matters more
+than the destination:
 
 | | |
 |---|---|
-| `body-sm` | L8 files "helper lines" with captions and timestamps. Wrong shelf: a caption annotates something you are already reading, and this **replaces** the question for somebody who could not start with it |
-| `heading-md` | the question's own token, so the two read as one voice. True, but it made the help as loud as the thing it was helping with, and the sheet had two display-sized sentences competing at the top |
-| **`body-lg`** | Ben, 2026-10-12. The largest step that is still **body** — prose to be read rather than a title to be scanned, which is what two concrete prompts are |
+| `body-sm` | L8 files "helper lines" with captions and timestamps |
+| `heading-md` | the question's own token, so the two read as one voice. It made the help exactly as loud as the thing it was helping with |
+| `body-lg` | the largest step that is still body — and this is the one that **proved the voice**, because the token carries `--font-text` |
+| **`body-sm`** | Ben, 2026-10-12. Back to the step L8 always prescribed, keeping what `body-lg` found |
 
-`body-lg` brings `--font-text` and a regular weight, which is the half
-`heading-md` could not give: measured on the sheet, the question is **Onest
-25.4px / 500** and the help is **Literata 19.8px / 400**. The question keeps
-the display voice and the help is plainly an answer to it rather than a second
-question — and it now shares a voice with the sheet's other quiet line,
-*mindestens hören für diese Übung*.
+**The voice was the real discovery, not the scale.** Dropping out of
+`heading-md` swapped Onest for Literata, and that is what stopped the help
+reading as a second question. The serif survived the last move; only the step
+came down.
 
-Ink still carries the rest: `--on-surface-muted` was doing the whole job of the
-hierarchy while the scale matched; now it does the smaller half, which is the
-right amount of work for a colour. `--measure-body`, not the heading's, now
-that this is body copy.
+**The gap was the other half.** At `margin: 0` the help sat hard against the
+question and the two read as one wrapped sentence — a failure a smaller step
+makes worse, not better. `--space-gap-related` is Layer 1's own name for atoms
+that belong together ("label+field, title+subtitle"), which is what a question
+and its help are.
+
+Measured on the sheet:
+
+| | | |
+|---|---|---|
+| Question | Onest **25.4px** / 500 | `--on-surface` |
+| Helper | Literata **15.8px** / 400 | `--on-surface-muted` |
+| Gap | **12px** (`--sp-3`) | |
+
+Which makes it **the caption's token set exactly** — the same as
+`.musie-immersive__caption` under the countdown. That is the point rather than
+a coincidence: the sheet has two quiet lines and they should be the same quiet.
 
 The revealed flag stays in `sessionStorage`, keyed by session and question
 (§5.2 of `lib/questions.ts`): closing and reopening the sheet does not put
