@@ -2304,35 +2304,37 @@ html[data-musy-scroll-snap] {
    degradation — both are `min`-sized outlines and neither is what the screen
    is for.
 
-   ── PULLED 24px LEFT, AND IT IS AN OPTICAL CORRECTION ────────────────────
-   Ben's number, from the screen, 2026-10-12. A bordered pill starts its LABEL
-   well inside its own box, so a button whose box lines up with the text above
-   it reads as indented. Measured before the nudge: the question's text at 32
-   and the button's label at 57.
+   ── PULLED 8px LEADING, WHICH LINES UP THE BOX AND NOT THE LABEL ────────
+   Ben's number, from the screen, 2026-10-12. It was 24px first, which put the
+   button's LABEL on the text's left edge; 16px back from there puts its BOX
+   there instead — measured, the question's text at 32 and the pill's border at
+   32, with the label falling where the pill's own padding puts it.
 
-   NOT DERIVED FROM THE BUTTON'S OWN GEOMETRY, deliberately. The 25px that
-   separates those two is `.musy-btn--min`'s margin (--sp-2) plus its border
-   plus its inline padding (--sp-4) — and a screen that computed its offset
-   from those three would be reaching into a component's internals, which is
-   exactly what L7 and rule 1's opening forbid. It would also break silently
-   the next time the rung is re-padded. So this is an app-level nudge of one
-   Layer 1 step, which happens to land a pixel off the arithmetic and is right
-   by eye, which is what optical alignment means.
+   Both are defensible and this is the one that was chosen by eye. Worth
+   knowing which it is, because the two drift apart the moment the rung is
+   re-padded: box alignment is stable under that, label alignment is not.
 
-   ── AND IT STAYS CLEAR OF THE MASK ───────────────────────────────────────
-   `.musy-lightbox__popup` is `overflow: hidden`, so a control pulled past its
-   padding is CUT, not merely crowded. Measured at 1280, 768, 390 and 320: the
-   popup's inline padding is 32px at every one of them, so the button's box
-   lands at 16 and its focus ring — `--focus-ring-clearance`, 5px — reaches 11.
-   Eleven pixels of daylight at the narrowest width the app supports.
+   NOT DERIVED FROM THE BUTTON'S OWN GEOMETRY. 8px is `.musy-btn--min`'s own
+   margin, and cancelling it is exactly what this does — but a screen that
+   wrote `calc(var(--sp-2) * -1)` BECAUSE that is the rung's margin would be
+   reaching into a component's internals, which L7 and rule 1's opening forbid.
+   It is one Layer 1 step, chosen on the screen.
 
-   That margin is the budget. A larger pull than --sp-5 has to be measured
+   ── THE FOCUS RING IS WHAT STILL NEEDS THE GUTTER ───────────────────────
+   The box no longer leaves the content edge, so the pull itself is safe by
+   construction. The RING is not: `--focus-ring-clearance` is 5px, so it
+   reaches 27 — three pixels inside a content edge at 32. Before
+   `.musy-lightbox__body` took the sheet's inline inset onto itself, the
+   scrollport clipped exactly there and the ring would have been cut on every
+   keyboard focus. That fix is load-bearing for this rule even though this rule
+   no longer overflows.
+   The gutter is --space-inset-sheet, 32px. A larger pull has to be measured
    again, not assumed.                                                       */
 .musie-question__swap {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-gap-related);
-  margin-inline-start: calc(var(--sp-5) * -1);
+  margin-inline-start: calc(var(--sp-2) * -1);
 }
 
 /* ── THE FOOT IS A `ButtonGroup` NOW — 2026-10-12 ────────────────────────

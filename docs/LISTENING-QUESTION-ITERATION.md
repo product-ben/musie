@@ -806,22 +806,31 @@ look for what it was overriding. The arithmetic itself is still live on
 `.musie-listen__infographic`, which does want a different number.
 
 It wraps, because the dead end puts *Fragen zurücksetzen* beside the disabled
-line — and it is **pulled 24px leading**, which is an optical correction and
-Ben's number from the screen (2026-10-12).
+line — and it is **pulled 8px leading**, Ben's number from the screen
+(2026-10-12).
 
-A bordered pill starts its *label* well inside its own box, so a button whose
-box lines up with the text above reads as indented. Measured before: text at
-32, label at 57. After: label at 33.
+It was 24px first, which put the button's **label** on the text's left edge;
+16px back from there puts its **box** there instead. Measured: text at 32, pill
+border at 32, label at 49 where the pill's own padding puts it.
 
-**Not derived from the button's geometry**, deliberately. The 25px between
-those two is `.musy-btn--min`'s margin plus border plus inline padding, and a
-screen computing its offset from those three would be reaching into a
-component's internals — exactly what L7 and rule 1's opening forbid, and it
-would break silently the next time the rung is re-padded. So it is one Layer 1
-step, a pixel off the arithmetic and right by eye.
+Both are defensible and this is the one chosen by eye. Worth knowing which it
+is, because the two drift apart the moment the rung is re-padded — box
+alignment is stable under that, label alignment is not.
 
-**And it needed a design-system change to clear the mask** — which I got wrong
-first and Ben caught from the screen.
+**Not derived from the button's geometry**, deliberately. 8px happens to be
+`.musy-btn--min`'s own margin and cancelling it is exactly what this does —
+but a screen that wrote it *because* that is the rung's margin would be
+reaching into a component's internals, which L7 and rule 1's opening forbid.
+It is one Layer 1 step, chosen on the screen.
+
+**The focus ring is what still needs the gutter.** The box no longer leaves the
+content edge, so the pull itself is safe by construction — but
+`--focus-ring-clearance` is 5px, so the ring reaches 27, three pixels inside a
+content edge at 32. The design-system change below is therefore load-bearing
+for this rule even though the rule no longer overflows.
+
+**That change was needed because I got the first check wrong** — Ben caught it
+from the screen.
 
 I measured the button's box at x=16 against `.musy-lightbox__popup`, which
 clips at 0, and called it visible. That does not follow:
