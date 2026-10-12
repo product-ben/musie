@@ -4772,6 +4772,34 @@
 }
 .musy-btn-group--center { justify-content: center; }
 .musy-btn-group--end { justify-content: flex-end; }
+
+/* ── A BUTTON IS NEVER SQUEEZED; THE ROW WRAPS INSTEAD — 2026-10-12 ────────
+   This is the rule the component's header always claimed and never enforced:
+   "below --bp-md it either wraps into a ragged staircase or SQUEEZES THE
+   LABELS". The stacking covered the first half at a viewport threshold, and
+   nothing covered the second — so between "both labels fit" and "the viewport
+   is phone-sized" a flex item would shrink below its own label rather than
+   wrap, because `.musy-btn--wrap` sets `white-space: normal` and a wrapping
+   label's min-content width is one word.
+
+   MEASURED on the listen sheet at a 1680px viewport: the row needs 787px with
+   a short label and 990px with a long one. In that band the long state wrapped
+   and the short state did not, so changing the label MOVED THE OTHER BUTTON —
+   and below 787px the way on was squeezed instead of wrapping, which is how a
+   label ends up clipped at the sheet's edge.
+
+   `flex-shrink: 0` says: do not take width off this control to make the row
+   fit. Flex's answer is then to wrap, which is the honest one — not enough
+   horizontal space IS the condition for stacking.
+
+   `max-inline-size: 100%` is the other half and stops the cure being worse
+   than the disease: a single label longer than the whole group would otherwise
+   overflow it. Capped, the button fills the line and the label wraps INSIDE
+   it, which is the stacked shape anyway.                                    */
+.musy-btn-group > .musy-btn {
+  flex-shrink: 0;
+  max-inline-size: 100%;
+}
 @media (max-width: 767.98px) {
   .musy-btn-group {
     flex-direction: column;
