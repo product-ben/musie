@@ -820,17 +820,43 @@ component's internals — exactly what L7 and rule 1's opening forbid, and it
 would break silently the next time the rung is re-padded. So it is one Layer 1
 step, a pixel off the arithmetic and right by eye.
 
-**And it clears the mask.** `.musy-lightbox__popup` is `overflow: hidden`, so a
-control pulled past its padding is *cut*, not merely crowded. Measured at four
-widths:
+**And it needed a design-system change to clear the mask** — which I got wrong
+first and Ben caught from the screen.
 
-| viewport | popup padding | button box | focus ring reaches |
-|---|---|---|---|
-| 1280 · 768 · 390 · 320 | 32px | **16** | **11** |
+I measured the button's box at x=16 against `.musy-lightbox__popup`, which
+clips at 0, and called it visible. That does not follow:
+`getBoundingClientRect` reports where a box is **laid out**, not whether an
+ancestor clips it. The real clipper was one level in —
+**`.musy-lightbox__body`**, which is `overflow-y: auto`, and a scroll container
+cannot keep the other axis visible: `overflow-x` computes to `auto` and cuts at
+the **padding box**. With the sheet's inline inset on the popup, that padding
+box edge sat exactly on the content edge, so the nudged button was sliced flat
+at 32.
 
-Eleven pixels of daylight at the narrowest width the app supports, and the
-padding does not change with the viewport. That margin is the budget: a larger
-pull than `--sp-5` has to be measured again, not assumed.
+Nothing inside that scroller can render outside it, so no app rule could fix
+it. The fix went into the component (rule 1, L7), and it is a move the file had
+already made on the other axis — `.musy-lightbox__body` carries the popup's
+**block** inset for the same reason, commented *"so it is INSIDE the scrollport
+and the last line clears the edge at the bottom of the scroll"*. The inline
+inset now does the same on the immersive surface:
+
+```css
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body {
+  margin-inline: calc(var(--space-inset-sheet) * -1);
+  padding-inline: var(--space-inset-sheet);
+}
+```
+
+The body reaches back out to the popup's border edge and re-applies the inset
+itself, so **content lands exactly where it did and only the clip boundary
+moves**. The popup keeps its own padding, because the headline is a *sibling*
+of the body and the close control is positioned against the popup's padding
+box.
+
+Measured after, at 1280 and 320: clip edge **0**, button box **16**, and the
+question, the caption and the close control all unmoved at 32, 32 and the
+trailing inset. The gutter this opens is `--space-inset-sheet` (32px), and that
+is the budget for any optical pull inside this sheet.
 
 **The action row below is `ButtonGroup`, not an app pattern** (2026-10-12).
 `.musie-immersive__actions` is gone, and with it a hand-written flex row, its

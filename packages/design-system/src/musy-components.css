@@ -2262,6 +2262,35 @@
 .musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body {
   display: flex;
   flex-direction: column;
+  /* ── THE INLINE INSET MOVES ONTO THE SCROLLER — 2026-10-12 ──────────────
+     The same move the BLOCK inset already made (see `.musy-lightbox__body`
+     below, "moved onto the scroller"), for the same reason and now on the
+     other axis.
+
+     WHY IT MATTERS HERE. This body is `overflow-y: auto`, and a scroll
+     container cannot keep the other axis visible — `overflow-x` computes to
+     `auto` and CLIPS AT THE PADDING BOX. With the inset on the popup, the
+     body's padding box edge sat exactly on the content edge, so anything a
+     screen pulled into the gutter was cut rather than crowded. Measured: an
+     app-level control nudged 24px leading rendered its box at 16 and was
+     sliced flat at 32.
+
+     Padding, not position: `padding-inline` is INSIDE the scrollport, so a
+     child may sit in it and remain visible, exactly as the block padding lets
+     the last line clear the bottom of the scroll.
+
+     THE NEGATIVE MARGIN IS WHY THE POPUP KEEPS ITS OWN PADDING. The headline
+     is a SIBLING of this body, a direct child of the popup, and the close
+     control is positioned against the popup's padding box; stripping the
+     popup's inset would move the first and is no business of the second. So
+     the body alone reaches back out to the popup's border edge and re-applies
+     the inset itself — its content lands exactly where it always did, and
+     only the clip boundary moves.
+
+     The gutter this opens is `--space-inset-sheet` (32px), and that is the
+     budget for any optical pull a screen makes inside this sheet. */
+  margin-inline: calc(var(--space-inset-sheet) * -1);
+  padding-inline: var(--space-inset-sheet);
 }
 
 .musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body > :only-child {
