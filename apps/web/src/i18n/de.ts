@@ -441,7 +441,17 @@ export const de: Messages = {
      Die Uhr gehört jetzt dem Knopf darüber, der das Minimum in seiner eigenen
      Beschriftung nennt. Dieser hier sagt nur noch, worauf er wartet. */
   'session.listen.startLocked': 'Zuerst hören, dann reflektieren',
-  'session.listen.start': 'Wenn du bereit bist, beginne zu reflektieren',
+  /* ── SHORTER, AND THE QUESTION IS WHY IT WORKS — Ben, 2026-10-12 ─────────
+     Was 'Wenn du bereit bist, beginne zu reflektieren'. The conditional spent
+     four words before reaching the verb, on a control that is only shown once
+     the gate has opened — so it was asking permission to offer the thing it
+     was already offering.
+
+     `Bereit?` keeps the whole of that courtesy in one word. It is the only
+     question mark on a button in this catalogue, and it earns it: the label
+     asks and answers in the same breath, which is what makes the imperative
+     after it read as an invitation rather than an order (§3). */
+  'session.listen.start': 'Bereit? Beginne zu reflektieren',
   /* Beschreibend, kein Satzzeichen-Deutsch: was zu sehen ist, in einem Satz.
      'Smartphone', weil 'Handy' in diesem Deck sonst nirgends steht. */
   'session.listen.infographicAlt': 'Eine Hand hält eine Karte über einen Tisch, daneben liegt ein Smartphone, aus dem Musik klingt.',

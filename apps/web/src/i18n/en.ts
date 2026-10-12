@@ -610,7 +610,9 @@ export const en = {
      still said by a button, which is the rule above; it is just said by the
      button that is counting rather than by the one that is disabled. */
   'session.listen.startLocked': 'Listen first, then reflect',
-  'session.listen.start': 'Start reflecting whenever you are ready',
+  /* Same cut as the German: the conditional clause is one word now, and the
+     question mark is what keeps the imperative an invitation. */
+  'session.listen.start': 'Ready? Start reflecting',
   /* THE PICTURE BETWEEN THE WORDS AND THE CONTROLS — 2026-10-07.
      DESCRIBED, NOT SILENT. The diary's marks take `alt=""` because the link
      around them already says which session; nothing says this one. The step's
