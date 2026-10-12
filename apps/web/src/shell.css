@@ -2092,7 +2092,19 @@ html[data-musy-scroll-snap] {
    a flex item's floor is its content's min-content width, which for a German
    compound is the compound. */
 .musie-question__headrow > .musie-md {
-  flex: 1 1 auto;
+  /* ── `0 1 auto`, AND THE `1` IN FRONT WAS A REAL BUG ────────────────────
+     It shipped as `flex: 1 1 auto` and the screenshot showed why that is
+     wrong: GROW makes this box fill the row, which pushes the `?` to the
+     trailing edge — and the trailing edge of the first row is exactly where
+     the Lightbox draws its close X. The two rendered on top of each other,
+     and Playwright polled 335 times for a control that never became stable
+     because it was under another one.
+
+     `0` is therefore load-bearing, not a tidy-up: this box shrinks to its
+     content, so the `?` sits immediately after the question's last line and
+     can never reach the corner. That is what the block above always claimed
+     and what the declaration now actually does. */
+  flex: 0 1 auto;
   min-inline-size: 0;
   margin-block-end: 0;
   max-inline-size: none;
