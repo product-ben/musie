@@ -8218,3 +8218,72 @@ builds), so nothing enforces it and it has clearly drifted. Either the five
 `?overview` assertions get updated to `/\/listen/` — a five-minute change, and
 the honest one, since `?overview` is deliberate — or the walk stops being
 something a branch is asked to run before it is called done.
+
+## `pnpm test:e2e` restores the track bucket but NOT the music — the entry above is half right
+
+Where: this file's "`supabase db reset` empties the local tracks bucket"
+(around line 6608), `apps/web/e2e/fakeTracks.ts`, `~/musie-audio/README.md`
+
+What I checked: that entry's closing advice is "the fix is `pnpm test:e2e` once
+`.env.local` is local, because `globalSetup` seeds them". I followed it on
+2026-10-12 after a reset, the walk went green, and Ben then reported that the
+music had stopped playing.
+
+**It had not stopped playing. It had become silent**, which is a different
+fault and looks identical from inside the app: the transport runs, the
+countdown counts, `data-state` reaches `playing`, and nothing is logged.
+
+`fakeTracks.ts` writes `silentWav(seconds)` — a PCM WAV generated from each
+row's `duration_seconds`. The file sizes identify it with no ambiguity at all,
+because the generator is 8000 bytes a second plus a 44-byte header:
+
+```
+trk-01  219s × 8000 + 44 = 1752044   ← exactly what was in the bucket
+trk-02  102s × 8000 + 44 =  816044
+trk-04  168s × 8000 + 44 = 1344044
+trk-05  191s × 8000 + 44 = 1528044
+```
+
+They are also `audio/wav` under an `.mp3` name, which the file's own header
+explains and which is the second tell. A real master is megabytes and
+`audio/mpeg`.
+
+So the advice is right about REACHABILITY and silent about AUDIBILITY. It
+unblocks `reveal.spec.ts`, which needs a playable object and does not care
+what is in it. It does not give a human anything to hear, and a person testing
+the listen step by ear has no way to tell that from a broken player.
+
+What I did: restored the four masters from `~/musie-audio/`, which is outside
+the repository on purpose (licensed files, and that folder's README says why).
+The mapping is that README's and agrees with `public.tracks.title` / `.artist`
+row for row:
+
+```
+trk-01  Little Yellow Petals — Rachel Sandy
+trk-02  Wait for It — Jon Björk
+trk-04  Bats and Rats — Ludvig Moulin
+trk-05  High Sierra Call — Roy Edwin Williams
+```
+
+Uploaded with `upsert: true` and `audio/mpeg`, behind the same loopback guard
+`fakeTracks.ts` uses — these are licensed files and the hosted bucket is not a
+restore script's business.
+
+Why: logged because the entry above is the first place anybody will look after
+the next reset, and following it is what produced the silence.
+
+**The order is the whole of it, and it is not obvious.** `fakeTracks.ts` uses
+`upsert: false`, so it only ever fills an EMPTY slot. Restore the masters first
+and every later `pnpm test:e2e` leaves them alone; run the walk first and the
+bucket looks full, so nothing will ever replace the placeholders until somebody
+deletes them by hand.
+
+What I need from Ben: **a decision on whether the restore becomes a script.**
+It is four files and a mapping that already exists in two places, so today it
+is a bespoke operation somebody reconstructs each time — which is how it took
+an hour to notice. A `scripts/restore-tracks.mjs` reading the folder from an
+env var (the masters stay out of git either way) would make it one command
+beside `supabase db reset`, and the entry above could then name it instead of
+naming the walk. Not done here: where the masters live on a second machine is
+Ben's to decide, and inventing a path for it would be the brief's premise
+rather than his.
