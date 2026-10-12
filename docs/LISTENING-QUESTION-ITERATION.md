@@ -793,10 +793,20 @@ it had to hold its own, and under the question it is an aside.
 question to ask for help with, so offering help would be offering nothing.
 
 `.musie-question__swap` is the row it sits in — an app pattern under L14,
-separated from the text by `--space-inset-card`, written as the difference
-between that and `.musie-immersive`'s own `--space-gap-stack` so the two do not
-add up (§L14.1). It wraps, because the dead end puts *Fragen zurücksetzen*
-beside the disabled line.
+separated from the text by **`--space-gap-stack`** (Ben, 2026-10-12, moving it
+closer). That is already `.musie-immersive`'s own gap between its children, so
+the rule declares **no margin at all**: the separation it wants is the one it
+has. Measured at 16px.
+
+It was `calc(var(--space-inset-card) - var(--space-gap-stack))` — 24px asked
+for, 16px already there, 8px added. That subtraction is now `--sp-4 - --sp-4`,
+so the declaration is gone rather than written as a zero; a
+`margin-block-start: 0` would exist to say nothing, and the next reader would
+look for what it was overriding. The arithmetic itself is still live on
+`.musie-listen__infographic`, which does want a different number.
+
+It wraps, because the dead end puts *Fragen zurücksetzen* beside the disabled
+line.
 
 **The action row below is `ButtonGroup`, not an app pattern** (2026-10-12).
 `.musie-immersive__actions` is gone, and with it a hand-written flex row, its
