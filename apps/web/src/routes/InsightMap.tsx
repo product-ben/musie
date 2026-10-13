@@ -37,13 +37,15 @@
 import * as React from 'react';
 import {
   Boxes, Brain, Building2, Check, Coffee, Handshake, Heart, Minus, Shield,
-  Sparkles, TrendingUp, Users,
+  Sparkles, TrendingUp, Users, X,
 } from 'lucide-react';
 import {
   Background, Controls, Handle, Panel, Position, ReactFlow,
 } from '@xyflow/react';
 import type { Edge, Node, NodeProps, NodeTypes } from '@xyflow/react';
-import { Badge, BadgeRow, Message, SegmentedControl } from '@musie/design-system';
+import {
+  Badge, BadgeRow, IconButton, Message, SegmentedControl, useToolSize,
+} from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { VIEW_IDS, layoutFor } from '../lib/orgLayout';
@@ -65,6 +67,7 @@ interface OrgNodeData extends Record<string, unknown> {
      insight dimension and "not used" on an outcome, and the node's accessible
      name has to say which. */
   statusLabel: MessageKey;
+  selected: boolean;
 }
 
 type OrgFlowNode = Node<OrgNodeData, 'orgCircle'>;
@@ -214,15 +217,22 @@ function weightRung(people: number): 1 | 2 | 3 | 4 {
 function OrgCircleNode({ data }: NodeProps<OrgFlowNode>) {
   const t = useT();
   return (
-    <div
+    /* A REAL <button>, not a div with a click handler. React Flow's own node
+       wrapper is told not to be focusable (`nodesFocusable={false}`), so this
+       is the single tab stop per node: it clicks, it takes Enter and Space
+       without a keydown handler, and `aria-pressed` says whether it is the one
+       the card is about. */
+    <button
+      type="button"
       className="musie-orgmap__node"
       data-kind={data.kind}
       data-status={data.status}
-      role="img"
+      data-selected={data.selected ? '1' : '0'}
+      aria-pressed={data.selected}
       /* THE STATUS IS IN THE NAME, not only in the fill. Green, orange and red
-         are the classic pair of hues a colour-blind reader cannot separate, so
-         the light is said in words here, drawn with a different border weight
-         per severity, and keyed by a legend on the canvas. Colour is the
+         are the classic three a colour-blind reader cannot separate, so the
+         light is said in words here, drawn with an inset ring that thickens
+         with severity, and keyed by a legend on the canvas. Colour is the
          glance; none of the three channels is alone. */
       aria-label={t('insightMap.node.aria', {
         name: data.name,
@@ -244,7 +254,7 @@ function OrgCircleNode({ data }: NodeProps<OrgFlowNode>) {
         className="musie-orgmap__handle"
         isConnectable={false}
       />
-    </div>
+    </button>
   );
 }
 
@@ -268,7 +278,33 @@ export function InsightMap() {
   const [filter, setFilter] = React.useState<FilterId>('outcomes');
   const [metric, setMetric] = React.useState<MetricId>('breaksUsage');
 
+  const [selected, setSelected] = React.useState<string | null>(null);
+  const tool = useToolSize();
+
   const metrics = METRICS_BY_FILTER[filter];
+
+  /**
+   * SELECTION IS CLEARED BY THE LEVEL AND NOTHING ELSE. Changing the metric
+   * recolours the same nodes, so the card stays on the one you were reading;
+   * changing the level replaces them, and a card about a pod that is no longer
+   * drawn is a card about nothing.
+   *
+   * IT HANGS OFF `onNodeClick` RATHER THAN THE BUTTON'S OWN `onClick`, and
+   * that is not a style choice. React Flow sets each node's `pointer-events`
+   * as an INLINE style, computed from whether IT has anything to do with the
+   * node — not draggable, not selectable, no click handler, so `none`, and the
+   * pan surface underneath swallows every press. No stylesheet can outrank an
+   * inline style, so the fix is to give React Flow the handler it is looking
+   * for rather than to fight it.
+   *
+   * The circle stays a real `<button>` for everything else: it is the tab
+   * stop, it announces itself as a button, it carries `aria-pressed`, and
+   * Enter or Space on it dispatches a click that bubbles to this same handler.
+   * One path, both input methods.
+   */
+  const onNodeClick = React.useCallback((_: React.MouseEvent, node: { id: string }) => {
+    setSelected((current) => (current === node.id ? null : node.id));
+  }, []);
 
   /* CHANGING THE FILTER CHANGES WHAT CAN BE ASKED, so the selected metric has
      to move with it — "Connectedness" is not an option once the question is
@@ -302,6 +338,7 @@ export function InsightMap() {
         count: circle.count,
         status: statusForMetric(circle.id, metric),
         statusLabel: statusLabel(metric, statusForMetric(circle.id, metric)),
+        selected: circle.id === selected,
       },
       style: { width: circle.r * 2, height: circle.r * 2 },
       draggable: false,
@@ -319,7 +356,11 @@ export function InsightMap() {
     }));
 
     return { nodes: flowNodes, edges: flowEdges };
-  }, [laid, metric]);
+  }, [laid, metric, selected]);
+
+  const selectedNode = selected === null
+    ? null
+    : laid.circles.find((circle) => circle.id === selected) ?? null;
 
   return (
     <div className="musie-orgmap-page">
@@ -349,18 +390,6 @@ export function InsightMap() {
           onValueChange={onFilter}
         />
 
-        <SegmentedControl
-          name="insight-map-level"
-          legend={t('insightMap.level.legend')}
-          options={VIEW_IDS.map((id) => ({
-            value: id,
-            label: t(VIEW_LABEL[id]),
-            glyph: VIEW_GLYPH[id],
-          }))}
-          value={view}
-          onValueChange={(next) => { if (isView(next)) setView(next); }}
-        />
-
         {/* TWO OPTIONS UNDER Musie Outcomes AND FOUR UNDER Emotional Insight,
             which is why it is keyed on the filter: SegmentedControl is
             specified for two to four and warns outside that, and a control
@@ -369,7 +398,6 @@ export function InsightMap() {
         <SegmentedControl
           key={filter}
           name="insight-map-metric"
-          className="musie-orgmap__controls-wide"
           legend={t('insightMap.care.legend')}
           options={metrics.map((id) => ({
             value: id,
@@ -379,16 +407,41 @@ export function InsightMap() {
           value={metric}
           onValueChange={(next) => { if (isMetric(next, filter)) setMetric(next); }}
         />
+
+        {/* THIRD, by Ben. It is the only one of the three that changes WHICH
+            nodes are drawn rather than what they say, so it reads last: you
+            choose the question, then the measure, then how close you stand. */}
+        <SegmentedControl
+          name="insight-map-level"
+          className="musie-orgmap__controls-wide"
+          legend={t('insightMap.level.legend')}
+          options={VIEW_IDS.map((id) => ({
+            value: id,
+            label: t(VIEW_LABEL[id]),
+            glyph: VIEW_GLYPH[id],
+          }))}
+          value={view}
+          onValueChange={(next) => {
+            if (!isView(next)) return;
+            setView(next);
+            setSelected(null);
+          }}
+        />
       </div>
 
-      <section className="musie-orgmap" aria-label={t('insightMap.canvas.label')}>
+      <section
+        className="musie-orgmap"
+        data-card={selected === null ? '0' : '1'}
+        aria-label={t('insightMap.canvas.label')}
+      >
+        <div className="musie-orgmap__canvas">
         {/* `key={view}` REMOUNTS THE CANVAS PER TAB, which is what makes
             `fitView` re-frame on every switch rather than only on first paint.
             It also drops the viewport, and that is the right behaviour here:
             a zoom into one department means nothing in the view that has no
             departments in it. Twenty-four nodes make the remount free. */}
         <ReactFlow
-          key={view}
+          key={`${view}-${selected === null ? 'wide' : 'narrow'}`}
           nodes={nodes}
           edges={edges}
           nodeTypes={NODE_TYPES}
@@ -398,6 +451,8 @@ export function InsightMap() {
              is spent twice over. At 0.18 the map used about a third of the
              space it had. */
           fitViewOptions={{ padding: 0.1 }}
+          onNodeClick={onNodeClick}
+          nodesFocusable={false}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
@@ -434,6 +489,29 @@ export function InsightMap() {
             </div>
           </Panel>
         </ReactFlow>
+        </div>
+
+        {selectedNode !== null && (
+          /* THE CARD IS EMPTY ON PURPOSE — Ben asked for the behaviour before
+             the content. It carries the name it is about and the way out, and
+             nothing else: an unlabelled empty box would be unreadable to a
+             screen reader and unexplainable to anybody else. */
+          <aside
+            className="musie-orgmap__card"
+            aria-label={t('insightMap.card.label', { name: selectedNode.name })}
+          >
+            <div className="musie-orgmap__card-head">
+              <h3 className="musie-orgmap__card-title">{selectedNode.name}</h3>
+              <IconButton
+                glyph={X}
+                label={t('insightMap.card.close')}
+                variant="ghost"
+                size={tool}
+                onClick={() => setSelected(null)}
+              />
+            </div>
+          </aside>
+        )}
       </section>
     </div>
   );

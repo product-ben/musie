@@ -49,10 +49,14 @@
    to nearly 700 — so from --bp-md the first two sit side by side and the
    metric takes the full width underneath it.
 
-   THE METRIC IS THE ONE THAT GETS THE WIDTH because it is the one that needs
-   it: four options, and *Wahrgenommene Stimmungsverbesserung* is the longest
-   label on the screen by some distance. The filter has two and the level has
-   three, and both fit a half.                                              */
+   THE METRIC GETS TWO THIRDS OF THE FIRST ROW because it is the one that
+   needs the width — four options, and *Wahrgenommene Stimmungsverbesserung* is
+   the longest label on the screen by a distance. The filter has two options
+   and fits the remaining third; the level takes the second row.
+
+   DOM ORDER IS VISUAL ORDER, which is L6's rule and the reason the grid is
+   shaped this way round rather than the obvious one: filter, then metric, then
+   level reads left to right and then down, and the markup says the same.    */
 .musie-orgmap__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -61,7 +65,7 @@
 
 /* --bp-md. */
 @media (min-width: 768px) {
-  .musie-orgmap__controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .musie-orgmap__controls { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
   .musie-orgmap__controls-wide { grid-column: 1 / -1; }
 }
 
@@ -81,6 +85,17 @@
      is the smallest canvas on which twenty-four circles still mean something. */
   block-size: 100%;
   min-block-size: calc(var(--measure-figure) * 1.1);
+  /* ── THE MAP, AND THE CARD BESIDE IT ─────────────────────────────────────
+     One column until something is selected. Then the map takes what is left
+     and the card takes a fixed measure at the inline end — which is what
+     pushes the graphic to the left edge, without the graphic itself moving:
+     `fitView` re-frames into the narrower box on the remount. Closing the card
+     restores both in the same move.
+
+     BELOW --bp-md THERE IS NO ROOM FOR TWO, so the card goes under the map and
+     the section grows. A card beside a 361px map would leave neither.       */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
   border-radius: var(--radius-panel);
   overflow: hidden;
@@ -109,6 +124,70 @@
   --xy-attribution-background-color-default: var(--surface-raised);
 }
 
+.musie-orgmap[data-card='1'] { grid-template-rows: minmax(0, 1fr) auto; }
+
+/* --bp-md. */
+@media (min-width: 768px) {
+  .musie-orgmap[data-card='1'] {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure-compact));
+  }
+}
+
+/* React Flow fills this, and this fills its grid cell. `min-inline-size: 0` so
+   the canvas can be made narrower by the card rather than refusing to shrink —
+   a grid item's automatic minimum is its content, and a canvas has no opinion
+   about its content's width until it is told it has none. */
+.musie-orgmap__canvas {
+  position: relative;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+/* ── THE CARD ─────────────────────────────────────────────────────────────
+   Empty for now, by instruction: it carries the name it is about and the way
+   out. A divider rather than a surface change, because it is part of the same
+   panel rather than a thing floating over it.                              */
+.musie-orgmap__card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-gap-stack);
+  padding: var(--space-inset-card);
+  min-inline-size: 0;
+  overflow-y: auto;
+  background-color: var(--surface-raised);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* --bp-md: the divider moves with the card. */
+@media (min-width: 768px) {
+  .musie-orgmap__card {
+    border-block-start: 0;
+    border-inline-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  }
+}
+
+/* The close control at the inline end — L6, the likely action outermost, and
+   DOM order matching visual order. `gap` rather than `space-between` alone, so
+   a long name wraps against the button instead of colliding with it. */
+.musie-orgmap__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+}
+
+.musie-orgmap__card-title {
+  margin: 0;
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+}
+
 /* ═══ ONE CIRCLE ════════════════════════════════════════════════════════════
    The node fills the box React Flow sized for it — the layout decided the
    diameter, so this rule only has to be round and to centre its two lines.
@@ -132,6 +211,12 @@
      shadow and so costs the content box nothing. */
   border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   text-align: center;
+  /* It is a <button>: the UA's own appearance has to go, and the pointer has
+     to say it can be pressed. */
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
   /* HALF A RUNG, AND THE NUMBER CAME OFF THE PAGE RATHER THAN OUT OF THE AIR.
      It was two rungs, then one, and the measurement killed both: at 32px of
      inset *Quality*, *Content*, *Partners* and *Enterprise* were ellipsised,
@@ -299,8 +384,14 @@
    A `Panel` is React Flow's own slot for something that rides above the
    canvas without scrolling with it. `body-sm` is permitted: L8 scopes it to
    metadata, and this explains the picture rather than being it.            */
+/* NARROWER THAN A FULL MEASURE, because it floats OVER the picture it is
+   explaining. At `--measure-compact` it covered a third of the canvas the
+   moment a card opened and the map lost the width — a caption that hides the
+   thing it captions. Three quarters of that rung, and the text was cut to
+   match: the legend already carries the colours, so this only has to carry the
+   shape. */
 .musie-orgmap__hint {
-  max-inline-size: var(--measure-compact);
+  max-inline-size: calc(var(--measure-compact) * 0.75);
   padding: var(--space-gap-inline) var(--space-gap-stack);
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
@@ -326,3 +417,26 @@
   background-color: var(--surface-raised);
   border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }
+
+/* ── SELECTED ────────────────────────────────────────────────────────────
+   An OUTLINE rather than a border or a shadow, and that is the whole reason
+   it works: the border already carries the status colour and the box-shadow
+   already carries severity, so a third ring had nowhere to go that did not
+   overwrite one of the two. An outline draws outside the box, costs the
+   content nothing, and follows the border radius.
+
+   `--border-strong` and not an accent: being selected is not a verdict, and
+   this map spends its one hue on what the people are doing. */
+.musie-orgmap__node[data-selected='1'] {
+  outline: var(--border-width-thick) var(--border-style-solid) var(--border-strong);
+  outline-offset: var(--space-gap-inline);
+}
+
+/* Keyboard focus still wins while it is there — same property, more specific
+   rule, and the focus ring is the one of the two that must never be missed. */
+.musie-orgmap__node:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.musie-orgmap__node:hover { border-color: var(--border-strong); }
