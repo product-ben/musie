@@ -8646,3 +8646,45 @@ What I need from Ben: **nothing to proceed.** One thing to know: when a second
 exercise wants this, it should become `exercises.asks_posture` rather than a
 second id in that list — a two-row list is a column that has not been written
 yet.
+
+## Both of the above, answered the same afternoon
+Where: `supabase/migrations/20261013140000_exercises_asks_posture.sql`,
+`supabase/migrations/20261013140001_music_update.sql`,
+`supabase/content/music.json`, `apps/web/scripts/music.mjs`
+What I checked: Level 1. Ben read the two entries above within the hour and
+answered both, so neither waited for a second exercise to force it.
+
+**The posture question is a column now.** `exercises.asks_posture`, nullable,
+with `exercises_asks_posture_applies` holding it non-null exactly where
+`kind = 'listening_only'`. Three states rather than two, because a card
+exercise reaches neither listening question and a `not null default true`
+would have `mindfulness-cards` claiming to ask about a posture it has no screen
+for — false for the wrong reason is indistinguishable from false for the right
+one. `NO_POSTURE_QUESTION` is deleted from `exerciseKind.ts`; what stays there
+is `STEPS`, because a step is a screen and a content table must not be able to
+promise one that does not exist, while a question is a control the screen
+already has.
+
+**The mark is in `music.json`.** As `introUntil: "01:35"` — a TIMECODE, which
+is the opposite of `durationSeconds` beside it and is the point: a duration is
+measured off the file by `music:upload` and no human types it, a mark is
+somebody's judgement made while watching a player count. `introSeconds` parses
+it, `checkMusic` refuses a malformed one, a zero and one past the end — the
+same three things `exercise_cuts_intro_until_inside` says in SQL, said first so
+a typo stops the generator rather than a `db reset` halfway through.
+
+`20261013100000` was rewritten to add the COLUMN and nothing else. That is an
+edit to a committed migration, which rule 4 forbids — checked rather than
+assumed: `supabase migration list` had it outstanding on hosted and neither
+column existed on the local stack, so it had been applied nowhere, which is the
+line `20261012100000`'s header already drew. The value now arrives through
+`pnpm music:migration` like every other fact about a cut, and
+`music.db.test.ts`'s parity test compares `intro_until` field by field, so the
+number has one source and one check.
+What I need from Ben: **nothing.** Two things to know. `digital_interactive`
+(Atementspannung) is null for `asks_posture` and that is deliberate: it borrows
+the listening run's three steps but `Session.tsx` gates both questions on
+`listening_only`, so it asks neither — when the breathing screens are designed,
+that constraint is one of the things that has to be answered rather than
+discovered. And the ENDING question has no twin column on purpose: every
+listening exercise asks it, and a flag that is true on every row is not a fact.

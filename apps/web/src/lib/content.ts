@@ -80,6 +80,20 @@ export interface Exercise {
    */
   needsCards: boolean;
   needsSound: boolean;
+  /**
+   * Whether the intro step asks *Wie möchtest du zuhören?* — Ben, 2026-10-13.
+   *
+   * `exercises.asks_posture`, which is NULL where the question does not arise
+   * and is held so by `exercises_asks_posture_applies`. Flattened to false
+   * here, because a screen has two things to do and not three: the difference
+   * between *does not ask* and *could not be asked* belongs to the schema,
+   * where the constraint can enforce it, and not to a React prop.
+   *
+   * The ENDING question has no twin. Every listening exercise asks it, and a
+   * flag that is true on every row is not a fact — `Session.tsx` gates that one
+   * on the kind alone.
+   */
+  asksPosture: boolean;
   imageUrl: string | null;
   implemented: boolean;
   sort: number;
@@ -270,7 +284,7 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
 
 interface ExerciseRow {
   id: string;
@@ -279,6 +293,7 @@ interface ExerciseRow {
   timeframe_max: number;
   needs_cards: boolean;
   needs_sound: boolean;
+  asks_posture: boolean | null;
   image_url: string | null;
   implemented: boolean;
   sort: number;
@@ -332,6 +347,9 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     timeframeMax: row.timeframe_max,
     needsCards: row.needs_cards,
     needsSound: row.needs_sound,
+    /* Null is "the question does not arise", which the screen draws the same
+       way as "does not ask". See the field. */
+    asksPosture: row.asks_posture ?? false,
     imageUrl: row.image_url,
     implemented: row.implemented,
     sort: row.sort,

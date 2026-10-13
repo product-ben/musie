@@ -12,7 +12,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ENDINGS, LOCALES, POSTURES, assertMusic, checkMusic, orderedPieces,
+  ENDINGS, LOCALES, POSTURES, assertMusic, checkMusic, introSeconds, orderedPieces,
   orderedCuts, readMusic, cutId, rows,
 } from '../../scripts/music.mjs';
 import type { MusicLibrary, MusicPiece, MusicCut } from '../../scripts/music.mjs';
@@ -206,6 +206,9 @@ describe('rows', () => {
       mixed_src: 'cut-body-scan-soundwalk-de-any-any-mixed-4343cfff.mp3',
       voice_src: 'cut-body-scan-soundwalk-de-any-any-voice-ed6246c4.mp3',
       duration_seconds: 183,
+      /* The fixture names no mark, and a cut without one is the ordinary
+         case — the Bodyscan's guidance starts immediately. */
+      intro_until: null,
       track_id: null,
     }]);
   });
@@ -288,5 +291,57 @@ describe('the library in the repository', () => {
       .map((r) => r.exercise);
 
     expect(withCut).toEqual(['body-scan-soundwalk']);
+  });
+});
+
+/**
+ * THE INTRO MARK — a timecode in the file, seconds in the row.
+ *
+ * It is the one field of a cut a human types rather than a tool measures, so
+ * it is the one field that can be typed wrong. `checkMusic` is what stops a
+ * wrong one reaching a migration, which is why the refusals matter as much as
+ * the parse.
+ */
+describe('introUntil', () => {
+  it('reads a timecode as whole seconds', () => {
+    expect(introSeconds({ introUntil: '01:35' })).toBe(95);
+    expect(introSeconds({ introUntil: '00:07' })).toBe(7);
+    expect(introSeconds({ introUntil: '10:00' })).toBe(600);
+  });
+
+  it('is null where there is none, and null where it is unreadable', () => {
+    expect(introSeconds({})).toBeNull();
+    expect(introSeconds({ introUntil: null })).toBeNull();
+    expect(introSeconds({ introUntil: '95' })).toBeNull();
+    expect(introSeconds({ introUntil: '1:5' })).toBeNull();
+    expect(introSeconds({ introUntil: '01:60' })).toBeNull();
+    expect(introSeconds({ introUntil: '1m35s' })).toBeNull();
+  });
+
+  /* The three the database would refuse, refused here first — a problem stops
+     the generator, where the constraint would stop a `db reset` halfway. */
+  it('refuses a mark that is unreadable, at zero, or past the end', async () => {
+    const music = await readMusic();
+    const withMark = (introUntil: string): MusicLibrary => ({
+      pieces: music.pieces,
+      cuts: [{ ...music.cuts.find((cut) => cut.exercise === 'sound-journey')!, introUntil }],
+    });
+
+    expect(checkMusic(withMark('95')).problems.join(' ')).toContain('timecode');
+    expect(checkMusic(withMark('00:00')).problems.join(' ')).toContain('start of the');
+    expect(checkMusic(withMark('20:00')).problems.join(' ')).toContain('past');
+    expect(checkMusic(withMark('01:35')).problems).toEqual([]);
+  });
+
+  /* The Klangreise arrives for ninety-five seconds before the piece begins;
+     the Bodyscan starts talking immediately. The difference IS the feature, so
+     it is asserted on the library rather than left to the database. */
+  it('marks the Klangreise and nothing else', async () => {
+    const music = await readMusic();
+    const marked = music.cuts.filter((cut) => introSeconds(cut) !== null);
+
+    expect([...new Set(marked.map((cut) => cut.exercise))]).toEqual(['sound-journey']);
+    expect(marked.every((cut) => introSeconds(cut) === 95)).toBe(true);
+    expect(rows(music).exercise_cuts.filter((row) => row.intro_until !== null)).toHaveLength(2);
   });
 });

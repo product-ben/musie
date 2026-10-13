@@ -152,6 +152,10 @@ function summarise(before, after) {
       lines.push(`~ ${id} — re-exported`);
     } else if (old.duration_seconds !== cut.duration_seconds) {
       lines.push(`~ ${id} — ${old.duration_seconds}s → ${cut.duration_seconds}s`);
+    } else if (old.intro_until !== cut.intro_until) {
+      /* The one field a re-export does not move and a human does, so it gets
+         its own line rather than hiding inside "re-exported". */
+      lines.push(`~ ${id} — intro ${old.intro_until ?? 'none'} → ${cut.intro_until ?? 'none'}`);
     }
   }
   for (const id of renWas.keys()) {
@@ -257,11 +261,12 @@ delete from public.exercise_cuts;`);
 -- serves any answer. The id is derived from all four, so the address and the
 -- row cannot disagree.
 insert into public.exercise_cuts
-  (id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds, track_id)
+  (id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds,
+   intro_until, track_id)
 values
 ${valuesList(cuts.map((row) => tuple([
     row.id, row.exercise_id, row.locale, row.posture, row.ending,
-    row.mixed_src, row.voice_src, row.duration_seconds, row.track_id,
+    row.mixed_src, row.voice_src, row.duration_seconds, row.intro_until, row.track_id,
   ])))}
 on conflict (id) do update set
   exercise_id      = excluded.exercise_id,
@@ -271,6 +276,7 @@ on conflict (id) do update set
   mixed_src        = excluded.mixed_src,
   voice_src        = excluded.voice_src,
   duration_seconds = excluded.duration_seconds,
+  intro_until      = excluded.intro_until,
   track_id         = excluded.track_id;
 
 delete from public.exercise_cuts where id not in (${cutIds});`);

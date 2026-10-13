@@ -60,8 +60,7 @@ import type { MessageKey } from '../i18n';
 import { warmTrackBytes } from '../lib/audio';
 import { getCard, getExercise, getListenAudio, getTrackFor } from '../lib/content';
 import {
-  DEFAULT_ENDING, DEFAULT_POSTURE, asksPosture,
-  isEnding, isPosture, skippedFor, stepsForKind,
+  DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedFor, stepsForKind,
 } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
 import type { Card, Exercise, ListenAudio, Track } from '../lib/content';
@@ -304,15 +303,22 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   );
 
   /* ── AND WHETHER THE FIRST QUESTION IS ASKED AT ALL — Ben, 2026-10-13 ──
-     Two gates, not one. The KIND decides whether a run asks about its audio
-     at all; the EXERCISE decides whether the posture half of that is worth
-     asking, and the Klangreise says no (`exerciseKind.ts`, `asksPosture`).
+     Two gates, not one, and only the second is a judgement. The KIND decides
+     whether a run asks about its audio; the ROW decides whether the posture
+     half is worth asking, and the Klangreise says no
+     (`exercises.asks_posture`, `20261013140000`).
+
+     `asksHowToListen` is still here and is not redundant:
+     `exercises_asks_posture_applies` already keeps the column null outside
+     `listening_only`, so the two can never disagree — but reading the gate off
+     the kind is what makes the ENDING question's rule visible beside it,
+     rather than implied by a constraint in another file.
 
      `posture` the STATE survives either way, because the cut lookup still
      needs a value to match against and every cut delivered so far serves any
      posture. What changes is whether the question is drawn, and whether the
      answer is written down as if somebody had given it. */
-  const asksPostureQuestion = asksHowToListen && asksPosture(data.exercise.id);
+  const asksPostureQuestion = asksHowToListen && data.exercise.asksPosture;
 
   /* ── WHICH AUDIO, FOR THOSE ANSWERS ───────────────────────────────────
      A SECOND read rather than part of the first, because it depends on the

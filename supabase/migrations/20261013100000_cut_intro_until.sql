@@ -46,14 +46,18 @@
 -- licence_ref`), so a column added THERE is unreadable until a new grant names
 -- it. Nothing of the sort applies here. Checked, not assumed.
 --
--- ── music.json DOES NOT STATE THIS, AND THAT IS A GAP ─────────────────────
--- `supabase/content/music.json` is meant to be the one file that states the
--- music library, with `pnpm music:migration` turning it into a migration. This
--- mark is written here by hand instead, so the library file no longer says
--- everything about a cut. It survives a regeneration — `20261012164204`'s
--- `on conflict do update` names its columns and this is not one of them — but
--- surviving is not the same as being stated. Logged in
--- apps/web/OPEN-QUESTIONS.md.
+-- ── THE SCHEMA ONLY · NO VALUE IS WRITTEN HERE ────────────────────────────
+-- This file adds the column and the rule; `music.json` says where the mark
+-- actually falls, and `pnpm music:migration` turns that into the insert
+-- (`20261013150000`). It was both for about an hour on 2026-10-13 — the column
+-- AND `update ... set intro_until = 95` — which put the Klangreise's 01:35 in
+-- two files able to disagree. Ben: the mark belongs in the library file.
+--
+-- Editing this file afterwards is the one thing CLAUDE.md rule 4 forbids, and
+-- it was checked rather than assumed: `supabase migration list` had it
+-- outstanding on hosted and neither column existed on the local stack, so it
+-- had been applied NOWHERE. `20261012100000`'s header is the precedent and
+-- draws the same line. Once it is applied this file is frozen like the rest.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 alter table public.exercise_cuts
@@ -69,14 +73,3 @@ comment on column public.exercise_cuts.intro_until is
 alter table public.exercise_cuts
   add constraint exercise_cuts_intro_until_inside
   check (intro_until is null or (intro_until > 0 and intro_until < duration_seconds));
-
--- ── THE KLANGREISE · 01:35 ────────────────────────────────────────────────
--- Ben, 2026-10-13, off the recording. BOTH endings: they are two bounces of
--- one session and share their opening exactly, which is the same construction
--- that lets the mute switch hand over between a cut's two stems at the sample.
---
--- The Bodyscan is left null deliberately rather than forgotten. Its guidance
--- starts immediately; there is nothing to skip.
-update public.exercise_cuts
-  set intro_until = 95
-  where id in ('cut-sound-journey-de-any-day', 'cut-sound-journey-de-any-sleep');

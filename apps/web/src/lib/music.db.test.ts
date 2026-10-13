@@ -58,7 +58,7 @@ describe('the database carries the library in supabase/content/music.json', () =
          GenericStringError. `content.ts` documents the same trap at
          EXERCISE_SELECT; this test walked into it anyway. */
       // prettier-ignore
-      .select('id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds, track_id')
+      .select('id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds, intro_until, track_id')
       .order('id');
 
     expect(error).toBeNull();
@@ -112,11 +112,11 @@ describe('the cuts and the pieces they credit', () => {
      `exercise_cuts_intro_until_inside` refuses that; this is the same claim
      read back off whatever actually landed.
 
-     THE NUMBER ITSELF IS NOT ASSERTED HERE. `20261013100000` states 01:35 and
-     is the only place that does — `music.json` does not carry the mark yet
-     (OPEN-QUESTIONS.md) — so repeating 95 in a test would be the same fact in
-     two files, able to disagree. What is asserted is the SHAPE the button
-     depends on. */
+     THE NUMBER ITSELF IS NOT ASSERTED HERE. `music.json` states `01:35` and
+     the parity test above compares every cut against it field by field, so the
+     value already has exactly one source and one check. This asserts the
+     INVARIANT instead — true of any mark anybody writes later, including one
+     typed into a migration by hand. */
   it('marks an intro only inside the recording it belongs to', async () => {
     const { data, error } = await service
       .from('exercise_cuts')
@@ -129,24 +129,6 @@ describe('the cuts and the pieces they credit', () => {
       expect(row.intro_until, `${row.id} marks an intro past its own end`)
         .toBeLessThan(row.duration_seconds);
     }
-  });
-
-  /* The two delivered exercises differ, and the difference is the feature: the
-     Klangreise spends ninety-five seconds arriving, the Bodyscan starts
-     talking immediately. A Bodyscan cut that grew a mark would put a control
-     on a sheet with nothing to skip. */
-  it('gives the Klangreise a mark and the Bodyscan none', async () => {
-    const { data, error } = await service
-      .from('exercise_cuts')
-      .select('id, exercise_id, intro_until');
-
-    expect(error).toBeNull();
-    const marked = (data ?? []).filter((row) => row.intro_until !== null);
-    const unmarked = (data ?? []).filter((row) => row.intro_until === null);
-
-    expect(marked.map((row) => row.exercise_id).every((id) => id === 'sound-journey')).toBe(true);
-    expect(marked.length, 'no Klangreise cut carries an intro mark').toBeGreaterThan(0);
-    expect(unmarked.some((row) => row.exercise_id === 'body-scan-soundwalk')).toBe(true);
   });
 
   /* The credit is the music INSIDE the mix, and `tracks` is about a piece we

@@ -88,6 +88,7 @@
       "locale": "de",
       "ending": "day",
       "durationSeconds": 574,
+      "introUntil": "01:35",
       "mixed": "cut-sound-journey-de-any-day-mixed-77032a4a.mp3",
       "mixedSource": "Klangreise - Tags.mp3"
     },
@@ -96,6 +97,7 @@
       "locale": "de",
       "ending": "sleep",
       "durationSeconds": 574,
+      "introUntil": "01:35",
       "mixed": "cut-sound-journey-de-any-sleep-mixed-482938bd.mp3",
       "mixedSource": "Klangreise - Einschlafen.mp3"
     }

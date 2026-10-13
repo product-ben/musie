@@ -133,42 +133,15 @@ export function isEnding(value: string | null | undefined): value is Ending {
 export const DEFAULT_POSTURE: Posture = 'sitting';
 export const DEFAULT_ENDING: Ending = 'day';
 
-/**
- * THE EXERCISES THAT DO NOT ASK HOW YOU ARE LISTENING — Ben, 2026-10-13.
- *
- * User testing: the Klangreise is ten minutes of music, and whether somebody
- * is sitting or lying changes nothing about what it does to them. Asking
- * anyway puts a question on the first screen whose answer cannot matter, which
- * is worse than not asking — a control that does nothing teaches that the
- * controls do nothing.
- *
- * THE BODYSCAN KEEPS IT. Its guidance walks the body and addresses a posture
- * out loud, so the question is part of getting ready for it rather than a
- * setting. The two exercises are the same KIND and differ here, which is why
- * this is an id and not a third `ExerciseKind`.
- *
- * ── WHY NOT DERIVED FROM THE CUTS ─────────────────────────────────────────
- * The tempting rule is *ask only where a posture-specific cut exists*. It is
- * wrong in exactly this case: every cut delivered so far is posture-agnostic,
- * including the Bodyscan's, so that rule would silence both questions. What
- * decides this is editorial and not yet recorded anywhere a query can reach.
- *
- * ── AND WHY NOT A COLUMN ──────────────────────────────────────────────────
- * It could be `exercises.asks_posture`, and one day it should be. Today it
- * would be a schema change to state one editorial decision about one row, and
- * this file already owns what a run asks for. When the second exercise wants
- * it, that is the moment — not before.
- */
-const NO_POSTURE_QUESTION: readonly string[] = ['sound-journey'];
+/* ── WHO ASKS ABOUT A POSTURE IS A COLUMN, NOT A LIST HERE ────────────────
+   It was `NO_POSTURE_QUESTION`, an exercise id in this file, for about three
+   hours on 2026-10-13 — with a docblock arguing that a two-row list is a
+   column nobody has written yet. Ben's answer was that a second exercise will
+   "absolutely" want it, so `exercises.asks_posture` was written
+   (`20261013140000`) and the list deleted rather than left to grow.
 
-/**
- * Whether this exercise asks *Wie möchtest du zuhören?* on the intro step.
- *
- * Takes the id alone and NOT the kind: a card exercise never reaches the
- * question at all (`Session.tsx` gates on `listening_only` first), so folding
- * the kind in here would be the same condition written in two places and
- * answerable differently in each.
- */
-export function asksPosture(exerciseId: string): boolean {
-  return !NO_POSTURE_QUESTION.includes(exerciseId);
-}
+   WHAT STAYS HERE is the part that is genuinely code: `STEPS` above, because a
+   step is a screen and a content table must not be able to promise one that
+   does not exist. Which QUESTIONS a run asks is not that — a question is a
+   control the screen already has, and switching it off cannot break a route.
+   `Exercise.asksPosture` carries it now. */
