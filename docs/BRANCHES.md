@@ -2,7 +2,7 @@
 
 On 2026-10-13 this repository had **41 local branches, 34 of them already merged
 into `origin/main`**, and 11 remote branches of which 9 were merged. The stalest
-local branch was 223 commits behind. It ended the day at **9 local and 2
+local branch was 223 commits behind. It ended the day at **8 local and 3
 remote**. Rule 9 says why that is not merely untidy:
 
 > **A stale worktree reads like a confused agent.** A worktree 76 commits behind
@@ -31,10 +31,9 @@ when the branch merges.
 
 ### Held by a worktree, merged, and only waiting for that worktree to go
 
-`listen-infographic` and `agents/netlify-deployment-setup-plan`. Both at zero
-commits ahead of `main`. Git refuses to delete a branch a worktree has checked
-out, which is the only reason they survive — not a judgement that they are
-wanted. See the worktree notes below for what is in each.
+`listen-infographic`, at zero commits ahead of `main`. Git refuses to delete a
+branch a worktree has checked out, which is the only reason it survives — not a
+judgement that it is wanted. See the worktree notes below.
 
 ## Deleted on 2026-10-13, and why
 
@@ -54,6 +53,8 @@ Beyond the 34 merged locals and 16 merged remotes:
   so it could never have been pushed as it stood.
 - **`insight-board`** — 1 commit, 86 files, SHA `2f4b1fa`. The earlier `/insight`
   provocation, superseded by `insight-map`, which merged as PR #20. Ben's call.
+- **`agents/netlify-deployment-setup-plan`** — SHA `daba191`, a bare
+  2026-09-14 "Initial commit" with zero tracked files, for a host that is gone.
 - **`ui-writing-iteration-20261009-1256`** — 3 commits, a strict subset of
   `ui-writing-experiment`'s 4. A timestamped duplicate.
 - **`backup/pre-merge-20261007`** — pointed at the same commit as
@@ -63,7 +64,7 @@ Beyond the 34 merged locals and 16 merged remotes:
 
 There is **one Supabase stack and one port 5173** (rule 9), so worktrees isolate
 files and nothing else. Ten existed on the morning of 2026-10-13 using 4.9 GB.
-**Six remain, using 2.0 GB.**
+**Five remain, using 1.9 GB.**
 
 | Worktree | Why it is still here |
 |---|---|
@@ -72,15 +73,22 @@ files and nothing else. Ten existed on the morning of 2026-10-13 using 4.9 GB.
 | `feelings-detection-help` | Two unmerged commits Ben is continuing. |
 | `maintenance-day` | This clear-out. Goes when it merges. |
 | `listen-infographic` | Five modified files, **checked and shipped** — `session.listen.infographicAlt` is in both catalogues on `main` and the picture renders at `SessionListen.tsx:1065`; its untracked 2.9 MB master is already in `~/Documents/musie-assets/app graphics/infographics/`. The diff is saved at `~/Documents/musie-assets/usertesting/listen-infographic-uncommitted-2026-10-13.patch`, so removing it is safe whenever Ben says. |
-| `netlify-deployment-setup-plan` | Seven untracked files and **zero tracked ones** — a 2026-09-14 "Initial commit" for a host that `remove-netlify` took out on 2026-09-26. Nothing to lose; just not yet removed. |
 
-**Seven were removed on 2026-10-13**, 3.6 GB in total. Three were idle —
+**Eight were removed on 2026-10-13**, 3.7 GB in total. Three were idle —
 `phase-h` (628 MB), `track-f-editor` (293 MB), `agent-guardrails` (31 MB). Four
 had forgotten dev servers running in them on ports 5175, 5177, 5178 and 5179 —
 `1st-week-oct`, `deck-scroll-gesture`, `listening-features`,
 `listening-question-iteration`, 2.7 GB — closed at Ben's request once he had
-confirmed none was a window he was using. All seven were clean and at zero
-commits ahead.
+confirmed none was a window he was using.
+
+The eighth, `netlify-deployment-setup-plan` (90 MB), needed `--force`: it held
+seven untracked files and **zero tracked ones**. They were read before it went —
+the repository's skeleton from 2026-09-14, a `pnpm check` that ran only
+typecheck and lint, an `App.tsx` the app no longer has, and a `netlify.toml` for
+a host `remove-netlify` took out on 2026-09-26. Checked rather than assumed:
+`netlify.toml` is recoverable from `a31ace8^`, so nothing there was a last copy.
+
+All eight were clean of unmerged commits.
 
 **Check what is on port 5173 before trusting a browser result** —
 `playwright.config.ts` reuses whatever is already serving it. On 2026-10-13 the
