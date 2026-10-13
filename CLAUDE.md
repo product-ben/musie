@@ -19,6 +19,8 @@ pnpm workspace (`pnpm-workspace.yaml`), Node 22, pnpm pinned by `packageManager`
 | `pnpm --filter web dev` | the app on :5173 |
 | `supabase start`, `supabase db reset` | the local stack; reset re-applies every migration |
 | `pnpm gen:types` | regenerates `apps/web/src/lib/database.types.ts` from the local DB |
+| `pnpm db:status` | do the migration files and the HOSTED database agree? read-only |
+| `pnpm db:sync` | push merged migrations to hosted. Refuses off `main`, dirty, or out of step with origin |
 | `pnpm storybook` | the design system on :6006 |
 | `pnpm deck:migration` | `supabase/content/deck.json` → a new stacking migration |
 | `pnpm deck:pdf` | the paper deck, print-ready, from the same file |
@@ -101,8 +103,25 @@ by content**, so editing a pushed file changes nothing on the remote and is
 skipped in silence — local and hosted drift apart and every check reports
 success. Every change is now its own new migration with `alter table`.
 
-Verify with `supabase db reset` locally, and `supabase db push` to send it.
-Nothing pushes automatically; `pnpm check` does not touch the database.
+Verify with `supabase db reset` locally, and **`pnpm db:sync`** to send it.
+
+**The two databases drift silently, and that is the trap.** `pnpm check` never
+touches a database, so typecheck, lint, tests and CI are all green while the
+migration files and the hosted database disagree — and the failure surfaces
+later, elsewhere, looking unrelated.
+
+- `pnpm db:status` answers whether they agree. Read-only, no secret in any file
+  (it authenticates with the CLI's own login). Exit 0 in sync, 1 drifted,
+  **2 unknown** — and *unknown* is never printed as *in sync*, because "I could
+  not check" and "they agree" looking alike is the original bug.
+- `pnpm db:sync` pushes, and **refuses** unless you are on `main`, the working
+  tree is clean, and `main` is level with `origin/main`. Each refusal has a
+  reason written into the script. Raw `supabase db push` stays denied: the guard
+  is the point, and it guards everyone.
+- `pnpm --filter web dev` runs the check first and **warns without blocking**.
+- `.github/workflows/db-push.yml` does it on merge to `main` and then runs the
+  database suite against hosted — inert until three secrets exist, and the file
+  says which.
 
 Content lives in a migration rather than `supabase/seed.sql` because `supabase
 db push` does not run `seed.sql` — header of `20260918150600_content_seed.sql`.
@@ -186,9 +205,17 @@ worktree's `supabase` command drives the same Docker containers. A `db reset`
 run from one branch re-applies *that branch's* migrations over whatever another
 agent is testing against; its `pnpm test:db` then fails against a schema that
 exists nowhere in its own tree, and it goes hunting for the bug in its own
-migration. `supabase db reset`, `supabase db push` and `pnpm gen:types` are
-denied in `.claude/settings.json` for that reason. Run them yourself, from one
-session, knowing the others are affected.
+migration. `supabase db reset` and `pnpm gen:types` are denied in
+`.claude/settings.json` for that reason. Run them yourself, from one session,
+knowing the others are affected.
+
+`supabase db push` is denied too, and **not for this reason** — it touches the
+hosted database, where no worktree is involved at all. Three commands were
+denied as one rule until 2026-10-13, and reading them as one rule is what hid
+the real problem: phrased as *who* may push rather than *when* a push is
+correct, it never protected Ben, who was free to push from a feature branch and
+whose actual failure was forgetting to push after a merge. `pnpm db:sync` is the
+guard that replaces it — see rule 4.
 
 `pnpm gen:types` reads the shared database and writes the local
 `apps/web/src/lib/database.types.ts`, so it will commit another branch's tables
