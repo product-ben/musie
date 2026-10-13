@@ -572,6 +572,13 @@ export const de: Messages = {
   'session.listen.play': 'Abspielen',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Noch einmal',
+  /* Ben, 2026-10-13, aus dem Usertesting: die Klangreise beginnt mit 95
+     Sekunden Hinführung, die beim vierten Mal niemand noch einmal braucht.
+     *Intro überspringen* und nicht *Zur Musik*, weil der Knopf sagt, was er
+     weglässt — was danach kommt, hört man ja. Nur dort sichtbar, wo der Cut
+     eine Marke nennt (`exercise_cuts.intro_until`), und nur solange sie noch
+     vor einem liegt: ein Sprung zurück wäre das Gegenteil des Versprechens. */
+  'session.listen.skipIntro': 'Intro überspringen',
   'session.listen.seek': 'Position in der Musik',
   'session.listen.aboutHeading': 'Zu dieser Musik',
   'session.listen.aboutArtist': 'Interpretin oder Interpret',

@@ -105,6 +105,50 @@ describe('the cuts and the pieces they credit', () => {
     }
   });
 
+  /* ── THE INTRO MARK — 2026-10-13 ──────────────────────────────────────
+     `intro_until` is what puts *Intro überspringen* on the focus sheet, and
+     the control seeks to it without clamping — so a mark at or past the end
+     would end the recording instead of skipping its opening.
+     `exercise_cuts_intro_until_inside` refuses that; this is the same claim
+     read back off whatever actually landed.
+
+     THE NUMBER ITSELF IS NOT ASSERTED HERE. `20261013100000` states 01:35 and
+     is the only place that does — `music.json` does not carry the mark yet
+     (OPEN-QUESTIONS.md) — so repeating 95 in a test would be the same fact in
+     two files, able to disagree. What is asserted is the SHAPE the button
+     depends on. */
+  it('marks an intro only inside the recording it belongs to', async () => {
+    const { data, error } = await service
+      .from('exercise_cuts')
+      .select('id, intro_until, duration_seconds');
+
+    expect(error).toBeNull();
+    for (const row of data ?? []) {
+      if (row.intro_until === null) continue;
+      expect(row.intro_until, `${row.id} marks an intro at or before zero`).toBeGreaterThan(0);
+      expect(row.intro_until, `${row.id} marks an intro past its own end`)
+        .toBeLessThan(row.duration_seconds);
+    }
+  });
+
+  /* The two delivered exercises differ, and the difference is the feature: the
+     Klangreise spends ninety-five seconds arriving, the Bodyscan starts
+     talking immediately. A Bodyscan cut that grew a mark would put a control
+     on a sheet with nothing to skip. */
+  it('gives the Klangreise a mark and the Bodyscan none', async () => {
+    const { data, error } = await service
+      .from('exercise_cuts')
+      .select('id, exercise_id, intro_until');
+
+    expect(error).toBeNull();
+    const marked = (data ?? []).filter((row) => row.intro_until !== null);
+    const unmarked = (data ?? []).filter((row) => row.intro_until === null);
+
+    expect(marked.map((row) => row.exercise_id).every((id) => id === 'sound-journey')).toBe(true);
+    expect(marked.length, 'no Klangreise cut carries an intro mark').toBeGreaterThan(0);
+    expect(unmarked.some((row) => row.exercise_id === 'body-scan-soundwalk')).toBe(true);
+  });
+
   /* The credit is the music INSIDE the mix, and `tracks` is about a piece we
      hold a file for — the unducked original that /discovered-music hands back.
      That export is still to come, so a cut may credit nothing; what it

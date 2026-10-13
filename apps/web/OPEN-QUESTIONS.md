@@ -8588,3 +8588,61 @@ it makes the restore one command again — **or whether the hashed key is worth
 one migration to adopt for them too.** Also whether the cut masters should move
 into `~/musie-audio` beside the other four; I did not move licensed files on my
 own.
+
+## The intro mark is stated in a migration, and `music.json` no longer says everything about a cut
+Where: `supabase/migrations/20261013100000_cut_intro_until.sql`,
+`supabase/content/music.json`, `apps/web/scripts/music-migration.mjs`
+What I checked: Level 1. `supabase/content/README.md` sets out the loop — one
+file states the library, `pnpm music:migration` turns an edit of it into a
+migration, and the file is the thing a human edits. `exercise_cuts.intro_until`
+breaks that for the first time: Ben gave the mark (01:35, from user testing)
+and it is written straight into a hand-authored migration, because the
+generator has no field for it and adding one is a bigger change than the
+feature asked for.
+
+It is not currently a bug. `20261012164204`'s `on conflict do update` names the
+columns it overwrites and the mark is not one of them, so a regenerated seed
+leaves it standing; a `supabase db reset` applies the seed first and this
+migration after. Both orders end with 95.
+
+It is a gap in the INVARIANT rather than in the data: the library file is no
+longer a complete statement of a cut, so somebody reading `music.json` to find
+out what the Klangreise is cannot see that ninety-five seconds of it are
+skippable.
+What I did: wrote the mark in the migration and said so in its header. The db
+test asserts the SHAPE the feature depends on — a mark inside its own file,
+present on the Klangreise and absent on the Bodyscan — and deliberately does
+not assert 95, so the number stays stated in exactly one place.
+What I need from Ben: **whether `intro_until` should become a field in
+`music.json`** (`introUntil: "01:35"`, parsed by the generator the way
+durations are measured) **or stay a schema fact that content edits do not
+touch.** The first restores the invariant and costs a field in the generator
+and its `.d.mts`; the second is honest only for as long as there is one mark in
+one exercise.
+
+## Hiding one of the two listening questions is an id in the code, not a column
+Where: `apps/web/src/lib/exerciseKind.ts` (`NO_POSTURE_QUESTION`),
+`apps/web/src/components/SessionIntro.tsx`, `apps/web/src/routes/Session.tsx`
+What I checked: Level 1. Ben, 2026-10-13, from user testing: the Klangreise
+should stop asking *Wie möchtest du zuhören?*, and the Bodyscan should keep it.
+Both are `listening_only`, so the KIND cannot carry the difference.
+
+The data cannot carry it either, which is the part worth recording. The
+tempting rule is *ask only where a posture-specific cut exists* — and every cut
+delivered so far is posture-agnostic, the Bodyscan's included, so that rule
+would silence both questions rather than one. What decides it is editorial: the
+Bodyscan's guidance addresses a posture out loud and the Klangreise's does not.
+What I did: an exercise-id list in `exerciseKind.ts`, which is the file that
+already owns what a run asks for, with the reasoning in its docblock and three
+unit tests. `SessionIntro`'s two questions became independently absent —
+`posture` undefined with `ending` a value — rather than gated on one flag.
+
+One thing followed that the brief did not name: `sessions.posture` is
+documented as the answer "AS ASKED", so a Klangreise run now writes **null**
+rather than the default it still uses to resolve a cut. Writing `sitting` would
+have made every Klangreise run read as a vote for a sitting recording in
+`missing_cuts`, which is the report that decides what gets recorded next.
+What I need from Ben: **nothing to proceed.** One thing to know: when a second
+exercise wants this, it should become `exercises.asks_posture` rather than a
+second id in that list — a two-row list is a column that has not been written
+yet.

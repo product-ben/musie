@@ -102,6 +102,9 @@ describe('pickCut', () => {
     mixed_src: `${id}-mixed.mp3`,
     voice_src: null,
     duration_seconds: 183,
+    /* `pickCut` matches on posture and ending alone; the mark rides along so
+       the row is a real `CutRow` rather than a shape that happens to compile. */
+    intro_until: null,
     track_id: null,
   });
 

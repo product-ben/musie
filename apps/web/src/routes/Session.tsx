@@ -60,7 +60,8 @@ import type { MessageKey } from '../i18n';
 import { warmTrackBytes } from '../lib/audio';
 import { getCard, getExercise, getListenAudio, getTrackFor } from '../lib/content';
 import {
-  DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedFor, stepsForKind,
+  DEFAULT_ENDING, DEFAULT_POSTURE, asksPosture,
+  isEnding, isPosture, skippedFor, stepsForKind,
 } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
 import type { Card, Exercise, ListenAudio, Track } from '../lib/content';
@@ -302,6 +303,17 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     isEnding(data.row.ending) ? data.row.ending : DEFAULT_ENDING,
   );
 
+  /* ── AND WHETHER THE FIRST QUESTION IS ASKED AT ALL — Ben, 2026-10-13 ──
+     Two gates, not one. The KIND decides whether a run asks about its audio
+     at all; the EXERCISE decides whether the posture half of that is worth
+     asking, and the Klangreise says no (`exerciseKind.ts`, `asksPosture`).
+
+     `posture` the STATE survives either way, because the cut lookup still
+     needs a value to match against and every cut delivered so far serves any
+     posture. What changes is whether the question is drawn, and whether the
+     answer is written down as if somebody had given it. */
+  const asksPostureQuestion = asksHowToListen && asksPosture(data.exercise.id);
+
   /* ── WHICH AUDIO, FOR THOSE ANSWERS ───────────────────────────────────
      A SECOND read rather than part of the first, because it depends on the
      answers and they change on the screen: keyed on all four, so moving a
@@ -353,6 +365,35 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       durationSeconds: data.track.durationSeconds,
     };
   }, [asksHowToListen, listenAudio, data.track]);
+
+  /**
+   * THE LENGTH THE INTRO COPY QUOTES, HELD ACROSS A RE-RESOLVE — Ben,
+   * 2026-10-13, from user testing.
+   *
+   * THE BUG: moving *Was machst du nach der Übung?* made the sentence flicker.
+   * `useAsync` clears its data on a key change (`lib/useAsync.ts`, and it is
+   * right to — stale data under a new key is the worse failure), so `audio`
+   * goes null for the length of one round trip. `SessionIntro` interpolates
+   * `{minutes}` off that number and is DOCUMENTED to show the placeholder when
+   * there is none, so the sentence read *die nächsten {minutes} Minuten* for a
+   * few hundred milliseconds and then settled back.
+   *
+   * THE FIX IS TO REMEMBER rather than to stop clearing: the last length we
+   * actually resolved stands while the next one is in flight. It is not a
+   * guess — it is the number that was true a moment ago, and for these two
+   * exercises it is the number that will be true again, since a cut's endings
+   * are two bounces of one session and share a length.
+   *
+   * It does NOT cover the first resolve of a cold load, where there has been
+   * no length yet and the placeholder is still what shows. That is the
+   * documented behaviour for "no recording to quote" and is one render rather
+   * than a flicker between two answers.
+   */
+  const [introDuration, setIntroDuration] = React.useState<number | null>(null);
+  const resolvedDuration = audio?.durationSeconds ?? null;
+  React.useEffect(() => {
+    if (resolvedDuration !== null) setIntroDuration(resolvedDuration);
+  }, [resolvedDuration]);
 
   /* ── THE ROTATING QUESTION, HELD FOR THE WHOLE RUN — 2026-10-11 ─────────
      Here and not inside `SessionListen` for the reason `feelingChange` is
@@ -490,7 +531,12 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        — but it does throw, so a failure surfaces in the console rather than as
        a silently wrong answer in the row. */
     if (state.step === 'intro' && asksHowToListen) {
-      void saveListeningAnswers(id, posture, ending);
+      /* NULL WHERE THE QUESTION WAS NOT PUT. `sessions.posture` is documented
+         as the answer "AS ASKED on the Einsteigen step", and the Klangreise
+         no longer asks — so writing the default would be the row claiming an
+         answer nobody gave, and `missing_cuts` would read it as demand for a
+         posture-specific recording that nothing has asked for. */
+      void saveListeningAnswers(id, asksPostureQuestion ? posture : null, ending);
     }
 
     go(next);
@@ -872,10 +918,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               /* The length of what is about to play, for the `{minutes}` the
                  intro copy quotes. From the resolved cut rather than from the
                  exercise, because a re-recording changes it. */
-              durationSeconds={audio?.durationSeconds ?? null}
-              /* Undefined for a kind that does not ask, which is how the step
-                 knows there is no question rather than no answer. */
-              posture={asksHowToListen ? posture : undefined}
+              durationSeconds={introDuration}
+              /* Undefined where the question is not put, which is how the step
+                 knows there is no question rather than no answer — now per
+                 question rather than for both at once. */
+              posture={asksPostureQuestion ? posture : undefined}
               ending={asksHowToListen ? ending : undefined}
               onPostureChange={setPosture}
               onEndingChange={setEnding}

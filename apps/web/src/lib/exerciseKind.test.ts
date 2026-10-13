@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_ENDING, DEFAULT_POSTURE, ENDINGS, EXERCISE_KINDS, POSTURES,
   isEnding, isExerciseKind, isPosture, skippedFor, stepsForKind,
+  asksPosture,
 } from './exerciseKind';
 import { STEP_IDS } from '../routeHandle';
 import { activeSteps, nextStep } from './sessionMachine';
@@ -113,5 +114,30 @@ describe('the narrowing guards', () => {
     expect(isEnding(DEFAULT_ENDING)).toBe(true);
     expect(DEFAULT_POSTURE).toBe('sitting');
     expect(DEFAULT_ENDING).toBe('day');
+  });
+});
+
+/**
+ * The posture question is asked per EXERCISE, not per kind — Ben, 2026-10-13.
+ *
+ * Both listening exercises are `listening_only` and they differ here, which is
+ * the whole reason this takes an id. The Klangreise changes nothing by being
+ * heard sitting or lying; the Bodyscan addresses a posture out loud.
+ */
+describe('which exercises ask how you are listening', () => {
+  it('does not ask on the Klangreise', () => {
+    expect(asksPosture('sound-journey')).toBe(false);
+  });
+
+  it('still asks on the Bodyscan, which is the same kind', () => {
+    expect(asksPosture('body-scan-soundwalk')).toBe(true);
+  });
+
+  /* The default is to ASK, so a listening exercise added tomorrow gets the
+     question until somebody decides it should not — the safe direction, since
+     a missing question is invisible and a redundant one is merely noise. */
+  it('asks by default, including for an exercise nobody has ruled on', () => {
+    expect(asksPosture('breathing-score')).toBe(true);
+    expect(asksPosture('an-exercise-that-does-not-exist-yet')).toBe(true);
   });
 });

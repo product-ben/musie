@@ -114,6 +114,7 @@ export type Database = {
           ending: string | null
           exercise_id: string
           id: string
+          intro_until: number | null
           locale: string
           mixed_src: string
           posture: string | null
@@ -125,6 +126,7 @@ export type Database = {
           ending?: string | null
           exercise_id: string
           id: string
+          intro_until?: number | null
           locale: string
           mixed_src: string
           posture?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           ending?: string | null
           exercise_id?: string
           id?: string
+          intro_until?: number | null
           locale?: string
           mixed_src?: string
           posture?: string | null

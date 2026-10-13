@@ -537,6 +537,16 @@ export type ListenAudio =
     /** The same cut without its music — the switch hands over to it. */
     voiceSrc: string | null;
     durationSeconds: number;
+    /**
+     * Where this recording's introduction ends, in seconds — or null where it
+     * has none to skip, which is every cut but the Klangreise today.
+     *
+     * A property of the CUT and not of the exercise, for `durationSeconds`'
+     * reason: a re-recording moves both. `exercise_cuts_intro_until_inside`
+     * guarantees `0 < intro_until < durationSeconds`, so the focus sheet can
+     * seek to it without clamping and without checking.
+     */
+    introUntilSeconds: number | null;
   }
   | {
     kind: 'piece';
@@ -548,7 +558,7 @@ export type ListenAudio =
 /* ONE STRING LITERAL — supabase-js parses this select at the TYPE level, and
    TypeScript does not fold a concatenation into a literal type. */
 // prettier-ignore
-const CUT_SELECT = 'id, locale, posture, ending, mixed_src, voice_src, duration_seconds, track_id';
+const CUT_SELECT = 'id, locale, posture, ending, mixed_src, voice_src, duration_seconds, intro_until, track_id';
 
 interface CutRow {
   id: string;
@@ -558,6 +568,7 @@ interface CutRow {
   mixed_src: string;
   voice_src: string | null;
   duration_seconds: number;
+  intro_until: number | null;
   track_id: string | null;
 }
 
@@ -650,6 +661,7 @@ export async function getListenAudio(
     mixedSrc: found.mixed_src,
     voiceSrc: found.voice_src,
     durationSeconds: found.duration_seconds,
+    introUntilSeconds: found.intro_until,
   };
 }
 
