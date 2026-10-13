@@ -37,15 +37,18 @@
 import * as React from 'react';
 import {
   Boxes, Brain, Building2, Check, Coffee, Handshake, Heart, Minus, Shield,
-  Sparkles, TrendingUp, Users, X,
+  Send, Sparkles, TrendingUp, Users, X,
 } from 'lucide-react';
 import {
-  Background, Controls, Handle, Panel, Position, ReactFlow,
+  Background, Controls, Handle, Position, ReactFlow,
 } from '@xyflow/react';
 import type { Edge, Node, NodeProps, NodeTypes } from '@xyflow/react';
 import {
-  Badge, BadgeRow, IconButton, Message, SegmentedControl, useToolSize,
+  Badge, BadgeRow, CtaButton, IconButton, Message, SegmentedControl, useToolSize,
 } from '@musie/design-system';
+import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
+import { breaksCard, cloudCard, exercisesCard, scaleCard } from '../lib/orgCard';
+import type { CloudWord } from '../lib/orgCard';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { VIEW_IDS, layoutFor } from '../lib/orgLayout';
@@ -260,6 +263,164 @@ function OrgCircleNode({ data }: NodeProps<OrgFlowNode>) {
 
 const NODE_TYPES: NodeTypes = { orgCircle: OrgCircleNode };
 
+/* ═══ WHAT THE CARD SHOWS ══════════════════════════════════════════════════
+   Five shapes, one per metric, because the five metrics are not variations of
+   one question. The card is about three hundred pixels wide, and every one of
+   them is written against that.                                             */
+
+/** A figure and its unit, for the one card that is a number. */
+function CardFigure(
+  { value, unit, delta }: { value: string; unit: string; delta?: string },
+) {
+  return (
+    <div className="musie-card__figure">
+      <p className="musie-card__figure-value">{value}</p>
+      <p className="musie-card__figure-unit">{unit}</p>
+      {delta !== undefined && <p className="musie-card__figure-delta">{delta}</p>}
+    </div>
+  );
+}
+
+/**
+ * A cloud of the six most common words.
+ *
+ * Six and not ten, and the heading says "most common" rather than implying
+ * these were all the words — see `cloudCard`. The share is printed beside each
+ * one because four type steps cannot carry a range that runs past fifteen to
+ * one, and because a word cloud without numbers is a mood board.
+ */
+function CardCloud({ title, words }: { title: string; words: CloudWord[] }) {
+  return (
+    <section className="musie-card__section">
+      <h4 className="musie-card__section-title">{title}</h4>
+      <ul className="musie-card__cloud">
+        {words.map((word) => (
+          <li className="musie-card__cloud-item" key={word.id}>
+            <span
+              className="musie-card__cloud-word"
+              data-rung={word.weight}
+              data-valence={word.valence}
+            >
+              {word.word}
+            </span>
+            <span className="musie-card__cloud-share">{Math.round(word.share)}%</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * A marker on a track between two named ends.
+ *
+ * THE ENDS ARE NAMED AND THE NUMBER IS PRINTED, because a dot on an unlabelled
+ * line is a decoration. The marker takes the one hue this screen spends: it
+ * marks a position, and the traffic light on the map has already given the
+ * verdict.
+ */
+function CardScale(
+  { low, high, value, position }: { low: string; high: string; value: string; position: number },
+) {
+  return (
+    <div className="musie-card__scale">
+      <p className="musie-card__scale-value">{value}</p>
+      <div
+        className="musie-card__scale-track"
+        style={{ '--musie-scale-at': `${position}%` } as React.CSSProperties}
+      >
+        <span className="musie-card__scale-mark" aria-hidden="true" />
+      </div>
+      <p className="musie-card__scale-ends">
+        <span>{low}</span>
+        <span>{high}</span>
+      </p>
+    </div>
+  );
+}
+
+function CardExercises({ title, names }: { title: string; names: string[] }) {
+  return (
+    <section className="musie-card__section">
+      <h4 className="musie-card__section-title">{title}</h4>
+      <ol className="musie-card__exercises">
+        {names.map((name) => <li key={name}>{name}</li>)}
+      </ol>
+    </section>
+  );
+}
+
+/**
+ * The body of the card, chosen by the metric.
+ *
+ * ── "Quality Breaks" IS MY READING, NOT BEN'S SPEC ───────────────────────
+ * He named a card for the other five and not for this one. Rather than leave
+ * it empty it shows the thing the Quality Breaks score is MADE of — how often
+ * a Musie Moment is taken — which is the only content that cannot contradict
+ * the number on the map. Flagged rather than quietly invented.
+ */
+function CardBody({ nodeId, metric }: { nodeId: string; metric: MetricId }) {
+  const t = useT();
+
+  if (metric === 'breaksUsage' || metric === 'breaks') {
+    const card = breaksCard(nodeId);
+    if (card.silent) return <p className="musie-note">{t('insightMap.card.unused')}</p>;
+    const sign = card.delta > 0 ? '+' : card.delta < 0 ? '\u2212' : '\u00b1';
+    return (
+      <CardFigure
+        value={card.perDay.toFixed(1)}
+        unit={t('insightMap.card.perDay')}
+        delta={t('insightMap.card.vsMonth', {
+          delta: `${sign}${Math.abs(card.delta).toFixed(1)}`,
+        })}
+      />
+    );
+  }
+
+  if (metric === 'moodLift') {
+    return (
+      <>
+        <CardCloud title={t('insightMap.card.before')} words={cloudCard(nodeId, 'during')} />
+        <CardCloud title={t('insightMap.card.after')} words={cloudCard(nodeId, 'after')} />
+      </>
+    );
+  }
+
+  if (metric === 'feeling') {
+    /* AFTER FIRST, because it is the half Musie has anything to do with. */
+    return (
+      <>
+        <CardCloud title={t('insightMap.card.afterMusie')} words={cloudCard(nodeId, 'after')} />
+        <CardCloud title={t('insightMap.card.duringWork')} words={cloudCard(nodeId, 'during')} />
+      </>
+    );
+  }
+
+  const scale = scaleCard(nodeId, metric);
+  const ends: { low: MessageKey; high: MessageKey } = metric === 'safety'
+    ? { low: 'insightMap.card.unsafe', high: 'insightMap.card.safe' }
+    : { low: 'insightMap.card.apart', high: 'insightMap.card.together' };
+  return (
+    <>
+      {scale === null
+        ? <p className="musie-note">{t('insightMap.card.noScore')}</p>
+        : (
+          <CardScale
+            low={t(ends.low)}
+            high={t(ends.high)}
+            value={scale.value.toFixed(1)}
+            position={scale.position}
+          />
+        )}
+      <CardExercises
+        title={t('insightMap.card.exercises')}
+        names={exercisesCard(nodeId, metric)}
+      />
+    </>
+  );
+}
+
+
 function isView(value: string): value is ViewId {
   return (VIEW_IDS as readonly string[]).includes(value);
 }
@@ -279,6 +440,7 @@ export function InsightMap() {
   const [metric, setMetric] = React.useState<MetricId>('breaksUsage');
 
   const [selected, setSelected] = React.useState<string | null>(null);
+  const [sharing, setSharing] = React.useState(false);
   const tool = useToolSize();
 
   const metrics = METRICS_BY_FILTER[filter];
@@ -461,40 +623,10 @@ export function InsightMap() {
         >
           <Background gap={32} size={1} />
           <Controls showInteractive={false} />
-          <Panel position="top-left" className="musie-orgmap__hint">
-            {t(VIEW_HINT[view])}
-          </Panel>
-          {/* ON THE CANVAS, not above it. A key belongs beside the thing it
-              keys, and the page already spends four rows before the map. */}
-          <Panel position="top-right">
-            {/* THE LABEL IS ON THE WRAPPER, NOT ON BadgeRow. It was on
-                BadgeRow for one screenshot: that component destructures
-                `children` and `className` and nothing else, so an `aria-label`
-                passed to it is dropped on the floor without a word from
-                TypeScript. The badges still read as text; what was missing was
-                anything saying what the four of them are together. */}
-            <div
-              className="musie-orgmap__legend"
-              role="group"
-              aria-label={t('insightMap.legend.label')}
-            >
-              <BadgeRow>
-                {METRIC_LIGHTS[metric].map((status) => (
-                  <Badge key={status} variant={STATUS_BADGE[status]} glyph={STATUS_GLYPH[status]}>
-                    {t(statusLabel(metric, status))}
-                  </Badge>
-                ))}
-              </BadgeRow>
-            </div>
-          </Panel>
         </ReactFlow>
         </div>
 
         {selectedNode !== null && (
-          /* THE CARD IS EMPTY ON PURPOSE — Ben asked for the behaviour before
-             the content. It carries the name it is about and the way out, and
-             nothing else: an unlabelled empty box would be unreadable to a
-             screen reader and unexplainable to anybody else. */
           <aside
             className="musie-orgmap__card"
             aria-label={t('insightMap.card.label', { name: selectedNode.name })}
@@ -509,9 +641,63 @@ export function InsightMap() {
                 onClick={() => setSelected(null)}
               />
             </div>
+
+            <CardBody nodeId={selectedNode.id} metric={metric} />
+
+            {/* ── ONLY ON A RED NODE ──────────────────────────────────────
+                The one place this screen offers to DO something, and it is
+                deliberately the only one: an action beside every reading
+                would turn a map into a worklist, and most of these readings
+                are not a problem to solve. "Needs attention" is, by its own
+                name.
+
+                It opens the app's own not-implemented dialog rather than
+                pretending to post. A prototype may show a button; it may not
+                imply it sent a message to a channel. */}
+            {statusForMetric(selectedNode.id, metric) === 'poor' && (
+              <CtaButton
+                variant="secondary"
+                align="start"
+                leadingIcon={Send}
+                wrap
+                onClick={() => setSharing(true)}
+              >
+                {t('insightMap.card.share')}
+              </CtaButton>
+            )}
           </aside>
         )}
+
+        {/* ── OUT OF THE CANVAS AND UNDER IT ─────────────────────────────
+            Both of these floated over the map as React Flow `Panel`s until
+            the card started taking a third of the width: a caption and a key
+            that cover the picture they are about. As a footer row inside the
+            same box they explain the map without hiding any of it, and they
+            cost the canvas about sixty pixels rather than a third of it. */}
+        <footer className="musie-orgmap__foot">
+          <p className="musie-orgmap__hint">{t(VIEW_HINT[view])}</p>
+          <div
+            className="musie-orgmap__legend"
+            role="group"
+            aria-label={t('insightMap.legend.label')}
+          >
+            <BadgeRow>
+              {METRIC_LIGHTS[metric].map((status) => (
+                <Badge key={status} variant={STATUS_BADGE[status]} glyph={STATUS_GLYPH[status]}>
+                  {t(statusLabel(metric, status))}
+                </Badge>
+              ))}
+            </BadgeRow>
+          </div>
+        </footer>
       </section>
+
+      {sharing && selectedNode !== null && (
+        <NotImplementedLightbox
+          what={t('insightMap.card.share')}
+          onClose={() => setSharing(false)}
+        />
+      )}
     </div>
   );
 }

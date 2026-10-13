@@ -1511,6 +1511,23 @@ export const en = {
   'insightMap.status.watch': 'Worth watching',
   'insightMap.status.poor': 'Needs attention',
   'insightMap.status.none': 'No data',
+  /* ── WHAT A CARD SAYS ───────────────────────────────────────────────────
+     Five shapes for five metrics. "Not taken at all" is a reading rather than
+     a gap, so it gets a sentence rather than a dash. */
+  'insightMap.card.perDay': 'Musie Moments a day, median',
+  'insightMap.card.vsMonth': '{delta} on last month',
+  'insightMap.card.unused': 'Nobody here takes a Musie Moment. That is the reading, not a gap in it.',
+  'insightMap.card.before': 'Before a Musie Moment',
+  'insightMap.card.after': 'After a Musie Moment',
+  'insightMap.card.afterMusie': 'How people feel after a Musie Moment',
+  'insightMap.card.duringWork': 'How people feel during the working day',
+  'insightMap.card.unsafe': 'Cannot speak up',
+  'insightMap.card.safe': 'Can say anything',
+  'insightMap.card.apart': 'On their own',
+  'insightMap.card.together': 'Part of something',
+  'insightMap.card.noScore': 'Too few people here to report on without reporting on them.',
+  'insightMap.card.exercises': 'Most used exercises',
+  'insightMap.card.share': 'Share a fitting exercise in Slack',
   'insightMap.card.label': 'Details for {name}',
   'insightMap.card.close': 'Close this card',
   'insightMap.legend.label': 'What the colours mean',

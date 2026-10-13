@@ -88,6 +88,7 @@
      the section grows. A card beside a 361px map would leave neither.       */
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
   border-radius: var(--radius-panel);
   overflow: hidden;
@@ -116,13 +117,17 @@
   --xy-attribution-background-color-default: var(--surface-raised);
 }
 
-.musie-orgmap[data-card='1'] { grid-template-rows: minmax(0, 1fr) auto; }
+.musie-orgmap[data-card='1'] { grid-template-rows: minmax(0, 1fr) auto auto; }
 
 /* --bp-md. */
 @media (min-width: 768px) {
   .musie-orgmap[data-card='1'] {
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure-compact));
+    grid-template-rows: minmax(0, 1fr) auto;
+    /* A measure and a quarter. At a plain `--measure-compact` the card held
+       the name and the X and nothing else; with a word cloud and a scale in it
+       the six words wrapped one per line. The map keeps the rest, and at 980px
+       that is still about six hundred pixels of canvas. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, calc(var(--measure-compact) * 1.25));
   }
 }
 
@@ -372,22 +377,37 @@
 .musie-orgmap__edge--w3 .react-flow__edge-path { stroke-width: var(--border-width-thick); }
 .musie-orgmap__edge--w4 .react-flow__edge-path { stroke-width: var(--border-width-focus); }
 
+/* ── THE FOOTER: THE CAPTION AND THE KEY ────────────────────────────────
+   Both of these were React Flow `Panel`s floating over the map, and both
+   covered the picture they explain the moment the card took a third of the
+   width. Down here they spend about sixty pixels of canvas instead of a third
+   of it, and the map is never hidden by its own caption.
+
+   It spans every column, so it sits under the card as well as the map — the
+   key is about the colours on the map, and the card is one of the things
+   reading them.                                                            */
+.musie-orgmap__foot {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+  padding: var(--space-gap-stack);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  background-color: var(--surface-raised);
+}
+
 /* ── THE HINT ─────────────────────────────────────────────────────────────
    A `Panel` is React Flow's own slot for something that rides above the
    canvas without scrolling with it. `body-sm` is permitted: L8 scopes it to
    metadata, and this explains the picture rather than being it.            */
-/* NARROWER THAN A FULL MEASURE, because it floats OVER the picture it is
-   explaining. At `--measure-compact` it covered a third of the canvas the
-   moment a card opened and the map lost the width — a caption that hides the
-   thing it captions. Three quarters of that rung, and the text was cut to
-   match: the legend already carries the colours, so this only has to carry the
-   shape. */
+/* A caption now rather than a floating note, so it drops the box it needed to
+   be readable over a picture. It keeps a measure, because a line of prose that
+   runs the width of a canvas is a line nobody finishes. */
 .musie-orgmap__hint {
-  max-inline-size: calc(var(--measure-compact) * 0.75);
-  padding: var(--space-gap-inline) var(--space-gap-stack);
-  border-radius: var(--radius-card);
-  background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  margin: 0;
+  max-inline-size: var(--measure-compact);
   color: var(--on-surface-muted);
   font-family: var(--type-body-sm-family);
   font-size: var(--type-body-sm-size);
@@ -402,13 +422,7 @@
    It wraps to a column at narrow widths, because four badges in a row is
    wider than a phone and a legend that scrolls out of view is a legend
    nobody finds. */
-.musie-orgmap__legend {
-  max-inline-size: var(--measure-compact);
-  padding: var(--space-gap-inline);
-  border-radius: var(--radius-card);
-  background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
-}
+.musie-orgmap__legend { margin-inline-start: auto; }
 
 /* ── SELECTED ────────────────────────────────────────────────────────────
    An OUTLINE rather than a border or a shadow, and that is the whole reason
@@ -432,3 +446,191 @@
 }
 
 .musie-orgmap__node:hover { border-color: var(--border-strong); }
+
+/* ═══ INSIDE THE CARD ═══════════════════════════════════════════════════════
+   Five shapes for five metrics, all written against a card about three hundred
+   pixels wide. Nothing here is a second copy of something on the map: the map
+   draws circles and lines, and none of this is either.                      */
+
+.musie-card__section {
+  display: grid;
+  gap: var(--space-gap-related);
+}
+
+/* `label-md` — L8's carve-out for a group label rather than prose, which is
+   what a section heading inside a card is. */
+.musie-card__section-title {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-heading);
+}
+
+/* ── THE ONE CARD THAT IS A NUMBER ───────────────────────────────────────
+   `display-lg` resolves to `--font-display`, the sans. `body-*` would be
+   Literata and a serif hero figure reads as decoration rather than as a
+   number. PROPORTIONAL figures, not tabular: nothing aligns under it. */
+.musie-card__figure {
+  display: grid;
+  gap: var(--space-gap-inline);
+  justify-items: start;
+}
+
+.musie-card__figure-value {
+  margin: 0;
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+  color: var(--on-surface);
+}
+
+.musie-card__figure-unit {
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+.musie-card__figure-delta {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line);
+  color: var(--on-surface);
+}
+
+/* ── THE CLOUD ───────────────────────────────────────────────────────────
+   A wrapping row rather than a grid, because six words of wildly different
+   size pack better when they flow — and unlike the big map there is no
+   before/after toggle here, so nothing has to hold its position.
+
+   FOUR RUNGS, 15px TO 26px, ALL `--font-display`. L8 bars `body-sm` from
+   anything that is content rather than caption, and these words ARE the
+   content — but `label-md` is its own carve-out for an identifier, which a
+   single feeling word is. One family across all four: a word that changed
+   typeface as it grew would encode its share twice.                       */
+.musie-card__cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-gap-stack);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.musie-card__cloud-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-gap-inline);
+}
+
+.musie-card__cloud-word { font-family: var(--font-display); }
+
+.musie-card__cloud-word[data-rung='1'] {
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+}
+.musie-card__cloud-word[data-rung='2'] {
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+}
+.musie-card__cloud-word[data-rung='3'] {
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+}
+.musie-card__cloud-word[data-rung='4'] {
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+}
+
+/* VALENCE IN THE `-text` STEPS, which are the ones solved for 4.5:1 — these
+   words are the mark, not a label beside one. Neutral takes no hue: Layer 1
+   ships two chromatic series and says there is no honest third. */
+.musie-card__cloud-word[data-valence='strain'] { color: var(--accent-2-text); }
+.musie-card__cloud-word[data-valence='ease'] { color: var(--accent-1-text); }
+.musie-card__cloud-word[data-valence='neutral'] { color: var(--on-surface); }
+
+.musie-card__cloud-share {
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE SCALE ───────────────────────────────────────────────────────────
+   A track with both ends named and the number printed. A dot on an unlabelled
+   line is a decoration, and this one has to be readable as a position.
+
+   `--musie-scale-at` arrives as a percentage from the component, because the
+   score is data and cannot come from a token. The half-width translate is a
+   geometric identity — the mark centred on its own value rather than hanging
+   to the right of it.                                                      */
+.musie-card__scale {
+  display: grid;
+  gap: var(--space-gap-inline);
+}
+
+.musie-card__scale-value {
+  margin: 0;
+  font-family: var(--type-heading-lg-family);
+  font-size: var(--type-heading-lg-size);
+  font-weight: var(--type-heading-lg-weight);
+  line-height: var(--type-heading-lg-line);
+  color: var(--on-surface);
+}
+
+.musie-card__scale-track {
+  position: relative;
+  block-size: var(--sp-2);
+  border-radius: var(--radius-full);
+  background-color: var(--surface-sunken);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* The one hue this screen spends, marking a POSITION rather than passing a
+   verdict — the traffic light on the map has already done that. */
+.musie-card__scale-mark {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--musie-scale-at);
+  transform: translate(-50%, -50%);
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+  border-radius: var(--radius-full);
+  background-color: var(--accent-1);
+  box-shadow: 0 0 0 var(--border-width-thick) var(--surface-raised);
+}
+
+.musie-card__scale-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+/* ── THE EXERCISES ───────────────────────────────────────────────────────
+   An ordered list, and it keeps its numbers: "most used" IS the order, and
+   the order is the only quantity on this card that was not invented to look
+   like evidence. */
+.musie-card__exercises {
+  display: grid;
+  gap: var(--space-gap-inline);
+  margin: 0;
+  padding-inline-start: var(--space-section);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+}
