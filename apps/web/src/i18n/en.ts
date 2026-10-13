@@ -253,7 +253,13 @@ export const en = {
      gone. `about.slide.understand` is `about.slide.diary` for the same
      reason: the key named a promise the line no longer makes. */
   'about.greeting': "Hi, I'm Musie.",
-  'about.pitch': 'I help you feel and act more mindful, aware, connected and safe through the power of music',
+  /* REWRITTEN WITH THE GERMAN, 2026-10-13. The German led this one and the
+     English follows its shape: the practical offer first, the adjectives as a
+     consequence rather than a claim, and the music last as the means. Three
+     sentences, because one clause carrying all of it needed a dash to stay
+     readable and the dash was holding up a sentence that should have been
+     three. */
+  'about.pitch': 'I help you, practically, to settle or to get going. Along the way you become more mindful, aware, connected and surer in how you feel and act. The power of music is what helps.',
   /* The typing indicator's accessible name. The dots are decorative; this is
      what a screen reader gets while the second message is on its way. */
   'about.typing': 'Musie is typing',
