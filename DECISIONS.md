@@ -138,9 +138,12 @@ exist, and its first step says so.
 already merged; the hosted suite runs immediately after; and `supabase db push`
 applies only what a migration says.
 
-**Three secrets, not five:** the access token can fetch the anon and
-service-role keys, so they are derived at runtime and masked explicitly —
-GitHub masks the secrets it was *given*, not values computed from them.
+**Two secrets, not five.** The access token fetches the anon and service-role
+keys at run time, masked explicitly — GitHub masks the secrets it was *given*,
+not values computed from them. And the project ref is not a secret at all: it is
+half of every public URL this project serves, so it sits in the workflow's `env`
+block in plain sight. Storing it as a secret would have implied otherwise and
+cost a third setup step for nothing.
 
 **Open, for Ben:** fully automatic, or one click? Actions are free and unmetered
 because the repository is public, and for the same reason a required-reviewer

@@ -8,17 +8,20 @@
 # `pnpm check` never touches a database (CLAUDE.md rule 4), so every check stays
 # green while the two disagree.
 #
-# ── THIS IS INERT UNTIL THREE SECRETS EXIST ──────────────────────────────────
+# ── THIS IS INERT UNTIL TWO SECRETS EXIST ────────────────────────────────────
 # Settings → Secrets and variables → Actions:
 #
 #   SUPABASE_ACCESS_TOKEN   a personal access token, supabase.com/dashboard/account/tokens
 #   SUPABASE_DB_PASSWORD    the project's database password
-#   SUPABASE_PROJECT_REF    xliwtiiopwyfunxkdmxh
 #
-# Without all three the first step says so and every later step is skipped, so
-# committing this changes nothing until that choice is made. The anon and
-# service-role keys are NOT secrets here — the access token can fetch them, which
-# keeps three secrets from becoming five.
+# Without both the first step says so and every later step is skipped, so
+# committing this changes nothing until that choice is made.
+#
+# TWO AND NOT FIVE. The anon and service-role keys are not stored here — the
+# access token fetches them at run time. And the project ref is not a secret at
+# all: it is in the `env` block below, in plain sight, because it is half of
+# every public URL this project serves. Storing it as a secret would have
+# implied otherwise and cost a third setup step.
 #
 # ── WHY AUTOMATIC IS DEFENSIBLE, AND HOW TO MAKE IT ONE CLICK INSTEAD ────────
 # It runs only on `main`, so the change is already merged and reviewed; the
@@ -56,16 +59,17 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      # Not a secret: it is half of every public URL this project serves.
+      PROJECT_REF: xliwtiiopwyfunxkdmxh
     steps:
       - name: Are the secrets present?
         id: armed
         run: |
-          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ] && [ -n "$PROJECT_REF" ]; then
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
             echo 'armed=true' >> "$GITHUB_OUTPUT"
           else
             echo 'armed=false' >> "$GITHUB_OUTPUT"
-            echo "::notice title=Not armed::Add SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD and SUPABASE_PROJECT_REF to enable automatic migration push. Until then migrations must be pushed by hand with 'pnpm db:sync' from a clean main."
+            echo "::notice title=Not armed::Add SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD to enable automatic migration push. Until then migrations must be pushed by hand with 'pnpm db:sync' from a clean main."
           fi
 
       - uses: actions/checkout@v4

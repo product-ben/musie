@@ -120,7 +120,7 @@ later, elsewhere, looking unrelated.
   is the point, and it guards everyone.
 - `pnpm --filter web dev` runs the check first and **warns without blocking**.
 - `.github/workflows/db-push.yml` does it on merge to `main` and then runs the
-  database suite against hosted — inert until three secrets exist, and the file
+  database suite against hosted — inert until two secrets exist, and the file
   says which.
 
 Content lives in a migration rather than `supabase/seed.sql` because `supabase
