@@ -263,6 +263,25 @@ export const router = createBrowserRouter([
         handle: handle({ titleKey: 'menu.title', overlay: true }),
       },
       {
+        /* THE ORG MAP — step one of the insight prototype, and the third tool
+           on this table. Same shape as /goal-mappings and /dev/qr: `lazy`,
+           linked from nowhere, reachable only by typing the path.
+
+           `lazy` IS LOAD-BEARING HERE, not tidy. This screen is the only
+           importer of `@xyflow/react` and the two d3 layout packages — a
+           megabyte of canvas library that nobody who never types this path
+           should download. Verified against the built chunk list, not assumed.
+
+           `wide` because the canvas is the screen, and `--bp-md` is not enough
+           of it. */
+        path: 'insight-map',
+        lazy: async () => {
+          const { InsightMap } = await import('./routes/InsightMap');
+          return { Component: InsightMap };
+        },
+        handle: handle({ titleKey: 'route.insightMap.title', wide: true }),
+      },
+      {
         path: '*',
         element: <Placeholder titleKey="route.notFound.title" />,
         handle: handle({ titleKey: 'route.notFound.title' }),

@@ -1083,6 +1083,71 @@ export const de: Messages = {
   'goalMap.outputLabel': 'Konfiguration',
   'goalMap.copy': 'Kopieren',
   'goalMap.copied': 'Kopiert',
+  /* /insight-map — ein Werkzeug, kein Screen. Trotzdem im Katalog, aus dem
+     Grund, den en.ts nennt. Namen von Abteilungen und Pods stehen NICHT hier:
+     die sind Inhalt und liegen in lib/orgFixture.ts. */
+  'insightMap.notReal.headline': 'Nichts auf dieser Karte ist echt',
+  'insightMap.lede.figure': '1.240 Musie-Momente in diesem Monat. 87 % fühlen sich danach besser.',
+  'insightMap.lede.text': 'Echte Erholung in Pausen und nach der Arbeit bringt mehr Energie, weniger Burnout und weniger Kündigungsgedanken – und wirkt früh gegen psychisch bedingte Ausfälle von im Schnitt 28,5 Tagen.',
+  'insightMap.level.legend': 'Welche Ebene du siehst',
+  'insightMap.level.company': 'Firma',
+  'insightMap.level.departments': 'Abteilungen',
+  'insightMap.level.pods': 'Pods',
+  'insightMap.canvas.label': 'Die Organisation als Karte, verschiebbar und zoombar',
+  /* Gezähltes Substantiv, hier unproblematisch: kein Pod hat weniger als drei
+     Menschen. Siehe en.ts. */
+  'insightMap.node.aria': '{name}, {count} Menschen, {status}',
+  /* Die zweite Auswahl: worum es dem Lesenden geht. Vier Dimensionen, genau
+     das Maximum von SegmentedControl. */
+  'insightMap.filter.legend': 'Was interessiert dich heute?',
+  'insightMap.filter.outcomes': 'Musie Outcomes',
+  'insightMap.filter.insight': 'Emotional Insight',
+  /* Die beiden Outcome-Maße: Wirkt Musie überhaupt? Das graue hier heißt
+     »gemessen, und niemand hat es genutzt« – nicht »niemand kann es dir
+     sagen« wie bei den vier Insight-Dimensionen. Die Legende sagt, welches
+     Grau gemeint ist; die Farbe kann das nicht. */
+  'insightMap.care.breaksUsage': 'Mental Health Momente',
+  'insightMap.care.moodLift': 'Wahrgenommene Stimmungsverbesserung',
+  'insightMap.usage.regular': 'Regelmäßig genutzt',
+  'insightMap.usage.none': 'Keine Nutzung',
+  'insightMap.lift.positive': 'Positiver Effekt',
+  'insightMap.lift.flat': 'Kein Effekt',
+  'insightMap.info.label': 'Warum {metric} wichtig ist',
+  'insightMap.care.legend': 'Worauf kommt es dir an?',
+  'insightMap.care.breaks': 'Gute Pausen',
+  'insightMap.care.feeling': 'Emotionale Gesundheit',
+  'insightMap.care.safety': 'Psychologische Sicherheit',
+  'insightMap.care.connectedness': 'Verbundenheit',
+  /* Die vier Lichter, als Wort und als Farbe – Grün, Orange und Rot sind die
+     drei, die farbenblinde Lesende nicht auseinanderhalten. »Keine Daten« ist
+     kein viertes Urteil: Für so kleine Gruppen kann niemand antworten. */
+  'insightMap.status.good': 'Gut',
+  'insightMap.status.watch': 'Im Blick behalten',
+  'insightMap.status.poor': 'Braucht Aufmerksamkeit',
+  'insightMap.status.none': 'Keine Daten',
+  /* Fünf Formen für fünf Maße. »Gar nicht genommen« ist ein Ergebnis und keine
+     Lücke – deshalb ein Satz und kein Strich. */
+  'insightMap.card.perDay': 'Musie Momente pro Tag, Median',
+  'insightMap.card.vsMonth': '{delta} zum Vormonat',
+  'insightMap.card.unused': 'Hier nimmt niemand einen Musie Moment. Das ist das Ergebnis, keine Lücke darin.',
+  'insightMap.card.before': 'Vor einem Musie Moment',
+  'insightMap.card.after': 'Nach einem Musie Moment',
+  'insightMap.card.afterMusie': 'Wie Menschen sich nach einem Musie Moment fühlen',
+  'insightMap.card.duringWork': 'Wie Menschen sich während der Arbeit fühlen',
+  'insightMap.card.unsafe': 'Kann nichts sagen',
+  'insightMap.card.safe': 'Kann alles sagen',
+  'insightMap.card.apart': 'Für sich allein',
+  'insightMap.card.together': 'Teil von etwas',
+  'insightMap.card.noScore': 'Zu wenige Menschen, um darüber zu berichten, ohne über sie zu berichten.',
+  'insightMap.card.exercises': 'Meistgenutzte Übungen',
+  'insightMap.card.share': 'Passende Übung in Slack teilen',
+  'insightMap.card.label': 'Details zu {name}',
+  'insightMap.card.close': 'Diese Karte schließen',
+  'insightMap.legend.label': 'Was die Farben bedeuten',
+  'insightMap.hint.company': 'Alle bei Northwind, als ein Kreis. Die Fläche steht überall für Menschen.',
+  'insightMap.hint.departments': 'Sechs Abteilungen, so groß wie ihre Zahl an Menschen. Zusammen der erste Tab.',
+  'insightMap.hint.pods': 'Eine Linie zu jeder Abteilung, aus der ein Pod Leute holt – je dicker, desto mehr. Abteilungen sind hier Ankerpunkte, keine Größen.',
+  'route.insightMap.title': 'Org-Karte',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',
