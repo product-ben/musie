@@ -748,3 +748,53 @@
   outline-offset: var(--focus-ring-offset);
   border-radius: var(--radius-xs);
 }
+
+/* ═══ THE RATIONALE, AS A HOVER BUBBLE ═════════════════════════════════════
+   Ben: show it only while the option is hovered, under the element.
+
+   ── WHY IT IS NOT `Hint` ─────────────────────────────────────────────────
+   The design system has a hover bubble and it cannot do this. `.musy-tip__bubble`
+   is `white-space: nowrap` with no max-width, which is right for the one-line
+   affordance it was built for and which rendered a paragraph 1,404px wide the
+   last time this screen tried it. `Hint` is also scoped to things that are NOT
+   controls, and these are radio options. Logged; this is the pattern until the
+   system has a popover.
+
+   ── IT IS ABSOLUTE, SO NOTHING MOVES ─────────────────────────────────────
+   A bubble that pushed the page down would shove the level control and the map
+   on every pointer move. It overlaps what is below it instead, which is what a
+   tooltip is for, and `--z-raised` is enough: it only has to clear its own
+   siblings.                                                                */
+.musie-tip { position: relative; }
+
+.musie-tip__bubble {
+  position: absolute;
+  inset-block-start: 100%;
+  z-index: var(--z-raised);
+  margin-block-start: var(--space-gap-inline);
+
+  /* ── CENTRED ON THE OPTION, CLAMPED TO THE CONTROL ──────────────────────
+     `--musie-tip-at` is the hovered option's centre, measured in the
+     component because only the DOM knows where an option ended up. The rest
+     is arithmetic: half the bubble to the left of that point, and never past
+     either edge of the control. `clamp()` does it without a second
+     measurement, and when the bubble is wider than the wrapper the lower
+     bound wins and it simply starts at the edge. */
+  --musie-tip-w: calc(var(--measure-compact) * 1.6);
+  inline-size: min(var(--musie-tip-w), 100%);
+  inset-inline-start: clamp(
+    0px,
+    calc(var(--musie-tip-at) - min(var(--musie-tip-w), 100%) / 2),
+    calc(100% - min(var(--musie-tip-w), 100%))
+  );
+
+  padding: var(--space-inset-card);
+  border-radius: var(--radius-card);
+  background-color: var(--surface-raised);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  box-shadow: var(--elevation-2);
+}
+
+/* Inside the bubble the prose gives up its page measure: the bubble is the
+   measure now. */
+.musie-tip__bubble .musie-rationale { max-inline-size: 100%; }

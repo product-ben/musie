@@ -496,9 +496,36 @@ export function InsightMap() {
 
   const [selected, setSelected] = React.useState<string | null>(null);
   const [sharing, setSharing] = React.useState(false);
+  const [hovered, setHovered] = React.useState<MetricId | null>(null);
+  const [tipAt, setTipAt] = React.useState(0);
   const tool = useToolSize();
 
   const metrics = METRICS_BY_FILTER[filter];
+
+  /**
+   * Which option the pointer or the keyboard is on, and where it sits.
+   *
+   * ── IT ANSWERS TO FOCUS AS WELL AS HOVER ─────────────────────────────────
+   * Ben asked for hover. Hover alone would mean a keyboard user never sees a
+   * word of it, and 1.4.13 wants content shown on hover to be reachable,
+   * dismissable and hoverable — so: focus opens it too, Escape closes it, and
+   * the bubble lives INSIDE the wrapper so the pointer can travel into it
+   * without the bubble vanishing. The last of those is not decoration either:
+   * the text is full of citations, and a link you cannot reach is a link.
+   */
+  const onTipPoint = React.useCallback((event: React.SyntheticEvent<HTMLDivElement>) => {
+    const wrapper = event.currentTarget;
+    const buttons = [...wrapper.querySelectorAll('button')];
+    const option = (event.target as HTMLElement).closest('button');
+    const index = option === null ? -1 : buttons.indexOf(option);
+    if (index < 0 || index >= metricsRef.current.length) return;
+    const box = wrapper.getBoundingClientRect();
+    const at = option!.getBoundingClientRect();
+    setTipAt(at.left - box.left + at.width / 2);
+    setHovered(metricsRef.current[index]);
+  }, []);
+
+  const clearTip = React.useCallback(() => setHovered(null), []);
 
   /**
    * SELECTION IS CLEARED BY THE LEVEL AND NOTHING ELSE. Changing the metric
@@ -523,11 +550,27 @@ export function InsightMap() {
     setSelected((current) => (current === node.id ? null : node.id));
   }, []);
 
+  /* 1.4.13: content shown on hover must be DISMISSABLE without moving the
+     pointer. Escape is the way, and it is the only keyboard handler on this
+     screen. */
+  React.useEffect(() => {
+    if (hovered === null) return undefined;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setHovered(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [hovered]);
+
   /* CHANGING THE FILTER CHANGES WHAT CAN BE ASKED, so the selected metric has
      to move with it — "Connectedness" is not an option once the question is
      whether Musie is being used at all. It lands on the first of the new set
      rather than trying to find an equivalent, because there is no equivalent:
      the two halves measure different things. */
+  /* The handler is stable across renders, so the metric list reaches it
+     through a ref rather than through its dependency array — otherwise every
+     filter change would rebuild it and React Flow would see new props. */
+  const metricsRef = React.useRef(metrics);
+  metricsRef.current = metrics;
+
   const onFilter = React.useCallback((next: string) => {
     if (!isFilter(next)) return;
     setFilter(next);
@@ -609,23 +652,49 @@ export function InsightMap() {
             specified for two to four and warns outside that, and a control
             holding stale options would offer a question this half of the map
             cannot answer. */}
-        <SegmentedControl
-          key={filter}
-          name="insight-map-metric"
-          legend={t('insightMap.care.legend')}
-          options={metrics.map((id) => ({
-            value: id,
-            label: t(METRIC_LABEL[id]),
-            glyph: METRIC_GLYPH[id],
-          }))}
-          value={metric}
-          onValueChange={(next) => { if (isMetric(next, filter)) setMetric(next); }}
-        />
+        {/* ── THE RATIONALE IS A HOVER BUBBLE NOW ─────────────────────────
+            Ben: show it only while the option is hovered, under the element.
+            So the control is wrapped, the wrapper owns the bubble, and the
+            control itself is untouched — `SegmentedControl` renders its own
+            options and nothing here reaches inside it.
 
-        {/* DIRECTLY UNDER THE QUESTION IT ANSWERS — Ben. It explains the
-            measure, so it belongs beside the control that picks one rather
-            than below all three. */}
-        <MetricRationale metric={metric} />
+            WHICH option is read from its INDEX among the wrapper's buttons,
+            not from a `musy-` class or a base-ui attribute. The options are
+            built from `metrics` in order, so the index IS the metric, and the
+            app stays out of the design system's internals. */}
+        <div
+          className="musie-tip"
+          onMouseOver={onTipPoint}
+          onMouseLeave={clearTip}
+          onFocus={onTipPoint}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) clearTip();
+          }}
+        >
+          <SegmentedControl
+            key={filter}
+            name="insight-map-metric"
+            legend={t('insightMap.care.legend')}
+            options={metrics.map((id) => ({
+              value: id,
+              label: t(METRIC_LABEL[id]),
+              glyph: METRIC_GLYPH[id],
+            }))}
+            value={metric}
+            onValueChange={(next) => { if (isMetric(next, filter)) setMetric(next); }}
+          />
+
+          {hovered !== null && METRIC_RATIONALE[hovered] !== undefined && (
+            <div
+              className="musie-tip__bubble"
+              role="tooltip"
+              style={{ '--musie-tip-at': `${tipAt}px` } as React.CSSProperties}
+            >
+              <MetricRationale metric={hovered} />
+            </div>
+          )}
+        </div>
+
 
         {/* THIRD, by Ben. It is the only one of the three that changes WHICH
             nodes are drawn rather than what they say, so it reads last: you
