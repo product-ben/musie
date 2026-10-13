@@ -1083,6 +1083,23 @@ export const de: Messages = {
   'goalMap.outputLabel': 'Konfiguration',
   'goalMap.copy': 'Kopieren',
   'goalMap.copied': 'Kopiert',
+  /* /insight-map — ein Werkzeug, kein Screen. Trotzdem im Katalog, aus dem
+     Grund, den en.ts nennt. Namen von Abteilungen und Pods stehen NICHT hier:
+     die sind Inhalt und liegen in lib/orgFixture.ts. */
+  'insightMap.notReal.headline': 'Nichts auf dieser Karte ist echt',
+  'insightMap.notReal.text': 'Northwind ist eine erfundene Firma mit hundert Menschen, und jede Zahl ist von Hand geschrieben. Keine Datenbank, keine Abfrage – das ist der Prototyp einer Form, kein Bericht über irgendwen.',
+  'insightMap.level.legend': 'Welche Ebene du siehst',
+  'insightMap.level.company': 'Firma',
+  'insightMap.level.departments': 'Abteilungen',
+  'insightMap.level.pods': 'Pods',
+  'insightMap.canvas.label': 'Die Organisation als Karte, verschiebbar und zoombar',
+  /* Gezähltes Substantiv, hier unproblematisch: kein Pod hat weniger als drei
+     Menschen. Siehe en.ts. */
+  'insightMap.node.aria': '{name}, {count} Menschen',
+  'insightMap.hint.company': 'Alle bei Northwind, als ein Kreis. Die Fläche steht auf jeder Ebene dieser Karte für Menschen.',
+  'insightMap.hint.departments': 'Die sechs Abteilungen, so groß wie die Zahl ihrer Menschen. Zusammen ergeben sie den Kreis vom ersten Tab.',
+  'insightMap.hint.pods': 'Eine Linie führt zu jeder Abteilung, aus der ein Pod Leute holt – je dicker, desto mehr vom Pod kommt von dort. Abteilungen sind hier Ankerpunkte, keine Größen: Die Pods um sie herum sind ihre Menschen.',
+  'route.insightMap.title': 'Org-Karte',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',

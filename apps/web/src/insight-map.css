@@ -1,0 +1,232 @@
+/**
+ * `/insight-map` — what this screen owns, plus React Flow's theming.
+ *
+ * The third route-scoped stylesheet in the app, after `exercises.css`, and
+ * imported the same way: by the screen that owns it, so nothing else carries
+ * it. React Flow's own stylesheet is imported immediately before this one in
+ * `routes/InsightMap.tsx`, which is what lets every rule below override it
+ * without a single `!important`.
+ *
+ * L14's three conditions bind all of it:
+ *   1. Every declaration resolves to a Layer 1 token or to arithmetic over
+ *      one. The only bare values are the geometric identities L14 allows —
+ *      0, 50%, 100% — and unitless multipliers inside calc().
+ *   2. Naming is `.musie-<block>[__<part>]`, deliberately NOT `musy-`.
+ *   3. Anything here that recurs is a component request, not a second copy.
+ *
+ * ── THEMING A THIRD-PARTY CANVAS WITHOUT BREAKING RULE 1 ──────────────────
+ * React Flow ships its palette as `--xy-*-default` custom properties and reads
+ * them through its own cascade. So this file sets those properties to musie's
+ * SEMANTIC tokens and touches none of React Flow's class rules. Nothing here
+ * reaches for a raw scale token, and nothing re-implements a component the
+ * design system has — the canvas, its controls and its edges are React Flow's,
+ * wearing Layer 1's colours.
+ */
+
+/* ═══ THE PAGE ══════════════════════════════════════════════════════════════
+   One gap, declared once, for the reason `.musie-exercises` gives: the notice
+   and the hint are conditionally present, and a `gap` skips an absent child
+   where a margin on each block has to remember.                             */
+.musie-orgmap-page {
+  display: grid;
+  /* `minmax(0, 1fr)` and not the default: an implicit track takes `auto` as
+     its minimum and grows to its widest child, and a canvas is a child that
+     will happily be wider than the page. */
+  grid-template-columns: minmax(0, 1fr);
+  /* THE CANVAS TAKES WHAT IS LEFT. It was a fixed 0.7 of the viewport, which
+     put it below the fold on a 1000px window — the screen's own preamble
+     pushed the only thing worth looking at off the bottom. Four `auto` rows
+     for the title, the notice, the tabs and nothing else; `1fr` for the map. */
+  grid-template-rows: auto auto auto 1fr;
+  gap: var(--space-gap-group);
+  block-size: 100%;
+}
+
+/* The shell's h1 carries `--space-gap-group` below itself, which is right on
+   a screen whose title is followed by content and wrong inside a grid already
+   spending that gap. Same correction `.musie-exercises` makes: one spacing
+   mechanism per container. */
+.musie-orgmap-page > .musie-placeholder { margin-block-end: 0; }
+
+/* ═══ THE CANVAS ════════════════════════════════════════════════════════════
+   A canvas needs a height — React Flow fills its container and the container
+   has nothing else to take one from. It gets it from the page's `1fr` row,
+   which is to say: everything the title, the notice and the tabs did not use. */
+.musie-orgmap {
+  /* Fills its `1fr` row, with a floor so it never collapses on a short
+     window. `--measure-figure` is Layer 1's figure width; one and a bit of it
+     is the smallest canvas on which twenty-four circles still mean something. */
+  block-size: 100%;
+  min-block-size: calc(var(--measure-figure) * 1.1);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+
+  /* ── REACT FLOW'S OWN PALETTE, REMAPPED ───────────────────────────────── */
+  --xy-background-color-default: var(--surface);
+  --xy-background-pattern-color-default: var(--border-subtle);
+
+  --xy-edge-stroke-default: var(--border-strong);
+  --xy-edge-stroke-selected-default: var(--interactive-primary);
+  --xy-edge-stroke-width-default: var(--border-width-hairline);
+
+  --xy-node-color-default: var(--on-surface);
+  --xy-node-background-color-default: var(--surface-raised);
+  --xy-node-border-default: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  --xy-node-boxshadow-hover-default: var(--elevation-1);
+  --xy-node-boxshadow-selected-default: var(--elevation-1);
+
+  --xy-controls-button-background-color-default: var(--surface-raised);
+  --xy-controls-button-background-color-hover-default: var(--interactive-ghost-hover);
+  --xy-controls-button-color-default: var(--on-surface);
+  --xy-controls-button-color-hover-default: var(--on-surface);
+  --xy-controls-button-border-color-default: var(--border-subtle);
+  --xy-controls-box-shadow-default: var(--elevation-1);
+
+  --xy-attribution-background-color-default: var(--surface-raised);
+}
+
+/* ═══ ONE CIRCLE ════════════════════════════════════════════════════════════
+   The node fills the box React Flow sized for it — the layout decided the
+   diameter, so this rule only has to be round and to centre its two lines.
+
+   NO BORDER OF ITS OWN BESIDES THE KIND RULES BELOW: `--xy-node-border` is
+   already set on the canvas, and a second boundary here would be two outlines
+   doing one job.                                                            */
+.musie-orgmap__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: var(--radius-full);
+  text-align: center;
+  /* HALF A RUNG, AND THE NUMBER CAME OFF THE PAGE RATHER THAN OUT OF THE AIR.
+     It was two rungs, then one, and the measurement killed both: at 32px of
+     inset *Quality*, *Content*, *Partners* and *Enterprise* were ellipsised,
+     and at 16px *Demand* still needed 61px of a 54px line. The four tightest
+     names measure 59–73px against circles of 72–89px, so four pixels of inset
+     is what leaves every one of them whole with a little room spare — and a
+     circle gives its full width only at its vertical centre anyway, so inset
+     here buys less than it looks.
+
+     A name a reader cannot finish is worse than a tight circle, and the
+     measurement fails on any truncation rather than trusting this sum. */
+  padding-inline: calc(var(--space-gap-inline) / 2);
+}
+
+/* ── THE THREE KINDS ──────────────────────────────────────────────────────
+   One hue, and it is the only hue on this canvas. `--accent-1` means "people
+   are here", not "good" — Layer 1 ships two chromatic series and says there is
+   no honest third, so the kinds are told apart by WEIGHT and FILL rather than
+   by hue, and the one colour is spent on the thing the map is about.        */
+.musie-orgmap__node[data-kind='company'] {
+  background-color: var(--accent-1-subtle);
+  border: var(--border-width-thick) var(--border-style-solid) var(--accent-1-border);
+}
+
+.musie-orgmap__node[data-kind='department'] {
+  background-color: var(--surface-sunken);
+  border: var(--border-width-thick) var(--border-style-solid) var(--border-strong);
+}
+
+/* A pod is the unit this map is about, so it is the one that is filled. */
+.musie-orgmap__node[data-kind='pod'] {
+  background-color: var(--accent-1-subtle);
+  border: var(--border-width-regular) var(--border-style-solid) var(--accent-1-border);
+}
+
+/* ── THE TWO LINES ────────────────────────────────────────────────────────
+   `label-md` is L8's own carve-out for "a card's own heading, when it is only
+   an identifier", which is exactly what a pod's name is here — the readable
+   figure is the count beneath it.
+
+   Both steps resolve to `--font-display`, so a circle never changes typeface
+   as it changes size. `body-*` would be Literata, and a serif figure reads as
+   decoration rather than as a number.                                       */
+.musie-orgmap__name {
+  max-inline-size: 100%;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* PROPORTIONAL FIGURES, not tabular: these do not align down a column, and
+   equal-width digits make a standalone number look loose. */
+.musie-orgmap__count {
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  color: var(--on-surface);
+}
+
+/* The company node is one circle on an empty canvas, so its number can take
+   the step a hero figure takes. */
+.musie-orgmap__node[data-kind='company'] .musie-orgmap__count {
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+}
+
+.musie-orgmap__node[data-kind='company'] .musie-orgmap__name {
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+}
+
+/* ── THE HANDLES ──────────────────────────────────────────────────────────
+   Inert and invisible, and AT THE CENTRE, which is what makes a line run
+   centre to centre and vanish under the circles at each end. React Flow draws
+   an edge between handle positions; anywhere else and the spokes would meet
+   the circle at a point that means nothing.
+
+   `inset-block-start` and `inset-inline-start` at 50% with a half-size
+   translate are geometric identities — the centre of a box, and half of the
+   element's own size.                                                       */
+.musie-orgmap .musie-orgmap__handle {
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  inline-size: var(--border-width-hairline);
+  block-size: var(--border-width-hairline);
+  min-inline-size: 0;
+  min-block-size: 0;
+  border: 0;
+  background-color: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── EDGE WEIGHT ──────────────────────────────────────────────────────────
+   Four rungs off Layer 1's border-width ladder, because a line's weight is a
+   width and inventing a second scale for it would be two ladders doing one
+   job. The exact headcount is on the node; this is the glance.             */
+.musie-orgmap__edge--w1 .react-flow__edge-path { stroke-width: var(--border-width-hairline); }
+.musie-orgmap__edge--w2 .react-flow__edge-path { stroke-width: var(--border-width-regular); }
+.musie-orgmap__edge--w3 .react-flow__edge-path { stroke-width: var(--border-width-thick); }
+.musie-orgmap__edge--w4 .react-flow__edge-path { stroke-width: var(--border-width-focus); }
+
+/* ── THE HINT ─────────────────────────────────────────────────────────────
+   A `Panel` is React Flow's own slot for something that rides above the
+   canvas without scrolling with it. `body-sm` is permitted: L8 scopes it to
+   metadata, and this explains the picture rather than being it.            */
+.musie-orgmap__hint {
+  max-inline-size: var(--measure-compact);
+  padding: var(--space-gap-inline) var(--space-gap-stack);
+  border-radius: var(--radius-card);
+  background-color: var(--surface-raised);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  color: var(--on-surface-muted);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}

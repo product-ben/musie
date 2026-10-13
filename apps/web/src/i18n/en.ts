@@ -1457,6 +1457,31 @@ export const en = {
   'goalMap.outputLabel': 'Config',
   'goalMap.copy': 'Copy',
   'goalMap.copied': 'Copied',
+  /* ── /insight-map — THE ORG MAP, A TOOL RATHER THAN A SCREEN ────────────
+     Linked from nowhere and reachable only by typing the path. It still goes
+     through the catalogue, exactly as /goal-mappings and /dev/qr do: rule 7 is
+     about where strings live, not about who is expected to read them.
+
+     The company, department and pod NAMES are not here. They are content —
+     invented content, in `lib/orgFixture.ts` — and content does not go through
+     the chrome catalogue, the same split rule 6 makes between `i18n/*` and the
+     content tables. */
+  'insightMap.notReal.headline': 'Nothing on this map is real',
+  'insightMap.notReal.text': 'Northwind is an invented hundred-person company and every number was written by hand. No database, no query — this is a prototype of a shape, not a report about anybody.',
+  'insightMap.level.legend': 'Which level to show',
+  'insightMap.level.company': 'Company',
+  'insightMap.level.departments': 'Departments',
+  'insightMap.level.pods': 'Pods',
+  'insightMap.canvas.label': 'The organisation, as a map you can pan and zoom',
+  /* COUNTED NOUN, AND IT IS SAFE HERE: no pod in the fixture has fewer than
+     three people, and this catalogue has no plural mechanism on purpose
+     (i18n/index.ts). If a pod of one ever arrives, this key needs splitting
+     rather than patching. */
+  'insightMap.node.aria': '{name}, {count} people',
+  'insightMap.hint.company': 'Everyone at Northwind, as one circle. Area is people on every level of this map.',
+  'insightMap.hint.departments': 'The six departments, sized by how many people they hold. They add up to the circle on the first tab.',
+  'insightMap.hint.pods': 'A line runs to every department a pod draws people from; the thicker it is, the more of the pod comes from there. Departments are anchors here rather than sizes — the pods around one are its people.',
+  'route.insightMap.title': 'Org map',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',
