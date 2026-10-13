@@ -8546,3 +8546,45 @@ the same shape of session — a card exercise asks about an image somebody is
 holding, and these have nothing in the hand — so the five phrasings may not
 transfer at all. If they should, it is a one-line change here plus five
 questions per exercise in two locales.
+
+## The audio restore cannot restore the four `trk-*` pieces, and only the cuts come back
+Where: `apps/web/scripts/music-upload.mjs`, `supabase/content/music.json`,
+`~/musie-audio/README.md`
+What I checked: Level 1. The hosted exercises screen was erroring because five
+migrations had never been pushed; chasing whether the audio would be there
+after the push found the bucket empty locally too, and `pnpm music:upload`
+unable to refill it.
+
+Two separate causes, one fixed here and one not.
+
+Fixed: the upload skipped whenever the minted key equalled the one
+`music.json` already carried — "already the library's key — unchanged" — which
+is true of every key the moment the first upload writes it back. The key states
+what the bytes ARE; only the bucket states what it HOLDS, and `supabase db
+reset` empties the bucket while leaving the library untouched. So the one
+command meant to restore the audio reported four skips over an empty bucket and
+exited 0. `upsert: false` already asks the question properly, so the match test
+is gone and the upload's own "exists" error is the skip. Verified: four cuts
+into an empty local bucket, then `pnpm test:db` 139/139 from 138/139.
+
+Not fixed: `trk-01`, `-02`, `-04`, `-05` are skipped by this script by design.
+`objectKey` always appends a content hash, and those four carry PLAIN keys from
+`20260921160000` — running them through the uploader would mint
+`trk-01-<hash>.mp3`, change `tracks.src`, and make a restore the cause of a new
+migration. `c2ffd2e` says so and skips them deliberately. The consequence is
+that the loop only half works: a `db reset` empties all eight objects and one
+command brings four back. I restored the other four locally by hand, with a
+plain-key upload against the storage API, which is correct but is not in the
+repo and will not be there the next time somebody resets.
+
+Two further things the folder does not state: the four cut masters are in
+`~/Downloads/wetransfer_horreise-gute-nacht-09-10-26-14-05-mp3_2026-10-09_1208`,
+not in `~/musie-audio`, so the default `--from` finds none of them; and
+`~/musie-audio/README.md` holds the ES-filename-to-`trk-0N` mapping in prose
+only, which is why the script cannot read it.
+What I need from Ben: **whether the four pieces should get a `fileSource` in
+`music.json` and a plain-key path through the uploader** — the honest fix, and
+it makes the restore one command again — **or whether the hashed key is worth
+one migration to adopt for them too.** Also whether the cut masters should move
+into `~/musie-audio` beside the other four; I did not move licensed files on my
+own.

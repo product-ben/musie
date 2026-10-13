@@ -332,8 +332,6 @@ async function main() {
   const skipped = [];
 
   for (const item of wanted) {
-    const current = item.of[item.field];
-
     /* ── WHICH FILE IN THE FOLDER ───────────────────────────────────────
        The named source, exactly. Or, failing that, the stem with an audio
        extension — the convention for a folder somebody tidied.
@@ -361,20 +359,32 @@ async function main() {
     measured.set(item.stem, { key, seconds, how, name });
 
     if (client === null) continue;
-    if (key === current) {
-      skipped.push(`${key}: already the library's key — unchanged.`);
-      continue;
-    }
 
+    /* ── THE BUCKET IS ASKED, NEVER THE LIBRARY ────────────────────────
+       This used to skip when the minted key equalled the one `music.json`
+       already carried, on the reasoning that a matching key means the file
+       is already up. It does not. The key states what the bytes ARE; only
+       the bucket states what it HOLDS, and `supabase db reset` empties the
+       bucket while leaving the library untouched — as does a hosted project
+       that never received the upload in the first place.
+
+       So the one command that is supposed to restore the audio reported
+       four times "already the library's key — unchanged" over an empty
+       bucket and exited 0. Rule 2's failure shape, in a script: it looked
+       implemented while doing nothing.
+
+       `upsert: false` already asks the question properly. A key that exists
+       is a file we have, by definition — the hash is in the name — so the
+       error it returns is the skip, and anything else is real. */
     const { error } = await client.storage.from(BUCKET).upload(key, buffer, {
       contentType: CONTENT_TYPES[extname(name).toLowerCase()],
       cacheControl: CACHE_CONTROL,
       upsert: false,
     });
-    /* A key that exists is a file we already have, by definition: the hash is
-       in the name. Not an error, and not a reason to overwrite. */
-    if (error !== null && !/exists/i.test(error.message)) {
-      throw new Error(`${key}: ${error.message}`);
+    if (error !== null) {
+      if (!/exists/i.test(error.message)) throw new Error(`${key}: ${error.message}`);
+      skipped.push(`${key}: already in the bucket — unchanged.`);
+      continue;
     }
     uploaded.push(`${key}  ${Math.round(seconds)}s  (${how}, from ${name})`);
   }
