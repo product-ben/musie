@@ -149,6 +149,18 @@ export interface SessionRow {
   rejectedQuestionIds: string[];
   /** What a re-roll will not offer right now. Emptied by the reset. */
   rejectedThisRound: string[];
+  /**
+   * The two answers the Einsteigen step asked for, or null before it was
+   * answered and for every card exercise. Read back on resume so coming back
+   * to a run plays what it was going to play — the defaults would otherwise
+   * quietly re-choose for somebody who had already chosen.
+   *
+   * Narrowed where they are used rather than here: `sessions_posture_known`
+   * and `sessions_ending_known` restrict them, and `exerciseKind.ts` owns the
+   * two vocabularies.
+   */
+  posture: string | null;
+  ending: string | null;
 }
 
 /**
@@ -188,6 +200,7 @@ function toRow(row: {
   status: string; step: string; started_at: string; ended_at: string | null;
   listening_question_id: string | null; listening_question: string | null;
   rejected_question_ids: string[]; rejected_this_round: string[];
+  posture: string | null; ending: string | null;
 }): SessionRow | null {
   if (row.status !== 'started' && row.status !== 'finished' && row.status !== 'abandoned') {
     console.error(`[musie] session ${row.id} has status "${row.status}" — dropped`);
@@ -212,10 +225,13 @@ function toRow(row: {
     rejectedThisRound: row.rejected_this_round,
     startedAt: row.started_at,
     endedAt: row.ended_at,
+    posture: row.posture,
+    ending: row.ending,
   };
 }
 
-const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round';
+// prettier-ignore
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending';
 
 /**
  * One session by id. Null when there is no such row — which, under RLS, is
@@ -336,6 +352,68 @@ export async function saveCard(
     .eq('id', id);
   if (error !== null) {
     throw new Error(`[musie] could not save the card: ${error.message}`);
+  }
+}
+
+/**
+ * THE TWO ANSWERS THE EINSTEIGEN STEP ASKS — 2026-10-11.
+ *
+ * Written on the way OUT of `intro`, not as each control moves: one request
+ * instead of four on a screen whose whole job is two taps, and the answers do
+ * not matter until something plays.
+ *
+ * ── RECORDED AS ASKED, NOT AS SERVED ──────────────────────────────────────
+ * These are what the person said they wanted, which is a different fact from
+ * what they got: a run that asked for *liegend · ins Einschlafen* and found no
+ * cut still says so, and that is how the gap stays visible a month later
+ * (`missing_cuts` is the other half). What actually played is
+ * `cut_id`, written by `savePlayed` when the audio starts.
+ *
+ * THROWS, unlike `markListened`: the person pressed Continue and is waiting,
+ * and a silent failure here would send them to a listen step whose audio was
+ * chosen by the defaults rather than by their answer.
+ */
+export async function saveListeningAnswers(
+  id: string,
+  posture: string,
+  ending: string,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ posture, ending })
+    .eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save how you are listening: ${error.message}`);
+  }
+}
+
+/**
+ * WHAT ACTUALLY PLAYED — the piece, and the cut of it.
+ *
+ * ONE WRITE, TWO FACTS, for `saveCard`'s reason: they are decided by one act,
+ * and writing them separately would allow a row that credits a piece while
+ * naming no cut of it — which the composite foreign key
+ * `sessions_cut_belongs_to_track` would then refuse, mid-exercise.
+ *
+ * `cutId` is null for a card exercise and for a listening run that fell
+ * back to the unducked original. `trackId` is the piece either way.
+ *
+ * IT NEVER THROWS, for `markListened`'s reason and alongside it: this is called
+ * from a play button, and a rejected promise inside a click handler mid-
+ * exercise is the wrong failure for a fact that exists so a listing screen can
+ * be tidy. The honest failure is a missing row on one page, logged.
+ */
+export async function savePlayed(
+  id: string,
+  trackId: string | null,
+  cutId: string | null,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ track_id: trackId, cut_id: cutId })
+    .eq('id', id);
+  if (error !== null) {
+    console.warn(`[musie] could not record what played: ${error.message}`);
   }
 }
 

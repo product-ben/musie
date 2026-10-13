@@ -41,11 +41,22 @@ describe('QUESTION_SETS names exercises that exist', () => {
     }
   });
 
-  it('covers the two built exercises and neither of the unbuilt ones (D2)', async () => {
+  it('names only exercises that are built (D2)', async () => {
     /* `implemented` is the column /exercises reads to decide what can be
        started. A question set on an exercise nobody can reach would be copy
        written for a screen that does not exist; a built exercise WITHOUT one
-       is fine and is what the three unbuilt ones will be when they land. */
+       is fine and is what the three unbuilt ones will be when they land.
+
+       ── AND TWO OF THEM LANDED — 2026-10-13 ──────────────────────────────
+       This was `toEqual(built)`, an EQUALITY, which also forbade the second
+       half of its own comment: a built exercise with no set. `sound-journey`
+       and `body-scan-soundwalk` became startable on `listening-features` the
+       day after this was written, with copy and audio and no question set, so
+       the equality failed on precisely the case the comment calls fine.
+
+       The rule is one-directional and always was. Whether those two should
+       now JOIN the rotation is a product question, logged in
+       apps/web/OPEN-QUESTIONS.md; this test must not be what answers it. */
     const { data, error } = await service
       .from('exercises')
       .select('id, implemented')
@@ -54,7 +65,9 @@ describe('QUESTION_SETS names exercises that exist', () => {
     expect(error).toBeNull();
 
     const built = (data ?? []).map((row) => row.id).sort();
-    expect(Object.keys(QUESTION_SETS).sort()).toEqual(built);
+    for (const exerciseId of Object.keys(QUESTION_SETS)) {
+      expect(built, `QUESTION_SETS names "${exerciseId}"`).toContain(exerciseId);
+    }
   });
 
   it('draws only questions the catalogue has', async () => {

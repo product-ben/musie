@@ -57,22 +57,24 @@ import { SessionReflect } from '../components/SessionReflect';
 import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
-import { getCard, getExercise, getTrackFor } from '../lib/content';
-import type { Card, Exercise, Track } from '../lib/content';
+import { warmTrackBytes } from '../lib/audio';
+import { getCard, getExercise, getListenAudio, getTrackFor } from '../lib/content';
+import {
+  DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedFor, stepsForKind,
+} from '../lib/exerciseKind';
+import type { Ending, Posture } from '../lib/exerciseKind';
+import type { Card, Exercise, ListenAudio, Track } from '../lib/content';
 import { hasAnswered } from '../lib/reflect';
 import type { ReflectMode } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
   completedBefore, endSession, readSession, saveCard, saveFeelingChange,
-  saveReflection, saveStep,
+  saveListeningAnswers, saveReflection, saveStep,
 } from '../lib/session';
 import type { FeelingChange, SessionRow } from '../lib/session';
 import { useSessionQuestion } from '../lib/useQuestion';
-import {
-  activeSteps, resumeSession, sessionReducer, stepTransition,
-} from '../lib/sessionMachine';
+import { resumeSession, sessionReducer, stepTransition } from '../lib/sessionMachine';
 import { useAsync } from '../lib/useAsync';
-import { STEP_IDS } from '../routeHandle';
 import type { StepId } from '../routeHandle';
 
 /** Every step's display name, as a catalogue key. A `Record`, so a fifth step
@@ -261,10 +263,96 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const { locale } = useLocale();
   const navigate = useNavigate();
 
-  const skipped: StepId[] = React.useMemo(
-    () => (data !== null && !data.exercise.needsCards ? ['scan'] : []),
-    [data],
+  /* ── WHICH STEPS THIS RUN HAS, AND WHICH IT DOES NOT ───────────────────
+     ONE DERIVATION, TWO CONSUMERS: the reducer is given `skipped` and the rail
+     is given `steps`, and both come from `exercises.kind` through
+     `lib/exerciseKind.ts`. A second rule for either would be a rule that can
+     disagree with the first.
+
+     It was `!data.exercise.needsCards ? ['scan'] : []` until 2026-10-11. The
+     fact is the same for every exercise that exists today — `needs_cards` is
+     held equal to the kind by a check constraint — and what changed is that
+     the rail now draws THREE markers for a listening exercise instead of four
+     with a gap, because it is handed three steps. See `stepsForKind`'s note
+     for why that overturns D14 for this kind and only this kind. */
+  const steps: readonly StepId[] = React.useMemo(
+    () => stepsForKind(data.exercise.kind),
+    [data.exercise.kind],
   );
+
+  const skipped: StepId[] = React.useMemo(
+    () => skippedFor(data.exercise.kind),
+    [data.exercise.kind],
+  );
+
+  /* ── THE TWO ANSWERS THE EINSTEIGEN STEP ASKS FOR ──────────────────────
+     Only a listening run asks, and both are PRESELECTED — so the state starts
+     from the row where there is one and from the defaults where there is not.
+
+     SEEDED FROM THE ROW, which is what makes coming back to a run play what it
+     was going to play: resuming with the defaults would quietly re-choose for
+     somebody who had already chosen. Narrowed rather than cast, because the
+     column is `text` and a check constraint is not a Postgres enum. */
+  const asksHowToListen = data.exercise.kind === 'listening_only';
+
+  const [posture, setPosture] = React.useState<Posture>(
+    isPosture(data.row.posture) ? data.row.posture : DEFAULT_POSTURE,
+  );
+  const [ending, setEnding] = React.useState<Ending>(
+    isEnding(data.row.ending) ? data.row.ending : DEFAULT_ENDING,
+  );
+
+  /* ── WHICH AUDIO, FOR THOSE ANSWERS ───────────────────────────────────
+     A SECOND read rather than part of the first, because it depends on the
+     answers and they change on the screen: keyed on all four, so moving a
+     segment re-resolves and arriving at Hören has the right files. The card
+     exercises never reach it — their recording came with the session row.
+
+     It is also where the PREFETCH happens: this runs on the intro step, where
+     the person is reading two sentences and looking at two preselected
+     answers, so the signed URLs are minted and cached (`lib/audio.ts`) before
+     the listen step mounts and asks for them. */
+  const { data: listenAudio } = useAsync(
+    () => (asksHowToListen
+      ? getListenAudio(data.row.exerciseId, locale, posture, ending)
+      : Promise.resolve(null)),
+    `listen-audio:${data.row.exerciseId}:${locale}:${posture}:${ending}:${asksHowToListen}`,
+  );
+
+  /* ── AND THE FIRST BYTES, WHILE THE ANSWERS ARE BEING LOOKED AT ───────
+     The URLs are minted by the read above; this pulls 128 KB of each file into
+     the HTTP cache so the first press of play costs a decode rather than a
+     connection. Only on `intro`, which is where the free seconds are, and only
+     once per key per page. See `warmTrackBytes`.
+
+     Keyed on `urlStep` rather than `state.step`: the URL is what says which
+     step is on screen (this file's first rule), and it is in scope before the
+     reducer that reconciles it. */
+  React.useEffect(() => {
+    if (urlStep !== 'intro' || listenAudio === null || listenAudio === undefined) return;
+    warmTrackBytes(listenAudio.kind === 'cut'
+      ? [listenAudio.mixedSrc, listenAudio.voiceSrc]
+      : [listenAudio.src]);
+  }, [urlStep, listenAudio]);
+
+  /**
+   * ONE SHAPE FOR THE LISTEN STEP, out of two sources.
+   *
+   * A listening run resolves a cut — or the unducked original, when its
+   * guidance is not recorded in this language yet. A card run already holds
+   * its one file, from the session row. The step reads both the same way, so
+   * neither it nor the mixer carries a branch for "the card case".
+   */
+  const audio: ListenAudio | null = React.useMemo(() => {
+    if (asksHowToListen) return listenAudio ?? null;
+    if (data.track === null) return null;
+    return {
+      kind: 'piece',
+      trackId: data.track.id,
+      src: data.track.src,
+      durationSeconds: data.track.durationSeconds,
+    };
+  }, [asksHowToListen, listenAudio, data.track]);
 
   /* ── THE ROTATING QUESTION, HELD FOR THE WHOLE RUN — 2026-10-11 ─────────
      Here and not inside `SessionListen` for the reason `feelingChange` is
@@ -365,7 +453,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const [busy, setBusy] = React.useState(false);
   const [closing, setClosing] = React.useState(false);
 
-  const { row, exercise, card, track } = data;
+  /* `track` stays on `data` and is read by the `audio` memo above rather than
+     destructured here: a card exercise's one file is the only thing that uses
+     it, and the step is given one shape for both kinds. */
+  const { row, exercise, card } = data;
 
   /* A session that has ENDED is history, not a run. The diary is where it
      lives, and that screen already knows how to draw it. */
@@ -383,13 +474,26 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
 
   const go = (step: StepId) => navigate(`/session/${encodeURIComponent(id)}/${step}`);
 
-  const run_ = activeSteps(skipped);
-  const stepAfter = (step: StepId) => run_[run_.indexOf(step) + 1] ?? null;
-  const stepBefore = (step: StepId) => run_[run_.indexOf(step) - 1] ?? null;
+  /* `steps` IS the run, so `activeSteps(skipped)` is no longer computed here:
+     it returned exactly this list, from the same derivation, one indirection
+     later. One name for one thing. */
+  const stepAfter = (step: StepId) => steps[steps.indexOf(step) + 1] ?? null;
+  const stepBefore = (step: StepId) => steps[steps.indexOf(step) - 1] ?? null;
 
   function advance() {
     const next = stepAfter(state.step);
-    if (next !== null) go(next);
+    if (next === null) return;
+
+    /* THE ANSWERS ARE WRITTEN ON THE WAY OUT OF `intro`, not as each control
+       moves: one request instead of four on a screen whose whole job is two
+       taps. Not awaited, because the navigation must not wait on a round trip
+       — but it does throw, so a failure surfaces in the console rather than as
+       a silently wrong answer in the row. */
+    if (state.step === 'intro' && asksHowToListen) {
+      void saveListeningAnswers(id, posture, ending);
+    }
+
+    go(next);
   }
 
   function retreat() {
@@ -729,7 +833,13 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           <div className="musie-rail">
             <InteractiveWizard
               label={t('session.wizardLabel')}
-              steps={STEP_IDS.map((step) => ({
+              /* THE RUN'S OWN STEPS, not all four — so a listening exercise
+                 draws three markers rather than four with one crossed out.
+                 `skipped` is still passed, and is empty for every kind whose
+                 run is the full list; the design system's fifth wizard state
+                 is untouched and is what a future kind with a genuine gap
+                 would use. */
+              steps={steps.map((step) => ({
                 id: step,
                 label: t(STEP_LABEL[step]),
                 icon: STEP_ICON[step],
@@ -756,7 +866,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
             Back from the first step leaves the session rather than moving in
             it. */}
         <WizardPanel actions={actions}>
-          {state.step === 'intro' && <SessionIntro exercise={exercise} />}
+          {state.step === 'intro' && (
+            <SessionIntro
+              exercise={exercise}
+              /* The length of what is about to play, for the `{minutes}` the
+                 intro copy quotes. From the resolved cut rather than from the
+                 exercise, because a re-recording changes it. */
+              durationSeconds={audio?.durationSeconds ?? null}
+              /* Undefined for a kind that does not ask, which is how the step
+                 knows there is no question rather than no answer. */
+              posture={asksHowToListen ? posture : undefined}
+              ending={asksHowToListen ? ending : undefined}
+              onPostureChange={setPosture}
+              onEndingChange={setEnding}
+            />
+          )}
 
           {state.step === 'scan' && (
             <SessionScan
@@ -771,7 +895,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           {state.step === 'listen' && (
             <SessionListen
               exercise={exercise}
-              track={track}
+              audio={audio}
               sessionId={id}
               card={card}
               listened={listened}

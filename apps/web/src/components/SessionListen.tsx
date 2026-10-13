@@ -30,7 +30,8 @@
  *
  * ── FOUR CARDS HAVE AUDIO AND FIVE DO NOT, SO BOTH PATHS ARE LIVE ─────────
  * E.4 landed the recordings. `tracks.src` now holds an object key in a
- * private bucket and `useTrackSource` signs it; the `<audio>` gets a real URL
+ * private bucket and `useMix` signs it (`useTrackSource` until 2026-10-12,
+ * when the second stream arrived); the `<audio>` gets a real URL
  * and really plays. For the other five `src` is NULL — the schema saying there
  * is no recording, rather than pointing at a file that was never there — and
  * the clock takes over at the track's own `duration_seconds`, which the seed
@@ -52,20 +53,20 @@
  */
 import * as React from 'react';
 import {
-  ButtonGroup, ContentList, CtaButton, Lightbox, Message, MusicPlayer, TrackButton,
+  ButtonGroup, ContentList, CtaButton, Lightbox, Message, MusicPlayer, Switch, TrackButton,
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
-import { ArrowDown, RotateCcw } from 'lucide-react';
+import { ArrowDown, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { isHelperRevealed, rememberHelperRevealed } from '../lib/questions';
 import type { SessionQuestion } from '../lib/useQuestion';
-import { useTrackSource } from '../lib/audio';
+import { useMix } from '../lib/mixer';
 import { revealTrack } from '../lib/reveal';
-import { markListened } from '../lib/session';
-import type { Card, Exercise, Track } from '../lib/content';
+import { markListened, savePlayed } from '../lib/session';
+import type { Card, Exercise, ListenAudio } from '../lib/content';
 import { bodyOnly, headingOnly, parseMarkdown, plainText } from '../lib/markdown';
 import { usePinnedHeader } from '../lib/useHeaderReveal';
 
@@ -144,7 +145,17 @@ function withView(search: string, view: typeof FOCUS | typeof OVERVIEW): string 
 
 export interface SessionListenProps {
   exercise: Exercise;
-  track: Track | null;
+  /**
+   * WHAT THIS RUN PLAYS — one of three shapes, and the step reads all three
+   * the same way (`lib/content.ts`, `ListenAudio`).
+   *
+   * `cut` is two stems: guidance, and music ducked under it. `piece` is
+   * one file — every card exercise, and a listening run whose guidance has not
+   * been recorded in this language yet. `null` is no recording at all, which
+   * is ordinary for five of the nine cards and is what the simulated clock
+   * answers.
+   */
+  audio: ListenAudio | null;
   /** Whose run this is. The reveal asks about a SESSION, never a track. */
   sessionId: string;
   /** Drawn this session, for the details view. Null where none was. */
@@ -200,51 +211,42 @@ export interface SessionListenProps {
  * threshold ONCE, upward, and keeps the position it counts down from.
  */
 export function SessionListen({
-  exercise, track, sessionId, card, listened, onListened, onAdvance, back,
+  exercise, audio, sessionId, card, listened, onListened, onAdvance, back,
   question,
 }: SessionListenProps) {
   const t = useT();
-  const media = React.useRef<HTMLAudioElement>(null);
 
   /**
-   * ── THE TRACK IS RELEASED ON THE WAY OUT — 2026-09-30 ────────────────────
+   * THE ELEMENTS, AND WHY THEY ARE NOT IN HERE ANY MORE — 2026-10-11.
    *
-   * The next step opens a microphone. This one has just been playing audio
-   * through an `<audio>` element, and on iOS those two facts share one audio
-   * session: a capture request renegotiates the route from playback to
-   * play-and-record, which is the first domino in the Bluetooth branch of
-   * docs/VOICE-CAPTURE-FIX.md §3.2.
+   * This step held one `<audio>` and a ref to it, and released the iOS audio
+   * session on the way out because the NEXT step opens a microphone (the
+   * reason is still written down, verbatim, in `lib/mixer.ts`'s cleanup).
    *
-   * THIS IS NOT A PROVEN BUG AND IS NOT WRITTEN UP AS ONE. React detaches the
-   * element and nulls the ref on unmount, and detaching normally stops
-   * playback on its own — the only `pause()` before this was the reader's, in
-   * `toggle()`. What this buys is DETERMINISM instead of garbage collection:
-   * three lines that release the iOS audio session at a moment this file
-   * chooses, rather than whenever the element is collected. Cheap, and it
-   * removes the question rather than answering it.
+   * A listening run plays TWO stems, and two elements held here would mean
+   * every handler in this file remembering to touch both — which is how one of
+   * them ends up thirty seconds ahead of the other. `useMix` owns them, and
+   * the rules about keeping them together, so this file is back to one clock
+   * and one transport.
    *
-   * `removeAttribute('src')` as well as `pause()`, because a paused element
-   * with a source can still hold the session; emptying it is what actually
-   * lets go. `load()` after it is what makes WebKit act on the change.
+   * `resolving` is still the guard that matters: a URL that has not arrived
+   * yet looks exactly like a card with no recording, and concluding the second
+   * while the first is true would play a countdown over a track that exists —
+   * intermittently, on slow connections, which is the worst way for it to
+   * happen.
    */
-  React.useEffect(() => () => {
-    const element = media.current;
-    if (element === null) return;
-    element.pause();
-    element.removeAttribute('src');
-    element.load();
-  }, []);
-  /**
-   * THE SIGNED URL, AND WHY THE STEP WAITS FOR IT — E.4.
-   *
-   * A private bucket has no permanent address, so the file's URL is a request
-   * rather than a string. `resolving` is the guard that matters: a URL that
-   * has not arrived yet looks exactly like a card with no recording, and
-   * concluding the second while the first is true would play a countdown over
-   * a track that exists — intermittently, on slow connections, which is the
-   * worst way for it to happen.
-   */
-  const { url, resolving } = useTrackSource(track?.src ?? null);
+  /* ── THE TWO FILES, FLATTENED OUT OF THE TWO SHAPES ───────────────────
+     A cut is the exercise as mixed, plus optionally the same recording with
+     its music removed. A piece is one file and has no alternative. So the step
+     below never asks which shape it got — only whether there is a second file
+     to hand over to, which is what decides whether the switch is offered. */
+  const mixedSrc = audio === null
+    ? null
+    : audio.kind === 'cut' ? audio.mixedSrc : audio.src;
+  const voiceSrc = audio !== null && audio.kind === 'cut' ? audio.voiceSrc : null;
+
+  /** The switch. Off means the music plays, which is the default. */
+  const [musicMuted, setMusicMuted] = React.useState(false);
 
   const [playing, setPlaying] = React.useState(false);
   const [position, setPosition] = React.useState(0);
@@ -268,6 +270,45 @@ export function SessionListen({
     simulatedRef.current = true;
     setSimulated(true);
   }, []);
+
+  /* ── THE PLAYER ────────────────────────────────────────────────────────
+     One hook for one or two streams: a card exercise passes a null
+     `musicSrc` and gets exactly the single element this file used to hold.
+
+     The callbacks are the same three the `<audio>` JSX carried, with the same
+     `simulatedRef` guards and for the same reason — once the clock has taken
+     over, a late `pause` from the element must not flip the transport back. */
+  const mix = useMix({
+    mixedSrc,
+    voiceSrc,
+    musicMuted,
+    onPlay: () => { if (!simulatedRef.current) setPlaying(true); },
+    onPause: () => { if (!simulatedRef.current) setPlaying(false); },
+    onTime: (at) => { if (!simulatedRef.current) setPosition(at); },
+    /* Pinned to the full duration rather than left wherever the last
+       timeupdate landed: that is what puts the button into `ended`. */
+    onEnded: () => setPosition(audio?.durationSeconds ?? 0),
+    /* A FILE THAT WOULD NOT LOAD. The clock takes over; whether it is RUNNING
+       is left alone, because this can arrive before anybody pressed anything. */
+    onError: goSimulated,
+    /* A PRESS THAT WAS REFUSED — and the clock has to START, because the
+       person has already pressed play. Dropping this half is what left the
+       transport on `paused` forever and took sixteen walks to notice; see
+       `MixOptions.onRefused`. */
+    onRefused: () => {
+      console.info('[musie] no playable audio — running the simulated clock');
+      goSimulated();
+      setPlaying(true);
+    },
+  });
+
+  /* DESTRUCTURED, because every one of these is a stable `useCallback` over
+     refs while `mix` itself is a fresh object each render. A hook dependency
+     on `mix` would re-create the callbacks below on every render — and one of
+     them is held by the effect that pauses on leaving the sheet. */
+  const {
+    play: playBoth, pause: pauseBoth, restart: restartBoth, seek: seekBoth,
+  } = mix;
 
   /**
    * ── THE LISTENING VIEW — the LISTEN-EXPERIMENTS branch ───────────────────
@@ -408,7 +449,7 @@ export function SessionListen({
    * recording: a gate longer than the track would never be reachable, so a
    * shorter piece is satisfied by finishing it.
    */
-  const duration = track?.durationSeconds ?? 0;
+  const duration = audio?.durationSeconds ?? 0;
   const gate = duration > 0
     ? Math.min(exercise.listenGateSeconds, duration)
     : exercise.listenGateSeconds;
@@ -453,7 +494,7 @@ export function SessionListen({
        plays a silent countdown whenever the storage round-trip loses a race
        with the first press, which is intermittent, connection-dependent, and
        looks exactly like correct behaviour. */
-    if (resolving) return;
+    if (mix.resolving) return;
 
     /* THE PRESS IS RECORDED — 2026-10-02, for *Discovered music*, which lists
        only the recordings somebody actually played.
@@ -471,6 +512,25 @@ export function SessionListen({
        never an interrupted exercise. First press wins, enforced in SQL. */
     void markListened(sessionId);
 
+    /* AND WHAT IT WAS. `markListened` says somebody pressed play; this says
+       what they pressed it on — the piece for the credit, and the cut
+       for the exact pair of files. Beside it rather than inside it because
+       they are two facts with two meanings, and neither throws: both exist so
+       a listing screen and a diary entry can be truthful, and an exception in
+       a play handler mid-exercise is the wrong failure for that.
+
+       Derivable today, recorded anyway — domain model ⑥. The cut follows
+       from the exercise and three answers right up to the moment one is
+       re-recorded, and one of those three answers (the locale) is on no
+       column of `sessions` at all. */
+    if (audio !== null) {
+      void savePlayed(
+        sessionId,
+        audio.trackId,
+        audio.kind === 'cut' ? audio.cutId : null,
+      );
+    }
+
     /* NO FILE, AND WE KNOW IT UP FRONT — so the clock has to be started
        DELIBERATELY here.
 
@@ -482,26 +542,23 @@ export function SessionListen({
        is a dead end for all five silent cards. The end-to-end walk caught
        exactly that, which is the second time it has caught this same step
        going nowhere. */
-    if (url === null) {
+    if (!mix.playable) {
       goSimulated();
       setPlaying(true);
       return;
     }
 
-    const element = media.current;
-    if (element === null || simulated) {
+    if (simulated) {
       setPlaying(true);
       return;
     }
-    element.play().catch(() => {
-      /* No file, no codec, or a gesture the browser did not trust. The clock
-         takes over rather than leaving a dead control — and it is logged, not
-         swallowed, because "there is no audio" and "this browser refused" look
-         identical from here. */
-      console.info('[musie] no playable audio — running the simulated clock');
-      goSimulated();
-      setPlaying(true);
-    });
+
+    /* BOTH STEMS, IN THIS GESTURE, NOTHING AWAITED — `useMix.play` is
+       synchronous for that reason, and the reason is iOS: it grants playback
+       to the gesture, not to the component, so an `await` here would spend it
+       and the music would silently never start. A refusal reaches
+       `onError`, which is `goSimulated`. */
+    playBoth();
   }
 
   /**
@@ -518,20 +575,23 @@ export function SessionListen({
    * element end up both driving `position`.
    */
   const pause = React.useCallback(() => {
-    const element = media.current;
     /* THE REF, NOT THE STATE. This is held by an effect that fires on a URL
        change, so it can be called from a closure older than the last render —
-       which is the same reason the element's own handlers read the ref. */
-    if (element !== null && !simulatedRef.current) element.pause();
+       which is the same reason the hook's own callbacks read the ref.
+
+       `mix.pause` is itself a stable `useCallback` over two refs, so it is the
+       dependency rather than `mix`: depending on the whole object would make
+       this identity change on every render and re-run the effect that holds
+       it, which is the pause-on-leaving-the-sheet effect. */
+    if (!simulatedRef.current) pauseBoth();
     setPlaying(false);
-  }, []);
+  }, [pauseBoth]);
 
   /* Ended restarts from zero: the glyph promised a restart, so resuming from
      the end would be a lie. */
   function restart() {
-    const element = media.current;
     setPosition(0);
-    if (element !== null && !simulated) element.currentTime = 0;
+    if (!simulated) restartBoth();
     play();
   }
 
@@ -635,8 +695,7 @@ export function SessionListen({
    */
   function seek(seconds: number) {
     const at = Math.max(0, Math.min(duration, seconds));
-    const element = media.current;
-    if (element !== null && !simulated) element.currentTime = at;
+    if (!simulated) seekBoth(at);
     setPosition(at);
   }
 
@@ -979,7 +1038,18 @@ export function SessionListen({
           `alt` from the catalogue like every other string (CLAUDE.md 7), and
           described rather than silent: unlike the diary's marks, nothing
           beside it says what is in it — the step's own copy is about the
-          sounds, not about the scene. */}
+          sounds, not about the scene.
+
+          ── AND NOT ON A LISTENING EXERCISE — Ben, 2026-10-12 ─────────────
+          The picture is *a hand holding a card over a phone*: it is the CARD
+          flow in one image, and the thing it illustrates is the step a
+          listening exercise does not have. Shown there it would be teaching a
+          deck to somebody who was told they need only headphones.
+
+          Keyed on the kind rather than on `needsCards`, for the reason
+          `exerciseKind.ts` exists: one answer to "what kind of exercise is
+          this", read in one vocabulary. */}
+      {exercise.kind === 'card_based' && (
       <img
         className="musie-listen__infographic"
         src={INFOGRAPHIC_SRC}
@@ -993,8 +1063,9 @@ export function SessionListen({
         height={941}
         decoding="async"
       />
+      )}
 
-      {track === null ? (
+      {audio === null ? (
         <Message
           variant="info"
           live="off"
@@ -1003,29 +1074,11 @@ export function SessionListen({
         />
       ) : (
         <div className="musie-stack">
-          {/* UNMOUNTED ONCE WE ARE SIMULATING. The element has already refused
-              the file, so it has nothing left to offer — and leaving it
-              mounted leaves a second thing driving `playing` and `position`
-              against the clock that has taken over. The ref guards inside the
-              handlers cover the events already in flight; this stops any more
-              being raised at all. */}
-          {!simulated && url !== null && (
-            <audio
-              ref={media}
-              src={url}
-              preload="none"
-              onPlay={() => { if (!simulatedRef.current) setPlaying(true); }}
-              onPause={() => { if (!simulatedRef.current) setPlaying(false); }}
-              onTimeUpdate={(event) => {
-                if (!simulatedRef.current) setPosition(event.currentTarget.currentTime);
-              }}
-              /* Pinned to the full duration rather than left wherever the last
-                 timeupdate landed: that is what puts the button into `ended`,
-                 where the glyph becomes a replay arrow. */
-              onEnded={() => setPosition(track.durationSeconds)}
-              onError={goSimulated}
-            />
-          )}
+          {/* NO `<audio>` HERE ANY MORE — `useMix` owns one or two elements
+              and this file owns the clock. The guards that used to live on
+              these handlers still exist, on the hook's callbacks, and for the
+              same reason: once the simulated clock has taken over, a late
+              event from an element must not flip the transport back. */}
 
           {/* THE WRAPPER HUGS, AND NOW IT IS ALSO WHAT GETS MEASURED.
               It was a plain <div> so the transport hugged its label instead of
@@ -1057,7 +1110,7 @@ export function SessionListen({
                 GERMAN catalogue defaults on an English screen. */}
             <TrackButton
               label={t('session.listen.track')}
-              duration={track.durationSeconds}
+              duration={duration}
               position={position}
               playing={playing}
               gateSeconds={gate}
@@ -1189,10 +1242,10 @@ export function SessionListen({
           soft: drag past ninety seconds and the gate opens, because the gate
           has always latched on position and never asked who moved it. */}
       <section ref={detailRef} className="musy-snap-view musie-listen__view musie-listen__view--detail">
-        {track !== null && (
+        {audio !== null && (
           <MusicPlayer
             title={revealed?.title ?? t('session.listen.track')}
-            duration={track.durationSeconds}
+            duration={duration}
             position={position}
             playing={playing}
             onTogglePlay={toggle}
@@ -1321,7 +1374,7 @@ export function SessionListen({
           focus to the element it came from. The Lightbox's own docblock calls
           that fallback "lucky" rather than guaranteed — it is guaranteed here
           precisely because the stage is still there, inert, under the sheet. */}
-      {track !== null && (
+      {audio !== null && (
         <Lightbox
           open={immersive}
           surface="immersive"
@@ -1491,7 +1544,7 @@ export function SessionListen({
                     a sentence. */}
                 <TrackButton
                   label={t('session.listen.track')}
-                  duration={track.durationSeconds}
+                  duration={duration}
                   position={position}
                   playing={playing}
                   variant="ghost"
@@ -1511,11 +1564,10 @@ export function SessionListen({
             </div>
 
             {/* ── THE WAY ON, AT THE TRAILING EDGE — Ben, 2026-10-07 ──────
-                Right-aligned, and alone in its row now that the transport has
-                moved up beside the countdown. The alignment is the ROW's, not
-                the button's: `CtaButton.align` moves the LABEL inside the
-                control, which is a different thing and would leave the box
-                where it was.
+                Right-aligned, and alone in its row until the switch joined it.
+                The alignment is the ROW's, not the button's:
+                `CtaButton.align` moves the LABEL inside the control, which is
+                a different thing and would leave the box where it was.
 
                 Gated by the same latch as the stage's — `met`, which still
                 reads POSITION and still does not ask who moved it, so the
@@ -1534,18 +1586,62 @@ export function SessionListen({
             {/* ── THE SYSTEM'S GROUP, NOT A ROW OF THIS SCREEN'S OWN ─────
                 `.musie-immersive__actions` was an app pattern with its own
                 wrap and its own media query, and `ButtonGroup` is the
-                component for exactly this (rule 1). The one thing it could not
-                do — stay TRAILING once it stacks, instead of turning into two
-                full-width rows — went INTO the component as `stacked="hug"`
-                rather than being reimplemented here. Same call `CtaButton`
-                made with `align`.
+                component for exactly this (rule 1). TWO things it could not do
+                arrived the same day from two branches, and both went INTO the
+                component rather than being reimplemented here — the call
+                `CtaButton` made with `align`:
 
-                IT HOLDS ONE CHILD AGAIN since 2026-10-12, because the ladder
-                moved up under the question. Kept rather than unwound back into
-                a div: `stacked="hug"` is still what stops a long German label
-                stretching across a phone, and the group is where the next
-                action in this row will go. */}
-            <ButtonGroup align="end" stacked="hug">
+                `stacked="hug"` keeps the group TRAILING once it stacks instead
+                of turning it into two full-width rows, and is what stops a
+                long German label stretching across a phone.
+
+                `relation="molecule"` is the DISTANCE between the two controls,
+                Ben's --space-gap-stack (2026-10-12). A switch and a way
+                forward are not alternatives to each other, which is the case
+                L6's control pair does not cover — and the gap is the
+                component's even though only this screen knows what the row
+                holds.
+
+                ── AND THE SWITCH SITS LEFT OF THE WAY ON ──────────────────
+                Ben, 2026-10-12. It was under the counter and its caption until
+                then; in the row it reads as one of the two things you can do
+                from here rather than as a note about the countdown. LEFT
+                because the CTA is where the step ends: the quiet choice comes
+                first in reading order, and the way forward stays at the
+                trailing edge where it has been since 2026-10-07.
+
+                OFF BY DEFAULT: the mix plays. On, the app hands over to the
+                same recording without its music — the position is read off the
+                playing element and written to the other one, so at 00:31 you
+                are still at 00:31 exactly. The two files are the same length
+                by construction, which is what makes that true rather than
+                approximately true.
+
+                ONLY WHERE THERE IS A GUIDANCE-ONLY CUT, and for Klangreise
+                there never will be: it "makes no sense with one of the stems
+                muted, so there is no adaptation possible" (Ben, 2026-10-12).
+                The music IS that exercise. A card exercise and the simulated
+                clock have one file for their own reasons.
+
+                So the control is RENDERED AWAY rather than disabled, and the
+                group then holds the CTA alone — which is the row it was while
+                the question's ladder lived here, and the shape `stacked="hug"`
+                was added for. A disabled switch would advertise a feature that
+                is not coming.
+
+                `VolumeX` / `Volume2` because `Switch`'s own docblock names that
+                pair as the case where the glyph should say WHAT is switching
+                rather than merely that something is. */}
+            <ButtonGroup align="end" stacked="hug" relation="molecule">
+              {mix.hasVoiceOnly && !simulated && (
+                <Switch
+                  label={t('session.listen.musicOff')}
+                  checked={musicMuted}
+                  onCheckedChange={setMusicMuted}
+                  onGlyph={VolumeX}
+                  offGlyph={Volume2}
+                />
+              )}
               <CtaButton
                 variant={met ? 'primary' : 'secondary'}
                 disabled={!met}

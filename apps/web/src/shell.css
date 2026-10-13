@@ -1796,10 +1796,36 @@ html[data-musy-scroll-snap] {
   gap: var(--space-gap-related);
 }
 
-/* The step's copy carries its own bottom margin everywhere else, where it is
-   followed by whatever the step draws. In here the group's gap is the spacing
-   and the two would add up. */
+/* ── THE WORDS, THEN A GROUP'S DISTANCE TO THE CONTROLS — Ben, 2026-10-12 ──
+   The step's copy carries its own bottom margin everywhere else, where it is
+   followed by whatever the step draws. In here the column's gap is the spacing
+   and the two would add up, so what is left is the DIFFERENCE between the gap
+   the lead spends between its parts and the one Ben asked for here: 32 − 12,
+   written as the subtraction rather than as 20px, which is L14.1 and the only
+   form that survives either token being retuned.
+
+   WHY A GROUP AND NOT THE LEAD'S OWN RUNG. The headline is a sentence to read;
+   the three controls under it are things to press. L2's ladder calls that
+   "molecules that do not belong together" — and the doubling check passes:
+   32 against the 12 that remains inside either part. On a listening exercise
+   there is no longer a picture between the two to say it for them.
+
+   UNLESS THE PICTURE IS THERE. On a card exercise it still is, and it already
+   owns that distance (`--space-inset-card`, its own block below). Both
+   separations would add up to 56px of nothing between the words and the step,
+   so the headline keeps its margin only where it is the thing the controls
+   follow. Measured, both widths: 32 on a listening exercise, and the card flow
+   unmoved at 24 either side of the picture.
+
+   `:has()` RATHER THAN A SECOND CLASS FROM THE STEP. The condition is already
+   in the DOM and the kind is already deciding whether the <img> renders, so a
+   modifier would be the same fact written twice. (The `:is()` note further up
+   this file is about that selector, not this one; `musy-components.css` uses
+   `:has()` for exactly this kind of "what follows this" rule.)              */
 .musie-listen__lead > .musie-md {
+  margin-block-end: calc(var(--space-gap-group) - var(--space-gap-related));
+}
+.musie-listen__lead > .musie-md:has(+ .musie-listen__infographic) {
   margin-block-end: 0;
 }
 
@@ -2349,7 +2375,13 @@ html[data-musy-scroll-snap] {
    `justify-content` and not `CtaButton.align`, because the two sound alike
    and are not — `align` moves the LABEL inside the control and leaves the box
    where it is. Where the box sits in a row was this screen's business under
-   L14; it is the component's now, which is the better home for it.          */
+   L14; it is the component's now, which is the better home for it.
+
+   THE GAP WENT THE SAME WAY, from the other branch and on the same day: the
+   mute switch beside the way on wanted `--space-gap-stack` between them, and
+   that is `relation="molecule"` rather than a rule here, for the reason this
+   block already gives. The wrapper also shrank the group to its widest child,
+   which is why its own media query existed at all.                          */
 
 
 /* ═══ DISCOVERED MUSIC ══════════════════════════════════════════════════════
@@ -2390,4 +2422,36 @@ html[data-musy-scroll-snap] {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-gap-stack);
+}
+
+/* ═══ THE EINSTEIGEN STEP'S TWO QUESTIONS ═══════════════════════════════════
+   A listening exercise asks two things before it plays — how you want to
+   listen, and what you are doing afterwards — and each is a legend with a
+   segmented control under it. Two molecules that do NOT belong to each other,
+   which is exactly what `--space-gap-group` is for (Layer 1's own words at its
+   declaration), and what `.musie-placeholder` and `.musie-sheet` already use
+   between blocks on these screens.
+
+   L14: a custom pattern only where the system has no component, and this is
+   one — `SegmentedControl` owns a control, not the spacing between two of
+   them, and `WizardPanel` owns the step's outer column rather than the
+   arrangement of one step's body. L14.1: every declaration resolves to a
+   Layer 1 token. L14.2: `musie-`, never `musy-`.
+
+   ── THE GAP IS ALSO BELOW THE SECOND ONE, AND THAT IS NOT SYMMETRY ────────
+   Ben, 2026-10-12. Under the second control is the panel's action row, which
+   is a third molecule and a different kind of thing — the way forward rather
+   than another question. Without the trailing gap the Continue button sits
+   closer to the question above it than the two questions sit to each other,
+   which reads as if it belonged to the second one.
+
+   `gap` on the column rather than a margin on the children: one spacing
+   mechanism per container, which is the rule `.musie-sheet .musie-placeholder`
+   next door exists to keep. */
+.musie-intro__questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  margin-block-start: var(--space-gap-group);
+  margin-block-end: var(--space-gap-group);
 }

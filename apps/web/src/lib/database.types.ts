@@ -108,6 +108,64 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_cuts: {
+        Row: {
+          duration_seconds: number
+          ending: string | null
+          exercise_id: string
+          id: string
+          locale: string
+          mixed_src: string
+          posture: string | null
+          track_id: string | null
+          voice_src: string | null
+        }
+        Insert: {
+          duration_seconds: number
+          ending?: string | null
+          exercise_id: string
+          id: string
+          locale: string
+          mixed_src: string
+          posture?: string | null
+          track_id?: string | null
+          voice_src?: string | null
+        }
+        Update: {
+          duration_seconds?: number
+          ending?: string | null
+          exercise_id?: string
+          id?: string
+          locale?: string
+          mixed_src?: string
+          posture?: string | null
+          track_id?: string | null
+          voice_src?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_cuts_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_cuts_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
+          {
+            foreignKeyName: "exercise_cuts_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_goals: {
         Row: {
           exercise_id: string
@@ -128,6 +186,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "exercises"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_goals_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
           },
           {
             foreignKeyName: "exercise_goals_goal_id_fkey"
@@ -186,6 +251,13 @@ export type Database = {
             referencedRelation: "exercises"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "exercise_i18n_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
         ]
       }
       exercise_tracks: {
@@ -223,6 +295,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "exercise_tracks_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
+          {
             foreignKeyName: "exercise_tracks_track_id_fkey"
             columns: ["track_id"]
             isOneToOne: false
@@ -236,6 +315,7 @@ export type Database = {
           id: string
           image_url: string | null
           implemented: boolean
+          kind: string
           listen_gate_seconds: number
           needs_cards: boolean
           needs_sound: boolean
@@ -247,6 +327,7 @@ export type Database = {
           id: string
           image_url?: string | null
           implemented?: boolean
+          kind: string
           listen_gate_seconds?: number
           needs_cards?: boolean
           needs_sound?: boolean
@@ -258,6 +339,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           implemented?: boolean
+          kind?: string
           listen_gate_seconds?: number
           needs_cards?: boolean
           needs_sound?: boolean
@@ -408,6 +490,13 @@ export type Database = {
             foreignKeyName: "reflections_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: true
+            referencedRelation: "question_rejections"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "reflections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -416,7 +505,9 @@ export type Database = {
       sessions: {
         Row: {
           card_id: string | null
+          cut_id: string | null
           ended_at: string | null
+          ending: string | null
           exercise_id: string
           feeling_change: string | null
           goal_id: string | null
@@ -424,6 +515,7 @@ export type Database = {
           listened_at: string | null
           listening_question: string | null
           listening_question_id: string | null
+          posture: string | null
           rejected_question_ids: string[]
           rejected_this_round: string[]
           started_at: string
@@ -434,7 +526,9 @@ export type Database = {
         }
         Insert: {
           card_id?: string | null
+          cut_id?: string | null
           ended_at?: string | null
+          ending?: string | null
           exercise_id: string
           feeling_change?: string | null
           goal_id?: string | null
@@ -442,6 +536,7 @@ export type Database = {
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
+          posture?: string | null
           rejected_question_ids?: string[]
           rejected_this_round?: string[]
           started_at?: string
@@ -452,7 +547,9 @@ export type Database = {
         }
         Update: {
           card_id?: string | null
+          cut_id?: string | null
           ended_at?: string | null
+          ending?: string | null
           exercise_id?: string
           feeling_change?: string | null
           goal_id?: string | null
@@ -460,6 +557,7 @@ export type Database = {
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
+          posture?: string | null
           rejected_question_ids?: string[]
           rejected_this_round?: string[]
           started_at?: string
@@ -477,11 +575,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sessions_cut_belongs_to_track"
+            columns: ["track_id", "cut_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_cuts"
+            referencedColumns: ["track_id", "id"]
+          },
+          {
             foreignKeyName: "sessions_exercise_id_fkey"
             columns: ["exercise_id"]
             isOneToOne: false
             referencedRelation: "exercises"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
           },
           {
             foreignKeyName: "sessions_goal_id_fkey"
@@ -585,6 +697,15 @@ export type Database = {
       }
     }
     Views: {
+      missing_cuts: {
+        Row: {
+          ending: string | null
+          exercise_id: string | null
+          locale: string | null
+          posture: string | null
+        }
+        Relationships: []
+      }
       missing_translations: {
         Row: {
           column_name: string | null
@@ -608,7 +729,29 @@ export type Database = {
           user_id: string | null
           was_reset: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Functions: {

@@ -1,0 +1,103 @@
+{
+  "pieces": [
+    {
+      "id": "trk-01",
+      "title": "Little Yellow Petals",
+      "artist": "Rachel Sandy",
+      "licenceRef": "Epidemic Sound · Little Yellow Petals · Rachel Sandy",
+      "file": "trk-01.mp3",
+      "durationSeconds": 219
+    },
+    {
+      "id": "trk-02",
+      "title": "Wait for It",
+      "artist": "Jon Björk",
+      "licenceRef": "Epidemic Sound · Wait for It · Jon Björk",
+      "file": "trk-02.mp3",
+      "durationSeconds": 102
+    },
+    {
+      "id": "trk-03",
+      "title": "Schwere Luft",
+      "artist": "Kollektiv Rau",
+      "licenceRef": null,
+      "file": null,
+      "durationSeconds": 178
+    },
+    {
+      "id": "trk-04",
+      "title": "Bats and Rats",
+      "artist": "Ludvig Moulin",
+      "licenceRef": "Epidemic Sound · Bats and Rats · Ludvig Moulin",
+      "file": "trk-04.mp3",
+      "durationSeconds": 168
+    },
+    {
+      "id": "trk-05",
+      "title": "High Sierra Call",
+      "artist": "Roy Edwin Williams",
+      "licenceRef": "Epidemic Sound · High Sierra Call · Roy Edwin Williams",
+      "file": "trk-05.mp3",
+      "durationSeconds": 191
+    },
+    {
+      "id": "trk-06",
+      "title": "Weiter Weg",
+      "artist": "Trio Halbmond",
+      "licenceRef": null,
+      "file": null,
+      "durationSeconds": 254
+    },
+    {
+      "id": "trk-07",
+      "title": "Kalte Sonne",
+      "artist": "Ben Aster",
+      "licenceRef": null,
+      "file": null,
+      "durationSeconds": 214
+    },
+    {
+      "id": "trk-08",
+      "title": "Ein Stuhl am Fenster",
+      "artist": "Ida Sperber",
+      "licenceRef": null,
+      "file": null,
+      "durationSeconds": 205
+    },
+    {
+      "id": "trk-09",
+      "title": "Aufgehen",
+      "artist": "Ensemble Nord",
+      "licenceRef": null,
+      "file": null,
+      "durationSeconds": 187
+    }
+  ],
+  "cuts": [
+    {
+      "exercise": "body-scan-soundwalk",
+      "locale": "de",
+      "durationSeconds": 183,
+      "mixed": "cut-body-scan-soundwalk-de-any-any-mixed-4343cfff.mp3",
+      "voice": "cut-body-scan-soundwalk-de-any-any-voice-ed6246c4.mp3",
+      "mixedSource": "BodyScan - mit Hintergrund.mp3",
+      "voiceSource": "BodyScan - ohne Hintergrund.mp3"
+    },
+    {
+      "exercise": "sound-journey",
+      "locale": "de",
+      "ending": "day",
+      "durationSeconds": 574,
+      "mixed": "cut-sound-journey-de-any-day-mixed-77032a4a.mp3",
+      "mixedSource": "Klangreise - Tags.mp3"
+    },
+    {
+      "exercise": "sound-journey",
+      "locale": "de",
+      "ending": "sleep",
+      "durationSeconds": 574,
+      "mixed": "cut-sound-journey-de-any-sleep-mixed-482938bd.mp3",
+      "mixedSource": "Klangreise - Einschlafen.mp3"
+    }
+  ]
+}

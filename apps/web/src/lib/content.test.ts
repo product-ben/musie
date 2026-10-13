@@ -14,7 +14,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { pickTranslation } from './content';
+import { pickCut, pickTranslation } from './content';
 
 interface Row {
   locale: string;
@@ -73,5 +73,94 @@ describe('pickTranslation', () => {
     const message = String(error.mock.calls[0][0]);
     expect(message).toContain('card_i18n');
     expect(message).toContain('card-3');
+  });
+});
+
+/**
+ * `pickCut()` — which recording answers the two questions.
+ *
+ * Tested directly for `pickTranslation`'s reason: it is pure, it decides what
+ * a person actually hears, and going through `getListenAudio` would mean
+ * mocking a supabase chain to exercise six lines that never touch the network.
+ *
+ * A NULL ON A ROW IS A WILDCARD — *this recording serves any answer* — which
+ * is what the delivered audio looks like: one Bodyscan recording for every
+ * combination, and two Klangreise ones that differ by ending and not by
+ * posture. These are the rules that make that work, and the rules that let a
+ * posture-specific cut take over later without anything being deleted.
+ */
+describe('pickCut', () => {
+  const row = (
+    id: string,
+    posture: string | null,
+    ending: string | null,
+  ) => ({
+    id,
+    locale: 'de',
+    posture,
+    ending,
+    mixed_src: `${id}-mixed.mp3`,
+    voice_src: null,
+    duration_seconds: 183,
+    track_id: null,
+  });
+
+  it('takes the exact match when there is one', () => {
+    const rows = [row('any', null, null), row('exact', 'lying', 'sleep')];
+    expect(pickCut(rows, 'lying', 'sleep')?.id).toBe('exact');
+  });
+
+  /* Bodyscan: one recording, no answers named, and it has to answer all four
+     combinations rather than none. */
+  it('takes a catch-all when nothing is more specific', () => {
+    const rows = [row('any', null, null)];
+    for (const posture of ['sitting', 'lying']) {
+      for (const ending of ['day', 'sleep']) {
+        expect(pickCut(rows, posture, ending)?.id).toBe('any');
+      }
+    }
+  });
+
+  /* Klangreise: two recordings that name their ending and say nothing about
+     posture. Both postures must reach the right ending. */
+  it('matches on ending alone, for either posture', () => {
+    const rows = [row('day', null, 'day'), row('sleep', null, 'sleep')];
+    expect(pickCut(rows, 'sitting', 'sleep')?.id).toBe('sleep');
+    expect(pickCut(rows, 'lying', 'sleep')?.id).toBe('sleep');
+    expect(pickCut(rows, 'lying', 'day')?.id).toBe('day');
+  });
+
+  /* THE LADDER, and the order of it is the whole point: naming the posture
+     beats naming the ending, and naming either beats naming neither. So the
+     day a posture-specific cut is recorded it wins over the ending-specific
+     one it replaces — without that row being deleted first. */
+  it('prefers the more specific row, posture before ending', () => {
+    const rows = [
+      row('any', null, null),
+      row('byEnding', null, 'sleep'),
+      row('byPosture', 'lying', null),
+      row('exact', 'lying', 'sleep'),
+    ];
+    expect(pickCut(rows, 'lying', 'sleep')?.id).toBe('exact');
+    expect(pickCut(rows.slice(0, 3), 'lying', 'sleep')?.id).toBe('byPosture');
+    expect(pickCut(rows.slice(0, 2), 'lying', 'sleep')?.id).toBe('byEnding');
+    expect(pickCut(rows.slice(0, 1), 'lying', 'sleep')?.id).toBe('any');
+  });
+
+  it('refuses a row that names a different answer', () => {
+    const rows = [row('sitting-only', 'sitting', null)];
+    expect(pickCut(rows, 'lying', 'day')).toBeNull();
+  });
+
+  /* Nothing in this language yet, which `missing_cuts` lists and the
+     listen step answers with its simulated clock. Not an error. */
+  it('returns null when there is nothing at all', () => {
+    expect(pickCut([], 'sitting', 'day')).toBeNull();
+  });
+
+  it('does not care what order the rows arrive in', () => {
+    const rows = [row('exact', 'lying', 'sleep'), row('any', null, null)];
+    expect(pickCut(rows, 'lying', 'sleep')?.id).toBe('exact');
+    expect(pickCut([...rows].reverse(), 'lying', 'sleep')?.id).toBe('exact');
   });
 });

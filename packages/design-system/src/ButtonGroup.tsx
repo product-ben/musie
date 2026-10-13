@@ -29,6 +29,23 @@
  * the easiest thing in the world to hit. `hug` is for a group that is NOT the
  * end of a step — an aside beside the way on, where a pair of full-width
  * buttons reads as two equal commitments.
+ *
+ * ── AND TWO RELATIONSHIPS, ONE LAYOUT — 2026-10-12 ───────────────────────
+ * Every group in the product held two ALTERNATIVES until then — Discard ·
+ * Save, Back · Continue — which L6 puts at --space-gap-inline because they
+ * read as one control pair. The listening step's sheet ends with a switch
+ * beside the way on, and those are not alternatives: pressing one is not
+ * declining the other. `relation` spends L2's --space-gap-stack between them
+ * instead.
+ *
+ * The gap stays the component's either way. WHICH RELATIONSHIP the row holds
+ * is the caller's, because it is the only one who knows — and that is the
+ * whole reason this is a prop and not a class a screen adds from outside
+ * (CLAUDE.md rule 1, 10-layout.md L7).
+ *
+ * THE TWO ARE ORTHOGONAL, and arrived the same day from two branches.
+ * `stacked` is what the COLUMN does below --bp-md; `relation` is what the
+ * SPACE between the controls means, in the column and the row alike.
  */
 import * as React from 'react';
 
@@ -52,11 +69,29 @@ export interface ButtonGroupProps {
   align?: 'start' | 'center' | 'end';
   /** Column behaviour below --bp-md. See ButtonGroupStacked. */
   stacked?: ButtonGroupStacked;
+  /**
+   * What the children are to EACH OTHER, which is the only thing the gap
+   * ladder keys on — 10-layout.md L2: "Layer 1 §5 names a token for each
+   * relationship; use the name, never a number".
+   *
+   * `alternatives` (default) — two ways out of one step. One control pair,
+   *   --space-gap-inline (L6). Every group written before 2026-10-12.
+   * `molecule` — controls of different KINDS, standing together because the
+   *   step ends here and not because they are choices between each other.
+   *   L2's "controls inside one molecule", --space-gap-stack.
+   *
+   * AND IT ALSO SAYS WHAT DOM ORDER MEANS. Among alternatives the order is
+   * priority, so the primary comes first and the stacked column puts it on
+   * top. In a molecule it is reading order: the way on stays last, so the
+   * stacked column ends with it — which is where the step ends.
+   */
+  relation?: 'alternatives' | 'molecule';
   className?: string;
 }
 
 export function ButtonGroup({
-  children, align = 'start', stacked = 'fill', className,
+  children, align = 'start', stacked = 'fill', relation = 'alternatives',
+  className,
 }: ButtonGroupProps) {
   return (
     <div
@@ -64,6 +99,7 @@ export function ButtonGroup({
         'musy-btn-group',
         align === 'start' ? '' : `musy-btn-group--${align}`,
         stacked === 'fill' ? '' : `musy-btn-group--stacked-${stacked}`,
+        relation === 'alternatives' ? '' : `musy-btn-group--${relation}`,
         className ?? '',
       ].filter(Boolean).join(' ')}
     >

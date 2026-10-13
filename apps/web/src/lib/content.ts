@@ -22,6 +22,8 @@
  * place knows both spellings.
  */
 import { getSupabase } from './supabase';
+import { isExerciseKind } from './exerciseKind';
+import type { ExerciseKind } from './exerciseKind';
 import type { Locale } from '../i18n';
 
 /* ── Shapes the screens see ────────────────────────────────────────────────*/
@@ -54,8 +56,28 @@ export interface Goal {
 
 export interface Exercise {
   id: string;
+  /**
+   * WHAT KIND OF EXERCISE THIS IS, and therefore which steps its run has —
+   * `lib/exerciseKind.ts` owns the step sets, this is just the column.
+   *
+   * Narrowed rather than cast: `database.types.ts` types the column as
+   * `string`, because a check constraint is not a Postgres enum and the
+   * generator cannot see one. An `as ExerciseKind` would assert the same thing
+   * while also hiding the day somebody widens the constraint — so an unknown
+   * value warns and falls back, the shape `session.ts` already uses for
+   * `sessions.step`.
+   */
+  kind: ExerciseKind;
   timeframeMin: number;
   timeframeMax: number;
+  /**
+   * SUPERSEDED BY `kind`, and held equal to it by a check constraint
+   * (`exercises_cards_match_kind`). Still selected because the column still
+   * exists — eight worktrees read it against the one shared Postgres, so
+   * dropping it is a follow-up migration rather than part of this change.
+   *
+   * Nothing in this app should branch on it any more: ask `kind`.
+   */
   needsCards: boolean;
   needsSound: boolean;
   imageUrl: string | null;
@@ -248,10 +270,11 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
 // prettier-ignore
-const EXERCISE_SELECT = 'id, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, needs_sound, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
 
 interface ExerciseRow {
   id: string;
+  kind: string;
   timeframe_min: number;
   timeframe_max: number;
   needs_cards: boolean;
@@ -277,11 +300,34 @@ interface ExerciseRow {
   exercise_goals: { goal_id: string }[];
 }
 
+/**
+ * NARROWING, NOT VALIDATION — the shape `readActiveSession` uses for
+ * `sessions.step`, and for the same reason.
+ *
+ * `exercises_kind_known` restricts the column to three values, so the else
+ * branch is unreachable through the database. It exists because the GENERATED
+ * type is `string`, and the alternative is an `as ExerciseKind` cast that
+ * asserts the same thing while hiding the day somebody widens the constraint.
+ *
+ * It falls back to `card_based`, which is the FOUR-STEP run: an exercise whose
+ * kind we cannot read draws every step rather than silently dropping one, so
+ * the failure is a step that should not be there instead of a run that cannot
+ * be finished.
+ */
+function exerciseKind(id: string, value: string): ExerciseKind {
+  if (isExerciseKind(value)) return value;
+  console.error(
+    `[musie] exercises: unknown kind "${value}" for id="${id}" — treating it as card_based`,
+  );
+  return 'card_based';
+}
+
 function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
   const text = pickTranslation(row.exercise_i18n, locale, 'exercise_i18n', row.id);
   if (text === null) return [];
   return [{
     id: row.id,
+    kind: exerciseKind(row.id, row.kind),
     timeframeMin: row.timeframe_min,
     timeframeMax: row.timeframe_max,
     needsCards: row.needs_cards,
@@ -465,6 +511,145 @@ export async function getTrackFor(
     id: track.id,
     src: track.src,
     durationSeconds: track.duration_seconds,
+  };
+}
+
+/* ── WHAT A LISTENING RUN PLAYS ────────────────────────────────────────────*/
+
+/**
+ * The audio for one run, in one of three shapes.
+ *
+ * `cut` is the produced thing: two stems, and the piece whose music is
+ * ducked in the second one. `piece` is the unducked original — what a card
+ * exercise plays, and what a listening run falls back to when its guidance has
+ * not been recorded in this language yet. `null` is no recording at all, which
+ * is ordinary for five of the nine cards and is what the simulated clock
+ * answers.
+ */
+export type ListenAudio =
+  | {
+    kind: 'cut';
+    cutId: string;
+    /** The music credited inside the mix, once we hold its own file. */
+    trackId: string | null;
+    /** The recording that plays. */
+    mixedSrc: string;
+    /** The same cut without its music — the switch hands over to it. */
+    voiceSrc: string | null;
+    durationSeconds: number;
+  }
+  | {
+    kind: 'piece';
+    trackId: string;
+    src: string | null;
+    durationSeconds: number;
+  };
+
+/* ONE STRING LITERAL — supabase-js parses this select at the TYPE level, and
+   TypeScript does not fold a concatenation into a literal type. */
+// prettier-ignore
+const CUT_SELECT = 'id, locale, posture, ending, mixed_src, voice_src, duration_seconds, track_id';
+
+interface CutRow {
+  id: string;
+  locale: string;
+  posture: string | null;
+  ending: string | null;
+  mixed_src: string;
+  voice_src: string | null;
+  duration_seconds: number;
+  track_id: string | null;
+}
+
+/**
+ * WHICH CUT ANSWERS THESE TWO, out of the ones this exercise has.
+ *
+ * A null dimension on a row means *this recording serves any answer*, which is
+ * what the delivered audio looks like: one Bodyscan recording for every
+ * combination, and two Klangreise ones that differ by ending and not by
+ * posture. So the match is a specificity ladder rather than an equality test,
+ * and the most specific row wins — which is what lets a posture-specific cut
+ * take over later without anything being deleted.
+ *
+ * PURE, and exported for the test: every rule that decides what a person hears
+ * is in these six lines, and none of them is visible in the query's shape.
+ */
+export function pickCut(
+  rows: CutRow[],
+  posture: string,
+  ending: string,
+): CutRow | null {
+  const serves = (row: CutRow) =>
+    (row.posture === null || row.posture === posture)
+    && (row.ending === null || row.ending === ending);
+
+  /* Two points for naming the posture, one for naming the ending — so an
+     exact row beats a posture-only row beats an ending-only row beats the
+     catch-all. Ties are impossible: `exercise_cuts_one_per_answer` is
+     unique over the four columns with nulls not distinct. */
+  const score = (row: CutRow) =>
+    (row.posture === null ? 0 : 2) + (row.ending === null ? 0 : 1);
+
+  return rows
+    .filter(serves)
+    .sort((a, b) => score(b) - score(a))[0] ?? null;
+}
+
+/**
+ * WHICH AUDIO A LISTENING EXERCISE PLAYS, for one set of answers.
+ *
+ * ── ONE QUERY, THEN THE FALLBACK IN MEMORY ────────────────────────────────
+ * It reads every cut of this exercise for this ENDING — at most four
+ * rows, being two locales × two postures — rather than asking for the exact
+ * combination and asking again on a miss. Two round trips on the path that is
+ * most likely to miss would be latency spent exactly where the content is
+ * thinnest, and four rows is nothing.
+ *
+ * ── THE FALLBACK, AND WHY IT IS THE ORIGINAL ──────────────────────────────
+ * No cut for these answers means the guidance has not been recorded yet.
+ * NOTHING EVER CROSSES LOCALES — not even the bed, whose ducking follows one
+ * script and no other — so the run plays the piece's own file: the music as
+ * released, unducked, with no guidance and no switch. A real exercise, in the
+ * right language on screen.
+ *
+ * The piece is read from ANY cut of the same exercise and ending, which
+ * is why this returns `piece` rather than null. A `fallback_track_id` column on
+ * `exercises` would be a second answer to a question the cuts already
+ * answer, and the two could disagree after a content edit.
+ */
+export async function getListenAudio(
+  exerciseId: string,
+  locale: Locale,
+  posture: string,
+  ending: string,
+): Promise<ListenAudio | null> {
+  /* ONE QUERY, FILTERED ONLY BY WHAT CANNOT BE RELAXED. The locale never
+     crosses, so it is in the `where`; posture and ending are matched in memory
+     because a null there is a wildcard the database cannot express as an
+     equality. At most a handful of rows per exercise either way. */
+  const { data, error } = await getSupabase()
+    .from('exercise_cuts')
+    .select(CUT_SELECT)
+    .eq('exercise_id', exerciseId)
+    .eq('locale', locale);
+
+  if (error !== null) fail(`exercise_cuts (${exerciseId}, ${locale})`, error.message);
+
+  const found = pickCut((data ?? []) as CutRow[], posture, ending);
+
+  /* NOTHING IN THIS LANGUAGE. Not an error: the recording has not been made
+     yet, which `missing_cuts` lists. The caller's own fallback decides
+     what happens — today the listen step runs its simulated clock, and the day
+     a piece has an unducked original of its own it will play that instead. */
+  if (found === null) return null;
+
+  return {
+    kind: 'cut',
+    cutId: found.id,
+    trackId: found.track_id,
+    mixedSrc: found.mixed_src,
+    voiceSrc: found.voice_src,
+    durationSeconds: found.duration_seconds,
   };
 }
 

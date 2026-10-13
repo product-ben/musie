@@ -8287,3 +8287,262 @@ beside `supabase db reset`, and the entry above could then name it instead of
 naming the walk. Not done here: where the masters live on a second machine is
 Ben's to decide, and inventing a path for it would be the brief's premise
 rather than his.
+
+# The listening type — the schema and the content pipeline
+
+## `needs_cards` is now a mirror of `exercises.kind`, and should not be — OPEN
+
+Where: `supabase/migrations/20261011100000_exercise_kinds.sql`,
+`apps/web/src/lib/content.ts` (`Exercise.needsCards`).
+
+What I checked: `kind` replaces `needs_cards` as the answer to *does this
+exercise draw a card*, and keeping both is the one piece of deliberate
+duplication in this branch. The honest change is to drop the column — and
+dropping it breaks every other worktree against the one shared Postgres
+(CLAUDE.md rule 9): eight of them select `needs_cards` in `content.ts`, so the
+next `supabase db reset` would fail their app with a PostgREST error in a file
+they never touched.
+
+What I did: kept it, and nailed it to the kind so the two cannot drift —
+`check ((kind = 'card_based') = needs_cards)`. `content.ts` still selects it and
+its docblock says nothing should branch on it. Nothing in this app does.
+
+What I need from Ben: **nothing now.** The follow-up is a one-statement
+migration — `alter table public.exercises drop column needs_cards;` plus the two
+lines in `content.ts` — once the parallel branches are merged. Recorded so it is
+a decision rather than a leftover.
+
+## D14 is overturned for one kind, and that was a designer's call — OPEN
+
+Where: `apps/web/src/lib/exerciseKind.ts` (`STEPS`),
+`apps/web/src/routes/Session.tsx` (the wizard's `steps`).
+
+What I checked: D14 settled that a cardless run draws **four** markers with
+`scan` visibly skipped. A `listening_only` run now draws **three**. The
+mechanism is untouched — `skipped` still goes to the reducer and to
+`InteractiveWizard`, and is empty for every kind today — but the rail is handed
+the run's own steps rather than all four.
+
+The argument for the change: D14 was right while "cardless" was an accident of
+which exercises had recordings. Once the kind says the stage does not exist for
+this exercise, a crossed-out *Scannen* teaches a step that will never apply, on
+every run, to everyone who runs it.
+
+What I did: made the change, on Ben's answer of 2026-10-11 ("three stages").
+
+What I need from Ben: **confirmation once he has seen it in the app**, because
+D14 was his designer's call and the fifth wizard state was built for it. The
+state is still there and still reachable; it just has no consumer today.
+
+## The switch is not recorded, so the diary cannot mention it — OPEN
+
+Where: `supabase/migrations/20261011110100_sessions_cut.sql`.
+
+What I checked: the listen step will offer *Musik stumm, nur Anleitung*. There
+is no column for it. A run that toggled it four times has no single answer, and
+a column holding the last state would read as *how you listened* while meaning
+*where the switch was when you left*.
+
+What I did: recorded the cut and the two answers, and nothing about the
+switch.
+
+What I need from Ben: **nothing**, unless the diary should one day say *you
+listened to this one without the music*. That would be a new column and a new
+question about what it means; logged because somebody will ask.
+
+## `/discovered-music` signs one URL per row, and reveals one per row — OPEN
+
+Where: `apps/web/src/routes/DiscoveredMusic.tsx`, `apps/web/src/lib/audio.ts`.
+
+What I checked: the screen mints a signed URL per row (one HTTP round trip
+each, in parallel) and calls `reveal-track` per row. Its own header already
+calls the second one acceptable at nine recordings and names the fix — a reveal
+that takes a list of sessions. The first has a one-call answer that did not
+exist when it was written: `createSignedUrls(paths, expiresIn)`, present in
+`@supabase/storage-js@2.116.0`.
+
+This branch adds pieces to that list, which is why it is worth re-reading.
+
+What I did: nothing on that screen — out of this branch's scope. What I *did*
+do, in `lib/audio.ts`, is the related fix that belongs to the listening step:
+a minted URL is now cached per page rather than per mount.
+
+What I need from Ben: **nothing.** Worth doing on the next pass over that
+screen; ten lines, no schema.
+
+## The two-streams spike — AWAITING A PHONE
+
+Where: `apps/web/src/routes/DevTwoStreams.tsx`, `/dev/two-streams`,
+registered lazily in `router.tsx`.
+
+What I checked: whether iOS keeps **two** simultaneous `<audio>` elements
+playing with the screen locked. It cannot be reasoned about, and it decides the
+shape of the listening type (LISTENING-EXERCISES-PLAN.md §4.10): two stems and
+a free gapless switch if yes, a pre-mixed master plus a dry guidance file and a
+swap-on-toggle if no. **The two answers do not share their audio files**, so it
+has to be settled before thirty-two of them are recorded.
+
+What I did: built the instrument and proved it works, headless, against the two
+masters that already exist (`trk-01.mp3`, `trk-05.mp3`):
+
+- both URLs signed in one `createSignedUrls` call;
+- both `play()` calls made synchronously in one gesture, both resolved;
+- both elements advanced 3.9s against 4.0s of wall clock, 0ms drift;
+- and — the part that matters — with one element deliberately paused while the
+  page was hidden, the verdict read *"✗ ONLY A kept playing — hidden 4.1s, A
+  advanced 4.1s, B advanced 0.0s"*. It discriminates rather than always
+  agreeing.
+
+**Two exemptions it takes, deliberately.** Its strings are inline English
+(rule 7) and there are no German ones (rule 6). A spike is an instrument read
+once and then deleted, and fifteen catalogue keys in two locales for a page with
+a known delete date is the waste those rules exist to prevent elsewhere. Nothing
+else is exempt: no new CSS, no new class, no raw token.
+
+**ANSWERED, 2026-10-11: yes.** Ben ran it — two tracks play at the same time
+and the muting works. `lib/mixer.ts` is built on that answer: two plain
+`<audio>` elements, no `AudioContext`, the switch setting `muted`. The stems
+stay the deliverable, and the pre-mixed fallback is not needed.
+
+**One half of the verdict is worth confirming before this is deleted**: the
+report was about simultaneous playback and muting, not explicitly about the
+LOCKED SCREEN for two minutes. The architecture does not change either way —
+plain elements are what survive backgrounding, which is why they were chosen —
+but if a locked screen does stop the pair, that is a product problem for a
+lie-down exercise and the place it would show up is here.
+
+What I needed from Ben, and what is left of it: **run it once with the screen
+locked.**
+
+```
+pnpm --filter web dev --host --port 5176
+# then on the phone, same network:  http://<lan-ip>:5176/dev/two-streams
+```
+
+Press *Start both*, lock the screen, wait two minutes, unlock, read the verdict.
+Then run it again with the switch on — muting is not pausing, and a platform
+that treats it as pausing is one this design has to know about. Check the ringer
+switch and Low Power Mode before believing a negative.
+
+Note that `apps/web/.env.local` points at the HOSTED project, so the page plays
+the real masters over the real CDN, which is the honest test. It also means
+`/dev/two-streams` is the ONLY route in this branch that works right now: every
+other screen reads `exercises.kind`, which exists in no deployed database until
+the migrations are applied.
+
+Write the answer here, and delete the route and the file.
+
+## `pnpm test:db` asserts a storage object that nothing seeds for it — OPEN
+
+Where: `apps/web/src/lib/db.content.db.test.ts` (*lets a signed-in listener
+sign a real object*), `apps/web/e2e/fakeTracks.ts`,
+`apps/web/e2e/globalSetup.ts`.
+
+What I checked: Ben hit this test red on 2026-10-11 with
+`StorageApiError: Object not found` / `NoSuchKey`. It is not a schema problem
+and not this branch's: the local stack carried **main's** 32 migrations
+(newest `20261009140000`, and `exercises.kind` did not exist on it), so none of
+this branch's work was even applied.
+
+Measured instead:
+
+- `select count(*) from storage.objects` → **0**;
+- `find /var/lib/storage -type f` inside `supabase_storage_musie` → **0 files**.
+
+The bucket exists — `20260921160000` re-inserts it with `on conflict do
+nothing` on every reset — and it is **empty**. `createSignedUrl` checks that
+the object exists, so it 404s, and the test is correct to fail.
+
+**Only two things ever put an object in that bucket.** An operator upload of
+the licensed masters, which deliberately never enter the repository; and
+`e2e/fakeTracks.ts`, which is wired into Playwright's `globalSetup` and
+therefore runs on `pnpm test:e2e` and **never on `pnpm test:db`**.
+
+So rule 4 — *run `pnpm test:db` after any change under
+`supabase/migrations/`* — lands on a red suite after any `supabase db reset`,
+for a reason that has nothing to do with the migration that was just written.
+That is the trap, and it is in `main`.
+
+**And the quick fix is itself blocked**, correctly: `apps/web/.env.local`
+points at the hosted project, so `e2e/support.ts`'s `stack()` refuses with its
+*"this walk would address two different databases and prove nothing"* guard.
+That guard is right and was measured into existence on 2026-09-21; the
+consequence is that the fixture seeder is unreachable while `.env.local` is
+hosted.
+
+What I did: nothing to either file. The fix is a product decision about where
+fixture audio belongs, and it is not this branch's scope.
+
+What I need from Ben: **a choice between three**, and the first is what makes
+the suite green in a minute:
+
+1. point `apps/web/.env.local` at the local stack (`supabase status` prints the
+   URL and the anon key), run `pnpm test:e2e` once so `globalSetup` seeds the
+   silent fixtures, and `test:db` goes green;
+2. run `test:db` against **hosted**, where the four real masters actually are —
+   `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY`,
+   `SUPABASE_TEST_SERVICE_ROLE_KEY`, all three or none. That is also the only
+   way that particular assertion means anything;
+3. move the seeding somewhere both suites share — a `pnpm fixtures:audio`, or a
+   `beforeAll` in the db suite — which is the real fix and is a change to
+   `main` rather than to this branch.
+
+Worth knowing either way: a test that SKIPPED on an empty bucket would be
+worse than this red one. The absence it is reporting is real.
+
+## Listening sheet — the gap between the mute switch and the way on is the system's, not the screen's
+Where: `src/components/SessionListen.tsx` (the sheet's foot),
+`packages/design-system/src/ButtonGroup.tsx`, `src/shell.css`
+(`.musie-immersive__actions`, deleted)
+What I checked: Level 1 for all three. Ben asked for `--space-gap-stack`
+between the two controls inside the button group (2026-10-12). That gap is
+`.musy-btn-group`'s own declaration, so writing it from `shell.css` would be
+the app re-emitting a component's geometry — CLAUDE.md rule 1 and L14's
+opening rule, the thing `CtaButton.align` exists to avoid.
+
+Level 2, the docs: L2's ladder puts "controls inside one molecule" at
+`--space-gap-stack` and the component spends `--space-gap-inline`, which L6
+prescribes for *two alternatives*. The sheet's row holds neither — a switch and
+a way forward are not alternatives to each other.
+What I did: added `relation="alternatives" | "molecule"` to `ButtonGroup`,
+default unchanged, and passed `molecule` here. Deleted
+`.musie-immersive__actions`, whose four declarations were the component's own
+re-typed one level out — and which shrank the group to its content, so the
+full-width stacking the component promises below `--bp-md` was never reaching
+this sheet.
+Why: the gap belongs to the component and the RELATIONSHIP belongs to the
+caller, which is the only split that leaves both rules intact. Measured after:
+16px in the row and stacked, against 8/12 unchanged for every other group.
+What I need from Ben: **nothing for the sheet.** One thing for the system,
+logged in the design system's own file: L2's table and L6's prose disagree
+about what two alternatives sit at (12 vs 8), and the stylesheet ships both.
+
+## Listening exercises — do the two that just became startable join the question rotation?
+Where: `src/content/questions.ts` (`QUESTION_SETS`),
+`src/lib/questions.db.test.ts`, `supabase/migrations/20261012100000_listening_steps.sql`
+What I checked: Level 1, both branches, at the merge. `questions.ts` says an
+exercise that is not a key "keeps today's behaviour entirely — the question out
+of `listen_md`, the heading out of `reflect_md`, `reflect_placeholder` in the
+field, and no `?` or re-roll button. That is `breathing-score`,
+`sound-journey` and `body-scan-soundwalk`, **none of which is built; they get
+questions when they get copy.**"
+
+Two of the three are now built and have copy, from this branch, the day after
+that was written. So the condition the sentence names has been met and the
+decision it defers is live.
+What I did: nothing to `QUESTION_SETS`. The two render their own `listen_md`
+body and `reflect_md` heading, which is the documented behaviour for an
+exercise with no set, and it is what Ben wrote this week on screen.
+
+One thing had to change: `questions.db.test.ts` asserted
+`keys(QUESTION_SETS) == every implemented exercise`, an EQUALITY, while its own
+comment states the subset rule — "a built exercise WITHOUT one is fine and is
+what the three unbuilt ones will be when they land". Narrowed to the subset, in
+the merge commit, because the alternative is a red suite that is right about
+nothing.
+What I need from Ben: **whether the two listening exercises should rotate five
+questions like the card exercises, or keep one question each.** They are not
+the same shape of session — a card exercise asks about an image somebody is
+holding, and these have nothing in the hand — so the five phrasings may not
+transfer at all. If they should, it is a one-line change here plus five
+questions per exercise in two locales.

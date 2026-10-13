@@ -4829,12 +4829,22 @@
   flex-shrink: 0;
   max-inline-size: 100%;
 }
+
+/* The gap is the RELATIONSHIP, and the default above is the one L6 names: two
+   alternatives read as a single control pair, so they sit at the icon-to-label
+   rung. A group holding controls of different kinds — the listening sheet's
+   mute switch beside the way on — is L2's "controls inside one molecule"
+   instead, which is one rung up. Both directions, because a stacked column of
+   two unlike controls needs it at least as much as a row does. */
+.musy-btn-group--molecule { gap: var(--space-gap-stack); }
+
 @media (max-width: 767.98px) {
   .musy-btn-group {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-gap-related);
   }
+  .musy-btn-group--molecule { gap: var(--space-gap-stack); }
   /* Stacked, every action is full width; the track button's countdown keeps
      its own column because the label sits left and the time is pushed right. */
   .musy-btn-group > .musy-btn { inline-size: 100%; }

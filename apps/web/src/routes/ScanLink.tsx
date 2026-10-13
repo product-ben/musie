@@ -106,7 +106,12 @@ export function ScanLink() {
     if (exercise === null) {
       throw new Error(`[musie] session ${row.id} names an exercise that is not there`);
     }
-    if (!exercise.needsCards) {
+    /* THE KIND, NOT `needsCards` — 2026-10-11. The two say the same thing
+       and are held equal by a check constraint, but one of them is the
+       answer and the other is a column kept alive for the other worktrees
+       (see `exercises_cards_match_kind`). A scanned card means nothing to an
+       exercise that has no scan step. */
+    if (exercise.kind !== 'card_based') {
       return { kind: 'cardless', sessionId: row.id, step: row.step };
     }
 

@@ -333,6 +333,28 @@ export const de: Messages = {
   /* ── Intro · D.5a ──────────────────────────────────────────────────────── */
   'session.intro.fallback': 'Nimm dir einen Moment Zeit zum Ankommen. Wenn du so weit bist, geht es weiter.',
 
+  /* ── DIE ZWEI ANTWORTEN · 2026-10-11 ───────────────────────────────────
+     Beide vorausgewählt. *Wie soll es enden?* und nicht *Entspannen /
+     Einschlafen*: `goals` hat schon eine Zeile **Entspannen**, zwei Schritte
+     vorher gefragt — dasselbe Wort zweimal, mit zwei Bedeutungen. Was sich
+     wirklich unterscheidet, ist der Schluss.
+
+     'Zurück in den Tag' ist kein Versprechen, sondern eine Richtung: die
+     Aufnahme endet so, dass du wieder da bist. 'Ins Einschlafen' genauso — wo
+     das Stück dich lässt, nicht was es mit dir macht (docs/GERMAN-UI-
+     WRITING.md, und kein Heilversprechen). */
+  'session.intro.posture.legend': 'Wie möchtest du zuhören?',
+  'session.intro.posture.sitting': 'Sitzend',
+  'session.intro.posture.lying': 'Liegend',
+  /* Ben, 2026-10-12: *Wie soll es enden?* → *Was machst du nach der Übung?*
+     Dieselbe Entscheidung, aus der Sicht der Person statt aus der der
+     Aufnahme — und damit auch kein Versprechen darüber, was die Übung bewirkt
+     (LISTENING-EXERCISES.md §6). Kollidiert weiterhin nicht mit dem Ziel
+     *Entspannen*, das die Bibliothek zwei Schritte vorher erfragt. */
+  'session.intro.ending.legend': 'Was machst du nach der Übung?',
+  'session.intro.ending.day': 'Zurück in den Tag',
+  'session.intro.ending.sleep': 'Einschlafen',
+
   /* ── Scan · D.5a, und der echte Scanner · E.0/E.1 ──────────────────────── */
   'session.scan.headline': 'Scanne die Karte, die gerade am besten zu deiner Stimmung passt.',
   /* KEIN 'reader'/'readerNote' MEHR — Ben, 2026-09-24. Die beiden Sätze standen
@@ -497,6 +519,10 @@ export const de: Messages = {
      'Noch mindestens so lange' — 24 Zeichen gegen 25 im Englischen, also
      unter dem Budget aus §5. */
   'session.listen.immersiveCountdown': 'mindestens hören für diese Übung',
+  /* Ben's own wording, 2026-10-11. Sagt, was das Drücken bringt, nicht in
+     welchem Zustand man ist — ein Schalter namens *Musik* liest sich als
+     Frage, ob es überhaupt welche gibt. */
+  'session.listen.musicOff': 'Klänge stumm schalten',
   /* Bens Wortlaut, 2026-10-07. Ersetzt `immersiveReady`, das nur eine Schwelle
      meldete: dieser Satz sagt, was geschafft ist, und gibt den Rest des Stücks
      als ANGEBOT zurück, nicht als Auflage.
@@ -589,8 +615,16 @@ export const de: Messages = {
   /* Drei geordnete Punkte, der niedrigste zuerst — die Reihenfolge IST die
      Frage. Jeder nennt den Vergleich ausdrücklich ('als vorher'), weil hier
      eine VERÄNDERUNG gemessen wird; ein Punkt namens 'gut' würde eine Stimmung
-     messen. */
-  'reflect.feeling.legend': 'Wie fühlst du dich jetzt?',
+     messen.
+
+     ── DIE LEGENDE FRAGT NACH DER STIMMUNG — Ben, 2026-10-12 ─────────────
+     'Wie fühlst du dich jetzt?' ist die Frage einer Therapeutin, und das hier
+     ist ein Musikprodukt (LISTENING-EXERCISES.md §6). 'Wie ist deine Stimmung
+     jetzt?' fragt nach etwas, das man in einer Sekunde an sich selbst abliest
+     und auf drei Punkten beantworten kann. Die VERÄNDERUNG steht weiterhin in
+     den drei Labels — die Stimmung in der Legende kostet also nichts von dem,
+     was der Hinweis darüber schützt. */
+  'reflect.feeling.legend': 'Wie ist deine Stimmung jetzt?',
   'reflect.feeling.worse': 'Schlechter als vorher',
   'reflect.feeling.same': 'Genau wie vorher',
   'reflect.feeling.better': 'Besser als vorher',
