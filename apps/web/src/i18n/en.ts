@@ -1070,12 +1070,19 @@ export const en = {
      transcript: next to the control it is about, where it is read before the
      finger moves rather than after. VoiceTranscript.tsx renders it.
 
-     `privacy.more` IS STILL PARKED, and the argument for it is unchanged:
-     `DataLightbox` stays built and still holds the long promise, and what is
-     missing is a door to it, which is Ben's to place
-     (apps/web/OPEN-QUESTIONS.md). `voice.hint.more` went the other way,
-     deleted outright, because that sentence was judged redundant rather than
-     homeless.
+     `privacy.more` IS PARKED WITH NOTHING BEHIND IT, 2026-10-13. The argument
+     used to be that `DataLightbox` stayed built and held the long promise, and
+     that only a door to it was missing. The lightbox has now gone instead —
+     three weeks with no door, and the clear-out took the room. So these keys
+     and `privacy.title`, `privacy.account`, `privacy.voice` and
+     `privacy.browserBound` have no surface at all.
+
+     THEY STAY ANYWAY, and the reason is not inertia: this is a written privacy
+     promise, some of it rewritten by Ben after the first draft was found
+     unrendered. Deleting product copy about data handling is a product
+     decision, not a clear-out's to take — logged in DECISIONS.md.
+     `voice.hint.more` went the other way, deleted outright, because that
+     sentence was judged redundant rather than homeless.
 
      THE PROMISE IN ONE LINE: not an abbreviation of `privacy.voice` so much as
      the half of it that is a promise — the mechanism is in the lightbox. It

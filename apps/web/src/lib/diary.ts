@@ -848,18 +848,15 @@ function wanted(locale: Locale): Locale[] {
    does not fold `'a' + 'b'` into a literal type, so a split select degrades
    the row to GenericStringError and every field access below becomes an
    error. */
-// prettier-ignore
 /** The three the column's CHECK allows, for narrowing a row's bare string. */
 const FEELING_CHANGES: readonly FeelingChange[] = ['worse', 'same', 'better'];
 
 const ENTRY_SELECT = 'id, status, step, started_at, ended_at, feeling_change, listening_question, exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md))';
 
-// prettier-ignore
 /* `tracks(id, src, duration_seconds)` AND NOT ONE COLUMN MORE.
    Adding `title` or `artist` here does not return null for them — it fails
    the request outright with 42501, and the screen shows its error state for
    what is really a grant the client was never given. See DiaryTrack. */
-// prettier-ignore
 const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, listening_question, cards(id, code, image_url), exercises(id, image_url, exercise_i18n(locale, name, description, image_alt, reflect_md)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 /**

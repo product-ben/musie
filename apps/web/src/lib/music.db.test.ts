@@ -57,7 +57,6 @@ describe('the database carries the library in supabase/content/music.json', () =
          a literal type, so splitting it degrades the row to
          GenericStringError. `content.ts` documents the same trap at
          EXERCISE_SELECT; this test walked into it anyway. */
-      // prettier-ignore
       .select('id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds, intro_until, track_id')
       .order('id');
 

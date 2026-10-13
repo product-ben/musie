@@ -237,8 +237,15 @@ export function SessionReflect({
             Both are gone. The transcript is what the reader came to this step
             for, and everything under it was competing with it: the promise,
             the second hint, the link. The promise is not withdrawn — it is
-            still true, and `DataLightbox` still holds all six sentences of it
-            — but this is no longer the place that says so.
+            still true — but this is no longer the place that says so.
+
+            AND THE LIGHTBOX IS GONE TOO, 2026-10-13. It had held the six
+            sentences and no door opened it for three weeks; the log below
+            asked where a door should go and nothing answered. The room went
+            instead of the door arriving. `privacy.title`, `privacy.account`,
+            `privacy.voice`, `privacy.browserBound` and `privacy.more` stay in
+            both catalogues, because deleting a written privacy promise is a
+            product decision rather than a clear-out — see DECISIONS.md.
 
             WHICH LEAVES THE LIGHTBOX WITH NO DOOR. Nothing in the app opens it
             any more, and that is the one thing about this change that is not

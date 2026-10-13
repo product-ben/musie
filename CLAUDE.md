@@ -133,8 +133,6 @@ hosted, which is how the `service_role` hole in rule 2 was found. It prints its
 target on the first call. Pass the keys for one run; the service-role key does
 not belong in a file.
 
-Content lives in a migration rather than `supabase/seed.sql` because `supabase
-db push` does not run `seed.sql` — header of `20260918150600_content_seed.sql`.
 
 Run `pnpm test:db` after any change under `supabase/migrations/`. It is
 deliberately **not** in `pnpm check`: CI runs `check` on a runner with no

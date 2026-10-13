@@ -60,7 +60,6 @@ import { saveStatements } from './statements';
  * nothing about the screen. The cards tables' own grants stay covered by
  * `db.security.db.test.ts`'s "content tables · readable, never writable".
  */
-// prettier-ignore
 const DETAIL_SELECT = 'id, status, step, started_at, ended_at, feeling_change, cards(id, code, image_url), exercises(id, exercise_i18n(locale, name, description)), reflections(mode, body, reflection_statements(id, text, position)), tracks(id, src, duration_seconds)';
 
 let client: SupabaseClient;

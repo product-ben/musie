@@ -820,9 +820,12 @@ export const de: Messages = {
      Transkript der Grund ist, warum jemand auf diesem Schritt steht, und das
      Kleingedruckte darunter dagegen angetreten ist.
 
-     Sie bleiben im Katalog, weil `DataLightbox` gebaut bleibt und das lange
-     Versprechen weiter enthält. Was fehlt, ist die Tür dorthin, und wo die
-     hingehört, entscheidet Ben (apps/web/OPEN-QUESTIONS.md).
+     Sie bleiben im Katalog, haben aber seit dem 13.10.2026 keine Oberfläche
+     mehr: `DataLightbox` ist gelöscht. Das Argument war, die Komponente bleibe
+     gebaut und es fehle nur die Tür dorthin — drei Wochen ohne Tür, dann ging
+     der Raum. Dass die Texte trotzdem bleiben, ist eine Produktentscheidung
+     und keine Aufräumarbeit: ein geschriebenes Datenschutzversprechen löscht
+     man nicht beim Ausräumen (DECISIONS.md).
 
      Das Versprechen in einer Zeile: keine Kürzung von `privacy.voice`, sondern
      die Hälfte davon, die ein Versprechen ist — wie es funktioniert, steht in

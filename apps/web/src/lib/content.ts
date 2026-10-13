@@ -283,7 +283,6 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
-// prettier-ignore
 const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
 
 interface ExerciseRow {
@@ -575,7 +574,6 @@ export type ListenAudio =
 
 /* ONE STRING LITERAL — supabase-js parses this select at the TYPE level, and
    TypeScript does not fold a concatenation into a literal type. */
-// prettier-ignore
 const CUT_SELECT = 'id, locale, posture, ending, mixed_src, voice_src, duration_seconds, intro_until, track_id';
 
 interface CutRow {

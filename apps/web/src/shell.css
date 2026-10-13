@@ -162,8 +162,9 @@
    the locale.                                                               */
 .musie-placeholder {
   /* --space-gap-group below, which is what every other block on these screens
-     uses to separate itself from the next thing (`.musie-md` above it,
-     `.musie-plain-list` below). It shipped as a bare `margin: 0`, so on /diary
+     uses to separate itself from the next thing (`.musie-md` above it, and
+     whatever the screen puts under the title). It shipped as a bare
+     `margin: 0`, so on /diary
      the title sat hard against the first entry with no token between them at
      all — the one place where nothing else supplied the gap. */
   margin: 0 0 var(--space-gap-group);
@@ -423,15 +424,6 @@
   margin-block: var(--space-gap-group);
 }
 
-/* ═══ THE DIARY'S SECOND HEADING — DELETED 2026-09-28 ═══════════════════════
-   `.musie-diary__earlier` drew *Earlier*, which separated the session you had
-   just finished — open as a card at the top of the screen — from the ones
-   before it. The card is gone (Ben), and *Earlier* is a relative word with
-   nothing left to be earlier THAN: the run is the whole diary now and its
-   period headings sit directly under the page title.
-
-   `diary.earlier` stays in both catalogues, unused. Deleting copy is not this
-   change's business and it is one grep away if the heading ever comes back. */
 
 /* ═══ THE END OF THE DIARY ══════════════════════════════════════════════════
    Delete-everything, which moved here from /settings on 2026-09-24. This class
@@ -1080,40 +1072,6 @@
   hyphens: var(--text-hyphens);
 }
 
-/* ═══ A WORD IN A SENTENCE THAT OPENS SOMETHING ═════════════════════════════
-   L14: the system has no inline link, and this is not one of its buttons. The
-   reflect step's data promise ends in *More about your data*, which opens a
-   lightbox — so the element has to be a <button> (it opens a dialog; it goes
-   nowhere) that READS as the link beside it, because a pill in the middle of a
-   line of small print is not a sentence any more.
-
-   Every declaration resolves to a Layer 1 token, and the colour and the focus
-   treatment are the ones `styles.css` already gives an <a>: two things that
-   look alike on the same screen must not be able to drift apart.
-
-   `font: inherit` is the load-bearing line. A <button> takes the UA's font at
-   the UA's size, so without it the link inside a body-sm paragraph renders at
-   13px Arial next to 14px Sora and looks like a rendering fault.             */
-.musie-inline-link {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--interactive-primary-on-subtle);
-  text-decoration: underline;
-  text-underline-offset: var(--border-width-regular);
-  cursor: pointer;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .musie-inline-link:hover { color: var(--on-surface); }
-}
-
-.musie-inline-link:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  border-radius: var(--radius-xs);
-}
 
 /* ═══ A RUN OF PLAIN PARAGRAPHS ═════════════════════════════════════════════
    `.musie-md` is the same shape and, since 2026-09-24, the same type step: it
@@ -1165,74 +1123,7 @@
   hyphens: var(--text-hyphens);
 }
 
-/* ═══ PLAIN LIST ════════════════════════════════════════════════════════════
-   L3: a run of repeated items is a list, so the count and position reach
-   assistive tech instead of being drawn. Items sit at --space-gap-stack, and
-   the gaps inside an item are one rung down (--space-gap-related), which keeps
-   L2's doubling check satisfied.                                            */
-.musie-plain-list {
-  margin: var(--space-gap-group) 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-group);
-}
 
-.musie-plain-list__item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-related);
-}
-
-.musie-plain-list__name {
-  margin: 0;
-  max-inline-size: var(--measure-heading);
-  font-family: var(--type-heading-sm-family);
-  font-size: var(--type-heading-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-heading-sm-line);
-  letter-spacing: var(--type-heading-sm-tracking);
-  color: var(--on-surface);
-  text-wrap: var(--text-wrap-heading);
-  hyphens: var(--text-hyphens);
-}
-
-.musie-plain-list__text {
-  margin: 0;
-  max-inline-size: var(--measure-body);
-  font-family: var(--type-body-md-family);
-  font-size: var(--type-body-md-size);
-  line-height: var(--type-body-md-line);
-  color: var(--on-surface);
-  text-wrap: var(--text-wrap-body);
-  hyphens: var(--text-hyphens);
-}
-
-/* body-sm is permitted here by L8: metadata, not the thing the screen is
-   about. */
-.musie-plain-list__meta {
-  margin: 0;
-  max-inline-size: var(--measure-body);
-  font-family: var(--type-body-sm-family);
-  font-size: var(--type-body-sm-size);
-  line-height: var(--type-body-sm-line);
-  color: var(--on-surface-muted);
-}
-
-/* ═══ A DIARY ENTRY'S HEADER ROW — DELETED 2026-09-26 ═══════════════════════
-   `.musie-entry__head` was a flex row inside `ContentBox`'s `header` slot,
-   holding the one control that collapses the card. Passing `header` at all is
-   what made the card FRAMED — a header band, a hairline, and the X on its own
-   line under the headline, because `.musy-box__header` is a flex COLUMN.
-
-   The box takes `onDismiss` + `dismissLabel` now and draws the control in the
-   headline row itself, which is the same pair `Message` and `Toast` have
-   always taken. So this block is not moved or renamed: it is gone, and the
-   geometry it was working around is the design system's again.
-
-   This is L14.3 arriving at its stated destination rather than being worked
-   around one more time — "a pattern that recurs is a component request".   */
 
 /* ═══ THE DIARY GRAPH ═══════════════════════════════════════════════════════
    Ben, 2026-09-26. A week of days; the sessions of each day stacked up it as
