@@ -1498,6 +1498,7 @@ export const en = {
   'insightMap.usage.none': 'Not used',
   'insightMap.lift.positive': 'Positive impact',
   'insightMap.lift.flat': 'No impact',
+  'insightMap.info.label': 'Why {metric} matters',
   'insightMap.care.legend': 'What do you care about?',
   'insightMap.care.breaks': 'Quality Breaks',
   'insightMap.care.feeling': 'Emotional Health',

@@ -87,3 +87,9 @@ export function parseProse(md: string): ProseBlock[] {
   }
   return blocks;
 }
+
+/** The heading of a piece, as plain text — what a dialog puts in its title. */
+export function proseHeading(md: string): string {
+  const heading = parseProse(md).find((block) => block.kind === 'heading');
+  return heading === undefined ? '' : heading.spans.map((span) => span.text).join('');
+}

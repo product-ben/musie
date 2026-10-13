@@ -62,7 +62,12 @@
 .musie-orgmap__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-gap-stack);
+  /* 24px — Ben. `--sp-5` is the Layer 1 rung that holds it, and it is the raw
+     spacing scale rather than one of L2's semantic names because the semantic
+     ladder has no 24: it steps `--space-gap-stack` 16 straight to
+     `--space-gap-group` 32. The number is still a token and still not picked by
+     eye; it is just a rung without a word. */
+  gap: var(--sp-5);
 }
 
 /* ═══ THE LEDE ══════════════════════════════════════════════════════════════
@@ -749,52 +754,37 @@
   border-radius: var(--radius-xs);
 }
 
-/* ═══ THE RATIONALE, AS A HOVER BUBBLE ═════════════════════════════════════
-   Ben: show it only while the option is hovered, under the element.
+/* ═══ THE INFO MARKER ══════════════════════════════════════════════════════
+   ── IT IS AN OVERLAY, BECAUSE A BUTTON INSIDE A BUTTON IS NOT HTML ───────
+   Ben asked for it inside the option. `SegmentedControl` renders each option
+   as a `<button>`, and nesting one inside another is invalid and unreachable —
+   so the marker is a SIBLING positioned over the option's right edge, which is
+   what "inside" looks like and the only version of it a browser accepts.
 
-   ── WHY IT IS NOT `Hint` ─────────────────────────────────────────────────
-   The design system has a hover bubble and it cannot do this. `.musy-tip__bubble`
-   is `white-space: nowrap` with no max-width, which is right for the one-line
-   affordance it was built for and which rendered a paragraph 1,404px wide the
-   last time this screen tried it. `Hint` is also scoped to things that are NOT
-   controls, and these are radio options. Logged; this is the pattern until the
-   system has a popover.
-
-   ── IT IS ABSOLUTE, SO NOTHING MOVES ─────────────────────────────────────
-   A bubble that pushed the page down would shove the level control and the map
-   on every pointer move. It overlaps what is below it instead, which is what a
-   tooltip is for, and `--z-raised` is enough: it only has to clear its own
-   siblings.                                                                */
+   `--musie-info-at` is the option's right edge, measured in the component,
+   because the track carries a one-pixel divider after every option and a gap
+   between every child: a marker placed by percentage drifts, and by the fourth
+   option the drift is visible.                                             */
 .musie-tip { position: relative; }
 
-.musie-tip__bubble {
+.musie-info-slot {
   position: absolute;
-  inset-block-start: 100%;
-  z-index: var(--z-raised);
-  margin-block-start: var(--space-gap-inline);
-
-  /* ── CENTRED ON THE OPTION, CLAMPED TO THE CONTROL ──────────────────────
-     `--musie-tip-at` is the hovered option's centre, measured in the
-     component because only the DOM knows where an option ended up. The rest
-     is arithmetic: half the bubble to the left of that point, and never past
-     either edge of the control. `clamp()` does it without a second
-     measurement, and when the bubble is wider than the wrapper the lower
-     bound wins and it simply starts at the edge. */
-  --musie-tip-w: calc(var(--measure-compact) * 1.6);
-  inline-size: min(var(--musie-tip-w), 100%);
-  inset-inline-start: clamp(
-    0px,
-    calc(var(--musie-tip-at) - min(var(--musie-tip-w), 100%) / 2),
-    calc(100% - min(var(--musie-tip-w), 100%))
-  );
-
-  padding: var(--space-inset-card);
-  border-radius: var(--radius-card);
-  background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
-  box-shadow: var(--elevation-2);
+  inset-block-start: 50%;
+  inset-inline-start: var(--musie-info-at);
+  /* Half its own size back from the option's edge, plus the track's own inset
+     — both geometric, neither picked by eye. */
+  transform: translate(calc(-100% - var(--space-gap-inline)), -50%);
+  /* The slot is only a position. The button inside it takes the pointer. */
+  pointer-events: none;
 }
 
-/* Inside the bubble the prose gives up its page measure: the bubble is the
-   measure now. */
-.musie-tip__bubble .musie-rationale { max-inline-size: 100%; }
+.musie-info-slot .musie-info { pointer-events: auto; }
+
+/* The legend above the track means the midpoint of the WRAPPER is not the
+   midpoint of the track, so the marker is nudged down by half of what the
+   legend and its gap occupy. `--type-label-lg-size` is the legend's step. */
+.musie-info-slot {
+  margin-block-start: calc(
+    (var(--type-label-lg-size) * var(--type-label-lg-line) + var(--space-gap-related)) / 2
+  );
+}

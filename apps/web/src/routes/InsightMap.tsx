@@ -37,18 +37,19 @@
 import * as React from 'react';
 import {
   Boxes, Brain, Building2, Check, Coffee, Handshake, Heart, Minus, Shield,
-  Send, Sparkles, TrendingUp, Users, X,
+  Info, Send, Sparkles, TrendingUp, Users, X,
 } from 'lucide-react';
 import {
   Background, Controls, Handle, Position, ReactFlow,
 } from '@xyflow/react';
 import type { Edge, Node, NodeProps, NodeTypes } from '@xyflow/react';
 import {
-  Badge, BadgeRow, CtaButton, IconButton, SegmentedControl, useToolSize,
+  Badge, BadgeRow, ContentBox, CtaButton, IconButton, Lightbox, SegmentedControl,
+  useToolSize,
 } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { breaksCard, cloudCard, exercisesCard, scaleCard } from '../lib/orgCard';
-import { parseProse } from '../lib/orgProse';
+import { parseProse, proseHeading } from '../lib/orgProse';
 import type { CloudWord } from '../lib/orgCard';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
@@ -414,6 +415,52 @@ function CardExercises({ title, names }: { title: string; names: string[] }) {
  * a Musie Moment is taken — which is the only content that cannot contradict
  * the number on the map. Flagged rather than quietly invented.
  */
+/**
+ * The research, in a dialog.
+ *
+ * ── A MODAL, NOT A BUBBLE — Ben, after living with the hover version ──────
+ * The bubble worked and did not read well: it arrived and left while the
+ * pointer was on its way somewhere else, and its text is full of citations
+ * that a reader has to travel into it to click. A dialog is the honest shape
+ * for a hundred and fifty words with six links in them — it stays until it is
+ * dismissed, and nothing about reading it is a race.
+ *
+ * `Lightbox` has no `trigger` here because the thing that opened it is one of
+ * several markers, so the dialog owes `finalFocus` instead: focus goes back to
+ * the marker that was pressed rather than to the top of the page.
+ */
+function InfoDialog(
+  { metric, onClose, finalFocus }: {
+    metric: MetricId;
+    onClose: () => void;
+    finalFocus: React.RefObject<HTMLButtonElement | null>;
+  },
+) {
+  const t = useT();
+  const { locale } = useLocale();
+  const source = METRIC_RATIONALE[metric];
+  if (source === undefined) return null;
+
+  return (
+    <Lightbox
+      open
+      title={proseHeading(locale === 'de' ? source.de : source.en)}
+      closeLabel={t('common.closeLabel')}
+      finalFocus={finalFocus}
+      onOpenChange={(next) => { if (!next) onClose(); }}
+    >
+      <ContentBox
+        headline={t(METRIC_LABEL[metric])}
+        headlineHidden
+        headingLevel={3}
+        outline="plain"
+      >
+        <MetricRationale metric={metric} />
+      </ContentBox>
+    </Lightbox>
+  );
+}
+
 function CardBody({ nodeId, metric }: { nodeId: string; metric: MetricId }) {
   const t = useT();
 
@@ -496,36 +543,16 @@ export function InsightMap() {
 
   const [selected, setSelected] = React.useState<string | null>(null);
   const [sharing, setSharing] = React.useState(false);
-  const [hovered, setHovered] = React.useState<MetricId | null>(null);
-  const [tipAt, setTipAt] = React.useState(0);
+  const [infoFor, setInfoFor] = React.useState<MetricId | null>(null);
+  /* The right edge of each option, in wrapper pixels. Measured, because only
+     the DOM knows where `SegmentedControl` put them. */
+  const [optionEnds, setOptionEnds] = React.useState<number[]>([]);
+  const tipRef = React.useRef<HTMLDivElement | null>(null);
+  const infoRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
   const tool = useToolSize();
 
   const metrics = METRICS_BY_FILTER[filter];
 
-  /**
-   * Which option the pointer or the keyboard is on, and where it sits.
-   *
-   * ── IT ANSWERS TO FOCUS AS WELL AS HOVER ─────────────────────────────────
-   * Ben asked for hover. Hover alone would mean a keyboard user never sees a
-   * word of it, and 1.4.13 wants content shown on hover to be reachable,
-   * dismissable and hoverable — so: focus opens it too, Escape closes it, and
-   * the bubble lives INSIDE the wrapper so the pointer can travel into it
-   * without the bubble vanishing. The last of those is not decoration either:
-   * the text is full of citations, and a link you cannot reach is a link.
-   */
-  const onTipPoint = React.useCallback((event: React.SyntheticEvent<HTMLDivElement>) => {
-    const wrapper = event.currentTarget;
-    const buttons = [...wrapper.querySelectorAll('button')];
-    const option = (event.target as HTMLElement).closest('button');
-    const index = option === null ? -1 : buttons.indexOf(option);
-    if (index < 0 || index >= metricsRef.current.length) return;
-    const box = wrapper.getBoundingClientRect();
-    const at = option!.getBoundingClientRect();
-    setTipAt(at.left - box.left + at.width / 2);
-    setHovered(metricsRef.current[index]);
-  }, []);
-
-  const clearTip = React.useCallback(() => setHovered(null), []);
 
   /**
    * SELECTION IS CLEARED BY THE LEVEL AND NOTHING ELSE. Changing the metric
@@ -550,15 +577,35 @@ export function InsightMap() {
     setSelected((current) => (current === node.id ? null : node.id));
   }, []);
 
-  /* 1.4.13: content shown on hover must be DISMISSABLE without moving the
-     pointer. Escape is the way, and it is the only keyboard handler on this
-     screen. */
-  React.useEffect(() => {
-    if (hovered === null) return undefined;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setHovered(null); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [hovered]);
+  /**
+   * Where each option ends, remeasured whenever that could change.
+   *
+   * ── AN OVERLAY, BECAUSE A BUTTON INSIDE A BUTTON IS NOT HTML ────────────
+   * Ben asked for the marker inside the option. `SegmentedControl` renders
+   * each option as a `<button>`, and a button inside a button is invalid and
+   * unreachable — no API could have offered it. So the markers are siblings,
+   * positioned over the right edge of each option, which is what "inside"
+   * looks like and is the only version of it a browser will accept.
+   *
+   * Measured rather than computed from a percentage: the track has a one-pixel
+   * divider after every option and a four-pixel gap between every child, and a
+   * marker that drifts two pixels per option is a marker that is visibly wrong
+   * by the fourth one.
+   */
+  React.useLayoutEffect(() => {
+    const wrapper = tipRef.current;
+    if (wrapper === null) return undefined;
+    const measure = () => {
+      const box = wrapper.getBoundingClientRect();
+      setOptionEnds([...wrapper.querySelectorAll('button')]
+        .filter((button) => !button.classList.contains('musie-info'))
+        .map((button) => button.getBoundingClientRect().right - box.left));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [metrics]);
 
   /* CHANGING THE FILTER CHANGES WHAT CAN BE ASKED, so the selected metric has
      to move with it — "Connectedness" is not an option once the question is
@@ -662,15 +709,7 @@ export function InsightMap() {
             not from a `musy-` class or a base-ui attribute. The options are
             built from `metrics` in order, so the index IS the metric, and the
             app stays out of the design system's internals. */}
-        <div
-          className="musie-tip"
-          onMouseOver={onTipPoint}
-          onMouseLeave={clearTip}
-          onFocus={onTipPoint}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) clearTip();
-          }}
-        >
+        <div className="musie-tip" ref={tipRef}>
           <SegmentedControl
             key={filter}
             name="insight-map-metric"
@@ -684,17 +723,28 @@ export function InsightMap() {
             onValueChange={(next) => { if (isMetric(next, filter)) setMetric(next); }}
           />
 
-          {hovered !== null && METRIC_RATIONALE[hovered] !== undefined && (
-            <div
-              className="musie-tip__bubble"
-              role="tooltip"
-              style={{ '--musie-tip-at': `${tipAt}px` } as React.CSSProperties}
-            >
-              <MetricRationale metric={hovered} />
-            </div>
-          )}
+          {metrics.map((id, index) => (
+            METRIC_RATIONALE[id] === undefined || optionEnds[index] === undefined
+              ? null
+              : (
+                <span
+                  className="musie-info-slot"
+                  key={id}
+                  style={{ '--musie-info-at': `${optionEnds[index]}px` } as React.CSSProperties}
+                >
+                  <IconButton
+                    glyph={Info}
+                    label={t('insightMap.info.label', { metric: t(METRIC_LABEL[id]) })}
+                    variant="ghost"
+                    size="min"
+                    className="musie-info"
+                    ref={(node) => { infoRefs.current[id] = node; }}
+                    onClick={() => setInfoFor(id)}
+                  />
+                </span>
+              )
+          ))}
         </div>
-
 
         {/* THIRD, by Ben. It is the only one of the three that changes WHICH
             nodes are drawn rather than what they say, so it reads last: you
@@ -829,6 +879,14 @@ export function InsightMap() {
           </div>
         </footer>
       </section>
+
+      {infoFor !== null && (
+        <InfoDialog
+          metric={infoFor}
+          onClose={() => setInfoFor(null)}
+          finalFocus={{ current: infoRefs.current[infoFor] ?? null }}
+        />
+      )}
 
       {sharing && selectedNode !== null && (
         <NotImplementedLightbox

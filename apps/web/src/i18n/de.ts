@@ -1112,6 +1112,7 @@ export const de: Messages = {
   'insightMap.usage.none': 'Keine Nutzung',
   'insightMap.lift.positive': 'Positiver Effekt',
   'insightMap.lift.flat': 'Kein Effekt',
+  'insightMap.info.label': 'Warum {metric} wichtig ist',
   'insightMap.care.legend': 'Worauf kommt es dir an?',
   'insightMap.care.breaks': 'Gute Pausen',
   'insightMap.care.feeling': 'Emotionale Gesundheit',
