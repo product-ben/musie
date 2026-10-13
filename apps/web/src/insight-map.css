@@ -44,29 +44,21 @@
 
 /* ═══ THE THREE CONTROLS ════════════════════════════════════════════════════
    ONE BLOCK, so the page grid stays at four rows and the canvas keeps its
-   `1fr`. Three stacked controls is a lot of chrome above the only thing worth
-   looking at — at 1280 the canvas had been pushed from 466px down the viewport
-   to nearly 700 — so from --bp-md the first two sit side by side and the
-   metric takes the full width underneath it.
+   `1fr`.
 
-   THE METRIC GETS TWO THIRDS OF THE FIRST ROW because it is the one that
-   needs the width — four options, and *Wahrgenommene Stimmungsverbesserung* is
-   the longest label on the screen by a distance. The filter has two options
-   and fits the remaining third; the level takes the second row.
+   STACKED AT EVERY WIDTH — Ben, and it is the right call for a reason the
+   two-column version made obvious: each of these three is about to carry a
+   sentence underneath it saying what the selection means. Side by side, those
+   sentences would sit in columns of different heights and the row would read
+   as two unrelated halves rather than as three questions in order.
 
-   DOM ORDER IS VISUAL ORDER, which is L6's rule and the reason the grid is
-   shaped this way round rather than the obvious one: filter, then metric, then
-   level reads left to right and then down, and the markup says the same.    */
+   One column also keeps DOM order and visual order identical without having to
+   think about it, which is L6's rule, and it is the same at 393px and at 1280
+   — so there is one layout to check rather than two.                        */
 .musie-orgmap__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-gap-stack);
-}
-
-/* --bp-md. */
-@media (min-width: 768px) {
-  .musie-orgmap__controls { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
-  .musie-orgmap__controls-wide { grid-column: 1 / -1; }
 }
 
 /* The shell's h1 carries `--space-gap-group` below itself, which is right on

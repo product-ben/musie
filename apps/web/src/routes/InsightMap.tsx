@@ -413,7 +413,6 @@ export function InsightMap() {
             choose the question, then the measure, then how close you stand. */}
         <SegmentedControl
           name="insight-map-level"
-          className="musie-orgmap__controls-wide"
           legend={t('insightMap.level.legend')}
           options={VIEW_IDS.map((id) => ({
             value: id,
