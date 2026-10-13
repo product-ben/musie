@@ -13,7 +13,7 @@
  * add them up.
  */
 import { COMPANY, DEPARTMENTS, PODS } from './orgFixture';
-import type { DepartmentId, Pod } from './orgFixture';
+import type { DepartmentId, DimensionId, Pod } from './orgFixture';
 
 export type NodeKind = 'company' | 'department' | 'pod';
 
@@ -100,4 +100,101 @@ export function nodeById(id: string): OrgNode | null {
     ?? POD_NODES.find((node) => node.id === id)
     ?? null
   );
+}
+
+/* ═══ HOW PEOPLE ARE DOING ══════════════════════════════════════════════════
+   A traffic light per node, per dimension. Four states, and the fourth is the
+   one that matters most.                                                    */
+
+/**
+ * `none` is NOT a fourth colour of bad news.
+ *
+ * It means nobody can answer the question for this group — because the pod is
+ * three people and reporting on it would be reporting on them, or because the
+ * question was not asked here this month. Half the pods are `none` on any
+ * given dimension, which is the most honest thing on the map and the reason
+ * grey is drawn with a DASHED edge rather than a dim green one: Layer 1's
+ * dashed style is its word for "provisional, awaiting content" (token gap G2),
+ * which is exactly this and nothing else.
+ */
+export type Status = 'none' | 'good' | 'watch' | 'poor';
+
+/**
+ * Where the light changes.
+ *
+ * Two thresholds on a nought-to-ten scale, and they are deliberately not
+ * symmetrical: 7 is "this is fine", and anything under 5.5 is bad enough to go
+ * and ask about rather than to watch. The band in between is the one a reader
+ * should neither act on nor ignore.
+ */
+const GOOD_AT = 7;
+const WATCH_AT = 5.5;
+
+export function bandOf(score: number): Exclude<Status, 'none'> {
+  if (score >= GOOD_AT) return 'good';
+  if (score >= WATCH_AT) return 'watch';
+  return 'poor';
+}
+
+/** A pod's own score, or null where nobody can answer. */
+export function podScore(podId: string, dimension: DimensionId): number | null {
+  const pod = PODS.find((p) => p.id === podId);
+  return pod?.scores[dimension] ?? null;
+}
+
+/**
+ * A department's score, built from the pods that DO have data — weighted by
+ * the people it draws from each of them.
+ *
+ * ── A DEPARTMENT IS NEVER GREY, AND THAT IS NOT A FUDGE ──────────────────
+ * Weighting by people is what makes this true: a department is twenty to
+ * forty-five people, so some pod inside it has always answered, and the
+ * aggregate is never small enough to be about an individual. The same fact
+ * that silences half the pods is what lets every department speak.
+ *
+ * Pods with no data are SKIPPED rather than counted as zero. Counting them
+ * would drag every department toward the bottom of the scale in proportion to
+ * how little it had measured, which is the opposite of what the reader should
+ * conclude from missing data.
+ */
+export function departmentScore(id: DepartmentId, dimension: DimensionId): number | null {
+  let people = 0;
+  let total = 0;
+  for (const pod of PODS) {
+    const score = pod.scores[dimension];
+    const members = pod.members[id];
+    if (score === undefined || members === undefined) continue;
+    people += members;
+    total += score * members;
+  }
+  return people === 0 ? null : total / people;
+}
+
+/** The company's, weighted by each pod's whole size. */
+export function companyScore(dimension: DimensionId): number | null {
+  let people = 0;
+  let total = 0;
+  for (const pod of PODS) {
+    const score = pod.scores[dimension];
+    if (score === undefined) continue;
+    const size = podTotal(pod);
+    people += size;
+    total += score * size;
+  }
+  return people === 0 ? null : total / people;
+}
+
+/** The score behind any node's light, or null where there is none. */
+export function scoreOf(nodeId: string, dimension: DimensionId): number | null {
+  if (nodeId === COMPANY.id) return companyScore(dimension);
+  if (DEPARTMENTS.some((d) => d.id === nodeId)) {
+    return departmentScore(nodeId as DepartmentId, dimension);
+  }
+  return podScore(nodeId, dimension);
+}
+
+/** The one call the screen makes. */
+export function statusOf(nodeId: string, dimension: DimensionId): Status {
+  const score = scoreOf(nodeId, dimension);
+  return score === null ? 'none' : bandOf(score);
 }

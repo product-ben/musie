@@ -7,11 +7,11 @@
  * shared pod still renders, it just quietly disagrees with the tab beside it.
  */
 import { describe, expect, it } from 'vitest';
-import { DEPARTMENTS, PODS } from './orgFixture';
+import { DEPARTMENTS, DIMENSION_IDS, PODS } from './orgFixture';
 import type { DepartmentId } from './orgFixture';
 import {
-  COMPANY_NODE, DEPARTMENT_NODES, LINKS, POD_NODES, departmentHeadcount, linksOfPod,
-  nodeById, podTotal,
+  COMPANY_NODE, DEPARTMENT_NODES, LINKS, POD_NODES, bandOf, companyScore,
+  departmentHeadcount, departmentScore, linksOfPod, nodeById, podTotal, scoreOf, statusOf,
 } from './orgModel';
 
 const DEPARTMENT_IDS = DEPARTMENTS.map((d) => d.id);
@@ -120,6 +120,88 @@ describe('the nodes', () => {
   it('gives every node a short form that fits a circle', () => {
     for (const node of [...DEPARTMENT_NODES, ...POD_NODES]) {
       expect(node.shortName.length, node.id).toBeLessThanOrEqual(12);
+    }
+  });
+});
+
+describe('the traffic light', () => {
+  it('leaves exactly half the pods with nothing to say, on every dimension', () => {
+    /* Ben's number, and it is the honest half rather than a gap in the
+       fixture: a pod of three or four cannot be reported on without reporting
+       on individuals. If an edit fills these in, the map stops making the
+       point it exists to make. */
+    for (const dimension of DIMENSION_IDS) {
+      const silent = PODS.filter((pod) => pod.scores[dimension] === undefined);
+      expect(silent, dimension).toHaveLength(9);
+      expect(silent.length / PODS.length, dimension).toBe(0.5);
+    }
+  });
+
+  it('silences a different nine each time, so each dimension is a new picture', () => {
+    const sets = DIMENSION_IDS.map((d) =>
+      PODS.filter((pod) => pod.scores[d] === undefined).map((p) => p.id).sort().join(','));
+    expect(new Set(sets).size).toBe(DIMENSION_IDS.length);
+  });
+
+  it('never leaves a department or the company grey', () => {
+    /* The other half of Ben's number: 0% no-data above pod level. It holds
+       because a department is twenty to forty-five people and some pod inside
+       it has always answered — not because anything is filled in by hand. */
+    for (const dimension of DIMENSION_IDS) {
+      expect(companyScore(dimension), dimension).not.toBeNull();
+      for (const node of DEPARTMENT_NODES) {
+        expect(scoreOf(node.id, dimension), `${node.id}/${dimension}`).not.toBeNull();
+        expect(statusOf(node.id, dimension), `${node.id}/${dimension}`).not.toBe('none');
+      }
+    }
+  });
+
+  it('never stores a nought, because a nought is a claim', () => {
+    for (const pod of PODS) {
+      for (const [dimension, score] of Object.entries(pod.scores)) {
+        expect(score, `${pod.id}/${dimension}`).toBeGreaterThan(0);
+        expect(score, `${pod.id}/${dimension}`).toBeLessThanOrEqual(10);
+      }
+    }
+  });
+
+  it('skips the silent pods rather than counting them as zero', () => {
+    /* Counting a pod with no data as 0 would drag a department down in
+       proportion to how little it had measured — the opposite of what a reader
+       should take from missing data. Engineering has nine pods and only some
+       speak on any dimension; its score must sit inside the range of those
+       that do. */
+    for (const dimension of DIMENSION_IDS) {
+      const heard = PODS
+        .filter((pod) => pod.scores[dimension] !== undefined && pod.members.eng !== undefined)
+        .map((pod) => pod.scores[dimension] as number);
+      const score = departmentScore('eng', dimension);
+      expect(score, dimension).not.toBeNull();
+      expect(score as number, dimension).toBeGreaterThanOrEqual(Math.min(...heard));
+      expect(score as number, dimension).toBeLessThanOrEqual(Math.max(...heard));
+    }
+  });
+
+  it('bands on seven and five and a half', () => {
+    expect(bandOf(7)).toBe('good');
+    expect(bandOf(6.9)).toBe('watch');
+    expect(bandOf(5.5)).toBe('watch');
+    expect(bandOf(5.4)).toBe('poor');
+  });
+
+  it('gives a pod with no data the status none, and one with data a colour', () => {
+    expect(statusOf('midmarket', 'breaks')).toBe('none');
+    expect(statusOf('support', 'breaks')).toBe('poor');
+    expect(statusOf('infra', 'breaks')).toBe('good');
+  });
+
+  it('shows all four lights on at least one dimension', () => {
+    /* A traffic light with one bulb is a dot. Every dimension must produce a
+       picture rather than a wash. */
+    for (const dimension of DIMENSION_IDS) {
+      const lights = new Set(POD_NODES.map((node) => statusOf(node.id, dimension)));
+      expect(lights.has('none'), dimension).toBe(true);
+      expect(lights.size, dimension).toBeGreaterThanOrEqual(3);
     }
   });
 });

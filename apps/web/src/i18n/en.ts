@@ -1477,7 +1477,26 @@ export const en = {
      three people, and this catalogue has no plural mechanism on purpose
      (i18n/index.ts). If a pod of one ever arrives, this key needs splitting
      rather than patching. */
-  'insightMap.node.aria': '{name}, {count} people',
+  'insightMap.node.aria': '{name}, {count} people, {status}',
+  /* ── THE SECOND CONTROL: WHAT A READER CAME FOR ─────────────────────────
+     Four dimensions, which is exactly SegmentedControl's cap. The labels are
+     Ben's own words and are deliberately not the shorter internal names the
+     model uses. */
+  'insightMap.care.legend': 'What do you care about?',
+  'insightMap.care.breaks': 'Quality Breaks',
+  'insightMap.care.feeling': 'Emotional Health',
+  'insightMap.care.safety': 'Psychological Safety',
+  'insightMap.care.connectedness': 'Connectedness',
+  /* ── THE FOUR LIGHTS ────────────────────────────────────────────────────
+     Said in words as well as drawn in colour, in every node's accessible name
+     and in the legend — green, orange and red being the three a colour-blind
+     reader cannot separate. "No data" is not a fourth verdict: it means nobody
+     can answer for a group this small, which is the honest half of this map. */
+  'insightMap.status.good': 'Doing well',
+  'insightMap.status.watch': 'Worth watching',
+  'insightMap.status.poor': 'Needs attention',
+  'insightMap.status.none': 'No data',
+  'insightMap.legend.label': 'What the colours mean',
   'insightMap.hint.company': 'Everyone at Northwind, as one circle. Area is people on every level of this map.',
   'insightMap.hint.departments': 'The six departments, sized by how many people they hold. They add up to the circle on the first tab.',
   'insightMap.hint.pods': 'A line runs to every department a pod draws people from; the thicker it is, the more of the pod comes from there. Departments are anchors here rather than sizes — the pods around one are its people.',

@@ -1095,7 +1095,22 @@ export const de: Messages = {
   'insightMap.canvas.label': 'Die Organisation als Karte, verschiebbar und zoombar',
   /* Gezähltes Substantiv, hier unproblematisch: kein Pod hat weniger als drei
      Menschen. Siehe en.ts. */
-  'insightMap.node.aria': '{name}, {count} Menschen',
+  'insightMap.node.aria': '{name}, {count} Menschen, {status}',
+  /* Die zweite Auswahl: worum es dem Lesenden geht. Vier Dimensionen, genau
+     das Maximum von SegmentedControl. */
+  'insightMap.care.legend': 'Worauf kommt es dir an?',
+  'insightMap.care.breaks': 'Gute Pausen',
+  'insightMap.care.feeling': 'Emotionale Gesundheit',
+  'insightMap.care.safety': 'Psychologische Sicherheit',
+  'insightMap.care.connectedness': 'Verbundenheit',
+  /* Die vier Lichter, als Wort und als Farbe – Grün, Orange und Rot sind die
+     drei, die farbenblinde Lesende nicht auseinanderhalten. »Keine Daten« ist
+     kein viertes Urteil: Für so kleine Gruppen kann niemand antworten. */
+  'insightMap.status.good': 'Gut',
+  'insightMap.status.watch': 'Im Blick behalten',
+  'insightMap.status.poor': 'Braucht Aufmerksamkeit',
+  'insightMap.status.none': 'Keine Daten',
+  'insightMap.legend.label': 'Was die Farben bedeuten',
   'insightMap.hint.company': 'Alle bei Northwind, als ein Kreis. Die Fläche steht auf jeder Ebene dieser Karte für Menschen.',
   'insightMap.hint.departments': 'Die sechs Abteilungen, so groß wie die Zahl ihrer Menschen. Zusammen ergeben sie den Kreis vom ersten Tab.',
   'insightMap.hint.pods': 'Eine Linie führt zu jeder Abteilung, aus der ein Pod Leute holt – je dicker, desto mehr vom Pod kommt von dort. Abteilungen sind hier Ankerpunkte, keine Größen: Die Pods um sie herum sind ihre Menschen.',

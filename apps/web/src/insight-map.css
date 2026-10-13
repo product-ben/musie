@@ -102,6 +102,12 @@
   inline-size: 100%;
   block-size: 100%;
   border-radius: var(--radius-full);
+  /* ONE CONSTANT BORDER WIDTH FOR EVERY STATUS. It used to thicken with
+     severity — regular, thick, focus — and that is a border-box change: three
+     pixels a side took six off the name's line and truncated *Finance* the
+     moment it turned red. Severity is an INSET RING below instead, which is a
+     shadow and so costs the content box nothing. */
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   text-align: center;
   /* HALF A RUNG, AND THE NUMBER CAME OFF THE PAGE RATHER THAN OUT OF THE AIR.
      It was two rungs, then one, and the measurement killed both: at 32px of
@@ -117,25 +123,76 @@
   padding-inline: calc(var(--space-gap-inline) / 2);
 }
 
-/* ── THE THREE KINDS ──────────────────────────────────────────────────────
-   One hue, and it is the only hue on this canvas. `--accent-1` means "people
-   are here", not "good" — Layer 1 ships two chromatic series and says there is
-   no honest third, so the kinds are told apart by WEIGHT and FILL rather than
-   by hue, and the one colour is spent on the thing the map is about.        */
-.musie-orgmap__node[data-kind='company'] {
-  background-color: var(--accent-1-subtle);
-  border: var(--border-width-thick) var(--border-style-solid) var(--accent-1-border);
+/* ── THE TRAFFIC LIGHT ───────────────────────────────────────────────────
+   Four states, and the fourth is the one that matters. Every node on every
+   tab carries one; only a pod is ever grey.
+
+   GREEN IS `--interactive-primary`, NOT `--success`. Layer 1 re-hued
+   `--success-9` to a yellow-green precisely so success could never be mistaken
+   for the brand — which makes it the wrong token for the "go" of a traffic
+   light and the right one for "that worked". Warning and error are the status
+   families as they stand, which is what makes a `Message` and a node
+   describing the same condition agree.
+
+   NEVER COLOUR ALONE. Green, orange and red are the classic three a
+   colour-blind reader cannot separate, so severity is ALSO an inset ring that
+   thickens as it worsens, the status is in each node's accessible name, and a
+   legend sits on the canvas. Colour is the glance; it is never the only
+   channel.
+
+   THE RING IS A SHADOW, NOT A BORDER, and that is the whole reason this is
+   written twice over: a border that thickens with severity shrinks the content
+   box with it, and three pixels a side was enough to truncate *Finance* the
+   moment it turned red. `box-shadow` draws inside the same box and costs the
+   name nothing.                                                            */
+.musie-orgmap__node[data-status='good'] {
+  background-color: var(--interactive-primary-subtle);
+  border-color: var(--interactive-primary-border);
 }
 
-.musie-orgmap__node[data-kind='department'] {
+.musie-orgmap__node[data-status='watch'] {
+  background-color: var(--feedback-warning-surface);
+  border-color: var(--feedback-warning-border);
+  box-shadow: inset 0 0 0 var(--border-width-regular) var(--feedback-warning-border);
+}
+
+.musie-orgmap__node[data-status='poor'] {
+  background-color: var(--feedback-error-surface);
+  border-color: var(--feedback-error-border);
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--feedback-error-border);
+}
+
+/* ── NO DATA, AND IT IS DASHED FOR A REASON ─────────────────────────────
+   `--border-style-dashed` is Layer 1's own word for "provisional / awaiting
+   content" (token gap G2), which is exactly what a grey node is and nothing
+   else. It is not a dim fourth verdict: half the pods are grey on any given
+   dimension because three or four people cannot be reported on without
+   reporting on individuals. The dash says "nothing here yet" where a flat grey
+   fill would say "nothing good here".                                      */
+.musie-orgmap__node[data-status='none'] {
   background-color: var(--surface-sunken);
-  border: var(--border-width-thick) var(--border-style-solid) var(--border-strong);
+  border-style: var(--border-style-dashed);
+  border-color: var(--border-subtle);
 }
 
-/* A pod is the unit this map is about, so it is the one that is filled. */
-.musie-orgmap__node[data-kind='pod'] {
-  background-color: var(--accent-1-subtle);
-  border: var(--border-width-regular) var(--border-style-solid) var(--accent-1-border);
+.musie-orgmap__node[data-status='good'] .musie-orgmap__count {
+  color: var(--interactive-primary-on-subtle);
+}
+.musie-orgmap__node[data-status='watch'] .musie-orgmap__count {
+  color: var(--feedback-warning-text);
+}
+.musie-orgmap__node[data-status='poor'] .musie-orgmap__count {
+  color: var(--feedback-error-text);
+}
+
+/* MUTED, NOT DISABLED. `--on-surface-disabled` is the ink for a control you
+   cannot use, and it is light enough that *Demand* and *Partners* were hard to
+   read at all. A pod with no data is not disabled — its headcount is known and
+   true, and only the dimension is silent. `--on-surface-muted` is still a full
+   4.5:1, so the name stays legible while the node stays quiet. */
+.musie-orgmap__node[data-status='none'] .musie-orgmap__count,
+.musie-orgmap__node[data-status='none'] .musie-orgmap__name {
+  color: var(--on-surface-muted);
 }
 
 /* ── THE TWO LINES ────────────────────────────────────────────────────────
@@ -229,4 +286,20 @@
   font-family: var(--type-body-sm-family);
   font-size: var(--type-body-sm-size);
   line-height: var(--type-body-sm-line);
+}
+
+/* ── THE LEGEND ──────────────────────────────────────────────────────────
+   A `BadgeRow` of the four lights, on the canvas rather than above it: a key
+   belongs beside the thing it keys, and the page already spends four rows
+   before the map starts.
+
+   It wraps to a column at narrow widths, because four badges in a row is
+   wider than a phone and a legend that scrolls out of view is a legend
+   nobody finds. */
+.musie-orgmap__legend {
+  max-inline-size: var(--measure-compact);
+  padding: var(--space-gap-inline);
+  border-radius: var(--radius-card);
+  background-color: var(--surface-raised);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }

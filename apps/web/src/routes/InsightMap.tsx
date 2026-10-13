@@ -35,17 +35,22 @@
  * hidden — doing either would breach the licence we are using.
  */
 import * as React from 'react';
-import { Boxes, Building2, Users } from 'lucide-react';
+import {
+  Boxes, Building2, Check, Coffee, Handshake, Heart, Minus, Shield, Users,
+} from 'lucide-react';
 import {
   Background, Controls, Handle, Panel, Position, ReactFlow,
 } from '@xyflow/react';
 import type { Edge, Node, NodeProps, NodeTypes } from '@xyflow/react';
-import { Message, SegmentedControl } from '@musie/design-system';
+import { Badge, BadgeRow, Message, SegmentedControl } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { VIEW_IDS, layoutFor } from '../lib/orgLayout';
 import type { ViewId } from '../lib/orgLayout';
-import type { NodeKind } from '../lib/orgModel';
+import { statusOf } from '../lib/orgModel';
+import type { NodeKind, Status } from '../lib/orgModel';
+import { DIMENSION_IDS } from '../lib/orgFixture';
+import type { DimensionId } from '../lib/orgFixture';
 import '@xyflow/react/dist/style.css';
 import '../insight-map.css';
 
@@ -54,6 +59,7 @@ interface OrgNodeData extends Record<string, unknown> {
   name: string;
   shortName: string;
   count: number;
+  status: Status;
 }
 
 type OrgFlowNode = Node<OrgNodeData, 'orgCircle'>;
@@ -68,6 +74,54 @@ const VIEW_GLYPH: Record<ViewId, typeof Users> = {
   company: Building2,
   departments: Boxes,
   pods: Users,
+};
+
+const DIMENSION_LABEL: Record<DimensionId, MessageKey> = {
+  breaks: 'insightMap.care.breaks',
+  feeling: 'insightMap.care.feeling',
+  safety: 'insightMap.care.safety',
+  connectedness: 'insightMap.care.connectedness',
+};
+
+const DIMENSION_GLYPH: Record<DimensionId, typeof Users> = {
+  breaks: Coffee,
+  feeling: Heart,
+  safety: Shield,
+  connectedness: Handshake,
+};
+
+/** The four lights, in the order a legend should read them. */
+const STATUS_ORDER: readonly Status[] = ['good', 'watch', 'poor', 'none'] as const;
+
+const STATUS_LABEL: Record<Status, MessageKey> = {
+  good: 'insightMap.status.good',
+  watch: 'insightMap.status.watch',
+  poor: 'insightMap.status.poor',
+  none: 'insightMap.status.none',
+};
+
+/**
+ * `primary-subtle` for good, and not `success`.
+ *
+ * Ben asked for a traffic light, and a traffic light's green is green. Layer 1
+ * re-hued `--success-9` to a yellow-green on purpose, so that success could
+ * never be mistaken for the brand — which makes it the wrong token for the
+ * "go" of a traffic light and the right one for "that worked". Warning and
+ * error are the status families as they stand.
+ *
+ * `neutral` carries no data, which is the one state here that is not a verdict.
+ */
+const STATUS_BADGE: Record<Status, 'primary-subtle' | 'warning' | 'error' | 'neutral'> = {
+  good: 'primary-subtle',
+  watch: 'warning',
+  poor: 'error',
+  none: 'neutral',
+};
+
+/* The two the status families do not supply themselves. */
+const STATUS_GLYPH: Partial<Record<Status, typeof Users>> = {
+  good: Check,
+  none: Minus,
 };
 
 /* One line per view, INSIDE the canvas rather than above it. It began as a
@@ -112,10 +166,17 @@ function OrgCircleNode({ data }: NodeProps<OrgFlowNode>) {
     <div
       className="musie-orgmap__node"
       data-kind={data.kind}
+      data-status={data.status}
       role="img"
+      /* THE STATUS IS IN THE NAME, not only in the fill. Green, orange and red
+         are the classic pair of hues a colour-blind reader cannot separate, so
+         the light is said in words here, drawn with a different border weight
+         per severity, and keyed by a legend on the canvas. Colour is the
+         glance; none of the three channels is alone. */
       aria-label={t('insightMap.node.aria', {
         name: data.name,
         count: String(data.count),
+        status: t(STATUS_LABEL[data.status]),
       })}
     >
       <Handle
@@ -142,15 +203,23 @@ function isView(value: string): value is ViewId {
   return (VIEW_IDS as readonly string[]).includes(value);
 }
 
+function isDimension(value: string): value is DimensionId {
+  return (DIMENSION_IDS as readonly string[]).includes(value);
+}
+
 export function InsightMap() {
   const t = useT();
   const [view, setView] = React.useState<ViewId>('company');
+  const [dimension, setDimension] = React.useState<DimensionId>('feeling');
 
-  /* The layout is pure and deterministic, so it is memoised per view rather
-     than recomputed on every render. Three results, computed at most once
-     each, and identical every time — see lib/orgLayout.ts on `jiggle`. */
+  /* TWO MEMOS, AND THE SPLIT IS THE POINT. Where a node sits has nothing to do
+     with what somebody cares about, so changing the dimension must not re-run
+     four hundred ticks of force simulation and shuffle the map under the
+     reader. The layout is keyed on the view alone; only the colours are keyed
+     on both. */
+  const laid = React.useMemo(() => layoutFor(view), [view]);
+
   const { nodes, edges } = React.useMemo(() => {
-    const laid = layoutFor(view);
     const flowNodes: OrgFlowNode[] = laid.circles.map((circle) => ({
       id: circle.id,
       type: 'orgCircle',
@@ -162,6 +231,7 @@ export function InsightMap() {
         name: circle.name,
         shortName: circle.shortName,
         count: circle.count,
+        status: statusOf(circle.id, dimension),
       },
       style: { width: circle.r * 2, height: circle.r * 2 },
       draggable: false,
@@ -179,7 +249,7 @@ export function InsightMap() {
     }));
 
     return { nodes: flowNodes, edges: flowEdges };
-  }, [view]);
+  }, [laid, dimension]);
 
   return (
     <div className="musie-orgmap-page">
@@ -205,6 +275,18 @@ export function InsightMap() {
         }))}
         value={view}
         onValueChange={(next) => { if (isView(next)) setView(next); }}
+      />
+
+      <SegmentedControl
+        name="insight-map-dimension"
+        legend={t('insightMap.care.legend')}
+        options={DIMENSION_IDS.map((id) => ({
+          value: id,
+          label: t(DIMENSION_LABEL[id]),
+          glyph: DIMENSION_GLYPH[id],
+        }))}
+        value={dimension}
+        onValueChange={(next) => { if (isDimension(next)) setDimension(next); }}
       />
 
       <section className="musie-orgmap" aria-label={t('insightMap.canvas.label')}>
@@ -235,6 +317,29 @@ export function InsightMap() {
           <Controls showInteractive={false} />
           <Panel position="top-left" className="musie-orgmap__hint">
             {t(VIEW_HINT[view])}
+          </Panel>
+          {/* ON THE CANVAS, not above it. A key belongs beside the thing it
+              keys, and the page already spends four rows before the map. */}
+          <Panel position="top-right">
+            {/* THE LABEL IS ON THE WRAPPER, NOT ON BadgeRow. It was on
+                BadgeRow for one screenshot: that component destructures
+                `children` and `className` and nothing else, so an `aria-label`
+                passed to it is dropped on the floor without a word from
+                TypeScript. The badges still read as text; what was missing was
+                anything saying what the four of them are together. */}
+            <div
+              className="musie-orgmap__legend"
+              role="group"
+              aria-label={t('insightMap.legend.label')}
+            >
+              <BadgeRow>
+                {STATUS_ORDER.map((status) => (
+                  <Badge key={status} variant={STATUS_BADGE[status]} glyph={STATUS_GLYPH[status]}>
+                    {t(STATUS_LABEL[status])}
+                  </Badge>
+                ))}
+              </BadgeRow>
+            </div>
           </Panel>
         </ReactFlow>
       </section>
