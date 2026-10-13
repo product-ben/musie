@@ -2,7 +2,7 @@
 
 On 2026-10-13 this repository had **41 local branches, 34 of them already merged
 into `origin/main`**, and 11 remote branches of which 9 were merged. The stalest
-local branch was 223 commits behind. It ended the day at **13 local and 2
+local branch was 223 commits behind. It ended the day at **9 local and 2
 remote**. Rule 9 says why that is not merely untidy:
 
 > **A stale worktree reads like a confused agent.** A worktree 76 commits behind
@@ -22,20 +22,19 @@ when the branch merges.
 | Branch | Holds | Waiting on |
 |---|---|---|
 | `main` | — | — |
-| `insight-board` | The `/insight` provocation: `routes/Insight.tsx` and seven `lib/insight*` modules, ~3,700 lines, entirely additive. Becoming its own feature. | Ben. **32 commits behind `main` as of 2026-10-13**, so it wants a rebase before anything else happens to it. |
+| `digital-cards` | Active work, in its own worktree. **Kept on Ben's instruction** — the branch and everything on it. | Ben. |
+| `insight-map` | The org canvas. **Merged as PR #20**, so its work is on `main`; the branch is kept because Ben is still working from it. | Ben. |
 | `ui-writing-experiment` | The localhost copy editor — `src/experiments/uiWriting/`, an overlay that rewrites copy where you are reading it and hands back a prompt. | Ben. A decision about whether this ships or stays a local tool. |
-| `feelings-detection-help` | `supabase/content/emotion-wheel.yml` — 128 feelings, each with a position, plus the log entry that argued the shape. | Ben, who is continuing it. **Deliberately kept**: it is data for something unbuilt, which is exactly what an automated prune would read as abandoned. |
-| `exercise-model` | `docs/EXERCISE-MODEL-PLAN.md`. The investigation into how an exercise is assembled today — four locations that cannot be read together — and the JSON schema that would replace them, toward an exercise builder for a music therapist. No code. | Its own day. Step 3 of its plan depends on `apps/web/scripts/_migration.mjs` being extracted first. |
-| `insight-map` | Yours, created 2026-10-13 off `main`. Empty as of that evening. | You. |
+| `feelings-detection-help` | `supabase/content/emotion-wheel.yml` — 128 feelings, each with a position, plus the log entry that argued the shape. | Ben, who is continuing it. **Deliberately kept**: data for something unbuilt, which is exactly what an automated prune reads as abandoned. |
+| `exercise-model` | `docs/EXERCISE-MODEL-PLAN.md`. How an exercise is assembled today — four locations that cannot be read together — and the JSON schema that would replace them, toward an exercise builder for a music therapist. No code. | Its own day. Step 3 of its plan depends on `apps/web/scripts/_migration.mjs` being extracted first. |
 | `maintenance-day` | The 2026-10-13 clear-out. Merge and delete. | Review. |
 
 ### Held by a worktree, merged, and only waiting for that worktree to go
 
-`1st-week-oct-usertesting-improvements`, `deck-scroll-gesture`,
-`listening-features`, `listening-question-iteration`, `listen-infographic`,
-`agents/netlify-deployment-setup-plan`. All at zero commits ahead of `main`.
-Git refuses to delete a branch a worktree has checked out, which is the only
-reason these six survived the prune — not a judgement that they are wanted.
+`listen-infographic` and `agents/netlify-deployment-setup-plan`. Both at zero
+commits ahead of `main`. Git refuses to delete a branch a worktree has checked
+out, which is the only reason they survive — not a judgement that they are
+wanted. See the worktree notes below for what is in each.
 
 ## Deleted on 2026-10-13, and why
 
@@ -53,6 +52,8 @@ Beyond the 34 merged locals and 16 merged remotes:
   it was stale: its `deck.json` pointed every card at the `method-card.png`
   placeholder, and it edited an already-applied migration, which rule 4 forbids —
   so it could never have been pushed as it stood.
+- **`insight-board`** — 1 commit, 86 files, SHA `2f4b1fa`. The earlier `/insight`
+  provocation, superseded by `insight-map`, which merged as PR #20. Ben's call.
 - **`ui-writing-iteration-20261009-1256`** — 3 commits, a strict subset of
   `ui-writing-experiment`'s 4. A timestamped duplicate.
 - **`backup/pre-merge-20261007`** — pointed at the same commit as
@@ -61,30 +62,29 @@ Beyond the 34 merged locals and 16 merged remotes:
 ## Worktrees
 
 There is **one Supabase stack and one port 5173** (rule 9), so worktrees isolate
-files and nothing else. Ten existed on 2026-10-13, using 4.9 GB; seven held zero
-commits that were not already in `main`.
+files and nothing else. Ten existed on the morning of 2026-10-13 using 4.9 GB.
+**Six remain, using 2.0 GB.**
 
-**Three were removed on 2026-10-13** — `phase-h` (628 MB), `track-f-editor`
-(293 MB) and `agent-guardrails` (31 MB). All three were clean, zero commits
-ahead, and had no process running out of them.
+| Worktree | Why it is still here |
+|---|---|
+| `musie` (the main checkout) | Ben's, on `insight-map`. |
+| `digital-cards` | Active work. |
+| `feelings-detection-help` | Two unmerged commits Ben is continuing. |
+| `maintenance-day` | This clear-out. Goes when it merges. |
+| `listen-infographic` | Five modified files, **checked and shipped** — `session.listen.infographicAlt` is in both catalogues on `main` and the picture renders at `SessionListen.tsx:1065`; its untracked 2.9 MB master is already in `~/Documents/musie-assets/app graphics/infographics/`. The diff is saved at `~/Documents/musie-assets/usertesting/listen-infographic-uncommitted-2026-10-13.patch`, so removing it is safe whenever Ben says. |
+| `netlify-deployment-setup-plan` | Seven untracked files and **zero tracked ones** — a 2026-09-14 "Initial commit" for a host that `remove-netlify` took out on 2026-09-26. Nothing to lose; just not yet removed. |
 
-**Four were left because a dev server is still running in them**:
-`deck-scroll-gesture` (:5178), `listening-features` (:5177), `1st-week-oct`
-(:5175) and `listening-question-iteration`. All four are merged and clean, so
-they can go the moment those servers are closed — about 2.7 GB.
-
-**Two were left for a reason other than a server.** `listen-infographic` holds
-five modified files; they were checked and the work has shipped —
-`session.listen.infographicAlt` is in both catalogues on `main` and the picture
-is rendered at `SessionListen.tsx:1065` — and its untracked 2.9 MB PNG master is
-already in `~/Documents/musie-assets/app graphics/infographics/`. The diff is
-saved at `~/Documents/musie-assets/usertesting/listen-infographic-uncommitted-2026-10-13.patch`,
-so removing it is now safe whenever you say.
-`netlify-deployment-setup-plan` has seven untracked files and **zero tracked
-ones** — a 2026-09-14 "Initial commit" for a host that `remove-netlify` took out
-on 2026-09-26.
+**Seven were removed on 2026-10-13**, 3.6 GB in total. Three were idle —
+`phase-h` (628 MB), `track-f-editor` (293 MB), `agent-guardrails` (31 MB). Four
+had forgotten dev servers running in them on ports 5175, 5177, 5178 and 5179 —
+`1st-week-oct`, `deck-scroll-gesture`, `listening-features`,
+`listening-question-iteration`, 2.7 GB — closed at Ben's request once he had
+confirmed none was a window he was using. All seven were clean and at zero
+commits ahead.
 
 **Check what is on port 5173 before trusting a browser result** —
 `playwright.config.ts` reuses whatever is already serving it. On 2026-10-13 the
-main checkout's own server was serving a different session's branch, which is
-this hazard happening rather than being hypothetical.
+main checkout's own server was serving a different session's branch, and the
+checkout switched branches mid-session so that a commit landed on the wrong one.
+That is this hazard happening rather than being hypothetical, and it is why the
+clear-out moved into a worktree of its own partway through.

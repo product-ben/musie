@@ -45,9 +45,12 @@ deployed, so a file not in it is not in the build.
 `public/assets/web/{exercises,infographics}/README.md` both said masters live
 outside — and the repository was not following it for the cards.
 
-**Open, for Ben:** who owns the card artwork, and does its licence care that
-15.9 MB of 300 dpi masters were in a public history until today? Removing them
-going forward does not remove them from history. See M2.
+**Answered, Ben, 2026-10-13:** the card artworks are Musie's own. No licence
+issue with their having been in a public history. So M2 stands unchanged — no
+history rewrite — and the reason narrows from "licensing" to the three technical
+ones: git keeps binaries forever, every worktree copies them, and a binary diff
+tells a reviewer nothing. The licensing argument still holds in full for the
+audio, which was never committed.
 
 ### M2 · The 15.9 MB already in git history stays
 
@@ -177,8 +180,16 @@ door should go went unanswered.
 Ben after the first draft was found unrendered. Deleting product copy about data
 handling is a product decision, not a clear-out's to take.
 
-**Open, for Ben:** does the long promise get a door somewhere, or does the copy
-go too?
+**Resolved, Ben, 2026-10-13: the copy goes too.** All five keys deleted from
+both catalogues — `privacy.title`, `privacy.account`, `privacy.voice`,
+`privacy.browserBound`, `privacy.more`.
+
+**What the app still promises, and where.** Three keys survive and all three are
+rendered: `privacy.voiceShort` beside the record button, `privacy.written` and
+`privacy.photo` on the reflect step's modes. So each promise still sits at the
+control it is about, which is the placement user testing argued for. What no
+longer exists is a single page stating all of it at once — if that is wanted
+back it is a screen, not a key.
 
 ### M11 · Rule 8 says two of three packages
 
@@ -225,6 +236,48 @@ it later means paying for it twice.
 **Why not further:** it is a multi-day change that wants the configs argued over
 before anything consumes them.
 
+### M15 · `size="comfort"` is reserved, not dead
+
+**Decided, Ben, 2026-10-13.** Zero call sites on four component APIs, and it
+stays — because it is **the rung for when Musie is optimised for elderly and for
+children.** 56px between the 44px default and `guided`'s 64px: the size a
+shakier or a smaller hand wants without the whole interface going large.
+
+**Why this needed saying.** `accent-alt` was deleted on 2026-10-10 for having no
+call sites, so from the outside this looks identical and the precedent points at
+deletion. Documented on `CtaButton`'s `CtaSize` with pointers from the other
+three, and in `BACKLOG.md` B5, so the next clear-out finds a reason rather than
+a precedent.
+
+**And what cannot go with it, ever:** `--target-comfort` the token. `guided`'s
+multi-line height is `calc(var(--target-comfort) * 2)` — "two comfort rows,
+derived, not picked" — and two further rules use it. The audit called this "8
+CSS rules"; only 3 are the variant.
+
+### M16 · The two-stream spike is kept as `/dev/experiment-mixer`
+
+**Decided, Ben, 2026-10-13.** It was written to be deleted the moment its one
+question was answered. The answer arrived — **yes, iOS keeps two `<audio>`
+elements playing with the screen locked**, confirmed on a real iPhone — and it
+arrived with a second question attached, so the bench stays.
+
+**The second question:** pressing pause in iOS's own lock-screen widget stops
+the foreground track and leaves the background bed playing. A person who presses
+pause has asked for silence. iOS binds its Media Session to one element and
+nothing claims that session deliberately. `BACKLOG.md` B2; the fix lands in
+`lib/mixer.ts`, and this route is the only place it can be tried against a
+locked screen without shipping.
+
+It keeps its rule-6 and rule-7 exemptions on the same footing as `/dev/qr` and
+`goal-mappings`: a tool linked from nowhere, lazy, opened only by the team.
+
+### M17 · `insight-board` goes; `insight-map` and `digital-cards` stay
+
+**Decided, Ben, 2026-10-13.** `insight-map` merged as PR #20 and its work is on
+`main`. `insight-board` was the earlier provocation and is superseded —
+deleted, SHA `2f4b1fa`, 86 files, recoverable by name. `digital-cards` is active
+work and is kept.
+
 ---
 
 ## Still to write
@@ -236,11 +289,10 @@ Not done, and listed so the gap is visible rather than assumed:
   open questions, across six surfaces. The raw board export is at
   `~/Documents/musie-assets/usertesting/`, so this needs no Figma round-trip.
   The refusals are the most valuable and most easily lost half.
-- **One open product tension** the board states and leaves to Ben: all five
-  participants said the automatic splitting of spoken reflections was unwanted,
-  while two loved the drag-to-combine gesture that exists *because* of the
-  splitting. The board sets out both costs, a recommendation, and a compromise
-  "named so it can be rejected knowingly".
+- ~~One open product tension about reflection splitting~~ — **moved to
+  `BACKLOG.md` B1** on Ben's instruction that removing the splitting is its own
+  piece of work, with everything the board had already worked out carried across
+  so it needs no re-deriving.
 - **The architectural decisions already settled** in
   `apps/web/OPEN-QUESTIONS.md` (8,548 lines, 263 entries),
   `packages/design-system/stories/OPEN-QUESTIONS.md` (4,248) and

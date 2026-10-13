@@ -803,7 +803,7 @@ export const en = {
      said a spoken answer could not be saved, which F.6 made false, and they
      said it in a five-line info box on a screen whose job is to get an answer
      out of somebody. It became `privacy.voiceShort` — the promise, one line,
-     with the rest behind `privacy.more` — and on 2026-09-24 that line went too:
+     with the rest behind the since-removed `privacy.more` — and on 2026-09-24 that line went too:
      the step now says nothing about data at all. See the privacy block. */
   'reflect.photo.notBuilt': 'Reading a photo is not built yet',
   'reflect.photo.notBuiltText': 'This shows how it will work. The photo stays on your device and is read back as text; the image is never uploaded.',
@@ -1037,7 +1037,7 @@ export const en = {
      it.
 
      ── TWO OF THESE WERE REWRITTEN BY H.0b, AND THE SIGN-OFF DOES NOT CARRY ──
-     `privacy.account` and `privacy.browserBound` were written when every
+     The removed `privacy.account` and `privacy.browserBound` were written when every
      account was anonymous and lived in browser storage. A tester signed into an
      account handed out by `scripts/create-tester.mjs` makes BOTH FALSE: they
      were asked for an email address (they were given one), their diary is on
@@ -1050,12 +1050,10 @@ export const en = {
      longer, and the privacy page is the one screen where precision outranks
      brevity. THE REWRITE IS NEW TEXT AND IS NOT COVERED BY THE SIGN-OFF ABOVE
      — it needs reading again. Logged in apps/web/OPEN-QUESTIONS.md. */
-  'privacy.title': 'What Musie keeps',
   /* 'never asks for your name' survives unqualified — nothing in either path
      asks for one. The email half did not: it is now a condition rather than a
      promise, because for a tester it was handed over, and a promise that holds
      only for some readers has to say which. */
-  'privacy.account': 'Musie never asks for your name. If you were given an email address and a password for the closed test, your diary belongs to that account. Otherwise this browser holds a private account of its own, and your diary belongs to it.',
   'privacy.written': 'What you write is saved to your diary so you can read it back later. Nobody else can see it.',
   /* ── ONE OF THESE IS HUNG AGAIN, AND THE OTHER IS STILL PARKED ──────────
      Parked by Ben on 2026-09-24: both were the reflect step's one-line promise
@@ -1070,21 +1068,23 @@ export const en = {
      transcript: next to the control it is about, where it is read before the
      finger moves rather than after. VoiceTranscript.tsx renders it.
 
-     `privacy.more` IS PARKED WITH NOTHING BEHIND IT, 2026-10-13. The argument
-     used to be that `DataLightbox` stayed built and held the long promise, and
-     that only a door to it was missing. The lightbox has now gone instead —
-     three weeks with no door, and the clear-out took the room. So these keys
-     and `privacy.title`, `privacy.account`, `privacy.voice` and
-     `privacy.browserBound` have no surface at all.
+     THE LONG PROMISE IS GONE, 2026-10-13 — Ben. `DataLightbox` held six
+     sentences and no door had opened it since 2026-09-24; the room went rather
+     than a door arriving, and the copy went with it: `privacy.title`,
+     `privacy.account`, `privacy.voice`, `privacy.browserBound` and
+     `privacy.more`. They were kept for one pass, because deleting written copy
+     about data handling is a product decision rather than a clear-out's, and
+     then the product decision was taken. DECISIONS.md M10.
 
-     THEY STAY ANYWAY, and the reason is not inertia: this is a written privacy
-     promise, some of it rewritten by Ben after the first draft was found
-     unrendered. Deleting product copy about data handling is a product
-     decision, not a clear-out's to take — logged in DECISIONS.md.
-     `voice.hint.more` went the other way, deleted outright, because that
-     sentence was judged redundant rather than homeless.
+     WHAT STILL SAYS SOMETHING, AND WHERE. Three keys survive and all three are
+     rendered: `privacy.voiceShort` beside the record button,
+     `privacy.written` and `privacy.photo` on the reflect step's modes. So the
+     app still makes the promises it makes AT the control they are about, which
+     is the placement user testing argued for. What it no longer has is a
+     single page that states all of it in one place — if that is wanted back it
+     is a screen, not a key.
 
-     THE PROMISE IN ONE LINE: not an abbreviation of `privacy.voice` so much as
+     THE PROMISE IN ONE LINE: not an abbreviation of the removed long form so much as
      the half of it that is a promise — the mechanism is in the lightbox. It
      says SPRACHNACHRICHT rather than Stimme since 2026-10-09: what is not kept
      is a recording, and "deine Stimme" promised something larger and vaguer
@@ -1093,8 +1093,6 @@ export const en = {
   /* The word in that sentence that opens the whole promise. Not 'Learn more':
      it names what is behind it, which is what a link in running text has to
      do when the sentence around it is doing the explaining. */
-  'privacy.more': 'More about your data',
-  'privacy.voice': 'If you answer out loud, Musie turns your words into text and keeps only the text. The recording itself is never stored.',
   'privacy.photo': 'A photo you take stays on your device. Musie never uploads it.',
   /* The uncomfortable one, and the reason it is here: an anonymous account
      living in browser storage is a real limitation, not a detail. Saying it
@@ -1104,7 +1102,6 @@ export const en = {
      everybody. The loss is stated FIRST and the reassurance second: a reader
      who skims one sentence should come away with the limitation rather than
      with the exemption. */
-  'privacy.browserBound': 'If your account lives only in this browser, clearing its data also clears your diary, and there is no way to get it back. If you signed in, your diary stays with your account and you can reach it again from another device.',
 
   /* ── The deep link and the dev sheet · E.0 ───────────────────────────────
      `/s/:code` is where a QR code lands: the phone's camera app follows the

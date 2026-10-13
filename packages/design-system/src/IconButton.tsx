@@ -29,6 +29,8 @@ import type { LucideIcon } from 'lucide-react';
  * means so a row mixing the two shapes cannot drift apart.
  */
 export type IconButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+/* `comfort` is unused today and reserved — see CtaButton.tsx's note: it is
+   the rung for when Musie is optimised for elderly and for children. */
 export type IconButtonSize = 'min' | 'primary' | 'comfort' | 'guided';
 
 export interface IconButtonProps

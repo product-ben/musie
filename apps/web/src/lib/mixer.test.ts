@@ -8,7 +8,7 @@
  * two things that could actually break on a device (does iOS keep audio going
  * with the screen locked, and does a swap sound like a cut) are exactly the
  * two a fake element would answer wrongly. Those were measured instead, on an
- * iPhone, through `/dev/two-streams`.
+ * iPhone, through `/dev/experiment-mixer`.
  *
  * What IS worth a test is the handover, because it is an ORDER — and an order
  * is invisible in a diff. Two of the three lines can be moved without breaking
