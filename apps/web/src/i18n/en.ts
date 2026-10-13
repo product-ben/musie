@@ -1467,7 +1467,8 @@ export const en = {
      the chrome catalogue, the same split rule 6 makes between `i18n/*` and the
      content tables. */
   'insightMap.notReal.headline': 'Nothing on this map is real',
-  'insightMap.notReal.text': 'Northwind is invented and every number was written by hand. A prototype of a shape, not a report about anybody.',
+  'insightMap.lede.figure': '1,240 Musie Moments this month. 87% feel better afterwards.',
+  'insightMap.lede.text': 'Real recovery, in breaks and after work, brings more energy, less burnout and fewer thoughts of leaving — and it works early against mental-health absences that run 28.5 days on average.',
   'insightMap.level.legend': 'Which level to show',
   'insightMap.level.company': 'Company',
   'insightMap.level.departments': 'Departments',

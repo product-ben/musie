@@ -65,6 +65,63 @@
   gap: var(--space-gap-stack);
 }
 
+/* ═══ THE LEDE ══════════════════════════════════════════════════════════════
+   What the screen says before it shows anything, and the page's only h1 — the
+   route keeps its title through `handle.titleKey`, but on the page "Org map"
+   was naming a thing the reader could already see.
+
+   TWO STEPS, NOT ONE. Ben asked for the display token, and the whole of it in
+   `display-lg` would be six lines of forty-four-pixel type: a headline that has
+   to be scrolled is not a headline. So the figure takes `display-lg` and the
+   sentence under it takes `--type-stage`, which is Layer 1's own step for
+   "Musie speaking" at 26–34px — still large, still the same voice, and the
+   hierarchy between them is what makes the first line land.
+
+   Both resolve to `--font-display`. `body-*` would be Literata, and a serif
+   figure reads as decoration rather than as a number.                       */
+.musie-lede {
+  display: grid;
+  gap: var(--space-gap-related);
+}
+
+/* Each line gets ITS OWN measure rather than sharing the headline's. At a
+   single `--measure-heading` for both, the sentence under the figure ran six
+   lines of thirty-three-pixel type — a cap meant for a headline, applied to a
+   paragraph. */
+.musie-lede__figure {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+  letter-spacing: var(--type-display-lg-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+}
+
+.musie-lede__text {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-stage-family);
+  font-size: var(--type-stage-size);
+  font-weight: var(--type-stage-weight);
+  line-height: var(--type-stage-line);
+  letter-spacing: var(--type-stage-tracking);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* The disclaimer, now that it has no box. It sits in the map's footer beside
+   the caption; `--feedback-warning-text` would overstate it and
+   `--on-surface-muted` would hide it, so it takes the body ink and the weight
+   does the rest. */
+.musie-orgmap__unreal {
+  color: var(--on-surface);
+  font-weight: var(--font-weight-semibold);
+}
+
 /* The shell's h1 carries `--space-gap-group` below itself, which is right on
    a screen whose title is followed by content and wrong inside a grid already
    spending that gap. Same correction `.musie-exercises` makes: one spacing
@@ -649,17 +706,6 @@
   display: grid;
   gap: var(--space-gap-related);
   max-inline-size: var(--measure-body);
-}
-
-.musie-rationale__title {
-  margin: 0;
-  font-family: var(--type-heading-sm-family);
-  font-size: var(--type-heading-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-heading-sm-line);
-  letter-spacing: var(--type-heading-sm-tracking);
-  color: var(--on-surface);
-  text-wrap: var(--text-wrap-heading);
 }
 
 .musie-rationale__text {

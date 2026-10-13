@@ -1087,7 +1087,8 @@ export const de: Messages = {
      Grund, den en.ts nennt. Namen von Abteilungen und Pods stehen NICHT hier:
      die sind Inhalt und liegen in lib/orgFixture.ts. */
   'insightMap.notReal.headline': 'Nichts auf dieser Karte ist echt',
-  'insightMap.notReal.text': 'Northwind ist erfunden, und jede Zahl ist von Hand geschrieben. Der Prototyp einer Form, kein Bericht über irgendwen.',
+  'insightMap.lede.figure': '1.240 Musie-Momente in diesem Monat. 87 % fühlen sich danach besser.',
+  'insightMap.lede.text': 'Echte Erholung in Pausen und nach der Arbeit bringt mehr Energie, weniger Burnout und weniger Kündigungsgedanken – und wirkt früh gegen psychisch bedingte Ausfälle von im Schnitt 28,5 Tagen.',
   'insightMap.level.legend': 'Welche Ebene du siehst',
   'insightMap.level.company': 'Firma',
   'insightMap.level.departments': 'Abteilungen',

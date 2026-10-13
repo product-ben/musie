@@ -44,7 +44,7 @@ import {
 } from '@xyflow/react';
 import type { Edge, Node, NodeProps, NodeTypes } from '@xyflow/react';
 import {
-  Badge, BadgeRow, CtaButton, IconButton, Message, SegmentedControl, useToolSize,
+  Badge, BadgeRow, CtaButton, IconButton, SegmentedControl, useToolSize,
 } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { breaksCard, cloudCard, exercisesCard, scaleCard } from '../lib/orgCard';
@@ -286,7 +286,11 @@ function MetricRationale({ metric }: { metric: MetricId }) {
   const { locale } = useLocale();
   const source = METRIC_RATIONALE[metric];
   if (source === undefined) return null;
-  const blocks = parseProse(locale === 'de' ? source.de : source.en);
+  /* HEADINGS DROPPED — Ben. They are kept in the source because they say what
+     each piece is about to anybody editing it, and because the parity test
+     reads them; nothing renders them. One line to put back. */
+  const blocks = parseProse(locale === 'de' ? source.de : source.en)
+    .filter((block) => block.kind === 'paragraph');
 
   return (
     <section className="musie-rationale">
@@ -308,9 +312,7 @@ function MetricRationale({ metric }: { metric: MetricId }) {
               {span.text}
             </a>
           )));
-        return block.kind === 'heading'
-          ? <h3 className="musie-rationale__title" key={index}>{spans}</h3>
-          : <p className="musie-rationale__text" key={index}>{spans}</p>;
+        return <p className="musie-rationale__text" key={index}>{spans}</p>;
       })}
     </section>
   );
@@ -579,17 +581,14 @@ export function InsightMap() {
 
   return (
     <div className="musie-orgmap-page">
-      <h1 className="musie-placeholder">{t('route.insightMap.title')}</h1>
-
-      {/* L11: context present on load is `info` at `live="off"`. It does not
-          dismiss, because what it says never stops being true. */}
-      <Message
-        variant="info"
-        headline={t('insightMap.notReal.headline')}
-        text={t('insightMap.notReal.text')}
-        headingLevel={2}
-        live="off"
-      />
+      {/* THE LEDE IS THE h1. The route still has a title — `handle.titleKey`
+          puts it in the document title — but on the page the heading is this,
+          because a screen with no h1 has no outline and "Org map" was telling
+          a reader something they could already see. */}
+      <header className="musie-lede">
+        <h1 className="musie-lede__figure">{t('insightMap.lede.figure')}</h1>
+        <p className="musie-lede__text">{t('insightMap.lede.text')}</p>
+      </header>
 
       <div className="musie-orgmap__controls">
         {/* FIRST, because it decides what the other two are even asking. */}
@@ -623,6 +622,11 @@ export function InsightMap() {
           onValueChange={(next) => { if (isMetric(next, filter)) setMetric(next); }}
         />
 
+        {/* DIRECTLY UNDER THE QUESTION IT ANSWERS — Ben. It explains the
+            measure, so it belongs beside the control that picks one rather
+            than below all three. */}
+        <MetricRationale metric={metric} />
+
         {/* THIRD, by Ben. It is the only one of the three that changes WHICH
             nodes are drawn rather than what they say, so it reads last: you
             choose the question, then the measure, then how close you stand. */}
@@ -642,8 +646,6 @@ export function InsightMap() {
           }}
         />
       </div>
-
-      <MetricRationale metric={metric} />
 
       <section
         className="musie-orgmap"
@@ -730,7 +732,19 @@ export function InsightMap() {
             same box they explain the map without hiding any of it, and they
             cost the canvas about sixty pixels rather than a third of it. */}
         <footer className="musie-orgmap__foot">
-          <p className="musie-orgmap__hint">{t(VIEW_HINT[view])}</p>
+          <p className="musie-orgmap__hint">
+            {t(VIEW_HINT[view])}
+            {' '}
+            {/* ── THE DISCLAIMER SURVIVED THE BOX IT LIVED IN ──────────────
+                Ben asked for the notice at the top to go, and it has. The
+                SENTENCE has not: an HR board full of invented figures with
+                nothing anywhere saying so is the one thing this screen must
+                not become, and it costs a line down here. Easy to delete if
+                that is the call — but it should be a call. */}
+            <strong className="musie-orgmap__unreal">
+              {t('insightMap.notReal.headline')}
+            </strong>
+          </p>
           <div
             className="musie-orgmap__legend"
             role="group"
