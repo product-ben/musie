@@ -42,6 +42,46 @@ export const DIMENSION_IDS: readonly DimensionId[] = [
   'breaks', 'feeling', 'safety', 'connectedness',
 ] as const;
 
+/**
+ * What a reader came for, which is the question before all the others.
+ *
+ * `outcomes` asks whether Musie is doing anything — is it used, and does using
+ * it help. `insight` asks how the people are, which is a different question
+ * with a different answer and, crucially, a different kind of silence.
+ */
+export type FilterId = 'outcomes' | 'insight';
+
+export const FILTER_IDS: readonly FilterId[] = ['outcomes', 'insight'] as const;
+
+/**
+ * The two outcome measures.
+ *
+ * ── THESE ARE MEASURED, SO ABSENCE IS NOT POSSIBLE ───────────────────────
+ * Unlike the four insight dimensions, an outcome always has an answer: if
+ * nobody in a pod opened Musie this month, "nobody opened Musie" IS the
+ * reading. That is why they are stored as an explicit value per pod rather
+ * than as a key that may be missing — the grey on an outcome map means
+ * something a reader can act on, where the grey on an insight map means
+ * nobody can tell them anything.
+ *
+ * The legend says which grey it is, because the colour cannot.
+ */
+export type OutcomeId = 'breaksUsage' | 'moodLift';
+
+/** Whether a pod actually takes its Musie Moments. */
+export type UsageLevel = 'regular' | 'none';
+
+/** Whether taking them moves anything. */
+export type LiftLevel = 'positive' | 'flat';
+
+/** Everything that can colour the map. */
+export type MetricId = OutcomeId | DimensionId;
+
+export const METRICS_BY_FILTER: Readonly<Record<FilterId, readonly MetricId[]>> = {
+  outcomes: ['breaksUsage', 'moodLift'],
+  insight: ['breaks', 'feeling', 'safety', 'connectedness'],
+};
+
 export interface Department {
   id: DepartmentId;
   name: string;
@@ -78,6 +118,14 @@ export interface Pod {
    * every dimension, and which nine is different each time.
    */
   scores: Partial<Record<DimensionId, number>>;
+  /**
+   * The measured outcomes. Required, not optional — see `OutcomeId`.
+   *
+   * `none` and `flat` are ANSWERS: this pod does not use Musie, and using it
+   * does not move anything here. Neither is a gap, and neither should be
+   * confused with the grey on an insight map.
+   */
+  outcomes: { breaksUsage: UsageLevel; moodLift: LiftLevel };
 }
 
 export const COMPANY = { id: 'northwind', name: 'Northwind' } as const;
@@ -98,22 +146,22 @@ export const DEPARTMENTS: readonly Department[] = [
  * sorts for itself and nothing downstream depends on this order.
  */
 export const PODS: readonly Pod[] = [
-  { id: 'payments', name: 'Payments', members: { eng: 6, pd: 3 }, scores: { breaks: 6.2, feeling: 6.8, safety: 6.1 } },
-  { id: 'platform', name: 'Platform', members: { eng: 7, pd: 1 }, scores: { breaks: 7.4, safety: 7.2, connectedness: 7.5 } },
-  { id: 'mobile', name: 'Mobile', members: { eng: 5, pd: 3 }, scores: { feeling: 7.1, connectedness: 7.8 } },
-  { id: 'infra', name: 'Infrastructure', shortName: 'Infra', members: { eng: 7 }, scores: { breaks: 7.8, safety: 7.6 } },
-  { id: 'growth', name: 'Growth', members: { eng: 4, pd: 1, mktg: 2 }, scores: { breaks: 5.9, feeling: 6.3, connectedness: 8.1 } },
-  { id: 'enterprise', name: 'Enterprise', members: { gtm: 7 }, scores: { breaks: 4.6 } },
-  { id: 'midmarket', name: 'Mid-Market', members: { gtm: 7 }, scores: {} },
-  { id: 'data', name: 'Data', members: { eng: 5, pd: 1 }, scores: { feeling: 7.3, safety: 6.9, connectedness: 7.2 } },
-  { id: 'devex', name: 'Developer Experience', shortName: 'DevEx', members: { eng: 5 }, scores: { safety: 7.4 } },
-  { id: 'salesops', name: 'Sales Engineering', shortName: 'Sales Eng', members: { gtm: 3, eng: 2 }, scores: { breaks: 6.4, safety: 5.8, connectedness: 7.6 } },
-  { id: 'support', name: 'Support', members: { cs: 5 }, scores: { breaks: 3.9, feeling: 4.4 } },
-  { id: 'onboarding', name: 'Onboarding', shortName: 'Onboard', members: { cs: 4, pd: 1 }, scores: { breaks: 5.4, feeling: 6.0, safety: 5.1, connectedness: 7.4 } },
-  { id: 'quality', name: 'Quality', members: { eng: 4 }, scores: {} },
-  { id: 'partnerships', name: 'Partnerships', shortName: 'Partners', members: { gtm: 3, mktg: 1 }, scores: { feeling: 6.6, connectedness: 7.9 } },
-  { id: 'content', name: 'Content', members: { mktg: 2, pd: 2 }, scores: { feeling: 7.0, safety: 4.3, connectedness: 6.8 } },
-  { id: 'demand', name: 'Demand', members: { mktg: 3 }, scores: {} },
-  { id: 'people', name: 'People', members: { ops: 3 }, scores: { breaks: 7.1, safety: 6.7 } },
-  { id: 'finance', name: 'Finance', members: { ops: 3 }, scores: { feeling: 5.2, connectedness: 5.4 } },
+  { id: 'payments', name: 'Payments', members: { eng: 6, pd: 3 }, scores: { breaks: 6.2, feeling: 6.8, safety: 6.1 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'platform', name: 'Platform', members: { eng: 7, pd: 1 }, scores: { breaks: 7.4, safety: 7.2, connectedness: 7.5 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'mobile', name: 'Mobile', members: { eng: 5, pd: 3 }, scores: { feeling: 7.1, connectedness: 7.8 }, outcomes: { breaksUsage: 'none', moodLift: 'positive' } },
+  { id: 'infra', name: 'Infrastructure', shortName: 'Infra', members: { eng: 7 }, scores: { breaks: 7.8, safety: 7.6 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'growth', name: 'Growth', members: { eng: 4, pd: 1, mktg: 2 }, scores: { breaks: 5.9, feeling: 6.3, connectedness: 8.1 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'enterprise', name: 'Enterprise', members: { gtm: 7 }, scores: { breaks: 4.6 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'midmarket', name: 'Mid-Market', members: { gtm: 7 }, scores: {}, outcomes: { breaksUsage: 'none', moodLift: 'flat' } },
+  { id: 'data', name: 'Data', members: { eng: 5, pd: 1 }, scores: { feeling: 7.3, safety: 6.9, connectedness: 7.2 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'devex', name: 'Developer Experience', shortName: 'DevEx', members: { eng: 5 }, scores: { safety: 7.4 }, outcomes: { breaksUsage: 'none', moodLift: 'positive' } },
+  { id: 'salesops', name: 'Sales Engineering', shortName: 'Sales Eng', members: { gtm: 3, eng: 2 }, scores: { breaks: 6.4, safety: 5.8, connectedness: 7.6 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'support', name: 'Support', members: { cs: 5 }, scores: { breaks: 3.9, feeling: 4.4 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'onboarding', name: 'Onboarding', shortName: 'Onboard', members: { cs: 4, pd: 1 }, scores: { breaks: 5.4, feeling: 6.0, safety: 5.1, connectedness: 7.4 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'quality', name: 'Quality', members: { eng: 4 }, scores: {}, outcomes: { breaksUsage: 'none', moodLift: 'positive' } },
+  { id: 'partnerships', name: 'Partnerships', shortName: 'Partners', members: { gtm: 3, mktg: 1 }, scores: { feeling: 6.6, connectedness: 7.9 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'content', name: 'Content', members: { mktg: 2, pd: 2 }, scores: { feeling: 7.0, safety: 4.3, connectedness: 6.8 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'demand', name: 'Demand', members: { mktg: 3 }, scores: {}, outcomes: { breaksUsage: 'none', moodLift: 'positive' } },
+  { id: 'people', name: 'People', members: { ops: 3 }, scores: { breaks: 7.1, safety: 6.7 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
+  { id: 'finance', name: 'Finance', members: { ops: 3 }, scores: { feeling: 5.2, connectedness: 5.4 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' } },
 ] as const;

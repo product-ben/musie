@@ -1087,7 +1087,7 @@ export const de: Messages = {
      Grund, den en.ts nennt. Namen von Abteilungen und Pods stehen NICHT hier:
      die sind Inhalt und liegen in lib/orgFixture.ts. */
   'insightMap.notReal.headline': 'Nichts auf dieser Karte ist echt',
-  'insightMap.notReal.text': 'Northwind ist eine erfundene Firma mit hundert Menschen, und jede Zahl ist von Hand geschrieben. Keine Datenbank, keine Abfrage – das ist der Prototyp einer Form, kein Bericht über irgendwen.',
+  'insightMap.notReal.text': 'Northwind ist erfunden, und jede Zahl ist von Hand geschrieben. Der Prototyp einer Form, kein Bericht über irgendwen.',
   'insightMap.level.legend': 'Welche Ebene du siehst',
   'insightMap.level.company': 'Firma',
   'insightMap.level.departments': 'Abteilungen',
@@ -1098,6 +1098,19 @@ export const de: Messages = {
   'insightMap.node.aria': '{name}, {count} Menschen, {status}',
   /* Die zweite Auswahl: worum es dem Lesenden geht. Vier Dimensionen, genau
      das Maximum von SegmentedControl. */
+  'insightMap.filter.legend': 'Was interessiert dich heute?',
+  'insightMap.filter.outcomes': 'Musie Outcomes',
+  'insightMap.filter.insight': 'Emotional Insight',
+  /* Die beiden Outcome-Maße: Wirkt Musie überhaupt? Das graue hier heißt
+     »gemessen, und niemand hat es genutzt« – nicht »niemand kann es dir
+     sagen« wie bei den vier Insight-Dimensionen. Die Legende sagt, welches
+     Grau gemeint ist; die Farbe kann das nicht. */
+  'insightMap.care.breaksUsage': 'Mental-Health-Pausen',
+  'insightMap.care.moodLift': 'Wahrgenommene Stimmungsverbesserung',
+  'insightMap.usage.regular': 'Regelmäßig genutzt',
+  'insightMap.usage.none': 'Keine Nutzung',
+  'insightMap.lift.positive': 'Positiver Effekt',
+  'insightMap.lift.flat': 'Kein Effekt',
   'insightMap.care.legend': 'Worauf kommt es dir an?',
   'insightMap.care.breaks': 'Gute Pausen',
   'insightMap.care.feeling': 'Emotionale Gesundheit',

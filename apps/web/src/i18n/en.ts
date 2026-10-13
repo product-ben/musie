@@ -1467,7 +1467,7 @@ export const en = {
      the chrome catalogue, the same split rule 6 makes between `i18n/*` and the
      content tables. */
   'insightMap.notReal.headline': 'Nothing on this map is real',
-  'insightMap.notReal.text': 'Northwind is an invented hundred-person company and every number was written by hand. No database, no query — this is a prototype of a shape, not a report about anybody.',
+  'insightMap.notReal.text': 'Northwind is invented and every number was written by hand. A prototype of a shape, not a report about anybody.',
   'insightMap.level.legend': 'Which level to show',
   'insightMap.level.company': 'Company',
   'insightMap.level.departments': 'Departments',
@@ -1482,6 +1482,21 @@ export const en = {
      Four dimensions, which is exactly SegmentedControl's cap. The labels are
      Ben's own words and are deliberately not the shorter internal names the
      model uses. */
+  'insightMap.filter.legend': 'What are you interested in today?',
+  'insightMap.filter.outcomes': 'Musie Outcomes',
+  'insightMap.filter.insight': 'Emotional Insight',
+  /* ── THE TWO OUTCOME MEASURES ───────────────────────────────────────────
+     These ask whether Musie is doing anything, which is a different question
+     from how people are — and it has a different kind of silence. Grey on an
+     outcome means "measured, and nobody used it"; grey on an insight
+     dimension means "nobody can tell you". The legend changes with the metric
+     to say which, because the colour cannot. */
+  'insightMap.care.breaksUsage': 'Mental health breaks',
+  'insightMap.care.moodLift': 'Perceived mood lift',
+  'insightMap.usage.regular': 'Used regularly',
+  'insightMap.usage.none': 'Not used',
+  'insightMap.lift.positive': 'Positive impact',
+  'insightMap.lift.flat': 'No impact',
   'insightMap.care.legend': 'What do you care about?',
   'insightMap.care.breaks': 'Quality Breaks',
   'insightMap.care.feeling': 'Emotional Health',

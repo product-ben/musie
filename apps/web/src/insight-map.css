@@ -42,6 +42,29 @@
   block-size: 100%;
 }
 
+/* ═══ THE THREE CONTROLS ════════════════════════════════════════════════════
+   ONE BLOCK, so the page grid stays at four rows and the canvas keeps its
+   `1fr`. Three stacked controls is a lot of chrome above the only thing worth
+   looking at — at 1280 the canvas had been pushed from 466px down the viewport
+   to nearly 700 — so from --bp-md the first two sit side by side and the
+   metric takes the full width underneath it.
+
+   THE METRIC IS THE ONE THAT GETS THE WIDTH because it is the one that needs
+   it: four options, and *Wahrgenommene Stimmungsverbesserung* is the longest
+   label on the screen by some distance. The filter has two and the level has
+   three, and both fit a half.                                              */
+.musie-orgmap__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-gap-stack);
+}
+
+/* --bp-md. */
+@media (min-width: 768px) {
+  .musie-orgmap__controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .musie-orgmap__controls-wide { grid-column: 1 / -1; }
+}
+
 /* The shell's h1 carries `--space-gap-group` below itself, which is right on
    a screen whose title is followed by content and wrong inside a grid already
    spending that gap. Same correction `.musie-exercises` makes: one spacing

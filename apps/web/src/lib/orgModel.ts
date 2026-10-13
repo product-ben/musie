@@ -13,7 +13,9 @@
  * add them up.
  */
 import { COMPANY, DEPARTMENTS, PODS } from './orgFixture';
-import type { DepartmentId, DimensionId, Pod } from './orgFixture';
+import type {
+  DepartmentId, DimensionId, MetricId, OutcomeId, Pod,
+} from './orgFixture';
 
 export type NodeKind = 'company' | 'department' | 'pod';
 
@@ -197,4 +199,80 @@ export function scoreOf(nodeId: string, dimension: DimensionId): number | null {
 export function statusOf(nodeId: string, dimension: DimensionId): Status {
   const score = scoreOf(nodeId, dimension);
   return score === null ? 'none' : bandOf(score);
+}
+
+/* ═══ THE MEASURED OUTCOMES ════════════════════════════════════════════════
+   A different kind of reading, and a different kind of grey.                */
+
+const OUTCOME_STATUS: Readonly<Record<OutcomeId, Readonly<Record<string, Status>>>> = {
+  breaksUsage: { regular: 'good', none: 'none' },
+  moodLift: { positive: 'good', flat: 'watch' },
+};
+
+function podOutcome(pod: Pod, outcome: OutcomeId): Status {
+  return OUTCOME_STATUS[outcome][pod.outcomes[outcome]] ?? 'none';
+}
+
+/**
+ * A parent's outcome: whichever reading MOST OF ITS PEOPLE are covered by.
+ *
+ * Not an average, because `regular` and `none` are not two ends of a scale —
+ * there is nothing halfway between a pod that uses Musie and one that does
+ * not. Weighted by people rather than by pods, so a department is not swung by
+ * the two smallest teams in it.
+ *
+ * A TIE GOES TO THE WORSE READING. "Half of this department does not use it"
+ * is the more useful thing for somebody to see, and a board that rounds ties
+ * up is a board that flatters.
+ */
+function majorityOutcome(
+  outcome: OutcomeId,
+  weight: (pod: Pod) => number,
+): Status {
+  const tally = new Map<Status, number>();
+  for (const pod of PODS) {
+    const people = weight(pod);
+    if (people <= 0) continue;
+    const status = podOutcome(pod, outcome);
+    tally.set(status, (tally.get(status) ?? 0) + people);
+  }
+  if (tally.size === 0) return 'none';
+  const rank: Status[] = ['none', 'poor', 'watch', 'good'];
+  let best: Status = 'none';
+  let bestPeople = -1;
+  for (const [status, people] of tally) {
+    if (people > bestPeople
+      || (people === bestPeople && rank.indexOf(status) < rank.indexOf(best))) {
+      best = status;
+      bestPeople = people;
+    }
+  }
+  return best;
+}
+
+export function outcomeStatus(nodeId: string, outcome: OutcomeId): Status {
+  if (nodeId === COMPANY.id) {
+    return majorityOutcome(outcome, (pod) => podTotal(pod));
+  }
+  if (DEPARTMENTS.some((d) => d.id === nodeId)) {
+    return majorityOutcome(outcome, (pod) => pod.members[nodeId as DepartmentId] ?? 0);
+  }
+  const pod = PODS.find((p) => p.id === nodeId);
+  return pod === undefined ? 'none' : podOutcome(pod, outcome);
+}
+
+function isOutcome(metric: MetricId): metric is OutcomeId {
+  return metric === 'breaksUsage' || metric === 'moodLift';
+}
+
+/**
+ * The one call the screen makes, whichever filter is on.
+ *
+ * Both halves return the same four-value `Status`, and that is deliberate: a
+ * reader learns one set of colours. What the grey MEANS differs between them —
+ * "nobody can tell you" against "nobody used it" — and the legend changes with
+ * the metric to say which, because the colour cannot.
+ */
+export function statusForMetric(nodeId: string, metric: MetricId): Status {
+  return isOutcome(metric) ? outcomeStatus(nodeId, metric) : statusOf(nodeId, metric);
 }

@@ -36,7 +36,8 @@
  */
 import * as React from 'react';
 import {
-  Boxes, Building2, Check, Coffee, Handshake, Heart, Minus, Shield, Users,
+  Boxes, Brain, Building2, Check, Coffee, Handshake, Heart, Minus, Shield,
+  Sparkles, TrendingUp, Users,
 } from 'lucide-react';
 import {
   Background, Controls, Handle, Panel, Position, ReactFlow,
@@ -47,10 +48,10 @@ import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { VIEW_IDS, layoutFor } from '../lib/orgLayout';
 import type { ViewId } from '../lib/orgLayout';
-import { statusOf } from '../lib/orgModel';
+import { statusForMetric } from '../lib/orgModel';
 import type { NodeKind, Status } from '../lib/orgModel';
-import { DIMENSION_IDS } from '../lib/orgFixture';
-import type { DimensionId } from '../lib/orgFixture';
+import { FILTER_IDS, METRICS_BY_FILTER } from '../lib/orgFixture';
+import type { FilterId, MetricId } from '../lib/orgFixture';
 import '@xyflow/react/dist/style.css';
 import '../insight-map.css';
 
@@ -60,6 +61,10 @@ interface OrgNodeData extends Record<string, unknown> {
   shortName: string;
   count: number;
   status: Status;
+  /* The word for this node's light UNDER THIS METRIC — grey is "no data" on an
+     insight dimension and "not used" on an outcome, and the node's accessible
+     name has to say which. */
+  statusLabel: MessageKey;
 }
 
 type OrgFlowNode = Node<OrgNodeData, 'orgCircle'>;
@@ -76,29 +81,75 @@ const VIEW_GLYPH: Record<ViewId, typeof Users> = {
   pods: Users,
 };
 
-const DIMENSION_LABEL: Record<DimensionId, MessageKey> = {
+const FILTER_LABEL: Record<FilterId, MessageKey> = {
+  outcomes: 'insightMap.filter.outcomes',
+  insight: 'insightMap.filter.insight',
+};
+
+const FILTER_GLYPH: Record<FilterId, typeof Users> = {
+  outcomes: Sparkles,
+  insight: Brain,
+};
+
+const METRIC_LABEL: Record<MetricId, MessageKey> = {
+  breaksUsage: 'insightMap.care.breaksUsage',
+  moodLift: 'insightMap.care.moodLift',
   breaks: 'insightMap.care.breaks',
   feeling: 'insightMap.care.feeling',
   safety: 'insightMap.care.safety',
   connectedness: 'insightMap.care.connectedness',
 };
 
-const DIMENSION_GLYPH: Record<DimensionId, typeof Users> = {
+const METRIC_GLYPH: Record<MetricId, typeof Users> = {
+  breaksUsage: Coffee,
+  moodLift: TrendingUp,
   breaks: Coffee,
   feeling: Heart,
   safety: Shield,
   connectedness: Handshake,
 };
 
-/** The four lights, in the order a legend should read them. */
-const STATUS_ORDER: readonly Status[] = ['good', 'watch', 'poor', 'none'] as const;
+/**
+ * Which lights a metric can actually show, in the order a legend reads them.
+ *
+ * A LEGEND THAT KEYS COLOURS THE MAP CANNOT PRODUCE IS WORSE THAN NO LEGEND:
+ * it invites a reader to go looking for a red pod that does not exist. Usage
+ * is two-valued — a pod takes its Musie Moments or it does not — and mood lift
+ * is two-valued as well. Only the four insight dimensions use the full set.
+ */
+const METRIC_LIGHTS: Record<MetricId, readonly Status[]> = {
+  breaksUsage: ['good', 'none'],
+  moodLift: ['good', 'watch'],
+  breaks: ['good', 'watch', 'poor', 'none'],
+  feeling: ['good', 'watch', 'poor', 'none'],
+  safety: ['good', 'watch', 'poor', 'none'],
+  connectedness: ['good', 'watch', 'poor', 'none'],
+};
 
-const STATUS_LABEL: Record<Status, MessageKey> = {
+/**
+ * What a light is CALLED under a given metric.
+ *
+ * The same grey means two different things depending on which half of the map
+ * you are in — "nobody can tell you" on an insight dimension, "nobody used it"
+ * on an outcome — and the colour cannot say which. So the words change with
+ * the metric and the colours do not, which is the right way round: a reader
+ * learns one set of colours and reads the legend for what they mean here.
+ */
+const METRIC_STATUS_LABEL: Partial<Record<MetricId, Partial<Record<Status, MessageKey>>>> = {
+  breaksUsage: { good: 'insightMap.usage.regular', none: 'insightMap.usage.none' },
+  moodLift: { good: 'insightMap.lift.positive', watch: 'insightMap.lift.flat' },
+};
+
+const GENERIC_STATUS_LABEL: Record<Status, MessageKey> = {
   good: 'insightMap.status.good',
   watch: 'insightMap.status.watch',
   poor: 'insightMap.status.poor',
   none: 'insightMap.status.none',
 };
+
+function statusLabel(metric: MetricId, status: Status): MessageKey {
+  return METRIC_STATUS_LABEL[metric]?.[status] ?? GENERIC_STATUS_LABEL[status];
+}
 
 /**
  * `primary-subtle` for good, and not `success`.
@@ -176,7 +227,7 @@ function OrgCircleNode({ data }: NodeProps<OrgFlowNode>) {
       aria-label={t('insightMap.node.aria', {
         name: data.name,
         count: String(data.count),
-        status: t(STATUS_LABEL[data.status]),
+        status: t(data.statusLabel as MessageKey),
       })}
     >
       <Handle
@@ -203,14 +254,32 @@ function isView(value: string): value is ViewId {
   return (VIEW_IDS as readonly string[]).includes(value);
 }
 
-function isDimension(value: string): value is DimensionId {
-  return (DIMENSION_IDS as readonly string[]).includes(value);
+function isFilter(value: string): value is FilterId {
+  return (FILTER_IDS as readonly string[]).includes(value);
+}
+
+function isMetric(value: string, filter: FilterId): value is MetricId {
+  return (METRICS_BY_FILTER[filter] as readonly string[]).includes(value);
 }
 
 export function InsightMap() {
   const t = useT();
   const [view, setView] = React.useState<ViewId>('company');
-  const [dimension, setDimension] = React.useState<DimensionId>('feeling');
+  const [filter, setFilter] = React.useState<FilterId>('outcomes');
+  const [metric, setMetric] = React.useState<MetricId>('breaksUsage');
+
+  const metrics = METRICS_BY_FILTER[filter];
+
+  /* CHANGING THE FILTER CHANGES WHAT CAN BE ASKED, so the selected metric has
+     to move with it — "Connectedness" is not an option once the question is
+     whether Musie is being used at all. It lands on the first of the new set
+     rather than trying to find an equivalent, because there is no equivalent:
+     the two halves measure different things. */
+  const onFilter = React.useCallback((next: string) => {
+    if (!isFilter(next)) return;
+    setFilter(next);
+    setMetric(METRICS_BY_FILTER[next][0]);
+  }, []);
 
   /* TWO MEMOS, AND THE SPLIT IS THE POINT. Where a node sits has nothing to do
      with what somebody cares about, so changing the dimension must not re-run
@@ -231,7 +300,8 @@ export function InsightMap() {
         name: circle.name,
         shortName: circle.shortName,
         count: circle.count,
-        status: statusOf(circle.id, dimension),
+        status: statusForMetric(circle.id, metric),
+        statusLabel: statusLabel(metric, statusForMetric(circle.id, metric)),
       },
       style: { width: circle.r * 2, height: circle.r * 2 },
       draggable: false,
@@ -249,7 +319,7 @@ export function InsightMap() {
     }));
 
     return { nodes: flowNodes, edges: flowEdges };
-  }, [laid, dimension]);
+  }, [laid, metric]);
 
   return (
     <div className="musie-orgmap-page">
@@ -265,29 +335,51 @@ export function InsightMap() {
         live="off"
       />
 
-      <SegmentedControl
-        name="insight-map-level"
-        legend={t('insightMap.level.legend')}
-        options={VIEW_IDS.map((id) => ({
-          value: id,
-          label: t(VIEW_LABEL[id]),
-          glyph: VIEW_GLYPH[id],
-        }))}
-        value={view}
-        onValueChange={(next) => { if (isView(next)) setView(next); }}
-      />
+      <div className="musie-orgmap__controls">
+        {/* FIRST, because it decides what the other two are even asking. */}
+        <SegmentedControl
+          name="insight-map-filter"
+          legend={t('insightMap.filter.legend')}
+          options={FILTER_IDS.map((id) => ({
+            value: id,
+            label: t(FILTER_LABEL[id]),
+            glyph: FILTER_GLYPH[id],
+          }))}
+          value={filter}
+          onValueChange={onFilter}
+        />
 
-      <SegmentedControl
-        name="insight-map-dimension"
-        legend={t('insightMap.care.legend')}
-        options={DIMENSION_IDS.map((id) => ({
-          value: id,
-          label: t(DIMENSION_LABEL[id]),
-          glyph: DIMENSION_GLYPH[id],
-        }))}
-        value={dimension}
-        onValueChange={(next) => { if (isDimension(next)) setDimension(next); }}
-      />
+        <SegmentedControl
+          name="insight-map-level"
+          legend={t('insightMap.level.legend')}
+          options={VIEW_IDS.map((id) => ({
+            value: id,
+            label: t(VIEW_LABEL[id]),
+            glyph: VIEW_GLYPH[id],
+          }))}
+          value={view}
+          onValueChange={(next) => { if (isView(next)) setView(next); }}
+        />
+
+        {/* TWO OPTIONS UNDER Musie Outcomes AND FOUR UNDER Emotional Insight,
+            which is why it is keyed on the filter: SegmentedControl is
+            specified for two to four and warns outside that, and a control
+            holding stale options would offer a question this half of the map
+            cannot answer. */}
+        <SegmentedControl
+          key={filter}
+          name="insight-map-metric"
+          className="musie-orgmap__controls-wide"
+          legend={t('insightMap.care.legend')}
+          options={metrics.map((id) => ({
+            value: id,
+            label: t(METRIC_LABEL[id]),
+            glyph: METRIC_GLYPH[id],
+          }))}
+          value={metric}
+          onValueChange={(next) => { if (isMetric(next, filter)) setMetric(next); }}
+        />
+      </div>
 
       <section className="musie-orgmap" aria-label={t('insightMap.canvas.label')}>
         {/* `key={view}` REMOUNTS THE CANVAS PER TAB, which is what makes
@@ -333,9 +425,9 @@ export function InsightMap() {
               aria-label={t('insightMap.legend.label')}
             >
               <BadgeRow>
-                {STATUS_ORDER.map((status) => (
+                {METRIC_LIGHTS[metric].map((status) => (
                   <Badge key={status} variant={STATUS_BADGE[status]} glyph={STATUS_GLYPH[status]}>
-                    {t(STATUS_LABEL[status])}
+                    {t(statusLabel(metric, status))}
                   </Badge>
                 ))}
               </BadgeRow>

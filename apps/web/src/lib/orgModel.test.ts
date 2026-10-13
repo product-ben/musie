@@ -7,11 +7,12 @@
  * shared pod still renders, it just quietly disagrees with the tab beside it.
  */
 import { describe, expect, it } from 'vitest';
-import { DEPARTMENTS, DIMENSION_IDS, PODS } from './orgFixture';
+import { DEPARTMENTS, DIMENSION_IDS, FILTER_IDS, METRICS_BY_FILTER, PODS } from './orgFixture';
 import type { DepartmentId } from './orgFixture';
 import {
   COMPANY_NODE, DEPARTMENT_NODES, LINKS, POD_NODES, bandOf, companyScore,
   departmentHeadcount, departmentScore, linksOfPod, nodeById, podTotal, scoreOf, statusOf,
+  statusForMetric,
 } from './orgModel';
 
 const DEPARTMENT_IDS = DEPARTMENTS.map((d) => d.id);
@@ -202,6 +203,73 @@ describe('the traffic light', () => {
       const lights = new Set(POD_NODES.map((node) => statusOf(node.id, dimension)));
       expect(lights.has('none'), dimension).toBe(true);
       expect(lights.size, dimension).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
+describe('the Musie Outcomes half', () => {
+  it('offers two measures under outcomes and four under insight', () => {
+    expect(METRICS_BY_FILTER.outcomes).toEqual(['breaksUsage', 'moodLift']);
+    expect(METRICS_BY_FILTER.insight).toHaveLength(4);
+    /* SegmentedControl is specified for two to four and warns outside it. */
+    for (const id of FILTER_IDS) {
+      expect(METRICS_BY_FILTER[id].length, id).toBeGreaterThanOrEqual(2);
+      expect(METRICS_BY_FILTER[id].length, id).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('shows only green and grey for breaks usage — never orange or red', () => {
+    /* A pod takes its Musie Moments or it does not. There is no halfway, so
+       the legend keys two lights and the map must not produce a third. */
+    const lights = new Set(POD_NODES.map((n) => statusForMetric(n.id, 'breaksUsage')));
+    expect([...lights].sort()).toEqual(['good', 'none']);
+  });
+
+  it('shows almost all green and exactly one orange for mood lift', () => {
+    const lights = POD_NODES.map((n) => statusForMetric(n.id, 'moodLift'));
+    expect(lights.filter((s) => s === 'watch')).toHaveLength(1);
+    expect(lights.filter((s) => s === 'good')).toHaveLength(17);
+    /* No grey at all here: every pod that uses Musie has an answer about
+       whether it helped, so absence would be a different claim. */
+    expect(lights.filter((s) => s === 'none')).toHaveLength(0);
+    expect(lights.filter((s) => s === 'poor')).toHaveLength(0);
+  });
+
+  it('names the one pod Musie is not reaching', () => {
+    const flat = POD_NODES.filter((n) => statusForMetric(n.id, 'moodLift') === 'watch');
+    expect(flat.map((n) => n.id)).toEqual(['midmarket']);
+    /* And it is the same pod that does not take the breaks — which is the
+       point of having both measures rather than one. */
+    expect(statusForMetric('midmarket', 'breaksUsage')).toBe('none');
+  });
+
+  it('never greys a department or the company on an outcome either', () => {
+    for (const metric of METRICS_BY_FILTER.outcomes) {
+      expect(statusForMetric('northwind', metric), metric).not.toBe('none');
+      for (const node of DEPARTMENT_NODES) {
+        expect(statusForMetric(node.id, metric), `${node.id}/${metric}`).not.toBe('none');
+      }
+    }
+  });
+
+  it('settles a parent by the reading most of its people are covered by', () => {
+    /* Not an average: there is nothing halfway between a pod that uses Musie
+       and one that does not. Engineering has fourteen people in pods that do
+       not, out of forty-five — so Engineering uses it. */
+    const notUsing = PODS
+      .filter((pod) => pod.outcomes.breaksUsage === 'none')
+      .reduce((total, pod) => total + (pod.members.eng ?? 0), 0);
+    expect(notUsing).toBe(14);
+    expect(notUsing * 2).toBeLessThan(departmentHeadcount('eng'));
+    expect(statusForMetric('eng', 'breaksUsage')).toBe('good');
+  });
+
+  it('routes every metric through one call', () => {
+    for (const metric of [...METRICS_BY_FILTER.outcomes, ...METRICS_BY_FILTER.insight]) {
+      for (const node of POD_NODES) {
+        expect(['none', 'good', 'watch', 'poor'], `${node.id}/${metric}`)
+          .toContain(statusForMetric(node.id, metric));
+      }
     }
   });
 });
