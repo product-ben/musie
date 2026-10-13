@@ -1491,7 +1491,7 @@ export const en = {
      outcome means "measured, and nobody used it"; grey on an insight
      dimension means "nobody can tell you". The legend changes with the metric
      to say which, because the colour cannot. */
-  'insightMap.care.breaksUsage': 'Mental health breaks',
+  'insightMap.care.breaksUsage': 'Mental Health Moments',
   'insightMap.care.moodLift': 'Perceived mood lift',
   'insightMap.usage.regular': 'Used regularly',
   'insightMap.usage.none': 'Not used',

@@ -264,3 +264,61 @@ export const PODS: readonly Pod[] = [
   { id: 'people', name: 'People', members: { ops: 3 }, scores: { breaks: 7.1, safety: 6.7 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' }, moodMix: 'steady', breaksPerDay: 1.9, breaksDelta: 0.4 },
   { id: 'finance', name: 'Finance', members: { ops: 3 }, scores: { feeling: 5.2, connectedness: 5.4 }, outcomes: { breaksUsage: 'regular', moodLift: 'positive' }, moodMix: 'steady', breaksPerDay: 1.6, breaksDelta: 0.1 },
 ] as const;
+
+/* ═══ WHY A METRIC MATTERS ══════════════════════════════════════════════════
+   The one body of real material on this screen, and the only thing on it that
+   is not invented: four short pieces on why each measure is worth measuring,
+   each sentence carrying its source.
+
+   ── IT IS CONTENT, SO IT IS HERE AND NOT IN `i18n/` ──────────────────────
+   Rule 6 splits chrome from content: chrome is ours and permanent and lives in
+   the catalogues; content is provisional and lives where the content lives.
+   Six hundred words of research prose is content by any reading, and putting
+   it through `MessageKey` would put four research essays in the same file as
+   "Close" and "Back".
+
+   PER LOCALE, THOUGH — the same shape a content table takes, a column per
+   language, because this screen is bilingual and a German reader and an
+   English one should both get prose rather than one of them getting the
+   other's. The German is Ben's, as written. The English is a translation of
+   it: the prose is translated and the SOURCES are not, because an
+   organisation's name is not a thing to translate and the reader following a
+   citation needs the name the document actually carries.
+
+   TWO METRICS HAVE NOTHING HERE YET — perceived mood lift, and the insight
+   half's Quality Breaks. The panel simply does not render for them rather
+   than showing a gap where a paragraph should be.                           */
+export const METRIC_RATIONALE: Partial<Record<MetricId, { de: string; en: string }>> = {
+  breaksUsage: {
+    de: `## Warum Mental Health Momente wichtig sind
+
+Fast jedem Dritten in Deutschland fällt die Pause regelmäßig aus ([BAuA 2024](https://www.baua.de/DE/Angebote/Publikationen/Bericht-kompakt/Ruhepausen)). Dabei geben schon Pausen von bis zu zehn Minuten neue Energie und senken Erschöpfung ([Albulescu et al. 2022](https://pubmed.ncbi.nlm.nih.gov/36044424/)). Zwischen Meetings verhindern sie, dass sich Stress aufbaut ([Microsoft 2021](https://www.microsoft.com/en-us/worklab/work-trend-index/brain-research)). Entscheidend ist, wie die Pause aussieht: Wer dabei aufs Handy schaut, ist danach nicht erholter als ohne Pause ([Kang & Kurtzberg 2019](https://timeshighereducation.com/news/switch-your-mobile-phone-if-you-want-switch-your-brain)). Eine kurze bewusste Entspannung senkt dagegen Stress und Erschöpfung und verbessert die Konzentration am Nachmittag ([Sianoja et al. 2018](https://greatergood.berkeley.edu/article/item/why_you_should_take_a_relaxing_lunch_break)). Musik macht das besonders einfach, denn Musik-Interventionen senken nachweislich Stress ([de Witte et al. 2020](https://pure.uva.nl/ws/files/58927620/Effects_of_music_interventions_on_stress_related_outcomes_a_systematic_review_and_two_meta_analyses.pdf)).`,
+    en: `## Why Mental Health Moments matter
+
+Almost one in three people in Germany regularly loses their break ([BAuA 2024](https://www.baua.de/DE/Angebote/Publikationen/Bericht-kompakt/Ruhepausen)). Yet breaks of even ten minutes restore energy and reduce exhaustion ([Albulescu et al. 2022](https://pubmed.ncbi.nlm.nih.gov/36044424/)). Taken between meetings, they stop stress from building up ([Microsoft 2021](https://www.microsoft.com/en-us/worklab/work-trend-index/brain-research)). What the break looks like decides everything: spend it on your phone and you are no more recovered than if you had skipped it ([Kang & Kurtzberg 2019](https://timeshighereducation.com/news/switch-your-mobile-phone-if-you-want-switch-your-brain)). A short, deliberate pause does the opposite — it lowers stress and exhaustion and sharpens concentration through the afternoon ([Sianoja et al. 2018](https://greatergood.berkeley.edu/article/item/why_you_should_take_a_relaxing_lunch_break)). Music makes that easy, and music interventions are shown to reduce stress ([de Witte et al. 2020](https://pure.uva.nl/ws/files/58927620/Effects_of_music_interventions_on_stress_related_outcomes_a_systematic_review_and_two_meta_analyses.pdf)).`,
+  },
+  feeling: {
+    de: `## Warum emotionale Gesundheit wichtig ist
+
+Psychische Erkrankungen sind der am stärksten wachsende Grund für Fehlzeiten. Bei AOK-Versicherten stiegen die Fehltage in zehn Jahren um 42 %, und ein Fall dauert im Schnitt 28,5 Tage ([AOK/WIdO Fehlzeiten-Report 2026](https://www.aerzteblatt.de/news/psychische-erkrankungen-an-der-spitze-der-fehlzeiten-a9b1b704-c89f-4533-9741-a49f74d32600)). In der EU sagen 29 % der Beschäftigten, dass die Arbeit bei ihnen Stress, Angst oder Depression auslöst oder verstärkt ([EU-OSHA 2025](https://osha.europa.eu/en/highlights/world-mental-health-day-29-eu-workers-suffer-stress-depression-or-anxiety)). Wer spürt, dass dem Arbeitgeber das eigene Wohlbefinden wichtig ist, ist deutlich seltener ausgebrannt ([Gallup 2024](https://www.gallup.com/workplace/652769/despite-employer-prioritization-employee-well-being-falters.aspx)). Die WHO empfiehlt deshalb Angebote am Arbeitsplatz, die emotionale Belastung senken ([WHO-Leitlinien 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10168149/)). Musik ist dafür für viele schon heute das Mittel der Wahl: 73 % der Deutschen nutzen sie, um mit Stress umzugehen ([TK-Stressreport 2025](https://www.tk.de/resource/blob/2208780/ba51a41989daff8fee95544c46761f1b/tk-stressreport-2025-data.pdf)).`,
+    en: `## Why emotional health matters
+
+Mental illness is the fastest-growing reason for absence. Among AOK members, days lost rose 42 % in ten years, and a single case now runs 28.5 days on average ([AOK/WIdO Fehlzeiten-Report 2026](https://www.aerzteblatt.de/news/psychische-erkrankungen-an-der-spitze-der-fehlzeiten-a9b1b704-c89f-4533-9741-a49f74d32600)). Across the EU, 29 % of workers say their job causes or worsens stress, anxiety or depression ([EU-OSHA 2025](https://osha.europa.eu/en/highlights/world-mental-health-day-29-eu-workers-suffer-stress-depression-or-anxiety)). People who feel their employer cares about their wellbeing burn out far less often ([Gallup 2024](https://www.gallup.com/workplace/652769/despite-employer-prioritization-employee-well-being-falters.aspx)). The WHO therefore recommends workplace offers that lower emotional strain ([WHO guidelines 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10168149/)). For many people music is already the tool of choice: 73 % of Germans use it to cope with stress ([TK-Stressreport 2025](https://www.tk.de/resource/blob/2208780/ba51a41989daff8fee95544c46761f1b/tk-stressreport-2025-data.pdf)).`,
+  },
+  safety: {
+    de: `## Warum psychologische Sicherheit wichtig ist
+
+Psychologische Sicherheit heißt, dass sich Menschen im Team trauen, Fragen zu stellen, Fehler zuzugeben und zu widersprechen. Googles Studie mit 180 Teams zeigt: Teams mit hoher psychologischer Sicherheit verlieren seltener Mitarbeitende, erzielen mehr Umsatz und werden von Führungskräften doppelt so oft als effektiv bewertet ([Google re:Work](https://rework.withgoogle.com/intl/en/guides/understand-team-effectiveness)). Fehlt sie, bleiben Probleme unausgesprochen. In Großbritannien trauen sich 45 % der Beschäftigten nicht, Fehler zu melden, und 15 % haben deshalb vermeidbare Fehler gemacht ([MHFA England 2026](https://mhfaengland.org/mhfa-centre/news/the-cost-of-workplace-silence-my-whole-self-2026)). 89 % der Beschäftigten halten psychologische Sicherheit für essenziell, aber nur 26 % der Führungskräfte zeigen das Verhalten, das sie schafft ([McKinsey 2021](https://www.mckinsey.com/featured-insights/week-in-charts/just-26-percent-of-leaders-create-psychological-safety-for-their-teams)).`,
+    en: `## Why psychological safety matters
+
+Psychological safety means people on a team dare to ask questions, admit mistakes and disagree. Google's study of 180 teams found that teams with high psychological safety lose fewer people, bring in more revenue, and are rated effective by leadership twice as often ([Google re:Work](https://rework.withgoogle.com/intl/en/guides/understand-team-effectiveness)). Without it, problems go unsaid. In the UK, 45 % of workers do not dare report a mistake, and 15 % have made an avoidable one because of it ([MHFA England 2026](https://mhfaengland.org/mhfa-centre/news/the-cost-of-workplace-silence-my-whole-self-2026)). 89 % of employees call psychological safety essential, but only 26 % of leaders show the behaviour that creates it ([McKinsey 2021](https://www.mckinsey.com/featured-insights/week-in-charts/just-26-percent-of-leaders-create-psychological-safety-for-their-teams)).`,
+  },
+  connectedness: {
+    de: `## Warum Verbundenheit im Team wichtig ist
+
+Nur etwa zwei von zehn Beschäftigten in den USA haben eine:n gute:n Freund:in bei der Arbeit. Genau diese Menschen arbeiten produktiver und sicherer und bringen mehr Ideen ein ([Gallup 2022](https://www.ibj.com/articles/gallup-just-2-in-10-u-s-employees-have-work-best-friend)). Einsamkeit ist dagegen teuer: Einsame Beschäftigte fehlen im Schnitt rund fünf Tage mehr im Jahr und denken fast doppelt so oft über eine Kündigung nach ([Cigna 2020](https://www.beckerspayer.com/payer/cigna-study-preventable-loneliness-costs-employers-154b-annually/)). Weltweit fühlten sich 22 % der Beschäftigten am Vortag sehr einsam, in Europa 13 % ([Gallup 2026](https://www.gallup.com/workplace/697904/state-of-the-global-workplace-global-data.aspx)). Und in Googles Teamstudie kam es weniger darauf an, wer im Team ist, als darauf, wie die Menschen miteinander umgehen ([Google re:Work](https://rework.withgoogle.com/intl/en/guides/understand-team-effectiveness)).`,
+    en: `## Why connectedness in a team matters
+
+Only about two in ten US workers have a good friend at work — and those are the people who work more productively and more safely and bring more ideas ([Gallup 2022](https://www.ibj.com/articles/gallup-just-2-in-10-u-s-employees-have-work-best-friend)). Loneliness, by contrast, is expensive: lonely employees miss around five more days a year and think about quitting almost twice as often ([Cigna 2020](https://www.beckerspayer.com/payer/cigna-study-preventable-loneliness-costs-employers-154b-annually/)). Worldwide, 22 % of workers felt very lonely the previous day; in Europe, 13 % ([Gallup 2026](https://www.gallup.com/workplace/697904/state-of-the-global-workplace-global-data.aspx)). And in Google's team study it mattered less who was on a team than how the people on it treated each other ([Google re:Work](https://rework.withgoogle.com/intl/en/guides/understand-team-effectiveness)).`,
+  },
+};

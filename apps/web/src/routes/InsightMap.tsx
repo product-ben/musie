@@ -48,14 +48,15 @@ import {
 } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { breaksCard, cloudCard, exercisesCard, scaleCard } from '../lib/orgCard';
+import { parseProse } from '../lib/orgProse';
 import type { CloudWord } from '../lib/orgCard';
-import { useT } from '../i18n/localeContext';
+import { useLocale, useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { VIEW_IDS, layoutFor } from '../lib/orgLayout';
 import type { ViewId } from '../lib/orgLayout';
 import { statusForMetric } from '../lib/orgModel';
 import type { NodeKind, Status } from '../lib/orgModel';
-import { FILTER_IDS, METRICS_BY_FILTER } from '../lib/orgFixture';
+import { FILTER_IDS, METRIC_RATIONALE, METRICS_BY_FILTER } from '../lib/orgFixture';
 import type { FilterId, MetricId } from '../lib/orgFixture';
 import '@xyflow/react/dist/style.css';
 import '../insight-map.css';
@@ -262,6 +263,58 @@ function OrgCircleNode({ data }: NodeProps<OrgFlowNode>) {
 }
 
 const NODE_TYPES: NodeTypes = { orgCircle: OrgCircleNode };
+
+/**
+ * Why the selected measure is worth measuring.
+ *
+ * ── THE ONE THING ON THIS SCREEN THAT IS NOT INVENTED ────────────────────
+ * Northwind is fiction and every number on the map was written by hand. This
+ * is not: it is real research with its sources attached, and the links are the
+ * reason it earns its place — a citation whose source cannot be followed is
+ * decoration, and this screen already has enough shapes that merely look like
+ * evidence.
+ *
+ * It is parsed by `lib/orgProse.ts` rather than by `lib/markdown.ts`, because
+ * that parser deliberately has no link branch. Its header says why, and the
+ * short of it is that it renders content from the DATABASE; this prose is
+ * written in the repository. Two trust levels, two parsers.
+ *
+ * TWO METRICS HAVE NO TEXT YET, so this renders nothing for them rather than
+ * drawing an empty panel where a paragraph should be.
+ */
+function MetricRationale({ metric }: { metric: MetricId }) {
+  const { locale } = useLocale();
+  const source = METRIC_RATIONALE[metric];
+  if (source === undefined) return null;
+  const blocks = parseProse(locale === 'de' ? source.de : source.en);
+
+  return (
+    <section className="musie-rationale">
+      {blocks.map((block, index) => {
+        const spans = block.spans.map((span, i) => (span.href === undefined
+          ? <React.Fragment key={i}>{span.text}</React.Fragment>
+          : (
+            /* EXTERNAL, AND IT SAYS SO BY OPENING ELSEWHERE. A citation is a
+               document somebody else published; sending a reader out of the
+               board and losing their selection to read it would be the wrong
+               trade. `rel` is not optional on a target of `_blank`. */
+            <a
+              key={i}
+              className="musie-rationale__link"
+              href={span.href}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {span.text}
+            </a>
+          )));
+        return block.kind === 'heading'
+          ? <h3 className="musie-rationale__title" key={index}>{spans}</h3>
+          : <p className="musie-rationale__text" key={index}>{spans}</p>;
+      })}
+    </section>
+  );
+}
 
 /* ═══ WHAT THE CARD SHOWS ══════════════════════════════════════════════════
    Five shapes, one per metric, because the five metrics are not variations of
@@ -589,6 +642,8 @@ export function InsightMap() {
           }}
         />
       </div>
+
+      <MetricRationale metric={metric} />
 
       <section
         className="musie-orgmap"

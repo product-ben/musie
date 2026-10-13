@@ -33,13 +33,17 @@
      its minimum and grows to its widest child, and a canvas is a child that
      will happily be wider than the page. */
   grid-template-columns: minmax(0, 1fr);
-  /* THE CANVAS TAKES WHAT IS LEFT. It was a fixed 0.7 of the viewport, which
-     put it below the fold on a 1000px window — the screen's own preamble
-     pushed the only thing worth looking at off the bottom. Four `auto` rows
-     for the title, the notice, the tabs and nothing else; `1fr` for the map. */
-  grid-template-rows: auto auto auto 1fr;
+  /* ── IT IS A DOCUMENT NOW, NOT A SCREEN THAT FILLS THE VIEWPORT ────────
+     The canvas took `1fr` of a full-height page until the rationale arrived.
+     A hundred and fifty words of cited research between the controls and the
+     map cannot share a fold with it, and squeezing the map to fit would be
+     choosing the worse half of both. So the page is a column you scroll, every
+     row sized to its content, and the map gets a generous fixed height of its
+     own below.
+
+     This is the third time the preamble has grown, and the first time it has
+     cost the map its place above the fold. Flagged rather than absorbed. */
   gap: var(--space-gap-group);
-  block-size: 100%;
 }
 
 /* ═══ THE THREE CONTROLS ════════════════════════════════════════════════════
@@ -72,10 +76,11 @@
    has nothing else to take one from. It gets it from the page's `1fr` row,
    which is to say: everything the title, the notice and the tabs did not use. */
 .musie-orgmap {
-  /* Fills its `1fr` row, with a floor so it never collapses on a short
-     window. `--measure-figure` is Layer 1's figure width; one and a bit of it
-     is the smallest canvas on which twenty-four circles still mean something. */
-  block-size: 100%;
+  /* Three quarters of the viewport minus the app's chrome — a map you can
+     read without it swallowing the page it sits in. `--measure-figure` is
+     Layer 1's figure width, and one and a bit of it is the floor below which
+     twenty-four circles stop meaning anything. */
+  block-size: calc(var(--view-block) * 0.75);
   min-block-size: calc(var(--measure-figure) * 1.1);
   /* ── THE MAP, AND THE CARD BESIDE IT ─────────────────────────────────────
      One column until something is selected. Then the map takes what is left
@@ -633,4 +638,67 @@
   font-size: var(--type-body-md-size);
   line-height: var(--type-body-md-line);
   color: var(--on-surface);
+}
+
+/* ═══ WHY THE MEASURE MATTERS ═══════════════════════════════════════════════
+   The one body of real material on this screen. It reads like prose because it
+   IS prose: `--measure-body` holds it to a line length somebody finishes, and
+   it takes `--font-text` — Literata — where everything that labels a figure
+   takes the sans.                                                           */
+.musie-rationale {
+  display: grid;
+  gap: var(--space-gap-related);
+  max-inline-size: var(--measure-body);
+}
+
+.musie-rationale__title {
+  margin: 0;
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+}
+
+.musie-rationale__text {
+  margin: 0;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* ── A CITATION ──────────────────────────────────────────────────────────
+   Semibold and green, as asked, and no underline — which is a real decision
+   rather than an omission. A link told apart from its paragraph by colour
+   ALONE fails 1.4.1; the weight is the second channel that makes it legal, so
+   the two have to travel together and neither can be dropped later for being
+   "a bit loud".
+
+   `--accent-1-text` IS THE GREEN, and the first attempt was not. The app's own
+   `.musie-inline-link` takes `--interactive-primary-on-subtle`, which reads as
+   a green name and resolves to `--sand-12` — near-black ink for text sitting
+   ON a green surface, not green ink for text on the page. Measured at
+   rgb(26, 31, 28) before anything looked wrong. `--accent-1-text` is
+   `--green-11`, Layer 1's step for "accessible text", solved to 4.5:1.
+
+   So a citation here is a different colour from an inline link elsewhere in
+   the product. That is Ben's instruction rather than a drift, and worth
+   knowing the next time the two are compared. */
+.musie-rationale__link {
+  color: var(--accent-1-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
+.musie-rationale__link:hover { text-decoration: underline; }
+
+.musie-rationale__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
 }

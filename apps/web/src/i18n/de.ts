@@ -1105,7 +1105,7 @@ export const de: Messages = {
      »gemessen, und niemand hat es genutzt« – nicht »niemand kann es dir
      sagen« wie bei den vier Insight-Dimensionen. Die Legende sagt, welches
      Grau gemeint ist; die Farbe kann das nicht. */
-  'insightMap.care.breaksUsage': 'Mental-Health-Pausen',
+  'insightMap.care.breaksUsage': 'Mental Health Momente',
   'insightMap.care.moodLift': 'Wahrgenommene Stimmungsverbesserung',
   'insightMap.usage.regular': 'Regelmäßig genutzt',
   'insightMap.usage.none': 'Keine Nutzung',
