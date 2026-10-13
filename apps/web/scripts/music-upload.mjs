@@ -8,7 +8,7 @@
  *
  * ── 1. THE MASTER NEVER ENTERS GIT ────────────────────────────────────────
  * Files are read from a folder OUTSIDE the repository (`--from`, default
- * `~/Documents/musie-audio/`), for the reason the artwork masters live outside
+ * `~/musie-audio/`), for the reason the artwork masters live outside
  * it: a licensed file committed once cannot be taken back out of any clone's
  * history, and `git rm` leaves the object behind.
  *
@@ -283,7 +283,7 @@ function target(args) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const from = String(args.from ?? join(homedir(), 'Documents', 'musie-audio'));
+  const from = String(args.from ?? join(homedir(), 'musie-audio'));
   /* `readMusic` AND NOT `assertMusic`, deliberately. The strict check demands
      an object key for every recording, and minting those keys is this script's
      entire job — so running it on a library that does not have them yet must
@@ -400,13 +400,24 @@ async function main() {
     }
   }
 
-  /* ── the keys and the durations, back into the file ───────────────────── */
+  /* ── the keys and the durations, back into the file ─────────────────────
+     AND THE SOURCE NAME STAYS. It used to be deleted here, on the reasoning
+     that the library states KEYS and a local filename is nobody's business —
+     which is true right up to the first `supabase db reset`. The reset empties
+     the bucket; the library by then holds a hashed key in the field the
+     uploader reads its source from, so a second run looks for a file named
+     after a hash and finds nothing. One upload, and the loop could not be run
+     again.
+
+     `mixedSource ?? mixed` is how the reader has always resolved it. Keeping
+     the left-hand side costs one line in the file and makes the restore after
+     a reset the same command as the first upload. */
   for (const piece of music.pieces) {
     const found = measured.get(piece.id);
     if (found === undefined) continue;
     piece.file = found.key;
     piece.durationSeconds = Math.round(found.seconds);
-    delete piece.fileSource;
+    piece.fileSource = found.name;
   }
   for (const cut of music.cuts) {
     const id = cutId(cut);
@@ -417,11 +428,11 @@ async function main() {
       /* THE MIX IS THE RECORDING, so its length is the cut's. The pair
          agrees within 250 ms by the check above. */
       cut.durationSeconds = Math.round(mix.seconds);
-      delete cut.mixedSource;
+      cut.mixedSource = mix.name;
     }
     if (voice !== undefined) {
       cut.voice = voice.key;
-      delete cut.voiceSource;
+      cut.voiceSource = voice.name;
     }
   }
 

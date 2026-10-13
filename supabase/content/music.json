@@ -79,21 +79,25 @@
       "locale": "de",
       "durationSeconds": 183,
       "mixed": "cut-body-scan-soundwalk-de-any-any-mixed-4343cfff.mp3",
-      "voice": "cut-body-scan-soundwalk-de-any-any-voice-ed6246c4.mp3"
+      "voice": "cut-body-scan-soundwalk-de-any-any-voice-ed6246c4.mp3",
+      "mixedSource": "BodyScan - mit Hintergrund.mp3",
+      "voiceSource": "BodyScan - ohne Hintergrund.mp3"
     },
     {
       "exercise": "sound-journey",
       "locale": "de",
       "ending": "day",
       "durationSeconds": 574,
-      "mixed": "cut-sound-journey-de-any-day-mixed-77032a4a.mp3"
+      "mixed": "cut-sound-journey-de-any-day-mixed-77032a4a.mp3",
+      "mixedSource": "Klangreise - Tags.mp3"
     },
     {
       "exercise": "sound-journey",
       "locale": "de",
       "ending": "sleep",
       "durationSeconds": 574,
-      "mixed": "cut-sound-journey-de-any-sleep-mixed-482938bd.mp3"
+      "mixed": "cut-sound-journey-de-any-sleep-mixed-482938bd.mp3",
+      "mixedSource": "Klangreise - Einschlafen.mp3"
     }
   ]
 }

@@ -23,6 +23,8 @@ export interface MusicPiece {
   artist: string;
   /** `tracks.licence_ref`, or null where there is nothing to cite. */
   licenceRef: string | null;
+  /** The local filename `music:upload` reads `file` from. Never a key. */
+  fileSource?: string;
   /** `tracks.src` — an object key, or null where there is no recording. */
   file: string | null;
   /** `tracks.duration_seconds`. Measured from the file by `music:upload`. */
