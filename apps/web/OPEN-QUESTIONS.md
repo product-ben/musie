@@ -8688,3 +8688,43 @@ the listening run's three steps but `Session.tsx` gates both questions on
 that constraint is one of the things that has to be answered rather than
 discovered. And the ENDING question has no twin column on purpose: every
 listening exercise asks it, and a flag that is true on every row is not a fact.
+
+## Kartenartwork — MC-01 is a different picture on paper than it is on the web
+Where: `artwork/cards/mc-01.png` against
+`apps/web/public/assets/web/cards/mc-01.webp`; `supabase/content/deck.json`
+(`image`), `apps/web/scripts/deck-pdf.mjs` (the `MASTER_EXT` lookup)
+
+What I checked: Level 1 — both sets of files, rendered side by side rather than
+compared by name.
+
+The deck has **two** image sets and the loop that picks between them is already
+written: `deck-pdf.mjs` looks for `artwork/cards/<id>.<ext>` first and falls
+back to the web copy, so the press gets the master where there is one. There
+are five masters (`mc-01` … `mc-05`) and nine web copies.
+
+For `mc-02` … `mc-05` the pair is the same picture, the master a slightly
+tighter crop. **`mc-01` is not.** It is the same drawing in a different
+colourway — the master is red and teal, the web copy blue and yellow. So the
+printed MC-01 and the MC-01 `deck.json` names in `image` are two different
+cards to anyone looking at them.
+
+Nothing renders `cards.image_url` today, which is why this has cost nothing so
+far: `/diary`'s graph reads the EXERCISE's artwork (`diary.ts:1042`), not the
+card's. It starts costing on the day a screen draws the card the tester just
+scanned, and it is already visible now — a FigJam stand-in deck built for
+remote user testing (2026-10-13) renders MC-01 red, because it is built from
+the same faces the printer would get.
+
+What I did: left it. The board shows the printed card, which is the artefact it
+stands in for, and a board that silently preferred the web copy would be a
+third version of the deck.
+
+Why: which colourway is MC-01 is an illustrator's decision, not a build step,
+and guessing it would put the wrong one on paper where it cannot be taken back.
+
+What I need from Ben: **one decision.** Which colourway is MC-01 — the red
+master or the blue web copy? Whichever it is, the other file should be replaced
+rather than kept, because the fallback in `deck-pdf.mjs` makes two files with
+one id look like a resolution rather than a conflict. The four cards with no
+master (`mc-06` … `mc-09`) print from a screen-sized webp meanwhile, which the
+script already warns about on every run.
