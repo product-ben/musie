@@ -501,9 +501,10 @@ export function Exercises() {
     /* ONE STACK, SO THE GAPS ARE THE SCREEN'S RATHER THAN EACH BLOCK'S.
        Four of the children below are conditional and each used to carry its
        own `margin-block-end`, which meant a new block was spaced correctly
-       only if somebody remembered to give it one — and the empty-goal notice
-       below is spaced today only because it borrows `.musie-running`'s class.
-       A `gap` skips an absent child for free. See `.musie-exercises`. */
+       only if somebody remembered to give it one. A `gap` skips an absent
+       child for free, so no block carries a margin and none needs a class to
+       borrow one — `.musie-running` was that borrowed class and had no rule
+       left to give by 2026-10-13. See `.musie-exercises`. */
     <div className="musie-exercises">
       {/* ── MUSIE ASKS, AND THE ROW BELOW ANSWERS (Ben, 2026-10-08) ────────
           One heading and nothing around it. The question is the whole header:
@@ -556,7 +557,6 @@ export function Exercises() {
           primary there and secondary here — the same rule, read twice. */}
       {running !== null && (
         <ContentBox
-          className="musie-running"
           headingLevel={2}
           headline={t('exercises.running.headline', {
             name: runningName ?? t('exercises.running.fallback'),
@@ -718,7 +718,6 @@ export function Exercises() {
       {settled && !picking && !loading && error === null
         && exercises.length > 0 && visible.length === 0 && (
         <ContentBox
-          className="musie-running"
           headingLevel={2}
           headline={t('exercises.goal.empty')}
           headlineHidden

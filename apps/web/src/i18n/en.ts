@@ -334,7 +334,6 @@ export const en = {
      were the detail lightbox's, and a tap on a card now starts the run
      (2026-09-24). The duration survives as the fact chip below — same fact,
      on the card, where it can be read without opening anything. */
-  'exercises.notImplemented': 'Not available yet',
   'exercises.legend': 'Choose an exercise',
   /* THE GLYPH LEGEND — the shortest true word for each of the three fact
      glyphs, above the cards. A key is only useful before the thing it
@@ -505,7 +504,6 @@ export const en = {
      sentence changed rather than being deleted — MOCKUPS.md's standard cuts
      both ways, and a frame still claiming it cannot see is the same defect as
      one pretending it can. */
-  'session.scan.headline': 'Scan the card that describes best how you are doing right now.',
   /* NO 'reader' OR 'readerNote' — Ben, 2026-09-24. Both sentences stood in the
      empty frame, which now holds nothing but its two buttons.
 
@@ -860,8 +858,6 @@ export const en = {
      own. A heading rather than a label: it names a region, and the entry
      under it carries its own labelled rows. */
   'diary.latest': 'Your last session',
-  'diary.openEntry': 'Open this entry',
-  'diary.earlier': 'Earlier',
   'diary.timelineLabel': 'Your sessions, newest first',
   'diary.listLabel': 'Diary entries',
   'diary.empty': 'No sessions yet',
@@ -885,7 +881,6 @@ export const en = {
   'diary.exercise': 'Exercise',
   'diary.when': 'When',
   'diary.howLong': 'How long',
-  'diary.card': 'Card',
   /* HOW THE SESSION LEFT THEM. A noun, like every other fact label on this
      card — the VALUE carries the comparison ("Better than before"), so the
      label only has to say which question is being answered. */
@@ -970,7 +965,6 @@ export const en = {
   'diary.graph.nextWeek': 'The week after',
   'diary.graph.empty': 'Your sessions will stack up here, one picture a day.',
 
-  'diary.collapse': 'Close this entry',
   'diary.delete': 'Delete this session',
   'diary.delete.confirm': 'Delete this session?',
   'diary.delete.text': 'This removes the session and anything you wrote in it. It cannot be undone.',

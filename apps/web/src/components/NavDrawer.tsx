@@ -197,7 +197,7 @@ export function NavDrawer(
                 const current = !row.action && row.id === currentPage;
 
                 return (
-                  <li key={row.id} className="musie-nav__item">
+                  <li key={row.id}>
                     {/* Inside the <li> that follows it: a bare <hr> as a child
                         of <ul> is not valid markup. */}
                     {row.separatorBefore === true ? (

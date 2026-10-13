@@ -27,13 +27,15 @@
  * than a default: the day a card appears under something else, the level is
  * the caller's to say.
  *
- * `onDismiss` / `dismissLabel` are kept and are currently UNUSED by the app.
- * The lightbox passes neither — `Lightbox` renders its own X, wired to Escape,
- * the scrim and Back, and a second one inside it would be a second thing to
- * keep in step. They are kept rather than deleted because they are two lines
- * that forward to `ContentBox`'s own contract, and the next surface to hold a
- * closeable entry should not have to re-derive them. If that surface never
- * arrives, they go.
+ * `onDismiss` / `dismissLabel` ARE GONE, 2026-10-13. They were kept for the
+ * next surface to hold a closeable entry, so that it would not have to
+ * re-derive them. That surface never arrived, and the only caller —
+ * `DiaryEntry.tsx` — passes `entry` and `headingLevel` and nothing else: the
+ * lightbox renders its own X, wired to Escape, the scrim and Back, and a second
+ * one inside it would be a second thing to keep in step.
+ *
+ * They forwarded to `ContentBox`'s own contract, so bringing them back is two
+ * lines whenever a second surface wants one.
  *
  * ══ THE 2026-09-26 ITERATION ══════════════════════════════════════════════
  *
@@ -108,10 +110,6 @@ export interface DiaryCardProps {
   entry: DiaryEntryDetail;
   /** Never guessed. h3 under a lightbox title, h2 under a page title. */
   headingLevel: 2 | 3;
-  /** Present ⇒ the card draws its own close control. Omit inside a Lightbox. */
-  onDismiss?: () => void;
-  /** The close control's whole accessible name. Required when `onDismiss` is. */
-  dismissLabel?: string;
 }
 
 /** The scale's three, as the catalogue says them. `MessageKey` is
@@ -122,7 +120,7 @@ const FEELING_KEY: Record<'worse' | 'same' | 'better', MessageKey> = {
   better: 'reflect.feeling.better',
 };
 
-export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: DiaryCardProps) {
+export function DiaryCard({ entry, headingLevel }: DiaryCardProps) {
   const t = useT();
   const { locale } = useLocale();
   const navigate = useNavigate();
@@ -278,8 +276,6 @@ export function DiaryCard({ entry, headingLevel, onDismiss, dismissLabel }: Diar
        * Both or neither, and the box tests the same pair: a close control with
        * no accessible name announces as "button".
        */
-      onDismiss={onDismiss}
-      dismissLabel={dismissLabel}
     >
       {/* ── THE ANSWER FIRST, THEN THE TRACK, THEN THE DISCLOSURE ────────
           Ben, 2026-09-23, and unchanged by the 09-26 pass except that what

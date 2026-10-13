@@ -79,7 +79,7 @@ export function DeckGuide({ onDismiss }: DeckGuideProps) {
           them is `body-xl` now, and a 20px glyph against a 26–34px display
           step reads as a footnote to it rather than as the picture of the
           control it is pointing at. */}
-      <span className="musie-deck-guide__row musie-deck-guide__row--goal">
+      <span className="musie-deck-guide__row">
         <span className="musie-deck-guide__glyph">
           <Icon glyph={ArrowUp} size="lg" />
         </span>

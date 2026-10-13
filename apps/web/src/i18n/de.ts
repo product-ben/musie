@@ -232,7 +232,6 @@ export const de: Messages = {
   'notImplemented.back': 'Zurück zur Auswahl',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
-  'exercises.notImplemented': 'Noch nicht verfügbar',
   'exercises.legend': 'Übung wählen',
   /* 'Kartenset', one word: it is a compound with a dictionary break point, so
      --text-hyphens: auto handles it and there is nothing to rephrase. */
@@ -356,7 +355,6 @@ export const de: Messages = {
   'session.intro.ending.sleep': 'Einschlafen',
 
   /* ── Scan · D.5a, und der echte Scanner · E.0/E.1 ──────────────────────── */
-  'session.scan.headline': 'Scanne die Karte, die gerade am besten zu deiner Stimmung passt.',
   /* KEIN 'reader'/'readerNote' MEHR — Ben, 2026-09-24. Die beiden Sätze standen
      im leeren Rahmen; der Rahmen zeigt jetzt nur noch die zwei Schaltflächen.
      Der Hinweis auf die Kamera-App des Handys ist damit nicht verschwunden,
@@ -664,8 +662,6 @@ export const de: Messages = {
      carries no finality in this frame; 'jüngste' would read as a register
      nobody speaks. */
   'diary.latest': 'Deine letzte Session',
-  'diary.openEntry': 'Eintrag öffnen',
-  'diary.earlier': 'Früher',
   'diary.timelineLabel': 'Deine Sessions, neueste zuerst',
   'diary.listLabel': 'Tagebucheinträge',
   'diary.empty': 'Noch keine Sessions',
@@ -689,7 +685,6 @@ export const de: Messages = {
   /* 'Dauer', not 'Wie lange': a label in a facts list is a noun in German
      where English gets away with a question. */
   'diary.howLong': 'Dauer',
-  'diary.card': 'Karte',
   /* Substantiv wie jede andere Faktenzeile auf dieser Karte. Den Vergleich
      trägt der WERT ('Besser als vorher'), das Label nennt nur die Frage. */
   'diary.feeling': 'Danach',
@@ -768,7 +763,6 @@ export const de: Messages = {
   'diary.graph.nextWeek': 'Woche danach',
   'diary.graph.empty': 'Hier stapeln sich deine Sessions, ein Bild pro Tag.',
 
-  'diary.collapse': 'Diesen Eintrag schließen',
   'diary.delete': 'Diese Session löschen',
   'diary.delete.confirm': 'Session löschen?',
   'diary.delete.text': 'Damit wird die Session und alles, was du darin geschrieben hast, endgültig gelöscht. Das lässt sich nicht rückgängig machen.',

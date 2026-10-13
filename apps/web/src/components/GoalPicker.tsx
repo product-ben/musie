@@ -134,7 +134,6 @@ export function GoalBox({ goals, choice, onCancel, onChoose }: GoalBoxProps) {
 
   return (
     <ContentBox
-      className="musie-goal-box"
       headline={t('exercises.goal.question')}
       headingLevel={2}
       /* The question is a label for the four rows under it, not prose to be
