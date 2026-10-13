@@ -245,6 +245,16 @@ export function SessionListen({
     : audio.kind === 'cut' ? audio.mixedSrc : audio.src;
   const voiceSrc = audio !== null && audio.kind === 'cut' ? audio.voiceSrc : null;
 
+  /**
+   * WHERE THIS RECORDING'S INTRODUCTION ENDS, or null where it has none.
+   *
+   * Only a CUT can carry it: a piece is the music as released and has no
+   * introduction to speak of, and the simulated clock has no recording at all.
+   * `exercise_cuts_intro_until_inside` guarantees the mark is inside the file
+   * and past zero, so the button below neither clamps nor checks.
+   */
+  const introUntil = audio !== null && audio.kind === 'cut' ? audio.introUntilSeconds : null;
+
   /** The switch. Off means the music plays, which is the default. */
   const [musicMuted, setMusicMuted] = React.useState(false);
 
@@ -1633,6 +1643,42 @@ export function SessionListen({
                 pair as the case where the glyph should say WHAT is switching
                 rather than merely that something is. */}
             <ButtonGroup align="end" stacked="hug" relation="molecule">
+              {/* ── A WAY PAST THE OPENING — Ben, 2026-10-13 ─────────────
+                  User testing: the Klangreise spends ninety-five seconds
+                  arriving before the piece begins. First time through that IS
+                  the exercise; fourth time it is a minute and a half of
+                  something already known, and the focus sheet's transport has
+                  no scrubber to get past it with — by design, since the
+                  scrubber lives two views down on the stage.
+
+                  OUTLINE, not secondary: this sits on the immersive sheet's
+                  own tinted surface, which is the case `CtaButton`'s docblock
+                  names for the transparent rung. `secondary` would paint
+                  `--surface-raised` onto a panel that is not the page.
+
+                  LEADING THE GROUP, which is the slot the mute switch holds on
+                  the Bodyscan — same `relation="molecule"` gap, and the two
+                  can never appear together: the switch needs a guidance-only
+                  stem and the Klangreise will never have one ("the music IS
+                  that exercise"), while the Bodyscan's guidance starts
+                  immediately and its `intro_until` is null.
+
+                  IT GOES AWAY ONCE IT IS BEHIND YOU. `seek` clamps but does
+                  not care about direction, so a button still offering to skip
+                  an intro at 06:00 would quietly rewind nine minutes of
+                  somebody's exercise. Rendered away rather than disabled, for
+                  the reason the switch is: a disabled control advertises
+                  something that is not coming back.
+
+                  IT DOES NOT PRESS PLAY. Entering the sheet already started
+                  the track (`enterImmersive`), so there is nothing to start —
+                  and a control that both seeks and plays is two controls. */}
+              {introUntil !== null && position < introUntil && (
+                <CtaButton variant="outline" onClick={() => seek(introUntil)}>
+                  {t('session.listen.skipIntro')}
+                </CtaButton>
+              )}
+
               {mix.hasVoiceOnly && !simulated && (
                 <Switch
                   label={t('session.listen.musicOff')}

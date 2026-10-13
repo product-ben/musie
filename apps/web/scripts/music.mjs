@@ -60,6 +60,19 @@ const EXERCISE_ID = /^[a-z][a-z0-9-]*$/;
 /** An object key: the id, the dimensions and a content hash. Never a title. */
 const OBJECT_KEY = /^[a-z0-9][a-z0-9.-]*$/;
 
+/**
+ * `01:35` — minutes and seconds, and nothing else.
+ *
+ * A TIMECODE AND NOT A NUMBER OF SECONDS, which is the opposite of
+ * `durationSeconds` next door and is deliberate. A duration is MEASURED off
+ * the file by `music:upload` and no human types it; an intro mark is an
+ * editorial judgement somebody makes while listening, with a player showing
+ * them `01:35`. Asking for 95 instead is asking them to do the arithmetic that
+ * this line does, in their head, at the one moment they are least likely to
+ * check it.
+ */
+const TIMECODE = /^(\d{1,2}):([0-5]\d)$/;
+
 export async function readMusic(path = MUSIC_PATH) {
   let raw;
   try {
@@ -86,6 +99,21 @@ function isPositiveInt(value) {
 
 /** An omitted dimension reads as `any` — in the id, and in the database as null. */
 const dimension = (value) => (isText(value) ? value : null);
+
+/**
+ * A cut's `introUntil` as whole seconds, or null where it names none.
+ *
+ * Null for ABSENT and for MALFORMED alike — `checkMusic` is what tells the two
+ * apart and refuses the second, so this stays total and the generator never
+ * emits a half-parsed mark. `01:35` → 95.
+ */
+export function introSeconds(cut) {
+  const value = cut?.introUntil;
+  if (!isText(value)) return null;
+  const match = TIMECODE.exec(value.trim());
+  if (match === null) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
 
 /**
  * THE ID OF A CUT IS ITS ADDRESS, spelled once.
@@ -254,6 +282,25 @@ export function checkMusic(music) {
       problems.push(`${where}: piece \`${cut.piece}\` is not in this file.`);
     }
 
+    /* ── THE INTRO MARK, IF THERE IS ONE ─────────────────────────────────
+       `exercise_cuts_intro_until_inside` says the same three things in SQL,
+       and this says them first — a problem here stops the generator, where a
+       constraint violation would stop a `supabase db reset` halfway through
+       and leave somebody reading Postgres about a typo in a JSON file. */
+    if (cut?.introUntil !== null && cut?.introUntil !== undefined) {
+      const intro = introSeconds(cut);
+      if (intro === null) {
+        problems.push(`${where}: introUntil must be a timecode like \`01:35\` — minutes and `
+          + 'seconds — or omitted where there is nothing to skip.');
+      } else if (intro === 0) {
+        problems.push(`${where}: introUntil \`${cut.introUntil}\` is the start of the `
+          + 'recording. Omit it rather than marking zero.');
+      } else if (isPositiveInt(cut?.durationSeconds) && intro >= cut.durationSeconds) {
+        problems.push(`${where}: introUntil \`${cut.introUntil}\` (${intro}s) is at or past `
+          + `the end of a ${cut.durationSeconds}s recording — the button would end it.`);
+      }
+    }
+
   }
 
   /* ── NO WARNING FOR A CUT WITH NO GUIDANCE-ONLY CUT ──────────────
@@ -321,6 +368,7 @@ export function rows(music) {
       mixed_src: cut.mixed,
       voice_src: cut.voice ?? null,
       duration_seconds: cut.durationSeconds,
+      intro_until: introSeconds(cut),
       track_id: cut.piece ?? null,
     })),
   };

@@ -58,7 +58,7 @@ describe('the database carries the library in supabase/content/music.json', () =
          GenericStringError. `content.ts` documents the same trap at
          EXERCISE_SELECT; this test walked into it anyway. */
       // prettier-ignore
-      .select('id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds, track_id')
+      .select('id, exercise_id, locale, posture, ending, mixed_src, voice_src, duration_seconds, intro_until, track_id')
       .order('id');
 
     expect(error).toBeNull();
@@ -102,6 +102,32 @@ describe('the cuts and the pieces they credit', () => {
     for (const row of data ?? []) {
       expect(row.mixed_src, `${row.id} has no recording`).toBeTruthy();
       expect(row.duration_seconds, `${row.id}`).toBeGreaterThan(0);
+    }
+  });
+
+  /* ── THE INTRO MARK — 2026-10-13 ──────────────────────────────────────
+     `intro_until` is what puts *Intro überspringen* on the focus sheet, and
+     the control seeks to it without clamping — so a mark at or past the end
+     would end the recording instead of skipping its opening.
+     `exercise_cuts_intro_until_inside` refuses that; this is the same claim
+     read back off whatever actually landed.
+
+     THE NUMBER ITSELF IS NOT ASSERTED HERE. `music.json` states `01:35` and
+     the parity test above compares every cut against it field by field, so the
+     value already has exactly one source and one check. This asserts the
+     INVARIANT instead — true of any mark anybody writes later, including one
+     typed into a migration by hand. */
+  it('marks an intro only inside the recording it belongs to', async () => {
+    const { data, error } = await service
+      .from('exercise_cuts')
+      .select('id, intro_until, duration_seconds');
+
+    expect(error).toBeNull();
+    for (const row of data ?? []) {
+      if (row.intro_until === null) continue;
+      expect(row.intro_until, `${row.id} marks an intro at or before zero`).toBeGreaterThan(0);
+      expect(row.intro_until, `${row.id} marks an intro past its own end`)
+        .toBeLessThan(row.duration_seconds);
     }
   });
 

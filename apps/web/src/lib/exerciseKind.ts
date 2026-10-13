@@ -132,3 +132,16 @@ export function isEnding(value: string | null | undefined): value is Ending {
  */
 export const DEFAULT_POSTURE: Posture = 'sitting';
 export const DEFAULT_ENDING: Ending = 'day';
+
+/* ── WHO ASKS ABOUT A POSTURE IS A COLUMN, NOT A LIST HERE ────────────────
+   It was `NO_POSTURE_QUESTION`, an exercise id in this file, for about three
+   hours on 2026-10-13 — with a docblock arguing that a two-row list is a
+   column nobody has written yet. Ben's answer was that a second exercise will
+   "absolutely" want it, so `exercises.asks_posture` was written
+   (`20261013140000`) and the list deleted rather than left to grow.
+
+   WHAT STAYS HERE is the part that is genuinely code: `STEPS` above, because a
+   step is a screen and a content table must not be able to promise one that
+   does not exist. Which QUESTIONS a run asks is not that — a question is a
+   control the screen already has, and switching it off cannot break a route.
+   `Exercise.asksPosture` carries it now. */

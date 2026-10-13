@@ -48,6 +48,18 @@ export interface MusicCut {
   piece?: string | null;
   /** Both files, which are the same length by construction. */
   durationSeconds: number;
+  /**
+   * `exercise_cuts.intro_until`, as a TIMECODE — `'01:35'`.
+   *
+   * Where this recording's introduction ends, and therefore where *Intro
+   * überspringen* jumps to on the focus sheet. Omitted means the recording has
+   * nothing to skip, which is every cut but the Klangreise today.
+   *
+   * A string and not a number of seconds, unlike `durationSeconds`: a duration
+   * is measured off the file and never typed, a mark is somebody's judgement
+   * made while watching a player count `01:35`. `introSeconds` converts it.
+   */
+  introUntil?: string | null;
   /** The local filename `music:upload` reads `mixed` from. Never a key. */
   mixedSource?: string;
   /** The local filename `music:upload` reads `voice` from. */
@@ -81,6 +93,8 @@ export interface CutRow {
   mixed_src: string;
   voice_src: string | null;
   duration_seconds: number;
+  /** Seconds, parsed from the cut's timecode — null where it names none. */
+  intro_until: number | null;
   track_id: string | null;
 }
 
@@ -101,6 +115,9 @@ export function readMusic(path?: string): Promise<MusicLibrary>;
 export function cutId(
   cut: Pick<MusicCut, 'exercise' | 'locale' | 'posture' | 'ending'>,
 ): string;
+
+/** `'01:35'` → 95. Null for absent AND for malformed; `checkMusic` refuses the second. */
+export function introSeconds(cut: Pick<MusicCut, 'introUntil'>): number | null;
 
 export function orderedPieces(music: MusicLibrary): MusicPiece[];
 export function orderedCuts(music: MusicLibrary): MusicCut[];

@@ -114,6 +114,7 @@ export type Database = {
           ending: string | null
           exercise_id: string
           id: string
+          intro_until: number | null
           locale: string
           mixed_src: string
           posture: string | null
@@ -125,6 +126,7 @@ export type Database = {
           ending?: string | null
           exercise_id: string
           id: string
+          intro_until?: number | null
           locale: string
           mixed_src: string
           posture?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           ending?: string | null
           exercise_id?: string
           id?: string
+          intro_until?: number | null
           locale?: string
           mixed_src?: string
           posture?: string | null
@@ -312,6 +315,7 @@ export type Database = {
       }
       exercises: {
         Row: {
+          asks_posture: boolean | null
           id: string
           image_url: string | null
           implemented: boolean
@@ -324,6 +328,7 @@ export type Database = {
           timeframe_min: number
         }
         Insert: {
+          asks_posture?: boolean | null
           id: string
           image_url?: string | null
           implemented?: boolean
@@ -336,6 +341,7 @@ export type Database = {
           timeframe_min: number
         }
         Update: {
+          asks_posture?: boolean | null
           id?: string
           image_url?: string | null
           implemented?: boolean

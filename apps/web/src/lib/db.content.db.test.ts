@@ -100,6 +100,49 @@ describe('tracks · the ids are opaque, and that is the security model', () => {
  * caps it, but only if it is reading the column at all. Set to something
  * absurd and nobody notices until a user is sitting there.
  */
+/**
+ * `asks_posture` — 20261013140000, and it is a THREE-state column.
+ *
+ * *Asks*, *does not ask*, and *the question does not arise*. The third is what
+ * a boolean would have lost: a card exercise reaching neither listening
+ * question would have had to claim one answer or the other, and false-for-the-
+ * wrong-reason reads exactly like false-for-the-right-one.
+ */
+describe('exercises · who asks how you are listening', () => {
+  it('carries an answer exactly where the question is asked', async () => {
+    const { client } = await anonymousUser();
+    const { data, error } = await client
+      .from('exercises')
+      .select('id, kind, asks_posture');
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(5);
+    for (const row of data ?? []) {
+      /* `exercises_asks_posture_applies` said in the other direction: the
+         constraint refuses a write, this notices a row that got in before it. */
+      expect(row.asks_posture === null, `${row.id} (${row.kind})`)
+        .toBe(row.kind !== 'listening_only');
+    }
+  });
+
+  /* The difference between the two listening exercises IS the decision, and it
+     is the reason this is a column rather than a `kind`. Ben, 2026-10-13: the
+     Klangreise changes nothing by being heard sitting or lying; the Bodyscan's
+     guidance addresses a posture out loud. */
+  it('asks on the Bodyscan and not on the Klangreise', async () => {
+    const { client } = await anonymousUser();
+    const { data, error } = await client
+      .from('exercises')
+      .select('id, asks_posture')
+      .in('id', ['body-scan-soundwalk', 'sound-journey']);
+
+    expect(error).toBeNull();
+    const byId = new Map((data ?? []).map((row) => [row.id, row.asks_posture]));
+    expect(byId.get('body-scan-soundwalk')).toBe(true);
+    expect(byId.get('sound-journey')).toBe(false);
+  });
+});
+
 describe('exercises · the listen gate', () => {
   it('is positive and present for every exercise', async () => {
     const { client } = await anonymousUser();

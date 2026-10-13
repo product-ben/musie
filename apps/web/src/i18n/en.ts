@@ -760,6 +760,7 @@ export const en = {
   'session.listen.play': 'Play',
   'session.listen.pause': 'Pause',
   'session.listen.restart': 'Play again',
+  'session.listen.skipIntro': 'Skip the intro',
   'session.listen.seek': 'Position in the music',
   'session.listen.aboutHeading': 'About this music',
   'session.listen.aboutArtist': 'Artist',

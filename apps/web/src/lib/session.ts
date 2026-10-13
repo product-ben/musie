@@ -372,10 +372,18 @@ export async function saveCard(
  * THROWS, unlike `markListened`: the person pressed Continue and is waiting,
  * and a silent failure here would send them to a listen step whose audio was
  * chosen by the defaults rather than by their answer.
+ *
+ * ── A NULL POSTURE IS "NOT ASKED" — 2026-10-13 ────────────────────────────
+ * The Klangreise stopped asking how you are listening (`exerciseKind.ts`,
+ * `asksPosture`), and the caller passes null for it rather than the default
+ * the cut lookup is still using. The paragraph above is the whole reason: a
+ * column that records what was ASKED must not be handed what was ASSUMED, or
+ * every Klangreise run reads as a vote for *sitzend* in a report about which
+ * recordings to make next.
  */
 export async function saveListeningAnswers(
   id: string,
-  posture: string,
+  posture: string | null,
   ending: string,
 ): Promise<void> {
   const { error } = await getSupabase()

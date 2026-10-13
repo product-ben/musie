@@ -66,6 +66,12 @@ export interface SessionIntroProps {
    * does not ask — the card exercises. Optional rather than nullable on
    * purpose: a screen that passes no handler is a screen with no QUESTION,
    * which is a different thing from one with no answer.
+   *
+   * THEY ARE ABSENT INDEPENDENTLY since 2026-10-13. The Klangreise asks about
+   * the ending and not about the posture (`exerciseKind.ts`, `asksPosture`),
+   * so `posture` is undefined while `ending` is a value — and the step draws
+   * one question rather than none. Gating both on one flag is what this
+   * stopped being able to do.
    */
   posture?: Posture;
   ending?: Ending;
@@ -101,7 +107,13 @@ export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
 }: SessionIntroProps) {
   const t = useT();
-  const asks = posture !== undefined && ending !== undefined;
+
+  /* ONE FLAG PER QUESTION, read off the prop that carries its answer. The
+     group itself survives as long as EITHER is asked: it is what spaces the
+     questions from the copy above them, and a single question still needs
+     that. */
+  const asksPosture = posture !== undefined;
+  const asksEnding = ending !== undefined;
 
   /* ── `{minutes}`, ROUNDED UP ───────────────────────────────────────────
      183 seconds reads as four minutes, not three: the sentence is a promise
@@ -120,40 +132,45 @@ export function SessionIntro({
     <>
       <Markdown md={md} fallbackKey="session.intro.fallback" />
 
-      {asks && (
+      {(asksPosture || asksEnding) && (
         /* `--space-gap-group` between the two question groups and under the
             second — Ben, 2026-10-12. The class is `shell.css`'s and exists
             because `SegmentedControl` owns a control rather than the space
             between two of them; see its block there for the L14 argument. */
         <div className="musie-intro__questions">
           {/* Rule 7: the legend and every label are passed. The legend IS the
-              question, so it stays visible — `legendHidden` would leave two
-              unexplained pairs of segments on the screen. */}
-          <SegmentedControl
-            name="session-posture"
-            legend={t('session.intro.posture.legend')}
-            value={posture}
-            onValueChange={(next) => { if (isPosture(next)) onPostureChange?.(next); }}
-            options={POSTURES.map((option) => ({
-              value: option,
-              label: t(`session.intro.posture.${option}`),
-              glyph: POSTURE_GLYPH[option],
-            }))}
-          />
+              question, so it stays visible — `legendHidden` would leave an
+              unexplained pair of segments on the screen. */}
+          {asksPosture && (
+            <SegmentedControl
+              name="session-posture"
+              legend={t('session.intro.posture.legend')}
+              value={posture}
+              onValueChange={(next) => { if (isPosture(next)) onPostureChange?.(next); }}
+              options={POSTURES.map((option) => ({
+                value: option,
+                label: t(`session.intro.posture.${option}`),
+                glyph: POSTURE_GLYPH[option],
+              }))}
+            />
+          )}
 
-          <SegmentedControl
-            name="session-ending"
-            legend={t('session.intro.ending.legend')}
-            value={ending}
-            onValueChange={(next) => { if (isEnding(next)) onEndingChange?.(next); }}
-            options={ENDINGS.map((option) => ({
-              value: option,
-              label: t(`session.intro.ending.${option}`),
-              glyph: ENDING_GLYPH[option],
-            }))}
-          />
+          {asksEnding && (
+            <SegmentedControl
+              name="session-ending"
+              legend={t('session.intro.ending.legend')}
+              value={ending}
+              onValueChange={(next) => { if (isEnding(next)) onEndingChange?.(next); }}
+              options={ENDINGS.map((option) => ({
+                value: option,
+                label: t(`session.intro.ending.${option}`),
+                glyph: ENDING_GLYPH[option],
+              }))}
+            />
+          )}
         </div>
       )}
+
     </>
   );
 }
