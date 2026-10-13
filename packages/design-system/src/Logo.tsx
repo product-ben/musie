@@ -12,8 +12,9 @@
  *
  * Sizes: nav 24px (--icon-size-lg), splash 96px (--icon-size-xl * 3).
  * The default src is the WEB rendition (192px wide, 2x the splash size). The
- * 1217px Figma original lives at /assets/source/ for handoff — it must never be
- * the src: a 601 KB bitmap decoded at 24px is pure cost.
+ * 1217px Figma original ships beside it at assets/musy-logo.png — it must never
+ * be the src: a 601 KB bitmap decoded at 24px is pure cost. There is no
+ * assets/source/; this comment claimed one until 2026-10-13.
  * NOT a home link — wrapping it in an anchor is the consuming app's job.
  */
 import * as React from 'react';
