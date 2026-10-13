@@ -12,6 +12,12 @@
 # Settings → Secrets and variables → Actions:
 #
 #   SUPABASE_ACCESS_TOKEN   a personal access token, supabase.com/dashboard/account/tokens
+#                           EXPIRES — the one created on 2026-10-13 runs out a
+#                           year later. SCHEDULED-MAINTENANCE.md carries the date
+#                           and what breaks: this job fails on `supabase link`,
+#                           merged migrations stop reaching hosted, and the only
+#                           loud signal is an email. `pnpm db:status` is the
+#                           backstop that catches it anyway.
 #   SUPABASE_DB_PASSWORD    the project's database password
 #
 # Without both the first step says so and every later step is skipped, so
