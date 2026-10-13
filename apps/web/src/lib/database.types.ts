@@ -490,6 +490,13 @@ export type Database = {
             foreignKeyName: "reflections_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: true
+            referencedRelation: "question_rejections"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "reflections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -722,7 +729,29 @@ export type Database = {
           user_id: string | null
           was_reset: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Functions: {
