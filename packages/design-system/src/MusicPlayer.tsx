@@ -108,7 +108,7 @@ export interface TrackButtonProps {
    * composed on CTA Button, `.musy-btn--ghost` has existed since §04, and
    * `.musy-mbtn` only sets layout.
    */
-  variant?: 'primary' | 'secondary' | 'accent' | 'accent-alt' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'accent' | 'ghost';
   /**
    * The target ladder, and it is CTA Button's own — this control is composed
    * on it, so the rungs are the same rungs and a `min` transport stands
@@ -270,7 +270,7 @@ export interface MusicPlayerProps {
   onRestart?: () => void;
   /** Scrub. Fires with the new position in seconds. */
   onSeek?: (seconds: number) => void;
-  accent?: 'primary' | 'accent' | 'accent-alt';
+  accent?: 'primary' | 'accent';
   disabled?: boolean;
   /** The transport words and the scrubber's name. Each defaults to the locale
    *  catalogue's PLAYER wording. */

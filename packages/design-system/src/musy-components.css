@@ -556,7 +556,7 @@
 }
 
 /* ── THE TWO ACCENT SOLIDS ARE GONE (Ben, 2026-10-05) ─────────────────────
-   `.musy-btn--accent` (ocher) and `.musy-btn--accent-alt` (purple) stood here
+   `.musy-btn--accent` (then ocher) and `.musy-btn--accent-alt` (purple) stood here
    with the same six states as primary. The brief is "CTAs in primary
    terracotta, secondary and ghost — not the yellow one any more", and the
    variants went with their only two call sites.
@@ -685,16 +685,7 @@
 }
 .musy-switch--accent .musy-switch__track[data-checked] .musy-switch__knob {
   color: var(--interactive-accent-on-subtle);
-}
-.musy-switch--accent-alt .musy-switch__track[data-checked] {
-  background-color: var(--interactive-accent-alt);
-  border-color: var(--interactive-accent-alt-border);
-}
-.musy-switch--accent-alt .musy-switch__track[data-checked] .musy-switch__knob {
-  color: var(--interactive-accent-alt-on-subtle);
-}
-
-/* The embedded check / x. Both live in the knob; only one is visible.
+}/* The embedded check / x. Both live in the knob; only one is visible.
    Sized against the KNOB, not the label: Layer 1's label-lg → icon-md pairing
    would overflow a 24px knob, so the pairing is knob-relative here. */
 .musy-switch__glyph { grid-area: 1 / 1; transition: opacity var(--motion-toggle); }
@@ -899,25 +890,7 @@
 }
 .musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__label {
   color: var(--interactive-accent-on-subtle);
-}
-
-/* SELECTED — accent alt */
-.musy-radio-group--accent-alt .musy-radio__body[data-checked] {
-  background-color: var(--interactive-accent-alt-subtle);
-  border-color: var(--interactive-accent-alt-border);
-  border-width: var(--border-width-thick);
-}
-.musy-radio-group--accent-alt .musy-radio__body[data-checked] .musy-radio__marker {
-  background-color: var(--interactive-accent-alt);
-  border-color: var(--interactive-accent-alt-border);
-  border-width: var(--border-width-thick);
-  color: var(--interactive-accent-alt-on);
-}
-.musy-radio-group--accent-alt .musy-radio__body[data-checked] .musy-radio__label {
-  color: var(--interactive-accent-alt-on-subtle);
-}
-
-/* DISABLED */
+}* DISABLED */
 .musy-radio__body[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: var(--border-subtle);
@@ -1067,25 +1040,9 @@
   background-color: var(--interactive-accent);
   border-color: var(--interactive-accent-on);
   color: var(--interactive-accent-on);
-}
-.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked] {
-  background-color: var(--interactive-accent-alt-subtle);
-  border-color: var(--interactive-accent-alt-border);
-  border-width: var(--border-width-thick);
-}
-.musy-radio-card-group--accent .musy-radio-card__body[data-checked] .musy-radio-card__label {
+}.musy-radio-card-group--accent .musy-radio-card__body[data-checked] .musy-radio-card__label {
   color: var(--interactive-accent-on-subtle);
-}
-.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked] .musy-radio-card__label {
-  color: var(--interactive-accent-alt-on-subtle);
-}
-.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked] .musy-radio-card__check {
-  background-color: var(--interactive-accent-alt);
-  border-color: var(--interactive-accent-alt-on);
-  color: var(--interactive-accent-alt-on);
-}
-
-.musy-radio-card__body[data-disabled] {
+}.musy-radio-card__body[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: var(--border-subtle);
   cursor: not-allowed;
@@ -2099,22 +2056,7 @@
 }
 .musy-rcard-group--accent .musy-rcard__body[data-checked] .musy-rcard__headline {
   color: var(--interactive-accent-on-subtle);
-}
-.musy-rcard-group--accent-alt .musy-rcard__body[data-checked] {
-  background-color: var(--interactive-accent-alt-subtle);
-  border-color: var(--interactive-accent-alt-border);
-  border-width: var(--border-width-thick);
-}
-.musy-rcard-group--accent-alt .musy-rcard__body[data-checked] .musy-rcard__check {
-  background-color: var(--interactive-accent-alt);
-  border-color: var(--interactive-accent-alt-on);
-  color: var(--interactive-accent-alt-on);
-}
-.musy-rcard-group--accent-alt .musy-rcard__body[data-checked] .musy-rcard__headline {
-  color: var(--interactive-accent-alt-on-subtle);
-}
-
-.musy-rcard__body[data-disabled] {
+}musy-rcard__body[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: var(--border-subtle);
   cursor: not-allowed;
@@ -2320,6 +2262,35 @@
 .musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body {
   display: flex;
   flex-direction: column;
+  /* ── THE INLINE INSET MOVES ONTO THE SCROLLER — 2026-10-12 ──────────────
+     The same move the BLOCK inset already made (see `.musy-lightbox__body`
+     below, "moved onto the scroller"), for the same reason and now on the
+     other axis.
+
+     WHY IT MATTERS HERE. This body is `overflow-y: auto`, and a scroll
+     container cannot keep the other axis visible — `overflow-x` computes to
+     `auto` and CLIPS AT THE PADDING BOX. With the inset on the popup, the
+     body's padding box edge sat exactly on the content edge, so anything a
+     screen pulled into the gutter was cut rather than crowded. Measured: an
+     app-level control nudged 24px leading rendered its box at 16 and was
+     sliced flat at 32.
+
+     Padding, not position: `padding-inline` is INSIDE the scrollport, so a
+     child may sit in it and remain visible, exactly as the block padding lets
+     the last line clear the bottom of the scroll.
+
+     THE NEGATIVE MARGIN IS WHY THE POPUP KEEPS ITS OWN PADDING. The headline
+     is a SIBLING of this body, a direct child of the popup, and the close
+     control is positioned against the popup's padding box; stripping the
+     popup's inset would move the first and is no business of the second. So
+     the body alone reaches back out to the popup's border edge and re-applies
+     the inset itself — its content lands exactly where it always did, and
+     only the clip boundary moves.
+
+     The gutter this opens is `--space-inset-sheet` (32px), and that is the
+     budget for any optical pull a screen makes inside this sheet. */
+  margin-inline: calc(var(--space-inset-sheet) * -1);
+  padding-inline: var(--space-inset-sheet);
 }
 
 .musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body > :only-child {
@@ -2784,11 +2755,6 @@
   border-color: var(--interactive-accent-border);
   color: var(--interactive-accent-on-subtle);
 }
-.musy-seg--accent-alt .musy-seg__option[data-checked] {
-  border-color: var(--interactive-accent-alt-border);
-  color: var(--interactive-accent-alt-on-subtle);
-}
-
 .musy-seg__option[data-disabled] {
   color: var(--on-surface-disabled);
   cursor: not-allowed;
@@ -3329,25 +3295,28 @@
    rects measured at drag start stay valid. */
 .musy-dlist__item--dragging { opacity: 0.4; }
 
-/* L9 — merge target: the accent's -subtle fill with its -border boundary. */
+/* L9 — merge target: the primary family's -subtle fill with its -border
+   boundary. It was the purple family until 2026-10-10; purple is gone and
+   green is the default for every interactive surface. */
 .musy-dlist__item--merge-target {
-  border-color: var(--interactive-accent-alt-border);
-  background-color: var(--interactive-accent-alt-subtle);
+  border-color: var(--interactive-primary-border);
+  background-color: var(--interactive-primary-subtle);
 }
 
 /* ── L9 · the drop indicator ──────────────────────────────────────────────
    Thick rather than hairline, because it has to read as a target at arm's
    length on a phone.
 
-   THE -border STEP, NEVER THE SOLID. A drop indicator is a meaningful graphic,
-   so 1.4.11 wants 3:1. --interactive-accent-alt is purple-9, which
-   measures 1.85:1 against the page and 2.01:1 against a card; the same family's
-   -border is purple-edge at 3.90:1 / 4.25:1. Layer 1's step-9 comment was
-   corrected to say so — 12 · Component gaps §5. */
+   THE -border STEP, NEVER THE SOLID — and under green the rule survives its
+   own reason. A drop indicator is a meaningful graphic, so 1.4.11 wants 3:1.
+   It was purple-9 at 1.85:1 against the page; green-9 would now measure
+   7.52:1 and pass on its own. The -border step stays anyway, because what the
+   indicator has to be legible against is a CARD it is sitting between, not
+   the page, and green-edge is the value solved for every surface at once. */
 .musy-dlist__drop {
   height: var(--border-width-thick);
   border-radius: var(--radius-full);
-  background-color: var(--interactive-accent-alt-border);
+  background-color: var(--interactive-primary-border);
   /* --sp-1 is the smallest step in the scale, and the line wants the same
      clearance either side. */
   margin-block: var(--sp-1);
@@ -3408,10 +3377,10 @@
   overflow: hidden;
 }
 
-/* What a release would do. Takes the accent that the drop indicator and the
+/* What a release would do. Takes the family that the drop indicator and the
    merge fill already use, so the hint and the target read as one answer. */
 .musy-dlist__preview-action {
-  color: var(--interactive-accent-alt-on-subtle);
+  color: var(--interactive-primary-on-subtle);
   font-family: var(--type-label-md-family);
   font-size: var(--type-label-md-size);
   font-weight: var(--type-label-md-weight);
@@ -3522,19 +3491,10 @@
 .musy-seg__option[data-checked] {
   border-color: transparent;
   border-width: var(--border-width-regular);
-}
-
-/* The accent group modifiers set the selected fill through their own rules, so
-   they need the same neutralising here or their -border step would win on
-   specificity. */
-.musy-radio-group--accent .musy-radio__body[data-checked],
-.musy-radio-group--accent-alt .musy-radio__body[data-checked],
+}.musy-radio-group--accent .musy-radio__body[data-checked],
 .musy-radio-card-group--accent .musy-radio-card__body[data-checked],
-.musy-radio-card-group--accent-alt .musy-radio-card__body[data-checked],
 .musy-rcard-group--accent .musy-rcard__body[data-checked],
-.musy-rcard-group--accent-alt .musy-rcard__body[data-checked],
-.musy-seg--accent .musy-seg__option[data-checked],
-.musy-seg--accent-alt .musy-seg__option[data-checked] {
+.musy-seg--accent .musy-seg__option[data-checked] {
   border-color: transparent;
   border-width: var(--border-width-regular);
 }
@@ -3654,20 +3614,6 @@
   --musy-sel-fill: var(--interactive-accent);
   --musy-sel-on: var(--interactive-accent-on);
 }
-.musy-switch.musy-switch--accent-alt,
-.musy-radio-group.musy-radio-group--accent-alt,
-.musy-radio-card-group.musy-radio-card-group--accent-alt,
-.musy-carousel.musy-carousel--accent-alt,
-.musy-rcard-group.musy-rcard-group--accent-alt {
-  --musy-rest-fill: var(--interactive-accent-alt-subtle);
-  --musy-rest-fill-hover: var(--interactive-accent-alt-subtle-hover);
-  --musy-rest-fill-active: var(--interactive-accent-alt-subtle-active);
-  --musy-rest-border: var(--interactive-accent-alt-border);
-  --musy-rest-on: var(--interactive-accent-alt-on-subtle);
-  --musy-sel-fill: var(--interactive-accent-alt);
-  --musy-sel-on: var(--interactive-accent-alt-on);
-}
-
 /* 05 · Switch — OFF track tinted. ON is left exactly as it was.
    Every rule here is guarded against [data-disabled]: these selectors outrank
    the disabled treatment (they carry one class more and sit later in the file),
@@ -3781,8 +3727,31 @@
 .musy-rcard-group .musy-rcard__body[data-checked] {
   background-color: var(--musy-sel-fill);
 }
+/* ── THE FACTS ROW JOINED THIS LIST ON 2026-10-10, AND IT HAD TO ──────────
+   `.musy-rcard__fact` was the one child of a selected card that kept its own
+   `color: var(--on-surface-muted)` from further up, so the headline and the
+   description stepped to the selected ink and the row carrying the NUMBER
+   stayed sand-11 on top of `--musy-sel-fill`. Measured, light theme:
+   1.41:1 on the old terracotta primary, 3.75:1 on ocher, 3.20:1 on purple.
+
+   It was logged as a question rather than fixed, because at 3.2–3.75 the
+   reading that "a fact is deliberately quieter than the title even when
+   selected" was at least arguable on two of the three accents, and the one
+   that failed was not the one the app used.
+
+   Both halves of that are now false. The palette change puts it at 1.45:1 on
+   primary and 2.44:1 on accent in light, and 1.39:1 on primary in dark — no
+   path clears 3:1, so there is no reading left to defend — and `primary` is
+   now what every screen uses, so the worst of the three is the one on the
+   page. `label-md` is 15px at the 393px reference, which is not large text,
+   so 1.4.3 wants 4.5. Adding the selector gives it `--musy-sel-on`: 7.52:1.
+
+   If a quieter fact IS wanted on a selected card, the way to get it is a
+   token solved against `--musy-sel-fill`, not the surface-muted ink that
+   happens to be inherited. */
 .musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__headline,
 .musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__desc,
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__fact,
 .musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__label {
   color: var(--musy-sel-on);
 }
@@ -3982,11 +3951,12 @@
   --musy-wizard-accent-on-subtle: var(--interactive-primary-on-subtle);
 }
 
-/* The two accent families. Whole solved families, not a hue swap: ocher and
-   purple are LIGHT solids and take dark ink, where terracotta is a dark solid
-   and takes light ink — so -on has to travel with -subtle, or the selected
-   marker's number fails 1.4.3. Which of the three a screen should use is still
-   undefined (conflict B12, open question 7). */
+/* The second accent family. Whole solved families, not a hue swap: terracotta
+   is a LIGHT solid and takes dark ink, where green is a dark solid and takes
+   the page colour — so -on has to travel with -subtle, or the selected
+   marker's number fails 1.4.3. Which of the two a screen should use stopped
+   being undefined on 2026-10-10: `primary` is green and is the default,
+   `accent` is opt-in. That closes conflict B12 / open question 7. */
 .musy-wizard--accent {
   --musy-wizard-accent: var(--interactive-accent);
   --musy-wizard-accent-subtle: var(--interactive-accent-subtle);
@@ -3994,14 +3964,6 @@
   --musy-wizard-accent-on: var(--interactive-accent-on);
   --musy-wizard-accent-on-subtle: var(--interactive-accent-on-subtle);
 }
-.musy-wizard--accent-alt {
-  --musy-wizard-accent: var(--interactive-accent-alt);
-  --musy-wizard-accent-subtle: var(--interactive-accent-alt-subtle);
-  --musy-wizard-accent-border: var(--interactive-accent-alt-border);
-  --musy-wizard-accent-on: var(--interactive-accent-alt-on);
-  --musy-wizard-accent-on-subtle: var(--interactive-accent-alt-on-subtle);
-}
-
 /* The run is a ROW at every width. Narrow screens do not stack it — they
    COLLAPSE it: the step on screen keeps its label, every other step shrinks to
    its marker alone. A stacked wizard costs four rows of vertical space to say
@@ -4781,12 +4743,6 @@
   border-color: var(--interactive-accent-border);
   color: var(--interactive-accent-on);
 }
-.musy-badge--accent-alt {
-  background-color: var(--interactive-accent-alt);
-  border-color: var(--interactive-accent-alt-border);
-  color: var(--interactive-accent-alt-on);
-}
-
 /* Status — the same four feedback families as Message, so a badge and a banner
    describing the same condition cannot disagree. Tinted, never solid. */
 .musy-badge--info    { background-color: var(--feedback-info-surface);    border-color: var(--feedback-info-border);    color: var(--feedback-info-text); }
@@ -4846,6 +4802,34 @@
 .musy-btn-group--center { justify-content: center; }
 .musy-btn-group--end { justify-content: flex-end; }
 
+/* ── A BUTTON IS NEVER SQUEEZED; THE ROW WRAPS INSTEAD — 2026-10-12 ────────
+   This is the rule the component's header always claimed and never enforced:
+   "below --bp-md it either wraps into a ragged staircase or SQUEEZES THE
+   LABELS". The stacking covered the first half at a viewport threshold, and
+   nothing covered the second — so between "both labels fit" and "the viewport
+   is phone-sized" a flex item would shrink below its own label rather than
+   wrap, because `.musy-btn--wrap` sets `white-space: normal` and a wrapping
+   label's min-content width is one word.
+
+   MEASURED on the listen sheet at a 1680px viewport: the row needs 787px with
+   a short label and 990px with a long one. In that band the long state wrapped
+   and the short state did not, so changing the label MOVED THE OTHER BUTTON —
+   and below 787px the way on was squeezed instead of wrapping, which is how a
+   label ends up clipped at the sheet's edge.
+
+   `flex-shrink: 0` says: do not take width off this control to make the row
+   fit. Flex's answer is then to wrap, which is the honest one — not enough
+   horizontal space IS the condition for stacking.
+
+   `max-inline-size: 100%` is the other half and stops the cure being worse
+   than the disease: a single label longer than the whole group would otherwise
+   overflow it. Capped, the button fills the line and the label wraps INSIDE
+   it, which is the stacked shape anyway.                                    */
+.musy-btn-group > .musy-btn {
+  flex-shrink: 0;
+  max-inline-size: 100%;
+}
+
 /* The gap is the RELATIONSHIP, and the default above is the one L6 names: two
    alternatives read as a single control pair, so they sit at the icon-to-label
    rung. A group holding controls of different kinds — the listening sheet's
@@ -4864,6 +4848,26 @@
   /* Stacked, every action is full width; the track button's countdown keeps
      its own column because the label sits left and the time is pushed right. */
   .musy-btn-group > .musy-btn { inline-size: 100%; }
+
+  /* ── stacked="hug" — THE ONE WAY OUT OF FULL WIDTH (2026-10-12) ──────────
+     A column of full-width buttons reads as a list of equal commitments, which
+     is right at the END of a step and wrong for a group that merely sits
+     BESIDE the way on.
+
+     TWO DECLARATIONS, AND BOTH ARE NEEDED. `align-items` undoes the stretch —
+     which is an ALIGNMENT, not a width — and `inline-size: auto` undoes the
+     100% the rule above has already put on every child. Either one alone
+     leaves the buttons full width.
+
+     AND IT IS WHAT MAKES `align` MEAN SOMETHING IN THE COLUMN. Hugging buttons
+     have an alignment to have, so the three modifiers below carry the same
+     intent down from the row: a group that is trailing on a wide screen stays
+     trailing on a phone rather than silently becoming two full-width rows.
+     `flex-start` is the base case, matching `align`'s own default. */
+  .musy-btn-group--stacked-hug { align-items: flex-start; }
+  .musy-btn-group--stacked-hug > .musy-btn { inline-size: auto; }
+  .musy-btn-group--center.musy-btn-group--stacked-hug { align-items: center; }
+  .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; }
 }
 
 /* ═══ MUSIC PLAYER ═════════════════════════════════════════════════════════
@@ -4957,12 +4961,7 @@
 .musy-mplayer--accent {
   --musy-mplayer-accent: var(--interactive-accent);
   --musy-mplayer-accent-border: var(--interactive-accent-border);
-}
-.musy-mplayer--accent-alt {
-  --musy-mplayer-accent: var(--interactive-accent-alt);
-  --musy-mplayer-accent-border: var(--interactive-accent-alt-border);
-}
-.musy-mplayer[data-disabled] {
+}.musy-mplayer[data-disabled] {
   border-color: var(--border-subtle);
   background-color: var(--interactive-primary-disabled);
   --musy-mplayer-accent: var(--on-surface-disabled);
@@ -6226,18 +6225,20 @@ html[data-musy-scroll-snap='y'] {
    now fades in with the gesture, driven frame by frame by --musy-card-reveal,
    which the component takes to 1 at a TENTH of the card.
 
-   THE FILL IS `--accent-3-text`, WHICH IS A TEXT TOKEN, and that is a
-   deliberate inversion worth justifying. The brief asked for "the purple
-   interactive colour with white on it", and those two cannot both be had:
-   `--interactive-accent-alt` is `--purple-9`, a pale dusty fill, and
-   `--on-surface-inverse` over it measures 2.01:1 — under even the 3:1 that
-   large text is allowed. `--accent-3-text` is the dark end of the same purple,
-   and it measures 6.46:1 in light and 6.72:1 in dark. So the design intent
-   survives — purple, white type, emphatic — and the contrast is legal, at the
-   cost of a token used for a fill instead of for ink.
+   THE FILL IS THE PRIMARY SOLID, AND THE DEFECT IT USED TO CARRY IS GONE
+   (2026-10-10). This rule used to paint itself with `--accent-3-text` — a TEXT
+   token used as a fill — because the brief wanted "the interactive colour with
+   white on it" and the purple family could not give both: `--purple-9` was a
+   pale dusty fill, and `--on-surface-inverse` over it measured 2.01:1, under
+   even the 3:1 large text is allowed. The dark end of the same purple was the
+   only legal way to get an emphatic panel.
 
-   IF LAYER 1 GROWS A DARK PURPLE SURFACE, this is the first thing that should
-   move to it. Logged in stories/OPEN-QUESTIONS.md.
+   Green needs no such trick. `--interactive-primary` is a DARK solid, and
+   `--interactive-primary-on` is the foreground Layer 1 already solves against
+   it: 7.52:1 in light, 5.28:1 in dark. So the inversion is reverted, the fill
+   is a fill, the ink is ink, and the open question this rule raised in
+   stories/OPEN-QUESTIONS.md is answered by the palette rather than worked
+   around.
 
    `pointer-events: none` because the gesture that raised it is still running:
    the finger is on the card underneath, and a new element appearing under it
@@ -6268,8 +6269,8 @@ html[data-musy-scroll-snap='y'] {
   justify-items: start;
   padding: var(--space-inset-card);
   border-radius: inherit;
-  background-color: var(--accent-3-text);
-  color: var(--on-surface-inverse);
+  background-color: var(--interactive-primary);
+  color: var(--interactive-primary-on);
   /* THE OPACITY IS THE DRAG. No threshold selector and no transition while a
      finger is down — the overlay is exactly as present as the gesture has made
      it, which is the whole of what Ben asked for. */
@@ -6427,12 +6428,6 @@ html[data-musy-scroll-snap='y'] {
   --musy-filter-sel-border: var(--interactive-accent-border);
   --musy-filter-sel-on: var(--interactive-accent-on-subtle);
 }
-.musy-filter--accent-alt {
-  --musy-filter-sel-fill: var(--interactive-accent-alt-subtle);
-  --musy-filter-sel-border: var(--interactive-accent-alt-border);
-  --musy-filter-sel-on: var(--interactive-accent-alt-on-subtle);
-}
-
 /* ── THE `min` RUNG ────────────────────────────────────────────────────────
    36px, and it is the SAME 36px a `min` CtaButton and a `min` SegmentedControl
    come to — stated here as the arithmetic rather than as the number, so the
@@ -6891,13 +6886,6 @@ html[data-musy-scroll-snap='y'] {
   border-color: var(--interactive-accent-border);
   color: var(--interactive-accent-on-subtle);
 }
-
-.musy-scale--accent-alt .musy-scale__point[data-checked] .musy-scale__mark {
-  background-color: var(--interactive-accent-alt-subtle);
-  border-color: var(--interactive-accent-alt-border);
-  color: var(--interactive-accent-alt-on-subtle);
-}
-
 /* ── HOVER, FOCUS, DISABLED ─────────────────────────────────────────────── */
 @media (hover: hover) and (pointer: fine) {
   .musy-scale__point:not([data-disabled]):hover .musy-scale__mark {

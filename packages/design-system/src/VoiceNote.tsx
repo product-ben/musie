@@ -28,7 +28,7 @@
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';
 import { Progress } from '@base-ui/react/progress';
-import { Mic, Square, Play, Pause, Trash2, CircleX } from 'lucide-react';
+import { Mic, Square, Play, Pause, Trash, CircleX } from 'lucide-react';
 import { Icon } from './Icon';
 import { useMusyText } from './locale';
 
@@ -162,7 +162,7 @@ export function VoiceNote({
               disabled={disabled}
               onClick={onDelete}
             >
-              <Icon glyph={Trash2} size="md" />
+              <Icon glyph={Trash} size="md" />
             </Button>
           </>
         )}

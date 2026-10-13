@@ -23,10 +23,15 @@
  * on this component and on Icon Button.
  *
  * ── THERE ARE NO ACCENT CTAs ANY MORE (Ben, 2026-10-05) ───────────────────
- * `accent` (ocher) and `accent-alt` (purple) were variants of this component
- * and are deleted: "CTAs in primary terracotta, secondary and ghost — not the
+ * `accent` (then ocher) and `accent-alt` (purple) were variants of this
+ * component and are deleted: "CTAs in primary, secondary and ghost — not the
  * yellow one any more". They had two call sites in the app between them and
  * `accent-alt` had none anywhere.
+ *
+ * That last observation generalised (2026-10-10): `accent-alt` had no call
+ * sites on ANY component either, so when the purple scale was dropped the
+ * variant went with it system-wide. A CTA is green now; `accent` is terracotta
+ * and opt-in.
  *
  * It closes conflict B12 / open question 7 FOR THIS COMPONENT by removing the
  * subject rather than by answering it. That pair asked which accent a screen
@@ -35,9 +40,10 @@
  * rule that was already written down in the stories — one primary per unit,
  * and it is the way on.
  *
- * The accent FAMILIES are untouched: the components that take an `accent`
- * prop still offer all three, and TrackButton and RecordButton keep their own
- * accent variants. Neither of those is a CTA.
+ * The accent FAMILIES are untouched by THIS component's decision: the ones
+ * that take an `accent` prop still offer both of the two that remain, and
+ * TrackButton and RecordButton keep their own accent variants. Neither of
+ * those is a CTA.
  */
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';

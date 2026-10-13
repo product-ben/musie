@@ -109,8 +109,8 @@ const meta = {
     onSeek: { action: 'seek', description: 'Scrub. Fires with the new position in seconds.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
-      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
+      options: ['primary', 'accent'],
+      description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
     disabled: { control: 'boolean', description: 'Disables the transport button and the scrubber.' },
     playLabel: { control: 'text', description: 'Copy. English default: "Play".' },
@@ -128,7 +128,7 @@ type Story = StoryObj<typeof meta>;
  *  derived transport state is `paused` at the head of the track. */
 export const Default: Story = {};
 
-/** All three accent families. The prototype uses the default `primary`.
+/** Both accent families. The prototype uses the default `primary`.
  *  The accent reaches the fill, the thumb and the border, but not the
  *  transport button — see Build notes. */
 export const Accents: Story = {
@@ -136,7 +136,6 @@ export const Accents: Story = {
     <Stack>
       <MusicPlayer {...args} accent="primary" title="accent: primary (default)" />
       <MusicPlayer {...args} accent="accent" title="accent: accent" />
-      <MusicPlayer {...args} accent="accent-alt" title="accent: accent-alt" />
     </Stack>
   ),
   args: { position: 72 },

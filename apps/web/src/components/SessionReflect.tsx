@@ -51,8 +51,10 @@ import { Markdown } from './Markdown';
 import { VoiceTranscript } from './VoiceTranscript';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
+import { withoutHeading } from '../lib/markdown';
 import type { ReflectMode } from '../lib/reflect';
 import type { FeelingChange } from '../lib/session';
+import type { SessionQuestion } from '../lib/useQuestion';
 
 export interface SessionReflectProps {
   /** Whose run this is. F.6 writes the statements against it as they arrive. */
@@ -73,6 +75,25 @@ export interface SessionReflectProps {
   /** The typed answer. The only one that can be saved today. */
   text: string;
   onTextChange: (text: string) => void;
+  /**
+   * The rotating question, in its PAST TENSE — the same one the listen step
+   * asked, phrased for somebody who has now heard the music.
+   *
+   * Held by `Session.tsx` rather than read here, because the two steps must
+   * agree: a question answered is the question that was asked, and the rail
+   * unmounts each step when you walk between them.
+   *
+   * NO RE-ROLL ON THIS STEP (D4). By the time somebody is here the question is
+   * what they listened for, and swapping it would leave them answering one
+   * they never held.
+   *
+   * AND NO HELPER EITHER, since 2026-10-12. Only `question.text.reflect` is
+   * read here. The help belongs to the listen step, where somebody is stuck in
+   * front of a question with nothing to do but think; by this step they have
+   * heard the music and are being asked to write, and a prompt-for-the-prompt
+   * competes with the answer rather than unblocking it.
+   */
+  question: SessionQuestion;
 }
 
 /**
@@ -86,6 +107,7 @@ export function SessionReflect({
   feeling, onFeelingChange,
   sessionId,
   onSpokenWords,
+  question,
 }: SessionReflectProps) {
   const t = useT();
 
@@ -120,8 +142,34 @@ export function SessionReflect({
           the modes are not a separate subject, they are the apparatus for the
           question directly above them. Splitting them would section the
           sentence away from the box you write in. */}
+      {/* ── THE QUESTION IS THE HEADLINE, AND IT IS NOT THE EXERCISE'S ───
+          Five rotate, and which one this run got came from the listen step
+          (`lib/useQuestion.ts`). `reflect_md`'s own `##` is dropped at render
+          time by `withoutHeading` rather than by a migration, because
+          `reflectQuestionOf` still reads that heading to label diary entries
+          from BEFORE the rotation — which is the question those sessions were
+          actually asked.
+
+          `withoutHeading` AND NOT `bodyOnly`: the latter promotes the first
+          paragraph to a heading, which here would put "Wenn du magst,
+          beantworte diese Fragen" in display type under the question.
+
+          FREIE BAHN LOSES "Spüre und reflektiere" (D12). Its numbered list
+          follows the rotating question, and step 2 of that list asks its own
+          two questions — so this step carries two sets of them. Ben chose
+          that knowing it; logged in OPEN-QUESTIONS.md.
+
+          The whole fallback path is the final branch: no question set means
+          `reflect_md` renders exactly as it always did, heading included. */}
       <section className="musie-reflect__section">
-        <Markdown md={exercise.reflectMd} />
+        {question.text === null ? (
+          <Markdown md={exercise.reflectMd} />
+        ) : (
+          <>
+            <Markdown md={`## ${question.text.reflect}`} />
+            <Markdown md={exercise.reflectMd} arrange={withoutHeading} />
+          </>
+        )}
 
         <div className="musie-stack">
         <SegmentedControl
@@ -136,7 +184,6 @@ export function SessionReflect({
              radio group announces as a bare list of buttons. */
           legend={t('reflect.legend')}
           legendHidden
-          accent="accent"
           options={[
             { value: 'voice', label: t('reflect.mode.voice'), glyph: Mic },
             { value: 'text', label: t('reflect.mode.text'), glyph: PenLine },
@@ -165,6 +212,15 @@ export function SessionReflect({
                field. `reflect_placeholder` is null for an exercise with no
                questions of its own, and then the catalogue's sentence is the
                honest thing to show. */
+            /* ── NO HELPER HERE — Ben, 2026-10-12 ─────────────────────────
+               The help belongs to the LISTEN step, where somebody is stuck in
+               front of a question with nothing to do but think. By the reflect
+               step they have heard the music and are being asked to write; a
+               prompt-for-the-prompt in the box competes with the answer rather
+               than unblocking it.
+
+               So this is the two rungs it always had: the exercise's own
+               questions, else the catalogue's sentence. */
             placeholder={exercise.reflectPlaceholder ?? t('reflect.text.placeholder')}
             description={t('privacy.written')}
             value={text}
@@ -245,7 +301,6 @@ export function SessionReflect({
             const known = FEELINGS.find((f) => f === picked);
             if (known !== undefined) onFeelingChange(known);
           }}
-          accent="accent"
         />
       </section>
     </>

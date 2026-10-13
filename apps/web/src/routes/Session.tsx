@@ -72,6 +72,7 @@ import {
   saveListeningAnswers, saveReflection, saveStep,
 } from '../lib/session';
 import type { FeelingChange, SessionRow } from '../lib/session';
+import { useSessionQuestion } from '../lib/useQuestion';
 import { resumeSession, sessionReducer, stepTransition } from '../lib/sessionMachine';
 import { useAsync } from '../lib/useAsync';
 import type { StepId } from '../routeHandle';
@@ -118,7 +119,7 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
  *                       names the act, not the page.
  *   reflect Quote       the step gives you your own words back, which is what
  *                       a quotation mark is for. It replaced
- *                       MessageCircleQuestion on 2026-10-09: that glyph reads
+ *                       MessageCircleQuestionMark on 2026-10-09: that glyph reads
  *                       as "do you have a question" — a help desk — where this
  *                       step is Nachdenken, and user testing produced the
  *                       first field evidence against it. Still deliberately
@@ -352,6 +353,16 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       durationSeconds: data.track.durationSeconds,
     };
   }, [asksHowToListen, listenAudio, data.track]);
+
+  /* ── THE ROTATING QUESTION, HELD FOR THE WHOLE RUN — 2026-10-11 ─────────
+     Here and not inside `SessionListen` for the reason `feelingChange` is
+     here: the LISTEN step asks it and the REFLECT step asks it again in the
+     past tense, and the rail unmounts each step when you walk between them.
+     A question held by the listen step would be re-drawn on the way back.
+
+     It is only ever ASSIGNED on the listen step (`lib/useQuestion.ts`), so a
+     session abandoned at intro or scan consumes nothing. */
+  const question = useSessionQuestion(data.row, locale);
 
 
   /* ── The state machine, INITIALISED FROM THE ROW ────────────────────────
@@ -822,7 +833,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           <div className="musie-rail">
             <InteractiveWizard
               label={t('session.wizardLabel')}
-              accent="accent"
               /* THE RUN'S OWN STEPS, not all four — so a listening exercise
                  draws three markers rather than four with one crossed out.
                  `skipped` is still passed, and is empty for every kind whose
@@ -892,6 +902,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               onListened={() => setListened(true)}
               onAdvance={advance}
               back={back}
+              question={question}
             />
           )}
 
@@ -906,6 +917,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               onTextChange={setAnswer}
               feeling={feelingChange}
               onFeelingChange={setFeelingChange}
+              question={question}
             />
           )}
         </WizardPanel>

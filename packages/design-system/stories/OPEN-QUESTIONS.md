@@ -4136,6 +4136,97 @@ What I need from Ben: **nothing**, unless a flick on his own trackpad still
 doubles. The floor is the number to move if so, and it is the only one in here
 that is about hands rather than hardware.
 
+---
+
+## Colour — Layer 1 drops to three hues, and the default becomes green
+
+Where: `tokens/musy-foundations.css` (Layer 1 + Layer 2), `tokens/musy-fonts.css`,
+`tokens/proof-manifest.json`, `tokens/musy-foundations.tokens.json`,
+`tokens/_palette.json`, `tokens/_audit.json`, `TOKEN-DRIFT.md`,
+`stories/foundations/_lib/tokens.ts`, `stories/foundations/_lib/borders.ts`,
+`src/musy-components.css` and eight component APIs.
+
+What I checked: Ben's instruction on 2026-10-10 — keep `sand`, `green` and
+`terracotta`, drop `ocher`, `purple` and `info`, move `success` away from the
+brand green, and make **every** interactive element green by default, with
+`accent` reserved for cases he picks. The W2 pairing from the `ds-experiment`
+branch is adopted rather than trialled, so the experiment override file and its
+four import lines are gone and the values live in Layer 1.
+
+What I did:
+
+**Three chromatic scales, not five.** `green` is new and is the brand;
+`terracotta` is re-anchored on W2's `#D99673`, which is a light fill that
+carries ink rather than the dark solid it used to be; `sand` is retuned to
+linen with a green-black ink. `ocher`, `purple` and `info` are deleted. Every
+Layer 2 alias that resolved through them is re-pointed or removed.
+
+**`--interactive-accent-alt` is gone system-wide**, with the purple scale. It
+was declared on eight component APIs and had **zero call sites on any of
+them** — the observation this file already recorded for CtaButton generalised
+once it was checked against the whole app. `--accent-3` went with it, so the
+accent rotation is two.
+
+**`info` is now neutral.** The blue scale is gone but `variant="info"` is live
+at four app call sites, so `--feedback-info-*` resolves through `sand` instead
+of being deleted. Info is the one status that is not an outcome; built on sand
+it recedes, and success / warning / error are left as the only chromatic
+statuses, which makes each of them mean more. No call site changed.
+
+**`success` moved by hue, not by lightness.** The old value sat at hue 136°
+against the brand's 151° — fifteen degrees apart, both mid-greens, and
+indistinguishable on a page with a green button on it. It is now hue 99°,
+yellow-green, 52° off the brand and twenty points more saturated. `-edge` is
+`#638A42` rather than the curve's `#6F9550`, because the curve value measured
+2.98:1 on the linen page and 1.4.11 wants 3.
+
+### Three questions in this file are answered by the palette rather than by a decision
+
+1. **The CardDeck swipe overlay** (entry: "the brief was overlay the card with
+   the purple interactive colour and write on it in white"). That entry used
+   `--accent-3-text` — a TEXT token — as a fill, because `--purple-9` was pale
+   and white over it measured 2.01:1, and it asked for a dark purple SURFACE in
+   Layer 1. Green needs no such trick: `--interactive-primary` is a dark solid
+   and `--interactive-primary-on` is the foreground Layer 1 already solves
+   against it, at 7.52:1 light / 5.28:1 dark. The inversion is reverted in both
+   places that copied it — `.musy-deck__overlay` and the app's
+   `.musie-deck-guide`.
+
+2. **The ocher / warning collision** (entry: "the second accent exists because
+   ocher is too close to a warning orange"). Dissolved rather than solved:
+   ocher is gone, and the family that existed to avoid it is gone with it.
+
+3. **Conflict B12 / open question 7 — which accent a screen should reach for.**
+   CtaButton answered it for buttons by deleting the subject. It is now
+   answered for everything: `primary` is the default on every component that
+   takes the prop, the app passes nothing anywhere, and `accent` is opt-in.
+
+### One thing the palette made me re-read, and W2 was right
+
+W2 calls `#C7CCC0` **green-soft** and glosses it "Chips, Auswahl-Flächen". I
+first put it at step 3, the resting tint. The contrast audit caught it:
+`--on-surface-muted` on it measures **3.66:1**, so a card tinted with the
+resting fill could not carry secondary text. It belongs at **step 5** — the
+active / selected step — which is what "Auswahl-Flächen" says: a *chosen*
+surface, not a resting one. It is also exactly the disabled button fill in the
+frame. Step 3 is now a lighter tint that clears 4.78:1.
+
+### Verification
+
+All **78** audit pairs in `proof-manifest.json` pass in **both** themes, with
+`_audit.json` regenerated from the stylesheet rather than hand-edited.
+`verify-tokens.mjs` passes: 320 tokens, 0 orphaned, 0 duplicated, TOKEN-DRIFT
+exact. `pnpm check` green.
+
+What I need from Ben: **nothing on the above.** Two things to look at:
+
+- **`accent` has no consumer.** Terracotta is now a family nothing reaches for.
+  It is kept because Ben said he would pick cases for it; if a month passes
+  with none, it is dead weight and the system is honestly one hue plus statuses.
+- **`success` and the brand are still both green**, 52° apart and far more
+  separable than before, but a green "done" banner on a page with a green
+  button is worth one look in situ before it is called settled.
+
 ## ButtonGroup — L2's table and L6's prose name different gaps for two alternatives
 Where: `docs/10-layout.md:78` (the gap ladder) against `docs/10-layout.md:231`
 (action rows), and `src/musy-components.css` `.musy-btn-group`

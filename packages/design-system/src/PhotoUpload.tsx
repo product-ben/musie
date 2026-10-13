@@ -26,7 +26,7 @@
  */
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';
-import { ImagePlus, Trash2, CircleX } from 'lucide-react';
+import { ImagePlus, Trash, CircleX } from 'lucide-react';
 import { Icon } from './Icon';
 import { useMusyText } from './locale';
 
@@ -151,7 +151,7 @@ export function PhotoUpload({
               disabled={disabled}
               onClick={() => onValueChange?.(null)}
             >
-              <Icon glyph={Trash2} size="md" />
+              <Icon glyph={Trash} size="md" />
             </Button>
           </div>
         </div>

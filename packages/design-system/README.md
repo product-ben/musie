@@ -95,7 +95,7 @@ Self-hosted, no third-party request. Nothing in this package ever calls
 committed to `tokens/fonts/`.
 
 Both families are **SIL Open Font License 1.1**. The licence texts ship beside
-the fonts as `tokens/fonts/SpaceGrotesk-OFL.txt` and `tokens/fonts/Inter-OFL.txt`,
+the fonts as `tokens/fonts/Onest-OFL.txt` and `tokens/fonts/Literata-OFL.txt`,
 which the licence requires.
 
 ### Preload snippet — copy this into the app shell
@@ -106,12 +106,12 @@ wherever your bundler emits the fonts:
 ```html
 <!-- Musy webfonts. Self-hosted: no preconnect, no third-party origin.
      LATIN ONLY on purpose — <link rel="preload"> ignores unicode-range, so
-     preloading the latin-ext files would fetch 173 KB that most sessions
+     preloading the latin-ext files would fetch 59.3 KB that most sessions
      never render a glyph from. They load on demand via unicode-range. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="/fonts/space-grotesk-latin.woff2">
+      href="/fonts/onest-latin.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="/fonts/inter-latin.woff2">
+      href="/fonts/literata-latin.woff2">
 ```
 
 `crossorigin` is required even for same-origin font preloads — fonts are always
@@ -127,34 +127,38 @@ Both families ship as **variable fonts clamped to `wght 400–700`**, which is
 exactly the range the system consumes.
 
 This is not a stylistic preference. Google's API returns the *same file* for
-`wght@400;500;700` as for `wght@400..700` — asking for statics yields three
-`@font-face` blocks all pointing at one variable file. Shipping statics would
-mean committing identical bytes three times: 120.8 KB instead of 40.3 KB for
-Space Grotesk, 453.1 KB instead of 270.7 KB for Inter. Dropping Inter's `opsz`
-axis took that family from 423.0 KB to 270.7 KB.
+`wght@400;500;600;700` as for `wght@400..700` — asking for statics yields four
+`@font-face` blocks all pointing at one variable file, which would mean
+committing identical bytes four times. Literata ships an `opsz` axis as well;
+it is deliberately not requested, since nothing in the type scale varies it.
 
-**Space Grotesk** — `var(--font-display)`
+**Onest** — `var(--font-display)`
 
 | Weight | Consumed by |
 |---|---|
-| 400 | `stage` |
-| 500 | `heading-md`, `heading-sm`, `body-xl` |
-| 700 | `display-xl`, `display-lg`, `heading-lg` |
+| 400 | `label-md` |
+| 500 | `display-lg`, `heading-lg`, `heading-md`, `body-xl`, `stage` |
+| 600 | `heading-sm`, `label-lg` |
+| 700 | `display-xl` |
 
-Space Grotesk ships no italic, and nothing in the system asks for one.
+600 is a **real rung here**, and only here. It was barred while the display
+face was Space Grotesk, which ships 400/500/700 — a 600 would have been
+synthesised by the browser. Onest's `wght` axis is continuous 100–900, so the
+instance exists in the file. See `--font-weight-semibold`.
 
-**Inter** — `var(--font-text)`
+Onest ships no italic, and nothing in the system asks for one.
+
+**Literata** — `var(--font-text)` — **the family that READS**
 
 | Weight | Consumed by |
 |---|---|
 | 400 | `body-lg`, `body-md`, `body-sm` |
-| 500 | `label-lg`, `label-md` |
 | 700 | **Not in the type scale.** `musy-components.css` only — the wizard's selected / `aria-current="step"` label |
 | 400 *italic* | **Not in the type scale.** `musy-components.css` only — one rule, the DraggableList empty-state text |
 
 Those last two are single rules and easy to lose in a future cleanup. Drop
-Inter 700 and the current wizard step degrades to a synthesised fake-bold; drop
-the italic and the browser shears upright Inter into a fake oblique.
+Literata 700 and the current wizard step degrades to a synthesised fake-bold;
+drop the italic and the browser shears the upright into a fake oblique.
 
 Nothing consumes 100–300 or 800–900, which is why the axis is clamped.
 
@@ -162,21 +166,20 @@ Nothing consumes 100–300 or 800–900, which is why the axis is clamped.
 
 | File | Subset | Axis | Size |
 |---|---|---|---|
-| `space-grotesk-latin.woff2` | latin | `wght 400–700` | 21.8 KB |
-| `space-grotesk-latin-ext.woff2` | latin-ext | `wght 400–700` | 18.5 KB |
-| `inter-latin.woff2` | latin | `wght 400–700` | 47.3 KB |
-| `inter-latin-ext.woff2` | latin-ext | `wght 400–700` | 83.3 KB |
-| `inter-italic-latin.woff2` | latin | `wght 400–700` italic | 50.4 KB |
+| `onest-latin.woff2` | latin | `wght 400–700` | 33.0 KB |
+| `onest-latin-ext.woff2` | latin-ext | `wght 400–700` | 27.7 KB |
+| `literata-latin.woff2` | latin | `wght 400–700` | 38.3 KB |
+| `literata-latin-ext.woff2` | latin-ext | `wght 400–700` | 31.5 KB |
+| `literata-italic-latin.woff2` | latin | `wght 400–700` italic | 39.1 KB |
 
-**221.3 KB total, of which 69.1 KB is the German critical path.**
+**169.7 KB total, of which 71.3 KB is the German critical path.**
 
 Each `@font-face` carries Google's own `unicode-range`. German umlauts
 (`ä ö ü Ä Ö Ü ß`, U+00C4–U+00FC) live entirely in **latin**, so ordinary German
 costs only the two latin files. The `latin-ext` files are fetched only when a
 Central or Eastern European character actually appears on screen.
 
-Inter's italic ships **latin only**: it serves exactly one CSS rule, and the
-latin-ext italic would have added 89.7 KB — 45% of the payload — for it.
+Literata's italic ships **latin only**: it serves exactly one CSS rule.
 
 ### Layout shift
 

@@ -59,7 +59,7 @@
  * was fixed, Field could not show existing text at all.
  */
 import * as React from 'react';
-import { ChevronDown, GripVertical, Pencil, Trash2 } from 'lucide-react';
+import { ChevronDown, GripVertical, Pencil, Trash } from 'lucide-react';
 import { ContentBox } from './ContentBox';
 import { CtaButton } from './CtaButton';
 import { Icon } from './Icon';
@@ -802,7 +802,7 @@ function DraggableListRow({
           onClick={onSwipeDelete}
         >
           <span className="musy-dlist__swipe-zone" ref={zone}>
-            <Icon glyph={Trash2} size="md" />
+            <Icon glyph={Trash} size="md" />
             {/* The word the panel says, which is `dragDelete` — the SAME word
                 the row menu uses, because one action must not have two names.
                 Past the commit point it becomes what a release would do, the
@@ -892,7 +892,7 @@ function DraggableListRow({
              Toast's undo (L11) is a better safety net than a confirm dialog
              nobody reads. */
           <div className="musy-dlist__actions musy-dlist__actions--end" id={menuId}>
-            <CtaButton variant="ghost" leadingIcon={Trash2} onClick={onDelete}>{t.dragDelete}</CtaButton>
+            <CtaButton variant="ghost" leadingIcon={Trash} onClick={onDelete}>{t.dragDelete}</CtaButton>
             <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>{t.dragEdit}</CtaButton>
           </div>
         )}

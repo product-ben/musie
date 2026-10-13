@@ -9,8 +9,15 @@
  * changes — including when it stops agreeing with the rule.
  */
 import componentsCss from '../../../src/musy-components.css?raw';
+import manifestJson from '../../../tokens/proof-manifest.json';
 
-const SCALES = ['sand', 'terracotta', 'ocher', 'purple', 'info', 'success', 'warning', 'error'];
+/* READ FROM THE MANIFEST, NOT TYPED OUT. This was a hand-written list until
+   2026-10-10, when three scales were dropped and it went stale in the one
+   place nothing checks it — a border drawn in a scale missing from this array
+   is simply not counted, and the page reports a smaller, tidier system than
+   the one that exists. The manifest is the same source the Colour page and
+   verify-tokens.mjs partition against. */
+const SCALES = manifestJson.scales as string[];
 
 export interface BorderUse {
   selector: string;

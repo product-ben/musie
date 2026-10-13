@@ -89,10 +89,11 @@ const meta = {
           '## TrackButton / MusicPlayer — one calls the colour prop `variant`, the other `accent`',
           'Where: `src/MusicPlayer.tsx:71` vs `:121`',
           'What I checked: Level 1. `TrackButtonProps.variant` is `\'primary\' |',
-          '\'secondary\' | \'accent\' | \'accent-alt\'`;',
-          '`MusicPlayerProps.accent` is `\'primary\' | \'accent\' |',
-          '\'accent-alt\'`. Two components in one file, overlapping value sets,',
-          'different prop names.',
+          '\'secondary\' | \'accent\' | \'ghost\'`;',
+          '`MusicPlayerProps.accent` is `\'primary\' | \'accent\'`.',
+          'Two components in one file, overlapping value sets,',
+          'different prop names. (Both lost `\'accent-alt\'` on 2026-10-10 with',
+          'the purple scale; the mismatch they describe survived it.)',
           'What I did: used each name as declared.',
           'Why: renaming either is a design decision.',
           'What I need from Ben: nothing, just flagging — but it is a trap for anyone',
@@ -125,7 +126,7 @@ const meta = {
     onRestart: { action: 'restart', description: 'Called instead of onTogglePlay once the track has ended.' },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'accent', 'accent-alt', 'ghost'],
+      options: ['primary', 'secondary', 'accent', 'ghost'],
       description: 'Button family. Defaults to `secondary`. `ghost` is for a transport that must not be the loudest thing on its screen.',
     },
     hideTimer: {
@@ -171,7 +172,6 @@ export const Variants: Story = {
       <TrackButton {...args} variant="primary" />
       <TrackButton {...args} variant="secondary" />
       <TrackButton {...args} variant="accent" />
-      <TrackButton {...args} variant="accent-alt" />
       <TrackButton {...args} variant="ghost" />
     </Stack>
   ),

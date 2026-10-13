@@ -6,7 +6,7 @@
  * invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowDown, ArrowUp, Minus, Smile, Meh, Frown, Laugh } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, FaceSlightlySmiling, FaceNeutral, FaceSlightlyFrowning, FaceGrinning } from 'lucide-react';
 import { FeelingsScale } from '../src/FeelingsScale';
 import { bothThemes, Row, Stack } from './_decorators';
 
@@ -84,7 +84,7 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the selected point’s value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
+      options: ['primary', 'accent'],
       description: 'The shared radio accent union — `primary` unless the screen says otherwise.',
     },
     disabled: { control: 'boolean', description: 'Disables every point.' },
@@ -108,7 +108,6 @@ export const Accents: Story = {
     <Stack>
       <Row label="accent: primary (default)"><FeelingsScale {...args} name="s-a" accent="primary" /></Row>
       <Row label="accent: accent"><FeelingsScale {...args} name="s-b" accent="accent" /></Row>
-      <Row label="accent: accent-alt"><FeelingsScale {...args} name="s-c" accent="accent-alt" /></Row>
     </Stack>
   ),
   args: { value: 'same' },
@@ -136,11 +135,11 @@ export const PointDisabled: Story = {
 export const FivePoints: Story = {
   args: {
     points: [
-      { value: '1', label: 'Viel schlechter', glyph: Frown },
+      { value: '1', label: 'Viel schlechter', glyph: FaceSlightlyFrowning },
       { value: '2', label: 'Schlechter', glyph: ArrowDown },
-      { value: '3', label: 'Gleich', glyph: Meh },
-      { value: '4', label: 'Besser', glyph: Smile },
-      { value: '5', label: 'Viel besser', glyph: Laugh },
+      { value: '3', label: 'Gleich', glyph: FaceNeutral },
+      { value: '4', label: 'Besser', glyph: FaceSlightlySmiling },
+      { value: '5', label: 'Viel besser', glyph: FaceGrinning },
     ],
     value: '4',
   },

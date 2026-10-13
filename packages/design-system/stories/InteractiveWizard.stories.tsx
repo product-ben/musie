@@ -5,7 +5,7 @@
  * docs/07-components.md §7.17. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DoorOpen, Headphones, MessageCircleQuestion, ScanLine } from 'lucide-react';
+import { DoorOpen, Headphones, MessageCircleQuestionMark, ScanLine } from 'lucide-react';
 import { InteractiveWizard } from '../src/InteractiveWizard';
 import { bothThemes, Stack } from './_decorators';
 
@@ -105,11 +105,12 @@ const meta = {
           'at any width. `vertical` is the exception and keeps its rule, being the',
           'variant for a rail with room rather than one without.',
           '',
-          '**Accent families are whole families, not a hue swap:** ocher and purple are',
-          'LIGHT solids and take dark ink where terracotta is a dark solid and takes',
-          'light ink, so `-on` travels with `-subtle` or the selected marker’s number',
-          'fails 1.4.3. Which of the three a screen should use is still undefined —',
-          'conflict B12, open question 7.',
+          '**Accent families are whole families, not a hue swap:** terracotta is a',
+          'LIGHT solid and takes dark ink where green is a dark solid and takes the',
+          'page colour, so `-on` travels with `-subtle` or the selected marker’s',
+          'number fails 1.4.3. Which of the two a screen should use is no longer',
+          'undefined: `primary` (green) is the default and nothing passes anything',
+          'else; `accent` is opt-in. That closes conflict B12 / open question 7.',
           '',
           '**What it is NOT.** Not a progress bar, not a tab list (tabs show sibling',
           'views; steps have an order and a gate), not Process Visualisation.',
@@ -212,7 +213,7 @@ const meta = {
     stateWords: { control: false, description: 'Override any of the five state words a step ANNOUNCES — they are screen-reader-only, never drawn. Each defaults to the locale catalogue — gesperrt / verfügbar / aktuell / erledigt / übersprungen in German, locked / available / current / done / skipped in English.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
+      options: ['primary', 'accent'],
       description: 'Which solved accent family paints the markers, the current label and the completed connectors.',
     },
     className: { control: false },
@@ -226,14 +227,13 @@ type Story = StoryObj<typeof meta>;
  *  step 2 is current, steps 3 and 4 are reachable in turn. */
 export const Default: Story = {};
 
-/** All three accent families. The prototype's one usage is
+/** Both accent families. The prototype's one usage is
  *  `accent`. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
       <InteractiveWizard {...args} accent="primary" label="accent: primary (default)" />
       <InteractiveWizard {...args} accent="accent" label="accent: accent" />
-      <InteractiveWizard {...args} accent="accent-alt" label="accent: accent-alt" />
     </Stack>
   ),
 };
@@ -249,7 +249,7 @@ export const Icons: Story = {
       { id: 'intro', label: 'Intro', icon: DoorOpen },
       { id: 'scan', label: 'Select Card', icon: ScanLine },
       { id: 'listen', label: 'Listen', icon: Headphones },
-      { id: 'reflect', label: 'Reflect', icon: MessageCircleQuestion },
+      { id: 'reflect', label: 'Reflect', icon: MessageCircleQuestionMark },
     ],
   },
 };

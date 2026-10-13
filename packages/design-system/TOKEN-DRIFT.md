@@ -84,6 +84,7 @@ The JSON bakes weights into each typography composite as literals (`"fontWeight"
 | Token | Declared in CSS |
 |---|---|
 | `--font-weight-bold` | `700` |
+| `--font-weight-semibold` | `600` |
 | `--font-weight-medium` | `500` |
 | `--font-weight-regular` | `400` |
 

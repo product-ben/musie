@@ -7637,6 +7637,657 @@ What I need from Ben: **whether the diary's card art should move to
 leave one answer to the question instead of two. I did not do it unasked
 because it is a visual change to a screen that was not under review.
 
+## A selected RadioCard's facts row keeps the unselected ink — OPEN
+
+Where: `packages/design-system/src/musy-components.css`, the `[data-checked]`
+block at the foot of the file (the one under *lighter selection boundaries*,
+around L3733).
+
+What I checked: building the three components in Figma meant rendering the real
+stylesheets in a browser and reading the computed values back, rather than
+transcribing the CSS — which is the only reason this turned up. The rule that
+recolours a selected card names three children:
+
+```css
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__headline,
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__desc,
+.musy-rcard-group .musy-rcard__body[data-checked] .musy-rcard__label {
+  color: var(--musy-sel-on);
+}
+```
+
+`.musy-rcard__fact` is not in that list, and it has its own `color:
+var(--on-surface-muted)` further up. So on a selected card the headline and the
+description step to the selected ink and the facts row stays sand-11, sitting
+on `--musy-sel-fill`. Measured in the browser, light theme:
+
+| accent | selected fill | fact ink | ratio |
+|---|---|---|---|
+| primary | terracotta-9 `#B55634` | sand-11 `#615A4D` | **1.41:1** |
+| accent | ocher-9 `#E9B86C` | sand-11 | 3.75:1 |
+| accent-alt | purple-9 `#CCA6C7` | sand-11 | 3.20:1 |
+
+`label-md` is 15px at 393px, so none of the three is large text and 4.5:1 is
+the bar. The headline and description are fine — 4.56, 9.54 and 8.14 — which is
+what makes it easy to miss: the card looks right, and the one row that fails is
+the one carrying the number.
+
+Reachable today on `/exercises` in the list view, where `RadioCards` is drawn
+with `accent="accent"` and a single fact, the timeframe. The selected state is
+brief there — choosing starts the session — but "brief" is not a contrast
+exemption, and nothing stops the next consumer holding a selection.
+
+What I did: **nothing to the stylesheet.** It is a Layer 2 component and the
+brief was a Figma file. I reproduced the defect as-is in the Figma library
+rather than quietly correcting it there, and said so in that file's read-me and
+in the component's description — a library that silently disagrees with the
+code is worse than one that documents the disagreement.
+
+What I need from Ben: **whether `.musy-rcard__fact` joins that selector list.**
+It is a one-line change and it would make the facts row match the headline it
+sits under. The alternative reading — that a fact is deliberately quieter than
+the title even when selected — is defensible on the two accents that clear 3:1,
+but not on `primary` at 1.41.
+
+---
+
+# Branch `ds-experiment` — the W2 colour + type direction
+
+## W2 — eight Figma colours and seven type steps do not cover the system's surface area
+
+Where: `packages/design-system/tokens/musy-experiment-w2.css`,
+`packages/design-system/tokens/musy-fonts-w2.css`, their two import lines in
+`src/main.tsx` and the matching pair in `packages/design-system/.storybook/preview.ts`
+
+What I checked: the Figma frame "RESULT · Onest × Literata in W2 Wald & helle
+Terrakotta" (file `5PHqMVXWPppbOsaIczf5wV`, node `23:2`) against Layer 1's
+actual token surface. The frame names **eight colours and seven type steps**.
+Layer 1 declares **four 12-step colour scales and eleven type steps**, and
+Layer 2 hangs ~90 semantic aliases off them. So the frame underdetermines the
+system, and every gap below is a place where the experiment had to decide
+something the design did not say.
+
+What I did: a separate override file rather than an edit. `musy-foundations.css`
+is [LOCKED], `musy-foundations-amendments.css` is reserved for the argued gaps
+G1–G4, and `scripts/verify-tokens.mjs` reads both — a token in either must be
+claimed by a Storybook page group and listed in `TOKEN-DRIFT.md`. An experiment
+is neither a gap nor a documented token. The new file is read by no script;
+reverting is deleting it plus four import lines.
+
+Every foreground/background pair the override can produce was contrast-checked
+in **both** themes before it was looked at — 40 pairs, all passing. Two fixes
+came out of that check rather than out of the design: `--accent-1-on` and
+`--accent-3-on` needed `light-dark()` rather than a single value, and the
+`sage` solid steps had to be lightened off the curve (the hover step landed at
+3.95:1 under ink, short of 4.5).
+
+Why: the brief was "touch only colour and typography", and these are the places
+where staying inside that line meant leaving a question open.
+
+What I need from Ben — **eight decisions, roughly in order of how much they
+change the look:**
+
+**1 · `stage` — Musie's own voice is the one step with no W2 equivalent, and it
+is the first screen anyone sees.** Layer 1 defines `stage` as "the same display
+family and the same 26px step as heading-lg, but regular weight and an open
+line height", so under W2 it is Onest. The consequence is on `/about`: the
+headline, the paragraph and the chrome are **all sans**, and Literata — the
+entire point of the pairing — does not appear on that screen at all. The W2
+logic says the serif reads and the sans labels, and Musie speaking a full
+sentence is reading. I kept it on display, because changing which family a step
+uses is a structural call and not a value to read off a frame. This is the one
+I would most like overturned.
+
+**2 · The third accent has no source.** W2 names one accent (`#D99673`, "nur
+Fläche"); the system has three — terracotta, ocher, purple — and `--accent-*`
+is consumed 27+ times in `musy-components.css`. I mapped primary→`forest`,
+accent→`clay`, and invented `sage` out of `green-soft` so a three-series chart
+still reads as one family. `sage` is the only scale in that file with no Figma
+behind it.
+
+**3 · Terracotta outshouts green.** W2 says green is the brand (buttons, links,
+focus) and terracotta is "nur Fläche". On `/about-you` the selected `RadioCards`
+fill is `clay-9` and it is the loudest thing on the screen — louder than the
+green primary CTA directly under it. That is W2 applied correctly and still
+reading as a hierarchy inversion. Either the selected-card fill should move off
+the accent, or W2's "surface only" needs to mean "not at this size".
+
+**4 · The secondary button label.** W2 draws the outline button with a green
+border *and* a green label. `--interactive-ghost-on` is ink and also dresses
+every plain ghost icon button in the app, so greening it would green far more
+than one button. Left on ink; the outline buttons are therefore green-bordered
+with ink labels, which is not quite what the frame shows.
+
+**5 · `label-md` stays 15–16px, not W2's 14.** Family and weight follow W2
+(Onest Regular, 140%); the size does not. This step sets chips and compact
+controls whose touch target is solved against `--target-primary` at the current
+size, and shrinking it is a geometry change, which the brief excluded. W2's
+14px may well be a desktop spec-sheet value rather than a phone one.
+
+**6 · `success` is now green, and so is the brand.** The four feedback scales
+are untouched — W2 says nothing about status — but `--feedback-success-*` and
+`--interactive-primary` are now the same hue. A green "saved" banner next to a
+green primary button is a 1.4.1 question (status not carried by colour alone),
+and it did not exist while the brand was terracotta.
+
+**7 · W2 makes the known `.musy-rcard__fact` defect worse, not better.** The
+entry above this one measured the facts row on a selected card at 1.41 / 3.75 /
+3.20:1 for primary / accent / accent-alt. Re-measured under W2 with the same
+`--on-surface-muted`: **1.45 / 2.44 / 2.26:1** — all three now fail 3:1, where
+two used to clear it. Nothing here caused that and nothing here fixes it; it is
+the same missing selector, and this direction removes the margin that made it
+survivable on two of the three accents.
+
+**8 · The scrim retint reads as olive over the artwork.** `--alpha-scrim` moved
+from warm brown to the same green-black as the ink, so a scrim over the linen
+canvas reads as shade rather than sepia — which is right on a surface. Over the
+terracotta exercise artwork on `/exercises` it is not: the front card reads as a
+solid olive panel rather than as a dimmed photograph. The artwork was shot for
+the old palette, which is outside what colour tokens can fix.
+
+Also flagged, and not a question: `--font-weight-semibold: 600` exists in that
+file and Layer 1 forbids it. Layer 1's argument is specific — Space Grotesk
+ships 400/500/700, so a 600 would be synthesised. Onest's `wght` axis is
+continuous 100–900 and `musy-fonts-w2.css` ships it as `font-weight: 400 700`,
+so under this pairing 600 is a real instance, and W2 spends it on exactly two
+steps (H3 and the button label). If the pairing is rejected, the token goes
+with it.
+
+---
+
+# W2 adopted — green is the default, and seven of the eight questions above are answered
+
+## Colour — the app stops choosing an accent, because the system now has an answer
+
+Where: twelve call sites across `src/components/BetaSignup.tsx`,
+`SessionReflect.tsx` (×2), `GoalPicker.tsx`, `MenuPreferences.tsx` (×2),
+`src/routes/AboutMusie.tsx`, `AboutYou.tsx`, `Session.tsx`, `Diary.tsx`,
+`Exercises.tsx` (×2); plus `src/exercises.css` and `src/main.tsx`.
+
+What I checked: Ben's instruction on 2026-10-10 — stay with W2, keep `sand`,
+`green` and `terracotta` in Layer 1, drop `ocher`, `purple` and `info`, move
+`success` off the brand green, and make **every** interactive element green by
+default, with `accent` reserved for cases he picks.
+
+What I did:
+
+**Removed `accent="accent"` from all twelve call sites.** Every component that
+takes the prop already defaulted to `accent = 'primary'`, so the app was
+overriding a default it now wants. Nothing replaced it: the screens pass
+nothing and inherit green. `GoalPicker`'s comment — which argued at length for
+passing `accent` so the one question before a session matched the other six
+screens — is rewritten, because the consistency it was buying is now the
+system's own.
+
+**The exercise deck cycles two accents, not three.** `((index % 3) + 1)` is
+`((index % 2) + 1)`, `CardDeck`'s `accent` prop is `1 | 2`, and the
+`[data-accent='3']` rule in `exercises.css` is gone with `--accent-3-text`.
+
+**`.musie-deck-guide` is the brand green.** It painted itself with
+`--accent-3-text` — a TEXT token used as a fill — because the purple family
+had no dark surface and white over `--purple-9` measured 2.01:1. That was
+copied from `.musy-deck__overlay`, which had the same problem for the same
+reason. Both now use `--interactive-primary` with `--interactive-primary-on`,
+which Layer 1 solves at 7.52:1 light / 5.28:1 dark.
+
+**The four stylesheets are back to four.** The `ds-experiment` override file
+and its imports are deleted; the values live in Layer 1, and
+`musy-fonts.css` is Onest × Literata.
+
+### What this resolves from the entry above
+
+1. **`stage` is still Onest** — unresolved, and now the only one. See below.
+2. **The third accent** — gone. `sage` was never needed: Ben's answer was two
+   chromatic scales, not three.
+3. **Terracotta outshouts green** — resolved by removing it from the default
+   path. The selected card on `/about-you` is now the green solid with the
+   page colour on it, and it no longer competes with the CTA beneath it
+   because it IS the same family.
+4. **The secondary button label** — resolved. `--interactive-ghost-border` is
+   green now, so an outline button reads as an action.
+5. **`label-md` at 15–16px** — unchanged and still deliberate. W2's 14px is a
+   spec-sheet value and this step sets touch targets.
+6. **`success` is green and so is the brand** — addressed. Success moved from
+   hue 136° to 99°, 52° off the brand instead of 15°.
+7. **`.musy-rcard__fact`** — **fixed, not flagged this time.** The palette
+   change took it from 1.41:1 to 1.45:1 on primary, and primary is now what
+   every screen uses, so the defect moved onto the main path. No accent clears
+   3:1 any more, which removes the only reading under which leaving it was
+   defensible. The selector now gets `--musy-sel-on`: 7.52:1. Argued in full
+   above the rule in `musy-components.css`.
+8. **The olive scrim over the exercise artwork** — unchanged, and now more
+   visible, because the card behind the legend is green too. The artwork was
+   shot for the terracotta palette; that is a photography question, not a
+   token one.
+
+What I need from Ben:
+
+- **`stage` — Musie's own voice is still Onest, and `/about` is still 100%
+  sans.** This is the one question from the entry above that the palette did
+  not answer, because it is about which family READS rather than about colour.
+  Layer 1 defines `stage` as sharing the display family with `heading-lg`;
+  W2's logic says a spoken sentence is reading and belongs in Literata. Still
+  a one-line change.
+- **`accent` now has no consumer anywhere.** Kept because Ben said he would
+  pick cases for it. Worth revisiting if none arrive.
+
+## `service_role` arrives holding ALL privileges on a VIEW, not just on a table — FIXED
+
+Where: `supabase/migrations/20261011120000_listening_question_rotation.sql`
+(the ACCESS block at the foot), and `20260918150500_content_schema.sql`'s
+`missing_translations`
+
+What I checked: the view `public.question_rejections` was written with the same
+two lines `missing_translations` ends with —
+
+```sql
+revoke all on public.question_rejections from anon, authenticated;
+grant select on public.question_rejections to service_role;
+```
+
+— on the reading that CLAUDE.md rule 2's revoke concerns TABLES, and that a
+view created by a migration starts with no grants of its own.
+
+**Measured, and that reading is wrong.** Applied in a transaction against the
+local stack and inspected before rolling back,
+`information_schema.role_table_grants` reported
+
+```
+service_role | SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+```
+
+The local stack's `alter default privileges in schema public grant all on
+tables to postgres, anon, authenticated, service_role` **covers views**, so the
+view arrived fully granted and the `grant select` was adding to a grant that
+was already there. Rule 2's "looks implemented while doing nothing", one layer
+further out than the column grant on `public.tracks` that the rule is written
+from.
+
+What I did: put `service_role` in the revoke —
+
+```sql
+revoke all on public.question_rejections from anon, authenticated, service_role;
+grant select on public.question_rejections to service_role;
+```
+
+— re-measured, and it now reports `service_role | SELECT` and nothing else.
+`postgres` keeps everything, which is correct: it owns the view.
+
+Why: nothing leaked and nothing was exploitable — `anon` and `authenticated`
+were correctly stripped, and a view with a join is not auto-updatable, so the
+write privileges could not have been exercised. But they stated the wrong
+intent, and the next person to read the file would have believed them.
+
+What I need from Ben: **`missing_translations` has the same latent grants and
+is not fixed here.** It is `20260918150500`, which is applied and pushed, so
+the fix is a new migration (rule 4) against a view that is working correctly
+today — a tidy-up, not a defect, and it is not in this iteration's scope.
+Measured: `service_role` and `authenticated` both hold all seven privileges on
+it. `authenticated` is the one worth a second look, because that view IS
+granted to the client on purpose.
+
+## The rotating question's `?` is a heading-with-a-control, and the system has that shape only for dismissal
+
+Where: `apps/web/src/shell.css` (`.musie-question__headrow`),
+`apps/web/src/components/SessionListen.tsx`
+
+What I checked: `ContentBox` draws `musy-box__headrow` — a heading that shrinks
+and wraps beside a control holding `--target-primary` — and it is reachable
+only by passing `onDismiss`. There is no slot for an arbitrary control beside a
+heading, in `ContentBox` or anywhere else, and the listen sheet is a `Lightbox`
+rather than a `ContentBox` in any case.
+
+What I did: an app pattern, `.musie-question__headrow`, under §L14 — the system
+has no component, every declaration resolves to a Layer 1 token, and the class
+is `musie-` prefixed (L14.1, L14.2).
+
+Two things in it are not obvious and are worth reading before it is reused:
+
+1. **`align-items: flex-end` puts the `?` after the question's LAST line**,
+   rather than at the trailing edge of the row. That is not a style preference:
+   the `Lightbox`'s own close X is in the sheet's top-trailing corner, and a
+   control pushed to the end of this row stacks under it whenever the question
+   is short enough to fit one line. The heading already carries a `::before`
+   float to step its first line around that X.
+2. **It re-declares two lines the lead used to make directly.**
+   `.musie-immersive__lead > .musie-md` is a CHILD selector and the headrow is
+   now the child, so without `.musie-question__headrow > .musie-md` the heading
+   gets its bottom margin back on top of the column gap and `.musie-md`'s
+   `--measure-body` starts beating the heading's wider cap again.
+
+Why: §L14.3 says a pattern that recurs is a component request, and there is
+exactly ONE call site — D4 keeps the `?` off the reflect step — so it does not
+qualify yet.
+
+What I need from Ben: nothing, just flagging. **The second call site makes this
+a component request**, and the `?`-beside-a-heading shape is likely to get one:
+the obvious next homes are the reflect step, if the helper ever needs a
+disclosure there too, and the exercise library's goal headings.
+
+## Focus has to be sent somewhere when the control that was pressed unmounts
+
+Where: `apps/web/src/components/SessionListen.tsx` (the `helperShown` effect),
+`.musie-question__helper` in `shell.css`
+
+What I checked: the helper's `?` is a ONE-WAY reveal (Ben, D15) — pressing it
+shows the helper and removes the button. Nothing else in this repo removes the
+control that took the press, so there was no precedent to copy. `Lightbox` and
+`NotImplementedLightbox` both rely on base-ui returning focus to a trigger that
+is still mounted behind them, and `SessionRunningLightbox`'s docblock calls
+that fallback "lucky" rather than guaranteed.
+
+What I did: made the helper a focus target — `tabIndex={-1}`, focused in an
+effect when it appears, with `outline: none` on `:focus` so a region nobody
+tabbed to does not draw a ring. `:focus-visible` is left alone, so a keyboard
+arrival still shows one.
+
+Why: without it, focus falls to `<body>` and a keyboard or screen-reader user
+loses their place on a full-screen sheet mid-exercise.
+
+What I need from Ben: **this is reasoned, not tested.** No screen reader has
+heard it, which is the same limit F.5's keyboard parity is filed under. The
+question it raises and cannot answer: should the helper be announced when it
+appears — `role="status"`, or a live region — rather than silently focused?
+Focusing it reads the text, which may be enough; announcing it as well would
+say it twice.
+
+## Freie Bahn's reflect step now carries two sets of questions
+
+Where: `apps/web/src/components/SessionReflect.tsx`, and
+`20260923150000_exercise_library_freie_bahn.sql:245`
+
+What I checked: Achtsame Pause's `reflect_md` is a question headline plus an
+invitation line, so replacing the headline with the rotating question is a
+clean swap. **Freie Bahn's is not the same shape.** Its heading is an
+instruction — *Spüre und reflektiere* — and its body is a numbered list of two
+steps whose second step asks its own two questions: *Wie fühlst du dich? Wie
+fühlt sich der Moment an?*
+
+So with the rotating question as the headline, that step reads:
+
+```
+## Hat der Klang in deinem Körper resoniert?
+
+1. Lass die Töne innerlich ausklingen. Atme noch einmal tief …
+2. Wie fühlst du dich? Wie fühlt sich der Moment an?
+```
+
+Two questions, two lines apart, and the answer field below them takes one
+answer.
+
+What I did: shipped it. Ben was shown this exact composition against two
+alternatives — Freie Bahn keeping its heading with the rotating question moved
+down to the field, and Freie Bahn getting the rotation on the listen step only
+— and chose *rotating question replaces the heading* (D12).
+
+Why: it is his call and he made it with the consequence in front of him, and
+the alternative was two structurally different reflect steps decided by whether
+an exercise's heading happens to be a question.
+
+What I need from Ben: nothing blocking. Worth a look on a phone once the
+migration is applied, because the thing to judge is whether the numbered list
+reads as *how to get to the answer* or as *a second question competing with the
+first*. If it is the second, the fix is content rather than code: Freie Bahn's
+`reflect_md` step 2 becomes an instruction instead of a question, in a new
+migration.
+
+## The question catalogue is a repo file, which is a second home for content
+
+Where: `apps/web/src/content/questions.ts`, and CLAUDE.md rule 6's two-way
+split
+
+What I checked: rule 6 divides user-visible copy in two — **chrome** in
+`apps/web/src/i18n/*`, ours and permanent, typed so a missing German key fails
+`pnpm check`; and **content** in the content tables, the spreadsheet's and
+provisional, with `missing_translations` as the completeness check.
+
+The five rotating questions are content by character and chrome by mechanism:
+they are an exercise's words, they will probably be reworded by whoever owns
+the Mindfulness Cards copy, and they now live in a typed TS module.
+
+What I did: a third location, `src/content/`, deliberately separate from
+`src/i18n/`. `Record<QuestionId, QuestionText>` is the completeness check and
+it is STRICTER than the view it replaces — a missing locale and a missing field
+are both compile errors, caught by `pnpm check` on the machine and in CI, where
+`missing_translations` only answers when somebody runs it and `pnpm check`
+never touches the database (rule 8).
+
+Ben chose this over two new content tables, having been given the up- and
+downsides (D1). The argument is written out in §5.1 of
+`docs/LISTENING-QUESTION-ITERATION.md` and the short form is: content lives in
+the content tables because of the ROWS the text hangs off — `cards.code` is
+printed on paper, `exercise_tracks` says which recording plays — and this is
+the first content in the repo that is only text.
+
+Why: logged because it bends the letter of rule 6 while keeping its purpose,
+and because the rule as written would send the next person to a migration.
+
+What I need from Ben: **two things, neither blocking.**
+
+1. **Rule 6 and `docs/GERMAN-UI-WRITING.md`'s "what it binds" table now have a
+   third row and do not know it.** Both name exactly two homes for copy. One
+   line in each.
+2. **If the spreadsheet is going to own these five questions, D1 should be
+   re-opened.** A non-developer editing a repo file means a PR instead of a
+   cell, and that is the one downside of this choice that cannot be mitigated
+   from inside the repo.
+
+## The migration is written and validated but NOT applied — BLOCKED on Ben
+
+Where: `supabase/migrations/20261011120000_listening_question_rotation.sql`
+
+What I checked: `supabase db reset`, `supabase db push` and `pnpm gen:types`
+are all denied in `.claude/settings.json`, and rule 9 says why: there is one
+Supabase stack behind fixed ports and **nine other worktrees** drive the same
+containers. A reset from here re-applies this branch's migrations over whatever
+another session is testing against.
+
+So the migration is unapplied, and the consequence is not subtle:
+`SESSION_COLUMNS` in `lib/session.ts` now names the four new columns, so
+**`readSession` fails and every `/session/:id` screen shows its error state
+until the migration is applied.** `/exercises`, `/diary` and the rest are
+unaffected.
+
+What I did: validated the SQL the furthest way available without touching
+anybody's schema — applied it inside a transaction against the local stack,
+inspected the result, and rolled back. Proven that way:
+
+- the four columns land with the intended types, nullability and `'{}'`
+  defaults;
+- `sessions_listening_question_pairs` refuses an id with no snapshot AND a
+  snapshot with no id, and accepts both together;
+- the view is created with `security_invoker=true` and runs;
+- grants end at `service_role | SELECT`, with `anon` and `authenticated`
+  holding nothing — which is how the bug in the first entry above was caught;
+- `was_reset` is false while the log and the round agree, true once the round
+  is emptied, and a session with no rejections never appears in the view.
+
+Also hand-edited `apps/web/src/lib/database.types.ts` rather than running the
+generator. That is deliberate and is the safer of the two: `pnpm gen:types`
+reads the SHARED database, so running it here would commit another branch's
+tables into this one and typecheck would pass right up to the merge (rule 9).
+Four columns and one view were added by hand, and nothing else in the file was
+touched.
+
+What I need from Ben: **one command, and the feature is live.**
+
+```
+supabase db reset        # from ONE session, knowing the other nine are affected
+pnpm gen:types           # optional — confirms the hand-edit matches
+pnpm test:db             # 8 new assertions in questions.db.test.ts
+pnpm --filter web dev --port 5176 --strictPort
+```
+
+`pnpm test:db` currently reports 5 of 8 failures in that file, all `PGRST205`
+("relation does not exist") or a missing column — which is the suite correctly
+reporting an unapplied migration rather than a defect. The three that pass are
+the `QUESTION_SETS`-to-`exercises` parity checks, which need no new schema.
+
+**Nothing in this branch has been seen running.** `pnpm check` is green (410
+tests, 29 of them new), both bundle builds are green, and the SQL is validated
+— but the UI has not been walked, because walking it needs the migration. Rule
+8's "verify against `pnpm --filter web dev`" is the one gate this iteration has
+not passed.
+
+## A fresh worktree has no `.env.local`, and the symptom is the whole app — RESOLVED
+
+Where: `apps/web/.env.local` (gitignored), `apps/web/playwright.config.ts:51,157`
+
+What I checked: after `supabase db reset` put this branch's migration on the
+stack, `pnpm test:e2e` reported **22 of 24 failures**. The two that passed are
+the WebKit capture specs, which are the only two that never touch the database.
+
+Three traps, in the order they fired, and all three are rule 9's:
+
+1. **`supabase db reset` was first run from the MAIN checkout.** That tree does
+   not contain `20261011120000`, so the reset applied every migration except
+   this branch's and `pnpm test:db` then reported a schema that exists in no
+   tree at all. `schema_migrations` topped out at `20261009140000`.
+2. **A Vite dev server had been listening on :5173 since 7 October**, cwd
+   `/Users/benjaminlipinski/musie/apps/web`. `playwright.config.ts:157` is
+   `reuseExistingServer: !process.env.CI` and `PORT` is the literal `5173` on
+   line 51, so the first walk tested a five-day-old app from another checkout.
+   Proven rather than assumed: that server's `SessionListen.tsx` had zero
+   occurrences of `musie-question__swap` and still contained the old sheet.
+3. **Killing it removed the crutch and exposed the real gap** — this worktree
+   had no `apps/web/.env.local`. It is `.env.*` in the root `.gitignore`, so
+   `git worktree add` does not bring one, and the app had no `VITE_SUPABASE_URL`
+   at all. The e2e harness was unaffected throughout, because `e2e/support.ts`
+   reads the stack directly, which is why `globalSetup` could cheerfully seed
+   four track placeholders into a bucket for an app that could not reach it.
+
+What I did: wrote `apps/web/.env.local` from `.env.example`, pointed at the
+LOCAL stack, anon key read out of `supabase status -o env` rather than pasted
+from memory, `VITE_REQUIRE_ACCOUNT=false`. The walk went from 2/24 to 16/24.
+
+Why: CLAUDE.md's Orientation section does say "copy `apps/web/.env.example` to
+`.env.local`", and I did not do it when creating the worktree. Logged because
+the SYMPTOM points nowhere near the cause — every walk fails on a different
+assertion, several of them deep inside a flow, and none of them says "no
+database URL".
+
+What I need from Ben: **nothing blocking, one suggestion.** Rule 9's worktree
+section lists the shared Supabase stack and the shared port 5173; it does not
+mention that `.env.local` is per-worktree and absent by default. One line
+there would have saved this. The sharper fix is `src/lib/supabase.ts` failing
+loudly on a missing `VITE_SUPABASE_URL` — it already refuses a service-role
+key, so the guard exists and this is one more condition in it.
+
+## The e2e suite is 8 red on `main`, and they are not this branch's
+
+Where: `apps/web/e2e/camera.spec.ts:87`, `cancel.spec.ts:190,477`,
+`scanlink.spec.ts:73`, `session.spec.ts:184`
+
+What I checked: with `.env.local` in place the walk is **16 / 24**. To find out
+whether the 8 are mine I ran the suite twice on the same tree, same deps, same
+server, with one line changed — `QUESTION_SETS` emptied, which makes the
+feature inert on every exercise:
+
+| Spec | feature ON | feature OFF |
+|---|---|---|
+| `camera:58` en/de | ✘ ✘ | ✘ ✘ |
+| `cancel:92` en/de | ✘ ✘ | ✘ ✘ |
+| `cancel:383` en/de | ✘ ✘ | ✘ ✘ |
+| `scanlink:40` en / de | ✘ / ✓ | ✘ / ✘ |
+| `session:55` en/de | ✘ ✘ | ✘ ✘ |
+| **total** | **8 failed** | **9 failed** |
+
+Identical set, and switching the feature OFF made it one worse. `scanlink [de]`
+flipping between the two runs is the proof that it is a race rather than a
+regression.
+
+Three distinct causes, as far as the output goes:
+
+- **Five of them are `toHaveURL(/\/listen$/)` against `listen?overview`.** The
+  app writes `?overview` by `replace` on arrival and has since `fca1bb2`; the
+  assertion races that effect, which is why the same line passes in one locale
+  and fails in the other. A stale spec, not a defect in the app.
+- **`cancel.spec.ts:190` / `:477`** are about the exercise library — a radio
+  keeping its selection after the running-session dialog closes, and the wrong
+  exercise ending up `started`. Nothing on this branch touches `/exercises`.
+- **`session.spec.ts:184`** waits for the transport to reach
+  `data-state="playing"` and it stays `paused`. The track is a silent WAV
+  placeholder written by `fakeTracks.ts`; worth a look on its own.
+
+What I did: nothing. This branch touches neither `apps/web/e2e` nor
+`playwright.config.ts` — `git diff origin/main...HEAD` over both is empty.
+
+What I need from Ben: **a ruling on whether `main` is allowed to be red here.**
+The suite is not in `pnpm check` and not in CI (`ci.yml` runs `check` plus both
+builds), so nothing enforces it and it has clearly drifted. Either the five
+`?overview` assertions get updated to `/\/listen/` — a five-minute change, and
+the honest one, since `?overview` is deliberate — or the walk stops being
+something a branch is asked to run before it is called done.
+
+## `pnpm test:e2e` restores the track bucket but NOT the music — the entry above is half right
+
+Where: this file's "`supabase db reset` empties the local tracks bucket"
+(around line 6608), `apps/web/e2e/fakeTracks.ts`, `~/musie-audio/README.md`
+
+What I checked: that entry's closing advice is "the fix is `pnpm test:e2e` once
+`.env.local` is local, because `globalSetup` seeds them". I followed it on
+2026-10-12 after a reset, the walk went green, and Ben then reported that the
+music had stopped playing.
+
+**It had not stopped playing. It had become silent**, which is a different
+fault and looks identical from inside the app: the transport runs, the
+countdown counts, `data-state` reaches `playing`, and nothing is logged.
+
+`fakeTracks.ts` writes `silentWav(seconds)` — a PCM WAV generated from each
+row's `duration_seconds`. The file sizes identify it with no ambiguity at all,
+because the generator is 8000 bytes a second plus a 44-byte header:
+
+```
+trk-01  219s × 8000 + 44 = 1752044   ← exactly what was in the bucket
+trk-02  102s × 8000 + 44 =  816044
+trk-04  168s × 8000 + 44 = 1344044
+trk-05  191s × 8000 + 44 = 1528044
+```
+
+They are also `audio/wav` under an `.mp3` name, which the file's own header
+explains and which is the second tell. A real master is megabytes and
+`audio/mpeg`.
+
+So the advice is right about REACHABILITY and silent about AUDIBILITY. It
+unblocks `reveal.spec.ts`, which needs a playable object and does not care
+what is in it. It does not give a human anything to hear, and a person testing
+the listen step by ear has no way to tell that from a broken player.
+
+What I did: restored the four masters from `~/musie-audio/`, which is outside
+the repository on purpose (licensed files, and that folder's README says why).
+The mapping is that README's and agrees with `public.tracks.title` / `.artist`
+row for row:
+
+```
+trk-01  Little Yellow Petals — Rachel Sandy
+trk-02  Wait for It — Jon Björk
+trk-04  Bats and Rats — Ludvig Moulin
+trk-05  High Sierra Call — Roy Edwin Williams
+```
+
+Uploaded with `upsert: true` and `audio/mpeg`, behind the same loopback guard
+`fakeTracks.ts` uses — these are licensed files and the hosted bucket is not a
+restore script's business.
+
+Why: logged because the entry above is the first place anybody will look after
+the next reset, and following it is what produced the silence.
+
+**The order is the whole of it, and it is not obvious.** `fakeTracks.ts` uses
+`upsert: false`, so it only ever fills an EMPTY slot. Restore the masters first
+and every later `pnpm test:e2e` leaves them alone; run the walk first and the
+bucket looks full, so nothing will ever replace the placeholders until somebody
+deletes them by hand.
+
+What I need from Ben: **a decision on whether the restore becomes a script.**
+It is four files and a mapping that already exists in two places, so today it
+is a bespoke operation somebody reconstructs each time — which is how it took
+an hour to notice. A `scripts/restore-tracks.mjs` reading the folder from an
+env var (the masters stay out of git either way) would make it one command
+beside `supabase db reset`, and the entry above could then name it instead of
+naming the walk. Not done here: where the masters live on a second machine is
+Ben's to decide, and inventing a path for it would be the brief's premise
+rather than his.
+
 # The listening type — the schema and the content pipeline
 
 ## `needs_cards` is now a mirror of `exercises.kind`, and should not be — OPEN
@@ -7865,3 +8516,33 @@ caller, which is the only split that leaves both rules intact. Measured after:
 What I need from Ben: **nothing for the sheet.** One thing for the system,
 logged in the design system's own file: L2's table and L6's prose disagree
 about what two alternatives sit at (12 vs 8), and the stylesheet ships both.
+
+## Listening exercises — do the two that just became startable join the question rotation?
+Where: `src/content/questions.ts` (`QUESTION_SETS`),
+`src/lib/questions.db.test.ts`, `supabase/migrations/20261012100000_listening_steps.sql`
+What I checked: Level 1, both branches, at the merge. `questions.ts` says an
+exercise that is not a key "keeps today's behaviour entirely — the question out
+of `listen_md`, the heading out of `reflect_md`, `reflect_placeholder` in the
+field, and no `?` or re-roll button. That is `breathing-score`,
+`sound-journey` and `body-scan-soundwalk`, **none of which is built; they get
+questions when they get copy.**"
+
+Two of the three are now built and have copy, from this branch, the day after
+that was written. So the condition the sentence names has been met and the
+decision it defers is live.
+What I did: nothing to `QUESTION_SETS`. The two render their own `listen_md`
+body and `reflect_md` heading, which is the documented behaviour for an
+exercise with no set, and it is what Ben wrote this week on screen.
+
+One thing had to change: `questions.db.test.ts` asserted
+`keys(QUESTION_SETS) == every implemented exercise`, an EQUALITY, while its own
+comment states the subset rule — "a built exercise WITHOUT one is fine and is
+what the three unbuilt ones will be when they land". Narrowed to the subset, in
+the merge commit, because the alternative is a red suite that is right about
+nothing.
+What I need from Ben: **whether the two listening exercises should rotate five
+questions like the card exercises, or keep one question each.** They are not
+the same shape of session — a card exercise asks about an image somebody is
+holding, and these have nothing in the hand — so the five phrasings may not
+transfer at all. If they should, it is a one-line change here plus five
+questions per exercise in two locales.

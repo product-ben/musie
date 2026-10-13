@@ -97,7 +97,7 @@
  */
 import * as React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { CircleCheck, CircleDashed, List, Trash2 } from 'lucide-react';
+import { CircleCheck, CircleDashed, List, Trash } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, LinkList, Message, SegmentedControl, Timeline, Toast,
@@ -547,7 +547,7 @@ function DeleteEverything() {
 
            `ghost`, and at the start edge: it is not what this screen is for. */
         <ButtonGroup align="start">
-          <CtaButton variant="ghost" leadingIcon={Trash2} onClick={() => setStatus('confirming')}>
+          <CtaButton variant="ghost" leadingIcon={Trash} onClick={() => setStatus('confirming')}>
             {t('diary.deleteAll')}
           </CtaButton>
         </ButtonGroup>
@@ -756,7 +756,6 @@ export function Diary() {
                  drawn. */
               legend={t('diary.filter.legend')}
               legendHidden
-              accent="accent"
               value={active}
               options={DIARY_FILTERS.map((value) => ({
                 value,

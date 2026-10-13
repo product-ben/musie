@@ -434,12 +434,11 @@
 
 /* The accent survives as INK, on the one line that is not the content's own:
    the timeframe. Resolved here because the palette is the app's business and
-   the component only carries the number — three accents across five
-   exercises, fixed by the printed order, so a card keeps its colour as the
-   deck is dealt. */
+   the component only carries the number — TWO accents across five exercises
+   since 2026-10-10 (it was three while Layer 1 had a purple scale), fixed by
+   the printed order, so a card keeps its colour as the deck is dealt. */
 .musy-deck__card[data-accent='1'] .musie-exercise-card { --musie-card-ink: var(--accent-1-text); }
 .musy-deck__card[data-accent='2'] .musie-exercise-card { --musie-card-ink: var(--accent-2-text); }
-.musy-deck__card[data-accent='3'] .musie-exercise-card { --musie-card-ink: var(--accent-3-text); }
 
 /* ── THE PICTURE ───────────────────────────────────────────────────────────
    Flush to the top, the left and the right: no padding on the face, 100% of
@@ -699,24 +698,23 @@
    grid cell, so it is exactly as wide as a card and as tall as the tallest
    face, with the pile's own radius inherited. Nothing here sets a size.
 
-   ── IT IS THE SWIPE OVERLAY'S PURPLE NOW (Ben, 2026-10-07) ────────────────
-   It was `--interactive-accent-alt` at 82% behind a blur, so the card shimmered
-   through — the thing being explained visible behind its own explanation. Ben
-   asked for the legend to look like the other purple state on this screen, the
-   one the deck raises while a card is being dealt, and that state is opaque:
-   `--accent-3-text` as a FILL with `--on-surface-inverse` on it, which is
-   `.musy-deck__overlay`'s own pair and carries its own justification for
-   inverting a text token (musy-components.css, above that rule).
+   ── IT IS THE SWIPE OVERLAY'S FILL (Ben, 2026-10-07; recoloured 2026-10-10)
+   It was `--interactive-accent-alt` at 82% behind a blur, so the card
+   shimmered through — the thing being explained visible behind its own
+   explanation. Ben asked for the legend to look like the other raised state on
+   this screen, the one the deck shows while a card is being dealt, and that
+   state is opaque. The pairing is `.musy-deck__overlay`'s, whatever it is, and
+   it is now `--interactive-primary` with `--interactive-primary-on`: the brand
+   green, a real solid with a real foreground, instead of the text token the
+   purple family had to borrow to get a dark enough fill.
 
    THE SHIMMER GOES WITH IT, and that is a consequence rather than a second
-   decision. The two cannot both be had: white on the pale purple solid
-   measures 2.01:1, which is why the overlay reached for the dark end of the
-   scale in the first place — and a photograph coming through a DARK fill at
-   82% reads as dirt rather than as shimmer. So the fill is flat and the blur
-   is gone with it, and the screen's two purple states are the same purple.
+   decision: a photograph coming through a DARK fill at 82% reads as dirt
+   rather than as shimmer. So the fill is flat and the blur is gone with it,
+   and the screen's two raised states are the same colour.
 
-   IF THE SHIMMER IS WANTED BACK it returns with the pale solid and that
-   solid's own foreground — never by thinning this one.                      */
+   IF THE SHIMMER IS WANTED BACK it returns with a pale solid and that solid's
+   own foreground — never by thinning this one.                              */
 .musie-deck-guide {
   /* It is a <button>, so the UA's own button styling has to go first. */
   appearance: none;
@@ -742,8 +740,8 @@
   padding: var(--space-inset-card);
   border-radius: inherit;
 
-  background-color: var(--accent-3-text);
-  color: var(--on-surface-inverse);
+  background-color: var(--interactive-primary);
+  color: var(--interactive-primary-on);
 
   /* IT ARRIVES, TOO. The legend appearing instantly over a pile that has just
      dealt itself in reads as a misdraw. `--motion-enter` is Layer 1's own
@@ -857,18 +855,19 @@
   border-radius: var(--radius-control);
   /* ── THE CARD'S SURFACE, NOT THE BUTTON'S FILL ────────────────────────
      `--surface-raised` and `--on-surface` are the card the real Start button
-     sits on, and the pair survived the fill going dark: against
-     `--accent-3-text` the chip measures about 6.4:1 in light and 5.2:1 in
-     dark, so it holds its shape as a graphic (1.4.11) in both themes.
+     sits on, and the pair has now survived the fill going dark TWICE: against
+     the old purple it measured about 6.4:1 / 5.2:1, and against
+     `--interactive-primary` it measures 8.14:1 in light and 3.89:1 in dark,
+     so it still holds its shape as a graphic (1.4.11) in both themes.
 
-     `--interactive-primary` — the real button's own terracotta — is the
-     obvious answer now that the legend is dark, and it is the wrong one: that
-     fill against this one is 1.4:1, so the pill would lose its edges and
-     survive only as floating white type.
+     `--interactive-primary` — the real button's own fill — is the obvious
+     answer and is now plainly the wrong one: since 2026-10-10 the legend
+     itself IS that fill, so the pill would be the same colour as the thing it
+     sits on and survive only as floating type. The argument used to be about
+     a 1.4:1 ratio; it is now about identity.
 
-     NOT `--interactive-accent-alt-on` either, which was the first answer back
-     when the fill was the pale solid: that token is the foreground solved
-     against the purple SOLID, so it is near-black in light mode. */
+     Measured, not derived: the dark figure is the tighter of the two because
+     `--surface-raised` is sand-4 there while the fill brightens to green-9. */
   background-color: var(--surface-raised);
   color: var(--on-surface);
   font-family: var(--type-label-md-family);

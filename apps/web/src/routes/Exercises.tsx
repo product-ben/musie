@@ -462,14 +462,16 @@ export function Exercises() {
          INK, one dark brown for another: 6.37 light / 5.17 dark against a 4.5
          bar, which is what `primary` scores in the same slots to within a
          rounding error. Contrast-neutral, and subtle to look at. Ben took it
-         on those terms on 2026-10-08, over a solid ocher fill that would have
-         needed B25's edge back to be identifiable at all (1.41:1 against the
-         track in light).
+         on those terms on 2026-10-08, over a solid accent fill that would
+         have needed B25's edge back to be identifiable at all (1.41:1 against
+         the track in light). The prop itself went on 2026-10-10 — the control
+         takes the green default now, like everything else — but the reasoning
+         is kept because it is the argument for why a view switch is ink and
+         not a fill, which is still true.
 
          THE CARD'S *STARTEN* IS STILL TERRACOTTA, and that is the point of
          the pairing: the way ON stays primary, and the two controls that only
          narrow what you are looking at share the other colour. */
-      accent="accent"
       /* While the question is open, everything the answer governs is inert —
          and the view switch governs which of the two filtered views you are
          looking at, so it is one of them. */
@@ -487,7 +489,7 @@ export function Exercises() {
     id: exercise.id,
     /* Fixed by the exercise's place in the printed order, NOT by its place in
        the pile, so a card keeps its colour as the deck is dealt. */
-    accent: ((index % 3) + 1) as 1 | 2 | 3,
+    accent: ((index % 2) + 1) as 1 | 2,
     /* A FUNCTION, SO THE FACE CAN PLACE THE DECK'S ACCEPT ITSELF. The deck
        drew that button into the card's corner until 2026-10-05 and could not
        know how wide this card's own bottom row was — see the note over
@@ -817,7 +819,6 @@ export function Exercises() {
                  the legend the screen always had. */
               legend={t('exercises.legend')}
               legendHidden
-              accent="accent"
               headingLevel={2}
               options={visible.map((exercise) => ({
                 value: exercise.id,

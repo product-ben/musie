@@ -296,6 +296,37 @@ export function bodyOnly(blocks: Block[]): Block[] {
 }
 
 /**
+ * THE BODY, WITH THE HEADING DROPPED AND NOTHING PROMOTED.
+ *
+ * The third of the set, and the one the ROTATING QUESTION needs — 2026-10-11.
+ * The reflect step now draws its headline from the question set rather than
+ * from `reflect_md`, so what it wants from that column is everything EXCEPT
+ * the heading: Achtsame Pause's invitation line, and Freie Bahn's numbered
+ * list of two steps.
+ *
+ * ── WHY NOT `bodyOnly`, WHICH IS ALMOST THIS ──────────────────────────────
+ * `bodyOnly` PROMOTES the first paragraph to a heading, because the listen
+ * sheet had no other heading to show. Here there is one already — the question
+ * — so promoting would give the step two headings, and Achtsame Pause's would
+ * read "Wenn du magst, beantworte diese Fragen" in display type above the
+ * field.
+ *
+ * ── THE COLUMN KEEPS ITS HEADING, AND THAT IS THE POINT ───────────────────
+ * The obvious alternative was a migration stripping the `##` out of
+ * `reflect_md`. It would break the diary: `reflectQuestionOf` reads exactly
+ * that heading to label entries from BEFORE the rotation, which is the
+ * question those sessions were actually asked. So the heading stays in the
+ * database and this drops it at render time.
+ *
+ * Like its two siblings it invents nothing: given all heading, or one
+ * paragraph, or nothing, it returns something the renderer can draw.
+ */
+export function withoutHeading(blocks: Block[]): Block[] {
+  const heading = blocks.find((block) => block.kind === 'heading');
+  return blocks.filter((block) => block !== heading);
+}
+
+/**
  * The same words with the formatting thrown away, as one string.
  *
  * For the places that need a step's copy as a VALUE rather than as a block of

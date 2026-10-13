@@ -506,7 +506,11 @@ export type Database = {
           goal_id: string | null
           id: string
           listened_at: string | null
+          listening_question: string | null
+          listening_question_id: string | null
           posture: string | null
+          rejected_question_ids: string[]
+          rejected_this_round: string[]
           started_at: string
           status: string
           step: string
@@ -523,7 +527,11 @@ export type Database = {
           goal_id?: string | null
           id?: string
           listened_at?: string | null
+          listening_question?: string | null
+          listening_question_id?: string | null
           posture?: string | null
+          rejected_question_ids?: string[]
+          rejected_this_round?: string[]
           started_at?: string
           status: string
           step: string
@@ -540,7 +548,11 @@ export type Database = {
           goal_id?: string | null
           id?: string
           listened_at?: string | null
+          listening_question?: string | null
+          listening_question_id?: string | null
           posture?: string | null
+          rejected_question_ids?: string[]
+          rejected_this_round?: string[]
           started_at?: string
           status?: string
           step?: string
@@ -694,6 +706,21 @@ export type Database = {
           issue: string | null
           locale: string | null
           record_id: string | null
+        }
+        Relationships: []
+      }
+      question_rejections: {
+        Row: {
+          exercise_id: string | null
+          language: string | null
+          left_with: string | null
+          rejected_count: number | null
+          rejected_question_ids: string[] | null
+          session_id: string | null
+          started_at: string | null
+          status: string | null
+          user_id: string | null
+          was_reset: boolean | null
         }
         Relationships: []
       }

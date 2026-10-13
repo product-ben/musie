@@ -254,9 +254,11 @@ export interface CardDeckItem {
    * on the card, still a button in the action column, still Enter.
    */
   content: React.ReactNode | ((card: CardDeckCard) => React.ReactNode);
-  /** 1, 2 or 3 — Layer 1's accent family. Fixed by the consumer, so a card
-   *  keeps its colour when the pile is reordered. */
-  accent?: 1 | 2 | 3;
+  /** 1 or 2 — Layer 1's accent family. Fixed by the consumer, so a card
+   *  keeps its colour when the pile is reordered. Two, not three, since
+   *  2026-10-10: Layer 1 carries two chromatic scales, green and terracotta,
+   *  and `accent-3` went with the purple one. */
+  accent?: 1 | 2;
 }
 
 export interface CardDeckProps {

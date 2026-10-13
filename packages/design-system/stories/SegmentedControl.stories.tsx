@@ -93,8 +93,8 @@ const meta = {
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
       control: 'inline-radio',
-      options: ['primary', 'accent', 'accent-alt'],
-      description: 'Solved accent family. `accent` is the default; `accent-alt` is for contexts where warnings are common.',
+      options: ['primary', 'accent'],
+      description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
     size: {
       control: 'inline-radio',
@@ -157,9 +157,10 @@ export const Labels: Story = {
 };
 
 /**
- * All three accent families. The prototype uses `accent`, and so does
- * /exercises since 2026-10-08, where the view switch answers in the same
- * ocher as the goal question beside it.
+ * Both accent families. The prototype used `accent`, and so did /exercises
+ * from 2026-10-08 — where the view switch answered in the same accent as the
+ * goal question beside it. Since 2026-10-10 neither passes it: the default is
+ * `primary`, the default is green, and the match is the system's own.
  *
  * ── IN PRACTICE IT CHANGES THE INK AND NOTHING ELSE ──────────────────────
  * The rule at §15 sets a `-border` as well, and **that border is not drawn**:
@@ -194,7 +195,6 @@ export const Accents: Story = {
     <Stack>
       <SegmentedControl {...args} name="a-primary" accent="primary" legend="accent: primary (default)" />
       <SegmentedControl {...args} name="a-p1" accent="accent" legend="accent: accent" />
-      <SegmentedControl {...args} name="a-p2" accent="accent-alt" legend="accent: accent-alt" />
     </Stack>
   ),
 };

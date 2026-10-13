@@ -30,7 +30,8 @@
  *
  * ── FOUR CARDS HAVE AUDIO AND FIVE DO NOT, SO BOTH PATHS ARE LIVE ─────────
  * E.4 landed the recordings. `tracks.src` now holds an object key in a
- * private bucket and `useTrackSource` signs it; the `<audio>` gets a real URL
+ * private bucket and `useMix` signs it (`useTrackSource` until 2026-10-12,
+ * when the second stream arrived); the `<audio>` gets a real URL
  * and really plays. For the other five `src` is NULL — the schema saying there
  * is no recording, rather than pointing at a file that was never there — and
  * the clock takes over at the track's own `duration_seconds`, which the seed
@@ -56,10 +57,12 @@ import {
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
-import { ArrowDown, Volume2, VolumeX } from 'lucide-react';
+import { ArrowDown, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
+import { isHelperRevealed, rememberHelperRevealed } from '../lib/questions';
+import type { SessionQuestion } from '../lib/useQuestion';
 import { useMix } from '../lib/mixer';
 import { revealTrack } from '../lib/reveal';
 import { markListened, savePlayed } from '../lib/session';
@@ -187,6 +190,15 @@ export interface SessionListenProps {
   /** Sticky across the step, so it is held by the session rather than here. */
   listened: boolean;
   onListened: () => void;
+  /**
+   * The rotating question, held by `Session.tsx` because the reflect step asks
+   * it again in the past tense (`lib/useQuestion.ts`).
+   *
+   * `question.rotates` is false for an exercise with no set, and then this step
+   * draws exactly what it drew before: `bodyOnly(listen_md)` on the sheet, no
+   * `?`, no re-roll button.
+   */
+  question: SessionQuestion;
 }
 
 /**
@@ -200,6 +212,7 @@ export interface SessionListenProps {
  */
 export function SessionListen({
   exercise, audio, sessionId, card, listened, onListened, onAdvance, back,
+  question,
 }: SessionListenProps) {
   const t = useT();
 
@@ -338,6 +351,57 @@ export function SessionListen({
      Back closes the sheet for free, because it changes the one thing that
      decides. */
   const immersive = searchParams.has(FOCUS);
+
+  /* ── THE HELPER'S REVEAL, WHICH IS ALSO THE FIRST RUNG OF THE LADDER ────
+     ONE CONTROL, TWO PRESSES — Ben, 2026-10-12. It replaces both the `?` icon
+     button beside the question AND the thirty-second broccoli button under it.
+
+     Press once and the helper appears: that is *Hilf mir bitte*, and it is
+     available immediately, because there is no reason to make somebody wait
+     for help. Press again and the question is turned down.
+
+     THE LADDER IS THE GATE, which is why the thirty-second timer is gone
+     (it overturns D8/D9). The rejection does not exist until help has been
+     asked for and read, so nobody rejects a question they have not engaged
+     with — which is the whole thing the timer was buying, bought by the
+     shape of the control instead of by a clock.
+
+     `revealedFor` is this render's answer and `sessionStorage` is the durable
+     one — see `isHelperRevealed` in lib/questions.ts for why a disclosure
+     state is neither a column nor component state alone. Read on every
+     render, which is one `getItem`, so closing and reopening the sheet does
+     not put somebody back on the first rung.
+
+     KEYED BY QUESTION, so a swap collapses the helper and the button says
+     *Hilf mir bitte* again for the new one.
+
+     NO FOCUS MANAGEMENT ANY MORE. The `?` used to unmount itself on press and
+     focus had to be sent somewhere deliberately; this button stays mounted and
+     only changes its label, so focus never goes anywhere. The whole effect
+     that handled it is gone with it. */
+  const [revealedFor, setRevealedFor] = React.useState<string | null>(null);
+
+  const helperShown = question.id !== null
+    && (revealedFor === question.id || isHelperRevealed(sessionId, question.id));
+
+  const revealHelper = React.useCallback(() => {
+    if (question.id === null) return;
+    rememberHelperRevealed(sessionId, question.id);
+    setRevealedFor(question.id);
+  }, [question.id, sessionId]);
+
+  /* ── A NEW QUESTION ARRIVES COLLAPSED, ON THE FIRST RUNG ────────────────
+     Ben, 2026-10-12. `helperShown` already fails its id comparison when the
+     question changes, so a plain swap resets without this — measured. What it
+     covers is the one case where the incoming id can EQUAL the revealed one:
+     *Fragen zurücksetzen* puts every rejected question back in play, and the
+     one handed back may be the very question whose helper was last opened.
+
+     The hook clears the durable half (`forgetHelperRevealed`); this clears
+     the render's half. Both are needed because they are two different stores
+     of the same fact, and the whole point is that neither survives a new
+     question. */
+  React.useEffect(() => { setRevealedFor(null); }, [question.id]);
 
   /* THE ADDRESS SAYS WHICH VIEW, even when nobody chose one. Replace, not
      push: arriving is not a step the Back button should have to walk through.
@@ -1340,9 +1404,96 @@ export function SessionListen({
                 instruction has already been read on the stage, and saying it
                 again here in display type made the question the smaller half
                 of its own screen. */}
+            {/* ── THE QUESTION, AND THE TWO THINGS BESIDE IT ─────────────
+                The question is no longer the exercise's: five of them rotate,
+                and which one this run got is `sessions.listening_question_id`
+                (`lib/useQuestion.ts`). `bodyOnly(listen_md)` is the FALLBACK,
+                for the three exercises with no set — their screens are
+                untouched by all of this.
+
+                RENDERED AS `## …` RATHER THAN AS A BARE <h2>, so it goes
+                through the same renderer the column did: the question is
+                Markdown (D5), and the sheet's typography is already keyed to
+                `.musie-immersive__lead .musie-md h2` — including the float
+                that steps the first line around the Lightbox's close control.
+                A hand-rolled heading would need both rules copied. */}
             <div className="musie-immersive__lead">
-              <Markdown md={exercise.listenMd} arrange={bodyOnly} />
+              {question.text === null ? (
+                <Markdown md={exercise.listenMd} arrange={bodyOnly} />
+              ) : (
+                <>
+                  {/* THE QUESTION, PLAIN. The `?` that used to sit beside it is
+                      gone — the control moved down into the action row and
+                      became *Hilf mir bitte* (Ben, 2026-10-12), which also
+                      retires `.musie-question__headrow` and the whole business
+                      of keeping a control out of the Lightbox's close corner. */}
+                  <Markdown md={`## ${question.text.listen}`} />
+
+                  {/* ── THE HELP, AT THE QUESTION'S OWN SIZE ────────────────
+                      `--type-heading-md-*`, the same token the question above
+                      it uses — Ben's correction, 2026-10-12. It was `body-sm`
+                      on the reading that a helper line is a caption (L8); it
+                      is not. It is the thing somebody who is stuck actually
+                      reads, in place of the question, so it is typeset as the
+                      question.
+
+                      Muted ink is what keeps the hierarchy once the scale
+                      stops doing it. */}
+                  {helperShown && (
+                    <p className="musie-question__helper">{question.text.helper}</p>
+                  )}
+                </>
+              )}
             </div>
+
+            {/* ── THE LADDER, UNDER THE TEXT — Ben, 2026-10-12 ───────────
+                It sat beside the way on for a day. Under the question is where
+                it belongs: it is about THIS QUESTION, and a control that acts
+                on the thing above it should not be in the row that leaves the
+                step.
+
+                `size="min"` — the S rung, and the quiet one. Beside the way on
+                it had to hold its own against a primary; under the question it
+                is an aside, and an aside at the same weight as the heading's
+                own actions would read as a second instruction.
+
+                THREE STATES, AND `canSwap` IS READ FIRST, because at the dead
+                end there is no question to ask for help with — offering help
+                would be offering nothing.
+
+                  not revealed   → Hilf mir bitte              (enabled)
+                  revealed       → Die Frage funktioniert …    (enabled)
+                  nothing left   → Keine weitere Frage übrig   (disabled)   */}
+            {question.rotates && (question.id !== null || question.exhausted) && (
+              <div className="musie-question__swap">
+                <CtaButton
+                  variant="outline"
+                  size="min"
+                  wrap
+                  disabled={!question.canSwap}
+                  onClick={helperShown ? question.reject : revealHelper}
+                >
+                  {!question.canSwap
+                    ? t('session.listen.questionExhausted')
+                    : helperShown
+                      ? t('session.listen.questionReroll')
+                      : t('session.listen.questionHelp')}
+                </CtaButton>
+
+                {/* The way out of the dead end, and only there (D16). */}
+                {!question.canSwap && (
+                  <CtaButton
+                    variant="outline"
+                    size="min"
+                    wrap
+                    leadingIcon={RotateCcw}
+                    onClick={question.reset}
+                  >
+                    {t('session.listen.questionReset')}
+                  </CtaButton>
+                )}
+              </div>
+            )}
 
             {/* ── THE MINIMUM, AS THE LARGEST THING ON THE SHEET ──────────
                 `role="timer"` rather than a live region, and the two are
@@ -1432,32 +1583,32 @@ export function SessionListen({
                 parameter — so the sheet closes because the address it was
                 reading is gone. Closing it first as well would push a second
                 history entry between the two. */}
-            {/* ── THE SWITCH SITS IN THE ROW, LEFT OF THE WAY ON ──────────
+            {/* ── THE SYSTEM'S GROUP, NOT A ROW OF THIS SCREEN'S OWN ─────
+                `.musie-immersive__actions` was an app pattern with its own
+                wrap and its own media query, and `ButtonGroup` is the
+                component for exactly this (rule 1). TWO things it could not do
+                arrived the same day from two branches, and both went INTO the
+                component rather than being reimplemented here — the call
+                `CtaButton` made with `align`:
+
+                `stacked="hug"` keeps the group TRAILING once it stacks instead
+                of turning it into two full-width rows, and is what stops a
+                long German label stretching across a phone.
+
+                `relation="molecule"` is the DISTANCE between the two controls,
+                Ben's --space-gap-stack (2026-10-12). A switch and a way
+                forward are not alternatives to each other, which is the case
+                L6's control pair does not cover — and the gap is the
+                component's even though only this screen knows what the row
+                holds.
+
+                ── AND THE SWITCH SITS LEFT OF THE WAY ON ──────────────────
                 Ben, 2026-10-12. It was under the counter and its caption until
                 then; in the row it reads as one of the two things you can do
-                from here rather than as a note about the countdown.
-
-                `ButtonGroup` rather than two controls in a div: it owns the
-                row's gap and its stacking at narrow widths, which is the
-                system's answer to exactly this arrangement (rule 1 — pass
-                props, do not re-emit the geometry).
-
-                AND IT OWNS THE WHOLE FOOT NOW. A `.musie-immersive__actions`
-                wrapper did the same three jobs a second time — flex row,
-                right-aligned, with a gap of its own — and shrank the group to
-                its content on the way, which defeated the full-width stacking
-                the component promises below --bp-md. It is gone, and the two
-                props below say the same two things to the component instead.
-
-                `relation="molecule"` IS THE DISTANCE BETWEEN THEM, Ben's
-                --space-gap-stack (2026-10-12). A prop and not a rule in
-                `shell.css`, because the gap belongs to the component and only
-                this screen knows what the row holds: a switch and a way
-                forward are not alternatives to each other, which is the case
-                L6's control pair does not cover. LEFT of the CTA because
-                the CTA is where the step ends: the quiet choice comes first in
-                reading order and the way forward stays at the trailing edge,
-                which is where it has been since 2026-10-07.
+                from here rather than as a note about the countdown. LEFT
+                because the CTA is where the step ends: the quiet choice comes
+                first in reading order, and the way forward stays at the
+                trailing edge where it has been since 2026-10-07.
 
                 OFF BY DEFAULT: the mix plays. On, the app hands over to the
                 same recording without its music — the position is read off the
@@ -1473,13 +1624,15 @@ export function SessionListen({
                 clock have one file for their own reasons.
 
                 So the control is RENDERED AWAY rather than disabled, and the
-                group then holds the CTA alone — which is the row it was. A
-                disabled switch would advertise a feature that is not coming.
+                group then holds the CTA alone — which is the row it was while
+                the question's ladder lived here, and the shape `stacked="hug"`
+                was added for. A disabled switch would advertise a feature that
+                is not coming.
 
                 `VolumeX` / `Volume2` because `Switch`'s own docblock names that
                 pair as the case where the glyph should say WHAT is switching
                 rather than merely that something is. */}
-            <ButtonGroup align="end" relation="molecule">
+            <ButtonGroup align="end" stacked="hug" relation="molecule">
               {mix.hasVoiceOnly && !simulated && (
                 <Switch
                   label={t('session.listen.musicOff')}

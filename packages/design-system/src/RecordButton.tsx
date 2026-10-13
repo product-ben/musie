@@ -57,7 +57,7 @@ export interface RecordButtonProps {
    *  button says *Record more* over a list that is already an answer, and the
    *  primary action there is finishing the session. Still the same control in
    *  the same two states; only the family it borrows is quieter. */
-  variant?: 'primary' | 'secondary' | 'accent' | 'accent-alt';
+  variant?: 'primary' | 'secondary' | 'accent';
   /** Raises the TARGET, not the type step — §7.4's ladder. */
   size?: 'primary' | 'comfort' | 'guided';
   disabled?: boolean;
