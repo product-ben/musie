@@ -1,0 +1,107 @@
+# Publish BOTH documentation sites to GitHub Pages, as one deployment.
+#
+# WHY ONE WORKFLOW. A Pages deployment replaces the entire site — there is no
+# partial upload and no merging of artifacts. Two workflows each uploading
+# their own half would therefore take turns clobbering each other, and the
+# live site would be whichever ran last. This file replaces storybook.yml for
+# that reason; it is not an extra workflow beside it.
+#
+#   /musie/            the documentation site (apps/docs, VitePress)
+#   /musie/storybook/  the design system (packages/design-system, Storybook)
+#
+# WHY HERE AND NOT ON THE APP'S HOST. This repository is public, so Pages and
+# Actions are free with no build-minute allowance to exhaust — an allowance is
+# what paused the app's deploys once already. Both of these are internal
+# documentation; the app is built and served by Cloudflare Workers. Keeping
+# them apart also means a broken app build no longer stops the docs from
+# publishing.
+#
+# ONE-TIME SETUP: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/docs/**'
+      - 'packages/design-system/**'
+      - '.github/workflows/pages.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never publish two deploys at once; cancel a superseded run rather than racing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # VitePress reads git for each page's "Last updated" line. With the
+          # default shallow clone every page is dated the day of the build.
+          fetch-depth: 0
+
+      # No `version:`. `packageManager` in package.json is the single source,
+      # which is what ci.yml does — pinning here as well meant a pnpm bump
+      # desynced the two workflows silently.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # NO `pnpm check` HERE — see M12 in DECISIONS.md. It ran the whole gate a
+      # second time on a commit ci.yml was already gating. Each build below
+      # compiles the thing it publishes, so a type error in either still fails
+      # this job. That is the gate that belongs to this workflow.
+
+      # Pages serves this repo under /musie/, not at a domain root. Without the
+      # base path every asset written as /assets/... resolves against the
+      # domain root and 404s.
+      - name: Build the docs
+        run: pnpm --filter docs build
+        env:
+          DOCS_BASE_PATH: /${{ github.event.repository.name }}/
+
+      - name: Build Storybook
+        run: pnpm build:storybook
+        env:
+          STORYBOOK_BASE_PATH: /${{ github.event.repository.name }}/storybook/
+
+      # One directory, assembled in the order the URLs imply. `cp -R x/. y/`
+      # rather than `cp -R x y` so the CONTENTS land in y, whether or not y
+      # already exists.
+      - name: Assemble the site
+        run: |
+          mkdir -p site/storybook
+          cp -R apps/docs/.vitepress/dist/. site/
+          cp -R packages/design-system/storybook-static/. site/storybook/
+          test -f site/index.html
+          test -f site/storybook/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

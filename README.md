@@ -55,6 +55,22 @@ Variables and secrets**. They are read at BUILD time and compiled into the
 bundle, so changing one means rebuilding — see `docs/MUSIE-SETUP.md` section 3,
 which lists the exact three and why none of them is a secret.
 
+## Documentation
+
+**https://product-ben.github.io/musie/** — the whole project, written twice:
+one switch in the header picks *For devs* or *For designers*, and every page
+carries both halves in full.
+
+```bash
+pnpm --filter docs dev      # VitePress dev server
+pnpm --filter docs build    # fails on a dead internal link — that is its gate
+pnpm --filter docs test     # the audience containers and the mermaid fence
+```
+
+It is a **derived view**: every page ends by naming the file in this repository
+that rules it. Where a page and the repository disagree, the repository wins
+and the page is a bug. `apps/docs/` is the source.
+
 ## Storybook
 
 The design system's Storybook covers 26 components (258 stories), the
@@ -67,14 +83,18 @@ pnpm build:storybook    # static build into packages/design-system/storybook-sta
 
 ### Where it is deployed
 
-**GitHub Pages**, at `https://product-ben.github.io/musie/`, published by
-`.github/workflows/storybook.yml` on every push to `main` that touches
-`packages/design-system/`.
+**GitHub Pages**, at `https://product-ben.github.io/musie/storybook/`, published
+by `.github/workflows/pages.yml` on every push to `main` that touches
+`packages/design-system/` or `apps/docs/`.
+
+It moved from the root of that site to `/storybook/` when the documentation
+site landed. **One Pages deployment replaces the whole site** — there is no
+partial upload — so the two cannot be published by two workflows without
+clobbering each other. `pages.yml` builds both and uploads one artifact.
 
 Pages and Actions are free with no build-minute allowance on a public
-repository, which is why the docs live here rather than on the app's host. It
-also decouples them: a broken app build no longer stops Storybook publishing,
-and vice versa.
+repository, which is why both sites live here rather than on the app's host. It
+also decouples them: a broken app build no longer stops either from publishing.
 
 **One-time setup:** Settings → Pages → Build and deployment → Source:
 **GitHub Actions**.
@@ -82,7 +102,7 @@ and vice versa.
 #### The base path matters
 
 Pages serves a project site under `/<repo>/`, not at a domain root. The
-workflow therefore builds with `STORYBOOK_BASE_PATH=/musie/`, which
+workflow therefore builds with `STORYBOOK_BASE_PATH=/musie/storybook/`, which
 `.storybook/main.ts` turns into Vite's `base`.
 
 Anything in a story that points at a served file must go through `asset()` in
@@ -96,8 +116,8 @@ To reproduce the published build locally:
 
 ```bash
 cd packages/design-system
-STORYBOOK_BASE_PATH=/musie/ npx storybook build
-mkdir -p /tmp/pages/musie && cp -R storybook-static/. /tmp/pages/musie/
+STORYBOOK_BASE_PATH=/musie/storybook/ npx storybook build
+mkdir -p /tmp/pages/musie/storybook && cp -R storybook-static/. /tmp/pages/musie/storybook/
 cd /tmp/pages && python3 -m http.server 8080   # then open /musie/
 ```
 
