@@ -1,0 +1,790 @@
+/**
+ * `/insight-map` — what this screen owns, plus React Flow's theming.
+ *
+ * The third route-scoped stylesheet in the app, after `exercises.css`, and
+ * imported the same way: by the screen that owns it, so nothing else carries
+ * it. React Flow's own stylesheet is imported immediately before this one in
+ * `routes/InsightMap.tsx`, which is what lets every rule below override it
+ * without a single `!important`.
+ *
+ * L14's three conditions bind all of it:
+ *   1. Every declaration resolves to a Layer 1 token or to arithmetic over
+ *      one. The only bare values are the geometric identities L14 allows —
+ *      0, 50%, 100% — and unitless multipliers inside calc().
+ *   2. Naming is `.musie-<block>[__<part>]`, deliberately NOT `musy-`.
+ *   3. Anything here that recurs is a component request, not a second copy.
+ *
+ * ── THEMING A THIRD-PARTY CANVAS WITHOUT BREAKING RULE 1 ──────────────────
+ * React Flow ships its palette as `--xy-*-default` custom properties and reads
+ * them through its own cascade. So this file sets those properties to musie's
+ * SEMANTIC tokens and touches none of React Flow's class rules. Nothing here
+ * reaches for a raw scale token, and nothing re-implements a component the
+ * design system has — the canvas, its controls and its edges are React Flow's,
+ * wearing Layer 1's colours.
+ */
+
+/* ═══ THE PAGE ══════════════════════════════════════════════════════════════
+   One gap, declared once, for the reason `.musie-exercises` gives: the notice
+   and the hint are conditionally present, and a `gap` skips an absent child
+   where a margin on each block has to remember.                             */
+.musie-orgmap-page {
+  display: grid;
+  /* `minmax(0, 1fr)` and not the default: an implicit track takes `auto` as
+     its minimum and grows to its widest child, and a canvas is a child that
+     will happily be wider than the page. */
+  grid-template-columns: minmax(0, 1fr);
+  /* ── IT IS A DOCUMENT NOW, NOT A SCREEN THAT FILLS THE VIEWPORT ────────
+     The canvas took `1fr` of a full-height page until the rationale arrived.
+     A hundred and fifty words of cited research between the controls and the
+     map cannot share a fold with it, and squeezing the map to fit would be
+     choosing the worse half of both. So the page is a column you scroll, every
+     row sized to its content, and the map gets a generous fixed height of its
+     own below.
+
+     This is the third time the preamble has grown, and the first time it has
+     cost the map its place above the fold. Flagged rather than absorbed. */
+  gap: var(--space-gap-group);
+}
+
+/* ═══ THE THREE CONTROLS ════════════════════════════════════════════════════
+   ONE BLOCK, so the page grid stays at four rows and the canvas keeps its
+   `1fr`.
+
+   STACKED AT EVERY WIDTH — Ben, and it is the right call for a reason the
+   two-column version made obvious: each of these three is about to carry a
+   sentence underneath it saying what the selection means. Side by side, those
+   sentences would sit in columns of different heights and the row would read
+   as two unrelated halves rather than as three questions in order.
+
+   One column also keeps DOM order and visual order identical without having to
+   think about it, which is L6's rule, and it is the same at 393px and at 1280
+   — so there is one layout to check rather than two.                        */
+.musie-orgmap__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* 24px — Ben. `--sp-5` is the Layer 1 rung that holds it, and it is the raw
+     spacing scale rather than one of L2's semantic names because the semantic
+     ladder has no 24: it steps `--space-gap-stack` 16 straight to
+     `--space-gap-group` 32. The number is still a token and still not picked by
+     eye; it is just a rung without a word. */
+  gap: var(--sp-5);
+}
+
+/* ═══ THE LEDE ══════════════════════════════════════════════════════════════
+   What the screen says before it shows anything, and the page's only h1 — the
+   route keeps its title through `handle.titleKey`, but on the page "Org map"
+   was naming a thing the reader could already see.
+
+   TWO STEPS, NOT ONE. Ben asked for the display token, and the whole of it in
+   `display-lg` would be six lines of forty-four-pixel type: a headline that has
+   to be scrolled is not a headline. So the figure takes `display-lg` and the
+   sentence under it takes `--type-stage`, which is Layer 1's own step for
+   "Musie speaking" at 26–34px — still large, still the same voice, and the
+   hierarchy between them is what makes the first line land.
+
+   Both resolve to `--font-display`. `body-*` would be Literata, and a serif
+   figure reads as decoration rather than as a number.                       */
+.musie-lede {
+  display: grid;
+  gap: var(--space-gap-related);
+}
+
+/* Each line gets ITS OWN measure rather than sharing the headline's. At a
+   single `--measure-heading` for both, the sentence under the figure ran six
+   lines of thirty-three-pixel type — a cap meant for a headline, applied to a
+   paragraph. */
+.musie-lede__figure {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+  letter-spacing: var(--type-display-lg-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+}
+
+.musie-lede__text {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-stage-family);
+  font-size: var(--type-stage-size);
+  font-weight: var(--type-stage-weight);
+  line-height: var(--type-stage-line);
+  letter-spacing: var(--type-stage-tracking);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* The disclaimer, now that it has no box. It sits in the map's footer beside
+   the caption; `--feedback-warning-text` would overstate it and
+   `--on-surface-muted` would hide it, so it takes the body ink and the weight
+   does the rest. */
+.musie-orgmap__unreal {
+  color: var(--on-surface);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* The shell's h1 carries `--space-gap-group` below itself, which is right on
+   a screen whose title is followed by content and wrong inside a grid already
+   spending that gap. Same correction `.musie-exercises` makes: one spacing
+   mechanism per container. */
+.musie-orgmap-page > .musie-placeholder { margin-block-end: 0; }
+
+/* ═══ THE CANVAS ════════════════════════════════════════════════════════════
+   A canvas needs a height — React Flow fills its container and the container
+   has nothing else to take one from. It gets it from the page's `1fr` row,
+   which is to say: everything the title, the notice and the tabs did not use. */
+.musie-orgmap {
+  /* Three quarters of the viewport minus the app's chrome — a map you can
+     read without it swallowing the page it sits in. `--measure-figure` is
+     Layer 1's figure width, and one and a bit of it is the floor below which
+     twenty-four circles stop meaning anything. */
+  block-size: calc(var(--view-block) * 0.75);
+  min-block-size: calc(var(--measure-figure) * 1.1);
+  /* ── THE MAP, AND THE CARD BESIDE IT ─────────────────────────────────────
+     One column until something is selected. Then the map takes what is left
+     and the card takes a fixed measure at the inline end — which is what
+     pushes the graphic to the left edge, without the graphic itself moving:
+     `fitView` re-frames into the narrower box on the remount. Closing the card
+     restores both in the same move.
+
+     BELOW --bp-md THERE IS NO ROOM FOR TWO, so the card goes under the map and
+     the section grows. A card beside a 361px map would leave neither.       */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+
+  /* ── REACT FLOW'S OWN PALETTE, REMAPPED ───────────────────────────────── */
+  --xy-background-color-default: var(--surface);
+  --xy-background-pattern-color-default: var(--border-subtle);
+
+  --xy-edge-stroke-default: var(--border-strong);
+  --xy-edge-stroke-selected-default: var(--interactive-primary);
+  --xy-edge-stroke-width-default: var(--border-width-hairline);
+
+  --xy-node-color-default: var(--on-surface);
+  --xy-node-background-color-default: var(--surface-raised);
+  --xy-node-border-default: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  --xy-node-boxshadow-hover-default: var(--elevation-1);
+  --xy-node-boxshadow-selected-default: var(--elevation-1);
+
+  --xy-controls-button-background-color-default: var(--surface-raised);
+  --xy-controls-button-background-color-hover-default: var(--interactive-ghost-hover);
+  --xy-controls-button-color-default: var(--on-surface);
+  --xy-controls-button-color-hover-default: var(--on-surface);
+  --xy-controls-button-border-color-default: var(--border-subtle);
+  --xy-controls-box-shadow-default: var(--elevation-1);
+
+  --xy-attribution-background-color-default: var(--surface-raised);
+}
+
+.musie-orgmap[data-card='1'] { grid-template-rows: minmax(0, 1fr) auto auto; }
+
+/* --bp-md. */
+@media (min-width: 768px) {
+  .musie-orgmap[data-card='1'] {
+    grid-template-rows: minmax(0, 1fr) auto;
+    /* A measure and a quarter. At a plain `--measure-compact` the card held
+       the name and the X and nothing else; with a word cloud and a scale in it
+       the six words wrapped one per line. The map keeps the rest, and at 980px
+       that is still about six hundred pixels of canvas. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, calc(var(--measure-compact) * 1.25));
+  }
+}
+
+/* React Flow fills this, and this fills its grid cell. `min-inline-size: 0` so
+   the canvas can be made narrower by the card rather than refusing to shrink —
+   a grid item's automatic minimum is its content, and a canvas has no opinion
+   about its content's width until it is told it has none. */
+.musie-orgmap__canvas {
+  position: relative;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+/* ── THE CARD ─────────────────────────────────────────────────────────────
+   Empty for now, by instruction: it carries the name it is about and the way
+   out. A divider rather than a surface change, because it is part of the same
+   panel rather than a thing floating over it.                              */
+.musie-orgmap__card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-gap-stack);
+  padding: var(--space-inset-card);
+  min-inline-size: 0;
+  overflow-y: auto;
+  background-color: var(--surface-raised);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* --bp-md: the divider moves with the card. */
+@media (min-width: 768px) {
+  .musie-orgmap__card {
+    border-block-start: 0;
+    border-inline-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  }
+}
+
+/* The close control at the inline end — L6, the likely action outermost, and
+   DOM order matching visual order. `gap` rather than `space-between` alone, so
+   a long name wraps against the button instead of colliding with it. */
+.musie-orgmap__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+}
+
+.musie-orgmap__card-title {
+  margin: 0;
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+}
+
+/* ═══ ONE CIRCLE ════════════════════════════════════════════════════════════
+   The node fills the box React Flow sized for it — the layout decided the
+   diameter, so this rule only has to be round and to centre its two lines.
+
+   NO BORDER OF ITS OWN BESIDES THE KIND RULES BELOW: `--xy-node-border` is
+   already set on the canvas, and a second boundary here would be two outlines
+   doing one job.                                                            */
+.musie-orgmap__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: var(--radius-full);
+  /* ONE CONSTANT BORDER WIDTH FOR EVERY STATUS. It used to thicken with
+     severity — regular, thick, focus — and that is a border-box change: three
+     pixels a side took six off the name's line and truncated *Finance* the
+     moment it turned red. Severity is an INSET RING below instead, which is a
+     shadow and so costs the content box nothing. */
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  text-align: center;
+  /* It is a <button>: the UA's own appearance has to go, and the pointer has
+     to say it can be pressed. */
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  /* HALF A RUNG, AND THE NUMBER CAME OFF THE PAGE RATHER THAN OUT OF THE AIR.
+     It was two rungs, then one, and the measurement killed both: at 32px of
+     inset *Quality*, *Content*, *Partners* and *Enterprise* were ellipsised,
+     and at 16px *Demand* still needed 61px of a 54px line. The four tightest
+     names measure 59–73px against circles of 72–89px, so four pixels of inset
+     is what leaves every one of them whole with a little room spare — and a
+     circle gives its full width only at its vertical centre anyway, so inset
+     here buys less than it looks.
+
+     A name a reader cannot finish is worse than a tight circle, and the
+     measurement fails on any truncation rather than trusting this sum. */
+  padding-inline: calc(var(--space-gap-inline) / 2);
+}
+
+/* ── THE TRAFFIC LIGHT ───────────────────────────────────────────────────
+   Four states, and the fourth is the one that matters. Every node on every
+   tab carries one; only a pod is ever grey.
+
+   GREEN IS `--interactive-primary`, NOT `--success`. Layer 1 re-hued
+   `--success-9` to a yellow-green precisely so success could never be mistaken
+   for the brand — which makes it the wrong token for the "go" of a traffic
+   light and the right one for "that worked". Warning and error are the status
+   families as they stand, which is what makes a `Message` and a node
+   describing the same condition agree.
+
+   NEVER COLOUR ALONE. Green, orange and red are the classic three a
+   colour-blind reader cannot separate, so severity is ALSO an inset ring that
+   thickens as it worsens, the status is in each node's accessible name, and a
+   legend sits on the canvas. Colour is the glance; it is never the only
+   channel.
+
+   THE RING IS A SHADOW, NOT A BORDER, and that is the whole reason this is
+   written twice over: a border that thickens with severity shrinks the content
+   box with it, and three pixels a side was enough to truncate *Finance* the
+   moment it turned red. `box-shadow` draws inside the same box and costs the
+   name nothing.                                                            */
+.musie-orgmap__node[data-status='good'] {
+  background-color: var(--interactive-primary-subtle);
+  border-color: var(--interactive-primary-border);
+}
+
+.musie-orgmap__node[data-status='watch'] {
+  background-color: var(--feedback-warning-surface);
+  border-color: var(--feedback-warning-border);
+  box-shadow: inset 0 0 0 var(--border-width-regular) var(--feedback-warning-border);
+}
+
+.musie-orgmap__node[data-status='poor'] {
+  background-color: var(--feedback-error-surface);
+  border-color: var(--feedback-error-border);
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--feedback-error-border);
+}
+
+/* ── NO DATA, AND IT IS DASHED FOR A REASON ─────────────────────────────
+   `--border-style-dashed` is Layer 1's own word for "provisional / awaiting
+   content" (token gap G2), which is exactly what a grey node is and nothing
+   else. It is not a dim fourth verdict: half the pods are grey on any given
+   dimension because three or four people cannot be reported on without
+   reporting on individuals. The dash says "nothing here yet" where a flat grey
+   fill would say "nothing good here".                                      */
+.musie-orgmap__node[data-status='none'] {
+  background-color: var(--surface-sunken);
+  border-style: var(--border-style-dashed);
+  border-color: var(--border-subtle);
+}
+
+.musie-orgmap__node[data-status='good'] .musie-orgmap__count {
+  color: var(--interactive-primary-on-subtle);
+}
+.musie-orgmap__node[data-status='watch'] .musie-orgmap__count {
+  color: var(--feedback-warning-text);
+}
+.musie-orgmap__node[data-status='poor'] .musie-orgmap__count {
+  color: var(--feedback-error-text);
+}
+
+/* MUTED, NOT DISABLED. `--on-surface-disabled` is the ink for a control you
+   cannot use, and it is light enough that *Demand* and *Partners* were hard to
+   read at all. A pod with no data is not disabled — its headcount is known and
+   true, and only the dimension is silent. `--on-surface-muted` is still a full
+   4.5:1, so the name stays legible while the node stays quiet. */
+.musie-orgmap__node[data-status='none'] .musie-orgmap__count,
+.musie-orgmap__node[data-status='none'] .musie-orgmap__name {
+  color: var(--on-surface-muted);
+}
+
+/* ── THE TWO LINES ────────────────────────────────────────────────────────
+   `label-md` is L8's own carve-out for "a card's own heading, when it is only
+   an identifier", which is exactly what a pod's name is here — the readable
+   figure is the count beneath it.
+
+   Both steps resolve to `--font-display`, so a circle never changes typeface
+   as it changes size. `body-*` would be Literata, and a serif figure reads as
+   decoration rather than as a number.                                       */
+.musie-orgmap__name {
+  max-inline-size: 100%;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* PROPORTIONAL FIGURES, not tabular: these do not align down a column, and
+   equal-width digits make a standalone number look loose. */
+.musie-orgmap__count {
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-line);
+  color: var(--on-surface);
+}
+
+/* The company node is one circle on an empty canvas, so its number can take
+   the step a hero figure takes. */
+.musie-orgmap__node[data-kind='company'] .musie-orgmap__count {
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+}
+
+.musie-orgmap__node[data-kind='company'] .musie-orgmap__name {
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+}
+
+/* ── THE HANDLES ──────────────────────────────────────────────────────────
+   Inert and invisible, and AT THE CENTRE, which is what makes a line run
+   centre to centre and vanish under the circles at each end. React Flow draws
+   an edge between handle positions; anywhere else and the spokes would meet
+   the circle at a point that means nothing.
+
+   `inset-block-start` and `inset-inline-start` at 50% with a half-size
+   translate are geometric identities — the centre of a box, and half of the
+   element's own size.                                                       */
+.musie-orgmap .musie-orgmap__handle {
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  inline-size: var(--border-width-hairline);
+  block-size: var(--border-width-hairline);
+  min-inline-size: 0;
+  min-block-size: 0;
+  border: 0;
+  background-color: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── EDGE WEIGHT ──────────────────────────────────────────────────────────
+   Four rungs off Layer 1's border-width ladder, because a line's weight is a
+   width and inventing a second scale for it would be two ladders doing one
+   job. The exact headcount is on the node; this is the glance.             */
+.musie-orgmap__edge--w1 .react-flow__edge-path { stroke-width: var(--border-width-hairline); }
+.musie-orgmap__edge--w2 .react-flow__edge-path { stroke-width: var(--border-width-regular); }
+.musie-orgmap__edge--w3 .react-flow__edge-path { stroke-width: var(--border-width-thick); }
+.musie-orgmap__edge--w4 .react-flow__edge-path { stroke-width: var(--border-width-focus); }
+
+/* ── THE FOOTER: THE CAPTION AND THE KEY ────────────────────────────────
+   Both of these were React Flow `Panel`s floating over the map, and both
+   covered the picture they explain the moment the card took a third of the
+   width. Down here they spend about sixty pixels of canvas instead of a third
+   of it, and the map is never hidden by its own caption.
+
+   It spans every column, so it sits under the card as well as the map — the
+   key is about the colours on the map, and the card is one of the things
+   reading them.                                                            */
+.musie-orgmap__foot {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+  padding: var(--space-gap-stack);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  background-color: var(--surface-raised);
+}
+
+/* ── THE HINT ─────────────────────────────────────────────────────────────
+   A `Panel` is React Flow's own slot for something that rides above the
+   canvas without scrolling with it. `body-sm` is permitted: L8 scopes it to
+   metadata, and this explains the picture rather than being it.            */
+/* A caption now rather than a floating note, so it drops the box it needed to
+   be readable over a picture. It keeps a measure, because a line of prose that
+   runs the width of a canvas is a line nobody finishes. */
+.musie-orgmap__hint {
+  margin: 0;
+  max-inline-size: var(--measure-compact);
+  color: var(--on-surface-muted);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+/* ── THE LEGEND ──────────────────────────────────────────────────────────
+   A `BadgeRow` of the four lights, on the canvas rather than above it: a key
+   belongs beside the thing it keys, and the page already spends four rows
+   before the map starts.
+
+   It wraps to a column at narrow widths, because four badges in a row is
+   wider than a phone and a legend that scrolls out of view is a legend
+   nobody finds. */
+.musie-orgmap__legend { margin-inline-start: auto; }
+
+/* ── SELECTED ────────────────────────────────────────────────────────────
+   An OUTLINE rather than a border or a shadow, and that is the whole reason
+   it works: the border already carries the status colour and the box-shadow
+   already carries severity, so a third ring had nowhere to go that did not
+   overwrite one of the two. An outline draws outside the box, costs the
+   content nothing, and follows the border radius.
+
+   `--border-strong` and not an accent: being selected is not a verdict, and
+   this map spends its one hue on what the people are doing. */
+.musie-orgmap__node[data-selected='1'] {
+  outline: var(--border-width-thick) var(--border-style-solid) var(--border-strong);
+  outline-offset: var(--space-gap-inline);
+}
+
+/* Keyboard focus still wins while it is there — same property, more specific
+   rule, and the focus ring is the one of the two that must never be missed. */
+.musie-orgmap__node:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.musie-orgmap__node:hover { border-color: var(--border-strong); }
+
+/* ═══ INSIDE THE CARD ═══════════════════════════════════════════════════════
+   Five shapes for five metrics, all written against a card about three hundred
+   pixels wide. Nothing here is a second copy of something on the map: the map
+   draws circles and lines, and none of this is either.                      */
+
+.musie-card__section {
+  display: grid;
+  gap: var(--space-gap-related);
+}
+
+/* `label-md` — L8's carve-out for a group label rather than prose, which is
+   what a section heading inside a card is. */
+.musie-card__section-title {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-heading);
+}
+
+/* ── THE ONE CARD THAT IS A NUMBER ───────────────────────────────────────
+   `display-lg` resolves to `--font-display`, the sans. `body-*` would be
+   Literata and a serif hero figure reads as decoration rather than as a
+   number. PROPORTIONAL figures, not tabular: nothing aligns under it. */
+.musie-card__figure {
+  display: grid;
+  gap: var(--space-gap-inline);
+  justify-items: start;
+}
+
+.musie-card__figure-value {
+  margin: 0;
+  font-family: var(--type-display-lg-family);
+  font-size: var(--type-display-lg-size);
+  font-weight: var(--type-display-lg-weight);
+  line-height: var(--type-display-lg-line);
+  color: var(--on-surface);
+}
+
+.musie-card__figure-unit {
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+.musie-card__figure-delta {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line);
+  color: var(--on-surface);
+}
+
+/* ── THE CLOUD ───────────────────────────────────────────────────────────
+   A wrapping row rather than a grid, because six words of wildly different
+   size pack better when they flow — and unlike the big map there is no
+   before/after toggle here, so nothing has to hold its position.
+
+   FOUR RUNGS, 15px TO 26px, ALL `--font-display`. L8 bars `body-sm` from
+   anything that is content rather than caption, and these words ARE the
+   content — but `label-md` is its own carve-out for an identifier, which a
+   single feeling word is. One family across all four: a word that changed
+   typeface as it grew would encode its share twice.                       */
+.musie-card__cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-gap-stack);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.musie-card__cloud-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-gap-inline);
+}
+
+.musie-card__cloud-word { font-family: var(--font-display); }
+
+.musie-card__cloud-word[data-rung='1'] {
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+}
+.musie-card__cloud-word[data-rung='2'] {
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+}
+.musie-card__cloud-word[data-rung='3'] {
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+}
+.musie-card__cloud-word[data-rung='4'] {
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+}
+
+/* VALENCE IN THE `-text` STEPS, which are the ones solved for 4.5:1 — these
+   words are the mark, not a label beside one. Neutral takes no hue: Layer 1
+   ships two chromatic series and says there is no honest third. */
+.musie-card__cloud-word[data-valence='strain'] { color: var(--accent-2-text); }
+.musie-card__cloud-word[data-valence='ease'] { color: var(--accent-1-text); }
+.musie-card__cloud-word[data-valence='neutral'] { color: var(--on-surface); }
+
+.musie-card__cloud-share {
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE SCALE ───────────────────────────────────────────────────────────
+   A track with both ends named and the number printed. A dot on an unlabelled
+   line is a decoration, and this one has to be readable as a position.
+
+   `--musie-scale-at` arrives as a percentage from the component, because the
+   score is data and cannot come from a token. The half-width translate is a
+   geometric identity — the mark centred on its own value rather than hanging
+   to the right of it.                                                      */
+.musie-card__scale {
+  display: grid;
+  gap: var(--space-gap-inline);
+}
+
+.musie-card__scale-value {
+  margin: 0;
+  font-family: var(--type-heading-lg-family);
+  font-size: var(--type-heading-lg-size);
+  font-weight: var(--type-heading-lg-weight);
+  line-height: var(--type-heading-lg-line);
+  color: var(--on-surface);
+}
+
+.musie-card__scale-track {
+  position: relative;
+  block-size: var(--sp-2);
+  border-radius: var(--radius-full);
+  background-color: var(--surface-sunken);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* The one hue this screen spends, marking a POSITION rather than passing a
+   verdict — the traffic light on the map has already done that. */
+.musie-card__scale-mark {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--musie-scale-at);
+  transform: translate(-50%, -50%);
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+  border-radius: var(--radius-full);
+  background-color: var(--accent-1);
+  box-shadow: 0 0 0 var(--border-width-thick) var(--surface-raised);
+}
+
+.musie-card__scale-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+/* ── THE EXERCISES ───────────────────────────────────────────────────────
+   An ordered list, and it keeps its numbers: "most used" IS the order, and
+   the order is the only quantity on this card that was not invented to look
+   like evidence. */
+.musie-card__exercises {
+  display: grid;
+  gap: var(--space-gap-inline);
+  margin: 0;
+  padding-inline-start: var(--space-section);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+}
+
+/* ═══ WHY THE MEASURE MATTERS ═══════════════════════════════════════════════
+   The one body of real material on this screen. It reads like prose because it
+   IS prose: `--measure-body` holds it to a line length somebody finishes, and
+   it takes `--font-text` — Literata — where everything that labels a figure
+   takes the sans.                                                           */
+.musie-rationale {
+  display: grid;
+  gap: var(--space-gap-related);
+  max-inline-size: var(--measure-body);
+}
+
+.musie-rationale__text {
+  margin: 0;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* ── A CITATION ──────────────────────────────────────────────────────────
+   Semibold and green, as asked, and no underline — which is a real decision
+   rather than an omission. A link told apart from its paragraph by colour
+   ALONE fails 1.4.1; the weight is the second channel that makes it legal, so
+   the two have to travel together and neither can be dropped later for being
+   "a bit loud".
+
+   `--accent-1-text` IS THE GREEN, and the first attempt was not. The app's own
+   `.musie-inline-link` takes `--interactive-primary-on-subtle`, which reads as
+   a green name and resolves to `--sand-12` — near-black ink for text sitting
+   ON a green surface, not green ink for text on the page. Measured at
+   rgb(26, 31, 28) before anything looked wrong. `--accent-1-text` is
+   `--green-11`, Layer 1's step for "accessible text", solved to 4.5:1.
+
+   So a citation here is a different colour from an inline link elsewhere in
+   the product. That is Ben's instruction rather than a drift, and worth
+   knowing the next time the two are compared. */
+.musie-rationale__link {
+  color: var(--accent-1-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
+.musie-rationale__link:hover { text-decoration: underline; }
+
+.musie-rationale__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
+}
+
+/* ═══ THE INFO MARKER ══════════════════════════════════════════════════════
+   ── IT IS AN OVERLAY, BECAUSE A BUTTON INSIDE A BUTTON IS NOT HTML ───────
+   Ben asked for it inside the option. `SegmentedControl` renders each option
+   as a `<button>`, and nesting one inside another is invalid and unreachable —
+   so the marker is a SIBLING positioned over the option's right edge, which is
+   what "inside" looks like and the only version of it a browser accepts.
+
+   `--musie-info-at` is the option's right edge, measured in the component,
+   because the track carries a one-pixel divider after every option and a gap
+   between every child: a marker placed by percentage drifts, and by the fourth
+   option the drift is visible.                                             */
+.musie-tip { position: relative; }
+
+.musie-info-slot {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--musie-info-at);
+  /* Half its own size back from the option's edge, plus the track's own inset
+     — both geometric, neither picked by eye. */
+  transform: translate(calc(-100% - var(--space-gap-inline)), -50%);
+  /* The slot is only a position. The button inside it takes the pointer. */
+  pointer-events: none;
+}
+
+.musie-info-slot .musie-info { pointer-events: auto; }
+
+/* The legend above the track means the midpoint of the WRAPPER is not the
+   midpoint of the track, so the marker is nudged down by half of what the
+   legend and its gap occupy. `--type-label-lg-size` is the legend's step. */
+.musie-info-slot {
+  margin-block-start: calc(
+    (var(--type-label-lg-size) * var(--type-label-lg-line) + var(--space-gap-related)) / 2
+  );
+}

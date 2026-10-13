@@ -1457,6 +1457,86 @@ export const en = {
   'goalMap.outputLabel': 'Config',
   'goalMap.copy': 'Copy',
   'goalMap.copied': 'Copied',
+  /* ── /insight-map — THE ORG MAP, A TOOL RATHER THAN A SCREEN ────────────
+     Linked from nowhere and reachable only by typing the path. It still goes
+     through the catalogue, exactly as /goal-mappings and /dev/qr do: rule 7 is
+     about where strings live, not about who is expected to read them.
+
+     The company, department and pod NAMES are not here. They are content —
+     invented content, in `lib/orgFixture.ts` — and content does not go through
+     the chrome catalogue, the same split rule 6 makes between `i18n/*` and the
+     content tables. */
+  'insightMap.notReal.headline': 'Nothing on this map is real',
+  'insightMap.lede.figure': '1,240 Musie Moments this month. 87% feel better afterwards.',
+  'insightMap.lede.text': 'Real recovery, in breaks and after work, brings more energy, less burnout and fewer thoughts of leaving — and it works early against mental-health absences that run 28.5 days on average.',
+  'insightMap.level.legend': 'Which level to show',
+  'insightMap.level.company': 'Company',
+  'insightMap.level.departments': 'Departments',
+  'insightMap.level.pods': 'Pods',
+  'insightMap.canvas.label': 'The organisation, as a map you can pan and zoom',
+  /* COUNTED NOUN, AND IT IS SAFE HERE: no pod in the fixture has fewer than
+     three people, and this catalogue has no plural mechanism on purpose
+     (i18n/index.ts). If a pod of one ever arrives, this key needs splitting
+     rather than patching. */
+  'insightMap.node.aria': '{name}, {count} people, {status}',
+  /* ── THE SECOND CONTROL: WHAT A READER CAME FOR ─────────────────────────
+     Four dimensions, which is exactly SegmentedControl's cap. The labels are
+     Ben's own words and are deliberately not the shorter internal names the
+     model uses. */
+  'insightMap.filter.legend': 'What are you interested in today?',
+  'insightMap.filter.outcomes': 'Musie Outcomes',
+  'insightMap.filter.insight': 'Emotional Insight',
+  /* ── THE TWO OUTCOME MEASURES ───────────────────────────────────────────
+     These ask whether Musie is doing anything, which is a different question
+     from how people are — and it has a different kind of silence. Grey on an
+     outcome means "measured, and nobody used it"; grey on an insight
+     dimension means "nobody can tell you". The legend changes with the metric
+     to say which, because the colour cannot. */
+  'insightMap.care.breaksUsage': 'Mental Health Moments',
+  'insightMap.care.moodLift': 'Perceived mood lift',
+  'insightMap.usage.regular': 'Used regularly',
+  'insightMap.usage.none': 'Not used',
+  'insightMap.lift.positive': 'Positive impact',
+  'insightMap.lift.flat': 'No impact',
+  'insightMap.info.label': 'Why {metric} matters',
+  'insightMap.care.legend': 'What do you care about?',
+  'insightMap.care.breaks': 'Quality Breaks',
+  'insightMap.care.feeling': 'Emotional Health',
+  'insightMap.care.safety': 'Psychological Safety',
+  'insightMap.care.connectedness': 'Connectedness',
+  /* ── THE FOUR LIGHTS ────────────────────────────────────────────────────
+     Said in words as well as drawn in colour, in every node's accessible name
+     and in the legend — green, orange and red being the three a colour-blind
+     reader cannot separate. "No data" is not a fourth verdict: it means nobody
+     can answer for a group this small, which is the honest half of this map. */
+  'insightMap.status.good': 'Doing well',
+  'insightMap.status.watch': 'Worth watching',
+  'insightMap.status.poor': 'Needs attention',
+  'insightMap.status.none': 'No data',
+  /* ── WHAT A CARD SAYS ───────────────────────────────────────────────────
+     Five shapes for five metrics. "Not taken at all" is a reading rather than
+     a gap, so it gets a sentence rather than a dash. */
+  'insightMap.card.perDay': 'Musie Moments a day, median',
+  'insightMap.card.vsMonth': '{delta} on last month',
+  'insightMap.card.unused': 'Nobody here takes a Musie Moment. That is the reading, not a gap in it.',
+  'insightMap.card.before': 'Before a Musie Moment',
+  'insightMap.card.after': 'After a Musie Moment',
+  'insightMap.card.afterMusie': 'How people feel after a Musie Moment',
+  'insightMap.card.duringWork': 'How people feel during the working day',
+  'insightMap.card.unsafe': 'Cannot speak up',
+  'insightMap.card.safe': 'Can say anything',
+  'insightMap.card.apart': 'On their own',
+  'insightMap.card.together': 'Part of something',
+  'insightMap.card.noScore': 'Too few people here to report on without reporting on them.',
+  'insightMap.card.exercises': 'Most used exercises',
+  'insightMap.card.share': 'Share a fitting exercise in Slack',
+  'insightMap.card.label': 'Details for {name}',
+  'insightMap.card.close': 'Close this card',
+  'insightMap.legend.label': 'What the colours mean',
+  'insightMap.hint.company': 'Everyone at Northwind, as one circle. Area is people, on every level.',
+  'insightMap.hint.departments': 'Six departments, sized by the people they hold. Together they are the first tab.',
+  'insightMap.hint.pods': 'A line runs to each department a pod draws from — thicker means more of it. Departments are anchors here, not sizes.',
+  'route.insightMap.title': 'Org map',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',
