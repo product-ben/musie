@@ -14,12 +14,16 @@ referenced from a component by hand.
 
 **768 × 562 WebP, quality 80, ~870 KB for the set.**
 
-The masters are the print exports — 1420 × 1040 JPEGs, 8.3 MB together — and
-they live **outside this folder on purpose**: `apps/web/deck-print/` is
-gitignored build output, and everything under `public/` is copied into the
-build verbatim and served to every visitor. A master kept here would ship
-whether or not anything asked for it, which is the mistake
-`../exercises/README.md` and `../infographics/README.md` both record.
+The print masters are 300 dpi PNGs and they live **outside the repository**, at
+`~/Documents/musie-assets/cards/`, one per card id plus `mc-01_alt.png`. `deck-pdf.mjs` finds them
+there by default and takes `--masters` for another machine. The 1420 × 1040
+JPEGs under `apps/web/deck-print/` are not masters — they are that script's own
+gitignored output on the way to the PDF.
+
+Everything under `public/` is copied into the build verbatim and served to
+every visitor, so a 3 MB master kept here would ship whether or not anything
+asked for it — the mistake `exercises.md` and `infographics.md` both record,
+and the reason this file is no longer under `public/` either.
 
 ```js
 sharp(src).resize(768).webp({ quality: 80, effort: 6 })

@@ -232,7 +232,6 @@ export const de: Messages = {
   'notImplemented.back': 'Zurück zur Auswahl',
 
   /* ── Exercises ───────────────────────────────────────────────────────────── */
-  'exercises.notImplemented': 'Noch nicht verfügbar',
   'exercises.legend': 'Übung wählen',
   /* 'Kartenset', one word: it is a compound with a dictionary break point, so
      --text-hyphens: auto handles it and there is nothing to rephrase. */
@@ -356,7 +355,6 @@ export const de: Messages = {
   'session.intro.ending.sleep': 'Einschlafen',
 
   /* ── Scan · D.5a, und der echte Scanner · E.0/E.1 ──────────────────────── */
-  'session.scan.headline': 'Scanne die Karte, die gerade am besten zu deiner Stimmung passt.',
   /* KEIN 'reader'/'readerNote' MEHR — Ben, 2026-09-24. Die beiden Sätze standen
      im leeren Rahmen; der Rahmen zeigt jetzt nur noch die zwei Schaltflächen.
      Der Hinweis auf die Kamera-App des Handys ist damit nicht verschwunden,
@@ -616,7 +614,7 @@ export const de: Messages = {
   /* `reflect.voice.notSaved` und der Absatz darunter sind weg (2026-09-23):
      Seit F.6 wird Gesprochenes gespeichert, der Text war also falsch — und er
      stand als fünfzeiliger Kasten auf einem Schritt, der eine Antwort will.
-     Geblieben ist `privacy.voiceShort`, eine Zeile, plus `privacy.more`. */
+     Geblieben ist `privacy.voiceShort`, eine Zeile. */
   'reflect.photo.notBuilt': 'Fotos auslesen ist noch nicht gebaut',
   'reflect.photo.notBuiltText': 'So funktioniert es. Das Foto bleibt auf deinem Gerät und wird als Text ausgelesen; das Bild wird nie hochgeladen.',
   /* Drei geordnete Punkte, der niedrigste zuerst — die Reihenfolge IST die
@@ -664,8 +662,6 @@ export const de: Messages = {
      carries no finality in this frame; 'jüngste' would read as a register
      nobody speaks. */
   'diary.latest': 'Deine letzte Session',
-  'diary.openEntry': 'Eintrag öffnen',
-  'diary.earlier': 'Früher',
   'diary.timelineLabel': 'Deine Sessions, neueste zuerst',
   'diary.listLabel': 'Tagebucheinträge',
   'diary.empty': 'Noch keine Sessions',
@@ -689,7 +685,6 @@ export const de: Messages = {
   /* 'Dauer', not 'Wie lange': a label in a facts list is a noun in German
      where English gets away with a question. */
   'diary.howLong': 'Dauer',
-  'diary.card': 'Karte',
   /* Substantiv wie jede andere Faktenzeile auf dieser Karte. Den Vergleich
      trägt der WERT ('Besser als vorher'), das Label nennt nur die Frage. */
   'diary.feeling': 'Danach',
@@ -768,7 +763,6 @@ export const de: Messages = {
   'diary.graph.nextWeek': 'Woche danach',
   'diary.graph.empty': 'Hier stapeln sich deine Sessions, ein Bild pro Tag.',
 
-  'diary.collapse': 'Diesen Eintrag schließen',
   'diary.delete': 'Diese Session löschen',
   'diary.delete.confirm': 'Session löschen?',
   'diary.delete.text': 'Damit wird die Session und alles, was du darin geschrieben hast, endgültig gelöscht. Das lässt sich nicht rückgängig machen.',
@@ -807,12 +801,10 @@ export const de: Messages = {
      Written to docs/GERMAN-UI-WRITING.md: du, sentence case, no 'Bitte'.
      'E-Mail-Adresse' keeps its hyphens (Durchkopplung). See en.ts for what
      each sentence is claiming and why it is true. */
-  'privacy.title': 'Was Musie speichert',
   /* Rewritten by H.0b — see the English block for why the old promise went
      false for a signed-in tester. 'Wenn … sonst …' rather than a relative
      clause: two short conditions read faster than one long qualification, and
      §5's length budget has no room for the long one. */
-  'privacy.account': 'Musie fragt nie nach deinem Namen. Wenn du für den geschlossenen Test eine E-Mail-Adresse und ein Passwort bekommen hast, gehört dein Tagebuch zu diesem Konto. Sonst hat dieser Browser ein eigenes, privates Konto, und dein Tagebuch gehört dazu.',
   'privacy.written': 'Was du schreibst, kommt in dein Tagebuch, damit du es später nachlesen kannst. Niemand sonst sieht es.',
   /* ── DIESE ZWEI LIEGEN AUF HALDE — Ben, 2026-09-24 ──────────────────────
      Nichts zeigt sie derzeit an. Sie waren die eine Zeile im
@@ -820,25 +812,27 @@ export const de: Messages = {
      Transkript der Grund ist, warum jemand auf diesem Schritt steht, und das
      Kleingedruckte darunter dagegen angetreten ist.
 
-     Sie bleiben im Katalog, weil `DataLightbox` gebaut bleibt und das lange
-     Versprechen weiter enthält. Was fehlt, ist die Tür dorthin, und wo die
-     hingehört, entscheidet Ben (apps/web/OPEN-QUESTIONS.md).
+     Das lange Versprechen ist am 13.10.2026 gelöscht — Ben. `DataLightbox`
+     enthielt sechs Sätze, und seit dem 24.09.2026 führte keine Tür mehr
+     hinein: der Raum ging, und die Texte gingen mit. Geblieben und überall
+     gerendert sind drei Zeilen — `privacy.voiceShort` neben dem Aufnahmeknopf,
+     `privacy.written` und `privacy.photo` auf dem Reflexionsschritt. Das
+     Versprechen steht also weiter dort, wo das Bedienelement steht, um das es
+     geht. Was fehlt, ist eine Seite, die alles auf einmal sagt — und das wäre
+     ein Screen, kein Katalogeintrag (DECISIONS.md M10).
 
-     Das Versprechen in einer Zeile: keine Kürzung von `privacy.voice`, sondern
+     Das Versprechen in einer Zeile: keine Kürzung der gelöschten Langform, sondern
      die Hälfte davon, die ein Versprechen ist — wie es funktioniert, steht in
      der Lightbox. */
   'privacy.voiceShort': 'Musie speichert nur den Text, nie die Sprachnachricht.',
   /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
      Link im Fließtext muss benennen, was hinter ihm liegt. */
-  'privacy.more': 'Mehr zu deinen Daten',
-  'privacy.voice': 'Wenn du laut antwortest, macht Musie aus deinen Worten Text. Die Aufnahme selbst wird nie gespeichert.',
   'privacy.photo': 'Ein Foto bleibt auf deinem Gerät. Musie lädt es nie hoch.',
   /* 'ist auch dein Tagebuch weg' rather than a softer 'geht verloren': the
      English is blunt on purpose and the German should not apologise for it. */
   /* The loss first, the exemption second, as in the English. 'Zurückholen
      lässt es sich nicht' is kept verbatim from the original German — it is the
      sentence that does the uncomfortable work, and it was already right. */
-  'privacy.browserBound': 'Wenn dein Konto nur in diesem Browser liegt, löschst du mit seinen Daten auch dein Tagebuch. Das kann nicht rückgängig gemacht werden. Wenn du angemeldet bist, bleibt dein Tagebuch in deinem Konto. Du erreichst es auch von einem anderen Gerät.',
 
   /* ── Der Deep Link und das Dev-Blatt · E.0 ───────────────────────────────
      'Kartenset' rather than 'Deck' throughout, as on the scan step above. The

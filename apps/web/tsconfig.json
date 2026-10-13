@@ -19,6 +19,6 @@
   /* Test files are typechecked by tsconfig.test.json, which is the only
      program that gets @types/node — see src/process-shim.d.ts. */
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/lib/db.support.ts"],
+  "exclude": ["src/**/*.test.ts", "src/lib/db.support.ts", "src/lib/db.globalSetup.ts"],
   "references": []
 }

@@ -607,9 +607,10 @@
    a `ContentBox` and brings its own; the distance to whatever is under it is
    `.musie-exercises`'s gap, like every other block on this screen.
 
-   `.musie-goal-box` is still passed as a className so the box can be found —
-   in the markup, in a measurement, and in a devtools pane full of `musy-`
-   classes that all belong to the system rather than to this screen.        */
+   `.musie-goal-box` WAS passed as a className "so the box can be found".
+   Nothing found it: no rule here, no selector in any test or walk. Removed
+   2026-10-13 along with four others of the same shape — a class in the markup
+   that no stylesheet answers is a hook that reads as styling.             */
 
 
 

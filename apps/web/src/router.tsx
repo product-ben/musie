@@ -223,13 +223,15 @@ export const router = createBrowserRouter([
            Lazy like /dev/qr, and for a stronger reason: this route exists to
            be deleted, and nothing that ships should carry a byte of it.
 
-           `titleKey` borrows the dev sheet's own, because the spike adds no
+           `titleKey` borrows the dev sheet's own, because the bench adds no
            catalogue keys — see the file's header for why it is exempt from
-           rules 6 and 7, and apps/web/OPEN-QUESTIONS.md for the record of it. */
-        path: 'dev/two-streams',
+           rules 6 and 7. It was `dev/two-streams` and was written to be
+           deleted; its question is answered and it is kept, because the
+           answer arrived with a second question attached. */
+        path: 'dev/experiment-mixer',
         lazy: async () => {
-          const { DevTwoStreams } = await import('./routes/DevTwoStreams');
-          return { Component: DevTwoStreams };
+          const { DevExperimentMixer } = await import('./routes/DevExperimentMixer');
+          return { Component: DevExperimentMixer };
         },
         handle: handle({ titleKey: 'scan.dev.title' }),
       },

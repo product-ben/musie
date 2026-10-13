@@ -1,5 +1,35 @@
 /**
- * `/dev/two-streams` — THE SPIKE. One question, one instrument, and a delete.
+ * `/dev/experiment-mixer` — the two-stream bench. KEPT, not deleted.
+ *
+ * ── THE ORIGINAL QUESTION, ANSWERED: YES ──────────────────────────────────
+ * iOS keeps two simultaneous `<audio>` elements playing with the screen locked
+ * and the app in the background. Confirmed by Ben on a real iPhone, 2026-10-13,
+ * including the locked-screen half that `OPEN-QUESTIONS.md` had been waiting on.
+ * `lib/mixer.ts` was built on that answer and the answer holds.
+ *
+ * ── AND A SECOND FINDING THE SPIKE WAS NEVER ASKED FOR ────────────────────
+ * **The lock-screen widget pauses one element, not both.** Pressing pause in
+ * iOS's own now-playing widget stops the FOREGROUND track and leaves the
+ * background bed playing. It should pause both: a person who presses pause has
+ * asked for silence, and getting music without guidance is worse than either.
+ *
+ * That is a real bug in the two-stream design rather than in this bench, and it
+ * is why the bench stays. iOS binds its Media Session to one element, so the
+ * fix is to own that session deliberately — one `navigator.mediaSession` with
+ * handlers that act on the PAIR — and this is the only place it can be tried
+ * against a locked screen without shipping it.
+ *
+ * Logged for the backlog; `lib/mixer.ts` is where the fix lands.
+ *
+ * ── SO IT IS NO LONGER "ONE QUESTION AND A DELETE" ────────────────────────
+ * It was written to be deleted the moment its one question was answered, and
+ * the answer arrived with a second question attached. Ben's call, 2026-10-13:
+ * keep it as `dev/experiment-mixer`, the bench for anything about two streams
+ * that only a locked phone can settle.
+ *
+ * It keeps its exemptions from rules 6 and 7 — inline English, no catalogue
+ * keys — on the same grounds as `/dev/qr` and `goal-mappings`: a tool nobody
+ * but the team opens, linked from nowhere, and lazy so no visitor downloads it.
  *
  * ── THE QUESTION ──────────────────────────────────────────────────────────
  * Does iOS keep TWO simultaneous `<audio>` elements playing with the screen
@@ -51,7 +81,7 @@
  *
  * ── HOW TO RUN IT ─────────────────────────────────────────────────────────
  *   pnpm --filter web dev --host --port 5176
- *   open http://<your-lan-ip>:5176/dev/two-streams on the iPhone
+ *   open http://<your-lan-ip>:5176/dev/experiment-mixer on the iPhone
  *   sign in as usual (the bucket is private; the policy wants `authenticated`)
  *   press Start both · lock the screen · wait two minutes · unlock · read the verdict
  *
@@ -61,9 +91,10 @@
  *
  * Check the ringer switch and Low Power Mode before believing a negative.
  *
- * ── DELETE IT ─────────────────────────────────────────────────────────────
- * When the answer is in OPEN-QUESTIONS.md, this file and its route entry go.
- * That is the whole lifecycle, and it is why nothing else imports it.
+ * ── WHAT TO RUN NEXT ON IT ────────────────────────────────────────────────
+ * The widget bug above. Press pause in the lock-screen widget and watch which
+ * element keeps going; then try a single Media Session whose `pause` handler
+ * stops both. Nothing else imports this file, so it can be changed freely.
  */
 import * as React from 'react';
 import { CtaButton, Switch } from '@musie/design-system';
@@ -93,7 +124,7 @@ interface Verdict {
 
 const seconds = (value: number) => `${value.toFixed(1)}s`;
 
-export function DevTwoStreams() {
+export function DevExperimentMixer() {
   const a = React.useRef<HTMLAudioElement>(null);
   const b = React.useRef<HTMLAudioElement>(null);
 

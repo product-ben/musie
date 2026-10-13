@@ -63,8 +63,14 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
+# OFF, and deliberately: there is no `supabase/seed.sql` and there must not be.
+# `supabase db push` does not run a seed file, so content that only existed
+# there would be in the local stack and never in the hosted one — which is why
+# content lives in migrations instead (CLAUDE.md rule 4, and the header of
+# `20260918150600_content_seed.sql`). This block was left enabled pointing at a
+# file that has never existed, so every `db reset` printed a seed step that did
+# nothing.
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
 sql_paths = ["./seed.sql"]

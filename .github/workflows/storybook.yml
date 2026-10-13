@@ -35,9 +35,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No `version:`. `packageManager` in package.json is the single source,
+      # which is what ci.yml does — pinning here as well meant a pnpm bump
+      # desynced the two workflows silently.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.5
 
       - uses: actions/setup-node@v4
         with:
@@ -46,9 +47,15 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The same gate the repo uses everywhere else. Docs that do not typecheck
-      # are not worth publishing.
-      - run: pnpm check
+      # NO `pnpm check` HERE — removed 2026-10-13. It ran the whole gate a second
+      # time on a commit ci.yml was already gating: runs 38352717855 and
+      # 38352717823 were the same commit, the same second, 1m19s and 1m23s.
+      #
+      # What it added over `build:storybook` was the app's typecheck, lint and
+      # the unit tests — none of which decide whether these docs are
+      # publishable. The Storybook build compiles the design system itself, so a
+      # type error here still fails this job. That is the gate that belongs to
+      # this workflow.
 
       # Pages serves this repo at /musie/. Without the base path every asset
       # written as /assets/... resolves against the domain root and 404s.

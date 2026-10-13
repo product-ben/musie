@@ -230,7 +230,6 @@ function toRow(row: {
   };
 }
 
-// prettier-ignore
 const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending';
 
 /**

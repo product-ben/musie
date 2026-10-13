@@ -110,7 +110,6 @@ export function discoveredFrom(rows: DiscoveredRow[]): DiscoveredTrack[] {
 
 /** ONE STRING LITERAL — supabase-js parses this select at the TYPE level, and
  *  TypeScript does not fold a concatenation into a literal type. */
-// prettier-ignore
 const DISCOVERED_SELECT = 'id, listened_at, track_id, tracks(id, src, duration_seconds)';
 
 /**

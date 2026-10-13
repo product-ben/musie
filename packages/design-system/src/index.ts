@@ -22,8 +22,8 @@
  *   import 'components/musy-components.css';
  */
 export {
-  MusyLocaleProvider, useMusyLocale, useMusyText,
-  MUSY_TEXT, musyTextDe, musyTextEn, DEFAULT_MUSY_LOCALE,
+  MusyLocaleProvider, useMusyText,
+  musyTextDe, musyTextEn, DEFAULT_MUSY_LOCALE,
 } from './locale';
 export type {
   MusyLocale, MusyLocaleProviderProps, MusyTextCatalogue, MusyStatusKey,

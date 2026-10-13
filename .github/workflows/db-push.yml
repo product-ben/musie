@@ -1,0 +1,147 @@
+# Walk merged migrations over to the hosted database, so a person does not have
+# to remember to.
+#
+# ── THE PROBLEM ───────────────────────────────────────────────────────────────
+# Migrations are append-only and are applied to the local stack and to
+# `project-musie` separately. A branch that merges with new migrations leaves
+# hosted behind until somebody runs `supabase db push`, and nothing notices:
+# `pnpm check` never touches a database (CLAUDE.md rule 4), so every check stays
+# green while the two disagree.
+#
+# ── THIS IS INERT UNTIL TWO SECRETS EXIST ────────────────────────────────────
+# Settings → Secrets and variables → Actions:
+#
+#   SUPABASE_ACCESS_TOKEN   a personal access token, supabase.com/dashboard/account/tokens
+#                           EXPIRES — the one created on 2026-10-13 runs out a
+#                           year later. SCHEDULED-MAINTENANCE.md carries the date
+#                           and what breaks: this job fails on `supabase link`,
+#                           merged migrations stop reaching hosted, and the only
+#                           loud signal is an email. `pnpm db:status` is the
+#                           backstop that catches it anyway.
+#   SUPABASE_DB_PASSWORD    the project's database password
+#
+# Without both the first step says so and every later step is skipped, so
+# committing this changes nothing until that choice is made.
+#
+# TWO AND NOT FIVE. The anon and service-role keys are not stored here — the
+# access token fetches them at run time. And the project ref is not a secret at
+# all: it is in the `env` block below, in plain sight, because it is half of
+# every public URL this project serves. Storing it as a secret would have
+# implied otherwise and cost a third setup step.
+#
+# ── WHY AUTOMATIC IS DEFENSIBLE, AND HOW TO MAKE IT ONE CLICK INSTEAD ────────
+# It runs only on `main`, so the change is already merged and reviewed; the
+# hosted database suite runs immediately after and fails the job loudly;
+# and `supabase db push` only applies what a migration says — it invents no
+# deletions.
+#
+# If one click is preferred over none: this repository is PUBLIC, so GitHub
+# Environments with a required reviewer are free (they are a paid feature on
+# private repositories). Create an environment, add yourself as a reviewer, and
+# add `environment: <name>` to the job below. The push then waits for approval.
+name: Database
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - '.github/workflows/db-push.yml'
+  workflow_dispatch:
+
+# Never two pushes at once, and never cancel one half-done: a migration that is
+# applied but not recorded is the one state rule 4 cannot talk its way out of.
+concurrency:
+  group: db-push
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    name: Push migrations and test hosted
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      # Not a secret: it is half of every public URL this project serves.
+      PROJECT_REF: xliwtiiopwyfunxkdmxh
+    steps:
+      - name: Are the secrets present?
+        id: armed
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo 'armed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'armed=false' >> "$GITHUB_OUTPUT"
+            echo "::notice title=Not armed::Add SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD to enable automatic migration push. Until then migrations must be pushed by hand with 'pnpm db:sync' from a clean main."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.armed.outputs.armed == 'true'
+
+      - uses: supabase/setup-cli@v1
+        if: steps.armed.outputs.armed == 'true'
+        with:
+          version: latest
+
+      - name: Link the project
+        if: steps.armed.outputs.armed == 'true'
+        run: supabase link --project-ref "$PROJECT_REF"
+
+      # What is about to be applied, named before it is applied — so the log
+      # answers "what did this change" without a database query.
+      - name: What is pending
+        if: steps.armed.outputs.armed == 'true'
+        run: supabase migration list --linked
+
+      - name: Push
+        if: steps.armed.outputs.armed == 'true'
+        run: supabase db push
+
+      # The push reporting success is not the same as the two agreeing.
+      - name: Confirm they now agree
+        if: steps.armed.outputs.armed == 'true'
+        run: supabase migration list --linked
+
+      # ── The suite that caught the service_role grant hole ──────────────────
+      # CLAUDE.md rule 4: these tests take all three SUPABASE_TEST_* variables
+      # or none, so a partial set cannot silently test something else.
+      - uses: pnpm/action-setup@v4
+        if: steps.armed.outputs.armed == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.armed.outputs.armed == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+        if: steps.armed.outputs.armed == 'true'
+
+      - name: Database tests against hosted
+        if: steps.armed.outputs.armed == 'true'
+        run: |
+          set -euo pipefail
+          # The access token can read the project's keys, so they are derived
+          # rather than stored. Values are masked explicitly: GitHub masks the
+          # secrets it was given, NOT things computed from them at runtime.
+          supabase projects api-keys --project-ref "$PROJECT_REF" --output-format json > keys.json
+          eval "$(node -e '
+            const fs = require("node:fs");
+            const raw = fs.readFileSync("keys.json", "utf8");
+            const line = raw.split("\n").find((l) => l.trim().startsWith("{"));
+            if (!line) { console.error("no JSON from projects api-keys"); process.exit(1); }
+            const keys = JSON.parse(line).keys ?? [];
+            const pick = (name) => (keys.find((k) => k.name === name) ?? {}).api_key;
+            const anon = pick("anon");
+            const service = pick("service_role");
+            if (!anon || !service) { console.error("anon or service_role key missing"); process.exit(1); }
+            for (const v of [anon, service]) console.log(`echo "::add-mask::${v}"`);
+            console.log(`export SUPABASE_TEST_ANON_KEY=${JSON.stringify(anon)}`);
+            console.log(`export SUPABASE_TEST_SERVICE_ROLE_KEY=${JSON.stringify(service)}`);
+          ')"
+          rm -f keys.json
+          export SUPABASE_TEST_URL="https://${PROJECT_REF}.supabase.co"
+          pnpm test:db

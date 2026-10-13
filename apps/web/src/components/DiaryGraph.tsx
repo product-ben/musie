@@ -519,7 +519,7 @@ function Day({ day, latestId }: {
           links would be reading the grid lines aloud. */}
       <p className="musie-graph__axis" aria-hidden="true">
         <span className="musie-graph__weekday">{formatWeekday(day.date, locale)}</span>
-        <span className="musie-graph__date">{formatDayOfMonth(day.date, locale)}</span>
+        <span>{formatDayOfMonth(day.date, locale)}</span>
       </p>
     </li>
   );

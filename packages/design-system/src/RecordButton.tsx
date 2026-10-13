@@ -59,6 +59,7 @@ export interface RecordButtonProps {
    *  the same two states; only the family it borrows is quieter. */
   variant?: 'primary' | 'secondary' | 'accent';
   /** Raises the TARGET, not the type step — §7.4's ladder. */
+  /* `comfort` reserved for the elderly/children pass — CtaButton.tsx. */
   size?: 'primary' | 'comfort' | 'guided';
   disabled?: boolean;
   block?: boolean;

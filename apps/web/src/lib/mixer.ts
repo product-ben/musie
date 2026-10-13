@@ -23,7 +23,7 @@
  * This is a twelve-to-fifteen-minute exercise people lie down for with the
  * screen locked.
  *
- * Measured on an iPhone before either version was written (`/dev/two-streams`,
+ * Measured on an iPhone before either version was written (`/dev/experiment-mixer`,
  * 2026-10-11): two elements play together and muting one works. The swap needs
  * strictly less than that — one element sounding, one paused and buffered —
  * so the measurement covers it with room to spare.

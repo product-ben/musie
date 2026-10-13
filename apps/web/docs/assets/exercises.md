@@ -37,7 +37,7 @@ sharp(src).resize(768, 768, { fit: 'cover' }).webp({ quality: 80, effort: 6 })
 ```
 
 748 KB for the set. The masters live **outside the repo**, in
-`~/Documents/musie-artwork/exercises/` on Ben's machine — everything under
+`~/Documents/musie-assets/app graphics/exercises/` on Ben's machine — everything under
 `public/` is copied into the build verbatim, so a 3 MB source kept here ships
 to every visitor without ever being requested.
 

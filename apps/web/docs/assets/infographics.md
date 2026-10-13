@@ -1,7 +1,7 @@
 # Step infographics
 
 One drawing per **step of the session flow** — the app's own artwork, not the
-content's. That is the whole distinction from `../exercises/`: an exercise card
+content's. That is the whole distinction from `exercises.md`: an exercise card
 image is chosen by a row (`exercises.image_url`) because there is one per
 exercise, and a step picture is the same for every exercise, so it is a
 constant in the screen that draws it.
@@ -46,7 +46,7 @@ the 1672px source renders downscaled 2.4× and the grain is below the rendered
 resolution either way.
 
 **The master lives outside the repo**, at
-`~/Documents/musie-artwork/infographics/` on Ben's machine, beside the exercise
+`~/Documents/musie-assets/app graphics/infographics/` on Ben's machine, beside the exercise
 set's. Everything under `public/` is copied into the build verbatim, so a
 master kept here ships to every visitor without ever being requested — which is
 exactly what happened to this one.

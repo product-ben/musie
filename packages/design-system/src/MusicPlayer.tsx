@@ -121,6 +121,7 @@ export interface TrackButtonProps {
    * on offer, `primary` (44px) is the floor, and `min` would be below what
    * 2.5.8 wants of a lone target.
    */
+  /* `comfort` reserved for the elderly/children pass — CtaButton.tsx. */
   size?: 'min' | 'primary' | 'guided' | 'comfort';
   disabled?: boolean;
   /**

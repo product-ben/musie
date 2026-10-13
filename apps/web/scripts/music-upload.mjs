@@ -8,9 +8,17 @@
  *
  * ── 1. THE MASTER NEVER ENTERS GIT ────────────────────────────────────────
  * Files are read from a folder OUTSIDE the repository (`--from`, default
- * `~/musie-audio/`), for the reason the artwork masters live outside
- * it: a licensed file committed once cannot be taken back out of any clone's
- * history, and `git rm` leaves the object behind.
+ * `~/Documents/musie-assets/music/`), for the reason the artwork masters live
+ * outside it: a licensed file committed once cannot be taken back out of any
+ * clone's history, and `git rm` leaves the object behind. Epidemic Sound is a
+ * SUBSCRIPTION licence, and this repository is PUBLIC.
+ *
+ * THE FOLDER IS SEARCHED RECURSIVELY, because the masters are filed by exercise
+ * — `Bodyscan/`, `Sound Journey/`, `Card based exercises/`, `unused/` — and
+ * `music.json` names a source by its FILENAME alone. Two files with the same
+ * name in two subfolders is therefore ambiguous, and this refuses rather than
+ * picking one: a mix uploaded under another exercise's key is the kind of
+ * mistake nobody hears until a session plays the wrong thing.
  *
  * ── 2. THE DURATION IS MEASURED, NEVER TYPED ──────────────────────────────
  * Every duration in `tracks` was invented by a seed in September and corrected
@@ -58,7 +66,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { extname, join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -283,7 +291,7 @@ function target(args) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const from = String(args.from ?? join(homedir(), 'musie-audio'));
+  const from = String(args.from ?? join(homedir(), 'Documents', 'musie-assets', 'music'));
   /* `readMusic` AND NOT `assertMusic`, deliberately. The strict check demands
      an object key for every recording, and minting those keys is this script's
      entire job — so running it on a library that does not have them yet must
@@ -291,10 +299,31 @@ async function main() {
      refuses until this has run. */
   const music = await readMusic();
 
-  let available;
+  /* basename -> full path, walked recursively. A Map and not a Set because the
+     lookup below knows a filename and the read needs a path. */
+  const available = new Map();
   try {
-    available = new Set(await readdir(from));
-  } catch {
+    const clashes = new Map();
+    for (const relative of await readdir(from, { recursive: true })) {
+      const name = basename(relative);
+      if (!(extname(name).toLowerCase() in CONTENT_TYPES)) continue;
+      const full = join(from, relative);
+      const already = available.get(name);
+      if (already !== undefined) {
+        clashes.set(name, [...(clashes.get(name) ?? [already]), full]);
+        continue;
+      }
+      available.set(name, full);
+    }
+    if (clashes.size > 0) {
+      const lines = [...clashes].map(([name, paths]) => `  ${name}\n${paths.map((f) => `    ${f}`).join('\n')}`);
+      throw new Error(
+        `Two files share one name under ${from}, and music.json names a source by filename alone:\n`
+          + `${lines.join('\n')}\nRename one, or pass --from pointing at a single exercise's folder.`,
+      );
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Two files share')) throw error;
     throw new Error(`No folder at ${from}. Pass --from if the masters live elsewhere.`);
   }
 
@@ -342,7 +371,7 @@ async function main() {
        both. */
     const name = available.has(item.source)
       ? item.source
-      : [...available].find((candidate) => {
+      : [...available.keys()].find((candidate) => {
         const extension = extname(candidate).toLowerCase();
         return extension in CONTENT_TYPES
           && candidate.slice(0, -extension.length) === item.stem;
@@ -353,7 +382,7 @@ async function main() {
       continue;
     }
 
-    const buffer = await readFile(join(from, name));
+    const buffer = await readFile(available.get(name));
     const { seconds, how } = measure(name, buffer);
     const key = objectKey(item.stem, buffer, name);
     measured.set(item.stem, { key, seconds, how, name });

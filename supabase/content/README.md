@@ -44,7 +44,7 @@ run the generator.
 | `id` | `cards.id` | `mc-01`. The lower case of `code`, always — it is what `sessions.card_id` stores, so a diary row read in a year should name the paper card without a join |
 | `code` | `cards.code` | `MC-01`. **What is printed on the card, and what the QR encodes.** Changing it on a deck that has been printed invalidates the paper |
 | `sort` | `cards.sort` | 1…n, contiguous. The order the deck is dealt and listed in |
-| `image` | `cards.image_url` | A **web** path, or `null`. Still the shared `method-card.png` placeholder for all nine, which has never existed on disk. The printed deck does not read it: print masters live in `artwork/cards/`, found by card id |
+| `image` | `cards.image_url` | A **web** path, or `null`. Still the shared `method-card.png` placeholder for all nine, which has never existed on disk. The printed deck does not read it: print masters live outside the repository in `~/Documents/musie-assets/cards/`, found by card id (`deck-pdf.mjs --masters` for another machine) |
 | `feeling` | `card_i18n.feeling` | Both locales, both required. A feeling written in one is a dropped translation (CLAUDE.md rule 6) |
 | `imageAlt` | `card_i18n.image_alt` | `null` in **both** locales, or written in both. Null in both is data — the source has no alt text; null in one is a translation somebody dropped |
 | `plays` | `exercise_tracks` | Exercise id → track id. The same card plays a different file in a different exercise, which is what the `tracks` / `exercise_tracks` split is for |
@@ -140,7 +140,8 @@ files nobody can regenerate are nine files nobody can check.
 ## What is still open
 
 - **No per-card artwork yet, and two places it could go.** The printed front
-  reads `artwork/cards/<card id>.*` and falls back to the feeling set in type,
+  reads `~/Documents/musie-assets/cards/<card id>.*` and falls back to the
+  feeling set in type,
   so the press needs no column. The SCREEN needs `cards.image_url` to point at
   a small web copy — and needs a screen that renders it, which no screen does.
 - **`cards.image_url` names a file that has never existed** for all nine. Set

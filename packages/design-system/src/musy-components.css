@@ -890,7 +890,9 @@
 }
 .musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__label {
   color: var(--interactive-accent-on-subtle);
-}* DISABLED */
+}
+
+/* DISABLED */
 .musy-radio__body[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: var(--border-subtle);

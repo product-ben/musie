@@ -429,7 +429,12 @@ export const musyTextEn: MusyTextCatalogue = {
  *  still get a `string` back rather than the whole catalogue's union. */
 export type MusyStatusKey = 'statusInfo' | 'statusWarning' | 'statusSuccess' | 'statusError';
 
-export const MUSY_TEXT: Record<MusyLocale, MusyTextCatalogue> = {
+/* NOT EXPORTED, 2026-10-13. `useMusyText()` below is the only reader and the
+   barrel offered this to nobody — no app import, no story. Un-exported rather
+   than deleted, which is the difference between it and `useMusyLocale`: that
+   one was exported AND called nowhere at all, so it went.
+   `musyTextDe` / `musyTextEn` remain exported — one story reads each. */
+const MUSY_TEXT: Record<MusyLocale, MusyTextCatalogue> = {
   de: musyTextDe,
   en: musyTextEn,
 };
@@ -454,11 +459,6 @@ export function MusyLocaleProvider({ locale, children }: MusyLocaleProviderProps
   /* createElement, not JSX, so this stays a .ts file: it is a catalogue with
      one provider on the end, not a component module. */
   return React.createElement(MusyLocaleContext.Provider, { value: locale }, children);
-}
-
-/** The active locale. Rarely needed directly — prefer `useMusyText()`. */
-export function useMusyLocale(): MusyLocale {
-  return React.useContext(MusyLocaleContext);
 }
 
 /**

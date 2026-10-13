@@ -1,5 +1,11 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(pnpm db:status)",
+      "Bash(pnpm db:status:*)",
+      "Bash(pnpm db:sync)",
+      "Bash(pnpm db:sync:*)"
+    ],
     "deny": [
       "Bash(supabase db reset)",
       "Bash(supabase db reset:*)",
@@ -7,7 +13,6 @@
       "Bash(supabase db push:*)",
       "Bash(pnpm gen:types)",
       "Bash(pnpm gen:types:*)",
-
       "Bash(git add -A)",
       "Bash(git add -A:*)",
       "Bash(git add --all)",
@@ -16,7 +21,6 @@
       "Bash(git commit -a:*)",
       "Bash(git commit --all)",
       "Bash(git commit --all:*)",
-
       "Bash(git checkout:*)",
       "Bash(git stash:*)",
       "Bash(git reset --hard)",

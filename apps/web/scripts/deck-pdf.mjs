@@ -47,12 +47,14 @@
  *   node scripts/deck-pdf.mjs --card 88x63 --bleed 3           # the defaults, spelled out
  *   node scripts/deck-pdf.mjs --card 63x88                     # portrait instead
  *   node scripts/deck-pdf.mjs --codes MC-03,MC-07              # reprint two cards
+ *   node scripts/deck-pdf.mjs --masters ~/elsewhere/cards      # masters somewhere else
  *
  * It writes `deck.pdf` and the `deck.html` it was printed from — open the HTML
  * in a browser to iterate on the design without waiting for a PDF.
  */
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import QRCode from 'qrcode';
@@ -75,12 +77,26 @@ const PUBLIC = join(HERE, '..', 'public');
  * offered. The screen wants a small `.webp`; the press wants the master. Two
  * files, one card.
  *
- * So this looks for `<card id>.<ext>` here FIRST and falls back to whatever
+ * So this looks for `<card id>.<ext>` there FIRST and falls back to whatever
  * `cards.image_url` points at — which means the printed deck is right from the
  * moment the masters land, with no column to update and no migration to run,
  * while the column stays what it has always been: a web path.
+ *
+ * ── THEY LEFT THE REPOSITORY ON 2026-10-13 ────────────────────────────────
+ * This was `<repo>/artwork/cards`, and five of the nine masters were committed.
+ * Git keeps every version of a binary forever and this repository is PUBLIC, so
+ * a 3 MB master edited twice is 6 MB that no clone can decline and no history
+ * can take back. They now live beside the audio and the exercise graphics in
+ * one place that iCloud backs up, which is also the convention
+ * `public/assets/web/{exercises,infographics}/README.md` already stated for
+ * their own masters and which the repository was not following.
+ *
+ * `--masters <dir>` overrides, which is what another machine needs: the default
+ * is one person's home directory and nothing in the repository can guarantee it
+ * exists. The fallback to the web copy means a missing directory degrades to a
+ * warning and a printable deck rather than a crash.
  */
-const MASTERS = join(HERE, '..', '..', '..', 'artwork', 'cards');
+const DEFAULT_MASTERS = join(homedir(), 'Documents', 'musie-assets', 'cards');
 
 /** Print-master extensions, best first. */
 const MASTER_EXT = ['.png', '.webp', '.jpg', '.jpeg', '.tif', '.tiff'];
@@ -103,7 +119,7 @@ const STAMP_FRACTION = 0.26;
 /**
  * How far the stamp sits inside the TRIM line, in millimetres.
  *
- * `artwork/cards/README.md` puts the floor at 3 mm — "anything that must
+ * The masters folder's `README.md` puts the floor at 3 mm — "anything that must
  * survive belongs at least 3 mm inside the trim line" — and this is a machine's
  * target rather than a human's, so it takes the floor plus a millimetre. A
  * drifting cut that clips a word costs a word; one that clips a QR's quiet zone
@@ -610,6 +626,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const baseUrl = typeof args['base-url'] === 'string' ? args['base-url'] : DEFAULT_BASE_URL;
   const out = resolve(typeof args.out === 'string' ? args.out : 'deck-print');
+  const masters = resolve(typeof args.masters === 'string' ? args.masters : DEFAULT_MASTERS);
   const card = parseSize(args.card, { width: 88, height: 63 });
   const bleed = args.bleed === undefined ? 3 : Number(args.bleed);
   const layout = args.layout === 'sheet' ? 'sheet' : 'single';
@@ -688,7 +705,7 @@ async function main() {
   const artwork = new Map();
   const fromMaster = new Set();
   for (const c of cards) {
-    const master = MASTER_EXT.map((ext) => join(MASTERS, `${c.id}${ext}`)).find((f) => existsSync(f));
+    const master = MASTER_EXT.map((ext) => join(masters, `${c.id}${ext}`)).find((f) => existsSync(f));
     if (master !== undefined) {
       artwork.set(c.id, pathToFileURL(master).href);
       fromMaster.add(c.id);
@@ -704,7 +721,7 @@ async function main() {
   if (webOnly.length > 0) {
     console.warn(
       `[musie] ${webOnly.length} card${webOnly.length === 1 ? '' : 's'} print from the WEB copy, which is sized ` +
-        `for a screen: ${webOnly.map((c) => c.code).join(', ')}. Put the print master in artwork/cards/.`,
+        `for a screen: ${webOnly.map((c) => c.code).join(', ')}. Put the print master in ${masters}.`,
     );
   }
   if (claimed.length > 0) {

@@ -72,6 +72,29 @@ export type CtaVariant =
   | 'outline'
   | 'ghost';
 
+/**
+ * ── `comfort` HAS NO CALL SITE, AND IS KEPT ON PURPOSE ────────────────────
+ * Checked on 2026-10-13 across `apps/web` and `features/voice`: zero uses, on
+ * this component and on `IconButton`, `MusicPlayer` and `RecordButton` too.
+ * `guided` has two, both through ternaries.
+ *
+ * `accent-alt` was deleted on 2026-10-10 for exactly that — no call sites
+ * anywhere — so the precedent points at deleting this as well. Ben ruled the
+ * other way, and the reason is a plan rather than sentiment: **`comfort` is the
+ * rung for when Musie is optimised for elderly and for children.** 56px sits
+ * between the 44px default and `guided`'s 64px, which is the size a shakier or
+ * smaller hand wants without the whole interface going large.
+ *
+ * So this is a reserved rung, not dead weight. `VoiceNote` and
+ * `RadioGroupImage` are exported-and-unused on the same footing, both named in
+ * BUILD-PLAN for a phase that has not arrived.
+ *
+ * NOTE WHAT CANNOT GO WITH IT. `--target-comfort` the TOKEN is load-bearing
+ * whatever happens to this variant: `guided`'s multi-line height is
+ * `calc(var(--target-comfort) * 2)` — "two comfort rows, derived, not picked" —
+ * and two further rules in `musy-components.css` use it directly. Deleting the
+ * variant would be three CSS rules, never the token.
+ */
 export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
 
 /**

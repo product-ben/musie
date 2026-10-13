@@ -237,8 +237,20 @@ export function SessionReflect({
             Both are gone. The transcript is what the reader came to this step
             for, and everything under it was competing with it: the promise,
             the second hint, the link. The promise is not withdrawn — it is
-            still true, and `DataLightbox` still holds all six sentences of it
-            — but this is no longer the place that says so.
+            still true — but this is no longer the place that says so.
+
+            AND THE LIGHTBOX IS GONE TOO, 2026-10-13. It had held the six
+            sentences and no door opened it for three weeks; the log below
+            asked where a door should go and nothing answered. The room went
+            instead of the door arriving, and its five copy keys went with it
+            once Ben ruled on them — `privacy.title`, `privacy.account`,
+            `privacy.voice`, `privacy.browserBound`, `privacy.more`.
+            DECISIONS.md M10.
+
+            THIS STEP STILL MAKES ITS PROMISES, at the controls they are about:
+            `privacy.written` and `privacy.photo` below, `privacy.voiceShort`
+            beside the record button. What is gone is the one page that said
+            all of it at once.
 
             WHICH LEAVES THE LIGHTBOX WITH NO DOOR. Nothing in the app opens it
             any more, and that is the one thing about this change that is not

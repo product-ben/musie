@@ -20,3 +20,9 @@ qr-codes/
 # committed; the `.local` sibling is personal and must never be, or one
 # developer's allowlist silently becomes everyone's.
 .claude/settings.local.json
+
+# macOS writes one of these into every folder anyone has opened in Finder, and
+# five were committed before this line existed — including one under
+# `apps/web/public/`, which is copied into the build verbatim and so was served
+# to every visitor.
+.DS_Store

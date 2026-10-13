@@ -9,6 +9,8 @@
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm -r run lint",
     "gen:types": "supabase gen types typescript --local > apps/web/src/lib/database.types.ts",
+    "db:status": "node scripts/db-status.mjs",
+    "db:sync": "node scripts/db-sync.mjs",
     "test": "pnpm -r run test",
     "test:db": "pnpm -r run test:db",
     "test:e2e": "pnpm -r run test:e2e",
