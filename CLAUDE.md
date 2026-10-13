@@ -160,11 +160,19 @@ unknown key is a typecheck error rather than a runtime fallback.
 
 ## 8 · `pnpm check` passes before anything is called done
 
-Typecheck, lint and unit tests across every package (root `package.json`). CI
-runs the same command plus both bundle builds, because `tsc --noEmit` resolves
-neither CSS imports nor the font-pinning Vite plugin (`.github/workflows/ci.yml`).
-Verify against `supabase start` and `pnpm --filter web dev`, never a URL —
-nothing deploys in this phase.
+Typecheck and lint across every package; **unit tests across two of the three**
+(root `package.json`). CI runs the same command plus both bundle builds, because
+`tsc --noEmit` resolves neither CSS imports nor the font-pinning Vite plugin
+(`.github/workflows/ci.yml`). Verify against `supabase start` and
+`pnpm --filter web dev`, never a URL — nothing deploys in this phase.
+
+**Two of three, and it is worth knowing which.** `packages/design-system` has no
+`test` script, so `pnpm -r run test` passes over it without a word. What covers
+it instead is real but different in kind: `verify-tokens.mjs` and
+`verify-layout.mjs` run inside its `typecheck`, and the `Smoke/Badge` story
+proves all four stylesheets and `data-theme` reached the preview. So the design
+system is asserted about, not unit-tested — and this rule said "every package"
+until 2026-10-13, which is the shape of claim that stops being read.
 
 ## 9 · A worktree isolates files and nothing else
 

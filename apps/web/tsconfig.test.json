@@ -31,6 +31,7 @@
   "include": [
     "src/**/*.test.ts",
     "src/lib/db.support.ts",
+    "src/lib/db.globalSetup.ts",
     "src/env.d.ts",
     /* The end-to-end walk. Outside `src` on purpose — it is not part of the
        bundle and must never be reachable from it — so it is named here rather

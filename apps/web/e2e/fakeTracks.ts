@@ -100,6 +100,31 @@ function silentWav(seconds: number): Buffer {
 }
 
 /**
+ * Which database to seed, when the caller already knows.
+ *
+ * ── WHY THIS IS A PARAMETER ───────────────────────────────────────────────
+ * `stack()` here is the WALK's, and it carries a guard that compares
+ * `apps/web/.env.local`'s `VITE_SUPABASE_URL` against the target: a browser
+ * writing to one database while the assertions read another proves nothing, so
+ * it refuses. That is right for a walk, which has two actors.
+ *
+ * The `db` project has one. It resolves its own target through
+ * `src/lib/db.support.ts`, which has its own rule — all three
+ * `SUPABASE_TEST_*` variables or none — and nothing in it reads `.env.local`.
+ * Making it go through the walk's guard meant `pnpm test:db` refused to seed
+ * whenever `.env.local` pointed at the hosted project, which it does; that is
+ * the blockage `apps/web/OPEN-QUESTIONS.md` recorded as stopping the obvious
+ * fix.
+ *
+ * So the caller says which database, and the loopback refusal below still
+ * applies to both of them. Playwright passes nothing and keeps the guard.
+ */
+export interface TrackAudioTarget {
+  API_URL: string;
+  SERVICE_ROLE_KEY: string;
+}
+
+/**
  * Give every track that claims a recording something to play.
  *
  * Reads `tracks` rather than taking a list, so a fifth recording arriving in a
@@ -107,8 +132,8 @@ function silentWav(seconds: number): Buffer {
  * NULL `src` stay NULL, because those are the schema saying there is no
  * recording and the simulated clock is the behaviour under test.
  */
-export default async function seedTrackAudio(): Promise<void> {
-  const { API_URL, SERVICE_ROLE_KEY } = stack();
+export default async function seedTrackAudio(target?: TrackAudioTarget): Promise<void> {
+  const { API_URL, SERVICE_ROLE_KEY } = target ?? stack();
 
   /* LOOPBACK ONLY. See the header: silent files in the hosted bucket would be
      played back to real people from the real diary. */

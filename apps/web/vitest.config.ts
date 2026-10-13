@@ -42,6 +42,11 @@ export default defineConfig({
           name: 'db',
           include: ['src/**/*.db.test.ts'],
           environment: 'node',
+          /* The `tracks` bucket is created empty by a migration and filled by
+             nobody, so one test's signed URL depended on whether an operator
+             had happened to upload. See db.globalSetup.ts. `unit` does not get
+             this: it touches no network at all. */
+          globalSetup: ['src/lib/db.globalSetup.ts'],
         },
       },
     ],
