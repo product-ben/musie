@@ -429,16 +429,20 @@ describe('a revert', () => {
   });
 
   /* Nothing is ever hard-deleted, so there is nothing to revert a create TO.
-     Retiring the row is the honest inverse: the code stays taken and every
-     diary entry that drew it keeps it. */
+     Retiring the row is the honest inverse: the id stays taken and every
+     diary entry that referred to it keeps it.
+
+     SHOWN ON A TRACK rather than a card, because `20261014150000` refuses to
+     archive a card until the deck query can hide one — see the describe
+     below, which asserts that refusal rather than working around it. */
   it('retires a row rather than deleting it, when it undoes a create', async () => {
-    await write('card', CARD, { code: CARD_CODE });
-    const edits = await editsFor('card', CARD);
+    await write('track', TRACK, { title: 'T', artist: 'A' });
+    const edits = await editsFor('track', TRACK);
 
     await revert(edits[0].id as string);
 
     const { data } = await serviceClient()
-      .from('cards').select('archived_at').eq('id', CARD).single();
+      .from('tracks').select('archived_at').eq('id', TRACK).single();
     expect(data?.archived_at).not.toBeNull();
   });
 
@@ -485,5 +489,64 @@ describe('reordering the deck', () => {
     await service.rpc('admin_reorder_cards', {
       p_actor_id: null, p_actor_email: ACTOR, p_ids: ids,
     });
+  });
+});
+
+/* ═══ THE ONE THING THAT IS SWITCHED OFF ════════════════════════════════════ */
+
+/**
+ * Retiring a CARD is refused while `CARD_SELECT` in `lib/content.ts` has no
+ * `archived_at` filter — a retired card would leave the maintenance grid and
+ * stay in the deck the product deals, which is worse than not offering it.
+ *
+ * These are the tests that have to be DELETED, along with the trigger, in the
+ * change that adds the filter. They are here so that removing the guard is a
+ * decision somebody makes rather than something that rots.
+ */
+describe('a card cannot be retired yet', () => {
+  it('refuses the archive, and the message says what to do instead', async () => {
+    await write('card', CARD, { code: CARD_CODE });
+
+    const { error } = await write('card', CARD, {
+      archived_at: new Date().toISOString(),
+    });
+
+    expect(error?.message).toMatch(/cannot be retired yet/);
+    expect(error?.message).toMatch(/content\.ts/);
+  });
+
+  /* The guard must not trap a row in the state it exists to prevent. */
+  it('still allows a card to be brought back', async () => {
+    await write('card', CARD, { code: CARD_CODE });
+    const { error } = await write('card', CARD, { archived_at: null });
+    expect(error).toBeNull();
+  });
+
+  /* An undo of a card's creation archives it, so it meets the same guard.
+     Worth asserting rather than discovering: while this is on, a card made by
+     mistake cannot be undone and simply stays unplaced. */
+  it('refuses to undo the creation of a card, which is the cost of the guard', async () => {
+    await write('card', CARD, { code: CARD_CODE });
+    const edits = await editsFor('card', CARD);
+
+    const { error } = await serviceClient().rpc('admin_revert', {
+      p_actor_id: null, p_actor_email: ACTOR, p_edit_id: edits[0].id as string,
+    });
+
+    expect(error?.message).toMatch(/cannot be retired yet/);
+  });
+
+  /* The asymmetry is the whole point: the projection CAN hide these two. */
+  it.each(['track', 'artwork'])('still retires a %s', async (entity) => {
+    const id = entity === 'track' ? TRACK : ARTWORK;
+    await write(entity, id, entity === 'track'
+      ? { title: 'T', artist: 'A' }
+      : { src: 'art-98-ffffffff.webp' });
+
+    const { error } = await write(entity, id, {
+      archived_at: new Date().toISOString(),
+    });
+
+    expect(error, `${entity} should still be retirable`).toBeNull();
   });
 });
