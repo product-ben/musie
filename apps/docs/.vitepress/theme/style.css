@@ -92,15 +92,18 @@
    and diagrams, and a table that scrolls sideways is a table nobody reads.
    Prose is held to its own measure below; this is the container, not the
    line length. */
-/* `.VPDoc.has-aside .content-container` is the default theme's own selector
-   and carries three classes, so `.VPDoc .content-container` loses to it and
-   the column stayed at 688px. Match the specificity. */
-.VPDoc.has-aside .content-container {
-  max-width: 900px;
-}
+/* The default theme caps this at 688px with `.VPDoc.has-aside
+   .content-container` — three classes, and inside a media query, so matching
+   the specificity was not enough and the column stayed at 688. One more class
+   wins outright. Measured, after two attempts that did not. */
+@media (min-width: 960px) {
+  .VPDoc.has-aside .content .content-container {
+    max-width: 900px;
+  }
 
-.VPDoc:not(.has-aside) .content-container {
-  max-width: 1040px;
+  .VPDoc:not(.has-aside) .content .content-container {
+    max-width: 1040px;
+  }
 }
 
 /* …but prose still reads at a sane measure. Only tables and diagrams get the
