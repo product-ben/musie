@@ -54,7 +54,12 @@ test('the listen step opens at the top of its stage', async ({ page }, testInfo)
   /* A card, so the step ahead has a recording and the step behind has its
      drawn-card state — which is what Back returns to and Continue leaves. */
   await enterCode(page, locale, 'MC-06');
-  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
+  /* `listen(\?|$)` — the listen step writes `?overview` on arrival by
+     `replace`, a render after the navigation. Anchored on `listen$` this
+     passed only by beating that write, and on 2026-10-14 it stopped
+     beating it; four other walks had already lost the same race. The claim
+     is the STEP, not the absence of a query. */
+  await expect(page).toHaveURL(/\/listen(\?|$)/, { timeout: 15_000 });
 
   /* Back to the card, down the page, and forward again. */
   await page.getByRole('button', { name: label(locale, 'common.back'), exact: true }).click();
@@ -70,7 +75,12 @@ test('the listen step opens at the top of its stage', async ({ page }, testInfo)
   const carried = await scrollY(page);
 
   await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
-  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
+  /* `listen(\?|$)` — the listen step writes `?overview` on arrival by
+     `replace`, a render after the navigation. Anchored on `listen$` this
+     passed only by beating that write, and on 2026-10-14 it stopped
+     beating it; four other walks had already lost the same race. The claim
+     is the STEP, not the absence of a query. */
+  await expect(page).toHaveURL(/\/listen(\?|$)/, { timeout: 15_000 });
 
   /* SETTLED, not sampled once. The defect is a scroll that lands and is then
      pulled back, so a single read straight after the navigation could see the
