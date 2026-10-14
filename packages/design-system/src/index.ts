@@ -126,6 +126,9 @@ export type {
 export { Lightbox } from './Lightbox';
 export type { LightboxProps, LightboxOrigin } from './Lightbox';
 
+export { RadioImage } from './RadioImage';
+export type { RadioImageProps, RadioImageOption } from './RadioImage';
+
 export { Sheet } from './Sheet';
 export type { SheetProps, SheetPage } from './Sheet';
 

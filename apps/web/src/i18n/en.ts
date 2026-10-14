@@ -606,7 +606,7 @@ export const en = {
   /* The switch, and it is named after the OBJECT rather than after the mode.
      The next exercise that asks for a physical object adds its own key beside
      this one; nothing here has to be true of a thing nobody has designed. */
-  'session.intro.cardsPresent': 'I have the cards in front of me.',
+  'session.intro.cardsPresent': 'I have the physical cards in front of me.',
 
   /* Under the switch, and only where the exercise deals ONE card — there is
      nothing to lay out, so the step says so instead of leaving a gap where an

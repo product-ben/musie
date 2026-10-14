@@ -1307,15 +1307,32 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               : []),
             ...hand.map((one) => ({
               id: one.id,
+              /* FULL-BLEED ARTWORK, so the position row drawn over it takes
+                 its white tone. The lead page above is copy on a surface and
+                 deliberately does not set this. */
+              media: true,
               content: (
-                <img
-                  className="musie-cards__art"
-                  src={fromRoot(one.imageUrl ?? '')}
-                  alt={one.imageAlt ?? t('session.scan.cardFallbackAlt', { code: one.code })}
-                  width={1200}
-                  height={849}
-                  decoding="async"
-                />
+                /* ── THE PAGE IS THE PICTURE, EDGE TO EDGE ──────────────────
+                   A card is 1.41:1 and no screen is, so a picture that is not
+                   cropped always leaves bars — top and bottom in portrait,
+                   left and right on a desktop. The field behind it turns those
+                   bars into a frame rather than a mistake, and it is what
+                   makes the white position row true: the dots are then ON the
+                   media they are drawn over, which is the whole of their
+                   variant (Ben, 2026-10-14).
+
+                   Cropping to fill was the alternative and is the one thing
+                   this flow cannot do — the composition IS the exercise. */
+                <div className="musie-cards__media">
+                  <img
+                    className="musie-cards__art"
+                    src={fromRoot(one.imageUrl ?? '')}
+                    alt={one.imageAlt ?? t('session.scan.cardFallbackAlt', { code: one.code })}
+                    width={1200}
+                    height={849}
+                    decoding="async"
+                  />
+                </div>
               ),
             } satisfies SheetPage)),
           ]}
@@ -1327,15 +1344,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
             const pages = hand.length > 1 ? hand.length + 1 : 1;
             if (hand.length > 1 && sheetIndex === 0) {
               return (
-                <CtaButton block onClick={() => setSheetIndex(1)}>
+                /* No `block`: a button is the size of what it says, and the
+                   sheet's foot caps it at the row and lets it wrap rather than
+                   overflow (Ben, 2026-10-14). */
+                <CtaButton onClick={() => setSheetIndex(1)}>
                   {t('session.cards.first')}
                 </CtaButton>
               );
             }
             if (sheetIndex === pages - 1) {
               return (
+                /* PRIMARY. It is the way on, and on the last page it is the
+                   only thing left to do — the forward chevron has nowhere to
+                   go and steps down to secondary beside it, which is §7.8's
+                   rule and the sheet applies it on its own. */
                 <CtaButton
-                  variant="secondary"
                   onClick={() => { setSheetOpen(false); setSheetSeen(true); advance(); }}
                 >
                   {t('common.continue')}

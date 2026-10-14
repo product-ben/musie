@@ -59,6 +59,7 @@
 import * as React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Dots } from './Dots';
+import type { DotsTone } from './Dots';
 import { IconButton } from './IconButton';
 import { Lightbox } from './Lightbox';
 import type { LightboxOrigin } from './Lightbox';
@@ -68,6 +69,15 @@ export interface SheetPage {
   id: string;
   /** The page's whole screen. Laid out at the sheet's full height. */
   content: React.ReactNode;
+  /**
+   * THIS PAGE IS A PICTURE, EDGE TO EDGE — so the position row drawn over it
+   * switches to its white tone (`Dots`, `tone="onMedia"`).
+   *
+   * Per PAGE and not per sheet, because a walk can be both: the card sheet
+   * opens on copy over a surface and then shows five full-bleed cards, and a
+   * green row over artwork is exactly what that variant exists to stop.
+   */
+  media?: boolean;
 }
 
 export interface SheetProps {
@@ -127,6 +137,27 @@ export function Sheet({
   const total = pages.length;
 
   /**
+   * ── MOVING BETWEEN PAGES IS ANIMATED — Ben, 2026-10-14 ──────────────────
+   * The chevrons and the dots scroll the sheet rather than cutting to the next
+   * page, which is what makes the two states read as one surface moving.
+   *
+   * REDUCED MOTION IS ASKED, NOT ASSUMED, and this is the one place in the
+   * package that has to ask in JavaScript: `scroll-behavior` is a CSS property
+   * and would be the tidy answer, but a `scrollTo` with an explicit `behavior`
+   * overrides it — so the media query has to be read where the call is made.
+   * Layer 1 cannot help; `--motion-*` is a duration, and this is a mode.
+   *
+   * `matchMedia` is read at the moment of the scroll rather than cached, so a
+   * preference changed mid-session takes effect on the next press.
+   */
+  const scrollBehavior = (): ScrollBehavior => (
+    typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? 'auto'
+      : 'smooth'
+  );
+
+  /**
    * MOVE THE SCROLLER WHEN THE INDEX MOVES FROM OUTSIDE — and only then.
    *
    * The guard is not a tidy-up. Without it the pair oscillates: a scroll
@@ -138,11 +169,11 @@ export function Sheet({
     const scroller = scrollerRef.current;
     if (scroller === null) return;
     if (nearestPage(scroller) === index) return;
-    /* `behavior: 'auto'`, and that is the stylesheet's decision rather than a
-       preference: section 8 of `musy-components.css` records that a smooth
-       scroll is silently dropped under reduced motion, which would leave the
-       dots and the viewport disagreeing about which page is current. */
-    scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'auto' });
+    /* THE DOTS CANNOT DISAGREE WITH THE VIEWPORT WHILE THIS RUNS, which is the
+       objection to animating a snap scroller: the consumer already holds the
+       new index, the row is drawn from it, and the scroll is what catches up.
+       The settle handler's own guard then finds them equal and does nothing. */
+    scroller.scrollTo({ top: index * scroller.clientHeight, behavior: scrollBehavior() });
   }, [index, open]);
 
   /**
@@ -212,6 +243,26 @@ export function Sheet({
    */
   const paging = total > 1 && index > 0;
 
+  /**
+   * ── THE FORWARD CHEVRON IS PRIMARY UNTIL THE SHEET'S OWN CTA LIGHTS UP ──
+   * §7.8 Carousel's rule, applied unchanged and for its own reason: while
+   * going on is the only thing to do, the forward control is the loudest thing
+   * on the screen and says so; the moment the screen offers a way OUT, the
+   * chevrons step out of its way. Ben, 2026-10-14, after the card sheet made
+   * the quiet version look like chrome.
+   *
+   * `previousVariant` IS DERIVED, NEVER PASSED — one rung below whatever the
+   * forward control is, so back can never be louder than forward. The same
+   * line Carousel draws.
+   */
+  const stepsAside = foot !== undefined && foot !== null && foot !== false;
+  const nextVariant = stepsAside ? 'secondary' : 'primary';
+  const previousVariant = stepsAside ? 'ghost' : 'secondary';
+
+  /* The row's tone follows the page under it, so a walk that starts on copy
+     and continues over artwork changes tone as it moves. */
+  const tone: DotsTone = pages[index]?.media === true ? 'onMedia' : 'default';
+
   return (
     <Lightbox
       open={open}
@@ -255,6 +306,7 @@ export function Sheet({
             index={index}
             label={dotLabel}
             onSelect={move}
+            tone={tone}
           />
         )}
 
@@ -266,13 +318,13 @@ export function Sheet({
             {paging && (
               <div className="musy-sheet__paging">
                 <IconButton
-                  variant="secondary"
+                  variant={previousVariant}
                   glyph={ChevronUp}
                   label={previousLabel}
                   onClick={() => move(index - 1)}
                 />
                 <IconButton
-                  variant="secondary"
+                  variant={nextVariant}
                   glyph={ChevronDown}
                   label={nextLabel}
                   disabled={index === total - 1}

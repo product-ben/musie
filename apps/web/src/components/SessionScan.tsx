@@ -52,7 +52,7 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field, Message } from '@musie/design-system';
+import { ContentList, CtaButton, Field, Message, RadioImage } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
@@ -238,39 +238,38 @@ export function SessionScan({
             </figure>
           )
         ) : (
-          /* ── THE HAND, AS A TWO-COLUMN GRID ──────────────────────────────
-             `aria-label` on the list rather than a <fieldset>: these are not
-             a form control whose value is submitted later — pressing one IS
-             the commit, so they are buttons, and a group of buttons is named
-             by its container. `RadioGroupImage` was the near miss and §7.2
-             records why it is the wrong component: a required visible label
-             per item, a 1:1 crop, and selection that waits for a Continue. */
-          <ul className="musie-cardgrid" aria-label={t('session.scan.gridLabel')}>
-            {hand.map((one) => (
-              <li key={one.id}>
-                <button
-                  type="button"
-                  className="musie-cardgrid__cell"
-                  /* The card already taken, for somebody who walked back into
-                     this step. `aria-current`, not `aria-pressed`: it is where
-                     you are in a run, not a toggle you left on. */
-                  aria-current={card?.id === one.id ? 'true' : undefined}
-                  disabled={scanning}
-                  onClick={() => onPick?.(one)}
-                >
-                  <img
-                    className="musie-cardgrid__art"
-                    src={fromRoot(one.imageUrl ?? '')}
-                    alt={alt(one)}
-                    width={1200}
-                    height={849}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </button>
-              </li>
-            ))}
-          </ul>
+          /* ── THE HAND — `RadioImage`, TWO COLUMNS THEN THREE ──────────────
+             It was an app-level grid of buttons until 2026-10-14 and is now a
+             Layer 2 component, which is what L14.3 asked for the moment the
+             pattern was worth naming. §7.9 `RadioGroupImage` is still the near
+             miss and still the wrong one — a required visible label per item, a
+             1:1 crop, and four columns on a desktop.
+
+             `legendHidden`, because the step's own headline IS the question:
+             `scan_md` opens with *Wähle eine Karte aus*, and printing it twice
+             is the thing L8 calls a caption on a caption. It stays the group's
+             accessible name.
+
+             `onCommit` AND NOT `onValueChange`: the arrow keys move selection
+             through a radio group as a way of READING it, and committing on
+             that would carry a keyboard user off the screen mid-look. The
+             component draws that line; this call site depends on it. */
+          <RadioImage
+            name="session-card"
+            legend={t('session.scan.gridLabel')}
+            legendHidden
+            value={card?.id}
+            onCommit={(chosen) => {
+              const one = hand.find((candidate) => candidate.id === chosen);
+              if (one !== undefined) onPick?.(one);
+            }}
+            disabled={scanning}
+            options={hand.map((one) => ({
+              value: one.id,
+              image: fromRoot(one.imageUrl ?? ''),
+              imageAlt: alt(one),
+            }))}
+          />
         )}
       </>
     );

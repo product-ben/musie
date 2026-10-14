@@ -55,6 +55,8 @@ const PAGES: SheetPage[] = [
   { id: 'lead', content: LEAD },
   ...SWATCHES.map((colour, i) => ({
     id: `card-${i + 1}`,
+    /* Full-bleed, so the position row switches to its white tone. */
+    media: true,
     content: picture(colour, `Card ${i + 1}`),
   })),
 ];
@@ -95,10 +97,19 @@ const meta = {
           '',
           '**The consumer owns the index**, the same split Carousel and Music Player make.',
           '',
-          '**The foot is computed by the consumer from the index** — a wide button on the',
+          '**The foot is computed by the consumer from the index** — a way in on the',
           'first page, nothing in the middle, a way on at the end. That is a decision',
-          'about a flow, not about sheets. The paging chevrons are this component’s and',
-          'appear once the first page is behind you.',
+          'about a flow, not about sheets. It hugs its label and wraps before it',
+          'overflows, so a long German label at phone width arrives full width and on two',
+          'lines without a breakpoint saying so.',
+          '',
+          '**The paging chevrons are this component’s**, appear once the first page is',
+          'behind you, and follow §7.8 Carousel’s emphasis rule: forward is `primary`',
+          'while going on is the only thing to do, and steps down the moment the sheet’s',
+          'own CTA lights up. Back is derived one rung below forward and is never louder.',
+          '',
+          '**A page marked `media` switches the dots to their white tone**, so a walk that',
+          'opens on copy and continues over artwork changes tone as it moves.',
           '',
           '**Not a horizontal mode.** `Carousel` is the sideways one, and its whole design',
           '— the peek, the nudge, the grab cursor, the scale — exists to say *there are',
@@ -142,9 +153,9 @@ function Walk({ startAt = 0 }: { startAt?: number }) {
         onIndexChange={setIndex}
         foot={
           index === 0 ? (
-            <CtaButton block onClick={() => setIndex(1)}>Look at the first image</CtaButton>
+            <CtaButton onClick={() => setIndex(1)}>Look at the first image</CtaButton>
           ) : last ? (
-            <CtaButton variant="secondary" onClick={() => setOpen(false)}>Continue</CtaButton>
+            <CtaButton onClick={() => setOpen(false)}>Continue</CtaButton>
           ) : undefined
         }
       />
@@ -163,7 +174,8 @@ export const Default: Story = { render: () => <Walk /> };
  *  about before it was). */
 export const SecondPage: Story = { render: () => <Walk startAt={1} /> };
 
-/** The last page, where the foot gains the way on beside the chevrons. */
+/** The last page: the way on takes `primary` and the forward chevron, which
+ *  has nowhere left to go, steps down beside it. */
 export const LastPage: Story = { render: () => <Walk startAt={PAGES.length - 1} /> };
 
 /**

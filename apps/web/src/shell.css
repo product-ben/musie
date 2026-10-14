@@ -2379,69 +2379,12 @@ html[data-musy-scroll-snap] {
   color: var(--on-surface);
 }
 
-/* ── THE HAND, AS A GRID ──────────────────────────────────────────────────
-   TWO COLUMNS, and it stays two at every width. Ben's wireframe says two, and
-   `auto-fit` with a floor would give a desktop four — which is a contact
-   sheet, not a hand. The cap is the column's own measure, so the cards grow
-   with the reading width instead of multiplying across it.                  */
-.musie-cardgrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-gap-stack);
-  margin-block: var(--space-gap-group) 0;
-  padding: 0;
-  list-style: none;
-}
-
-.musie-cardgrid__cell {
-  /* A real <button>: pressing one IS the commit, so it answers Enter and
-     Space, is in the tab order, and is announced as pressable. */
-  display: block;
-  inline-size: 100%;
-  padding: 0;
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: none;
-  cursor: pointer;
-  overflow: hidden;
-  /* Layer 1 owns the duration and collapses it under reduced motion. */
-  transition: border-color var(--motion-fast), transform var(--motion-fast);
-}
-
-.musie-cardgrid__art,
-.musie-cardshow__art {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .musie-cardgrid__cell:hover:not(:disabled) {
-    border-color: var(--border-strong);
-    /* A card lifting towards the pointer — the same gesture the deck's own
-       pile makes, at a tenth of the distance. */
-    transform: translateY(calc(var(--sp-1) * -0.5));
-  }
-}
-
-.musie-cardgrid__cell:focus-visible {
-  outline: var(--focus-ring-width) var(--border-style-solid) var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
-}
-
-/* THE CARD ALREADY TAKEN, for somebody who walked back into this step. Border
-   AND inset, never colour alone (1.4.1) — and deliberately not the hover
-   treatment, which would make "where you are" and "where the pointer is" the
-   same picture. */
-.musie-cardgrid__cell[aria-current='true'] {
-  border-color: var(--border-focus);
-  box-shadow: inset 0 0 0 var(--border-width-regular) var(--border-focus);
-}
-
-.musie-cardgrid__cell:disabled {
-  cursor: progress;
-  opacity: 0.6;
-}
+/* ── THE HAND ─────────────────────────────────────────────────────────────
+   GONE FROM HERE — 2026-10-14. `.musie-cardgrid` was an L14 pattern with the
+   component request logged beside it, exactly as §7.2 of `DIGITAL-CARDS.md`
+   proposed. Ben asked for the component on the day the grid was first seen, so
+   it is `RadioImage` in the design system now and this file keeps none of its
+   geometry. The request and its answer are both in `OPEN-QUESTIONS.md`.      */
 
 /* ── ONE CARD, SHOWN ──────────────────────────────────────────────────────
    Freie Bahn's drawn card on the step itself. Capped at the reading measure so
@@ -2475,10 +2418,41 @@ html[data-musy-scroll-snap] {
   margin: 0;
 }
 
-.musie-cards__art {
+/* The field the card is shown on. `--surface-inverse` is Layer 1's own dark
+   surface — the same token the inverse ink is defined against — so the frame
+   is the system's darkest surface rather than an invented black. */
+.musie-cards__media {
+  display: grid;
+  /* `minmax(0, 1fr)` ON BOTH AXES, and it is load-bearing rather than tidy.
+     A grid item's `min-block-size` defaults to `auto`, which means "never
+     smaller than my content" — so the picture below kept its natural height,
+     outgrew the page and was clipped at full width, which is `cover` arrived
+     at by accident. The same trap `.musy-lightbox__body` documents on the
+     other axis, and the same fix. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
   inline-size: 100%;
   block-size: 100%;
-  object-fit: contain;
+  min-block-size: 0;
+  background-color: var(--surface-inverse);
+}
+
+/* CONSTRAINED, NOT FITTED. `object-fit: contain` on a box sized `100% / 100%`
+   looked right and was not: the percentage block size did not resolve against
+   the page, the height fell back to the picture's own, and the card was
+   clipped top and bottom at full width — which is `cover` by accident, and
+   `cover` is the one thing this flow cannot do, because the composition IS the
+   exercise. Two maxima and auto sizing cannot overflow whatever the page
+   turns out to be. */
+.musie-cards__art {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  inline-size: auto;
+  block-size: auto;
+  /* See the grid above: without these the maxima never bind. */
+  min-inline-size: 0;
+  min-block-size: 0;
 }
 
 /* ── THE CARD ON THE FOCUS SHEET ──────────────────────────────────────────
@@ -2499,27 +2473,61 @@ html[data-musy-scroll-snap] {
   border-radius: var(--radius-md);
 }
 
-/* ── IT IS A STACK ON BOTH LAYOUTS, AND THE WIREFRAME IS NOT ──────────────
-   The desktop sketch puts the picture on the leading side with the countdown
-   and the transport beside it. What is built is the mobile stack at every
-   width, bigger where there is room, and that is a deliberate deviation worth
-   stating here rather than discovering from a screenshot:
+/* ── THE DESKTOP TWO-COLUMN ROW — Ben, 2026-10-14 ─────────────────────────
+   The wireframe: the picture on the leading side and the countdown beside it,
+   once there is width for both. Below that width it is the stack above, which
+   is the phone the exercise is actually done on.
 
-   The sheet's column is FOUR SIBLINGS — lead, picture, clock, actions — and
-   grouping two of them into a row needs either a wrapper element or
-   `grid-template-areas`. A wrapper that existed only in digital mode would
-   fork the DOM of a sheet that every card and listening exercise shares, so
-   the layout would be two layouts maintained in parallel; naming the areas
-   needs a selector for the action row, and that row is a design-system
-   component whose class this file must not reach for (rule 1, L7).
+   ── EVERY CHILD SPANS, AND EXACTLY TWO DO NOT ───────────────────────────
+   The first version named three areas — lead, card, clock — and the sheet has
+   FIVE children: the question, the *Hilf mir bitte* row, the picture, the
+   clock and the action row. The two it did not name were auto-placed into
+   implicit rows and ended up in opposite corners.
 
-   So: the stack, which is correct on the phone the exercise is actually done
-   on, and legible on a desktop. Logged in `apps/web/OPEN-QUESTIONS.md` as the
-   one place the wireframe is not followed; the honest fix is a two-slot
-   middle in the `Sheet` component, once a second screen needs one.          */
+   So the rule is stated the other way round: everything spans both columns,
+   and the picture and the clock are the two exceptions that take one each.
+   That survives a sixth child, which a list of areas does not — and the only
+   thing it asserts about the DOM is that the picture comes before the clock,
+   which is the reading order on the phone as well.
+
+   `:has(.musie-immersive__card)` GUARDS THE WHOLE BLOCK, so a paper run and
+   every listening exercise keep the column they have always had: no card, no
+   grid, not one declaration applied.                                        */
 @media (min-width: 60rem) {
-  .musie-immersive__card {
-    max-inline-size: calc(var(--measure-body) * 0.75);
+  .musie-immersive:has(.musie-immersive__card) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: center;
+    column-gap: var(--space-gap-group);
+  }
+
+  /* The default: a full-width row, which is what the column gave everything
+     before this media query existed. */
+  .musie-immersive:has(.musie-immersive__card) > * {
+    grid-column: 1 / -1;
+  }
+
+  .musie-immersive:has(.musie-immersive__card) > .musie-immersive__card {
+    grid-column: 1;
+    /* Leading edge, as drawn — the picture anchors the row and the clock reads
+       beside it rather than under it. */
+    justify-self: start;
+    margin-inline: 0;
+    max-inline-size: 100%;
     max-block-size: calc(var(--viewport-block) * 0.5);
   }
+
+  .musie-immersive:has(.musie-immersive__card) > .musie-immersive__clock {
+    /* COLUMN 2, AND THE ROW IS THE PICTURE'S. Auto-placement puts it there
+       because the cursor is sitting in that cell: the picture claimed column 1
+       of this row immediately before it. */
+    grid-column: 2;
+    /* Against the picture's middle rather than its top: the countdown is the
+       other half of a pair, not a caption hanging off it. */
+    align-self: center;
+    /* The flex column's `margin-block: auto` took the slack and has nothing to
+       take in a grid; cleared so it cannot push the clock out of its row. */
+    margin-block: 0;
+  }
+}
 }

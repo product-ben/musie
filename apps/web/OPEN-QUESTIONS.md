@@ -8831,3 +8831,51 @@ print decision is untouched and the question stands.
 What I need from Ben: **the colourway decision, eventually** — and a look at
 one re-encoded card beside its master, because 1200/75 is my call and not a
 measured one.
+
+## Digital cards, round two — what the first look changed, and the one thing it did not
+
+Where: `packages/design-system/src/{Sheet,Dots,RadioImage}.tsx`,
+`apps/web/src/shell.css`, `apps/web/src/components/Session*.tsx`
+
+What I checked: Ben walked the built flow on 2026-10-14 and sent eleven
+corrections. Nine were layout and emphasis; two turned into components.
+
+What I did:
+
+- **`RadioImage`** — the card grid was an app-level `.musie-cardgrid` with the
+  component request logged beside it. Ben asked for the component on the day he
+  first saw the grid, so it is Layer 2 now, two columns then three from `30rem`
+  of the group's own width, and `shell.css` keeps none of its geometry.
+- **`Dots` has two tones**, `default` and `onMedia`, with a story that shows
+  the wrong pairing on purpose. The white row is `--on-surface-inverse` at two
+  opacities under one scrim shadow — nothing can be contrast-checked against an
+  arbitrary picture, so it does not pretend to.
+- **The sheet's foot hugs its label and sits at the trailing edge**, the
+  forward chevron is `primary` until the sheet's own CTA lights up (§7.8's rule
+  verbatim), paging is animated and asks about reduced motion in JavaScript
+  because a `scrollTo` with an explicit `behavior` overrides the stylesheet.
+- **The focus sheet is the wireframe's two-column row on a desktop** — the
+  deviation logged last night is gone.
+
+**Three defects came out of looking rather than out of a test**, which is the
+part worth keeping:
+
+1. **The current dot was invisible.** `Dots` READS `--musy-sel-fill` and the
+   sheet never set it, so the mark had `background-color: var(--undefined)`.
+   Nothing failed; the row simply had a hole in it.
+2. **The card was being cropped.** `object-fit: contain` on a box sized
+   `100% / 100%` looked right and was not — the grid item's `min-block-size:
+   auto` meant the maxima never bound, the picture kept its natural height and
+   was clipped at full width. `cover` by accident, on a flow whose whole
+   subject is the composition.
+3. **The container query was dead.** `@container` styles DESCENDANTS, and the
+   grid was asking about its own inline size, so the three-column rule could
+   never match. It needed the extra element that `.musy-rimage__grid` now is.
+
+What I need from Ben: **the sheet's dark field is a decision, not a fix.** A
+card is 1.41:1 and no screen is, so an uncropped picture always leaves bars.
+They are now `--surface-inverse` — the system's own darkest surface — which is
+what makes the white dots true and what turns the bars into a frame. It is the
+only dark surface anywhere in this warm product, and it is on screen for five
+pages in a row. If it reads as a different app, the alternative is sand bars
+and the green dot row, and the white variant stays for whatever needs it next.

@@ -144,9 +144,12 @@ test('a digital session deals, chooses, and writes the same two columns', async 
     page.getByRole('button', { name: label(locale, 'session.scan.scanCard'), exact: true }),
   ).toHaveCount(0);
 
-  const grid = page.getByRole('list', { name: label(locale, 'session.scan.gridLabel') });
+  /* A radio group since 2026-10-14, when the grid became `RadioImage`. The
+     legend is visually hidden — the step's own headline asks the question —
+     and is still the group's accessible name, which is what this asks for. */
+  const grid = page.getByRole('radiogroup', { name: label(locale, 'session.scan.gridLabel') });
   await expect(grid).toBeVisible({ timeout: 15_000 });
-  const pictures = grid.getByRole('button');
+  const pictures = grid.getByRole('radio');
   await expect(pictures).toHaveCount(DEALT);
 
   /* ── THE SAME HAND AFTER A RELOAD ───────────────────────────────────────

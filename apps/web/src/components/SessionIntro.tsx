@@ -181,13 +181,17 @@ export function SessionIntro({
           {/* Rule 7: the label is passed. `Layers` / `Layers` would be one
               glyph for two states, so the pair says what is switching — a pile
               of cards on the table, or none. */}
+          {/* NO `reverse`. That prop pushes the label to the far edge of the
+              row — the settings-sheet layout — and this is not a settings row:
+              it is one control in a column of copy, and every other Switch in
+              the app (the music one on the listen sheet, the dark-mode one in
+              the menu) sits directly beside its own label. Ben, 2026-10-14. */}
           <Switch
             label={t('session.intro.cardsPresent')}
             checked={cardsPresent}
             onCheckedChange={(next) => onCardsPresentChange?.(next)}
             onGlyph={Layers}
             offGlyph={Layers}
-            reverse
           />
 
           {/* ── WHAT TAKES THE BODY COPY'S PLACE ──────────────────────────

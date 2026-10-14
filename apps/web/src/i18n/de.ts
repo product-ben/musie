@@ -438,7 +438,7 @@ export const de: Messages = {
   /* ── DIGITALE KARTEN ─────────────────────────────────────────────────────
      Siehe `en.ts` für die Begründungen. Register: §1 du und Imperativ
      Singular, §2 Satzanfang groß, §3 Verb zuerst, §7 Gedankenstrich. */
-  'session.intro.cardsPresent': 'Die Karten liegen vor mir.',
+  'session.intro.cardsPresent': 'Die analogen Karten liegen vor mir.',
   'session.intro.nothingToLayOut': 'Es gibt nichts vorzubereiten, legen wir los.',
   'session.intro.deal': '{count} Karten ziehen',
   'session.intro.dealOne': 'Eine Karte ziehen',

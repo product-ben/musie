@@ -1437,6 +1437,51 @@
   }
 }
 
+/* ── ON MEDIA · the white row ─────────────────────────────────────────────
+   For dots drawn ON TOP OF A PICTURE. Nothing can be contrast-checked against
+   an arbitrary image, so this does not pretend to: one ink, two opacities, and
+   a soft scrim shadow under the whole row — the pairing that survives a pale
+   sky and a dark forest in the same deck.
+
+   `--on-surface-inverse` is the ink that is already defined as "text on the
+   inverse surface", which is what an image is for these purposes. The shadow
+   is `--alpha-scrim`, the token the sheet's own backdrop uses, so the row
+   carries a trace of the same scrim rather than a second colour.
+
+   THE CURRENT MARK IGNORES `--musy-sel-fill` HERE, deliberately: the host's
+   accent is a brand colour chosen against a surface, and over a photograph it
+   is one more unpredictable contrast. Position is carried by opacity and by
+   the pill's length, which are 1.4.1-safe on any background.              */
+.musy-dots--on-media {
+  filter: drop-shadow(0 1px 2px var(--alpha-scrim));
+}
+
+.musy-dots--on-media .musy-dot__mark {
+  background-color: var(--on-surface-inverse);
+  opacity: 0.55;
+}
+
+.musy-dots--on-media .musy-dot[data-current="true"] .musy-dot__mark {
+  background-color: var(--on-surface-inverse);
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-dots--on-media .musy-dot:hover:not([data-current="true"]) .musy-dot__mark {
+    background-color: var(--on-surface-inverse);
+    opacity: 0.8;
+  }
+}
+
+@media (forced-colors: active) {
+  /* The shadow and the opacities are both dropped in forced colours, so the
+     row would become one flat block of CanvasText. The border is what keeps
+     the marks apart when their fill is no longer ours to choose. */
+  .musy-dots--on-media .musy-dot__mark {
+    border: var(--border-width-regular) var(--border-style-solid) CanvasText;
+  }
+}
+
 
 /* ═══ 9 · CONTENT BOX ══════════════════════════════════════════════════════
    No APG pattern (not interactive, not a landmark). Semantic HTML: <article>
@@ -7047,14 +7092,29 @@ html[data-musy-scroll-snap='y'] {
 
 .musy-sheet__foot > * { pointer-events: auto; }
 
-/* ALONE ON THE ROW, THE ACTION TAKES THE WHOLE FOOT. Two cases reach it and
-   both are right for the same reason — there is nothing beside it to be
-   balanced against: the FIRST page of a walk, whose one offer is the way in
-   (`CtaButton block`, which is what the wireframe draws), and a sheet of a
-   SINGLE page, whose one offer is the way on. Beside the chevrons on a last
-   page the same button is compact, because then the foot is shared. */
-.musy-sheet__foot:not(:has(.musy-sheet__paging)) > :first-child {
-  flex: 1 1 auto;
+/* ── THE ACTION HUGS ITS LABEL, AND WRAPS BEFORE IT OVERFLOWS ─────────────
+   Ben, 2026-10-14. It used to stretch across the foot when it was the only
+   thing on the row, which made a two-word button look like a page-wide bar.
+   A button is the size of what it says.
+
+   THE MOBILE EXCEPTION NEEDS NO BREAKPOINT, which is the part worth writing
+   down: an `inline-flex` button capped at the row's width grows with its
+   label and stops at the edge, so a long German label at 393px arrives at
+   full width AND WRAPS — which is the exception stated as a consequence
+   rather than as a second rule. The two declarations below are
+   `.musy-btn--wrap`'s own, applied here so a consumer cannot forget the prop
+   and get an overflowing row instead.                                       */
+.musy-sheet__foot > * {
+  max-inline-size: 100%;
+}
+
+.musy-sheet__foot .musy-btn {
+  min-block-size: var(--musy-btn-target);
+  block-size: auto;
+}
+
+.musy-sheet__foot .musy-btn__label {
+  white-space: normal;
 }
 
 .musy-sheet__paging {
@@ -7064,4 +7124,126 @@ html[data-musy-scroll-snap='y'] {
      so tab order runs from what the sheet is FOR to how you move inside it
      (L6). No auto margin: it would claim the free space and push the
      consumer's action back to the opposite corner. */
+}
+
+/* ═══ 26 · RADIO IMAGE ══════════════════════════════════════════════════════
+   A grid of pictures you choose one of. `RadioImage.tsx` carries the argument
+   for why this is not §7.9 with the label switched off; this is its geometry.
+
+   ── TWO COLUMNS, THEN THREE, AND NEVER FOUR ─────────────────────────────
+   The count answers the GROUP's width, not the viewport's — §7.10's rule, and
+   for its reason: a group inside a panel or a sidebar has to get the right
+   count, and a media query there resolves the desktop grid and overflows.
+
+   Three is the ceiling. A hand of five at three-up reads as a hand; at four-up
+   it reads as a catalogue.                                                  */
+/* THE CONTAINER, AND IT IS NOT THE GRID. `@container` styles DESCENDANTS, so
+   a grid asking about its own inline size never matches — the rule is simply
+   dead. The query element has to be one level in, which is what
+   `.musy-rimage__grid` is for and the only reason it exists. */
+.musy-rimage {
+  display: block;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+  container-type: inline-size;
+  container-name: musy-rimage;
+}
+
+.musy-rimage__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--grid-gap);
+  min-inline-size: 0;
+}
+
+@container musy-rimage (min-width: 30rem) {
+  .musy-rimage__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* The whole cell is the control, so the target is the picture — 2.5.8 is
+   satisfied by a wide margin and there is no separate hit area to miss. */
+.musy-rimage__cell {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding: 0;
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-card);
+  background-color: transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--motion-toggle), box-shadow var(--motion-toggle);
+}
+
+/* THE PICTURE KEEPS ITS OWN RATIO. No crop and no fixed aspect: the artwork is
+   a composition, and the row simply becomes as tall as the picture is. */
+.musy-rimage__art {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.musy-rimage__check {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+  border: var(--border-width-thick) var(--border-style-solid) transparent;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: transparent;
+  transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle);
+}
+
+/* ── CHOSEN · three cues, none of them colour alone (1.4.1) ──────────────
+   The border strengthens, an inset ring doubles it against a picture whose own
+   edge may be any colour, and the tick fills. A photograph can swallow a 1.5px
+   border on its own; the ring is what keeps the state legible over artwork. */
+.musy-rimage__cell[data-checked] {
+  border-color: var(--musy-sel-fill, var(--interactive-primary));
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--musy-sel-fill, var(--interactive-primary));
+}
+
+.musy-rimage__cell[data-checked] .musy-rimage__check {
+  background-color: var(--musy-sel-fill, var(--interactive-primary));
+  border-color: var(--interactive-primary-on);
+  color: var(--interactive-primary-on);
+}
+
+.musy-rimage--accent .musy-rimage__cell {
+  --musy-sel-fill: var(--interactive-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-rimage__cell:not([data-checked]):not([data-disabled]):hover {
+    border-color: var(--border-strong);
+  }
+}
+
+.musy-rimage__cell:focus-visible {
+  outline: var(--focus-ring-width) var(--border-style-solid) var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.musy-rimage__cell[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (forced-colors: active) {
+  .musy-rimage__cell[data-checked] { border-color: Highlight; }
+  .musy-rimage__cell[data-checked] .musy-rimage__check {
+    background-color: Highlight;
+    color: HighlightText;
+  }
 }
