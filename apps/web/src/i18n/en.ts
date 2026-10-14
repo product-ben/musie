@@ -434,6 +434,17 @@ export const en = {
      together. */
   'session.step.intro': 'Start',
   'session.step.scan': 'Scan',
+  'session.step.select': 'Choose',
+  /* ── THE TWO DIGITAL SECOND STEPS ────────────────────────────────────────
+     `view` and `select` are STEP IDS as of 2026-10-14, not labels overriding
+     `scan`: nothing is scanned when the deck is not on the table, so the step
+     is a different step rather than the same one wearing another name. Freie
+     Bahn deals one card and you look at it; Achtsame Pause deals five and you
+     choose between them.
+
+     A run still has four steps and the rail is still four markers long —
+     the second one is `scan`, `view` or `select` and never two. */
+  'session.step.view': 'Look',
   'session.step.listen': 'Listen',
   'session.step.reflect': 'Reflect',
   /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
@@ -600,6 +611,105 @@ export const en = {
      connection problem rather than a camera problem, and it says so. */
   'session.scan.cameraDecoder': 'The code reader could not be loaded. Check your connection and try again, or type the code printed on your card.',
   'session.scan.cameraFailed': 'The camera could not be started. Type the code printed on your card instead.',
+
+  /* ── DIGITAL CARDS · the deck for people who have no deck ────────────────
+     `DIGITAL-CARDS.md`. The switch on Einsteigen, the sheet the hand is shown
+     in, and the grid it is chosen from. Every one of these is CHROME: it is
+     true of any card exercise, and it talks about the MODE rather than about
+     the exercise, which is what keeps it out of the content tables. The
+     exercise's own words are the thing being replaced. */
+
+  /* The switch, and it is named after the OBJECT rather than after the mode.
+     The next exercise that asks for a physical object adds its own key beside
+     this one; nothing here has to be true of a thing nobody has designed. */
+  'session.intro.cardsPresent': 'I have the physical cards in front of me.',
+
+  /* Under the switch, and only where the exercise deals ONE card — there is
+     nothing to lay out, so the step says so instead of leaving a gap where an
+     instruction about paper used to be. */
+  'session.intro.nothingToLayOut': 'There is nothing to lay out, let’s start.',
+  /* ── A SMALL SCREEN, SAID ONCE AND WITHOUT A GATE ────────────────────────
+     Only in digital mode, and only below 850px — the width is a CSS decision
+     and lives in `shell.css`, because what fits on a screen is not something a
+     React component should be measuring.
+
+     It does not block anything and must not read as if it did: the exercise
+     works at 393px, it is simply better with room. "Kein Problem" is doing
+     real work in the German — the sentence exists to tell somebody their
+     screen is fine. */
+  'session.intro.smallScreen': 'Your screen is quite small for this exercise. That is no problem at all, but you will get the best of it on a screen that is at least tablet-sized.',
+
+  /* `{count}` from `cardsDealt`, and the two forms are ONE/OTHER by hand:
+     there is no plural helper in `i18n/index.ts` and deliberately so — two
+     locales with the same one/other rule do not need ICU. Only the `other`
+     form is reachable today (a one-card exercise deals on the next step), and
+     the `one` form exists so that an exercise dealing one card from Einsteigen
+     does not render "1 cards". */
+  'session.intro.deal': 'Draw {count} cards',
+  /* After the sheet has been seen once: going on is the loud action again and
+     the pictures are a tap away. */
+  /* ── THE ONE-CARD DRAW MOVED ONTO EINSTEIGEN — Ben, 2026-10-14 ───────────
+     It was a button on Auswählen; going on from Einsteigen now draws. The
+     card is then simply THERE when the step arrives, which is what a drawn
+     card is — the previous shape asked you to press *continue* and then
+     *draw*, which is two presses for one act. */
+  'session.intro.drawRandom': 'Draw a random card',
+
+  /* ── THE SHEET ──────────────────────────────────────────────────────────*/
+  /* Announced, not drawn: the sheet IS the cards, and a title over a
+     full-screen picture would be the product labelling its own furniture. */
+  'session.cards.title': 'Your cards',
+  'session.cards.close': 'Close the cards',
+  /* The first screen of the sheet. The landscape line is a REQUEST and not an
+     orientation lock: the artwork is landscape and a portrait phone gives it a
+     third of the screen, but a locked orientation breaks the one person who
+     cannot turn their device and overrides a system preference. */
+  'session.cards.lead': 'If you are on your phone, turn it to landscape. Then look at the five cards and breathe in and out once with each of them.',
+  'session.cards.leadOne': 'If you are on your phone, turn it to landscape. Look at the card and breathe in and out once.',
+  'session.cards.first': 'Look at the first image',
+  'session.cards.next': 'Next image',
+  'session.cards.previous': 'Previous image',
+  /* `Dots` requires a name per mark (4.1.2) and renders as plain spans without
+     one. Here the dots are a way to move, so they are named. */
+  'session.cards.dot': 'Image {position} of {total}',
+
+  /* ── AUSWÄHLEN ──────────────────────────────────────────────────────────*/
+  /* The grid's own legend. The step's headline is the exercise's `scan_md`
+     heading and stays; this names the GROUP for anyone who meets it as a list
+     of nine buttons rather than as a picture. */
+  'session.select.gridLabel': 'Your cards — choose one',
+  /* The one sentence under the headline on Auswählen. It is the exercise's
+     own first instruction with the half about paper removed — chrome, because
+     what it leaves out is exactly the part that is only true of a deck. */
+  'session.select.headline': 'Choose a card',
+  /* ── A WAY BACK INTO THE WALK ────────────────────────────────────────────
+     The sheet opens on arrival and collapses onto the grid, so somebody who
+     closed it early — or came back from Hören — would otherwise have no way to
+     look at the five again. The grid is the step; this is the phase. */
+  'session.select.lookAgain': 'Look at the cards again',
+  'session.select.lead': 'Pick the image that speaks to you most right now, for whatever reason.',
+  /* A one-card exercise draws here rather than on Einsteigen, because its own
+     paper copy draws here. Same register as `session.scan.scanCard`. */
+  'session.view.expand': 'Look at the card',
+  /* ── WHAT AUSWÄHLEN SAYS WHEN THERE IS ONE CARD AND NO CHOICE ────────────
+     The exercise's own `scan_md` heading is *Choose a card*, which is true of
+     the other one. These two replace it, and they are chrome for the reason
+     every string in this block is: what they leave out is the half that only
+     applies to a deck.
+
+     A QUESTION RATHER THAN AN INSTRUCTION — Ben, 2026-10-14. It was *Look at
+     your card*, and the step does not want you to look: you are already
+     looking. It wants you to find something in it, which is the same move the
+     listen sheet makes with its own question. */
+  'session.view.headline': 'What do you see in the picture?',
+  'session.view.lead': 'Breathe out and in again at least once before you move on.',
+  'session.cards.failed': 'That card could not be saved. Try again in a moment.',
+  /* THE NAME A CARD HAS WHEN THE DECK HAS NO ALT TEXT FOR IT YET. Nine real
+     descriptions live in `supabase/content/deck.json` and arrive with that
+     migration; until it is applied `card_i18n.image_alt` is null, and a grid
+     of nine unnamed images is a grid of nine identical options. The code is a
+     poor name and an honest one — it is what is printed on the card. */
+  'session.cards.fallbackAlt': 'Card {code}',
 
   /* ── Listen · D.5b ───────────────────────────────────────────────────────
      THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:

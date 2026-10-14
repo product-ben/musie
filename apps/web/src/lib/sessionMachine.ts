@@ -101,7 +101,21 @@ export type SessionAction =
   | { type: 'FINISH'; at: string }
   | { type: 'CANCEL'; at: string }
   /** Rehydrate wholesale from a persisted row. Not a transition — see below. */
-  | { type: 'RESUME'; session: PersistedSession };
+  | { type: 'RESUME'; session: PersistedSession }
+  /**
+   * ── THE RUN ITSELF CHANGED — 2026-10-14 ──────────────────────────────────
+   * Which steps this run has, when that stops being a fact about the exercise
+   * alone. It became one the day the deck became optional: the second step is
+   * `scan`, `view` or `select` depending on a switch the person flips on
+   * Einsteigen, so `skipped` is no longer decided once at `startSession`.
+   *
+   * WITHOUT THIS THE SWITCH DID NOTHING AND LOOKED LIKE IT HAD. `useReducer`
+   * runs its initialiser once, so `skipped` held the paper run for the life of
+   * the session; the rail relabelled (it is drawn from props) and the
+   * reachability rule then refused `select` as a step outside the run. Found
+   * by the walk, which is the only place a stale initialiser shows.
+   */
+  | { type: 'RUN'; skipped: readonly StepId[] };
 
 /** A session that has ended accepts no further transitions. */
 export function isTerminal(status: SessionStatus): boolean {
@@ -237,12 +251,31 @@ function withCompleted(completed: readonly StepId[], step: StepId): readonly Ste
   return completed.includes(step) ? completed : [...completed, step];
 }
 
+/** Two step lists, same members in the same order. */
+function sameRun(a: readonly StepId[], b: readonly StepId[]): boolean {
+  return a.length === b.length && a.every((step, i) => step === b[i]);
+}
+
 export function sessionReducer(state: SessionState, action: SessionAction): SessionState {
   /* RESUME is exempt: it REPLACES the state rather than extending it, and the
      row it replaces it with may itself be terminal (the Diary reads finished
      and abandoned sessions). The guard exists to stop a session growing new
      history after it ended, not to stop us reading one back. */
   if (action.type === 'RESUME') return resumeSession(action.session, state.skipped);
+
+  /* ── THE RUN, LIKE RESUME, IS NOT A TRANSITION ──────────────────────────
+     It is exempt from the terminal guard for RESUME's reason: it says which
+     steps this run HAS rather than moving within it, and a finished session
+     being read by the diary still has a run.
+
+     REFUSAL IS THE SAME OBJECT, as everywhere in this file: a run that has not
+     changed returns `state` itself, so `useReducer` skips the re-render — and
+     this action is dispatched from an effect on every render that recomputes
+     the list, which would otherwise loop. */
+  if (action.type === 'RUN') {
+    if (sameRun(state.skipped, action.skipped)) return state;
+    return { ...state, skipped: action.skipped };
+  }
 
   if (isTerminal(state.status)) return state;
 

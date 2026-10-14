@@ -17,6 +17,17 @@
  * `STEP_IDS` is imported rather than retyped. A literal `['intro', 'scan',
  * 'listen', 'reflect']` here would be a third copy of the list — and would
  * keep passing on the day the run gains a fifth step.
+ *
+ * ── AND IT GAINED TWO, ON 2026-10-14 ──────────────────────────────────────
+ * `view` and `select` — the second step of a digital card run. That is exactly
+ * the day the paragraph above was written for, and it did its job: every test
+ * here that walked "the run" by calling `startSession(PAPER)` with no skips started
+ * walking six steps and failed.
+ *
+ * So the fixtures name their run. `PAPER` is the deck-on-the-table run, which
+ * is what these transitions were always about; `FIVE` and `ONE` are the two
+ * digital ones, and the suite asserts that the reducer treats all three the
+ * same — because it should. The reducer has never known which step is second.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -37,16 +48,28 @@ import {
 
 const AT = '2026-09-19T10:00:00.000Z';
 
-/** Walk forward `count` times from a fresh session. */
-function advanced(count: number): SessionState {
-  let state = startSession();
+/* The three card runs, as `skippedForRun` spells them: every run skips two of
+   the three second steps, and which two is the whole of the difference. */
+const PAPER: readonly StepId[] = ['view', 'select'];
+/* The paper run itself, which is what most of these tests mean when they say
+   "the steps": `STEP_IDS` is the vocabulary, this is a run. */
+const RUN = activeSteps(PAPER);
+const FIVE: readonly StepId[] = ['scan', 'view'];
+const ONE: readonly StepId[] = ['scan', 'select'];
+/* And a run with no cards at all: it skips all three second steps, where
+   `scan` was the only one until 2026-10-14. */
+const CARDLESS: readonly StepId[] = ['scan', 'view', 'select'];
+
+/** Walk forward `count` times from a fresh session of the given run. */
+function advanced(count: number, skipped: readonly StepId[] = PAPER): SessionState {
+  let state = startSession(skipped);
   for (let i = 0; i < count; i += 1) state = sessionReducer(state, { type: 'NEXT' });
   return state;
 }
 
 describe('startSession', () => {
   it('begins at the first step, running, with nothing behind it', () => {
-    const state = startSession();
+    const state = startSession(PAPER);
 
     expect(state.step).toBe(STEP_IDS[0]);
     expect(state.status).toBe('started');
@@ -58,23 +81,45 @@ describe('startSession', () => {
 
 describe('forward', () => {
   it('walks the four steps in order, completing each one as it leaves it', () => {
-    let state = startSession();
+    let state = startSession(PAPER);
 
     /* Asserted step by step rather than at the end, because "completed" must
        lag the current step by exactly one — the step on screen is not done. */
-    STEP_IDS.forEach((step, i) => {
+    RUN.forEach((step, i) => {
       expect(state.step).toBe(step);
-      expect(state.completed).toEqual(STEP_IDS.slice(0, i));
-      expect(state.history).toEqual(STEP_IDS.slice(0, i));
+      expect(state.completed).toEqual(RUN.slice(0, i));
+      expect(state.history).toEqual(RUN.slice(0, i));
       state = sessionReducer(state, { type: 'NEXT' });
     });
   });
 
   it('refuses NEXT at the last step, because the way out of it is FINISH', () => {
-    const atLast = advanced(STEP_IDS.length - 1);
-    expect(atLast.step).toBe(STEP_IDS[STEP_IDS.length - 1]);
+    const atLast = advanced(RUN.length - 1);
+    expect(atLast.step).toBe(RUN[RUN.length - 1]);
 
     expect(sessionReducer(atLast, { type: 'NEXT' })).toBe(atLast);
+  });
+
+  /* ── THE REDUCER DOES NOT KNOW WHICH STEP IS SECOND ─────────────────────
+     Three card runs, identical in every way the machine can see: four steps,
+     the same transitions, the same completions. If this ever fails it means
+     a step name has leaked into the reducer, which is the thing it has been
+     careful about since D.6 — `sessionMachine.ts` names no step at all and
+     walks `STEP_IDS` instead. */
+  it('treats the three card runs identically', () => {
+    for (const skipped of [PAPER, FIVE, ONE]) {
+      const run = activeSteps(skipped);
+      expect(run).toHaveLength(4);
+
+      let state = startSession(skipped);
+      for (let i = 0; i < run.length - 1; i += 1) {
+        state = sessionReducer(state, { type: 'NEXT' });
+      }
+
+      expect(state.step).toBe('reflect');
+      expect(state.completed).toEqual(run.slice(0, -1));
+      expect(state.history).toEqual(run.slice(0, -1));
+    }
   });
 
   it('jumps to a step whose predecessors are all completed', () => {
@@ -95,7 +140,7 @@ describe('forward', () => {
   it.each(['listen', 'reflect'] as StepId[])(
     'refuses GO_TO %s from a fresh session, whose predecessors are unfinished',
     (step) => {
-      const state = startSession();
+      const state = startSession(PAPER);
       expect(isStepReachable(state, step)).toBe(false);
       expect(sessionReducer(state, { type: 'GO_TO', step })).toBe(state);
     },
@@ -138,7 +183,7 @@ describe('back', () => {
   });
 
   it('refuses BACK at the first step, where the stack is empty', () => {
-    const state = startSession();
+    const state = startSession(PAPER);
 
     expect(canGoBack(state)).toBe(false);
     expect(sessionReducer(state, { type: 'BACK' })).toBe(state);
@@ -153,8 +198,8 @@ describe('back', () => {
 });
 
 describe('resume', () => {
-  it.each(STEP_IDS)('comes back to %s, with its completed steps intact', (step) => {
-    const completed = STEP_IDS.slice(0, STEP_IDS.indexOf(step));
+  it.each(RUN)('comes back to %s, with its completed steps intact', (step) => {
+    const completed = RUN.slice(0, RUN.indexOf(step));
 
     const state = resumeSession({ step, status: 'started', completed });
 
@@ -211,7 +256,7 @@ describe('finish and cancel', () => {
     const finished = sessionReducer(atReflect, { type: 'FINISH', at: AT });
 
     expect(finished.status).toBe('finished');
-    expect(finished.completed).toEqual([...STEP_IDS]);
+    expect(finished.completed).toEqual([...RUN]);
     expect(finished.endedAt).toBe(AT);
     expect(finished.step).toBe('reflect');
   });
@@ -241,7 +286,7 @@ describe('finish and cancel', () => {
   it('takes the timestamp as an input — the reducer never reads the clock', () => {
     const other = '2020-01-01T00:00:00.000Z';
 
-    expect(sessionReducer(startSession(), { type: 'CANCEL', at: other }).endedAt).toBe(other);
+    expect(sessionReducer(startSession(PAPER), { type: 'CANCEL', at: other }).endedAt).toBe(other);
   });
 });
 
@@ -300,7 +345,6 @@ describe('nextStep', () => {
  * only knows that a skipped step is not in the run.
  */
 describe('a cardless exercise · scan is skipped, and the run still finishes', () => {
-  const CARDLESS = ['scan'] as const;
 
   it('leaves the other three steps in the run, in order', () => {
     expect(activeSteps(CARDLESS)).toEqual(['intro', 'listen', 'reflect']);
@@ -363,7 +407,7 @@ describe('a cardless exercise · scan is skipped, and the run still finishes', (
       session: { step: 'listen', status: 'started', completed: ['intro'] },
     });
 
-    expect(state.skipped).toEqual(['scan']);
+    expect(state.skipped).toEqual([...CARDLESS]);
     expect(isStepReachable(state, 'scan')).toBe(false);
     /* The resumed run must still be finishable. */
     expect(nextStep(state.step, state.skipped)).toBe('reflect');
@@ -382,17 +426,17 @@ describe('a cardless exercise · scan is skipped, and the run still finishes', (
  */
 describe('stepTransition', () => {
   it('is `stay` for the step you are already on', () => {
-    const state = startSession();
+    const state = startSession(PAPER);
     expect(stepTransition(state, 'intro')).toBe('stay');
   });
 
   it('is `next` for the step immediately after — which is what completes one', () => {
-    const state = startSession();
+    const state = startSession(PAPER);
     expect(stepTransition(state, 'scan')).toBe('next');
   });
 
   it('is `refuse` for a step two ahead of an unfinished one', () => {
-    const state = startSession();
+    const state = startSession(PAPER);
     expect(stepTransition(state, 'listen')).toBe('refuse');
     expect(stepTransition(state, 'reflect')).toBe('refuse');
   });
@@ -400,7 +444,7 @@ describe('stepTransition', () => {
   it('is `jump` for a step already completed', () => {
     /* Going back to re-read something must not undo it, which is why this is
        a jump rather than a NEXT run backwards. */
-    const state = sessionReducer(sessionReducer(startSession(), { type: 'NEXT' }), { type: 'NEXT' });
+    const state = sessionReducer(sessionReducer(startSession(PAPER), { type: 'NEXT' }), { type: 'NEXT' });
     expect(state.step).toBe('listen');
     expect(stepTransition(state, 'intro')).toBe('jump');
     expect(stepTransition(state, 'scan')).toBe('jump');
@@ -410,14 +454,14 @@ describe('stepTransition', () => {
     /* A cardless exercise goes intro → listen. `scan` is not the next step,
        it is not in the run at all — so Continue from intro is a NEXT to
        `listen`, not a refused jump. */
-    const state = startSession(['scan']);
+    const state = startSession(CARDLESS);
     expect(stepTransition(state, 'listen')).toBe('next');
     expect(stepTransition(state, 'scan')).toBe('refuse');
   });
 
   it('walks a whole cardless run without ever refusing a forward move', () => {
     /* The regression this pair of rules exists to prevent, end to end. */
-    let state = startSession(['scan']);
+    let state = startSession(CARDLESS);
     for (const target of ['listen', 'reflect'] as const) {
       expect(stepTransition(state, target)).toBe('next');
       state = sessionReducer(state, { type: 'NEXT' });
@@ -427,7 +471,7 @@ describe('stepTransition', () => {
   });
 
   it('walks a whole four-step run the same way', () => {
-    let state = startSession();
+    let state = startSession(PAPER);
     for (const target of ['scan', 'listen', 'reflect'] as const) {
       expect(stepTransition(state, target)).toBe('next');
       state = sessionReducer(state, { type: 'NEXT' });

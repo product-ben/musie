@@ -70,7 +70,14 @@ test('a deep link puts its card on the running session', async ({ page }, testIn
      case this assertion is really about: `listen` is unreachable from `intro`
      by the reachability rule, so a resolver that redirected without writing
      the step would be bounced straight back here and this would fail. */
-  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/listen$`), { timeout: 15_000 });
+  /* `listen(\?|$)`, NOT `listen$` — the listen step writes its own
+     `?overview` token on arrival (`lib/digitalCards.ts`, and the infographic
+     work that introduced it), by `replace`, so the address this lands on
+     carries it a frame later. Anchored on `listen$` this walk failed on
+     `main` for a reason that had nothing to do with the deep link. */
+  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/listen(\\?|$)`), {
+    timeout: 15_000,
+  });
 
   /* ── THE ROW ────────────────────────────────────────────────────────────
      By identity. The deep link chose the card, so "some card" would not be an
@@ -138,4 +145,91 @@ test('a deep link with nothing running holds the card and offers the library', a
      would look entirely correct on screen. */
   const after = (await db.from('sessions').select('id')).data?.length ?? 0;
   expect(after).toBe(before);
+});
+
+/**
+ * A DEEP LINK INTO A DIGITAL SESSION ENDS THE DIGITAL RUN.
+ *
+ * Ben, 2026-10-13, when the two could disagree: *Scan gewinnt*. Somebody turns
+ * the switch off because the deck is not to hand, then finds it — and the
+ * printed code is proof of that, where the switch was only an answer given
+ * before they went looking.
+ *
+ * WHAT MAKES IT MORE THAN A COLUMN. `sessions.digital_cards` decides which
+ * steps the run HAS (`20261014113500_view_and_select_are_steps.sql`), so a row
+ * left saying `true` would put this person on `listen` under a rail naming
+ * *Auswählen* — a step they never walked, offering the five cards the
+ * deterministic deal picked, which need not include the one in their hand.
+ * Asserted on the rail as well as on the row, because the rail is the part
+ * they would see.
+ *
+ * Only a walk can reach it: `ScanLink` is a resolver with no screen, and the
+ * disagreement is between a column it writes and a step list computed
+ * somewhere else entirely.
+ */
+test('a deep link into a digital session turns the mode off', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name as Locale;
+  test.setTimeout(120_000);
+
+  await withLocale(page, locale);
+  await reachTheLibrary(page, locale);
+  /* Named rather than taken by position: one Supabase stack, and a
+     maintenance UI that reorders this table is being built against it. */
+  await startExercise(page, locale, locale === 'de' ? 'Achtsame Pause' : 'Mindful Break');
+
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
+  const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
+  expect(sessionId).toBeTruthy();
+
+  /* THE SWITCH OFF — the run is digital from here, and the rail says so. */
+  const cards = page.getByRole('switch', {
+    name: label(locale, 'session.intro.cardsPresent'),
+  });
+  await expect(cards).toBeVisible({ timeout: 15_000 });
+  await cards.click();
+  await expect(cards).not.toBeChecked();
+
+  const rail = page.getByRole('navigation', { name: label(locale, 'session.wizardLabel') });
+  await expect(
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
+  ).toBeVisible();
+
+  /* ── AND THEN THE DECK TURNS UP ─────────────────────────────────────────
+     Cold, as a phone's camera app delivers it. The mode was never written to
+     the row before this point — `advance` writes it on the way out of
+     Einsteigen — so the loader has to read what the switch did, and this walk
+     would pass against a version that only looked at its own URL. */
+  await page.goto(`/s/${CARD.code}`);
+  /* `listen(\?|$)`, NOT `listen$` — the listen step writes its own
+     `?overview` token on arrival (`lib/digitalCards.ts`, and the infographic
+     work that introduced it), by `replace`, so the address this lands on
+     carries it a frame later. Anchored on `listen$` this walk failed on
+     `main` for a reason that had nothing to do with the deep link. */
+  await expect(page).toHaveURL(new RegExp(`/session/${sessionId}/listen(\\?|$)`), {
+    timeout: 15_000,
+  });
+
+  const db = service();
+  const { data: session } = await db
+    .from('sessions')
+    .select('card_id, track_id, step, digital_cards')
+    .eq('id', sessionId)
+    .single();
+
+  expect(session).toBeTruthy();
+  expect(session!.card_id).toBe(CARD.id);
+  expect(session!.track_id).toBe(CARD.track);
+  expect(session!.step).toBe('listen');
+  /* THE DECISION, on the row. */
+  expect(session!.digital_cards, 'the scan did not win').toBe(false);
+
+  /* THE RAIL THE PERSON IS LOOKING AT — the paper run's, four markers, naming
+     the step the scan actually finished. */
+  await expect(
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.scan')},`) }),
+  ).toBeVisible();
+  await expect(
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
+  ).toHaveCount(0);
+  await expect(rail.getByRole('button')).toHaveCount(4);
 });

@@ -102,7 +102,7 @@ import {
   answerParagraphs, durationMinutes, formatDateTime, formatShortDateTime, stepMessageKey,
 } from '../lib/diary';
 import { useTrackSource } from '../lib/audio';
-import { fromRoot } from '../lib/assets';
+import { contentImageUrl } from '../lib/assets';
 import type { DiaryEntryDetail, DiaryTrack } from '../lib/diary';
 import type { MessageKey } from '../i18n';
 
@@ -365,7 +365,7 @@ export function DiaryCard({ entry, headingLevel }: DiaryCardProps) {
         <figure className="musie-diary__card">
           <img
             className="musie-diary__card-art"
-            src={fromRoot(entry.cardImageUrl)}
+            src={contentImageUrl(entry.cardImageUrl)}
             alt=""
             width={768}
             height={562}

@@ -61,7 +61,7 @@ import { pickTranslation } from './content';
 import { isStepId } from '../routeHandle';
 import type { StepId } from '../routeHandle';
 import { INTL_LOCALES } from '../i18n';
-import type { Locale, MessageKey } from '../i18n';
+import type { Locale } from '../i18n';
 import { parseMarkdown, plainText } from './markdown';
 import type { SessionStatus } from './sessionMachine';
 import type { FeelingChange } from './session';
@@ -680,25 +680,19 @@ export function filterByStatus<T extends { status: DiaryStatus }>(
 export const FILTER_FROM_ENTRIES = 5;
 
 /**
- * The schema's step id, as a catalogue key.
+ * The schema's step id, as a catalogue key — RE-EXPORTED, not defined here.
  *
- * A fixed relation between two vocabularies that are deliberately NOT the
- * same one: `sessions.step` holds English slugs under a check constraint, and
- * the catalogue holds their display names per locale. Written once, here,
- * because both diary screens need it — and as a `Record<StepId, …>`, so
- * adding a fifth step to STEP_IDS fails the typecheck instead of rendering a
- * raw slug at somebody.
+ * It lived in this file, and in two more, until 2026-10-14: `routes/Exercises`
+ * and `routes/Session` each kept an identical copy, and widening `STEP_IDS` by
+ * two names produced three compile errors in three files. It now sits beside
+ * the ids it names (`routeHandle.ts`), which is the one file all three already
+ * import.
+ *
+ * The name stays exported from here because both diary screens ask this module
+ * for everything else they need, and an import list that reaches past it for
+ * one function would be a second place to look.
  */
-const STEP_MESSAGE_KEY: Record<StepId, MessageKey> = {
-  intro: 'session.step.intro',
-  scan: 'session.step.scan',
-  listen: 'session.step.listen',
-  reflect: 'session.step.reflect',
-};
-
-export function stepMessageKey(step: StepId): MessageKey {
-  return STEP_MESSAGE_KEY[step];
-}
+export { stepMessageKey } from '../routeHandle';
 
 /* ── Two URLs, both built here ────────────────────────────────────────────*/
 

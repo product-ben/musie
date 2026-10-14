@@ -148,3 +148,56 @@ this looks identical from the outside.
 **If it is ever removed**, it is three CSS rules and four type unions — and
 **never** `--target-comfort`, the token. `guided`'s multi-line height is
 `calc(var(--target-comfort) * 2)`, and two further rules use it directly.
+
+---
+
+## B6 · Take care of the alt texts — they have two homes and the app reads the wrong one
+
+**Ben, 2026-10-14: into the backlog.** Found while merging `main` into
+`digital-cards-build`, and verified on a factory database rather than on
+somebody's live edit.
+
+`MAINTENANCE-UI.md` §3.1 says the only translated thing left in the deck is an
+artwork's alt text, *"which moves to `artwork_i18n` where it belongs"*. The
+schema moved; the data and the readers did not.
+
+| | |
+|---|---|
+| `card_i18n.image_alt` | 18 rows after a reset — the nine descriptions, both locales. **What the app reads** |
+| `artwork_i18n.alt` | 0 non-null rows. **What `/maintenance` writes** |
+
+`20261014100100_maintenance_import.sql` L101-104 creates the `artwork_i18n`
+rows with a literal `null` and does not carry the column across.
+`public.project_deck()` projects `cards.image_url` and `exercise_tracks` from
+the grid — not alt text. And both readers that matter, `apps/web/src/lib/content.ts`
+and `apps/web/scripts/content-export.mjs` L152, select `card_i18n.image_alt`.
+
+**Three consequences, and the second is the bad one.**
+
+1. An operator who spends an afternoon describing nine pictures changes
+   `artwork_i18n.alt`, and no screen shows a word of it. Nothing errors, because
+   both rows exist.
+2. After an artwork upload the card shows the **new** picture with the **old**
+   card's description. Stale alt text, not missing alt text — a screen reader
+   is told something confidently wrong, which is worse than silence.
+3. `card_i18n` is scheduled to be dropped "once the live branches land"
+   (§3.1). The nine descriptions go with it.
+
+It lands hardest on the digital path, where a card fills the screen with
+nothing else on it: there the alt text *is* the card.
+
+**First move.** Three small pieces, in this order, because rule 9's
+`needs_cards` precedent says readers move before a column goes:
+
+- one `update public.artwork_i18n i set alt = (select c.image_alt from …)`
+  carrying the existing text across, in the migration that is already going to
+  drop `card_i18n`;
+- `content.ts` and `content-export.mjs` switch to the artwork's alt — the join
+  is already there for `image_url`;
+- then the drop.
+
+Not done on the digital-cards branch for two reasons worth keeping: writing
+`artwork_i18n` by hand is a content write through a door deliberately open only
+to the `content-admin` function, and putting it in a migration would be content
+travelling by migration, which rule 4.1 has just closed. The longer form, with
+the evidence, is in `apps/web/OPEN-QUESTIONS.md`.

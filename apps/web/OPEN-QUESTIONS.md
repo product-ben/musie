@@ -8729,6 +8729,7 @@ one id look like a resolution rather than a conflict. The four cards with no
 master (`mc-06` … `mc-09`) print from a screen-sized webp meanwhile, which the
 script already warns about on every run.
 
+
 ---
 
 # The documentation site — apps/docs, 2026-10-13
@@ -8965,3 +8966,535 @@ Why: an export whose output depends on which exercises happen to exist is an
 export that produces a diff on an unrelated change. Canonical beats
 familiar, once.
 What I need from Ben: **nothing, just flagging** the one-time diff.
+
+## Digital cards — three things that are Ben's, and one that is a map pretending to be a column
+
+Where: `apps/web/src/lib/digitalCards.ts` (`CARDS_DEALT`),
+`supabase/migrations/20261013192229_deck_update.sql`,
+`supabase/migrations/20261014074000_achtsame_pause_lays_out_five.sql`
+
+What I checked: `DIGITAL-CARDS.md` section 9 argues for `exercises.cards_dealt`
+— one column, read in one place, driving both digital shapes — and the
+argument is still right. It is not built.
+
+What I did: the number lives in a map in `lib/digitalCards.ts`, keyed by
+exercise id, with the whole reason in its header.
+
+Why: the three commands that would land a column are denied to me and belong
+to Ben (CLAUDE.md rule 9, `.claude/settings.json`). `supabase db reset`
+re-applies one branch's migrations over whatever another worktree is testing
+against; `pnpm gen:types` reads that shared database and writes into whichever
+branch is checked out. A column in an unapplied migration is a column
+`database.types.ts` does not have, so every screen reading it fails to
+typecheck — and hand-editing the generated file to pretend otherwise is how
+local and hosted drift apart in silence. `exerciseKind.ts` is the precedent for
+keeping a structural fact in the app, and it is a weaker precedent than I would
+like: a step set is about SCREENS, and how many cards an exercise lays out is
+about the exercise.
+
+What I need from Ben: **two commands, and then three lines of deletion.**
+
+```
+supabase db reset        # applies both migrations below
+pnpm gen:types           # regenerates database.types.ts
+pnpm test:db             # should go green — see below
+```
+
+**Until the first one runs, `pnpm test:db` has exactly one failure** and it is
+this branch's own content: *has the same feeling in both locales, and the same
+alt text* compares `deck.json` against the database, and the nine alt texts are
+in the file and not yet in Postgres. 141 of 142 pass, including the pairing
+check that now FAILS rather than logs (your 2026-10-14 answer). Verified.
+
+The two migrations are additive and neither is needed for the app to run: one
+writes alt text into `card_i18n`, the other repairs Achtsame Pause's intro copy
+(five cards, no `[X]`). Until they land, the grid names its pictures *Karte
+MC-01* through the `session.scan.cardFallbackAlt` key, which is written for
+exactly that gap.
+
+Then `cards_dealt` can become the column, and the map is deleted with its
+header.
+
+## Digital cards — the focus sheet is a stack at every width, and the wireframe is not
+
+Where: `apps/web/src/shell.css` (`.musie-immersive__card`)
+
+What I checked: the desktop sketch puts the chosen card on the leading side
+with the countdown and the transport beside it. What is built is the mobile
+stack at every width, larger where there is room.
+
+What I did: the stack, and said so in the stylesheet where the media query is.
+
+Why: the sheet's column is four siblings — lead, picture, clock, actions — and
+grouping two of them into a row needs either a wrapper element or named grid
+areas. A wrapper that existed only in digital mode would fork the DOM of a
+sheet every card and listening exercise shares, so the layout would become two
+layouts maintained in parallel; naming the areas needs a selector for the
+action row, and that row is a design-system component whose class `shell.css`
+must not reach for (rule 1, L7).
+
+What I need from Ben: **nothing blocking.** It is legible on a desktop and
+correct on the phone the exercise is actually done on. The honest fix is a
+two-slot middle in the new `Sheet` component, and it should wait for a second
+screen that needs one rather than be designed from this one.
+
+## Digital cards — the card artwork is re-encoded, and MC-01 is still two pictures
+
+Where: `apps/web/public/assets/web/cards/*.webp`,
+`~/Documents/musie-assets/cards/`
+
+What I checked: the digital flow shows a card full screen twice — the walk and
+the focus sheet — and `apps/web/docs/assets/cards.md` says in as many words
+that the 768px file is roughly 1.8× the largest slot it had and that anything
+larger needs a re-encode first.
+
+What I did: all nine re-encoded from the 1491 × 1055 masters at **1200px,
+quality 75** — 2.0 MB for the set against 0.9 MB, about 230 KB a card. 1491 at
+q80 was 4.1 MB and barely sharper on these grainy illustrations; 1024 saved
+little. The masters cap it at 1491 either way, so nothing here reaches 1× on a
+2× phone in landscape, and these are soft-edged gradients with no fine detail,
+where that costs least.
+
+**The crop changes slightly** — the masters are 1.413:1 against the old web
+copies' 1.366:1 — which is visible if you flip between an old and a new file.
+Nothing renders `cards.image_url` today except this feature, so nothing else
+moves.
+
+**MC-01 comes from `mc-01_alt.png`.** Your 2026-10-13 entry records that the
+master is red and teal while the web copy is blue and yellow, and asks which
+colourway MC-01 is. I did not answer it: `mc-01_alt.png` is the blue one, so
+the app ships the picture it already shipped, at a higher resolution. The
+print decision is untouched and the question stands.
+
+What I need from Ben: **the colourway decision, eventually** — and a look at
+one re-encoded card beside its master, because 1200/75 is my call and not a
+measured one.
+
+## Digital cards, round two — what the first look changed, and the one thing it did not
+
+Where: `packages/design-system/src/{Sheet,Dots,RadioImage}.tsx`,
+`apps/web/src/shell.css`, `apps/web/src/components/Session*.tsx`
+
+What I checked: Ben walked the built flow on 2026-10-14 and sent eleven
+corrections. Nine were layout and emphasis; two turned into components.
+
+What I did:
+
+- **`RadioImage`** — the card grid was an app-level `.musie-cardgrid` with the
+  component request logged beside it. Ben asked for the component on the day he
+  first saw the grid, so it is Layer 2 now, two columns then three from `30rem`
+  of the group's own width, and `shell.css` keeps none of its geometry.
+- **`Dots` has two tones**, `default` and `onMedia`, with a story that shows
+  the wrong pairing on purpose. The white row is `--on-surface-inverse` at two
+  opacities under one scrim shadow — nothing can be contrast-checked against an
+  arbitrary picture, so it does not pretend to.
+- **The sheet's foot hugs its label and sits at the trailing edge**, the
+  forward chevron is `primary` until the sheet's own CTA lights up (§7.8's rule
+  verbatim), paging is animated and asks about reduced motion in JavaScript
+  because a `scrollTo` with an explicit `behavior` overrides the stylesheet.
+- **The focus sheet is the wireframe's two-column row on a desktop** — the
+  deviation logged last night is gone.
+
+**Three defects came out of looking rather than out of a test**, which is the
+part worth keeping:
+
+1. **The current dot was invisible.** `Dots` READS `--musy-sel-fill` and the
+   sheet never set it, so the mark had `background-color: var(--undefined)`.
+   Nothing failed; the row simply had a hole in it.
+2. **The card was being cropped.** `object-fit: contain` on a box sized
+   `100% / 100%` looked right and was not — the grid item's `min-block-size:
+   auto` meant the maxima never bound, the picture kept its natural height and
+   was clipped at full width. `cover` by accident, on a flow whose whole
+   subject is the composition.
+3. **The container query was dead.** `@container` styles DESCENDANTS, and the
+   grid was asking about its own inline size, so the three-column rule could
+   never match. It needed the extra element that `.musy-rimage__grid` now is.
+
+**ANSWERED 2026-10-14.** Ben kept the dark field and asked for it to be
+carried through: *"then let's be consequent and color the gutter also in the
+dark gray."* So the surface moved from the PAGE to the SHEET —
+`.musy-sheet__field`, painted while the page under the chrome is a picture, and
+reaching past Lightbox's own insets to the viewport edge. A page cannot do
+that: it is inset by the sheet it sits in, which is why the first version left
+a sand frame around a dark picture.
+
+Two things came out of that, and both were found by looking:
+
+- **The field used the wrong token on one axis.** `--space-inset-card` was a
+  reasonable guess for the body's block padding and is one step smaller than
+  the truth — the popup's `padding-inline` and the immersive body's
+  `padding-block` are both `--space-inset-sheet`. It left an 8px sand sliver
+  along the top and bottom that no test could have seen.
+- **The paging chevrons were coloured for a surface.** `secondary` fills with
+  `--surface-raised`, and both disabled states fill with
+  `--interactive-primary-disabled` over `--on-surface-disabled` — pale blobs on
+  a dark field, and the disabled forward chevron on the last page was a grey
+  smudge. The sheet now re-tints its own chrome while it is over a picture: one
+  ink, `--on-surface-inverse`, the same the white dot row uses, and the
+  disabled state is dimmed to 45% rather than refilled, so it keeps the shape
+  of the row.
+
+**That re-tint is the one place in this package where a component reaches into
+another component's class**, and it is written down where it happens. The
+alternative is a `tone` axis on `IconButton` multiplying four variants by every
+state, for one consumer. If a second component ever puts controls on artwork it
+did not choose, that axis is the right answer and those four rules are what it
+should be built from.
+
+## The listen step's sheet was an app-level column, and that is why two sheets could not agree
+
+Where: `packages/design-system/src/Sheet.tsx`,
+`apps/web/src/components/SessionListen.tsx`, `apps/web/src/shell.css`
+(`.musie-immersive__body`)
+
+What I checked: Ben, 2026-10-14, after walking both sheets — *"the alignment of
+the header (incl. Hilf mir bitte) section and the next button is broken
+(regression) … the position of these elements must not change in the different
+modes. Build a new storybook component sheet for this and implement it
+everywhere where the sheet is used."*
+
+He is right about the cause and the cause is not a stray declaration.
+`/listen?focus` was `Lightbox surface="immersive"` with a hand-built flex
+column inside it (`.musie-immersive`, three children, `margin-block: auto` on
+the middle one), while the card walk was the new `Sheet`. Two screens arranging
+the same frame cannot promise that a header and a way-on sit in the same place,
+however carefully each is written — and the grid I added for the desktop row
+made the old column's five children fight, which is what he saw.
+
+What I did: `Sheet` grew a `header` slot and a single-body mode, and the listen
+step moved onto it. The sheet is three grid rows now — header `auto`, middle
+`minmax(0, 1fr)`, foot `auto` — so both corners are the component's promise in
+every variant. `.musie-immersive` is gone from `shell.css`; what is left is
+`.musie-immersive__body`, which arranges the two things the middle row holds.
+
+Two consequences worth naming:
+
+- **The foot is in flow rather than positioned.** Absolute put it in the right
+  place and ON TOP of the middle — fine over a full-bleed picture, wrong over a
+  countdown it would cover. A row cannot overlap what it is beside.
+- **The listen sheet's JSX is hoisted into two consts** (`focusHeader`,
+  `focusFoot`) rather than written inline in the props. Nothing inside them
+  moved; a hundred lines of commented JSX inside a prop is a hundred lines
+  nobody reads.
+
+Verified: `pnpm check`, the digital walk and the listen walk in both locales,
+and the whole English suite — six failures, the same six, all of them failing
+on `main` with no changes applied.
+
+What I need from Ben: **nothing on this.** One thing to know: `Sheet` now has
+two shapes and a slot that is optional, which is the point at which a component
+starts being able to be used wrongly. The story file covers header-over-a-walk
+and single-body, and the invariant to hold it to is the one he stated — open
+both, and the two corners must not move.
+
+## A picture that fills its container is a component, because twice in one week it was not
+
+Where: `packages/design-system/src/Image.tsx`, `apps/web/src/shell.css`
+
+What I checked: Ben, 2026-10-14 — *"when an image is placed inside a
+container, it must always fill the width of the container, if no max width is
+defined."* He sent it with a screenshot of Freie Bahn's drawn card running past
+the panel.
+
+The cause is worth writing down because it is not carelessness. A bare `<img>`
+is `inline` with `width: auto`, so it renders at its INTRINSIC size — 1200px
+for this deck's artwork — and any narrower container gets an overflow. The two
+declarations that prevent it (`display: block; inline-size: 100%`) had been
+written four separate times in this app, and `.musie-cardshow__art` lost its
+copy when a neighbouring block was deleted in the `RadioImage` move. Nothing
+errored. No test failed. It shows at some widths and not others.
+
+What I did: `Image`, Layer 2 — the fill rule, `block-size: auto` so the ratio
+is the picture's own, and `maxWidth` / `minWidth` as the two bounds with the
+cap defaulting to `100%`. It has a Storybook page including a story that draws
+a bare `<img>` beside it, labelled as the defect rather than as a variant.
+
+**No `object-fit`, deliberately**, and that is the line the component draws:
+fitting is what you do to a picture in a box of a FIXED SHAPE, and this
+component's premise is that the box follows the picture. The sheet's full-bleed
+card page is the other case and keeps its own two declarations — it is a
+picture told to fit a viewport, which is a different job.
+
+What I need from Ben: **nothing.** One thing for whoever is next: every
+remaining bare `<img>` in `apps/web` is a candidate — the exercise artwork on
+the library, the diary's card art, the listen step's infographic — and each one
+should be checked rather than converted in bulk, because a few of them are
+genuinely the fit-a-fixed-box case.
+
+## The sheet is in the address now, and the token belongs to the step
+
+Where: `apps/web/src/lib/digitalCards.ts` (`SHEET_OPEN`, `withToken`),
+`apps/web/src/routes/Session.tsx` (`sheetStep`)
+
+What I checked: Ben — *"when the sheet is pulled up, always expose it in the
+url (with ?focus)."* The same token the listen step has used for its own
+full-screen view since 2026-10-07.
+
+What I did: the card sheet's open state is `searchParams.has('focus')` rather
+than React state. Browser Back closes it, a reload keeps it open, and the walk
+asserts both.
+
+**Two things went wrong on the way, and both are in the code now:**
+
+1. **Both sheets opened at once.** The card sheet is mounted wherever there is
+   a hand, so `/listen?digitalcards&focus` drew the listening sheet AND the
+   card walk, with the walk on top. Sharing a token only works if the STEP
+   decides which sheet it means, and that has to be implemented rather than
+   asserted in a comment — `sheetStep` is where it is implemented. Found on a
+   screenshot taken for something else.
+2. **Composing two token helpers lost the first token's valuelessness.**
+   `URLSearchParams.toString()` writes a bare `?focus` back as `focus=`, so
+   `?digitalcards` became `?digitalcards=` the moment the second helper ran.
+   `.has()` answers both, so nothing broke — but an address saying
+   `?digitalcards=` invites the reading that a value is missing, and a flag has
+   no value to be missing. `withToken` rebuilds the pairs by hand now, and the
+   unit test names the defect.
+
+What I need from Ben: **nothing.** Worth knowing: `?focus` now means "a sheet
+is up" across three steps, and the fourth step to want a sheet will have to
+join that rule rather than mint a token.
+
+## Freie Bahn, tuned — and the rail says two words after all
+
+Where: `apps/web/src/routes/Session.tsx` (`DIGITAL_STEP`),
+`apps/web/src/components/SessionScan.tsx`,
+`packages/design-system/src/Image.tsx` (`expand`)
+
+What I checked: Ben, 2026-10-14, after running the built flow. Five changes to
+Freie Bahn in digital mode, and one of them revisits his own decision of the
+day before.
+
+What I did:
+
+- **The rail says *Ansehen*, with one picture rather than a stack.** On
+  2026-10-13 the tuning was that BOTH card exercises say *Auswählen*, and the
+  argument for it was that the rail must not invent a difference where there is
+  none. Seen running, there is one: Freie Bahn deals a single card and you do
+  not pick it, so *Auswählen* described an act that is not on the screen. The
+  tuning is not undone — the step ID is `scan` in both, and the word differs
+  exactly where the exercises do.
+- **The draw moved onto Einsteigen** as *Zufällige Karte ziehen*. The card is
+  then simply there when Auswählen arrives, which is what a drawn card is; the
+  previous shape asked for *Weiter* and then *Karte ziehen*, two presses for
+  one act. `pickCard` does it — the same write, re-read and advance that
+  choosing a picture does, with a hand of one and nobody choosing.
+- **Auswählen says its own two lines** — *Sieh dir deine Karte an* and *Atme
+  mindestens einmal aus und wieder ein, bevor du weitergehst.* — because the
+  exercise's own `scan_md` heading is *Wähle eine Karte aus*, which is the
+  other exercise's. Both go through `arrange` rather than into a markdown
+  string, so a `*` in chrome copy cannot arrive as emphasis.
+- **`Image` grew `expand`**: one secondary icon button at the top trailing
+  corner, inside the picture, off for every image and on here. It replaces the
+  third button in the step's action row — the only one of the three that was
+  about the picture above them rather than about the step. The label and the
+  handler travel as one object so the label cannot be half-passed, and the
+  handler takes the event because the sheet grows out of the rect of the
+  control that opened it.
+
+Two notes on the German, both §1: *Sieh* and not *Sehe* — the imperative of
+*sehen* takes the vowel change, as `session.cards.lead` already does with *sieh
+dir die fünf Karten an* — and *weitergehst* in one word.
+
+What I need from Ben: **nothing.** One thing to watch: `Image`'s DOM is now
+conditional — a bare `<img>` without `expand`, a wrapper with it — and the
+frame is `inline-block` with a `fit-content` cap so the control stays on the
+picture rather than drifting to the container's edge. Anything laying out
+against an `Image` that later gains the control will meet that wrapper.
+
+## An invisible layer over two working buttons
+
+Where: `packages/design-system/src/musy-components.css` (the `.musy-sheet`
+slot list), `apps/web/e2e/digitalcards.spec.ts`
+
+What I checked: Ben, 2026-10-14 — *"the 'Hilf mir bitte' and 'Pause' buttons in
+/listen?digitalcards=&focus aren't clickable anymore."*
+
+The cause, and it is mine from the day before. `.musy-sheet__field` — the
+surface painted behind a sheet whose page is a picture — is
+`position: absolute`, and a positioned element paints above STATIC siblings
+whatever the source order says. I lifted `pages`, `dots` and `foot` out from
+under it and did not lift `header` or `body`, which is where those two controls
+live. On the card walk nothing showed, because its content is `pages`. On the
+listen sheet the field is TRANSPARENT — that page is not a picture — so it
+covered two controls with nothing visible at all.
+
+What I did: the two missing selectors, and a comment naming the list as the
+trap. Written out rather than as `.musy-sheet > *:not(.musy-sheet__field)`,
+because that selector outranks `.musy-sheet__dots` on specificity and would
+quietly turn the dots' `absolute` back into `relative`.
+
+**And a guard that actually catches it.** The digital walk now trial-clicks
+both controls on the focus sheet: `click({ trial: true })` runs Playwright's
+actionability checks — visible, stable, enabled, and HIT-TESTABLE at the point
+it would press — and then does not press. Verified by taking the fix out again;
+the failure then names the cause in as many words,
+`.musy-sheet__field intercepts pointer events`.
+
+What I need from Ben: **nothing.** The lesson is the one worth keeping rather
+than the fix: a `toBeVisible` would have passed through the whole bug, and so
+would every screenshot. A transparent layer is only visible to a hit test.
+
+## `pnpm test:db` is red, and neither cause is on this branch
+
+Where: the shared local stack (CLAUDE.md rule 9),
+`apps/web/src/lib/db.sessions.db.test.ts`, `apps/web/src/lib/deck.db.test.ts`,
+and `../maintenance-ui/supabase/migrations/2026101410*.sql`
+
+What I checked: after the reset, `pnpm test:db` reports **2 failed | 140
+passed**. `supabase_migrations.schema_migrations` lists four applied versions
+that exist in no checkout I am working in —
+
+    20261014100000  maintenance_schema
+    20261014100100  maintenance_import
+    20261014100200  content_edits_cleanup
+    20261014100300  reorder_needs_a_where
+
+— all four from `../musie.worktrees/maintenance-ui`, all four stamped *after*
+`20261013192229_deck_update.sql`. One stack, one `db reset`, and the schema
+under both suites is now the union of two branches. Each failure traces to it:
+
+1. **`permits retiring a card, and keeps the entry it was part of`** fails at
+   `db.sessions.db.test.ts:587` — the *session* insert, not the delete the test
+   is about — with `23503`. `maintenance_schema` adds
+   `cards_code_shape check (code ~ '^MC-(0[1-9]|[1-9][0-9])$')` and
+   `cards_id_is_code check (id = lower(code))` to `public.cards`. The fixture
+   inserts `code: 'ZZ-99'`, that insert carries no assertion, so the card
+   silently never exists and the session's `card_id` has nothing to point at.
+2. **`has the same cards, with the same codes, artwork and order`** — the row
+   for `mc-07` carries `assets/web/cards/mc-04.webp`, where `deck.json` and
+   `20261013192229_deck_update.sql` both say `mc-07.webp`. `maintenance_schema`
+   puts `valence`, `arousal` and `archived_at` on `public.cards`, adds
+   `grid_cells` and `artworks`, and gives `project_deck()` the job of rewriting
+   `cards.image_url` from the grid. `mc-07` sits at cell `(0, 2)`, where there
+   is **no grid cell at all** — so the grid cannot even produce the value the
+   row holds, and it was written live through the UI being built against it.
+
+How I know it is not mine: I ran both files from the **main** checkout against
+the same stack. Main fails *harder* — `deck.db.test.ts` 3 of 4, and
+`db.sessions.db.test.ts` at the identical line 587 — because main has the
+maintenance schema applied without `20261013192229`. My branch's own migration
+is provably applied: `exercises.cards_dealt` reads 5 / 1 / null and
+`sessions.digital_cards` exists, which is what the 140 passing tests assert.
+
+What I did: **nothing to the database.** A `db reset` would re-apply this
+branch's migrations over whatever `maintenance-ui` is testing against — the
+trap rule 9 is written for, and the reason those commands are denied to me.
+
+What I need from Ben: a decision, and two separate things are true.
+
+- The `ZZ-99` fixture and `cards_code_shape` cannot both stand. That is the
+  maintenance branch's call, and it is **a test on `main` that their migration
+  breaks** — better said before that merge than discovered after it.
+- The deck test's premise is *"the database carries the deck in
+  `supabase/content/deck.json`"*. A maintenance UI that edits `cards`,
+  `grid_cells` and `artworks` makes that false by design. When it lands, that
+  test has to become "the grid carries the deck" or stop existing; it cannot
+  stay as it is and mean anything.
+
+
+## `maintenance.db.test.ts` ratchets the card order, and `deck.db.test.ts` pays for it
+
+Where: `apps/web/src/lib/maintenance.db.test.ts` (the reorder case),
+`apps/web/vitest.config.ts` (the `db` project), `public.admin_reorder_cards`
+
+What I checked: after merging `main` into `digital-cards-build`, `pnpm test:db`
+is **1 failed | 181 passed**, and the failure is `deck.db.test.ts` — *has the
+same cards, with the same codes, artwork and order*. The predicted cause was
+this branch's alt text disagreeing with the snapshot. **It is not that.** The
+alt-text case and the pairing case both pass; the only disagreement is the
+ORDER, and the live deck reads
+
+    mc-02:1 mc-01:2 mc-03:3 … mc-09:9
+
+Run alone, with no other file touching the database, it fails the same way. So
+this is not a race between files — it is a write left in the shared database.
+
+The reorder case swaps the first two cards, asserts, and puts the deck back:
+
+```ts
+const swapped = [...ids]; [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
+await service.rpc('admin_reorder_cards', { …, p_ids: swapped });   // asserted
+await service.rpc('admin_reorder_cards', { …, p_ids: ids });       // not
+```
+
+`ids` is read from the database **at the start of the run**. So the restore
+does not restore a known-good order — it restores *whatever the order was when
+the test started*. The first run that ended between those two calls made the
+swap permanent, and every run since has faithfully put the swap back. A
+ratchet, and the second call's error is unchecked, so a failure there is
+invisible.
+
+Two things make it worse than a stale row: `admin_reorder_cards` parks every
+card at `sort + 1000` in the middle of its work, and the `db` project sets no
+`fileParallelism: false`, so eleven files run in parallel threads against one
+Postgres — a sibling reading `cards` ordered by `sort` can see the parked deck
+as well as the swapped one. One Postgres behind nine worktrees (rule 9): the
+cost is paid by whoever runs `pnpm test:db` next, in a file they did not touch.
+
+What I did: **nothing to the database.** The repair is a content write to a
+shared stack, and `supabase db reset` is denied to this session for the reason
+rule 9 gives. A reset puts the factory order back and the test passes with no
+export needed — the merged `deck.json` already agrees with the database on
+everything else, alt text included.
+
+What I need from Ben: the reset (or one reorder through `/maintenance`), and
+then a decision that is the maintenance branch's, not this one's — the restore
+should name the order it wants rather than echoing what it read, and its error
+should be asserted. As written, the suite cannot tell a broken restore from a
+working one.
+
+**Verified after the reset, 2026-10-14.** Ben ran `supabase db reset` from this
+worktree. `pnpm test:db` is **182 passed, 11 files, no failures** — the first
+fully green run of the merged suite — and it left the deck at `mc-01:1 … mc-09:9`.
+
+So the ratchet is LATENT, not constant: from a correct starting order the
+restore echoes a correct order and the deck survives the suite. It bites once,
+when a run ends between the swap and the restore, and then never heals, because
+every later run reads the swapped order as the one to put back. That is worse
+than a constant failure, not better — it is invisible until somebody merges and
+cannot reproduce it. The two-line fix is unchanged: name the order, assert the
+restore.
+
+## Alt text has two homes now, and the app reads the one that is scheduled to be dropped
+
+Where: `supabase/migrations/20261014100100_maintenance_import.sql` L101-104,
+`public.project_deck()`, `apps/web/src/lib/content.ts`,
+`apps/web/scripts/content-export.mjs` L152, `MAINTENANCE-UI.md` §3.1
+
+What I checked: §3.1 says the only translated thing left in the deck is an
+artwork's alt text, *"which moves to `artwork_i18n` where it belongs"*. The
+move has not happened in the data:
+
+| | |
+|---|---|
+| `card_i18n.image_alt` | the nine descriptions this branch wrote, present in both locales |
+| `artwork_i18n.alt` | **null**, in both locales, for all nine |
+
+The import creates the `artwork_i18n` rows with a literal `null` and does not
+carry `card_i18n.image_alt` across. `project_deck()` projects
+`cards.image_url` and `exercise_tracks` from the grid — not alt text. And both
+readers that matter, `content.ts` and `content-export.mjs`, select
+`card_i18n.image_alt`.
+
+So the table the maintenance UI WRITES is not the table the app READS. An
+operator who types alt text at `/maintenance` changes `artwork_i18n.alt`, and
+every screen keeps showing `card_i18n.image_alt` — with no error anywhere,
+because both rows exist. And when `card_i18n` is dropped (§3.1 schedules it for
+"once the live branches land"), the nine descriptions go with it.
+
+This lands hardest on the digital path, which is the only place a card is shown
+full screen with nothing else on the page: there, the alt text IS the card for
+anybody using a screen reader.
+
+What I did: nothing. Writing alt text into `artwork_i18n` by hand would be a
+content write to a shared database through a door that is deliberately only
+open to the `content-admin` function, and copying it in a migration would be
+content travelling by migration — which rule 4.1 has just closed.
+
+What I need from Ben: whichever of the two is meant to be true. If
+`artwork_i18n` is the home, the import should carry the column across and the
+readers should follow before `card_i18n` is dropped — one `update … from` and a
+select each. If `card_i18n.image_alt` stays the home until the readers move,
+then the maintenance screen's alt-text field is writing to a column nothing
+reads today, and that is worth knowing before an operator spends an afternoon
+describing nine pictures.

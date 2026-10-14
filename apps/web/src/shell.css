@@ -1922,30 +1922,27 @@ html[data-musy-scroll-snap] {
    What the step's full-screen sheet holds, from the top: the exercise's own
    words, the minimum time, and the two controls.
 
-   A PERMITTED CUSTOM PATTERN (L14), and a narrow one. The FRAME is the design
-   system's — `Lightbox surface="immersive"` owns the scrim, the edge-to-edge
-   surface, the clip that opens out of the control and the insets, because a
-   screen styling a panel popup into a full-screen one is reaching into a
-   component's geometry (L7, rule 1). What is left here is the ARRANGEMENT of
-   this step's three things inside the single element the sheet hands over, and
-   the system has no component for that. Every declaration resolves to a Layer 1
-   token or to a keyword (L14.1); the classes are `musie-` (L14.2); a second
-   screen wanting this column is a component request (L14.3).
+   ── THE COLUMN IS GONE, AND SO IS THE ARGUMENT FOR IT — 2026-10-14 ──────
+   `.musie-immersive` was a three-child flex column with `margin-block: auto`
+   on the middle one, written as a permitted L14 pattern with a note saying a
+   second screen wanting it would be a component request. The card walk was
+   that second screen, and `Sheet` is the component: it owns the header row,
+   the middle, the foot and the frame, so the header and the way on sit in the
+   same place in both sheets — which is what Ben asked for and what no amount
+   of care in two separate screens can actually promise.
 
-   ── THE MIDDLE TAKES THE SLACK ──────────────────────────────────────────
-   Three children and `margin-block: auto` on the middle one, rather than
-   `justify-content: space-between` on the column. The difference shows on a
-   short screen: `space-between` distributes what is left between all three
-   gaps, so a 568px landscape phone gets the instruction, a figure a third of
-   the way down and the buttons — none of them where the design puts them. An
-   auto margin takes the remainder and collapses to the gap when there is none,
-   so the order degrades to a plain stack instead of to a different layout.
+   WHAT IS LEFT HERE is the MIDDLE row's own arrangement — the card beside the
+   clock — plus the typography of the step's own parts, which were always the
+   screen's. Every declaration resolves to a Layer 1 token or to a keyword
+   (L14.1); the classes are `musie-` (L14.2).
 
-   The column gets its full height from the component (`:only-child` inside
-   `.musy-lightbox__body`); what it does with it is here.                    */
-.musie-immersive {
+   The auto-margin paragraph that used to be here described a box this file no
+   longer draws; the slack is the sheet's middle row now, and `minmax(0, 1fr)`
+   in `musy-components.css` is where it is taken.                           */
+.musie-immersive__body {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--space-gap-stack);
 }
 
@@ -2345,4 +2342,212 @@ html[data-musy-scroll-snap] {
   gap: var(--space-gap-group);
   margin-block-start: var(--space-gap-group);
   margin-block-end: var(--space-gap-group);
+}
+
+/* ═══ DIGITAL CARDS ═════════════════════════════════════════════════════════
+   `DIGITAL-CARDS.md`. The switch on Einsteigen, the hand as a grid on
+   Auswählen, and the card beside the music on the focus sheet.
+
+   A PERMITTED CUSTOM PATTERN (L14), and the boundary is the same one the rest
+   of this file keeps: the SHEET is the design system's — `Sheet` owns the
+   frame, the paging, the dots, the chevrons and the foot's geometry, because a
+   screen cannot set `scroll-snap-type` on another component's scroll container
+   (rule 1, L7). What is left here is what a page HOLDS and how this screen's
+   own grid is laid out, and the system has no component for either. Every
+   declaration resolves to a Layer 1 token or to a keyword (L14.1); the classes
+   are `musie-` (L14.2); a second screen wanting the grid is a component
+   request (L14.3, and section 7.2 of the PRD says so in as many words).      */
+
+/* ── THE SWITCH, AND THE LINE THAT REPLACES THE COPY IT HID ──────────────── */
+.musie-intro__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  /* The same block rhythm as `.musie-intro__questions` above: the switch sits
+     between the headline and the body copy, so it owns the space on both
+     sides rather than borrowing either neighbour's margin. */
+  margin-block: var(--space-gap-group);
+}
+
+/* The sentence that stands where an instruction about paper used to. Body ink
+   rather than muted: it is the step's own copy now, not a caption on it. */
+.musie-intro__note {
+  margin: 0;
+  color: var(--on-surface);
+}
+
+/* ── "YOUR SCREEN IS SMALL", BELOW 850px ──────────────────────────────────
+   Drawn by the step whenever the cards are not on the table, and taken away
+   here. A media query rather than a measurement in React: the width is a
+   presentational condition, and a component asking `matchMedia` for it buys a
+   resize listener, a first paint that guesses and a branch to test — for a
+   sentence that appears and disappears with the window.
+
+   `display: none` rather than `visibility` or a class the component omits, so
+   it leaves the accessibility tree as well: above this width the sentence is
+   not quiet, it is untrue.
+
+   ── 850px IS BEN'S NUMBER AND IS NOT A TOKEN ───────────────────────────
+   Deliberately between `--bp-md` (768, "tablet portrait") and `--bp-lg`
+   (1024, "tablet landscape"), so it is neither. It is a judgement about where
+   a hand of five pictures and a full-screen card stop having room, made at a
+   window rather than derived from the scale — which is also why it is written
+   as a literal with this paragraph beside it rather than rounded to the
+   nearest token and quietly made wrong.
+
+   ONE THING IT GETS WRONG, and it is logged rather than fixed: an iPad in
+   portrait is 768–834px, so it sees a sentence recommending a tablet. The
+   copy and the threshold disagree by about 80px.                           */
+.musie-intro__small {
+  margin: 0;
+  color: var(--on-surface-muted);
+}
+
+@media (min-width: 850px) {
+  .musie-intro__small { display: none; }
+}
+
+/* ── THE HAND ─────────────────────────────────────────────────────────────
+   GONE FROM HERE — 2026-10-14. `.musie-cardgrid` was an L14 pattern with the
+   component request logged beside it, exactly as §7.2 of `DIGITAL-CARDS.md`
+   proposed. Ben asked for the component on the day the grid was first seen, so
+   it is `RadioImage` in the design system now and this file keeps none of its
+   geometry. The request and its answer are both in `OPEN-QUESTIONS.md`.      */
+
+/* ── ONE CARD, SHOWN ──────────────────────────────────────────────────────
+   Freie Bahn's drawn card on the step itself. Capped at the reading measure so
+   it does not become a poster on a wide window.                             */
+/* ── ONE CARD, SHOWN AT THE PANEL'S OWN WIDTH ─────────────────────────────
+   NO CAP — Ben, 2026-10-14. It was capped at `--measure-body`, which is a
+   READING measure: the right bound for a line of text and the wrong one for a
+   picture, which is not read. The panel is already capped (the session route
+   is `wide`, 980px), so "fill the container" has a bound; it is just not this
+   element's to invent.
+
+   The picture itself needs no declaration for it — `Image` fills its container
+   by default, which is the whole of that component. */
+.musie-cardshow {
+  margin-block: var(--space-gap-group) 0;
+  margin-inline: 0;
+}
+
+.musie-cardshow__art {
+  border-radius: var(--radius-md);
+}
+
+/* ── WHAT A SHEET PAGE HOLDS ──────────────────────────────────────────────
+   The sheet gives a page the whole surface and centres its content; these two
+   say what goes in it. The picture is `contain` rather than `cover`: a card is
+   a composition, and cropping one to fill a phone's portrait aspect would cut
+   off the half the exercise asks you to look at.                            */
+.musie-cards__lead {
+  padding-inline: var(--space-inset-sheet);
+  /* Clear of the dots rail, which the sheet pins to the inline start. */
+  padding-inline-start: calc(var(--space-inset-sheet) * 2 + var(--target-min));
+  max-inline-size: var(--measure-body);
+  font: var(--type-heading-md-font, inherit);
+  font-size: var(--type-heading-md-size);
+  line-height: var(--type-heading-md-line);
+}
+
+.musie-cards__lead p {
+  margin: 0;
+}
+
+/* The card, centred on the page. THE DARK FIELD IS NOT HERE ANY MORE — it is
+   `.musy-sheet__field`, which reaches past Lightbox's insets to the viewport
+   edge, so the gutter is part of the same surface instead of a sand frame
+   around a dark one (Ben, 2026-10-14). A page that painted its own background
+   could never do that: it is inset by the sheet it sits in. */
+.musie-cards__media {
+  display: grid;
+  /* `minmax(0, 1fr)` ON BOTH AXES, and it is load-bearing rather than tidy.
+     A grid item's `min-block-size` defaults to `auto`, which means "never
+     smaller than my content" — so the picture below kept its natural height,
+     outgrew the page and was clipped at full width, which is `cover` arrived
+     at by accident. The same trap `.musy-lightbox__body` documents on the
+     other axis, and the same fix. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+/* CONSTRAINED, NOT FITTED. `object-fit: contain` on a box sized `100% / 100%`
+   looked right and was not: the percentage block size did not resolve against
+   the page, the height fell back to the picture's own, and the card was
+   clipped top and bottom at full width — which is `cover` by accident, and
+   `cover` is the one thing this flow cannot do, because the composition IS the
+   exercise. Two maxima and auto sizing cannot overflow whatever the page
+   turns out to be. */
+.musie-cards__art {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  inline-size: auto;
+  block-size: auto;
+  /* See the grid above: without these the maxima never bind. */
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+/* ── THE CARD ON THE FOCUS SHEET ──────────────────────────────────────────
+   The fourth child of `.musie-immersive`, between the question and the clock.
+   It takes the slack the clock's auto margin used to take alone, so on a short
+   screen the picture yields before the countdown does — the countdown is the
+   thing that must stay legible.                                             */
+/* ── THE CARD ON THE FOCUS SHEET ──────────────────────────────────────────
+   The fill rule and the cap are `Image`'s now; what is left here is where it
+   sits and how tall it may get.
+
+   ── THE HEADLINE IS ITS ANCHOR, AT EVERY WIDTH — Ben, 2026-10-14 ────────
+   `margin-inline: auto` centred it, and the desktop grid then overrode that
+   with `justify-self: start` — so the picture was left-aligned on a wide
+   window and centred on every other, which is the one thing a picture under a
+   left-aligned headline must not do. The auto margin is gone; `align-self`
+   keeps it at the leading edge in the column too, where a flex item would
+   otherwise stretch.
+
+   THE BLOCK CAP STAYS, bounded by the viewport rather than by the picture's
+   own ratio: on a landscape phone the sheet is 390px tall and an unbounded
+   picture would push the clock off the bottom. `block-size: auto` from the
+   component plus a `max-block-size` here means the ratio holds and the height
+   is what yields. */
+.musie-immersive__card {
+  align-self: start;
+  max-block-size: calc(var(--viewport-block) * 0.4);
+  border-radius: var(--radius-md);
+}
+
+/* ── THE DESKTOP TWO-COLUMN ROW — Ben, 2026-10-14 ─────────────────────────
+   The picture on the leading side and the countdown beside it, once there is
+   width for both. Below that width it is the column above, which is the phone
+   the exercise is actually done on.
+
+   TWO CHILDREN, SO TWO COLUMNS, and that is all this rule has to say now. It
+   used to live on the whole sheet and had to defend itself against five
+   siblings — the question, the help row and the action row kept being
+   auto-placed into corners. Those three belong to the sheet's header and foot
+   rows since the step moved onto `Sheet`, so what is left in this box is
+   exactly the pair the wireframe draws side by side.
+
+   `:has(.musie-immersive__card)` GUARDS IT, so a paper run and every listening
+   exercise keep the plain column: no card, no grid.                         */
+@media (min-width: 60rem) {
+  .musie-immersive__body:has(.musie-immersive__card) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    /* Both halves centred against each other, so the countdown reads as the
+       other half of a pair rather than as a caption under the picture. */
+    align-items: center;
+    column-gap: var(--space-gap-group);
+  }
+
+  .musie-immersive__body:has(.musie-immersive__card) .musie-immersive__card {
+    /* A little taller where the row is half the width. The leading edge is
+       the base rule's and needs no restating. */
+    max-block-size: calc(var(--viewport-block) * 0.5);
+  }
+}
 }

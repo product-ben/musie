@@ -20,9 +20,33 @@
  *
  * `--musy-sel-fill` is READ, NOT SET. It is the host component's selected
  * colour — the Carousel sets it per accent — so the dots take the colour of
- * whatever they are the position row for.
+ * whatever they are the position row for. A host that forgets it gets a
+ * CURRENT MARK WITH NO FILL, which is an invisible dot and a position row with
+ * a hole in it. `.musy-sheet__dots` sets it; so does the Carousel.
+ *
+ * ── TWO TONES, AND WHICH ONE IS A QUESTION ABOUT THE BACKGROUND ───────────
+ * `default` is the green row: marks in `--border-strong`, the current one in
+ * the host's selected colour. It needs a SURFACE under it — a card, a panel,
+ * the page — where those two tokens were contrast-checked.
+ *
+ * `onMedia` is the white row, for dots that sit ON TOP OF A PICTURE. Nothing
+ * can be contrast-checked against an arbitrary photograph, so this one does
+ * not try: the marks are `--on-surface-inverse` and carry a soft scrim shadow,
+ * which is the pairing that survives a pale sky and a dark forest in the same
+ * deck. Ben, 2026-10-14, from the card sheet, where the first page is copy on
+ * a surface and the five after it are full-bleed artwork — so the row changes
+ * tone as you move through it.
+ *
+ * USE `default` EVERYWHERE ELSE. A white row on a surface is invisible, and
+ * the green one over a picture is the thing this variant exists to stop.
  */
 import * as React from 'react';
+
+/**
+ * Where the row is drawn, which decides what it is drawn in.
+ * `default` — on a surface. `onMedia` — on top of a picture.
+ */
+export type DotsTone = 'default' | 'onMedia';
 
 export interface DotsProps {
   /** How many marks. */
@@ -47,12 +71,22 @@ export interface DotsProps {
   onSelect?: (index: number) => void;
   /** Stable keys, so a mark survives a reorder. Falls back to the position. */
   ids?: readonly string[];
+  /** See the header. `default` on a surface, `onMedia` over a picture. */
+  tone?: DotsTone;
   className?: string;
 }
 
-export function Dots({ total, index, label, onSelect, ids, className }: DotsProps) {
+export function Dots({
+  total, index, label, onSelect, ids, tone = 'default', className,
+}: DotsProps) {
   const marks = Array.from({ length: total }, (_, i) => i);
-  const classes = ['musy-dots', className ?? ''].filter(Boolean).join(' ');
+  /* The class is only emitted for the non-default tone, so every existing
+     row is byte-identical to what it rendered before this prop existed. */
+  const classes = [
+    'musy-dots',
+    tone === 'onMedia' ? 'musy-dots--on-media' : '',
+    className ?? '',
+  ].filter(Boolean).join(' ');
 
   if (onSelect === undefined) {
     return (

@@ -70,24 +70,33 @@ describe('the database carries the deck in supabase/content/deck.json', () => {
 
   it('has a real recording behind every pairing', async () => {
     /* The foreign key already guarantees the track ROW exists. This is the
-       other half: `tracks.src` is null for a card with no audio yet, which is
-       ordinary and is reported rather than failed — five of nine are silent by
-       design, and the listen step runs a simulated clock for them. */
+       other half: whether the row has a FILE.
+
+       ── IT FAILS NOW, WHERE IT USED TO LOG — Ben, 2026-10-14 ──────────────
+       This was a `console.info` and a green run, and the comment said "five of
+       nine are silent by design". Both were true while a PERSON drew the
+       cards: a silent card was the deck's state of the world, and the listen
+       step runs a simulated clock for it rather than breaking.
+
+       Two things changed. `20261002153212` remapped mc-06…mc-09 off the four
+       tracks whose files never landed and onto the four that did, so nothing
+       is silent today — and digital mode means **Musie deals the cards**
+       (`DIGITAL-CARDS.md` section 5.2). A pairing with no file is now our
+       choice rather than the deck's luck, and it is dealt to somebody who had
+       no say in which cards they were offered.
+
+       THE COST IS NAMED RATHER THAN DISCOVERED: a tenth card added before its
+       recording lands turns this red. That is the point. Either point it at a
+       track that plays, as the remap did, or land the recording — a card the
+       app hands over should make a sound. */
     const { data, error } = await service.from('tracks').select('id, src');
     expect(error).toBeNull();
 
-    const silent = new Set((data ?? []).filter((track) => track.src === null).map((t) => t.id));
-    const quiet = expected.exercise_tracks.filter((pair) => silent.has(pair.track_id));
-    if (quiet.length > 0) {
-      console.info(
-        `[deck] ${quiet.length} pairings play a track with no file yet: ` +
-          `${[...new Set(quiet.map((pair) => pair.track_id))].sort().join(', ')}`,
-      );
-    }
-
-    const missing = expected.exercise_tracks.filter(
-      (pair) => !(data ?? []).some((track) => track.id === pair.track_id),
-    );
-    expect(missing).toEqual([]);
+    const withFile = new Set((data ?? []).filter((track) => track.src !== null).map((t) => t.id));
+    const silent = expected.exercise_tracks.filter((pair) => !withFile.has(pair.track_id));
+    expect(
+      silent.map((pair) => `${pair.card_id ?? 'no card'} plays ${pair.track_id}`),
+      'a dealt card with no recording behind it',
+    ).toEqual([]);
   });
 });
