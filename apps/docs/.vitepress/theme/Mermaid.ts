@@ -107,55 +107,77 @@ export default defineComponent({
     const error = ref('');
     const { isDark } = useData();
 
+    /** One retry, then the error. See `render` below for why. */
+    async function draw(): Promise<void> {
+      /* ── WAIT FOR THE FONT. This is not politeness, it is correctness ──
+         Mermaid sizes every box and every table column by MEASURING its
+         label, once, at render time. Onest is a webfont, so a render that
+         happens first measures the fallback — which is narrower — and the
+         real face then overflows the box it was given.
+
+         What that looks like: `uuid` drawn as `uuic`, `RESTRICT` as
+         `RESTRIC`, every cell in the ER diagram clipped by a character or
+         two. Measured on the data-model page; the geometry was right and
+         every label was a few pixels too wide for it.
+
+         `document.fonts.ready` resolves once the faces in use have loaded.
+         The `catch` matters: in a browser without the Font Loading API this
+         must still draw, slightly wrong, rather than not at all. */
+      await document.fonts?.ready?.catch?.(() => undefined);
+
+      /* Lazy, and the only reason mermaid is not in the main bundle. */
+      const { default: mermaid } = await import('mermaid');
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
+        themeVariables: {
+          ...(isDark.value ? DARK : LIGHT),
+          fontFamily: 'Onest, ui-sans-serif, system-ui, sans-serif',
+          fontSize: '15px',
+        },
+        /* useMaxWidth: FALSE, so mermaid reports the size the diagram was
+           LAID OUT at rather than pre-scaling it into the column. The
+           scaling is then the stylesheet's job — `fitToViewBox` turns that
+           layout size into the element's intrinsic width and height, and
+           `max-width: 100%` scales it with its aspect ratio intact.
+           Measured: with `true`, the ER diagram's type came out at about
+           three pixels. */
+        flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: false },
+        sequence: { useMaxWidth: false },
+        er: { useMaxWidth: false },
+        stateDiagram: { useMaxWidth: false },
+      });
+      const { svg: out } = await mermaid.render(`mmd-${++seq}`, decode(props.code));
+      svg.value = fitToViewBox(out);
+      error.value = '';
+    }
+
+    /**
+     * Draw, and retry once.
+     *
+     * Two unrelated things can fail here and they deserve different
+     * treatment. A diagram that will not PARSE fails identically every time,
+     * and must say so on the page — silently rendering nothing is how a broken
+     * diagram survives a review. But mermaid arrives as a lazy chunk, and so
+     * does its layout engine, so a flaky connection produces `Failed to fetch
+     * dynamically imported module` for a file that is served perfectly well.
+     * Seen once on a phone, against a URL that answers 200.
+     *
+     * A permanent error panel is the wrong answer to a dropped request, so
+     * the first failure is retried after a moment. The second is reported.
+     */
     async function render(): Promise<void> {
       try {
-        /* ── WAIT FOR THE FONT. This is not politeness, it is correctness ──
-           Mermaid sizes every box and every table column by MEASURING its
-           label, once, at render time. Onest is a webfont, so a render that
-           happens first measures the fallback — which is narrower — and the
-           real face then overflows the box it was given.
-
-           What that looks like: `uuid` drawn as `uuic`, `RESTRICT` as
-           `RESTRIC`, every cell in the ER diagram clipped by a character or
-           two. Measured on the data-model page; the geometry was right and
-           every label was a few pixels too wide for it.
-
-           `document.fonts.ready` resolves once the faces in use have loaded.
-           The `catch` matters: in a browser without the Font Loading API this
-           must still draw, slightly wrong, rather than not at all. */
-        await document.fonts?.ready?.catch?.(() => undefined);
-
-        /* Lazy, and the only reason mermaid is not in the main bundle. */
-        const { default: mermaid } = await import('mermaid');
-        mermaid.initialize({
-          startOnLoad: false,
-          securityLevel: 'strict',
-          theme: 'base',
-          themeVariables: {
-            ...(isDark.value ? DARK : LIGHT),
-            fontFamily: 'Onest, ui-sans-serif, system-ui, sans-serif',
-            fontSize: '15px',
-          },
-          /* useMaxWidth: FALSE everywhere, which is the opposite of mermaid's
-             default and is the point. `true` scales a wide diagram DOWN to the
-             content column — the fourteen-table ER diagram rendered at about
-             3px of type, which is a picture of a diagram rather than one. With
-             it off the SVG keeps its natural size and `.mermaid-figure`
-             scrolls sideways instead (theme/style.css). A diagram narrower
-             than the column is unaffected. */
-          flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: false },
-          sequence: { useMaxWidth: false },
-          er: { useMaxWidth: false },
-          stateDiagram: { useMaxWidth: false },
-        });
-        const { svg: out } = await mermaid.render(`mmd-${++seq}`, decode(props.code));
-        svg.value = fitToViewBox(out);
-        error.value = '';
-      } catch (cause) {
-        /* A diagram that will not parse must say so on the page. Silently
-           rendering nothing is how a broken diagram survives a review. */
-        error.value = cause instanceof Error ? cause.message : String(cause);
-        svg.value = '';
+        await draw();
+      } catch {
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          await draw();
+        } catch (cause) {
+          error.value = cause instanceof Error ? cause.message : String(cause);
+          svg.value = '';
+        }
       }
     }
 
