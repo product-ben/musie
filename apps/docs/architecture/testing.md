@@ -7,7 +7,7 @@ needs a database, one needs a browser. Only the first is in `pnpm check`.
 |---|---|---|---|---|
 | unit | `pnpm test` | 37 + 3 + 2 | nothing | **yes** |
 | database | `pnpm test:db` | 10 | the local stack | no |
-| end-to-end | `pnpm test:e2e` | 7 specs | a browser + the stack | no |
+| end-to-end | `pnpm test:e2e` | 8 specs | a browser + the stack | no |
 
 852 unit tests pass in about a second — 524 in `apps/web`, 51 in
 `@musie/voice`, 277 in `apps/docs`.
@@ -132,8 +132,9 @@ returns are asserted in the db test.
 
 ## End-to-end
 
-Playwright, `apps/web/e2e/`. Seven specs: `session`, `listen`, `reveal`,
-`cancel`, `resume`, `scanlink`, `camera`, plus a WebKit-only capture spec.
+Playwright, `apps/web/e2e/`. Eight specs — `session`, `listen`, `reveal`,
+`cancel`, `resume`, `scanlink`, `camera` and a WebKit-only `capture` — holding
+13 tests, across three projects (`en`, `de`, `webkit`).
 
 - It starts the dev server itself and **reuses one already on :5173** — which
   is a hazard, not a feature, when another worktree is serving that port

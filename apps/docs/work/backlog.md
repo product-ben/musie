@@ -98,8 +98,10 @@ act on the pair. Lands in `apps/web/src/lib/mixer.ts`.
 
 ## B3 · the browser walk runs nowhere, and that is the real problem
 
-Nine specs, 14 tests, three browser projects — **42 test runs that currently
-execute in no place at all.**
+`BACKLOG.md` counts nine specs, 14 tests and three browser projects — **42
+test runs that currently execute in no place at all.** The tree today holds
+eight specs and 13 tests, so it is 39 runs; the argument is unchanged and the
+number is not the point.
 
 - **Not locally.** `.env.local` points the browser at hosted while the
   assertions read the local stack, and `e2e/support.ts` refuses: *"This walk
@@ -123,8 +125,8 @@ locale.
 2. **Wire it into CI** with `supabase/setup-cli` plus `supabase start` on the
    runner — the gap rule 4 already names. Real coverage; a few minutes per run,
    and Actions are free here.
-3. **Delete it**, if neither is worth it. **42 test runs that never run are
-   worse than none, because they read as coverage.**
+3. **Delete it**, if neither is worth it. **Test runs that never run are worse
+   than none, because they read as coverage.**
 
 ## B4 · `db:status` from an unlinked worktree
 

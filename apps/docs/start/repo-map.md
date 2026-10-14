@@ -78,7 +78,7 @@ apps/web/                 the app
     lib/                  55 modules + their tests
     i18n/                 en.ts, de.ts, and the resolution
     content/
-  e2e/                    7 Playwright specs + the fakes
+  e2e/                    8 Playwright specs + the fakes
   scripts/                deck-migration, deck-pdf, music-upload, music-migration, qr-codes
   docs/assets/
 apps/docs/                this site

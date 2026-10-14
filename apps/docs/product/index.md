@@ -123,7 +123,7 @@ it.**
 | Database | Supabase, Frankfurt. 41 migrations, 17 tables, RLS on all of them |
 | Languages | DE + EN, complete, switchable with no reload |
 | Design system | 32 components, 358 stories, published Storybook |
-| Tests | 852 unit, 10 db files, 7 Playwright specs |
+| Tests | 852 unit, 10 db files, 8 Playwright specs |
 | Exercises implemented | 2 of 5 (`mindfulness-cards`, `free-rein`) |
 | Music licensed | 4 of the 9 card pieces (Epidemic Sound, **subscription**) |
 | Accounts | handed out by hand. No self-service sign-up — needs a domain |
