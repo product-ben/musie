@@ -52,12 +52,14 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field } from '@musie/design-system';
+import { ContentList, CtaButton, Field, Message } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import type { Card, Exercise } from '../lib/content';
+import { fromRoot } from '../lib/assets';
+import { headingOnly } from '../lib/markdown';
 import { takeHeldCode } from '../lib/scan';
 
 export interface SessionScanProps {
@@ -76,6 +78,22 @@ export interface SessionScanProps {
    */
   codeError: string | null;
   onSubmitCode: (code: string) => void;
+  /**
+   * ── DIGITAL MODE — `DIGITAL-CARDS.md` §7 ────────────────────────────────
+   *
+   * The hand this session was dealt, or null on the paper path. Null and
+   * empty are different answers: null is *the cards are on the table*, and
+   * `[]` would be a dealt hand with nothing in it, which cannot happen.
+   *
+   * It arrives already dealt. This component does not know how a hand is made
+   * and must not: `lib/digitalCards.ts` derives it from the session id, which
+   * is what makes it the same hand after a reload.
+   */
+  hand?: readonly Card[] | null;
+  /** Take this card. Writes `card_id` and `track_id` and moves the step on. */
+  onPick?: (card: Card) => void;
+  /** Why the last pick did not land, already translated — or null. */
+  pickError?: string | null;
 }
 
 /**
@@ -86,6 +104,7 @@ export interface SessionScanProps {
  */
 export function SessionScan({
   exercise, card, scanning, codeError, onSubmitCode,
+  hand = null, onPick, pickError = null,
 }: SessionScanProps) {
   const t = useT();
 
@@ -171,6 +190,90 @@ export function SessionScan({
     const trimmed = code.trim();
     if (trimmed === '') return;
     applyCode(trimmed);
+  }
+
+  /**
+   * ── THE DIGITAL SHAPE, AND IT IS A DIFFERENT STEP ───────────────────────
+   *
+   * Not a mode of the frame and not a third way of naming a card: there is no
+   * code, no camera and no QR, so `CardScanner` is **not mounted**. Not hidden
+   * with CSS — not mounted. Four of its five states are about a camera nobody
+   * is opening, and a camera permission prompt behind a `display: none` is the
+   * kind of thing that only shows up on somebody else's phone.
+   *
+   * The headline stays, because it is the step's own name for itself and is
+   * true whichever way the cards arrive; the body goes, because it is two
+   * numbered steps about QR codes.
+   */
+  if (hand !== null) {
+    const alt = (one: Card) =>
+      one.imageAlt ?? t('session.scan.cardFallbackAlt', { code: one.code });
+
+    return (
+      <>
+        <Markdown md={exercise.scanMd} arrange={headingOnly} />
+
+        {/* `headline` and not children: `Message` takes the sentence as a prop,
+            and this one IS the sentence — there is no second line to add under
+            it, because the first already says what to do about it. */}
+        {pickError !== null && <Message variant="error" headline={pickError} live="assertive" />}
+
+        {/* ── ONE CARD: THE ONE THAT WAS DRAWN, OR NOTHING YET ─────────────
+            A one-card exercise draws from the action row (*Karte ziehen*),
+            which is `Session.tsx`'s, and the picture appears here once it has.
+            Before that this step is its headline and a button — which is
+            honest: there is nothing to show until the card is drawn, and
+            showing a placeholder for it would be showing a card. */}
+        {hand.length === 1 ? (
+          card !== null && (
+            <figure className="musie-cardshow">
+              <img
+                className="musie-cardshow__art"
+                src={fromRoot(card.imageUrl ?? '')}
+                alt={alt(card)}
+                width={1200}
+                height={849}
+                decoding="async"
+              />
+            </figure>
+          )
+        ) : (
+          /* ── THE HAND, AS A TWO-COLUMN GRID ──────────────────────────────
+             `aria-label` on the list rather than a <fieldset>: these are not
+             a form control whose value is submitted later — pressing one IS
+             the commit, so they are buttons, and a group of buttons is named
+             by its container. `RadioGroupImage` was the near miss and §7.2
+             records why it is the wrong component: a required visible label
+             per item, a 1:1 crop, and selection that waits for a Continue. */
+          <ul className="musie-cardgrid" aria-label={t('session.scan.gridLabel')}>
+            {hand.map((one) => (
+              <li key={one.id}>
+                <button
+                  type="button"
+                  className="musie-cardgrid__cell"
+                  /* The card already taken, for somebody who walked back into
+                     this step. `aria-current`, not `aria-pressed`: it is where
+                     you are in a run, not a toggle you left on. */
+                  aria-current={card?.id === one.id ? 'true' : undefined}
+                  disabled={scanning}
+                  onClick={() => onPick?.(one)}
+                >
+                  <img
+                    className="musie-cardgrid__art"
+                    src={fromRoot(one.imageUrl ?? '')}
+                    alt={alt(one)}
+                    width={1200}
+                    height={849}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    );
   }
 
   return (

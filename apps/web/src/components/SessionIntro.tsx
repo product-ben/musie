@@ -41,13 +41,14 @@
  * `RadioGroupText` would be right past four options; neither question will
  * have four.
  */
-import { Armchair, BedSingle, Moon, Sunrise } from 'lucide-react';
-import { SegmentedControl } from '@musie/design-system';
+import { Armchair, BedSingle, Layers, Moon, Sunrise } from 'lucide-react';
+import { SegmentedControl, Switch } from '@musie/design-system';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
+import { bodyOnly, headingOnly } from '../lib/markdown';
 
 export interface SessionIntroProps {
   exercise: Exercise;
@@ -77,6 +78,27 @@ export interface SessionIntroProps {
   ending?: Ending;
   onPostureChange?: (posture: Posture) => void;
   onEndingChange?: (ending: Ending) => void;
+  /**
+   * ── THE CARDS SWITCH — `DIGITAL-CARDS.md` §3 ────────────────────────────
+   *
+   * Absent for an exercise that asks for no object, which is the same
+   * distinction the two questions above draw: a step that passes no handler is
+   * a step with no QUESTION, which is a different thing from one whose answer
+   * happens to be false. Only `kind === 'card_based'` passes these.
+   *
+   * `cardsPresent`, not `digital`: the switch is named after the OBJECT the
+   * exercise asks for, so the next exercise that needs one inherits the shape
+   * and adds a string (§1.1, clause 1). The MODE is the negative of it and
+   * lives in the URL, where `Session.tsx` puts it.
+   */
+  cardsPresent?: boolean;
+  onCardsPresentChange?: (present: boolean) => void;
+  /**
+   * Whether this exercise lays its cards out on THIS step. False for a
+   * one-card exercise, which draws on Auswählen because its own paper copy
+   * does — and which therefore has nothing to prepare here, and says so.
+   */
+  dealsHere?: boolean;
 }
 
 /** The glyph per option. A `Record`, so a third posture fails the typecheck
@@ -105,6 +127,7 @@ const ENDING_GLYPH: Record<Ending, typeof Armchair> = {
  */
 export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
+  cardsPresent, onCardsPresentChange, dealsHere = false,
 }: SessionIntroProps) {
   const t = useT();
 
@@ -128,9 +151,60 @@ export function SessionIntro({
     ? exercise.introMd
     : exercise.introMd.replaceAll('{minutes}', String(Math.ceil(durationSeconds / 60)));
 
+  /* ONE FLAG, read off the prop that carries the answer — the same shape the
+     two questions above use, and for the same reason. */
+  const asksForCards = cardsPresent !== undefined;
+  const digital = asksForCards && cardsPresent === false;
+
   return (
     <>
-      <Markdown md={md} fallbackKey="session.intro.fallback" />
+      {/* ── THE COPY, SPLIT AROUND THE SWITCH ───────────────────────────────
+          Ben's placement: the switch goes BETWEEN the headline and the text,
+          and it is the right one — the body copy is the instruction the switch
+          makes true or false (*Leg die Karten vor dich*), so the answer is
+          given above the sentence it governs rather than under it.
+
+          `headingOnly` / `bodyOnly` are `lib/markdown.ts`'s, already used by
+          the listen step to split one `listen_md` between two screens. One
+          string, two places, no second content column.
+
+          IN DIGITAL MODE THE BODY DOES NOT COME BACK. It is an instruction
+          about paper that is not there, and §6 records the three ways that
+          could have gone: hiding it is the simplest thing that is honest, and
+          the sheet one tap away carries what it used to say. */}
+      {asksForCards
+        ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingOnly} />
+        : <Markdown md={md} fallbackKey="session.intro.fallback" />}
+
+      {asksForCards && (
+        <div className="musie-intro__cards">
+          {/* Rule 7: the label is passed. `Layers` / `Layers` would be one
+              glyph for two states, so the pair says what is switching — a pile
+              of cards on the table, or none. */}
+          <Switch
+            label={t('session.intro.cardsPresent')}
+            checked={cardsPresent}
+            onCheckedChange={(next) => onCardsPresentChange?.(next)}
+            onGlyph={Layers}
+            offGlyph={Layers}
+            reverse
+          />
+
+          {/* ── WHAT TAKES THE BODY COPY'S PLACE ──────────────────────────
+              Only where the exercise deals ONE card. A five-card exercise
+              needs no line: its forward action has just become *5 Karten
+              ziehen*, and the screen explains itself by moving.
+
+              Chrome rather than content, because it is true of every one-card
+              card exercise and talks about the MODE rather than about the
+              exercise (§6). */}
+          {digital && !dealsHere && (
+            <p className="musie-intro__note">{t('session.intro.nothingToLayOut')}</p>
+          )}
+        </div>
+      )}
+
+      {asksForCards && !digital && <Markdown md={md} arrange={bodyOnly} />}
 
       {(asksPosture || asksEnding) && (
         /* `--space-gap-group` between the two question groups and under the

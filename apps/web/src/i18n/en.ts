@@ -428,6 +428,7 @@ export const en = {
      together. */
   'session.step.intro': 'Start',
   'session.step.scan': 'Scan',
+  'session.step.select': 'Choose',
   'session.step.listen': 'Listen',
   'session.step.reflect': 'Reflect',
   /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
@@ -594,6 +595,71 @@ export const en = {
      connection problem rather than a camera problem, and it says so. */
   'session.scan.cameraDecoder': 'The code reader could not be loaded. Check your connection and try again, or type the code printed on your card.',
   'session.scan.cameraFailed': 'The camera could not be started. Type the code printed on your card instead.',
+
+  /* ── DIGITAL CARDS · the deck for people who have no deck ────────────────
+     `DIGITAL-CARDS.md`. The switch on Einsteigen, the sheet the hand is shown
+     in, and the grid it is chosen from. Every one of these is CHROME: it is
+     true of any card exercise, and it talks about the MODE rather than about
+     the exercise, which is what keeps it out of the content tables. The
+     exercise's own words are the thing being replaced. */
+
+  /* The switch, and it is named after the OBJECT rather than after the mode.
+     The next exercise that asks for a physical object adds its own key beside
+     this one; nothing here has to be true of a thing nobody has designed. */
+  'session.intro.cardsPresent': 'I have the cards in front of me.',
+
+  /* Under the switch, and only where the exercise deals ONE card — there is
+     nothing to lay out, so the step says so instead of leaving a gap where an
+     instruction about paper used to be. */
+  'session.intro.nothingToLayOut': 'There is nothing to lay out, let’s start.',
+
+  /* `{count}` from `cardsDealt`, and the two forms are ONE/OTHER by hand:
+     there is no plural helper in `i18n/index.ts` and deliberately so — two
+     locales with the same one/other rule do not need ICU. Only the `other`
+     form is reachable today (a one-card exercise deals on the next step), and
+     the `one` form exists so that an exercise dealing one card from Einsteigen
+     does not render "1 cards". */
+  'session.intro.deal': 'Draw {count} cards',
+  'session.intro.dealOne': 'Draw one card',
+  /* After the sheet has been seen once: going on is the loud action again and
+     the pictures are a tap away. */
+  'session.intro.dealAgain': 'Look at the {count} cards',
+  'session.intro.dealAgainOne': 'Look at the card',
+
+  /* ── THE SHEET ──────────────────────────────────────────────────────────*/
+  /* Announced, not drawn: the sheet IS the cards, and a title over a
+     full-screen picture would be the product labelling its own furniture. */
+  'session.cards.title': 'Your cards',
+  'session.cards.close': 'Close the cards',
+  /* The first screen of the sheet. The landscape line is a REQUEST and not an
+     orientation lock: the artwork is landscape and a portrait phone gives it a
+     third of the screen, but a locked orientation breaks the one person who
+     cannot turn their device and overrides a system preference. */
+  'session.cards.lead': 'If you are on your phone, turn it to landscape. Then look at the five cards and breathe in and out once with each of them.',
+  'session.cards.leadOne': 'If you are on your phone, turn it to landscape. Look at the card and breathe in and out once.',
+  'session.cards.first': 'Look at the first image',
+  'session.cards.next': 'Next image',
+  'session.cards.previous': 'Previous image',
+  /* `Dots` requires a name per mark (4.1.2) and renders as plain spans without
+     one. Here the dots are a way to move, so they are named. */
+  'session.cards.dot': 'Image {position} of {total}',
+
+  /* ── AUSWÄHLEN ──────────────────────────────────────────────────────────*/
+  /* The grid's own legend. The step's headline is the exercise's `scan_md`
+     heading and stays; this names the GROUP for anyone who meets it as a list
+     of nine buttons rather than as a picture. */
+  'session.scan.gridLabel': 'Your cards — choose one',
+  /* A one-card exercise draws here rather than on Einsteigen, because its own
+     paper copy draws here. Same register as `session.scan.scanCard`. */
+  'session.scan.draw': 'Draw your card',
+  'session.scan.drawAgain': 'Look at the card',
+  'session.scan.pickFailed': 'That card could not be saved. Try again in a moment.',
+  /* THE NAME A CARD HAS WHEN THE DECK HAS NO ALT TEXT FOR IT YET. Nine real
+     descriptions live in `supabase/content/deck.json` and arrive with that
+     migration; until it is applied `card_i18n.image_alt` is null, and a grid
+     of nine unnamed images is a grid of nine identical options. The code is a
+     poor name and an honest one — it is what is printed on the card. */
+  'session.scan.cardFallbackAlt': 'Card {code}',
 
   /* ── Listen · D.5b ───────────────────────────────────────────────────────
      THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:

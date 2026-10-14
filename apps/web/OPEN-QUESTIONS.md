@@ -8728,3 +8728,106 @@ rather than kept, because the fallback in `deck-pdf.mjs` makes two files with
 one id look like a resolution rather than a conflict. The four cards with no
 master (`mc-06` … `mc-09`) print from a screen-sized webp meanwhile, which the
 script already warns about on every run.
+
+## Digital cards — three things that are Ben's, and one that is a map pretending to be a column
+
+Where: `apps/web/src/lib/digitalCards.ts` (`CARDS_DEALT`),
+`supabase/migrations/20261013192229_deck_update.sql`,
+`supabase/migrations/20261014074000_achtsame_pause_lays_out_five.sql`
+
+What I checked: `DIGITAL-CARDS.md` section 9 argues for `exercises.cards_dealt`
+— one column, read in one place, driving both digital shapes — and the
+argument is still right. It is not built.
+
+What I did: the number lives in a map in `lib/digitalCards.ts`, keyed by
+exercise id, with the whole reason in its header.
+
+Why: the three commands that would land a column are denied to me and belong
+to Ben (CLAUDE.md rule 9, `.claude/settings.json`). `supabase db reset`
+re-applies one branch's migrations over whatever another worktree is testing
+against; `pnpm gen:types` reads that shared database and writes into whichever
+branch is checked out. A column in an unapplied migration is a column
+`database.types.ts` does not have, so every screen reading it fails to
+typecheck — and hand-editing the generated file to pretend otherwise is how
+local and hosted drift apart in silence. `exerciseKind.ts` is the precedent for
+keeping a structural fact in the app, and it is a weaker precedent than I would
+like: a step set is about SCREENS, and how many cards an exercise lays out is
+about the exercise.
+
+What I need from Ben: **two commands, and then three lines of deletion.**
+
+```
+supabase db reset        # applies both migrations below
+pnpm gen:types           # regenerates database.types.ts
+pnpm test:db             # should go green — see below
+```
+
+**Until the first one runs, `pnpm test:db` has exactly one failure** and it is
+this branch's own content: *has the same feeling in both locales, and the same
+alt text* compares `deck.json` against the database, and the nine alt texts are
+in the file and not yet in Postgres. 141 of 142 pass, including the pairing
+check that now FAILS rather than logs (your 2026-10-14 answer). Verified.
+
+The two migrations are additive and neither is needed for the app to run: one
+writes alt text into `card_i18n`, the other repairs Achtsame Pause's intro copy
+(five cards, no `[X]`). Until they land, the grid names its pictures *Karte
+MC-01* through the `session.scan.cardFallbackAlt` key, which is written for
+exactly that gap.
+
+Then `cards_dealt` can become the column, and the map is deleted with its
+header.
+
+## Digital cards — the focus sheet is a stack at every width, and the wireframe is not
+
+Where: `apps/web/src/shell.css` (`.musie-immersive__card`)
+
+What I checked: the desktop sketch puts the chosen card on the leading side
+with the countdown and the transport beside it. What is built is the mobile
+stack at every width, larger where there is room.
+
+What I did: the stack, and said so in the stylesheet where the media query is.
+
+Why: the sheet's column is four siblings — lead, picture, clock, actions — and
+grouping two of them into a row needs either a wrapper element or named grid
+areas. A wrapper that existed only in digital mode would fork the DOM of a
+sheet every card and listening exercise shares, so the layout would become two
+layouts maintained in parallel; naming the areas needs a selector for the
+action row, and that row is a design-system component whose class `shell.css`
+must not reach for (rule 1, L7).
+
+What I need from Ben: **nothing blocking.** It is legible on a desktop and
+correct on the phone the exercise is actually done on. The honest fix is a
+two-slot middle in the new `Sheet` component, and it should wait for a second
+screen that needs one rather than be designed from this one.
+
+## Digital cards — the card artwork is re-encoded, and MC-01 is still two pictures
+
+Where: `apps/web/public/assets/web/cards/*.webp`,
+`~/Documents/musie-assets/cards/`
+
+What I checked: the digital flow shows a card full screen twice — the walk and
+the focus sheet — and `apps/web/docs/assets/cards.md` says in as many words
+that the 768px file is roughly 1.8× the largest slot it had and that anything
+larger needs a re-encode first.
+
+What I did: all nine re-encoded from the 1491 × 1055 masters at **1200px,
+quality 75** — 2.0 MB for the set against 0.9 MB, about 230 KB a card. 1491 at
+q80 was 4.1 MB and barely sharper on these grainy illustrations; 1024 saved
+little. The masters cap it at 1491 either way, so nothing here reaches 1× on a
+2× phone in landscape, and these are soft-edged gradients with no fine detail,
+where that costs least.
+
+**The crop changes slightly** — the masters are 1.413:1 against the old web
+copies' 1.366:1 — which is visible if you flip between an old and a new file.
+Nothing renders `cards.image_url` today except this feature, so nothing else
+moves.
+
+**MC-01 comes from `mc-01_alt.png`.** Your 2026-10-13 entry records that the
+master is red and teal while the web copy is blue and yellow, and asks which
+colourway MC-01 is. I did not answer it: `mc-01_alt.png` is the blue one, so
+the app ships the picture it already shipped, at a higher resolution. The
+print decision is untouched and the question stands.
+
+What I need from Ben: **the colourway decision, eventually** — and a look at
+one re-encoded card beside its master, because 1200/75 is my call and not a
+measured one.

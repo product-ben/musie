@@ -67,6 +67,7 @@ import { useMix } from '../lib/mixer';
 import { revealTrack } from '../lib/reveal';
 import { markListened, savePlayed } from '../lib/session';
 import type { Card, Exercise, ListenAudio } from '../lib/content';
+import { fromRoot } from '../lib/assets';
 import { bodyOnly, headingOnly, parseMarkdown, plainText } from '../lib/markdown';
 import { usePinnedHeader } from '../lib/useHeaderReveal';
 
@@ -146,6 +147,23 @@ function withView(search: string, view: typeof FOCUS | typeof OVERVIEW): string 
 export interface SessionListenProps {
   exercise: Exercise;
   /**
+   * ── THIS RUN HAS NO PAPER CARD — `DIGITAL-CARDS.md` section 8 ───────────
+   *
+   * Two things follow, and they pull in opposite directions, which is why one
+   * flag answers both: the step's infographic goes, and the card itself
+   * arrives on the focus sheet.
+   *
+   * The infographic is *a hand holding a card over a table, beside a phone
+   * lying flat* — the paper flow in one picture. It is already withheld from a
+   * listening exercise for exactly this reason (Ben, 2026-10-12: shown there
+   * "it would be teaching a deck to somebody who was told they need only
+   * headphones"), and digital mode is the same mistake with the same picture.
+   *
+   * And the card has to be ON SCREEN while the music plays, because that is
+   * what the exercise asks you to look at. On paper it is in your hand.
+   */
+  digital?: boolean;
+  /**
    * WHAT THIS RUN PLAYS — one of three shapes, and the step reads all three
    * the same way (`lib/content.ts`, `ListenAudio`).
    *
@@ -211,7 +229,7 @@ export interface SessionListenProps {
  * threshold ONCE, upward, and keeps the position it counts down from.
  */
 export function SessionListen({
-  exercise, audio, sessionId, card, listened, onListened, onAdvance, back,
+  exercise, digital = false, audio, sessionId, card, listened, onListened, onAdvance, back,
   question,
 }: SessionListenProps) {
   const t = useT();
@@ -1059,7 +1077,7 @@ export function SessionListen({
           Keyed on the kind rather than on `needsCards`, for the reason
           `exerciseKind.ts` exists: one answer to "what kind of exercise is
           this", read in one vocabulary. */}
-      {exercise.kind === 'card_based' && (
+      {exercise.kind === 'card_based' && !digital && (
       <img
         className="musie-listen__infographic"
         src={INFOGRAPHIC_SRC}
@@ -1532,6 +1550,33 @@ export function SessionListen({
                 the layout holds, and what it says is now a RESULT rather than
                 a demand. `data-done` rather than a second class, because it is
                 a state of this element and not a different element. */}
+            {/* ── THE CARD, WHILE THE MUSIC PLAYS — section 8.2 ─────────────
+                The exercise's own instruction is *Höre bewusst zu, und schau
+                dir die Karte an*. On paper the card is in your hand; here it
+                has to be on the screen that replaced everything else, or the
+                second half of the sentence has nothing to point at.
+
+                A FOURTH CHILD of the column, between the question and the
+                clock, which is where the wireframe puts it on both layouts —
+                the stylesheet turns the middle into a two-column row once
+                there is width for one, so the same three elements read as
+                "picture beside transport" on a desktop and as a stack on a
+                phone.
+
+                ONLY IN DIGITAL MODE AND ONLY WITH A CARD. A paper run would be
+                shown a picture of the card it is already holding, which is the
+                infographic's mistake in reverse. */}
+            {digital && card !== null && (
+              <img
+                className="musie-immersive__card"
+                src={fromRoot(card.imageUrl ?? '')}
+                alt={card.imageAlt ?? t('session.scan.cardFallbackAlt', { code: card.code })}
+                width={1200}
+                height={849}
+                decoding="async"
+              />
+            )}
+
             <div className="musie-immersive__clock">
               <div className="musie-immersive__meter">
                 <p

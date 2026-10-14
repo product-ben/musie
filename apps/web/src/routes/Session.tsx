@@ -44,13 +44,14 @@
  * writes is permanent and shows up in the diary as unfinished.
  */
 import * as React from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { DoorOpen, Headphones, Quote, ScanQrCode } from 'lucide-react';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { DoorOpen, Headphones, Images, Quote, ScanQrCode } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
-  WizardPanel,
+  Sheet, WizardPanel,
 } from '@musie/design-system';
+import type { LightboxOrigin, SheetPage } from '@musie/design-system';
 import { SessionIntro } from '../components/SessionIntro';
 import { SessionListen } from '../components/SessionListen';
 import { SessionReflect } from '../components/SessionReflect';
@@ -58,7 +59,11 @@ import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { warmTrackBytes } from '../lib/audio';
-import { getCard, getExercise, getListenAudio, getTrackFor } from '../lib/content';
+import { getCard, getCards, getExercise, getListenAudio, getTrackFor } from '../lib/content';
+import { fromRoot } from '../lib/assets';
+import {
+  DIGITAL_CARDS, cardsDealt, dealsOnIntro, dealtCards, withDigitalCards,
+} from '../lib/digitalCards';
 import {
   DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedFor, stepsForKind,
 } from '../lib/exerciseKind';
@@ -84,6 +89,34 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
   scan: 'session.step.scan',
   listen: 'session.step.listen',
   reflect: 'session.step.reflect',
+};
+
+/**
+ * ── WHAT THE SECOND STEP IS CALLED WHEN NOTHING IS SCANNED ────────────────
+ * *Auswählen*, on BOTH card exercises — Ben, 2026-10-13, as a consistency
+ * tuning between the two. Nothing is scanned in either: there is no code, no
+ * camera and no QR, and a rail that says otherwise is the product describing a
+ * step it is not running.
+ *
+ * An earlier draft gave Freie Bahn a third word, *Ziehen*, on the grounds that
+ * nothing is chosen there. True of the gesture and false of the step: in both
+ * exercises the second step is where a card BECOMES YOURS, and two words for
+ * one step would make the two exercises look structurally different when the
+ * only difference is how many cards are on the table.
+ *
+ * THE STEP ID DOES NOT MOVE. `sessions_step_known` is a check constraint on
+ * four literals and `STEP_IDS` is frozen in `routeHandle.ts`; a label is not an
+ * id, which is the distinction `20260923150000` made when *Body Scan als
+ * Soundwalk* became *Bodyscan* and kept its slug. Same for the glyph: a QR
+ * code drawn beside a step with no QR code in it is the rail telling the same
+ * lie in pictures.
+ */
+const DIGITAL_STEP_LABEL: Partial<Record<StepId, MessageKey>> = {
+  scan: 'session.step.select',
+};
+
+const DIGITAL_STEP_ICON: Partial<Record<StepId, LucideIcon>> = {
+  scan: Images,
 };
 
 /**
@@ -284,6 +317,63 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     () => skippedFor(data.exercise.kind),
     [data.exercise.kind],
   );
+
+  /* ══ DIGITAL CARDS — `DIGITAL-CARDS.md` ═══════════════════════════════════
+     The deck for the people who have no deck. Nothing below is persisted and
+     that is the design, not a shortcut: the switch is on in every session
+     because the deck is what Musie pushes people to, and a remembered *off*
+     would turn a fallback into a preference (§3).
+
+     THE MODE IS THE URL. `?digitalcards`, a valueless token, for the three
+     things `SessionListen` already gets out of `?overview` / `?focus`: the
+     browser's own Back behaves, a tester can be sent straight to the thing
+     being tested, and a reload keeps it. `withDigitalCards` keeps whatever
+     else is in the query, so it coexists with the listen step's own tokens.
+
+     ONLY WHERE THERE IS AN OBJECT TO BE WITHOUT. A listening exercise has no
+     cards to have, so the switch would be a question about nothing. Keyed on
+     `kind` for the reason `exerciseKind.ts` exists — one vocabulary, one
+     answer — and on `cardsDealt`, which is the number the two digital shapes
+     come out of. */
+  const [searchParams] = useSearchParams();
+  const dealt = cardsDealt(data.exercise.id);
+  const asksForCards = data.exercise.kind === 'card_based' && dealt !== null;
+  const digital = asksForCards && searchParams.has(DIGITAL_CARDS);
+  const dealsHere = dealsOnIntro(data.exercise.id);
+
+  /* THE NINE CARDS, and only once the mode is on: the paper path never needs
+     them, and asking for them anyway would put a request on every card session
+     for a grid that is not going to be drawn. */
+  const { data: deck } = useAsync(
+    () => (digital ? getCards(locale) : Promise.resolve(null)),
+    `deck:${locale}:${digital}`,
+  );
+
+  /* THE HAND — derived, never stored. The same session is dealt the same cards
+     forever, because the only input is the id in the address bar
+     (`lib/digitalCards.ts`). Null means the cards are on the table. */
+  const hand = React.useMemo(
+    () => (digital && deck !== null ? dealtCards(id, deck, dealt ?? 0) : null),
+    [digital, deck, id, dealt],
+  );
+
+  /* The sheet. `seen` is what moves the action row from *ziehen* to *ansehen*
+     — a fact about this visit rather than about the session, which is why it
+     is React state and not a column. */
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [sheetIndex, setSheetIndex] = React.useState(0);
+  const [sheetSeen, setSheetSeen] = React.useState(false);
+  const [pickError, setPickError] = React.useState<string | null>(null);
+  /* MEASURED AT THE PRESS, never on mount: the page may have scrolled and a
+     rect is viewport-relative. Lightbox's own note says why a stale one looks
+     like a glitch rather than like a bug. */
+  const sheetOrigin = React.useRef<LightboxOrigin | null>(null);
+
+  function openSheet(event: React.MouseEvent<HTMLButtonElement>) {
+    sheetOrigin.current = event.currentTarget.getBoundingClientRect();
+    setSheetIndex(0);
+    setSheetOpen(true);
+  }
 
   /* ── THE TWO ANSWERS THE EINSTEIGEN STEP ASKS FOR ──────────────────────
      Only a listening run asks, and both are PRESELECTED — so the state starts
@@ -519,7 +609,15 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     return <Navigate to={`/session/${encodeURIComponent(id)}/${state.step}`} replace />;
   }
 
-  const go = (step: StepId) => navigate(`/session/${encodeURIComponent(id)}/${step}`);
+  /* THE MODE TRAVELS WITH THE STEP. `navigate` drops the search string unless
+     it is given one, so without this the switch would be forgotten by the
+     first Continue — and the token is the only place the mode lives. The
+     listen step rewrites the search on arrival and rebuilds it from
+     `location.search`, so what is put here survives that. */
+  const go = (step: StepId) => navigate({
+    pathname: `/session/${encodeURIComponent(id)}/${step}`,
+    search: withDigitalCards('', digital),
+  });
 
   /* `steps` IS the run, so `activeSteps(skipped)` is no longer computed here:
      it returned exactly this list, from the same derivation, one indirection
@@ -607,6 +705,87 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     } catch (thrown: unknown) {
       console.error('[musie] could not record the scan:', thrown);
       setScanError(t('session.scan.codeFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * ── TAKING A CARD WITHOUT SCANNING ONE — `DIGITAL-CARDS.md` section 7.3 ──
+   *
+   * THE SAME WRITE, through the same pair of calls: `getTrackFor` for the
+   * recording the (exercise, card) pair plays, then `saveCard` for both
+   * columns in one update. What you drew and what it plays are decided by one
+   * act, which is `lib/scan.ts`'s argument and is unchanged by how the card
+   * was named.
+   *
+   * `scanCardInto` is NOT reused, and that is the point of it being two lines
+   * here: that function decodes a code, and there is no code. Its pure half
+   * has nothing to do. So there are two callers of one write rather than two
+   * writes — and a digitally chosen card is indistinguishable downstream,
+   * which is the property the diary, the reveal and the discovered-music
+   * listing all quietly depend on.
+   *
+   * A PRESS IS NOT INSTANT and does not pretend to be: `busy` disables the
+   * grid while the round trip is in flight, a failure stays on the step and
+   * says so, and only a success moves on.
+   */
+  async function pickCard(chosen: Card) {
+    if (busy) return;
+    setBusy(true);
+    setPickError(null);
+    try {
+      const track = await getTrackFor(exercise.id, chosen.id);
+      await saveCard(id, chosen.id, track?.id ?? null);
+      onRescan();
+      advance();
+    } catch (thrown: unknown) {
+      console.error('[musie] could not take the card:', thrown);
+      setPickError(t('session.scan.pickFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * THE ONE-CARD DRAW. Freie Bahn deals on THIS step because its own paper
+   * copy deals here — *Ziehe eine zufaellige Karte vom Stapel* is `scan_md`,
+   * not `intro_md` (section 9).
+   *
+   * ── IT REVEALS IN PLACE, AND THE SHEET IS THE STEP AFTER ────────────────
+   * The press writes the card and the picture appears ON THE STEP; *Karte
+   * ansehen* beside it is what opens the sheet. The first build opened the
+   * sheet from the press itself and it did not work, for a reason worth
+   * keeping:
+   *
+   * `onRescan()` bumps the read key, and `useAsync` CLEARS ITS DATA on a key
+   * change — deliberately, because stale data under a new key is the worse
+   * failure (`lib/useAsync.ts`). So the re-read unmounts `SessionRun` for the
+   * length of one round trip, and every piece of its state goes with it,
+   * including which sheet was open. The sheet opened and vanished in the same
+   * frame. The scan path never met this because a scanned card navigates to
+   * the next step immediately.
+   *
+   * Opening BEFORE the write was the other way out and is worse: a write that
+   * then failed would leave somebody looking at a card their session does not
+   * have.
+   *
+   * So the two acts are two presses, which also reads better: drawing a card
+   * turns it face up where it lies, and looking at it properly is a thing you
+   * then choose to do.
+   */
+  async function drawCard() {
+    const only = hand?.[0];
+    if (only === undefined || busy || card !== null) return;
+    setBusy(true);
+    setPickError(null);
+    try {
+      const track = await getTrackFor(exercise.id, only.id);
+      await saveCard(id, only.id, track?.id ?? null);
+      onRescan();
+    } catch (thrown: unknown) {
+      console.error('[musie] could not draw the card:', thrown);
+      setPickError(t('session.scan.pickFailed'));
     } finally {
       setBusy(false);
     }
@@ -792,28 +971,100 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     ? <CtaButton variant="ghost" render={<Link to="/exercises" />}>{t('common.back')}</CtaButton>
     : <CtaButton variant="ghost" onClick={retreat}>{t('common.back')}</CtaButton>;
 
+  /* The count the two deal labels quote. A string, because `translate` fills
+     slots from `Record<string, string | undefined>` and a number would be a
+     silent `undefined` leaving `{count}` on a button. */
+  const count = String(dealt ?? 0);
+
   let actions: React.ReactNode = null;
   if (state.step === 'intro') {
+    /* ── ONE FILLED PRIMARY, AND IT MOVES WHEN THE HAND HAS BEEN SEEN ──────
+       `DIGITAL-CARDS.md` section 5.1. While there is a hand to deal, dealing
+       it is the only thing to do and *Weiter* is REPLACED rather than joined:
+       the filled treatment says what this screen is for. Once the sheet has
+       been closed, going on is the loud action again and the pictures are the
+       quiet way back. The three-button row is the shape the scan step already
+       uses (Zurueck, Andere Karte scannen, Weiter), and the rule is the listen
+       step's own — the primary moves when the step is satisfied.
+
+       A ONE-CARD EXERCISE KEEPS *Weiter* HERE, because it deals on the next
+       step; its intro has nothing to prepare and says so under the switch. */
+    const deals = digital && dealsHere;
     actions = (
       <>
         {back}
-        <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>
+        {deals && sheetSeen && (
+          <CtaButton variant="secondary" onClick={openSheet}>
+            {dealt === 1
+              ? t('session.intro.dealAgainOne')
+              : t('session.intro.dealAgain', { count })}
+          </CtaButton>
+        )}
+        {deals && !sheetSeen
+          ? (
+            /* `loading` WHILE THE DECK IS IN FLIGHT. The sheet cannot mount
+               before the nine cards have arrived, so without this the button
+               is pressable with nothing behind it and the sheet appears a
+               beat later on a slow connection — which reads as a dropped tap.
+               It says the hand is being fetched, because it is. */
+            <CtaButton
+              loading={deck === null}
+              loadingLabel={t('content.loading')}
+              onClick={openSheet}
+            >
+              {dealt === 1 ? t('session.intro.dealOne') : t('session.intro.deal', { count })}
+            </CtaButton>
+          )
+          : <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>}
       </>
     );
   } else if (state.step === 'scan') {
-    actions = (
-      <>
-        {back}
-        {card !== null && (
-          <>
-            <CtaButton variant="secondary" onClick={() => void clearScan()}>
-              {t('session.scan.again')}
+    /* ── THE DIGITAL STEP HAS TWO SHAPES AND ONE RULE ──────────────────────
+       The rule is the one above: the step that DEALS shows a filled primary
+       that deals, and once it has dealt, going on takes the filled treatment
+       back.
+
+       A grid needs no row at all — pressing a picture is the commit and the
+       step moves on by itself, so a Continue beside it would be a second way
+       to do what has already been done. A one-card exercise draws from here,
+       so it gets the row. */
+    if (hand !== null) {
+      actions = dealsHere ? back : (
+        <>
+          {back}
+          {card !== null && (
+            <CtaButton variant="secondary" onClick={openSheet}>
+              {t('session.scan.drawAgain')}
             </CtaButton>
-            <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>
-          </>
-        )}
-      </>
-    );
+          )}
+          {card === null
+            ? (
+              <CtaButton
+                loading={busy || deck === null}
+                loadingLabel={t('content.loading')}
+                onClick={() => void drawCard()}
+              >
+                {t('session.scan.draw')}
+              </CtaButton>
+            )
+            : <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>}
+        </>
+      );
+    } else {
+      actions = (
+        <>
+          {back}
+          {card !== null && (
+            <>
+              <CtaButton variant="secondary" onClick={() => void clearScan()}>
+                {t('session.scan.again')}
+              </CtaButton>
+              <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>
+            </>
+          )}
+        </>
+      );
+    }
   } else if (state.step === 'listen') {
     /* ONE FILLED PRIMARY, AND IT MOVES WHEN THE GATE OPENS. Until the step is
        satisfied, listening is the only thing to do and the transport holds the
@@ -891,10 +1142,14 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  run is the full list; the design system's fifth wizard state
                  is untouched and is what a future kind with a genuine gap
                  would use. */
+              /* THE SECOND STEP IS RENAMED, NOT REPLACED — the id, the
+                 reachability rule and `sessions.step` are untouched; only what
+                 the rail calls it changes, and only while nothing is scanned.
+                 See `DIGITAL_STEP_LABEL`. */
               steps={steps.map((step) => ({
                 id: step,
-                label: t(STEP_LABEL[step]),
-                icon: STEP_ICON[step],
+                label: t((digital && DIGITAL_STEP_LABEL[step]) || STEP_LABEL[step]),
+                icon: (digital && DIGITAL_STEP_ICON[step]) || STEP_ICON[step],
               }))}
               current={state.step}
               completed={[...state.completed]}
@@ -932,6 +1187,25 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               ending={asksHowToListen ? ending : undefined}
               onPostureChange={setPosture}
               onEndingChange={setEnding}
+              /* ── THE CARDS SWITCH ──────────────────────────────────────
+                 Undefined where there is no object to be without, which is
+                 the same distinction the two questions above draw. The answer
+                 is the NEGATIVE of the mode and lives in the URL, so turning
+                 the switch is a navigation rather than a `setState` — which is
+                 what makes the browser's Back undo it and a reload keep it.
+
+                 `replace`, so a switch flipped twice does not leave two
+                 entries in the history between the person and the library. */
+              cardsPresent={asksForCards ? !digital : undefined}
+              onCardsPresentChange={(present) => {
+                navigate(
+                  { search: withDigitalCards(searchParams.toString(), !present) },
+                  { replace: true },
+                );
+                /* A hand put back on the table is a hand nobody has seen. */
+                if (present) { setSheetSeen(false); setSheetOpen(false); }
+              }}
+              dealsHere={dealsHere}
             />
           )}
 
@@ -942,12 +1216,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               scanning={busy}
               codeError={scanError}
               onSubmitCode={(scanned) => void submitCode(scanned)}
+              /* Null on the paper path, which is what tells the step to mount
+                 the scanner at all. */
+              hand={hand}
+              onPick={(chosen) => void pickCard(chosen)}
+              pickError={pickError}
             />
           )}
 
           {state.step === 'listen' && (
             <SessionListen
               exercise={exercise}
+              /* No paper card in this run: the step drops the infographic that
+                 teaches the deck and draws the chosen card on the focus sheet
+                 instead. One flag, because the two are the same fact. */
+              digital={digital}
               audio={audio}
               sessionId={id}
               card={card}
@@ -975,6 +1258,94 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           )}
         </WizardPanel>
       </ContentBox>
+
+      {/* ══ THE HAND, FULL SCREEN ════════════════════════════════════════════
+          `DIGITAL-CARDS.md` section 5.3. One page per card, and a first page
+          carrying the instruction where there is more than one card to look
+          at — a single card needs no instruction about choosing between five.
+
+          MOUNTED WHENEVER THERE IS A HAND, not only while it is open, for
+          `SessionListen`'s own reason: base-ui's Dialog animates its exit, and
+          a component unmounted on close takes its own closing animation with
+          it. `open` is what opens it.
+
+          THE PAGES ARE BUILT HERE rather than inside the sheet, because what a
+          page IS belongs to the flow: a picture, with the lead as the page
+          before it. The sheet owns the paging, the dots, the chevrons and the
+          foot's geometry, and none of the content. */}
+      {hand !== null && hand.length > 0 && (
+        <Sheet
+          open={sheetOpen}
+          onOpenChange={(next) => {
+            setSheetOpen(next);
+            /* Closed is seen. It is what moves the intro's row from *ziehen*
+               to *ansehen*, and it deliberately does not ask whether every
+               page was reached: looking at pictures is not something to
+               enforce (section 5.6). */
+            if (!next) setSheetSeen(true);
+          }}
+          title={t('session.cards.title')}
+          closeLabel={t('session.cards.close')}
+          origin={sheetOrigin.current}
+          index={sheetIndex}
+          onIndexChange={setSheetIndex}
+          dotLabel={(position, total) => t('session.cards.dot', {
+            position: String(position), total: String(total),
+          })}
+          nextLabel={t('session.cards.next')}
+          previousLabel={t('session.cards.previous')}
+          pages={[
+            ...(hand.length > 1
+              ? [{
+                id: 'lead',
+                content: (
+                  <div className="musie-cards__lead">
+                    <p>{t('session.cards.lead')}</p>
+                  </div>
+                ),
+              } satisfies SheetPage]
+              : []),
+            ...hand.map((one) => ({
+              id: one.id,
+              content: (
+                <img
+                  className="musie-cards__art"
+                  src={fromRoot(one.imageUrl ?? '')}
+                  alt={one.imageAlt ?? t('session.scan.cardFallbackAlt', { code: one.code })}
+                  width={1200}
+                  height={849}
+                  decoding="async"
+                />
+              ),
+            } satisfies SheetPage)),
+          ]}
+          /* THE FOOT, PER PAGE — a wide way in on the instruction, nothing in
+             the middle while the chevrons carry the walk, and a way on at the
+             end. The sheet does not decide this: "what this flow offers
+             besides moving between pages" is the flow's own business. */
+          foot={(() => {
+            const pages = hand.length > 1 ? hand.length + 1 : 1;
+            if (hand.length > 1 && sheetIndex === 0) {
+              return (
+                <CtaButton block onClick={() => setSheetIndex(1)}>
+                  {t('session.cards.first')}
+                </CtaButton>
+              );
+            }
+            if (sheetIndex === pages - 1) {
+              return (
+                <CtaButton
+                  variant="secondary"
+                  onClick={() => { setSheetOpen(false); setSheetSeen(true); advance(); }}
+                >
+                  {t('common.continue')}
+                </CtaButton>
+              );
+            }
+            return undefined;
+          })()}
+        />
+      )}
 
       {/* THE WAY OUT THAT IS NOT FINISHING.
           While a session runs the nav drawer offers nothing else, so without

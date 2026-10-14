@@ -48,7 +48,19 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { fakeCameraArgs } from './e2e/fakeCamera';
 
-const PORT = 5173;
+/**
+ * 5173 unless told otherwise — and being able to tell it otherwise is what
+ * makes a walk in a WORKTREE mean anything (CLAUDE.md rule 9).
+ *
+ * There is one port 5173 and ten worktrees. `reuseExistingServer` below then
+ * does exactly what it promises and nothing anybody wants: a walk started from
+ * branch B reuses branch A's dev server, passes, and reports that B works.
+ * Rule 9 says "check what is on the port before believing a result"; this is
+ * how a result can be made believable instead.
+ *
+ *     MUSIE_PORT=5179 pnpm --filter web test:e2e
+ */
+const PORT = Number(process.env.MUSIE_PORT ?? 5173);
 /**
  * `localhost`, NOT `127.0.0.1`, and it is not interchangeable here.
  *
@@ -149,7 +161,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm dev',
+    /* THE PORT IS PASSED, and `--strictPort` with it. Without both, Vite picks
+       its own when 5173 is taken — it moves to 5174 and the walk tests a
+       server the config is not pointed at, which is the failure the BASE_URL
+       note above was written about. */
+    command: `pnpm dev --port ${String(PORT)} --strictPort`,
     url: BASE_URL,
     /* Reuse whatever is already on :5173 when developing; start a fresh one in
        CI. `pnpm dev` is the same command a person runs, so there is no second

@@ -88,7 +88,16 @@ describe('the checker refuses', () => {
     ['an English feeling that is missing', (d) => { d.cards[0]!.feeling.en = ' '; }, /feeling\.en is missing/],
     ['a feeling padded with a space', (d) => { d.cards[0]!.feeling.de = ' Freude'; }, /whitespace at an end/],
     ['the old placeholder prefix', (d) => { d.cards[0]!.feeling.de = '[DE] Joy'; }, /\[DE\] placeholder/],
-    ['alt text in one locale only', (d) => { d.cards[0]!.imageAlt.de = 'Eine Karte'; }, /dropped translation/],
+    /* BOTH SIDES ARE SET EXPLICITLY, and that is the repair of 2026-10-14: the
+       case used to write German alone and rely on the real deck carrying no
+       alt text at all, so it stopped proving anything the day the nine
+       descriptions landed (`DIGITAL-CARDS.md` section 11). Naming the null
+       makes the fixture's own state irrelevant, which is what a rule about
+       half-translated alt text should be. */
+    ['alt text in one locale only', (d) => {
+      d.cards[0]!.imageAlt.de = 'Eine Karte';
+      d.cards[0]!.imageAlt.en = null;
+    }, /dropped translation/],
     ['a track id that is not one', (d) => { d.cards[0]!.plays['mindfulness-cards'] = 'joy.mp3'; }, /track id like/],
     ['an exercise id that is not one', (d) => { d.cards[0]!.plays['Mindfulness Cards'] = 'trk-01'; }, /is not an exercise id/],
     ['an image that is neither a path nor null', (d) => { (d.cards[0] as unknown as { image: number }).image = 1; }, /must be a path/],

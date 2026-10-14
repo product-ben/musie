@@ -302,6 +302,7 @@ export const de: Messages = {
      Einsteigen' and 'Aktuelle Session – Einsteigen'. */
   'session.step.intro': 'Einsteigen',
   'session.step.scan': 'Scannen',
+  'session.step.select': 'Auswählen',
   'session.step.listen': 'Hören',
   'session.step.reflect': 'Nachdenken',
   /* 'Abgeschlossen', nicht 'Beendet' (Ben, 2026-09-23). 'Beendet' sagt nur,
@@ -433,6 +434,32 @@ export const de: Messages = {
   'session.scan.cameraUnsupported': 'Dieser Browser öffnet hier keine Kamera. Tippe stattdessen den Code von deiner Karte ein.',
   'session.scan.cameraDecoder': 'Der Code-Leser ließ sich nicht laden. Prüfe deine Verbindung und versuch es noch einmal, oder tippe den Code von deiner Karte ein.',
   'session.scan.cameraFailed': 'Die Kamera ließ sich nicht starten. Tippe stattdessen den Code von deiner Karte ein.',
+
+  /* ── DIGITALE KARTEN ─────────────────────────────────────────────────────
+     Siehe `en.ts` für die Begründungen. Register: §1 du und Imperativ
+     Singular, §2 Satzanfang groß, §3 Verb zuerst, §7 Gedankenstrich. */
+  'session.intro.cardsPresent': 'Die Karten liegen vor mir.',
+  'session.intro.nothingToLayOut': 'Es gibt nichts vorzubereiten, legen wir los.',
+  'session.intro.deal': '{count} Karten ziehen',
+  'session.intro.dealOne': 'Eine Karte ziehen',
+  'session.intro.dealAgain': '{count} Karten ansehen',
+  'session.intro.dealAgainOne': 'Karte ansehen',
+  'session.cards.title': 'Deine Karten',
+  'session.cards.close': 'Karten schließen',
+  'session.cards.lead': 'Wenn du auf dem Handy unterwegs bist, drehe ins Breitformat. Dann sieh dir die fünf Karten an und atme zu jeder einmal ein und aus.',
+  'session.cards.leadOne': 'Wenn du auf dem Handy unterwegs bist, drehe ins Breitformat. Sieh dir die Karte an und atme einmal ein und aus.',
+  'session.cards.first': 'Erstes Bild ansehen',
+  'session.cards.next': 'Nächstes Bild',
+  'session.cards.previous': 'Vorheriges Bild',
+  'session.cards.dot': 'Bild {position} von {total}',
+  'session.scan.gridLabel': 'Deine Karten – wähle eine aus',
+  /* 'Karte ziehen' und nicht 'Zieh deine Karte': dieselbe Form wie
+     `session.scan.scanCard` ('Karte scannen'), die dieser Schritt schon
+     spricht. */
+  'session.scan.draw': 'Karte ziehen',
+  'session.scan.drawAgain': 'Karte ansehen',
+  'session.scan.pickFailed': 'Die Karte konnte nicht übernommen werden. Versuch es gleich noch einmal.',
+  'session.scan.cardFallbackAlt': 'Karte {code}',
 
   /* ── Listen · D.5b ─────────────────────────────────────────────────────── */
   /* ── EIN WORT FÜR DIE MUSIK, UND ES IST 'die Musik' (Ben, 2026-10-09) ────

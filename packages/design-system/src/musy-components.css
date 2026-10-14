@@ -6918,3 +6918,150 @@ html[data-musy-scroll-snap='y'] {
   .musy-scale__point[data-disabled] .musy-scale__mark { border-color: GrayText; }
   .musy-scale__track::before { background-color: CanvasText; }
 }
+
+/* ═══ 25 · SHEET ════════════════════════════════════════════════════════════
+   A full-screen surface paged one screen at a time, downwards. `Sheet.tsx`
+   carries the argument for why the paging belongs to a component; this is the
+   geometry it needs.
+
+   ── TWO SCROLLERS, AND THE OUTER ONE MUST NOT ENGAGE ─────────────────────
+   Lightbox's own body is `overflow-y: auto` and this sits inside it as its
+   `:only-child`, which the immersive rules already give `flex: 1 1 auto` and
+   `min-block-size: 0`. So the sheet is exactly as tall as the body, the body
+   never overflows, and the `<ol>` below is the only thing that scrolls. Two
+   nested scrollers sound like one too many; the outer one is for content
+   taller than the viewport, which is the case this component does not have. */
+.musy-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* The height the body handed over, and no more — the pages are measured
+     against it, so it cannot be allowed to grow with its content. */
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+/* ── THE PAGES ────────────────────────────────────────────────────────────
+   `mandatory` rather than `proximity`, and `scroll-snap-stop: always` on the
+   page: together they are the promise that one gesture moves exactly one
+   screen. `mandatory` alone promises only that a scroll LANDS on a snap point
+   and never which one, which is how a flick used to carry three slides past a
+   view whose whole job was to interrupt (Ben, 2026-09-22). */
+.musy-sheet__pages {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  /* The chrome below is `position: absolute` over this, so a page's own
+     content would run under the dots and the chevrons. The inset is the
+     sheet's, not the page's, because a picture that stopped short of the edge
+     would stop being full-bleed. Pages that hold TEXT add their own. */
+  overscroll-behavior: contain;
+}
+
+.musy-sheet__pages:focus-visible {
+  outline: var(--focus-ring-width) var(--border-style-solid) var(--border-focus);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+.musy-sheet__page {
+  /* The whole surface, every time. `block-size` and not `min-block-size`: a
+     page measured against the scroller is what makes `scrollTop / clientHeight`
+     the page index, and one page growing taller than the others would put every
+     index after it out by the difference. */
+  block-size: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ── THE DOTS ─────────────────────────────────────────────────────────────
+   Inline start, block centre — the wireframe's placement, and it is the one
+   edge of a full-screen picture that no other control wants. Rotated by laying
+   the row out as a column rather than by `transform`, so the 24px targets stay
+   axis-aligned for a thumb and for a hit test. */
+.musy-sheet__dots {
+  /* ── THE SELECTED COLOUR, BECAUSE `Dots` ONLY READS IT ──────────────────
+     Section 7.11's note: `--musy-sel-fill` is read, not set — it is the HOST
+     component's selected colour, so the dots take the colour of whatever they
+     are the position row for. A host that forgets it gets a current mark with
+     `background-color: var(--musy-sel-fill)` resolving to nothing, which is an
+     INVISIBLE mark and a position row that silently has a hole in it. Caught
+     on a screenshot rather than by a test, which is the only way to catch it.
+
+     `--interactive-primary`, the same value the carousel's default accent
+     takes: the sheet's surface is `--surface-overlay`, which is what every
+     other primary control on this product sits on. */
+  --musy-sel-fill: var(--interactive-primary);
+  position: absolute;
+  inset-inline-start: var(--space-inset-sheet);
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  flex-direction: column;
+}
+
+/* THE CURRENT MARK IS A PILL ALONG THE AXIS OF TRAVEL, which here is the block
+   axis. Section 7.11's rule is that current differs from not-current by WIDTH
+   AND FILL rather than by fill alone (1.4.1), and the 2:1 pill is how it says
+   so — but a row's pill is horizontal, and laid out as a column that reads as
+   one dot being fatter than the others rather than as a position in a
+   sequence. Same ratio, same `--target-min`, turned ninety degrees to match
+   the direction the pages move. Measured: 24x12 became 12x24. */
+.musy-sheet__dots .musy-dot[data-current="true"] .musy-dot__mark {
+  inline-size: var(--sp-3);
+  block-size: var(--target-min);
+}
+
+/* ── THE FOOT ─────────────────────────────────────────────────────────────
+   The consumer's actions and the paging pair, on one row at the block end.
+
+   NOTHING HERE MEASURES THE BROWSER BAR. Lightbox sizes its popup against a
+   `position: fixed; inset: 0` positioner, which follows the SMALL viewport on
+   iOS the way a fixed box does — so the bottom of this sheet is already above
+   the browser's own chrome, and an extra allowance would leave a gap on every
+   other device. */
+.musy-sheet__foot {
+  position: absolute;
+  inset-block-end: var(--space-inset-sheet);
+  inset-inline: var(--space-inset-sheet);
+  display: flex;
+  align-items: flex-end;
+  /* BOTH AT THE TRAILING EDGE, which is what the first consumer's wireframe
+     draws: the way on sits beside the chevrons rather than across the sheet
+     from them. `space-between` put it at the opposite corner, where it read as
+     a second, unrelated control. A lone action still takes the full width —
+     the `:has()` rule below — because a first page offering one thing offers
+     it across the foot. */
+  justify-content: flex-end;
+  gap: var(--space-gap-stack);
+  /* The row is chrome over a scroller: it must not eat the gestures that
+     belong to the pages, only the presses that land on its own controls. */
+  pointer-events: none;
+}
+
+.musy-sheet__foot > * { pointer-events: auto; }
+
+/* ALONE ON THE ROW, THE ACTION TAKES THE WHOLE FOOT. Two cases reach it and
+   both are right for the same reason — there is nothing beside it to be
+   balanced against: the FIRST page of a walk, whose one offer is the way in
+   (`CtaButton block`, which is what the wireframe draws), and a sheet of a
+   SINGLE page, whose one offer is the way on. Beside the chevrons on a last
+   page the same button is compact, because then the foot is shared. */
+.musy-sheet__foot:not(:has(.musy-sheet__paging)) > :first-child {
+  flex: 1 1 auto;
+}
+
+.musy-sheet__paging {
+  display: flex;
+  gap: var(--space-gap-related);
+  /* Last in the DOM, and the row's own `flex-end` puts it last on screen too —
+     so tab order runs from what the sheet is FOR to how you move inside it
+     (L6). No auto margin: it would claim the free space and push the
+     consumer's action back to the opposite corner. */
+}

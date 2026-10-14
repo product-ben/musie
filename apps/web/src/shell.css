@@ -2346,3 +2346,180 @@ html[data-musy-scroll-snap] {
   margin-block-start: var(--space-gap-group);
   margin-block-end: var(--space-gap-group);
 }
+
+/* ═══ DIGITAL CARDS ═════════════════════════════════════════════════════════
+   `DIGITAL-CARDS.md`. The switch on Einsteigen, the hand as a grid on
+   Auswählen, and the card beside the music on the focus sheet.
+
+   A PERMITTED CUSTOM PATTERN (L14), and the boundary is the same one the rest
+   of this file keeps: the SHEET is the design system's — `Sheet` owns the
+   frame, the paging, the dots, the chevrons and the foot's geometry, because a
+   screen cannot set `scroll-snap-type` on another component's scroll container
+   (rule 1, L7). What is left here is what a page HOLDS and how this screen's
+   own grid is laid out, and the system has no component for either. Every
+   declaration resolves to a Layer 1 token or to a keyword (L14.1); the classes
+   are `musie-` (L14.2); a second screen wanting the grid is a component
+   request (L14.3, and section 7.2 of the PRD says so in as many words).      */
+
+/* ── THE SWITCH, AND THE LINE THAT REPLACES THE COPY IT HID ──────────────── */
+.musie-intro__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  /* The same block rhythm as `.musie-intro__questions` above: the switch sits
+     between the headline and the body copy, so it owns the space on both
+     sides rather than borrowing either neighbour's margin. */
+  margin-block: var(--space-gap-group);
+}
+
+/* The sentence that stands where an instruction about paper used to. Body ink
+   rather than muted: it is the step's own copy now, not a caption on it. */
+.musie-intro__note {
+  margin: 0;
+  color: var(--on-surface);
+}
+
+/* ── THE HAND, AS A GRID ──────────────────────────────────────────────────
+   TWO COLUMNS, and it stays two at every width. Ben's wireframe says two, and
+   `auto-fit` with a floor would give a desktop four — which is a contact
+   sheet, not a hand. The cap is the column's own measure, so the cards grow
+   with the reading width instead of multiplying across it.                  */
+.musie-cardgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-gap-stack);
+  margin-block: var(--space-gap-group) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.musie-cardgrid__cell {
+  /* A real <button>: pressing one IS the commit, so it answers Enter and
+     Space, is in the tab order, and is announced as pressable. */
+  display: block;
+  inline-size: 100%;
+  padding: 0;
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  /* Layer 1 owns the duration and collapses it under reduced motion. */
+  transition: border-color var(--motion-fast), transform var(--motion-fast);
+}
+
+.musie-cardgrid__art,
+.musie-cardshow__art {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musie-cardgrid__cell:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    /* A card lifting towards the pointer — the same gesture the deck's own
+       pile makes, at a tenth of the distance. */
+    transform: translateY(calc(var(--sp-1) * -0.5));
+  }
+}
+
+.musie-cardgrid__cell:focus-visible {
+  outline: var(--focus-ring-width) var(--border-style-solid) var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* THE CARD ALREADY TAKEN, for somebody who walked back into this step. Border
+   AND inset, never colour alone (1.4.1) — and deliberately not the hover
+   treatment, which would make "where you are" and "where the pointer is" the
+   same picture. */
+.musie-cardgrid__cell[aria-current='true'] {
+  border-color: var(--border-focus);
+  box-shadow: inset 0 0 0 var(--border-width-regular) var(--border-focus);
+}
+
+.musie-cardgrid__cell:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* ── ONE CARD, SHOWN ──────────────────────────────────────────────────────
+   Freie Bahn's drawn card on the step itself. Capped at the reading measure so
+   it does not become a poster on a wide window.                             */
+.musie-cardshow {
+  margin-block: var(--space-gap-group) 0;
+  margin-inline: 0;
+  max-inline-size: var(--measure-body);
+}
+
+.musie-cardshow__art {
+  border-radius: var(--radius-md);
+}
+
+/* ── WHAT A SHEET PAGE HOLDS ──────────────────────────────────────────────
+   The sheet gives a page the whole surface and centres its content; these two
+   say what goes in it. The picture is `contain` rather than `cover`: a card is
+   a composition, and cropping one to fill a phone's portrait aspect would cut
+   off the half the exercise asks you to look at.                            */
+.musie-cards__lead {
+  padding-inline: var(--space-inset-sheet);
+  /* Clear of the dots rail, which the sheet pins to the inline start. */
+  padding-inline-start: calc(var(--space-inset-sheet) * 2 + var(--target-min));
+  max-inline-size: var(--measure-body);
+  font: var(--type-heading-md-font, inherit);
+  font-size: var(--type-heading-md-size);
+  line-height: var(--type-heading-md-line);
+}
+
+.musie-cards__lead p {
+  margin: 0;
+}
+
+.musie-cards__art {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+/* ── THE CARD ON THE FOCUS SHEET ──────────────────────────────────────────
+   The fourth child of `.musie-immersive`, between the question and the clock.
+   It takes the slack the clock's auto margin used to take alone, so on a short
+   screen the picture yields before the countdown does — the countdown is the
+   thing that must stay legible.                                             */
+.musie-immersive__card {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: var(--measure-body);
+  /* Bounded by the viewport rather than by its own ratio: on a landscape phone
+     the sheet is 390px tall and an unbounded picture would push the clock off
+     the bottom. */
+  max-block-size: calc(var(--viewport-block) * 0.4);
+  object-fit: contain;
+  margin-inline: auto;
+  border-radius: var(--radius-md);
+}
+
+/* ── IT IS A STACK ON BOTH LAYOUTS, AND THE WIREFRAME IS NOT ──────────────
+   The desktop sketch puts the picture on the leading side with the countdown
+   and the transport beside it. What is built is the mobile stack at every
+   width, bigger where there is room, and that is a deliberate deviation worth
+   stating here rather than discovering from a screenshot:
+
+   The sheet's column is FOUR SIBLINGS — lead, picture, clock, actions — and
+   grouping two of them into a row needs either a wrapper element or
+   `grid-template-areas`. A wrapper that existed only in digital mode would
+   fork the DOM of a sheet that every card and listening exercise shares, so
+   the layout would be two layouts maintained in parallel; naming the areas
+   needs a selector for the action row, and that row is a design-system
+   component whose class this file must not reach for (rule 1, L7).
+
+   So: the stack, which is correct on the phone the exercise is actually done
+   on, and legible on a desktop. Logged in `apps/web/OPEN-QUESTIONS.md` as the
+   one place the wireframe is not followed; the honest fix is a two-slot
+   middle in the `Sheet` component, once a second screen needs one.          */
+@media (min-width: 60rem) {
+  .musie-immersive__card {
+    max-inline-size: calc(var(--measure-body) * 0.75);
+    max-block-size: calc(var(--viewport-block) * 0.5);
+  }
+}
