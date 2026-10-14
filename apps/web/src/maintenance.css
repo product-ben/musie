@@ -1,0 +1,341 @@
+/**
+ * `/maintenance` — the fourth route-scoped stylesheet, after `exercises.css`,
+ * `insight-map.css` and the deck sheet.
+ *
+ * ── WHY THERE IS A STYLESHEET HERE AT ALL ─────────────────────────────────
+ * `10-layout.md` L14 permits a custom pattern ONLY where the design system
+ * has no component, and two things here qualify: the 5 × 5 grid, which is the
+ * screen, and a select, which the system does not have. Everything else on
+ * the screen is a design-system component with props — `Field`, `Lightbox`,
+ * `ContentBox`, `CtaButton`, `Message`, `Toast`, `Badge`, `SegmentedControl`
+ * — and nothing below reaches into any of their geometry (L7).
+ *
+ * L14.1: every declaration resolves to a Layer 1 token or arithmetic over
+ * one. There is no raw scale token in this file — no `--sand-*`, no
+ * `--green-*` — and no bare pixel value except hairlines taken from
+ * `--border-width-*`.
+ *
+ * L14.2: every class is `musie-` prefixed, never `musy-`, so this file can
+ * never be mistaken for a system file.
+ *
+ * L14.3: a pattern that recurs is a COMPONENT REQUEST rather than a second
+ * copy. Two are logged in `apps/web/OPEN-QUESTIONS.md` — the grid and the
+ * select — because a second screen wanting either should get a component and
+ * not a copy of this.
+ */
+
+.musie-maintenance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  padding-block-end: var(--space-section);
+}
+
+/* ═══ THE GRID ══════════════════════════════════════════════════════════════
+   Five fixed columns, because the grid IS five by five — this is the one
+   layout on the screen that must not reflow, since a cell's meaning is its
+   position and a wrapped row would move it. It scrolls sideways on a phone
+   instead, which keeps the axes true.                                        */
+
+.musie-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(calc(var(--sp-4) * 3), 1fr));
+  gap: var(--sp-1);
+  overflow-x: auto;
+  padding-block: var(--sp-1);
+}
+
+.musie-grid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-1);
+  min-height: calc(var(--sp-4) * 4);
+  padding: var(--sp-1);
+  border: var(--border-width-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--font-text);
+  cursor: pointer;
+}
+
+.musie-grid__cell:hover {
+  border-color: var(--border-strong-hover);
+}
+
+.musie-grid__cell:focus-visible {
+  outline: var(--border-width-focus) solid var(--border-focus);
+  outline-offset: var(--focus-ring-clearance);
+}
+
+.musie-grid__code {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  font-variant-numeric: tabular-nums;
+}
+
+.musie-grid__art {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+}
+
+.musie-grid__track {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-align: center;
+  /* Layer 1 sets this, and it hyphenates by the element's DECLARED language —
+     which is why rule 5 exists. The titles here are English and German both,
+     under whatever `<html lang>` the operator's locale set, so wrapping is
+     left to break on words rather than inside them. */
+  overflow-wrap: break-word;
+  hyphens: manual;
+}
+
+/* ═══ A SELECT, WHICH THE SYSTEM DOES NOT HAVE ══════════════════════════════
+   Native on purpose: a list of nine wants the platform's own picker, which is
+   a wheel on a phone and a keyboard-navigable menu everywhere else. Styled
+   only enough to sit beside a `Field` without looking foreign.              */
+
+.musie-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+}
+
+.musie-picker__label {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+.musie-picker__select {
+  min-height: var(--target-guided);
+  padding-inline: var(--sp-2);
+  border: var(--border-width-regular) solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-text);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+}
+
+.musie-picker__select:focus-visible {
+  outline: var(--border-width-focus) solid var(--border-focus);
+  outline-offset: var(--focus-ring-clearance);
+}
+
+.musie-picker__select:disabled {
+  color: var(--on-surface-disabled);
+}
+
+/* ═══ A FACT, WHICH IS NOT A FIELD ══════════════════════════════════════════
+   Deliberately NOT styled as an input. A duration is measured and an id is
+   the server's, and a box that looks typeable invites typing in it.         */
+
+.musie-fact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gap-inline);
+  padding-block: var(--space-gap-inline);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+.musie-fact__label {
+  color: var(--on-surface-muted);
+  min-width: calc(var(--sp-4) * 2);
+}
+
+.musie-fact__value {
+  color: var(--on-surface);
+  overflow-wrap: anywhere;
+}
+
+/* ═══ ROWS AND THUMBNAILS ═══════════════════════════════════════════════════ */
+
+.musie-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.musie-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+  width: 100%;
+  padding: var(--space-inset-card);
+  border: var(--border-width-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--font-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.musie-row--split {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-gap-related);
+  cursor: default;
+}
+
+.musie-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+  flex: 1 1 auto;
+  /* A flex item's default `min-width: auto` would let a long title push the
+     actions off the row rather than wrapping — the same shrink that silently
+     undid the diagram sizing on the docs branch. */
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.musie-row__actions {
+  display: flex;
+  gap: var(--space-gap-inline);
+  flex: 0 0 auto;
+}
+
+.musie-row__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+}
+
+.musie-row__meta {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.musie-toolrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-gap-related);
+}
+
+.musie-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--sp-4) * 4), 1fr));
+  gap: var(--space-gap-related);
+}
+
+.musie-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+  padding: var(--sp-1);
+  border: var(--border-width-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--font-text);
+  cursor: pointer;
+}
+
+.musie-thumb__img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+}
+
+.musie-thumb__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+.musie-artwork__preview {
+  width: 100%;
+  max-width: calc(var(--sp-4) * 8);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+}
+
+/* ═══ THE FILE INPUT ════════════════════════════════════════════════════════
+   The system's `PhotoUpload` draws a proper drop zone and is used where a
+   PICTURE is chosen; audio has no such component, so this is the plain
+   control with a label attached.                                            */
+
+.musie-file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+  padding-block: var(--space-gap-inline);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+/* ═══ THE LOG ═══════════════════════════════════════════════════════════════ */
+
+.musie-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.musie-log__entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+  padding: var(--space-inset-card);
+  border-inline-start: var(--border-width-thick) solid var(--border-subtle);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-control);
+}
+
+.musie-log__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+.musie-log__who,
+.musie-log__when {
+  color: var(--on-surface-muted);
+}
+
+.musie-log__what {
+  margin: 0;
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface);
+  overflow-wrap: anywhere;
+}

@@ -8890,3 +8890,78 @@ worse than one wrong number.
 What I need from Ben: **nothing, just flagging.** Worth noting that the same
 counting command could go in `verify-coverage.mjs`, which already walks the
 story files — then the number would be checked rather than remembered.
+
+---
+
+## Maintenance UI — the copy on `/maintenance` is English and inline
+Where: `apps/web/src/routes/Maintenance.tsx`, whole file
+What I checked: rules 6 and 7, and the two documented exemptions —
+`DevQrSheet.tsx` and `DevExperimentMixer.tsx` both write their own exemption
+into their headers. `/goal-mappings` is NOT exempt and carries `goalMap.*`
+keys in both catalogues.
+What I did: exempt, English, with the exemption in the file header. The one
+string that IS translated is the route title (`route.maintenance.title`,
+"Verwaltung"), because a route title is chrome and chrome is ours and
+permanent. The one piece of CONTENT on the screen — an artwork's alt text — is
+edited in both locales and refuses one without the other, because that reaches
+a listener.
+Why: a four-entity CRUD surface is roughly 160 keys of copy for a screen one
+person opens, and rule 7's reason — a leaked German default making the UI
+half-German — cannot happen in a screen with no catalogue lookups at all.
+What I need from Ben: **nothing, decided 2026-10-14.** Worth revisiting the
+day a second person gets added to the allowlist.
+
+## Maintenance UI — two patterns with no component, and both would recur
+Where: `apps/web/src/maintenance.css`, `.musie-grid*` and `.musie-picker*`
+What I checked: `10-layout.md` L14 permits a custom pattern only where the
+system has no component; L14.3 makes a pattern that recurs a component
+request. The system has 32 component files and neither a grid nor a select.
+What I did: both as `musie-`prefixed patterns, every declaration resolving to
+a Layer 1 token, and logged here rather than built as components.
+Why: the grid is one screen's whole layout and may well stay that way; a
+select is the one the system is more likely to want, because every form the
+app grows will meet it. Neither is worth a component on one caller.
+What I need from Ben: **a decision when a second caller appears.** A `Select`
+would be the smaller and more valuable of the two.
+
+## Maintenance UI — `card_i18n` survives as a table nothing reads
+Where: `supabase/migrations/20261014100000_maintenance_schema.sql` §5
+What I checked: the feeling word left every screen on 2026-10-09
+(`SessionListen.tsx`, `SessionScan.tsx`, `DiaryCard.tsx`, `diary.ts`). What
+kept the data alive was `deck:pdf` printing it on the front of MC-06…MC-09,
+which have no artwork master. Five live worktrees still select
+`card_i18n(locale, feeling, image_alt)` in `content.ts`.
+What I did: dropped the `not null` and stopped writing it. The nine words sit
+inert. Dropping the column and then the table is a one-statement follow-up.
+Why: dropping it today breaks five worktrees with a PostgREST error in a file
+they did not touch — the trap `20261011100000` avoided with `needs_cards`.
+What I need from Ben: **nothing, but the follow-up needs doing** once
+`digital-cards`, `digital-cards-build`, `feelings-detection-help`,
+`listen-infographic` and `maintenance-day` have landed. Until then `deck:pdf`
+still has a feeling to fall back on, which is a reprieve rather than a plan.
+
+## Maintenance UI — `pnpm content:pull` is named everywhere and does not exist
+Where: `MAINTENANCE-UI.md` §8's table, `content-export.mjs`'s header
+What I checked: `supabase db reset` now yields FACTORY content — the September
+seed plus the import — rather than whatever is live, because content no longer
+travels by migration. `pnpm content:export` writes a snapshot; nothing reads
+one back.
+What I did: built the export, not the pull, and said so in both places.
+Why: the import reproduces the deck exactly as it stood, so local and hosted
+agree until the first real edit through the UI. The gap opens then, and not
+before — and writing an importer for a shape that no edit has yet stressed
+would be guessing at it.
+What I need from Ben: **nothing yet.** It becomes real the first time you edit
+the deck in a browser and then want a local stack that matches.
+
+## Maintenance UI — the exported `deck.json` reorders two keys, once
+Where: `supabase/content/deck.json`, every card's `plays`
+What I checked: the committed file lists `mindfulness-cards` before
+`free-rein`; the export sorts them. JSON object key order carries no meaning
+and both `deck.mjs` and `deck-pdf.mjs` read by key — `deck.test.ts` (23) and
+`deck.db.test.ts` pass on the re-written file.
+What I did: kept the sort and committed the churn once.
+Why: an export whose output depends on which exercises happen to exist is an
+export that produces a diff on an unrelated change. Canonical beats
+familiar, once.
+What I need from Ben: **nothing, just flagging** the one-time diff.

@@ -1,0 +1,254 @@
+{
+  "$note": "THE GRID, EXPORTED. Written by pnpm content:export, never by hand — the grid is edited at /maintenance and lives in the database. This file is a snapshot so a deck change can be read in git log; nothing imports it.",
+  "cells": [
+    {
+      "valence": -2,
+      "arousal": 2,
+      "card": "MC-03",
+      "track": "trk-05",
+      "artwork": "art-03"
+    },
+    {
+      "valence": -1,
+      "arousal": 2,
+      "card": "MC-04",
+      "track": "trk-01",
+      "artwork": "art-04"
+    },
+    {
+      "valence": 0,
+      "arousal": 2,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 1,
+      "arousal": 2,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 2,
+      "arousal": 2,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": -2,
+      "arousal": 1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": -1,
+      "arousal": 1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 0,
+      "arousal": 1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 1,
+      "arousal": 1,
+      "card": "MC-09",
+      "track": "trk-01",
+      "artwork": "art-09"
+    },
+    {
+      "valence": 2,
+      "arousal": 1,
+      "card": "MC-01",
+      "track": "trk-04",
+      "artwork": "art-01"
+    },
+    {
+      "valence": -2,
+      "arousal": 0,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": -1,
+      "arousal": 0,
+      "card": "MC-06",
+      "track": "trk-05",
+      "artwork": "art-06"
+    },
+    {
+      "valence": 0,
+      "arousal": 0,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 1,
+      "arousal": 0,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 2,
+      "arousal": 0,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": -2,
+      "arousal": -1,
+      "card": "MC-02",
+      "track": "trk-02",
+      "artwork": "art-02"
+    },
+    {
+      "valence": -1,
+      "arousal": -1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 0,
+      "arousal": -1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 1,
+      "arousal": -1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 2,
+      "arousal": -1,
+      "card": "MC-07",
+      "track": "trk-04",
+      "artwork": "art-07"
+    },
+    {
+      "valence": -2,
+      "arousal": -2,
+      "card": "MC-08",
+      "track": "trk-02",
+      "artwork": "art-08"
+    },
+    {
+      "valence": -1,
+      "arousal": -2,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 0,
+      "arousal": -2,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
+      "valence": 1,
+      "arousal": -2,
+      "card": "MC-05",
+      "track": "trk-02",
+      "artwork": "art-05"
+    },
+    {
+      "valence": 2,
+      "arousal": -2,
+      "card": null,
+      "track": null,
+      "artwork": null
+    }
+  ],
+  "artworks": [
+    {
+      "id": "art-01",
+      "src": "assets/web/cards/mc-01.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-02",
+      "src": "assets/web/cards/mc-02.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-03",
+      "src": "assets/web/cards/mc-03.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-04",
+      "src": "assets/web/cards/mc-04.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-05",
+      "src": "assets/web/cards/mc-05.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-06",
+      "src": "assets/web/cards/mc-06.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-07",
+      "src": "assets/web/cards/mc-07.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-08",
+      "src": "assets/web/cards/mc-08.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    },
+    {
+      "id": "art-09",
+      "src": "assets/web/cards/mc-09.webp",
+      "alt": {
+        "de": null,
+        "en": null
+      }
+    }
+  ]
+}
