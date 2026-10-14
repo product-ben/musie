@@ -28,8 +28,9 @@ pnpm workspace (`pnpm-workspace.yaml`), Node 22, pnpm pinned by `packageManager`
 | `pnpm db:sync` | push merged migrations to hosted. Refuses off `main`, dirty, or out of step with origin |
 | `pnpm storybook` | the design system on :6006 |
 | `pnpm --filter docs dev` | the documentation site. `build` fails on a dead link |
-| `pnpm deck:migration` | `supabase/content/deck.json` → a new stacking migration |
-| `pnpm deck:pdf` | the paper deck, print-ready, from the same file |
+| `pnpm deck:migration` | **retired 2026-10-14.** Refuses, and says where the deck is edited now |
+| `pnpm content:export` | the database → `deck.json`, `music.json`'s pieces and `grid.json`. The snapshot, not the source |
+| `pnpm deck:pdf` | the paper deck, print-ready, from `deck.json` |
 
 Planning documents: `BUILD-PLAN.md` (phases, and what "done" means),
 `DOMAIN-MODEL.md` (schema and its open questions),
@@ -131,6 +132,60 @@ later, elsewhere, looking unrelated.
 
 Content lives in a migration rather than `supabase/seed.sql` because `supabase
 db push` does not run `seed.sql` — header of `20260918150600_content_seed.sql`.
+**For four tables that stopped being true on 2026-10-14; read the next
+paragraph before you generate anything.**
+
+### 4.1 · Content does not travel by migration any more — four tables
+
+`cards`, `card_i18n`, `tracks` and the new `grid_cells` / `artworks` /
+`artwork_i18n` are edited at **`/maintenance`** and live in the database.
+`20261014100100_maintenance_import.sql` is the last migration that will ever
+state deck content.
+
+**This is the rule most likely to be broken by somebody who read the old one.**
+A generated deck migration states the WHOLE deck — upserting every row and
+deleting what the file no longer has — so generating one now puts the file's
+version back over whatever an operator changed, on the next `supabase db
+reset` or the next merge to `main`. Silently, with every check green. That is
+rule 4's own trap arriving through the door this change opened, which is why
+the guard is in code and not only here:
+
+- `pnpm deck:migration` **refuses** and prints where the deck is edited now.
+- `pnpm music:migration` writes `exercise_cuts` **only**. The `tracks` half
+  came out, and that is the single most important line of the change: it is
+  the overlap that would otherwise clobber an edit on the next run.
+- `exercise_tracks` and `cards.image_url` are **derived**, rewritten by
+  `public.project_deck()` on every admin write. A row written there by hand
+  for a card is erased by the next cell change.
+
+Three things follow:
+
+- **Schema still travels by migration, and rule 4 is untouched for it.** A
+  column, a constraint, a function: new file, new timestamp, `pnpm db:sync`.
+- **`supabase db reset` now yields FACTORY content, not live.** The import
+  reproduces the deck as it stood on 14 October, so local and hosted agree
+  until the first real edit through the UI; after that they do not, and
+  `pnpm content:pull` — which would close the gap — is logged in
+  `apps/web/OPEN-QUESTIONS.md` and not built.
+- **`pnpm db:status` becomes exactly as truthful as it claims.** It compares
+  migration files to hosted, and migrations now carry only schema.
+
+Where a content change's REASON lives now is `public.content_edits`: one
+append-only row per write, naming the operator, the moment, and the before and
+after. It replaces a migration header and is better at it — it names the
+person who decided rather than the engineer who typed. A revert is a new row;
+nothing rewrites history, and nothing in the schema can be hard-deleted,
+because a history must always have something to return to.
+
+The write surface is one SQL function, `public.admin_write`, reached only by
+the `content-admin` Edge Function, which holds the service role and the
+allowlist of who may call it. **Changing that allowlist is an edit to
+`supabase/functions/content-admin/index.ts` and a `supabase functions deploy`
+— no workflow covers it.** The client holds no copy of the list, so a
+maintenance screen that refuses is the function refusing.
+
+`MAINTENANCE-UI.md` is the whole argument; `MAINTENANCE-UI-PLAN.md` is how it
+was built.
 
 **`pnpm test:db` runs against whichever database you point it at.** Bare, it
 uses the local stack. Set `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` and

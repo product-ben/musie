@@ -182,7 +182,6 @@ function removedIds(before, after) {
 function sql(music, summary, today, removals, known) {
   const { tracks, exercise_cuts: cuts } = rows(music);
 
-  const pieceIds = wrapped(tracks.map((row) => lit(row.id)));
   const cutIds = cuts.length === 0
     ? null
     : wrapped(cuts.map((row) => lit(row.id)));
@@ -195,10 +194,14 @@ function sql(music, summary, today, removals, known) {
     '-- again; editing this file leaves the two disagreeing, and music.db.test.ts',
     '-- is what notices.',
     '--',
-    '-- It states the WHOLE library rather than the difference, so it lands the',
-    '-- same pieces and cuts whatever it finds and is harmless applied',
-    '-- twice. It writes `public.tracks` and `public.exercise_cuts` and',
-    '-- nothing else — `exercise_tracks` belongs to the deck.',
+    '-- It states the WHOLE set of cuts rather than the difference, so it lands',
+    '-- the same cuts whatever it finds and is harmless applied twice.',
+    '--',
+    '-- IT WRITES `public.exercise_cuts` AND NOTHING ELSE. It used to state',
+    '-- `public.tracks` as well; since 2026-10-14 the pieces are edited at',
+    '-- /maintenance and live in the database, so a generated migration',
+    '-- stating them would silently overwrite an operator edit on the next',
+    '-- `db reset`. MAINTENANCE-UI.md §8 and CLAUDE.md rule 4.',
   ];
 
   if (summary.length > 0) {
@@ -226,26 +229,16 @@ function sql(music, summary, today, removals, known) {
   const parts = [head.join('\n')];
 
   parts.push(`
--- ── THE PIECES ────────────────────────────────────────────────────────────
--- One row per licensed recording: the credit, and the music as released.
--- \`src\` is null where there is no file, which is ordinary — five of the nine
--- deck cards are silent and the simulated clock is the designed behaviour.
-insert into public.tracks (id, src, duration_seconds, title, artist, licence_ref) values
-${valuesList(tracks.map((row) => tuple([
-    row.id, row.src, row.duration_seconds, row.title, row.artist, row.licence_ref,
-  ])))}
-on conflict (id) do update set
-  src              = excluded.src,
-  duration_seconds = excluded.duration_seconds,
-  title            = excluded.title,
-  artist           = excluded.artist,
-  licence_ref      = excluded.licence_ref;`);
-
-  parts.push(`
--- Anything the file no longer carries. \`on delete restrict\` from
--- \`sessions.track_id\` means a piece somebody played cannot go, which is the
--- point.
-delete from public.tracks where id not in (${pieceIds});`);
+-- ── THE PIECES ARE NOT HERE ANY MORE ──────────────────────────────────────
+-- ${tracks.length} piece(s) are declared in the file and this migration states
+-- NONE of them. \`public.tracks\` is edited at /maintenance and lives in the
+-- database from 2026-10-14; a migration stating it would put the file's
+-- version back on the next \`supabase db reset\`, silently, which is exactly
+-- the two-sources drift CLAUDE.md rule 4 exists to describe.
+--
+-- The \`pieces\` array in the file is a SNAPSHOT now, written by
+-- \`pnpm content:export\`. It is still what the printer and the upload script
+-- read, and it is still worth committing — it is just no longer the source.`);
 
   if (cutIds === null) {
     parts.push(`

@@ -1541,6 +1541,7 @@ export const en = {
   'insightMap.hint.departments': 'Six departments, sized by the people they hold. Together they are the first tab.',
   'insightMap.hint.pods': 'A line runs to each department a pod draws from — thicker means more of it. Departments are anchors here, not sizes.',
   'route.insightMap.title': 'Org map',
+  'route.maintenance.title': 'Maintenance',
   'route.aboutMusie.title': 'About Musie',
   'route.aboutYou.title': 'About you',
   'route.diary.title': 'Your diary',

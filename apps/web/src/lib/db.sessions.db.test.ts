@@ -529,8 +529,21 @@ describe('sessions · the catalogue cannot be edited out from under a diary', ()
    * catalogue row that can actually be deleted, and deleting a SEEDED card
    * would leave the database one card short for every later run of this
    * suite — a test that erodes its own fixtures passes once.
+   *
+   * IT USED TO BE `zz-test-retire-me` / `ZZ-99`, and 20261014100000 took that
+   * away: the code space is closed to `MC-01`…`MC-99` and the id must be the
+   * code lower-cased, so a fixture outside the space is now refused by
+   * `cards_code_shape` and `cards_id_is_code`. The constraint found this test
+   * rather than the other way round — the insert was never checked for an
+   * error, so it failed silently and the FAILURE SURFACED ON THE SESSION
+   * INSERT two statements later, which is the shape of bug that takes an hour.
+   * The insert is asserted now.
+   *
+   * MC-99 is the deliberate choice: the deck grows from MC-01 upward, so the
+   * top of the space is the last code a real card will ever take.
    */
-  const CARD = 'zz-test-retire-me';
+  const CARD = 'mc-99';
+  const CARD_CODE = 'MC-99';
 
   afterEach(async () => {
     /* Removed here as well as by the test, so a failure part-way through does
@@ -573,7 +586,10 @@ describe('sessions · the catalogue cannot be edited out from under a diary', ()
 
     /* Both locales, so a concurrent read of missing_translations does not see
        a hole that belongs to this test. */
-    await service.from('cards').insert({ id: CARD, code: 'ZZ-99', sort: 99 });
+    const fixture = await service.from('cards').insert({ id: CARD, code: CARD_CODE, sort: 99 });
+    /* ASSERTED, because it was not: an insert refused here used to surface two
+       statements later as a foreign key violation on the session. */
+    expect(fixture.error, 'the throwaway card could not be created').toBeNull();
     await service.from('card_i18n').insert([
       { card_id: CARD, locale: 'en', feeling: 'Test' },
       { card_id: CARD, locale: 'de', feeling: 'Test' },

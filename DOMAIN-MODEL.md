@@ -11,6 +11,13 @@ the Session and Reflection tables now EXIST. Everything below is live and
 verified against `supabase db reset` + `pnpm test:db` (57 tests) unless a line
 says otherwise.
 
+**AMENDED 2026-10-14 — the diagram below is out of date in four places, and
+the amendment is at the foot of this file under *The grid*.** A CARD now
+carries a POSITION and no copy at all; ARTWORK is an entity; EXERCISE_TRACK is
+DERIVED rather than authored; and cards, tracks and artworks are edited at
+`/maintenance` rather than by migration. Read that section before trusting the
+ER diagram, and CLAUDE.md rule 4.1 before generating anything.
+
 Phase C answered nine of the twelve open decisions. They have moved to
 **Resolved** at the foot, each with the shape it actually took — which in four
 places is NOT the shape this document originally proposed. Those four are
@@ -751,3 +758,73 @@ exercises are complete in both locales.
 None of this blocks the schema — the columns and the rows exist and are
 nullable. It blocks the screens: an exercise that cannot say what to do while
 the track plays has nothing to show at the listen step.
+
+
+---
+
+## The grid — added 2026-10-14
+
+The maintenance UI (`MAINTENANCE-UI.md`) changed four things about the shape
+above. All of them are live and verified against `supabase migration up` plus
+`pnpm test:db` (182 tests, 40 of them new).
+
+```mermaid
+erDiagram
+    CARD   }o--|| GRID_CELL : "stands on"
+    TRACK   |o--o{ GRID_CELL : "sits in"
+    ARTWORK |o--o{ GRID_CELL : "sits in"
+    ARTWORK ||--o{ ARTWORK_I18N : "described in"
+    GRID_CELL {
+        smallint valence PK "-2..2 — how pleasant"
+        smallint arousal PK "-2..2 — how activating"
+        text track_id FK "null = a silent card"
+        text artwork_id FK "null = no picture"
+    }
+    CARD {
+        text id PK "the code, lower-cased — a CHECK now, not a convention"
+        text code "MC-01..MC-99. Written ONCE; a trigger refuses a change"
+        smallint valence FK "null = made but not dealt"
+        smallint arousal FK
+        timestamptz archived_at "retired; its code stays taken forever"
+    }
+    ARTWORK {
+        text id PK "art-NN"
+        text src "a bucket key, or a bundle path"
+        timestamptz archived_at
+    }
+```
+
+**A cell is a POSITION, not a record anybody creates.** Twenty-five are
+written once and never added to or removed; the UI only fills and empties
+them. `unique (valence, arousal)` on `cards` is *one card per cell*, which
+caps the live deck at 25 while the code space allows 99.
+
+**A card carries no copy.** `card_i18n.feeling` is retired — the word left
+every screen on 2026-10-09 and nothing writes it now. The column and the
+table come out once five live worktrees land; `apps/web/OPEN-QUESTIONS.md` has
+the follow-up. The only translated string left in the deck is an artwork's alt
+text, which is why `artwork_i18n` exists and `tracks` still has no `_i18n`
+sibling.
+
+**EXERCISE_TRACK IS DERIVED.** `public.project_deck()` rewrites it from
+`cards → grid_cells → track_id` for every `card_based` exercise on every admin
+write, and does the same for `cards.image_url` from the cell's artwork. **A
+row written there by hand for a card is erased by the next cell change.** The
+`card_id is null` rows — a cardless exercise's own track — are never touched,
+and a test asserts it.
+
+**A piece of music says more about itself.** `tracks` gained `album`,
+`release_year`, `tempo_bpm`, `mood_note`, `licence_type` and `catalogue_ref`.
+The last two split what `licence_ref` was carrying in prose: 20260921160000
+records that it held "the only stable identifier the download gives us" AND
+the terms, and that Epidemic Sound is a *subscription* licence rather than the
+per-track clearance BUILD-PLAN assumed. The identifier is `catalogue_ref` now
+and the terms are a value you can filter on.
+
+**And there is a history.** `public.content_edits`, one append-only row per
+write: the operator's id and email, the moment, the entity and row, the action
+and the `before` and `after` as `jsonb`. A revert is a NEW row naming the edit
+it undid, so the log reads forward and nothing rewrites it. It is also the
+reason **nothing in this schema can be hard-deleted** — if the row were gone
+its `before` would have nothing to return to — and the reason `archived_at`
+exists on `cards`, `tracks` and `artworks` rather than a delete.
