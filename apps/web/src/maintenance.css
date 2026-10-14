@@ -45,9 +45,16 @@
 .musie-maintenance__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-gap-related);
+}
+
+/* Undo and redo, in that order and adjacent, because they are one control
+   with two directions — a gap between them would make them two. */
+.musie-maintenance__undo {
+  display: flex;
+  gap: var(--space-gap-inline);
 }
 
 /* ═══ THE GRID ══════════════════════════════════════════════════════════════

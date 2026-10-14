@@ -35,13 +35,13 @@
  * they recur (L14.3), and both are logged.
  */
 import * as React from 'react';
-import { useNavigate } from 'react-router';
-import { ArrowLeft, Clock, Image, LayoutGrid, Layers, Music } from 'lucide-react';
+import { Clock, Image, LayoutGrid, Layers, Music, Redo2, Undo2 } from 'lucide-react';
 import {
   Badge,
   ContentBox,
   CtaButton,
   Field,
+  IconButton,
   Lightbox,
   Message,
   SegmentedControl,
@@ -267,7 +267,6 @@ function History(props: {
 /* ═══ THE SCREEN ════════════════════════════════════════════════════════════ */
 
 export function Maintenance(): React.ReactElement {
-  const navigate = useNavigate();
   const [deck, setDeck] = React.useState<MaintenanceDeck | null>(null);
   const [problem, setProblem] = React.useState<string | null>(null);
   const [refused, setRefused] = React.useState(false);
@@ -406,6 +405,54 @@ export function Maintenance(): React.ReactElement {
   const revert = (editId: string): void => {
     void run('Reverted', () => revertEdit(editId));
   };
+
+  /* ── UNDO AND REDO ──────────────────────────────────────────────────────
+     Both are READ OUT OF THE LOG rather than kept in a stack beside it. The
+     log is append-only and a revert is itself an edit naming what it undid,
+     so the whole of the state is already there — which is why these survive a
+     reload, why they are the same for two people looking at one deck, and why
+     there is nothing to keep in step.
+
+     An edit is CANCELLED when a later, live revert names it. Walking newest
+     first and skipping what is already cancelled is what makes a revert that
+     was itself undone count for nothing, which is the case a counter gets
+     wrong. */
+  const cancelled = new Set<string>();
+  for (const edit of deck.edits) {
+    if (cancelled.has(edit.id)) continue;
+    if (edit.action === 'revert' && edit.reverts !== null) cancelled.add(edit.reverts);
+  }
+
+  /** The newest edit still standing that is not itself an undo. */
+  const undoTarget = deck.edits.find(
+    (edit) => !cancelled.has(edit.id) && edit.action !== 'revert',
+  ) ?? null;
+
+  /**
+   * REDO IS ONE LEVEL, and deliberately: it undoes your last undo.
+   *
+   * It is offered only when the newest edit is a revert of something that is
+   * NOT itself a revert. Without that second half, pressing redo twice would
+   * undo again — the second press would revert the revert-of-a-revert — and a
+   * control that alternates between two meanings is worse than one that stops.
+   * Deeper redo wants a cursor the log does not carry; logged rather than
+   * faked.
+   */
+  const newestEdit = deck.edits[0] ?? null;
+  const redoneEdit = newestEdit !== null && newestEdit.reverts !== null
+    ? deck.edits.find((edit) => edit.id === newestEdit.reverts) ?? null
+    : null;
+  const redoTarget = newestEdit !== null
+    && newestEdit.action === 'revert'
+    && !cancelled.has(newestEdit.id)
+    && redoneEdit !== null
+    && redoneEdit.action !== 'revert'
+    ? newestEdit
+    : null;
+
+  /** What a press would do, as the sentence the tooltip shows. */
+  const describe = (edit: ContentEdit): string =>
+    `${edit.entity} ${edit.row_id} — ${changes(edit)}`;
 
   /* ── THE GRID ───────────────────────────────────────────────────────────── */
 
@@ -1174,30 +1221,35 @@ export function Maintenance(): React.ReactElement {
     <div className="musie-maintenance">
       <div className="musie-maintenance__head">
         <h1 className="musie-placeholder">Maintenance</h1>
-        {/**
-          * THE WAY OUT. This screen is linked from nowhere and reached by
-          * typing the path, so without this the only exit is the browser's
-          * own back button or the menu — and on a phone in standalone mode
-          * there is no browser chrome to reach for.
-          *
-          * History first, `/` as the floor. `window.history.state.idx` is
-          * react-router's own counter: 0 means this entry is the first in the
-          * session, so there is nothing behind it and `navigate(-1)` would
-          * leave the app entirely or do nothing at all. That is the case a
-          * typed URL always lands in.
-          */}
-        <CtaButton
-          variant="secondary"
-          size="min"
-          leadingIcon={ArrowLeft}
-          onClick={() => {
-            const entry = (window.history.state as { idx?: number } | null)?.idx ?? 0;
-            if (entry > 0) navigate(-1);
-            else void navigate('/');
-          }}
-        >
-          Back
-        </CtaButton>
+
+        {/* The label IS the tooltip — `IconButton` shows it on hover and gives
+            it to a screen reader as the button's name, so the two cannot say
+            different things. `MusyTooltipProvider` is already mounted in
+            AppShell, above every route. */}
+        <div className="musie-maintenance__undo">
+          <IconButton
+            glyph={Undo2}
+            tooltip
+            size="min"
+            variant="secondary"
+            disabled={busy || undoTarget === null}
+            label={undoTarget === null
+              ? 'Nothing to undo'
+              : `Undo ${describe(undoTarget)}`}
+            onClick={() => { if (undoTarget !== null) revert(undoTarget.id); }}
+          />
+          <IconButton
+            glyph={Redo2}
+            tooltip
+            size="min"
+            variant="secondary"
+            disabled={busy || redoTarget === null}
+            label={redoTarget === null || redoneEdit === null
+              ? 'Nothing to redo'
+              : `Redo ${describe(redoneEdit)}`}
+            onClick={() => { if (redoTarget !== null) revert(redoTarget.id); }}
+          />
+        </div>
       </div>
 
       <SegmentedControl
