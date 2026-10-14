@@ -254,7 +254,7 @@ terms become a value you can filter on, and the note goes back to being prose.
 *Which of these may we actually still use* stops being a question you answer by
 reading a sentence.
 
-**What the file knows, offered and never forced.** On upload the server reads
+**What the file knows, offered and never forced.** On upload the BROWSER reads
 the file's own tags — title, artist, album, year, and bpm where the download
 carries one — and offers them as starting values for any field left empty. It
 never overwrites something that was typed, and the screen says which values
@@ -402,12 +402,20 @@ server that checks *which* operator. `storage.objects` still gets no insert
 policy for `authenticated` — the function mints a **signed upload URL** and the
 browser PUTs to it.
 
-**The server measures the duration, not the browser.** After the upload lands,
-the function reads the object back with the service role and measures it. The
-measuring code already exists and has no dependencies — `music-upload.mjs`
-parses `mvhd` for MP4 and frame headers plus Xing for MP3, deliberately without
-ffprobe — so it moves to a module both the script and the function import. A
-number measured where nobody can type it is the whole point.
+**The duration is measured, never typed — and the platform does it.**
+CORRECTED 2026-10-14, during the build: this said the server would measure it,
+and the server never sees the bytes. The browser PUTs them straight to storage
+through a signed URL, which is what keeps a seven-megabyte master off an edge
+function's request limit. And a hand-rolled MP3 frame walk is *worse* at this
+than the platform — `music-upload.mjs` has one, deliberately without ffprobe,
+and it gets variable bitrate right only because it reads the Xing header.
+
+So the browser's own decoder measures it, the function clamps it to a
+plausible range, and the number lands in the history like any other value. The
+principle that mattered survives intact: **nobody is offered a text box**, and
+a bad measurement is visible in the log and one press from being reverted. The
+tags are read in the browser for the same reason, which also keeps the whole
+parser inside `pnpm check`.
 
 **A key may not say what the card is.** The third reason that migration gives
 for rejecting `apps/web/public/` is that `mc-01-joy.mp3` names the card *and*
