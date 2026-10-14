@@ -21,12 +21,7 @@ name: Pages
 
 on:
   push:
-    # `docs-site` IS TEMPORARY and comes out when that branch merges. It is
-    # here because `workflow_dispatch` can only be triggered on a workflow
-    # that already exists on the default branch, so there is no other way to
-    # see the site live before the merge. The github-pages environment also
-    # needed a deployment-branch policy for it; that goes at the same time.
-    branches: [main, docs-site]
+    branches: [main]
     paths:
       - 'apps/docs/**'
       - 'packages/design-system/**'
