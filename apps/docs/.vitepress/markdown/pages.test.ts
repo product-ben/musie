@@ -83,3 +83,36 @@ describe('every page', () => {
     expect(ALL.find((p) => p.path === path)!.source).toContain('**Source of truth:**');
   });
 });
+
+/**
+ * The sidebar, against the pages on disk.
+ *
+ * `vitepress build` fails on a dead link in MARKDOWN and says nothing about
+ * the sidebar — a nav entry pointing at a page that does not exist is a 404
+ * that the build reports as success. With 45 entries across six groups that is
+ * worth a test rather than a habit.
+ */
+describe('the sidebar', () => {
+  const config = readFileSync(join(ROOT, '.vitepress/config.ts'), 'utf8');
+  const links = [...new Set([...config.matchAll(/link: '(\/[^']*)'/g)].map((m) => m[1]))];
+
+  /** '/' → index.md, '/features/' → features/index.md, '/work/backlog' → work/backlog.md */
+  function pageFor(link: string): string {
+    const path = link.replace(/^\/+/, '');
+    if (path === '') return 'index.md';
+    return path.endsWith('/') ? `${path}index.md` : `${path}.md`;
+  }
+
+  it('links to something', () => {
+    expect(links.length).toBeGreaterThan(40);
+  });
+
+  it.each(links)('%s · resolves to a page that exists', (link) => {
+    expect(ALL.map((p) => p.path)).toContain(pageFor(link));
+  });
+
+  it('leaves no page unreachable from the sidebar', () => {
+    const reachable = new Set(links.map(pageFor));
+    expect(ALL.map((p) => p.path).filter((path) => !reachable.has(path))).toEqual([]);
+  });
+});

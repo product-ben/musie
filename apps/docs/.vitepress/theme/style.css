@@ -230,9 +230,22 @@ html[data-audience='designers'] .aud--devs {
   min-height: 1px;
 }
 
+/* NOT max-width: 100%. The component renders with mermaid's `useMaxWidth`
+   off, so a wide diagram keeps its natural size and this figure scrolls —
+   a shrunk-to-fit ER diagram is a picture of a diagram rather than one.
+   A diagram narrower than the column is centred by the flex above. */
 .mermaid-figure svg {
-  max-width: 100%;
+  max-width: none;
   height: auto;
+}
+
+/* Give a wide diagram the whole doc column before it has to scroll: the
+   content measure is set for prose, and a diagram is not prose. */
+@media (min-width: 960px) {
+  .mermaid-figure {
+    margin-inline: -48px;
+    padding-inline: 48px;
+  }
 }
 
 .mermaid-error {

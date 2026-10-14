@@ -14,7 +14,9 @@ import { useData } from 'vitepress';
    which only a browser can collapse. Kept to the same six roles in both
    themes so a diagram cannot look right in one and wrong in the other. */
 const LIGHT = {
-  background: 'transparent',
+  darkMode: false,
+  background: '#F3EEE4', // sand-2 — mermaid derives contrasts from this
+  edgeLabelBackground: '#F3EEE4',
   primaryColor: '#E9EFE9', // green-2   — node fill
   primaryBorderColor: '#678271', // green-edge
   primaryTextColor: '#16281D', // green-12
@@ -29,7 +31,9 @@ const LIGHT = {
 };
 
 const DARK = {
-  background: 'transparent',
+  darkMode: true,
+  background: '#191D1A',
+  edgeLabelBackground: '#191D1A',
   primaryColor: '#16281E',
   primaryBorderColor: '#6B8F79',
   primaryTextColor: '#D8E8DF',
@@ -76,9 +80,17 @@ export default defineComponent({
             fontFamily: 'Onest, ui-sans-serif, system-ui, sans-serif',
             fontSize: '15px',
           },
-          flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: true },
-          sequence: { useMaxWidth: true },
-          er: { useMaxWidth: true },
+          /* useMaxWidth: FALSE everywhere, which is the opposite of mermaid's
+             default and is the point. `true` scales a wide diagram DOWN to the
+             content column — the fourteen-table ER diagram rendered at about
+             3px of type, which is a picture of a diagram rather than one. With
+             it off the SVG keeps its natural size and `.mermaid-figure`
+             scrolls sideways instead (theme/style.css). A diagram narrower
+             than the column is unaffected. */
+          flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: false },
+          sequence: { useMaxWidth: false },
+          er: { useMaxWidth: false },
+          stateDiagram: { useMaxWidth: false },
         });
         const { svg: out } = await mermaid.render(`mmd-${++seq}`, decode(props.code));
         svg.value = out;
