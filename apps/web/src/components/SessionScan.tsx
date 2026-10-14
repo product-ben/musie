@@ -60,6 +60,7 @@ import { useT } from '../i18n/localeContext';
 import type { Card, Exercise } from '../lib/content';
 import { fromRoot } from '../lib/assets';
 import { headingOnly } from '../lib/markdown';
+import type { Block } from '../lib/markdown';
 import { takeHeldCode } from '../lib/scan';
 
 export interface SessionScanProps {
@@ -211,7 +212,32 @@ export function SessionScan({
 
     return (
       <>
-        <Markdown md={exercise.scanMd} arrange={headingOnly} />
+        {/* ── THE HEADLINE, AND ONE SENTENCE UNDER IT ────────────────────
+            Ben, 2026-10-14. The step was its headline alone, which left the
+            question *wähle* unanswered: choose on what grounds? The sentence
+            that answers it is the exercise's own first instruction minus the
+            half about paper — *Lege die anderen Karten außer Sichtweite* is
+            not a thing you can do to a grid.
+
+            IT IS APPENDED AS A BLOCK rather than drawn as a sibling <p>. The
+            renderer owns the space between a heading and what follows it
+            (`.musie-md h2 + *`), so a paragraph outside `.musie-md` would need
+            that spacing copied — and copied spacing is what drifts. Handing
+            `arrange` one more block puts the chrome sentence through the same
+            typography as the content above it.
+
+            Only where there is a CHOICE to make: a one-card exercise draws
+            rather than chooses, and the sentence would be describing something
+            that is not on the screen. */}
+        <Markdown
+          md={exercise.scanMd}
+          arrange={(blocks): Block[] => (hand.length > 1
+            ? [
+              ...headingOnly(blocks),
+              { kind: 'paragraph', spans: [{ text: t('session.scan.digitalLead') }] },
+            ]
+            : headingOnly(blocks))}
+        />
 
         {/* `headline` and not children: `Message` takes the sentence as a prop,
             and this one IS the sentence — there is no second line to add under

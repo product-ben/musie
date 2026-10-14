@@ -108,8 +108,20 @@ const meta = {
           'while going on is the only thing to do, and steps down the moment the sheet’s',
           'own CTA lights up. Back is derived one rung below forward and is never louder.',
           '',
-          '**A page marked `media` switches the dots to their white tone**, so a walk that',
-          'opens on copy and continues over artwork changes tone as it moves.',
+          '**A page marked `media` switches the dots to their white tone**, paints the',
+          'sheet’s field in `--surface-inverse` out to the viewport edge — past Lightbox’s',
+          'own insets, so the gutter is part of the same surface — and re-tints the close',
+          'control and the chevrons in inverse ink. A walk that opens on copy and',
+          'continues over artwork changes all of that as it moves.',
+          '',
+          '**Three rows, two of them promises.** `header` is pinned to the top and `foot`',
+          'to the bottom in EVERY variant — paged or single, with a picture or without —',
+          'because that is a promise one component can keep and two screens cannot. The',
+          'listen step’s own full-screen view was an app-level column until it moved here',
+          'for exactly that reason.',
+          '',
+          '**Omit `pages` and the sheet draws `children` as one body**, centred between the',
+          'same two rows: no dots, no chevrons, nothing else moves.',
           '',
           '**Not a horizontal mode.** `Carousel` is the sideways one, and its whole design',
           '— the peek, the nudge, the grab cursor, the scale — exists to say *there are',
@@ -177,6 +189,59 @@ export const SecondPage: Story = { render: () => <Walk startAt={1} /> };
 /** The last page: the way on takes `primary` and the forward chevron, which
  *  has nowhere left to go, steps down beside it. */
 export const LastPage: Story = { render: () => <Walk startAt={PAGES.length - 1} /> };
+
+/**
+ * **A header over a walk.** The question stays at the top while the pictures
+ * move under it, and the foot stays where it is — which is the whole point of
+ * the three rows.
+ */
+export const WithHeader: Story = {
+  render: function Headed() {
+    const [index, setIndex] = React.useState(1);
+    return (
+      <Sheet
+        {...LABELS}
+        open
+        onOpenChange={() => {}}
+        header={<h2 style={{ margin: 0 }}>What picture forms in your mind’s eye?</h2>}
+        pages={PAGES}
+        index={index}
+        onIndexChange={setIndex}
+        foot={index === PAGES.length - 1
+          ? <CtaButton onClick={() => {}}>Continue</CtaButton>
+          : undefined}
+      />
+    );
+  },
+};
+
+/**
+ * **No pages at all** — one body between the same header and foot. This is the
+ * listen step's own sheet: a question above, a picture and a countdown beside
+ * each other, and the way on at the bottom right. Compare the two corners with
+ * `WithHeader` above: they do not move.
+ */
+export const SingleBody: Story = {
+  render: () => (
+    <Sheet
+      {...LABELS}
+      open
+      onOpenChange={() => {}}
+      header={
+        <>
+          <h2 style={{ margin: 0 }}>What picture forms in your mind’s eye?</h2>
+          <CtaButton variant="secondary" size="min" onClick={() => {}}>Please help me</CtaButton>
+        </>
+      }
+      foot={<CtaButton onClick={() => {}}>Ready? Start reflecting</CtaButton>}
+    >
+      <div style={{ display: 'grid', gap: 'var(--space-gap-group)', justifyItems: 'start' }}>
+        <div style={{ inlineSize: '20rem', aspectRatio: '1.41', background: SWATCHES[0], borderRadius: 'var(--radius-md)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--type-display-sm-size, 2.5rem)' }}>01:29</p>
+      </div>
+    </Sheet>
+  ),
+};
 
 /**
  * A single page — no dots, no chevrons, and the foot is whatever the screen

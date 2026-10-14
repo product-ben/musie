@@ -8902,3 +8902,49 @@ alternative is a `tone` axis on `IconButton` multiplying four variants by every
 state, for one consumer. If a second component ever puts controls on artwork it
 did not choose, that axis is the right answer and those four rules are what it
 should be built from.
+
+## The listen step's sheet was an app-level column, and that is why two sheets could not agree
+
+Where: `packages/design-system/src/Sheet.tsx`,
+`apps/web/src/components/SessionListen.tsx`, `apps/web/src/shell.css`
+(`.musie-immersive__body`)
+
+What I checked: Ben, 2026-10-14, after walking both sheets — *"the alignment of
+the header (incl. Hilf mir bitte) section and the next button is broken
+(regression) … the position of these elements must not change in the different
+modes. Build a new storybook component sheet for this and implement it
+everywhere where the sheet is used."*
+
+He is right about the cause and the cause is not a stray declaration.
+`/listen?focus` was `Lightbox surface="immersive"` with a hand-built flex
+column inside it (`.musie-immersive`, three children, `margin-block: auto` on
+the middle one), while the card walk was the new `Sheet`. Two screens arranging
+the same frame cannot promise that a header and a way-on sit in the same place,
+however carefully each is written — and the grid I added for the desktop row
+made the old column's five children fight, which is what he saw.
+
+What I did: `Sheet` grew a `header` slot and a single-body mode, and the listen
+step moved onto it. The sheet is three grid rows now — header `auto`, middle
+`minmax(0, 1fr)`, foot `auto` — so both corners are the component's promise in
+every variant. `.musie-immersive` is gone from `shell.css`; what is left is
+`.musie-immersive__body`, which arranges the two things the middle row holds.
+
+Two consequences worth naming:
+
+- **The foot is in flow rather than positioned.** Absolute put it in the right
+  place and ON TOP of the middle — fine over a full-bleed picture, wrong over a
+  countdown it would cover. A row cannot overlap what it is beside.
+- **The listen sheet's JSX is hoisted into two consts** (`focusHeader`,
+  `focusFoot`) rather than written inline in the props. Nothing inside them
+  moved; a hundred lines of commented JSX inside a prop is a hundred lines
+  nobody reads.
+
+Verified: `pnpm check`, the digital walk and the listen walk in both locales,
+and the whole English suite — six failures, the same six, all of them failing
+on `main` with no changes applied.
+
+What I need from Ben: **nothing on this.** One thing to know: `Sheet` now has
+two shapes and a slot that is optional, which is the point at which a component
+starts being able to be used wrongly. The story file covers header-over-a-walk
+and single-body, and the invariant to hold it to is the one he stated — open
+both, and the two corners must not move.

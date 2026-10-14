@@ -53,7 +53,7 @@
  */
 import * as React from 'react';
 import {
-  ButtonGroup, ContentList, CtaButton, Lightbox, Message, MusicPlayer, Switch, TrackButton,
+  ButtonGroup, ContentList, CtaButton, Message, MusicPlayer, Sheet, Switch, TrackButton,
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
@@ -1010,6 +1010,189 @@ export function SessionListen({
     }]),
   ];
 
+  /**
+   * ── THE FOCUS SHEET'S THREE SLOTS — 2026-10-14 ───────────────────────────
+   *
+   * The sheet below is `Sheet`, not a `Lightbox` with a hand-built column in
+   * it. Ben, after walking both: the header and the way on have to sit in the
+   * same place whether the sheet is this one or the card walk, *"the position
+   * of these elements must not change in the different modes"* — and two
+   * screens arranging the same frame cannot promise that, however carefully
+   * each is written. One component owns the three rows now.
+   *
+   * They are hoisted out of the return rather than written inline, because a
+   * hundred lines of commented JSX inside a prop is a hundred lines nobody
+   * will read. Nothing moved inside them.
+   */
+  const focusHeader = (
+    <>
+            {/* THE QUESTION ALONE — `bodyOnly`, the mirror of the stage's
+                `headingOnly`, since 2026-10-07.
+
+                Between them the two states split one `listen_md`: the stage
+                shows the INSTRUCTION, because nothing has been listened to yet
+                and a question about what you are hearing has nothing to be
+                asked about; the sheet shows the QUESTION, because the track is
+                playing and that is the thing to hold.
+
+                IT USED TO SHOW BOTH, run together into one heading. The
+                instruction has already been read on the stage, and saying it
+                again here in display type made the question the smaller half
+                of its own screen. */}
+            {/* ── THE QUESTION, AND THE TWO THINGS BESIDE IT ─────────────
+                The question is no longer the exercise's: five of them rotate,
+                and which one this run got is `sessions.listening_question_id`
+                (`lib/useQuestion.ts`). `bodyOnly(listen_md)` is the FALLBACK,
+                for the three exercises with no set — their screens are
+                untouched by all of this.
+
+                RENDERED AS `## …` RATHER THAN AS A BARE <h2>, so it goes
+                through the same renderer the column did: the question is
+                Markdown (D5), and the sheet's typography is already keyed to
+                `.musie-immersive__lead .musie-md h2` — including the float
+                that steps the first line around the Lightbox's close control.
+                A hand-rolled heading would need both rules copied. */}
+            <div className="musie-immersive__lead">
+              {question.text === null ? (
+                <Markdown md={exercise.listenMd} arrange={bodyOnly} />
+              ) : (
+                <>
+                  {/* THE QUESTION, PLAIN. The `?` that used to sit beside it is
+                      gone — the control moved down into the action row and
+                      became *Hilf mir bitte* (Ben, 2026-10-12), which also
+                      retires `.musie-question__headrow` and the whole business
+                      of keeping a control out of the Lightbox's close corner. */}
+                  <Markdown md={`## ${question.text.listen}`} />
+
+                  {/* ── THE HELP, AT THE QUESTION'S OWN SIZE ────────────────
+                      `--type-heading-md-*`, the same token the question above
+                      it uses — Ben's correction, 2026-10-12. It was `body-sm`
+                      on the reading that a helper line is a caption (L8); it
+                      is not. It is the thing somebody who is stuck actually
+                      reads, in place of the question, so it is typeset as the
+                      question.
+
+                      Muted ink is what keeps the hierarchy once the scale
+                      stops doing it. */}
+                  {helperShown && (
+                    <p className="musie-question__helper">{question.text.helper}</p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* ── THE LADDER, UNDER THE TEXT — Ben, 2026-10-12 ───────────
+                It sat beside the way on for a day. Under the question is where
+                it belongs: it is about THIS QUESTION, and a control that acts
+                on the thing above it should not be in the row that leaves the
+                step.
+
+                `size="min"` — the S rung, and the quiet one. Beside the way on
+                it had to hold its own against a primary; under the question it
+                is an aside, and an aside at the same weight as the heading's
+                own actions would read as a second instruction.
+
+                THREE STATES, AND `canSwap` IS READ FIRST, because at the dead
+                end there is no question to ask for help with — offering help
+                would be offering nothing.
+
+                  not revealed   → Hilf mir bitte              (enabled)
+                  revealed       → Die Frage funktioniert …    (enabled)
+                  nothing left   → Keine weitere Frage übrig   (disabled)   */}
+            {question.rotates && (question.id !== null || question.exhausted) && (
+              <div className="musie-question__swap">
+                <CtaButton
+                  variant="outline"
+                  size="min"
+                  wrap
+                  disabled={!question.canSwap}
+                  onClick={helperShown ? question.reject : revealHelper}
+                >
+                  {!question.canSwap
+                    ? t('session.listen.questionExhausted')
+                    : helperShown
+                      ? t('session.listen.questionReroll')
+                      : t('session.listen.questionHelp')}
+                </CtaButton>
+
+                {/* The way out of the dead end, and only there (D16). */}
+                {!question.canSwap && (
+                  <CtaButton
+                    variant="outline"
+                    size="min"
+                    wrap
+                    leadingIcon={RotateCcw}
+                    onClick={question.reset}
+                  >
+                    {t('session.listen.questionReset')}
+                  </CtaButton>
+                )}
+              </div>
+            )}
+
+    </>
+  );
+
+  const focusFoot = (
+            <ButtonGroup align="end" stacked="hug" relation="molecule">
+              {/* ── A WAY PAST THE OPENING — Ben, 2026-10-13 ─────────────
+                  User testing: the Klangreise spends ninety-five seconds
+                  arriving before the piece begins. First time through that IS
+                  the exercise; fourth time it is a minute and a half of
+                  something already known, and the focus sheet's transport has
+                  no scrubber to get past it with — by design, since the
+                  scrubber lives two views down on the stage.
+
+                  OUTLINE, not secondary: this sits on the immersive sheet's
+                  own tinted surface, which is the case `CtaButton`'s docblock
+                  names for the transparent rung. `secondary` would paint
+                  `--surface-raised` onto a panel that is not the page.
+
+                  LEADING THE GROUP, which is the slot the mute switch holds on
+                  the Bodyscan — same `relation="molecule"` gap, and the two
+                  can never appear together: the switch needs a guidance-only
+                  stem and the Klangreise will never have one ("the music IS
+                  that exercise"), while the Bodyscan's guidance starts
+                  immediately and its `intro_until` is null.
+
+                  IT GOES AWAY ONCE IT IS BEHIND YOU. `seek` clamps but does
+                  not care about direction, so a button still offering to skip
+                  an intro at 06:00 would quietly rewind nine minutes of
+                  somebody's exercise. Rendered away rather than disabled, for
+                  the reason the switch is: a disabled control advertises
+                  something that is not coming back.
+
+                  IT DOES NOT PRESS PLAY. Entering the sheet already started
+                  the track (`enterImmersive`), so there is nothing to start —
+                  and a control that both seeks and plays is two controls. */}
+              {introUntil !== null && position < introUntil && (
+                <CtaButton variant="outline" onClick={() => seek(introUntil)}>
+                  {t('session.listen.skipIntro')}
+                </CtaButton>
+              )}
+
+              {mix.hasVoiceOnly && !simulated && (
+                <Switch
+                  label={t('session.listen.musicOff')}
+                  checked={musicMuted}
+                  onCheckedChange={setMusicMuted}
+                  onGlyph={VolumeX}
+                  offGlyph={Volume2}
+                />
+              )}
+              <CtaButton
+                variant={met ? 'primary' : 'secondary'}
+                disabled={!met}
+                wrap
+                onClick={onAdvance}
+              >
+                {met
+                  ? t('session.listen.start')
+                  : t('session.listen.immersiveLocked')}
+              </CtaButton>
+            </ButtonGroup>
+  );
+
   return (
     <>
       <div className="musie-listen">
@@ -1403,126 +1586,21 @@ export function SessionListen({
           that fallback "lucky" rather than guaranteed — it is guaranteed here
           precisely because the stage is still there, inert, under the sheet. */}
       {audio !== null && (
-        <Lightbox
+        <Sheet
           open={immersive}
-          surface="immersive"
-          origin={origin}
-          title={t('session.listen.immersiveTitle')}
-          titleHidden
-          closeLabel={t('session.listen.immersiveClose')}
           onOpenChange={(next) => {
             if (!next) leaveImmersive();
           }}
+          title={t('session.listen.immersiveTitle')}
+          closeLabel={t('session.listen.immersiveClose')}
+          origin={origin}
+          header={focusHeader}
+          foot={focusFoot}
         >
-          {/* ONE ELEMENT, because the immersive surface gives its only child
-              the full height to arrange and leaves the arranging to the
-              caller. Three siblings here would get the ordinary stacking and
-              the foot of the sheet would sit under the instruction. */}
-          <div className="musie-immersive">
-            {/* THE QUESTION ALONE — `bodyOnly`, the mirror of the stage's
-                `headingOnly`, since 2026-10-07.
-
-                Between them the two states split one `listen_md`: the stage
-                shows the INSTRUCTION, because nothing has been listened to yet
-                and a question about what you are hearing has nothing to be
-                asked about; the sheet shows the QUESTION, because the track is
-                playing and that is the thing to hold.
-
-                IT USED TO SHOW BOTH, run together into one heading. The
-                instruction has already been read on the stage, and saying it
-                again here in display type made the question the smaller half
-                of its own screen. */}
-            {/* ── THE QUESTION, AND THE TWO THINGS BESIDE IT ─────────────
-                The question is no longer the exercise's: five of them rotate,
-                and which one this run got is `sessions.listening_question_id`
-                (`lib/useQuestion.ts`). `bodyOnly(listen_md)` is the FALLBACK,
-                for the three exercises with no set — their screens are
-                untouched by all of this.
-
-                RENDERED AS `## …` RATHER THAN AS A BARE <h2>, so it goes
-                through the same renderer the column did: the question is
-                Markdown (D5), and the sheet's typography is already keyed to
-                `.musie-immersive__lead .musie-md h2` — including the float
-                that steps the first line around the Lightbox's close control.
-                A hand-rolled heading would need both rules copied. */}
-            <div className="musie-immersive__lead">
-              {question.text === null ? (
-                <Markdown md={exercise.listenMd} arrange={bodyOnly} />
-              ) : (
-                <>
-                  {/* THE QUESTION, PLAIN. The `?` that used to sit beside it is
-                      gone — the control moved down into the action row and
-                      became *Hilf mir bitte* (Ben, 2026-10-12), which also
-                      retires `.musie-question__headrow` and the whole business
-                      of keeping a control out of the Lightbox's close corner. */}
-                  <Markdown md={`## ${question.text.listen}`} />
-
-                  {/* ── THE HELP, AT THE QUESTION'S OWN SIZE ────────────────
-                      `--type-heading-md-*`, the same token the question above
-                      it uses — Ben's correction, 2026-10-12. It was `body-sm`
-                      on the reading that a helper line is a caption (L8); it
-                      is not. It is the thing somebody who is stuck actually
-                      reads, in place of the question, so it is typeset as the
-                      question.
-
-                      Muted ink is what keeps the hierarchy once the scale
-                      stops doing it. */}
-                  {helperShown && (
-                    <p className="musie-question__helper">{question.text.helper}</p>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* ── THE LADDER, UNDER THE TEXT — Ben, 2026-10-12 ───────────
-                It sat beside the way on for a day. Under the question is where
-                it belongs: it is about THIS QUESTION, and a control that acts
-                on the thing above it should not be in the row that leaves the
-                step.
-
-                `size="min"` — the S rung, and the quiet one. Beside the way on
-                it had to hold its own against a primary; under the question it
-                is an aside, and an aside at the same weight as the heading's
-                own actions would read as a second instruction.
-
-                THREE STATES, AND `canSwap` IS READ FIRST, because at the dead
-                end there is no question to ask for help with — offering help
-                would be offering nothing.
-
-                  not revealed   → Hilf mir bitte              (enabled)
-                  revealed       → Die Frage funktioniert …    (enabled)
-                  nothing left   → Keine weitere Frage übrig   (disabled)   */}
-            {question.rotates && (question.id !== null || question.exhausted) && (
-              <div className="musie-question__swap">
-                <CtaButton
-                  variant="outline"
-                  size="min"
-                  wrap
-                  disabled={!question.canSwap}
-                  onClick={helperShown ? question.reject : revealHelper}
-                >
-                  {!question.canSwap
-                    ? t('session.listen.questionExhausted')
-                    : helperShown
-                      ? t('session.listen.questionReroll')
-                      : t('session.listen.questionHelp')}
-                </CtaButton>
-
-                {/* The way out of the dead end, and only there (D16). */}
-                {!question.canSwap && (
-                  <CtaButton
-                    variant="outline"
-                    size="min"
-                    wrap
-                    leadingIcon={RotateCcw}
-                    onClick={question.reset}
-                  >
-                    {t('session.listen.questionReset')}
-                  </CtaButton>
-                )}
-              </div>
-            )}
-
+          {/* THE MIDDLE ROW. Two things at most — the card and the clock — and
+              the sheet gives this box exactly what is left between the header
+              and the foot, so what happens here cannot move either of them. */}
+          <div className="musie-immersive__body">
             {/* ── THE MINIMUM, AS THE LARGEST THING ON THE SHEET ──────────
                 `role="timer"` rather than a live region, and the two are
                 opposites: a timer's implicit `aria-live` is OFF, so the figure
@@ -1687,65 +1765,8 @@ export function SessionListen({
                 `VolumeX` / `Volume2` because `Switch`'s own docblock names that
                 pair as the case where the glyph should say WHAT is switching
                 rather than merely that something is. */}
-            <ButtonGroup align="end" stacked="hug" relation="molecule">
-              {/* ── A WAY PAST THE OPENING — Ben, 2026-10-13 ─────────────
-                  User testing: the Klangreise spends ninety-five seconds
-                  arriving before the piece begins. First time through that IS
-                  the exercise; fourth time it is a minute and a half of
-                  something already known, and the focus sheet's transport has
-                  no scrubber to get past it with — by design, since the
-                  scrubber lives two views down on the stage.
-
-                  OUTLINE, not secondary: this sits on the immersive sheet's
-                  own tinted surface, which is the case `CtaButton`'s docblock
-                  names for the transparent rung. `secondary` would paint
-                  `--surface-raised` onto a panel that is not the page.
-
-                  LEADING THE GROUP, which is the slot the mute switch holds on
-                  the Bodyscan — same `relation="molecule"` gap, and the two
-                  can never appear together: the switch needs a guidance-only
-                  stem and the Klangreise will never have one ("the music IS
-                  that exercise"), while the Bodyscan's guidance starts
-                  immediately and its `intro_until` is null.
-
-                  IT GOES AWAY ONCE IT IS BEHIND YOU. `seek` clamps but does
-                  not care about direction, so a button still offering to skip
-                  an intro at 06:00 would quietly rewind nine minutes of
-                  somebody's exercise. Rendered away rather than disabled, for
-                  the reason the switch is: a disabled control advertises
-                  something that is not coming back.
-
-                  IT DOES NOT PRESS PLAY. Entering the sheet already started
-                  the track (`enterImmersive`), so there is nothing to start —
-                  and a control that both seeks and plays is two controls. */}
-              {introUntil !== null && position < introUntil && (
-                <CtaButton variant="outline" onClick={() => seek(introUntil)}>
-                  {t('session.listen.skipIntro')}
-                </CtaButton>
-              )}
-
-              {mix.hasVoiceOnly && !simulated && (
-                <Switch
-                  label={t('session.listen.musicOff')}
-                  checked={musicMuted}
-                  onCheckedChange={setMusicMuted}
-                  onGlyph={VolumeX}
-                  offGlyph={Volume2}
-                />
-              )}
-              <CtaButton
-                variant={met ? 'primary' : 'secondary'}
-                disabled={!met}
-                wrap
-                onClick={onAdvance}
-              >
-                {met
-                  ? t('session.listen.start')
-                  : t('session.listen.immersiveLocked')}
-              </CtaButton>
-            </ButtonGroup>
           </div>
-        </Lightbox>
+        </Sheet>
       )}
     </>
   );

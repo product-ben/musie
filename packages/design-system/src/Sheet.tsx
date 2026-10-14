@@ -94,14 +94,34 @@ export interface SheetProps {
   closeLabel: string;
   /** The rect this grew out of. Straight through to Lightbox. */
   origin?: LightboxOrigin | null;
-  /** One entry per screen, in reading order. */
-  pages: readonly SheetPage[];
-  index: number;
-  onIndexChange: (index: number) => void;
-  /** Rule 7, and 4.1.2: a row of unnamed dots is a row of nothing. */
-  dotLabel: (position: number, total: number) => string;
-  nextLabel: string;
-  previousLabel: string;
+  /**
+   * ── THE HEADER, AND IT IS THE REASON THIS SLOT EXISTS ───────────────────
+   *
+   * Pinned to the top of the sheet, in the same place in every variant —
+   * paged or single, with a foot or without, over a picture or over copy.
+   *
+   * Ben, 2026-10-14: *"the header section should always be top aligned and the
+   * next button on the bottom right of the screen. The position of these
+   * elements must not change in the different modes."* That is a promise one
+   * component can keep and two cannot, which is why the listen step's own
+   * sheet stopped being an app-level column on the same day.
+   */
+  header?: React.ReactNode;
+  /**
+   * PAGED MODE. One entry per screen, in reading order. Omit it and the sheet
+   * draws `children` as a single body instead — no dots, no chevrons, and the
+   * header and the foot exactly where they are here.
+   */
+  pages?: readonly SheetPage[];
+  index?: number;
+  onIndexChange?: (index: number) => void;
+  /** Rule 7, and 4.1.2: a row of unnamed dots is a row of nothing. Required
+   *  in paged mode; unused without pages. */
+  dotLabel?: (position: number, total: number) => string;
+  nextLabel?: string;
+  previousLabel?: string;
+  /** The single body, for a sheet with no pages. Ignored when `pages` is given. */
+  children?: React.ReactNode;
   /**
    * The foot — whatever this sheet offers besides moving between pages, at the
    * block end, inline start of the paging controls.
@@ -130,11 +150,12 @@ function nearestPage(scroller: HTMLElement): number {
 
 export function Sheet({
   open, onOpenChange, title, closeLabel, origin = null,
-  pages, index, onIndexChange, dotLabel, nextLabel, previousLabel,
-  foot, className,
+  header, pages, index = 0, onIndexChange, dotLabel, nextLabel, previousLabel,
+  children, foot, className,
 }: SheetProps) {
   const scrollerRef = React.useRef<HTMLOListElement>(null);
-  const total = pages.length;
+  const paged = pages !== undefined && pages.length > 0;
+  const total = pages?.length ?? 0;
 
   /**
    * ── MOVING BETWEEN PAGES IS ANIMATED — Ben, 2026-10-14 ──────────────────
@@ -187,7 +208,7 @@ export function Sheet({
     const scroller = scrollerRef.current;
     if (scroller === null) return;
     const landed = nearestPage(scroller);
-    if (landed !== index && landed >= 0 && landed < total) onIndexChange(landed);
+    if (landed !== index && landed >= 0 && landed < total) onIndexChange?.(landed);
   }, [index, onIndexChange, total]);
 
   const onScroll = React.useCallback(() => {
@@ -205,7 +226,7 @@ export function Sheet({
 
   const move = (to: number) => {
     if (to < 0 || to >= total) return;
-    onIndexChange(to);
+    onIndexChange?.(to);
   };
 
   /**
@@ -241,7 +262,7 @@ export function Sheet({
    * button was the half that was wrong. The first page is also the one screen
    * in the sheet somebody may need twice, because it carries the instruction.
    */
-  const paging = total > 1 && index > 0;
+  const paging = paged && total > 1 && index > 0;
 
   /**
    * ── THE FORWARD CHEVRON IS PRIMARY UNTIL THE SHEET'S OWN CTA LIGHTS UP ──
@@ -261,7 +282,7 @@ export function Sheet({
 
   /* The row's tone follows the page under it, so a walk that starts on copy
      and continues over artwork changes tone as it moves. */
-  const tone: DotsTone = pages[index]?.media === true ? 'onMedia' : 'default';
+  const tone: DotsTone = pages?.[index]?.media === true ? 'onMedia' : 'default';
 
   return (
     <Lightbox
@@ -272,6 +293,12 @@ export function Sheet({
       closeLabel={closeLabel}
       surface="immersive"
       origin={origin}
+      /* THE CLASS LANDS ON THE POPUP, which is the only way to reach the
+         CLOSE CONTROL: it is Lightbox's, positioned against the popup, and
+         therefore outside this sheet's own element. On a dark field its
+         `--on-surface` ink is all but invisible — Ben, 2026-10-14 — so the
+         tone has to travel one level further out than `data-media` does. */
+      className={tone === 'onMedia' ? 'musy-sheet-host musy-sheet-host--media' : 'musy-sheet-host'}
     >
       {/* ONE ELEMENT, because the immersive surface gives its only child the
           full height to arrange and leaves the arranging to the caller. */}
@@ -299,6 +326,14 @@ export function Sheet({
 
             `aria-hidden` and no content: it is paint. */}
         <div className="musy-sheet__field" aria-hidden="true" />
+        {header !== undefined && <div className="musy-sheet__header">{header}</div>}
+
+        {!paged ? (
+          /* SINGLE BODY. The same box the pages would have filled, so the
+             header above it and the foot below it do not move when a sheet
+             stops being a walk and becomes one screen. */
+          <div className="musy-sheet__body">{children}</div>
+        ) : (
         <ol
           ref={scrollerRef}
           className="musy-sheet__pages"
@@ -310,19 +345,20 @@ export function Sheet({
           onScrollEnd={report}
           onKeyDown={onKeyDown}
         >
-          {pages.map((page, i) => (
+          {(pages ?? []).map((page, i) => (
             <li
               key={page.id}
               className="musy-sheet__page"
               /* Which of how many, for a reader who cannot see the dots. */
-              aria-label={dotLabel(i + 1, total)}
+              aria-label={dotLabel?.(i + 1, total)}
             >
               {page.content}
             </li>
           ))}
         </ol>
+        )}
 
-        {total > 1 && (
+        {paged && total > 1 && dotLabel !== undefined && (
           <Dots
             className="musy-sheet__dots"
             total={total}
@@ -343,13 +379,13 @@ export function Sheet({
                 <IconButton
                   variant={previousVariant}
                   glyph={ChevronUp}
-                  label={previousLabel}
+                  label={previousLabel ?? ''}
                   onClick={() => move(index - 1)}
                 />
                 <IconButton
                   variant={nextVariant}
                   glyph={ChevronDown}
-                  label={nextLabel}
+                  label={nextLabel ?? ''}
                   disabled={index === total - 1}
                   onClick={() => move(index + 1)}
                 />

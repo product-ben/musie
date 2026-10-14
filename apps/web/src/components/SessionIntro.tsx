@@ -48,7 +48,7 @@ import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
-import { bodyOnly, headingOnly } from '../lib/markdown';
+import { headingOnly, withoutHeading } from '../lib/markdown';
 
 export interface SessionIntroProps {
   exercise: Exercise;
@@ -208,7 +208,15 @@ export function SessionIntro({
         </div>
       )}
 
-      {asksForCards && !digital && <Markdown md={md} arrange={bodyOnly} />}
+      {/* `withoutHeading`, NOT `bodyOnly` — Ben, 2026-10-14, from Freie Bahn.
+          `bodyOnly` PROMOTES the first paragraph to a heading, because the
+          listen sheet it was written for has no other heading to show. Here
+          the heading is already above the switch, so promoting gave this step
+          two of them: *Lege den Stapel Karten verdeckt vor dich.* arrived in
+          display type, which is the same defect `withoutHeading` was added for
+          on the reflect step. Achtsame Pause hid it by having a LIST as its
+          body, and a list is never promoted. */}
+      {asksForCards && !digital && <Markdown md={md} arrange={withoutHeading} />}
 
       {(asksPosture || asksEnding) && (
         /* `--space-gap-group` between the two question groups and under the

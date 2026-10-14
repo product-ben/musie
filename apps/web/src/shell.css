@@ -1922,30 +1922,27 @@ html[data-musy-scroll-snap] {
    What the step's full-screen sheet holds, from the top: the exercise's own
    words, the minimum time, and the two controls.
 
-   A PERMITTED CUSTOM PATTERN (L14), and a narrow one. The FRAME is the design
-   system's — `Lightbox surface="immersive"` owns the scrim, the edge-to-edge
-   surface, the clip that opens out of the control and the insets, because a
-   screen styling a panel popup into a full-screen one is reaching into a
-   component's geometry (L7, rule 1). What is left here is the ARRANGEMENT of
-   this step's three things inside the single element the sheet hands over, and
-   the system has no component for that. Every declaration resolves to a Layer 1
-   token or to a keyword (L14.1); the classes are `musie-` (L14.2); a second
-   screen wanting this column is a component request (L14.3).
+   ── THE COLUMN IS GONE, AND SO IS THE ARGUMENT FOR IT — 2026-10-14 ──────
+   `.musie-immersive` was a three-child flex column with `margin-block: auto`
+   on the middle one, written as a permitted L14 pattern with a note saying a
+   second screen wanting it would be a component request. The card walk was
+   that second screen, and `Sheet` is the component: it owns the header row,
+   the middle, the foot and the frame, so the header and the way on sit in the
+   same place in both sheets — which is what Ben asked for and what no amount
+   of care in two separate screens can actually promise.
 
-   ── THE MIDDLE TAKES THE SLACK ──────────────────────────────────────────
-   Three children and `margin-block: auto` on the middle one, rather than
-   `justify-content: space-between` on the column. The difference shows on a
-   short screen: `space-between` distributes what is left between all three
-   gaps, so a 568px landscape phone gets the instruction, a figure a third of
-   the way down and the buttons — none of them where the design puts them. An
-   auto margin takes the remainder and collapses to the gap when there is none,
-   so the order degrades to a plain stack instead of to a different layout.
+   WHAT IS LEFT HERE is the MIDDLE row's own arrangement — the card beside the
+   clock — plus the typography of the step's own parts, which were always the
+   screen's. Every declaration resolves to a Layer 1 token or to a keyword
+   (L14.1); the classes are `musie-` (L14.2).
 
-   The column gets its full height from the component (`:only-child` inside
-   `.musy-lightbox__body`); what it does with it is here.                    */
-.musie-immersive {
+   The auto-margin paragraph that used to be here described a box this file no
+   longer draws; the slack is the sheet's middle row now, and `minmax(0, 1fr)`
+   in `musy-components.css` is where it is taken.                           */
+.musie-immersive__body {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--space-gap-stack);
 }
 
@@ -2475,60 +2472,35 @@ html[data-musy-scroll-snap] {
 }
 
 /* ── THE DESKTOP TWO-COLUMN ROW — Ben, 2026-10-14 ─────────────────────────
-   The wireframe: the picture on the leading side and the countdown beside it,
-   once there is width for both. Below that width it is the stack above, which
-   is the phone the exercise is actually done on.
+   The picture on the leading side and the countdown beside it, once there is
+   width for both. Below that width it is the column above, which is the phone
+   the exercise is actually done on.
 
-   ── EVERY CHILD SPANS, AND EXACTLY TWO DO NOT ───────────────────────────
-   The first version named three areas — lead, card, clock — and the sheet has
-   FIVE children: the question, the *Hilf mir bitte* row, the picture, the
-   clock and the action row. The two it did not name were auto-placed into
-   implicit rows and ended up in opposite corners.
+   TWO CHILDREN, SO TWO COLUMNS, and that is all this rule has to say now. It
+   used to live on the whole sheet and had to defend itself against five
+   siblings — the question, the help row and the action row kept being
+   auto-placed into corners. Those three belong to the sheet's header and foot
+   rows since the step moved onto `Sheet`, so what is left in this box is
+   exactly the pair the wireframe draws side by side.
 
-   So the rule is stated the other way round: everything spans both columns,
-   and the picture and the clock are the two exceptions that take one each.
-   That survives a sixth child, which a list of areas does not — and the only
-   thing it asserts about the DOM is that the picture comes before the clock,
-   which is the reading order on the phone as well.
-
-   `:has(.musie-immersive__card)` GUARDS THE WHOLE BLOCK, so a paper run and
-   every listening exercise keep the column they have always had: no card, no
-   grid, not one declaration applied.                                        */
+   `:has(.musie-immersive__card)` GUARDS IT, so a paper run and every listening
+   exercise keep the plain column: no card, no grid.                         */
 @media (min-width: 60rem) {
-  .musie-immersive:has(.musie-immersive__card) {
+  .musie-immersive__body:has(.musie-immersive__card) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-content: center;
+    /* Both halves centred against each other, so the countdown reads as the
+       other half of a pair rather than as a caption under the picture. */
+    align-items: center;
     column-gap: var(--space-gap-group);
   }
 
-  /* The default: a full-width row, which is what the column gave everything
-     before this media query existed. */
-  .musie-immersive:has(.musie-immersive__card) > * {
-    grid-column: 1 / -1;
-  }
-
-  .musie-immersive:has(.musie-immersive__card) > .musie-immersive__card {
-    grid-column: 1;
-    /* Leading edge, as drawn — the picture anchors the row and the clock reads
-       beside it rather than under it. */
+  .musie-immersive__body:has(.musie-immersive__card) .musie-immersive__card {
+    /* Leading edge, as drawn. The picture anchors the row. */
     justify-self: start;
     margin-inline: 0;
     max-inline-size: 100%;
     max-block-size: calc(var(--viewport-block) * 0.5);
-  }
-
-  .musie-immersive:has(.musie-immersive__card) > .musie-immersive__clock {
-    /* COLUMN 2, AND THE ROW IS THE PICTURE'S. Auto-placement puts it there
-       because the cursor is sitting in that cell: the picture claimed column 1
-       of this row immediately before it. */
-    grid-column: 2;
-    /* Against the picture's middle rather than its top: the countdown is the
-       other half of a pair, not a caption hanging off it. */
-    align-self: center;
-    /* The flex column's `margin-block: auto` took the slack and has nothing to
-       take in a grid; cleared so it cannot push the clock out of its row. */
-    margin-block: 0;
   }
 }
 }

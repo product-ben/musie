@@ -6978,12 +6978,48 @@ html[data-musy-scroll-snap='y'] {
    taller than the viewport, which is the case this component does not have. */
 .musy-sheet {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  /* ── THREE ROWS, AND TWO OF THEM ARE PROMISES ──────────────────────────
+     Header at the top, foot at the bottom, and whatever is between them takes
+     the rest. Ben, 2026-10-14: those two must sit in the same place whether
+     the sheet is a walk through five pictures or one screen with a countdown
+     on it — which is a promise one component can keep and two cannot.
+
+     `minmax(0, 1fr)` on the middle row for the reason it is load-bearing
+     everywhere else in this file: a grid track defaults to `min-content` as
+     its floor, and a full-height page or a picture would push the foot off
+     the bottom rather than shrink.
+
+     THE FOOT IS IN FLOW RATHER THAN POSITIONED, which it was until today. An
+     absolute foot sits in the same place too — and sits ON TOP of whatever the
+     middle draws, which is fine over a full-bleed picture and wrong over a
+     countdown the foot would then cover. A row cannot overlap what it is
+     beside. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   /* The height the body handed over, and no more — the pages are measured
      against it, so it cannot be allowed to grow with its content. */
   block-size: 100%;
   min-block-size: 0;
+}
+
+/* ── THE HEADER ───────────────────────────────────────────────────────────
+   Top of the sheet, every variant. It keeps its own trailing space so the
+   middle row starts clear of it, and it clears the close control's corner —
+   `--target-primary` is that control's own size, so a heading cannot run under
+   the X whatever the copy does. */
+.musy-sheet__header {
+  padding-inline-end: var(--target-primary);
+  padding-block-end: var(--space-gap-stack);
+}
+
+/* ── THE SINGLE BODY ──────────────────────────────────────────────────────
+   What a sheet with no pages draws between the header and the foot. Centred,
+   because a sheet of one screen is a thing to look at rather than a column to
+   read down. */
+.musy-sheet__body {
+  min-block-size: 0;
+  display: grid;
+  align-content: center;
 }
 
 /* ── THE FIELD ────────────────────────────────────────────────────────────
@@ -7026,9 +7062,44 @@ html[data-musy-scroll-snap='y'] {
    screen. `mandatory` alone promises only that a scroll LANDS on a snap point
    and never which one, which is how a flick used to carry three slides past a
    view whose whole job was to interrupt (Ben, 2026-09-22). */
+/* ── THE CLOSE CONTROL, ON A PICTURE ──────────────────────────────────────
+   Lightbox draws it in `--on-surface` against the popup's own surface, which
+   is right for every other sheet and all but invisible on the dark field. The
+   class is the Sheet's and the selector reaches one level out, for the reason
+   the paging block below gives at greater length: this is the component that
+   puts controls on artwork, and the alternative is a tone axis on a control
+   that has no variants to hang one on. */
+.musy-lightbox__popup.musy-sheet-host--media .musy-lightbox__close {
+  color: var(--on-surface-inverse);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-lightbox__popup.musy-sheet-host--media .musy-lightbox__close:hover {
+    /* The ghost hover is a sand tint and would flash light on a dark field.
+       The same ink at a low alpha keeps the gesture and the surface. */
+    background-color: color-mix(in oklab, var(--on-surface-inverse) 18%, transparent);
+  }
+}
+
+.musy-lightbox__popup.musy-sheet-host--media .musy-lightbox__close:active {
+  background-color: color-mix(in oklab, var(--on-surface-inverse) 28%, transparent);
+}
+
 .musy-sheet__pages {
   flex: 1 1 auto;
   min-block-size: 0;
+  /* ── NO SCROLLBAR — Ben, 2026-10-14 ────────────────────────────────────
+     A paged surface already says where it is, twice: the dots on one edge and
+     the chevrons on the other. A scrollbar over a full-bleed picture is a
+     third answer to a question nobody asked, and on a desktop with classic
+     scrollbars it sat on top of the artwork.
+
+     THE CONTENT STAYS REACHABLE WITHOUT IT, which is the only reason this is
+     not a 2.1.1 problem: the pages answer the arrow keys, Page Up/Down, Home
+     and End through `onKeyDown`, the dots are real buttons, and the chevrons
+     are too. Hiding a scrollbar on a container with no other way through it
+     would be the opposite. */
+  scrollbar-width: none;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -7040,6 +7111,10 @@ html[data-musy-scroll-snap='y'] {
      sheet's, not the page's, because a picture that stopped short of the edge
      would stop being full-bleed. Pages that hold TEXT add their own. */
   overscroll-behavior: contain;
+}
+
+.musy-sheet__pages::-webkit-scrollbar {
+  display: none;
 }
 
 .musy-sheet__pages:focus-visible {
@@ -7106,9 +7181,7 @@ html[data-musy-scroll-snap='y'] {
    the browser's own chrome, and an extra allowance would leave a gap on every
    other device. */
 .musy-sheet__foot {
-  position: absolute;
-  inset-block-end: var(--space-inset-sheet);
-  inset-inline: var(--space-inset-sheet);
+  padding-block-start: var(--space-gap-stack);
   display: flex;
   align-items: flex-end;
   /* BOTH AT THE TRAILING EDGE, which is what the first consumer's wireframe
@@ -7119,12 +7192,7 @@ html[data-musy-scroll-snap='y'] {
      it across the foot. */
   justify-content: flex-end;
   gap: var(--space-gap-stack);
-  /* The row is chrome over a scroller: it must not eat the gestures that
-     belong to the pages, only the presses that land on its own controls. */
-  pointer-events: none;
 }
-
-.musy-sheet__foot > * { pointer-events: auto; }
 
 /* ── THE ACTION HUGS ITS LABEL, AND WRAPS BEFORE IT OVERFLOWS ─────────────
    Ben, 2026-10-14. It used to stretch across the foot when it was the only

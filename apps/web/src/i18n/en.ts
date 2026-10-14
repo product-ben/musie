@@ -649,6 +649,10 @@ export const en = {
      heading and stays; this names the GROUP for anyone who meets it as a list
      of nine buttons rather than as a picture. */
   'session.scan.gridLabel': 'Your cards — choose one',
+  /* The one sentence under the headline on Auswählen. It is the exercise's
+     own first instruction with the half about paper removed — chrome, because
+     what it leaves out is exactly the part that is only true of a deck. */
+  'session.scan.digitalLead': 'Pick the image that speaks to you most right now, for whatever reason.',
   /* A one-card exercise draws here rather than on Einsteigen, because its own
      paper copy draws here. Same register as `session.scan.scanCard`. */
   'session.scan.draw': 'Draw your card',
