@@ -21,11 +21,7 @@ name: Pages
 
 on:
   push:
-    # `docs-site` is TEMPORARY: it is the only way to publish the site before
-    # the merge, because workflow_dispatch cannot fire for a workflow that
-    # does not yet exist on the default branch. Removed in the next commit,
-    # together with the github-pages deployment-branch policy it needs.
-    branches: [main, docs-site]
+    branches: [main]
     paths:
       - 'apps/docs/**'
       - 'packages/design-system/**'
