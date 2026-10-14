@@ -65,9 +65,15 @@ function decode(encoded: string): string {
  * why this exists.
  *
  * So the width and height are taken back from the `viewBox`, which is the
- * layout's own coordinate space, and the inline `max-width` mermaid adds is
- * removed. The figure scrolls sideways instead (theme/style.css). A diagram
- * narrower than the column is unaffected — its viewBox is already small.
+ * layout's own coordinate space, and mermaid's inline `max-width` is removed.
+ * What that buys is a correct INTRINSIC size: the stylesheet's
+ * `max-width: 100%; height: auto` then scales a wide diagram with its aspect
+ * ratio intact, and a diagram narrower than the column renders at 1:1 instead
+ * of being stretched.
+ *
+ * It writes no inline `style` of its own. It did, briefly, and an inline
+ * `max-width: none` beats a stylesheet — which is how six diagrams ended up
+ * scrolling after a change meant to stop them scrolling.
  */
 function fitToViewBox(svg: string): string {
   const open = /<svg\b[^>]*>/.exec(svg);
@@ -84,7 +90,7 @@ function fitToViewBox(svg: string): string {
     .replace(/\swidth="[^"]*"/, '')
     .replace(/\sheight="[^"]*"/, '')
     .replace(/\sstyle="[^"]*"/, '')
-    .replace(/<svg\b/, `<svg width="${width}" height="${height}" style="max-width:none"`);
+    .replace(/<svg\b/, `<svg width="${width}" height="${height}"`);
 
   return svg.replace(open[0], fixed);
 }

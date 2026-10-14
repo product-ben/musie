@@ -92,7 +92,10 @@
    and diagrams, and a table that scrolls sideways is a table nobody reads.
    Prose is held to its own measure below; this is the container, not the
    line length. */
-.VPDoc .content-container {
+/* `.VPDoc.has-aside .content-container` is the default theme's own selector
+   and carries three classes, so `.VPDoc .content-container` loses to it and
+   the column stayed at 688px. Match the specificity. */
+.VPDoc.has-aside .content-container {
   max-width: 900px;
 }
 
