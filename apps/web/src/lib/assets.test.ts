@@ -7,6 +7,7 @@
  * moving — so the interesting cases are the ones where a reader might guess
  * wrong about which shape it is holding.
  */
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { contentImageUrl, fromRoot } from './assets';
 
@@ -57,5 +58,76 @@ describe('contentImageUrl', () => {
   /* A missing base must not take a screen down over one picture. */
   it('falls back to the bare key when there is no storage base', () => {
     expect(contentImageUrl('art-07-a3f91b2c.webp', '')).toBe('art-07-a3f91b2c.webp');
+  });
+});
+
+/**
+ * ── WHICH HELPER A SCREEN MAY CALL, AS A RULE RATHER THAN A HABIT ─────────
+ * `contentImageUrl` exists because a deck picture's `image_url` holds a BUNDLE
+ * PATH today and an OBJECT KEY the moment an operator uploads artwork at
+ * `/maintenance` — `project_deck()` writes the artwork's `src` straight into
+ * the column. `fromRoot` cannot tell the two apart: handed
+ * `art-07-a3f91b2c.webp` it returns `/art-07-a3f91b2c.webp`, a 404 at a path
+ * that names the key.
+ *
+ * Nothing catches that today, and that is the point of this test. Factory
+ * content holds bundle paths, so every card renders, every walk passes and
+ * every screenshot looks right — until the first upload, which is the whole
+ * purpose of the screen that writes it. `pnpm check` touches no database and a
+ * Playwright `toBeVisible` passes on a broken `<img>`.
+ *
+ * So the rule is checked against the SOURCE: `fromRoot` is allowed only where
+ * the column is staying a bundle path, which is `exercises.image_url` and
+ * `user_types.image_url` (the helper's own docblock names both). Everything a
+ * card shows — the listen step, the diary entry, and the digital path's view,
+ * select and sheet — goes through `contentImageUrl`.
+ *
+ * An allowlist rather than a pattern over the argument, because the argument is
+ * `card.imageUrl`, `one.imageUrl` and `entry.cardImageUrl` in five different
+ * files: a regex over those names would be the thing most likely to rot. A new
+ * `fromRoot` call now fails here and asks its author to say why it is exempt.
+ */
+describe('the source rule: a card picture never goes through fromRoot', () => {
+  const SRC = new URL('../', import.meta.url).pathname;
+
+  /** Every `.ts`/`.tsx` under `src/`, excluding tests and the helper itself. */
+  function sources(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = `${dir}${entry.name}`;
+      if (entry.isDirectory()) return sources(`${path}/`);
+      if (!/\.tsx?$/.test(entry.name)) return [];
+      if (/\.test\.tsx?$/.test(entry.name)) return [];
+      if (path.endsWith('lib/assets.ts')) return [];
+      return [path];
+    });
+  }
+
+  /* The two bundle-path columns, and nothing else. Add a line here only with
+     the column that justifies it. */
+  const ALLOWED = new Map([
+    ['routes/Exercises.tsx', 'exercises.image_url — not moving'],
+  ]);
+
+  const files = sources(SRC);
+
+  it('has sources to check, so this cannot pass vacuously', () => {
+    expect(files.length).toBeGreaterThan(40);
+    /* And the helper is actually reached by the screens — a rule that passed
+       because every call had been deleted would be worse than no rule. */
+    const users = files.filter((file) =>
+      /\bcontentImageUrl\(/.test(readFileSync(file, 'utf8')));
+    expect(users.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('calls fromRoot only where a column is staying a bundle path', () => {
+    const offenders = files
+      .filter((file) => /\bfromRoot\(/.test(readFileSync(file, 'utf8')))
+      .map((file) => file.slice(SRC.length))
+      .filter((relative) => !ALLOWED.has(relative));
+
+    expect(
+      offenders,
+      `these call fromRoot on a column that can become an object key: ${offenders.join(', ')}`,
+    ).toEqual([]);
   });
 });

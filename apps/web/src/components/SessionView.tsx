@@ -41,7 +41,7 @@ import type { LightboxOrigin } from '@musie/design-system';
 import { CardSheet } from './CardSheet';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
-import { fromRoot } from '../lib/assets';
+import { contentImageUrl } from '../lib/assets';
 import type { Block } from '../lib/markdown';
 import type { Card } from '../lib/content';
 
@@ -97,7 +97,7 @@ export function SessionView({
         <figure className="musie-cardshow">
           <Image
             className="musie-cardshow__art"
-            src={fromRoot(card.imageUrl ?? '')}
+            src={contentImageUrl(card.imageUrl ?? '')}
             alt={card.imageAlt ?? t('session.cards.fallbackAlt', { code: card.code })}
             width={1200}
             height={849}

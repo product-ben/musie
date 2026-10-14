@@ -28,7 +28,7 @@ import { CtaButton, Sheet } from '@musie/design-system';
 import type { LightboxOrigin, SheetPage } from '@musie/design-system';
 import { Image } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
-import { fromRoot } from '../lib/assets';
+import { contentImageUrl } from '../lib/assets';
 import type { Card } from '../lib/content';
 
 export interface CardSheetProps {
@@ -77,7 +77,7 @@ export function CardSheet({ cards, open, onOpenChange, origin, onDone }: CardShe
         <div className="musie-cards__media">
           <Image
             className="musie-cards__art"
-            src={fromRoot(one.imageUrl ?? '')}
+            src={contentImageUrl(one.imageUrl ?? '')}
             alt={one.imageAlt ?? t('session.cards.fallbackAlt', { code: one.code })}
             width={1200}
             height={849}

@@ -32,7 +32,7 @@ import type { LightboxOrigin } from '@musie/design-system';
 import { CardSheet } from './CardSheet';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
-import { fromRoot } from '../lib/assets';
+import { contentImageUrl } from '../lib/assets';
 import type { Block } from '../lib/markdown';
 import type { Card } from '../lib/content';
 
@@ -98,7 +98,7 @@ export function SessionSelect({
         disabled={choosing}
         options={hand.map((one) => ({
           value: one.id,
-          image: fromRoot(one.imageUrl ?? ''),
+          image: contentImageUrl(one.imageUrl ?? ''),
           imageAlt: alt(one),
         }))}
       />

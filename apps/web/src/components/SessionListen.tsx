@@ -67,7 +67,7 @@ import { useMix } from '../lib/mixer';
 import { revealTrack } from '../lib/reveal';
 import { markListened, savePlayed } from '../lib/session';
 import type { Card, Exercise, ListenAudio } from '../lib/content';
-import { fromRoot } from '../lib/assets';
+import { contentImageUrl } from '../lib/assets';
 import { bodyOnly, headingOnly, parseMarkdown, plainText } from '../lib/markdown';
 import { usePinnedHeader } from '../lib/useHeaderReveal';
 
@@ -1647,7 +1647,7 @@ export function SessionListen({
             {digital && card !== null && (
               <Image
                 className="musie-immersive__card"
-                src={fromRoot(card.imageUrl ?? '')}
+                src={contentImageUrl(card.imageUrl ?? '')}
                 alt={card.imageAlt ?? t('session.cards.fallbackAlt', { code: card.code })}
                 width={1200}
                 height={849}
