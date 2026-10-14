@@ -47,6 +47,8 @@ import {
   Toast,
 } from '@musie/design-system';
 import {
+  AXIS_MAX,
+  AXIS_MIN,
   CELLS,
   LICENCE_TYPES,
   cellId,
@@ -87,6 +89,16 @@ import type {
 import '../maintenance.css';
 
 type View = 'grid' | 'music' | 'artwork' | 'cards' | 'log';
+
+/**
+ * The five positions on either axis, derived from `deckRules` so there is one
+ * definition of how wide the grid is. Valence reads left to right; arousal is
+ * drawn top-down, so its rows are this reversed — up is more activating.
+ */
+const AXIS: number[] = Array.from(
+  { length: AXIS_MAX - AXIS_MIN + 1 },
+  (_, step) => AXIS_MIN + step,
+);
 
 /* ═══ SMALL SHARED PIECES ═══════════════════════════════════════════════════ */
 
@@ -166,6 +178,41 @@ function changes(edit: ContentEdit): string {
 }
 
 /**
+ * Always on screen, below every library. Ben, 2026-10-14.
+ *
+ * Nothing here is ever deleted — a code can never be freed and a history must
+ * always have something to return to — so *retired* is a permanent part of
+ * every list rather than an empty state somebody might never see. Which is
+ * also why the empty case says what it says: this section fills up over time
+ * and never empties.
+ */
+function Retired(props: { count: number; children: React.ReactNode }): React.ReactElement {
+  return (
+    <section className="musie-retired">
+      <h2 className="musie-retired__head">Retired</h2>
+      {props.count === 0
+        ? (
+          <p className="musie-note">
+            Nothing is retired. Nothing here is ever deleted, so this fills up
+            rather than empties.
+          </p>
+        )
+        : props.children}
+    </section>
+  );
+}
+
+/** A filename without its extension — the last fallback for a title. */
+function stemOf(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  return (dot > 0 ? filename.slice(0, dot) : filename).trim();
+}
+
+function reason(thrown: unknown): string {
+  return thrown instanceof Error ? thrown.message : String(thrown);
+}
+
+/**
  * The history, which is on every detail view rather than on a screen of its
  * own.
  *
@@ -225,6 +272,18 @@ export function Maintenance(): React.ReactElement {
   const [view, setView] = React.useState<View>('grid');
   const [toast, setToast] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+
+  /**
+   * A DRAFT IS NOT A ROW. Ben, 2026-10-14: only create an item when it is
+   * saved. These used to write a placeholder immediately — a piece called
+   * `Untitled` by `Unknown`, an artwork whose `src` was `art-07-pending` —
+   * and open the panel on it, so closing the panel left the placeholder in
+   * the library and in the log. Now the panel holds a draft that exists
+   * nowhere until Save, and the log's first line for a row is its real one.
+   */
+  const [draftTrack, setDraftTrack] = React.useState(false);
+  const [draftCard, setDraftCard] = React.useState(false);
+  const [draftCell, setDraftCell] = React.useState<string>('');
 
   /** Which thing is open, if any. */
   const [openCell, setOpenCell] = React.useState<Cell | null>(null);
@@ -331,6 +390,10 @@ export function Maintenance(): React.ReactElement {
   const liveArtworks = deck.artworks.filter((a) => a.archived_at === null);
   const liveCards = deck.cards.filter((c) => c.archived_at === null);
 
+  const retiredTracks = deck.tracks.filter((t) => t.archived_at !== null);
+  const retiredArtworks = deck.artworks.filter((a) => a.archived_at !== null);
+  const retiredCards = deck.cards.filter((c) => c.archived_at !== null);
+
   /** Which cells a track or artwork sits on — the "archiving this costs" list. */
   const cellsUsing = (kind: 'track' | 'artwork', id: string): MaintenanceCell[] =>
     deck.cells.filter((cell) => (kind === 'track' ? cell.track_id : cell.artwork_id) === id);
@@ -347,38 +410,56 @@ export function Maintenance(): React.ReactElement {
   const grid = (
     <>
       <p className="musie-note">
-        Valence across, arousal up. A card plays whatever music sits on its square
-        and shows whatever picture sits there. The same piece may sit on several
-        squares; an empty square is a silent card, which is ordinary.
+        Valence across, arousal up — both run −2 to +2. A card plays whatever
+        music sits on its square and shows whatever picture sits there. The same
+        piece may sit on several squares; an empty square is a silent card,
+        which is ordinary.
       </p>
       <div className="musie-grid" role="group" aria-label="The valence and arousal grid">
-        {CELLS.map((cell) => {
-          const held = cellAt(cell);
-          const card = cardAt(cell);
-          const track = trackById(held?.track_id ?? null);
-          const artwork = artworkById(held?.artwork_id ?? null);
-          return (
-            <button
-              key={cellId(cell)}
-              type="button"
-              className="musie-grid__cell"
-              aria-label={`Valence ${cell.valence}, arousal ${cell.arousal}`}
-              onClick={() => setOpenCell(cell)}
-            >
-              <span className="musie-grid__code">{card?.code ?? '·'}</span>
-              {artwork !== undefined && (
-                <img
-                  className="musie-grid__art"
-                  src={contentImageUrl(artwork.src)}
-                  alt=""
-                />
-              )}
-              <span className="musie-grid__track">
-                {track === undefined ? 'no music' : track.title}
-              </span>
-            </button>
-          );
-        })}
+        {/* THE LABELS ARE `aria-hidden`. Each cell's own `aria-label` already
+            says "Valence 1, arousal 2", so a screen reader gets the position
+            from the thing it is on; a labelled row and column would read the
+            same two numbers again on the way past. */}
+        <span className="musie-grid__axis" aria-hidden="true" />
+        {AXIS.map((valence) => (
+          <span key={`valence-${valence}`} className="musie-grid__axis" aria-hidden="true">
+            {valence}
+          </span>
+        ))}
+
+        {[...AXIS].reverse().map((arousal) => (
+          <React.Fragment key={`arousal-${arousal}`}>
+            <span className="musie-grid__axis" aria-hidden="true">{arousal}</span>
+            {AXIS.map((valence) => {
+              const cell = { valence, arousal };
+              const held = cellAt(cell);
+              const card = cardAt(cell);
+              const track = trackById(held?.track_id ?? null);
+              const artwork = artworkById(held?.artwork_id ?? null);
+              return (
+                <button
+                  key={cellId(cell)}
+                  type="button"
+                  className="musie-grid__cell"
+                  aria-label={`Valence ${valence}, arousal ${arousal}`}
+                  onClick={() => setOpenCell(cell)}
+                >
+                  <span className="musie-grid__code">{card?.code ?? '·'}</span>
+                  {artwork !== undefined && (
+                    <img
+                      className="musie-grid__art"
+                      src={contentImageUrl(artwork.src)}
+                      alt=""
+                    />
+                  )}
+                  <span className="musie-grid__track">
+                    {track === undefined ? 'no music' : track.title}
+                  </span>
+                </button>
+              );
+            })}
+          </React.Fragment>
+        ))}
       </div>
     </>
   );
@@ -454,49 +535,130 @@ export function Maintenance(): React.ReactElement {
 
   /* ── MUSIC ──────────────────────────────────────────────────────────────── */
 
+  /**
+   * SEVERAL FILES AT ONCE, each becoming a piece filled in from its own tags.
+   * Ben, 2026-10-14.
+   *
+   * ── THE IDS ARE MINTED FROM A LIST THAT GROWS ───────────────────────────
+   * `nextId` reads the highest id in use, and nothing has been written yet
+   * when the second file is reached — so minting from `deck.tracks` would
+   * give every file in one drop the same id, and the second write would
+   * quietly update the first piece. The local `taken` is what makes a drop of
+   * nine files nine pieces.
+   *
+   * ── ROW FIRST, THEN FILE ────────────────────────────────────────────────
+   * The metadata write creates the row and the upload fills in `src` and the
+   * duration. That order means a failed upload leaves a piece with no
+   * recording — which is a legal and honest state, five of the nine are like
+   * that, and the row carries the credit the file came with. The other order
+   * would leave an object in the bucket that nothing points at.
+   *
+   * ── AND THE TITLE MAY BE A FILENAME ─────────────────────────────────────
+   * Tags first, the filename stem second. A studio's export is called
+   * `BodyScan - mit Hintergrund.mp3`, so the fallback is a prompt rather
+   * than an answer — which is what the toast says.
+   */
+  const uploadPieces = async (files: FileList): Promise<void> => {
+    setBusy(true);
+    const added: string[] = [];
+    const failed: string[] = [];
+    const taken = deck.tracks.map((track) => track.id);
+
+    for (const file of Array.from(files)) {
+      try {
+        const tags = readAudioTags(await readHead(file));
+        const measured = await measureDuration(file);
+        const id = nextId('trk', taken);
+        taken.push(id);
+
+        await saveTrack(id, {
+          title: tags.title ?? stemOf(file.name),
+          artist: tags.artist ?? '',
+          album: tags.album,
+          release_year: tags.year,
+          tempo_bpm: tags.tempoBpm,
+        });
+        await uploadMedia({
+          kind: 'track', id, file, filename: file.name, durationSeconds: measured,
+        });
+        added.push(id);
+      } catch (thrown: unknown) {
+        failed.push(`${file.name}: ${reason(thrown)}`);
+      }
+    }
+
+    await load();
+    setBusy(false);
+    setToast([
+      added.length === 0 ? null : `${added.length} piece(s) added — check the titles`,
+      failed.length === 0 ? null : `${failed.length} failed: ${failed.join('; ')}`,
+    ].filter((line) => line !== null).join(' · ') || 'nothing to add');
+  };
+
+  /** One row, live or retired. */
+  const trackRow = (track: MaintenanceTrack): React.ReactElement => (
+    <li key={track.id}>
+      <button
+        type="button"
+        className={`musie-row${track.archived_at === null ? '' : ' musie-row--retired'}`}
+        onClick={() => setOpenTrack(track.id)}
+      >
+        <span className="musie-row__name">
+          {track.title === '' ? track.id : track.title}
+          {track.artist.trim() === '' && <Badge variant="warning" hideIcon>no artist</Badge>}
+        </span>
+        <span className="musie-row__meta">
+          {track.artist.trim() === '' ? 'artist not filled in yet' : track.artist}
+          {track.tempo_bpm !== null && ` · ${track.tempo_bpm} bpm`}
+          {track.src === null ? ' · no file' : ` · ${seconds(track.duration_seconds)}`}
+          {` · ${cellsUsing('track', track.id).length} square(s)`}
+        </span>
+      </button>
+    </li>
+  );
+
+  /* Calmest first where a tempo is known, which is the judgement being made
+     every time a piece is placed on the vertical axis. */
+  const byTempo = (a: MaintenanceTrack, b: MaintenanceTrack): number =>
+    (a.tempo_bpm ?? Number.MAX_SAFE_INTEGER) - (b.tempo_bpm ?? Number.MAX_SAFE_INTEGER)
+    || a.title.localeCompare(b.title);
+
   const music = (
     <>
       <div className="musie-toolrow">
+        <label className="musie-file">
+          <span>Upload pieces — one per file, filled in from its own tags</span>
+          <input
+            type="file"
+            multiple
+            accept="audio/mpeg,audio/mp4,audio/aac,audio/wav"
+            disabled={busy}
+            onChange={(event) => {
+              const files = event.target.files;
+              if (files !== null && files.length > 0) void uploadPieces(files);
+              event.target.value = '';
+            }}
+          />
+        </label>
         <CtaButton
-          variant="primary"
+          variant="secondary"
           size="min"
-          loading={busy}
-          loadingLabel="Adding"
-          onClick={() => {
-            const id = nextId('trk', deck.tracks.map((t) => t.id));
-            void run('Piece added', () => saveTrack(id, { title: 'Untitled', artist: 'Unknown' }))
-              .then((ok) => { if (ok) setOpenTrack(id); });
-          }}
+          disabled={busy}
+          onClick={() => setDraftTrack(true)}
         >
-          Add a piece
+          Add one with no file
         </CtaButton>
-        <span className="musie-note">
-          {liveTracks.length} live, {deck.tracks.length - liveTracks.length} retired. Sorted
-          calmest first where a tempo is known.
-        </span>
       </div>
 
-      <ul className="musie-rows">
-        {[...deck.tracks]
-          .sort((a, b) => (a.tempo_bpm ?? 9999) - (b.tempo_bpm ?? 9999)
-            || a.title.localeCompare(b.title))
-          .map((track) => (
-            <li key={track.id}>
-              <button type="button" className="musie-row" onClick={() => setOpenTrack(track.id)}>
-                <span className="musie-row__name">
-                  {track.title}
-                  {track.archived_at !== null && <Badge variant="neutral" hideIcon>retired</Badge>}
-                </span>
-                <span className="musie-row__meta">
-                  {track.artist}
-                  {track.tempo_bpm !== null && ` · ${track.tempo_bpm} bpm`}
-                  {track.src === null ? ' · no file' : ` · ${seconds(track.duration_seconds)}`}
-                  {` · ${cellsUsing('track', track.id).length} square(s)`}
-                </span>
-              </button>
-            </li>
-          ))}
-      </ul>
+      <p className="musie-note">
+        {liveTracks.length} live. Sorted calmest first where a tempo is known.
+      </p>
+
+      <ul className="musie-rows">{[...liveTracks].sort(byTempo).map(trackRow)}</ul>
+
+      <Retired count={retiredTracks.length}>
+        <ul className="musie-rows">{[...retiredTracks].sort(byTempo).map(trackRow)}</ul>
+      </Retired>
     </>
   );
 
@@ -524,45 +686,84 @@ export function Maintenance(): React.ReactElement {
 
   /* ── ARTWORK ────────────────────────────────────────────────────────────── */
 
+  /**
+   * A PICTURE IS CREATED BY CHOOSING ONE, not by pressing Add.
+   *
+   * `artworks.src` is `not null`, so an artwork with no file is not a state
+   * the schema can hold — which used to mean inventing one: the Add button
+   * wrote `src: 'art-07-pending'`, a key pointing at nothing, and left it
+   * there if the panel was closed. Choosing the file IS the save here, which
+   * is what Ben asked for and also the only honest shape available.
+   *
+   * Resized to 768² WebP before it leaves the browser — the size
+   * `20260924140000` worked out as 4× the largest slot a card gives an image.
+   */
+  const uploadPictures = async (files: FileList): Promise<void> => {
+    setBusy(true);
+    const added: string[] = [];
+    const failed: string[] = [];
+    const taken = deck.artworks.map((art) => art.id);
+
+    for (const file of Array.from(files)) {
+      try {
+        const resized = await resizeArtwork(file);
+        const id = nextId('art', taken);
+        taken.push(id);
+        await uploadMedia({ kind: 'artwork', id, file: resized, filename: `${id}.webp` });
+        added.push(id);
+      } catch (thrown: unknown) {
+        failed.push(`${file.name}: ${reason(thrown)}`);
+      }
+    }
+
+    await load();
+    setBusy(false);
+    setToast([
+      added.length === 0 ? null : `${added.length} picture(s) added`,
+      failed.length === 0 ? null : `${failed.length} failed: ${failed.join('; ')}`,
+    ].filter((line) => line !== null).join(' · ') || 'nothing to add');
+  };
+
+  const artworkThumb = (art: MaintenanceArtwork): React.ReactElement => (
+    <button
+      key={art.id}
+      type="button"
+      className={`musie-thumb${art.archived_at === null ? '' : ' musie-thumb--retired'}`}
+      onClick={() => setOpenArtwork(art.id)}
+    >
+      {/* `cover` here and `contain` in the panel: a thumbnail is a label and
+          wants one shape, and the panel is where the picture is the subject. */}
+      <img src={contentImageUrl(art.src)} alt="" className="musie-thumb__img" />
+      <span className="musie-thumb__name">{art.id}</span>
+      <span className="musie-note">{cellsUsing('artwork', art.id).length} square(s)</span>
+    </button>
+  );
+
   const artwork = (
     <>
       <div className="musie-toolrow">
-        <CtaButton
-          variant="primary"
-          size="min"
-          loading={busy}
-          loadingLabel="Adding"
-          onClick={() => {
-            const id = nextId('art', deck.artworks.map((a) => a.id));
-            /* A row with a placeholder src, so the file can be uploaded onto
-               it: `artworks.src` is `not null`, and a picture with no file is
-               not a state worth modelling for the five minutes it lasts. */
-            void run('Picture added', () => saveArtwork(id, { src: `${id}-pending` }))
-              .then((ok) => { if (ok) setOpenArtwork(id); });
-          }}
-        >
-          Add a picture
-        </CtaButton>
+        <label className="musie-file">
+          <span>Upload pictures — resized to 768² WebP on the way</span>
+          <input
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp"
+            disabled={busy}
+            onChange={(event) => {
+              const files = event.target.files;
+              if (files !== null && files.length > 0) void uploadPictures(files);
+              event.target.value = '';
+            }}
+          />
+        </label>
         <span className="musie-note">{liveArtworks.length} live.</span>
       </div>
 
-      <div className="musie-thumbs">
-        {deck.artworks.map((art) => (
-          <button
-            key={art.id}
-            type="button"
-            className="musie-thumb"
-            onClick={() => setOpenArtwork(art.id)}
-          >
-            <img src={contentImageUrl(art.src)} alt="" className="musie-thumb__img" />
-            <span className="musie-thumb__name">
-              {art.id}
-              {art.archived_at !== null && <Badge variant="neutral" hideIcon>retired</Badge>}
-            </span>
-            <span className="musie-note">{cellsUsing('artwork', art.id).length} square(s)</span>
-          </button>
-        ))}
-      </div>
+      <div className="musie-thumbs">{liveArtworks.map(artworkThumb)}</div>
+
+      <Retired count={retiredArtworks.length}>
+        <div className="musie-thumbs">{retiredArtworks.map(artworkThumb)}</div>
+      </Retired>
     </>
   );
 
@@ -598,82 +799,89 @@ export function Maintenance(): React.ReactElement {
   const everUsedCodes = deck.cards.map((card) => card.code);
   const free = nextFreeCode(everUsedCodes);
 
+  const cardRow = (
+    card: MaintenanceCard,
+    index: number,
+    all: MaintenanceCard[],
+  ): React.ReactElement => (
+    <li key={card.id}>
+      <div className={`musie-row musie-row--split${card.archived_at === null ? '' : ' musie-row--retired'}`}>
+        <button type="button" className="musie-row__main" onClick={() => setOpenCard(card.id)}>
+          <span className="musie-row__name">{card.code}</span>
+          <span className="musie-row__meta">
+            {card.valence === null
+              ? 'not on the grid'
+              : `square ${card.valence}, ${card.arousal}`}
+            {' · '}
+            {card.valence === null
+              ? 'no music'
+              : trackById(cellAt({ valence: card.valence, arousal: card.arousal ?? 0 })?.track_id ?? null)?.title ?? 'no music'}
+          </span>
+        </button>
+        {card.archived_at === null && (
+          <span className="musie-row__actions">
+            <CtaButton
+              variant="secondary"
+              size="min"
+              loading={busy}
+              loadingLabel="…"
+              onClick={() => {
+                if (index === 0) return;
+                const order = all.map((one) => one.id);
+                [order[index - 1], order[index]] = [order[index], order[index - 1]];
+                void run('Order changed', () => reorderCards(order));
+              }}
+            >
+              Up
+            </CtaButton>
+            <CtaButton
+              variant="secondary"
+              size="min"
+              loading={busy}
+              loadingLabel="…"
+              onClick={() => {
+                if (index === all.length - 1) return;
+                const order = all.map((one) => one.id);
+                [order[index], order[index + 1]] = [order[index + 1], order[index]];
+                void run('Order changed', () => reorderCards(order));
+              }}
+            >
+              Down
+            </CtaButton>
+          </span>
+        )}
+      </div>
+    </li>
+  );
+
+  const ordered = [...liveCards].sort((a, b) => a.sort - b.sort);
+
   const cards = (
     <>
       <div className="musie-toolrow">
         <CtaButton
           variant="primary"
           size="min"
-          loading={busy}
-          loadingLabel="Adding"
-          onClick={() => {
-            if (free === null) return;
-            const problems = validateCard(
-              { code: free, valence: null, arousal: null }, everUsedCodes,
-            );
-            if (problems.length > 0) { setToast(problems[0]); return; }
-            void run(`${free} added`, () => saveCard(free.toLowerCase(), { code: free }));
-          }}
+          disabled={busy || free === null}
+          onClick={() => { setDraftCell(''); setDraftCard(true); }}
         >
           {free === null ? 'All 99 codes are used' : `Add ${free}`}
         </CtaButton>
         <span className="musie-note">
-          {liveCards.length} live of {deck.cards.length} ever made. A code is written once
-          and never reused.
+          {liveCards.length} live of {deck.cards.length} ever made. A code is written
+          once and never reused, so a retired card keeps its own for ever.
         </span>
       </div>
 
       <ul className="musie-rows">
-        {[...deck.cards].sort((a, b) => a.sort - b.sort).map((card, index, all) => (
-          <li key={card.id}>
-            <div className="musie-row musie-row--split">
-              <button type="button" className="musie-row__main" onClick={() => setOpenCard(card.id)}>
-                <span className="musie-row__name">
-                  {card.code}
-                  {card.archived_at !== null && <Badge variant="neutral" hideIcon>retired</Badge>}
-                </span>
-                <span className="musie-row__meta">
-                  {card.valence === null
-                    ? 'not on the grid'
-                    : `square ${card.valence}, ${card.arousal}`}
-                  {' · '}
-                  {trackById(cellAt({ valence: card.valence ?? 0, arousal: card.arousal ?? 0 })?.track_id ?? null)?.title ?? 'no music'}
-                </span>
-              </button>
-              <span className="musie-row__actions">
-                <CtaButton
-                  variant="secondary"
-                  size="min"
-                  loading={busy}
-                  loadingLabel="…"
-                  onClick={() => {
-                    if (index === 0) return;
-                    const order = all.map((c) => c.id);
-                    [order[index - 1], order[index]] = [order[index], order[index - 1]];
-                    void run('Order changed', () => reorderCards(order));
-                  }}
-                >
-                  Up
-                </CtaButton>
-                <CtaButton
-                  variant="secondary"
-                  size="min"
-                  loading={busy}
-                  loadingLabel="…"
-                  onClick={() => {
-                    if (index === all.length - 1) return;
-                    const order = all.map((c) => c.id);
-                    [order[index], order[index + 1]] = [order[index + 1], order[index]];
-                    void run('Order changed', () => reorderCards(order));
-                  }}
-                >
-                  Down
-                </CtaButton>
-              </span>
-            </div>
-          </li>
-        ))}
+        {ordered.map((card, index) => cardRow(card, index, ordered))}
       </ul>
+
+      <Retired count={retiredCards.length}>
+        <ul className="musie-rows">
+          {retiredCards.map((card, index) => cardRow(card, index, retiredCards))}
+        </ul>
+      </Retired>
     </>
   );
 
@@ -771,6 +979,114 @@ export function Maintenance(): React.ReactElement {
     );
   })();
 
+  /* ── THE DRAFTS, WHICH ARE NOT ROWS YET ─────────────────────────────────── */
+
+  const draftTrackId = nextId('trk', deck.tracks.map((track) => track.id));
+
+  const trackDraft = draftTrack && (
+    <TrackPanel
+      isNew
+      track={{
+        id: draftTrackId,
+        src: null,
+        duration_seconds: 0,
+        title: '',
+        artist: '',
+        album: null,
+        release_year: null,
+        tempo_bpm: null,
+        mood_note: null,
+        licence_type: null,
+        catalogue_ref: null,
+        licence_ref: null,
+        archived_at: null,
+      }}
+      cells={[]}
+      cards={deck.cards}
+      edits={[]}
+      busy={busy}
+      onClose={() => setDraftTrack(false)}
+      onSave={async (patch) => {
+        const ok = await run(`${draftTrackId} created`, () => saveTrack(draftTrackId, patch));
+        /* Straight into the real panel, which is where the file goes — the
+           draft has no upload control, because there is no row to hang a key
+           on until this moment. */
+        if (ok) { setDraftTrack(false); setOpenTrack(draftTrackId); }
+        return ok;
+      }}
+      onUpload={() => Promise.resolve(false)}
+      onArchive={() => Promise.resolve(false)}
+      onRevert={() => undefined}
+    />
+  );
+
+  const cardDraft = draftCard && free !== null && (
+    <Lightbox
+      title={`New card · ${free}`}
+      open
+      onOpenChange={(next) => { if (!next) setDraftCard(false); }}
+      closeLabel="Close"
+    >
+      <p className="musie-note">
+        Nothing is written until you press Create.
+      </p>
+
+      <Field
+        label="Code"
+        value={free}
+        readOnly
+        description="The lowest code nobody has taken. It cannot be changed afterwards, and it is never offered again — a printed QR encodes it."
+      />
+
+      <Picker
+        label="Square"
+        value={draftCell}
+        options={[
+          { value: '', label: '— not on the grid —' },
+          ...CELLS.map((cell) => {
+            const occupant = cardAt(cell);
+            return {
+              value: cellId(cell),
+              label: `${cell.valence}, ${cell.arousal}${occupant === undefined ? '' : ` (held by ${occupant.code})`}`,
+            };
+          }),
+        ]}
+        disabled={busy}
+        onChange={setDraftCell}
+      />
+
+      <CtaButton
+        variant="primary"
+        loading={busy}
+        loadingLabel="Creating"
+        onClick={() => {
+          const target = draftCell === '' ? null : parseCellId(draftCell);
+          const problems = validateCard(
+            { code: free, valence: target?.valence ?? null, arousal: target?.arousal ?? null },
+            everUsedCodes,
+          );
+          if (problems.length > 0) { setToast(problems[0]); return; }
+
+          void run(`${free} created`, async () => {
+            /* One card per cell is a unique constraint, so whoever is standing
+               there has to step off first. */
+            const occupant = target === null ? undefined : cardAt(target);
+            if (occupant !== undefined) {
+              await saveCard(occupant.id, { valence: null, arousal: null });
+            }
+            await saveCard(free.toLowerCase(), {
+              code: free,
+              valence: target?.valence ?? null,
+              arousal: target?.arousal ?? null,
+            });
+          }).then((ok) => { if (ok) setDraftCard(false); });
+        }}
+      >
+        Create {free}
+      </CtaButton>
+    </Lightbox>
+  );
+
   /* ── THE LOG ────────────────────────────────────────────────────────────── */
 
   const log = (
@@ -826,6 +1142,8 @@ export function Maintenance(): React.ReactElement {
       {trackPanel}
       {artworkPanel}
       {cardPanel}
+      {trackDraft}
+      {cardDraft}
 
       <Toast label={toast} onDismiss={() => setToast(null)} dismissLabel="Dismiss" />
     </div>
@@ -849,6 +1167,8 @@ function TrackPanel(props: {
   cards: MaintenanceCard[];
   edits: ContentEdit[];
   busy: boolean;
+  /** A draft: nothing exists in the database until Save. */
+  isNew?: boolean;
   onClose: () => void;
   onSave: (patch: Patch) => Promise<boolean>;
   onUpload: (file: File, durationSeconds: number) => Promise<boolean>;
@@ -885,7 +1205,11 @@ function TrackPanel(props: {
       releaseYear: draft.release_year,
       tempoBpm: draft.tempo_bpm,
       licenceType: draft.licence_type,
-      durationSeconds: draft.duration_seconds,
+      /* NULL where there is no file. A piece with no recording is ordinary —
+         five of the nine are — and `validateTrack` reads a zero as a
+         measurement that failed, which for a draft would be a sentence about
+         a broken upload that never happened. */
+      durationSeconds: draft.src === null ? null : draft.duration_seconds,
     });
     setProblems(found);
     if (found.length > 0) return;
@@ -949,11 +1273,20 @@ function TrackPanel(props: {
 
   return (
     <Lightbox
-      title={draft.title === '' ? track.id : draft.title}
+      title={props.isNew === true
+        ? `New piece · ${track.id}`
+        : (draft.title === '' ? track.id : draft.title)}
       open
       onOpenChange={(next) => { if (!next) props.onClose(); }}
       closeLabel="Close"
     >
+      {props.isNew === true && (
+        <p className="musie-note">
+          Nothing is written until you press Create. A piece with no file is
+          ordinary — five of the nine are, and the listen step runs its clock
+          instead. Upload the audio once it exists.
+        </p>
+      )}
       {problems.length > 0 && (
         <Message
           variant="error"
@@ -1007,6 +1340,7 @@ function TrackPanel(props: {
           onValueChange={(value) => set({ licence_ref: value === '' ? null : value })} />
       </ContentBox>
 
+      {props.isNew !== true && (
       <ContentBox headline="The file, and what cannot be typed" headingLevel={3}>
         <Fact label="Duration">
           {track.src === null ? 'no file' : `${seconds(track.duration_seconds)} · measured`}
@@ -1035,11 +1369,13 @@ function TrackPanel(props: {
           <p className="musie-note">Read from the file: {fromFile.join(', ')}. Change anything that is wrong.</p>
         )}
       </ContentBox>
+      )}
 
       <div className="musie-toolrow">
         <CtaButton variant="primary" loading={props.busy} loadingLabel="Saving" onClick={save}>
-          Save
+          {props.isNew === true ? 'Create' : 'Save'}
         </CtaButton>
+        {props.isNew !== true && (
         <CtaButton
           variant="secondary"
           loading={props.busy}
@@ -1055,11 +1391,14 @@ function TrackPanel(props: {
         >
           {track.archived_at === null ? 'Retire this piece' : 'Bring it back'}
         </CtaButton>
+        )}
       </div>
 
-      <ContentBox headline="What changed here" headingLevel={3}>
-        <History edits={props.edits} onRevert={props.onRevert} busy={props.busy} />
-      </ContentBox>
+      {props.isNew !== true && (
+        <ContentBox headline="What changed here" headingLevel={3}>
+          <History edits={props.edits} onRevert={props.onRevert} busy={props.busy} />
+        </ContentBox>
+      )}
     </Lightbox>
   );
 }

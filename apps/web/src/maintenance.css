@@ -15,6 +15,13 @@
  * `--green-*` — and no bare pixel value except hairlines taken from
  * `--border-width-*`.
  *
+ * ── THE RADIUS IS `--radius-xs`, AND IT USED TO BE `--radius-control` ─────
+ * Which resolves to `--radius-full`, 999px: every box on this screen was a
+ * pill, because `--radius-control` is the BUTTON geometry from Figma and a
+ * grid cell is not a button. `--radius-xs` is 4px — "checkbox, swatch, tag"
+ * — and a tool screen made of boxes wants the smallest corner the system
+ * has. Ben, 2026-10-14, looking at it.
+ *
  * L14.2: every class is `musie-` prefixed, never `musy-`, so this file can
  * never be mistaken for a system file.
  *
@@ -39,10 +46,31 @@
 
 .musie-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(calc(var(--sp-4) * 3), 1fr));
+  /* SIX columns: the arousal labels, then the five valence columns. `auto`
+     rather than a width, so the label column is exactly as wide as `-2` and
+     the cells keep the rest. */
+  grid-template-columns: auto repeat(5, minmax(calc(var(--sp-4) * 3), 1fr));
   gap: var(--sp-1);
   overflow-x: auto;
   padding-block: var(--sp-1);
+}
+
+/* ── THE AXIS LABELS ──────────────────────────────────────────────────────
+   Ben, 2026-10-14: label each row and column. Without them the grid is 25
+   boxes and the reader has to count in from an edge to know which square a
+   card is on — which is the one thing the screen is for. */
+
+.musie-grid__axis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-gap-inline);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  /* The columns are a scale, so the digits have to line up rather than kern
+     — `-2` and `0` are different widths in a proportional face. */
+  font-variant-numeric: tabular-nums;
 }
 
 .musie-grid__cell {
@@ -54,7 +82,7 @@
   min-height: calc(var(--sp-4) * 4);
   padding: var(--sp-1);
   border: var(--border-width-hairline) solid var(--border-subtle);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
   background: var(--surface-raised);
   color: var(--on-surface);
   font-family: var(--font-text);
@@ -80,7 +108,7 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
   background: var(--surface-sunken);
 }
 
@@ -118,7 +146,7 @@
   min-height: var(--target-guided);
   padding-inline: var(--sp-2);
   border: var(--border-width-regular) solid var(--border-strong);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
   background: var(--surface);
   color: var(--on-surface);
   font-family: var(--font-text);
@@ -176,7 +204,7 @@
   width: 100%;
   padding: var(--space-inset-card);
   border: var(--border-width-hairline) solid var(--border-subtle);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
   background: var(--surface-raised);
   color: var(--on-surface);
   font-family: var(--font-text);
@@ -250,7 +278,7 @@
   gap: var(--space-gap-inline);
   padding: var(--sp-1);
   border: var(--border-width-hairline) solid var(--border-subtle);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
   background: var(--surface-raised);
   color: var(--on-surface);
   font-family: var(--font-text);
@@ -261,7 +289,7 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
   background: var(--surface-sunken);
 }
 
@@ -277,8 +305,14 @@
   width: 100%;
   max-width: calc(var(--sp-4) * 8);
   aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: var(--radius-control);
+  /* `contain`, NOT `cover` — Ben, 2026-10-14: show the entire artwork. The
+     thumbnails in the list stay `cover`, because a thumbnail is a label and
+     wants a consistent shape; this is the one place the picture is the
+     subject, and a crop here hides exactly what you opened it to check. The
+     uploads are square anyway, so this only shows itself on a source that is
+     not — which is the case worth seeing. */
+  object-fit: contain;
+  border-radius: var(--radius-xs);
   background: var(--surface-sunken);
 }
 
@@ -315,7 +349,7 @@
   padding: var(--space-inset-card);
   border-inline-start: var(--border-width-thick) solid var(--border-subtle);
   background: var(--surface-sunken);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-xs);
 }
 
 .musie-log__head {
@@ -338,4 +372,30 @@
   line-height: var(--type-body-sm-line);
   color: var(--on-surface);
   overflow-wrap: anywhere;
+}
+
+/* ═══ RETIRED ═══════════════════════════════════════════════════════════════
+   Always on screen, below the live list. Ben, 2026-10-14. Nothing is ever
+   deleted here, so "retired" is a real and permanent part of every library
+   rather than an empty state — and a retired card's code stays taken for
+   ever, which is a thing you can only see if the card is still listed. */
+
+.musie-retired {
+  margin-block-start: var(--space-gap-group);
+}
+
+.musie-retired__head {
+  margin: 0 0 var(--space-gap-related);
+  font-family: var(--type-heading-sm-family);
+  font-size: var(--type-heading-sm-size);
+  line-height: var(--type-heading-sm-line);
+  letter-spacing: var(--type-heading-sm-tracking);
+  color: var(--on-surface-muted);
+}
+
+/* Dimmer than a live row, and still legible: it is a record, not a ruin. */
+.musie-row--retired,
+.musie-thumb--retired {
+  background: var(--surface-sunken);
+  color: var(--on-surface-muted);
 }
