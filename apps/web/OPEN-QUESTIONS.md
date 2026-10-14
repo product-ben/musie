@@ -9015,3 +9015,50 @@ asserts both.
 What I need from Ben: **nothing.** Worth knowing: `?focus` now means "a sheet
 is up" across three steps, and the fourth step to want a sheet will have to
 join that rule rather than mint a token.
+
+## Freie Bahn, tuned — and the rail says two words after all
+
+Where: `apps/web/src/routes/Session.tsx` (`DIGITAL_STEP`),
+`apps/web/src/components/SessionScan.tsx`,
+`packages/design-system/src/Image.tsx` (`expand`)
+
+What I checked: Ben, 2026-10-14, after running the built flow. Five changes to
+Freie Bahn in digital mode, and one of them revisits his own decision of the
+day before.
+
+What I did:
+
+- **The rail says *Ansehen*, with one picture rather than a stack.** On
+  2026-10-13 the tuning was that BOTH card exercises say *Auswählen*, and the
+  argument for it was that the rail must not invent a difference where there is
+  none. Seen running, there is one: Freie Bahn deals a single card and you do
+  not pick it, so *Auswählen* described an act that is not on the screen. The
+  tuning is not undone — the step ID is `scan` in both, and the word differs
+  exactly where the exercises do.
+- **The draw moved onto Einsteigen** as *Zufällige Karte ziehen*. The card is
+  then simply there when Auswählen arrives, which is what a drawn card is; the
+  previous shape asked for *Weiter* and then *Karte ziehen*, two presses for
+  one act. `pickCard` does it — the same write, re-read and advance that
+  choosing a picture does, with a hand of one and nobody choosing.
+- **Auswählen says its own two lines** — *Sieh dir deine Karte an* and *Atme
+  mindestens einmal aus und wieder ein, bevor du weitergehst.* — because the
+  exercise's own `scan_md` heading is *Wähle eine Karte aus*, which is the
+  other exercise's. Both go through `arrange` rather than into a markdown
+  string, so a `*` in chrome copy cannot arrive as emphasis.
+- **`Image` grew `expand`**: one secondary icon button at the top trailing
+  corner, inside the picture, off for every image and on here. It replaces the
+  third button in the step's action row — the only one of the three that was
+  about the picture above them rather than about the step. The label and the
+  handler travel as one object so the label cannot be half-passed, and the
+  handler takes the event because the sheet grows out of the rect of the
+  control that opened it.
+
+Two notes on the German, both §1: *Sieh* and not *Sehe* — the imperative of
+*sehen* takes the vowel change, as `session.cards.lead` already does with *sieh
+dir die fünf Karten an* — and *weitergehst* in one word.
+
+What I need from Ben: **nothing.** One thing to watch: `Image`'s DOM is now
+conditional — a bare `<img>` without `expand`, a wrapper with it — and the
+frame is `inline-block` with a `fit-content` cap so the control stays on the
+picture rather than drifting to the container's edge. Anything laying out
+against an `Image` that later gains the control will meet that wrapper.

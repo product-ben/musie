@@ -429,6 +429,13 @@ export const en = {
   'session.step.intro': 'Start',
   'session.step.scan': 'Scan',
   'session.step.select': 'Choose',
+  /* ── AND A THIRD WORD, FOR THE EXERCISE THAT CHOOSES NOTHING ─────────────
+     Ben, 2026-10-14, refining his own consistency tuning of the day before
+     after seeing it run: Freie Bahn deals ONE card and you do not pick it, so
+     *Choose* was describing an act that is not there. Two words for the same
+     step after all — and the rail is right to say which, because the two
+     exercises really are doing different things at it. */
+  'session.step.look': 'Look',
   'session.step.listen': 'Listen',
   'session.step.reflect': 'Reflect',
   /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
@@ -635,6 +642,12 @@ export const en = {
      the pictures are a tap away. */
   'session.intro.dealAgain': 'Look at the {count} cards',
   'session.intro.dealAgainOne': 'Look at the card',
+  /* ── THE ONE-CARD DRAW MOVED ONTO EINSTEIGEN — Ben, 2026-10-14 ───────────
+     It was a button on Auswählen; going on from Einsteigen now draws. The
+     card is then simply THERE when the step arrives, which is what a drawn
+     card is — the previous shape asked you to press *continue* and then
+     *draw*, which is two presses for one act. */
+  'session.intro.drawRandom': 'Draw a random card',
 
   /* ── THE SHEET ──────────────────────────────────────────────────────────*/
   /* Announced, not drawn: the sheet IS the cards, and a title over a
@@ -667,6 +680,13 @@ export const en = {
      paper copy draws here. Same register as `session.scan.scanCard`. */
   'session.scan.draw': 'Draw your card',
   'session.scan.drawAgain': 'Look at the card',
+  /* ── WHAT AUSWÄHLEN SAYS WHEN THERE IS ONE CARD AND NO CHOICE ────────────
+     The exercise's own `scan_md` heading is *Choose a card*, which is true of
+     the other one. These two replace it, and they are chrome for the reason
+     every string in this block is: what they leave out is the half that only
+     applies to a deck. */
+  'session.scan.lookHeadline': 'Look at your card',
+  'session.scan.lookLead': 'Breathe out and in again at least once before you move on.',
   'session.scan.pickFailed': 'That card could not be saved. Try again in a moment.',
   /* THE NAME A CARD HAS WHEN THE DECK HAS NO ALT TEXT FOR IT YET. Nine real
      descriptions live in `supabase/content/deck.json` and arrive with that

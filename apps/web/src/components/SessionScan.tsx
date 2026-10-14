@@ -95,6 +95,12 @@ export interface SessionScanProps {
   onPick?: (card: Card) => void;
   /** Why the last pick did not land, already translated — or null. */
   pickError?: string | null;
+  /**
+   * Open the drawn card full screen. Takes the event, because the sheet grows
+   * out of the RECT of the control that opened it and a rect is measured at
+   * the press. Only the one-card shape draws a control for it.
+   */
+  onExpand?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 /**
@@ -105,7 +111,7 @@ export interface SessionScanProps {
  */
 export function SessionScan({
   exercise, card, scanning, codeError, onSubmitCode,
-  hand = null, onPick, pickError = null,
+  hand = null, onPick, pickError = null, onExpand,
 }: SessionScanProps) {
   const t = useT();
 
@@ -212,7 +218,26 @@ export function SessionScan({
 
     return (
       <>
-        {/* ── THE HEADLINE, AND ONE SENTENCE UNDER IT ────────────────────
+        {/* ── ONE CARD: ITS OWN TWO LINES ─────────────────────────────────
+            `scan_md` opens with *Wähle eine Karte aus*, which is true of the
+            other exercise. Freie Bahn deals one and you do not pick it, so the
+            step says what there IS to do — Ben, 2026-10-14.
+
+            BOTH LINES GO THROUGH `arrange` rather than into a markdown string,
+            so chrome copy cannot accidentally be parsed: a `*` in a sentence
+            would otherwise arrive as emphasis. `md=""` with no `fallbackKey`
+            parses to nothing and the blocks are injected whole, which is the
+            documented shape of that prop. */}
+        {hand.length === 1 ? (
+          <Markdown
+            md=""
+            arrange={(): Block[] => [
+              { kind: 'heading', level: 2, spans: [{ text: t('session.scan.lookHeadline') }] },
+              { kind: 'paragraph', spans: [{ text: t('session.scan.lookLead') }] },
+            ]}
+          />
+        ) : (
+        /* ── THE HEADLINE, AND ONE SENTENCE UNDER IT ────────────────────
             Ben, 2026-10-14. The step was its headline alone, which left the
             question *wähle* unanswered: choose on what grounds? The sentence
             that answers it is the exercise's own first instruction minus the
@@ -226,18 +251,16 @@ export function SessionScan({
             `arrange` one more block puts the chrome sentence through the same
             typography as the content above it.
 
-            Only where there is a CHOICE to make: a one-card exercise draws
-            rather than chooses, and the sentence would be describing something
-            that is not on the screen. */}
-        <Markdown
-          md={exercise.scanMd}
-          arrange={(blocks): Block[] => (hand.length > 1
-            ? [
+            This branch is the CHOOSING one, so the sentence is unconditional
+            here: the one-card shape above says its own two lines instead. */
+          <Markdown
+            md={exercise.scanMd}
+            arrange={(blocks): Block[] => [
               ...headingOnly(blocks),
               { kind: 'paragraph', spans: [{ text: t('session.scan.digitalLead') }] },
-            ]
-            : headingOnly(blocks))}
-        />
+            ]}
+          />
+        )}
 
         {/* `headline` and not children: `Message` takes the sentence as a prop,
             and this one IS the sentence — there is no second line to add under
@@ -265,6 +288,16 @@ export function SessionScan({
                 alt={alt(card)}
                 width={1200}
                 height={849}
+                /* ── THE WAY TO SEE IT PROPERLY IS ON THE PICTURE ──────────
+                    It was a third button in the step's action row — one of
+                    three, and the only one that was about the picture above
+                    them rather than about the step. On the picture it needs no
+                    label beside it, and the row is left saying what it should:
+                    back, and on. */
+                expand={onExpand === undefined ? undefined : {
+                  label: t('session.scan.drawAgain'),
+                  onClick: onExpand,
+                }}
                 decoding="async"
               />
             </figure>

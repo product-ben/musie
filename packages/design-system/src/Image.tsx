@@ -36,8 +36,32 @@
  * declarations above decide that — but they give the browser the aspect ratio
  * before the bytes arrive, so the layout does not jump when it does. A screen
  * that omits them gets a correct picture and a reflow.
+ *
+ * ── `expand` — ONE CONTROL, INSIDE THE PICTURE ────────────────────────────
+ * Off for every image, on request here. Given, a secondary icon button sits at
+ * the top trailing corner INSIDE the frame, and the picture gains a wrapper to
+ * position it against.
+ *
+ * Ben, 2026-10-14, from Freie Bahn's step: *"I like your idea with the Karte
+ * ansehen button. Add this as a feature to the image component as a variant."*
+ * The action there is a sheet that opens with the card full screen, and the
+ * button it used to be was in the step's own action row — three buttons in a
+ * row, one of which was about the picture above them rather than about the
+ * step. On the picture it needs no label at all.
+ *
+ * ONE OBJECT RATHER THAN TWO PROPS, so the label cannot be half-passed: a
+ * control with no accessible name is a 4.1.2 failure, and an `onExpand` that
+ * silently defaulted its label is how that happens (rule 7's whole subject).
+ *
+ * THE HANDLER TAKES THE EVENT, which looks like a leak and is not: the one
+ * consumer opens a `Sheet`, and an immersive sheet grows out of the RECT of
+ * the control that opened it. Measured at the press, never on mount —
+ * Lightbox's own note says why.
  */
 import * as React from 'react';
+import { Expand } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { IconButton } from './IconButton';
 
 export interface ImageProps
   extends Omit<React.ComponentPropsWithoutRef<'img'>, 'className' | 'style' | 'width' | 'height'> {
@@ -60,11 +84,26 @@ export interface ImageProps
   maxWidth?: string;
   /** The floor. Rarely wanted; a picture that cannot shrink will overflow. */
   minWidth?: string;
+  /**
+   * One control inside the picture, at the top trailing corner. Omitted —
+   * which is every image — nothing is drawn and the DOM is a bare `<img>`.
+   *
+   * `label` is required because the control is icon-only; `glyph` defaults to
+   * `Expand`, which reads as *make this bigger* rather than as *look at this*,
+   * and is the action the one consumer actually performs.
+   */
+  expand?: {
+    label: string;
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    glyph?: LucideIcon;
+  };
   className?: string;
 }
 
 export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
-  function Image({ src, alt, width, height, maxWidth, minWidth, className, ...rest }, ref) {
+  function Image({
+    src, alt, width, height, maxWidth, minWidth, expand, className, ...rest
+  }, ref) {
     /* The two bounds travel as custom properties rather than as inline
        `max-width` / `min-width`, so the stylesheet keeps the cascade: a
        consumer's own class can still raise or lower them, which an inline
@@ -73,7 +112,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
     if (maxWidth !== undefined) (vars as Record<string, string>)['--musy-image-max'] = maxWidth;
     if (minWidth !== undefined) (vars as Record<string, string>)['--musy-image-min'] = minWidth;
 
-    return (
+    const picture = (
       <img
         {...rest}
         ref={ref}
@@ -84,6 +123,28 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         className={['musy-image', className ?? ''].filter(Boolean).join(' ')}
         style={Object.keys(vars).length > 0 ? vars : undefined}
       />
+    );
+
+    if (expand === undefined) return picture;
+
+    /* THE WRAPPER EXISTS ONLY WHEN THE CONTROL DOES. Every image without
+       `expand` keeps the DOM it had before this prop existed — one element —
+       so nothing that was laid out against a bare `<img>` moves.
+
+       The className goes to the IMAGE and the bounds with it; the frame is
+       `display: contents`-adjacent in spirit but is a real box, because a
+       `position: absolute` child needs something to be absolute against. */
+    return (
+      <span className="musy-image-frame">
+        {picture}
+        <IconButton
+          variant="secondary"
+          glyph={expand.glyph ?? Expand}
+          label={expand.label}
+          className="musy-image-frame__action"
+          onClick={expand.onClick}
+        />
+      </span>
     );
   },
 );

@@ -45,7 +45,9 @@
  */
 import * as React from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
-import { DoorOpen, Headphones, Images, Quote, ScanQrCode } from 'lucide-react';
+import {
+  DoorOpen, Headphones, Image as ImageIcon, Images, Quote, ScanQrCode,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
@@ -112,12 +114,25 @@ const STEP_LABEL: Record<StepId, MessageKey> = {
  * code drawn beside a step with no QR code in it is the rail telling the same
  * lie in pictures.
  */
-const DIGITAL_STEP_LABEL: Partial<Record<StepId, MessageKey>> = {
-  scan: 'session.step.select',
-};
-
-const DIGITAL_STEP_ICON: Partial<Record<StepId, LucideIcon>> = {
-  scan: Images,
+/**
+ * ── AND TWO WORDS AFTER ALL, BECAUSE THE TWO ACTS ARE DIFFERENT ───────────
+ * Ben, 2026-10-14, refining the consistency tuning of the day before after
+ * seeing it run. *Auswählen* describes picking one of five; Freie Bahn deals
+ * ONE card and you do not pick it, so on that exercise the step is *Ansehen* —
+ * and the glyph follows, one picture rather than a stack of them.
+ *
+ * That is not the tuning undone. The point of it was that the rail must not
+ * invent a difference where there is none; here there is one, and it is the
+ * difference between the two exercises. The step ID is still `scan` in both.
+ */
+const DIGITAL_STEP: Partial<Record<StepId, {
+  many: { label: MessageKey; icon: LucideIcon };
+  one: { label: MessageKey; icon: LucideIcon };
+}>> = {
+  scan: {
+    many: { label: 'session.step.select', icon: Images },
+    one: { label: 'session.step.look', icon: ImageIcon },
+  },
 };
 
 /**
@@ -1032,6 +1047,17 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        A ONE-CARD EXERCISE KEEPS *Weiter* HERE, because it deals on the next
        step; its intro has nothing to prepare and says so under the switch. */
     const deals = digital && dealsHere;
+    /* ── THE ONE-CARD DRAW IS THE WAY ON — Ben, 2026-10-14 ─────────────────
+       It was a button on Auswählen and is the forward action here instead, so
+       the card is simply THERE when that step arrives. Two presses for one act
+       is what the old shape asked for: *Weiter*, then *Karte ziehen*.
+
+       `pickCard` AND NOT `drawCard`: it is the same write followed by the same
+       re-read and the same `advance()`, which is exactly what choosing a
+       picture does — the only difference is that the hand has one card in it
+       and nobody chose. `drawCard` stays for the person who lands on
+       Auswählen with no card, by a reload or a pasted address. */
+    const drawsOn = digital && !dealsHere && card === null && hand !== null;
     actions = (
       <>
         {back}
@@ -1042,7 +1068,16 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               : t('session.intro.dealAgain', { count })}
           </CtaButton>
         )}
-        {deals && !sheetSeen
+        {drawsOn && (
+          <CtaButton
+            loading={busy || deck === null}
+            loadingLabel={t('content.loading')}
+            onClick={() => { const one = hand?.[0]; if (one !== undefined) void pickCard(one); }}
+          >
+            {t('session.intro.drawRandom')}
+          </CtaButton>
+        )}
+        {drawsOn ? null : deals && !sheetSeen
           ? (
             /* `loading` WHILE THE DECK IS IN FLIGHT. The sheet cannot mount
                before the nine cards have arrived, so without this the button
@@ -1071,14 +1106,18 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        to do what has already been done. A one-card exercise draws from here,
        so it gets the row. */
     if (hand !== null) {
+      /* ── ONE CARD: BACK, AND ON ────────────────────────────────────────
+         *Karte ansehen* is gone from this row — it is the control on the
+         picture now (`Image`'s `expand`), which is where a thing about the
+         picture belongs. What is left is the two actions that are about the
+         STEP, which is what Ben asked for: the row "directly says Weiter".
+
+         THE DRAW BUTTON STAYS AS THE FALLBACK for an address that arrives
+         here with no card — a reload mid-draw, or a pasted URL. Without it
+         the step is a headline and a dead end. */
       actions = dealsHere ? back : (
         <>
           {back}
-          {card !== null && (
-            <CtaButton variant="secondary" onClick={openSheet}>
-              {t('session.scan.drawAgain')}
-            </CtaButton>
-          )}
           {card === null
             ? (
               <CtaButton
@@ -1188,11 +1227,17 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  reachability rule and `sessions.step` are untouched; only what
                  the rail calls it changes, and only while nothing is scanned.
                  See `DIGITAL_STEP_LABEL`. */
-              steps={steps.map((step) => ({
-                id: step,
-                label: t((digital && DIGITAL_STEP_LABEL[step]) || STEP_LABEL[step]),
-                icon: (digital && DIGITAL_STEP_ICON[step]) || STEP_ICON[step],
-              }))}
+              steps={steps.map((step) => {
+                const renamed = digital ? DIGITAL_STEP[step] : undefined;
+                const named = renamed === undefined
+                  ? undefined
+                  : (dealsHere ? renamed.many : renamed.one);
+                return {
+                  id: step,
+                  label: t(named?.label ?? STEP_LABEL[step]),
+                  icon: named?.icon ?? STEP_ICON[step],
+                };
+              })}
               current={state.step}
               completed={[...state.completed]}
               skipped={skipped}
@@ -1272,6 +1317,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               hand={hand}
               onPick={(chosen) => void pickCard(chosen)}
               pickError={pickError}
+              onExpand={openSheet}
             />
           )}
 

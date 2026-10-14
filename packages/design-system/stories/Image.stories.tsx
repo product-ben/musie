@@ -10,6 +10,7 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Eye } from 'lucide-react';
 import { Image } from '../src/Image';
 
 const SWATCH = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -141,6 +142,61 @@ export const WithoutTheComponent: Story = {
     <Box width="14rem">
       {/* A bare <img>, on purpose — this story IS the defect. */}
       <img src={args.src} alt={args.alt} width={args.width} height={args.height} />
+    </Box>
+  ),
+};
+
+/**
+ * **`expand` — one control, inside the picture.** Off for every image; given,
+ * a secondary icon button sits at the top trailing corner and the picture
+ * gains a wrapper to position it against. Every image WITHOUT it keeps the DOM
+ * it had before the prop existed — one element — so nothing laid out against a
+ * bare `<img>` moves.
+ *
+ * The label is required and travels with the handler in one object, so it
+ * cannot be half-passed: an icon-only control with no accessible name is a
+ * 4.1.2 failure, and a prop that defaults its own label is how that happens.
+ *
+ * The handler takes the EVENT, which looks like a leak and is not — the first
+ * consumer opens a full-screen sheet, and an immersive sheet grows out of the
+ * rect of the control that opened it, measured at the press.
+ */
+export const Expandable: Story = {
+  render: (args) => (
+    <Box>
+      <Image
+        {...args}
+        expand={{ label: 'Look at the card', onClick: () => {} }}
+      />
+    </Box>
+  ),
+};
+
+/** The same control with a glyph of the consumer's choosing — `Expand` is the
+ *  default because it reads as *make this bigger* rather than as *look at
+ *  this*, which is the action rather than the invitation. */
+export const ExpandableWithOwnGlyph: Story = {
+  render: (args) => (
+    <Box>
+      <Image
+        {...args}
+        expand={{ label: 'Look at the card', glyph: Eye, onClick: () => {} }}
+      />
+    </Box>
+  ),
+};
+
+/** Capped and expandable together: the control stays ON the picture rather
+ *  than drifting to the container's edge, which is what the frame's
+ *  `fit-content` width is for. */
+export const ExpandableAndCapped: Story = {
+  render: (args) => (
+    <Box width="44rem">
+      <Image
+        {...args}
+        maxWidth="20rem"
+        expand={{ label: 'Look at the card', onClick: () => {} }}
+      />
     </Box>
   ),
 };

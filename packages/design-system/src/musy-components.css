@@ -7431,3 +7431,32 @@ html[data-musy-scroll-snap='y'] {
   max-inline-size: var(--musy-image-max, 100%);
   min-inline-size: var(--musy-image-min, 0);
 }
+
+/* ── THE FRAME, AND IT EXISTS ONLY WHEN THE CONTROL DOES ──────────────────
+   `Image` renders a bare <img> until `expand` is given; then it wraps, because
+   a `position: absolute` control needs a box to be absolute against. Nothing
+   that was laid out against the bare element moves, which is why the wrapper
+   is conditional rather than always there.
+
+   `max-inline-size: fit-content` is what keeps the control ON the picture: the
+   frame is an inline-block, so without it the box would be the full column
+   width and the button would sit at the column's trailing edge with air
+   between it and a capped picture. */
+.musy-image-frame {
+  position: relative;
+  display: inline-block;
+  max-inline-size: 100%;
+  line-height: 0;
+}
+
+/* Top trailing corner, inside. `--space-inset-card` so it keeps the same
+   distance from the edge as a tick in a RadioImage cell does. */
+.musy-image-frame__action {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  /* The picture underneath is arbitrary, so the control carries its own
+     surface — `secondary` already fills with `--surface-raised`, and this is
+     the shadow that separates it from whatever is behind it. */
+  box-shadow: var(--elevation-1);
+}

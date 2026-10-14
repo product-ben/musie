@@ -302,7 +302,7 @@ export const de: Messages = {
      Einsteigen' and 'Aktuelle Session – Einsteigen'. */
   'session.step.intro': 'Einsteigen',
   'session.step.scan': 'Scannen',
-  'session.step.select': 'Auswählen',
+  'session.step.select': 'Auswählen',  'session.step.look': 'Ansehen',
   'session.step.listen': 'Hören',
   'session.step.reflect': 'Nachdenken',
   /* 'Abgeschlossen', nicht 'Beendet' (Ben, 2026-09-23). 'Beendet' sagt nur,
@@ -447,7 +447,7 @@ export const de: Messages = {
   'session.intro.deal': '{count} Karten ziehen',
   'session.intro.dealOne': 'Eine Karte ziehen',
   'session.intro.dealAgain': '{count} Karten ansehen',
-  'session.intro.dealAgainOne': 'Karte ansehen',
+  'session.intro.dealAgainOne': 'Karte ansehen',  'session.intro.drawRandom': 'Zufällige Karte ziehen',
   'session.cards.title': 'Deine Karten',
   'session.cards.close': 'Karten schließen',
   'session.cards.lead': 'Wenn du auf dem Handy unterwegs bist, drehe ins Breitformat. Dann sieh dir die fünf Karten an und atme zu jeder einmal ein und aus.',
@@ -463,6 +463,11 @@ export const de: Messages = {
      spricht. */
   'session.scan.draw': 'Karte ziehen',
   'session.scan.drawAgain': 'Karte ansehen',
+  /* Bens Sätze, auf den Standard gebracht (§1): 'Sieh' statt 'Sehe' — der
+     Imperativ von *sehen* hat den Vokalwechsel, wie 'sieh dir die fünf Karten
+     an' im Sheet — und 'weitergehst' in einem Wort. */
+  'session.scan.lookHeadline': 'Sieh dir deine Karte an',
+  'session.scan.lookLead': 'Atme mindestens einmal aus und wieder ein, bevor du weitergehst.',
   'session.scan.pickFailed': 'Die Karte konnte nicht übernommen werden. Versuch es gleich noch einmal.',
   'session.scan.cardFallbackAlt': 'Karte {code}',
 
