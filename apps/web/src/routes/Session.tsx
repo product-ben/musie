@@ -62,7 +62,8 @@ import { warmTrackBytes } from '../lib/audio';
 import { getCard, getCards, getExercise, getListenAudio, getTrackFor } from '../lib/content';
 import { fromRoot } from '../lib/assets';
 import {
-  DIGITAL_CARDS, cardsDealt, dealsOnIntro, dealtCards, withDigitalCards,
+  DIGITAL_CARDS, SHEET_OPEN, cardsDealt, dealsOnIntro, dealtCards,
+  withDigitalCards, withSheetOpen,
 } from '../lib/digitalCards';
 import {
   DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedFor, stepsForKind,
@@ -357,10 +358,38 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     [digital, deck, id, dealt],
   );
 
-  /* The sheet. `seen` is what moves the action row from *ziehen* to *ansehen*
-     — a fact about this visit rather than about the session, which is why it
-     is React state and not a column. */
-  const [sheetOpen, setSheetOpen] = React.useState(false);
+  /* ── THE SHEET IS OPEN WHEN THE ADDRESS SAYS SO ────────────────────────
+     `?focus`, the same token the listen step uses for its own full-screen
+     view (`lib/digitalCards.ts`). Browser Back closes it, a reload keeps it,
+     and a tester can be sent straight to it — none of which React state gives.
+
+     WHICH PAGE is still React state: it is where you are inside the sheet
+     rather than whether the sheet is up, and putting it in the address would
+     mint a history entry per card. `seen` is state for the same reason — it
+     is a fact about this visit, which is why it is not a column either. */
+  /* ── THE SHEET BELONGS TO ONE STEP ─────────────────────────────────────
+     `?focus` means "a sheet is up" and the STEP decides which — that is the
+     whole reason for sharing the token with the listen step, and it has to be
+     implemented rather than asserted. It was not, for one screenshot: the card
+     sheet is mounted wherever there is a hand, so `/listen?digitalcards&focus`
+     opened the listening sheet AND the card walk, and the walk rendered on top
+     of it.
+
+     The card sheet belongs to the step that DEALS — Einsteigen where five are
+     laid out, Auswählen where one is drawn — and `dealsOnIntro` already names
+     which. Everywhere else the token is somebody else's.
+
+     `sheetOpen` itself is derived below, once the reducer has a step. */
+  const sheetStep: StepId = dealsHere ? 'intro' : 'scan';
+  const setSheetOpen = (next: boolean) => {
+    navigate(
+      { search: withSheetOpen(searchParams.toString(), next) },
+      /* PUSH TO OPEN so Back closes it; REPLACE to close, so the way out does
+         not add a third entry between the person and the step. The listen
+         step's `leaveImmersive` draws the same line. */
+      next ? undefined : { replace: true },
+    );
+  };
   const [sheetIndex, setSheetIndex] = React.useState(0);
   const [sheetSeen, setSheetSeen] = React.useState(false);
   const [pickError, setPickError] = React.useState<string | null>(null);
@@ -373,6 +402,14 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     sheetOrigin.current = event.currentTarget.getBoundingClientRect();
     setSheetIndex(0);
     setSheetOpen(true);
+  }
+
+  /* Going on from inside the sheet. `advance` rebuilds the search from the
+     mode alone, so the token comes off in the same navigation that changes the
+     step — one entry, not two. */
+  function leaveSheet() {
+    setSheetSeen(true);
+    advance();
   }
 
   /* ── THE TWO ANSWERS THE EINSTEIGEN STEP ASKS FOR ──────────────────────
@@ -520,6 +557,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       skipped,
     ),
   );
+
+  /* The card sheet is up when the address says so AND the step it belongs to
+     is the one showing — see `sheetStep` above for the screenshot that made
+     the second half necessary. */
+  const sheetOpen = searchParams.has(SHEET_OPEN) && state.step === sheetStep;
 
   /* ── URL → rules → row. The one reconciliation. ─────────────────────────
      Runs after the seed, so `state` already reflects the row.
@@ -1198,12 +1240,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  entries in the history between the person and the library. */
               cardsPresent={asksForCards ? !digital : undefined}
               onCardsPresentChange={(present) => {
+                /* BOTH TOKENS COME OFF when the cards go back on the table:
+                   the mode, and any sheet that was up. Dropping only the mode
+                   leaves `?focus` on an address with no sheet behind it —
+                   harmless today and a trap for the next thing that reads it. */
                 navigate(
-                  { search: withDigitalCards(searchParams.toString(), !present) },
+                  {
+                    search: withSheetOpen(
+                      withDigitalCards(searchParams.toString(), !present),
+                      !present && sheetOpen,
+                    ),
+                  },
                   { replace: true },
                 );
                 /* A hand put back on the table is a hand nobody has seen. */
-                if (present) { setSheetSeen(false); setSheetOpen(false); }
+                if (present) setSheetSeen(false);
               }}
               dealsHere={dealsHere}
             />
@@ -1273,7 +1324,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           page IS belongs to the flow: a picture, with the lead as the page
           before it. The sheet owns the paging, the dots, the chevrons and the
           foot's geometry, and none of the content. */}
-      {hand !== null && hand.length > 0 && (
+      {hand !== null && hand.length > 0 && state.step === sheetStep && (
         <Sheet
           open={sheetOpen}
           onOpenChange={(next) => {
@@ -1358,9 +1409,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                    only thing left to do — the forward chevron has nowhere to
                    go and steps down to secondary beside it, which is §7.8's
                    rule and the sheet applies it on its own. */
-                <CtaButton
-                  onClick={() => { setSheetOpen(false); setSheetSeen(true); advance(); }}
-                >
+                <CtaButton onClick={leaveSheet}>
                   {t('common.continue')}
                 </CtaButton>
               );

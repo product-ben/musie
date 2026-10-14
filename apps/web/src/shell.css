@@ -2458,16 +2458,26 @@ html[data-musy-scroll-snap] {
    It takes the slack the clock's auto margin used to take alone, so on a short
    screen the picture yields before the countdown does — the countdown is the
    thing that must stay legible.                                             */
+/* ── THE CARD ON THE FOCUS SHEET ──────────────────────────────────────────
+   The fill rule and the cap are `Image`'s now; what is left here is where it
+   sits and how tall it may get.
+
+   ── THE HEADLINE IS ITS ANCHOR, AT EVERY WIDTH — Ben, 2026-10-14 ────────
+   `margin-inline: auto` centred it, and the desktop grid then overrode that
+   with `justify-self: start` — so the picture was left-aligned on a wide
+   window and centred on every other, which is the one thing a picture under a
+   left-aligned headline must not do. The auto margin is gone; `align-self`
+   keeps it at the leading edge in the column too, where a flex item would
+   otherwise stretch.
+
+   THE BLOCK CAP STAYS, bounded by the viewport rather than by the picture's
+   own ratio: on a landscape phone the sheet is 390px tall and an unbounded
+   picture would push the clock off the bottom. `block-size: auto` from the
+   component plus a `max-block-size` here means the ratio holds and the height
+   is what yields. */
 .musie-immersive__card {
-  display: block;
-  inline-size: 100%;
-  max-inline-size: var(--measure-body);
-  /* Bounded by the viewport rather than by its own ratio: on a landscape phone
-     the sheet is 390px tall and an unbounded picture would push the clock off
-     the bottom. */
+  align-self: start;
   max-block-size: calc(var(--viewport-block) * 0.4);
-  object-fit: contain;
-  margin-inline: auto;
   border-radius: var(--radius-md);
 }
 
@@ -2496,10 +2506,8 @@ html[data-musy-scroll-snap] {
   }
 
   .musie-immersive__body:has(.musie-immersive__card) .musie-immersive__card {
-    /* Leading edge, as drawn. The picture anchors the row. */
-    justify-self: start;
-    margin-inline: 0;
-    max-inline-size: 100%;
+    /* A little taller where the row is half the width. The leading edge is
+       the base rule's and needs no restating. */
     max-block-size: calc(var(--viewport-block) * 0.5);
   }
 }

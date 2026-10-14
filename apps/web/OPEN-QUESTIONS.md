@@ -8948,3 +8948,70 @@ two shapes and a slot that is optional, which is the point at which a component
 starts being able to be used wrongly. The story file covers header-over-a-walk
 and single-body, and the invariant to hold it to is the one he stated — open
 both, and the two corners must not move.
+
+## A picture that fills its container is a component, because twice in one week it was not
+
+Where: `packages/design-system/src/Image.tsx`, `apps/web/src/shell.css`
+
+What I checked: Ben, 2026-10-14 — *"when an image is placed inside a
+container, it must always fill the width of the container, if no max width is
+defined."* He sent it with a screenshot of Freie Bahn's drawn card running past
+the panel.
+
+The cause is worth writing down because it is not carelessness. A bare `<img>`
+is `inline` with `width: auto`, so it renders at its INTRINSIC size — 1200px
+for this deck's artwork — and any narrower container gets an overflow. The two
+declarations that prevent it (`display: block; inline-size: 100%`) had been
+written four separate times in this app, and `.musie-cardshow__art` lost its
+copy when a neighbouring block was deleted in the `RadioImage` move. Nothing
+errored. No test failed. It shows at some widths and not others.
+
+What I did: `Image`, Layer 2 — the fill rule, `block-size: auto` so the ratio
+is the picture's own, and `maxWidth` / `minWidth` as the two bounds with the
+cap defaulting to `100%`. It has a Storybook page including a story that draws
+a bare `<img>` beside it, labelled as the defect rather than as a variant.
+
+**No `object-fit`, deliberately**, and that is the line the component draws:
+fitting is what you do to a picture in a box of a FIXED SHAPE, and this
+component's premise is that the box follows the picture. The sheet's full-bleed
+card page is the other case and keeps its own two declarations — it is a
+picture told to fit a viewport, which is a different job.
+
+What I need from Ben: **nothing.** One thing for whoever is next: every
+remaining bare `<img>` in `apps/web` is a candidate — the exercise artwork on
+the library, the diary's card art, the listen step's infographic — and each one
+should be checked rather than converted in bulk, because a few of them are
+genuinely the fit-a-fixed-box case.
+
+## The sheet is in the address now, and the token belongs to the step
+
+Where: `apps/web/src/lib/digitalCards.ts` (`SHEET_OPEN`, `withToken`),
+`apps/web/src/routes/Session.tsx` (`sheetStep`)
+
+What I checked: Ben — *"when the sheet is pulled up, always expose it in the
+url (with ?focus)."* The same token the listen step has used for its own
+full-screen view since 2026-10-07.
+
+What I did: the card sheet's open state is `searchParams.has('focus')` rather
+than React state. Browser Back closes it, a reload keeps it open, and the walk
+asserts both.
+
+**Two things went wrong on the way, and both are in the code now:**
+
+1. **Both sheets opened at once.** The card sheet is mounted wherever there is
+   a hand, so `/listen?digitalcards&focus` drew the listening sheet AND the
+   card walk, with the walk on top. Sharing a token only works if the STEP
+   decides which sheet it means, and that has to be implemented rather than
+   asserted in a comment — `sheetStep` is where it is implemented. Found on a
+   screenshot taken for something else.
+2. **Composing two token helpers lost the first token's valuelessness.**
+   `URLSearchParams.toString()` writes a bare `?focus` back as `focus=`, so
+   `?digitalcards` became `?digitalcards=` the moment the second helper ran.
+   `.has()` answers both, so nothing broke — but an address saying
+   `?digitalcards=` invites the reading that a value is missing, and a flag has
+   no value to be missing. `withToken` rebuilds the pairs by hand now, and the
+   unit test names the defect.
+
+What I need from Ben: **nothing.** Worth knowing: `?focus` now means "a sheet
+is up" across three steps, and the fourth step to want a sheet will have to
+join that rule rather than mint a token.

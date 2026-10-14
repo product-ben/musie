@@ -9,7 +9,9 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { cardsDealt, dealsOnIntro, dealtCards, withDigitalCards } from './digitalCards';
+import {
+  SHEET_OPEN, cardsDealt, dealsOnIntro, dealtCards, withDigitalCards, withSheetOpen,
+} from './digitalCards';
 import type { Card } from './content';
 
 const DECK: Card[] = Array.from({ length: 9 }, (_, i) => ({
@@ -105,13 +107,29 @@ describe('withDigitalCards', () => {
   });
 
   it('keeps whatever else is in the query, and puts its own token last', () => {
-    expect(withDigitalCards('?overview', true)).toBe('?overview=&digitalcards');
-    expect(withDigitalCards('?focus', true)).toBe('?focus=&digitalcards');
+    expect(withDigitalCards('?overview', true)).toBe('?overview&digitalcards');
+    expect(withDigitalCards('?focus', true)).toBe('?focus&digitalcards');
   });
 
   it('takes the token off again, and leaves nothing behind when it was alone', () => {
     expect(withDigitalCards('?digitalcards', false)).toBe('');
-    expect(withDigitalCards('?digitalcards&overview', false)).toBe('?overview=');
+    expect(withDigitalCards('?digitalcards&overview', false)).toBe('?overview');
+  });
+
+  /* The defect this was written for: two of these composed used to leave the
+     first token with a trailing `=`, because the serialiser only spared the
+     one the helper had just added. */
+  it('keeps every valueless token valueless, however many helpers run', () => {
+    const both = withSheetOpen(withDigitalCards('', true), true);
+    expect(both).toBe('?digitalcards&focus');
+    expect(withSheetOpen(both, false)).toBe('?digitalcards');
+    expect(withDigitalCards(both, false)).toBe('?focus');
+  });
+
+  /* A real value is still a real value. */
+  it('leaves a key that has a value alone', () => {
+    expect(withDigitalCards('?utm=spring', true)).toBe('?utm=spring&digitalcards');
+    expect(withDigitalCards('?utm=a%20b', true)).toBe('?utm=a%20b&digitalcards');
   });
 
   it('never writes the token twice', () => {
@@ -123,5 +141,27 @@ describe('withDigitalCards', () => {
   it('is readable by URLSearchParams.has', () => {
     expect(new URLSearchParams(withDigitalCards('?overview', true)).has('digitalcards')).toBe(true);
     expect(new URLSearchParams(withDigitalCards('?overview', false)).has('digitalcards')).toBe(false);
+  });
+});
+
+describe('withSheetOpen', () => {
+  /* The same token the listen step uses, deliberately: it means "a sheet is
+     up", and which sheet is the step's business. */
+  it('writes and clears ?focus without touching the mode', () => {
+    expect(withSheetOpen('?digitalcards', true)).toBe('?digitalcards&focus');
+    expect(withSheetOpen('?digitalcards&focus', false)).toBe('?digitalcards');
+  });
+
+  it('survives a round trip', () => {
+    const opened = withSheetOpen('?digitalcards', true);
+    expect(new URLSearchParams(opened).has('focus')).toBe(true);
+    expect(new URLSearchParams(opened).has('digitalcards')).toBe(true);
+    const closed = withSheetOpen(opened, false);
+    expect(new URLSearchParams(closed).has('focus')).toBe(false);
+    expect(new URLSearchParams(closed).has('digitalcards')).toBe(true);
+  });
+
+  it('is the one token, not two', () => {
+    expect(SHEET_OPEN).toBe('focus');
   });
 });

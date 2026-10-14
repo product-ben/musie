@@ -195,10 +195,55 @@ export function dealtCards(
  * on arrival and on every transport press; it does that by rebuilding from
  * `location.search`, so a mode token already on the URL survives it.
  */
-export function withDigitalCards(search: string, on: boolean): string {
+export function withToken(search: string, token: string, on: boolean): string {
   const rest = new URLSearchParams(search);
-  rest.delete(DIGITAL_CARDS);
-  const others = rest.toString();
-  if (!on) return others === '' ? '' : `?${others}`;
-  return others === '' ? `?${DIGITAL_CARDS}` : `?${others}&${DIGITAL_CARDS}`;
+  rest.delete(token);
+
+  /* ── EVERY VALUELESS TOKEN STAYS VALUELESS, NOT JUST THIS ONE ───────────
+     `URLSearchParams.toString()` writes a bare `?focus` back as `focus=`, so
+     an earlier version — which kept only its OWN token bare and let the
+     serialiser handle the rest — turned `?digitalcards` into `?digitalcards=`
+     the moment a second helper ran over it. Composing two of these is exactly
+     what the switch and the sheet do.
+
+     The trailing `=` is not cosmetic: `.has()` answers both, so nothing
+     breaks, and an address that says `?digitalcards=` invites the reading
+     that there is a VALUE missing. A flag has no value to be missing.
+
+     So the pairs are rebuilt by hand and an empty value is emitted as the key
+     alone. The key is not re-encoded: it came out of `URLSearchParams`, which
+     has already decoded it, and encoding a token like `focus` is a no-op that
+     would only matter for a key nobody writes. */
+  const parts = [...rest.entries()].map(
+    ([key, value]) => (value === '' ? key : `${key}=${encodeURIComponent(value)}`),
+  );
+  if (on) parts.push(token);
+  return parts.length === 0 ? '' : `?${parts.join('&')}`;
+}
+
+export function withDigitalCards(search: string, on: boolean): string {
+  return withToken(search, DIGITAL_CARDS, on);
+}
+
+/**
+ * ── AN OPEN SHEET IS IN THE ADDRESS — Ben, 2026-10-14 ─────────────────────
+ *
+ * *"When the sheet is pulled up, always expose it in the url (with ?focus)."*
+ *
+ * The SAME TOKEN the listen step already uses for its own full-screen view,
+ * deliberately rather than a second one: it means one thing — *a sheet is up*
+ * — and which sheet is decided by the step you are on, exactly as the step
+ * decides what `?overview` shows. A second token would be a second name for
+ * the same state, and the first person to hand-type one would get a screen
+ * with two sheets arguing about it.
+ *
+ * Three things fall out of it, and none is free otherwise: the browser's own
+ * Back closes the sheet, a reload keeps it open instead of dropping somebody
+ * back on the step behind it, and a tester can be sent straight to the thing
+ * being tested.
+ */
+export const SHEET_OPEN = 'focus';
+
+export function withSheetOpen(search: string, on: boolean): string {
+  return withToken(search, SHEET_OPEN, on);
 }

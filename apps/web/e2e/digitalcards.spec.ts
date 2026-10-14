@@ -99,6 +99,23 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   const sheet = page.getByRole('dialog', { name: label(locale, 'session.cards.title') });
   await expect(sheet).toBeVisible({ timeout: 15_000 });
 
+  /* ── AN OPEN SHEET IS IN THE ADDRESS ────────────────────────────────────
+     Ben, 2026-10-14. The same `?focus` the listen step uses, so the browser's
+     own Back closes it and a reload keeps it — which is the half a unit test
+     cannot reach, because it is the router doing the work. */
+  await expect(page).toHaveURL(/digitalcards/);
+  await expect(page).toHaveURL(/focus/);
+
+  await page.reload();
+  await expect(sheet).toBeVisible({ timeout: 15_000 });
+
+  await page.goBack();
+  await expect(sheet).toHaveCount(0);
+  await expect(page).not.toHaveURL(/focus/);
+
+  await deal.click();
+  await expect(sheet).toBeVisible({ timeout: 15_000 });
+
   /* SIX PAGES: the instruction, then five cards. The dots say how many, which
      is also the one place a miscounted hand would show up on screen. */
   await expect(sheet.getByRole('button', {

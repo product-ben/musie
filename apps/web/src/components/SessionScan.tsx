@@ -52,7 +52,7 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field, Message, RadioImage } from '@musie/design-system';
+import { ContentList, CtaButton, Field, Image, Message, RadioImage } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
@@ -252,8 +252,14 @@ export function SessionScan({
             showing a placeholder for it would be showing a card. */}
         {hand.length === 1 ? (
           card !== null && (
+            /* `Image`, NOT A BARE <img> — and this is the place that proved
+               why the component had to exist. The two declarations that sized
+               it lived in a block next to the card grid, and when the grid
+               moved into `RadioImage` they went with it: the drawn card then
+               rendered at its intrinsic 1200px and hung out of the panel. One
+               deletion, no error, visible at some widths only. */
             <figure className="musie-cardshow">
-              <img
+              <Image
                 className="musie-cardshow__art"
                 src={fromRoot(card.imageUrl ?? '')}
                 alt={alt(card)}

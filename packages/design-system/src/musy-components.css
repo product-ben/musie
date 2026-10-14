@@ -7410,3 +7410,24 @@ html[data-musy-scroll-snap='y'] {
     color: HighlightText;
   }
 }
+
+/* ═══ 27 · IMAGE ════════════════════════════════════════════════════════════
+   A picture that fills the box it is put in and never leaves it.
+   `Image.tsx` carries the argument; these are the four declarations it is.
+
+   A bare <img> is `inline` with `width: auto`, so it renders at its intrinsic
+   pixel size and hangs out of any container narrower than that. The overflow
+   shows at some widths and not others, which is how it survives review.      */
+.musy-image {
+  display: block;
+  inline-size: 100%;
+  /* The ratio is the picture's own. Never a fixed height, and deliberately no
+     `object-fit`: fitting is what you do to a picture in a box of a fixed
+     shape, and the premise here is that the box follows the picture. */
+  block-size: auto;
+  /* THE DEFAULT CAP IS THE RULE. `100%` is what makes "fills the container"
+     true rather than "is as wide as it likes" — a caller's `maxWidth`
+     replaces it, and a caller who passes nothing gets the container. */
+  max-inline-size: var(--musy-image-max, 100%);
+  min-inline-size: var(--musy-image-min, 0);
+}

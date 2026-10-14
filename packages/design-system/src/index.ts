@@ -126,6 +126,9 @@ export type {
 export { Lightbox } from './Lightbox';
 export type { LightboxProps, LightboxOrigin } from './Lightbox';
 
+export { Image } from './Image';
+export type { ImageProps } from './Image';
+
 export { RadioImage } from './RadioImage';
 export type { RadioImageProps, RadioImageOption } from './RadioImage';
 

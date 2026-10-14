@@ -53,7 +53,7 @@
  */
 import * as React from 'react';
 import {
-  ButtonGroup, ContentList, CtaButton, Message, MusicPlayer, Sheet, Switch, TrackButton,
+  ButtonGroup, ContentList, CtaButton, Image, Message, MusicPlayer, Sheet, Switch, TrackButton,
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
@@ -1645,12 +1645,16 @@ export function SessionListen({
                 shown a picture of the card it is already holding, which is the
                 infographic's mistake in reverse. */}
             {digital && card !== null && (
-              <img
+              <Image
                 className="musie-immersive__card"
                 src={fromRoot(card.imageUrl ?? '')}
                 alt={card.imageAlt ?? t('session.scan.cardFallbackAlt', { code: card.code })}
                 width={1200}
                 height={849}
+                /* The reading measure, so the picture does not become a poster
+                   on a wide window. The block cap and the alignment are the
+                   step's own and stay in `shell.css`. */
+                maxWidth="var(--measure-body)"
                 decoding="async"
               />
             )}
