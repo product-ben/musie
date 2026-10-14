@@ -8853,3 +8853,40 @@ is the decision DOC2 took deliberately.
 What I need from Ben: **nothing, just flagging** — unless the old URL was sent
 to somebody outside the team, in which case it is worth a message rather than a
 redirect.
+
+## Three documents quote a component count, and all three are stale — flagging
+
+Where: `README.md` ("26 components (258 stories)"),
+`docs/MUSIE-BRIEFING.md` §6 ("29 Komponenten"), `BUILD-PLAN.md` (1.7–1.11,
+"26 components, 258 stories")
+
+What I checked, by counting rather than quoting:
+
+```
+ls packages/design-system/src/*.tsx | grep -v '\.stories\.' | wc -l     → 32
+ls packages/design-system/stories/*.stories.tsx | wc -l                 → 34
+grep -hoE '^export const [A-Za-z0-9_]+: Story' …/*.stories.tsx | wc -l  → 358
+```
+
+So: **32 component files, 34 story files, 358 stories.** Several files export
+more than one component (`Badge` + `BadgeRow`, `Field` + `FieldItem` +
+`FieldGroup`, `TrackButton` + `MusicPlayer`, `IconButton` +
+`MusyTooltipProvider`), so 32 is a count of files rather than of exported
+names — which is probably where 26 and 29 came from as well as from the
+package having grown.
+
+All three were true when written. None is now, and they disagree with each
+other, which is the state M11 described: *a claim that is two-thirds true is
+the shape of claim that stops being read.*
+
+What I did: used the measured numbers on the site, said on
+`apps/docs/design/index.md` how they were obtained, and named the three stale
+quotes there rather than editing them.
+
+Why: the site is a derived view, and a number corrected in the derived view
+only would leave three authoritative files wrong and a fourth right, which is
+worse than one wrong number.
+
+What I need from Ben: **nothing, just flagging.** Worth noting that the same
+counting command could go in `verify-coverage.mjs`, which already walks the
+story files — then the number would be checked rather than remembered.

@@ -88,7 +88,7 @@ network tab on a session shows Supabase and nothing else.
 | Storage | bucket `tracks`, private, signed URLs | the mp3s |
 | `reveal-track` | edge function, service role | the only route to `tracks.title` |
 | `realtime-token` | edge function, holds the OpenAI key | mints ephemeral tokens |
-| `@musie/design-system` | tokens + 35 components + Storybook | `packages/design-system` |
+| `@musie/design-system` | tokens + 32 components + Storybook | `packages/design-system` |
 | `@musie/voice` | speech-to-text core | `features/voice` |
 
 ## The provider tree, which is the architecture

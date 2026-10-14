@@ -111,7 +111,7 @@ that decision — and the log says so, rather than leaving it to be rediscovered
 
 ## The design system's log is a different question
 
-4,248 lines, 118 questions raised while writing 258 stories. It is where a
+4,248 lines, 118 questions raised while writing them. It is where a
 component's API is argued with — and the reason `CtaButton` has an `align` prop
 at all.
 

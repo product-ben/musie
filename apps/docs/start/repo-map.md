@@ -8,7 +8,7 @@ flowchart TB
   subgraph ws["pnpm workspace"]
     W["<b>apps/web</b><br/>React 19 · Vite · react-router<br/>the only consumer of the design system"]
     DO["<b>apps/docs</b><br/>VitePress · this site"]
-    DS["<b>packages/design-system</b><br/>@musie/design-system<br/>tokens · 35 components · Storybook"]
+    DS["<b>packages/design-system</b><br/>@musie/design-system<br/>tokens · 32 components · Storybook"]
     VO["<b>features/voice</b><br/>@musie/voice<br/>speech to text"]
   end
   SB["<b>supabase/</b><br/>config.toml · migrations/ · functions/ · content/"]
@@ -26,7 +26,7 @@ flowchart TB
 |---|---|
 | **`apps/web`** | the app. The only thing that consumes the design system |
 | **`apps/docs`** | this site |
-| **`packages/design-system`** | tokens, 35 components, the layout rules, Storybook |
+| **`packages/design-system`** | tokens, 32 components, the layout rules, Storybook |
 | **`features/voice`** | speech-to-text. Its own package so it has to hold up before a screen consumes it |
 
 ## The documents that matter, and what each one is for
@@ -84,9 +84,9 @@ apps/web/                 the app
 apps/docs/                this site
 packages/design-system/
   tokens/                 Layer 1 + fonts + theme-init.js
-  src/                    Layer 2 — 35 components + musy-components.css
+  src/                    Layer 2 — 32 components + musy-components.css
   docs/                   Layer 3
-  stories/                258 stories, CONVENTIONS.md, OPEN-QUESTIONS.md
+  stories/                358 stories, CONVENTIONS.md, OPEN-QUESTIONS.md
   scripts/                verify-tokens, verify-layout, verify-coverage
 features/voice/           @musie/voice
 supabase/

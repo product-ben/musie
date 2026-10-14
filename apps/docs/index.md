@@ -28,7 +28,7 @@ features:
     link: /architecture/
     linkText: How it fits together
   - title: Design system
-    details: Three layers — tokens, components, layout rules. 35 components, 258 stories, and the rule that the app may never reimplement any of it.
+    details: Three layers — tokens, components, layout rules. 32 components, 358 stories, and the rule that the app may never reimplement any of it.
     link: /design/
     linkText: The three layers
   - title: 21 features, one page each

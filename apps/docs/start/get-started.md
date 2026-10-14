@@ -40,7 +40,7 @@ pnpm install
 pnpm storybook
 ```
 
-That gives you 35 components and 258 stories on `localhost:6006`, in light and
+That gives you 32 components and 358 stories on `localhost:6006`, in light and
 dark, with the token reference and the layout rules as pages. It is also
 published, so you can look without cloning anything:
 [product-ben.github.io/musie/storybook](https://product-ben.github.io/musie/storybook/).

@@ -1,13 +1,13 @@
 # The design system
 
-`@musie/design-system` — three layers, 35 components, 258 stories, and one rule
+`@musie/design-system` — three layers, 32 components, 358 stories, and one rule
 that governs everything about how the app uses it: **the app consumes it; it
 does not reimplement it.**
 
 ```mermaid
 flowchart TB
   L1["<b>Layer 1 · Foundations</b><br/>8 raw scales × 14 steps · 83 semantic aliases<br/>spacing · targets · radius · motion · type"]
-  L2["<b>Layer 2 · Components</b><br/>35 components, one file each<br/>+ musy-components.css"]
+  L2["<b>Layer 2 · Components</b><br/>32 components, one file each<br/>+ musy-components.css"]
   L3["<b>Layer 3 · Layout rules</b><br/>L0–L15 · prose, not code<br/>how components are arranged"]
   APP["<b>apps/web</b><br/>imports components, passes props"]
   L1 --> L2 --> L3 --> APP
@@ -94,7 +94,7 @@ Only where the system has **no component** for it (L14). Then:
 
 ## Where to look
 
-[**Storybook**](https://product-ben.github.io/musie/storybook/) — 258 stories,
+[**Storybook**](https://product-ben.github.io/musie/storybook/) — 358 stories,
 light and dark side by side, plus the foundations token reference and the
 Layer 3 rules as pages.
 
@@ -112,7 +112,7 @@ packages/design-system/
                      Figma, the pre-paint theme script, self-hosted woff2
   src/               Layer 2 — one file per component + musy-components.css
   docs/              Layer 3 — 10-layout.md, 15-layout-evidence.md
-  stories/           258 stories, CONVENTIONS.md, OPEN-QUESTIONS.md
+  stories/           358 stories, CONVENTIONS.md, OPEN-QUESTIONS.md
   scripts/           verify-tokens.mjs, verify-layout.mjs, verify-coverage.mjs
 ```
 
@@ -190,6 +190,18 @@ Two single rules are easy to lose in a cleanup and worth knowing: **Literata
 700** serves only the wizard's `aria-current="step"` label, and **Literata 400
 italic** serves exactly one rule, the `DraggableList` empty state. Drop either
 and the browser synthesises a fake bold or a fake oblique.
+
+## The counts, measured rather than quoted
+
+`ls src/*.tsx` minus the stories gives **32 component files**, and
+`grep -c '^export const .*: Story'` across 34 story files gives **358
+stories**. Several files export more than one component — `Badge` + `BadgeRow`,
+`Field` + `FieldItem` + `FieldGroup`, `TrackButton` + `MusicPlayer` — so 32 is
+files, not exported names.
+
+Three places in the repository state a different number: `README.md` says *26
+components (258 stories)*, `docs/MUSIE-BRIEFING.md` says *29*, and `BUILD-PLAN.md`
+says *26 components, 258 stories*. All three were true when written. Logged.
 
 ## What covers the package instead of tests
 
