@@ -1,7 +1,7 @@
 # The pre-merge gate: typecheck, lint, and prove both bundles still build.
 #
 # WHY THIS EXISTS. Until this file, every check in the repo ran only AFTER a
-# merge — the host builds `main`, and storybook.yml is a `push` workflow behind
+# merge — the host builds `main`, and pages.yml is a `push` workflow behind
 # a path filter, so a pull request touching apps/web ran nothing at all. Breakage
 # was found on main, by the next person, instead of on the branch, by its
 # author. This moves the same commands to the branch.
@@ -11,10 +11,15 @@
 # can typecheck cleanly and still fail the bundle. Building is the only check
 # that exercises those.
 #
-# DELIBERATE OVERLAP: on a push to main this rebuilds Storybook, which
-# storybook.yml then builds again to publish. That is a second ~1min run on a
+# DELIBERATE OVERLAP: on a push to main this rebuilds Storybook and the docs,
+# which pages.yml then builds again to publish. That is a second ~2min run on a
 # free public-repo allowance, and the alternative — trusting the publish job as
 # the first build — is the failure mode this file exists to remove.
+#
+# WHY THE DOCS ARE BUILT HERE TOO. `vitepress build` fails on a dead internal
+# link, and that is the only check the documentation site has. Run only in
+# pages.yml it would find a broken link after the merge; run here it finds it
+# on the branch, which is what this file is for.
 name: CI
 
 on:
@@ -61,3 +66,6 @@ jobs:
 
       - name: Build Storybook
         run: pnpm build:storybook
+
+      - name: Build the docs
+        run: pnpm --filter docs build

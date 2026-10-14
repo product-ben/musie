@@ -7,7 +7,12 @@ that proves it — read the file before arguing with the rule.
 
 pnpm workspace (`pnpm-workspace.yaml`), Node 22, pnpm pinned by `packageManager`:
 
-- `apps/web` — the React 19 / Vite / react-router app. The only consumer.
+- `apps/web` — the React 19 / Vite / react-router app. The only consumer of
+  the design system.
+- `apps/docs` — the documentation site. VitePress, published to GitHub Pages at
+  `/musie/`, with Storybook beside it at `/musie/storybook/`. A **derived
+  view**: each page names the file in this repo that rules it, so a page that
+  disagrees with the repo is a bug in the page.
 - `packages/design-system` — `@musie/design-system`: Layer 1 tokens, Layer 2
   components, Layer 3 layout docs, Storybook.
 - `supabase/` — `config.toml` and `migrations/`. Local stack only (rule 4).
@@ -22,6 +27,7 @@ pnpm workspace (`pnpm-workspace.yaml`), Node 22, pnpm pinned by `packageManager`
 | `pnpm db:status` | do the migration files and the HOSTED database agree? read-only |
 | `pnpm db:sync` | push merged migrations to hosted. Refuses off `main`, dirty, or out of step with origin |
 | `pnpm storybook` | the design system on :6006 |
+| `pnpm --filter docs dev` | the documentation site. `build` fails on a dead link |
 | `pnpm deck:migration` | `supabase/content/deck.json` → a new stacking migration |
 | `pnpm deck:pdf` | the paper deck, print-ready, from the same file |
 
@@ -177,19 +183,20 @@ unknown key is a typecheck error rather than a runtime fallback.
 
 ## 8 · `pnpm check` passes before anything is called done
 
-Typecheck and lint across every package; **unit tests across two of the three**
+Typecheck and lint across every package; **unit tests across three of the four**
 (root `package.json`). CI runs the same command plus both bundle builds, because
 `tsc --noEmit` resolves neither CSS imports nor the font-pinning Vite plugin
 (`.github/workflows/ci.yml`). Verify against `supabase start` and
 `pnpm --filter web dev`, never a URL — nothing deploys in this phase.
 
-**Two of three, and it is worth knowing which.** `packages/design-system` has no
-`test` script, so `pnpm -r run test` passes over it without a word. What covers
+**Three of four, and it is worth knowing which.** `packages/design-system` has
+no `test` script, so `pnpm -r run test` passes over it without a word. What covers
 it instead is real but different in kind: `verify-tokens.mjs` and
 `verify-layout.mjs` run inside its `typecheck`, and the `Smoke/Badge` story
 proves all four stylesheets and `data-theme` reached the preview. So the design
 system is asserted about, not unit-tested — and this rule said "every package"
-until 2026-10-13, which is the shape of claim that stops being read.
+until 2026-10-13, which is the shape of claim that stops being read. It said
+"two of three" until `apps/docs` arrived the same day with tests of its own.
 
 ## 9 · A worktree isolates files and nothing else
 
