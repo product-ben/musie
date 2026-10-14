@@ -280,6 +280,21 @@ html[data-audience='designers'] .aud--devs {
   }
 }
 
+/* Mermaid draws labels as HTML inside a `foreignObject`, and sizes that box
+   from its own measurement of the text. The measurement comes out two to four
+   pixels short — consistently, with the right font loaded — and a
+   `foreignObject` clips by default, so every label lost its last character or
+   two: `uuid` drawn as `uuic`, `RESTRICT` as `RESTRIC`, `PROFILE` as
+   `PROFILI`. Measured on the data-model page: box 30px, content 33px.
+
+   `overflow: visible` lets the label finish drawing. The alternative is
+   `htmlLabels: false`, which sizes from getBBox and cannot clip — but these
+   diagrams use <b> and <br/> in their labels, and SVG text labels would render
+   the <b> literally. */
+.mermaid-figure foreignObject {
+  overflow: visible;
+}
+
 .mermaid-error {
   padding: 12px 14px;
   border: 1.5px solid var(--musie-accent-edge);
