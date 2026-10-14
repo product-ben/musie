@@ -25,6 +25,17 @@ the gate — after your own reflection — does Musie release the title and the
 artist. That is the central mechanic: you listen without knowing what you are
 *supposed* to be hearing.
 
+```mermaid
+flowchart LR
+  C["A printed card<br/>one of nine feelings"] -->|"scan the QR"| T["A piece of music<br/><b>title withheld</b>"]
+  T --> G["listen · the gate"]
+  G --> R["reflect<br/>write · speak · photograph"]
+  R --> RV["<b>the reveal</b><br/>title + artist, now"]
+  R --> D["the diary<br/>a list of moments"]
+  style T fill:#F9EDE5,stroke:#B5704F
+  style RV fill:#F9EDE5,stroke:#B5704F
+```
+
 ::: designers
 ## The five exercises
 

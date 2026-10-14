@@ -12,6 +12,23 @@ supabase start                                  # Docker; prints the two values
 pnpm --filter web dev                           # http://localhost:5173
 ```
 
+```mermaid
+flowchart LR
+  N["Node 22 + pnpm"] --> I["pnpm install"]
+  I --> SB["pnpm storybook<br/>:6006"]
+  I --> CK["pnpm check<br/>the gate"]
+  I --> DC["pnpm --filter docs dev<br/>these docs"]
+  I --> E["apps/web/.env.local"]
+  D["Docker"] --> S["supabase start"]
+  S -->|"prints the two values"| E
+  E --> W["pnpm --filter web dev<br/>:5173"]
+  S --> DB["pnpm test:db"]
+  W --> E2E["pnpm test:e2e"]
+```
+
+Everything on the top row needs **nothing but `pnpm install`**. Only the
+bottom row needs Docker.
+
 ## The four things you can run
 
 | Command | What it is | Needs |

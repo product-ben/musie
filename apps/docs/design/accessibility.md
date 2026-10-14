@@ -15,6 +15,15 @@ pass yet.
 | `<html lang>` | follows the active locale, pre-paint |
 | A dedicated a11y pass | **not started** — BUILD-PLAN step 1.12 |
 
+```mermaid
+flowchart TB
+  L1["<b>Layer 1 · the tokens</b><br/>contrast solved · prefers-reduced-motion<br/>prefers-contrast · forced-colors"] -->|"so a component needs no branch,<br/>and cannot forget one"| L2
+  L2["<b>Layer 2 · the components</b><br/>focus ring + clearance · target sizes<br/>announced names"] --> APP
+  APP["<b>The app</b><br/>&lt;html lang&gt; pre-paint · overlays are routes<br/>alt text per locale · every string passed"]
+  GAP["<b>Not done</b><br/>a dedicated a11y pass · automated checks<br/>a screen-reader walkthrough"]
+  APP -.-> GAP
+```
+
 ::: designers
 ## What you can rely on without asking
 
