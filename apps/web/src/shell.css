@@ -2376,6 +2376,37 @@ html[data-musy-scroll-snap] {
   color: var(--on-surface);
 }
 
+/* ── "YOUR SCREEN IS SMALL", BELOW 850px ──────────────────────────────────
+   Drawn by the step whenever the cards are not on the table, and taken away
+   here. A media query rather than a measurement in React: the width is a
+   presentational condition, and a component asking `matchMedia` for it buys a
+   resize listener, a first paint that guesses and a branch to test — for a
+   sentence that appears and disappears with the window.
+
+   `display: none` rather than `visibility` or a class the component omits, so
+   it leaves the accessibility tree as well: above this width the sentence is
+   not quiet, it is untrue.
+
+   ── 850px IS BEN'S NUMBER AND IS NOT A TOKEN ───────────────────────────
+   Deliberately between `--bp-md` (768, "tablet portrait") and `--bp-lg`
+   (1024, "tablet landscape"), so it is neither. It is a judgement about where
+   a hand of five pictures and a full-screen card stop having room, made at a
+   window rather than derived from the scale — which is also why it is written
+   as a literal with this paragraph beside it rather than rounded to the
+   nearest token and quietly made wrong.
+
+   ONE THING IT GETS WRONG, and it is logged rather than fixed: an iPad in
+   portrait is 768–834px, so it sees a sentence recommending a tablet. The
+   copy and the threshold disagree by about 80px.                           */
+.musie-intro__small {
+  margin: 0;
+  color: var(--on-surface-muted);
+}
+
+@media (min-width: 850px) {
+  .musie-intro__small { display: none; }
+}
+
 /* ── THE HAND ─────────────────────────────────────────────────────────────
    GONE FROM HERE — 2026-10-14. `.musie-cardgrid` was an L14 pattern with the
    component request logged beside it, exactly as §7.2 of `DIGITAL-CARDS.md`

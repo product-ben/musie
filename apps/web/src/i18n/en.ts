@@ -612,6 +612,16 @@ export const en = {
      nothing to lay out, so the step says so instead of leaving a gap where an
      instruction about paper used to be. */
   'session.intro.nothingToLayOut': 'There is nothing to lay out, let’s start.',
+  /* ── A SMALL SCREEN, SAID ONCE AND WITHOUT A GATE ────────────────────────
+     Only in digital mode, and only below 850px — the width is a CSS decision
+     and lives in `shell.css`, because what fits on a screen is not something a
+     React component should be measuring.
+
+     It does not block anything and must not read as if it did: the exercise
+     works at 393px, it is simply better with room. "Kein Problem" is doing
+     real work in the German — the sentence exists to tell somebody their
+     screen is fine. */
+  'session.intro.smallScreen': 'Your screen is quite small for this exercise. That is no problem at all, but you will get the best of it on a screen that is at least tablet-sized.',
 
   /* `{count}` from `cardsDealt`, and the two forms are ONE/OTHER by hand:
      there is no plural helper in `i18n/index.ts` and deliberately so — two

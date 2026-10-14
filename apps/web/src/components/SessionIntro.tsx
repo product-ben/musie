@@ -205,6 +205,21 @@ export function SessionIntro({
           {digital && !dealsHere && (
             <p className="musie-intro__note">{t('session.intro.nothingToLayOut')}</p>
           )}
+
+          {/* ── THE SCREEN IS SMALL, AND THAT IS ALL IT SAYS ─────────────
+              Ben, 2026-10-14. Drawn whenever the cards are not on the table,
+              and HIDDEN ABOVE 850px BY CSS rather than by a measurement here:
+              what fits on a screen is a question the stylesheet can answer
+              without a resize listener, a hydration branch or a first paint
+              that guesses. `shell.css` carries the width and the reason.
+
+              It gates nothing. The exercise works at 393px — the hand is two
+              columns, the sheet asks you to turn the phone — so this is an
+              aside about where it is BEST, and it is written so that somebody
+              on a phone is told their screen is fine. */}
+          {digital && (
+            <p className="musie-intro__small">{t('session.intro.smallScreen')}</p>
+          )}
         </div>
       )}
 
