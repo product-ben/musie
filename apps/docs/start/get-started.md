@@ -13,7 +13,7 @@ pnpm --filter web dev                           # http://localhost:5173
 ```
 
 ```mermaid
-flowchart LR
+flowchart TB
   N["Node 22 + pnpm"] --> I["pnpm install"]
   I --> SB["pnpm storybook<br/>:6006"]
   I --> CK["pnpm check<br/>the gate"]

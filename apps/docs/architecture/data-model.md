@@ -3,22 +3,14 @@
 Seventeen tables and three views. Content is seeded by migration and read-only
 to the client; a person's own rows are the only ones they can write.
 
+**A person's own rows** — everything below is written by the person it belongs
+to, and readable by nobody else.
+
 ```mermaid
 erDiagram
     PROFILE ||--o{ SESSION : "runs"
-    PROFILE }o--o| USER_TYPE : "here as"
-    SESSION }o--|| EXERCISE : "is one run of"
-    SESSION }o--o| CARD : "drew"
-    SESSION }o--o| GOAL : "was run for"
-    SESSION }o--o| TRACK : "played"
-    SESSION }o--o| EXERCISE_CUT : "or played this"
     SESSION ||--o| REFLECTION : "ends in"
     REFLECTION ||--o{ REFLECTION_STATEMENT : "is assembled from"
-    EXERCISE }o--o{ GOAL : "serves"
-    EXERCISE ||--o{ EXERCISE_TRACK : "sounds like"
-    EXERCISE ||--o{ EXERCISE_CUT : "has recordings"
-    CARD ||--o{ EXERCISE_TRACK : "is paired in"
-    EXERCISE_TRACK }o--|| TRACK : "plays"
 
     PROFILE {
         uuid user_id PK
@@ -29,7 +21,7 @@ erDiagram
     SESSION {
         uuid id PK
         uuid user_id FK
-        text exercise_id FK
+        text exercise_id FK "RESTRICT"
         text card_id FK "null unless a card was drawn"
         text goal_id FK "null = no goal, deliberately"
         text track_id FK "TEXT, not uuid"
@@ -41,13 +33,37 @@ erDiagram
         timestamptz started_at
         timestamptz ended_at "null while running"
     }
+    REFLECTION {
+        uuid id PK
+        uuid session_id FK
+        text mode "text | voice — NO media column"
+        text body "always text, never null"
+    }
+    REFLECTION_STATEMENT {
+        uuid id PK
+        uuid reflection_id FK
+        int position
+        text text
+    }
+```
+
+**The catalogue** — seeded by migration, `select` only for the client, and
+every table with copy has an `_i18n` sibling.
+
+```mermaid
+erDiagram
+    EXERCISE }o--o{ GOAL : "serves"
+    EXERCISE ||--o{ EXERCISE_TRACK : "sounds like"
+    EXERCISE ||--o{ EXERCISE_CUT : "has recordings"
+    CARD ||--o{ EXERCISE_TRACK : "is paired in"
+    EXERCISE_TRACK }o--|| TRACK : "plays"
+
     EXERCISE {
         text id PK
         text kind "card_based | listening_only | digital_interactive"
         int timeframe_min
         int timeframe_max
         bool needs_cards "mirror of kind, by constraint"
-        bool needs_sound
         bool implemented
         int listen_gate_seconds
     }
@@ -71,13 +87,15 @@ erDiagram
         text mixed_src
         text voice_src "nullable — no switch where absent"
     }
-    REFLECTION {
-        uuid id PK
-        uuid session_id FK
-        text mode "text | voice"
-        text body "always text, never null"
+    GOAL {
+        text id PK
+        text label "per locale"
     }
 ```
+
+A session's five foreign keys into the catalogue — exercise, card, goal, track
+and cut — are on `SESSION` above. What each one does when the thing it points
+at is deleted is the table in the developer tab, and no two of them agree.
 
 The session's life:
 

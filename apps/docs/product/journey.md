@@ -3,7 +3,7 @@
 Five surfaces in order, plus one shortcut that starts on paper.
 
 ```mermaid
-flowchart LR
+flowchart TB
   QR["A printed card<br/>scanned with the phone camera"] -->|"/s/:code"| S
   R(["/"]) --> A["About Musie<br/>/about"]
   A --> AY["About you<br/>/about-you"]

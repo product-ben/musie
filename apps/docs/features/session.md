@@ -5,7 +5,6 @@ and a row in the database that outlives the tab.
 
 ```mermaid
 stateDiagram-v2
-    direction LR
     [*] --> intro
     intro --> scan : card_based only
     intro --> listen : listening_only — scan is SKIPPED

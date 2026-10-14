@@ -89,13 +89,24 @@
 }
 
 /* A little more room than the default 688px: these pages are mostly tables
-   and diagrams, and a table that scrolls sideways is a table nobody reads. */
+   and diagrams, and a table that scrolls sideways is a table nobody reads.
+   Prose is held to its own measure below; this is the container, not the
+   line length. */
 .VPDoc .content-container {
-  max-width: 820px;
+  max-width: 900px;
 }
 
 .VPDoc:not(.has-aside) .content-container {
-  max-width: 960px;
+  max-width: 1040px;
+}
+
+/* …but prose still reads at a sane measure. Only tables and diagrams get the
+   full container. */
+.vp-doc p,
+.vp-doc ul,
+.vp-doc ol,
+.vp-doc blockquote {
+  max-width: 68ch;
 }
 
 /* ═══ THE AUDIENCE MECHANISM ═══════════════════════════════════════════════
@@ -241,12 +252,20 @@ html[data-audience='designers'] .aud--devs {
   flex: 0 0 auto;
 }
 
-/* NOT max-width: 100%. The component renders with mermaid's `useMaxWidth`
-   off, so a wide diagram keeps its natural size and this figure scrolls —
-   a shrunk-to-fit ER diagram is a picture of a diagram rather than one.
-   A diagram narrower than the column is centred by the flex above. */
+/* FIT TO WIDTH, and the history is worth keeping because the obvious fix is
+   wrong. Mermaid scales a wide diagram into the column and the type comes out
+   at five pixels, so the first attempt removed the cap and let the figure
+   scroll. Measured across nine pages: SEVEN of them then scrolled, including
+   diagrams that had fit perfectly well. Sideways-scrolling a diagram is a
+   worse default than a small one.
+   
+   So the cap is back, and the two diagrams that were genuinely too big to fit
+   were made smaller instead — the ER diagram is split in two, and the widest
+   flowcharts are top-down rather than left-right. `fitToViewBox` in
+   theme/Mermaid.ts still sets the intrinsic size, which is what keeps the
+   aspect ratio right as this scales. */
 .mermaid-figure svg {
-  max-width: none;
+  max-width: 100%;
   height: auto;
 }
 
