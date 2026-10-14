@@ -109,6 +109,22 @@ export default defineComponent({
 
     async function render(): Promise<void> {
       try {
+        /* ── WAIT FOR THE FONT. This is not politeness, it is correctness ──
+           Mermaid sizes every box and every table column by MEASURING its
+           label, once, at render time. Onest is a webfont, so a render that
+           happens first measures the fallback — which is narrower — and the
+           real face then overflows the box it was given.
+
+           What that looks like: `uuid` drawn as `uuic`, `RESTRICT` as
+           `RESTRIC`, every cell in the ER diagram clipped by a character or
+           two. Measured on the data-model page; the geometry was right and
+           every label was a few pixels too wide for it.
+
+           `document.fonts.ready` resolves once the faces in use have loaded.
+           The `catch` matters: in a browser without the Font Loading API this
+           must still draw, slightly wrong, rather than not at all. */
+        await document.fonts?.ready?.catch?.(() => undefined);
+
         /* Lazy, and the only reason mermaid is not in the main bundle. */
         const { default: mermaid } = await import('mermaid');
         mermaid.initialize({
