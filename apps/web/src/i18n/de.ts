@@ -456,6 +456,7 @@ export const de: Messages = {
   'session.cards.dot': 'Bild {position} von {total}',
   'session.select.gridLabel': 'Deine Karten – wähle eine aus',
   'session.select.headline': 'Wähle eine Karte aus',
+  'session.select.lookAgain': 'Karten ansehen',
   'session.select.lead': 'Wähle das Bild aus, das dich gerade am meisten anspricht, aus welchen Gründen auch immer.',
   /* 'Karte ziehen' und nicht 'Zieh deine Karte': dieselbe Form wie
      `session.scan.scanCard` ('Karte scannen'), die dieser Schritt schon

@@ -53,6 +53,7 @@ import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
   WizardPanel,
 } from '@musie/design-system';
+import type { LightboxOrigin } from '@musie/design-system';
 import { SessionIntro } from '../components/SessionIntro';
 import { SessionSelect } from '../components/SessionSelect';
 import { SessionView } from '../components/SessionView';
@@ -62,10 +63,7 @@ import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import { warmTrackBytes } from '../lib/audio';
 import { getCard, getCards, getExercise, getListenAudio, getTrackFor } from '../lib/content';
-import {
-  DIGITAL_CARDS, SHEET_OPEN, cardsDealt, dealtCards,
-  withDigitalCards, withSheetOpen,
-} from '../lib/digitalCards';
+import { SHEET_OPEN, dealtCards, withSheetOpen } from '../lib/digitalCards';
 import {
   DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedForRun, stepsForRun,
 } from '../lib/exerciseKind';
@@ -75,8 +73,8 @@ import { hasAnswered } from '../lib/reflect';
 import type { ReflectMode } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
-  completedBefore, endSession, readSession, saveCard, saveFeelingChange,
-  saveListeningAnswers, saveReflection, saveStep,
+  completedBefore, endSession, readSession, saveCard, saveDigitalCards,
+  saveFeelingChange, saveListeningAnswers, saveReflection, saveStep,
 } from '../lib/session';
 import type { FeelingChange, SessionRow } from '../lib/session';
 import { useSessionQuestion } from '../lib/useQuestion';
@@ -305,14 +303,23 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
      steps either way, which is what keeps the rail four markers long
      (`stepsForRun`, and Ben's answer of 2026-10-14).
 
-     THE MODE IS THE URL for now and `sessions.digital_cards` once
-     `20261014113500` is applied and the types are regenerated — the column
-     exists because the reachability rule computes from this list, so a session
-     resumed from the drawer has to know which list it has. */
+     ── THE MODE IS A COLUMN, AND LOCAL STATE WHILE THE SWITCH MOVES ───────
+     `sessions.digital_cards`, because the reachability rule computes from this
+     list and a session resumed from the drawer has to know which list it has.
+     It was a query token until 2026-10-14; the token could not survive leaving
+     the session, which was tolerable while the mode only changed labels and is
+     not now that it changes the route.
+
+     SEEDED FROM THE ROW AND HELD IN STATE, which is exactly what `posture` and
+     `ending` do two blocks down and for the same two reasons: the rail has to
+     relabel the instant the switch moves, and a write per flip would be a
+     round trip on a screen whose whole job is two taps. The row catches up on
+     the way out of Einsteigen. */
   const [searchParams] = useSearchParams();
-  const dealt = cardsDealt(data.exercise.id);
+  const dealt = data.exercise.cardsDealt;
   const asksForCards = data.exercise.kind === 'card_based' && dealt !== null;
-  const digital = asksForCards && searchParams.has(DIGITAL_CARDS);
+  const [digitalCards, setDigitalCards] = React.useState(data.row.digitalCards);
+  const digital = asksForCards && digitalCards;
 
   const steps: readonly StepId[] = React.useMemo(
     () => stepsForRun(data.exercise.kind, { digital, cardsDealt: dealt }),
@@ -358,13 +365,36 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const sheetOpen = searchParams.has(SHEET_OPEN);
   const setSheetOpen = (next: boolean, options?: { replace?: boolean }) => {
     navigate(
-      { search: withSheetOpen(searchParams.toString(), next) },
+      {
+        /* ── THE PATHNAME IS NAMED, NOT INHERITED ──────────────────────────
+           `navigate({ search })` keeps whatever pathname is CURRENT when the
+           navigation is processed — and `select` opens its sheet from an
+           effect that runs in the same commit as the push that brought it
+           there. Measured 2026-10-14: the replace landed on the entry before,
+           so the address became `/intro?focus` and Back from the sheet went
+           somewhere nobody had been.
+
+           Naming it removes the race: the step is `state.step`, which is what
+           is on screen, not what the router is in the middle of. */
+        pathname: `/session/${encodeURIComponent(id)}/${state.step}`,
+        search: withSheetOpen(searchParams.toString(), next),
+      },
       /* PUSH TO OPEN so Back closes it; REPLACE to close, and REPLACE when a
          step opens its own sheet on arrival — `select` does, and an entry
          there would sit between the person and Einsteigen. */
       next && options?.replace !== true ? undefined : { replace: true },
     );
   };
+
+  /* MEASURED AT THE PRESS, never on mount: a rect is viewport-relative and the
+     page may have scrolled. Lightbox's own note says why a stale one reads as a
+     glitch rather than as a bug. */
+  const sheetOrigin = React.useRef<LightboxOrigin | null>(null);
+
+  function openSheet(event: React.MouseEvent<HTMLButtonElement>) {
+    sheetOrigin.current = event.currentTarget.getBoundingClientRect();
+    setSheetOpen(true);
+  }
 
   const [cardError, setCardError] = React.useState<string | null>(null);
 
@@ -514,6 +544,23 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     ),
   );
 
+  /* ── THE REDUCER IS TOLD WHICH RUN THIS IS ──────────────────────────────
+     `useReducer` runs its initialiser once, so without this `skipped` would
+     hold whatever the run was on the first render — the paper one, since the
+     row's `digital_cards` starts false — for the life of the session. The rail
+     is drawn from props and would relabel correctly; the REACHABILITY RULE
+     reads `state.skipped` and would refuse `select` as a step outside the run.
+
+     That is exactly what happened, and the walk is what found it: the switch
+     moved, the rail said *Auswählen*, and pressing the forward button did
+     nothing at all.
+
+     The action refuses a run that has not changed by returning the same
+     object, which is what stops this effect looping. */
+  React.useEffect(() => {
+    dispatch({ type: 'RUN', skipped });
+  }, [skipped]);
+
   /* ── URL → rules → row. The one reconciliation. ─────────────────────────
      Runs after the seed, so `state` already reflects the row.
 
@@ -607,9 +654,32 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
      first Continue — and the token is the only place the mode lives. The
      listen step rewrites the search on arrival and rebuilds it from
      `location.search`, so what is put here survives that. */
+  /**
+   * ── ENTERING A STEP NAMES ITS PHASE ───────────────────────────────────────
+   * The mode is a column, so there is nothing in the query to carry — except
+   * for one step. `select` OPENS WITH ITS WALK: the sheet is its first phase,
+   * and the navigation that enters it says so.
+   *
+   * IT WAS AN EFFECT IN THE STEP FIRST, and three versions of that effect were
+   * wrong in three different ways — all found by the walk, none by review. A
+   * search-only `navigate` from inside the arriving component replaced the
+   * entry BEFORE it, so the address became `/intro?focus`. A `useRef` guard
+   * came back false after a reload, so the X could not close the sheet. And a
+   * cold-arrival test could not tell a reload from a fresh arrival, because
+   * both reach this step with no phase and no card.
+   *
+   * Naming the phase in the navigation removes all three: the address is right
+   * from the first frame, a reload obeys whatever it says, and closing the
+   * sheet is the only thing that takes the token off.
+   *
+   * ONLY WHILE NOTHING IS CHOSEN. Coming back from Hören lands on the grid
+   * with the chosen picture marked — re-opening the walk there would be the
+   * product insisting you look again at five cards you have already decided
+   * between.
+   */
   const go = (step: StepId) => navigate({
     pathname: `/session/${encodeURIComponent(id)}/${step}`,
-    search: withDigitalCards('', digital),
+    search: step === 'select' && card === null ? `?${SHEET_OPEN}` : '',
   });
 
   /* `steps` IS the run, so `activeSteps(skipped)` is no longer computed here:
@@ -627,6 +697,14 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        taps. Not awaited, because the navigation must not wait on a round trip
        — but it does throw, so a failure surfaces in the console rather than as
        a silently wrong answer in the row. */
+    /* WHICH RUN THIS IS, on the way out of Einsteigen — the same timing as the
+       two listening answers below and for the same reason. Not awaited, but it
+       does throw, so a failure surfaces in the console rather than as a row
+       that computes a different run from the one on screen. */
+    if (state.step === 'intro' && asksForCards && digitalCards !== data.row.digitalCards) {
+      void saveDigitalCards(id, digitalCards);
+    }
+
     if (state.step === 'intro' && asksHowToListen) {
       /* NULL WHERE THE QUESTION WAS NOT PUT. `sessions.posture` is documented
          as the answer "AS ASKED on the Einsteigen step", and the Klangreise
@@ -1018,6 +1096,12 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     actions = (
       <>
         {back}
+        {/* A WAY BACK INTO THE WALK. The sheet opens on arrival and collapses
+            onto the grid; without this, closing it early — or coming back from
+            Hören — would leave the five pictures unreachable. */}
+        <CtaButton variant="secondary" onClick={openSheet}>
+          {t('session.select.lookAgain')}
+        </CtaButton>
         {card !== null && <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>}
       </>
     );
@@ -1166,22 +1250,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
 
                  `replace`, so a switch flipped twice does not leave two
                  entries in the history between the person and the library. */
-              cardsPresent={asksForCards ? !digital : undefined}
-              onCardsPresentChange={(present) => {
-                /* BOTH TOKENS COME OFF when the cards go back on the table:
-                   the mode, and any sheet that was up. Dropping only the mode
-                   leaves `?focus` on an address with no sheet behind it —
-                   harmless today and a trap for the next thing that reads it. */
-                navigate(
-                  {
-                    search: withSheetOpen(
-                      withDigitalCards(searchParams.toString(), !present),
-                      !present && sheetOpen,
-                    ),
-                  },
-                  { replace: true },
-                );
-              }}
+              cardsPresent={asksForCards ? !digitalCards : undefined}
+              /* LOCAL, so the rail relabels under the thumb; the row is
+                 written on the way out. */
+              onCardsPresentChange={(present) => setDigitalCards(!present)}
               /* Where the cards are laid out, for the line that stands where
                  the paper instruction was: an exercise dealing one card has
                  nothing to prepare on this step. */
@@ -1211,6 +1283,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               onPick={(chosen) => void pickCard(chosen)}
               sheetOpen={sheetOpen}
               onSheetOpenChange={setSheetOpen}
+              sheetOrigin={sheetOrigin.current}
             />
           )}
 

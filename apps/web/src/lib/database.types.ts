@@ -316,6 +316,7 @@ export type Database = {
       exercises: {
         Row: {
           asks_posture: boolean | null
+          cards_dealt: number | null
           id: string
           image_url: string | null
           implemented: boolean
@@ -329,6 +330,7 @@ export type Database = {
         }
         Insert: {
           asks_posture?: boolean | null
+          cards_dealt?: number | null
           id: string
           image_url?: string | null
           implemented?: boolean
@@ -342,6 +344,7 @@ export type Database = {
         }
         Update: {
           asks_posture?: boolean | null
+          cards_dealt?: number | null
           id?: string
           image_url?: string | null
           implemented?: boolean
@@ -512,6 +515,7 @@ export type Database = {
         Row: {
           card_id: string | null
           cut_id: string | null
+          digital_cards: boolean
           ended_at: string | null
           ending: string | null
           exercise_id: string
@@ -533,6 +537,7 @@ export type Database = {
         Insert: {
           card_id?: string | null
           cut_id?: string | null
+          digital_cards?: boolean
           ended_at?: string | null
           ending?: string | null
           exercise_id: string
@@ -554,6 +559,7 @@ export type Database = {
         Update: {
           card_id?: string | null
           cut_id?: string | null
+          digital_cards?: boolean
           ended_at?: string | null
           ending?: string | null
           exercise_id?: string

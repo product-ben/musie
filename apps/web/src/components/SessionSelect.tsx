@@ -14,17 +14,17 @@
  * answer to the question of whether it should grow, and it is what makes the
  * sheet a phase rather than a sixth marker.
  *
- * ── THE PHASE IS IN THE ADDRESS, WRITTEN ON ARRIVAL BY REPLACE ────────────
- * `?focus`, the same mechanism and the same reason as the listen step's
- * `?overview` since 2026-10-07: a reload keeps the phase you were in, the
- * browser's own Back closes the sheet onto the grid, and a tester can be sent
- * to either. REPLACE rather than push, so opening the step does not put an
- * entry between the person and Einsteigen.
+ * ── THE PHASE IS IN THE ADDRESS, AND THIS STEP DOES NOT WRITE IT ──────────
+ * `?focus`, the same token and the same reason as the listen step's own
+ * full-screen view: a reload keeps the phase you were in, the browser's Back
+ * closes the sheet onto the grid, and a tester can be sent to either.
  *
- * AND ONLY WHILE NOTHING IS CHOSEN. Coming back from Hören finds a card on the
- * row and lands on the grid, with the chosen picture marked — re-opening the
- * walk there would be the product insisting you look again at five cards you
- * have already decided between.
+ * THE NAVIGATION THAT ENTERS THIS STEP NAMES THE PHASE — `Session.tsx`'s `go`,
+ * which carries `?focus` when nothing is chosen yet. Three versions of an
+ * effect in this file tried to write it on arrival instead, and all three were
+ * wrong in ways only the walk found; `go`'s docblock lists them. What is left
+ * here is a screen that reads `sheetOpen` and draws, which is what a screen
+ * should be.
  */
 import * as React from 'react';
 import { Message, RadioImage } from '@musie/design-system';
@@ -50,25 +50,14 @@ export interface SessionSelectProps {
   /** Whether the sheet is up — `?focus`, owned by the route. */
   sheetOpen: boolean;
   onSheetOpenChange: (open: boolean, options?: { replace?: boolean }) => void;
+  /** The rect the sheet grows out of when the step's own button opened it. */
+  sheetOrigin: LightboxOrigin | null;
 }
 
 export function SessionSelect({
-  hand, card, choosing, error, onPick, sheetOpen, onSheetOpenChange,
+  hand, card, choosing, error, onPick, sheetOpen, onSheetOpenChange, sheetOrigin,
 }: SessionSelectProps) {
   const t = useT();
-  const origin = React.useRef<LightboxOrigin | null>(null);
-
-  /* ── THE SHEET OPENS ITSELF, ONCE, BY REPLACE ───────────────────────────
-     Guarded three ways and each guard is a real case: a card already chosen
-     means this is a return visit; `sheetOpen` already true means a reload has
-     restored the phase and re-writing it would mint a history entry; and the
-     ref means a close must not be undone by the effect that opens it. */
-  const opened = React.useRef(false);
-  React.useEffect(() => {
-    if (card !== null || sheetOpen || opened.current) return;
-    opened.current = true;
-    onSheetOpenChange(true, { replace: true });
-  }, [card, sheetOpen, onSheetOpenChange]);
 
   const alt = (one: Card) =>
     one.imageAlt ?? t('session.cards.fallbackAlt', { code: one.code });
@@ -118,7 +107,7 @@ export function SessionSelect({
         cards={hand}
         open={sheetOpen}
         onOpenChange={onSheetOpenChange}
-        origin={origin.current}
+        origin={sheetOrigin}
         /* THE WALK COLLAPSES ONTO THE GRID. `Weiter` on the last card closes
            the sheet and leaves the step exactly where it was — the choice is
            the next thing, in the step, which is what Ben asked for. */

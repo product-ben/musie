@@ -9095,3 +9095,60 @@ the failure then names the cause in as many words,
 What I need from Ben: **nothing.** The lesson is the one worth keeping rather
 than the fix: a `toBeVisible` would have passed through the whole bug, and so
 would every screenshot. A transparent layer is only visible to a hit test.
+
+## `pnpm test:db` is red, and neither cause is on this branch
+
+Where: the shared local stack (CLAUDE.md rule 9),
+`apps/web/src/lib/db.sessions.db.test.ts`, `apps/web/src/lib/deck.db.test.ts`,
+and `../maintenance-ui/supabase/migrations/2026101410*.sql`
+
+What I checked: after the reset, `pnpm test:db` reports **2 failed | 140
+passed**. `supabase_migrations.schema_migrations` lists four applied versions
+that exist in no checkout I am working in —
+
+    20261014100000  maintenance_schema
+    20261014100100  maintenance_import
+    20261014100200  content_edits_cleanup
+    20261014100300  reorder_needs_a_where
+
+— all four from `../musie.worktrees/maintenance-ui`, all four stamped *after*
+`20261013192229_deck_update.sql`. One stack, one `db reset`, and the schema
+under both suites is now the union of two branches. Each failure traces to it:
+
+1. **`permits retiring a card, and keeps the entry it was part of`** fails at
+   `db.sessions.db.test.ts:587` — the *session* insert, not the delete the test
+   is about — with `23503`. `maintenance_schema` adds
+   `cards_code_shape check (code ~ '^MC-(0[1-9]|[1-9][0-9])$')` and
+   `cards_id_is_code check (id = lower(code))` to `public.cards`. The fixture
+   inserts `code: 'ZZ-99'`, that insert carries no assertion, so the card
+   silently never exists and the session's `card_id` has nothing to point at.
+2. **`has the same cards, with the same codes, artwork and order`** — the row
+   for `mc-07` carries `assets/web/cards/mc-04.webp`, where `deck.json` and
+   `20261013192229_deck_update.sql` both say `mc-07.webp`. `maintenance_schema`
+   puts `valence`, `arousal` and `archived_at` on `public.cards`, adds
+   `grid_cells` and `artworks`, and gives `project_deck()` the job of rewriting
+   `cards.image_url` from the grid. `mc-07` sits at cell `(0, 2)`, where there
+   is **no grid cell at all** — so the grid cannot even produce the value the
+   row holds, and it was written live through the UI being built against it.
+
+How I know it is not mine: I ran both files from the **main** checkout against
+the same stack. Main fails *harder* — `deck.db.test.ts` 3 of 4, and
+`db.sessions.db.test.ts` at the identical line 587 — because main has the
+maintenance schema applied without `20261013192229`. My branch's own migration
+is provably applied: `exercises.cards_dealt` reads 5 / 1 / null and
+`sessions.digital_cards` exists, which is what the 140 passing tests assert.
+
+What I did: **nothing to the database.** A `db reset` would re-apply this
+branch's migrations over whatever `maintenance-ui` is testing against — the
+trap rule 9 is written for, and the reason those commands are denied to me.
+
+What I need from Ben: a decision, and two separate things are true.
+
+- The `ZZ-99` fixture and `cards_code_shape` cannot both stand. That is the
+  maintenance branch's call, and it is **a test on `main` that their migration
+  breaks** — better said before that merge than discovered after it.
+- The deck test's premise is *"the database carries the deck in
+  `supabase/content/deck.json`"*. A maintenance UI that edits `cards`,
+  `grid_cells` and `artworks` makes that false by design. When it lands, that
+  test has to become "the grid carries the deck" or stop existing; it cannot
+  stay as it is and mean anything.

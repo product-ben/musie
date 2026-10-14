@@ -145,6 +145,20 @@ export interface SessionRow {
    */
   listeningQuestionId: string | null;
   listeningQuestion: string | null;
+  /**
+   * ── WHICH RUN THIS IS — `sessions.digital_cards`, 2026-10-14 ─────────────
+   * True where the cards are not on the table. STORED rather than derived,
+   * because the wizard's reachability rule computes from the step LIST and the
+   * step list depends on it: a session resumed from the drawer without it
+   * would compute the paper run while sitting on `view`, and the rule would
+   * then refuse the step the row is actually on.
+   *
+   * `not null default false` with no third state, unlike `profiles.language`:
+   * a session either runs with the deck on the table or it does not, every row
+   * that existed before this column did, and the switch is answered on the
+   * first screen of every run.
+   */
+  digitalCards: boolean;
   /** Append-only log of rejections. Never cleared, including by the reset. */
   rejectedQuestionIds: string[];
   /** What a re-roll will not offer right now. Emptied by the reset. */
@@ -200,7 +214,7 @@ function toRow(row: {
   status: string; step: string; started_at: string; ended_at: string | null;
   listening_question_id: string | null; listening_question: string | null;
   rejected_question_ids: string[]; rejected_this_round: string[];
-  posture: string | null; ending: string | null;
+  posture: string | null; ending: string | null; digital_cards: boolean;
 }): SessionRow | null {
   if (row.status !== 'started' && row.status !== 'finished' && row.status !== 'abandoned') {
     console.error(`[musie] session ${row.id} has status "${row.status}" — dropped`);
@@ -227,10 +241,11 @@ function toRow(row: {
     endedAt: row.ended_at,
     posture: row.posture,
     ending: row.ending,
+    digitalCards: row.digital_cards,
   };
 }
 
-const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending';
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards';
 
 /**
  * One session by id. Null when there is no such row — which, under RLS, is
@@ -380,6 +395,29 @@ export async function saveCard(
  * every Klangreise run reads as a vote for *sitzend* in a report about which
  * recordings to make next.
  */
+/**
+ * WHICH RUN THIS IS, written on the way OUT of Einsteigen.
+ *
+ * The same timing and the same reason as `saveListeningAnswers` beside it: one
+ * request on the way out instead of one per flip of a switch, on a screen
+ * whose whole job is two taps. The step list is recomputed from LOCAL state as
+ * the switch moves, so the rail relabels instantly and the row catches up —
+ * which is also why this does not re-read the session afterwards.
+ *
+ * IT THROWS, like `saveListeningAnswers`: the person pressed Continue and is
+ * waiting, and a silent failure here sends them to a `view` or `select` step
+ * that a resume would compute out of the run.
+ */
+export async function saveDigitalCards(id: string, digitalCards: boolean): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ digital_cards: digitalCards })
+    .eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save which run this is: ${error.message}`);
+  }
+}
+
 export async function saveListeningAnswers(
   id: string,
   posture: string | null,

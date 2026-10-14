@@ -79,6 +79,18 @@ export interface Exercise {
    * Nothing in this app should branch on it any more: ask `kind`.
    */
   needsCards: boolean;
+  /**
+   * HOW MANY CARDS THIS EXERCISE LAYS OUT, or null where it draws none —
+   * `exercises.cards_dealt`, held to the kind by a check constraint.
+   *
+   * It decides two things, which is why it is a column rather than a number in
+   * the app: the size of a digital hand, and WHICH SECOND STEP the run has —
+   * `select` where there is a choice to make, `view` where there is not
+   * (`lib/exerciseKind.ts`). It was a map in `lib/digitalCards.ts` until
+   * 2026-10-14, with a header promising this column and naming why it could
+   * not be written yet.
+   */
+  cardsDealt: number | null;
   needsSound: boolean;
   /**
    * Whether the intro step asks *Wie möchtest du zuhören?* — Ben, 2026-10-13.
@@ -283,7 +295,7 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
-const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
 
 interface ExerciseRow {
   id: string;
@@ -291,6 +303,7 @@ interface ExerciseRow {
   timeframe_min: number;
   timeframe_max: number;
   needs_cards: boolean;
+  cards_dealt: number | null;
   needs_sound: boolean;
   asks_posture: boolean | null;
   image_url: string | null;
@@ -345,6 +358,7 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     timeframeMin: row.timeframe_min,
     timeframeMax: row.timeframe_max,
     needsCards: row.needs_cards,
+    cardsDealt: row.cards_dealt,
     needsSound: row.needs_sound,
     /* Null is "the question does not arise", which the screen draws the same
        way as "does not ask". See the field. */

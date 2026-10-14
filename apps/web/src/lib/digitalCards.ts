@@ -14,89 +14,30 @@
  * fallback into a preference, so the switch is asked fresh every session and
  * there is no column, no profile field and no web storage behind it.
  *
- * What survives a step change is the QUERY TOKEN (`?digitalcards`), and what
- * survives a reload is this file's arithmetic.
+ * ── AND THE MODE IS NOT HERE ANY MORE ────────────────────────────────────
+ * It was `?digitalcards`, a query token, for one day. It became
+ * `sessions.digital_cards` on 2026-10-14, because `view` and `select` are
+ * steps now and the step LIST depends on the mode — a token cannot survive
+ * leaving the session, and a run whose list is computed wrong refuses the step
+ * its own row is sitting on.
  *
- * ── WHY `CARDS_DEALT` IS A MAP HERE AND NOT A COLUMN — READ THIS FIRST ────
- * It belongs in `exercises.cards_dealt`. `DIGITAL-CARDS.md` §9 argues for the
- * column and the argument still stands: how many cards an exercise lays out is
- * a fact about the exercise, the library card already states it in prose, and
- * prose in two tables cannot be compared.
+ * What is still derived, and the reason this file exists, is the HAND.
  *
- * It is a map because **the commands that would land the column are denied to
- * this session and belong to Ben** (CLAUDE.md rule 9, `.claude/settings.json`):
- * `supabase db reset` re-applies one branch's migrations over whatever another
- * worktree is testing against, and `pnpm gen:types` reads that shared database
- * and writes into whichever branch is checked out. A column added in a
- * migration nobody may apply is a column `database.types.ts` does not have, so
- * every screen reading it fails to typecheck — and hand-editing the generated
- * file to pretend otherwise is how local and hosted drift apart in silence.
+ * ── WHAT MOVED OUT OF HERE ────────────────────────────────────────────────
+ * `CARDS_DEALT` was a map in this file — exercise id to a number — with a
+ * twenty-five line header explaining that it belonged in `exercises` and could
+ * not be written there, because the commands that apply a migration are Ben's
+ * under rule 9 and a column the generated types do not have is a compile error
+ * in every screen that reads it.
  *
- * So the number lives here, next to `STEPS` in `exerciseKind.ts`, which is the
- * precedent: that file keeps the step set per KIND in the app rather than in a
- * content table, on the reasoning that a content row must not be able to
- * promise a screen that does not exist. How many pictures the sheet paginates
- * is the same shape of fact.
- *
- * **The migration this wants is written and unapplied**: see
- * `supabase/migrations/` for the `exercises.cards_dealt` file, and
- * `apps/web/OPEN-QUESTIONS.md` for what has to happen for this map to be
- * deleted. It is three lines and one import when it does.
+ * `20261014113500` applied it on 2026-10-14, so the map and its argument are
+ * gone and `exercise.cardsDealt` is the number. `dealsOnIntro` went with them:
+ * nothing deals on Einsteigen any more, because `view` and `select` are steps
+ * and a step does its own work.
  */
 import type { Card } from './content';
 
-/**
- * The query token. Valueless, because this is a MODE and not a value —
- * `?view=digital` would invite a second value that does not exist. The shape
- * and the argument are `SessionListen`'s `?overview` / `?focus`, and
- * `URLSearchParams` answers a bare token with `.has()` and no parsing.
- */
-export const DIGITAL_CARDS = 'digitalcards';
 
-/**
- * How many cards each exercise deals — and therefore, through one number,
- * which of the two digital shapes it runs (`DIGITAL-CARDS.md` §9).
- *
- *   5  Achtsame Pause  lays five out on Einsteigen and you choose one
- *   1  Freie Bahn      draws one on Auswählen and you do not choose
- *
- * **It is keyed on the id and the id is the exercise**, which is the one thing
- * about this map that is not provisional: `sessions.exercise_id` holds these
- * strings, `exercise_tracks` joins on them, and `20260923150000` records that
- * an id in this schema is a stable handle rather than a label.
- *
- * An exercise that is absent draws no cards, which is every listening and
- * digital-interactive row. That is why the accessor returns null rather than
- * zero: *this exercise has no cards* and *this exercise deals none of them*
- * are the same answer here, and a zero would read as a hand of nothing.
- */
-const CARDS_DEALT: Readonly<Record<string, number>> = {
-  'mindfulness-cards': 5,
-  'free-rein': 1,
-};
-
-export function cardsDealt(exerciseId: string): number | null {
-  return CARDS_DEALT[exerciseId] ?? null;
-}
-
-/**
- * Where this exercise's deal happens — the consistency tuning, as one
- * derivation rather than as two code paths.
- *
- * **Both exercises deal where their own paper copy already deals.** Achtsame
- * Pause's `intro_md` lays five cards out before anything is chosen; Freie
- * Bahn's `scan_md` opens with *Ziehe eine zufällige Karte vom Stapel*. That
- * difference is the difference between the two exercises, so the digital flow
- * mirrors it instead of inventing a third arrangement.
- *
- * More than one card to look at is something to do BEFORE the step that asks
- * you to choose; one card is the choosing. Hence the test, and hence no
- * `exercise.id === 'free-rein'` anywhere above this line or below it.
- */
-export function dealsOnIntro(exerciseId: string): boolean {
-  const count = cardsDealt(exerciseId);
-  return count !== null && count > 1;
-}
 
 /* ── The hand ──────────────────────────────────────────────────────────────*/
 
@@ -221,9 +162,6 @@ export function withToken(search: string, token: string, on: boolean): string {
   return parts.length === 0 ? '' : `?${parts.join('&')}`;
 }
 
-export function withDigitalCards(search: string, on: boolean): string {
-  return withToken(search, DIGITAL_CARDS, on);
-}
 
 /**
  * ── AN OPEN SHEET IS IN THE ADDRESS — Ben, 2026-10-14 ─────────────────────

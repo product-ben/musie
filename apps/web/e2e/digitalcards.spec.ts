@@ -68,8 +68,11 @@ test('a digital session deals, chooses, and writes the same two columns', async 
 
   await cards.click();
 
-  /* ── THE MODE IS THE URL ────────────────────────────────────────────────*/
-  await expect(page).toHaveURL(/\/intro\?digitalcards$/);
+  /* ── THE MODE IS THE ROW, NOT THE URL ───────────────────────────────────
+     It was `?digitalcards` for a day. The step list depends on the mode now,
+     so it is `sessions.digital_cards` — read back at the foot of this walk. The
+     address does not change when the switch moves; the RAIL does. */
+  await expect(page).toHaveURL(/\/intro$/);
   await expect(cards).not.toBeChecked();
 
   /* *Weiter* is REPLACED rather than joined while there is a hand to deal. */
@@ -103,7 +106,7 @@ test('a digital session deals, chooses, and writes the same two columns', async 
      Einsteigen's button is only a way on now; `select` opens the walk itself,
      by REPLACE, so the sheet is a phase of the step rather than something to
      go and find. */
-  await expect(page).toHaveURL(/\/select\?/);
+  await expect(page).toHaveURL(/\/select/);
   const sheet = page.getByRole('dialog', { name: label(locale, 'session.cards.title') });
   await expect(sheet).toBeVisible({ timeout: 15_000 });
 
@@ -111,18 +114,21 @@ test('a digital session deals, chooses, and writes the same two columns', async 
      Ben, 2026-10-14. The same `?focus` the listen step uses, so the browser's
      own Back closes it and a reload keeps it — which is the half a unit test
      cannot reach, because it is the router doing the work. */
-  await expect(page).toHaveURL(/digitalcards/);
   await expect(page).toHaveURL(/focus/);
 
   await page.reload();
   await expect(sheet).toBeVisible({ timeout: 15_000 });
 
-  /* The phase is in the address, so Back leaves the STEP rather than the
-     sheet — the sheet was never pushed, it was replaced onto the step. */
-  await page.goBack();
-  await expect(page).toHaveURL(/\/intro/);
+  /* ── CLOSING IT EARLY LEAVES THE GRID, AND THE WALK IS STILL REACHABLE ──
+     The sheet is a phase, not a gate: the X collapses it onto the step, and
+     the step's own button opens it again. Without that button somebody who
+     closed early would have no way back to the five pictures, which is the
+     hole this assertion exists to keep shut. */
+  await sheet.getByRole('button', { name: label(locale, 'session.cards.close'), exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect(page).toHaveURL(/\/select$/);
 
-  await deal.click();
+  await page.getByRole('button', { name: label(locale, 'session.select.lookAgain'), exact: true }).click();
   await expect(sheet).toBeVisible({ timeout: 15_000 });
 
   /* SIX PAGES: the instruction, then five cards. The dots say how many, which
@@ -164,7 +170,7 @@ test('a digital session deals, chooses, and writes the same two columns', async 
      phase token off and leaves the step showing its grid. */
   await onwards.click();
   await expect(sheet).toHaveCount(0);
-  await expect(page).toHaveURL(/\/select\?digitalcards$/);
+  await expect(page).toHaveURL(/\/select$/);
 
   /* THE SCANNER IS NOT MOUNTED. Its primary control exists in no other state
      of the paper step, so its absence is the assertion. */
@@ -202,7 +208,6 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   const chosenSrc = before[2];
   await pictures.nth(2).click();
   await expect(page).toHaveURL(/\/listen/, { timeout: 20_000 });
-  await expect(page).toHaveURL(/digitalcards/);
 
   /* THE INFOGRAPHIC TEACHES THE DECK, so it is not here. Found by its own alt
      text, from the catalogue like everything else. */
@@ -231,7 +236,12 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   await expect(sheetNow).toBeVisible({ timeout: 15_000 });
   await sheetNow.getByRole('button', { name: label(locale, 'session.listen.questionHelp'), exact: true })
     .click({ trial: true });
-  await sheetNow.getByRole('button', { name: new RegExp(label(locale, 'session.listen.pause')) })
+  /* THE TRANSPORT, BY THE PART OF ITS NAME THAT DOES NOT MOVE. It announces
+     "Play , Your music" or "Pause , Your music" depending on whether anything
+     is playing — and whether anything is playing is not what this block is
+     about. Matching on `Pause` passed in German and timed out in English for
+     that reason alone, which is the two-locale run earning its keep. */
+  await sheetNow.getByRole('button', { name: new RegExp(label(locale, 'session.listen.track')) })
     .click({ trial: true });
 
   /* ── AND THE ROW ────────────────────────────────────────────────────────
@@ -241,7 +251,7 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   const db = service();
   const { data: row, error } = await db
     .from('sessions')
-    .select('card_id, track_id, step, status')
+    .select('card_id, track_id, step, status, digital_cards')
     .eq('id', sessionId as string)
     .single();
 
@@ -250,6 +260,9 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   expect(row?.track_id, 'a card with no recording behind it').toBeTruthy();
   expect(row?.step).toBe('listen');
   expect(row?.status).toBe('started');
+  /* THE RUN IS ON THE ROW. A resume reads this and computes the step list from
+     it — without it the rule would refuse the step the row is sitting on. */
+  expect(row?.digital_cards).toBe(true);
 
   /* The card that was pressed is the card that was written — not merely some
      card. `image_url` is what the grid drew, so it joins the two. */
@@ -259,4 +272,92 @@ test('a digital session deals, chooses, and writes the same two columns', async 
     .eq('id', row?.card_id as string)
     .single();
   expect(chosenSrc).toContain(card?.image_url);
+});
+
+/**
+ * THE OTHER DIGITAL SHAPE — one card, looked at rather than chosen between.
+ *
+ * Freie Bahn deals a single card, so its second step is `view`: its own route,
+ * its own row in `sessions.step`, and a screen that draws the card itself. The
+ * walk above covers `select`; this one exists because the two are different
+ * STEPS now rather than two shapes of one, and a test that only walked the
+ * five-card path would not notice if the one-card route stopped resolving.
+ */
+test('a one-card digital session draws on arrival and looks before it listens', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name as Locale;
+  test.setTimeout(120_000);
+
+  await withLocale(page, locale);
+  await reachTheLibrary(page, locale);
+  await startExercise(page, locale, locale === 'de' ? 'Freie Bahn' : 'Free Rein');
+
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);
+  const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
+
+  await page.getByRole('switch', { name: label(locale, 'session.intro.cardsPresent') }).click();
+
+  /* ── THE RAIL SAYS *ANSEHEN*, AND STILL HAS FOUR MARKERS ────────────────
+     Ben, 2026-10-14: the two card exercises do different things at the second
+     step — one chooses, one is dealt — so the rail says which. What it must
+     not do is change length. */
+  const rail = page.getByRole('navigation', { name: label(locale, 'session.wizardLabel') });
+  await expect(
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.view')},`) }),
+  ).toBeVisible();
+  await expect(rail.getByRole('button')).toHaveCount(4);
+
+  /* Einsteigen has nothing to prepare, and says so. */
+  await expect(
+    page.getByText(label(locale, 'session.intro.nothingToLayOut'), { exact: true }),
+  ).toBeVisible();
+
+  /* ── THE STEP DRAWS, NOT THE BUTTON ─────────────────────────────────────
+     The forward action carries a label and nothing else; the card is written
+     on arrival at `view`. The picture appearing is that write having landed —
+     and the row is read back at the foot of this walk to prove it. */
+  await page.getByRole('button', {
+    name: label(locale, 'session.intro.drawRandom'), exact: true,
+  }).click();
+
+  await expect(page).toHaveURL(/\/view$/);
+  await expect(
+    page.getByRole('heading', { name: label(locale, 'session.view.headline') }),
+  ).toBeVisible({ timeout: 15_000 });
+
+  /* ── THE WAY TO SEE IT PROPERLY IS ON THE PICTURE ───────────────────────
+     Not a third button in the action row. One page, so no dots and no
+     chevrons — which falls out of the card count rather than out of a prop. */
+  const expand = page.getByRole('button', { name: label(locale, 'session.view.expand'), exact: true });
+  await expect(expand).toBeVisible({ timeout: 15_000 });
+  await expand.click();
+
+  const sheet = page.getByRole('dialog', { name: label(locale, 'session.cards.title') });
+  await expect(sheet).toBeVisible({ timeout: 15_000 });
+  await expect(page).toHaveURL(/focus/);
+  await expect(
+    sheet.getByRole('button', { name: label(locale, 'session.cards.next'), exact: true }),
+  ).toHaveCount(0);
+
+  await sheet.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect(page).toHaveURL(/\/view$/);
+
+  await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
+  await expect(page).toHaveURL(/\/listen/, { timeout: 20_000 });
+
+  /* ── AND THE ROW ────────────────────────────────────────────────────────
+     The same two columns a scanned card writes, and the run on the row so a
+     resume computes the step list it actually had. */
+  const db = service();
+  const { data: row, error } = await db
+    .from('sessions')
+    .select('card_id, track_id, step, digital_cards')
+    .eq('id', sessionId as string)
+    .single();
+
+  expect(error).toBeNull();
+  expect(row?.card_id, 'the step did not draw').toBeTruthy();
+  expect(row?.track_id, 'a card with no recording behind it').toBeTruthy();
+  expect(row?.step).toBe('listen');
+  expect(row?.digital_cards).toBe(true);
 });

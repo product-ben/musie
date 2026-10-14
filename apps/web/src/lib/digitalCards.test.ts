@@ -9,9 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-  SHEET_OPEN, cardsDealt, dealsOnIntro, dealtCards, withDigitalCards, withSheetOpen,
-} from './digitalCards';
+import { SHEET_OPEN, dealtCards, withSheetOpen } from './digitalCards';
 import type { Card } from './content';
 
 const DECK: Card[] = Array.from({ length: 9 }, (_, i) => ({
@@ -26,25 +24,12 @@ const DECK: Card[] = Array.from({ length: 9 }, (_, i) => ({
 const SESSION = '8f1c6b2e-5a4d-4f3b-9c2a-1d0e7b6a5c43';
 const OTHER = '2b9d4e1a-7c3f-4a5b-8e6d-0f1a2b3c4d5e';
 
-describe('cardsDealt', () => {
-  it('gives the two card exercises their counts and nothing else a count', () => {
-    expect(cardsDealt('mindfulness-cards')).toBe(5);
-    expect(cardsDealt('free-rein')).toBe(1);
-    expect(cardsDealt('sound-journey')).toBeNull();
-    expect(cardsDealt('body-scan-soundwalk')).toBeNull();
-    expect(cardsDealt('breathing-score')).toBeNull();
-  });
-});
-
-describe('dealsOnIntro', () => {
-  /* The consistency tuning, as the one derivation it is: more than one card is
-     something to look at BEFORE the step that asks you to choose. */
-  it('deals on Einsteigen only where more than one card is laid out', () => {
-    expect(dealsOnIntro('mindfulness-cards')).toBe(true);
-    expect(dealsOnIntro('free-rein')).toBe(false);
-    expect(dealsOnIntro('sound-journey')).toBe(false);
-  });
-});
+/* `cardsDealt` and `dealsOnIntro` used to be tested here. Both are gone: the
+   count is `exercises.cards_dealt` since `20261014113500`, read at the content
+   boundary like every other column, and nothing deals on Einsteigen any more
+   — `view` and `select` are steps, and a step does its own work. What decides
+   which of the two a run has is `stepsForRun`, tested in
+   `exerciseKind.test.ts` beside the rest of the step set. */
 
 describe('dealtCards', () => {
   it('deals the number asked for', () => {
@@ -101,48 +86,10 @@ describe('dealtCards', () => {
   });
 });
 
-describe('withDigitalCards', () => {
-  it('writes the token without a value', () => {
-    expect(withDigitalCards('', true)).toBe('?digitalcards');
-  });
-
-  it('keeps whatever else is in the query, and puts its own token last', () => {
-    expect(withDigitalCards('?overview', true)).toBe('?overview&digitalcards');
-    expect(withDigitalCards('?focus', true)).toBe('?focus&digitalcards');
-  });
-
-  it('takes the token off again, and leaves nothing behind when it was alone', () => {
-    expect(withDigitalCards('?digitalcards', false)).toBe('');
-    expect(withDigitalCards('?digitalcards&overview', false)).toBe('?overview');
-  });
-
-  /* The defect this was written for: two of these composed used to leave the
-     first token with a trailing `=`, because the serialiser only spared the
-     one the helper had just added. */
-  it('keeps every valueless token valueless, however many helpers run', () => {
-    const both = withSheetOpen(withDigitalCards('', true), true);
-    expect(both).toBe('?digitalcards&focus');
-    expect(withSheetOpen(both, false)).toBe('?digitalcards');
-    expect(withDigitalCards(both, false)).toBe('?focus');
-  });
-
-  /* A real value is still a real value. */
-  it('leaves a key that has a value alone', () => {
-    expect(withDigitalCards('?utm=spring', true)).toBe('?utm=spring&digitalcards');
-    expect(withDigitalCards('?utm=a%20b', true)).toBe('?utm=a%20b&digitalcards');
-  });
-
-  it('never writes the token twice', () => {
-    expect(withDigitalCards('?digitalcards', true)).toBe('?digitalcards');
-  });
-
-  /* The whole point of the token's shape: `.has()` answers it with no parsing
-     of our own, which is the same contract `SessionListen` relies on. */
-  it('is readable by URLSearchParams.has', () => {
-    expect(new URLSearchParams(withDigitalCards('?overview', true)).has('digitalcards')).toBe(true);
-    expect(new URLSearchParams(withDigitalCards('?overview', false)).has('digitalcards')).toBe(false);
-  });
-});
+/* `withDigitalCards` was tested here. The mode is `sessions.digital_cards`
+   since `20261014113500` — a token could not survive leaving the session, and
+   the step list depends on the mode. `withToken` itself is still exercised
+   below, through the one caller that remains. */
 
 describe('withSheetOpen', () => {
   /* The same token the listen step uses, deliberately: it means "a sheet is

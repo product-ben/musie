@@ -676,6 +676,11 @@ export const en = {
      own first instruction with the half about paper removed — chrome, because
      what it leaves out is exactly the part that is only true of a deck. */
   'session.select.headline': 'Choose a card',
+  /* ── A WAY BACK INTO THE WALK ────────────────────────────────────────────
+     The sheet opens on arrival and collapses onto the grid, so somebody who
+     closed it early — or came back from Hören — would otherwise have no way to
+     look at the five again. The grid is the step; this is the phase. */
+  'session.select.lookAgain': 'Look at the cards again',
   'session.select.lead': 'Pick the image that speaks to you most right now, for whatever reason.',
   /* A one-card exercise draws here rather than on Einsteigen, because its own
      paper copy draws here. Same register as `session.scan.scanCard`. */
