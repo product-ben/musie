@@ -15,6 +15,23 @@ flowchart TD
 ```
 
 ::: designers
+## There is a run where nothing is scanned at all
+
+Since 2026-10-14 the card exercises also run **without the physical deck**, and
+then there is no QR code to read: the second step is `view` or `select` instead
+of `scan`, the camera is **not mounted** — not hidden, not mounted, because a
+`display: none` camera still asks for a permission on somebody's phone — and
+everything on this page simply does not happen.
+
+What the two paths share is the row they write. A card dealt digitally and a
+card scanned from the table leave the same `card_id` and `track_id`, so the
+diary, the reveal and the discovered-music listing cannot tell them apart. See
+[a session](/features/session) for which run has which second step.
+
+A code scanned **into** a digital run wins: `/s/MC-01` writes the card and turns
+`digital_cards` off, because a printed code is proof that the deck is in
+somebody's hands.
+
 ## Three ways in, and the common one is not the app
 
 The common path is **the phone's own camera app** following
