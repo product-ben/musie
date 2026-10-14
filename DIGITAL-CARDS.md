@@ -1076,10 +1076,30 @@ here; the same six fail on `d976bdc` with no changes applied, and two more
 besides. Measured in a throwaway worktree rather than assumed. They are not
 gated by CI, which runs `pnpm check` and the two bundle builds.
 
-**Two of those six are fixed in passing.** Both walks in `scanlink.spec.ts`
+**Three of those six specs are fixed in passing** — five tests, one cause.
+`scanlink.spec.ts` (both walks), `camera.spec.ts` (both) and `resume.spec.ts`
 anchored on `/listen$`, and the listen step writes its own `?overview` token on
-arrival by `replace` — so the anchor could never match once that landed. One
-regular expression each, and the comment names the trap.
+arrival by `replace`. That makes it a RACE rather than a constant failure: the
+anchor matches only when the assertion beats the token, which is why this set
+reads as six specs some runs and five others. One regular expression each,
+`/listen(\?|$)/`, and the comment names the trap. The claim being made is the
+step, not the absence of a query.
+
+**Three specs still fail, eight tests, and none of them is about this feature**
+— measured after the fixes above: 24 passed, 8 failed.
+
+| | |
+|---|---|
+| `session.spec.ts:55` | the listen step renders its focus dialog where the walk looks inside `.musie-listen__view--stage` |
+| `reveal.spec.ts:42` | `locator('audio')` never attaches |
+| `cancel.spec.ts:92` | a radio keeps its selection after the question closes |
+| `cancel.spec.ts:383` | the ended session is the wrong one — `free-rein` where `mindfulness-cards` was asked for |
+
+The last one looked like the shared stack having been reordered by
+`../maintenance-ui`; it is not. `public.exercises` still reads
+`mindfulness-cards` at `sort = 1`, checked. All four belong to the listen and
+library work rather than to digital cards, and chasing them from this branch
+would mean rewriting assertions whose feature somebody else owns.
 
 ### 17.5 · The architecture, two days later
 

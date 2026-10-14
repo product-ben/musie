@@ -50,7 +50,11 @@ test('continue session returns to the step you stopped on', async ({ page }, tes
   /* Naming the card finishes the scan step since 2026-09-24, so the listen
      step arrives on its own and there is no Continue to press. */
   await enterCode(page, locale, 'MC-01');
-  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
+  /* `listen(\?|$)` — the listen step writes `?overview` on arrival by
+     `replace`, so the token lands a frame after the navigation and an
+     anchored `listen$` matches only when the assertion wins the race. The
+     claim here is the STEP, not the absence of a query. */
+  await expect(page).toHaveURL(/\/listen(\?|$)/, { timeout: 15_000 });
 
   /* The row has to agree before leaving, or the rest of this proves nothing:
      a resume that lands on `intro` is correct if `intro` is what was stored. */
@@ -73,7 +77,7 @@ test('continue session returns to the step you stopped on', async ({ page }, tes
 
   /* THE URL: the resume landed where it was aimed. */
   await expect(page, 'resuming did not land on the stored step')
-    .toHaveURL(new RegExp(`/session/${sessionId}/listen$`), { timeout: 15_000 });
+    .toHaveURL(new RegExp(`/session/${sessionId}/listen(\\?|$)`), { timeout: 15_000 });
 
   /* THE ROW: and arriving did not overwrite it. This is the assertion the bug
      was actually made of — the URL alone was wrong for one frame and then

@@ -84,7 +84,11 @@ test('the camera reads a card and the session takes it', async ({ page, context 
      put in the field, the field is submitted, the card is written and the
      listen step arrives — which is the whole of E.2, plus 2026-09-24's second
      half, in one assertion that nobody helped along. */
-  await expect(page).toHaveURL(/\/listen$/, { timeout: 60_000 });
+  /* `listen(\?|$)` — the listen step writes `?overview` on arrival by
+     `replace`, so the token lands a frame after the navigation and an
+     anchored `listen$` matches only when the assertion wins the race. The
+     claim here is the STEP, not the absence of a query. */
+  await expect(page).toHaveURL(/\/listen(\?|$)/, { timeout: 60_000 });
 
   /* The card's own code, on screen, beside its feeling — the listen step's
      details carry it. It proves WHICH card was read rather than that some card
@@ -144,7 +148,7 @@ test('saying no to the camera costs nothing', async ({ page, context }, testInfo
      that left the step unable to name a card would be the camera having taken
      something away by being added. */
   await enterCode(page, locale, TYPED_INSTEAD.code);
-  await expect(page).toHaveURL(/\/listen$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/listen(\?|$)/, { timeout: 15_000 });
 
   const db = service();
   const { data: session } = await db
