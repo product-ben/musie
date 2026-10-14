@@ -5,12 +5,12 @@ needs a database, one needs a browser. Only the first is in `pnpm check`.
 
 | Suite | Command | Files | Needs | In `pnpm check` |
 |---|---|---|---|---|
-| unit | `pnpm test` | 37 + 3 | nothing | **yes** |
+| unit | `pnpm test` | 37 + 3 + 2 | nothing | **yes** |
 | database | `pnpm test:db` | 10 | the local stack | no |
 | end-to-end | `pnpm test:e2e` | 7 specs | a browser + the stack | no |
 
-582 unit tests pass in about a second — 524 in `apps/web`, 51 in
-`@musie/voice`, 7 in `apps/docs`.
+852 unit tests pass in about a second — 524 in `apps/web`, 51 in
+`@musie/voice`, 277 in `apps/docs`.
 
 ```mermaid
 flowchart LR

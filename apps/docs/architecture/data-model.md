@@ -1,7 +1,7 @@
 # Data model
 
-Fourteen tables and one view. Content is seeded by migration and read-only to
-the client; a person's own rows are the only ones they can write.
+Seventeen tables and three views. Content is seeded by migration and read-only
+to the client; a person's own rows are the only ones they can write.
 
 ```mermaid
 erDiagram
@@ -167,7 +167,7 @@ difference between them.
 | `reflections` | one per session | all four, own rows |
 | `reflection_statements` | one per statement, in position order | all four, own rows |
 | `beta_signups` | the closed-beta form | `insert` only |
-| `missing_translations` *(view)* | every content hole | `select` |
+| `missing_translations`, `missing_cuts`, `question_rejections` *(views)* | every content hole; every uncovered audio combination | `select` |
 
 `goals` and `goal_i18n` were `situations` / `situation_i18n` until
 `20261007100000`, which renamed the tables, the indexes, the policies and

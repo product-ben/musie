@@ -73,9 +73,9 @@ arguments is the one that decides it: **the repository is public.**
 ```
 apps/web/                 the app
   src/
-    components/           17 app components
+    components/           18 app components
     routes/               15 screens
-    lib/                  ~90 modules + their tests
+    lib/                  55 modules + their tests
     i18n/                 en.ts, de.ts, and the resolution
     content/
   e2e/                    7 Playwright specs + the fakes
