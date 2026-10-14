@@ -7049,7 +7049,29 @@ html[data-musy-scroll-snap='y'] {
   background-color: var(--surface-inverse);
 }
 
-/* The chrome sits over the field rather than under it. */
+/* ── EVERY SLOT SITS OVER THE FIELD, AND THE LIST IS THE WHOLE RULE ───────
+   The field is `position: absolute`, and a positioned element paints above
+   STATIC siblings whatever the source order says. So anything that is not
+   lifted here sits UNDERNEATH it — and underneath means unclickable, because
+   the field covers the sheet edge to edge.
+
+   THAT SHIPPED. `header` and `body` were missing from this list for a day:
+   on the listen sheet, where the field is transparent because the page is not
+   a picture, *Hilf mir bitte* and *Pause* were covered by an invisible layer
+   and stopped responding. Nothing looked wrong, nothing failed, and the one
+   slot that still worked was the foot — which was in the list.
+
+   SO THE LIST IS THE TRAP. A slot added to `Sheet.tsx` without a line here is
+   a slot that renders correctly and cannot be used. It is written out rather
+   than expressed as `.musy-sheet > *:not(.musy-sheet__field)`, because that
+   selector outranks `.musy-sheet__dots` on specificity and would quietly turn
+   the dots' `absolute` back into `relative`, moving the rail into the flow.
+   An e2e walk trial-clicks both controls on the focus sheet, which is the
+   check that actually catches this rather than describing it — verified by
+   taking these two selectors out again: Playwright then names the cause in the
+   failure, `.musy-sheet__field intercepts pointer events`. */
+.musy-sheet__header,
+.musy-sheet__body,
 .musy-sheet__pages,
 .musy-sheet__dots,
 .musy-sheet__foot {

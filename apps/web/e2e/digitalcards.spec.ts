@@ -199,6 +199,30 @@ test('a digital session deals, chooses, and writes the same two columns', async 
     page.getByRole('img', { name: label(locale, 'session.listen.infographicAlt') }),
   ).toHaveCount(0);
 
+  /* ── AND THE FOCUS SHEET'S CONTROLS ARE REACHABLE ───────────────────────
+     A regression guard, from a real one: the sheet paints a field across
+     itself for the pages that are pictures, and for a day that field covered
+     two controls on the listen sheet — `Hilf mir bitte` and the transport —
+     because their slots were not lifted above it. They rendered perfectly and
+     did nothing.
+
+     `trial: true` is the whole point of this block. It runs Playwright's
+     actionability checks — visible, stable, ENABLED, and HIT-TESTABLE at the
+     point it would press — and then does not press. A `toBeVisible` would have
+     passed throughout the bug; only hit-testing sees a transparent layer. */
+  await page.getByRole('button', {
+    name: new RegExp(label(locale, 'session.listen.listenUnstarted', { time: '1:30' })
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  }).click();
+  await expect(page).toHaveURL(/focus/, { timeout: 20_000 });
+
+  const sheetNow = page.getByRole('dialog', { name: label(locale, 'session.listen.immersiveTitle') });
+  await expect(sheetNow).toBeVisible({ timeout: 15_000 });
+  await sheetNow.getByRole('button', { name: label(locale, 'session.listen.questionHelp'), exact: true })
+    .click({ trial: true });
+  await sheetNow.getByRole('button', { name: new RegExp(label(locale, 'session.listen.pause')) })
+    .click({ trial: true });
+
   /* ── AND THE ROW ────────────────────────────────────────────────────────
      The point of the whole walk. A digitally chosen card writes `card_id` AND
      `track_id` in one update, exactly as a scanned one does, and the step id

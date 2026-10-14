@@ -9062,3 +9062,36 @@ conditional — a bare `<img>` without `expand`, a wrapper with it — and the
 frame is `inline-block` with a `fit-content` cap so the control stays on the
 picture rather than drifting to the container's edge. Anything laying out
 against an `Image` that later gains the control will meet that wrapper.
+
+## An invisible layer over two working buttons
+
+Where: `packages/design-system/src/musy-components.css` (the `.musy-sheet`
+slot list), `apps/web/e2e/digitalcards.spec.ts`
+
+What I checked: Ben, 2026-10-14 — *"the 'Hilf mir bitte' and 'Pause' buttons in
+/listen?digitalcards=&focus aren't clickable anymore."*
+
+The cause, and it is mine from the day before. `.musy-sheet__field` — the
+surface painted behind a sheet whose page is a picture — is
+`position: absolute`, and a positioned element paints above STATIC siblings
+whatever the source order says. I lifted `pages`, `dots` and `foot` out from
+under it and did not lift `header` or `body`, which is where those two controls
+live. On the card walk nothing showed, because its content is `pages`. On the
+listen sheet the field is TRANSPARENT — that page is not a picture — so it
+covered two controls with nothing visible at all.
+
+What I did: the two missing selectors, and a comment naming the list as the
+trap. Written out rather than as `.musy-sheet > *:not(.musy-sheet__field)`,
+because that selector outranks `.musy-sheet__dots` on specificity and would
+quietly turn the dots' `absolute` back into `relative`.
+
+**And a guard that actually catches it.** The digital walk now trial-clicks
+both controls on the focus sheet: `click({ trial: true })` runs Playwright's
+actionability checks — visible, stable, enabled, and HIT-TESTABLE at the point
+it would press — and then does not press. Verified by taking the fix out again;
+the failure then names the cause in as many words,
+`.musy-sheet__field intercepts pointer events`.
+
+What I need from Ben: **nothing.** The lesson is the one worth keeping rather
+than the fix: a `toBeVisible` would have passed through the whole bug, and so
+would every screenshot. A transparent layer is only visible to a hit test.
