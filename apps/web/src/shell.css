@@ -2418,9 +2418,11 @@ html[data-musy-scroll-snap] {
   margin: 0;
 }
 
-/* The field the card is shown on. `--surface-inverse` is Layer 1's own dark
-   surface — the same token the inverse ink is defined against — so the frame
-   is the system's darkest surface rather than an invented black. */
+/* The card, centred on the page. THE DARK FIELD IS NOT HERE ANY MORE — it is
+   `.musy-sheet__field`, which reaches past Lightbox's insets to the viewport
+   edge, so the gutter is part of the same surface instead of a sand frame
+   around a dark one (Ben, 2026-10-14). A page that painted its own background
+   could never do that: it is inset by the sheet it sits in. */
 .musie-cards__media {
   display: grid;
   /* `minmax(0, 1fr)` ON BOTH AXES, and it is load-bearing rather than tidy.
@@ -2435,7 +2437,6 @@ html[data-musy-scroll-snap] {
   inline-size: 100%;
   block-size: 100%;
   min-block-size: 0;
-  background-color: var(--surface-inverse);
 }
 
 /* CONSTRAINED, NOT FITTED. `object-fit: contain` on a box sized `100% / 100%`

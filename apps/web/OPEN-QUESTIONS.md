@@ -8872,10 +8872,33 @@ part worth keeping:
    grid was asking about its own inline size, so the three-column rule could
    never match. It needed the extra element that `.musy-rimage__grid` now is.
 
-What I need from Ben: **the sheet's dark field is a decision, not a fix.** A
-card is 1.41:1 and no screen is, so an uncropped picture always leaves bars.
-They are now `--surface-inverse` — the system's own darkest surface — which is
-what makes the white dots true and what turns the bars into a frame. It is the
-only dark surface anywhere in this warm product, and it is on screen for five
-pages in a row. If it reads as a different app, the alternative is sand bars
-and the green dot row, and the white variant stays for whatever needs it next.
+**ANSWERED 2026-10-14.** Ben kept the dark field and asked for it to be
+carried through: *"then let's be consequent and color the gutter also in the
+dark gray."* So the surface moved from the PAGE to the SHEET —
+`.musy-sheet__field`, painted while the page under the chrome is a picture, and
+reaching past Lightbox's own insets to the viewport edge. A page cannot do
+that: it is inset by the sheet it sits in, which is why the first version left
+a sand frame around a dark picture.
+
+Two things came out of that, and both were found by looking:
+
+- **The field used the wrong token on one axis.** `--space-inset-card` was a
+  reasonable guess for the body's block padding and is one step smaller than
+  the truth — the popup's `padding-inline` and the immersive body's
+  `padding-block` are both `--space-inset-sheet`. It left an 8px sand sliver
+  along the top and bottom that no test could have seen.
+- **The paging chevrons were coloured for a surface.** `secondary` fills with
+  `--surface-raised`, and both disabled states fill with
+  `--interactive-primary-disabled` over `--on-surface-disabled` — pale blobs on
+  a dark field, and the disabled forward chevron on the last page was a grey
+  smudge. The sheet now re-tints its own chrome while it is over a picture: one
+  ink, `--on-surface-inverse`, the same the white dot row uses, and the
+  disabled state is dimmed to 45% rather than refilled, so it keeps the shape
+  of the row.
+
+**That re-tint is the one place in this package where a component reaches into
+another component's class**, and it is written down where it happens. The
+alternative is a `tone` axis on `IconButton` multiplying four variants by every
+state, for one consumer. If a second component ever puts controls on artwork it
+did not choose, that axis is the right answer and those four rules are what it
+should be built from.

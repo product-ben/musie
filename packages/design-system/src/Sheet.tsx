@@ -275,7 +275,30 @@ export function Sheet({
     >
       {/* ONE ELEMENT, because the immersive surface gives its only child the
           full height to arrange and leaves the arranging to the caller. */}
-      <div className={['musy-sheet', className ?? ''].filter(Boolean).join(' ')}>
+      <div
+        className={['musy-sheet', className ?? ''].filter(Boolean).join(' ')}
+        /* The whole sheet knows whether the page under the chrome is a
+           picture: the field below is painted from it, the dots take their
+           white tone from it, and the paging controls re-tint for it. One
+           attribute so the three cannot disagree. */
+        data-media={tone === 'onMedia' ? 'true' : undefined}
+      >
+        {/* ── THE FIELD — the sheet's own surface, out to the edges ─────────
+            A picture that is not cropped always leaves bars, and the bars have
+            to be part of the same surface or the sheet reads as a photograph
+            pasted onto a page. This is that surface.
+
+            IT REACHES PAST ITS OWN BOX ON PURPOSE. Lightbox insets this
+            sheet by `--space-inset-sheet` on both axes — the popup's
+            `padding-inline` and the immersive body's `padding-block` are the
+            same token — so a background painted here would stop short of the
+            viewport by exactly that. The negative inset undoes it, and nothing
+            clips it: measured 2026-10-14, the body's PADDING box is the full
+            viewport and no ancestor carries a transform, a filter or
+            containment.
+
+            `aria-hidden` and no content: it is paint. */}
+        <div className="musy-sheet__field" aria-hidden="true" />
         <ol
           ref={scrollerRef}
           className="musy-sheet__pages"

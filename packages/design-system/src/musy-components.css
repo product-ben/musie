@@ -6986,6 +6986,40 @@ html[data-musy-scroll-snap='y'] {
   min-block-size: 0;
 }
 
+/* ── THE FIELD ────────────────────────────────────────────────────────────
+   Painted only under a page that is a picture; transparent otherwise, so a
+   sheet of copy keeps the surface Lightbox gave it. `--surface-inverse` is
+   Layer 1's own darkest surface — the one `--on-surface-inverse` is defined
+   against — rather than an invented black, which is what lets the white dots
+   and the re-tinted chevrons below be checked against something.
+
+   The transition is the same token a toggle uses: moving from the instruction
+   onto the first card changes the surface under a scroll that is still
+   finishing, and a hard cut there reads as a flash. */
+.musy-sheet__field {
+  position: absolute;
+  /* `--space-inset-sheet` ON BOTH AXES, which is what Lightbox actually uses:
+     the popup's `padding-inline` and the immersive body's `padding-block` are
+     the same token. An earlier version reached back by `--space-inset-card` on
+     the block axis — a reasonable guess, one step smaller, and it left a
+     sand-coloured sliver along the top and bottom edges that was visible on a
+     screenshot and in no test. */
+  inset: calc(var(--space-inset-sheet) * -1);
+  background-color: transparent;
+  transition: background-color var(--motion-toggle);
+}
+
+.musy-sheet[data-media] .musy-sheet__field {
+  background-color: var(--surface-inverse);
+}
+
+/* The chrome sits over the field rather than under it. */
+.musy-sheet__pages,
+.musy-sheet__dots,
+.musy-sheet__foot {
+  position: relative;
+}
+
 /* ── THE PAGES ────────────────────────────────────────────────────────────
    `mandatory` rather than `proximity`, and `scroll-snap-stop: always` on the
    page: together they are the promise that one gesture moves exactly one
@@ -7115,6 +7149,67 @@ html[data-musy-scroll-snap='y'] {
 
 .musy-sheet__foot .musy-btn__label {
   white-space: normal;
+}
+
+/* ── THE PAGING CONTROLS ON A PICTURE ─────────────────────────────────────
+   Every icon-button variant is coloured against a SURFACE: `secondary` fills
+   with `--surface-raised`, and both disabled states fill with
+   `--interactive-primary-disabled` and write in `--on-surface-disabled`. On
+   the dark field all three are pale blobs, and the disabled one is the worst
+   of them — Ben, 2026-10-14, from the last page, where the forward chevron is
+   disabled and had become a grey smudge.
+
+   So the sheet re-tints its OWN chrome while it is over a picture. One ink,
+   `--on-surface-inverse`, which is the token the white dot row already uses.
+
+   WHY THIS REACHES INTO ANOTHER COMPONENT'S CLASS, which nothing else in this
+   package does lightly: the Sheet is the one component that puts controls on
+   artwork it did not choose, and the alternative is a fifth `tone` axis on
+   IconButton multiplying four variants by every state. If a second component
+   ever needs this, that axis is the right answer and these four rules are what
+   it should be built from.                                                  */
+.musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn--primary {
+  background-color: var(--on-surface-inverse);
+  border-color: transparent;
+  color: var(--surface-inverse);
+}
+
+.musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn--secondary,
+.musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn--ghost,
+.musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn--outline {
+  background-color: transparent;
+  border-color: var(--on-surface-inverse);
+  color: var(--on-surface-inverse);
+}
+
+/* DIMMED, NEVER DISSOLVED. A disabled control that disappears takes the shape
+   of the row with it — the same argument `.musy-icon-btn--outline:disabled`
+   already makes about keeping its border. Opacity rather than a second ink,
+   because there is no inverse-disabled token and inventing one for a single
+   control is how a palette grows sideways. */
+.musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn:disabled,
+.musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn[data-disabled] {
+  background-color: transparent;
+  border-color: var(--on-surface-inverse);
+  color: var(--on-surface-inverse);
+  opacity: 0.45;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn:hover:not(:disabled) {
+    background-color: var(--on-surface-inverse);
+    border-color: var(--on-surface-inverse);
+    color: var(--surface-inverse);
+  }
+}
+
+@media (forced-colors: active) {
+  /* The opacity and the inverse ink are both dropped in forced colours; the
+     system's own disabled colour is what is left to say it. */
+  .musy-sheet[data-media] .musy-sheet__paging .musy-icon-btn:disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
 }
 
 .musy-sheet__paging {
