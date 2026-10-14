@@ -9391,3 +9391,98 @@ What I need from Ben: a decision, and two separate things are true.
   test has to become "the grid carries the deck" or stop existing; it cannot
   stay as it is and mean anything.
 
+
+## `maintenance.db.test.ts` ratchets the card order, and `deck.db.test.ts` pays for it
+
+Where: `apps/web/src/lib/maintenance.db.test.ts` (the reorder case),
+`apps/web/vitest.config.ts` (the `db` project), `public.admin_reorder_cards`
+
+What I checked: after merging `main` into `digital-cards-build`, `pnpm test:db`
+is **1 failed | 181 passed**, and the failure is `deck.db.test.ts` — *has the
+same cards, with the same codes, artwork and order*. The predicted cause was
+this branch's alt text disagreeing with the snapshot. **It is not that.** The
+alt-text case and the pairing case both pass; the only disagreement is the
+ORDER, and the live deck reads
+
+    mc-02:1 mc-01:2 mc-03:3 … mc-09:9
+
+Run alone, with no other file touching the database, it fails the same way. So
+this is not a race between files — it is a write left in the shared database.
+
+The reorder case swaps the first two cards, asserts, and puts the deck back:
+
+```ts
+const swapped = [...ids]; [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
+await service.rpc('admin_reorder_cards', { …, p_ids: swapped });   // asserted
+await service.rpc('admin_reorder_cards', { …, p_ids: ids });       // not
+```
+
+`ids` is read from the database **at the start of the run**. So the restore
+does not restore a known-good order — it restores *whatever the order was when
+the test started*. The first run that ended between those two calls made the
+swap permanent, and every run since has faithfully put the swap back. A
+ratchet, and the second call's error is unchecked, so a failure there is
+invisible.
+
+Two things make it worse than a stale row: `admin_reorder_cards` parks every
+card at `sort + 1000` in the middle of its work, and the `db` project sets no
+`fileParallelism: false`, so eleven files run in parallel threads against one
+Postgres — a sibling reading `cards` ordered by `sort` can see the parked deck
+as well as the swapped one. One Postgres behind nine worktrees (rule 9): the
+cost is paid by whoever runs `pnpm test:db` next, in a file they did not touch.
+
+What I did: **nothing to the database.** The repair is a content write to a
+shared stack, and `supabase db reset` is denied to this session for the reason
+rule 9 gives. A reset puts the factory order back and the test passes with no
+export needed — the merged `deck.json` already agrees with the database on
+everything else, alt text included.
+
+What I need from Ben: the reset (or one reorder through `/maintenance`), and
+then a decision that is the maintenance branch's, not this one's — the restore
+should name the order it wants rather than echoing what it read, and its error
+should be asserted. As written, the suite cannot tell a broken restore from a
+working one.
+
+## Alt text has two homes now, and the app reads the one that is scheduled to be dropped
+
+Where: `supabase/migrations/20261014100100_maintenance_import.sql` L101-104,
+`public.project_deck()`, `apps/web/src/lib/content.ts`,
+`apps/web/scripts/content-export.mjs` L152, `MAINTENANCE-UI.md` §3.1
+
+What I checked: §3.1 says the only translated thing left in the deck is an
+artwork's alt text, *"which moves to `artwork_i18n` where it belongs"*. The
+move has not happened in the data:
+
+| | |
+|---|---|
+| `card_i18n.image_alt` | the nine descriptions this branch wrote, present in both locales |
+| `artwork_i18n.alt` | **null**, in both locales, for all nine |
+
+The import creates the `artwork_i18n` rows with a literal `null` and does not
+carry `card_i18n.image_alt` across. `project_deck()` projects
+`cards.image_url` and `exercise_tracks` from the grid — not alt text. And both
+readers that matter, `content.ts` and `content-export.mjs`, select
+`card_i18n.image_alt`.
+
+So the table the maintenance UI WRITES is not the table the app READS. An
+operator who types alt text at `/maintenance` changes `artwork_i18n.alt`, and
+every screen keeps showing `card_i18n.image_alt` — with no error anywhere,
+because both rows exist. And when `card_i18n` is dropped (§3.1 schedules it for
+"once the live branches land"), the nine descriptions go with it.
+
+This lands hardest on the digital path, which is the only place a card is shown
+full screen with nothing else on the page: there, the alt text IS the card for
+anybody using a screen reader.
+
+What I did: nothing. Writing alt text into `artwork_i18n` by hand would be a
+content write to a shared database through a door that is deliberately only
+open to the `content-admin` function, and copying it in a migration would be
+content travelling by migration — which rule 4.1 has just closed.
+
+What I need from Ben: whichever of the two is meant to be true. If
+`artwork_i18n` is the home, the import should carry the column across and the
+readers should follow before `card_i18n` is dropped — one `update … from` and a
+select each. If `card_i18n.image_alt` stays the home until the readers move,
+then the maintenance screen's alt-text field is writing to a column nothing
+reads today, and that is worth knowing before an operator spends an afternoon
+describing nine pictures.
