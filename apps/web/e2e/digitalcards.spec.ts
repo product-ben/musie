@@ -77,16 +77,19 @@ test('a digital session deals, chooses, and writes the same two columns', async 
     page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }),
   ).toHaveCount(0);
 
-  /* The rail renames its second step. The id does not move — that is asserted
-     at the foot of this walk, where `sessions.step` is read back. */
-  /* A step marker is a <button> inside `<nav aria-label>`, and its name is
-     "<label>, <state>" — so the match is on the prefix, and it is scoped to the
-     rail because a word like *Choose* could reasonably appear in copy. */
+  /* ── THE SECOND STEP IS A DIFFERENT STEP, NOT A RENAMED ONE ─────────────
+     Since 2026-10-14 the rail reads `select` because the run HAS a step called
+     `select` — and the row says so too, which is read back at the foot of this
+     walk. A step marker is a <button> inside `<nav aria-label>` whose name is
+     "<label>, <state>", so the match is on the prefix and scoped to the rail.
+
+     STILL FOUR MARKERS. Ben's rule: flipping the switch must not change the
+     rail's length, only which second step it names. */
+  const rail = page.getByRole('navigation', { name: label(locale, 'session.wizardLabel') });
   await expect(
-    page
-      .getByRole('navigation', { name: label(locale, 'session.wizardLabel') })
-      .getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
   ).toBeVisible();
+  await expect(rail.getByRole('button')).toHaveCount(4);
 
   /* ── DEALING ────────────────────────────────────────────────────────────*/
   const deal = page.getByRole('button', {
@@ -96,6 +99,11 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   await expect(deal).toBeEnabled({ timeout: 15_000 });
   await deal.click();
 
+  /* ── THE STEP OPENS WITH ITS SHEET ──────────────────────────────────────
+     Einsteigen's button is only a way on now; `select` opens the walk itself,
+     by REPLACE, so the sheet is a phase of the step rather than something to
+     go and find. */
+  await expect(page).toHaveURL(/\/select\?/);
   const sheet = page.getByRole('dialog', { name: label(locale, 'session.cards.title') });
   await expect(sheet).toBeVisible({ timeout: 15_000 });
 
@@ -109,9 +117,10 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   await page.reload();
   await expect(sheet).toBeVisible({ timeout: 15_000 });
 
+  /* The phase is in the address, so Back leaves the STEP rather than the
+     sheet — the sheet was never pushed, it was replaced onto the step. */
   await page.goBack();
-  await expect(sheet).toHaveCount(0);
-  await expect(page).not.toHaveURL(/focus/);
+  await expect(page).toHaveURL(/\/intro/);
 
   await deal.click();
   await expect(sheet).toBeVisible({ timeout: 15_000 });
@@ -150,10 +159,12 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   await expect(onwards).toBeVisible({ timeout: 15_000 });
   await expect(next).toBeDisabled();
 
+  /* ── THE SHEET COLLAPSES ONTO THE GRID, IN THE SAME STEP ────────────────
+     Ben's shape: *Weiter* on the last card does not advance — it takes the
+     phase token off and leaves the step showing its grid. */
   await onwards.click();
-
-  /* ── AUSWÄHLEN ──────────────────────────────────────────────────────────*/
-  await expect(page).toHaveURL(/\/scan\?digitalcards$/);
+  await expect(sheet).toHaveCount(0);
+  await expect(page).toHaveURL(/\/select\?digitalcards$/);
 
   /* THE SCANNER IS NOT MOUNTED. Its primary control exists in no other state
      of the paper step, so its absence is the assertion. */
@@ -164,7 +175,7 @@ test('a digital session deals, chooses, and writes the same two columns', async 
   /* A radio group since 2026-10-14, when the grid became `RadioImage`. The
      legend is visually hidden — the step's own headline asks the question —
      and is still the group's accessible name, which is what this asks for. */
-  const grid = page.getByRole('radiogroup', { name: label(locale, 'session.scan.gridLabel') });
+  const grid = page.getByRole('radiogroup', { name: label(locale, 'session.select.gridLabel') });
   await expect(grid).toBeVisible({ timeout: 15_000 });
   const pictures = grid.getByRole('radio');
   await expect(pictures).toHaveCount(DEALT);

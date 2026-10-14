@@ -52,15 +52,12 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field, Image, Message, RadioImage } from '@musie/design-system';
+import { ContentList, CtaButton, Field } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import type { Card, Exercise } from '../lib/content';
-import { fromRoot } from '../lib/assets';
-import { headingOnly } from '../lib/markdown';
-import type { Block } from '../lib/markdown';
 import { takeHeldCode } from '../lib/scan';
 
 export interface SessionScanProps {
@@ -79,28 +76,6 @@ export interface SessionScanProps {
    */
   codeError: string | null;
   onSubmitCode: (code: string) => void;
-  /**
-   * ── DIGITAL MODE — `DIGITAL-CARDS.md` §7 ────────────────────────────────
-   *
-   * The hand this session was dealt, or null on the paper path. Null and
-   * empty are different answers: null is *the cards are on the table*, and
-   * `[]` would be a dealt hand with nothing in it, which cannot happen.
-   *
-   * It arrives already dealt. This component does not know how a hand is made
-   * and must not: `lib/digitalCards.ts` derives it from the session id, which
-   * is what makes it the same hand after a reload.
-   */
-  hand?: readonly Card[] | null;
-  /** Take this card. Writes `card_id` and `track_id` and moves the step on. */
-  onPick?: (card: Card) => void;
-  /** Why the last pick did not land, already translated — or null. */
-  pickError?: string | null;
-  /**
-   * Open the drawn card full screen. Takes the event, because the sheet grows
-   * out of the RECT of the control that opened it and a rect is measured at
-   * the press. Only the one-card shape draws a control for it.
-   */
-  onExpand?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 /**
@@ -111,7 +86,6 @@ export interface SessionScanProps {
  */
 export function SessionScan({
   exercise, card, scanning, codeError, onSubmitCode,
-  hand = null, onPick, pickError = null, onExpand,
 }: SessionScanProps) {
   const t = useT();
 
@@ -197,147 +171,6 @@ export function SessionScan({
     const trimmed = code.trim();
     if (trimmed === '') return;
     applyCode(trimmed);
-  }
-
-  /**
-   * ── THE DIGITAL SHAPE, AND IT IS A DIFFERENT STEP ───────────────────────
-   *
-   * Not a mode of the frame and not a third way of naming a card: there is no
-   * code, no camera and no QR, so `CardScanner` is **not mounted**. Not hidden
-   * with CSS — not mounted. Four of its five states are about a camera nobody
-   * is opening, and a camera permission prompt behind a `display: none` is the
-   * kind of thing that only shows up on somebody else's phone.
-   *
-   * The headline stays, because it is the step's own name for itself and is
-   * true whichever way the cards arrive; the body goes, because it is two
-   * numbered steps about QR codes.
-   */
-  if (hand !== null) {
-    const alt = (one: Card) =>
-      one.imageAlt ?? t('session.scan.cardFallbackAlt', { code: one.code });
-
-    return (
-      <>
-        {/* ── ONE CARD: ITS OWN TWO LINES ─────────────────────────────────
-            `scan_md` opens with *Wähle eine Karte aus*, which is true of the
-            other exercise. Freie Bahn deals one and you do not pick it, so the
-            step says what there IS to do — Ben, 2026-10-14.
-
-            BOTH LINES GO THROUGH `arrange` rather than into a markdown string,
-            so chrome copy cannot accidentally be parsed: a `*` in a sentence
-            would otherwise arrive as emphasis. `md=""` with no `fallbackKey`
-            parses to nothing and the blocks are injected whole, which is the
-            documented shape of that prop. */}
-        {hand.length === 1 ? (
-          <Markdown
-            md=""
-            arrange={(): Block[] => [
-              { kind: 'heading', level: 2, spans: [{ text: t('session.scan.lookHeadline') }] },
-              { kind: 'paragraph', spans: [{ text: t('session.scan.lookLead') }] },
-            ]}
-          />
-        ) : (
-        /* ── THE HEADLINE, AND ONE SENTENCE UNDER IT ────────────────────
-            Ben, 2026-10-14. The step was its headline alone, which left the
-            question *wähle* unanswered: choose on what grounds? The sentence
-            that answers it is the exercise's own first instruction minus the
-            half about paper — *Lege die anderen Karten außer Sichtweite* is
-            not a thing you can do to a grid.
-
-            IT IS APPENDED AS A BLOCK rather than drawn as a sibling <p>. The
-            renderer owns the space between a heading and what follows it
-            (`.musie-md h2 + *`), so a paragraph outside `.musie-md` would need
-            that spacing copied — and copied spacing is what drifts. Handing
-            `arrange` one more block puts the chrome sentence through the same
-            typography as the content above it.
-
-            This branch is the CHOOSING one, so the sentence is unconditional
-            here: the one-card shape above says its own two lines instead. */
-          <Markdown
-            md={exercise.scanMd}
-            arrange={(blocks): Block[] => [
-              ...headingOnly(blocks),
-              { kind: 'paragraph', spans: [{ text: t('session.scan.digitalLead') }] },
-            ]}
-          />
-        )}
-
-        {/* `headline` and not children: `Message` takes the sentence as a prop,
-            and this one IS the sentence — there is no second line to add under
-            it, because the first already says what to do about it. */}
-        {pickError !== null && <Message variant="error" headline={pickError} live="assertive" />}
-
-        {/* ── ONE CARD: THE ONE THAT WAS DRAWN, OR NOTHING YET ─────────────
-            A one-card exercise draws from the action row (*Karte ziehen*),
-            which is `Session.tsx`'s, and the picture appears here once it has.
-            Before that this step is its headline and a button — which is
-            honest: there is nothing to show until the card is drawn, and
-            showing a placeholder for it would be showing a card. */}
-        {hand.length === 1 ? (
-          card !== null && (
-            /* `Image`, NOT A BARE <img> — and this is the place that proved
-               why the component had to exist. The two declarations that sized
-               it lived in a block next to the card grid, and when the grid
-               moved into `RadioImage` they went with it: the drawn card then
-               rendered at its intrinsic 1200px and hung out of the panel. One
-               deletion, no error, visible at some widths only. */
-            <figure className="musie-cardshow">
-              <Image
-                className="musie-cardshow__art"
-                src={fromRoot(card.imageUrl ?? '')}
-                alt={alt(card)}
-                width={1200}
-                height={849}
-                /* ── THE WAY TO SEE IT PROPERLY IS ON THE PICTURE ──────────
-                    It was a third button in the step's action row — one of
-                    three, and the only one that was about the picture above
-                    them rather than about the step. On the picture it needs no
-                    label beside it, and the row is left saying what it should:
-                    back, and on. */
-                expand={onExpand === undefined ? undefined : {
-                  label: t('session.scan.drawAgain'),
-                  onClick: onExpand,
-                }}
-                decoding="async"
-              />
-            </figure>
-          )
-        ) : (
-          /* ── THE HAND — `RadioImage`, TWO COLUMNS THEN THREE ──────────────
-             It was an app-level grid of buttons until 2026-10-14 and is now a
-             Layer 2 component, which is what L14.3 asked for the moment the
-             pattern was worth naming. §7.9 `RadioGroupImage` is still the near
-             miss and still the wrong one — a required visible label per item, a
-             1:1 crop, and four columns on a desktop.
-
-             `legendHidden`, because the step's own headline IS the question:
-             `scan_md` opens with *Wähle eine Karte aus*, and printing it twice
-             is the thing L8 calls a caption on a caption. It stays the group's
-             accessible name.
-
-             `onCommit` AND NOT `onValueChange`: the arrow keys move selection
-             through a radio group as a way of READING it, and committing on
-             that would carry a keyboard user off the screen mid-look. The
-             component draws that line; this call site depends on it. */
-          <RadioImage
-            name="session-card"
-            legend={t('session.scan.gridLabel')}
-            legendHidden
-            value={card?.id}
-            onCommit={(chosen) => {
-              const one = hand.find((candidate) => candidate.id === chosen);
-              if (one !== undefined) onPick?.(one);
-            }}
-            disabled={scanning}
-            options={hand.map((one) => ({
-              value: one.id,
-              image: fromRoot(one.imageUrl ?? ''),
-              imageAlt: alt(one),
-            }))}
-          />
-        )}
-      </>
-    );
   }
 
   return (

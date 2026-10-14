@@ -69,8 +69,7 @@ import { GoalBox, GoalPill } from '../components/GoalPicker';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useT } from '../i18n/localeContext';
-import type { MessageKey } from '../i18n';
-import type { StepId } from '../routeHandle';
+import { stepMessageKey } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
 import { createSession, endSession, useActiveSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
@@ -87,14 +86,6 @@ import '../exercises.css';
 type View = 'deck' | 'list';
 
 /**
- * A step id, as the catalogue says it.
- *
- * The four ids are the URL's and the row's; these are their display names, and
- * the split is the schema's own (`session.step.*` in en.ts). A map rather than
- * four branches, and typed by `StepId` so a fifth step fails the typecheck here
- * rather than rendering a key.
- */
-/**
  * How far one press of a toolbar chevron scrolls, as a fraction of what you
  * can see.
  *
@@ -105,13 +96,6 @@ type View = 'deck' | 'list';
  * spacing, and there is no rung on the ladder for "most of a row".
  */
 const NUDGE = 0.8;
-
-const STEP_LABEL: Record<StepId, MessageKey> = {
-  intro: 'session.step.intro',
-  scan: 'session.step.scan',
-  listen: 'session.step.listen',
-  reflect: 'session.step.reflect',
-};
 
 export function Exercises() {
   const t = useT();
@@ -561,7 +545,7 @@ export function Exercises() {
           headline={t('exercises.running.headline', {
             name: runningName ?? t('exercises.running.fallback'),
           })}
-          text={t('exercises.running.stoppedAt', { step: t(STEP_LABEL[running.step]) })}
+          text={t('exercises.running.stoppedAt', { step: t(stepMessageKey(running.step)) })}
         >
           <ButtonGroup align="end">
             <CtaButton

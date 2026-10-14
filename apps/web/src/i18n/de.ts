@@ -302,7 +302,7 @@ export const de: Messages = {
      Einsteigen' and 'Aktuelle Session – Einsteigen'. */
   'session.step.intro': 'Einsteigen',
   'session.step.scan': 'Scannen',
-  'session.step.select': 'Auswählen',  'session.step.look': 'Ansehen',
+  'session.step.select': 'Auswählen',  'session.step.view': 'Ansehen',
   'session.step.listen': 'Hören',
   'session.step.reflect': 'Nachdenken',
   /* 'Abgeschlossen', nicht 'Beendet' (Ben, 2026-09-23). 'Beendet' sagt nur,
@@ -445,9 +445,7 @@ export const de: Messages = {
      Relativsatz. */
   'session.intro.smallScreen': 'Dein Bildschirm ist recht klein für diese Übung. Das ist zwar kein Problem, aber die optimale Erfahrung hast du auf Bildschirmen, die mindestens Tablet-Größe haben.',
   'session.intro.deal': '{count} Karten ziehen',
-  'session.intro.dealOne': 'Eine Karte ziehen',
-  'session.intro.dealAgain': '{count} Karten ansehen',
-  'session.intro.dealAgainOne': 'Karte ansehen',  'session.intro.drawRandom': 'Zufällige Karte ziehen',
+  'session.intro.drawRandom': 'Zufällige Karte ziehen',
   'session.cards.title': 'Deine Karten',
   'session.cards.close': 'Karten schließen',
   'session.cards.lead': 'Wenn du auf dem Handy unterwegs bist, drehe ins Breitformat. Dann sieh dir die fünf Karten an und atme zu jeder einmal ein und aus.',
@@ -456,13 +454,13 @@ export const de: Messages = {
   'session.cards.next': 'Nächstes Bild',
   'session.cards.previous': 'Vorheriges Bild',
   'session.cards.dot': 'Bild {position} von {total}',
-  'session.scan.gridLabel': 'Deine Karten – wähle eine aus',
-  'session.scan.digitalLead': 'Wähle das Bild aus, das dich gerade am meisten anspricht, aus welchen Gründen auch immer.',
+  'session.select.gridLabel': 'Deine Karten – wähle eine aus',
+  'session.select.headline': 'Wähle eine Karte aus',
+  'session.select.lead': 'Wähle das Bild aus, das dich gerade am meisten anspricht, aus welchen Gründen auch immer.',
   /* 'Karte ziehen' und nicht 'Zieh deine Karte': dieselbe Form wie
      `session.scan.scanCard` ('Karte scannen'), die dieser Schritt schon
      spricht. */
-  'session.scan.draw': 'Karte ziehen',
-  'session.scan.drawAgain': 'Karte ansehen',
+  'session.view.expand': 'Karte ansehen',
   /* ── EINE FRAGE, KEINE AUFFORDERUNG — Ben, 2026-10-14 ────────────────────
      War 'Sieh dir deine Karte an'. Die Frage ist besser: der Schritt will
      nicht, dass du hinsiehst — das tust du ohnehin —, sondern dass du etwas
@@ -473,10 +471,10 @@ export const de: Messages = {
      Korrektur wie 'Wie fühlt sich der Moment an?' in 20260923150000.
 
      'weitergehst' in einem Wort (§1). */
-  'session.scan.lookHeadline': 'Was siehst du in dem Bild?',
-  'session.scan.lookLead': 'Atme mindestens einmal aus und wieder ein, bevor du weitergehst.',
-  'session.scan.pickFailed': 'Die Karte konnte nicht übernommen werden. Versuch es gleich noch einmal.',
-  'session.scan.cardFallbackAlt': 'Karte {code}',
+  'session.view.headline': 'Was siehst du in dem Bild?',
+  'session.view.lead': 'Atme mindestens einmal aus und wieder ein, bevor du weitergehst.',
+  'session.cards.failed': 'Die Karte konnte nicht übernommen werden. Versuch es gleich noch einmal.',
+  'session.cards.fallbackAlt': 'Karte {code}',
 
   /* ── Listen · D.5b ─────────────────────────────────────────────────────── */
   /* ── EIN WORT FÜR DIE MUSIK, UND ES IST 'die Musik' (Ben, 2026-10-09) ────

@@ -72,22 +72,67 @@ const STEPS: Record<ExerciseKind, readonly StepId[]> = {
   digital_interactive: ['intro', 'listen', 'reflect'],
 };
 
-/** The steps this kind's run consists of, in order. */
-export function stepsForKind(kind: ExerciseKind): readonly StepId[] {
-  return STEPS[kind];
+/**
+ * What a card run needs to know about ITSELF, beyond its kind — 2026-10-14.
+ *
+ * The kind alone stopped being enough the day the deck became optional: the
+ * same `card_based` exercise runs four steps either way, but the SECOND of
+ * them is `scan` with the deck on the table, `view` where one card was dealt
+ * digitally, and `select` where five were.
+ */
+export interface RunShape {
+  /** The cards are not on the table — `sessions.digital_cards`. */
+  digital: boolean;
+  /** `exercises.cards_dealt`: how many this exercise lays out, or null. */
+  cardsDealt: number | null;
+}
+
+/**
+ * The steps this RUN consists of, in order.
+ *
+ * ── THE DIGITAL RUN IS THE PAPER RUN WITH ITS SECOND STEP SUBSTITUTED ─────
+ * Written as a substitution rather than as three lists, because that is the
+ * product fact and it is the one Ben stated: *the rail stays four markers long
+ * for every card exercise* (2026-10-14). A `map` cannot change the length; a
+ * second list could, and would, the first time somebody edited one of them.
+ *
+ * So there is no run anywhere with both `scan` and `view`, or with `view` and
+ * `select` — which is also why their order inside `STEP_IDS` is unobservable
+ * and why `scan` was left in its historical place there.
+ *
+ * ── WHICH OF THE TWO IS ONE NUMBER ────────────────────────────────────────
+ * `cards_dealt`, the same column that decides how many cards the hand holds.
+ * More than one to look at is something to choose between; one is something to
+ * look at. Null cannot happen for `card_based` — a check constraint holds the
+ * two together — and falls to `view`, which is the shape that asks nothing of
+ * a hand it may not have.
+ */
+export function stepsForRun(kind: ExerciseKind, shape: RunShape): readonly StepId[] {
+  const steps = STEPS[kind];
+  if (kind !== 'card_based' || !shape.digital) return steps;
+
+  const second: StepId = (shape.cardsDealt ?? 1) > 1 ? 'select' : 'view';
+  return steps.map((step) => (step === 'scan' ? second : step));
 }
 
 /**
  * The steps that are NOT in this kind's run — what `sessionMachine` and
  * `InteractiveWizard` both call `skipped`.
  *
- * Derived from `stepsForKind`, so the rail and the reducer cannot disagree
+ * Derived from `stepsForRun`, so the rail and the reducer cannot disagree
  * about a run: there is one list, and this is its complement. Deriving it the
  * other way round — listing the skipped steps per kind and subtracting — would
  * be the same data entered twice.
+ *
+ * IT IS NOW USUALLY THREE STEPS LONG FOR A CARD RUN rather than none: a paper
+ * run skips `view` and `select`, a digital one skips `scan` and whichever of
+ * the other two it did not take. The design system's fifth wizard state draws
+ * a skipped step as a visible gap, and nothing wants that here — which is why
+ * the rail is handed `stepsForRun` and not all six (`Session.tsx`, and
+ * `stepsForRun`'s own note on the length).
  */
-export function skippedFor(kind: ExerciseKind): StepId[] {
-  const steps = stepsForKind(kind);
+export function skippedForRun(kind: ExerciseKind, shape: RunShape): StepId[] {
+  const steps = stepsForRun(kind, shape);
   return STEP_IDS.filter((step) => !steps.includes(step));
 }
 

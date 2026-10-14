@@ -1648,7 +1648,7 @@ export function SessionListen({
               <Image
                 className="musie-immersive__card"
                 src={fromRoot(card.imageUrl ?? '')}
-                alt={card.imageAlt ?? t('session.scan.cardFallbackAlt', { code: card.code })}
+                alt={card.imageAlt ?? t('session.cards.fallbackAlt', { code: card.code })}
                 width={1200}
                 height={849}
                 /* The reading measure, so the picture does not become a poster

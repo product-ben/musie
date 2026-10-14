@@ -429,13 +429,16 @@ export const en = {
   'session.step.intro': 'Start',
   'session.step.scan': 'Scan',
   'session.step.select': 'Choose',
-  /* ── AND A THIRD WORD, FOR THE EXERCISE THAT CHOOSES NOTHING ─────────────
-     Ben, 2026-10-14, refining his own consistency tuning of the day before
-     after seeing it run: Freie Bahn deals ONE card and you do not pick it, so
-     *Choose* was describing an act that is not there. Two words for the same
-     step after all — and the rail is right to say which, because the two
-     exercises really are doing different things at it. */
-  'session.step.look': 'Look',
+  /* ── THE TWO DIGITAL SECOND STEPS ────────────────────────────────────────
+     `view` and `select` are STEP IDS as of 2026-10-14, not labels overriding
+     `scan`: nothing is scanned when the deck is not on the table, so the step
+     is a different step rather than the same one wearing another name. Freie
+     Bahn deals one card and you look at it; Achtsame Pause deals five and you
+     choose between them.
+
+     A run still has four steps and the rail is still four markers long —
+     the second one is `scan`, `view` or `select` and never two. */
+  'session.step.view': 'Look',
   'session.step.listen': 'Listen',
   'session.step.reflect': 'Reflect',
   /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
@@ -637,11 +640,8 @@ export const en = {
      the `one` form exists so that an exercise dealing one card from Einsteigen
      does not render "1 cards". */
   'session.intro.deal': 'Draw {count} cards',
-  'session.intro.dealOne': 'Draw one card',
   /* After the sheet has been seen once: going on is the loud action again and
      the pictures are a tap away. */
-  'session.intro.dealAgain': 'Look at the {count} cards',
-  'session.intro.dealAgainOne': 'Look at the card',
   /* ── THE ONE-CARD DRAW MOVED ONTO EINSTEIGEN — Ben, 2026-10-14 ───────────
      It was a button on Auswählen; going on from Einsteigen now draws. The
      card is then simply THERE when the step arrives, which is what a drawn
@@ -671,15 +671,15 @@ export const en = {
   /* The grid's own legend. The step's headline is the exercise's `scan_md`
      heading and stays; this names the GROUP for anyone who meets it as a list
      of nine buttons rather than as a picture. */
-  'session.scan.gridLabel': 'Your cards — choose one',
+  'session.select.gridLabel': 'Your cards — choose one',
   /* The one sentence under the headline on Auswählen. It is the exercise's
      own first instruction with the half about paper removed — chrome, because
      what it leaves out is exactly the part that is only true of a deck. */
-  'session.scan.digitalLead': 'Pick the image that speaks to you most right now, for whatever reason.',
+  'session.select.headline': 'Choose a card',
+  'session.select.lead': 'Pick the image that speaks to you most right now, for whatever reason.',
   /* A one-card exercise draws here rather than on Einsteigen, because its own
      paper copy draws here. Same register as `session.scan.scanCard`. */
-  'session.scan.draw': 'Draw your card',
-  'session.scan.drawAgain': 'Look at the card',
+  'session.view.expand': 'Look at the card',
   /* ── WHAT AUSWÄHLEN SAYS WHEN THERE IS ONE CARD AND NO CHOICE ────────────
      The exercise's own `scan_md` heading is *Choose a card*, which is true of
      the other one. These two replace it, and they are chrome for the reason
@@ -690,15 +690,15 @@ export const en = {
      your card*, and the step does not want you to look: you are already
      looking. It wants you to find something in it, which is the same move the
      listen sheet makes with its own question. */
-  'session.scan.lookHeadline': 'What do you see in the picture?',
-  'session.scan.lookLead': 'Breathe out and in again at least once before you move on.',
-  'session.scan.pickFailed': 'That card could not be saved. Try again in a moment.',
+  'session.view.headline': 'What do you see in the picture?',
+  'session.view.lead': 'Breathe out and in again at least once before you move on.',
+  'session.cards.failed': 'That card could not be saved. Try again in a moment.',
   /* THE NAME A CARD HAS WHEN THE DECK HAS NO ALT TEXT FOR IT YET. Nine real
      descriptions live in `supabase/content/deck.json` and arrive with that
      migration; until it is applied `card_i18n.image_alt` is null, and a grid
      of nine unnamed images is a grid of nine identical options. The code is a
      poor name and an honest one — it is what is printed on the card. */
-  'session.scan.cardFallbackAlt': 'Card {code}',
+  'session.cards.fallbackAlt': 'Card {code}',
 
   /* ── Listen · D.5b ───────────────────────────────────────────────────────
      THE TRACK HAS NO NAME HERE, and that is the exercise rather than a gap:
