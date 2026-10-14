@@ -9,8 +9,8 @@ needs a database, one needs a browser. Only the first is in `pnpm check`.
 | database | `pnpm test:db` | 10 | the local stack | no |
 | end-to-end | `pnpm test:e2e` | 8 specs | a browser + the stack | no |
 
-852 unit tests pass in about a second — 524 in `apps/web`, 51 in
-`@musie/voice`, 277 in `apps/docs`.
+954 unit tests pass in about a second — 524 in `apps/web`, 51 in
+`@musie/voice`, 379 in `apps/docs`.
 
 ```mermaid
 flowchart LR

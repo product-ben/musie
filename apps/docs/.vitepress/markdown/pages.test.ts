@@ -17,8 +17,7 @@
  *      `Cannot read properties of undefined (reading 'ref')` — which names
  *      neither the file nor the cause. Learned the hard way on the CI/CD page.
  */
-import { readFileSync } from 'node:fs';
-import { readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -114,5 +113,35 @@ describe('the sidebar', () => {
   it('leaves no page unreachable from the sidebar', () => {
     const reachable = new Set(links.map(pageFor));
     expect(ALL.map((p) => p.path).filter((path) => !reachable.has(path))).toEqual([]);
+  });
+});
+
+/**
+ * Every link into the repository, against the repository.
+ *
+ * The source-of-truth line at the foot of each page is this site's central
+ * promise — it is what makes a derived view honest rather than a second,
+ * competing description (DOC1). A link that 404s breaks that promise
+ * **silently**: `vitepress build` only checks links between pages, and GitHub
+ * answers a missing path with a page rather than an error.
+ *
+ * So this walks up out of the package and checks each path exists. That
+ * coupling is deliberate: a file renamed in `apps/web` SHOULD fail a test in
+ * `apps/docs`, because that rename is exactly what makes a page wrong.
+ */
+describe('links into the repository', () => {
+  const REPO = fileURLToPath(new URL('../../../..', import.meta.url));
+  const pattern = /https:\/\/github\.com\/product-ben\/musie\/(?:blob|tree)\/main\/([^)\s#]+)/g;
+
+  const targets = [
+    ...new Set(ALL.flatMap((page) => [...page.source.matchAll(pattern)].map((m) => m[1]))),
+  ].sort();
+
+  it('there are links to check', () => {
+    expect(targets.length).toBeGreaterThan(50);
+  });
+
+  it.each(targets)('%s exists in the repository', (path) => {
+    expect(existsSync(join(REPO, path)), `${path} is linked but not in the repo`).toBe(true);
   });
 });
