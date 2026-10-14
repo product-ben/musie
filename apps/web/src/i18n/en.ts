@@ -684,8 +684,13 @@ export const en = {
      The exercise's own `scan_md` heading is *Choose a card*, which is true of
      the other one. These two replace it, and they are chrome for the reason
      every string in this block is: what they leave out is the half that only
-     applies to a deck. */
-  'session.scan.lookHeadline': 'Look at your card',
+     applies to a deck.
+
+     A QUESTION RATHER THAN AN INSTRUCTION — Ben, 2026-10-14. It was *Look at
+     your card*, and the step does not want you to look: you are already
+     looking. It wants you to find something in it, which is the same move the
+     listen sheet makes with its own question. */
+  'session.scan.lookHeadline': 'What do you see in the picture?',
   'session.scan.lookLead': 'Breathe out and in again at least once before you move on.',
   'session.scan.pickFailed': 'That card could not be saved. Try again in a moment.',
   /* THE NAME A CARD HAS WHEN THE DECK HAS NO ALT TEXT FOR IT YET. Nine real

@@ -463,10 +463,17 @@ export const de: Messages = {
      spricht. */
   'session.scan.draw': 'Karte ziehen',
   'session.scan.drawAgain': 'Karte ansehen',
-  /* Bens Sätze, auf den Standard gebracht (§1): 'Sieh' statt 'Sehe' — der
-     Imperativ von *sehen* hat den Vokalwechsel, wie 'sieh dir die fünf Karten
-     an' im Sheet — und 'weitergehst' in einem Wort. */
-  'session.scan.lookHeadline': 'Sieh dir deine Karte an',
+  /* ── EINE FRAGE, KEINE AUFFORDERUNG — Ben, 2026-10-14 ────────────────────
+     War 'Sieh dir deine Karte an'. Die Frage ist besser: der Schritt will
+     nicht, dass du hinsiehst — das tust du ohnehin —, sondern dass du etwas
+     darin findest, und das ist dieselbe Bewegung, die das Hören-Sheet mit
+     seiner Frage macht.
+
+     Das Fragezeichen ist §7: der Satz, der fragt, trägt das Zeichen. Dieselbe
+     Korrektur wie 'Wie fühlt sich der Moment an?' in 20260923150000.
+
+     'weitergehst' in einem Wort (§1). */
+  'session.scan.lookHeadline': 'Was siehst du in dem Bild?',
   'session.scan.lookLead': 'Atme mindestens einmal aus und wieder ein, bevor du weitergehst.',
   'session.scan.pickFailed': 'Die Karte konnte nicht übernommen werden. Versuch es gleich noch einmal.',
   'session.scan.cardFallbackAlt': 'Karte {code}',

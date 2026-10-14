@@ -2417,10 +2417,18 @@ html[data-musy-scroll-snap] {
 /* ── ONE CARD, SHOWN ──────────────────────────────────────────────────────
    Freie Bahn's drawn card on the step itself. Capped at the reading measure so
    it does not become a poster on a wide window.                             */
+/* ── ONE CARD, SHOWN AT THE PANEL'S OWN WIDTH ─────────────────────────────
+   NO CAP — Ben, 2026-10-14. It was capped at `--measure-body`, which is a
+   READING measure: the right bound for a line of text and the wrong one for a
+   picture, which is not read. The panel is already capped (the session route
+   is `wide`, 980px), so "fill the container" has a bound; it is just not this
+   element's to invent.
+
+   The picture itself needs no declaration for it — `Image` fills its container
+   by default, which is the whole of that component. */
 .musie-cardshow {
   margin-block: var(--space-gap-group) 0;
   margin-inline: 0;
-  max-inline-size: var(--measure-body);
 }
 
 .musie-cardshow__art {
