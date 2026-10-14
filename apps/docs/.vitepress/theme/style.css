@@ -228,6 +228,17 @@ html[data-audience='designers'] .aud--devs {
   display: flex;
   justify-content: center;
   min-height: 1px;
+  /* Without this a CENTRED flex container that overflows puts its own start
+     out of reach of the scroller — the left edge of a wide diagram becomes
+     unscrollable rather than merely off-screen. */
+  min-width: min-content;
+}
+
+/* A flex item SHRINKS by default, which silently undid the whole point of
+   sizing the SVG from its viewBox: the element said width="1895" and laid out
+   at 624px. Measured on the data-model page, twice. */
+.mermaid-figure .mermaid-svg > svg {
+  flex: 0 0 auto;
 }
 
 /* NOT max-width: 100%. The component renders with mermaid's `useMaxWidth`
