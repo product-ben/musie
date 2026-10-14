@@ -282,6 +282,33 @@ export const router = createBrowserRouter([
         handle: handle({ titleKey: 'route.insightMap.title', wide: true }),
       },
       {
+        /* THE MAINTENANCE SCREEN — the deck, the music and the artwork as
+           things you can edit. The fourth tool on this table, and the same
+           shape as the other three: `lazy`, linked from nowhere, reachable
+           only by typing the path.
+
+           IT IS THE FIRST ONE THAT WRITES. `/goal-mappings` emits a config
+           somebody pastes back; this one lands every press in the database
+           through the `content-admin` Edge Function. The function holds the
+           allowlist of who may do that — there is deliberately no copy of it
+           in the browser, so the route gate is nothing more than the screen
+           drawing the function's own refusal.
+
+           `lazy` is load-bearing rather than tidy: this module is the only
+           importer of `maintenance.ts`, `audioTags.ts` and `mediaFile.ts`, so
+           an ID3 parser and a canvas resizer stay out of everybody's first
+           paint.
+
+           `wide` because the grid IS the screen, and five columns do not fit
+           in `--bp-md`. See routes/Maintenance.tsx. */
+        path: 'maintenance',
+        lazy: async () => {
+          const { Maintenance } = await import('./routes/Maintenance');
+          return { Component: Maintenance };
+        },
+        handle: handle({ titleKey: 'route.maintenance.title', wide: true }),
+      },
+      {
         path: '*',
         element: <Placeholder titleKey="route.notFound.title" />,
         handle: handle({ titleKey: 'route.notFound.title' }),

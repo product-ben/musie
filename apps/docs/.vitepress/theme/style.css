@@ -1,0 +1,326 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MUSIE DOCS — the skin, and the audience mechanism.
+
+   The colours below are Musie's own, copied from
+   packages/design-system/tokens/musy-foundations.css and mapped onto
+   VitePress's variables. COPIED, NOT IMPORTED, and that is deliberate: the
+   foundations file also sets typography and layout on `body` and on bare
+   elements, and loading it here would fight VitePress's own layout for the
+   same selectors. What this site needs from Layer 1 is the palette and the two
+   families — so it takes exactly those, and the fonts it takes for real
+   (theme/index.ts imports musy-fonts.css).
+
+   If a brand colour changes in Layer 1 it must be changed here too. That is
+   the price of the decision above; there is one block to change and it is
+   this one.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* sand — the page */
+  --vp-c-bg: #f3eee4; /* sand-2  · page background */
+  --vp-c-bg-alt: #e5e3d9; /* sand-3  · sidebar, nav, footer */
+  --vp-c-bg-soft: #faf7f1; /* sand-1  · code blocks, callouts — paper on canvas */
+  --vp-c-bg-elv: #faf7f1;
+  --vp-c-text-1: #1a1f1c; /* sand-12 */
+  --vp-c-text-2: #62645e; /* sand-11 */
+  --vp-c-text-3: #7c7e74; /* sand-10 */
+  --vp-c-divider: #cfcec2; /* sand-6 */
+  --vp-c-border: #bdbcaf; /* sand-7 */
+  --vp-c-gutter: #cfcec2;
+
+  /* green — the brand */
+  --vp-c-brand-1: #2b5340; /* green-9/11 · link text, 7.4:1 on the page */
+  --vp-c-brand-2: #22442f; /* green-10   · hover */
+  --vp-c-brand-3: #2b5340; /* solid fill */
+  --vp-c-brand-soft: #e3e7de; /* green-3 */
+  --vp-c-brand-on: #f3eee4; /* --interactive-primary-on */
+
+  /* terracotta — the second voice, used for the designer tab and accents */
+  --musie-accent-1: #824429; /* terracotta-11 */
+  --musie-accent-soft: #f4dfd2; /* terracotta-3 */
+  --musie-accent-edge: #b5704f; /* terracotta-edge */
+  --musie-brand-edge: #678271; /* green-edge */
+
+  --vp-font-family-base: Onest, ui-sans-serif, system-ui, sans-serif;
+  --vp-font-family-prose: Literata, ui-serif, Georgia, serif;
+
+  --vp-layout-max-width: 1520px;
+}
+
+.dark {
+  --vp-c-bg: #191d1a;
+  --vp-c-bg-alt: #111412;
+  --vp-c-bg-soft: #222723;
+  --vp-c-bg-elv: #222723;
+  --vp-c-text-1: #edf0ec;
+  --vp-c-text-2: #9ea59f;
+  --vp-c-text-3: #79807a;
+  --vp-c-divider: #3b413c;
+  --vp-c-border: #4c534e;
+  --vp-c-gutter: #3b413c;
+
+  --vp-c-brand-1: #8fbca2; /* green-11 dark */
+  --vp-c-brand-2: #6fa688;
+  --vp-c-brand-3: #5e9478;
+  --vp-c-brand-soft: #16281e;
+  --vp-c-brand-on: #111412;
+
+  --musie-accent-1: #d0937a;
+  --musie-accent-soft: #2f1f16;
+  --musie-accent-edge: #a2694b;
+  --musie-brand-edge: #6b8f79;
+}
+
+/* ─── Type. Onest labels and heads, Literata reads — the design system's own
+   rule, applied to prose only so tables and code stay dense and scannable. */
+.vp-doc p,
+.vp-doc li,
+.vp-doc blockquote,
+.vp-doc dd {
+  font-family: var(--vp-font-family-prose);
+}
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  font-family: var(--vp-font-family-base);
+  letter-spacing: -0.01em;
+}
+
+/* A little more room than the default 688px: these pages are mostly tables
+   and diagrams, and a table that scrolls sideways is a table nobody reads.
+   Prose is held to its own measure below; this is the container, not the
+   line length. */
+/* The default theme caps this at 688px with `.VPDoc.has-aside
+   .content-container` — three classes, and inside a media query, so matching
+   the specificity was not enough and the column stayed at 688. One more class
+   wins outright. Measured, after two attempts that did not. */
+@media (min-width: 960px) {
+  .VPDoc.has-aside .content .content-container {
+    max-width: 900px;
+  }
+
+  .VPDoc:not(.has-aside) .content .content-container {
+    max-width: 1040px;
+  }
+}
+
+/* …but prose still reads at a sane measure. Only tables and diagrams get the
+   full container. */
+.vp-doc p,
+.vp-doc ul,
+.vp-doc ol,
+.vp-doc blockquote {
+  max-width: 68ch;
+}
+
+/* ═══ THE AUDIENCE MECHANISM ═══════════════════════════════════════════════
+   One declaration does the work. Everything else here is labelling.
+
+   With no JavaScript, <html> carries no data-audience, neither rule matches,
+   and the page reads as both halves end to end. See markdown/audience.ts. */
+html[data-audience='devs'] .aud--designers,
+html[data-audience='designers'] .aud--devs {
+  display: none;
+}
+
+.aud {
+  margin: 28px 0;
+  padding-left: 18px;
+  border-left: 1.5px solid var(--vp-c-divider);
+}
+
+.aud::before {
+  content: attr(data-aud-label);
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: var(--vp-font-family-base);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.aud--devs {
+  border-left-color: var(--musie-brand-edge);
+}
+
+.aud--devs::before {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+.aud--designers {
+  border-left-color: var(--musie-accent-edge);
+}
+
+.aud--designers::before {
+  background: var(--musie-accent-soft);
+  color: var(--musie-accent-1);
+}
+
+/* The first heading inside a block should not also carry the default top
+   margin — the chip is already the spacing. */
+.aud > :nth-child(1) {
+  margin-top: 0;
+}
+
+/* ─── The toggle ─────────────────────────────────────────────────────────── */
+.aud-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  background: var(--vp-c-bg-soft);
+}
+
+.aud-toggle__btn {
+  padding: 5px 13px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-base);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.aud-toggle__btn:hover {
+  color: var(--vp-c-text-1);
+}
+
+.aud-toggle__btn.is-on {
+  background: var(--vp-c-brand-3);
+  color: var(--vp-c-brand-on);
+}
+
+.aud-toggle__btn:focus-visible {
+  outline: 3px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+.aud-toggle--nav {
+  margin-left: 16px;
+}
+
+.aud-toggle--doc {
+  margin: 0 0 26px;
+}
+
+/* Two instances, one visible at a time. The nav bar is sticky on desktop, so
+   the toggle is always reachable there; below the breakpoint VitePress hides
+   nav-bar content, so the in-document one takes over. */
+.aud-toggle--doc {
+  display: inline-flex;
+}
+
+@media (min-width: 960px) {
+  .aud-toggle--doc {
+    display: none;
+  }
+}
+
+@media (max-width: 959px) {
+  .aud-toggle--nav {
+    display: none;
+  }
+}
+
+/* ─── Diagrams ───────────────────────────────────────────────────────────── */
+.mermaid-figure {
+  margin: 26px 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.mermaid-figure .mermaid-svg {
+  display: flex;
+  justify-content: center;
+  min-height: 1px;
+}
+
+/* NO `min-width: min-content` here, and no `flex: 0 0 auto` on the svg. Both
+   belonged to a scrolling approach that was measured and abandoned, and both
+   defeat `max-width: 100%` from different directions: min-content grows the
+   CONTAINER to the diagram's width, so the percentage then resolves against
+   the wrong box and the figure scrolls anyway. That is what kept six diagrams
+   scrolling through three deploys. */
+
+/* FIT TO WIDTH, and the history is worth keeping because the obvious fix is
+   wrong. Mermaid scales a wide diagram into the column and the type comes out
+   at five pixels, so the first attempt removed the cap and let the figure
+   scroll. Measured across nine pages: SEVEN of them then scrolled, including
+   diagrams that had fit perfectly well. Sideways-scrolling a diagram is a
+   worse default than a small one.
+   
+   So the cap is back, and the two diagrams that were genuinely too big to fit
+   were made smaller instead — the ER diagram is split in two, and the widest
+   flowcharts are top-down rather than left-right. `fitToViewBox` in
+   theme/Mermaid.ts still sets the intrinsic size, which is what keeps the
+   aspect ratio right as this scales. */
+.mermaid-figure svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Give a wide diagram the whole doc column before it has to scroll: the
+   content measure is set for prose, and a diagram is not prose. */
+@media (min-width: 960px) {
+  .mermaid-figure {
+    margin-inline: -48px;
+    padding-inline: 48px;
+  }
+}
+
+/* Mermaid draws labels as HTML inside a `foreignObject`, and sizes that box
+   from its own measurement of the text. The measurement comes out two to four
+   pixels short — consistently, with the right font loaded — and a
+   `foreignObject` clips by default, so every label lost its last character or
+   two: `uuid` drawn as `uuic`, `RESTRICT` as `RESTRIC`, `PROFILE` as
+   `PROFILI`. Measured on the data-model page: box 30px, content 33px.
+
+   `overflow: visible` lets the label finish drawing. The alternative is
+   `htmlLabels: false`, which sizes from getBBox and cannot clip — but these
+   diagrams use <b> and <br/> in their labels, and SVG text labels would render
+   the <b> literally. */
+.mermaid-figure foreignObject {
+  overflow: visible;
+}
+
+.mermaid-error {
+  padding: 12px 14px;
+  border: 1.5px solid var(--musie-accent-edge);
+  border-radius: 8px;
+  background: var(--musie-accent-soft);
+  color: var(--musie-accent-1);
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+/* ─── Small corrections to the default theme ─────────────────────────────── */
+.vp-doc table {
+  display: table;
+  width: 100%;
+  font-size: 14px;
+}
+
+.vp-doc th,
+.vp-doc td {
+  padding: 8px 12px;
+}
+
+.vp-doc blockquote {
+  border-left-color: var(--musie-accent-edge);
+}
+
+.VPHero .name {
+  font-family: var(--vp-font-family-base);
+}

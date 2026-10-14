@@ -1,12 +1,36 @@
 # The deck
 
+> **THE ARROW TURNED ROUND ON 2026-10-14.** The deck is edited at
+> **`/maintenance`** and lives in the database. `deck.json` is a **snapshot**
+> now, written by `pnpm content:export`, and `pnpm deck:migration` refuses.
+> Everything below describes the loop as it was and is kept because the rules
+> about what a card IS have not changed — the codes, the ids, the both-locales
+> rule and the track that has to exist are all still true, and are enforced by
+> check constraints rather than by a generator. What has changed is who writes
+> the file. Read CLAUDE.md rule 4.1 and `MAINTENANCE-UI.md` first.
+>
+> What is still true of this file, and the reason to keep exporting it:
+> `deck:pdf` reads it and nothing else, so print day is unaffected; and a
+> committed export is how a deck change becomes something a person can read in
+> `git log`. The record of WHY a change was made is `public.content_edits`,
+> which names the operator.
+>
+> `feeling` is retired — the word left every screen on 2026-10-09 and is
+> written by nothing now. It is still in the snapshot because `deck:pdf`
+> prints it on the front of the four cards that have no artwork master.
+>
+> The grid — 25 cells, their music and their pictures — is exported beside
+> this file as `grid.json`. It is not in here because four things parse
+> `deck.json` and adding a field would be the change that passes every check
+> and breaks the printer.
+
 `deck.json` is the Mindfulness Cards deck: nine cards, their codes, their
 feelings in both locales, and which recording each one plays in each exercise.
-It is the **only** place the deck is written by hand. Everything else about the
-deck is generated from it — the migration that lands it in the database, and
-the PDF that goes to a printer.
+It **was** the only place the deck was written by hand, and everything else
+about it was generated — the migration that landed it in the database, and the
+PDF that goes to a printer.
 
-## The loop
+## The loop — as it was until 2026-10-14
 
 ```
 edit deck.json
@@ -157,8 +181,17 @@ files nobody can regenerate are nine files nobody can check.
 # The music
 
 `music.json` is the music library: every licensed **piece** — its credit and
-the music as released — and every produced **cut** of a listening
-exercise. It is the only place either is written by hand. The migration that
+the music as released — and every produced **cut** of a listening exercise.
+
+> **SINCE 2026-10-14 THE TWO HALVES ARE DIFFERENT KINDS OF THING.** `pieces`
+> is a **snapshot** of `public.tracks`, which is edited at `/maintenance`;
+> `pnpm music:migration` writes `exercise_cuts` only, and the `tracks` half
+> came out of it. `cuts` is unchanged and is still the only place a cut is
+> written by hand. A piece now carries six more fields than the table below
+> lists — `album`, `releaseYear`, `tempoBpm`, `moodNote`, `licenceType`,
+> `catalogueRef` — written only where they hold something.
+
+The `cuts` half is the only place a cut is written by hand. The migration that
 lands them in the database is generated from it, the same way the deck's is.
 
 It owns `public.tracks` and `public.exercise_cuts`, and **nothing else**.

@@ -15,7 +15,8 @@
     "deck:migration": "node scripts/deck-migration.mjs",
     "deck:pdf": "node scripts/deck-pdf.mjs",
     "music:migration": "node scripts/music-migration.mjs",
-    "music:upload": "node scripts/music-upload.mjs"
+    "music:upload": "node scripts/music-upload.mjs",
+    "content:export": "node scripts/content-export.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

@@ -17,7 +17,8 @@
     "deck:migration": "pnpm --filter web run deck:migration --",
     "deck:pdf": "pnpm --filter web run deck:pdf --",
     "music:migration": "pnpm --filter web run music:migration --",
-    "music:upload": "pnpm --filter web run music:upload --"
+    "music:upload": "pnpm --filter web run music:upload --",
+    "content:export": "pnpm --filter web run content:export --"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

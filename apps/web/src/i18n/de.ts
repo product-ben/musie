@@ -154,10 +154,16 @@ export const de: Messages = {
   /* ── About Musie · D.1 ───────────────────────────────────────────────────
      'Hallo', not 'Hi': the English is a greeting in a chat bubble and German
      writes that as 'Hallo'. 'Hi' exists in German but reads as imported.
-     The pitch line carries a Gedankenstrich where the English runs on — the
-     German sentence needs the break to stay readable at 62ch. */
+
+     THE PITCH SAYS WHAT IT DOES BEFORE IT SAYS WHAT IT IS — Ben, 2026-10-13.
+     It used to open on four adjectives and reach the music at the end, after a
+     Gedankenstrich that existed to keep one long clause readable at 62ch. It
+     now opens on the practical offer — settle, or get going — and the
+     adjectives become what happens along the way. Three short sentences
+     instead of one long one, so the break is a full stop and the
+     Gedankenstrich is gone with the clause that needed it. */
   'about.greeting': 'Hallo, ich bin Musie.',
-  'about.pitch': 'Ich helfe dir, achtsamer, bewusster, verbundener und sicherer zu fühlen und zu handeln – mit der Kraft der Musik',
+  'about.pitch': 'Ich helfe dir praktisch dabei, dich zu entspannen oder zu aktivieren. Dabei wirst du achtsamer, bewusster, verbundener und sicherer im Fühlen und Handeln. Dabei hilft die Kraft der Musik.',
   /* The German chat convention is the bare verb: 'Musie schreibt …'. */
   'about.typing': 'Musie schreibt',
   /* 'Was Musie kann' — a noun-ish heading naming the section, which §3's
@@ -1185,6 +1191,7 @@ export const de: Messages = {
   'insightMap.hint.departments': 'Sechs Abteilungen, so groß wie ihre Zahl an Menschen. Zusammen der erste Tab.',
   'insightMap.hint.pods': 'Eine Linie zu jeder Abteilung, aus der ein Pod Leute holt – je dicker, desto mehr. Abteilungen sind hier Ankerpunkte, keine Größen.',
   'route.insightMap.title': 'Org-Karte',
+  'route.maintenance.title': 'Verwaltung',
   'route.aboutMusie.title': 'Über Musie',
   'route.aboutYou.title': 'Über dich',
   'route.diary.title': 'Dein Tagebuch',

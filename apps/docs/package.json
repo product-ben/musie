@@ -1,0 +1,34 @@
+{
+  "name": "docs",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The documentation site. VitePress, published to GitHub Pages at /musie/.",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --project unit"
+  },
+  "dependencies": {
+    "@musie/design-system": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.10.5",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-container": "^4.0.0",
+    "mermaid": "^12.2.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vite": "^6.0.7",
+    "vitepress": "^1.6.4",
+    "vitest": "^5.0.1",
+    "vue": "^3.5.13"
+  }
+}

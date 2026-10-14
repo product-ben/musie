@@ -9,11 +9,76 @@ and board stickies can cite it. A decision that turns out wrong is not edited:
 a new entry supersedes it and says so.
 
 **This file starts on 2026-10-13 and is incomplete by design.** It holds that
-day's maintenance decisions. The large body of product and architectural
+day's maintenance decisions and, in Part 2, the documentation site's. The large
+body of product and architectural
 decisions — roughly 60 actions, 35 explicit refusals and 30 "already resolved,
 do not re-propose" notes from the September user-testing round, plus everything
 in the two append-only logs — is still to be brought in. See **Still to write**
 at the foot.
+
+---
+
+## Part 2 · The documentation site, 2026-10-13
+
+### DOC1 · The project gets a documentation site, and it is a DERIVED VIEW
+
+**Decided, Ben, 2026-10-13.** `apps/docs`, VitePress, published to GitHub
+Pages. Every page is newly written; **nothing moves**, and each page ends by
+naming the file in the repository that rules it.
+
+**Why derived and not absorbed.** The obvious alternative was to move the long
+documents into the site and leave forwarding stubs — one home, no drift.
+`BUILD-PLAN.md` alone is cited 66 times across 23 files, fourteen of them in
+code and **two inside applied migrations that rule 4 forbids editing**. Those
+two can never be repaired; they would point at a stub forever.
+
+**The cost, stated:** two descriptions of the same thing, which can drift. The
+mitigation is the source-of-truth line at the foot of every page, and the rule
+that where the page and the repository disagree, the page is the bug.
+
+### DOC2 · One Pages deployment serves both sites. Storybook moves to /storybook/
+
+**Decided.** Docs at `https://product-ben.github.io/musie/`, Storybook at
+`/musie/storybook/`.
+
+**Why they had to be combined at all.** A Pages deployment **replaces the
+entire site** — there is no partial upload and no merging of artifacts. Two
+workflows each uploading their own half would take turns clobbering each other
+and the live site would be whichever ran last. So `storybook.yml` is gone and
+`pages.yml` builds both and uploads one artifact.
+
+**Why the docs take the root** rather than sitting at `/musie/docs/`: the docs
+are the front door, and they link to Storybook. The cost is that Storybook's
+URL changed; `README.md` carried it in four places and they are updated.
+
+### DOC3 · Every page is written twice, and the switch is CSS
+
+**Decided, Ben, 2026-10-13.** A sticky *For devs* / *For designers* toggle, both
+halves present in full on every page, landing on **designers** for a first-time
+visitor — the designer half explains the product, which reads better for anyone
+new to Musie, developers included.
+
+**Why CSS and not a conditional render.** Three reasons; the third decides it.
+No flash, because an inline `<head>` script resolves the audience before the
+first paint — the same trick `data-theme` and `<html lang>` already use
+(rule 5). Both halves stay in the DOM, so search and Find-in-page reach the
+half you are not reading. And with JavaScript off the page reads as both halves
+end to end, which is also what a crawler sees.
+
+**The cost, named so it is not discovered:** the right-hand outline is built
+from the markdown at build time and lists both halves' headings, so a
+twenty-line DOM pass hides the ones inside a hidden block.
+
+### DOC4 · The docs build runs in `ci.yml` as well as in `pages.yml`
+
+**Decided.** Contrary to M12's precedent, which took the gate *out* of the
+publish workflow for duplicating `ci.yml`.
+
+**Why this is not that.** M12 removed a second run of the same gate on the same
+commit. This adds the docs build to the **branch** gate, where it is the only
+check the site has: `vitepress build` fails on a dead internal link, and run
+only in `pages.yml` it would find a broken link after the merge. `ci.yml` exists
+precisely to move checks onto the branch.
 
 ---
 
