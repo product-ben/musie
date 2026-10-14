@@ -55,6 +55,40 @@ function decode(encoded: string): string {
   return new TextDecoder().decode(bytes);
 }
 
+/**
+ * Render the diagram at the size it was laid out for.
+ *
+ * `useMaxWidth: false` is not enough on its own. Mermaid draws into a
+ * `viewBox` and then sets the element's width — so an ER diagram laid out at
+ * 1200px, handed a 624px element, is SCALED: the geometry is right and the
+ * type comes out at five pixels. Measured on the data-model page, which is
+ * why this exists.
+ *
+ * So the width and height are taken back from the `viewBox`, which is the
+ * layout's own coordinate space, and the inline `max-width` mermaid adds is
+ * removed. The figure scrolls sideways instead (theme/style.css). A diagram
+ * narrower than the column is unaffected — its viewBox is already small.
+ */
+function fitToViewBox(svg: string): string {
+  const open = /<svg\b[^>]*>/.exec(svg);
+  if (!open) return svg;
+
+  const box = /viewBox="([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)"/.exec(open[0]);
+  if (!box) return svg;
+
+  const width = Math.ceil(Number(box[3]));
+  const height = Math.ceil(Number(box[4]));
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0) return svg;
+
+  const fixed = open[0]
+    .replace(/\swidth="[^"]*"/, '')
+    .replace(/\sheight="[^"]*"/, '')
+    .replace(/\sstyle="[^"]*"/, '')
+    .replace(/<svg\b/, `<svg width="${width}" height="${height}" style="max-width:none"`);
+
+  return svg.replace(open[0], fixed);
+}
+
 let seq = 0;
 
 export default defineComponent({
@@ -93,7 +127,7 @@ export default defineComponent({
           stateDiagram: { useMaxWidth: false },
         });
         const { svg: out } = await mermaid.render(`mmd-${++seq}`, decode(props.code));
-        svg.value = out;
+        svg.value = fitToViewBox(out);
         error.value = '';
       } catch (cause) {
         /* A diagram that will not parse must say so on the page. Silently
