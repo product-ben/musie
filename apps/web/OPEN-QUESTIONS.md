@@ -8728,3 +8728,128 @@ rather than kept, because the fallback in `deck-pdf.mjs` makes two files with
 one id look like a resolution rather than a conflict. The four cards with no
 master (`mc-06` … `mc-09`) print from a screen-sized webp meanwhile, which the
 script already warns about on every run.
+
+---
+
+# The documentation site — apps/docs, 2026-10-13
+
+Four things found while writing 44 pages about the repository. Three are
+inconsistencies in the repository rather than in the site; the site is a
+derived view and does not fix the code it describes, so they are here.
+
+## SessionReflect.tsx says a spoken reflection cannot be saved. It can — RESOLVED, needs one edit
+
+Where: `src/components/SessionReflect.tsx:6-11` (the header's "THREE DOORS"
+block), against `src/lib/reflect.ts:32-36` and
+`src/components/VoiceTranscript.tsx:107`
+
+What I checked, three levels:
+
+- **`SessionReflect.tsx`'s header** says: *"What it still cannot do is SAVE:
+  nothing writes `reflections.body` but the text mode, so `Finish` stays
+  disabled here and the step says why. F.6 is the write."*
+- **`lib/reflect.ts`'s header** says the opposite, and explicitly: *"VOICE
+  COUNTS SINCE F.6, and the day this comment anticipated has arrived."*
+  `hasAnswered` returns `spokenWords` for `mode === 'voice'`.
+- **`VoiceTranscript.tsx:107`** calls `saveStatements(sessionId, statements)`.
+  `lib/statements.ts` is F.6 and assembles `reflections.body` from the rows on
+  every write.
+
+So F.6 landed, two of the three files were updated, and the third was not.
+
+What I did: nothing to the code. Documented the live behaviour on
+`apps/docs/features/reflect.md` (voice works, photo does not) and logged this.
+
+Why: the site is a derived view (DOC1) — where a page and the repository
+disagree the repository wins, so a page must not become the only place the
+truth is written. And the stale text is the first thing a reader of that
+component meets, which is a bigger problem than its being wrong.
+
+What I need from Ben: **nothing, just flagging** — but it is a two-line edit to
+that header, and worth taking before someone reads it and re-implements F.6.
+
+## `supabase/content/README.md` and `docs/MUSIE-SETUP.md` still instruct a denied command
+
+Where: `supabase/content/README.md:19` and `:185` (both loops),
+`docs/MUSIE-SETUP.md:279`
+
+What I checked: both loops read
+
+```
+supabase db push        sends it to the hosted project
+```
+
+M5 (2026-10-13) decided that raw `supabase db push` **stays denied** in
+`.claude/settings.json` and that `pnpm db:sync` is allowed instead, because the
+guard — on `main`, clean tree, level with origin — is the point and it guards
+everyone. `CLAUDE.md` rule 4 says the same. `.claude/settings.json` denies the
+raw command today.
+
+These are not historical records. `CLAUDE.md` points at
+`supabase/content/README.md` as *"the loop that turns an edit of it into a
+migration and a printed card"*, and `MUSIE-SETUP.md` is *"the full account"* of
+how the running system is wired. Somebody following either is told to run a
+command that will be refused, and the refusal does not say what to run instead.
+
+(The same string in `docs/START-PAGE-ITERATION.md`,
+`docs/LISTENING-QUESTION-ITERATION.md`, `docs/VOICE-MEMO.md` and
+`BUILD-PLAN.md` is a record of what was done at the time and is correct to
+leave.)
+
+What I did: wrote `pnpm db:sync` in the equivalent diagram on
+`apps/docs/features/deck-pipeline.md` and `music-pipeline.md`, and logged this
+rather than editing two documents this branch does not otherwise touch.
+
+Why: three live documents disagreeing about one command is the shape of
+problem M5 was written to end, and fixing it in the derived view only would
+leave the authoritative files wrong.
+
+What I need from Ben: **nothing, just flagging.** Three lines across two files.
+
+## CLAUDE.md's Orientation does not list `features/*`
+
+Where: `CLAUDE.md`, the Orientation block
+
+What I checked: `pnpm-workspace.yaml` globs `apps/*`, `packages/*` **and
+`features/*`**, with a comment explaining why `@musie/voice` is its own
+workspace package. The Orientation block lists `apps/web`,
+`packages/design-system` and `supabase/` — and, since this branch, `apps/docs`.
+It does not mention `features/voice`, which is 21 source files, 51 tests, the
+whole voice reflection, and the only consumer of an edge function.
+
+A subagent's whole world is its prompt plus this file (rule 9), so a package
+that is not in Orientation is a package it does not know exists.
+
+What I did: added `apps/docs` only — the package this branch introduces — and
+left `features/*` alone.
+
+Why: rule 8's claim about test coverage had to be corrected in the same edit
+(it said "two of the three" and is now three of four), and widening the
+Orientation block further is an edit to Ben's own guardrail document that this
+branch was not asked to make.
+
+What I need from Ben: **one decision** — add a `features/voice` line to
+Orientation, or leave it out deliberately.
+
+## The Storybook URL moved, and nothing redirects the old one
+
+Where: `.github/workflows/pages.yml`, `README.md`
+
+What I checked: Storybook was served at `https://product-ben.github.io/musie/`
+and is now at `/musie/storybook/`, because the documentation site takes the
+root (DOC2). GitHub Pages serves a static artifact, so there is no redirect to
+configure: the old URL now serves the docs home page rather than a 404, which
+is the better of the two failures but is still not Storybook.
+
+`README.md` carried the old URL in four places and they are updated. A link
+shared in a chat, a bookmark, or a Figma file is not.
+
+What I did: left it. The docs home links to Storybook in the nav and in a hero
+action, so somebody landing on the old URL is one click away.
+
+Why: an HTML redirect at the root would mean the docs could not be there, which
+is the decision DOC2 took deliberately.
+
+What I need from Ben: **nothing, just flagging** — unless the old URL was sent
+to somebody outside the team, in which case it is worth a message rather than a
+redirect.
