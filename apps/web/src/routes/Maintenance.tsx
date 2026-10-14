@@ -1057,22 +1057,53 @@ export function Maintenance(): React.ReactElement {
           <code>{scanLink(card.code, window.location.origin)}</code>
         </Fact>
 
-        <CtaButton
-          variant="secondary"
-          loading={busy}
-          loadingLabel="…"
-          onClick={() => {
-            const archived = card.archived_at === null;
-            if (archived && !window.confirm(
-              `Retire ${card.code}? Its square is freed and its code stays taken forever. ` +
-              'Every diary entry that drew it keeps it.',
-            )) return;
-            void run(archived ? 'Card retired' : 'Card restored',
-              () => setArchived('card', card.id, archived));
-          }}
-        >
-          {card.archived_at === null ? 'Retire this card' : 'Bring it back'}
-        </CtaButton>
+        {/**
+          * ── RETIRING A CARD IS OFF ────────────────────────────────────────
+          * MAINTENANCE-UI.md §10 promised that the deck query would filter
+          * `archived_at`, and it does not: `CARD_SELECT` in `lib/content.ts`
+          * reads id, code, image_url, sort and the i18n row, and nothing
+          * anywhere excludes an archived card. So retiring one does half of
+          * what the button says — it leaves this grid and frees its square,
+          * and STAYS IN THE DECK THE PRODUCT DEALS.
+          *
+          * Retiring a piece of music or a picture is sound and is untouched:
+          * the projection skips archived rows, so the card goes silent or
+          * loses its picture, which is visible and correct. It is only the
+          * card itself that the read path cannot hide.
+          *
+          * The button is disabled AND the database refuses
+          * (`20261014150000`), because a disabled control is not a guard —
+          * a stale tab reaches the function without passing it, which is the
+          * same reason this screen's own route gate is cosmetic.
+          *
+          * RESTORE STAYS LIVE. Only the retire direction is off, so nothing
+          * can be trapped in the state the guard exists to prevent.
+          */}
+        {card.archived_at === null ? (
+          <>
+            <CtaButton variant="secondary" disabled loading={false}>
+              Retire this card
+            </CtaButton>
+            <p className="musie-note">
+              Retiring a card is off until the app can hide one. The deck the
+              product deals does not filter retired cards yet, so a card
+              retired here would still be dealt to players — and you could not
+              tell from this screen. Retire its music or its picture instead;
+              both work and both show.
+            </p>
+          </>
+        ) : (
+          <CtaButton
+            variant="secondary"
+            loading={busy}
+            loadingLabel="…"
+            onClick={() => {
+              void run('Card restored', () => setArchived('card', card.id, false));
+            }}
+          >
+            Bring it back
+          </CtaButton>
+        )}
 
         <ContentBox headline="What changed here" headingLevel={3}>
           <History edits={editsFor('card', card.id)} onRevert={revert} busy={busy} />
