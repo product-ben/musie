@@ -9443,6 +9443,18 @@ should name the order it wants rather than echoing what it read, and its error
 should be asserted. As written, the suite cannot tell a broken restore from a
 working one.
 
+**Verified after the reset, 2026-10-14.** Ben ran `supabase db reset` from this
+worktree. `pnpm test:db` is **182 passed, 11 files, no failures** — the first
+fully green run of the merged suite — and it left the deck at `mc-01:1 … mc-09:9`.
+
+So the ratchet is LATENT, not constant: from a correct starting order the
+restore echoes a correct order and the deck survives the suite. It bites once,
+when a run ends between the swap and the restore, and then never heals, because
+every later run reads the swapped order as the one to put back. That is worse
+than a constant failure, not better — it is invisible until somebody merges and
+cannot reproduce it. The two-line fix is unchanged: name the order, assert the
+restore.
+
 ## Alt text has two homes now, and the app reads the one that is scheduled to be dropped
 
 Where: `supabase/migrations/20261014100100_maintenance_import.sql` L101-104,
