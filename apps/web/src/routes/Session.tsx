@@ -1244,15 +1244,22 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               /* ── THE CARDS SWITCH ──────────────────────────────────────
                  Undefined where there is no object to be without, which is
                  the same distinction the two questions above draw. The answer
-                 is the NEGATIVE of the mode and lives in the URL, so turning
-                 the switch is a navigation rather than a `setState` — which is
-                 what makes the browser's Back undo it and a reload keep it.
+                 is the NEGATIVE of the mode: the switch says *the cards are in
+                 front of me*, because the paper deck is the experience being
+                 pushed and the default has to be the one nobody has to find.
 
-                 `replace`, so a switch flipped twice does not leave two
-                 entries in the history between the person and the library. */
+                 IT WAS `?digitalcards` IN THE URL UNTIL 2026-10-14, flipped by
+                 a `replace` navigation so Back would undo it. That stopped
+                 being possible when the mode became `sessions.digital_cards`:
+                 the reachability rule computes from the run's step list, so a
+                 session resumed from the drawer has to be able to READ which
+                 list it has, and a token that only exists while the tab does
+                 cannot tell it. Local state now, written on the way out of
+                 this step by `advance`, which is the same timing the two
+                 listening answers have. */
               cardsPresent={asksForCards ? !digitalCards : undefined}
-              /* LOCAL, so the rail relabels under the thumb; the row is
-                 written on the way out. */
+              /* LOCAL, so the rail relabels under the thumb rather than after
+                 a round trip. */
               onCardsPresentChange={(present) => setDigitalCards(!present)}
               /* Where the cards are laid out, for the line that stands where
                  the paper instruction was: an exercise dealing one card has

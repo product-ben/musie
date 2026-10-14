@@ -39,6 +39,20 @@
  *
  * `replace`, so Back from the session does not land on a resolver that would
  * resolve all over again.
+ *
+ * ── A SCAN ENDS A DIGITAL RUN, AND THAT IS BEN'S DECISION ──────────────────
+ * Ben, 2026-10-13, asked which should win when a card is scanned into a
+ * session that was started without the deck: *Scan gewinnt*. A code on a
+ * printed card is proof that the deck is in somebody's hands, and the switch
+ * said otherwise only because it was answered before they went looking.
+ *
+ * So `digital_cards` goes off here. It is not cosmetic: that column decides
+ * which steps the run HAS, so a row left saying `true` would send this person
+ * to a rail naming a step they skipped — *Auswählen*, offering five cards the
+ * deterministic deal chose, none of them necessarily the card in their hand.
+ * Written only when it is actually true, so the ordinary scan costs no extra
+ * request, and AWAITED for the same reason `saveStep` is: the session screen
+ * computes the step list the moment it mounts.
  */
 import { Link, Navigate, useParams } from 'react-router';
 import { ContentBox, CtaButton, Message } from '@musie/design-system';
@@ -46,7 +60,7 @@ import { useLocale, useT } from '../i18n/localeContext';
 import { getCardByCode, getExercise } from '../lib/content';
 import { holdCode, scanCardInto } from '../lib/scan';
 import { decodeScan } from '../lib/scanCode';
-import { readActiveSession, readSession, saveStep } from '../lib/session';
+import { readActiveSession, readSession, saveDigitalCards, saveStep } from '../lib/session';
 import { useAsync } from '../lib/useAsync';
 import type { StepId } from '../routeHandle';
 
@@ -125,6 +139,11 @@ export function ScanLink() {
          day the outcome set grows, this is where it shows up. */
       return outcome.kind === 'malformed' ? { kind: 'malformed' } : { kind: 'unknown', code };
     }
+
+    /* THE DECK IS EVIDENTLY IN THEIR HANDS. See the header: the scan wins, and
+       the column that decides the run's shape has to agree with the card that
+       was just written to it. */
+    if (row.digitalCards) await saveDigitalCards(row.id, false);
 
     /* THE STEP, WRITTEN BEFORE THE REDIRECT. Awaited rather than fired off:
        the session screen reads the row the moment it mounts, and a step still

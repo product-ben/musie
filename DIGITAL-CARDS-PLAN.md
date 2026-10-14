@@ -258,21 +258,35 @@ Against: two new screen files, one migration, one widened function signature.
 
 ---
 
-## 6 · Still open
+## 6 · Answered, and how
 
-1. **Does `view` re-draw on a Back?** Proposal: no. The row has a card, so the
-   arrival effect does nothing and the same card is shown. Re-drawing would
+All three were open when this plan was written. None of them is now, and two
+were answered by walking rather than by reasoning — the record is in
+`apps/web/e2e/digitalcards.spec.ts` and `apps/web/e2e/scanlink.spec.ts`.
+
+1. **Does `view` re-draw on a Back?** **No.** The row has a card, so the
+   arrival effect does nothing and the same card comes back. Re-drawing would
    make Back a shuffle, which is the mistake `clearScan` was written up for.
-2. **Does the switch stay visible on Einsteigen after the second step has
-   been reached?** It writes `digital_cards`, which decides the run's shape, so
-   flipping it mid-run changes the step list under a session that has already
-   completed a step. Simplest answer: the switch is Einsteigen's and Einsteigen
-   is reachable, so flipping it there clears `card_id` and the completed list
-   back to Einsteigen — the same thing *Andere Karte scannen* does today, one
-   step wider. Needs Ben.
-3. **`/s/MC-01` into a digital session** — the decision stands (the scan wins
-   and the mode goes off), but with `digital_cards` as a column it is now a
-   write rather than a navigation, and the session's step list changes with it.
+   `SessionView`'s docblock carries the reason; the one-card walk carries the
+   proof.
+2. **Does the switch stay visible on Einsteigen after the second step has been
+   reached?** **Yes, and nothing has to be cleared.** Walked: choose a card
+   digitally, go back to Einsteigen through the rail, flip the switch on, go
+   forward. The rail relabels to `scan` and stays four markers long, the card
+   and its recording survive, `digital_cards` goes to `false` on the way out,
+   and the scan step shows *Deine Karte · MC-0x* with *Andere Karte scannen* —
+   true however the card arrived, so no copy has to apologise for a scan that
+   never happened. Clearing the card would punish somebody for finding their
+   deck, which is the opposite of §1.1's whole reason for existing.
+   `the switch flipped back mid-run keeps the card and the rail`.
+3. **`/s/MC-01` into a digital session.** Ben's decision stands — *Scan
+   gewinnt* — and it is a write now: `ScanLink` turns `digital_cards` off
+   before it redirects, awaited, for the same reason `saveStep` is awaited. It
+   matters beyond tidiness, because that column decides which steps the run
+   has: a row left saying `true` would land somebody on `listen` under a rail
+   naming `select`, a step they never walked, offering five dealt cards that
+   need not include the one in their hand. `a deep link into a digital session
+   turns the mode off`, asserting the rail as well as the row.
 
 ---
 
@@ -293,3 +307,29 @@ Against: two new screen files, one migration, one widened function signature.
    entry for an abandoned one renders.
 7. `pnpm check`, `pnpm test:db`, and the two walks in both locales.
 8. `apps/docs/features/session.md` carries both diagrams above.
+
+### Where those two actually stand
+
+**7 — `pnpm check` green** (544 app tests, 51 voice) and **every walk in both
+locales green**, now five of them: the five-card path, the one-card path, the
+switch flipped back mid-run, and the deep link into a digital session. Two
+walks in `scanlink.spec.ts` were red before this branch touched them and are
+green now — they anchored on `/listen$`, and the listen step writes its own
+`?overview` token on arrival, so the anchor could not match.
+
+**`pnpm test:db` is 2 failed | 140 passed, and neither failure is this
+branch's.** The write-up is in `apps/web/OPEN-QUESTIONS.md`: the one local
+stack carries four applied migrations from `../maintenance-ui`, which add
+`cards_code_shape` (refusing the `ZZ-99` fixture a sessions test inserts) and
+move `cards.image_url` under a grid the deck test does not know about. `main`
+fails the same two files harder against the same stack. Nothing to fix here,
+and a `db reset` to prove it would re-apply this branch's migrations over
+whatever that branch is testing against — CLAUDE.md rule 9.
+
+**8 — not done, deliberately.** Ben, during the tuning rounds: *"Dont update
+the github documentation yet, we do this in the end."* And this branch is 27
+commits behind `main`, which is where `apps/docs` arrived (PR #23) — the file
+does not exist in this worktree to edit. Both diagrams are in §3 above, which
+is what the merge should carry into `apps/docs/features/session.md`. Doing it
+here would mean rebasing onto 27 commits of somebody else's docs work
+unattended, which is a worse trade than leaving one page stale for a day.

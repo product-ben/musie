@@ -1003,19 +1003,20 @@ back out of Postgres.
 | | |
 |---|---|
 | `packages/design-system/src/Sheet.tsx` | the full-screen paged surface (section 10.1), with `Sheet.stories.tsx` and a `SHEET` section in `musy-components.css` |
-| `apps/web/src/lib/digitalCards.ts` | the mode token, the deal, and `cardsDealt` — pure, with 15 unit tests |
+| `apps/web/src/lib/digitalCards.ts` | the deal and the sheet token — pure. The mode token and the `cardsDealt` map lived here until §17.5 took both into Postgres |
 | `apps/web/e2e/digitalcards.spec.ts` | the walk: switch, sheet, grid, reload, choice, and the two columns |
-| two migrations | the deck's nine alt texts; Achtsame Pause's intro copy repaired to five cards with no `[X]` |
+| three migrations | the deck's nine alt texts; Achtsame Pause's intro copy repaired to five cards with no `[X]`; and `20261014113500`, which is §17.5 |
+| `apps/web/src/components/` | `SessionView`, `SessionSelect` and `CardSheet` — the two digital steps and the walk they share (§17.5) |
+| `Image`, `RadioImage`, `Dots` tone | three design-system components the sheet work asked for, each with stories |
 | nine re-encoded cards | 1200px from the masters, 2.0 MB for the set |
 
 ### 17.2 · The four places it differs from this document
 
-1. **`cards_dealt` is a map in the app, not a column** (section 9). The
-   commands that would land a column are denied to this session and are Ben's
-   — rule 9. The migration is not written, because a column nobody may apply
-   is a column `database.types.ts` does not have and therefore a typecheck
-   failure in every screen that reads it. Logged, with the three lines that
-   delete the map once the column exists.
+1. ~~**`cards_dealt` is a map in the app, not a column**~~ — **CLOSED on
+   2026-10-14.** It is `public.exercises.cards_dealt`, applied, and the map is
+   deleted. It was a map only because the commands that apply a migration are
+   Ben's under rule 9, and a column nobody may apply is a typecheck failure in
+   every screen that reads it. He ran them; see §17.5.
 
 2. **The one-card draw reveals in place; the sheet is a second press**
    (section 7.1 said *Karte ziehen* opens the sheet). It cannot: `onRescan()`
@@ -1054,10 +1055,16 @@ server is started with `--port --strictPort` so it cannot silently move.
 
 ### 17.4 · What was verified, and what was not
 
-**Verified.** `pnpm check` (typecheck, lint, 590 unit tests). The digital walk
-in both locales, against the local stack. Every state screenshotted at 1280px
-and the grid at 393px. `pnpm test:db`: 141 of 142, the one failure being the
-alt text this branch adds to `deck.json` and cannot apply to Postgres.
+**Verified.** `pnpm check` (typecheck, lint, 595 unit tests). Five walks in
+both locales, against the local stack. Every state screenshotted at 1280px and
+the grid at 393px.
+
+`pnpm test:db`: **140 of 142, and neither failure is this branch's** — the one
+local stack carries four applied migrations from `../maintenance-ui`, and
+`main` fails the same two files harder against it. The proof, including why a
+`db reset` to demonstrate it would be the wrong move, is in
+`apps/web/OPEN-QUESTIONS.md`. The alt-text failure this section used to name
+is gone: the migration is written and applied.
 
 **Not verified.** Nothing on a real phone — the browser-bar question
 (section 5.4) is answered by `100svh` and by Lightbox's own fixed positioner,
@@ -1068,3 +1075,41 @@ nothing is pushed, and `pnpm db:sync` refuses from a feature branch, correctly.
 here; the same six fail on `d976bdc` with no changes applied, and two more
 besides. Measured in a throwaway worktree rather than assumed. They are not
 gated by CI, which runs `pnpm check` and the two bundle builds.
+
+**Two of those six are fixed in passing.** Both walks in `scanlink.spec.ts`
+anchored on `/listen$`, and the listen step writes its own `?overview` token on
+arrival by `replace` — so the anchor could never match once that landed. One
+regular expression each, and the comment names the trap.
+
+### 17.5 · The architecture, two days later
+
+Ben, 2026-10-14: *"the architecture got a bit messy… the 'scan' is not
+happening anymore. Instead we have ('Ansehen' / 'View') and ('Auswählen' /
+'Select') as distinct steps. These should have their own routes/states in a
+session."* He was right, and `DIGITAL-CARDS-PLAN.md` names what it was: one
+step doing three jobs, and four separate hand-kept answers to the question
+*which step is the second one* — a label override per exercise, a derived
+"which step owns the sheet", a derived "which step deals", and an Einsteigen
+button that performed a write.
+
+What replaced them:
+
+| | |
+|---|---|
+| `view`, `select` | real steps: two route segments, two literals in `sessions_step_known`, two screens |
+| `sessions.digital_cards` | which run this is, on the row — because the reachability rule computes from the step list, so a resumed session has to be able to read which list it has |
+| `exercises.cards_dealt` | how many cards, and therefore WHICH of the two digital steps the run has. One number, both answers |
+| `stepsForRun(kind, shape)` | the single place the second step is chosen, replacing all four derivations |
+| `stepMessageKey(step)` | one `Record<StepId, MessageKey>`, replacing three copies of the same map |
+
+Two things this made true that were not before: the sheet is a PHASE of
+`select` rather than an overlay anybody has to find — it opens on arrival,
+through `?focus` written by the navigation that enters the step — and the rail
+is four markers long in every mode, which was Ben's own rule and is now a
+property of the step list rather than of a label.
+
+Three decisions the plan had left open are answered in its §6, two of them by
+walking rather than by reasoning: Back does not re-draw, the switch may be
+flipped back mid-run and nothing has to be cleared, and a scanned card ends a
+digital run — *Scan gewinnt*, written to the row by `ScanLink` before it
+redirects.

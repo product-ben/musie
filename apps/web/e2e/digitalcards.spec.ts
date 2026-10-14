@@ -361,3 +361,117 @@ test('a one-card digital session draws on arrival and looks before it listens', 
   expect(row?.step).toBe('listen');
   expect(row?.digital_cards).toBe(true);
 });
+
+/**
+ * THE SWITCH FLIPPED BACK, AFTER A DIGITAL CARD WAS ALREADY CHOSEN.
+ *
+ * `DIGITAL-CARDS-PLAN.md` §6.2 left this open, and it is the one path where
+ * the step architecture can contradict itself: `sessions.digital_cards`
+ * decides which steps the run HAS, Einsteigen stays reachable, and the switch
+ * is on Einsteigen — so somebody who finds their deck after choosing a card
+ * digitally changes the step list under a step they have already completed.
+ *
+ * WHAT THIS ASSERTS IS THAT NOTHING HAS TO BE CLEARED. Walked, rather than
+ * reasoned about:
+ *
+ *   the rail relabels to `scan` and stays FOUR markers long — Ben's rule;
+ *   the card and its recording SURVIVE, because a card dealt from the deck is
+ *     a card either way and taking it away would punish finding the deck;
+ *   the scan step says *Deine Karte · MC-0x* and offers *Andere Karte
+ *     scannen* — which is true however the card arrived, so no copy has to
+ *     apologise for a scan that never happened.
+ *
+ * A unit test cannot reach it: the contradiction is between the reducer's
+ * `skipped`, the row, and the router, and only a walk holds all three.
+ */
+test('the switch flipped back mid-run keeps the card and the rail', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name as Locale;
+  test.setTimeout(120_000);
+
+  await withLocale(page, locale);
+  await reachTheLibrary(page, locale);
+  /* NAMED, unlike the first walk, which takes the first row and says in a
+     comment that `sort = 1` is Achtsame Pause. There is one Supabase stack
+     (CLAUDE.md rule 9) and a maintenance UI is being built against it that
+     reorders exercises; a walk that depends on the order of a table somebody
+     else is editing fails for a reason that is not in this repository. */
+  await startExercise(page, locale, locale === 'de' ? 'Achtsame Pause' : 'Mindful Break');
+  await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/, { timeout: 15_000 });
+  const sessionId = (/\/session\/([0-9a-f-]+)\//.exec(page.url()) ?? [])[1];
+
+  const cards = page.getByRole('switch', {
+    name: label(locale, 'session.intro.cardsPresent'),
+  });
+  await expect(cards).toBeVisible({ timeout: 15_000 });
+  await cards.click();
+
+  await page.getByRole('button', {
+    name: label(locale, 'session.intro.deal', { count: String(DEALT) }),
+    exact: true,
+  }).click();
+  await expect(page).toHaveURL(/\/select/);
+
+  /* The sheet, to its end, and then a card — the shortest route to a session
+     that has COMPLETED a step no paper run has. */
+  await page.getByRole('button', {
+    name: label(locale, 'session.cards.first'), exact: true,
+  }).click();
+  for (let page_ = 0; page_ < DEALT - 1; page_ += 1) {
+    await page.getByRole('button', {
+      name: label(locale, 'session.cards.next'), exact: true,
+    }).click();
+  }
+  await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('radio').first().click();
+  await expect(page).toHaveURL(/\/listen/, { timeout: 20_000 });
+
+  const db = service();
+  const chosen = await db
+    .from('sessions')
+    .select('card_id, track_id')
+    .eq('id', sessionId as string)
+    .single();
+  expect(chosen.error).toBeNull();
+  expect(chosen.data?.card_id).toBeTruthy();
+
+  /* ── BACK TO EINSTEIGEN, THROUGH THE RAIL ─────────────────────────────── */
+  const rail = page.getByRole('navigation', { name: label(locale, 'session.wizardLabel') });
+  await rail.getByRole('button').first().click();
+  await expect(page).toHaveURL(/\/intro$/);
+
+  await expect(cards).not.toBeChecked();
+  await cards.click();
+  await expect(cards).toBeChecked();
+
+  /* THE RAIL IS THE PAPER RAIL AGAIN, AND STILL FOUR. */
+  await expect(
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.scan')},`) }),
+  ).toBeVisible();
+  await expect(
+    rail.getByRole('button', { name: new RegExp(`^${label(locale, 'session.step.select')},`) }),
+  ).toHaveCount(0);
+  await expect(rail.getByRole('button')).toHaveCount(4);
+
+  await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
+  await expect(page).toHaveURL(/\/scan$/, { timeout: 15_000 });
+
+  /* ── THE STEP THAT WAS NEVER WALKED, HOLDING THE CARD THAT WAS ────────── */
+  await expect(
+    page.getByRole('button', { name: label(locale, 'session.scan.again'), exact: true }),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(label(locale, 'session.scan.yourCard'))).toBeVisible();
+
+  const after = await db
+    .from('sessions')
+    .select('card_id, track_id, step, digital_cards')
+    .eq('id', sessionId as string)
+    .single();
+
+  expect(after.error).toBeNull();
+  expect(after.data?.digital_cards, 'the flip was not written').toBe(false);
+  /* NOT CLEARED. The decision §6.2 was left open for. */
+  expect(after.data?.card_id).toBe(chosen.data?.card_id);
+  expect(after.data?.track_id).toBe(chosen.data?.track_id);
+  expect(after.data?.step).toBe('scan');
+});
