@@ -2550,4 +2550,3 @@ html[data-musy-scroll-snap] {
     max-block-size: calc(var(--viewport-block) * 0.5);
   }
 }
-}
