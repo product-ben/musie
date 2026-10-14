@@ -21,14 +21,16 @@
  *      here.
  *
  * ── THE FIXTURES CLEAN UP AFTER THEMSELVES ────────────────────────────────
- * MC-98, trk-98, art-98 and the cell at (0, +2), which no card stands on.
+ * MC-98, trk-98, art-98 and whichever cell no card stands on — found at
+ * startup, never assumed; see below.
  * Nothing touches mc-01…mc-09 or trk-01…trk-09: this suite can be pointed at
  * HOSTED (CLAUDE.md rule 4), and a test that moved a real card's music would
  * change what a beta tester hears. `20261014100200` is the migration that
  * grants the delete this needs, and says why withholding it was wrong.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { INSUFFICIENT_PRIVILEGE, anonClient, serviceClient } from './db.support';
+import { CELLS, cellId } from './deckRules';
 
 /** Top of the code space: the deck grows from MC-01 up, so these are last. */
 const CARD = 'mc-98';
@@ -36,9 +38,24 @@ const CARD_CODE = 'MC-98';
 const TRACK = 'trk-98';
 const ARTWORK = 'art-98';
 
-/** A cell no card stands on — the nine are placed elsewhere. */
-const CELL = { valence: 0, arousal: 2 };
-const CELL_ID = '0,2';
+/**
+ * A cell no card stands on — FOUND, not assumed.
+ *
+ * This was `{ valence: 0, arousal: 2 }`, hard-coded, on the reasoning that the
+ * nine imported cards are placed elsewhere. That reasoning is true of the deck
+ * this branch imports and of nothing else: the local stack is one Postgres
+ * behind every worktree (CLAUDE.md rule 9), so the deck in it is whichever
+ * branch last ran `supabase db reset`, and a card standing on the fixture's
+ * cell makes four tests fail for a reason that has nothing to do with what
+ * they assert — `cards_one_per_cell` refusing the fixture, two statements
+ * before the assertion.
+ *
+ * So it is looked up once, before anything runs. 25 cells against at most a
+ * handful of cards means there is always one; `beforeAll` throws if there is
+ * not, which would be a real finding rather than a flake.
+ */
+let CELL = { valence: 0, arousal: 2 };
+let CELL_ID = '0,2';
 
 const ACTOR = 'db-test@musie.invalid';
 
@@ -67,6 +84,23 @@ async function editsFor(entity: string, rowId: string): Promise<Record<string, u
   return (data ?? []) as Record<string, unknown>[];
 }
 
+beforeAll(async () => {
+  const { data, error } = await serviceClient().from('cards').select('valence, arousal');
+  if (error !== null) throw new Error(`could not read the deck: ${error.message}`);
+
+  const taken = new Set((data ?? [])
+    .filter((card) => card.valence !== null)
+    .map((card) => `${card.valence},${card.arousal}`));
+
+  const free = CELLS.find((cell) => !taken.has(cellId(cell)));
+  if (free === undefined) {
+    throw new Error('every one of the 25 cells holds a card; this suite needs one free');
+  }
+
+  CELL = free;
+  CELL_ID = cellId(free);
+});
+
 async function cleanUp(): Promise<void> {
   const service = serviceClient();
   /* The cell first: it is the only fixture that cannot be deleted — a cell is
@@ -79,11 +113,19 @@ async function cleanUp(): Promise<void> {
   await service.from('tracks').delete().eq('id', TRACK);
   await service.from('artwork_i18n').delete().eq('artwork_id', ARTWORK);
   await service.from('artworks').delete().eq('id', ARTWORK);
-  for (const [entity, rowId] of [
-    ['card', CARD], ['track', TRACK], ['artwork', ARTWORK], ['cell', CELL_ID],
-  ]) {
-    await service.from('content_edits').delete().eq('entity', entity).eq('row_id', rowId);
-  }
+  /**
+   * ── ONLY THIS SUITE'S OWN LINES ───────────────────────────────────────
+   * Keyed on the ACTOR, not on the row. It used to delete every log line for
+   * the fixture rows, and the reorder test below deleted one per live card —
+   * which took out a real repair somebody had made to mc-07 through
+   * `admin_write` an hour earlier. A suite that erases history it did not
+   * write is the opposite of what the log is for, and this one can be
+   * pointed at HOSTED (CLAUDE.md rule 4), where those lines are the record of
+   * what an operator actually did.
+   *
+   * `db-test@musie.invalid` is written by nothing else, so this is exact.
+   */
+  await service.from('content_edits').delete().eq('actor_email', ACTOR);
   /* And the projection, so a half-finished test does not leave a pairing
      behind for the deck tests to find. */
   await service.rpc('project_deck');
@@ -91,6 +133,8 @@ async function cleanUp(): Promise<void> {
 
 beforeEach(cleanUp);
 afterEach(cleanUp);
+/* The fixture cell is shared state on a shared stack: leave it as found. */
+afterAll(cleanUp);
 
 /* ═══ ACCESS ════════════════════════════════════════════════════════════════ */
 
@@ -435,12 +479,11 @@ describe('reordering the deck', () => {
       swapped.map((_, index) => index + 1),
     );
 
-    /* Put the deck back: this suite can be pointed at hosted. */
+    /* Put the deck back: this suite can be pointed at hosted. The log lines
+       are cleared by `cleanUp`, which keys on this suite's own actor and so
+       cannot take a real operator's history with it. */
     await service.rpc('admin_reorder_cards', {
       p_actor_id: null, p_actor_email: ACTOR, p_ids: ids,
     });
-    for (const id of ids) {
-      await service.from('content_edits').delete().eq('entity', 'card').eq('row_id', id);
-    }
   });
 });

@@ -125,3 +125,30 @@ export async function resizeArtwork(file: Blob): Promise<Blob> {
   if (blob === null) throw new Error('this browser could not encode a WebP');
   return blob;
 }
+
+/**
+ * SHA-256 of a file's bytes, hex — what makes "the same file" answerable.
+ *
+ * ── WHY THE BROWSER, AND WHY NOT THE KEY ──────────────────────────────────
+ * `music-upload.mjs` puts eight characters of the hash INTO the object key,
+ * so its uploads deduplicate by construction. This screen cannot: the bytes
+ * go straight from the browser to storage through a signed URL and the server
+ * never holds them, which is what keeps a seven-megabyte master off an edge
+ * function's request limit. So the hash is computed here — the one place that
+ * has the bytes — and stored in a column with a unique index behind it.
+ *
+ * ── THE SOURCE, NOT THE RESIZE ────────────────────────────────────────────
+ * Artwork is hashed BEFORE `resizeArtwork`. Hashing the WebP would make "the
+ * same picture" mean "encoded identically", and two drops of one photograph
+ * are the duplicate worth refusing. It also means the answer does not change
+ * if the resize ever does.
+ *
+ * `crypto.subtle` needs a secure context. localhost is one, and so is every
+ * address this app is ever served from.
+ */
+export async function hashFile(file: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}

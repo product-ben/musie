@@ -404,7 +404,17 @@ Deno.serve(async (req: Request) => {
           return json({ error: 'no_such_object', detail: key }, 409);
         }
 
-        if (kind === 'artwork') return await write('artwork', id, { src: key });
+        /* The hash comes from the browser because the browser is the only
+           thing that held the bytes — see `hashFile`. It is not a security
+           claim and does not need to be: a wrong one costs a duplicate, and
+           the unique index behind the column is what refuses a real one. */
+        const contentHash = typeof payload.contentHash === 'string' && payload.contentHash !== ''
+          ? payload.contentHash
+          : null;
+
+        if (kind === 'artwork') {
+          return await write('artwork', id, { src: key, content_hash: contentHash });
+        }
 
         const seconds = Number(payload.durationSeconds);
         if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 7200) {
@@ -413,6 +423,7 @@ Deno.serve(async (req: Request) => {
         return await write('track', id, {
           src: key,
           duration_seconds: Math.round(seconds),
+          content_hash: contentHash,
         });
       }
 

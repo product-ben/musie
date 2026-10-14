@@ -35,7 +35,8 @@
  * they recur (L14.3), and both are logged.
  */
 import * as React from 'react';
-import { Clock, Image, LayoutGrid, Layers, Music } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { ArrowLeft, Clock, Image, LayoutGrid, Layers, Music } from 'lucide-react';
 import {
   Badge,
   ContentBox,
@@ -62,7 +63,7 @@ import {
 import type { Cell } from '../lib/deckRules';
 import { contentImageUrl } from '../lib/assets';
 import { readAudioTags } from '../lib/audioTags';
-import { measureDuration, readHead, resizeArtwork } from '../lib/mediaFile';
+import { hashFile, measureDuration, readHead, resizeArtwork } from '../lib/mediaFile';
 import { scanLink } from '../lib/scanCode';
 import {
   MaintenanceError,
@@ -266,10 +267,11 @@ function History(props: {
 /* ═══ THE SCREEN ════════════════════════════════════════════════════════════ */
 
 export function Maintenance(): React.ReactElement {
+  const navigate = useNavigate();
   const [deck, setDeck] = React.useState<MaintenanceDeck | null>(null);
   const [problem, setProblem] = React.useState<string | null>(null);
   const [refused, setRefused] = React.useState(false);
-  const [view, setView] = React.useState<View>('grid');
+  const [view, setView] = React.useState<View>('music');
   const [toast, setToast] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
 
@@ -561,25 +563,56 @@ export function Maintenance(): React.ReactElement {
   const uploadPieces = async (files: FileList): Promise<void> => {
     setBusy(true);
     const added: string[] = [];
+    const skipped: string[] = [];
     const failed: string[] = [];
     const taken = deck.tracks.map((track) => track.id);
 
+    /**
+     * ── NO FILE TWICE ─────────────────────────────────────────────────────
+     * Hash → what already holds it, so a refusal can NAME the piece rather
+     * than report a constraint. Seeded from the library and added to as the
+     * drop runs, which is what catches the same file selected twice in one
+     * go — the case a check against the library alone would miss.
+     *
+     * This is the courtesy. The guard is `tracks_content_hash_once`, and the
+     * hash is written with the row BEFORE the bytes move, so a duplicate is
+     * refused without uploading anything.
+     */
+    const seen = new Map<string, string>();
+    for (const track of deck.tracks) {
+      if (track.content_hash !== null) {
+        seen.set(track.content_hash, track.title === '' ? track.id : track.title);
+      }
+    }
+
     for (const file of Array.from(files)) {
       try {
+        const hash = await hashFile(file);
+        const already = seen.get(hash);
+        if (already !== undefined) {
+          skipped.push(`${file.name} is already here as ${already}`);
+          continue;
+        }
+
         const tags = readAudioTags(await readHead(file));
         const measured = await measureDuration(file);
         const id = nextId('trk', taken);
         taken.push(id);
 
+        const title = tags.title ?? stemOf(file.name);
         await saveTrack(id, {
-          title: tags.title ?? stemOf(file.name),
+          title,
           artist: tags.artist ?? '',
           album: tags.album,
           release_year: tags.year,
           tempo_bpm: tags.tempoBpm,
+          content_hash: hash,
         });
+        seen.set(hash, title);
+
         await uploadMedia({
-          kind: 'track', id, file, filename: file.name, durationSeconds: measured,
+          kind: 'track', id, file, filename: file.name,
+          durationSeconds: measured, contentHash: hash,
         });
         added.push(id);
       } catch (thrown: unknown) {
@@ -591,6 +624,7 @@ export function Maintenance(): React.ReactElement {
     setBusy(false);
     setToast([
       added.length === 0 ? null : `${added.length} piece(s) added — check the titles`,
+      skipped.length === 0 ? null : `${skipped.length} skipped: ${skipped.join('; ')}`,
       failed.length === 0 ? null : `${failed.length} failed: ${failed.join('; ')}`,
     ].filter((line) => line !== null).join(' · ') || 'nothing to add');
   };
@@ -701,15 +735,35 @@ export function Maintenance(): React.ReactElement {
   const uploadPictures = async (files: FileList): Promise<void> => {
     setBusy(true);
     const added: string[] = [];
+    const skipped: string[] = [];
     const failed: string[] = [];
     const taken = deck.artworks.map((art) => art.id);
 
+    /* THE SOURCE IS HASHED, not the resize — two drops of one photograph are
+       the duplicate worth refusing, and hashing the WebP would make "the same
+       picture" mean "encoded identically". */
+    const seen = new Map<string, string>();
+    for (const art of deck.artworks) {
+      if (art.content_hash !== null) seen.set(art.content_hash, art.id);
+    }
+
     for (const file of Array.from(files)) {
       try {
+        const hash = await hashFile(file);
+        const already = seen.get(hash);
+        if (already !== undefined) {
+          skipped.push(`${file.name} is already here as ${already}`);
+          continue;
+        }
+
         const resized = await resizeArtwork(file);
         const id = nextId('art', taken);
         taken.push(id);
-        await uploadMedia({ kind: 'artwork', id, file: resized, filename: `${id}.webp` });
+        seen.set(hash, id);
+
+        await uploadMedia({
+          kind: 'artwork', id, file: resized, filename: `${id}.webp`, contentHash: hash,
+        });
         added.push(id);
       } catch (thrown: unknown) {
         failed.push(`${file.name}: ${reason(thrown)}`);
@@ -720,6 +774,7 @@ export function Maintenance(): React.ReactElement {
     setBusy(false);
     setToast([
       added.length === 0 ? null : `${added.length} picture(s) added`,
+      skipped.length === 0 ? null : `${skipped.length} skipped: ${skipped.join('; ')}`,
       failed.length === 0 ? null : `${failed.length} failed: ${failed.join('; ')}`,
     ].filter((line) => line !== null).join(' · ') || 'nothing to add');
   };
@@ -999,6 +1054,9 @@ export function Maintenance(): React.ReactElement {
         licence_type: null,
         catalogue_ref: null,
         licence_ref: null,
+        /* No bytes, so nothing to hash. A piece created with no file picks
+           one up the first time one is uploaded onto it. */
+        content_hash: null,
         archived_at: null,
       }}
       cells={[]}
@@ -1114,7 +1172,33 @@ export function Maintenance(): React.ReactElement {
 
   return (
     <div className="musie-maintenance">
-      <h1 className="musie-placeholder">Maintenance</h1>
+      <div className="musie-maintenance__head">
+        <h1 className="musie-placeholder">Maintenance</h1>
+        {/**
+          * THE WAY OUT. This screen is linked from nowhere and reached by
+          * typing the path, so without this the only exit is the browser's
+          * own back button or the menu — and on a phone in standalone mode
+          * there is no browser chrome to reach for.
+          *
+          * History first, `/` as the floor. `window.history.state.idx` is
+          * react-router's own counter: 0 means this entry is the first in the
+          * session, so there is nothing behind it and `navigate(-1)` would
+          * leave the app entirely or do nothing at all. That is the case a
+          * typed URL always lands in.
+          */}
+        <CtaButton
+          variant="secondary"
+          size="min"
+          leadingIcon={ArrowLeft}
+          onClick={() => {
+            const entry = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+            if (entry > 0) navigate(-1);
+            else void navigate('/');
+          }}
+        >
+          Back
+        </CtaButton>
+      </div>
 
       <SegmentedControl
         name="maintenance-view"
@@ -1122,10 +1206,10 @@ export function Maintenance(): React.ReactElement {
         /* A glyph is REQUIRED on a segmented option, and it is the part that
            survives a narrow viewport where the label is clipped. */
         options={[
-          { value: 'grid', label: 'Grid', glyph: LayoutGrid },
           { value: 'music', label: 'Music', glyph: Music },
           { value: 'artwork', label: 'Artwork', glyph: Image },
           { value: 'cards', label: 'Cards', glyph: Layers },
+          { value: 'grid', label: 'Grid', glyph: LayoutGrid },
           { value: 'log', label: 'Log', glyph: Clock },
         ]}
         value={view}

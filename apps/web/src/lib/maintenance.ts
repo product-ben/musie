@@ -52,6 +52,8 @@ export interface MaintenanceTrack {
   licence_type: string | null;
   catalogue_ref: string | null;
   licence_ref: string | null;
+  /** SHA-256 of the uploaded file. Null for anything the import created. */
+  content_hash: string | null;
   archived_at: string | null;
 }
 
@@ -59,6 +61,8 @@ export interface MaintenanceArtwork {
   id: string;
   src: string;
   created_at: string;
+  /** SHA-256 of the SOURCE image, before the resize. */
+  content_hash: string | null;
   archived_at: string | null;
   /** Null in both or written in both. One of the two is a dropped translation. */
   alt_de: string | null;
@@ -247,6 +251,8 @@ export async function uploadMedia(options: {
   file: Blob;
   filename: string;
   durationSeconds?: number;
+  /** Written with the key, so the unique index can refuse a second copy. */
+  contentHash?: string;
 }): Promise<unknown> {
   const signed = await call<SignedUpload>('upload.sign', {
     kind: options.kind,
@@ -265,5 +271,6 @@ export async function uploadMedia(options: {
     id: options.id,
     key: signed.key,
     durationSeconds: options.durationSeconds,
+    contentHash: options.contentHash,
   });
 }

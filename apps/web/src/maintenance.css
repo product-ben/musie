@@ -38,6 +38,18 @@
   padding-block-end: var(--space-section);
 }
 
+/* The title and the way out. `baseline` rather than `center` so the button
+   sits on the heading's baseline instead of floating against its line box,
+   and `wrap` so a narrow viewport drops it under the title rather than
+   squeezing the heading. */
+.musie-maintenance__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-gap-related);
+}
+
 /* ═══ THE GRID ══════════════════════════════════════════════════════════════
    Five fixed columns, because the grid IS five by five — this is the one
    layout on the screen that must not reflow, since a cell's meaning is its
