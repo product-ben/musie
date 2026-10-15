@@ -353,7 +353,7 @@ const GOALS = [
     value: 'mindfulness',
     headline: 'Mindfulness',
     descriptionLead: 'Why?',
-    description: 'Mindfulness grows with every practice, and repetition does more for it than resolutions. Music gives your attention something to hold on to when your thoughts drift.',
+    description: 'More mindfulness helps you stay calm in stressful moments and notice what you need right now. My exercises help you practise that with music.',
   },
 ];
 

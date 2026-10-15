@@ -253,13 +253,24 @@ null is data rather than a missing translation (§10).
 
 **Achtsamkeit** · *Mindfulness*
 
-> **Warum?** Achtsamkeit wächst mit jeder Übung und braucht Wiederholung mehr
-> als Vorsätze. Musik gibt deiner Aufmerksamkeit etwas, woran sie sich halten
-> kann, wenn die Gedanken abdriften.
+> **Warum?** Mehr Achtsamkeit hilft dir, in stressigen Situationen ruhig zu
+> bleiben und zu merken, was du gerade brauchst. Meine Übungen helfen dir
+> dabei, das mit Musik einzuüben.
 
-> **Why?** Mindfulness grows with every practice, and repetition does more for
-> it than resolutions. Music gives your attention something to hold on to when
-> your thoughts drift.
+> **Why?** More mindfulness helps you stay calm in stressful moments and
+> notice what you need right now. My exercises help you practise that with
+> music.
+
+**Rewritten on 2026-10-15**, from Ben's two openings. The first draft said
+how mindfulness grows — true, and about the PRACTICE rather than about the
+reader, where the question the testing heard was *was soll das bringen?* This
+one names a moment the reader already recognises and then offers to help with
+it. `20261015160000_a_better_why_for_achtsamkeit.sql`.
+
+**Musie speaks as *ich* here** — *Meine Übungen* — which is Ben's phrasing and
+established practice rather than new: `free-rein`'s own description already
+reads *eine Höranleitung von mir*. This is the one card that argues rather
+than labels, and an argument is made by somebody.
 
 Written to `docs/GERMAN-UI-WRITING.md`: du, sentence case. No em-dashes and no
 *nicht X, sondern Y* — the patterns Ben asked to keep out.

@@ -18,7 +18,7 @@ const GOALS: Goal[] = [
   {
     id: 'mindfulness', sort: 4,
     label: 'Achtsamkeit', purpose: 'Achtsamer werden',
-    why: 'Achtsamkeit wächst mit jeder Übung.',
+    why: 'Mehr Achtsamkeit hilft dir in stressigen Situationen.',
   },
 ];
 
@@ -137,9 +137,9 @@ describe('cacheGoal', () => {
 });
 
 describe('startable', () => {
-  /* The headline's count and the shuffle's candidate set are this one
-     expression — PRD §7 and §9. The pile is deliberately NOT filtered by it,
-     which is why the deck still deals two where this returns one. */
+  /* THE SHUFFLE'S CANDIDATE SET, and not the headline's count — the headline
+     counts the pile (PRD §7.1). The pile is deliberately NOT filtered by
+     this, which is why the deck deals two where this returns one. */
   it('drops the exercises that are not built yet', () => {
     expect(startable(filterByGoal(DECK, 'get-to-know-musie')).map((e) => e.id))
       .toEqual(['free-rein']);
