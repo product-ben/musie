@@ -178,7 +178,8 @@ the same CORS block (dev is a Vite server on another port), the same
 `asCaller.auth.getUser()` rather than decoding a JWT by hand, the same
 one-answer-for-two-failures discipline.
 
-- `MAINTAINERS` — the allowlist, lower-cased, both spellings of Ben's address.
+- `MAINTAINERS` — the allowlist, lower-cased: both spellings of Ben's address,
+  and one line per tester added since (Lucia, 2026-10-14).
   An empty string never matches, because that is what an anonymous user's email
   is.
 - One POST envelope, `{ action, payload }`. `read.all`, `card.create`,

@@ -21,14 +21,86 @@
  * to a plausible range and writes it into the history, so a bad measurement
  * is visible in the log and one press from being reverted.
  *
- * ── NOT UNIT-TESTED, AND HONESTLY SO ──────────────────────────────────────
- * Both functions below are thin wrappers over browser APIs that `vitest`'s
- * node environment does not have. Testing them would mean mocking
- * `HTMLMediaElement` and `CanvasRenderingContext2D`, which asserts that the
- * mock behaves like the mock. They are verified by the walk in
+ * ── MOSTLY NOT UNIT-TESTED, AND HONESTLY SO ───────────────────────────────
+ * `measureDuration` and `resizeArtwork` are thin wrappers over browser APIs
+ * that `vitest`'s node environment does not have. Testing them would mean
+ * mocking `HTMLMediaElement` and `CanvasRenderingContext2D`, which asserts
+ * that the mock behaves like the mock. They are verified by the walk in
  * MAINTENANCE-UI.md §17 instead: an mp3 whose duration appears without being
  * typed, and an image that comes back as a 768-pixel WebP.
+ *
+ * `asUploadableAudio` IS tested, because it is a pure function over a name
+ * and a `Blob` and node has both — and because the bug it fixes was invisible
+ * at every other layer: the type it chooses is checked by a server, so
+ * nothing in this repository would have gone red when it was wrong.
  */
+
+/* ═══ WHAT THE BUCKET WILL ACCEPT ═══════════════════════════════════════════ */
+
+/**
+ * The content type to upload a recording AS, by extension.
+ *
+ * ── WHY THE FILE'S OWN `type` IS NOT GOOD ENOUGH ──────────────────────────
+ * The `tracks` bucket lists four `allowed_mime_types` — `audio/mpeg`,
+ * `audio/mp4`, `audio/aac`, `audio/wav` (`20260921160000`) — and storage
+ * checks the type the upload ARRIVES with. For a `.m4a` every browser on
+ * macOS reports `audio/x-m4a`, which is not on that list, so the PUT came
+ * back `mime type audio/x-m4a is not supported` — measured against the local
+ * stack on 2026-10-14. `.m4a` is the format this repo's own MP3 parser tells
+ * you to prefer ("that is a reason to ship `.m4a`", `music-upload.mjs`), and
+ * it could not be uploaded through this screen at all.
+ *
+ * This is the same table `music-upload.mjs` has carried since September; the
+ * CLI worked for `.m4a` precisely because it names the type instead of
+ * trusting the file's.
+ *
+ * ── AND WHY IT IS A NEW BLOB RATHER THAN A `contentType` OPTION ───────────
+ * Also measured, and the reason this is not a one-line fix:
+ * `uploadToSignedUrl` IGNORES `options.contentType` for a `Blob` or `File`
+ * body. It builds a `FormData` and appends the blob, so the multipart part
+ * carries the blob's OWN type and the option is never read — only the
+ * stream/buffer branch applies it. Passing `contentType` therefore looks
+ * exactly like a fix and does nothing. Re-wrapping is what actually lands.
+ */
+const AUDIO_CONTENT_TYPES: Readonly<Record<string, string>> = {
+  mp3: 'audio/mpeg',
+  m4a: 'audio/mp4',
+  mp4: 'audio/mp4',
+  aac: 'audio/aac',
+  wav: 'audio/wav',
+};
+
+/** The extension, lowercased, with nothing else in it. `'' `if there is none. */
+function extensionOf(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  if (dot <= 0) return '';
+  return filename.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/** What this screen can upload, for the file picker and the refusal below. */
+export const AUDIO_EXTENSIONS = Object.keys(AUDIO_CONTENT_TYPES);
+
+/**
+ * The same bytes, labelled with a type the bucket accepts.
+ *
+ * Throws on an extension the bucket has no type for, rather than uploading
+ * and letting storage refuse: the message here can name the formats, and
+ * refusing before the row is written is what keeps a failure from leaving a
+ * piece behind — see `uploadPieces`.
+ */
+export function asUploadableAudio(file: Blob, filename: string): Blob {
+  const extension = extensionOf(filename);
+  const contentType = AUDIO_CONTENT_TYPES[extension];
+  if (contentType === undefined) {
+    throw new Error(
+      `${extension === '' ? 'a file with no extension' : `.${extension}`} is not a format `
+      + `this uploads — it takes ${AUDIO_EXTENSIONS.map((e) => `.${e}`).join(', ')}`,
+    );
+  }
+  /* A new Blob over the same bytes: nothing is copied or re-encoded, only the
+     label changes. `File` extends `Blob`, so this accepts either. */
+  return file.type === contentType ? file : new Blob([file], { type: contentType });
+}
 
 /** Two hours. The function refuses anything longer, so this agrees with it. */
 const LONGEST_SECONDS = 7200;

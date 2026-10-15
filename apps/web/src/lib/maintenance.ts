@@ -16,6 +16,7 @@
  * constraint that said no, and that sentence is better than anything this
  * file could compose.
  */
+import { asUploadableAudio } from './mediaFile';
 import { getSupabase } from './supabase';
 
 /* ═══ WHAT COMES BACK ═══════════════════════════════════════════════════════ */
@@ -244,6 +245,13 @@ interface SignedUpload {
  * `durationSeconds` is measured by the platform decoder (`mediaFile.ts`) and
  * clamped by the function. It is never typed, and it is recorded in the
  * history either way, so a bad measurement is visible and revertable.
+ *
+ * ── A RECORDING IS RE-LABELLED BEFORE IT GOES ─────────────────────────────
+ * `asUploadableAudio` names the content type from the extension, because
+ * storage checks the type the bytes ARRIVE with and the bucket's four
+ * `allowed_mime_types` do not include `audio/x-m4a` — which is what every
+ * macOS browser calls a `.m4a`. Artwork needs none of this: it arrives from
+ * `resizeArtwork` already encoded as the `image/webp` it will be stored as.
  */
 export async function uploadMedia(options: {
   kind: 'track' | 'artwork';
@@ -260,9 +268,13 @@ export async function uploadMedia(options: {
     filename: options.filename,
   });
 
+  const body = options.kind === 'track'
+    ? asUploadableAudio(options.file, options.filename)
+    : options.file;
+
   const { error } = await getSupabase()
     .storage.from(signed.bucket)
-    .uploadToSignedUrl(signed.key, signed.token, options.file);
+    .uploadToSignedUrl(signed.key, signed.token, body);
 
   if (error !== null) throw new MaintenanceError('upload_failed', error.message);
 

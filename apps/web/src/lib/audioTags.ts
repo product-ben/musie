@@ -30,6 +30,8 @@
  * testable in the `unit` project with buffers built by hand.
  */
 
+import { TEMPO_MAX, TEMPO_MIN, YEAR_MAX, YEAR_MIN } from './deckRules';
+
 export interface AudioTags {
   title: string | null;
   artist: string | null;
@@ -96,13 +98,20 @@ function syncsafe(bytes: Uint8Array, at: number): number {
   );
 }
 
-/** The leading digits of a date string. `2021-04-03` → 2021. */
+/**
+ * The leading digits of a date string. `2021-04-03` → 2021.
+ *
+ * BOUNDED BY THE COLUMN'S OWN RULE, like `tempoOf` and for the same reason:
+ * a tag read here is written straight through to `tracks` by `uploadPieces`,
+ * and `tracks_release_year_sane` refuses anything outside 1900–2100.
+ */
 function yearOf(value: string | null): number | null {
   if (value === null) return null;
   const match = /\d{4}/.exec(value);
   if (match === null) return null;
   const year = Number(match[0]);
-  return Number.isInteger(year) ? year : null;
+  if (!Number.isInteger(year)) return null;
+  return year >= YEAR_MIN && year <= YEAR_MAX ? year : null;
 }
 
 function numberOf(value: string | null): number | null {
@@ -111,10 +120,37 @@ function numberOf(value: string | null): number | null {
   return Number.isInteger(parsed) ? parsed : null;
 }
 
+/**
+ * A TEMPO, OR NOTHING — AND `0` IS NOTHING.
+ *
+ * Measured on 2026-10-14: two of the thirteen Epidemic Sound exports in
+ * `musie-assets/music/unused` carry `TBPM 0`. `tracks_tempo_sane` requires
+ * `>= 1`, and `uploadPieces` writes a tag straight through without calling
+ * `validateTrack` — so a zero took the WHOLE ROW down with a constraint
+ * message, and the file looked broken when only its tempo was missing.
+ *
+ * Out of range therefore means *this file does not say*, which is the honest
+ * reading and the one the form is built for. `deckRules` already says it in
+ * as many words: "0 is not a tempo".
+ */
+function tempoOf(value: number | null): number | null {
+  if (value === null) return null;
+  return value >= TEMPO_MIN && value <= TEMPO_MAX ? value : null;
+}
+
 function clean(value: string): string | null {
   /* Trailing NULs are normal in both formats, and a tag padded to a fixed
      width is a tag full of spaces. */
-  const text = value.replace(/\0+$/, '').trim();
+  const text = value
+    .replace(/\0+$/, '')
+    /* AND THE EXPORTER'S OWN ESCAPING, which is not ours to keep. Epidemic
+       Sound writes `The Lion\'s Hoop` into TIT2 — a backslash belonging to
+       whatever quoted the string on their side. Measured across the thirteen
+       files in `musie-assets/music/unused` on 2026-10-14: both titles with an
+       apostrophe carry it and nothing else does. Only `\'` and `\"`, so a
+       title that really contains a backslash keeps it. */
+    .replace(/\\(['"])/g, '$1')
+    .trim();
   return text === '' ? null : text;
 }
 
@@ -194,7 +230,7 @@ function readId3(bytes: Uint8Array): AudioTags {
     /* TDRC is v2.4's recording time and carries a whole date; TYER is v2.3's
        four-digit year. Either way only the year is wanted. */
     year: yearOf(found.get('TDRC') ?? found.get('TYER') ?? null),
-    tempoBpm: numberOf(found.get('TBPM') ?? null),
+    tempoBpm: tempoOf(numberOf(found.get('TBPM') ?? null)),
   };
 }
 
@@ -291,6 +327,6 @@ function readMp4(bytes: Uint8Array): AudioTags {
     artist: text.get(`${sign}ART`) ?? null,
     album: text.get(`${sign}alb`) ?? null,
     year: yearOf(text.get(`${sign}day`) ?? null),
-    tempoBpm: numbers.get('tmpo') ?? null,
+    tempoBpm: tempoOf(numbers.get('tmpo') ?? null),
   };
 }

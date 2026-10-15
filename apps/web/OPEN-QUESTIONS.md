@@ -9498,3 +9498,51 @@ select each. If `card_i18n.image_alt` stays the home until the readers move,
 then the maintenance screen's alt-text field is writing to a column nothing
 reads today, and that is worth knowing before an operator spends an afternoon
 describing nine pictures.
+
+## A failed upload could never be retried, and I cannot say what failed the first time
+
+Where: `apps/web/src/routes/Maintenance.tsx` (`uploadPieces`),
+`apps/web/src/lib/mediaFile.ts` (`asUploadableAudio`),
+`apps/web/src/lib/audioTags.ts` (`tempoOf`, `clean`),
+`supabase/migrations/20261014120000_no_duplicate_uploads.sql`
+
+What I checked: Ben reported that `ES_The Lion's Hoop - Jon Bjork.mp3` would
+not upload at `/maintenance`. The file is not the problem — measured: 3.96 MB,
+`audio/mpeg`, a well-formed Xing header, 121.8 s, `TBPM 128`. It uploads
+end-to-end through the real `content-admin` function against the local stack,
+unchanged, on the first try.
+
+Three faults were found around it, two of which hit files in that same folder:
+
+| | |
+|---|---|
+| **A failed upload poisoned every retry** | the hash is written WITH THE ROW before the bytes move — `20261014120000`'s design, and the right one — but a row whose upload then failed keeps the hash, and the drop skips any file whose hash it can already see. One failure made a file unuploadable *forever* through that door, answering *already here as …* and naming a piece with no recording. |
+| **`.m4a` could not be uploaded at all** | macOS browsers call it `audio/x-m4a`; the bucket lists four types and not that one. `uploadToSignedUrl` ignores `options.contentType` for a `Blob`, so the obvious fix does nothing — the blob has to be re-labelled. `.m4a` is the format `music-upload.mjs` tells you to prefer. |
+| **`TBPM 0` took a whole row down** | two of the thirteen exports in `musie-assets/music/unused` carry it; `tracks_tempo_sane` wants `>= 1`, and `uploadPieces` writes a tag through without calling `validateTrack`. |
+
+Also fixed: a replacement through the track panel wrote `content_hash = null`,
+silently surrendering that row's duplicate protection; and Epidemic Sound
+writes `The Lion\'s Hoop` into TIT2, so two titles arrived with a backslash in
+them.
+
+What I did: fixed all five, client-side, with no migration — so the bucket's
+`allowed_mime_types` is untouched and there is nothing to `db:sync`. Verified
+against the local stack: the real file uploads, the same bytes named `.m4a`
+upload, a `.flac` is refused *before* a row is written, and a cleared hash lets
+the same file be dropped again.
+
+What I need from Ben: **two things.**
+
+1. **I could not determine what made the first attempt fail**, and I have
+   stopped rather than guessed. Reading the hosted database was denied twice in
+   this session (the service-role key, and an anonymous read of `tracks`), so I
+   could not look at the row. The fix above makes the failure *recoverable*
+   whatever it was, and makes two causes that are live in that folder
+   impossible — but if the first failure was something hosted-only, it is still
+   there. The one-glance check: if `/maintenance` shows a piece titled
+   `The Lion\'s Hoop` with `· no file`, that is the poisoned row, and its hash
+   has to come off before the file will go up. Retiring it is not enough — a
+   retired row's hash still blocks the drop, which is itself worth a follow-up.
+2. **Hosted is one migration behind**: `pnpm db:status` reports
+   `20261014150000_a_card_cannot_be_retired_yet.sql` on disk and not on hosted.
+   Unrelated to the upload, but it is rule 4's trap sitting open right now.

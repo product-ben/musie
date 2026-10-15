@@ -60,6 +60,12 @@ import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 const MAINTAINERS = [
   'lipinskib@gmail.com',
   'lipinskib@googlemail.com',
+  /* Lucia, 2026-10-14. ONE spelling, and deliberately: her account was created
+     by `create-tester.mjs` on exactly this address, so this is the string
+     `auth.users` holds and the only one a token can ever carry. The pair above
+     is not a pattern to copy — it exists because Ben's account signs in as the
+     spelling his brief did not name. */
+  'lucia.vondamnitz@gmail.com',
 ];
 
 /**

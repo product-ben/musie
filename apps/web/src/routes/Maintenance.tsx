@@ -63,7 +63,14 @@ import {
 import type { Cell } from '../lib/deckRules';
 import { contentImageUrl } from '../lib/assets';
 import { readAudioTags } from '../lib/audioTags';
-import { hashFile, measureDuration, readHead, resizeArtwork } from '../lib/mediaFile';
+import {
+  AUDIO_EXTENSIONS,
+  asUploadableAudio,
+  hashFile,
+  measureDuration,
+  readHead,
+  resizeArtwork,
+} from '../lib/mediaFile';
 import { scanLink } from '../lib/scanCode';
 import {
   MaintenanceError,
@@ -202,6 +209,20 @@ function Retired(props: { count: number; children: React.ReactNode }): React.Rea
     </section>
   );
 }
+
+/**
+ * What the file picker offers.
+ *
+ * THE EXTENSIONS MATTER AS MUCH AS THE TYPES. `accept` is matched against the
+ * operating system's idea of a file's type, and the bucket is matched against
+ * the BROWSER's — and for `.m4a` those disagree (`asUploadableAudio` has the
+ * measurement). Naming the extensions too means the picker can never grey out
+ * a file this screen can in fact upload.
+ */
+const AUDIO_ACCEPT = [
+  'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/wav',
+  ...AUDIO_EXTENSIONS.map((extension) => `.${extension}`),
+].join(',');
 
 /** A filename without its extension — the last fallback for a title. */
 function stemOf(filename: string): string {
@@ -632,8 +653,47 @@ export function Maintenance(): React.ReactElement {
       }
     }
 
-    for (const file of Array.from(files)) {
+    /**
+     * ── A FAILED UPLOAD MUST NOT POISON THE NEXT ATTEMPT ──────────────────
+     * The hash is written WITH THE ROW, before the bytes move, so the unique
+     * index can refuse a duplicate without spending an upload. That is
+     * `20261014120000`'s design and it is the right one — but it has a cost
+     * nobody had paid yet: a row whose upload then FAILED still holds the
+     * hash, and the loop above skips any file whose hash it can already see.
+     *
+     * So one failure made a file UNUPLOADABLE FOREVER through this door.
+     * Every later drop answered *already here as …*, naming a piece that has
+     * no recording — which reads as the screen being wrong about its own
+     * library rather than as a retry being refused.
+     *
+     * Clearing the hash is the undo. The row stays, because nothing in this
+     * schema is hard-deleted and a piece with no file is a state five of the
+     * nine imported rows are already in; it simply stops standing in the way.
+     * The toast names it either way, so it can be retired or filled in.
+     */
+    const unblockRetry = async (id: string, hash: string): Promise<string> => {
+      seen.delete(hash);
       try {
+        await saveTrack(id, { content_hash: null });
+        return `${id} is here with no file — drop it again to retry`;
+      } catch {
+        /* The undo itself failed, and that is worth saying plainly: the next
+           drop WILL skip this file until the row is retired by hand. */
+        return `${id} still holds this file's fingerprint — retire it to retry`;
+      }
+    };
+
+    for (const file of Array.from(files)) {
+      /* The row this file got, once it has one. A failure AFTER this is set
+         has to undo the hash — see `unblockRetry`. */
+      let wrote: { id: string; hash: string } | null = null;
+      try {
+        /* THE FORMAT IS CHECKED FIRST, before anything is written. Storage
+           judges the type the bytes arrive with, so a format the bucket has
+           no content type for cannot be uploaded at all — and finding that
+           out here means no row and no hash are left behind for it. */
+        const body = asUploadableAudio(file, file.name);
+
         const hash = await hashFile(file);
         const already = seen.get(hash);
         if (already !== undefined) {
@@ -655,15 +715,17 @@ export function Maintenance(): React.ReactElement {
           tempo_bpm: tags.tempoBpm,
           content_hash: hash,
         });
+        wrote = { id, hash };
         seen.set(hash, title);
 
         await uploadMedia({
-          kind: 'track', id, file, filename: file.name,
+          kind: 'track', id, file: body, filename: file.name,
           durationSeconds: measured, contentHash: hash,
         });
         added.push(id);
       } catch (thrown: unknown) {
-        failed.push(`${file.name}: ${reason(thrown)}`);
+        const undone = wrote === null ? null : await unblockRetry(wrote.id, wrote.hash);
+        failed.push(`${file.name}: ${reason(thrown)}${undone === null ? '' : ` (${undone})`}`);
       }
     }
 
@@ -712,7 +774,7 @@ export function Maintenance(): React.ReactElement {
           <input
             type="file"
             multiple
-            accept="audio/mpeg,audio/mp4,audio/aac,audio/wav"
+            accept={AUDIO_ACCEPT}
             disabled={busy}
             onChange={(event) => {
               const files = event.target.files;
@@ -755,8 +817,13 @@ export function Maintenance(): React.ReactElement {
         busy={busy}
         onClose={() => setOpenTrack(null)}
         onSave={(patch) => run('Piece saved', () => saveTrack(track.id, patch))}
-        onUpload={(file, durationSeconds) => run('File replaced', () => uploadMedia({
+        /* THE HASH GOES WITH IT. `upload.finish` always writes
+           `content_hash`, so leaving it out here wrote NULL — a replacement
+           quietly surrendered the row's duplicate protection, and the same
+           file could then be dropped in again as a new piece. */
+        onUpload={(file, durationSeconds) => run('File replaced', async () => uploadMedia({
           kind: 'track', id: track.id, file, filename: file.name, durationSeconds,
+          contentHash: await hashFile(file),
         }))}
         onArchive={(archived) => run(archived ? 'Piece retired' : 'Piece restored',
           () => setArchived('track', track.id, archived))}
@@ -1524,7 +1591,7 @@ function TrackPanel(props: {
           <span>{track.src === null ? 'Upload the audio' : 'Replace the audio'}</span>
           <input
             type="file"
-            accept="audio/mpeg,audio/mp4,audio/aac,audio/wav"
+            accept={AUDIO_ACCEPT}
             disabled={props.busy}
             onChange={(event) => {
               const file = event.target.files?.[0];

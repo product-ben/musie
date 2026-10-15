@@ -232,6 +232,64 @@ describe('an m4a', () => {
   });
 });
 
+/* ═══ WHAT AN EXPORTER GETS WRONG ═══════════════════════════════════════════ */
+
+/**
+ * The two things measured in Ben's own library on 2026-10-14, across the
+ * thirteen Epidemic Sound exports in `musie-assets/music/unused`.
+ *
+ * Both were WRITTEN STRAIGHT INTO `tracks` by `uploadPieces`, which does not
+ * call `validateTrack` — so a tag an exporter got wrong was not a field left
+ * empty, it was an upload that failed or a title with punctuation in it.
+ */
+describe('a tag an exporter got wrong', () => {
+  /* Two of the thirteen carry `TBPM 0`, and `tracks_tempo_sane` wants >= 1. */
+  it('reads a tempo of zero as no tempo at all', () => {
+    expect(readAudioTags(id3([frame('TBPM', '0')])).tempoBpm).toBeNull();
+  });
+
+  it('reads a tempo past the top of the column as no tempo', () => {
+    expect(readAudioTags(id3([frame('TBPM', '401')])).tempoBpm).toBeNull();
+    expect(readAudioTags(id3([frame('TBPM', '-74')])).tempoBpm).toBeNull();
+  });
+
+  it('keeps the tempi either side of the bounds', () => {
+    expect(readAudioTags(id3([frame('TBPM', '1')])).tempoBpm).toBe(1);
+    expect(readAudioTags(id3([frame('TBPM', '400')])).tempoBpm).toBe(400);
+  });
+
+  it('reads a year outside the column as no year', () => {
+    expect(readAudioTags(id3([frame('TDRC', '1899')])).year).toBeNull();
+    expect(readAudioTags(id3([frame('TDRC', '2101')])).year).toBeNull();
+    expect(readAudioTags(id3([frame('TDRC', '1900')])).year).toBe(1900);
+  });
+
+  /* The same bound, through the other parser. */
+  it('bounds an m4a tempo too, where 96 and 74 already read correctly', () => {
+    expect(readAudioTags(mp4([atom('tmpo', data([0, 0], 21))])).tempoBpm).toBeNull();
+    /* 401, two bytes big-endian — parsed, then refused for being out of range. */
+    expect(readAudioTags(mp4([atom('tmpo', data([1, 0x91], 21))])).tempoBpm).toBeNull();
+  });
+
+  /**
+   * `ES_The Lion's Hoop - Jon Bjork.mp3` has `The Lion\'s Hoop` in its TIT2,
+   * and `ES_We'll Always Have Notting Hill` the same — a backslash belonging
+   * to whatever quoted the string on the exporter's side. It is not part of
+   * the title, and it reached the screen.
+   */
+  it("drops an exporter's escaping of an apostrophe", () => {
+    expect(readAudioTags(id3([frame('TIT2', "The Lion\\'s Hoop")])).title)
+      .toBe("The Lion's Hoop");
+    expect(readAudioTags(id3([frame('TPE1', 'Say \\"hello\\"')])).artist)
+      .toBe('Say "hello"');
+  });
+
+  /* Only `\'` and `\"`. A backslash that is really in the title stays. */
+  it('keeps a backslash that is not escaping a quote', () => {
+    expect(readAudioTags(id3([frame('TIT2', 'AC\\DC')])).title).toBe('AC\\DC');
+  });
+});
+
 /* ═══ AND IT NEVER THROWS ═══════════════════════════════════════════════════ */
 
 /**
