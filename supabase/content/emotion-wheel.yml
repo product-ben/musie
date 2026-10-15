@@ -1,0 +1,484 @@
+# The emotion wheel — "I feel …"
+#
+# A verbatim transcription of the eight-emotion feelings wheel, English with a
+# German reading beside it. Three rings, nested the way they are drawn:
+#
+#   emotions    8   inner ring    Happy, Trust, Fear, Surprise, Sad, …
+#   detailed   40   middle ring   4 or 6 per emotion
+#   specific   80   outer ring    exactly 2 per detailed feeling
+#
+# Order is one clockwise sweep of the wheel, starting at twelve o'clock with
+# Happy, and the same sweep inside every ring. Nothing here is sorted
+# alphabetically — the sequence is the picture.
+#
+# ── WHERE EACH FEELING SITS ───────────────────────────────────────────────
+# Every node carries its position, because the wheel is a circle and the
+# useful questions are about neighbours.
+#
+#   i     0-based index within its own ring, clockwise from twelve o'clock:
+#         emotions 0–7, detailed 0–39, specific 0–79.
+#   deg   [start, end] in degrees, same origin and direction. 0° is the line
+#         between Anticipation and Happy at the top; the wheel closes at 360.
+#
+# Index and angle are not interchangeable, and assuming they are is the trap
+# this file exists to prevent. A main emotion is always 45°, but it holds 4 OR
+# 6 detailed feelings — so a detailed segment is 11.25° inside Trust and 7.5°
+# inside Happy, and a specific is half of whatever its parent is. Equal steps
+# in `i` are unequal steps in `deg`.
+#
+# ── NEIGHBOURS ────────────────────────────────────────────────────────────
+# Neighbours wrap, because nothing on a circle is first or last:
+#
+#   either side of detailed d:   (d - 1) % 40   and   (d + 1) % 40
+#
+# Every detailed feeling holds exactly two specifics, so a specific's index is
+# 2 × its parent's index, plus 0 or 1. That makes the drill-down question — a
+# detailed feeling's own two specifics, plus the one touching it on each side
+# from the neighbouring detailed feelings — pure arithmetic:
+#
+#   its own       2d  and  2d + 1
+#   to its left   (2d - 1) % 80     the last specific of detailed d - 1
+#   to its right  (2d + 2) % 80     the first specific of detailed d + 1
+#
+# Worked, for Happy › Optimistic (d = 0): its own are 0 Powerful and 1
+# Inspired, to the left is 79 Passionate, to the right is 2 Proud. Passionate
+# is the last word of Anticipation, and the wrap is the whole point — it is
+# the segment physically touching Powerful across the twelve o'clock line.
+#
+# ── THE WORDS ─────────────────────────────────────────────────────────────
+# The English is the image's own wording, unedited. Three consequences that are
+# the source's, not this file's:
+#
+#   - Powerful appears twice under Happy — under Optimistic and under Strong.
+#   - Delighted appears under Happy › Joyful and again under Surprise › Amazed.
+#   - Embarassed is spelled with one r, as the wheel spells it.
+#
+# A word is therefore not a key; `i` is. The two Powerfuls are specific 0 and
+# 5, the two Delighteds are 7 and 37.
+#
+# The wheel mixes adjectives (Happy, Scared) with nouns (Trust, Grief,
+# Admiration). The German mirrors each word's part of speech instead of
+# levelling it, so the prompt reads "Ich fühle mich ruhig" for an adjective and
+# "Ich fühle Verachtung" for a noun. German follows docs/GERMAN-UI-WRITING.md —
+# du, sentence case, no Bitte, and … rather than three dots.
+#
+# Nothing reads this file yet — no migration, no table, no app code. It is a
+# dataset on an experiment branch.
+
+wheel:
+  zero_at: twelve o'clock
+  direction: clockwise
+  rings: { emotions: 8, detailed: 40, specific: 80 }
+
+prompt:
+  en: I feel …
+  de: Ich fühle mich …
+
+emotions:
+  - id: happy
+    i: 0
+    deg: [0, 45]
+    en: Happy
+    de: Glücklich
+    detailed:
+      - id: optimistic
+        i: 0
+        deg: [0, 7.5]
+        en: Optimistic
+        de: Optimistisch
+        specific:
+          - { i: 0, deg: [0, 3.75],    en: Powerful, de: Kraftvoll  }
+          - { i: 1, deg: [3.75, 7.5],  en: Inspired, de: Inspiriert }
+
+      - id: confident
+        i: 1
+        deg: [7.5, 15]
+        en: Confident
+        de: Selbstbewusst
+        specific:
+          - { i: 2, deg: [7.5, 11.25],  en: Proud,        de: Stolz        }
+          - { i: 3, deg: [11.25, 15],   en: Self-Assured, de: Selbstsicher }
+
+      - id: strong
+        i: 2
+        deg: [15, 22.5]
+        en: Strong
+        de: Stark
+        specific:
+          - { i: 4, deg: [15, 18.75],    en: Courageous, de: Mutig     }
+          - { i: 5, deg: [18.75, 22.5],  en: Powerful,   de: Kraftvoll }
+
+      - id: joyful
+        i: 3
+        deg: [22.5, 30]
+        en: Joyful
+        de: Freudig
+        specific:
+          - { i: 6, deg: [22.5, 26.25],  en: Ecstatic,  de: Ekstatisch }
+          - { i: 7, deg: [26.25, 30],    en: Delighted, de: Entzückt   }
+
+      - id: aroused
+        i: 4
+        deg: [30, 37.5]
+        en: Aroused
+        de: Erregt
+        specific:
+          - { i: 8, deg: [30, 33.75],    en: Amorous, de: Sinnlich  }
+          - { i: 9, deg: [33.75, 37.5],  en: Playful, de: Verspielt }
+
+      - id: loving
+        i: 5
+        deg: [37.5, 45]
+        en: Loving
+        de: Liebevoll
+        specific:
+          - { i: 10, deg: [37.5, 41.25],  en: Embracing, de: Zugewandt }
+          - { i: 11, deg: [41.25, 45],    en: Generous,  de: Großzügig }
+
+  - id: trust
+    i: 1
+    deg: [45, 90]
+    en: Trust
+    de: Vertrauen
+    detailed:
+      - id: grateful
+        i: 6
+        deg: [45, 56.25]
+        en: Grateful
+        de: Dankbar
+        specific:
+          - { i: 12, deg: [45, 50.625],     en: Blessed,    de: Gesegnet    }
+          - { i: 13, deg: [50.625, 56.25],  en: Admiration, de: Bewunderung }
+
+      - id: peaceful
+        i: 7
+        deg: [56.25, 67.5]
+        en: Peaceful
+        de: Friedlich
+        specific:
+          - { i: 14, deg: [56.25, 61.875],  en: Calm,    de: Ruhig     }
+          - { i: 15, deg: [61.875, 67.5],   en: Content, de: Zufrieden }
+
+      - id: accepted
+        i: 8
+        deg: [67.5, 78.75]
+        en: Accepted
+        de: Angenommen
+        specific:
+          - { i: 16, deg: [67.5, 73.125],   en: Valued,    de: Wertgeschätzt }
+          - { i: 17, deg: [73.125, 78.75],  en: Respected, de: Respektiert   }
+
+      - id: hopeful
+        i: 9
+        deg: [78.75, 90]
+        en: Hopeful
+        de: Hoffnungsvoll
+        specific:
+          - { i: 18, deg: [78.75, 84.375],  en: Longing,   de: Sehnsucht      }
+          - { i: 19, deg: [84.375, 90],     en: Expectant, de: Erwartungsvoll }
+
+  - id: fear
+    i: 2
+    deg: [90, 135]
+    en: Fear
+    de: Angst
+    detailed:
+      - id: cautious
+        i: 10
+        deg: [90, 97.5]
+        en: Cautious
+        de: Vorsichtig
+        specific:
+          - { i: 20, deg: [90, 93.75],    en: Timid,        de: Schüchtern }
+          - { i: 21, deg: [93.75, 97.5],  en: Apprehensive, de: Beklommen  }
+
+      - id: weak
+        i: 11
+        deg: [97.5, 105]
+        en: Weak
+        de: Schwach
+        specific:
+          - { i: 22, deg: [97.5, 101.25],  en: Insecure,   de: Unsicher    }
+          - { i: 23, deg: [101.25, 105],   en: Vulnerable, de: Verletzlich }
+
+      - id: scared
+        i: 12
+        deg: [105, 112.5]
+        en: Scared
+        de: Verängstigt
+        specific:
+          - { i: 24, deg: [105, 108.75],    en: Frightened, de: Erschrocken }
+          - { i: 25, deg: [108.75, 112.5],  en: Terrified,  de: Entsetzt    }
+
+      - id: anxious
+        i: 13
+        deg: [112.5, 120]
+        en: Anxious
+        de: Ängstlich
+        specific:
+          - { i: 26, deg: [112.5, 116.25],  en: Dread,   de: Grauen  }
+          - { i: 27, deg: [116.25, 120],    en: Panicky, de: Panisch }
+
+      - id: nervous
+        i: 14
+        deg: [120, 127.5]
+        en: Nervous
+        de: Nervös
+        specific:
+          - { i: 28, deg: [120, 123.75],    en: Threatened, de: Bedroht     }
+          - { i: 29, deg: [123.75, 127.5],  en: Uneasy,     de: Unbehaglich }
+
+      - id: worried
+        i: 15
+        deg: [127.5, 135]
+        en: Worried
+        de: Besorgt
+        specific:
+          - { i: 30, deg: [127.5, 131.25],  en: Edgy,       de: Angespannt }
+          - { i: 31, deg: [131.25, 135],    en: Distressed, de: Aufgewühlt }
+
+  - id: surprise
+    i: 3
+    deg: [135, 180]
+    en: Surprise
+    de: Überraschung
+    detailed:
+      - id: startled
+        i: 16
+        deg: [135, 146.25]
+        en: Startled
+        de: Aufgeschreckt
+        specific:
+          - { i: 32, deg: [135, 140.625],     en: Awe,     de: Ehrfurcht  }
+          - { i: 33, deg: [140.625, 146.25],  en: Shocked, de: Schockiert }
+
+      - id: confused
+        i: 17
+        deg: [146.25, 157.5]
+        en: Confused
+        de: Verwirrt
+        specific:
+          - { i: 34, deg: [146.25, 151.875],  en: Disillusioned, de: Desillusioniert }
+          - { i: 35, deg: [151.875, 157.5],   en: Distracted,    de: Abgelenkt       }
+
+      - id: amazed
+        i: 18
+        deg: [157.5, 168.75]
+        en: Amazed
+        de: Erstaunt
+        specific:
+          - { i: 36, deg: [157.5, 163.125],   en: Astonished, de: Verblüfft }
+          - { i: 37, deg: [163.125, 168.75],  en: Delighted,  de: Entzückt  }
+
+      - id: disappointed
+        i: 19
+        deg: [168.75, 180]
+        en: Disappointed
+        de: Enttäuscht
+        specific:
+          - { i: 38, deg: [168.75, 174.375],  en: Betrayed, de: Verraten }
+          - { i: 39, deg: [174.375, 180],     en: Dismayed, de: Bestürzt }
+
+  - id: sad
+    i: 4
+    deg: [180, 225]
+    en: Sad
+    de: Traurig
+    detailed:
+      - id: unhappy
+        i: 20
+        deg: [180, 187.5]
+        en: Unhappy
+        de: Unglücklich
+        specific:
+          - { i: 40, deg: [180, 183.75],    en: Hopeless,  de: Hoffnungslos }
+          - { i: 41, deg: [183.75, 187.5],  en: Miserable, de: Elend        }
+
+      - id: depressed
+        i: 21
+        deg: [187.5, 195]
+        en: Depressed
+        de: Niedergeschlagen
+        specific:
+          - { i: 42, deg: [187.5, 191.25],  en: Discouraged, de: Entmutigt }
+          - { i: 43, deg: [191.25, 195],    en: Empty,       de: Leer      }
+
+      - id: grief
+        i: 22
+        deg: [195, 202.5]
+        en: Grief
+        de: Trauer
+        specific:
+          - { i: 44, deg: [195, 198.75],    en: Despair, de: Verzweiflung }
+          - { i: 45, deg: [198.75, 202.5],  en: Sorrow,  de: Kummer       }
+
+      - id: hurt
+        i: 23
+        deg: [202.5, 210]
+        en: Hurt
+        de: Verletzt
+        specific:
+          - { i: 46, deg: [202.5, 206.25],  en: Injured, de: Verwundet }
+          - { i: 47, deg: [206.25, 210],    en: Wronged, de: Gekränkt  }
+
+      - id: lonely
+        i: 24
+        deg: [210, 217.5]
+        en: Lonely
+        de: Einsam
+        specific:
+          - { i: 48, deg: [210, 213.75],    en: Abandoned, de: Verlassen }
+          - { i: 49, deg: [213.75, 217.5],  en: Isolated,  de: Isoliert  }
+
+      - id: ashamed
+        i: 25
+        deg: [217.5, 225]
+        en: Ashamed
+        de: Beschämt
+        specific:
+          - { i: 50, deg: [217.5, 221.25],  en: Guilty,     de: Schuldig }
+          - { i: 51, deg: [221.25, 225],    en: Embarassed, de: Verlegen }
+
+  - id: disgust
+    i: 5
+    deg: [225, 270]
+    en: Disgust
+    de: Ekel
+    detailed:
+      - id: disapproval
+        i: 26
+        deg: [225, 236.25]
+        en: Disapproval
+        de: Missbilligung
+        specific:
+          - { i: 52, deg: [225, 230.625],     en: Ridicule,   de: Spott        }
+          - { i: 53, deg: [230.625, 236.25],  en: Judgmental, de: Verurteilend }
+
+      - id: dislike
+        i: 27
+        deg: [236.25, 247.5]
+        en: Dislike
+        de: Abneigung
+        specific:
+          - { i: 54, deg: [236.25, 241.875],  en: Awful,    de: Furchtbar }
+          - { i: 55, deg: [241.875, 247.5],   en: Appalled, de: Empört    }
+
+      - id: repelled
+        i: 28
+        deg: [247.5, 258.75]
+        en: Repelled
+        de: Abgestoßen
+        specific:
+          - { i: 56, deg: [247.5, 253.125],   en: Bored,     de: Gelangweilt }
+          - { i: 57, deg: [253.125, 258.75],  en: Loathsome, de: Widerwärtig }
+
+      - id: contempt
+        i: 29
+        deg: [258.75, 270]
+        en: Contempt
+        de: Verachtung
+        specific:
+          - { i: 58, deg: [258.75, 264.375],  en: Detestable, de: Abscheulich }
+          - { i: 59, deg: [264.375, 270],     en: Envious,    de: Neidisch    }
+
+  - id: angry
+    i: 6
+    deg: [270, 315]
+    en: Angry
+    de: Wütend
+    detailed:
+      - id: critical
+        i: 30
+        deg: [270, 277.5]
+        en: Critical
+        de: Kritisch
+        specific:
+          - { i: 60, deg: [270, 273.75],    en: Biting,   de: Bissig  }
+          - { i: 61, deg: [273.75, 277.5],  en: Abrasive, de: Schroff }
+
+      - id: aggressive
+        i: 31
+        deg: [277.5, 285]
+        en: Aggressive
+        de: Aggressiv
+        specific:
+          - { i: 62, deg: [277.5, 281.25],  en: Hostile,  de: Feindselig }
+          - { i: 63, deg: [281.25, 285],    en: Spiteful, de: Gehässig   }
+
+      - id: mad
+        i: 32
+        deg: [285, 292.5]
+        en: Mad
+        de: Zornig
+        specific:
+          - { i: 64, deg: [285, 288.75],    en: Enraged, de: Außer sich }
+          - { i: 65, deg: [288.75, 292.5],  en: Furious, de: Rasend     }
+
+      - id: upset
+        i: 33
+        deg: [292.5, 300]
+        en: Upset
+        de: Verärgert
+        specific:
+          - { i: 66, deg: [292.5, 296.25],  en: Provoked,  de: Provoziert }
+          - { i: 67, deg: [296.25, 300],    en: Irritated, de: Gereizt    }
+
+      - id: frustrated
+        i: 34
+        deg: [300, 307.5]
+        en: Frustrated
+        de: Frustriert
+        specific:
+          - { i: 68, deg: [300, 303.75],    en: Annoyed,  de: Genervt     }
+          - { i: 69, deg: [303.75, 307.5],  en: Thwarted, de: Ausgebremst }
+
+      - id: insulted
+        i: 35
+        deg: [307.5, 315]
+        en: Insulted
+        de: Beleidigt
+        specific:
+          - { i: 70, deg: [307.5, 311.25],  en: Indignant, de: Entrüstet   }
+          - { i: 71, deg: [311.25, 315],    en: Vengeful,  de: Rachsüchtig }
+
+  - id: anticipation
+    i: 7
+    deg: [315, 360]
+    en: Anticipation
+    de: Erwartung
+    detailed:
+      - id: stressed
+        i: 36
+        deg: [315, 326.25]
+        en: Stressed
+        de: Gestresst
+        specific:
+          - { i: 72, deg: [315, 320.625],     en: Overwhelmed, de: Überfordert }
+          - { i: 73, deg: [320.625, 326.25],  en: Pressured,   de: Unter Druck }
+
+      - id: interested
+        i: 37
+        deg: [326.25, 337.5]
+        en: Interested
+        de: Interessiert
+        specific:
+          - { i: 74, deg: [326.25, 331.875],  en: Impatient, de: Ungeduldig }
+          - { i: 75, deg: [331.875, 337.5],   en: Curious,   de: Neugierig  }
+
+      - id: eager
+        i: 38
+        deg: [337.5, 348.75]
+        en: Eager
+        de: Eifrig
+        specific:
+          - { i: 76, deg: [337.5, 343.125],   en: Enthusiastic, de: Begeistert }
+          - { i: 77, deg: [343.125, 348.75],  en: Motivated,    de: Motiviert  }
+
+      - id: excited
+        i: 39
+        deg: [348.75, 360]
+        en: Excited
+        de: Aufgeregt
+        specific:
+          - { i: 78, deg: [348.75, 354.375],  en: Energized,  de: Energiegeladen   }
+          - { i: 79, deg: [354.375, 360],     en: Passionate, de: Leidenschaftlich }
