@@ -9546,3 +9546,60 @@ What I need from Ben: **two things.**
 2. **Hosted is one migration behind**: `pnpm db:status` reports
    `20261014150000_a_card_cannot_be_retired_yet.sql` on disk and not on hosted.
    Unrelated to the upload, but it is rule 4's trap sitting open right now.
+
+## The migration push has never once succeeded, and today's two failures were not yesterday's
+
+Where: `.github/workflows/db-push.yml` (`supabase/setup-cli@v1`, and the
+`paths:` filter on the `push` trigger), `SCHEDULED-MAINTENANCE.md`
+
+What I checked: `pnpm db:status` reported DRIFTED —
+`20261014150000_a_card_cannot_be_retired_yet.sql` on disk, not on hosted — so I
+read the workflow that exists to prevent exactly that. **It has five runs and
+five failures. M8's automation has never worked.**
+
+Two distinct causes, and the second is the one worth writing down:
+
+| | |
+|---|---|
+| 2026-10-13/14, four runs | `supabase link` fails: *password authentication failed for user "postgres"*. `SUPABASE_DB_PASSWORD` is wrong. Ben reports this fixed on 2026-10-15 |
+| 2026-10-15, two dispatches sixteen seconds apart | **`Failed to resolve latest Supabase CLI release: rate limit exceeded`**, in `setup-cli`, *before* `link`. `version: latest` asks the GitHub API which release is newest on every run |
+
+The trap is the resemblance. Both read as *the Database job failed again* in the
+same email, and the second pair says **nothing at all** about the credentials —
+the job never reached them. A fix that was in fact applied looks exactly like a
+fix that was not, which is M6's own principle ("I could not check" and "they
+agree" must never look alike) arriving one layer further out than M6 was
+written for.
+
+A second thing I had wrong, and it matters for how the automation is reasoned
+about: **merging any PR to `main` does not run this workflow.** The `push`
+trigger carries `paths: ['supabase/migrations/**', '.github/workflows/db-push.yml']`.
+That is correct behaviour — a client-side change has nothing to push — but it
+means the pending migration cannot be carried over by merging unrelated work,
+and PR #29 (five upload fixes, deliberately no migration) did not and could not
+trigger it.
+
+What I did: pinned the CLI to `2.117.0`, the version on Ben's machine today, so
+the step cannot fail for a reason outside this repository and so the CLI that
+pushes a migration is the CLI a person ran `supabase db reset` with. Moving the
+pin is a deliberate act, like `wrangler.jsonc`'s `compatibility_date`.
+
+The pin also happens to be the cheapest way to answer the open question, because
+this file is itself in the `paths:` filter: **merging it runs the workflow.** If
+it now gets past `link`, the password is fixed and the migration goes over in the
+same run. If it stops at `link` again, the secret is still wrong — and this time
+that reading is unambiguous.
+
+What I need from Ben: **nothing beyond merging it**, and then one glance at
+where the job stops. Two things to know:
+
+1. The hosted database suite runs immediately after the push, and two tests on
+   `main` are expected to fail there for reasons already logged — the `ZZ-99`
+   fixture against `cards_code_shape`, and `deck.db.test.ts`'s premise that the
+   database carries `deck.json`, which the maintenance UI makes false by design.
+   A failure in the *test* step therefore confirms the credentials rather than
+   questioning them.
+2. `supabase db push` was never the thing that was broken. `pnpm db:sync` uses
+   the CLI's own login and would have worked on any of these five days, which is
+   why the drift was invisible: the guarded manual path was fine and the
+   automation nobody watched was not.
