@@ -7749,10 +7749,25 @@ html[data-musy-scroll-snap='y'] {
    and not read as a second headline. The size is set on the component, not
    here, so `Icon` applies the stroke rule for the step.
 
-   `align-self: center` rather than the flex container's `baseline`: a glyph
-   this size has no text baseline worth aligning, and sitting it on one drops
-   it below the line it belongs to. */
-.musy-ilink__icon { flex: none; align-self: center; }
+   ── IT SITS ON THE BASELINE — Ben, 2026-10-15 ─────────────────────────
+   `align-self: center` centred it against the line box, which at a display
+   step left it floating above the letters: the x-height is a third of the
+   line and the glyph was centred on the whole of it.
+
+   `baseline` on a replaced element does the right thing for free. An SVG has
+   no text baseline, so CSS Box Alignment synthesizes one from the border
+   box's BOTTOM edge — which is why this one declaration both baseline-aligns
+   the item and bottom-aligns the glyph, and why the rule reads as if it did
+   only the first. The dots now sit on the same line the letters stand on.
+
+   THE OPTICAL NUDGE HAD TO GO WITH IT, and it is removed at the call site
+   rather than here: `Icon`'s `inline` prop applies
+   `translateY(--icon-optical-nudge)`, a -0.055em lift that corrects an icon
+   set `vertical-align: middle` against text. Against a baseline it is a
+   correction for a problem that is no longer there — it would have lifted
+   the glyph ~2px off the line at `heading-lg` and made this declaration
+   almost right, which is the worst of the three options. */
+.musy-ilink__icon { flex: none; align-self: baseline; }
 
 .musy-ilink:disabled {
   color: var(--on-surface-disabled);

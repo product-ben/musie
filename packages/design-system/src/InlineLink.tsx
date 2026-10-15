@@ -82,9 +82,14 @@ export function InlineLink({
           is a visibly long tail after the last letter. */}
       <span className="musy-ilink__text">{children}</span>
       {/* NO `label`, which is how `Icon` is told it is decorative: it sets
-          `aria-hidden` itself when none is passed. `inline` applies
-          --icon-optical-nudge, which is the prop's whole purpose — an icon
-          beside text.
+          `aria-hidden` itself when none is passed.
+
+          AND NO `inline`, which it carried until 2026-10-15. That prop's
+          whole job is `translateY(--icon-optical-nudge)` — a -0.055em lift
+          that corrects an icon set `vertical-align: middle` against text.
+          The glyph is baseline-aligned now (see `.musy-ilink__icon`), so the
+          nudge corrects a problem that no longer exists and would push it
+          ~2px off the line it was just put on.
 
           `lg` (24px) — Ben, 2026-10-15, after two passes. `sm` read as a
           speck beside display type; `xl` competed with the word it belongs
@@ -92,7 +97,7 @@ export function InlineLink({
           notices is not a cue — 24 is where it is noticed without becoming a
           second headline. */}
       {trailingIcon !== undefined && (
-        <Icon glyph={trailingIcon} size="lg" inline className="musy-ilink__icon" />
+        <Icon glyph={trailingIcon} size="lg" className="musy-ilink__icon" />
       )}
     </Button>
   );
