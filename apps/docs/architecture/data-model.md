@@ -27,7 +27,8 @@ erDiagram
         text track_id FK "TEXT, not uuid"
         text cut_id FK "the listening exercises' own audio"
         text status "started | finished | abandoned"
-        text step "intro | scan | listen | reflect"
+        text step "intro | scan|view|select | listen | reflect"
+        bool digital_cards "true where the deck is not on the table"
         text feeling_change
         timestamptz listened_at
         timestamptz started_at
@@ -64,6 +65,7 @@ erDiagram
         int timeframe_min
         int timeframe_max
         bool needs_cards "mirror of kind, by constraint"
+        int cards_dealt "5, 1, or null where none are drawn"
         bool implemented
         int listen_gate_seconds
     }
@@ -214,7 +216,12 @@ constraint sessions_ended_at_matches_status
   check ((status = 'started') = (ended_at is null))
 
 -- the four steps are fixed here, not in the app
-constraint sessions_step_known check (step in ('intro','scan','listen','reflect'))
+constraint sessions_step_known
+  check (step in ('intro','scan','view','select','listen','reflect'))
+-- six legal names, four used per row: the second step is scan, view or
+-- select and never two of them
+constraint exercises_cards_dealt_matches_kind
+  check ((kind = 'card_based') = (cards_dealt is not null))
 
 -- needs_cards is a mirror of kind, not a second answer
 constraint exercises_cards_match_kind check ((kind = 'card_based') = needs_cards)

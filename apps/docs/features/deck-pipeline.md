@@ -4,14 +4,19 @@ One file, two outputs: the migration that lands the deck in the database, and
 the print-ready PDF. `deck.json` is the **only** place the deck is written by
 hand.
 
+**This flow reversed on 2026-10-14.** The file used to be the source and the
+database the copy. It is the other way round now: the deck is edited at
+`/maintenance`, lives in the database, and `deck.json` is an **export**.
+
 ```mermaid
 flowchart TD
-  J["supabase/content/deck.json<br/>nine cards · codes · feelings × 2 · which track plays where"]
-  J -->|"pnpm deck:migration"| M["a NEW stacking migration<br/>upserts every row, deletes what is gone"]
-  M --> RST["supabase db reset"] --> TDB["pnpm test:db<br/>deck.db.test.ts: the database IS this file"]
-  TDB --> PUSH["pnpm db:sync → hosted"]
+  UI["/maintenance<br/>cards · tracks · artwork · the 5×5 grid"]
+  UI -->|"content-admin → admin_write()"| DB["the database<br/>cards · grid_cells · artworks · tracks"]
+  DB -->|"project_deck()"| P["cards.image_url + exercise_tracks<br/>DERIVED, rewritten on every write"]
+  DB -->|"pnpm content:export"| J["supabase/content/deck.json<br/>a readable snapshot, committed to git"]
   J -->|"pnpm deck:pdf"| PDF["deck.pdf + deck.html<br/>88×63mm, 3mm bleed, both faces"]
   J -->|"pnpm check"| T["deck.test.ts<br/>the file obeys every rule — no database"]
+  X["pnpm deck:migration"] -.->|"REFUSES"| UI
 ```
 
 ::: designers
@@ -108,33 +113,51 @@ address.
 | `lib/deck.ts`, `lib/deck.test.ts` | the rules, in `pnpm check` |
 | `lib/deck.db.test.ts` | the database **is** the file, row for row |
 
-## Rule 4 is not relaxed here
+## Content stopped travelling by migration — rule 4.1
 
-Every deck change is still **its own new migration file**, with its own new
-timestamp, reviewed and committed like any other. Nothing edits an applied
-migration and nothing pushes on its own.
+**Schema still travels by migration and rule 4 is untouched for it.** A column,
+a constraint, a function: new file, new timestamp, `pnpm db:sync`.
 
-What the generator removes is the retyping: nine cards across three tables, two
-locales and two exercises is **45 rows** — and both `cards.sort` and
-`cards.code` are non-deferrable unique columns that collide mid-statement if
-two cards swap places. That is the trap `20260923150000` hit on
-`exercises.sort`.
+Deck *content* does not. `20261014100100_maintenance_import.sql` is the last
+migration that will ever state it, and `20261013192229_deck_update.sql` is the
+last generated one — grandfathered, kept because it applies before the import in
+timestamp order.
 
-## Each generated migration states the WHOLE deck
+## Why the generator had to be switched off, and not just discouraged
 
-Upserts every row, deletes what the deck no longer has — rather than only the
-difference.
+Because each generated migration states the **WHOLE deck** — upserting every
+row and deleting what the file no longer has, rather than only the difference.
 
-**A migration carrying just the changed row would depend on the database
-already being in the state the generator imagined**, which is the assumption
-rule 4 exists because nobody can make safely. Stating it in full lands the same
-deck whatever it finds, and is harmless applied twice.
+That was the right shape while the file was the source: a migration carrying
+just the changed row would depend on the database already being in the state
+the generator imagined, which is the assumption rule 4 exists because nobody can
+make safely. Stating it in full lands the same deck whatever it finds.
 
-The header's *what this changes* summary is a different thing: it diffs
-`git show HEAD:supabase/content/deck.json` against the file on disk. It is prose
-for a reviewer. Commit the deck before generating and the summary is empty and
-the migration is still complete — `deck.db.test.ts` is what actually proves the
-database matches.
+**Now that an operator edits the deck, that same completeness is the hazard.**
+Generating a migration today would put the file's version back over whatever was
+changed at `/maintenance` — silently, on the next `supabase db reset` or the
+next merge to `main`, with every check green. So `pnpm deck:migration` refuses
+and prints where the deck is edited now, and `pnpm music:migration` writes
+`exercise_cuts` only: the `tracks` half came out, because that was the overlap
+that would clobber an edit on the next run.
+
+It is not a hypothetical. On 2026-10-14 the grandfathered deck migration was
+three migrations short of being pushed to hosted, where an operator had just
+re-placed all nine cards and uploaded twelve tracks; applying it would have
+written two of those pairings back to where they had been in September. It was
+marked applied instead of run.
+
+## `deck.json` is a snapshot, and `content:export` writes it
+
+`pnpm content:export` reads the local stack and rewrites `deck.json`,
+`music.json` and `grid.json`. The file keeps the same shape it always had, so
+`deck:pdf` and `deck.test.ts` are unaffected — what changed is who writes it.
+
+`deck.db.test.ts` still asserts that the database matches the snapshot, which
+means a fresh export is part of committing a content change rather than an
+afterthought. Note what it compares after an edit: `supabase db reset` yields
+**factory** content, not live, so local and hosted agree only until the first
+real edit through the UI.
 
 ## It does not own `tracks`
 
@@ -153,10 +176,16 @@ should draw it. A card paired with nothing is **legal**: it is the honest state
 while a recording is being chosen, and the generator says so rather than
 refusing.
 
-**Removing** — `pnpm deck:migration` refuses unless you pass
-`--allow-removal`, because `sessions.card_id` is `on delete set null`: every
-diary entry that ever drew that card keeps its row and loses the card it drew.
-**That is a product decision, not a content edit.**
+**Removing** — nothing is hard-deleted any more. A card is **archived**
+(`cards.archived_at`), which keeps every diary entry that ever drew it intact
+and keeps a history with something to return to. The old guard here —
+`pnpm deck:migration --allow-removal` — is gone with the command: the generator
+refuses outright, because a generated migration states the WHOLE deck and would
+put the file's version back over whatever an operator changed, silently, on the
+next `supabase db reset`.
+
+`sessions.card_id` is still `on delete set null`, and that is still the reason
+retiring a card is a product decision rather than a content edit.
 
 ## The output is not committed
 

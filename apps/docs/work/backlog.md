@@ -12,6 +12,7 @@ re-deriving it.
 | **B3** | The browser walk runs nowhere | decide: manual tool, CI, or delete |
 | **B4** | `db:status` cannot answer from an unlinked worktree | pass the project ref explicitly |
 | **B5** | `size="comfort"` has no call site and is **reserved, not dead** | nothing — it is here so a clear-out finds a reason |
+| **B6** | Alt text has two homes, and the app reads the one scheduled to be dropped | carry the column across, move the two readers, then drop |
 
 ::: designers
 ## B1 · The splitting of spoken reflections
@@ -50,6 +51,22 @@ asked for silence; music without guidance is worse than either alone.**
 
 It can be tried at `/dev/experiment-mixer`, which is kept for exactly this — the
 only place a locked screen can be tested without shipping.
+
+## B6 · The pictures' descriptions are in the wrong table
+
+A card's alt text is the only translated thing left in the deck, and it is
+currently in two places at once: the nine written descriptions sit in
+`card_i18n.image_alt`, which every screen reads, while `/maintenance` writes
+`artwork_i18n.alt`, which has no rows with anything in them.
+
+**Two consequences, and the second is the one that matters.** An operator who
+spends an afternoon describing nine pictures changes a column nothing shows. And
+after an artwork upload a card shows the **new** picture with the **old** card's
+description — a screen reader is told something confidently wrong, which is
+worse than being told nothing.
+
+It lands hardest on the digital card path, where a card fills the screen with
+nothing else on it: there the description *is* the card.
 
 ## B5 · A size that is reserved rather than unused
 
@@ -143,6 +160,26 @@ problem it was built to fix.
 state. The ref is not a secret — it is already in the `env` block of
 `db-push.yml`. Needs a look at what `migration list` wants alongside
 `--project-ref` to avoid prompting for a password.
+
+## B6 · the three pieces, in order
+
+`20261014100100_maintenance_import.sql` creates the `artwork_i18n` rows with a
+literal `null` and does not carry `card_i18n.image_alt` across.
+`public.project_deck()` projects `cards.image_url` and `exercise_tracks` from
+the grid — not alt text. Both readers, `lib/content.ts` and
+`scripts/content-export.mjs`, select `card_i18n.image_alt`. So the table the
+maintenance UI writes is not the table the app reads, and `card_i18n` is
+scheduled to be dropped once the live branches land.
+
+1. one `update public.artwork_i18n i set alt = (select c.image_alt from …)`,
+   in the migration that is already going to drop `card_i18n`;
+2. `content.ts` and `content-export.mjs` switch to the artwork's alt — the join
+   is already there for `image_url`;
+3. then the drop.
+
+**Readers before the column goes**, which is the sequence `20261011100000` used
+for `needs_cards` rather than breaking every other worktree's app with a
+PostgREST error in a file they did not touch.
 
 ## B5 · if `comfort` is ever removed
 
