@@ -1202,7 +1202,6 @@ export const de: Messages = {
   'feelings.sheet.close': 'Schließen',
   'feelings.sheet.next': 'Weiter',
   'feelings.sheet.previous': 'Zurück',
-  'feelings.sheet.dot': 'Schritt {position} von {total}',
   'feelings.sheet.done': 'Das trifft es',
   'feelings.prompt.empty': 'Ich fühle mich …',
   'feelings.prompt.chosen': 'Gewählt: {feeling}',

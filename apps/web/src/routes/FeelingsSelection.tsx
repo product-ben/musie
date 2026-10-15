@@ -226,9 +226,13 @@ export function FeelingsSelection() {
         index={index}
         onIndexChange={setIndex}
         pages={pages}
-        dotLabel={(position, total) =>
-          t('feelings.sheet.dot', { position: String(position), total: String(total) })
-        }
+        /* NO `dotLabel`, and that is what removes the dots — `Sheet` draws the
+           row only when it is given one, because an unlabelled dot row fails
+           4.1.2 and the component refuses to draw one rather than draw it
+           nameless. Ben, 2026-10-15: the dots overlapped the hint on a ring
+           that scrolls, and a drill-down does not need a position indicator —
+           three rings is not a walk whose length you have to know. The
+           chevrons stay; they are guarded separately. */
         nextLabel={t('feelings.sheet.next')}
         previousLabel={t('feelings.sheet.previous')}
         header={

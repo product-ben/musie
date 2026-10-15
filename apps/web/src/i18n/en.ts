@@ -1657,7 +1657,6 @@ export const en = {
   'feelings.sheet.close': 'Close',
   'feelings.sheet.next': 'Next',
   'feelings.sheet.previous': 'Back',
-  'feelings.sheet.dot': 'Step {position} of {total}',
   'feelings.sheet.done': 'That is the one',
   'feelings.prompt.empty': 'I feel …',
   'feelings.prompt.chosen': 'I feel {feeling}',
