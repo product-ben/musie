@@ -7760,14 +7760,34 @@ html[data-musy-scroll-snap='y'] {
    the item and bottom-aligns the glyph, and why the rule reads as if it did
    only the first. The dots now sit on the same line the letters stand on.
 
-   THE OPTICAL NUDGE HAD TO GO WITH IT, and it is removed at the call site
-   rather than here: `Icon`'s `inline` prop applies
-   `translateY(--icon-optical-nudge)`, a -0.055em lift that corrects an icon
-   set `vertical-align: middle` against text. Against a baseline it is a
-   correction for a problem that is no longer there — it would have lifted
-   the glyph ~2px off the line at `heading-lg` and made this declaration
-   almost right, which is the worst of the three options. */
-.musy-ilink__icon { flex: none; align-self: baseline; }
+   `Icon`'s OWN NUDGE IS NOT USED, and it is refused at the call site rather
+   than here: the `inline` prop applies `translateY(--icon-optical-nudge)`, a
+   -0.055em LIFT that corrects an icon set `vertical-align: middle` against
+   text. Against a baseline it corrects a problem that is no longer there,
+   and it pulls the wrong way for the offset below.
+
+   ── AND THEN 4px DOWN FROM IT — Ben, 2026-10-15 ───────────────────────
+   Sitting exactly on the baseline, the dots read as a tail hanging off the
+   end of the word: a vertical glyph takes its full box, where the letters
+   beside it only fill their x-height, so "level at the bottom" and "level to
+   the eye" are not the same line. Dropping it a rung puts its mass against
+   the middle of the letters.
+
+   `--sp-1` IS THE RUNG and it is a fixed 4px rather than an em, which is
+   right here for a reason that would not hold elsewhere: the glyph is a
+   fixed 24px at every type step this component is used at, so an offset that
+   scaled with the text would drift against an icon that does not.
+
+   A TRANSFORM, NOT A MARGIN OR `position: relative`. A transform is the only
+   one of the three that moves the paint without touching layout — a margin
+   would push the line box taller and a relative offset would still reserve
+   its original space while painting elsewhere. The baseline alignment above
+   stays the thing that positions it; this only paints it a rung lower. */
+.musy-ilink__icon {
+  flex: none;
+  align-self: baseline;
+  transform: translateY(var(--sp-1));
+}
 
 .musy-ilink:disabled {
   color: var(--on-surface-disabled);
