@@ -9603,3 +9603,132 @@ where the job stops. Two things to know:
    the CLI's own login and would have worked on any of these five days, which is
    why the drift was invisible: the guarded manual path was fine and the
    automation nobody watched was not.
+
+## The hosted suite's first real run: the snapshots are stale because somebody did the work
+
+Where: `supabase/content/deck.json`, `music.json`, `apps/web/scripts/content-export.mjs`,
+`20261015100000_alt_text_follows_the_picture.sql`
+
+What I checked: the first hosted run of `pnpm test:db` that ever got past
+`supabase link` reported 5 of 11 files red, 9 assertions. **Eight of the nine
+are one thing: hosted holds more than the snapshot files do.** I guessed a
+parallel race first — the `db` project still has no `fileParallelism: false`
+and `maintenance.db.test.ts` writes cards and tracks for 90 seconds — and the
+diffs settled it the other way. They name rows, not counts:
+
+- `mc-10`, `sort: 10`, showing `assets/web/cards/mc-06.webp`
+- `trk-10` … `trk-22`, eleven pieces with real titles, artists, durations, files
+- `exercise_tracks` re-paired: mc-01→trk-22, mc-02→trk-12, mc-04→trk-21,
+  mc-05→trk-13, mc-06→trk-17, mc-09→trk-16, mc-10→trk-10
+
+So `/maintenance` is being used as designed, and rule 4.1's divergence has
+opened exactly where it said it would. **No race. Nothing to debug.**
+
+What I did: nothing to the snapshots, and one thing worth saying plainly
+instead — **the tool for this is already built.** `content-export.mjs` takes
+`SUPABASE_TEST_URL` + `SUPABASE_TEST_SERVICE_ROLE_KEY`, the same pair as
+`test:db`, so refreshing the files from hosted is one command today:
+
+    SUPABASE_TEST_URL=… SUPABASE_TEST_SERVICE_ROLE_KEY=… pnpm content:export
+
+That is what makes the hosted suite mean something again. **`pnpm content:pull`
+is a different tool for a different problem** — hosted content into the LOCAL
+stack, so a dev stack matches what testers see — and it is still not built. The
+earlier entry said it becomes real "the first time you edit the deck in a
+browser and then want a local stack that matches". That day is today, but it is
+a convenience; the red suite is not waiting on it.
+
+What I need from Ben: **a decision on which of the two is wanted**, and they
+are not alternatives so much as different days' problems. The export is a
+command and a commit. The pull is a script that writes content into a database,
+and the design question it carries is whether it may write the local stack
+directly with the service role, or must go through `admin_write` like every
+other content write — the first is simpler and the second is the only one that
+proves the real door still works.
+
+## `card_i18n` cannot be dropped, and §3.1 says it will be
+
+Where: `MAINTENANCE-UI.md` §3.1, `supabase/migrations/20260918150500_content_schema.sql`,
+`apps/web/src/components/SessionListen.tsx` L993, `apps/web/scripts/deck-pdf.mjs`
+
+What I checked: §3.1 schedules `card_i18n` away "once the live branches land",
+and `20261015100000` has just made `card_i18n.image_alt` a derived column —
+which would be pointless work if the table were going. It is not going, and the
+reason is one column: `feeling`.
+
+`card_i18n.feeling` is `not null`, `deck.mjs` refuses an empty one, and
+`deck:pdf` prints the word on the physical FRONT of MC-06…MC-09, which have no
+artwork master — so emptying the data prints four blank cards. The feeling word
+left every SCREEN on 2026-10-09 ("THE CODE ALONE", Ben), and the comment that
+records it is explicit that four render sites changed and no migration did.
+
+So the deck still carries exactly one string per card per locale, it is not
+shown anywhere, and the printer needs it.
+
+What I did: logged it rather than resolving it, and made `image_alt` derived
+inside the table on the understanding that the table stays.
+
+What I need from Ben: **nothing to proceed**, one thing to decide eventually.
+If `card_i18n` is really to go, `feeling` has to move somewhere first — the
+natural home is `cards` itself, or an `i18n` table keyed by card that is honest
+about being the printer's. Until then §3.1 is a plan that cannot be executed,
+and it should say so rather than reading as scheduled work.
+
+## MC-10 exists, is unreachable, and cannot be retired either
+
+Where: hosted `public.cards`, `apps/web/src/lib/content.ts` (`toCard`),
+`20261014150000_a_card_cannot_be_retired_yet.sql`
+
+What I checked: `missing_translations` reports `mc-10` missing in `de` and
+`en` — no `card_i18n` rows at all. `toCard` returns `[]` when
+`pickTranslation` finds nothing, so **the card is invisible in the app** while
+sitting in the grid and paired to `trk-10` in both card exercises. That is the
+answer to why it cannot be opened: not a bug, a missing row, and the reader
+degrading quietly on purpose.
+
+Its description it would get for free — its cell holds MC-06's artwork, and
+`project_deck()` now reads the picture that is actually shown. What it needs is
+a `feeling` in both locales, which is one word and a product decision.
+
+**And the loop closes awkwardly:** if MC-10 was a trial rather than a tenth
+feeling, it cannot be removed through `/maintenance` either. Archiving is
+refused by the trigger that went live this morning — `20261014150000`, because
+`CARD_SELECT` has no `archived_at` filter — and the screen offers no delete,
+deliberately, since nothing in this schema is hard-deleted.
+
+What I need from Ben: **which of the two it is.** A tenth feeling needs a word
+in German and English and I will write both. A trial needs either a
+hand-written `delete` with the service role, or the `archived_at` filter in
+`CARD_SELECT` plus `drop trigger cards_archive_disabled` — which is the one
+line `20261014150000` says is how it goes away, and it was always going to be
+wanted sooner than planned.
+
+## A fourth local/hosted auth divergence, found by a test that could not run
+
+Where: `apps/web/src/lib/auth.convert.db.test.ts` (`testEmail`),
+`BUILD-PLAN.md` A.6 Half 1
+
+What I checked: the ninth hosted failure is not content. H.2's conversion test
+is refused with `{ code: 'email_address_invalid', status: 400 }` — and the
+conversion never happens, so the thing under test is untouched. The test mints
+its own address, `h2-<label>-<timestamp>-<rand>@musie.test`, and **`.test` is a
+reserved TLD (RFC 2606)**: local GoTrue accepts it, hosted does not.
+
+What I did: nothing yet — it is one line in the test, and it belongs with a
+decision rather than in a migration-and-alt-text change.
+
+Two things follow and the second is the one that matters:
+
+- **H.2 is still unproven on hosted.** The run did not test it; it failed to
+  reach it. The claim all of phase H rests on — that `updateUser` converts in
+  place and keeps the id — holds only on the local stack so far.
+- **H.3 would be built against a looser validator than the one that will judge
+  real users.** Hosted's email rules are stricter than `config.toml`'s, which
+  is the same shape as A.6's *Divergence 1* (anonymous sign-ins are a dashboard
+  setting hosted, and `enable_anonymous_sign_ins` governs only local). That
+  list has four entries now, three of them unchecked.
+
+What I need from Ben: **a domain the test may own.** A real one on the sending
+domain once there is one; `@example.com` is also reserved and would fail the
+same way, so this is not a cosmetic swap. Until then A.6's "pnpm test:db green
+against hosted" cannot be ticked, and it should not be.
