@@ -190,6 +190,11 @@ export function Exercises() {
      go. */
   const toolbar = useEdgeFade<HTMLDivElement>();
   const scrollable = toolbar.edges !== 'none';
+  /* THE BACK CHEVRON IS DRAWN ONLY WHEN THERE IS SOMETHING BEHIND US — Ben,
+     2026-10-15. `'end'` means the only travel left is forwards, so the back
+     one is spent and comes OUT of the row rather than going grey in it; see
+     the block over the chevron itself for why the two ends differ. */
+  const backShown = toolbar.edges === 'start' || toolbar.edges === 'both';
 
   /* `behavior` IS NOT PASSED. `scroll-behavior` on the row is what decides
      whether this glides or jumps, so the motion lives in the stylesheet with
@@ -737,22 +742,46 @@ export function Exercises() {
               scroll and nowhere else — two permanently dead controls on a
               desktop would be the accessibility answer written as clutter.
 
-              DISABLED AT THE END IT POINTS AT, rather than hidden: a control
-              that vanished as you reached the end would move the row under
-              the pointer that was pressing it. `edges` names the end that
-              has something PAST it, so `end` means nothing is behind us and
-              the back chevron is spent.
+              `edges` names the end that has something PAST it, so `end` means
+              nothing is behind us and the back chevron is spent.
+
+              ── AND THE TWO CHEVRONS NOW ANSWER "SPENT" DIFFERENTLY ────────
+              THE BACK ONE IS HIDDEN (Ben, 2026-10-15); the forward one is
+              still disabled. That asymmetry is the point rather than an
+              oversight, and the rule it bends is worth stating because it
+              was written here deliberately: *a control that vanished as you
+              reached the end would move the row under the pointer that was
+              pressing it.*
+
+              It still would. What outweighs it is WHERE the back chevron
+              sits: first in the row, so while it is drawn it indents
+              everything after it, and the shuffle button starts ~40px to the
+              right of the headline directly above it. Two left edges that
+              nearly line up read as a mistake in a way one honest edge does
+              not, and this column has exactly two things in it.
+
+              THE FORWARD ONE HAS NO SUCH COST — it is last, so hiding it
+              would move nothing into alignment with anything, and the
+              pointer argument is unopposed. It keeps `disabled`.
+
+              THE SHIFT IS REAL AND IS THE PRICE. Scrolling right brings the
+              back chevron in and pushes the row ~40px. The pointer is on the
+              FORWARD chevron when that happens, which is the one that moves
+              least — it is pinned to the row's trailing edge — so the thing
+              being pressed stays under the finger even though the row does
+              not. That is why this is affordable here and would not be if
+              the pair were both at one end.
 
               `size="min"` is the smallest rung this system has — 24px, with
               `--sp-2` of clear space baked into the class because 2.5.8 only
               allows a target that small when it is spaced. That margin is
-              why the row around them carries no gap. */}
-          {scrollable && (
+              why the row around them carries no gap, and it is also most of
+              the 40px above. */}
+          {backShown && (
             <IconButton
               glyph={ChevronLeft}
               size="min"
               label={t('exercises.toolbar.left')}
-              disabled={toolbar.edges === 'end'}
               onClick={() => nudge(-1)}
             />
           )}
