@@ -177,3 +177,9 @@ export type { QrScannerProps, QrScannerMode } from './QrScanner';
 
 export { Timeline } from './Timeline';
 export type { TimelineProps, TimelineGroup } from './Timeline';
+
+/* A link INSIDE a sentence or a heading, which is the one thing `CtaButton`
+   cannot be: it inherits its type from where it sits rather than declaring a
+   step of its own. InlineLink.tsx's header tells the two apart. */
+export { InlineLink } from './InlineLink';
+export type { InlineLinkProps } from './InlineLink';

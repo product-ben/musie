@@ -47,4 +47,42 @@ describe('catalogue parity', () => {
 
     expect(mismatched).toEqual([]);
   });
+
+  /* ── THE ONE SLOT THAT IS NEVER FILLED ───────────────────────────────────
+     `{goal}` in /exercises' headline marks where a CONTROL goes, not where a
+     string goes: `splitSlot` cuts the rendered sentence at it and the screen
+     puts an `InlineLink` in the gap. The test above cannot protect it — a
+     locale that dropped `{goal}` from BOTH forms would still have matching
+     slots, and the headline would quietly render with no goal in it and no
+     way to change one.
+
+     This is what makes `splitSlot`'s null branch insurance rather than a path
+     anybody takes. */
+  const HEADLINES = [
+    'exercises.headline.none',
+    'exercises.headline.one',
+    'exercises.headline.other',
+  ] as const;
+
+  it('keeps the {goal} slot in every headline form, in both locales', () => {
+    const missing = HEADLINES.flatMap((key) => [
+      ...(en[key].includes('{goal}') ? [] : [`en ${key}`]),
+      ...(de[key].includes('{goal}') ? [] : [`de ${key}`]),
+    ]);
+
+    expect(missing).toEqual([]);
+  });
+
+  /* The count is interpolated in exactly one of the three. `none` and `one`
+     write the number as a word or leave it out, which is the whole reason
+     they are separate keys — a `{count}` in them would print a digit beside
+     the word that already says it. */
+  it('interpolates the count in the plural form and nowhere else', () => {
+    expect(slotsOf(en['exercises.headline.other'])).toContain('count');
+    expect(slotsOf(de['exercises.headline.other'])).toContain('count');
+    for (const key of ['exercises.headline.none', 'exercises.headline.one'] as const) {
+      expect(slotsOf(en[key])).not.toContain('count');
+      expect(slotsOf(de[key])).not.toContain('count');
+    }
+  });
 });

@@ -2,23 +2,25 @@
  * The legend, as an extra card on the pile.
  *
  * ── WHY IT IS A CARD AND NOT A DIALOG ─────────────────────────────────────
- * Everything it explains is on this screen and around it: the goal in the row
- * above the pile, the two directions the card goes, the card itself. A dialog
+ * Everything it explains is on this screen and around it: the two directions
+ * the card goes, and the card itself. A dialog
  * would take the screen away to describe it. Sitting in the pile's own cell —
  * the deck's `cover` slot — it covers exactly the card and nothing else.
  *
  * ── IT IS A MAP OF THE SCREEN, NOT A LIST OF FACTS (Ben, 2026-10-07) ───────
- * Three centred rows, each a glyph beside a sentence, said the same three
- * things in a column that pointed nowhere. The wireframe's correction is that
- * WHERE a hint sits is half of what it says, so each row now sits where its
- * control is:
+ * Centred rows, each a glyph beside a sentence, said the same things in a
+ * column that pointed nowhere. The wireframe's correction is that WHERE a
+ * hint sits is half of what it says, so each row sits where its control is:
  *
- *   goal   → top, and the arrow points UP, out of the card at the goal pill
- *            in the toolbar row above the pile.
  *   swipe  → the middle, with a chevron at each edge of the card, because the
  *            pair is the hint: the gesture goes either way.
  *   start  → the bottom, with a picture of the Start button in the corner the
  *            real one is in on the face underneath.
+ *
+ * TWO ROWS SINCE 2026-10-15. A third pointed up out of the card at the goal
+ * pill; the goal is the page's headline now, so the one thing that row
+ * existed to locate is the largest line on the screen. Its own block, below,
+ * is the argument.
  *
  * The stylesheet does the placing; this file owns the order, which is also the
  * reading order a screen reader gets.
@@ -28,7 +30,7 @@
  * it is everything. A `<button>` rather than a div with a handler: it is in
  * the tab order, it answers Enter and Space, and a screen reader is told it
  * can be pressed. Everything inside is phrasing content — spans and svgs —
- * which is what keeps a button legal while holding three rows of layout.
+ * which is what keeps a button legal while holding two rows of layout.
  *
  * FOCUS IS NOT MOVED TO IT. It is onboarding over a screen somebody has just
  * arrived at, not a decision owed before anything else can happen; stealing
@@ -44,7 +46,7 @@
  * motion collapses it to 1ms through Layer 1 without this file knowing.
  */
 import * as React from 'react';
-import { ArrowRight, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Icon } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 
@@ -68,23 +70,25 @@ export function DeckGuide({ onDismiss }: DeckGuideProps) {
          a second copy of that number and would outlive the element. */
       onAnimationEnd={() => { if (leaving) onDismiss(); }}
     >
-      {/* ── THE GOAL, AND IT IS NOT ON THIS CARD ────────────────────────
-          The one control the legend points at from a distance: the pill is in
-          the row above the pile, so the glyph is an arrow pointing out of the
-          card at it rather than the pill's own funnel. A funnel here named the
-          control; the arrow says where it is, which is the thing a first-time
-          reader does not know.
+      {/* ── THE GOAL ROW IS GONE — Ben, 2026-10-15 ──────────────────────
+          An arrow pointing up out of the card, beside *Ändere dein Ziel*,
+          aimed at the goal control in the row above the pile.
 
-          `lg` AND NOT `md`, here and on the two chevrons: the sentence beside
-          them is `body-xl` now, and a 20px glyph against a 26–34px display
-          step reads as a footnote to it rather than as the picture of the
-          control it is pointing at. */}
-      <span className="musie-deck-guide__row">
-        <span className="musie-deck-guide__glyph">
-          <Icon glyph={ArrowUp} size="lg" />
-        </span>
-        <span className="musie-deck-guide__text">{t('exercises.guide.goal')}</span>
-      </span>
+          IT STOPPED BEING WORTH A THIRD OF THIS CARD on the day the goal
+          moved into the headline. The pill it pointed at was a small
+          outlined chip among three controls, and the thing a first-time
+          reader did not know was WHERE it was — which is the whole reason
+          the row drew a direction rather than a funnel. The goal is now the
+          largest line on the screen, in the sentence the page opens with,
+          wearing a coloured link and a glyph. A card that covers the deck in
+          order to point at it is explaining the one thing that no longer
+          needs explaining.
+
+          So the legend is two rows now: the gesture and the press, which are
+          the two things still invisible until somebody does them.
+
+          `exercises.guide.goal` went with it — a key nothing renders is the
+          invisible rot the catalogue's own header warns about. */}
 
       {/* ── THE TWO DIRECTIONS, AT THE TWO EDGES ────────────────────────
           Both chevrons, in the order they sit in beside the pile and pushed

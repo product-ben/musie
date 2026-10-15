@@ -1909,6 +1909,36 @@
    touch scale instead of drifting from it. */
 .musy-rcard__body { --musy-rcard-media: var(--target-guided); }
 
+/* ── THE CARD WITH NO PICTURE (2026-10-15) ────────────────────────────────
+   ONE COLUMN, and the check comes off the media and onto the card. A goal has
+   no artwork — the goal sheet's four cards are words — and four placeholder
+   squares would be decoration standing in for information.
+
+   THE TEXT RESERVES ROOM FOR THE CHECK rather than flowing under it. The
+   indicator is absolutely positioned in the card's top-trailing corner, like
+   the one over a picture, so without this the headline would run beneath it
+   at the width where it wraps. `--icon-size-lg` is the check's own size and
+   `--space-gap-stack` is the same rung the two columns are separated by, so
+   the gap beside the check matches the gap beside a thumbnail.
+
+   NO `@container` OVERRIDE IS NEEDED. The rules that widen the media column
+   at 480px are written against `--musy-rcard-media` and the media element
+   itself; with one column and no media element, neither has anything to act
+   on. Checked at 393 and 1280.                                             */
+.musy-rcard__body--plain {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "text";
+  padding-inline-end: calc(var(--space-inset-card) + var(--icon-size-lg) + var(--space-gap-stack));
+}
+
+/* The check, where there is no picture to sit on. Same corner, same size, same
+   states — only the box it is positioned against changes, and that box is
+   `.musy-rcard__body`, which is already `position: relative`. */
+.musy-rcard__check--bare {
+  inset-block-start: var(--space-inset-card);
+  inset-inline-end: var(--space-inset-card);
+}
+
 /* ONE ANATOMY AT EVERY WIDTH. The card used to stack — full-bleed media above
    the text — from --bp-md worth of group width. That is gone: the list row is
    the layout everywhere, because the thing being compared is the TEXT, and a
@@ -1934,7 +1964,17 @@
        column is wide, so a short description still gets a square rather than a
        letterbox. A long one makes the media taller, never narrower. */
     min-block-size: calc(var(--target-guided) * 3);
-    padding-inline-start: 0;
+    /* ── `padding-inline-start: 0` IS GONE — Ben, 2026-10-15 ────────────
+       The media used to run full-bleed to the card's leading edge, which
+       meant a card WITH a picture had no left padding and a card without one
+       had `--space-inset-card`. Put the two variants in one Storybook page —
+       which is where Ben saw it — and the text columns start at different
+       places down the list.
+
+       The picture is a thumbnail inside the card now, not a panel attached
+       to its edge, so the inset is the same on every card whatever it
+       carries. The vertical bleed and the half-rounded corner went with it;
+       see `.musy-rcard__media` below. */
   }
 }
 
@@ -1955,8 +1995,12 @@
        narrowed, and it resolves by pinning to the cap and inflating the row. */
     align-self: stretch;
     aspect-ratio: auto;
-    margin-block: calc(var(--space-inset-card) * -1);
-    border-radius: var(--radius-input) 0 0 var(--radius-input);
+    /* NO NEGATIVE MARGIN AND NO HALF-ROUNDED CORNER. Both existed to make the
+       picture part of the card's edge; with the leading inset restored above,
+       a block bleed with an inset start is a picture hanging off three sides
+       of four, which reads as a rendering fault rather than a decision. A
+       thumbnail is rounded on all four corners. */
+    border-radius: var(--radius-input);
   }
 }
 
@@ -1998,6 +2042,30 @@
   color: var(--on-surface-muted);
   text-wrap: var(--text-wrap-body);
   hyphens: var(--text-hyphens);
+}
+
+/* ── THE BOLD LEAD-IN, INSIDE THE SENTENCE ────────────────────────────────
+   "Warum?" and then two sentences, all one paragraph: the lead has to wrap
+   with the copy and sit on its baseline, which is what an inline <strong>
+   does and a block of its own would not.
+
+   THE WEIGHT IS THE LABEL STEP'S, NOT `bold`. The description renders at
+   whatever `descriptionStep` says, so a bare `font-weight: bold` would be a
+   different weight per step and a different one again in a theme that swaps
+   the family. `--type-label-md-weight` is the system's word for "emphasised
+   small text" and tracks with it.
+
+   THE COLOUR STEPS UP one rung from the body it leads — the paragraph is
+   `--on-surface-muted` and the lead is the full ink, so the eye lands on the
+   question before reading the answer. That is the whole job of a lead-in.
+
+   THE SPACE AFTER IT IS A MARGIN, NOT A SPACE CHARACTER in the markup: a
+   literal " " inside the element would be collapsed at a line break and
+   announced as part of the strong text.                                    */
+.musy-rcard__desc-lead {
+  margin-inline-end: var(--space-gap-inline);
+  font-weight: var(--type-label-md-weight);
+  color: var(--on-surface);
 }
 
 /* FACTS. What the exercise costs and needs, as glyphs: three of them read in
@@ -2079,8 +2147,27 @@
 .musy-rcard__body[data-unchecked]:active:not([data-disabled]),
 .musy-rcard__body[data-force~="active"] { background-color: var(--interactive-ghost-active); }
 
+/* ── SELECTED IS WHITE NOW, AND IT IS A BORDER AND A GLYPH (2026-10-15) ───
+   `background-color: var(--interactive-primary-subtle)` is GONE from both
+   variants below. A selected card keeps `--surface-raised`, the same surface
+   it has at rest, and says so with the thick green border and the filled
+   check instead.
+
+   Ben's call, and taken knowing what it costs: this component is also the
+   /exercises list view, the digital card pick and /maintenance's track and
+   artwork pickers, and none of those asked to change. One component with one
+   look beat a `surface` prop that three call sites would have had to pass
+   correctly for the rest of the product's life.
+
+   1.4.1 HOLDS WITHOUT THE FILL. Selection is carried by border WEIGHT —
+   regular 1.5px to thick 2px — and by a glyph that is absent when unchecked.
+   Neither is a colour, so the state survives a monochrome rendering, which
+   the fill never had to do on its own anyway.
+
+   WHAT STAYS: the border colour, the border width, the filled check and the
+   headline's ink. The accent variant keeps all four in terracotta, so a
+   screen that opts into `accent` still reads as one family.               */
 .musy-rcard__body[data-checked] {
-  background-color: var(--interactive-primary-subtle);
   border-color: var(--interactive-primary-border);
   border-width: var(--border-width-thick);
 }
@@ -2092,7 +2179,6 @@
 .musy-rcard__body[data-checked] .musy-rcard__headline { color: var(--interactive-primary-on-subtle); }
 
 .musy-rcard-group--accent .musy-rcard__body[data-checked] {
-  background-color: var(--interactive-accent-subtle);
   border-color: var(--interactive-accent-border);
   border-width: var(--border-width-thick);
 }
@@ -2103,7 +2189,22 @@
 }
 .musy-rcard-group--accent .musy-rcard__body[data-checked] .musy-rcard__headline {
   color: var(--interactive-accent-on-subtle);
-}musy-rcard__body[data-disabled] {
+}
+
+/* ── THE MISSING DOT, FOUND 2026-10-15 ───────────────────────────────────
+   This selector read `}musy-rcard__body[data-disabled] {` — no leading `.`,
+   no line break — so it was a type selector for an element called
+   `musy-rcard__body`, which matches nothing. The fill and the cursor below
+   have therefore never applied, on any screen, since the component shipped.
+
+   It looked three-quarters right and that is why it survived: the three rules
+   underneath it are spelled correctly, so a disabled card DID grey its text
+   and fade its picture. Only the surface and the cursor were missing, and
+   nobody compares a disabled card against a spec.
+
+   Found while rewriting the block above it. Logged in
+   stories/OPEN-QUESTIONS.md.                                              */
+.musy-rcard__body[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   border-color: var(--border-subtle);
   cursor: not-allowed;
@@ -3751,25 +3852,63 @@
   color: var(--musy-sel-fill);
 }
 
-/* 13 · Radio cards */
+/* 13 · Radio cards
+   ── THE REST STATE LEFT THE TINT AND BECAME A DECK CARD — Ben, 2026-10-15 ──
+   An unselected card was `--musy-rest-fill` (green-3) like every other
+   control in this block. It is now the face of a card off the PILE: white,
+   hairline edge, the deck's radius.
+
+   WITHOUT THE DECK'S ELEVATION, which it had for an hour. A shadow on the
+   pile says *these are stacked and you can take the top one*; on a list of
+   four that are all equally available it says nothing and costs the group
+   its flatness. Ben, on sight. The border is doing the separating.
+
+   WHY THE PILE IS THE REFERENCE AND NOT THE BLOCK ABOVE. On /exercises these
+   two things are the same list of options drawn twice — the goal sheet, and
+   the deck you choose an exercise from — and a tinted rectangle beside a
+   raised white card reads as a different KIND of thing rather than the same
+   thing in another view. Ben looked at the two side by side and asked for one
+   of them. `.musy-deck__card` is where every value below comes from, verbatim.
+
+   AND IT COSTS THE REST STATE NOTHING IN 1.4.1 TERMS. Selection still
+   escalates to `--musy-sel-fill` (the solid green), so the two states differ
+   by fill, by border weight and by the check glyph — the same three cues this
+   block's header claims, with the rest state simply no longer spending the
+   accent to say "unselected".
+
+   THE OVERRIDE LIVES HERE, 1 500 LINES BELOW SECTION 13, AND THAT IS THE
+   POINT. The first attempt at this change edited `.musy-rcard__body` up in
+   section 13 and did nothing at all: these selectors carry one class more and
+   sit later in the file, so they win twice over. Anything about rcard
+   SELECTION belongs in this block.                                          */
 .musy-rcard-group .musy-rcard__body[data-unchecked]:not([data-disabled]) {
-  background-color: var(--musy-rest-fill);
+  background-color: var(--surface-raised);
+  border-color: var(--border-subtle);
+  border-width: var(--border-width-hairline);
+  border-radius: var(--radius-lg);
 }
+/* The selected card keeps the deck's radius too, or the group changes shape
+   as you move through it. Border weight is what escalates, not the corner. */
+.musy-rcard-group .musy-rcard__body[data-checked] { border-radius: var(--radius-lg); }
 /* The headline stays primary ink at rest: the card's name is the thing being
    read, and the accent is the group's SELECTION language — spending it on
    every unselected card leaves nothing for the selected one to say. The
    description keeps --musy-rest-on. Checked and disabled solve their own ink
    against their own fill, below. */
 .musy-rcard-group .musy-rcard__body[data-unchecked]:not([data-disabled]) .musy-rcard__headline { color: var(--on-surface); }
+/* Hover and press leave the green family with the rest state. A tinted card
+   hovered to a deeper tint of the SELECTION colour was the old reading; a
+   white card hovers the way every other white surface in the system does,
+   which is the neutral ghost pair. */
 @media (hover: hover) {
   .musy-rcard-group .musy-rcard__body[data-unchecked]:hover:not([data-disabled]),
   .musy-rcard-group .musy-rcard__body[data-unchecked][data-force~="hover"] {
-    background-color: var(--musy-rest-fill-hover);
+    background-color: var(--interactive-ghost-hover);
   }
 }
 .musy-rcard-group .musy-rcard__body[data-unchecked]:active:not([data-disabled]),
 .musy-rcard-group .musy-rcard__body[data-unchecked][data-force~="active"] {
-  background-color: var(--musy-rest-fill-active);
+  background-color: var(--interactive-ghost-active);
 }
 .musy-rcard-group .musy-rcard__body[data-checked] {
   background-color: var(--musy-sel-fill);
@@ -7481,4 +7620,176 @@ html[data-musy-scroll-snap='y'] {
      surface — `secondary` already fills with `--surface-raised`, and this is
      the shadow that separates it from whatever is behind it. */
   box-shadow: var(--elevation-1);
+}
+
+
+/* ═══ 28 · INLINE LINK ══════════════════════════════════════════════════════
+   base-ui Button, drawn as a link inside a sentence or a heading.
+
+   ── EVERY TYPE PROPERTY IS INHERITED, AND THAT IS THE COMPONENT ──────────
+   No family, no size, no weight, no line height, no tracking. The element is
+   display type inside an h1 and body type inside a p, because both come from
+   whatever it sits in — which is the one thing `.musy-btn` cannot do and the
+   reason this is not a button rung.
+
+   A <button> arrives with a UA font, a UA background and a UA border, so the
+   first four declarations are there to take those away rather than to style
+   anything. `font: inherit` carries family, size, weight and line height in
+   one; `letter-spacing` is not part of the `font` shorthand and needs its own.
+
+   ── 1.4.1, AND WHY THE RULE IS HERE AND NOT AT THE CALL SITE ─────────────
+   A link inside a block of text must not be told apart from the text by
+   COLOUR ALONE (1.4.1, technique F73). Two ways to answer that, and which one
+   applies is decided by the COMPONENT from whether it was given a glyph:
+
+     with a glyph     the glyph is the resting cue, the underline waits for
+                      hover and focus.
+     without one      `--bare`, underlined at rest.
+
+   The modifier is set in InlineLink.tsx from `trailingIcon === undefined`, so
+   there is no prop a call site can get wrong.
+
+   ── THE UNDERLINE IS ON THE TEXT, NOT ON THE CONTROL ─────────────────────
+   `.musy-ilink__text` carries it. On the flex container the rule would run
+   through the icon's box as well, which at a display step is a visible tail
+   several pixels long after the last letter.
+
+   ── TARGET SIZE ─────────────────────────────────────────────────────────
+   2.5.8's inline exception covers a target in a sentence or a block of text,
+   which is the only place this belongs. No min-height is set, deliberately:
+   one would break the line box it sits in, which is the thing this component
+   exists to avoid.                                                         */
+.musy-ilink {
+  display: inline-flex;
+  align-items: baseline;
+  /* ── NO GAP, AND THAT IS NOT THE SAME AS NO SPACE — Ben, 2026-10-15 ────
+     It was `--space-gap-inline` (8px), Layer 1's "icon ↔ its own label.
+     Never widen this", and Ben asked for the glyph 8px closer — which is
+     this rung exactly, so the honest expression of the instruction is to
+     spend none of it.
+
+     THE GLYPH STILL IS NOT TOUCHING THE TEXT. A Lucide icon is drawn on a
+     24px grid with its strokes inset from the edge, so an ellipsis-vertical
+     carries roughly a quarter of its own box as clear space on each side.
+     At `lg` that is the optical gap; the declared 8px was being added ON TOP
+     of it, which is why the glyph looked adrift from the word it belongs to.
+
+     `0` is a geometric identity rather than a spacing decision, which is the
+     one case L14 allows a bare value — there is no rung on the ladder for
+     "none", and `--sp-0` does not exist. */
+  gap: 0;
+  margin: 0;
+  /* ── NO BACKGROUND, AND IT HAD ONE FOR AN HOUR — Ben, 2026-10-15 ───────
+     A tinted pill on `--interactive-primary-subtle` with 4px of padding,
+     asked for and then taken back on sight. Worth a line rather than a
+     silent revert: the fill was legible (6.94:1 light, 7.29:1 dark, measured)
+     and it still read as a CHIP — a small box sitting in the sentence —
+     where the thing it marks is a word in a heading. Text in a heading
+     should look like text in a heading.
+
+     So the padding and the radius go with it. They existed only to give the
+     fill room; with nothing to inset, 4px of padding is a control nudged off
+     its own baseline for no reason. `padding: 0` is the state this started
+     in and is back to. */
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  /* Solved ≥ 4.5:1 against every surface — Layer 1 calls it "accent 1 as
+     accessible text". NOT `--interactive-primary`, which is a FILL colour
+     (green-9) and scores 3.0:1 as text. */
+  color: var(--accent-1-text);
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-toggle);
+}
+
+/* NO GLYPH, SO THE UNDERLINE CANNOT WAIT. See the header. */
+.musy-ilink--bare .musy-ilink__text {
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-ilink:hover:not(:disabled) .musy-ilink__text,
+  .musy-ilink[data-force~="hover"] .musy-ilink__text {
+    text-decoration: underline;
+    text-underline-offset: var(--sp-1);
+  }
+}
+
+.musy-ilink:active:not(:disabled),
+.musy-ilink[data-force~="active"] { color: var(--accent-1); }
+
+/* The ring is drawn around the whole control, glyph included, which is why it
+   is on the control and not on the text. `--focus-ring-offset` keeps it clear
+   of the descenders of the line above. */
+.musy-ilink:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
+}
+.musy-ilink:focus-visible .musy-ilink__text {
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+/* ── THE GLYPH IS `lg` — Ben, 2026-10-15, after two passes ───────────────
+   24px. It shipped at `sm` (16px), went to `xl` (32px) because at 16 beside
+   display type it read as a speck, and settled one rung back down: at 32 it
+   competed with the word it belongs to, which is the thing the first
+   argument had predicted and the second had overcorrected.
+
+   IT IS THE 1.4.1 CUE, which is why the size is not cosmetic: the underline
+   waits for hover BECAUSE this glyph is there at rest (see the header), and
+   a cue nobody notices is not a cue. 24 is the size at which it is noticed
+   and not read as a second headline. The size is set on the component, not
+   here, so `Icon` applies the stroke rule for the step.
+
+   ── IT SITS ON THE BASELINE — Ben, 2026-10-15 ─────────────────────────
+   `align-self: center` centred it against the line box, which at a display
+   step left it floating above the letters: the x-height is a third of the
+   line and the glyph was centred on the whole of it.
+
+   `baseline` on a replaced element does the right thing for free. An SVG has
+   no text baseline, so CSS Box Alignment synthesizes one from the border
+   box's BOTTOM edge — which is why this one declaration both baseline-aligns
+   the item and bottom-aligns the glyph, and why the rule reads as if it did
+   only the first. The dots now sit on the same line the letters stand on.
+
+   `Icon`'s OWN NUDGE IS NOT USED, and it is refused at the call site rather
+   than here: the `inline` prop applies `translateY(--icon-optical-nudge)`, a
+   -0.055em LIFT that corrects an icon set `vertical-align: middle` against
+   text. Against a baseline it corrects a problem that is no longer there,
+   and it pulls the wrong way for the offset below.
+
+   ── AND THEN 4px DOWN FROM IT — Ben, 2026-10-15 ───────────────────────
+   Sitting exactly on the baseline, the dots read as a tail hanging off the
+   end of the word: a vertical glyph takes its full box, where the letters
+   beside it only fill their x-height, so "level at the bottom" and "level to
+   the eye" are not the same line. Dropping it a rung puts its mass against
+   the middle of the letters.
+
+   `--sp-1` IS THE RUNG and it is a fixed 4px rather than an em, which is
+   right here for a reason that would not hold elsewhere: the glyph is a
+   fixed 24px at every type step this component is used at, so an offset that
+   scaled with the text would drift against an icon that does not.
+
+   A TRANSFORM, NOT A MARGIN OR `position: relative`. A transform is the only
+   one of the three that moves the paint without touching layout — a margin
+   would push the line box taller and a relative offset would still reserve
+   its original space while painting elsewhere. The baseline alignment above
+   stays the thing that positions it; this only paints it a rung lower. */
+.musy-ilink__icon {
+  flex: none;
+  align-self: baseline;
+  transform: translateY(var(--sp-1));
+}
+
+.musy-ilink:disabled {
+  color: var(--on-surface-disabled);
+  cursor: not-allowed;
 }
