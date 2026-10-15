@@ -1,57 +1,51 @@
 /**
  * The goal: what a person is after when they start a session.
  *
- * Three facts live here, and nothing else does. The query is in `content.ts`,
- * the hook is in `useContent.ts`, the picker is a component, and the screen
+ * Four facts live here, and nothing else does. The query is in `content.ts`,
+ * the hook is in `useContent.ts`, the sheet is a component, and the screen
  * decides what to draw — this file owns only what a CHOICE is, where it is
- * remembered, and what it filters.
+ * remembered, what it filters, and which of the filtered exercises can
+ * actually be started.
  *
- * ── "MUSIE ENTDECKEN" IS NOT A GOAL, IT IS THE ABSENCE OF ONE ─────────────
- * Four options are offered and three of them are rows. The fourth means "show
- * me everything", and it is modelled as the lack of a goal rather than as a
- * row mapped to every exercise — because a row would have to be re-mapped
- * every time an exercise is added, and the day somebody forgot, the one
- * option that promises everything would quietly stop delivering it. Absence
- * cannot fall out of step with the catalogue.
+ * ── THE SENTINEL IS GONE, AND THAT IS THE CHANGE (2026-10-15) ─────────────
+ * There used to be a `NO_GOAL` here, and a long argument for it: "Musie
+ * entdecken" meant *show me everything*, and it was modelled as the ABSENCE
+ * of a goal rather than as a row, because a row mapped to every exercise
+ * falls out of step the first time somebody adds an exercise and forgets to
+ * map it. Absence cannot.
  *
- * It needs a value on screen regardless, because `RadioGroupText` identifies
- * an option by a string. `NO_GOAL` is that value and it never reaches the
- * database: `goalIdFor()` is the one place it turns back into null.
+ * That argument was right and it no longer applies. Ben's mapping of
+ * 2026-10-15 gives *Musie kennenlernen* three NAMED exercises — Achtsam
+ * Atmen, Bodyscan, Freie Bahn — so it promises something specific rather
+ * than everything, and there is nothing left for absence to express. It is a
+ * row (`get-to-know-musie`), it is the first of four, and `goalIdFor()` went
+ * with the sentinel: a choice is now always a real goal id, and
+ * `sessions.goal_id` is never null again.
  *
- * ── THREE STATES, NOT TWO ─────────────────────────────────────────────────
- * `null` and `NO_GOAL` are different answers and the screen draws them
- * differently:
+ * ── TWO STATES NOW, NOT THREE ─────────────────────────────────────────────
  *
- *   null      not known yet → the goals are still in flight, nothing drawn
- *   NO_GOAL   "Musie entdecken" → every exercise, pile dealt
- *   an id     a goal → the exercises mapped to it
+ *   null    not known yet → the goals are still in flight, nothing drawn
+ *   an id   this goal → the exercises mapped to it
  *
- * WHAT `null` MEANT CHANGED ON 2026-10-07, and this file did not. It meant
- * "nobody has chosen yet", and /exercises drew the question over an empty
- * stage for it; Ben's call is that the screen opens on NO_GOAL instead and
- * keeps the question behind the pill. So `null` is now only the window before
- * the goals have landed — a state the screen waits out rather than draws.
+ * `null` keeps exactly one job, the one it has had since 2026-10-07: the
+ * window before the goals have landed, which the screen waits out rather
+ * than draws. What it does NOT mean, and never means again, is "nobody has
+ * chosen" — `defaultGoal()` answers that.
  *
- * NOTHING HERE MOVED, which is the point of the split: `readCachedGoal` still
- * answers "what was stored" and still says null for nothing-stored. Which
- * state the screen OPENS in is the screen's decision, and it is made in
- * `Exercises.tsx` where the rest of the drawing is decided.
+ * ── A STORED `__none__` IS A STALE VALUE AND FALLS BACK FOR FREE ──────────
+ * Every browser that used this screen before today holds `__none__` in
+ * `musie-goal`. `readCachedGoal` validates the stored id against the goals
+ * that actually exist, and no row can spell it — ids are English slugs
+ * constrained to `[a-z][a-z0-9-]*` by this content's own convention — so it
+ * reads as never-chosen and the screen opens on the default. No migration,
+ * no special case, and it is asserted in `goals.test.ts` rather than assumed.
  */
 import type { Exercise, Goal } from './content';
-
-/**
- * The option value for "Musie entdecken".
- *
- * Double-underscored so it cannot collide with a goal id: ids are English
- * slugs constrained to `[a-z][a-z0-9-]*` by the content's own convention, so
- * no row can ever spell this.
- */
-export const NO_GOAL = '__none__';
 
 /** Beside `musie-locale`, and read by nothing else. */
 export const GOAL_STORAGE_KEY = 'musie-goal';
 
-/** A goal id, or `NO_GOAL`. Never null — null is the ABSENCE of a choice. */
+/** A goal id. Never a sentinel, and never null — null is "not known yet". */
 export type GoalChoice = string;
 
 /**
@@ -60,10 +54,10 @@ export type GoalChoice = string;
  * VALIDATED AGAINST THE GOALS THAT ACTUALLY EXIST, which is the whole reason
  * this takes an argument. A goal removed from the content leaves a stale id
  * in a returning visitor's browser, and trusting it would filter the deck by
- * something that is no longer offered — an empty screen with a pill naming a
- * goal the picker cannot show as checked. An unknown value reads as "never
- * chosen", which the screen turns into *Musie entdecken* and a full pile.
- * Same discipline `isLocale` applies to a stored locale.
+ * something that is no longer offered — an empty screen under a headline
+ * naming a goal the sheet cannot show as checked. An unknown value reads as
+ * "never chosen", which the screen turns into `defaultGoal()` and a full
+ * pile. Same discipline `isLocale` applies to a stored locale.
  *
  * Call it only once `goals` has loaded; before that there is nothing to
  * validate against and the answer would be a false null.
@@ -72,7 +66,6 @@ export function readCachedGoal(goals: Goal[]): GoalChoice | null {
   try {
     const stored = localStorage.getItem(GOAL_STORAGE_KEY);
     if (stored === null) return null;
-    if (stored === NO_GOAL) return NO_GOAL;
     return goals.some((goal) => goal.id === stored) ? stored : null;
   } catch {
     /* Private mode, blocked site data. */
@@ -84,19 +77,31 @@ export function cacheGoal(choice: GoalChoice): void {
   try {
     localStorage.setItem(GOAL_STORAGE_KEY, choice);
   } catch {
-    /* Losing it costs the next visit its filter — it opens on *Musie
-       entdecken* and every exercise — not correctness. */
+    /* Losing it costs the next visit its filter — it opens on the default
+       goal rather than the chosen one — not correctness. */
   }
 }
 
 /**
- * What goes in `sessions.goal_id`.
+ * The goal a browser opens on: THE FIRST ONE OFFERED.
  *
- * The ONE place `NO_GOAL` turns back into null, so the sentinel cannot reach
- * the database through some other path.
+ * `goals[0]` looks like an accident and is not. `getGoals` orders by `sort`,
+ * and the goal sheet renders that same array in that same order — so "the
+ * default goal" and "the first card in the sheet" are ONE fact rather than
+ * two that can disagree. Ben's default is *Einen Weg Musie kennenzulernen*
+ * and it is `sort = 1`; changing which goal is default is then a migration
+ * rather than a migration plus a constant in here that somebody has to
+ * remember to move with it.
+ *
+ * A hardcoded `'get-to-know-musie'` was the obvious alternative and is worse
+ * in the one way that matters: it can be true in this file and false in the
+ * table, and nothing would notice.
+ *
+ * Null for an empty list, which is a catalogue that failed to load. The
+ * screen already has an answer for that and it is not a goal.
  */
-export function goalIdFor(choice: GoalChoice | null): string | null {
-  return choice === null || choice === NO_GOAL ? null : choice;
+export function defaultGoal(goals: Goal[]): GoalChoice | null {
+  return goals[0]?.id ?? null;
 }
 
 /**
@@ -107,17 +112,56 @@ export function goalIdFor(choice: GoalChoice | null): string | null {
  * filter it would make switching goals a network round trip for an answer
  * that is already on the page.
  *
- * `null` and `NO_GOAL` both return everything — the screen is what decides
- * whether to DRAW anything before a choice is made, which keeps this function
- * total and testable.
+ * `null` returns everything — the screen is what decides whether to DRAW
+ * anything before a choice is known, which keeps this function total and
+ * testable.
  */
 export function filterByGoal(exercises: Exercise[], choice: GoalChoice | null): Exercise[] {
-  if (choice === null || choice === NO_GOAL) return exercises;
+  if (choice === null) return exercises;
   return exercises.filter((exercise) => exercise.goalIds.includes(choice));
 }
 
-/** The label for the pill, or null while the catalogue has not landed. */
+/**
+ * The ones a press would actually start.
+ *
+ * ── THE SHUFFLE'S CANDIDATE SET, AND NOT THE HEADLINE'S COUNT ─────────────
+ * *Such mir eine Übung aus* draws from this, so it can never hand somebody an
+ * exercise that refuses; it is also what disables the control when a goal
+ * offers nothing built.
+ *
+ * IT COUNTED THE HEADLINE TOO, FOR HALF A DAY. The argument was that one
+ * expression keeps the number and the shuffle from disagreeing — and it was
+ * the wrong thing to make agree. `breathing-score` is mapped to three of the
+ * four goals and is unbuilt, so the headline read *2 Übungen zum Aktivieren*
+ * over a pile of three cards. Ben reported it on sight: a number directly
+ * above the thing it counts has to be the count of that thing, whatever the
+ * reasoning. The headline reads `visible` now.
+ *
+ * ── THE PILE IS NOT FILTERED BY THIS, AND THAT IS DELIBERATE ──────────────
+ * The deck deals every mapped exercise, built or not, and refuses the unbuilt
+ * ones through `NotImplementedLightbox` — filtering them out "would quietly
+ * show two exercises where the product has five", which is the rule
+ * `Exercises.tsx` has carried since the deck shipped.
+ */
+export function startable(exercises: Exercise[]): Exercise[] {
+  return exercises.filter((exercise) => exercise.implemented);
+}
+
+/** The goal's name — its card headline — or null while the catalogue has not landed. */
 export function goalLabel(goals: Goal[], choice: GoalChoice): string | null {
-  if (choice === NO_GOAL) return null;
   return goals.find((goal) => goal.id === choice)?.label ?? null;
+}
+
+/**
+ * The goal as a purpose phrase, for the headline's `{goal}` slot.
+ *
+ * A SECOND LOOKUP RATHER THAN A SECOND USE OF `goalLabel`, because the two
+ * strings are not interchangeable: the headline reads "3 Übungen zum
+ * *Entspannen*" and the card in the sheet is headed "*Entspannung*". German
+ * grammar makes the difference obvious; English hides it well enough
+ * ("relax" against "Relaxation") that one column would have looked
+ * sufficient for a while and then been wrong in the harder language.
+ */
+export function goalPurpose(goals: Goal[], choice: GoalChoice): string | null {
+  return goals.find((goal) => goal.id === choice)?.purpose ?? null;
 }

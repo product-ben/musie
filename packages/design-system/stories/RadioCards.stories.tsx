@@ -333,3 +333,79 @@ export const WithError: Story = {
  *  layout switch is a container query on the GROUP, so this is the only way to
  *  see the wider anatomy. */
 export const Tablet: Story = { decorators: [fixedWidth(834)] };
+
+/* ── THE TEXT-ONLY VARIANT (2026-10-15) ────────────────────────────────────
+   `image` and `imageAlt` are a union — both or neither — so these four options
+   are typed without them rather than with empty strings. The goal sheet on
+   /exercises is the call site: a goal has no artwork, and four placeholder
+   squares would be decoration standing in for information.
+
+   THE COPY IS THE REAL COPY, in English, including the asymmetry that matters:
+   only the fourth card carries a description. Ben, 2026-10-15 — the first
+   three goals name a state you already know you want, and Mindfulness is the
+   abstract one. A story that gave all four a body would make the component
+   look like it required one.                                               */
+const GOALS = [
+  { value: 'get-to-know-musie', headline: 'A way into Musie' },
+  { value: 'relax', headline: 'Relaxation' },
+  { value: 'wake-up', headline: 'Energy' },
+  {
+    value: 'mindfulness',
+    headline: 'Mindfulness',
+    descriptionLead: 'Why?',
+    description: 'More mindfulness helps you stay calm in stressful moments and notice what you need right now. My exercises help you practise that with music.',
+  },
+];
+
+/**
+ * No picture, so no media column — the card is a headline, an optional body,
+ * and the check mark moved to the card's own trailing edge.
+ */
+export const TextOnly: Story = {
+  args: {
+    name: 'goal',
+    legend: 'What do you need right now?',
+    legendHidden: true,
+    options: GOALS,
+    value: 'get-to-know-musie',
+  },
+};
+
+/**
+ * `descriptionLead` — a bold word or two at the head of the body.
+ *
+ * A STRING AND NOT A `ReactNode` DESCRIPTION, which is the decision worth
+ * seeing here: the whole card is the radio control, so everything inside it
+ * is part of the control's accessible name, and markup would let a caller put
+ * anything at all into it.
+ *
+ * Ignored without a description — a lead-in to nothing is not a sentence —
+ * which is why the first three cards above draw no bold word despite being
+ * passed one by the screen.
+ */
+export const DescriptionLead: Story = {
+  args: {
+    name: 'goal-lead',
+    legend: 'What do you need right now?',
+    options: [GOALS[3], { ...GOALS[1], descriptionLead: 'Why?' }],
+    value: 'mindfulness',
+  },
+};
+
+/**
+ * Selected is WHITE now, in both families — 2026-10-15.
+ *
+ * The fill used to be `--interactive-primary-subtle`; a selected card keeps
+ * `--surface-raised` and says so with the thick green border and the filled
+ * check. Two non-colour cues, so 1.4.1 holds without it — which is the thing
+ * to check in this story rather than the colour.
+ */
+export const SelectedIsWhite: Story = {
+  render: (args) => (
+    <Stack>
+      <RadioCards {...args} name="w-primary" legend="primary (default)" value="mindfulness-break" />
+      <RadioCards {...args} name="w-accent" accent="accent" legend="accent" value="mindfulness-break" />
+      <RadioCards {...args} name="w-none" legend="nothing selected" value={undefined} />
+    </Stack>
+  ),
+};

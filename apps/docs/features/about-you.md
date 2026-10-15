@@ -71,7 +71,7 @@ has not answered yet, asked of the user.
 | | |
 |---|---|
 | `routes/AboutYou.tsx` | the screen |
-| `components/GoalPicker.tsx` | the goals, where they are offered |
+| `components/GoalSheet.tsx` | the goals, where they are offered |
 | `components/NotImplementedLightbox.tsx` | the refusal |
 | `lib/profile.ts` | the write |
 | `user_types` + `user_type_i18n` | 4 rows, `implemented` on one |

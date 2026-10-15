@@ -295,26 +295,6 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
  * headline followed by its description and its fact chips.
  */
 export async function startExercise(page: Page, locale: Locale, name?: string) {
-  /* ── IT ANSWERS THE GOAL QUESTION FIRST, AND THAT IS NEW (2026-10-07) ────
-     /exercises asks for a goal before it deals anything: with none chosen
-     there is no deck, no list and no view switch, so every step below would
-     wait for a control that is not going to appear.
-
-     "Musie entdecken" is the answer every walk wants — it is the option that
-     filters nothing, so the five exercises stay name-addressable and no walk
-     has to know which goals its exercise is mapped to. A real goal here would
-     make this helper fail the day the mapping changed.
-
-     CONDITIONAL, because the choice is remembered in localStorage: a context
-     that has already answered lands on the pill instead, and the question is
-     not on screen to answer twice. */
-  const goals = page.getByRole('radiogroup', {
-    name: label(locale, 'exercises.goal.question'),
-  });
-  if (await goals.isVisible().catch(() => false)) {
-    await goals.getByRole('radio', { name: label(locale, 'exercises.goal.none') }).click();
-  }
-
   /* ── IT SWITCHES TO THE LIST FIRST, AND THAT IS NEW (2026-10-05) ─────────
      /exercises opened on a column of radios until the deck replaced it. The
      deck shows ONE card at a time, so "click the card called X" there means
@@ -324,8 +304,8 @@ export async function startExercise(page: Page, locale: Locale, name?: string) {
      is itself a pair of radios, so every walk in this suite was clicking
      *Stack* and waiting for a session that was never started.
 
-     The list is the same five exercises, name-addressable in one press, and
-     the switch to it is a control with an accessible name like everything else
+     The list is the same exercises, name-addressable in one press, and the
+     switch to it is a control with an accessible name like everything else
      here. What it does NOT cover is the deck's own press — logged in
      apps/web/OPEN-QUESTIONS.md. */
   const toList = page.getByRole('radio', {
@@ -340,9 +320,60 @@ export async function startExercise(page: Page, locale: Locale, name?: string) {
      switch got clicked instead. `exercises.legend` is the group's accessible
      name; it is visually hidden and still the thing to ask for. */
   const group = page.getByRole('radiogroup', { name: label(locale, 'exercises.legend') });
+
+  /* ── NO EXERCISE IS VISIBLE UNDER EVERY GOAL ANY MORE (2026-10-15) ───────
+     This helper used to answer the goal question with *Musie entdecken*, the
+     option that filtered nothing, precisely so that no walk had to know which
+     goals its exercise was mapped to.
+
+     THAT OPTION IS GONE. *Musie kennenlernen* is a real goal with three named
+     exercises now, and the four goals between them cover all five — but no
+     single one of them does. A walk asking for *Achtsame Pause* lands on a
+     default goal that does not offer it.
+
+     SO THE HELPER LOOKS, AND MOVES ON IF IT IS NOT THERE. At most four goals,
+     usually the first. Deliberately NOT a hardcoded exercise-to-goal table:
+     that is content, it changes by migration, and a table in here would go
+     stale silently and fail as "the card never appeared" three specs away
+     from the thing that moved.
+
+     UNNAMED WALKS NEVER ENTER THE LOOP — any exercise will do, and the
+     default goal has three. */
   const card = name === undefined
     ? group.getByRole('radio').first()
     : group.getByRole('radio', { name });
+
+  if (name !== undefined) {
+    /* THE HEADLINE'S LINK, FOUND BY ITS SR-ONLY HALF. Its accessible name is
+       the goal's own purpose phrase followed by *Ziel ändern* — the phrase is
+       CONTENT and unknowable here, the suffix is chrome and in the catalogue,
+       so the regex matches on the half this file is allowed to know. */
+    const changeGoal = page.getByRole('button', {
+      name: new RegExp(label(locale, 'exercises.goal.change')),
+    });
+
+    for (let i = 0; i < 4; i += 1) {
+      if (await card.isVisible().catch(() => false)) break;
+
+      await expect(changeGoal).toBeVisible({ timeout: 15_000 });
+      await changeGoal.click();
+
+      const sheet = page.getByRole('radiogroup', {
+        name: label(locale, 'exercises.goal.question'),
+      });
+      await expect(sheet).toBeVisible({ timeout: 15_000 });
+      /* BY POSITION, not by label: a goal's label is content in `goal_i18n`
+         and this file has no business knowing it. The order is `goals.sort`,
+         which is a column with a unique constraint — a fact about the content
+         rather than an accident of layout, which is the same argument the
+         note above `startExercise` makes about `exercises.sort`. */
+      await sheet.getByRole('radio').nth(i).click();
+      /* Choosing closes the sheet. Waiting for that is what stops the next
+         iteration clicking a link the scrim is still over. */
+      await expect(sheet).toBeHidden({ timeout: 15_000 });
+    }
+  }
+
   await expect(card).toBeVisible({ timeout: 15_000 });
   await card.click();
 }

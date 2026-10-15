@@ -804,6 +804,18 @@
    reads as belonging to the left one. */
 .musie-deck-guide__row--swipe {
   justify-content: space-between;
+  /* ── IT TAKES THE MIDDLE, NOW THAT THERE ARE TWO ROWS — 2026-10-15 ─────
+     The legend was three rows spread top / middle / bottom by the column's
+     `space-between`, which put the chevrons across the card's waist for
+     free. With the goal row removed, `space-between` over two children
+     would pin this one to the TOP and lose the correspondence — the
+     gesture is a thing you do across the middle of the card.
+
+     Growing it instead keeps both: this row fills whatever is left, its
+     own `align-items: center` holds the chevrons at the waist of that
+     space, and the press row stays in the bottom corner where the real
+     button is. */
+  flex: 1 1 auto;
 }
 
 .musie-deck-guide__row--swipe .musie-deck-guide__text {
@@ -897,4 +909,75 @@
   font-weight: var(--type-body-xl-weight);
   line-height: var(--type-body-xl-line);
   letter-spacing: var(--type-body-xl-tracking);
+}
+
+
+/* ═══ THE GOAL SHEET'S HEADLINE ════════════════════════════════════════════
+   An L14 pattern: the system has no component for a plain text headline in a
+   `Sheet`'s header slot, so the screen draws the h2 and types it. Every
+   declaration below resolves to a Layer 1 token, and the prefix is `musie-`.
+
+   THE TOKEN IS THE ONE THE OTHER SHEET ALREADY USES. The listen step's focus
+   sheet puts its question through `.musie-md h2`, which is
+   `--type-heading-md-*` — so this matches it property for property rather
+   than picking a step by eye. The page's own h1 is `heading-lg`
+   (`.musie-placeholder`); a sheet opened FROM that heading should not compete
+   with it.
+
+   NO MARGIN. `.musy-sheet` is a flex column that owns the distance between
+   its header and its body, which is the same rule `.musie-sheet
+   .musie-placeholder` states in shell.css and the same one
+   `.musie-exercises > .musie-placeholder` states above: one spacing mechanism
+   per container, and here the container's is the sheet's.
+
+   §L14.3 — AND THIS IS THE SECOND CALL SITE, SO IT IS A COMPONENT REQUEST.
+   `Sheet` should take a `headline` string and type it itself. Not built here:
+   the listen sheet's header is Markdown with a float cut around the close
+   control, so merging the two is its own piece of work. Logged in
+   apps/web/OPEN-QUESTIONS.md.                                              */
+.musie-goal-sheet__headline {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}
+
+/* ═══ THE GOAL SHEET'S GUTTER AT M AND L ═══════════════════════════════════
+   An L14 pattern, `musie-` prefixed, every declaration a Layer 1 rung.
+
+   THE SHEET IS THE VIEWPORT, which is what makes this necessary. An immersive
+   Lightbox has `padding-inline: var(--space-inset-sheet)` — 32px — and that is
+   the whole of its gutter at every width. On a phone 32px is most of a thumb
+   and reads as a generous margin; on a 1728px laptop it is 1.8% of the window
+   and the cards sit against the glass. Ben, on screen: *the left padding is
+   missing on M and L viewports.*
+
+   IT IS ADDED HERE AND NOT IN `Sheet`, deliberately. The other two sheets in
+   this app are full-bleed by design — the card walk shows artwork edge to
+   edge, and the listen step's focus view is a picture with a clock on it — so
+   widening the component's own inset would put a sand margin around the one
+   thing those two exist to show. This sheet is a column of text; it is the
+   odd one out, so it carries the correction.
+
+   TWO RUNGS, NOT A FLUID CLAMP. `--sp-6` and `--sp-8` are Layer 1's own steps
+   and they land on 64px and 96px of total inset once the component's 32px is
+   counted. A clamp would be a third spacing mechanism on an element that
+   already has the component's and the grid's.
+
+   THE BREAKPOINTS ARE LAYER 1'S and are written as raw px because a media
+   query cannot read a custom property — `--bp-md` is 768px and `--bp-lg` is
+   1024px, and if either ever moves this block has to move with it. That is
+   the standing cost of CSS media queries in this system and every other
+   breakpoint in these stylesheets pays it the same way.                     */
+@media (min-width: 768px) {
+  .musie-goal-sheet { padding-inline: var(--sp-6); }
+}
+@media (min-width: 1024px) {
+  .musie-goal-sheet { padding-inline: var(--sp-8); }
 }
