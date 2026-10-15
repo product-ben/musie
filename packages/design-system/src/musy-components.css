@@ -3838,25 +3838,59 @@
   color: var(--musy-sel-fill);
 }
 
-/* 13 · Radio cards */
+/* 13 · Radio cards
+   ── THE REST STATE LEFT THE TINT AND BECAME A DECK CARD — Ben, 2026-10-15 ──
+   An unselected card was `--musy-rest-fill` (green-3) like every other
+   control in this block. It is now the face of a card off the PILE: white,
+   hairline edge, the deck's radius and the deck's elevation.
+
+   WHY THE PILE IS THE REFERENCE AND NOT THE BLOCK ABOVE. On /exercises these
+   two things are the same list of options drawn twice — the goal sheet, and
+   the deck you choose an exercise from — and a tinted rectangle beside a
+   raised white card reads as a different KIND of thing rather than the same
+   thing in another view. Ben looked at the two side by side and asked for one
+   of them. `.musy-deck__card` is where every value below comes from, verbatim.
+
+   AND IT COSTS THE REST STATE NOTHING IN 1.4.1 TERMS. Selection still
+   escalates to `--musy-sel-fill` (the solid green), so the two states differ
+   by fill, by border weight and by the check glyph — the same three cues this
+   block's header claims, with the rest state simply no longer spending the
+   accent to say "unselected".
+
+   THE OVERRIDE LIVES HERE, 1 500 LINES BELOW SECTION 13, AND THAT IS THE
+   POINT. The first attempt at this change edited `.musy-rcard__body` up in
+   section 13 and did nothing at all: these selectors carry one class more and
+   sit later in the file, so they win twice over. Anything about rcard
+   SELECTION belongs in this block.                                          */
 .musy-rcard-group .musy-rcard__body[data-unchecked]:not([data-disabled]) {
-  background-color: var(--musy-rest-fill);
+  background-color: var(--surface-raised);
+  border-color: var(--border-subtle);
+  border-width: var(--border-width-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
 }
+/* The selected card keeps the deck's radius too, or the group changes shape
+   as you move through it. Border weight is what escalates, not the corner. */
+.musy-rcard-group .musy-rcard__body[data-checked] { border-radius: var(--radius-lg); }
 /* The headline stays primary ink at rest: the card's name is the thing being
    read, and the accent is the group's SELECTION language — spending it on
    every unselected card leaves nothing for the selected one to say. The
    description keeps --musy-rest-on. Checked and disabled solve their own ink
    against their own fill, below. */
 .musy-rcard-group .musy-rcard__body[data-unchecked]:not([data-disabled]) .musy-rcard__headline { color: var(--on-surface); }
+/* Hover and press leave the green family with the rest state. A tinted card
+   hovered to a deeper tint of the SELECTION colour was the old reading; a
+   white card hovers the way every other white surface in the system does,
+   which is the neutral ghost pair. */
 @media (hover: hover) {
   .musy-rcard-group .musy-rcard__body[data-unchecked]:hover:not([data-disabled]),
   .musy-rcard-group .musy-rcard__body[data-unchecked][data-force~="hover"] {
-    background-color: var(--musy-rest-fill-hover);
+    background-color: var(--interactive-ghost-hover);
   }
 }
 .musy-rcard-group .musy-rcard__body[data-unchecked]:active:not([data-disabled]),
 .musy-rcard-group .musy-rcard__body[data-unchecked][data-force~="active"] {
-  background-color: var(--musy-rest-fill-active);
+  background-color: var(--interactive-ghost-active);
 }
 .musy-rcard-group .musy-rcard__body[data-checked] {
   background-color: var(--musy-sel-fill);
@@ -7612,9 +7646,27 @@ html[data-musy-scroll-snap='y'] {
   align-items: baseline;
   gap: var(--space-gap-inline);
   margin: 0;
-  padding: 0;
+  /* ── THE TINTED PILL — Ben, 2026-10-15 ─────────────────────────────────
+     4px all round, which is `--sp-1`: the bottom rung of the ladder and the
+     only one small enough to sit inside a line of text.
+
+     NO NEW TOKEN WAS NEEDED, and that is worth writing down because the brief
+     expected one. `--interactive-primary-subtle` is green-3 and Layer 1
+     defines it as "green tinted fill at rest — chips, tags, rows", which is
+     exactly what a link wearing a soft pill is. The decorative sibling
+     `--accent-1-subtle` holds the same VALUE and the wrong SEMANTIC: that
+     family is for chart series and avatars, not for something you press.
+
+     CONTRAST, MEASURED RATHER THAN ASSUMED. `--accent-1-text` (green-11) on
+     this fill is 6.94:1 light and 7.29:1 dark, so the ink does not have to
+     change with the background and the link goes on looking like a link. Had
+     it not cleared 4.5, the ink Layer 1 pairs with this fill is
+     `--interactive-primary-on-subtle` — which is sand-12, and would have made
+     it look like body copy in a box. */
+  padding: var(--sp-1);
+  border-radius: var(--radius-xs);
+  background-color: var(--interactive-primary-subtle);
   border: 0;
-  background: none;
   font: inherit;
   letter-spacing: inherit;
   /* Solved ≥ 4.5:1 against every surface — Layer 1 calls it "accent 1 as
@@ -7625,7 +7677,20 @@ html[data-musy-scroll-snap='y'] {
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--motion-toggle);
+  transition: color var(--motion-toggle), background-color var(--motion-toggle);
+}
+
+/* The pill answers the pointer, which bare text could only do by underlining.
+   The same three-step ladder every other tinted control in this file uses. */
+@media (hover: hover) and (pointer: fine) {
+  .musy-ilink:hover:not(:disabled),
+  .musy-ilink[data-force~="hover"] {
+    background-color: var(--interactive-primary-subtle-hover);
+  }
+}
+.musy-ilink:active:not(:disabled),
+.musy-ilink[data-force~="active"] {
+  background-color: var(--interactive-primary-subtle-active);
 }
 
 /* NO GLYPH, SO THE UNDERLINE CANNOT WAIT. See the header. */
@@ -7658,11 +7723,20 @@ html[data-musy-scroll-snap='y'] {
   text-underline-offset: var(--sp-1);
 }
 
-/* The glyph does not grow with the type. A heading at the display step beside
-   a 16px glyph is the intended proportion: the icon says "this opens
-   something", and an icon scaled to a 34px heading would be a second headline.
-   It is `aria-hidden` through `Icon`'s own rule, so nothing is lost by it
-   staying small. */
+/* ── THE GLYPH IS `xl` — Ben, 2026-10-15 ─────────────────────────────────
+   32px, up from 16. It shipped at `sm` with an argument that an icon scaled
+   to a 34px heading would read as a second headline; on screen the opposite
+   was true — at 16px beside display type it read as a speck of dust rather
+   than as the control's one affordance.
+
+   IT IS ALSO THE 1.4.1 CUE, which is the reason the size is not cosmetic:
+   the underline waits for hover BECAUSE this glyph is there at rest (see the
+   header), and a cue nobody notices is not a cue. The size is set on the
+   component, not here, so `Icon` can apply its own stroke rule for the step.
+
+   `align-self: center` rather than the flex container's `baseline`: a 32px
+   glyph has no text baseline worth aligning, and sitting it on one drops it
+   below the line it belongs to. */
 .musy-ilink__icon { flex: none; align-self: center; }
 
 .musy-ilink:disabled {

@@ -935,3 +935,37 @@
   text-wrap: var(--text-wrap-heading);
   hyphens: var(--text-hyphens);
 }
+
+/* ═══ THE GOAL SHEET'S GUTTER AT M AND L ═══════════════════════════════════
+   An L14 pattern, `musie-` prefixed, every declaration a Layer 1 rung.
+
+   THE SHEET IS THE VIEWPORT, which is what makes this necessary. An immersive
+   Lightbox has `padding-inline: var(--space-inset-sheet)` — 32px — and that is
+   the whole of its gutter at every width. On a phone 32px is most of a thumb
+   and reads as a generous margin; on a 1728px laptop it is 1.8% of the window
+   and the cards sit against the glass. Ben, on screen: *the left padding is
+   missing on M and L viewports.*
+
+   IT IS ADDED HERE AND NOT IN `Sheet`, deliberately. The other two sheets in
+   this app are full-bleed by design — the card walk shows artwork edge to
+   edge, and the listen step's focus view is a picture with a clock on it — so
+   widening the component's own inset would put a sand margin around the one
+   thing those two exist to show. This sheet is a column of text; it is the
+   odd one out, so it carries the correction.
+
+   TWO RUNGS, NOT A FLUID CLAMP. `--sp-6` and `--sp-8` are Layer 1's own steps
+   and they land on 64px and 96px of total inset once the component's 32px is
+   counted. A clamp would be a third spacing mechanism on an element that
+   already has the component's and the grid's.
+
+   THE BREAKPOINTS ARE LAYER 1'S and are written as raw px because a media
+   query cannot read a custom property — `--bp-md` is 768px and `--bp-lg` is
+   1024px, and if either ever moves this block has to move with it. That is
+   the standing cost of CSS media queries in this system and every other
+   breakpoint in these stylesheets pays it the same way.                     */
+@media (min-width: 768px) {
+  .musie-goal-sheet { padding-inline: var(--sp-6); }
+}
+@media (min-width: 1024px) {
+  .musie-goal-sheet { padding-inline: var(--sp-8); }
+}

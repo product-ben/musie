@@ -17,7 +17,8 @@ The brief, verbatim where it matters:
 
 Four decisions were put to Ben before this was written, and all four are
 settled in here: the sheet is a plain stack of four cards (§5), the count
-counts what can actually be started (§7), Radio Cards goes white everywhere
+counts what the pile holds (§7 — this one was reversed on sight), Radio Cards
+goes white everywhere
 (§4.2), and *Musie kennenlernen* becomes a real goal with no show-everything
 escape hatch (§6.1).
 
@@ -70,10 +71,15 @@ One sentence, four forms, the goal a link:
 
 | goal | German | English |
 |---|---|---|
-| get-to-know-musie | **2 Übungen** zum *Musie kennenlernen* | **2 exercises** to *get to know Musie* |
-| relax | **2 Übungen** zum *Entspannen* | **2 exercises** to *relax* |
-| wake-up | **2 Übungen** zum *Aktivieren* | **2 exercises** to *get going* |
-| mindfulness | **3 Übungen** zum *Achtsamer werden* | **3 exercises** to *grow more mindful* |
+| get-to-know-musie | **Drei Übungen** zum *Musie kennenlernen* | **Three exercises** to *get to know Musie* |
+| relax | **Drei Übungen** zum *Entspannen* | **Three exercises** to *relax* |
+| wake-up | **Drei Übungen** zum *Aktivieren* | **Three exercises** to *get going* |
+| mindfulness | **Drei Übungen** zum *Achtsamer werden* | **Three exercises** to *grow more mindful* |
+
+**The number is a word**, through twelve and digits above it — Ben,
+2026-10-15. `i18n/numbers.ts` holds the table and says why it is not in the
+message catalogue. `none` and `one` carry their own numerals, because both
+inflect the noun as well: *Keine Übung*, *Eine Übung*.
 
 It stays the page's `h1`, at `--type-heading-lg-*`, in the same position. The
 italics above are this table's; on screen the goal is distinguished by colour
@@ -363,37 +369,61 @@ include `goals`, `goal_i18n` or `exercise_goals`, so nothing here collides with
 
 ## 7 · What the count counts
 
-**Exercises that can actually be started** — `implemented = true` within the
-goal's mapping. Today that is:
+**The pile.** Every exercise the goal maps to, built or not — so the number in
+the headline is always the number of cards under it. Three for each of the
+four goals today.
 
-| goal | mapped | counted | the difference |
-|---|---|---|---|
-| Musie kennenlernen | 3 | **2** | Achtsam Atmen is not built |
-| Entspannen | 3 | **2** | Achtsam Atmen |
-| Aktivieren | 3 | **2** | Achtsam Atmen |
-| Achtsamer werden | 3 | **3** | — |
+### 7.1 It counted the startable ones for half a day, and that was wrong
 
-`breathing-score` is `implemented = false` and sits in three of the four goals,
-so this is not an edge case, it is the common case.
+This section argued the opposite when it was written, and the reversal is
+worth keeping rather than overwriting, because the argument was sound and the
+result was still a bug.
 
-**The pile still deals all three.** `/exercises` has shown every exercise
-including the unbuilt ones since the deck shipped, and refuses them honestly
-through `NotImplementedLightbox` — the alternative, filtering them out, *"would
+`breathing-score` is `implemented = false` and sits in three of the four
+goals, so counting only what could be STARTED gave:
+
+| goal | mapped | startable |
+|---|---|---|
+| Musie kennenlernen | 3 | 2 |
+| Entspannen | 3 | 2 |
+| Aktivieren | 3 | 2 |
+| Achtsamer werden | 3 | 3 |
+
+The reasoning was that the headline should promise what pressing something
+would actually get you, while the pile shows what exists. Defensible on paper.
+Ben saw it on screen — *2 Übungen zum Aktivieren* over three cards — and
+reported it as a bug in one line.
+
+**A number sitting directly above the thing it counts has to be the count of
+that thing.** No reasoning survives the adjacency; the reader does the
+arithmetic before they read the argument. That is the whole lesson, and it is
+the kind that only arrives from a rendered page.
+
+**What did not change:** the pile still deals the unbuilt ones and still
+refuses them through `NotImplementedLightbox` — filtering them out *"would
 quietly show two exercises where the product has five"*, which is the note the
-screen already carries against its own `exercises` memo. That rule is unchanged.
+screen has carried since the deck shipped. And `startable()` still exists:
+*Such mir eine Übung aus* draws from it, so the shuffle can never start
+something that refuses, and the control disables itself when a goal offers
+nothing built.
 
-So the headline says 2 while the deck holds 3, and that is deliberate: **the
-headline promises what you can start, and the pile shows what exists.** The
-numbers converge on their own the day Achtsam Atmen ships, with no content
-change.
+Two knock-on facts, both now resolved rather than accepted:
 
-Two knock-on facts, both accepted:
+- `CardDeck`'s position announcement and the headline agree again — *card 1 of
+  3* under *Drei Übungen*.
+- A goal whose exercises are all unbuilt still reads honestly: the headline
+  counts three, the cards all refuse, and the shuffle is disabled.
+  `db.content.db.test.ts` asserts no goal is in that state.
 
-- `CardDeck`'s position announcement says *card 1 of 3* under a headline saying
-  *2 Übungen*. A screen reader meets both. Logged.
-- A goal with mapped-but-unbuilt exercises only would show *Keine Übung zum …*
-  over a pile of refusing cards. It cannot happen today; the `none` form exists
-  so that it reads as a sentence rather than as *0 Übungen* if it ever does.
+### 7.2 The number is a word
+
+*Drei Übungen*, not *3 Übungen* — Ben, 2026-10-15. Spelled out through twelve
+and set in figures above, which is the ordinary rule for prose and a headline
+is prose. `i18n/numbers.ts` holds the table and argues why it is not in the
+message catalogue.
+
+`none` and `one` carry their own numerals rather than interpolating one, since
+both inflect the noun as well: *Keine Übung*, *Eine Übung*.
 
 ## 8 · What comes out
 

@@ -231,7 +231,13 @@ export interface RadioCardsProps {
 
 export function RadioCards({
   name, legend, legendHidden = false, hint, options, value, onValueChange, accent = 'primary',
-  headingLevel = 3, headlineStep = 'heading-sm', descriptionStep = 'body-md',
+  /* `body-sm`, NOT `body-md` — Ben, 2026-10-15, with the rest-state change.
+     The card is the deck card's face now, and `.musie-exercise-card__text` is
+     `--type-body-sm-*` against a `heading-sm` name. Copying the surface and
+     the border while leaving the type a step larger would have produced a
+     card that looks like a deck card until you read it. Both steps are still
+     props, so a screen that wants the old pair passes it. */
+  headingLevel = 3, headlineStep = 'heading-sm', descriptionStep = 'body-sm',
   disabled = false, error, emptyLabel, className,
 }: RadioCardsProps) {
   const t = useMusyText();

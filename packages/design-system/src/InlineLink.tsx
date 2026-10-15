@@ -84,9 +84,14 @@ export function InlineLink({
       {/* NO `label`, which is how `Icon` is told it is decorative: it sets
           `aria-hidden` itself when none is passed. `inline` applies
           --icon-optical-nudge, which is the prop's whole purpose — an icon
-          beside text. */}
+          beside text.
+
+          `xl` (32px) — Ben, 2026-10-15. It was `sm`, on the theory that a
+          glyph scaled to display type would read as a second headline; beside
+          a 34px heading it read as a speck instead. It is also the thing
+          satisfying 1.4.1 here, and a cue nobody notices is not a cue. */}
       {trailingIcon !== undefined && (
-        <Icon glyph={trailingIcon} size="sm" inline className="musy-ilink__icon" />
+        <Icon glyph={trailingIcon} size="xl" inline className="musy-ilink__icon" />
       )}
     </Button>
   );

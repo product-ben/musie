@@ -124,23 +124,24 @@ export function filterByGoal(exercises: Exercise[], choice: GoalChoice | null): 
 /**
  * The ones a press would actually start.
  *
- * ── ONE LINE, AND IT EXISTS SO THAT TWO THINGS CANNOT DISAGREE ────────────
- * /exercises counts these in its headline AND draws from them for *Such mir
- * eine Übung aus*. Both were `filter((e) => e.implemented)` written out at
- * the call site; one expression makes "a headline promising two exercises
- * beside a shuffle that can reach a third" inexpressible rather than merely
- * untrue today.
+ * ── THE SHUFFLE'S CANDIDATE SET, AND NOT THE HEADLINE'S COUNT ─────────────
+ * *Such mir eine Übung aus* draws from this, so it can never hand somebody an
+ * exercise that refuses; it is also what disables the control when a goal
+ * offers nothing built.
+ *
+ * IT COUNTED THE HEADLINE TOO, FOR HALF A DAY. The argument was that one
+ * expression keeps the number and the shuffle from disagreeing — and it was
+ * the wrong thing to make agree. `breathing-score` is mapped to three of the
+ * four goals and is unbuilt, so the headline read *2 Übungen zum Aktivieren*
+ * over a pile of three cards. Ben reported it on sight: a number directly
+ * above the thing it counts has to be the count of that thing, whatever the
+ * reasoning. The headline reads `visible` now.
  *
  * ── THE PILE IS NOT FILTERED BY THIS, AND THAT IS DELIBERATE ──────────────
  * The deck deals every mapped exercise, built or not, and refuses the unbuilt
  * ones through `NotImplementedLightbox` — filtering them out "would quietly
  * show two exercises where the product has five", which is the rule
  * `Exercises.tsx` has carried since the deck shipped.
- *
- * So the headline says 2 over a pile of 3 while `breathing-score` is unbuilt,
- * and that is the honest pair rather than an oversight: the headline promises
- * what you can START, the pile shows what EXISTS. The two converge the day
- * Achtsam Atmen ships, with no content change and no code change.
  */
 export function startable(exercises: Exercise[]): Exercise[] {
   return exercises.filter((exercise) => exercise.implemented);

@@ -1426,7 +1426,7 @@ export const en = {
      word after it is the goal's `purpose`, which is content and lives in
      `goal_i18n` — "Entspannen", not "Entspannung". */
   'exercises.headline.none': 'No exercises to {goal}',
-  'exercises.headline.one': '1 exercise to {goal}',
+  'exercises.headline.one': 'One exercise to {goal}',
   'exercises.headline.other': '{count} exercises to {goal}',
   /* NO 'exercises.intro'. It was the subline — "Press a card to start that
      exercise, or swipe sideways to see another. Or see all of them in a list."

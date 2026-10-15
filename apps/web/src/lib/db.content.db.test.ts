@@ -93,11 +93,13 @@ describe('goals · four of them, and nothing is stranded', () => {
     expect((goals ?? []).map((g) => g.id).filter((id) => !served.has(id))).toEqual([]);
   }, 30_000);
 
-  /* ── THE HEADLINE'S COUNT IS NOT THE PILE'S, AND BOTH ARE FINE ──────────
-     The headline counts `implemented` exercises and the deck deals every
-     mapped one, so a goal whose exercises are ALL unbuilt would read "Keine
-     Übung zum …" over a pile of cards that every one of them refuses. It
-     cannot happen under today's mapping and nothing in the schema forbids
+  /* ── A GOAL WHERE NOTHING CAN BE STARTED ────────────────────────────────
+     The headline counts the pile and the deck deals it, so a goal whose
+     exercises are ALL unbuilt still reads honestly — but every card in it
+     would refuse, and *Such mir eine Übung aus* would be a disabled control
+     over a full pile. That is a dead end dressed as a choice.
+
+     It cannot happen under today's mapping and nothing in the schema forbids
      it, so this is what makes it a test failure rather than a screenshot. */
   it('leaves no goal offering only exercises that are not built', async () => {
     const service = serviceClient();

@@ -71,7 +71,8 @@ import type {
 import { GoalSheet } from '../components/GoalSheet';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
-import { useT } from '../i18n/localeContext';
+import { useLocale, useT } from '../i18n/localeContext';
+import { numberWord } from '../i18n/numbers';
 import { splitSlot } from '../i18n/slot';
 import { stepMessageKey } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
@@ -105,6 +106,9 @@ const NUDGE = 0.8;
 
 export function Exercises() {
   const t = useT();
+  /* The headline writes its count as a WORD, and the word is per locale —
+     so the screen needs the locale itself, not only the lookup bound to it. */
+  const { locale } = useLocale();
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { data, loading, error } = useExercises();
@@ -303,10 +307,29 @@ export function Exercises() {
      than by removal. `none` is what the headline says the day an exercise is
      retired; *0 Übungen* would be a worse sentence.
 
-     IT COUNTS `ready`, NOT `visible`. Three of the four goals include Achtsam
-     Atmen, which is not built, so the headline says "2 Übungen" over a pile of
-     three cards. The headline promises what you can START; the pile shows what
-     EXISTS and refuses the rest honestly. GOAL-FILTER.md §7.
+     ── IT COUNTS `visible`, AND IT COUNTED `ready` FOR HALF A DAY ──────────
+     The first build counted what could be STARTED, which is the answer Ben
+     picked when the question was asked in the abstract. On screen it was
+     wrong, and he reported it as a bug: the headline read *2 Übungen zum
+     Aktivieren* over a pile of THREE cards, because Achtsam Atmen is mapped
+     to three of the four goals and is not built.
+
+     Both numbers are defensible in a document and only one of them is
+     defensible on a page: the count sits directly above the thing it counts,
+     so it has to be the number of cards there. A promise that undercounts
+     what is visible reads as a bug whatever the reasoning behind it, which is
+     exactly how it was found.
+
+     WHAT DID NOT MOVE is `pickForMe`, which still draws from `ready` — the
+     shuffle must never start something that refuses. So the two numbers still
+     exist; the headline simply stopped being the place that reports the
+     smaller one.
+
+     THE NUMBER IS A WORD (Ben, 2026-10-15). `numberWord` spells out through
+     twelve and falls back to digits above, which is the ordinary rule for
+     prose — and a headline is prose. `none` and `one` carry their own
+     numerals, because both inflect the noun as well: *Keine Übung*, *Eine
+     Übung*.
 
      THE SPLIT, AND WHY IT IS NOT THREE KEYS. `{goal}` is left unfilled on
      purpose and `splitSlot` cuts the rendered sentence at it, so the link can
@@ -319,13 +342,14 @@ export function Exercises() {
   const purpose = choice === null ? null : goalPurpose(goals, choice);
   const headline = React.useMemo(() => {
     if (purpose === null) return null;
-    const key = ready.length === 0
+    const count = visible.length;
+    const key = count === 0
       ? 'exercises.headline.none'
-      : ready.length === 1 ? 'exercises.headline.one' : 'exercises.headline.other';
+      : count === 1 ? 'exercises.headline.one' : 'exercises.headline.other';
     /* `goal` is deliberately not passed — `translate` leaves an unmatched slot
        verbatim, which is what there is to split on. */
-    return splitSlot(t(key, { count: String(ready.length) }), 'goal');
-  }, [purpose, ready.length, t]);
+    return splitSlot(t(key, { count: numberWord(count, locale) }), 'goal');
+  }, [purpose, visible.length, locale, t]);
 
   /* ── WHAT IS IN THE TOOLBAR, AND WHEN ────────────────────────────────────
      The pill and the view switch shared this row from 2026-10-07, and the

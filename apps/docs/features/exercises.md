@@ -59,26 +59,25 @@ The goal column is the whole of what decides which exercises you see. See
 
 ## The headline says how many, and it is not the number of cards
 
-Since 2026-10-15 the `h1` reads *2 Übungen zum Entspannen*, and the goal in it
-is a link that opens the goal sheet.
+Since 2026-10-15 the `h1` reads *Drei Übungen zum Entspannen*, and the goal in
+it is a link that opens the goal sheet. The number is written out through
+twelve and set in figures above it.
 
-**The count is what you can START, not what is in the pile.** Achtsam Atmen
-sits in three of the four goals and has no screens, so those three headlines
-say *2 Übungen* over a deck of three cards.
+**The count is the pile.** Every exercise the goal maps to is counted and
+dealt, built or not — so the number above the deck is always the number of
+cards in it.
 
-That gap is deliberate rather than an oversight:
+It counted only the STARTABLE ones for half a day, which read *2 Übungen* over
+a deck of three cards because Achtsam Atmen has no screens. Both numbers are
+defensible in a document and only one of them is defensible on a page: the
+count sits directly above the thing it counts. Ben reported it as a bug on
+sight.
 
-- the **headline promises** what pressing something would actually get you;
-- the **pile shows** what the product has, and refuses the unbuilt ones
-  honestly — filtering them out "would quietly show two exercises where the
-  product has five", which is the rule the screen has carried since the deck
-  shipped.
-
-The two converge on their own the day Achtsam Atmen ships, with no content
-change and no code change.
-
-One consequence worth knowing: the deck announces *card 1 of 3* under a
-headline saying *2 Übungen*, so a screen-reader user meets both numbers.
+What has not changed is that **the unbuilt ones are still dealt and still
+refuse** — filtering them out "would quietly show two exercises where the
+product has five", which is the rule the screen has carried since the deck
+shipped. *Such mir eine Übung aus* is the one thing that skips them, so the
+shuffle can never start something that refuses.
 :::
 
 ::: devs
@@ -90,7 +89,7 @@ headline saying *2 Übungen*, so a screen-reader user meets both numbers.
 | `lib/content.ts`, `lib/useContent.ts` | the fetch, per locale |
 | `lib/session.ts` | `startSession`, and the running-session branch |
 | `lib/exerciseKind.ts` | which steps a kind of exercise runs |
-| `lib/goals.ts` | the filter, and `startable()` — what the headline counts |
+| `lib/goals.ts` | the filter, and `startable()` — the shuffle's candidate set |
 | `components/GoalSheet.tsx` | the goal sheet behind the headline |
 | `i18n/slot.ts` | splitting the headline around its link |
 | `components/NotImplementedLightbox.tsx` | the refusal |

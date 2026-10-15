@@ -1015,7 +1015,7 @@ export const de: Messages = {
      'zum Musie-Kennenlernen' oder 'um Musie kennenzulernen'; in
      OPEN-QUESTIONS notiert, nicht still korrigiert. */
   'exercises.headline.none': 'Keine Übung zum {goal}',
-  'exercises.headline.one': '1 Übung zum {goal}',
+  'exercises.headline.one': 'Eine Übung zum {goal}',
   'exercises.headline.other': '{count} Übungen zum {goal}',
   /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
      sie ist ersatzlos weg (Ben, 2026-10-08). `DeckGuide` erklärt Tippen und

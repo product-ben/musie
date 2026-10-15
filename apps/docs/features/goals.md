@@ -5,7 +5,7 @@ than a filter beside it. Picking one opens a sheet that says what each is for.
 
 ```mermaid
 flowchart TD
-  H["h1 · '2 Übungen zum Entspannen'"] -->|"the goal is a link"| S["Sheet · 'Was brauchst du gerade?'"]
+  H["h1 · 'Drei Übungen zum Entspannen'"] -->|"the goal is a link"| S["Sheet · 'Was brauchst du gerade?'"]
   S --> G1["Einen Weg Musie kennenzulernen<br/><i>default — sort 1</i>"]
   S --> G2["Entspannung"]
   S --> G3["Energie"]
@@ -35,10 +35,13 @@ carrying the offer:
 
 | goal | German | English |
 |---|---|---|
-| `get-to-know-musie` | 2 Übungen zum **Musie kennenlernen** | 2 exercises to **get to know Musie** |
-| `relax` | 2 Übungen zum **Entspannen** | 2 exercises to **relax** |
-| `wake-up` | 2 Übungen zum **Aktivieren** | 2 exercises to **get going** |
-| `mindfulness` | 3 Übungen zum **Achtsamer werden** | 3 exercises to **grow more mindful** |
+| `get-to-know-musie` | Drei Übungen zum **Musie kennenlernen** | Three exercises to **get to know Musie** |
+| `relax` | Drei Übungen zum **Entspannen** | Three exercises to **relax** |
+| `wake-up` | Drei Übungen zum **Aktivieren** | Three exercises to **get going** |
+| `mindfulness` | Drei Übungen zum **Achtsamer werden** | Three exercises to **grow more mindful** |
+
+The number is **written out** through twelve and set in figures above it —
+the ordinary rule for prose, and a headline is prose.
 
 The bold part is a link. Pressing it opens the sheet.
 
@@ -96,9 +99,10 @@ worth knowing:
 - **Achtsame Pause appears under one goal only.** It is the exercise the paper
   deck exists for, so somebody who never picks *Achtsamer werden* never meets
   the deck. Deliberate, and logged.
-- **Achtsam Atmen is in three of the four and is not built.** Which is why
-  three of the four headlines say *2 Übungen* over a pile of three cards —
-  see [the exercise library](/features/exercises).
+- **Achtsam Atmen is in three of the four and is not built.** It is still
+  counted and still dealt — the headline reports the pile — and pressing it
+  opens the *not built yet* refusal. See
+  [the exercise library](/features/exercises).
 
 ## The default is the first card
 
@@ -152,14 +156,16 @@ since 2026-10-07, and now it cannot.
 for free: `readCachedGoal` validates the stored id against the goals that
 actually exist, and no row can spell it. Asserted in `goals.test.ts`.
 
-## `startable()` is why the count and the shuffle cannot disagree
+## `startable()` is the shuffle's candidate set
 
-The headline counts it and *Such mir eine Übung aus* draws from it — one
-expression, so a headline promising two exercises beside a shuffle that can
-reach a third is not expressible.
+*Such mir eine Übung aus* draws from it, so the shuffle can never start an
+exercise that would refuse. It is also what disables the button when a goal
+offers nothing built.
 
-The **pile is deliberately not filtered by it**: the deck deals every mapped
-exercise and refuses the unbuilt ones honestly.
+**The headline does NOT count it** — it counts the pile. It counted
+`startable()` for half a day and Ben reported it as a bug on sight: the
+number sits directly above the cards it counts, so it has to be the number of
+cards there, whatever the reasoning behind the smaller figure.
 
 ## The headline is one string per locale, split on `{goal}`
 

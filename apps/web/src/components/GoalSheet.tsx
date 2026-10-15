@@ -84,6 +84,11 @@ export function GoalSheet({
       title={t('exercises.goal.sheetTitle')}
       closeLabel={t('common.closeLabel')}
       origin={origin}
+      /* The gutter at M and L. `Sheet`'s own inset is 32px at every width,
+         which is a margin on a phone and nothing on a laptop — see
+         `.musie-goal-sheet` in exercises.css for why the correction is this
+         sheet's and not the component's. */
+      className="musie-goal-sheet"
       /* ── THE QUESTION, PINNED TO THE TOP ───────────────────────────────
          In the `header` slot rather than in the body, which is what keeps it
          in the same place whatever the cards below do — Sheet's header is
