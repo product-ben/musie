@@ -1224,6 +1224,31 @@ export const de: Messages = {
   'feelings.reopen.open': 'Das Sheet ist offen',
   'feelings.reopen.closed': 'Noch mal wählen',
   'route.feelingsSelection.title': 'Gefühl wählen',
+  /* `/capturing-feelings-exploration` – der Test von 2026-10-15, der beim Bild
+     anfängt statt beim Wort. Bens Wortlaut für die erste Frage und die drei
+     Optionen, unverändert übernommen.
+
+     Die drei Fragen in Schritt 2 sind ausgeschrieben und nicht eine Frage mit
+     eingesetzter Bildart: „Wer ist zu sehen?“ passt auf keine Landschaft.
+
+     „Erzähl“, nicht „Erzähle“: der Imperativ Singular darf die Endung bei
+     Verben auf -l abwerfen, und gesprochen ist genau das die Form, in der
+     jemand gebeten wird, etwas zu erzählen. Siehe docs/GERMAN-UI-WRITING.md
+     zum Imperativ Singular. */
+  'capturing.picture.headline': 'Was für ein Bild ist vor deinem inneren Auge entstanden?',
+  'capturing.picture.empty': 'Hier gibt es nichts zu wählen.',
+  'capturing.kind.figures.option': 'Figuren',
+  'capturing.kind.figures.headline': 'Erzähl von ihnen.',
+  'capturing.kind.figures.question': 'Wer ist zu sehen, und was tun sie?',
+  'capturing.kind.memory.option': 'Eine Erinnerung',
+  'capturing.kind.memory.headline': 'Erzähl von diesem Moment.',
+  'capturing.kind.memory.question': 'Wann war das, und wer war dabei?',
+  'capturing.kind.landscape.option': 'Eine Landschaft',
+  'capturing.kind.landscape.headline': 'Erzähl von diesem Ort.',
+  'capturing.kind.landscape.question': 'Wo bist du, und was siehst du um dich herum?',
+  'capturing.feeling.headline': 'Wie fühlt sich das an?',
+  'capturing.feeling.label': 'In deinen Worten',
+  'route.capturingFeelings.title': 'Gefühle einfangen',
   'route.insightMap.title': 'Org-Karte',
   'route.maintenance.title': 'Verwaltung',
   'route.aboutMusie.title': 'Über Musie',

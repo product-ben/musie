@@ -1679,6 +1679,26 @@ export const en = {
   'feelings.reopen.open': 'The sheet is open',
   'feelings.reopen.closed': 'Choose again',
   'route.feelingsSelection.title': 'Feelings selection',
+  /* `/capturing-feelings-exploration` — the picture-first test of 2026-10-15,
+     and the sibling of the block above. It never shows a feeling word: it asks
+     what the person saw, asks one question back about that kind of picture, and
+     only then offers to talk about the feeling. The three step-2 questions are
+     written out rather than interpolated, because "Who is there?" has no
+     landscape reading. See routes/CapturingFeelingsExploration.tsx. */
+  'capturing.picture.headline': "What picture appeared in your mind's eye?",
+  'capturing.picture.empty': 'Nothing to choose from here.',
+  'capturing.kind.figures.option': 'Figures',
+  'capturing.kind.figures.headline': 'Tell me about them.',
+  'capturing.kind.figures.question': 'Who is there, and what are they doing?',
+  'capturing.kind.memory.option': 'A memory',
+  'capturing.kind.memory.headline': 'Tell me about that moment.',
+  'capturing.kind.memory.question': 'When was it, and who was with you?',
+  'capturing.kind.landscape.option': 'A landscape',
+  'capturing.kind.landscape.headline': 'Tell me about this place.',
+  'capturing.kind.landscape.question': 'Where are you, and what do you see around you?',
+  'capturing.feeling.headline': 'How does this make you feel?',
+  'capturing.feeling.label': 'In your own words',
+  'route.capturingFeelings.title': 'Capturing feelings',
   'route.insightMap.title': 'Org map',
   'route.maintenance.title': 'Maintenance',
   'route.aboutMusie.title': 'About Musie',
