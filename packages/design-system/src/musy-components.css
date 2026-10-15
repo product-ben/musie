@@ -1964,7 +1964,17 @@
        column is wide, so a short description still gets a square rather than a
        letterbox. A long one makes the media taller, never narrower. */
     min-block-size: calc(var(--target-guided) * 3);
-    padding-inline-start: 0;
+    /* ── `padding-inline-start: 0` IS GONE — Ben, 2026-10-15 ────────────
+       The media used to run full-bleed to the card's leading edge, which
+       meant a card WITH a picture had no left padding and a card without one
+       had `--space-inset-card`. Put the two variants in one Storybook page —
+       which is where Ben saw it — and the text columns start at different
+       places down the list.
+
+       The picture is a thumbnail inside the card now, not a panel attached
+       to its edge, so the inset is the same on every card whatever it
+       carries. The vertical bleed and the half-rounded corner went with it;
+       see `.musy-rcard__media` below. */
   }
 }
 
@@ -1985,8 +1995,12 @@
        narrowed, and it resolves by pinning to the cap and inflating the row. */
     align-self: stretch;
     aspect-ratio: auto;
-    margin-block: calc(var(--space-inset-card) * -1);
-    border-radius: var(--radius-input) 0 0 var(--radius-input);
+    /* NO NEGATIVE MARGIN AND NO HALF-ROUNDED CORNER. Both existed to make the
+       picture part of the card's edge; with the leading inset restored above,
+       a block bleed with an inset start is a picture hanging off three sides
+       of four, which reads as a rendering fault rather than a decision. A
+       thumbnail is rounded on all four corners. */
+    border-radius: var(--radius-input);
   }
 }
 
@@ -3842,7 +3856,12 @@
    ── THE REST STATE LEFT THE TINT AND BECAME A DECK CARD — Ben, 2026-10-15 ──
    An unselected card was `--musy-rest-fill` (green-3) like every other
    control in this block. It is now the face of a card off the PILE: white,
-   hairline edge, the deck's radius and the deck's elevation.
+   hairline edge, the deck's radius.
+
+   WITHOUT THE DECK'S ELEVATION, which it had for an hour. A shadow on the
+   pile says *these are stacked and you can take the top one*; on a list of
+   four that are all equally available it says nothing and costs the group
+   its flatness. Ben, on sight. The border is doing the separating.
 
    WHY THE PILE IS THE REFERENCE AND NOT THE BLOCK ABOVE. On /exercises these
    two things are the same list of options drawn twice — the goal sheet, and
@@ -3867,7 +3886,6 @@
   border-color: var(--border-subtle);
   border-width: var(--border-width-hairline);
   border-radius: var(--radius-lg);
-  box-shadow: var(--elevation-2);
 }
 /* The selected card keeps the deck's radius too, or the group changes shape
    as you move through it. Border weight is what escalates, not the corner. */
@@ -7644,28 +7662,37 @@ html[data-musy-scroll-snap='y'] {
 .musy-ilink {
   display: inline-flex;
   align-items: baseline;
-  gap: var(--space-gap-inline);
+  /* ── NO GAP, AND THAT IS NOT THE SAME AS NO SPACE — Ben, 2026-10-15 ────
+     It was `--space-gap-inline` (8px), Layer 1's "icon ↔ its own label.
+     Never widen this", and Ben asked for the glyph 8px closer — which is
+     this rung exactly, so the honest expression of the instruction is to
+     spend none of it.
+
+     THE GLYPH STILL IS NOT TOUCHING THE TEXT. A Lucide icon is drawn on a
+     24px grid with its strokes inset from the edge, so an ellipsis-vertical
+     carries roughly a quarter of its own box as clear space on each side.
+     At `lg` that is the optical gap; the declared 8px was being added ON TOP
+     of it, which is why the glyph looked adrift from the word it belongs to.
+
+     `0` is a geometric identity rather than a spacing decision, which is the
+     one case L14 allows a bare value — there is no rung on the ladder for
+     "none", and `--sp-0` does not exist. */
+  gap: 0;
   margin: 0;
-  /* ── THE TINTED PILL — Ben, 2026-10-15 ─────────────────────────────────
-     4px all round, which is `--sp-1`: the bottom rung of the ladder and the
-     only one small enough to sit inside a line of text.
+  /* ── NO BACKGROUND, AND IT HAD ONE FOR AN HOUR — Ben, 2026-10-15 ───────
+     A tinted pill on `--interactive-primary-subtle` with 4px of padding,
+     asked for and then taken back on sight. Worth a line rather than a
+     silent revert: the fill was legible (6.94:1 light, 7.29:1 dark, measured)
+     and it still read as a CHIP — a small box sitting in the sentence —
+     where the thing it marks is a word in a heading. Text in a heading
+     should look like text in a heading.
 
-     NO NEW TOKEN WAS NEEDED, and that is worth writing down because the brief
-     expected one. `--interactive-primary-subtle` is green-3 and Layer 1
-     defines it as "green tinted fill at rest — chips, tags, rows", which is
-     exactly what a link wearing a soft pill is. The decorative sibling
-     `--accent-1-subtle` holds the same VALUE and the wrong SEMANTIC: that
-     family is for chart series and avatars, not for something you press.
-
-     CONTRAST, MEASURED RATHER THAN ASSUMED. `--accent-1-text` (green-11) on
-     this fill is 6.94:1 light and 7.29:1 dark, so the ink does not have to
-     change with the background and the link goes on looking like a link. Had
-     it not cleared 4.5, the ink Layer 1 pairs with this fill is
-     `--interactive-primary-on-subtle` — which is sand-12, and would have made
-     it look like body copy in a box. */
-  padding: var(--sp-1);
-  border-radius: var(--radius-xs);
-  background-color: var(--interactive-primary-subtle);
+     So the padding and the radius go with it. They existed only to give the
+     fill room; with nothing to inset, 4px of padding is a control nudged off
+     its own baseline for no reason. `padding: 0` is the state this started
+     in and is back to. */
+  padding: 0;
+  background: none;
   border: 0;
   font: inherit;
   letter-spacing: inherit;
@@ -7677,20 +7704,7 @@ html[data-musy-scroll-snap='y'] {
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--motion-toggle), background-color var(--motion-toggle);
-}
-
-/* The pill answers the pointer, which bare text could only do by underlining.
-   The same three-step ladder every other tinted control in this file uses. */
-@media (hover: hover) and (pointer: fine) {
-  .musy-ilink:hover:not(:disabled),
-  .musy-ilink[data-force~="hover"] {
-    background-color: var(--interactive-primary-subtle-hover);
-  }
-}
-.musy-ilink:active:not(:disabled),
-.musy-ilink[data-force~="active"] {
-  background-color: var(--interactive-primary-subtle-active);
+  transition: color var(--motion-toggle);
 }
 
 /* NO GLYPH, SO THE UNDERLINE CANNOT WAIT. See the header. */
@@ -7723,20 +7737,21 @@ html[data-musy-scroll-snap='y'] {
   text-underline-offset: var(--sp-1);
 }
 
-/* ── THE GLYPH IS `xl` — Ben, 2026-10-15 ─────────────────────────────────
-   32px, up from 16. It shipped at `sm` with an argument that an icon scaled
-   to a 34px heading would read as a second headline; on screen the opposite
-   was true — at 16px beside display type it read as a speck of dust rather
-   than as the control's one affordance.
+/* ── THE GLYPH IS `lg` — Ben, 2026-10-15, after two passes ───────────────
+   24px. It shipped at `sm` (16px), went to `xl` (32px) because at 16 beside
+   display type it read as a speck, and settled one rung back down: at 32 it
+   competed with the word it belongs to, which is the thing the first
+   argument had predicted and the second had overcorrected.
 
-   IT IS ALSO THE 1.4.1 CUE, which is the reason the size is not cosmetic:
-   the underline waits for hover BECAUSE this glyph is there at rest (see the
-   header), and a cue nobody notices is not a cue. The size is set on the
-   component, not here, so `Icon` can apply its own stroke rule for the step.
+   IT IS THE 1.4.1 CUE, which is why the size is not cosmetic: the underline
+   waits for hover BECAUSE this glyph is there at rest (see the header), and
+   a cue nobody notices is not a cue. 24 is the size at which it is noticed
+   and not read as a second headline. The size is set on the component, not
+   here, so `Icon` applies the stroke rule for the step.
 
-   `align-self: center` rather than the flex container's `baseline`: a 32px
-   glyph has no text baseline worth aligning, and sitting it on one drops it
-   below the line it belongs to. */
+   `align-self: center` rather than the flex container's `baseline`: a glyph
+   this size has no text baseline worth aligning, and sitting it on one drops
+   it below the line it belongs to. */
 .musy-ilink__icon { flex: none; align-self: center; }
 
 .musy-ilink:disabled {

@@ -1510,7 +1510,11 @@ export const en = {
      reader what pressing this does, because the legend is one big button and
      its accessible name is otherwise three sentences of explanation with no
      verb among them. */
-  'exercises.guide.goal': 'Change your goal',
+  /* NO 'exercises.guide.goal'. It was *Change your goal* — the legend's top row, an arrow
+     pointing up out of the card at the goal pill. The pill is gone and the
+     goal is the page's headline, so the row was explaining the largest line
+     on the screen; Ben cut it on 2026-10-15 and the key goes with it rather
+     than being kept against a row that is not coming back. */
   'exercises.guide.next': 'Swipe for the next exercise',
   'exercises.guide.start': 'Press an exercise to start it',
   'exercises.guide.dismiss': 'Press to continue',

@@ -1092,7 +1092,11 @@ export const de: Messages = {
      `guide.dismiss` wird nie gesehen: die Zeile nur für Screenreader, weil die
      Legende ein einziger Button ist und ihr zugänglicher Name sonst aus drei
      Erklärungssätzen ohne Verb besteht. */
-  'exercises.guide.goal': 'Ändere dein Ziel',
+  /* NO 'exercises.guide.goal'. It was *Ändere dein Ziel* — the legend's top row, an arrow
+     pointing up out of the card at the goal pill. The pill is gone and the
+     goal is the page's headline, so the row was explaining the largest line
+     on the screen; Ben cut it on 2026-10-15 and the key goes with it rather
+     than being kept against a row that is not coming back. */
   'exercises.guide.next': 'Wische für die nächste Übung',
   'exercises.guide.start': 'Tippe eine Übung an, um sie zu starten',
   'exercises.guide.dismiss': 'Zum Fortfahren drücken',

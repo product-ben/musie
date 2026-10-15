@@ -86,12 +86,13 @@ export function InlineLink({
           --icon-optical-nudge, which is the prop's whole purpose — an icon
           beside text.
 
-          `xl` (32px) — Ben, 2026-10-15. It was `sm`, on the theory that a
-          glyph scaled to display type would read as a second headline; beside
-          a 34px heading it read as a speck instead. It is also the thing
-          satisfying 1.4.1 here, and a cue nobody notices is not a cue. */}
+          `lg` (24px) — Ben, 2026-10-15, after two passes. `sm` read as a
+          speck beside display type; `xl` competed with the word it belongs
+          to. It is also the thing satisfying 1.4.1 here, and a cue nobody
+          notices is not a cue — 24 is where it is noticed without becoming a
+          second headline. */}
       {trailingIcon !== undefined && (
-        <Icon glyph={trailingIcon} size="xl" inline className="musy-ilink__icon" />
+        <Icon glyph={trailingIcon} size="lg" inline className="musy-ilink__icon" />
       )}
     </Button>
   );

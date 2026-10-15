@@ -804,6 +804,18 @@
    reads as belonging to the left one. */
 .musie-deck-guide__row--swipe {
   justify-content: space-between;
+  /* ── IT TAKES THE MIDDLE, NOW THAT THERE ARE TWO ROWS — 2026-10-15 ─────
+     The legend was three rows spread top / middle / bottom by the column's
+     `space-between`, which put the chevrons across the card's waist for
+     free. With the goal row removed, `space-between` over two children
+     would pin this one to the TOP and lose the correspondence — the
+     gesture is a thing you do across the middle of the card.
+
+     Growing it instead keeps both: this row fills whatever is left, its
+     own `align-items: center` holds the chevrons at the waist of that
+     space, and the press row stays in the bottom corner where the real
+     button is. */
+  flex: 1 1 auto;
 }
 
 .musie-deck-guide__row--swipe .musie-deck-guide__text {
