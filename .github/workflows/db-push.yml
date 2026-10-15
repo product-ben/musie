@@ -81,10 +81,27 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.armed.outputs.armed == 'true'
 
+      # ── PINNED, AND NOT FOR TIDINESS ──────────────────────────────────────
+      # `version: latest` makes this action ask the GitHub API which release is
+      # newest, on every run. On 2026-10-15 two dispatches sixteen seconds apart
+      # both died there:
+      #
+      #   Failed to resolve latest Supabase CLI release: rate limit exceeded
+      #
+      # Before `link`, before `push` — so the job failed without touching the
+      # database and WITHOUT SAYING ANYTHING ABOUT THE CREDENTIALS, which is the
+      # expensive part: the two failures looked exactly like the password
+      # failures of the day before and were a different fault entirely.
+      #
+      # A pin removes the lookup, so the step cannot fail for a reason that has
+      # nothing to do with this repository. It also makes CI run the CLI that
+      # pushes the migrations the same CLI a person ran `supabase db reset` with
+      # locally — 2.117.0 on Ben's machine today. Moving it is a deliberate act,
+      # like `wrangler.jsonc`'s `compatibility_date`.
       - uses: supabase/setup-cli@v1
         if: steps.armed.outputs.armed == 'true'
         with:
-          version: latest
+          version: 2.117.0
 
       - name: Link the project
         if: steps.armed.outputs.armed == 'true'

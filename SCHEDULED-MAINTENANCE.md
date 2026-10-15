@@ -36,7 +36,12 @@ everywhere else.
 ### How you would find out — two ways, and the second is the one that matters
 
 1. **GitHub emails you** that the workflow failed. Reliable, and easy to skim
-   past, which is the whole reason this file exists.
+   past, which is the whole reason this file exists. **Read WHICH STEP failed
+   before believing it is this.** On 2026-10-15 two runs died in `setup-cli`
+   with *rate limit exceeded* — before `link`, so they said nothing about any
+   credential while looking identical to the runs that did. The CLI version is
+   pinned now for that reason. A credential fault stops at *Link the project*;
+   anything earlier is not one.
 2. **`pnpm db:status` starts saying DRIFTED**, and
    `pnpm --filter web dev` says it in a box before the dev server starts. That
    backstop was built for a different failure — automation that quietly stopped
@@ -86,6 +91,12 @@ Named so they are not forgotten, not as tasks:
 - **`wrangler.jsonc`'s `compatibility_date`** is pinned at `2026-09-22`. Not an
   expiry — a deliberate pin — but it is the kind of thing that is reviewed on a
   clock rather than prompted by a failure.
+- **`db-push.yml`'s Supabase CLI version**, pinned at `2.117.0` on 2026-10-15
+  for the reason in the entry above. Same kind of thing as the line before it,
+  with one difference worth knowing: this pin is what the hosted database is
+  migrated BY, so it is the one place where a stale version reaches production.
+  Move it when the local CLI moves, not on a schedule — `supabase --version` is
+  the number to match.
 
 ## Adding one
 
