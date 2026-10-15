@@ -309,6 +309,25 @@ export const router = createBrowserRouter([
         handle: handle({ titleKey: 'route.maintenance.title', wide: true }),
       },
       {
+        /* THE FEELINGS DRILL-DOWN — a user test of 2026-10-15, and the fifth
+           tool on this table. Same shape as the other four: `lazy`, linked
+           from nowhere, reachable only by typing the path, writing nothing.
+
+           `lazy` is load-bearing rather than tidy: this module is the only
+           importer of `content/emotionWheel.ts`, 128 words of transcribed
+           wheel that nobody who never types this path should download.
+
+           NOT `wide`. The question under test is whether narrowing beats
+           reading a list of 128, and that is a phone question — `--bp-md` is
+           the width the answer has to hold at. See routes/FeelingsSelection.tsx. */
+        path: 'feelings-selection',
+        lazy: async () => {
+          const { FeelingsSelection } = await import('./routes/FeelingsSelection');
+          return { Component: FeelingsSelection };
+        },
+        handle: handle({ titleKey: 'route.feelingsSelection.title' }),
+      },
+      {
         path: '*',
         element: <Placeholder titleKey="route.notFound.title" />,
         handle: handle({ titleKey: 'route.notFound.title' }),
