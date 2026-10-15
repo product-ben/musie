@@ -1425,9 +1425,57 @@ export const en = {
      sit anywhere, including first, and a translator reads a sentence. The
      word after it is the goal's `purpose`, which is content and lives in
      `goal_i18n` — "Entspannen", not "Entspannung". */
-  'exercises.headline.none': 'No exercises to {goal}',
-  'exercises.headline.one': 'One exercise to {goal}',
-  'exercises.headline.other': '{count} exercises to {goal}',
+  /* ── THE LEAD, AND WHY IT IS ITS OWN KEY (Ben, 2026-10-15) ──────────────
+     The headline opens by noticing that somebody turned up before it says
+     what is on offer. That is the half the user testing was asking for and
+     the count could not give: *warum sollte ich das machen* is not answered
+     by a number, and the first thing to say to somebody stepping out of a
+     busy day is not an inventory.
+
+     SPLIT FROM THE THREE FORMS RATHER THAN COPIED INTO EACH, which is the
+     opposite of the call made one block up for `{goal}` — and the
+     distinction is the whole rule. That slot splits ONE sentence, so three
+     keys would have fixed the word order and handed a translator fragments.
+     This is a SECOND SENTENCE: it does not vary with the count, and nothing
+     about it depends on where the other one puts its verb. Splitting between
+     sentences costs a translator nothing; splitting inside one costs them
+     the sentence.
+
+     Six copies of it otherwise — three forms, two locales — and the next
+     person to reword it would find five.
+
+     ── IT IS THE TIME OF DAY (Ben, 2026-10-15) ──────────────────────────
+     It was *Good that you're taking a moment.* for an hour. A greeting is
+     warmer and asks nothing: the first draft noticed the reader and then
+     complimented them for arriving, which is a small thing to answer at the
+     top of a screen you came to for something else.
+
+     THE BAND IS GERMAN TIME, NOT THE READER'S — `lib/greeting.ts` carries
+     the argument and the clock. 04:00–11:30, 11:31–16:30, and the rest.
+
+     THE BOUNDARIES ARE THE GERMAN ONES IN BOTH LOCALES, which makes the
+     English slightly early twice a day: 11:35 is *Good afternoon* here and
+     would be *Good morning* to most English speakers. Kept on purpose. One
+     rule and two words beats two rules that drift, and the alternative —
+     per-locale boundaries — would mean the German and English screens
+     disagreeing about what time it is. */
+  'exercises.headline.morning': 'Good morning.',
+  'exercises.headline.day': 'Good afternoon.',
+  'exercises.headline.evening': 'Good evening.',
+  /* The offer. "Here are" / "Here is" is why the plural forms earn their
+     keep twice over — the verb agrees as well as the noun, which no
+     interpolated count can do. `none` drops the "here" entirely: *Here are
+     no exercises* is grammatical and reads like a shrug.
+
+     NO FULL STOP ON ANY OF THE THREE, and it is not a style choice: `{goal}`
+     is the last thing in two of them, and the link that replaces it ends in
+     a glyph — so a period after the slot renders as a dot floating past the
+     ellipsis, half a space clear of the word. Seen on screen, in German, at
+     393px. The LEAD keeps its stop, because it has a sentence after it to be
+     separated from. */
+  'exercises.headline.none': 'No exercises to {goal} yet',
+  'exercises.headline.one': 'Here is one exercise to {goal}',
+  'exercises.headline.other': 'Here are {count} exercises to {goal}',
   /* NO 'exercises.intro'. It was the subline — "Press a card to start that
      exercise, or swipe sideways to see another. Or see all of them in a list."
      — and it went with the header rewrite (Ben, 2026-10-08), unreplaced.

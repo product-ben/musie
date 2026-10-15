@@ -1014,9 +1014,54 @@ export const de: Messages = {
      'zum Musie kennenlernen' ist Bens Wortlaut und bleibt so. Der Duden will
      'zum Musie-Kennenlernen' oder 'um Musie kennenzulernen'; in
      OPEN-QUESTIONS notiert, nicht still korrigiert. */
-  'exercises.headline.none': 'Keine Übung zum {goal}',
-  'exercises.headline.one': 'Eine Übung zum {goal}',
-  'exercises.headline.other': '{count} Übungen zum {goal}',
+  /* ── Der Einstieg, und warum er ein eigener Schlüssel ist (Ben, 2026-10-15)
+     Die Überschrift bemerkt erst, dass jemand da ist, und sagt dann, was es
+     gibt. Genau diese Hälfte hat im Usertesting gefehlt: *warum sollte ich
+     das machen* beantwortet keine Zahl, und das Erste, was man jemandem
+     sagt, der aus einem vollen Tag heraustritt, ist keine Bestandsliste.
+
+     GETRENNT VON DEN DREI FORMEN statt in jede hineinkopiert — also genau
+     andersherum als beim `{goal}`-Platzhalter einen Block weiter oben, und
+     der Unterschied ist die ganze Regel. Der Platzhalter teilt EINEN Satz;
+     drei Schlüssel hätten die Wortstellung festgenagelt und wer übersetzt,
+     bekäme Bruchstücke. Das hier ist ein ZWEITER Satz: er ändert sich nicht
+     mit der Zahl, und nichts daran hängt davon ab, wohin der andere sein
+     Verb stellt. Zwischen Sätzen zu trennen kostet beim Übersetzen nichts,
+     innerhalb eines Satzes kostet es den Satz.
+
+     Sonst sechs Kopien — drei Formen, zwei Sprachen — und wer ihn das
+     nächste Mal umschreibt, findet fünf davon.
+
+     ── Es ist die Tageszeit (Ben, 2026-10-15) ───────────────────────────
+     Eine Stunde lang stand hier *Schön, dass du dir einen Moment nimmst.*
+     Ein Gruß ist wärmer und verlangt nichts: der erste Entwurf hat die
+     Leserin bemerkt und ihr dann ein Kompliment für ihr Erscheinen gemacht,
+     und das ist viel verlangt ganz oben auf einem Bildschirm, zu dem man
+     wegen etwas anderem gekommen ist.
+
+     NACH DEUTSCHER ZEIT, nicht nach der des Geräts — die Begründung und die
+     Uhr stehen in `lib/greeting.ts`. 04:00–11:30, 11:31–16:30, der Rest.
+
+     Punkt statt Ausrufezeichen: der Gruß steht vor einem zweiten Satz und
+     soll ihn ankündigen, nicht übertönen. */
+  'exercises.headline.morning': 'Guten Morgen.',
+  'exercises.headline.day': 'Guten Tag.',
+  'exercises.headline.evening': 'Guten Abend.',
+  /* Das Angebot. 'Hier ist' gegen 'Hier sind' ist der zweite Grund, warum
+     sich die Pluralformen lohnen — das Verb kongruiert mit, nicht nur das
+     Substantiv, und das kann keine eingesetzte Zahl. `none` lässt das 'hier'
+     weg: *Hier sind keine Übungen* ist korrekt und klingt wie ein
+     Achselzucken.
+
+     KEIN PUNKT bei allen dreien, und das ist keine Stilfrage: `{goal}` steht
+     bei zweien am Satzende, und der Link, der ihn ersetzt, endet mit einem
+     Glyph — ein Punkt danach wird als Tupfen hinter den drei Punkten
+     gezeichnet, einen halben Wortabstand vom Wort entfernt. Auf dem Schirm
+     gesehen, auf Deutsch, bei 393px. Der GRUSS behält seinen Punkt, weil nach
+     ihm ein Satz kommt, von dem er getrennt werden muss. */
+  'exercises.headline.none': 'Noch keine Übung zum {goal}',
+  'exercises.headline.one': 'Hier ist eine Übung zum {goal}',
+  'exercises.headline.other': 'Hier sind {count} Übungen zum {goal}',
   /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
      sie ist ersatzlos weg (Ben, 2026-10-08). `DeckGuide` erklärt Tippen und
      Wischen auf der Karte selbst; die Liste erklärt er nicht, und genau diese

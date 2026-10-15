@@ -74,6 +74,7 @@ import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
 import { useLocale, useT } from '../i18n/localeContext';
 import { numberWord } from '../i18n/numbers';
 import { splitSlot } from '../i18n/slot';
+import { timeOfDay } from '../lib/greeting';
 import { stepMessageKey } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
 import { createSession, endSession, useActiveSession } from '../lib/session';
@@ -344,6 +345,21 @@ export function Exercises() {
      NULL WHILE THE GOALS ARE IN FLIGHT. `purpose` comes from the catalogue, so
      there is no sentence to write until it lands — and the screen already
      draws nothing else in that window. */
+  /* ── THE GREETING, READ ONCE WHEN THE SCREEN ARRIVES ────────────────────
+     Morning, day or evening, on GERMAN time rather than the reader's —
+     `lib/greeting.ts` owns the bands and the argument for the clock.
+
+     `useMemo` WITH NO DEPENDENCIES, so it is the time this screen was opened
+     at and not the time of the last render. Both are defensible and this one
+     is stable: a heading that re-greets you mid-session because a goal
+     changed at 11:31 is stranger than one that is a few minutes behind.
+
+     THE COST IS A TAB LEFT OPEN ACROSS A BOUNDARY, which keeps the greeting
+     it arrived with until the next navigation. The alternative is a timer
+     re-rendering a heading nobody is looking at, for a word that is wrong
+     for at most one visit. */
+  const greeting = React.useMemo(() => timeOfDay(), []);
+
   const purpose = choice === null ? null : goalPurpose(goals, choice);
   const headline = React.useMemo(() => {
     if (purpose === null) return null;
@@ -611,6 +627,17 @@ export function Exercises() {
           page. */}
       {headline !== null && purpose !== null && (
         <h1 className="musie-placeholder">
+          {/* ── THE GREETING, AND IT IS IN THE SAME HEADING ────────────────
+              Two sentences, one `h1`. Ben asked to EXTEND the headline, not
+              to put something above it — and the two belong together: the
+              first greets you, the second says what is here. Splitting them
+              into a heading and a subline would make the greeting the page's
+              title and demote the offer, which is the wrong way round.
+
+              `{' '}` between them because JSX drops whitespace at a line
+              break, and two sentences run together is the kind of thing that
+              is invisible in review and obvious on screen. */}
+          {t(`exercises.headline.${greeting}`)}{' '}
           {headline[0]}
           <InlineLink
             trailingIcon={EllipsisVertical}

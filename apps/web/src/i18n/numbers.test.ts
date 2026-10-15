@@ -2,16 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { numberWord } from './numbers';
 
 describe('numberWord', () => {
+  /* LOWER CASE: the headline puts the number mid-sentence — "Hier sind drei
+     Übungen zum …" — and a numeral is lower case there in both languages. */
   it('writes out the counts the product actually produces', () => {
-    expect(numberWord(2, 'de')).toBe('Zwei');
-    expect(numberWord(3, 'de')).toBe('Drei');
-    expect(numberWord(2, 'en')).toBe('Two');
-    expect(numberWord(3, 'en')).toBe('Three');
+    expect(numberWord(2, 'de')).toBe('zwei');
+    expect(numberWord(3, 'de')).toBe('drei');
+    expect(numberWord(2, 'en')).toBe('two');
+    expect(numberWord(3, 'en')).toBe('three');
   });
 
   it('runs to twelve in both locales', () => {
-    expect(numberWord(12, 'de')).toBe('Zwölf');
-    expect(numberWord(12, 'en')).toBe('Twelve');
+    expect(numberWord(12, 'de')).toBe('zwölf');
+    expect(numberWord(12, 'en')).toBe('twelve');
   });
 
   /* The convention is spell out through twelve, figures above — so thirteen

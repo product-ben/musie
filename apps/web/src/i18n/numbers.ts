@@ -24,11 +24,20 @@
  * made `en.ts` a worse document for the one job it does well, which is being
  * read end to end.
  *
- * ── CAPITALISED, BECAUSE EVERY USE IS SENTENCE-INITIAL ────────────────────
- * Both headline templates begin with the slot — *{count} Übungen zum …* — and
- * German capitalises nothing here that English does not. A second call site
- * mid-sentence would want the lower-case form, and that is the moment to add
- * a `position` argument rather than to lower-case at the call site and hope.
+ * ── LOWER CASE, AND IT WAS CAPITALISED FOR AN AFTERNOON ───────────────────
+ * The first version returned *Drei* because both headline templates began
+ * with the slot, and the note here said a mid-sentence call site "is the
+ * moment to add a `position` argument rather than to lower-case at the call
+ * site and hope". The headline grew a lead sentence the same day — *Schön,
+ * dass du dir einen Moment nimmst. Hier sind drei Übungen zum …* — and the
+ * number stopped being first.
+ *
+ * NO `position` ARGUMENT, THOUGH, because there is no longer a caller that
+ * wants the other form: every use is mid-sentence now, and a numeral is
+ * lower case mid-sentence in both languages — German capitalises nouns, not
+ * numbers. An argument with one value is a parameter pretending to be a
+ * decision. The day something needs *Drei* at the head of a sentence is the
+ * day to add it, and this paragraph is the note to read first.
  *
  * ── TWELVE, AND THEN DIGITS ───────────────────────────────────────────────
  * The convention this follows (Chicago, Duden §: *Zahlwörter bis zwölf*) is
@@ -45,8 +54,8 @@ import type { Locale } from './index';
  * as well as the number, which no interpolation can do.
  */
 const WORDS: Record<Locale, readonly string[]> = {
-  de: ['Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs', 'Sieben', 'Acht', 'Neun', 'Zehn', 'Elf', 'Zwölf'],
-  en: ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'],
+  de: ['zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'],
+  en: ['two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'],
 };
 
 const FIRST = 2;
