@@ -154,9 +154,16 @@ the guard is in code and not only here:
 - `pnpm music:migration` writes `exercise_cuts` **only**. The `tracks` half
   came out, and that is the single most important line of the change: it is
   the overlap that would otherwise clobber an edit on the next run.
-- `exercise_tracks` and `cards.image_url` are **derived**, rewritten by
-  `public.project_deck()` on every admin write. A row written there by hand
-  for a card is erased by the next cell change.
+- `exercise_tracks`, `cards.image_url` and `card_i18n.image_alt` are
+  **derived**, rewritten by `public.project_deck()` on every admin write. A
+  row written there by hand for a card is erased by the next cell change.
+  **`image_alt` joined them on 2026-10-15, and the gap before it is the
+  lesson:** the picture was derived and its description was not, so an artwork
+  upload moved the one and left the other — a screen reader told confidently
+  about the wrong image. The single home for a description is
+  `artwork_i18n.alt`, which is what `/maintenance` writes;
+  `20261015100000_alt_text_follows_the_picture.sql` says why that is a
+  projection rather than a change to the two readers.
 
 Three things follow:
 

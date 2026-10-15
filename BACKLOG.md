@@ -151,7 +151,21 @@ this looks identical from the outside.
 
 ---
 
-## B6 · Take care of the alt texts — they have two homes and the app reads the wrong one
+## B6 · Take care of the alt texts — DONE 2026-10-15, and not the way this says
+
+**Taken off the backlog by `20261015100000_alt_text_follows_the_picture.sql`.**
+The entry is kept rather than deleted because the diagnosis below is right and
+the *direction* was wrong — which is the part worth reading before trusting the
+next entry in this file.
+
+**What the hosted database actually held**, once the suite could reach it:
+`card_i18n.image_alt` **null in both locales for all nine cards**, not the
+eighteen rows this entry counted. Both homes were empty, so there was nothing
+to carry across. The text was restored from `supabase/content/deck.json`, where
+it had survived.
+
+**And the fix is a projection, not a reader move** — see *First move* below for
+the plan that was not taken, and why.
 
 **Ben, 2026-10-14: into the backlog.** Found while merging `main` into
 `digital-cards-build`, and verified on a factory database rather than on
@@ -186,8 +200,7 @@ and `apps/web/scripts/content-export.mjs` L152, select `card_i18n.image_alt`.
 It lands hardest on the digital path, where a card fills the screen with
 nothing else on it: there the alt text *is* the card.
 
-**First move.** Three small pieces, in this order, because rule 9's
-`needs_cards` precedent says readers move before a column goes:
+**First move — the plan, and why it was not the one taken.** It read:
 
 - one `update public.artwork_i18n i set alt = (select c.image_alt from …)`
   carrying the existing text across, in the migration that is already going to
@@ -196,8 +209,27 @@ nothing else on it: there the alt text *is* the card.
   is already there for `image_url`;
 - then the drop.
 
-Not done on the digital-cards branch for two reasons worth keeping: writing
-`artwork_i18n` by hand is a content write through a door deliberately open only
-to the `content-admin` function, and putting it in a migration would be content
-travelling by migration, which rule 4.1 has just closed. The longer form, with
-the evidence, is in `apps/web/OPEN-QUESTIONS.md`.
+**All three premises turned out to be false, and that is the useful part:**
+
+1. **There was nothing to carry across.** `card_i18n.image_alt` is null on
+   hosted in both locales. The source was `deck.json`.
+2. **The join is not already there.** `cards.image_url` is *projected* by
+   `project_deck()`, not joined — a card reaches its artwork only through
+   (valence, arousal), which is no foreign key, so PostgREST cannot follow it.
+   Moving the readers would have needed a view first.
+3. **The drop cannot happen.** §3.1 schedules `card_i18n` away, but `feeling`
+   lives in it — `not null`, and `deck:pdf` prints the word on the physical
+   front of MC-06…MC-09. That contradiction is logged, not resolved.
+
+So `card_i18n.image_alt` became **derived** instead, projected from
+`artwork_i18n.alt` by `project_deck()` beside `cards.image_url`. No reader
+changed, `/maintenance`'s alt field started working, and stale alt text became
+impossible by construction rather than by care.
+
+The one reason in the original entry that still holds, and the reason this is a
+migration at all: writing `artwork_i18n` by hand is a content write through a
+door deliberately open only to the `content-admin` function. Rule 4.1 permits
+this file because its shape is the opposite of the danger — eighteen updates,
+each `where alt is null`, so it can only fill a hole and never put a file's
+version back over an operator's edit. Proved both ways against the local stack
+before it was committed.
