@@ -27,6 +27,22 @@
  * agree, or a narrow panel gets a correct one-up grid holding cards laid out
  * for a desktop three-up. This component sits in the MVP's sidebar column,
  * where that is not hypothetical.
+ *
+ * ── TWO CHANGES ON 2026-10-15, BOTH FROM THE GOAL SHEET ───────────────────
+ * THE PICTURE IS OPTIONAL. `image` and `imageAlt` are a union — both or
+ * neither — and a card given neither drops the media column and moves its
+ * check mark to the card's own inline-end. The goal sheet's four cards are
+ * words and nothing else: a goal has no artwork, and a placeholder square
+ * four times over would have been decoration standing in for information.
+ *
+ * THE CARD IS WHITE IN EVERY STATE. A selected card used to fill with
+ * `--interactive-primary-subtle`; it keeps `--surface-raised` now, and
+ * selection is carried by the thick green border and the filled check that
+ * were always there too. Ben's call, taken knowing it changes three screens
+ * that did not ask for it — the /exercises list, the digital card pick and
+ * /maintenance's pickers — because one component with one look beats a
+ * variant somebody has to choose correctly. 1.4.1 still holds: border weight
+ * and a glyph are both non-colour cues.
  */
 import * as React from 'react';
 import { RadioGroup } from '@base-ui/react/radio-group';
@@ -114,14 +130,55 @@ export function RadioCardLegend({ items, className }: RadioCardLegendProps) {
   );
 }
 
-export interface RadioCardOptionRich {
+/**
+ * THE MEDIA IS BOTH OR NEITHER, and the type is what enforces it.
+ *
+ * A union rather than two optional fields, so `image` without `imageAlt` is a
+ * compile error. The original API made both required for exactly this reason
+ * — "`alt=""` is not reachable through this API" — and making them optional
+ * the obvious way would have reopened the hole it closed.
+ */
+export type RadioCardMedia =
+  | {
+    image: string;
+    /**
+     * Alt text, authored PER ITEM — same rule as 7.7. These images are how a
+     * pre-literate or low-literacy user tells the options apart, so `alt=""`
+     * is not reachable through this API.
+     */
+    imageAlt: string;
+  }
+  | { image?: undefined; imageAlt?: undefined };
+
+export interface RadioCardBase {
   value: string;
   /** The card's name. Rendered as a real heading, so the group reads as a list
    *  of titled things rather than a wall of prose. */
   headline: string;
-  /** One or two lines. Longer than that and this is a Content Box with its own
-   *  screen, not an option in a chooser. */
-  description: string;
+  /**
+   * One or two lines. Longer than that and this is a Content Box with its own
+   * screen, not an option in a chooser.
+   *
+   * OPTIONAL SINCE 2026-10-15. A card whose headline says everything should
+   * be a headline, not a headline with an empty paragraph under it — the goal
+   * sheet has four cards and one of them has a body. Omitted, the text column
+   * is the heading and whatever else the card carries.
+   */
+  description?: string;
+  /**
+   * A bold word or two at the head of the description — "Why?", "Note:".
+   *
+   * ── A STRING, NOT A `ReactNode` DESCRIPTION ────────────────────────────
+   * The obvious way to get bold text in here is to widen `description` to
+   * accept markup. That is wrong for this component specifically: the card IS
+   * the radio control, so everything inside it is part of the control's
+   * accessible name, and a `ReactNode` lets a caller put anything at all into
+   * it. A lead-in is the only emphasis these cards have ever wanted, so it is
+   * the only one the API offers.
+   *
+   * Ignored without a `description` — a lead-in to nothing is not a sentence.
+   */
+  descriptionLead?: string;
   /**
    * What the card COSTS and NEEDS, as glyphs. Pinned to the foot of the text
    * column, so a run of cards compares like with like on one horizontal line.
@@ -137,15 +194,10 @@ export interface RadioCardOptionRich {
    * because a card with nothing to qualify should not carry an empty line.
    */
   label?: string;
-  image: string;
-  /**
-   * Alt text, authored PER ITEM — same rule as 7.7. These images are how a
-   * pre-literate or low-literacy user tells the options apart, so `alt=""` is
-   * not reachable through this API.
-   */
-  imageAlt: string;
   disabled?: boolean;
 }
+
+export type RadioCardOptionRich = RadioCardBase & RadioCardMedia;
 
 export interface RadioCardsProps {
   name: string;
@@ -215,51 +267,87 @@ export function RadioCards({
       ].filter(Boolean).join(' ')}>
         {options.length === 0 ? (
           <p className="musy-rcard-group__empty musy-radio-group__hint">{emptyLabel ?? t.optionsEmpty}</p>
-        ) : options.map((opt) => (
-          <Radio.Root
-            key={opt.value}
-            value={opt.value}
-            disabled={opt.disabled}
-            nativeButton
-            render={<button type="button" />}
-            className="musy-rcard__body"
-            aria-invalid={error ? true : undefined}
-          >
-            <span className="musy-rcard__media">
-              <img src={opt.image} alt={opt.imageAlt} />
-              <span className="musy-rcard__check" aria-hidden="true">
-                <Radio.Indicator keepMounted render={<span />}>
-                  <Icon glyph={Check} size="sm" />
-                </Radio.Indicator>
-              </span>
+        ) : options.map((opt) => {
+          /* AN EMPTY STRING IS NO PICTURE. The type says `image` is a non-empty
+             string when it is there at all, and a caller mapping a nullable
+             `image_url` through `?? ''` is the shape that actually turns up —
+             /exercises' list view did exactly that and rendered a broken
+             <img> for an exercise with no artwork. Falsy is treated as absent
+             here so that call site gets the text-only card it meant. */
+          const hasMedia = typeof opt.image === 'string' && opt.image !== '';
+
+          /* THE CHECK LIVES IN THE MEDIA WHEN THERE IS MEDIA, and on the card
+             otherwise. It used to be unconditionally inside `__media`, which
+             is why a card without a picture had nowhere to put it — the
+             stylesheet pins this variant to the card's own inline-end,
+             aligned to the headline's first line. */
+          const check = (
+            <span
+              className={hasMedia ? 'musy-rcard__check' : 'musy-rcard__check musy-rcard__check--bare'}
+              aria-hidden="true"
+            >
+              <Radio.Indicator keepMounted render={<span />}>
+                <Icon glyph={Check} size="sm" />
+              </Radio.Indicator>
             </span>
-            <span className="musy-rcard__text">
-              <H className="musy-rcard__headline" data-type-step={headlineStep}>{opt.headline}</H>
-              <p className="musy-rcard__desc" data-type-step={descriptionStep}>{opt.description}</p>
-              {/* FACTS BEFORE THE META LABEL, and the stylesheet depends on the
-                  order: `.musy-rcard__facts` claims the auto margin that pins
-                  the pair to the foot of the column, and
-                  `.musy-rcard__facts + .musy-rcard__label` is what stops the
-                  label claiming it a second time. */}
-              {opt.facts && opt.facts.length > 0 && (
-                <span className="musy-rcard__facts">
-                  {opt.facts.map((fact) => (
-                    <Hint key={fact.id} text={fact.text} className="musy-rcard__fact">
-                      <Icon glyph={fact.glyph} size="sm" />
-                      {/* aria-hidden: `Hint` already renders the full sentence
-                          for AT, and announcing "2–12 min" in front of it would
-                          say the same fact twice in two registers. */}
-                      {fact.shortText !== undefined && (
-                        <span aria-hidden="true">{fact.shortText}</span>
-                      )}
-                    </Hint>
-                  ))}
+          );
+
+          return (
+            <Radio.Root
+              key={opt.value}
+              value={opt.value}
+              disabled={opt.disabled}
+              nativeButton
+              render={<button type="button" />}
+              className={hasMedia ? 'musy-rcard__body' : 'musy-rcard__body musy-rcard__body--plain'}
+              aria-invalid={error ? true : undefined}
+            >
+              {hasMedia && (
+                <span className="musy-rcard__media">
+                  <img src={opt.image} alt={opt.imageAlt} />
+                  {check}
                 </span>
               )}
-              {opt.label && <span className="musy-rcard__label">{opt.label}</span>}
-            </span>
-          </Radio.Root>
-        ))}
+              {!hasMedia && check}
+              <span className="musy-rcard__text">
+                <H className="musy-rcard__headline" data-type-step={headlineStep}>{opt.headline}</H>
+                {opt.description !== undefined && opt.description !== '' && (
+                  <p className="musy-rcard__desc" data-type-step={descriptionStep}>
+                    {/* THE LEAD IS INSIDE THE PARAGRAPH, not above it: it is the
+                        first words of the sentence, so it has to wrap with them
+                        and sit on their baseline. A block of its own would put
+                        "Warum?" on a line by itself at every width. */}
+                    {opt.descriptionLead !== undefined && opt.descriptionLead !== '' && (
+                      <strong className="musy-rcard__desc-lead">{opt.descriptionLead}</strong>
+                    )}
+                    {opt.description}
+                  </p>
+                )}
+                {/* FACTS BEFORE THE META LABEL, and the stylesheet depends on
+                    the order: `.musy-rcard__facts` claims the auto margin that
+                    pins the pair to the foot of the column, and
+                    `.musy-rcard__facts + .musy-rcard__label` is what stops the
+                    label claiming it a second time. */}
+                {opt.facts && opt.facts.length > 0 && (
+                  <span className="musy-rcard__facts">
+                    {opt.facts.map((fact) => (
+                      <Hint key={fact.id} text={fact.text} className="musy-rcard__fact">
+                        <Icon glyph={fact.glyph} size="sm" />
+                        {/* aria-hidden: `Hint` already renders the full sentence
+                            for AT, and announcing "2–12 min" in front of it
+                            would say the same fact twice in two registers. */}
+                        {fact.shortText !== undefined && (
+                          <span aria-hidden="true">{fact.shortText}</span>
+                        )}
+                      </Hint>
+                    ))}
+                  </span>
+                )}
+                {opt.label && <span className="musy-rcard__label">{opt.label}</span>}
+              </span>
+            </Radio.Root>
+          );
+        })}
       </div>
 
       {error && (

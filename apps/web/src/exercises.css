@@ -898,3 +898,40 @@
   line-height: var(--type-body-xl-line);
   letter-spacing: var(--type-body-xl-tracking);
 }
+
+
+/* ═══ THE GOAL SHEET'S HEADLINE ════════════════════════════════════════════
+   An L14 pattern: the system has no component for a plain text headline in a
+   `Sheet`'s header slot, so the screen draws the h2 and types it. Every
+   declaration below resolves to a Layer 1 token, and the prefix is `musie-`.
+
+   THE TOKEN IS THE ONE THE OTHER SHEET ALREADY USES. The listen step's focus
+   sheet puts its question through `.musie-md h2`, which is
+   `--type-heading-md-*` — so this matches it property for property rather
+   than picking a step by eye. The page's own h1 is `heading-lg`
+   (`.musie-placeholder`); a sheet opened FROM that heading should not compete
+   with it.
+
+   NO MARGIN. `.musy-sheet` is a flex column that owns the distance between
+   its header and its body, which is the same rule `.musie-sheet
+   .musie-placeholder` states in shell.css and the same one
+   `.musie-exercises > .musie-placeholder` states above: one spacing mechanism
+   per container, and here the container's is the sheet's.
+
+   §L14.3 — AND THIS IS THE SECOND CALL SITE, SO IT IS A COMPONENT REQUEST.
+   `Sheet` should take a `headline` string and type it itself. Not built here:
+   the listen sheet's header is Markdown with a float cut around the close
+   control, so merging the two is its own piece of work. Logged in
+   apps/web/OPEN-QUESTIONS.md.                                              */
+.musie-goal-sheet__headline {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}

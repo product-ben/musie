@@ -979,36 +979,44 @@ export const de: Messages = {
   /* ── Das Deck · /exercises ──────────────────────────────────────────────
      Was auf einer Karte steht, steht NICHT hier: Name, Beschreibung und Bild
      gehören der Übung und kommen aus den Inhaltstabellen. */
-  /* ── Musie fragt, und die Zahl ist weg (Ben, 2026-10-08) ────────────────
-     Vorher '{count} Übungen für dich'. Der Ziel-Filter hat die Zahl beweglich
-     gemacht, und dieser Katalog kennt keine Pluralformen (siehe i18n/index.ts)
-     — bei einem Ziel mit genau einer Übung hätte da '1 Übungen für dich'
-     gestanden. Die drei Überschrift-Zustände in Exercises.tsx gab es nur wegen
-     dieser Zahl; sie gehen mit ihr.
+  /* ── Die Überschrift IST jetzt der Filter (Ben, 2026-10-15) ─────────────
+     KEIN 'exercises.headline' mehr. Das war eine Woche lang 'Welche Übung
+     starten wir?', und die Notiz davor lohnt sich, weil diese Änderung ihre
+     Hälfte zurücknimmt: die Zahl flog am 2026-10-08 genau DESHALB raus, weil
+     der Ziel-Filter sie beweglich machte und dieser Katalog keine
+     Pluralformen kennt — bei einem Ziel mit genau einer Übung hätte da '1
+     Übungen für dich' gestanden.
 
-     EINE FRAGE, wo dieser Bildschirm sonst Nominalphrasen setzt. §3's Ausnahme
-     gilt für Überschriften, die etwas benennen — diese benennt nicht, sie
-     fragt. `aboutYou.headline` ist der Präzedenzfall: auch dort fragt Musie
-     und die Antwort steht darunter.
+     Die Zahl kommt zurück, und was damals fehlte, ist jetzt der Grund dafür.
+     Im Usertesting bleiben Menschen an der Tür stehen — 'warum sollte ich das
+     machen?' —, also hört die größte Zeile des Bildschirms auf zu fragen und
+     sagt, was es gibt und wofür. Das Plural-Problem ist diesmal gelöst statt
+     weggestrichen: drei Formen.
 
-     'WIR', NICHT 'DU' — und das ist kein Verstoß gegen §1 (Ben, 2026-10-08).
-     §1 regelt du gegen Sie; die erste Person Plural ist eine dritte Sache und
-     hier die Absicht: die Karte wird zwar allein gedrückt, aber Musie begleitet
-     die Session. 'Übung' und nicht 'Session', weil genau das auf den Karten
-     steht und in `exercises` die Zeile heißt — die Karten sind die Antwort auf
-     diese Frage, und sie sollen so heißen, wie die Frage sie nennt.
+     DREI FORMEN, und Deutsch und Englisch teilen sie sich. 'none' ist keine
+     Versicherung gegen einen Zustand, den niemand sieht — das ist der Satz
+     für den Tag, an dem eine Übung stillgelegt wird, und '0 Übungen' wäre ein
+     schlechterer Satz als ein geschriebener.
 
-     EINE ZEILE, UND DAS IST GEMESSEN. Bens Wortlaut war 'Mit welcher Übung
-     starten wir?' und misst 386px — bei 393px Breite stehen 361px zur
-     Verfügung (zwei Mal --gutter ab), also 25px zu viel und damit zwei Zeilen.
-     Gestrichen ist nur 'Mit': diese Fassung misst 332px und hat 29px Luft.
+     GEZÄHLT WIRD, WAS STARTBAR IST, nicht was im Stapel liegt. Drei der vier
+     Ziele enthalten Achtsam Atmen, und das ist nicht gebaut — die Überschrift
+     sagt also '2 Übungen' über einem Stapel aus drei Karten. So gewollt:
+     die Überschrift verspricht, was du starten kannst, der Stapel zeigt, was
+     es gibt. Begründet in GOAL-FILTER.md §7.
 
-     DAS MASS IST NICHT DIE SCHRANKE, das Gerät ist es: --measure-heading löst
-     zu 438px auf und greift auf dem Telefon nie. Eine Schriftgröße, die den
-     langen Satz einzeilig gemacht hätte, wäre 17.8px gewesen — Fließtextgröße,
-     und --type-heading-lg-size ist Layer 1, also [LOCKED]. Kürzen war die
-     einzige Stelle, an der das zu lösen war. */
-  'exercises.headline': 'Welche Übung starten wir?',
+     '{goal}' WIRD ABSICHTLICH NICHT GEFÜLLT. Der Platzhalter markiert, wo der
+     `InlineLink` steht; `i18n/slot.ts` teilt den fertigen Satz daran. Genau
+     deshalb ist das EIN Satz pro Sprache und kein Vorn-und-Hinten-Paar: der
+     Platzhalter darf überall stehen, auch zuerst, und wer übersetzt, liest
+     einen Satz. Das Wort danach ist `purpose` aus `goal_i18n` und damit
+     Inhalt — 'Entspannen', nicht 'Entspannung'.
+
+     'zum Musie kennenlernen' ist Bens Wortlaut und bleibt so. Der Duden will
+     'zum Musie-Kennenlernen' oder 'um Musie kennenzulernen'; in
+     OPEN-QUESTIONS notiert, nicht still korrigiert. */
+  'exercises.headline.none': 'Keine Übung zum {goal}',
+  'exercises.headline.one': '1 Übung zum {goal}',
+  'exercises.headline.other': '{count} Übungen zum {goal}',
   /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
      sie ist ersatzlos weg (Ben, 2026-10-08). `DeckGuide` erklärt Tippen und
      Wischen auf der Karte selbst; die Liste erklärt er nicht, und genau diese
@@ -1102,18 +1110,54 @@ export const de: Messages = {
   'exercises.view.legend': 'Wie die Übungen gezeigt werden',
   'exercises.view.deck': 'Stapel',
   'exercises.view.list': 'Liste',
-  /* KEIN 'exercises.goal.headline' mehr. Das war 'Dein Ziel' und nie die
-     Überschrift der Ziel-Box, sondern einer der drei h1-Zustände von
-     /exercises — der für ein Ziel, das keine Übung bedient. Die Überschrift
-     ist jetzt eine einzige Frage, der Zustand ist weg, und ein Schlüssel, den
-     nichts mehr zeichnet, ist genau die unsichtbare Fäulnis, vor der der Kopf
-     dieser Datei warnt. Also gelöscht statt aufgehoben. */
-  /* du, and NO 'gerade heute': the brief had both and they say the same
-     thing twice — 'gerade' is right now, 'heute' is today. 'heute' is the one
-     that matches a choice you make once a day. Flagged in OPEN-QUESTIONS. */
-  'exercises.goal.question': 'Was möchtest du heute erreichen?',
-  'exercises.goal.none': 'Musie entdecken',
-  'exercises.goal.pill': 'Ziel: {goal}',
+  /* KEIN 'exercises.goal.none' mehr. Das war 'Musie entdecken' — das einzige
+     Ziel-Label, das hier stand statt in `goal_i18n`, weil es die ABWESENHEIT
+     eines Ziels benannte und deshalb keine Zeile hatte, deren Label es hätte
+     sein können. Seit 2026-10-15 hat es eine (`get-to-know-musie`) und drei
+     zugeordnete Übungen; das Argument ist mit seinem Gegenstand weg. Der Text
+     ist in die Tabelle umgezogen, nicht gelöscht.
+
+     KEIN 'exercises.goal.pill' mehr. Das war 'Ziel: {goal}' auf dem
+     Trichter-Button in der Werkzeugleiste. Die Überschrift ist jetzt das
+     Bedienelement.
+
+     KEIN 'exercises.goal.headline' mehr. Das war 'Dein Ziel', einer der drei
+     h1-Zustände von /exercises, und es ging am 2026-10-08. Immer noch weg. */
+  /* Einmal gefragt, zweimal gezeichnet — als sichtbare h2 im Sheet und als
+     verborgene Legende der Radio Cards darunter. Ein Fieldset braucht einen
+     eigenen zugänglichen Namen (1.3.1, 4.1.2), und eine Überschrift darüber
+     liefert den nicht.
+
+     'WAS BRAUCHST DU GERADE' statt 'was möchtest du heute erreichen' (Ben,
+     2026-10-15). Erreichen ist ein Vorsatz, brauchen ist ein Zustand, in dem
+     man schon steckt — und diese Änderung ist für Menschen mitten im Tag, nicht
+     mitten in der Planung. 'gerade' statt 'heute': die alte Notiz wählte
+     'heute', weil das Ziel einmal am Tag gewählt wird; die Frage zielt jetzt
+     auf den Moment. Nur so lassen sich die Karten als Nominalphrasen
+     beantworten — 'Entspannung', 'Energie' —, denn jede vervollständigt
+     'Ich brauche …'. */
+  'exercises.goal.question': 'Was brauchst du gerade?',
+  /* Der fette Vorspann auf einer Ziel-Karte, vor den zwei Sätzen. Ein Wort,
+     auf jeder Karte dasselbe, also Chrome — die SÄTZE sind `goal_i18n.why`
+     und stehen pro Ziel woanders.
+
+     NUR EINE DER VIER KARTEN HAT ÜBERHAUPT EINEN TEXT (Ben, 2026-10-15):
+     Musie kennenlernen, Entspannung und Energie benennen sich selbst,
+     Achtsamkeit ist das abstrakte Ziel, zu dem im Testing 'was soll das
+     bringen?' kam. Dieses Wort wird also heute genau einmal gezeichnet. */
+  'exercises.goal.why': 'Warum?',
+  /* Wird nie gesehen, nur gehört. Steht als sr-only-Text im Link der
+     Überschrift, damit das Bedienelement als 'Entspannen, Ziel ändern'
+     angesagt wird und die h1 trotzdem ein Satz bleibt.
+
+     KEIN `aria-label`: ein Label ERSETZT den Text im zugänglichen Namen, und
+     die Überschrift hieße dann '2 Übungen zum Ziel ändern: Entspannen'. */
+  'exercises.goal.change': 'Ziel ändern',
+  /* Der zugängliche Name des Sheets — angesagt, nie gezeichnet, so wie
+     `Sheet` es für `title` verlangt. Die sichtbare Überschrift darin ist die
+     Frage oben; das hier benennt das Möbelstück und ist deshalb eine
+     Nominalphrase, die auch ohne Kontext trägt. */
+  'exercises.goal.sheetTitle': 'Dein Ziel',
   'exercises.goal.empty': 'Für dieses Ziel gibt es noch keine Übung.',
   /* Verbphrase, Infinitiv — ein Button sagt, was er tut (§3). */
   'exercises.goal.emptyAction': 'Anderes Ziel wählen',

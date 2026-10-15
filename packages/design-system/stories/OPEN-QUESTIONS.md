@@ -4246,3 +4246,64 @@ changing either silently would move every action row in the product.
 What I need from Ben: **which of the two is the rule for alternatives** — 8 as
 L6 says, or 12 as the table says. Whichever it is, the other document is wrong
 and one of the two `.musy-btn-group` gaps changes with it.
+
+## RadioCards — a missing `.` meant the disabled card never got its fill — FIXED
+Where: `src/musy-components.css`, the rule after
+`.musy-rcard-group--accent .musy-rcard__body[data-checked] .musy-rcard__headline`
+What I checked: Level 1. The selector was written
+`}musy-rcard__body[data-disabled] {` — the closing brace of the previous rule,
+then a selector with no leading `.` and no line break. That is a valid TYPE
+selector for an element named `musy-rcard__body`, which matches nothing, so
+the block has never applied: a disabled card has been drawing
+`--surface-raised` and a default cursor since the component shipped.
+
+**It looked three-quarters right, which is why it survived.** The three rules
+immediately below it are spelled correctly, so a disabled card DID drop its
+headline, description and label to `--on-surface-disabled` and fade its media
+to 50%. Only the `--interactive-primary-disabled` fill and the
+`cursor: not-allowed` were missing — and nobody compares a disabled card
+against a spec.
+
+What I did: added the `.` and put the rule on its own line, with the history
+in a comment above it so the next reader does not take the fill for a new
+decision. Found while rewriting the `[data-checked]` block two lines above it,
+which is the only reason anyone was looking.
+
+Why: it is a one-character fix inside a block this change was already
+rewriting, and leaving a known-dead rule in place while editing its
+neighbours is how it survives another round.
+
+What I need from Ben: **one look at a disabled card**, in Storybook's
+`Disabled` story, both themes. The state has a fill for the first time, and
+`--interactive-primary-disabled` is `green-5` — W2's rule is that a disabled
+control stays inside its family rather than going neutral, so this should
+read as a faded green card. If it reads as *selected* instead, now that
+selection is no longer a fill (same change, see below), the token is the thing
+to revisit and not the selector.
+
+## RadioCards — selection is no longer a fill, in four places at once
+Where: `src/musy-components.css`, `.musy-rcard__body[data-checked]` and its
+`--accent` sibling
+What I checked: Level 2 and Level 3 both describe selection as carrying FOUR
+cues — "fill, border weight, check glyph, headline colour — so it survives
+`prefers-contrast: more` and greyscale with no special case (1.4.1)", which is
+the RadioCards story's own description text.
+
+Ben asked for the card to be white in every state (2026-10-15), so there are
+three cues now, and the story's description is the Level 2 statement that is
+now wrong.
+
+What I did: dropped the fill from both the primary and the accent variant and
+left the other three. Updated the component header; **did not** rewrite the
+story's description block, which still says four.
+
+Why: 1.4.1 is satisfied by border weight and the check glyph alone — two
+non-colour cues — so the change is conformant, and the selected state was
+verified against the three other screens that use this component. The
+story's docs block is a long verbatim quote from §7.13 of the component docs,
+and editing one clause of a quotation without touching the source it quotes
+is how the two drift.
+
+What I need from Ben: **nothing to decide**, but `docs/07-components.md`
+§7.13 says four cues and now describes a state the component does not draw.
+It is one sentence in a document this repository does not carry a copy of.

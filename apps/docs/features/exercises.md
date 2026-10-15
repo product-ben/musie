@@ -46,13 +46,39 @@ answered with a choice rather than a refusal:
 
 ## The exercises
 
-| | Exercise | Takes | Needs | Built |
-|---|---|---|---|---|
-| 1 | Achtsame Pause · Mindful Pause | 2–12 min | the deck | **yes** |
-| 2 | Freie Bahn · Free Rein | 2–5 min | the deck | **yes** |
-| 3 | Achtsam Atmen · Mindful Breathing | 5–8 min | sound | no screens |
-| 4 | Klangreise · Sound Journey | 12–15 min | sound | audio model built |
-| 5 | Bodyscan · Body Scan | 10–12 min | sound | audio model built |
+| | Exercise | Takes | Needs | Built | Goals |
+|---|---|---|---|---|---|
+| 1 | Achtsame Pause · Mindful Pause | 2–12 min | the deck | **yes** | Achtsamer werden |
+| 2 | Freie Bahn · Free Rein | 2–5 min | the deck | **yes** | kennenlernen · Aktivieren · Achtsamer werden |
+| 3 | Achtsam Atmen · Mindful Breathing | 5–8 min | sound | no screens | kennenlernen · Entspannen · Aktivieren |
+| 4 | Klangreise · Sound Journey | 12–15 min | sound | audio model built | Entspannen · Aktivieren · Achtsamer werden |
+| 5 | Bodyscan · Body Scan | 10–12 min | sound | audio model built | kennenlernen · Entspannen |
+
+The goal column is the whole of what decides which exercises you see. See
+[Goals](/features/goals).
+
+## The headline says how many, and it is not the number of cards
+
+Since 2026-10-15 the `h1` reads *2 Übungen zum Entspannen*, and the goal in it
+is a link that opens the goal sheet.
+
+**The count is what you can START, not what is in the pile.** Achtsam Atmen
+sits in three of the four goals and has no screens, so those three headlines
+say *2 Übungen* over a deck of three cards.
+
+That gap is deliberate rather than an oversight:
+
+- the **headline promises** what pressing something would actually get you;
+- the **pile shows** what the product has, and refuses the unbuilt ones
+  honestly — filtering them out "would quietly show two exercises where the
+  product has five", which is the rule the screen has carried since the deck
+  shipped.
+
+The two converge on their own the day Achtsam Atmen ships, with no content
+change and no code change.
+
+One consequence worth knowing: the deck announces *card 1 of 3* under a
+headline saying *2 Übungen*, so a screen-reader user meets both numbers.
 :::
 
 ::: devs
@@ -64,6 +90,9 @@ answered with a choice rather than a refusal:
 | `lib/content.ts`, `lib/useContent.ts` | the fetch, per locale |
 | `lib/session.ts` | `startSession`, and the running-session branch |
 | `lib/exerciseKind.ts` | which steps a kind of exercise runs |
+| `lib/goals.ts` | the filter, and `startable()` — what the headline counts |
+| `components/GoalSheet.tsx` | the goal sheet behind the headline |
+| `i18n/slot.ts` | splitting the headline around its link |
 | `components/NotImplementedLightbox.tsx` | the refusal |
 
 ## `exercises.kind` decides the step list, and the step list is code

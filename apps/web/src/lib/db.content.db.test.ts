@@ -22,6 +22,102 @@ describe('missing_translations', () => {
   }, 30_000);
 });
 
+/**
+ * The goal mapping — 20261015140000, and the reason it is asserted here.
+ *
+ * `/exercises` offers four goals and nothing else. There is no *show me
+ * everything* option any more, so **the mapping is the only way an exercise is
+ * reachable at all**: one filed under no goal is one the product cannot show,
+ * and nothing in the app would say so — the deck would simply never deal it
+ * and every check would stay green.
+ *
+ * That is a property of content, it changes by migration, and it is exactly
+ * the kind of thing a migration gets half right. So it is a test.
+ */
+describe('goals · four of them, and nothing is stranded', () => {
+  it('offers four goals, each with both locales and a purpose', async () => {
+    const { client } = await anonymousUser();
+    const { data, error } = await client
+      .from('goals')
+      .select('id, sort, goal_i18n(locale, label, purpose, why)')
+      .order('sort');
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(4);
+
+    for (const goal of data ?? []) {
+      expect(goal.goal_i18n).toHaveLength(2);
+      for (const text of goal.goal_i18n) {
+        /* `purpose` is `not null` in the schema; this catches the emptier
+           failure a constraint cannot — a column filled with a space. */
+        expect(text.purpose.trim()).not.toBe('');
+        expect(text.label.trim()).not.toBe('');
+      }
+    }
+  }, 30_000);
+
+  /* THE DEFAULT IS THE FIRST BY `sort`, which `lib/goals.ts` relies on
+     without naming an id. Two goals claiming one sort would be caught by the
+     unique constraint; what it cannot catch is the first one being something
+     nobody meant to open on. */
+  it('opens on get-to-know-musie, which is sort 1', async () => {
+    const { client } = await anonymousUser();
+    const { data } = await client.from('goals').select('id, sort').order('sort');
+
+    expect(data?.[0]).toEqual({ id: 'get-to-know-musie', sort: 1 });
+  }, 30_000);
+
+  it('maps every exercise to at least one goal', async () => {
+    const service = serviceClient();
+    const [{ data: exercises }, { data: pairs }] = await Promise.all([
+      service.from('exercises').select('id'),
+      service.from('exercise_goals').select('exercise_id, goal_id'),
+    ]);
+
+    const mapped = new Set((pairs ?? []).map((pair) => pair.exercise_id));
+    /* Named in the failure, because "an exercise is unreachable" is useless
+       without saying which one. */
+    expect((exercises ?? []).map((e) => e.id).filter((id) => !mapped.has(id))).toEqual([]);
+  }, 30_000);
+
+  it('gives every goal at least one exercise', async () => {
+    const service = serviceClient();
+    const [{ data: goals }, { data: pairs }] = await Promise.all([
+      service.from('goals').select('id'),
+      service.from('exercise_goals').select('goal_id'),
+    ]);
+
+    const served = new Set((pairs ?? []).map((pair) => pair.goal_id));
+    /* A goal serving nothing is a legal state the screen draws honestly —
+       `exercises.goal.empty` — and not a state anybody should SHIP. */
+    expect((goals ?? []).map((g) => g.id).filter((id) => !served.has(id))).toEqual([]);
+  }, 30_000);
+
+  /* ── THE HEADLINE'S COUNT IS NOT THE PILE'S, AND BOTH ARE FINE ──────────
+     The headline counts `implemented` exercises and the deck deals every
+     mapped one, so a goal whose exercises are ALL unbuilt would read "Keine
+     Übung zum …" over a pile of cards that every one of them refuses. It
+     cannot happen under today's mapping and nothing in the schema forbids
+     it, so this is what makes it a test failure rather than a screenshot. */
+  it('leaves no goal offering only exercises that are not built', async () => {
+    const service = serviceClient();
+    const [{ data: exercises }, { data: pairs }] = await Promise.all([
+      service.from('exercises').select('id, implemented'),
+      service.from('exercise_goals').select('exercise_id, goal_id'),
+    ]);
+
+    const built = new Set((exercises ?? []).filter((e) => e.implemented).map((e) => e.id));
+    const startableBy = new Map<string, number>();
+    for (const pair of pairs ?? []) {
+      if (!built.has(pair.exercise_id)) continue;
+      startableBy.set(pair.goal_id, (startableBy.get(pair.goal_id) ?? 0) + 1);
+    }
+
+    const goals = [...new Set((pairs ?? []).map((pair) => pair.goal_id))];
+    expect(goals.filter((id) => (startableBy.get(id) ?? 0) === 0)).toEqual([]);
+  }, 30_000);
+});
+
 describe('tracks · the ids are opaque, and that is the security model', () => {
   /**
    * WHY THIS TEST EXISTS.

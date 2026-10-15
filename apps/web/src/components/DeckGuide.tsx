@@ -69,11 +69,18 @@ export function DeckGuide({ onDismiss }: DeckGuideProps) {
       onAnimationEnd={() => { if (leaving) onDismiss(); }}
     >
       {/* ── THE GOAL, AND IT IS NOT ON THIS CARD ────────────────────────
-          The one control the legend points at from a distance: the pill is in
-          the row above the pile, so the glyph is an arrow pointing out of the
-          card at it rather than the pill's own funnel. A funnel here named the
-          control; the arrow says where it is, which is the thing a first-time
-          reader does not know.
+          The one control the legend points at from a distance, so the glyph
+          is an arrow pointing out of the card at it rather than a picture of
+          the control itself. A funnel here named the control; the arrow says
+          WHERE it is, which is the thing a first-time reader does not know.
+
+          THE ARROW STILL POINTS UP, AT A DIFFERENT CONTROL (2026-10-15). It
+          aimed at the goal pill in the toolbar row; the pill is gone and the
+          goal is a link inside the page's headline, which is further up the
+          same column. So the row needed no change at all — which is the
+          argument for having drawn a direction rather than a funnel, and is
+          worth leaving written down. `exercises.guide.goal` still reads
+          *Ändere dein Ziel*: it names the move, not the thing moved.
 
           `lg` AND NOT `md`, here and on the two chevrons: the sentence beside
           them is `body-xl` now, and a 20px glyph against a 26–34px display
