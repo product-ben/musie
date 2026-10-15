@@ -134,14 +134,53 @@ export function checkDeck(deck) {
       problems.push(`${where}: image must be a path, or null where there is none.`);
     }
 
-    for (const locale of LOCALES) {
-      const feeling = card?.feeling?.[locale];
+    /* ── THE FEELING IS ONLY OWED WHERE THERE IS NO PICTURE ────────────────
+     * Ben, 2026-10-15. This required both locales for every card until MC-10
+     * was added at `/maintenance` and `pnpm check` went red on a card nobody
+     * had done anything wrong to.
+     *
+     * It is the last step of a retirement rather than a hole in rule 6.
+     * `20261014100000` already made `card_i18n.feeling` nullable and called it
+     * RETIRED — "nothing writes it and no screen reads it" — because the word
+     * left every screen on 2026-10-09. What kept the DATA alive was named in
+     * the same breath: `deck-pdf.mjs`'s `front()` sets the word in type for a
+     * card with no artwork, so emptying it would have printed blank cards.
+     * That migration predicted its own expiry — "uploading artwork for exactly
+     * those four is what this UI is for" — and the fresh export says it has
+     * arrived: art-01 … art-09, every one with a file.
+     *
+     * So the rule now matches its one consumer exactly. A card WITH a picture
+     * owes no word, because `front()` prints the picture alone and deliberately
+     * sets nothing over it. A card WITHOUT one still owes both, because that is
+     * the branch that would print a blank.
+     *
+     * AND RULE 6 IS UNTOUCHED FOR A CARD THAT HAS A WORD. Written in one
+     * locale and null in the other is still a dropped translation — the same
+     * shape as the `imageAlt` rule immediately below, and the reason both read
+     * the same way: null in both is data, null in one is a mistake. */
+    const feelings = LOCALES.map((locale) => card?.feeling?.[locale] ?? null);
+    const hasArtwork = isText(card?.image);
+
+    if (!hasArtwork) {
+      for (const [at, feeling] of feelings.entries()) {
+        if (feeling === null) {
+          problems.push(`${where}: feeling.${LOCALES[at]} is missing and ${where} has no artwork. deck:pdf sets the word in type for a card with no picture, so this one would print blank.`);
+        }
+      }
+    }
+
+    if (feelings.some((feeling) => feeling !== null) && feelings.some((feeling) => feeling === null)) {
+      problems.push(`${where}: feeling is written in one locale and null in the other. Null in both is a card that goes by its picture; null in one is a dropped translation — CLAUDE.md rule 6.`);
+    }
+
+    for (const [at, feeling] of feelings.entries()) {
+      if (feeling === null) continue;
       if (!isText(feeling)) {
-        problems.push(`${where}: feeling.${locale} is missing. A feeling in one locale and not the other is a dropped translation — CLAUDE.md rule 6.`);
+        problems.push(`${where}: feeling.${LOCALES[at]} must be text, or null where the card goes by its picture.`);
       } else if (feeling !== feeling.trim()) {
-        problems.push(`${where}: feeling.${locale} has whitespace at an end; it is set centred on a card and the space will show.`);
+        problems.push(`${where}: feeling.${LOCALES[at]} has whitespace at an end; it is set centred on a card and the space will show.`);
       } else if (feeling.startsWith('[DE] ')) {
-        problems.push(`${where}: feeling.${locale} carries the old [DE] placeholder prefix. Write the German — CLAUDE.md rule 6.`);
+        problems.push(`${where}: feeling.${LOCALES[at]} carries the old [DE] placeholder prefix. Write the German — CLAUDE.md rule 6.`);
       }
     }
 
@@ -207,14 +246,28 @@ export function rows(deck) {
       image_url: card.image,
       sort: card.sort,
     })),
-    card_i18n: cards.flatMap((card) =>
-      LOCALES.map((locale) => ({
+    /* A CARD WITH NO COPY GETS NO ROW, which is what the database holds.
+     *
+     * Found by the export on 2026-10-15: `content:export` writes a card that
+     * has no `card_i18n` row as `feeling: {de: null, en: null}` — "no row"
+     * flattened into "a row of nulls". Mapping that straight back produced two
+     * rows the database does not have, so the round-trip was untrue and
+     * `deck.db.test.ts` compared twenty rows against eighteen.
+     *
+     * Skipped per CARD rather than per locale, because the database has either
+     * both of a card's rows or neither, and a word in one locale only is
+     * already a problem `checkDeck` refuses. */
+    card_i18n: cards.flatMap((card) => {
+      const carries = LOCALES.some((locale) =>
+        (card.feeling?.[locale] ?? null) !== null || (card.imageAlt?.[locale] ?? null) !== null);
+      if (!carries) return [];
+      return LOCALES.map((locale) => ({
         card_id: card.id,
         locale,
-        feeling: card.feeling[locale],
+        feeling: card.feeling?.[locale] ?? null,
         image_alt: card.imageAlt?.[locale] ?? null,
-      })),
-    ),
+      }));
+    }),
     exercise_tracks: cards.flatMap((card) =>
       Object.entries(card.plays ?? {})
         .sort(([a], [b]) => a.localeCompare(b))
