@@ -15,8 +15,8 @@
         "en": "Fine blue lines fan across the surface; at the right edge a large dark disc rises into warm light."
       },
       "plays": {
-        "free-rein": "trk-04",
-        "mindfulness-cards": "trk-04"
+        "free-rein": "trk-22",
+        "mindfulness-cards": "trk-22"
       }
     },
     {
@@ -33,8 +33,8 @@
         "en": "Green and turquoise waves sweep up to the right, with a pale yellow light behind them."
       },
       "plays": {
-        "free-rein": "trk-02",
-        "mindfulness-cards": "trk-02"
+        "free-rein": "trk-12",
+        "mindfulness-cards": "trk-12"
       }
     },
     {
@@ -69,8 +69,8 @@
         "en": "Horizontal bands of green, turquoise and cream lie quietly over one another."
       },
       "plays": {
-        "free-rein": "trk-01",
-        "mindfulness-cards": "trk-01"
+        "free-rein": "trk-21",
+        "mindfulness-cards": "trk-21"
       }
     },
     {
@@ -87,8 +87,8 @@
         "en": "A ridge layered in red and slate grey under a dusty red sky."
       },
       "plays": {
-        "free-rein": "trk-02",
-        "mindfulness-cards": "trk-02"
+        "free-rein": "trk-13",
+        "mindfulness-cards": "trk-13"
       }
     },
     {
@@ -105,8 +105,8 @@
         "en": "Deep blue waves at the lower left meet a glowing red field in one wide curve."
       },
       "plays": {
-        "free-rein": "trk-05",
-        "mindfulness-cards": "trk-05"
+        "free-rein": "trk-17",
+        "mindfulness-cards": "trk-17"
       }
     },
     {
@@ -159,8 +159,26 @@
         "en": "A dark ridge with red strata under an overcast red sky."
       },
       "plays": {
-        "free-rein": "trk-01",
-        "mindfulness-cards": "trk-01"
+        "free-rein": "trk-16",
+        "mindfulness-cards": "trk-16"
+      }
+    },
+    {
+      "id": "mc-10",
+      "code": "MC-10",
+      "sort": 10,
+      "image": "assets/web/cards/mc-06.webp",
+      "feeling": {
+        "de": null,
+        "en": null
+      },
+      "imageAlt": {
+        "de": null,
+        "en": null
+      },
+      "plays": {
+        "free-rein": "trk-10",
+        "mindfulness-cards": "trk-10"
       }
     }
   ]

@@ -80,6 +80,105 @@
       "file": null,
       "durationSeconds": 187,
       "licenceType": "none_yet"
+    },
+    {
+      "id": "trk-10",
+      "title": "Aura",
+      "artist": "Martin Landh",
+      "licenceRef": null,
+      "file": "trk-10-b0224a84.mp3",
+      "durationSeconds": 151,
+      "tempoBpm": 70
+    },
+    {
+      "id": "trk-11",
+      "title": "Cat among the Flower Pots",
+      "artist": "Ludvig Moulin",
+      "licenceRef": null,
+      "file": "trk-11-32066abc.mp3",
+      "durationSeconds": 167,
+      "tempoBpm": 110
+    },
+    {
+      "id": "trk-12",
+      "title": "Circus Coming to Town",
+      "artist": "Ludvig Moulin",
+      "licenceRef": null,
+      "file": "trk-12-251cf6f0.mp3",
+      "durationSeconds": 150,
+      "releaseYear": 2021
+    },
+    {
+      "id": "trk-13",
+      "title": "Fable",
+      "artist": "Jakob Ahlbom",
+      "licenceRef": null,
+      "file": "trk-13-9fcb2bf3.mp3",
+      "durationSeconds": 169,
+      "tempoBpm": 147
+    },
+    {
+      "id": "trk-14",
+      "title": "Fish for Tea",
+      "artist": "Dez Moran",
+      "licenceRef": null,
+      "file": "trk-14-07434722.mp3",
+      "durationSeconds": 114,
+      "tempoBpm": 117
+    },
+    {
+      "id": "trk-16",
+      "title": "Mosquitoes",
+      "artist": "Ludvig Moulin",
+      "licenceRef": null,
+      "file": "trk-16-a7262395.mp3",
+      "durationSeconds": 158,
+      "releaseYear": 2023,
+      "tempoBpm": 140
+    },
+    {
+      "id": "trk-17",
+      "title": "Sneaking Around",
+      "artist": "Guto Lucena",
+      "licenceRef": null,
+      "file": "trk-17-ee6f751e.mp3",
+      "durationSeconds": 146,
+      "tempoBpm": 112
+    },
+    {
+      "id": "trk-19",
+      "title": "Somewhere",
+      "artist": "Jakob Ahlbom",
+      "licenceRef": null,
+      "file": "trk-19-c0e22bb1.mp3",
+      "durationSeconds": 223,
+      "tempoBpm": 125
+    },
+    {
+      "id": "trk-20",
+      "title": "The Lion\\'s Hoop",
+      "artist": "Jon Björk",
+      "licenceRef": null,
+      "file": "trk-20-7f3a7a38.mp3",
+      "durationSeconds": 122,
+      "tempoBpm": 128
+    },
+    {
+      "id": "trk-21",
+      "title": "time travel",
+      "artist": "Yosep",
+      "licenceRef": null,
+      "file": "trk-21-7f16bf4a.mp3",
+      "durationSeconds": 163,
+      "tempoBpm": 69
+    },
+    {
+      "id": "trk-22",
+      "title": "We\\'ll Always Have Notting Hill",
+      "artist": "Clarence Reed",
+      "licenceRef": null,
+      "file": "trk-22-67cded9d.mp3",
+      "durationSeconds": 109
     }
   ],
   "cuts": [
