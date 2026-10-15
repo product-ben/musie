@@ -1283,6 +1283,65 @@ export const de: Messages = {
   'insightMap.hint.company': 'Alle bei Northwind, als ein Kreis. Die Fläche steht überall für Menschen.',
   'insightMap.hint.departments': 'Sechs Abteilungen, so groß wie ihre Zahl an Menschen. Zusammen der erste Tab.',
   'insightMap.hint.pods': 'Eine Linie zu jeder Abteilung, aus der ein Pod Leute holt – je dicker, desto mehr. Abteilungen sind hier Ankerpunkte, keine Größen.',
+  /* `/feelings-selection`. Die 128 Gefühle stehen NICHT hier — sie sind die
+     Worte des Rads, zweisprachig in `content/emotionWheel.ts`.
+
+     `feelings.prompt.chosen` berichtet statt zu formulieren: das Rad mischt
+     Adjektive (Glücklich) und Substantive (Vertrauen), und ein Satz kann nur
+     eines von beiden tragen – „Ich fühle mich Vertrauen" ist falsch, „Ich
+     fühle glücklich" auch. Die Frage steht im leeren Zustand, das Wort danach
+     für sich. Siehe die offene Frage zum Wortartenkonflikt. */
+  'feelings.sheet.title': 'Finde das Wort für dein Gefühl',
+  'feelings.sheet.close': 'Schließen',
+  'feelings.sheet.next': 'Weiter',
+  'feelings.sheet.previous': 'Zurück',
+  'feelings.sheet.done': 'Das trifft es',
+  'feelings.prompt.empty': 'Ich fühle mich …',
+  'feelings.prompt.chosen': 'Gewählt: {feeling}',
+  'feelings.ring.emotions.legend': 'Was kommt dem am nächsten?',
+  'feelings.ring.emotions.hint': 'Fang weit an. Genauer wird es gleich.',
+  'feelings.ring.detailed.legend': 'Du hast {feeling} gewählt. Welche Art?',
+  'feelings.ring.detailed.hint': 'Passt noch nicht? Geh zurück und wähle anders.',
+  'feelings.ring.detailed.waiting': 'Welche Art?',
+  'feelings.ring.specific.legend': 'Und {feeling} genauer?',
+  'feelings.ring.specific.hint': 'Die letzten zwei. Bei beiden darfst du bleiben.',
+  'feelings.ring.specific.waiting': 'Genauer?',
+  /* Die letzte Zeile auf Ring 2 und 3: das Wort von oben, als Antwort und
+     nicht als Schritt. Wer es wählt, geht nicht tiefer. */
+  'feelings.stop': 'Einfach {feeling}',
+  'feelings.waiting.emotion': 'Wähle im ersten Schritt ein Gefühl, dann füllt sich das hier.',
+  'feelings.waiting.detailed': 'Wähle eins im Schritt davor, dann füllt sich das hier.',
+  'feelings.empty': 'Hier gibt es nichts zu wählen.',
+  'feelings.result.empty': 'Noch nichts gewählt.',
+  'feelings.result.chosen': 'Du hast gewählt: {feeling}',
+  'feelings.reopen.open': 'Das Sheet ist offen',
+  'feelings.reopen.closed': 'Noch mal wählen',
+  'route.feelingsSelection.title': 'Gefühl wählen',
+  /* `/capturing-feelings-exploration` – der Test von 2026-10-15, der beim Bild
+     anfängt statt beim Wort. Bens Wortlaut für die erste Frage und die drei
+     Optionen, unverändert übernommen.
+
+     Die drei Fragen in Schritt 2 sind ausgeschrieben und nicht eine Frage mit
+     eingesetzter Bildart: „Wer ist zu sehen?“ passt auf keine Landschaft.
+
+     „Erzähl“, nicht „Erzähle“: der Imperativ Singular darf die Endung bei
+     Verben auf -l abwerfen, und gesprochen ist genau das die Form, in der
+     jemand gebeten wird, etwas zu erzählen. Siehe docs/GERMAN-UI-WRITING.md
+     zum Imperativ Singular. */
+  'capturing.picture.headline': 'Was für ein Bild ist vor deinem inneren Auge entstanden?',
+  'capturing.picture.empty': 'Hier gibt es nichts zu wählen.',
+  'capturing.kind.figures.option': 'Figuren',
+  'capturing.kind.figures.headline': 'Erzähl von ihnen.',
+  'capturing.kind.figures.question': 'Wer ist zu sehen, und was tun sie?',
+  'capturing.kind.memory.option': 'Eine Erinnerung',
+  'capturing.kind.memory.headline': 'Erzähl von diesem Moment.',
+  'capturing.kind.memory.question': 'Wann war das, und wer war dabei?',
+  'capturing.kind.landscape.option': 'Eine Landschaft',
+  'capturing.kind.landscape.headline': 'Erzähl von diesem Ort.',
+  'capturing.kind.landscape.question': 'Wo bist du, und was siehst du um dich herum?',
+  'capturing.feeling.headline': 'Wie fühlt sich das an?',
+  'capturing.feeling.label': 'In deinen Worten',
+  'route.capturingFeelings.title': 'Gefühle einfangen',
   'route.insightMap.title': 'Org-Karte',
   'route.maintenance.title': 'Verwaltung',
   'route.aboutMusie.title': 'Über Musie',

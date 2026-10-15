@@ -1739,6 +1739,55 @@ export const en = {
   'insightMap.hint.company': 'Everyone at Northwind, as one circle. Area is people, on every level.',
   'insightMap.hint.departments': 'Six departments, sized by the people they hold. Together they are the first tab.',
   'insightMap.hint.pods': 'A line runs to each department a pod draws from — thicker means more of it. Departments are anchors here, not sizes.',
+  /* `/feelings-selection` — the drill-down test of 2026-10-15. The 128
+     feelings themselves are NOT here: they are the wheel's own words, both
+     languages, in `content/emotionWheel.ts`. These are only the furniture. */
+  'feelings.sheet.title': 'Find the word for how you feel',
+  'feelings.sheet.close': 'Close',
+  'feelings.sheet.next': 'Next',
+  'feelings.sheet.previous': 'Back',
+  'feelings.sheet.done': 'That is the one',
+  'feelings.prompt.empty': 'I feel …',
+  'feelings.prompt.chosen': 'I feel {feeling}',
+  'feelings.ring.emotions.legend': 'Which of these is closest?',
+  'feelings.ring.emotions.hint': 'Start wide. You can get more precise in a moment.',
+  'feelings.ring.detailed.legend': 'You said {feeling}. Which kind?',
+  'feelings.ring.detailed.hint': 'Still not quite it? Go back and pick another.',
+  'feelings.ring.detailed.waiting': 'Which kind?',
+  'feelings.ring.specific.legend': 'And {feeling} more exactly?',
+  'feelings.ring.specific.hint': 'The last two. Either is a fine place to stop.',
+  'feelings.ring.specific.waiting': 'More exactly?',
+  /* The last row of rings 2 and 3: the word from the ring above, as an answer
+     rather than a step. Choosing it stops the drill-down. */
+  'feelings.stop': 'Just {feeling}',
+  'feelings.waiting.emotion': 'Pick a feeling on the first step and these fill in.',
+  'feelings.waiting.detailed': 'Pick one on the step before and these fill in.',
+  'feelings.empty': 'Nothing to choose from here.',
+  'feelings.result.empty': 'Nothing chosen yet.',
+  'feelings.result.chosen': 'You chose: {feeling}',
+  'feelings.reopen.open': 'The sheet is open',
+  'feelings.reopen.closed': 'Choose again',
+  'route.feelingsSelection.title': 'Feelings selection',
+  /* `/capturing-feelings-exploration` — the picture-first test of 2026-10-15,
+     and the sibling of the block above. It never shows a feeling word: it asks
+     what the person saw, asks one question back about that kind of picture, and
+     only then offers to talk about the feeling. The three step-2 questions are
+     written out rather than interpolated, because "Who is there?" has no
+     landscape reading. See routes/CapturingFeelingsExploration.tsx. */
+  'capturing.picture.headline': "What picture appeared in your mind's eye?",
+  'capturing.picture.empty': 'Nothing to choose from here.',
+  'capturing.kind.figures.option': 'Figures',
+  'capturing.kind.figures.headline': 'Tell me about them.',
+  'capturing.kind.figures.question': 'Who is there, and what are they doing?',
+  'capturing.kind.memory.option': 'A memory',
+  'capturing.kind.memory.headline': 'Tell me about that moment.',
+  'capturing.kind.memory.question': 'When was it, and who was with you?',
+  'capturing.kind.landscape.option': 'A landscape',
+  'capturing.kind.landscape.headline': 'Tell me about this place.',
+  'capturing.kind.landscape.question': 'Where are you, and what do you see around you?',
+  'capturing.feeling.headline': 'How does this make you feel?',
+  'capturing.feeling.label': 'In your own words',
+  'route.capturingFeelings.title': 'Capturing feelings',
   'route.insightMap.title': 'Org map',
   'route.maintenance.title': 'Maintenance',
   'route.aboutMusie.title': 'About Musie',
