@@ -1214,6 +1214,9 @@ export const de: Messages = {
   'feelings.ring.specific.legend': 'Und {feeling} genauer?',
   'feelings.ring.specific.hint': 'Die letzten zwei. Bei beiden darfst du bleiben.',
   'feelings.ring.specific.waiting': 'Genauer?',
+  /* Die letzte Zeile auf Ring 2 und 3: das Wort von oben, als Antwort und
+     nicht als Schritt. Wer es wählt, geht nicht tiefer. */
+  'feelings.stop': 'Einfach {feeling}',
   'feelings.waiting.emotion': 'Wähle im ersten Schritt ein Gefühl, dann füllt sich das hier.',
   'feelings.waiting.detailed': 'Wähle eins im Schritt davor, dann füllt sich das hier.',
   'feelings.empty': 'Hier gibt es nichts zu wählen.',

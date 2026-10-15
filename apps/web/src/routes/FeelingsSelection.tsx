@@ -51,6 +51,20 @@ function word(entry: WheelWord, locale: 'en' | 'de'): string {
 const options = (entries: readonly WheelWord[], locale: 'en' | 'de'): RadioOption[] =>
   entries.map((entry) => ({ value: String(entry.i), label: word(entry, locale) }));
 
+/**
+ * The value of the "just the word above" row, and it cannot collide with a
+ * ring index because every other value is a number as a string.
+ *
+ * ── WHY THE ROW EXISTS (Ben, 2026-10-15) ──────────────────────────────────
+ * Narrowing assumes the narrower word is the better one, and for a person who
+ * means exactly *Happy* every row on the next ring is a worse answer than the
+ * one they already gave. Without this they must either accept a word they do
+ * not mean or close the sheet, and a test cannot tell those two apart. So each
+ * deeper ring ends with the word from the ring above, and choosing it STOPS:
+ * it is an answer, not a step.
+ */
+const STOP = 'stop';
+
 export function FeelingsSelection() {
   const t = useT();
   const { locale } = useLocale();
@@ -59,6 +73,17 @@ export function FeelingsSelection() {
   const [emotionI, setEmotionI] = React.useState<number | null>(null);
   const [detailedI, setDetailedI] = React.useState<number | null>(null);
   const [specificI, setSpecificI] = React.useState<number | null>(null);
+
+  /**
+   * Which ring the person stopped on, having taken the word from the ring
+   * above rather than one of the words in front of them.
+   *
+   * It is NOT the same as "nothing chosen on this ring", which is why it is
+   * its own state: `chosen` already falls back up the chain, so stopping
+   * needs no arithmetic — but the row has to draw as selected, and the sheet
+   * must not advance. Both of those need to know the difference.
+   */
+  const [stoppedAt, setStoppedAt] = React.useState<'emotion' | 'detailed' | null>(null);
 
   /* The sheet is the screen here — it opens on arrival and reopens from the
      one control underneath it, so a tester who closes it is not stranded. */
@@ -79,17 +104,34 @@ export function FeelingsSelection() {
     setEmotionI(Number(value));
     setDetailedI(null);
     setSpecificI(null);
+    setStoppedAt(null);
     setIndex(1);
   }
 
   function chooseDetailed(value: string) {
+    if (value === STOP) {
+      /* The emotion was already the answer. Clear the ring below and stay —
+         advancing would offer a narrower word for a choice that just said
+         narrower is wrong. */
+      setDetailedI(null);
+      setSpecificI(null);
+      setStoppedAt('emotion');
+      return;
+    }
     setDetailedI(Number(value));
     setSpecificI(null);
+    setStoppedAt(null);
     setIndex(2);
   }
 
   function chooseSpecific(value: string) {
+    if (value === STOP) {
+      setSpecificI(null);
+      setStoppedAt('detailed');
+      return;
+    }
     setSpecificI(Number(value));
+    setStoppedAt(null);
   }
 
   /* The chosen word, as deep as the person has gone — this is what the sheet
@@ -119,8 +161,11 @@ export function FeelingsSelection() {
           name="wheel-detailed"
           legend={t('feelings.ring.detailed.legend', { feeling: word(emotion, locale) })}
           hint={t('feelings.ring.detailed.hint')}
-          options={options(emotion.detailed, locale)}
-          value={detailedI === null ? '' : String(detailedI)}
+          options={[
+            ...options(emotion.detailed, locale),
+            { value: STOP, label: t('feelings.stop', { feeling: word(emotion, locale) }) },
+          ]}
+          value={stoppedAt === 'emotion' ? STOP : detailedI === null ? '' : String(detailedI)}
           onValueChange={chooseDetailed}
           guided
           emptyLabel={t('feelings.empty')}
@@ -149,8 +194,11 @@ export function FeelingsSelection() {
           name="wheel-specific"
           legend={t('feelings.ring.specific.legend', { feeling: word(detailed, locale) })}
           hint={t('feelings.ring.specific.hint')}
-          options={options(detailed.specific, locale)}
-          value={specificI === null ? '' : String(specificI)}
+          options={[
+            ...options(detailed.specific, locale),
+            { value: STOP, label: t('feelings.stop', { feeling: word(detailed, locale) }) },
+          ]}
+          value={stoppedAt === 'detailed' ? STOP : specificI === null ? '' : String(specificI)}
           onValueChange={chooseSpecific}
           guided
           emptyLabel={t('feelings.empty')}

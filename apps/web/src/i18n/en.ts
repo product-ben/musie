@@ -1669,6 +1669,9 @@ export const en = {
   'feelings.ring.specific.legend': 'And {feeling} more exactly?',
   'feelings.ring.specific.hint': 'The last two. Either is a fine place to stop.',
   'feelings.ring.specific.waiting': 'More exactly?',
+  /* The last row of rings 2 and 3: the word from the ring above, as an answer
+     rather than a step. Choosing it stops the drill-down. */
+  'feelings.stop': 'Just {feeling}',
   'feelings.waiting.emotion': 'Pick a feeling on the first step and these fill in.',
   'feelings.waiting.detailed': 'Pick one on the step before and these fill in.',
   'feelings.empty': 'Nothing to choose from here.',
