@@ -175,14 +175,23 @@ describe('the grid', () => {
     expect(data).toHaveLength(25);
   });
 
-  it('holds the nine cards, one per cell', async () => {
+  /* ONE PER CELL, AND NO LONGER NINE. The count was `toHaveLength(9)` with a
+     matching `toBe(9)` below it until 2026-10-15, when it failed against
+     hosted because MC-10 had been added through this very screen — a test
+     asserting that the maintenance UI goes unused.
+   *
+   * The assertion that was always meant is the second one: no two cards share
+   * a cell. `cells.size === data.length` says exactly that and says it for any
+   * size of deck, which the pair of nines could not. The grid's own size is
+   * still fixed and still asserted, one test above. */
+  it('holds each placed card in a cell of its own', async () => {
     const { data } = await serviceClient()
       .from('cards')
       .select('id, valence, arousal')
       .not('valence', 'is', null);
-    expect(data).toHaveLength(9);
+    expect((data ?? []).length, 'no card is placed at all').toBeGreaterThan(0);
     const cells = new Set((data ?? []).map((c) => `${c.valence},${c.arousal}`));
-    expect(cells.size, 'two cards share a cell').toBe(9);
+    expect(cells.size, 'two cards share a cell').toBe((data ?? []).length);
   });
 
   it('refuses a second card on an occupied cell', async () => {

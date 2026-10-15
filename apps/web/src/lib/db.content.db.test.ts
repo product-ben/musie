@@ -250,30 +250,47 @@ describe('the tracks bucket · private, readable signed, and honest about absenc
   }, 30_000);
 
   /**
-   * FOUR HAVE A FILE AND FIVE DO NOT, and the five say so with NULL rather
-   * than with a path to something that was never uploaded.
+   * A RECORDING EITHER HAS A FILE OR SAYS SO WITH NULL — never with a path to
+   * something that was never uploaded.
    *
    * The distinction is the point of the nullable column: a null is absence,
-   * and a src that will not resolve is a fault. A test that only counted
-   * rows would pass against a schema that had quietly gone back to pointing
-   * at files that do not exist.
+   * and a src that will not resolve is a fault.
+   *
+   * ── THE ROLL-CALL CAME OUT, 2026-10-15 ──────────────────────────────────
+   * This read `expect(withFile).toEqual(['trk-01', 'trk-02', 'trk-04',
+   * 'trk-05'])` — the four cleared recordings as of September. Against hosted
+   * it found fifteen, because eleven pieces were uploaded at `/maintenance`,
+   * which is what that screen is for. The list was a census, not a rule.
+   *
+   * And it was hiding a second failure one line down, which is the better
+   * reason to have looked rather than just bumped the number: the spelling
+   * assertion was `${row.id}.mp3`, and a key minted by the UI is
+   * `${id}-${eight hex}.${extension}` (`mintKey`, content-admin/index.ts) —
+   * `trk-10-b0224a84.mp3`. Every upload through the real door would have
+   * failed it. `music-upload.mjs` wrote the bare `trk-01.mp3` form, so both
+   * spellings are live and both are correct.
+   *
+   * What the assertion is FOR survives either way, and it is a security
+   * property rather than a naming preference: the key names the opaque id and
+   * nothing else. `mc-01-joy.mp3` would carry the card and the feeling into
+   * the filename — the exact leak the opaque ids exist to prevent. A random
+   * suffix carries nothing, so the pattern below admits it and still refuses
+   * anything that names the content.
    */
-  it('gives exactly the cleared recordings a src, and the rest null', async () => {
+  it('gives a recording either a src that names only its id, or null', async () => {
     const { data, error } = await serviceClient()
       .from('tracks')
       .select('id, src')
       .order('id');
 
     expect(error).toBeNull();
+    expect((data ?? []).length, 'no recordings at all').toBeGreaterThan(0);
 
-    const withFile = (data ?? []).filter((t) => t.src !== null).map((t) => t.id);
-    expect(withFile).toEqual(['trk-01', 'trk-02', 'trk-04', 'trk-05']);
-
-    /* The key is the id and nothing else. `mc-01-joy.mp3` would name the card
-       and the feeling — the same leak the opaque ids exist to prevent, moved
-       into the filename. */
     for (const row of data ?? []) {
-      if (row.src !== null) expect(row.src).toBe(`${row.id}.mp3`);
+      if (row.src === null) continue;
+      expect(row.src, `${row.id} names something other than its id`).toMatch(
+        new RegExp(`^${row.id}(-[0-9a-f]{8})?\\.[a-z0-9]+$`),
+      );
     }
   }, 30_000);
 });
