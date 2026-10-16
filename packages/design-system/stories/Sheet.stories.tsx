@@ -267,3 +267,30 @@ export const OnePage: Story = {
     );
   },
 };
+
+
+/**
+ * `contentAlign="top"` — the single body directly under the headline, 2026-10-16.
+ *
+ * The default `distributed` centres the body in the room between the header
+ * and the foot, which is right for a sheet of ONE SCREEN — a picture, a
+ * countdown, four cards to compare. It is wrong for a body that is a LIST
+ * somebody works down: measured on the reflect step, a drill-down of three
+ * rows sat in the middle of a tall sheet with the question stranded at the
+ * top and a hand's worth of nothing between them.
+ *
+ * ONE DECLARATION, AND NO NEW DISTANCE. `top` changes `align-content` and
+ * nothing else; the gap below the headline stays the `--space-gap-stack` the
+ * header already spends in every variant, so the two cannot drift apart.
+ */
+export const ContentTopAligned: Story = {
+  args: {
+    contentAlign: 'top',
+    children: (
+      <div style={{ display: 'grid', gap: 'var(--space-gap-stack)' }}>
+        <p>Die erste Zeile steht direkt unter der Frage.</p>
+        <p>Und die zweite darunter, statt in der Mitte zu schweben.</p>
+      </div>
+    ),
+  },
+};

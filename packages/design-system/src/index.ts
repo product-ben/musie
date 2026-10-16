@@ -93,6 +93,11 @@ export type { MessageProps, MessageVariant, MessageLive } from './Message';
 export { ContentList } from './ContentList';
 export type { ContentListProps, ContentListItem } from './ContentList';
 
+/* A word the person put there, with a way to take it back out. NOT a control
+   — only its × is — which is why it is neither Badge nor FilterChips. */
+export { Chip, ChipRow } from './Chip';
+export type { ChipProps, ChipRowProps } from './Chip';
+
 /* A tree narrowed one level at a time. It draws no rows of its own — the
    level is a slot — so it exports its option and level shapes for whatever
    selection component a consumer puts in there. */
@@ -141,7 +146,7 @@ export { RadioImage } from './RadioImage';
 export type { RadioImageProps, RadioImageOption } from './RadioImage';
 
 export { Sheet } from './Sheet';
-export type { SheetProps, SheetPage } from './Sheet';
+export type { SheetProps, SheetPage, SheetContentAlign } from './Sheet';
 
 export { Logo } from './Logo';
 export type { LogoProps, LogoSize } from './Logo';

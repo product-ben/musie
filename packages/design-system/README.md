@@ -387,3 +387,42 @@ does over the action and the dismiss.
 It is **last in the DOM**, so a screen reader meets the dismiss before it.
 That is the price of the row it needs: the toast is a wrapping flex row, and a
 100%-wide child before the dismiss pushes the dismiss onto a third line.
+
+
+## And on the same day, after the first screens were looked at
+
+| | |
+|---|---|
+| **`Chip`** / **`ChipRow`** | new. A word the person put there, with a way to take it back out |
+| **`Sheet`** · `contentAlign` | `top`, for a body that is a list rather than one screen |
+| **`DrillDown`** · `onDepthChange` | the level, and what its stop row would commit |
+
+### `Chip` is not a control, and only its × is
+
+That is the whole semantic difference between it and everything near it. A
+`FilterChips` chip is a checkbox — pressing it changes a query. A
+`SegmentedControl` option is a radio. This is a **noun**: a word somebody
+already chose, sitting there being true.
+
+So nothing about it may suggest a press would do something — no hover, no
+active state, no cursor, no focus ring on the chip itself. And **background
+only, no border**: an edge is what a control wears to say where you may press.
+It is the one visual difference from every other chip in the system, and it is
+carrying meaning rather than taste.
+
+Without `onRemove` it renders as a `<span>`, because a chip nobody can remove
+is a label. `ChipRow` owns the gap between chips — `--space-gap-related`,
+shipped with the component for the reason `ButtonGroup` gives about a row of
+actions: a distance decided in two places is two decisions.
+
+### `contentAlign="top"` is one declaration
+
+`distributed` (the default) centres a single body between the header and the
+foot, which is right for a sheet of one screen — a picture, a countdown, four
+cards to compare. It is wrong for a body that is a **list** somebody works
+down: the reflect step's drill-down sat three rows deep in the middle of a tall
+sheet with the question stranded at the top.
+
+`top` changes `align-content` and nothing else. The gap below the headline
+stays the `--space-gap-stack` the header already spends in every variant, so
+there is no second distance that could drift from the first.

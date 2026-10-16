@@ -941,6 +941,72 @@
 .musy-radio-group__error { margin-block-start: var(--space-gap-related); }
 
 
+/* ═══ 6b · CHIP ════════════════════════════════════════════════════════════
+   A word the person put there, with a way to take it back out.
+
+   BACKGROUND ONLY, NO BORDER — Ben, 2026-10-16. Every other chip in this file
+   wears an edge because an edge is what a control uses to say where you may
+   press. This is not a control: it is a noun, and the fill alone is enough to
+   say "one object" when the object is a single word.
+
+   AND IT HAS NO STATES. No hover, no active, no cursor, no focus ring on the
+   chip itself — nothing may suggest a press would do something, because it
+   would not. The × inside is an ordinary IconButton and brings all of that
+   with it.
+
+   The rung is `min`, the same 36px a `min` CtaButton and a `min` chip in §16
+   come to, stated as the arithmetic so the three cannot drift.             */
+
+.musy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  box-sizing: border-box;
+  min-block-size: calc(var(--target-min) + var(--sp-3));
+  /* Asymmetric on purpose: the label's side keeps a pill's inset, and the ×
+     side closes up because the button carries its own target around it. With
+     equal padding the × floats in the middle of too much room. */
+  padding-inline: var(--sp-4) var(--sp-2);
+  border: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-sunken);
+  color: var(--on-surface);
+}
+
+/* No × — then the box is a label and the trailing inset matches the leading
+   one, because there is no control to leave room for. */
+.musy-chip:not(:has(.musy-chip__remove)) { padding-inline: var(--sp-4); }
+
+.musy-chip__label {
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  /* A chip holding a long word grows; it never clips. A feeling cut in half
+     is a different feeling. */
+  text-wrap: var(--text-wrap-body);
+}
+
+/* ── THE ROW ───────────────────────────────────────────────────────────────
+   `--space-gap-related`, which is L2's rung for atoms that belong together —
+   and chips in a line are one answer, not several. It is shipped with the
+   component rather than left to a screen for the reason ButtonGroup gives
+   about a row of actions: the number is a decision, and a decision made in
+   two places is two decisions.
+
+   WRAPS RATHER THAN SCROLLS, unlike §16's row. That one is a control strip
+   with a horizontal gesture; this is content, and content that runs off the
+   side of a reading column is content somebody loses. */
+.musy-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-gap-related);
+  min-inline-size: 0;
+}
+ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
+.musy-chip-row__item { display: inline-flex; }
+
 /* ═══ 6a · DRILL DOWN ══════════════════════════════════════════════════════
    The frame around a level: the back row, and whatever the slot draws. The
    ROWS are not here — they belong to whichever selection component is in the
@@ -7258,6 +7324,18 @@ html[data-musy-scroll-snap='y'] {
   display: grid;
   align-content: center;
 }
+
+/* ── contentAlign="top" — 2026-10-16 ──────────────────────────────────────
+   The body directly under the headline, for a sheet whose content is a LIST
+   somebody works through rather than one screen to look at. The reflect
+   step's drill-down centred three rows in the middle of a tall sheet, with
+   the question stranded at the top and a hand's worth of nothing between.
+
+   ONE DECLARATION, AND THAT IS THE POINT. The distance below the headline is
+   the `--space-gap-stack` `.musy-sheet__header` already spends in every
+   variant; adding a second one here would be two rules that could disagree
+   about the same gap. */
+.musy-sheet__body[data-align="top"] { align-content: start; }
 
 /* ── THE FIELD ────────────────────────────────────────────────────────────
    Painted only under a page that is a picture; transparent otherwise, so a

@@ -64,6 +64,12 @@ import { IconButton } from './IconButton';
 import { Lightbox } from './Lightbox';
 import type { LightboxOrigin } from './Lightbox';
 
+/**
+ * Where a single body sits between the header and the foot. See
+ * `SheetProps.contentAlign`.
+ */
+export type SheetContentAlign = 'distributed' | 'top';
+
 export interface SheetPage {
   /** Stable identity. The React key. */
   id: string;
@@ -123,6 +129,27 @@ export interface SheetProps {
   /** The single body, for a sheet with no pages. Ignored when `pages` is given. */
   children?: React.ReactNode;
   /**
+   * ── WHERE THE SINGLE BODY SITS — Ben, 2026-10-16 ───────────────────────
+   *
+   * `distributed` (the default, and every sheet before this prop) centres the
+   * body in the room between the header and the foot. That is right for a
+   * sheet of ONE SCREEN — a picture, a countdown, four cards to compare —
+   * which is a thing to look at rather than a column to read down.
+   *
+   * `top` puts it directly under the headline, at the header's own trailing
+   * rung. That is right for a sheet whose body is a LIST somebody is working
+   * through: the reflect step's drill-down centred three rows in the middle
+   * of a tall sheet, with the question stranded at the top and a hand's worth
+   * of nothing between them.
+   *
+   * ONE RULE AND NOT A NEW DISTANCE. `top` only changes `align-content`; the
+   * gap below the headline stays the `--space-gap-stack` the header already
+   * spends in every variant, so the two cannot drift apart.
+   *
+   * Ignored in paged mode, where each page owns its own height.
+   */
+  contentAlign?: SheetContentAlign;
+  /**
    * The foot — whatever this sheet offers besides moving between pages, at the
    * block end, inline start of the paging controls.
    *
@@ -151,7 +178,7 @@ function nearestPage(scroller: HTMLElement): number {
 export function Sheet({
   open, onOpenChange, title, closeLabel, origin = null,
   header, pages, index = 0, onIndexChange, dotLabel, nextLabel, previousLabel,
-  children, foot, className,
+  children, foot, contentAlign = 'distributed', className,
 }: SheetProps) {
   const scrollerRef = React.useRef<HTMLOListElement>(null);
   const paged = pages !== undefined && pages.length > 0;
@@ -332,7 +359,10 @@ export function Sheet({
           /* SINGLE BODY. The same box the pages would have filled, so the
              header above it and the foot below it do not move when a sheet
              stops being a walk and becomes one screen. */
-          <div className="musy-sheet__body">{children}</div>
+          <div
+            className="musy-sheet__body"
+            data-align={contentAlign === 'top' ? 'top' : undefined}
+          >{children}</div>
         ) : (
         <ol
           ref={scrollerRef}

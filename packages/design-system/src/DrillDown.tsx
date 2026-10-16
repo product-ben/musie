@@ -160,6 +160,23 @@ export interface DrillDownProps {
    * without this component knowing what holding one means.
    */
   disabledIds?: readonly string[];
+  /**
+   * The level changed — 0 is the first, 1 the second, and so on.
+   *
+   * Reported because a consumer's FOOT can depend on it and nothing else can
+   * see it: the depth lives inside this component's path, and the slot is
+   * handed it in render, which is the one place a consumer may not read it
+   * into state. The feelings sheet shows its two actions from level 2 down.
+   *
+   * `stopId` is the id the stop row would commit at this level — the
+   * parent's own id, and `null` at the first level where there is no stop.
+   * Reported alongside the depth because a consumer whose foot can finish
+   * the sheet needs to know WHAT the pre-checked row means, and asking the
+   * slot in render is the one place it may not read state from.
+   *
+   * Fired from an effect, after the render that moved — never during one.
+   */
+  onDepthChange?: (depth: number, stopId: string | null) => void;
   className?: string;
 }
 
@@ -180,7 +197,7 @@ const STOP = '::drilldown-stop::';
 export function DrillDown({
   nodes, onPick, children,
   stopLabel, backLabel, levelLabel,
-  disabledIds, className,
+  disabledIds, onDepthChange, className,
 }: DrillDownProps) {
   /**
    * THE PATH TAKEN SO FAR, root first — the one piece of state here.
@@ -280,6 +297,13 @@ export function DrillDown({
     );
     first?.focus();
   }, [path]);
+
+  /* Reported on arrival as well as on every move, so a consumer that keys
+     its foot on the depth is right from the first frame rather than one
+     render behind. */
+  React.useEffect(() => {
+    onDepthChange?.(path.length, parent === null ? null : parent.id);
+  }, [path.length, parent, onDepthChange]);
 
   const choose = React.useCallback((chosen: string) => {
     if (locked) return;
