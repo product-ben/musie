@@ -851,6 +851,36 @@
   overflow: visible;
 }
 
+/* THE ROW THAT DESCENDS — `drillDown`, 2026-10-16.
+   The marker stays; the arrow is added at the inline end, which is Ben's
+   call: one list, one rhythm, and the arrow is the only thing that differs.
+
+   `margin-inline-start: auto` and NOT a width on the label. The label is an
+   ordinary flex item (0 1 auto), so with room to spare the auto margin pushes
+   the arrow to the end, and without it the label shrinks and the arrow keeps
+   its size. Giving the label a basis instead would fix the clamp point at one
+   string length and get every other one wrong.
+
+   That shrinking is exactly what the component's overflow measurement is for
+   (see RadioGroupText's header): a long German label clamps one word earlier
+   beside an arrow, is measured as clamped, and is then rendered unclamped. */
+.musy-radio__drill {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-gap-related);
+  color: var(--on-surface-muted);
+  transition: color var(--motion-toggle);
+}
+/* Checked is a transient state on a descending row — it is the frame of the
+   tap that replaces the level — but it must not flash a mismatched ink. */
+.musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__drill {
+  color: var(--interactive-accent-on-subtle);
+}
+.musy-radio__body[data-disabled] .musy-radio__drill { color: var(--on-surface-disabled); }
+
 @media (hover: hover) and (pointer: fine) {
   .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
   .musy-radio__body[data-force~="hover"] {
@@ -909,6 +939,97 @@
   border-color: var(--feedback-error-border);
 }
 .musy-radio-group__error { margin-block-start: var(--space-gap-related); }
+
+
+/* ═══ 6b · CHIP ════════════════════════════════════════════════════════════
+   A word the person put there, with a way to take it back out.
+
+   BACKGROUND ONLY, NO BORDER — Ben, 2026-10-16. Every other chip in this file
+   wears an edge because an edge is what a control uses to say where you may
+   press. This is not a control: it is a noun, and the fill alone is enough to
+   say "one object" when the object is a single word.
+
+   AND IT HAS NO STATES. No hover, no active, no cursor, no focus ring on the
+   chip itself — nothing may suggest a press would do something, because it
+   would not. The × inside is an ordinary IconButton and brings all of that
+   with it.
+
+   The rung is `min`, the same 36px a `min` CtaButton and a `min` chip in §16
+   come to, stated as the arithmetic so the three cannot drift.             */
+
+.musy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  box-sizing: border-box;
+  min-block-size: calc(var(--target-min) + var(--sp-3));
+  /* Asymmetric on purpose: the label's side keeps a pill's inset, and the ×
+     side closes up because the button carries its own target around it. With
+     equal padding the × floats in the middle of too much room. */
+  padding-inline: var(--sp-4) var(--sp-2);
+  border: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-sunken);
+  color: var(--on-surface);
+}
+
+/* No × — then the box is a label and the trailing inset matches the leading
+   one, because there is no control to leave room for. */
+.musy-chip:not(:has(.musy-chip__remove)) { padding-inline: var(--sp-4); }
+
+.musy-chip__label {
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  /* A chip holding a long word grows; it never clips. A feeling cut in half
+     is a different feeling. */
+  text-wrap: var(--text-wrap-body);
+}
+
+/* ── THE ROW ───────────────────────────────────────────────────────────────
+   `--space-gap-related`, which is L2's rung for atoms that belong together —
+   and chips in a line are one answer, not several. It is shipped with the
+   component rather than left to a screen for the reason ButtonGroup gives
+   about a row of actions: the number is a decision, and a decision made in
+   two places is two decisions.
+
+   WRAPS RATHER THAN SCROLLS, unlike §16's row. That one is a control strip
+   with a horizontal gesture; this is content, and content that runs off the
+   side of a reading column is content somebody loses. */
+.musy-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-gap-related);
+  min-inline-size: 0;
+}
+ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
+.musy-chip-row__item { display: inline-flex; }
+
+/* ═══ 6a · DRILL DOWN ══════════════════════════════════════════════════════
+   The frame around a level: the back row, and whatever the slot draws. The
+   ROWS are not here — they belong to whichever selection component is in the
+   slot, which is the whole point of the slot.
+
+   No height, no scroller. A level is at most nine rows and the surface this
+   sits in (Sheet, inside Lightbox) already owns the scrolling. A second
+   scroller here would be the mistake Sheet's own header warns about.        */
+
+.musy-drilldown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  min-inline-size: 0;
+}
+
+/* THE WAY UP IS A CtaButton — ghost, `min` — so everything about how it
+   looks and behaves is §7.4's, not this component's. What is left here is
+   the one thing a button cannot know: that it must hug its own label rather
+   than stretch to the column it sits in. */
+.musy-drilldown__back { align-self: start; }
+
+.musy-drilldown__body { min-inline-size: 0; }
 
 
 /* ═══ 7 · RADIO GROUP — IMAGE + TEXT ═══════════════════════════════════════
@@ -3001,6 +3122,16 @@
   min-inline-size: calc(var(--measure-compact) / 2);
 }
 
+/* THE SLOT — its own full row, always. `flex-basis: 100%` is what forces the
+   wrap: the toast is already a wrapping row, so a child that can never share
+   a line with anything lands beneath whatever came before it. No max-width of
+   its own — the toast's cap is the cap, and a control that does not fit it is
+   the wrong control for a toast. */
+.musy-toast__slot {
+  flex: 1 0 100%;
+  min-inline-size: 0;
+}
+
 /* Both controls hold their size, and the pair takes the trailing edge — on one
    row that pushes them away from the text, on two it puts them at the row's
    end, which is L6 either way. The action is a CtaButton the consumer passes,
@@ -5024,6 +5155,25 @@
    two unlike controls needs it at least as much as a row does. */
 .musy-btn-group--molecule { gap: var(--space-gap-stack); }
 
+/* ── purpose="continue-only" — THE ORDER AXIS (2026-10-16) ────────────────
+   Ben: the primary is always bottom right, the secondary left next to it,
+   the tertiary left of that.
+
+   `row-reverse` AND NOT `justify-content: flex-end` + reordered children.
+   DOM order stays priority order, so a keyboard and a screen reader meet the
+   primary first; only the paint is reversed. Reordering the children would
+   have made the two disagree, and the accessible order is the one that must
+   not move.
+
+   `justify-content: flex-start` is stated rather than left to the default,
+   because in a reversed row flex-start IS the trailing edge — and stating it
+   defeats any --center / --end modifier that reached this element, which the
+   component also stops at the source by dropping `align` for this variant. */
+.musy-btn-group--continue-only {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
 @media (max-width: 767.98px) {
   .musy-btn-group {
     flex-direction: column;
@@ -5054,6 +5204,20 @@
   .musy-btn-group--stacked-hug > .musy-btn { inline-size: auto; }
   .musy-btn-group--center.musy-btn-group--stacked-hug { align-items: center; }
   .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; }
+
+  /* ── continue-only REVERSES THE COLUMN TOO ──────────────────────────────
+     A DELIBERATE EXCEPTION to this block's own rule — "the order in the DOM
+     is the order of priority, top to bottom". Here the primary is the BOTTOM
+     button, directly above the thumb, which is what "always bottom right"
+     means once there is no right.
+
+     Put to Ben as a conflict with the existing rule on 2026-10-16 and chosen
+     with it named. The old rule is not wrong; it is `actions`', and the
+     component's header now says so.
+
+     Still only paint: `column-reverse` leaves the primary first in the DOM,
+     so tab order and the screen reader are unchanged from the row. */
+  .musy-btn-group--continue-only { flex-direction: column-reverse; }
 }
 
 /* ═══ MUSIC PLAYER ═════════════════════════════════════════════════════════
@@ -7159,6 +7323,52 @@ html[data-musy-scroll-snap='y'] {
   min-block-size: 0;
   display: grid;
   align-content: center;
+}
+
+/* ── contentAlign="top" — 2026-10-16 ──────────────────────────────────────
+   The body directly under the headline, for a sheet whose content is a LIST
+   somebody works through rather than one screen to look at. The reflect
+   step's drill-down centred three rows in the middle of a tall sheet, with
+   the question stranded at the top and a hand's worth of nothing between.
+
+   TWO DECLARATIONS, AND THE SECOND IS THE DISTANCE — Ben, 2026-10-16:
+   `--space-section` between the headline and the content.
+
+   THE RUNG IS RIGHT and it is worth saying why, because it is two steps up
+   from what the header spends elsewhere. In a `distributed` sheet the header
+   and the body are one composition that is CENTRED as a whole, so the gap
+   between them is a gap inside a molecule — `--space-gap-stack`. Here the
+   headline is a question and the body is the apparatus for answering it,
+   stacked at the top of the sheet with room below: they read as two
+   SECTIONS, which is the rung L2 names for exactly that.
+
+   SCOPED TO THIS VARIANT, deliberately. `.musy-sheet__header`'s own padding
+   is shared with the paged sheets — the card walk and the listen focus view —
+   where the header floats over a full-bleed picture and this distance would
+   push the pages down for a reason that belongs to a different variant. The
+   override sits on the body, so a sheet that did not ask for it is
+   untouched. */
+.musy-sheet__body[data-align="top"] {
+  align-content: start;
+  /* On the BODY rather than the header, so only this variant pays it. The
+     header keeps its own padding; this adds the difference between the two
+     rungs on top of it, stated as the arithmetic rather than as a number so
+     neither rung can drift away from the other. */
+  margin-block-start: calc(var(--space-section) - var(--space-gap-stack));
+  /* ── AND IT SCROLLS, WHICH THE CENTRED VARIANT NEVER HAD TO ────────────
+     `distributed` is for a body that FITS by design — one picture, one
+     countdown, four cards. A top-aligned body is a list, and a list is
+     exactly the thing that does not fit: measured at level 2 of the reflect
+     drill-down, seven rows and a foot ran past the bottom of the sheet and
+     the last row was drawn underneath the buttons.
+
+     The track is already `minmax(0, 1fr)` and this element already carries
+     `min-block-size: 0`, so the only thing missing was permission to
+     scroll. The foot is a sibling grid row and stays where it is. */
+  overflow-y: auto;
+  /* The scroll happens inside the sheet's own inset, so a row's focus ring
+     is not clipped against the edge it scrolls past. */
+  scrollbar-width: thin;
 }
 
 /* ── THE FIELD ────────────────────────────────────────────────────────────

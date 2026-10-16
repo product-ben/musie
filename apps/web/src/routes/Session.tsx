@@ -59,24 +59,31 @@ import { SessionSelect } from '../components/SessionSelect';
 import { SessionView } from '../components/SessionView';
 import { SessionListen } from '../components/SessionListen';
 import { SessionReflect } from '../components/SessionReflect';
+import { FeelingsSheet } from '../components/FeelingsSheet';
+import { ThoughtsSheet } from '../components/ThoughtsSheet';
+import { UnderstandSheet } from '../components/UnderstandSheet';
 import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import { warmTrackBytes } from '../lib/audio';
 import { getCard, getCards, getExercise, getListenAudio, getTrackFor } from '../lib/content';
-import { SHEET_OPEN, dealtCards, withSheetOpen } from '../lib/digitalCards';
+import { SHEET_OPEN, dealtCards, withSheetOpen, withToken } from '../lib/digitalCards';
 import {
   DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedForRun, stepsForRun,
 } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
 import type { Card, Exercise, ListenAudio, Track } from '../lib/content';
-import { hasAnswered } from '../lib/reflect';
-import type { ReflectMode } from '../lib/reflect';
+import { pathOf, useSessionFeelings } from '../lib/feelings';
+import { FOCUS_FEELINGS, FOCUS_THOUGHTS, FOCUS_UNDERSTAND, REFLECT_SHEETS, hasAnswered } from '../lib/reflect';
+import type { ReflectMode, ReflectSheet } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
   completedBefore, endSession, readSession, saveCard, saveDigitalCards,
-  saveFeelingChange, saveListeningAnswers, saveReflection, saveStep,
+  saveListeningAnswers, saveReflection, saveStep,
 } from '../lib/session';
-import type { FeelingChange, SessionRow } from '../lib/session';
+/* `saveFeelingChange` and `FeelingChange` left this file on 2026-10-16 with
+   the mood scale. Diary.tsx imports them now — the function and the column
+   are unchanged, only the screen that asks has moved. */
+import type { SessionRow } from '../lib/session';
 import { useSessionQuestion } from '../lib/useQuestion';
 import { resumeSession, sessionReducer, stepTransition } from '../lib/sessionMachine';
 import { useAsync } from '../lib/useAsync';
@@ -595,17 +602,75 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const [scanError, setScanError] = React.useState<string | null>(null);
 
   /**
-   * HOW THE SESSION LEFT YOU, on the three-point scale the reflect step asks
-   * for. `null` until somebody answers, and that is a real state rather than a
-   * missing one: the question is optional in the sense that a session can be
-   * saved without it, and the completion dialog is what says so out loud.
+   * ── HOW THE SESSION LEFT YOU IS NOT ASKED HERE ANY MORE — 2026-10-16 ────
    *
-   * HELD HERE, beside `answer` and `reflectMode`, because it is written in the
-   * same `finish()` as they are and because the step itself is unmounted and
-   * remounted by the rail. A value kept inside `SessionReflect` would be lost
-   * by stepping back to listen and forward again.
+   * `feelingChange` used to live at this line, written by `finish()` into
+   * `sessions.feeling_change`. The scale moved to the success toast on
+   * /diary: the session is over by then, the question is about something
+   * finished, and this step was carrying six other things.
+   *
+   * The COLUMN is untouched and so is `saveFeelingChange` — only the place
+   * that asks has moved. `Diary.tsx` writes it now, for the session id that
+   * rides along in the navigation state below.
    */
-  const [feelingChange, setFeelingChange] = React.useState<FeelingChange | null>(null);
+
+  /**
+   * THE FEELINGS THIS SESSION IS HOLDING.
+   *
+   * Lifted here rather than held in the step for the same reason `answer` is:
+   * the rail unmounts each step when you walk between them, and the sheet and
+   * the section both read this one list.
+   *
+   * UNLIKE `answer`, IT IS ALREADY SAVED. Each feeling is written the moment
+   * it is confirmed (Ben, 2026-10-16) — so this is a mirror of rows that
+   * exist, not a draft waiting for `finish()`. `lib/feelings.ts` has the
+   * argument.
+   */
+  const feelings = useSessionFeelings(id, locale, state.step === 'reflect');
+
+  /**
+   * WHICH SHEET IS OPEN IS THE ADDRESS, NOT STATE — the pattern the listen
+   * step's `?focus` already uses (SessionListen.tsx). Derived, so there is no
+   * second boolean that could disagree with the URL, and the browser's own
+   * Back closes a sheet for free.
+   *
+   * THE TWO ARE EXCLUSIVE, resolved rather than rendered together: a
+   * hand-typed `?focus-feelings&focus-thoughts` opens feelings, the same way
+   * `?focus&overview` resolves on the listen step.
+   */
+  /* FIRST ONE PRESENT WINS, in `REFLECT_SHEETS`' order — so a hand-typed
+     address naming two of them resolves to one sheet rather than rendering
+     two, the same way `?focus&overview` resolves on the listen step. */
+  const reflectSheet = REFLECT_SHEETS.find((token) => searchParams.has(token)) ?? null;
+  const feelingsOpen = reflectSheet === FOCUS_FEELINGS;
+  const thoughtsOpen = reflectSheet === FOCUS_THOUGHTS;
+  const understandOpen = reflectSheet === FOCUS_UNDERSTAND;
+
+  /**
+   * Open one reflect sheet, or close both. `null` closes.
+   *
+   * `withToken` twice, and the pathname NAMED rather than inherited — both
+   * are `setSheetOpen`'s lessons above, and the second one was measured:
+   * `navigate({ search })` keeps whatever pathname is current when the
+   * navigation is processed, which is not always the step on screen.
+   *
+   * PUSH TO OPEN so the browser's Back closes the sheet; REPLACE to close, so
+   * closing does not leave an entry somebody has to walk back through twice.
+   */
+  const setReflectSheet = React.useCallback((which: ReflectSheet | null) => {
+    /* Every token rewritten on every call, so opening one always closes the
+       others and there is no combination of taps that can leave two on the
+       address. `withToken` returns a leading `?`, which the next call has to
+       be handed without — hence the strip. */
+    const search = REFLECT_SHEETS.reduce(
+      (acc, token) => withToken(acc.replace(/^\?/, ''), token, which === token),
+      searchParams.toString(),
+    );
+    navigate(
+      { pathname: `/session/${encodeURIComponent(id)}/${state.step}`, search },
+      which === null ? { replace: true } : undefined,
+    );
+  }, [searchParams, navigate, id, state.step]);
 
   /** The completion dialog, opened by saving while something is unanswered. */
   const [confirmingIncomplete, setConfirmingIncomplete] = React.useState(false);
@@ -625,6 +690,12 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   /* Whether the transcript editor holds any words — F.6. It owns the
      statements, so the step has to be told. */
   const [spokenWords, setSpokenWords] = React.useState(false);
+  /* AND THE WORDS THEMSELVES — 2026-10-16. The reflect step's filled state
+     shows what was captured as one block whichever mode produced it, and in
+     voice mode the step holds no copy of the transcript. `VoiceTranscript`
+     joins it with the same `joinStatements` that builds `reflections.body`,
+     so the screen and the diary cannot disagree. */
+  const [spokenText, setSpokenText] = React.useState('');
   const [answer, setAnswer] = React.useState('');
   const [listened, setListened] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -925,41 +996,20 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       if (!skip && reflectMode !== 'voice') {
         await saveReflection(id, reflectMode, answer.trim());
       }
-      /* HOW THE SESSION LEFT YOU, written in the same act as the reflection
-         and for the same reason: the scale sits on a step that can be walked
-         back out of, so saving on every press would record a mind being
-         changed rather than an answer being given.
+      /* ── THE SCALE IS NOT WRITTEN HERE ANY MORE — 2026-10-16 ───────────
+         `saveFeelingChange` used to run in this block, with its own catch so
+         one optional field could never cost the session. The question moved
+         to /diary's confirmation toast: by then the session is over, and
+         "how was that?" is a question about something finished rather than a
+         seventh thing to do on the step before it.
 
-         IT SURVIVES `skip`, which the reflection does not. Saving without a
-         written answer is a real outcome the dialog offers by name, and the
-         scale may well be the only thing somebody chose to give — dropping it
-         because the text box is empty would discard the answer they did make.
+         THE WHOLE PARAGRAPH OF CARE THAT STOOD HERE STILL APPLIES, just on
+         the other side — Diary.tsx writes it, on its own, and a failure there
+         costs the answer and nothing else. The column is untouched; the
+         session simply finishes with it null until somebody answers.
 
-         NOT WRITTEN WHEN UNANSWERED. Null is the column's own resting state,
-         so a write of null would be a round trip that says nothing. */
-      if (feelingChange !== null) {
-        /* ITS OWN CATCH, AND THE SESSION SURVIVES IT. Everything else in this
-           block is the session: the reflection somebody wrote, and the status
-           that makes it an entry. This is one optional field on a nullable
-           column, answering a question the save dialog already offers to skip
-           — so losing it must cost the answer, never the session.
-
-           Without this, the shared `catch` below would swallow the whole
-           finish: no `endSession`, no navigation, `busy` cleared, and somebody
-           standing on /reflect pressing a button that does nothing while the
-           only explanation is in the console. A column that is missing, a
-           constraint that rejects, or a dropped connection would all land
-           there.
-
-           STILL LOGGED, never silent. The answer is gone and the console says
-           so, which is the same bargain `markListened` makes on the step
-           before this one. */
-        try {
-          await saveFeelingChange(id, feelingChange);
-        } catch (thrown: unknown) {
-          console.error('[musie] the session was saved without how it left you:', thrown);
-        }
-      }
+         WHICH SESSION the toast writes against rides below, in the route
+         state that already triggers it. */
       const at = new Date().toISOString();
       await endSession(id, 'finished', at);
       dispatch({ type: 'FINISH', at });
@@ -987,7 +1037,12 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
          flag rides on `!skip`, and `close()` below drops it entirely. */
       navigate('/diary', {
         replace: true,
-        state: skip ? undefined : { sessionSaved: true },
+        /* `sessionId` RIDES ALONG — 2026-10-16. The toast asks the mood
+           question now, and it has to write the answer against THIS session.
+           "The newest row" would be wrong the moment two tabs are open, and
+           it is the kind of wrong that shows up in somebody else's diary
+           rather than in a test. */
+        state: skip ? undefined : { sessionSaved: true, sessionId: id },
       });
     } catch (thrown: unknown) {
       console.error('[musie] could not finish the session:', thrown);
@@ -1155,11 +1210,23 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
        WHAT COUNTS AS COMPLETE is the written answer AND the scale. Either one
        open opens the dialog; the dialog's second button saves anyway, so this
        is a speed bump rather than a gate. */
-    const complete = hasAnswered(reflectMode, answer, spokenWords) && feelingChange !== null;
+    /* ── WHAT COMPLETE MEANS NOW — 2026-10-16 ─────────────────────────
+       Feelings AND thoughts. The mood scale used to be half of it and has
+       moved to /diary, so it is no longer this step's business whether it
+       was answered.
+
+       GHOST UNTIL BOTH, filled primary once both are there — Ben. It is
+       still NEVER DISABLED, which is the 2026-10-09 rule and the reason the
+       dialog exists: a control that knows what is missing should say so, not
+       go grey. */
+    const hasFeelings = feelings.feelings.length > 0;
+    const hasThoughts = hasAnswered(reflectMode, answer, spokenWords);
+    const complete = hasFeelings && hasThoughts;
     actions = (
       <>
         {back}
         <CtaButton
+          variant={complete ? 'primary' : 'ghost'}
           loading={busy}
           loadingLabel={t('content.loading')}
           onClick={() => {
@@ -1324,16 +1391,17 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
 
           {state.step === 'reflect' && (
             <SessionReflect
-              exercise={exercise}
-              sessionId={id}
-              onSpokenWords={setSpokenWords}
-              mode={reflectMode}
-              onModeChange={setReflectMode}
-              text={answer}
-              onTextChange={setAnswer}
-              feeling={feelingChange}
-              onFeelingChange={setFeelingChange}
-              question={question}
+              feelings={feelings.feelings}
+              onAddFeeling={() => setReflectSheet(FOCUS_FEELINGS)}
+              onRemoveFeeling={(feelingId) => { void feelings.remove(feelingId); }}
+              /* THE CAPTURED THOUGHTS, AS ONE BLOCK. In voice mode the step
+                 has no copy of the transcript — `VoiceTranscript` owns the
+                 statements and writes them itself — so what the filled state
+                 can honestly show is that there ARE words, which is what
+                 `spokenWords` reports. The typed answer is shown as typed. */
+              thoughts={reflectMode === 'voice' ? spokenText : answer}
+              onEditThoughts={() => setReflectSheet(FOCUS_THOUGHTS)}
+              onUnderstand={() => setReflectSheet(FOCUS_UNDERSTAND)}
             />
           )}
         </WizardPanel>
@@ -1420,6 +1488,53 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
 
           ONE SENTENCE, and it argues from what they get rather than from what
           the product wants — `reflect.incomplete.text`. */}
+      {/* ── THE TWO REFLECT SHEETS ─────────────────────────────────────
+          Mounted beside the panel rather than inside the step, for the same
+          reason the card sheet is: `WizardPanel` unmounts a step when the
+          rail moves, and a sheet that vanished mid-write would take the
+          writing with it. Only on the reflect step — nothing else has them,
+          and the tokens mean nothing anywhere else. */}
+      {state.step === 'reflect' && (
+        <>
+          <FeelingsSheet
+            open={feelingsOpen}
+            onOpenChange={(next) => setReflectSheet(next ? FOCUS_FEELINGS : null)}
+            held={feelings.feelings}
+            onPick={(nodeId) => {
+              const path = pathOf(nodeId);
+              if (path === null) return Promise.resolve('already-held' as const);
+              return feelings.add(path);
+            }}
+            error={feelings.error}
+          />
+          <ThoughtsSheet
+            open={thoughtsOpen}
+            onOpenChange={(next) => setReflectSheet(next ? FOCUS_THOUGHTS : null)}
+            sessionId={id}
+            exercise={exercise}
+            question={question}
+            /* ONLY WHERE THERE WAS A PICTURE TO SEE. A paper run was holding
+               the card, and a digital run with no card never had one — the
+               same condition the listen step draws it under. */
+            card={digital && card !== null ? {
+              code: card.code,
+              imageUrl: card.imageUrl,
+              imageAlt: card.imageAlt,
+            } : null}
+            mode={reflectMode}
+            onModeChange={setReflectMode}
+            text={answer}
+            onTextChange={setAnswer}
+            onSpokenWords={setSpokenWords}
+            onSpokenText={setSpokenText}
+          />
+          <UnderstandSheet
+            open={understandOpen}
+            onOpenChange={(next) => setReflectSheet(next ? FOCUS_UNDERSTAND : null)}
+          />
+        </>
+      )}
+
       {confirmingIncomplete && (
         <Lightbox
           open
@@ -1435,7 +1550,51 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
             headline={t('reflect.incomplete.title')}
             text={t('reflect.incomplete.text')}
           >
-            <ButtonGroup align="end">
+            {/* ── THE ROW IS `continue-only` NOW — Ben, 2026-10-16 ──────
+                Every control here is a way on from this dialog; none of them
+                acts on the page behind it. The variant puts the primary
+                bottom right and reverses the stack too, so on a phone the
+                primary is the bottom button, above the thumb.
+
+                DOM ORDER IS PRIORITY ORDER and is unchanged — primary,
+                secondary, tertiary — because `continue-only` reverses the
+                paint and not the markup. `align` is dropped by the variant,
+                so the `end` that used to be here is gone rather than
+                silently losing. */}
+            <ButtonGroup purpose="continue-only">
+              {/* ── A DOOR INTO WHAT IS MISSING ────────────────────────────
+                  WHEN BOTH ARE MISSING, ONLY THE FEELINGS DOOR IS DRAWN.
+                  Feelings is the thing to do first and the cheaper of the
+                  two to answer; two primary-looking doors in a three-button
+                  column is the overload this whole change removes. The
+                  thoughts door is reached the ordinary way once the feelings
+                  sheet closes.
+
+                  IT DISMISSES THE DIALOG IN THE SAME ACT, so Escape from the
+                  sheet lands on /reflect and not on a dialog underneath. */}
+              <CtaButton
+                variant="primary"
+                onClick={() => {
+                  setConfirmingIncomplete(false);
+                  setReflectSheet(
+                    feelings.feelings.length === 0 ? FOCUS_FEELINGS : FOCUS_THOUGHTS,
+                  );
+                }}
+              >
+                {feelings.feelings.length === 0
+                  ? t('reflect.incomplete.goFeelings')
+                  : t('reflect.incomplete.goThoughts')}
+              </CtaButton>
+              <CtaButton
+                variant="secondary"
+                onClick={() => setConfirmingIncomplete(false)}
+              >
+                {t('reflect.incomplete.continue')}
+              </CtaButton>
+              {/* AND THE WAY OUT STAYS OPEN, in the third rank. It says
+                  INCOMPLETE out loud — and note what it no longer covers:
+                  the feelings are already written, so this saves the
+                  reflection and the status and nothing else. */}
               <CtaButton
                 variant="ghost"
                 loading={busy}
@@ -1446,9 +1605,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                 }}
               >
                 {t('reflect.incomplete.save')}
-              </CtaButton>
-              <CtaButton onClick={() => setConfirmingIncomplete(false)}>
-                {t('reflect.incomplete.continue')}
               </CtaButton>
             </ButtonGroup>
           </ContentBox>

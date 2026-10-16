@@ -267,3 +267,36 @@ export const OnePage: Story = {
     );
   },
 };
+
+
+/**
+ * `contentAlign="top"` — the single body directly under the headline, 2026-10-16.
+ *
+ * The default `distributed` centres the body in the room between the header
+ * and the foot, which is right for a sheet of ONE SCREEN — a picture, a
+ * countdown, four cards to compare. It is wrong for a body that is a LIST
+ * somebody works down: measured on the reflect step, a drill-down of three
+ * rows sat in the middle of a tall sheet with the question stranded at the
+ * top and a hand's worth of nothing between them.
+ *
+ * IT ALSO SPENDS A DIFFERENT DISTANCE: `--space-section` between the headline
+ * and the content, two rungs up from what a `distributed` sheet uses. The
+ * relationship is different, so the rung is. Centred, the header and the body
+ * are one composition and what sits between them is a gap inside a molecule;
+ * top-aligned, the headline is a QUESTION and the body is the apparatus for
+ * answering it — two sections, which is what L2 names that rung for.
+ *
+ * Scoped to this variant. The header's own padding is shared with the paged
+ * sheets, where it floats over a full-bleed picture.
+ */
+export const ContentTopAligned: Story = {
+  args: {
+    contentAlign: 'top',
+    children: (
+      <div style={{ display: 'grid', gap: 'var(--space-gap-stack)' }}>
+        <p>Die erste Zeile steht direkt unter der Frage.</p>
+        <p>Und die zweite darunter, statt in der Mitte zu schweben.</p>
+      </div>
+    ),
+  },
+};

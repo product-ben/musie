@@ -191,30 +191,85 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
     await onwards.click();
 
     /* ── Reflect ───────────────────────────────────────────────────────────
-       Text is the only mode that can complete the step: voice and photo are
-       interactive mockups and write nothing (MOCKUPS.md 1 and 2). */
+       REWRITTEN 2026-10-16. The step is a welcome and two doors now; the work
+       is behind two sheets, and the mood scale has left the step entirely for
+       the toast on /diary. The walk opens both doors, which is also what
+       proves the `?focus-feelings` / `?focus-thoughts` tokens resolve.
+
+       Text is still the only mode that can complete the written half: voice
+       and photo are interactive mockups here (MOCKUPS.md 1 and 2). */
     await expect(page).toHaveURL(/\/reflect$/);
+
+    /* ── THE FEELINGS SHEET, AND THE DRILL-DOWN ───────────────────────────
+       Found by role and by catalogue string, never by a wheel word: the 128
+       words are CONTENT, they are provisional, and a walk that typed one
+       would go red the first time the spreadsheet is reimported.
+
+       So the path taken is "the first descending row, twice, then the stop" —
+       which is a shape the dataset cannot change out from under, and which
+       exercises all three of descend, descend, and pick. */
+    await page
+      .getByRole('button', { name: label(locale, 'reflect.feelings.cta'), exact: true })
+      .click();
+    await expect(page).toHaveURL(/focus-feelings/);
+
+    /* At level 1 every row descends, so `.first()` is a branch. At level 2
+       the first row is the STOP — pre-checked on arrival, and taking it both
+       persists the feeling and closes the sheet (Ben, 2026-10-16). That is
+       the path this walk takes: it ends at level 2, so the nullable
+       `specific_i` is exercised, and it needs no *Ich bin fertig*.
+
+       CLICKING AN ALREADY-CHECKED ROW IS THE POINT. A native radio fires no
+       change event for it, so this click is also what proves
+       `onOptionActivate` is wired — under a change handler alone it would
+       do nothing and this walk would hang here. */
+    await page.getByRole('radio').first().click();
+    await page.getByRole('radio').first().click();
+
+    /* The stop closed the sheet by itself — no action was pressed. */
+    await expect(page).toHaveURL(/\/reflect$/);
+
+    /* Back on the step, the section has SWITCHED STATE: the empty state's
+       button is gone and the filled state's subheadline is up. Both are
+       catalogue strings, so neither depends on which of the 128 words the
+       walk happened to pick.
+
+       The + is asserted too, because it is the only way back into the sheet
+       from the filled state — and a filled state with no way to add another
+       is the regression this pair would otherwise miss. */
+    await expect(
+      page.getByText(label(locale, 'reflect.feelings.held'), { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: label(locale, 'reflect.feelings.cta'), exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: label(locale, 'reflect.feelings.add'), exact: true }),
+    ).toBeVisible();
+
+    /* ── THE THOUGHTS SHEET ───────────────────────────────────────────────
+       Its button is a filled primary now that feelings is non-empty, which is
+       a treatment change and not an accessible one — so it is still found the
+       same way. */
+    await page
+      .getByRole('button', { name: label(locale, 'reflect.thoughts.cta'), exact: true })
+      .click();
+    await expect(page).toHaveURL(/focus-thoughts/);
 
     await page.getByRole('radio', { name: label(locale, 'reflect.mode.text'), exact: true }).click();
     await page
       .getByRole('textbox', { name: label(locale, 'reflect.text.label'), exact: true })
       .fill(ANSWER[locale]);
 
-    /* ── AND THE SCALE, WHICH IS THE SECOND HALF OF "COMPLETE" ────────────
-       Since 2026-10-09 the step asks how the session left you, and the save
-       button opens a completion dialog when either the written answer or the
-       scale is still open. Answering both is what keeps this walk on the
-       straight path; the dialog has its own coverage in the unit tests.
-
-       The scale is a radio group like the mode switch above it, so it is found
-       the same way — by the accessible name its catalogue string gives it. */
     await page
-      .getByRole('radio', { name: label(locale, 'reflect.feeling.better'), exact: true })
+      .getByRole('button', { name: label(locale, 'reflect.thoughts.sheet.done'), exact: true })
       .click();
+    await expect(page).toHaveURL(/\/reflect$/);
 
-    /* ALWAYS ENABLED NOW, and the assertion stays because that is the claim:
-       the old primary was disabled until the answer existed, which stopped
-       people without telling them why. */
+    /* ALWAYS ENABLED, and the assertion stays because that is the claim: the
+       old primary was disabled until the answer existed, which stopped people
+       without telling them why. It is a GHOST until both sections are filled
+       and a filled primary after — a treatment change, so nothing here. */
     const finish = page.getByRole('button', { name: label(locale, 'reflect.save'), exact: true });
     await expect(finish).toBeEnabled();
     await finish.click();

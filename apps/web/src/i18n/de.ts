@@ -683,6 +683,109 @@ export const de: Messages = {
   'reflect.feeling.same': 'Genau wie vorher',
   'reflect.feeling.better': 'Besser als vorher',
 
+  /* ══ DER SCHRITT, NEU — 2026-10-16 ══════════════════════════════════════
+     Der Standardschritt trug die rotierende Frage, die Fragen der Übung,
+     drei Antwortwege, ein Textfeld, einen Datenschutzsatz, die Skala und
+     zwei Aktionen — alles auf einmal, direkt nachdem jemand zehn Minuten
+     die Augen zu hatte. Nutzertests fanden drei Probleme, die sich
+     gegenseitig verstärken: Menschen finden keine Worte für das Erlebte,
+     sie können das Gefühl gar nicht benennen, und niemand hat ihnen gesagt,
+     warum das Verbalisieren überhaupt etwas bringt.
+
+     Jetzt: eine Begrüßung, ein Grund, zwei Türen. Jede Arbeit liegt hinter
+     ihrem eigenen Sheet, geöffnet von jemandem, der es öffnen wollte.
+
+     DIE HEADLINE IST BENS, mit einer Korrektur, die er bestätigt hat: sie
+     mischte drei Personen in einem Satz (*fühlen wir* / *verarbeite* /
+     *kommen an*). Jetzt durchgehend du — da fängt der Satz ohnehin an
+     (*atme*), und du ist das Register der ganzen App (§1). */
+  'reflect.welcome.headline': 'Willkommen zurück',
+  /* ── DIE HEADLINE IST KURZ, DER SATZ RUTSCHT RUNTER — Ben, 2026-10-16 ──
+     Vorher stand der ganze Absatz in Display-Größe da, lief auf einem Laptop
+     über drei Zeilen und las sich wie eine Wand — genau in dem Moment, in dem
+     sich jemandes Augen erst wieder umstellen. Jetzt zwei Wörter, und der
+     Satz steht als Fließtext darunter, wo ein Satz hingehört.
+
+     ER FÄNGT WEITER MIT DEM ATEM AN. *Atme erstmal tief ein und aus* ist die
+     einzige Anweisung auf dem Schritt, und sie steht zuerst, weil sie das
+     ist, was man vor allem anderen tun soll. */
+  'reflect.welcome.breathe': 'Atme erstmal tief ein und aus. Jetzt fühlst du die Gefühle, die aufgekommen sind, verarbeitest die Gedanken und kommst wieder in der echten Welt an.',
+
+  /* ── DAS WARUM LIEGT JETZT HINTER EINER TÜR — Ben, 2026-10-16 ──────────
+     `reflect.welcome.text` stand auf dem Schritt: vier Sätze darüber, wofür
+     das bewusste Wahrnehmen gut ist. Richtiger Inhalt, falscher Ort — der
+     ganze Umbau dieses Schritts handelt davon, dass weniger darauf steht,
+     und ein Absatz Rechtfertigung ist genau das, woran jemand vorbeilesen
+     muss, der ohnehin schon reflektieren will.
+
+     Also eine dritte Tür, und die Frage ist das Label. Wer sich fragt, was
+     das bringen soll, bekommt die Antwort; wer sich das nicht fragt, muss
+     sie nie ablehnen.
+
+     UND AM ENDE LÄSST ER EINEN RAUS. "Wenn nicht, ist das auch oke" ist Bens
+     eigene Zeile und der wichtigste Satz des Absatzes: die beiden Türen
+     darüber sind freiwillig, und eine Seite, die für sie wirbt, ohne das zu
+     sagen, wirbt eben. */
+  'reflect.understand.cta': 'Was soll das bringen?',
+  'reflect.understand.sheet.title': 'Wofür das gut ist',
+  'reflect.understand.sheet.headline': 'Was soll das bringen?',
+  'reflect.understand.sheet.text': 'Das bewusste Fühlen deiner Gefühle und Gedanken hilft dir dabei, sie zu verarbeiten, im Moment zu sein und wenn du möchtest loszulassen. Das entspannt die meisten Menschen. Außerdem hilft es dir langfristig, dich selbst besser zu fühlen und zu verstehen. Wenn du magst, steig ein. Wenn nicht, ist das auch oke.',
+  'reflect.understand.sheet.done': 'Fertig',
+
+  /* ── DER GEFÜHLS-ABSCHNITT ───────────────────────────────────────────────
+     *Entdecke* statt *wähle* oder *füge hinzu*: das Problem ist ja gerade,
+     dass Menschen nicht wissen, was sie fühlen — das Verb muss eine Suche
+     versprechen und nicht nach einer Antwort fragen, die niemand hat. */
+  'reflect.feelings.cta': 'Entdecke deine Gefühle',
+  /* IN DER STIMME DER NUTZERIN, was §1 ausdrücklich erlaubt: die Labels der
+     Nutzungsarten machen es genauso. Es sind die eigenen Worte, zurückgespielt
+     — und genau darum geht es in diesem Abschnitt. */
+  'reflect.feelings.held': 'Was ich gerade gefühlt habe',
+  'reflect.feelings.add': 'Weiteres Gefühl hinzufügen',
+  /* Pro Zeile: ein Knopf nur mit Icon braucht einen Namen, und viermal
+     'Entfernen' wäre für einen Screenreader viermal dasselbe. */
+  'reflect.feelings.remove': '{feeling} entfernen',
+
+  /* ── DAS GEFÜHLS-SHEET ───────────────────────────────────────────────────
+     `title` wird angesagt und nie gezeichnet — Sheets eigener Vertrag — und
+     die Headline ist das, was gelesen wird. Zwei Strings, weil sie zwei
+     Aufgaben haben: einer benennt das Möbelstück, einer stellt die Frage. */
+  'reflect.feelings.sheet.title': 'Ein Gefühl festhalten',
+  'reflect.feelings.sheet.headline': 'Was spürst du gerade in dir?',
+  /* DIE STOPP-ZEILE, ab Ebene 2 immer ganz oben. Klein nach 'einfach nur',
+     weil die Zeile weitergeht und keinen Satz beginnt. */
+  'reflect.feelings.sheet.just': 'einfach nur {feeling}',
+  'reflect.feelings.sheet.back': 'Zurück zu {feeling}',
+  /* Was der → bedeutet, an den zugänglichen Namen der Zeile angehängt. Darf
+     das Label NICHT wiederholen: die Zeile sagt 'Optimistisch, weitere
+     Gefühle'. */
+  'reflect.feelings.sheet.more': 'weitere Gefühle',
+  /* Die Live-Region, wenn eine neue Ebene ankommt. */
+  'reflect.feelings.sheet.level': '{feeling} — {count} Gefühle',
+  'reflect.feelings.sheet.empty': 'Hier sind keine Gefühle',
+  /* EINE ZEILE, DIE DU SCHON HÄLTST. Deaktivierte Zeilen sehen deaktiviert
+     aus und sagen nicht, warum, und RadioGroupText hat keinen Platz für einen
+     Grund pro Zeile — also steht der Grund im Label, wo er sichtbar und
+     angesagt ist. */
+  'reflect.feelings.sheet.heldRow': '{feeling} — hältst du schon fest',
+  /* Und das Rennen, für das es die Unique-Constraint gibt: zwei Tipps, ein
+     Wiederholungsversuch, ein zweiter Tab. Kein Fehler — die richtige Antwort
+     ist 'das hast du schon'. */
+  'reflect.feelings.sheet.alreadyHeld': 'Das hältst du schon fest',
+  'reflect.feelings.sheet.done': 'Ich bin fertig',
+  'reflect.feelings.sheet.another': 'Weiteres Gefühl festhalten',
+  'reflect.feelings.sheet.failed': 'Dieses Gefühl konnte nicht gespeichert werden. Versuch es gleich noch einmal.',
+
+  /* ── DER GEDANKEN-ABSCHNITT UND SEIN SHEET ───────────────────────────────
+     Der Knopf nennt, was wahrzunehmen war und wann — *beim Hören*. Vor der
+     Leere des Feldes sind Menschen stehen geblieben; ein Verb mit einem
+     Zeitpunkt daran ist leichter anzufangen als 'Schreib deine Reflexion'. */
+  'reflect.thoughts.cta': 'Halte fest, was du beim Hören wahrgenommen hast',
+  'reflect.thoughts.held': 'Was ich gerade wahrgenommen habe',
+  'reflect.thoughts.edit': 'Ändern, was du festgehalten hast',
+  'reflect.thoughts.sheet.title': 'Gedanken festhalten',
+  'reflect.thoughts.sheet.done': 'Fertig',
+
   /* ── EIN WEG HINAUS, UND ER SAGT, WOHIN (Ben, 2026-10-09) ────────────────
      KEIN 'reflect.skip' UND KEIN 'reflect.finish' mehr. Der Schritt hatte drei
      Ausgänge gleichzeitig — überspringen, beenden und das stille *Diese
@@ -702,6 +805,15 @@ export const de: Messages = {
      Benennt die Handlung, nicht den Kasten: 'Abbrechen' beschriebe das
      Verlassen dieses Fensters, nicht die Rückkehr zur Reflexion. */
   'reflect.incomplete.continue': 'Reflexion fortsetzen',
+  /* ── UND JETZT EINE TÜR ZU DEM, WAS FEHLT — 2026-10-16 ─────────────────
+     Der Dialog sagte, was offen ist, und bot nur an weiterzumachen oder
+     trotzdem zu speichern — die passende Stelle musste man selbst finden.
+     Diese beiden sind die primäre Aktion; welche gezeichnet wird, hängt
+     davon ab, was tatsächlich fehlt. Fehlt BEIDES, steht nur die Gefühls-Tür
+     da: Gefühle kommen zuerst, und zwei primär aussehende Türen in einer
+     Dreierspalte sind genau die Überforderung, die diese Änderung abbaut. */
+  'reflect.incomplete.goFeelings': 'Entdecke deine Gefühle',
+  'reflect.incomplete.goThoughts': 'Halte deine Gedanken fest',
   /* Der Ausgang bleibt offen, im zweiten Rang — und sagt 'unvollständig'
      laut, damit klar ist, was im Tagebuch landet. */
   'reflect.incomplete.save': 'Unvollständig im Tagebuch speichern',
@@ -784,8 +896,30 @@ export const de: Messages = {
 
      Nebenbei erledigt sich damit der Widerspruch des alten Wortlauts —
      "beendete Übung" über einem Eintrag mit dem Etikett "Nicht beendet". */
-  'diary.saved': 'Deine Reflexion findest du im neuesten Tagebucheintrag',
+  /* ── UND ER FRAGT JETZT ETWAS — 2026-10-16 ────────────────────────────
+     Die Stimmungsskala ist von /reflect heruntergekommen, wo sie als siebte
+     Sache auf einem Schritt stand, der schon sechs trug. Sie steht jetzt
+     hier, im Slot, den der Toast dafür bekommen hat: die Session ist vorbei,
+     das Tagebuch ist auf dem Schirm, und 'wie war das?' ist eine Frage, die
+     man in einem Tipp über etwas Abgeschlossenes beantworten kann.
+
+     DER PREIS IST, DASS MAN SIE VERPASSEN KANN. Sechzig Sekunden, schließbar,
+     und keine zweite Stelle fragt nach — eine Stimmungsskala, die einem über
+     die Screens hinterherläuft, ist das Gegenteil von dem, worum es hier
+     geht. `sessions.feeling_change` darf null sein, und eine Session, die
+     niemand beantwortet hat, hat eben keine. */
+  'diary.saved': 'Deine Reflexion findest du im neuesten Tagebucheintrag. Wie ist deine Stimmung nach der letzten Session?',
   'diary.saved.dismiss': 'Meldung schließen',
+  /* Der eigene zugängliche Name der Skala. Nicht derselbe String wie der Satz
+     darüber: ein Fieldset braucht einen eigenen Namen (1.3.1, 4.1.2), und der
+     Satz ist ein Absatz, keine Frage an das Bedienelement. */
+  'diary.saved.moodLegend': 'Deine Stimmung nach der Session',
+  /* Die Gefühle an einem Eintrag. Vergangenheit und in der Stimme der
+     Nutzerin, wie der Abschnitt auf /reflect, der sie gesammelt hat — das ist
+     derselbe Bericht, zurückgelesen, nicht das Produkt, das ein Feld
+     beschreibt. */
+  'diary.entry.feelings': 'Was du gefühlt hast',
+  'diary.saved.moodFailed': 'Das konnte nicht gespeichert werden. Versuch es gleich noch einmal.',
 
   /* ── Der Graph ────────────────────────────────────────────────────────
      Eine Woche aus Tagen, jede Session als Bild ihrer Übung.

@@ -4,8 +4,17 @@
  * header and docs/07-components.md §7.23.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { Toast } from '../src/Toast';
+import { FeelingsScale } from '../src/FeelingsScale';
 import { bothThemes } from './_decorators';
+
+/* The reflect rework's own scale, which is what the slot was built for. */
+const MOOD = [
+  { value: 'worse', label: 'Schlechter', glyph: ArrowDown },
+  { value: 'same', label: 'Unverändert', glyph: Minus },
+  { value: 'better', label: 'Besser', glyph: ArrowUp },
+];
 
 const meta = {
   title: 'Components/Toast',
@@ -309,5 +318,64 @@ export const NotSwipeableWithoutDismiss: Story = {
     label: 'Ohne onDismiss gibt es keine Wischgeste',
     tone: 'warning',
     onDismiss: undefined,
+  },
+};
+
+/**
+ * THE SLOT — 2026-10-16. Interactive content on its own row beneath the
+ * label, built for the reflect rework: the confirmation after a session also
+ * asks how the session left you, and the scale that asks it lives here.
+ *
+ * It is NOT a second action. `action` is still exactly one — two ways out
+ * makes this a dialog — and the slot is content: it does not dismiss, and
+ * the toast does not know what it holds.
+ *
+ * THE SWIPE GOES INERT INSIDE IT. Drag across a radio point with a touch
+ * pointer and the toast stays put; drag the text beside it and it leaves.
+ * That is the thing to check in this story, and it cannot be checked by
+ * reading the source.
+ *
+ * NOT PART OF THE ANNOUNCEMENT. `FeelingsScale` is a fieldset with its own
+ * legend; folding it into the toast's status would read the whole control
+ * out as one sentence.
+ */
+export const WithSlot: Story = {
+  args: {
+    label: 'Deine Reflexion findest du im neuesten Tagebucheintrag. Wie ist deine Stimmung nach der letzten Session?',
+    tone: 'success',
+    placement: 'top',
+    dismissLabel: 'Meldung schließen',
+    children: (
+      <FeelingsScale
+        name="story-mood"
+        legend="Deine Stimmung nach der Session"
+        points={MOOD}
+      />
+    ),
+  },
+};
+
+/**
+ * SLOT AND ACTION TOGETHER, which the slot makes possible and which is worth
+ * looking at deliberately rather than meeting by accident.
+ *
+ * Note the cap changes: `[data-has-action]` drops the toast to
+ * --measure-compact, which is the three-part row's measure and is narrower
+ * than the slot usually wants. If a screen needs both, this is the story that
+ * says what it will get.
+ */
+export const WithSlotAndAction: Story = {
+  args: {
+    label: 'Gefühl entfernt',
+    tone: 'neutral',
+    action: { label: 'Rückgängig', onAction: () => {} },
+    dismissLabel: 'Meldung schließen',
+    children: (
+      <FeelingsScale
+        name="story-mood-action"
+        legend="Deine Stimmung nach der Session"
+        points={MOOD}
+      />
+    ),
   },
 };
