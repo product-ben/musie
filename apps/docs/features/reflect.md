@@ -1,19 +1,35 @@
 # Reflecting
 
-Step 4. Three ways to answer, two of which work, and one way **not** to answer
-that is a real answer. The reflection is always text, however it was entered.
+Step 4. A welcome, a reason, and two doors — and behind the doors, a
+vocabulary for naming a feeling and the three ways to answer in words.
+
+Rules this page is downstream of: `components/SessionReflect.tsx`,
+`components/FeelingsSheet.tsx`, `components/ThoughtsSheet.tsx`,
+`lib/feelings.ts`, `lib/reflect.ts` and
+`supabase/migrations/20261016100000_a_feeling_is_a_path_not_a_word.sql`.
 
 ```mermaid
 flowchart TD
-  M{"mode"} -->|"text"| T["a box · hasAnswered when non-blank"]
-  M -->|"voice"| V["live transcription → statements<br/>hasAnswered when there are words"]
-  M -->|"photo"| P["an interactive MOCKUP<br/>produces nothing to store"]
-  T --> B[("reflections.body · not null")]
-  V --> ST[("reflection_statements<br/>one row per statement, in order")]
+  R["/reflect · welcome + why"] --> FE["feelings section"]
+  R --> TH["thoughts section"]
+  FE -->|"?focus-feelings"| FS["FeelingsSheet · DrillDown<br/>8 → 40 → 80, einfach nur {x} to stop"]
+  FS -->|"written on confirm"| SF[("session_feelings<br/>a PATH, never a word")]
+  TH -->|"?focus-thoughts"| TS["ThoughtsSheet · the question,<br/>the card, the three modes"]
+  TS -->|"text"| T["a box · hasAnswered when non-blank"]
+  TS -->|"voice"| V["live transcription → statements"]
+  TS -->|"photo"| P["an interactive MOCKUP<br/>produces nothing to store"]
+  T -->|"saved by Session im Tagebuch speichern"| B[("reflections.body · not null")]
+  V -->|"written as it is spoken"| ST[("reflection_statements")]
   ST -->|"joinStatements() on every write"| B
-  P -.->|"Finish stays disabled, and says why"| X["nothing"]
-  S["Skip reflection"] --> F["session finished,<br/><b>no reflections row</b>"]
+  R --> SAVE["Session im Tagebuch speichern<br/>ghost until both, never disabled"]
+  SAVE --> D["/diary + the toast,<br/>which asks the mood question"]
+  D --> FC[("sessions.feeling_change")]
 ```
+
+**The mood scale is not on this step any more.** *Wie ist deine Stimmung
+jetzt?* moved to the success toast on `/diary` on 2026-10-16. The column and
+`saveFeelingChange` are unchanged; only the screen that asks has moved. See
+[Diary](./diary.md).
 
 ::: designers
 ## Three doors, and two of them open
@@ -84,12 +100,46 @@ That is scoped work, not done: see [Backlog](/work/backlog) B1.
 
 | | |
 |---|---|
-| `components/SessionReflect.tsx` | the step, the three modes |
+| `components/SessionReflect.tsx` | the default step: a welcome, and two doors |
+| `components/FeelingsSheet.tsx` | `?focus-feelings` — the wheel, narrowed |
+| `components/ThoughtsSheet.tsx` | `?focus-thoughts` — the question and the three modes |
 | `components/VoiceTranscript.tsx` | the transcript editor, and the write |
-| `lib/reflect.ts` | `hasAnswered` — what counts as an answer. Pure |
+| `lib/feelings.ts` | the wheel ⇄ the table, and `useSessionFeelings` |
+| `lib/reflect.ts` | `hasAnswered`, and the two sheet tokens. Pure |
 | `lib/statements.ts` | `saveStatements`, `joinStatements` |
 | `lib/voiceScreen.ts`, `lib/voiceMessages.ts` | the screen's own state and copy |
 | `@musie/voice` | the capture and transcription core |
+| `DrillDown`, `RadioGroupText.drillDown`, `ButtonGroup purpose` | the design system's half |
+
+## A feeling is a path, not a word
+
+`content/emotionWheel.ts` is emphatic that a label cannot be a key: *Powerful*
+appears twice in the wheel and *Delighted* appears twice. So
+`session_feelings` stores the ROUTE — `(emotion_id, detailed_id, specific_i)`
+— and no label at all; the word is resolved in the active locale at read time,
+which is also what keeps one dataset serving both languages.
+
+A path can stop at any level, because the sheet offers *einfach nur
+{parent}* from level 2 down. A shorter path is nulls from where it stopped,
+and `session_feelings_path_ordered` refuses one with a hole in it.
+
+`NULLS NOT DISTINCT` on the unique constraint is the easy thing to miss: under
+the SQL default two rows of `('happy', null, null)` do not conflict, which
+would make the level-1 stop the one feeling in the wheel you could hold twice.
+
+## Feelings are written on confirm; thoughts are not
+
+The one place this step is inconsistent, deliberately.
+
+A feeling is written the moment it is confirmed in the sheet, and its × is a
+delete. The session row already exists, so nothing blocks it, and a closed tab
+keeps what somebody named. A half-written paragraph is not a discrete fact
+with a stable identity, so the thoughts stay in `Session.tsx` and are written
+by *Session im Tagebuch speichern*, as before.
+
+The consequence worth knowing: **that button does not save the feelings**,
+because they are already saved. A session abandoned after naming a feeling
+keeps it and stays unfinished.
 
 ## `hasAnswered` is its own module, and that is not fussiness
 

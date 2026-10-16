@@ -9870,3 +9870,158 @@ question worth putting on the pile is whether `--measure-heading` should be
 in `rem` or `px` rather than `ch` — which would make it bind, predictably, at
 every size. That is a Layer 1 change, it moves every heading in the product,
 and it wants its own look at the screens before anyone touches it.
+
+## A retired wheel word leaves a row that resolves to a different feeling
+
+Where: `apps/web/src/lib/feelings.ts` (`resolveFeeling`),
+`apps/web/src/content/emotionWheel.ts`,
+`supabase/migrations/20261016100000_a_feeling_is_a_path_not_a_word.sql`
+
+What I checked: `session_feelings` stores a path — `(emotion_id, detailed_id,
+specific_i)` — and no label, which is right: *Powerful* appears twice in the
+wheel and *Delighted* appears twice, so a word cannot be a key. The label is
+resolved from `emotionWheel.ts` at read time in the active locale.
+
+The wheel is a FILE, regenerated from `supabase/content/emotion-wheel.yml` by
+`apps/web/scripts/emotion-wheel.mjs`. Nothing stops it changing. Level 3
+carries no id at all — only `i`, its index clockwise within its parent — so
+**reordering one ring silently repoints every level-3 row under it at a
+different word.** A removal is the visible case; a reorder is the quiet one,
+and it is the likelier of the two.
+
+What I did: `resolveFeeling` falls back UP the path. A missing level-3 index
+gives the level-2 word, a missing level-2 id gives the level-1 word, and only
+an unknown level-1 id returns null — which `listFeelings` drops rather than
+drawing blank. Pinned in `feelings.test.ts` so a change to it is deliberate.
+
+Why: of the things that could happen to a diary entry whose word has gone,
+showing the broader true feeling is the least wrong. Showing an id, a blank,
+or nothing at all are all worse. But it is a default, not a decision.
+
+What I need from Ben: **nothing yet** — no word has ever been retired. What
+is worth knowing is that the fallback is silent: somebody's entry would
+quietly read *Optimistisch* where they chose *Kraftvoll*, and no check in the
+repo would notice. If the wheel is ever edited, the two real options are a
+stable id on level 3 (a generator change and a backfill) or a migration that
+rewrites affected rows. Both are cheaper before there is data than after.
+
+## The soft cap of five feelings is a UI rule with nothing behind it
+
+Where: `apps/web/src/lib/feelings.ts` (`FEELINGS_SOFT_CAP`),
+`apps/web/src/components/FeelingsSheet.tsx`
+
+What I checked: Ben chose "deduped, soft cap at 5". The dedupe IS a
+constraint — `session_feelings_one_per_path`, with `NULLS NOT DISTINCT` so the
+level-1 stop cannot be held twice either. The cap is not: past five the sheet
+simply stops offering *Weiteres Gefühl festhalten*, and nothing refuses a
+sixth row.
+
+What I did: left it as a UI rule, which is what was asked for, and said so in
+the constant's own comment.
+
+Why: it is a kindness rather than an invariant — nothing downstream breaks
+with six, the /reflect line just grows into a paragraph. A constraint would
+also have to answer "what happens to the sixth insert", and the honest answer
+today is "nothing tries".
+
+What I need from Ben: **nothing for this PR.** Worth a look if the line ever
+does grow — a trigger and a db test is the shape it would take, not a longer
+check in a component.
+
+## `.musie-feeling-row` and a third sheet headline — two L14.3 calls
+
+Where: `apps/web/src/shell.css` (`.musie-feeling-row`,
+`.musie-reflect-sheet__headline`), `apps/web/src/exercises.css`
+(`.musie-goal-sheet__headline`)
+
+What I checked: two patterns, different standing.
+
+`.musie-feeling-row` — comma-separated words each with an ×, middle-aligned
+with a trailing + — is **new and has one caller.** L14 permits it; L14.3 only
+bites on the second.
+
+`.musie-reflect-sheet__headline` is **the third copy** of a headline inside a
+`Sheet` header. `.musie-goal-sheet__headline` already logged itself as the
+second and called `Sheet` taking a `headline` string a component request; the
+two sheets added here make it three, with identical declarations.
+
+What I did: copied the pattern, and noted in `shell.css` that it is the third
+site rather than letting the count go unrecorded.
+
+Why: the goal sheet's own note gives the reason not to merge them in passing —
+the listen step's header is Markdown with a float cut around the close
+control, so folding all four into one prop is its own piece of work and not
+something to improvise while building a different feature.
+
+What I need from Ben: **a decision on the headline**, now that it is three.
+The request is `Sheet` taking `headline` and typing it itself. Nothing for
+`.musie-feeling-row` yet.
+
+## The reflect step's save button no longer saves everything on the step
+
+Where: `apps/web/src/routes/Session.tsx` (`finish`, the incomplete dialog),
+`apps/web/src/lib/feelings.ts` (`addFeeling`)
+
+What I checked: Ben chose "immediately on confirm" for feelings and left the
+thoughts on the old model. Both choices are right on their own terms — a
+feeling is a discrete fact with a stable identity and survives a closed tab; a
+half-written paragraph is a draft nobody asked to keep.
+
+The consequence is that *Session im Tagebuch speichern* now saves the
+reflection and the status, and **not** the feelings, which are already saved.
+*Trotzdem speichern* likewise. Two things on one screen with two different
+save models, and the screen does not say so anywhere.
+
+What I did: nothing in the UI. The comments in both files say it, and the
+dialog's copy was left alone.
+
+Why: the honest alternatives both cost something. Telling the reader
+("deine Gefühle sind schon gespeichert") puts a sentence about persistence on
+a step whose whole redesign was about having less on it. Making feelings wait
+for the save button would lose them on a closed tab, which is the thing
+immediate-write was chosen for.
+
+What I need from Ben: **worth seeing in testing rather than deciding now.**
+The case to watch is somebody who names three feelings, presses Back, and
+leaves — the session is unfinished, badged *Nicht beendet* in the diary, and
+holds three feelings. That may read as correct or as a loose end; it is not
+obvious from the outside which.
+
+## The feelings on /reflect are text, where the brief said "inline links"
+
+Where: `apps/web/src/components/SessionReflect.tsx` (`.musie-feeling-row`)
+
+What I checked: the brief says *"Shows feelings as comma separated inline
+links (with x in the slot) in the large body text"*. The design system has
+`InlineLink` and /exercises already puts one inside a headline, so the pattern
+exists and was available.
+
+What I did: rendered each feeling as plain body-lg text with its own ×
+`IconButton` beside it, and the outlined + after the last one. The × is the
+only control; the word is not clickable.
+
+Why: the same brief says **"out of scope is editing a confirmed feeling"** —
+so a link on the word has nowhere to go. `InlineLink` renders an anchor or a
+button, and either one announces to a screen reader as a control that does
+something; this one would do nothing. That is the thing I argued against two
+entries up, about plain text on the diary entry, and it would be odd to
+accept it here.
+
+It is also the treatment that reads correctly: the × and the + are green and
+interactive, the words are ink, and what you can act on is visibly what you
+can act on.
+
+What I need from Ben: **a ruling, because this is a visible departure from a
+written instruction and not a judgement call I should make alone.** Three
+ways it could go:
+
+1. **Leave it.** The words are text; the × and + carry the interaction.
+2. **Link treatment, no link.** Colour the words with the interactive ink but
+   leave them as `<span>`. Looks like the brief, lies to nobody, but a green
+   word that does nothing is its own small confusion.
+3. **Make the link mean something.** Tapping a feeling reopens the sheet at
+   the level it was chosen from — navigation rather than editing, so it does
+   not break the out-of-scope rule. This is the only version where a link is
+   honest, and it is new scope.
+
+I have built 1. Screenshot of it is in the PR.
