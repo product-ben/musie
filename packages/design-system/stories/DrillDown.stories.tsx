@@ -78,7 +78,12 @@ function TextLevel(level: DrillDownLevel) {
         drillDownLabel: o.drillDown ? 'weitere Gefühle' : undefined,
       }))}
       value={level.value}
-      onValueChange={level.onChoose}
+      /* Two events, and they are not the same one — see DrillDown's header.
+         The arrow keys highlight; a click or Enter activates. The stop row
+         arrives pre-checked, and a checked native radio fires no change, so
+         activation is the only event that can hear a tap on it. */
+      onValueChange={level.onHighlight}
+      onOptionActivate={level.onChoose}
       emptyLabel="Keine Gefühle hier"
     />
   );
@@ -129,8 +134,17 @@ const meta = {
           'already found their word should not have to read past six narrower ones to',
           'say so.',
           '',
-          '**Nothing is ever pre-checked**, including on the way back up: what was',
-          'picked at a level is no longer what is being asked there.',
+          '**The stop row arrives pre-checked** below the first level — the answer',
+          'you already have is the one offered, and narrowing further is the opt-in.',
+          'Which is why the slot gets `onChoose` (a click, or Enter) separately from',
+          '`onHighlight` (the arrow keys moving the selection): a pre-checked native',
+          'radio fires no change event when it is clicked again, so under a change',
+          'handler alone the one row the level is built around would do nothing.',
+          '',
+          '**One pick per visit to a level.** A pick locks every row until the',
+          'component is remounted — the consumer’s “another one” button is what',
+          'clears it. A stop pick usually closes the surface, so the lock is the',
+          'leaf case: it stops four feelings being collected in four fast taps.',
           '',
           '**Escape is not taken.** It belongs to the surface this sits in — Lightbox,',
           'in the one consumer that exists. Going up a level must never race closing',
@@ -225,12 +239,26 @@ export const CardsInTheSlot: Story = {
           disabled: o.disabled,
         }))}
         value={level.value}
+        /* ONE HANDLER, because RadioCards has no `onOptionActivate` — it is
+           not meant to. So this slot acts on the change event, which costs
+           it the pre-checked stop row: that row cannot be re-activated by
+           clicking it, because a checked radio fires no change.
+
+           That is the slot being honest about what its component can do,
+           and it is half the value of this story: the frame is identical,
+           the rows are entirely the consumer's, and so are their limits. */
         onValueChange={level.onChoose}
         emptyLabel="Keine Gefühle hier"
       />
     ),
   },
 };
+
+/** THE LOCK, WITHOUT LEAVING THE STORY. Drill to the third level and pick a
+ *  leaf: every row goes disabled, because only one may be taken per visit.
+ *  There is no reset here — that is the consumer's button — so this story is
+ *  how the locked state is looked at. */
+export const LockedAfterAPick: Story = {};
 
 /** AT PHONE WIDTH. Nine rows and a back row in a 360px column, which is the
  *  width the real consumer is read at — the sheet on a phone. */

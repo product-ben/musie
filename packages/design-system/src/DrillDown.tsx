@@ -32,17 +32,45 @@
  * carries the arrow and the accessible suffix that tells the two kinds of row
  * apart without sight.
  *
- * ── THE STOP IS THE FIRST ROW, NOT THE LAST ───────────────────────────────
+ * ── THE STOP IS THE FIRST ROW, AND IT ARRIVES CHECKED ─────────────────────
  * From level 2 down the slot is handed an extra option first: *einfach nur
  * {parent}*. Somebody who has already found their word should not have to
  * read past six narrower ones to say so, and the top of the list is where
  * that costs nothing.
+ *
+ * IT IS PRE-CHECKED — Ben, 2026-10-16. Arriving at a level, the answer you
+ * already have is the one offered: narrowing further is the opt-in, not the
+ * default. That reverses an earlier note in this file which said nothing is
+ * ever pre-checked, and the reversal is the point of the change.
+ *
+ * WHICH IS WHY THE SLOT NEEDS `onActivate` AND NOT ONLY `onChoose`. A
+ * pre-checked row fires no `change` when it is clicked — it is a native
+ * radio underneath — so the one row the level is built around would be the
+ * one row that did nothing. `RadioGroupText.onOptionActivate` is the event
+ * this component actually acts on; `onHighlight` is only the arrow keys
+ * moving the selection, which must NOT navigate.
+ *
+ * ── ONE PICK PER VISIT TO A LEVEL ────────────────────────────────────────
+ * Ben: *"only one option can be selected in one go. Before selecting another
+ * one, the user needs to click Weiteres Gefühl festhalten."* So a pick locks
+ * the level — every row goes disabled — and only a remount clears it.
+ *
+ * The consumer never sees the lock on a STOP pick, because a stop means "I
+ * am done" and the sheet closes on it. It is the leaf case this is for: pick
+ * *Kraftvoll* and the list stops accepting a second tap rather than letting
+ * four feelings be collected in four fast taps nobody meant.
  *
  * ── THE CONSUMER OWNS WHAT HAPPENS AFTER ──────────────────────────────────
  * `onPick` reports the full path and nothing else. "Show two buttons once
  * something has been picked" is a fact about the reflect flow, not about
  * drill-downs — the same split Sheet makes with its index, for the same
  * reason.
+ *
+ * STOP OR LEAF IS READ OFF THE PATH, not signalled by a second argument: the
+ * last node of a stop pick still HAS children (that is what was stopped
+ * above), and a leaf has none. So a consumer that wants to close on one and
+ * not the other already has what it needs, and this component keeps one
+ * callback.
  *
  * ── ESCAPE IS NOT TAKEN ───────────────────────────────────────────────────
  * It belongs to whatever surface this is inside — Lightbox, in the one
@@ -51,7 +79,7 @@
  */
 import * as React from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { Icon } from './Icon';
+import { CtaButton } from './CtaButton';
 
 export interface DrillDownNode {
   /** Stable within its siblings. The React key, and what `value` carries. */
@@ -74,18 +102,44 @@ export interface DrillDownOption {
 export interface DrillDownLevel {
   /** The rows, the stop row already first when there is a parent. */
   options: readonly DrillDownOption[];
-  /** Call with a row's `value`. This component decides descend vs pick. */
+  /**
+   * A row was ACTIVATED — clicked, or Enter/Space. This is what descends or
+   * picks; see the header for why it is not the change event.
+   */
   onChoose: (value: string) => void;
+  /**
+   * The arrow keys moved the checked row. Highlight only: it must never
+   * navigate, or a keyboard user cannot read the list without being taken
+   * somewhere by every row they pass.
+   */
+  onHighlight: (value: string) => void;
   /** Null at the first level. */
   parent: DrillDownNode | null;
   /** 0 at the first level. The slot needs it for a key and nothing else. */
   depth: number;
   /**
-   * Nothing is ever pre-checked, and this says so out loud so a slot can pass
-   * it straight through as `value`. A level returned to shows no selection:
-   * what was picked there is no longer what is being asked.
+   * What is checked right now — pass it straight through as the slot's
+   * `value`. The stop row at every level below the first, until the arrow
+   * keys move it.
+   *
+   * NEVER `undefined`, AND THAT IS NOT A STYLE CHOICE. The first level has
+   * no stop row and nothing checked, which is `''` here rather than the
+   * `undefined` it reads as. base-ui's `useControlled` decides whether a
+   * component is controlled ONCE, on its first render:
+   *
+   *     const { current: isControlled } = React.useRef(controlled !== undefined);
+   *
+   * So a slot handed `undefined` at level 1 mounts an UNCONTROLLED group,
+   * and every value after it — including the pre-checked stop — is ignored
+   * for the lifetime of that element. Measured in the browser: the stop row
+   * rendered unchecked with the right value on both sides of the comparison.
+   *
+   * `''` matches no option, so nothing is checked and the group is
+   * controlled from the first render.
    */
-  value: undefined;
+  value: string;
+  /** A pick has happened here: every row is disabled until a remount. */
+  locked: boolean;
 }
 
 export interface DrillDownProps {
@@ -109,8 +163,19 @@ export interface DrillDownProps {
   className?: string;
 }
 
-/** The value the stop row carries. Cannot collide: no wheel id contains a space. */
-const STOP = '\u0000stop';
+/**
+ * The value the stop row carries.
+ *
+ * NOT A CONTROL CHARACTER. It was `\u0000stop`, which is unforgeable and also
+ * unusable: the value reaches a real `<input type="radio" value=…>`, and a
+ * NUL does not survive the round trip through the DOM — the row rendered
+ * with no value and could never read as checked. Measured in the browser,
+ * which is the only place it shows.
+ *
+ * Collision-proof by SHAPE instead: a consumer's ids are its own, and this
+ * one contains characters an id built by `nodeId()` cannot.
+ */
+const STOP = '::drilldown-stop::';
 
 export function DrillDown({
   nodes, onPick, children,
@@ -123,6 +188,20 @@ export function DrillDown({
    * is no second fact that could disagree about where we are.
    */
   const [path, setPath] = React.useState<readonly DrillDownNode[]>([]);
+
+  /**
+   * WHICH ROW IS CHECKED. Not derived from `path` — the arrow keys move it,
+   * and a controlled value that ignored them would snap the selection back
+   * under the user's hands on every keypress.
+   *
+   * `null` is "this level has not been touched", which resolves to the stop
+   * row below. A real `undefined` after that would be indistinguishable from
+   * it, which is why this is null and not undefined.
+   */
+  const [highlight, setHighlight] = React.useState<string | null>(null);
+
+  /** A pick has happened at this level. Cleared only by a remount. */
+  const [locked, setLocked] = React.useState(false);
 
   const parent = path.length > 0 ? path[path.length - 1] : null;
   /* MEMOISED, because `parent.children ?? []` mints a new empty array on
@@ -143,8 +222,9 @@ export function DrillDown({
       drillDown: (node.children?.length ?? 0) > 0,
       /* A LEAF CAN BE DISABLED, A BRANCH NEVER IS. Holding "Kraftvoll"
          already must not shut the door on "Optimistisch", which is the route
-         to seven other words. */
-      disabled: (node.children?.length ?? 0) === 0 && held.has(node.id),
+         to seven other words. And a LOCKED level disables everything — one
+         pick per visit. */
+      disabled: locked || ((node.children?.length ?? 0) === 0 && held.has(node.id)),
     }));
     if (parent === null) return rows;
     return [
@@ -152,11 +232,34 @@ export function DrillDown({
         value: STOP,
         label: stopLabel(parent.label),
         drillDown: false,
-        disabled: held.has(parent.id),
+        disabled: locked || held.has(parent.id),
       },
       ...rows,
     ];
-  }, [siblings, parent, held, stopLabel]);
+  }, [siblings, parent, held, stopLabel, locked]);
+
+  /**
+   * THE STOP IS CHECKED ON ARRIVAL, below the first level — Ben, 2026-10-16.
+   * The answer you already have is the one offered; narrowing further is the
+   * opt-in. `highlight` wins once the arrow keys have moved it.
+   *
+   * ── THE HIGHLIGHT IS VALIDATED AGAINST THIS LEVEL, NOT TRUSTED ─────────
+   * A click fires BOTH events — the change that sets the highlight and the
+   * activation that descends — and nothing guarantees which React runs
+   * first. If the change lands last, `highlight` holds a row id belonging to
+   * the level we just LEFT, and the new level renders with nothing checked.
+   *
+   * Measured: that is exactly what happened. Clearing the highlight inside
+   * `choose` is not enough, because the clear can be overwritten by the very
+   * event it is trying to cancel. Checking membership cannot lose that race:
+   * a value that is not on screen is not a selection, whenever it arrived.
+   */
+  const value = React.useMemo(() => {
+    if (highlight !== null && options.some((o) => o.value === highlight)) return highlight;
+    /* `''` and not `undefined` at the first level — see `DrillDownLevel.value`
+       for why that distinction is load-bearing rather than cosmetic. */
+    return parent === null ? '' : STOP;
+  }, [highlight, options, parent]);
 
   /**
    * ── FOCUS GOES TO THE NEW LEVEL, AND IT IS MEASURED FROM THE DOM ────────
@@ -178,18 +281,29 @@ export function DrillDown({
     first?.focus();
   }, [path]);
 
-  const choose = React.useCallback((value: string) => {
-    if (value === STOP) {
-      if (parent !== null) onPick(path);
+  const choose = React.useCallback((chosen: string) => {
+    if (locked) return;
+    if (chosen === STOP) {
+      if (parent === null) return;
+      setLocked(true);
+      onPick(path);
       return;
     }
-    const node = siblings.find((n) => n.id === value);
+    const node = siblings.find((n) => n.id === chosen);
     if (node === undefined) return;
-    if ((node.children?.length ?? 0) > 0) setPath([...path, node]);
-    else onPick([...path, node]);
-  }, [parent, path, siblings, onPick]);
+    if ((node.children?.length ?? 0) > 0) {
+      /* DESCENDING RESETS THE HIGHLIGHT, so the new level arrives on its own
+         stop rather than inheriting the row that was checked to get here. */
+      setHighlight(null);
+      setPath([...path, node]);
+      return;
+    }
+    setLocked(true);
+    onPick([...path, node]);
+  }, [locked, parent, path, siblings, onPick]);
 
   const up = React.useCallback(() => {
+    setHighlight(null);
     setPath((current) => current.slice(0, -1));
   }, []);
 
@@ -209,24 +323,37 @@ export function DrillDown({
         {parent === null ? '' : levelLabel(parent.label, options.length)}
       </p>
 
+      {/* ── THE WAY UP, AS A SMALL GHOST CTA — Ben, 2026-10-16 ──────────
+          It was a bespoke `.musy-drilldown__back` button with its own ink,
+          padding and hover, which is this component re-deriving a control
+          the system already ships. `size="min"` and `variant="ghost"` are
+          that control, and they come with the focus ring, the pressed state
+          and the disabled handling for free.
+
+          It carries the word you came from, which is the thing that says
+          where "up" goes, and `leadingIcon` is the system's own slot for the
+          chevron — not an Icon dropped inside a button. */}
       {parent !== null && (
-        <button
-          type="button"
+        <CtaButton
           className="musy-drilldown__back"
+          variant="ghost"
+          size="min"
+          leadingIcon={ChevronLeft}
           onClick={up}
         >
-          <Icon glyph={ChevronLeft} size="sm" />
-          <span>{backLabel(parent.label)}</span>
-        </button>
+          {backLabel(parent.label)}
+        </CtaButton>
       )}
 
       <div ref={bodyRef} className="musy-drilldown__body">
         {children({
           options,
           onChoose: choose,
+          onHighlight: setHighlight,
           parent,
           depth: path.length,
-          value: undefined,
+          value,
+          locked,
         })}
       </div>
     </div>

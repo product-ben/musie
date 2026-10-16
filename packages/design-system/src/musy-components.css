@@ -957,37 +957,11 @@
   min-inline-size: 0;
 }
 
-/* The way up. A row rather than an icon button: it carries the word you came
-   from, which is the thing that says where "up" goes. Ghost treatment — it is
-   navigation beside a list of choices, and a bordered box here would read as
-   a tenth option. */
-.musy-drilldown__back {
-  display: flex;
-  align-items: center;
-  gap: var(--space-gap-inline);
-  align-self: start;
-  box-sizing: border-box;
-  min-height: var(--target-comfort);
-  padding-block: var(--space-inset-control);
-  padding-inline: var(--space-inset-control) var(--space-gap-related);
-  border: 0;
-  border-radius: var(--radius-control);
-  background-color: var(--interactive-ghost);
-  color: var(--interactive-ghost-on);
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  letter-spacing: var(--type-label-md-tracking);
-  cursor: pointer;
-  text-align: start;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--motion-toggle);
-}
-@media (hover: hover) and (pointer: fine) {
-  .musy-drilldown__back:hover { background-color: var(--interactive-ghost-hover); }
-}
-.musy-drilldown__back:active { background-color: var(--interactive-ghost-active); }
+/* THE WAY UP IS A CtaButton — ghost, `min` — so everything about how it
+   looks and behaves is §7.4's, not this component's. What is left here is
+   the one thing a button cannot know: that it must hug its own label rather
+   than stretch to the column it sits in. */
+.musy-drilldown__back { align-self: start; }
 
 .musy-drilldown__body { min-inline-size: 0; }
 

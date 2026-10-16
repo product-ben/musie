@@ -35,6 +35,25 @@
  * accessible name, so a descending row and a terminal row are told apart
  * without sight. Rule 7: it is passed, never defaulted.
  *
+ * ── ACTIVATION IS NOT CHANGE — `onOptionActivate`, 2026-10-16 ────────────
+ * `onValueChange` is base-ui's, and base-ui's is a native radio `change`: a
+ * row that is ALREADY checked fires nothing when it is clicked again. Read
+ * in `@base-ui/react/radio/root/RadioRoot.js`, not assumed.
+ *
+ * That is correct for a form and wrong for a list you ACT on. The feelings
+ * sheet pre-checks *einfach nur {x}* on arrival and expects a tap on it to
+ * mean "yes, that one" — which under `onValueChange` alone is the one row in
+ * the list that does nothing.
+ *
+ * So this fires on the ROW being activated: a click, and Enter or Space,
+ * because `Radio.Root` renders a real `<button>`. Arrow keys move the
+ * checked value and do NOT activate, which is the other half of the win —
+ * a keyboard user can browse a drill-down with the arrows without each stop
+ * along the way navigating them somewhere.
+ *
+ * Both fire on a click of an unchecked row, `onValueChange` first. A
+ * consumer that wants "what the user chose" wants this one.
+ *
  * THE ARROW NARROWS THE LABEL BOX, which is the one thing here that interacts
  * with the truncation above: a long German label now has less room before it
  * clamps. The measurement already covers it — the effect runs after layout
@@ -98,6 +117,12 @@ export interface RadioGroupTextProps {
   options: RadioOption[];
   value?: string;
   onValueChange?: (value: string) => void;
+  /**
+   * A row was ACTIVATED — clicked, or Enter/Space on it — whether or not
+   * that changed the value. See the header for why this is not the same
+   * event as `onValueChange`, and when you want it instead.
+   */
+  onOptionActivate?: (value: string) => void;
   accent?: RadioAccent;
   /** Raise each row to --target-guided. */
   guided?: boolean;
@@ -113,6 +138,7 @@ export interface RadioGroupTextProps {
 
 export function RadioGroupText({
   name, legend, legendHidden = false, hint, options, value, onValueChange,
+  onOptionActivate,
   accent = 'primary', guided = false, disabled = false,
   error, emptyLabel, className,
 }: RadioGroupTextProps) {
@@ -179,6 +205,10 @@ export function RadioGroupText({
           disabled={opt.disabled}
           nativeButton
           render={<button type="button" />}
+          /* ACTIVATION, not change — see the header. On the Root rather than
+             on the inner input: the Root IS the button, so this catches the
+             click and the Enter/Space that a button turns into one. */
+          onClick={() => onOptionActivate?.(opt.value)}
           className={['musy-radio__body', unclamped[opt.value] ? 'musy-radio__body--no-clamp' : '']
             .filter(Boolean).join(' ')}
           aria-invalid={error ? true : undefined}
