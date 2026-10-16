@@ -36,6 +36,19 @@
  * cannot drop the glyph and silently land on colour alone. A `underline`
  * prop would have made that one typo away.
  *
+ * ── IT CAN CARRY ACTIONS, AND THEY CHANGE ITS SHAPE (2026-10-15) ─────────
+ * `actions` puts up to two icon controls beside the link — on /exercises,
+ * the chevrons that step to the next goal without opening the sheet. They
+ * are SIBLINGS of the link's button, because a button inside a button is
+ * invalid HTML and a 4.1.2 failure, so the component wraps both in a span
+ * when they are present and renders the bare button when they are not.
+ *
+ * WHY THE COMPONENT DRAWS THEM rather than taking a node: an action here has
+ * to look like it belongs to the word beside it, and the obvious thing for a
+ * caller to reach for is `IconButton` — which brings its own box and padding
+ * and breaks the line, for the same reason `CtaButton` cannot be this
+ * component. Handing out a slot would be handing out that problem.
+ *
  * ── TARGET SIZE IS NOT A PROBLEM AND IT IS WORTH WRITING DOWN ─────────────
  * 2.5.8's inline exception covers "a target in a sentence or block of text",
  * which is the only place this component belongs. Its first call site is in
@@ -47,10 +60,57 @@ import { Button } from '@base-ui/react/button';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
 
+/**
+ * One icon control beside the link — a step, a dismiss, a shortcut.
+ *
+ * A DECLARATIVE SHAPE RATHER THAN A `ReactNode` SLOT, and the reason is the
+ * one the whole component is about: an action here has to be a sibling of
+ * the link's button and has to look like it belongs to the same word. Handing
+ * the caller a slot means handing them that styling problem, and the first
+ * thing they would reach for is an `IconButton` — which brings its own box
+ * and padding and breaks the line it sits in, exactly as `CtaButton` would.
+ *
+ * So the component draws them and the caller says what they do.
+ */
+export interface InlineLinkAction {
+  /** Stable identity. The React key. */
+  id: string;
+  glyph: LucideIcon;
+  /** Accessible name. Rule 7: required, because an icon-only control IS its
+   *  label and there is no sensible default. */
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
 export interface InlineLinkProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'className'> {
   /** The link's text. Inherits every type property from where it sits. */
   children: React.ReactNode;
+  /**
+   * Up to two icon controls to the inline-end of the link.
+   *
+   * ── THEY ARE SIBLINGS OF THE BUTTON, NEVER CHILDREN ────────────────────
+   * That is not a layout preference. A `<button>` inside a `<button>` is
+   * invalid HTML and a 4.1.2 failure — the same rule `RadioCards` states in
+   * its own header about a radio with an interactive child. So passing
+   * `actions` changes the rendered shape: the component wraps the link and
+   * its actions in a `musy-ilink-group` span instead of rendering the button
+   * alone.
+   *
+   * WITHOUT `actions` THERE IS NO WRAPPER, so the plain case renders exactly
+   * the element it always did and nothing downstream of it moves.
+   *
+   * `className` AND `render` STILL ADDRESS THE BUTTON either way — the
+   * wrapper is the component's own furniture and is not reachable from
+   * outside. A caller styling the group would be styling a box it did not
+   * ask for.
+   *
+   * Two at most. The slot is sized for a pair and a third would push the
+   * line past the word it belongs to; the component does not police it,
+   * because a runtime throw for a layout opinion is worse than the layout.
+   */
+  actions?: readonly InlineLinkAction[];
   /**
    * The glyph after the text.
    *
@@ -63,9 +123,9 @@ export interface InlineLinkProps
 }
 
 export function InlineLink({
-  children, trailingIcon, className, ...rest
+  children, trailingIcon, actions, className, ...rest
 }: InlineLinkProps) {
-  return (
+  const link = (
     <Button
       className={[
         'musy-ilink',
@@ -100,5 +160,29 @@ export function InlineLink({
         <Icon glyph={trailingIcon} size="lg" className="musy-ilink__icon" />
       )}
     </Button>
+  );
+
+  if (actions === undefined || actions.length === 0) return link;
+
+  return (
+    <span className="musy-ilink-group">
+      {link}
+      {actions.map((action) => (
+        <button
+          key={action.id}
+          type="button"
+          className="musy-ilink-action"
+          /* THE NAME IS THE LABEL, not a tooltip. An icon-only control has no
+             text node, so without this it announces as "button" — and these
+             two differ only by which way the chevron points, which is exactly
+             the difference a screen reader cannot see. */
+          aria-label={action.label}
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
+          <Icon glyph={action.glyph} size="lg" />
+        </button>
+      ))}
+    </span>
   );
 }

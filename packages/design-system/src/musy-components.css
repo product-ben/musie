@@ -7674,10 +7674,25 @@ html[data-musy-scroll-snap='y'] {
      At `lg` that is the optical gap; the declared 8px was being added ON TOP
      of it, which is why the glyph looked adrift from the word it belongs to.
 
-     `0` is a geometric identity rather than a spacing decision, which is the
-     one case L14 allows a bare value — there is no rung on the ladder for
-     "none", and `--sp-0` does not exist. */
-  gap: 0;
+     ── AND IT WENT BACK TO ONE RUNG WHEN THE GLYPH CHANGED (2026-10-16) ─
+     `0` was right for the ellipsis and wrong the moment the glyph became
+     `SlidersHorizontal`. The reasoning above is why: the clear space was
+     coming from INSIDE the glyph's box, and how much there is depends on
+     the glyph. Measured on screen — ellipsis-vertical starts its ink about
+     8px into a 24px box, sliders about 3px — so the same declared `0` read
+     as a comfortable gap for one and as touching the last letter for the
+     other.
+
+     `--sp-1` put the optical gap at ~7px, which is what the ellipsis gave
+     for free. Ben's call on 2026-10-16 is `--space-gap-related` (12px), one
+     rung up again: Layer 1's word for "atoms that belong together —
+     label+field, title+subtitle", which is what a word and the glyph that
+     acts on it are. On screen that is ~15px of optical clearance.
+
+     IT IS A NAMED RUNG RATHER THAN AN em FOR THE REASON THE DROP BELOW IS:
+     the glyph is a fixed 24px at every type step, so a gap that scaled with
+     the text would drift against an icon that does not. */
+  gap: var(--space-gap-related);
   margin: 0;
   /* ── NO BACKGROUND, AND IT HAD ONE FOR AN HOUR — Ben, 2026-10-15 ───────
      A tinted pill on `--interactive-primary-subtle` with 4px of padding,
@@ -7790,6 +7805,73 @@ html[data-musy-scroll-snap='y'] {
 }
 
 .musy-ilink:disabled {
+  color: var(--on-surface-disabled);
+  cursor: not-allowed;
+}
+
+/* ── THE GROUP, WHEN THE LINK CARRIES ACTIONS (2026-10-15) ────────────────
+   Only rendered when `actions` is passed; without them the component is the
+   bare button it always was. The wrapper exists because the actions must be
+   SIBLINGS of the link rather than children — a button inside a button is
+   invalid HTML and a 4.1.2 failure.
+
+   `inline-flex` and `baseline`, so the whole group sits in the sentence the
+   same way the bare link does. The group is what the line box now contains;
+   everything inside it aligns to the same baseline the words do.          */
+.musy-ilink-group {
+  display: inline-flex;
+  align-items: baseline;
+  /* Between the link and its actions, and between the two actions. Layer 1's
+     "icon ↔ its own label" rung is the right distance for both: the three
+     are one unit, and the thing that separates them from the sentence is the
+     colour, not a gap. */
+  gap: var(--space-gap-inline);
+}
+
+/* ── ONE ACTION ──────────────────────────────────────────────────────────
+   Drawn by the component rather than passed in, so it cannot arrive as an
+   `IconButton` with a box around it — see the header.
+
+   IT MATCHES THE LINK'S GLYPH EXACTLY: same 24px size, same baseline
+   alignment, same 4px drop. Three glyphs on one line that did not agree
+   about any of those would read as three different kinds of thing, and
+   these are one control group.
+
+   NOT `--accent-1-text`. The chevrons are the quieter half of the pair: the
+   link is what the sentence is about and what opens the sheet, and two
+   equally green chevrons beside it would compete with the word. Ink, and
+   the colour is the hover. */
+.musy-ilink-action {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--on-surface-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* The same rung the link's own glyph drops by, for the same reason — a
+     vertical glyph on a baseline reads as a tail hanging off the line. */
+  transform: translateY(var(--sp-1));
+  transition: color var(--motion-toggle);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-ilink-action:hover:not(:disabled),
+  .musy-ilink-action[data-force~="hover"] { color: var(--accent-1-text); }
+}
+.musy-ilink-action:active:not(:disabled),
+.musy-ilink-action[data-force~="active"] { color: var(--accent-1); }
+
+.musy-ilink-action:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
+}
+
+.musy-ilink-action:disabled {
   color: var(--on-surface-disabled);
   cursor: not-allowed;
 }

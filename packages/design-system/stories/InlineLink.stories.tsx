@@ -14,7 +14,7 @@
  * must not import react-router; `render` is the boundary that keeps it out.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ArrowUpRight, EllipsisVertical } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, EllipsisVertical, SlidersHorizontal } from 'lucide-react';
 import { InlineLink } from '../src/InlineLink';
 import { Stack, bothThemes } from './_decorators';
 
@@ -191,5 +191,47 @@ export const Themes: Story = {
       {'2 exercises to '}
       <InlineLink {...args} />
     </p>
+  ),
+};
+
+/**
+ * WITH ACTIONS — the /exercises headline, whole.
+ *
+ * Two icon controls beside the link, which the component draws rather than
+ * taking as a node: an action here has to look like it belongs to the word,
+ * and the obvious thing to reach for — `IconButton` — brings a box and
+ * breaks the line.
+ *
+ * THEY ARE SIBLINGS OF THE LINK'S BUTTON, never children. A `<button>` inside
+ * a `<button>` is invalid HTML and a 4.1.2 failure, so passing `actions`
+ * wraps both in a `musy-ilink-group` span; without them the component renders
+ * the bare button it always did.
+ *
+ * The chevrons are the quieter half of the pair on purpose: the link is what
+ * the sentence is about and what opens the sheet, so it keeps the link colour
+ * and these take ink until hovered.
+ */
+export const WithActions: Story = {
+  args: {
+    children: 'relax',
+    trailingIcon: SlidersHorizontal,
+    actions: [
+      { id: 'previous', glyph: ChevronLeft, label: 'Previous goal', onClick: () => {} },
+      { id: 'next', glyph: ChevronRight, label: 'Next goal', onClick: () => {} },
+    ],
+  },
+  render: (args) => (
+    <h1
+      style={{
+        margin: 0,
+        fontFamily: 'var(--type-heading-lg-family)',
+        fontSize: 'var(--type-heading-lg-size)',
+        fontWeight: 'var(--type-heading-lg-weight)',
+        lineHeight: 'var(--type-heading-lg-line)',
+      }}
+    >
+      {'Good morning. Here are three exercises to '}
+      <InlineLink {...args} />
+    </h1>
   ),
 };

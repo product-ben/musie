@@ -67,7 +67,40 @@
    It is the same correction `.musie-deck-intro` made for the same reason and
    the same rule `.musie-sheet .musie-placeholder` states in shell.css: one
    spacing mechanism per container, and here the container's is the grid's. */
-.musie-exercises > .musie-placeholder { margin-block-end: 0; }
+.musie-exercises > .musie-placeholder {
+  margin-block-end: 0;
+
+  /* ── 660px, AND IT IS AN L14.1 EXCEPTION — Ben, 2026-10-16 ────────────
+     The second bare value in this file, after the 16:9 crop, and flagged
+     for the same reason: L14.1 asks every declaration to resolve to a
+     Layer 1 token or to arithmetic over one, and this resolves to neither.
+     660 is not a rung, not a breakpoint, and not a clean fraction of
+     either — reaching for `--bp-md` minus two spacing steps would land at
+     672 and be numerology rather than a token.
+
+     WHAT IT REPLACES IS WORSE THAN A LITERAL, THOUGH, and that is the
+     argument for taking it. `.musie-placeholder` caps itself at
+     `--measure-heading`, which is `50ch` — and `ch` is a property of the
+     ELEMENT'S OWN TYPE, so a measure in `ch` grows with the font size.
+     Measured on this heading: 1128px at 1440 (34px type), 974px at 834,
+     862px at 393. The bigger the heading, the longer the line it is allowed
+     to run, which is backwards — a display step wants FEWER characters per
+     line than body copy, not more.
+
+     So the cap that was supposed to protect this heading was never binding
+     at any width the product is read at; what actually wrapped it was the
+     column. At 1440 it ran 980px of display type across the screen.
+
+     IT BINDS ONLY WHERE IT IS NEEDED. At 393px the heading renders 361px
+     wide, so this changes nothing on a phone and everything on a laptop.
+
+     The system-level half of this — that `ch` measures invert at display
+     sizes — is logged in apps/web/OPEN-QUESTIONS.md rather than fixed here,
+     because `--measure-heading` is Layer 1 and is read by every heading in
+     the product. A second screen wanting 660 is what turns this into a
+     token. */
+  max-inline-size: 660px;
+}
 
 /* ═══ A DIALOG'S BODY ══════════════════════════════════════════════════════
    Two declarations, for the one lightbox in this screen that carries no
