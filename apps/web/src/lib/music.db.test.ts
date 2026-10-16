@@ -177,15 +177,31 @@ describe('the card flow is untouched by any of this', () => {
      that `tracks` and `exercise_tracks` would not move; if a cut ever
      starts writing a pairing row, or a listening exercise acquires one, this
      is what says so. */
-  it('leaves exercise_tracks to the deck — eighteen rows, all with a card', async () => {
+  it('leaves exercise_tracks to the deck — every row has a card', async () => {
     const { data, error } = await service
       .from('exercise_tracks')
       .select('exercise_id, card_id');
 
     expect(error).toBeNull();
-    expect(data).toHaveLength(18);
     expect((data ?? []).filter((row) => row.card_id === null)).toEqual([]);
   });
+
+  /* THE COUNT CAME OUT ON 2026-10-15, and it was `toHaveLength(18)` — in the
+     name of the test as well as in its body.
+   *
+   * It failed against hosted for the right reason: an operator added MC-10 at
+   * `/maintenance`, `project_deck()` paired it in both card exercises, and
+   * eighteen became twenty. Nothing was broken. A test that counts the deck
+   * asserts that nobody uses the product, which since rule 4.1 is a thing the
+   * product is FOR.
+   *
+   * Nothing is lost by removing it, and that is worth being explicit about
+   * because somebody will want to put a number back. The census belongs to
+   * `deck.db.test.ts`, which takes it from `deck.json` and so moves when the
+   * deck moves. What this describe block is actually for is the SHAPE — that a
+   * cut never writes a pairing row and a listening exercise never acquires one
+   * — and the count never tested either. The two assertions that do are the
+   * one above and the one below. */
 
   it('gives no listening exercise a pairing row', async () => {
     const { data, error } = await service
