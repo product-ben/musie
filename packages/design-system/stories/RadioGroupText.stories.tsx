@@ -239,3 +239,52 @@ export const LongLabel: Story = {
     ],
   },
 };
+
+/** A ROW THAT DESCENDS — `drillDown`, 2026-10-16.
+ *
+ *  The trailing → means *choosing this asks the next question*. The marker
+ *  stays on every row, which is Ben's call: the arrow is added at the right
+ *  of the box so the list is still one thing to scan.
+ *
+ *  `drillDownLabel` is appended to the row's accessible name, so a descending
+ *  row and a terminal row are told apart without sight. It must not repeat
+ *  the label — this row announces as "Optimistisch, weitere Gefühle".
+ *
+ *  Mixed on purpose: one level of the emotion wheel holds both kinds, the
+ *  stop row first. `DrillDown` is what assembles a level like this. */
+export const DrillDownRows: Story = {
+  args: {
+    legend: 'Was spürst du gerade in dir?',
+    value: undefined,
+    options: [
+      { value: 'stop', label: 'einfach nur Glücklich' },
+      { value: 'optimistic', label: 'Optimistisch', drillDown: true, drillDownLabel: 'weitere Gefühle' },
+      { value: 'trusting', label: 'Vertrauensvoll', drillDown: true, drillDownLabel: 'weitere Gefühle' },
+      { value: 'peaceful', label: 'Friedlich', drillDown: true, drillDownLabel: 'weitere Gefühle' },
+      { value: 'accepted', label: 'Akzeptiert', drillDown: true, drillDownLabel: 'weitere Gefühle' },
+    ],
+  },
+};
+
+/** The arrow NARROWS THE LABEL BOX, which is the one way `drillDown`
+ *  interacts with the truncation above: a long label clamps a word earlier
+ *  beside an arrow than without one.
+ *
+ *  Nothing special handles it — the overflow measurement already runs after
+ *  layout with `options` in its deps — and this story is how that stays true.
+ *  The long row should render unclamped, exactly as LongLabel does. */
+export const DrillDownLongLabel: Story = {
+  args: {
+    legend: 'a descending row past the two-line clamp',
+    value: undefined,
+    options: [
+      { value: 'short', label: 'Optimistisch', drillDown: true, drillDownLabel: 'weitere Gefühle' },
+      {
+        value: 'long',
+        label: 'Zufrieden mit dem, was der Tag gebracht hat, und einigermaßen versöhnt mit dem, was er nicht gebracht hat',
+        drillDown: true,
+        drillDownLabel: 'weitere Gefühle',
+      },
+    ],
+  },
+};

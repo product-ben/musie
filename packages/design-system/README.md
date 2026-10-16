@@ -314,3 +314,76 @@ import { CtaButton, ContentBox, Icon } from '@musie/design-system';
 
 The package ships TypeScript source, not a build. The consumer's bundler
 compiles it.
+
+## What arrived on 2026-10-16, with the reflect rework
+
+Four changes, and three of them are additions to components that already
+existed. Each file's own header carries the argument; this is the index.
+
+| | |
+|---|---|
+| **`DrillDown`** | new. A tree narrowed one level at a time |
+| **`RadioGroupText`** · `drillDown` | an option that descends, with a trailing → |
+| **`ButtonGroup`** · `purpose` | `continue-only`, which reverses the order |
+| **`Toast`** · `children` | content on its own row beneath the label |
+
+### `DrillDown` draws no rows
+
+`children` is a function handed the level to draw, so the component imports no
+selection component at all. It owns the stack, the back row, the stop row, the
+live region and the focus move; the feelings sheet passes a `RadioGroupText`.
+
+There is **no default slot**, deliberately: a default would mean importing one
+selection component, which is the single thing the slot exists to avoid. The
+`CardsInTheSlot` story is the only proof the API is generic, and a slot nothing
+has ever been swapped in is a slot that does not work.
+
+### The rows are radios, and the arrow is additive
+
+A drill-down row is still a radio: within the question on screen, choosing
+*Optimistisch* **is** a choice, and its consequence is that the next question
+is asked. Each level is its own group with its own legend.
+
+**The marker stays on every row** — Ben's call: the arrow goes on the right of
+the box so the list is still one thing to scan. `drillDownLabel` is appended to
+the row's accessible name so the two kinds of row are told apart without sight,
+and it is warned about in development when a `drillDown` option omits it.
+
+One thing that is measured rather than reasoned about: the arrow narrows the
+label box, so a long German label clamps a word earlier beside one. The
+existing overflow measurement already covers it, and `DrillDownLongLabel` is
+the story that keeps it true.
+
+### `continue-only` reverses the column too
+
+`stacked` governs width and `relation` governs space; `purpose` governs order.
+For a group whose every control is a way on from here.
+
+| | at `--bp-md` and up | below `--bp-md` |
+|---|---|---|
+| `actions` (default) | row, `align`, DOM order | stacked, full width, **primary first** |
+| `continue-only` | row, trailing, **primary rightmost** | stacked, full width, **primary last** |
+
+**The second row is a deliberate exception** to this component's own rule that
+the stacked order is DOM order top to bottom. "Always bottom right" has no
+right once there is no row, so the primary becomes the bottom button, above the
+thumb. Put to Ben as a conflict with the existing rule and chosen with it
+named — the old rule is not wrong, it belongs to `actions`.
+
+DOM order stays priority order in both. The reversal is `row-reverse` /
+`column-reverse`, so a keyboard and a screen reader meet the primary first
+either way; only the paint changes. `align` is dropped under this variant
+rather than allowed to fight it.
+
+One consumer today, by instruction: the reflect step's incomplete dialog.
+
+### The `Toast` slot is content, not a second action
+
+`action` is still exactly one — two ways out makes it a dialog. The slot does
+not dismiss, is not folded into the toast's announcement (whatever goes in it
+names itself), and the swipe goes inert inside it, the same way it already
+does over the action and the dismiss.
+
+It is **last in the DOM**, so a screen reader meets the dismiss before it.
+That is the price of the row it needs: the toast is a wrapping flex row, and a
+100%-wide child before the dismiss pushes the dismiss onto a third line.

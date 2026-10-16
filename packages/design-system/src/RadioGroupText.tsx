@@ -19,12 +19,33 @@
  * Truncation: the label clamps at 2 lines. The component MEASURES whether the
  * clamp actually cut anything and, if it did, drops the clamp for that option
  * rather than hiding meaning-bearing text. There is no ellipsis-only path.
+ *
+ * ── A ROW THAT DESCENDS — `drillDown`, 2026-10-16 ─────────────────────────
+ * An option can carry a trailing arrow meaning *choosing this asks the next
+ * question*. It is still a radio: within the level on screen, choosing it IS
+ * a choice, and the consequence happens to be that the group is replaced.
+ * `DrillDown` is the component that does the replacing; this one only knows
+ * how to draw the affordance.
+ *
+ * THE MARKER STAYS ON EVERY ROW — Ben, 2026-10-16: the arrow is *"added on
+ * the right side of the box so that it's still easy for users to scan"*. One
+ * list, one visual rhythm; the arrow is what differs, not the row's anatomy.
+ *
+ * AND IT IS NOT DECORATION. `drillDownLabel` is appended to the row's
+ * accessible name, so a descending row and a terminal row are told apart
+ * without sight. Rule 7: it is passed, never defaulted.
+ *
+ * THE ARROW NARROWS THE LABEL BOX, which is the one thing here that interacts
+ * with the truncation above: a long German label now has less room before it
+ * clamps. The measurement already covers it — the effect runs after layout
+ * and `options` is in its deps — but it is why the arrow is laid out with an
+ * auto margin rather than by giving the label a width.
  */
 import * as React from 'react';
 import { RadioGroup } from '@base-ui/react/radio-group';
 import { Radio } from '@base-ui/react/radio';
 import { Fieldset } from '@base-ui/react/fieldset';
-import { Check } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { Icon } from './Icon';
 import { Message } from './Message';
 import { useMusyText } from './locale';
@@ -35,6 +56,21 @@ export interface RadioOption {
   value: string;
   label: string;
   disabled?: boolean;
+  /**
+   * This row DESCENDS: draws the trailing → and says so to a screen reader.
+   * The marker is unchanged — see the header for why it stays.
+   */
+  drillDown?: boolean;
+  /**
+   * Rule 7 — what the → means, appended to this row's accessible name.
+   * Required when `drillDown` is set, and warned about in development when
+   * it is missing.
+   *
+   * DO NOT REPEAT THE LABEL in it. The row announces as
+   * `${label}, ${drillDownLabel}`, so *weitere Gefühle* gives "Optimistisch,
+   * weitere Gefühle" where *weiter zu Optimistisch* would say the word twice.
+   */
+  drillDownLabel?: string;
 }
 
 export interface RadioGroupTextProps {
@@ -83,6 +119,21 @@ export function RadioGroupText({
   const t = useMusyText();
   const hintId = React.useId();
   const errorId = React.useId();
+
+  /* Rule 7's own failure mode, caught where it happens rather than in review:
+     a descending row with no `drillDownLabel` is an arrow that means nothing
+     to anyone who cannot see it. Same shape as FeelingsScale's point-count
+     warning — development only, never thrown. */
+  if (process.env.NODE_ENV !== 'production') {
+    const unnamed = options.filter((o) => o.drillDown && !o.drillDownLabel);
+    if (unnamed.length > 0) {
+      console.warn(
+        `RadioGroupText "${name}": ${unnamed.length} drillDown option(s) with no `
+        + 'drillDownLabel — the → is then invisible to a screen reader. '
+        + `First: "${unnamed[0].label}".`
+      );
+    }
+  }
 
   /* Overflow measurement — see the truncation note above. */
   const labelRefs = React.useRef<Record<string, HTMLSpanElement | null>>({});
@@ -143,6 +194,18 @@ export function RadioGroupText({
             className="musy-radio__label"
             ref={(el) => { labelRefs.current[opt.value] = el; }}
           >{opt.label}</span>
+          {opt.drillDown && (
+            <>
+              {/* The name, before the glyph: a row announces as
+                  "Optimistisch, weitere Gefühle". */}
+              {opt.drillDownLabel && (
+                <span className="musy-sr-only">{`, ${opt.drillDownLabel}`}</span>
+              )}
+              <span className="musy-radio__drill" aria-hidden="true">
+                <Icon glyph={ArrowRight} size="sm" />
+              </span>
+            </>
+          )}
         </Radio.Root>
       ))}
 

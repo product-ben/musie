@@ -44,3 +44,26 @@ export function hasAnswered(mode: ReflectMode, text: string, spokenWords = false
   if (mode === 'voice') return spokenWords;
   return mode === 'text' && text.trim().length > 0;
 }
+
+/**
+ * ── TWO SHEETS ON ONE STEP, SO TWO TOKENS — 2026-10-16 ────────────────────
+ *
+ * `SHEET_OPEN` (`?focus`, in lib/digitalCards.ts) means *a sheet is up*, and
+ * its header argues at length that which sheet should be decided by the step
+ * rather than by a second token. That argument holds everywhere it was
+ * written about — and the reflect step is the case it did not have: it has
+ * TWO sheets, so the step cannot decide, and one token would be a state the
+ * screen could not resolve.
+ *
+ * These are therefore not a second name for `?focus`. They are the names of
+ * two different sheets, which is what Ben's brief calls them.
+ *
+ * THEY ARE EXCLUSIVE, and the screen resolves rather than renders both — a
+ * hand-typed `?focus-feelings&focus-thoughts` opens feelings. The same rule
+ * `SessionListen` applies to `?focus&overview`.
+ */
+export const FOCUS_FEELINGS = 'focus-feelings';
+export const FOCUS_THOUGHTS = 'focus-thoughts';
+
+/** Which reflect sheet the address is asking for, if either. */
+export type ReflectSheet = typeof FOCUS_FEELINGS | typeof FOCUS_THOUGHTS;

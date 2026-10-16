@@ -851,6 +851,36 @@
   overflow: visible;
 }
 
+/* THE ROW THAT DESCENDS — `drillDown`, 2026-10-16.
+   The marker stays; the arrow is added at the inline end, which is Ben's
+   call: one list, one rhythm, and the arrow is the only thing that differs.
+
+   `margin-inline-start: auto` and NOT a width on the label. The label is an
+   ordinary flex item (0 1 auto), so with room to spare the auto margin pushes
+   the arrow to the end, and without it the label shrinks and the arrow keeps
+   its size. Giving the label a basis instead would fix the clamp point at one
+   string length and get every other one wrong.
+
+   That shrinking is exactly what the component's overflow measurement is for
+   (see RadioGroupText's header): a long German label clamps one word earlier
+   beside an arrow, is measured as clamped, and is then rendered unclamped. */
+.musy-radio__drill {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-gap-related);
+  color: var(--on-surface-muted);
+  transition: color var(--motion-toggle);
+}
+/* Checked is a transient state on a descending row — it is the frame of the
+   tap that replaces the level — but it must not flash a mismatched ink. */
+.musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__drill {
+  color: var(--interactive-accent-on-subtle);
+}
+.musy-radio__body[data-disabled] .musy-radio__drill { color: var(--on-surface-disabled); }
+
 @media (hover: hover) and (pointer: fine) {
   .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
   .musy-radio__body[data-force~="hover"] {
@@ -909,6 +939,57 @@
   border-color: var(--feedback-error-border);
 }
 .musy-radio-group__error { margin-block-start: var(--space-gap-related); }
+
+
+/* ═══ 6a · DRILL DOWN ══════════════════════════════════════════════════════
+   The frame around a level: the back row, and whatever the slot draws. The
+   ROWS are not here — they belong to whichever selection component is in the
+   slot, which is the whole point of the slot.
+
+   No height, no scroller. A level is at most nine rows and the surface this
+   sits in (Sheet, inside Lightbox) already owns the scrolling. A second
+   scroller here would be the mistake Sheet's own header warns about.        */
+
+.musy-drilldown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  min-inline-size: 0;
+}
+
+/* The way up. A row rather than an icon button: it carries the word you came
+   from, which is the thing that says where "up" goes. Ghost treatment — it is
+   navigation beside a list of choices, and a bordered box here would read as
+   a tenth option. */
+.musy-drilldown__back {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  align-self: start;
+  box-sizing: border-box;
+  min-height: var(--target-comfort);
+  padding-block: var(--space-inset-control);
+  padding-inline: var(--space-inset-control) var(--space-gap-related);
+  border: 0;
+  border-radius: var(--radius-control);
+  background-color: var(--interactive-ghost);
+  color: var(--interactive-ghost-on);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  cursor: pointer;
+  text-align: start;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-toggle);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musy-drilldown__back:hover { background-color: var(--interactive-ghost-hover); }
+}
+.musy-drilldown__back:active { background-color: var(--interactive-ghost-active); }
+
+.musy-drilldown__body { min-inline-size: 0; }
 
 
 /* ═══ 7 · RADIO GROUP — IMAGE + TEXT ═══════════════════════════════════════
@@ -3001,6 +3082,16 @@
   min-inline-size: calc(var(--measure-compact) / 2);
 }
 
+/* THE SLOT — its own full row, always. `flex-basis: 100%` is what forces the
+   wrap: the toast is already a wrapping row, so a child that can never share
+   a line with anything lands beneath whatever came before it. No max-width of
+   its own — the toast's cap is the cap, and a control that does not fit it is
+   the wrong control for a toast. */
+.musy-toast__slot {
+  flex: 1 0 100%;
+  min-inline-size: 0;
+}
+
 /* Both controls hold their size, and the pair takes the trailing edge — on one
    row that pushes them away from the text, on two it puts them at the row's
    end, which is L6 either way. The action is a CtaButton the consumer passes,
@@ -5024,6 +5115,25 @@
    two unlike controls needs it at least as much as a row does. */
 .musy-btn-group--molecule { gap: var(--space-gap-stack); }
 
+/* ── purpose="continue-only" — THE ORDER AXIS (2026-10-16) ────────────────
+   Ben: the primary is always bottom right, the secondary left next to it,
+   the tertiary left of that.
+
+   `row-reverse` AND NOT `justify-content: flex-end` + reordered children.
+   DOM order stays priority order, so a keyboard and a screen reader meet the
+   primary first; only the paint is reversed. Reordering the children would
+   have made the two disagree, and the accessible order is the one that must
+   not move.
+
+   `justify-content: flex-start` is stated rather than left to the default,
+   because in a reversed row flex-start IS the trailing edge — and stating it
+   defeats any --center / --end modifier that reached this element, which the
+   component also stops at the source by dropping `align` for this variant. */
+.musy-btn-group--continue-only {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
 @media (max-width: 767.98px) {
   .musy-btn-group {
     flex-direction: column;
@@ -5054,6 +5164,20 @@
   .musy-btn-group--stacked-hug > .musy-btn { inline-size: auto; }
   .musy-btn-group--center.musy-btn-group--stacked-hug { align-items: center; }
   .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; }
+
+  /* ── continue-only REVERSES THE COLUMN TOO ──────────────────────────────
+     A DELIBERATE EXCEPTION to this block's own rule — "the order in the DOM
+     is the order of priority, top to bottom". Here the primary is the BOTTOM
+     button, directly above the thumb, which is what "always bottom right"
+     means once there is no right.
+
+     Put to Ben as a conflict with the existing rule on 2026-10-16 and chosen
+     with it named. The old rule is not wrong; it is `actions`', and the
+     component's header now says so.
+
+     Still only paint: `column-reverse` leaves the primary first in the DOM,
+     so tab order and the screen reader are unchanged from the row. */
+  .musy-btn-group--continue-only { flex-direction: column-reverse; }
 }
 
 /* ═══ MUSIC PLAYER ═════════════════════════════════════════════════════════

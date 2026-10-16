@@ -517,6 +517,48 @@ export type Database = {
           },
         ]
       }
+      session_feelings: {
+        Row: {
+          created_at: string
+          detailed_id: string | null
+          emotion_id: string
+          id: string
+          session_id: string
+          specific_i: number | null
+        }
+        Insert: {
+          created_at?: string
+          detailed_id?: string | null
+          emotion_id: string
+          id?: string
+          session_id: string
+          specific_i?: number | null
+        }
+        Update: {
+          created_at?: string
+          detailed_id?: string | null
+          emotion_id?: string
+          id?: string
+          session_id?: string
+          specific_i?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_feelings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "question_rejections"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "session_feelings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           card_id: string | null

@@ -79,7 +79,7 @@ export { Hint } from './Hint';
 export type { HintProps } from './Hint';
 
 export { ButtonGroup } from './ButtonGroup';
-export type { ButtonGroupProps } from './ButtonGroup';
+export type { ButtonGroupProps, ButtonGroupStacked, ButtonGroupPurpose } from './ButtonGroup';
 
 export { ContentBox } from './ContentBox';
 export type { ContentBoxProps, TypeStep, BoxOutline, HeadingLevel } from './ContentBox';
@@ -92,6 +92,14 @@ export type { MessageProps, MessageVariant, MessageLive } from './Message';
 
 export { ContentList } from './ContentList';
 export type { ContentListProps, ContentListItem } from './ContentList';
+
+/* A tree narrowed one level at a time. It draws no rows of its own — the
+   level is a slot — so it exports its option and level shapes for whatever
+   selection component a consumer puts in there. */
+export { DrillDown } from './DrillDown';
+export type {
+  DrillDownProps, DrillDownNode, DrillDownOption, DrillDownLevel,
+} from './DrillDown';
 
 export { DraggableList, itemTypeStep } from './DraggableList';
 export type {

@@ -167,6 +167,32 @@ export interface ToastProps {
    *  already IS the status. Ignored when `tone` is `neutral`, which has none. */
   statusWord?: string;
   dismissLabel?: string;
+  /**
+   * ── THE SLOT — 2026-10-16 ───────────────────────────────────────────────
+   * Interactive content on its own row beneath the label. Built for the
+   * reflect rework, where the confirmation after a session also asks how the
+   * session left you, and the scale that asks it lives in the toast.
+   *
+   * IT IS NOT A SECOND ACTION. `action` is still exactly one — two ways out
+   * makes this a dialog — and the slot is content, which is a different kind
+   * of thing: it does not dismiss, and the toast does not know what it holds.
+   *
+   * THE SWIPE GOES INERT INSIDE IT. A drag across a radio point is not a
+   * dismiss gesture; `onPointerDown` bails on anything inside the slot, the
+   * same way it already bails on the action and the dismiss.
+   *
+   * IT IS NOT PART OF THE ANNOUNCEMENT. Whatever goes in here names itself —
+   * FeelingsScale is a fieldset with its own legend — and folding it into the
+   * toast's status would read the whole control out as one sentence.
+   *
+   * READING ORDER, AND THE ONE COMPROMISE: the slot is last in the DOM, so a
+   * screen reader meets the dismiss before it. That is the price of the row
+   * it needs — the toast is a wrapping flex row, and a 100%-wide child placed
+   * before the dismiss pushes the dismiss onto a third line. The dismiss is a
+   * labelled button either way, so nothing is unreachable; it is simply met
+   * one control early.
+   */
+  children?: React.ReactNode;
   id?: string;
   className?: string;
 }
@@ -180,6 +206,7 @@ export function Toast({
   placement = 'bottom',
   statusWord,
   dismissLabel,
+  children,
   id,
   className,
 }: ToastProps) {
@@ -221,6 +248,10 @@ export function Toast({
     /* The two controls speak for themselves. A thumb that came down on Undo
        meant Undo. */
     if ((event.target as Element).closest('.musy-btn, .musy-toast__dismiss')) return;
+    /* AND THE SLOT, for the same reason — 2026-10-16. A thumb that came down
+       on a radio point meant that point, and a scale is exactly the kind of
+       control somebody drags across rather than taps. */
+    if ((event.target as Element).closest('.musy-toast__slot')) return;
 
     gesture.current = {
       x: event.clientX,
@@ -366,6 +397,10 @@ export function Toast({
           <Icon glyph={X} size="md" />
         </Button>
       ) : null}
+
+      {/* Its own row, beneath everything. See `children` for why it is last
+          in the DOM and not between the text and the dismiss. */}
+      {children && <div className="musy-toast__slot">{children}</div>}
     </div>
   );
 }
