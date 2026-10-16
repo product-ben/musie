@@ -59,12 +59,29 @@ describe('the committed deck', () => {
     /* BOTH LOCALES FOR EVERY CARD THAT CARRIES COPY, and no row at all for a
        card that carries none — which is what the database holds, so
        `cards.length * LOCALES.length` stopped being right on 2026-10-15.
-       MC-10 is the live example: added through `/maintenance`, which writes no
-       `card_i18n` row, and going by its picture rather than a word. */
+
+       MC-10 WAS THE LIVE EXAMPLE OF THE SECOND HALF AND IS NOT ANY MORE.
+       Added through `/maintenance`, which writes no `card_i18n` row, it sat
+       in the deck with no copy in either locale — and `toCard` drops a card
+       whose translation is missing, so it was in `cards`, on the grid, in
+       this file, and had never once been shown. `20261016150000` gave it a
+       `feeling` in both locales and the projection gave it its description,
+       which is what makes it drawable.
+
+       SO THE RULE KEEPS ITS TEETH AND LOSES ITS WITNESS. Every card carries
+       copy today, so the `filter` below cannot currently be wrong — it is
+       kept because the shape it describes is the database's, and the next
+       card created through `/maintenance` arrives in exactly the state MC-10
+       was in. The assertion under it is flipped rather than deleted: it now
+       pins the repair, so a regression that dropped those rows again would
+       be caught by name rather than by an arithmetic mismatch. */
     const carriesCopy = (card: Deck['cards'][number]): boolean =>
       LOCALES.some((locale) => card.feeling[locale] !== null || card.imageAlt[locale] !== null);
     expect(flat.card_i18n).toHaveLength(deck.cards.filter(carriesCopy).length * LOCALES.length);
-    expect(flat.card_i18n.some((row) => row.card_id === 'mc-10'), 'mc-10 carries no copy and should have no row').toBe(false);
+    expect(
+      flat.card_i18n.filter((row) => row.card_id === 'mc-10').map((row) => row.locale).sort(),
+      'mc-10 can be drawn again, so it carries a row in both locales',
+    ).toEqual([...LOCALES].sort());
     expect(flat.exercise_tracks).toHaveLength(
       deck.cards.reduce((total, card) => total + Object.keys(card.plays).length, 0),
     );
