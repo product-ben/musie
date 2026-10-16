@@ -40,18 +40,40 @@ export interface UserType {
 /**
  * What a person is after when they start a session.
  *
- * Three rows — Achtsamkeit stärken, Entspannen, Aufwachen — and the fourth
- * option on screen is not one of them: "Musie entdecken" is the ABSENCE of a
- * goal, so it has no row here and writes null to `sessions.goal_id`. See
- * `lib/goals.ts`, which owns that distinction, and the header of
- * `20261007100100_goals_seed.sql`, which owns the reason.
+ * FOUR ROWS SINCE 2026-10-15, and the fourth one is the change. "Musie
+ * kennenlernen" was the ABSENCE of a goal — no row, null in
+ * `sessions.goal_id` — for as long as it meant *show me everything*. It now
+ * offers three named exercises like the other three, so there is nothing left
+ * for absence to express and it is a row like them.
+ * `20261015140000_the_headline_is_the_filter.sql` carries the argument;
+ * `lib/goals.ts` is where `NO_GOAL` used to live.
+ *
+ * ── A GOAL IS SAID THREE WAYS, AND THEY ARE NOT ONE STRING REUSED ─────────
+ * `label` names it, `purpose` says what its exercises are FOR, and `why`
+ * argues for it. The grammar differs — *Entspannung* is what you need,
+ * *Entspannen* is what the exercises are for — so no screen can derive one
+ * from another and the table carries all three.
  *
  * Was `Situation` in the schema until 2026-10-07, and never read by anything.
  */
 export interface Goal {
   id: string;
   sort: number;
+  /** The goal's name, and the headline of its card in the goal sheet. */
   label: string;
+  /** Dropped into /exercises' h1 after "zum" / "to". Never empty. */
+  purpose: string;
+  /**
+   * Two sentences under a bold "Warum?" on the card, or null.
+   *
+   * NULL IS DATA AND NOT A GAP — Ben, 2026-10-15: three of the four goals
+   * name themselves and carry no explanation. Only Achtsamkeit has one, and
+   * it is the one the user testing heard *was soll das bringen?* about. The
+   * same distinction `Exercise.needs` makes, and the reason
+   * `public.missing_translations` reports a string only where one locale has
+   * it and the other does not.
+   */
+  why: string | null;
 }
 
 export interface Exercise {
@@ -268,13 +290,23 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
  * (the schema's `sort integer not null unique`), and sorting by a translated
  * string would put the list in a different order in each locale.
  *
- * "Musie entdecken" is NOT in here. It is the absence of a goal, it has no
- * row, and the picker appends it — see `lib/goals.ts`.
+ * ALL FOUR ARE IN HERE SINCE 2026-10-15. "Musie kennenlernen" used to be
+ * appended by the picker because it was the absence of a goal rather than a
+ * row; it is a row now, and the only thing that decides the order of the four
+ * is this query's `order('sort')`.
+ *
+ * WHICH MAKES THE ORDER LOAD-BEARING TWICE. It is the order of the cards in
+ * the goal sheet, and `defaultGoal()` in `lib/goals.ts` takes the FIRST of
+ * them — so "the default goal" and "the first card" are one fact that cannot
+ * drift, and both move by migration.
  */
 export async function getGoals(locale: Locale): Promise<Goal[]> {
   const { data, error } = await getSupabase()
     .from('goals')
-    .select('id, sort, goal_i18n(locale, label)')
+    /* ONE STRING LITERAL — the note above `EXERCISE_SELECT` is the reason, and
+       it applies to every select in this file: supabase-js parses this at the
+       TYPE level, and TypeScript does not fold `'a' + 'b'` into a literal. */
+    .select('id, sort, goal_i18n(locale, label, purpose, why)')
     .in('goal_i18n.locale', wanted(locale))
     .order('sort');
 
@@ -287,6 +319,11 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
       id: row.id,
       sort: row.sort,
       label: text.label,
+      purpose: text.purpose,
+      /* `?? null` RATHER THAN A FALLBACK STRING. A goal with no explanation is
+         three of the four, and the card simply draws no body — inventing a
+         sentence here would put words in the product's mouth. */
+      why: text.why ?? null,
     }];
   });
 }

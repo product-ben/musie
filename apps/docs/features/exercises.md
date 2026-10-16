@@ -46,13 +46,38 @@ answered with a choice rather than a refusal:
 
 ## The exercises
 
-| | Exercise | Takes | Needs | Built |
-|---|---|---|---|---|
-| 1 | Achtsame Pause · Mindful Pause | 2–12 min | the deck | **yes** |
-| 2 | Freie Bahn · Free Rein | 2–5 min | the deck | **yes** |
-| 3 | Achtsam Atmen · Mindful Breathing | 5–8 min | sound | no screens |
-| 4 | Klangreise · Sound Journey | 12–15 min | sound | audio model built |
-| 5 | Bodyscan · Body Scan | 10–12 min | sound | audio model built |
+| | Exercise | Takes | Needs | Built | Goals |
+|---|---|---|---|---|---|
+| 1 | Achtsame Pause · Mindful Pause | 2–12 min | the deck | **yes** | Achtsamer werden |
+| 2 | Freie Bahn · Free Rein | 2–5 min | the deck | **yes** | kennenlernen · Aktivieren · Achtsamer werden |
+| 3 | Achtsam Atmen · Mindful Breathing | 5–8 min | sound | no screens | kennenlernen · Entspannen · Aktivieren |
+| 4 | Klangreise · Sound Journey | 12–15 min | sound | audio model built | Entspannen · Aktivieren · Achtsamer werden |
+| 5 | Bodyscan · Body Scan | 10–12 min | sound | audio model built | kennenlernen · Entspannen |
+
+The goal column is the whole of what decides which exercises you see. See
+[Goals](/features/goals).
+
+## The headline says how many, and it is not the number of cards
+
+Since 2026-10-15 the `h1` reads *Drei Übungen zum Entspannen*, and the goal in
+it is a link that opens the goal sheet. The number is written out through
+twelve and set in figures above it.
+
+**The count is the pile.** Every exercise the goal maps to is counted and
+dealt, built or not — so the number above the deck is always the number of
+cards in it.
+
+It counted only the STARTABLE ones for half a day, which read *2 Übungen* over
+a deck of three cards because Achtsam Atmen has no screens. Both numbers are
+defensible in a document and only one of them is defensible on a page: the
+count sits directly above the thing it counts. Ben reported it as a bug on
+sight.
+
+What has not changed is that **the unbuilt ones are still dealt and still
+refuse** — filtering them out "would quietly show two exercises where the
+product has five", which is the rule the screen has carried since the deck
+shipped. *Such mir eine Übung aus* is the one thing that skips them, so the
+shuffle can never start something that refuses.
 :::
 
 ::: devs
@@ -64,6 +89,9 @@ answered with a choice rather than a refusal:
 | `lib/content.ts`, `lib/useContent.ts` | the fetch, per locale |
 | `lib/session.ts` | `startSession`, and the running-session branch |
 | `lib/exerciseKind.ts` | which steps a kind of exercise runs |
+| `lib/goals.ts` | the filter, and `startable()` — the shuffle's candidate set |
+| `components/GoalSheet.tsx` | the goal sheet behind the headline |
+| `i18n/slot.ts` | splitting the headline around its link |
 | `components/NotImplementedLightbox.tsx` | the refusal |
 
 ## `exercises.kind` decides the step list, and the step list is code

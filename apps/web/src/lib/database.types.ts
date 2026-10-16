@@ -363,16 +363,22 @@ export type Database = {
           goal_id: string
           label: string
           locale: string
+          purpose: string
+          why: string | null
         }
         Insert: {
           goal_id: string
           label: string
           locale: string
+          purpose: string
+          why?: string | null
         }
         Update: {
           goal_id?: string
           label?: string
           locale?: string
+          purpose?: string
+          why?: string | null
         }
         Relationships: [
           {

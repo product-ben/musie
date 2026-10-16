@@ -1392,39 +1392,90 @@ export const en = {
   /* The ROUTE's name, for the document title. The screen's own headline is
      below and says something else — a route title is a noun phrase that has to
      work in a tab, and a question Musie asks is not that. */
-  /* ── MUSIE ASKS, AND THE COUNT IS GONE (Ben, 2026-10-08) ────────────────
-     It was '{count} exercises for you', and the count was interpolated so the
-     line could not go stale as the deck grew. The goal filter is what ended
-     it: the number now moves with the filter, and this catalogue has no
-     plural machinery by design (see i18n/index.ts) — so a goal serving one
-     exercise would have read *1 exercises for you*. The three-state headline
-     in Exercises.tsx existed to work around the same number and goes with it.
+  /* ── THE HEADLINE CARRIES THE FILTER NOW (Ben, 2026-10-15) ──────────────
+     NO 'exercises.headline'. It was *Which exercise do we start?* for a week,
+     and the note it replaced is worth keeping because this change reverses
+     half of it: the count was dropped on 2026-10-08 precisely BECAUSE the
+     goal filter made the number move, and because this catalogue has no
+     plural machinery, so a goal serving one exercise would have read *1
+     exercises for you*.
 
-     A QUESTION, WHERE THE REST OF THIS SCREEN IS NOUN PHRASES. It names
-     nothing, it asks — `aboutYou.headline` is the precedent, the other screen
-     where the person answers the heading rather than reading it.
+     The count comes back, and the thing that was missing is the reason it can.
+     User testing found people stalling at the door of a mindfulness exercise
+     — *warum sollte ich das machen?* — so the one line in the largest type on
+     the screen stops asking a question it cannot answer and starts saying what
+     is on offer and what for. The plural problem is answered properly this
+     time, with three forms rather than by deleting the number.
 
-     *WE*, NOT *YOU* (Ben, 2026-10-08). The card is pressed alone, but Musie
-     comes along for the session — so the question is asked in the first person
-     plural. The German does the same with *wir*, which is not a breach of §1:
-     that rule is du against Sie, and this is a different axis.
+     THREE FORMS, AND GERMAN AND ENGLISH SHARE THEM. i18n/index.ts says why
+     there is no ICU library: two locales and one/other plurals in both. `none`
+     is not insurance for a state nobody reaches — it is what the headline says
+     the first time an exercise is retired, and *0 exercises* would be a worse
+     sentence than a written one.
 
-     *EXERCISE* AND NOT *SESSION*, because that is the word on the cards and
-     the name of the table they come from. The cards are the answer to this
-     question and should be called what the question calls them.
+     THE COUNT IS WHAT CAN BE STARTED, not what is in the pile. Three of the
+     four goals include Achtsam Atmen, which is not built, so the headline
+     reads *2 exercises* over a deck of three cards. Deliberate — the headline
+     promises what you can start, the pile shows what exists — and argued in
+     GOAL-FILTER.md §7.
 
-     ONE LINE, AND IT IS MEASURED. At 393px — the width this product is
-     designed against, which GERMAN-UI-WRITING §5 names — the heading has 361px
-     after the two gutters. This is 345px, with 16px to spare; the German is
-     332px with 29. *Which exercise shall we start?* was the first phrasing and
-     is 370px, nine over, so it would have wrapped.
+     `{goal}` IS DELIBERATELY NOT FILLED. It marks where the `InlineLink` goes,
+     and `i18n/slot.ts` splits the rendered string on it. That is why this is
+     one sentence per locale rather than a prefix and a suffix: the slot can
+     sit anywhere, including first, and a translator reads a sentence. The
+     word after it is the goal's `purpose`, which is content and lives in
+     `goal_i18n` — "Entspannen", not "Entspannung". */
+  /* ── THE LEAD, AND WHY IT IS ITS OWN KEY (Ben, 2026-10-15) ──────────────
+     The headline opens by noticing that somebody turned up before it says
+     what is on offer. That is the half the user testing was asking for and
+     the count could not give: *warum sollte ich das machen* is not answered
+     by a number, and the first thing to say to somebody stepping out of a
+     busy day is not an inventory.
 
-     THE MEASURE IS NOT WHAT BINDS, the device is: `--measure-heading` resolves
-     to 438px and never comes into play on a phone. The font size that would
-     have fitted the longer draft on one line is 17.8px — body size — and
-     `--type-heading-lg-size` lives in Layer 1, which is `[LOCKED]`. So the
-     copy was the only place this could be solved. */
-  'exercises.headline': 'Which exercise do we start?',
+     SPLIT FROM THE THREE FORMS RATHER THAN COPIED INTO EACH, which is the
+     opposite of the call made one block up for `{goal}` — and the
+     distinction is the whole rule. That slot splits ONE sentence, so three
+     keys would have fixed the word order and handed a translator fragments.
+     This is a SECOND SENTENCE: it does not vary with the count, and nothing
+     about it depends on where the other one puts its verb. Splitting between
+     sentences costs a translator nothing; splitting inside one costs them
+     the sentence.
+
+     Six copies of it otherwise — three forms, two locales — and the next
+     person to reword it would find five.
+
+     ── IT IS THE TIME OF DAY (Ben, 2026-10-15) ──────────────────────────
+     It was *Good that you're taking a moment.* for an hour. A greeting is
+     warmer and asks nothing: the first draft noticed the reader and then
+     complimented them for arriving, which is a small thing to answer at the
+     top of a screen you came to for something else.
+
+     THE BAND IS GERMAN TIME, NOT THE READER'S — `lib/greeting.ts` carries
+     the argument and the clock. 04:00–11:30, 11:31–16:30, and the rest.
+
+     THE BOUNDARIES ARE THE GERMAN ONES IN BOTH LOCALES, which makes the
+     English slightly early twice a day: 11:35 is *Good afternoon* here and
+     would be *Good morning* to most English speakers. Kept on purpose. One
+     rule and two words beats two rules that drift, and the alternative —
+     per-locale boundaries — would mean the German and English screens
+     disagreeing about what time it is. */
+  'exercises.headline.morning': 'Good morning.',
+  'exercises.headline.day': 'Good afternoon.',
+  'exercises.headline.evening': 'Good evening.',
+  /* The offer. "Here are" / "Here is" is why the plural forms earn their
+     keep twice over — the verb agrees as well as the noun, which no
+     interpolated count can do. `none` drops the "here" entirely: *Here are
+     no exercises* is grammatical and reads like a shrug.
+
+     NO FULL STOP ON ANY OF THE THREE, and it is not a style choice: `{goal}`
+     is the last thing in two of them, and the link that replaces it ends in
+     a glyph — so a period after the slot renders as a dot floating past the
+     ellipsis, half a space clear of the word. Seen on screen, in German, at
+     393px. The LEAD keeps its stop, because it has a sentence after it to be
+     separated from. */
+  'exercises.headline.none': 'No exercises to {goal} yet',
+  'exercises.headline.one': 'Here is one exercise to {goal}',
+  'exercises.headline.other': 'Here are {count} exercises to {goal}',
   /* NO 'exercises.intro'. It was the subline — "Press a card to start that
      exercise, or swipe sideways to see another. Or see all of them in a list."
      — and it went with the header rewrite (Ben, 2026-10-08), unreplaced.
@@ -1507,7 +1558,11 @@ export const en = {
      reader what pressing this does, because the legend is one big button and
      its accessible name is otherwise three sentences of explanation with no
      verb among them. */
-  'exercises.guide.goal': 'Change your goal',
+  /* NO 'exercises.guide.goal'. It was *Change your goal* — the legend's top row, an arrow
+     pointing up out of the card at the goal pill. The pill is gone and the
+     goal is the page's headline, so the row was explaining the largest line
+     on the screen; Ben cut it on 2026-10-15 and the key goes with it rather
+     than being kept against a row that is not coming back. */
   'exercises.guide.next': 'Swipe for the next exercise',
   'exercises.guide.start': 'Press an exercise to start it',
   'exercises.guide.dismiss': 'Press to continue',
@@ -1531,32 +1586,66 @@ export const en = {
   'exercises.view.deck': 'Stack',
   'exercises.view.list': 'List',
   /* ── THE GOAL, AND THE FOUR THINGS IT NEEDS TO SAY ──────────────────────
-     The three goal LABELS are content and live in `goal_i18n` — they are the
+     ALL FOUR goal labels are content and live in `goal_i18n` — they are the
      product's own words and change by migration. Everything here is chrome:
-     the question, the pill, the fourth option, and the sentence for a goal
-     nothing serves.
+     the question, the bold lead on a card, the way a screen reader is told
+     the headline is a control, and the sentence for a goal nothing serves.
 
-     `exercises.goal.none` IS CHROME and the other three labels are not, which
-     looks inconsistent and is not: "Musie entdecken" has no row to be the
-     label of. It means the absence of a goal (see lib/goals.ts), so there is
-     nowhere else for it to live. */
-  /* NO 'exercises.goal.headline'. It was *Your goal*, and it was never the
-     goal box's own headline — it was one of /exercises' three h1 states, the
-     one worn when a goal served nothing so a count would have read zero. The
-     headline is a single question now and that state is gone, which leaves
-     this string with nothing drawing it. A key nothing renders is the
-     invisible rot the note at the top of this file warns about, so it is
-     deleted rather than kept against a state that is not coming back. */
-  /* THE FIELDSET'S LEGEND, not the box's headline — RadioGroupText has no
-     `legendHidden`, so a visible headline above it would ask the question
-     twice. The ContentBox keeps the same string as a hidden headline for the
-     document outline. */
-  'exercises.goal.question': 'What would you like to achieve today?',
-  'exercises.goal.none': 'Discover Musie',
-  'exercises.goal.pill': 'Goal: {goal}',
+     NO 'exercises.goal.none'. It was *Discover Musie*, and it was the one
+     label in this group that lived here rather than in `goal_i18n` — because
+     it named the ABSENCE of a goal and so had no row to be the label of. It
+     has a row now (`get-to-know-musie`, 2026-10-15) and three mapped
+     exercises, so the argument for it being chrome is gone with the thing it
+     argued about. The string moved to the table; it was not deleted.
+
+     NO 'exercises.goal.pill'. It was *Goal: {goal}*, worn by the Funnel
+     button in the toolbar, and the headline is the control now. A key nothing
+     renders is the invisible rot the note at the top of this file warns
+     about, so it goes rather than being kept against a control that is not
+     coming back.
+
+     NO 'exercises.goal.headline'. It was *Your goal*, one of /exercises'
+     three h1 states, and it went on 2026-10-08. Still gone. */
+  /* ASKED ONCE AND DRAWN TWICE — the sheet's visible `h2` and the Radio
+     Cards' hidden legend under it. A fieldset needs its own accessible name
+     (1.3.1, 4.1.2) and a heading above it does not supply one, so the same
+     string is passed to both and rendered once. The pattern `GoalBox` used
+     before the sheet replaced it.
+
+     *WHAT DO YOU NEED RIGHT NOW* rather than *what would you like to achieve
+     today* (Ben, 2026-10-15). Achieving is a goal you set; needing is a state
+     you are already in, and the people this change is for are mid-hustle
+     rather than mid-plan. It is also what makes the card labels answerable as
+     noun phrases — *Entspannung*, *Energie* — since each one completes
+     "I need …". */
+  'exercises.goal.question': 'What do you need right now?',
+  /* The bold lead on a goal card, before the two sentences. One word, the
+     same on every card that has a body, so it is chrome — the SENTENCES are
+     `goal_i18n.why` and differ per goal.
+
+     ONLY ONE OF THE FOUR CARDS HAS A BODY AT ALL (Ben, 2026-10-15): Musie
+     kennenlernen, Entspannung and Energie name themselves, and Achtsamkeit is
+     the abstract one the testing heard *was soll das bringen?* about. So this
+     word is drawn once today, and the card falls back to a headline alone
+     wherever `why` is null. */
+  'exercises.goal.why': 'Why?',
+  /* NEVER SEEN, ONLY HEARD. It is appended inside the headline's link as
+     sr-only text, so the control announces as "relax, change your goal" while
+     the h1 still reads as one sentence.
+
+     NOT AN `aria-label`, which was the obvious way and is wrong: a label
+     REPLACES the element's text in the accessible name, so the heading would
+     have announced as "2 exercises to change your goal: relax". */
+  'exercises.goal.change': 'Change your goal',
+  /* The sheet's accessible name — announced, never drawn, which is `Sheet`'s
+     own contract for `title`. The visible heading inside it is the question
+     above; this is the furniture's name, so it is a noun phrase that works
+     read out of context. */
+  'exercises.goal.sheetTitle': 'Your goal',
   /* NOT `content.empty`, which says the catalogue did not load. This says it
      loaded and has nothing for this goal — a true sentence about a mapping,
-     not a failure. */
+     not a failure. Unreachable under the mapping of 2026-10-15, and kept for
+     the first time one is retired. */
   'exercises.goal.empty': 'No exercise serves this goal yet.',
   'exercises.goal.emptyAction': 'Choose a different goal',
   /* ── /goal-mappings — A TOOL, NOT A SCREEN ──────────────────────────────
@@ -1650,6 +1739,55 @@ export const en = {
   'insightMap.hint.company': 'Everyone at Northwind, as one circle. Area is people, on every level.',
   'insightMap.hint.departments': 'Six departments, sized by the people they hold. Together they are the first tab.',
   'insightMap.hint.pods': 'A line runs to each department a pod draws from — thicker means more of it. Departments are anchors here, not sizes.',
+  /* `/feelings-selection` — the drill-down test of 2026-10-15. The 128
+     feelings themselves are NOT here: they are the wheel's own words, both
+     languages, in `content/emotionWheel.ts`. These are only the furniture. */
+  'feelings.sheet.title': 'Find the word for how you feel',
+  'feelings.sheet.close': 'Close',
+  'feelings.sheet.next': 'Next',
+  'feelings.sheet.previous': 'Back',
+  'feelings.sheet.done': 'That is the one',
+  'feelings.prompt.empty': 'I feel …',
+  'feelings.prompt.chosen': 'I feel {feeling}',
+  'feelings.ring.emotions.legend': 'Which of these is closest?',
+  'feelings.ring.emotions.hint': 'Start wide. You can get more precise in a moment.',
+  'feelings.ring.detailed.legend': 'You said {feeling}. Which kind?',
+  'feelings.ring.detailed.hint': 'Still not quite it? Go back and pick another.',
+  'feelings.ring.detailed.waiting': 'Which kind?',
+  'feelings.ring.specific.legend': 'And {feeling} more exactly?',
+  'feelings.ring.specific.hint': 'The last two. Either is a fine place to stop.',
+  'feelings.ring.specific.waiting': 'More exactly?',
+  /* The last row of rings 2 and 3: the word from the ring above, as an answer
+     rather than a step. Choosing it stops the drill-down. */
+  'feelings.stop': 'Just {feeling}',
+  'feelings.waiting.emotion': 'Pick a feeling on the first step and these fill in.',
+  'feelings.waiting.detailed': 'Pick one on the step before and these fill in.',
+  'feelings.empty': 'Nothing to choose from here.',
+  'feelings.result.empty': 'Nothing chosen yet.',
+  'feelings.result.chosen': 'You chose: {feeling}',
+  'feelings.reopen.open': 'The sheet is open',
+  'feelings.reopen.closed': 'Choose again',
+  'route.feelingsSelection.title': 'Feelings selection',
+  /* `/capturing-feelings-exploration` — the picture-first test of 2026-10-15,
+     and the sibling of the block above. It never shows a feeling word: it asks
+     what the person saw, asks one question back about that kind of picture, and
+     only then offers to talk about the feeling. The three step-2 questions are
+     written out rather than interpolated, because "Who is there?" has no
+     landscape reading. See routes/CapturingFeelingsExploration.tsx. */
+  'capturing.picture.headline': "What picture appeared in your mind's eye?",
+  'capturing.picture.empty': 'Nothing to choose from here.',
+  'capturing.kind.figures.option': 'Figures',
+  'capturing.kind.figures.headline': 'Tell me about them.',
+  'capturing.kind.figures.question': 'Who is there, and what are they doing?',
+  'capturing.kind.memory.option': 'A memory',
+  'capturing.kind.memory.headline': 'Tell me about that moment.',
+  'capturing.kind.memory.question': 'When was it, and who was with you?',
+  'capturing.kind.landscape.option': 'A landscape',
+  'capturing.kind.landscape.headline': 'Tell me about this place.',
+  'capturing.kind.landscape.question': 'Where are you, and what do you see around you?',
+  'capturing.feeling.headline': 'How does this make you feel?',
+  'capturing.feeling.label': 'In your own words',
+  'route.capturingFeelings.title': 'Capturing feelings',
   'route.insightMap.title': 'Org map',
   'route.maintenance.title': 'Maintenance',
   'route.aboutMusie.title': 'About Musie',

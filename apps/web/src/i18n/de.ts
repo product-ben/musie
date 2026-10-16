@@ -979,36 +979,89 @@ export const de: Messages = {
   /* ── Das Deck · /exercises ──────────────────────────────────────────────
      Was auf einer Karte steht, steht NICHT hier: Name, Beschreibung und Bild
      gehören der Übung und kommen aus den Inhaltstabellen. */
-  /* ── Musie fragt, und die Zahl ist weg (Ben, 2026-10-08) ────────────────
-     Vorher '{count} Übungen für dich'. Der Ziel-Filter hat die Zahl beweglich
-     gemacht, und dieser Katalog kennt keine Pluralformen (siehe i18n/index.ts)
-     — bei einem Ziel mit genau einer Übung hätte da '1 Übungen für dich'
-     gestanden. Die drei Überschrift-Zustände in Exercises.tsx gab es nur wegen
-     dieser Zahl; sie gehen mit ihr.
+  /* ── Die Überschrift IST jetzt der Filter (Ben, 2026-10-15) ─────────────
+     KEIN 'exercises.headline' mehr. Das war eine Woche lang 'Welche Übung
+     starten wir?', und die Notiz davor lohnt sich, weil diese Änderung ihre
+     Hälfte zurücknimmt: die Zahl flog am 2026-10-08 genau DESHALB raus, weil
+     der Ziel-Filter sie beweglich machte und dieser Katalog keine
+     Pluralformen kennt — bei einem Ziel mit genau einer Übung hätte da '1
+     Übungen für dich' gestanden.
 
-     EINE FRAGE, wo dieser Bildschirm sonst Nominalphrasen setzt. §3's Ausnahme
-     gilt für Überschriften, die etwas benennen — diese benennt nicht, sie
-     fragt. `aboutYou.headline` ist der Präzedenzfall: auch dort fragt Musie
-     und die Antwort steht darunter.
+     Die Zahl kommt zurück, und was damals fehlte, ist jetzt der Grund dafür.
+     Im Usertesting bleiben Menschen an der Tür stehen — 'warum sollte ich das
+     machen?' —, also hört die größte Zeile des Bildschirms auf zu fragen und
+     sagt, was es gibt und wofür. Das Plural-Problem ist diesmal gelöst statt
+     weggestrichen: drei Formen.
 
-     'WIR', NICHT 'DU' — und das ist kein Verstoß gegen §1 (Ben, 2026-10-08).
-     §1 regelt du gegen Sie; die erste Person Plural ist eine dritte Sache und
-     hier die Absicht: die Karte wird zwar allein gedrückt, aber Musie begleitet
-     die Session. 'Übung' und nicht 'Session', weil genau das auf den Karten
-     steht und in `exercises` die Zeile heißt — die Karten sind die Antwort auf
-     diese Frage, und sie sollen so heißen, wie die Frage sie nennt.
+     DREI FORMEN, und Deutsch und Englisch teilen sie sich. 'none' ist keine
+     Versicherung gegen einen Zustand, den niemand sieht — das ist der Satz
+     für den Tag, an dem eine Übung stillgelegt wird, und '0 Übungen' wäre ein
+     schlechterer Satz als ein geschriebener.
 
-     EINE ZEILE, UND DAS IST GEMESSEN. Bens Wortlaut war 'Mit welcher Übung
-     starten wir?' und misst 386px — bei 393px Breite stehen 361px zur
-     Verfügung (zwei Mal --gutter ab), also 25px zu viel und damit zwei Zeilen.
-     Gestrichen ist nur 'Mit': diese Fassung misst 332px und hat 29px Luft.
+     GEZÄHLT WIRD, WAS STARTBAR IST, nicht was im Stapel liegt. Drei der vier
+     Ziele enthalten Achtsam Atmen, und das ist nicht gebaut — die Überschrift
+     sagt also '2 Übungen' über einem Stapel aus drei Karten. So gewollt:
+     die Überschrift verspricht, was du starten kannst, der Stapel zeigt, was
+     es gibt. Begründet in GOAL-FILTER.md §7.
 
-     DAS MASS IST NICHT DIE SCHRANKE, das Gerät ist es: --measure-heading löst
-     zu 438px auf und greift auf dem Telefon nie. Eine Schriftgröße, die den
-     langen Satz einzeilig gemacht hätte, wäre 17.8px gewesen — Fließtextgröße,
-     und --type-heading-lg-size ist Layer 1, also [LOCKED]. Kürzen war die
-     einzige Stelle, an der das zu lösen war. */
-  'exercises.headline': 'Welche Übung starten wir?',
+     '{goal}' WIRD ABSICHTLICH NICHT GEFÜLLT. Der Platzhalter markiert, wo der
+     `InlineLink` steht; `i18n/slot.ts` teilt den fertigen Satz daran. Genau
+     deshalb ist das EIN Satz pro Sprache und kein Vorn-und-Hinten-Paar: der
+     Platzhalter darf überall stehen, auch zuerst, und wer übersetzt, liest
+     einen Satz. Das Wort danach ist `purpose` aus `goal_i18n` und damit
+     Inhalt — 'Entspannen', nicht 'Entspannung'.
+
+     'zum Musie kennenlernen' ist Bens Wortlaut und bleibt so. Der Duden will
+     'zum Musie-Kennenlernen' oder 'um Musie kennenzulernen'; in
+     OPEN-QUESTIONS notiert, nicht still korrigiert. */
+  /* ── Der Einstieg, und warum er ein eigener Schlüssel ist (Ben, 2026-10-15)
+     Die Überschrift bemerkt erst, dass jemand da ist, und sagt dann, was es
+     gibt. Genau diese Hälfte hat im Usertesting gefehlt: *warum sollte ich
+     das machen* beantwortet keine Zahl, und das Erste, was man jemandem
+     sagt, der aus einem vollen Tag heraustritt, ist keine Bestandsliste.
+
+     GETRENNT VON DEN DREI FORMEN statt in jede hineinkopiert — also genau
+     andersherum als beim `{goal}`-Platzhalter einen Block weiter oben, und
+     der Unterschied ist die ganze Regel. Der Platzhalter teilt EINEN Satz;
+     drei Schlüssel hätten die Wortstellung festgenagelt und wer übersetzt,
+     bekäme Bruchstücke. Das hier ist ein ZWEITER Satz: er ändert sich nicht
+     mit der Zahl, und nichts daran hängt davon ab, wohin der andere sein
+     Verb stellt. Zwischen Sätzen zu trennen kostet beim Übersetzen nichts,
+     innerhalb eines Satzes kostet es den Satz.
+
+     Sonst sechs Kopien — drei Formen, zwei Sprachen — und wer ihn das
+     nächste Mal umschreibt, findet fünf davon.
+
+     ── Es ist die Tageszeit (Ben, 2026-10-15) ───────────────────────────
+     Eine Stunde lang stand hier *Schön, dass du dir einen Moment nimmst.*
+     Ein Gruß ist wärmer und verlangt nichts: der erste Entwurf hat die
+     Leserin bemerkt und ihr dann ein Kompliment für ihr Erscheinen gemacht,
+     und das ist viel verlangt ganz oben auf einem Bildschirm, zu dem man
+     wegen etwas anderem gekommen ist.
+
+     NACH DEUTSCHER ZEIT, nicht nach der des Geräts — die Begründung und die
+     Uhr stehen in `lib/greeting.ts`. 04:00–11:30, 11:31–16:30, der Rest.
+
+     Punkt statt Ausrufezeichen: der Gruß steht vor einem zweiten Satz und
+     soll ihn ankündigen, nicht übertönen. */
+  'exercises.headline.morning': 'Guten Morgen.',
+  'exercises.headline.day': 'Guten Tag.',
+  'exercises.headline.evening': 'Guten Abend.',
+  /* Das Angebot. 'Hier ist' gegen 'Hier sind' ist der zweite Grund, warum
+     sich die Pluralformen lohnen — das Verb kongruiert mit, nicht nur das
+     Substantiv, und das kann keine eingesetzte Zahl. `none` lässt das 'hier'
+     weg: *Hier sind keine Übungen* ist korrekt und klingt wie ein
+     Achselzucken.
+
+     KEIN PUNKT bei allen dreien, und das ist keine Stilfrage: `{goal}` steht
+     bei zweien am Satzende, und der Link, der ihn ersetzt, endet mit einem
+     Glyph — ein Punkt danach wird als Tupfen hinter den drei Punkten
+     gezeichnet, einen halben Wortabstand vom Wort entfernt. Auf dem Schirm
+     gesehen, auf Deutsch, bei 393px. Der GRUSS behält seinen Punkt, weil nach
+     ihm ein Satz kommt, von dem er getrennt werden muss. */
+  'exercises.headline.none': 'Noch keine Übung zum {goal}',
+  'exercises.headline.one': 'Hier ist eine Übung zum {goal}',
+  'exercises.headline.other': 'Hier sind {count} Übungen zum {goal}',
   /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
      sie ist ersatzlos weg (Ben, 2026-10-08). `DeckGuide` erklärt Tippen und
      Wischen auf der Karte selbst; die Liste erklärt er nicht, und genau diese
@@ -1084,7 +1137,11 @@ export const de: Messages = {
      `guide.dismiss` wird nie gesehen: die Zeile nur für Screenreader, weil die
      Legende ein einziger Button ist und ihr zugänglicher Name sonst aus drei
      Erklärungssätzen ohne Verb besteht. */
-  'exercises.guide.goal': 'Ändere dein Ziel',
+  /* NO 'exercises.guide.goal'. It was *Ändere dein Ziel* — the legend's top row, an arrow
+     pointing up out of the card at the goal pill. The pill is gone and the
+     goal is the page's headline, so the row was explaining the largest line
+     on the screen; Ben cut it on 2026-10-15 and the key goes with it rather
+     than being kept against a row that is not coming back. */
   'exercises.guide.next': 'Wische für die nächste Übung',
   'exercises.guide.start': 'Tippe eine Übung an, um sie zu starten',
   'exercises.guide.dismiss': 'Zum Fortfahren drücken',
@@ -1102,18 +1159,54 @@ export const de: Messages = {
   'exercises.view.legend': 'Wie die Übungen gezeigt werden',
   'exercises.view.deck': 'Stapel',
   'exercises.view.list': 'Liste',
-  /* KEIN 'exercises.goal.headline' mehr. Das war 'Dein Ziel' und nie die
-     Überschrift der Ziel-Box, sondern einer der drei h1-Zustände von
-     /exercises — der für ein Ziel, das keine Übung bedient. Die Überschrift
-     ist jetzt eine einzige Frage, der Zustand ist weg, und ein Schlüssel, den
-     nichts mehr zeichnet, ist genau die unsichtbare Fäulnis, vor der der Kopf
-     dieser Datei warnt. Also gelöscht statt aufgehoben. */
-  /* du, and NO 'gerade heute': the brief had both and they say the same
-     thing twice — 'gerade' is right now, 'heute' is today. 'heute' is the one
-     that matches a choice you make once a day. Flagged in OPEN-QUESTIONS. */
-  'exercises.goal.question': 'Was möchtest du heute erreichen?',
-  'exercises.goal.none': 'Musie entdecken',
-  'exercises.goal.pill': 'Ziel: {goal}',
+  /* KEIN 'exercises.goal.none' mehr. Das war 'Musie entdecken' — das einzige
+     Ziel-Label, das hier stand statt in `goal_i18n`, weil es die ABWESENHEIT
+     eines Ziels benannte und deshalb keine Zeile hatte, deren Label es hätte
+     sein können. Seit 2026-10-15 hat es eine (`get-to-know-musie`) und drei
+     zugeordnete Übungen; das Argument ist mit seinem Gegenstand weg. Der Text
+     ist in die Tabelle umgezogen, nicht gelöscht.
+
+     KEIN 'exercises.goal.pill' mehr. Das war 'Ziel: {goal}' auf dem
+     Trichter-Button in der Werkzeugleiste. Die Überschrift ist jetzt das
+     Bedienelement.
+
+     KEIN 'exercises.goal.headline' mehr. Das war 'Dein Ziel', einer der drei
+     h1-Zustände von /exercises, und es ging am 2026-10-08. Immer noch weg. */
+  /* Einmal gefragt, zweimal gezeichnet — als sichtbare h2 im Sheet und als
+     verborgene Legende der Radio Cards darunter. Ein Fieldset braucht einen
+     eigenen zugänglichen Namen (1.3.1, 4.1.2), und eine Überschrift darüber
+     liefert den nicht.
+
+     'WAS BRAUCHST DU GERADE' statt 'was möchtest du heute erreichen' (Ben,
+     2026-10-15). Erreichen ist ein Vorsatz, brauchen ist ein Zustand, in dem
+     man schon steckt — und diese Änderung ist für Menschen mitten im Tag, nicht
+     mitten in der Planung. 'gerade' statt 'heute': die alte Notiz wählte
+     'heute', weil das Ziel einmal am Tag gewählt wird; die Frage zielt jetzt
+     auf den Moment. Nur so lassen sich die Karten als Nominalphrasen
+     beantworten — 'Entspannung', 'Energie' —, denn jede vervollständigt
+     'Ich brauche …'. */
+  'exercises.goal.question': 'Was brauchst du gerade?',
+  /* Der fette Vorspann auf einer Ziel-Karte, vor den zwei Sätzen. Ein Wort,
+     auf jeder Karte dasselbe, also Chrome — die SÄTZE sind `goal_i18n.why`
+     und stehen pro Ziel woanders.
+
+     NUR EINE DER VIER KARTEN HAT ÜBERHAUPT EINEN TEXT (Ben, 2026-10-15):
+     Musie kennenlernen, Entspannung und Energie benennen sich selbst,
+     Achtsamkeit ist das abstrakte Ziel, zu dem im Testing 'was soll das
+     bringen?' kam. Dieses Wort wird also heute genau einmal gezeichnet. */
+  'exercises.goal.why': 'Warum?',
+  /* Wird nie gesehen, nur gehört. Steht als sr-only-Text im Link der
+     Überschrift, damit das Bedienelement als 'Entspannen, Ziel ändern'
+     angesagt wird und die h1 trotzdem ein Satz bleibt.
+
+     KEIN `aria-label`: ein Label ERSETZT den Text im zugänglichen Namen, und
+     die Überschrift hieße dann '2 Übungen zum Ziel ändern: Entspannen'. */
+  'exercises.goal.change': 'Ziel ändern',
+  /* Der zugängliche Name des Sheets — angesagt, nie gezeichnet, so wie
+     `Sheet` es für `title` verlangt. Die sichtbare Überschrift darin ist die
+     Frage oben; das hier benennt das Möbelstück und ist deshalb eine
+     Nominalphrase, die auch ohne Kontext trägt. */
+  'exercises.goal.sheetTitle': 'Dein Ziel',
   'exercises.goal.empty': 'Für dieses Ziel gibt es noch keine Übung.',
   /* Verbphrase, Infinitiv — ein Button sagt, was er tut (§3). */
   'exercises.goal.emptyAction': 'Anderes Ziel wählen',
@@ -1190,6 +1283,65 @@ export const de: Messages = {
   'insightMap.hint.company': 'Alle bei Northwind, als ein Kreis. Die Fläche steht überall für Menschen.',
   'insightMap.hint.departments': 'Sechs Abteilungen, so groß wie ihre Zahl an Menschen. Zusammen der erste Tab.',
   'insightMap.hint.pods': 'Eine Linie zu jeder Abteilung, aus der ein Pod Leute holt – je dicker, desto mehr. Abteilungen sind hier Ankerpunkte, keine Größen.',
+  /* `/feelings-selection`. Die 128 Gefühle stehen NICHT hier — sie sind die
+     Worte des Rads, zweisprachig in `content/emotionWheel.ts`.
+
+     `feelings.prompt.chosen` berichtet statt zu formulieren: das Rad mischt
+     Adjektive (Glücklich) und Substantive (Vertrauen), und ein Satz kann nur
+     eines von beiden tragen – „Ich fühle mich Vertrauen" ist falsch, „Ich
+     fühle glücklich" auch. Die Frage steht im leeren Zustand, das Wort danach
+     für sich. Siehe die offene Frage zum Wortartenkonflikt. */
+  'feelings.sheet.title': 'Finde das Wort für dein Gefühl',
+  'feelings.sheet.close': 'Schließen',
+  'feelings.sheet.next': 'Weiter',
+  'feelings.sheet.previous': 'Zurück',
+  'feelings.sheet.done': 'Das trifft es',
+  'feelings.prompt.empty': 'Ich fühle mich …',
+  'feelings.prompt.chosen': 'Gewählt: {feeling}',
+  'feelings.ring.emotions.legend': 'Was kommt dem am nächsten?',
+  'feelings.ring.emotions.hint': 'Fang weit an. Genauer wird es gleich.',
+  'feelings.ring.detailed.legend': 'Du hast {feeling} gewählt. Welche Art?',
+  'feelings.ring.detailed.hint': 'Passt noch nicht? Geh zurück und wähle anders.',
+  'feelings.ring.detailed.waiting': 'Welche Art?',
+  'feelings.ring.specific.legend': 'Und {feeling} genauer?',
+  'feelings.ring.specific.hint': 'Die letzten zwei. Bei beiden darfst du bleiben.',
+  'feelings.ring.specific.waiting': 'Genauer?',
+  /* Die letzte Zeile auf Ring 2 und 3: das Wort von oben, als Antwort und
+     nicht als Schritt. Wer es wählt, geht nicht tiefer. */
+  'feelings.stop': 'Einfach {feeling}',
+  'feelings.waiting.emotion': 'Wähle im ersten Schritt ein Gefühl, dann füllt sich das hier.',
+  'feelings.waiting.detailed': 'Wähle eins im Schritt davor, dann füllt sich das hier.',
+  'feelings.empty': 'Hier gibt es nichts zu wählen.',
+  'feelings.result.empty': 'Noch nichts gewählt.',
+  'feelings.result.chosen': 'Du hast gewählt: {feeling}',
+  'feelings.reopen.open': 'Das Sheet ist offen',
+  'feelings.reopen.closed': 'Noch mal wählen',
+  'route.feelingsSelection.title': 'Gefühl wählen',
+  /* `/capturing-feelings-exploration` – der Test von 2026-10-15, der beim Bild
+     anfängt statt beim Wort. Bens Wortlaut für die erste Frage und die drei
+     Optionen, unverändert übernommen.
+
+     Die drei Fragen in Schritt 2 sind ausgeschrieben und nicht eine Frage mit
+     eingesetzter Bildart: „Wer ist zu sehen?“ passt auf keine Landschaft.
+
+     „Erzähl“, nicht „Erzähle“: der Imperativ Singular darf die Endung bei
+     Verben auf -l abwerfen, und gesprochen ist genau das die Form, in der
+     jemand gebeten wird, etwas zu erzählen. Siehe docs/GERMAN-UI-WRITING.md
+     zum Imperativ Singular. */
+  'capturing.picture.headline': 'Was für ein Bild ist vor deinem inneren Auge entstanden?',
+  'capturing.picture.empty': 'Hier gibt es nichts zu wählen.',
+  'capturing.kind.figures.option': 'Figuren',
+  'capturing.kind.figures.headline': 'Erzähl von ihnen.',
+  'capturing.kind.figures.question': 'Wer ist zu sehen, und was tun sie?',
+  'capturing.kind.memory.option': 'Eine Erinnerung',
+  'capturing.kind.memory.headline': 'Erzähl von diesem Moment.',
+  'capturing.kind.memory.question': 'Wann war das, und wer war dabei?',
+  'capturing.kind.landscape.option': 'Eine Landschaft',
+  'capturing.kind.landscape.headline': 'Erzähl von diesem Ort.',
+  'capturing.kind.landscape.question': 'Wo bist du, und was siehst du um dich herum?',
+  'capturing.feeling.headline': 'Wie fühlt sich das an?',
+  'capturing.feeling.label': 'In deinen Worten',
+  'route.capturingFeelings.title': 'Gefühle einfangen',
   'route.insightMap.title': 'Org-Karte',
   'route.maintenance.title': 'Verwaltung',
   'route.aboutMusie.title': 'Über Musie',

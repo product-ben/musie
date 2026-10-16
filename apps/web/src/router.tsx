@@ -309,6 +309,54 @@ export const router = createBrowserRouter([
         handle: handle({ titleKey: 'route.maintenance.title', wide: true }),
       },
       {
+        /* THE FEELINGS DRILL-DOWN — a user test of 2026-10-15, and the fifth
+           tool on this table. Same shape as the other four: `lazy`, linked
+           from nowhere, reachable only by typing the path, writing nothing.
+
+           `lazy` is load-bearing rather than tidy: this module is the only
+           importer of `content/emotionWheel.ts`, 128 words of transcribed
+           wheel that nobody who never types this path should download.
+
+           NOT `wide`. The question under test is whether narrowing beats
+           reading a list of 128, and that is a phone question — `--bp-md` is
+           the width the answer has to hold at. See routes/FeelingsSelection.tsx. */
+        path: 'feelings-selection',
+        lazy: async () => {
+          const { FeelingsSelection } = await import('./routes/FeelingsSelection');
+          return { Component: FeelingsSelection };
+        },
+        handle: handle({ titleKey: 'route.feelingsSelection.title' }),
+      },
+      {
+        /* THE PICTURE-FIRST TEST — the same user test of 2026-10-15 and the
+           sixth tool on this table, so the same shape again: `lazy`, linked
+           from nowhere, reachable only by typing the path, writing nothing.
+
+           It is the SIBLING of the route above and is deliberately a separate
+           path rather than a mode of it. The two ask opposite questions — hand
+           over a vocabulary and narrow it, versus never show a feeling word at
+           all — and a tester is sent to one or the other, never to a screen
+           with a switch on it.
+
+           `lazy` is habit rather than load-bearing here: this module imports
+           nothing the app does not already ship. It stays lazy anyway, because
+           every other tool on this table is, and a route nobody but the team
+           opens should not sit in everybody's first paint.
+
+           NOT `wide`. The flow is three boxes in a column and the test is on a
+           phone — `--bp-md` is the width the answer has to hold at. Same
+           reasoning as the route above. See
+           routes/CapturingFeelingsExploration.tsx. */
+        path: 'capturing-feelings-exploration',
+        lazy: async () => {
+          const { CapturingFeelingsExploration } = await import(
+            './routes/CapturingFeelingsExploration'
+          );
+          return { Component: CapturingFeelingsExploration };
+        },
+        handle: handle({ titleKey: 'route.capturingFeelings.title' }),
+      },
+      {
         path: '*',
         element: <Placeholder titleKey="route.notFound.title" />,
         handle: handle({ titleKey: 'route.notFound.title' }),
