@@ -18,8 +18,12 @@ export interface DeckCard {
   sort: number;
   /** `cards.image_url`, or null where there is no artwork. */
   image: string | null;
-  /** `card_i18n.feeling`, both locales, both required. */
-  feeling: Record<Locale, string>;
+  /** `card_i18n.feeling` — null in BOTH locales for a card that goes by its
+   *  picture, or written in both. Required in both only where `image` is null,
+   *  because that is the one branch `deck-pdf.mjs` sets the word in type for.
+   *  Was `Record<Locale, string>` until 2026-10-15; see `checkDeck` for why a
+   *  retired column stopped being owed. */
+  feeling: Record<Locale, string | null>;
   /** `card_i18n.image_alt` — null in BOTH locales, or written in both. */
   imageAlt: Record<Locale, string | null>;
   /** `exercise_tracks` — exercise id → the track that exercise plays for this

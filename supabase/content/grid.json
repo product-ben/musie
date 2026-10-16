@@ -4,16 +4,16 @@
     {
       "valence": -2,
       "arousal": 2,
-      "card": "MC-03",
-      "track": "trk-05",
-      "artwork": "art-03"
+      "card": null,
+      "track": null,
+      "artwork": null
     },
     {
       "valence": -1,
       "arousal": 2,
-      "card": "MC-04",
-      "track": "trk-01",
-      "artwork": "art-04"
+      "card": null,
+      "track": null,
+      "artwork": null
     },
     {
       "valence": 0,
@@ -39,37 +39,37 @@
     {
       "valence": -2,
       "arousal": 1,
-      "card": null,
-      "track": null,
-      "artwork": null
+      "card": "MC-10",
+      "track": "trk-10",
+      "artwork": "art-06"
     },
     {
       "valence": -1,
       "arousal": 1,
-      "card": null,
-      "track": null,
-      "artwork": null
+      "card": "MC-09",
+      "track": "trk-16",
+      "artwork": "art-09"
     },
     {
       "valence": 0,
       "arousal": 1,
-      "card": null,
-      "track": null,
-      "artwork": null
+      "card": "MC-01",
+      "track": "trk-22",
+      "artwork": "art-01"
     },
     {
       "valence": 1,
       "arousal": 1,
-      "card": "MC-09",
-      "track": "trk-01",
-      "artwork": "art-09"
+      "card": "MC-02",
+      "track": "trk-12",
+      "artwork": "art-02"
     },
     {
       "valence": 2,
       "arousal": 1,
-      "card": "MC-01",
-      "track": "trk-04",
-      "artwork": "art-01"
+      "card": null,
+      "track": null,
+      "artwork": null
     },
     {
       "valence": -2,
@@ -82,22 +82,22 @@
       "valence": -1,
       "arousal": 0,
       "card": "MC-06",
-      "track": "trk-05",
+      "track": "trk-17",
       "artwork": "art-06"
     },
     {
       "valence": 0,
       "arousal": 0,
-      "card": null,
-      "track": null,
-      "artwork": null
+      "card": "MC-03",
+      "track": "trk-05",
+      "artwork": "art-03"
     },
     {
       "valence": 1,
       "arousal": 0,
-      "card": null,
-      "track": null,
-      "artwork": null
+      "card": "MC-08",
+      "track": "trk-02",
+      "artwork": "art-08"
     },
     {
       "valence": 2,
@@ -109,44 +109,44 @@
     {
       "valence": -2,
       "arousal": -1,
-      "card": "MC-02",
-      "track": "trk-02",
-      "artwork": "art-02"
+      "card": null,
+      "track": null,
+      "artwork": null
     },
     {
       "valence": -1,
       "arousal": -1,
-      "card": null,
-      "track": null,
-      "artwork": null
+      "card": "MC-05",
+      "track": "trk-13",
+      "artwork": "art-05"
     },
     {
       "valence": 0,
-      "arousal": -1,
-      "card": null,
-      "track": null,
-      "artwork": null
-    },
-    {
-      "valence": 1,
-      "arousal": -1,
-      "card": null,
-      "track": null,
-      "artwork": null
-    },
-    {
-      "valence": 2,
       "arousal": -1,
       "card": "MC-07",
       "track": "trk-04",
       "artwork": "art-07"
     },
     {
+      "valence": 1,
+      "arousal": -1,
+      "card": "MC-04",
+      "track": "trk-21",
+      "artwork": "art-04"
+    },
+    {
+      "valence": 2,
+      "arousal": -1,
+      "card": null,
+      "track": null,
+      "artwork": null
+    },
+    {
       "valence": -2,
       "arousal": -2,
-      "card": "MC-08",
-      "track": "trk-02",
-      "artwork": "art-08"
+      "card": null,
+      "track": null,
+      "artwork": null
     },
     {
       "valence": -1,
@@ -165,9 +165,9 @@
     {
       "valence": 1,
       "arousal": -2,
-      "card": "MC-05",
-      "track": "trk-02",
-      "artwork": "art-05"
+      "card": null,
+      "track": null,
+      "artwork": null
     },
     {
       "valence": 2,
@@ -182,72 +182,72 @@
       "id": "art-01",
       "src": "assets/web/cards/mc-01.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Feine blaue Linien fächern über die Fläche, am rechten Rand steigt eine große dunkle Scheibe in warmes Licht.",
+        "en": "Fine blue lines fan across the surface; at the right edge a large dark disc rises into warm light."
       }
     },
     {
       "id": "art-02",
       "src": "assets/web/cards/mc-02.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Grüne und türkise Wellen schwingen nach rechts oben, dahinter ein blassgelber Lichtschein.",
+        "en": "Green and turquoise waves sweep up to the right, with a pale yellow light behind them."
       }
     },
     {
       "id": "art-03",
       "src": "assets/web/cards/mc-03.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Blaugraue Bergrücken schieben sich hintereinander in den Dunst.",
+        "en": "Blue-grey ridges layer one behind another into the haze."
       }
     },
     {
       "id": "art-04",
       "src": "assets/web/cards/mc-04.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Waagerechte Bänder aus Grün, Türkis und Cremeweiß liegen ruhig übereinander.",
+        "en": "Horizontal bands of green, turquoise and cream lie quietly over one another."
       }
     },
     {
       "id": "art-05",
       "src": "assets/web/cards/mc-05.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Ein rot und schiefergrau geschichteter Felsrücken unter einem staubroten Himmel.",
+        "en": "A ridge layered in red and slate grey under a dusty red sky."
       }
     },
     {
       "id": "art-06",
       "src": "assets/web/cards/mc-06.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Tiefblaue Wellen unten links treffen in einer weiten Kurve auf ein leuchtend rotes Feld.",
+        "en": "Deep blue waves at the lower left meet a glowing red field in one wide curve."
       }
     },
     {
       "id": "art-07",
       "src": "assets/web/cards/mc-07.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Eine fast leere blaue Fläche, auf der nur die Struktur des Papiers zu sehen ist.",
+        "en": "An almost empty blue surface on which only the grain of the paper shows."
       }
     },
     {
       "id": "art-08",
       "src": "assets/web/cards/mc-08.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Türkise und grüne Wellen, tief am Horizont ein blassgelber Streifen Licht.",
+        "en": "Turquoise and green waves with a pale yellow band of light low on the horizon."
       }
     },
     {
       "id": "art-09",
       "src": "assets/web/cards/mc-09.webp",
       "alt": {
-        "de": null,
-        "en": null
+        "de": "Ein dunkler Höhenzug mit roten Schichten unter einem verhangenen roten Himmel.",
+        "en": "A dark ridge with red strata under an overcast red sky."
       }
     }
   ]
