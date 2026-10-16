@@ -660,3 +660,52 @@ matching for the row below.
 A locked level labelled every row *hältst du schon fest*, including the two
 nobody was holding — two different things grey a row out, and the copy only
 knew about one of them.
+
+
+---
+
+## 17 · The third round — Ben, 2026-10-16, after looking at the screens
+
+| | |
+|---|---|
+| A `Chip` component, used for the feelings | new, with `ChipRow` |
+| *Was soll das bringen?* off the button group | an `InlineLink` on the welcome sentence |
+| Both sections full container width | the `--measure-body` caps came off |
+| `Sheet` gains two content variants | `contentAlign: 'distributed' | 'top'` |
+| The feelings foot from level 2 | `DrillDown.onDepthChange` |
+| The diary stays text only | unchanged, and now justified by `Chip`'s own API |
+
+### 17.1 · A chip is a noun
+
+Every other chip in the system is a control — `FilterChips` is a checkbox,
+`SegmentedControl` is a radio. This one is a word somebody already chose,
+sitting there being true, so **only its × is interactive**: no hover, no
+active, no cursor, no focus ring on the chip. And background only, no border,
+because an edge is what a control wears to say where you may press.
+
+Without `onRemove` it renders a `<span>` — which is what makes "the diary
+stays text only" a property of the component rather than a second
+implementation.
+
+### 17.2 · The question is not an offer
+
+The button group holds the things to **do**. Asking what any of it is for is
+not one of them, and a box with a label in it standing beside two offers reads
+as a third offer. `InlineLink` exists for exactly this and its own header
+argues against `CtaButton size="min"` in a sentence.
+
+Consequence worth noting: once both sections are answered the group is empty,
+so it is no longer rendered at all. An empty section still spends a section's
+worth of space saying nothing.
+
+### 17.3 · The foot from level 2 needed one thing thinking through
+
+Showing the buttons earlier is what Ben asked for. But from level 2 the stop
+row is **already checked and not yet written** — so a *done* button that merely
+closed would throw away the thing on screen saying it had been chosen.
+
+*Ich bin fertig* therefore commits first: nothing picked this visit and a stop
+available means it writes that stop, exactly as tapping the row would. That is
+why `onDepthChange` reports the stop's id alongside the depth — the sheet needs
+to know what the pre-checked row MEANS, and the slot is handed that during a
+render, which is the one place a consumer may not read it into state.
