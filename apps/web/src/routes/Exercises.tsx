@@ -57,8 +57,8 @@
  */
 import * as React from 'react';
 import {
-  ArrowRight, ChevronLeft, ChevronRight, EllipsisVertical, HelpCircle, LayoutList, Layers,
-  Shuffle, Timer,
+  ArrowRight, ChevronLeft, ChevronRight, HelpCircle, LayoutList, Layers,
+  Shuffle, SlidersHorizontal, Timer,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -66,7 +66,7 @@ import {
   SegmentedControl,
 } from '@musie/design-system';
 import type {
-  CardDeckCard, CardDeckItem, LightboxOrigin, RadioCardFact,
+  CardDeckCard, CardDeckItem, InlineLinkAction, LightboxOrigin, RadioCardFact,
 } from '@musie/design-system';
 import { GoalSheet } from '../components/GoalSheet';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
@@ -360,6 +360,66 @@ export function Exercises() {
      for at most one visit. */
   const greeting = React.useMemo(() => timeOfDay(), []);
 
+  /* ── STEPPING THE GOAL WITHOUT OPENING THE SHEET (Ben, 2026-10-16) ──────
+     User testing again: nobody read the link as a way to CHANGE the goal.
+     It reads as a label, because a word in a sentence is a label everywhere
+     else. So the headline grows two chevrons — the thing that says "there
+     are others" without having to be understood first — and the link keeps
+     the sheet, which is where the reasons are.
+
+     THEY WRAP, which is Ben's call over hiding them at the ends. Four goals
+     is a short enough ring to go round, and a pair that is always there is
+     a pair you can learn: a control that appears and disappears teaches
+     nothing except that the screen moved. The cost is that neither chevron
+     ever says "this is the last one", which a list of four does not really
+     need to.
+
+     INDEX FROM `goals`, NOT FROM A COUNTER. The array is `sort` order
+     straight out of the query, so the ring is the same order the sheet
+     shows and the two cannot drift. An unknown choice — the window before
+     the goals land — gives -1, and both steps fall back to the first goal
+     rather than reaching past the end of the array. */
+  const step = React.useCallback((by: 1 | -1) => {
+    if (goals.length === 0) return;
+    const at = goals.findIndex((goal) => goal.id === choice);
+    const next = goals[(at + by + goals.length) % goals.length] ?? goals[0];
+    choose(next.id);
+  }, [goals, choice, choose]);
+
+  /* ── AND THEY ARE ANNOUNCED, BECAUSE NOTHING ELSE WOULD ─────────────────
+     Choosing in the sheet announces itself for free: Lightbox restores focus
+     to the link, whose label is now the new goal. A chevron has no such
+     mechanism — focus stays on the chevron, its own label does not change,
+     and the heading beside it is not something a screen reader re-reads.
+
+     So the one path that would otherwise be silent gets a polite live
+     region. `polite`, not `assertive`: the person pressed the button, so
+     they are expecting the answer and it can wait for a gap.
+
+     IT ANNOUNCES THE PURPOSE, NOT THE LABEL, and the two are different
+     strings for the same goal — *Entspannen* against *Entspannung*. The
+     label is the sheet's card headline and reads like the fuller answer;
+     the purpose is what the HEADING now says. A live region exists to
+     report what changed on screen, so hearing a word the screen does not
+     show would be the one confusing option. Caught by reading the announced
+     text beside the rendered line rather than by thinking about it. */
+  const goalName = choice === null ? null : goalPurpose(goals, choice);
+
+  const goalSteps: InlineLinkAction[] = [
+    {
+      id: 'previous',
+      glyph: ChevronLeft,
+      label: t('exercises.goal.previous'),
+      onClick: () => step(-1),
+    },
+    {
+      id: 'next',
+      glyph: ChevronRight,
+      label: t('exercises.goal.next'),
+      onClick: () => step(1),
+    },
+  ];
+
   const purpose = choice === null ? null : goalPurpose(goals, choice);
   const headline = React.useMemo(() => {
     if (purpose === null) return null;
@@ -640,7 +700,17 @@ export function Exercises() {
           {t(`exercises.headline.${greeting}`)}{' '}
           {headline[0]}
           <InlineLink
-            trailingIcon={EllipsisVertical}
+            /* A FILTER MARK, NOT AN ELLIPSIS (Ben, 2026-10-16). The three
+               dots said "there is a menu here" and people read it as
+               decoration on a label; sliders say the word narrows what is
+               below it, which is what the control does.
+
+               `SlidersHorizontal` over `Funnel`, which is what the retired
+               GoalPill wore — Ben's pick, and the pill it would have
+               inherited from is gone, so nothing is left to be consistent
+               with. */
+            trailingIcon={SlidersHorizontal}
+            actions={goalSteps}
             /* The sheet is a dialog and this is what opens it. base-ui's
                Dialog.Trigger would set both for us, but Sheet owns its
                Lightbox and does not expose the trigger slot — so they are
@@ -660,6 +730,13 @@ export function Exercises() {
           {headline[1]}
         </h1>
       )}
+
+      {/* Heard, never seen — see `goalSteps`. Outside the `h1`, because a
+          live region inside a heading would make the heading's own text
+          change announce twice. */}
+      <p className="musy-sr-only" aria-live="polite">
+        {goalName === null ? '' : t('exercises.goal.changed', { goal: goalName })}
+      </p>
 
       {loading && <p className="musie-note">{t('content.loading')}</p>}
       {error !== null && <p className="musie-note">{t('content.errorDetail')}</p>}

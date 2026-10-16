@@ -182,4 +182,4 @@ export type { TimelineProps, TimelineGroup } from './Timeline';
    cannot be: it inherits its type from where it sits rather than declaring a
    step of its own. InlineLink.tsx's header tells the two apart. */
 export { InlineLink } from './InlineLink';
-export type { InlineLinkProps } from './InlineLink';
+export type { InlineLinkProps, InlineLinkAction } from './InlineLink';

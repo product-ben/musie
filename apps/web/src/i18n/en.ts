@@ -1646,6 +1646,20 @@ export const en = {
      loaded and has nothing for this goal — a true sentence about a mapping,
      not a failure. Unreachable under the mapping of 2026-10-15, and kept for
      the first time one is retired. */
+  /* ── THE TWO CHEVRONS BESIDE THE GOAL (Ben, 2026-10-16) ────────────────
+     Icon-only, so these ARE the controls: without a name each announces as
+     "button", and the two differ only by which way a chevron points, which
+     is exactly the difference a screen reader cannot see.
+
+     "Goal" AND NOT "exercise": they step the FILTER, and the pile changing
+     underneath is the consequence rather than the action. */
+  'exercises.goal.previous': 'Previous goal',
+  'exercises.goal.next': 'Next goal',
+  /* Heard, never seen. Choosing in the sheet announces itself — focus
+     returns to the link and the link now says the new goal — but a chevron
+     leaves focus where it is and changes a heading beside it, which nothing
+     re-reads. This is the only path that would otherwise be silent. */
+  'exercises.goal.changed': 'Goal: {goal}',
   'exercises.goal.empty': 'No exercise serves this goal yet.',
   'exercises.goal.emptyAction': 'Choose a different goal',
   /* ── /goal-mappings — A TOOL, NOT A SCREEN ──────────────────────────────

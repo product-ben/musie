@@ -1207,6 +1207,22 @@ export const de: Messages = {
      Frage oben; das hier benennt das Möbelstück und ist deshalb eine
      Nominalphrase, die auch ohne Kontext trägt. */
   'exercises.goal.sheetTitle': 'Dein Ziel',
+  /* ── Die zwei Chevrons neben dem Ziel (Ben, 2026-10-16) ────────────────
+     Nur Symbole, also SIND diese Texte die Bedienelemente: ohne Namen wird
+     beides als 'Schaltfläche' angesagt, und die beiden unterscheiden sich
+     nur durch die Richtung eines Pfeils — genau das, was eine Vorleseansage
+     nicht sieht.
+
+     'Ziel' und nicht 'Übung': sie schalten den FILTER weiter, und dass sich
+     der Stapel darunter ändert, ist die Folge und nicht die Handlung. */
+  'exercises.goal.previous': 'Vorheriges Ziel',
+  'exercises.goal.next': 'Nächstes Ziel',
+  /* Wird gehört, nie gesehen. Eine Wahl im Sheet sagt sich von selbst an —
+     der Fokus kehrt zum Link zurück, und der nennt jetzt das neue Ziel —
+     aber ein Chevron lässt den Fokus, wo er ist, und ändert eine Überschrift
+     daneben, die nichts erneut vorliest. Dieser Weg wäre sonst als einziger
+     stumm. */
+  'exercises.goal.changed': 'Ziel: {goal}',
   'exercises.goal.empty': 'Für dieses Ziel gibt es noch keine Übung.',
   /* Verbphrase, Infinitiv — ein Button sagt, was er tut (§3). */
   'exercises.goal.emptyAction': 'Anderes Ziel wählen',
