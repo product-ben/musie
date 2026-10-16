@@ -849,68 +849,41 @@
    full-width pair would read as one. */
 .musie-reflect__door { align-self: start; }
 
-/* ── THE FEELINGS, AS A LINE OF WORDS ──────────────────────────────────────
-   Comma-separated inline words, each with its own × , and the + after the
-   last one. Ben: the words and the button are middle aligned.
+/* ── THE FEELINGS ROW: CHIPS, AND THE WAY TO ADD ANOTHER ──────────────────
+   `ChipRow` owns the gap BETWEEN chips (L2's `--space-gap-related`, shipped
+   with the component). What is left here is the one thing it cannot know:
+   that a `+` button stands at the end of the line, outside the list, and has
+   to sit against it at the same rung.
 
-   A <ul> WITH ITS MARKERS OFF. It is a list to a screen reader and the commas
-   are not announced, so the semantics have to come from somewhere — and the
-   commas are decoration, which is why they carry aria-hidden in the markup.
+   `align-items: center` is Ben's alignment and is doing real work: the + is
+   --target-primary and a chip is --target-min plus a rung, so without it the
+   button would hang below the line of chips.
 
-   `align-items: center` is Ben's alignment, and it is doing real work: the +
-   is --target-primary and a line of body text is shorter, so without it the
-   button would sit on the text's baseline and the row would look broken. */
+   FULL CONTAINER WIDTH — Ben, 2026-10-16. No `--measure-body` cap: a reading
+   measure is for prose, and this is a wrapping row of objects. Capping it
+   made the chips wrap early against an invisible edge halfway across the
+   step. */
 .musie-feeling-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  /* The row's rung is `related`; the word-and-× pair below sits at `inline`,
-     the tighter one. Two rungs, so the pair reads as one unit and the commas
-     separate units — L6's distinction, spent rather than described. */
   gap: var(--space-gap-related);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  max-inline-size: var(--measure-body);
-}
-
-/* Each word with its × — one unit, so a wrap never leaves a × orphaned on the
-   next line from the word it removes. A tighter gap than the row's, because
-   the button belongs to the word rather than standing beside it (L6). */
-.musie-feeling-row__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-gap-inline);
-}
-
-/* The word itself, at the large body step the brief asks for. */
-.musie-feeling-row__word {
-  font-family: var(--type-body-lg-family);
-  font-size: var(--type-body-lg-size);
-  font-weight: var(--type-body-lg-weight);
-  line-height: var(--type-body-lg-line);
-  color: var(--on-surface);
-}
-
-/* The separator. Pulled back against the × so it reads as punctuation after
-   the pair rather than as a third item — a negative margin of the row's own
-   gap, which is arithmetic over a Layer 1 token and not a picked number. */
-.musie-feeling-row__comma {
-  margin-inline-start: calc(var(--space-gap-inline) * -0.5);
-  font-family: var(--type-body-lg-family);
-  font-size: var(--type-body-lg-size);
-  line-height: var(--type-body-lg-line);
-  color: var(--on-surface-muted);
+  inline-size: 100%;
 }
 
 /* ── THE CAPTURED THOUGHTS, AS A BLOCK YOU CAN TAP ─────────────────────────
    A button, because it is a control: reachable by keyboard and announced as
    one. Styled as prose, because what it shows is the reader's own words and a
-   button chrome around them would make them look like a label. */
+   button chrome around them would make them look like a label.
+
+   FULL CONTAINER WIDTH — Ben, 2026-10-16. The `--measure-body` cap came off
+   with the feelings row's: it is a SURFACE holding prose rather than a column
+   of prose, and a box that stops two thirds of the way across the step reads
+   as a box that failed to fill. The text inside it still wraps at the
+   measure the type sets. */
 .musie-reflect__thoughts {
   display: block;
   inline-size: 100%;
-  max-inline-size: var(--measure-body);
   margin: 0;
   padding: var(--space-inset-control);
   border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);

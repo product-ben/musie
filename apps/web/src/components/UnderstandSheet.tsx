@@ -53,6 +53,13 @@ export function UnderstandSheet({ open, onOpenChange }: UnderstandSheetProps) {
          grow-from-origin animation would be right for one and wrong for the
          rest. */
       origin={null}
+      /* ── TOP, NOT DISTRIBUTED — Ben, 2026-10-16 ───────────────────────
+         `Sheet`'s default centres a single body in the room between the
+         header and the foot, which is right for one screen to look at and
+         wrong for a column somebody reads or works down. Measured on screen:
+         the drill-down's three rows sat in the middle of a tall sheet with
+         the question stranded at the top. */
+      contentAlign="top"
       className="musie-reflect-sheet"
       header={
         <h2 className="musie-reflect-sheet__headline">

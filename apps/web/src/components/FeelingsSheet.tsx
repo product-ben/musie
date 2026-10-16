@@ -93,11 +93,28 @@ export function FeelingsSheet({
 
   const [alreadyHeld, setAlreadyHeld] = React.useState(false);
 
+  /**
+   * HOW DEEP THE DRILL-DOWN IS, so the foot can appear from level 2 down.
+   *
+   * Reported by `DrillDown` from an effect rather than read in render: the
+   * depth lives inside its path, and the slot is handed it during a render,
+   * which is the one place a consumer may not put it into state.
+   */
+  const [depth, setDepth] = React.useState(0);
+  /**
+   * What the pre-checked stop row would commit at the level on screen, and
+   * `null` at level 1 where there is no stop. See *Ich bin fertig* below:
+   * it is what stops that button discarding a visible selection.
+   */
+  const [stopId, setStopId] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     if (!open) return;
     setPickedHere(0);
     setRun((n) => n + 1);
     setAlreadyHeld(false);
+    setDepth(0);
+    setStopId(null);
   }, [open]);
 
   const tree = React.useMemo(() => wheelAsTree(locale), [locale]);
@@ -105,19 +122,18 @@ export function FeelingsSheet({
 
   const atCap = held.length >= FEELINGS_SOFT_CAP;
 
-  const pick = React.useCallback(async (path: readonly DrillDownNode[]) => {
-    const last = path[path.length - 1];
-    if (last === undefined) return;
+  /**
+   * Write one feeling by its node id, and close the sheet when the pick was
+   * a STOP. Taken by two callers — a tapped row, and *Ich bin fertig*
+   * standing in for the pre-checked stop — which is why `viaStop` is an
+   * argument here rather than being re-derived in each.
+   */
+  const commit = React.useCallback(async (nodeId: string, viaStop: boolean) => {
     /* Decoded here rather than in the sheet's caller so a malformed id — which
        can only come from a tree this file built — dies at the boundary. */
-    if (pathOf(last.id) === null) return;
-
-    /* STOP OR LEAF, read off the path: a stop's last node still has the
-       children it stopped above, and a leaf has none. See the header. */
-    const viaStop = (last.children?.length ?? 0) > 0;
-
+    if (pathOf(nodeId) === null) return;
     try {
-      const result = await onPick(last.id);
+      const result = await onPick(nodeId);
       setAlreadyHeld(result === 'already-held');
       if (result === 'added') {
         setPickedHere((n) => n + 1);
@@ -132,6 +148,21 @@ export function FeelingsSheet({
          failure the screen has already reported. */
     }
   }, [onPick, onOpenChange]);
+
+  /** *Ich bin fertig* committing the stop. Always a stop, hence `true`. */
+  const pickId = React.useCallback(
+    (nodeId: string) => commit(nodeId, true),
+    [commit],
+  );
+
+  /** A row was activated in the drill-down. */
+  const pick = React.useCallback((path: readonly DrillDownNode[]) => {
+    const last = path[path.length - 1];
+    if (last === undefined) return;
+    /* STOP OR LEAF, read off the path: a stop's last node still has the
+       children it stopped above, and a leaf has none. See the header. */
+    void commit(last.id, (last.children?.length ?? 0) > 0);
+  }, [commit]);
 
   /* ── THE SLOT ────────────────────────────────────────────────────────────
      `DrillDown` draws no rows; this is what it draws instead. Rule 7 all the
@@ -186,7 +217,24 @@ export function FeelingsSheet({
     />
   ), [t]);
 
-  const foot = pickedHere === 0 && !alreadyHeld ? undefined : (
+  /**
+   * ── THE FOOT APPEARS FROM LEVEL 2 — Ben, 2026-10-16 ─────────────────────
+   *
+   * *"Zeige im Feelings sheet ab dem 2. Level die Buttons an, um es Users
+   * einfacher zu machen die richtige Auswahl schnell zu treffen."*
+   *
+   * It used to wait for a pick. That was right while the stop row was just
+   * another option, and became wrong once the stop arrived PRE-CHECKED: from
+   * level 2 there is always an answer selected, so there is always something
+   * *Ich bin fertig* could mean. Making somebody pick first in order to be
+   * shown the button that finishes is the step asking for a tap it does not
+   * need.
+   *
+   * Level 1 still shows nothing, and that is not an inconsistency: nothing
+   * is checked there, so neither button has anything to act on yet. The ×
+   * is the way out of a sheet nobody has answered.
+   */
+  const foot = depth === 0 && pickedHere === 0 && !alreadyHeld ? undefined : (
     <div className="musie-stack">
       {error !== null && (
         <Message
@@ -205,7 +253,22 @@ export function FeelingsSheet({
         />
       )}
       <ButtonGroup purpose="continue-only">
-        <CtaButton variant="primary" onClick={() => onOpenChange(false)}>
+        {/* ── IT COMMITS WHAT IS SELECTED, THEN CLOSES ──────────────────
+            From level 2 the stop row is ALREADY CHECKED, so a *done* button
+            that merely closed would throw away the thing on screen saying
+            it had been chosen. That is the trap showing the foot early
+            would otherwise open.
+
+            So: nothing picked in this visit and a stop available → commit
+            it, exactly as tapping the row would. Something already picked
+            → it is already written, and this just closes. */}
+        <CtaButton
+          variant="primary"
+          onClick={() => {
+            if (pickedHere === 0 && stopId !== null) { void pickId(stopId); return; }
+            onOpenChange(false);
+          }}
+        >
           {t('reflect.feelings.sheet.done')}
         </CtaButton>
         {/* ONLY BELOW THE CAP. Not disabled — a disabled control here would
@@ -237,6 +300,13 @@ export function FeelingsSheet({
          animation that is right for one is wrong or impossible for the other
          two. The goal sheet has exactly one door and can afford it. */
       origin={null}
+      /* ── TOP, NOT DISTRIBUTED — Ben, 2026-10-16 ───────────────────────
+         `Sheet`'s default centres a single body in the room between the
+         header and the foot, which is right for one screen to look at and
+         wrong for a column somebody reads or works down. Measured on screen:
+         the drill-down's three rows sat in the middle of a tall sheet with
+         the question stranded at the top. */
+      contentAlign="top"
       className="musie-reflect-sheet"
       header={
         <h2 className="musie-reflect-sheet__headline">
@@ -250,6 +320,7 @@ export function FeelingsSheet({
         nodes={tree}
         onPick={pick}
         disabledIds={heldIds}
+        onDepthChange={(next, stop) => { setDepth(next); setStopId(stop); }}
         stopLabel={(parent) => t('reflect.feelings.sheet.just', { feeling: parent })}
         backLabel={(parent) => t('reflect.feelings.sheet.back', { feeling: parent })}
         levelLabel={(parent, count) => t('reflect.feelings.sheet.level', {

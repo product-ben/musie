@@ -45,8 +45,8 @@
  * whole point of a filled state.
  */
 import * as React from 'react';
-import { Plus, X } from 'lucide-react';
-import { ButtonGroup, CtaButton, IconButton } from '@musie/design-system';
+import { Plus } from 'lucide-react';
+import { ButtonGroup, Chip, ChipRow, CtaButton, IconButton, InlineLink } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import type { HeldFeeling } from '../lib/feelings';
 
@@ -78,18 +78,33 @@ export function SessionReflect({
 
   return (
     <>
-      {/* ── THE WELCOME ─────────────────────────────────────────────────
-          Two words and one sentence. The headline was the whole paragraph
-          in display type until 2026-10-16, which ran three lines on a
-          laptop and read as a wall at the moment somebody's eyes are still
+      {/* ── THE WELCOME, AND THE THIRD DOOR INSIDE IT ──────────────────
+          Two words and one sentence. The headline was the whole sentence in
+          display type until 2026-10-16, which ran three lines on a laptop
+          and read as a wall at the moment somebody's eyes are still
           adjusting.
 
           THE SENTENCE OPENS ON THE BREATH, which is the only instruction on
           the step and is first because it is what to do before reading any
-          of the rest. */}
+          of the rest.
+
+          AND IT ENDS ON THE QUESTION — Ben, 2026-10-16. *Was soll das
+          bringen?* was a third `CtaButton` in the group below; it is an
+          `InlineLink` on the end of this sentence now. The reason is what
+          the two kinds of control mean: the group holds the things to DO,
+          and asking what any of it is for is not one of them. A box with a
+          label in it standing beside two offers reads as a third offer.
+
+          `InlineLink` is built for exactly this — it inherits its type from
+          the paragraph, so it is body copy that happens to be pressable
+          rather than a button that broke a line. Its own header makes the
+          argument against `CtaButton size="min"` here. */}
       <section className="musie-reflect__section">
         <h2 className="musie-reflect__welcome">{t('reflect.welcome.headline')}</h2>
-        <p className="musie-reflect__why">{t('reflect.welcome.breathe')}</p>
+        <p className="musie-reflect__why">
+          {t('reflect.welcome.breathe')}{' '}
+          <InlineLink onClick={onUnderstand}>{t('reflect.understand.cta')}</InlineLink>
+        </p>
       </section>
 
       {/* ── SECTION · FEELINGS, WHEN THERE ARE SOME ─────────────────────
@@ -100,47 +115,44 @@ export function SessionReflect({
       {hasFeelings && (
         <section className="musie-reflect__section">
           <h3 className="musie-reflect__held">{t('reflect.feelings.held')}</h3>
-          {/* THE FEELINGS AS A LINE OF TEXT, not a list of chips. They are
-              what somebody felt, read back as a sentence fragment — the
-              comma is doing the work a list's bullets would do, at a
-              fraction of the furniture.
+          {/* ── CHIPS, AND THE × IS THE ONLY CONTROL IN THEM ──────────────
+              They were words in a line with a loose × beside each, held
+              together by an app pattern. `Chip` is the component for it as
+              of 2026-10-16 — background only, no border, and not hoverable,
+              because a chip is a NOUN rather than a control: it is a word
+              somebody already chose, sitting there being true.
 
-              A <ul> underneath, because it IS a list to a screen reader and
-              the commas are not announced. The stylesheet takes the markers
-              and the bullets off; the semantics stay. */}
-          <ul className="musie-feeling-row">
-            {feelings.map((feeling, index) => (
-              <li key={feeling.id} className="musie-feeling-row__item">
-                <span className="musie-feeling-row__word">{feeling.label}</span>
-                <IconButton
-                  glyph={X}
-                  size="min"
-                  variant="ghost"
-                  /* Per row. Four buttons called "Remove" are four
-                     identical buttons to anyone who cannot see which row
-                     they are on. */
-                  label={t('reflect.feelings.remove', { feeling: feeling.label })}
-                  tooltip={false}
-                  onClick={() => onRemoveFeeling(feeling.id)}
-                />
-                {/* The comma is DECORATION — it separates words visually and
-                    the <li> boundary is what separates them semantically, so
-                    announcing it would be the punctuation read out loud. */}
-                {index < feelings.length - 1 && (
-                  <span className="musie-feeling-row__comma" aria-hidden="true">,</span>
-                )}
-              </li>
-            ))}
-            <li className="musie-feeling-row__item">
-              <IconButton
-                glyph={Plus}
-                size="primary"
-                variant="outline"
-                label={t('reflect.feelings.add')}
-                onClick={onAddFeeling}
-              />
-            </li>
-          </ul>
+              `ChipRow as="ul"` because it IS a list to anything that cannot
+              see the gaps, and the gap itself is the component's — L2's rung
+              for atoms that belong together, shipped with it so a screen
+              cannot pick a different number.
+
+              THE COMMA IS GONE WITH THE LINE OF TEXT. It was doing a list's
+              work when the feelings were prose; chips carry their own
+              boundaries, and a comma between two filled pills is punctuation
+              with nothing to punctuate. */}
+          <div className="musie-feeling-row">
+            <ChipRow as="ul">
+              {feelings.map((feeling) => (
+                <Chip
+                  key={feeling.id}
+                  onRemove={() => onRemoveFeeling(feeling.id)}
+                  /* Per row. Four buttons called "Remove" are four identical
+                     buttons to anyone who cannot see which chip they are on. */
+                  removeLabel={t('reflect.feelings.remove', { feeling: feeling.label })}
+                >
+                  {feeling.label}
+                </Chip>
+              ))}
+            </ChipRow>
+            <IconButton
+              glyph={Plus}
+              size="primary"
+              variant="outline"
+              label={t('reflect.feelings.add')}
+              onClick={onAddFeeling}
+            />
+          </div>
         </section>
       )}
 
@@ -163,16 +175,22 @@ export function SessionReflect({
       )}
 
       {/* ── THE DOORS, AS ONE GROUP — Ben, 2026-10-16 ────────────────────
-          *"Put the three buttons by default into a button group."* One
+          *"Put the buttons by default into a button group."* One
           `ButtonGroup`, so the row behaviour and the stacking rule are
-          §7.4a's rather than re-derived per button, and the three offers
-          read as one set of things you could do rather than three unrelated
-          controls stacked down the page.
+          §7.4a's rather than re-derived per button, and the offers read as
+          one set of things you could do rather than two unrelated controls
+          stacked down the page.
 
-          A DOOR LEAVES THE GROUP WHEN ITS SECTION FILLS. The feelings CTA is
-          replaced by the + beside the words it collected, and the thoughts
-          CTA by the block you tap to edit — so the group shrinks as the step
-          is answered, and on a finished step it holds only the third door.
+          THE THIRD DOOR IS NOT IN HERE. *Was soll das bringen?* was, and
+          came out the same day: it is an `InlineLink` on the end of the
+          sentence above now. This group holds the things to DO, and asking
+          what any of it is for is not one of them.
+
+          A DOOR LEAVES THE GROUP WHEN ITS SECTION FILLS — the feelings CTA
+          is replaced by the + beside the chips it collected, the thoughts
+          CTA by the block you tap to edit. ONCE BOTH ARE ANSWERED THERE IS
+          NO GROUP AT ALL, which is why this is guarded: an empty section
+          would still spend a section's worth of space saying nothing.
 
           `hug` AND `align="start"`, not the default `fill`. These are
           OFFERS, and the component's own header says `fill` is for a step's
@@ -182,14 +200,8 @@ export function SessionReflect({
           THE ORDER IS PRIORITY AND THE TREATMENTS SAY SO. Feelings is the
           thing to do first and the cheapest to answer — three taps and a
           word — so it holds the filled primary; thoughts is outlined until
-          feelings is answered and takes the primary afterwards; the third
-          door is ghost throughout, because reading about why is never the
-          thing to do next. */}
-      {/* IN A SECTION, which is not decoration: `.musie-reflect__section`
-          is what carries the distance between subjects on this step, and
-          `.musie-reflect__section + .musy-wizard__actions` is what gives the
-          action row below its own. A loose ButtonGroup here got neither —
-          measured on screen, the paragraph above it ran into the buttons. */}
+          feelings is answered and takes the primary afterwards. */}
+      {(!hasFeelings || !hasThoughts) && (
       <section className="musie-reflect__section">
       <ButtonGroup stacked="hug" align="start">
         {!hasFeelings && (
@@ -205,11 +217,9 @@ export function SessionReflect({
             {t('reflect.thoughts.cta')}
           </CtaButton>
         )}
-        <CtaButton variant="ghost" onClick={onUnderstand}>
-          {t('reflect.understand.cta')}
-        </CtaButton>
       </ButtonGroup>
       </section>
+      )}
     </>
   );
 }

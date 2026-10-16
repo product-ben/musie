@@ -100,6 +100,13 @@ export function ThoughtsSheet({
       closeLabel={t('common.closeLabel')}
       /* Same reasoning as the feelings sheet: three doors in, so no `origin`. */
       origin={null}
+      /* ── TOP, NOT DISTRIBUTED — Ben, 2026-10-16 ───────────────────────
+         `Sheet`'s default centres a single body in the room between the
+         header and the foot, which is right for one screen to look at and
+         wrong for a column somebody reads or works down. Measured on screen:
+         the drill-down's three rows sat in the middle of a tall sheet with
+         the question stranded at the top. */
+      contentAlign="top"
       className="musie-reflect-sheet"
       /* ── THE QUESTION, PINNED ──────────────────────────────────────────
          In the header slot rather than the body, which is what keeps it in
