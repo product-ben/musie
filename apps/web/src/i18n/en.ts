@@ -955,11 +955,38 @@ export const en = {
      mixed three persons in one sentence (*fühlen wir* / *verarbeite* /
      *kommen an*). It is all du now, which is where the sentence already
      starts — *atme* — and what the rest of the app speaks. */
-  'reflect.welcome.headline': 'Welcome back — take a deep breath in, and out. Now you feel what came up, work through the thoughts, and arrive back in the real world.',
-  /* THE WHY, which is the thing the step never said. It argues from what the
-     reader gets — in the moment, and over time — and ends by inviting rather
-     than instructing, because the two doors below are optional. */
-  'reflect.welcome.text': 'Noticing your feelings and thoughts on purpose helps you work through them and be in the moment. Most people find that relaxing. And over time it helps you feel and understand yourself better. Start in, if you like:',
+  'reflect.welcome.headline': 'Welcome back',
+  /* ── THE HEADLINE SHRANK, AND THE SENTENCE MOVED DOWN — Ben, 2026-10-16 ─
+     It was the whole paragraph set in display type, which ran three lines on
+     a laptop and read as a wall at exactly the moment somebody's eyes are
+     adjusting. Two words now, and the sentence is body copy under it where a
+     sentence belongs.
+
+     IT STILL OPENS ON THE BREATH. *Atme erstmal tief ein und aus* is the one
+     instruction on the step, and it is first because it is the thing to do
+     before reading anything else. */
+  'reflect.welcome.breathe': 'Take a deep breath in, and out. Now you feel the feelings that came up, work through the thoughts, and arrive back in the real world.',
+
+  /* ── THE WHY IS BEHIND A DOOR NOW — Ben, 2026-10-16 ────────────────────
+     `reflect.welcome.text` used to stand on the step: four sentences
+     explaining what noticing your feelings is FOR. It was the right content
+     in the wrong place — the step's whole redesign is about having less on
+     it, and a paragraph of justification is exactly what somebody who
+     already wants to reflect has to read past.
+
+     So it is a third door, and the question is the label. Somebody who
+     wonders *was soll das bringen?* gets the answer; somebody who does not
+     never has to decline it.
+
+     AND IT ENDS BY LETTING YOU OFF. "Wenn nicht, ist das auch oke" is Ben's
+     own line and it is the most important one in the paragraph: the two
+     doors above are optional, and a page that argues for them without
+     saying so is arguing. */
+  'reflect.understand.cta': 'What is this for?',
+  'reflect.understand.sheet.title': 'What this is for',
+  'reflect.understand.sheet.headline': 'What is this for?',
+  'reflect.understand.sheet.text': 'Consciously feeling your feelings and thoughts helps you work through them, be in the moment and — if you want to — let go. Most people find that relaxing. And over time it helps you feel and understand yourself better. Start in, if you like. And if not, that is fine too.',
+  'reflect.understand.sheet.done': 'Done',
 
   /* ── THE FEELINGS SECTION ────────────────────────────────────────────────
      *Discover* rather than *choose* or *add*: the problem this solves is that

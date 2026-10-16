@@ -61,6 +61,7 @@ import { SessionListen } from '../components/SessionListen';
 import { SessionReflect } from '../components/SessionReflect';
 import { FeelingsSheet } from '../components/FeelingsSheet';
 import { ThoughtsSheet } from '../components/ThoughtsSheet';
+import { UnderstandSheet } from '../components/UnderstandSheet';
 import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import { warmTrackBytes } from '../lib/audio';
@@ -72,7 +73,7 @@ import {
 import type { Ending, Posture } from '../lib/exerciseKind';
 import type { Card, Exercise, ListenAudio, Track } from '../lib/content';
 import { pathOf, useSessionFeelings } from '../lib/feelings';
-import { FOCUS_FEELINGS, FOCUS_THOUGHTS, hasAnswered } from '../lib/reflect';
+import { FOCUS_FEELINGS, FOCUS_THOUGHTS, FOCUS_UNDERSTAND, REFLECT_SHEETS, hasAnswered } from '../lib/reflect';
 import type { ReflectMode, ReflectSheet } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
@@ -637,8 +638,13 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    * hand-typed `?focus-feelings&focus-thoughts` opens feelings, the same way
    * `?focus&overview` resolves on the listen step.
    */
-  const feelingsOpen = searchParams.has(FOCUS_FEELINGS);
-  const thoughtsOpen = !feelingsOpen && searchParams.has(FOCUS_THOUGHTS);
+  /* FIRST ONE PRESENT WINS, in `REFLECT_SHEETS`' order — so a hand-typed
+     address naming two of them resolves to one sheet rather than rendering
+     two, the same way `?focus&overview` resolves on the listen step. */
+  const reflectSheet = REFLECT_SHEETS.find((token) => searchParams.has(token)) ?? null;
+  const feelingsOpen = reflectSheet === FOCUS_FEELINGS;
+  const thoughtsOpen = reflectSheet === FOCUS_THOUGHTS;
+  const understandOpen = reflectSheet === FOCUS_UNDERSTAND;
 
   /**
    * Open one reflect sheet, or close both. `null` closes.
@@ -652,9 +658,14 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    * closing does not leave an entry somebody has to walk back through twice.
    */
   const setReflectSheet = React.useCallback((which: ReflectSheet | null) => {
-    let search = searchParams.toString();
-    search = withToken(search, FOCUS_FEELINGS, which === FOCUS_FEELINGS);
-    search = withToken(search.replace(/^\?/, ''), FOCUS_THOUGHTS, which === FOCUS_THOUGHTS);
+    /* Every token rewritten on every call, so opening one always closes the
+       others and there is no combination of taps that can leave two on the
+       address. `withToken` returns a leading `?`, which the next call has to
+       be handed without — hence the strip. */
+    const search = REFLECT_SHEETS.reduce(
+      (acc, token) => withToken(acc.replace(/^\?/, ''), token, which === token),
+      searchParams.toString(),
+    );
     navigate(
       { pathname: `/session/${encodeURIComponent(id)}/${state.step}`, search },
       which === null ? { replace: true } : undefined,
@@ -1390,6 +1401,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  `spokenWords` reports. The typed answer is shown as typed. */
               thoughts={reflectMode === 'voice' ? spokenText : answer}
               onEditThoughts={() => setReflectSheet(FOCUS_THOUGHTS)}
+              onUnderstand={() => setReflectSheet(FOCUS_UNDERSTAND)}
             />
           )}
         </WizardPanel>
@@ -1515,6 +1527,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
             onTextChange={setAnswer}
             onSpokenWords={setSpokenWords}
             onSpokenText={setSpokenText}
+          />
+          <UnderstandSheet
+            open={understandOpen}
+            onOpenChange={(next) => setReflectSheet(next ? FOCUS_UNDERSTAND : null)}
           />
         </>
       )}

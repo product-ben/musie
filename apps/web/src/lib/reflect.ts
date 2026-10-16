@@ -64,6 +64,18 @@ export function hasAnswered(mode: ReflectMode, text: string, spokenWords = false
  */
 export const FOCUS_FEELINGS = 'focus-feelings';
 export const FOCUS_THOUGHTS = 'focus-thoughts';
+/** The third door — why any of this is worth doing. Reads nothing, writes
+ *  nothing, and is on the address anyway so it can be linked to and so Back
+ *  closes it like the other two. */
+export const FOCUS_UNDERSTAND = 'focus-understand';
 
-/** Which reflect sheet the address is asking for, if either. */
-export type ReflectSheet = typeof FOCUS_FEELINGS | typeof FOCUS_THOUGHTS;
+/** Which reflect sheet the address is asking for, if any. */
+export type ReflectSheet =
+  | typeof FOCUS_FEELINGS
+  | typeof FOCUS_THOUGHTS
+  | typeof FOCUS_UNDERSTAND;
+
+/** All three, in resolution order — first one present on the address wins. */
+export const REFLECT_SHEETS: readonly ReflectSheet[] = [
+  FOCUS_FEELINGS, FOCUS_THOUGHTS, FOCUS_UNDERSTAND,
+];

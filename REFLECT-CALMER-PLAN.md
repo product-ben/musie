@@ -383,6 +383,10 @@ a level-3 leaf; and both duplicate labels in the wheel (*Powerful*,
 A small `useSessionFeelings(sessionId, locale, enabled)` hook holds the list
 and the mutations, so the step and the sheet read one source.
 
+**BUILT DIFFERENTLY — a second round of Ben's changes landed on 2026-10-16**,
+after the first build was verified. §16 records them; the sections above
+describe the step as it stands.
+
 **BUILT DIFFERENTLY — the `enabled` flag was not in the plan.** A session has
 four steps and the feelings belong to one, so the hook as first written opened
 every run with a query for a list that three of the four steps cannot show. A
@@ -592,3 +596,67 @@ signal. Already queued for it:
   and nothing decides what the reader does (PRD, Open 2);
 - the soft cap at five is a UI rule with no constraint behind it (PRD, Open 4);
 - `.musie-feeling-row` if a second screen asks for it (§8).
+
+
+---
+
+## 16 · The second round — Ben, 2026-10-16
+
+Ten changes, after testing the first build. The PRD carries the argument for
+each; this is what they cost in code.
+
+| | |
+|---|---|
+| Headline shortened to *Willkommen zurück* | the sentence became `reflect.welcome.breathe`, body copy under it |
+| The *why* paragraph left the step | rewritten into a third sheet; `reflect.welcome.text` retired |
+| A third door, `?focus-understand` | `UnderstandSheet.tsx`, `FOCUS_UNDERSTAND`, `REFLECT_SHEETS` |
+| The three buttons in one group | `ButtonGroup stacked="hug" align="start"`, inside a section |
+| The back row as a small ghost CTA | `CtaButton variant="ghost" size="min" leadingIcon` — `.musy-drilldown__back` shrank to one declaration |
+| *einfach nur …* pre-checked at levels 2 and 3 | `DrillDownLevel.value`, and the two events below |
+| Taking it saves **and closes** | read off the path: a stop's last node still has children |
+| One pick per level | `locked` in `DrillDown`; cleared by remount |
+
+### 16.1 · Two events, because a checked radio is silent
+
+`onValueChange` is base-ui's, and base-ui's is a change event: **a row that is
+already checked fires nothing when clicked again.** Pre-checking the stop row
+therefore made the one row the level is built around the one row that did
+nothing.
+
+`RadioGroupText` gained `onOptionActivate` — a click, or Enter/Space on the
+`<button>` `Radio.Root` already renders. `DrillDown` acts on activation and
+treats `onValueChange` as highlight only, which also buys the keyboard back:
+arrows browse the list without every row passed through navigating you
+somewhere, and Enter commits.
+
+### 16.2 · Two bugs that only the browser could find
+
+**base-ui latches controlled-vs-uncontrolled on the first render.**
+
+```js
+const { current: isControlled } = React.useRef(controlled !== undefined);
+```
+
+Level 1 has nothing checked, which was `undefined` — so the group mounted
+UNCONTROLLED and ignored every value after it, including the pre-checked stop.
+It rendered unchecked with the correct value on both sides of the comparison,
+which no amount of source-reading finds. `DrillDownLevel.value` is now `string`
+and the empty case is `''`.
+
+**The highlight could outlive its level.** A click fires both events and
+nothing orders them; when the change landed last, `highlight` held an id from
+the level just left and the new level rendered with nothing checked. Clearing
+it inside `choose` loses that race. The value is validated against the current
+options instead — a value that is not on screen is not a selection, whenever
+it arrived.
+
+### 16.3 · Two things caught by looking at the screenshots
+
+The `ButtonGroup` sat outside any section, so it inherited no spacing and the
+paragraph above ran into it. It is inside a `.musie-reflect__section` now,
+which is also what keeps `.musie-reflect__section + .musy-wizard__actions`
+matching for the row below.
+
+A locked level labelled every row *hältst du schon fest*, including the two
+nobody was holding — two different things grey a row out, and the copy only
+knew about one of them.

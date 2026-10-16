@@ -213,20 +213,20 @@ test('a whole session lands in Postgres', async ({ page }, testInfo) => {
       .click();
     await expect(page).toHaveURL(/focus-feelings/);
 
-    /* The stop row is FIRST at every level below the first, so at level 1
-       every row descends and `.first()` is a branch. At level 2 the first row
-       is the stop — which is the one this walk takes, giving a path that ends
-       at level 2 and exercises the nullable `specific_i`. */
+    /* At level 1 every row descends, so `.first()` is a branch. At level 2
+       the first row is the STOP — pre-checked on arrival, and taking it both
+       persists the feeling and closes the sheet (Ben, 2026-10-16). That is
+       the path this walk takes: it ends at level 2, so the nullable
+       `specific_i` is exercised, and it needs no *Ich bin fertig*.
+
+       CLICKING AN ALREADY-CHECKED ROW IS THE POINT. A native radio fires no
+       change event for it, so this click is also what proves
+       `onOptionActivate` is wired — under a change handler alone it would
+       do nothing and this walk would hang here. */
     await page.getByRole('radio').first().click();
     await page.getByRole('radio').first().click();
 
-    /* The actions appear only once something has been picked — the
-       progressive disclosure Ben asked for, and this is what asserts it. */
-    const doneFeeling = page.getByRole('button', {
-      name: label(locale, 'reflect.feelings.sheet.done'), exact: true,
-    });
-    await expect(doneFeeling).toBeVisible();
-    await doneFeeling.click();
+    /* The stop closed the sheet by itself — no action was pressed. */
     await expect(page).toHaveURL(/\/reflect$/);
 
     /* Back on the step, the section has SWITCHED STATE: the empty state's

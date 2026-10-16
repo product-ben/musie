@@ -26,6 +26,25 @@
  * keeps *Weiteres Gefühl festhalten* honest — it only means something once
  * there is a "this one" to add another to.
  *
+ * ── THE STOP ROW SAVES AND CLOSES; A LEAF SAVES AND WAITS ─────────────────
+ * Ben, 2026-10-16: *"Clicking on the 'Einfach nur…' option also closes the
+ * sheet and persists the selected option."*
+ *
+ * The asymmetry is the meaning. Taking the stop is somebody saying *that is
+ * the word, I am done narrowing* — so the sheet has nothing left to ask and
+ * gets out of the way. Taking a leaf at the bottom is a pick they may well
+ * want to add to, so the sheet stays and offers both.
+ *
+ * TOLD APART FROM THE PATH ALONE, with no second argument from `DrillDown`:
+ * the last node of a stop pick still HAS children — they are what was
+ * stopped above — and a leaf has none.
+ *
+ * ── AND ONLY ONE PICK PER LEVEL ──────────────────────────────────────────
+ * *"On the third level, only one option can be selected in one go. Before
+ * selecting another one, the user needs to click Weiteres Gefühl
+ * festhalten."* `DrillDown` locks itself after a pick; this sheet's reset
+ * button is what unlocks it, by remounting the component.
+ *
  * ── THE SOFT CAP IS FIVE, AND IT IS NOT A CONSTRAINT ──────────────────────
  * Past five the foot offers only *Ich bin fertig*. Nothing is blocked, no
  * error is shown, and removing one on /reflect makes room. A sixth row
@@ -33,7 +52,7 @@
  */
 import * as React from 'react';
 import { ButtonGroup, CtaButton, DrillDown, Message, RadioGroupText, Sheet } from '@musie/design-system';
-import type { DrillDownLevel } from '@musie/design-system';
+import type { DrillDownLevel, DrillDownNode } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { FEELINGS_SOFT_CAP, idOf, pathOf, wheelAsTree } from '../lib/feelings';
 import type { HeldFeeling } from '../lib/feelings';
@@ -86,22 +105,33 @@ export function FeelingsSheet({
 
   const atCap = held.length >= FEELINGS_SOFT_CAP;
 
-  const pick = React.useCallback(async (path: readonly { id: string }[]) => {
-    const leaf = path[path.length - 1];
-    if (leaf === undefined) return;
+  const pick = React.useCallback(async (path: readonly DrillDownNode[]) => {
+    const last = path[path.length - 1];
+    if (last === undefined) return;
     /* Decoded here rather than in the sheet's caller so a malformed id — which
        can only come from a tree this file built — dies at the boundary. */
-    if (pathOf(leaf.id) === null) return;
+    if (pathOf(last.id) === null) return;
+
+    /* STOP OR LEAF, read off the path: a stop's last node still has the
+       children it stopped above, and a leaf has none. See the header. */
+    const viaStop = (last.children?.length ?? 0) > 0;
+
     try {
-      const result = await onPick(leaf.id);
+      const result = await onPick(last.id);
       setAlreadyHeld(result === 'already-held');
-      if (result === 'added') setPickedHere((n) => n + 1);
+      if (result === 'added') {
+        setPickedHere((n) => n + 1);
+        /* THE STOP CLOSES THE SHEET. Only on a real write — an
+           already-held row leaves it open so the message can be read, and a
+           failure leaves it open so the error can. */
+        if (viaStop) onOpenChange(false);
+      }
     } catch {
       /* The error is the caller's state and is drawn in the foot. Swallowed
          here so an unhandled rejection does not reach the console on a
          failure the screen has already reported. */
     }
-  }, [onPick]);
+  }, [onPick, onOpenChange]);
 
   /* ── THE SLOT ────────────────────────────────────────────────────────────
      `DrillDown` draws no rows; this is what it draws instead. Rule 7 all the
@@ -121,14 +151,37 @@ export function FeelingsSheet({
         value: o.value,
         /* A disabled row says WHY in its label. The component has no per-row
            reason slot, and a row that is simply greyed out is the product
-           refusing without explaining. */
-        label: o.disabled ? t('reflect.feelings.sheet.heldRow', { feeling: o.label }) : o.label,
+           refusing without explaining.
+
+           ONLY WHEN THE LEVEL IS NOT LOCKED. Two different things grey a row
+           out: it is already held, or a pick has just been taken and the
+           level is closed until *Weiteres Gefühl festhalten*. Measured on
+           screen, this said "hältst du schon fest" on all three rows of a
+           locked level — including the two nobody is holding, which is the
+           product explaining itself wrongly rather than not at all. When the
+           level is locked the reason is the lock, and the row the user just
+           chose is sitting there checked, saying it. */
+        label: o.disabled && !l.locked
+          ? t('reflect.feelings.sheet.heldRow', { feeling: o.label })
+          : o.label,
         disabled: o.disabled,
         drillDown: o.drillDown,
         drillDownLabel: o.drillDown ? t('reflect.feelings.sheet.more') : undefined,
       }))}
       value={l.value}
-      onValueChange={l.onChoose}
+      /* ── TWO EVENTS, AND THEY ARE NOT THE SAME ONE ────────────────────
+         `onValueChange` is the arrow keys moving the checked row: a
+         highlight, and it must never navigate, or a keyboard user cannot
+         read the list without being taken somewhere by every row they pass.
+
+         `onOptionActivate` is a click, or Enter/Space — and it is the only
+         one that works for the row this level is built around. *einfach nur
+         {x}* arrives PRE-CHECKED, and a checked native radio fires no
+         change when it is clicked again, so under `onValueChange` alone the
+         one row somebody is most likely to tap would be the one row that
+         did nothing. */
+      onValueChange={l.onHighlight}
+      onOptionActivate={l.onChoose}
       emptyLabel={t('reflect.feelings.sheet.empty')}
     />
   ), [t]);

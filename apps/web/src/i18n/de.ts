@@ -699,11 +699,38 @@ export const de: Messages = {
      mischte drei Personen in einem Satz (*fühlen wir* / *verarbeite* /
      *kommen an*). Jetzt durchgehend du — da fängt der Satz ohnehin an
      (*atme*), und du ist das Register der ganzen App (§1). */
-  'reflect.welcome.headline': 'Willkommen zurück, atme erstmal tief ein und aus. Jetzt fühlst du die Gefühle, die aufgekommen sind, verarbeitest die Gedanken und kommst wieder in der echten Welt an.',
-  /* DAS WARUM — das, was der Schritt nie gesagt hat. Argumentiert mit dem,
-     was die lesende Person davon hat, im Moment und auf Dauer, und lädt am
-     Ende ein, statt anzuweisen: die beiden Türen darunter sind freiwillig. */
-  'reflect.welcome.text': 'Das bewusste Wahrnehmen deiner Gefühle und Gedanken hilft dir dabei, sie zu verarbeiten und im Moment zu sein. Das entspannt die meisten Menschen. Außerdem hilft es dir langfristig, dich selbst besser zu fühlen und zu verstehen. Wenn du magst, steig ein:',
+  'reflect.welcome.headline': 'Willkommen zurück',
+  /* ── DIE HEADLINE IST KURZ, DER SATZ RUTSCHT RUNTER — Ben, 2026-10-16 ──
+     Vorher stand der ganze Absatz in Display-Größe da, lief auf einem Laptop
+     über drei Zeilen und las sich wie eine Wand — genau in dem Moment, in dem
+     sich jemandes Augen erst wieder umstellen. Jetzt zwei Wörter, und der
+     Satz steht als Fließtext darunter, wo ein Satz hingehört.
+
+     ER FÄNGT WEITER MIT DEM ATEM AN. *Atme erstmal tief ein und aus* ist die
+     einzige Anweisung auf dem Schritt, und sie steht zuerst, weil sie das
+     ist, was man vor allem anderen tun soll. */
+  'reflect.welcome.breathe': 'Atme erstmal tief ein und aus. Jetzt fühlst du die Gefühle, die aufgekommen sind, verarbeitest die Gedanken und kommst wieder in der echten Welt an.',
+
+  /* ── DAS WARUM LIEGT JETZT HINTER EINER TÜR — Ben, 2026-10-16 ──────────
+     `reflect.welcome.text` stand auf dem Schritt: vier Sätze darüber, wofür
+     das bewusste Wahrnehmen gut ist. Richtiger Inhalt, falscher Ort — der
+     ganze Umbau dieses Schritts handelt davon, dass weniger darauf steht,
+     und ein Absatz Rechtfertigung ist genau das, woran jemand vorbeilesen
+     muss, der ohnehin schon reflektieren will.
+
+     Also eine dritte Tür, und die Frage ist das Label. Wer sich fragt, was
+     das bringen soll, bekommt die Antwort; wer sich das nicht fragt, muss
+     sie nie ablehnen.
+
+     UND AM ENDE LÄSST ER EINEN RAUS. "Wenn nicht, ist das auch oke" ist Bens
+     eigene Zeile und der wichtigste Satz des Absatzes: die beiden Türen
+     darüber sind freiwillig, und eine Seite, die für sie wirbt, ohne das zu
+     sagen, wirbt eben. */
+  'reflect.understand.cta': 'Was soll das bringen?',
+  'reflect.understand.sheet.title': 'Wofür das gut ist',
+  'reflect.understand.sheet.headline': 'Was soll das bringen?',
+  'reflect.understand.sheet.text': 'Das bewusste Fühlen deiner Gefühle und Gedanken hilft dir dabei, sie zu verarbeiten, im Moment zu sein und wenn du möchtest loszulassen. Das entspannt die meisten Menschen. Außerdem hilft es dir langfristig, dich selbst besser zu fühlen und zu verstehen. Wenn du magst, steig ein. Wenn nicht, ist das auch oke.',
+  'reflect.understand.sheet.done': 'Fertig',
 
   /* ── DER GEFÜHLS-ABSCHNITT ───────────────────────────────────────────────
      *Entdecke* statt *wähle* oder *füge hinzu*: das Problem ist ja gerade,
