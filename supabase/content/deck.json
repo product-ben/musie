@@ -169,12 +169,12 @@
       "sort": 10,
       "image": "assets/web/cards/mc-06.webp",
       "feeling": {
-        "de": null,
-        "en": null
+        "de": "test",
+        "en": "test"
       },
       "imageAlt": {
-        "de": null,
-        "en": null
+        "de": "Tiefblaue Wellen unten links treffen in einer weiten Kurve auf ein leuchtend rotes Feld.",
+        "en": "Deep blue waves at the lower left meet a glowing red field in one wide curve."
       },
       "plays": {
         "free-rein": "trk-10",
