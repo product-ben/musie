@@ -246,15 +246,38 @@ describe('rows', () => {
 });
 
 describe('the library in the repository', () => {
-  it('carries the nine pieces the recordings migration left', async () => {
+  /* THE CENSUS CAME OUT ON 2026-10-15, and it was `toHaveLength(9)` beside
+     `filter(src !== null)).toHaveLength(4)` — the library as the recordings
+     migration left it in September. The first export from hosted found twenty
+     pieces and fifteen files, because eleven were uploaded at `/maintenance`.
+     Both numbers were a snapshot of a library that is now operator-managed, so
+     counting them asserts that nobody uses the screen.
+
+     What is worth asserting is that the READER still reads: a known September
+     piece comes back whole, with its own file-naming form, and nothing in the
+     library is half a row. `trk-01` is the fixture because it is the first
+     piece ever cleared and it is not going anywhere. */
+  it('reads the library, and a September piece comes back whole', async () => {
     const { tracks } = rows(await readMusic());
-    expect(tracks).toHaveLength(9);
-    expect(tracks.filter((row) => row.src !== null)).toHaveLength(4);
+
+    expect(tracks.length, 'the library reads as empty').toBeGreaterThan(0);
     expect(tracks.find((row) => row.id === 'trk-01')).toMatchObject({
       src: 'trk-01.mp3',
       duration_seconds: 219,
       title: 'Little Yellow Petals',
     });
+
+    /* Every piece is named, and every file is named after its own id — the
+       same property `db.content.db.test.ts` asserts against the database, held
+       here against the file. */
+    for (const row of tracks) {
+      expect(row.title, `${row.id} has no title`).toBeTruthy();
+      if (row.src !== null) {
+        expect(row.src, `${row.id} names something other than its id`).toMatch(
+          new RegExp(`^${row.id}(-[0-9a-f]{8})?\\.[a-z0-9]+$`),
+        );
+      }
+    }
   });
 
   /* THE DELIVERED AUDIO, AS THE FILE DESCRIBES IT. Bodyscan is one recording

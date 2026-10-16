@@ -9733,3 +9733,84 @@ domain once there is one; `@example.com` is also reserved and would fail the
 same way, so this is not a cosmetic swap. Until then A.6's "pnpm test:db green
 against hosted" cannot be ticked, and it should not be.
 
+## `database.types.ts` protects two type aliases, not the queries — and the typed client costs ONE error
+
+Where: `apps/web/src/lib/supabase.ts` L88, `apps/web/src/lib/db.support.ts` L120/L150,
+`apps/web/src/lib/diary.ts` L925/L1081, `scripts/db-status.mjs`
+
+What I checked: `pnpm db:status` has been printing *"`database.types.ts` is older
+than the newest migration — run `pnpm gen:types`"* since `20261014150000`. I
+told Ben that meant the app typechecks against a schema that no longer exists.
+**That was wrong in its mechanism, and the measurement is better news than the
+claim.**
+
+The clients are created WITHOUT the generated type:
+
+    client = createClient(url, key);            // supabase.ts L88
+    return createClient(API_URL, ANON_KEY, …)   // db.support.ts L120
+
+So no `.from()` query anywhere is checked against the schema. `database.types.ts`
+is imported in exactly two places — `profile.ts` for `Profile` / `ProfilePatch`,
+and `statements.ts` for one parameter annotation. Neither pending migration
+touches `profiles`.
+
+The proof that this is already the state rather than a worry: the file has been
+missing FOUR WHOLE TABLES since 2026-10-14 — `grid_cells`, `artworks`,
+`artwork_i18n`, `content_edits` — and nothing has gone red. The only code that
+names them is `maintenance.db.test.ts`, through `serviceClient()`.
+
+What I did: **measured it rather than reasoning about it.** Typed all three
+client constructions, ran both halves of `pnpm --filter web typecheck` (there
+are two configs, `tsconfig.json` and `tsconfig.test.json`, and the script runs
+both — tests ARE in scope), recorded the output, and reverted the probe.
+
+**One error. The same one in both configs:**
+
+    src/lib/diary.ts(1081,9): error TS2322
+      tracks: Type '{ src: string | null; … }' is not assignable to
+              'Embedded<{ src: string; … }>'
+
+`DetailRow.tracks.src` is hand-written as `string`; `tracks.src` is nullable in
+the schema, which is what a piece with no recording is — the state five of the
+nine imported rows are in. **And it costs nothing at runtime:** `toTrack`
+assigns it into `DiaryTrack.src`, which is already `string | null` and
+documented as such, and `useTrackSource` signs a null happily. So it is a
+hand-written mirror that drifted, not a bug.
+
+Two things that measurement settled, and I would have got both wrong:
+
+- **The four missing tables produce no error**, even with the test config in
+  scope, because `serviceClient(): SupabaseClient` declares a BARE return type
+  that erases the generic. Typing the constructor is not enough; the annotation
+  has to widen too.
+- **Typing the client is roughly two lines, not a piece of work.** I told Ben it
+  would "spül eine Reihe echter Fehler hoch". It spills one, and that one is a
+  two-word fix.
+
+What I need from Ben: **a decision, and it is cheap either way.**
+
+1. **Type the client** — `createClient<Database>` in `supabase.ts`, `string |
+   null` in `DetailRow`, and `gen:types` goes from protecting two aliases to
+   protecting every query in the app. Then `db:status`'s reminder starts being
+   about something.
+2. **Leave it**, and know what the reminder is worth. Checked, because it would
+   have been easy to blame the script: `db-status.mjs` L152 already says *"Run
+   `pnpm gen:types` and commit it **if a column moved**"* — a conditional, and
+   the right one. It compares FILE TIMESTAMPS, it does not claim otherwise, and
+   it even suppresses itself when either side is uncommitted. The overstatement
+   was mine, not its.
+
+   What nothing answers is the condition itself: **did a column move?** On
+   2026-10-15 the answer was no, twice — a trigger and a function replacement —
+   and finding that out took reading both migrations. A reminder whose
+   precondition costs more to check than the command it suggests is a reminder
+   that gets run blindly or ignored, and `gen:types` run blindly against a
+   local stack that is behind is the worse of the two.
+
+Doing 1 makes the question disappear, because then a moved column announces
+itself. Doing neither leaves a correct reminder nobody can cheaply act on.
+
+**Separate, and not mine to fold in:** widening `serviceClient()` would put the
+db tests under the schema too, and that is where the four missing tables land.
+It needs `gen:types` after a `supabase db reset` first, so it is Ben's command
+before it is anybody's edit.

@@ -56,7 +56,15 @@ describe('the committed deck', () => {
   it('flattens into the three tables it lands in', () => {
     const flat = rows(deck);
     expect(flat.cards).toHaveLength(deck.cards.length);
-    expect(flat.card_i18n).toHaveLength(deck.cards.length * LOCALES.length);
+    /* BOTH LOCALES FOR EVERY CARD THAT CARRIES COPY, and no row at all for a
+       card that carries none — which is what the database holds, so
+       `cards.length * LOCALES.length` stopped being right on 2026-10-15.
+       MC-10 is the live example: added through `/maintenance`, which writes no
+       `card_i18n` row, and going by its picture rather than a word. */
+    const carriesCopy = (card: Deck['cards'][number]): boolean =>
+      LOCALES.some((locale) => card.feeling[locale] !== null || card.imageAlt[locale] !== null);
+    expect(flat.card_i18n).toHaveLength(deck.cards.filter(carriesCopy).length * LOCALES.length);
+    expect(flat.card_i18n.some((row) => row.card_id === 'mc-10'), 'mc-10 carries no copy and should have no row').toBe(false);
     expect(flat.exercise_tracks).toHaveLength(
       deck.cards.reduce((total, card) => total + Object.keys(card.plays).length, 0),
     );
@@ -84,8 +92,16 @@ describe('the checker refuses', () => {
     ['two cards with one code', (d) => { d.cards[1]!.code = d.cards[0]!.code; }, /is already/],
     ['a gap in the order', (d) => { d.cards.at(-1)!.sort += 1; }, /with no gaps/],
     ['a sort that is not a number', (d) => { (d.cards[0] as unknown as { sort: string }).sort = '1'; }, /whole number/],
-    ['a German feeling that is missing', (d) => { d.cards[0]!.feeling.de = ''; }, /feeling\.de is missing/],
-    ['an English feeling that is missing', (d) => { d.cards[0]!.feeling.en = ' '; }, /feeling\.en is missing/],
+    /* EMPTY IS NOT MISSING, and since 2026-10-15 the checker says so in two
+       different sentences. `cards[0]` has artwork, so it owes no word at all —
+       but a word it DOES carry still has to be text. */
+    ['a German feeling that is blank', (d) => { d.cards[0]!.feeling.de = ''; }, /feeling\.de must be text/],
+    ['an English feeling that is only a space', (d) => { d.cards[0]!.feeling.en = ' '; }, /feeling\.en must be text/],
+    /* And the two states the rule change created. A card with a picture owes
+       no word; one without owes both, because `deck-pdf.mjs` sets the word in
+       type for exactly that card and would otherwise print a blank. */
+    ['a feeling dropped in one locale only', (d) => { d.cards[0]!.feeling.en = null; }, /written in one locale and null in the other/],
+    ['no feeling on a card with no artwork', (d) => { d.cards[0]!.image = null; d.cards[0]!.feeling.de = null; d.cards[0]!.feeling.en = null; }, /has no artwork/],
     ['a feeling padded with a space', (d) => { d.cards[0]!.feeling.de = ' Freude'; }, /whitespace at an end/],
     ['the old placeholder prefix', (d) => { d.cards[0]!.feeling.de = '[DE] Joy'; }, /\[DE\] placeholder/],
     /* BOTH SIDES ARE SET EXPLICITLY, and that is the repair of 2026-10-14: the
