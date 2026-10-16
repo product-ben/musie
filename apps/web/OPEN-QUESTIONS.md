@@ -9814,3 +9814,59 @@ itself. Doing neither leaves a correct reminder nobody can cheaply act on.
 db tests under the schema too, and that is where the four missing tables land.
 It needs `gen:types` after a `supabase db reset` first, so it is Ben's command
 before it is anybody's edit.
+
+## A `ch` measure inverts at display sizes, so the biggest headings get the longest lines
+
+Where: `packages/design-system/tokens/musy-foundations.css`
+(`--measure-heading: 50ch`), `apps/web/src/shell.css` (`.musie-placeholder`),
+`apps/web/src/exercises.css` (`.musie-exercises > .musie-placeholder`)
+
+What I checked: Ben asked for a 660px cap on /exercises' headline. Before
+adding it I measured what the existing cap actually resolves to on that
+element, because `.musie-placeholder` already carries
+`max-inline-size: var(--measure-heading)` and a second cap on top of a
+working one would be noise.
+
+It is not a working one. `ch` is the width of the "0" glyph **in the
+element's own font**, so a measure in `ch` scales with `font-size`.
+`--type-heading-lg-size` is fluid, and on this heading `50ch` measures:
+
+| viewport | font-size | `--measure-heading` resolves to | heading rendered |
+|---|---|---|---|
+| 1440px | 34px | **1128px** | 980px, 2 lines |
+| 834px | 29.4px | 974px | 786px, 2 lines |
+| 393px | 26px | 862px | 361px, 3 lines |
+
+**The cap has never bound at any width the product is read at.** What wraps
+this heading is the column it sits in, not the measure that was bought to
+wrap it. And the direction is backwards: the larger the type, the longer the
+line it is permitted, where a display step wants *fewer* characters per line
+than body copy, not more.
+
+This is not specific to /exercises. Every heading in the product that uses
+`--measure-heading` has the same inversion; it only became visible here
+because this headline grew to two sentences and ran 980px of display type
+across a laptop.
+
+The history makes it worth raising rather than assuming it is known.
+`--measure-heading` was `26ch`, and the README records Ben breaking the
+Layer 1 lock on 2026-10-09 to make it `50ch`, because 26 was "breaking
+headings that had no reason to break". That diagnosis was right about the
+symptom. The 26 → 50 change moved the number; it did not change the unit,
+and the unit is what makes the number unpredictable.
+
+What I did: added `max-inline-size: 660px` to `.musie-exercises >
+.musie-placeholder` only — one screen, flagged in the stylesheet as the
+second L14.1 exception in that file after the 16:9 crop. Did **not** touch
+`--measure-heading`.
+
+Why: the token is Layer 1, it is `[LOCKED]`, and it is read by every heading
+in the product. Changing a unit there on the way past a one-screen request
+would be exactly the kind of silent, wide change rule 1 exists to prevent —
+and I have measured one screen, not all of them.
+
+What I need from Ben: **nothing for this PR.** The 660 stands on its own. The
+question worth putting on the pile is whether `--measure-heading` should be
+in `rem` or `px` rather than `ch` — which would make it bind, predictably, at
+every size. That is a Layer 1 change, it moves every heading in the product,
+and it wants its own look at the screens before anyone touches it.
