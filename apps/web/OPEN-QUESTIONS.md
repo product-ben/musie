@@ -10025,3 +10025,51 @@ ways it could go:
    honest, and it is new scope.
 
 I have built 1. Screenshot of it is in the PR.
+
+---
+
+## A third screen hand-rolls `<audio>` + transport state, and the fourth will too
+
+**Where:** `routes/Maintenance.tsx` `Audition`, `routes/DiscoveredMusic.tsx`
+`TrackRow`, `components/DiaryCard.tsx` `ListenAgain` — and
+`components/SessionListen.tsx`, which already escaped this by extracting
+`useMix`.
+
+**What I checked:** the design system is deliberately out of this. Both
+transports are fully controlled and own no media element, no fetch and no
+timer, and `MusicPlayer.tsx`'s header argues for that split at length: it is
+what lets §19 Voice Note drive a real recorder and a simulated one with no
+branch inside the package. That is not the thing to change, and this is not a
+component request.
+
+What recurs is on the APP side of the split, and it is the same twelve lines
+three times: a `ref` to an `<audio>`, a `playing` flag fed by `onPlay` /
+`onPause` rather than by the click, a `position` fed by `onTimeUpdate`,
+`onEnded` pinned to the stored duration so the transport reaches `ended`
+rather than stopping a frame short, a `play()` whose rejection is logged
+because an expired token, a lost object and a refused codec look identical
+from there, and a toggle that restarts from zero when the glyph has already
+promised a restart.
+
+Each of the three carries its own comment explaining the same four decisions.
+They agree today. That is the part worth flagging: they agree because each was
+written by reading the last one, which is exactly how the fourth one disagrees.
+
+**What I did:** copied the pattern a third time, deliberately, and said so in
+`Audition`'s docblock.
+
+**Why:** the brief was one panel, and extracting a `useTrackTransport` hook on
+the way past would rewrite two shipped screens — one of them the diary, one of
+them the only place a listener is given music back — to no requirement anybody
+stated. `useMix` is the precedent for extracting this, and it was extracted
+when a second stem made the listen step's copy genuinely different, not when
+it was merely third.
+
+**What I need from Ben:** nothing for this PR. The question for the pile is
+whether `useTrackTransport(src, durationSeconds)` returning
+`{ position, playing, toggle, seek, restart }` should land before the next
+screen plays a track. It is a pure refactor of app code, it touches no
+migration and no component, and the three call sites are small enough to do in
+one sitting — but it rewrites the diary and `/discovered-music`, so it wants to
+be its own change with its own look at both, not a rider on a maintenance
+panel.
