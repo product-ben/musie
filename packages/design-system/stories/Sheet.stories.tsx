@@ -279,9 +279,15 @@ export const OnePage: Story = {
  * rows sat in the middle of a tall sheet with the question stranded at the
  * top and a hand's worth of nothing between them.
  *
- * ONE DECLARATION, AND NO NEW DISTANCE. `top` changes `align-content` and
- * nothing else; the gap below the headline stays the `--space-gap-stack` the
- * header already spends in every variant, so the two cannot drift apart.
+ * IT ALSO SPENDS A DIFFERENT DISTANCE: `--space-section` between the headline
+ * and the content, two rungs up from what a `distributed` sheet uses. The
+ * relationship is different, so the rung is. Centred, the header and the body
+ * are one composition and what sits between them is a gap inside a molecule;
+ * top-aligned, the headline is a QUESTION and the body is the apparatus for
+ * answering it — two sections, which is what L2 names that rung for.
+ *
+ * Scoped to this variant. The header's own padding is shared with the paged
+ * sheets, where it floats over a full-bleed picture.
  */
 export const ContentTopAligned: Story = {
   args: {

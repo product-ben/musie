@@ -423,6 +423,17 @@ cards to compare. It is wrong for a body that is a **list** somebody works
 down: the reflect step's drill-down sat three rows deep in the middle of a tall
 sheet with the question stranded at the top.
 
-`top` changes `align-content` and nothing else. The gap below the headline
-stays the `--space-gap-stack` the header already spends in every variant, so
-there is no second distance that could drift from the first.
+`top` changes two things: the alignment, and the distance. `--space-section`
+sits between the headline and the content, two rungs up from what a
+`distributed` sheet spends — because the relationship is different. Centred,
+the header and the body are one composition and the gap between them is inside
+a molecule. Top-aligned, the headline is a **question** and the body is the
+apparatus for answering it: two sections, which is the rung L2 names for that.
+
+Scoped to the variant. The header's own padding is shared with the paged
+sheets, where it floats over a full-bleed picture and this distance would push
+the pages down for a reason belonging to a different variant.
+
+`Chip`'s remove control is an **eraser**, not an ×. An × means *close* almost
+everywhere else here — the Lightbox corner, the Toast dismiss — and both of
+those put something away without changing it. This one deletes a row.

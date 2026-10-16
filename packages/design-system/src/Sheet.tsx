@@ -142,9 +142,21 @@ export interface SheetProps {
    * of a tall sheet, with the question stranded at the top and a hand's worth
    * of nothing between them.
    *
-   * ONE RULE AND NOT A NEW DISTANCE. `top` only changes `align-content`; the
-   * gap below the headline stays the `--space-gap-stack` the header already
-   * spends in every variant, so the two cannot drift apart.
+   * IT ALSO CHANGES THE DISTANCE, and that is the second half of the variant
+   * rather than an afterthought — `--space-section` between the headline and
+   * the content (Ben, 2026-10-16), two rungs up from what a `distributed`
+   * sheet spends.
+   *
+   * The rung is right because the relationship is different. In a
+   * `distributed` sheet the header and the body are one composition that is
+   * centred as a whole, so what sits between them is a gap inside a molecule.
+   * Here the headline is a QUESTION and the body is the apparatus for
+   * answering it, stacked at the top with room below: two sections, which is
+   * the rung L2 names for exactly that.
+   *
+   * Scoped to this variant — the header's own padding is shared with the
+   * paged sheets, where it floats over a full-bleed picture and this distance
+   * would push the pages down for a reason belonging elsewhere.
    *
    * Ignored in paged mode, where each page owns its own height.
    */

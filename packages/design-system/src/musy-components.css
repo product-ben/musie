@@ -7331,11 +7331,45 @@ html[data-musy-scroll-snap='y'] {
    step's drill-down centred three rows in the middle of a tall sheet, with
    the question stranded at the top and a hand's worth of nothing between.
 
-   ONE DECLARATION, AND THAT IS THE POINT. The distance below the headline is
-   the `--space-gap-stack` `.musy-sheet__header` already spends in every
-   variant; adding a second one here would be two rules that could disagree
-   about the same gap. */
-.musy-sheet__body[data-align="top"] { align-content: start; }
+   TWO DECLARATIONS, AND THE SECOND IS THE DISTANCE — Ben, 2026-10-16:
+   `--space-section` between the headline and the content.
+
+   THE RUNG IS RIGHT and it is worth saying why, because it is two steps up
+   from what the header spends elsewhere. In a `distributed` sheet the header
+   and the body are one composition that is CENTRED as a whole, so the gap
+   between them is a gap inside a molecule — `--space-gap-stack`. Here the
+   headline is a question and the body is the apparatus for answering it,
+   stacked at the top of the sheet with room below: they read as two
+   SECTIONS, which is the rung L2 names for exactly that.
+
+   SCOPED TO THIS VARIANT, deliberately. `.musy-sheet__header`'s own padding
+   is shared with the paged sheets — the card walk and the listen focus view —
+   where the header floats over a full-bleed picture and this distance would
+   push the pages down for a reason that belongs to a different variant. The
+   override sits on the body, so a sheet that did not ask for it is
+   untouched. */
+.musy-sheet__body[data-align="top"] {
+  align-content: start;
+  /* On the BODY rather than the header, so only this variant pays it. The
+     header keeps its own padding; this adds the difference between the two
+     rungs on top of it, stated as the arithmetic rather than as a number so
+     neither rung can drift away from the other. */
+  margin-block-start: calc(var(--space-section) - var(--space-gap-stack));
+  /* ── AND IT SCROLLS, WHICH THE CENTRED VARIANT NEVER HAD TO ────────────
+     `distributed` is for a body that FITS by design — one picture, one
+     countdown, four cards. A top-aligned body is a list, and a list is
+     exactly the thing that does not fit: measured at level 2 of the reflect
+     drill-down, seven rows and a foot ran past the bottom of the sheet and
+     the last row was drawn underneath the buttons.
+
+     The track is already `minmax(0, 1fr)` and this element already carries
+     `min-block-size: 0`, so the only thing missing was permission to
+     scroll. The foot is a sibling grid row and stays where it is. */
+  overflow-y: auto;
+  /* The scroll happens inside the sheet's own inset, so a row's focus ring
+     is not clipped against the edge it scrolls past. */
+  scrollbar-width: thin;
+}
 
 /* ── THE FIELD ────────────────────────────────────────────────────────────
    Painted only under a page that is a picture; transparent otherwise, so a

@@ -16,6 +16,13 @@
  * The remove control is the only interactive thing in the box, and it is an
  * ordinary `IconButton` with its own states and its own accessible name.
  *
+ * ── AN ERASER, NOT AN × — Ben, 2026-10-16 ────────────────────────────────
+ * An × means CLOSE almost everywhere it appears in this system — the
+ * Lightbox's corner, the Toast's dismiss — and both of those put the thing
+ * away without changing anything. This one deletes a row. The eraser says
+ * the difference, and says it at a glance in a line where the two could
+ * otherwise be confused for each other.
+ *
  * ── BACKGROUND ONLY, NO BORDER ───────────────────────────────────────────
  * Also Ben's. An edge is what a control wears to say where you may press, and
  * this is not a control; the fill alone is enough to say "this is one object"
@@ -36,7 +43,7 @@
  * `ButtonGroup` makes about a row of actions.
  */
 import * as React from 'react';
-import { X } from 'lucide-react';
+import { Eraser } from 'lucide-react';
 import { IconButton } from './IconButton';
 
 export interface ChipProps {
@@ -71,7 +78,7 @@ export function Chip({ children, onRemove, removeLabel, className }: ChipProps) 
       {onRemove && (
         <IconButton
           className="musy-chip__remove"
-          glyph={X}
+          glyph={Eraser}
           size="min"
           variant="ghost"
           label={removeLabel ?? ''}

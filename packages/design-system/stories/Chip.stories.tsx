@@ -19,6 +19,10 @@ const meta = {
           '**Purpose.** Show something the person already chose, and offer the one',
           'way to take it back out.',
           '',
+          '**The control is an eraser, not an ×.** An × means *close* almost',
+          'everywhere else here — the Lightbox corner, the Toast dismiss — and both',
+          'of those put something away without changing it. This one deletes a row.',
+          '',
           '**It is not a control, and only its × is.** That is the whole semantic',
           'difference between this and everything near it. A `FilterChips` chip is a',
           'checkbox — pressing it changes a query. A `SegmentedControl` option is a',
@@ -65,7 +69,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** With its ×. Hover the chip: nothing happens. Hover the ×: it responds. */
+/** With its eraser. Hover the chip: nothing happens. Hover the eraser: it
+ *  responds. An ERASER and not an × on purpose — an × means *close* almost
+ *  everywhere else in this system, and both of those put something away
+ *  without changing it. This one deletes a row. */
 export const Default: Story = {};
 
 /** No `onRemove`, so no button and no group — a `<span>` with a fill. This is
