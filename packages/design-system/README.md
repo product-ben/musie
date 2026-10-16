@@ -314,3 +314,126 @@ import { CtaButton, ContentBox, Icon } from '@musie/design-system';
 
 The package ships TypeScript source, not a build. The consumer's bundler
 compiles it.
+
+## What arrived on 2026-10-16, with the reflect rework
+
+Four changes, and three of them are additions to components that already
+existed. Each file's own header carries the argument; this is the index.
+
+| | |
+|---|---|
+| **`DrillDown`** | new. A tree narrowed one level at a time |
+| **`RadioGroupText`** · `drillDown` | an option that descends, with a trailing → |
+| **`ButtonGroup`** · `purpose` | `continue-only`, which reverses the order |
+| **`Toast`** · `children` | content on its own row beneath the label |
+
+### `DrillDown` draws no rows
+
+`children` is a function handed the level to draw, so the component imports no
+selection component at all. It owns the stack, the back row, the stop row, the
+live region and the focus move; the feelings sheet passes a `RadioGroupText`.
+
+There is **no default slot**, deliberately: a default would mean importing one
+selection component, which is the single thing the slot exists to avoid. The
+`CardsInTheSlot` story is the only proof the API is generic, and a slot nothing
+has ever been swapped in is a slot that does not work.
+
+### The rows are radios, and the arrow is additive
+
+A drill-down row is still a radio: within the question on screen, choosing
+*Optimistisch* **is** a choice, and its consequence is that the next question
+is asked. Each level is its own group with its own legend.
+
+**The marker stays on every row** — Ben's call: the arrow goes on the right of
+the box so the list is still one thing to scan. `drillDownLabel` is appended to
+the row's accessible name so the two kinds of row are told apart without sight,
+and it is warned about in development when a `drillDown` option omits it.
+
+One thing that is measured rather than reasoned about: the arrow narrows the
+label box, so a long German label clamps a word earlier beside one. The
+existing overflow measurement already covers it, and `DrillDownLongLabel` is
+the story that keeps it true.
+
+### `continue-only` reverses the column too
+
+`stacked` governs width and `relation` governs space; `purpose` governs order.
+For a group whose every control is a way on from here.
+
+| | at `--bp-md` and up | below `--bp-md` |
+|---|---|---|
+| `actions` (default) | row, `align`, DOM order | stacked, full width, **primary first** |
+| `continue-only` | row, trailing, **primary rightmost** | stacked, full width, **primary last** |
+
+**The second row is a deliberate exception** to this component's own rule that
+the stacked order is DOM order top to bottom. "Always bottom right" has no
+right once there is no row, so the primary becomes the bottom button, above the
+thumb. Put to Ben as a conflict with the existing rule and chosen with it
+named — the old rule is not wrong, it belongs to `actions`.
+
+DOM order stays priority order in both. The reversal is `row-reverse` /
+`column-reverse`, so a keyboard and a screen reader meet the primary first
+either way; only the paint changes. `align` is dropped under this variant
+rather than allowed to fight it.
+
+One consumer today, by instruction: the reflect step's incomplete dialog.
+
+### The `Toast` slot is content, not a second action
+
+`action` is still exactly one — two ways out makes it a dialog. The slot does
+not dismiss, is not folded into the toast's announcement (whatever goes in it
+names itself), and the swipe goes inert inside it, the same way it already
+does over the action and the dismiss.
+
+It is **last in the DOM**, so a screen reader meets the dismiss before it.
+That is the price of the row it needs: the toast is a wrapping flex row, and a
+100%-wide child before the dismiss pushes the dismiss onto a third line.
+
+
+## And on the same day, after the first screens were looked at
+
+| | |
+|---|---|
+| **`Chip`** / **`ChipRow`** | new. A word the person put there, with a way to take it back out |
+| **`Sheet`** · `contentAlign` | `top`, for a body that is a list rather than one screen |
+| **`DrillDown`** · `onDepthChange` | the level, and what its stop row would commit |
+
+### `Chip` is not a control, and only its × is
+
+That is the whole semantic difference between it and everything near it. A
+`FilterChips` chip is a checkbox — pressing it changes a query. A
+`SegmentedControl` option is a radio. This is a **noun**: a word somebody
+already chose, sitting there being true.
+
+So nothing about it may suggest a press would do something — no hover, no
+active state, no cursor, no focus ring on the chip itself. And **background
+only, no border**: an edge is what a control wears to say where you may press.
+It is the one visual difference from every other chip in the system, and it is
+carrying meaning rather than taste.
+
+Without `onRemove` it renders as a `<span>`, because a chip nobody can remove
+is a label. `ChipRow` owns the gap between chips — `--space-gap-related`,
+shipped with the component for the reason `ButtonGroup` gives about a row of
+actions: a distance decided in two places is two decisions.
+
+### `contentAlign="top"` is one declaration
+
+`distributed` (the default) centres a single body between the header and the
+foot, which is right for a sheet of one screen — a picture, a countdown, four
+cards to compare. It is wrong for a body that is a **list** somebody works
+down: the reflect step's drill-down sat three rows deep in the middle of a tall
+sheet with the question stranded at the top.
+
+`top` changes two things: the alignment, and the distance. `--space-section`
+sits between the headline and the content, two rungs up from what a
+`distributed` sheet spends — because the relationship is different. Centred,
+the header and the body are one composition and the gap between them is inside
+a molecule. Top-aligned, the headline is a **question** and the body is the
+apparatus for answering it: two sections, which is the rung L2 names for that.
+
+Scoped to the variant. The header's own padding is shared with the paged
+sheets, where it floats over a full-bleed picture and this distance would push
+the pages down for a reason belonging to a different variant.
+
+`Chip`'s remove control is an **eraser**, not an ×. An × means *close* almost
+everywhere else here — the Lightbox corner, the Toast dismiss — and both of
+those put something away without changing it. This one deletes a row.

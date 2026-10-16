@@ -10,7 +10,7 @@ import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { ButtonGroup } from '../src/ButtonGroup';
 import { CtaButton } from '../src/CtaButton';
 import { Switch } from '../src/Switch';
-import { bothThemes, Stack, Row } from './_decorators';
+import { bothThemes, fixedWidth, Stack, Row } from './_decorators';
 
 /* The prototype's own wizard action row — METHOD FLOW, align="end". The
    primary action comes FIRST in the markup, because DOM order is priority
@@ -297,6 +297,72 @@ export const StackedHug: Story = {
       <>
         <CtaButton variant="outline" wrap>Die Frage funktioniert für mich nicht</CtaButton>
         <CtaButton variant="primary" wrap>Wenn du bereit bist, beginne zu reflektieren</CtaButton>
+      </>
+    ),
+  },
+};
+
+/** `purpose="continue-only"` — THE ORDER AXIS, 2026-10-16.
+ *
+ *  Ben: *"the primary action is always bottom right, the secondary action
+ *  left next to it, the tertiary action left next to it."* For a group whose
+ *  every control is a way ON from here — nothing in it acts on the page
+ *  behind it.
+ *
+ *  DOM ORDER IS UNCHANGED and is still priority order: primary, secondary,
+ *  tertiary, exactly as written below. The reversal is `row-reverse`, so a
+ *  keyboard and a screen reader meet the primary first while the eye meets it
+ *  last. Tab through this story to see the two disagree on purpose.
+ *
+ *  `align` is ignored here — the trailing edge is part of what the variant
+ *  means, so a group cannot ask for both and have one silently win.
+ *
+ *  The reflect step's incomplete dialog is the only consumer today, by
+ *  instruction. */
+export const ContinueOnly: Story = {
+  args: {
+    purpose: 'continue-only',
+    children: (
+      <>
+        <CtaButton variant="primary">Entdecke deine Gefühle</CtaButton>
+        <CtaButton variant="outline">Weiter bearbeiten</CtaButton>
+        <CtaButton variant="ghost">Trotzdem speichern</CtaButton>
+      </>
+    ),
+  },
+};
+
+/** The same variant with two actions, which is the commoner shape. */
+export const ContinueOnlyPair: Story = {
+  args: {
+    purpose: 'continue-only',
+    children: (
+      <>
+        <CtaButton variant="primary">Ich bin fertig</CtaButton>
+        <CtaButton variant="outline">Weiteres Gefühl festhalten</CtaButton>
+      </>
+    ),
+  },
+};
+
+/** BELOW --bp-md THE COLUMN REVERSES TOO, which is a deliberate exception to
+ *  this component's own rule that the stacked order is DOM order, top to
+ *  bottom. "Always bottom right" has no right once there is no row, so the
+ *  primary becomes the bottom button — directly above the thumb.
+ *
+ *  Put to Ben as a conflict with the existing rule and chosen with it named.
+ *  The old rule is not wrong; it belongs to `purpose="actions"`.
+ *
+ *  Narrow pane, so the stack is visible without resizing the window. */
+export const ContinueOnlyStacked: Story = {
+  decorators: [fixedWidth(360)],
+  args: {
+    purpose: 'continue-only',
+    children: (
+      <>
+        <CtaButton variant="primary">Entdecke deine Gefühle</CtaButton>
+        <CtaButton variant="outline">Weiter bearbeiten</CtaButton>
+        <CtaButton variant="ghost">Trotzdem speichern</CtaButton>
       </>
     ),
   },

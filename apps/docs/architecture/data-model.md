@@ -186,6 +186,7 @@ difference between them.
 | `sessions` | a person's runs | all four, own rows |
 | `reflections` | one per session | all four, own rows |
 | `reflection_statements` | one per statement, in position order | all four, own rows |
+| `session_feelings` | the feelings a session held on to | `select, insert, delete`, own rows — **no update** |
 | `beta_signups` | the closed-beta form | `insert` only |
 | `missing_translations`, `missing_cuts`, `question_rejections` *(views)* | every content hole; every uncovered audio combination | `select` |
 
@@ -278,6 +279,19 @@ and an artist name are not translated.
 `security_invoker = true`, so it is subject to the caller's own policies.
 
 ## No `media_path` anywhere
+
+`session_feelings` stores a **path through the emotion wheel**, never a word:
+`(emotion_id, detailed_id, specific_i)`, with nulls from wherever the path
+stopped. `content/emotionWheel.ts` says why a label cannot be a key —
+*Powerful* appears twice in the wheel and *Delighted* appears twice — and the
+label is resolved in the active locale at read time, which is what lets one
+dataset serve both languages.
+
+It is the only table in the app with **no update policy and no update grant**,
+and that is the feature: editing a confirmed feeling is out of scope, the two
+verbs are add and remove, and the schema is where that can be enforced rather
+than promised. Its unique constraint is `NULLS NOT DISTINCT`, without which
+the level-1 stop would be the one feeling you could hold twice.
 
 `reflections` has `mode` (`text` | `voice`) and `body`, and **no column for
 audio or an image**. DOMAIN-MODEL.md originally proposed `media_path`; it was

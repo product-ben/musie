@@ -46,6 +46,30 @@
  * THE TWO ARE ORTHOGONAL, and arrived the same day from two branches.
  * `stacked` is what the COLUMN does below --bp-md; `relation` is what the
  * SPACE between the controls means, in the column and the row alike.
+ *
+ * ── AND A THIRD AXIS: `purpose` — 2026-10-16 ─────────────────────────────
+ * `stacked` governs WIDTH and `relation` governs SPACE. This one governs
+ * ORDER, which is why it is not a value of either.
+ *
+ * Ben: *"Add a variant: continue-only. This variant should always be used
+ * when it's purely about continuing, not about another action on the page
+ * (like scrolling). The primary action is always bottom right, the secondary
+ * action left next to it, the tertiary action left next to it."*
+ *
+ * THE RULE ABOVE — "the primary action must come first in the markup" so the
+ * stacked column puts it on top — IS NOW SCOPED TO `actions`. `continue-only`
+ * reverses the column too, so the primary ends up at the BOTTOM, directly
+ * above the thumb. Ben chose that knowingly when the conflict was put to him,
+ * and the exception is written here rather than left to be discovered.
+ *
+ * DOM ORDER IS STILL PRIORITY ORDER in both variants, and that is the whole
+ * reason the reversal is CSS. A keyboard and a screen reader meet the primary
+ * first either way; only the paint changes. Reordering the children would
+ * have made the two disagree.
+ *
+ * ONE CONSUMER TODAY, by instruction: the reflect step's incomplete dialog
+ * ("use it here, not anywhere else, yet"). A second consumer is when this
+ * variant earns its keep — not a reason to widen it now.
  */
 import * as React from 'react';
 
@@ -60,6 +84,14 @@ import * as React from 'react';
  *   where two full-width buttons read as two equal commitments.
  */
 export type ButtonGroupStacked = 'fill' | 'hug';
+
+/**
+ * What the row is FOR — see the header's third axis.
+ *
+ * `continue-only` is a group whose every action is a way on from here;
+ * nothing in it acts on the page behind it.
+ */
+export type ButtonGroupPurpose = 'actions' | 'continue-only';
 
 export interface ButtonGroupProps {
   children: React.ReactNode;
@@ -86,20 +118,36 @@ export interface ButtonGroupProps {
    * stacked column ends with it — which is where the step ends.
    */
   relation?: 'alternatives' | 'molecule';
+  /**
+   * What the row is FOR. See the header.
+   *
+   * `actions` (default) — the mixed case every group was until 2026-10-16:
+   *   some of these act on the page behind them.
+   * `continue-only` — every control in the group is a way ON from here.
+   *   Visually reversed in both directions, so the primary is rightmost in
+   *   the row and last in the column. `align` is ignored: the alignment is
+   *   part of what the variant means.
+   */
+  purpose?: ButtonGroupPurpose;
   className?: string;
 }
 
 export function ButtonGroup({
   children, align = 'start', stacked = 'fill', relation = 'alternatives',
-  className,
+  purpose = 'actions', className,
 }: ButtonGroupProps) {
   return (
     <div
       className={[
         'musy-btn-group',
-        align === 'start' ? '' : `musy-btn-group--${align}`,
+        /* `align` is dropped under continue-only rather than fighting it in
+           the stylesheet: the variant's whole point is that the primary is
+           trailing, and a group that asked for both would have one of the two
+           silently win. */
+        align === 'start' || purpose === 'continue-only' ? '' : `musy-btn-group--${align}`,
         stacked === 'fill' ? '' : `musy-btn-group--stacked-${stacked}`,
         relation === 'alternatives' ? '' : `musy-btn-group--${relation}`,
+        purpose === 'actions' ? '' : `musy-btn-group--${purpose}`,
         className ?? '',
       ].filter(Boolean).join(' ')}
     >

@@ -110,6 +110,20 @@ export interface DiaryCardProps {
   entry: DiaryEntryDetail;
   /** Never guessed. h3 under a lightbox title, h2 under a page title. */
   headingLevel: 2 | 3;
+  /**
+   * THE FEELINGS THAT SESSION HELD ON TO — 2026-10-16.
+   *
+   * A PROP AND NOT A READ, which is the whole reason this is not simply
+   * fetched here: the same card is the row in /diary's list, and a read
+   * inside it would be one query per entry on a screen that can hold thirty.
+   * The entry PAGE reads them and passes them down; the list passes nothing
+   * and costs nothing.
+   *
+   * Omitted and empty mean the same thing to the render, deliberately — "not
+   * loaded" and "none held" both draw nothing, and there is no third state
+   * worth a spinner for a list of at most five words.
+   */
+  feelings?: readonly { id: string; label: string }[];
 }
 
 /** The scale's three, as the catalogue says them. `MessageKey` is
@@ -120,7 +134,7 @@ const FEELING_KEY: Record<'worse' | 'same' | 'better', MessageKey> = {
   better: 'reflect.feeling.better',
 };
 
-export function DiaryCard({ entry, headingLevel }: DiaryCardProps) {
+export function DiaryCard({ entry, headingLevel, feelings = [] }: DiaryCardProps) {
   const t = useT();
   const { locale } = useLocale();
   const navigate = useNavigate();
@@ -290,6 +304,38 @@ export function DiaryCard({ entry, headingLevel }: DiaryCardProps) {
           is in reach: the button is one line below the box, on a card this
           short, and it is not worth putting a control in front of the writing
           it is a control for. */}
+
+      {/* ── THE FEELINGS, ABOVE THE ANSWER ──────────────────────────────
+          Above, because that is the order they were given in — the reflect
+          step asks for the feeling first, and an entry that read them back
+          the other way round would be re-ordering somebody's own account of
+          their session.
+
+          PLAIN TEXT, NOT LINKS. On /reflect each word carries an × because
+          it can still be taken back; here there is nothing to remove, and a
+          past session is not editable. A control that does nothing is worse
+          than no control.
+
+          A <ul> with its markers off, same as the step: it is a list to a
+          screen reader and the commas are not announced. */}
+      {feelings.length > 0 && (
+        <ContentBox
+          headline={t('diary.entry.feelings')}
+          headingLevel={(headingLevel + 1) as 3 | 4}
+          outline="sunken"
+        >
+          <ul className="musie-entry-feelings">
+            {feelings.map((feeling, index) => (
+              <li key={feeling.id}>
+                {feeling.label}
+                {index < feelings.length - 1 && (
+                  <span aria-hidden="true">,</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </ContentBox>
+      )}
 
       {/* The answer, in its own box: it is prose the person wrote, not a
           fact about the session, and a sunken box says that without a

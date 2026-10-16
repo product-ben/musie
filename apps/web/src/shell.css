@@ -792,6 +792,181 @@
   margin-block-start: var(--space-section);
 }
 
+/* ═══ THE REFLECT STEP, REWORKED — 2026-10-16 ══════════════════════════════
+   Permitted L14 patterns: the design system has no component for a welcome
+   paragraph, a line of removable words, or a tapped block of prose. Every
+   declaration below resolves to a Layer 1 token or arithmetic over one
+   (L14.1), and every class is `musie-` and not `musy-` (L14.2).
+
+   L14.3 — IF A SECOND SCREEN WANTS `.musie-feeling-row`, it is a component
+   request and not a second copy. Logged in apps/web/OPEN-QUESTIONS.md.      */
+
+/* The step's own headline. An h2 under ContentBox's h1, at heading-md: the
+   exercise's name is the h1 and this must not out-shout it. */
+.musie-reflect__welcome {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}
+
+/* The why. Body copy at the reading measure — it is the longest thing on the
+   step and the only paragraph, so it gets the measure the prose rules use. */
+.musie-reflect__why {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+/* A section's own subheadline — *Was ich gerade gefühlt habe*. h3, under the
+   step's h2, at label weight: it labels the thing below it rather than
+   starting a new subject. */
+.musie-reflect__held {
+  margin: 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+}
+
+/* THE TWO DOORS HUG. A CtaButton is inline-flex and `.musie-reflect__section`
+   is a flex column, which stretches it edge to edge — the same note
+   `.musie-voice__controls` makes. An offer is not the end of a step, and a
+   full-width pair would read as one. */
+.musie-reflect__door { align-self: start; }
+
+/* ── THE FEELINGS ROW: CHIPS, AND THE WAY TO ADD ANOTHER ──────────────────
+   `ChipRow` owns the gap BETWEEN chips (L2's `--space-gap-related`, shipped
+   with the component). What is left here is the one thing it cannot know:
+   that a `+` button stands at the end of the line, outside the list, and has
+   to sit against it at the same rung.
+
+   `align-items: center` is Ben's alignment and is doing real work: the + is
+   --target-primary and a chip is --target-min plus a rung, so without it the
+   button would hang below the line of chips.
+
+   FULL CONTAINER WIDTH — Ben, 2026-10-16. No `--measure-body` cap: a reading
+   measure is for prose, and this is a wrapping row of objects. Capping it
+   made the chips wrap early against an invisible edge halfway across the
+   step. */
+.musie-feeling-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-gap-related);
+  inline-size: 100%;
+}
+
+/* ── THE CAPTURED THOUGHTS, AS A BLOCK YOU CAN TAP ─────────────────────────
+   A button, because it is a control: reachable by keyboard and announced as
+   one. Styled as prose, because what it shows is the reader's own words and a
+   button chrome around them would make them look like a label.
+
+   FULL CONTAINER WIDTH — Ben, 2026-10-16. The `--measure-body` cap came off
+   with the feelings row's: it is a SURFACE holding prose rather than a column
+   of prose, and a box that stops two thirds of the way across the step reads
+   as a box that failed to fill. The text inside it still wraps at the
+   measure the type sets. */
+.musie-reflect__thoughts {
+  display: block;
+  inline-size: 100%;
+  margin: 0;
+  padding: var(--space-inset-control);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-card);
+  background-color: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  text-align: start;
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+  white-space: pre-wrap;
+  cursor: pointer;
+  transition: background-color var(--motion-toggle), border-color var(--motion-toggle);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musie-reflect__thoughts:hover { background-color: var(--interactive-ghost-hover); }
+}
+.musie-reflect__thoughts:active { background-color: var(--interactive-ghost-active); }
+
+/* The feelings on a diary entry. Plain words, comma separated — no × and no
+   +, because a past session is not editable and a control that does nothing
+   is worse than no control. The <ul> is for the screen reader; the commas are
+   decoration and carry aria-hidden in the markup. */
+.musie-entry-feelings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gap-inline);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface);
+}
+
+/* ═══ THE REFLECT STEP'S TWO SHEETS ════════════════════════════════════════
+   THE HEADLINE IS THE THIRD CALL SITE of a pattern `.musie-goal-sheet__headline`
+   already states, which under L14.3 makes `Sheet` taking a `headline` string a
+   COMPONENT REQUEST rather than a third copy. Not built here, for the reason
+   the goal sheet's own note gives — the listen sheet's header is Markdown with
+   a float cut around the close control, so merging all three is its own piece
+   of work. Logged again in apps/web/OPEN-QUESTIONS.md.
+
+   THE GUTTER AT M AND L is the same correction the goal sheet carries and for
+   the same reason: an immersive Lightbox has 32px of inset at every width,
+   which is a margin on a phone and nothing on a laptop. These two sheets are
+   columns of text, like the goal sheet and unlike the two full-bleed ones.
+
+   THE BREAKPOINTS ARE LAYER 1'S, written as raw px because a media query
+   cannot read a custom property — --bp-md is 768 and --bp-lg is 1024, and if
+   either moves this block moves with it.                                    */
+.musie-reflect-sheet__headline {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens);
+}
+
+/* The card, between the headline and the controls. The Image component caps
+   its own inline size at the body measure; this is the block cap, so a tall
+   window does not turn the card into a poster and push the controls off the
+   fold — which is the whole reason it is in the sheet at all. */
+.musie-reflect-sheet__card { align-self: start; }
+
+@media (min-width: 768px) {
+  .musie-reflect-sheet { padding-inline: var(--sp-6); }
+}
+@media (min-width: 1024px) {
+  .musie-reflect-sheet { padding-inline: var(--sp-8); }
+}
+
 /* ═══ THE CARD IN A DIARY ENTRY ═════════════════════════════════════════════
    The artwork of the card that was drawn, under the answer it prompted.
 
