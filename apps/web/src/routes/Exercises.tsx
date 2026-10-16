@@ -405,36 +405,34 @@ export function Exercises() {
      text beside the rendered line rather than by thinking about it. */
   const goalName = choice === null ? null : goalPurpose(goals, choice);
 
-  /* ── THE BACK CHEVRON IS AN UNDO, NOT A DIRECTION (Ben, 2026-10-16) ────
-     It appears once you have pressed FORWARD and not before — *it's only
-     there to easily and quickly get back to the last item.*
+  /* ── BOTH CHEVRONS, ALWAYS — AND THE OTHER WAY WAS TRIED ───────────────
+     For one iteration the back chevron was an UNDO: hidden until you pressed
+     forward, reset on the next load of the route, there only to get you back
+     to the item you just left. Ben: *this hasn't worked out.* Reverted on
+     sight, and worth recording rather than quietly deleting, because the
+     idea is a reasonable one to have again.
 
-     SO IT IS NOT PART OF THE RING, even though it steps through the same
-     one. Forward is the way you browse four goals; back is the way out of a
-     press you did not mean. A pair of arrows present from the start would
-     have offered two directions through a list of four, which is a map
-     nobody needs for four things.
+     WHAT WAS MEASURED WHILE IT WAS IN. Pressing forward moved the forward
+     chevron itself: the arriving back chevron pushed it right while the new
+     goal's shorter word pulled the line left, so it travelled 10px in a
+     direction that depended on the words. A control that moves when you
+     press it is a control you press twice badly, and browsing four goals
+     means pressing it twice.
 
-     IT IS STATE, NOT STORAGE, and that is the whole of "on the next load of
-     the route it is gone again": `useState` resets when the route unmounts,
-     so starting a session and coming back leaves the headline as the screen
-     first draws it. The GOAL survives that — it is in `localStorage` — and
-     the way back to the one before it does not, because by then there is no
-     press to undo. */
-  const [stepped, setStepped] = React.useState(false);
-
+     A PAIR THAT IS ALWAYS THERE IS A PAIR YOU CAN LEARN, which is the same
+     reasoning that made them wrap rather than stop at the ends. */
   const goalSteps: InlineLinkAction[] = [
-    ...(stepped ? [{
+    {
       id: 'previous',
       glyph: ChevronLeft,
       label: t('exercises.goal.previous'),
       onClick: () => step(-1),
-    }] : []),
+    },
     {
       id: 'next',
       glyph: ChevronRight,
       label: t('exercises.goal.next'),
-      onClick: () => { setStepped(true); step(1); },
+      onClick: () => step(1),
     },
   ];
 
