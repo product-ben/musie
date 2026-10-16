@@ -939,6 +939,80 @@ export const en = {
   'reflect.feeling.same': 'Exactly as before',
   'reflect.feeling.better': 'Better than before',
 
+  /* ══ THE STEP, REWORKED — 2026-10-16 ═══════════════════════════════════
+     The default screen used to carry the rotating question, the exercise's
+     own questions, three answer modes, a text field, a privacy line, the
+     mood scale and two actions — all of it immediately after somebody had
+     their eyes closed for ten minutes. User testing found three failures
+     that compound: people cannot find words for what they experienced, they
+     cannot name the feeling at all, and nobody ever told them why putting it
+     into words is worth doing.
+
+     So the step is now a welcome, a reason, and two doors. Each piece of
+     work is behind its own sheet, opened by somebody who chose to open it.
+
+     THE HEADLINE IS BEN'S, with one grammar correction he confirmed: it
+     mixed three persons in one sentence (*fühlen wir* / *verarbeite* /
+     *kommen an*). It is all du now, which is where the sentence already
+     starts — *atme* — and what the rest of the app speaks. */
+  'reflect.welcome.headline': 'Welcome back — take a deep breath in, and out. Now you feel what came up, work through the thoughts, and arrive back in the real world.',
+  /* THE WHY, which is the thing the step never said. It argues from what the
+     reader gets — in the moment, and over time — and ends by inviting rather
+     than instructing, because the two doors below are optional. */
+  'reflect.welcome.text': 'Noticing your feelings and thoughts on purpose helps you work through them and be in the moment. Most people find that relaxing. And over time it helps you feel and understand yourself better. Start in, if you like:',
+
+  /* ── THE FEELINGS SECTION ────────────────────────────────────────────────
+     *Discover* rather than *choose* or *add*: the problem this solves is that
+     people do not know what they feel, so the verb has to promise a search
+     rather than ask for an answer they do not have. */
+  'reflect.feelings.cta': 'Discover your feelings',
+  /* IN THE USER'S OWN VOICE, which GERMAN-UI-WRITING.md §1 permits beside the
+     du of everything around it — the user type labels set the precedent. It
+     is the reader's own words played back, which is the point of the
+     section. */
+  'reflect.feelings.held': 'What I just felt',
+  'reflect.feelings.add': 'Add another feeling',
+  /* Per row, because an icon-only control needs a name and "remove" alone
+     would be four identical buttons to a screen reader. */
+  'reflect.feelings.remove': 'Remove {feeling}',
+
+  /* ── THE FEELINGS SHEET ──────────────────────────────────────────────────
+     `title` is announced and never drawn — Sheet's own contract — and the
+     headline is what is actually read. The two are different strings because
+     they do different jobs: one names the furniture, one asks the question. */
+  'reflect.feelings.sheet.title': 'Hold on to a feeling',
+  'reflect.feelings.sheet.headline': 'What do you feel in yourself right now?',
+  /* THE STOP ROW, first at every level below the first. Lower case after
+     "just", because it continues the row rather than starting a sentence. */
+  'reflect.feelings.sheet.just': 'just {feeling}',
+  'reflect.feelings.sheet.back': 'Back to {feeling}',
+  /* What the → means, appended to a descending row's accessible name. It must
+     NOT repeat the label: the row announces as "Optimistic, more feelings". */
+  'reflect.feelings.sheet.more': 'more feelings',
+  /* The live region, when a new level arrives. */
+  'reflect.feelings.sheet.level': '{feeling} — {count} feelings',
+  'reflect.feelings.sheet.empty': 'No feelings here',
+  /* A ROW YOU ARE ALREADY HOLDING. Disabled rows look disabled and say
+     nothing about why, and RadioGroupText has no per-row reason slot — so the
+     reason goes into the label, where it is both visible and announced. */
+  'reflect.feelings.sheet.heldRow': '{feeling} — already held',
+  /* And the race the unique constraint exists for: two taps, a retry, a
+     second tab. Not an error — the right answer is "you have that one". */
+  'reflect.feelings.sheet.alreadyHeld': 'You are already holding that one',
+  'reflect.feelings.sheet.done': 'I am done',
+  'reflect.feelings.sheet.another': 'Hold on to another feeling',
+  'reflect.feelings.sheet.failed': 'That feeling could not be saved. Try again in a moment.',
+
+  /* ── THE THOUGHTS SECTION AND ITS SHEET ──────────────────────────────────
+     The CTA names what to notice and when — *while listening* — because the
+     field's emptiness was the thing people stalled in front of, and a verb
+     with a time attached is easier to start than "write your reflection". */
+  'reflect.thoughts.cta': 'Note what you noticed while listening',
+  'reflect.thoughts.held': 'What I just noticed',
+  'reflect.thoughts.edit': 'Change what you noted',
+  'reflect.thoughts.sheet.title': 'Note your thoughts',
+  'reflect.thoughts.sheet.done': 'Done',
+
   /* ── ONE WAY OUT, AND IT SAYS WHERE THE SESSION GOES (Ben, 2026-10-09) ────
      NO 'reflect.skip' AND NO 'reflect.finish'. The step carried three exits at
      once — skip, finish, and the ghost *Close this session* — which user
@@ -963,6 +1037,15 @@ export const en = {
      for. Naming the act, not the dialog: "Cancel" would describe leaving this
      box rather than returning to the reflection. */
   'reflect.incomplete.continue': 'Continue reflecting',
+  /* ── AND NOW A DOOR INTO THE THING THAT IS MISSING — 2026-10-16 ────────
+     The dialog used to say what was open and offer only to carry on or to
+     save anyway, which leaves somebody to find the right control themselves.
+     These two are the primary, and which one is drawn depends on what is
+     actually missing. When BOTH are, only the feelings door is offered:
+     feelings is the thing to do first, and two primary-looking doors in a
+     three-button column is the overload this whole change removes. */
+  'reflect.incomplete.goFeelings': 'Discover your feelings',
+  'reflect.incomplete.goThoughts': 'Note your thoughts',
   /* And the way out stays open, in the second rank. It says INCOMPLETE out
      loud: somebody choosing it should know what the diary will hold. */
   'reflect.incomplete.save': 'Save to the diary, incomplete',
@@ -1043,8 +1126,28 @@ export const en = {
      It also retires the clash the old wording carried -- *beendete Uebung*
      over an entry badged *Nicht beendet* -- without needing the ruling that
      was logged for it. No adjective, no contradiction. */
-  'diary.saved': 'You can find your reflection in the latest diary entry',
+  /* ── AND IT ASKS SOMETHING NOW — 2026-10-16 ───────────────────────────
+     The mood scale came off /reflect, where it sat under the answer as a
+     seventh thing to do on a step already carrying six. It is here instead,
+     in the slot the Toast grew for it: the session is over, the diary is on
+     screen, and "how was that?" is a question somebody can answer in one tap
+     about something that has finished.
+
+     THE PRICE IS THAT IT CAN BE MISSED. Sixty seconds, dismissable, and no
+     second surface asks — a mood scale that chases you across screens is the
+     opposite of what this change is for. `sessions.feeling_change` is
+     nullable and a session nobody answered simply has none. */
+  'diary.saved': 'You can find your reflection in the latest diary entry. How is your mood after that session?',
   'diary.saved.dismiss': 'Dismiss this message',
+  /* The scale's own accessible name. Not the same string as the sentence
+     above: a fieldset needs a name of its own (1.3.1, 4.1.2), and the
+     sentence is a paragraph rather than a question put to the control. */
+  'diary.saved.moodLegend': 'Your mood after the session',
+  /* The feelings on an entry. Past tense and in the user's own voice, like
+     the section on /reflect that collected them — this is the same account
+     read back, not the product describing a field. */
+  'diary.entry.feelings': 'What you felt',
+  'diary.saved.moodFailed': 'That could not be saved. Try again in a moment.',
 
   /* -- THE GRAPH ---------------------------------------------------------
      A week of days, each session drawn as its exercise's artwork.

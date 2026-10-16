@@ -86,6 +86,8 @@ import { Lightbox, Message } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { useCloseOverlay } from '../lib/useCloseOverlay';
 import { useDiaryEntry } from '../lib/useDiary';
+import { listFeelings } from '../lib/feelings';
+import { useAsync } from '../lib/useAsync';
 import { formatShortDateTime, sessionPath } from '../lib/diary';
 /* THE CARD ITSELF LIVES IN A COMPONENT, because /diary renders the same one
    inline for the newest entry. This route is now the frame and the four
@@ -112,6 +114,29 @@ export function DiaryEntry() {
      type rather than for a user: an empty id reads as no entry, which is the
      404 branch and already correct. */
   const { data, loading, error } = useDiaryEntry(params.id ?? '');
+
+  /**
+   * THE FEELINGS THAT SESSION HELD — 2026-10-16.
+   *
+   * Read HERE and passed into the card, not read inside it: the same card is
+   * a row in /diary's list, and a read in there would be one query per entry
+   * on a screen that can hold thirty of them.
+   *
+   * KEYED ON THE LOCALE as well as the id, because the label is resolved from
+   * the wheel at read time — switching language has to re-resolve the words,
+   * and `useAsync` re-runs on a key change.
+   *
+   * A FAILURE DRAWS NOTHING. `useAsync`'s error is deliberately not surfaced:
+   * the entry is the reflection and the session, and a list of feelings that
+   * could not be read must not put an error banner over writing that loaded
+   * perfectly well. The gap is quiet and the console is not.
+   */
+  const feelings = useAsync(
+    () => (params.id === undefined || params.id === ''
+      ? Promise.resolve([])
+      : listFeelings(params.id, locale)),
+    `feelings:${params.id ?? ''}:${locale}`,
+  );
 
   /**
    * THE RUNNING-SESSION REDIRECT, and why it is here rather than in a loader.
@@ -166,7 +191,7 @@ export function DiaryEntry() {
     /* h3: the lightbox's own title is the h2 above it. On /diary the same
        card is an h2, under the page title — which is exactly why the level is
        a prop rather than a default. */
-    body = <DiaryCard entry={entry} headingLevel={3} />;
+    body = <DiaryCard entry={entry} headingLevel={3} feelings={feelings.data ?? []} />;
   }
 
   /**

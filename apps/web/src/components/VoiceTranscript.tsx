@@ -54,7 +54,7 @@ import { CtaButton, DraggableList, Message, RecordButton, Toast } from '@musie/d
 import {
   DEFAULT_MODEL, IDLE_STOP_MS, SESSION_SECONDS, setStatementsHandler, useTranscription,
 } from '@musie/voice';
-import { saveStatements } from '../lib/statements';
+import { joinStatements, saveStatements } from '../lib/statements';
 import type { VoiceMessageCode } from '@musie/voice';
 import { useLocale, useT } from '../i18n/localeContext';
 import { realtimeToken } from '../lib/realtimeToken';
@@ -68,12 +68,27 @@ const SECONDS = String(SESSION_SECONDS);
 const SILENCE = String(IDLE_STOP_MS / 1000);
 
 export function VoiceTranscript({
-  sessionId, onSpokenWords,
+  sessionId, onSpokenWords, onSpokenText,
 }: {
   sessionId: string;
   /** Reported upward so *Finish session* can open — F.6. The statements live
    *  in here, and the typed box the step otherwise asks about is empty. */
   onSpokenWords?: (has: boolean) => void;
+  /**
+   * THE WORDS THEMSELVES, reported up — 2026-10-16.
+   *
+   * The reflect step's filled state shows what was captured, as one block,
+   * whichever mode produced it (Ben). In voice mode the step has no copy of
+   * the transcript: the statements live here and are written straight to
+   * `reflection_statements`. So the same effect that reports WHETHER there
+   * are words now also reports WHAT they are.
+   *
+   * `joinStatements` and not a join written here, because this has to be the
+   * same prose `reflections.body` is assembled from — two joins that could
+   * drift is exactly how a diary entry ends up disagreeing with the screen
+   * that wrote it.
+   */
+  onSpokenText?: (text: string) => void;
 }) {
   const t = useT();
   const { locale } = useLocale();
@@ -100,7 +115,8 @@ export function VoiceTranscript({
      deleting the last statement un-answers the question. */
   React.useEffect(() => {
     onSpokenWords?.(session.sentences.some((s) => s.text.trim() !== ''));
-  }, [session.sentences, onSpokenWords]);
+    onSpokenText?.(joinStatements(session.sentences));
+  }, [session.sentences, onSpokenWords, onSpokenText]);
 
   React.useEffect(() => {
     const previous = setStatementsHandler((statements) => {

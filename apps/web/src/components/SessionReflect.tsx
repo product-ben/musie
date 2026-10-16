@@ -1,319 +1,175 @@
 /**
- * Step 4 · Reflect — the questions, and the answer.
+ * Step 4 · Reflect — the calm default.
  *
- * ── THREE DOORS, AND TWO OF THEM OPEN ─────────────────────────────────────
- * Text, voice and photo.
+ * ── WHAT THIS STEP USED TO BE ─────────────────────────────────────────────
+ * A rotating question, the exercise's own questions, three answer modes, a
+ * text field, a privacy line, a three-point mood scale and two actions — all
+ * on one screen, reached immediately after ten minutes with your eyes closed.
  *
- * VOICE IS REAL SINCE F.4. `VoiceTranscript` opens a microphone, a socket and
- * a transcription session, and the statements it produces can be edited,
- * reordered, joined and deleted. What it still cannot do is SAVE: nothing
- * writes `reflections.body` but the text mode, so `Finish` stays disabled
- * here and the step says why. F.6 is the write.
+ * User testing found three failures, and they compound. People cannot find
+ * words for what they experienced. They cannot name the feeling at all —
+ * nothing in the product ever offered a vocabulary. And nobody had told them
+ * why putting an observation into words is worth doing, so the whole step
+ * read as homework.
  *
- * PHOTO IS STILL A MOCKUP, waiting on which model reads handwriting, and says
- * so where the answer would go — MOCKUPS.md 2, and the standard that file
- * sets. `Finish` stays disabled for it too.
+ * ── WHAT IT IS NOW ───────────────────────────────────────────────────────
+ * A welcome, a reason, and two doors. The work is behind the doors:
  *
- * That each mode announces its own limit is honest rather than obstructive —
- * the alternative was hiding what the product has already decided on, which
- * would make the screen look finished and be less true.
+ *   FeelingsSheet   `?focus-feelings`  — the emotion wheel, narrowed
+ *   ThoughtsSheet   `?focus-thoughts`  — everything this file used to hold
  *
- * PHOTO AND VOICE ARE ONE FEATURE WITH TWO FRONT DOORS. Both produce words;
- * neither produces a file. That is why `reflections` has no `media_path` and no
- * Storage bucket, and why `mode` already allows all three values although two
- * of them are unbuilt. The absence is the design (D1, D13).
+ * The mood scale is on neither: it moved to the success toast on /diary,
+ * where the session is over and "how was that?" is a question about
+ * something finished.
  *
- * ── DECLINING IS AN ANSWER, AND IT SITS IN THE ACTION ROW ──────────────────
- * Three ways to answer and one way not to answer are different kinds of
- * choice, so it is not a fourth segment — that would make refusal look like a
- * method of answering.
+ * ── THE ORDER IS FEELINGS, THEN THOUGHTS ─────────────────────────────────
+ * The feeling is the thing people cannot name, and it is CHEAP to answer —
+ * three taps and a word. The thoughts field is the expensive one, and it is
+ * the one they stalled in front of. Putting the cheap, blocked thing first
+ * gives somebody a win before the field that stopped them, and the thoughts
+ * button's own treatment follows along to say which is next: outlined while
+ * feelings is empty, filled primary once it is not.
  *
- * It is not under the group either, which is where it started. *Skip
- * reflection* is a way OUT of the step, and the step's ways out are the action
- * row: it sits beside *Finish session* as the alternative to it, which is what
- * it actually is. Rendered by `Session.tsx` with the rest of that row.
- *
- * A DECLINED REFLECTION STILL FINISHES THE SESSION — Ben, 2026-09-19. The row
- * is `finished` with no `reflections` row beside it, which the schema already
- * allows: `reflections.body` is not null, so "no answer" can only be expressed
- * as no row. DOMAIN-MODEL.md's state diagram reads `started --> finished :
- * completes the reflection`, and that sentence is now the looser of the two —
- * reaching the end of the run is what finishes it, and whether you left words
- * behind is a separate fact the diary reports on its own.
+ * ── THE SECTIONS ARE WRITTEN IN THE USER'S VOICE ─────────────────────────
+ * *Was ich gerade gefühlt habe*, *Was ich gerade wahrgenommen habe*.
+ * GERMAN-UI-WRITING.md §1 permits first person beside the du of everything
+ * around it, for copy that is the user speaking — the user-type labels set
+ * the precedent. These are the reader's own words played back, which is the
+ * whole point of a filled state.
  */
 import * as React from 'react';
-import { ArrowDown, ArrowUp, Camera, Mic, Minus, PenLine } from 'lucide-react';
-import {
-  Field, FeelingsScale, Message, PhotoUpload, SegmentedControl,
-} from '@musie/design-system';
-import type { UploadedPhoto } from '@musie/design-system';
-import { Markdown } from './Markdown';
-import { VoiceTranscript } from './VoiceTranscript';
+import { Plus, X } from 'lucide-react';
+import { CtaButton, IconButton } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
-import type { Exercise } from '../lib/content';
-import { withoutHeading } from '../lib/markdown';
-import type { ReflectMode } from '../lib/reflect';
-import type { FeelingChange } from '../lib/session';
-import type { SessionQuestion } from '../lib/useQuestion';
+import type { HeldFeeling } from '../lib/feelings';
 
 export interface SessionReflectProps {
-  /** Whose run this is. F.6 writes the statements against it as they arrive. */
-  sessionId: string;
-  /** Passed straight through from `VoiceTranscript` — F.6. */
-  onSpokenWords?: (has: boolean) => void;
-  exercise: Exercise;
+  /** What the session is holding. Read, never written, by this file. */
+  feelings: HeldFeeling[];
+  onAddFeeling: () => void;
+  onRemoveFeeling: (id: string) => void;
   /**
-   * How the session left you, on the three-point scale — `null` until it is
-   * answered. Held by `Session.tsx` beside the written answer, because both
-   * are written by the same `finish()` and because the rail unmounts this
-   * step when you walk back to listen.
+   * The captured thoughts, as ONE BLOCK of text — Ben, 2026-10-16.
+   *
+   * Typed text renders as typed; a spoken answer renders as its statements
+   * joined into prose, which is what `reflections.body` holds in both cases
+   * anyway. Photo captures nothing today and so can never fill this.
    */
-  feeling: FeelingChange | null;
-  onFeelingChange: (value: FeelingChange) => void;
-  mode: ReflectMode;
-  onModeChange: (mode: ReflectMode) => void;
-  /** The typed answer. The only one that can be saved today. */
-  text: string;
-  onTextChange: (text: string) => void;
-  /**
-   * The rotating question, in its PAST TENSE — the same one the listen step
-   * asked, phrased for somebody who has now heard the music.
-   *
-   * Held by `Session.tsx` rather than read here, because the two steps must
-   * agree: a question answered is the question that was asked, and the rail
-   * unmounts each step when you walk between them.
-   *
-   * NO RE-ROLL ON THIS STEP (D4). By the time somebody is here the question is
-   * what they listened for, and swapping it would leave them answering one
-   * they never held.
-   *
-   * AND NO HELPER EITHER, since 2026-10-12. Only `question.text.reflect` is
-   * read here. The help belongs to the listen step, where somebody is stuck in
-   * front of a question with nothing to do but think; by this step they have
-   * heard the music and are being asked to write, and a prompt-for-the-prompt
-   * competes with the answer rather than unblocking it.
-   */
-  question: SessionQuestion;
+  thoughts: string;
+  onEditThoughts: () => void;
 }
 
-/**
- * THE BODY ONLY — the action row is `WizardPanel`'s, filled by `Session.tsx`.
- * Everything *Finish session* needs to decide whether it is enabled — the
- * mode, the text and whether the answer was declined — is already lifted,
- * because the session is what writes them.
- */
 export function SessionReflect({
-  exercise, mode, onModeChange, text, onTextChange,
-  feeling, onFeelingChange,
-  sessionId,
-  onSpokenWords,
-  question,
+  feelings, onAddFeeling, onRemoveFeeling, thoughts, onEditThoughts,
 }: SessionReflectProps) {
   const t = useT();
 
-  /* The PHOTO mockup holds its state HERE rather than in the session: nothing
-     it captures is ever saved, so lifting it would put something in the
-     session's shape that the session never writes.
-
-     Voice used to keep a fake elapsed-seconds timer beside it. It is gone:
-     `VoiceTranscript` runs a real session, and `useTranscription` owns the
-     real clock. */
-  const [photo, setPhoto] = React.useState<UploadedPhoto | null>(null);
-
-  /* THE SCALE'S THREE, IN ORDER, AND THE ONLY LIST OF THEM ON THIS SCREEN.
-     `FeelingsScale` is generic over its points — a scale does not know what it
-     is measuring — so the narrowing from its `string` back to `FeelingChange`
-     happens here, against this array rather than against three literals
-     written a second time. A value that is not one of them cannot reach the
-     column, which is the same set `sessions_feeling_change_known` enforces at
-     the other end. */
-  const FEELINGS: readonly FeelingChange[] = ['worse', 'same', 'better'];
+  const hasFeelings = feelings.length > 0;
+  const hasThoughts = thoughts.trim().length > 0;
 
   return (
     <>
-      {/* THE STEP'S OWN WORDS — `reflect_md`: the headline that asks what you
-          were thinking about, and under it the questions to answer if you want
-          to. It used to be a `StepText` plus the shared `question` <h2>; that
-          column is gone (2026-09-23) and each step carries its own headline,
-          because the listen step asks what picture FORMS and this one asks
-          what it was called and what happened in it. */}
-      {/* ── SECTION 1 · THE QUESTION, AND HOW YOU ANSWER IT ────────────────
-          The step's own words and the three ways to reply are ONE section:
-          the modes are not a separate subject, they are the apparatus for the
-          question directly above them. Splitting them would section the
-          sentence away from the box you write in. */}
-      {/* ── THE QUESTION IS THE HEADLINE, AND IT IS NOT THE EXERCISE'S ───
-          Five rotate, and which one this run got came from the listen step
-          (`lib/useQuestion.ts`). `reflect_md`'s own `##` is dropped at render
-          time by `withoutHeading` rather than by a migration, because
-          `reflectQuestionOf` still reads that heading to label diary entries
-          from BEFORE the rotation — which is the question those sessions were
-          actually asked.
-
-          `withoutHeading` AND NOT `bodyOnly`: the latter promotes the first
-          paragraph to a heading, which here would put "Wenn du magst,
-          beantworte diese Fragen" in display type under the question.
-
-          FREIE BAHN LOSES "Spüre und reflektiere" (D12). Its numbered list
-          follows the rotating question, and step 2 of that list asks its own
-          two questions — so this step carries two sets of them. Ben chose
-          that knowing it; logged in OPEN-QUESTIONS.md.
-
-          The whole fallback path is the final branch: no question set means
-          `reflect_md` renders exactly as it always did, heading included. */}
+      {/* ── THE WELCOME, AND THE REASON ─────────────────────────────────
+          Two paragraphs and no heading above them: this IS the step's
+          headline, and `ContentBox` already carries the exercise's name as
+          the h1. A second heading here would be the screen naming its own
+          furniture before saying anything. */}
       <section className="musie-reflect__section">
-        {question.text === null ? (
-          <Markdown md={exercise.reflectMd} />
-        ) : (
-          <>
-            <Markdown md={`## ${question.text.reflect}`} />
-            <Markdown md={exercise.reflectMd} arrange={withoutHeading} />
-          </>
-        )}
-
-        <div className="musie-stack">
-        <SegmentedControl
-          name="reflect-mode"
-          /* THE NAME STAYS; THE HEADING GOES — Ben, 2026-09-23. "How would you
-             like to answer?" sat above three buttons that say *Record audio*,
-             *Write answer* and *Take photo*, which is the question answered in
-             the controls that answer it. `legendHidden` is the component's own
-             prop for exactly this: the group keeps its accessible name, so a
-             screen reader still hears what the three radios are FOR, and the
-             screen stops saying it twice. It is never dropped — an unnamed
-             radio group announces as a bare list of buttons. */
-          legend={t('reflect.legend')}
-          legendHidden
-          options={[
-            { value: 'voice', label: t('reflect.mode.voice'), glyph: Mic },
-            { value: 'text', label: t('reflect.mode.text'), glyph: PenLine },
-            { value: 'photo', label: t('reflect.mode.photo'), glyph: Camera },
-          ]}
-          value={mode}
-          onValueChange={(next) => onModeChange(next as ReflectMode)}
-        />
-
-        {mode === 'text' && (
-          <Field
-            multiline
-            rows={5}
-            label={t('reflect.text.label')}
-            /* ── THE EXERCISE'S OWN QUESTIONS, IN THE BOX — Ben, 2026-10-07 ─
-               They were body copy above this field, which left the reader
-               holding them in their head while typing into something that said
-               nothing about them. A prompt belongs in the box being answered:
-               it is there while the answer is being written and gone the
-               moment it has been.
-
-               THE FALLBACK IS CHROME AND THE QUESTIONS ARE NOT. These are
-               Achtsame Pause's — a named scene, and what happened in it — and
-               Freie Bahn asks something else entirely, so a catalogue key here
-               would print one exercise's questions under every exercise's
-               field. `reflect_placeholder` is null for an exercise with no
-               questions of its own, and then the catalogue's sentence is the
-               honest thing to show. */
-            /* ── NO HELPER HERE — Ben, 2026-10-12 ─────────────────────────
-               The help belongs to the LISTEN step, where somebody is stuck in
-               front of a question with nothing to do but think. By the reflect
-               step they have heard the music and are being asked to write; a
-               prompt-for-the-prompt in the box competes with the answer rather
-               than unblocking it.
-
-               So this is the two rungs it always had: the exercise's own
-               questions, else the catalogue's sentence. */
-            placeholder={exercise.reflectPlaceholder ?? t('reflect.text.placeholder')}
-            description={t('privacy.written')}
-            value={text}
-            onValueChange={onTextChange}
-          />
-        )}
-
-        {/* ── AND NOW NOT EVEN A SENTENCE — Ben, 2026-09-24 ────────────────
-            The step carried the data promise twice over. It was a `Message`
-            with a four-clause paragraph until 2026-09-23, then one line of
-            small print — *Musie keeps the text, never your voice* — with
-            *More about your data* beside it opening `DataLightbox`.
-
-            Both are gone. The transcript is what the reader came to this step
-            for, and everything under it was competing with it: the promise,
-            the second hint, the link. The promise is not withdrawn — it is
-            still true — but this is no longer the place that says so.
-
-            AND THE LIGHTBOX IS GONE TOO, 2026-10-13. It had held the six
-            sentences and no door opened it for three weeks; the log below
-            asked where a door should go and nothing answered. The room went
-            instead of the door arriving, and its five copy keys went with it
-            once Ben ruled on them — `privacy.title`, `privacy.account`,
-            `privacy.voice`, `privacy.browserBound`, `privacy.more`.
-            DECISIONS.md M10.
-
-            THIS STEP STILL MAKES ITS PROMISES, at the controls they are about:
-            `privacy.written` and `privacy.photo` below, `privacy.voiceShort`
-            beside the record button. What is gone is the one page that said
-            all of it at once.
-
-            WHICH LEAVES THE LIGHTBOX WITH NO DOOR. Nothing in the app opens it
-            any more, and that is the one thing about this change that is not
-            finished: logged in apps/web/OPEN-QUESTIONS.md, because where the
-            data promise lives is Ben's to place and not something to invent a
-            nav item for. The component stays built. */}
-        {mode === 'voice' && (
-          <VoiceTranscript sessionId={sessionId} onSpokenWords={onSpokenWords} />
-        )}
-
-        {mode === 'photo' && (
-          <div className="musie-stack">
-            <PhotoUpload
-              label={t('reflect.photo.label')}
-              value={photo}
-              onValueChange={setPhoto}
-              previewAlt={t('reflect.photo.previewAlt')}
-              description={t('privacy.photo')}
-              zoneText={t('reflect.photo.zone')}
-              chooseLabel={t('reflect.photo.choose')}
-              replaceLabel={t('reflect.photo.replace')}
-              removeLabel={t('reflect.photo.remove')}
-            />
-            <Message
-              variant="info"
-              live="off"
-              headingLevel={3}
-              headline={t('reflect.photo.notBuilt')}
-              text={t('reflect.photo.notBuiltText')}
-            />
-          </div>
-        )}
-        </div>
+        <h2 className="musie-reflect__welcome">{t('reflect.welcome.headline')}</h2>
+        <p className="musie-reflect__why">{t('reflect.welcome.text')}</p>
       </section>
 
-      {/* ── SECTION 2 · HOW THE SESSION LEFT YOU ─────────────────────────────
-          AFTER the answer, not before it: the question is about the session
-          that has just happened, and asking it above the reflection would put
-          a summary before the thing being summarised.
-
-          A SCALE, NOT A SEGMENTED CONTROL, and the component's own header is
-          where that is argued — the three points are ordered and the order is
-          the information, where a segmented control's options are alternatives
-          with no order at all.
-
-          It is OPTIONAL in the sense that the session saves without it, and
-          the completion dialog in `Session.tsx` is what says so out loud
-          rather than a disabled button that explains nothing. */}
+      {/* ── SECTION · FEELINGS ──────────────────────────────────────────── */}
       <section className="musie-reflect__section">
-        <FeelingsScale
-          name="session-feeling"
-          legend={t('reflect.feeling.legend')}
-          points={[
-            { value: 'worse', label: t('reflect.feeling.worse'), glyph: ArrowDown },
-            { value: 'same', label: t('reflect.feeling.same'), glyph: Minus },
-            { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
-          ]}
-          value={feeling ?? undefined}
-          onValueChange={(picked) => {
-            const known = FEELINGS.find((f) => f === picked);
-            if (known !== undefined) onFeelingChange(known);
-          }}
-        />
+        {!hasFeelings ? (
+          /* HUGGING, not full width. The two doors are offers; a pair of
+             full-width buttons reads as the end of a step, which is what the
+             action row below actually is. `.musie-reflect__door` is the
+             align-self — a CtaButton is inline-flex and a flex column
+             stretches it, which is the note `.musie-voice__controls` makes
+             for the same reason. */
+          <CtaButton className="musie-reflect__door" variant="primary" onClick={onAddFeeling}>
+            {t('reflect.feelings.cta')}
+          </CtaButton>
+        ) : (
+          <>
+            <h3 className="musie-reflect__held">{t('reflect.feelings.held')}</h3>
+            {/* THE FEELINGS AS A LINE OF TEXT, not a list of chips. They are
+                what somebody felt, read back as a sentence fragment — the
+                comma is doing the work a list's bullets would do, at a
+                fraction of the furniture.
+
+                A <ul> underneath, because it IS a list to a screen reader and
+                the commas are not announced. The stylesheet takes the markers
+                and the bullets off; the semantics stay. */}
+            <ul className="musie-feeling-row">
+              {feelings.map((feeling, index) => (
+                <li key={feeling.id} className="musie-feeling-row__item">
+                  <span className="musie-feeling-row__word">{feeling.label}</span>
+                  <IconButton
+                    glyph={X}
+                    size="min"
+                    variant="ghost"
+                    /* Per row. Four buttons called "Remove" are four
+                       identical buttons to anyone who cannot see which row
+                       they are on. */
+                    label={t('reflect.feelings.remove', { feeling: feeling.label })}
+                    tooltip={false}
+                    onClick={() => onRemoveFeeling(feeling.id)}
+                  />
+                  {/* The comma is DECORATION — it separates words visually and
+                      the <li> boundary is what separates them semantically, so
+                      announcing it would be the punctuation read out loud. */}
+                  {index < feelings.length - 1 && (
+                    <span className="musie-feeling-row__comma" aria-hidden="true">,</span>
+                  )}
+                </li>
+              ))}
+              <li className="musie-feeling-row__item">
+                <IconButton
+                  glyph={Plus}
+                  size="primary"
+                  variant="outline"
+                  label={t('reflect.feelings.add')}
+                  onClick={onAddFeeling}
+                />
+              </li>
+            </ul>
+          </>
+        )}
+      </section>
+
+      {/* ── SECTION · THOUGHTS ──────────────────────────────────────────── */}
+      <section className="musie-reflect__section">
+        {!hasThoughts ? (
+          /* THE VARIANT FOLLOWS THE SECTION ABOVE — Ben, 2026-10-16. Outlined
+             while feelings is empty, because feelings is the thing to do
+             first; filled primary once it is not, because it is now the next
+             thing. Two primaries at once would be the overload this change
+             exists to remove. */
+          <CtaButton
+            className="musie-reflect__door"
+            variant={hasFeelings ? 'primary' : 'outline'}
+            onClick={onEditThoughts}
+          >
+            {t('reflect.thoughts.cta')}
+          </CtaButton>
+        ) : (
+          <>
+            <h3 className="musie-reflect__held">{t('reflect.thoughts.held')}</h3>
+            {/* Tapping it reopens the sheet. A button and not a div with a
+                click handler: it is a control, and it has to be reachable by
+                keyboard and announced as one. */}
+            <button
+              type="button"
+              className="musie-reflect__thoughts"
+              onClick={onEditThoughts}
+            >
+              <span className="musy-sr-only">{t('reflect.thoughts.edit')}: </span>
+              {thoughts}
+            </button>
+          </>
+        )}
       </section>
     </>
   );

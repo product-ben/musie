@@ -97,16 +97,18 @@
  */
 import * as React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { CircleCheck, CircleDashed, List, Trash } from 'lucide-react';
+import { ArrowDown, ArrowUp, CircleCheck, CircleDashed, List, Minus, Trash } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  ButtonGroup, ContentBox, CtaButton, LinkList, Message, SegmentedControl, Timeline, Toast,
+  ButtonGroup, ContentBox, CtaButton, FeelingsScale, LinkList, Message, SegmentedControl,
+  Timeline, Toast,
 } from '@musie/design-system';
 import type { LinkListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { Locale, MessageKey } from '../i18n';
 import { useProfile } from '../lib/profileContext';
-import { deleteAllSessions, useActiveSession } from '../lib/session';
+import { deleteAllSessions, saveFeelingChange, useActiveSession } from '../lib/session';
+import type { FeelingChange } from '../lib/session';
 import { useDiary } from '../lib/useDiary';
 import {
   DIARY_FILTERS, FILTER_FROM_ENTRIES, dayAnchorId, durationMinutes, filterByStatus, formatMonth,
@@ -114,6 +116,15 @@ import {
 } from '../lib/diary';
 import type { DiaryEntry, DiaryFilter, DiaryPeriod } from '../lib/diary';
 import { DiaryGraph } from '../components/DiaryGraph';
+
+/* THE SCALE'S THREE, IN ORDER, AND THE ONLY LIST OF THEM HERE. FeelingsScale
+   is generic over its points — a scale does not know what it is measuring —
+   so the narrowing from its `string` back to `FeelingChange` happens against
+   this array rather than against three literals written a second time. It is
+   the same set `sessions_feeling_change_known` enforces at the other end.
+
+   It moved here from SessionReflect with the scale itself, unchanged. */
+const FEELING_CHANGES: readonly FeelingChange[] = ['worse', 'same', 'better'];
 
 type Translate = ReturnType<typeof useT>;
 
@@ -127,8 +138,20 @@ type Translate = ReturnType<typeof useT>;
  * one makes the offer stale. This toast has no action at all. Nothing is
  * waiting on it, so its only job is to be read, and the number for that is
  * reading time rather than a deadline borrowed from a decision.
+ *
+ * SIXTY SECONDS SINCE 2026-10-16, AND THE ARGUMENT ABOVE IS WHY IT CHANGED
+ * RATHER THAN BEING CONTRADICTED. The number was reading time because the
+ * toast had nothing to do. It has something to do now — it carries the mood
+ * scale that came off the reflect step — so the number is answering time
+ * instead, and answering a question about a session you have just finished
+ * is slower than reading a sentence about where to find it.
+ *
+ * Ben, when the brief said thirty and his own note said a minute: sixty,
+ * answering closes it, the × stays. A long toast is a real cost and this one
+ * is holding a question rather than a receipt; if it reads as being in the
+ * way, the lever is this number and not the pattern.
  */
-const SAVED_TOAST_MS = 10_000;
+const SAVED_TOAST_MS = 60_000;
 
 /**
  * The supporting lines, as SIBLINGS rather than one joined string. The slot is
@@ -608,9 +631,42 @@ function SessionSaved() {
      `location` each time, because the clear below removes it from history
      immediately — and a component that read it live would show the toast for
      exactly one frame. */
+  const state = location.state as
+    { sessionSaved?: boolean; sessionId?: string } | null;
   const [showing, setShowing] = React.useState(
-    () => (location.state as { sessionSaved?: boolean } | null)?.sessionSaved === true,
+    () => state?.sessionSaved === true,
   );
+  /* WHICH SESSION THE SCALE WRITES AGAINST — 2026-10-16. Read once, with the
+     flag, and from the same place: "the newest row" would be wrong the moment
+     two tabs are open, and wrong in somebody else's diary rather than in a
+     test. Null means the scale is not drawn at all — an older entry in the
+     history, or a flag without an id, must not write to a guessed session. */
+  const [sessionId] = React.useState(() => state?.sessionId ?? null);
+
+  /* The answer in flight, and the one failure it can have. The toast stays up
+     on a failure: closing on a promise it did not keep is the one thing a
+     confirmation must not do. */
+  const [saving, setSaving] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+
+  const answer = React.useCallback(async (picked: string) => {
+    if (sessionId === null || saving) return;
+    const known = FEELING_CHANGES.find((f) => f === picked);
+    if (known === undefined) return;
+    setSaving(true);
+    setFailed(false);
+    try {
+      await saveFeelingChange(sessionId, known);
+      /* ANSWERING CLOSES IT — Ben. The question is answered, so the thing
+         holding it has no reason to stay. */
+      setShowing(false);
+    } catch (thrown: unknown) {
+      console.error('[musie] could not save how the session left you:', thrown);
+      setFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  }, [sessionId, saving]);
 
   React.useEffect(() => {
     if (!showing) return undefined;
@@ -632,7 +688,43 @@ function SessionSaved() {
       placement="top"
       onDismiss={() => setShowing(false)}
       dismissLabel={t('diary.saved.dismiss')}
-    />
+    >
+      {/* ── THE MOOD SCALE, IN THE SLOT — 2026-10-16 ────────────────────
+          It used to be the reflect step's second section, under the answer.
+          Here the session is over and the question is about something
+          finished, which is what it was always asking.
+
+          ONLY WITH A SESSION TO WRITE TO. An arrival with the flag and no id
+          still confirms where the reflection went — it just does not ask a
+          question it could not record the answer to.
+
+          NOT PART OF THE TOAST'S ANNOUNCEMENT: FeelingsScale is a fieldset
+          with its own legend, and folding it in would read the whole control
+          out as one sentence. */}
+      {sessionId !== null && (
+        <>
+          <FeelingsScale
+            name="session-feeling"
+            legend={t('diary.saved.moodLegend')}
+            points={[
+              { value: 'worse', label: t('reflect.feeling.worse'), glyph: ArrowDown },
+              { value: 'same', label: t('reflect.feeling.same'), glyph: Minus },
+              { value: 'better', label: t('reflect.feeling.better'), glyph: ArrowUp },
+            ]}
+            disabled={saving}
+            onValueChange={(picked) => { void answer(picked); }}
+          />
+          {failed && (
+            <Message
+              variant="error"
+              live="assertive"
+              headingLevel={3}
+              headline={t('diary.saved.moodFailed')}
+            />
+          )}
+        </>
+      )}
+    </Toast>
   );
 }
 
