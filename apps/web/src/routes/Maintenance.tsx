@@ -44,6 +44,7 @@ import {
   IconButton,
   Lightbox,
   Message,
+  MusicPlayer,
   SegmentedControl,
   Toast,
 } from '@musie/design-system';
@@ -62,6 +63,7 @@ import {
 } from '../lib/deckRules';
 import type { Cell } from '../lib/deckRules';
 import { contentImageUrl } from '../lib/assets';
+import { useTrackSource } from '../lib/audio';
 import { readAudioTags } from '../lib/audioTags';
 import {
   AUDIO_EXTENSIONS,
@@ -1395,6 +1397,149 @@ export function Maintenance(): React.ReactElement {
  * instead, each saying why: a duration is measured off the file, and the id
  * and the key are the server's because they are deliberately opaque.
  */
+/**
+ * Hearing the file, inside the panel that claims it.
+ *
+ * ── THE ONE FACT THE FORM CANNOT STATE ────────────────────────────────────
+ * Everything else here is typed and can be read back: the credit, the tempo,
+ * the licence. The recording cannot. `Duration` says 3:41 and `Key` says
+ * `trk-04-9c1f2a08.mp3`, and neither answers the question an operator
+ * actually has after an upload — *is this the right piece of music?* Checking
+ * it used to mean finding the card on a square, starting a session and
+ * listening past the Einsteigen step; now it is a press.
+ *
+ * ── MusicPlayer, NOT TrackButton, AND THE COLUMN GRANT DECIDED IT AGAIN ───
+ * `DiaryCard` and `SessionListen` both reach for `TrackButton`, and both say
+ * why in the same words: `MusicPlayer.title` is required and VISIBLE, and
+ * neither screen may name the track, because `tracks.title` and `artist` are
+ * withheld from the client by column grant — naming either in a query fails
+ * the whole request with 42501.
+ *
+ * THIS SCREEN IS THE ONE PLACE WHERE THAT IS FALSE. The deck arrives through
+ * `content-admin`, which selects `tracks` with `*` under the service role
+ * precisely so the credit can be edited. So the title is ours to show, and
+ * the same reasoning that sends those two screens to `TrackButton` sends this
+ * one to the player.
+ *
+ * The scrubber is the point rather than a second row of chrome outweighing
+ * what it controls. An operator confirming an upload listens to a few seconds
+ * at 0:00 and a few more near the end — whether the fade is there, whether
+ * the file is the master or the rough — and that is a scrub, not a transport.
+ *
+ * ── THE APP HOLDS THE MEDIA ELEMENT ───────────────────────────────────────
+ * `MusicPlayer` owns no `<audio>`, no fetch and no timer — the split its own
+ * header documents — so the element is here, exactly as `DiscoveredMusic`
+ * holds its own. It carries no class: a media element is not a pattern, and
+ * L14 has nothing to say about it. `preload="none"`, because opening a row to
+ * fix a typo in the artist should not spend six megabytes of somebody's
+ * connection on audio nobody asked to hear.
+ *
+ * Closing the Lightbox unmounts this, and a media element removed from the
+ * document is paused by the platform, so there is no cleanup here and no
+ * track playing on in an empty panel.
+ *
+ * ── A REPLACEMENT IS A NEW KEY, WHICH IS WHAT MAKES THIS HONEST ────────────
+ * `mintKey` in the function gives every upload a random suffix, so `src`
+ * changes whenever the audio does and `useTrackSource` re-signs rather than
+ * handing back a cached URL for bytes that moved. The element then takes a
+ * new `src` and resets — but it resets WITHOUT firing `pause`, which would
+ * leave the transport drawing a Pause glyph over silence and a position
+ * inside a file that is no longer loaded. So both are cleared from here when
+ * the URL changes.
+ */
+function Audition({ track }: { track: MaintenanceTrack }): React.ReactElement | null {
+  const media = React.useRef<HTMLAudioElement>(null);
+  const { url } = useTrackSource(track.src);
+  const [playing, setPlaying] = React.useState(false);
+  const [position, setPosition] = React.useState(0);
+
+  /* See the docblock's last paragraph: a new file is a new URL, and the
+     element's own events do not report the reset. */
+  React.useEffect(() => { setPlaying(false); setPosition(0); }, [url]);
+
+  /* NO FILE, NO CONTROL. Five of the nine pieces are silent, and the Fact
+     above this says so under `Duration`. A disabled player beside that
+     sentence would be a second, vaguer way of saying it, and the `Upload the
+     audio` input below is the act that makes it untrue. */
+  if (track.src === null) return null;
+
+  function play(): void {
+    const element = media.current;
+    if (element === null) return;
+    element.play().catch((thrown: unknown) => {
+      /* A token that expired, an object the bucket lost, a codec the browser
+         will not take. All three look identical from here and none of them
+         should pass without a word: no event fires, so `playing` stays false
+         and the glyph stays Play, which is the truth — and the console says
+         which of the three it was. */
+      console.warn(`[musie] could not play ${track.id}:`, reason(thrown));
+      setPlaying(false);
+    });
+  }
+
+  function toggle(): void {
+    const element = media.current;
+    if (element === null) return;
+
+    /* Ended restarts from zero: the glyph promised a restart, so resuming
+       from the end would be a lie. `DiscoveredMusic`'s own rule, and the
+       listen step's. */
+    if (track.duration_seconds > 0 && position >= track.duration_seconds) {
+      element.currentTime = 0;
+      setPosition(0);
+    }
+
+    if (element.paused) play();
+    else element.pause();
+  }
+
+  return (
+    <>
+      <MusicPlayer
+        /* The row's own fallback: an untitled draft is known by its id
+           everywhere else on this screen, and the player is not the place to
+           invent a name for it. */
+        title={track.title === '' ? track.id : track.title}
+        duration={track.duration_seconds}
+        position={position}
+        playing={playing}
+        /* Signing is a round trip, so the panel is drawn before it can sound.
+           Disabled says so, where a control that did nothing would not. */
+        disabled={url === null}
+        onTogglePlay={toggle}
+        onRestart={toggle}
+        onSeek={(seconds) => {
+          const element = media.current;
+          if (element !== null) element.currentTime = seconds;
+          setPosition(seconds);
+        }}
+        /* EXPLICIT, AND ENGLISH LIKE THE REST OF THIS SCREEN. The component's
+           four defaults come from the package's locale catalogue, which
+           answers in German — rule 7's leak exactly. This file's header
+           exempts it from the CATALOGUE, not from passing its own strings. */
+        playLabel="Play"
+        pauseLabel="Pause"
+        restartLabel="Play again"
+        seekLabel="Scrub"
+      />
+      {url !== null && (
+        <audio
+          ref={media}
+          src={url}
+          preload="none"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
+          /* Pinned to the stored duration rather than left wherever the last
+             timeupdate landed: that is what puts the transport into `ended`,
+             where the glyph becomes a replay arrow. */
+          onEnded={() => setPosition(track.duration_seconds)}
+        />
+      )}
+    </>
+  );
+}
+
 function TrackPanel(props: {
   track: MaintenanceTrack;
   cells: MaintenanceCell[];
@@ -1576,6 +1721,12 @@ function TrackPanel(props: {
 
       {props.isNew !== true && (
       <ContentBox headline="The file, and what cannot be typed" headingLevel={3}>
+        {/* FIRST IN THE BOX, because it is the file. The Facts under it are
+            reference — what the row claims about the recording — and this is
+            the recording. Nothing between them: `.musy-box__slot` is a flex
+            column with `--space-gap-stack`, so the player is spaced like a
+            child of this box rather than by a rule of ours. */}
+        <Audition track={track} />
         <Fact label="Duration">
           {track.src === null ? 'no file' : `${seconds(track.duration_seconds)} · measured`}
         </Fact>
