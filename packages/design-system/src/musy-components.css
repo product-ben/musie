@@ -7683,15 +7683,16 @@ html[data-musy-scroll-snap='y'] {
      as a comfortable gap for one and as touching the last letter for the
      other.
 
-     `--sp-1` puts the optical gap back at ~7px, which is what the ellipsis
-     was giving for free and what Ben approved when he asked for the 8px to
-     come off. The number on screen is the thing being held steady here, not
-     the number in the stylesheet.
+     `--sp-1` put the optical gap at ~7px, which is what the ellipsis gave
+     for free. Ben's call on 2026-10-16 is `--space-gap-related` (12px), one
+     rung up again: Layer 1's word for "atoms that belong together —
+     label+field, title+subtitle", which is what a word and the glyph that
+     acts on it are. On screen that is ~15px of optical clearance.
 
-     IT IS A FIXED RUNG RATHER THAN AN em FOR THE REASON THE DROP BELOW IS:
+     IT IS A NAMED RUNG RATHER THAN AN em FOR THE REASON THE DROP BELOW IS:
      the glyph is a fixed 24px at every type step, so a gap that scaled with
      the text would drift against an icon that does not. */
-  gap: var(--sp-1);
+  gap: var(--space-gap-related);
   margin: 0;
   /* ── NO BACKGROUND, AND IT HAD ONE FOR AN HOUR — Ben, 2026-10-15 ───────
      A tinted pill on `--interactive-primary-subtle` with 4px of padding,

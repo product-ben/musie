@@ -405,18 +405,36 @@ export function Exercises() {
      text beside the rendered line rather than by thinking about it. */
   const goalName = choice === null ? null : goalPurpose(goals, choice);
 
+  /* ── THE BACK CHEVRON IS AN UNDO, NOT A DIRECTION (Ben, 2026-10-16) ────
+     It appears once you have pressed FORWARD and not before — *it's only
+     there to easily and quickly get back to the last item.*
+
+     SO IT IS NOT PART OF THE RING, even though it steps through the same
+     one. Forward is the way you browse four goals; back is the way out of a
+     press you did not mean. A pair of arrows present from the start would
+     have offered two directions through a list of four, which is a map
+     nobody needs for four things.
+
+     IT IS STATE, NOT STORAGE, and that is the whole of "on the next load of
+     the route it is gone again": `useState` resets when the route unmounts,
+     so starting a session and coming back leaves the headline as the screen
+     first draws it. The GOAL survives that — it is in `localStorage` — and
+     the way back to the one before it does not, because by then there is no
+     press to undo. */
+  const [stepped, setStepped] = React.useState(false);
+
   const goalSteps: InlineLinkAction[] = [
-    {
+    ...(stepped ? [{
       id: 'previous',
       glyph: ChevronLeft,
       label: t('exercises.goal.previous'),
       onClick: () => step(-1),
-    },
+    }] : []),
     {
       id: 'next',
       glyph: ChevronRight,
       label: t('exercises.goal.next'),
-      onClick: () => step(1),
+      onClick: () => { setStepped(true); step(1); },
     },
   ];
 
