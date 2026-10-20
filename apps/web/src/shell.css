@@ -285,12 +285,13 @@
    the measure — a `CtaButton` without `block` still came out 311px wide of a
    311px box, which is `block` by accident. Measured, then fixed.
 
-   CENTRED rather than start: it sits alone under a full-measure button and a
-   full-measure rule, so an edge to align to is exactly what it does not have.
-   One declaration, no token needed — this is about the box model, not the
-   scale. */
+   START, not centre. Ben, 2026-10-20: "left align it all". Everything else in
+   this box begins at the same inline edge — the heading, the intro, the field
+   label, the boxes — so a centred button under them is the one element that
+   starts somewhere else, and the eye has to travel to find it. One
+   declaration, no token needed: this is about the box model, not the scale. */
 .musie-gate-secondary {
-  align-self: center;
+  align-self: start;
 }
 
 /* ═══ THE CHAT CADENCE ══════════════════════════════════════════════════════
