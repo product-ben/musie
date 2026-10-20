@@ -10073,3 +10073,62 @@ migration and no component, and the three call sites are small enough to do in
 one sitting — but it rewrites the diary and `/discovered-music`, so it wants to
 be its own change with its own look at both, not a rider on a maintenance
 panel.
+
+---
+
+## Audio hosting — egress is the ceiling, not storage, and it does not announce itself
+
+**Where:** `src/lib/audio.ts` (`signedTrackUrls`, `warmTrackBytes`),
+`src/lib/assets.ts` (`contentImageUrl`), `supabase/migrations/20260921160000_track_audio.sql`
+(the `tracks` bucket), `wrangler.jsonc`
+
+**What I checked:** the question was how much content the Cloudflare account
+can take. The numbers, from the Cloudflare and Supabase docs on 2026-10-16 —
+the account's own plan is *not* readable from a non-interactive session, the
+Cloudflare MCP server being unauthorised and no Wrangler credentials existing
+on the machine, so both columns are written out:
+
+- **Workers static assets**, which is what `wrangler.jsonc` deploys: 25 MiB per
+  file on both plans, 20,000 files per version on Free and 100,000 on Paid, no
+  documented total size cap. `apps/web/dist` is 5.5 MB. Requests to static
+  assets are free and unlimited, so the Free plan's 100,000/day never applies
+  here — the file has no `main` and there is no script to invoke.
+- **Request body through the proxy** (anything uploaded *into* an app behind
+  Cloudflare): 100 MB Free and Pro, 200 MB Business. This one does not cover
+  Wrangler's asset upload, which goes to the API rather than through the proxy.
+- **R2**, if audio ever moves there: 10 GB-month free, $0.015/GB-month after,
+  5 GiB per single PUT, and **egress free**.
+- **Supabase Free**, which is where audio actually lives: 1 GB file storage,
+  **5 GB egress per month**, 50 MB maximum upload.
+
+So the binding constraint is none of the megabyte limits anybody would think to
+look up. It is Supabase's egress. The largest track is 6.9 MB, which makes
+5 GB/month roughly **700 complete plays** — about 35 each across twenty
+testers. Two things make that smaller than it reads: the `tracks` bucket is
+private by design, so every mint carries a fresh token and CDN caching cannot
+help (`audio.ts` holds a minted URL for its TTL and the browser caches inside a
+session, but the same card next week is egress again), and spoken audio ships
+bilingual, so the catalogue doubles rather than grows.
+
+**What I did:** nothing. Nothing moved to R2, and no second upload path was
+built.
+
+**Why:** the move does not get more expensive by waiting, which is the only
+reason deferring it is safe rather than merely cheap. Both content columns hold
+a **key**, not a URL — `assets.ts` argues it at length (a full URL would bake
+the project ref into a content row, so the same row could not be valid locally
+and hosted), and `tracks.src` has held an object key since `20260921160000`. All
+the knowledge of *where* a file lives therefore sits in `contentImageUrl()` and
+in `audio.ts`'s signing. R2 later is those two address-builders, the upload half
+of `content-admin`, and one copy across with identical keys: no content
+migration, no row rewrite, and rule 4 not involved at any point. Building it now
+would cost the same and buy nothing for nine tracks.
+
+**What I need from Ben:** nothing to decide. The trigger is written here because
+**it surfaces as a bug rather than as a bill.** `pnpm check` never touches
+storage and no test goes red; an exhausted egress budget reaches a listener as
+the listen step falling back to its clock — which is what the missing-policy
+case in `20260921160000` describes, and is indistinguishable from an audio
+defect from the outside. So: Supabase → Usage → Egress, once more than a handful
+of people are testing. Before that it is noise. `pnpm content:pull` is the other
+thing in this area deliberately not built.
