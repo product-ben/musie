@@ -50,11 +50,12 @@ export const de: Messages = {
      No 'Bitte' anywhere (§4), and the instructions are imperative singular:
      'Melde dich an', 'Prüfe beides', 'Trag … ein'. */
   'auth.title': 'Anmelden',
-  'auth.intro': 'Musie ist noch im geschlossenen Test. Trag deine E-Mail-Adresse ein, dann schicken wir dir einen Code.',
+  'auth.intro': 'Musie ist noch im geschlossenen Test. Trag deine E-Mail-Adresse ein, dann schicken wir dir ein Einmal-Passwort.',
   'auth.email': 'E-Mail-Adresse',
   'auth.password': 'Passwort',
-  /* Verb zuerst — §3. */
-  'auth.submit': 'Code anfordern',
+  /* Verb zuerst — §3. Der Bindestrich in »Einmal-Passwort« ist auch die
+     Bruchstelle, an der die Zeile umbrechen darf — §6. */
+  'auth.submit': 'Einmal-Passwort anfordern',
   /* Überschrift, also kein Punkt — §7. */
   'auth.failed': 'Das hat nicht funktioniert',
   'auth.error.missing': 'Trag deine E-Mail-Adresse und dein Passwort ein.',
@@ -103,19 +104,28 @@ export const de: Messages = {
   'auth.privacy.link': 'Datenschutzerklärung',
   'auth.signUp.exists': 'Mit dieser Adresse gibt es schon ein Konto. Melde dich damit an.',
 
-  /* ── Die sechs Ziffern · beide Wege enden hier ────────────────────────────
+  /* ── Das Einmal-Passwort · beide Wege enden hier ─────────────────────────
+     HEISST AUF DEM SCHIRM NIE »Code«. Ben, 2026-10-20. In diesem Ablauf kommen
+     zwei verschiedene Dinge als Ziffern vor — der Zugangscode, den jemand
+     einmal vorliest, und das Passwort, das bei jeder Anmeldung per Mail
+     kommt. Heißen beide »Code«, liest eine Testerin »Neuen Code schicken« auf
+     dem falschen Schirm und tippt die falschen vier Ziffern. Der ZUGANGSCODE
+     behält seinen Namen; dieses hier ist das Einmal-Passwort.
+
+     Das Wort ist NEUTRUM — das Passwort, also »ein«, »dieses«, »neues«.
+
      `auth.code.intro` nennt die Adresse absichtlich. Der häufigste Fehler auf
-     diesem Schirm ist eine vertippte Adresse, kein vertippter Code — wer in
-     ein leeres Postfach schaut, soll den Tippfehler sehen statt ihn zu raten.
-     Dafür gibt es auch `auth.code.back`. */
-  'auth.code.title': 'Dein Code',
-  'auth.code.intro': 'Wir haben sechs Ziffern an {email} geschickt.',
-  'auth.code.label': 'Anmeldecode',
+     diesem Schirm ist eine vertippte Adresse, kein vertipptes Passwort — wer
+     in ein leeres Postfach schaut, soll den Tippfehler sehen statt ihn zu
+     raten. Dafür gibt es auch `auth.code.back`. */
+  'auth.code.title': 'Dein Einmal-Passwort',
+  'auth.code.intro': 'Wir haben ein Einmal-Passwort an {email} geschickt.',
+  'auth.code.label': 'Einmal-Passwort',
   'auth.code.digit': 'Ziffer {position} von {total}',
-  'auth.code.resend': 'Neuen Code schicken',
-  'auth.code.resent': 'Ein neuer Code ist unterwegs.',
+  'auth.code.resend': 'Neues Einmal-Passwort schicken',
+  'auth.code.resent': 'Ein neues Einmal-Passwort ist unterwegs.',
   'auth.code.back': 'Andere Adresse verwenden',
-  'auth.code.checking': 'Dein Code wird geprüft …',
+  'auth.code.checking': 'Dein Einmal-Passwort wird geprüft …',
 
   /* Die beiden Code-Absagen sagen absichtlich Verschiedenes: ein
      zurückgezogener Code wird nie wieder funktionieren, ein verbrauchter wurde
@@ -125,8 +135,8 @@ export const de: Messages = {
   'auth.error.codeSpent': 'Dieser Zugangscode wurde schon benutzt. Frag nach einem neuen.',
   'auth.error.termsRequired': 'Du musst die Nutzungsbedingungen akzeptieren, um fortzufahren.',
   'auth.error.details': 'Prüfe deinen Vornamen und deine E-Mail-Adresse.',
-  'auth.error.codeWrong': 'Dieser Code stimmt nicht. Prüfe die sechs Ziffern.',
-  'auth.error.codeExpired': 'Dieser Code ist abgelaufen. Frag einen neuen an.',
+  'auth.error.codeWrong': 'Dieses Einmal-Passwort stimmt nicht. Prüfe die sechs Ziffern.',
+  'auth.error.codeExpired': 'Dieses Einmal-Passwort ist abgelaufen. Fordere ein neues an.',
 
   /* ── Das Konto, im Menü · H.0b ───────────────────────────────────────────
      'Konto', not 'Account': §8 keeps an English term only where German has no

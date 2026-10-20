@@ -274,11 +274,11 @@ otp_expiry = 3600
 # in two languages reads as spam, and the digits are the only part of it that
 # has to be understood.
 [auth.email.template.magic_link]
-subject = "Dein Musie-Code: {{ .Token }}"
+subject = "Dein Einmal-Passwort: {{ .Token }}"
 content_path = "./supabase/templates/sign-in-code.html"
 
 [auth.email.template.confirmation]
-subject = "Dein Musie-Code: {{ .Token }}"
+subject = "Dein Einmal-Passwort: {{ .Token }}"
 content_path = "./supabase/templates/sign-in-code.html"
 
 # Uncomment to customize email template
