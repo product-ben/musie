@@ -67,10 +67,17 @@ export const en = {
      hand, so the copy cannot promise a mail will arrive, cannot say where to
      write, and must not imply anyone can sign themselves up. */
   'auth.title': 'Sign in',
-  'auth.intro': 'Musie is in closed testing. Sign in with the email address and password you were given.',
+  /* REWRITTEN for the code, 2026-10-20. It used to promise a password that was
+     handed out by hand, and both halves of that are gone: people sign
+     themselves up now, and nobody is given a password at all. */
+  'auth.intro': 'Musie is in closed testing. Enter your email address and we will send you a code.',
   'auth.email': 'Email address',
+  /* `auth.password` and `auth.error.credentials` BELOW ARE NO LONGER DRAWN by
+     any screen — `lib/signIn.ts` still exports the password path and still has
+     its tests, so the keys stay until that file goes. Deleting them now would
+     fail the typecheck in a file this branch is deliberately not touching. */
   'auth.password': 'Password',
-  'auth.submit': 'Sign in',
+  'auth.submit': 'Send me a code',
   /* A HEADING, so no full stop, and it names no cause — the cause is the `text`
      beneath it and there are four of those. */
   'auth.failed': 'That did not work',
@@ -85,6 +92,61 @@ export const en = {
   'auth.error.notConfirmed': 'That account has not been confirmed yet. Ask whoever gave you the password.',
   'auth.error.rateLimit': 'Too many attempts. Wait a minute and try again.',
   'auth.error.unknown': 'Something went wrong signing you in. Try again in a moment.',
+
+  /* ── Signing up, in two steps · 2026-10-20 ───────────────────────────────
+     The access code FIRST, on its own, and only then a name and an address.
+     Ben's ordering, and it is the one that costs a stranger nothing: somebody
+     without a code is turned away before being asked for anything personal.
+
+     NOTHING HERE NAMES A PERSON. The old copy told a stuck tester to "let Ben
+     know", which was right when he was the only way in; now the recovery is a
+     code somebody can read out again, so the sentences point at the code. */
+  'auth.signIn.switch': 'First time here?',
+  'auth.signUp.switch': 'Already have an account?',
+  'auth.error.email': 'Enter the email address you signed up with.',
+
+  'auth.signUp.codeTitle': 'Your access code',
+  'auth.signUp.codeIntro': 'Musie is in closed testing. Enter the four-digit code you were given.',
+  'auth.signUp.codeLabel': 'Access code',
+  'auth.signUp.codeSubmit': 'Continue',
+
+  'auth.signUp.detailsTitle': 'About you',
+  'auth.signUp.detailsIntro': 'We send a code to this address every time you sign in, so it needs to be one you can read.',
+  'auth.firstName': 'First name',
+  'auth.signUp.submit': 'Create my account',
+  /* THE ONE TICK. The privacy policy sits beside it as a link and is NOT
+     agreed to — a privacy policy is information provided under Art. 13, and a
+     required box accepting it is bundled consent. Ben, 2026-10-20. */
+  'auth.terms.label': 'I accept the terms',
+  'auth.terms.link': 'Read the terms',
+  'auth.privacy.note': 'How Musie handles your data:',
+  'auth.privacy.link': 'Privacy policy',
+  'auth.signUp.exists': 'You already have an account with this address. Sign in instead.',
+
+  /* ── The six digits · both paths end here ────────────────────────────────
+     `auth.code.intro` NAMES THE ADDRESS deliberately. The commonest failure on
+     this screen is a mistyped address, not a mistyped code, and a person
+     staring at an empty inbox needs to be able to see the typo rather than
+     guess at it — which is also why `auth.code.back` exists. */
+  'auth.code.title': 'Enter your code',
+  'auth.code.intro': 'We sent six digits to {email}.',
+  'auth.code.label': 'Sign-in code',
+  'auth.code.digit': 'Digit {position} of {total}',
+  'auth.code.resend': 'Send a new code',
+  'auth.code.resent': 'A new code is on its way.',
+  'auth.code.back': 'Use a different address',
+  'auth.code.checking': 'Checking your code…',
+
+  /* The two code refusals say DIFFERENT things on purpose. A revoked code was
+     withdrawn and will never work; a spent one was used by somebody else. Both
+     end in "ask for another", but only one of them is worth re-typing first. */
+  'auth.error.codeUnknown': 'There is no such access code. Check the four digits.',
+  'auth.error.codeRevoked': 'That access code is no longer valid. Ask for a new one.',
+  'auth.error.codeSpent': 'That access code has already been used. Ask for a new one.',
+  'auth.error.termsRequired': 'You need to accept the terms before you can continue.',
+  'auth.error.details': 'Check your first name and your email address.',
+  'auth.error.codeWrong': 'That code is not right. Check the six digits.',
+  'auth.error.codeExpired': 'That code has expired. Ask for a new one.',
   /* The TRANSPORT failure reuses `content.errorDetail` rather than adding a
      fifth sentence: 'Check your connection and try again.' is already the app's
      one way of saying that, and two spellings of it is the drift this catalogue

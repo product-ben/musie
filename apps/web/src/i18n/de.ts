@@ -50,10 +50,11 @@ export const de: Messages = {
      No 'Bitte' anywhere (§4), and the instructions are imperative singular:
      'Melde dich an', 'Prüfe beides', 'Trag … ein'. */
   'auth.title': 'Anmelden',
-  'auth.intro': 'Musie ist noch im geschlossenen Test. Melde dich mit der E-Mail-Adresse und dem Passwort an, die du bekommen hast.',
+  'auth.intro': 'Musie ist noch im geschlossenen Test. Trag deine E-Mail-Adresse ein, dann schicken wir dir einen Code.',
   'auth.email': 'E-Mail-Adresse',
   'auth.password': 'Passwort',
-  'auth.submit': 'Anmelden',
+  /* Verb zuerst — §3. */
+  'auth.submit': 'Code anfordern',
   /* Überschrift, also kein Punkt — §7. */
   'auth.failed': 'Das hat nicht funktioniert',
   'auth.error.missing': 'Trag deine E-Mail-Adresse und dein Passwort ein.',
@@ -71,6 +72,61 @@ export const de: Messages = {
   'auth.error.notConfirmed': 'Dieses Konto ist noch nicht bestätigt. Wende dich an die Person, die dir das Passwort gegeben hat.',
   'auth.error.rateLimit': 'Zu viele Versuche. Warte eine Minute und versuche es erneut.',
   'auth.error.unknown': 'Beim Anmelden ist etwas schiefgegangen. Versuche es gleich noch einmal.',
+
+  /* ── Registrierung in zwei Schritten · 2026-10-20 ─────────────────────────
+     Erst der Zugangscode allein, dann Name und Adresse. Wer keinen Code hat,
+     wird abgewiesen, bevor nach irgendetwas Persönlichem gefragt wird.
+
+     KEIN SATZ NENNT EINE PERSON. Die alte Fehlermeldung schickte Ratlose zu
+     Ben — richtig, solange er der einzige Weg hinein war. Jetzt ist der Weg
+     ein Code, den jemand noch einmal vorlesen kann, also zeigen die Sätze auf
+     den Code. */
+  'auth.signIn.switch': 'Zum ersten Mal hier?',
+  'auth.signUp.switch': 'Du hast schon ein Konto?',
+  'auth.error.email': 'Trag die E-Mail-Adresse ein, mit der du dich registriert hast.',
+
+  'auth.signUp.codeTitle': 'Dein Zugangscode',
+  'auth.signUp.codeIntro': 'Musie ist noch im geschlossenen Test. Gib den vierstelligen Code ein, den du bekommen hast.',
+  'auth.signUp.codeLabel': 'Zugangscode',
+  'auth.signUp.codeSubmit': 'Weiter',
+
+  'auth.signUp.detailsTitle': 'Über dich',
+  'auth.signUp.detailsIntro': 'An diese Adresse schicken wir dir bei jeder Anmeldung einen Code — du solltest sie also lesen können.',
+  'auth.firstName': 'Vorname',
+  'auth.signUp.submit': 'Konto erstellen',
+  /* DAS EINE HÄKCHEN. Die Datenschutzerklärung steht als Link daneben und wird
+     NICHT akzeptiert — sie ist eine Information nach Art. 13, und ein Pflicht-
+     häkchen darauf wäre gebündelte Einwilligung. Ben, 2026-10-20. */
+  'auth.terms.label': 'Ich akzeptiere die Nutzungsbedingungen',
+  'auth.terms.link': 'Nutzungsbedingungen lesen',
+  'auth.privacy.note': 'Wie Musie mit deinen Daten umgeht:',
+  'auth.privacy.link': 'Datenschutzerklärung',
+  'auth.signUp.exists': 'Mit dieser Adresse gibt es schon ein Konto. Melde dich damit an.',
+
+  /* ── Die sechs Ziffern · beide Wege enden hier ────────────────────────────
+     `auth.code.intro` nennt die Adresse absichtlich. Der häufigste Fehler auf
+     diesem Schirm ist eine vertippte Adresse, kein vertippter Code — wer in
+     ein leeres Postfach schaut, soll den Tippfehler sehen statt ihn zu raten.
+     Dafür gibt es auch `auth.code.back`. */
+  'auth.code.title': 'Dein Code',
+  'auth.code.intro': 'Wir haben sechs Ziffern an {email} geschickt.',
+  'auth.code.label': 'Anmeldecode',
+  'auth.code.digit': 'Ziffer {position} von {total}',
+  'auth.code.resend': 'Neuen Code schicken',
+  'auth.code.resent': 'Ein neuer Code ist unterwegs.',
+  'auth.code.back': 'Andere Adresse verwenden',
+  'auth.code.checking': 'Dein Code wird geprüft …',
+
+  /* Die beiden Code-Absagen sagen absichtlich Verschiedenes: ein
+     zurückgezogener Code wird nie wieder funktionieren, ein verbrauchter wurde
+     von jemand anderem benutzt. */
+  'auth.error.codeUnknown': 'Diesen Zugangscode gibt es nicht. Prüfe die vier Ziffern.',
+  'auth.error.codeRevoked': 'Dieser Zugangscode gilt nicht mehr. Frag nach einem neuen.',
+  'auth.error.codeSpent': 'Dieser Zugangscode wurde schon benutzt. Frag nach einem neuen.',
+  'auth.error.termsRequired': 'Du musst die Nutzungsbedingungen akzeptieren, um fortzufahren.',
+  'auth.error.details': 'Prüfe deinen Vornamen und deine E-Mail-Adresse.',
+  'auth.error.codeWrong': 'Dieser Code stimmt nicht. Prüfe die sechs Ziffern.',
+  'auth.error.codeExpired': 'Dieser Code ist abgelaufen. Frag einen neuen an.',
 
   /* ── Das Konto, im Menü · H.0b ───────────────────────────────────────────
      'Konto', not 'Account': §8 keeps an English term only where German has no

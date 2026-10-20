@@ -1,0 +1,55 @@
+<!--
+  The sign-in code email.
+
+  ── IT IS IN THE REPOSITORY, AND THAT IS THE POINT ─────────────────────────
+  Supabase keeps email templates in the dashboard, which means the local stack
+  sends something different from production unless this file exists. It did:
+  on 2026-10-20 a local walk of the sign-up flow got the DEFAULT template — a
+  magic link, no digits — while hosted had the real one pasted in by hand. The
+  browser walk could not finish because there was no code to type.
+
+  That is the same shape as the OTP-length trap found the same day: one setting
+  living in two places with nothing comparing them. `config.toml` now points at
+  this file, so local and hosted render the same words and a change is a diff
+  somebody can review rather than a paste nobody saw.
+
+  ── BILINGUAL, GERMAN FIRST ────────────────────────────────────────────────
+  Ben, 2026-10-20. Supabase sends ONE template per project and cannot vary it
+  by locale, so a German-only mail would be wrong for every English-speaking
+  tester and vice versa. The code itself is language-neutral and shown once —
+  printing it twice, once per language, reads as two different codes at a
+  glance.
+
+  ── THE COLOURS ARE HARDCODED, AND THEY HAVE TO BE ─────────────────────────
+  Email clients support neither CSS custom properties nor `light-dark()`, so
+  this is the one place Layer 1 cannot reach. The values are the light-theme
+  hex of the tokens they stand for, named here so a palette change can find
+  them: #FAF7F1 sand-1, #F3EEE4 sand-2, #1A1F1C sand-12, #62645E sand-11,
+  #2B5340 green-11, #CFCEC2 sand-6.
+
+  ── {{ .Token }} IS THE WHOLE POINT ────────────────────────────────────────
+  Not `{{ .ConfirmationURL }}`. The product asks for six digits typed into the
+  tab the person is already in; a link would open in whatever browser the mail
+  app hands it to, which on a phone is usually the wrong one.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3EEE4;margin:0;padding:32px 16px;">
+  <tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:440px;background-color:#FAF7F1;border-radius:12px;padding:32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+      <tr><td>
+        <p style="margin:0 0 24px;font-size:15px;font-weight:600;color:#2B5340;">Musie</p>
+
+        <p style="margin:0 0 12px;font-size:16px;line-height:1.5;color:#1A1F1C;">Dein Anmeldecode:</p>
+
+        <p style="margin:0 0 28px;font-size:34px;font-weight:600;letter-spacing:0.18em;color:#1A1F1C;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">{{ .Token }}</p>
+
+        <p style="margin:0 0 4px;font-size:15px;line-height:1.5;color:#62645E;">Er gilt 60 Minuten.</p>
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.5;color:#62645E;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="border-top:1px solid #CFCEC2;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+
+        <p style="margin:0 0 4px;font-size:15px;line-height:1.5;color:#62645E;">Your sign-in code is above, valid for 60 minutes.</p>
+        <p style="margin:0;font-size:15px;line-height:1.5;color:#62645E;">If this wasn't you, ignore this email.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
