@@ -85,9 +85,10 @@ Impressum must not create an `auth.users` row by reading it.
 | 4 | The same line on `/beta` and on the sign-in gate | `BetaSignup.tsx`, `SignInGate.tsx` |
 | 5 | The same two links in the documentation site's footer | `apps/docs/.vitepress/config.*` |
 | 6 | One corrected in-product promise about the voice | `i18n/en.ts` + `de.ts` — §6 |
-| 7 | A one-time analytics consent card, on first run **inside** the app | §4.4, placed in §5.6 |
-| 8 | An *Analytics & session replay* switch, so consent can be withdrawn | `MenuPreferences.tsx`, beside dark mode |
-| 9 | `profiles.analytics_consent` + timestamp + policy version | A new migration — CLAUDE.md rule 4 |
+| 7 | **Two permission toggles at sign-up**, under the terms row | `SignInGate.tsx` + `ConsentToggles.tsx` — §4.7 |
+| 8 | The same two on **`/about-you`**, which is where they are changed | `ConsentSettings.tsx`. The drawer switch is retired |
+| 9 | `profiles.analytics_consent` and `profiles.research_consent`, each with a timestamp and a policy version | Two migrations — CLAUDE.md rule 4 |
+| 9a | A one-time card asking both, for accounts older than the question | `AnalyticsProvider.tsx` — §4.7 |
 | 10 | PostHog configured as §4.5 says, replacing the stub already in the tree | `apps/web/src/lib/posthog.ts` |
 
 **No banner on any public page**, because no public page loads analytics (§4.6).
@@ -391,6 +392,42 @@ reflection, not a feeling word, not an email, not a track title. Event names
 and enums only. A wizard that instruments an app cannot know which of its
 strings are a diary; we can, and this is the one place to write it down.
 
+### 4.7 · The second permission — Ben, 2026-10-20
+
+**Sign-up asks two questions, not one, and they are not degrees of the same
+thing.** Under *Ich akzeptiere die Nutzungsbedingungen*, which is required,
+sit two switches that are not:
+
+| | What it means | What it changes |
+|---|---|---|
+| *…mein Verhalten auf der Seite analysieren* | May we watch **what you do** | `analytics_consent` → PostHog full vs cookieless, replay on or off (§4.4, §4.5) |
+| *…meine Reflexionen lesen, auch die gesprochenen* | May we read **what you wrote** | `research_consent` → whether your rows appear in `public.research_reflections` |
+
+**The second one is the Art. 9 explicit consent this document called its
+largest remaining gap** (§8). It is valid only while two things stay true, and
+both are properties of the UI rather than of the database, which is why they
+are written here: **neither is pre-ticked**, and **neither is a condition of
+signing up** — somebody who leaves both off gets the same product at the same
+speed.
+
+**Reading it is a view, not a screen.** `public.research_reflections` joins
+reflections to the consent and is granted to `service_role` alone. The filter
+lives in the database because the filter *is* the permission: `where
+research_consent = 'granted'` forgotten once in the SQL editor is somebody's
+diary in a spreadsheet it was never meant to reach. There is no admin UI for
+reading reflections, and none is planned here.
+
+**Three places ask, one component answers.** Sign-up holds the answers until
+submit (there is no account yet); the first-run card asks anybody whose account
+predates the question; `/about-you` is where they change afterwards, because
+that is where the sign-up copy promises they will be. The drawer's analytics
+switch is retired — one setting in two places is two places to read a different
+answer from.
+
+**Turning analytics off reloads the page, and turning research off does not.**
+`cookieless_mode` is an init-time shape, so *off* only becomes true on the next
+load; the research flag changes nothing in the browser at all.
+
 ### 4.6 · Analytics runs inside the app only
 
 `/beta`, the sign-in gate, `/impressum`, `/privacy` and `musie.org` load **no
@@ -598,6 +635,12 @@ code does and does not yet cover:
 - [ ] The documentation site's footer carries both links
 - [ ] `privacy.voiceShort` is rewritten in `en.ts` and `de.ts`, and says the
       speech leaves the device
+- [ ] Both toggles are off on a fresh sign-up form, and a signup with both off
+      succeeds exactly as fast as one with both on
+- [ ] `/about-you` shows the same two, reflects what was chosen at sign-up, and
+      turning analytics off there reloads and stays off
+- [ ] `select * from public.research_reflections` returns rows only for people
+      whose `research_consent` is `granted`, and is refused to `authenticated`
 - [ ] The consent card is asked once, inside the app, with refuse as prominent
       as accept, and closing it counts as a refusal
 - [ ] **Refusing produces no device storage** — verified by clearing site data,
@@ -628,12 +671,14 @@ code does and does not yet cover:
 
 ## 8 · Not in this, and named so it is not lost
 
-- **Art. 9 explicit consent before the first recording.** The strongest legal
-  basis for a diary of feelings and a voice stream to a US provider is explicit
-  consent, given once, knowingly, with a record of it. The policy can describe
-  the processing; it cannot be the consent. **This is the largest remaining gap
-  and it should be a PRD of its own, before testers arrive** — most likely one
-  checkbox at account creation plus one line at the record button.
+- ~~**Art. 9 explicit consent before the first recording.**~~ **Built
+  2026-10-20** — §4.7. Sign-up asks it as the second of two toggles, off by
+  default and never required, and `/about-you` is where it is withdrawn. What
+  is still NOT covered: the consent is for *reading* reflections, and the
+  separate question of the voice stream to OpenAI is answered by the privacy
+  page rather than by a toggle, because transcription is how the feature works
+  rather than an optional extra. If that should be refusable too, it is a
+  product decision and a new PRD.
 - **Terms of service / AGB.** Not legally required. Worth having before money
   or more than twenty people, and it is where the next item lives.
 - **A "this is not therapy" disclaimer.** Musie hands somebody an exercise about

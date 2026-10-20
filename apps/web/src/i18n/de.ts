@@ -1674,11 +1674,16 @@ und solche Daten schützt die DSGVO strenger als alles andere (Art. 9). Genau
 so behandeln wir sie: in der Datenbank sind sie auf dein Konto beschränkt, sie
 werden nie für ein Profil über dich benutzt, und wir geben sie nicht weiter.
 
-Wir bauen gerade einen ausdrücklichen Einwilligungsschritt davor, damit
-niemand ein Mikrofon oder ein Tagebuchfeld erreicht, ohne vorher in klaren
-Worten zugestimmt zu haben. Bis dahin verarbeiten wir diese Inhalte nur, weil
-du uns um Musie gebeten hast, und aus keinem anderen Grund – und du kannst
-alles davon jederzeit in deinem Tagebuch löschen.
+**Niemand liest sie, wenn du es nicht erlaubst.** Beim Anmelden wurden dir zwei
+getrennte Fragen gestellt, beide standen auf Aus, bis du sie eingeschaltet
+hast: ob Ben und Lucy auswerten dürfen, wie du Musie benutzt, und ob sie deine
+Reflexionen lesen dürfen – auch die gesprochenen –, um Musie zu verbessern. Die
+zweite betrifft das, was du geschrieben hast, und ist eine ausdrückliche
+Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO. Ein Nein kostet dich nichts:
+Musie funktioniert genauso, und du kannst beides jederzeit unter *Über dich*
+ändern. Alles andere hier passiert nur, weil du uns um Musie gebeten hast, und
+aus keinem anderen Grund – und du kannst alles davon jederzeit in deinem
+Tagebuch löschen.
 
 ## Deine Stimme, während du sprichst
 
@@ -1744,6 +1749,16 @@ Browser wird dann nichts abgelegt, und nichts hängt an dir.
 
 **In beiden Fällen** enthält kein Ereignis, das wir senden, was du geschrieben
 oder gesagt hast, welches Gefühl du ausgewählt hast oder deine E-Mail-Adresse.
+Das steht nicht nur hier, sondern im Code: Es gibt genau eine Stelle, von der
+Ereignisse abgehen, und sie entfernt diese Angaben, bevor irgendetwas das Gerät
+verlässt.
+
+**Deine Reflexionen zu lesen ist die andere Erlaubnis, nicht diese.** Bei der
+Auswertung geht es darum, was du tust; bei der anderen darum, was du
+geschrieben hast. Sie sendet nichts irgendwohin – sie entscheidet, ob deine
+Reflexionen überhaupt auftauchen, wenn wir uns ansehen, was Menschen
+geschrieben haben. Das passiert in unserer eigenen Datenbank und verlässt sie
+nicht.
 
 Du kannst deine Antwort jederzeit ändern, im Menü unter den beiden Schaltern.
 Der Widerruf ist so einfach wie die Zustimmung: ein Tippen, und die Seite
@@ -1782,24 +1797,28 @@ eine Änderung bedeutet, dass wir etwas täten, dem du nicht zugestimmt hast –
 etwa ein neuer Anbieter für die Auswertung –, fragen wir dich neu, statt
 anzunehmen, das alte Ja gelte weiter.`,
 
-  /* ── DIE KARTE FÜR DIE AUSWERTUNG · LEGAL-PAGES.md §4.4 ──────────────────
-     Einmal gefragt, innerhalb der App. Beide Knöpfe haben dieselbe Variante
-     und dasselbe Gewicht: eine angestoßene Einwilligung ist keine freie, und
-     der Text muss ein Nein wie eine von zwei normalen Antworten aussehen
-     lassen. Deshalb bedankt sich keiner der beiden Sätze für ein Ja. */
-  'analytics.title': 'Dürfen wir sehen, wo Musie im Weg steht?',
-  'analytics.body': `Wenn du zustimmst, zeichnen wir auf, welche Bildschirme du
-öffnest, wie lange Dinge dauern, und spielen deine Sitzung nach – mit **jedem
-Text und jeder Eingabe maskiert**. Also Formen und Berührungen, nie das, was du
-geschrieben hast.
 
-Wenn du ablehnst, zählen wir nur, wie oft Bildschirme geöffnet werden: nichts
-in deinem Browser, keine Aufzeichnung. In beiden Fällen enthält nichts, was wir
-senden, was du geschrieben oder gesagt hast, oder deine E-Mail-Adresse.
+  /* ── DIE ZWEI ERLAUBNISSE · LEGAL-PAGES.md §4.4 ──────────────────────────
+     Die Labels stehen in der ICH-FORM, der Absatz in der du-Form. Das ist
+     Absicht: Ein Label neben einem Schalter ist der Satz, dem jemand zustimmt,
+     und es steht direkt unter „Ich akzeptiere die Nutzungsbedingungen“. Der
+     Absatz ist das, was wir sagen.
 
-Du kannst deine Antwort jederzeit im Menü ändern.`,
-  'analytics.accept': 'Ja, das hilft',
-  'analytics.refuse': 'Nein, nur zählen',
-  'analytics.closeLabel': 'Schließen',
-  'analytics.switchLabel': 'Auswertung und Sitzungsaufzeichnung',
+     KEIN „nur“, KEIN „anonymisiert“, KEIN „lediglich“. Jedes davon wäre ein
+     Weichmacher an den zwei Sätzen in diesem Produkt, die genau so gelesen
+     werden müssen, wie sie dastehen.
+
+     Gedankenstrich als Halbgeviertstrich mit Leerzeichen (GERMAN-UI-WRITING
+     §7), „Reflexionen“ und nicht „Reflektionen“. */
+  'consent.intro': 'Am wichtigsten ist uns, dass du Musie wirklich benutzt. Je mehr du mit uns teilst, desto leichter können wir daraus lernen. Und es ist völlig okay, wenn das, was du einträgst, so privat ist, dass du es nicht teilen möchtest. Du kannst beides jederzeit unter *Über dich* ändern.',
+  'consent.analytics.label': 'Ben und Lucy dürfen mein Verhalten auf der Seite analysieren, um Musie zu verbessern.',
+  'consent.research.label': 'Ben und Lucy dürfen meine Reflexionen lesen – auch die gesprochenen –, um Musie zu verbessern.',
+
+  'consent.card.title': 'Zwei Fragen zu deinen Daten',
+  'consent.card.body': 'Dein Konto gibt es schon länger als diese beiden Fragen, deshalb kommen sie jetzt. Du kannst bei beiden Nein sagen und Musie genauso weiter benutzen wie bisher.',
+  'consent.card.save': 'Speichern',
+  'consent.card.closeLabel': 'Schließen',
+
+  'consent.settings.headline': 'Was du mit uns teilst',
+  'consent.settings.text': 'Beides ist freiwillig, und du kannst es jederzeit ändern. Nichts davon ändert, wie Musie für dich funktioniert.',
 };

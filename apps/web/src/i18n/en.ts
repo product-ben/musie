@@ -2130,11 +2130,15 @@ the GDPR protects more strictly than anything else (Art. 9). We treat it that
 way: it is scoped to your account in the database, it is never used to profile
 you, and it is not shared.
 
-We are putting an explicit consent step in front of this, so that nobody
-reaches a microphone or a diary field without having agreed to it in so many
-words. Until it is there, the processing happens because you asked us for the
-service and for no other reason, and you can delete all of it at any time from
-your diary.
+**Nobody reads it unless you say they may.** When you signed up you were asked
+two separate questions, both switched off until you turned them on: whether Ben
+and Lucy may analyse how you use Musie, and whether they may read your
+reflections — the spoken ones included — to improve it. The second is the one
+that touches what you wrote, and it is explicit consent under Art. 9(2)(a).
+Saying no to either costs you nothing: Musie works the same, and you can change
+both at any time under *About you*. Everything else here happens because you
+asked us for the service and for no other reason, and you can delete all of it
+at any time from your diary.
 
 ## Your voice, while you are speaking
 
@@ -2196,7 +2200,15 @@ identifier stored on your device and no replay at all. Nothing is written into
 your browser, and nothing is tied to you.
 
 **Either way**, no event we send carries what you wrote, what you said, which
-feeling you picked or your email address.
+feeling you picked or your email address. That is enforced in the code rather
+than promised: there is one place analytics events are sent from, and it strips
+those properties before anything leaves.
+
+**Reading your reflections is the other permission, and it is not this one.**
+Analytics is about what you do; that one is about what you wrote. It sends
+nothing anywhere — it decides whether your reflections appear at all when we
+look at what people have written, which happens in our own database and never
+leaves it.
 
 You can change your answer whenever you like, in the menu, under the two
 switches. Withdrawing is as easy as giving: one tap, and the page starts again
@@ -2236,25 +2248,31 @@ would be doing something you have not agreed to — a new processor for the
 analytics, for instance — we ask you again rather than assuming the old yes
 still covers it.`,
 
-  /* ── THE ANALYTICS CONSENT CARD · LEGAL-PAGES.md §4.4 ────────────────────
-     Asked once, inside the app. The two buttons carry the same variant and
-     the same weight on purpose: a nudged consent is not freely given, and the
-     copy has to make refusing feel like one of two normal answers rather than
-     the awkward one. So neither sentence thanks anybody for saying yes. */
-  'analytics.title': 'Help us see where Musie gets in the way?',
-  'analytics.body': `If you say yes, we record which screens you open, how long
-things take, and a replay of your session with **every text and every input
-masked** — shapes and taps, never what you wrote.
 
-If you say no, we only count how often screens are opened, with nothing stored
-in your browser and no replay. Either way, nothing we send carries what you
-wrote, what you said or your email address.
+  /* ── THE TWO PERMISSIONS · LEGAL-PAGES.md §4.4 ───────────────────────────
+     Asked at sign-up under the terms toggle, asked once by the first-run card
+     for accounts older than the question, and changed afterwards on
+     /about-you. One set of strings for all three — components/ConsentToggles.
 
-You can change your answer any time in the menu.`,
-  'analytics.accept': 'Yes, that helps',
-  'analytics.refuse': 'No, count only',
-  'analytics.closeLabel': 'Close',
-  'analytics.switchLabel': 'Analytics and session replay',
+     THE LABELS ARE FIRST PERSON and the paragraph is second person, which is
+     deliberate rather than sloppy: a label beside a switch is the sentence the
+     person is agreeing to, and it sits directly under *I accept the terms*.
+     The paragraph is us talking to them. German does the same.
+
+     NEITHER LABEL SAYS "ANONYMISED", "ONLY", OR "JUST". Every one of those
+     would be a softener on the two sentences in this product that must be
+     read exactly as written. */
+  'consent.intro': 'What matters most to us is that you really use Musie. The more you share with us, the easier it is for us to learn. And it is completely fine if what you write is too private to share. You can change both of these any time under *About you*.',
+  'consent.analytics.label': 'Ben and Lucy may analyse how I behave on the site, to improve Musie.',
+  'consent.research.label': 'Ben and Lucy may read my reflections — the spoken ones too — to improve Musie.',
+
+  'consent.card.title': 'Two questions about your data',
+  'consent.card.body': 'Your account is older than these two questions, which is why they are turning up now. You can say no to both and go on using Musie exactly as before.',
+  'consent.card.save': 'Save',
+  'consent.card.closeLabel': 'Close',
+
+  'consent.settings.headline': 'What you share with us',
+  'consent.settings.text': 'Both are optional and you can change them whenever you like. Neither one changes how Musie works for you.',
 } as const;
 
 /** Every catalogue must answer to this shape. */

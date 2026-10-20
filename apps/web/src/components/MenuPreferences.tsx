@@ -24,16 +24,12 @@
  * reason it is a slot rather than three more props on the drawer.
  */
 import * as React from 'react';
-import { Eye, EyeOff, Languages, Moon, Sun } from 'lucide-react';
+import { Languages, Moon, Sun } from 'lucide-react';
 import { SegmentedControl, Switch } from '@musie/design-system';
 import { AccountSection } from './AccountSection';
 import { LegalLinks } from './LegalLinks';
 import { LOCALES, LOCALE_LABELS, isLocale } from '../i18n';
 import { useLocale, useT } from '../i18n/localeContext';
-import { asConsent, consentPatch } from '../lib/analyticsConsent';
-import type { AnalyticsConsent } from '../lib/analyticsConsent';
-import { useAuth } from '../lib/authContext';
-import { updateProfile } from '../lib/profile';
 import { useProfile } from '../lib/profileContext';
 
 export function MenuPreferences() {
@@ -72,16 +68,12 @@ export function MenuPreferences() {
         </div>
       </div>
 
-      {/* ── WITHDRAWING THE ANALYTICS CONSENT ──────────────────────────────
-          Art. 7(3): a consent must be as easy to withdraw as it was to give.
-          A buried setting would fail that; this is the same drawer the two
-          switches above live in, one tap from every screen.
-
-          ITS OWN ROW, NOT A THIRD CONTROL IN THE PAIR ABOVE. The two there
-          carry no visible label because a moon and two endonyms say what they
-          do; nothing says *analytics and session replay* except those words,
-          so this row keeps its label and therefore keeps its own line. */}
-      <AnalyticsSwitch />
+      {/* THE TWO PERMISSIONS ARE NOT HERE. They were, for an afternoon, as a
+          single analytics switch — and then sign-up grew a pair of toggles and
+          /about-you became their home (Ben, 2026-10-20). One setting in two
+          places is two places to read a different answer from, and the page
+          the copy points people at has to be the one that holds them.
+          components/ConsentToggles.tsx, routes/AboutYou.tsx. */}
 
       {/* ── THE SMALL PRINT, AT THE FOOT OF THE DRAWER ─────────────────────
           One tap from every screen in the app, which is what `§ 5 DDG`'s
@@ -93,105 +85,8 @@ export function MenuPreferences() {
   );
 }
 
-/**
- * On, and PostHog runs in full; off, and it runs cookieless — the same two
- * answers the consent card offers, which is what makes this a withdrawal
- * rather than a second, differently-shaped question.
- *
- * ── IT RENDERS FOR NOBODY WHO HAS NOT ANSWERED ────────────────────────────
- * A null consent means the card has not been answered yet, and a switch is
- * the wrong control for that: it has two positions and the honest state is
- * "not asked". The card asks; this changes the answer afterwards.
- *
- * ── AND IT RELOADS, DELIBERATELY ──────────────────────────────────────────
- * `initAnalytics` runs once per page load and the mode — cookieless or not —
- * is decided there, because `cookieless_mode` is an init-time shape rather
- * than something to toggle under a live session. So the honest way to apply a
- * change is to start the page again, which is also the only way to be sure
- * that OFF means off: a reload with a refusal recorded cannot leave a replay
- * recorder running somewhere in the tab.
- *
- * The write is AWAITED first. `useProfile().update` is fire-and-forget by
- * design — the control moves immediately and the request lands when it lands —
- * and a reload one line later would cancel it, leaving the UI claiming
- * something the database never heard. So this writes directly, waits, and only
- * then reloads; a failure keeps the switch where it was and says so on the
- * console.
- */
-function AnalyticsSwitch() {
-  const t = useT();
-  const { userId } = useAuth();
-  const { profile } = useProfile();
 
-  const stored = asConsent(profile?.analytics_consent);
-  const [pending, setPending] = React.useState<AnalyticsConsent | null>(null);
 
-  if (stored === null || userId === null) return null;
-
-  const checked = (pending ?? stored) === 'granted';
-
-  return (
-    <Switch
-      label={t('analytics.switchLabel')}
-      checked={checked}
-      /* The press is in flight and the page is about to start again; a second
-         press in that window would write the opposite answer and lose the
-         race with its own reload. */
-      disabled={pending !== null}
-      onCheckedChange={(next) => {
-        const value: AnalyticsConsent = next ? 'granted' : 'refused';
-        setPending(value);
-        void (async () => {
-          try {
-            await updateProfile(userId, consentPatch(value));
-            window.location.reload();
-          } catch (thrown: unknown) {
-            const message = thrown instanceof Error ? thrown.message : String(thrown);
-            console.error('[musie] could not save the analytics consent:', message);
-            setPending(null);
-          }
-        })();
-      }}
-      /* An eye, open and closed: the two states are "we can see how the app is
-         used" and "we cannot", which is what the words say and what a check
-         mark would not. */
-      onGlyph={Eye}
-      offGlyph={EyeOff}
-    />
-  );
-}
-
-/**
- * Dark mode.
- *
- * ── TWO STORES, ONE DIRECTION ──────────────────────────────────────────────
- * localStorage (`musy-theme`, owned by theme-init.js) is the SOURCE OF TRUTH
- * for rendering. It has to be: the attribute must be set before the first
- * stylesheet loads, and that is measurable — 2.2 verified `data-theme` is
- * written while `document.styleSheets.length` is still 0. Nothing that waits
- * on a network round trip can do that job.
- *
- * profiles.theme is a MIRROR, written alongside so the preference can follow a
- * real account later.
- *
- * NOTHING READS profiles.theme, and that is deliberate, not an oversight:
- * reading it on boot would reintroduce exactly the flash the localStorage
- * store exists to prevent. It becomes readable the day an account spans
- * devices, and until then it is a write-only column. Do not "fix" it.
- *
- * This control calls window.musyTheme.set() and NEVER touches `data-theme`
- * itself — theme-init.js owns the attribute and the storage key together, and
- * setting the attribute here would put a second writer on it.
- *
- * (Language is the mirror image: profiles.language is authoritative, because
- * there is no flash-of-wrong-language to solve. See LocaleProvider.)
- *
- * ── THE STATE IS READ ON MOUNT, WHICH THE DRAWER MAKES FREE ────────────────
- * The initialiser runs once per mount, and this component mounts with the
- * drawer — so every open reads the store again and cannot show a stale switch.
- * In the old sheet that was true for the same reason; nothing about it depended
- * on which overlay it was in.
- */
 function ThemeSwitch() {
   const t = useT();
   const { update } = useProfile();
@@ -264,6 +159,7 @@ function ThemeSwitch() {
  * component is RadioGroup + Radio, not Tabs), so arrow keys and the single tab
  * stop survive the swap.
  */
+
 function LanguageChoice() {
   const { locale, setLocale } = useLocale();
   const t = useT();

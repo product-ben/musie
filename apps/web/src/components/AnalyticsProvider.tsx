@@ -48,15 +48,15 @@
  * the same reason the init is here at all.
  */
 import * as React from 'react';
-import { ButtonGroup, CtaButton, Lightbox } from '@musie/design-system';
-import { asConsent, consentPatch, needsAsking } from '../lib/analyticsConsent';
-import type { AnalyticsConsent } from '../lib/analyticsConsent';
+import { CtaButton, Lightbox } from '@musie/design-system';
+import { NO_CONSENT_YET, asConsent, bothConsentsPatch, needsAsking } from '../lib/consents';
+import type { ConsentAnswers } from '../lib/consents';
 import { useAuth } from '../lib/authContext';
 import { initAnalytics } from '../lib/posthog';
 import { useProfile } from '../lib/profileContext';
 import { useT } from '../i18n/localeContext';
+import { ConsentToggles } from './ConsentToggles';
 import { LegalLinks } from './LegalLinks';
-import { Markdown } from './Markdown';
 
 /** A cold load into a running exercise is not the moment to ask. */
 function inSession(pathname: string): boolean {
@@ -73,8 +73,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const openedInSession = React.useRef(inSession(window.location.pathname));
 
   const consent = asConsent(profile?.analytics_consent);
-  const version = profile?.analytics_consent_version;
-  const unanswered = needsAsking(consent, version);
+  const unanswered = needsAsking(consent, profile?.analytics_consent_version)
+    /* EITHER permission being unanswered brings the card back, because it asks
+       for both at once. In practice that is the testers who signed up before
+       the toggles existed: their analytics answer may be on record and their
+       research answer cannot be. */
+    || needsAsking(asConsent(profile?.research_consent), profile?.research_consent_version);
 
   React.useEffect(() => {
     /* 'error' and 'pending' both mean the consent is UNKNOWN, and unknown is
@@ -85,14 +89,14 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     initAnalytics(consent, userId);
   }, [consent, status, unanswered, userId]);
 
-  function answer(value: AnalyticsConsent) {
+  function answer(answers: ConsentAnswers) {
     /* `update` writes the row and sets the local copy first, so the card
        closes on the press rather than on the round trip, and the effect above
        initialises from the new value. A FAILED write logs and leaves the
        database saying null — which means the card returns on the next load,
        which is the right failure: better to ask twice than to record a consent
        that was never stored. */
-    update(consentPatch(value));
+    update(bothConsentsPatch(answers));
   }
 
   const open = status === 'ready' && userId !== null && unanswered
@@ -106,41 +110,44 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ConsentCard({ onAnswer }: { onAnswer: (value: AnalyticsConsent) => void }) {
+function ConsentCard({ onAnswer }: { onAnswer: (answers: ConsentAnswers) => void }) {
   const t = useT();
+
+  /* Both off, and nothing may default them on — see ConsentToggles. */
+  const [answers, setAnswers] = React.useState<ConsentAnswers>(NO_CONSENT_YET);
 
   return (
     <Lightbox
       open
-      /* Closing without choosing is a refusal — rule 1 above. So there is no
-         "ask me later": the X and the scrim mean the same thing as the second
-         button, and nothing is captured either way. */
+      /* CLOSING WITHOUT SAVING IS A REFUSAL OF BOTH, including anything
+         ticked on the way out: a tick that was never confirmed is not an
+         answer, and reading it as one would turn "I changed my mind and shut
+         the box" into a consent. Nothing is captured either way, and the two
+         switches on /about-you are how somebody changes their mind later. */
       onOpenChange={(next) => {
-        if (!next) onAnswer('refused');
+        if (!next) onAnswer(NO_CONSENT_YET);
       }}
-      title={t('analytics.title')}
-      closeLabel={t('analytics.closeLabel')}
+      title={t('consent.card.title')}
+      closeLabel={t('consent.card.closeLabel')}
       surface="panel"
     >
-      <Markdown md={t('analytics.body')} />
+      {/* Why this is appearing at all, for the handful of testers whose
+          accounts are older than the question. */}
+      <p className="musie-note">{t('consent.card.body')}</p>
 
-      {/* ALTERNATIVES, AND NEITHER IS RANKED. `relation="alternatives"` is the
-          group for two choices rather than an action and its escape hatch, and
-          both buttons take the SAME variant: a filled primary beside a ghost
-          is a nudge, and a nudged consent is not freely given. */}
-      <ButtonGroup relation="alternatives">
-        <CtaButton variant="secondary" wrap onClick={() => onAnswer('granted')}>
-          {t('analytics.accept')}
-        </CtaButton>
-        <CtaButton variant="secondary" wrap onClick={() => onAnswer('refused')}>
-          {t('analytics.refuse')}
-        </CtaButton>
-      </ButtonGroup>
+      <ConsentToggles value={answers} onChange={setAnswers} />
+
+      {/* ONE BUTTON, NOT TWO. The old card asked a single yes/no and so took
+          a pair of equally weighted alternatives; two switches already carry
+          the choice, and a second button beside Save could only mean "save
+          something other than what the switches say". */}
+      <CtaButton variant="primary" block wrap onClick={() => onAnswer(answers)}>
+        {t('consent.card.save')}
+      </CtaButton>
 
       {/* INFORMED is part of the definition, so the policy is one press away
           from the question. It leaves the app — these pages are not routes —
-          and the card returns on the way back, because the answer is still
-          null. */}
+          and the card returns on the way back, because nothing was answered. */}
       <LegalLinks />
     </Lightbox>
   );

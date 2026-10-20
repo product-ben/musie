@@ -20,6 +20,7 @@
  * every outcome resolves to a key the app owns in both languages.
  */
 import type { MessageKey } from '../i18n';
+import type { ConsentAnswers } from './consents';
 import { PRIVACY_VERSION, TERMS_VERSION } from './legal';
 import { getSupabase } from './supabase';
 
@@ -134,9 +135,15 @@ export function createAccount(input: {
   firstName: string;
   email: string;
   acceptedTerms: boolean;
+  /**
+   * The two optional permissions, as the switches stood when Submit was
+   * pressed. Not required for anything: a signup with both off is a signup.
+   */
+  consents: ConsentAnswers;
 }): Promise<SignUpResult> {
+  const { consents, ...rest } = input;
   return callSignup({
-    ...input,
+    ...rest,
     email: input.email.trim(),
     firstName: input.firstName.trim(),
     /* Sent, not assumed server-side: what has to be provable is which wording
@@ -144,6 +151,11 @@ export function createAccount(input: {
        loaded knows that. See lib/legal.ts. */
     termsVersion: TERMS_VERSION,
     privacyVersion: PRIVACY_VERSION,
+    /* Sent as the two booleans they are, and written server-side against
+       `privacyVersion` — so the version recorded beside a permission is the
+       wording that was on the screen, exactly as for the terms. */
+    analyticsConsent: consents.analytics,
+    researchConsent: consents.research,
   });
 }
 

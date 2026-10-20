@@ -45,6 +45,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router';
 import { ContentBox, CtaButton, Message, RadioGroupText } from '@musie/design-system';
 import { AccountSection } from '../components/AccountSection';
+import { ConsentSettings } from '../components/ConsentSettings';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { useT } from '../i18n/localeContext';
 import { useProfile } from '../lib/profileContext';
@@ -180,6 +181,13 @@ export function AboutYou() {
           `.musie-stage__box` because the stage is a centred column and a second
           box with no measure of its own would be wider than the question
           above it. */}
+      {/* ── THE TWO PERMISSIONS, WHERE THE SIGN-UP COPY SAID THEY WOULD BE ──
+          *You can change these any time on the About you page* is a promise
+          this box keeps. It sits above the account section because changing a
+          permission is a thing people come here to do, and signing out is a
+          thing they come here to do once. */}
+      <ConsentSettings className="musie-stage__box" />
+
       <AccountSection className="musie-stage__box" />
 
       {/* Rendered only while refused !== null, so the dialog mounts with the

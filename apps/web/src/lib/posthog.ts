@@ -44,7 +44,7 @@
  * fills in from a dashboard's first copy button.
  */
 import posthog from 'posthog-js';
-import type { AnalyticsConsent } from './analyticsConsent';
+import type { Consent } from './consents';
 
 const EU_CLOUD = 'https://eu.i.posthog.com';
 
@@ -106,7 +106,7 @@ export function analyticsConfigured(): boolean {
  * app down to a blank page, which hides the reason". An app with no analytics
  * is a working app; an app that will not paint is not.
  */
-export function initAnalytics(consent: AnalyticsConsent, userId: string): void {
+export function initAnalytics(consent: Consent, userId: string): void {
   if (started) return;
   if (!analyticsConfigured()) {
     if (import.meta.env.DEV) {

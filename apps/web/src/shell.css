@@ -2811,3 +2811,21 @@ html[data-musy-scroll-snap] {
 .musie-legal > span {
   color: var(--on-surface-muted);
 }
+
+/* ═══ THE TWO PERMISSIONS ═══════════════════════════════════════════════════
+   A paragraph and two switches, in three places: the sign-up step, the
+   first-run card, and /about-you. See components/ConsentToggles.tsx.
+
+   A PERMITTED CUSTOM PATTERN (L14): the design system has no component for a
+   labelled group of switches, every declaration resolves to a Layer 1 token,
+   and the class is `musie-` rather than `musy-`.
+
+   --space-gap-stack is L3's rung for items in a list, which is what two
+   switches under a paragraph are. The hosts differ — a ContentBox, a Lightbox,
+   a stage box — so the group owns the space between its own children and
+   nothing about the space around itself.                                     */
+.musie-consents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}

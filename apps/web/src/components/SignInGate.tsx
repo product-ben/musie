@@ -59,9 +59,12 @@ import {
   CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo, Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
+import { ConsentToggles } from './ConsentToggles';
 import { LegalLinks } from './LegalLinks';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
+import { NO_CONSENT_YET } from '../lib/consents';
+import type { ConsentAnswers } from '../lib/consents';
 import { PRIVACY_PATH, TERMS_PATH } from '../lib/legal';
 import {
   checkAccessCode, createAccount, requestSignInCode, verifySignInCode,
@@ -90,6 +93,10 @@ export function SignInGate() {
   const [accessCode, setAccessCode] = React.useState('');
   const [signInCode, setSignInCode] = React.useState('');
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
+  /* The two permissions, both off, and nothing in this file may default them
+     on — see components/ConsentToggles.tsx. They are held here until the form
+     is submitted because there is no account to write them to yet. */
+  const [consents, setConsents] = React.useState<ConsentAnswers>(NO_CONSENT_YET);
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<MessageKey | null>(null);
   const [notice, setNotice] = React.useState<MessageKey | null>(null);
@@ -168,7 +175,9 @@ export function SignInGate() {
     setBusy(true);
     setFailure(null);
 
-    const made = await createAccount({ accessCode, firstName, email, acceptedTerms });
+    const made = await createAccount({
+      accessCode, firstName, email, acceptedTerms, consents,
+    });
     if (!made.ok) return fail(made.messageKey);
 
     /* ALREADY REGISTERED IS NOT A FAILURE. The account is theirs; they came to
@@ -434,6 +443,20 @@ export function SignInGate() {
               >
                 {t('auth.terms.link')}
               </InlineLink>
+
+              {/* ── TWO PERMISSIONS, AND NEITHER IS A CONDITION ──────────────
+                  Ben, 2026-10-20. The terms toggle above is REQUIRED — the
+                  submit refuses without it. These two are not: somebody who
+                  leaves both off signs up exactly as fast and gets exactly the
+                  same product, which is what keeps them consent rather than a
+                  toll. The intro paragraph says so in the person's own terms.
+
+                  They sit BELOW the terms and its link rather than beside
+                  them, because they are a different kind of thing: one is the
+                  agreement that makes an account possible, these are two
+                  favours. A person reading downwards meets the compulsory
+                  thing, then the optional ones. */}
+              <ConsentToggles value={consents} onChange={setConsents} disabled={busy} />
 
               {/* Linked, never ticked — see the header. The sentence names what
                   the link is FOR, because "Privacy policy" alone beside a

@@ -410,6 +410,9 @@ export type Database = {
           analytics_consent: string | null
           analytics_consent_at: string | null
           analytics_consent_version: string | null
+          research_consent: string | null
+          research_consent_at: string | null
+          research_consent_version: string | null
           created_at: string
           display_name: string | null
           language: string | null
@@ -421,6 +424,9 @@ export type Database = {
           analytics_consent?: string | null
           analytics_consent_at?: string | null
           analytics_consent_version?: string | null
+          research_consent?: string | null
+          research_consent_at?: string | null
+          research_consent_version?: string | null
           created_at?: string
           display_name?: string | null
           language?: string | null
@@ -432,6 +438,9 @@ export type Database = {
           analytics_consent?: string | null
           analytics_consent_at?: string | null
           analytics_consent_version?: string | null
+          research_consent?: string | null
+          research_consent_at?: string | null
+          research_consent_version?: string | null
           created_at?: string
           display_name?: string | null
           language?: string | null
