@@ -119,6 +119,10 @@ export const en = {
   'auth.signUp.detailsIntro': 'We send a code to this address every time you sign in, so it needs to be one you can read.',
   'auth.firstName': 'First name',
   'auth.signUp.submit': 'Create my account',
+  /* Why the button is shut. It exists only while it is true — see the
+     `.musie-cta-stack` block in SignInGate: a disabled control with
+     nothing beside it cannot be pressed to find out what is wrong. */
+  'auth.signUp.hint': 'Fill in your first name and email address, and accept the terms.',
   /* THE ONE TICK. The privacy policy sits beside it as a link and is NOT
      agreed to — a privacy policy is information provided under Art. 13, and a
      required box accepting it is bundled consent. Ben, 2026-10-20. */
@@ -239,7 +243,7 @@ export const en = {
      sentence because that is all that is true: the list is three columns, it
      is not readable with the key the browser holds (the table refuses it), and
      nothing is sent anywhere else. */
-  'beta.privacy': 'Your name and address are used for the beta invitation and nothing else.',
+  'beta.privacy': 'Your name and address are used for the beta invitation and nothing else. The privacy page at the foot of this page says what Musie stores once you are in.',
   /* Field-level, each one next to the control it is about. Imperative, naming
      the next action rather than the rule that was broken. */
   'beta.error.firstName': 'Enter your first name.',
@@ -1407,7 +1411,18 @@ export const en = {
      says SPRACHNACHRICHT rather than Stimme since 2026-10-09: what is not kept
      is a recording, and "deine Stimme" promised something larger and vaguer
      than the system actually does. */
-  'privacy.voiceShort': 'Musie saves only the text, never the voice message.',
+  /* ── REWRITTEN 2026-10-20, AND THE OLD LINE IS WHY ──────────────────────
+     It said: "Musie saves only the text, never the voice message." Every word
+     of that was true and the sentence was still misleading — the audio goes
+     from the browser to OpenAI in the United States to BECOME that text, and
+     a reader of the old line concludes their voice never left the phone. That
+     is the same failure the `privacy.account` / `privacy.browserBound` rewrite
+     above was about: a promise that is false for the people currently testing.
+
+     It is longer now, and this is the one screen where precision outranks
+     brevity — the full story is on /privacy, one tap away in the menu.
+     LEGAL-PAGES.md §6. */
+  'privacy.voiceShort': 'Your words are turned into text by a service outside the EU. Musie keeps the text, never the recording.',
   /* The word in that sentence that opens the whole promise. Not 'Learn more':
      it names what is behind it, which is what a link in running text has to
      do when the sentence around it is doing the explaining. */
@@ -2020,6 +2035,248 @@ export const en = {
   'route.goalMappings.title': 'Goal mappings',
   'route.session.title': 'Current session — {step}',
   'route.notFound.title': 'Not found',
+
+  /* ── THE PAGES THE LAW ASKS FOR · LEGAL-PAGES.md ─────────────────────────
+     Two documents, and they are CHROME: ours, permanent, and nobody else is
+     going to supply them. They live in the catalogue rather than in .md files
+     under src/ for one reason — `de.ts` is typed against this object, so a
+     document added here and forgotten there fails `pnpm check` instead of
+     shipping a half-German legal page (rules 6 and 7). Two files per page
+     would read better and check nothing.
+
+     THE MARKDOWN IS WHAT components/Markdown.tsx PARSES: `##` and `###`
+     headings, paragraphs, `**strong**`, and numbered lists. There is no link
+     branch in that parser (lib/markdown.ts says why), so addresses and
+     provider URLs are written as plain text. For an Impressum that is normal.
+
+     PRECISION OUTRANKS BREVITY HERE, which is the one place this catalogue
+     says that. The §5 fields are a legal minimum and the privacy document has
+     to match what the code actually does — the inventory it is written from is
+     LEGAL-PAGES.md §4.1–§4.3, read back from the schema and the bundle. */
+  'legal.navLabel': 'Legal',
+  'legal.imprint.link': 'Legal notice',
+  'legal.privacy.link': 'Privacy',
+  'legal.back': 'Back to Musie',
+  'legal.privacy.version': 'This privacy notice is dated {version}.',
+
+  'legal.imprint.title': 'Impressum',
+  /* The German word stands in the English page too: it is the term the
+     obligation is named after, and the term somebody is looking for. */
+  'legal.imprint.body': `## Information under § 5 DDG
+
+Musie is operated by Benjamin Lipinski and Lucy von Damnitz, Strehleranger 7,
+81735 Munich, Germany.
+
+## Contact
+
+Email: bl@musie.org
+
+Email is the fastest way to reach us, and the address a legal notice has to
+name. We answer data protection questions at the same address.
+
+## Responsible for the content
+
+Benjamin Lipinski and Lucy von Damnitz, at the address above.
+
+Musie is run by two people and not by a company, so there is no commercial
+register entry, no registered representative and no VAT identification number
+to state here.
+
+## What Musie is, right now
+
+A closed beta. The exercises, the music and the texts are work in progress,
+and access is by invitation. Musie is not a medical service and it does not
+replace therapy or treatment.`,
+
+  'legal.privacy.title': 'Privacy',
+  'legal.privacy.body': `## The short version
+
+Musie holds a diary you write for yourself. Nobody else can read it, nothing
+about you is sold or shared, and there is no advertising. Analytics and
+session replay are off until you say yes, and saying no costs you nothing.
+
+## Who is responsible
+
+Benjamin Lipinski and Lucy von Damnitz, Strehleranger 7, 81735 Munich,
+Germany. Email bl@musie.org. We run Musie together, so we are jointly
+responsible for what happens to your data, and either of us will answer you.
+
+## What we store, and why
+
+**Your account.** Your email address and a password, so that you can sign in
+and so that your diary is yours. Legal basis: the contract you asked us for,
+Art. 6(1)(b) GDPR.
+
+**Your settings.** Language, light or dark, and who you said you are here as.
+
+**Your sessions.** Which exercise you opened, when, how far you got.
+
+**What you write or say.** The text of your reflection, and the feelings you
+picked before and after. This is the diary, and it is the reason the rest
+exists.
+
+**Your spoken answers are stored as text only.** There is no recording
+anywhere in Musie: no audio file, no bucket, no column. Read the next section
+for what happens while you are speaking.
+
+**A photo you take stays on your device.** Musie never uploads it.
+
+**The waiting list.** If you signed up at /beta we hold the first name, the
+email address and the reason you gave, to invite you and for nothing else.
+
+**Server logs.** Our hosting and database providers record IP addresses and
+request times to serve the app and to defend it against abuse.
+
+## The sensitive part, said plainly
+
+What you write about how you feel can say something about your health, which
+the GDPR protects more strictly than anything else (Art. 9). We treat it that
+way: it is scoped to your account in the database, it is never used to profile
+you, and it is not shared.
+
+**Nobody reads it unless you say they may.** When you signed up you were asked
+two separate questions, both switched off until you turned them on: whether Ben
+and Lucy may analyse how you use Musie, and whether they may read your
+reflections — the spoken ones included — to improve it. The second is the one
+that touches what you wrote, and it is explicit consent under Art. 9(2)(a).
+Saying no to either costs you nothing: Musie works the same, and you can change
+both at any time under *About you*. Everything else here happens because you
+asked us for the service and for no other reason, and you can delete all of it
+at any time from your diary.
+
+## Your voice, while you are speaking
+
+When you hold the record button, the audio goes from your browser to OpenAI in
+the United States, which turns it into text and sends the text back. Musie
+keeps the text. The audio is not stored by us at any point.
+
+That is a transfer outside the EU, and it is the only one in Musie. If you
+would rather it did not happen, write your reflection instead: the written
+answer never leaves our own providers.
+
+## Who else processes your data
+
+**Supabase** runs the database, the accounts and the server functions, in
+Frankfurt, Germany.
+
+**Cloudflare** serves the app itself.
+
+**OpenAI** turns speech into text, in the United States, and only while you
+are recording.
+
+**PostHog** measures how the app is used and, with your consent, records the
+screen. Its data is held in the EU, in Frankfurt.
+
+Each of them processes data on our instructions and under a contract that says
+so. Where a provider's parent company is in the United States, the transfer
+rests on the standard safeguards the GDPR provides for it.
+
+## What Musie stores on your device
+
+Musie writes a handful of things into your browser, and all of them are either
+the login itself or something you chose:
+
+1. The sign-in token, which is what keeps you signed in.
+2. Light or dark, because you picked it.
+3. German or English, because you picked it.
+4. The goal you filtered the deck by, and whether you have seen its one-time
+   guide.
+5. A scanned card code and a couple of per-tab notes, so that a reload in the
+   middle of something does not lose your place.
+
+None of that needs your permission, because without it the thing you asked for
+does not work. There are no advertising cookies, no tracking pixels, and no
+fonts loaded from anybody else's server.
+
+## Analytics and session replay
+
+This is the one thing we ask permission for, and the card that asks is the
+only place it is decided.
+
+**If you say yes**, PostHog records which screens you open and how long things
+take, and replays your session so that we can see where the app got in your
+way. Every text and every input in that replay is masked before it is
+recorded: we see shapes, taps and timings, not what you wrote. Network
+responses are dropped entirely, so your diary cannot arrive in a recording.
+
+**If you say no**, PostHog still counts how often screens are opened, with no
+identifier stored on your device and no replay at all. Nothing is written into
+your browser, and nothing is tied to you.
+
+**Either way**, no event we send carries what you wrote, what you said, which
+feeling you picked or your email address. That is enforced in the code rather
+than promised: there is one place analytics events are sent from, and it strips
+those properties before anything leaves.
+
+**Reading your reflections is the other permission, and it is not this one.**
+Analytics is about what you do; that one is about what you wrote. It sends
+nothing anywhere — it decides whether your reflections appear at all when we
+look at what people have written, which happens in our own database and never
+leaves it.
+
+You can change your answer whenever you like, in the menu, under the two
+switches. Withdrawing is as easy as giving: one tap, and the page starts again
+without it.
+
+## What you can ask of us
+
+You can ask what we hold about you, have it corrected, have it deleted, have
+its use restricted, object to it, and get a copy to take elsewhere. You can
+withdraw a consent at any time without giving a reason. Write to
+bl@musie.org.
+
+**Deleting your diary does not need us.** There is a button on your diary that
+removes every session and everything in them, and it takes effect
+immediately.
+
+If you think we are handling your data wrongly, you can complain to a
+supervisory authority. The one responsible for us is the Bavarian State Office
+for Data Protection Supervision (Bayerisches Landesamt für Datenschutzaufsicht)
+in Ansbach.
+
+## How long we keep things
+
+Your diary stays until you delete it or ask us to delete your account. The
+waiting list is kept until the beta is over. Analytics data is kept for as
+long as it is useful and no longer.
+
+## Children
+
+Musie is a closed beta for adults. It is not meant for anyone under 16, and we
+do not knowingly collect anything from them.
+
+## When this changes
+
+We will say so here, and the date below changes with it. If a change means we
+would be doing something you have not agreed to — a new processor for the
+analytics, for instance — we ask you again rather than assuming the old yes
+still covers it.`,
+
+
+  /* ── THE TWO PERMISSIONS · LEGAL-PAGES.md §4.4 ───────────────────────────
+     Asked at sign-up under the terms toggle, asked once by the first-run card
+     for accounts older than the question, and changed afterwards on
+     /about-you. One set of strings for all three — components/ConsentToggles.
+
+     THE LABELS ARE FIRST PERSON and the paragraph is second person, which is
+     deliberate rather than sloppy: a label beside a switch is the sentence the
+     person is agreeing to, and it sits directly under *I accept the terms*.
+     The paragraph is us talking to them. German does the same.
+
+     NEITHER LABEL SAYS "ANONYMISED", "ONLY", OR "JUST". Every one of those
+     would be a softener on the two sentences in this product that must be
+     read exactly as written. */
+  'consent.intro': 'What matters most to us is that you really use Musie. The more you share with us, the easier it is for us to learn. And it is completely fine if what you write is too private to share. You can change both of these any time under *About you*.',
+  'consent.analytics.label': 'Ben and Lucy may analyse how I behave on the site, to improve Musie.',
+  'consent.research.label': 'Ben and Lucy may read my reflections — the spoken ones too — to improve Musie.',
+
+  'consent.card.title': 'Two questions about your data',
+  'consent.card.body': 'Your account is older than these two questions, which is why they are turning up now. You can say no to both and go on using Musie exactly as before.',
+  'consent.card.save': 'Save',
+  'consent.card.closeLabel': 'Close',
+
+  'consent.settings.headline': 'What you share with us',
+  'consent.settings.text': 'Both are optional and you can change them whenever you like. Neither one changes how Musie works for you.',
 } as const;
 
 /** Every catalogue must answer to this shape. */

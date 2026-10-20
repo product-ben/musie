@@ -107,5 +107,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  /* ANALYTICS USED TO IDENTIFY FROM HERE, AND IT CANNOT.
+     An effect in this provider ran the moment a session resolved — which is
+     before the profile has been read, and therefore before anybody knows
+     whether this person has consented to analytics at all. Identifying there
+     meant PostHog was already running, with the account's email address
+     attached as a person property (LEGAL-PAGES.md §4.5.1).
+
+     It now happens inside `initAnalytics`, called by AnalyticsProvider once
+     the consent is known — with the user id alone, and only when the answer
+     was yes. This provider is back to one job: publishing the auth state. */
+
   return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
 }

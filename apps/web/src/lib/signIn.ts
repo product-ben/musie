@@ -25,8 +25,9 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { MessageKey } from '../i18n';
-import { getSupabase } from './supabase';
 import { resetSessionCache } from './auth';
+import { analyticsReady, posthog } from './posthog';
+import { getSupabase } from './supabase';
 
 export type SignInResult =
   | { ok: true }
@@ -160,5 +161,9 @@ export async function signOut(client?: SupabaseClient): Promise<void> {
      that says they are signed out of an account they are still holding data
      from is worse than reloading into a gate they can sign in at again. */
   resetSessionCache();
+  /* Clear the browser identity before the next visitor reaches the gate — and
+     only if there is one to clear, which there is not until somebody has
+     consented and PostHog has actually started. */
+  if (analyticsReady()) posthog.reset();
   window.location.assign('/');
 }

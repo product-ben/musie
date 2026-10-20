@@ -51,12 +51,14 @@ import {
 } from '@musie/design-system';
 import { Languages } from 'lucide-react';
 import { BRAND_NAME } from '../brand';
+import { LegalLinks } from './LegalLinks';
 import { LOCALES, LOCALE_LABELS, isLocale } from '../i18n';
 import type { MessageKey } from '../i18n';
 import { useLocale, useT } from '../i18n/localeContext';
 import { BETA_REASONS } from '../lib/betaReasons';
 import { betaSignupProblems, hasProblem, submitBetaSignup } from '../lib/betaSignup';
 import type { BetaSignupFields } from '../lib/betaSignup';
+import { analyticsReady, posthog } from '../lib/posthog';
 
 const EMPTY: BetaSignupFields = { firstName: '', email: '', reasonCode: '' };
 
@@ -128,6 +130,9 @@ export function BetaSignup() {
     setBusy(false);
 
     if (result.ok) {
+      /* The application fields are personal data, so the conversion event
+         deliberately carries no form values. */
+      if (analyticsReady()) posthog.capture('beta_signup_completed');
       /* Trimmed, because that is the form the row was written with. */
       setSignedUp(fields.firstName.trim());
       return;
@@ -278,7 +283,13 @@ export function BetaSignup() {
             {/* What happens to the address, under the button that sends it.
                 `.musie-note` is the shell's muted paragraph and already takes
                 `--measure-body`; it is the pattern /diary and /discovered-music
-                use for a line somebody reads rather than acts on. */}
+                use for a line somebody reads rather than acts on.
+
+                ART. 13 WANTS THE POLICY HERE, not a page later: this form
+                collects a name and an email address, and the information about
+                what happens to them has to be available at the moment they are
+                asked for. The sentence was true and alone; it now names where
+                the rest of it is. LEGAL-PAGES.md §5.3. */}
             <p className="musie-note">{t('beta.privacy')}</p>
           </ContentBox>
         )}
@@ -327,6 +338,13 @@ export function BetaSignup() {
           }}
         />
       </div>
+
+      {/* ── THE SMALL PRINT ────────────────────────────────────────────────
+          This page is the one thing a stranger can reach without an account,
+          so it is one of the two places the Impressum has to be reachable
+          from: `§ 5 DDG` wants it *ständig verfügbar*, and a page behind a
+          sign-in form is not. LEGAL-PAGES.md §5.3. */}
+      <LegalLinks />
     </main>
   );
 }

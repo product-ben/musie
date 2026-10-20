@@ -215,6 +215,14 @@ Deno.serve(async (req: Request) => {
   const acceptedTerms = body.acceptedTerms === true;
   const termsVersion = clean(body.termsVersion, 10);
   const privacyVersion = clean(body.privacyVersion, 10);
+  /* THE TWO OPTIONAL PERMISSIONS, and `=== true` rather than a cast: anything
+     that is not literally true is a no. A consent arriving as the string
+     "false", as 1, or as undefined from an older client must read as refused,
+     because the only safe way to be wrong here is to under-collect. Neither
+     can refuse the signup — that is what makes them consent rather than a
+     condition (LEGAL-PAGES.md §4.4). */
+  const analyticsConsent = body.analyticsConsent === true;
+  const researchConsent = body.researchConsent === true;
   const DATED = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
 
   if (!acceptedTerms) {
@@ -287,12 +295,26 @@ Deno.serve(async (req: Request) => {
      on to produce a working account with a blank name. That is the branch
      below behaving exactly as intended, and it is also why the mistake needed
      a test to find rather than a failure to announce it. */
+  /* The name AND the two permissions, in one statement, because they land on
+     the same row and a second round trip could leave a person named with no
+     answers recorded. The version written beside each is `privacyVersion` —
+     the wording that was on the screen when they answered, which is the Art.
+     7(1) fact that cannot be reconstructed later. */
+  const answeredAt = new Date().toISOString();
   const named = await server
     .from('profiles')
-    .update({ display_name: firstName })
+    .update({
+      display_name: firstName,
+      analytics_consent: analyticsConsent ? 'granted' : 'refused',
+      analytics_consent_at: answeredAt,
+      analytics_consent_version: privacyVersion,
+      research_consent: researchConsent ? 'granted' : 'refused',
+      research_consent_at: answeredAt,
+      research_consent_version: privacyVersion,
+    })
     .eq('user_id', userId);
   if (named.error !== null) {
-    console.error(`[account-signup] could not set display_name for ${userId}: ${named.error.message}`);
+    console.error(`[account-signup] could not set display_name or consents for ${userId}: ${named.error.message}`);
   }
 
   /* ── 4 · WHAT THEY AGREED TO, AND WHAT THEY WERE SHOWN ─────────────────── */

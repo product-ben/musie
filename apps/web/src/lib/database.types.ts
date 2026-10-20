@@ -34,6 +34,112 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_code_claims: {
+        Row: {
+          claimed_at: string
+          code: string
+          email: string
+          user_id: string | null
+        }
+        Insert: {
+          claimed_at?: string
+          code: string
+          email: string
+          user_id?: string | null
+        }
+        Update: {
+          claimed_at?: string
+          code?: string
+          email?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_code_claims_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "access_codes"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      access_codes: {
+        Row: {
+          code: string
+          created_at: string
+          max_uses: number
+          note: string | null
+          revoked_at: string | null
+          uses: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          max_uses?: number
+          note?: string | null
+          revoked_at?: string | null
+          uses?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          max_uses?: number
+          note?: string | null
+          revoked_at?: string | null
+          uses?: number
+        }
+        Relationships: []
+      }
+      artwork_i18n: {
+        Row: {
+          alt: string | null
+          artwork_id: string
+          locale: string
+        }
+        Insert: {
+          alt?: string | null
+          artwork_id: string
+          locale: string
+        }
+        Update: {
+          alt?: string | null
+          artwork_id?: string
+          locale?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artwork_i18n_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "artworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artworks: {
+        Row: {
+          archived_at: string | null
+          content_hash: string | null
+          created_at: string
+          id: string
+          src: string
+        }
+        Insert: {
+          archived_at?: string | null
+          content_hash?: string | null
+          created_at?: string
+          id: string
+          src: string
+        }
+        Update: {
+          archived_at?: string | null
+          content_hash?: string | null
+          created_at?: string
+          id?: string
+          src?: string
+        }
+        Relationships: []
+      }
       beta_signups: {
         Row: {
           created_at: string
@@ -61,19 +167,19 @@ export type Database = {
       card_i18n: {
         Row: {
           card_id: string
-          feeling: string
+          feeling: string | null
           image_alt: string | null
           locale: string
         }
         Insert: {
           card_id: string
-          feeling: string
+          feeling?: string | null
           image_alt?: string | null
           locale: string
         }
         Update: {
           card_id?: string
-          feeling?: string
+          feeling?: string | null
           image_alt?: string | null
           locale?: string
         }
@@ -89,24 +195,88 @@ export type Database = {
       }
       cards: {
         Row: {
+          archived_at: string | null
+          arousal: number | null
           code: string
           id: string
           image_url: string | null
           sort: number
+          valence: number | null
         }
         Insert: {
+          archived_at?: string | null
+          arousal?: number | null
           code: string
           id: string
           image_url?: string | null
           sort: number
+          valence?: number | null
         }
         Update: {
+          archived_at?: string | null
+          arousal?: number | null
           code?: string
           id?: string
           image_url?: string | null
           sort?: number
+          valence?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cards_cell_fkey"
+            columns: ["valence", "arousal"]
+            isOneToOne: true
+            referencedRelation: "grid_cells"
+            referencedColumns: ["valence", "arousal"]
+          },
+        ]
+      }
+      content_edits: {
+        Row: {
+          action: string
+          actor_email: string
+          actor_user_id: string | null
+          after: Json
+          at: string
+          before: Json | null
+          entity: string
+          id: string
+          reverts: string | null
+          row_id: string
+        }
+        Insert: {
+          action: string
+          actor_email: string
+          actor_user_id?: string | null
+          after: Json
+          at?: string
+          before?: Json | null
+          entity: string
+          id?: string
+          reverts?: string | null
+          row_id: string
+        }
+        Update: {
+          action?: string
+          actor_email?: string
+          actor_user_id?: string | null
+          after?: Json
+          at?: string
+          before?: Json | null
+          entity?: string
+          id?: string
+          reverts?: string | null
+          row_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_edits_reverts_fkey"
+            columns: ["reverts"]
+            isOneToOne: false
+            referencedRelation: "content_edits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exercise_cuts: {
         Row: {
@@ -405,27 +575,102 @@ export type Database = {
         }
         Relationships: []
       }
+      grid_cells: {
+        Row: {
+          arousal: number
+          artwork_id: string | null
+          track_id: string | null
+          valence: number
+        }
+        Insert: {
+          arousal: number
+          artwork_id?: string | null
+          track_id?: string | null
+          valence: number
+        }
+        Update: {
+          arousal?: number
+          artwork_id?: string | null
+          track_id?: string | null
+          valence?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grid_cells_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "artworks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grid_cells_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_acceptances: {
+        Row: {
+          accepted_at: string
+          document: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          document: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string
+          document?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          analytics_consent: string | null
+          analytics_consent_at: string | null
+          analytics_consent_version: string | null
           created_at: string
           display_name: string | null
           language: string | null
+          research_consent: string | null
+          research_consent_at: string | null
+          research_consent_version: string | null
           theme: string
           user_id: string
           user_type_id: string | null
         }
         Insert: {
+          analytics_consent?: string | null
+          analytics_consent_at?: string | null
+          analytics_consent_version?: string | null
           created_at?: string
           display_name?: string | null
           language?: string | null
+          research_consent?: string | null
+          research_consent_at?: string | null
+          research_consent_version?: string | null
           theme?: string
           user_id: string
           user_type_id?: string | null
         }
         Update: {
+          analytics_consent?: string | null
+          analytics_consent_at?: string | null
+          analytics_consent_version?: string | null
           created_at?: string
           display_name?: string | null
           language?: string | null
+          research_consent?: string | null
+          research_consent_at?: string | null
+          research_consent_version?: string | null
           theme?: string
           user_id?: string
           user_type_id?: string | null
@@ -476,6 +721,13 @@ export type Database = {
             referencedRelation: "reflections"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reflection_statements_reflection_id_fkey"
+            columns: ["reflection_id"]
+            isOneToOne: false
+            referencedRelation: "research_reflections"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reflections: {
@@ -506,6 +758,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: true
             referencedRelation: "question_rejections"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "reflections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "research_reflections"
             referencedColumns: ["session_id"]
           },
           {
@@ -548,6 +807,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "question_rejections"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "session_feelings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "research_reflections"
             referencedColumns: ["session_id"]
           },
           {
@@ -680,27 +946,51 @@ export type Database = {
       }
       tracks: {
         Row: {
+          album: string | null
+          archived_at: string | null
           artist: string
+          catalogue_ref: string | null
+          content_hash: string | null
           duration_seconds: number
           id: string
           licence_ref: string | null
+          licence_type: string | null
+          mood_note: string | null
+          release_year: number | null
           src: string | null
+          tempo_bpm: number | null
           title: string
         }
         Insert: {
+          album?: string | null
+          archived_at?: string | null
           artist: string
+          catalogue_ref?: string | null
+          content_hash?: string | null
           duration_seconds: number
           id: string
           licence_ref?: string | null
+          licence_type?: string | null
+          mood_note?: string | null
+          release_year?: number | null
           src?: string | null
+          tempo_bpm?: number | null
           title: string
         }
         Update: {
+          album?: string | null
+          archived_at?: string | null
           artist?: string
+          catalogue_ref?: string | null
+          content_hash?: string | null
           duration_seconds?: number
           id?: string
           licence_ref?: string | null
+          licence_type?: string | null
+          mood_note?: string | null
+          release_year?: number | null
           src?: string | null
+          tempo_bpm?: number | null
           title?: string
         }
         Relationships: []
@@ -813,9 +1103,83 @@ export type Database = {
           },
         ]
       }
+      research_reflections: {
+        Row: {
+          body: string | null
+          card_id: string | null
+          created_at: string | null
+          exercise_id: string | null
+          id: string | null
+          mode: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      admin_reorder_cards: {
+        Args: { p_actor_email: string; p_actor_id: string; p_ids: string[] }
+        Returns: Json
+      }
+      admin_revert: {
+        Args: { p_actor_email: string; p_actor_id: string; p_edit_id: string }
+        Returns: Json
+      }
+      admin_write: {
+        Args: {
+          p_action?: string
+          p_actor_email: string
+          p_actor_id: string
+          p_entity: string
+          p_patch: Json
+          p_reverts?: string
+          p_row_id: string
+        }
+        Returns: Json
+      }
+      bind_access_code_claim: {
+        Args: { p_code: string; p_email: string; p_user_id: string }
+        Returns: boolean
+      }
+      claim_access_code: {
+        Args: { p_code: string; p_email: string }
+        Returns: string
+      }
+      project_deck: { Args: never; Returns: undefined }
+      release_access_code: {
+        Args: { p_code: string; p_email: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

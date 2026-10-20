@@ -287,7 +287,12 @@ export function useTranscription() {
       model: TranscriptionModel,
       language: LanguageChoice,
       segmentation: SegmentationMode = 'silence',
-      options?: { keepExisting?: boolean },
+      /* `onTranscriptionCompleted` TAKES NO TEXT, DELIBERATELY. Its one caller
+         is an analytics event, and the transcript must never reach one — it is
+         what somebody just said about how they feel (LEGAL-PAGES.md §4.5.1).
+         Handing over nothing means a property cannot be added back at the call
+         site without coming through this signature first. */
+      options?: { keepExisting?: boolean; onTranscriptionCompleted?: () => void },
     ) => {
       // Recording again while the last stop is still waiting: keep that
       // statement rather than dropping it on the floor.
@@ -370,6 +375,7 @@ export function useTranscription() {
             setPending(false);
             awaitingStatement.current = false;
             saveStatement(event.text, event.language);
+            options?.onTranscriptionCompleted?.();
             // This is the turn Stop was waiting for; nothing more is coming.
             if (stopping) settle();
             break;

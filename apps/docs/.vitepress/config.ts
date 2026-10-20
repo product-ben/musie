@@ -165,9 +165,19 @@ export default defineConfig({
 
     lastUpdatedText: 'Last updated',
 
+    /* The two legal links live in the footer MESSAGE rather than in `nav`,
+       because they are not documentation: this site is published at
+       product-ben.github.io/musie/ and a public website needs an Impressum
+       reachable from every page of it, which a footer is and a nav entry
+       between *Design* and *Features* is not. Absolute URLs, because the
+       pages themselves are served by the app at musie.org — this site has no
+       copy of them, and two copies of a legal text is one too many.
+       LEGAL-PAGES.md §5.3. */
     footer: {
       message:
-        'Musie — a mindfulness app whose active ingredient is music, and whose front door is paper.',
+        'Musie — a mindfulness app whose active ingredient is music, and whose front door is paper. '
+        + '<a href="https://musie.org/impressum">Impressum</a> · '
+        + '<a href="https://musie.org/privacy">Privacy</a>',
       copyright: 'Documentation generated from the repository it documents.',
     },
   },

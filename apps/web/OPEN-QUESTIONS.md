@@ -10310,3 +10310,52 @@ and should say so in `10-layout.md` rather than only here.
 **Worth knowing:** this is the second Layer 2 finding from this screen, after
 `InlineLink`'s anchor case. Both were found by rendering it, neither by the
 typecheck.
+
+---
+
+## `CtaButton` and `InlineLink` warn when they render an anchor, and most call sites do
+
+**The entry above found the same thing from the sign-in gate's side, and
+landed on `main` first.** This one is kept because it adds the other half: the
+fault is not `InlineLink`'s alone, and most of the call sites that have it are
+`CtaButton`'s.
+
+**Where:** `packages/design-system/src/CtaButton.tsx`,
+`packages/design-system/src/InlineLink.tsx`. Found on 2026-10-20 while building
+the two legal pages, by looking at a real browser console rather than by
+reading the code.
+
+Both components are built on base-ui's `Button`, and neither sets
+`nativeButton`. base-ui defaults it to `true` and then warns, loudly and per
+instance, whenever `render` makes the element something other than a
+`<button>`:
+
+> Base UI: A component that acts as a button expected a native `<button>`
+> because the `nativeButton` prop is true. Rendering a non-`<button>` removes
+> native button semantics, which can impact forms and accessibility.
+
+Rendering an anchor through these components is not an edge case — it is the
+documented way to navigate. `NavDrawer`, `Session.tsx`, `ScanLink.tsx`,
+`Diary.tsx` and `DiscoveredMusic.tsx` all pass `render={<Link …/>}`, and the two
+new legal pages pass `render={<a href=…/>}` because they are mounted above the
+router and have no `Link` to give.
+
+**What I did:** passed `nativeButton={false}` at the three call sites this
+branch adds (`LegalPage`'s back link and both links in `LegalLinks`). The
+console is clean for the new pages.
+
+**Why that is a workaround and not the fix:** every existing call site still
+warns, and the next one written will too, because nothing in the component's
+own API hints that an anchor needs a second prop. The component already knows
+more than the caller does — it is the thing holding `render` — so the honest
+version is for `CtaButton` and `InlineLink` to derive `nativeButton` from what
+they were handed, or to omit it when `render` is present and let base-ui infer.
+Either way it belongs in the design system rather than in a prop every screen
+has to remember.
+
+**What I need from Ben:** nothing to decide now. It is cosmetic in production
+(React strips the warning from a production build) and it is noise in
+development, which is where it costs: a console with a standing warning in it
+is a console nobody reads, and the transcript leak this same branch fixed was
+found *in* that console. Worth an hour in the design system before the next
+screen adds a sixth call site.

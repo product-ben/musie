@@ -27,6 +27,7 @@ import * as React from 'react';
 import { Languages, Moon, Sun } from 'lucide-react';
 import { SegmentedControl, Switch } from '@musie/design-system';
 import { AccountSection } from './AccountSection';
+import { LegalLinks } from './LegalLinks';
 import { LOCALES, LOCALE_LABELS, isLocale } from '../i18n';
 import { useLocale, useT } from '../i18n/localeContext';
 import { useProfile } from '../lib/profileContext';
@@ -66,41 +67,26 @@ export function MenuPreferences() {
           <LanguageChoice />
         </div>
       </div>
+
+      {/* THE TWO PERMISSIONS ARE NOT HERE. They were, for an afternoon, as a
+          single analytics switch — and then sign-up grew a pair of toggles and
+          /about-you became their home (Ben, 2026-10-20). One setting in two
+          places is two places to read a different answer from, and the page
+          the copy points people at has to be the one that holds them.
+          components/ConsentToggles.tsx, routes/AboutYou.tsx. */}
+
+      {/* ── THE SMALL PRINT, AT THE FOOT OF THE DRAWER ─────────────────────
+          One tap from every screen in the app, which is what `§ 5 DDG`'s
+          *unmittelbar erreichbar* asks for — and no pixels on any screen,
+          because the drawer is already here. LEGAL-PAGES.md §5.2 explains why
+          this is not a footer and not a header icon. */}
+      <LegalLinks />
     </>
   );
 }
 
-/**
- * Dark mode.
- *
- * ── TWO STORES, ONE DIRECTION ──────────────────────────────────────────────
- * localStorage (`musy-theme`, owned by theme-init.js) is the SOURCE OF TRUTH
- * for rendering. It has to be: the attribute must be set before the first
- * stylesheet loads, and that is measurable — 2.2 verified `data-theme` is
- * written while `document.styleSheets.length` is still 0. Nothing that waits
- * on a network round trip can do that job.
- *
- * profiles.theme is a MIRROR, written alongside so the preference can follow a
- * real account later.
- *
- * NOTHING READS profiles.theme, and that is deliberate, not an oversight:
- * reading it on boot would reintroduce exactly the flash the localStorage
- * store exists to prevent. It becomes readable the day an account spans
- * devices, and until then it is a write-only column. Do not "fix" it.
- *
- * This control calls window.musyTheme.set() and NEVER touches `data-theme`
- * itself — theme-init.js owns the attribute and the storage key together, and
- * setting the attribute here would put a second writer on it.
- *
- * (Language is the mirror image: profiles.language is authoritative, because
- * there is no flash-of-wrong-language to solve. See LocaleProvider.)
- *
- * ── THE STATE IS READ ON MOUNT, WHICH THE DRAWER MAKES FREE ────────────────
- * The initialiser runs once per mount, and this component mounts with the
- * drawer — so every open reads the store again and cannot show a stale switch.
- * In the old sheet that was true for the same reason; nothing about it depended
- * on which overlay it was in.
- */
+
+
 function ThemeSwitch() {
   const t = useT();
   const { update } = useProfile();
@@ -173,6 +159,7 @@ function ThemeSwitch() {
  * component is RadioGroup + Radio, not Tabs), so arrow keys and the single tab
  * stop survive the swap.
  */
+
 function LanguageChoice() {
   const { locale, setLocale } = useLocale();
   const t = useT();

@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { BETA_PATH, isPublicPath } from './publicRoute';
+import { BETA_PATH, IMPRINT_PATH, PRIVACY_PATH, isPublicPath, publicPage } from './publicRoute';
 
 describe('isPublicPath', () => {
   it('matches the canonical path', () => {
@@ -44,5 +44,45 @@ describe('isPublicPath', () => {
   it('does not match a path that only contains it', () => {
     expect(isPublicPath('/app/beta')).toBe(false);
     expect(isPublicPath('beta')).toBe(false);
+  });
+});
+
+describe('publicPage', () => {
+  it('names which page a path is', () => {
+    expect(publicPage('/beta')).toBe('beta');
+    expect(publicPage('/impressum')).toBe('imprint');
+    expect(publicPage('/privacy')).toBe('privacy');
+  });
+
+  it('accepts the other word for each legal page', () => {
+    /* The word somebody types depends on the language they are thinking in,
+       and the links themselves always use the canonical spelling. */
+    expect(publicPage('/imprint')).toBe('imprint');
+    expect(publicPage('/datenschutz')).toBe('privacy');
+  });
+
+  it('accepts the spellings a typed legal URL arrives in', () => {
+    for (const pathname of ['/Impressum', '/IMPRESSUM', '/impressum/', '/Datenschutz']) {
+      expect(publicPage(pathname)).not.toBeNull();
+    }
+  });
+
+  it('is not forgiving about prefixes', () => {
+    /* A legal page behind a login is the failure this list exists to prevent,
+       and a near-miss that silently reaches the gate is the same failure. */
+    for (const pathname of ['/privacy-policy', '/impressum-alt', '/privacy/cookies']) {
+      expect(publicPage(pathname)).toBeNull();
+    }
+  });
+
+  it('answers null for the app', () => {
+    for (const pathname of ['/', '/about', '/exercises', '/menu']) {
+      expect(publicPage(pathname)).toBeNull();
+    }
+  });
+
+  it('canonical constants are the spellings that get linked', () => {
+    expect(IMPRINT_PATH).toBe('/impressum');
+    expect(PRIVACY_PATH).toBe('/privacy');
   });
 });

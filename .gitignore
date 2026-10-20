@@ -30,3 +30,4 @@ qr-codes/
 # VitePress's dependency pre-bundle cache. The site's build output lives at
 # apps/docs/.vitepress/dist, which the bare `dist` line above already covers.
 .vitepress/cache
+.env.local

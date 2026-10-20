@@ -40,10 +40,12 @@
  * 2026-10-20, after the first draft toggled both. Which version was on screen
  * is still recorded — see `lib/legal.ts`.
  *
- * NEITHER PAGE EXISTS YET (`LEGAL-PAGES.md` plans `/privacy`; there is no
- * terms page at all), so both links 404 today. Accepted deliberately rather
- * than drawn as dead text: a link that will work is better than a promise that
- * something is readable somewhere.
+ * ONE OF THE TWO PAGES EXISTS NOW. `/privacy` is a real public page, served
+ * above `AuthProvider` like `/beta` — so the privacy link below goes somewhere
+ * and the Art. 13 promise this screen makes is one the product keeps. There is
+ * still no terms page: `/terms` is not in `publicRoute.ts`'s allowlist, so
+ * following it does not 404, it shows this gate. Accepted deliberately for now
+ * (LEGAL-PAGES.md §8 puts terms out of scope) rather than drawn as dead text.
  *
  * ── EVERY STRING IS PASSED (rule 7) ────────────────────────────────────────
  * `Field`'s `errorWord`, `Message`'s `statusWord` and `Switch`'s own internals
@@ -57,8 +59,17 @@ import {
   CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo, Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
+import { ConsentToggles } from './ConsentToggles';
+import { LegalLinks } from './LegalLinks';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
+/* ONE EMAIL RULE, NOT TWO. `betaSignup.ts` already owns the shape and the
+   length, and two regexes that disagree is the bug this import avoids: a
+   person accepted by the waiting list and refused by the gate, or the reverse,
+   with nothing on either screen to explain it. */
+import { EMAIL_MAX, EMAIL_SHAPE } from '../lib/betaSignup';
+import { NO_CONSENT_YET } from '../lib/consents';
+import type { ConsentAnswers } from '../lib/consents';
 import { PRIVACY_PATH, TERMS_PATH } from '../lib/legal';
 import {
   checkAccessCode, createAccount, requestSignInCode, verifySignInCode,
@@ -87,6 +98,28 @@ export function SignInGate() {
   const [accessCode, setAccessCode] = React.useState('');
   const [signInCode, setSignInCode] = React.useState('');
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
+  /* The two permissions, both off, and nothing in this file may default them
+     on — see components/ConsentToggles.tsx. They are held here until the form
+     is submitted because there is no account to write them to yet. */
+  const [consents, setConsents] = React.useState<ConsentAnswers>(NO_CONSENT_YET);
+
+  /**
+   * Is the sign-up form answerable yet?
+   *
+   * DERIVED ON EVERY RENDER rather than held in state, which is what makes the
+   * button open the moment the last field is right instead of on the next
+   * press. The same shape `betaSignupProblems` uses on /beta, and for the same
+   * reason it gives: held in state it would be a snapshot of the last attempt.
+   *
+   * The two permissions are NOT in here. They are optional, and a form that
+   * will not submit until somebody has considered them is a form that makes
+   * them feel required.
+   */
+  const trimmedEmail = email.trim();
+  const signUpReady = firstName.trim() !== ''
+    && trimmedEmail.length <= EMAIL_MAX
+    && EMAIL_SHAPE.test(trimmedEmail)
+    && acceptedTerms;
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<MessageKey | null>(null);
   const [notice, setNotice] = React.useState<MessageKey | null>(null);
@@ -165,7 +198,9 @@ export function SignInGate() {
     setBusy(true);
     setFailure(null);
 
-    const made = await createAccount({ accessCode, firstName, email, acceptedTerms });
+    const made = await createAccount({
+      accessCode, firstName, email, acceptedTerms, consents,
+    });
     if (!made.ok) return fail(made.messageKey);
 
     /* ALREADY REGISTERED IS NOT A FAILURE. The account is theirs; they came to
@@ -410,12 +445,19 @@ export function SignInGate() {
                 />
               </FieldGroup>
 
+              {/* NO `reverse`, SO THE TRACK SITS ON THE LEFT. `reverse` is
+                  `row-reverse` + `space-between` — the settings-row layout,
+                  where a label hugs the start and its switch is pushed to the
+                  far edge. That is right in a drawer of preferences and wrong
+                  in a column of three consents: the two below are
+                  ConsentToggles, which take the default, and a terms row whose
+                  track sat on the opposite side made the three read as two
+                  different kinds of control. Ben, 2026-10-20. */}
               <Switch
                 label={t('auth.terms.label')}
                 checked={acceptedTerms}
                 onCheckedChange={setAcceptedTerms}
                 disabled={busy}
-                reverse
               />
               {/* `nativeButton={false}` on every anchor. InlineLink documents
                   `render={<a href=… />}` as the way to make it navigate, but
@@ -431,6 +473,20 @@ export function SignInGate() {
               >
                 {t('auth.terms.link')}
               </InlineLink>
+
+              {/* ── TWO PERMISSIONS, AND NEITHER IS A CONDITION ──────────────
+                  Ben, 2026-10-20. The terms toggle above is REQUIRED — the
+                  submit refuses without it. These two are not: somebody who
+                  leaves both off signs up exactly as fast and gets exactly the
+                  same product, which is what keeps them consent rather than a
+                  toll. The intro paragraph says so in the person's own terms.
+
+                  They sit BELOW the terms and its link rather than beside
+                  them, because they are a different kind of thing: one is the
+                  agreement that makes an account possible, these are two
+                  favours. A person reading downwards meets the compulsory
+                  thing, then the optional ones. */}
+              <ConsentToggles value={consents} onChange={setConsents} disabled={busy} />
 
               {/* Linked, never ticked — see the header. The sentence names what
                   the link is FOR, because "Privacy policy" alone beside a
@@ -456,9 +512,42 @@ export function SignInGate() {
               {/* The action half of the same shape. No rule and no second
                   control: there is no other route off this step — the way back
                   is the one the person came in by. */}
-              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
-                {t('auth.signUp.submit')}
-              </CtaButton>
+              {/* ── THE BUTTON IS SHUT UNTIL THE FORM IS ANSWERABLE ──────────
+                  Ben, 2026-10-20. Name, an address that looks like one, and
+                  the terms ticked; the two permissions below it are optional
+                  and deliberately not part of this.
+
+                  IT KEEPS A HINT, which is the condition for disabling it at
+                  all. A dead button with nothing beside it is the worst
+                  version of this pattern: the person cannot press it to find
+                  out what is wrong, so the screen has to say so first. Same
+                  shape /about-you uses for Continue — `.musie-cta-stack` and
+                  an `aria-describedby`, so the reason reaches a screen reader
+                  as part of the button rather than as a stray paragraph.
+
+                  THE SUBMIT CHECKS ARE STILL THERE, and so is the server's.
+                  This is a courtesy, not a gate: `submitSignUp` refuses
+                  without the tick and `account-signup` refuses again, because
+                  a disabled attribute is a hint to a browser and nothing to
+                  anybody else. */}
+              <div className="musie-cta-stack">
+                <CtaButton
+                  type="submit"
+                  block
+                  loading={busy}
+                  loadingLabel={t('content.loading')}
+                  wrap
+                  disabled={!signUpReady}
+                  aria-describedby={signUpReady ? undefined : 'sign-up-hint'}
+                >
+                  {t('auth.signUp.submit')}
+                </CtaButton>
+                {!signUpReady && (
+                  <p id="sign-up-hint" className="musie-cta-stack__hint">
+                    {t('auth.signUp.hint')}
+                  </p>
+                )}
+              </div>
             </>
           )}
 
@@ -499,6 +588,22 @@ export function SignInGate() {
           )}
         </ContentBox>
       </div>
+
+      {/* ── THE SMALL PRINT ────────────────────────────────────────────────
+          THE PRIVACY LINK APPEARS TWICE ON THIS SCREEN, AND THAT IS NOT AN
+          OVERSIGHT. The one inside the sign-up step is Art. 13 information
+          handed over at the moment data is asked for, which is where that
+          obligation lives; this line is `§ 5 DDG`'s standing requirement, and
+          it is the only place the IMPRESSUM appears at all. Removing either
+          loses something the other does not carry.
+
+          For a stranger with no account this screen IS the website —
+          `musie.org` is the app's own address since 2026-10-20, so the gate is
+          what the root serves. That makes it the one place an Impressum
+          absolutely has to be reachable from: `§ 5 DDG` asks for *leicht
+          erkennbar, unmittelbar erreichbar und ständig verfügbar*, and behind
+          a password is none of the three. LEGAL-PAGES.md §5.3. */}
+      <LegalLinks />
     </main>
   );
 }
