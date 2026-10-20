@@ -100,6 +100,8 @@ export const de: Messages = {
   'auth.signUp.detailsIntro': 'An diese Adresse schicken wir dir bei jeder Anmeldung einen Code — du solltest sie also lesen können.',
   'auth.firstName': 'Vorname',
   'auth.signUp.submit': 'Konto erstellen',
+  /* Verb-first, kein „Bitte“ (GERMAN-UI-WRITING §3 und §4). */
+  'auth.signUp.hint': 'Fülle Vorname und E-Mail-Adresse aus und akzeptiere die Nutzungsbedingungen.',
   /* DAS EINE HÄKCHEN. Die Datenschutzerklärung steht als Link daneben und wird
      NICHT akzeptiert — sie ist eine Information nach Art. 13, und ein Pflicht-
      häkchen darauf wäre gebündelte Einwilligung. Ben, 2026-10-20. */

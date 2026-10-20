@@ -63,6 +63,11 @@ import { ConsentToggles } from './ConsentToggles';
 import { LegalLinks } from './LegalLinks';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
+/* ONE EMAIL RULE, NOT TWO. `betaSignup.ts` already owns the shape and the
+   length, and two regexes that disagree is the bug this import avoids: a
+   person accepted by the waiting list and refused by the gate, or the reverse,
+   with nothing on either screen to explain it. */
+import { EMAIL_MAX, EMAIL_SHAPE } from '../lib/betaSignup';
 import { NO_CONSENT_YET } from '../lib/consents';
 import type { ConsentAnswers } from '../lib/consents';
 import { PRIVACY_PATH, TERMS_PATH } from '../lib/legal';
@@ -97,6 +102,24 @@ export function SignInGate() {
      on — see components/ConsentToggles.tsx. They are held here until the form
      is submitted because there is no account to write them to yet. */
   const [consents, setConsents] = React.useState<ConsentAnswers>(NO_CONSENT_YET);
+
+  /**
+   * Is the sign-up form answerable yet?
+   *
+   * DERIVED ON EVERY RENDER rather than held in state, which is what makes the
+   * button open the moment the last field is right instead of on the next
+   * press. The same shape `betaSignupProblems` uses on /beta, and for the same
+   * reason it gives: held in state it would be a snapshot of the last attempt.
+   *
+   * The two permissions are NOT in here. They are optional, and a form that
+   * will not submit until somebody has considered them is a form that makes
+   * them feel required.
+   */
+  const trimmedEmail = email.trim();
+  const signUpReady = firstName.trim() !== ''
+    && trimmedEmail.length <= EMAIL_MAX
+    && EMAIL_SHAPE.test(trimmedEmail)
+    && acceptedTerms;
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<MessageKey | null>(null);
   const [notice, setNotice] = React.useState<MessageKey | null>(null);
@@ -422,12 +445,19 @@ export function SignInGate() {
                 />
               </FieldGroup>
 
+              {/* NO `reverse`, SO THE TRACK SITS ON THE LEFT. `reverse` is
+                  `row-reverse` + `space-between` — the settings-row layout,
+                  where a label hugs the start and its switch is pushed to the
+                  far edge. That is right in a drawer of preferences and wrong
+                  in a column of three consents: the two below are
+                  ConsentToggles, which take the default, and a terms row whose
+                  track sat on the opposite side made the three read as two
+                  different kinds of control. Ben, 2026-10-20. */}
               <Switch
                 label={t('auth.terms.label')}
                 checked={acceptedTerms}
                 onCheckedChange={setAcceptedTerms}
                 disabled={busy}
-                reverse
               />
               {/* `nativeButton={false}` on every anchor. InlineLink documents
                   `render={<a href=… />}` as the way to make it navigate, but
@@ -482,9 +512,42 @@ export function SignInGate() {
               {/* The action half of the same shape. No rule and no second
                   control: there is no other route off this step — the way back
                   is the one the person came in by. */}
-              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
-                {t('auth.signUp.submit')}
-              </CtaButton>
+              {/* ── THE BUTTON IS SHUT UNTIL THE FORM IS ANSWERABLE ──────────
+                  Ben, 2026-10-20. Name, an address that looks like one, and
+                  the terms ticked; the two permissions below it are optional
+                  and deliberately not part of this.
+
+                  IT KEEPS A HINT, which is the condition for disabling it at
+                  all. A dead button with nothing beside it is the worst
+                  version of this pattern: the person cannot press it to find
+                  out what is wrong, so the screen has to say so first. Same
+                  shape /about-you uses for Continue — `.musie-cta-stack` and
+                  an `aria-describedby`, so the reason reaches a screen reader
+                  as part of the button rather than as a stray paragraph.
+
+                  THE SUBMIT CHECKS ARE STILL THERE, and so is the server's.
+                  This is a courtesy, not a gate: `submitSignUp` refuses
+                  without the tick and `account-signup` refuses again, because
+                  a disabled attribute is a hint to a browser and nothing to
+                  anybody else. */}
+              <div className="musie-cta-stack">
+                <CtaButton
+                  type="submit"
+                  block
+                  loading={busy}
+                  loadingLabel={t('content.loading')}
+                  wrap
+                  disabled={!signUpReady}
+                  aria-describedby={signUpReady ? undefined : 'sign-up-hint'}
+                >
+                  {t('auth.signUp.submit')}
+                </CtaButton>
+                {!signUpReady && (
+                  <p id="sign-up-hint" className="musie-cta-stack__hint">
+                    {t('auth.signUp.hint')}
+                  </p>
+                )}
+              </div>
             </>
           )}
 

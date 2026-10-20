@@ -119,6 +119,10 @@ export const en = {
   'auth.signUp.detailsIntro': 'We send a code to this address every time you sign in, so it needs to be one you can read.',
   'auth.firstName': 'First name',
   'auth.signUp.submit': 'Create my account',
+  /* Why the button is shut. It exists only while it is true — see the
+     `.musie-cta-stack` block in SignInGate: a disabled control with
+     nothing beside it cannot be pressed to find out what is wrong. */
+  'auth.signUp.hint': 'Fill in your first name and email address, and accept the terms.',
   /* THE ONE TICK. The privacy policy sits beside it as a link and is NOT
      agreed to — a privacy policy is information provided under Art. 13, and a
      required box accepting it is bundled consent. Ben, 2026-10-20. */
