@@ -294,18 +294,27 @@ export function SignInGate() {
               {/* ── TWO WAYS OUT OF ONE STEP ────────────────────────────────
                   A group rather than a button and a link — Ben, 2026-10-20.
                   The way between the two halves of this gate is a control, so
-                  it looks like one. `alternatives` is ButtonGroup's default
-                  and is exactly what these are, which is why the primary comes
-                  first in the DOM: among alternatives, order is priority.
+                  it looks like one.
+
+                  THE PRIMARY COMES LAST, which is the opposite of what
+                  ButtonGroup's docblock prescribes for `alternatives` — "the
+                  primary comes first and the stacked column puts it on top".
+                  Ben's rule, same day, measured against the render: the
+                  primary CTA is always on the right. Primary-first put it at
+                  x=244 with the outline at x=444 in a row.
+
+                  `alternatives` is kept rather than swapped for `molecule`,
+                  which does document primary-last: these two ARE choices
+                  between each other, and `relation` is what the gap ladder
+                  keys on, so lying about the relationship to get the ordering
+                  convention would buy the right order and the wrong gap. The
+                  disagreement is logged in apps/web/OPEN-QUESTIONS.md.
 
                   `stacked="hug"` so they size to their labels rather than
                   filling the column, and `align="end"` so the pair sits where
                   the eye finishes. German is the case that tests this —
                   'Ich habe schon ein Konto' is 25 characters. */}
               <ButtonGroup align="end" stacked="hug">
-                <CtaButton type="submit" loading={busy} loadingLabel={t('content.loading')} wrap>
-                  {t('auth.submit')}
-                </CtaButton>
                 <CtaButton
                   type="button"
                   variant="outline"
@@ -314,6 +323,9 @@ export function SignInGate() {
                   onClick={() => { go('signUpCode'); }}
                 >
                   {t('auth.signIn.switch')}
+                </CtaButton>
+                <CtaButton type="submit" loading={busy} loadingLabel={t('content.loading')} wrap>
+                  {t('auth.submit')}
                 </CtaButton>
               </ButtonGroup>
             </>
@@ -341,21 +353,21 @@ export function SignInGate() {
               <ButtonGroup align="end" stacked="hug">
                 <CtaButton
                   type="button"
-                  loading={busy}
-                  loadingLabel={t('content.loading')}
-                  wrap
-                  onClick={() => { void submitAccessCode(accessCode); }}
-                >
-                  {t('auth.signUp.codeSubmit')}
-                </CtaButton>
-                <CtaButton
-                  type="button"
                   variant="outline"
                   wrap
                   disabled={busy}
                   onClick={() => { go('signIn'); }}
                 >
                   {t('auth.signUp.switch')}
+                </CtaButton>
+                <CtaButton
+                  type="button"
+                  loading={busy}
+                  loadingLabel={t('content.loading')}
+                  wrap
+                  onClick={() => { void submitAccessCode(accessCode); }}
+                >
+                  {t('auth.signUp.codeSubmit')}
                 </CtaButton>
               </ButtonGroup>
             </>

@@ -10274,3 +10274,39 @@ the failure mode it would be trying to prevent.
 **And a smaller one:** `created` on `ResolvedSession` is now always false. It is
 kept because `AuthProvider` logs it and that log distinguishes a restored
 session from a fresh one. If that console line ever goes, the field goes with it.
+
+---
+
+## `ButtonGroup` says the primary comes first; Ben says it goes on the right
+
+**What happened:** the gate's two controls sit in a `ButtonGroup` with
+`relation="alternatives"`, which is what they are — two ways out of one step.
+That relation's docblock is explicit about ordering:
+
+> Among alternatives the order is priority, so the primary comes first and the
+> stacked column puts it on top.
+
+Written that way, the render puts the primary on the **left** of the row:
+measured at 834px, primary at x=244 and the outline at x=444. Ben, 2026-10-20:
+*"The primary cta is always right!"*
+
+**What I did:** put the primary last in the DOM, against the docblock. Measured
+again — primary at x=513, outline at x=244 — and left `relation` as
+`alternatives`.
+
+**Why not `molecule`, which documents primary-last:** because `relation` is
+what the gap ladder keys on, not just the ordering convention. These two
+buttons genuinely are choices between each other, so calling them a molecule
+would buy the right order and the wrong gap, and would leave the next reader a
+relationship label that is false about the thing it describes.
+
+**What I need from Ben:** which of the two rules is the system's. They cannot
+both be, and the gate is now a counter-example to a Layer 2 docblock — which is
+the kind of disagreement that gets copied by the next screen that needs a pair
+of buttons. Either `alternatives` should document primary-last (and every
+existing group using it wants checking), or the gate is a deliberate exception
+and should say so in `10-layout.md` rather than only here.
+
+**Worth knowing:** this is the second Layer 2 finding from this screen, after
+`InlineLink`'s anchor case. Both were found by rendering it, neither by the
+typecheck.
