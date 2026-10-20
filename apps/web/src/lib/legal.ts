@@ -41,10 +41,19 @@ export const PRIVACY_VERSION = '2026-10-20';
 /**
  * Where the two documents live.
  *
- * NEITHER PAGE EXISTS YET. `LEGAL-PAGES.md` plans `/privacy` as a public page
- * and has no terms page at all; both are a later step, and Ben accepted on
- * 2026-10-20 that these links 404 until then. They are written here rather
- * than inline so that the day the pages land, one file changes.
+ * ── ONE OF THEM EXISTS NOW, AND IT IS NOT SPELLED HERE ────────────────────
+ * This file said "NEITHER PAGE EXISTS YET … both links 404 until then". Half
+ * of that stopped being true the day `/privacy` landed as a public page, and
+ * the spelling of a public path belongs to the one list that decides what IS
+ * public: `lib/publicRoute.ts`. Re-exported rather than repeated, so the two
+ * cannot drift into a link that points at a page the allowlist does not serve
+ * — which would not 404, it would show the sign-in gate.
+ *
+ * `/terms` is still a promise. There is no terms page, `publicRoute.ts` does
+ * not serve one, and a visitor who follows that link meets the gate rather
+ * than a 404. It stays a plain string here because adding it to the allowlist
+ * would make the app answer for a document nobody has written — see
+ * LEGAL-PAGES.md §8, where terms are deliberately out of scope.
  */
+export { PRIVACY_PATH } from './publicRoute';
 export const TERMS_PATH = '/terms';
-export const PRIVACY_PATH = '/privacy';

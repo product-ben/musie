@@ -407,6 +407,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          analytics_consent: string | null
+          analytics_consent_at: string | null
+          analytics_consent_version: string | null
           created_at: string
           display_name: string | null
           language: string | null
@@ -415,6 +418,9 @@ export type Database = {
           user_type_id: string | null
         }
         Insert: {
+          analytics_consent?: string | null
+          analytics_consent_at?: string | null
+          analytics_consent_version?: string | null
           created_at?: string
           display_name?: string | null
           language?: string | null
@@ -423,6 +429,9 @@ export type Database = {
           user_type_id?: string | null
         }
         Update: {
+          analytics_consent?: string | null
+          analytics_consent_at?: string | null
+          analytics_consent_version?: string | null
           created_at?: string
           display_name?: string | null
           language?: string | null

@@ -24,11 +24,16 @@
  * reason it is a slot rather than three more props on the drawer.
  */
 import * as React from 'react';
-import { Languages, Moon, Sun } from 'lucide-react';
+import { Eye, EyeOff, Languages, Moon, Sun } from 'lucide-react';
 import { SegmentedControl, Switch } from '@musie/design-system';
 import { AccountSection } from './AccountSection';
+import { LegalLinks } from './LegalLinks';
 import { LOCALES, LOCALE_LABELS, isLocale } from '../i18n';
 import { useLocale, useT } from '../i18n/localeContext';
+import { asConsent, consentPatch } from '../lib/analyticsConsent';
+import type { AnalyticsConsent } from '../lib/analyticsConsent';
+import { useAuth } from '../lib/authContext';
+import { updateProfile } from '../lib/profile';
 import { useProfile } from '../lib/profileContext';
 
 export function MenuPreferences() {
@@ -66,7 +71,93 @@ export function MenuPreferences() {
           <LanguageChoice />
         </div>
       </div>
+
+      {/* ── WITHDRAWING THE ANALYTICS CONSENT ──────────────────────────────
+          Art. 7(3): a consent must be as easy to withdraw as it was to give.
+          A buried setting would fail that; this is the same drawer the two
+          switches above live in, one tap from every screen.
+
+          ITS OWN ROW, NOT A THIRD CONTROL IN THE PAIR ABOVE. The two there
+          carry no visible label because a moon and two endonyms say what they
+          do; nothing says *analytics and session replay* except those words,
+          so this row keeps its label and therefore keeps its own line. */}
+      <AnalyticsSwitch />
+
+      {/* ── THE SMALL PRINT, AT THE FOOT OF THE DRAWER ─────────────────────
+          One tap from every screen in the app, which is what `§ 5 DDG`'s
+          *unmittelbar erreichbar* asks for — and no pixels on any screen,
+          because the drawer is already here. LEGAL-PAGES.md §5.2 explains why
+          this is not a footer and not a header icon. */}
+      <LegalLinks />
     </>
+  );
+}
+
+/**
+ * On, and PostHog runs in full; off, and it runs cookieless — the same two
+ * answers the consent card offers, which is what makes this a withdrawal
+ * rather than a second, differently-shaped question.
+ *
+ * ── IT RENDERS FOR NOBODY WHO HAS NOT ANSWERED ────────────────────────────
+ * A null consent means the card has not been answered yet, and a switch is
+ * the wrong control for that: it has two positions and the honest state is
+ * "not asked". The card asks; this changes the answer afterwards.
+ *
+ * ── AND IT RELOADS, DELIBERATELY ──────────────────────────────────────────
+ * `initAnalytics` runs once per page load and the mode — cookieless or not —
+ * is decided there, because `cookieless_mode` is an init-time shape rather
+ * than something to toggle under a live session. So the honest way to apply a
+ * change is to start the page again, which is also the only way to be sure
+ * that OFF means off: a reload with a refusal recorded cannot leave a replay
+ * recorder running somewhere in the tab.
+ *
+ * The write is AWAITED first. `useProfile().update` is fire-and-forget by
+ * design — the control moves immediately and the request lands when it lands —
+ * and a reload one line later would cancel it, leaving the UI claiming
+ * something the database never heard. So this writes directly, waits, and only
+ * then reloads; a failure keeps the switch where it was and says so on the
+ * console.
+ */
+function AnalyticsSwitch() {
+  const t = useT();
+  const { userId } = useAuth();
+  const { profile } = useProfile();
+
+  const stored = asConsent(profile?.analytics_consent);
+  const [pending, setPending] = React.useState<AnalyticsConsent | null>(null);
+
+  if (stored === null || userId === null) return null;
+
+  const checked = (pending ?? stored) === 'granted';
+
+  return (
+    <Switch
+      label={t('analytics.switchLabel')}
+      checked={checked}
+      /* The press is in flight and the page is about to start again; a second
+         press in that window would write the opposite answer and lose the
+         race with its own reload. */
+      disabled={pending !== null}
+      onCheckedChange={(next) => {
+        const value: AnalyticsConsent = next ? 'granted' : 'refused';
+        setPending(value);
+        void (async () => {
+          try {
+            await updateProfile(userId, consentPatch(value));
+            window.location.reload();
+          } catch (thrown: unknown) {
+            const message = thrown instanceof Error ? thrown.message : String(thrown);
+            console.error('[musie] could not save the analytics consent:', message);
+            setPending(null);
+          }
+        })();
+      }}
+      /* An eye, open and closed: the two states are "we can see how the app is
+         used" and "we cannot", which is what the words say and what a check
+         mark would not. */
+      onGlyph={Eye}
+      offGlyph={EyeOff}
+    />
   );
 }
 

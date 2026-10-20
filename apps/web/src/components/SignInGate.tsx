@@ -40,10 +40,12 @@
  * 2026-10-20, after the first draft toggled both. Which version was on screen
  * is still recorded — see `lib/legal.ts`.
  *
- * NEITHER PAGE EXISTS YET (`LEGAL-PAGES.md` plans `/privacy`; there is no
- * terms page at all), so both links 404 today. Accepted deliberately rather
- * than drawn as dead text: a link that will work is better than a promise that
- * something is readable somewhere.
+ * ONE OF THE TWO PAGES EXISTS NOW. `/privacy` is a real public page, served
+ * above `AuthProvider` like `/beta` — so the privacy link below goes somewhere
+ * and the Art. 13 promise this screen makes is one the product keeps. There is
+ * still no terms page: `/terms` is not in `publicRoute.ts`'s allowlist, so
+ * following it does not 404, it shows this gate. Accepted deliberately for now
+ * (LEGAL-PAGES.md §8 puts terms out of scope) rather than drawn as dead text.
  *
  * ── EVERY STRING IS PASSED (rule 7) ────────────────────────────────────────
  * `Field`'s `errorWord`, `Message`'s `statusWord` and `Switch`'s own internals
@@ -57,6 +59,7 @@ import {
   CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo, Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
+import { LegalLinks } from './LegalLinks';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
 import { PRIVACY_PATH, TERMS_PATH } from '../lib/legal';
@@ -499,6 +502,22 @@ export function SignInGate() {
           )}
         </ContentBox>
       </div>
+
+      {/* ── THE SMALL PRINT ────────────────────────────────────────────────
+          THE PRIVACY LINK APPEARS TWICE ON THIS SCREEN, AND THAT IS NOT AN
+          OVERSIGHT. The one inside the sign-up step is Art. 13 information
+          handed over at the moment data is asked for, which is where that
+          obligation lives; this line is `§ 5 DDG`'s standing requirement, and
+          it is the only place the IMPRESSUM appears at all. Removing either
+          loses something the other does not carry.
+
+          For a stranger with no account this screen IS the website —
+          `musie.org` is the app's own address since 2026-10-20, so the gate is
+          what the root serves. That makes it the one place an Impressum
+          absolutely has to be reachable from: `§ 5 DDG` asks for *leicht
+          erkennbar, unmittelbar erreichbar und ständig verfügbar*, and behind
+          a password is none of the three. LEGAL-PAGES.md §5.3. */}
+      <LegalLinks />
     </main>
   );
 }

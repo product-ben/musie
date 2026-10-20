@@ -107,6 +107,7 @@ import type { LinkListItem } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import type { Locale, MessageKey } from '../i18n';
 import { useProfile } from '../lib/profileContext';
+import { analyticsReady, posthog } from '../lib/posthog';
 import { deleteAllSessions, saveFeelingChange, useActiveSession } from '../lib/session';
 import type { FeelingChange } from '../lib/session';
 import { useDiary } from '../lib/useDiary';
@@ -657,6 +658,9 @@ function SessionSaved() {
     setFailed(false);
     try {
       await saveFeelingChange(sessionId, known);
+      if (analyticsReady()) {
+        posthog.capture('session_mood_feedback_submitted', { feeling_change: known });
+      }
       /* ANSWERING CLOSES IT — Ben. The question is answered, so the thing
          holding it has no reason to stay. */
       setShowing(false);

@@ -57,6 +57,7 @@ import {
 import { joinStatements, saveStatements } from '../lib/statements';
 import type { VoiceMessageCode } from '@musie/voice';
 import { useLocale, useT } from '../i18n/localeContext';
+import { analyticsReady, posthog } from '../lib/posthog';
 import { realtimeToken } from '../lib/realtimeToken';
 import { VOICE_MESSAGE_KEYS, VOICE_UNDO_KEYS } from '../lib/voiceMessages';
 import { hasRecorded, recordLabelKey, recordPhase, stopNoticeKey } from '../lib/voiceScreen';
@@ -205,7 +206,33 @@ export function VoiceTranscript({
     /* `keepExisting` is always true: recording again ADDS to the reflection
        rather than replacing it, which is what "Record more" promises. The
        list is only ever cleared by leaving the step. */
-    await session.start(outcome.token, DEFAULT_MODEL, locale, 'silence', { keepExisting: true });
+    await session.start(outcome.token, DEFAULT_MODEL, locale, 'silence', {
+      keepExisting: true,
+      /* ── WHAT THIS EVENT MAY NOT CARRY ──────────────────────────────────
+         The generated version sent `$ai_output_choices` — the transcript,
+         verbatim — to PostHog. That is the one thing on this screen that must
+         never leave for a third party: it is what somebody just said about how
+         they feel, which is Art. 9 data, and `privacy.voiceShort` promises the
+         opposite a few elements below. LEGAL-PAGES.md §4.5.1 has the argument.
+
+         The event itself stays, because the model and the count are worth
+         having — OpenAI bills per minute and fails hard at the spend cap, and
+         `realtimeToken.ts` already maps those two failures by hand. The words
+         do not come with it, and the callback is handed none: `features/voice`
+         passes no text at all, so a property cannot be added back here without
+         changing that signature first. */
+      onTranscriptionCompleted: () => {
+        if (!analyticsReady()) return;
+        posthog.capture('$ai_generation', {
+          $ai_trace_id: crypto.randomUUID(),
+          $ai_session_id: sessionId,
+          $ai_span_name: 'realtime_transcription',
+          $ai_model: outcome.model,
+          $ai_provider: 'openai',
+          $ai_stream: true,
+        });
+      },
+    });
   }
 
   return (

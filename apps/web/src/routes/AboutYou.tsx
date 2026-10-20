@@ -48,6 +48,8 @@ import { AccountSection } from '../components/AccountSection';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { useT } from '../i18n/localeContext';
 import { useProfile } from '../lib/profileContext';
+import { analyticsReady, posthog } from '../lib/posthog';
+import { posthogLog } from '../lib/posthogLogs';
 import { useUserTypes } from '../lib/useContent';
 import type { UserType } from '../lib/content';
 
@@ -141,6 +143,8 @@ export function AboutYou() {
                  accepts the default arrives at /exercises with no user type
                  and the drawer sends them straight back here. */
               if (shown !== null && shown !== recorded) update({ user_type_id: shown });
+              if (analyticsReady()) posthog.capture('onboarding_completed');
+              posthogLog.onboardingCompleted();
               navigate('/exercises');
             }}
           >

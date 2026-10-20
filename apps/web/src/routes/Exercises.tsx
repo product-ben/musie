@@ -77,6 +77,8 @@ import { splitSlot } from '../i18n/slot';
 import { timeOfDay } from '../lib/greeting';
 import { stepMessageKey } from '../routeHandle';
 import { useAuth } from '../lib/authContext';
+import { analyticsReady, posthog } from '../lib/posthog';
+import { posthogLog } from '../lib/posthogLogs';
 import { createSession, endSession, useActiveSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
 import { useExercises, useGoals } from '../lib/useContent';
@@ -494,6 +496,10 @@ export function Exercises() {
          that none was known. */
       const result = await createSession(userId, exercise.id, choice);
       if (result.kind === 'started') {
+        if (analyticsReady()) {
+          posthog.capture('session_started', { exercise_kind: exercise.kind });
+        }
+        posthogLog.sessionStarted(exercise.kind);
         /* The one path that does NOT clear `busy`: the deck is about to
            unmount, and dropping busy first would bring the card back for a
            frame on the way out. */
@@ -548,6 +554,7 @@ export function Exercises() {
          the same one the dialog's second button makes. Three doors, one act, so
          the diary cannot tell them apart and does not have to. */
       await endSession(running.id, 'abandoned', new Date().toISOString());
+      if (analyticsReady()) posthog.capture('session_abandoned');
       setEndedHere(true);
     } catch (thrown: unknown) {
       console.error('[musie] could not end the running session:', thrown);

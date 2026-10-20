@@ -31,14 +31,16 @@ import './shell.css';
 
 import { MusyLocaleProvider } from '@musie/design-system';
 
+import { AnalyticsProvider } from './components/AnalyticsProvider';
 import { AuthProvider } from './AuthProvider';
 import { LocaleProvider } from './LocaleProvider';
 import { PublicLocaleProvider } from './PublicLocaleProvider';
 import { BetaSignup } from './components/BetaSignup';
+import { LegalPage } from './components/LegalPage';
 import { SignInGate } from './components/SignInGate';
 import { useAuth } from './lib/authContext';
 import { useLocale } from './i18n/localeContext';
-import { isPublicPath } from './lib/publicRoute';
+import { publicPage } from './lib/publicRoute';
 import { ProfileProvider } from './ProfileProvider';
 import { router } from './router';
 
@@ -119,10 +121,11 @@ const root = createRoot(container);
 /**
  * ══ THE PUBLIC PAGE IS DECIDED HERE, ABOVE EVERYTHING ELSE ═════════════════
  *
- * `/beta` — the closed-beta sign-up — is the one URL this app answers without
- * an account, and it gets a tree of its own rather than a route in the table
- * below. The reason is one line up: `AuthProvider` is the next thing to mount,
- * and it is not passive.
+ * THREE URLs this app answers without an account: `/beta`, the closed-beta
+ * sign-up, and `/impressum` and `/privacy`, the two pages the law asks for.
+ * They get a tree of their own rather than routes in the table below. The
+ * reason is one line up: `AuthProvider` is the next thing to mount, and it is
+ * not passive.
  *
  * It used to CREATE something — with `VITE_REQUIRE_ACCOUNT` off, no session
  * meant `signInAnonymously()` and a stranger reading the pitch left an
@@ -131,6 +134,11 @@ const root = createRoot(container);
  * the gate, so a public page mounted inside this tree would never render —
  * whoever followed the link would meet a form asking for an access code they
  * do not have.
+ *
+ * THE LEGAL PAGES MAKE THAT ARGUMENT SHARPER RATHER THAN WIDER: reading a page
+ * about data protection must not be the thing that starts collecting data, and
+ * an Impressum behind a sign-in form is not `ständig verfügbar` in the first
+ * place. LEGAL-PAGES.md §5.5.
  *
  * So this branch is the whole mechanism: above the session, above the profile,
  * above the router. `lib/publicRoute.ts` holds the path and the match, and
@@ -149,12 +157,14 @@ const root = createRoot(container);
  * both branches, in the order the README fixes. That is deliberate: it is the
  * one thing the public page must not be allowed to get wrong on its own.
  */
-if (isPublicPath(window.location.pathname)) {
+const page = publicPage(window.location.pathname);
+
+if (page !== null) {
   root.render(
     <StrictMode>
       <PublicLocaleProvider>
         <DesignSystemLocale>
-          <BetaSignup />
+          {page === 'beta' ? <BetaSignup /> : <LegalPage page={page} />}
         </DesignSystemLocale>
       </PublicLocaleProvider>
     </StrictMode>,
@@ -177,7 +187,13 @@ if (isPublicPath(window.location.pathname)) {
               {/* INSIDE DesignSystemLocale, so the gate's own labels and the
                   design system's defaults are both in the app's language. */}
               <SessionGate>
-                <RouterProvider router={router} />
+                {/* INSIDE the gate, so the consent card never appears over the
+                    sign-in form, and ABOVE the router, because PostHog is
+                    started once per page load rather than once per route. It
+                    is the only place `init` is called — see lib/posthog.ts. */}
+                <AnalyticsProvider>
+                  <RouterProvider router={router} />
+                </AnalyticsProvider>
               </SessionGate>
             </DesignSystemLocale>
           </LocaleProvider>

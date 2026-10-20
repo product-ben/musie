@@ -66,6 +66,8 @@ import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import { warmTrackBytes } from '../lib/audio';
 import { getCard, getCards, getExercise, getListenAudio, getTrackFor } from '../lib/content';
+import { analyticsReady, posthog } from '../lib/posthog';
+import { posthogLog } from '../lib/posthogLogs';
 import { SHEET_OPEN, dealtCards, withSheetOpen, withToken } from '../lib/digitalCards';
 import {
   DEFAULT_ENDING, DEFAULT_POSTURE, isEnding, isPosture, skippedForRun, stepsForRun,
@@ -1012,6 +1014,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
          state that already triggers it. */
       const at = new Date().toISOString();
       await endSession(id, 'finished', at);
+      if (analyticsReady()) {
+        posthog.capture('session_completed', { exercise_kind: exercise.kind });
+      }
+      posthogLog.sessionCompleted(exercise.kind);
       dispatch({ type: 'FINISH', at });
       /* THE LIST, not the entry. Ben, 2026-09-20: finishing hands you your
          diary rather than one page of it — and the list now leads with the
@@ -1056,6 +1062,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     try {
       const at = new Date().toISOString();
       await endSession(id, 'abandoned', at);
+      if (analyticsReady()) posthog.capture('session_abandoned');
       dispatch({ type: 'CANCEL', at });
       /* THE LIST, exactly as finishing does. Both ways out of a session end in
          the same place, and the diary leads with the one you just left.

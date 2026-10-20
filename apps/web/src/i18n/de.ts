@@ -186,7 +186,7 @@ export const de: Messages = {
      'Sonstiges', das eine Kategorie benennt statt einen Ort. */
   'beta.reason.other': 'Woanders',
   'beta.submit': 'Für die Beta anmelden',
-  'beta.privacy': 'Dein Name und deine Adresse werden nur für die Einladung zur Beta benutzt, für nichts anderes.',
+  'beta.privacy': 'Dein Name und deine Adresse werden nur für die Einladung zur Beta benutzt, für nichts anderes. Was Musie speichert, wenn du dabei bist, steht auf der Datenschutzseite unten.',
   'beta.error.firstName': 'Gib deinen Vornamen ein.',
   'beta.error.email': 'Gib eine E-Mail-Adresse ein, zum Beispiel du@beispiel.de.',
   'beta.error.reason': 'Wähle aus, wie du von Musie erfahren hast.',
@@ -1078,7 +1078,13 @@ export const de: Messages = {
      Das Versprechen in einer Zeile: keine Kürzung der gelöschten Langform, sondern
      die Hälfte davon, die ein Versprechen ist — wie es funktioniert, steht in
      der Lightbox. */
-  'privacy.voiceShort': 'Musie speichert nur den Text, nie die Sprachnachricht.',
+  /* Neu geschrieben am 2026-10-20. Der alte Satz hieß "Musie speichert nur
+     den Text, nie die Sprachnachricht." – jedes Wort wahr und der Satz
+     trotzdem irreführend: Der Ton geht vom Browser zu OpenAI in die USA, um
+     dort zu Text zu werden. Wer den alten Satz liest, schließt daraus, dass
+     seine Stimme das Gerät nie verlässt. Länger als vorher, und hier geht
+     Genauigkeit vor Kürze. LEGAL-PAGES.md §6. */
+  'privacy.voiceShort': 'Deine Worte werden von einem Dienst außerhalb der EU in Text umgewandelt. Musie behält den Text, nie die Aufnahme.',
   /* Das Wort im Satz, das alles Weitere öffnet. Nicht 'Mehr erfahren': ein
      Link im Fließtext muss benennen, was hinter ihm liegt. */
   'privacy.photo': 'Ein Foto bleibt auf deinem Gerät. Musie lädt es nie hoch.',
@@ -1575,4 +1581,225 @@ export const de: Messages = {
      spaces, where English sets an em dash. The English key keeps its '—'. */
   'route.session.title': 'Aktuelle Session – {step}',
   'route.notFound.title': 'Nicht gefunden',
+
+  /* ── DIE SEITEN, DIE DAS GESETZ VERLANGT · LEGAL-PAGES.md ────────────────
+     Echtes Deutsch, nicht übersetztes Englisch, und hier ist das Deutsche die
+     Fassung, auf die es ankommt: ein Impressum ist eine deutsche Pflicht, und
+     die Leserinnen und Leser dieser Beta sind überwiegend deutschsprachig.
+     du-Form wie überall sonst (GERMAN-UI-WRITING §1), Satz-Groß- und
+     Kleinschreibung in den Überschriften (§2), kein *Bitte* (§4), Gedankenstrich
+     als Halbgeviertstrich (§7). */
+  'legal.navLabel': 'Rechtliches',
+  'legal.imprint.link': 'Impressum',
+  'legal.privacy.link': 'Datenschutz',
+  'legal.back': 'Zurück zu Musie',
+  'legal.privacy.version': 'Diese Datenschutzerklärung ist vom {version}.',
+
+  'legal.imprint.title': 'Impressum',
+  'legal.imprint.body': `## Angaben gemäß § 5 DDG
+
+Musie wird betrieben von Benjamin Lipinski und Lucy von Damnitz,
+Strehleranger 7, 81735 München, Deutschland.
+
+## Kontakt
+
+E-Mail: bl@musie.org
+
+Über diese Adresse erreichst du uns am schnellsten, und sie ist die Adresse,
+die ein Impressum nennen muss. Fragen zum Datenschutz beantworten wir unter
+derselben Adresse.
+
+## Verantwortlich für den Inhalt
+
+Benjamin Lipinski und Lucy von Damnitz, Adresse wie oben.
+
+Musie wird von zwei Personen betrieben, nicht von einer Firma. Es gibt deshalb
+keinen Handelsregistereintrag, keine vertretungsberechtigte Person und keine
+Umsatzsteuer-Identifikationsnummer, die hier zu nennen wären.
+
+## Was Musie im Moment ist
+
+Eine geschlossene Beta. Übungen, Musik und Texte sind in Arbeit, der Zugang
+läuft über Einladungen. Musie ist kein medizinisches Angebot und ersetzt weder
+Therapie noch Behandlung.`,
+
+  'legal.privacy.title': 'Datenschutz',
+  'legal.privacy.body': `## Kurz gesagt
+
+Musie führt ein Tagebuch, das du für dich schreibst. Niemand sonst kann es
+lesen, nichts über dich wird verkauft oder weitergegeben, und Werbung gibt es
+nicht. Auswertung und Sitzungsaufzeichnung sind aus, solange du nicht
+zustimmst, und ein Nein kostet dich nichts.
+
+## Wer verantwortlich ist
+
+Benjamin Lipinski und Lucy von Damnitz, Strehleranger 7, 81735 München,
+Deutschland. E-Mail bl@musie.org. Wir betreiben Musie gemeinsam und sind
+deshalb gemeinsam dafür verantwortlich, was mit deinen Daten passiert. Du
+kannst dich an uns beide wenden.
+
+## Was wir speichern, und warum
+
+**Dein Konto.** Deine E-Mail-Adresse und ein Passwort, damit du dich anmelden
+kannst und damit dein Tagebuch deines ist. Rechtsgrundlage: der Vertrag, um
+den du uns gebeten hast, Art. 6 Abs. 1 lit. b DSGVO.
+
+**Deine Einstellungen.** Sprache, hell oder dunkel, und als wer du hier bist.
+
+**Deine Sessions.** Welche Übung du geöffnet hast, wann, und wie weit du
+gekommen bist.
+
+**Was du schreibst oder sagst.** Den Text deiner Reflexion und die Gefühle,
+die du vorher und nachher ausgewählt hast. Das ist das Tagebuch, und dafür
+gibt es den Rest.
+
+**Gesprochene Antworten speichern wir nur als Text.** In Musie gibt es keine
+Aufnahme: keine Audiodatei, keinen Speicher dafür, keine Spalte in der
+Datenbank. Der nächste Abschnitt sagt, was passiert, während du sprichst.
+
+**Ein Foto, das du machst, bleibt auf deinem Gerät.** Musie lädt es nie hoch.
+
+**Die Warteliste.** Wenn du dich unter /beta angemeldet hast, haben wir
+Vornamen, E-Mail-Adresse und den Grund, den du angegeben hast – für die
+Einladung und für nichts anderes.
+
+**Server-Protokolle.** Unsere Anbieter für Hosting und Datenbank
+protokollieren IP-Adressen und Zeitpunkte von Anfragen, um die App
+auszuliefern und gegen Missbrauch zu schützen.
+
+## Der heikle Teil, offen gesagt
+
+Was du über dein Befinden schreibst, kann etwas über deine Gesundheit sagen,
+und solche Daten schützt die DSGVO strenger als alles andere (Art. 9). Genau
+so behandeln wir sie: in der Datenbank sind sie auf dein Konto beschränkt, sie
+werden nie für ein Profil über dich benutzt, und wir geben sie nicht weiter.
+
+Wir bauen gerade einen ausdrücklichen Einwilligungsschritt davor, damit
+niemand ein Mikrofon oder ein Tagebuchfeld erreicht, ohne vorher in klaren
+Worten zugestimmt zu haben. Bis dahin verarbeiten wir diese Inhalte nur, weil
+du uns um Musie gebeten hast, und aus keinem anderen Grund – und du kannst
+alles davon jederzeit in deinem Tagebuch löschen.
+
+## Deine Stimme, während du sprichst
+
+Wenn du den Aufnahmeknopf hältst, geht der Ton von deinem Browser zu OpenAI in
+die USA. Dort wird er in Text umgewandelt, und der Text kommt zurück. Musie
+behält den Text. Der Ton wird von uns an keiner Stelle gespeichert.
+
+Das ist eine Übermittlung außerhalb der EU, und es ist die einzige in Musie.
+Wenn du das nicht möchtest, schreib deine Reflexion stattdessen: Die
+geschriebene Antwort verlässt unsere eigenen Anbieter nie.
+
+## Wer deine Daten außerdem verarbeitet
+
+**Supabase** betreibt Datenbank, Konten und Server-Funktionen, in Frankfurt
+am Main.
+
+**Cloudflare** liefert die App selbst aus.
+
+**OpenAI** wandelt Sprache in Text um, in den USA, und nur während du
+aufnimmst.
+
+**PostHog** misst, wie die App benutzt wird, und zeichnet mit deiner
+Einwilligung den Bildschirm auf. Die Daten liegen in der EU, in Frankfurt am
+Main.
+
+Alle vier verarbeiten Daten nach unseren Weisungen und auf Grundlage eines
+Vertrags, der das festhält. Wo die Muttergesellschaft eines Anbieters in den
+USA sitzt, stützt sich die Übermittlung auf die Garantien, die die DSGVO dafür
+vorsieht.
+
+## Was Musie auf deinem Gerät speichert
+
+Musie legt einige Dinge in deinem Browser ab, und alle davon sind entweder die
+Anmeldung selbst oder etwas, das du ausgewählt hast:
+
+1. Das Anmelde-Token, das dich angemeldet hält.
+2. Hell oder dunkel, weil du es ausgewählt hast.
+3. Deutsch oder Englisch, weil du es ausgewählt hast.
+4. Das Ziel, nach dem du die Karten gefiltert hast, und ob du die einmalige
+   Erklärung dazu gesehen hast.
+5. Einen gescannten Kartencode und ein paar Notizen pro Tab, damit ein Neuladen
+   mitten in einer Übung deinen Platz nicht verliert.
+
+Dafür brauchen wir keine Erlaubnis, denn ohne diese Einträge funktioniert
+nicht, worum du gebeten hast. Es gibt keine Werbe-Cookies, keine
+Zählpixel und keine Schriften, die von einem fremden Server geladen werden.
+
+## Auswertung und Sitzungsaufzeichnung
+
+Das ist das eine, wofür wir um Erlaubnis fragen, und die Karte, die fragt, ist
+der einzige Ort, an dem darüber entschieden wird.
+
+**Wenn du zustimmst**, zeichnet PostHog auf, welche Bildschirme du öffnest und
+wie lange Dinge dauern, und spielt deine Sitzung nach, damit wir sehen, wo die
+App dir im Weg stand. Jeder Text und jede Eingabe ist in dieser Aufzeichnung
+maskiert, bevor sie entsteht: Wir sehen Formen, Berührungen und Zeiten, nicht
+das, was du geschrieben hast. Antworten vom Server werden vollständig
+verworfen, damit dein Tagebuch nicht in einer Aufzeichnung landen kann.
+
+**Wenn du ablehnst**, zählt PostHog nur noch, wie oft Bildschirme geöffnet
+werden – ohne Kennung auf deinem Gerät und ohne jede Aufzeichnung. In deinem
+Browser wird dann nichts abgelegt, und nichts hängt an dir.
+
+**In beiden Fällen** enthält kein Ereignis, das wir senden, was du geschrieben
+oder gesagt hast, welches Gefühl du ausgewählt hast oder deine E-Mail-Adresse.
+
+Du kannst deine Antwort jederzeit ändern, im Menü unter den beiden Schaltern.
+Der Widerruf ist so einfach wie die Zustimmung: ein Tippen, und die Seite
+startet ohne sie neu.
+
+## Was du von uns verlangen kannst
+
+Du kannst erfahren, was wir über dich gespeichert haben, es berichtigen,
+löschen oder in seiner Nutzung einschränken lassen, der Verarbeitung
+widersprechen und eine Kopie zum Mitnehmen verlangen. Eine Einwilligung kannst
+du jederzeit und ohne Begründung widerrufen. Schreib an bl@musie.org.
+
+**Dein Tagebuch zu löschen, geht ohne uns.** In deinem Tagebuch gibt es einen
+Knopf, der alle Sessions und alles darin entfernt, und zwar sofort.
+
+Wenn du glaubst, dass wir mit deinen Daten falsch umgehen, kannst du dich bei
+einer Aufsichtsbehörde beschweren. Für uns zuständig ist das Bayerische
+Landesamt für Datenschutzaufsicht (BayLDA) in Ansbach.
+
+## Wie lange wir Dinge behalten
+
+Dein Tagebuch bleibt, bis du es löschst oder uns bittest, dein Konto zu
+löschen. Die Warteliste behalten wir, bis die Beta vorbei ist.
+Auswertungsdaten behalten wir so lange, wie sie nützlich sind, und nicht
+länger.
+
+## Kinder und Jugendliche
+
+Musie ist eine geschlossene Beta für Erwachsene. Es ist nicht für Menschen
+unter 16 gedacht, und wir erheben von ihnen bewusst keine Daten.
+
+## Wenn sich das hier ändert
+
+Dann sagen wir es an dieser Stelle, und das Datum unten ändert sich mit. Wenn
+eine Änderung bedeutet, dass wir etwas täten, dem du nicht zugestimmt hast –
+etwa ein neuer Anbieter für die Auswertung –, fragen wir dich neu, statt
+anzunehmen, das alte Ja gelte weiter.`,
+
+  /* ── DIE KARTE FÜR DIE AUSWERTUNG · LEGAL-PAGES.md §4.4 ──────────────────
+     Einmal gefragt, innerhalb der App. Beide Knöpfe haben dieselbe Variante
+     und dasselbe Gewicht: eine angestoßene Einwilligung ist keine freie, und
+     der Text muss ein Nein wie eine von zwei normalen Antworten aussehen
+     lassen. Deshalb bedankt sich keiner der beiden Sätze für ein Ja. */
+  'analytics.title': 'Dürfen wir sehen, wo Musie im Weg steht?',
+  'analytics.body': `Wenn du zustimmst, zeichnen wir auf, welche Bildschirme du
+öffnest, wie lange Dinge dauern, und spielen deine Sitzung nach – mit **jedem
+Text und jeder Eingabe maskiert**. Also Formen und Berührungen, nie das, was du
+geschrieben hast.
+
+Wenn du ablehnst, zählen wir nur, wie oft Bildschirme geöffnet werden: nichts
+in deinem Browser, keine Aufzeichnung. In beiden Fällen enthält nichts, was wir
+senden, was du geschrieben oder gesagt hast, oder deine E-Mail-Adresse.
+
+Du kannst deine Antwort jederzeit im Menü ändern.`,
+  'analytics.accept': 'Ja, das hilft',
+  'analytics.refuse': 'Nein, nur zählen',
+  'analytics.closeLabel': 'Schließen',
+  'analytics.switchLabel': 'Auswertung und Sitzungsaufzeichnung',
 };
