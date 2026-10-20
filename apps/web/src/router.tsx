@@ -236,6 +236,24 @@ export const router = createBrowserRouter([
         handle: handle({ titleKey: 'scan.dev.title' }),
       },
       {
+        /* THE CODEFIELD BENCH — and it is written to be deleted.
+
+           Same shape as /dev/qr and /dev/experiment-mixer: lazy, linked from
+           nowhere, reachable only by typing the path. It exists because
+           `CodeField`'s whole value is its interaction and Storybook cannot
+           show any of it — stories/CONVENTIONS.md §5 forbids local state in a
+           story, so on that page the boxes never move.
+
+           Delete it when the sign-in screens land and walk the same
+           behaviours in the real app. See routes/DevCodeField.tsx. */
+        path: 'dev/code-field',
+        lazy: async () => {
+          const { DevCodeField } = await import('./routes/DevCodeField');
+          return { Component: DevCodeField };
+        },
+        handle: handle({ titleKey: 'scan.dev.title' }),
+      },
+      {
         /* GOAL MAPPINGS — a tool, like /dev/qr above, and lazy for the same
            reason: `FilterChips` is used nowhere else in the app, so loading
            it this way keeps it out of everybody's first paint.
