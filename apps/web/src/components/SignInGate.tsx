@@ -54,7 +54,8 @@
  */
 import * as React from 'react';
 import {
-  CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo, Message, Switch,
+  ButtonGroup, CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo,
+  Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
 import { useT } from '../i18n/localeContext';
@@ -72,7 +73,16 @@ const SIGN_IN_CODE_LENGTH = 6;
 export function SignInGate() {
   const t = useT();
 
-  const [view, setView] = React.useState<View>('signIn');
+  /* ── SIGN-UP IS THE FIRST THING A VISITOR SEES ──────────────────────────
+     Ben, 2026-10-20. The gate used to open on the sign-in form, which is the
+     right screen for the people who already have an account and the wrong one
+     for everybody the beta is being handed to. A tester arriving with a code
+     in a message had to find a link before the screen matched what they were
+     holding.
+
+     Returning testers pay one press for it, and they are the half of the
+     audience that already knows where they are. */
+  const [view, setView] = React.useState<View>('signUpCode');
   const [email, setEmail] = React.useState('');
   const [firstName, setFirstName] = React.useState('');
   const [accessCode, setAccessCode] = React.useState('');
@@ -281,13 +291,31 @@ export function SignInGate() {
                 />
               </FieldGroup>
 
-              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
-                {t('auth.submit')}
-              </CtaButton>
+              {/* ── TWO WAYS OUT OF ONE STEP ────────────────────────────────
+                  A group rather than a button and a link — Ben, 2026-10-20.
+                  The way between the two halves of this gate is a control, so
+                  it looks like one. `alternatives` is ButtonGroup's default
+                  and is exactly what these are, which is why the primary comes
+                  first in the DOM: among alternatives, order is priority.
 
-              <InlineLink type="button" onClick={() => { go('signUpCode'); }}>
-                {t('auth.signIn.switch')}
-              </InlineLink>
+                  `stacked="hug"` so they size to their labels rather than
+                  filling the column, and `align="end"` so the pair sits where
+                  the eye finishes. German is the case that tests this —
+                  'Ich habe schon ein Konto' is 25 characters. */}
+              <ButtonGroup align="end" stacked="hug">
+                <CtaButton type="submit" loading={busy} loadingLabel={t('content.loading')} wrap>
+                  {t('auth.submit')}
+                </CtaButton>
+                <CtaButton
+                  type="button"
+                  variant="outline"
+                  wrap
+                  disabled={busy}
+                  onClick={() => { go('signUpCode'); }}
+                >
+                  {t('auth.signIn.switch')}
+                </CtaButton>
+              </ButtonGroup>
             </>
           )}
 
@@ -310,20 +338,26 @@ export function SignInGate() {
                 autoFocus
               />
 
-              <CtaButton
-                type="button"
-                block
-                loading={busy}
-                loadingLabel={t('content.loading')}
-                wrap
-                onClick={() => { void submitAccessCode(accessCode); }}
-              >
-                {t('auth.signUp.codeSubmit')}
-              </CtaButton>
-
-              <InlineLink type="button" onClick={() => { go('signIn'); }}>
-                {t('auth.signUp.switch')}
-              </InlineLink>
+              <ButtonGroup align="end" stacked="hug">
+                <CtaButton
+                  type="button"
+                  loading={busy}
+                  loadingLabel={t('content.loading')}
+                  wrap
+                  onClick={() => { void submitAccessCode(accessCode); }}
+                >
+                  {t('auth.signUp.codeSubmit')}
+                </CtaButton>
+                <CtaButton
+                  type="button"
+                  variant="outline"
+                  wrap
+                  disabled={busy}
+                  onClick={() => { go('signIn'); }}
+                >
+                  {t('auth.signUp.switch')}
+                </CtaButton>
+              </ButtonGroup>
             </>
           )}
 
@@ -394,9 +428,16 @@ export function SignInGate() {
                 </InlineLink>
               </p>
 
-              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
-                {t('auth.signUp.submit')}
-              </CtaButton>
+              {/* One control, but the same group and the same alignment as the
+                  two screens either side of it. Ben specified the pairs; a
+                  full-width button here would make this the one step whose
+                  action sits somewhere else, which reads as a different kind
+                  of screen. Say so if the block button was wanted. */}
+              <ButtonGroup align="end" stacked="hug">
+                <CtaButton type="submit" loading={busy} loadingLabel={t('content.loading')} wrap>
+                  {t('auth.signUp.submit')}
+                </CtaButton>
+              </ButtonGroup>
             </>
           )}
 

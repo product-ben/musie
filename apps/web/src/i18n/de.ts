@@ -50,7 +50,7 @@ export const de: Messages = {
      No 'Bitte' anywhere (§4), and the instructions are imperative singular:
      'Melde dich an', 'Prüfe beides', 'Trag … ein'. */
   'auth.title': 'Anmelden',
-  'auth.intro': 'Musie ist noch im geschlossenen Test. Trag deine E-Mail-Adresse ein, dann schicken wir dir ein Einmal-Passwort.',
+  'auth.intro': 'Trag deine E-Mail-Adresse ein, dann schickt Musie dir ein Einmal-Passwort. Das schützt deine persönlichen Daten besser als normale Passwörter.',
   'auth.email': 'E-Mail-Adresse',
   'auth.password': 'Passwort',
   /* Verb zuerst — §3. Der Bindestrich in »Einmal-Passwort« ist auch die
@@ -82,14 +82,19 @@ export const de: Messages = {
      Ben — richtig, solange er der einzige Weg hinein war. Jetzt ist der Weg
      ein Code, den jemand noch einmal vorlesen kann, also zeigen die Sätze auf
      den Code. */
-  'auth.signIn.switch': 'Zum ersten Mal hier?',
-  'auth.signUp.switch': 'Du hast schon ein Konto?',
+  /* JETZT BUTTONS, keine Links im Fließtext — Ben, 2026-10-20. Sie sind der
+     Weg zwischen den beiden Hälften des Gates, und ein Weg durch einen
+     Schirm ist ein Bedienelement, kein Satz. Also stehen sie als Handlung
+     da, nicht als Frage: »Zum ersten Mal hier?« überließ es der Leserin,
+     herauszufinden, dass die Antwort ein Klick ist. */
+  'auth.signIn.switch': 'Ich brauche ein Konto',
+  'auth.signUp.switch': 'Ich habe schon ein Konto',
   'auth.error.email': 'Trag die E-Mail-Adresse ein, mit der du dich registriert hast.',
 
   'auth.signUp.codeTitle': 'Dein Zugangscode',
   'auth.signUp.codeIntro': 'Musie ist noch im geschlossenen Test. Gib den vierstelligen Code ein, den du bekommen hast.',
   'auth.signUp.codeLabel': 'Zugangscode',
-  'auth.signUp.codeSubmit': 'Weiter',
+  'auth.signUp.codeSubmit': 'Jetzt registrieren',
 
   'auth.signUp.detailsTitle': 'Über dich',
   'auth.signUp.detailsIntro': 'An diese Adresse schicken wir dir bei jeder Anmeldung einen Code — du solltest sie also lesen können.',

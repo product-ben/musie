@@ -70,7 +70,7 @@ export const en = {
   /* REWRITTEN for the code, 2026-10-20. It used to promise a password that was
      handed out by hand, and both halves of that are gone: people sign
      themselves up now, and nobody is given a password at all. */
-  'auth.intro': 'Musie is in closed testing. Enter your email address and we will send you a one-time password.',
+  'auth.intro': 'Enter your email address and Musie will send you a one-time password. It protects your personal data better than ordinary passwords.',
   'auth.email': 'Email address',
   /* `auth.password` and `auth.error.credentials` BELOW ARE NO LONGER DRAWN by
      any screen — `lib/signIn.ts` still exports the password path and still has
@@ -101,14 +101,19 @@ export const en = {
      NOTHING HERE NAMES A PERSON. The old copy told a stuck tester to "let Ben
      know", which was right when he was the only way in; now the recovery is a
      code somebody can read out again, so the sentences point at the code. */
-  'auth.signIn.switch': 'First time here?',
-  'auth.signUp.switch': 'Already have an account?',
+  /* BUTTONS NOW, not links in a sentence — Ben, 2026-10-20. They are the way
+     between the two halves of the gate, and a way through a screen is a
+     control, not prose. So they read as actions rather than questions: the
+     old copy asked 'First time here?' and left the reader to work out that
+     answering it was a click. */
+  'auth.signIn.switch': 'I need an account',
+  'auth.signUp.switch': 'I already have an account',
   'auth.error.email': 'Enter the email address you signed up with.',
 
   'auth.signUp.codeTitle': 'Your access code',
   'auth.signUp.codeIntro': 'Musie is in closed testing. Enter the four-digit code you were given.',
   'auth.signUp.codeLabel': 'Access code',
-  'auth.signUp.codeSubmit': 'Continue',
+  'auth.signUp.codeSubmit': 'Register now',
 
   'auth.signUp.detailsTitle': 'About you',
   'auth.signUp.detailsIntro': 'We send a code to this address every time you sign in, so it needs to be one you can read.',
