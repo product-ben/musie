@@ -156,6 +156,12 @@ export type {
   FieldProps, FieldItemProps, FieldGroupProps, FieldType, FieldAutoComplete,
 } from './Field';
 
+/* One box per digit — the access code (4) and the sign-in code (6). Beside
+   Field because it is the same kind of thing wearing the same clothes, not
+   because it shares an implementation: base-ui 1.7 has no part for this. */
+export { CodeField } from './CodeField';
+export type { CodeFieldProps } from './CodeField';
+
 export { InteractiveWizard, WizardPanel } from './InteractiveWizard';
 export type {
   InteractiveWizardProps, WizardPanelProps, WizardStep, WizardStepState, WizardStateWords, WizardAccent } from './InteractiveWizard';

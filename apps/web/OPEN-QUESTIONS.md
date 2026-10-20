@@ -10132,3 +10132,100 @@ case in `20260921160000` describes, and is indistinguishable from an audio
 defect from the outside. So: Supabase → Usage → Egress, once more than a handful
 of people are testing. Before that it is noise. `pnpm content:pull` is the other
 thing in this area deliberately not built.
+
+---
+
+## `InlineLink`'s documented anchor case warns, and keeps button semantics
+
+**What happened:** `SignInGate` links the terms and the privacy policy with
+`InlineLink render={<a href=… />}` — which is exactly what that component's own
+docblock prescribes: *"a link that navigates is `render={<a href=… />}`,
+inherited from base-ui's `Button`"*. The browser console says otherwise, twice
+per render:
+
+> Base UI: A component that acts as a button expected a native `<button>`
+> because the `nativeButton` prop is true. Rendering a non-`<button>` removes
+> native button semantics, which can impact forms and accessibility.
+
+So the component's documented way of making a link produces an anchor that
+still carries button semantics. `InlineLink.stories.tsx:152` renders the same
+shape, so the warning is not new to this branch — it has simply never been read
+out of a console.
+
+**What I did:** passed `nativeButton={false}` at both call sites in
+`SignInGate.tsx`, with a comment saying why.
+
+**Why not fix the component:** `InlineLink` could lower `nativeButton` itself
+whenever `render` is an anchor, which is the right fix and a small one. It is
+also a default change in a Layer 2 component used elsewhere, on a branch whose
+subject is sign-up — and rule 1's whole posture is that a component change is a
+component change, not a rider. Caller-side is the honest stopgap.
+
+**What I need from Ben:** a decision on whether `InlineLink` should infer it.
+The alternative is that every future caller rendering an anchor has to remember
+a prop the docblock does not mention, which is the shape of thing that gets
+forgotten exactly once and then ships.
+
+**How it was found:** the end-to-end walk, and only by it. `tsc` is satisfied —
+`nativeButton` is a legal prop with a legal default — no unit test renders this
+component, and on screen the link looks and behaves correctly. Same shape as
+the `Field` accessible-name defect recorded in that component's own header.
+
+---
+
+## `pnpm test:db` has five permanent reds locally, and rule 4 points straight at it
+
+**What happened:** `deck.db.test.ts` (4) and `music.db.test.ts` (1) fail on a
+local stack and cannot be made to pass there. Checked rather than assumed:
+`supabase/content/deck.json` carries `MC-10`; the local database has no such
+card. The snapshots were refreshed from HOSTED — `f8bc082 The library snapshot
+catches up with the seventy that were uploaded`, `c58e7e4 The snapshots
+describe the fifteenth` — while `supabase db reset` yields the factory content
+of `20261014100100_maintenance_import.sql`.
+
+That is rule 4.1 working exactly as written: content lives in the database and
+is edited at `/maintenance`, so local and hosted diverge from the first real
+edit. `pnpm content:pull`, which would close the gap, is already logged in this
+file as not built.
+
+**What I did:** nothing. Confirmed the five are unrelated to this branch — both
+files contain zero references to user creation — and carried on.
+
+**Why it is worth an entry anyway:** rule 4 says *run `pnpm test:db` after any
+change under `supabase/migrations/`*, and that instruction now lands on a suite
+that is partly red before you start. A green suite means something; a suite
+that is always five red means a person has to remember which five, every time,
+and the sixth red arrives looking like the other five. That is the failure mode
+`ci.yml`'s "a suite that silently skips is worse than no suite" comment is
+about, wearing the opposite costume.
+
+**What I need from Ben:** whether `content:pull` is worth building now that
+real testers are arriving — or, cheaper, whether those five tests should skip
+with a stated reason when the target is local, so that red means red.
+
+---
+
+## `CodeField` has no unit tests, because the design system has no test runner
+
+**What happened:** `CodeField` is the first Layer 2 component whose entire value
+is interaction — paste distributing across boxes, focus advancing, completion
+firing exactly once. Rule 8 records that `packages/design-system` has no `test`
+script, so `pnpm -r run test` passes over it without a word, and
+`stories/CONVENTIONS.md` §5 forbids local state in a story — so the Storybook
+page cannot demonstrate any of those three behaviours either.
+
+**What I did:** built `/dev/code-field`, a stateful bench on the pattern of
+`/dev/qr` and `/dev/experiment-mixer`, and drove it with Playwright. That caught
+two real defects a reading would not have: focus moved inside the change handler
+raced the controlled re-render and silently DROPPED digits, and `maxLength={1}`
+would have truncated an autofilled code to one character — the platform hook the
+field exists for, broken on every phone, invisible on every desktop.
+
+**Why not add a test runner:** rule 8's "three of four" is a documented
+property of this repo, and adding a `test` script to the design system changes
+what `pnpm check` means for every future contributor. That is Ben's call, not a
+side effect of a sign-up branch.
+
+**What I need from Ben:** whether the design system should get vitest. If not,
+the bench should probably stay rather than be deleted when the screens land —
+which is a reversal of what its own header currently says.

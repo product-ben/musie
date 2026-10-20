@@ -64,6 +64,7 @@
 .musy-switch__track:focus-visible,
 .musy-radio__body:focus-visible,
 .musy-field__control:focus-visible,
+.musy-code-field__box:focus-visible,
 .musy-wizard__trigger:focus-visible,
 .musy-radio-card__body:focus-visible,
 .musy-rcard__body:focus-visible,
@@ -4236,6 +4237,111 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   padding: 0;
   margin: 0;
   min-inline-size: 0;
+}
+
+/* Code field — one box per digit, for the access code (4) and the sign-in
+   code (6). It is dressed AS §15's control rather than beside it: same border,
+   radius, surface and focus ring, because it is the same kind of thing and a
+   second look for one kind of control is how a set stops reading as a set.
+
+   Two deliberate departures, both asked for:
+
+   BODY-LG, where every other control is body-md. A code is read back one
+   character at a time off a phone screen against an email on the same phone,
+   which is not what the body measure is sized for.
+
+   SQUARE-ISH AND CAPPED, rather than filling the row. The boxes flex so four
+   and six both fit a phone, but `max-inline-size` stops four of them growing
+   into letterboxes — four boxes and six boxes have to read as one control at
+   two lengths, which they stop doing the moment the box shape changes with
+   the count.
+
+   `tabular-nums` so the digits do not shift as they are typed: these are
+   centred in fixed boxes, and proportional numerals move the 1s. */
+.musy-code-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  min-inline-size: 0;
+}
+
+.musy-code-field__label {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface);
+}
+
+.musy-code-field__boxes {
+  display: flex;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.musy-code-field__box {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-inline-size: 0;
+  max-inline-size: var(--target-comfort);
+  min-height: var(--target-primary);
+  padding: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong);
+  border-radius: var(--radius-input);
+  background-color: var(--surface-raised);
+  color: var(--on-surface);
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line);
+  /* Written out rather than left to `currentColor`, because the caret IS the
+     feedback here: these boxes hold one character, so a person who cannot see
+     where the cursor is cannot tell which box the next digit lands in. Asked
+     for by Ben on 2026-10-20 after the focus bug made it invisible. */
+  caret-color: var(--on-surface);
+  /* No transition on border-color or background-color, for §15's reason: a
+     validity change must land immediately, and an interrupted transition can
+     leave the control showing a state it is no longer in. */
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-code-field__box:hover:not(:disabled),
+  .musy-code-field__box[data-force~="hover"] { border-color: var(--on-surface-muted); }
+}
+
+/* The error belongs to the CODE, not to one digit of it, so every box carries
+   it. Marking only the last box would say the sixth digit was wrong, which is
+   not something this field can know. */
+.musy-code-field__box[aria-invalid="true"] {
+  border-color: var(--feedback-error-border);
+  border-width: var(--border-width-thick);
+  background-color: var(--feedback-error-surface);
+}
+
+.musy-code-field__box:disabled {
+  border-color: var(--border-subtle);
+  background-color: var(--interactive-primary-disabled);
+  color: var(--on-surface-disabled);
+  cursor: not-allowed;
+}
+
+.musy-code-field__description {
+  margin: 0;
+  max-width: var(--measure-body);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-wrap: pretty;
+}
+
+.musy-code-field__error {
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--feedback-error-text);
+  text-wrap: pretty;
 }
 
 

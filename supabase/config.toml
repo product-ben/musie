@@ -254,6 +254,33 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# ── THE SIGN-IN CODE EMAIL · 2026-10-20 ─────────────────────────────────────
+# BOTH templates point at the same file, and that is deliberate. Which one
+# GoTrue sends depends on whether the account is already confirmed, and
+# `account-signup` creates accounts with `email_confirm: true` — so in practice
+# it is `magic_link`. `confirmation` is wired to the same words anyway, because
+# the day something creates an unconfirmed account, the difference between the
+# two templates would be a tester receiving a link where the screen is asking
+# for six digits.
+#
+# IT LIVES IN THE REPOSITORY rather than only in the dashboard. Without this,
+# the local stack sends Supabase's default — a magic link, no digits — while
+# hosted sends the real thing, and a local walk of the sign-up flow cannot
+# finish. That happened on 2026-10-20. Same shape as the OTP-length trap found
+# the same day: one setting in two places with nothing comparing them.
+#
+# The subject carries the code so iOS can offer it above the keyboard from the
+# notification. It is German-only while the body is bilingual: a subject line
+# in two languages reads as spam, and the digits are the only part of it that
+# has to be understood.
+[auth.email.template.magic_link]
+subject = "Dein Einmal-Passwort: {{ .Token }}"
+content_path = "./supabase/templates/sign-in-code.html"
+
+[auth.email.template.confirmation]
+subject = "Dein Einmal-Passwort: {{ .Token }}"
+content_path = "./supabase/templates/sign-in-code.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
