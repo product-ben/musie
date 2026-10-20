@@ -249,6 +249,50 @@
   padding-inline: var(--gutter);
 }
 
+/* ═══ THE GATE'S SECOND ROUTE ═══════════════════════════════════════════════
+   Ben, 2026-10-20. Each gate screen has one action and, under a rule, the way
+   to the OTHER half of the gate: sign-up offers sign-in, sign-in offers
+   sign-up. The rule is what says those two are not a pair of alternatives —
+   one is what this screen is for, the other is a way off it.
+
+   WHY NOT ButtonGroup. That component exists for controls that belong
+   together, and its `alternatives` relation is explicit that order is
+   priority. These two do not belong together: the primary fills the measure
+   and the secondary hugs its label, which is the opposite of a pair. Ben
+   called it an exception, and this is the declaration of it.
+
+   L14 PERMITS THIS because the system has no separator component — grepped,
+   not assumed: no Divider, no Separator, no `musy-rule` in the stylesheet. An
+   `<hr>` carries the thematic break for free, so the element is semantic and
+   only its appearance is ours.
+
+   Every declaration resolves to a Layer 1 token (L14.1). `block-size: 0` with
+   a block-start border rather than a `background`, so the line is exactly one
+   hairline at any zoom and inherits the border colour ladder.
+
+   IF A THIRD SCREEN WANTS THIS, it is a component request, not a third copy
+   (L14.3).                                                                  */
+.musie-gate-rule {
+  inline-size: 100%;
+  block-size: 0;
+  margin: 0;
+  border: 0;
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+
+/* The secondary HUGS, and it needs saying out loud. `.musy-box__slot` is a
+   flex column, so its default `align-items: stretch` makes every child fill
+   the measure — a `CtaButton` without `block` still came out 311px wide of a
+   311px box, which is `block` by accident. Measured, then fixed.
+
+   CENTRED rather than start: it sits alone under a full-measure button and a
+   full-measure rule, so an edge to align to is exactly what it does not have.
+   One declaration, no token needed — this is about the box model, not the
+   scale. */
+.musie-gate-secondary {
+  align-self: center;
+}
+
 /* ═══ THE CHAT CADENCE ══════════════════════════════════════════════════════
    Musie's two messages arrive in turn, like someone typing. The system has no
    Chat, no Avatar and no typing indicator, which is what makes this a

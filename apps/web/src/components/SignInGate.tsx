@@ -54,8 +54,7 @@
  */
 import * as React from 'react';
 import {
-  ButtonGroup, CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo,
-  Message, Switch,
+  CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo, Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
 import { useT } from '../i18n/localeContext';
@@ -291,43 +290,38 @@ export function SignInGate() {
                 />
               </FieldGroup>
 
-              {/* ── TWO WAYS OUT OF ONE STEP ────────────────────────────────
-                  A group rather than a button and a link — Ben, 2026-10-20.
-                  The way between the two halves of this gate is a control, so
-                  it looks like one.
+              {/* ── THE ACTION, THEN A RULE, THEN THE OTHER ROUTE ───────────
+                  Ben's shape for every gate screen, 2026-10-20. The primary
+                  FILLS the measure, because it is what this screen is for. The
+                  rule says the control under it is not an alternative to it.
+                  The secondary HUGS its label, because it is a way off this
+                  screen rather than a way through it.
 
-                  THE PRIMARY COMES LAST, which is the opposite of what
-                  ButtonGroup's docblock prescribes for `alternatives` — "the
-                  primary comes first and the stacked column puts it on top".
-                  Ben's rule, same day, measured against the render: the
-                  primary CTA is always on the right. Primary-first put it at
-                  x=244 with the outline at x=444 in a row.
+                  NO ButtonGroup — "move it out of the button group, this is an
+                  exception". That component is for controls that belong
+                  together, and a full-measure button beside a hugging one is
+                  the opposite of a pair. It also retires the ordering problem
+                  logged earlier today: with no group there is no primary-first
+                  convention to contradict.
 
-                  `alternatives` is kept rather than swapped for `molecule`,
-                  which does document primary-last: these two ARE choices
-                  between each other, and `relation` is what the gap ladder
-                  keys on, so lying about the relationship to get the ordering
-                  convention would buy the right order and the wrong gap. The
-                  disagreement is logged in apps/web/OPEN-QUESTIONS.md.
+                  `.musie-gate-rule` in shell.css carries the L14 permission —
+                  the system has no separator component, grepped not assumed. */}
+              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
+                {t('auth.submit')}
+              </CtaButton>
 
-                  `stacked="hug"` so they size to their labels rather than
-                  filling the column, and `align="end"` so the pair sits where
-                  the eye finishes. German is the case that tests this —
-                  'Ich habe schon ein Konto' is 25 characters. */}
-              <ButtonGroup align="end" stacked="hug">
-                <CtaButton
-                  type="button"
-                  variant="outline"
-                  wrap
-                  disabled={busy}
-                  onClick={() => { go('signUpCode'); }}
-                >
-                  {t('auth.signIn.switch')}
-                </CtaButton>
-                <CtaButton type="submit" loading={busy} loadingLabel={t('content.loading')} wrap>
-                  {t('auth.submit')}
-                </CtaButton>
-              </ButtonGroup>
+              <hr className="musie-gate-rule" />
+
+              <CtaButton
+                type="button"
+                variant="outline"
+                className="musie-gate-secondary"
+                wrap
+                disabled={busy}
+                onClick={() => { go('signUpCode'); } }
+              >
+                {t('auth.signIn.switch')}
+              </CtaButton>
             </>
           )}
 
@@ -350,26 +344,45 @@ export function SignInGate() {
                 autoFocus
               />
 
-              <ButtonGroup align="end" stacked="hug">
-                <CtaButton
-                  type="button"
-                  variant="outline"
-                  wrap
-                  disabled={busy}
-                  onClick={() => { go('signIn'); }}
-                >
-                  {t('auth.signUp.switch')}
-                </CtaButton>
-                <CtaButton
-                  type="button"
-                  loading={busy}
-                  loadingLabel={t('content.loading')}
-                  wrap
-                  onClick={() => { void submitAccessCode(accessCode); }}
-                >
-                  {t('auth.signUp.codeSubmit')}
-                </CtaButton>
-              </ButtonGroup>
+              {/* ── THE ACTION, THEN A RULE, THEN THE OTHER ROUTE ───────────
+                  Ben's shape for every gate screen, 2026-10-20. The primary
+                  FILLS the measure, because it is what this screen is for. The
+                  rule says the control under it is not an alternative to it.
+                  The secondary HUGS its label, because it is a way off this
+                  screen rather than a way through it.
+
+                  NO ButtonGroup — "move it out of the button group, this is an
+                  exception". That component is for controls that belong
+                  together, and a full-measure button beside a hugging one is
+                  the opposite of a pair. It also retires the ordering problem
+                  logged earlier today: with no group there is no primary-first
+                  convention to contradict.
+
+                  `.musie-gate-rule` in shell.css carries the L14 permission —
+                  the system has no separator component, grepped not assumed. */}
+              <CtaButton
+                type="button"
+                block
+                loading={busy}
+                loadingLabel={t('content.loading')}
+                wrap
+                onClick={() => { void submitAccessCode(accessCode); }}
+              >
+                {t('auth.signUp.codeSubmit')}
+              </CtaButton>
+
+              <hr className="musie-gate-rule" />
+
+              <CtaButton
+                type="button"
+                variant="outline"
+                className="musie-gate-secondary"
+                wrap
+                disabled={busy}
+                onClick={() => { go('signIn'); } }
+              >
+                {t('auth.signUp.switch')}
+              </CtaButton>
             </>
           )}
 
@@ -440,16 +453,12 @@ export function SignInGate() {
                 </InlineLink>
               </p>
 
-              {/* One control, but the same group and the same alignment as the
-                  two screens either side of it. Ben specified the pairs; a
-                  full-width button here would make this the one step whose
-                  action sits somewhere else, which reads as a different kind
-                  of screen. Say so if the block button was wanted. */}
-              <ButtonGroup align="end" stacked="hug">
-                <CtaButton type="submit" loading={busy} loadingLabel={t('content.loading')} wrap>
-                  {t('auth.signUp.submit')}
-                </CtaButton>
-              </ButtonGroup>
+              {/* The action half of the same shape. No rule and no second
+                  control: there is no other route off this step — the way back
+                  is the one the person came in by. */}
+              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
+                {t('auth.signUp.submit')}
+              </CtaButton>
             </>
           )}
 
