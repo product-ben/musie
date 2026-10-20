@@ -30,7 +30,7 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { INSUFFICIENT_PRIVILEGE, anonClient, anonymousUser, serviceClient } from './db.support';
+import { INSUFFICIENT_PRIVILEGE, anonClient, testUser, serviceClient } from './db.support';
 
 /** Postgres unique violation — what a refused duplicate path looks like. */
 const UNIQUE_VIOLATION = '23505';
@@ -43,8 +43,8 @@ let aliceId: string;
 let bobId: string;
 
 beforeAll(async () => {
-  ({ client: alice, userId: aliceId } = await anonymousUser());
-  ({ client: bob, userId: bobId } = await anonymousUser());
+  ({ client: alice, userId: aliceId } = await testUser());
+  ({ client: bob, userId: bobId } = await testUser());
   expect(aliceId).not.toBe(bobId);
 }, 30_000);
 

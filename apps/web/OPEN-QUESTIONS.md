@@ -10229,3 +10229,48 @@ side effect of a sign-up branch.
 **What I need from Ben:** whether the design system should get vitest. If not,
 the bench should probably stay rather than be deleted when the screens land —
 which is a reversal of what its own header currently says.
+
+---
+
+## The anonymous path is gone, and a workflow had been red about it for days
+
+**What happened:** Ben, 2026-10-20 — *"We dont do the anonymised accounts anymore."*
+So `signInAnonymously()`, `VITE_REQUIRE_ACCOUNT`, `lib/requireAccount.ts` and
+`auth.convert.db.test.ts` are removed, and `enable_anonymous_sign_ins` is false
+on both stacks.
+
+**What I did:** the full removal — the app path, the flag, the type, the
+config, eight documentation pages, and the db suite's dependency on it.
+`anonymousUser()` becomes `testUser()` and creates its people with the service
+role. The isolation tests never needed the users to be ANONYMOUS; they need two
+people who are not each other, and the anonymity was incidental.
+
+**What it exposed, and this is the part worth keeping:** the `Database`
+workflow had been failing on every merge since at least **16 October** with
+`anonymous_provider_disabled`. The hosted project has anonymous sign-ins off,
+the local stack has them on, and `db-push.yml` runs the suite against hosted.
+The local suite was green the whole time.
+
+**It was not a secret.** `apps/docs/architecture/auth.md` already stated that
+hosted has the provider disabled and that `POST /auth/v1/signup` answers
+exactly that error. The fact was written down. What nobody joined it to was the
+test helper, and therefore the suite, and therefore the workflow.
+
+**So the gap was never knowledge — it was that no check compares the two
+environments.** `pnpm db:status` compares migrations and says nothing about
+auth settings; `supabase config diff` does compare them, and nothing runs it.
+That is the same shape as the OTP-length trap found the same day (`otp_length`
+6 locally, 8 on hosted, nothing comparing them) and as rule 4's original drift.
+
+**What I need from Ben:** whether `supabase config diff` should run in CI
+against hosted, as a non-blocking report. It would have caught the anonymous
+setting, the OTP length and the stale email-template subject — three
+environment disagreements in one day, each found by hand and each after it had
+already cost something. The argument against is that the two configs legitimately
+differ (`site_url` is localhost locally, by design), so it would need an
+allowlist of expected differences or it becomes noise nobody reads — which is
+the failure mode it would be trying to prevent.
+
+**And a smaller one:** `created` on `ResolvedSession` is now always false. It is
+kept because `AuthProvider` logs it and that log distinguishes a restored
+session from a fresh one. If that console line ever goes, the field goes with it.

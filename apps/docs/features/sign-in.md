@@ -6,13 +6,14 @@ and four failures that are written as four different sentences.
 ```mermaid
 flowchart TD
   B["App boots"] --> G["getSession()"]
-  G -->|"no session"| F{"VITE_REQUIRE_ACCOUNT"}
-  F -->|"on"| S["SignInGate<br/>the whole screen"]
-  F -->|"off"| A["anonymous session"]
-  S --> T["email + password"]
-  T -->|"ok"| R["resetSessionCache() → the app"]
-  T -->|"wrong credentials"| E1["'that did not match'"]
-  T -->|"transport failed"| E2["'check your connection'"]
+  G -->|"no session"| S["SignInGate<br/>the whole screen"]
+  S --> T["email"]
+  S --> U["access code → name, email, terms"]
+  U --> T
+  T --> C["six digits"]
+  C -->|"ok"| R["the app"]
+  C -->|"wrong or expired"| E1["'that is not right'"]
+  C -->|"transport failed"| E2["'check your connection'"]
 ```
 
 ::: designers
@@ -67,7 +68,7 @@ account.
 | `lib/signIn.ts` | `signIn()`, `signOut()`, the error map |
 | `lib/signIn.db.test.ts` | the codes **this stack** actually returns |
 | `lib/signIn.test.ts` | the map, as a pure table |
-| `lib/requireAccount.ts` | the flag |
+| `lib/signUp.ts` | the two sign-up calls and the code round trip |
 | `lib/auth.ts` | `ensureSession()`, `resetSessionCache()` |
 
 ## It is mounted below `LocaleProvider`, not in `AuthProvider`

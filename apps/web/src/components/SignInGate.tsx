@@ -2,14 +2,17 @@
  * The gate — sign in, sign up, and the six digits they both end at.
  *
  * ── A GATE, NOT A SCREEN ───────────────────────────────────────────────────
- * With `VITE_REQUIRE_ACCOUNT` on there is no way past this and no anonymous
- * fall-through beside it. That is the point rather than a side effect: if
- * signing in first is preferred BECAUSE it keeps the beta closed, then one
- * person who never finds a sign-in control is the entire licensing argument
- * undone — a subscription-licensed master and a `[DE] `-prefixed placeholder
- * content set, on a real domain, in front of whoever has the URL.
+ * There is no way past this and nothing beside it. That is the point rather
+ * than a side effect: if signing in first is preferred BECAUSE it keeps the
+ * beta closed, then one person who never finds a sign-in control is the entire
+ * licensing argument undone — a subscription-licensed master and a `[DE] `-
+ * prefixed placeholder content set, on a real domain, in front of whoever has
+ * the URL.
  *
- * With the flag off this component never mounts and nothing here is reachable.
+ * It used to be conditional: `VITE_REQUIRE_ACCOUNT` chose between this screen
+ * and an anonymous session, and with the flag off this component never mounted
+ * at all. Anonymous accounts went on 2026-10-20 and the flag went with them,
+ * so this is now the only thing a visitor without a session can reach.
  *
  * ── FOUR VIEWS, ONE COMPONENT, AND WHY NOT FOUR ROUTES ────────────────────
  * `router.tsx` opens by saying every screen is a real route. This is the

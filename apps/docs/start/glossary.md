@@ -49,7 +49,7 @@ the user speaking, so they are first person.
 | **semantic alias** | `--surface`, `--interactive-primary-hover`. The API |
 | **raw scale** | `--sand-9`. **Never consumed directly** |
 | **the gate** (listen) | `listen_gate_seconds` — how much of the track unlocks the reflection |
-| **the gate** (auth) | `VITE_REQUIRE_ACCOUNT` — the sign-in wall |
+| **the gate** (auth) | `SignInGate` — the sign-in wall. Unconditional since 2026-10-20 |
 | **column grant** | `grant select (…)` — how `tracks.title` is withheld |
 | **the drift** | the local and hosted databases disagreeing silently |
 | **the walk** | `pnpm test:e2e` — one Playwright pass through a whole session |

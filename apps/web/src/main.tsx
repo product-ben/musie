@@ -86,8 +86,9 @@ function DesignSystemLocale({ children }: { children: React.ReactNode }) {
  * So AuthProvider keeps its job of PUBLISHING the state, including the new
  * 'signedOut', and the decision about what to render moves here, below the two
  * providers that make copy work. The substance of the plan is unchanged: there
- * is a gate, and nothing falls through to anonymous sign-in behind it. Logged
- * in apps/web/OPEN-QUESTIONS.md.
+ * is a gate, and nothing falls through behind it. Since 2026-10-20 there is
+ * nothing it COULD fall through to: anonymous sign-in is gone and the gate is
+ * unconditional. Logged in apps/web/OPEN-QUESTIONS.md.
  *
  * ── AND WHY THE PROVIDERS ABOVE IT ARE FINE WITH NO USER ──────────────────
  * Checked rather than assumed: with `status: 'signedOut'`, ProfileProvider's
@@ -121,13 +122,15 @@ const root = createRoot(container);
  * `/beta` — the closed-beta sign-up — is the one URL this app answers without
  * an account, and it gets a tree of its own rather than a route in the table
  * below. The reason is one line up: `AuthProvider` is the next thing to mount,
- * and it is not passive. With `VITE_REQUIRE_ACCOUNT` off, no session means
- * `signInAnonymously()`, so a landing page mounted ANYWHERE inside it would
- * create a real `auth.users` row for every stranger who read the pitch and
- * left. The flag is on today and the flag is meant to come off again
- * (lib/requireAccount.ts is explicit that the anonymous path is not dead
- * code), so "the marketing page does not create accounts" must not be a
- * property that rests on a deploy variable.
+ * and it is not passive.
+ *
+ * It used to CREATE something — with `VITE_REQUIRE_ACCOUNT` off, no session
+ * meant `signInAnonymously()` and a stranger reading the pitch left an
+ * `auth.users` row behind. Anonymous accounts went on 2026-10-20 and the flag
+ * went with them. What the provider does now is REFUSE: no session resolves to
+ * the gate, so a public page mounted inside this tree would never render —
+ * whoever followed the link would meet a form asking for an access code they
+ * do not have.
  *
  * So this branch is the whole mechanism: above the session, above the profile,
  * above the router. `lib/publicRoute.ts` holds the path and the match, and

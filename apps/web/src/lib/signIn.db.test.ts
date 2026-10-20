@@ -145,20 +145,15 @@ describe('H.0b · the failure a tester will actually hit', () => {
   }, 60_000);
 });
 
-describe('H.0b · the anonymous path is still there behind the flag', () => {
-  it('still creates an anonymous session when asked directly', async () => {
-    /* `VITE_REQUIRE_ACCOUNT` is not set in a test run, so this asserts the
-       thing the flag turns OFF is intact: H.2 converts one of these and H.3
-       builds sign-up on it, so a change that broke anonymous sign-in while
-       leaving the gate working would be invisible to every other test here. */
-    const anonymous = anonClient();
-    const created = await anonymous.auth.signInAnonymously();
-    expect(created.error).toBeNull();
-    expect(created.data.session).not.toBeNull();
-    expect(created.data.user?.is_anonymous).toBe(true);
+/* ── THE ANONYMOUS PATH WAS TESTED HERE, AND IT IS GONE ────────────────────
+   A test asserted that `signInAnonymously()` still worked behind the flag,
+   on the argument that H.2 converted one of those users and H.3 built
+   sign-up on it. Neither is true any more: sign-up is an access code and a
+   one-time password, and anonymous accounts were removed from the product on
+   2026-10-20 (Ben).
 
-    if (created.data.user !== null && created.data.user !== undefined) {
-      await serviceClient().auth.admin.deleteUser(created.data.user.id);
-    }
-  }, 60_000);
-});
+   It is deleted rather than skipped. A skipped test is a claim nobody is
+   checking, and this one would have asserted a capability the product has
+   deliberately given up — the most expensive kind of false green, because it
+   reads as coverage. `enable_anonymous_sign_ins` is false on both stacks now,
+   so the assertion could only ever fail. */

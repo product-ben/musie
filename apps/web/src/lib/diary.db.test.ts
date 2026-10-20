@@ -29,7 +29,7 @@
 import { beforeAll, afterEach, describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { anonymousUser, serviceClient } from './db.support';
+import { testUser, serviceClient } from './db.support';
 import { saveStatements } from './statements';
 
 /**
@@ -66,7 +66,7 @@ let client: SupabaseClient;
 let userId: string;
 
 beforeAll(async () => {
-  ({ client, userId } = await anonymousUser());
+  ({ client, userId } = await testUser());
 }, 30_000);
 
 /* A leftover row would make the next test read two sessions where it expects
@@ -261,7 +261,7 @@ describe('deleting the whole diary · G.2', () => {
        that would go red the day that policy is weakened — and it would go red
        loudly, where the app would simply start deleting other people's
        sessions in silence. */
-    const stranger = await anonymousUser();
+    const stranger = await testUser();
     const { data: theirs, error: written } = await stranger.client
       .from('sessions')
       .insert({
@@ -455,7 +455,7 @@ describe('reflection_statements · a spoken answer, written as it is spoken', ()
    * would show it.
    */
   it('does not reach another person\'s statements', async () => {
-    const stranger = await anonymousUser();
+    const stranger = await testUser();
     const { data: theirSession } = await stranger.client
       .from('sessions')
       .insert({
