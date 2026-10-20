@@ -18,8 +18,7 @@
  * ── WHY IT IS PURE ─────────────────────────────────────────────────────────
  * Both inputs are facts the caller already holds, and the whole of the
  * behaviour is in which pair maps to which destination — exactly the part that
- * can be wrong without anything throwing. `lib/requireAccount.ts` splits itself
- * the same way and for the same reason.
+ * can be wrong without anything throwing.
  */
 
 /** The two places `/` can send somebody. Not `string`: there are two. */

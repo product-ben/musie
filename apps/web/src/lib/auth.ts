@@ -30,11 +30,21 @@
  */
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from './supabase';
-import { requireAccount } from './requireAccount';
 
 export interface ResolvedSession {
   session: Session;
-  /** True when this call created the user; false when it was restored. */
+  /**
+   * Always false now, and kept rather than deleted.
+   *
+   * It meant "this call created the user", which only `signInAnonymously()`
+   * could ever do — a session is restored from storage or it is not. With
+   * anonymous accounts gone there is nothing left to create here, so the one
+   * remaining producer passes `false`.
+   *
+   * It stays because `AuthProvider` logs it, and that log is how you tell a
+   * session that survived a reload from a fresh one. Removing the field would
+   * remove the distinction from the console at the same time.
+   */
   created: boolean;
 }
 
@@ -50,7 +60,7 @@ export interface ResolvedSession {
  */
 export type SessionOutcome =
   | ({ kind: 'session' } & ResolvedSession)
-  /** No session, and this build will not create one. `VITE_REQUIRE_ACCOUNT`. */
+  /** No session. The sign-in screen is the only thing that follows. */
   | { kind: 'gate' };
 
 /**
@@ -98,21 +108,17 @@ async function resolveSession(): Promise<SessionOutcome> {
     return { kind: 'session', session: existing.data.session, created: false };
   }
 
-  /* THE GATE. Checked after `getSession()` and never before it: the flag
-     decides what happens when there is NO session, and asking it first would
-     mean re-reading it on a path where it changes nothing. */
-  if (requireAccount()) return { kind: 'gate' };
-
-  const created = await supabase.auth.signInAnonymously();
-  if (created.error !== null) throw created.error;
-  if (created.data.session === null) {
-    throw new Error(
-      'Anonymous sign-in returned no session. Is enable_anonymous_sign_ins set? ' +
-      'For the local stack that lives in supabase/config.toml, not the dashboard.',
-    );
-  }
-
-  return { kind: 'session', session: created.data.session, created: true };
+  /**
+   * THE GATE, AND IT IS NO LONGER A CHOICE.
+   *
+   * There used to be a branch here: `VITE_REQUIRE_ACCOUNT` decided whether no
+   * session meant the sign-in screen or `signInAnonymously()`. Anonymous
+   * accounts were removed from the product on 2026-10-20 (Ben), so there is
+   * one answer left and the flag that selected between them is gone with it.
+   *
+   * No session means the gate. Always, in every build, on every target.
+   */
+  return { kind: 'gate' };
 }
 
 export function ensureSession(): Promise<SessionOutcome> {

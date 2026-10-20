@@ -2,7 +2,7 @@
  * The account, and signing out of it — H.0b.
  *
  * ── IT RENDERS ONLY FOR A USER WITH AN EMAIL ADDRESS ───────────────────────
- * An anonymous user has none, and this whole section is hidden from them. That
+ * A user without one has this whole section hidden. That
  * is not tidiness: their account lives in this browser and nowhere else, so
  * 'Sign out' would be a button that strands an entire diary on an id nobody can
  * sign in as again — the exact data-loss shape H.0 is written to keep away from
@@ -58,7 +58,7 @@ export function AccountSection({ className }: { className?: string }) {
   const { email } = useAuth();
   const [busy, setBusy] = React.useState(false);
 
-  /* Anonymous, or not resolved yet. Either way there is nothing to sign out
+  /* Not resolved yet. Either way there is nothing to sign out
      of and nothing true to say about an address. */
   if (email === null) return null;
 

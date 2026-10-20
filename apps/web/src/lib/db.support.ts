@@ -34,11 +34,13 @@
  * and every column grant; it does not belong in a file, and least of all in
  * one a hosted project's key could reach.
  *
- * The target is PRINTED on first use. These tests create real anonymous users
- * wherever they are aimed, and "why is my production project full of users"
- * is a question that should never have to be asked.
+ * The target is PRINTED on first use. These tests create real users wherever
+ * they are aimed, and "why is my production project full of users" is a
+ * question that should never have to be asked. They are also swept at the end
+ * of every file — see sweepCreatedUsers.
  */
 import { execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -123,23 +125,67 @@ export function anonClient(): SupabaseClient {
 }
 
 /**
- * A fresh anonymous USER — a real auth.users row, a real profiles row from the
- * trigger, and the `authenticated` role. Each call is a different person,
- * which is the whole point of the isolation tests.
+ * A fresh USER — a real auth.users row, a real profiles row from the trigger,
+ * and the `authenticated` role. Each call is a different person, which is the
+ * whole point of the isolation tests.
  *
- * config.toml rate-limits anonymous sign-ins to 30 per hour per IP. This suite
- * creates two per run, so a tight loop of reruns is the only way to hit it.
+ * ── IT USED TO BE AN ANONYMOUS SIGN-IN, AND THAT BROKE ON HOSTED ──────────
+ * `signInAnonymously()` until 2026-10-20. The isolation tests never needed
+ * the users to be ANONYMOUS — they need two people who are not each other —
+ * so the anonymity was incidental and the dependency was invisible until it
+ * cost something.
+ *
+ * It cost this: `enable_anonymous_sign_ins` is false on the hosted project,
+ * and `db-push.yml` runs this suite against hosted on every merge. Every one
+ * of those runs failed with `anonymous_provider_disabled` — on 16 October and
+ * again on the 20th — while the local suite stayed green, because the local
+ * stack has the provider on.
+ *
+ * AND IT WAS NOT A SECRET. `apps/docs/architecture/auth.md` states that the
+ * hosted project has anonymous sign-ins disabled and that
+ * `POST /auth/v1/signup` answers `anonymous_provider_disabled` there. The fact
+ * was written down; what nobody joined it to was this helper, and therefore
+ * the suite, and therefore a workflow that had been red for days. The gap was
+ * never knowledge — it was that no check compared the two environments.
+ *
+ * So the user is created with the service role instead. It works identically
+ * on both targets, and it is the only version of this helper that can be true
+ * now that anonymous accounts are gone from the product entirely.
  */
-export async function anonymousUser(): Promise<{
+export async function testUser(): Promise<{
   client: SupabaseClient;
   userId: string;
 }> {
+  /* Distinct per call AND per run: these tests prove that one person cannot
+     read another's rows, so two users from the same run must never collide,
+     and a rerun must not meet its own leftovers. */
+  const email = `db-suite-${Date.now()}-${randomUUID().slice(0, 8)}@musie.test`;
+  const password = randomUUID();
+
+  const admin = serviceClient();
+  const created = await admin.auth.admin.createUser({
+    email,
+    password,
+    /* Confirmed on arrival, so the sign-in below needs no mail on any path.
+       `create-tester.mjs` uses the same trick for the same reason. */
+    email_confirm: true,
+  });
+  if (created.error !== null) throw created.error;
+
+  const userId = created.data.user?.id;
+  if (userId === undefined) throw new Error('admin.createUser returned no user.');
+  registerCreatedUser(userId);
+
+  /* A CLIENT ACTING AS THAT PERSON, which is the whole point — an admin
+     client would bypass RLS and every test here would pass against a database
+     with no policies at all. `admin.createUser` hands back a user but not a
+     session, so the password exists only to turn one into the other and is
+     thrown away with the function scope. */
   const client = anonClient();
-  const { data, error } = await client.auth.signInAnonymously();
-  if (error !== null) throw error;
-  if (data.user === null) throw new Error('Anonymous sign-in returned no user.');
-  registerCreatedUser(data.user.id);
-  return { client, userId: data.user.id };
+  const signedIn = await client.auth.signInWithPassword({ email, password });
+  if (signedIn.error !== null) throw signedIn.error;
+
+  return { client, userId };
 }
 
 /**
@@ -173,9 +219,9 @@ const createdUsers = new Set<string>();
 /**
  * Hand a user id to the sweep.
  *
- * `anonymousUser()` calls this for you. It is exported for the two places that
- * create a user without it — a raw `signInAnonymously()` on a client the test
- * built itself, where the helper's shared client would defeat the point.
+ * `testUser()` calls this for you. It is exported for the places that create a
+ * user without it — `signIn.db.test.ts` builds its own accounts to prove the
+ * sign-in round trip, and those need sweeping too.
  */
 export function registerCreatedUser(userId: string): void {
   createdUsers.add(userId);

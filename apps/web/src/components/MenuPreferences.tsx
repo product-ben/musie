@@ -34,9 +34,9 @@ import { useProfile } from '../lib/profileContext';
 export function MenuPreferences() {
   return (
     <>
-      {/* FIRST NOW, and it still renders for nobody else: an anonymous user has
-          no account to name and nothing safe to sign out of. See
-          AccountSection. It moved above the two switches on 2026-09-24 because
+      {/* FIRST NOW. It renders only once there is an account to name — see
+          AccountSection, which hides itself until the email resolves. It moved
+          above the two switches on 2026-09-24 because
           the row below is pinned to the foot of the viewport — see
           `.musie-prefs-row` in shell.css — and something has to be the thing
           that is not pinned. */}

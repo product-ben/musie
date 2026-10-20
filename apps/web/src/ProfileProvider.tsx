@@ -51,10 +51,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
          * THE RECOVERY IS `signOut()`, which already does exactly this job for
          * the sign-out control: clear the token, reset the session cache,
          * reload. The reload is what makes it correct rather than clever — the
-         * tab starts again, `ensureSession()` finds no session, and either a
-         * fresh anonymous user is created or the gate is the first paint,
-         * whichever `VITE_REQUIRE_ACCOUNT` says. A deleted ACCOUNT should land
-         * at the sign-in form, not be quietly replaced by an anonymous one.
+         * tab starts again, `ensureSession()` finds no session, and the gate is
+         * the first paint. It used to depend on a flag — the other branch
+         * minted an anonymous user — and since 2026-10-20 there is only the
+         * one outcome, which is the one this recovery always wanted: a deleted
+         * ACCOUNT lands at the sign-in form.
          *
          * AND IT IS CLAIMED, NOT DECIDED. The recovery reloads, so a second
          * failure would reload again — forever, minting an anonymous user each

@@ -8,15 +8,14 @@ is closed.
 flowchart TD
   B["Page loads"] --> G["getSession()<br/>reads localStorage"]
   G -->|"a session is there"| OK(["Signed in · created: false"])
-  G -->|"nothing stored"| F{"VITE_REQUIRE_ACCOUNT"}
-  F -->|"on"| GATE["kind: 'gate'<br/>→ SignInGate screen"]
-  F -->|"off"| ANON["signInAnonymously()"]
-  ANON --> OK2(["Signed in · created: true"])
-  GATE -->|"email + password"| SI["signIn()"]
-  SI -->|"ok"| RS["resetSessionCache()"]
-  RS --> OK
-  SI -->|"wrong password"| E1["copy we own, both languages"]
-  SI -->|"no network"| E2["a different sentence"]
+  G -->|"nothing stored"| GATE["kind: 'gate'<br/>→ SignInGate screen"]
+  GATE -->|"email"| OTP["signInWithOtp()<br/>shouldCreateUser: false"]
+  GATE -->|"access code"| SU["account-signup<br/>Edge Function"]
+  SU --> OTP
+  OTP --> V["verifyOtp()<br/>six digits"]
+  V -->|"ok"| OK
+  V -->|"wrong or expired"| E1["copy we own, both languages"]
+  V -->|"no network"| E2["a different sentence"]
 ```
 
 ::: designers
@@ -98,38 +97,25 @@ served the cached gate and the app would sit behind a form it had already
 passed. So `signIn()` and `signOut()` both call `resetSessionCache()` — without
 it, signing in appears to do nothing.
 
-**The gate is checked after `getSession()`, never before.** The flag decides
-what happens when there is *no* session; asking first would re-read it on a
-path where it changes nothing.
+**There is no flag any more.** `VITE_REQUIRE_ACCOUNT` chose between this gate
+and an anonymous session until 2026-10-20. Anonymous accounts were removed from
+the product, so there is one answer left and nothing to select between: no
+session means the gate, in every build, on every target.
 
-## `VITE_REQUIRE_ACCOUNT`
+## What the flag cost while it existed
 
-Read at **build** time and compiled into the bundle. Changing it means
-rebuilding, not restarting.
+Worth keeping, because the failure shape outlived it. Anonymous sign-ins are a
+*dashboard* setting and they were **already disabled on the hosted project** —
+`POST /auth/v1/signup` answered `anonymous_provider_disabled` there — while the
+local stack had them on. So the two environments disagreed about whether a
+whole code path worked, and nothing compared them.
 
-`apps/web/src/lib/requireAccount.ts` parses it strictly, and the asymmetry is
-the reason:
-
-- A flag meant to be **on** that parses as off opens the beta to anyone with
-  the URL, silently — the whole licensing argument undone.
-- A flag meant to be **off** that parses as on shows a form nobody can pass:
-  annoying, visible in seconds, nobody's licence problem.
-
-So the dangerous direction is the quiet one. `true` / `1` / `on` / `yes`,
-case-insensitive. Anything else non-empty is treated as off **and warned about
-in the console**. Vite hands every variable through as a string — there is no
-boolean coercion in `import.meta.env` — so a bare `Boolean(...)` would be
-permanently on.
-
-**On hosted, "off" is not merely open, it is broken.** Anonymous sign-ins are a
-*dashboard* setting on the Supabase project and they are disabled there;
-`POST /auth/v1/signup` answers `anonymous_provider_disabled`. With the flag off
-nobody can get into the hosted app by any route. With it on, the app never
-calls `signInAnonymously()` and that setting stops mattering.
-
-The anonymous path is **not dead code** and must not be deleted: it is what
-H.2 proves convertible, what H.3 builds sign-up on, and what going public again
-looks like. Deleting it makes that a rewrite; keeping it makes it a variable.
+That is what made `pnpm test:db` fail on hosted and pass locally: the suite's
+`anonymousUser()` helper signed in anonymously for every isolation test. The
+`Database` workflow had been red on every merge since at least 16 October, for
+a reason documented on this page and connected to the suite by nobody. It
+creates users with the service role now (`db.support.ts`, `testUser`), which
+behaves identically on both targets.
 
 ## Error mapping
 
@@ -198,7 +184,7 @@ signup fails.
 **Source of truth:**
 [`lib/auth.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/auth.ts),
 [`lib/signIn.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/signIn.ts),
-[`lib/requireAccount.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/requireAccount.ts),
+[`lib/signUp.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/signUp.ts),
 [`lib/identity.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/identity.ts),
 [`20260918142704_profiles.sql`](https://github.com/product-ben/musie/blob/main/supabase/migrations/20260918142704_profiles.sql),
 [docs/MUSIE-SETUP.md](https://github.com/product-ben/musie/blob/main/docs/MUSIE-SETUP.md) §2.

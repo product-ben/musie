@@ -25,7 +25,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { QUESTION_ORDER, QUESTION_SETS } from '../content/questions';
-import { anonClient, anonymousUser, serviceClient, INSUFFICIENT_PRIVILEGE } from './db.support';
+import { anonClient, testUser, serviceClient, INSUFFICIENT_PRIVILEGE } from './db.support';
 
 const service = serviceClient();
 
@@ -99,7 +99,7 @@ describe('the sessions row can hold a question', () => {
        anonymous sign-ins to 30 an hour per IP and this suite already spends
        two per run, so a test per assertion would make a tight rerun loop fail
        on the sign-in rather than on the schema. */
-    const { client, userId } = await anonymousUser();
+    const { client, userId } = await testUser();
 
     const { data: started, error: startError } = await client
       .from('sessions')
@@ -163,7 +163,7 @@ describe('question_rejections is service_role only', () => {
   it('is refused to a signed-in listener', async () => {
     /* The one that matters: a rejection log is not a diary, and the person who
        produced it has no screen that needs it. */
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { error } = await client.from('question_rejections').select('*').limit(1);
 
     expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);

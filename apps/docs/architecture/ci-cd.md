@@ -173,10 +173,9 @@ load-bearing:
 
 Environment variables are set **per build trigger**, not in `wrangler.jsonc`,
 and are read at build time and compiled into the bundle — changing one means
-rebuilding. Three of them, and none is a secret:
+rebuilding. Two of them, and neither is a secret:
 
 ```
-VITE_REQUIRE_ACCOUNT   = true
 VITE_SUPABASE_URL      = https://xliwtiiopwyfunxkdmxh.supabase.co
 VITE_SUPABASE_ANON_KEY = sb_publishable_…
 ```

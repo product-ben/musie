@@ -83,8 +83,7 @@ keeps the condition true by construction: **`/` IS the cold arrival.**
 
 Both inputs are facts the caller already holds, and the whole of the behaviour
 is in which pair maps to which destination — exactly the part that can be wrong
-without anything throwing. `lib/requireAccount.ts` splits itself the same way
-for the same reason.
+without anything throwing.
 
 The pattern is worth copying: when the risky part of a module is a mapping, make
 the mapping a pure export and test it directly rather than reaching for a mock.

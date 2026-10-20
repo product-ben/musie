@@ -61,15 +61,18 @@ if (isPublicPath(window.location.pathname)) {
 }
 ```
 
-**Why above `AuthProvider`:** with `VITE_REQUIRE_ACCOUNT` off, no session means
-`signInAnonymously()`. A landing page mounted anywhere *inside* that provider
-would create a real `auth.users` row for every stranger who read the pitch and
-left.
+**Why above `AuthProvider`:** no session resolves to `{ kind: 'gate' }`, and
+`SessionGate` renders the sign-in screen in place of whatever was below it. A
+landing page mounted *inside* that provider would never be reachable — whoever
+followed the link would meet a form asking for an access code they have not
+got.
 
-The flag is on today **and is meant to come off again** —
-`lib/requireAccount.ts` is explicit that the anonymous path is not dead code —
-so "the marketing page does not create accounts" must not be a property that
-rests on a deploy variable.
+The reason changed on 2026-10-20 and the conclusion did not. It used to be that
+`AuthProvider` would **create** something: with `VITE_REQUIRE_ACCOUNT` off, no
+session meant `signInAnonymously()` and every stranger who read the pitch left
+an `auth.users` row behind. Anonymous accounts are gone and so is the flag, so
+the argument no longer rests on a deploy variable that was meant to be
+flipped.
 
 `lib/publicRoute.ts` holds the path and the match, and says what the page gives
 up by not being a route: its own `document.title` and its own language control,

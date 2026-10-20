@@ -8,11 +8,11 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { anonymousUser, serviceClient } from './db.support';
+import { testUser, serviceClient } from './db.support';
 
 describe('missing_translations', () => {
   it('reports no holes', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data, error } = await client.from('missing_translations').select('*');
 
     expect(error).toBeNull();
@@ -36,7 +36,7 @@ describe('missing_translations', () => {
  */
 describe('goals · four of them, and nothing is stranded', () => {
   it('offers four goals, each with both locales and a purpose', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data, error } = await client
       .from('goals')
       .select('id, sort, goal_i18n(locale, label, purpose, why)')
@@ -61,7 +61,7 @@ describe('goals · four of them, and nothing is stranded', () => {
      unique constraint; what it cannot catch is the first one being something
      nobody meant to open on. */
   it('opens on get-to-know-musie, which is sort 1', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data } = await client.from('goals').select('id, sort').order('sort');
 
     expect(data?.[0]).toEqual({ id: 'get-to-know-musie', sort: 1 });
@@ -208,7 +208,7 @@ describe('tracks · the ids are opaque, and that is the security model', () => {
  */
 describe('exercises · who asks how you are listening', () => {
   it('carries an answer exactly where the question is asked', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data, error } = await client
       .from('exercises')
       .select('id, kind, asks_posture');
@@ -228,7 +228,7 @@ describe('exercises · who asks how you are listening', () => {
      Klangreise changes nothing by being heard sitting or lying; the Bodyscan's
      guidance addresses a posture out loud. */
   it('asks on the Bodyscan and not on the Klangreise', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data, error } = await client
       .from('exercises')
       .select('id, asks_posture')
@@ -243,7 +243,7 @@ describe('exercises · who asks how you are listening', () => {
 
 describe('exercises · the listen gate', () => {
   it('is positive and present for every exercise', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data, error } = await client
       .from('exercises')
       .select('id, listen_gate_seconds, timeframe_min');
@@ -261,7 +261,7 @@ describe('exercises · the listen gate', () => {
        and reflect. A gate that exceeded it would be asking somebody to listen
        for longer than the card says the entire thing lasts, which is a
        promise broken before the track starts. */
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data } = await client
       .from('exercises')
       .select('id, listen_gate_seconds, timeframe_min');
@@ -276,7 +276,7 @@ describe('exercises · the listen gate', () => {
        user out today. It asserts the SEED is coherent without that safety
        net — if this goes red, somebody has set a gate that only the cap is
        saving, and the cap is a fallback rather than the design. */
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
     const { data: pairs } = await client
       .from('exercise_tracks')
       .select('exercise_id, track_id, exercises(listen_gate_seconds), tracks(duration_seconds)');
@@ -327,7 +327,7 @@ describe('the tracks bucket · private, readable signed, and honest about absenc
    * the simulated clock and the app looks like it did before E.4.
    */
   it('lets a signed-in listener sign a real object', async () => {
-    const { client } = await anonymousUser();
+    const { client } = await testUser();
 
     const { data: track, error: read } = await client
       .from('tracks')

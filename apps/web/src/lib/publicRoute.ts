@@ -10,14 +10,23 @@
  * so a page that is not in the route table deserves an explanation.
  *
  * The public page has to be decided ABOVE `AuthProvider`, which is the one
- * thing the router cannot do — the router renders inside it. And the provider
- * is not passive: with `VITE_REQUIRE_ACCOUNT` off, no session means
- * `signInAnonymously()`, so a landing page mounted anywhere inside that tree
- * would create a real `auth.users` row for every visitor who ever read the
- * pitch. Today the flag is on and nothing would happen; the flag exists to be
- * turned off again (`lib/requireAccount.ts` is explicit that the anonymous
- * path is not dead code), and "the marketing page stops creating accounts
- * because of a deploy variable" is not a property to leave resting on one.
+ * thing the router cannot do — the router renders inside it.
+ *
+ * ── THE REASON CHANGED ON 2026-10-20, AND THE CONCLUSION DID NOT ──────────
+ * It used to be that `AuthProvider` would CREATE something: with
+ * `VITE_REQUIRE_ACCOUNT` off, no session meant `signInAnonymously()`, so a
+ * landing page mounted inside that tree minted a real `auth.users` row for
+ * every stranger who read the pitch and left.
+ *
+ * Anonymous accounts are gone and so is the flag, so nothing is created any
+ * more. What the provider does now is REFUSE: no session resolves to
+ * `{ kind: 'gate' }`, and `SessionGate` renders the sign-in screen in place of
+ * whatever was below it. A public page mounted inside that tree would
+ * therefore never be reachable at all — a stranger sent to `/beta` would be
+ * shown a form asking for an access code they have not got.
+ *
+ * Weaker failure, stronger argument: the old one rested on a deploy variable
+ * that was meant to be flipped, and this one cannot be switched off.
  *
  * So `main.tsx` asks this question of `window.location.pathname` before it
  * mounts anything, and the public page gets a tree of its own: no auth, no

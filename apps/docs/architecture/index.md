@@ -108,11 +108,11 @@ flowchart TB
 ```
 
 **`/beta` branches above `AuthProvider`, and that is the whole mechanism.**
-With `VITE_REQUIRE_ACCOUNT` off, no session means `signInAnonymously()` — so a
-landing page mounted anywhere *inside* `AuthProvider` would create a real
-`auth.users` row for every stranger who read the pitch and left. The flag is
-on today and is meant to come off again, so "the marketing page does not
-create accounts" must not rest on a deploy variable.
+No session resolves to the gate, so a landing page mounted *inside*
+`AuthProvider` would never render — whoever followed the link would meet a form
+asking for an access code they have not got. It used to be a stronger failure
+and a weaker argument: with `VITE_REQUIRE_ACCOUNT` off, no session meant
+`signInAnonymously()` and every stranger left an `auth.users` row behind.
 
 **`SessionGate` is below `LocaleProvider`, not in `AuthProvider`.** BUILD-PLAN
 H.0b put the gate in `AuthProvider`; that is above `LocaleProvider`, so the

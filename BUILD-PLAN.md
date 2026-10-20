@@ -1372,6 +1372,23 @@ is none, so a real session is simply used.
   path again, and so is password reset. If OAuth is wanted,
   `enable_manual_linking` has to go true — email conversion does not need it.
 
+> **H.2 AND H.5 ARE BOTH MOOT AS OF 2026-10-20, AND NOT BECAUSE THEY FAILED.**
+> Ben removed anonymous accounts from the product. There is nothing left to
+> convert, so H.2's proof is about a path that no longer exists; and nothing
+> creates `auth.users` rows except sign-up, so H.5's sweep has no source to
+> sweep. Both entries are kept below as the record of what was decided and
+> why — the repo's own rule about re-deciding things.
+>
+> What went with them: `signInAnonymously()`, `VITE_REQUIRE_ACCOUNT`,
+> `lib/requireAccount.ts`, `auth.convert.db.test.ts`, and the db suite's
+> dependency on anonymous sign-in — which had been failing on hosted since at
+> least 16 October, because `enable_anonymous_sign_ins` is false there.
+>
+> **The one thing worth carrying forward:** H.2 proved that an anonymous diary
+> CAN be carried into a real account. If try-before-signup is ever wanted
+> again, that is a real finding and not a dead end — it is the mechanism that
+> is gone, not the knowledge.
+
 - [x] **H.2 Convert, never create — and prove it before building any UI.** A
   test that runs sessions as an anonymous user, converts that user, and reads
   the same rows back under the same id. If this does not hold, every screen in

@@ -52,8 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           : {
               status: 'ready',
               userId: next.user.id,
-              /* `''` for an anonymous user, which `?? null` does not catch.
-                 See accountEmail's docblock — this was a real bug. */
+              /* Normalised through `accountEmail` rather than `?? null`.
+                 It existed because an anonymous user's email was `''`, which
+                 `??` does not catch; anonymous accounts are gone, but the
+                 guard stays — it is three lines, and it is the difference
+                 between "Signed in as " with nothing after it and a sentence
+                 that names somebody. See accountEmail's docblock. */
               email: accountEmail(next.user.email),
               error: null,
             },
@@ -67,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (outcome.kind === 'gate') {
           /* Printed, because a gate looks identical to a bug from the outside
              and the flag that caused it is invisible on screen. */
-          console.info('[musie] no session, and VITE_REQUIRE_ACCOUNT is on: showing sign-in.');
+          console.info('[musie] no session: showing sign-in.');
           setState({ status: 'signedOut', userId: null, email: null, error: null });
           return;
         }
@@ -78,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
            have to compare by eye. */
         console.info(
           `[musie] user id: ${outcome.session.user.id} ` +
-          `(${outcome.created ? 'NEW anonymous user created' : 'restored from localStorage'})`,
+          `(${outcome.created ? 'new' : 'restored from localStorage'})`,
         );
 
         setState({

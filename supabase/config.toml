@@ -180,7 +180,7 @@ refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = true
+enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
@@ -206,11 +206,15 @@ email_sent = 2
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
 #
-# RAISED FROM THE DEFAULT 30 FOR THE TEST SUITE, not for the app. `pnpm
-# test:db` signs in five fresh anonymous users per run, and one browser tab
-# doing real work signs in too — so at 30 the sixth consecutive run inside an
-# hour fails at SIGN-IN rather than at an assertion, which reads exactly like
-# a broken policy and is not. A local stack has no abuse surface to protect.
+# INERT since 2026-10-20: the provider above is off, so nothing can reach this
+# limit. It was raised from the default 30 for the db suite, which used to sign
+# in a fresh anonymous user per isolation test; that helper creates users with
+# the service role now (`db.support.ts`, `testUser`), which no rate limit
+# touches.
+#
+# Left at 300 rather than reset, because resetting it would read as a decision
+# about a provider that is disabled. If anonymous sign-ins ever come back, the
+# reason the number is not 30 comes back with them.
 anonymous_users = 300
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150

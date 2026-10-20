@@ -30,7 +30,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   INSUFFICIENT_PRIVILEGE,
   anonClient,
-  anonymousUser,
+  testUser,
   serviceClient,
 } from './db.support';
 
@@ -54,8 +54,8 @@ let aliceId: string;
 let bobId: string;
 
 beforeAll(async () => {
-  ({ client: alice, userId: aliceId } = await anonymousUser());
-  ({ client: bob, userId: bobId } = await anonymousUser());
+  ({ client: alice, userId: aliceId } = await testUser());
+  ({ client: bob, userId: bobId } = await testUser());
   expect(aliceId).not.toBe(bobId);
 }, 30_000);
 

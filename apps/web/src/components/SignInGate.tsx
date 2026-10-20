@@ -2,14 +2,17 @@
  * The gate — sign in, sign up, and the six digits they both end at.
  *
  * ── A GATE, NOT A SCREEN ───────────────────────────────────────────────────
- * With `VITE_REQUIRE_ACCOUNT` on there is no way past this and no anonymous
- * fall-through beside it. That is the point rather than a side effect: if
- * signing in first is preferred BECAUSE it keeps the beta closed, then one
- * person who never finds a sign-in control is the entire licensing argument
- * undone — a subscription-licensed master and a `[DE] `-prefixed placeholder
- * content set, on a real domain, in front of whoever has the URL.
+ * There is no way past this and nothing beside it. That is the point rather
+ * than a side effect: if signing in first is preferred BECAUSE it keeps the
+ * beta closed, then one person who never finds a sign-in control is the entire
+ * licensing argument undone — a subscription-licensed master and a `[DE] `-
+ * prefixed placeholder content set, on a real domain, in front of whoever has
+ * the URL.
  *
- * With the flag off this component never mounts and nothing here is reachable.
+ * It used to be conditional: `VITE_REQUIRE_ACCOUNT` chose between this screen
+ * and an anonymous session, and with the flag off this component never mounted
+ * at all. Anonymous accounts went on 2026-10-20 and the flag went with them,
+ * so this is now the only thing a visitor without a session can reach.
  *
  * ── FOUR VIEWS, ONE COMPONENT, AND WHY NOT FOUR ROUTES ────────────────────
  * `router.tsx` opens by saying every screen is a real route. This is the
@@ -69,7 +72,16 @@ const SIGN_IN_CODE_LENGTH = 6;
 export function SignInGate() {
   const t = useT();
 
-  const [view, setView] = React.useState<View>('signIn');
+  /* ── SIGN-UP IS THE FIRST THING A VISITOR SEES ──────────────────────────
+     Ben, 2026-10-20. The gate used to open on the sign-in form, which is the
+     right screen for the people who already have an account and the wrong one
+     for everybody the beta is being handed to. A tester arriving with a code
+     in a message had to find a link before the screen matched what they were
+     holding.
+
+     Returning testers pay one press for it, and they are the half of the
+     audience that already knows where they are. */
+  const [view, setView] = React.useState<View>('signUpCode');
   const [email, setEmail] = React.useState('');
   const [firstName, setFirstName] = React.useState('');
   const [accessCode, setAccessCode] = React.useState('');
@@ -278,13 +290,38 @@ export function SignInGate() {
                 />
               </FieldGroup>
 
+              {/* ── THE ACTION, THEN A RULE, THEN THE OTHER ROUTE ───────────
+                  Ben's shape for every gate screen, 2026-10-20. The primary
+                  FILLS the measure, because it is what this screen is for. The
+                  rule says the control under it is not an alternative to it.
+                  The secondary HUGS its label, because it is a way off this
+                  screen rather than a way through it.
+
+                  NO ButtonGroup — "move it out of the button group, this is an
+                  exception". That component is for controls that belong
+                  together, and a full-measure button beside a hugging one is
+                  the opposite of a pair. It also retires the ordering problem
+                  logged earlier today: with no group there is no primary-first
+                  convention to contradict.
+
+                  `.musie-gate-rule` in shell.css carries the L14 permission —
+                  the system has no separator component, grepped not assumed. */}
               <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
                 {t('auth.submit')}
               </CtaButton>
 
-              <InlineLink type="button" onClick={() => { go('signUpCode'); }}>
+              <hr className="musie-gate-rule" />
+
+              <CtaButton
+                type="button"
+                variant="outline"
+                className="musie-gate-secondary"
+                wrap
+                disabled={busy}
+                onClick={() => { go('signUpCode'); } }
+              >
                 {t('auth.signIn.switch')}
-              </InlineLink>
+              </CtaButton>
             </>
           )}
 
@@ -307,6 +344,22 @@ export function SignInGate() {
                 autoFocus
               />
 
+              {/* ── THE ACTION, THEN A RULE, THEN THE OTHER ROUTE ───────────
+                  Ben's shape for every gate screen, 2026-10-20. The primary
+                  FILLS the measure, because it is what this screen is for. The
+                  rule says the control under it is not an alternative to it.
+                  The secondary HUGS its label, because it is a way off this
+                  screen rather than a way through it.
+
+                  NO ButtonGroup — "move it out of the button group, this is an
+                  exception". That component is for controls that belong
+                  together, and a full-measure button beside a hugging one is
+                  the opposite of a pair. It also retires the ordering problem
+                  logged earlier today: with no group there is no primary-first
+                  convention to contradict.
+
+                  `.musie-gate-rule` in shell.css carries the L14 permission —
+                  the system has no separator component, grepped not assumed. */}
               <CtaButton
                 type="button"
                 block
@@ -318,9 +371,18 @@ export function SignInGate() {
                 {t('auth.signUp.codeSubmit')}
               </CtaButton>
 
-              <InlineLink type="button" onClick={() => { go('signIn'); }}>
+              <hr className="musie-gate-rule" />
+
+              <CtaButton
+                type="button"
+                variant="outline"
+                className="musie-gate-secondary"
+                wrap
+                disabled={busy}
+                onClick={() => { go('signIn'); } }
+              >
                 {t('auth.signUp.switch')}
-              </InlineLink>
+              </CtaButton>
             </>
           )}
 
@@ -391,6 +453,9 @@ export function SignInGate() {
                 </InlineLink>
               </p>
 
+              {/* The action half of the same shape. No rule and no second
+                  control: there is no other route off this step — the way back
+                  is the one the person came in by. */}
               <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
                 {t('auth.signUp.submit')}
               </CtaButton>
