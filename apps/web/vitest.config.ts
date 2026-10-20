@@ -47,6 +47,12 @@ export default defineConfig({
              had happened to upload. See db.globalSetup.ts. `unit` does not get
              this: it touches no network at all. */
           globalSetup: ['src/lib/db.globalSetup.ts'],
+          /* And the other half: the suite gives its users back. This runs in
+             the WORKER, unlike `globalSetup` above, which is the whole reason
+             it is a separate file — the registry of created ids lives in the
+             worker's module graph and a main-process teardown would drain an
+             empty set and report success. See db.setup.ts. */
+          setupFiles: ['src/lib/db.setup.ts'],
         },
       },
     ],

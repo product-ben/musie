@@ -138,7 +138,93 @@ export async function anonymousUser(): Promise<{
   const { data, error } = await client.auth.signInAnonymously();
   if (error !== null) throw error;
   if (data.user === null) throw new Error('Anonymous sign-in returned no user.');
+  registerCreatedUser(data.user.id);
   return { client, userId: data.user.id };
+}
+
+/**
+ * ── EVERY USER THIS SUITE CREATES, SO THE RUN CAN TAKE THEM BACK ──────────
+ *
+ * `db-push.yml` runs this suite against the HOSTED project on every merge to
+ * `main`, and each run left its anonymous users behind permanently. They are
+ * real `auth.users` rows: they count toward monthly active users, and they
+ * crowd out the real testers in exactly the table somebody is about to start
+ * reading daily. The pile grew with merges rather than with use, which is why
+ * nobody connected it to the tests.
+ *
+ * The two files that create EMAIL accounts — `signIn.db.test.ts` and
+ * `auth.convert.db.test.ts` — already delete theirs in an `afterAll`. This is
+ * the same discipline for the anonymous ones, applied once in the helper that
+ * mints them rather than copied into the seven files that call it.
+ *
+ * NOT A HEURISTIC, and that is the point. The sweep deletes exactly the ids
+ * this process minted — no age cutoff, no "anonymous users older than", no
+ * query that could match a real person's row. A test user cannot be confused
+ * with a tester because the suite never has to guess which is which.
+ *
+ * The registry is module-scoped, so it is per worker process. `db.setup.ts`
+ * registers the `afterAll` that drains it, which Vitest runs once per test
+ * FILE — the tests in a file are done with their users by then, and holding
+ * them to the end of the whole run would need a channel between workers that
+ * does not exist.
+ */
+const createdUsers = new Set<string>();
+
+/**
+ * Hand a user id to the sweep.
+ *
+ * `anonymousUser()` calls this for you. It is exported for the two places that
+ * create a user without it — a raw `signInAnonymously()` on a client the test
+ * built itself, where the helper's shared client would defeat the point.
+ */
+export function registerCreatedUser(userId: string): void {
+  createdUsers.add(userId);
+}
+
+/**
+ * Delete every user this process registered, then forget them.
+ *
+ * ── IT NEVER FAILS THE RUN ────────────────────────────────────────────────
+ * A leftover row is noise; a red build over a cleanup is worse than the thing
+ * it cleans, and it would land on whoever merged next rather than on whoever
+ * broke it. So a failed delete is reported and swallowed — loudly enough to
+ * notice, quietly enough not to block a merge.
+ *
+ * Deleting a user cascades to `profiles` and everything hanging off it, which
+ * is why this is the only sweep needed rather than one per table.
+ */
+export async function sweepCreatedUsers(): Promise<void> {
+  if (createdUsers.size === 0) return;
+
+  const service = serviceClient();
+  const ids = [...createdUsers];
+  createdUsers.clear();
+
+  const failures: string[] = [];
+  for (const userId of ids) {
+    try {
+      const { error } = await service.auth.admin.deleteUser(userId);
+      /* ALREADY GONE IS NOT A FAILURE. `auth.convert.db.test.ts` and
+         `signIn.db.test.ts` keep their own `created` lists and delete in their
+         own `afterAll`, which Vitest runs before this one — so for those files
+         every id here is a second attempt at a row that is correctly absent.
+         Warning about it would print on every green run, and a warning that is
+         always there is one nobody reads on the day it means something. */
+      if (error !== null && error.status !== 404) {
+        failures.push(`${userId}: ${error.message}`);
+      }
+    } catch (thrown: unknown) {
+      failures.push(`${userId}: ${thrown instanceof Error ? thrown.message : String(thrown)}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    console.warn(
+      `[db suite] ${failures.length} of ${ids.length} test users could not be deleted. `
+      + 'They are now orphaned rows — delete them by hand.\n  '
+      + failures.join('\n  '),
+    );
+  }
 }
 
 /**
