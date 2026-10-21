@@ -10359,3 +10359,123 @@ development, which is where it costs: a console with a standing warning in it
 is a console nobody reads, and the transcript leak this same branch fixed was
 found *in* that console. Worth an hour in the design system before the next
 screen adds a sixth call site.
+
+---
+
+# Phase — the exercise model and `/exercise-builder`
+
+## No `pnpm exercises:export`, because a `.mjs` cannot import `questions.ts` — RESOLVED
+
+Where: `src/lib/buildExerciseConfig.ts` (header), `src/content/questions.ts:68`
+
+What I checked: the obvious shape for this is a script beside
+`content-export.mjs` that reads the database and writes five files into
+`supabase/content/exercises/`. It is not here, and the reason is one import.
+The rotating questions live in `content/questions.ts` as TypeScript —
+`QUESTION_SETS`, `questionsDe`, `questionsEn` — and Node cannot import that.
+Making it importable means moving the copy into JSON and giving up the
+`Record<QuestionId, QuestionText>` completeness check that file is built
+around, which is a change to a module three screens read.
+
+What I did: assembled configs **in the browser**, where the database and
+`questions.ts` are both ordinary imports, and had the therapist download the
+result. No committed configs, no export script.
+
+Why: the deliverable Ben asked for is a file a therapist hands over. Committed
+configs are a separate want — they are what lets `pnpm check` validate a config
+without a database — and buying them today costs a refactor of a file the
+session screens depend on, for no part of what was asked.
+
+What I need from Ben: nothing now. Worth knowing that the two wants are
+separable and that the second one waits on the `QuestionId` change below.
+
+## `QuestionId` is a closed union, so a therapist cannot write a sixth question — FLAGGED
+
+Where: `src/content/questions.ts:68`
+
+What I checked: `export type QuestionId = 'lq-01' | 'lq-02' | 'lq-03' | 'lq-04'
+| 'lq-05';`, and `questionsDe` / `questionsEn` are
+`Record<QuestionId, QuestionText>` — which the file's own header names as a
+completeness check: a missing question is a type error.
+
+What I did: nothing to that file. The config's question ids are plain strings
+**scoped to their set**, and `validateConfig` checks what the union used to —
+same ids, same order, in every declared text locale, each with `listen`,
+`reflect` and `helper`. So the contract is ready for a therapist-authored
+question and the app is not.
+
+Why: Ben decided on 2026-10-21 that whether a listening exercise rotates
+questions is the therapist's call. A switch they can throw that then refuses a
+sixth question because of a TypeScript union is the kind of half-built thing
+that reads as a bug. The closure was right while five questions were the whole
+product; a question is three strings, unlike a posture, which needs a glyph, a
+label in two locales and a recording and is genuinely a screen.
+
+What I need from Ben: nothing to decide — it is named in the model as the
+blocker for step 4. Flagging that the builder will happily emit a `q-02` that
+today's app cannot render.
+
+## The builder is behind the sign-in gate, so a therapist needs an account — FLAGGED
+
+Where: `src/lib/publicRoute.ts`, `src/router.tsx` (the `exercise-builder` entry)
+
+What I checked: `publicPage()` names three public paths — `/beta`,
+`/impressum`, `/privacy`. Everything else mounts inside `AuthProvider`, which
+resolves a missing session to `{ kind: 'gate' }` and renders the sign-in screen
+in place of whatever was below it.
+
+What I did: left it gated, like `/maintenance`, `/goal-mappings` and every
+other tool. Made a local account with
+`node apps/web/scripts/create-tester.mjs …` to verify the screen.
+
+Why: the alternative is putting an editing tool for live content in front of
+anybody who guesses the URL. The gate is the right answer; it just means
+handing a therapist the tool is handing them credentials too.
+
+What I need from Ben: **how a therapist gets an account.** A tester row made by
+hand is fine for one person and does not scale to a few. Nothing blocks today.
+
+## `select` and `view` have no content columns, and the builder had to say so — RESOLVED
+
+Where: `src/lib/exerciseConfig.ts` (`copySource`), `src/i18n/en.ts`
+(`builder.chromeCopy`)
+
+What I checked: there is no `select_md` and no `view_md`. Every word those two
+steps show is a `MessageKey` — `session.select.headline` is *Wähle eine Karte
+aus*, which is **also** the `##` heading of `scan_md`. The same headline exists
+twice, in two systems, one editable and one not.
+
+What I did: added `copySource: 'content' | 'chrome'` to a run step. The builder
+marks those two, the validator skips the content rules for them, and the screen
+shows a `Message` saying the step has no text of its own yet.
+
+Why: without it the builder opened on four red errors in *What still needs
+doing* that no therapist could resolve, because the copy genuinely is not
+theirs to write. A panel that is red on arrival is a panel nobody reads — the
+exact failure CLAUDE.md rule 8 describes for claims that stop being read. The
+field is the hole stated rather than hidden: moving that copy out of chrome is
+what deletes it.
+
+What I need from Ben: nothing. It is in `docs/EXERCISE-MODEL.md` under what is
+not built.
+
+## `skip_intro` and `mute_background` share one slot, and nothing enforces it — FLAGGED
+
+Where: `src/components/SessionListen.tsx:1150`, `src/lib/exerciseConfig.ts`
+
+What I checked: the comment says the two controls *"can never appear
+together"* — the Klangreise will never have a guidance-only stem ("the music IS
+that exercise") and the Bodyscan's `intro_until` is null. True of today's two
+recordings. **No constraint enforces it.** Nothing stops an `exercise_cuts` row
+carrying both `intro_until` and `voice_src`.
+
+What I did: `validateConfig` emits a **warning**, not an error, and the message
+names the comment it is protecting.
+
+Why: a warning is the honest severity. The config is not wrong — the layout is
+unprepared. Making these two controls configurable is exactly what produces the
+pairing, so it is called out before somebody finds it on a therapist's screen.
+
+What I need from Ben: a decision eventually — either the immersive sheet takes
+both controls, or a `CHECK` forbids the pairing. Right now a comment is
+load-bearing. Nothing blocks today.

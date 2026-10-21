@@ -2829,3 +2829,74 @@ html[data-musy-scroll-snap] {
   flex-direction: column;
   gap: var(--space-gap-stack);
 }
+
+
+/* ═══ THE EXERCISE BUILDER ══════════════════════════════════════════════════
+   `/exercise-builder`, and a custom pattern under L14: the design system has
+   a box, a field and a button, and no component for *a column of boxes with an
+   editor beside a preview*. So the layout is here, every declaration resolves
+   to a Layer 1 token, and the class is `musie-` so nobody mistakes it for a
+   system part (L14.2).
+
+   IT IS A CANDIDATE FOR NOTHING. L14.3 says a pattern that recurs is a
+   component request — this one does not recur, and should not: a split
+   editor is what one tool looks like, not a thing the product does. If a
+   second screen ever wants it, that is the moment to ask, and not before. */
+.musie-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+}
+
+/* The editor and its preview, side by side where there is room for both.
+   ONE BREAKPOINT, and it is the same one the route's `wide` handle is about:
+   under it the preview goes under the fields, which is the honest order —
+   you write, then you look. */
+.musie-builder__split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-gap-group);
+}
+
+@media (min-width: 48rem) {
+  .musie-builder__split {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.musie-builder__edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+}
+
+/* The preview sits on the raised surface, because it is standing in for a
+   step's own box and a flat panel reads as more fields. */
+.musie-builder__preview {
+  padding: var(--space-inset-card);
+  border-radius: var(--radius-card);
+  background: var(--surface-raised);
+}
+
+.musie-builder__previewLabel {
+  margin: 0 0 var(--space-gap-group);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  color: var(--on-surface-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--type-label-md-tracking);
+}
+
+/* One question of a rotating set: three fields and a remove, held together so
+   the group reads as one thing rather than as nine loose fields in a column. */
+.musie-builder__question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  padding: var(--space-inset-card);
+  border: var(--border-width-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}

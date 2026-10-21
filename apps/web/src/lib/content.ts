@@ -627,7 +627,7 @@ export type ListenAudio =
    TypeScript does not fold a concatenation into a literal type. */
 const CUT_SELECT = 'id, locale, posture, ending, mixed_src, voice_src, duration_seconds, intro_until, track_id';
 
-interface CutRow {
+export interface CutRow {
   id: string;
   locale: string;
   posture: string | null;
@@ -752,4 +752,28 @@ export async function getCardByCode(code: string, locale: Locale): Promise<Card 
   if (data === null) return null;
 
   return toCard(data, locale)[0] ?? null;
+}
+
+/**
+ * Every cut, for every exercise, in every locale — for `/exercise-builder`.
+ *
+ * `getListenAudio` above reads the same table but asks a different question:
+ * *which ONE recording serves this person's two answers, in this locale*. The
+ * builder asks *what does this exercise have at all*, because a config states
+ * the whole answer matrix and the gaps in it are the interesting part — three
+ * rows here, all `de`, is what says the English listening exercises cannot be
+ * listened to.
+ *
+ * No `locale` filter and no `pickCut`, therefore. Ordered, so two runs of the
+ * builder produce the same file.
+ */
+export async function getExerciseCuts(): Promise<(CutRow & { exercise_id: string })[]> {
+  const { data, error } = await getSupabase()
+    .from('exercise_cuts')
+    .select(`exercise_id, ${CUT_SELECT}`)
+    .order('id');
+
+  if (error !== null) fail('exercise_cuts', error.message);
+
+  return (data ?? []) as (CutRow & { exercise_id: string })[];
 }

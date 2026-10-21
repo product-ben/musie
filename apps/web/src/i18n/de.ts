@@ -1823,4 +1823,58 @@ anzunehmen, das alte Ja gelte weiter.`,
 
   'consent.settings.headline': 'Was du mit uns teilst',
   'consent.settings.text': 'Beides ist freiwillig, und du kannst es jederzeit ändern. Nichts davon ändert, wie Musie für dich funktioniert.',
+
+  /* ── /exercise-builder ──────────────────────────────────────────────────
+     §1 du, §3 verb-first on every action, §7 typography: – and not —.
+     *Übungseditor* over *Übungs-Editor*: §6 only wants a break point where
+     the compound has no legal one, and this one breaks at Übungs|editor.
+     *Bildschirm* rather than *digital* for the mode badge — the therapist is
+     being told where the cards ARE, which is the thing they can picture, and
+     §8 lets a technical word stay only where it is the word people use. */
+  'builder.headline': 'Übungseditor',
+  'builder.intro': 'Bearbeite die Texte jeder Übung, in beiden Sprachen, und lade sie als eine Datei herunter. Hier wird nichts gespeichert – die Datei ist das, was du weitergibst.',
+  'builder.pick': 'Welche Übung',
+  'builder.locale': 'Welche Sprache',
+  'builder.locale.de': 'Deutsch',
+  'builder.locale.en': 'Englisch',
+  'builder.implemented': 'Fertig',
+  'builder.unimplemented': 'Noch nicht gebaut',
+  'builder.mode.analogue': 'Mit Karten auf dem Tisch',
+  'builder.mode.digital': 'Mit Karten auf dem Bildschirm',
+
+  'builder.library': 'In der Übungsliste',
+  'builder.library.name': 'Name',
+  'builder.library.description': 'Beschreibung',
+  'builder.library.needs': 'Was bereitliegen soll',
+  'builder.library.needsHint': 'Lass das Feld leer, wenn die Übung nichts braucht.',
+  'builder.library.imageAlt': 'Bildbeschreibung',
+  'builder.library.imageAltHint': 'Wird allen vorgelesen, die das Bild nicht sehen können. Beschreibe, was darauf zu sehen ist.',
+
+  'builder.field.headline': 'Überschrift',
+  'builder.field.body': 'Text',
+  'builder.field.bodyHint': 'Eine leere Zeile beginnt einen neuen Absatz. Beginne eine Zeile mit 1. für eine nummerierte Liste oder mit - für eine Aufzählung.',
+  'builder.field.placeholder': 'Hinweis im Schreibfeld',
+  'builder.field.placeholderHint': 'Grauer Text im Feld, der sagt, was dort hingehört. Reiner Text – keine Formatierung.',
+  'builder.preview': 'So wird es aussehen',
+  'builder.chromeCopy.headline': 'Noch keine eigenen Texte',
+  'builder.chromeCopy': 'Dieser Schritt hat noch keine eigenen Texte: Er nutzt Formulierungen, die fest in der App stehen. Was du hier schreibst, ist ein Wunsch, sie herauszulösen – die App ändert sich dadurch noch nicht.',
+
+  'builder.questions': 'Fragen beim Hören',
+  'builder.questions.intro': 'Eine wechselnde Frage steht unter dem Player und kommt in der Reflexion zurück. Schalte sie nur ein, wenn du eine möchtest – die Übung funktioniert auch ohne.',
+  'builder.questions.toggle': 'Wechselnde Frage stellen',
+  'builder.questions.listen': 'Beim Hören',
+  'builder.questions.listenHint': 'Steht unter dem Player, während die Musik läuft.',
+  'builder.questions.reflect': 'In der Reflexion',
+  'builder.questions.reflectHint': 'Derselbe Gedanke, hinterher als Frage gestellt.',
+  'builder.questions.helper': 'Wenn jemand nicht weiterkommt',
+  'builder.questions.helperHint': 'Steht hinter dem Fragezeichen und hilft allen, die nicht wissen, wo sie anfangen sollen.',
+  'builder.questions.add': 'Frage hinzufügen',
+  'builder.questions.remove': 'Diese Frage entfernen',
+
+  'builder.problems': 'Was noch fehlt',
+  'builder.problems.none': 'Nichts fehlt. Diese Übung kann weitergegeben werden.',
+
+  'builder.hand': 'Weitergeben',
+  'builder.hand.intro': 'Lade die Datei herunter und schick sie weiter. Sie wird von Hand gelesen und in Musie eingebaut – bis dahin erreicht nichts davon jemanden.',
+  'builder.download': 'Datei herunterladen',
 };

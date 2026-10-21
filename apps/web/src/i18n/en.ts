@@ -2277,6 +2277,58 @@ still covers it.`,
 
   'consent.settings.headline': 'What you share with us',
   'consent.settings.text': 'Both are optional and you can change them whenever you like. Neither one changes how Musie works for you.',
+
+  /* ── /exercise-builder ──────────────────────────────────────────────────
+     A tool, like /goal-mappings above: the therapist edits the copy, the file
+     comes out, and nothing is saved. The strings say that plainly in both
+     locales, because a screen that LOOKS like an admin panel and silently
+     discards work is the worst version of this. */
+  'builder.headline': 'Exercise builder',
+  'builder.intro': 'Edit the copy of any exercise, in either language, and download it as one file. Nothing here is saved — the file is what you hand over.',
+  'builder.pick': 'Which exercise',
+  'builder.locale': 'Which language',
+  'builder.locale.de': 'German',
+  'builder.locale.en': 'English',
+  'builder.implemented': 'Built',
+  'builder.unimplemented': 'Not built yet',
+  'builder.mode.analogue': 'With the cards on the table',
+  'builder.mode.digital': 'With the cards on screen',
+
+  'builder.library': 'In the exercise list',
+  'builder.library.name': 'Name',
+  'builder.library.description': 'Description',
+  'builder.library.needs': 'What to have ready',
+  'builder.library.needsHint': 'Leave this empty if the exercise needs nothing.',
+  'builder.library.imageAlt': 'Picture description',
+  'builder.library.imageAltHint': 'Read aloud to anyone who cannot see the picture. Describe what is in it.',
+
+  'builder.field.headline': 'Headline',
+  'builder.field.body': 'Text',
+  'builder.field.bodyHint': 'A blank line starts a new paragraph. Begin a line with 1. for a numbered list, or with - for a bulleted one.',
+  'builder.field.placeholder': 'Prompt in the writing box',
+  'builder.field.placeholderHint': 'Grey text inside the box, to say what to write. Plain text — no formatting.',
+  'builder.preview': 'How it will look',
+  'builder.chromeCopy.headline': 'No text of its own yet',
+  'builder.chromeCopy': 'This step has no text of its own yet: it uses wording built into the app. Anything you write here is a request to move that wording out, and it will not change the app on its own.',
+
+  'builder.questions': 'Questions while listening',
+  'builder.questions.intro': 'A rotating question sits under the player and comes back in the reflection. Switch it on only if you want one — the exercise reads perfectly well without.',
+  'builder.questions.toggle': 'Ask a rotating question',
+  'builder.questions.listen': 'While listening',
+  'builder.questions.listenHint': 'Shown under the player while the music runs.',
+  'builder.questions.reflect': 'In the reflection',
+  'builder.questions.reflectHint': 'The same thought, asked afterwards as a question.',
+  'builder.questions.helper': 'If someone is stuck',
+  'builder.questions.helperHint': 'Shown behind the question mark, to help someone who does not know where to start.',
+  'builder.questions.add': 'Add a question',
+  'builder.questions.remove': 'Remove this question',
+
+  'builder.problems': 'What still needs doing',
+  'builder.problems.none': 'Nothing missing. This exercise is ready to hand over.',
+
+  'builder.hand': 'Hand it over',
+  'builder.hand.intro': 'Download the file and send it on. It is read and put into Musie by hand — nothing you do here reaches anybody until then.',
+  'builder.download': 'Download the file',
 } as const;
 
 /** Every catalogue must answer to this shape. */

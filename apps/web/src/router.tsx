@@ -268,6 +268,32 @@ export const router = createBrowserRouter([
         },
         handle: handle({ titleKey: 'route.goalMappings.title' }),
       },
+      {
+        /* THE EXERCISE BUILDER — the same tool shape again, and the closest
+           sibling /goal-mappings has: read the live content, edit it in the
+           browser, emit a file, write nothing. The difference is who it is
+           for. That one is for Ben, deciding a mapping in a minute; this one
+           is handed to a MUSIC THERAPIST, who edits the copy of an exercise
+           and sends the file back.
+
+           So it is `wide`: two columns of copy beside a live preview is what
+           the screen is, and `--bp-md` cannot hold both.
+
+           `lazy` like the rest, and here it is nearly free either way — the
+           module imports nothing the app does not already ship. It stays lazy
+           because every other tool on this table is, and because a screen that
+           reads BOTH locales of every exercise on mount has no business in
+           anybody's first paint.
+
+           IT STILL WRITES NOTHING, and the header of routes/ExerciseBuilder.tsx
+           says why that is a design and not a gap. */
+        path: 'exercise-builder',
+        lazy: async () => {
+          const { ExerciseBuilder } = await import('./routes/ExerciseBuilder');
+          return { Component: ExerciseBuilder };
+        },
+        handle: handle({ titleKey: 'builder.headline', wide: true }),
+      },
       /* `/done` IS GONE. The prototype ended on a screen that acknowledged the
          session and offered to share it; C.2 cut sharing, and D.5 routes a
          finished run straight into its own diary entry — which already says
