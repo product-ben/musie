@@ -10479,3 +10479,59 @@ pairing, so it is called out before somebody finds it on a therapist's screen.
 What I need from Ben: a decision eventually — either the immersive sheet takes
 both controls, or a `CHECK` forbids the pairing. Right now a comment is
 load-bearing. Nothing blocks today.
+
+## Three Layer 1 tokens are window-driven, so a framed preview inherits the wrong ones — FLAGGED
+
+Where: `src/shell.css` (`.musie-builder__phone`),
+`packages/design-system/tokens/musy-foundations.css:717,732,737-739`
+
+What I checked: `--gutter`, `--columns`, `--grid-gap` and `--viewport-block`
+are set in `:root` and overridden by `@media (min-width: …)`. `.musie-rail`
+already declares `container-type: inline-size` and the wizard has an
+`@container (max-width: 420px)` variant, so COMPONENTS respond to their
+container — but a custom property resolved by a media query is settled before
+any container is consulted, so the values those components read are the
+window's.
+
+Measured, not assumed: on a 1440px window the 480px preview frame inherited
+`--gutter: var(--sp-7)` (the 1280px gutter) and drew phone copy at desktop
+spacing; and with `--viewport-block` at `100svh` the listen step's scroll-snap
+pager stopped snapping and stacked every view end to end — one frame 3,328px
+tall.
+
+What I did: pinned the base block's own four values on the frame, with a
+comment saying they are the window's decision being undone rather than a
+design decision being made. The frame also carries a height, so the pager has
+a viewport to measure against.
+
+Why: the brief was a mobile preview. A preview that renders desktop spacing is
+worse than no preview, because it is confidently wrong about the one thing it
+exists to show.
+
+What I need from Ben: nothing to decide. Worth knowing that any future framed
+preview — a Storybook viewport, a side-by-side comparison — hits this, and
+that the fix is for Layer 1 to express these four as container queries rather
+than for each caller to re-pin them. If that ever happens, the block in
+`shell.css` deletes itself and says so.
+
+## `<details>` for the exercise picker, because the system has no disclosure — RESOLVED
+
+Where: `src/routes/ExerciseBuilder.tsx`, `src/shell.css`
+(`.musie-builder__pick`)
+
+What I checked: the design system exports `DrillDown`, `Sheet`, `Lightbox` and
+`InteractiveWizard`, and no collapsible or disclosure. `Sheet` is the nearest,
+and it is a layer over the page rather than a section of it.
+
+What I did: a native `<details>` / `<summary>` with `musie-` classes, under
+L14 — a custom pattern where the system has no component. The closed row shows
+which exercise is selected, because a disclosure that hides its own answer
+makes you open it to find out what you chose.
+
+Why: the element brings its own keyboard and screen-reader behaviour, and
+rebuilding that on a `<button>` plus `aria-expanded` would be the design
+system's job and not a tool screen's.
+
+What I need from Ben: nothing now. L14.3 says a pattern that recurs is a
+component request — this is one call site, and a disclosure is a plausible
+Layer 2 part the day a second screen wants one.

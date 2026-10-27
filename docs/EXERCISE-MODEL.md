@@ -159,6 +159,36 @@ Those are read out of the database and **shown**, because a config states them
 and the therapist should see what they are handing over — but changing them is
 changing what the app does.
 
+### The preview is the real screen
+
+The left column is a phone-width frame holding the step itself: the real
+`ContentBox` + `InteractiveWizard` + `WizardPanel` shell from `Session.tsx`,
+with `SessionIntro`, `SessionScan`, `SessionSelect`, `SessionView`,
+`SessionListen` or `SessionReflect` inside it. Not a drawing of the step — the
+step. Safe because five of the six are pure, `SessionListen` writes only from
+its play handler, and `CardScanner` has no mount effect so no camera is ever
+requested.
+
+The rail doubles as the step picker: `InteractiveWizard` already takes
+`onStepChange`, so the control that chooses a step is the one people will be
+watched using, and there is no second row of buttons beside it.
+
+**Three things had to be put back inside the frame**, and all three are the
+same bug: Layer 1 drives them off `@media`, which is the window, and a
+container query cannot reach a custom property a media query already resolved.
+
+| Pinned on the frame | Why |
+|---|---|
+| `--gutter`, `--columns`, `--grid-gap` | on a 1440px desktop the preview inherited the 1280px gutter and drew phone copy at desktop spacing |
+| `--viewport-block` | the listen step is a scroll-snap pager measured in `--view-block`; without a height it stopped snapping and stacked to 3,328px |
+| `LocaleContext` | the app's locale is the therapist's account, the copy's is the picker — left alone, German copy rendered under an English rail |
+
+The frame is `--bp-sm` wide and 3:5 tall, which is arithmetic over a Layer 1
+token rather than a device nobody named. Its border sits where the screen edge
+sits and it carries no padding of its own, because everything inside sizes
+against its container: with `--space-inset-card` on the frame the rail got
+380px, needed 402px, and clipped a step the real screen does not clip.
+
 ### The headline split
 
 `exercise_i18n.<step>_md` is one Markdown string whose first line is a `## `
