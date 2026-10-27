@@ -10508,10 +10508,23 @@ Why: the brief was a mobile preview. A preview that renders desktop spacing is
 worse than no preview, because it is confidently wrong about the one thing it
 exists to show.
 
+**A FOURTH ONE, found by Ben's screenshot rather than by me:** the step rail
+collapses below `--bp-md` — current step keeps its label, the rest shrink to
+markers — and that is a media query as well. In a 393px frame inside a 1440px
+window it never fired, so every label rendered and the markers sat on top of
+the words. `InteractiveWizard` already has the answer and says so in the prop
+doc: *"force the collapsed run inside a narrow container, which no media query
+can see."* Passing `compact` fixed it with no CSS.
+
+That it took a screenshot to find is the lesson. I measured widths and
+overflow and called the rail healthy, because `scrollWidth === clientWidth`
+once it scrolled — and a rail whose labels are UNDER its markers measures
+perfectly fine. Numbers did not catch it and a picture did.
+
 What I need from Ben: nothing to decide. Worth knowing that any future framed
-preview — a Storybook viewport, a side-by-side comparison — hits this, and
-that the fix is for Layer 1 to express these four as container queries rather
-than for each caller to re-pin them. If that ever happens, the block in
+preview — a Storybook viewport, a side-by-side comparison — hits all four, and
+that the fix is for Layer 1 to express them as container queries rather than
+for each caller to re-pin them. If that ever happens, the block in
 `shell.css` deletes itself and says so.
 
 ## `<details>` for the exercise picker, because the system has no disclosure — RESOLVED
@@ -10535,3 +10548,28 @@ system's job and not a tool screen's.
 What I need from Ben: nothing now. L14.3 says a pattern that recurs is a
 component request — this is one call site, and a disclosure is a plausible
 Layer 2 part the day a second screen wants one.
+
+## The preview frame is 393 x 852, which is not a token and should not be — RESOLVED
+
+Where: `src/shell.css` (`.musie-builder`, `--musie-phone-inline` /
+`--musie-phone-block`)
+
+What I checked: L14.1 wants every declaration in a custom pattern to resolve to
+a Layer 1 token or arithmetic over one. These two resolve to neither. I first
+wrote the frame as `--bp-sm` wide and `calc(var(--bp-sm) * 5 / 3)` tall, which
+satisfied the rule and was wrong: Ben asked for *"genau die iPhone 16 Ansicht,
+die man auch bekommt wenn man im Chrome dev tools unterwegs ist"*, and that is
+393 x 852.
+
+What I did: declared both as named custom properties on `.musie-builder`, with
+the device in the comment above them.
+
+Why: a breakpoint and a device are different kinds of fact. `--bp-sm` is the
+width at which THIS design system changes its mind; 393px is the width of a
+phone Apple shipped. Deriving one from the other would have produced a number
+that looked principled and meant nothing — and the preview exists to be
+trusted about exactly this measurement.
+
+What I need from Ben: nothing. Flagging it because it is a deliberate
+exception to L14.1 rather than an oversight, and the next person reading that
+block should see the argument rather than assume a token was missed.

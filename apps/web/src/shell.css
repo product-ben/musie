@@ -2843,6 +2843,19 @@ html[data-musy-scroll-snap] {
    markdown panels are gone, replaced by one preview that renders the REAL
    step. */
 .musie-builder {
+  /* ── THE DEVICE ──────────────────────────────────────────────────────────
+     393 x 852 is the iPhone 16's CSS viewport — the preset Chrome DevTools
+     opens under that name, which is what Ben asked the preview to be.
+
+     DELIBERATELY NOT TOKENS, and not arithmetic over one. L14.1 wants every
+     declaration to resolve to Layer 1, and these two do not, because they are
+     not a design decision: they describe a device the design system has no
+     opinion about. Named here once, with the device in the comment — deriving
+     393px from `--bp-sm` would be a sum that looked principled and meant
+     nothing. Logged in OPEN-QUESTIONS.md. */
+  --musie-phone-inline: 393px;
+  --musie-phone-block: 852px;
+
   display: flex;
   flex-direction: column;
   gap: var(--space-section);
@@ -2906,7 +2919,7 @@ html[data-musy-scroll-snap] {
   .musie-builder__split {
     /* The phone is a fixed width and the editor takes what is left: a device
        frame that stretches is not a device frame. */
-    grid-template-columns: var(--bp-sm) 1fr;
+    grid-template-columns: var(--musie-phone-inline) 1fr;
   }
 
   /* IT FOLLOWS YOU DOWN THE EDITOR. The question fields on the listen step run
@@ -2923,7 +2936,7 @@ html[data-musy-scroll-snap] {
    is seen at the width it will be read at. */
 .musie-builder__phone {
   inline-size: 100%;
-  max-inline-size: var(--bp-sm);
+  max-inline-size: var(--musie-phone-inline);
   margin-inline: auto;
   /* NO PADDING, AND THAT IS MEASURED. The frame's border has to sit where a
      480px screen's edge sits, because everything inside sizes itself against
@@ -2944,13 +2957,11 @@ html[data-musy-scroll-snap] {
      tall, and that resolves from `--viewport-block: 100svh` — the WINDOW
      again. Without a height here the pager stopped snapping and stacked: one
      frame 3,328px tall with every view laid end to end, which is not a screen
-     anybody has.
-     So the frame IS the viewport: 3:5 at `--bp-sm`, which is arithmetic over
-     a Layer 1 token rather than a device nobody named, and the pager measures
-     itself against it. The therapist can then see the thing they actually
-     need to see — whether their text fits a screen without scrolling. */
-  --viewport-block: calc(var(--bp-sm) * 5 / 3);
-  block-size: calc(var(--bp-sm) * 5 / 3);
+     anybody has. So the frame IS the viewport, and the pager measures itself
+     against it — which is how a therapist can see the thing they actually
+     need to see: whether their text fits a screen without scrolling. */
+  --viewport-block: var(--musie-phone-block);
+  block-size: var(--musie-phone-block);
   /* Down like a phone, never sideways: a horizontal bar inside the bezel
      would be the frame's artefact and not the screen's. */
   overflow-x: clip;

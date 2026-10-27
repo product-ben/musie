@@ -182,12 +182,22 @@ container query cannot reach a custom property a media query already resolved.
 | `--gutter`, `--columns`, `--grid-gap` | on a 1440px desktop the preview inherited the 1280px gutter and drew phone copy at desktop spacing |
 | `--viewport-block` | the listen step is a scroll-snap pager measured in `--view-block`; without a height it stopped snapping and stacked to 3,328px |
 | `LocaleContext` | the app's locale is the therapist's account, the copy's is the picker — left alone, German copy rendered under an English rail |
+| `compact` on the wizard | the rail collapses below `--bp-md`, and that is a media query too: in a 393px frame inside a 1440px window every label rendered and the markers sat on top of the words |
 
-The frame is `--bp-sm` wide and 3:5 tall, which is arithmetic over a Layer 1
-token rather than a device nobody named. Its border sits where the screen edge
-sits and it carries no padding of its own, because everything inside sizes
-against its container: with `--space-inset-card` on the frame the rail got
-380px, needed 402px, and clipped a step the real screen does not clip.
+The wizard's own prop documents this case exactly — *"force the collapsed run
+inside a narrow container, which no media query can see"* — so that one needed
+no CSS, only passing.
+
+**The frame is 393 × 852**, the iPhone 16's CSS viewport and the preset Chrome
+DevTools opens under that name. Those two numbers are deliberately not tokens
+and not arithmetic over one: they describe a device the design system has no
+opinion about, and deriving 393 from `--bp-sm` would be a sum that looked
+principled and meant nothing.
+
+Its border sits where the screen edge sits and it carries no padding of its
+own, because everything inside sizes against its container: with
+`--space-inset-card` on the frame the rail lost 22px and clipped a step the
+real screen does not clip.
 
 ### The headline split
 

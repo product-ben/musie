@@ -100,27 +100,13 @@ function questionSourceFor(exerciseId: string): QuestionSource | undefined {
 }
 
 /**
- * The step's forward action, disabled.
- *
- * Its own component for one reason: it must read the PREVIEW's locale, and a
- * `useT()` called in `StepPreview` runs before that provider exists. A German
- * step under an English *Continue* is the mismatch this whole wrapper is for.
- */
-function PreviewAction() {
-  const t = useT();
-  return <CtaButton variant="primary" disabled>{t('common.continue')}</CtaButton>;
-}
-
-/**
  * The live preview: the real shell, the real step, the edited copy.
  *
  * Its own component so the session screens' hooks sit behind one boundary —
  * `SessionListen` alone is 26 of them, and re-running those on every keystroke
  * in the editor beside it is the thing that would make typing feel slow.
  */
-function StepPreview({
-  exercise, config, step, steps, locale, mode, onStepChange,
-}: {
+interface PreviewProps {
   exercise: Exercise;
   config: ExerciseConfig;
   step: StepId;
@@ -128,7 +114,39 @@ function StepPreview({
   locale: Locale;
   mode: RunMode;
   onStepChange: (next: StepId) => void;
-}) {
+}
+
+/**
+ * The preview, in the language being edited.
+ *
+ * TWO COMPONENTS AND NOT ONE, and the split is the whole point: a `useT()`
+ * called beside the provider runs BEFORE it, so everything the outer function
+ * translated came out in the app's locale while the step inside came out in
+ * the editor's. That showed as a German step under an English rail — *Start*
+ * where the screen says *Einsteigen* — and it survived one round of fixing
+ * because the button was patched on its own instead of the boundary being
+ * moved. Everything that translates now sits inside.
+ */
+function StepPreview(props: PreviewProps) {
+  const { locale } = props;
+
+  /* `setLocale` is a no-op on purpose: nothing inside the preview may change
+     the builder's own language, and nothing inside it tries. */
+  const value = React.useMemo(
+    () => ({ locale, resolved: true, setLocale: () => { /* not from in here. */ } }),
+    [locale],
+  );
+
+  return (
+    <LocaleContext.Provider value={value}>
+      <PreviewBody {...props} />
+    </LocaleContext.Provider>
+  );
+}
+
+function PreviewBody({
+  exercise, config, step, steps, locale, mode, onStepChange,
+}: PreviewProps) {
   const t = useT();
 
   /* Local answers, so the segmented controls and the switch in the preview
@@ -152,22 +170,7 @@ function StepPreview({
   const first = written.at(0);
   const rotates = listen?.features.includes('rotating_question') ?? false;
 
-  /* ── THE PREVIEW SPEAKS THE LANGUAGE BEING EDITED ─────────────────────
-     The app's own locale is whatever the therapist's account says, and the
-     copy being edited is whichever the picker is on. Left alone those come
-     apart, and the preview renders German copy under an English rail with an
-     English *Continue* under it — which is not what anybody's screen looks
-     like, and is exactly the kind of wrongness a preview must not invent.
-
-     `setLocale` is a no-op here on purpose: nothing inside the preview may
-     change the builder's own language, and nothing inside it tries. */
-  const previewLocale = React.useMemo(
-    () => ({ locale, resolved: true, setLocale: () => { /* not from in here. */ } }),
-    [locale],
-  );
-
   return (
-    <LocaleContext.Provider value={previewLocale}>
     <ContentBox
       headingLevel={2}
       headlineStep="heading-sm"
@@ -183,6 +186,16 @@ function StepPreview({
               icon: STEP_ICON[id],
             }))}
             current={step}
+            /* COMPACT, AND THE PROP EXISTS FOR EXACTLY THIS. The wizard
+               collapses below `--bp-md` — current step keeps its label, the
+               rest shrink to markers — and that rule is a MEDIA query, so in a
+               393px frame inside a 1440px window it never fires: every label
+               rendered, and the markers sat on top of the words.
+               `compact` is documented as "force the collapsed run inside a
+               narrow container, which no media query can see", which is this
+               container exactly. Same bug as `--gutter` and `--viewport-block`;
+               this one the component already had an answer for. */
+            compact
             /* EVERY STEP REACHABLE, which a real run would never allow — the
                rail here is a picker, and a therapist editing the reflect copy
                must not have to walk four steps to reach it. */
@@ -193,7 +206,9 @@ function StepPreview({
         </div>
       }
     >
-      <WizardPanel actions={<PreviewAction />}>
+      <WizardPanel
+        actions={<CtaButton variant="primary" disabled>{t('common.continue')}</CtaButton>}
+      >
         {step === 'intro' && (
           <SessionIntro
             exercise={exercise}
@@ -288,7 +303,6 @@ function StepPreview({
         )}
       </WizardPanel>
     </ContentBox>
-    </LocaleContext.Provider>
   );
 }
 
