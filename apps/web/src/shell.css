@@ -2829,3 +2829,224 @@ html[data-musy-scroll-snap] {
   flex-direction: column;
   gap: var(--space-gap-stack);
 }
+
+
+/* ═══ THE EXERCISE BUILDER ══════════════════════════════════════════════════
+   `/exercise-builder`: a phone-width live preview beside the editor for the
+   step it is showing. A custom pattern under L14 — the design system has a
+   box, a field and a wizard, and no component for *a device frame next to a
+   form*, which is what one tool looks like and not a thing the product does.
+   Every declaration resolves to a Layer 1 token; the class is `musie-` so
+   nobody mistakes it for a system part (L14.2).
+
+   REBUILT 2026-10-27 on Ben's brief: the per-step "so wird es aussehen"
+   markdown panels are gone, replaced by one preview that renders the REAL
+   step. */
+.musie-builder {
+  /* ── THE DEVICE ──────────────────────────────────────────────────────────
+     393 x 852 is the iPhone 16's CSS viewport — the preset Chrome DevTools
+     opens under that name, which is what Ben asked the preview to be.
+
+     DELIBERATELY NOT TOKENS, and not arithmetic over one. L14.1 wants every
+     declaration to resolve to Layer 1, and these two do not, because they are
+     not a design decision: they describe a device the design system has no
+     opinion about. Named here once, with the device in the comment — deriving
+     393px from `--bp-sm` would be a sum that looked principled and meant
+     nothing. Logged in OPEN-QUESTIONS.md. */
+  --musie-phone-inline: 393px;
+  --musie-phone-block: 852px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+}
+
+/* ── The exercise, folded away ──────────────────────────────────────────────
+   A native <details>, so the disclosure keyboard and screen-reader behaviour
+   come for free. Closed by default: it is chosen once and then stands out of
+   the way of the thing being done. */
+.musie-builder__pick {
+  padding: var(--space-inset-card);
+  border: var(--border-width-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-raised);
+}
+
+.musie-builder__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gap-inline);
+  align-items: baseline;
+  cursor: pointer;
+}
+
+.musie-builder__summaryLabel {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  color: var(--on-surface);
+}
+
+/* WHICH EXERCISE, ON THE CLOSED ROW. A disclosure that hides its own answer
+   makes you open it to find out what you chose. */
+.musie-builder__summaryValue {
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+.musie-builder__picked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  margin-block-start: var(--space-gap-group);
+}
+
+/* ── The phone and the editor ─────────────────────────────────────────────
+   One column under the tablet breakpoint, which is also where two columns of
+   this width stop fitting. The preview leads on a narrow screen: you look,
+   then you write. */
+.musie-builder__split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-section);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .musie-builder__split {
+    /* The phone is a fixed width and the editor takes what is left: a device
+       frame that stretches is not a device frame. */
+    grid-template-columns: var(--musie-phone-inline) 1fr;
+  }
+
+  /* IT FOLLOWS YOU DOWN THE EDITOR. The question fields on the listen step run
+     past the fold, and a preview you have scrolled away from is a preview you
+     stop consulting. */
+  .musie-builder__phoneColumn {
+    position: sticky;
+    inset-block-start: var(--space-gap-group);
+  }
+}
+
+/* THE FRAME IS THE CONSTRAINT, not decoration: `--bp-sm` is Layer 1's own
+   name for a large phone, and the whole point of the preview is that the copy
+   is seen at the width it will be read at. */
+.musie-builder__phone {
+  inline-size: 100%;
+  max-inline-size: var(--musie-phone-inline);
+  margin-inline: auto;
+  /* NO PADDING, AND THAT IS MEASURED. The frame's border has to sit where a
+     480px screen's edge sits, because everything inside sizes itself against
+     its container: with `--space-inset-card` on the frame the rail got 380px,
+     needed 402px, and the fourth step was clipped — a bug the preview would
+     have been showing of a screen that does not have it. The border is the
+     bezel; the page inside owns its own inset, exactly as it does for real. */
+  border: var(--border-width-regular) solid var(--border-subtle);
+  border-radius: var(--radius-sheet);
+  background: var(--surface);
+  /* The step's own `@container` rules — the wizard switches variant at 420px —
+     resolve against THIS, not the window, which is what makes a preview at
+     this width honest rather than a narrow copy of the desktop layout. */
+  container-type: inline-size;
+
+  /* ── AND IT HAS A HEIGHT, WHICH IS NOT DECORATION ──────────────────────
+     The listen step is a scroll-snap pager whose views are `--view-block`
+     tall, and that resolves from `--viewport-block: 100svh` — the WINDOW
+     again. Without a height here the pager stopped snapping and stacked: one
+     frame 3,328px tall with every view laid end to end, which is not a screen
+     anybody has. So the frame IS the viewport, and the pager measures itself
+     against it — which is how a therapist can see the thing they actually
+     need to see: whether their text fits a screen without scrolling. */
+  --viewport-block: var(--musie-phone-block);
+  block-size: var(--musie-phone-block);
+  /* Down like a phone, never sideways: a horizontal bar inside the bezel
+     would be the frame's artefact and not the screen's. */
+  overflow-x: clip;
+  overflow-y: auto;
+
+  /* ── THE PHONE'S OWN TOKENS, PUT BACK ──────────────────────────────────
+     Layer 1 drives `--gutter`, `--columns` and `--grid-gap` off `@media`,
+     which is the WINDOW — so on a 1440px desktop the preview inherited the
+     1280px gutter (`--sp-7`) and drew phone copy at desktop spacing. Container
+     queries cannot fix that: a custom property set by a media query is
+     resolved before any container is consulted.
+     So the four values below are the base block's own, verbatim — the ones
+     that apply under 768px. This is not a design decision being made here;
+     it is the window's decision being undone. If Layer 1 ever moves these to
+     container queries, this block deletes itself. */
+  --gutter: var(--sp-4);
+  --columns: 4;
+  --grid-gap: var(--sp-4);
+  padding-inline: var(--gutter);
+}
+
+.musie-builder__edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  min-inline-size: 0;
+}
+
+/* One question of a rotating set: three fields and a remove, held together so
+   the group reads as one thing rather than as nine loose fields in a column. */
+.musie-builder__question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  padding: var(--space-inset-card);
+  border: var(--border-width-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
+/* The change log: three columns, the path in the row header. A table and not
+   a list because the reader is comparing two values per row, which is what a
+   table is for. */
+.musie-builder__log {
+  inline-size: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+
+.musie-builder__log th,
+.musie-builder__log td {
+  padding: var(--space-gap-related) var(--space-gap-inline);
+  border-block-end: var(--border-width-hairline) solid var(--border-subtle);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  text-align: start;
+  vertical-align: baseline;
+}
+
+.musie-builder__log thead th {
+  font-weight: var(--type-label-md-weight);
+  color: var(--on-surface-muted);
+}
+
+/* The old value is the quieter of the two: the reader is checking what it
+   became, and the strikethrough would make a long paragraph unreadable. */
+.musie-builder__was {
+  color: var(--on-surface-muted);
+}
+
+.musie-builder__path {
+  display: block;
+  margin-block-end: var(--space-gap-related);
+  overflow-wrap: anywhere;
+}
+
+/* The two version switches, under the phone they change. A column at the
+   frame's own width so they read as part of it rather than as page furniture
+   that happens to sit nearby. */
+.musie-builder__variant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  inline-size: 100%;
+  max-inline-size: var(--musie-phone-inline);
+  margin-inline: auto;
+  margin-block-start: var(--space-gap-group);
+}

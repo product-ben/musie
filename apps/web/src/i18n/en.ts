@@ -2277,6 +2277,98 @@ still covers it.`,
 
   'consent.settings.headline': 'What you share with us',
   'consent.settings.text': 'Both are optional and you can change them whenever you like. Neither one changes how Musie works for you.',
+
+  /* ── /exercise-builder ──────────────────────────────────────────────────
+     A tool, like /goal-mappings above: the therapist edits the copy, the file
+     comes out, and nothing is saved. The strings say that plainly in both
+     locales, because a screen that LOOKS like an admin panel and silently
+     discards work is the worst version of this. */
+  'builder.headline': 'Exercise builder',
+  'builder.intro': 'Edit the copy of any exercise, in either language, and download it as one file. Nothing here is saved — the file is what you hand over.',
+  'builder.pick': 'Which exercise',
+  'builder.locale': 'Which language',
+  'builder.locale.de': 'German',
+  'builder.locale.en': 'English',
+  'builder.implemented': 'Built',
+  'builder.unimplemented': 'Not built yet',
+  /* SHORT: a segment is not a row, and the design target is two words. The
+     first pair clipped to "With the cards on th…" at the frame's width,
+     which made the two options indistinguishable. The glyph carries the
+     rest. */
+  'builder.mode.analogue': 'On the table',
+  'builder.mode.digital': 'On screen',
+
+  'builder.mode': 'Which version',
+  'builder.reflectSheet.headline': 'This text appears in a panel, not on the step',
+  'builder.reflectSheet': 'The reflection step itself shows the feelings and the captured thoughts. Your headline, text and prompt appear when someone opens the writing panel — so the preview beside this will not change as you type here.',
+  'builder.library': 'In the exercise list',
+  'builder.library.name': 'Name',
+  'builder.library.description': 'Description',
+  'builder.library.needs': 'What to have ready',
+  'builder.library.needsHint': 'Leave this empty if the exercise needs nothing.',
+  'builder.library.imageAlt': 'Picture description',
+  'builder.library.imageAltHint': 'Read aloud to anyone who cannot see the picture. Describe what is in it.',
+
+  'builder.field.headline': 'Headline',
+  'builder.field.body': 'Text',
+  'builder.field.bodyHint': 'A blank line starts a new paragraph. Begin a line with 1. for a numbered list, or with - for a bulleted one.',
+  'builder.field.placeholder': 'Prompt in the writing box',
+  'builder.field.placeholderHint': 'Grey text inside the box, to say what to write. Plain text — no formatting.',
+  'builder.chromeCopy.headline': 'No text of its own yet',
+  'builder.chromeCopy': 'This step has no text of its own yet: it uses wording built into the app. Anything you write here is a request to move that wording out, and it will not change the app on its own.',
+
+  'builder.field.builtIn': 'This is what the app says here today. Leave it empty to keep it, or write your own.',
+  'builder.field.continueLabel': 'Button that leads on',
+  'builder.field.secondaryLabel': 'The other button',
+  'builder.field.labelHint': 'Two or three words. Leave it empty to keep what the app says.',
+  'builder.willTranslate.de': 'When you leave a field, I rewrite the English version of it.',
+  'builder.willTranslate.en': 'When you leave a field, I rewrite the German version of it.',
+
+  'builder.questions': 'Questions while listening',
+  'builder.questions.intro': 'A rotating question sits under the player and comes back in the reflection. Switch it on only if you want one — the exercise reads perfectly well without.',
+  'builder.questions.toggle': 'Ask a rotating question',
+  'builder.questions.listen': 'While listening',
+  'builder.questions.listenHint': 'Shown under the player while the music runs.',
+  'builder.questions.reflect': 'In the reflection',
+  'builder.questions.reflectHint': 'The same thought, asked afterwards as a question.',
+  'builder.questions.helper': 'If someone is stuck',
+  'builder.questions.helperHint': 'Shown behind the question mark, to help someone who does not know where to start.',
+  'builder.questions.add': 'Add a question',
+  'builder.questions.remove': 'Remove this question',
+
+  'builder.problems': 'What still needs doing',
+  'builder.problems.none': 'Nothing missing. This exercise is ready to hand over.',
+
+  'builder.prompt': 'Tell me what to change',
+  'builder.prompt.intro': 'Describe it in your own words and I will rewrite the wording. I can only change what the exercise SAYS \u2014 not how it works. Anything else I will write down for Ben instead.',
+  'builder.prompt.label': 'What should be different?',
+  'builder.prompt.hint': 'One instruction at a time works best.',
+  'builder.prompt.placeholder': 'Make the introduction warmer and a little shorter',
+  'builder.prompt.submit': 'Rewrite it',
+  'builder.prompt.busy': 'Rewriting\u2026',
+  'builder.prompt.translating': 'Translating the other language\u2026',
+  'builder.prompt.noKey': 'This is not set up yet \u2014 Ben still needs to add the key.',
+  'builder.prompt.forbidden': 'Your account is not on the list for this yet. Ask Ben.',
+  'builder.prompt.failed': 'That did not work. Try again, or change the wording yourself.',
+
+  'builder.changes': 'What you changed',
+  'builder.changes.none': 'Nothing yet. Everything is as it came out of Musie.',
+  'builder.changes.what': 'Where',
+  'builder.changes.before': 'Was',
+  'builder.changes.after': 'Now',
+  'builder.changes.text': 'Wording',
+  'builder.changes.structural': 'Needs a decision',
+  'builder.changes.byPrompt': 'From your instruction',
+  'builder.changes.byTranslation': 'Translated for you',
+
+  'builder.hand.safe': 'This one can go straight in.',
+  'builder.hand.unsafe': 'This one needs a conversation first',
+  'builder.hand.unsafeDetail': 'Something here changes how the exercise works, not just what it says. That cannot simply be loaded into Musie \u2014 it needs a decision. Send the file anyway and say what you were after.',
+
+  'builder.hand': 'Hand it over',
+  'builder.hand.intro': 'Download the file and send it on. It is read and put into Musie by hand — nothing you do here reaches anybody until then.',
+  'builder.download.packing': 'Working out the options\u2026',
+  'builder.download': 'Download the file',
 } as const;
 
 /** Every catalogue must answer to this shape. */

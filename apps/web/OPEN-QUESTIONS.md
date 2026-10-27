@@ -10359,3 +10359,263 @@ development, which is where it costs: a console with a standing warning in it
 is a console nobody reads, and the transcript leak this same branch fixed was
 found *in* that console. Worth an hour in the design system before the next
 screen adds a sixth call site.
+
+---
+
+# Phase — the exercise model and `/exercise-builder`
+
+## No `pnpm exercises:export`, because a `.mjs` cannot import `questions.ts` — RESOLVED
+
+Where: `src/lib/buildExerciseConfig.ts` (header), `src/content/questions.ts:68`
+
+What I checked: the obvious shape for this is a script beside
+`content-export.mjs` that reads the database and writes five files into
+`supabase/content/exercises/`. It is not here, and the reason is one import.
+The rotating questions live in `content/questions.ts` as TypeScript —
+`QUESTION_SETS`, `questionsDe`, `questionsEn` — and Node cannot import that.
+Making it importable means moving the copy into JSON and giving up the
+`Record<QuestionId, QuestionText>` completeness check that file is built
+around, which is a change to a module three screens read.
+
+What I did: assembled configs **in the browser**, where the database and
+`questions.ts` are both ordinary imports, and had the therapist download the
+result. No committed configs, no export script.
+
+Why: the deliverable Ben asked for is a file a therapist hands over. Committed
+configs are a separate want — they are what lets `pnpm check` validate a config
+without a database — and buying them today costs a refactor of a file the
+session screens depend on, for no part of what was asked.
+
+What I need from Ben: nothing now. Worth knowing that the two wants are
+separable and that the second one waits on the `QuestionId` change below.
+
+## `QuestionId` is a closed union, so a therapist cannot write a sixth question — FLAGGED
+
+Where: `src/content/questions.ts:68`
+
+What I checked: `export type QuestionId = 'lq-01' | 'lq-02' | 'lq-03' | 'lq-04'
+| 'lq-05';`, and `questionsDe` / `questionsEn` are
+`Record<QuestionId, QuestionText>` — which the file's own header names as a
+completeness check: a missing question is a type error.
+
+What I did: nothing to that file. The config's question ids are plain strings
+**scoped to their set**, and `validateConfig` checks what the union used to —
+same ids, same order, in every declared text locale, each with `listen`,
+`reflect` and `helper`. So the contract is ready for a therapist-authored
+question and the app is not.
+
+Why: Ben decided on 2026-10-21 that whether a listening exercise rotates
+questions is the therapist's call. A switch they can throw that then refuses a
+sixth question because of a TypeScript union is the kind of half-built thing
+that reads as a bug. The closure was right while five questions were the whole
+product; a question is three strings, unlike a posture, which needs a glyph, a
+label in two locales and a recording and is genuinely a screen.
+
+What I need from Ben: nothing to decide — it is named in the model as the
+blocker for step 4. Flagging that the builder will happily emit a `q-02` that
+today's app cannot render.
+
+## The builder is behind the sign-in gate, so a therapist needs an account — FLAGGED
+
+Where: `src/lib/publicRoute.ts`, `src/router.tsx` (the `exercise-builder` entry)
+
+What I checked: `publicPage()` names three public paths — `/beta`,
+`/impressum`, `/privacy`. Everything else mounts inside `AuthProvider`, which
+resolves a missing session to `{ kind: 'gate' }` and renders the sign-in screen
+in place of whatever was below it.
+
+What I did: left it gated, like `/maintenance`, `/goal-mappings` and every
+other tool. Made a local account with
+`node apps/web/scripts/create-tester.mjs …` to verify the screen.
+
+Why: the alternative is putting an editing tool for live content in front of
+anybody who guesses the URL. The gate is the right answer; it just means
+handing a therapist the tool is handing them credentials too.
+
+What I need from Ben: **how a therapist gets an account.** A tester row made by
+hand is fine for one person and does not scale to a few. Nothing blocks today.
+
+## `select` and `view` have no content columns, and the builder had to say so — RESOLVED
+
+Where: `src/lib/exerciseConfig.ts` (`copySource`), `src/i18n/en.ts`
+(`builder.chromeCopy`)
+
+What I checked: there is no `select_md` and no `view_md`. Every word those two
+steps show is a `MessageKey` — `session.select.headline` is *Wähle eine Karte
+aus*, which is **also** the `##` heading of `scan_md`. The same headline exists
+twice, in two systems, one editable and one not.
+
+What I did: added `copySource: 'content' | 'chrome'` to a run step. The builder
+marks those two, the validator skips the content rules for them, and the screen
+shows a `Message` saying the step has no text of its own yet.
+
+Why: without it the builder opened on four red errors in *What still needs
+doing* that no therapist could resolve, because the copy genuinely is not
+theirs to write. A panel that is red on arrival is a panel nobody reads — the
+exact failure CLAUDE.md rule 8 describes for claims that stop being read. The
+field is the hole stated rather than hidden: moving that copy out of chrome is
+what deletes it.
+
+What I need from Ben: nothing. It is in `docs/EXERCISE-MODEL.md` under what is
+not built.
+
+## `skip_intro` and `mute_background` share one slot, and nothing enforces it — FLAGGED
+
+Where: `src/components/SessionListen.tsx:1150`, `src/lib/exerciseConfig.ts`
+
+What I checked: the comment says the two controls *"can never appear
+together"* — the Klangreise will never have a guidance-only stem ("the music IS
+that exercise") and the Bodyscan's `intro_until` is null. True of today's two
+recordings. **No constraint enforces it.** Nothing stops an `exercise_cuts` row
+carrying both `intro_until` and `voice_src`.
+
+What I did: `validateConfig` emits a **warning**, not an error, and the message
+names the comment it is protecting.
+
+Why: a warning is the honest severity. The config is not wrong — the layout is
+unprepared. Making these two controls configurable is exactly what produces the
+pairing, so it is called out before somebody finds it on a therapist's screen.
+
+What I need from Ben: a decision eventually — either the immersive sheet takes
+both controls, or a `CHECK` forbids the pairing. Right now a comment is
+load-bearing. Nothing blocks today.
+
+## Three Layer 1 tokens are window-driven, so a framed preview inherits the wrong ones — FLAGGED
+
+Where: `src/shell.css` (`.musie-builder__phone`),
+`packages/design-system/tokens/musy-foundations.css:717,732,737-739`
+
+What I checked: `--gutter`, `--columns`, `--grid-gap` and `--viewport-block`
+are set in `:root` and overridden by `@media (min-width: …)`. `.musie-rail`
+already declares `container-type: inline-size` and the wizard has an
+`@container (max-width: 420px)` variant, so COMPONENTS respond to their
+container — but a custom property resolved by a media query is settled before
+any container is consulted, so the values those components read are the
+window's.
+
+Measured, not assumed: on a 1440px window the 480px preview frame inherited
+`--gutter: var(--sp-7)` (the 1280px gutter) and drew phone copy at desktop
+spacing; and with `--viewport-block` at `100svh` the listen step's scroll-snap
+pager stopped snapping and stacked every view end to end — one frame 3,328px
+tall.
+
+What I did: pinned the base block's own four values on the frame, with a
+comment saying they are the window's decision being undone rather than a
+design decision being made. The frame also carries a height, so the pager has
+a viewport to measure against.
+
+Why: the brief was a mobile preview. A preview that renders desktop spacing is
+worse than no preview, because it is confidently wrong about the one thing it
+exists to show.
+
+**A FOURTH ONE, found by Ben's screenshot rather than by me:** the step rail
+collapses below `--bp-md` — current step keeps its label, the rest shrink to
+markers — and that is a media query as well. In a 393px frame inside a 1440px
+window it never fired, so every label rendered and the markers sat on top of
+the words. `InteractiveWizard` already has the answer and says so in the prop
+doc: *"force the collapsed run inside a narrow container, which no media query
+can see."* Passing `compact` fixed it with no CSS.
+
+That it took a screenshot to find is the lesson. I measured widths and
+overflow and called the rail healthy, because `scrollWidth === clientWidth`
+once it scrolled — and a rail whose labels are UNDER its markers measures
+perfectly fine. Numbers did not catch it and a picture did.
+
+What I need from Ben: nothing to decide. Worth knowing that any future framed
+preview — a Storybook viewport, a side-by-side comparison — hits all four, and
+that the fix is for Layer 1 to express them as container queries rather than
+for each caller to re-pin them. If that ever happens, the block in
+`shell.css` deletes itself and says so.
+
+## `<details>` for the exercise picker, because the system has no disclosure — RESOLVED
+
+Where: `src/routes/ExerciseBuilder.tsx`, `src/shell.css`
+(`.musie-builder__pick`)
+
+What I checked: the design system exports `DrillDown`, `Sheet`, `Lightbox` and
+`InteractiveWizard`, and no collapsible or disclosure. `Sheet` is the nearest,
+and it is a layer over the page rather than a section of it.
+
+What I did: a native `<details>` / `<summary>` with `musie-` classes, under
+L14 — a custom pattern where the system has no component. The closed row shows
+which exercise is selected, because a disclosure that hides its own answer
+makes you open it to find out what you chose.
+
+Why: the element brings its own keyboard and screen-reader behaviour, and
+rebuilding that on a `<button>` plus `aria-expanded` would be the design
+system's job and not a tool screen's.
+
+What I need from Ben: nothing now. L14.3 says a pattern that recurs is a
+component request — this is one call site, and a disclosure is a plausible
+Layer 2 part the day a second screen wants one.
+
+## The preview frame is 393 x 852, which is not a token and should not be — RESOLVED
+
+Where: `src/shell.css` (`.musie-builder`, `--musie-phone-inline` /
+`--musie-phone-block`)
+
+What I checked: L14.1 wants every declaration in a custom pattern to resolve to
+a Layer 1 token or arithmetic over one. These two resolve to neither. I first
+wrote the frame as `--bp-sm` wide and `calc(var(--bp-sm) * 5 / 3)` tall, which
+satisfied the rule and was wrong: Ben asked for *"genau die iPhone 16 Ansicht,
+die man auch bekommt wenn man im Chrome dev tools unterwegs ist"*, and that is
+393 x 852.
+
+What I did: declared both as named custom properties on `.musie-builder`, with
+the device in the comment above them.
+
+Why: a breakpoint and a device are different kinds of fact. `--bp-sm` is the
+width at which THIS design system changes its mind; 393px is the width of a
+phone Apple shipped. Deriving one from the other would have produced a number
+that looked principled and meant nothing — and the preview exists to be
+trusted about exactly this measurement.
+
+What I need from Ben: nothing. Flagging it because it is a deliberate
+exception to L14.1 rather than an oversight, and the next person reading that
+block should see the argument rather than assume a token was missed.
+
+## "Deutsch geändert → Englisch neu, und andersrum" is a loop — RESOLVED
+
+Where: `src/routes/ExerciseBuilder.tsx` (`translateTwin`),
+`src/lib/exercisePrompt.ts`
+
+What I checked: Ben asked on 2026-10-27 for every German edit to produce a new
+English translation "und andersrum". Taken literally that is two fields each
+regenerating the other: edit DE → EN rewritten; correct that EN by hand → DE
+rewritten, over her German. The last edit always wins and silently destroys
+the other side.
+
+What I did: made it one-directional per edit event. The field a PERSON touches
+is the source; the generated twin does not itself trigger a translation back.
+Fires on blur, not on change — a call per keystroke would translate
+half-written sentences.
+
+Why: it is the only reading that does what the instruction means rather than
+what it says. The change log makes it checkable: every machine-written path
+carries `by: "translation"` and is listed in `handover.machineTranslated`, so
+a wrong overwrite is visible rather than silent.
+
+What I need from Ben: nothing to decide. Flagging because the literal reading
+is the one somebody will re-ask for later.
+
+## The text-path allowlist exists twice, and the drift is safe one way — FLAGGED
+
+Where: `supabase/functions/exercise-prompt/index.ts` (`extractText`),
+`src/lib/exerciseChanges.ts` (`classifyPath`)
+
+What I checked: the Edge Function runs on Deno and cannot import from
+`apps/web/src`, so the list of which paths are text lives in both places.
+
+What I did: made the browser's copy authoritative. The function hands the
+model only text fields and drops any path it did not hand out; the browser
+then re-checks every returned path with `classifyPath` before applying it. If
+the two ever disagree, the client refuses the extra path — so drift costs a
+rejected edit, never an applied structural one.
+
+Why: a shared module would be better and is not available across the two
+runtimes. Two copies with a defined winner is the next best thing, and it is
+the direction that fails safe.
+
+What I need from Ben: nothing. Worth knowing that adding a text field to the
+schema means editing both lists, and that forgetting the function's copy
+simply means the model cannot edit that field — not that it can edit more.

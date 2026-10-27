@@ -1,0 +1,616 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://musie.org/schema/exercise.schema.json",
+  "title": "Musie exercise config",
+  "description": "One file says what an exercise is. Written by /exercise-builder, read by a person. Nothing in the app reads a config at runtime yet \u2014 see docs/EXERCISE-MODEL.md. This schema is the structural half of the contract; the rules it cannot express (a cut matrix covering every answer, two locales holding the same question ids in the same order) live in apps/web/src/lib/exerciseConfig.ts and are checked by validateConfig.",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "implemented",
+    "modes",
+    "catalogue",
+    "library",
+    "run",
+    "content"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "handover": {
+      "description": "What changed since this was read out of the database, and whether it can simply be applied. Written by /exercise-builder; absent on a config nobody has edited. safeToApply false means at least one change needs an implementation decision \u2014 read blockers before loading anything.",
+      "type": "object",
+      "required": [
+        "safeToApply",
+        "blockers",
+        "baseline",
+        "changes",
+        "requests",
+        "machineTranslated"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "safeToApply": {
+          "type": "boolean"
+        },
+        "blockers": {
+          "description": "One line per structural change or unapplied request. Empty when safe.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "baseline": {
+          "type": "object",
+          "required": [
+            "takenAt"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "takenAt": {
+              "type": "string",
+              "description": "ISO 8601, UTC. When the config was read."
+            }
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "kind",
+              "before",
+              "after",
+              "by"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "text",
+                  "structural"
+                ],
+                "description": "structural means it changes how the exercise works, not what it says."
+              },
+              "before": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "after": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "by": {
+                "enum": [
+                  "hand",
+                  "prompt",
+                  "translation"
+                ]
+              },
+              "prompt": {
+                "type": "string",
+                "description": "Her own words, where `by` is prompt."
+              }
+            }
+          }
+        },
+        "requests": {
+          "description": "Everything she asked for in her own words, applied or not. An unapplied request is a blocker.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "at",
+              "prompt",
+              "applied"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "applied": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "machineTranslated": {
+          "description": "Paths whose text a model wrote rather than a person. CLAUDE.md rule 6 already calls content translations provisional; this says which ones.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "staticText": {
+      "description": "Where the therapist wrote her own wording over a string the app owns \u2014 a button label, or the heading of a step with no text of its own. A section of its own because it is a WORK ORDER, not a log: changing a MessageKey is a decision about where that string should live, so a non-empty staticText makes handover.safeToApply false. One entry per field, the latest value winning.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "locale",
+          "messageKey",
+          "builtIn",
+          "wants",
+          "options"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "de",
+              "en"
+            ]
+          },
+          "messageKey": {
+            "type": "string",
+            "description": "The key this overrides \u2014 what to grep for in apps/web/src/i18n/*."
+          },
+          "builtIn": {
+            "type": "string",
+            "description": "What the app says today, in this field's own language."
+          },
+          "wants": {
+            "type": "string"
+          },
+          "options": {
+            "description": "Ways it could be built, cheapest first, written for the engineer. Empty where they could not be fetched.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "title",
+                "what",
+                "tradeoff"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "what": {
+                  "type": "string",
+                  "description": "What would actually change \u2014 files, columns, keys."
+                },
+                "tradeoff": {
+                  "type": "string",
+                  "description": "Who else it affects, what it costs, what it risks."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "id": {
+      "type": "string",
+      "description": "exercises.id. Never renamed to match a display name: sessions.exercise_id and every diary entry point at it.",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "kind": {
+      "enum": [
+        "card_based",
+        "digital_interactive",
+        "listening_only"
+      ],
+      "description": "exercises.kind. Which screens the run has is STEP_IDS and exerciseKind.ts, not this file."
+    },
+    "implemented": {
+      "type": "boolean",
+      "description": "false suspends the content rules and keeps the structural ones, so an unfinished exercise is a legal config rather than a wall of empty fields."
+    },
+    "modes": {
+      "description": "Null where the exercise draws no card: there is nothing physical to lay out, so analogue-or-digital does not arise. The three-state shape exercises.asks_posture uses.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "offers",
+            "default"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "offers": {
+              "enum": [
+                "analogue",
+                "digital",
+                "both"
+              ]
+            },
+            "default": {
+              "enum": [
+                "analogue",
+                "digital"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "catalogue": {
+      "type": "object",
+      "required": [
+        "sort",
+        "timeframeMinutes",
+        "cardsDealt",
+        "artwork",
+        "goals"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sort": {
+          "type": "integer"
+        },
+        "timeframeMinutes": {
+          "type": "object",
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "cardsDealt": {
+          "description": "How many a digital hand holds, and therefore WHICH second step the run has: more than one is select, one is view.",
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1
+            }
+          ]
+        },
+        "artwork": {
+          "type": "string"
+        },
+        "goals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "library": {
+      "description": "The exercise before anybody starts it: what /exercises shows.",
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(de|en)$": {
+          "type": "object",
+          "required": [
+            "name",
+            "description",
+            "needs",
+            "imageAlt"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "needs": {
+              "description": "Null where the exercise needs nothing. Not '': the intro's needs_note feature is derived from this being non-null.",
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "imageAlt": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "run": {
+      "description": "The steps, in STEP_IDS order. A card exercise that offers both modes carries scan tagged analogue AND select tagged digital, in one array: that is two runs written once, not a run with two second steps.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/runStep"
+      }
+    },
+    "content": {
+      "type": "object",
+      "required": [
+        "locales",
+        "textLocales"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "locales": {
+          "description": "Locales with a RECORDING.",
+          "type": "array",
+          "items": {
+            "enum": [
+              "de",
+              "en"
+            ]
+          }
+        },
+        "textLocales": {
+          "description": "Locales with TEXT. May be wider than locales, and saying so is the point: Klangreise has English text and no English recording.",
+          "type": "array",
+          "items": {
+            "enum": [
+              "de",
+              "en"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stepCopy": {
+      "type": "object",
+      "required": [
+        "headline",
+        "bodyMd"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "type": "string",
+          "description": "The ## line of exercise_i18n.<step>_md, lifted out so it can be a field."
+        },
+        "bodyMd": {
+          "type": "string",
+          "description": "Everything under it. Markdown."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "reflect only. Plain text \u2014 it is an attribute on an input, so ## would reach the reader."
+        },
+        "continueLabel": {
+          "type": "string",
+          "description": "Absent falls back to the chrome MessageKey."
+        },
+        "digital": {
+          "$ref": "#/$defs/copyOverride"
+        },
+        "analogue": {
+          "$ref": "#/$defs/copyOverride"
+        }
+      }
+    },
+    "copyOverride": {
+      "description": "Only the fields that differ in that mode. Legal only where modes.offers includes it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "bodyMd": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "continueLabel": {
+          "type": "string"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": [
+        "id",
+        "listen",
+        "reflect",
+        "helper"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Scoped to its own set, NOT a member of a global union. q-01 in two exercises is two different questions.",
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "listen": {
+          "type": "string",
+          "description": "Shown under the player while the recording runs."
+        },
+        "reflect": {
+          "type": "string",
+          "description": "The same thought, asked again on the reflect step."
+        },
+        "helper": {
+          "type": "string",
+          "description": "The ladder behind ?."
+        }
+      }
+    },
+    "runStep": {
+      "type": "object",
+      "required": [
+        "step",
+        "features",
+        "copy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "enum": [
+            "intro",
+            "scan",
+            "view",
+            "select",
+            "listen",
+            "reflect"
+          ]
+        },
+        "mode": {
+          "description": "Binds the step to one mode. scan is analogue; select and view are digital.",
+          "enum": [
+            "analogue",
+            "digital"
+          ]
+        },
+        "features": {
+          "description": "Only names the app enumerates \u2014 STEP_FEATURES in exerciseConfig.ts, per step. An unknown feature is a validation error, never a screen that renders nothing.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "gateSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ask": {
+          "description": "intro only. Null means the question does not arise; an omitted key means do not ask. A config may switch a question off and preselect an answer; it cannot add an option.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "posture": {
+              "$ref": "#/$defs/askOrNone"
+            },
+            "ending": {
+              "$ref": "#/$defs/askOrNone"
+            }
+          }
+        },
+        "cuts": {
+          "description": "listen only. Names the answer matrix in exercise_cuts' own vocabulary, with any for its nulls. It may NOT carry mixed_src, voice_src, duration_seconds, intro_until or track_id: those belong to music.json, and a second writer of exercise_cuts is the overlap CLAUDE.md 4.1 exists to prevent.",
+          "type": "object",
+          "required": [
+            "expects"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "expects": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "posture",
+                  "ending"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "posture": {
+                    "enum": [
+                      "sitting",
+                      "lying",
+                      "any"
+                    ]
+                  },
+                  "ending": {
+                    "enum": [
+                      "day",
+                      "sleep",
+                      "any"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "questions": {
+          "description": "listen only, and only with rotating_question. Every locale holds the same ids in the same order: the rotation indexes by position.",
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(de|en)$": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/question"
+              }
+            }
+          }
+        },
+        "copySource": {
+          "description": "chrome means this step has no content columns and every word it shows is a MessageKey in i18n/*. True of select and view today. Their copy is expected to be empty, and the content rules are skipped for them.",
+          "enum": [
+            "content",
+            "chrome"
+          ]
+        },
+        "copy": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(de|en)$": {
+              "$ref": "#/$defs/stepCopy"
+            }
+          }
+        }
+      }
+    },
+    "askOrNone": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "default"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "default": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

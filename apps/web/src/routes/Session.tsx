@@ -46,14 +46,11 @@
 import * as React from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  DoorOpen, Headphones, Image as ImageIcon, Images, Quote, ScanQrCode,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
   WizardPanel,
 } from '@musie/design-system';
 import type { LightboxOrigin } from '@musie/design-system';
+import { STEP_ICON } from '../lib/stepIcons';
 import { SessionIntro } from '../components/SessionIntro';
 import { SessionSelect } from '../components/SessionSelect';
 import { SessionView } from '../components/SessionView';
@@ -154,16 +151,6 @@ import type { StepId } from '../routeHandle';
  *                       any of them in the rail would promise one of the three
  *                       before you have chosen.
  */
-const STEP_ICON: Record<StepId, LucideIcon> = {
-  intro: DoorOpen,
-  scan: ScanQrCode,
-  /* One picture for the step that shows you one, a stack for the step that
-     asks you to choose between five. */
-  view: ImageIcon,
-  select: Images,
-  listen: Headphones,
-  reflect: Quote,
-};
 
 /** Everything one session screen needs, in one read. */
 interface SessionData {

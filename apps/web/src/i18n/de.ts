@@ -1823,4 +1823,96 @@ anzunehmen, das alte Ja gelte weiter.`,
 
   'consent.settings.headline': 'Was du mit uns teilst',
   'consent.settings.text': 'Beides ist freiwillig, und du kannst es jederzeit ändern. Nichts davon ändert, wie Musie für dich funktioniert.',
+
+  /* ── /exercise-builder ──────────────────────────────────────────────────
+     §1 du, §3 verb-first on every action, §7 typography: – and not —.
+     *Übungseditor* over *Übungs-Editor*: §6 only wants a break point where
+     the compound has no legal one, and this one breaks at Übungs|editor.
+     *Bildschirm* rather than *digital* for the mode badge — the therapist is
+     being told where the cards ARE, which is the thing they can picture, and
+     §8 lets a technical word stay only where it is the word people use. */
+  'builder.headline': 'Übungseditor',
+  'builder.intro': 'Bearbeite die Texte jeder Übung, in beiden Sprachen, und lade sie als eine Datei herunter. Hier wird nichts gespeichert – die Datei ist das, was du weitergibst.',
+  'builder.pick': 'Welche Übung',
+  'builder.locale': 'Welche Sprache',
+  'builder.locale.de': 'Deutsch',
+  'builder.locale.en': 'Englisch',
+  'builder.implemented': 'Fertig',
+  'builder.unimplemented': 'Noch nicht gebaut',
+  /* Kurz: ein Segment ist keine Zeile. Das erste Paar brach auf "Mit Karten
+     auf dem…" um und machte die beiden Optionen ununterscheidbar. */
+  'builder.mode.analogue': 'Auf dem Tisch',
+  'builder.mode.digital': 'Am Bildschirm',
+
+  'builder.mode': 'Welche Fassung',
+  'builder.reflectSheet.headline': 'Dieser Text erscheint in einem Panel, nicht im Schritt',
+  'builder.reflectSheet': 'Der Reflexionsschritt selbst zeigt die Gefühle und die festgehaltenen Gedanken. Deine Überschrift, dein Text und dein Hinweis erscheinen erst, wenn jemand das Schreibfeld öffnet – die Vorschau daneben ändert sich hier also nicht mit.',
+  'builder.library': 'In der Übungsliste',
+  'builder.library.name': 'Name',
+  'builder.library.description': 'Beschreibung',
+  'builder.library.needs': 'Was bereitliegen soll',
+  'builder.library.needsHint': 'Lass das Feld leer, wenn die Übung nichts braucht.',
+  'builder.library.imageAlt': 'Bildbeschreibung',
+  'builder.library.imageAltHint': 'Wird allen vorgelesen, die das Bild nicht sehen können. Beschreibe, was darauf zu sehen ist.',
+
+  'builder.field.headline': 'Überschrift',
+  'builder.field.body': 'Text',
+  'builder.field.bodyHint': 'Eine leere Zeile beginnt einen neuen Absatz. Beginne eine Zeile mit 1. für eine nummerierte Liste oder mit - für eine Aufzählung.',
+  'builder.field.placeholder': 'Hinweis im Schreibfeld',
+  'builder.field.placeholderHint': 'Grauer Text im Feld, der sagt, was dort hingehört. Reiner Text – keine Formatierung.',
+  'builder.chromeCopy.headline': 'Noch keine eigenen Texte',
+  'builder.chromeCopy': 'Dieser Schritt hat noch keine eigenen Texte: Er nutzt Formulierungen, die fest in der App stehen. Was du hier schreibst, ist ein Wunsch, sie herauszulösen – die App ändert sich dadurch noch nicht.',
+
+  'builder.field.builtIn': 'Das sagt die App hier heute. Lass es leer, um es zu behalten, oder schreib deins.',
+  'builder.field.continueLabel': 'Knopf, der weiterf\u00fchrt',
+  'builder.field.secondaryLabel': 'Der andere Knopf',
+  'builder.field.labelHint': 'Zwei oder drei W\u00f6rter. Leer lassen beh\u00e4lt, was die App sagt.',
+  'builder.willTranslate.de': 'Wenn du ein Feld verl\u00e4sst, schreibe ich die englische Fassung davon neu.',
+  'builder.willTranslate.en': 'Wenn du ein Feld verl\u00e4sst, schreibe ich die deutsche Fassung davon neu.',
+
+  'builder.questions': 'Fragen beim Hören',
+  'builder.questions.intro': 'Eine wechselnde Frage steht unter dem Player und kommt in der Reflexion zurück. Schalte sie nur ein, wenn du eine möchtest – die Übung funktioniert auch ohne.',
+  'builder.questions.toggle': 'Wechselnde Frage stellen',
+  'builder.questions.listen': 'Beim Hören',
+  'builder.questions.listenHint': 'Steht unter dem Player, während die Musik läuft.',
+  'builder.questions.reflect': 'In der Reflexion',
+  'builder.questions.reflectHint': 'Derselbe Gedanke, hinterher als Frage gestellt.',
+  'builder.questions.helper': 'Wenn jemand nicht weiterkommt',
+  'builder.questions.helperHint': 'Steht hinter dem Fragezeichen und hilft allen, die nicht wissen, wo sie anfangen sollen.',
+  'builder.questions.add': 'Frage hinzufügen',
+  'builder.questions.remove': 'Diese Frage entfernen',
+
+  'builder.problems': 'Was noch fehlt',
+  'builder.problems.none': 'Nichts fehlt. Diese Übung kann weitergegeben werden.',
+
+  'builder.prompt': 'Sag mir, was anders soll',
+  'builder.prompt.intro': 'Beschreib es in deinen eigenen Worten, ich formuliere um. \u00c4ndern kann ich nur, was die \u00dcbung SAGT \u2014 nicht, wie sie funktioniert. Alles andere schreibe ich stattdessen f\u00fcr Ben auf.',
+  'builder.prompt.label': 'Was soll anders sein?',
+  'builder.prompt.hint': 'Eine Anweisung auf einmal funktioniert am besten.',
+  'builder.prompt.placeholder': 'Mach die Einleitung w\u00e4rmer und etwas k\u00fcrzer',
+  'builder.prompt.submit': 'Umformulieren',
+  'builder.prompt.busy': 'Formuliere um\u2026',
+  'builder.prompt.translating': '\u00dcbersetze die andere Sprache\u2026',
+  'builder.prompt.noKey': 'Das ist noch nicht eingerichtet \u2014 Ben muss daf\u00fcr noch den Schl\u00fcssel hinterlegen.',
+  'builder.prompt.forbidden': 'Dein Zugang steht daf\u00fcr noch nicht auf der Liste. Sag Ben Bescheid.',
+  'builder.prompt.failed': 'Das hat nicht geklappt. Versuch es nochmal, oder formuliere selbst um.',
+
+  'builder.changes': 'Was du ge\u00e4ndert hast',
+  'builder.changes.none': 'Noch nichts. Alles steht so, wie es aus Musie kam.',
+  'builder.changes.what': 'Wo',
+  'builder.changes.before': 'Vorher',
+  'builder.changes.after': 'Jetzt',
+  'builder.changes.text': 'Formulierung',
+  'builder.changes.structural': 'Braucht eine Entscheidung',
+  'builder.changes.byPrompt': 'Aus deiner Anweisung',
+  'builder.changes.byTranslation': 'F\u00fcr dich \u00fcbersetzt',
+
+  'builder.hand.safe': 'Das hier kann direkt \u00fcbernommen werden.',
+  'builder.hand.unsafe': 'Das hier braucht vorher ein Gespr\u00e4ch',
+  'builder.hand.unsafeDetail': 'Etwas davon \u00e4ndert, wie die \u00dcbung funktioniert, nicht nur was sie sagt. Das l\u00e4sst sich nicht einfach in Musie laden \u2014 daf\u00fcr braucht es eine Entscheidung. Schick die Datei trotzdem und schreib dazu, was du vorhattest.',
+
+  'builder.hand': 'Weitergeben',
+  'builder.hand.intro': 'Lade die Datei herunter und schick sie weiter. Sie wird von Hand gelesen und in Musie eingebaut – bis dahin erreicht nichts davon jemanden.',
+  'builder.download.packing': 'Ermittle die M\u00f6glichkeiten\u2026',
+  'builder.download': 'Datei herunterladen',
 };
