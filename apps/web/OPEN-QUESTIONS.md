@@ -10573,3 +10573,49 @@ trusted about exactly this measurement.
 What I need from Ben: nothing. Flagging it because it is a deliberate
 exception to L14.1 rather than an oversight, and the next person reading that
 block should see the argument rather than assume a token was missed.
+
+## "Deutsch geändert → Englisch neu, und andersrum" is a loop — RESOLVED
+
+Where: `src/routes/ExerciseBuilder.tsx` (`translateTwin`),
+`src/lib/exercisePrompt.ts`
+
+What I checked: Ben asked on 2026-10-27 for every German edit to produce a new
+English translation "und andersrum". Taken literally that is two fields each
+regenerating the other: edit DE → EN rewritten; correct that EN by hand → DE
+rewritten, over her German. The last edit always wins and silently destroys
+the other side.
+
+What I did: made it one-directional per edit event. The field a PERSON touches
+is the source; the generated twin does not itself trigger a translation back.
+Fires on blur, not on change — a call per keystroke would translate
+half-written sentences.
+
+Why: it is the only reading that does what the instruction means rather than
+what it says. The change log makes it checkable: every machine-written path
+carries `by: "translation"` and is listed in `handover.machineTranslated`, so
+a wrong overwrite is visible rather than silent.
+
+What I need from Ben: nothing to decide. Flagging because the literal reading
+is the one somebody will re-ask for later.
+
+## The text-path allowlist exists twice, and the drift is safe one way — FLAGGED
+
+Where: `supabase/functions/exercise-prompt/index.ts` (`extractText`),
+`src/lib/exerciseChanges.ts` (`classifyPath`)
+
+What I checked: the Edge Function runs on Deno and cannot import from
+`apps/web/src`, so the list of which paths are text lives in both places.
+
+What I did: made the browser's copy authoritative. The function hands the
+model only text fields and drops any path it did not hand out; the browser
+then re-checks every returned path with `classifyPath` before applying it. If
+the two ever disagree, the client refuses the extra path — so drift costs a
+rejected edit, never an applied structural one.
+
+Why: a shared module would be better and is not available across the two
+runtimes. Two copies with a defined winner is the next best thing, and it is
+the direction that fails safe.
+
+What I need from Ben: nothing. Worth knowing that adding a text field to the
+schema means editing both lists, and that forgetting the function's copy
+simply means the model cannot edit that field — not that it can edit more.

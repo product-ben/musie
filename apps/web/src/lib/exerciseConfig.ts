@@ -188,8 +188,67 @@ export interface LibraryCopy {
   imageAlt: string;
 }
 
+/** How a field came to hold what it holds. */
+export type ChangeOrigin = 'hand' | 'prompt' | 'translation';
+
+/** Whether a change needs a decision before the file can be applied. */
+export type ChangeKind = 'text' | 'structural';
+
+export interface ConfigChange {
+  /** Dotted path into the config, as the builder and the validator spell it. */
+  path: string;
+  kind: ChangeKind;
+  /** The value as the database had it. Null where the field did not exist. */
+  before: string | null;
+  /** The value now. Null where the field is gone. */
+  after: string | null;
+  by: ChangeOrigin;
+  /** The therapist's own words, where `by` is `prompt`. */
+  prompt?: string;
+}
+
+/** One thing she asked for in her own words. */
+export interface HandoverRequest {
+  /** ISO 8601, UTC. */
+  at: string;
+  prompt: string;
+  /** False where it was declined as structural, or recorded as a note. */
+  applied: boolean;
+  /** Why not, where it was not. */
+  reason?: string;
+}
+
+export interface Handover {
+  /**
+   * FALSE MEANS STOP. The file still describes a complete exercise; what it
+   * also contains is at least one change that needs an implementation
+   * decision, so uploading it without reading `blockers` would apply something
+   * nobody agreed to.
+   */
+  safeToApply: boolean;
+  /** One line per structural change or declined request. Empty when safe. */
+  blockers: string[];
+  /** What this was built from, so a reader can tell whether it has gone stale. */
+  baseline: { takenAt: string };
+  changes: ConfigChange[];
+  requests: HandoverRequest[];
+  /** Paths whose text a model wrote rather than a person. */
+  machineTranslated: string[];
+}
+
 export interface ExerciseConfig {
   $schema?: string;
+  /**
+   * WHAT CHANGED, AND WHETHER IT CAN JUST BE APPLIED — Ben, 2026-10-27.
+   *
+   * First key after `$schema`, because its whole job is to be read before the
+   * rest of the file. Absent on a config straight out of the database: a file
+   * nobody has edited has nothing to hand over.
+   *
+   * `exerciseChanges.ts` computes it. The shape lives here with the rest of
+   * the contract so one file says what a config IS.
+   */
+  handover?: Handover;
   id: string;
   kind: ExerciseKind;
   implemented: boolean;
@@ -426,6 +485,27 @@ export function validateConfig(
     }
     if (has('posture_question') && config.kind !== 'listening_only') {
       error(`${at}.features`, 'Only a listening exercise asks about posture.');
+    }
+
+    /* ── A TEXT FIELD THAT SWITCHES OFF A FEATURE ────────────────────────
+       `needs_note` is derived from `library[locale].needs` being non-null, so
+       clearing that sentence in the builder turns the feature into a promise
+       of a note with no text. It is the sharpest case for classifying the
+       EFFECT rather than the field: she edited something the model calls
+       text, and the config now says something structural.
+
+       An error and not a warning: the step would draw an empty note. */
+    if (has('needs_note')) {
+      for (const locale of textLocales) {
+        if ((config.library[locale]?.needs ?? null) === null) {
+          /* REPORTED ON THE FIELD, NOT ON THE FEATURE. She can fix the note;
+             she cannot fix a feature list she never sees. It also puts this
+             under `library.`, which `implemented: false` suspends with the
+             rest of the content rules — where it belongs. */
+          error(`library.${locale}.needs`,
+            'The intro promises a note about what to have ready, and there is none.');
+        }
+      }
     }
 
     /* ── The two questions, and the cut they reach ─────────────────────── */

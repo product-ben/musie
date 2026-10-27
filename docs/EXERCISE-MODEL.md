@@ -199,6 +199,80 @@ own, because everything inside sizes against its container: with
 `--space-inset-card` on the frame the rail lost 22px and clipped a step the
 real screen does not clip.
 
+### She describes the change; only the words move
+
+`/exercise-builder` carries a prompt box. She writes what should be different,
+and `supabase/functions/exercise-prompt` rewrites the copy — **Claude Opus 5**,
+chosen on quality rather than price: at this volume the gap between the
+cheapest and dearest model is about a coffee a week, and the text reaches
+patients.
+
+**The boundary is the function, not the model.** The request carries the TEXT
+fields only, flattened to path → string. The model never sees `features`,
+`run`, `modes`, `cuts` or `gateSeconds`, so it cannot return an edit to them.
+Anything structural she asks for comes back in `declined` and is written into
+`handover.requests` instead — so the ask survives even when nothing was done
+about it.
+
+Three gates, in order: the function hands out only text paths; it drops any
+path it did not hand out; and the browser re-checks every returned path with
+`classifyPath` before applying it. The last one wins, which is what makes the
+two copies of the allowlist safe to drift.
+
+### Auto-translate follows the edit, in one direction
+
+Finish a German field and its English twin is rewritten; finish an English one
+and the German is. **The generated side does not itself trigger a translation
+back.** Two fields that regenerate each other mean the last edit always wins
+and silently destroys the other side, which is not what "and vice versa" asks
+for.
+
+It fires on blur, not on change — a model call per keystroke would be a call
+per letter, and would translate half-written sentences. Every machine-written
+path is listed in `handover.machineTranslated`, because CLAUDE.md rule 6
+already calls content translations provisional and this says *which ones*.
+
+### The handover block, and why it is the second key
+
+```jsonc
+{
+  "$schema": "./exercise.schema.json",
+  "handover": {
+    "safeToApply": false,
+    "blockers": ["run[3].features: -rotating_question -question_helper_ladder"],
+    "baseline": { "takenAt": "2026-10-27T10:01:14.972Z" },
+    "changes": [ { "path": "…", "kind": "text", "before": "…", "after": "…", "by": "hand" } ],
+    "requests": [ { "at": "…", "prompt": "Mach daraus zwei Schritte", "applied": false } ],
+    "machineTranslated": ["run[1].copy.en.bodyMd"]
+  },
+  "id": "mindfulness-cards"
+}
+```
+
+Second, and the object is rebuilt rather than spread to keep it there:
+`safeToApply: false` at the bottom of six hundred lines is a flag nobody meets
+until after they have decided. The filename says it too — a config with a
+blocker downloads as `<id>.NEEDS-REVIEW.json`.
+
+**`changes` is a diff, not a log of keystrokes.** A field typed, cleared and
+retyped is one net change. Only the PROVENANCE — hand, prompt, or translation
+— is carried alongside, because that is the one thing a diff cannot recover.
+
+**A list of words is one fact.** `features`, `goals` and `locales` are sets, so
+they are compared whole and summarised by what moved. Walking them by index
+turned "two features switched off" into three entries that each looked like a
+rename, which was true of the array and false about the exercise.
+
+### The line is drawn on the effect, not the field
+
+`library.de.needs` is a TEXT field — and empty means `needs: null`, from which
+`needs_note` is derived. Clearing a sentence switches off a feature.
+
+That lands in the change log as a structural change to `run[0].features`,
+because the classification asks what the config SAYS after the edit rather
+than what she aimed at. `validateConfig` reports the same thing on the field
+she can actually fix.
+
 ### The headline split
 
 `exercise_i18n.<step>_md` is one Markdown string whose first line is a `## `

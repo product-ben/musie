@@ -61,8 +61,11 @@ function card(overrides: Partial<ExerciseConfig> = {}): ExerciseConfig {
       artwork: 'a.webp', goals: ['mindfulness'],
     },
     library: {
-      de: { name: 'Achtsame Pause', description: 'D', needs: null, imageAlt: 'A' },
-      en: { name: 'Mindful Break', description: 'D', needs: null, imageAlt: 'A' },
+      /* `needs` IS SET, and it has to be: the intro below carries `needs_note`,
+         which is derived from this being non-null. The fixture said null for
+         its first week and the rule that catches it did not exist yet. */
+      de: { name: 'Achtsame Pause', description: 'D', needs: 'Die Karten', imageAlt: 'A' },
+      en: { name: 'Mindful Break', description: 'D', needs: 'The cards', imageAlt: 'A' },
     },
     run,
     content: { locales: ['de', 'en'], textLocales: ['de', 'en'] },

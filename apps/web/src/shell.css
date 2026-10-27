@@ -3000,3 +3000,40 @@ html[data-musy-scroll-snap] {
   border: var(--border-width-hairline) solid var(--border-subtle);
   border-radius: var(--radius-card);
 }
+
+/* The change log: three columns, the path in the row header. A table and not
+   a list because the reader is comparing two values per row, which is what a
+   table is for. */
+.musie-builder__log {
+  inline-size: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+
+.musie-builder__log th,
+.musie-builder__log td {
+  padding: var(--space-gap-related) var(--space-gap-inline);
+  border-block-end: var(--border-width-hairline) solid var(--border-subtle);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  text-align: start;
+  vertical-align: baseline;
+}
+
+.musie-builder__log thead th {
+  font-weight: var(--type-label-md-weight);
+  color: var(--on-surface-muted);
+}
+
+/* The old value is the quieter of the two: the reader is checking what it
+   became, and the strikethrough would make a long paragraph unreadable. */
+.musie-builder__was {
+  color: var(--on-surface-muted);
+}
+
+.musie-builder__path {
+  display: block;
+  margin-block-end: var(--space-gap-related);
+  overflow-wrap: anywhere;
+}

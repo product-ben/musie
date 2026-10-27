@@ -80,7 +80,11 @@ import { buildExerciseConfig, configToFile } from '../lib/buildExerciseConfig';
 import type { QuestionSource } from '../lib/buildExerciseConfig';
 import { configToExercise, previewCard, previewHand, stepsInMode } from '../lib/configToExercise';
 import { validateConfig } from '../lib/exerciseConfig';
-import type { ExerciseConfig, QuestionText, RunMode, StepCopy } from '../lib/exerciseConfig';
+import { buildHandover, changeLog, setAtPath } from '../lib/exerciseChanges';
+import { PromptError, promptEdits, translateFields, twinPath } from '../lib/exercisePrompt';
+import type {
+  ChangeOrigin, ExerciseConfig, HandoverRequest, QuestionText, RunMode, StepCopy,
+} from '../lib/exerciseConfig';
 
 /** Where a new question's id comes from. Scoped to its set, so `q-01` in two
  *  exercises is two different questions and nothing collides. */
@@ -106,6 +110,37 @@ function questionSourceFor(exerciseId: string): QuestionSource | undefined {
  * `SessionListen` alone is 26 of them, and re-running those on every keystroke
  * in the editor beside it is the thing that would make typing feel slow.
  */
+/**
+ * A field that rewrites its twin in the other language once it is finished.
+ *
+ * ON BLUR, NOT ON CHANGE. A model call per keystroke would be a call per
+ * letter — slow, expensive, and it would translate half-written sentences.
+ * `Field` has no `onBlur` of its own, so the wrapper catches the one that
+ * bubbles out of the control inside it.
+ *
+ * The value at focus is remembered, so leaving a field untouched translates
+ * nothing.
+ */
+function Finishing({
+  path, value, onFinished, children,
+}: {
+  path: string;
+  value: string;
+  onFinished: (path: string, value: string) => void;
+  children: React.ReactNode;
+}) {
+  const atFocus = React.useRef(value);
+
+  return (
+    <div
+      onFocus={() => { atFocus.current = value; }}
+      onBlur={() => { if (value !== atFocus.current) onFinished(path, value); }}
+    >
+      {children}
+    </div>
+  );
+}
+
 interface PreviewProps {
   exercise: Exercise;
   config: ExerciseConfig;
@@ -317,6 +352,37 @@ export function ExerciseBuilder() {
   const [step, setStep] = React.useState<StepId>('intro');
   const [failed, setFailed] = React.useState(false);
 
+  /* ── WHAT IT LOOKED LIKE WHEN IT LOADED ──────────────────────────────────
+     The change log is a DIFF against this, not a log of keystrokes: a field
+     typed, cleared and retyped is one net change, which is what a reader
+     wants. Frozen at load and never written to again. */
+  const [baseline, setBaseline] = React.useState<Record<string, ExerciseConfig> | null>(null);
+
+  /* HOW each field came to hold what it holds, per exercise, per path. A path
+     with no entry is `hand` — the common case, and the one that needs no
+     bookkeeping to be right. */
+  const [origins, setOrigins] = React.useState<Record<string, Record<string, ChangeOrigin>>>({});
+
+  /* Her own words, for the paths a prompt wrote. */
+  const [prompts, setPrompts] = React.useState<Record<string, Record<string, string>>>({});
+
+  /* Everything she asked for, applied or not. */
+  const [requests, setRequests] = React.useState<Record<string, HandoverRequest[]>>({});
+
+  /* ONE CLOCK READING FOR THE WHOLE SESSION. `buildHandover` takes its
+     timestamp rather than reading one, so downloading the same edits twice
+     produces the same bytes — the byte-stability `content-export.mjs` names,
+     and the reason a diff of two configs is worth reading at all. */
+  const [loadedAt] = React.useState(() => new Date().toISOString());
+
+  const [draft, setDraft] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [note, setNote] = React.useState('');
+  const [trouble, setTrouble] = React.useState<string | null>(null);
+  /* The path being translated, so one field can show it without a spinner on
+     every other field. */
+  const [translating, setTranslating] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     let live = true;
 
@@ -347,6 +413,9 @@ export function ExerciseBuilder() {
         ids.sort((a, b) => (built[a]?.catalogue.sort ?? 0) - (built[b]?.catalogue.sort ?? 0));
 
         setConfigs(built);
+        /* The snapshot, taken once. `structuredClone` because `built` is about
+           to be edited in place by every keystroke. */
+        setBaseline(structuredClone(built));
         setOrder(ids);
         setSelected(ids.at(0) ?? null);
       } catch (thrown: unknown) {
@@ -372,23 +441,151 @@ export function ExerciseBuilder() {
     });
   }, [selected]);
 
+  /**
+   * Write an answer into the config and remember where it came from.
+   *
+   * `setAtPath` returns false for a path that does not resolve, and those are
+   * dropped rather than created — the last of three gates, after the Edge
+   * Function's allowlist and `classifyPath`.
+   */
+  const applyEdits = React.useCallback((
+    edits: { path: string; value: string }[],
+    by: ChangeOrigin,
+    asked?: string,
+  ) => {
+    if (edits.length === 0) return;
+    const landed: string[] = [];
+
+    edit((target) => {
+      for (const entry of edits) {
+        if (setAtPath(target, entry.path, entry.value)) landed.push(entry.path);
+      }
+    });
+
+    if (selected === null) return;
+    setOrigins((current) => ({
+      ...current,
+      [selected]: {
+        ...current[selected],
+        ...Object.fromEntries(landed.map((path) => [path, by])),
+      },
+    }));
+    if (asked !== undefined) {
+      setPrompts((current) => ({
+        ...current,
+        [selected]: {
+          ...current[selected],
+          ...Object.fromEntries(landed.map((path) => [path, asked])),
+        },
+      }));
+    }
+  }, [edit, selected]);
+
+  /**
+   * She finished a field: rewrite its twin in the other language.
+   *
+   * ONE DIRECTION PER EDIT. The field a person touched is the source; the
+   * generated twin does not itself trigger a translation back. Two fields
+   * that regenerate each other mean the last edit always wins and silently
+   * destroys the other side — which is not what "and vice versa" asks for.
+   */
+  const translateTwin = React.useCallback(async (path: string, text: string) => {
+    if (config === undefined || text.trim() === '') return;
+    const to: Locale = locale === 'de' ? 'en' : 'de';
+    if (!config.content.textLocales.includes(to)) return;
+
+    setTranslating(path);
+    setTrouble(null);
+    try {
+      const done = await translateFields(locale, to, [{ path: twinPath(path, locale, to), text }]);
+      applyEdits(done.map((entry) => ({ path: entry.path, value: entry.text })), 'translation');
+    } catch (thrown: unknown) {
+      const reason = thrown instanceof PromptError ? thrown.reason : 'unknown';
+      setTrouble(reason);
+    } finally {
+      setTranslating(null);
+    }
+  }, [applyEdits, config, locale]);
+
+  const onPrompt = React.useCallback(async () => {
+    if (config === undefined || draft.trim() === '' || selected === null) return;
+    const asked = draft.trim();
+
+    setBusy(true);
+    setTrouble(null);
+    setNote('');
+    try {
+      const answer = await promptEdits(config, locale, asked);
+      applyEdits(answer.edits, 'prompt', asked);
+      setNote(answer.note);
+
+      /* RECORDED WHETHER OR NOT IT WAS DONE. A request nobody applied is a
+         blocker in the handover block, so Ben sees the ask even when the
+         model would not act on it. */
+      setRequests((current) => ({
+        ...current,
+        [selected]: [
+          ...(current[selected] ?? []),
+          ...(answer.declined.length === 0
+            ? [{ at: new Date().toISOString(), prompt: asked, applied: answer.edits.length > 0 }]
+            : answer.declined.map((entry) => ({
+              at: new Date().toISOString(),
+              prompt: asked,
+              applied: false,
+              reason: entry.why,
+            }))),
+        ],
+      }));
+      setDraft('');
+    } catch (thrown: unknown) {
+      const reason = thrown instanceof PromptError ? thrown.reason : 'unknown';
+      setTrouble(reason);
+    } finally {
+      setBusy(false);
+    }
+  }, [applyEdits, config, draft, locale, selected]);
+
   const problems = React.useMemo(
     () => (config === undefined ? [] : validateConfig(config)),
     [config],
   );
 
+  const changes = React.useMemo(() => {
+    if (config === undefined || selected === null) return [];
+    const was = baseline?.[selected];
+    if (was === undefined) return [];
+    return changeLog(was, config, origins[selected] ?? {}, prompts[selected] ?? {});
+  }, [baseline, config, origins, prompts, selected]);
+
+  const handover = React.useMemo(() => {
+    const mine = selected === null ? {} : origins[selected] ?? {};
+    const translated = Object.entries(mine)
+      .filter(([, by]) => by === 'translation')
+      .map(([path]) => path);
+    return buildHandover(
+      changes,
+      selected === null ? [] : requests[selected] ?? [],
+      translated,
+      loadedAt,
+    );
+  }, [changes, loadedAt, origins, requests, selected]);
+
   const onDownload = React.useCallback(() => {
     if (config === undefined) return;
-    const blob = new Blob([configToFile(config)], { type: 'application/json' });
+    const blob = new Blob([configToFile(config, handover)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${config.id}.json`;
+    /* THE NAME SAYS IT TOO. Ben asked for the flag inside the file; the
+       filename is the half he sees in the Finder before he opens it. */
+    link.download = handover.safeToApply
+      ? `${config.id}.json`
+      : `${config.id}.NEEDS-REVIEW.json`;
     link.click();
     /* Revoked on the next tick: Safari reads the href after the click returns,
        and revoking in the same turn gives an empty file with no error. */
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  }, [config]);
+  }, [config, handover]);
 
   if (failed) return <p className="musie-note">{t('content.errorDetail')}</p>;
   if (configs === null) return <p className="musie-note">{t('content.loading')}</p>;
@@ -558,6 +755,48 @@ export function ExerciseBuilder() {
         </div>
 
         <div className="musie-builder__edit">
+          {/* ── SAY WHAT YOU WANT ────────────────────────────────────────
+              Ben, 2026-10-27. It can only change WORDS: the Edge Function
+              shows the model the text fields and nothing else, so a request
+              to add a step comes back declined rather than half-done. */}
+          <ContentBox headline={t('builder.prompt')} headingLevel={2}>
+            <p className="musie-note">{t('builder.prompt.intro')}</p>
+
+            <Field
+              label={t('builder.prompt.label')}
+              description={t('builder.prompt.hint')}
+              multiline
+              rows={3}
+              value={draft}
+              placeholder={t('builder.prompt.placeholder')}
+              disabled={busy}
+              onValueChange={setDraft}
+            />
+
+            <CtaButton
+              variant="secondary"
+              disabled={busy || draft.trim() === ''}
+              onClick={() => { void onPrompt(); }}
+            >
+              {busy ? t('builder.prompt.busy') : t('builder.prompt.submit')}
+            </CtaButton>
+
+            {note !== '' && <Message variant="info" headline={note} />}
+
+            {trouble !== null && (
+              <Message
+                variant="error"
+                headline={t(trouble === 'no_api_key' ? 'builder.prompt.noKey'
+                  : trouble === 'forbidden' ? 'builder.prompt.forbidden'
+                    : 'builder.prompt.failed')}
+              />
+            )}
+
+            {translating !== null && (
+              <Message variant="info" headline={t('builder.prompt.translating')} />
+            )}
+          </ContentBox>
+
           <ContentBox headline={t(stepMessageKey(current))} headingLevel={2}>
             <BadgeRow>
               {entry?.mode !== undefined && (
@@ -578,29 +817,47 @@ export function ExerciseBuilder() {
               />
             )}
 
-            <Field
-              label={t('builder.field.headline')}
+            <Finishing
+              path={`run[${entryIndex}].copy.${locale}.headline`}
               value={copy.headline}
-              onValueChange={(value) => editCopy('headline', value)}
-            />
-            <Field
-              label={t('builder.field.body')}
-              description={t('builder.field.bodyHint')}
-              multiline
-              rows={8}
+              onFinished={(path, value) => { void translateTwin(path, value); }}
+            >
+              <Field
+                label={t('builder.field.headline')}
+                value={copy.headline}
+                onValueChange={(value) => editCopy('headline', value)}
+              />
+            </Finishing>
+            <Finishing
+              path={`run[${entryIndex}].copy.${locale}.bodyMd`}
               value={copy.bodyMd}
-              onValueChange={(value) => editCopy('bodyMd', value)}
-            />
+              onFinished={(path, value) => { void translateTwin(path, value); }}
+            >
+              <Field
+                label={t('builder.field.body')}
+                description={t('builder.field.bodyHint')}
+                multiline
+                rows={8}
+                value={copy.bodyMd}
+                onValueChange={(value) => editCopy('bodyMd', value)}
+              />
+            </Finishing>
             {current === 'reflect' && (
               <>
-                <Field
-                  label={t('builder.field.placeholder')}
-                  description={t('builder.field.placeholderHint')}
-                  multiline
-                  rows={3}
+                <Finishing
+                  path={`run[${entryIndex}].copy.${locale}.placeholder`}
                   value={copy.placeholder ?? ''}
-                  onValueChange={(value) => editCopy('placeholder', value)}
-                />
+                  onFinished={(path, value) => { void translateTwin(path, value); }}
+                >
+                  <Field
+                    label={t('builder.field.placeholder')}
+                    description={t('builder.field.placeholderHint')}
+                    multiline
+                    rows={3}
+                    value={copy.placeholder ?? ''}
+                    onValueChange={(value) => editCopy('placeholder', value)}
+                  />
+                </Finishing>
                 {/* THE REFLECT COPY DOES NOT SHOW IN THE PREVIEW, and saying
                     so is better than letting somebody type into a field and
                     watch nothing happen. `SessionReflect` draws the feelings,
@@ -753,7 +1010,68 @@ export function ExerciseBuilder() {
         ))}
       </ContentBox>
 
+      {/* ── WHAT CHANGED ────────────────────────────────────────────────
+          Ben, 2026-10-27: a section at the bottom showing everything before
+          and after. It is the same list that goes into the file, computed
+          once — a panel that disagreed with the block it summarises would be
+          worse than neither. */}
+      <ContentBox headline={t('builder.changes')} headingLevel={2}>
+        {changes.length === 0 && <p className="musie-note">{t('builder.changes.none')}</p>}
+
+        {changes.length > 0 && (
+          <table className="musie-builder__log">
+            <thead>
+              <tr>
+                <th scope="col">{t('builder.changes.what')}</th>
+                <th scope="col">{t('builder.changes.before')}</th>
+                <th scope="col">{t('builder.changes.after')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {changes.map((change) => (
+                <tr key={change.path}>
+                  <th scope="row">
+                    <code className="musie-builder__path">{change.path}</code>
+                    <BadgeRow>
+                      <Badge variant={change.kind === 'structural' ? 'warning' : 'neutral'}>
+                        {t(change.kind === 'structural'
+                          ? 'builder.changes.structural' : 'builder.changes.text')}
+                      </Badge>
+                      {change.by !== 'hand' && (
+                        <Badge variant="info">
+                          {t(change.by === 'translation'
+                            ? 'builder.changes.byTranslation' : 'builder.changes.byPrompt')}
+                        </Badge>
+                      )}
+                    </BadgeRow>
+                  </th>
+                  {/* EM DASH FOR ABSENT, not an empty cell: a field that did
+                      not exist and a field that was emptied read the same in
+                      a blank cell, and they are different things. */}
+                  <td className="musie-builder__was">{change.before ?? '—'}</td>
+                  <td>{change.after ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </ContentBox>
+
       <ContentBox headline={t('builder.hand')} headingLevel={2}>
+        {handover.safeToApply
+          ? <Message variant="success" headline={t('builder.hand.safe')} />
+          : (
+            <Message
+              variant="warning"
+              headline={t('builder.hand.unsafe')}
+              text={t('builder.hand.unsafeDetail')}
+            />
+          )}
+
+        {handover.blockers.map((blocker) => (
+          <p className="musie-note" key={blocker}><code>{blocker}</code></p>
+        ))}
+
         <p className="musie-note">{t('builder.hand.intro')}</p>
         <CtaButton variant="primary" onClick={onDownload}>
           {t('builder.download')}

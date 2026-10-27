@@ -32,7 +32,7 @@ import { LOCALES } from '../i18n';
 import { DEFAULT_POSTURE, DEFAULT_ENDING } from './exerciseKind';
 import { splitHeadline } from './exerciseConfig';
 import type {
-  ExerciseConfig, RunStep, StepCopy, CutExpectation, QuestionText, LibraryCopy,
+  ExerciseConfig, Handover, RunStep, StepCopy, CutExpectation, QuestionText, LibraryCopy,
 } from './exerciseConfig';
 
 /** One `exercise_cuts` row, only the columns a config can be checked against. */
@@ -280,6 +280,16 @@ export function buildExerciseConfig(source: ExerciseSource): ExerciseConfig {
  * produces identical bytes. A file that differs on every save makes a diff
  * useless, and a diff is the entire point of handing this over.
  */
-export function configToFile(config: ExerciseConfig): string {
-  return `${JSON.stringify(config, null, 2)}\n`;
+export function configToFile(config: ExerciseConfig, handover?: Handover): string {
+  /* ── HANDOVER GOES SECOND, AND THAT IS NOT COSMETIC ────────────────────
+     JSON keeps insertion order, and the block's whole job is to be read
+     before the rest of the file: `safeToApply: false` at the bottom of six
+     hundred lines is a flag nobody meets until after they have decided. So
+     the object is rebuilt rather than spread — `{...config, handover}` would
+     put it last, which is the one place it must not be. */
+  const { $schema, ...rest } = config;
+  const ordered = handover === undefined
+    ? { $schema, ...rest }
+    : { $schema, handover, ...rest };
+  return `${JSON.stringify(ordered, null, 2)}\n`;
 }
