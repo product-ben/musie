@@ -86,7 +86,7 @@ function extractText(config: Record<string, any>, locale: string): Record<string
   run.forEach((entry: Record<string, any>, index: number) => {
     const copy = entry.copy?.[locale];
     if (copy) {
-      for (const field of ['headline', 'bodyMd', 'placeholder', 'continueLabel']) {
+      for (const field of ['headline', 'bodyMd', 'placeholder', 'continueLabel', 'secondaryLabel']) {
         if (typeof copy[field] === 'string') {
           out[`run[${index}].copy.${locale}.${field}`] = copy[field];
         }
@@ -94,7 +94,7 @@ function extractText(config: Record<string, any>, locale: string): Record<string
       for (const mode of ['digital', 'analogue']) {
         const override = copy[mode];
         if (!override) continue;
-        for (const field of ['headline', 'bodyMd', 'placeholder', 'continueLabel']) {
+        for (const field of ['headline', 'bodyMd', 'placeholder', 'continueLabel', 'secondaryLabel']) {
           if (typeof override[field] === 'string') {
             out[`run[${index}].copy.${locale}.${mode}.${field}`] = override[field];
           }

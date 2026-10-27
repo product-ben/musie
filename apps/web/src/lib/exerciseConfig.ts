@@ -115,6 +115,15 @@ export interface StepCopy {
   placeholder?: string;
   /** The forward action. Absent falls back to the chrome `MessageKey`. */
   continueLabel?: string;
+  /**
+   * The step's OTHER button, where it has two — *Karten ansehen* on `select`,
+   * *Karte ansehen* on `view`, *Nochmal scannen* on `scan`.
+   *
+   * Absent falls back to chrome, exactly like `continueLabel`. Added
+   * 2026-10-27: the builder showed neither, so every button in the app was
+   * invisible to the person whose job is the wording.
+   */
+  secondaryLabel?: string;
   /** Overrides for a digital run — the cards are on screen, not on a table. */
   digital?: Partial<StepCopy>;
   /** Overrides for an analogue run. Rare; the base case is usually analogue. */

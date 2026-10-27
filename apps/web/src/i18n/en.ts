@@ -2291,8 +2291,12 @@ still covers it.`,
   'builder.locale.en': 'English',
   'builder.implemented': 'Built',
   'builder.unimplemented': 'Not built yet',
-  'builder.mode.analogue': 'With the cards on the table',
-  'builder.mode.digital': 'With the cards on screen',
+  /* SHORT: a segment is not a row, and the design target is two words. The
+     first pair clipped to "With the cards on th…" at the frame's width,
+     which made the two options indistinguishable. The glyph carries the
+     rest. */
+  'builder.mode.analogue': 'On the table',
+  'builder.mode.digital': 'On screen',
 
   'builder.mode': 'Which version',
   'builder.reflectSheet.headline': 'This text appears in a panel, not on the step',
@@ -2312,6 +2316,13 @@ still covers it.`,
   'builder.field.placeholderHint': 'Grey text inside the box, to say what to write. Plain text — no formatting.',
   'builder.chromeCopy.headline': 'No text of its own yet',
   'builder.chromeCopy': 'This step has no text of its own yet: it uses wording built into the app. Anything you write here is a request to move that wording out, and it will not change the app on its own.',
+
+  'builder.field.builtIn': 'This is what the app says here today. Leave it empty to keep it, or write your own.',
+  'builder.field.continueLabel': 'Button that leads on',
+  'builder.field.secondaryLabel': 'The other button',
+  'builder.field.labelHint': 'Two or three words. Leave it empty to keep what the app says.',
+  'builder.willTranslate.de': 'When you leave a field, I rewrite the English version of it.',
+  'builder.willTranslate.en': 'When you leave a field, I rewrite the German version of it.',
 
   'builder.questions': 'Questions while listening',
   'builder.questions.intro': 'A rotating question sits under the player and comes back in the reflection. Switch it on only if you want one — the exercise reads perfectly well without.',

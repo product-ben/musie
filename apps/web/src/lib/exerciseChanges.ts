@@ -39,8 +39,8 @@ import type {
  * not, which is the safe direction for a flag Ben relies on. */
 const TEXT_PATHS: readonly RegExp[] = [
   /^library\.(de|en)\.(name|description|needs|imageAlt)$/,
-  /^run\[\d+]\.copy\.(de|en)\.(headline|bodyMd|placeholder|continueLabel)$/,
-  /^run\[\d+]\.copy\.(de|en)\.(digital|analogue)\.(headline|bodyMd|placeholder|continueLabel)$/,
+  /^run\[\d+]\.copy\.(de|en)\.(headline|bodyMd|placeholder|continueLabel|secondaryLabel)$/,
+  /^run\[\d+]\.copy\.(de|en)\.(digital|analogue)\.(headline|bodyMd|placeholder|continueLabel|secondaryLabel)$/,
   /^run\[\d+]\.questions\.(de|en)\[\d+]\.(listen|reflect|helper)$/,
 ];
 

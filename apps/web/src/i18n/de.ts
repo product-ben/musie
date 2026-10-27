@@ -1839,8 +1839,10 @@ anzunehmen, das alte Ja gelte weiter.`,
   'builder.locale.en': 'Englisch',
   'builder.implemented': 'Fertig',
   'builder.unimplemented': 'Noch nicht gebaut',
-  'builder.mode.analogue': 'Mit Karten auf dem Tisch',
-  'builder.mode.digital': 'Mit Karten auf dem Bildschirm',
+  /* Kurz: ein Segment ist keine Zeile. Das erste Paar brach auf "Mit Karten
+     auf dem…" um und machte die beiden Optionen ununterscheidbar. */
+  'builder.mode.analogue': 'Auf dem Tisch',
+  'builder.mode.digital': 'Am Bildschirm',
 
   'builder.mode': 'Welche Fassung',
   'builder.reflectSheet.headline': 'Dieser Text erscheint in einem Panel, nicht im Schritt',
@@ -1860,6 +1862,13 @@ anzunehmen, das alte Ja gelte weiter.`,
   'builder.field.placeholderHint': 'Grauer Text im Feld, der sagt, was dort hingehört. Reiner Text – keine Formatierung.',
   'builder.chromeCopy.headline': 'Noch keine eigenen Texte',
   'builder.chromeCopy': 'Dieser Schritt hat noch keine eigenen Texte: Er nutzt Formulierungen, die fest in der App stehen. Was du hier schreibst, ist ein Wunsch, sie herauszulösen – die App ändert sich dadurch noch nicht.',
+
+  'builder.field.builtIn': 'Das sagt die App hier heute. Lass es leer, um es zu behalten, oder schreib deins.',
+  'builder.field.continueLabel': 'Knopf, der weiterf\u00fchrt',
+  'builder.field.secondaryLabel': 'Der andere Knopf',
+  'builder.field.labelHint': 'Zwei oder drei W\u00f6rter. Leer lassen beh\u00e4lt, was die App sagt.',
+  'builder.willTranslate.de': 'Wenn du ein Feld verl\u00e4sst, schreibe ich die englische Fassung davon neu.',
+  'builder.willTranslate.en': 'Wenn du ein Feld verl\u00e4sst, schreibe ich die deutsche Fassung davon neu.',
 
   'builder.questions': 'Fragen beim Hören',
   'builder.questions.intro': 'Eine wechselnde Frage steht unter dem Player und kommt in der Reflexion zurück. Schalte sie nur ein, wenn du eine möchtest – die Übung funktioniert auch ohne.',

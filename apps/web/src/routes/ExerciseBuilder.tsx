@@ -79,6 +79,7 @@ import type { QuestionId } from '../content/questions';
 import { buildExerciseConfig, configToFile } from '../lib/buildExerciseConfig';
 import type { QuestionSource } from '../lib/buildExerciseConfig';
 import { configToExercise, previewCard, previewHand, stepsInMode } from '../lib/configToExercise';
+import { chromeCopyFor } from '../lib/chromeCopy';
 import { validateConfig } from '../lib/exerciseConfig';
 import { buildHandover, changeLog, setAtPath } from '../lib/exerciseChanges';
 import { PromptError, promptEdits, translateFields, twinPath } from '../lib/exercisePrompt';
@@ -618,6 +619,15 @@ export function ExerciseBuilder() {
   const rotates = listen?.features.includes('rotating_question') ?? false;
   const questions = listen?.questions?.[locale] ?? [];
 
+  /* The words this step shows when the config says nothing. Drawn as
+     placeholders, so an empty field still means "leave the app's own word
+     alone" and typing is a proposal to move that string out of chrome. */
+  const built = chromeCopyFor(current, { mode, cardsDealt: config.catalogue.cardsDealt });
+  const builtIn = (which: 'headline' | 'bodyMd' | 'continueLabel' | 'secondaryLabel') => {
+    const entry = built[which];
+    return entry === undefined ? undefined : t(entry.key, entry.slots);
+  };
+
   const editCopy = (field: keyof StepCopy, value: string) => {
     edit((draft) => {
       const target = draft.run[entryIndex];
@@ -658,41 +668,6 @@ export function ExerciseBuilder() {
             onValueChange={setSelected}
             emptyLabel={t('content.empty')}
           />
-
-          <SegmentedControl
-            name="builder-locale"
-            legend={t('builder.locale')}
-            options={LOCALES.map((code) => ({
-              value: code,
-              label: t(code === 'de' ? 'builder.locale.de' : 'builder.locale.en'),
-              /* ONE GLYPH FOR BOTH, the way /goal-mappings uses one for all
-                 five exercises: two invented icons would imply a difference
-                 between the languages that there is not. */
-              glyph: Languages,
-            }))}
-            value={locale}
-            onValueChange={(next) => setLocale(next as Locale)}
-          />
-
-          {offersModes && (
-            <SegmentedControl
-              name="builder-mode"
-              legend={t('builder.mode')}
-              options={[
-                { value: 'analogue', label: t('builder.mode.analogue'), glyph: STEP_ICON.scan },
-                { value: 'digital', label: t('builder.mode.digital'), glyph: STEP_ICON.select },
-              ]}
-              value={mode}
-              onValueChange={(next) => setMode(next as RunMode)}
-            />
-          )}
-
-          <BadgeRow>
-            <Badge variant="neutral">{config.kind}</Badge>
-            <Badge variant={config.implemented ? 'success' : 'warning'}>
-              {t(config.implemented ? 'builder.implemented' : 'builder.unimplemented')}
-            </Badge>
-          </BadgeRow>
 
           {/* The exercise's own card — not a step's copy, which is why it
               lives up here with the thing it names. */}
@@ -751,6 +726,52 @@ export function ExerciseBuilder() {
               mode={mode}
               onStepChange={setStep}
             />
+          </div>
+
+          {/* ── WHICH VERSION YOU ARE LOOKING AT ──────────────────────────
+              Under the preview and not in the collapsible above, because
+              these two change WHAT THE PHONE SHOWS — a control belongs beside
+              the thing it moves. Ben, 2026-10-27.
+
+              `legendAsLabel`, so they read as two fields rather than as two
+              section headings: the preview already is the section. */}
+          <div className="musie-builder__variant">
+            <SegmentedControl
+              name="builder-locale"
+              legend={t('builder.locale')}
+              legendAsLabel
+              options={LOCALES.map((code) => ({
+                value: code,
+                label: t(code === 'de' ? 'builder.locale.de' : 'builder.locale.en'),
+                /* ONE GLYPH FOR BOTH, the way /goal-mappings uses one for all
+                   five exercises: two invented icons would imply a difference
+                   between the languages that there is not. */
+                glyph: Languages,
+              }))}
+              value={locale}
+              onValueChange={(next) => setLocale(next as Locale)}
+            />
+
+            {offersModes && (
+              <SegmentedControl
+                name="builder-mode"
+                legend={t('builder.mode')}
+                legendAsLabel
+                options={[
+                  { value: 'analogue', label: t('builder.mode.analogue'), glyph: STEP_ICON.scan },
+                  { value: 'digital', label: t('builder.mode.digital'), glyph: STEP_ICON.select },
+                ]}
+                value={mode}
+                onValueChange={(next) => setMode(next as RunMode)}
+              />
+            )}
+
+            <BadgeRow>
+              <Badge variant="neutral">{config.kind}</Badge>
+              <Badge variant={config.implemented ? 'success' : 'warning'}>
+                {t(config.implemented ? 'builder.implemented' : 'builder.unimplemented')}
+              </Badge>
+            </BadgeRow>
           </div>
         </div>
 
@@ -817,6 +838,13 @@ export function ExerciseBuilder() {
               />
             )}
 
+            {/* SAID BEFORE IT HAPPENS. A spinner that appears after the fact
+                explains a thing that already ran; what she needs is to know
+                that leaving a field rewrites the other language. */}
+            <p className="musie-note">
+              {t(locale === 'de' ? 'builder.willTranslate.de' : 'builder.willTranslate.en')}
+            </p>
+
             <Finishing
               path={`run[${entryIndex}].copy.${locale}.headline`}
               value={copy.headline}
@@ -824,6 +852,9 @@ export function ExerciseBuilder() {
             >
               <Field
                 label={t('builder.field.headline')}
+                placeholder={builtIn('headline')}
+                description={built.headline === undefined
+                  ? undefined : t('builder.field.builtIn')}
                 value={copy.headline}
                 onValueChange={(value) => editCopy('headline', value)}
               />
@@ -835,13 +866,50 @@ export function ExerciseBuilder() {
             >
               <Field
                 label={t('builder.field.body')}
-                description={t('builder.field.bodyHint')}
+                description={built.bodyMd === undefined
+                  ? t('builder.field.bodyHint') : t('builder.field.builtIn')}
+                placeholder={builtIn('bodyMd')}
                 multiline
                 rows={8}
                 value={copy.bodyMd}
                 onValueChange={(value) => editCopy('bodyMd', value)}
               />
             </Finishing>
+            {/* ── THE BUTTONS ───────────────────────────────────────────
+                Every step has a forward action and some have a second one,
+                and until today none of them was editable anywhere: the field
+                has been in the schema since the first commit and the editor
+                never drew it. The placeholder is what the button says now. */}
+            <Finishing
+              path={`run[${entryIndex}].copy.${locale}.continueLabel`}
+              value={copy.continueLabel ?? ''}
+              onFinished={(path, value) => { void translateTwin(path, value); }}
+            >
+              <Field
+                label={t('builder.field.continueLabel')}
+                description={t('builder.field.labelHint')}
+                placeholder={builtIn('continueLabel')}
+                value={copy.continueLabel ?? ''}
+                onValueChange={(value) => editCopy('continueLabel', value)}
+              />
+            </Finishing>
+
+            {built.secondaryLabel !== undefined && (
+              <Finishing
+                path={`run[${entryIndex}].copy.${locale}.secondaryLabel`}
+                value={copy.secondaryLabel ?? ''}
+                onFinished={(path, value) => { void translateTwin(path, value); }}
+              >
+                <Field
+                  label={t('builder.field.secondaryLabel')}
+                  description={t('builder.field.labelHint')}
+                  placeholder={builtIn('secondaryLabel')}
+                  value={copy.secondaryLabel ?? ''}
+                  onValueChange={(value) => editCopy('secondaryLabel', value)}
+                />
+              </Finishing>
+            )}
+
             {current === 'reflect' && (
               <>
                 <Finishing

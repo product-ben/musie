@@ -125,12 +125,17 @@ export function configToExercise(
  * it. `imageUrl` is null, which the card components already handle, because
  * five of the nine deck cards are genuinely silent and imageless.
  */
-export function previewCard(): Card {
+export function previewCard(index = 1): Card {
+  const n = String(index).padStart(2, '0');
   return {
-    id: 'preview-card',
-    code: 'MC-01',
-    imageUrl: null,
-    sort: 1,
+    id: `mc-${n}`,
+    code: `MC-${n}`,
+    /* THE REAL FILES. `imageUrl: null` is a legal card — five of the nine are
+       genuinely silent — but it renders as a broken image, and a preview whose
+       cards look broken teaches the wrong thing about the screen. These paths
+       are the deck's own, so what she sees is what a run shows. */
+    imageUrl: `assets/web/cards/mc-${n}.webp`,
+    sort: index,
     feeling: '',
     imageAlt: null,
   };
@@ -139,10 +144,7 @@ export function previewCard(): Card {
 /** A hand for `select`, as long as the exercise deals. */
 export function previewHand(cardsDealt: number | null): Card[] {
   const count = cardsDealt ?? 1;
-  return Array.from({ length: count }, (_, index) => ({
-    ...previewCard(),
-    id: `preview-card-${index + 1}`,
-    code: `MC-0${index + 1}`,
-    sort: index + 1,
-  }));
+  /* The deck has nine; an exercise dealing more than that would wrap rather
+     than ask for a file that is not there. */
+  return Array.from({ length: count }, (_, index) => previewCard((index % 9) + 1));
 }
