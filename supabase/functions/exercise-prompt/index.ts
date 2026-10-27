@@ -28,10 +28,14 @@
  *   supabase secrets set ANTHROPIC_API_KEY=…
  *   supabase functions deploy exercise-prompt
  *
+ * A workspace-scoped key is enough. An ORGANISATION key additionally needs
+ * `supabase secrets set ANTHROPIC_WORKSPACE_ID=…`, because the API refuses an
+ * unscoped key outright — see the note beside the client below.
+ *
  * By hand, like the other three. No workflow covers it, so CHANGING THE
  * EDITOR LIST IS AN EDIT AND A DEPLOY.
  */
-import Anthropic from 'npm:@anthropic-ai/sdk@0.69.0';
+import Anthropic from 'npm:@anthropic-ai/sdk@1.3.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 /**
@@ -294,7 +298,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (whoError !== null || auth.user === null) return json({ error: 'unauthenticated' }, 401);
   if (!mayEdit(auth.user.email)) return json({ error: 'forbidden' }, 403);
 
-  const client = new Anthropic({ apiKey });
+  /* ── A KEY MAY OR MAY NOT KNOW ITS WORKSPACE ──────────────────────────
+     An ORGANISATION-level key is not scoped to one, and the API then refuses
+     every request until `anthropic-workspace-id` names it:
+
+       "This API key is not scoped to a workspace, so this request must
+        include the anthropic-workspace-id header…"
+
+     A workspace-scoped key needs none of this, which is the simpler setup and
+     the one to prefer. The header is supported anyway so an org key works
+     without anybody having to find out why it does not — that refusal arrives
+     as a generic model failure otherwise, and looks like a bug in this file. */
+  const workspace = Deno.env.get('ANTHROPIC_WORKSPACE_ID');
+  const client = new Anthropic({
+    apiKey,
+    ...(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {}),
+  });
 
   try {
     if (body.action === 'translate') {

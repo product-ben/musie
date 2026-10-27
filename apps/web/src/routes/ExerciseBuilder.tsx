@@ -628,6 +628,24 @@ export function ExerciseBuilder() {
     return entry === undefined ? undefined : t(entry.key, entry.slots);
   };
 
+  /**
+   * Hand-editing a field takes its provenance back.
+   *
+   * Without this a field she prompted and then rewrote herself kept saying
+   * *From your instruction* in the change log — which is the one thing that
+   * column exists to get right.
+   */
+  const ownIt = (path: string) => {
+    if (selected === null) return;
+    setOrigins((current) => {
+      const mine = current[selected];
+      if (mine?.[path] === undefined) return current;
+      const rest = { ...mine };
+      delete rest[path];
+      return { ...current, [selected]: rest };
+    });
+  };
+
   const editCopy = (field: keyof StepCopy, value: string) => {
     edit((draft) => {
       const target = draft.run[entryIndex];
@@ -635,6 +653,7 @@ export function ExerciseBuilder() {
       const existing = target.copy[locale] ?? { headline: '', bodyMd: '' };
       target.copy[locale] = { ...existing, [field]: value };
     });
+    ownIt(`run[${entryIndex}].copy.${locale}.${field}`);
   };
 
   return (
@@ -1106,7 +1125,7 @@ export function ExerciseBuilder() {
                           ? 'builder.changes.structural' : 'builder.changes.text')}
                       </Badge>
                       {change.by !== 'hand' && (
-                        <Badge variant="info">
+                        <Badge variant="outline">
                           {t(change.by === 'translation'
                             ? 'builder.changes.byTranslation' : 'builder.changes.byPrompt')}
                         </Badge>
