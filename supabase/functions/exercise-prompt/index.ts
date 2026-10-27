@@ -50,6 +50,17 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const EDITORS: readonly string[] = [
   'lipinskib@gmail.com',
   'lipinskib@googlemail.com',
+  /* Lucia, 2026-10-27, and ONE spelling on purpose — the same reasoning
+     `content-admin` records for the same person: her account was created by
+     `create-tester.mjs` on exactly this address, so it is the string
+     `auth.users` holds and the only one a token can ever carry. The pair
+     above is not a pattern to copy; it exists because Ben's account signs in
+     as the spelling his brief did not name.
+
+     SHE IS ON BOTH LISTS NOW, and they still mean different things: that one
+     is who may edit the deck in the database, this one is who may edit
+     exercise copy into a file. The overlap is her, not the rule. */
+  'lucia.vondamnitz@gmail.com',
 ];
 
 function mayEdit(email: string | undefined): boolean {
