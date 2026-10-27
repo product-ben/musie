@@ -148,6 +148,70 @@
         }
       }
     },
+    "staticText": {
+      "description": "Where the therapist wrote her own wording over a string the app owns \u2014 a button label, or the heading of a step with no text of its own. A section of its own because it is a WORK ORDER, not a log: changing a MessageKey is a decision about where that string should live, so a non-empty staticText makes handover.safeToApply false. One entry per field, the latest value winning.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "locale",
+          "messageKey",
+          "builtIn",
+          "wants",
+          "options"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "de",
+              "en"
+            ]
+          },
+          "messageKey": {
+            "type": "string",
+            "description": "The key this overrides \u2014 what to grep for in apps/web/src/i18n/*."
+          },
+          "builtIn": {
+            "type": "string",
+            "description": "What the app says today, in this field's own language."
+          },
+          "wants": {
+            "type": "string"
+          },
+          "options": {
+            "description": "Ways it could be built, cheapest first, written for the engineer. Empty where they could not be fetched.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "title",
+                "what",
+                "tradeoff"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "what": {
+                  "type": "string",
+                  "description": "What would actually change \u2014 files, columns, keys."
+                },
+                "tradeoff": {
+                  "type": "string",
+                  "description": "Who else it affects, what it costs, what it risks."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "id": {
       "type": "string",
       "description": "exercises.id. Never renamed to match a display name: sessions.exercise_id and every diary entry point at it.",

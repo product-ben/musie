@@ -280,7 +280,15 @@ export function buildExerciseConfig(source: ExerciseSource): ExerciseConfig {
  * produces identical bytes. A file that differs on every save makes a diff
  * useless, and a diff is the entire point of handing this over.
  */
-export function configToFile(config: ExerciseConfig, handover?: Handover): string {
+export function configToFile(
+  config: ExerciseConfig,
+  handover?: Handover,
+  /* Ben, 2026-10-27: a section of its own for the words she wrote over the
+     app's. It sits beside `handover` rather than inside it because it is a
+     different kind of thing — the log says what she wants, this is the work
+     order, and it carries the ways it could be built. */
+  staticText?: unknown[],
+): string {
   /* ── HANDOVER GOES SECOND, AND THAT IS NOT COSMETIC ────────────────────
      JSON keeps insertion order, and the block's whole job is to be read
      before the rest of the file: `safeToApply: false` at the bottom of six
@@ -288,8 +296,9 @@ export function configToFile(config: ExerciseConfig, handover?: Handover): strin
      the object is rebuilt rather than spread — `{...config, handover}` would
      put it last, which is the one place it must not be. */
   const { $schema, ...rest } = config;
-  const ordered = handover === undefined
-    ? { $schema, ...rest }
-    : { $schema, handover, ...rest };
+  const ordered: Record<string, unknown> = { $schema };
+  if (handover !== undefined) ordered.handover = handover;
+  if (staticText !== undefined && staticText.length > 0) ordered.staticText = staticText;
+  Object.assign(ordered, rest);
   return `${JSON.stringify(ordered, null, 2)}\n`;
 }

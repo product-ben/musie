@@ -67,7 +67,7 @@ import { SessionView } from '../components/SessionView';
 import { SessionListen } from '../components/SessionListen';
 import { SessionReflect } from '../components/SessionReflect';
 import { LocaleContext, useT } from '../i18n/localeContext';
-import { LOCALES } from '../i18n';
+import { LOCALES, translate } from '../i18n';
 import type { Locale } from '../i18n';
 import { stepMessageKey } from '../routeHandle';
 import type { StepId } from '../routeHandle';
@@ -78,11 +78,16 @@ import { QUESTION_SETS, questionsDe, questionsEn } from '../content/questions';
 import type { QuestionId } from '../content/questions';
 import { buildExerciseConfig, configToFile } from '../lib/buildExerciseConfig';
 import type { QuestionSource } from '../lib/buildExerciseConfig';
-import { configToExercise, previewCard, previewHand, stepsInMode } from '../lib/configToExercise';
-import { chromeCopyFor } from '../lib/chromeCopy';
+import {
+  configToExercise, copyInMode, previewCard, previewHand, stepsInMode,
+} from '../lib/configToExercise';
+import { chromeCopyFor, chromeDefaults, staticOverrides } from '../lib/chromeCopy';
+import type { ChromeDefault, StaticOverride } from '../lib/chromeCopy';
 import { validateConfig } from '../lib/exerciseConfig';
 import { buildHandover, changeLog, setAtPath } from '../lib/exerciseChanges';
-import { PromptError, promptEdits, translateFields, twinPath } from '../lib/exercisePrompt';
+import {
+  PromptError, fetchIntegrationOptions, promptEdits, translateFields, twinPath,
+} from '../lib/exercisePrompt';
 import type {
   ChangeOrigin, ExerciseConfig, HandoverRequest, QuestionText, RunMode, StepCopy,
 } from '../lib/exerciseConfig';
@@ -193,6 +198,18 @@ function PreviewBody({
 
   const intro = config.run.find((entry) => entry.step === 'intro');
   const listen = config.run.find((entry) => entry.step === 'listen');
+
+  /* What this step's forward action says: her override where she wrote one,
+     the app's own word otherwise. Same fallback the schema describes. */
+  const here = config.run.find(
+    (entry) => entry.step === step && (entry.mode === undefined || entry.mode === mode),
+  );
+  const ownLabel = copyInMode(here?.copy[locale], mode).continueLabel ?? '';
+  const appLabel = chromeCopyFor(step, { mode, cardsDealt: config.catalogue.cardsDealt })
+    .continueLabel;
+  const forwardLabel = ownLabel.trim() !== ''
+    ? ownLabel
+    : (appLabel === undefined ? t('common.continue') : t(appLabel.key, appLabel.slots));
   const asksPosture = intro?.features.includes('posture_question') ?? false;
   const asksEnding = intro?.features.includes('ending_question') ?? false;
   const offersModes = config.modes?.offers === 'both';
@@ -243,7 +260,12 @@ function PreviewBody({
       }
     >
       <WizardPanel
-        actions={<CtaButton variant="primary" disabled>{t('common.continue')}</CtaButton>}
+        /* ── THE BUTTON SHOWS WHAT SHE WROTE ──────────────────────────────
+           Hard-coded to `common.continue` until 2026-10-27, which meant a
+           therapist could override a button label and watch the preview go on
+           saying the app's word. A field you can edit and not see is worse
+           than a field you cannot edit. */
+        actions={<CtaButton variant="primary" disabled>{forwardLabel}</CtaButton>}
       >
         {step === 'intro' && (
           <SessionIntro
@@ -442,6 +464,15 @@ export function ExerciseBuilder() {
     });
   }, [selected]);
 
+  /* What a chrome key says, IN THE FIELD'S OWN LANGUAGE — `translate` and not
+     `t`, because `t` is bound to the app's locale and a German override has to
+     report the German word it replaces. It said `builtIn: "Continue"` for a
+     German field until this took the locale. */
+  const resolve = React.useCallback(
+    (entry: ChromeDefault, which: Locale) => translate(which, entry.key, entry.slots),
+    [],
+  );
+
   /**
    * Write an answer into the config and remember where it came from.
    *
@@ -516,7 +547,9 @@ export function ExerciseBuilder() {
     setTrouble(null);
     setNote('');
     try {
-      const answer = await promptEdits(config, locale, asked);
+      const answer = await promptEdits(
+        config, locale, asked, chromeDefaults(config, locale, resolve),
+      );
       applyEdits(answer.edits, 'prompt', asked);
       setNote(answer.note);
 
@@ -544,7 +577,7 @@ export function ExerciseBuilder() {
     } finally {
       setBusy(false);
     }
-  }, [applyEdits, config, draft, locale, selected]);
+  }, [applyEdits, config, draft, locale, resolve, selected]);
 
   const problems = React.useMemo(
     () => (config === undefined ? [] : validateConfig(config)),
@@ -558,22 +591,80 @@ export function ExerciseBuilder() {
     return changeLog(was, config, origins[selected] ?? {}, prompts[selected] ?? {});
   }, [baseline, config, origins, prompts, selected]);
 
+  /* ── WHERE SHE WROTE OVER A WORD THE APP OWNS ───────────────────────────
+     ONE ENTRY PER FIELD, LAST WINS — Ben's rule, and it falls out of keying
+     by path: what he implements is where she landed, not how she got there. */
+  const overrides = React.useMemo(
+    () => (config === undefined ? [] : staticOverrides(config, resolve)),
+    [config, resolve],
+  );
+
   const handover = React.useMemo(() => {
     const mine = selected === null ? {} : origins[selected] ?? {};
     const translated = Object.entries(mine)
       .filter(([, by]) => by === 'translation')
       .map(([path]) => path);
-    return buildHandover(
+    const block = buildHandover(
       changes,
       selected === null ? [] : requests[selected] ?? [],
       translated,
       loadedAt,
     );
-  }, [changes, loadedAt, origins, requests, selected]);
 
-  const onDownload = React.useCallback(() => {
+    /* A REWRITTEN BUTTON IS NOT A ROW SOMEBODY UPDATES. `common.continue` is
+       one string shared by every exercise, so writing over it for one of them
+       is a decision about where that string should live — which is exactly
+       what Ben asked to be stopped by. */
+    if (overrides.length === 0) return block;
+    return {
+      ...block,
+      safeToApply: false,
+      blockers: [
+        ...block.blockers,
+        ...overrides.map(
+          (entry) => `${entry.path}: overrides ${entry.messageKey} — see staticText`,
+        ),
+      ],
+    };
+  }, [changes, loadedAt, origins, overrides, requests, selected]);
+
+  const [packing, setPacking] = React.useState(false);
+
+  const onDownload = React.useCallback(async () => {
     if (config === undefined) return;
-    const blob = new Blob([configToFile(config, handover)], { type: 'application/json' });
+
+    /* ── THE OPTIONS ARE FETCHED HERE, ONCE ───────────────────────────────
+       When the file is produced, which is when the answer is needed. Asking
+       per keystroke would be a model call per letter, and asking on every
+       download would re-ask for overrides that have not moved. */
+    let withOptions: StaticOverride[] = overrides;
+    if (overrides.some((entry) => entry.options.length === 0)) {
+      setPacking(true);
+      try {
+        const found = await fetchIntegrationOptions(overrides.map((entry) => ({
+          path: entry.path,
+          locale: entry.locale,
+          messageKey: entry.messageKey,
+          builtIn: entry.builtIn,
+          wants: entry.wants,
+        })));
+        withOptions = overrides.map(
+          (entry) => ({ ...entry, options: found[entry.path] ?? [] }),
+        );
+      } catch (thrown: unknown) {
+        /* THE FILE STILL GOES OUT. Options are a convenience for Ben; a model
+           that is down must not stand between her and handing her work over.
+           The empty array says they were not asked for. */
+        const reason = thrown instanceof PromptError ? thrown.reason : 'unknown';
+        setTrouble(reason);
+      } finally {
+        setPacking(false);
+      }
+    }
+
+    const blob = new Blob([configToFile(config, handover, withOptions)], {
+      type: 'application/json',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -586,7 +677,7 @@ export function ExerciseBuilder() {
     /* Revoked on the next tick: Safari reads the href after the click returns,
        and revoking in the same turn gives an empty file with no error. */
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  }, [config, handover]);
+  }, [config, handover, overrides]);
 
   if (failed) return <p className="musie-note">{t('content.errorDetail')}</p>;
   if (configs === null) return <p className="musie-note">{t('content.loading')}</p>;
@@ -1160,8 +1251,8 @@ export function ExerciseBuilder() {
         ))}
 
         <p className="musie-note">{t('builder.hand.intro')}</p>
-        <CtaButton variant="primary" onClick={onDownload}>
-          {t('builder.download')}
+        <CtaButton variant="primary" disabled={packing} onClick={() => { void onDownload(); }}>
+          {packing ? t('builder.download.packing') : t('builder.download')}
         </CtaButton>
       </ContentBox>
     </div>

@@ -263,6 +263,47 @@ they are compared whole and summarised by what moved. Walking them by index
 turned "two features switched off" into three entries that each looked like a
 rename, which was true of the array and false about the exercise.
 
+### Writing over a word the app owns
+
+A rewritten `intro_md` is a row somebody updates. A rewritten **button** is
+not: `common.continue` is one `MessageKey` shared by every exercise, so
+changing it for one of them is a decision about where that string should live.
+
+Since 2026-10-27 she may ask for it anyway — the prompt carries the app's own
+words alongside the config, because a button label is ABSENT from a config and
+absent is what *use the app's own word* means. The preview shows her version
+immediately, the change log keeps it, and the file grows a section of its own:
+
+```jsonc
+"staticText": [
+  {
+    "path": "run[0].copy.de.continueLabel",
+    "locale": "de",
+    "messageKey": "common.continue",
+    "builtIn": "Weiter",
+    "wants": "Los geht's",
+    "options": [
+      { "title": "Change the shared German key",
+        "what": "Edit `common.continue` in `de.ts` …",
+        "tradeoff": "One string shared by every exercise … Cheapest, and poor for exactly that reason." }
+    ]
+  }
+]
+```
+
+**A section and not a log entry**, because it is a work order: a non-empty
+`staticText` makes `safeToApply` false, and the options are fetched once when
+the file is produced — written for the engineer, cheapest first, each naming
+the files it would touch and who else it affects.
+
+**One entry per field, the latest value winning.** It falls out of reading the
+config's current value rather than accumulating edits: what gets implemented
+is where she landed, not how she got there.
+
+`builtIn` is resolved in the FIELD's language, not the app's. Through the
+app's own `t` it reported `"Continue"` for a German override, which is the one
+thing that field exists to get right.
+
 ### The line is drawn on the effect, not the field
 
 `library.de.needs` is a TEXT field — and empty means `needs: null`, from which

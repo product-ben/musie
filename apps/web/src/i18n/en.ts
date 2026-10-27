@@ -2367,6 +2367,7 @@ still covers it.`,
 
   'builder.hand': 'Hand it over',
   'builder.hand.intro': 'Download the file and send it on. It is read and put into Musie by hand — nothing you do here reaches anybody until then.',
+  'builder.download.packing': 'Working out the options\u2026',
   'builder.download': 'Download the file',
 } as const;
 

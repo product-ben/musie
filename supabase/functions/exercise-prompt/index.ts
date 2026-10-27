@@ -155,6 +155,13 @@ WHAT YOU MAY DO
 Rewrite the text of the fields you were given. That is all. Return every field
 you changed in "edits", keyed by the exact path you were given.
 
+SOME FIELDS ARE THE APP'S OWN WORDS
+A field marked (app's own wording) currently comes from the app rather than
+from this exercise — button labels, and the headings of steps that have no
+text of their own. You MAY rewrite those: she is allowed to say what she wants
+them to say, and somebody will decide afterwards how to build it. Treat them
+exactly like any other field. Do not warn her about it; the file records it.
+
 WHAT YOU MAY NOT DO
 You cannot add or remove steps, turn features on or off, add or remove
 questions, change which recording plays, change timings, or change anything
@@ -191,6 +198,79 @@ path it came with. Change nothing else.
 
 ${GERMAN_RULES}
 `.trim();
+
+const OPTIONS_SYSTEM = `
+A music therapist has written her own wording over a string that the Musie app
+owns — a button label, or the heading of a step that has no text of its own.
+She cannot apply that herself. You are writing the options for the ENGINEER who
+will decide how to build it.
+
+WHAT MUSIE LOOKS LIKE, which is what makes these decisions different:
+- Chrome lives in \`apps/web/src/i18n/en.ts\` and \`de.ts\` as a \`MessageKey\`.
+  It is OURS and PERMANENT, typed: \`de.ts\` is checked against \`en.ts\`, so a
+  key added in one language and not the other fails the build. One string there
+  is shared by every exercise that renders that screen.
+- Content lives in Postgres, in \`exercise_i18n\`, one row per (exercise,
+  locale). It is per-exercise and editable without a deploy.
+- Some steps (\`select\`, \`view\`) have NO content columns at all, so every
+  word they show is chrome today.
+- A config file exists (\`StepCopy.continueLabel\`, \`secondaryLabel\`) but
+  NOTHING READS IT AT RUNTIME yet. Proposing that it be read is a legitimate
+  option, and it is a bigger change than it sounds.
+
+Give between two and four options per field. Order them cheapest first. Each
+one is a real route somebody could take this afternoon, not a category:
+
+- "title": a few words naming the route.
+- "what": what would actually change — name files, columns or keys where you
+  can. Be concrete. "Add a column" is useless; "add \`continue_label\` to
+  \`exercise_i18n\`, read it in \`Session.tsx\`'s action row" is an option.
+- "tradeoff": the half that makes it a choice. Who else it affects, what it
+  costs, what it risks. Changing a shared key changes it for every exercise —
+  say so.
+
+Always include the cheapest honest option, even when it is poor, and say in
+its tradeoff why it is poor. Do not invent files or columns you were not told
+about. Write in English: the engineer reads English, and these are code
+decisions.
+`.trim();
+
+const OPTIONS_TOOL = {
+  name: 'return_options',
+  description: 'Ways each override could be built, cheapest first.',
+  strict: true,
+  input_schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      fields: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            path: { type: 'string' },
+            options: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  title: { type: 'string' },
+                  what: { type: 'string' },
+                  tradeoff: { type: 'string' },
+                },
+                required: ['title', 'what', 'tradeoff'],
+              },
+            },
+          },
+          required: ['path', 'options'],
+        },
+      },
+    },
+    required: ['fields'],
+  },
+} as const;
 
 const EDIT_TOOL = {
   name: 'return_edits',
@@ -337,6 +417,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return json({ translations: input?.translations ?? [] }, 200);
     }
 
+    if (body.action === 'options') {
+      const overrides = Array.isArray(body.overrides) ? body.overrides : [];
+      if (overrides.length === 0) return json({ fields: [] }, 200);
+
+      const message = await client.messages.create({
+        model: MODEL,
+        max_tokens: 16000,
+        system: [{ type: 'text', text: OPTIONS_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        tools: [OPTIONS_TOOL as any],
+        tool_choice: { type: 'tool', name: 'return_options' },
+        messages: [{
+          role: 'user',
+          content: 'She has written her own wording over these app strings. '
+            + 'For each one, how could it be built?\n\n'
+            + JSON.stringify(overrides, null, 2),
+        }],
+      });
+
+      const input = toolInput(message, 'return_options');
+      return json({ fields: input?.fields ?? [] }, 200);
+    }
+
     if (body.action === 'prompt') {
       const config = (body.config ?? {}) as Record<string, any>;
       const locale = typeof body.locale === 'string' ? body.locale : 'de';
@@ -344,6 +446,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (prompt === '') return json({ error: 'bad_request' }, 400);
 
       const text = extractText(config, locale);
+
+      /* THE APP'S OWN WORDS, sent by the browser because they live in its
+         `i18n` catalogue and not in the config. Merged in only where the
+         config says nothing, so an override she has already written wins. */
+      const chrome = (body.chrome ?? {}) as Record<string, string>;
+      const owned = new Set<string>();
+      for (const [path, word] of Object.entries(chrome)) {
+        if (typeof word !== 'string') continue;
+        owned.add(path);
+        if (text[path] === undefined || text[path] === '') text[path] = word;
+      }
+
+      const labelled = Object.fromEntries(
+        Object.entries(text).map(([path, value]) => [
+          owned.has(path) ? `${path} (app's own wording)` : path,
+          value,
+        ]),
+      );
+      /* The model answers with the path it was shown, so the label has to come
+         back off before anything is applied. */
+      const unlabel = (path: string) => path.replace(/ \(app's own wording\)$/, '');
 
       const message = await client.messages.create({
         model: MODEL,
@@ -357,7 +480,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           role: 'user',
           content: `About this exercise (read-only, not editable):\n${describe(config)}\n\n`
             + `Her instruction:\n${prompt}\n\n`
-            + `The fields you may rewrite:\n${JSON.stringify(text, null, 2)}`,
+            + `The fields you may rewrite:\n${JSON.stringify(labelled, null, 2)}`,
         }],
       });
 
@@ -379,6 +502,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
          outside that set is a path it invented — dropped here, and checked
          again in the browser. */
       const edits = (Array.isArray(input.edits) ? input.edits : [])
+        .map((edit: Record<string, any>) => (typeof edit?.path === 'string'
+          ? { ...edit, path: unlabel(edit.path) }
+          : edit))
         .filter((edit: Record<string, any>) => typeof edit?.path === 'string'
           && typeof edit?.value === 'string'
           && Object.prototype.hasOwnProperty.call(text, edit.path));

@@ -1913,5 +1913,6 @@ anzunehmen, das alte Ja gelte weiter.`,
 
   'builder.hand': 'Weitergeben',
   'builder.hand.intro': 'Lade die Datei herunter und schick sie weiter. Sie wird von Hand gelesen und in Musie eingebaut – bis dahin erreicht nichts davon jemanden.',
+  'builder.download.packing': 'Ermittle die M\u00f6glichkeiten\u2026',
   'builder.download': 'Datei herunterladen',
 };

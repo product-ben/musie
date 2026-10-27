@@ -15,6 +15,7 @@
 import { getSupabase } from './supabase';
 import { classifyPath } from './exerciseChanges';
 import type { ExerciseConfig } from './exerciseConfig';
+import type { IntegrationOption } from './chromeCopy';
 import type { Locale } from '../i18n';
 
 export interface PromptEdit {
@@ -80,8 +81,13 @@ export async function promptEdits(
   config: ExerciseConfig,
   locale: Locale,
   prompt: string,
+  /* The app's own words, keyed by path. They live in the browser's `i18n`
+     catalogue and not in the config, so the function cannot find them — and
+     without them the model never sees a button label, because "absent" is
+     what "use the app's own word" looks like. */
+  chrome: Record<string, string> = {},
 ): Promise<PromptAnswer> {
-  const data = await call({ action: 'prompt', config, locale, prompt });
+  const data = await call({ action: 'prompt', config, locale, prompt, chrome });
 
   const edits = (Array.isArray(data.edits) ? data.edits : [])
     .filter((edit: unknown): edit is PromptEdit => {
@@ -129,4 +135,32 @@ export async function translateFields(
 /** The same path, in the other locale. `run[0].copy.de.bodyMd` → `…en…`. */
 export function twinPath(path: string, from: Locale, to: Locale): string {
   return path.replace(`.${from}.`, `.${to}.`).replace(`.${from}[`, `.${to}[`);
+}
+
+/**
+ * How each override could be built — written for Ben, not for her.
+ *
+ * Asked once, when the file is produced, because that is when the answer is
+ * needed and asking per keystroke would be a model call per letter. One call
+ * for every override in the exercise.
+ */
+export async function fetchIntegrationOptions(
+  overrides: { path: string; locale: string; messageKey: string; builtIn: string; wants: string }[],
+): Promise<Record<string, IntegrationOption[]>> {
+  if (overrides.length === 0) return {};
+
+  const data = await call({ action: 'options', overrides });
+  const fields = Array.isArray(data.fields) ? data.fields : [];
+
+  const out: Record<string, IntegrationOption[]> = {};
+  for (const entry of fields as { path?: unknown; options?: unknown }[]) {
+    if (typeof entry.path !== 'string' || !Array.isArray(entry.options)) continue;
+    out[entry.path] = entry.options.filter((option: unknown) => {
+      const candidate = option as IntegrationOption | null;
+      return typeof candidate?.title === 'string'
+        && typeof candidate?.what === 'string'
+        && typeof candidate?.tradeoff === 'string';
+    }) as IntegrationOption[];
+  }
+  return out;
 }
