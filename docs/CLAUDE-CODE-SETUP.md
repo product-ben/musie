@@ -42,7 +42,7 @@ them — without them the next commands are not found.
 ```bash
 brew install git gh node@22 supabase/tap/supabase
 brew install --cask visual-studio-code docker
-brew link --overwrite node@22
+brew link --force --overwrite node@22
 corepack enable
 ```
 
