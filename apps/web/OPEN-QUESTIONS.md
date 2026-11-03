@@ -10620,35 +10620,27 @@ What I need from Ben: nothing. Worth knowing that adding a text field to the
 schema means editing both lists, and that forgetting the function's copy
 simply means the model cannot edit that field — not that it can edit more.
 
-## Lucia proposes changes through Claude Code; only Ben ships — DECIDED
+## Klangreise's first review: the one static-text ask went into the shared key — RESOLVED
 
-Where: `tools/contributor/`, `.claude/skills/{neu,pruefen,vorschlagen}`,
-`.github/CODEOWNERS`, the GitHub ruleset `main is reviewed`
+Where: `sound-journey.NEEDS-REVIEW.json` (baseline 2026-10-28),
+`run[1].copy.de.secondaryLabel` → `session.listen.startLocked`
 
-What I checked: on 2026-11-03 Ben asked for Lucia to propose changes from her
-own Mac with Claude Code, on new branches and as pull requests only, testing
-on localhost against hosted data. `main` had no protection at all (the API
-answered "Branch not protected"), and merging to `main` deploys both the app
-and the schema — so `main` is the one gate, and it was open.
+What I checked: the file's only blocker asks for "Zuerst Hören, dann
+Reflektieren" where the built-in German read "Zuerst hören, dann
+reflektieren". The two differ only in capitals, and the handover fetched no
+options for it.
 
-What I did: three layers. A ruleset on `main` (PR, one approval, code-owner
-review; admin bypasses) is the only one that holds. Managed settings plus a
-PreToolUse guard, installed root-owned on her Mac, stop Claude early and fail
-closed. Her `~/.claude/CLAUDE.md` and three skills make the safe path the one
-without git: she talks German with Claude, the pull requests are English.
+What I did: first declined it — as imperatives the infinitives are verbs and
+take lower case. Ben, 2026-11-03: *make this change on app level, it works
+better for all exercises.* So `session.listen.startLocked` in `de.ts` now reads
+"Zuerst Hören, dann Reflektieren" for every exercise, read as two named steps
+rather than an instruction. No per-exercise override, no column. The other five
+changes, all German copy, went into
+`20261103100000_klangreise_first_review.sql`, word for word except for one
+missing comma ("wahr, ohne … zu wollen") and trailing spaces.
 
-Why: local rules are prefix-matched and run as her user; anything local is a
-convenience, not a wall. The ruleset is a wall only if **she has her own GitHub
-account** — `install.sh` refuses to run under `product-ben`.
+Why: one shared string changed once is cheaper than building a per-exercise
+chrome override, and Ben wants the same label everywhere.
 
-**Data, option A (Ben, 2026-11-03):** her localhost writes the hosted database,
-so `/maintenance` and the exercise builder are live for every tester from
-there. Claude never writes data for her; she edits by hand, as before. That is
-not a proposal path for data — it is the existing one, reviewed after the
-fact through `content_edits`. A real sandbox needs `pnpm content:pull` (logged
-above, not built) plus Docker on her Mac.
-
-What I need from Ben: two things outside the repo. Her GitHub login, to add
-her with Write access (the command is in `tools/contributor/README.md`). And
-the Claude login: sharing a personal plan's login is against its terms and
-spends Ben's limits; her own seat changes nothing in this setup.
+What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
+so Klangreise's English text now says something different from its German.

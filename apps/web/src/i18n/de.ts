@@ -581,8 +581,12 @@ export const de: Messages = {
      Satz, der 'Minuten' sagt: aus neunzig Sekunden wurde '01:30 Minuten'.
 
      Die Uhr gehört jetzt dem Knopf darüber, der das Minimum in seiner eigenen
-     Beschriftung nennt. Dieser hier sagt nur noch, worauf er wartet. */
-  'session.listen.startLocked': 'Zuerst hören, dann reflektieren',
+     Beschriftung nennt. Dieser hier sagt nur noch, worauf er wartet.
+
+     Großgeschrieben seit 2026-11-03: die erste Rückmeldung aus dem
+     Übungs-Builder wollte es so für die Klangreise, und Ben für alle Übungen.
+     Gelesen als zwei Schritte mit Namen, nicht als Aufforderung. */
+  'session.listen.startLocked': 'Zuerst Hören, dann Reflektieren',
   /* ── SHORTER, AND THE QUESTION IS WHY IT WORKS — Ben, 2026-10-12 ─────────
      Was 'Wenn du bereit bist, beginne zu reflektieren'. The conditional spent
      four words before reaching the verb, on a control that is only shown once
