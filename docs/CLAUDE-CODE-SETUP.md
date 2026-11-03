@@ -37,14 +37,29 @@ Mac password; nothing appears as you type, which is normal.
 At the end it prints **"Next steps"** with two or three lines to paste. Paste
 them — without them the next commands are not found.
 
-**Everything else:**
+**Everything else — one line at a time.** Homebrew asks *"Do you want to
+proceed? [y/n]"* before it installs; type `y` and Enter. Paste several lines
+at once and the later lines are read as answers to that question, which shows
+as a stream of *Invalid input* (Ctrl-C, then start again line by line).
 
 ```bash
 brew install git gh node@22 supabase/tap/supabase
+```
+
+```bash
 brew install --cask visual-studio-code docker
+```
+
+```bash
 brew link --force --overwrite node@22
+```
+
+```bash
 corepack enable
 ```
+
+A warning that `node@22` is *deprecated* is expected: it is in maintenance
+until 2027 and it is the version the repository pins.
 
 | Tool | What it is for |
 |---|---|
