@@ -10619,3 +10619,28 @@ the direction that fails safe.
 What I need from Ben: nothing. Worth knowing that adding a text field to the
 schema means editing both lists, and that forgetting the function's copy
 simply means the model cannot edit that field — not that it can edit more.
+
+## Klangreise's first review: the one static-text ask went into the shared key — RESOLVED
+
+Where: `sound-journey.NEEDS-REVIEW.json` (baseline 2026-10-28),
+`run[1].copy.de.secondaryLabel` → `session.listen.startLocked`
+
+What I checked: the file's only blocker asks for "Zuerst Hören, dann
+Reflektieren" where the built-in German read "Zuerst hören, dann
+reflektieren". The two differ only in capitals, and the handover fetched no
+options for it.
+
+What I did: first declined it — as imperatives the infinitives are verbs and
+take lower case. Ben, 2026-11-03: *make this change on app level, it works
+better for all exercises.* So `session.listen.startLocked` in `de.ts` now reads
+"Zuerst Hören, dann Reflektieren" for every exercise, read as two named steps
+rather than an instruction. No per-exercise override, no column. The other five
+changes, all German copy, went into
+`20261103100000_klangreise_first_review.sql`, word for word except for one
+missing comma ("wahr, ohne … zu wollen") and trailing spaces.
+
+Why: one shared string changed once is cheaper than building a per-exercise
+chrome override, and Ben wants the same label everywhere.
+
+What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
+so Klangreise's English text now says something different from its German.
