@@ -1,0 +1,4 @@
+# Every change waits for Ben. The ruleset on `main` requires a code owner's
+# approval; the admin role bypasses it, so this binds contributors, not Ben.
+# tools/contributor/README.md says why.
+* @product-ben
