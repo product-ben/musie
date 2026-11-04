@@ -1670,7 +1670,7 @@ if (!TUNING) document.getElementById('sw-regler').closest('.musy-switch').style.
 if (!SETTINGS) document.getElementById('btn-settings').style.display = 'none';   // ausgeblendet, nicht entfernt: der Rest der Seite greift weiter darauf zu   // ausgeblendet, nicht entfernt: render() schreibt weiter in den Switch
 // ---- Was ein Durchgang zeigt: wie oft gezogen und gestrichen, wie stark (z = Anschlag 0 bis 1) ----
 const stats = { pulls: 0, strums: 0, soft: 0, medium: 0, strong: 0, sum: 0 };
-function harpStat(kind, vel) { introCancel(); if (cd.started && !cd.running && cd.left > 0) cdStart();   // pausiert und weitergespielt: der Ton setzt den Countdown fort, nach 0:00 nicht mehr
+function harpStat(kind, vel) { introCancel(); touchSeen(); if (cd.started && !cd.running && cd.left > 0) cdStart();   // pausiert und weitergespielt: der Ton setzt den Countdown fort, nach 0:00 nicht mehr
   stats[kind === 'pull' ? 'pulls' : 'strums']++; const z = Math.max(0, Math.min(1, (vel - 0.22) / 0.78));
   stats[z < 0.34 ? 'soft' : z < 0.67 ? 'medium' : 'strong']++; stats.sum += z; }
 function harpSummary(why) { const n = stats.pulls + stats.strums; if (!n) return;
@@ -1683,6 +1683,25 @@ function sendPlayTime(endedBy, beacon) {
   const props = { play_seconds: playSeconds(), ended_by: endedBy, played: playStart !== null };
   posthog.capture('harp_play_time', props, beacon ? { transport: 'sendBeacon' } : undefined); console.info('[PostHog]', 'harp_play_time', props);
 }
+// ---- Spielsitzung: vom ersten bis zum letzten Saitenkontakt. 30 s ohne Saite beenden sie, ebenso das Verlassen der Seite. ----
+// Der Auftakt zählt nicht (er läuft nicht über harpStat). Gemessen wird bis zum letzten Kontakt, nicht bis zum Timer.
+const IDLE_MS = 30000;
+let touchFirst = null, touchLast = 0, touchCount = 0, touchTimer = null, touchSessions = 0;
+function touchSeen() {
+  const t = performance.now();
+  if (touchFirst !== null && t - touchLast > IDLE_MS) endTouchSession('idle');   // ein gedrosselter Timer im Hintergrund-Tab
+  if (touchFirst === null) touchFirst = t;
+  touchLast = t; touchCount++;
+  clearTimeout(touchTimer); touchTimer = setTimeout(() => endTouchSession('idle'), IDLE_MS);
+}
+function endTouchSession(endedBy, beacon) {
+  if (touchFirst === null) return; clearTimeout(touchTimer);
+  const props = { play_seconds: Math.round((touchLast - touchFirst) / 100) / 10, touches: touchCount, ended_by: endedBy, session_index: ++touchSessions };
+  touchFirst = null; touchCount = 0;
+  if (beacon) { if (phStarted && window.posthog) posthog.capture('harp_session', props, { transport: 'sendBeacon' }); console.info('[PostHog]', 'harp_session', props); }
+  else ph('harp_session', props);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') endTouchSession('left', true); });   // iOS feuert pagehide nicht verlässlich
 // Wer die Umfrage weggeklickt hat, bekommt sie über das Event nicht noch einmal (PostHog merkt sich „gesehen“).
 // Solange sie nicht abgeschickt ist, öffnet „Ich bin fertig“ sie dann direkt.
 const SURVEY_ID = '01a1a69b-c481-0000-acf8-e050a042353a';
@@ -1697,7 +1716,7 @@ document.getElementById('btn-done').addEventListener('click', () => {
   ph('harp_done', { play_seconds: playSeconds() });       // beim ersten Mal öffnet dieses Event die PostHog-Umfrage
   reopenSurvey();
 });
-addEventListener('pagehide', () => { sendPlayTime('left', true);
+addEventListener('pagehide', () => { sendPlayTime('left', true); endTouchSession('left', true);
   if (phStarted && window.posthog) posthog.capture('harp_played', { trigger: 'pagehide', pulls: stats.pulls, strums: stats.strums, play_seconds: playSeconds() }, { transport: 'sendBeacon' }); });
 if (consent === 'granted') startPostHog(consent);
 layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } else introStrings(true); requestAnimationFrame(frame);
