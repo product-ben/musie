@@ -1586,6 +1586,9 @@ function startPostHog(v) {
     disable_surveys: !granted,
   });
   posthog.register({ experiment: EXPERIMENT, harp_lang: lang, harp_regler: TUNING });
+  // Abgeschickt ist abgeschickt: danach öffnet „Ich bin fertig“ die Umfrage nicht mehr (keine doppelten Antworten).
+  posthog.on('eventCaptured', e => { if (e && e.event === 'survey sent' && e.properties && e.properties.$survey_id === SURVEY_ID && e.properties.$survey_completed !== false) {
+    try { localStorage.setItem('harfe-survey-sent', '1'); } catch (err) {} } });
 }
 function answerConsent(v) {
   const changed = consent !== null && consent !== v;
@@ -1634,9 +1637,19 @@ function sendPlayTime(endedBy, beacon) {
   const props = { play_seconds: playSeconds(), ended_by: endedBy, played: playStart !== null };
   posthog.capture('harp_play_time', props, beacon ? { transport: 'sendBeacon' } : undefined); console.info('[PostHog]', 'harp_play_time', props);
 }
+// Wer die Umfrage weggeklickt hat, bekommt sie über das Event nicht noch einmal (PostHog merkt sich „gesehen“).
+// Solange sie nicht abgeschickt ist, öffnet „Ich bin fertig“ sie dann direkt.
+const SURVEY_ID = '01a1a69b-c481-0000-acf8-e050a042353a';
+function reopenSurvey() {
+  let seen = false, sent = false;
+  try { seen = localStorage.getItem('seenSurvey_' + SURVEY_ID) !== null; sent = localStorage.getItem('harfe-survey-sent') === '1'; } catch (e) {}
+  if (!seen || sent || !phStarted || !window.posthog || !posthog.displaySurvey) return;
+  posthog.displaySurvey(SURVEY_ID, { ignoreConditions: true, ignoreDelay: true, displayType: 'popover' });
+}
 document.getElementById('btn-done').addEventListener('click', () => {
   sendPlayTime('done'); harpSummary('done');
-  ph('harp_done', { play_seconds: playSeconds() });       // löst die PostHog-Umfrage aus
+  ph('harp_done', { play_seconds: playSeconds() });       // beim ersten Mal öffnet dieses Event die PostHog-Umfrage
+  reopenSurvey();
 });
 addEventListener('pagehide', () => { sendPlayTime('left', true);
   if (phStarted && window.posthog) posthog.capture('harp_played', { trigger: 'pagehide', pulls: stats.pulls, strums: stats.strums, play_seconds: playSeconds() }, { transport: 'sendBeacon' }); });
