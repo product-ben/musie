@@ -1618,7 +1618,18 @@ function sendName() {
   posthog.setPersonProperties({ first_name: name }); console.info('[PostHog]', 'first_name', name);
 }
 function consentStep(s) { document.querySelectorAll('#consent .musie-consent-step').forEach(el => { el.hidden = el.dataset.step !== s; }); }
-document.querySelectorAll('#consent .musie-agree').forEach(b => b.addEventListener('click', () => { answerConsent('granted'); closeDialog('consent'); }));
+// Auftakt: sobald die Harfe frei ist (Karte weggeklickt oder gar nicht gezeigt), klingen die 2. und 0,3 s später die 5. Saite.
+// Nur Klang und Schwingung: zählt nicht als Spielen, startet weder Countdown noch Spielzeit. Wartet kurz, bis die Aufnahmen dekodiert sind.
+let introDone = false;
+function introStrings() {
+  if (introDone) return; introDone = true; wake();
+  const t0 = performance.now(), all = Object.keys(SAMPLES).length;
+  (function go() {
+    if (state.engine === 'aufnahme' && sampleBufs.length < all && performance.now() - t0 < 1500) { setTimeout(go, 50); return; }
+    pluck(1, 0.6); setTimeout(() => pluck(4, 0.6), 300);
+  })();
+}
+document.querySelectorAll('#consent .musie-agree').forEach(b => b.addEventListener('click', () => { answerConsent('granted'); closeDialog('consent'); introStrings(); }));
 document.querySelector('#consent .musie-decline').addEventListener('click', () => {
   answerConsent('refused'); consentStep('no'); document.querySelector('#consent [data-step="no"] .musie-agree').focus(); });
 DIALOG_CLOSE.consent = () => {};                         // Teilnahme-Schranke: zu geht sie nur mit der Zustimmung
@@ -1675,7 +1686,7 @@ document.getElementById('btn-done').addEventListener('click', () => {
 addEventListener('pagehide', () => { sendPlayTime('left', true);
   if (phStarted && window.posthog) posthog.capture('harp_played', { trigger: 'pagehide', pulls: stats.pulls, strums: stats.strums, play_seconds: playSeconds() }, { transport: 'sendBeacon' }); });
 if (consent === 'granted') startPostHog(consent);
-layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } requestAnimationFrame(frame);
+layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } else introStrings(); requestAnimationFrame(frame);
 </script>
 
 </body>
