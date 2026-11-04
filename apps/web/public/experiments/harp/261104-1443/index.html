@@ -950,6 +950,8 @@ function impulse(sec) {               // selbst erzeugter Hall: abklingendes, ge
 let roomTimer;
 function setRoom() { clearTimeout(roomTimer); roomTimer = setTimeout(() => { conv.buffer = impulse(P.room); }, 120); }
 function wake() { if (ctx.state !== 'running') ctx.resume(); }
+// Ohne Geste hält der Browser den Ton an; was dann geplant wird, klingt erst beim ersten Klick, gesammelt und zu spät. Also gar nicht erst planen.
+const audible = () => ctx.state === 'running' || !navigator.userActivation || navigator.userActivation.hasBeenActive;
 function fade(v, t, tau) { v.duck.gain.cancelScheduledValues(t); v.duck.gain.setTargetAtTime(0, t, tau);
   v.srcs.forEach(s => { try { s.stop(t + tau * 8); } catch (e) {} }); v.dead = true; }
 // Karplus-Strong aus Version 1: ein Rauschstoß läuft durch eine Verzögerung der Länge einer Periode und wird dabei gemittelt.
@@ -974,7 +976,7 @@ function ksBuffer(freq, vel) {
   return b;
 }
 function play(i, vel) {
-  wake(); if (state.engine === 'aufnahme' && !sampleBufs.length) return;
+  wake(); if (!audible()) return; if (state.engine === 'aufnahme' && !sampleBufs.length) return;
   const midi = midis[i], t = ctx.currentTime, S = SOUNDS[P.sound];
   voices = voices.filter(v => !v.dead);
   if (P.damp) voices.filter(v => v.string === i).forEach(v => fade(v, t, 0.04));     // gleiche Saite verstummt
@@ -1622,7 +1624,11 @@ function consentStep(s) { document.querySelectorAll('#consent .musie-consent-ste
 // Nur Klang und Schwingung: zählt nicht als Spielen, startet weder Countdown noch Spielzeit. Wartet kurz, bis die Aufnahmen dekodiert sind.
 let introDone = false;
 function introStrings() {
-  if (introDone) return; introDone = true; wake();
+  if (introDone) return;
+  if (!audible()) {                                        // Ton gesperrt (Besuch ohne Karte): der Auftakt wartet auf die erste Berührung, damit Bild und Klang zusammen kommen
+    const unlock = () => { ['pointerdown', 'keydown'].forEach(t => removeEventListener(t, unlock, true)); introStrings(); };
+    ['pointerdown', 'keydown'].forEach(t => addEventListener(t, unlock, true)); return; }
+  introDone = true; wake();
   const t0 = performance.now(), all = Object.keys(SAMPLES).length;
   (function go() {
     if (state.engine === 'aufnahme' && sampleBufs.length < all && performance.now() - t0 < 1500) { setTimeout(go, 50); return; }
