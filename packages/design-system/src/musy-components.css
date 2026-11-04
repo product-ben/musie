@@ -2606,6 +2606,17 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      `padding-block` rather than a margin, so it is INSIDE the scrollport and
      the last line clears the edge at the bottom of the scroll. */
   padding-block: var(--space-inset-card);
+  /* AND THE INLINE INSET, for the reason the immersive sheet already gives
+     below ("moved onto the scroller", other axis): a scroll container clips
+     at its PADDING BOX, and with the inset on the popup that box sat exactly
+     on the content edge. A full-width button's focus ring — 3px, offset 2px —
+     was cut flat on both sides. Measured 2026-11-04 on the harp experiment's
+     consent card. The body reaches back out to the popup's border edge and
+     re-applies the inset itself, so content lands where it always did and
+     only the clip boundary moves. The immersive variant overrides both with
+     --space-inset-sheet. */
+  margin-inline: calc(var(--space-inset-card) * -1);
+  padding-inline: var(--space-inset-card);
 }
 
 /* ── RESERVING THE BAND THE CLOSE CONTROL SITS IN ──────────────────────────
