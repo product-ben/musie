@@ -44,6 +44,55 @@
     "not_found_handling": "single-page-application"
   },
 
+  // ── THE CUSTOM DOMAIN · musie.org — 2026-11-04 ──────────────────────────
+  //
+  // The second half of BUILD-PLAN's decision 1. The domain was registered at
+  // Cloudflare on 2026-10-20 because Resend needs a sending domain for the
+  // sign-in codes; attaching it to this Worker makes it the app's address as
+  // well, with /experiments riding along because they are files in the same
+  // bundle.
+  //
+  // THIS FILE IS CATCHING UP, NOT ATTACHING. musie.org already answered with
+  // this Worker's bundle on 2026-11-04 — attached outside this file — while
+  // LEGAL-PAGES.md §5.3 and SignInGate.tsx already said this file attached
+  // it. Every `main` deploy since then left the domain in place, so a deploy
+  // without this block does not detach it; it simply leaves the attachment
+  // written down nowhere. That is the same objection the block below makes
+  // about `workers_dev`: a setting made by clicking is a second source of
+  // truth waiting to disagree with the first. With `custom_domain: true` the
+  // deploy owns the DNS record and the certificate, and re-asserts them.
+  //
+  // ROOT, NOT `www`. One origin, because an origin is where a browser keeps
+  // the Supabase session, the locale and everything else in localStorage —
+  // a second custom domain is a second, separate app as far as a visitor's
+  // device is concerned, and a second entry in every allowlist. `www` is a
+  // 301 to the root, written as a Redirect Rule in the dashboard: a redirect
+  // is not something this Worker serves.
+  //
+  // `workers_dev` below stays true, so musie.lipinskib.workers.dev keeps
+  // answering. Same bundle, different origin — a tester who moves across
+  // signs in once more.
+  //
+  // IT DOES NOT COLLIDE WITH EMAIL ROUTING. `hallo@musie.org` receives
+  // through MX records; this is the proxied A/AAAA record Cloudflare manages
+  // for the Worker. Different record types on the same name, at once.
+  //
+  // NO PREVIEWS ON THE DOMAIN. The attachment of 2026-10-20 had previews
+  // switched on, which made Cloudflare write a read-only `*.musie.org`
+  // record for this Worker: every subdomain became a preview hostname, and
+  // the Access app that guards previews (docs/MUSIE-SETUP.md §5) answered
+  // `www.musie.org` with a Cloudflare login. Nobody had added `www` to
+  // Access; the wildcard had. Previews keep their workers.dev URLs, behind
+  // the same Access app, so turning this off loses nothing that was in use
+  // and frees `www` to be the plain redirect described above.
+  //
+  // Written, not left unset: with the key absent a deploy sends nothing and
+  // whatever the dashboard last said stays true — the drift this block
+  // exists to end.
+  "routes": [
+    { "pattern": "musie.org", "custom_domain": true, "previews_enabled": false }
+  ],
+
   // ── PUBLIC, DELIBERATELY, AND NOT FOR LONG ──────────────────────────────
   //
   // Both of these default to `true`, so writing them changes nothing today.
@@ -110,6 +159,10 @@
   // Access in front of these URLs with them flipped back to true. Access is
   // the better fit while the domain is parked until print day, because it does
   // not need the domain to exist.
+  //
+  // Since 2026-11-04 the custom domain above is the first of the two, so
+  // "no HOSTNAME" no longer holds: with both of these false, musie.org
+  // still answers and only the workers.dev URLs go dark.
   "workers_dev": true,
   "preview_urls": true
 
