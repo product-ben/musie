@@ -950,6 +950,8 @@ function impulse(sec) {               // selbst erzeugter Hall: abklingendes, ge
 let roomTimer;
 function setRoom() { clearTimeout(roomTimer); roomTimer = setTimeout(() => { conv.buffer = impulse(P.room); }, 120); }
 function wake() { if (ctx.state !== 'running') ctx.resume(); }
+// Ohne Geste hält der Browser den Ton an; was dann geplant wird, klingt erst beim ersten Klick, gesammelt und zu spät. Also gar nicht erst planen.
+const audible = () => ctx.state === 'running' || !navigator.userActivation || navigator.userActivation.hasBeenActive;
 function fade(v, t, tau) { v.duck.gain.cancelScheduledValues(t); v.duck.gain.setTargetAtTime(0, t, tau);
   v.srcs.forEach(s => { try { s.stop(t + tau * 8); } catch (e) {} }); v.dead = true; }
 // Karplus-Strong aus Version 1: ein Rauschstoß läuft durch eine Verzögerung der Länge einer Periode und wird dabei gemittelt.
@@ -974,7 +976,7 @@ function ksBuffer(freq, vel) {
   return b;
 }
 function play(i, vel) {
-  wake(); if (state.engine === 'aufnahme' && !sampleBufs.length) return;
+  wake(); if (!audible()) return; if (state.engine === 'aufnahme' && !sampleBufs.length) return;
   const midi = midis[i], t = ctx.currentTime, S = SOUNDS[P.sound];
   voices = voices.filter(v => !v.dead);
   if (P.damp) voices.filter(v => v.string === i).forEach(v => fade(v, t, 0.04));     // gleiche Saite verstummt
@@ -1196,10 +1198,10 @@ function hapticNote() {
   return hasSwitch ? L('Vibration: Haptik-Impulse.') : L('Vibration: auf diesem Gerät nicht verfügbar.');
 }
 
-function pluck(i, vel) {
-  vel = Math.max(0.08, Math.min(1, vel)); pluckBuzz(vel);
+function pluck(i, vel, mute) {
+  vel = Math.max(0.08, Math.min(1, vel)); if (!mute) pluckBuzz(vel);
   const v = vib[i]; v.amp = Math.max(P.damp ? 0 : v.amp * 0.5, MOTION * (3 + 15 * vel)); v.t0 = performance.now(); v.phase = Math.random() * 6;
-  play(i, vel);
+  if (!mute) play(i, vel);
 }
 
 const STEPS = 40;
@@ -1266,7 +1268,7 @@ function crossings(p, x, y, t) {
 }
 function release(p, vel) { if (p.held == null) return; const i = p.held; vib[i].held = null; p.held = null; p.last[i] = p.t; harpStat('pull', vel); pluck(i, vel); }
 cv.addEventListener('pointerdown', e => {
-  wake(); cdAutoStart(); cv.setPointerCapture(e.pointerId);
+  introCancel(); wake(); cdAutoStart(); cv.setPointerCapture(e.pointerId);
   const p = { x: e.clientX, y: e.clientY, t: e.timeStamp, held: null, last: {} }, i = nearest(e.clientX);
   if (i >= 0) { p.held = i; p.grab = e.clientX; vib[i].held = { dx: 0, y: e.clientY }; }
   pointers.set(e.pointerId, p);
@@ -1618,15 +1620,18 @@ function sendName() {
   posthog.setPersonProperties({ first_name: name }); console.info('[PostHog]', 'first_name', name);
 }
 function consentStep(s) { document.querySelectorAll('#consent .musie-consent-step').forEach(el => { el.hidden = el.dataset.step !== s; }); }
-// Auftakt: sobald die Harfe frei ist (Karte weggeklickt oder gar nicht gezeigt), klingen die 2. und 0,3 s später die 5. Saite.
-// Nur Klang und Schwingung: zählt nicht als Spielen, startet weder Countdown noch Spielzeit. Wartet kurz, bis die Aufnahmen dekodiert sind.
-let introDone = false;
-function introStrings() {
-  if (introDone) return; introDone = true; wake();
+// Auftakt: sobald die Harfe frei ist, schwingen die 2. und 0,3 s später die 5. Saite. Nach dem Zustimmen mit Ton, beim Laden ohne Karte stumm.
+// Nur Klang und Schwingung: zählt nicht als Spielen, startet weder Countdown noch Spielzeit. Mit Ton wartet er kurz, bis die Aufnahmen dekodiert sind.
+// Berührt jemand die Harfe, bevor eine Saite des Auftakts dran ist, entfällt sie.
+let introDone = false, introCancelled = false, introTimer;
+function introCancel() { introCancelled = true; clearTimeout(introTimer); }
+function introStrings(mute) {               // mute: Besuch ohne Karte, die zwei Saiten schwingen nur, ohne Ton
+  if (introDone || introCancelled) return; introDone = true; if (!mute) wake();
   const t0 = performance.now(), all = Object.keys(SAMPLES).length;
   (function go() {
-    if (state.engine === 'aufnahme' && sampleBufs.length < all && performance.now() - t0 < 1500) { setTimeout(go, 50); return; }
-    pluck(1, 0.6); setTimeout(() => pluck(4, 0.6), 300);
+    if (introCancelled) return;
+    if (!mute && state.engine === 'aufnahme' && sampleBufs.length < all && performance.now() - t0 < 1500) { introTimer = setTimeout(go, 50); return; }
+    pluck(1, 0.6, mute); introTimer = setTimeout(() => { if (!introCancelled) pluck(4, 0.6, mute); }, 300);
   })();
 }
 document.querySelectorAll('#consent .musie-agree').forEach(b => b.addEventListener('click', () => { answerConsent('granted'); closeDialog('consent'); introStrings(); }));
@@ -1656,7 +1661,7 @@ if (!TUNING) document.getElementById('sw-regler').closest('.musy-switch').style.
 if (!SETTINGS) document.getElementById('btn-settings').style.display = 'none';   // ausgeblendet, nicht entfernt: der Rest der Seite greift weiter darauf zu   // ausgeblendet, nicht entfernt: render() schreibt weiter in den Switch
 // ---- Was ein Durchgang zeigt: wie oft gezogen und gestrichen, wie stark (z = Anschlag 0 bis 1) ----
 const stats = { pulls: 0, strums: 0, soft: 0, medium: 0, strong: 0, sum: 0 };
-function harpStat(kind, vel) { if (cd.started && !cd.running && cd.left > 0) cdStart();   // pausiert und weitergespielt: der Ton setzt den Countdown fort, nach 0:00 nicht mehr
+function harpStat(kind, vel) { introCancel(); if (cd.started && !cd.running && cd.left > 0) cdStart();   // pausiert und weitergespielt: der Ton setzt den Countdown fort, nach 0:00 nicht mehr
   stats[kind === 'pull' ? 'pulls' : 'strums']++; const z = Math.max(0, Math.min(1, (vel - 0.22) / 0.78));
   stats[z < 0.34 ? 'soft' : z < 0.67 ? 'medium' : 'strong']++; stats.sum += z; }
 function harpSummary(why) { const n = stats.pulls + stats.strums; if (!n) return;
@@ -1686,7 +1691,7 @@ document.getElementById('btn-done').addEventListener('click', () => {
 addEventListener('pagehide', () => { sendPlayTime('left', true);
   if (phStarted && window.posthog) posthog.capture('harp_played', { trigger: 'pagehide', pulls: stats.pulls, strums: stats.strums, play_seconds: playSeconds() }, { transport: 'sendBeacon' }); });
 if (consent === 'granted') startPostHog(consent);
-layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } else introStrings(); requestAnimationFrame(frame);
+layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } else introStrings(true); requestAnimationFrame(frame);
 </script>
 
 </body>
