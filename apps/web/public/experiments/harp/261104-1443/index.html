@@ -1198,10 +1198,10 @@ function hapticNote() {
   return hasSwitch ? L('Vibration: Haptik-Impulse.') : L('Vibration: auf diesem Gerät nicht verfügbar.');
 }
 
-function pluck(i, vel) {
-  vel = Math.max(0.08, Math.min(1, vel)); pluckBuzz(vel);
+function pluck(i, vel, mute) {
+  vel = Math.max(0.08, Math.min(1, vel)); if (!mute) pluckBuzz(vel);
   const v = vib[i]; v.amp = Math.max(P.damp ? 0 : v.amp * 0.5, MOTION * (3 + 15 * vel)); v.t0 = performance.now(); v.phase = Math.random() * 6;
-  play(i, vel);
+  if (!mute) play(i, vel);
 }
 
 const STEPS = 40;
@@ -1620,19 +1620,15 @@ function sendName() {
   posthog.setPersonProperties({ first_name: name }); console.info('[PostHog]', 'first_name', name);
 }
 function consentStep(s) { document.querySelectorAll('#consent .musie-consent-step').forEach(el => { el.hidden = el.dataset.step !== s; }); }
-// Auftakt: sobald die Harfe frei ist (Karte weggeklickt oder gar nicht gezeigt), klingen die 2. und 0,3 s später die 5. Saite.
+// Auftakt: sobald die Harfe frei ist, schwingen die 2. und 0,3 s später die 5. Saite. Nach dem Zustimmen mit Ton, beim Laden ohne Karte stumm.
 // Nur Klang und Schwingung: zählt nicht als Spielen, startet weder Countdown noch Spielzeit. Wartet kurz, bis die Aufnahmen dekodiert sind.
 let introDone = false;
-function introStrings() {
-  if (introDone) return;
-  if (!audible()) {                                        // Ton gesperrt (Besuch ohne Karte): der Auftakt wartet auf die erste Berührung, damit Bild und Klang zusammen kommen
-    const unlock = () => { ['pointerdown', 'keydown'].forEach(t => removeEventListener(t, unlock, true)); introStrings(); };
-    ['pointerdown', 'keydown'].forEach(t => addEventListener(t, unlock, true)); return; }
-  introDone = true; wake();
+function introStrings(mute) {               // mute: Besuch ohne Karte, die zwei Saiten schwingen nur, ohne Ton
+  if (introDone) return; introDone = true; if (!mute) wake();
   const t0 = performance.now(), all = Object.keys(SAMPLES).length;
   (function go() {
     if (state.engine === 'aufnahme' && sampleBufs.length < all && performance.now() - t0 < 1500) { setTimeout(go, 50); return; }
-    pluck(1, 0.6); setTimeout(() => pluck(4, 0.6), 300);
+    pluck(1, 0.6, mute); setTimeout(() => pluck(4, 0.6, mute), 300);
   })();
 }
 document.querySelectorAll('#consent .musie-agree').forEach(b => b.addEventListener('click', () => { answerConsent('granted'); closeDialog('consent'); introStrings(); }));
@@ -1692,7 +1688,7 @@ document.getElementById('btn-done').addEventListener('click', () => {
 addEventListener('pagehide', () => { sendPlayTime('left', true);
   if (phStarted && window.posthog) posthog.capture('harp_played', { trigger: 'pagehide', pulls: stats.pulls, strums: stats.strums, play_seconds: playSeconds() }, { transport: 'sendBeacon' }); });
 if (consent === 'granted') startPostHog(consent);
-layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } else introStrings(); requestAnimationFrame(frame);
+layout(); fromHash(); setLang(lang); if (consent !== 'granted') { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); } else introStrings(true); requestAnimationFrame(frame);
 </script>
 
 </body>
