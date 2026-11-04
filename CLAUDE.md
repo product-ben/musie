@@ -41,6 +41,14 @@ before re-deciding anything), `packages/design-system/docs/10-layout.md`
 edit of it into a migration and a printed card). Local config: copy
 `apps/web/.env.example` to `.env.local`, anon key only.
 
+**Not every session is Ben's.** Contributors (Lucia, from 2026-11-03) work
+through Claude Code on their own Mac, set up by `docs/CLAUDE-CODE-SETUP.md`.
+Their work leaves the machine only as a pull request from a branch cut from
+the latest `origin/main`; `main` is protected and refuses a direct push, and
+merging deploys the app and the schema both. On their machine the Supabase
+stack is theirs alone, so rule 9's sharing hazards do not apply there — but
+`db:sync`, `functions deploy` and every secret stay Ben's.
+
 ## 1 · The app consumes the design system; it does not reimplement it
 
 Import from `@musie/design-system` and pass props. Never reference a raw scale
