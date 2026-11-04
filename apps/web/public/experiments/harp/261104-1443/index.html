@@ -657,7 +657,7 @@ button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-
 /* Version 1443: „Ich bin fertig“ unten rechts, ausgeblendet, solange die Leiste offen ist. Der 1:30-Countdown oben links bleibt. */
 .foot > .musie-done { position: absolute; right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px)); bottom: 0; pointer-events: auto;
   transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
-.foot.expanded > .musie-done { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot.expanded > .musie-done, .foot > .musie-done[data-waiting] { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
 .foot > #btn-settings { position: absolute; left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); bottom: 0; pointer-events: auto;
   transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
 .foot.expanded > #btn-settings { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
@@ -1497,6 +1497,7 @@ function cdRender() {
   cdTime.textContent = mmss(Math.max(0, Math.ceil(cd.left))); cdTime.toggleAttribute('data-done', done);
   const cap = done && cd.thanked ? L('Danke für deine Antworten. Spiel gern weiter.') : done ? L('Super, dass du dich 1:30 Minuten fokussiert hast. Spiel gern weiter.') : L('mindestens spielen für diese Übung');
   if (cdCap.textContent !== cap) cdCap.textContent = cap;
+  document.getElementById('btn-done').toggleAttribute('data-waiting', state === 'unstarted' || state === 'playing');   // „Ich bin fertig“ erst nach Pause oder bei 0:00
   if (cd.shown !== state) { const had = cdBtn.contains(document.activeElement); cdBtn.innerHTML = (lang === 'en' ? CD_MARKUP_EN : CD_MARKUP)[state]; cd.shown = state; if (had) cdBtn.firstElementChild.focus(); }
 }
 function cdTick() { const now = performance.now(); cd.left -= (now - cd.at) / 1000; cd.at = now;
