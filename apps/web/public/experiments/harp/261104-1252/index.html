@@ -802,7 +802,6 @@ button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-
     <div class="musie-swatches__hint">PostHog</div>
     <pre class="musie-data-log" id="data-log" aria-live="polite"></pre>
     <div class="musie-swatches__hint">Die letzten Events, die an PostHog gegangen sind.</div>
-    <button type="button" class="musie-reset" id="data-again">Umfrage wieder zeigen</button>
     </section>
     <section class="musie-section">
         <div class="readout" id="readout"></div>
@@ -847,20 +846,6 @@ button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-
         <div class="musie-consent-step" data-step="no" hidden><p class="musie-note">Schade. Ohne Zustimmung läuft das Experiment nicht. Wenn du es dir anders überlegst, kannst du jederzeit mitmachen.</p><button type="button" tabindex="0" class="musie-agree musy-btn musy-btn--primary musy-btn--block musy-btn--wrap"><span class="musy-btn__label">Doch mitmachen</span></button></div>
         <nav class="musie-legal" aria-label="Rechtliches"><a href="/impressum" target="_blank" rel="noopener" role="button" tabindex="0" class="musy-ilink musy-ilink--bare"><span class="musy-ilink__text">Impressum</span></a><span aria-hidden="true">·</span><a href="/privacy" target="_blank" rel="noopener" role="button" tabindex="0" class="musy-ilink musy-ilink--bare"><span class="musy-ilink__text">Datenschutz</span></a></nav>
       </div>
-    </div>
-  </div>
-</div>
-<div class="musie-dialog" id="survey" hidden>
-  <div class="musy-lightbox__backdrop" data-surface="panel" data-open=""></div>
-  <div class="musy-lightbox__positioner" data-surface="panel">
-    <div class="musy-lightbox__popup" data-surface="panel" role="dialog" aria-modal="true" aria-labelledby="survey-title" data-open="">
-      <h2 id="survey-title" class="musy-lightbox__headline" data-type-step="heading-md">Wie war es?</h2>
-      <div class="musy-lightbox__body">
-        <div role="radiogroup" aria-labelledby="base-ui-_fs-R_3_" class="musy-scale"><div id="base-ui-_fs-R_3_" class="musy-radio-group__legend">Wie fühlst du dich nach der Übung?</div><div class="musy-scale__track"><button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" data-value="tenser" class="musy-scale__point"><span class="musy-scale__mark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-face-slightly-frowning lucide-frown musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M15 10V9"></path><path d="M9 10V9"></path><path d="M9 16a5 5 0 016 0"></path><circle cx="12" cy="12" r="10"></circle></svg></span><span class="musy-scale__label">Angespannter als davor</span></button><button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" data-value="same" class="musy-scale__point"><span class="musy-scale__mark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-face-neutral lucide-meh musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M15 10V9"></path><path d="M8 16h8"></path><path d="M9 10V9"></path><circle cx="12" cy="12" r="10"></circle></svg></span><span class="musy-scale__label">Genauso wie davor</span></button><button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" data-value="relaxed" class="musy-scale__point"><span class="musy-scale__mark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-face-slightly-smiling lucide-smile musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M15 10V9"></path><path d="M16.472 15a6 6 0 01-8.943 0"></path><path d="M9 10V9"></path><circle cx="12" cy="12" r="10"></circle></svg></span><span class="musy-scale__label">Entspannter als davor</span></button></div></div>
-        <div class="musie-survey-more" id="survey-more" hidden><div class="musy-field"><label id="base-ui-_f1-R_7_" for="_f1-R_0_-control" class="musy-field__label">Was trägt zu diesem Gefühl bei?</label><textarea rows="3" id="_f1-R_0_-control" name="q_cause" class="musy-field__control musy-field__control--textarea"></textarea></div><div class="musy-field"><label id="base-ui-_f2-R_7_" for="_f2-R_0_-control" class="musy-field__label">Was hat dir gut gefallen?</label><textarea rows="3" id="_f2-R_0_-control" name="q_liked" class="musy-field__control musy-field__control--textarea"></textarea></div><div class="musy-field"><label id="base-ui-_f3-R_7_" for="_f3-R_0_-control" class="musy-field__label">Was würdest du dir anders oder zusätzlich wünschen?</label><textarea rows="3" id="_f3-R_0_-control" name="q_wish" class="musy-field__control musy-field__control--textarea"></textarea></div></div>
-        <button type="button" tabindex="0" class="musie-send musy-btn musy-btn--primary musy-btn--block musy-btn--wrap"><span class="musy-btn__label">Absenden</span></button>
-      </div>
-      <button type="button" class="musy-lightbox__close" aria-label="Schließen"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
     </div>
   </div>
 </div>
@@ -1482,7 +1467,7 @@ function cdRender() {
   if (cd.shown !== state) { const had = cdBtn.contains(document.activeElement); cdBtn.innerHTML = (lang === 'en' ? CD_MARKUP_EN : CD_MARKUP)[state]; cd.shown = state; if (had) cdBtn.firstElementChild.focus(); }
 }
 function cdTick() { const now = performance.now(); cd.left -= (now - cd.at) / 1000; cd.at = now;
-  if (cd.left <= 0) { cd.left = 0; cd.running = false; clearInterval(cdTimer); ph('harp_countdown_finished', {}); harpSummary('00:00'); setTimeout(() => surveyFrom('00:00'), 600); } cdRender(); }
+  if (cd.left <= 0) { cd.left = 0; cd.running = false; clearInterval(cdTimer); ph('harp_countdown_finished', {}); harpSummary('00:00'); } cdRender(); }
 function cdStart() { if (cd.running) return; if (cd.left <= 0) { cd.left = CD; cd.thanked = false; } if (!cd.started || cd.left === CD) ph('harp_countdown_started', {}); cd.started = true; cd.running = true; cd.at = performance.now();
   clearInterval(cdTimer); cdTimer = setInterval(cdTick, 250); cdRender(); }                     // viermal pro Sekunde, wie die App
 function cdPause() { if (!cd.running) return; ph('harp_countdown_paused', { left: Math.ceil(cd.left) }); cdTick(); cd.running = false; clearInterval(cdTimer); cdRender(); }
@@ -1575,11 +1560,6 @@ function startPostHog(v) {
     disable_surveys: !granted,
   });
   posthog.register({ experiment: EXPERIMENT, harp_lang: lang, harp_regler: TUNING });
-  if (granted) posthog.onSurveysLoaded(() => posthog.getSurveys(list => {
-    const s = (list || []).find(x => x.name === SURVEY_NAME); if (!s) return;
-    SURVEY.id = s.id; SURVEY.iteration = s.current_iteration ?? null;
-    (s.questions || []).forEach((q, i) => { if (SURVEY.questions[i] && q.id) QID[SURVEY.questions[i].id] = q.id; });
-  }));
 }
 function answerConsent(v) {
   const changed = consent !== null && consent !== v;
@@ -1610,59 +1590,7 @@ function renderData() {
   document.getElementById('data-log').textContent = phLog.length
     ? phLog.map(e => e.at + '  ' + e.event + '  ' + JSON.stringify(e.properties)).join('\n') : L('Noch keine Events.');
 }
-document.getElementById('data-again').addEventListener('click', () => { try { localStorage.removeItem('harfe-survey-seen'); } catch (e) {} surveyFrom('Regler'); });
 
-// ---- Umfrage nach dem Countdown (API-Umfrage: PostHog hält die Definition, die Seite zeichnet und sendet) ----
-// Die IDs sind Platzhalter, bis die Umfrage in PostHog angelegt ist (Typ api, ohne Anzeigebedingungen: der Auslöser ist 00:00).
-// Antworten gehen immer mit dem deutschen Wortlaut der Auswahl, damit beide Sprachen in einer Spalte landen.
-// In PostHog als API-Umfrage „Harfe 261104-1252“ anlegen, vier Fragen in dieser Reihenfolge, ohne Anzeigebedingungen.
-// Bis sie gefunden ist, gehen die Antworten unter diesen Platzhaltern ein.
-const SURVEY_NAME = 'Harfe 261104-1252', QID = {};
-const SURVEY = { id: 'SURVEY_ID_FOLGT', iteration: null, questions: [
-  { id: 'q_feeling', question: 'Wie fühlst du dich nach der Übung?' },
-  { id: 'q_cause', question: 'Was trägt zu diesem Gefühl bei?' },
-  { id: 'q_liked', question: 'Was hat dir gut gefallen?' },
-  { id: 'q_wish', question: 'Was würdest du dir anders oder zusätzlich wünschen?' }] };
-const FEELING = { tenser: 'Angespannter als davor', same: 'Genauso wie davor', relaxed: 'Entspannter als davor' };
-const sv = { answers: {}, submission: null, sentAny: false };
-function surveySeen() { try { return localStorage.getItem('harfe-survey-seen') === '1'; } catch (e) { return false; } }
-function surveyFrom(why) {
-  if (consent !== 'granted' || surveySeen()) return;      // cookielos gibt es keine Umfrage
-  sv.answers = {}; sv.submission = null; sv.sentAny = false;
-  document.querySelectorAll('#survey .musy-scale__point').forEach(b => { b.toggleAttribute('data-checked', false); b.toggleAttribute('data-unchecked', true); b.setAttribute('aria-checked', false); b.tabIndex = -1; });
-  document.querySelector('#survey .musy-scale__point').tabIndex = 0;
-  document.querySelectorAll('#survey textarea').forEach(t => { t.value = ''; });
-  document.getElementById('survey-more').hidden = true;
-  openDialog('survey');
-  ph('survey shown', { $survey_id: SURVEY.id, $survey_iteration: SURVEY.iteration, trigger: why });
-}
-function surveySend(completed) {
-  if (!sv.submission) sv.submission = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
-  sv.sentAny = true;
-  const props = { $survey_id: SURVEY.id, $survey_iteration: SURVEY.iteration, $survey_submission_id: sv.submission, $survey_completed: completed,
-    $survey_questions: SURVEY.questions.map(({ id, question }) => ({ id: QID[id] || id, question })) };
-  for (const [q, v] of Object.entries(sv.answers)) if (v) props['$survey_response_' + (QID[q] || q)] = v;
-  ph('survey sent', props);
-}
-function surveyDone() { try { localStorage.setItem('harfe-survey-seen', '1'); } catch (e) {} closeDialog('survey'); }
-document.querySelectorAll('#survey .musy-scale__point').forEach((b, i, all) => {
-  const choose = () => {
-    all.forEach(o => { const on = o === b; o.toggleAttribute('data-checked', on); o.toggleAttribute('data-unchecked', !on); o.setAttribute('aria-checked', on); o.tabIndex = on ? 0 : -1; });
-    sv.answers.q_feeling = FEELING[b.dataset.value]; document.getElementById('survey-more').hidden = false; surveySend(false);
-  };
-  b.addEventListener('click', choose);
-  b.addEventListener('keydown', e => { const s = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!s) return; e.preventDefault();
-    const n = all[(i + s + all.length) % all.length]; n.click(); n.focus(); });
-});
-document.querySelectorAll('#survey textarea').forEach(t => {
-  t.addEventListener('change', () => { sv.answers[t.name] = t.value.trim(); if (sv.answers.q_feeling) surveySend(false); });
-  t.addEventListener('input', () => t.toggleAttribute('data-filled', t.value !== ''));
-});
-document.querySelector('#survey .musie-send').addEventListener('click', () => {
-  document.querySelectorAll('#survey textarea').forEach(t => { sv.answers[t.name] = t.value.trim(); });
-  surveySend(true); surveyDone(); cd.thanked = true; cdRender();
-});
-DIALOG_CLOSE.survey = () => { if (!sv.sentAny) ph('survey dismissed', { $survey_id: SURVEY.id, $survey_iteration: SURVEY.iteration }); surveyDone(); };
 
 addEventListener('resize', () => { layout(); placePanel(); }); addEventListener('hashchange', fromHash);
 if (!TUNING) document.getElementById('sw-regler').closest('.musy-switch').style.display = 'none';   // ausgeblendet, nicht entfernt: render() schreibt weiter in den Switch
