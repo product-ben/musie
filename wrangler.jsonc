@@ -76,8 +76,21 @@
   // IT DOES NOT COLLIDE WITH EMAIL ROUTING. `hallo@musie.org` receives
   // through MX records; this is the proxied A/AAAA record Cloudflare manages
   // for the Worker. Different record types on the same name, at once.
+  //
+  // NO PREVIEWS ON THE DOMAIN. The attachment of 2026-10-20 had previews
+  // switched on, which made Cloudflare write a read-only `*.musie.org`
+  // record for this Worker: every subdomain became a preview hostname, and
+  // the Access app that guards previews (docs/MUSIE-SETUP.md §5) answered
+  // `www.musie.org` with a Cloudflare login. Nobody had added `www` to
+  // Access; the wildcard had. Previews keep their workers.dev URLs, behind
+  // the same Access app, so turning this off loses nothing that was in use
+  // and frees `www` to be the plain redirect described above.
+  //
+  // Written, not left unset: with the key absent a deploy sends nothing and
+  // whatever the dashboard last said stays true — the drift this block
+  // exists to end.
   "routes": [
-    { "pattern": "musie.org", "custom_domain": true }
+    { "pattern": "musie.org", "custom_domain": true, "previews_enabled": false }
   ],
 
   // ── PUBLIC, DELIBERATELY, AND NOT FOR LONG ──────────────────────────────
