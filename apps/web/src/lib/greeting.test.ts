@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { timeOfDay } from './greeting';
+
+/* THE FIRST `Intl.DateTimeFormat` WITH A `timeZone` LOADS THE TZ DATABASE,
+   and on a cold build machine that load alone can outlast Vitest's 5s test
+   timeout. Measured 2026-11-04 on Cloudflare Workers Builds: the first test
+   below took 5402ms and failed the deploy, the eleven after it took 0–1ms.
+   Paying it once here, with room to spare, keeps every test timing its own
+   logic rather than whichever one happens to run first. */
+beforeAll(() => {
+  new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit' }).format(0);
+}, 30_000);
 
 /**
  * Every instant below is written in UTC and asserted against the BERLIN band
