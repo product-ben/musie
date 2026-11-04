@@ -950,8 +950,17 @@ function impulse(sec) {               // selbst erzeugter Hall: abklingendes, ge
 let roomTimer;
 function setRoom() { clearTimeout(roomTimer); roomTimer = setTimeout(() => { conv.buffer = impulse(P.room); }, 120); }
 function wake() { if (ctx.state !== 'running') ctx.resume(); }
-// Ohne Geste hält der Browser den Ton an; was dann geplant wird, klingt erst beim ersten Klick, gesammelt und zu spät. Also gar nicht erst planen.
-const audible = () => ctx.state === 'running' || !navigator.userActivation || navigator.userActivation.hasBeenActive;
+// Ohne Geste hält der Browser den Ton an; was dann geplant wird, klingt erst beim Freischalten, gesammelt und zu spät. Also nur bei laufendem Ton planen.
+let unlocking = false;                                     // in einer Geste freigegeben, resume() läuft noch: der Ton dieser Geste kommt Millisekunden später, nicht gesammelt
+const audible = () => ctx.state === 'running' || unlocking;
+// Safari (iOS und Mac) schaltet den Ton nur in touchend, click, mousedown oder keydown frei, nicht beim Wischen über die Saiten.
+// Darum bei jeder solchen Geste wecken und einen stillen Puffer abspielen (WebKit hält ihn als Freigabe fest). Bleibt aktiv: nach Anruf
+// oder Hintergrund steht iOS auf 'interrupted' und braucht wieder eine Geste.
+function unlockAudio() {
+  if (!ctx || ctx.state === 'running') return;
+  unlocking = true; ctx.resume().then(() => { unlocking = false; }, () => { unlocking = false; }); try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+}
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
 function fade(v, t, tau) { v.duck.gain.cancelScheduledValues(t); v.duck.gain.setTargetAtTime(0, t, tau);
   v.srcs.forEach(s => { try { s.stop(t + tau * 8); } catch (e) {} }); v.dead = true; }
 // Karplus-Strong aus Version 1: ein Rauschstoß läuft durch eine Verzögerung der Länge einer Periode und wird dabei gemittelt.
@@ -1630,7 +1639,7 @@ function introStrings(mute) {               // mute: Besuch ohne Karte, die zwei
   const t0 = performance.now(), all = Object.keys(SAMPLES).length;
   (function go() {
     if (introCancelled) return;
-    if (!mute && state.engine === 'aufnahme' && sampleBufs.length < all && performance.now() - t0 < 1500) { introTimer = setTimeout(go, 50); return; }
+    if (!mute && (ctx.state !== 'running' || state.engine === 'aufnahme' && sampleBufs.length < all) && performance.now() - t0 < 1500) { introTimer = setTimeout(go, 50); return; }
     pluck(1, 0.6, mute); introTimer = setTimeout(() => { if (!introCancelled) pluck(4, 0.6, mute); }, 300);
   })();
 }
