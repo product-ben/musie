@@ -321,6 +321,28 @@ the prompt restates it. Prefer `Explore` and `Plan` for fan-out: neither can
 write, so neither can collide. Do the writing in one session, where a single
 context holds the whole tree.
 
+## 10 · `/experiments` is the exception to every rule above
+
+Ben, 2026-11-04. Everything served under `/experiments` is a **Claude-artifact
+spike hosted to be measured**: tracked with PostHog, watched in session
+recordings, evaluated with PostHog surveys. Each page lives a few weeks and is
+then deleted. So none of the strict rules apply there — not 1 (design system,
+raw scale tokens), not 6 and 7 (catalogue strings), not L14, not LEGAL-PAGES
+§4.6 ("public pages load no analytics"). Push them pragmatically.
+
+- **The shape:** the artifact's own HTML, nearly as-is, as a static file at
+  `apps/web/public/experiments/<name>/<yymmdd-hhmm>/index.html`. Vite copies
+  `public/` into `dist/`, and Cloudflare serves a real file before the SPA
+  fallback in `wrangler.jsonc`, so nothing in `apps/web/src` changes. Do not
+  port an experiment into the React app; that is the trap this rule exists for.
+- **What still holds, because Ben asked for it:** nothing reaches PostHog before
+  the visitor agrees (the harp makes agreeing the condition of taking part); no
+  secret in the file (the PostHog project key is public by design); nothing is
+  written to Supabase; `<meta name="robots" content="noindex">`.
+- **The first one:** `/experiments/harp/261104-1252/`, built from the artifact
+  „Harfe v29“. Its survey is looked up in PostHog by name, so creating the
+  survey needs no redeploy.
+
 ## Log what you could not resolve
 
 `apps/web/OPEN-QUESTIONS.md` is append-only, and an empty log is a failure
