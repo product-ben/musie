@@ -630,9 +630,12 @@ button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-
 @media (max-width: 767.98px) { .musy-btn-group { flex-direction: column; align-items: stretch; gap: var(--space-gap-related); } }
 @media (max-width: 767.98px) { .musy-btn-group > .musy-btn { inline-size: 100%; } }
 @media (max-width: 767.98px) { .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; } }
-/* L2: der Text und die Knöpfe, die auf ihn antworten, sind ein Molekül (--space-gap-stack); Impressum und Datenschutz ein eigenes (--space-gap-group am Lightbox-Inhalt). */
-.musie-consent-step { display: flex; flex-direction: column; gap: var(--space-gap-stack); }
-/* Die Karte ist so schmal wie ein Telefon: die Knöpfe stehen gestapelt wie die ButtonGroup unter --bp-md (volle Breite, --space-gap-related), die Zustimmung unten. */
+/* Abstände (Ben, 2026-11-04): Überschrift, Text, Knöpfe und Impressum/Datenschutz je --space-gap-group auseinander. */
+.musie-consent-step { display: flex; flex-direction: column; gap: var(--space-gap-group); }
+/* Überschrift zu Text: --space-gap-group statt Browser-Rand am h2 plus Inset (42–46 px, kein Token). */
+#consent .musy-lightbox__headline { margin-block-end: 0; }
+#consent .musy-lightbox__body { padding-block-start: var(--space-gap-group); }
+/* Die Karte ist so schmal wie ein Telefon: die Knöpfe stehen gestapelt wie die ButtonGroup unter --bp-md (volle Breite, --space-gap-related), die Zustimmung oben. */
 .musie-consent-step .musy-btn-group { flex-direction: column; align-items: stretch; gap: var(--space-gap-related); }
 .musie-consent-step .musy-btn-group > .musy-btn { inline-size: 100%; }
 .musie-consent-step[hidden] { display: none; }
@@ -858,7 +861,7 @@ button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-
     <div class="musy-lightbox__popup" data-surface="panel" role="dialog" aria-modal="true" aria-labelledby="consent-title" data-open="">
       <h2 id="consent-title" class="musy-lightbox__headline" data-type-step="heading-md">Mach mit beim Experiment</h2>
       <div class="musy-lightbox__body">
-        <div class="musie-consent-step" data-step="ask"><p class="musie-note">Dieses Experiment lebt davon, dass wir sehen, wie die Harfe gespielt wird. Wenn du mitmachst, tracken wir, wie du die Seite benutzt, und stellen dir am Ende der Übung ein paar Fragen. <strong>Deine Antworten in der Umfrage nach der Übung sind für uns extrem wertvoll, daher würden wir uns sehr freuen, wenn du mitmachst.</strong> Dafür setzen wir Cookies. Ohne deine Zustimmung kann das Experiment leider nicht laufen.</p><div class="musy-btn-group musy-btn-group--end"><button type="button" tabindex="0" class="musy-btn musy-btn--outline musy-btn--wrap musie-decline"><span class="musy-btn__label">Nicht teilnehmen</span></button><button type="button" tabindex="0" class="musy-btn musy-btn--primary musy-btn--wrap musie-agree"><span class="musy-btn__label">Zustimmen und spielen</span></button></div></div>
+        <div class="musie-consent-step" data-step="ask"><p class="musie-note">Dieses Experiment lebt davon, dass wir sehen, wie die Harfe gespielt wird. Wenn du mitmachst, tracken wir, wie du die Seite benutzt, und stellen dir am Ende der Übung ein paar Fragen. <strong>Deine Antworten in der Umfrage nach der Übung sind für uns extrem wertvoll, daher würden wir uns sehr freuen, wenn du mitmachst.</strong> Dafür setzen wir Cookies. Ohne deine Zustimmung kann das Experiment leider nicht laufen.</p><div class="musy-btn-group musy-btn-group--end"><button type="button" tabindex="0" class="musy-btn musy-btn--primary musy-btn--wrap musie-agree"><span class="musy-btn__label">Zustimmen und spielen</span></button><button type="button" tabindex="0" class="musy-btn musy-btn--outline musy-btn--wrap musie-decline"><span class="musy-btn__label">Nicht teilnehmen</span></button></div></div>
         <div class="musie-consent-step" data-step="no" hidden><p class="musie-note">Schade. Ohne Zustimmung läuft das Experiment nicht. Wenn du es dir anders überlegst, kannst du jederzeit mitmachen.</p><div class="musy-btn-group musy-btn-group--end"><button type="button" tabindex="0" class="musy-btn musy-btn--primary musy-btn--wrap musie-agree"><span class="musy-btn__label">Doch mitmachen</span></button></div></div>
         <nav class="musie-legal" aria-label="Rechtliches"><a href="/impressum" target="_blank" rel="noopener" role="button" tabindex="0" class="musy-ilink musy-ilink--bare"><span class="musy-ilink__text">Impressum</span></a><span aria-hidden="true">·</span><a href="/privacy" target="_blank" rel="noopener" role="button" tabindex="0" class="musy-ilink musy-ilink--bare"><span class="musy-ilink__text">Datenschutz</span></a></nav>
       </div>
