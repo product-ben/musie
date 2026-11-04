@@ -340,8 +340,9 @@ raw scale tokens), not 6 and 7 (catalogue strings), not L14, not LEGAL-PAGES
   secret in the file (the PostHog project key is public by design); nothing is
   written to Supabase; `<meta name="robots" content="noindex">`.
 - **The first one:** `/experiments/harp/261104-1252/`, built from the artifact
-  „Harfe v29“. Its survey is looked up in PostHog by name, so creating the
-  survey needs no redeploy.
+  „Harfe v29“. Its survey is PostHog's own popover ("Harp experiment
+  evaluation"), triggered by the page's `harp_countdown_finished` event — so
+  the questions are edited in PostHog, never in the file.
 
 ## Log what you could not resolve
 
