@@ -94,8 +94,8 @@ button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-
 /* Der Hinweis gehört zur Überschrift wie ein Absatz unter dem h2 in .musie-md: --space-gap-group dazwischen. Aus, nimmt er keinen Platz. */
 .musie-top__header .note { margin-block-start: var(--space-gap-group); }
 .musie-top__header .note:not(.shown) { display: none; }
-/* .musy-sheet__body + .musie-immersive__body: die Mitte, zentriert; der Countdown linksbündig darin */
-.musie-immersive__body { min-block-size: 0; display: flex; flex-direction: column; justify-content: center; gap: var(--space-gap-stack); }
+/* .musy-sheet__body + .musie-immersive__body. Version 1443: der Countdown unten links, direkt über der Fußzeile mit „Ich bin fertig“ */
+.musie-immersive__body { min-block-size: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-gap-stack); }
 /* Aus shell.css, der Fokus-Sheet der Hörübung: die Restzeit als größtes Element, der Transport daneben, die Bildunterschrift darunter. */
 .musie-immersive__clock { display: flex; flex-direction: column; gap: var(--space-gap-inline); }
 #cd-btn { pointer-events: auto; }                          /* nur der Knopf fängt Berührungen ab, die Saiten darunter bleiben spielbar */
@@ -1462,7 +1462,15 @@ function setExpanded(on) {
 }
 // Der Fuß ist im Fokus-Sheet eine Zeile im Fluss: wächst er, wird die Mitte kleiner. Hier hält der Rahmen so viel frei, wie Leiste oder Knopf hoch sind.
 const toolbarEl = document.getElementById('toolbar'), frameEl = document.querySelector('.musie-top');
-function placeFoot() { frameEl.style.setProperty('--foot-h', (foot.classList.contains('expanded') ? toolbarEl.offsetHeight : btnSettings.offsetHeight) + 'px'); }
+// Ohne Zahnrad steht der Countdown unten links auf einer Linie mit „Ich bin fertig“. Wo beide nicht nebeneinander passen (schmal), rückt er über den Knopf.
+const doneEl = document.getElementById('btn-done'), clockEl = document.querySelector('.musie-immersive__clock');
+function textWidth(el) { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().width; }
+function placeFoot() {
+  const need = Math.max(clockEl.querySelector('.musie-immersive__meter').offsetWidth, textWidth(document.getElementById('cd-cap')));
+  const room = doneEl.getBoundingClientRect().left - clockEl.getBoundingClientRect().left - 16;   // 16: Luft zwischen Text und Knopf
+  frameEl.style.setProperty('--foot-h', (foot.classList.contains('expanded') ? toolbarEl.offsetHeight : btnSettings.offsetHeight || (need > room ? doneEl.offsetHeight : 0)) + 'px'); }
+addEventListener('resize', placeFoot);
+new MutationObserver(placeFoot).observe(clockEl, { subtree: true, childList: true, characterData: true });   // Sprache, Pause/Weiter
 new ResizeObserver(placeFoot).observe(toolbarEl);
 new MutationObserver(placeFoot).observe(foot, { attributes: true, attributeFilter: ['class'] });
 btnSettings.addEventListener('click', () => setExpanded(true));
