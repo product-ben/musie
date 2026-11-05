@@ -1,17 +1,17 @@
 /**
  * PROPOSAL, FOR BEN TO DECIDE — this knowingly breaks CLAUDE.md rule 1: raw
- * hex colours (the system has no pink), a hand-drawn SVG cast to LucideIcon
+ * hex colours (the system has no blue), a hand-drawn SVG cast to LucideIcon
  * because Carousel only takes Lucide glyphs, and an inline size that overrides
  * the badge's 32px. If it stays, the clean version is a component request:
- * Carousel accepts an illustration, and a pink token joins Layer 1.
+ * Carousel accepts an illustration, and a blue token joins Layer 1.
  *
- * A pink elephant riding a unicorn riding a witch's broom, which would really
+ * A blue elephant riding a unicorn riding a witch's broom, which would really
  * rather buy an ice cream.
  */
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
 
-function PinkElephant(props: React.SVGProps<SVGSVGElement>) {
+function BlueElephant(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -53,19 +53,19 @@ function PinkElephant(props: React.SVGProps<SVGSVGElement>) {
       <circle cx="46" cy="73" r="2.6" style={{ fill: '#69db7c' }} />
       <circle cx="25" cy="61" r="1.3" style={{ fill: '#3a2a3a' }} />
 
-      {/* the pink elephant, on top of it all */}
-      <ellipse cx="60" cy="75" rx="4" ry="6" style={{ fill: '#f7a8c8', stroke: '#c45d8a', strokeWidth: 1.2 }} />
-      <ellipse cx="64" cy="62" rx="14" ry="13" style={{ fill: '#f7a8c8', stroke: '#c45d8a', strokeWidth: 1.5 }} />
-      <ellipse cx="67" cy="42" rx="8" ry="10" style={{ fill: '#fbc6dc', stroke: '#c45d8a', strokeWidth: 1.5 }} />
-      <circle cx="56" cy="42" r="11" style={{ fill: '#f7a8c8', stroke: '#c45d8a', strokeWidth: 1.5 }} />
-      <path d="M47 46 q-8 2 -10 -6 q-1 -4 2 -5" style={{ stroke: '#f7a8c8', strokeWidth: 5 }} />
-      <path d="M47 46 q-8 2 -10 -6 q-1 -4 2 -5" style={{ stroke: '#c45d8a', strokeWidth: 1, opacity: 0.6 }} />
+      {/* the blue elephant, on top of it all */}
+      <ellipse cx="60" cy="75" rx="4" ry="6" style={{ fill: '#8ec5f0', stroke: '#3b78b5', strokeWidth: 1.2 }} />
+      <ellipse cx="64" cy="62" rx="14" ry="13" style={{ fill: '#8ec5f0', stroke: '#3b78b5', strokeWidth: 1.5 }} />
+      <ellipse cx="67" cy="42" rx="8" ry="10" style={{ fill: '#bfdff7', stroke: '#3b78b5', strokeWidth: 1.5 }} />
+      <circle cx="56" cy="42" r="11" style={{ fill: '#8ec5f0', stroke: '#3b78b5', strokeWidth: 1.5 }} />
+      <path d="M47 46 q-8 2 -10 -6 q-1 -4 2 -5" style={{ stroke: '#8ec5f0', strokeWidth: 5 }} />
+      <path d="M47 46 q-8 2 -10 -6 q-1 -4 2 -5" style={{ stroke: '#3b78b5', strokeWidth: 1, opacity: 0.6 }} />
       <circle cx="52" cy="39" r="1.6" style={{ fill: '#3a2a3a' }} />
-      <path d="M52 47 q3 2 6 0" style={{ stroke: '#c45d8a', strokeWidth: 1.2 }} />
-      <polygon points="57,53 52,50 52,56" style={{ fill: '#4dabf7' }} />
-      <polygon points="57,53 62,50 62,56" style={{ fill: '#4dabf7' }} />
+      <path d="M52 47 q3 2 6 0" style={{ stroke: '#3b78b5', strokeWidth: 1.2 }} />
+      <polygon points="57,53 52,50 52,56" style={{ fill: '#f06595' }} />
+      <polygon points="57,53 62,50 62,56" style={{ fill: '#f06595' }} />
     </svg>
   );
 }
 
-export const PinkElephantGlyph = PinkElephant as unknown as LucideIcon;
+export const BlueElephantGlyph = BlueElephant as unknown as LucideIcon;

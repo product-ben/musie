@@ -33,7 +33,7 @@
  */
 import * as React from 'react';
 import { BookOpen, Music } from 'lucide-react';
-import { PinkElephantGlyph } from './PinkElephantGlyph';
+import { BlueElephantGlyph } from './BlueElephantGlyph';
 import { useNavigate } from 'react-router';
 import { Carousel, ContentBox, CtaButton } from '@musie/design-system';
 import type { CarouselSlide } from '@musie/design-system';
@@ -66,7 +66,7 @@ import { useProfile } from '../lib/profileContext';
  * is written in.
  */
 const SLIDES: { id: string; titleKey: MessageKey; glyph: CarouselSlide['glyph'] }[] = [
-  { id: 'choose', titleKey: 'about.slide.choose', glyph: PinkElephantGlyph },
+  { id: 'choose', titleKey: 'about.slide.choose', glyph: BlueElephantGlyph },
   { id: 'guide', titleKey: 'about.slide.guide', glyph: Music },
   { id: 'diary', titleKey: 'about.slide.diary', glyph: BookOpen },
 ];
