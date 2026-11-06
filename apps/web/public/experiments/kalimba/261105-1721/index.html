@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Kalimba</title>
+<!-- Musie-Experiment „Kalimba v3“ (CLAUDE.md Regel 10). Gestaltung, Design-System-Blöcke, Ton-Freischaltung und Vibration aus
+     /experiments/harp/261104-1443/ übernommen. Aufnahmen: HCP-Soundfonts (CC0), http://unneraans.de/soundfonts/ – nichts wird synthetisiert. -->
+<style>html,body{margin:0;padding:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+/* Layout wie die Harfe: der Bildschirm ist das Instrument; Einstellungen unten links, das Regler-Feld rechts, der Hinweis oben links. */
+:root {
+  --bg: #FAF7F1;        /* sand-1 */
+  --string: #2B5340;    /* green-9 */
+  --pluck: #CE8865;     /* terracotta-10 */
+  --text: #62645E;      /* sand-11 */
+  --strong: #1A1F1C;    /* sand-12 */
+  --chip-bg: #F3EEE4;   /* sand-2 */
+  --chip-line: #CFCEC2; /* sand-6 */
+  --chip-on-bg: #2B5340;
+  --chip-on-text: #FAF7F1;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --radius-xs: 4px; --radius-sm: 8px;   /* musy-foundations.css: swatch, small */
+  --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-3: #E5E3D9; --sand-4: #DEDCD1; --sand-5: #D6D5C9; --sand-6: #CFCEC2; --sand-7: #BDBCAF; --sand-8: #A7A89B; --sand-9: #8A8C82; --sand-10: #7C7E74; --sand-11: #62645E; --sand-12: #1A1F1C; --terracotta-1: #FDF8F5; --terracotta-2: #F9EDE5; --terracotta-3: #F4DFD2; --terracotta-4: #F0D5C4; --terracotta-5: #ECCBB7; --terracotta-6: #E8C1AA; --terracotta-7: #E3B294; --terracotta-8: #DEA37F; --terracotta-9: #D99673; --terracotta-10: #CE8865; --terracotta-11: #824429; --terracotta-12: #4A2718;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111412; --string: #8FBCA2; --pluck: #E6A684; --text: #9EA59F; --strong: #EDF0EC;
+  --chip-bg: #191D1A; --chip-line: #3B413C; --chip-on-bg: #8FBCA2; --chip-on-text: #111412; color-scheme: dark;
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-4: #2A2F2B; --sand-5: #323833; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-10: #868D87; --sand-11: #9EA59F; --sand-12: #EDF0EC; --terracotta-1: #160F0B; --terracotta-2: #221711; --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673; --terracotta-10: #E6A684; --terracotta-11: #D0937A; --terracotta-12: #F6DACB; } }
+:root[data-theme="dark"] {
+  --bg: #111412; --string: #8FBCA2; --pluck: #E6A684; --text: #9EA59F; --strong: #EDF0EC;
+  --chip-bg: #191D1A; --chip-line: #3B413C; --chip-on-bg: #8FBCA2; --chip-on-text: #111412; color-scheme: dark;
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-4: #2A2F2B; --sand-5: #323833; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-10: #868D87; --sand-11: #9EA59F; --sand-12: #EDF0EC; --terracotta-1: #160F0B; --terracotta-2: #221711; --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673; --terracotta-10: #E6A684; --terracotta-11: #D0937A; --terracotta-12: #F6DACB; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--on-surface-muted); overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#harp { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: none; }
+.musie-cursor { position: fixed; left: 0; top: 0; inline-size: calc(var(--sp-5) * 2); block-size: calc(var(--sp-5) * 2);
+  margin: calc(var(--sp-5) * -1) 0 0 calc(var(--sp-5) * -1); border-radius: var(--radius-full); background: var(--interactive-primary);
+  pointer-events: none; visibility: hidden; will-change: transform; }
+.musie-cursor.shown { visibility: visible; }
+button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* Fuß: Hinweiszeile, darüber das Regler-Feld. Rand zum Bildschirm: --sp-4, wie die Seitenränder. */
+.foot { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-inset-card));
+  padding-left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); padding-right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; }
+.panel { position: fixed; z-index: 1; top: calc(env(safe-area-inset-top, 0px) + var(--sp-4));
+  bottom: var(--panel-bottom, calc(env(safe-area-inset-bottom, 0px) + var(--sp-4)));
+  right: max(var(--sp-4), env(safe-area-inset-right, 0px));
+  width: min(420px, calc(100% - var(--sp-4) * 2)); box-sizing: border-box; align-content: start;
+  pointer-events: auto; touch-action: pan-y; overflow-y: auto; overscroll-behavior: contain;
+  opacity: 0; transform: translateX(var(--sp-2)); visibility: hidden;
+  transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 280ms;
+  background: var(--surface); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-panel); padding: var(--space-inset-card); display: grid; gap: var(--space-gap-group); }
+.panel.open { opacity: 1; transform: none; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .panel { transition: none; } }
+
+/* Label und sein Regler gehören zusammen: --space-gap-related. Regler untereinander: --space-gap-stack (oben). */
+.ctl { display: grid; grid-template-columns: 1fr auto; column-gap: var(--space-gap-related); row-gap: var(--space-gap-related); align-items: baseline; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--interactive-primary); }
+.ctl small { grid-column: 1 / -1; }
+.check { display: flex; gap: var(--space-gap-inline); align-items: flex-start; }
+.check input { accent-color: var(--interactive-primary); width: var(--icon-size-md); height: var(--icon-size-md); margin: 0; flex: 0 0 auto; }
+.check span { display: grid; gap: var(--sp-1); }
+.readout { font-variant-numeric: tabular-nums; -webkit-user-select: text; user-select: text; }
+.musie-reset { justify-self: start; min-height: var(--target-min); padding: 0; background: none; border: 0; cursor: pointer;
+  color: var(--on-surface); text-decoration: underline; text-underline-offset: var(--sp-1); }
+
+/* Schrift: Labels label-md, Hinweise body-sm (die kleinste Stufe, L8). Nie fett. */
+.ctl label, .ctl .musie-label, .ctl output, .check, .musie-reset {
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--font-weight-regular);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+.ctl label, .ctl .musie-label, .check { color: var(--on-surface); }
+.ctl output { color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.ctl small, .check small, .readout, .note {
+  font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); }
+.musie-top { position: fixed; inset: 0; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr); pointer-events: none;
+  padding: calc(env(safe-area-inset-top, 0px) + max(var(--space-inset-card), var(--target-primary))) max(var(--space-inset-sheet), env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-inset-card) + var(--space-gap-stack) + var(--foot-h, var(--target-primary))) max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); }
+/* .musy-sheet__header: rechts frei für das X, darunter --space-gap-stack */
+.musie-top__header { padding-inline-end: var(--target-primary); padding-block-end: var(--space-gap-stack); display: grid; justify-items: start; }
+/* Der Hinweis gehört zur Überschrift wie ein Absatz unter dem h2 in .musie-md: --space-gap-group dazwischen. Aus, nimmt er keinen Platz. */
+.musie-top__header .note { margin-block-start: var(--space-gap-group); }
+.musie-top__header .note:not(.shown) { display: none; }
+/* .musy-sheet__body + .musie-immersive__body. Version 1443: der Countdown unten links, direkt über der Fußzeile mit „Ich bin fertig“ */
+.musie-immersive__body { min-block-size: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-gap-stack); }
+/* Aus shell.css, der Fokus-Sheet der Hörübung: die Restzeit als größtes Element, der Transport daneben, die Bildunterschrift darunter. */
+.musie-immersive__clock { display: flex; flex-direction: column; gap: var(--space-gap-inline); }
+#cd-btn { pointer-events: auto; }                          /* nur der Knopf fängt Berührungen ab, die Saiten darunter bleiben spielbar */
+.musie-immersive__meter { display: flex; align-items: center; gap: var(--space-gap-inline); inline-size: fit-content; }
+.musie-immersive__time { margin: 0; transition: color var(--motion-toggle); font-family: var(--type-display-xl-family); font-size: var(--type-display-xl-size);
+  font-weight: var(--type-display-xl-weight); line-height: var(--type-display-xl-line); letter-spacing: var(--type-display-xl-tracking);
+  font-variant-numeric: tabular-nums; color: var(--on-surface); }
+.musie-immersive__time[data-done] { color: var(--on-surface-muted); }
+.musie-immersive__caption { margin: 0; max-inline-size: var(--measure-body); text-wrap: pretty; font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-headline { margin: 0; max-inline-size: var(--measure-heading); color: var(--on-surface);
+  font-family: var(--type-heading-md-family); font-size: var(--type-heading-md-size); font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line); letter-spacing: var(--type-heading-md-tracking); text-wrap: var(--text-wrap-body); }
+.note { margin: 0;
+  max-inline-size: 60ch; text-align: left; text-wrap: pretty; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.note.shown { opacity: 1; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .note { transition: none; } }
+[hidden] { display: none !important; }
+/* ── Musie-Komponenten Switch, SegmentedControl und RadioGroupText ─────────
+   Regeln aus packages/design-system/src/musy-components.css, gemessen im Browser mit allen vier
+   Stylesheets in Reihenfolge (spätere Überschreibungen inklusive). Tokens aufgelöst je Theme. */
+:root {
+  --focus-ring: 3px solid #2B5340;
+  --focus-ring-offset: 2px;
+  --border-width-hairline: 1px;
+  --icon-size-md: 20px;
+  --icon-stroke: 2px;
+  --icon-size-sm: 16px;
+  --icon-stroke-sm: 1.5px;
+  --icon-size-lg: 24px;
+  --icon-size-xl: 32px;
+  --icon-optical-nudge: -0.055em;
+  --on-surface-muted: #62645E;
+  --on-surface: #1A1F1C;
+  --interactive-primary-on-subtle: #1A1F1C;
+  --feedback-info-icon: #62645E;
+  --feedback-warning-icon: #894C00;
+  --feedback-success-icon: #3F6E23;
+  --feedback-error-icon: #A53231;
+  --motion-emphasis: 520ms cubic-bezier(0.2, 0.9, 0.1, 1);
+  --sp-1: 4px;
+  --space-gap-related: 12px;
+  --target-primary: 44px;
+  --target-guided: 64px;
+  --border-width-regular: 1.5px;
+  --border-style-solid: solid;
+  --border-strong: #678271;
+  --radius-full: 999px;
+  --surface-sunken: #E5E3D9;
+  --motion-toggle: 140ms cubic-bezier(0.2, 0, 0.2, 1);
+  --surface-raised: #FAF7F1;
+  --elevation-1: 0 1px 2px rgb(32 44 36 / 0.10), 0 1px 3px -1px rgb(32 44 36 / 0.06), inset 0 0 0 1px transparent;
+  --interactive-primary: #2B5340;
+  --interactive-primary-border: #678271;
+  --interactive-accent: #D99673;
+  --interactive-accent-border: #B5704F;
+  --interactive-accent-on-subtle: #824429;
+  --interactive-ghost-hover: #E5E3D9;
+  --interactive-primary-hover: #22442F;
+  --interactive-ghost-active: #DEDCD1;
+  --interactive-primary-active: #1C3827;
+  --interactive-primary-disabled: #C7CCC0;
+  --border-subtle: #CFCEC2;
+  --on-surface-disabled: #8A8C82;
+  --type-label-lg-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-label-lg-weight: 600;
+  --type-label-lg-line: 1.2;
+  --type-label-lg-tracking: 0;
+  --text-wrap-body: pretty;
+  --space-gap-stack: 16px;
+  --type-heading-sm-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
+  --type-heading-sm-weight: 600;
+  --type-heading-sm-line: 1.3;
+  --type-heading-sm-tracking: 0;
+  --text-wrap-heading: balance;
+  --measure-heading: 50ch;
+  --type-label-md-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-label-md-weight: 400;
+  --type-label-md-line: 1.4;
+  --type-label-md-tracking: 0.002em;
+  --type-body-md-family: Literata, ui-serif, Georgia, serif;
+  --type-body-md-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-body-md-weight: 400;
+  --type-body-md-line: 1.5;
+  --measure-body: 62ch;
+  --target-comfort: 56px;
+  --space-inset-control: 12px 24px;
+  --radius-card: 12px;
+  --text-hyphens: auto;
+  --interactive-primary-subtle: #E3E7DE;
+  --border-width-thick: 2px;
+  --interactive-primary-on: #F3EEE4;
+  --interactive-accent-subtle: #F4DFD2;
+  --interactive-accent-on: #1A1F1C;
+  --feedback-error-border: #B85B55;
+  --radius-control: 999px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --target-min: 24px;
+  --interactive-primary-subtle-hover: #D5DBD0;
+  --interactive-primary-subtle-active: #C7CCC0;
+  --interactive-accent-subtle-hover: #F0D5C4;
+  --interactive-accent-subtle-active: #ECCBB7;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --space-gap-inline: 8px;
+  --space-gap-group: 32px;
+  --space-inset-card: 24px;
+  --space-inset-sheet: 32px;
+  --radius-panel: 16px;
+  --surface: #F3EEE4;
+  --font-weight-regular: 400;
+  --type-body-sm-family: Literata, ui-serif, Georgia, serif;
+  --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-body-sm-weight: 400;
+  --type-body-sm-line: 1.5;
+  --type-body-sm-tracking: 0;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --focus-ring: 3px solid #6FA688;
+  --on-surface-muted: #9EA59F;
+  --on-surface: #EDF0EC;
+  --interactive-primary-on-subtle: #EDF0EC;
+  --feedback-info-icon: #9EA59F;
+  --feedback-warning-icon: #D08A48;
+  --feedback-success-icon: #9ACB6F;
+  --feedback-error-icon: #E87A73;
+  --border-strong: #6B8F79;
+  --surface-sunken: #111412;
+  --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478;
+  --interactive-primary-border: #6B8F79;
+  --interactive-accent-border: #A2694B;
+  --interactive-accent-on-subtle: #D0937A;
+  --interactive-ghost-hover: #2A2F2B;
+  --interactive-primary-hover: #6FA688;
+  --interactive-ghost-active: #323833;
+  --interactive-primary-active: #538A6C;
+  --interactive-primary-disabled: #203B2B;
+  --border-subtle: #3B413C;
+  --on-surface-disabled: #79807A;
+  --interactive-primary-subtle: #16281E;
+  --interactive-primary-on: #111412;
+  --interactive-accent-subtle: #2F1F16;
+  --interactive-accent-on: #111412;
+  --feedback-error-border: #BB605A;
+  --interactive-primary-subtle-hover: #1B3224;
+  --interactive-primary-subtle-active: #203B2B;
+  --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-subtle-active: #442E21;
+  --surface: #191D1A;
+} }
+:root[data-theme="dark"] {
+  --focus-ring: 3px solid #6FA688;
+  --on-surface-muted: #9EA59F;
+  --on-surface: #EDF0EC;
+  --interactive-primary-on-subtle: #EDF0EC;
+  --feedback-info-icon: #9EA59F;
+  --feedback-warning-icon: #D08A48;
+  --feedback-success-icon: #9ACB6F;
+  --feedback-error-icon: #E87A73;
+  --border-strong: #6B8F79;
+  --surface-sunken: #111412;
+  --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478;
+  --interactive-primary-border: #6B8F79;
+  --interactive-accent-border: #A2694B;
+  --interactive-accent-on-subtle: #D0937A;
+  --interactive-ghost-hover: #2A2F2B;
+  --interactive-primary-hover: #6FA688;
+  --interactive-ghost-active: #323833;
+  --interactive-primary-active: #538A6C;
+  --interactive-primary-disabled: #203B2B;
+  --border-subtle: #3B413C;
+  --on-surface-disabled: #79807A;
+  --interactive-primary-subtle: #16281E;
+  --interactive-primary-on: #111412;
+  --interactive-accent-subtle: #2F1F16;
+  --interactive-accent-on: #111412;
+  --feedback-error-border: #BB605A;
+  --interactive-primary-subtle-hover: #1B3224;
+  --interactive-primary-subtle-active: #203B2B;
+  --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-subtle-active: #442E21;
+  --surface: #191D1A;
+}
+.musy-switch__track:focus-visible,
+.musy-radio__body:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-sr-only,
+.musy-seg--labels-none .musy-seg__label,
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] .musy-seg__label { position: absolute; width: var(--border-width-hairline); height: var(--border-width-hairline); padding: 0px; margin: calc(var(--border-width-hairline) * -1); overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0px; }
+.musy-icon { display: inline-block; flex-shrink: 0; width: var(--icon-size-md); height: var(--icon-size-md); stroke: currentcolor; stroke-width: var(--icon-stroke); fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.musy-icon--sm { width: var(--icon-size-sm); height: var(--icon-size-sm); stroke-width: var(--icon-stroke-sm); }
+.musy-icon--md { width: var(--icon-size-md); height: var(--icon-size-md); }
+.musy-icon--lg { width: var(--icon-size-lg); height: var(--icon-size-lg); }
+.musy-icon--xl { width: var(--icon-size-xl); height: var(--icon-size-xl); }
+.musy-icon--inline { transform: translateY(var(--icon-optical-nudge)); }
+.musy-icon--muted { color: var(--on-surface-muted); }
+.musy-icon--strong { color: var(--on-surface); }
+.musy-icon--primary { color: var(--interactive-primary-on-subtle); }
+.musy-icon--info { color: var(--feedback-info-icon); }
+.musy-icon--warning { color: var(--feedback-warning-icon); }
+.musy-icon--success { color: var(--feedback-success-icon); }
+.musy-icon--error { color: var(--feedback-error-icon); }
+.musy-icon[data-animate="on"] { transition: transform var(--motion-emphasis); }
+@media (prefers-reduced-motion: reduce) { .musy-icon[data-animate="on"] { transition: none; animation: auto ease 0s 1 normal none running none !important; } }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-switch { --musy-switch-knob: var(--icon-size-lg); --musy-switch-pad: var(--sp-1); --musy-switch-h: calc(var(--musy-switch-knob) + var(--musy-switch-pad) * 2); --musy-switch-w: calc(var(--musy-switch-knob) * 2 + var(--musy-switch-pad) * 3); display: flex; align-items: center; gap: var(--space-gap-related); min-height: var(--target-primary); cursor: pointer; }
+.musy-switch--guided { min-height: var(--target-guided); }
+.musy-switch--reverse { flex-direction: row-reverse; justify-content: space-between; }
+.musy-switch__track { position: relative; flex-shrink: 0; display: block; box-sizing: border-box; width: var(--musy-switch-w); height: var(--musy-switch-h); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-full); background-color: var(--surface-sunken); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-switch__knob { position: absolute; top: 0px; left: 0px; display: grid; place-items: center; width: var(--musy-switch-knob); height: var(--musy-switch-knob); margin: calc(var(--musy-switch-pad) - var(--border-width-regular)); border-radius: var(--radius-full); background-color: var(--surface-raised); box-shadow: var(--elevation-1); color: var(--on-surface-muted); transition: transform var(--motion-toggle),
+              background-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-switch__track[data-checked] { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); }
+.musy-switch__track[data-checked] .musy-switch__knob { transform: translateX(calc(var(--musy-switch-knob) + var(--musy-switch-pad))); color: var(--interactive-primary-on-subtle); }
+.musy-switch--accent .musy-switch__track[data-checked] { background-color: var(--interactive-accent); border-color: var(--interactive-accent-border); }
+.musy-switch--accent .musy-switch__track[data-checked] .musy-switch__knob { color: var(--interactive-accent-on-subtle); }
+.musy-switch__glyph { grid-area: 1 / 1; transition: opacity var(--motion-toggle); }
+.musy-switch__glyph[data-state="hidden"] { opacity: 0; }
+@media (hover: hover) and (pointer: fine) { .musy-switch__track[data-unchecked]:hover:not([data-disabled]),
+.musy-switch__track[data-force~="hover"][data-unchecked] { background-color: var(--interactive-ghost-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-switch__track[data-checked]:hover:not([data-disabled]),
+.musy-switch__track[data-force~="hover"][data-checked] { background-color: var(--interactive-primary-hover); } }
+.musy-switch__track[data-unchecked]:active:not([data-disabled]),
+.musy-switch__track[data-force~="active"][data-unchecked] { background-color: var(--interactive-ghost-active); }
+.musy-switch__track[data-checked]:active:not([data-disabled]),
+.musy-switch__track[data-force~="active"][data-checked] { background-color: var(--interactive-primary-active); }
+.musy-switch__track[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); cursor: not-allowed; }
+.musy-switch__track[data-disabled] .musy-switch__knob { box-shadow: none; color: var(--on-surface-disabled); }
+.musy-switch:has(.musy-switch__track[data-disabled]) { cursor: not-allowed; }
+.musy-switch:has(.musy-switch__track[data-disabled]) .musy-switch__label { color: var(--on-surface-disabled); }
+.musy-switch__label { font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-body); cursor: pointer; }
+.musy-radio-group { display: flex; flex-direction: column; gap: var(--space-gap-stack); border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-radio-group__legend { padding: 0px; margin-block-end: var(--space-gap-related); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+.musy-radio-group__legend--label { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+.musy-radio-group__hint { margin-block-end: var(--space-gap-stack); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); max-width: var(--measure-body); }
+.musy-radio__body { display: flex; align-items: center; gap: var(--space-gap-related); box-sizing: border-box; width: 100%; min-height: var(--target-comfort); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-card); background-color: var(--surface-raised); cursor: pointer; text-align: start; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-radio-group--guided .musy-radio__body { min-height: var(--target-guided); }
+.musy-radio__marker { position: relative; display: grid; place-items: center; flex-shrink: 0; box-sizing: border-box; width: var(--icon-size-lg); height: var(--icon-size-lg); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-full); color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-radio__label { font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); color: var(--on-surface); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); overflow-wrap: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.musy-radio--no-clamp .musy-radio__label,
+.musy-radio__body--no-clamp .musy-radio__label { display: block; -webkit-line-clamp: none; overflow: visible; }
+.musy-radio__drill { display: grid; place-items: center; flex-shrink: 0; margin-inline-start: auto; padding-inline-start: var(--space-gap-related); color: var(--on-surface-muted); transition: color var(--motion-toggle); }
+.musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-accent-on-subtle); }
+.musy-radio__body[data-disabled] .musy-radio__drill { color: var(--on-surface-disabled); }
+@media (hover: hover) and (pointer: fine) { .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
+.musy-radio__body[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-radio__body[data-unchecked]:active:not([data-disabled]),
+.musy-radio__body[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-radio__body[data-checked] { background-color: var(--interactive-primary-subtle); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); }
+.musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on); }
+.musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] { background-color: var(--interactive-accent-subtle); border-color: var(--interactive-accent-border); border-width: var(--border-width-thick); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--interactive-accent); border-color: var(--interactive-accent-border); border-width: var(--border-width-thick); color: var(--interactive-accent-on); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-accent-on-subtle); }
+.musy-radio__body[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); border-width: var(--border-width-regular); cursor: not-allowed; }
+.musy-radio__body[data-disabled] .musy-radio__label { color: var(--on-surface-disabled); }
+.musy-radio__body[data-disabled] .musy-radio__marker { border-color: var(--on-surface-disabled); }
+.musy-radio-group[data-invalid] .musy-radio__body,
+.musy-radio__body[data-invalid] { border-color: var(--feedback-error-border); }
+.musy-radio-group__error { margin-block-start: var(--space-gap-related); }
+.musy-box__headrow > .musy-sr-only { flex: 0 0 auto; }
+.musy-seg { contain: layout; container-type: inline-size; border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-seg__track { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--sp-1); box-sizing: border-box; inline-size: 100%; padding: var(--sp-1); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-control); background-color: var(--surface-sunken); }
+.musy-seg__option { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); box-sizing: border-box; min-inline-size: 0px; min-block-size: var(--target-primary); padding-inline: var(--sp-3); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background-color: transparent; color: var(--on-surface-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-seg--guided .musy-seg__option { min-block-size: var(--target-guided); }
+.musy-seg--min { --musy-seg-rung: calc(var(--target-min) + var(--sp-3)); }
+.musy-seg--min .musy-seg__option { min-block-size: calc(var(--musy-seg-rung) - var(--sp-1) * 2 - var(--border-width-hairline) * 2); padding-inline: var(--sp-3); gap: var(--sp-1); }
+.musy-seg--labels-none,
+.musy-seg--labels-unchecked { container-type: normal; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__track,
+.musy-seg--labels-unchecked .musy-seg__track { grid-auto-flow: column; grid-auto-columns: auto; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__option { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); gap: 0px; }
+.musy-seg--labels-none.musy-seg--min .musy-seg__option { min-inline-size: var(--target-min); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked.musy-seg--min .musy-seg__option[data-checked] { min-inline-size: var(--target-min); }
+.musy-seg__option > .musy-icon { flex: 0 0 auto; }
+.musy-seg__label { min-inline-size: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 30rem) { .musy-seg__option { flex-direction: column; gap: var(--sp-1); padding-inline: var(--sp-2); padding-block: var(--sp-2); } }
+@container (max-width: 30rem) { .musy-seg__label { max-inline-size: 100%; } }
+@container (max-width: 30rem) { .musy-seg--labels-none .musy-seg__option,
+.musy-seg--labels-unchecked .musy-seg__option { flex-direction: row; padding-block: 0px; } }
+@media (hover: hover) and (pointer: fine) { .musy-seg__option[data-unchecked]:hover:not([data-disabled]),
+.musy-seg__option[data-force~="hover"] { background-color: var(--interactive-ghost-hover); color: var(--on-surface); } }
+.musy-seg__option[data-unchecked]:active:not([data-disabled]),
+.musy-seg__option[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-seg__option[data-checked] { background-color: var(--surface-raised); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on-subtle); }
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: var(--interactive-accent-border); color: var(--interactive-accent-on-subtle); }
+.musy-seg__option[data-disabled] { color: var(--on-surface-disabled); cursor: not-allowed; }
+.musy-seg__option[data-disabled][data-checked] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); }
+.musy-dlist__swipe-action > .musy-icon { color: var(--feedback-error-icon); }
+.musy-radio__body,
+.musy-radio__body[data-checked],
+.musy-seg__option,
+.musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio-group--accent .musy-radio__body[data-checked],
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio__body[aria-invalid="true"] { border-color: var(--feedback-error-border); border-width: var(--border-width-thick); }
+.musy-radio__body[data-disabled] { border-color: var(--border-subtle); }
+@media (prefers-contrast: more) { .musy-radio__body,
+.musy-seg__option { border-color: var(--border-subtle); } }
+@media (prefers-contrast: more) { .musy-radio__body[data-checked],
+.musy-seg__option[data-checked] { border-color: var(--border-strong); border-width: var(--border-width-thick); } }
+@media (forced-colors: active) { .musy-radio__body,
+.musy-switch__track { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-radio__body[data-checked] { border-color: highlight; } }
+@media (forced-colors: active) { .musy-seg__option[data-checked] { border-color: highlight; color: highlight; } }
+@media (forced-colors: active) { .musy-radio__body[data-checked] .musy-radio__marker { background-color: highlight; color: highlighttext; } }
+@media (forced-colors: active) { .musy-switch__track[data-checked] { background-color: highlight; } }
+@media (forced-colors: active) { .musy-radio__body[data-disabled],
+.musy-switch__track[data-disabled] { color: graytext; border-color: graytext; } }
+.musy-switch,
+.musy-radio-group { --musy-rest-fill: var(--interactive-primary-subtle); --musy-rest-fill-hover: var(--interactive-primary-subtle-hover); --musy-rest-fill-active: var(--interactive-primary-subtle-active); --musy-rest-border: var(--interactive-primary-border); --musy-rest-on: var(--interactive-primary-on-subtle); --musy-sel-fill: var(--interactive-primary); --musy-sel-on: var(--interactive-primary-on); }
+.musy-switch.musy-switch--accent,
+.musy-radio-group.musy-radio-group--accent { --musy-rest-fill: var(--interactive-accent-subtle); --musy-rest-fill-hover: var(--interactive-accent-subtle-hover); --musy-rest-fill-active: var(--interactive-accent-subtle-active); --musy-rest-border: var(--interactive-accent-border); --musy-rest-on: var(--interactive-accent-on-subtle); --musy-sel-fill: var(--interactive-accent); --musy-sel-on: var(--interactive-accent-on); }
+.musy-switch .musy-switch__track[data-unchecked]:not([data-disabled]) { background-color: var(--musy-rest-fill); border-color: var(--musy-rest-border); }
+.musy-switch .musy-switch__track[data-unchecked]:not([data-disabled]) .musy-switch__knob { color: var(--musy-rest-on); }
+@media (hover: hover) and (pointer: fine) { .musy-switch .musy-switch__track[data-unchecked]:hover:not([data-disabled]),
+.musy-switch .musy-switch__track[data-unchecked][data-force~="hover"] { background-color: var(--musy-rest-fill-hover); } }
+.musy-switch .musy-switch__track[data-unchecked]:active:not([data-disabled]),
+.musy-switch .musy-switch__track[data-unchecked][data-force~="active"] { background-color: var(--musy-rest-fill-active); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) { background-color: var(--musy-rest-fill); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) .musy-radio__label { color: var(--musy-rest-on); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) .musy-radio__marker { border-color: var(--musy-rest-border); }
+@media (hover: hover) { .musy-radio-group .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
+.musy-radio-group .musy-radio__body[data-unchecked][data-force~="hover"] { background-color: var(--musy-rest-fill-hover); } }
+.musy-radio-group .musy-radio__body[data-unchecked]:active:not([data-disabled]),
+.musy-radio-group .musy-radio__body[data-unchecked][data-force~="active"] { background-color: var(--musy-rest-fill-active); }
+.musy-radio-group .musy-radio__body[data-checked] { background-color: var(--musy-sel-fill); }
+.musy-radio-group .musy-radio__body[data-checked] .musy-radio__label { color: var(--musy-sel-on); }
+.musy-radio-group .musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--surface-raised); border-color: var(--surface-raised); color: var(--musy-sel-fill); }
+.musy-field__error > .musy-icon { flex-shrink: 0; color: var(--feedback-error-icon); }
+.musy-field__valid > .musy-icon { flex-shrink: 0; color: var(--feedback-success-icon); }
+.musy-wizard__connector > .musy-icon { display: none; position: absolute; inset-block-start: 50%; inset-inline-start: 50%; transform: translate(-50%, -50%); }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; } }
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; }
+.musy-badge:has(> .musy-icon:first-child) { padding-inline-start: var(--sp-2); }
+.musy-badge > .musy-icon { flex: 0 0 auto; }
+.musy-badge--info > .musy-icon { color: var(--feedback-info-icon); }
+.musy-badge--warning > .musy-icon { color: var(--feedback-warning-icon); }
+.musy-badge--success > .musy-icon { color: var(--feedback-success-icon); }
+.musy-badge--error > .musy-icon { color: var(--feedback-error-icon); }
+.musy-rcard__body[data-disabled] .musy-badge > .musy-icon,
+.musy-radio-card__body[data-disabled] .musy-badge > .musy-icon { color: var(--on-surface-disabled); }
+.musy-rec > .musy-icon { flex: 0 0 auto; }
+.musy-filter__dimension > .musy-filter__toggle > .musy-icon,
+.musy-filter__value > .musy-icon { flex: 0 0 auto; }
+
+/* IconButton (Layer 2), Regeln aus den vier Stylesheets in Ladereihenfolge, per CSSOM gelesen; Tokens je Theme aufgelöst. */
+:root { --interactive-ghost: transparent; --interactive-ghost-on: #1A1F1C; --interactive-ghost-border-hover: #22442F; --interactive-primary-on-disabled: #62645E; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #8A8C82; --on-surface-inverse: #FAF7F1; --surface-inverse: #1A1F1C; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --interactive-ghost: transparent; --interactive-ghost-on: #EDF0EC; --interactive-ghost-border-hover: #6FA688; --interactive-primary-on-disabled: #9EA59F; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #79807A; --on-surface-inverse: #111412; --surface-inverse: #EDF0EC; } }
+:root[data-theme="dark"] { --interactive-ghost: transparent; --interactive-ghost-on: #EDF0EC; --interactive-ghost-border-hover: #6FA688; --interactive-primary-on-disabled: #9EA59F; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #79807A; --on-surface-inverse: #111412; --surface-inverse: #EDF0EC; }
+.musy-icon-btn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-icon-btn { --musy-icon-btn-size: var(--target-primary); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--musy-icon-btn-size); height: var(--musy-icon-btn-size); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-icon-btn--min { --musy-icon-btn-size: var(--target-min); }
+.musy-icon-btn--primary-size { --musy-icon-btn-size: var(--target-primary); }
+.musy-icon-btn--comfort { --musy-icon-btn-size: var(--target-comfort); }
+.musy-icon-btn--guided { --musy-icon-btn-size: var(--target-guided); }
+.musy-icon-btn--min { margin: var(--sp-2); }
+.musy-icon-btn--primary { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on); }
+.musy-icon-btn--secondary { background-color: var(--surface-raised); border-color: var(--border-strong); color: var(--on-surface); }
+.musy-icon-btn--outline { background-color: transparent; border-color: var(--border-strong); color: var(--on-surface); }
+.musy-icon-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--primary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--primary[data-force~="hover"] { background-color: var(--interactive-primary-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--secondary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--secondary[data-force~="hover"], .musy-icon-btn--outline:hover:not(:disabled):not([data-loading]), .musy-icon-btn--outline[data-force~="hover"] { background-color: var(--interactive-ghost-hover); border-color: var(--interactive-ghost-border-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-icon-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-icon-btn--primary:active:not(:disabled), .musy-icon-btn--primary[data-pressed]:not(:disabled), .musy-icon-btn--primary[data-force~="active"] { background-color: var(--interactive-primary-active); }
+.musy-icon-btn--secondary:active:not(:disabled), .musy-icon-btn--secondary[data-pressed]:not(:disabled), .musy-icon-btn--outline:active:not(:disabled), .musy-icon-btn--outline[data-pressed]:not(:disabled), .musy-icon-btn--outline[data-force~="active"], .musy-icon-btn--ghost:active:not(:disabled), .musy-icon-btn--ghost[data-pressed]:not(:disabled), .musy-icon-btn--secondary[data-force~="active"], .musy-icon-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-icon-btn:disabled, .musy-icon-btn[data-disabled] { cursor: not-allowed; }
+.musy-icon-btn--primary:disabled, .musy-icon-btn--primary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--interactive-primary-on-disabled); }
+.musy-icon-btn--secondary:disabled, .musy-icon-btn--secondary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--on-surface-disabled); }
+.musy-icon-btn--outline:disabled, .musy-icon-btn--outline[data-disabled] { background-color: transparent; border-color: var(--border-subtle); color: var(--on-surface-disabled); }
+.musy-icon-btn--ghost:disabled, .musy-icon-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-icon-btn[data-loading] { cursor: progress; }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+@media (forced-colors: active) { .musy-icon-btn { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-icon-btn--primary { background-color: buttonface; color: buttontext; } }
+@media (forced-colors: active) { .musy-icon-btn:disabled { color: graytext; border-color: graytext; } }
+/* TrackButton (Layer 2, MusicPlayer.tsx), Regeln per CSSOM aus den vier Stylesheets; dazu display-xl und heading-md. */
+:root { --type-display-xl-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-display-xl-size: clamp(40px, calc(30.991px + 2.2923vw), 64px); --type-display-xl-weight: 700; --type-display-xl-line: 1.0; --type-display-xl-tracking: -0.018em; --type-heading-md-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-heading-md-size: clamp(22px, calc(20.499px + 0.3820vw), 26px); --type-heading-md-weight: 500; --type-heading-md-line: 1.25; --type-heading-md-tracking: -0.004em; }
+.musy-btn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-btn { --musy-btn-target: var(--target-primary); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-gap-inline); min-height: var(--musy-btn-target); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); text-align: center; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-btn--min { --musy-btn-target: var(--target-min); padding-block: var(--sp-2); padding-inline: var(--sp-4); gap: var(--sp-1); margin: var(--sp-2); font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); border-radius: var(--radius-control); }
+.musy-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-btn--ghost:active:not(:disabled), .musy-btn--ghost[data-pressed]:not(:disabled), .musy-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-btn:disabled, .musy-btn[data-disabled] { cursor: not-allowed; }
+.musy-btn--ghost:disabled, .musy-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-btn[data-loading] { cursor: progress; position: relative; }
+.musy-btn[data-loading] .musy-btn__label, .musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn__label { text-wrap: var(--text-wrap-body); }
+@media (forced-colors: active) { .musy-btn { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-btn:disabled { color: graytext; border-color: graytext; } }
+.musy-btn.musy-mbtn { justify-content: flex-start; gap: var(--space-gap-related); min-inline-size: 18ch; }
+.musy-mbtn__time { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.musy-btn.musy-mbtn--no-timer { min-inline-size: 0px; justify-content: center; }
+/* Leiste: eine Reihe, mittig ausgerichtet, links am unteren Rand. Zu schmal: die Switches brechen um. */
+.musie-toolbar { pointer-events: auto; touch-action: manipulation; box-sizing: border-box; max-inline-size: 100%;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-stack);
+  padding: var(--space-inset-card); background: var(--surface);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-panel); }
+/* Eingeklappt: nur der Einstellungs-Button in der Ecke. Ausgeklappt: die Leiste an seiner Stelle, ganz rechts das X.
+   Übergang wie das Regler-Feld, 280 ms ease-in-out. */
+/* Version 1443: „Ich bin fertig“ unten rechts, ausgeblendet, solange die Leiste offen ist. Der 1:30-Countdown oben links bleibt. */
+.foot > .musie-done { position: absolute; right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px)); bottom: 0; pointer-events: auto;
+  transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > .musie-done, .foot > .musie-done[data-waiting] { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot > #btn-settings { position: absolute; left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); bottom: 0; pointer-events: auto;
+  transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > #btn-settings { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot:not(.expanded) > .musie-toolbar { opacity: 0; visibility: hidden; transform: translateY(var(--sp-2));
+  transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot.expanded > .musie-toolbar { transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 0s; }
+@media (prefers-reduced-motion: reduce) { .foot > #btn-settings, .foot > .musie-toolbar { transition: none !important; } }
+.musie-toolbar__switches { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-stack); }
+/* Der SegmentedControl richtet sich nach der Breite seines Behälters: die Leiste gibt ihm eine. */
+.musie-toolbar__seg { inline-size: calc(var(--target-primary) * 7); max-inline-size: 100%; flex: 0 1 auto; }
+/* Kleine Switch-Variante, im Design-System nicht vorhanden: Label in label-md wie die Segmente,
+   Spur und Knopf aus der Texthöhe abgeleitet. Knopf --icon-size-sm (16), Rand --sp-1: Spur 24 x 44,
+   so hoch wie die Zeile des Labels. Die Zeile bleibt 44 px hoch, das ist das Tippziel. */
+.musy-switch.musie-switch--sm { --musy-switch-knob: var(--icon-size-sm); --musy-switch-pad: var(--sp-1); gap: var(--space-gap-inline); }
+.musie-switch--sm .musy-switch__glyph .musy-icon { width: calc(var(--icon-size-sm) * 0.75); height: calc(var(--icon-size-sm) * 0.75); }
+.musie-switch--sm .musy-switch__label { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+/* Labels nie fett: der Switch setzt label-lg in 600, hier regulär. Gehört als Wunsch ins Design-System. */
+.musie-toolbar .musy-switch__label { font-weight: var(--font-weight-regular); }
+.musie-swatches__hint { font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); margin-block-start: calc(var(--space-gap-related) - var(--space-gap-stack)); }
+.panel .musy-switch__label { font-weight: var(--font-weight-regular); }
+/* Abschnitte im Regler-Feld (L2): zwischen Abschnitten --space-gap-group, mittig eine Trennlinie; darin --space-gap-stack;
+   Überschrift zu ihrem Inhalt --space-gap-related. Doppelungsprobe: 32 ≥ 2 × 16. */
+.musie-section { display: grid; gap: var(--space-gap-stack); min-inline-size: 0; }
+.musie-section + .musie-section { border-top: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); padding-top: var(--space-gap-group); }
+.musie-section__title { margin: 0; color: var(--on-surface); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); }
+.musie-section__title + * { margin-block-start: calc(var(--space-gap-related) - var(--space-gap-stack)); }
+.musy-radio-group > .musie-swatches__hint:first-child { margin-block-start: 0; }
+/* Bezeichnung → ihr Hinweis: --space-gap-related (die Bezeichnung bringt ihn als Rand mit, die Gruppe ihren Abstand) */
+.musy-radio-group__legend + .musie-swatches__hint { margin-block-start: calc(-1 * var(--space-gap-stack)); }
+/* ── Kalimba: eigenes Instrument, Rest wie die Harfe ─────────────────────────────
+   Stahl, weiße Kappen und Holz aus den Musie-Skalen (Sand, Terrakotta). Hell und dunkel wie oben. */
+:root {
+  --steel-hi: #FAF7F1; --steel: #DEDCD1; --steel-mid: #BDBCAF; --steel-lo: #8A8C82; --steel-edge: #62645E;
+  --cap: #FAF7F1; --cap-shade: #DEDCD1; --cap-line: #BDBCAF;
+  --wood: #F0D5C4; --wood-grain: #E3B294; --wood-edge: #DEA37F;
+  --shadow: rgb(26 31 28 / 0.30);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --steel-hi: #EDF0EC; --steel: #9EA59F; --steel-mid: #868D87; --steel-lo: #616862; --steel-edge: #3B413C;
+  --cap: #EDF0EC; --cap-shade: #9EA59F; --cap-line: #616862;
+  --wood: #513726; --wood-grain: #67462F; --wood-edge: #85593B;
+  --shadow: rgb(0 0 0 / 0.55); } }
+:root[data-theme="dark"] {
+  --steel-hi: #EDF0EC; --steel: #9EA59F; --steel-mid: #868D87; --steel-lo: #616862; --steel-edge: #3B413C;
+  --cap: #EDF0EC; --cap-shade: #9EA59F; --cap-line: #616862;
+  --wood: #513726; --wood-grain: #67462F; --wood-edge: #85593B;
+  --shadow: rgb(0 0 0 / 0.55); }
+#kalimba { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; touch-action: none; }
+.musie-probe { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
+.musie-section .note-text { margin: 0; }
+.musie-section a { color: var(--on-surface); text-underline-offset: var(--sp-1); }
+</style>
+</head>
+<body>
+
+<canvas id="kalimba" aria-label="Kalimba: Zungen antippen oder darüberstreichen"></canvas>
+<div class="foot">
+  <div class="panel" id="panel">
+    <section class="musie-section" aria-labelledby="h-klang">
+      <h2 class="musie-section__title" id="h-klang">Klang</h2>
+      <div class="ctl"><label for="hard">Härte</label><output id="hard-out" for="hard"></output>
+        <input type="range" id="hard" min="0" max="1" step="0.01">
+        <small>Wenig: weicher Daumen, warm. Viel: heller, mit deutlichem Anschlag.</small></div>
+      <div class="ctl"><label for="len">Tonlänge</label><output id="len-out" for="len"></output>
+        <input type="range" id="len" min="0.5" max="10.5" step="0.5">
+        <small>Ganz rechts klingt die Aufnahme frei aus, bis zu 10 Sekunden.</small></div>
+      <div class="ctl"><label for="swing">Schwenk-Vibrato</label><output id="swing-out" for="swing"></output>
+        <input type="range" id="swing" min="0" max="1" step="0.01">
+        <small>Wie stark das Schwenken den Klang schwingen lässt. Am Computer: V gedrückt halten.</small></div>
+      <div id="rg-sound-slot"></div>
+    </section>
+    <section class="musie-section" aria-labelledby="h-ansicht">
+      <h2 class="musie-section__title" id="h-ansicht">Ansicht</h2>
+      <div id="sw-names-slot"></div>
+      <div id="sw-wood-slot"></div>
+    </section>
+    <section class="musie-section" aria-labelledby="h-info">
+      <h2 class="musie-section__title" id="h-info">Über die Aufnahmen</h2>
+      <div class="musie-swatches__hint">Eine Membran-Kalimba in a-Moll, 440 Hz. Neun Zungen, von links: a′ c″ c′ a′ A f′ e′ e″ h′.</div>
+      <div class="musie-swatches__hint">8 Töne in 5 Spielweisen, jeder Ton eine Aufnahme. Quelle: <a href="http://unneraans.de/soundfonts/" target="_blank" rel="noopener">HCP-Soundfonts</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.de" target="_blank" rel="noopener">CC0</a> (gemeinfrei). Nur gekürzt und als MP3 gespeichert; Härte, Tonlänge und Vibrato formen die Aufnahme beim Abspielen.</div>
+    </section>
+    <section class="musie-section">
+      <div class="readout" id="readout"></div>
+      <button type="button" class="musie-reset" id="reset">Auf die Standardwerte zurücksetzen</button>
+    </section>
+  </div>
+  <button aria-expanded="false" aria-controls="toolbar" type="button" tabindex="0" id="btn-settings" aria-label="Einstellungen öffnen" class="musy-icon-btn musy-icon-btn--secondary musy-icon-btn--primary-size"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  <div class="musie-toolbar" id="toolbar">
+    <div class="musie-toolbar__switches" id="toolbar-switches"></div>
+    <button type="button" tabindex="0" id="btn-close" aria-label="Einstellungen schließen" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+  </div>
+</div>
+<div class="musie-top">
+  <header class="musie-top__header" id="header">
+    <h1 class="musie-headline">Tippe die Zungen der Kalimba an. Schwenkst du das Handy, schwingt der Klang mit.</h1>
+    <p class="note" id="note"></p>
+  </header>
+</div>
+<span class="musie-probe" id="probe" aria-hidden="true"></span>
+
+<script>
+(() => {
+// ════════ Instrument: Werksstimmung der Membran-Kalimba, von links nach rechts ════════
+const TINES = [
+  { label: 'a′', note: 'A4', hz: 440.00, key: 'a' }, { label: 'c″', note: 'C5', hz: 523.25, key: 's' },
+  { label: 'c′', note: 'C4', hz: 261.63, key: 'd' }, { label: 'a′', note: 'A4', hz: 440.00, key: 'f' },
+  { label: 'A',  note: 'A3', hz: 220.00, key: 'g' }, { label: 'f′', note: 'F4', hz: 349.23, key: 'h' },
+  { label: 'e′', note: 'E4', hz: 329.63, key: 'j' }, { label: 'e″', note: 'E5', hz: 659.26, key: 'k' },
+  { label: 'h′', note: 'B4', hz: 493.88, key: 'l' },
+];
+// Stimmkorrektur je Aufnahme in Cent, aus dem Soundfont übernommen
+const CENTS = {
+  closed:  { A3: 9,  A4: 11, B4: 5,  C4: 8,  C5: 10, E4: 8,  E5: -4, F4: 16 },
+  open:    { A3: 9,  A4: 8,  B4: 0,  C4: 8,  C5: 10, E4: 15, E5: -4, F4: 10 },
+  wah:     { A3: 9,  A4: 1,  B4: 0,  C4: 8,  C5: 10, E4: 15, E5: -4, F4: 10 },
+  wahwah:  { A3: 14, A4: 12, B4: -2, C4: 14, C5: -2, E4: 15, E5: 3,  F4: 3 },
+  openwah: { A3: 26, A4: 1,  B4: 0,  C4: 8,  C5: 7,  E4: 8,  E5: -7, F4: 13 },
+};
+const NOTES = ['A3', 'C4', 'E4', 'F4', 'A4', 'B4', 'C5', 'E5'];
+// Klangfarbe: welche Aufnahme. „Ruhig“ ist die liegende; Schwenken blendet sie zur offenen hin.
+const SOUNDS = [
+  { key: 'still',   art: 'closed',  label: 'Ruhig' },
+  { key: 'open',    art: 'open',    label: 'Offen' },
+  { key: 'wah',     art: 'wah',     label: 'Einmal geöffnet' },
+  { key: 'wahwah',  art: 'wahwah',  label: 'Mehrmals geöffnet' },
+  { key: 'openwah', art: 'openwah', label: 'Auf und ab' },
+];
+const DEFAULTS = { hard: 0.35, len: 4, swing: 0.6, sound: 'still', names: true, wood: false };
+let P = { ...DEFAULTS };
+try { Object.assign(P, JSON.parse(localStorage.getItem('kalimba-klang') || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem('kalimba-klang', JSON.stringify(P)); } catch (e) {} };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const coarse = matchMedia('(pointer: coarse)');
+const pct = v => Math.round(v * 100) + ' %';
+const sec = v => v > 10 ? 'voll' : v.toFixed(1).replace('.', ',') + ' s';
+
+// ════════ Bedienelemente: Markup wie in der Harfe (base-ui-Zustände) ════════
+const CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>';
+const XMARK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>';
+const switchHTML = (id, label, small) => `<div class="musy-switch${small ? ' musie-switch--sm' : ''}"><button type="button" data-unchecked="" tabindex="0" id="${id}" role="switch" aria-checked="false" class="musy-switch__track"><span data-unchecked="" class="musy-switch__knob"><span class="musy-switch__glyph" data-state="hidden">${CHECK}</span><span class="musy-switch__glyph" data-state="shown">${XMARK}</span></span></button><label for="${id}" class="musy-switch__label">${label}</label></div>`;
+document.getElementById('toolbar-switches').innerHTML =
+  switchHTML('sw-vibration', 'Vibration', true) + switchHTML('sw-motion', 'Schwenken', true) + switchHTML('sw-regler', 'Regler', true) + switchHTML('sw-info', 'Info', true);
+document.getElementById('sw-names-slot').outerHTML = switchHTML('sw-names', 'Tonnamen unter den Zungen', false);
+document.getElementById('sw-wood-slot').outerHTML = switchHTML('sw-wood', 'Holzblock zeigen', false);
+document.getElementById('rg-sound-slot').outerHTML =
+  '<div role="radiogroup" class="musy-radio-group" id="rg-sound" aria-labelledby="rg-sound-legend" aria-describedby="rg-sound-hint"><div id="rg-sound-legend" class="musy-radio-group__legend musy-radio-group__legend--label">Klangfarbe</div>' +
+  '<div id="rg-sound-hint" class="musie-swatches__hint">Fünf Spielweisen, alle aufgenommen. Bei „Ruhig“ öffnet das Schwenken den Klang.</div>' +
+  SOUNDS.map(s => `<button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" id="rg-${s.key}" data-value="${s.key}" class="musy-radio__body"><span class="musy-radio__marker" aria-hidden="true"><span data-unchecked="">${CHECK}</span></span><span class="musy-radio__label">${s.label}</span></button>`).join('') + '</div>';
+
+function setSwitch(id, on) {         // Zustand wie base-ui ihn schreibt: data-checked / data-unchecked, aria-checked, Glyphen
+  const t = document.getElementById(id), k = t.querySelector('.musy-switch__knob'), g = t.querySelectorAll('.musy-switch__glyph');
+  for (const el of [t, k]) { el.toggleAttribute('data-checked', on); el.toggleAttribute('data-unchecked', !on); }
+  t.setAttribute('aria-checked', on); g[0].dataset.state = on ? 'shown' : 'hidden'; g[1].dataset.state = on ? 'hidden' : 'shown';
+}
+
+// ════════ Zeichnen ════════
+const cv = document.getElementById('kalimba'), g = cv.getContext('2d'), probe = document.getElementById('probe');
+let C = {};
+function readColors() {                                   // Canvas kennt keine CSS-Variablen: über ein Probe-Element auflösen
+  const get = v => { probe.style.color = `var(${v})`; return getComputedStyle(probe).color; };
+  C = Object.fromEntries(['--steel-hi', '--steel', '--steel-mid', '--steel-lo', '--steel-edge', '--cap', '--cap-shade', '--cap-line',
+    '--wood', '--wood-grain', '--wood-edge', '--shadow', '--on-surface', '--on-surface-muted', '--terracotta-9', '--sand-9'].map(v => [v, get(v)]));
+}
+const rgba = (c, a) => { const p = c.match(/[\d.]+/g) || [0, 0, 0]; return `rgba(${p[0]},${p[1]},${p[2]},${a})`; };
+const minHz = Math.min(...TINES.map(t => t.hz));
+const state = TINES.map(() => ({ t0: -1e9, on: false }));
+const header = document.getElementById('header'), foot = document.querySelector('.foot');
+const btnSettings = document.getElementById('btn-settings'), toolbarEl = document.getElementById('toolbar');
+let W = 0, H = 0, L = null;
+
+function layout() {
+  const dpr = Math.min(3, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const top = header.getBoundingClientRect().bottom + 20;
+  const footTop = (foot.classList.contains('expanded') ? toolbarEl : btnSettings).getBoundingClientRect().top;
+  const bottom = footTop - 16;
+  const width = Math.min(W - 32, 560), x0 = (W - width) / 2, pitch = width / TINES.length;
+  const tw = Math.max(12, Math.min(30, pitch * 0.6));
+  const stubH = tw * 1.25, rodH = Math.max(8, Math.min(14, tw * 0.5));
+  const rodY = top + stubH, freeTop = rodY + rodH / 2;
+  const labelRoom = P.names ? 30 : 8;
+  const avail = Math.max(80, bottom - freeTop - labelRoom);
+  L = { top, bottom, x0, width, pitch, tw, stubH, rodH, rodY, freeTop, avail, cap: Math.max(16, tw * 1.5),
+    tines: TINES.map((t, i) => ({ cx: x0 + pitch * (i + 0.5), len: avail * Math.sqrt(minHz / t.hz) })) };
+  draw(performance.now());
+}
+
+function wood() {
+  const pad = L.pitch * 0.4, x = L.x0 - pad, y = L.top - L.stubH * 0.5, w = L.width + pad * 2;
+  const h = L.freeTop + L.avail + (P.names ? 30 : 0) + 12 - y;
+  g.save();
+  g.shadowColor = C['--shadow']; g.shadowBlur = 14; g.shadowOffsetX = -3; g.shadowOffsetY = 6;
+  g.fillStyle = C['--wood']; g.beginPath(); g.roundRect(x, y, w, h, 16); g.fill();
+  g.restore();
+  g.save(); g.beginPath(); g.roundRect(x, y, w, h, 16); g.clip();
+  g.strokeStyle = rgba(C['--wood-grain'], 0.55); g.lineWidth = 1;                // Maserung längs, wie auf dem Foto
+  for (let k = 0; k < 26; k++) {
+    const bx = x + (k + 0.5) * w / 26, a = 2 + (k * 37 % 7), ph = k * 1.7;
+    g.beginPath();
+    for (let yy = y; yy <= y + h; yy += 8) { const xx = bx + Math.sin(yy / 47 + ph) * a + Math.sin(yy / 13 + ph * 2) * 0.6; yy === y ? g.moveTo(xx, yy) : g.lineTo(xx, yy); }
+    g.stroke();
+  }
+  g.restore();
+  g.strokeStyle = C['--wood-edge']; g.lineWidth = 1; g.beginPath(); g.roundRect(x + 0.5, y + 0.5, w - 1, h - 1, 16); g.stroke();
+}
+
+function tine(i, now) {
+  const T = L.tines[i], s = state[i], tw = L.tw, r = tw / 2;
+  const t = (now - s.t0) / 1000;
+  const amp = reduceMotion.matches ? 0 : Math.exp(-t / 0.45);
+  const d = amp * Math.sin(2 * Math.PI * (5 + TINES[i].hz / 110) * t);   // Spitze zum Auge hin und weg
+  const glow = Math.exp(-t / 1.1);
+  const x = T.cx - r, top = L.rodY - L.stubH, tipY = L.freeTop + T.len + d * 1.2;
+  const capTop = tipY - L.cap;
+  const path = () => { g.beginPath(); g.roundRect(x, top, tw, tipY - top, r); };
+
+  // Licht von oben rechts: Schatten nach links unten, er wandert mit der Schwingung
+  g.save();
+  g.shadowColor = C['--shadow']; g.shadowBlur = 4 + Math.abs(d) * 3; g.shadowOffsetX = -2 - Math.abs(d); g.shadowOffsetY = 3 + d * 2.5;
+  g.fillStyle = C['--steel']; path(); g.fill();
+  g.restore();
+
+  g.save(); path(); g.clip();
+  // Satinierter Edelstahl: links dunkler, rechts das Licht
+  const gx = g.createLinearGradient(x, 0, x + tw, 0);
+  gx.addColorStop(0, C['--steel-lo']); gx.addColorStop(0.12, C['--steel-mid']); gx.addColorStop(0.45, C['--steel']);
+  gx.addColorStop(0.75, C['--steel-hi']); gx.addColorStop(0.92, C['--steel']); gx.addColorStop(1, C['--steel-mid']);
+  g.fillStyle = gx; g.fillRect(x, top, tw, tipY - top);
+  // matter Glanz längs, wandert beim Schwingen; unter dem Steg ein wenig Schatten
+  const fl = tipY - L.freeTop, band = 0.38 + d * 0.06;
+  const gy = g.createLinearGradient(0, L.freeTop, 0, tipY);
+  gy.addColorStop(0, rgba(C['--steel-edge'], 0.35)); gy.addColorStop(0.06, rgba(C['--steel-edge'], 0));
+  gy.addColorStop(Math.max(0.07, band - 0.18), rgba(C['--steel-hi'], 0));
+  gy.addColorStop(band, rgba(C['--steel-hi'], 0.28 + Math.abs(d) * 0.25));
+  gy.addColorStop(Math.min(0.9, band + 0.22), rgba(C['--steel-hi'], 0));
+  g.fillStyle = gy; g.fillRect(x, L.freeTop, tw, fl);
+  g.strokeStyle = rgba(C['--steel-edge'], 0.07); g.lineWidth = 0.6;          // feiner Längsschliff
+  for (let k = 1; k < 6; k++) { const bx = x + tw * (k / 6) + ((i * 13 + k * 7) % 5 - 2) * 0.3; g.beginPath(); g.moveTo(bx, L.freeTop); g.lineTo(bx, capTop); g.stroke(); }
+  // weiße Enden hinter dem Steg und weiße Kappe an der Spitze
+  const capFill = (y0, y1) => {
+    const gc = g.createLinearGradient(x, 0, x + tw, 0);
+    gc.addColorStop(0, C['--cap-shade']); gc.addColorStop(0.3, C['--cap']); gc.addColorStop(1, C['--cap']);
+    g.fillStyle = gc; g.fillRect(x, y0, tw, y1 - y0);
+  };
+  capFill(top, L.rodY);
+  capFill(capTop, tipY);
+  const gs = g.createLinearGradient(0, capTop, 0, capTop + 4);                // weicher Übergang Stahl → Kappe
+  gs.addColorStop(0, rgba(C['--steel-edge'], 0.25)); gs.addColorStop(1, rgba(C['--steel-edge'], 0));
+  g.fillStyle = gs; g.fillRect(x, capTop, tw, 4);
+  if (glow > 0.02) { g.fillStyle = rgba(C['--terracotta-9'], 0.85 * glow); g.fillRect(x, capTop, tw, L.cap); }
+  g.restore();
+  g.strokeStyle = rgba(C['--cap-line'], 0.6); g.lineWidth = 0.75; path(); g.stroke();   // Kante, damit Weiß auf Sand steht
+
+  if (P.names) {
+    g.fillStyle = glow > 0.05 ? C['--on-surface'] : C['--on-surface-muted'];
+    g.font = '400 13px Onest, ui-sans-serif, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'top';
+    g.fillText(TINES[i].label, T.cx, L.freeTop + T.len + 10);
+  }
+  s.on = glow > 0.02;
+}
+
+function rod() {                                           // eine Chromstange, links und rechts verschraubt
+  const ext = L.pitch * 0.32, x = L.x0 - ext, w = L.width + ext * 2, y = L.rodY - L.rodH / 2, h = L.rodH;
+  g.save(); g.shadowColor = C['--shadow']; g.shadowBlur = 5; g.shadowOffsetX = -2; g.shadowOffsetY = 3;
+  const gr = g.createLinearGradient(0, y, 0, y + h);
+  gr.addColorStop(0, C['--steel-mid']); gr.addColorStop(0.28, C['--steel-hi']); gr.addColorStop(0.5, C['--steel']);
+  gr.addColorStop(0.8, C['--steel-lo']); gr.addColorStop(1, C['--steel-edge']);
+  g.fillStyle = gr; g.beginPath(); g.roundRect(x, y, w, h, h / 2); g.fill();
+  g.restore();
+  for (const sx of [x + h * 0.95, x + w - h * 0.95]) {
+    const cy = L.rodY, rw = h * 0.95, rs = h * 0.7;
+    g.fillStyle = C['--steel-mid']; g.beginPath(); g.arc(sx, cy, rw, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = C['--steel-edge']; g.lineWidth = 0.75; g.stroke();
+    const rg = g.createRadialGradient(sx + rs * 0.35, cy - rs * 0.35, rs * 0.1, sx, cy, rs);
+    rg.addColorStop(0, C['--steel-hi']); rg.addColorStop(0.7, C['--steel']); rg.addColorStop(1, C['--steel-lo']);
+    g.fillStyle = rg; g.beginPath(); g.arc(sx, cy, rs, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = C['--steel-edge']; g.lineWidth = Math.max(1, rs * 0.2); g.lineCap = 'round';   // Kreuzschlitz
+    g.beginPath(); g.moveTo(sx - rs * 0.5, cy); g.lineTo(sx + rs * 0.5, cy); g.moveTo(sx, cy - rs * 0.5); g.lineTo(sx, cy + rs * 0.5); g.stroke();
+  }
+}
+
+function draw(now) {
+  g.clearRect(0, 0, W, H);
+  if (!L) return;
+  if (P.wood) wood();
+  for (let i = 0; i < TINES.length; i++) tine(i, now);
+  rod();
+}
+let raf = 0;
+function loop(now) { draw(now); raf = state.some(s => s.on) ? requestAnimationFrame(loop) : 0; }
+function pluckVisual(i) { state[i].t0 = performance.now(); state[i].on = true; if (!raf) raf = requestAnimationFrame(loop); }
+
+// ════════ Audio (Freischaltung und Summe wie Harfe 1443) ════════
+let ctx, memIn, memPeak, unlocking = false, pending = null;
+const buffers = {}, loading = {}, voices = new Map();
+function initAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 2; comp.attack.value = 0.003; comp.release.value = 0.25;
+  const makeup = ctx.createGain(); makeup.gain.value = 1.4;
+  const limit = ctx.createDynamicsCompressor();
+  limit.threshold.value = -2; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  // Membran: alle Zungen klingen über sie; Schwenken bewegt Lautstärke und Resonanz
+  memIn = ctx.createGain();
+  memPeak = ctx.createBiquadFilter(); memPeak.type = 'peaking'; memPeak.frequency.value = 700; memPeak.Q.value = 1.2; memPeak.gain.value = 0;
+  memIn.connect(memPeak); memPeak.connect(comp); comp.connect(makeup); makeup.connect(limit); limit.connect(ctx.destination);
+}
+const audible = () => ctx.state === 'running' || unlocking;
+// Safari schaltet den Ton nur in touchend, click, mousedown oder keydown frei. Der Anschlag kommt aber schon bei pointerdown:
+// den merken wir uns und spielen ihn, sobald der Ton läuft.
+function unlockAudio() {
+  if (!ctx || ctx.state === 'running') return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; flushPending(); render(); }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+  flushPending();
+}
+function flushPending() { if (pending && performance.now() - pending.t < 700 && audible()) { const i = pending.i; pending = null; play(i, true); } }
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+
+async function loadOne(art, note) {
+  const res = await fetch(`../samples/${art}-${note}.mp3`);
+  if (!res.ok) throw new Error(`${art}-${note}: ${res.status}`);
+  const buf = await ctx.decodeAudioData(await res.arrayBuffer());
+  const d = buf.getChannelData(0); let i = 0;                // MP3 setzt vorne Stille ein: ab dem echten Anschlag spielen
+  while (i < d.length && Math.abs(d[i]) < 0.01) i++;
+  (buffers[art] ||= {})[note] = { buf, offset: Math.max(0, i - 32) / buf.sampleRate };
+}
+const loadArt = art => loading[art] ||= Promise.all(NOTES.map(n => loadOne(art, n)));
+
+// Härte → Tiefpass, Einsatz, Wärme
+const cutoff = h => 1400 * Math.pow(16000 / 1400, h);
+const attackOf = h => 0.001 + 0.024 * (1 - h);
+const shelfOf = h => h < 0.2 ? 2 * (1 - h / 0.2) : 0;
+let openMix = 0;                                           // 0 liegend, 1 offen: kommt vom Schwenken
+function damp(v, now) {
+  v.env.gain.cancelScheduledValues(now); v.env.gain.setValueAtTime(v.env.gain.value, now); v.env.gain.setTargetAtTime(0, now, 0.018);
+  v.layers.forEach(l => { try { l.src.stop(now + 0.15); } catch (e) {} });
+}
+function play(i, fromPending) {
+  if (!fromPending) pluckVisual(i);
+  if (!ctx || !buffers.closed) return;
+  if (!audible()) { pending = { i, t: performance.now() }; return; }
+  const now = ctx.currentTime, note = TINES[i].note;
+  const old = voices.get(i); if (old) damp(old, now);       // der Daumen stoppt die Zunge, bevor er sie neu anschlägt
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = cutoff(P.hard);
+  const shelf = ctx.createBiquadFilter(); shelf.type = 'lowshelf'; shelf.frequency.value = 300; shelf.gain.value = shelfOf(P.hard);
+  const env = ctx.createGain(), level = 0.85 + Math.random() * 0.08, att = attackOf(P.hard);
+  env.gain.setValueAtTime(0, now); env.gain.linearRampToValueAtTime(level, now + att);
+  let end = Infinity;
+  if (P.len <= 10) { env.gain.setTargetAtTime(0, now + att + 0.15 * P.len, P.len / 4); end = now + att + 1.6 * P.len + 0.1; }
+  lp.connect(shelf); shelf.connect(env); env.connect(memIn);
+  const v = { i, env, lp, layers: [], live: 0 };
+  const add = (art, gain) => {
+    const b = buffers[art]?.[note]; if (!b) return;
+    const src = ctx.createBufferSource(); src.buffer = b.buf; src.detune.value = CENTS[art][note];
+    const gn = ctx.createGain(); gn.gain.value = gain; src.connect(gn); gn.connect(lp);
+    src.start(now, b.offset); if (end < Infinity) src.stop(end);
+    src.onended = () => { v.live--; if (v.live <= 0 && voices.get(i) === v) voices.delete(i); };
+    v.layers.push({ art, src, g: gn }); v.live++;
+  };
+  const snd = SOUNDS.find(s => s.key === P.sound) || SOUNDS[0];
+  if (snd.key === 'still' || !buffers[snd.art]) { add('closed', Math.cos(openMix * Math.PI / 2)); add('open', Math.sin(openMix * Math.PI / 2)); }
+  else add(snd.art, 1);
+  voices.set(i, v);
+  buzz(12, 1);
+}
+
+// ════════ Vibration (aus der Harfe 1443) ════════
+// Android: navigator.vibrate. iPhone: kein vibrate; ab iOS 18 löst ein umgeschalteter <input switch> einen Haptik-Impuls aus.
+let haptics = true; try { haptics = localStorage.getItem('kalimba-vibration') !== 'aus'; } catch (e) {}
+const hasVibrate = typeof navigator.vibrate === 'function';
+const hasSwitch = 'switch' in HTMLInputElement.prototype;
+let vibrateBlocked = false;
+function iosTick() {
+  const l = document.createElement('label'), c = document.createElement('input');
+  l.setAttribute('aria-hidden', 'true'); l.style.display = 'none'; c.type = 'checkbox'; c.setAttribute('switch', '');
+  l.appendChild(c); document.head.appendChild(l); l.click(); l.remove();
+}
+function buzz(ms, ticks) {
+  if (!haptics) return;
+  if (hasVibrate && !vibrateBlocked) {
+    let ok = false; try { ok = navigator.vibrate(ms); } catch (e) {}
+    if (ok) return;
+    vibrateBlocked = true;
+  }
+  if (hasSwitch) { iosTick(); for (let k = 1; k < ticks; k++) setTimeout(iosTick, k * 55); }
+}
+function hapticNote() {
+  if (!haptics) return 'Vibration aus';
+  if (hasVibrate && !vibrateBlocked) return 'Vibration an';
+  return hasSwitch ? 'Vibration: einzelne Haptik-Impulse (iPhone)' : 'Vibration auf diesem Gerät nicht verfügbar';
+}
+
+// ════════ Schwenken → Vibrato ════════
+let motionOn = true; try { motionOn = localStorage.getItem('kalimba-schwenken') !== 'aus'; } catch (e) {}
+let motionState = 'idle';                                  // idle | asking | on | denied | none
+let m = 0, mSign = 0, mPeak = 0, lastBuzz = 0, vHeld = false, vStart = 0;
+const needsPermission = typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
+function onMotion(e) {
+  const r = e.rotationRate; let s = 0;
+  if (r && (r.alpha !== null || r.beta !== null)) {        // die stärkste Drehachse, mit Vorzeichen: das Hin und Her
+    for (const v of [r.alpha || 0, r.beta || 0, r.gamma || 0]) if (Math.abs(v) > Math.abs(s)) s = v;
+    s /= 240;
+  } else if (e.acceleration && e.acceleration.x !== null) s = (e.acceleration.x || 0) / 10;
+  s = Math.max(-1, Math.min(1, s));
+  m += (s - m) * 0.35;
+  if (motionState !== 'on') { motionState = 'on'; render(); }
+}
+function startMotion() {
+  if (!motionOn || typeof DeviceMotionEvent === 'undefined') { if (typeof DeviceMotionEvent === 'undefined') motionState = 'none'; return; }
+  if (needsPermission) {
+    if (motionState === 'asking' || motionState === 'on') return;
+    motionState = 'asking';
+    DeviceMotionEvent.requestPermission().then(p => {
+      if (p === 'granted') { addEventListener('devicemotion', onMotion); motionState = 'idle'; } else motionState = 'denied';
+      render();
+    }, () => { motionState = 'denied'; render(); });
+  } else { addEventListener('devicemotion', onMotion); }
+}
+if (!needsPermission) startMotion();
+// iOS fragt nur in einer Geste: beim ersten Tippen
+addEventListener('touchend', () => { if (needsPermission && motionState === 'idle' && motionOn) startMotion(); }, { capture: true, passive: true });
+
+setInterval(() => {                                        // 30 ms: Schwenken auf die Membran übertragen
+  if (vHeld) m = Math.sin((performance.now() - vStart) / 1000 * 2 * Math.PI * 5) * 0.8;
+  else if (!motionOn) m = 0;
+  else m *= 0.92;                                          // ohne neue Bewegung klingt es aus
+  if (!ctx) return;
+  const a = Math.abs(m), depth = P.swing, now = ctx.currentTime;
+  memIn.gain.setTargetAtTime(1 - 0.35 * depth * a, now, 0.03);
+  memPeak.frequency.setTargetAtTime(450 + 950 * (m + 1) / 2, now, 0.03);
+  memPeak.gain.setTargetAtTime(9 * depth * a, now, 0.03);
+  openMix = Math.min(1, a * 1.3) * depth;
+  voices.forEach(v => v.layers.forEach(l => {
+    const target = l.art === 'closed' ? Math.cos(openMix * Math.PI / 2) : l.art === 'open' ? Math.sin(openMix * Math.PI / 2) : null;
+    if (target !== null && (P.sound === 'still')) l.g.gain.setTargetAtTime(target, now, 0.04);
+  }));
+  // bei jeder Richtungsumkehr ein Impuls, solange etwas klingt
+  mPeak = Math.max(mPeak, a);
+  const sign = m > 0.05 ? 1 : m < -0.05 ? -1 : mSign;
+  if (sign !== mSign) {
+    if (mSign !== 0 && mPeak > 0.15 && voices.size && depth > 0 && performance.now() - lastBuzz > 110) {
+      buzz(Math.round(15 + 25 * Math.min(1, mPeak)), 1); lastBuzz = performance.now();
+    }
+    mSign = sign; mPeak = 0;
+  }
+}, 30);
+
+// ════════ Spielen ════════
+const lastCol = new Map();
+function colAt(x, y) {
+  if (!L || y < L.top - 20 || y > L.bottom + 10) return -1;
+  if (x < L.x0 - L.pitch * 0.3 || x > L.x0 + L.width + L.pitch * 0.3) return -1;
+  return Math.max(0, Math.min(TINES.length - 1, Math.floor((x - L.x0) / L.pitch)));
+}
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  const i = colAt(e.clientX, e.clientY); lastCol.set(e.pointerId, i); if (i >= 0) play(i);
+});
+cv.addEventListener('pointermove', e => {
+  if (!lastCol.has(e.pointerId)) return;
+  const i = colAt(e.clientX, e.clientY);
+  if (i >= 0 && i !== lastCol.get(e.pointerId)) { lastCol.set(e.pointerId, i); play(i); }
+});
+['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, e => lastCol.delete(e.pointerId)));
+const held = new Set();
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest?.('input, button, a')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'v') { if (!vHeld) { vHeld = true; vStart = performance.now(); } return; }
+  const i = TINES.findIndex(t => t.key === k);
+  if (i >= 0 && !held.has(k)) { held.add(k); play(i); }
+});
+addEventListener('keyup', e => { const k = e.key.toLowerCase(); held.delete(k); if (k === 'v') vHeld = false; });
+
+// ════════ Panel, Leiste, Hinweis ════════
+const panel = document.getElementById('panel'), note = document.getElementById('note'), readout = document.getElementById('readout');
+let info = false;
+const CTLS = { hard: pct, len: sec, swing: pct };
+function render() {
+  setSwitch('sw-vibration', haptics); setSwitch('sw-motion', motionOn && motionState !== 'denied'); setSwitch('sw-regler', panel.classList.contains('open'));
+  setSwitch('sw-info', info); setSwitch('sw-names', P.names); setSwitch('sw-wood', P.wood);
+  for (const [id, fmt] of Object.entries(CTLS)) { document.getElementById(id).value = P[id]; document.getElementById(id + '-out').textContent = fmt(P[id]); }
+  document.querySelectorAll('#rg-sound .musy-radio__body').forEach(b => { const on = b.dataset.value === P.sound;
+    for (const el of [b, b.querySelector('.musy-radio__marker > span')]) { el.toggleAttribute('data-checked', on); el.toggleAttribute('data-unchecked', !on); }
+    b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; });
+  readout.textContent = `Härte ${pct(P.hard)} · Tonlänge ${sec(P.len)} · Schwenk-Vibrato ${pct(P.swing)} · ${(SOUNDS.find(s => s.key === P.sound) || SOUNDS[0]).label}`;
+  const running = ctx && ctx.state === 'running';
+  const motionText = !motionOn ? 'Schwenken aus' : motionState === 'on' ? 'Schwenken an' : motionState === 'denied' ? 'Schwenken: Bewegung nicht erlaubt (in den Safari-Einstellungen freigeben)'
+    : motionState === 'none' ? 'Schwenken: kein Bewegungssensor' : needsPermission ? 'Schwenken: fragt beim ersten Tippen' : 'Schwenken: wartet auf Bewegung';
+  if (!running) { note.textContent = 'Tippe auf eine Zunge, dann klingt die Kalimba.'; note.classList.add('shown'); }
+  else if (info) {
+    note.innerHTML = 'Membran-Kalimba in a-Moll · ' + hapticNote() + ' · ' + motionText + '<br>' +
+      (coarse.matches ? 'Antippen oder über die Zungen streichen. Schwenke das Handy für Vibrato.' : 'Klicken oder streichen. Tasten A bis L spielen, V gedrückt halten schwenkt.');
+    note.classList.add('shown');
+  } else note.classList.remove('shown');
+}
+function bindRange(id) {
+  document.getElementById(id).addEventListener('input', e => {
+    P[id] = +e.target.value; save(); render();
+    if (id === 'hard' && ctx) voices.forEach(v => v.lp.frequency.setTargetAtTime(cutoff(P.hard), ctx.currentTime, 0.05));
+  });
+}
+Object.keys(CTLS).forEach(bindRange);
+const SOUND_KEYS = SOUNDS.map(s => s.key);
+function chooseSound(k) { if (k === P.sound) return; P.sound = k; save(); const a = SOUNDS.find(s => s.key === k).art; if (ctx) loadArt(a).catch(() => {}); render(); }
+document.querySelectorAll('#rg-sound .musy-radio__body').forEach(b => {
+  b.addEventListener('click', () => chooseSound(b.dataset.value));
+  b.addEventListener('keydown', e => {
+    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key]; if (!step) return; e.preventDefault();
+    const k = SOUND_KEYS[(SOUND_KEYS.indexOf(P.sound) + step + SOUND_KEYS.length) % SOUND_KEYS.length];
+    chooseSound(k); document.getElementById('rg-' + k).focus(); });
+});
+document.getElementById('sw-vibration').addEventListener('click', () => {
+  haptics = !haptics; try { localStorage.setItem('kalimba-vibration', haptics ? 'an' : 'aus'); } catch (e) {}
+  render(); if (haptics) buzz(60, 2); });
+document.getElementById('sw-motion').addEventListener('click', () => {
+  motionOn = !(motionOn && motionState !== 'denied'); try { localStorage.setItem('kalimba-schwenken', motionOn ? 'an' : 'aus'); } catch (e) {}
+  if (motionOn) { if (motionState === 'denied') motionState = 'idle'; startMotion(); }
+  render(); });
+document.getElementById('sw-regler').setAttribute('aria-controls', 'panel');
+document.getElementById('sw-regler').addEventListener('click', () => { panel.classList.toggle('open'); render(); });
+document.getElementById('sw-info').setAttribute('aria-controls', 'note');
+document.getElementById('sw-info').addEventListener('click', () => { info = !info; render(); });
+document.getElementById('sw-names').addEventListener('click', () => { P.names = !P.names; save(); render(); layout(); });
+document.getElementById('sw-wood').addEventListener('click', () => { P.wood = !P.wood; save(); render(); draw(performance.now()); });
+document.getElementById('reset').addEventListener('click', () => { P = { ...DEFAULTS }; save(); render(); layout(); });
+
+// Leiste ein- und ausklappen, Regler-Feld daneben (wie Harfe 1443)
+function placePanel() {
+  const t = toolbarEl.getBoundingClientRect();
+  const panelLeft = innerWidth - parseFloat(getComputedStyle(panel).right) - panel.offsetWidth;
+  if (t.right > panelLeft) panel.style.setProperty('--panel-bottom', 'calc(' + Math.ceil(innerHeight - t.top) + 'px + var(--space-gap-stack))');
+  else panel.style.removeProperty('--panel-bottom');
+}
+new ResizeObserver(placePanel).observe(toolbarEl);
+const btnClose = document.getElementById('btn-close'), frameEl = document.querySelector('.musie-top');
+function setExpanded(on) {
+  foot.classList.toggle('expanded', on); btnSettings.setAttribute('aria-expanded', on);
+  if (!on && panel.classList.contains('open')) { panel.classList.remove('open'); render(); }
+  if (on) placePanel();
+  (on ? document.getElementById('sw-vibration') : btnSettings).focus({ preventScroll: true });
+}
+function placeFoot() { frameEl.style.setProperty('--foot-h', (foot.classList.contains('expanded') ? toolbarEl.offsetHeight : btnSettings.offsetHeight) + 'px'); layout(); }
+btnSettings.addEventListener('click', () => setExpanded(true));
+btnClose.addEventListener('click', () => setExpanded(false));
+addEventListener('keydown', e => { if (e.key === 'Escape' && foot.classList.contains('expanded')) setExpanded(false); });
+new MutationObserver(placeFoot).observe(foot, { attributes: true, attributeFilter: ['class'] });
+new ResizeObserver(placeFoot).observe(toolbarEl);
+new ResizeObserver(layout).observe(header);
+addEventListener('resize', layout);
+
+// ════════ Start ════════
+readColors();
+const recolor = () => { readColors(); draw(performance.now()); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', recolor);
+new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+initAudio();
+ctx.onstatechange = render;
+render(); placeFoot();
+document.fonts && document.fonts.ready.then(() => draw(performance.now()));
+Promise.all([loadArt('closed'), loadArt('open')])
+  .then(() => ['wah', 'wahwah', 'openwah'].reduce((p, a) => p.then(() => loadArt(a)).catch(() => {}), Promise.resolve()))
+  .catch(() => { note.textContent = 'Die Aufnahmen ließen sich nicht laden. Lade die Seite neu.'; note.classList.add('shown'); });
+})();
+</script>
+</body>
+</html>
