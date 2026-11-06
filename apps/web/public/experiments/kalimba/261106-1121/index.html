@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Kalimba</title>
+<!-- Musie-Experiment „Kalimba v5“ (CLAUDE.md Regel 10). Gestaltung, Design-System-Blöcke, Ton-Freischaltung und Vibration aus
+     /experiments/harp/261104-1443/ übernommen. Aufnahmen in ../samples/: HCP-Soundfonts (CC0), http://unneraans.de/soundfonts/ – nichts wird synthetisiert. -->
+<style>html,body{margin:0;padding:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+/* Layout wie die Harfe: der Bildschirm ist das Instrument; Einstellungen unten links, das Regler-Feld rechts, der Hinweis oben links. */
+:root {
+  --bg: #FAF7F1;        /* sand-1 */
+  --string: #2B5340;    /* green-9 */
+  --pluck: #CE8865;     /* terracotta-10 */
+  --text: #62645E;      /* sand-11 */
+  --strong: #1A1F1C;    /* sand-12 */
+  --chip-bg: #F3EEE4;   /* sand-2 */
+  --chip-line: #CFCEC2; /* sand-6 */
+  --chip-on-bg: #2B5340;
+  --chip-on-text: #FAF7F1;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --radius-xs: 4px; --radius-sm: 8px;   /* musy-foundations.css: swatch, small */
+  --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-3: #E5E3D9; --sand-4: #DEDCD1; --sand-5: #D6D5C9; --sand-6: #CFCEC2; --sand-7: #BDBCAF; --sand-8: #A7A89B; --sand-9: #8A8C82; --sand-10: #7C7E74; --sand-11: #62645E; --sand-12: #1A1F1C; --terracotta-1: #FDF8F5; --terracotta-2: #F9EDE5; --terracotta-3: #F4DFD2; --terracotta-4: #F0D5C4; --terracotta-5: #ECCBB7; --terracotta-6: #E8C1AA; --terracotta-7: #E3B294; --terracotta-8: #DEA37F; --terracotta-9: #D99673; --terracotta-10: #CE8865; --terracotta-11: #824429; --terracotta-12: #4A2718;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111412; --string: #8FBCA2; --pluck: #E6A684; --text: #9EA59F; --strong: #EDF0EC;
+  --chip-bg: #191D1A; --chip-line: #3B413C; --chip-on-bg: #8FBCA2; --chip-on-text: #111412; color-scheme: dark;
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-4: #2A2F2B; --sand-5: #323833; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-10: #868D87; --sand-11: #9EA59F; --sand-12: #EDF0EC; --terracotta-1: #160F0B; --terracotta-2: #221711; --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673; --terracotta-10: #E6A684; --terracotta-11: #D0937A; --terracotta-12: #F6DACB; } }
+:root[data-theme="dark"] {
+  --bg: #111412; --string: #8FBCA2; --pluck: #E6A684; --text: #9EA59F; --strong: #EDF0EC;
+  --chip-bg: #191D1A; --chip-line: #3B413C; --chip-on-bg: #8FBCA2; --chip-on-text: #111412; color-scheme: dark;
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-4: #2A2F2B; --sand-5: #323833; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-10: #868D87; --sand-11: #9EA59F; --sand-12: #EDF0EC; --terracotta-1: #160F0B; --terracotta-2: #221711; --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673; --terracotta-10: #E6A684; --terracotta-11: #D0937A; --terracotta-12: #F6DACB; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--on-surface-muted); overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#harp { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: none; }
+.musie-cursor { position: fixed; left: 0; top: 0; inline-size: calc(var(--sp-5) * 2); block-size: calc(var(--sp-5) * 2);
+  margin: calc(var(--sp-5) * -1) 0 0 calc(var(--sp-5) * -1); border-radius: var(--radius-full); background: var(--interactive-primary);
+  pointer-events: none; visibility: hidden; will-change: transform; }
+.musie-cursor.shown { visibility: visible; }
+button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* Fuß: Hinweiszeile, darüber das Regler-Feld. Rand zum Bildschirm: --sp-4, wie die Seitenränder. */
+.foot { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-inset-card));
+  padding-left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); padding-right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; }
+.panel { position: fixed; z-index: 1; top: calc(env(safe-area-inset-top, 0px) + var(--sp-4));
+  bottom: var(--panel-bottom, calc(env(safe-area-inset-bottom, 0px) + var(--sp-4)));
+  right: max(var(--sp-4), env(safe-area-inset-right, 0px));
+  width: min(420px, calc(100% - var(--sp-4) * 2)); box-sizing: border-box; align-content: start;
+  pointer-events: auto; touch-action: pan-y; overflow-y: auto; overscroll-behavior: contain;
+  opacity: 0; transform: translateX(var(--sp-2)); visibility: hidden;
+  transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 280ms;
+  background: var(--surface); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-panel); padding: var(--space-inset-card); display: grid; gap: var(--space-gap-group); }
+.panel.open { opacity: 1; transform: none; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .panel { transition: none; } }
+
+/* Label und sein Regler gehören zusammen: --space-gap-related. Regler untereinander: --space-gap-stack (oben). */
+.ctl { display: grid; grid-template-columns: 1fr auto; column-gap: var(--space-gap-related); row-gap: var(--space-gap-related); align-items: baseline; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--interactive-primary); }
+.ctl small { grid-column: 1 / -1; }
+.check { display: flex; gap: var(--space-gap-inline); align-items: flex-start; }
+.check input { accent-color: var(--interactive-primary); width: var(--icon-size-md); height: var(--icon-size-md); margin: 0; flex: 0 0 auto; }
+.check span { display: grid; gap: var(--sp-1); }
+.readout { font-variant-numeric: tabular-nums; -webkit-user-select: text; user-select: text; }
+.musie-reset { justify-self: start; min-height: var(--target-min); padding: 0; background: none; border: 0; cursor: pointer;
+  color: var(--on-surface); text-decoration: underline; text-underline-offset: var(--sp-1); }
+
+/* Schrift: Labels label-md, Hinweise body-sm (die kleinste Stufe, L8). Nie fett. */
+.ctl label, .ctl .musie-label, .ctl output, .check, .musie-reset {
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--font-weight-regular);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+.ctl label, .ctl .musie-label, .check { color: var(--on-surface); }
+.ctl output { color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.ctl small, .check small, .readout, .note {
+  font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); }
+.musie-top { position: fixed; inset: 0; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr); pointer-events: none;
+  padding: calc(env(safe-area-inset-top, 0px) + max(var(--space-inset-card), var(--target-primary))) max(var(--space-inset-sheet), env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-inset-card) + var(--space-gap-stack) + var(--foot-h, var(--target-primary))) max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); }
+/* .musy-sheet__header: rechts frei für das X, darunter --space-gap-stack */
+.musie-top__header { padding-inline-end: var(--target-primary); padding-block-end: var(--space-gap-stack); display: grid; justify-items: start; }
+/* Der Hinweis gehört zur Überschrift wie ein Absatz unter dem h2 in .musie-md: --space-gap-group dazwischen. Aus, nimmt er keinen Platz. */
+.musie-top__header .note { margin-block-start: var(--space-gap-group); }
+.musie-top__header .note:not(.shown) { display: none; }
+/* .musy-sheet__body + .musie-immersive__body. Version 1443: der Countdown unten links, direkt über der Fußzeile mit „Ich bin fertig“ */
+.musie-immersive__body { min-block-size: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-gap-stack); }
+/* Aus shell.css, der Fokus-Sheet der Hörübung: die Restzeit als größtes Element, der Transport daneben, die Bildunterschrift darunter. */
+.musie-immersive__clock { display: flex; flex-direction: column; gap: var(--space-gap-inline); }
+#cd-btn { pointer-events: auto; }                          /* nur der Knopf fängt Berührungen ab, die Saiten darunter bleiben spielbar */
+.musie-immersive__meter { display: flex; align-items: center; gap: var(--space-gap-inline); inline-size: fit-content; }
+.musie-immersive__time { margin: 0; transition: color var(--motion-toggle); font-family: var(--type-display-xl-family); font-size: var(--type-display-xl-size);
+  font-weight: var(--type-display-xl-weight); line-height: var(--type-display-xl-line); letter-spacing: var(--type-display-xl-tracking);
+  font-variant-numeric: tabular-nums; color: var(--on-surface); }
+.musie-immersive__time[data-done] { color: var(--on-surface-muted); }
+.musie-immersive__caption { margin: 0; max-inline-size: var(--measure-body); text-wrap: pretty; font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-headline { margin: 0; max-inline-size: var(--measure-heading); color: var(--on-surface);
+  font-family: var(--type-heading-md-family); font-size: var(--type-heading-md-size); font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line); letter-spacing: var(--type-heading-md-tracking); text-wrap: var(--text-wrap-body); }
+.note { margin: 0;
+  max-inline-size: 60ch; text-align: left; text-wrap: pretty; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.note.shown { opacity: 1; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .note { transition: none; } }
+[hidden] { display: none !important; }
+/* ── Musie-Komponenten Switch, SegmentedControl und RadioGroupText ─────────
+   Regeln aus packages/design-system/src/musy-components.css, gemessen im Browser mit allen vier
+   Stylesheets in Reihenfolge (spätere Überschreibungen inklusive). Tokens aufgelöst je Theme. */
+:root {
+  --focus-ring: 3px solid #2B5340;
+  --focus-ring-offset: 2px;
+  --border-width-hairline: 1px;
+  --icon-size-md: 20px;
+  --icon-stroke: 2px;
+  --icon-size-sm: 16px;
+  --icon-stroke-sm: 1.5px;
+  --icon-size-lg: 24px;
+  --icon-size-xl: 32px;
+  --icon-optical-nudge: -0.055em;
+  --on-surface-muted: #62645E;
+  --on-surface: #1A1F1C;
+  --interactive-primary-on-subtle: #1A1F1C;
+  --feedback-info-icon: #62645E;
+  --feedback-warning-icon: #894C00;
+  --feedback-success-icon: #3F6E23;
+  --feedback-error-icon: #A53231;
+  --motion-emphasis: 520ms cubic-bezier(0.2, 0.9, 0.1, 1);
+  --sp-1: 4px;
+  --space-gap-related: 12px;
+  --target-primary: 44px;
+  --target-guided: 64px;
+  --border-width-regular: 1.5px;
+  --border-style-solid: solid;
+  --border-strong: #678271;
+  --radius-full: 999px;
+  --surface-sunken: #E5E3D9;
+  --motion-toggle: 140ms cubic-bezier(0.2, 0, 0.2, 1);
+  --surface-raised: #FAF7F1;
+  --elevation-1: 0 1px 2px rgb(32 44 36 / 0.10), 0 1px 3px -1px rgb(32 44 36 / 0.06), inset 0 0 0 1px transparent;
+  --interactive-primary: #2B5340;
+  --interactive-primary-border: #678271;
+  --interactive-accent: #D99673;
+  --interactive-accent-border: #B5704F;
+  --interactive-accent-on-subtle: #824429;
+  --interactive-ghost-hover: #E5E3D9;
+  --interactive-primary-hover: #22442F;
+  --interactive-ghost-active: #DEDCD1;
+  --interactive-primary-active: #1C3827;
+  --interactive-primary-disabled: #C7CCC0;
+  --border-subtle: #CFCEC2;
+  --on-surface-disabled: #8A8C82;
+  --type-label-lg-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-label-lg-weight: 600;
+  --type-label-lg-line: 1.2;
+  --type-label-lg-tracking: 0;
+  --text-wrap-body: pretty;
+  --space-gap-stack: 16px;
+  --type-heading-sm-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
+  --type-heading-sm-weight: 600;
+  --type-heading-sm-line: 1.3;
+  --type-heading-sm-tracking: 0;
+  --text-wrap-heading: balance;
+  --measure-heading: 50ch;
+  --type-label-md-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-label-md-weight: 400;
+  --type-label-md-line: 1.4;
+  --type-label-md-tracking: 0.002em;
+  --type-body-md-family: Literata, ui-serif, Georgia, serif;
+  --type-body-md-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-body-md-weight: 400;
+  --type-body-md-line: 1.5;
+  --measure-body: 62ch;
+  --target-comfort: 56px;
+  --space-inset-control: 12px 24px;
+  --radius-card: 12px;
+  --text-hyphens: auto;
+  --interactive-primary-subtle: #E3E7DE;
+  --border-width-thick: 2px;
+  --interactive-primary-on: #F3EEE4;
+  --interactive-accent-subtle: #F4DFD2;
+  --interactive-accent-on: #1A1F1C;
+  --feedback-error-border: #B85B55;
+  --radius-control: 999px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --target-min: 24px;
+  --interactive-primary-subtle-hover: #D5DBD0;
+  --interactive-primary-subtle-active: #C7CCC0;
+  --interactive-accent-subtle-hover: #F0D5C4;
+  --interactive-accent-subtle-active: #ECCBB7;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --space-gap-inline: 8px;
+  --space-gap-group: 32px;
+  --space-inset-card: 24px;
+  --space-inset-sheet: 32px;
+  --radius-panel: 16px;
+  --surface: #F3EEE4;
+  --font-weight-regular: 400;
+  --type-body-sm-family: Literata, ui-serif, Georgia, serif;
+  --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-body-sm-weight: 400;
+  --type-body-sm-line: 1.5;
+  --type-body-sm-tracking: 0;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --focus-ring: 3px solid #6FA688;
+  --on-surface-muted: #9EA59F;
+  --on-surface: #EDF0EC;
+  --interactive-primary-on-subtle: #EDF0EC;
+  --feedback-info-icon: #9EA59F;
+  --feedback-warning-icon: #D08A48;
+  --feedback-success-icon: #9ACB6F;
+  --feedback-error-icon: #E87A73;
+  --border-strong: #6B8F79;
+  --surface-sunken: #111412;
+  --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478;
+  --interactive-primary-border: #6B8F79;
+  --interactive-accent-border: #A2694B;
+  --interactive-accent-on-subtle: #D0937A;
+  --interactive-ghost-hover: #2A2F2B;
+  --interactive-primary-hover: #6FA688;
+  --interactive-ghost-active: #323833;
+  --interactive-primary-active: #538A6C;
+  --interactive-primary-disabled: #203B2B;
+  --border-subtle: #3B413C;
+  --on-surface-disabled: #79807A;
+  --interactive-primary-subtle: #16281E;
+  --interactive-primary-on: #111412;
+  --interactive-accent-subtle: #2F1F16;
+  --interactive-accent-on: #111412;
+  --feedback-error-border: #BB605A;
+  --interactive-primary-subtle-hover: #1B3224;
+  --interactive-primary-subtle-active: #203B2B;
+  --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-subtle-active: #442E21;
+  --surface: #191D1A;
+} }
+:root[data-theme="dark"] {
+  --focus-ring: 3px solid #6FA688;
+  --on-surface-muted: #9EA59F;
+  --on-surface: #EDF0EC;
+  --interactive-primary-on-subtle: #EDF0EC;
+  --feedback-info-icon: #9EA59F;
+  --feedback-warning-icon: #D08A48;
+  --feedback-success-icon: #9ACB6F;
+  --feedback-error-icon: #E87A73;
+  --border-strong: #6B8F79;
+  --surface-sunken: #111412;
+  --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478;
+  --interactive-primary-border: #6B8F79;
+  --interactive-accent-border: #A2694B;
+  --interactive-accent-on-subtle: #D0937A;
+  --interactive-ghost-hover: #2A2F2B;
+  --interactive-primary-hover: #6FA688;
+  --interactive-ghost-active: #323833;
+  --interactive-primary-active: #538A6C;
+  --interactive-primary-disabled: #203B2B;
+  --border-subtle: #3B413C;
+  --on-surface-disabled: #79807A;
+  --interactive-primary-subtle: #16281E;
+  --interactive-primary-on: #111412;
+  --interactive-accent-subtle: #2F1F16;
+  --interactive-accent-on: #111412;
+  --feedback-error-border: #BB605A;
+  --interactive-primary-subtle-hover: #1B3224;
+  --interactive-primary-subtle-active: #203B2B;
+  --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-subtle-active: #442E21;
+  --surface: #191D1A;
+}
+.musy-switch__track:focus-visible,
+.musy-radio__body:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-sr-only,
+.musy-seg--labels-none .musy-seg__label,
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] .musy-seg__label { position: absolute; width: var(--border-width-hairline); height: var(--border-width-hairline); padding: 0px; margin: calc(var(--border-width-hairline) * -1); overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0px; }
+.musy-icon { display: inline-block; flex-shrink: 0; width: var(--icon-size-md); height: var(--icon-size-md); stroke: currentcolor; stroke-width: var(--icon-stroke); fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.musy-icon--sm { width: var(--icon-size-sm); height: var(--icon-size-sm); stroke-width: var(--icon-stroke-sm); }
+.musy-icon--md { width: var(--icon-size-md); height: var(--icon-size-md); }
+.musy-icon--lg { width: var(--icon-size-lg); height: var(--icon-size-lg); }
+.musy-icon--xl { width: var(--icon-size-xl); height: var(--icon-size-xl); }
+.musy-icon--inline { transform: translateY(var(--icon-optical-nudge)); }
+.musy-icon--muted { color: var(--on-surface-muted); }
+.musy-icon--strong { color: var(--on-surface); }
+.musy-icon--primary { color: var(--interactive-primary-on-subtle); }
+.musy-icon--info { color: var(--feedback-info-icon); }
+.musy-icon--warning { color: var(--feedback-warning-icon); }
+.musy-icon--success { color: var(--feedback-success-icon); }
+.musy-icon--error { color: var(--feedback-error-icon); }
+.musy-icon[data-animate="on"] { transition: transform var(--motion-emphasis); }
+@media (prefers-reduced-motion: reduce) { .musy-icon[data-animate="on"] { transition: none; animation: auto ease 0s 1 normal none running none !important; } }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-switch { --musy-switch-knob: var(--icon-size-lg); --musy-switch-pad: var(--sp-1); --musy-switch-h: calc(var(--musy-switch-knob) + var(--musy-switch-pad) * 2); --musy-switch-w: calc(var(--musy-switch-knob) * 2 + var(--musy-switch-pad) * 3); display: flex; align-items: center; gap: var(--space-gap-related); min-height: var(--target-primary); cursor: pointer; }
+.musy-switch--guided { min-height: var(--target-guided); }
+.musy-switch--reverse { flex-direction: row-reverse; justify-content: space-between; }
+.musy-switch__track { position: relative; flex-shrink: 0; display: block; box-sizing: border-box; width: var(--musy-switch-w); height: var(--musy-switch-h); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-full); background-color: var(--surface-sunken); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-switch__knob { position: absolute; top: 0px; left: 0px; display: grid; place-items: center; width: var(--musy-switch-knob); height: var(--musy-switch-knob); margin: calc(var(--musy-switch-pad) - var(--border-width-regular)); border-radius: var(--radius-full); background-color: var(--surface-raised); box-shadow: var(--elevation-1); color: var(--on-surface-muted); transition: transform var(--motion-toggle),
+              background-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-switch__track[data-checked] { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); }
+.musy-switch__track[data-checked] .musy-switch__knob { transform: translateX(calc(var(--musy-switch-knob) + var(--musy-switch-pad))); color: var(--interactive-primary-on-subtle); }
+.musy-switch--accent .musy-switch__track[data-checked] { background-color: var(--interactive-accent); border-color: var(--interactive-accent-border); }
+.musy-switch--accent .musy-switch__track[data-checked] .musy-switch__knob { color: var(--interactive-accent-on-subtle); }
+.musy-switch__glyph { grid-area: 1 / 1; transition: opacity var(--motion-toggle); }
+.musy-switch__glyph[data-state="hidden"] { opacity: 0; }
+@media (hover: hover) and (pointer: fine) { .musy-switch__track[data-unchecked]:hover:not([data-disabled]),
+.musy-switch__track[data-force~="hover"][data-unchecked] { background-color: var(--interactive-ghost-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-switch__track[data-checked]:hover:not([data-disabled]),
+.musy-switch__track[data-force~="hover"][data-checked] { background-color: var(--interactive-primary-hover); } }
+.musy-switch__track[data-unchecked]:active:not([data-disabled]),
+.musy-switch__track[data-force~="active"][data-unchecked] { background-color: var(--interactive-ghost-active); }
+.musy-switch__track[data-checked]:active:not([data-disabled]),
+.musy-switch__track[data-force~="active"][data-checked] { background-color: var(--interactive-primary-active); }
+.musy-switch__track[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); cursor: not-allowed; }
+.musy-switch__track[data-disabled] .musy-switch__knob { box-shadow: none; color: var(--on-surface-disabled); }
+.musy-switch:has(.musy-switch__track[data-disabled]) { cursor: not-allowed; }
+.musy-switch:has(.musy-switch__track[data-disabled]) .musy-switch__label { color: var(--on-surface-disabled); }
+.musy-switch__label { font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-body); cursor: pointer; }
+.musy-radio-group { display: flex; flex-direction: column; gap: var(--space-gap-stack); border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-radio-group__legend { padding: 0px; margin-block-end: var(--space-gap-related); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+.musy-radio-group__legend--label { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+.musy-radio-group__hint { margin-block-end: var(--space-gap-stack); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); max-width: var(--measure-body); }
+.musy-radio__body { display: flex; align-items: center; gap: var(--space-gap-related); box-sizing: border-box; width: 100%; min-height: var(--target-comfort); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-card); background-color: var(--surface-raised); cursor: pointer; text-align: start; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-radio-group--guided .musy-radio__body { min-height: var(--target-guided); }
+.musy-radio__marker { position: relative; display: grid; place-items: center; flex-shrink: 0; box-sizing: border-box; width: var(--icon-size-lg); height: var(--icon-size-lg); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-full); color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-radio__label { font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); color: var(--on-surface); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); overflow-wrap: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.musy-radio--no-clamp .musy-radio__label,
+.musy-radio__body--no-clamp .musy-radio__label { display: block; -webkit-line-clamp: none; overflow: visible; }
+.musy-radio__drill { display: grid; place-items: center; flex-shrink: 0; margin-inline-start: auto; padding-inline-start: var(--space-gap-related); color: var(--on-surface-muted); transition: color var(--motion-toggle); }
+.musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-accent-on-subtle); }
+.musy-radio__body[data-disabled] .musy-radio__drill { color: var(--on-surface-disabled); }
+@media (hover: hover) and (pointer: fine) { .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
+.musy-radio__body[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-radio__body[data-unchecked]:active:not([data-disabled]),
+.musy-radio__body[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-radio__body[data-checked] { background-color: var(--interactive-primary-subtle); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); }
+.musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on); }
+.musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] { background-color: var(--interactive-accent-subtle); border-color: var(--interactive-accent-border); border-width: var(--border-width-thick); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--interactive-accent); border-color: var(--interactive-accent-border); border-width: var(--border-width-thick); color: var(--interactive-accent-on); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-accent-on-subtle); }
+.musy-radio__body[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); border-width: var(--border-width-regular); cursor: not-allowed; }
+.musy-radio__body[data-disabled] .musy-radio__label { color: var(--on-surface-disabled); }
+.musy-radio__body[data-disabled] .musy-radio__marker { border-color: var(--on-surface-disabled); }
+.musy-radio-group[data-invalid] .musy-radio__body,
+.musy-radio__body[data-invalid] { border-color: var(--feedback-error-border); }
+.musy-radio-group__error { margin-block-start: var(--space-gap-related); }
+.musy-box__headrow > .musy-sr-only { flex: 0 0 auto; }
+.musy-seg { contain: layout; container-type: inline-size; border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-seg__track { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--sp-1); box-sizing: border-box; inline-size: 100%; padding: var(--sp-1); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-control); background-color: var(--surface-sunken); }
+.musy-seg__option { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); box-sizing: border-box; min-inline-size: 0px; min-block-size: var(--target-primary); padding-inline: var(--sp-3); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background-color: transparent; color: var(--on-surface-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-seg--guided .musy-seg__option { min-block-size: var(--target-guided); }
+.musy-seg--min { --musy-seg-rung: calc(var(--target-min) + var(--sp-3)); }
+.musy-seg--min .musy-seg__option { min-block-size: calc(var(--musy-seg-rung) - var(--sp-1) * 2 - var(--border-width-hairline) * 2); padding-inline: var(--sp-3); gap: var(--sp-1); }
+.musy-seg--labels-none,
+.musy-seg--labels-unchecked { container-type: normal; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__track,
+.musy-seg--labels-unchecked .musy-seg__track { grid-auto-flow: column; grid-auto-columns: auto; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__option { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); gap: 0px; }
+.musy-seg--labels-none.musy-seg--min .musy-seg__option { min-inline-size: var(--target-min); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked.musy-seg--min .musy-seg__option[data-checked] { min-inline-size: var(--target-min); }
+.musy-seg__option > .musy-icon { flex: 0 0 auto; }
+.musy-seg__label { min-inline-size: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 30rem) { .musy-seg__option { flex-direction: column; gap: var(--sp-1); padding-inline: var(--sp-2); padding-block: var(--sp-2); } }
+@container (max-width: 30rem) { .musy-seg__label { max-inline-size: 100%; } }
+@container (max-width: 30rem) { .musy-seg--labels-none .musy-seg__option,
+.musy-seg--labels-unchecked .musy-seg__option { flex-direction: row; padding-block: 0px; } }
+@media (hover: hover) and (pointer: fine) { .musy-seg__option[data-unchecked]:hover:not([data-disabled]),
+.musy-seg__option[data-force~="hover"] { background-color: var(--interactive-ghost-hover); color: var(--on-surface); } }
+.musy-seg__option[data-unchecked]:active:not([data-disabled]),
+.musy-seg__option[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-seg__option[data-checked] { background-color: var(--surface-raised); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on-subtle); }
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: var(--interactive-accent-border); color: var(--interactive-accent-on-subtle); }
+.musy-seg__option[data-disabled] { color: var(--on-surface-disabled); cursor: not-allowed; }
+.musy-seg__option[data-disabled][data-checked] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); }
+.musy-dlist__swipe-action > .musy-icon { color: var(--feedback-error-icon); }
+.musy-radio__body,
+.musy-radio__body[data-checked],
+.musy-seg__option,
+.musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio-group--accent .musy-radio__body[data-checked],
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio__body[aria-invalid="true"] { border-color: var(--feedback-error-border); border-width: var(--border-width-thick); }
+.musy-radio__body[data-disabled] { border-color: var(--border-subtle); }
+@media (prefers-contrast: more) { .musy-radio__body,
+.musy-seg__option { border-color: var(--border-subtle); } }
+@media (prefers-contrast: more) { .musy-radio__body[data-checked],
+.musy-seg__option[data-checked] { border-color: var(--border-strong); border-width: var(--border-width-thick); } }
+@media (forced-colors: active) { .musy-radio__body,
+.musy-switch__track { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-radio__body[data-checked] { border-color: highlight; } }
+@media (forced-colors: active) { .musy-seg__option[data-checked] { border-color: highlight; color: highlight; } }
+@media (forced-colors: active) { .musy-radio__body[data-checked] .musy-radio__marker { background-color: highlight; color: highlighttext; } }
+@media (forced-colors: active) { .musy-switch__track[data-checked] { background-color: highlight; } }
+@media (forced-colors: active) { .musy-radio__body[data-disabled],
+.musy-switch__track[data-disabled] { color: graytext; border-color: graytext; } }
+.musy-switch,
+.musy-radio-group { --musy-rest-fill: var(--interactive-primary-subtle); --musy-rest-fill-hover: var(--interactive-primary-subtle-hover); --musy-rest-fill-active: var(--interactive-primary-subtle-active); --musy-rest-border: var(--interactive-primary-border); --musy-rest-on: var(--interactive-primary-on-subtle); --musy-sel-fill: var(--interactive-primary); --musy-sel-on: var(--interactive-primary-on); }
+.musy-switch.musy-switch--accent,
+.musy-radio-group.musy-radio-group--accent { --musy-rest-fill: var(--interactive-accent-subtle); --musy-rest-fill-hover: var(--interactive-accent-subtle-hover); --musy-rest-fill-active: var(--interactive-accent-subtle-active); --musy-rest-border: var(--interactive-accent-border); --musy-rest-on: var(--interactive-accent-on-subtle); --musy-sel-fill: var(--interactive-accent); --musy-sel-on: var(--interactive-accent-on); }
+.musy-switch .musy-switch__track[data-unchecked]:not([data-disabled]) { background-color: var(--musy-rest-fill); border-color: var(--musy-rest-border); }
+.musy-switch .musy-switch__track[data-unchecked]:not([data-disabled]) .musy-switch__knob { color: var(--musy-rest-on); }
+@media (hover: hover) and (pointer: fine) { .musy-switch .musy-switch__track[data-unchecked]:hover:not([data-disabled]),
+.musy-switch .musy-switch__track[data-unchecked][data-force~="hover"] { background-color: var(--musy-rest-fill-hover); } }
+.musy-switch .musy-switch__track[data-unchecked]:active:not([data-disabled]),
+.musy-switch .musy-switch__track[data-unchecked][data-force~="active"] { background-color: var(--musy-rest-fill-active); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) { background-color: var(--musy-rest-fill); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) .musy-radio__label { color: var(--musy-rest-on); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) .musy-radio__marker { border-color: var(--musy-rest-border); }
+@media (hover: hover) { .musy-radio-group .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
+.musy-radio-group .musy-radio__body[data-unchecked][data-force~="hover"] { background-color: var(--musy-rest-fill-hover); } }
+.musy-radio-group .musy-radio__body[data-unchecked]:active:not([data-disabled]),
+.musy-radio-group .musy-radio__body[data-unchecked][data-force~="active"] { background-color: var(--musy-rest-fill-active); }
+.musy-radio-group .musy-radio__body[data-checked] { background-color: var(--musy-sel-fill); }
+.musy-radio-group .musy-radio__body[data-checked] .musy-radio__label { color: var(--musy-sel-on); }
+.musy-radio-group .musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--surface-raised); border-color: var(--surface-raised); color: var(--musy-sel-fill); }
+.musy-field__error > .musy-icon { flex-shrink: 0; color: var(--feedback-error-icon); }
+.musy-field__valid > .musy-icon { flex-shrink: 0; color: var(--feedback-success-icon); }
+.musy-wizard__connector > .musy-icon { display: none; position: absolute; inset-block-start: 50%; inset-inline-start: 50%; transform: translate(-50%, -50%); }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; } }
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; }
+.musy-badge:has(> .musy-icon:first-child) { padding-inline-start: var(--sp-2); }
+.musy-badge > .musy-icon { flex: 0 0 auto; }
+.musy-badge--info > .musy-icon { color: var(--feedback-info-icon); }
+.musy-badge--warning > .musy-icon { color: var(--feedback-warning-icon); }
+.musy-badge--success > .musy-icon { color: var(--feedback-success-icon); }
+.musy-badge--error > .musy-icon { color: var(--feedback-error-icon); }
+.musy-rcard__body[data-disabled] .musy-badge > .musy-icon,
+.musy-radio-card__body[data-disabled] .musy-badge > .musy-icon { color: var(--on-surface-disabled); }
+.musy-rec > .musy-icon { flex: 0 0 auto; }
+.musy-filter__dimension > .musy-filter__toggle > .musy-icon,
+.musy-filter__value > .musy-icon { flex: 0 0 auto; }
+
+/* IconButton (Layer 2), Regeln aus den vier Stylesheets in Ladereihenfolge, per CSSOM gelesen; Tokens je Theme aufgelöst. */
+:root { --interactive-ghost: transparent; --interactive-ghost-on: #1A1F1C; --interactive-ghost-border-hover: #22442F; --interactive-primary-on-disabled: #62645E; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #8A8C82; --on-surface-inverse: #FAF7F1; --surface-inverse: #1A1F1C; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --interactive-ghost: transparent; --interactive-ghost-on: #EDF0EC; --interactive-ghost-border-hover: #6FA688; --interactive-primary-on-disabled: #9EA59F; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #79807A; --on-surface-inverse: #111412; --surface-inverse: #EDF0EC; } }
+:root[data-theme="dark"] { --interactive-ghost: transparent; --interactive-ghost-on: #EDF0EC; --interactive-ghost-border-hover: #6FA688; --interactive-primary-on-disabled: #9EA59F; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #79807A; --on-surface-inverse: #111412; --surface-inverse: #EDF0EC; }
+.musy-icon-btn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-icon-btn { --musy-icon-btn-size: var(--target-primary); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--musy-icon-btn-size); height: var(--musy-icon-btn-size); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-icon-btn--min { --musy-icon-btn-size: var(--target-min); }
+.musy-icon-btn--primary-size { --musy-icon-btn-size: var(--target-primary); }
+.musy-icon-btn--comfort { --musy-icon-btn-size: var(--target-comfort); }
+.musy-icon-btn--guided { --musy-icon-btn-size: var(--target-guided); }
+.musy-icon-btn--min { margin: var(--sp-2); }
+.musy-icon-btn--primary { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on); }
+.musy-icon-btn--secondary { background-color: var(--surface-raised); border-color: var(--border-strong); color: var(--on-surface); }
+.musy-icon-btn--outline { background-color: transparent; border-color: var(--border-strong); color: var(--on-surface); }
+.musy-icon-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--primary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--primary[data-force~="hover"] { background-color: var(--interactive-primary-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--secondary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--secondary[data-force~="hover"], .musy-icon-btn--outline:hover:not(:disabled):not([data-loading]), .musy-icon-btn--outline[data-force~="hover"] { background-color: var(--interactive-ghost-hover); border-color: var(--interactive-ghost-border-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-icon-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-icon-btn--primary:active:not(:disabled), .musy-icon-btn--primary[data-pressed]:not(:disabled), .musy-icon-btn--primary[data-force~="active"] { background-color: var(--interactive-primary-active); }
+.musy-icon-btn--secondary:active:not(:disabled), .musy-icon-btn--secondary[data-pressed]:not(:disabled), .musy-icon-btn--outline:active:not(:disabled), .musy-icon-btn--outline[data-pressed]:not(:disabled), .musy-icon-btn--outline[data-force~="active"], .musy-icon-btn--ghost:active:not(:disabled), .musy-icon-btn--ghost[data-pressed]:not(:disabled), .musy-icon-btn--secondary[data-force~="active"], .musy-icon-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-icon-btn:disabled, .musy-icon-btn[data-disabled] { cursor: not-allowed; }
+.musy-icon-btn--primary:disabled, .musy-icon-btn--primary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--interactive-primary-on-disabled); }
+.musy-icon-btn--secondary:disabled, .musy-icon-btn--secondary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--on-surface-disabled); }
+.musy-icon-btn--outline:disabled, .musy-icon-btn--outline[data-disabled] { background-color: transparent; border-color: var(--border-subtle); color: var(--on-surface-disabled); }
+.musy-icon-btn--ghost:disabled, .musy-icon-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-icon-btn[data-loading] { cursor: progress; }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+@media (forced-colors: active) { .musy-icon-btn { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-icon-btn--primary { background-color: buttonface; color: buttontext; } }
+@media (forced-colors: active) { .musy-icon-btn:disabled { color: graytext; border-color: graytext; } }
+/* TrackButton (Layer 2, MusicPlayer.tsx), Regeln per CSSOM aus den vier Stylesheets; dazu display-xl und heading-md. */
+:root { --type-display-xl-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-display-xl-size: clamp(40px, calc(30.991px + 2.2923vw), 64px); --type-display-xl-weight: 700; --type-display-xl-line: 1.0; --type-display-xl-tracking: -0.018em; --type-heading-md-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-heading-md-size: clamp(22px, calc(20.499px + 0.3820vw), 26px); --type-heading-md-weight: 500; --type-heading-md-line: 1.25; --type-heading-md-tracking: -0.004em; }
+.musy-btn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-btn { --musy-btn-target: var(--target-primary); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-gap-inline); min-height: var(--musy-btn-target); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); text-align: center; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-btn--min { --musy-btn-target: var(--target-min); padding-block: var(--sp-2); padding-inline: var(--sp-4); gap: var(--sp-1); margin: var(--sp-2); font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); border-radius: var(--radius-control); }
+.musy-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-btn--ghost:active:not(:disabled), .musy-btn--ghost[data-pressed]:not(:disabled), .musy-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-btn:disabled, .musy-btn[data-disabled] { cursor: not-allowed; }
+.musy-btn--ghost:disabled, .musy-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-btn[data-loading] { cursor: progress; position: relative; }
+.musy-btn[data-loading] .musy-btn__label, .musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn__label { text-wrap: var(--text-wrap-body); }
+@media (forced-colors: active) { .musy-btn { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-btn:disabled { color: graytext; border-color: graytext; } }
+.musy-btn.musy-mbtn { justify-content: flex-start; gap: var(--space-gap-related); min-inline-size: 18ch; }
+.musy-mbtn__time { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.musy-btn.musy-mbtn--no-timer { min-inline-size: 0px; justify-content: center; }
+/* Leiste: eine Reihe, mittig ausgerichtet, links am unteren Rand. Zu schmal: die Switches brechen um. */
+.musie-toolbar { pointer-events: auto; touch-action: manipulation; box-sizing: border-box; max-inline-size: 100%;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-stack);
+  padding: var(--space-inset-card); background: var(--surface);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-panel); }
+/* Eingeklappt: nur der Einstellungs-Button in der Ecke. Ausgeklappt: die Leiste an seiner Stelle, ganz rechts das X.
+   Übergang wie das Regler-Feld, 280 ms ease-in-out. */
+/* Version 1443: „Ich bin fertig“ unten rechts, ausgeblendet, solange die Leiste offen ist. Der 1:30-Countdown oben links bleibt. */
+.foot > .musie-done { position: absolute; right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px)); bottom: 0; pointer-events: auto;
+  transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > .musie-done, .foot > .musie-done[data-waiting] { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot > #btn-settings { position: absolute; left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); bottom: 0; pointer-events: auto;
+  transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > #btn-settings { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot:not(.expanded) > .musie-toolbar { opacity: 0; visibility: hidden; transform: translateY(var(--sp-2));
+  transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot.expanded > .musie-toolbar { transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 0s; }
+@media (prefers-reduced-motion: reduce) { .foot > #btn-settings, .foot > .musie-toolbar { transition: none !important; } }
+.musie-toolbar__switches { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-stack); }
+/* Der SegmentedControl richtet sich nach der Breite seines Behälters: die Leiste gibt ihm eine. */
+.musie-toolbar__seg { inline-size: calc(var(--target-primary) * 7); max-inline-size: 100%; flex: 0 1 auto; }
+/* Kleine Switch-Variante, im Design-System nicht vorhanden: Label in label-md wie die Segmente,
+   Spur und Knopf aus der Texthöhe abgeleitet. Knopf --icon-size-sm (16), Rand --sp-1: Spur 24 x 44,
+   so hoch wie die Zeile des Labels. Die Zeile bleibt 44 px hoch, das ist das Tippziel. */
+.musy-switch.musie-switch--sm { --musy-switch-knob: var(--icon-size-sm); --musy-switch-pad: var(--sp-1); gap: var(--space-gap-inline); }
+.musie-switch--sm .musy-switch__glyph .musy-icon { width: calc(var(--icon-size-sm) * 0.75); height: calc(var(--icon-size-sm) * 0.75); }
+.musie-switch--sm .musy-switch__label { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+/* Labels nie fett: der Switch setzt label-lg in 600, hier regulär. Gehört als Wunsch ins Design-System. */
+.musie-toolbar .musy-switch__label { font-weight: var(--font-weight-regular); }
+/* Saitenfarbe: eine Stufe 1-12 für beide Skalen. Das Design-System hat keine Farbauswahl (L14):
+   eigenes Muster, nur Tokens. Je Feld oben sand-N (Saite in Ruhe), unten terracotta-N (Saite angefasst). */
+.musie-swatches__hint { font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); margin-block-start: calc(var(--space-gap-related) - var(--space-gap-stack)); }
+.musie-swatches { display: grid; grid-template-columns: repeat(6, minmax(var(--target-min), 1fr)); gap: var(--space-gap-inline); }
+.musie-swatch { display: grid; gap: var(--sp-1); justify-items: stretch; box-sizing: border-box; min-height: var(--target-min); margin: 0;
+  padding: var(--sp-1); cursor: pointer; background: var(--surface); color: var(--on-surface-muted);
+  border: var(--border-width-thick) var(--border-style-solid) var(--surface); border-radius: var(--radius-sm);
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--font-weight-regular);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); font-variant-numeric: tabular-nums; }
+.musie-swatch__chip { display: grid; grid-template-rows: 1fr 1fr; block-size: var(--icon-size-lg); overflow: hidden;
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-xs); }
+@media (hover: hover) and (pointer: fine) { .musie-swatch[aria-checked="false"]:hover { background: var(--interactive-ghost-hover); border-color: var(--interactive-ghost-hover); } }
+.musie-swatch[aria-checked="true"] { background: var(--interactive-primary-subtle); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on-subtle); }
+.musie-swatch:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musie-swatch[data-shade="1"] .musie-swatch__rest { background: var(--sand-1); }
+.musie-swatch[data-shade="1"] .musie-swatch__active { background: var(--terracotta-1); }
+.musie-swatch[data-shade="2"] .musie-swatch__rest { background: var(--sand-2); }
+.musie-swatch[data-shade="2"] .musie-swatch__active { background: var(--terracotta-2); }
+.musie-swatch[data-shade="3"] .musie-swatch__rest { background: var(--sand-3); }
+.musie-swatch[data-shade="3"] .musie-swatch__active { background: var(--terracotta-3); }
+.musie-swatch[data-shade="4"] .musie-swatch__rest { background: var(--sand-4); }
+.musie-swatch[data-shade="4"] .musie-swatch__active { background: var(--terracotta-4); }
+.musie-swatch[data-shade="5"] .musie-swatch__rest { background: var(--sand-5); }
+.musie-swatch[data-shade="5"] .musie-swatch__active { background: var(--terracotta-5); }
+.musie-swatch[data-shade="6"] .musie-swatch__rest { background: var(--sand-6); }
+.musie-swatch[data-shade="6"] .musie-swatch__active { background: var(--terracotta-6); }
+.musie-swatch[data-shade="7"] .musie-swatch__rest { background: var(--sand-7); }
+.musie-swatch[data-shade="7"] .musie-swatch__active { background: var(--terracotta-7); }
+.musie-swatch[data-shade="8"] .musie-swatch__rest { background: var(--sand-8); }
+.musie-swatch[data-shade="8"] .musie-swatch__active { background: var(--terracotta-8); }
+.musie-swatch[data-shade="9"] .musie-swatch__rest { background: var(--sand-9); }
+.musie-swatch[data-shade="9"] .musie-swatch__active { background: var(--terracotta-9); }
+.musie-swatch[data-shade="10"] .musie-swatch__rest { background: var(--sand-10); }
+.musie-swatch[data-shade="10"] .musie-swatch__active { background: var(--terracotta-10); }
+.musie-swatch[data-shade="11"] .musie-swatch__rest { background: var(--sand-11); }
+.musie-swatch[data-shade="11"] .musie-swatch__active { background: var(--terracotta-11); }
+.musie-swatch[data-shade="12"] .musie-swatch__rest { background: var(--sand-12); }
+.musie-swatch[data-shade="12"] .musie-swatch__active { background: var(--terracotta-12); }
+.panel .musy-switch__label { font-weight: var(--font-weight-regular); }
+/* Abschnitte im Regler-Feld (L2): zwischen Abschnitten --space-gap-group, mittig eine Trennlinie; darin --space-gap-stack;
+   Überschrift zu ihrem Inhalt --space-gap-related. Doppelungsprobe: 32 ≥ 2 × 16. */
+.musie-section { display: grid; gap: var(--space-gap-stack); min-inline-size: 0; }
+.musie-section + .musie-section { border-top: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); padding-top: var(--space-gap-group); }
+.musie-section__title { margin: 0; color: var(--on-surface); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); }
+.musie-section__title + * { margin-block-start: calc(var(--space-gap-related) - var(--space-gap-stack)); }
+.musy-radio-group > .musie-swatches__hint:first-child { margin-block-start: 0; }
+/* Bezeichnung → ihr Hinweis: --space-gap-related (die Bezeichnung bringt ihn als Rand mit, die Gruppe ihren Abstand) */
+.musy-radio-group__legend + .musie-swatches__hint { margin-block-start: calc(-1 * var(--space-gap-stack)); }
+/* ── Kalimba: eigenes Instrument, Rest wie die Harfe ─────────────────────────────
+   Zungen flach und einfarbig wie die Saiten der Harfe: Sand in Ruhe, Terrakotta angeschlagen (Stufe wählbar).
+   Der Steg ist ein einziger Bogen, eine Sand-Stufe dunkler als die Zungen. Nichts bewegt sich außer der Farbe
+   und dem weichen Punkt, den ein Fingerdruck auf der Zunge hinterlässt. */
+#kalimba { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; touch-action: none; }
+.musie-probe { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
+.musie-section a { color: var(--on-surface); text-underline-offset: var(--sp-1); }
+</style>
+</head>
+<body>
+
+<canvas id="kalimba" aria-label="Kalimba: Zungen antippen oder darüberstreichen"></canvas>
+<div class="foot">
+  <div class="panel" id="panel">
+    <section class="musie-section" aria-labelledby="h-klang">
+      <h2 class="musie-section__title" id="h-klang">Klang</h2>
+      <div class="ctl"><label for="hard">Härte</label><output id="hard-out" for="hard"></output>
+        <input type="range" id="hard" min="0" max="1" step="0.01">
+        <small>Wenig: weicher Daumen, warm. Viel: heller, mit deutlichem Anschlag.</small></div>
+      <div class="ctl"><label for="len">Tonlänge</label><output id="len-out" for="len"></output>
+        <input type="range" id="len" min="0.5" max="10.5" step="0.5">
+        <small>Ganz rechts klingt die Aufnahme frei aus, bis zu 10 Sekunden.</small></div>
+      <div class="ctl"><label for="swing">Schwenk-Vibrato</label><output id="swing-out" for="swing"></output>
+        <input type="range" id="swing" min="0" max="1" step="0.01">
+        <small>Wie stark das Schwenken den Klang schwingen lässt. Am Computer: V gedrückt halten.</small></div>
+      <div class="ctl"><label for="touch">Anschlag weiter oben</label><output id="touch-out" for="touch"></output>
+        <input type="range" id="touch" min="0" max="1" step="0.01">
+        <small>Wie viel leiser und dumpfer eine Zunge klingt, wenn du sie nah am Steg drückst statt an der Spitze.</small></div>
+      <div id="rg-tuning-slot"></div>
+      <div id="rg-sound-slot"></div>
+    </section>
+    <section class="musie-section" aria-labelledby="h-farbe">
+      <h2 class="musie-section__title" id="h-farbe">Zungenfarbe</h2>
+      <div role="radiogroup" class="musy-radio-group" id="rg-farbe" aria-labelledby="h-farbe" aria-describedby="farbe-hint"><div id="farbe-hint" class="musie-swatches__hint">Oben Sand: die Zunge in Ruhe. Unten Terrakotta: die Zunge, wenn sie klingt. Wie die Saiten der Harfe.</div><div class="musie-swatches" id="swatches"></div></div>
+      <div id="sw-wood-slot"></div>
+    </section>
+    <section class="musie-section" aria-labelledby="h-info">
+      <h2 class="musie-section__title" id="h-info">Über die Aufnahmen</h2>
+      <div class="musie-swatches__hint" id="tuning-info"></div>
+      <div class="musie-swatches__hint">Jeder Ton ist eine Aufnahme einer Membran-Kalimba: HCP-Soundfonts, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.de" target="_blank" rel="noopener">CC0</a> (gemeinfrei), <a href="http://unneraans.de/soundfonts/" target="_blank" rel="noopener">unneraans.de/soundfonts</a>. Töne, die nicht aufgenommen sind, entstehen aus der nächsten Aufnahme, höchstens zwei Halbtöne verschoben. Härte, Tonlänge und Vibrato formen die Aufnahme beim Abspielen.</div>
+    </section>
+    <section class="musie-section">
+      <div class="readout" id="readout"></div>
+      <button type="button" class="musie-reset" id="reset">Auf die Standardwerte zurücksetzen</button>
+    </section>
+  </div>
+  <button aria-expanded="false" aria-controls="toolbar" type="button" tabindex="0" id="btn-settings" aria-label="Einstellungen öffnen" class="musy-icon-btn musy-icon-btn--secondary musy-icon-btn--primary-size"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  <div class="musie-toolbar" id="toolbar">
+    <div class="musie-toolbar__switches" id="toolbar-switches"></div>
+    <button type="button" tabindex="0" id="btn-close" aria-label="Einstellungen schließen" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+  </div>
+</div>
+<div class="musie-top">
+  <header class="musie-top__header" id="header">
+    <h1 class="musie-headline">Tippe die Zungen der Kalimba an. Schwenkst du das Handy, schwingt der Klang mit.</h1>
+    <p class="note" id="note"></p>
+  </header>
+</div>
+<span class="musie-probe" id="probe" aria-hidden="true"></span>
+
+<script>
+(() => {
+// ════════ Stimmungen ════════
+// Jede Zunge: Ton, Hz (für die Länge), die Aufnahme, aus der er kommt, und wie viele Halbtöne sie verschoben wird.
+// „Pentatonik“: dieselben fünf Töne wie die Harfe (d e g a h), ab A gezählt. Keine Halbtöne nebeneinander:
+// zwei Kalimbas, oder Kalimba und Harfe, klingen zusammen immer konsonant.
+const TUNINGS = {
+  penta: { label: 'Pentatonik, passt zur Harfe', info: 'Pentatonik mit den Tönen der Harfe (d, e, g, a, h), ab A: A H d e g a h d′ e′. Ohne Halbtöne, darum klingen zwei Kalimbas und Kalimba mit Harfe immer zusammen.',
+    tines: [ // von links nach rechts: tiefster Ton in der Mitte, dann abwechselnd rechts und links
+      { n: 'e″', hz: 659.26, src: 'E5', semi: 0 },  { n: 'h′', hz: 493.88, src: 'B4', semi: 0 }, { n: 'g′', hz: 392.00, src: 'A4', semi: -2 },
+      { n: 'd′', hz: 293.66, src: 'E4', semi: -2 }, { n: 'A',  hz: 220.00, src: 'A3', semi: 0 }, { n: 'H',  hz: 246.94, src: 'C4', semi: -1 },
+      { n: 'e′', hz: 329.63, src: 'E4', semi: 0 },  { n: 'a′', hz: 440.00, src: 'A4', semi: 0 }, { n: 'd″', hz: 587.33, src: 'E5', semi: -2 } ] },
+  amoll: { label: 'a-Moll wie das Original', info: 'a-Moll in Werksstimmung der Membran-Kalimba: a′ c″ c′ a′ A f′ e′ e″ h′. Mit f und h klingen manche Töne zusammen reibend.',
+    tines: [
+      { n: 'a′', hz: 440.00, src: 'A4', semi: 0 }, { n: 'c″', hz: 523.25, src: 'C5', semi: 0 }, { n: 'c′', hz: 261.63, src: 'C4', semi: 0 },
+      { n: 'a′', hz: 440.00, src: 'A4', semi: 0 }, { n: 'A',  hz: 220.00, src: 'A3', semi: 0 }, { n: 'f′', hz: 349.23, src: 'F4', semi: 0 },
+      { n: 'e′', hz: 329.63, src: 'E4', semi: 0 }, { n: 'e″', hz: 659.26, src: 'E5', semi: 0 }, { n: 'h′', hz: 493.88, src: 'B4', semi: 0 } ] },
+};
+const KEYS = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'];
+// Stimmkorrektur je Aufnahme in Cent, aus dem Soundfont übernommen
+const CENTS = {
+  closed:  { A3: 9,  A4: 11, B4: 5,  C4: 8,  C5: 10, E4: 8,  E5: -4, F4: 16 },
+  open:    { A3: 9,  A4: 8,  B4: 0,  C4: 8,  C5: 10, E4: 15, E5: -4, F4: 10 },
+  wah:     { A3: 9,  A4: 1,  B4: 0,  C4: 8,  C5: 10, E4: 15, E5: -4, F4: 10 },
+  wahwah:  { A3: 14, A4: 12, B4: -2, C4: 14, C5: -2, E4: 15, E5: 3,  F4: 3 },
+  openwah: { A3: 26, A4: 1,  B4: 0,  C4: 8,  C5: 7,  E4: 8,  E5: -7, F4: 13 },
+};
+const NOTES = ['A3', 'C4', 'E4', 'F4', 'A4', 'B4', 'C5', 'E5'];
+const SOUNDS = [
+  { key: 'still',   art: 'closed',  label: 'Ruhig' },
+  { key: 'open',    art: 'open',    label: 'Offen' },
+  { key: 'wah',     art: 'wah',     label: 'Einmal geöffnet' },
+  { key: 'wahwah',  art: 'wahwah',  label: 'Mehrmals geöffnet' },
+  { key: 'openwah', art: 'openwah', label: 'Auf und ab' },
+];
+const DEFAULTS = { hard: 0.35, len: 4, swing: 0.8, touch: 0.7, tuning: 'penta', sound: 'still', shade: 7, wood: false };
+let P = { ...DEFAULTS };
+try { Object.assign(P, JSON.parse(localStorage.getItem('kalimba-v4') || '{}')); } catch (e) {}
+if (!TUNINGS[P.tuning]) P.tuning = DEFAULTS.tuning;
+const save = () => { try { localStorage.setItem('kalimba-v4', JSON.stringify(P)); } catch (e) {} };
+const tines = () => TUNINGS[P.tuning].tines;
+const coarse = matchMedia('(pointer: coarse)');
+const pct = v => Math.round(v * 100) + ' %';
+const sec = v => v > 10 ? 'voll' : v.toFixed(1).replace('.', ',') + ' s';
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// ════════ Bedienelemente: Markup wie in der Harfe (base-ui-Zustände) ════════
+const CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>';
+const XMARK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>';
+const switchHTML = (id, label, small) => `<div class="musy-switch${small ? ' musie-switch--sm' : ''}"><button type="button" data-unchecked="" tabindex="0" id="${id}" role="switch" aria-checked="false" class="musy-switch__track"><span data-unchecked="" class="musy-switch__knob"><span class="musy-switch__glyph" data-state="hidden">${CHECK}</span><span class="musy-switch__glyph" data-state="shown">${XMARK}</span></span></button><label for="${id}" class="musy-switch__label">${label}</label></div>`;
+const radioGroupHTML = (id, legend, hint, items) =>
+  `<div role="radiogroup" class="musy-radio-group" id="${id}" aria-labelledby="${id}-legend"${hint ? ` aria-describedby="${id}-hint"` : ''}><div id="${id}-legend" class="musy-radio-group__legend musy-radio-group__legend--label">${legend}</div>` +
+  (hint ? `<div id="${id}-hint" class="musie-swatches__hint">${hint}</div>` : '') +
+  items.map(s => `<button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" id="${id}-${s.key}" data-value="${s.key}" class="musy-radio__body"><span class="musy-radio__marker" aria-hidden="true"><span data-unchecked="">${CHECK}</span></span><span class="musy-radio__label">${s.label}</span></button>`).join('') + '</div>';
+document.getElementById('toolbar-switches').innerHTML =
+  switchHTML('sw-vibration', 'Vibration', true) + switchHTML('sw-motion', 'Schwenken', true) + switchHTML('sw-regler', 'Regler', true) + switchHTML('sw-info', 'Info', true);
+document.getElementById('sw-wood-slot').outerHTML = switchHTML('sw-wood', 'Holzblock zeigen', false);
+document.getElementById('rg-tuning-slot').outerHTML = radioGroupHTML('rg-tuning', 'Stimmung', '', Object.entries(TUNINGS).map(([key, t]) => ({ key, label: t.label })));
+document.getElementById('rg-sound-slot').outerHTML = radioGroupHTML('rg-sound', 'Klangfarbe', 'Fünf Spielweisen, alle aufgenommen. Bei „Ruhig“ öffnet das Schwenken den Klang.', SOUNDS);
+document.getElementById('swatches').innerHTML = Array.from({ length: 12 }, (_, k) => k + 1).map(n =>
+  `<button type="button" role="radio" class="musie-swatch" id="farbe-${n}" data-shade="${n}" aria-checked="false" tabindex="-1" aria-label="Stufe ${n}"><span class="musie-swatch__chip" aria-hidden="true"><span class="musie-swatch__rest"></span><span class="musie-swatch__active"></span></span>${n}</button>`).join('');
+
+function setSwitch(id, on) {         // Zustand wie base-ui ihn schreibt: data-checked / data-unchecked, aria-checked, Glyphen
+  const t = document.getElementById(id), k = t.querySelector('.musy-switch__knob'), g = t.querySelectorAll('.musy-switch__glyph');
+  for (const el of [t, k]) { el.toggleAttribute('data-checked', on); el.toggleAttribute('data-unchecked', !on); }
+  t.setAttribute('aria-checked', on); g[0].dataset.state = on ? 'shown' : 'hidden'; g[1].dataset.state = on ? 'hidden' : 'shown';
+}
+function setRadio(id, value) {
+  document.querySelectorAll(`#${id} .musy-radio__body`).forEach(b => { const on = b.dataset.value === value;
+    for (const el of [b, b.querySelector('.musy-radio__marker > span')]) { el.toggleAttribute('data-checked', on); el.toggleAttribute('data-unchecked', !on); }
+    b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; });
+}
+function bindRadio(id, keys, get, choose) {
+  document.querySelectorAll(`#${id} .musy-radio__body`).forEach(b => {
+    b.addEventListener('click', () => choose(b.dataset.value));
+    b.addEventListener('keydown', e => {
+      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key]; if (!step) return; e.preventDefault();
+      const k = keys[(keys.indexOf(get()) + step + keys.length) % keys.length];
+      choose(k); document.getElementById(`${id}-${k}`).focus(); });
+  });
+}
+
+// ════════ Zeichnen: flach, einfarbig ════════
+const cv = document.getElementById('kalimba'), g = cv.getContext('2d'), probe = document.getElementById('probe');
+let C = {};
+function readColors() {                                   // Canvas kennt keine CSS-Variablen: über ein Probe-Element auflösen
+  const get = v => { probe.style.color = `var(${v})`; return getComputedStyle(probe).color; };
+  C = { rest: get(`--sand-${P.shade}`), hit: get(`--terracotta-${P.shade}`), bridge: get(`--sand-${Math.min(12, P.shade + 1)}`), wood: get('--terracotta-3'), woodLine: get('--terracotta-5') };
+}
+const rgb = c => (c.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+const mix = (a, b, t) => { const A = rgb(a), B = rgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+const state = Array.from({ length: 9 }, () => ({ t0: -1e9, vel: 1, on: false }));
+const header = document.getElementById('header'), foot = document.querySelector('.foot');
+const btnSettings = document.getElementById('btn-settings'), toolbarEl = document.getElementById('toolbar');
+let W = 0, H = 0, L = null, swingEnv = 0;
+
+function layout() {
+  const dpr = Math.min(3, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const top = header.getBoundingClientRect().bottom + 28;
+  const footTop = (foot.classList.contains('expanded') ? toolbarEl : btnSettings).getBoundingClientRect().top;
+  const bottom = footTop - 20;
+  const width = Math.min(W - 32, 560), x0 = (W - width) / 2, pitch = width / 9;
+  const tw = clamp(pitch * 0.42, 10, 22);
+  const amp = clamp(pitch * 0.22, 6, 14);
+  const waveY = top + amp + 4;
+  const avail = Math.max(80, bottom - waveY - amp);
+  const minHz = Math.min(...tines().map(t => t.hz));
+  // Bogen: Sehne über die ganze Breite samt Überstand, Pfeilhöhe 1,6 × amp, Mitte oben
+  const half = width / 2 + pitch * 0.45, sag = amp * 1.6, R = (half * half + sag * sag) / (2 * sag);
+  L = { top, bottom, x0, width, pitch, tw, amp, waveY, avail, half, sag, R,
+    tines: tines().map((t, i) => ({ cx: x0 + pitch * (i + 0.5), len: avail * Math.sqrt(minHz / t.hz) })) };
+  draw(performance.now());
+}
+// Der Steg: ein Kreisbogen mit einem Radius, in der Mitte am höchsten. Er steht still.
+const waveAt = x => { const d = x - (L.x0 + L.width / 2); return L.waveY + L.sag / 2 - (Math.sqrt(L.R * L.R - d * d) - (L.R - L.sag)); };
+
+function wood() {
+  const pad = L.pitch * 0.5, x = L.x0 - pad, y = L.top - 6, w = L.width + pad * 2, h = L.waveY + L.avail + 24 - y;
+  g.fillStyle = C.wood; g.beginPath(); g.roundRect(x, y, w, h, 20); g.fill();
+}
+
+function tine(i, now) {
+  const T = L.tines[i], s = state[i];
+  const t = (now - s.t0) / 1000;
+  const glow = Math.exp(-t / 1.1) * (0.4 + 0.6 * s.vel);
+  const y0 = waveAt(T.cx) - L.tw * 0.5, y1 = waveAt(T.cx) + T.len;
+  g.strokeStyle = glow > 0.02 ? mix(C.rest, C.hit, Math.min(1, glow * 1.1)) : C.rest;
+  g.lineWidth = L.tw; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(T.cx, y0); g.lineTo(T.cx, y1); g.stroke();
+  s.on = glow > 0.02;
+}
+function wave() {
+  const ext = L.pitch * 0.45, xa = L.x0 - ext, xb = L.x0 + L.width + ext;
+  g.strokeStyle = C.bridge; g.lineWidth = clamp(L.tw * 0.55, 6, 11); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath();
+  for (let x = xa; x <= xb + 0.5; x += 4) { const y = waveAt(x); x === xa ? g.moveTo(x, y) : g.lineTo(x, y); }
+  g.stroke();
+}
+function draw(now) {
+  g.clearRect(0, 0, W, H);
+  if (!L) return;
+  if (P.wood) wood();
+  for (let i = 0; i < 9; i++) tine(i, now);
+  wave();
+  dots(now);
+}
+// Fingerdruck: ein weicher Punkt auf der Zunge, wo der Finger sie trifft. Er wächst und blasst aus.
+// Je lauter der Anschlag, desto größer und kräftiger (Sand → Terrakotta).
+const DOT_MS = 700;
+let presses = [];
+function dots(now) {
+  presses = presses.filter(d => now - d.t0 < DOT_MS);
+  for (const d of presses) {
+    const T = L.tines[d.i], p = (now - d.t0) / DOT_MS, grow = 1 - Math.pow(1 - p, 3);
+    const r = L.tw * (0.8 + (0.6 + 3.4 * d.vel) * grow);     // weicher Rand wirkt kleiner: etwas größer zeichnen
+    const x = T.cx, y = waveAt(T.cx) + clamp(d.pos, 0, 1) * T.len;
+    const c = mix(C.rest, C.hit, 0.3 + 0.7 * d.vel).replace('rgb(', 'rgba(').replace(')', ',');
+    const fill = g.createRadialGradient(x, y, 0, x, y, r);   // Unschärfe als Verlauf: Safari kennt keinen Canvas-Filter
+    fill.addColorStop(0, c + '1)'); fill.addColorStop(0.3, c + '0.8)'); fill.addColorStop(0.65, c + '0.3)'); fill.addColorStop(1, c + '0)');
+    g.globalAlpha = Math.min(1, Math.pow(1 - p, 1.6) * (0.45 + 0.75 * d.vel));
+    g.fillStyle = fill;
+    g.beginPath(); g.arc(x, y, r, 0, 2 * Math.PI); g.fill();
+  }
+  g.globalAlpha = 1;
+}
+let raf = 0;
+function loop(now) { draw(now); raf = (state.some(s => s.on) || presses.length) ? requestAnimationFrame(loop) : 0; }
+function kick() { if (!raf) raf = requestAnimationFrame(loop); }
+function pluckVisual(i, vel, pos) {
+  const now = performance.now();
+  state[i].t0 = now; state[i].vel = vel; state[i].on = true;
+  presses.push({ i, pos, vel, t0: now }); kick();
+}
+
+// ════════ Audio (Freischaltung und Summe wie Harfe 1443) ════════
+let ctx, memIn, memTrem, memPeak, lfo, lfoTrem, lfoPeak, lfoPitch, unlocking = false, pending = null;
+const buffers = {}, loading = {}, voices = new Map();
+function initAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 2; comp.attack.value = 0.003; comp.release.value = 0.25;
+  const makeup = ctx.createGain(); makeup.gain.value = 1.4;
+  const limit = ctx.createDynamicsCompressor();
+  limit.threshold.value = -2; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  // Membran: alle Zungen klingen über sie. Schwenken öffnet ein Vibrato: Lautstärke, Resonanz und ein Hauch Tonhöhe schwingen.
+  memIn = ctx.createGain(); memTrem = ctx.createGain(); memTrem.gain.value = 1;
+  memPeak = ctx.createBiquadFilter(); memPeak.type = 'peaking'; memPeak.frequency.value = 800; memPeak.Q.value = 1.1; memPeak.gain.value = 0;
+  lfo = ctx.createOscillator(); lfo.frequency.value = 5.5;
+  lfoTrem = ctx.createGain(); lfoTrem.gain.value = 0; lfo.connect(lfoTrem); lfoTrem.connect(memTrem.gain);
+  lfoPeak = ctx.createGain(); lfoPeak.gain.value = 0; lfo.connect(lfoPeak); lfoPeak.connect(memPeak.frequency);
+  lfoPitch = ctx.createGain(); lfoPitch.gain.value = 0; lfo.connect(lfoPitch);                  // geht an jede Quelle (detune)
+  lfo.start();
+  memIn.connect(memTrem); memTrem.connect(memPeak); memPeak.connect(comp); comp.connect(makeup); makeup.connect(limit); limit.connect(ctx.destination);
+}
+const audible = () => ctx.state === 'running' || unlocking;
+// Safari schaltet den Ton nur in touchend, click, mousedown oder keydown frei. Der Anschlag kommt schon bei pointerdown:
+// den merken wir uns und spielen ihn, sobald der Ton läuft.
+function unlockAudio() {
+  if (!ctx || ctx.state === 'running') return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; flushPending(); render(); }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+  flushPending();
+}
+function flushPending() { if (pending && performance.now() - pending.t < 700 && audible()) { const p = pending; pending = null; play(p.i, p.pos, true); } }
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+
+async function loadOne(art, note) {
+  const res = await fetch(`../samples/${art}-${note}.mp3`);
+  if (!res.ok) throw new Error(`${art}-${note}: ${res.status}`);
+  const buf = await ctx.decodeAudioData(await res.arrayBuffer());
+  const d = buf.getChannelData(0); let i = 0;                // MP3 setzt vorne Stille ein: ab dem echten Anschlag spielen
+  while (i < d.length && Math.abs(d[i]) < 0.01) i++;
+  (buffers[art] ||= {})[note] = { buf, offset: Math.max(0, i - 32) / buf.sampleRate };
+}
+const loadArt = art => loading[art] ||= Promise.all(NOTES.map(n => loadOne(art, n)));
+
+const cutoff = h => 1400 * Math.pow(16000 / 1400, h);       // Härte → Tiefpass
+const attackOf = h => 0.001 + 0.024 * (1 - h);              // Härte → Einsatz
+const shelfOf = h => h < 0.2 ? 2 * (1 - h / 0.2) : 0;       // wenig Härte: etwas Wärme
+let openMix = 0;
+function damp(v, now) {
+  v.env.gain.cancelScheduledValues(now); v.env.gain.setValueAtTime(v.env.gain.value, now); v.env.gain.setTargetAtTime(0, now, 0.018);
+  v.layers.forEach(l => { try { l.src.stop(now + 0.15); } catch (e) {} });
+}
+// pos: wo die Zunge gedrückt wurde, 0 am Steg, 1 an der Spitze. Weiter oben: leiser und dumpfer.
+function play(i, pos, fromPending) {
+  const vel = 1 - P.touch * (1 - Math.pow(clamp(pos, 0, 1), 0.8)) * 0.8;
+  if (!fromPending) { pluckVisual(i, vel, pos); buzz(Math.round(30 + 60 * vel), vel > 0.6 ? 3 : 2); }
+  if (!ctx || !buffers.closed) return;
+  if (!audible()) { pending = { i, pos, t: performance.now() }; return; }
+  const now = ctx.currentTime, T = tines()[i], note = T.src, rate = Math.pow(2, T.semi / 12);
+  const old = voices.get(i); if (old) damp(old, now);       // der Daumen stoppt die Zunge, bevor er sie neu anschlägt
+  const dull = 1 - P.touch * (1 - clamp(pos, 0, 1)) * 0.75;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = Math.max(500, cutoff(P.hard) * dull);
+  const shelf = ctx.createBiquadFilter(); shelf.type = 'lowshelf'; shelf.frequency.value = 300; shelf.gain.value = shelfOf(P.hard);
+  const env = ctx.createGain(), level = (0.85 + Math.random() * 0.08) * vel, att = attackOf(P.hard) + (1 - dull) * 0.012;
+  env.gain.setValueAtTime(0, now); env.gain.linearRampToValueAtTime(level, now + att);
+  let end = Infinity;
+  if (P.len <= 10) { env.gain.setTargetAtTime(0, now + att + 0.15 * P.len, P.len / 4); end = now + att + 1.6 * P.len + 0.1; }
+  lp.connect(shelf); shelf.connect(env); env.connect(memIn);
+  const v = { i, env, lp, dull, layers: [], live: 0 };
+  const add = (art, gain) => {
+    const b = buffers[art]?.[note]; if (!b) return;
+    const src = ctx.createBufferSource(); src.buffer = b.buf; src.playbackRate.value = rate; src.detune.value = CENTS[art][note];
+    lfoPitch.connect(src.detune);
+    const gn = ctx.createGain(); gn.gain.value = gain; src.connect(gn); gn.connect(lp);
+    src.start(now, b.offset);                                // Versatz in Zeit der Aufnahme, unabhängig von der Verschiebung if (end < Infinity) src.stop(end);
+    src.onended = () => { try { lfoPitch.disconnect(src.detune); } catch (e) {} v.live--; if (v.live <= 0 && voices.get(i) === v) voices.delete(i); };
+    v.layers.push({ art, src, g: gn }); v.live++;
+  };
+  const snd = SOUNDS.find(s => s.key === P.sound) || SOUNDS[0];
+  if (snd.key === 'still' || !buffers[snd.art]) { add('closed', Math.cos(openMix * Math.PI / 2)); add('open', Math.sin(openMix * Math.PI / 2)); }
+  else add(snd.art, 1);
+  voices.set(i, v);
+}
+
+// ════════ Vibration (aus der Harfe 1443) ════════
+// Android: navigator.vibrate. iPhone: kein vibrate; ab iOS 18 löst ein umgeschalteter <input switch> einen Haptik-Impuls aus,
+// aber nur während einer Berührung. Beim reinen Schwenken ohne Berührung kann das iPhone im Browser nicht vibrieren.
+let haptics = true; try { haptics = localStorage.getItem('kalimba-vibration') !== 'aus'; } catch (e) {}
+const hasVibrate = typeof navigator.vibrate === 'function';
+const hasSwitch = 'switch' in HTMLInputElement.prototype;
+let vibrateBlocked = false;
+function iosTick() {
+  const l = document.createElement('label'), c = document.createElement('input');
+  l.setAttribute('aria-hidden', 'true'); l.style.display = 'none'; c.type = 'checkbox'; c.setAttribute('switch', '');
+  l.appendChild(c); document.head.appendChild(l); l.click(); l.remove();
+}
+function buzz(ms, ticks) {
+  if (!haptics) return;
+  if (hasVibrate && !vibrateBlocked) {
+    let ok = false; try { ok = navigator.vibrate(ms); } catch (e) {}
+    if (ok) return;
+    vibrateBlocked = true;
+  }
+  if (hasSwitch) { iosTick(); for (let k = 1; k < ticks; k++) setTimeout(iosTick, k * 55); }
+}
+const canBuzzFreely = () => hasVibrate && !vibrateBlocked;   // nur Android kann ohne Berührung vibrieren
+function hapticNote() {
+  if (!haptics) return 'Vibration aus';
+  if (canBuzzFreely()) return 'Vibration an, auch beim Schwenken';
+  return hasSwitch ? 'Vibration: kurze Impulse beim Antippen. Beim Schwenken lässt das iPhone Webseiten nicht vibrieren' : 'Vibration auf diesem Gerät nicht verfügbar';
+}
+
+// ════════ Schwenken → Vibrato ════════
+let motionOn = true; try { motionOn = localStorage.getItem('kalimba-schwenken') !== 'aus'; } catch (e) {}
+let motionState = 'idle';                                  // idle | asking | on | denied | none
+let rot = 0, vHeld = false, lastBuzz = 0;
+const needsPermission = typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
+function onMotion(e) {
+  const r = e.rotationRate; let s = 0;
+  if (r && (r.alpha !== null || r.beta !== null)) s = Math.max(Math.abs(r.alpha || 0), Math.abs(r.beta || 0), Math.abs(r.gamma || 0)) / 110;
+  else if (e.acceleration && e.acceleration.x !== null) s = Math.hypot(e.acceleration.x || 0, e.acceleration.y || 0, e.acceleration.z || 0) / 6;
+  rot = Math.max(rot, clamp(s, 0, 1));
+  if (motionState !== 'on') { motionState = 'on'; render(); }
+}
+function startMotion() {
+  if (typeof DeviceMotionEvent === 'undefined') { motionState = 'none'; return; }
+  if (!motionOn) return;
+  if (needsPermission) {
+    if (motionState === 'asking' || motionState === 'on' || motionState === 'granted') return;
+    motionState = 'asking';
+    DeviceMotionEvent.requestPermission().then(p => {
+      if (p === 'granted') { addEventListener('devicemotion', onMotion); motionState = 'granted'; } else motionState = 'denied';
+      render();
+    }, () => { motionState = 'idle'; render(); });
+  } else addEventListener('devicemotion', onMotion);
+}
+if (!needsPermission) startMotion();
+// iOS fragt nur in einer Geste nach der Erlaubnis
+['touchend', 'click'].forEach(t => addEventListener(t, () => { if (needsPermission && motionOn && motionState === 'idle') startMotion(); }, { capture: true, passive: true }));
+
+setInterval(() => {                                        // 30 ms: Schwenken auf die Membran übertragen
+  const target = vHeld ? 1 : motionOn ? rot : 0;
+  rot *= 0.8;                                              // die letzte Bewegung klingt ab
+  swingEnv += (target - swingEnv) * (target > swingEnv ? 0.45 : 0.08);   // schnell an, langsam aus
+  if (swingEnv < 0.003) swingEnv = 0;
+  const e = swingEnv * P.swing;
+  // Android: das Handy vibriert beim Schwenken mit, stärker, wenn Zungen klingen
+  if (e > 0.12 && canBuzzFreely() && haptics && performance.now() - lastBuzz > 140) {
+    buzz(Math.round(30 + 70 * e * (voices.size ? 1 : 0.6)), 1); lastBuzz = performance.now();
+  }
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  lfo.frequency.setTargetAtTime(4.5 + 3 * swingEnv, now, 0.1);
+  lfoTrem.gain.setTargetAtTime(0.55 * e, now, 0.04);       // Lautstärke schwingt um bis zu ±55 %
+  lfoPeak.gain.setTargetAtTime(700 * e, now, 0.04);       // Resonanz wandert ±700 Hz
+  lfoPitch.gain.setTargetAtTime(22 * e, now, 0.04);       // Tonhöhe ±22 Cent
+  memPeak.gain.setTargetAtTime(10 * e, now, 0.05);
+  openMix = Math.min(1, e * 1.2);
+  if (P.sound === 'still') voices.forEach(v => v.layers.forEach(l => {
+    const t = l.art === 'closed' ? Math.cos(openMix * Math.PI / 2) : l.art === 'open' ? Math.sin(openMix * Math.PI / 2) : null;
+    if (t !== null) l.g.gain.setTargetAtTime(t, now, 0.05);
+  }));
+}, 30);
+
+// ════════ Spielen ════════
+const lastCol = new Map();
+function hit(x, y) {
+  if (!L || y < L.top - 20 || y > L.bottom + 10) return null;
+  if (x < L.x0 - L.pitch * 0.3 || x > L.x0 + L.width + L.pitch * 0.3) return null;
+  const i = clamp(Math.floor((x - L.x0) / L.pitch), 0, 8), T = L.tines[i];
+  const y0 = waveAt(T.cx);
+  return { i, pos: (y - y0) / T.len };                     // unterhalb der Spitze: wie an der Spitze
+}
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  const h = hit(e.clientX, e.clientY); lastCol.set(e.pointerId, h ? h.i : -1); if (h) play(h.i, h.pos);
+});
+cv.addEventListener('pointermove', e => {
+  if (!lastCol.has(e.pointerId)) return;
+  const h = hit(e.clientX, e.clientY);
+  if (h && h.i !== lastCol.get(e.pointerId)) { lastCol.set(e.pointerId, h.i); play(h.i, h.pos); }
+});
+['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, e => lastCol.delete(e.pointerId)));
+const held = new Set();
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest?.('input, button, a')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'v') { vHeld = true; return; }
+  const i = KEYS.indexOf(k);
+  if (i >= 0 && !held.has(k)) { held.add(k); play(i, e.shiftKey ? 0.15 : 1); }   // mit Shift: weit oben angeschlagen
+});
+addEventListener('keyup', e => { const k = e.key.toLowerCase(); held.delete(k); if (k === 'v') vHeld = false; });
+
+// ════════ Panel, Leiste, Hinweis ════════
+const panel = document.getElementById('panel'), note = document.getElementById('note'), readout = document.getElementById('readout');
+let info = false;
+const CTLS = { hard: pct, len: sec, swing: pct, touch: pct };
+function render() {
+  setSwitch('sw-vibration', haptics); setSwitch('sw-motion', motionOn && motionState !== 'denied'); setSwitch('sw-regler', panel.classList.contains('open'));
+  setSwitch('sw-info', info); setSwitch('sw-wood', P.wood);
+  for (const [id, fmt] of Object.entries(CTLS)) { document.getElementById(id).value = P[id]; document.getElementById(id + '-out').textContent = fmt(P[id]); }
+  setRadio('rg-tuning', P.tuning); setRadio('rg-sound', P.sound);
+  document.querySelectorAll('#swatches .musie-swatch').forEach(b => { const on = +b.dataset.shade === P.shade; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; });
+  document.getElementById('tuning-info').textContent = TUNINGS[P.tuning].info;
+  readout.textContent = `${TUNINGS[P.tuning].label} · Härte ${pct(P.hard)} · Tonlänge ${sec(P.len)} · Schwenk-Vibrato ${pct(P.swing)} · Anschlag oben ${pct(P.touch)} · ${(SOUNDS.find(s => s.key === P.sound) || SOUNDS[0]).label} · Zungenfarbe ${P.shade}`;
+  const running = ctx && ctx.state === 'running';
+  const motionText = !motionOn ? 'Schwenken aus' : motionState === 'on' ? 'Schwenken an' : motionState === 'denied' ? 'Schwenken: Bewegung nicht erlaubt. Safari-Einstellungen → Bewegung & Ausrichtung'
+    : motionState === 'none' ? 'Schwenken: kein Bewegungssensor' : needsPermission && motionState !== 'granted' ? 'Schwenken: fragt beim ersten Tippen' : 'Schwenken: wartet auf Bewegung';
+  if (!running) { note.textContent = 'Tippe auf eine Zunge, dann klingt die Kalimba.'; note.classList.add('shown'); }
+  else if (info) {
+    note.innerHTML = TUNINGS[P.tuning].label + ' · ' + motionText + '<br>' + hapticNote() + '<br>' +
+      (coarse.matches ? 'An der Spitze klingt es voll, nah am Steg leiser und dumpfer. Schwenke das Handy für Vibrato.' : 'Klicken oder streichen; Tasten A bis L spielen, mit Shift weit oben. V gedrückt halten schwenkt.');
+    note.classList.add('shown');
+  } else note.classList.remove('shown');
+}
+Object.keys(CTLS).forEach(id => document.getElementById(id).addEventListener('input', e => {
+  P[id] = +e.target.value; save(); render();
+  if (id === 'hard' && ctx) voices.forEach(v => v.lp.frequency.setTargetAtTime(Math.max(500, cutoff(P.hard) * v.dull), ctx.currentTime, 0.05));
+}));
+bindRadio('rg-tuning', Object.keys(TUNINGS), () => P.tuning, k => { if (k === P.tuning) return; P.tuning = k; save(); render(); layout(); });
+bindRadio('rg-sound', SOUNDS.map(s => s.key), () => P.sound, k => { if (k === P.sound) return; P.sound = k; save(); if (ctx) loadArt(SOUNDS.find(s => s.key === k).art).catch(() => {}); render(); });
+function chooseShade(n) { n = clamp(n, 1, 12); if (n === P.shade) return; P.shade = n; save(); readColors(); render(); draw(performance.now()); }
+document.querySelectorAll('#swatches .musie-swatch').forEach(b => {
+  b.addEventListener('click', () => chooseShade(+b.dataset.shade));
+  b.addEventListener('keydown', e => {                       // Raster 6 x 2 wie bei der Harfe
+    const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 6, ArrowUp: -6 }[e.key];
+    const to = e.key === 'Home' ? 1 : e.key === 'End' ? 12 : step ? P.shade + step : 0; if (!to) return; e.preventDefault();
+    chooseShade(to); document.getElementById('farbe-' + P.shade).focus(); });
+});
+document.getElementById('sw-vibration').addEventListener('click', () => {
+  haptics = !haptics; try { localStorage.setItem('kalimba-vibration', haptics ? 'an' : 'aus'); } catch (e) {}
+  render(); if (haptics) buzz(80, 2); });
+document.getElementById('sw-motion').addEventListener('click', () => {
+  motionOn = !(motionOn && motionState !== 'denied'); try { localStorage.setItem('kalimba-schwenken', motionOn ? 'an' : 'aus'); } catch (e) {}
+  if (motionOn) { if (motionState === 'denied') motionState = 'idle'; startMotion(); }
+  render(); });
+document.getElementById('sw-regler').setAttribute('aria-controls', 'panel');
+document.getElementById('sw-regler').addEventListener('click', () => { panel.classList.toggle('open'); render(); });
+document.getElementById('sw-info').setAttribute('aria-controls', 'note');
+document.getElementById('sw-info').addEventListener('click', () => { info = !info; render(); });
+document.getElementById('sw-wood').addEventListener('click', () => { P.wood = !P.wood; save(); render(); draw(performance.now()); });
+document.getElementById('reset').addEventListener('click', () => { P = { ...DEFAULTS }; save(); readColors(); render(); layout(); });
+
+// Leiste ein- und ausklappen, Regler-Feld daneben (wie Harfe 1443)
+function placePanel() {
+  const t = toolbarEl.getBoundingClientRect();
+  const panelLeft = innerWidth - parseFloat(getComputedStyle(panel).right) - panel.offsetWidth;
+  if (t.right > panelLeft) panel.style.setProperty('--panel-bottom', 'calc(' + Math.ceil(innerHeight - t.top) + 'px + var(--space-gap-stack))');
+  else panel.style.removeProperty('--panel-bottom');
+}
+new ResizeObserver(placePanel).observe(toolbarEl);
+const btnClose = document.getElementById('btn-close'), frameEl = document.querySelector('.musie-top');
+function setExpanded(on) {
+  foot.classList.toggle('expanded', on); btnSettings.setAttribute('aria-expanded', on);
+  if (!on && panel.classList.contains('open')) { panel.classList.remove('open'); render(); }
+  if (on) placePanel();
+  (on ? document.getElementById('sw-vibration') : btnSettings).focus({ preventScroll: true });
+}
+function placeFoot() { frameEl.style.setProperty('--foot-h', (foot.classList.contains('expanded') ? toolbarEl.offsetHeight : btnSettings.offsetHeight) + 'px'); layout(); }
+btnSettings.addEventListener('click', () => setExpanded(true));
+btnClose.addEventListener('click', () => setExpanded(false));
+addEventListener('keydown', e => { if (e.key === 'Escape' && foot.classList.contains('expanded')) setExpanded(false); });
+new MutationObserver(placeFoot).observe(foot, { attributes: true, attributeFilter: ['class'] });
+new ResizeObserver(placeFoot).observe(toolbarEl);
+new ResizeObserver(layout).observe(header);
+addEventListener('resize', layout);
+
+// ════════ Start ════════
+readColors();
+const recolor = () => { readColors(); draw(performance.now()); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', recolor);
+new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+initAudio();
+ctx.onstatechange = render;
+render(); placeFoot();
+Promise.all([loadArt('closed'), loadArt('open')])
+  .then(() => ['wah', 'wahwah', 'openwah'].reduce((p, a) => p.then(() => loadArt(a)).catch(() => {}), Promise.resolve()))
+  .catch(() => { note.textContent = 'Die Aufnahmen ließen sich nicht laden. Lade die Seite neu.'; note.classList.add('shown'); });
+})();
+</script>
+</body>
+</html>
