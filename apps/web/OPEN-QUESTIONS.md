@@ -10644,3 +10644,24 @@ chrome override, and Ben wants the same label everywhere.
 
 What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
 so Klangreise's English text now says something different from its German.
+
+## Kalimba — the bridge went from a still wavy line to a single arc; can the wave come back? — OPEN
+
+Where: `apps/web/public/experiments/kalimba/261106-1121/index.html` (`waveAt`,
+the bridge stroke) against
+`the-kalimba-swings:apps/web/public/experiments/kalimba/261105-2047/index.html`
+
+What I checked: the last version on the-kalimba-swings (261105-2047) drew the
+bridge as a fixed sine line, one and a half waves across the tines, in the
+tines' colour. The shape never moved. Only while shaking did terracotta run
+along it. The version on main (cd962d3, Ben, 2026-11-06) draws it as one
+circular arc, highest in the middle, one sand step darker, and nothing moves.
+
+What I did: nothing to the kalimba. Lucia, 2026-11-07: the bridge should stay
+still, as on main, but she prefers the wavy line to the arc.
+
+Why: the arc was Ben's deliberate change ("Der Steg ist ein einziger Bogen"),
+so it is his call, not something to revert in passing.
+
+What I need from Ben: arc or still wavy line? If the wave, it would come back
+without the running colour, keeping everything else on main as it is.
