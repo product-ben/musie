@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Windspiel</title>
+<!-- Musie-Experiment „Windspiel“ (CLAUDE.md Regel 10). Vorbild ist ein gestimmtes Bambus-Windspiel mit acht Metallstäben
+     (die Koshi; der Name ist eine Marke, darum heißt es hier Windspiel). Gestimmt auf die Pentatonik der Harfe und der Kalimba
+     (d e g a h): g′ a′ h′ d″ e″ g″ a″ h″, Ignis-Anordnung plus e. Nichts wird synthetisiert.
+     Aufnahmen in ../samples/: einzelne Schläge, geschnitten aus Freesound-Aufnahmen unter CC0 (gemeinfrei), siehe RECS unten.
+     Kein PostHog: ob und wie das Windspiel gemessen wird, entscheidet Ben (apps/web/OPEN-QUESTIONS.md). Nichts geht an Supabase. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+:root {
+  --bg: #FAF7F1;            /* sand-1 */
+  --surface: #FFFFFF;
+  --line: #CFCEC2;          /* sand-6 */
+  --bamboo: #E5E3D9;        /* sand-3 */
+  --bamboo-edge: #A7A89B;   /* sand-8 */
+  --tine: #2B5340;          /* green-9 */
+  --hit: #CE8865;           /* terracotta-10 */
+  --text: #62645E;          /* sand-11 */
+  --strong: #1A1F1C;        /* sand-12 */
+  --accent: #2B5340;
+  --on-accent: #FAF7F1;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --gap: 16px;
+  --radius: 16px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111412; --surface: #191D1A; --line: #3B413C; --bamboo: #2A2F2B; --bamboo-edge: #616862;
+  --tine: #8FBCA2; --hit: #E6A684; --text: #9EA59F; --strong: #EDF0EC; --accent: #8FBCA2; --on-accent: #111412; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #111412; --surface: #191D1A; --line: #3B413C; --bamboo: #2A2F2B; --bamboo-edge: #616862;
+  --tine: #8FBCA2; --hit: #E6A684; --text: #9EA59F; --strong: #EDF0EC; --accent: #8FBCA2; --on-accent: #111412; color-scheme: dark; }
+
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-ui); overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.top { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gap)); left: max(var(--gap), env(safe-area-inset-left, 0px));
+  right: max(var(--gap), env(safe-area-inset-right, 0px)); pointer-events: none; }
+h1 { margin: 0; font-family: var(--font-text); font-weight: 400; font-size: 26px; line-height: 1.25; color: var(--strong); }
+.hint { margin: 8px 0 0; max-width: 34ch; font-size: 14px; line-height: 1.45; text-wrap: pretty; }
+
+.foot { position: fixed; left: max(var(--gap), env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--gap));
+  display: flex; gap: 8px; align-items: center; }
+.chip { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+  color: var(--strong); font: 500 15px/1 var(--font-ui); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.rec-name { font-size: 14px; color: var(--text); }
+
+.start { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); transform: translateX(-50%);
+  min-height: 52px; padding: 0 28px; border-radius: 999px; border: 0; background: var(--accent); color: var(--on-accent);
+  font: 500 17px/1 var(--font-ui); cursor: pointer; white-space: nowrap; }
+.start[hidden] { display: none; }
+
+.panel { position: fixed; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + var(--gap)); right: max(var(--gap), env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--gap) + 56px); width: min(400px, calc(100% - 2 * var(--gap))); box-sizing: border-box;
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-user-select: text; user-select: text;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 22px; align-content: start; }
+.panel[hidden] { display: none; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: baseline; }
+.ctl label { font-size: 15px; color: var(--strong); }
+.ctl output { font-size: 15px; color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 6px 0; accent-color: var(--accent); min-height: 32px; }
+.ctl small, .small { grid-column: 1 / -1; font-size: 13px; line-height: 1.5; color: var(--text); text-wrap: pretty; }
+.ctl .ticks { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 12px; color: var(--text); margin-top: -4px; }
+.meter { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--bamboo); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--hit); }
+.panel .chip { justify-self: start; }
+.credits { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.credits a, .small a { color: var(--strong); }
+h2 { margin: 0 0 -10px; font: 500 13px/1.3 var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); }
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="Ein Windspiel aus Bambus mit acht Metallstäben. Schütteln lässt es klingen."></canvas>
+
+<div class="top">
+  <h1>Windspiel</h1>
+  <p class="hint" id="hint">Schüttle das Handy. Je stärker du schüttelst, desto lauter und heller klingt es. Hältst du still, klingt es aus.</p>
+</div>
+
+<button class="start" id="start" type="button">Antippen und Ton an</button>
+
+<div class="foot">
+  <button class="chip" id="settings-btn" type="button" aria-pressed="false" aria-controls="panel">Einstellungen</button>
+  <span class="rec-name" id="rec-name"></span>
+</div>
+
+<section class="panel" id="panel" hidden aria-label="Einstellungen">
+  <div class="ctl">
+    <label for="rec">Aufnahme</label>
+    <output id="rec-out" for="rec"></output>
+    <input type="range" id="rec" min="0" max="5" step="1" value="0">
+    <small id="rec-text"></small>
+    <small id="rec-stats"></small>
+  </div>
+  <button class="chip" id="scale-btn" type="button">Alle Töne nacheinander</button>
+  <div class="ctl">
+    <label for="sens">Empfindlichkeit</label>
+    <output id="sens-out" for="sens"></output>
+    <input type="range" id="sens" min="0" max="100" step="1" value="55">
+    <div class="ticks"><span>braucht kräftiges Schütteln</span><span>reagiert schon auf wenig</span></div>
+  </div>
+  <div class="ctl">
+    <label>Wind gerade</label>
+    <output id="wind-out">0 %</output>
+    <div class="meter" aria-hidden="true"><i id="wind-bar"></i></div>
+    <small id="motion-state"></small>
+  </div>
+  <p class="small">Ohne Schütteln: über das Bild wischen. Am Computer die Leertaste halten, mit den Tasten 1 bis 8 klingt jeder Stab einzeln.</p>
+  <div>
+    <h2>Woher die Töne kommen</h2>
+    <p class="small">Einzelne Schläge, geschnitten aus Aufnahmen echter Windspiele auf Freesound. Alle stehen unter CC0, sind also gemeinfrei. Wo ein Stab fehlt, übernimmt ihn sein Nachbar, etwas höher oder tiefer gestimmt.</p>
+    <ul class="credits" id="credits"></ul>
+  </div>
+</section>
+
+<script>
+(() => {
+// ════════ Töne ════════
+// Die fünf Töne der Harfe (d e g a h), wie bei einem Ignis-Windspiel von g′ aus gelegt, plus e. A = 440 Hz, wie Harfe und Kalimba.
+const TONES = [['g′', 392.00], ['a′', 440.00], ['h′', 493.88], ['d″', 587.33], ['e″', 659.26], ['g″', 783.99], ['a″', 880.00], ['h″', 987.77]];
+// Die Stäbe stehen im Kreis um den Klöppel. Nachbarn im Kreis sind keine Nachbarn in der Tonleiter, wie beim Vorbild:
+// so ergeben schnelle Schläge Sprünge statt Läufe.
+const RING = [0, 4, 1, 5, 2, 6, 3, 7];
+
+// Aus Freesound, alle CC0. Ausgewertet und geschnitten mit einem Skript: Einsatz, Tonhöhe, Abstand zum nächsten Schlag.
+const FS = {
+  653635: ['KOSHI bell AIR', 'Marcysia'],
+  653636: ['KOSHI bell WATER', 'Marcysia'],
+  378431: ['Koshi Wind Chimes, Medium', 'Kinoton'],
+  459402: ['CHIMES (KOSHI) - 1', 'SamuelGremaud'],
+  459403: ['CHIMES (KOSHI) - 2', 'SamuelGremaud'],
+  547645: ['Koshi Chimes Windbell', 'Audeption'],
+  583575: ['Fire Koshi Chimes Mini', 'tayhamm'],
+};
+const RECS = [
+  { id: 'marcysia-luft', name: 'Luft · Marcysia', text: 'Ein Windspiel in der Stimmung „Luft“ (a c e h), sehr ruhig angeschlagen und zu Hause aufgenommen. Alle Töne kommen aus demselben Instrument.' },
+  { id: 'mischung', name: 'Beste Mischung', text: 'Für jeden Ton der sauberste Schlag aus allen Aufnahmen. Die Töne stammen aus vier Instrumenten und klingen darum nicht ganz wie aus einem Guss.' },
+  { id: 'kinoton-wasser', name: 'Wasser · Kinoton', text: 'Ein Windspiel in der Stimmung „Wasser“ (a d f g), in Stereo mit zwei Mikrofonen aufgenommen: die natürlichste Aufnahme. Es klingelt darin aber fast ohne Pause, darum liegen nur wenige Stäbe frei.' },
+  { id: 'marcysia-wasser', name: 'Wasser · Marcysia', text: 'Ein Windspiel in der Stimmung „Wasser“ (a d f g), ruhig angeschlagen. Leise aufgenommen, darum ist etwas Rauschen zu hören.' },
+  { id: 'gremaud-luft', name: 'Luft · Gremaud', text: 'Ein Windspiel in der Stimmung „Luft“ (a c e h), mit einem Handrekorder aufgenommen. Wenige Schläge stehen frei, darum klingen manche Töne kurz.' },
+  { id: 'audeption-erde', name: 'Erde · Audeption', text: 'Ein Windspiel in der Stimmung „Erde“ (c e f g). Die Aufnahme wurde schon beim Hochladen mit Equalizer und Kompressor bearbeitet.' },
+];
+const MANIFEST = {"marcysia-luft":{"clips":[{"o":0.1,"d":2.393,"hz":431.7,"g":1.413,"from":"653635 58.023 s"},{"o":2.743,"d":4.083,"hz":511.5,"g":0.569,"from":"653635 116.208 s"},{"o":7.076,"d":4.504,"hz":511.5,"g":0.731,"from":"653635 36.336 s"},{"o":11.83,"d":0.7645,"hz":511.5,"g":0.816,"from":"653635 0.200 s"},{"o":12.8445,"d":4.504,"hz":644.3,"g":0.576,"from":"653635 37.029 s"},{"o":17.5985,"d":1.7835,"hz":644.3,"g":0.521,"from":"653635 56.197 s"},{"o":19.632,"d":4.504,"hz":872.4,"g":0.691,"from":"653635 67.320 s"},{"o":24.386,"d":0.679,"hz":872.4,"g":0.682,"from":"653635 28.895 s"},{"o":25.315,"d":1.111,"hz":872.4,"g":0.558,"from":"653635 78.211 s"},{"o":26.676,"d":4.504,"hz":1041.4,"g":0.821,"from":"653635 36.123 s"},{"o":31.43,"d":3.7785,"hz":1041.4,"g":0.631,"from":"653635 45.862 s"},{"o":35.4585,"d":4.459,"hz":1041.4,"g":0.812,"from":"653635 115.839 s"}],"notes":[[0,1,2],[1,2,0],[1,2,3],[1,2,4],[4,5],[6,7,8],[9,10,6],[9,10,11]]},"marcysia-wasser":{"clips":[{"o":0.1,"d":4.504,"hz":769.4,"g":0.483,"from":"653636 23.285 s"},{"o":4.854,"d":0.652,"hz":871,"g":0.45,"from":"653636 6.209 s"},{"o":5.756,"d":3.99,"hz":871,"g":0.998,"from":"653636 27.215 s"},{"o":9.996,"d":3.0965,"hz":579.4,"g":0.515,"from":"653636 77.785 s"},{"o":13.3425,"d":2.047,"hz":579.4,"g":0.496,"from":"653636 81.928 s"},{"o":15.6395,"d":1.245,"hz":579.4,"g":3.108,"from":"653636 18.686 s"},{"o":17.1345,"d":1.542,"hz":682.9,"g":0.619,"from":"653636 98.892 s"},{"o":18.9265,"d":0.7815,"hz":769.4,"g":0.473,"from":"653636 60.441 s"},{"o":19.958,"d":4.504,"hz":769.4,"g":0.574,"from":"653636 22.622 s"},{"o":24.712,"d":1.4435,"hz":871,"g":1.164,"from":"653636 56.325 s"},{"o":26.4055,"d":2.3255,"hz":1172.6,"g":0.491,"from":"653636 104.889 s"}],"notes":[[0,1,2],[3,4,5],[3,4,5],[3,4,6],[0,7,8],[0,1,2],[1,2,9],[1,2,10]]},"kinoton-wasser":{"clips":[{"o":0.1,"d":4.504,"hz":429.1,"g":0.68,"from":"378431 1.145 s"},{"o":4.854,"d":2.842,"hz":429.1,"g":0.818,"from":"378431 8.428 s"},{"o":7.946,"d":2.141,"hz":429.1,"g":0.583,"from":"378431 15.825 s"},{"o":10.337,"d":2.543,"hz":1173.7,"g":0.502,"from":"378431 18.000 s"},{"o":13.13,"d":0.7575,"hz":1173.7,"g":0.39,"from":"378431 37.419 s"},{"o":14.1375,"d":0.758,"hz":1173.7,"g":0.539,"from":"378431 40.203 s"},{"o":15.1455,"d":1.8435,"hz":1402.6,"g":0.308,"from":"378431 70.725 s"},{"o":17.239,"d":4.504,"hz":1402.6,"g":0.326,"from":"378431 72.531 s"},{"o":21.993,"d":1.829,"hz":1402.6,"g":0.322,"from":"378431 68.847 s"},{"o":24.072,"d":3.659,"hz":1772.1,"g":0.494,"from":"378431 21.412 s"},{"o":27.981,"d":3.0035,"hz":1772.1,"g":0.461,"from":"378431 14.960 s"}],"notes":[[0,1,2],[0,1,2],[0,1,2],[3,4,5],[6,7,8],[9,6,10],[3,4,5],[3,4,5]]},"gremaud-luft":{"clips":[{"o":0.1,"d":0.604,"hz":431.7,"g":0.424,"from":"459403 8.197 s"},{"o":0.954,"d":0.604,"hz":512.6,"g":1.873,"from":"459403 7.455 s"},{"o":1.808,"d":1.4135,"hz":644,"g":0.513,"from":"459402 28.666 s"},{"o":3.4715,"d":0.729,"hz":644,"g":0.513,"from":"459403 8.015 s"},{"o":4.4505,"d":0.692,"hz":644,"g":0.796,"from":"459402 20.593 s"},{"o":5.3925,"d":1.924,"hz":871.8,"g":0.791,"from":"459402 35.104 s"},{"o":7.5665,"d":1.581,"hz":871.8,"g":0.61,"from":"459402 33.496 s"},{"o":9.3975,"d":0.604,"hz":871.8,"g":0.53,"from":"459402 30.202 s"},{"o":10.2515,"d":2.3035,"hz":1048.3,"g":0.583,"from":"459402 25.934 s"},{"o":12.805,"d":2.918,"hz":986.4,"g":0.523,"from":"459403 38.689 s"}],"notes":[[0,1],[0,1],[1,0],[2,3,1],[2,3,4],[5,6,7],[5,8,9],[8,5,9]]},"audeption-erde":{"clips":[{"o":0.1,"d":1.7477,"hz":772.9,"g":0.811,"from":"547645 11.614 s"},{"o":2.0977,"d":4.504,"hz":686.3,"g":0.517,"from":"547645 20.924 s"},{"o":6.8517,"d":0.8007,"hz":1042.5,"g":0.428,"from":"547645 10.299 s"},{"o":7.9025,"d":1.9251,"hz":1042.5,"g":0.664,"from":"547645 11.437 s"},{"o":10.0775,"d":0.8427,"hz":1042.5,"g":0.503,"from":"547645 15.773 s"},{"o":11.1703,"d":1.2562,"hz":646.4,"g":0.475,"from":"547645 9.851 s"},{"o":12.6764,"d":0.8867,"hz":646.4,"g":0.555,"from":"547645 17.741 s"},{"o":13.8132,"d":0.7127,"hz":646.4,"g":0.402,"from":"547645 18.658 s"},{"o":14.7759,"d":1.7516,"hz":686.3,"g":0.811,"from":"547645 11.613 s"}],"notes":[[0,1],[2,3,4],[5,6,7],[1,5,8],[1,8,5],[0,1],[2,3,4],[2,3,4]]},"mischung":{"clips":[{"o":0.1,"d":4.504,"hz":429.1,"g":0.68,"from":"378431 1.145 s"},{"o":4.854,"d":2.842,"hz":429.1,"g":0.818,"from":"378431 8.428 s"},{"o":7.946,"d":2.141,"hz":429.1,"g":0.583,"from":"378431 15.825 s"},{"o":10.337,"d":4.083,"hz":511.5,"g":0.569,"from":"653635 116.208 s"},{"o":14.67,"d":3.0965,"hz":579.4,"g":0.515,"from":"653636 77.785 s"},{"o":18.0165,"d":4.504,"hz":511.5,"g":0.731,"from":"653635 36.336 s"},{"o":22.7705,"d":4.504,"hz":769.4,"g":0.483,"from":"653636 23.285 s"},{"o":27.5245,"d":0.7815,"hz":769.4,"g":0.473,"from":"653636 60.441 s"},{"o":28.556,"d":4.504,"hz":769.4,"g":0.574,"from":"653636 22.622 s"},{"o":33.31,"d":1.924,"hz":871.8,"g":0.791,"from":"459402 35.104 s"},{"o":35.484,"d":0.652,"hz":871,"g":0.45,"from":"653636 6.209 s"},{"o":36.386,"d":3.99,"hz":871,"g":0.998,"from":"653636 27.215 s"},{"o":40.626,"d":4.504,"hz":1041.4,"g":0.821,"from":"653635 36.123 s"},{"o":45.38,"d":2.3035,"hz":1048.3,"g":0.583,"from":"459402 25.934 s"},{"o":47.9335,"d":2.543,"hz":1173.7,"g":0.502,"from":"378431 18.000 s"}],"notes":[[0,1,2],[0,1,2],[0,1,3],[3,4,5],[6,7,8],[9,6,10],[9,10,11],[12,13,14]]}};
+
+// ════════ Zustand und Einstellungen ════════
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+let recIdx = Math.max(0, RECS.findIndex(r => r.id === store.get('windspiel-aufnahme')));
+let sens = +(store.get('windspiel-empfindlichkeit') ?? 55); if (!(sens >= 0 && sens <= 100)) sens = 55;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const $ = id => document.getElementById(id);
+
+// ════════ Audio ════════
+let ctx, master, unlocking = false;
+const sets = {}, loading = {}, voices = [];
+function initAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.knee.value = 10; comp.ratio.value = 2.5; comp.attack.value = 0.003; comp.release.value = 0.3;
+  const makeup = ctx.createGain(); makeup.gain.value = 1.5;
+  const limit = ctx.createDynamicsCompressor();
+  limit.threshold.value = -2; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  master = ctx.createGain(); master.gain.value = 1;
+  master.connect(comp); comp.connect(makeup); makeup.connect(limit); limit.connect(ctx.destination);
+}
+initAudio();
+const running = () => ctx.state === 'running';
+// Safari schaltet den Ton nur in touchend, click, mousedown oder keydown frei (wie Harfe und Kalimba).
+function unlockAudio() {
+  if (running() || unlocking) return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; render(); }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+}
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+
+const decode = ab => new Promise((ok, no) => { const p = ctx.decodeAudioData(ab, ok, no); if (p && p.then) p.then(ok, no); });
+function loadSet(id) {
+  return loading[id] ||= fetch(`../samples/${id}.mp3`).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(decode).then(buf => {
+    // Der MP3-Encoder legt am Anfang etwas Stille vor. Der erste Schlag beginnt in der Datei bei 0,1 s: so weit liegt alles später.
+    const d = buf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < 1e-3) i++;
+    const shift = clamp(i / buf.sampleRate - 0.1 - 0.002, 0, 0.08);
+    sets[id] = { buf, shift, last: TONES.map(() => -1) };
+    render();
+    return sets[id];
+  }).catch(e => { delete loading[id]; throw e; });
+}
+
+// Ein Schlag: welcher Ton, wie stark (0–1). Weicher Schlag: leiser und dunkler, wie beim echten Klöppel.
+function strike(tone, vel) {
+  const rec = RECS[recIdx], set = sets[rec.id], man = MANIFEST[rec.id];
+  hitVisual(tone, vel);
+  if (!set || !running()) return;
+  const choices = man.notes[tone]; if (!choices.length) return;
+  let pick = choices[Math.floor(Math.random() * choices.length)];
+  if (choices.length > 1 && pick === set.last[tone]) pick = choices[(choices.indexOf(pick) + 1) % choices.length];
+  set.last[tone] = pick;
+  const clip = man.clips[pick], rate = TONES[tone][1] / clip.hz, len = clip.d / rate, now = ctx.currentTime + 0.005;
+  // derselbe Stab, noch klingend: der neue Schlag übernimmt ihn (kurz ausblenden statt doppelt klingen)
+  for (const v of voices) if (v.tone === tone && !v.done) { v.g.gain.cancelScheduledValues(now); v.g.gain.setTargetAtTime(0, now, 0.02); v.done = true; try { v.src.stop(now + 0.15); } catch (e) {} }
+  const src = ctx.createBufferSource(); src.buffer = set.buf; src.playbackRate.value = rate;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4; lp.frequency.value = 1400 + 16000 * vel * vel;
+  const g = ctx.createGain(), peak = clip.g * 0.55 * Math.pow(vel, 1.6);
+  g.gain.setValueAtTime(peak, now);
+  g.gain.setValueAtTime(peak, now + len * 0.45);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak * 0.001, 1e-5), now + len);   // die Aufnahme endet vor dem Ausklingen: sanft zu Ende führen
+  src.connect(lp); lp.connect(g); g.connect(master);
+  src.start(now, clip.o + set.shift, clip.d);
+  const v = { src, g, tone, done: false, end: now + len };
+  src.onended = () => { const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1); try { g.disconnect(); } catch (e) {} };
+  voices.push(v);
+  // höchstens 16 Stimmen: die älteste blendet aus
+  const live = voices.filter(x => !x.done); if (live.length > 16) { const o = live[0]; o.g.gain.setTargetAtTime(0, now, 0.04); o.done = true; try { o.src.stop(now + 0.3); } catch (e) {} }
+}
+
+// ════════ Wind: Schütteln, Wischen, Leertaste ════════
+let shake = 0, lateral = 0, keyWind = 0, dragWind = 0, wind = 0;
+let motionState = 'idle';   // idle | asking | on | denied | none
+const needsPermission = typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
+let gx = null, gy = null, gz = null;
+function onMotion(e) {
+  // Totzone hängt an der Empfindlichkeit: ein gehaltenes Handy ruckt bis etwa 1–2 m/s² und dreht sich bis etwa 40 °/s.
+  const s = sens / 100, dzA = 2.4 - 1.9 * s, spanA = 13 - 8 * s, dzR = 70 - 50 * s, spanR = 380 - 230 * s;
+  let as = 0, ax = 0;
+  const a = e.acceleration;
+  if (a && a.x !== null) { as = Math.hypot(a.x || 0, a.y || 0, a.z || 0); ax = a.x || 0; }
+  else if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.x !== null) {   // ohne Lagesensor: Schwerkraft herausmitteln
+    const g = e.accelerationIncludingGravity;
+    if (gx === null) { gx = g.x; gy = g.y; gz = g.z; }
+    gx += (g.x - gx) * 0.08; gy += (g.y - gy) * 0.08; gz += (g.z - gz) * 0.08;
+    ax = g.x - gx; as = Math.hypot(ax, g.y - gy, g.z - gz);
+  }
+  let rs = 0; const r = e.rotationRate;
+  if (r && (r.alpha !== null || r.beta !== null)) rs = Math.max(Math.abs(r.alpha || 0), Math.abs(r.beta || 0), Math.abs(r.gamma || 0));
+  shake = Math.max(shake, clamp(Math.max((as - dzA) / spanA, (rs - dzR) / spanR), 0, 1));
+  lateral += (clamp(ax / 8, -1, 1) - lateral) * 0.4;
+  if (motionState !== 'on') { motionState = 'on'; render(); }
+}
+function startMotion() {
+  if (typeof DeviceMotionEvent === 'undefined') { motionState = 'none'; render(); return; }
+  if (needsPermission) {
+    if (motionState !== 'idle') return;
+    motionState = 'asking';
+    DeviceMotionEvent.requestPermission().then(p => {
+      if (p === 'granted') addEventListener('devicemotion', onMotion); else motionState = 'denied';
+      if (motionState === 'asking') motionState = 'idle-granted';
+      render();
+    }, () => { motionState = 'idle'; render(); });
+  } else { addEventListener('devicemotion', onMotion); }
+}
+if (!needsPermission) startMotion();
+
+// Wischen: die Geschwindigkeit des Fingers ist der Wind
+let lastPt = null;
+const scene = $('scene');
+scene.addEventListener('pointerdown', e => { lastPt = { x: e.clientX, y: e.clientY, t: performance.now() }; scene.setPointerCapture(e.pointerId); });
+scene.addEventListener('pointermove', e => {
+  if (!lastPt) return; const t = performance.now(), dt = Math.max(8, t - lastPt.t);
+  const v = Math.hypot(e.clientX - lastPt.x, e.clientY - lastPt.y) / dt * 1000;   // px/s
+  dragWind = Math.max(dragWind, clamp((v - 120) / 2200, 0, 1));
+  lateral += (clamp((e.clientX - lastPt.x) / dt * 0.25, -1, 1) - lateral) * 0.3;
+  lastPt = { x: e.clientX, y: e.clientY, t };
+});
+['pointerup', 'pointercancel'].forEach(t => scene.addEventListener(t, () => { lastPt = null; }));
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'BUTTON' && (e.code === 'Space' || e.key === 'Enter')) return;   // Knöpfe bedienen sich selbst
+  if (e.code === 'Space') { keyWind = e.shiftKey ? 1 : 0.55; e.preventDefault(); }
+  const n = parseInt(e.key, 10); if (n >= 1 && n <= 8 && !e.repeat) strike(n - 1, 0.75);
+});
+addEventListener('keyup', e => { if (e.code === 'Space') keyWind = 0; });
+
+// ════════ Klöppel ════════
+// Der Wind treibt den Klöppel. Mehr Wind: er schlägt öfter an, und härter. Er wandert im Kreis meist zum Nachbarstab.
+let clapper = 0, lastTone = -1;
+function stepClapper() {
+  const r = Math.random();
+  const step = r < 0.55 ? 1 : r < 0.8 ? 2 : r < 0.9 ? 3 : 4;
+  clapper = (clapper + (Math.random() < 0.5 ? step : RING.length - step)) % RING.length;
+  let tone = RING[clapper];
+  if (tone === lastTone) { clapper = (clapper + 1) % RING.length; tone = RING[clapper]; }
+  return lastTone = tone;
+}
+
+// ════════ Bild ════════
+const g2 = scene.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; scene.width = W * DPR; scene.height = H * DPR; }
+addEventListener('resize', resize); resize();
+const hits = TONES.map(() => ({ t: -1e9, v: 0 }));
+function hitVisual(tone, vel) { hits[tone].t = performance.now(); hits[tone].v = vel; }
+let ang = 0, angV = 0, pend = 0, pendV = 0;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function draw(now, dt) {
+  // Röhre als Pendel, vom Wind gestoßen; der Anhänger unten pendelt nach
+  const push = lateral * 30 + (Math.random() - 0.5) * wind * 60;
+  angV += (-14 * ang - 2.4 * angV + push) * dt; ang += angV * dt; ang = clamp(ang, -0.5, 0.5);
+  pendV += (-9 * (pend - ang) - 1.6 * pendV + (Math.random() - 0.5) * wind * 40) * dt; pend += pendV * dt; pend = clamp(pend, -0.8, 0.8);
+  const a = reduceMotion ? ang * 0.3 : ang, p = reduceMotion ? pend * 0.3 : pend;
+
+  g2.setTransform(DPR, 0, 0, DPR, 0, 0); g2.clearRect(0, 0, W, H);
+  const tw = clamp(Math.min(W * 0.2, H * 0.11), 56, 110), th = tw * 3.1;
+  const ax = W / 2, ay = Math.max(H * 0.16, 110), cord = H * 0.07;
+  const c = { line: css('--bamboo-edge'), bamboo: css('--bamboo'), tine: css('--tine'), hit: css('--hit'), bg: css('--bg') };
+  g2.save(); g2.translate(ax, ay); g2.rotate(a);
+  g2.strokeStyle = c.line; g2.lineWidth = 1.5;
+  g2.beginPath(); g2.moveTo(0, -ay); g2.lineTo(0, cord); g2.stroke();                       // Aufhängung
+  const top = cord, bottom = cord + th;
+  // Bambusröhre, vorne aufgeschnitten gedacht: die Stäbe stehen sichtbar darin
+  g2.fillStyle = c.bamboo; g2.strokeStyle = c.line; g2.lineWidth = 1.5;
+  roundRect(-tw / 2, top, tw, th, tw * 0.12); g2.fill(); g2.stroke();
+  [0.33, 0.66].forEach(k => { g2.beginPath(); g2.moveTo(-tw / 2, top + th * k); g2.lineTo(tw / 2, top + th * k); g2.stroke(); });
+  // acht Stäbe im Kreis, von unten nach oben; tiefe Töne lang. Hinten liegende blasser.
+  const baseY = bottom - th * 0.08, r = tw * 0.32;
+  const order = RING.map((tone, i) => ({ tone, phi: i / RING.length * Math.PI * 2 + 0.3 })).sort((m, n) => Math.sin(m.phi) - Math.sin(n.phi));
+  for (const { tone, phi } of order) {
+    const x = Math.cos(phi) * r, depth = (Math.sin(phi) + 1) / 2, len = th * (0.52 - 0.26 * tone / 7);
+    const h = hits[tone], k = Math.max(0, 1 - (now - h.t) / 900) * h.v;
+    g2.globalAlpha = 0.45 + 0.55 * depth; g2.lineCap = 'round';
+    g2.strokeStyle = c.tine; g2.lineWidth = 3 + 2 * depth; g2.beginPath(); g2.moveTo(x, baseY); g2.lineTo(x, baseY - len); g2.stroke();
+    if (k > 0.01) { g2.globalAlpha = Math.min(1, k * 1.4); g2.strokeStyle = c.hit; g2.lineWidth = 3 + 2 * depth + 4 * k; g2.beginPath(); g2.moveTo(x, baseY); g2.lineTo(x, baseY - len); g2.stroke(); }
+  }
+  g2.globalAlpha = 1;
+  // Klöppel an seiner Schnur, beim zuletzt getroffenen Stab
+  const phiC = clapper / RING.length * Math.PI * 2 + 0.3, cx = Math.cos(phiC) * r * 0.62, cy = baseY - th * 0.3;
+  g2.strokeStyle = c.line; g2.lineWidth = 1; g2.beginPath(); g2.moveTo(0, top); g2.lineTo(cx, cy); g2.stroke();
+  g2.fillStyle = c.line; g2.beginPath(); g2.arc(cx, cy, tw * 0.09, 0, Math.PI * 2); g2.fill();
+  // Schnur aus der Röhre nach unten zum Anhänger, der den Wind fängt
+  g2.translate(0, bottom); g2.rotate(p - a);
+  const drop = H * 0.12;
+  g2.strokeStyle = c.line; g2.lineWidth = 1; g2.beginPath(); g2.moveTo(0, 0); g2.lineTo(0, drop); g2.stroke();
+  g2.fillStyle = c.tine; g2.globalAlpha = 0.85; g2.beginPath();
+  g2.moveTo(0, drop); g2.quadraticCurveTo(tw * 0.32, drop + tw * 0.35, 0, drop + tw * 0.75); g2.quadraticCurveTo(-tw * 0.32, drop + tw * 0.35, 0, drop); g2.fill();
+  g2.restore(); g2.globalAlpha = 1;
+}
+function roundRect(x, y, w, h, r) { g2.beginPath(); g2.moveTo(x + r, y); g2.arcTo(x + w, y, x + w, y + h, r); g2.arcTo(x + w, y + h, x, y + h, r); g2.arcTo(x, y + h, x, y, r); g2.arcTo(x, y, x + w, y, r); g2.closePath(); }
+
+// ════════ Takt ════════
+let lastT = performance.now(), scaleQueue = [];
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  const target = Math.max(shake, keyWind, dragWind);
+  // schnell an, langsam aus: der Wind legt sich, er bricht nicht ab
+  wind += (target - wind) * (target > wind ? 1 - Math.exp(-dt / 0.04) : 1 - Math.exp(-dt / 0.45));
+  if (wind < 0.002) wind = 0;
+  shake *= Math.exp(-dt / 0.12); dragWind *= Math.exp(-dt / 0.15); lateral *= Math.exp(-dt / 0.3);
+  // Anschläge pro Sekunde: bei leichtem Wind einer alle paar Sekunden, bei Sturm ein dichtes Klingeln
+  if (wind > 0.02) {
+    const rate = 0.4 + 15 * Math.pow(wind, 1.4);
+    if (Math.random() < 1 - Math.exp(-rate * dt)) strike(stepClapper(), clamp(wind * (0.55 + 0.6 * Math.random()), 0.06, 1));
+  }
+  while (scaleQueue.length && scaleQueue[0].at <= now) strike(scaleQueue.shift().tone, 0.7);
+  draw(now, dt);
+  if (now - lastUi > 120) { lastUi = now; $('wind-out').value = `${Math.round(wind * 100)} %`; $('wind-bar').style.width = `${wind * 100}%`; }
+  requestAnimationFrame(frame);
+}
+let lastUi = 0;
+requestAnimationFrame(frame);
+
+// ════════ Oberfläche ════════
+const fmt = x => x.toLocaleString('de-DE', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+function stats(id) {
+  const m = MANIFEST[id]; let maxShift = 0, octave = 0;
+  m.notes.forEach((list, t) => {
+    const shifts = list.map(i => 12 * Math.log2(TONES[t][1] / m.clips[i].hz));
+    if (shifts.some(s => Math.abs(s) > 6)) octave++;
+    shifts.filter(s => Math.abs(s) <= 6).forEach(s => maxShift = Math.max(maxShift, Math.abs(s)));
+  });
+  const srcs = [...new Set(m.clips.map(c => c.from.split(' ')[0]))];
+  return { clips: m.clips.length, maxShift, octave, srcs };
+}
+function render() {
+  const rec = RECS[recIdx], st = stats(rec.id), ready = !!sets[rec.id];
+  $('rec').value = recIdx; $('rec-out').value = `${recIdx + 1} von ${RECS.length} · ${rec.name}`;
+  $('rec-name').textContent = ready ? rec.name : `${rec.name} lädt …`;
+  $('rec-text').textContent = rec.text;
+  $('rec-stats').textContent = `8 Töne aus ${st.clips} Schlägen, je Ton bis zu drei zum Abwechseln. Höchstens ${fmt(st.maxShift)} Halbtöne umgestimmt`
+    + (st.octave ? `; ${st.octave === 1 ? 'ein Ton kommt' : `${['', '', 'zwei', 'drei', 'vier'][st.octave] || st.octave} Töne kommen`} aus der Oktave darüber und ${st.octave === 1 ? 'klingt' : 'klingen'} darum weicher und länger.` : '.');
+  $('credits').innerHTML = st.srcs.map(f => `<li><a href="https://freesound.org/s/${f}/" target="_blank" rel="noopener">„${FS[f][0]}“</a> von ${FS[f][1]}, CC0</li>`).join('');
+  $('sens-out').value = `${sens} %`;
+  $('motion-state').textContent = {
+    idle: needsPermission ? 'Nach dem Antippen fragt das Handy, ob die Seite die Bewegung lesen darf.' : 'Noch keine Bewegung gemessen.',
+    'idle-granted': 'Bewegung erlaubt. Schüttle das Handy.', asking: 'Das Handy fragt nach der Erlaubnis …',
+    on: 'Bewegung wird gemessen.', denied: 'Bewegung nicht erlaubt. Wischen geht trotzdem; erlauben lässt es sich in den Einstellungen des Browsers.',
+    none: 'Dieses Gerät meldet keine Bewegung. Wischen oder Leertaste halten.',
+  }[motionState] || '';
+  const needsTap = !running() || (needsPermission && motionState === 'idle');
+  $('start').hidden = !needsTap;
+  $('start').textContent = running() ? 'Antippen und Schütteln erlauben' : 'Antippen und Ton an';
+}
+$('start').addEventListener('click', () => { unlockAudio(); startMotion(); setTimeout(render, 50); });
+$('settings-btn').addEventListener('click', () => {
+  const open = $('panel').hidden; $('panel').hidden = !open; $('settings-btn').setAttribute('aria-pressed', String(open));
+  if (open) RECS.forEach(r => loadSet(r.id).catch(() => {}));   // die anderen Aufnahmen erst laden, wenn jemand vergleichen will
+});
+$('rec').addEventListener('input', e => {
+  recIdx = +e.target.value; store.set('windspiel-aufnahme', RECS[recIdx].id);
+  for (const v of voices) if (!v.done) { v.g.gain.setTargetAtTime(0, ctx.currentTime, 0.08); v.done = true; }
+  loadSet(RECS[recIdx].id).catch(() => { $('rec-name').textContent = 'Aufnahme konnte nicht laden'; });
+  render();
+});
+$('sens').value = sens;
+$('sens').addEventListener('input', e => { sens = +e.target.value; store.set('windspiel-empfindlichkeit', String(sens)); render(); });
+$('scale-btn').addEventListener('click', () => {
+  const t0 = performance.now() + 80; scaleQueue = TONES.map((_, i) => ({ tone: i, at: t0 + i * 420 }));
+});
+// iOS fragt nach der Bewegung nur innerhalb einer Geste
+['touchend', 'click'].forEach(t => addEventListener(t, () => { if (needsPermission && motionState === 'idle') startMotion(); }, { capture: true, passive: true }));
+ctx.onstatechange = render;
+
+render();
+loadSet(RECS[recIdx].id).catch(() => { $('rec-name').textContent = 'Aufnahme konnte nicht laden'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Windspiel</title>
+<!-- Musie-Experiment „Windspiel“ v2 (CLAUDE.md Regel 10). Vorbild ist ein gestimmtes Bambus-Windspiel mit acht Metallstäben
+     (die Koshi; der Name ist eine Marke, darum heißt es hier Windspiel): ein geschlossener Zylinder aus Bambus an einer Schnur,
+     innen ein Klöppel, dessen Schnur unten herauskommt und in einem Blatt endet, das den Wind fängt.
+     Gestimmt auf die Pentatonik der Harfe und der Kalimba (d e g a h): g′ a′ h′ d″ e″ g″ a″ h″. Nichts wird synthetisiert.
+     Klang: „Wasser · Kinoton“, gewählt nach dem Vergleich in /experiments/windspiel/261106-2248/. Schläge geschnitten aus
+     „Koshi Wind Chimes, Medium“ von Kinoton, https://freesound.org/s/378431/ (CC0, gemeinfrei).
+     Bewegung: eine Kette aus Punkten mit Schwerkraft (Verlet). Ein Ton entsteht, wenn der Klöppel innen an einen Stab stößt.
+     Vibration wie im Vibrations-Spielplatz /experiments/vibration/261105-2053/ herausgefunden.
+     Kein PostHog: ob und wie das Windspiel gemessen wird, entscheidet Ben (apps/web/OPEN-QUESTIONS.md). Nichts geht an Supabase. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+/* Musie-Palette aus packages/design-system/tokens/musy-foundations.css, je Theme aufgelöst */
+:root {
+  --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-3: #E5E3D9; --sand-6: #CFCEC2; --sand-8: #A7A89B; --sand-9: #8A8C82; --sand-11: #62645E; --sand-12: #1A1F1C;
+  --green-6: #A3AB9B; --green-7: #8C9785; --green-8: #768372; --green-9: #2B5340; --green-10: #22442F;
+  --terracotta-3: #F4DFD2; --terracotta-4: #F0D5C4; --terracotta-5: #ECCBB7; --terracotta-6: #E8C1AA; --terracotta-7: #E3B294; --terracotta-8: #DEA37F; --terracotta-9: #D99673;
+  --surface: #FFFFFF; --on-accent: #FAF7F1;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --gap: 16px; --radius: 16px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-6: #3B413C; --sand-8: #616862; --sand-9: #79807A; --sand-11: #9EA59F; --sand-12: #EDF0EC;
+  --green-6: #264633; --green-7: #325A42; --green-8: #427355; --green-9: #5E9478; --green-10: #6FA688;
+  --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673;
+  --surface: #191D1A; --on-accent: #111412; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-6: #3B413C; --sand-8: #616862; --sand-9: #79807A; --sand-11: #9EA59F; --sand-12: #EDF0EC;
+  --green-6: #264633; --green-7: #325A42; --green-8: #427355; --green-9: #5E9478; --green-10: #6FA688;
+  --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673;
+  --surface: #191D1A; --on-accent: #111412; color-scheme: dark; }
+
+html, body { margin: 0; height: 100%; }
+body { background: var(--sand-1); color: var(--sand-11); font-family: var(--font-ui); overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--green-9); outline-offset: 2px; }
+
+.top { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gap)); left: max(var(--gap), env(safe-area-inset-left, 0px));
+  right: max(var(--gap), env(safe-area-inset-right, 0px)); pointer-events: none; }
+h1 { margin: 0; font-family: var(--font-text); font-weight: 400; font-size: 26px; line-height: 1.25; color: var(--sand-12); }
+.hint { margin: 8px 0 0; max-width: 17ch; font-size: 14px; line-height: 1.45; text-wrap: pretty; }
+
+.foot { position: fixed; left: max(var(--gap), env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--gap)); }
+.chip { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--sand-6); background: var(--surface);
+  color: var(--sand-12); font: 500 15px/1 var(--font-ui); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--green-9); border-color: var(--green-9); color: var(--on-accent); }
+
+.start { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); transform: translateX(-50%);
+  min-height: 52px; padding: 0 28px; border-radius: 999px; border: 0; background: var(--green-9); color: var(--on-accent);
+  font: 500 17px/1 var(--font-ui); cursor: pointer; white-space: nowrap; }
+.start[hidden] { display: none; }
+
+.panel { position: fixed; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + var(--gap)); right: max(var(--gap), env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--gap) + 56px); width: min(400px, calc(100% - 2 * var(--gap))); box-sizing: border-box;
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-user-select: text; user-select: text;
+  background: var(--surface); border: 1px solid var(--sand-6); border-radius: var(--radius); padding: 20px; display: grid; gap: 22px; align-content: start; }
+.panel[hidden] { display: none; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: baseline; }
+.ctl label, .check { font-size: 15px; color: var(--sand-12); }
+.ctl output { font-size: 15px; color: var(--sand-11); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 6px 0; accent-color: var(--green-9); min-height: 32px; }
+.ctl small, .small { grid-column: 1 / -1; font-size: 13px; line-height: 1.5; color: var(--sand-11); text-wrap: pretty; margin: 0; }
+.ticks { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--sand-11); margin-top: -4px; }
+.check { display: flex; gap: 12px; align-items: flex-start; }
+.check input { accent-color: var(--green-9); width: 20px; height: 20px; margin: 0; flex: 0 0 auto; }
+.check span { display: grid; gap: 4px; }
+.panel .chip { justify-self: start; }
+.small a { color: var(--sand-12); }
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="Ein Windspiel aus Bambus an einer Schnur. Schütteln oder darüber streichen lässt es klingen."></canvas>
+
+<div class="top">
+  <h1>Windspiel</h1>
+  <p class="hint">Schüttle das Handy oder streiche über das Windspiel.</p>
+</div>
+
+<button class="start" id="start" type="button">Antippen und Ton an</button>
+
+<div class="foot">
+  <button class="chip" id="settings-btn" type="button" aria-pressed="false" aria-controls="panel">Einstellungen</button>
+</div>
+
+<section class="panel" id="panel" hidden aria-label="Einstellungen">
+  <div class="ctl">
+    <label for="sens">Empfindlichkeit</label>
+    <output id="sens-out" for="sens"></output>
+    <input type="range" id="sens" min="0" max="100" step="1">
+    <div class="ticks"><span>braucht kräftiges Schütteln</span><span>reagiert schon auf wenig</span></div>
+  </div>
+  <div class="ctl">
+    <label for="soft">Weicher</label>
+    <output id="soft-out" for="soft"></output>
+    <input type="range" id="soft" min="0" max="100" step="1">
+    <div class="ticks"><span>klar, wie aufgenommen</span><span>weich und gedämpft</span></div>
+  </div>
+  <label class="check"><input type="checkbox" id="vib"><span>Vibration<small class="small" id="vib-note"></small></span></label>
+  <button class="chip" id="scale-btn" type="button">Alle Töne nacheinander</button>
+  <p class="small" id="motion-state"></p>
+  <p class="small">Am Computer: Leertaste halten schüttelt, die Pfeiltasten stoßen an, mit den Tasten 1 bis 8 klingt jeder Stab einzeln.</p>
+  <p class="small">Klang: einzelne Schläge aus <a href="https://freesound.org/s/378431/" target="_blank" rel="noopener">„Koshi Wind Chimes, Medium“</a> von Kinoton, CC0 (gemeinfrei). Drei Töne kommen aus der Oktave darüber und klingen darum etwas weicher und länger.</p>
+</section>
+
+<script>
+(() => {
+// ════════ Töne ════════
+// Die fünf Töne der Harfe (d e g a h), von g′ aus gelegt. A = 440 Hz, wie Harfe und Kalimba.
+const TONES = [['g′', 392.00], ['a′', 440.00], ['h′', 493.88], ['d″', 587.33], ['e″', 659.26], ['g″', 783.99], ['a″', 880.00], ['h″', 987.77]];
+// Die Stäbe stehen im Kreis um den Klöppel; Nachbarn im Kreis sind keine Nachbarn in der Tonleiter, wie beim Vorbild.
+const RING = [0, 4, 1, 5, 2, 6, 3, 7];
+const SET = 'kinoton-wasser';
+const MANIFEST = {"kinoton-wasser":{"clips":[{"o":0.1,"d":4.504,"hz":429.1,"g":0.68,"from":"378431 1.145 s"},{"o":4.854,"d":2.842,"hz":429.1,"g":0.818,"from":"378431 8.428 s"},{"o":7.946,"d":2.141,"hz":429.1,"g":0.583,"from":"378431 15.825 s"},{"o":10.337,"d":2.543,"hz":1173.7,"g":0.502,"from":"378431 18.000 s"},{"o":13.13,"d":0.7575,"hz":1173.7,"g":0.39,"from":"378431 37.419 s"},{"o":14.1375,"d":0.758,"hz":1173.7,"g":0.539,"from":"378431 40.203 s"},{"o":15.1455,"d":1.8435,"hz":1402.6,"g":0.308,"from":"378431 70.725 s"},{"o":17.239,"d":4.504,"hz":1402.6,"g":0.326,"from":"378431 72.531 s"},{"o":21.993,"d":1.829,"hz":1402.6,"g":0.322,"from":"378431 68.847 s"},{"o":24.072,"d":3.659,"hz":1772.1,"g":0.494,"from":"378431 21.412 s"},{"o":27.981,"d":3.0035,"hz":1772.1,"g":0.461,"from":"378431 14.960 s"}],"notes":[[0,1,2],[0,1,2],[0,1,2],[3,4,5],[6,7,8],[9,6,10],[3,4,5],[3,4,5]]}};
+
+// ════════ Einstellungen ════════
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const num = (k, d) => { const v = +(store.get(k) ?? d); return v >= 0 && v <= 100 ? v : d; };
+let sens = num('windspiel2-empfindlichkeit', 5), soft = num('windspiel2-weich', 25), hapticsOn = store.get('windspiel2-vibration') !== 'aus';
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const $ = id => document.getElementById(id);
+
+// ════════ Audio ════════
+let ctx, master, unlocking = false, set = null;
+const voices = [];
+function initAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.knee.value = 10; comp.ratio.value = 2.5; comp.attack.value = 0.003; comp.release.value = 0.3;
+  const makeup = ctx.createGain(); makeup.gain.value = 1.5;
+  const limit = ctx.createDynamicsCompressor();
+  limit.threshold.value = -2; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  master = ctx.createGain(); master.gain.value = 1;
+  master.connect(comp); comp.connect(makeup); makeup.connect(limit); limit.connect(ctx.destination);
+}
+initAudio();
+const running = () => ctx.state === 'running';
+// Safari schaltet den Ton nur in touchend, click, mousedown oder keydown frei (wie Harfe und Kalimba).
+function unlockAudio() {
+  if (running() || unlocking) return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; render(); }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+}
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+const decode = ab => new Promise((ok, no) => { const p = ctx.decodeAudioData(ab, ok, no); if (p && p.then) p.then(ok, no); });
+fetch(`../samples/${SET}.mp3`).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(decode).then(buf => {
+  // Der MP3-Encoder legt am Anfang etwas Stille vor. Der erste Schlag beginnt in der Datei bei 0,1 s: so weit liegt alles später.
+  const d = buf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < 1e-3) i++;
+  set = { buf, shift: clamp(i / buf.sampleRate - 0.1 - 0.002, 0, 0.08), last: TONES.map(() => -1) };
+}).catch(() => { $('motion-state').textContent = 'Der Klang konnte nicht laden. Seite neu laden.'; });
+
+// Ein Schlag: welcher Ton, wie stark (0–1). Leiser Schlag: auch dunkler. „Weicher“: dunkler und mit sanfterem Einsatz.
+function strike(tone, vel) {
+  ripple(vel);
+  buzz(vel);
+  if (!set || !running()) return;
+  const man = MANIFEST[SET], choices = man.notes[tone];
+  let pick = choices[Math.floor(Math.random() * choices.length)];
+  if (choices.length > 1 && pick === set.last[tone]) pick = choices[(choices.indexOf(pick) + 1) % choices.length];
+  set.last[tone] = pick;
+  const clip = man.clips[pick], rate = TONES[tone][1] / clip.hz, len = clip.d / rate, now = ctx.currentTime + 0.005;
+  const s = soft / 100;
+  // derselbe Stab, noch klingend: der neue Schlag übernimmt ihn
+  for (const v of voices) if (v.tone === tone && !v.done) { v.g.gain.cancelScheduledValues(now); v.g.gain.setTargetAtTime(0, now, 0.02); v.done = true; try { v.src.stop(now + 0.15); } catch (e) {} }
+  const src = ctx.createBufferSource(); src.buffer = set.buf; src.playbackRate.value = rate;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4;
+  lp.frequency.value = Math.max(450, (1400 + 16000 * vel * vel) * (1 - 0.85 * Math.pow(s, 0.7)));
+  const g = ctx.createGain(), peak = clip.g * 0.55 * Math.pow(vel, 1.5) * (1 + 0.3 * s), attack = 0.001 + 0.035 * s;
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(peak, now + attack);
+  g.gain.setValueAtTime(peak, now + Math.max(attack, len * 0.45));
+  g.gain.exponentialRampToValueAtTime(Math.max(peak * 0.001, 1e-5), now + len);   // die Aufnahme endet vor dem Ausklingen: sanft zu Ende führen
+  src.connect(lp); lp.connect(g); g.connect(master);
+  src.start(now, clip.o + set.shift, clip.d);
+  const v = { src, g, tone, done: false };
+  src.onended = () => { const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1); try { g.disconnect(); } catch (e) {} };
+  voices.push(v);
+  const live = voices.filter(x => !x.done); if (live.length > 16) { const o = live[0]; o.g.gain.setTargetAtTime(0, now, 0.04); o.done = true; try { o.src.stop(now + 0.3); } catch (e) {} }
+}
+
+// ════════ Vibration ════════
+// Android: navigator.vibrate, erst nachdem die Seite einmal berührt wurde; die Stärke lässt sich nur über die Dauer regeln.
+// iPhone: keine Vibrations-Schnittstelle. Nur der Tick eines Schalters, vom Skript ausgelöst bis iOS 26.4, seit 26.5 nicht mehr.
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const iosVer = (ua.match(/OS (\d+)[_.](\d+)/) || []).slice(1).map(Number);
+const hasVibrate = typeof navigator.vibrate === 'function';
+const hasSwitch = 'switch' in HTMLInputElement.prototype;
+const iosTick = isIOS && hasSwitch && (iosVer[0] < 26 || (iosVer[0] === 26 && iosVer[1] < 5));
+let lastBuzz = 0;
+function scriptTick() {
+  const l = document.createElement('label'), c = document.createElement('input');
+  c.type = 'checkbox'; c.setAttribute('switch', ''); l.appendChild(c); l.style.display = 'none'; l.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(l); l.click(); l.remove();
+}
+function buzz(vel) {
+  if (!hapticsOn || vel < 0.05) return;
+  const now = performance.now();
+  if (hasVibrate) { if (now - lastBuzz < 30) return; lastBuzz = now; try { navigator.vibrate(Math.round(8 + 34 * vel)); } catch (e) {} }
+  else if (iosTick) { if (now - lastBuzz < 70) return; lastBuzz = now; try { scriptTick(); } catch (e) {} }
+}
+
+// ════════ Bewegung des Handys ════════
+let motionState = 'idle';   // idle | asking | granted | on | denied | none
+const needsPermission = typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
+let inX = 0, inY = 0, gx = null, gy = null, gz = null;   // Trägheit im Bild, px/s²
+function onMotion(e) {
+  // Das Handy ist der Aufhängepunkt. Ruckt es nach rechts, bleibt das Windspiel zurück: es erfährt die Gegenrichtung.
+  // Totzone: ein gehaltenes Handy ruckt bis etwa 1–2 m/s². Empfindlichkeit regelt Totzone und Stärke.
+  const s = sens / 100, dz = 2.0 - 1.6 * s, scale = 300 + 2600 * s;
+  let ax = 0, ay = 0;
+  const a = e.acceleration;
+  if (a && a.x !== null) { ax = a.x || 0; ay = a.y || 0; }
+  else if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.x !== null) {   // ohne Lagesensor: Schwerkraft herausmitteln
+    const g = e.accelerationIncludingGravity;
+    if (gx === null) { gx = g.x; gy = g.y; gz = g.z; }
+    gx += (g.x - gx) * 0.08; gy += (g.y - gy) * 0.08; gz += (g.z - gz) * 0.08;
+    ax = g.x - gx; ay = g.y - gy;
+  }
+  const m = Math.hypot(ax, ay), k = m > dz ? (m - dz) / m * scale : 0;
+  // Gerät: x nach rechts, y nach oben. Bild: y nach unten. Trägheit = Gegenrichtung der Beschleunigung.
+  inX = -ax * k; inY = ay * k;
+  if (motionState !== 'on') { motionState = 'on'; render(); }
+}
+function startMotion() {
+  if (typeof DeviceMotionEvent === 'undefined') { motionState = 'none'; render(); return; }
+  if (needsPermission) {
+    if (motionState !== 'idle') return;
+    motionState = 'asking';
+    DeviceMotionEvent.requestPermission().then(p => {
+      if (p === 'granted') { addEventListener('devicemotion', onMotion); if (motionState === 'asking') motionState = 'granted'; }
+      else motionState = 'denied';
+      render();
+    }, () => { motionState = 'idle'; render(); });
+  } else addEventListener('devicemotion', onMotion);
+}
+if (!needsPermission) startMotion();
+
+// ════════ Physik: Schnur – Zylinder – Klöppel – Schnur – Blatt ════════
+// Punkte mit Verlet-Integration und Längen-Bedingungen. Der Zylinder ist schwer, Schnur und Blatt leicht.
+const scene = $('scene'), g2 = scene.getContext('2d');
+let W = 0, H = 0, DPR = 1, R = 50, CH = 130;
+let pts = [], links = [], A, T, B, K, O, LEAF, ropeIdx = [], cordIdx = [];
+const GRAV = 2200;
+function P(x, y, mass, drag) { const p = { x, y, px: x, py: y, w: mass ? 1 / mass : 0, drag }; pts.push(p); return p; }
+function link(a, b, len, stiff = 1) { links.push({ a, b, len: len ?? Math.hypot(a.x - b.x, a.y - b.y), stiff }); }
+function build() {
+  pts = []; links = []; ropeIdx = []; cordIdx = [];
+  const d = clamp(Math.min(W * 0.3, H * 0.165), 84, 165);   // Durchmesser: 50 % größer als v1
+  R = d / 2; CH = d * 2.6;                                   // Vorbild: etwa 6,3 cm breit, 16,5 cm hoch
+  const x = W / 2, ropeLen = clamp(H * 0.19, 110, 260), cordLen = clamp(H * 0.15, 80, 200);
+  A = P(x, -4, 0, 0);                                        // Aufhängung, oben am Rand
+  const nR = 8; let prev = A;
+  for (let i = 1; i <= nR; i++) { const p = P(x, -4 + ropeLen * i / (nR + 1), 0.05, 1.2); link(prev, p, ropeLen / (nR + 1)); ropeIdx.push(p); prev = p; }
+  T = P(x, -4 + ropeLen, 6, 0.3); link(prev, T, ropeLen / (nR + 1));
+  B = P(x, T.y + CH, 6, 0.3); link(T, B, CH);
+  K = P(x, T.y + CH * 0.7, 0.5, 0.3); link(T, K, CH * 0.7);  // Klöppel hängt innen von oben
+  O = P(x, B.y + 2, 0.08, 1.5); link(K, O, CH * 0.3 + 2);      // die Schnur an der Öffnung unten
+  const nL = 7; prev = O;
+  for (let i = 1; i <= nL; i++) { const p = P(x, O.y + cordLen * i / (nL + 1), 0.06, 1.5); link(prev, p, cordLen / (nL + 1)); cordIdx.push(p); prev = p; }
+  LEAF = P(x, O.y + cordLen, 0.35, 4.5); link(prev, LEAF, cordLen / (nL + 1));
+}
+function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; scene.width = W * DPR; scene.height = H * DPR; build(); }
+addEventListener('resize', resize); resize();
+
+let hSub = 1 / 240, pushX = 0, pushY = 0, keyShake = 0, keyPhase = 0, lastTone = -1, lastHit = 0;
+function step(h) {
+  const fx = inX + pushX, fy = GRAV + inY + pushY;
+  for (const p of pts) {
+    if (!p.w) continue;
+    const damp = Math.exp(-p.drag * h), vx = (p.x - p.px) * damp, vy = (p.y - p.py) * damp;
+    p.px = p.x; p.py = p.y;
+    // das Blatt fängt die Bewegung stärker ein: mehr Luftwiderstand, dafür flattert es
+    p.x += vx + fx * h * h; p.y += vy + fy * h * h;
+  }
+  for (let it = 0; it < 12; it++) {
+    for (const l of links) {
+      const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, dist = Math.hypot(dx, dy) || 1e-6, wsum = l.a.w + l.b.w; if (!wsum) continue;
+      const diff = (dist - l.len) / dist / wsum * l.stiff;
+      l.a.x += dx * diff * l.a.w; l.a.y += dy * diff * l.a.w; l.b.x -= dx * diff * l.b.w; l.b.y -= dy * diff * l.b.w;
+    }
+    confine(h);
+  }
+  hitDone = false;
+}
+// Der Klöppel bleibt im Zylinder. Stößt er an den Kreis der Stäbe, klingt der Stab dort, so stark, wie er aufprallt.
+let hitDone = false;   // höchstens ein Anschlag je Rechenschritt
+function confine(h) {
+  const ux = (B.x - T.x) / CH, uy = (B.y - T.y) / CH, nx = -uy, ny = ux;
+  const rt = R * 0.4;                                     // Kreis der Stäbe, abzüglich Klöppel
+  const kx = K.x - T.x, ky = K.y - T.y, perp = kx * nx + ky * ny;
+  if (Math.abs(perp) > rt) {
+    const side = Math.sign(perp), over = perp - side * rt;
+    // Geschwindigkeit des Klöppels gegenüber der Röhre an dieser Stelle
+    const along = clamp((kx * ux + ky * uy) / CH, 0, 1);
+    const tvx = ((T.x - T.px) * (1 - along) + (B.x - B.px) * along) / h, tvy = ((T.y - T.py) * (1 - along) + (B.y - B.py) * along) / h;
+    const kvx = (K.x - K.px) / h, kvy = (K.y - K.py) / h, vrel = ((kvx - tvx) * nx + (kvy - tvy) * ny) * side;
+    // zurück an den Stab, die Röhre bekommt den Gegenstoß
+    const wk = K.w, wt = (T.w + B.w) / 2, share = wk / (wk + wt);
+    K.x -= nx * over * share; K.y -= ny * over * share;
+    T.x += nx * over * (1 - share) * (1 - along); T.y += ny * over * (1 - share) * (1 - along);
+    B.x += nx * over * (1 - share) * along; B.y += ny * over * (1 - share) * along;
+    if (vrel > 0) {   // prallt ab: ein Drittel der Geschwindigkeit kehrt um
+      const dv = -1.35 * vrel * side;
+      K.px -= nx * dv * h; K.py -= ny * dv * h;
+      if (!hitDone && vrel > 30 && performance.now() - lastHit > 25) { hitDone = true; lastHit = performance.now(); hit(side, vrel); }
+    }
+  }
+}
+function hit(side, speed) {
+  // welcher Stab: einer auf der Seite, an die der Klöppel stößt; die mittleren öfter
+  const cands = RING.map((tone, i) => ({ tone, x: Math.cos(i / RING.length * Math.PI * 2 + 0.3) })).filter(c => Math.sign(c.x) === side && c.tone !== lastTone);
+  let sum = cands.reduce((s, c) => s + c.x * c.x + 0.1, 0), r = Math.random() * sum, pick = cands[0];
+  for (const c of cands) { r -= c.x * c.x + 0.1; if (r <= 0) { pick = c; break; } }
+  lastTone = pick.tone;
+  strike(pick.tone, clamp(Math.pow(speed / 650, 0.8), 0.04, 1));
+}
+
+// Streichen: was der Finger berührt, nimmt er in seine Richtung mit
+let finger = null;
+function distToSeg(px, py, a, b) { const dx = b.x - a.x, dy = b.y - a.y, t = clamp(((px - a.x) * dx + (py - a.y) * dy) / (dx * dx + dy * dy || 1), 0, 1); return [Math.hypot(px - a.x - dx * t, py - a.y - dy * t), t]; }
+// Der Finger gibt dem Berührten einen Teil seiner Geschwindigkeit, nie mehr als er selbst hat: ein Anstoßen, kein Mitschleppen.
+// Die schwere Röhre nimmt wenig an, Schnur und Blatt viel.
+function nudge(p, vx, vy, f) {
+  const ox = (p.x - p.px) / hSub, oy = (p.y - p.py) / hSub;
+  const nx = ox + (vx - ox) * f, ny = oy + (vy - oy) * f;
+  p.px = p.x - nx * hSub; p.py = p.y - ny * hSub;
+}
+scene.addEventListener('pointerdown', e => { finger = { x: e.clientX, y: e.clientY, t: performance.now() }; try { scene.setPointerCapture(e.pointerId); } catch (err) {} });
+scene.addEventListener('pointermove', e => {
+  if (!finger) return;
+  const t0 = performance.now(), dts = Math.max(0.008, (t0 - finger.t) / 1000);
+  const vx = clamp((e.clientX - finger.x) / dts, -2500, 2500), vy = clamp((e.clientY - finger.y) / dts, -2500, 2500);
+  finger = { x: e.clientX, y: e.clientY, t: t0 };
+  const reach = 30;
+  const [dc, t] = distToSeg(e.clientX, e.clientY, T, B);
+  if (dc < R + reach) {                                    // an der Röhre: oben und unten anteilig, dort wo der Finger ist
+    const f = 0.08 * (dc < R ? 1 : 1 - (dc - R) / reach);
+    nudge(T, vx, vy * 0.4, f * (1 - t)); nudge(B, vx, vy * 0.4, f * t);
+  }
+  for (const p of [...ropeIdx, ...cordIdx, LEAF]) {        // an Schnur und Blatt
+    const dd = Math.hypot(e.clientX - p.x, e.clientY - p.y), rr = p === LEAF ? R * 0.9 + reach : reach;
+    if (dd < rr) nudge(p, vx, vy, 0.6 * (1 - dd / rr));
+  }
+});
+['pointerup', 'pointercancel'].forEach(t => scene.addEventListener(t, () => { finger = null; }));
+
+// Tastatur
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'BUTTON' && (e.code === 'Space' || e.key === 'Enter')) return;
+  if (e.target.tagName === 'INPUT' && e.target.type === 'range' && e.key.startsWith('Arrow')) return;
+  if (e.code === 'Space') { keyShake = e.shiftKey ? 1 : 0.6; e.preventDefault(); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { const s = e.key === 'ArrowLeft' ? -1 : 1; T.x += s * 6; B.x += s * 10; e.preventDefault(); }
+  const n = parseInt(e.key, 10); if (n >= 1 && n <= 8 && !e.repeat) strike(n - 1, 0.75);
+});
+addEventListener('keyup', e => { if (e.code === 'Space') keyShake = 0; });
+
+// ════════ Bild ════════
+let col = {};
+function readColors() { const cs = getComputedStyle(document.documentElement); for (const n of ['sand-9', 'green-7', 'green-8', 'green-9', 'green-10', 'terracotta-4', 'terracotta-5', 'terracotta-6', 'terracotta-7', 'terracotta-8', 'terracotta-9']) col[n] = cs.getPropertyValue('--' + n).trim(); }
+readColors(); matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', readColors);
+const ripples = [];
+function ripple(v) { ripples.push({ t: performance.now(), v, side: Math.sign((K.x - T.x) * -(B.y - T.y) / CH + (K.y - T.y) * (B.x - T.x) / CH) || 1 }); if (ripples.length > 12) ripples.shift(); }
+function curve(list) {   // weiche Linie durch die Punkte
+  g2.beginPath(); g2.moveTo(list[0].x, list[0].y);
+  for (let i = 1; i < list.length - 1; i++) { const mx = (list[i].x + list[i + 1].x) / 2, my = (list[i].y + list[i + 1].y) / 2; g2.quadraticCurveTo(list[i].x, list[i].y, mx, my); }
+  const l = list[list.length - 1]; g2.lineTo(l.x, l.y); g2.stroke();
+}
+function draw(now) {
+  g2.setTransform(DPR, 0, 0, DPR, 0, 0); g2.clearRect(0, 0, W, H);
+  g2.lineCap = 'round'; g2.lineJoin = 'round';
+  // Schnur oben
+  g2.strokeStyle = col['sand-9']; g2.lineWidth = 1.6; curve([A, ...ropeIdx, T]);
+  // Schnur unten: aus der Mitte der Öffnung zum Blatt
+  const ang = Math.atan2(B.y - T.y, B.x - T.x) - Math.PI / 2, ux = (B.x - T.x) / CH, uy = (B.y - T.y) / CH;
+  const ex = B.x + ux * R * 0.18, ey = B.y + uy * R * 0.18;
+  curve([{ x: ex, y: ey }, O, ...cordIdx, LEAF]);
+  // Zylinder: gedrehtes Koordinatensystem, Achse nach unten, von 0 bis CH
+  g2.save(); g2.translate(T.x, T.y); g2.rotate(ang);
+  const r = R, ry = r * 0.22;
+  const grad = g2.createLinearGradient(-r, 0, r, 0);
+  grad.addColorStop(0, col['terracotta-8']); grad.addColorStop(0.22, col['terracotta-6']); grad.addColorStop(0.4, col['terracotta-4']);
+  grad.addColorStop(0.62, col['terracotta-6']); grad.addColorStop(1, col['terracotta-8']);
+  g2.fillStyle = grad;
+  g2.beginPath(); g2.moveTo(-r, 0); g2.lineTo(-r, CH); g2.ellipse(0, CH, r, ry, 0, Math.PI, 0, true); g2.lineTo(r, 0); g2.ellipse(0, 0, r, ry, 0, 0, Math.PI, false); g2.closePath(); g2.fill();
+  // feine Maserung der Bambus-Lagen, längs, kaum sichtbar
+  g2.save(); g2.clip(); g2.globalAlpha = 0.18; g2.strokeStyle = col['terracotta-9']; g2.lineWidth = 0.8;
+  for (const k of [-0.78, -0.52, -0.2, 0.15, 0.46, 0.72]) { g2.beginPath(); g2.moveTo(k * r, 0); g2.lineTo(k * r, CH + ry); g2.stroke(); }
+  g2.restore();
+  // Deckel oben, geschlossen
+  g2.fillStyle = col['terracotta-5']; g2.beginPath(); g2.ellipse(0, 0, r, ry, 0, 0, Math.PI * 2); g2.fill();
+  g2.strokeStyle = col['terracotta-7']; g2.lineWidth = 1; g2.stroke();
+  g2.fillStyle = col['sand-9']; g2.beginPath(); g2.arc(0, 0, 2.2, 0, Math.PI * 2); g2.fill();   // Knoten der Schnur
+  // Klang: zarte Wellen an der Seite, an die der Klöppel stößt
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const q = ripples[i], age = (now - q.t) / 1100; if (age > 1) { ripples.splice(i, 1); continue; }
+    g2.strokeStyle = col['green-8']; g2.lineWidth = 1.4;
+    for (const k of [0, 0.35]) { const a2 = age - k; if (a2 < 0) continue;
+      g2.globalAlpha = (1 - a2) * Math.min(1, q.v * 1.6) * 0.7;
+      g2.beginPath(); g2.arc(q.side * (r + 8 + a2 * r * 0.9), CH * 0.62, CH * 0.12 + a2 * CH * 0.1, q.side > 0 ? -0.9 : Math.PI - 0.9, q.side > 0 ? 0.9 : Math.PI + 0.9); g2.stroke(); }
+  }
+  g2.globalAlpha = 1; g2.restore();
+  // Blatt am Ende: fängt den Wind
+  const pl = cordIdx[cordIdx.length - 1], la = Math.atan2(LEAF.y - pl.y, LEAF.x - pl.x) - Math.PI / 2, L = R * 1.9, w = L * 0.3;
+  g2.save(); g2.translate(LEAF.x, LEAF.y); g2.rotate(la);
+  g2.fillStyle = col['green-9']; g2.beginPath(); g2.moveTo(0, 0);
+  g2.bezierCurveTo(w, L * 0.25, w * 0.8, L * 0.75, 0, L); g2.bezierCurveTo(-w * 0.8, L * 0.75, -w, L * 0.25, 0, 0); g2.fill();
+  g2.strokeStyle = col['green-7']; g2.lineWidth = 1; g2.beginPath(); g2.moveTo(0, L * 0.06); g2.lineTo(0, L * 0.92); g2.stroke();
+  g2.restore();
+}
+
+// ════════ Takt ════════
+let lastT = performance.now(), scaleQueue = [];
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - lastT) / 1000); lastT = now;
+  // Leertaste: hin und her wie eine schüttelnde Hand
+  if (keyShake) { keyPhase += dt * 2 * Math.PI * 3.2; pushX = Math.sin(keyPhase) * 9000 * keyShake; } else pushX = 0;
+  const S = 4; hSub = dt / S; for (let i = 0; i < S; i++) step(hSub);
+  inX *= Math.exp(-dt / 0.05); inY *= Math.exp(-dt / 0.05);   // ohne neue Messung klingt der Ruck ab
+  while (scaleQueue.length && scaleQueue[0].at <= now) strike(scaleQueue.shift().tone, 0.7);
+  draw(now);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ════════ Oberfläche ════════
+function render() {
+  $('sens').value = sens; $('sens-out').value = `${sens} %`;
+  $('soft').value = soft; $('soft-out').value = `${soft} %`;
+  $('vib').checked = hapticsOn;
+  $('vib-note').textContent = hasVibrate ? 'Das Handy vibriert bei jedem Anschlag kurz mit, bei kräftigen Schlägen länger.'
+    : iosTick ? 'Das iPhone tickt bei jedem Anschlag. Dafür muss in den Einstellungen unter „Töne & Haptik“ die System-Haptik an sein.'
+    : isIOS ? 'Auf diesem iPhone geht es leider nicht: Seit iOS 26.5 dürfen Webseiten das iPhone nur noch beim Antippen ticken lassen.'
+    : 'Dieser Browser kann nicht vibrieren.';
+  $('motion-state').textContent = {
+    idle: needsPermission ? 'Nach dem Antippen fragt das Handy, ob die Seite die Bewegung lesen darf.' : '',
+    granted: 'Bewegung erlaubt. Schüttle das Handy.', asking: 'Das Handy fragt nach der Erlaubnis …',
+    on: '', denied: 'Bewegung nicht erlaubt. Streichen geht trotzdem; erlauben lässt es sich in den Einstellungen des Browsers.',
+    none: 'Dieses Gerät meldet keine Bewegung. Streichen oder Leertaste halten.',
+  }[motionState] || '';
+  const needsTap = !running() || (needsPermission && motionState === 'idle');
+  $('start').hidden = !needsTap;
+  $('start').textContent = running() ? 'Antippen und Schütteln erlauben' : 'Antippen und Ton an';
+}
+$('start').addEventListener('click', () => { unlockAudio(); startMotion(); setTimeout(render, 50); });
+$('settings-btn').addEventListener('click', () => {
+  const open = $('panel').hidden; $('panel').hidden = !open; $('settings-btn').setAttribute('aria-pressed', String(open));
+});
+$('sens').addEventListener('input', e => { sens = +e.target.value; store.set('windspiel2-empfindlichkeit', String(sens)); render(); });
+$('soft').addEventListener('input', e => { soft = +e.target.value; store.set('windspiel2-weich', String(soft)); render(); });
+$('vib').addEventListener('change', e => { hapticsOn = e.target.checked; store.set('windspiel2-vibration', hapticsOn ? 'an' : 'aus'); if (hapticsOn) buzz(0.6); });
+$('scale-btn').addEventListener('click', () => { const t0 = performance.now() + 80; scaleQueue = TONES.map((_, i) => ({ tone: i, at: t0 + i * 420 })); });
+['touchend', 'click'].forEach(t => addEventListener(t, () => { if (needsPermission && motionState === 'idle') startMotion(); }, { capture: true, passive: true }));
+ctx.onstatechange = render;
+render();
+})();
+</script>
+</body>
+</html>

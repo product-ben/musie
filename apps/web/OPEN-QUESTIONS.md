@@ -10644,3 +10644,46 @@ chrome override, and Ben wants the same label everywhere.
 
 What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
 so Klangreise's English text now says something different from its German.
+
+## Windspiel experiment — does it get PostHog, and with which survey? — OPEN
+
+Where: `apps/web/public/experiments/windspiel/261106-2248/index.html` (the
+head comment says so too)
+
+What I checked: rule 10 allows PostHog under `/experiments` once the visitor
+agrees, and the harp does exactly that (consent as the condition of playing,
+survey "Harp experiment evaluation" fired by `harp_countdown_finished`). The
+kalimba ships without it. Lucia, 2026-11-06: whether the Windspiel is measured
+is Ben's call.
+
+What I did: shipped it without PostHog, without consent UI and without any
+event. Nothing leaves the page but the six sample files it loads from
+`../samples/`.
+
+Why: adding a consent flow and an event name nobody has asked for would decide
+what is measured on Ben's behalf; leaving it out is the reversible choice.
+
+What I need from Ben: yes or no to PostHog on the Windspiel; if yes, which
+event ends a session (there is no countdown here) and whether it shares the
+harp's survey or gets its own.
+
+## Windspiel experiment — the samples are cut from CC0 Freesound previews, not originals — RESOLVED
+
+Where: `apps/web/public/experiments/windspiel/samples/*.mp3`
+
+What I checked: twelve CC0 recordings of real bamboo chimes on Freesound,
+each page's licence field (all `publicdomain/zero/1.0`). Originals need a
+Freesound login; the public high-quality previews (128–188 kbps MP3) do not.
+
+What I did: analysed the previews (onset, which tine was struck, how long it
+rang before the next strike), cut the cleanest strikes per tone, and stored one
+MP3 per recording: g′ a′ h′ d″ e″ g″ a″ h″, retuned to A = 440 at play time.
+The page credits every source it uses, although CC0 does not require it.
+
+Why: CC0 permits copying, cutting and publishing, also commercially. A
+preview is the same recording at lower bitrate, so the licence is the same.
+
+What I need from Ben: nothing. If one recording wins the comparison and the
+sound should improve, download its original WAV with an account and re-cut it;
+the cutting script lives only in the session that made it, so ask for it to be
+written down if that happens.
