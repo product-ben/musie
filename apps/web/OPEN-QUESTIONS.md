@@ -10687,3 +10687,31 @@ What I need from Ben: nothing. If one recording wins the comparison and the
 sound should improve, download its original WAV with an account and re-cut it;
 the cutting script lives only in the session that made it, so ask for it to be
 written down if that happens.
+
+## Atem-Windspiel — a page under /experiments asks for the microphone — OPEN
+
+Where: `apps/web/public/experiments/atem-windspiel/261108-1402/index.html`
+(`startMic`, `readMic`)
+
+What I checked: it is the first experiment that calls `getUserMedia`. The
+breathing exercise listens for the exhale through the mouth and lets it ring
+the Windspiel. The audio is analysed in the page only (low-band level, median
+of the 1–5 kHz bands, spectral flatness); nothing is recorded, stored or sent,
+and the page says so above the start button. `noiseSuppression` and
+`autoGainControl` are off because both would erase the breath; echo
+cancellation is a switch in the settings, off by default, because on some
+iPhones it makes playback quieter. Rule 10's limits still hold: no secret,
+nothing to Supabase, `noindex`, no PostHog.
+
+What I did: shipped it with the microphone, five exercises (calm 4·1·6,
+resonance 5·5, cyclic sighing, pursed-lip, breath counting), each with its
+study linked in the settings, and a test area for tuning the detection on a
+real phone. Tested by Lucia on her iPhone over a tunnel; the detection
+thresholds come from that and from a simulation, not from a range of devices.
+
+Why: the exercise is the breath, and the microphone is the only way a web page
+can hear it.
+
+What I need from Ben: is a microphone prompt acceptable on an experiment page,
+and should it get PostHog like the harp? If yes to PostHog, the natural event is
+the end of a session (`Lass das Windspiel ausklingen`).
