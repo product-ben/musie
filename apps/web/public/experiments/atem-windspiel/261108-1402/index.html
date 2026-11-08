@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Atem-Windspiel</title>
+<!-- Musie-Experiment „Atem-Windspiel“ v1 (CLAUDE.md Regel 10). Eine Atemübung: durch die Nase ein, durch den Mund aus;
+     das Ausatmen weht über das Mikrofon in das Windspiel aus /experiments/windspiel/ und bringt es zum Klingen.
+     Rhythmus nach Studien zu langsamem Atmen mit verlängertem Ausatmen:
+       Zaccaro u. a. 2018, Front. Hum. Neurosci. 12:353, doi:10.3389/fnhum.2018.00353 (unter 10 Atemzüge/min: entspannter, weniger Angst)
+       Laborde u. a. 2022, Neurosci. Biobehav. Rev. 138:104711, doi:10.1016/j.neubiorev.2022.104711 (langsames Atmen hebt die vagale HRV)
+       Sevoz-Couche & Laborde 2022, Neurosci. Biobehav. Rev., doi:10.1016/j.neubiorev.2022.104576 (Resonanz um 0,1 Hz, etwa 6/min)
+       Balban u. a. 2023, Cell Rep. Med. 4:100895, doi:10.1016/j.xcrm.2022.100895 (zyklisches Seufzen: Stimmung, Atemfrequenz)
+     Das Mikrofon wird nur auf dem Gerät ausgewertet (Pegel und Rauschanteil); nichts wird aufgenommen, gespeichert oder gesendet.
+     Klang: Schläge aus „Koshi Wind Chimes, Medium“ von Kinoton, https://freesound.org/s/378431/ (CC0). Nichts wird synthetisiert.
+     Kein PostHog: ob und wie gemessen wird, entscheidet Ben (apps/web/OPEN-QUESTIONS.md). Nichts geht an Supabase. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+/* Musie-Palette aus packages/design-system/tokens/musy-foundations.css, je Theme aufgelöst */
+:root {
+  --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-3: #E5E3D9; --sand-6: #CFCEC2; --sand-7: #BDBCAF; --sand-8: #A7A89B; --sand-9: #8A8C82; --sand-11: #62645E; --sand-12: #1A1F1C;
+  --green-9: #2B5340; --terracotta-7: #E3B294; --terracotta-9: #D99673;
+  --surface: #FFFFFF; --on-accent: #FAF7F1;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --gap: 16px; --radius: 16px;
+  color-scheme: light;
+  /* Variante B, „Terrakotta-Keramik“: Körper terracotta-9, Schimmer heller, Kordel sand-8, Holzring terracotta-5 */
+  /* Schimmer: deutlich heller als der Körper, in beiden Themes (hell terracotta-1, dunkel terracotta-12) */
+  --chime-body: #D99673; --chime-glow: #FDF8F5; --chime-cord: #A7A89B;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --chime-glow: #F6DACB; --chime-cord: #616862; } }
+:root[data-theme="dark"] { --chime-glow: #F6DACB; --chime-cord: #616862; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-11: #9EA59F; --sand-12: #EDF0EC;
+  --green-9: #5E9478; --terracotta-7: #67462F; --terracotta-9: #D99673;
+  --surface: #191D1A; --on-accent: #111412; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-11: #9EA59F; --sand-12: #EDF0EC;
+  --green-9: #5E9478; --terracotta-7: #67462F; --terracotta-9: #D99673;
+  --surface: #191D1A; --on-accent: #111412; color-scheme: dark; }
+
+html, body { margin: 0; height: 100%; }
+body { background: var(--sand-1); color: var(--sand-11); font-family: var(--font-ui); overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.tap { -webkit-tap-highlight-color: transparent; }
+.tap input, .tick input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--green-9); outline-offset: 2px; }
+
+.top { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 44px); left: max(24px, env(safe-area-inset-left, 0px));
+  right: max(24px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.headline { margin: 0; max-width: 26ch; color: var(--sand-12); font-weight: 500; font-size: 20px; line-height: 1.35; text-wrap: balance; }
+.note { margin: 12px 0 0; max-width: 34ch; font-size: 14px; line-height: 1.5; text-wrap: pretty; min-height: 1.5em; }
+
+/* Taktgeber wie die Zeitanzeige der Harfe: die Phase in Worten, darunter groß die Sekunden */
+/* v3: der Taktgeber steht während der Übung oben links an der Stelle der Überschrift, damit das Windspiel groß bleiben kann */
+.pace { display: grid; justify-items: start; gap: 4px; pointer-events: none; }
+.pace[hidden], .headline[hidden] { display: none; }
+.phase { font-size: 17px; font-weight: 500; color: var(--sand-12); }
+.count { font-family: var(--font-text); font-size: 44px; line-height: 1; color: var(--sand-12); font-variant-numeric: tabular-nums; min-height: 44px; }
+.bar { inline-size: min(180px, 45vw); block-size: 3px; border-radius: 2px; background: var(--sand-3); overflow: hidden; margin-top: 8px; }
+.bar[hidden] { display: none; }
+/* Startkarte: Übung wählen, Hinweis zum Mikrofon, Start */
+.card { position: fixed; z-index: 1; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); max-width: 440px; margin: 0 auto; box-sizing: border-box;
+  max-height: calc(100% - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 200px); overflow-y: auto; touch-action: pan-y;
+  background: var(--surface); border: 1px solid var(--sand-6); border-radius: var(--radius); padding: 16px; display: grid; gap: 14px; }
+.card[hidden] { display: none; }
+.pick { display: grid; gap: 2px; border: 0; margin: 0; padding: 0; }
+.pick label { display: flex; gap: 12px; align-items: flex-start; padding: 10px 4px; border-radius: 10px; cursor: pointer; }
+.pick label:has(input:checked) { background: var(--sand-2); }
+.pick input { accent-color: var(--green-9); width: 20px; height: 20px; margin: 2px 0 0; flex: 0 0 auto; }
+.pick b { display: block; font-weight: 500; font-size: 15px; color: var(--sand-12); }
+.pick small { display: block; font-size: 13px; line-height: 1.45; color: var(--sand-11); }
+.card .start { position: static; transform: none; justify-self: stretch; }
+.card .privacy { position: static; margin: 0; max-width: none; text-align: left; }
+.bar i { display: block; block-size: 100%; inline-size: 0; background: var(--terracotta-9); }
+.round, .dur { font-size: 13px; color: var(--sand-11); min-height: 1.4em; }
+.dur[hidden] { display: none; }
+
+.foot { position: fixed; left: max(24px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
+.icon-btn { inline-size: 48px; block-size: 48px; display: grid; place-items: center; border-radius: 999px; border: 1px solid var(--sand-6);
+  background: var(--surface); color: var(--sand-12); cursor: pointer; padding: 0; }
+.icon-btn[aria-expanded="true"] { background: var(--sand-3); }
+.icon-btn svg { inline-size: 22px; block-size: 22px; }
+
+.start { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); transform: translateX(-50%);
+  min-height: 52px; padding: 0 28px; border-radius: 999px; border: 0; background: var(--green-9); color: var(--on-accent);
+  font: 500 17px/1 var(--font-ui); cursor: pointer; white-space: nowrap; }
+.start[hidden] { display: none; }
+.privacy { position: fixed; left: 24px; right: 24px; bottom: calc(env(safe-area-inset-bottom, 0px) + 160px); margin: 0 auto; max-width: 34ch;
+  text-align: center; font-size: 13px; line-height: 1.5; color: var(--sand-11); }
+.privacy[hidden] { display: none; }
+
+.panel { position: fixed; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + var(--gap)); right: max(var(--gap), env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 60px); width: min(400px, calc(100% - 2 * var(--gap))); box-sizing: border-box;
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-user-select: text; user-select: text;
+  background: var(--surface); border: 1px solid var(--sand-6); border-radius: var(--radius); padding: 20px; display: grid; gap: 22px; align-content: start; }
+.panel[hidden] { display: none; }
+.panel h2 { margin: 0 0 -10px; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sand-11); }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: baseline; }
+.ctl label, .check, .radio { font-size: 15px; color: var(--sand-12); }
+.ctl output { font-size: 15px; color: var(--sand-11); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 6px 0; accent-color: var(--green-9); min-height: 32px; }
+.small { font-size: 13px; line-height: 1.5; color: var(--sand-11); text-wrap: pretty; margin: 0; }
+.check, .radio { display: flex; gap: 12px; align-items: flex-start; }
+.check input, .radio input { accent-color: var(--green-9); width: 20px; height: 20px; margin: 0; flex: 0 0 auto; }
+.check span, .radio span { display: grid; gap: 4px; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; }
+legend { font-size: 15px; color: var(--sand-12); margin-bottom: 4px; padding: 0; }
+.chip { justify-self: start; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--sand-6); background: var(--surface);
+  color: var(--sand-12); font: 500 15px/1 var(--font-ui); cursor: pointer; display: inline-flex; align-items: center; }
+.meter { grid-column: 1 / -1; position: relative; block-size: 8px; border-radius: 4px; background: var(--sand-3); overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; inline-size: 0; background: var(--terracotta-9); }
+.meter b { position: absolute; inset-block: 0; inline-size: 2px; background: var(--sand-12); }
+.small a { color: var(--sand-12); }
+.probe { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
+</style>
+</head>
+<body>
+<!-- Das Bild liegt in einem Label mit einem unsichtbaren Schalter: jeder echte Tipp legt ihn um, und das iPhone tickt dabei. -->
+<label class="tap" id="tap"><input type="checkbox" switch tabindex="-1" aria-hidden="true" id="tap-switch"><canvas id="scene" aria-label="Ein Windspiel aus Bambus. Dein Ausatmen bringt es zum Klingen."></canvas></label>
+<span class="probe" id="probe" aria-hidden="true"></span>
+
+<div class="top">
+  <p class="headline" id="headline">Wähle eine Atemübung. Dein Ausatmen bringt das Windspiel zum Klingen.</p>
+  <div class="pace" id="pace" hidden aria-live="polite">
+    <div class="phase" id="phase"></div>
+    <div class="count" id="count" aria-hidden="true"></div>
+    <div class="bar" id="bar-wrap" aria-hidden="true"><i id="bar"></i></div>
+    <div class="round" id="round"></div>
+    <div class="dur" id="dur" hidden></div>
+  </div>
+  <p class="note" id="note"></p>
+</div>
+
+<div class="card" id="card">
+  <fieldset class="pick" id="pick" aria-label="Atemübung"></fieldset>
+  <p class="small privacy" id="privacy">Die Übung hört über das Mikrofon, wann du ausatmest. Das bleibt auf diesem Gerät: nichts wird aufgenommen, gespeichert oder gesendet.</p>
+  <button class="start" id="start" type="button">Mikrofon erlauben und beginnen</button>
+</div>
+
+<div class="foot">
+  <button class="icon-btn" id="settings-btn" type="button" aria-expanded="false" aria-controls="panel" aria-label="Einstellungen öffnen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+</div>
+
+<section class="panel" id="panel" hidden aria-label="Einstellungen">
+  <div class="ctl">
+    <label for="rounds">Atemzüge</label>
+    <output id="rounds-out" for="rounds"></output>
+    <input type="range" id="rounds" min="3" max="30" step="1">
+  </div>
+  <label class="check"><input type="checkbox" id="showdur"><span>Dauer des Ausatmens zeigen<small class="small">Nach jedem Ausatmen, wie lange das Windspiel geklungen hat. Kein Wettbewerb: lang ist nicht besser, ruhig ist gut.</small></span></label>
+  <div class="ctl">
+    <label for="soft">Weicher</label>
+    <output id="soft-out" for="soft"></output>
+    <input type="range" id="soft" min="0" max="100" step="1">
+  </div>
+  <div class="ctl">
+    <label for="sens">Empfindlichkeit des Mikrofons</label>
+    <output id="sens-out" for="sens"></output>
+    <input type="range" id="sens" min="0" max="100" step="1">
+  </div>
+
+  <h2>Test</h2>
+  <div class="ctl">
+    <label>Atem gerade</label>
+    <output id="lvl-out"></output>
+    <div class="meter" aria-hidden="true"><i id="lvl-bar"></i><b id="lvl-thr"></b></div>
+    <small class="small" id="diag"></small>
+  </div>
+  <label class="chip tick" id="tick-btn"><input type="checkbox" switch tabindex="-1" aria-hidden="true">Vibration testen: hier antippen</label>
+  <p class="small" id="vib-note"></p>
+  <label class="check"><input type="checkbox" id="echo"><span>Echo-Unterdrückung<small class="small">Probier sie aus, falls das Windspiel sich selbst hört und ohne Atem weiterklingt. Auf manchen iPhones wird der Klang damit leiser.</small></span></label>
+  <button class="chip" id="scale-btn" type="button">Alle Töne nacheinander</button>
+
+  <h2>Woher das kommt</h2>
+  <p class="small">Ruhig atmen: langsames Atmen mit längerem Ausatmen wirkt beruhigend (<a href="https://www.frontiersin.org/journals/human-neuroscience/articles/10.3389/fnhum.2018.00353/text" target="_blank" rel="noopener">Zaccaro u. a. 2018</a>, <a href="https://eprints.bournemouth.ac.uk/38169/" target="_blank" rel="noopener">Laborde u. a. 2022</a>).
+    Resonanz-Atmung: 6 Atemzüge pro Minute hoben die Herzratenvariabilität stärker als Box- und 4-7-8-Atmung (<a href="https://pubmed.ncbi.nlm.nih.gov/39864026/" target="_blank" rel="noopener">Vergleich 2025</a>).
+    Seufzer-Atmung: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947" target="_blank" rel="noopener">Balban u. a. 2023</a>.
+    Lippenbremse: verlangsamt die Atmung, belegt vor allem bei Lungenerkrankungen (<a href="https://uhra.herts.ac.uk/id/eprint/672/" target="_blank" rel="noopener">Übersicht 2009</a>).
+    Atemzüge zählen: als Achtsamkeitsübung untersucht (<a href="https://www.frontiersin.org/articles/10.3389/fpsyg.2014.01202/full" target="_blank" rel="noopener">Levinson u. a. 2014</a>).
+    Wird dir schwindlig, atme einfach normal weiter.</p>
+  <p class="small">Klang: einzelne Schläge aus <a href="https://freesound.org/s/378431/" target="_blank" rel="noopener">„Koshi Wind Chimes, Medium“</a> von Kinoton, CC0 (gemeinfrei).</p>
+</section>
+
+<script>
+(() => {
+const TONES = [['g′', 392.00], ['a′', 440.00], ['h′', 493.88], ['d″', 587.33], ['e″', 659.26], ['g″', 783.99], ['a″', 880.00], ['h″', 987.77]];
+const RING = [0, 4, 1, 5, 2, 6, 3, 7];
+const SET = 'kinoton-wasser', SAMPLES = '../../windspiel/samples/';
+const MANIFEST = {"kinoton-wasser":{"clips":[{"o":0.1,"d":4.504,"hz":429.1,"g":0.68,"from":"378431 1.145 s"},{"o":4.854,"d":2.842,"hz":429.1,"g":0.818,"from":"378431 8.428 s"},{"o":7.946,"d":2.141,"hz":429.1,"g":0.583,"from":"378431 15.825 s"},{"o":10.337,"d":2.543,"hz":1173.7,"g":0.502,"from":"378431 18.000 s"},{"o":13.13,"d":0.7575,"hz":1173.7,"g":0.39,"from":"378431 37.419 s"},{"o":14.1375,"d":0.758,"hz":1173.7,"g":0.539,"from":"378431 40.203 s"},{"o":15.1455,"d":1.8435,"hz":1402.6,"g":0.308,"from":"378431 70.725 s"},{"o":17.239,"d":4.504,"hz":1402.6,"g":0.326,"from":"378431 72.531 s"},{"o":21.993,"d":1.829,"hz":1402.6,"g":0.322,"from":"378431 68.847 s"},{"o":24.072,"d":3.659,"hz":1772.1,"g":0.494,"from":"378431 21.412 s"},{"o":27.981,"d":3.0035,"hz":1772.1,"g":0.461,"from":"378431 14.960 s"}],"notes":[[0,1,2],[0,1,2],[0,1,2],[3,4,5],[6,7,8],[9,6,10],[3,4,5],[3,4,5]]}};
+// Rhythmen. „ein“ und „nach“ durch die Nase, „aus“ durch den Mund; nur beim Ausatmen hört die Übung hin.
+// „frei“: ohne Takt, die Übung zählt jedes Ausatmen mit (Atemzüge zählen, Levinson u. a. 2014).
+const PATTERNS = {
+  ruhig:    [['ein', 4, 'Einatmen durch die Nase'], ['pause', 1, 'Pause'], ['aus', 6, 'Ausatmen durch den Mund']],
+  resonanz: [['ein', 5, 'Einatmen durch die Nase'], ['aus', 5, 'Ausatmen durch den Mund']],
+  seufzer:  [['ein', 3, 'Einatmen durch die Nase'], ['nach', 1, 'Noch kurz nachatmen'], ['aus', 6, 'Ausatmen durch den Mund']],
+  lippen:   [['ein', 2, 'Einatmen durch die Nase'], ['aus', 4, 'Langsam durch locker geschlossene Lippen aus']],
+  zaehlen:  [['frei', Infinity, 'Atme in deinem Tempo']],
+};
+const EXERCISES = [
+  ['ruhig', 'Ruhig atmen', '4 s ein, 1 s Pause, 6 s aus. Längeres Ausatmen beruhigt.'],
+  ['resonanz', 'Resonanz-Atmung', '5 s ein, 5 s aus: sechs Atemzüge in der Minute.'],
+  ['seufzer', 'Seufzer-Atmung', 'Durch die Nase ein, kurz nachatmen, lang durch den Mund aus.'],
+  ['lippen', 'Lippenbremse', '2 s ein, 4 s langsam durch locker geschlossene Lippen aus.'],
+  ['zaehlen', 'Atemzüge zählen', 'Ohne Takt, in deinem Tempo. Zähle still mit, bis 9, dann wieder von vorn.'],
+];
+
+// ════════ Einstellungen ════════
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const num = (k, d, lo = 0, hi = 100) => { const v = +(store.get(k) ?? d); return v >= lo && v <= hi ? v : d; };
+let pattern = PATTERNS[store.get('atem-rhythmus')] ? store.get('atem-rhythmus') : 'ruhig';
+let rounds = num('atem-runden', 6, 3, 30), showDur = store.get('atem-dauer') === 'an', soft = num('atem-weich', 35), sens = num('atem3-empfindlichkeit', 95);
+let echo = store.get('atem-echo') === 'an';
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+// ════════ Audio ════════
+let ctx, master, set = null, unlocking = false;
+const voices = [];
+function initAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });   // kürzeste Verzögerung
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.knee.value = 10; comp.ratio.value = 2.5; comp.attack.value = 0.003; comp.release.value = 0.3;
+  const makeup = ctx.createGain(); makeup.gain.value = 1.5;
+  const limit = ctx.createDynamicsCompressor();
+  limit.threshold.value = -2; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  master = ctx.createGain();
+  const rev = ctx.createConvolver(), wet = ctx.createGain(); wet.gain.value = 0.2;
+  const sr = ctx.sampleRate, len = Math.round(sr * 2.6), ir = ctx.createBuffer(2, len, sr);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < len; i++) { lp += ((Math.random() * 2 - 1) - lp) * 0.35; d[i] = lp * Math.exp(-i / sr / 0.6) * (i < sr * 0.012 ? i / (sr * 0.012) : 1); } }
+  rev.buffer = ir;
+  master.connect(comp); master.connect(rev); rev.connect(wet); wet.connect(comp);
+  comp.connect(makeup); makeup.connect(limit); limit.connect(ctx.destination);
+}
+initAudio();
+const running = () => ctx.state === 'running';
+function unlockAudio() {
+  if (running() || unlocking) return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+}
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+const decode = ab => new Promise((ok, no) => { const p = ctx.decodeAudioData(ab, ok, no); if (p && p.then) p.then(ok, no); });
+fetch(`${SAMPLES}${SET}.mp3`).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(decode).then(buf => {
+  const d = buf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < 1e-3) i++;
+  set = { buf, shift: clamp(i / buf.sampleRate - 0.1 - 0.002, 0, 0.08), last: TONES.map(() => -1) };
+}).catch(() => { $('note').textContent = 'Der Klang konnte nicht laden. Seite neu laden.'; });
+
+let glowT = -1e9, glowV = 0, lastTone = -1;
+const glowLeft = () => Math.exp(-Math.max(0, (performance.now() - glowT) / 1000 - 0.06) / 1.1);
+function strike(tone, vel) {
+  glowV = Math.max(vel, glowV * glowLeft()); glowT = performance.now(); outEnv = Math.max(outEnv, vel);
+  buzz(vel);
+  if (!set || !running()) return;
+  const man = MANIFEST[SET], choices = man.notes[tone];
+  let pick = choices[Math.floor(Math.random() * choices.length)];
+  if (choices.length > 1 && pick === set.last[tone]) pick = choices[(choices.indexOf(pick) + 1) % choices.length];
+  set.last[tone] = pick;
+  const clip = man.clips[pick], rate = TONES[tone][1] / clip.hz, len = clip.d / rate, now = ctx.currentTime;   // sofort, ohne Vorlauf
+  const s = soft / 100;
+  for (const v of voices) if (v.tone === tone && !v.done) { v.g.gain.cancelScheduledValues(now); v.g.gain.setTargetAtTime(0, now, 0.02); v.done = true; try { v.src.stop(now + 0.15); } catch (e) {} }
+  const src = ctx.createBufferSource(); src.buffer = set.buf; src.playbackRate.value = rate;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4;
+  lp.frequency.value = Math.max(450, (1400 + 16000 * vel * vel) * (1 - 0.85 * Math.pow(s, 0.7)));
+  const g = ctx.createGain(), peak = clip.g * 0.5 * Math.pow(vel, 1.5) * (1 + 0.3 * s), attack = 0.001 + 0.035 * s;
+  g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(peak, now + attack);
+  g.gain.setValueAtTime(peak, now + Math.max(attack, len * 0.45));
+  g.gain.exponentialRampToValueAtTime(Math.max(peak * 0.001, 1e-5), now + len);
+  src.connect(lp); lp.connect(g); g.connect(master);
+  src.start(now, clip.o + set.shift, clip.d);
+  const v = { src, g, tone, done: false };
+  src.onended = () => { const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1); try { g.disconnect(); } catch (e) {} };
+  voices.push(v);
+  const live = voices.filter(x => !x.done); if (live.length > 16) { const o = live[0]; o.g.gain.setTargetAtTime(0, now, 0.04); o.done = true; try { o.src.stop(now + 0.3); } catch (e) {} }
+}
+// welcher Stab: meist ein Nachbar im Kreis des letzten, nie zweimal derselbe
+let clap = 0;
+function nextTone() { const r = Math.random(), st = r < 0.55 ? 1 : r < 0.85 ? 2 : 3; clap = (clap + (Math.random() < 0.5 ? st : RING.length - st)) % RING.length;
+  if (RING[clap] === lastTone) clap = (clap + 1) % RING.length; return lastTone = RING[clap]; }
+
+// ════════ Vibration ════════
+// Android: navigator.vibrate. iPhone: keine Vibrations-Schnittstelle, nur der Tick eines Schalters, seit iOS 26.5 nur beim echten Tipp.
+// Safari meldet seit iOS 26 eingefroren „OS 18_6“; die echte Version steht in „Version/26.x“.
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const iosVer = (() => { const v = ua.match(/Version\/(\d+)\.(\d+)/), o = ua.match(/OS (\d+)[_.](\d+)/);
+  if (v && +v[1] >= 18) return [+v[1], +v[2]]; if (o && +o[1] < 18) return [+o[1], +o[2]]; return [99, 0]; })();
+const hasVibrate = typeof navigator.vibrate === 'function';
+const hasSwitch = 'switch' in HTMLInputElement.prototype;
+const iosTick = isIOS && hasSwitch && (iosVer[0] < 26 || (iosVer[0] === 26 && iosVer[1] < 5));
+let lastBuzz = 0;
+function scriptTick() { const l = document.createElement('label'), c = document.createElement('input');
+  c.type = 'checkbox'; c.setAttribute('switch', ''); l.appendChild(c); l.style.display = 'none'; l.setAttribute('aria-hidden', 'true'); document.body.appendChild(l); l.click(); l.remove(); }
+function buzz(vel) {
+  if (vel < 0.08) return;
+  const now = performance.now();
+  if (hasVibrate) { if (now - lastBuzz < 45) return; lastBuzz = now; try { navigator.vibrate(Math.round(5 + 22 * vel)); } catch (e) {} }
+  else if (iosTick) { if (now - lastBuzz < 90) return; lastBuzz = now; try { scriptTick(); } catch (e) {} }
+}
+
+// ════════ Mikrofon: Ausatmen erkennen ════════
+// Ausatmen durch den Mund ist ein tiefes, gleichmäßiges Rauschen. Gemessen wird der Pegel unter 250 Hz: dort liegt der Atem,
+// das Windspiel (ab 392 Hz) nicht, und ein Handy-Lautsprecher gibt dort kaum etwas ab. So hört es sich nicht selbst.
+// Sprache hat Tonhöhen: ein Klang mit wenig Rauschanteil zählt nicht als Atem.
+let stream = null, anLow, anFull, lowBuf, fullBuf, floorDb = -80, levelDb = -100, flat = 0, breath = 0, exhaling = false, onCount = 0, offCount = 0;
+let calib = null, micState = 'idle';   // idle | asking | calibrating | on | denied | none
+async function startMic() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { micState = 'none'; render(); return false; }
+  micState = 'asking'; render();
+  try {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {}
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: echo, noiseSuppression: false, autoGainControl: false } });
+  } catch (e) { micState = 'denied'; render(); return false; }
+  const src = ctx.createMediaStreamSource(stream);
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 40;
+  const lp1 = ctx.createBiquadFilter(); lp1.type = 'lowpass'; lp1.frequency.value = 250; lp1.Q.value = 0.7;
+  const lp2 = ctx.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 250; lp2.Q.value = 0.7;
+  anLow = ctx.createAnalyser(); anLow.fftSize = 512; anFull = ctx.createAnalyser(); anFull.fftSize = 2048; anFull.smoothingTimeConstant = 0;
+  const sink = ctx.createGain(); sink.gain.value = 0;   // manche Browser rechnen nur, was am Ende hörbar angeschlossen ist
+  src.connect(hp); hp.connect(lp1); lp1.connect(lp2); lp2.connect(anLow); src.connect(anFull); anLow.connect(sink); anFull.connect(sink); sink.connect(ctx.destination);
+  lowBuf = new Float32Array(anLow.fftSize); fullBuf = new Float32Array(anFull.frequencyBinCount);
+  calib = { until: performance.now() + 2200, vals: [] }; micState = 'calibrating'; render();
+  return true;
+}
+// v2: zwei Merkmale. (1) Pusten direkt ins Mikrofon: tiefes Rauschen unter 250 Hz. (2) Ausatmen aus normaler Entfernung:
+// ein leises, helles Hauchen über 1–5 kHz. Dafür zählt der MEDIAN der Bänder: ein Hauch hebt alle Bänder gleichmäßig,
+// die Töne des Windspiels heben nur einzelne. So hört es seinen eigenen Klang kaum.
+// Die Ruhe wird laufend nachgeführt (Raumgeräusche ändern sich, das iPhone regelt nach), und gehört wird nur beim Ausatmen.
+let hissDb = -120, hissFloor = -120, outEnv = 0;
+const median = arr => { const s = arr.slice().sort((x, y) => x - y); return s[s.length >> 1]; };
+function readMic(now) {
+  if (!anLow) return;
+  anLow.getFloatTimeDomainData(lowBuf); let e = 0; for (const v of lowBuf) e += v * v;
+  levelDb = 10 * Math.log10(e / lowBuf.length + 1e-12);
+  anFull.getFloatFrequencyData(fullBuf);   // dB je Band
+  const bin = ctx.sampleRate / anFull.fftSize;
+  let a = Math.round(150 / bin), b = Math.round(2000 / bin), lg = 0, ar = 0;   // Rauschanteil (spektrale Flachheit) 150–2000 Hz
+  for (let i = a; i < b; i++) { const p = Math.pow(10, fullBuf[i] / 10) + 1e-14; lg += Math.log(p); ar += p; }
+  flat += (Math.exp(lg / (b - a)) / (ar / (b - a)) - flat) * 0.3;
+  hissDb = median(Array.from(fullBuf.subarray(Math.round(1000 / bin), Math.round(5000 / bin))));
+  if (calib) {
+    calib.vals.push([levelDb, hissDb]);
+    if (now > calib.until) {
+      floorDb = median(calib.vals.map(v => v[0])); hissFloor = median(calib.vals.map(v => v[1]));
+      calib = null; micState = 'on'; render(); onReady();
+    }
+    return;
+  }
+  const s = sens / 100, listening = listensNow();
+  const rawLow = clamp((levelDb - floorDb - (12 - 7 * s)) / 18, 0, 1);
+  const rawHiss = clamp((hissDb - hissFloor - (6 - 3.5 * s)) / 9, 0, 1);   // v4: empfindlicher, schon ein leiser Hauch zählt
+  // was das Windspiel gerade selbst spielt, hebt die Schwelle ein wenig
+  const raw = listening ? clamp(Math.max(rawLow, rawHiss) * clamp((flat - 0.05) / 0.1, 0, 1) - 0.15 * outEnv, 0, 1) : 0;
+  // Ruhe nachführen: nach unten immer, schnell; nach oben nur, wenn das Windspiel still ist. v2 zog sie auch über dem
+  // Nachklang des ersten Atemzugs hoch: danach musste jeder Atemzug lauter sein als das Windspiel selbst.
+  if (!exhaling) {
+    const quiet = outEnv < 0.03;
+    floorDb += (levelDb - floorDb) * (levelDb < floorDb ? 0.05 : quiet ? 0.012 : 0);
+    hissFloor += (hissDb - hissFloor) * (hissDb < hissFloor ? 0.05 : quiet ? 0.012 : 0);
+  }
+  breath += (raw - breath) * (raw > breath ? 0.6 : 0.15);
+  if (!exhaling) { onCount = raw > 0.05 ? onCount + 1 : 0; if (onCount >= 3) { exhaling = true; offCount = 0; exhaleStart(now, raw); } }
+  else { offCount = raw < 0.02 ? offCount + 1 : 0; if (offCount >= 9 || !listening) { exhaling = false; exhaleEnd(now); } }
+}
+
+// ════════ Ablauf der Übung ════════
+let session = null;   // { idx, phaseStart, round, durs: [], heardThis, exStart, exLast }
+const phases = () => PATTERNS[pattern];
+function onReady() { startSession(); }
+function startSession() {
+  session = { idx: 0, phaseStart: performance.now(), round: 1, durs: [], heard: false, exStart: 0, exLast: 0, hinted: false };
+  $('card').hidden = true; $('headline').hidden = true; $('pace').hidden = false; $('dur').hidden = true;
+  const free = phases()[0][0] === 'frei';
+  $('bar-wrap').hidden = free;
+  $('note').textContent = free ? 'Atme durch die Nase ein und durch den Mund aus, so langsam, wie es sich gut anfühlt. Zähle bei jedem Ausatmen still eins weiter. Nach 9 beginnst du wieder bei 1.'
+    : 'Je kräftiger du ausatmest, desto lauter und heller klingt das Windspiel. Sanft und gleichmäßig klingt es am schönsten.';
+}
+function phaseNow() { return phases()[session.idx]; }
+const listensNow = () => !!session && !session.done && ['aus', 'frei'].includes(phaseNow()[0]);
+function exhaleStart(now, raw) {
+  if (listensNow() && !session.exStart) session.exStart = now;
+  strike(nextTone(), clamp(0.45 + 0.4 * raw, 0.45, 0.85));   // der erste Ton kommt sofort, wenn der Atem kommt
+}
+function exhaleEnd(now) {
+  if (!session || !session.exStart) return;
+  session.exLast = now;
+  if (phaseNow()[0] !== 'frei') return;
+  // frei: jedes Ausatmen, das länger als eine halbe Sekunde dauert, ist ein Atemzug
+  const d = (now - session.exStart) / 1000; session.exStart = 0;
+  if (d < 0.5) return;
+  session.durs.push(d); showLast(d);
+  if (session.round >= rounds) { endSession(); return; }
+  session.round++;
+}
+const fmtS = d => d.toFixed(1).replace('.', ',');
+function showLast(d) { $('dur').textContent = d > 0.2 ? `Ausgeatmet: ${fmtS(d)} s` : 'Kein Atem gehört'; $('dur').hidden = !showDur; }
+function tickSession(now) {
+  if (!session || session.done) return;
+  const [kind, secs, label] = phaseNow(), t = (now - session.phaseStart) / 1000;
+  if (kind === 'frei') {   // ohne Takt: neun Punkte, einer je Ausatmen, dann wieder von vorn
+    const n = (session.round - 1) % 9;
+    $('phase').textContent = label;
+    $('count').textContent = Array.from({ length: 9 }, (_, i) => i < n ? '●' : '○').join(' ');
+    $('count').style.fontSize = '20px';
+    $('round').textContent = `Atemzug ${session.round} von ${rounds}`;
+    return;
+  }
+  $('count').style.fontSize = '';
+  if (kind === 'aus' && exhaling && session.exStart) { session.exLast = now; session.heard = true; }
+  // Lucia, 2026-11-08: der Windstoß soll immer die vollen Sekunden dauern
+  $('phase').textContent = kind === 'aus' ? `${label}, die vollen ${secs} Sekunden` : label;
+  $('count').textContent = String(Math.max(1, Math.ceil(secs - t)));
+  $('bar').style.inlineSize = `${clamp(t / secs, 0, 1) * 100}%`;
+  $('round').textContent = `Atemzug ${session.round} von ${rounds}`;
+  if (kind === 'aus' && t > 2.5 && !session.heard && !session.hinted) { session.hinted = true; $('note').textContent = 'Puste sanft in Richtung Handy, als würdest du das Windspiel anblasen.'; }
+  if (t < secs) return;
+  // Phase zu Ende
+  if (kind === 'aus') {
+    const d = session.exStart ? (Math.max(session.exLast, session.exStart) - session.exStart) / 1000 : 0;
+    session.durs.push(d); session.exStart = 0; session.exLast = 0; session.heard = false;
+    if (d > 0) $('note').textContent = '';
+    showLast(d);
+    if (session.round >= rounds) { endSession(); return; }
+    session.round++;
+  }
+  session.idx = (session.idx + 1) % phases().length; session.phaseStart = now;
+}
+function endSession() {
+  session.done = true;
+  $('phase').textContent = 'Lass das Windspiel ausklingen.'; $('count').textContent = ''; $('bar').style.inlineSize = '100%'; $('round').textContent = '';
+  const heard = session.durs.filter(d => d > 0.2);
+  if (showDur && heard.length) { $('dur').textContent = 'Deine Ausatmungen: ' + heard.map(fmtS).join(' · ') + ' s'; $('dur').hidden = false; }
+  $('note').textContent = 'Schön. Bleib noch einen Moment, bis es still ist.';
+  setTimeout(() => {   // danach: dieselbe Karte wie am Anfang, zum Wiederholen oder für eine andere Übung
+    $('pace').hidden = true; $('headline').hidden = false; $('note').textContent = '';
+    $('headline').textContent = 'Noch einmal? Du kannst auch eine andere Übung wählen.';
+    $('start').textContent = 'Beginnen'; $('card').hidden = false;
+  }, 5000);
+}
+
+// ════════ Physik: das Windspiel hängt, der Atem weht hinein ════════
+// Wie in /experiments/windspiel/261106-2335/: starre Längen (kein Hüpfen), Röhre schwer, Schnur und Perle leicht.
+// Der Atem schiebt Röhre, Schnur und Perle zur Seite, in Böen. Die Töne kommen aus dem Atem selbst (sofort, ohne Warten auf
+// den Klöppel); die Bewegung zeigt, dass der Atem angekommen ist.
+const scene = $('scene'), g2 = scene.getContext('2d');
+let W = 0, H = 0, DPR = 1, R = 50, CH = 130, pts = [], links = [], A, T, B, C1, C2, C3, BEAD;
+const GRAV = 7600;
+function P(x, y, mass, drag) { const p = { x, y, px: x, py: y, w: mass ? 1 / mass : 0, drag }; pts.push(p); return p; }
+function link(a, b) { links.push({ a, b, len: Math.hypot(a.x - b.x, a.y - b.y) }); }
+function build() {
+  pts = []; links = [];
+  // v3: so groß wie das Windspiel 261106-2317 (das größte; 2335 und Atem v2 waren gut 15 % kleiner). Oben ist Platz für
+  // den Taktgeber, darunter hängt das Windspiel bis kurz vor den unteren Rand; passt es nicht, wird es gerade so klein wie nötig.
+  const ay = Math.max(194, H * 0.25), ropeLen = clamp(H * 0.04, 22, 60), cordLen = clamp(H * 0.07, 40, 100);
+  let d = clamp(Math.min(W * 0.3, H * 0.165), 84, 165);
+  const room = H - 16 - ay - ropeLen - cordLen; if (d * 2.6 + d * 0.65 > room) d = Math.max(60, room / 3.25);   // Scheibe unten: 0,6 d
+  R = d / 2; CH = d * 2.6;
+  const x = W / 2;
+  A = P(x, ay, 0, 0);
+  T = P(x, ay + ropeLen, 1, 0.8); link(A, T);
+  B = P(x, T.y + CH, 1, 0.8); link(T, B);
+  C1 = P(x, B.y + 4, 0.12, 1.2); link(B, C1);
+  C2 = P(x, C1.y + cordLen / 3, 0.12, 1.2); link(C1, C2);
+  C3 = P(x, C2.y + cordLen / 3, 0.12, 1.2); link(C2, C3);
+  BEAD = P(x, C3.y + cordLen / 3, 0.35, 0.9); link(C3, BEAD);
+}
+function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; scene.width = W * DPR; scene.height = H * DPR; build(); }
+addEventListener('resize', resize);
+// Wind ohne Richtung: der Atem kommt von vorn, das Windspiel schaukelt nach beiden Seiten. v4 schob immer nach rechts
+// („Rechtsdrang“, Lucia 2026-11-08). Jetzt: eine Wiege im Takt des Windspiels (knapp 1 Hz) plus zufällige Böen nach links
+// und rechts, im Mittel null.
+let gust = 0, gustTarget = 0, gustT = 0, swayPhase = 0, windNow = 0, spin = 0, spinV = 0;   // spin: wie weit sich die Scheibe um die Schnur gedreht hat
+const swayNow = () => 0.6 * Math.sin(swayPhase) + 0.6 * gust;   // −1 … 1, im Mittel null
+function step(h) {
+  for (const p of pts) {
+    if (!p.w) continue;
+    const damp = Math.exp(-p.drag * h), vx = (p.x - p.px) * damp, vy = (p.y - p.py) * damp;
+    const light = p === BEAD ? 1 : p.w > 2 ? 0.7 : 0.25;          // die leichte Perle fängt den Atem am meisten
+    const wx = windNow * 1300 * light * swayNow();   // schaukelt sanft um die Mitte, kräftiger bei stärkerem Atem
+    p.px = p.x; p.py = p.y; p.x += vx + wx * h * h; p.y += vy + (GRAV - (p === BEAD ? windNow * 900 : 0)) * h * h;
+  }
+  for (let it = 0; it < 16; it++) for (const l of links) {
+    const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, dist = Math.hypot(dx, dy) || 1e-6, k = (dist - l.len) / dist / (l.a.w + l.b.w);
+    l.a.x += dx * k * l.a.w; l.a.y += dy * k * l.a.w; l.b.x -= dx * k * l.b.w; l.b.y -= dy * k * l.b.w;
+  }
+}
+
+// ════════ Bild: wie die Kalimba und das Windspiel ════════
+let C = {}, shadowCol = [0, 0, 0];
+function readColors() { const probe = $('probe'), get = v => { probe.style.color = `var(${v})`; return getComputedStyle(probe).color; };
+  C = { body: get('--chime-body'), glow: get('--chime-glow'), cord: get('--chime-cord'), bg: get('--sand-1') };
+  C.edge = mix(C.body, 'rgb(0,0,0)', 0.16); C.lit = mix(C.body, 'rgb(255,255,255)', 0.14);
+  shadowCol = shadowColor(); }
+// feine Körnung der matten Keramik: einmal als Kachel erzeugt, dann als Muster über die Form gelegt
+const grain = (() => { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext && c.getContext('2d'); if (!g) return null;
+  for (let i = 0; i < 900; i++) { g.fillStyle = Math.random() < 0.55 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.08)'; g.fillRect(Math.random() * 96, Math.random() * 96, 1 + Math.random(), 1 + Math.random()); }
+  return c; })();
+let grainPat = null;
+const rgb = c => (c.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+const lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+const gam = v => 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055);
+function toLab([r, gg, b]) { r = lin(r); gg = lin(gg); b = lin(b);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * gg + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * gg + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * gg + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s]; }
+function fromLab([L_, a, b]) { const l = (L_ + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L_ - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L_ - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map(v => clamp(Math.round(gam(clamp(v, 0, 1))), 0, 255)); }
+const mix = (a, b, t) => { if (t <= 0) return a; if (t >= 1) return b; const X = toLab(rgb(a)), Y = toLab(rgb(b)); return `rgb(${fromLab(X.map((v, i) => v + (Y[i] - v) * t)).join(',')})`; };
+const map = (v, a, b, c, d) => c + (v - a) * (d - c) / (b - a), roundTo = (v, p) => Math.round(v * 10 ** p) / 10 ** p;
+const SH = { oomph: 0.34, crispy: 0.44, res: 0.26, lx: -0.25, ly: -0.37 }, SIZE = { min: 2, max: 5, off: [15, 25] };
+function bezierX(t, c) { const u = 1 - t; return 3 * u * u * t * c + 3 * u * t * t * c + t * t * t; }
+function rgbToHsl([r, gg, b]) { r /= 255; gg /= 255; b /= 255; const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, d = mx - mn; if (!d) return [0, 0, l * 100];
+  const s = d / (1 - Math.abs(2 * l - 1)), hue = mx === r ? ((gg - b) / d) % 6 : mx === gg ? (b - r) / d + 2 : (r - gg) / d + 4; return [(hue * 60 + 360) % 360, s * 100, l * 100]; }
+function shadowColor() { const [h, s, l] = rgbToHsl(rgb(C.bg)), top = map(SH.oomph, 0, 1, 85, 50);
+  return [Math.round(h), Math.round(clamp(s * map(l, 50, 100, 1, 0.25), 0, 100)), Math.round(clamp(map(l, 0, 100, 0, top) - 5, 0, 100))]; }
+const LAYERS = (() => { const n = Math.round(map(SH.res, 0, 1, SIZE.min, SIZE.max)), far = map(SH.oomph, 0, 1, SIZE.off[0], SIZE.off[1]), out = [];
+  for (let i = 0; i < n; i++) { const alpha = map(SH.oomph, 0, 1, 0.4, 1.25) * map(i, 0, n, SH.crispy, 1 - SH.crispy) * ((SIZE.min + SIZE.max) / 2 / n), c = bezierX(n > 1 ? i / (n - 1) : 1, map(SH.crispy, 0, 1, 0.25, 0));
+    const x = roundTo(map(c, 0, 1, map(SH.lx, -1, 1, 1, -1), map(SH.lx, -1, 1, far, -far)), 1), y = roundTo(map(c, 0, 1, map(SH.ly, -1, 1, 1, -1), map(SH.ly, -1, 1, far, -far)), 1);
+    out.push([x, y, roundTo(map(SH.crispy, 0, 1, 1.5, 0.75) * Math.hypot(x, y), 1), clamp(roundTo(alpha, 2), 0, 1)]); } return out; })();
+let bend = 0, lastTx = 0;
+// Variante B (Lucia, 2026-11-08, nach einem Keramik-Windspiel als Vorbild): leicht konischer Körper mit ausgestelltem Fuß,
+// matte Terrakotta mit feiner Körnung, oben ein Knoten in heller Kordel, seitlich ein Holzring, unten eine flache Scheibe mit
+// Loch, die sich im Atem dreht. Licht von oben links wie bei Kalimba und Harfe.
+function bodyPath() {   // im gedrehten System: Achse nach unten, 0 oben, CH unten
+  const rt = R * 0.7, rb = R * 0.92, foot = R * 1.1, cr = R * 0.14, yb = CH * 0.84;
+  g2.beginPath(); g2.moveTo(-rt + cr, 0); g2.lineTo(rt - cr, 0); g2.quadraticCurveTo(rt, 0, rt + 0.6, cr);
+  g2.lineTo(rb, yb); g2.quadraticCurveTo(rb, CH * 0.96, foot, CH); g2.lineTo(-foot, CH);
+  g2.quadraticCurveTo(-rb, CH * 0.96, -rb, yb); g2.lineTo(-rt - 0.6, cr); g2.quadraticCurveTo(-rt, 0, -rt + cr, 0); g2.closePath();
+  return { rt, rb };
+}
+function shapes(flat, now) {
+  const ang = Math.atan2(B.y - T.y, B.x - T.x) - Math.PI / 2;
+  g2.save(); g2.translate(T.x, T.y); g2.rotate(ang);
+  const { rt, rb } = bodyPath();
+  if (flat) { g2.fillStyle = '#000'; g2.fill(); }
+  else {
+    const gr = g2.createLinearGradient(-R * 1.1, 0, R * 1.1, 0);   // rund: Ränder dunkler, links etwas Licht
+    gr.addColorStop(0, C.edge); gr.addColorStop(0.3, C.lit); gr.addColorStop(0.55, C.body); gr.addColorStop(1, C.edge);
+    g2.fillStyle = gr; g2.fill();
+    if (grain) { grainPat ||= g2.createPattern(grain, 'repeat'); g2.fillStyle = grainPat; g2.fill(); }
+    // Schimmer: hell, solange der Atem ankommt, und kurz heller bei jedem Ton. v3 nahm einen Ton fast wie die Keramik:
+    // im dunklen Modus war nichts zu sehen.
+    const t = (now - glowT) / 1000, kHit = (reduceMotion.matches ? 1 : Math.min(1, t / 0.06)) * glowLeft() * (0.35 + 0.65 * glowV);
+    const k = Math.max(kHit, Math.min(1, windNow * 1.6) * 0.55);
+    if (k > 0.01) { g2.globalAlpha = Math.min(0.8, k * 0.9); g2.fillStyle = C.glow; g2.fill(); g2.globalAlpha = 1; }
+    g2.strokeStyle = 'rgba(255,255,255,0.22)'; g2.lineCap = 'round'; g2.lineWidth = R * 0.13;   // Lichtkante
+    g2.beginPath(); g2.moveTo(-rt * 0.55, R * 0.3); g2.lineTo(-rb * 0.62, CH * 0.8); g2.stroke();
+  }
+  // Knoten der Kordel oben. Der seitliche Holzring ist weg (Lucia, 2026-11-08: zu nah am Vorbild-Foto).
+  if (!flat) { g2.fillStyle = C.cord; g2.beginPath(); g2.ellipse(0, -1, R * 0.12, R * 0.08, 0, 0, Math.PI * 2); g2.fill(); }
+  g2.restore();
+  // kleine Scheibe mit Loch, dreht sich um die Schnur (v4: etwa so groß wie früher die Perle)
+  const pl = C3, la = Math.atan2(BEAD.y - pl.y, BEAD.x - pl.x) - Math.PI / 2, dr = Math.max(8, R * 0.26), sx = 0.25 + 0.75 * Math.abs(Math.cos(spin));
+  g2.save(); g2.translate(BEAD.x, BEAD.y); g2.rotate(la);
+  g2.beginPath(); g2.ellipse(0, dr, dr * sx, dr, 0, 0, Math.PI * 2); g2.ellipse(0, dr, dr * 0.26 * sx, dr * 0.26, 0, 0, Math.PI * 2);
+  if (flat) g2.fillStyle = '#000';
+  else { const gd = g2.createLinearGradient(-dr * sx, 0, dr * sx, 0); gd.addColorStop(0, C.lit); gd.addColorStop(1, C.edge); g2.fillStyle = gd; }
+  g2.fill('evenodd');
+  g2.restore();
+}
+function cords() {
+  g2.strokeStyle = C.cord; g2.lineWidth = 2.2; g2.lineCap = 'round';   // helle Kordel, etwas kräftiger als ein Faden
+  const mx = (A.x + T.x) / 2, my = (A.y + T.y) / 2, dx = T.x - A.x, dy = T.y - A.y, l = Math.hypot(dx, dy) || 1;
+  g2.beginPath(); g2.moveTo(A.x, A.y); g2.quadraticCurveTo(mx - dy / l * bend, my + dx / l * bend, T.x, T.y); g2.stroke();
+  g2.fillStyle = C.cord; g2.beginPath(); g2.arc(A.x, A.y, 2.5, 0, Math.PI * 2); g2.fill();
+  g2.lineWidth = 1.2;   // unten ein dünner Draht zur Scheibe
+  const list = [B, C1, C2, C3, BEAD];
+  g2.beginPath(); g2.moveTo(B.x, B.y);
+  for (let i = 1; i < list.length - 1; i++) g2.quadraticCurveTo(list[i].x, list[i].y, (list[i].x + list[i + 1].x) / 2, (list[i].y + list[i + 1].y) / 2);
+  g2.lineTo(BEAD.x, BEAD.y); g2.stroke();
+}
+function draw(now, dt) {
+  g2.setTransform(DPR, 0, 0, DPR, 0, 0); g2.clearRect(0, 0, W, H);
+  bend += (clamp(-(T.x - lastTx) / Math.max(dt, 1e-3) * 0.02, -12, 12) - bend) * 0.12; lastTx = T.x;
+  cords();
+  const [h, s, l] = shadowCol;
+  if (!matchMedia('(forced-colors: active)').matches) for (const [x, y, blur, a] of LAYERS) {
+    g2.save(); g2.shadowColor = `hsla(${h}, ${s}%, ${l}%, ${a})`; g2.shadowOffsetX = x * DPR; g2.shadowOffsetY = y * DPR; g2.shadowBlur = blur * DPR; shapes(true, now); g2.restore();
+  }
+  shapes(false, now);
+}
+
+// ════════ Takt ════════
+let lastT = performance.now(), scaleQueue = [], lastUi = 0, strikeAcc = 0;
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - lastT) / 1000); lastT = now;
+  readMic(now); outEnv *= Math.exp(-dt / 1.2);
+  // Atem → Wind; Böen machen ihn lebendig
+  windNow += (breath - windNow) * (breath > windNow ? 0.5 : 0.08);
+  gustT -= dt; if (gustT <= 0) { gustT = 0.3 + Math.random() * 0.5; gustTarget = Math.random() * 2 - 1; }
+  gust += (gustTarget - gust) * (1 - Math.exp(-dt / 0.15));   // Böen weich ein- und ausblenden, kein Ruck
+  swayPhase += dt * 2 * Math.PI * (0.85 + 0.1 * Math.sin(swayPhase * 0.13));   // die Wiege, leicht unregelmäßig
+  // die Scheibe dreht sich in Böen und die Schnur dreht sie langsam zurück
+  spinV += (-3 * spin - 0.8 * spinV + windNow * gust * 14) * dt; spin += spinV * dt;
+  // solange der Atem weht, schlägt der Klöppel an: bei sanftem Atem selten und leise, bei kräftigerem dichter
+  if (exhaling && windNow > 0.03) {
+    strikeAcc += dt * (1.4 + 2.0 * Math.pow(windNow, 1.2));   // v4 gleichmäßiger: schon sanfter Atem klingt gut hörbar, kräftiger nur etwas dichter
+    // die Stärke des Atems bestimmt den Klang: sanft leise und dunkel, kräftiger lauter und heller (und dichter, siehe oben)
+    if (strikeAcc >= 1) { strikeAcc = Math.random() * 0.4; strike(nextTone(), clamp(0.4 + 0.5 * windNow * (0.85 + 0.3 * Math.random()), 0.4, 0.95)); }   // v4: auch sanft schon angenehm laut, kräftiger vor allem heller
+  } else strikeAcc = 0.6;   // so kommt der zweite Ton nach dem ersten nicht zu spät
+  for (let i = 0; i < 6; i++) step(dt / 6);
+  tickSession(now);
+  while (scaleQueue.length && scaleQueue[0].at <= now) strike(scaleQueue.shift().tone, 0.7);
+  draw(now, dt);
+  if (now - lastUi > 100) { lastUi = now; uiMeter(); }
+  requestAnimationFrame(frame);
+}
+function uiMeter() {
+  if (!anLow) { $('lvl-out').value = '–'; return; }
+  const rel = levelDb - floorDb, margin = 16 - 10 * sens / 100;
+  $('lvl-out').value = calib ? 'misst Ruhe …' : `${Math.round(breath * 100)} %`;
+  $('lvl-bar').style.inlineSize = `${clamp(rel / 50, 0, 1) * 100}%`;
+  $('lvl-thr').style.insetInlineStart = `${clamp(margin / 50, 0, 1) * 100}%`;
+  $('diag').textContent = `Tief ${rel.toFixed(0)} dB, Hauch ${(hissDb - hissFloor).toFixed(0)} dB über der Ruhe, Rauschanteil ${(flat * 100).toFixed(0)} % · ${exhaling ? 'Ausatmen erkannt' : 'kein Atem'} · Ton-Sitzung: ${navigator.audioSession ? navigator.audioSession.type : 'unbekannt'} · Ton läuft: ${running() ? 'ja' : 'nein'}`;
+}
+
+// ════════ Oberfläche ════════
+function render() {
+  document.querySelectorAll('input[name=pattern]').forEach(r => r.checked = r.value === pattern);
+  $('rounds').value = rounds; $('rounds-out').value = String(rounds);
+  $('showdur').checked = showDur; $('dur').hidden = !showDur || !$('dur').textContent;
+  $('soft').value = soft; $('soft-out').value = `${soft} %`;
+  $('sens').value = sens; $('sens-out').value = `${sens} %`;
+  $('echo').checked = echo;
+  $('vib-note').textContent = hasVibrate ? 'Das Handy tippt bei jedem Ton leise in die Hand.'
+    : iosTick ? 'Das iPhone tickt bei jedem Ton. Dafür muss in den Einstellungen unter „Töne & Haptik“ die System-Haptik an sein.'
+    : isIOS ? 'Spürst du beim Antippen ein Ticken? Beim Atmen selbst kann ein iPhone im Browser nicht vibrieren: Seit iOS 26.5 tickt es nur bei einem echten Tipp. Die System-Haptik muss unter „Töne & Haptik“ an sein.'
+    : 'Dieser Browser kann nicht vibrieren.';
+  const msg = { asking: 'Das Handy fragt nach dem Mikrofon …', calibrating: 'Einen Moment still sein, die Übung hört, wie leise es bei dir ist …',
+    denied: 'Ohne Mikrofon hört die Übung deinen Atem nicht. Du kannst es in den Einstellungen des Browsers erlauben und die Seite neu laden.',
+    none: 'Dieser Browser gibt das Mikrofon nicht frei.' }[micState];
+  if (msg) $('note').textContent = msg; else if (micState === 'on' && /still sein|fragt/.test($('note').textContent)) $('note').textContent = '';
+}
+// die Übungen stehen auf der Startkarte, nicht versteckt in den Einstellungen
+$('pick').innerHTML = EXERCISES.map(([key, name, desc]) =>
+  `<label><input type="radio" name="pattern" value="${key}"><span><b>${name}</b><small>${desc}</small></span></label>`).join('');
+$('start').addEventListener('click', async () => {
+  unlockAudio();
+  if (micState === 'on') { startSession(); return; }
+  $('card').hidden = true; $('headline').hidden = true;
+  const ok = await startMic(); if (!ok) { $('card').hidden = false; $('headline').hidden = false; }
+});
+$('settings-btn').addEventListener('click', () => {
+  const open = $('panel').hidden; $('panel').hidden = !open; $('settings-btn').setAttribute('aria-expanded', String(open));
+  $('settings-btn').setAttribute('aria-label', open ? 'Einstellungen schließen' : 'Einstellungen öffnen');
+});
+document.querySelectorAll('input[name=pattern]').forEach(r => r.addEventListener('change', () => { pattern = r.value; store.set('atem-rhythmus', pattern); render(); }));
+$('rounds').addEventListener('input', e => { rounds = +e.target.value; store.set('atem-runden', String(rounds)); render(); });
+$('showdur').addEventListener('change', e => { showDur = e.target.checked; store.set('atem-dauer', showDur ? 'an' : 'aus'); render(); });
+$('soft').addEventListener('input', e => { soft = +e.target.value; store.set('atem-weich', String(soft)); render(); });
+$('sens').addEventListener('input', e => { sens = +e.target.value; store.set('atem3-empfindlichkeit', String(sens)); render(); });
+$('echo').addEventListener('change', async e => {
+  echo = e.target.checked; store.set('atem-echo', echo ? 'an' : 'aus');
+  if (stream) { const tr = stream.getAudioTracks()[0]; try { await tr.applyConstraints({ echoCancellation: echo, noiseSuppression: false, autoGainControl: false }); } catch (err) {} }
+  render();
+});
+$('scale-btn').addEventListener('click', () => { const t0 = performance.now() + 80; scaleQueue = TONES.map((_, i) => ({ tone: i, at: t0 + i * 420 })); });
+// ein Tipp aufs Windspiel: ein einzelner Ton (und auf dem iPhone ein Ticken über den Schalter im Label)
+scene.addEventListener('click', e => { const [dx, dy] = [e.clientX - (T.x + B.x) / 2, e.clientY - (T.y + B.y) / 2]; if (Math.abs(dx) < R + 16 && Math.abs(dy) < CH / 2 + 16) strike(nextTone(), 0.5); });
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return; const n = parseInt(e.key, 10); if (n >= 1 && n <= 8 && !e.repeat) strike(n - 1, 0.7); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', readColors);
+readColors(); resize(); render();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

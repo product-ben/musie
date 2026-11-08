@@ -10644,3 +10644,74 @@ chrome override, and Ben wants the same label everywhere.
 
 What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
 so Klangreise's English text now says something different from its German.
+
+## Windspiel experiment — does it get PostHog, and with which survey? — OPEN
+
+Where: `apps/web/public/experiments/windspiel/261106-2248/index.html` (the
+head comment says so too)
+
+What I checked: rule 10 allows PostHog under `/experiments` once the visitor
+agrees, and the harp does exactly that (consent as the condition of playing,
+survey "Harp experiment evaluation" fired by `harp_countdown_finished`). The
+kalimba ships without it. Lucia, 2026-11-06: whether the Windspiel is measured
+is Ben's call.
+
+What I did: shipped it without PostHog, without consent UI and without any
+event. Nothing leaves the page but the six sample files it loads from
+`../samples/`.
+
+Why: adding a consent flow and an event name nobody has asked for would decide
+what is measured on Ben's behalf; leaving it out is the reversible choice.
+
+What I need from Ben: yes or no to PostHog on the Windspiel; if yes, which
+event ends a session (there is no countdown here) and whether it shares the
+harp's survey or gets its own.
+
+## Windspiel experiment — the samples are cut from CC0 Freesound previews, not originals — RESOLVED
+
+Where: `apps/web/public/experiments/windspiel/samples/*.mp3`
+
+What I checked: twelve CC0 recordings of real bamboo chimes on Freesound,
+each page's licence field (all `publicdomain/zero/1.0`). Originals need a
+Freesound login; the public high-quality previews (128–188 kbps MP3) do not.
+
+What I did: analysed the previews (onset, which tine was struck, how long it
+rang before the next strike), cut the cleanest strikes per tone, and stored one
+MP3 per recording: g′ a′ h′ d″ e″ g″ a″ h″, retuned to A = 440 at play time.
+The page credits every source it uses, although CC0 does not require it.
+
+Why: CC0 permits copying, cutting and publishing, also commercially. A
+preview is the same recording at lower bitrate, so the licence is the same.
+
+What I need from Ben: nothing. If one recording wins the comparison and the
+sound should improve, download its original WAV with an account and re-cut it;
+the cutting script lives only in the session that made it, so ask for it to be
+written down if that happens.
+
+## Atem-Windspiel — a page under /experiments asks for the microphone — OPEN
+
+Where: `apps/web/public/experiments/atem-windspiel/261108-1402/index.html`
+(`startMic`, `readMic`)
+
+What I checked: it is the first experiment that calls `getUserMedia`. The
+breathing exercise listens for the exhale through the mouth and lets it ring
+the Windspiel. The audio is analysed in the page only (low-band level, median
+of the 1–5 kHz bands, spectral flatness); nothing is recorded, stored or sent,
+and the page says so above the start button. `noiseSuppression` and
+`autoGainControl` are off because both would erase the breath; echo
+cancellation is a switch in the settings, off by default, because on some
+iPhones it makes playback quieter. Rule 10's limits still hold: no secret,
+nothing to Supabase, `noindex`, no PostHog.
+
+What I did: shipped it with the microphone, five exercises (calm 4·1·6,
+resonance 5·5, cyclic sighing, pursed-lip, breath counting), each with its
+study linked in the settings, and a test area for tuning the detection on a
+real phone. Tested by Lucia on her iPhone over a tunnel; the detection
+thresholds come from that and from a simulation, not from a range of devices.
+
+Why: the exercise is the breath, and the microphone is the only way a web page
+can hear it.
+
+What I need from Ben: is a microphone prompt acceptable on an experiment page,
+and should it get PostHog like the harp? If yes to PostHog, the natural event is
+the end of a session (`Lass das Windspiel ausklingen`).
