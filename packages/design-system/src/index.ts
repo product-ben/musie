@@ -52,7 +52,7 @@ export { CtaButton } from './CtaButton';
 export type { CtaButtonProps, CtaVariant, CtaSize, CtaAlign } from './CtaButton';
 
 export { Switch } from './Switch';
-export type { SwitchProps, SwitchAccent } from './Switch';
+export type { SwitchProps, SwitchAccent, SwitchSize } from './Switch';
 
 export { RadioGroupText } from './RadioGroupText';
 export type { RadioGroupTextProps, RadioOption, RadioAccent } from './RadioGroupText';
@@ -213,3 +213,13 @@ export {
   INSTRUMENT_SHADOW_DEFAULT, INSTRUMENT_SHADOW_LEVELS,
 } from './instrumentShadow';
 export type { InstrumentShadowParams, InstrumentShadowLayer } from './instrumentShadow';
+
+/* The instruments' two (2026-11-09). „Dialogue (non modal)“ is generic — the
+   page behind it stays playable, which is what the instrument settings need
+   and why it is not a Lightbox. `Countdown` is the minimum timer the listening
+   focus sheet drew as app CSS around a TrackButton; it is the system's now
+   (L14.3: a pattern that recurs is a component). */
+export { DialogueNonModal } from './DialogueNonModal';
+export type { DialogueNonModalProps, DialogueNonModalPlacement } from './DialogueNonModal';
+export { Countdown } from './Countdown';
+export type { CountdownProps, CountdownState } from './Countdown';

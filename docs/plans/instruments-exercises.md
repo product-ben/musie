@@ -45,7 +45,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 
 | # | Lane | Status | Files (exclusive) | Definition of done |
 | --- | --- | --- | --- | --- |
-| L1 | DS components: **`DialogueNonModal`** — Storybook „Dialogue (non modal)“, generic, the settings are its first use (Ben, 2026-11-09) —, `Countdown`, `SegmentedControl` + `description`, `Switch` + `size="sm"` | in Arbeit — `../musie.worktrees/instr-l1-components`, branch `instruments/l1-…`, started 2026-11-09 | `packages/design-system/src/{DialogueNonModal,Countdown,SegmentedControl,Switch}.tsx`, `musy-components.css`, `stories/{DialogueNonModal,Countdown,SegmentedControl,Switch}.stories.tsx`, `reference/design_system/docs/07-components.md` | stories per CONVENTIONS.md (zu/offen/mit/ohne Vibration for the dialogue); keyboard + screen reader; `pnpm --filter @musie/design-system typecheck` green |
+| L1 | DS components: **`DialogueNonModal`** — Storybook „Dialogue (non modal)“, generic, the settings are its first use (Ben, 2026-11-09) —, `Countdown`, `SegmentedControl` + `description`, `Switch` + `size="sm"` | **erledigt** (`bea11e3`, merged): checked in Chromium for focus, Escape, no inert/scroll lock, nested over an immersive Lightbox, the description in the accessibility tree, the countdown announcements | `packages/design-system/src/{DialogueNonModal,Countdown,SegmentedControl,Switch}.tsx`, `musy-components.css`, `stories/{DialogueNonModal,Countdown,SegmentedControl,Switch}.stories.tsx`, `reference/design_system/docs/07-components.md` | stories per CONVENTIONS.md (zu/offen/mit/ohne Vibration for the dialogue); keyboard + screen reader; `pnpm --filter @musie/design-system typecheck` green |
 | L3 | Engine: audio unlock + master chain from config, answer (generalised from the marimba), play clock reducer, onboarding, haptics + feature detection, motion permission | in Arbeit — `../musie.worktrees/instr-l3-engine`, branch `instruments/l3-…`, started 2026-11-09 | `apps/web/src/instruments/engine/**` | pure parts unit-tested: answer for 3 instruments on/off, clock (play, first note, demo does not start, pause, expire, play on, continue button), onboarding cancels on own touch, vibration detection |
 | L4 | The three instruments as adapters (draw, hit, play), ported from the experiments onto the tokens | harp **erledigt** (`856c034`, merged `…` in this branch, 56 tests incl. parity against the experiment's own functions) · kalimba **erledigt** (`ce9aa3e`, merged, 103 tests incl. parity) · marimba **erledigt** (`d999b35`, merged, 86 tests incl. parity and frame-by-frame drawing against the experiment) | `apps/web/src/instruments/{harp,kalimba,marimba}/**` | each sounds from F2/F3 only; renders with `--instrument-*` tokens; keyboard-playable |
 | L5 | Copy DE/EN | **aufgegangen in F4** — the rows the copy fills are created by F4, so a second migration would write the same rows twice. Remaining check is in I3: `missing_translations` empty for the three | – | – |
@@ -56,7 +56,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 | # | Task | Status | Depends on | Files |
 | --- | --- | --- | --- | --- |
 | I1 | `SessionPlay` step: settings on the step, CTA opens the focus sheet with `InstrumentStage`, demo note, timer, settings in a `DialogueNonModal` in sync with the step, *Weiter zum Reflektieren*; intro additions (volume, browser, motion permission with its state) | offen | L1, L3, L4 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `components/SessionIntro.tsx`, `routes/Session.tsx`, `lib/session.ts`, `i18n/{en,de}.ts` |
-| I2 | DS exports of the L1 components + CLAUDE.md rule 10 sentence | offen | L1 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
+| I2 | DS exports of the L1 components + CLAUDE.md rule 10 sentence | **erledigt**: `DialogueNonModal`, `Countdown`, `SwitchSize` exported; CLAUDE.md rule 10 names the one way out (an experiment Ben turns into an exercise) and that the instruments' experiments are now load-bearing | L1 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
 | I3 | Tests: db (three exercises, kind, relax, samples, texts complete, sessions store mode + seconds, diary security unchanged), adjust `db.content` count; e2e walk intro → diary | in Arbeit — the database half is done: `db.instruments.db.test.ts` (14 checks) green on the isolated stack, `db.content` counts 8; the e2e walk waits for I1 | I1, F4 | `apps/web/src/lib/*.db.test.ts`, `apps/web/e2e/instruments.spec.ts` |
 | I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server; **the three exercise images** (`assets/web/exercises/{kalimba,marimba,harp}.webp`, 768×768, referenced by the migration) rendered from the integrated instruments with Playwright + sharp — rendering them from the experiments would show the pre-token look (marimba bars sand-5, not the key token) | offen | I1–I3 | – |
 | I5 | PR, every deviation from the brief listed | offen | I4 | – |
@@ -100,7 +100,10 @@ it roll strokes.
    or keep only the softening of the sound?
 7. Marimba holes (`--instrument-detail`, sand-8) are now lighter than the
    bars (`--instrument-key`, sand-9) in light mode; darker in the experiment.
-8. `/exercise-builder`'s „Sag mir, was ich ändern soll“ box cannot reach the
+8. „Ich spiele mit Musie“ is cut to „Ich spiele mit …“ in the settings
+   dialogue at 393px (needs 136px, gets 115). Shorter labels in the copy, or a
+   narrower panel inset on phones? Decided at I1 by looking.
+9. `/exercise-builder`'s „Sag mir, was ich ändern soll“ box cannot reach the
    eight new fields: `supabase/functions/exercise-prompt/index.ts` lists its
    fields, and changing it needs a `functions deploy` (Ben).
 
@@ -170,5 +173,6 @@ the usual `supabase db reset` from one session (Ben).
 - 2026-11-09 — I3 database half: whole db suite on the isolated stack: 222 green, 5 red — all five in `deck.db.test.ts` / `music.db.test.ts`, which compare to the hosted snapshots (10 cards, 89 pieces) while a fresh stack carries the factory content (9 cards, 9 pieces), CLAUDE.md rule 4.1. Not caused by this branch; they are red on any freshly started stack.
 - 2026-11-09 — L6 merged (`b7eadb5`), then L4-kalimba and L4-harp: 1009 unit tests green on the branch. Merged as each finished rather than strictly L1 → L3 → L4 → L6: the files are exclusive, so the order changes nothing.
 - 2026-11-09 — L4-marimba merged: 1095 unit tests green. All three adapters build their own master chain. L1 and L3 still running.
+- 2026-11-09 — L1 merged, I2 done. Only L3 (engine) is still running.
 - 2026-11-09 — Ben: the non-modal settings dialog is the generic component
   „Dialogue (non modal)“ — `DialogueNonModal` in code. PRD and plan renamed.
