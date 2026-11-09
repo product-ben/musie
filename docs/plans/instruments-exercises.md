@@ -373,3 +373,6 @@ the usual `supabase db reset` from one session (Ben).
   223 green / the 5 known; `pnpm check` 1247 web tests; the walk on the
   desktop and on an emulated phone. The motion switch's iOS prompt can only
   be walked on a real iPhone.
+- 2026-11-09 — Ben: once started, the play step's instrument button says
+  „Weiterspielen“ and stays primary; „Weiter zum Reflektieren“ is the
+  secondary. Checked on the step before and after a note, and in the walk.
