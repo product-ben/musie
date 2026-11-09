@@ -204,9 +204,9 @@ the top beside the X for all three.
 | R2b | **DS · `Countdown` `size="compact"`**: the marimba's one-row clock (figure in heading-md, `min` transport, caption hidden below 760px) beside the existing display size | **erledigt** `2e0a0ab` | R0 | `Countdown.tsx`, CSS, story |
 | R2 | **DS · `DialogueNonModal` `placement="top-end"`**: opens under the top bar at the right, the trigger beside the X | **erledigt** `2e0a0ab` | – | `DialogueNonModal.tsx`, CSS, story |
 | R3 | **DS · tap effect + cursor, tokens and live controls**: tokens `--instrument-tap-*` (duration 700 ms, size, growth, opacity curve) and `--instrument-cursor-*` (size, colour) in the amendments; `instrumentTap.ts` (pure: the dot at time t for strength v — radius, alpha, gradient stops), its SIZE absolute (from the kalimba's tine width), not relative to what was hit, so a marimba bar does not get a dot five times as large; `InstrumentCursor` (follows mouse/pen over a target); Storybook „Instrument tap“ — a string, a tine and a bar to tap, with Controls bound to every parameter, the values shown as the token lines to paste. `--instrument-key` → sand-5. `TOKEN-DRIFT.md` | **erledigt** `818f8f9`, merged `fdb141f`; the host reads the tokens as `host.tap()` (`ecaeb97`) | – | `packages/design-system/{tokens/musy-foundations-amendments.css,TOKEN-DRIFT.md,src/instrumentTap.ts,src/InstrumentCursor.tsx,src/index.ts,stories/…}` |
-| R4a | **Harp**: tap dot at the grip, travelling with the pull, fading after release; one per strum crossing | offen | R3 | `apps/web/src/instruments/harp/**` |
-| R4b | **Kalimba**: its dots through `instrumentTap` (parity test against the experiment's `dots` stays) | offen | R3 | `apps/web/src/instruments/kalimba/**` |
-| R4c | **Marimba**: the kalimba's dot replaces its own; none on answers; the portrait hint becomes the experiment's full-screen overlay (stage side, R5) | offen | R3 | `apps/web/src/instruments/marimba/**` |
+| R4a | **Harp**: tap dot at the grip, travelling with the pull, fading after release; one per strum crossing | **erledigt** `9471769`, merged `19e1464`; keys 1–7 leave a dot at the string's middle (the lane's addition) | R3 | `apps/web/src/instruments/harp/**` |
+| R4b | **Kalimba**: its dots through `instrumentTap` (parity test against the experiment's `dots` stays) | **erledigt** `6ba2dfa`, merged `47fee5c`: identical to the experiment at 393×852, where the tine is the size token | R3 | `apps/web/src/instruments/kalimba/**` |
+| R4c | **Marimba**: the kalimba's dot replaces its own; none on answers; the portrait hint becomes the experiment's full-screen overlay (stage side, R5) | **erledigt** `9e4b612`, merged `dce9423` | R3 | `apps/web/src/instruments/marimba/**` |
 | R5 | **App · the sheet as harp 1443**: `SessionPlay` on the overlay sheet; head = headline block; foot = Countdown left, Weiter right with the `placeFoot` rule (as CSS: the foot wraps, Weiter keeps to the end); settings icon in the header slot opening the dialogue top-end; `InstrumentStage` fills the sheet and passes the measured head/foot as `inset` (kalimba and marimba lay out between them, the harp ignores them as its experiment did); `InstrumentCursor` over the canvas; the marimba's rotate overlay | **erledigt** `000f6cc` (layout), `11f1e76` (cursor) | R1, R2, R3 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `shell.css`, i18n |
 | R6 | **Verify**: R0's table vs the app at the same four sizes (screenshots side by side, experiment left, app right, for each instrument), the e2e walk, `pnpm check`, the three builds; re-render the three exercise images (the key colour changed) | offen | R4, R5 | `e2e/instruments.spec.ts`, `public/assets/web/exercises/*.webp` |
 
@@ -293,3 +293,13 @@ the usual `supabase db reset` from one session (Ben).
   walk is green on the new layout without a change: its selectors are roles
   and names, and neither moved with the buttons. R4a/b/c running as three
   agents from `ecaeb97`, one instrument each.
+- 2026-11-09 — R4a/b/c merged: 1246 unit tests green. Looked at in the app
+  at 1280×800: the demo lights a tine or bar and leaves no dot; a strum leaves
+  a dot at each string it crosses; the kalimba's dot shows around the tine.
+  **The marimba's dot does not show:** it is painted, but in the colour the
+  bar is lit with — sampled at 40–690 ms its centre differs from the lit bar
+  by at most 2 levels, and it grows past the bar only once mostly faded. The
+  experiment's own dot shared that colour too and was visible only because it
+  grew with the bar's width. Logged for Ben; not changed. With a mouse the
+  48 px cursor also covers most of a fresh dot at the point of the click
+  (touch has no cursor). Exercise images re-rendered (`d53f9f6`).

@@ -10839,3 +10839,62 @@ Why: CLAUDE.md rule 1. A screen does not shrink a component's target, and
 
 What I need from Ben: nothing, unless the marimba should have a smaller
 transport, which would be a `Countdown` change for every exercise.
+
+## The marimba's tap dot is invisible on its lit bar — FLAGGED
+
+Where: `apps/web/src/instruments/marimba/draw.ts` (`paintTaps`), the
+`--instrument-tap-*` tokens
+
+What I checked: round 2 gave the marimba the kalimba's dot, for own strokes
+only, at the token's absolute size (16.85 px, the kalimba's tine width). It is
+painted, between `--instrument-key` and `--instrument-played`; the bar it sits
+on glows in `--instrument-played`. Sampled in the app at 40, 150, 300, 500 and
+690 ms after a click, the dot's centre differs from the lit bar beside it by
+at most 2 levels per channel: nobody will see it. It reaches past the bar's
+edge (about 330 ms in, at a medium stroke) only once it has mostly faded. On the kalimba it spills
+past the narrow tine onto the ground and is plainly visible. The
+experiment's own marimba dot shared the bar's colour as well, and showed only
+because it grew with the bar's width (up to 0.68 of it).
+
+What I did: nothing. The tests prove the dot is drawn, and drawn only for
+own strokes.
+
+What I need from Ben: one of — the marimba's dot in a colour of its own (one
+more token, e.g. terracotta-9 as the experiment's answer stroke was), the
+marimba's dot relative to the bar's width again (gives up "one size for all"),
+or no dot on the marimba at all, since the bar already lights where it was
+struck.
+
+## Mouse only: the green cursor covers a fresh tap dot — FLAGGED
+
+Where: `InstrumentCursor` over every instrument; the tap dot
+
+What I checked: the cursor is 48 px across; a fresh dot is 27 px, at the
+point of the click, and grows past the cursor after about 70 ms at a medium
+stroke, fading as it grows. With a mouse that held still, the dot shows as a
+halo around the cursor; once the mouse moves on it shows whole (a strum's
+dots trail behind it). On touch there is no cursor and the dot is whole.
+
+What I did: kept both, as asked.
+
+What I need from Ben: nothing, unless the desktop should see the tap too —
+then a smaller cursor while pressed, or the dot drawn larger than the cursor.
+
+## Round 2's lanes left three small choices — RESOLVED
+
+Where: `apps/web/src/instruments/{harp,kalimba,marimba}/`,
+`supabase/content/instruments/{kalimba,marimba}.json`
+
+What I checked: the three agents' reports.
+
+What I did, and why:
+- The harp's keys 1–7 leave a dot at the middle of the string: they are own
+  notes too, and the middle is where a string swings most.
+- The harp's held dot does not age while the string is held, so it does not
+  grow until release; from the release on it is the kalimba's tap exactly.
+- `visual.dotMs` (kalimba 700, marimba 600) stays in the locked sound configs
+  and the database though nothing reads it any more: the configs are the
+  experiments' 1:1 and locked (the brief), and the duration now lives in
+  `--instrument-tap-duration`. A comment in each `sound.ts` says so.
+
+What I need from Ben: nothing.
