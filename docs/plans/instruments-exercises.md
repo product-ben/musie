@@ -148,7 +148,7 @@ not touch (the migration, `database.types.ts`, another lane's files,
 `index.ts`), the decisions above, and its definition of done — a subagent
 inherits the directory, not this conversation (rule 9).
 
-## Round 2 — what the instruments lost from the experiments (planned, not built)
+## Round 2 — what the instruments lost from the experiments
 
 Ben, 2026-11-09, after playing the three on localhost: "wir haben bei den
 Instrumenten Einiges verloren aus den Experimenten." Four changes, his answers
@@ -200,14 +200,14 @@ the top beside the X for all three.
 | # | Task | Status | Depends on | Files |
 | --- | --- | --- | --- | --- |
 | R0 | **Measure the experiments first.** Playwright on the three experiments at 393×852, 430×932, 852×393 (marimba) and 1280×800: headline box, clock box, button box, instrument extent (top/bottom/side of strings, tines, bars), cursor size. Written into this file as the acceptance table; R5 compares the app against it pixel box by pixel box (memory: measure, never derive from CSS) | **erledigt**: table below | – | this file |
-| R1 | **DS · `Sheet` overlay layout**: a `layout="overlay"` (name to settle) where the body fills the whole sheet under a transparent head and foot, pointer events passing through their empty parts; a header slot for actions beside the X (the settings icon). Stories + 07-components | offen | R0 | `packages/design-system/src/Sheet.tsx`, `musy-components.css`, `stories/Sheet.stories.tsx`, docs |
-| R2b | **DS · `Countdown` `size="compact"`**: the marimba's one-row clock (figure in heading-md, `min` transport, caption hidden below 760px) beside the existing display size | offen | R0 | `Countdown.tsx`, CSS, story |
-| R2 | **DS · `DialogueNonModal` `placement="top-end"`**: opens under the top bar at the right, the trigger beside the X | offen | – | `DialogueNonModal.tsx`, CSS, story |
-| R3 | **DS · tap effect + cursor, tokens and live controls**: tokens `--instrument-tap-*` (duration 700 ms, size, growth, opacity curve) and `--instrument-cursor-*` (size, colour) in the amendments; `instrumentTap.ts` (pure: the dot at time t for strength v — radius, alpha, gradient stops), its SIZE absolute (from the kalimba's tine width), not relative to what was hit, so a marimba bar does not get a dot five times as large; `InstrumentCursor` (follows mouse/pen over a target); Storybook „Instrument tap“ — a string, a tine and a bar to tap, with Controls bound to every parameter, the values shown as the token lines to paste. `--instrument-key` → sand-5. `TOKEN-DRIFT.md` | offen | – | `packages/design-system/{tokens/musy-foundations-amendments.css,TOKEN-DRIFT.md,src/instrumentTap.ts,src/InstrumentCursor.tsx,src/index.ts,stories/…}` |
+| R1 | **DS · `Sheet` overlay layout**: a `layout="overlay"` (name to settle) where the body fills the whole sheet under a transparent head and foot, pointer events passing through their empty parts; a header slot for actions beside the X (the settings icon). Stories + 07-components | **erledigt** `2e0a0ab`: settled as three props rather than a layout name — `stage` (the body behind head and foot), `actions` (beside the X), `density` (`compact` for the marimba's tighter head and foot) | R0 | `packages/design-system/src/Sheet.tsx`, `musy-components.css`, `stories/Sheet.stories.tsx`, docs |
+| R2b | **DS · `Countdown` `size="compact"`**: the marimba's one-row clock (figure in heading-md, `min` transport, caption hidden below 760px) beside the existing display size | **erledigt** `2e0a0ab` | R0 | `Countdown.tsx`, CSS, story |
+| R2 | **DS · `DialogueNonModal` `placement="top-end"`**: opens under the top bar at the right, the trigger beside the X | **erledigt** `2e0a0ab` | – | `DialogueNonModal.tsx`, CSS, story |
+| R3 | **DS · tap effect + cursor, tokens and live controls**: tokens `--instrument-tap-*` (duration 700 ms, size, growth, opacity curve) and `--instrument-cursor-*` (size, colour) in the amendments; `instrumentTap.ts` (pure: the dot at time t for strength v — radius, alpha, gradient stops), its SIZE absolute (from the kalimba's tine width), not relative to what was hit, so a marimba bar does not get a dot five times as large; `InstrumentCursor` (follows mouse/pen over a target); Storybook „Instrument tap“ — a string, a tine and a bar to tap, with Controls bound to every parameter, the values shown as the token lines to paste. `--instrument-key` → sand-5. `TOKEN-DRIFT.md` | **erledigt** `818f8f9`, merged `fdb141f`; the host reads the tokens as `host.tap()` (`ecaeb97`) | – | `packages/design-system/{tokens/musy-foundations-amendments.css,TOKEN-DRIFT.md,src/instrumentTap.ts,src/InstrumentCursor.tsx,src/index.ts,stories/…}` |
 | R4a | **Harp**: tap dot at the grip, travelling with the pull, fading after release; one per strum crossing | offen | R3 | `apps/web/src/instruments/harp/**` |
 | R4b | **Kalimba**: its dots through `instrumentTap` (parity test against the experiment's `dots` stays) | offen | R3 | `apps/web/src/instruments/kalimba/**` |
 | R4c | **Marimba**: the kalimba's dot replaces its own; none on answers; the portrait hint becomes the experiment's full-screen overlay (stage side, R5) | offen | R3 | `apps/web/src/instruments/marimba/**` |
-| R5 | **App · the sheet as harp 1443**: `SessionPlay` on the overlay sheet; head = headline block; foot = Countdown left, Weiter right with the `placeFoot` rule; settings icon in the header slot opening the dialogue top-end; `InstrumentStage` fills the sheet and passes the measured head/foot as `inset` (kalimba and marimba lay out between them, the harp ignores them as its experiment did); `InstrumentCursor` over the canvas; the marimba's rotate overlay | offen | R1, R2, R3 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `shell.css`, i18n |
+| R5 | **App · the sheet as harp 1443**: `SessionPlay` on the overlay sheet; head = headline block; foot = Countdown left, Weiter right with the `placeFoot` rule (as CSS: the foot wraps, Weiter keeps to the end); settings icon in the header slot opening the dialogue top-end; `InstrumentStage` fills the sheet and passes the measured head/foot as `inset` (kalimba and marimba lay out between them, the harp ignores them as its experiment did); `InstrumentCursor` over the canvas; the marimba's rotate overlay | **erledigt** `000f6cc` (layout), `11f1e76` (cursor) | R1, R2, R3 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `shell.css`, i18n |
 | R6 | **Verify**: R0's table vs the app at the same four sizes (screenshots side by side, experiment left, app right, for each instrument), the e2e walk, `pnpm check`, the three builds; re-render the three exercise images (the key colour changed) | offen | R4, R5 | `e2e/instruments.spec.ts`, `public/assets/web/exercises/*.webp` |
 
 **R0 · what the experiments measure** (Playwright, CSS px, `[x, y, w, h]`;
@@ -277,3 +277,19 @@ the usual `supabase db reset` from one session (Ben).
 - 2026-11-09 — I5: PRD in the repo, open points in the log, PR opened. The isolated stack (`musie-instruments`) and the dev server on :5191 were stopped afterwards.
 - 2026-11-09 — Ben: the non-modal settings dialog is the generic component
   „Dialogue (non modal)“ — `DialogueNonModal` in code. PRD and plan renamed.
+- 2026-11-09 — Round 2 planned with Ben (four answers, then „Marimba wie ihr
+  Experiment“ after R0). R0 measured; R1, R2, R2b in one session on the
+  branch (`2e0a0ab`); R3 as an agent in its own worktree, merged (`fdb141f`);
+  R5's layout (`000f6cc`) measured against R0 until the boxes agreed: the
+  harp's paint is identical, its headline stands at (32, 44), the clock's
+  top is within 1 px at all four sizes, Weiter keeps to the right edge; the
+  marimba in landscape has its headline at (32, 16) and bars from y 54 across
+  the width. Two fixes found only by measuring: the stage header's top margin
+  (32 → 44, the X's target height) and the marimba's status line, whose
+  intrinsic width widened the sheet's grid column past the viewport.
+- 2026-11-09 — R5's cursor (`11f1e76`): over the canvas the dot is visible,
+  48 px, `--interactive-primary`, and the canvas hides the system pointer;
+  over the settings button the dot hides and the pointer returns. The e2e
+  walk is green on the new layout without a change: its selectors are roles
+  and names, and neither moved with the buttons. R4a/b/c running as three
+  agents from `ecaeb97`, one instrument each.
