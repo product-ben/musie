@@ -383,6 +383,8 @@ export const de: Messages = {
   'session.step.scan': 'Scannen',
   'session.step.select': 'Auswählen',  'session.step.view': 'Ansehen',
   'session.step.listen': 'Hören',
+  'session.step.play': 'Musizieren',
+  'session.play.continue': 'Weiter zum Reflektieren',
   'session.step.reflect': 'Nachdenken',
   /* 'Abgeschlossen', nicht 'Beendet' (Ben, 2026-09-23). 'Beendet' sagt nur,
      dass etwas aufgehört hat — das steht auch über einer abgebrochenen Runde.

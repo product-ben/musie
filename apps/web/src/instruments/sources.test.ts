@@ -54,7 +54,6 @@ function literal(source: string, marker: string): unknown {
     if (source[end] === open) depth += 1;
     else if (source[end] === close) { depth -= 1; if (depth === 0) break; }
   }
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   return new Function(`return (${source.slice(i, end + 1)});`)();
 }
 

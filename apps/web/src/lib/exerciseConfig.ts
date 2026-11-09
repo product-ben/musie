@@ -60,6 +60,10 @@ export const STEP_FEATURES: Record<StepId, readonly string[]> = {
     'skip_intro', 'card_visual', 'infographic', 'rotating_question',
     'question_helper_ladder', 'track_reveal', 'immersive_view',
   ],
+  /* The instruments (2026-11-09). Every one is something the play step draws:
+     the answer switch, the vibration switch where the device has one, the
+     demo note on opening, the timer, the sheet. */
+  play: ['answer_mode', 'vibration_switch', 'motion_permission', 'demo_note', 'play_timer', 'immersive_view'],
   reflect: [
     'mode_text', 'mode_voice', 'mode_photo',
     'sheet_feelings', 'sheet_thoughts', 'sheet_understand',

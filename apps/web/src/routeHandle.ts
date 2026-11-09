@@ -15,7 +15,9 @@ import type { MessageKey } from './i18n';
 /**
  * The wizard's step names. The ONLY valid values for `:step`.
  *
- * ── SIX NAMES, AND A RUN USES FOUR OF THEM ────────────────────────────────
+ * ── SEVEN NAMES, AND A RUN USES THREE OR FOUR OF THEM ─────────────────────
+ * `play` (2026-11-09) is the instruments' own: intro · play · reflect.
+ *
  * The second step of a card run is `scan`, `view` or `select` and never two of
  * them: the deck on the table is scanned, one card dealt digitally is looked
  * at, five dealt digitally are chosen between. `lib/exerciseKind.ts` is where
@@ -29,7 +31,7 @@ import type { MessageKey } from './i18n';
  * rather than being moved for tidiness: the paper run's four stay exactly
  * where every existing test expects them.
  */
-export const STEP_IDS = ['intro', 'scan', 'view', 'select', 'listen', 'reflect'] as const;
+export const STEP_IDS = ['intro', 'scan', 'view', 'select', 'listen', 'play', 'reflect'] as const;
 
 export type StepId = (typeof STEP_IDS)[number];
 
@@ -62,6 +64,7 @@ const STEP_MESSAGE_KEY: Record<StepId, MessageKey> = {
   view: 'session.step.view',
   select: 'session.step.select',
   listen: 'session.step.listen',
+  play: 'session.step.play',
   reflect: 'session.step.reflect',
 };
 

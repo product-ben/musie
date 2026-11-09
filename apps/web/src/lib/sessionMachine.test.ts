@@ -50,15 +50,15 @@ const AT = '2026-09-19T10:00:00.000Z';
 
 /* The three card runs, as `skippedForRun` spells them: every run skips two of
    the three second steps, and which two is the whole of the difference. */
-const PAPER: readonly StepId[] = ['view', 'select'];
+const PAPER: readonly StepId[] = ['view', 'select', 'play'];
 /* The paper run itself, which is what most of these tests mean when they say
    "the steps": `STEP_IDS` is the vocabulary, this is a run. */
 const RUN = activeSteps(PAPER);
-const FIVE: readonly StepId[] = ['scan', 'view'];
-const ONE: readonly StepId[] = ['scan', 'select'];
+const FIVE: readonly StepId[] = ['scan', 'view', 'play'];
+const ONE: readonly StepId[] = ['scan', 'select', 'play'];
 /* And a run with no cards at all: it skips all three second steps, where
    `scan` was the only one until 2026-10-14. */
-const CARDLESS: readonly StepId[] = ['scan', 'view', 'select'];
+const CARDLESS: readonly StepId[] = ['scan', 'view', 'select', 'play'];
 
 /** Walk forward `count` times from a fresh session of the given run. */
 function advanced(count: number, skipped: readonly StepId[] = PAPER): SessionState {

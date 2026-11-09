@@ -192,6 +192,48 @@ export interface Exercise {
    * so the empty array is the honest answer rather than a missing field.
    */
   goalIds: string[];
+  /**
+   * WHAT AN INSTRUMENTS EXERCISE IS PLAYED ON, AND ITS OWN WORDS — or null for
+   * every other kind (2026-11-09).
+   *
+   * One field rather than ten optional ones, because they arrive and leave
+   * together: an exercise has all of them or none, and a screen asks one
+   * question (`exercise.instrument !== null`) instead of ten.
+   *
+   * The SOUND is not here. It is read by the play step itself
+   * (`lib/instruments.ts`), because the library list has no use for 32 sample
+   * rows and a few kilobytes of jsonb per instrument.
+   */
+  instrument: ExerciseInstrument | null;
+}
+
+/** How someone plays along: the instrument answers, or it does not. */
+export type PlayMode = 'solo' | 'with_musie';
+
+export function isPlayMode(value: string | null | undefined): value is PlayMode {
+  return value === 'solo' || value === 'with_musie';
+}
+
+/** `exercise_instruments` and the instruments' copy columns of `exercise_i18n`. */
+export interface ExerciseInstrument {
+  /** `instruments.id` — harp, kalimba, marimba. */
+  id: string;
+  /** What Zusammenspiel starts at. `with_musie` for all three (the brief). */
+  defaultMode: PlayMode;
+  /** What the vibration switch starts at, where there is one. */
+  vibrationDefault: boolean;
+  /* The copy. `string` where every instrument has it; `motionMd` is null for
+     the harp, which uses no sensor, and that null is the screen's answer to
+     "is there a permission to ask for". */
+  volumeMd: string;
+  browserMd: string;
+  motionMd: string | null;
+  playMd: string;
+  playCta: string;
+  modeSoloLabel: string;
+  modeSoloMd: string;
+  modeMusieLabel: string;
+  modeMusieMd: string;
 }
 
 /**
@@ -332,7 +374,7 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
-const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt), exercise_goals(goal_id)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, volume_md, browser_md, motion_md, play_md, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id), exercise_instruments(instrument_id, default_mode, vibration_default)';
 
 interface ExerciseRow {
   id: string;
@@ -358,7 +400,20 @@ interface ExerciseRow {
     reflect_md: string | null;
     reflect_placeholder: string | null;
     image_alt: string;
+    volume_md: string | null;
+    browser_md: string | null;
+    motion_md: string | null;
+    play_md: string | null;
+    play_cta: string | null;
+    mode_solo_label: string | null;
+    mode_solo_md: string | null;
+    mode_musie_label: string | null;
+    mode_musie_md: string | null;
   }[];
+  /* ONE-TO-ONE, because `exercise_instruments.exercise_id` is its primary
+     key — PostgREST answers an object or null. Typed as either so a change of
+     key on the other side degrades to the first row, not to a crash. */
+  exercise_instruments: InstrumentRow | InstrumentRow[] | null;
   /* A to-many embed, so PostgREST returns an array — never an object. The
      collapse `getTrackFor` has to perform does not apply here. */
   exercise_goals: { goal_id: string }[];
@@ -378,6 +433,47 @@ interface ExerciseRow {
  * the failure is a step that should not be there instead of a run that cannot
  * be finished.
  */
+interface InstrumentRow {
+  instrument_id: string;
+  default_mode: string;
+  vibration_default: boolean;
+}
+
+/**
+ * THE INSTRUMENT, OR NULL — and null for an instruments row whose join or
+ * copy is missing, with a console error, rather than a play step that opens
+ * on nothing. `missing_translations` and the db suite are what keep that
+ * branch unreachable.
+ */
+function toInstrument(
+  id: string,
+  embed: ExerciseRow['exercise_instruments'],
+  text: ExerciseRow['exercise_i18n'][number],
+): ExerciseInstrument | null {
+  const row = Array.isArray(embed) ? (embed[0] ?? null) : embed;
+  if (row === null) return null;
+  const required = [text.volume_md, text.browser_md, text.play_md, text.play_cta, text.mode_solo_label,
+    text.mode_solo_md, text.mode_musie_label, text.mode_musie_md];
+  if (required.some((value) => value === null || value === '')) {
+    console.error(`[musie] exercises: instrument copy incomplete for id="${id}"`);
+    return null;
+  }
+  return {
+    id: row.instrument_id,
+    defaultMode: isPlayMode(row.default_mode) ? row.default_mode : 'with_musie',
+    vibrationDefault: row.vibration_default,
+    volumeMd: text.volume_md ?? '',
+    browserMd: text.browser_md ?? '',
+    motionMd: text.motion_md === '' ? null : text.motion_md,
+    playMd: text.play_md ?? '',
+    playCta: text.play_cta ?? '',
+    modeSoloLabel: text.mode_solo_label ?? '',
+    modeSoloMd: text.mode_solo_md ?? '',
+    modeMusieLabel: text.mode_musie_label ?? '',
+    modeMusieMd: text.mode_musie_md ?? '',
+  };
+}
+
 function exerciseKind(id: string, value: string): ExerciseKind {
   if (isExerciseKind(value)) return value;
   console.error(
@@ -422,6 +518,7 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
        PostgREST does not promise one for an embed, and this array reaches a
        `useMemo` dependency in Exercises.tsx. */
     goalIds: row.exercise_goals.map((pair) => pair.goal_id).sort(),
+    instrument: toInstrument(row.id, row.exercise_instruments, text),
   }];
 }
 

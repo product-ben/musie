@@ -528,6 +528,8 @@ export const en = {
      the second one is `scan`, `view` or `select` and never two. */
   'session.step.view': 'Look',
   'session.step.listen': 'Listen',
+  'session.step.play': 'Play',
+  'session.play.continue': 'Continue to reflection',
   'session.step.reflect': 'Reflect',
   /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
      of them is worth reading: finishing a session is an achievement, and the

@@ -113,6 +113,8 @@ export function configToExercise(
       : reflectCopy.placeholder,
     imageAlt: card?.imageAlt ?? '',
     goalIds: [...config.catalogue.goals],
+    /* The builder does not draw the play step yet: plan task L6. */
+    instrument: null,
   };
 }
 

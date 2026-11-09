@@ -103,6 +103,19 @@ describe('stepsForRun', () => {
   });
 });
 
+describe('the instruments run (2026-11-09)', () => {
+  /* The play step belongs to this kind alone, so every other run skips it —
+     which is why the lists below gained `play` the day it was added. */
+  it('is intro · play · reflect, whatever the shape says', () => {
+    expect(stepsForRun('instruments', NONE)).toEqual(['intro', 'play', 'reflect']);
+    expect(stepsForRun('instruments', PAPER)).toEqual(['intro', 'play', 'reflect']);
+  });
+
+  it('skips every card step and listening', () => {
+    expect(skippedForRun('instruments', NONE)).toEqual(['scan', 'view', 'select', 'listen']);
+  });
+});
+
 describe('skippedForRun', () => {
   /* IT STOPPED BEING EMPTY ON 2026-10-14. A paper card run skips the two
      digital second steps, and a digital one skips `scan` and whichever of the
@@ -111,13 +124,13 @@ describe('skippedForRun', () => {
      visible gap and nothing wants that here, which is why the rail is handed
      `stepsForRun` rather than all six. */
   it('skips the two second steps this run did not take', () => {
-    expect(skippedForRun('card_based', PAPER)).toEqual(['view', 'select']);
-    expect(skippedForRun('card_based', FIVE)).toEqual(['scan', 'view']);
-    expect(skippedForRun('card_based', ONE)).toEqual(['scan', 'select']);
+    expect(skippedForRun('card_based', PAPER)).toEqual(['view', 'select', 'play']);
+    expect(skippedForRun('card_based', FIVE)).toEqual(['scan', 'view', 'play']);
+    expect(skippedForRun('card_based', ONE)).toEqual(['scan', 'select', 'play']);
   });
 
   it('skips all three second steps for a listening exercise', () => {
-    expect(skippedForRun('listening_only', NONE)).toEqual(['scan', 'view', 'select']);
+    expect(skippedForRun('listening_only', NONE)).toEqual(['scan', 'view', 'select', 'play']);
   });
 
   /* THE TWO LISTS MUST NOT DRIFT. `skippedFor` is derived from
