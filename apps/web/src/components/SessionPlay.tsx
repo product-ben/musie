@@ -203,7 +203,9 @@ export function SessionPlay({
               />
               {/* ── THE MARIMBA IN PORTRAIT — its experiment's full screen ──
                   On a touch screen held upright the bars are drawn anyway,
-                  and this covers them, as `.musie-rotate` did. */}
+                  and this covers them, as `.musie-rotate` did; the head and
+                  the foot step aside (`data-covered`). The X and the settings
+                  stay, so nobody is held in a sheet they cannot use. */}
               {rotate && (
                 <div className="musie-play__rotate" role="status">
                   <Smartphone aria-hidden="true" className="musie-play__rotate-icon" />
@@ -214,7 +216,7 @@ export function SessionPlay({
             </>
           ) : undefined}
           header={
-            <div ref={headRef} className="musie-play__head" data-compact={compact ? 'true' : undefined}>
+            <div ref={headRef} className="musie-play__head" data-compact={compact ? 'true' : undefined} data-covered={rotate ? 'true' : undefined}>
               <h2 className="musie-play__headline">{headline}</h2>
               {/* The demo, a load failure: polite, and in the marimba's one
                   line where its experiment kept its note. For the harp and the
@@ -230,7 +232,7 @@ export function SessionPlay({
             </div>
           }
           foot={
-            <div ref={footRef} className="musie-play__foot" data-compact={compact ? 'true' : undefined}>
+            <div ref={footRef} className="musie-play__foot" data-compact={compact ? 'true' : undefined} data-covered={rotate ? 'true' : undefined}>
               <Countdown
                 className="musie-play__clock"
                 size={compact ? 'compact' : 'display'}

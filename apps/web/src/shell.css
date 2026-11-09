@@ -2791,6 +2791,13 @@ html[data-musy-scroll-snap] {
 }
 
 /* ── THE MARIMBA UPRIGHT ON A TOUCH SCREEN — its experiment's full screen ── */
+/* The head and the foot are hidden, not removed: their boxes are the
+   instrument's insets, and the bars must not move when the hint goes. */
+.musie-play__head[data-covered],
+.musie-play__foot[data-covered] {
+  visibility: hidden;
+}
+
 .musie-play__rotate {
   position: absolute;
   inset: 0;
