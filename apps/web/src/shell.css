@@ -2763,17 +2763,15 @@ html[data-musy-scroll-snap] {
 /* The harp's foot: the clock at the leading edge, the button at the trailing
    edge, side by side where both fit — and where they do not, the button drops
    below with the clock above it (the harp's `placeFoot`). */
-/* THE CLOCK STANDS ON THE BOTTOM EDGE (Ben, 2026-11-09). `wrap-reverse`
-   stacks the rows from the bottom up: the clock's row is the lowest, and
-   where Weiter does not fit beside it, its row goes ABOVE the clock, not
-   below. The edge is the sheet's, a fixed box the size of what the browser
-   shows — on a phone that ends above a bottom address bar, never under it.
-   `end`, not `flex-end`: it means the bottom whatever the wrap direction. */
+/* THE CLOCK ON THE BOTTOM EDGE, WEITER ALWAYS UNDER IT (Ben, 2026-11-09).
+   Until a pause or 0:00 the button's row is shut and the clock stands on the
+   edge; then the row opens and pushes the clock up. The edge is the sheet's,
+   a fixed box the size of what the browser shows — on a phone it ends above
+   a bottom address bar, never under it. The instruments lay out between the
+   head and this foot, so they give way as the row opens. */
 .musie-play__foot {
   display: flex;
-  flex-wrap: wrap-reverse;
-  align-items: end;
-  gap: var(--space-gap-stack);
+  flex-direction: column;
   inline-size: 100%;
 }
 
@@ -2781,29 +2779,44 @@ html[data-musy-scroll-snap] {
   min-inline-size: 0;
 }
 
+/* The row opens from nothing: `0fr` to `1fr` is a transition to the
+   button's own height, which `height: auto` cannot be. */
 .musie-play__done {
-  margin-inline-start: auto;
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--motion-sheet-slide);
 }
 
-/* Laid out always, shown only on pause or at 0:00 — so the clock never moves
-   when it appears. `inert` on the element keeps it out of the tab order. */
+/* What the opening row clips. It reaches `--focus-ring-clearance` past the
+   foot at the sides, so the clip never cuts the button's focus ring. */
+.musie-play__done-clip {
+  min-block-size: 0;
+  overflow: hidden;
+  margin-inline: calc(var(--focus-ring-clearance) * -1);
+}
+
+/* The gap above the button is inside the clip, so it opens with the row;
+   the padding below and at the sides is the focus ring's room. */
+.musie-play__done-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-gap-stack) var(--focus-ring-clearance) var(--focus-ring-clearance);
+  transition: opacity var(--motion-sheet-slide), translate var(--motion-sheet-slide);
+}
+
+/* Shut, and hidden so it is neither read nor reached; on shutting, hidden
+   only once the row has closed. `inert` on the element keeps it out of the
+   tab order meanwhile. */
 .musie-play__done[data-waiting] {
+  grid-template-rows: 0fr;
   visibility: hidden;
+  transition: grid-template-rows var(--motion-exit), visibility 0s linear var(--motion-duration-fast);
 }
 
-/* The marimba's foot: one row, centred on the small clock, which gives way
-   before the button does. */
-.musie-play__foot[data-compact] {
-  flex-wrap: nowrap;
-  align-items: center;
-}
-
-.musie-play__foot[data-compact] .musie-play__clock {
-  flex: 0 1 auto;
-}
-
-.musie-play__foot[data-compact] .musie-play__done {
-  flex: 0 0 auto;
+.musie-play__done[data-waiting] .musie-play__done-row {
+  opacity: 0;
+  translate: 0 var(--motion-travel-md);
+  transition: opacity var(--motion-exit), translate var(--motion-exit);
 }
 
 /* ── THE HAND ─────────────────────────────────────────────────────────────

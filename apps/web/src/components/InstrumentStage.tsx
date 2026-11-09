@@ -175,8 +175,12 @@ export function InstrumentStage({
       const turned = TURNS_UPRIGHT[definition.id] && rect.height > rect.width;
       const width = turned ? rect.height : rect.width;
       const height = turned ? rect.width : rect.height;
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
+      /* Only on a change: assigning a canvas's size clears it, even to the
+         same number, and the foot's opening row re-measures every frame. */
+      const pxWidth = Math.round(width * dpr);
+      const pxHeight = Math.round(height * dpr);
+      if (canvas.width !== pxWidth) canvas.width = pxWidth;
+      if (canvas.height !== pxHeight) canvas.height = pxHeight;
       /* The CSS turns the canvas (`.musie-instrument[data-turned]`); the
          pointers are turned back in `pointerOf`. */
       scope.toggleAttribute('data-turned', turned);

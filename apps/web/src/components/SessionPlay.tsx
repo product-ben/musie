@@ -225,7 +225,7 @@ export function SessionPlay({
             </div>
           }
           foot={
-            <div ref={footRef} className="musie-play__foot" data-compact={compact ? 'true' : undefined}>
+            <div ref={footRef} className="musie-play__foot">
               <Countdown
                 className="musie-play__clock"
                 size={compact ? 'compact' : 'display'}
@@ -240,10 +240,14 @@ export function SessionPlay({
                 trackLabel={t('session.play.timer.name')}
                 announcement={said === null ? '' : t(`session.play.timer.${said.key}`)}
               />
-              {/* ALWAYS LAID OUT, shown only on pause or at 0:00 — the harp's
-                  `data-waiting`: the clock must not move when it appears. */}
+              {/* UNDER THE CLOCK, its row shut until a pause or 0:00; opening,
+                  it pushes the clock up (Ben, 2026-11-09). */}
               <div className="musie-play__done" data-waiting={showContinue(clock) ? undefined : 'true'} inert={!showContinue(clock)}>
-                <CtaButton onClick={onAdvance}>{t('session.play.continue')}</CtaButton>
+                <div className="musie-play__done-clip">
+                  <div className="musie-play__done-row">
+                    <CtaButton onClick={onAdvance}>{t('session.play.continue')}</CtaButton>
+                  </div>
+                </div>
               </div>
             </div>
           }
