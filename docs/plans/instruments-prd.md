@@ -243,3 +243,8 @@ die Stäbe der Marimba sind 11–12 px kürzer (Touch-Ziel des Systems, 56 statt
   nicht betroffen).
 - Der Demo-Satz der Marimba wird bei 852×393 abgeschnitten — kürzerer Satz,
   Umbruch, oder der eigene Hinweis des Experiments.
+
+**Nachtrag (Ben, 2026-11-09):** Hochkant dreht sich die Marimba, statt um
+Drehen zu bitten. Die Stäbe liegen quer über dem Bildschirm, die tiefen unten,
+die Schrift bleibt aufrecht; hochkant gilt das Harfen-Layout. Der Dreh-Hinweis
+entfällt. Die Texte der Übung empfehlen weiterhin, das Handy quer zu legen.

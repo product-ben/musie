@@ -10919,3 +10919,29 @@ What I need from Ben: one of — a shorter sentence for all three (e.g. „Musie
 spielt dir einen ersten Ton vor.“ / "Musie plays you a first note.", which
 fits), the line allowed to wrap (the bars lose about 20 px), or the
 experiment's per-instrument note back for the marimba.
+
+## The marimba held upright turns instead of asking to be turned — RESOLVED
+
+Where: `apps/web/src/components/InstrumentStage.tsx` (`TURNS_UPRIGHT`,
+`pointerOf`), `.musie-instrument[data-turned]` in `apps/web/src/shell.css`,
+`SessionPlay`
+
+What I checked: the experiment drew the bars anyway in portrait and covered
+them with „Leg dein Handy quer vor dich.“ Ben asked for the instrument turned
+in the mobile breakpoint and fitted to the phone's height, with only the
+instrument turning and the low notes at the bottom.
+
+What I did: in any box taller than wide, the stage lays the marimba out
+landscape, rotates the canvas a quarter turn counter-clockwise and turns each
+pointer back. Upright, the sheet takes the harp's layout (its one-line head
+and one-row foot do not fit 393 px). The rotate hint and its two strings are
+removed.
+
+Why: the adapter, its drawing and its hit test stay the experiment's, so
+their parity tests still hold.
+
+What I need from Ben: nothing. The exercise's copy still recommends laying
+the phone sideways („Am besten liegt das Handy quer vor dir“, „Leg dein Handy
+quer vor dich.“ on the step, „tief links und hoch rechts“ in the
+description). That is still good advice, but no longer required. Changing it
+is a content migration if wanted.

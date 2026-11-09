@@ -313,3 +313,16 @@ the usual `supabase db reset` from one session (Ben).
   web, Storybook and docs builds green, the e2e walk green. `test:db` not
   re-run: round 2 changed nothing under `supabase/`; round 1's 222 green / 5
   known stand.
+- 2026-11-09 — Ben: the marimba held upright turns instead of asking to be
+  turned — bars across the screen, the low ones at the bottom, the words
+  upright (`fbbd72a`). The stage hands the adapter a landscape box, turns the
+  canvas a quarter turn counter-clockwise in CSS and the pointers back, so
+  the experiment's drawing and hit test and their parity tests are untouched.
+  Upright the marimba takes the harp's layout; the rotate hint, its two
+  strings and the adapter's `orientationHint` are gone. Checked at 393×852
+  and 430×932: a tap at the bottom lights the bottom bar, the clock starts,
+  nothing overflows; turned to landscape mid-session and back, the layout
+  follows without a new session. One thing tried and taken back: giving the
+  turned bars the marimba's 8 px chrome gap at the sides broke the
+  experiment's layout parity (its side insets are the notch's safe area), and
+  the bars already clear the clock by about 12 px.
