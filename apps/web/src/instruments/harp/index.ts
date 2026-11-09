@@ -7,6 +7,7 @@
  *   input.ts     pointers and keys → plucks
  *   draw.ts      swing, bend, colour ease, shadow
  *   colour.ts    the OKLab blend between palette colours
+ *   tap.ts       the tap dot of an own note (round 2 — not the experiment's)
  *
  * Seven strings, d e g a h d′ e′, low to high and left to right — so a
  * string's index IS its degree, and the engine's answer plays string
@@ -20,10 +21,11 @@
  */
 import type { InstrumentFactory, StageBox } from '../types';
 import { createMixer } from './colour';
-import { newString, paintHarp, pluckString, shapeStrings, type ShadowCache, type StringState, type Who } from './draw';
-import { stringXs } from './geometry';
-import { createHarpInput } from './input';
+import { bendY, newString, paintHarp, pluckString, shapeStrings, type ShadowCache, type StringState, type Who } from './draw';
+import { strength, stringXs } from './geometry';
+import { createHarpInput, type PluckSpot } from './input';
 import { clampVelocity, createHarpSound, pluckBuzz, type HarpDemo, type HarpSound, type LoadedSample } from './sound';
+import { createHarpTaps } from './tap';
 
 /**
  * `ready()` waits for every sample, looking every 50 ms, at most 1.5 s — the
@@ -52,6 +54,7 @@ export const createHarp: InstrumentFactory = (definition, host) => {
   const graph = createHarpSound(host.audio, sound, loaded);
   const strings: StringState[] = Array.from({ length: count }, newString);
   const mix = createMixer();
+  const taps = createHarpTaps();
   const shadowCache: { current: ShadowCache | null } = { current: null };
   const reducedMotion = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   let box: StageBox | null = null;
@@ -68,20 +71,38 @@ export const createHarp: InstrumentFactory = (definition, host) => {
     return host.audible() ? graph.play(i, vel) : null;
   }
 
-  /** The person's own note: vibration, swing, sound, then the engine hears it. */
-  function own(i: number, velocity: number): void {
+  /**
+   * The tap dot of an own note (`tap.ts`): a pull's dot, which has followed
+   * the grip, stays where the string was let go; a strum crossing strikes one
+   * where it crossed; a key, at the middle of its string.
+   */
+  function tapped(i: number, vel: number, spot: PluckSpot | undefined, now: number): void {
+    if (box === null) return;
+    if (spot?.how === 'pull' && taps.release(i, vel, now)) return;
+    if (spot === undefined) taps.strike(xs[i], box.height / 2, vel, now);
+    else taps.strike(spot.x, spot.how === 'pull' ? bendY(spot.y, box.height) : spot.y, vel, now);
+  }
+
+  /** The person's own note: vibration, swing, sound, the dot, then the engine hears it. */
+  function own(i: number, velocity: number, spot?: PluckSpot): void {
     const vel = clampVelocity(velocity, sound);
     const [ms, ticks] = pluckBuzz(vel, sound);
     host.vibrate(ms, ticks);
     sounding(i, vel, 'me');
-    host.played({ degree: i, velocity: vel, at: performance.now() });
+    const now = performance.now();
+    tapped(i, vel, spot, now);
+    host.played({ degree: i, velocity: vel, at: now });
   }
 
   const input = createHarpInput(sound, demo, () => xs, {
     pluck: own,
     hold(i, pull) {
       strings[i].held = pull;
-      if (pull !== null) strings[i].who = 'me';
+      if (pull !== null) {
+        strings[i].who = 'me';
+        /* The grip's dot, at the string's bent point, as strong as the pull. */
+        if (box !== null) taps.hold(i, xs[i] + pull.dx, bendY(pull.y, box.height), strength(pull.dx, xs, sound.velocity.pull));
+      }
       host.requestDraw();
     },
     tick: () => host.vibrate(sound.haptics.pullStep.ms, 1),
@@ -120,9 +141,12 @@ export const createHarp: InstrumentFactory = (definition, host) => {
     draw(g, now) {
       if (box === null) return false;
       const reduced = reducedMotion?.matches ?? false;
+      const palette = host.palette();
       const { drawn, moving } = shapeStrings(now, strings, xs, box.height, sound, reduced);
-      paintHarp(g, drawn, box, host.palette(), host.shadow(), sound, mix, shadowCache);
-      return moving;
+      paintHarp(g, drawn, box, palette, host.shadow(), sound, mix, shadowCache);
+      /* The dots over the strings, as the kalimba draws its dots after its tines. */
+      const dotted = taps.paint(g, now, host.tap(), palette);
+      return moving || dotted;
     },
 
     pointerDown: (e) => input.down(e),
@@ -146,6 +170,7 @@ export const createHarp: InstrumentFactory = (definition, host) => {
     dispose() {
       settle?.();
       input.reset();
+      taps.clear();
       graph.dispose();
     },
   };

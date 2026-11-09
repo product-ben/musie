@@ -13,6 +13,12 @@
  * stubs for what they reach outside themselves. It is our own file in this
  * repo; that is the only reason running it is acceptable (as in
  * `shadow.test.ts` and `sources.test.ts`).
+ *
+ * The tap dot (round 2, `tap.ts`) is NOT the experiment's, so nothing here
+ * compares it: `shapeStrings` knows nothing of it, the dots are a pass of
+ * their own painted after `paintHarp`, and the input sink below logs a
+ * note's string and velocity — not the `PluckSpot` the port now reports with
+ * it. The dots are held to their brief in `adapter.test.ts`.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
