@@ -113,7 +113,7 @@ export interface InstrumentPalette {
   played: string;
   /** `--instrument-answer`: what Musie played. */
   answer: string;
-  /** `--surface`, behind the instrument. */
+  /** `--instrument-surface` (sand-1), behind the instrument. */
   background: string;
   /** For the instruments' own fine lines (cords, holes, bridge). */
   detail: string;
@@ -146,18 +146,22 @@ export interface InstrumentHost {
    */
   shadow(): { layers: readonly InstrumentShadowLayer[]; rgb: readonly [number, number, number] } | null;
   /**
-   * Vibrate now — Android immediately; on iOS the host owes the tick to the
-   * next `touchend` (measured on an iPhone 13, PRD point 12). No-op when the
-   * switch is off or the device cannot.
+   * Vibrate now — Android immediately; on iOS the host owes `ticks` haptic
+   * ticks to the next `touchend` (measured on an iPhone 13, PRD point 12).
+   * `ticks` defaults to 1; `ticks: 0` means Android only, owe the iPhone
+   * nothing (the kalimba's swing, which vibrates without a touch). No-op when
+   * the switch is off or the device cannot.
    */
   vibrate(ms: number, ticks?: number): void;
   /**
-   * The motion sensor's latest reading, 0 … 1 (rotation for the kalimba,
-   * jolt magnitude for the marimba), with its timestamp; null when there is
-   * no permission or no sensor.
+   * The motion sensor, or null without permission or sensor. `rotation` is
+   * the kalimba's 0 … 1 swing (max rotation rate / 110, or |acceleration| / 6)
+   * and is the LARGEST value since the previous call — reading it consumes
+   * the peak, so one adapter is its only reader. `jolt` is the latest raw
+   * |acceleration| in m/s². `at` is on the `performance.now()` clock.
    */
   motion(): { rotation: number; jolt: number; at: number } | null;
-  /** Recent jolt peaks, for the marimba's strike strength window. */
+  /** Raw |acceleration| in m/s² since `t` (`performance.now()` clock), 1000 ms kept — the marimba's strike window. */
   joltsSince(t: number): { at: number; magnitude: number }[];
   /**
    * The person played. The ENGINE decides what follows: the clock may start,
@@ -165,7 +169,11 @@ export interface InstrumentHost {
    * Never call this for the demo note or for an answer note.
    */
   played(stroke: Stroke): void;
-  /** A finger is (still) down on the instrument — the answer waits for it. */
+  /**
+   * How many pointers are down on the instrument. While > 0 the answer waits;
+   * going above 0 also interrupts an answer and cancels the demo, as the
+   * harp's touch-down did.
+   */
   holding(count: number): void;
   /** Ask for an animation frame; the host calls `draw` until it returns false. */
   requestDraw(): void;
