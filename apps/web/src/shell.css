@@ -2628,36 +2628,41 @@ html[data-musy-scroll-snap] {
 }
 
 /* ═══ INSTRUMENTS · WHAT EINSTEIGEN ADDS ═══════════════════════════════════
-   `InstrumentIntro`: volume, browser, and the motion permission under the
-   exercise's own intro. The same block rhythm as `.musie-intro__questions`
-   (L14: no component holds a column of copy and one button; every value is a
-   Layer 1 token). */
+   `InstrumentIntro`: the settings under the exercise's own intro — how to
+   play, the vibration, the motion sensor (Ben, 2026-11-09: made here and
+   nowhere else). The rhythm the play step's settings had: a group gap
+   between settings, a related gap inside one (L14: no component holds a
+   subheading, a sentence and a switch; every value is a Layer 1 token). */
 .musie-intro__instrument {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-related);
-  margin-block: var(--space-gap-group);
-}
-
-.musie-intro__motion {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-gap-related);
-  margin-block-start: var(--space-gap-related);
-}
-
-/* ═══ INSTRUMENTS · MUSIZIEREN ═════════════════════════════════════════════
-   `SessionPlay` and `InstrumentStage`. L14: the system has components for
-   every control here (Switch, SegmentedControl, Countdown, Sheet) and none for the column that holds them or for a canvas that fills
-   the sheet's middle — so these classes place, and every value is a token. */
-.musie-play__settings {
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-group);
   margin-block: var(--space-gap-group);
 }
 
+.musie-intro__setting {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-gap-related);
+}
+
+/* Inside a setting the copy is a subheading and its sentence, spaced like the
+   segmented control's legend and control: the setting's own gap, not the
+   step copy's margins (`.musie-md`'s group margin below, and the extra one
+   after a heading). */
+.musie-intro__setting > .musie-md {
+  margin: 0;
+}
+
+.musie-intro__setting > .musie-md h3 + * {
+  margin-block-start: 0;
+}
+
+/* ═══ INSTRUMENTS · MUSIZIEREN ═════════════════════════════════════════════
+   `SessionPlay` and `InstrumentStage`. L14: the system has components for
+   every control here (Countdown, Sheet) and none for a canvas that fills the
+   sheet's middle — so these classes place, and every value is a token. */
 /* The instrument fills the sheet's middle row. The row is the sheet's own
    (`minmax(0, 1fr)`, positioned); this only places the stage inside it,
    rather than changing the sheet's geometry (rule 1, L7). */

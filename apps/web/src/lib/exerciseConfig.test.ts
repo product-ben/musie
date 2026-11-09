@@ -367,12 +367,13 @@ describe('implemented: false suspends the content rules', () => {
    she emptied. */
 function instruments(motion = true): ExerciseConfig {
   const introCopy = {
-    headline: 'Loslegen', bodyMd: 'Ruhig.', volumeMd: 'Leiser.', browserMd: 'Safari.',
-    ...(motion ? { motionMd: 'Bewegung.' } : {}),
+    headline: 'Bevor es losgeht', bodyMd: 'Ruhig.',
+    modeSoloLabel: 'Alleine', modeSoloMd: 'Still.', modeMusieLabel: 'Duett mit Musie', modeMusieMd: 'Antwortet.',
+    ...(motion ? { motionMd: '### Schwingen?\n\nBewegung.', motionLabel: 'Schwingen erlauben' } : {}),
   };
   const playCopy = {
-    headline: 'Spiel', bodyMd: 'Los.', playCta: 'Zur Kalimba',
-    modeSoloLabel: 'Allein', modeSoloMd: 'Still.', modeMusieLabel: 'Mit Musie', modeMusieMd: 'Antwortet.',
+    headline: 'Spiel', bodyMd: '', playCta: 'Zur Kalimba',
+    playTouchMd: 'Mit dem Finger.', playPointerMd: 'Mit der Maus.', focusHeadline: 'Tippe.',
   };
   return {
     id: motion ? 'kalimba' : 'harp',
@@ -417,15 +418,15 @@ describe('an instruments exercise', () => {
   });
 
   it('refuses each of the play step\'s words emptied, on the field', () => {
-    for (const field of ['playCta', 'modeSoloLabel', 'modeSoloMd', 'modeMusieLabel', 'modeMusieMd'] as const) {
+    for (const field of ['playTouchMd', 'playPointerMd', 'focusHeadline', 'playCta'] as const) {
       const config = instruments();
       config.run[1]!.copy.en![field] = ' ';
       expect(errors(config).map((problem) => problem.path)).toEqual([`run[1].copy.en.${field}`]);
     }
   });
 
-  it('refuses the intro\'s two notes emptied', () => {
-    for (const field of ['volumeMd', 'browserMd'] as const) {
+  it('refuses the intro\'s ways of playing emptied — the settings are made there', () => {
+    for (const field of ['modeSoloLabel', 'modeSoloMd', 'modeMusieLabel', 'modeMusieMd'] as const) {
       const config = instruments();
       delete config.run[0]!.copy.de![field];
       expect(errors(config).map((problem) => problem.path)).toEqual([`run[0].copy.de.${field}`]);
@@ -435,10 +436,13 @@ describe('an instruments exercise', () => {
   /* The `needs` / `needs_note` shape again: the feature on one step, the
      words that explain it on another. A permission asked with no sentence
      above it is a button nobody was told about. */
-  it('refuses a motion permission with nothing said about it', () => {
+  it('refuses a motion permission with nothing said about it, or no switch', () => {
     const config = instruments(true);
     delete config.run[0]!.copy.de!.motionMd;
     expect(errors(config).map((problem) => problem.path)).toEqual(['run[0].copy.de.motionMd']);
+    const unswitched = instruments(true);
+    delete unswitched.run[0]!.copy.de!.motionLabel;
+    expect(errors(unswitched).map((problem) => problem.path)).toEqual(['run[0].copy.de.motionLabel']);
   });
 
   it('does not ask a card exercise\'s intro for the instruments\' notes', () => {

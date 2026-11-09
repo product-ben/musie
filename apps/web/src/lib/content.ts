@@ -222,13 +222,18 @@ export interface ExerciseInstrument {
   defaultMode: PlayMode;
   /** What the vibration switch starts at, where there is one. */
   vibrationDefault: boolean;
-  /* The copy. `string` where every instrument has it; `motionMd` is null for
-     the harp, which uses no sensor, and that null is the screen's answer to
-     "is there a permission to ask for". */
-  volumeMd: string;
-  browserMd: string;
+  /* The copy. `string` where every instrument has it; `motionMd` and
+     `motionLabel` are null for the harp, which uses no sensor, and that null
+     is the screen's answer to "is there a switch for it". */
   motionMd: string | null;
+  motionLabel: string | null;
+  /** The play step's heading. */
   playMd: string;
+  /** How to play, on a touch screen and with a mouse and keyboard. */
+  playTouchMd: string;
+  playPointerMd: string;
+  /** The focus sheet's headline. */
+  focusHeadline: string;
   playCta: string;
   modeSoloLabel: string;
   modeSoloMd: string;
@@ -374,7 +379,7 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
-const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, volume_md, browser_md, motion_md, play_md, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id), exercise_instruments(instrument_id, default_mode, vibration_default)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, motion_md, motion_label, play_md, play_touch_md, play_pointer_md, focus_headline, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id), exercise_instruments(instrument_id, default_mode, vibration_default)';
 
 interface ExerciseRow {
   id: string;
@@ -400,10 +405,12 @@ interface ExerciseRow {
     reflect_md: string | null;
     reflect_placeholder: string | null;
     image_alt: string;
-    volume_md: string | null;
-    browser_md: string | null;
     motion_md: string | null;
+    motion_label: string | null;
     play_md: string | null;
+    play_touch_md: string | null;
+    play_pointer_md: string | null;
+    focus_headline: string | null;
     play_cta: string | null;
     mode_solo_label: string | null;
     mode_solo_md: string | null;
@@ -452,8 +459,8 @@ function toInstrument(
 ): ExerciseInstrument | null {
   const row = Array.isArray(embed) ? (embed[0] ?? null) : embed;
   if (row === null) return null;
-  const required = [text.volume_md, text.browser_md, text.play_md, text.play_cta, text.mode_solo_label,
-    text.mode_solo_md, text.mode_musie_label, text.mode_musie_md];
+  const required = [text.play_md, text.play_touch_md, text.play_pointer_md, text.focus_headline, text.play_cta,
+    text.mode_solo_label, text.mode_solo_md, text.mode_musie_label, text.mode_musie_md];
   if (required.some((value) => value === null || value === '')) {
     console.error(`[musie] exercises: instrument copy incomplete for id="${id}"`);
     return null;
@@ -462,10 +469,12 @@ function toInstrument(
     id: row.instrument_id,
     defaultMode: isPlayMode(row.default_mode) ? row.default_mode : 'with_musie',
     vibrationDefault: row.vibration_default,
-    volumeMd: text.volume_md ?? '',
-    browserMd: text.browser_md ?? '',
     motionMd: text.motion_md === '' ? null : text.motion_md,
+    motionLabel: text.motion_label === '' ? null : text.motion_label,
     playMd: text.play_md ?? '',
+    playTouchMd: text.play_touch_md ?? '',
+    playPointerMd: text.play_pointer_md ?? '',
+    focusHeadline: text.focus_headline ?? '',
     playCta: text.play_cta ?? '',
     modeSoloLabel: text.mode_solo_label ?? '',
     modeSoloMd: text.mode_solo_md ?? '',

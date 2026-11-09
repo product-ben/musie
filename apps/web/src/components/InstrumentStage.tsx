@@ -67,6 +67,8 @@ export interface InstrumentStageProps {
   /** Read on every note, so the settings dialogue takes effect at once. */
   mode: PlayMode;
   vibration: boolean;
+  /** The motion switch from Einsteigen; off, the sensor is not used. */
+  motion: boolean;
   /** The clock as the last opening left it, or undefined for a fresh one. */
   clock?: ClockState;
   onClock: (state: ClockState) => void;
@@ -115,7 +117,7 @@ function pointerOf(e: React.PointerEvent<HTMLCanvasElement>, box: DOMRect, turne
 }
 
 export function InstrumentStage({
-  definition, durationSeconds, mode, vibration, clock, onClock, onSession, onDemo, onPlayed,
+  definition, durationSeconds, mode, vibration, motion, clock, onClock, onSession, onDemo, onPlayed,
   onTurn, onError, label, insetTop, insetBottom,
 }: InstrumentStageProps) {
   const scopeRef = React.useRef<HTMLDivElement>(null);
@@ -127,8 +129,10 @@ export function InstrumentStage({
      re-creating it on every switch would cut the sound. */
   const modeRef = React.useRef(mode);
   const vibrationRef = React.useRef(vibration);
+  const motionRef = React.useRef(motion);
   modeRef.current = mode;
   vibrationRef.current = vibration;
+  motionRef.current = motion;
 
   const callbacks = React.useRef({ onClock, onSession, onDemo, onPlayed, onTurn, onError });
   callbacks.current = { onClock, onSession, onDemo, onPlayed, onTurn, onError };
@@ -154,6 +158,7 @@ export function InstrumentStage({
         durationSeconds,
         getMode: () => modeRef.current,
         getVibration: () => vibrationRef.current,
+        getMotion: () => motionRef.current,
         clock: initialClock.current,
         onClock: (state) => callbacks.current.onClock(state),
         onPlayed: () => callbacks.current.onPlayed(),

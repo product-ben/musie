@@ -83,27 +83,30 @@ describe('which paths are text', () => {
    Marimba or Harfe would stop the file at Ben's desk as a decision nobody
    asked for. */
 const INSTRUMENT_TEXT = [
-  'run[0].copy.LOCALE.volumeMd',
-  'run[0].copy.LOCALE.browserMd',
+  'run[0].copy.LOCALE.modeSoloLabel',
+  'run[0].copy.LOCALE.modeSoloMd',
+  'run[0].copy.LOCALE.modeMusieLabel',
+  'run[0].copy.LOCALE.modeMusieMd',
   'run[0].copy.LOCALE.motionMd',
+  'run[0].copy.LOCALE.motionLabel',
   'run[1].copy.LOCALE.headline',
   'run[1].copy.LOCALE.bodyMd',
+  'run[1].copy.LOCALE.playTouchMd',
+  'run[1].copy.LOCALE.playPointerMd',
+  'run[1].copy.LOCALE.focusHeadline',
   'run[1].copy.LOCALE.playCta',
-  'run[1].copy.LOCALE.modeSoloLabel',
-  'run[1].copy.LOCALE.modeSoloMd',
-  'run[1].copy.LOCALE.modeMusieLabel',
-  'run[1].copy.LOCALE.modeMusieMd',
 ] as const;
 
 function kalimba(): ExerciseConfig {
   const intro = (locale: string) => ({
-    headline: 'Loslegen', bodyMd: `Ruhig (${locale}).`,
-    volumeMd: 'Leiser.', browserMd: 'Safari.', motionMd: 'Bewegung.',
+    headline: 'Bevor es losgeht', bodyMd: `Ruhig (${locale}).`,
+    modeSoloLabel: 'Alleine', modeSoloMd: 'Still.',
+    modeMusieLabel: 'Duett mit Musie', modeMusieMd: 'Antwortet.',
+    motionMd: 'Bewegung.', motionLabel: 'Schwingen erlauben',
   });
   const play = (locale: string) => ({
     headline: 'Tippe', bodyMd: `Spiel (${locale}).`, playCta: 'Zur Kalimba',
-    modeSoloLabel: 'Allein', modeSoloMd: 'Still.',
-    modeMusieLabel: 'Mit Musie', modeMusieMd: 'Antwortet.',
+    playTouchMd: 'Mit dem Finger.', playPointerMd: 'Mit der Maus.', focusHeadline: 'Tippe.',
   });
   return {
     id: 'kalimba',

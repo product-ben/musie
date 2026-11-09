@@ -33,7 +33,7 @@ const definition: InstrumentDefinition = {
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-function setup(opts: { mode?: PlayMode; vibration?: boolean; audible?: boolean; tick?: boolean } = {}) {
+function setup(opts: { mode?: PlayMode; vibration?: boolean; motion?: boolean; audible?: boolean; tick?: boolean } = {}) {
   const time = fakeTime();
   let mode: PlayMode = opts.mode ?? 'with_musie';
   let vibration = opts.vibration ?? true;
@@ -123,6 +123,7 @@ function setup(opts: { mode?: PlayMode; vibration?: boolean; audible?: boolean; 
       durationSeconds: 90,
       getMode: () => mode,
       getVibration: () => vibration,
+      ...(opts.motion === undefined ? {} : { getMotion: () => opts.motion === true }),
       onClock,
       onDemo,
       onAnswered,
@@ -312,6 +313,14 @@ describe('the rest of the host', () => {
     s.emitMotion({ at: 5, acceleration: { x: 0, y: 3, z: 0 }, rotationRate: { alpha: 11, beta: 0, gamma: 0 } });
     expect(s.host.motion()).toEqual({ rotation: 0.1, jolt: 3, at: 5 });
     expect(s.host.joltsSince(0)).toEqual([{ at: 5, magnitude: 3 }]);
+  });
+
+  it('with the motion switch off, the sensor is not listened to and reads as absent', () => {
+    const s = setup({ motion: false });
+    s.emitMotion({ at: 5, acceleration: { x: 0, y: 3, z: 0 }, rotationRate: { alpha: 11, beta: 0, gamma: 0 } });
+    expect(s.motion.reading()).toBeNull();
+    expect(s.host.motion()).toBeNull();
+    expect(s.host.joltsSince(0)).toEqual([]);
   });
 
   it('ticks the adapter every 100 ms when it wants that', () => {

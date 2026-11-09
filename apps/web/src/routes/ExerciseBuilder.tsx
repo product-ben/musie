@@ -1044,24 +1044,28 @@ export function ExerciseBuilder() {
 
             {/* ── THE INSTRUMENTS' OWN WORDS ─────────────────────────────
                 In the order the step shows them, under its text and above
-                its button. On the intro: three notes, the third only where
-                the instrument uses the motion sensor. On the play step: the
-                two ways of playing, then the button that opens the
+                its button. On the intro: the two ways of playing, then the
+                motion switch where the instrument uses the sensor. On the
+                play step: how to play by touch and by mouse, the focus
+                sheet's headline, then the button that opens the
                 instrument. */}
             {current === 'intro' && playEntry !== undefined && (
               <>
-                {copyField('volumeMd', 'builder.field.volume', 'builder.field.volumeHint')}
-                {copyField('browserMd', 'builder.field.browser', 'builder.field.browserHint')}
+                {copyField('modeMusieLabel', 'builder.field.modeMusie', 'builder.field.modeHint', false)}
+                {copyField('modeMusieMd', 'builder.field.modeMusieMd', 'builder.field.modeMdHint')}
+                {copyField('modeSoloLabel', 'builder.field.modeSolo', 'builder.field.modeHint', false)}
+                {copyField('modeSoloMd', 'builder.field.modeSoloMd', 'builder.field.modeMdHint')}
                 {asksMotion
                   && copyField('motionMd', 'builder.field.motion', 'builder.field.motionHint')}
+                {asksMotion
+                  && copyField('motionLabel', 'builder.field.motionLabel', 'builder.field.motionLabelHint', false)}
               </>
             )}
             {current === 'play' && (
               <>
-                {copyField('modeSoloLabel', 'builder.field.modeSolo', 'builder.field.modeHint', false)}
-                {copyField('modeSoloMd', 'builder.field.modeSoloMd', 'builder.field.modeMdHint')}
-                {copyField('modeMusieLabel', 'builder.field.modeMusie', 'builder.field.modeHint', false)}
-                {copyField('modeMusieMd', 'builder.field.modeMusieMd', 'builder.field.modeMdHint')}
+                {copyField('playTouchMd', 'builder.field.playTouch', 'builder.field.playTouchHint')}
+                {copyField('playPointerMd', 'builder.field.playPointer', 'builder.field.playPointerHint')}
+                {copyField('focusHeadline', 'builder.field.focusHeadline', 'builder.field.focusHeadlineHint', false)}
                 {copyField('playCta', 'builder.field.playCta', 'builder.field.playCtaHint', false)}
               </>
             )}

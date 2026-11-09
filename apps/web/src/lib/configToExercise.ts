@@ -87,26 +87,30 @@ function instrumentFor(
   if (play?.instrument === undefined) return null;
   const intro = copyInMode(config.run.find((entry) => entry.step === 'intro')?.copy[locale], mode);
   const here = copyInMode(play.copy[locale], mode);
+  const asksMotion = play.features.includes('motion_permission');
 
   return {
     id: play.instrument.id,
     defaultMode: play.instrument.defaultMode,
     vibrationDefault: play.instrument.vibrationDefault,
-    volumeMd: intro.volumeMd ?? '',
-    browserMd: intro.browserMd ?? '',
-    /* NULL MEANS NO PERMISSION IS ASKED FOR, and that is the FEATURE's to
-       say: the words without `motion_permission` would be a button the config
-       did not promise, and `content.ts` reads '' as null for the same reason. */
-    motionMd: play.features.includes('motion_permission')
-      && intro.motionMd !== undefined && intro.motionMd.trim() !== ''
+    /* NULL MEANS NO SWITCH, and that is the FEATURE's to say: the words
+       without `motion_permission` would be a switch the config did not
+       promise, and `content.ts` reads '' as null for the same reason. */
+    motionMd: asksMotion && intro.motionMd !== undefined && intro.motionMd.trim() !== ''
       ? intro.motionMd
       : null,
+    motionLabel: asksMotion && intro.motionLabel !== undefined && intro.motionLabel.trim() !== ''
+      ? intro.motionLabel
+      : null,
     playMd: joinHeadline(here.headline, here.bodyMd),
+    playTouchMd: here.playTouchMd ?? '',
+    playPointerMd: here.playPointerMd ?? '',
+    focusHeadline: here.focusHeadline ?? '',
     playCta: here.playCta ?? '',
-    modeSoloLabel: here.modeSoloLabel ?? '',
-    modeSoloMd: here.modeSoloMd ?? '',
-    modeMusieLabel: here.modeMusieLabel ?? '',
-    modeMusieMd: here.modeMusieMd ?? '',
+    modeSoloLabel: intro.modeSoloLabel ?? '',
+    modeSoloMd: intro.modeSoloMd ?? '',
+    modeMusieLabel: intro.modeMusieLabel ?? '',
+    modeMusieMd: intro.modeMusieMd ?? '',
   };
 }
 

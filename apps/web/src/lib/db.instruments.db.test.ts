@@ -97,17 +97,27 @@ describe('instruments · the three exercises', () => {
        step cannot do without. */
     const copy = await alice
       .from('exercise_i18n')
-      .select('exercise_id, locale, name, play_md, play_cta, volume_md, browser_md, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md, motion_md')
+      .select('exercise_id, locale, name, play_md, play_touch_md, play_pointer_md, focus_headline, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md, motion_md, motion_label')
       .in('exercise_id', [...IDS]);
     expect(copy.error).toBeNull();
     expect(copy.data).toHaveLength(6);
     for (const row of copy.data ?? []) {
-      for (const column of ['name', 'play_md', 'play_cta', 'volume_md', 'browser_md', 'mode_solo_label', 'mode_solo_md', 'mode_musie_label', 'mode_musie_md'] as const) {
+      for (const column of ['name', 'play_md', 'play_touch_md', 'play_pointer_md', 'focus_headline', 'play_cta', 'mode_solo_label', 'mode_solo_md', 'mode_musie_label', 'mode_musie_md'] as const) {
         expect(row[column], `${row.exercise_id}/${row.locale}/${column}`).toBeTruthy();
       }
-      /* The harp uses no sensor and asks for no permission. */
+      /* The harp uses no sensor and has no switch for it. */
       expect(row.motion_md === null, `${row.exercise_id}/${row.locale}/motion_md`).toBe(row.exercise_id === 'harp');
+      expect(row.motion_label === null, `${row.exercise_id}/${row.locale}/motion_label`).toBe(row.exercise_id === 'harp');
     }
+  });
+
+  it('say „Duett mit Musie“ first, and the harp keeps its sheet headline (Ben, 2026-11-09)', async () => {
+    const { data } = await alice.from('exercise_i18n')
+      .select('locale, mode_musie_label, mode_solo_label, focus_headline').eq('exercise_id', 'harp').order('locale');
+    expect(data?.[0]).toEqual({
+      locale: 'de', mode_musie_label: 'Duett mit Musie', mode_solo_label: 'Alleine',
+      focus_headline: 'Atme tief ein und aus. Spiele dabei Musies Harfe im Rhythmus deines Atems.',
+    });
   });
 
   it('say „Zur Harfe“ and „To the harp“ on the button', async () => {

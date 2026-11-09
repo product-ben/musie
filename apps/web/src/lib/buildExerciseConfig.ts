@@ -91,19 +91,21 @@ function copyFor(exercise: Exercise, step: string): StepCopy {
      `instrument` is null for every other kind, so nothing below reaches a
      card or a listening exercise. */
   if (instrument !== null && step === 'intro') {
-    copy.volumeMd = instrument.volumeMd;
-    copy.browserMd = instrument.browserMd;
-    /* ABSENT FOR THE HARP, not ''. Null is "there is no permission to ask
-       for", and the builder draws no field for a sensor the instrument does
-       not use — a sentence typed there would promise one. */
-    if (instrument.motionMd !== null) copy.motionMd = instrument.motionMd;
-  }
-  if (instrument !== null && step === 'play') {
-    copy.playCta = instrument.playCta;
-    copy.modeSoloLabel = instrument.modeSoloLabel;
-    copy.modeSoloMd = instrument.modeSoloMd;
     copy.modeMusieLabel = instrument.modeMusieLabel;
     copy.modeMusieMd = instrument.modeMusieMd;
+    copy.modeSoloLabel = instrument.modeSoloLabel;
+    copy.modeSoloMd = instrument.modeSoloMd;
+    /* ABSENT FOR THE HARP, not ''. Null is "there is no switch for it", and
+       the builder draws no field for a sensor the instrument does not use —
+       a sentence typed there would promise one. */
+    if (instrument.motionMd !== null) copy.motionMd = instrument.motionMd;
+    if (instrument.motionLabel !== null) copy.motionLabel = instrument.motionLabel;
+  }
+  if (instrument !== null && step === 'play') {
+    copy.playTouchMd = instrument.playTouchMd;
+    copy.playPointerMd = instrument.playPointerMd;
+    copy.focusHeadline = instrument.focusHeadline;
+    copy.playCta = instrument.playCta;
   }
 
   return copy;

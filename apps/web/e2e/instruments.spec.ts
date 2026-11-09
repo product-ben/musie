@@ -5,16 +5,17 @@
  * brief promised and what no unit test can see:
  *
  *   · Kalimba, Marimba, Harfe are under „Entspannung“;
- *   · Einsteigen shows the volume hint always, and the motion state for the
- *     two instruments that use a sensor (the harp shows none);
- *   · Musizieren starts in „mit Musie“, the vibration switch is on where the
- *     browser can vibrate;
+ *   · Einsteigen says „Bevor es losgeht“ and holds the settings: „Duett mit
+ *     Musie“ is chosen at first; on a desktop there is no vibration or motion
+ *     switch (touch screens only — the phone walk below has them);
+ *   · Musizieren says „Wenn du bereit bist, spiel auf der …“ and how to play
+ *     with mouse and keyboard, and has no settings of its own;
  *   · the button opens the focus sheet and ONE demo note sounds, said in the
  *     status line — and the timer does NOT start from it;
  *   · the person's own note starts the timer, and the demo sentence goes;
  *   · Pause shows „Weiter zum Reflektieren“;
- *   · the settings are made on the step, before: the sheet has none, and
- *     „allein“ chosen on the step is still „allein“ after the sheet;
+ *   · the sheet has no settings either: „Alleine“ chosen on Einsteigen is
+ *     what the session stores;
  *   · Weiter stores the mode and the seconds on the session, and the
  *     reflection reaches the diary as it does for every exercise.
  *
@@ -28,9 +29,9 @@ import type { Page } from '@playwright/test';
 import { label, service, stack } from './support';
 
 const INSTRUMENTS = [
-  { id: 'kalimba', name: 'Kalimba', cta: 'Zur Kalimba', sensor: true },
-  { id: 'marimba', name: 'Marimba', cta: 'Zur Marimba', sensor: true },
-  { id: 'harp', name: 'Harfe', cta: 'Zur Harfe', sensor: false },
+  { id: 'kalimba', name: 'Kalimba', cta: 'Zur Kalimba' },
+  { id: 'marimba', name: 'Marimba', cta: 'Zur Marimba' },
+  { id: 'harp', name: 'Harfe', cta: 'Zur Harfe' },
 ] as const;
 
 const locale = 'de' as const;
@@ -80,31 +81,20 @@ test.describe('the instruments', () => {
 
       /* ── Einsteigen ─────────────────────────────────────────────────── */
       await expect(page).toHaveURL(/\/intro$/, { timeout: 15_000 });
-      await expect(page.getByText(/Stell dein Handy etwas leiser als sonst\./)).toBeVisible();
-      /* The motion section: not asked yet, so the button; pressed, a state
-         is said — Chromium on a desktop has no sensor prompt, so it is
-         „allowed“, „not allowed“ or „no movement reported“. The harp has no
-         motion section at all. */
-      const allow = page.getByRole('button', { name: label(locale, 'session.play.motion.allow'), exact: true });
-      if (instrument.sensor) {
-        await allow.click();
-        const said = [
-          label(locale, 'session.play.motion.granted'),
-          label(locale, 'session.play.motion.denied'),
-          label(locale, 'session.play.motion.unavailable'),
-        ].map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        await expect(page.getByRole('status').filter({ hasText: new RegExp(said.join('|')) })).toBeVisible();
-      } else {
-        await expect(allow).toHaveCount(0);
-      }
+      await expect(page.getByRole('heading', { name: 'Bevor es losgeht' })).toBeVisible();
+      await expect(page.getByText(/nicht auf voller Lautstärke/)).toBeVisible();
+      const mode = page.getByRole('radiogroup', { name: label(locale, 'session.intro.mode.legend') });
+      await expect(mode.getByRole('radio', { name: /Duett mit Musie/ })).toBeChecked();
+      /* A desktop: no switch to feel the instrument, none for the sensor. */
+      await expect(page.getByRole('switch')).toHaveCount(0);
+      await mode.getByRole('radio', { name: /Alleine/ }).click();
       await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
 
-      /* ── Musizieren, the step ───────────────────────────────────────── */
+      /* ── Musizieren, the step: what to do, no settings ─────────────── */
       await expect(page).toHaveURL(/\/play$/);
-      const stepMode = page.getByRole('radiogroup', { name: label(locale, 'session.play.mode.legend') });
-      await expect(stepMode.getByRole('radio', { name: /mit Musie/ })).toBeChecked();
-      await expect(page.getByRole('switch', { name: label(locale, 'session.play.vibration') })).toBeChecked();
-      await stepMode.getByRole('radio', { name: /allein/ }).click();
+      await expect(page.getByRole('heading', { name: `Wenn du bereit bist, spiel auf der ${instrument.name}` })).toBeVisible();
+      await expect(page.getByText(/indem du deine Tastatur nutzt/)).toBeVisible();
+      await expect(page.getByRole('radiogroup')).toHaveCount(0);
       await page.getByRole('button', { name: instrument.cta, exact: true }).click();
 
       /* ── the sheet: one demo note, and it does not start the timer ─── */
@@ -144,7 +134,6 @@ test.describe('the instruments', () => {
       /* Gone, not only closing: during its exit the sheet's own Weiter is
          still there beside the row's. */
       await expect(sheet).toHaveCount(0);
-      await expect(stepMode.getByRole('radio', { name: /allein/ })).toBeChecked();
 
       /* ── Weiter: mode and seconds on the row ────────────────────────── */
       await page.getByRole('button', { name: label(locale, 'session.play.continue'), exact: true }).click();
@@ -168,4 +157,34 @@ test.describe('the instruments', () => {
       await service().auth.admin.deleteUser(userId);
     });
   }
+});
+
+/* ── ON A PHONE ──────────────────────────────────────────────────────────────
+   What a touch screen adds (Ben, 2026-11-09): on Einsteigen the switch to
+   feel the instrument, on by default; on Musizieren the how-to for fingers.
+   The motion switch is not walked: an emulated phone sends no motion data and
+   has no iOS prompt, so the section stays away — the real phone is its test. */
+test.describe('the instruments on a phone', () => {
+  test.skip(({ locale: browserLocale }) => browserLocale !== 'de-DE', 'German only — see the header');
+  test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
+
+  test('Kalimba: the vibration switch on Einsteigen, the touch how-to on Musizieren', async ({ page }) => {
+    const userId = await signedIn(page);
+    const { data: row, error } = await service().from('sessions')
+      .insert({ user_id: userId, exercise_id: 'kalimba', goal_id: 'relax', status: 'started', step: 'intro' })
+      .select('id').single();
+    if (error !== null) throw error;
+    await page.goto(`/session/${row.id}/intro`);
+
+    await expect(page.getByRole('heading', { name: 'Bevor es losgeht' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: label(locale, 'session.intro.vibration.title') })).toBeVisible();
+    await expect(page.getByRole('switch', { name: label(locale, 'session.intro.vibration.label') })).toBeChecked();
+    await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();
+
+    await expect(page).toHaveURL(/\/play$/);
+    await expect(page.getByText(/mehrere Zungen mit deinen Fingern berührst/)).toBeVisible();
+    await expect(page.getByText(/Tastatur/)).toHaveCount(0);
+
+    await service().auth.admin.deleteUser(userId);
+  });
 });

@@ -69,10 +69,12 @@ function harp(): Record<Locale, Exercise> {
       imageAlt: 'Eine Harfe mit sieben Saiten',
       introMd: '## Loslegen\n\nSuch dir einen ruhigen Ort, an dem du die nächsten Minuten ungestört bist. Zieh eine Saite und lass sie los: je weiter, desto lauter. Wischen streicht über die Saiten.',
     }, {
-      volumeMd: 'Stell dein Handy etwas leiser als sonst. Leise klingt die Harfe schöner.',
-      browserMd: 'Am besten klingt es auf dem iPhone in Safari und auf Android in Chrome.',
       motionMd: null,
+      motionLabel: null,
       playMd: '## Atme tief ein und aus\n\nSpiele dabei Musies Harfe im Rhythmus deines Atems.',
+      playTouchMd: 'Berühre mehrere Saiten.',
+      playPointerMd: 'Fahr mit gedrückter Maustaste über die Saiten.',
+      focusHeadline: 'Spiel.',
       playCta: 'Zur Harfe',
       modeSoloLabel: 'Ich spiele allein',
       modeSoloMd: 'Die Harfe antwortet nicht. Spiel frei, so lange du magst.',
@@ -86,10 +88,12 @@ function harp(): Record<Locale, Exercise> {
       imageAlt: 'A harp with seven strings',
       introMd: '## Getting started\n\nFind a quiet place where nobody will disturb you for the next few minutes. Pull a string and let go: the further, the louder. Swiping strums the strings.',
     }, {
-      volumeMd: 'Turn your phone down a little. The harp sounds better quiet.',
-      browserMd: 'It sounds best in Safari on an iPhone and in Chrome on Android.',
       motionMd: null,
+      motionLabel: null,
       playMd: '## Breathe deeply in and out\n\nPlay Musie\'s harp in the rhythm of your breath.',
+      playTouchMd: 'Berühre mehrere Saiten.',
+      playPointerMd: 'Fahr mit gedrückter Maustaste über die Saiten.',
+      focusHeadline: 'Spiel.',
       playCta: 'To the harp',
       modeSoloLabel: 'I play alone',
       modeSoloMd: 'The harp does not answer. Play freely for as long as you like.',
@@ -108,10 +112,12 @@ function kalimba(): Record<Locale, Exercise> {
       imageAlt: 'Eine Kalimba mit neun Zungen auf einem Holzkörper',
       introMd: '## Loslegen\n\nSuch dir einen ruhigen Ort, an dem du die nächsten Minuten ungestört bist. Halte das Handy in beiden Händen, so dass deine Daumen die Zungen erreichen.',
     }, {
-      volumeMd: 'Stell dein Handy etwas leiser als sonst. Leise klingt die Kalimba schöner.',
-      browserMd: 'Am besten klingt es auf dem iPhone in Safari und auf Android in Chrome.',
       motionMd: 'Schwenkst du das Handy, schwingt der Klang mit. Dafür nutzt die Kalimba die Bewegung deines Handys. Dein Handy fragt dich einmal, ob du das erlaubst.',
+      motionLabel: 'Schwingen erlauben',
       playMd: '## Tippe die Zungen der Kalimba an\n\nSchwenkst du das Handy, schwingt der Klang mit.',
+      playTouchMd: 'Berühre mehrere Saiten.',
+      playPointerMd: 'Fahr mit gedrückter Maustaste über die Saiten.',
+      focusHeadline: 'Spiel.',
       playCta: 'Zur Kalimba',
       modeSoloLabel: 'Ich spiele allein',
       modeSoloMd: 'Die Kalimba antwortet nicht. Spiel frei, so lange du magst.',
@@ -125,10 +131,12 @@ function kalimba(): Record<Locale, Exercise> {
       imageAlt: 'A kalimba with nine tines on a wooden body',
       introMd: '## Getting started\n\nFind a quiet place where nobody will disturb you for the next few minutes. Hold the phone in both hands so your thumbs reach the tines.',
     }, {
-      volumeMd: 'Turn your phone down a little. The kalimba sounds better quiet.',
-      browserMd: 'It sounds best in Safari on an iPhone and in Chrome on Android.',
       motionMd: 'Swing your phone and the sound swings with it. For that the kalimba uses your phone\'s movement. Your phone asks you once whether that is all right.',
+      motionLabel: 'Allow swinging',
       playMd: '## Tap the kalimba\'s tines\n\nSwing your phone and the sound swings with it.',
+      playTouchMd: 'Berühre mehrere Saiten.',
+      playPointerMd: 'Fahr mit gedrückter Maustaste über die Saiten.',
+      focusHeadline: 'Spiel.',
       playCta: 'To the kalimba',
       modeSoloLabel: 'I play alone',
       modeSoloMd: 'The kalimba does not answer. Play freely for as long as you like.',
@@ -196,25 +204,29 @@ describe('the round trip, database → config → Exercise', () => {
     const config = build(kalimba());
     const intro = config.run[0]!.copy.de!;
     const play = config.run[1]!.copy.de!;
-    intro.volumeMd = 'Leiser.';
-    intro.browserMd = 'Safari.';
     intro.motionMd = 'Bewegung.';
+    intro.motionLabel = 'Erlauben';
+    intro.modeSoloLabel = 'Allein';
+    intro.modeSoloMd = 'Still.';
+    intro.modeMusieLabel = 'Zu zweit';
+    intro.modeMusieMd = 'Antwortet.';
     play.headline = 'Spiel';
     play.bodyMd = 'Los.';
+    play.playTouchMd = 'Mit dem Finger.';
+    play.playPointerMd = 'Mit der Maus.';
+    play.focusHeadline = 'Jetzt.';
     play.playCta = 'Zur Kalimba, jetzt';
-    play.modeSoloLabel = 'Allein';
-    play.modeSoloMd = 'Still.';
-    play.modeMusieLabel = 'Zu zweit';
-    play.modeMusieMd = 'Antwortet.';
 
     expect(configToExercise(config, 'de', 'analogue').instrument).toEqual({
       id: 'kalimba',
       defaultMode: 'with_musie',
       vibrationDefault: true,
-      volumeMd: 'Leiser.',
-      browserMd: 'Safari.',
       motionMd: 'Bewegung.',
+      motionLabel: 'Erlauben',
       playMd: '## Spiel\n\nLos.',
+      playTouchMd: 'Mit dem Finger.',
+      playPointerMd: 'Mit der Maus.',
+      focusHeadline: 'Jetzt.',
       playCta: 'Zur Kalimba, jetzt',
       modeSoloLabel: 'Allein',
       modeSoloMd: 'Still.',

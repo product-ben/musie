@@ -378,9 +378,9 @@ export type Database = {
       }
       exercise_i18n: {
         Row: {
-          browser_md: string | null
           description: string
           exercise_id: string
+          focus_headline: string | null
           image_alt: string
           intro_md: string | null
           listen_md: string | null
@@ -389,20 +389,22 @@ export type Database = {
           mode_musie_md: string | null
           mode_solo_label: string | null
           mode_solo_md: string | null
+          motion_label: string | null
           motion_md: string | null
           name: string
           needs: string | null
           play_cta: string | null
           play_md: string | null
+          play_pointer_md: string | null
+          play_touch_md: string | null
           reflect_md: string | null
           reflect_placeholder: string | null
           scan_md: string | null
-          volume_md: string | null
         }
         Insert: {
-          browser_md?: string | null
           description: string
           exercise_id: string
+          focus_headline?: string | null
           image_alt: string
           intro_md?: string | null
           listen_md?: string | null
@@ -411,20 +413,22 @@ export type Database = {
           mode_musie_md?: string | null
           mode_solo_label?: string | null
           mode_solo_md?: string | null
+          motion_label?: string | null
           motion_md?: string | null
           name: string
           needs?: string | null
           play_cta?: string | null
           play_md?: string | null
+          play_pointer_md?: string | null
+          play_touch_md?: string | null
           reflect_md?: string | null
           reflect_placeholder?: string | null
           scan_md?: string | null
-          volume_md?: string | null
         }
         Update: {
-          browser_md?: string | null
           description?: string
           exercise_id?: string
+          focus_headline?: string | null
           image_alt?: string
           intro_md?: string | null
           listen_md?: string | null
@@ -433,15 +437,17 @@ export type Database = {
           mode_musie_md?: string | null
           mode_solo_label?: string | null
           mode_solo_md?: string | null
+          motion_label?: string | null
           motion_md?: string | null
           name?: string
           needs?: string | null
           play_cta?: string | null
           play_md?: string | null
+          play_pointer_md?: string | null
+          play_touch_md?: string | null
           reflect_md?: string | null
           reflect_placeholder?: string | null
           scan_md?: string | null
-          volume_md?: string | null
         }
         Relationships: [
           {

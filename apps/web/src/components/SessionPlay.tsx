@@ -5,12 +5,15 @@
  * primary button opens (`?focus` on the address, so the browser's Back closes
  * it and a reload keeps it — `SessionListen`'s argument, reused).
  *
- *   THE STEP   the exercise's headline and the two settings. Its buttons —
+ *   THE STEP   „Wenn du bereit bist, spiel auf der …“ and how to play — by
+ *              touch or by mouse and keyboard, whichever this device is.
+ *              The settings were made on Einsteigen (Ben, 2026-11-09). Its
+ *              buttons —
  *              Back, the one that opens the instrument („Zur Harfe“,
  *              `exercise_i18n.play_cta`) and, once the timer is paused or
  *              done, *Weiter zum Reflektieren* — are the wizard's action row,
  *              built in `Session.tsx` like every other step's.
- *   THE SHEET  head: the headline and one polite status line; under it, the
+ *   THE SHEET  head: `focus_headline` and one polite status line; under it, the
  *              instrument; foot: the 1:30 timer and *Weiter*. No settings:
  *              they are made on the step, before (Ben, 2026-11-09).
  *
@@ -28,10 +31,9 @@
  * touch cancels it (`engine/onboarding.ts`).
  */
 import * as React from 'react';
-import { User, Users } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
-  Countdown, CtaButton, Message, SegmentedControl, Sheet, Switch,
+  Countdown, CtaButton, Message, Sheet,
 } from '@musie/design-system';
 import type { CountdownState } from '@musie/design-system';
 import { InstrumentStage } from './InstrumentStage';
@@ -39,10 +41,9 @@ import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { useAsync } from '../lib/useAsync';
 import { getInstrument } from '../lib/instruments';
-import { headingOnly, parseMarkdown, plainText, withoutHeading } from '../lib/markdown';
 import type { Exercise, ExerciseInstrument, PlayMode } from '../lib/content';
 import { PLAY_FOCUS, withFocus } from '../lib/playSheet';
-import { supportsVibration } from '../instruments/engine/haptics';
+import { isTouchScreen } from '../lib/touchScreen';
 import { announcement, remainingSeconds, showContinueInSheet } from '../instruments/engine/clock';
 import type { ClockState } from '../instruments/engine/clock';
 import type { InstrumentSession } from '../instruments/engine/host';
@@ -59,9 +60,9 @@ export interface SessionPlayProps {
   exercise: Exercise;
   instrument: ExerciseInstrument;
   mode: PlayMode;
-  onModeChange: (mode: PlayMode) => void;
   vibration: boolean;
-  onVibrationChange: (on: boolean) => void;
+  /** The motion switch from Einsteigen. */
+  motion: boolean;
   clock: ClockState;
   onClock: (state: ClockState) => void;
   /** *Weiter zum Reflektieren*, from the sheet's foot — the same press as the row's. */
@@ -69,7 +70,7 @@ export interface SessionPlayProps {
 }
 
 export function SessionPlay({
-  exercise, instrument, mode, onModeChange, vibration, onVibrationChange, clock, onClock, onAdvance,
+  exercise, instrument, mode, vibration, motion, clock, onClock, onAdvance,
 }: SessionPlayProps) {
   const t = useT();
   const navigate = useNavigate();
@@ -90,7 +91,6 @@ export function SessionPlay({
     () => typeof matchMedia === 'function' && matchMedia('(orientation: portrait)').matches,
   );
   const [stageError, setStageError] = React.useState(false);
-  const canVibrate = React.useMemo(() => supportsVibration(), []);
 
   /* The demo, once the sheet's session exists — and never again after the
      person has played. */
@@ -106,59 +106,27 @@ export function SessionPlay({
     navigate(-1);
   }
 
-  /* ── THE SETTINGS — on the step only; the sheet has none ─────────────── */
-  const modeControl = (
-    <SegmentedControl
-      name="play-mode-step"
-      legend={t('session.play.mode.legend')}
-      value={mode}
-      onValueChange={(next) => { if (next === 'solo' || next === 'with_musie') onModeChange(next); }}
-      options={[
-        { value: 'solo', label: instrument.modeSoloLabel, glyph: User, description: instrument.modeSoloMd },
-        { value: 'with_musie', label: instrument.modeMusieLabel, glyph: Users, description: instrument.modeMusieMd },
-      ]}
-    />
-  );
-  /* Only where the device can vibrate at all — `navigator.vibrate`, or the
-     iPhone's switch haptics. Feature detection, never the user agent. */
-  const vibrationControl = canVibrate && (
-    <Switch
-      size="md"
-      label={t('session.play.vibration')}
-      checked={vibration}
-      onCheckedChange={(next) => onVibrationChange(next)}
-    />
-  );
-
   const said = announcement(clock);
   const marimba = instrument.id === 'marimba';
   /* The marimba keeps its own experiment's layout in landscape (Ben, after
      R0). Upright, its bars are turned and there is height to spare, so it
      takes the harp's layout like the other two. */
   const compact = marimba && !turned;
-  /* THE SHEET'S HEADLINE IS A SENTENCE, as each experiment's <h1> was —
-     heading and body in one line of heading type. The marimba's was its
-     heading alone („Spiel, bis du ruhig bist.“); its body is the step's
-     advice to lay the phone sideways. */
-  const headline = React.useMemo(() => {
-    const blocks = parseMarkdown(instrument.playMd);
-    const head = plainText(headingOnly(blocks)).trim();
-    const body = plainText(withoutHeading(blocks)).trim();
-    const closed = /[.:!?…]$/.test(head) ? head : `${head}.`;
-    return marimba || body === '' ? closed : `${closed} ${body}`;
-  }, [instrument.playMd, marimba]);
+  /* THE SHEET'S HEADLINE IS A SENTENCE, as each experiment's <h1> was — its
+     own field since the play step got its own words (Ben, 2026-11-09). */
+  const headline = instrument.focusHeadline;
+  /* How to play, for the device in hand: a finger, or a mouse and keys. */
+  const howTo = React.useMemo(
+    () => `${instrument.playMd}\n\n${isTouchScreen() ? instrument.playTouchMd : instrument.playPointerMd}`,
+    [instrument.playMd, instrument.playTouchMd, instrument.playPointerMd],
+  );
   const headRef = React.useRef<HTMLDivElement>(null);
   const footRef = React.useRef<HTMLDivElement>(null);
   const canvasLabel = isInstrumentId(instrument.id) ? t(`session.play.canvas.${instrument.id}`) : exercise.name;
 
   return (
     <>
-      <Markdown md={instrument.playMd} />
-
-      <div className="musie-play__settings">
-        {vibrationControl}
-        {modeControl}
-      </div>
+      <Markdown md={howTo} />
 
       {loadError !== null && (
         <Message variant="error" live="assertive" headline={t('session.play.loadError')} />
@@ -179,6 +147,7 @@ export function SessionPlay({
               durationSeconds={exercise.listenGateSeconds}
               mode={mode}
               vibration={vibration}
+              motion={motion}
               clock={clock}
               onClock={onClock}
               onSession={setSession}

@@ -97,6 +97,12 @@ export interface InstrumentSessionOptions {
   durationSeconds: number;
   getMode: () => PlayMode;
   getVibration: () => boolean;
+  /**
+   * The person's motion switch on Einsteigen (Ben, 2026-11-09). Off, the
+   * sensor is neither listened to nor read: `motion()` is null and there are
+   * no jolts, as on a device without one. Absent means allowed.
+   */
+  getMotion?: () => boolean;
   /** A clock carried over from an earlier opening of the sheet. */
   clock?: ClockState;
   onClock?: (state: ClockState) => void;
@@ -146,7 +152,8 @@ export function createInstrumentSession(options: InstrumentSessionOptions, env: 
   const { now, timers } = env;
   const audio = env.audio();
   const motion = env.motion();
-  const releaseMotion = motion.listen();
+  const motionAllowed = options.getMotion ?? (() => true);
+  const releaseMotion = motionAllowed() ? motion.listen() : () => {};
   const vibrator = createVibrator(options.getVibration, env.vibration(timers));
 
   let disposed = false;
@@ -238,8 +245,8 @@ export function createInstrumentSession(options: InstrumentSessionOptions, env: 
     vibrate: (ms, ticks) => {
       if (!disposed) vibrator.vibrate(ms, ticks);
     },
-    motion: () => motion.reading(),
-    joltsSince: (t) => motion.joltsSince(t),
+    motion: () => (motionAllowed() ? motion.reading() : null),
+    joltsSince: (t) => (motionAllowed() ? motion.joltsSince(t) : []),
     played(stroke) {
       if (disposed) return;
       onboarding?.cancel();
@@ -293,7 +300,7 @@ export function createInstrumentSession(options: InstrumentSessionOptions, env: 
   /* ── the finger lifts: the iPhone's owed tick, and Safari's motion grant ── */
   const onTouchEnd = () => {
     vibrator.touchEnd();
-    motion.rearm();
+    if (motionAllowed()) motion.rearm();
   };
   const touchOptions: AddEventListenerOptions = { capture: true, passive: true };
   scope.addEventListener('touchend', onTouchEnd, touchOptions);

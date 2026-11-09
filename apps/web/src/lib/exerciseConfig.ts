@@ -113,8 +113,8 @@ export interface QuestionText {
 
 /** The copy fields only an instruments exercise has. All plain strings. */
 export type InstrumentCopyField =
-  | 'volumeMd' | 'browserMd' | 'motionMd'
-  | 'playCta' | 'modeSoloLabel' | 'modeSoloMd' | 'modeMusieLabel' | 'modeMusieMd';
+  | 'modeSoloLabel' | 'modeSoloMd' | 'modeMusieLabel' | 'modeMusieMd' | 'motionMd' | 'motionLabel'
+  | 'playTouchMd' | 'playPointerMd' | 'focusHeadline' | 'playCta';
 
 /** What one step says, in one locale, in one mode. */
 export interface StepCopy {
@@ -142,16 +142,26 @@ export interface StepCopy {
      into a migration is a rename, not a decision. Optional, like
      `placeholder`: present only on the step that shows it, and only in an
      exercise of the `instruments` kind. */
-  /** `intro` only. `volume_md`, always shown: a quieter phone sounds better. */
-  volumeMd?: string;
-  /** `intro` only. `browser_md`: where the exercise works best. */
-  browserMd?: string;
+  /** `intro` only (Ben, 2026-11-09: the settings are made before). The
+      segment for playing alone, and what it means. */
+  modeSoloLabel?: string;
+  modeSoloMd?: string;
+  /** `intro` only. The segment for the duet with Musie, and what it means. */
+  modeMusieLabel?: string;
+  modeMusieMd?: string;
   /**
    * `intro` only, and only where the play step asks for the motion sensor
-   * (`motion_permission`). ABSENT for the harp, not empty: `motion_md` null is
-   * the screen's answer to "is there a permission to ask for".
+   * (`motion_permission`): a heading and what the sensor is for, and the
+   * switch that allows it. ABSENT for the harp, not empty: `motion_md` null
+   * is the screen's answer to "is there a switch for it".
    */
   motionMd?: string;
+  motionLabel?: string;
+  /** `play` only. How to play: on a touch screen, and with a mouse and keyboard. */
+  playTouchMd?: string;
+  playPointerMd?: string;
+  /** `play` only. The focus sheet's headline, one sentence over the instrument. */
+  focusHeadline?: string;
   /**
    * `play` only. `play_cta`, the button that opens the instrument — *Zur
    * Harfe*. The exercise's own words and NOT a chrome override, unlike
@@ -161,12 +171,6 @@ export interface StepCopy {
    * sheet, `session.play.continue`.
    */
   playCta?: string;
-  /** `play` only. The segment for playing alone, and what it means. */
-  modeSoloLabel?: string;
-  modeSoloMd?: string;
-  /** `play` only. The segment for playing with Musie, and what it means. */
-  modeMusieLabel?: string;
-  modeMusieMd?: string;
   /** Overrides for a digital run — the cards are on screen, not on a table. */
   digital?: Partial<StepCopy>;
   /** Overrides for an analogue run. Rare; the base case is usually analogue. */
@@ -561,8 +565,11 @@ export function validateConfig(
   const instrumentCopy: Partial<Record<StepId, InstrumentCopyField[]>> = playStep === undefined
     ? {}
     : {
-      intro: asksMotion ? ['volumeMd', 'browserMd', 'motionMd'] : ['volumeMd', 'browserMd'],
-      play: ['playCta', 'modeSoloLabel', 'modeSoloMd', 'modeMusieLabel', 'modeMusieMd'],
+      intro: [
+        'modeMusieLabel', 'modeMusieMd', 'modeSoloLabel', 'modeSoloMd',
+        ...(asksMotion ? (['motionMd', 'motionLabel'] as const) : []),
+      ],
+      play: ['playTouchMd', 'playPointerMd', 'focusHeadline', 'playCta'],
     };
 
   for (const [index, entry] of config.run.entries()) {
@@ -778,7 +785,9 @@ export function validateConfig(
       if (copy.headline.trim() === '') {
         error(`${at}.copy.${locale}.headline`, 'A step needs a headline.');
       }
-      if (copy.bodyMd.trim() === '') {
+      /* The instruments' play step says how to play in two fields of its own,
+         for touch and for mouse and keyboard — its heading stands alone. */
+      if (copy.bodyMd.trim() === '' && entry.step !== 'play') {
         warn(`${at}.copy.${locale}.bodyMd`, 'A headline with nothing under it.');
       }
 
