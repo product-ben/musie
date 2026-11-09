@@ -2343,6 +2343,28 @@ still covers it.`,
   'builder.questions.add': 'Add a question',
   'builder.questions.remove': 'Remove this question',
 
+  /* ── The instruments (2026-11-09) ──────────────────────────────────────
+     The intro's three notes and the play step's two ways of playing and its
+     button — one field each, the same Field every other step draws. One
+     block, so the `session.play.*` keys another lane adds elsewhere in this
+     file merge without touching it. */
+  'builder.field.volume': 'Note on volume',
+  'builder.field.volumeHint': 'Always shown. The app cannot tell how loud the phone is, so this sentence is the only reminder.',
+  'builder.field.browser': 'Note on the browser',
+  'builder.field.browserHint': 'Where the exercise sounds best.',
+  'builder.field.motion': 'Note on movement',
+  'builder.field.motionHint': 'Sits above the button that asks to use the phone’s movement. Say what the exercise needs it for.',
+  'builder.field.modeSolo': 'Choice: alone',
+  'builder.field.modeSoloMd': 'Explanation: alone',
+  'builder.field.modeMusie': 'Choice: with Musie',
+  'builder.field.modeMusieMd': 'Explanation: with Musie',
+  'builder.field.modeHint': 'The two choices sit side by side — keep each one short.',
+  'builder.field.modeMdHint': 'Shown under the two choices while this one is selected.',
+  'builder.field.playCta': 'Button that opens the instrument',
+  'builder.field.playCtaHint': 'Two or three words. The button that leads on to the reflection waits inside, with the instrument.',
+  'builder.playPreview.headline': 'The instrument is not in the preview',
+  'builder.playPreview': 'The preview shows this step’s headline, its text and the button that opens the instrument. The two ways of playing and the button inside appear only in the app, so the preview will not change as you type into those fields.',
+
   'builder.problems': 'What still needs doing',
   'builder.problems.none': 'Nothing missing. This exercise is ready to hand over.',
 

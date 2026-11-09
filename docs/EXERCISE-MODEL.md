@@ -151,10 +151,14 @@ with an operator's name on it — not as a button somebody added here.
 - **whether the listen step rotates questions at all, and their texts** — for
   every exercise, listening ones included (Ben, 2026-10-21: that is a clinical
   judgement about a particular exercise, not a rule in the code)
+- for the three instruments: the intro's notes on volume, browser and motion,
+  the play step's button, and its two ways of playing with their
+  explanations — see *The instruments kind* below
 
 ### What it will not let them change
 
-Which steps a run has, which features are on, the cut matrix, the timeframes.
+Which steps a run has, which features are on, the cut matrix, the timeframes,
+which instrument a play step plays.
 Those are read out of the database and **shown**, because a config states them
 and the therapist should see what they are handing over — but changing them is
 changing what the app does.
@@ -326,6 +330,77 @@ uses**, so what is on screen is what the step draws.
 The round trip is exact for every row in the database today, which
 `exerciseConfig.test.ts` asserts against real copy. It is *not* identity for
 arbitrary Markdown and does not pretend to be.
+
+## The instruments kind
+
+*2026-11-09.* Kalimba, Marimba and Harfe (`20261109100000_instruments.sql`)
+run **intro · play · reflect**. `play` takes the listen step's slot, and its
+timer reads the same column, so the run has no `listen` entry and
+`gateSeconds` sits on `play`. They sort 6, 7 and 8, which is all that puts
+them at the end of the builder's list.
+
+```jsonc
+{ "step": "intro", "features": ["needs_note"],
+  "copy": { "de": { "headline": "Loslegen", "bodyMd": "…",
+                    "volumeMd": "…", "browserMd": "…", "motionMd": "…" } } },
+{ "step": "play", "gateSeconds": 90,
+  "features": ["answer_mode", "vibration_switch", "motion_permission",
+               "demo_note", "play_timer", "immersive_view"],
+  "instrument": { "id": "kalimba", "defaultMode": "with_musie", "vibrationDefault": true },
+  "copy": { "de": { "headline": "Tippe die Zungen der Kalimba an", "bodyMd": "…",
+                    "playCta": "Zur Kalimba",
+                    "modeSoloLabel": "Ich spiele allein", "modeSoloMd": "…",
+                    "modeMusieLabel": "Ich spiele mit Musie", "modeMusieMd": "…" } } }
+```
+
+**One field per column, spelled as `ExerciseInstrument` spells it.** `play_md`
+splits into `headline` and `bodyMd` like every other step's Markdown; the other
+eight new `exercise_i18n` columns keep their names, camel-cased. Turning a
+handed-over file back into a migration is a rename, not a decision.
+
+**All of them are text** — on `TEXT_PATHS` in `exerciseChanges.ts`, base copy
+only (an instruments exercise has no modes to override):
+
+| Field | Step | Column |
+|---|---|---|
+| `headline`, `bodyMd` | play | `play_md` |
+| `volumeMd`, `browserMd`, `motionMd` | intro | `volume_md`, `browser_md`, `motion_md` |
+| `playCta` | play | `play_cta` |
+| `modeSoloLabel`, `modeSoloMd` | play | `mode_solo_label`, `mode_solo_md` |
+| `modeMusieLabel`, `modeMusieMd` | play | `mode_musie_label`, `mode_musie_md` |
+
+**`instrument` is not.** Which instrument, and what *Zusammenspiel* and the
+vibration switch start at, is what the exercise *is* — stated in the file,
+shown, structural if it moves. The sound is not in a config at all: it is
+locked to its experiment.
+
+**`playCta` is not `continueLabel`.** On the play step `continueLabel`
+overrides `session.play.continue` — *Weiter zum Reflektieren*, inside the sheet
+— and falls back to it when absent, like every button label. `play_cta` is the
+exercise's own button, *Zur Harfe*, with nothing to fall back to, so it is a
+field of its own and an empty one is an error.
+
+**`motionMd` follows the feature, like `needs`.** `motion_permission` on the
+play step is derived from `motion_md` being non-null. The harp's is null, so
+it has neither the feature nor the field, and the builder draws none: a
+sentence typed there would promise a permission nothing asks for. Emptying the
+kalimba's is an error on the field. Every other new field is required too,
+because `content.ts` drops the whole instrument — and the play step with it —
+when one is empty.
+
+**The preview draws what it can.** There is no `SessionPlay` to mount yet
+(plan task I1), so the play step shows its own headline and body through
+`Markdown`, `playCta` as the panel's button, and a note saying the two ways of
+playing and the button inside are not in it. `configToExercise` already fills
+`exercise.instrument`, so the intro's three notes appear in the preview as soon
+as `SessionIntro` reads them, and `SessionPlay` mounts there like the rest.
+
+**The prompt box does not reach the eight new fields yet.** `extractText` in
+`supabase/functions/exercise-prompt` hands the model a fixed list of copy
+fields, so a typed instruction can reword the play step's headline and body
+but not the rest. Translating on leaving a field works for all of them, because
+the browser checks `classifyPath` and the function does not filter. Adding them
+to `extractText` is an edit and a `supabase functions deploy`.
 
 ## What is not built
 
