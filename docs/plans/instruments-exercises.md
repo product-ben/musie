@@ -208,7 +208,7 @@ the top beside the X for all three.
 | R4b | **Kalimba**: its dots through `instrumentTap` (parity test against the experiment's `dots` stays) | **erledigt** `6ba2dfa`, merged `47fee5c`: identical to the experiment at 393×852, where the tine is the size token | R3 | `apps/web/src/instruments/kalimba/**` |
 | R4c | **Marimba**: the kalimba's dot replaces its own; none on answers; the portrait hint becomes the experiment's full-screen overlay (stage side, R5) | **erledigt** `9e4b612`, merged `dce9423` | R3 | `apps/web/src/instruments/marimba/**` |
 | R5 | **App · the sheet as harp 1443**: `SessionPlay` on the overlay sheet; head = headline block; foot = Countdown left, Weiter right with the `placeFoot` rule (as CSS: the foot wraps, Weiter keeps to the end); settings icon in the header slot opening the dialogue top-end; `InstrumentStage` fills the sheet and passes the measured head/foot as `inset` (kalimba and marimba lay out between them, the harp ignores them as its experiment did); `InstrumentCursor` over the canvas; the marimba's rotate overlay | **erledigt** `000f6cc` (layout), `11f1e76` (cursor) | R1, R2, R3 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `shell.css`, i18n |
-| R6 | **Verify**: R0's table vs the app at the same four sizes (screenshots side by side, experiment left, app right, for each instrument), the e2e walk, `pnpm check`, the three builds; re-render the three exercise images (the key colour changed) | offen | R4, R5 | `e2e/instruments.spec.ts`, `public/assets/web/exercises/*.webp` |
+| R6 | **Verify**: R0's table vs the app at the same four sizes (screenshots side by side, experiment left, app right, for each instrument), the e2e walk, `pnpm check`, the three builds; re-render the three exercise images (the key colour changed) | **erledigt**: see the log | R4, R5 | `e2e/instruments.spec.ts`, `public/assets/web/exercises/*.webp` |
 
 **R0 · what the experiments measure** (Playwright, CSS px, `[x, y, w, h]`;
 `paint` = the instrument's painted extent on the canvas; the done button shown):
@@ -303,3 +303,13 @@ the usual `supabase db reset` from one session (Ben).
   grew with the bar's width. Logged for Ben; not changed. With a mouse the
   48 px cursor also covers most of a fresh dot at the point of the click
   (touch has no cursor). Exercise images re-rendered (`d53f9f6`).
+- 2026-11-09 — R6 done. Re-measured after the merges, unchanged from R5's
+  numbers. The side-by-side screenshots found what the boxes did not: the
+  marimba's rotate hint left the head and the foot showing (fixed, `fa212cd`:
+  hidden, not removed, so the insets hold; X and settings stay) and its demo
+  sentence is cut at 852 × 393 (logged for Ben — it is copy). The canvas's
+  focus ring shows when the sheet is opened by keyboard and not after a
+  click, checked both ways. `pnpm check` green (1246 web unit tests), the
+  web, Storybook and docs builds green, the e2e walk green. `test:db` not
+  re-run: round 2 changed nothing under `supabase/`; round 1's 222 green / 5
+  known stand.
