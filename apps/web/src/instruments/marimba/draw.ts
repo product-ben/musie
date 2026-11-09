@@ -1,17 +1,32 @@
 /**
  * The marimba, drawn: flat bars across the full width, low on the left, two
- * cords through the nodal points, a soft dot where the mallet hit.
+ * cords through the nodal points, and the design system's tap where the
+ * person struck.
  *
- * Source: the experiment's „Zeichnen“ (`layout`, `cords`, `bar`, `dots`,
- * `draw`, `lightUp`) and „Berühren“ (`hit`). The geometry is the experiment's
- * own and lives here as named constants — `marimba.json` locks the SOUND, the
- * look is this file. The experiment is flat (v1, v3), so no instrument shadow
- * is drawn.
+ * Source: the experiment's „Zeichnen“ (`layout`, `cords`, `bar`, `draw`,
+ * `lightUp`) and „Berühren“ (`hit`). The geometry is the experiment's own and
+ * lives here as named constants — `marimba.json` locks the SOUND, the look is
+ * this file. The experiment is flat (v1, v3), so no instrument shadow is
+ * drawn.
+ *
+ * THE DOT IS NOT THE EXPERIMENT'S (round 2, Ben 2026-11-09). The experiment
+ * left its own smaller dot (600 ms, radius a share of the bar's width) for
+ * every stroke, answers included. The kalimba's tap replaced it: the design
+ * system's `instrumentTapAt` + `paintInstrumentTap` with the host's
+ * `--instrument-tap-*` parameters, for every OWN stroke — a roll's strokes
+ * and a glissando's steps each count — and never for Musie's answer or the
+ * demo. It sits where the experiment's sat (the bar's centre line, the touched
+ * point along the bar); its size is absolute, so a bar does not get a dot five
+ * times a tine's. The bars' glow is the experiment's, unchanged, answer
+ * colour included.
  *
  * COLOURS come only from `host.palette()` (CLAUDE.md rule 1): the bars at
  * rest are `rest` (the key family), the person's strokes `played`, Musie's
- * answer `answer`, cords and holes `detail`, the ground `background`.
+ * answer `answer`, cords and holes `detail`, the ground `background`; the tap
+ * lies between `rest` and `played`.
  */
+import { instrumentTapAt, paintInstrumentTap } from '@musie/design-system';
+import type { InstrumentTapParams } from '@musie/design-system';
 import type { InstrumentPalette, StageBox } from '../types';
 import { clamp } from './strike';
 
@@ -50,16 +65,9 @@ const GLOW_LIT = 0.02;
 const GLOW_GAIN = 1.15;
 /** A bar struck again by the same player while still lit keeps 70 % of its glow. */
 const GLOW_KEEP = 0.7;
-/** The dot: radius share of the bar width, growth, fade, and its three gradient stops. */
-const DOT_BASE = 0.18;
-const DOT_GROW = 0.15;
-const DOT_GROW_VEL = 0.35;
-const DOT_POS_MIN = 0.08;
-const DOT_POS_MAX = 0.92;
-const DOT_FADE_POWER = 1.4;
-const DOT_ALPHA_BASE = 0.4;
-const DOT_ALPHA_VEL = 0.5;
-const DOT_STOPS = [[0, 0.9], [0.4, 0.5], [1, 0]] as const;
+/** Where along the bar the tap may sit: the experiment kept its dot this far inside either end. */
+const TAP_POS_MIN = 0.08;
+const TAP_POS_MAX = 0.92;
 
 /**
  * The ground warms toward `played` at `calm · calm.background · WARM_SHARE`.
@@ -172,11 +180,6 @@ export function mixColour(a: string, b: string, t: number): string {
   return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`;
 }
 
-export function withAlpha(colour: string, alpha: number): string {
-  const [r, g, b] = parseColour(colour);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
 /* ── the picture ─────────────────────────────────────────────────────── */
 
 export type Player = 'played' | 'answer';
@@ -188,11 +191,11 @@ interface BarLight {
   on: boolean;
 }
 
-interface Press {
+/** One of the person's strokes, as long as its tap lasts. */
+interface Tap {
   i: number;
   pos: number;
   vel: number;
-  who: Player;
   t0: number;
 }
 
@@ -206,21 +209,28 @@ export interface Frame {
   layout: MarimbaLayout | null;
   dpr: number;
   palette: InstrumentPalette;
+  /** `host.tap()`: the tap's parameters, read each frame like the palette. */
+  tap: InstrumentTapParams;
   /** 0 … 1: how far the ground has warmed toward `played`. */
   warmth: number;
   now: number;
 }
 
 export interface MarimbaPicture {
-  /** `lightUp`: a bar struck by the person (`played`) or by Musie (`answer`). */
-  lightUp(i: number, vel: number, who: Player, pos: number, now: number): void;
-  /** One frame. True while a bar still glows or a dot still fades. */
+  /**
+   * `lightUp`, the bar's half: a bar struck by the person or the demo
+   * (`played`) or by Musie (`answer`) glows. Leaves no dot — that is `tap`.
+   */
+  lightUp(i: number, vel: number, who: Player, now: number): void;
+  /** One of the person's OWN strokes on bar `i`, at `pos` along it (0 top … 1 bottom): the tap. */
+  tap(i: number, pos: number, vel: number, now: number): void;
+  /** One frame. True while a bar still glows or a tap still fades. */
   draw(g: CanvasRenderingContext2D, frame: Frame): boolean;
 }
 
-export function createPicture(count: number, visual: { dotMs: number; glowTau: number }): MarimbaPicture {
+export function createPicture(count: number, visual: { glowTau: number }): MarimbaPicture {
   const light: BarLight[] = Array.from({ length: count }, () => ({ t0: -1e9, vel: 0, who: 'played', on: false }));
-  let presses: Press[] = [];
+  let taps: Tap[] = [];
 
   function cords(g: CanvasRenderingContext2D, L: MarimbaLayout, p: InstrumentPalette) {
     g.strokeStyle = p.detail;
@@ -257,39 +267,37 @@ export function createPicture(count: number, visual: { dotMs: number; glowTau: n
     }
   }
 
-  function dots(g: CanvasRenderingContext2D, L: MarimbaLayout, p: InstrumentPalette, now: number) {
-    presses = presses.filter((d) => now - d.t0 < visual.dotMs && d.i < L.bars.length);
-    for (const d of presses) {
+  /** The taps, over the bars, oldest first; a finished one is dropped. Strength is the stroke's velocity. */
+  function paintTaps(g: CanvasRenderingContext2D, L: MarimbaLayout, p: InstrumentPalette, params: InstrumentTapParams, now: number) {
+    const rest = parseColour(p.rest);
+    const played = parseColour(p.played);
+    const live: Tap[] = [];
+    for (const d of taps) {
       const B = L.bars[d.i];
-      const t = (now - d.t0) / visual.dotMs;
-      const grow = 1 - Math.pow(1 - t, 3);
-      const r = B.w * (DOT_BASE + (DOT_GROW + DOT_GROW_VEL * d.vel) * grow);
-      const x = B.cx;
-      const y = B.y0 + clamp(d.pos, DOT_POS_MIN, DOT_POS_MAX) * B.h;
-      const colour = d.who === 'answer' ? p.answer : p.played;
-      const fill = g.createRadialGradient(x, y, 0, x, y, r);
-      for (const [at, alpha] of DOT_STOPS) fill.addColorStop(at, withAlpha(colour, alpha));
-      g.globalAlpha = Math.pow(1 - t, DOT_FADE_POWER) * (DOT_ALPHA_BASE + DOT_ALPHA_VEL * d.vel);
-      g.fillStyle = fill;
-      g.beginPath();
-      g.arc(x, y, r, 0, 2 * Math.PI);
-      g.fill();
+      const frame = instrumentTapAt(params, { ageMs: now - d.t0, strength: d.vel });
+      if (!B || frame.done) continue;
+      paintInstrumentTap(g, B.cx, B.y0 + clamp(d.pos, TAP_POS_MIN, TAP_POS_MAX) * B.h, frame, rest, played);
+      live.push(d);
     }
-    g.globalAlpha = 1;
+    taps = live;
   }
 
   return {
-    lightUp(i, vel, who, pos, now) {
+    lightUp(i, vel, who, now) {
       const s = light[i];
       if (!s) return;
       s.vel = Math.max(vel, s.on && s.who === who ? s.vel * GLOW_KEEP : 0);
       s.t0 = now;
       s.who = who;
       s.on = true;
-      presses.push({ i, pos, vel, who, t0: now });
     },
 
-    draw(g, { layout: L, dpr, palette: p, warmth, now }) {
+    tap(i, pos, vel, now) {
+      if (i < 0 || i >= count) return;
+      taps.push({ i, pos, vel, t0: now });
+    },
+
+    draw(g, { layout: L, dpr, palette: p, tap, warmth, now }) {
       if (!L) return false;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.fillStyle = warmth > 0 ? mixColour(p.background, p.played, warmth) : p.background;
@@ -300,8 +308,8 @@ export function createPicture(count: number, visual: { dotMs: number; glowTau: n
         bar(g, L, p, i, now);
         lit ||= light[i].on;
       }
-      dots(g, L, p, now);
-      return lit || presses.length > 0;
+      paintTaps(g, L, p, tap, now);
+      return lit || taps.length > 0;
     },
   };
 }

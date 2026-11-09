@@ -29,8 +29,6 @@ export const KEYS = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö'] as const
 /** Where a key strikes along the bar: the middle, or with Shift near the end. */
 const KEY_POS = 0.5;
 const KEY_POS_SHIFT = 0.1;
-/** Where an answer and the demo light their bar: the middle. */
-const MIDDLE = 0.5;
 /** How often `ready()` looks whether the host has decoded every recording. */
 const READY_POLL_MS = 50;
 /** A host that has not ticked for a while does not get the whole gap at once. */
@@ -133,7 +131,10 @@ export function createMarimbaWith(definition: InstrumentDefinition, host: Instru
     /* Vibration FIRST, as in the experiment: the iPhone allows the tick only
        within the touch (the host owes it to the touchend). */
     if (buzz !== null) host.vibrate(buzz);
-    picture.lightUp(i, velocity, 'played', pos, now);
+    /* The glow, and the tap: every own stroke leaves one — a roll's strokes
+       and a glissando's steps each are one (round 2). */
+    picture.lightUp(i, velocity, 'played', now);
+    picture.tap(i, pos, velocity, now);
     host.requestDraw();
     play(i, velocity, roll, true);
     host.played({ degree: i, velocity, roll, at: now });
@@ -179,6 +180,7 @@ export function createMarimbaWith(definition: InstrumentDefinition, host: Instru
         layout,
         dpr: box?.dpr ?? 1,
         palette: host.palette(),
+        tap: host.tap(),
         warmth: calm.calm * sound.calm.background * WARM_SHARE,
         now,
       });
@@ -247,19 +249,21 @@ export function createMarimbaWith(definition: InstrumentDefinition, host: Instru
       keysDown.delete(key.toLowerCase());
     },
 
-    /* `answerStroke`: the answer colour and the sound, no vibration. A roll's
-       strokes come from the engine one by one, each with `roll: true`. */
+    /* `answerStroke`: the answer colour and the sound, no vibration — and no
+       tap, which is the person's alone (round 2). A roll's strokes come from
+       the engine one by one, each with `roll: true`. */
     playAnswer(s: Stroke) {
       if (disposed || s.degree < 0 || s.degree >= count) return null;
-      picture.lightUp(s.degree, s.velocity, 'answer', MIDDLE, env.now());
+      picture.lightUp(s.degree, s.velocity, 'answer', env.now());
       host.requestDraw();
       return play(s.degree, s.velocity, s.roll === true, false);
     },
 
     playDemo() {
       const bar = clamp(demo.bar, 0, count - 1);
+      /* The played colour shows where to touch; no tap, as nobody touched. */
       if (!disposed) {
-        picture.lightUp(bar, demo.velocity, 'played', MIDDLE, env.now());
+        picture.lightUp(bar, demo.velocity, 'played', env.now());
         host.requestDraw();
         play(bar, demo.velocity, false, false);
       }

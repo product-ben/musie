@@ -4,15 +4,18 @@
  * timers move only when the test says so.
  *
  * What is held here is the WIRING — who is told what, and when: the person's
- * strokes are reported and vibrate, the answer and the demo do neither; a
- * touch waits for the jolt; a locked context keeps the stroke for its unlock;
- * the layer, the rate, the filter and the envelope reach the graph. The
- * arithmetic itself is held against the experiment in `experiment.test.ts`.
+ * strokes are reported, vibrate and leave the design system's tap, the answer
+ * and the demo do none of it; a touch waits for the jolt; a locked context
+ * keeps the stroke for its unlock; the layer, the rate, the filter and the
+ * envelope reach the graph. The arithmetic itself is held against the
+ * experiment in `experiment.test.ts` and `draw.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
+import { INSTRUMENT_TAP_DEFAULT, instrumentTapAt, paintInstrumentTap } from '@musie/design-system';
+import type { InstrumentTapParams } from '@musie/design-system';
 
 import type { StageBox, StagePointer } from '../types';
-import { layoutBars, mixColour } from './draw';
+import { layoutBars, mixColour, parseColour } from './draw';
 import { createMarimba, createMarimbaWith } from './index';
 import { barFiles, levelOf, lowpassHz, playbackRate, type MarimbaSound } from './sound';
 import { FakeAudio, PALETTE, fakeEnv, fakeHost, loadMarimba } from './testing';
@@ -210,6 +213,110 @@ describe('Musie’s notes', () => {
   });
 });
 
+describe('the tap (round 2): every own stroke, never Musie’s', () => {
+  /** Not the defaults anywhere, so a dot drawn with them would not match. */
+  const TUNED: InstrumentTapParams = {
+    ...INSTRUMENT_TAP_DEFAULT, durationMs: 400, size: 21, growth: 0.9, mix: 0.5, mixByStrength: 0.4, opacity: 0.3,
+  };
+
+  /** What the design system paints for these strokes at `now`, at (bar centre, y), on the same recorder. */
+  function designSystem(params: InstrumentTapParams, now: number, strokes: { x: number; y: number; velocity: number; at: number }[]) {
+    const { g, dots } = recordTaps();
+    for (const s of strokes) {
+      const frame = instrumentTapAt(params, { ageMs: now - s.at, strength: s.velocity });
+      paintInstrumentTap(g, s.x, s.y, frame, parseColour(PALETTE.rest), parseColour(PALETTE.played));
+    }
+    return dots;
+  }
+  /** The taps the adapter draws at `now`. */
+  function drawn(t: ReturnType<typeof setup>, now = t.env.now()) {
+    const { g, dots } = recordTaps();
+    t.m.draw(g, now);
+    return dots;
+  }
+  /** Each reported stroke, at the centre of its bar and `pos` along it. */
+  const reported = (t: ReturnType<typeof setup>, pos = 0.5) =>
+    t.log.played.map((p) => ({ ...t.on(p.degree, pos), velocity: p.velocity, at: p.at }));
+
+  it('an own stroke: the design system’s tap where it landed, at its velocity, with the host’s parameters read at draw time', () => {
+    const t = setup();
+    t.m.pointerDown({ ...t.pointer(1, 3), ...t.on(3, 0.3) });
+    t.state.tap = TUNED; // after the stroke: the frame reads host.tap()
+    t.env.advance(120);
+    const [p] = t.log.played;
+    const expected = designSystem(TUNED, 1120, [{ ...t.on(3, 0.3), velocity: p.velocity, at: p.at }]);
+    expect(expected).toHaveLength(1);
+    expect(drawn(t)).toEqual(expected);
+    expect(drawn(t)).not.toEqual(designSystem(INSTRUMENT_TAP_DEFAULT, 1120, reported(t, 0.3)));
+    t.env.advance(280); // TUNED lives 400 ms
+    expect(drawn(t)).toEqual([]);
+  });
+
+  it('every stroke of a roll leaves one, at the roll’s velocity', () => {
+    const t = setup();
+    for (let k = 0; k < 4; k++) {
+      t.m.pointerDown(t.pointer(k, 6));
+      t.m.pointerUp(t.pointer(k, 6));
+      t.env.advance(100);
+    }
+    expect(t.log.played.map((p) => p.roll)).toEqual([false, true, true, true]);
+    expect(drawn(t)).toEqual(designSystem(INSTRUMENT_TAP_DEFAULT, t.env.now(), reported(t)));
+    expect(drawn(t)).toHaveLength(4);
+  });
+
+  it('every step of a glissando leaves one, on the bar it crossed onto', () => {
+    const t = setup();
+    t.m.pointerDown(t.pointer(1, 0));
+    t.env.advance(50);
+    t.m.pointerMove({ ...t.pointer(1, 1), ...t.on(1) });
+    t.env.advance(50);
+    t.m.pointerMove({ ...t.pointer(1, 2), ...t.on(2) });
+    expect(t.log.played.map((p) => p.degree)).toEqual([0, 1, 2]);
+    expect(drawn(t)).toEqual(designSystem(INSTRUMENT_TAP_DEFAULT, t.env.now(), reported(t)));
+  });
+
+  it('a touch leaves it when it sounds, not before; a key too', () => {
+    const t = setup();
+    t.m.pointerDown(t.pointer(1, 5, 'touch', { radius: 26, force: 1 }));
+    expect(drawn(t)).toEqual([]);
+    t.env.advance(8); // noMotionWaitMs
+    t.m.keyDown('a', false);
+    expect(t.log.played.map((p) => p.degree)).toEqual([5, 0]);
+    expect(drawn(t)).toEqual(designSystem(INSTRUMENT_TAP_DEFAULT, t.env.now(), reported(t)));
+  });
+
+  it('Musie’s answer leaves none — a roll of it neither — though its bar glows in the answer colour', () => {
+    const t = setup();
+    t.m.playAnswer({ degree: 5, velocity: 0.9, at: 1000 });
+    t.m.playAnswer({ degree: 2, velocity: 0.42, roll: true, at: 1000 });
+    const fills: string[] = [];
+    t.m.draw(recordFills(fills), 1000);
+    expect(fills).toContain(mixColour(PALETTE.rest, PALETTE.answer, Math.min(1, (0.35 + 0.65 * 0.9) * 1.15)));
+    expect(drawn(t, 1000)).toEqual([]);
+    expect(drawn(t, 1100)).toEqual([]);
+  });
+
+  it('the demo leaves none, though its bar glows in the played colour', () => {
+    const t = setup();
+    t.m.playDemo();
+    const fills: string[] = [];
+    t.m.draw(recordFills(fills), 1000);
+    expect(fills).toContain(mixColour(PALETTE.rest, PALETTE.played, Math.min(1, (0.35 + 0.65 * 0.6) * 1.15)));
+    expect(drawn(t, 1000)).toEqual([]);
+    expect(drawn(t, 1100)).toEqual([]);
+  });
+
+  it('after an answer and the demo, the person’s stroke is the only tap', () => {
+    const t = setup();
+    t.m.playDemo();
+    t.m.playAnswer({ degree: 7, velocity: 0.5, at: 1000 });
+    t.env.advance(10);
+    t.m.pointerDown(t.pointer(1, 4));
+    expect(drawn(t)).toEqual(designSystem(INSTRUMENT_TAP_DEFAULT, t.env.now(), reported(t)));
+    expect(drawn(t)).toHaveLength(1);
+  });
+});
+
 describe('audio', () => {
   it('the master chain: bus → warm lowpass → compressor → makeup → limiter → destination, from the config', () => {
     const t = setup();
@@ -398,6 +505,26 @@ describe('the factory', () => {
     expect(() => createMarimba({ ...definition, samples: definition.samples.slice(1) }, fakeHost().host)).toThrow(/no sample/);
   });
 });
+
+/** A 2D context that records every gradient-filled circle — a tap — with its centre, radius, opacity and stops. */
+function recordTaps() {
+  const dots: { arc: number[]; alpha: number; gradient: { args: number[]; stops: [number, string][] } }[] = [];
+  let arc: number[] = [];
+  const g: Record<string, unknown> = { fillStyle: '', strokeStyle: '', lineWidth: 1, lineCap: 'butt', globalAlpha: 1 };
+  const noop = () => {};
+  for (const op of ['setTransform', 'beginPath', 'roundRect', 'moveTo', 'lineTo', 'stroke', 'fillRect']) g[op] = noop;
+  g.arc = (...a: number[]) => { arc = a; };
+  g.createRadialGradient = (...args: number[]) => {
+    const stops: [number, string][] = [];
+    return { args, stops, addColorStop: (at: number, c: string) => void stops.push([at, c]) };
+  };
+  g.fill = () => {
+    if (typeof g.fillStyle === 'string') return;
+    const { args, stops } = g.fillStyle as { args: number[]; stops: [number, string][] };
+    dots.push({ arc, alpha: g.globalAlpha as number, gradient: { args, stops: [...stops] } });
+  };
+  return { g: g as unknown as CanvasRenderingContext2D, dots };
+}
 
 /** A 2D context that records the fillStyle of every fill and fillRect, and ignores the rest. */
 function recordFills(out: string[]): CanvasRenderingContext2D {
