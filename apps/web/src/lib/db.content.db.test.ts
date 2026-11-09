@@ -214,7 +214,8 @@ describe('exercises · who asks how you are listening', () => {
       .select('id, kind, asks_posture');
 
     expect(error).toBeNull();
-    expect(data).toHaveLength(5);
+    /* Five until 2026-11-09; Kalimba, Marimba and Harfe made it eight. */
+    expect(data).toHaveLength(8);
     for (const row of data ?? []) {
       /* `exercises_asks_posture_applies` said in the other direction: the
          constraint refuses a write, this notices a row that got in before it. */
@@ -249,7 +250,8 @@ describe('exercises · the listen gate', () => {
       .select('id, listen_gate_seconds, timeframe_min');
 
     expect(error).toBeNull();
-    expect(data).toHaveLength(5);
+    /* Five until 2026-11-09; Kalimba, Marimba and Harfe made it eight. */
+    expect(data).toHaveLength(8);
     for (const row of data ?? []) {
       expect(typeof row.listen_gate_seconds).toBe('number');
       expect(row.listen_gate_seconds).toBeGreaterThanOrEqual(0);
