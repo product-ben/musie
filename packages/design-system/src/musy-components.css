@@ -7610,6 +7610,13 @@ html[data-musy-scroll-snap='y'] {
   pointer-events: auto;
 }
 
+/* With a stage the header starts below the row the X stands in —
+   max(`--space-inset-card`, `--target-primary`) from the top, the harp's own
+   padding (measured: 44px) — since the stage puts nothing else between them. */
+.musy-sheet[data-stage]:not([data-density="compact"]) .musy-sheet__header {
+  margin-block-start: calc(max(var(--space-inset-card), var(--target-primary)) - var(--space-inset-sheet));
+}
+
 /* With a stage the foot sits at `--space-inset-card` from the bottom, where the
    harp's „Ich bin fertig“ stood (measured: 24px), not at the sheet's inset. */
 .musy-sheet[data-stage] .musy-sheet__foot {

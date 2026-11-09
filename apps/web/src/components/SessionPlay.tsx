@@ -39,7 +39,7 @@ import { Markdown } from './Markdown';
 import { useT } from '../i18n/localeContext';
 import { useAsync } from '../lib/useAsync';
 import { getInstrument } from '../lib/instruments';
-import { headingOnly } from '../lib/markdown';
+import { headingOnly, parseMarkdown, plainText, withoutHeading } from '../lib/markdown';
 import type { Exercise, ExerciseInstrument, PlayMode } from '../lib/content';
 import { PLAY_FOCUS, withFocus } from '../lib/playSheet';
 import { supportsVibration } from '../instruments/engine/haptics';
@@ -47,6 +47,7 @@ import { announcement, remainingSeconds, showContinue } from '../instruments/eng
 import type { ClockState } from '../instruments/engine/clock';
 import type { InstrumentSession } from '../instruments/engine/host';
 import { isInstrumentId } from '../instruments/types';
+import { Smartphone } from 'lucide-react';
 
 const PHASE_TO_COUNTDOWN: Record<ClockState['phase'], CountdownState> = {
   unstarted: 'unstarted',
@@ -128,6 +129,21 @@ export function SessionPlay({
   );
 
   const said = announcement(clock);
+  /* The marimba keeps its own experiment's layout (Ben, after R0). */
+  const compact = instrument.id === 'marimba';
+  /* THE SHEET'S HEADLINE IS A SENTENCE, as each experiment's <h1> was —
+     heading and body in one line of heading type. The marimba's was its
+     heading alone („Spiel, bis du ruhig bist.“); its body is the rotation
+     screen's own sentence. */
+  const headline = React.useMemo(() => {
+    const blocks = parseMarkdown(instrument.playMd);
+    const head = plainText(headingOnly(blocks)).trim();
+    const body = plainText(withoutHeading(blocks)).trim();
+    const closed = /[.:!?…]$/.test(head) ? head : `${head}.`;
+    return compact || body === '' ? closed : `${closed} ${body}`;
+  }, [instrument.playMd, compact]);
+  const headRef = React.useRef<HTMLDivElement>(null);
+  const footRef = React.useRef<HTMLDivElement>(null);
   const canvasLabel = isInstrumentId(instrument.id) ? t(`session.play.canvas.${instrument.id}`) : exercise.name;
 
   return (
@@ -149,10 +165,75 @@ export function SessionPlay({
           onOpenChange={(next) => { if (!next) close(); }}
           title={exercise.name}
           closeLabel={t('session.play.close')}
+          /* The marimba keeps its experiment's layout (Ben, after R0): one line
+             at the very top, the small clock in the foot row. */
+          density={compact ? 'compact' : 'default'}
+          actions={
+            <DialogueNonModal
+              open={settingsOpen}
+              onOpenChange={setSettingsOpen}
+              title={t('session.play.settings.title')}
+              closeLabel={t('session.play.settings.close')}
+              placement="top-end"
+              trigger={<IconButton glyph={Settings} label={t('session.play.settings.open')} variant="secondary" />}
+            >
+              <div className="musie-play__dialogue">
+                {modeControl('play-mode-sheet')}
+                {vibrationControl('sm')}
+              </div>
+            </DialogueNonModal>
+          }
+          stage={immersive ? (
+            <>
+              <InstrumentStage
+                definition={definition}
+                durationSeconds={exercise.listenGateSeconds}
+                mode={mode}
+                vibration={vibration}
+                clock={clock}
+                onClock={onClock}
+                onSession={setSession}
+                onDemo={() => setDemoSaid(true)}
+                onPlayed={() => setPlayed(true)}
+                onOrientationHint={setRotate}
+                onError={(error) => { console.error('[musie] instrument:', error); setStageError(true); }}
+                label={canvasLabel}
+                insetTop={headRef}
+                insetBottom={footRef}
+              />
+              {/* ── THE MARIMBA IN PORTRAIT — its experiment's full screen ──
+                  On a touch screen held upright the bars are drawn anyway,
+                  and this covers them, as `.musie-rotate` did. */}
+              {rotate && (
+                <div className="musie-play__rotate" role="status">
+                  <Smartphone aria-hidden="true" className="musie-play__rotate-icon" />
+                  <p className="musie-play__headline">{t('session.play.rotate.title')}</p>
+                  <p className="musie-play__rotate-hint">{t('session.play.rotate.hint')}</p>
+                </div>
+              )}
+            </>
+          ) : undefined}
           header={
-            <div className="musie-play__head">
-              <Markdown md={instrument.playMd} arrange={headingOnly} />
+            <div ref={headRef} className="musie-play__head" data-compact={compact ? 'true' : undefined}>
+              <h2 className="musie-play__headline">{headline}</h2>
+              {/* The demo, a load failure: polite, and in the marimba's one
+                  line where its experiment kept its note. For the harp and the
+                  kalimba it is said, not drawn — their experiments had no line
+                  there, and a line appearing would move the instrument. */}
+              <p
+                className={compact ? 'musie-play__note' : 'musy-sr-only'}
+                role="status"
+                aria-live="polite"
+              >
+                {stageError ? t('session.play.loadError') : demoSaid && !played ? t('session.play.demo') : ''}
+              </p>
+            </div>
+          }
+          foot={
+            <div ref={footRef} className="musie-play__foot" data-compact={compact ? 'true' : undefined}>
               <Countdown
+                className="musie-play__clock"
+                size={compact ? 'compact' : 'display'}
                 remainingSeconds={remainingSeconds(clock, performance.now())}
                 state={PHASE_TO_COUNTDOWN[clock.phase]}
                 onToggle={() => session?.clock.dispatch({ type: 'TOGGLE', at: performance.now() })}
@@ -164,54 +245,14 @@ export function SessionPlay({
                 trackLabel={t('session.play.timer.name')}
                 announcement={said === null ? '' : t(`session.play.timer.${said.key}`)}
               />
-              {/* One polite line for what the sheet has to say besides the
-                  timer: the demo while it is the only thing that happened,
-                  the rotation where the marimba wants it, a load failure. */}
-              <p className="musie-play__status" role="status" aria-live="polite">
-                {stageError ? t('session.play.loadError')
-                  : rotate ? t('session.play.rotate')
-                  : demoSaid && !played ? t('session.play.demo') : ''}
-              </p>
-            </div>
-          }
-          foot={
-            <div className="musie-play__foot">
-              <DialogueNonModal
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
-                title={t('session.play.settings.title')}
-                closeLabel={t('session.play.settings.close')}
-                placement="bottom-start"
-                trigger={<IconButton glyph={Settings} label={t('session.play.settings.open')} variant="secondary" />}
-              >
-                <div className="musie-play__dialogue">
-                  {modeControl('play-mode-sheet')}
-                  {vibrationControl('sm')}
-                </div>
-              </DialogueNonModal>
-              {showContinue(clock) && (
+              {/* ALWAYS LAID OUT, shown only on pause or at 0:00 — the harp's
+                  `data-waiting`: the clock must not move when it appears. */}
+              <div className="musie-play__done" data-waiting={showContinue(clock) ? undefined : 'true'} inert={!showContinue(clock)}>
                 <CtaButton onClick={onAdvance}>{t('session.play.continue')}</CtaButton>
-              )}
+              </div>
             </div>
           }
-        >
-          {immersive && (
-            <InstrumentStage
-              definition={definition}
-              durationSeconds={exercise.listenGateSeconds}
-              mode={mode}
-              vibration={vibration}
-              clock={clock}
-              onClock={onClock}
-              onSession={setSession}
-              onDemo={() => setDemoSaid(true)}
-              onPlayed={() => setPlayed(true)}
-              onOrientationHint={setRotate}
-              onError={(error) => { console.error('[musie] instrument:', error); setStageError(true); }}
-              label={canvasLabel}
-            />
-          )}
-        </Sheet>
+        />
       )}
     </>
   );

@@ -2682,43 +2682,140 @@ html[data-musy-scroll-snap] {
   outline-offset: calc(var(--focus-ring-offset) * -1);
 }
 
-.musie-play__head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-related);
-}
-
-.musie-play__head > .musie-md {
-  margin-block-end: 0;
-}
-
-.musie-play__status {
-  margin: 0;
-  color: var(--on-surface-muted);
-  min-block-size: calc(1em * var(--type-body-md-line));
-}
-
-/* The foot: the settings and the clock at the leading edge, as the harp had
-   them, the way on at the trailing edge. */
-.musie-play__foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-gap-stack);
-  inline-size: 100%;
-}
-
-.musie-play__clock {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-gap-stack);
-}
-
 .musie-play__dialogue {
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-group);
+}
+
+/* ── THE SHEET, AS THE EXPERIMENTS LAID IT OUT — round 2, 2026-11-09 ───────
+   The instrument is the sheet's `stage`, under everything. Over it: the
+   headline at the top left, the clock at the bottom left, „Weiter zum
+   Reflektieren“ at the bottom right — the harp 1443's page, measured with
+   Playwright and written into docs/plans/instruments-exercises.md (R0). The
+   marimba keeps its own experiment's: one line at the top, a one-row clock. */
+.musie-play__head {
+  display: grid;
+  justify-items: start;
+}
+
+.musie-play__headline {
+  margin: 0;
+  max-inline-size: var(--measure-heading);
+  color: var(--on-surface);
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+  text-wrap: var(--text-wrap-heading);
+}
+
+/* The marimba: headline and note on one line, the note always there even when
+   empty, so the bars do not move when it changes (its experiment, v2). */
+.musie-play__head[data-compact] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-gap-stack);
+  min-inline-size: 0;
+}
+
+.musie-play__head[data-compact] .musie-play__headline {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* `inline-size: 0` with `flex-grow`: the line takes the room left and never
+   asks for more. Without it a long note, kept on one line, widened the
+   sheet's grid column past the screen (measured at 852px: 795 of 788). */
+.musie-play__note {
+  flex: 1 1 0;
+  inline-size: 0;
+  min-inline-size: 0;
+  min-block-size: calc(1em * var(--type-body-sm-line));
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+
+/* The harp's foot: the clock at the leading edge, the button at the trailing
+   edge, side by side where both fit — and where they do not, the button drops
+   below with the clock above it (the harp's `placeFoot`). */
+.musie-play__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: var(--space-gap-stack);
+  row-gap: 0;
+  inline-size: 100%;
+}
+
+/* The clock keeps `--space-gap-stack` above the foot's bottom whether the
+   button stands beside it or below it — the harp's body padding
+   (`--space-inset-card + --space-gap-stack` above the foot, measured: the
+   clock's bottom 16px above the button's). Hence no row gap above. */
+.musie-play__clock {
+  min-inline-size: 0;
+  margin-block-end: var(--space-gap-stack);
+}
+
+.musie-play__done {
+  margin-inline-start: auto;
+}
+
+/* Laid out always, shown only on pause or at 0:00 — so the clock never moves
+   when it appears. `inert` on the element keeps it out of the tab order. */
+.musie-play__done[data-waiting] {
+  visibility: hidden;
+}
+
+/* The marimba's foot: one row, centred on the small clock, which gives way
+   before the button does. */
+.musie-play__foot[data-compact] {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.musie-play__foot[data-compact] .musie-play__clock {
+  flex: 0 1 auto;
+  margin-block-end: 0;
+}
+
+.musie-play__foot[data-compact] .musie-play__done {
+  flex: 0 0 auto;
+}
+
+/* ── THE MARIMBA UPRIGHT ON A TOUCH SCREEN — its experiment's full screen ── */
+.musie-play__rotate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-gap-stack);
+  padding: var(--space-inset-sheet);
+  background-color: var(--surface);
+  text-align: center;
+}
+
+.musie-play__rotate-icon {
+  inline-size: var(--icon-size-lg);
+  block-size: var(--icon-size-lg);
+  color: var(--on-surface-muted);
+}
+
+.musie-play__rotate-hint {
+  margin: 0;
+  max-inline-size: 32ch;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
 }
 
 /* ── THE HAND ─────────────────────────────────────────────────────────────

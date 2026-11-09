@@ -62,6 +62,14 @@ export interface InstrumentStageProps {
   onError: (error: unknown) => void;
   /** The accessible name of the canvas. */
   label: string;
+  /**
+   * The sheet's head and foot, laid over the stage: their edges are the
+   * instrument's insets — where the kalimba's and the marimba's experiments
+   * measured their header's bottom and their foot's top. The harp ignores
+   * them, as its experiment did: its strings run the full height.
+   */
+  insetTop?: React.RefObject<HTMLElement | null>;
+  insetBottom?: React.RefObject<HTMLElement | null>;
 }
 
 function pointerOf(e: React.PointerEvent<HTMLCanvasElement>, box: DOMRect): StagePointer {
@@ -83,7 +91,7 @@ function pointerOf(e: React.PointerEvent<HTMLCanvasElement>, box: DOMRect): Stag
 
 export function InstrumentStage({
   definition, durationSeconds, mode, vibration, clock, onClock, onSession, onDemo, onPlayed,
-  onOrientationHint, onError, label,
+  onOrientationHint, onError, label, insetTop, insetBottom,
 }: InstrumentStageProps) {
   const scopeRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -140,11 +148,18 @@ export function InstrumentStage({
       const dpr = Math.min(3, window.devicePixelRatio || 1);
       canvas.width = Math.round(rect.width * dpr);
       canvas.height = Math.round(rect.height * dpr);
+      const head = insetTop?.current?.getBoundingClientRect();
+      const foot = insetBottom?.current?.getBoundingClientRect();
       session.layout({
         width: rect.width,
         height: rect.height,
         dpr,
-        inset: { top: 0, right: 0, bottom: 0, left: 0 },
+        inset: {
+          top: head === undefined ? 0 : Math.max(0, head.bottom - rect.top),
+          right: 0,
+          bottom: foot === undefined ? 0 : Math.max(0, rect.bottom - foot.top),
+          left: 0,
+        },
       });
       const hint = (session.adapter as { orientationHint?: boolean }).orientationHint;
       callbacks.current.onOrientationHint?.(hint === true);
@@ -152,6 +167,8 @@ export function InstrumentStage({
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(scope);
+    if (insetTop?.current) observer.observe(insetTop.current);
+    if (insetBottom?.current) observer.observe(insetBottom.current);
 
     /* ── KEYS ── the experiments' keyboards, on the window while the sheet is
        up; never while typing, never with a modifier. Held keys are released
@@ -196,7 +213,7 @@ export function InstrumentStage({
       callbacks.current.onSession(null);
       session.dispose();
     };
-  }, [definition, durationSeconds]);
+  }, [definition, durationSeconds, insetTop, insetBottom]);
 
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     const session = sessionRef.current;
