@@ -16,7 +16,8 @@
  *   · forward a mouse's moves with no button down (the harp's A-key strum);
  *   · send `keyUp` for held keys when the window loses focus;
  *   · tell the session about every touch (`touched`), so a touch that hits
- *     no note still stops the demo and an answer.
+ *     no note still stops the demo and an answer;
+ *   · show the harp's green cursor dot over the canvas (`InstrumentCursor`).
  *
  * ── ONE SESSION PER OPENING ───────────────────────────────────────────────
  * Created when the sheet mounts this, disposed when it unmounts. The clock is
@@ -25,6 +26,7 @@
  * new one.
  */
 import * as React from 'react';
+import { InstrumentCursor } from '@musie/design-system';
 import { createInstrumentSession } from '../instruments/engine/host';
 import type { InstrumentSession } from '../instruments/engine/host';
 import type { ClockState } from '../instruments/engine/clock';
@@ -245,6 +247,11 @@ export function InstrumentStage({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
+      {/* THE HARP'S GREEN DOT, for every instrument (Ben, round 2): it stands
+          in for mouse and pen over the canvas and while a string is held past
+          its edge; the normal pointer over controls; nothing for touch. The
+          design system's, so its size and colour are tokens. */}
+      <InstrumentCursor target={canvasRef} />
     </div>
   );
 }
