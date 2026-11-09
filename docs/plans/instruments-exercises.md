@@ -47,7 +47,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 | --- | --- | --- | --- | --- |
 | L1 | DS components: **`DialogueNonModal`** — Storybook „Dialogue (non modal)“, generic, the settings are its first use (Ben, 2026-11-09) —, `Countdown`, `SegmentedControl` + `description`, `Switch` + `size="sm"` | in Arbeit — `../musie.worktrees/instr-l1-components`, branch `instruments/l1-…`, started 2026-11-09 | `packages/design-system/src/{DialogueNonModal,Countdown,SegmentedControl,Switch}.tsx`, `musy-components.css`, `stories/{DialogueNonModal,Countdown,SegmentedControl,Switch}.stories.tsx`, `reference/design_system/docs/07-components.md` | stories per CONVENTIONS.md (zu/offen/mit/ohne Vibration for the dialogue); keyboard + screen reader; `pnpm --filter @musie/design-system typecheck` green |
 | L3 | Engine: audio unlock + master chain from config, answer (generalised from the marimba), play clock reducer, onboarding, haptics + feature detection, motion permission | in Arbeit — `../musie.worktrees/instr-l3-engine`, branch `instruments/l3-…`, started 2026-11-09 | `apps/web/src/instruments/engine/**` | pure parts unit-tested: answer for 3 instruments on/off, clock (play, first note, demo does not start, pause, expire, play on, continue button), onboarding cancels on own touch, vibration detection |
-| L4 | The three instruments as adapters (draw, hit, play), ported from the experiments onto the tokens | harp **erledigt** (`856c034`, merged `…` in this branch, 56 tests incl. parity against the experiment's own functions) · kalimba **erledigt** (`ce9aa3e`, merged, 103 tests incl. parity) · marimba in Arbeit | `apps/web/src/instruments/{harp,kalimba,marimba}/**` | each sounds from F2/F3 only; renders with `--instrument-*` tokens; keyboard-playable |
+| L4 | The three instruments as adapters (draw, hit, play), ported from the experiments onto the tokens | harp **erledigt** (`856c034`, merged `…` in this branch, 56 tests incl. parity against the experiment's own functions) · kalimba **erledigt** (`ce9aa3e`, merged, 103 tests incl. parity) · marimba **erledigt** (`d999b35`, merged, 86 tests incl. parity and frame-by-frame drawing against the experiment) | `apps/web/src/instruments/{harp,kalimba,marimba}/**` | each sounds from F2/F3 only; renders with `--instrument-*` tokens; keyboard-playable |
 | L5 | Copy DE/EN | **aufgegangen in F4** — the rows the copy fills are created by F4, so a second migration would write the same rows twice. Remaining check is in I3: `missing_translations` empty for the three | – | – |
 | L6 | Therapist UI: the three exercises at the end of `/exercise-builder`, every new text field editable | **erledigt** (`90223c1`, merged as `b7eadb5`): 30 new tests; the three appear last; every new text path classified `text`; the play step previews its copy and CTA, not the instrument | `lib/exerciseConfig.ts`, `lib/exerciseChanges.ts`, `lib/buildExerciseConfig.ts`, `lib/configToExercise.ts`, `routes/ExerciseBuilder.tsx`, `supabase/content/exercises/exercise.schema.json` | a text edit is classified `text`, not `structural`; builder previews the play step |
 
@@ -68,13 +68,19 @@ size the canvas to box × dpr (adapters call `setTransform` themselves);
 forward mouse `pointermove` with no button pressed (the harp's A-key strum);
 send `keyUp` for held keys on window blur; call `requestDraw` when the palette
 or shadow changes (a still instrument does not redraw itself); pass
-`radius`/`force` from touch events (marimba).
+`radius` (`Touch.radiusX` semantics — not `PointerEvent.width`, a diameter)
+and `force` from touch events (marimba); capture pointers and pass
+`pointercancel` on as `pointerUp`; show the marimba's rotate hint when its
+adapter reports `orientationHint`.
 
 **Decided by the integrator, sent to L3 while it ran:** every adapter builds
 its own master chain into `audio.destination` (the chains differ per
 instrument and are part of the locked sound); the engine adds none.
 `vibrate(ms, 0)` = Android only, no iOS tick. `motion().rotation` is scaled
 as the kalimba experiment does and keeps the maximum since the last read.
+`joltsSince()` is raw |acceleration| in m/s² on the `performance.now()`
+clock; the first note of a rolled answer is a normal stroke, the seven after
+it roll strokes.
 
 **Open, for Ben or Lucia (logged in `apps/web/OPEN-QUESTIONS.md` at I5):**
 1. Kalimba bridge: the still wave is drawn at the full height the layout
@@ -88,7 +94,13 @@ as the kalimba experiment does and keeps the maximum since the last read.
    shorten them?
 5. Four kalimba files (F4, C5 × closed/open) are indexed and fetched but the
    pentatonic tuning never plays them — the whole default sound was copied.
-6. `/exercise-builder`'s „Sag mir, was ich ändern soll“ box cannot reach the
+6. Marimba background warming: kept, scaled to 0.14 of the experiment's
+   blend, because `--instrument-played` (terracotta-7) is far stronger than
+   the experiment's terracotta-2; 0.14 reproduces its warmest ground. Keep,
+   or keep only the softening of the sound?
+7. Marimba holes (`--instrument-detail`, sand-8) are now lighter than the
+   bars (`--instrument-key`, sand-9) in light mode; darker in the experiment.
+8. `/exercise-builder`'s „Sag mir, was ich ändern soll“ box cannot reach the
    eight new fields: `supabase/functions/exercise-prompt/index.ts` lists its
    fields, and changing it needs a `functions deploy` (Ben).
 
@@ -157,5 +169,6 @@ the usual `supabase db reset` from one session (Ben).
 - 2026-11-09 — Lanes L1, L3, L4 (harp, kalimba, marimba as three agents) and L6 started in parallel from `b4662bc`, each in its own worktree with exclusive files. Meanwhile I3's database tests on the feature branch.
 - 2026-11-09 — I3 database half: whole db suite on the isolated stack: 222 green, 5 red — all five in `deck.db.test.ts` / `music.db.test.ts`, which compare to the hosted snapshots (10 cards, 89 pieces) while a fresh stack carries the factory content (9 cards, 9 pieces), CLAUDE.md rule 4.1. Not caused by this branch; they are red on any freshly started stack.
 - 2026-11-09 — L6 merged (`b7eadb5`), then L4-kalimba and L4-harp: 1009 unit tests green on the branch. Merged as each finished rather than strictly L1 → L3 → L4 → L6: the files are exclusive, so the order changes nothing.
+- 2026-11-09 — L4-marimba merged: 1095 unit tests green. All three adapters build their own master chain. L1 and L3 still running.
 - 2026-11-09 — Ben: the non-modal settings dialog is the generic component
   „Dialogue (non modal)“ — `DialogueNonModal` in code. PRD and plan renamed.
