@@ -248,3 +248,8 @@ die Stäbe der Marimba sind 11–12 px kürzer (Touch-Ziel des Systems, 56 statt
 Drehen zu bitten. Die Stäbe liegen quer über dem Bildschirm, die tiefen unten,
 die Schrift bleibt aufrecht; hochkant gilt das Harfen-Layout. Der Dreh-Hinweis
 entfällt. Die Texte der Übung empfehlen weiterhin, das Handy quer zu legen.
+
+**Nachtrag (Ben, 2026-11-09):** Das Fokus-Sheet hat keine Einstellungen mehr.
+Zusammenspiel und Vibration werden nur auf dem Schritt davor gewählt. Der
+Timer steht unten am Rand; „Weiter zum Reflektieren“ erscheint bei Pause oder
+0:00 darunter und schiebt ihn sanft hoch.

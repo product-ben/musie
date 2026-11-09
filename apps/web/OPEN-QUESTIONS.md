@@ -10945,3 +10945,21 @@ the phone sideways („Am besten liegt das Handy quer vor dir“, „Leg dein Ha
 quer vor dich.“ on the step, „tief links und hoch rechts“ in the
 description). That is still good advice, but no longer required. Changing it
 is a content migration if wanted.
+
+## The focus sheet has no settings — RESOLVED
+
+Where: `apps/web/src/components/SessionPlay.tsx`; answers „The headline and
+the kalimba stand differently from their experiments, by the round-2 layout“
+above, in part
+
+What I checked: the sheet's settings icon opened the step's two settings
+again in a „Dialogue (non modal)“, at the top beside the X.
+
+What I did: removed the icon, the dialogue and their three strings. The
+headline is the experiment's width again; the kalimba's tines still start
+higher than in its experiment, for the reason given above.
+
+Why: Ben, 2026-11-09: „Die Einstellungen können nur davor gemacht werden.“
+
+What I need from Ben: whether `DialogueNonModal` and `Sheet`'s `actions`
+slot, built for this, stay in the design system without a consumer, or go.

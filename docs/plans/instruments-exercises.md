@@ -343,3 +343,8 @@ the usual `supabase db reset` from one session (Ben).
   675 in about 300 ms, the tines' ends follow 712 → 644, never a blank frame
   (the stage now assigns the canvas size only when it changes). In the
   marimba's landscape the bars lose 68 px of 263 while Weiter shows.
+- 2026-11-09 — Ben: no settings in the focus sheet; they are made on the
+  step, before. The icon, its Dialogue (non modal) and three strings removed;
+  the headline has the experiment's width again (285 at 393, 322 at 430, 744
+  at 852). `DialogueNonModal` (with `top-end`) and `Sheet`'s `actions` stay
+  in the design system, now without a consumer in the app.
