@@ -11,6 +11,7 @@ import {
   playSeconds,
   remainingSeconds,
   showContinue,
+  showContinueInSheet,
 } from './clock';
 import type { ClockAction, ClockState } from './clock';
 
@@ -137,6 +138,37 @@ describe('the clock', () => {
     ]);
     expect(s.continuedAt).toBeNull();
     expect(playSeconds(s, 50_000)).toBe(50);
+  });
+
+  it('the sheet offers Weiter only after the person pauses, and at 0:00 (Ben, 2026-11-09)', () => {
+    expect(showContinueInSheet(initialClock(90))).toBe(false);
+    const own = run([{ type: 'OWN_NOTE', at: 0 }, { type: 'PAUSE', at: 20_000 }]);
+    expect(own.pausedBy).toBe('person');
+    expect(showContinueInSheet(own)).toBe(true);
+    const toggled = run([{ type: 'PLAY', at: 0 }, { type: 'TOGGLE', at: 5000 }]);
+    expect(showContinueInSheet(toggled)).toBe(true);
+    const ended = run([{ type: 'PLAY', at: 0 }, { type: 'TICK', at: 91_000 }]);
+    expect(showContinueInSheet(ended)).toBe(true);
+  });
+
+  it('closing the sheet pauses, offers Weiter on the step and not in the sheet', () => {
+    const closed = run([{ type: 'OWN_NOTE', at: 0 }, { type: 'CLOSE', at: 20_000 }]);
+    expect(closed.phase).toBe('paused');
+    expect(closed.pausedBy).toBe('closing');
+    expect(remainingSeconds(closed, 999_999)).toBe(70);
+    expect(showContinue(closed)).toBe(true);
+    expect(showContinueInSheet(closed)).toBe(false);
+    /* opened again: a note resumes it, and the person's own pause offers Weiter */
+    const resumed = run([{ type: 'OWN_NOTE', at: 30_000 }], closed);
+    expect(resumed.phase).toBe('running');
+    expect(resumed.pausedBy).toBeNull();
+    expect(showContinueInSheet(run([{ type: 'TOGGLE', at: 40_000 }], resumed))).toBe(true);
+    /* a pause the person made survives the sheet closing on it */
+    const own = run([{ type: 'PLAY', at: 0 }, { type: 'PAUSE', at: 5000 }, { type: 'CLOSE', at: 6000 }]);
+    expect(own.pausedBy).toBe('person');
+    expect(showContinueInSheet(own)).toBe(true);
+    /* nothing to close on a clock that never ran */
+    expect(run([{ type: 'CLOSE', at: 1000 }])).toEqual(initialClock(90));
   });
 
   it('every announcement counts, so the same key twice is said twice', () => {

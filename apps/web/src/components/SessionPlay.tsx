@@ -43,7 +43,7 @@ import { headingOnly, parseMarkdown, plainText, withoutHeading } from '../lib/ma
 import type { Exercise, ExerciseInstrument, PlayMode } from '../lib/content';
 import { PLAY_FOCUS, withFocus } from '../lib/playSheet';
 import { supportsVibration } from '../instruments/engine/haptics';
-import { announcement, remainingSeconds, showContinue } from '../instruments/engine/clock';
+import { announcement, remainingSeconds, showContinueInSheet } from '../instruments/engine/clock';
 import type { ClockState } from '../instruments/engine/clock';
 import type { InstrumentSession } from '../instruments/engine/host';
 import { isInstrumentId } from '../instruments/types';
@@ -223,9 +223,10 @@ export function SessionPlay({
                 trackLabel={t('session.play.timer.name')}
                 announcement={said === null ? '' : t(`session.play.timer.${said.key}`)}
               />
-              {/* UNDER THE CLOCK, its row shut until a pause or 0:00; opening,
-                  it pushes the clock up (Ben, 2026-11-09). */}
-              <div className="musie-play__done" data-waiting={showContinue(clock) ? undefined : 'true'} inert={!showContinue(clock)}>
+              {/* UNDER THE CLOCK, its row shut until the person pauses or 0:00 —
+                  not when the sheet opens on a clock its closing paused;
+                  opening, it pushes the clock up (Ben, 2026-11-09). */}
+              <div className="musie-play__done" data-waiting={showContinueInSheet(clock) ? undefined : 'true'} inert={!showContinueInSheet(clock)}>
                 <div className="musie-play__done-clip">
                   <div className="musie-play__done-row">
                     <CtaButton onClick={onAdvance}>{t('session.play.continue')}</CtaButton>

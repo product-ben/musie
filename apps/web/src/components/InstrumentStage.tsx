@@ -240,11 +240,12 @@ export function InstrumentStage({
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
-      /* CLOSING THE SHEET IS A PAUSE. The clock is handed back paused, so the
-         step shows *Weiter zum Reflektieren* — the same answer a press on
-         Pause gives — and reopening continues from where it stood. */
+      /* CLOSING THE SHEET IS A PAUSE, but not the person's. The clock is
+         handed back paused, so the step shows *Weiter zum Reflektieren* and
+         reopening continues from where it stood — while the sheet itself
+         offers Weiter only after the person pauses (`showContinueInSheet`). */
       if (session.clock.state().phase === 'running') {
-        session.clock.dispatch({ type: 'PAUSE', at: performance.now() });
+        session.clock.dispatch({ type: 'CLOSE', at: performance.now() });
       }
       sessionRef.current = null;
       callbacks.current.onSession(null);
