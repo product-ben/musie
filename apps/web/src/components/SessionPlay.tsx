@@ -10,15 +10,15 @@
  *              `exercise_i18n.play_cta`) and, once the timer is paused or
  *              done, *Weiter zum Reflektieren* — are the wizard's action row,
  *              built in `Session.tsx` like every other step's.
- *   THE SHEET  head: the headline, the 1:30 timer and one polite status line;
- *              middle: the instrument; foot: the settings icon, which opens the
- *              SAME settings in a „Dialogue (non modal)“, and *Weiter*.
+ *   THE SHEET  head: the headline and one polite status line; under it, the
+ *              instrument; foot: the 1:30 timer and *Weiter*. No settings:
+ *              they are made on the step, before (Ben, 2026-11-09).
  *
  * ── THE SETTINGS AND THE CLOCK ARE HELD ABOVE ─────────────────────────────
  * `Session.tsx` owns the mode, the vibration switch and the clock, and passes
- * them in: the step and the dialogue draw one state, and the action row needs
- * the clock to know whether *Weiter* is there yet. The session reads the mode
- * on every note, so „allein“ silences an answer that is playing.
+ * them in: the action row needs the clock to know whether *Weiter* is there
+ * yet, and the row on the way out stores the mode. The session reads the mode
+ * on every note.
  *
  * ── THE PRESS IS THE UNLOCK ───────────────────────────────────────────────
  * iOS only lets a page make sound from inside a gesture, so the primary
@@ -28,10 +28,10 @@
  * touch cancels it (`engine/onboarding.ts`).
  */
 import * as React from 'react';
-import { Settings, User, Users } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
-  Countdown, CtaButton, DialogueNonModal, IconButton, Message, SegmentedControl, Sheet, Switch,
+  Countdown, CtaButton, Message, SegmentedControl, Sheet, Switch,
 } from '@musie/design-system';
 import type { CountdownState } from '@musie/design-system';
 import { InstrumentStage } from './InstrumentStage';
@@ -90,7 +90,6 @@ export function SessionPlay({
     () => typeof matchMedia === 'function' && matchMedia('(orientation: portrait)').matches,
   );
   const [stageError, setStageError] = React.useState(false);
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
   const canVibrate = React.useMemo(() => supportsVibration(), []);
 
   /* The demo, once the sheet's session exists — and never again after the
@@ -100,7 +99,6 @@ export function SessionPlay({
   }, [session, played]);
 
   function close() {
-    setSettingsOpen(false);
     if (location.key === 'default') {
       navigate({ search: withFocus(location.search, false) }, { replace: true });
       return;
@@ -108,10 +106,10 @@ export function SessionPlay({
     navigate(-1);
   }
 
-  /* ── THE SETTINGS, drawn twice from one state ────────────────────────── */
-  const modeControl = (name: string) => (
+  /* ── THE SETTINGS — on the step only; the sheet has none ─────────────── */
+  const modeControl = (
     <SegmentedControl
-      name={name}
+      name="play-mode-step"
       legend={t('session.play.mode.legend')}
       value={mode}
       onValueChange={(next) => { if (next === 'solo' || next === 'with_musie') onModeChange(next); }}
@@ -123,9 +121,9 @@ export function SessionPlay({
   );
   /* Only where the device can vibrate at all — `navigator.vibrate`, or the
      iPhone's switch haptics. Feature detection, never the user agent. */
-  const vibrationControl = (size: 'md' | 'sm') => canVibrate && (
+  const vibrationControl = canVibrate && (
     <Switch
-      size={size}
+      size="md"
       label={t('session.play.vibration')}
       checked={vibration}
       onCheckedChange={(next) => onVibrationChange(next)}
@@ -158,8 +156,8 @@ export function SessionPlay({
       <Markdown md={instrument.playMd} />
 
       <div className="musie-play__settings">
-        {vibrationControl('md')}
-        {modeControl('play-mode-step')}
+        {vibrationControl}
+        {modeControl}
       </div>
 
       {loadError !== null && (
@@ -175,21 +173,6 @@ export function SessionPlay({
           /* The marimba keeps its experiment's layout (Ben, after R0): one line
              at the very top, the small clock in the foot row. */
           density={compact ? 'compact' : 'default'}
-          actions={
-            <DialogueNonModal
-              open={settingsOpen}
-              onOpenChange={setSettingsOpen}
-              title={t('session.play.settings.title')}
-              closeLabel={t('session.play.settings.close')}
-              placement="top-end"
-              trigger={<IconButton glyph={Settings} label={t('session.play.settings.open')} variant="secondary" />}
-            >
-              <div className="musie-play__dialogue">
-                {modeControl('play-mode-sheet')}
-                {vibrationControl('sm')}
-              </div>
-            </DialogueNonModal>
-          }
           stage={immersive ? (
             <InstrumentStage
               definition={definition}

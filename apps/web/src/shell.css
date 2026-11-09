@@ -2699,12 +2699,6 @@ html[data-musy-scroll-snap] {
   outline-offset: calc(var(--focus-ring-offset) * -1);
 }
 
-.musie-play__dialogue {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-group);
-}
-
 /* ── THE SHEET, AS THE EXPERIMENTS LAID IT OUT — round 2, 2026-11-09 ───────
    The instrument is the sheet's `stage`, under everything. Over it: the
    headline at the top left, the clock at the bottom left, „Weiter zum

@@ -419,9 +419,9 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   );
 
   /* ── AN INSTRUMENT'S TWO SETTINGS — 2026-11-09 ──────────────────────────
-     Held HERE, not in the step: the play step draws them twice (on the step
-     and in the sheet's „Dialogue (non modal)“), and one state is what keeps
-     the two in step. Seeded from `exercise_instruments` — „mit Musie“ and
+     Held HERE, not in the step: the step draws them, the focus sheet reads
+     them on every note, and the row stores them on the way out. Seeded from
+     `exercise_instruments` — „mit Musie“ and
      vibration on, the brief's defaults. Written to the row with the play
      time, on the way out of Musizieren. */
   const instrument = data.exercise.instrument;

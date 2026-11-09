@@ -13,8 +13,8 @@
  *     status line — and the timer does NOT start from it;
  *   · the person's own note starts the timer, and the demo sentence goes;
  *   · Pause shows „Weiter zum Reflektieren“;
- *   · the settings in the „Dialogue (non modal)“ and on the step are one
- *     state: „allein“ chosen in the dialogue is „allein“ on the step;
+ *   · the settings are made on the step, before: the sheet has none, and
+ *     „allein“ chosen on the step is still „allein“ after the sheet;
  *   · Weiter stores the mode and the seconds on the session, and the
  *     reflection reaches the diary as it does for every exercise.
  *
@@ -104,6 +104,7 @@ test.describe('the instruments', () => {
       const stepMode = page.getByRole('radiogroup', { name: label(locale, 'session.play.mode.legend') });
       await expect(stepMode.getByRole('radio', { name: /mit Musie/ })).toBeChecked();
       await expect(page.getByRole('switch', { name: label(locale, 'session.play.vibration') })).toBeChecked();
+      await stepMode.getByRole('radio', { name: /allein/ }).click();
       await page.getByRole('button', { name: instrument.cta, exact: true }).click();
 
       /* ── the sheet: one demo note, and it does not start the timer ─── */
@@ -134,14 +135,15 @@ test.describe('the instruments', () => {
       await page.getByRole('button', { name: new RegExp(`^${label(locale, 'session.play.timer.pause')}`) }).click();
       await expect(page.getByRole('button', { name: label(locale, 'session.play.continue') }).first()).toBeVisible();
 
-      /* ── the settings: one state, two places ────────────────────────── */
-      await page.getByRole('button', { name: label(locale, 'session.play.settings.open') }).click();
-      const dialogue = page.getByRole('dialog', { name: label(locale, 'session.play.settings.title') });
-      await dialogue.getByRole('radio', { name: /allein/ }).click();
-      await page.keyboard.press('Escape');
-      await expect(dialogue).toBeHidden();
+      /* ── the sheet has no settings; the step's choice survives it ────── */
+      const sheet = page.locator('.musy-sheet');
+      await expect(sheet.getByRole('radiogroup')).toHaveCount(0);
+      await expect(sheet.getByRole('switch')).toHaveCount(0);
       await page.getByRole('button', { name: label(locale, 'session.play.close') }).click();
       await expect(page).not.toHaveURL(/focus/);
+      /* Gone, not only closing: during its exit the sheet's own Weiter is
+         still there beside the row's. */
+      await expect(sheet).toHaveCount(0);
       await expect(stepMode.getByRole('radio', { name: /allein/ })).toBeChecked();
 
       /* ── Weiter: mode and seconds on the row ────────────────────────── */
