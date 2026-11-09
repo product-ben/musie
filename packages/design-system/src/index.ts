@@ -223,3 +223,16 @@ export { DialogueNonModal } from './DialogueNonModal';
 export type { DialogueNonModalProps, DialogueNonModalPlacement } from './DialogueNonModal';
 export { Countdown } from './Countdown';
 export type { CountdownProps, CountdownState } from './Countdown';
+
+/* The instruments' tap and cursor (2026-11-09), both maintained here with live
+   controls in Storybook. The tap is the kalimba's soft dot, now every own
+   note's on all three instruments, as a pure function of the
+   `--instrument-tap-*` tokens (amendments G5) plus a painter for a canvas.
+   The cursor is the harp's green dot standing in for mouse and pen. */
+export {
+  instrumentTapAt, paintInstrumentTap, readInstrumentTapParams, instrumentTapTokenLines,
+  INSTRUMENT_TAP_DEFAULT, INSTRUMENT_TAP_STOPS, INSTRUMENT_TAP_TOKENS,
+} from './instrumentTap';
+export type { InstrumentTapParams, InstrumentTapFrame, InstrumentTapRgb } from './instrumentTap';
+export { InstrumentCursor } from './InstrumentCursor';
+export type { InstrumentCursorProps } from './InstrumentCursor';

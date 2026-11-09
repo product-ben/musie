@@ -1597,3 +1597,55 @@ Every default is the locale catalogue's (`countdown*` in `src/locale.ts`), and e
 **A11y notes.** The control's accessible name is the action then what it moves — "Pause, Countdown" — 7.21's construction. Start, pause and end are status messages (4.1.3) and are announced; the ticking figure is not. The caption carries the meaning the figure cannot, so the number is never the only statement of what is asked.
 
 **What it is NOT.** Not a stopwatch (it counts down to a floor, and stops at it), not a progress bar, not a timer implementation, not 7.21's readout — which is the track's remaining time, a different number for a different question.
+
+---
+
+## 7.28 Instrument Cursor `[SEED]` · PROVISIONAL (G5)
+
+Storybook: **Components/InstrumentCursor**. Code: `InstrumentCursor`. The harp experiment's green dot (`harp/261104-1443`, `.musie-cursor` and `moveCursor`), made the mouse cursor of every instrument's focus sheet by Ben on 2026-11-09 and maintained here, as the tap effect is (`instrumentTap.ts`, Storybook **Foundations/Instrument tap**).
+
+**Purpose.** Stand in for the mouse and pen pointer over an instrument: a soft green disc where the arrow would be, so pointing at a string reads as touching it.
+
+**APG pattern.** None. It is the pointer's picture, not content: `aria-hidden`, no role, never focusable.
+
+**When it shows** — the experiment's rule, unchanged.
+
+| Pointer | Where | Dot | System pointer on the target |
+| --- | --- | --- | --- |
+| mouse or pen | over the target | follows it | hidden (`cursor: none`) |
+| mouse or pen | past the target's edge, the target holding its capture | follows it | — |
+| mouse or pen | anywhere else — a control laid over the instrument, the page | none | normal |
+| touch | anywhere | none | — |
+| — | the pointer leaves the document | none | normal |
+
+So `target` is the element **played on** — the canvas — not a container that also holds controls: over a child of the target the normal pointer comes back, as it did over the experiment's buttons.
+
+**Anatomy.**
+```
+InstrumentCursor              renders nothing in place
+└── (appended to the target's document body, while mounted)
+    div.musy-instrument-cursor   aria-hidden  [data-shown]  [data-theme = the target's]
+target                         [data-musy-instrument-cursor]  while the dot shows
+```
+
+**Props.**
+
+| Prop | Type | Default |
+|---|---|---|
+| `target` | `HTMLElement \| null \| RefObject<HTMLElement \| null>` | — (required; null draws nothing) |
+
+A ref object is read once, after mount; pass the element itself when it can be replaced while the cursor stays mounted.
+
+**Why on the body, and created rather than portaled.** A `position: fixed` element inside a transformed ancestor is fixed to that ancestor, not to the viewport, and inside a clipped one is clipped by it — and the sheet an instrument is played in is a 7.14 Lightbox, whose popup holds its entrance animation: a transform on the default surface (`musy-lb-in`), a clip-path on the immersive one (`musy-lb-grow`). On the body it is fixed to the viewport however the sheet is drawn; it copies the target's nearest `data-theme` so it is green for the theme the instrument is drawn in. Created with the DOM rather than through a React portal so the system does not import `react-dom`, which it does not declare. It moves by `transform` on every `pointermove` / `pointerdown`, with no React render in between.
+
+**Geometry.** `--instrument-cursor-size` square, `--radius-full`, `--instrument-cursor-color`, centred on the pointer by a negative margin of half its size. `top` / `left` are **physical** on purpose: the pointer's `clientX` / `clientY` are. `z-index: calc(var(--z-toast) + 1)` — a pointer drawn under something would not be a pointer.
+
+**State matrix.** Shown or hidden (`data-shown`), by the table above. No hover, active, focus or disabled state of its own.
+
+**Responsive behaviour.** None: a pointer is the same size on every screen, and on a touch screen it is never drawn.
+
+**Token usage.** `--instrument-cursor-size` `--instrument-cursor-color` (G5: `calc(var(--sp-5) * 2)`, `var(--interactive-primary)`) `--radius-full` `--z-toast`
+
+**A11y notes.** Under **forced colours** the dot is not drawn and the system pointer stays: a system colour scheme replaces ours, and the system pointer is the one it accounts for. No `prefers-reduced-motion` rule: it moves only when the person moves. Keyboard play is untouched — the dot belongs to pointers.
+
+**What it is NOT.** Not a custom `cursor:` image (a CSS cursor cannot take a token or follow the theme), not a focus indicator, not the tap effect — that is drawn on the canvas, by the instrument, where a note was played.

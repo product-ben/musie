@@ -121,8 +121,8 @@ export function InstrumentShadowRamp() {
 
 const SWATCHES = [
   ['--instrument-surface', 'What the instruments are drawn on — the page they lie on, --surface'],
-  ['--instrument-string', 'A string instrument at rest (harp) — lighter'],
-  ['--instrument-key', 'A key instrument at rest (marimba, kalimba) — darker'],
+  ['--instrument-string', 'A string instrument at rest (harp) — darker'],
+  ['--instrument-key', 'A key instrument at rest (marimba, kalimba) — lighter, by Ben’s choice of 2026-11-09'],
   ['--instrument-played', 'What the person touched'],
   ['--instrument-answer', 'What Musie answered'],
   ['--instrument-detail', 'Cords, holes, the bridge'],
