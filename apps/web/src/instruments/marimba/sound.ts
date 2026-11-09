@@ -93,7 +93,13 @@ export interface MarimbaSound {
   glissando: { decay: number; min: number; max: number };
   haptics: { strike: { baseMs: number; velMs: number }; roll: { ms: number; everyMs: number } };
   pendingMs: number;
-  visual: { dotMs: number; glowTau: number };
+  /**
+   * The bars' glow. The locked config also still carries `dotMs` (600, the
+   * experiment's own dot); nothing reads it since round 2, when the design
+   * system's tap replaced that dot and took its lifetime from
+   * `--instrument-tap-duration`.
+   */
+  visual: { glowTau: number };
 }
 
 /** `marimba.json` → `demo`: the onboarding stroke. */

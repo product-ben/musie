@@ -1,4 +1,3 @@
-import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * Test support for the marimba's `*.test.ts` — imported by tests only, never
  * by the adapter. Not a `.test.ts` itself so vitest does not collect it; it
@@ -8,6 +7,8 @@ import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
  * the migration is written from — so the tests play exactly what the database
  * will hand the adapter.
  */
+import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
+import type { InstrumentTapParams } from '@musie/design-system';
 import marimbaJson from '../../../../../supabase/content/instruments/marimba.json';
 import samplesJson from '../../../../../supabase/content/instruments/samples.json';
 import type {
@@ -121,6 +122,8 @@ export function fakeHost(audio = new FakeAudio()) {
     audible: true,
     motion: null as { rotation: number; jolt: number; at: number } | null,
     jolts: [] as { at: number; magnitude: number }[],
+    /** What `host.tap()` hands over: the tokens' defaults unless a test sets other values. */
+    tap: INSTRUMENT_TAP_DEFAULT as InstrumentTapParams,
   };
   const host: InstrumentHost = {
     audio: audio as unknown as AudioContext,
@@ -128,7 +131,7 @@ export function fakeHost(audio = new FakeAudio()) {
     buffer: (file) => buffers.get(file),
     palette: () => PALETTE,
     shadow: () => null,
-    tap: () => INSTRUMENT_TAP_DEFAULT,
+    tap: () => state.tap,
     vibrate: (ms) => { log.vibrate.push(ms); },
     motion: () => state.motion,
     joltsSince: (t) => { log.joltsAsked.push(t); return state.jolts.filter((j) => j.at >= t); },
