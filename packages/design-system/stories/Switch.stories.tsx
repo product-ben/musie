@@ -50,6 +50,12 @@ const meta = {
           'slider. The 44px target is the whole row, not the 32px track, which is what makes',
           'it usable one-handed.',
           '',
+          '**Two sizes** (`size`, 2026-11-09). `md` is the switch as it always was;',
+          '`sm` is the one the harp experiment built for itself as `.musie-switch--sm`,',
+          'for a row of settings set in label-md beside a segmented control — knob',
+          '`--icon-size-sm`, the label at label-md and regular weight. The ROW keeps',
+          'its 44px target at both sizes; only the track and the type step down.',
+          '',
           'Three cues carry the state — fill, knob travel, and the embedded glyph — so',
           'removing the hue leaves it readable (1.4.1).',
           '',
@@ -152,6 +158,11 @@ const meta = {
       options: ['primary', 'accent'],
       description: 'Solved accent family. `primary` (green) is the default and is what the app uses everywhere; `accent` (terracotta) is opt-in for a screen with a reason.',
     },
+    size: {
+      control: 'inline-radio',
+      options: ['md', 'sm'],
+      description: 'The track and the label’s type step. `md` by default; `sm` is a 16px knob (44×24 track) with the label at label-md, regular weight. The row stays the 44px target at both.',
+    },
     guided: { control: 'boolean', description: 'Raise the row to --target-guided for assisted use.' },
     showStateIcons: {
       control: 'boolean',
@@ -181,6 +192,20 @@ export const Default: Story = {};
 /** On. Every state exists twice, once per checked value; the fill, the knob
  *  travel and the embedded glyph all move. */
 export const Checked: Story = { args: { checked: true } };
+
+/** `size="sm"`, off and on, with the default beside it. The knob is
+ *  `--icon-size-sm` and the track is re-derived from it (44×24); the label
+ *  drops to label-md at regular weight. The row is still the 44px target.
+ *  „Vibration“ is the instruments' own switch, its first use. */
+export const Small: Story = {
+  render: (args) => (
+    <Stack>
+      <Switch {...args} size="sm" label="Vibration" checked={false} />
+      <Switch {...args} size="sm" label="Vibration" checked />
+      <Switch {...args} size="md" label="Vibration — size: md (default)" checked />
+    </Stack>
+  ),
+};
 
 /** All three accent families, on and off. The prototype uses
  *  `accent`. */

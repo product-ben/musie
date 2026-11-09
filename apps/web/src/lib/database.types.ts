@@ -380,12 +380,23 @@ export type Database = {
         Row: {
           description: string
           exercise_id: string
+          focus_headline: string | null
           image_alt: string
           intro_md: string | null
           listen_md: string | null
           locale: string
+          mode_musie_label: string | null
+          mode_musie_md: string | null
+          mode_solo_label: string | null
+          mode_solo_md: string | null
+          motion_label: string | null
+          motion_md: string | null
           name: string
           needs: string | null
+          play_cta: string | null
+          play_md: string | null
+          play_pointer_md: string | null
+          play_touch_md: string | null
           reflect_md: string | null
           reflect_placeholder: string | null
           scan_md: string | null
@@ -393,12 +404,23 @@ export type Database = {
         Insert: {
           description: string
           exercise_id: string
+          focus_headline?: string | null
           image_alt: string
           intro_md?: string | null
           listen_md?: string | null
           locale: string
+          mode_musie_label?: string | null
+          mode_musie_md?: string | null
+          mode_solo_label?: string | null
+          mode_solo_md?: string | null
+          motion_label?: string | null
+          motion_md?: string | null
           name: string
           needs?: string | null
+          play_cta?: string | null
+          play_md?: string | null
+          play_pointer_md?: string | null
+          play_touch_md?: string | null
           reflect_md?: string | null
           reflect_placeholder?: string | null
           scan_md?: string | null
@@ -406,12 +428,23 @@ export type Database = {
         Update: {
           description?: string
           exercise_id?: string
+          focus_headline?: string | null
           image_alt?: string
           intro_md?: string | null
           listen_md?: string | null
           locale?: string
+          mode_musie_label?: string | null
+          mode_musie_md?: string | null
+          mode_solo_label?: string | null
+          mode_solo_md?: string | null
+          motion_label?: string | null
+          motion_md?: string | null
           name?: string
           needs?: string | null
+          play_cta?: string | null
+          play_md?: string | null
+          play_pointer_md?: string | null
+          play_touch_md?: string | null
           reflect_md?: string | null
           reflect_placeholder?: string | null
           scan_md?: string | null
@@ -430,6 +463,49 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "missing_cuts"
             referencedColumns: ["exercise_id"]
+          },
+        ]
+      }
+      exercise_instruments: {
+        Row: {
+          default_mode: string
+          exercise_id: string
+          instrument_id: string
+          vibration_default: boolean
+        }
+        Insert: {
+          default_mode?: string
+          exercise_id: string
+          instrument_id: string
+          vibration_default?: boolean
+        }
+        Update: {
+          default_mode?: string
+          exercise_id?: string
+          instrument_id?: string
+          vibration_default?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_instruments_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: true
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_instruments_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: true
+            referencedRelation: "missing_cuts"
+            referencedColumns: ["exercise_id"]
+          },
+          {
+            foreignKeyName: "exercise_instruments_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -610,6 +686,97 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      instrument_samples: {
+        Row: {
+          bytes: number
+          file: string
+          instrument_id: string
+          layer: string
+          midi: number
+          path: string
+          sha256: string
+        }
+        Insert: {
+          bytes: number
+          file: string
+          instrument_id: string
+          layer: string
+          midi: number
+          path: string
+          sha256: string
+        }
+        Update: {
+          bytes?: number
+          file?: string
+          instrument_id?: string
+          layer?: string
+          midi?: number
+          path?: string
+          sha256?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instrument_samples_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instrument_sounds: {
+        Row: {
+          answer: Json
+          demo: Json
+          instrument_id: string
+          sound: Json
+        }
+        Insert: {
+          answer: Json
+          demo: Json
+          instrument_id: string
+          sound: Json
+        }
+        Update: {
+          answer?: Json
+          demo?: Json
+          instrument_id?: string
+          sound?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instrument_sounds_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: true
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instruments: {
+        Row: {
+          family: string
+          id: string
+          source_branch: string
+          source_commit: string
+          source_experiment: string
+        }
+        Insert: {
+          family: string
+          id: string
+          source_branch: string
+          source_commit: string
+          source_experiment: string
+        }
+        Update: {
+          family?: string
+          id?: string
+          source_branch?: string
+          source_commit?: string
+          source_experiment?: string
+        }
+        Relationships: []
       }
       legal_acceptances: {
         Row: {
@@ -839,6 +1006,8 @@ export type Database = {
           listened_at: string | null
           listening_question: string | null
           listening_question_id: string | null
+          play_mode: string | null
+          play_seconds: number | null
           posture: string | null
           rejected_question_ids: string[]
           rejected_this_round: string[]
@@ -861,6 +1030,8 @@ export type Database = {
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
+          play_mode?: string | null
+          play_seconds?: number | null
           posture?: string | null
           rejected_question_ids?: string[]
           rejected_this_round?: string[]
@@ -883,6 +1054,8 @@ export type Database = {
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
+          play_mode?: string | null
+          play_seconds?: number | null
           posture?: string | null
           rejected_question_ids?: string[]
           rejected_this_round?: string[]

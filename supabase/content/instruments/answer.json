@@ -1,0 +1,12 @@
+{
+  "$comment": "The answer, shared by all three instruments: Lucia's marimba v6 (marimba/261108-1740, commit 5590e20, functions pauseMs / compose / playAnswer). Only `home` and `roll` are per instrument and live in each instrument's own file. Ben, 2026-11-09: the kalimba answers exactly like the marimba.",
+  "phraseMemory": 12,
+  "maxNotes": 8,
+  "pause": { "medianFactor": 2.5, "longestFactor": 1.4, "lastGaps": 6, "fallbackMedianMs": 600, "minMs": 1800, "maxMs": 6000, "afterRollMs": 400, "heldRetryMs": 400 },
+  "length": { "shortUpTo": 3, "short": [2, 3], "medium": [0.45, 0.65], "long": [0.8, 1.0], "avoidRepeatTries": 6 },
+  "motif": { "sizes": [2, 3], "transforms": ["inv", "retro", "both"], "tries": 24 },
+  "gaps": { "fallbackMs": 520, "baseMinMs": 260, "baseMaxMs": 1000, "jitter": [0.92, 1.15], "minMs": 220, "maxMs": 1400, "lastFactor": 1.35 },
+  "velocity": { "meanFactor": 0.85, "min": 0.45, "max": 0.85, "archBase": 0.88, "archSpan": 0.16, "jitter": 0.04, "clampMin": 0.35, "clampMax": 0.9, "lastFactor": 0.9 },
+  "endMs": 300,
+  "interruptFadeTau": 0.15
+}

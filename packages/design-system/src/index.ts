@@ -18,7 +18,7 @@
  *
  * Import the stylesheets once, in this order, at the app root:
  *   import 'tokens/musy-foundations.css';
- *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1–G3
+ *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1–G5
  *   import 'components/musy-components.css';
  */
 export {
@@ -52,7 +52,7 @@ export { CtaButton } from './CtaButton';
 export type { CtaButtonProps, CtaVariant, CtaSize, CtaAlign } from './CtaButton';
 
 export { Switch } from './Switch';
-export type { SwitchProps, SwitchAccent } from './Switch';
+export type { SwitchProps, SwitchAccent, SwitchSize } from './Switch';
 
 export { RadioGroupText } from './RadioGroupText';
 export type { RadioGroupTextProps, RadioOption, RadioAccent } from './RadioGroupText';
@@ -146,7 +146,7 @@ export { RadioImage } from './RadioImage';
 export type { RadioImageProps, RadioImageOption } from './RadioImage';
 
 export { Sheet } from './Sheet';
-export type { SheetProps, SheetPage, SheetContentAlign } from './Sheet';
+export type { SheetProps, SheetPage, SheetContentAlign, SheetDensity } from './Sheet';
 
 export { Logo } from './Logo';
 export type { LogoProps, LogoSize } from './Logo';
@@ -202,3 +202,33 @@ export type { TimelineProps, TimelineGroup } from './Timeline';
    step of its own. InlineLink.tsx's header tells the two apart. */
 export { InlineLink } from './InlineLink';
 export type { InlineLinkProps, InlineLinkAction } from './InlineLink';
+
+/* Instrument shadows (2026-11-09): the harp's multi-layer canvas shadow as a
+   pure function of the `--instrument-shadow-*` tokens (amendments G5). Not a
+   component — the instruments are drawn on a canvas, which takes layers, not
+   a box-shadow. */
+export {
+  instrumentShadowLayers, instrumentShadowColor, instrumentShadowProfile,
+  readInstrumentShadowParams, hslToRgb,
+  INSTRUMENT_SHADOW_DEFAULT, INSTRUMENT_SHADOW_LEVELS,
+} from './instrumentShadow';
+export type { InstrumentShadowParams, InstrumentShadowLayer } from './instrumentShadow';
+
+/* The instruments' timer (2026-11-09). `Countdown` is the minimum timer the
+   listening focus sheet drew as app CSS around a TrackButton; it is the
+   system's now (L14.3: a pattern that recurs is a component). */
+export { Countdown } from './Countdown';
+export type { CountdownProps, CountdownState, CountdownSize } from './Countdown';
+
+/* The instruments' tap and cursor (2026-11-09), both maintained here with live
+   controls in Storybook. The tap is the kalimba's soft dot, now every own
+   note's on all three instruments, as a pure function of the
+   `--instrument-tap-*` tokens (amendments G5) plus a painter for a canvas.
+   The cursor is the harp's green dot standing in for mouse and pen. */
+export {
+  instrumentTapAt, paintInstrumentTap, readInstrumentTapParams, instrumentTapTokenLines,
+  INSTRUMENT_TAP_DEFAULT, INSTRUMENT_TAP_STOPS, INSTRUMENT_TAP_TOKENS,
+} from './instrumentTap';
+export type { InstrumentTapParams, InstrumentTapFrame, InstrumentTapRgb } from './instrumentTap';
+export { InstrumentCursor } from './InstrumentCursor';
+export type { InstrumentCursorProps } from './InstrumentCursor';

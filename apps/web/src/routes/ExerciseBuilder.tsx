@@ -25,7 +25,9 @@
  * It mounts the SESSION COMPONENTS THEMSELVES — `SessionIntro`, `SessionScan`,
  * `SessionSelect`, `SessionView`, `SessionListen`, `SessionReflect` — inside
  * the real `ContentBox` + `InteractiveWizard` + `WizardPanel` shell that
- * `Session.tsx` uses. Not a drawing of the step: the step.
+ * `Session.tsx` uses. Not a drawing of the step: the step. The one exception
+ * is the instruments' `play`, which has no screen yet to mount (2026-11-09):
+ * it shows its own copy and its button, and says what it leaves out.
  *
  * That is safe because of three facts, each checked rather than assumed:
  *   · five of the six are PURE — props in, `Exercise` imported as a type
@@ -66,9 +68,10 @@ import { SessionSelect } from '../components/SessionSelect';
 import { SessionView } from '../components/SessionView';
 import { SessionListen } from '../components/SessionListen';
 import { SessionReflect } from '../components/SessionReflect';
+import { Markdown } from '../components/Markdown';
 import { LocaleContext, useT } from '../i18n/localeContext';
 import { LOCALES, translate } from '../i18n';
-import type { Locale } from '../i18n';
+import type { Locale, MessageKey } from '../i18n';
 import { stepMessageKey } from '../routeHandle';
 import type { StepId } from '../routeHandle';
 import { STEP_ICON } from '../lib/stepIcons';
@@ -76,7 +79,7 @@ import { getExercises, getExerciseCuts } from '../lib/content';
 import type { Exercise } from '../lib/content';
 import { QUESTION_SETS, questionsDe, questionsEn } from '../content/questions';
 import type { QuestionId } from '../content/questions';
-import { buildExerciseConfig, configToFile } from '../lib/buildExerciseConfig';
+import { buildExerciseConfig, configToFile, exerciseOrder } from '../lib/buildExerciseConfig';
 import type { QuestionSource } from '../lib/buildExerciseConfig';
 import {
   configToExercise, copyInMode, previewCard, previewHand, stepsInMode,
@@ -89,7 +92,8 @@ import {
   PromptError, fetchIntegrationOptions, promptEdits, translateFields, twinPath,
 } from '../lib/exercisePrompt';
 import type {
-  ChangeOrigin, ExerciseConfig, HandoverRequest, QuestionText, RunMode, StepCopy,
+  ChangeOrigin, ExerciseConfig, HandoverRequest, InstrumentCopyField, QuestionText, RunMode,
+  StepCopy,
 } from '../lib/exerciseConfig';
 
 /** Where a new question's id comes from. Scoped to its set, so `q-01` in two
@@ -210,6 +214,10 @@ function PreviewBody({
   const forwardLabel = ownLabel.trim() !== ''
     ? ownLabel
     : (appLabel === undefined ? t('common.continue') : t(appLabel.key, appLabel.slots));
+  /* THE PLAY STEP'S BUTTON IS THE EXERCISE'S OWN — `play_cta`, *Zur Harfe* —
+     and it opens the instrument. Its way on, `continueLabel`, waits inside
+     the sheet, which a preview never opens. */
+  const panelLabel = step === 'play' ? (exercise.instrument?.playCta ?? '') : forwardLabel;
   const asksPosture = intro?.features.includes('posture_question') ?? false;
   const asksEnding = intro?.features.includes('ending_question') ?? false;
   const offersModes = config.modes?.offers === 'both';
@@ -265,7 +273,7 @@ function PreviewBody({
            therapist could override a button label and watch the preview go on
            saying the app's word. A field you can edit and not see is worse
            than a field you cannot edit. */
-        actions={<CtaButton variant="primary" disabled>{forwardLabel}</CtaButton>}
+        actions={<CtaButton variant="primary" disabled>{panelLabel}</CtaButton>}
       >
         {step === 'intro' && (
           <SessionIntro
@@ -349,6 +357,15 @@ function PreviewBody({
           />
         )}
 
+        {/* ── NO PLAY SCREEN TO MOUNT YET ──────────────────────────────────
+            `SessionPlay` is plan task I1, built after this. Until it exists
+            the preview draws what the step's own copy says, through the same
+            `Markdown` every step renders with, and its button as the panel's
+            action; the editor says what the preview leaves out. When
+            `SessionPlay` lands it goes here like the five beside it, and that
+            note goes. */}
+        {step === 'play' && <Markdown md={exercise.instrument?.playMd ?? ''} />}
+
         {step === 'reflect' && (
           <SessionReflect
             feelings={[]}
@@ -424,16 +441,15 @@ export function ExerciseBuilder() {
         }
 
         const built: Record<string, ExerciseConfig> = {};
-        const ids: string[] = [];
         for (const [id, byLocale] of byId) {
           built[id] = buildExerciseConfig({
             byLocale,
             cuts: cuts.filter((cut) => cut.exercise_id === id),
             questions: questionSourceFor(id),
           });
-          ids.push(id);
         }
-        ids.sort((a, b) => (built[a]?.catalogue.sort ?? 0) - (built[b]?.catalogue.sort ?? 0));
+        /* The catalogue's order, which puts the three instruments last. */
+        const ids = exerciseOrder(built);
 
         setConfigs(built);
         /* The snapshot, taken once. `structuredClone` because `built` is about
@@ -747,6 +763,46 @@ export function ExerciseBuilder() {
     ownIt(`run[${entryIndex}].copy.${locale}.${field}`);
   };
 
+  /* ── THE INSTRUMENTS' RUN ────────────────────────────────────────────────
+     Its play step, and whether that asks for the motion sensor — which is
+     what decides whether the intro has a sentence about it. The harp asks
+     for none, so it gets no field: a sentence typed there would promise a
+     permission nothing asks for. */
+  const playEntry = config.run.find((candidate) => candidate.step === 'play');
+  const asksMotion = playEntry?.features.includes('motion_permission') ?? false;
+
+  /**
+   * One of the instruments' fields, in the shape every field above already
+   * has: a `Field` inside `Finishing`, so leaving it rewrites its twin and
+   * typing into it takes its provenance back. Eight of them are the same
+   * thing, so one function draws them rather than eight copies.
+   *
+   * Multiline unless it is a label: a button or a segment holds a few words,
+   * and a box three lines high invites a sentence.
+   */
+  const copyField = (
+    field: InstrumentCopyField,
+    label: MessageKey,
+    hint: MessageKey,
+    multiline = true,
+  ) => (
+    <Finishing
+      key={field}
+      path={`run[${entryIndex}].copy.${locale}.${field}`}
+      value={copy[field] ?? ''}
+      onFinished={(path, value) => { void translateTwin(path, value); }}
+    >
+      <Field
+        label={t(label)}
+        description={t(hint)}
+        multiline={multiline}
+        rows={multiline ? 3 : undefined}
+        value={copy[field] ?? ''}
+        onValueChange={(value) => editCopy(field, value)}
+      />
+    </Finishing>
+  );
+
   return (
     <div className="musie-builder">
       <h1 className="musie-placeholder">{t('builder.headline')}</h1>
@@ -985,6 +1041,35 @@ export function ExerciseBuilder() {
                 onValueChange={(value) => editCopy('bodyMd', value)}
               />
             </Finishing>
+
+            {/* ── THE INSTRUMENTS' OWN WORDS ─────────────────────────────
+                In the order the step shows them, under its text and above
+                its button. On the intro: the two ways of playing, then the
+                motion switch where the instrument uses the sensor. On the
+                play step: how to play by touch and by mouse, the focus
+                sheet's headline, then the button that opens the
+                instrument. */}
+            {current === 'intro' && playEntry !== undefined && (
+              <>
+                {copyField('modeMusieLabel', 'builder.field.modeMusie', 'builder.field.modeHint', false)}
+                {copyField('modeMusieMd', 'builder.field.modeMusieMd', 'builder.field.modeMdHint')}
+                {copyField('modeSoloLabel', 'builder.field.modeSolo', 'builder.field.modeHint', false)}
+                {copyField('modeSoloMd', 'builder.field.modeSoloMd', 'builder.field.modeMdHint')}
+                {asksMotion
+                  && copyField('motionMd', 'builder.field.motion', 'builder.field.motionHint')}
+                {asksMotion
+                  && copyField('motionLabel', 'builder.field.motionLabel', 'builder.field.motionLabelHint', false)}
+              </>
+            )}
+            {current === 'play' && (
+              <>
+                {copyField('playTouchMd', 'builder.field.playTouch', 'builder.field.playTouchHint')}
+                {copyField('playPointerMd', 'builder.field.playPointer', 'builder.field.playPointerHint')}
+                {copyField('focusHeadline', 'builder.field.focusHeadline', 'builder.field.focusHeadlineHint', false)}
+                {copyField('playCta', 'builder.field.playCta', 'builder.field.playCtaHint', false)}
+              </>
+            )}
+
             {/* ── THE BUTTONS ───────────────────────────────────────────
                 Every step has a forward action and some have a second one,
                 and until today none of them was editable anywhere: the field
@@ -1048,6 +1133,17 @@ export function ExerciseBuilder() {
                   text={t('builder.reflectSheet')}
                 />
               </>
+            )}
+
+            {/* The reflect step's note, for the same reason: the preview
+                draws this step's headline, text and button, and nothing it
+                cannot — so the fields it leaves out say so here. */}
+            {current === 'play' && (
+              <Message
+                variant="info"
+                headline={t('builder.playPreview.headline')}
+                text={t('builder.playPreview')}
+              />
             )}
           </ContentBox>
 

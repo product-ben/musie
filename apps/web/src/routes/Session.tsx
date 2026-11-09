@@ -44,7 +44,7 @@
  * writes is permanent and shows up in the diary as unfinished.
  */
 import * as React from 'react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
   WizardPanel,
@@ -55,6 +55,15 @@ import { SessionIntro } from '../components/SessionIntro';
 import { SessionSelect } from '../components/SessionSelect';
 import { SessionView } from '../components/SessionView';
 import { SessionListen } from '../components/SessionListen';
+import { SessionPlay } from '../components/SessionPlay';
+import { openPlaySheet } from '../lib/playSheet';
+import { initialClock, playSeconds, showContinue } from '../instruments/engine/clock';
+import type { ClockState } from '../instruments/engine/clock';
+import { useMotionPermission } from '../lib/useMotionPermission';
+import { readMotionWanted, writeMotionWanted } from '../lib/motionWanted';
+import { isTouchScreen } from '../lib/touchScreen';
+import { supportsVibration } from '../instruments/engine/haptics';
+import type { PlayMode } from '../lib/content';
 import { SessionReflect } from '../components/SessionReflect';
 import { FeelingsSheet } from '../components/FeelingsSheet';
 import { ThoughtsSheet } from '../components/ThoughtsSheet';
@@ -77,7 +86,7 @@ import type { ReflectMode, ReflectSheet } from '../lib/reflect';
 import { scanCardInto } from '../lib/scan';
 import {
   completedBefore, endSession, readSession, saveCard, saveDigitalCards,
-  saveListeningAnswers, saveReflection, saveStep,
+  saveListeningAnswers, savePlay, saveReflection, saveStep,
 } from '../lib/session';
 /* `saveFeelingChange` and `FeelingChange` left this file on 2026-10-16 with
    the mood scale. Diary.tsx imports them now — the function and the column
@@ -279,6 +288,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const t = useT();
   const { locale } = useLocale();
   const navigate = useNavigate();
+  const location = useLocation();
 
   /* ── WHICH STEPS THIS RUN HAS, AND WHICH IT DOES NOT ───────────────────
      ONE DERIVATION, TWO CONSUMERS: the reducer is given `skipped` and the rail
@@ -410,6 +420,46 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   const [ending, setEnding] = React.useState<Ending>(
     isEnding(data.row.ending) ? data.row.ending : DEFAULT_ENDING,
   );
+
+  /* ── AN INSTRUMENT'S TWO SETTINGS — 2026-11-09 ──────────────────────────
+     Held HERE, not in the step: the step draws them, the focus sheet reads
+     them on every note, and the row stores them on the way out. Seeded from
+     `exercise_instruments` — „mit Musie“ and
+     vibration on, the brief's defaults. Written to the row with the play
+     time, on the way out of Musizieren. */
+  const instrument = data.exercise.instrument;
+  const [playMode, setPlayMode] = React.useState<PlayMode>(instrument?.defaultMode ?? 'with_musie');
+  const [vibrationOn, setVibrationOn] = React.useState<boolean>(instrument?.vibrationDefault ?? true);
+  /* The motion switch, per instrument and remembered on this device: off the
+     first time, on from then on once switched on (Ben, 2026-11-09). */
+  const [motionWanted, setMotionWanted] = React.useState<boolean>(
+    () => instrument !== null && readMotionWanted(instrument.id),
+  );
+  /* Vibration and motion are offered on touch screens only (Ben). Neither
+     changes while the page is up. */
+  const touch = React.useMemo(() => isTouchScreen(), []);
+  const canVibrate = React.useMemo(() => touch && supportsVibration(), [touch]);
+  /* The 1:30, held here because the action row needs it: *Weiter zum
+     Reflektieren* appears in the row once the timer is paused or done, the
+     same moment it appears in the sheet. The stage hands every change back. */
+  const [playClock, setPlayClock] = React.useState<ClockState>(
+    () => initialClock(data.exercise.listenGateSeconds),
+  );
+  /* The sensor's permission, asked on Einsteigen when its switch goes on, for
+     the instruments that use one, on touch screens (Ben). Listening only
+     while that intro is on screen. */
+  const motion = useMotionPermission(
+    instrument !== null && instrument.motionMd !== null && touch && urlStep === 'intro',
+  );
+  /* Switching on is what asks — synchronously, inside the press, because iOS
+     only prompts from a gesture. A refusal leaves the switch showing off (the
+     intro reads the permission); the wish stays stored, so allowing it later
+     in Safari's settings is enough. */
+  function changeMotionWanted(on: boolean) {
+    setMotionWanted(on);
+    if (instrument !== null) writeMotionWanted(instrument.id, on);
+    if (on && motion.permission === 'prompt') motion.request();
+  }
 
   /* ── AND WHETHER THE FIRST QUESTION IS ASKED AT ALL — Ben, 2026-10-13 ──
      Two gates, not one, and only the second is a judgement. The KIND decides
@@ -775,6 +825,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     }
 
     go(next);
+  }
+
+  /**
+   * *Weiter zum Reflektieren* — from the row or from the sheet's foot.
+   *
+   * The play time is the clock's: first own note to now, pauses included
+   * (Ben). Written with the mode as it stands; not awaited, like the intro's
+   * answers — the navigation must not wait on a round trip, and a failure is
+   * thrown to the console rather than swallowed.
+   */
+  function finishPlay() {
+    void savePlay(id, playMode, playSeconds(playClock, performance.now())).catch((thrown: unknown) => {
+      console.error('[musie] could not save the play:', thrown);
+    });
+    advance();
   }
 
   function retreat() {
@@ -1168,6 +1233,26 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
         )}
       </>
     );
+  } else if (state.step === 'play') {
+    /* MUSIZIEREN · BACK, THE INSTRUMENT, AND — ONCE THE TIMER IS PAUSED OR
+       DONE — THE WAY ON. The button that opens the instrument stays the
+       filled primary throughout (Ben, 2026-11-09): before the first note it
+       says the exercise's own `play_cta` („Zur Harfe“), once the person has
+       started it says *Weiterspielen*. *Weiter zum Reflektieren* stands
+       beside it as the secondary. */
+    const canGoOn = showContinue(playClock);
+    const started = playClock.phase !== 'unstarted';
+    actions = (
+      <>
+        {back}
+        {canGoOn && (
+          <CtaButton variant="secondary" onClick={finishPlay}>{t('session.play.continue')}</CtaButton>
+        )}
+        <CtaButton onClick={() => openPlaySheet(navigate, location.search)}>
+          {started ? t('session.play.keepPlaying') : (instrument?.playCta ?? '')}
+        </CtaButton>
+      </>
+    );
   } else if (state.step === 'listen') {
     /* ONE FILLED PRIMARY, AND IT MOVES WHEN THE GATE OPENS. Until the step is
        satisfied, listening is the only thing to do and the transport holds the
@@ -1326,6 +1411,29 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  the paper instruction was: an exercise dealing one card has
                  nothing to prepare on this step. */
               dealsHere={dealt !== null && dealt > 1}
+              instrumentSettings={instrument === null ? undefined : {
+                mode: playMode,
+                onModeChange: setPlayMode,
+                vibration: vibrationOn,
+                onVibrationChange: setVibrationOn,
+                canVibrate,
+                motion: motion.permission,
+                motionWanted,
+                onMotionWantedChange: changeMotionWanted,
+              }}
+            />
+          )}
+
+          {state.step === 'play' && instrument !== null && (
+            <SessionPlay
+              exercise={exercise}
+              instrument={instrument}
+              mode={playMode}
+              vibration={vibrationOn}
+              motion={motionWanted}
+              clock={playClock}
+              onClock={setPlayClock}
+              onAdvance={finishPlay}
             />
           )}
 

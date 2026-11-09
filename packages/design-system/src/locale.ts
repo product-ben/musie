@@ -155,6 +155,26 @@ export interface MusyTextCatalogue {
   trackBelowMinimum: string;
   trackPastMinimum: string;
 
+  /* ── Countdown ────────────────────────────────────────────────────────
+     Its own words rather than TrackButton's, though it composes that button:
+     a countdown is STARTED and RESUMED, where a track is listened to. The
+     harp experiment (261104-1443) is the source of all five control words. */
+  countdownStart: string;
+  countdownResume: string;
+  countdownPause: string;
+  countdownRestart: string;
+  /** What the control moves — appended to its accessible name, after the
+   *  action: "Starten, Countdown". */
+  countdownName: string;
+  /* The polite live region's three words, used only when the screen passes
+     no `announcement` of its own. Start, pause and the end each have to be
+     HEARD (WCAG 2.2 AA, 4.1.3) — the figure is `role="timer"`, whose live
+     setting is off, so without these a screen-reader user starts a clock and
+     is told nothing until they go looking. */
+  countdownRunning: string;
+  countdownPaused: string;
+  countdownEnded: string;
+
   /* ── Capture · RecordButton ──────────────────────────────────────────── */
   recordReady: string;
   recordRecording: string;
@@ -280,6 +300,17 @@ export const musyTextDe: MusyTextCatalogue = {
   trackBelowMinimum: 'Weiter hören (mindestens {time})',
   trackPastMinimum: 'Noch weiter hören ({time})',
 
+  /* The harp's own words. 'Pause' is the one noun, as it is for the track
+     button: it is the word on every pause control in the set. */
+  countdownStart: 'Starten',
+  countdownResume: 'Weiter',
+  countdownPause: 'Pause',
+  countdownRestart: 'Noch einmal',
+  countdownName: 'Countdown',
+  countdownRunning: 'Countdown läuft',
+  countdownPaused: 'Countdown pausiert',
+  countdownEnded: 'Countdown abgelaufen',
+
   recordReady: 'Jetzt aufnehmen',
   recordRecording: 'Aufnahme läuft',
   recordStatus: (elapsed, remaining) =>
@@ -373,6 +404,16 @@ export const musyTextEn: MusyTextCatalogue = {
   trackUnstarted: 'Listen now (at least {time})',
   trackBelowMinimum: 'Keep listening (at least {time})',
   trackPastMinimum: 'Listen on ({time})',
+
+  /* The harp's English, and lower case where it sits inside a name. */
+  countdownStart: 'Start',
+  countdownResume: 'Resume',
+  countdownPause: 'Pause',
+  countdownRestart: 'Start again',
+  countdownName: 'countdown',
+  countdownRunning: 'Countdown running',
+  countdownPaused: 'Countdown paused',
+  countdownEnded: 'Countdown finished',
 
   recordReady: 'Record Now',
   recordRecording: 'Recording',

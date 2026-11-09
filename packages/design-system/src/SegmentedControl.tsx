@@ -26,6 +26,15 @@
  * word. The selected state is already told three ways over there (fill, border
  * weight, ink), so the word is spent where it still has something to say —
  * what pressing would get you. See `SegmentedLabels`.
+ *
+ * WHAT AN OPTION MEANS can be said under the control, per option
+ * (`description`, 2026-11-09 — the instruments' „Ich spiele allein“ / „Ich
+ * spiele mit Musie“, where the two words do not say that one of them makes
+ * the instrument answer). The SELECTED option's sentence is shown; each
+ * option's own radio is tied to its own sentence by `aria-describedby`, so a
+ * screen reader hears what an option means as it lands on it — before
+ * choosing it, not only after. A control with no descriptions renders exactly
+ * as it did.
  */
 import * as React from 'react';
 import { RadioGroup } from '@base-ui/react/radio-group';
@@ -44,6 +53,21 @@ export interface SegmentedOption {
    * an icon-less segment would be the one that loses its meaning first.
    */
   glyph: LucideIcon;
+  /**
+   * What choosing this option means — a sentence or two, not a second label.
+   * Shown UNDER the control while this option is the selected one, and
+   * linked to this option's radio by `aria-describedby` whether or not it is
+   * selected, so it is heard on focus, as the option is reached.
+   *
+   * WHY EVERY OPTION POINTS AT ITS OWN SENTENCE, rather than all of them at
+   * one region that swaps its text: an arrow key moves focus AND selection
+   * in one keystroke, and a screen reader that reads the description of the
+   * newly focused radio before React has re-rendered the swapped text would
+   * announce the option you just LEFT. Pointing each radio at its own
+   * sentence leaves no race to lose. A sentence that is not shown is
+   * `hidden`, which `aria-describedby` still reads.
+   */
+  description?: React.ReactNode;
   disabled?: boolean;
 }
 
@@ -158,13 +182,28 @@ export function SegmentedControl({
     );
   }
 
+  /* WHICH SENTENCE IS SHOWN follows the selection, and the selection is
+     `value` when the group is controlled. Uncontrolled, the group holds its
+     own value and this mirrors it from `onValueChange`, so the shown sentence
+     is right either way — the one piece of state here, and it exists only for
+     that. */
+  const descriptionBase = React.useId();
+  const [ownValue, setOwnValue] = React.useState<string | undefined>(undefined);
+  const selected = value !== undefined ? value : ownValue;
+  const hasDescription = (opt: SegmentedOption) =>
+    opt.description !== undefined && opt.description !== null && opt.description !== false && opt.description !== '';
+  const descriptionId = (index: number) => `${descriptionBase}-description-${index}`;
+
   return (
     <Fieldset.Root
       render={
         <RadioGroup
           name={name}
           value={value}
-          onValueChange={(v) => onValueChange?.(String(v))}
+          onValueChange={(v) => {
+            setOwnValue(String(v));
+            onValueChange?.(String(v));
+          }}
           disabled={disabled}
         />
       }
@@ -186,7 +225,7 @@ export function SegmentedControl({
       </Fieldset.Legend>
 
       <div className="musy-seg__track">
-        {options.map((opt) => (
+        {options.map((opt, index) => (
           <Radio.Root
             key={opt.value}
             value={opt.value}
@@ -194,6 +233,7 @@ export function SegmentedControl({
             nativeButton
             render={<button type="button" />}
             className="musy-seg__option"
+            aria-describedby={hasDescription(opt) ? descriptionId(index) : undefined}
           >
             <Icon glyph={opt.glyph} size={size === 'min' ? 'sm' : 'md'} />
             {/* ALWAYS RENDERED, AND ALWAYS THE SAME CLASS. Whether it is drawn
@@ -206,6 +246,23 @@ export function SegmentedControl({
           </Radio.Root>
         ))}
       </div>
+
+      {/* ONE SENTENCE PER OPTION THAT HAS ONE, and only the selected one
+          drawn. The others are `hidden` rather than absent, because each is
+          what its own radio's `aria-describedby` points at — see
+          `SegmentedOption.description`. Nothing at all is rendered for an
+          option without one, so a control with no descriptions is exactly
+          the control it was. */}
+      {options.map((opt, index) => hasDescription(opt) && (
+        <p
+          key={opt.value}
+          id={descriptionId(index)}
+          className="musy-seg__description"
+          hidden={opt.value !== selected}
+        >
+          {opt.description}
+        </p>
+      ))}
     </Fieldset.Root>
   );
 }

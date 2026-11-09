@@ -10,7 +10,7 @@
  * A `Record<StepId, …>`, so a seventh step is a compile error here rather
  * than a rail with a gap in it.
  */
-import { DoorOpen, Headphones, Image as ImageIcon, Images, Quote, ScanQrCode } from 'lucide-react';
+import { DoorOpen, Headphones, Image as ImageIcon, Images, Music, Quote, ScanQrCode } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { StepId } from '../routeHandle';
 
@@ -22,5 +22,6 @@ export const STEP_ICON: Record<StepId, LucideIcon> = {
   view: ImageIcon,
   select: Images,
   listen: Headphones,
+  play: Music,
   reflect: Quote,
 };

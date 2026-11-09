@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Marimbaphon</title>
+<!-- Musie-Experiment „Marimbaphon v2“ (CLAUDE.md Regel 10). v2: ohne Grundton, längere Stäbe aus Holz, Überschrift und Hinweis in einer Zeile. Gestaltung, Design-System-Blöcke, Ton-Freischaltung und Vibration aus
+     /experiments/kalimba/261106-1121/, Countdown aus /experiments/harp/261104-1443/. Erste Version: noch ohne Einwilligung und ohne PostHog,
+     darum wird nichts gemessen. Aufnahmen in ../samples/: VSCO 2 Community Edition, Versilian Studios (CC0), Marimba „Outrigger, loud“.
+     Die Bibliothek benennt eine Oktave tiefer, als es klingt: ihre „G2“ klingt als G3 (196 Hz). Die Dateien hier heißen nach dem, was klingt. -->
+<style>html,body{margin:0;padding:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+/* Aus /experiments/kalimba/261106-1121/: Musie-Farben, Schriften und Design-System-Blöcke */
+/* Layout wie die Harfe: der Bildschirm ist das Instrument; Einstellungen unten links, das Regler-Feld rechts, der Hinweis oben links. */
+:root {
+  --bg: #FAF7F1;        /* sand-1 */
+  --string: #2B5340;    /* green-9 */
+  --pluck: #CE8865;     /* terracotta-10 */
+  --text: #62645E;      /* sand-11 */
+  --strong: #1A1F1C;    /* sand-12 */
+  --chip-bg: #F3EEE4;   /* sand-2 */
+  --chip-line: #CFCEC2; /* sand-6 */
+  --chip-on-bg: #2B5340;
+  --chip-on-text: #FAF7F1;
+  --font-ui: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --radius-xs: 4px; --radius-sm: 8px;   /* musy-foundations.css: swatch, small */
+  --sand-1: #FAF7F1; --sand-2: #F3EEE4; --sand-3: #E5E3D9; --sand-4: #DEDCD1; --sand-5: #D6D5C9; --sand-6: #CFCEC2; --sand-7: #BDBCAF; --sand-8: #A7A89B; --sand-9: #8A8C82; --sand-10: #7C7E74; --sand-11: #62645E; --sand-12: #1A1F1C; --terracotta-1: #FDF8F5; --terracotta-2: #F9EDE5; --terracotta-3: #F4DFD2; --terracotta-4: #F0D5C4; --terracotta-5: #ECCBB7; --terracotta-6: #E8C1AA; --terracotta-7: #E3B294; --terracotta-8: #DEA37F; --terracotta-9: #D99673; --terracotta-10: #CE8865; --terracotta-11: #824429; --terracotta-12: #4A2718;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111412; --string: #8FBCA2; --pluck: #E6A684; --text: #9EA59F; --strong: #EDF0EC;
+  --chip-bg: #191D1A; --chip-line: #3B413C; --chip-on-bg: #8FBCA2; --chip-on-text: #111412; color-scheme: dark;
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-4: #2A2F2B; --sand-5: #323833; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-10: #868D87; --sand-11: #9EA59F; --sand-12: #EDF0EC; --terracotta-1: #160F0B; --terracotta-2: #221711; --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673; --terracotta-10: #E6A684; --terracotta-11: #D0937A; --terracotta-12: #F6DACB; } }
+:root[data-theme="dark"] {
+  --bg: #111412; --string: #8FBCA2; --pluck: #E6A684; --text: #9EA59F; --strong: #EDF0EC;
+  --chip-bg: #191D1A; --chip-line: #3B413C; --chip-on-bg: #8FBCA2; --chip-on-text: #111412; color-scheme: dark;
+  --sand-1: #111412; --sand-2: #191D1A; --sand-3: #222723; --sand-4: #2A2F2B; --sand-5: #323833; --sand-6: #3B413C; --sand-7: #4C534E; --sand-8: #616862; --sand-9: #79807A; --sand-10: #868D87; --sand-11: #9EA59F; --sand-12: #EDF0EC; --terracotta-1: #160F0B; --terracotta-2: #221711; --terracotta-3: #2F1F16; --terracotta-4: #3A271C; --terracotta-5: #442E21; --terracotta-6: #513726; --terracotta-7: #67462F; --terracotta-8: #85593B; --terracotta-9: #D99673; --terracotta-10: #E6A684; --terracotta-11: #D0937A; --terracotta-12: #F6DACB; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--on-surface-muted); overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#harp { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: none; }
+.musie-cursor { position: fixed; left: 0; top: 0; inline-size: calc(var(--sp-5) * 2); block-size: calc(var(--sp-5) * 2);
+  margin: calc(var(--sp-5) * -1) 0 0 calc(var(--sp-5) * -1); border-radius: var(--radius-full); background: var(--interactive-primary);
+  pointer-events: none; visibility: hidden; will-change: transform; }
+.musie-cursor.shown { visibility: visible; }
+button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* Fuß: Hinweiszeile, darüber das Regler-Feld. Rand zum Bildschirm: --sp-4, wie die Seitenränder. */
+.foot { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-inset-card));
+  padding-left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); padding-right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; }
+.panel { position: fixed; z-index: 1; top: calc(env(safe-area-inset-top, 0px) + var(--sp-4));
+  bottom: var(--panel-bottom, calc(env(safe-area-inset-bottom, 0px) + var(--sp-4)));
+  right: max(var(--sp-4), env(safe-area-inset-right, 0px));
+  width: min(420px, calc(100% - var(--sp-4) * 2)); box-sizing: border-box; align-content: start;
+  pointer-events: auto; touch-action: pan-y; overflow-y: auto; overscroll-behavior: contain;
+  opacity: 0; transform: translateX(var(--sp-2)); visibility: hidden;
+  transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 280ms;
+  background: var(--surface); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  border-radius: var(--radius-panel); padding: var(--space-inset-card); display: grid; gap: var(--space-gap-group); }
+.panel.open { opacity: 1; transform: none; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .panel { transition: none; } }
+
+/* Label und sein Regler gehören zusammen: --space-gap-related. Regler untereinander: --space-gap-stack (oben). */
+.ctl { display: grid; grid-template-columns: 1fr auto; column-gap: var(--space-gap-related); row-gap: var(--space-gap-related); align-items: baseline; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--interactive-primary); }
+.ctl small { grid-column: 1 / -1; }
+.check { display: flex; gap: var(--space-gap-inline); align-items: flex-start; }
+.check input { accent-color: var(--interactive-primary); width: var(--icon-size-md); height: var(--icon-size-md); margin: 0; flex: 0 0 auto; }
+.check span { display: grid; gap: var(--sp-1); }
+.readout { font-variant-numeric: tabular-nums; -webkit-user-select: text; user-select: text; }
+.musie-reset { justify-self: start; min-height: var(--target-min); padding: 0; background: none; border: 0; cursor: pointer;
+  color: var(--on-surface); text-decoration: underline; text-underline-offset: var(--sp-1); }
+
+/* Schrift: Labels label-md, Hinweise body-sm (die kleinste Stufe, L8). Nie fett. */
+.ctl label, .ctl .musie-label, .ctl output, .check, .musie-reset {
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--font-weight-regular);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+.ctl label, .ctl .musie-label, .check { color: var(--on-surface); }
+.ctl output { color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.ctl small, .check small, .readout, .note {
+  font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); }
+.musie-top { position: fixed; inset: 0; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr); pointer-events: none;
+  padding: calc(env(safe-area-inset-top, 0px) + max(var(--space-inset-card), var(--target-primary))) max(var(--space-inset-sheet), env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-inset-card) + var(--space-gap-stack) + var(--foot-h, var(--target-primary))) max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); }
+/* .musy-sheet__header: rechts frei für das X, darunter --space-gap-stack */
+.musie-top__header { padding-inline-end: var(--target-primary); padding-block-end: var(--space-gap-stack); display: grid; justify-items: start; }
+/* Der Hinweis gehört zur Überschrift wie ein Absatz unter dem h2 in .musie-md: --space-gap-group dazwischen. Aus, nimmt er keinen Platz. */
+.musie-top__header .note { margin-block-start: var(--space-gap-group); }
+.musie-top__header .note:not(.shown) { display: none; }
+/* .musy-sheet__body + .musie-immersive__body. Version 1443: der Countdown unten links, direkt über der Fußzeile mit „Ich bin fertig“ */
+.musie-immersive__body { min-block-size: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-gap-stack); }
+/* Aus shell.css, der Fokus-Sheet der Hörübung: die Restzeit als größtes Element, der Transport daneben, die Bildunterschrift darunter. */
+.musie-immersive__clock { display: flex; flex-direction: column; gap: var(--space-gap-inline); }
+#cd-btn { pointer-events: auto; }                          /* nur der Knopf fängt Berührungen ab, die Saiten darunter bleiben spielbar */
+.musie-immersive__meter { display: flex; align-items: center; gap: var(--space-gap-inline); inline-size: fit-content; }
+.musie-immersive__time { margin: 0; transition: color var(--motion-toggle); font-family: var(--type-display-xl-family); font-size: var(--type-display-xl-size);
+  font-weight: var(--type-display-xl-weight); line-height: var(--type-display-xl-line); letter-spacing: var(--type-display-xl-tracking);
+  font-variant-numeric: tabular-nums; color: var(--on-surface); }
+.musie-immersive__time[data-done] { color: var(--on-surface-muted); }
+.musie-immersive__caption { margin: 0; max-inline-size: var(--measure-body); text-wrap: pretty; font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-headline { margin: 0; max-inline-size: var(--measure-heading); color: var(--on-surface);
+  font-family: var(--type-heading-md-family); font-size: var(--type-heading-md-size); font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line); letter-spacing: var(--type-heading-md-tracking); text-wrap: var(--text-wrap-body); }
+.note { margin: 0;
+  max-inline-size: 60ch; text-align: left; text-wrap: pretty; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.note.shown { opacity: 1; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .note { transition: none; } }
+[hidden] { display: none !important; }
+/* ── Musie-Komponenten Switch, SegmentedControl und RadioGroupText ─────────
+   Regeln aus packages/design-system/src/musy-components.css, gemessen im Browser mit allen vier
+   Stylesheets in Reihenfolge (spätere Überschreibungen inklusive). Tokens aufgelöst je Theme. */
+:root {
+  --focus-ring: 3px solid #2B5340;
+  --focus-ring-offset: 2px;
+  --border-width-hairline: 1px;
+  --icon-size-md: 20px;
+  --icon-stroke: 2px;
+  --icon-size-sm: 16px;
+  --icon-stroke-sm: 1.5px;
+  --icon-size-lg: 24px;
+  --icon-size-xl: 32px;
+  --icon-optical-nudge: -0.055em;
+  --on-surface-muted: #62645E;
+  --on-surface: #1A1F1C;
+  --interactive-primary-on-subtle: #1A1F1C;
+  --feedback-info-icon: #62645E;
+  --feedback-warning-icon: #894C00;
+  --feedback-success-icon: #3F6E23;
+  --feedback-error-icon: #A53231;
+  --motion-emphasis: 520ms cubic-bezier(0.2, 0.9, 0.1, 1);
+  --sp-1: 4px;
+  --space-gap-related: 12px;
+  --target-primary: 44px;
+  --target-guided: 64px;
+  --border-width-regular: 1.5px;
+  --border-style-solid: solid;
+  --border-strong: #678271;
+  --radius-full: 999px;
+  --surface-sunken: #E5E3D9;
+  --motion-toggle: 140ms cubic-bezier(0.2, 0, 0.2, 1);
+  --surface-raised: #FAF7F1;
+  --elevation-1: 0 1px 2px rgb(32 44 36 / 0.10), 0 1px 3px -1px rgb(32 44 36 / 0.06), inset 0 0 0 1px transparent;
+  --interactive-primary: #2B5340;
+  --interactive-primary-border: #678271;
+  --interactive-accent: #D99673;
+  --interactive-accent-border: #B5704F;
+  --interactive-accent-on-subtle: #824429;
+  --interactive-ghost-hover: #E5E3D9;
+  --interactive-primary-hover: #22442F;
+  --interactive-ghost-active: #DEDCD1;
+  --interactive-primary-active: #1C3827;
+  --interactive-primary-disabled: #C7CCC0;
+  --border-subtle: #CFCEC2;
+  --on-surface-disabled: #8A8C82;
+  --type-label-lg-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-label-lg-weight: 600;
+  --type-label-lg-line: 1.2;
+  --type-label-lg-tracking: 0;
+  --text-wrap-body: pretty;
+  --space-gap-stack: 16px;
+  --type-heading-sm-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
+  --type-heading-sm-weight: 600;
+  --type-heading-sm-line: 1.3;
+  --type-heading-sm-tracking: 0;
+  --text-wrap-heading: balance;
+  --measure-heading: 50ch;
+  --type-label-md-family: Onest, ui-sans-serif, system-ui, sans-serif;
+  --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-label-md-weight: 400;
+  --type-label-md-line: 1.4;
+  --type-label-md-tracking: 0.002em;
+  --type-body-md-family: Literata, ui-serif, Georgia, serif;
+  --type-body-md-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-body-md-weight: 400;
+  --type-body-md-line: 1.5;
+  --measure-body: 62ch;
+  --target-comfort: 56px;
+  --space-inset-control: 12px 24px;
+  --radius-card: 12px;
+  --text-hyphens: auto;
+  --interactive-primary-subtle: #E3E7DE;
+  --border-width-thick: 2px;
+  --interactive-primary-on: #F3EEE4;
+  --interactive-accent-subtle: #F4DFD2;
+  --interactive-accent-on: #1A1F1C;
+  --feedback-error-border: #B85B55;
+  --radius-control: 999px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --target-min: 24px;
+  --interactive-primary-subtle-hover: #D5DBD0;
+  --interactive-primary-subtle-active: #C7CCC0;
+  --interactive-accent-subtle-hover: #F0D5C4;
+  --interactive-accent-subtle-active: #ECCBB7;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --space-gap-inline: 8px;
+  --space-gap-group: 32px;
+  --space-inset-card: 24px;
+  --space-inset-sheet: 32px;
+  --radius-panel: 16px;
+  --surface: #F3EEE4;
+  --font-weight-regular: 400;
+  --type-body-sm-family: Literata, ui-serif, Georgia, serif;
+  --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-body-sm-weight: 400;
+  --type-body-sm-line: 1.5;
+  --type-body-sm-tracking: 0;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --focus-ring: 3px solid #6FA688;
+  --on-surface-muted: #9EA59F;
+  --on-surface: #EDF0EC;
+  --interactive-primary-on-subtle: #EDF0EC;
+  --feedback-info-icon: #9EA59F;
+  --feedback-warning-icon: #D08A48;
+  --feedback-success-icon: #9ACB6F;
+  --feedback-error-icon: #E87A73;
+  --border-strong: #6B8F79;
+  --surface-sunken: #111412;
+  --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478;
+  --interactive-primary-border: #6B8F79;
+  --interactive-accent-border: #A2694B;
+  --interactive-accent-on-subtle: #D0937A;
+  --interactive-ghost-hover: #2A2F2B;
+  --interactive-primary-hover: #6FA688;
+  --interactive-ghost-active: #323833;
+  --interactive-primary-active: #538A6C;
+  --interactive-primary-disabled: #203B2B;
+  --border-subtle: #3B413C;
+  --on-surface-disabled: #79807A;
+  --interactive-primary-subtle: #16281E;
+  --interactive-primary-on: #111412;
+  --interactive-accent-subtle: #2F1F16;
+  --interactive-accent-on: #111412;
+  --feedback-error-border: #BB605A;
+  --interactive-primary-subtle-hover: #1B3224;
+  --interactive-primary-subtle-active: #203B2B;
+  --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-subtle-active: #442E21;
+  --surface: #191D1A;
+} }
+:root[data-theme="dark"] {
+  --focus-ring: 3px solid #6FA688;
+  --on-surface-muted: #9EA59F;
+  --on-surface: #EDF0EC;
+  --interactive-primary-on-subtle: #EDF0EC;
+  --feedback-info-icon: #9EA59F;
+  --feedback-warning-icon: #D08A48;
+  --feedback-success-icon: #9ACB6F;
+  --feedback-error-icon: #E87A73;
+  --border-strong: #6B8F79;
+  --surface-sunken: #111412;
+  --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478;
+  --interactive-primary-border: #6B8F79;
+  --interactive-accent-border: #A2694B;
+  --interactive-accent-on-subtle: #D0937A;
+  --interactive-ghost-hover: #2A2F2B;
+  --interactive-primary-hover: #6FA688;
+  --interactive-ghost-active: #323833;
+  --interactive-primary-active: #538A6C;
+  --interactive-primary-disabled: #203B2B;
+  --border-subtle: #3B413C;
+  --on-surface-disabled: #79807A;
+  --interactive-primary-subtle: #16281E;
+  --interactive-primary-on: #111412;
+  --interactive-accent-subtle: #2F1F16;
+  --interactive-accent-on: #111412;
+  --feedback-error-border: #BB605A;
+  --interactive-primary-subtle-hover: #1B3224;
+  --interactive-primary-subtle-active: #203B2B;
+  --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-subtle-active: #442E21;
+  --surface: #191D1A;
+}
+.musy-switch__track:focus-visible,
+.musy-radio__body:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-sr-only,
+.musy-seg--labels-none .musy-seg__label,
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] .musy-seg__label { position: absolute; width: var(--border-width-hairline); height: var(--border-width-hairline); padding: 0px; margin: calc(var(--border-width-hairline) * -1); overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0px; }
+.musy-icon { display: inline-block; flex-shrink: 0; width: var(--icon-size-md); height: var(--icon-size-md); stroke: currentcolor; stroke-width: var(--icon-stroke); fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.musy-icon--sm { width: var(--icon-size-sm); height: var(--icon-size-sm); stroke-width: var(--icon-stroke-sm); }
+.musy-icon--md { width: var(--icon-size-md); height: var(--icon-size-md); }
+.musy-icon--lg { width: var(--icon-size-lg); height: var(--icon-size-lg); }
+.musy-icon--xl { width: var(--icon-size-xl); height: var(--icon-size-xl); }
+.musy-icon--inline { transform: translateY(var(--icon-optical-nudge)); }
+.musy-icon--muted { color: var(--on-surface-muted); }
+.musy-icon--strong { color: var(--on-surface); }
+.musy-icon--primary { color: var(--interactive-primary-on-subtle); }
+.musy-icon--info { color: var(--feedback-info-icon); }
+.musy-icon--warning { color: var(--feedback-warning-icon); }
+.musy-icon--success { color: var(--feedback-success-icon); }
+.musy-icon--error { color: var(--feedback-error-icon); }
+.musy-icon[data-animate="on"] { transition: transform var(--motion-emphasis); }
+@media (prefers-reduced-motion: reduce) { .musy-icon[data-animate="on"] { transition: none; animation: auto ease 0s 1 normal none running none !important; } }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-switch { --musy-switch-knob: var(--icon-size-lg); --musy-switch-pad: var(--sp-1); --musy-switch-h: calc(var(--musy-switch-knob) + var(--musy-switch-pad) * 2); --musy-switch-w: calc(var(--musy-switch-knob) * 2 + var(--musy-switch-pad) * 3); display: flex; align-items: center; gap: var(--space-gap-related); min-height: var(--target-primary); cursor: pointer; }
+.musy-switch--guided { min-height: var(--target-guided); }
+.musy-switch--reverse { flex-direction: row-reverse; justify-content: space-between; }
+.musy-switch__track { position: relative; flex-shrink: 0; display: block; box-sizing: border-box; width: var(--musy-switch-w); height: var(--musy-switch-h); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-full); background-color: var(--surface-sunken); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-switch__knob { position: absolute; top: 0px; left: 0px; display: grid; place-items: center; width: var(--musy-switch-knob); height: var(--musy-switch-knob); margin: calc(var(--musy-switch-pad) - var(--border-width-regular)); border-radius: var(--radius-full); background-color: var(--surface-raised); box-shadow: var(--elevation-1); color: var(--on-surface-muted); transition: transform var(--motion-toggle),
+              background-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-switch__track[data-checked] { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); }
+.musy-switch__track[data-checked] .musy-switch__knob { transform: translateX(calc(var(--musy-switch-knob) + var(--musy-switch-pad))); color: var(--interactive-primary-on-subtle); }
+.musy-switch--accent .musy-switch__track[data-checked] { background-color: var(--interactive-accent); border-color: var(--interactive-accent-border); }
+.musy-switch--accent .musy-switch__track[data-checked] .musy-switch__knob { color: var(--interactive-accent-on-subtle); }
+.musy-switch__glyph { grid-area: 1 / 1; transition: opacity var(--motion-toggle); }
+.musy-switch__glyph[data-state="hidden"] { opacity: 0; }
+@media (hover: hover) and (pointer: fine) { .musy-switch__track[data-unchecked]:hover:not([data-disabled]),
+.musy-switch__track[data-force~="hover"][data-unchecked] { background-color: var(--interactive-ghost-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-switch__track[data-checked]:hover:not([data-disabled]),
+.musy-switch__track[data-force~="hover"][data-checked] { background-color: var(--interactive-primary-hover); } }
+.musy-switch__track[data-unchecked]:active:not([data-disabled]),
+.musy-switch__track[data-force~="active"][data-unchecked] { background-color: var(--interactive-ghost-active); }
+.musy-switch__track[data-checked]:active:not([data-disabled]),
+.musy-switch__track[data-force~="active"][data-checked] { background-color: var(--interactive-primary-active); }
+.musy-switch__track[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); cursor: not-allowed; }
+.musy-switch__track[data-disabled] .musy-switch__knob { box-shadow: none; color: var(--on-surface-disabled); }
+.musy-switch:has(.musy-switch__track[data-disabled]) { cursor: not-allowed; }
+.musy-switch:has(.musy-switch__track[data-disabled]) .musy-switch__label { color: var(--on-surface-disabled); }
+.musy-switch__label { font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-body); cursor: pointer; }
+.musy-radio-group { display: flex; flex-direction: column; gap: var(--space-gap-stack); border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-radio-group__legend { padding: 0px; margin-block-end: var(--space-gap-related); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+.musy-radio-group__legend--label { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+.musy-radio-group__hint { margin-block-end: var(--space-gap-stack); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); max-width: var(--measure-body); }
+.musy-radio__body { display: flex; align-items: center; gap: var(--space-gap-related); box-sizing: border-box; width: 100%; min-height: var(--target-comfort); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-card); background-color: var(--surface-raised); cursor: pointer; text-align: start; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-radio-group--guided .musy-radio__body { min-height: var(--target-guided); }
+.musy-radio__marker { position: relative; display: grid; place-items: center; flex-shrink: 0; box-sizing: border-box; width: var(--icon-size-lg); height: var(--icon-size-lg); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-full); color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-radio__label { font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); color: var(--on-surface); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); overflow-wrap: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.musy-radio--no-clamp .musy-radio__label,
+.musy-radio__body--no-clamp .musy-radio__label { display: block; -webkit-line-clamp: none; overflow: visible; }
+.musy-radio__drill { display: grid; place-items: center; flex-shrink: 0; margin-inline-start: auto; padding-inline-start: var(--space-gap-related); color: var(--on-surface-muted); transition: color var(--motion-toggle); }
+.musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__drill { color: var(--interactive-accent-on-subtle); }
+.musy-radio__body[data-disabled] .musy-radio__drill { color: var(--on-surface-disabled); }
+@media (hover: hover) and (pointer: fine) { .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
+.musy-radio__body[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-radio__body[data-unchecked]:active:not([data-disabled]),
+.musy-radio__body[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-radio__body[data-checked] { background-color: var(--interactive-primary-subtle); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); }
+.musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on); }
+.musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-primary-on-subtle); }
+.musy-radio-group--accent .musy-radio__body[data-checked] { background-color: var(--interactive-accent-subtle); border-color: var(--interactive-accent-border); border-width: var(--border-width-thick); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--interactive-accent); border-color: var(--interactive-accent-border); border-width: var(--border-width-thick); color: var(--interactive-accent-on); }
+.musy-radio-group--accent .musy-radio__body[data-checked] .musy-radio__label { color: var(--interactive-accent-on-subtle); }
+.musy-radio__body[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); border-width: var(--border-width-regular); cursor: not-allowed; }
+.musy-radio__body[data-disabled] .musy-radio__label { color: var(--on-surface-disabled); }
+.musy-radio__body[data-disabled] .musy-radio__marker { border-color: var(--on-surface-disabled); }
+.musy-radio-group[data-invalid] .musy-radio__body,
+.musy-radio__body[data-invalid] { border-color: var(--feedback-error-border); }
+.musy-radio-group__error { margin-block-start: var(--space-gap-related); }
+.musy-box__headrow > .musy-sr-only { flex: 0 0 auto; }
+.musy-seg { contain: layout; container-type: inline-size; border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-seg__track { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--sp-1); box-sizing: border-box; inline-size: 100%; padding: var(--sp-1); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-control); background-color: var(--surface-sunken); }
+.musy-seg__option { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); box-sizing: border-box; min-inline-size: 0px; min-block-size: var(--target-primary); padding-inline: var(--sp-3); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background-color: transparent; color: var(--on-surface-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-seg--guided .musy-seg__option { min-block-size: var(--target-guided); }
+.musy-seg--min { --musy-seg-rung: calc(var(--target-min) + var(--sp-3)); }
+.musy-seg--min .musy-seg__option { min-block-size: calc(var(--musy-seg-rung) - var(--sp-1) * 2 - var(--border-width-hairline) * 2); padding-inline: var(--sp-3); gap: var(--sp-1); }
+.musy-seg--labels-none,
+.musy-seg--labels-unchecked { container-type: normal; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__track,
+.musy-seg--labels-unchecked .musy-seg__track { grid-auto-flow: column; grid-auto-columns: auto; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__option { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); gap: 0px; }
+.musy-seg--labels-none.musy-seg--min .musy-seg__option { min-inline-size: var(--target-min); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked.musy-seg--min .musy-seg__option[data-checked] { min-inline-size: var(--target-min); }
+.musy-seg__option > .musy-icon { flex: 0 0 auto; }
+.musy-seg__label { min-inline-size: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 30rem) { .musy-seg__option { flex-direction: column; gap: var(--sp-1); padding-inline: var(--sp-2); padding-block: var(--sp-2); } }
+@container (max-width: 30rem) { .musy-seg__label { max-inline-size: 100%; } }
+@container (max-width: 30rem) { .musy-seg--labels-none .musy-seg__option,
+.musy-seg--labels-unchecked .musy-seg__option { flex-direction: row; padding-block: 0px; } }
+@media (hover: hover) and (pointer: fine) { .musy-seg__option[data-unchecked]:hover:not([data-disabled]),
+.musy-seg__option[data-force~="hover"] { background-color: var(--interactive-ghost-hover); color: var(--on-surface); } }
+.musy-seg__option[data-unchecked]:active:not([data-disabled]),
+.musy-seg__option[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-seg__option[data-checked] { background-color: var(--surface-raised); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on-subtle); }
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: var(--interactive-accent-border); color: var(--interactive-accent-on-subtle); }
+.musy-seg__option[data-disabled] { color: var(--on-surface-disabled); cursor: not-allowed; }
+.musy-seg__option[data-disabled][data-checked] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); }
+.musy-dlist__swipe-action > .musy-icon { color: var(--feedback-error-icon); }
+.musy-radio__body,
+.musy-radio__body[data-checked],
+.musy-seg__option,
+.musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio-group--accent .musy-radio__body[data-checked],
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio__body[aria-invalid="true"] { border-color: var(--feedback-error-border); border-width: var(--border-width-thick); }
+.musy-radio__body[data-disabled] { border-color: var(--border-subtle); }
+@media (prefers-contrast: more) { .musy-radio__body,
+.musy-seg__option { border-color: var(--border-subtle); } }
+@media (prefers-contrast: more) { .musy-radio__body[data-checked],
+.musy-seg__option[data-checked] { border-color: var(--border-strong); border-width: var(--border-width-thick); } }
+@media (forced-colors: active) { .musy-radio__body,
+.musy-switch__track { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-radio__body[data-checked] { border-color: highlight; } }
+@media (forced-colors: active) { .musy-seg__option[data-checked] { border-color: highlight; color: highlight; } }
+@media (forced-colors: active) { .musy-radio__body[data-checked] .musy-radio__marker { background-color: highlight; color: highlighttext; } }
+@media (forced-colors: active) { .musy-switch__track[data-checked] { background-color: highlight; } }
+@media (forced-colors: active) { .musy-radio__body[data-disabled],
+.musy-switch__track[data-disabled] { color: graytext; border-color: graytext; } }
+.musy-switch,
+.musy-radio-group { --musy-rest-fill: var(--interactive-primary-subtle); --musy-rest-fill-hover: var(--interactive-primary-subtle-hover); --musy-rest-fill-active: var(--interactive-primary-subtle-active); --musy-rest-border: var(--interactive-primary-border); --musy-rest-on: var(--interactive-primary-on-subtle); --musy-sel-fill: var(--interactive-primary); --musy-sel-on: var(--interactive-primary-on); }
+.musy-switch.musy-switch--accent,
+.musy-radio-group.musy-radio-group--accent { --musy-rest-fill: var(--interactive-accent-subtle); --musy-rest-fill-hover: var(--interactive-accent-subtle-hover); --musy-rest-fill-active: var(--interactive-accent-subtle-active); --musy-rest-border: var(--interactive-accent-border); --musy-rest-on: var(--interactive-accent-on-subtle); --musy-sel-fill: var(--interactive-accent); --musy-sel-on: var(--interactive-accent-on); }
+.musy-switch .musy-switch__track[data-unchecked]:not([data-disabled]) { background-color: var(--musy-rest-fill); border-color: var(--musy-rest-border); }
+.musy-switch .musy-switch__track[data-unchecked]:not([data-disabled]) .musy-switch__knob { color: var(--musy-rest-on); }
+@media (hover: hover) and (pointer: fine) { .musy-switch .musy-switch__track[data-unchecked]:hover:not([data-disabled]),
+.musy-switch .musy-switch__track[data-unchecked][data-force~="hover"] { background-color: var(--musy-rest-fill-hover); } }
+.musy-switch .musy-switch__track[data-unchecked]:active:not([data-disabled]),
+.musy-switch .musy-switch__track[data-unchecked][data-force~="active"] { background-color: var(--musy-rest-fill-active); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) { background-color: var(--musy-rest-fill); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) .musy-radio__label { color: var(--musy-rest-on); }
+.musy-radio-group .musy-radio__body[data-unchecked]:not([data-disabled]) .musy-radio__marker { border-color: var(--musy-rest-border); }
+@media (hover: hover) { .musy-radio-group .musy-radio__body[data-unchecked]:hover:not([data-disabled]),
+.musy-radio-group .musy-radio__body[data-unchecked][data-force~="hover"] { background-color: var(--musy-rest-fill-hover); } }
+.musy-radio-group .musy-radio__body[data-unchecked]:active:not([data-disabled]),
+.musy-radio-group .musy-radio__body[data-unchecked][data-force~="active"] { background-color: var(--musy-rest-fill-active); }
+.musy-radio-group .musy-radio__body[data-checked] { background-color: var(--musy-sel-fill); }
+.musy-radio-group .musy-radio__body[data-checked] .musy-radio__label { color: var(--musy-sel-on); }
+.musy-radio-group .musy-radio__body[data-checked] .musy-radio__marker { background-color: var(--surface-raised); border-color: var(--surface-raised); color: var(--musy-sel-fill); }
+.musy-field__error > .musy-icon { flex-shrink: 0; color: var(--feedback-error-icon); }
+.musy-field__valid > .musy-icon { flex-shrink: 0; color: var(--feedback-success-icon); }
+.musy-wizard__connector > .musy-icon { display: none; position: absolute; inset-block-start: 50%; inset-inline-start: 50%; transform: translate(-50%, -50%); }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; } }
+.musy-wizard--compact:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; }
+.musy-badge:has(> .musy-icon:first-child) { padding-inline-start: var(--sp-2); }
+.musy-badge > .musy-icon { flex: 0 0 auto; }
+.musy-badge--info > .musy-icon { color: var(--feedback-info-icon); }
+.musy-badge--warning > .musy-icon { color: var(--feedback-warning-icon); }
+.musy-badge--success > .musy-icon { color: var(--feedback-success-icon); }
+.musy-badge--error > .musy-icon { color: var(--feedback-error-icon); }
+.musy-rcard__body[data-disabled] .musy-badge > .musy-icon,
+.musy-radio-card__body[data-disabled] .musy-badge > .musy-icon { color: var(--on-surface-disabled); }
+.musy-rec > .musy-icon { flex: 0 0 auto; }
+.musy-filter__dimension > .musy-filter__toggle > .musy-icon,
+.musy-filter__value > .musy-icon { flex: 0 0 auto; }
+
+/* IconButton (Layer 2), Regeln aus den vier Stylesheets in Ladereihenfolge, per CSSOM gelesen; Tokens je Theme aufgelöst. */
+:root { --interactive-ghost: transparent; --interactive-ghost-on: #1A1F1C; --interactive-ghost-border-hover: #22442F; --interactive-primary-on-disabled: #62645E; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #8A8C82; --on-surface-inverse: #FAF7F1; --surface-inverse: #1A1F1C; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --interactive-ghost: transparent; --interactive-ghost-on: #EDF0EC; --interactive-ghost-border-hover: #6FA688; --interactive-primary-on-disabled: #9EA59F; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #79807A; --on-surface-inverse: #111412; --surface-inverse: #EDF0EC; } }
+:root[data-theme="dark"] { --interactive-ghost: transparent; --interactive-ghost-on: #EDF0EC; --interactive-ghost-border-hover: #6FA688; --interactive-primary-on-disabled: #9EA59F; --interactive-ghost-disabled: transparent; --interactive-ghost-on-disabled: #79807A; --on-surface-inverse: #111412; --surface-inverse: #EDF0EC; }
+.musy-icon-btn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-icon-btn { --musy-icon-btn-size: var(--target-primary); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--musy-icon-btn-size); height: var(--musy-icon-btn-size); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-icon-btn--min { --musy-icon-btn-size: var(--target-min); }
+.musy-icon-btn--primary-size { --musy-icon-btn-size: var(--target-primary); }
+.musy-icon-btn--comfort { --musy-icon-btn-size: var(--target-comfort); }
+.musy-icon-btn--guided { --musy-icon-btn-size: var(--target-guided); }
+.musy-icon-btn--min { margin: var(--sp-2); }
+.musy-icon-btn--primary { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on); }
+.musy-icon-btn--secondary { background-color: var(--surface-raised); border-color: var(--border-strong); color: var(--on-surface); }
+.musy-icon-btn--outline { background-color: transparent; border-color: var(--border-strong); color: var(--on-surface); }
+.musy-icon-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--primary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--primary[data-force~="hover"] { background-color: var(--interactive-primary-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--secondary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--secondary[data-force~="hover"], .musy-icon-btn--outline:hover:not(:disabled):not([data-loading]), .musy-icon-btn--outline[data-force~="hover"] { background-color: var(--interactive-ghost-hover); border-color: var(--interactive-ghost-border-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-icon-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-icon-btn--primary:active:not(:disabled), .musy-icon-btn--primary[data-pressed]:not(:disabled), .musy-icon-btn--primary[data-force~="active"] { background-color: var(--interactive-primary-active); }
+.musy-icon-btn--secondary:active:not(:disabled), .musy-icon-btn--secondary[data-pressed]:not(:disabled), .musy-icon-btn--outline:active:not(:disabled), .musy-icon-btn--outline[data-pressed]:not(:disabled), .musy-icon-btn--outline[data-force~="active"], .musy-icon-btn--ghost:active:not(:disabled), .musy-icon-btn--ghost[data-pressed]:not(:disabled), .musy-icon-btn--secondary[data-force~="active"], .musy-icon-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-icon-btn:disabled, .musy-icon-btn[data-disabled] { cursor: not-allowed; }
+.musy-icon-btn--primary:disabled, .musy-icon-btn--primary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--interactive-primary-on-disabled); }
+.musy-icon-btn--secondary:disabled, .musy-icon-btn--secondary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--on-surface-disabled); }
+.musy-icon-btn--outline:disabled, .musy-icon-btn--outline[data-disabled] { background-color: transparent; border-color: var(--border-subtle); color: var(--on-surface-disabled); }
+.musy-icon-btn--ghost:disabled, .musy-icon-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-icon-btn[data-loading] { cursor: progress; }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+@media (forced-colors: active) { .musy-icon-btn { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-icon-btn--primary { background-color: buttonface; color: buttontext; } }
+@media (forced-colors: active) { .musy-icon-btn:disabled { color: graytext; border-color: graytext; } }
+/* TrackButton (Layer 2, MusicPlayer.tsx), Regeln per CSSOM aus den vier Stylesheets; dazu display-xl und heading-md. */
+:root { --type-display-xl-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-display-xl-size: clamp(40px, calc(30.991px + 2.2923vw), 64px); --type-display-xl-weight: 700; --type-display-xl-line: 1.0; --type-display-xl-tracking: -0.018em; --type-heading-md-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-heading-md-size: clamp(22px, calc(20.499px + 0.3820vw), 26px); --type-heading-md-weight: 500; --type-heading-md-line: 1.25; --type-heading-md-tracking: -0.004em; }
+.musy-btn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-btn { --musy-btn-target: var(--target-primary); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-gap-inline); min-height: var(--musy-btn-target); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); text-align: center; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-btn--min { --musy-btn-target: var(--target-min); padding-block: var(--sp-2); padding-inline: var(--sp-4); gap: var(--sp-1); margin: var(--sp-2); font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); border-radius: var(--radius-control); }
+.musy-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-btn--ghost:active:not(:disabled), .musy-btn--ghost[data-pressed]:not(:disabled), .musy-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-btn:disabled, .musy-btn[data-disabled] { cursor: not-allowed; }
+.musy-btn--ghost:disabled, .musy-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-btn[data-loading] { cursor: progress; position: relative; }
+.musy-btn[data-loading] .musy-btn__label, .musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn__label { text-wrap: var(--text-wrap-body); }
+@media (forced-colors: active) { .musy-btn { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-btn:disabled { color: graytext; border-color: graytext; } }
+.musy-btn.musy-mbtn { justify-content: flex-start; gap: var(--space-gap-related); min-inline-size: 18ch; }
+.musy-mbtn__time { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.musy-btn.musy-mbtn--no-timer { min-inline-size: 0px; justify-content: center; }
+/* Leiste: eine Reihe, mittig ausgerichtet, links am unteren Rand. Zu schmal: die Switches brechen um. */
+.musie-toolbar { pointer-events: auto; touch-action: manipulation; box-sizing: border-box; max-inline-size: 100%;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-stack);
+  padding: var(--space-inset-card); background: var(--surface);
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-panel); }
+/* Eingeklappt: nur der Einstellungs-Button in der Ecke. Ausgeklappt: die Leiste an seiner Stelle, ganz rechts das X.
+   Übergang wie das Regler-Feld, 280 ms ease-in-out. */
+/* Version 1443: „Ich bin fertig“ unten rechts, ausgeblendet, solange die Leiste offen ist. Der 1:30-Countdown oben links bleibt. */
+.foot > .musie-done { position: absolute; right: max(var(--space-inset-sheet), env(safe-area-inset-right, 0px)); bottom: 0; pointer-events: auto;
+  transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > .musie-done, .foot > .musie-done[data-waiting] { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot > #btn-settings { position: absolute; left: max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)); bottom: 0; pointer-events: auto;
+  transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > #btn-settings { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot:not(.expanded) > .musie-toolbar { opacity: 0; visibility: hidden; transform: translateY(var(--sp-2));
+  transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 280ms; }
+.foot.expanded > .musie-toolbar { transition: opacity 280ms ease-in-out, transform 280ms ease-in-out, visibility 0s linear 0s; }
+@media (prefers-reduced-motion: reduce) { .foot > #btn-settings, .foot > .musie-toolbar { transition: none !important; } }
+.musie-toolbar__switches { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-stack); }
+/* Der SegmentedControl richtet sich nach der Breite seines Behälters: die Leiste gibt ihm eine. */
+.musie-toolbar__seg { inline-size: calc(var(--target-primary) * 7); max-inline-size: 100%; flex: 0 1 auto; }
+/* Kleine Switch-Variante, im Design-System nicht vorhanden: Label in label-md wie die Segmente,
+   Spur und Knopf aus der Texthöhe abgeleitet. Knopf --icon-size-sm (16), Rand --sp-1: Spur 24 x 44,
+   so hoch wie die Zeile des Labels. Die Zeile bleibt 44 px hoch, das ist das Tippziel. */
+.musy-switch.musie-switch--sm { --musy-switch-knob: var(--icon-size-sm); --musy-switch-pad: var(--sp-1); gap: var(--space-gap-inline); }
+.musie-switch--sm .musy-switch__glyph .musy-icon { width: calc(var(--icon-size-sm) * 0.75); height: calc(var(--icon-size-sm) * 0.75); }
+.musie-switch--sm .musy-switch__label { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+/* Labels nie fett: der Switch setzt label-lg in 600, hier regulär. Gehört als Wunsch ins Design-System. */
+.musie-toolbar .musy-switch__label { font-weight: var(--font-weight-regular); }
+/* Saitenfarbe: eine Stufe 1-12 für beide Skalen. Das Design-System hat keine Farbauswahl (L14):
+   eigenes Muster, nur Tokens. Je Feld oben sand-N (Saite in Ruhe), unten terracotta-N (Saite angefasst). */
+.musie-swatches__hint { font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); margin-block-start: calc(var(--space-gap-related) - var(--space-gap-stack)); }
+.musie-swatches { display: grid; grid-template-columns: repeat(6, minmax(var(--target-min), 1fr)); gap: var(--space-gap-inline); }
+.musie-swatch { display: grid; gap: var(--sp-1); justify-items: stretch; box-sizing: border-box; min-height: var(--target-min); margin: 0;
+  padding: var(--sp-1); cursor: pointer; background: var(--surface); color: var(--on-surface-muted);
+  border: var(--border-width-thick) var(--border-style-solid) var(--surface); border-radius: var(--radius-sm);
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--font-weight-regular);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); font-variant-numeric: tabular-nums; }
+.musie-swatch__chip { display: grid; grid-template-rows: 1fr 1fr; block-size: var(--icon-size-lg); overflow: hidden;
+  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-xs); }
+@media (hover: hover) and (pointer: fine) { .musie-swatch[aria-checked="false"]:hover { background: var(--interactive-ghost-hover); border-color: var(--interactive-ghost-hover); } }
+.musie-swatch[aria-checked="true"] { background: var(--interactive-primary-subtle); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on-subtle); }
+.musie-swatch:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musie-swatch[data-shade="1"] .musie-swatch__rest { background: var(--sand-1); }
+.musie-swatch[data-shade="1"] .musie-swatch__active { background: var(--terracotta-1); }
+.musie-swatch[data-shade="2"] .musie-swatch__rest { background: var(--sand-2); }
+.musie-swatch[data-shade="2"] .musie-swatch__active { background: var(--terracotta-2); }
+.musie-swatch[data-shade="3"] .musie-swatch__rest { background: var(--sand-3); }
+.musie-swatch[data-shade="3"] .musie-swatch__active { background: var(--terracotta-3); }
+.musie-swatch[data-shade="4"] .musie-swatch__rest { background: var(--sand-4); }
+.musie-swatch[data-shade="4"] .musie-swatch__active { background: var(--terracotta-4); }
+.musie-swatch[data-shade="5"] .musie-swatch__rest { background: var(--sand-5); }
+.musie-swatch[data-shade="5"] .musie-swatch__active { background: var(--terracotta-5); }
+.musie-swatch[data-shade="6"] .musie-swatch__rest { background: var(--sand-6); }
+.musie-swatch[data-shade="6"] .musie-swatch__active { background: var(--terracotta-6); }
+.musie-swatch[data-shade="7"] .musie-swatch__rest { background: var(--sand-7); }
+.musie-swatch[data-shade="7"] .musie-swatch__active { background: var(--terracotta-7); }
+.musie-swatch[data-shade="8"] .musie-swatch__rest { background: var(--sand-8); }
+.musie-swatch[data-shade="8"] .musie-swatch__active { background: var(--terracotta-8); }
+.musie-swatch[data-shade="9"] .musie-swatch__rest { background: var(--sand-9); }
+.musie-swatch[data-shade="9"] .musie-swatch__active { background: var(--terracotta-9); }
+.musie-swatch[data-shade="10"] .musie-swatch__rest { background: var(--sand-10); }
+.musie-swatch[data-shade="10"] .musie-swatch__active { background: var(--terracotta-10); }
+.musie-swatch[data-shade="11"] .musie-swatch__rest { background: var(--sand-11); }
+.musie-swatch[data-shade="11"] .musie-swatch__active { background: var(--terracotta-11); }
+.musie-swatch[data-shade="12"] .musie-swatch__rest { background: var(--sand-12); }
+.musie-swatch[data-shade="12"] .musie-swatch__active { background: var(--terracotta-12); }
+.panel .musy-switch__label { font-weight: var(--font-weight-regular); }
+/* Abschnitte im Regler-Feld (L2): zwischen Abschnitten --space-gap-group, mittig eine Trennlinie; darin --space-gap-stack;
+   Überschrift zu ihrem Inhalt --space-gap-related. Doppelungsprobe: 32 ≥ 2 × 16. */
+.musie-section { display: grid; gap: var(--space-gap-stack); min-inline-size: 0; }
+.musie-section + .musie-section { border-top: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); padding-top: var(--space-gap-group); }
+.musie-section__title { margin: 0; color: var(--on-surface); font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); }
+.musie-section__title + * { margin-block-start: calc(var(--space-gap-related) - var(--space-gap-stack)); }
+.musy-radio-group > .musie-swatches__hint:first-child { margin-block-start: 0; }
+/* Bezeichnung → ihr Hinweis: --space-gap-related (die Bezeichnung bringt ihn als Rand mit, die Gruppe ihren Abstand) */
+.musy-radio-group__legend + .musie-swatches__hint { margin-block-start: calc(-1 * var(--space-gap-stack)); }
+/* Aus der Harfe 1443: der Hauptknopf „Ich bin fertig“ */
+.musy-btn--primary { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on); }
+@media (hover: hover) and (pointer: fine) { .musy-btn--primary:hover:not(:disabled):not([data-loading]), .musy-btn--primary[data-force~="hover"] { background-color: var(--interactive-primary-hover); } }
+.musy-btn--primary:active:not(:disabled), .musy-btn--primary[data-pressed]:not(:disabled), .musy-btn--primary[data-force~="active"] { background-color: var(--interactive-primary-active); }
+.musy-btn--primary:disabled, .musy-btn--primary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--interactive-primary-on-disabled); }
+.musy-btn--wrap { min-height: var(--musy-btn-target); height: auto; }
+.musy-btn--wrap .musy-btn__label { white-space: normal; }
+
+/* ── Marimbaphon ──────────────────────────────────────────────────────────────
+   Quer gelegt ist der Bildschirm das Instrument: die Stäbe über die ganze Breite, links tief, rechts hoch.
+   Oben eine Zeile Überschrift und eine Zeile Hinweis, unten eine Zeile: Einstellungen, Countdown, „Ich bin fertig“. */
+#marimba { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; touch-action: none; }
+.musie-probe { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
+.musie-safe { position: fixed; inset: 0; visibility: hidden; pointer-events: none;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+.musie-top { padding-top: calc(env(safe-area-inset-top, 0px) + var(--sp-4)); }
+/* v2: Überschrift und Hinweis in einer Zeile, damit die Stäbe mehr Höhe bekommen. Der Hinweis ist immer da, auch leer:
+   so springen die Stäbe nicht, wenn er wechselt. */
+.musie-top__header { padding-block-end: 0; display: flex; align-items: baseline; gap: var(--space-gap-stack); min-inline-size: 0; }
+.musie-top__header .musie-headline { flex: 0 0 auto; white-space: nowrap; }
+.musie-top__header .note, .musie-top__header .note:not(.shown) { display: block; flex: 1 1 auto; min-inline-size: 0; margin: 0; max-inline-size: none;
+  min-block-size: calc(var(--type-body-sm-line) * 1em); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Holz aus der Terrakotta-Skala: hell im hellen Modus, dunkles Holz im dunklen. */
+:root { --musie-wood: var(--terracotta-7); --musie-wood-grain: var(--terracotta-9); --musie-wood-edge: var(--terracotta-8);
+  --musie-wood-glow: var(--terracotta-2); --musie-wood-hole: var(--terracotta-11); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --musie-wood-grain: var(--terracotta-8); --musie-wood-edge: var(--terracotta-5);
+  --musie-wood-glow: var(--terracotta-12); --musie-wood-hole: var(--terracotta-3); } }
+:root[data-theme="dark"] { --musie-wood-grain: var(--terracotta-8); --musie-wood-edge: var(--terracotta-5);
+  --musie-wood-glow: var(--terracotta-12); --musie-wood-hole: var(--terracotta-3); }
+.foot { bottom: calc(env(safe-area-inset-bottom, 0px) + var(--sp-3)); }
+.foot > .musie-clock { position: absolute; bottom: 0; pointer-events: none; display: flex; align-items: center; gap: var(--space-gap-inline);
+  left: calc(max(var(--space-inset-sheet), env(safe-area-inset-left, 0px)) + var(--target-primary) + var(--space-gap-stack));
+  min-block-size: var(--target-primary); transition: opacity 280ms ease-in-out, visibility 0s linear 0s; }
+.foot.expanded > .musie-clock { opacity: 0; visibility: hidden; transition: opacity 280ms ease-in-out, visibility 0s linear 280ms; }
+.musie-clock #cd-btn { pointer-events: auto; }
+.musie-clock .musy-btn--min { margin: 0; }
+.musie-clock__time { margin: 0; font-family: var(--type-heading-md-family); font-size: var(--type-heading-md-size); font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line); letter-spacing: var(--type-heading-md-tracking); font-variant-numeric: tabular-nums; color: var(--on-surface);
+  transition: color var(--motion-toggle); }
+.musie-clock__time[data-done] { color: var(--on-surface-muted); }
+.musie-clock__cap { margin: 0; font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+@media (max-width: 760px) { .musie-clock__cap { display: none; } }
+.musie-toolbar__seg { inline-size: calc(var(--target-primary) * 5); }
+.panel { z-index: 2; }
+.musie-section p { margin: 0; }
+.musie-section a { color: var(--on-surface); text-underline-offset: var(--sp-1); }
+/* Hochkant auf dem Handy: bitte quer legen. */
+.musie-rotate { position: fixed; inset: 0; z-index: 5; display: none; place-content: center; justify-items: center; gap: var(--space-gap-stack);
+  box-sizing: border-box; padding: var(--space-inset-sheet); background: var(--bg); text-align: center; }
+.musie-rotate p { margin: 0; max-inline-size: 32ch; }
+.musie-rotate .musie-rotate__hint { font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-rotate .musy-icon { color: var(--on-surface-muted); }
+@media (orientation: portrait) and (pointer: coarse) { .musie-rotate { display: grid; } }
+</style>
+</head>
+<body>
+
+<canvas id="marimba" aria-label="Marimbaphon: Stäbe antippen oder darüberstreichen"></canvas>
+<div class="foot">
+  <div class="panel" id="panel">
+    <section class="musie-section" aria-labelledby="h-spiel">
+      <h2 class="musie-section__title" id="h-spiel">So spielst du</h2>
+      <p class="musie-swatches__hint">Tippe die Stäbe an. Weiter zur Mitte klingt ein Stab voller, an den Enden leiser.</p>
+      <p class="musie-swatches__hint"><strong>Wirbel:</strong> Tippe mit zwei Fingern schnell abwechselnd auf einen Stab, wie mit zwei Schlägeln. So hält ein Marimbaphon einen Ton. Tiefe Stäbe wirbelt man langsamer als hohe. Abwechselnd auf zwei Stäben klingen zwei Töne zugleich.</p>
+      <p class="musie-swatches__hint"><strong>Gespräch:</strong> Machst du eine Pause, antwortet das Marimbaphon. Es greift etwas aus deinem Spiel auf, ohne es nachzuspielen. Seine Stäbe leuchten grün. Tippst du dazwischen, hört es auf, und du bist wieder dran.</p>
+    </section>
+    <section class="musie-section" aria-labelledby="h-info">
+      <h2 class="musie-section__title" id="h-info">Über die Töne</h2>
+      <p class="musie-swatches__hint">Die Stäbe sind gestimmt in d, e, g, a und h, denselben fünf Tönen wie Harfe, Kalimba und Windspiel. Darin gibt es keine Halbtöne nebeneinander, darum klingt jeder Zusammenklang, auch mit den anderen Instrumenten.</p>
+      <p class="musie-swatches__hint">Jeder Ton ist eine Aufnahme eines Marimbaphons: VSCO 2 Community Edition von Versilian Studios, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.de" target="_blank" rel="noopener">CC0</a> (gemeinfrei), <a href="https://github.com/sgossner/VSCO-2-CE" target="_blank" rel="noopener">github.com/sgossner/VSCO-2-CE</a>. Töne, die nicht aufgenommen sind, entstehen aus der nächsten Aufnahme, höchstens drei Halbtöne verschoben. Nichts wird synthetisiert.</p>
+      <p class="musie-swatches__hint" id="haptic-info"></p>
+    </section>
+  </div>
+  <button aria-expanded="false" aria-controls="toolbar" type="button" tabindex="0" id="btn-settings" aria-label="Einstellungen öffnen" class="musy-icon-btn musy-icon-btn--secondary musy-icon-btn--primary-size"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+  <div class="musie-clock">
+    <p class="musie-clock__time" role="timer" id="cd-time">01:30</p>
+    <span id="cd-btn"></span>
+    <p class="musie-clock__cap" id="cd-cap" aria-live="polite"></p>
+  </div>
+  <button type="button" tabindex="0" id="btn-done" class="musie-done musy-btn musy-btn--primary musy-btn--wrap" data-waiting=""><span class="musy-btn__label">Ich bin fertig</span></button>
+  <div class="musie-toolbar" id="toolbar">
+    <div class="musie-toolbar__seg"><div role="radiogroup" aria-labelledby="bars-legend" id="seg-bars" class="musy-seg musy-seg--min"><div id="bars-legend" class="musy-sr-only">Anzahl der Stäbe</div><div class="musy-seg__track"><button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" id="bars-7" data-value="7" class="musy-seg__option"><span class="musy-seg__label">7 Stäbe</span></button><button type="button" data-unchecked="" tabindex="-1" role="radio" aria-checked="false" id="bars-10" data-value="10" class="musy-seg__option"><span class="musy-seg__label">10 Stäbe</span></button></div></div></div>
+    <div class="musie-toolbar__switches" id="toolbar-switches"></div>
+    <button type="button" tabindex="0" id="btn-close" aria-label="Einstellungen schließen" class="musy-icon-btn musy-icon-btn--ghost musy-icon-btn--primary-size"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+  </div>
+</div>
+<div class="musie-top">
+  <header class="musie-top__header" id="header">
+    <h1 class="musie-headline">Spiel, bis du ruhig bist.</h1>
+    <p class="note" id="note"></p>
+  </header>
+</div>
+<div class="musie-rotate" role="status">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone musy-icon musy-icon--xl" aria-hidden="true" focusable="false" style="transform: rotate(90deg)"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg>
+  <p class="musie-headline">Leg dein Handy quer vor dich.</p>
+  <p class="musie-rotate__hint">Dreht sich die Seite nicht mit, ist die Ausrichtungssperre an. Du kannst sie im Kontrollzentrum ausschalten.</p>
+</div>
+<span class="musie-probe" id="probe" aria-hidden="true"></span>
+<div class="musie-safe" id="safe" aria-hidden="true"></div>
+
+<script>
+(() => {
+// ════════ Stäbe ════════
+// Von links nach rechts, tief nach hoch: d e g a h d′ e′ g′ a′ h′ (D3 bis H4), die Pentatonik von Harfe, Kalimba und Windspiel.
+// Jeder Stab: die Aufnahme, aus der er kommt, und wie viele Halbtöne sie verschoben wird (höchstens drei).
+const SCALE = [
+  { n: 'd',  midi: 50, src: 'C3', semi: 2 },  { n: 'e',  midi: 52, src: 'G3', semi: -3 }, { n: 'g',  midi: 55, src: 'G3', semi: 0 },
+  { n: 'a',  midi: 57, src: 'B3', semi: -2 }, { n: 'h',  midi: 59, src: 'B3', semi: 0 },  { n: 'd′', midi: 62, src: 'F4', semi: -3 },
+  { n: 'e′', midi: 64, src: 'F4', semi: -1 }, { n: 'g′', midi: 67, src: 'F4', semi: 2 },  { n: 'a′', midi: 69, src: 'C5', semi: -3 },
+  { n: 'h′', midi: 71, src: 'C5', semi: -1 },
+];
+const FILES = ['C3', 'G3', 'B3', 'F4', 'C5'];
+const HOME = [0, 2, 5, 7];                                 // d, g, d′, g′: hier endet eine Antwort ruhig
+const KEYS = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö'];
+const DEFAULTS = { bars: 10, dialog: true };
+let P = { ...DEFAULTS };
+try { Object.assign(P, JSON.parse(localStorage.getItem('marimba-v2') || '{}')); } catch (e) {}
+if (P.bars !== 7 && P.bars !== 10) P.bars = DEFAULTS.bars;
+const save = () => { try { localStorage.setItem('marimba-v2', JSON.stringify(P)); } catch (e) {} };
+const N = () => P.bars;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+const median = a => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+const gaps = ph => ph.slice(1).map((p, k) => p.t - ph[k].t);
+
+// ════════ Bedienelemente: Markup wie in Kalimba und Harfe (base-ui-Zustände) ════════
+const CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>';
+const XMARK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>';
+const switchHTML = (id, label) => `<div class="musy-switch musie-switch--sm"><button type="button" data-unchecked="" tabindex="0" id="${id}" role="switch" aria-checked="false" class="musy-switch__track"><span data-unchecked="" class="musy-switch__knob"><span class="musy-switch__glyph" data-state="hidden">${CHECK}</span><span class="musy-switch__glyph" data-state="shown">${XMARK}</span></span></button><label for="${id}" class="musy-switch__label">${label}</label></div>`;
+document.getElementById('toolbar-switches').innerHTML =
+  switchHTML('sw-dialog', 'Gespräch') + switchHTML('sw-vibration', 'Vibration') + switchHTML('sw-info', 'Info');
+function setSwitch(id, on) {
+  const t = document.getElementById(id), k = t.querySelector('.musy-switch__knob'), gl = t.querySelectorAll('.musy-switch__glyph');
+  for (const el of [t, k]) { el.toggleAttribute('data-checked', on); el.toggleAttribute('data-unchecked', !on); }
+  t.setAttribute('aria-checked', on); gl[0].dataset.state = on ? 'shown' : 'hidden'; gl[1].dataset.state = on ? 'hidden' : 'shown';
+}
+function setSeg(value) {
+  document.querySelectorAll('#seg-bars .musy-seg__option').forEach(b => { const on = +b.dataset.value === value;
+    b.toggleAttribute('data-checked', on); b.toggleAttribute('data-unchecked', !on); b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; });
+}
+
+// ════════ Zeichnen: Holzstäbe mit Maserung; dein Schlag lässt den Stab hell aufleuchten, die Antwort grün ════════
+const cv = document.getElementById('marimba'), g = cv.getContext('2d'), probe = document.getElementById('probe'), safeEl = document.getElementById('safe');
+let C = {};
+function readColors() {                                   // Canvas kennt keine CSS-Variablen: über ein Probe-Element auflösen
+  const get = v => { probe.style.color = `var(${v})`; return getComputedStyle(probe).color; };
+  C = { bg: get('--bg'), warm: get('--terracotta-2'), cord: get('--sand-7'), wood: get('--musie-wood'), grain: get('--musie-wood-grain'),
+    edge: get('--musie-wood-edge'), hole: get('--musie-wood-hole'), me: get('--musie-wood-glow'), you: get('--interactive-primary') };
+}
+const rgb = c => (c.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+const mix = (a, b, t) => { const A = rgb(a), B = rgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+const state = SCALE.map(() => ({ t0: -1e9, vel: 0, who: 'me', on: false }));
+const header = document.getElementById('header'), foot = document.querySelector('.foot');
+const btnSettings = document.getElementById('btn-settings'), toolbarEl = document.getElementById('toolbar');
+let W = 0, H = 0, L = null, calm = 0;
+
+function layout() {
+  const dpr = Math.min(3, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const s = getComputedStyle(safeEl), sl = parseFloat(s.paddingLeft) || 0, sr = parseFloat(s.paddingRight) || 0;
+  const x0 = Math.max(16, sl), x1 = W - Math.max(16, sr);
+  const top = header.getBoundingClientRect().bottom + 10;
+  const bottom = btnSettings.getBoundingClientRect().top - 10;  // die Leiste legt sich beim Öffnen darüber; die Stäbe bleiben, wo sie sind
+  const n = N(), col = (x1 - x0) / n, avail = Math.max(60, bottom - top), cy = (top + bottom) / 2, f0 = hz(SCALE[0].midi);
+  // Nach rechts kürzer wie beim echten Instrument, aber sanfter: auch der höchste Stab bleibt gut 70 % so lang wie der tiefste.
+  // Die tiefen Stäbe etwas breiter.
+  L = { x0, x1, col, top, bottom, cy, bars: SCALE.slice(0, n).map((b, i) => {
+    const h = avail * Math.pow(f0 / hz(b.midi), 0.28), w = col * (0.84 - 0.1 * i / Math.max(1, n - 1));
+    return { cx: x0 + col * (i + 0.5), w, h, y0: cy - h / 2, seed: i * 7.31 + 1.7 };
+  }) };
+  draw(performance.now());
+}
+function cords() {                                         // die zwei Schnüre durch die Knotenpunkte, bei 22,4 % von jedem Ende
+  g.strokeStyle = C.cord; g.lineWidth = 1.5; g.lineCap = 'round';
+  for (const f of [0.224, 0.776]) {
+    g.beginPath();
+    L.bars.forEach((B, i) => { const y = B.y0 + B.h * f; if (i === 0) g.moveTo(L.x0 - 4, y); g.lineTo(B.cx, y); });
+    const last = L.bars[L.bars.length - 1]; g.lineTo(L.x1 + 4, last.y0 + last.h * f); g.stroke();
+  }
+}
+// Maserung: feine Linien entlang des Stabs, leicht gewellt, für jeden Stab etwas anders (fester Zufall aus seiner Nummer)
+const noise = (s, k) => { const x = Math.sin(s * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
+function grain(B) {
+  const x0 = B.cx - B.w / 2, lines = Math.max(4, Math.round(B.w / 5));
+  g.save(); g.beginPath(); g.roundRect(x0, B.y0, B.w, B.h, Math.min(6, B.w / 5)); g.clip();
+  g.strokeStyle = C.grain; g.lineCap = 'round';
+  for (let k = 0; k < lines; k++) {
+    const u = (k + 0.3 + 0.4 * noise(B.seed, k)) / lines, amp = B.w * (0.012 + 0.03 * noise(B.seed, k + 40)), ph = noise(B.seed, k + 80) * 6.28;
+    const waves = 1.2 + 2.2 * noise(B.seed, k + 120);
+    g.globalAlpha = 0.25 + 0.35 * noise(B.seed, k + 160); g.lineWidth = 0.6 + 1.1 * noise(B.seed, k + 200);
+    g.beginPath();
+    for (let y = 0; y <= B.h; y += 6) { const x = x0 + u * B.w + amp * Math.sin(ph + waves * 6.28 * y / B.h); y === 0 ? g.moveTo(x, B.y0) : g.lineTo(x, B.y0 + y); }
+    g.stroke();
+  }
+  g.restore(); g.globalAlpha = 1;
+}
+function bar(i, now) {
+  const B = L.bars[i], s = state[i], t = (now - s.t0) / 1000;
+  const glow = Math.exp(-t / 0.85) * (0.35 + 0.65 * s.vel);
+  s.on = glow > 0.02;
+  const x0 = B.cx - B.w / 2, rad = Math.min(6, B.w / 5);
+  g.fillStyle = C.wood; g.beginPath(); g.roundRect(x0, B.y0, B.w, B.h, rad); g.fill();
+  grain(B);
+  if (s.on) {                                              // Aufleuchten über dem Holz: hell bei dir, grün bei der Antwort
+    g.globalAlpha = Math.min(1, glow * 1.1) * (s.who === 'you' ? 0.7 : 0.75);
+    g.fillStyle = s.who === 'you' ? C.you : C.me; g.beginPath(); g.roundRect(x0, B.y0, B.w, B.h, rad); g.fill(); g.globalAlpha = 1;
+  }
+  g.strokeStyle = C.edge; g.lineWidth = 1; g.beginPath(); g.roundRect(x0 + 0.5, B.y0 + 0.5, B.w - 1, B.h - 1, rad); g.stroke();
+  g.fillStyle = C.hole; const r = clamp(B.w * 0.045, 1.5, 3);
+  for (const f of [0.224, 0.776]) { g.beginPath(); g.arc(B.cx, B.y0 + B.h * f, r, 0, 2 * Math.PI); g.fill(); }
+}
+const DOT_MS = 600;
+let presses = [];
+function dots(now) {                                       // wo der Schlägel traf: ein weicher Punkt, der wächst und verblasst
+  presses = presses.filter(d => now - d.t0 < DOT_MS && d.i < L.bars.length);
+  for (const d of presses) {
+    const B = L.bars[d.i], p = (now - d.t0) / DOT_MS, grow = 1 - Math.pow(1 - p, 3);
+    const r = B.w * (0.18 + (0.15 + 0.35 * d.vel) * grow), x = B.cx, y = B.y0 + clamp(d.pos, 0.08, 0.92) * B.h;
+    const c = (d.who === 'you' ? C.you : C.me).replace('rgb(', 'rgba(').replace(')', ',');
+    const fill = g.createRadialGradient(x, y, 0, x, y, r);
+    fill.addColorStop(0, c + '0.9)'); fill.addColorStop(0.4, c + '0.5)'); fill.addColorStop(1, c + '0)');
+    g.globalAlpha = Math.pow(1 - p, 1.4) * (0.4 + 0.5 * d.vel); g.fillStyle = fill;
+    g.beginPath(); g.arc(x, y, r, 0, 2 * Math.PI); g.fill();
+  }
+  g.globalAlpha = 1;
+}
+function draw(now) {
+  g.fillStyle = mix(C.bg, C.warm, calm * 0.85); g.fillRect(0, 0, W, H);   // ruhiger gespielt: der Grund wird ganz langsam etwas wärmer
+  if (!L) return;
+  cords();
+  for (let i = 0; i < L.bars.length; i++) bar(i, now);
+  dots(now);
+}
+let raf = 0;
+function loop(now) { draw(now); raf = (state.slice(0, N()).some(s => s.on) || presses.length) ? requestAnimationFrame(loop) : 0; }
+function kick() { if (!raf) raf = requestAnimationFrame(loop); }
+function lightUp(i, vel, who, pos) {
+  const now = performance.now(), s = state[i];
+  s.t0 = now; s.vel = Math.max(vel, s.on && s.who === who ? s.vel * 0.7 : 0); s.who = who; s.on = true;
+  presses.push({ i, pos: pos ?? 0.5, vel, who, t0: now }); kick();
+}
+
+// ════════ Audio (Freischaltung und Summe wie Kalimba und Harfe) ════════
+let ctx, bus, warmLp, unlocking = false, pending = null;
+const buffers = {}, voices = [];
+function initAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 2; comp.attack.value = 0.003; comp.release.value = 0.25;
+  const makeup = ctx.createGain(); makeup.gain.value = 1.3;
+  const limit = ctx.createDynamicsCompressor();
+  limit.threshold.value = -2; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.001; limit.release.value = 0.1;
+  bus = ctx.createGain();
+  warmLp = ctx.createBiquadFilter(); warmLp.type = 'lowpass'; warmLp.Q.value = 0.5; warmLp.frequency.value = 14000;   // ruhiger: etwas weicher
+  bus.connect(warmLp); warmLp.connect(comp); comp.connect(makeup); makeup.connect(limit); limit.connect(ctx.destination);
+}
+const audible = () => ctx.state === 'running' || unlocking;
+// Safari schaltet den Ton nur in touchend, click, mousedown oder keydown frei. Der Anschlag kommt schon bei pointerdown:
+// den merken wir uns und spielen ihn, sobald der Ton läuft.
+function unlockAudio() {
+  if (!ctx || ctx.state === 'running') return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; flushPending(); render(); }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+  flushPending();
+}
+function flushPending() { if (pending && performance.now() - pending.t < 700 && audible()) { const p = pending; pending = null; sound(p.i, p.vel, 'me', p.roll); } }
+['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+
+async function loadOne(f) {
+  const res = await fetch(`../samples/${f}.wav`);
+  if (!res.ok) throw new Error(`${f}: ${res.status}`);
+  const buf = await ctx.decodeAudioData(await res.arrayBuffer());
+  const d = buf.getChannelData(0); let i = 0;
+  while (i < d.length && Math.abs(d[i]) < 0.01) i++;
+  buffers[f] = { buf, offset: Math.max(0, i - 32) / buf.sampleRate };
+}
+
+const levelOf = i => 0.5 * (1 + 0.35 * (1 - i / (SCALE.length - 1)));   // tiefe Stäbe etwas lauter: der Handy-Lautsprecher schluckt die Tiefe
+function fade(v, now, tau) {
+  try { v.env.gain.cancelScheduledValues(now); v.env.gain.setValueAtTime(v.env.gain.value, now); v.env.gain.setTargetAtTime(0, now, tau); v.src.stop(now + tau * 8); } catch (e) {}
+}
+// Ein Schlag. Ein echter Stab wird beim neuen Schlag nicht abgedämpft: der alte Klang läuft weiter.
+function sound(i, vel, who, roll) {
+  if (!ctx) return null;
+  const B = SCALE[i], b = buffers[B.src];
+  if (!b) return null;
+  if (!audible()) { if (who === 'me') pending = { i, vel, roll, t: performance.now() }; return null; }
+  const now = ctx.currentTime;
+  const src = ctx.createBufferSource(); src.buffer = b.buf; src.playbackRate.value = Math.pow(2, B.semi / 12);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5;
+  lp.frequency.value = roll ? 2600 : 1800 + 9000 * vel * vel;          // leise Schläge sind weicher: es gibt nur laute Aufnahmen
+  const env = ctx.createGain(), lvl = vel * levelOf(i), att = roll ? 0.008 : 0.0015;
+  env.gain.setValueAtTime(0, now); env.gain.linearRampToValueAtTime(lvl, now + att);
+  src.connect(lp); lp.connect(env); env.connect(bus);
+  src.start(now, b.offset);
+  const v = { i, who, env, src };
+  voices.push(v);
+  src.onended = () => { const k = voices.indexOf(v); if (k >= 0) voices.splice(k, 1); };
+  while (voices.length > 32) fade(voices.shift(), now, 0.04);
+  return v;
+}
+
+// ════════ Vibration (aus Kalimba und Harfe) ════════
+// Android: navigator.vibrate. iPhone: kein vibrate; ab iOS 18 löst ein umgeschalteter <input switch> einen Haptik-Impuls aus,
+// aber nur während einer Berührung. Darum vibriert das iPhone bei deinen Schlägen, nicht bei den Antworten.
+let haptics = true; try { haptics = localStorage.getItem('marimba-vibration') !== 'aus'; } catch (e) {}
+const hasVibrate = typeof navigator.vibrate === 'function';
+const hasSwitch = 'switch' in HTMLInputElement.prototype;
+let vibrateBlocked = false;
+function iosTick() {
+  const l = document.createElement('label'), c = document.createElement('input');
+  l.setAttribute('aria-hidden', 'true'); l.style.display = 'none'; c.type = 'checkbox'; c.setAttribute('switch', '');
+  l.appendChild(c); document.head.appendChild(l); l.click(); l.remove();
+}
+function buzz(ms, ticks) {
+  if (!haptics) return;
+  if (hasVibrate && !vibrateBlocked) {
+    let ok = false; try { ok = navigator.vibrate(ms); } catch (e) {}
+    if (ok) return;
+    vibrateBlocked = true;
+  }
+  if (hasSwitch) { iosTick(); for (let k = 1; k < ticks; k++) setTimeout(iosTick, k * 55); }
+}
+function hapticNote() {
+  if (!haptics) return 'Vibration ist aus.';
+  if (hasVibrate && !vibrateBlocked) return 'Vibration: bei jedem Schlag. Beim Wirbel nur sanft, sonst brummt das Handy.';
+  return hasSwitch ? 'Vibration: ein kurzer Impuls bei jedem Schlag, beim Wirbel seltener.' : 'Vibration ist auf diesem Gerät nicht verfügbar.';
+}
+
+// ════════ Dein Schlag ════════
+// Wirbel wie am echten Instrument: schnelle Einzelschläge, abwechselnd mit zwei Schlägeln (hier: zwei Fingern).
+// Folgen Schläge so schnell, werden sie gleichmäßig weich, wie ein guter Wirbel: der erste Schlag bleibt der Akzent.
+const barT = SCALE.map(() => -1e9), lastMe = { t: -1e9 };
+let lastBuzzT = -1e9;
+function me(i, pos) {
+  const now = performance.now();
+  const roll = now - barT[i] < 260 || now - lastMe.t < 170;
+  barT[i] = now;
+  const edge = Math.abs(clamp(pos, 0, 1) - 0.5) * 2;      // 0 in der Mitte des Stabs, 1 am Ende
+  const vel = roll ? 0.5 + Math.random() * 0.08 : clamp(1 - 0.3 * edge * edge, 0.6, 1) * (0.96 + Math.random() * 0.04);
+  if (answering) stopAnswer();
+  if (!cd.started) cdStart(); else if (!cd.running && cd.left > 0) cdStart();   // der erste Ton startet den Countdown, ein Ton setzt ihn fort
+  lightUp(i, vel, 'me', pos);
+  sound(i, vel, 'me', roll);
+  if (!roll || now - lastBuzzT > 200) { buzz(roll ? 20 : Math.round(30 + 50 * vel), roll ? 1 : vel > 0.85 ? 3 : 2); lastBuzzT = now; }
+  listen(i, vel, now, roll);
+  calmNote(now, roll);
+  lastMe.t = now;
+}
+
+// ════════ Gespräch ════════
+// Das Marimbaphon hört zu, bis du eine Pause machst, die zu deinem Tempo passt. Dann antwortet es: es greift EINE Sache
+// aus deinem Spiel auf (deinen Rhythmus, deine Richtung umgekehrt, deinen letzten Ton, dasselbe höher oder tiefer) und
+// verändert den Rest. Die Antwort endet auf d oder g. Tippst du dazwischen, hört sie sanft auf.
+let phrase = [], pauseTimer = 0, answering = false, ansTimers = [], ansVoices = [];
+const held = new Map();                                    // Finger, die gerade auf dem Glas liegen
+function listen(i, vel, t, roll) {
+  if (!P.dialog) return;
+  const last = phrase[phrase.length - 1], prev = phrase[phrase.length - 2];
+  if (roll && last && (last.i === i || (prev && prev.i === i))) last.roll = true;   // ein Wirbel ist ein Ton, kein Satz
+  else phrase.push({ i, vel, t });
+  if (phrase.length > 12) phrase.shift();
+  clearTimeout(pauseTimer); pauseTimer = setTimeout(maybeAnswer, pauseMs());
+}
+function pauseMs() {
+  const g = gaps(phrase), m = g.length ? median(g) : 600;
+  return clamp(m * 3, 1800, 3200) + (phrase.length && phrase[phrase.length - 1].roll ? 400 : 0);
+}
+function maybeAnswer() {
+  if (!P.dialog || !phrase.length) return;
+  if (held.size) { pauseTimer = setTimeout(maybeAnswer, 400); return; }   // ein Finger liegt noch: noch nicht fertig
+  const ph = phrase; phrase = [];
+  playAnswer(compose(ph));
+}
+function compose(ph) {
+  const n = N(), degs = ph.map(p => Math.min(p.i, n - 1)), g = gaps(ph);
+  const fold = d => { while (d < 0 || d > n - 1) d = d < 0 ? -d : 2 * (n - 1) - d; return d; };
+  const walk = (start, k) => { const out = []; let d = start; for (let j = 0; j < k; j++) { d = fold(d + pick([-2, -1, -1, 1, 1, 2])); out.push(d); } return out; };
+  let len = clamp(ph.length + Math.round(rnd(-1, 1)), 2, 6);
+  const rule = ph.length < 2 ? pick(['continue', 'rhythm']) : pick(['rhythm', 'mirror', 'continue', 'shift']);
+  let notes;
+  if (rule === 'rhythm') {                                 // dein Rhythmus, eigene Töne
+    len = clamp(ph.length, 2, 6);
+    const start = fold(Math.round(mean(degs)) + pick([-3, -2, 2, 3]));
+    notes = [start, ...walk(start, len - 1)];
+  } else if (rule === 'mirror') {                          // deine Richtung, umgekehrt, ab deinem letzten Ton
+    const a0 = degs[0], start = degs[degs.length - 1];
+    notes = degs.slice(0, len).map(d => fold(start - (d - a0)));
+    if (notes.length < len) notes.push(...walk(notes[notes.length - 1], len - notes.length));
+  } else if (rule === 'continue') {                        // dein letzter Ton, weitergeführt
+    notes = walk(degs[degs.length - 1], len);
+  } else {                                                 // dasselbe höher oder tiefer, am Ende anders
+    const s = pick([-3, -2, 2, 3]);
+    notes = degs.slice(0, len).map(d => fold(d + s));
+    if (notes.length < len) notes.push(...walk(notes[notes.length - 1], len - notes.length));
+    notes[notes.length - 1] = fold(notes[notes.length - 1] + pick([-1, 1]));
+  }
+  if (notes.join() === degs.slice(0, notes.length).join()) notes[notes.length - 1] = fold(notes[notes.length - 1] + pick([-2, 2]));
+  const homes = HOME.filter(h => h < n), end = notes[notes.length - 1];
+  const dist = Math.min(...homes.map(h => Math.abs(h - end)));
+  notes[notes.length - 1] = pick(homes.filter(h => Math.abs(h - end) === dist));
+  if (notes.length === degs.length && notes.join() === degs.join()) {   // der ruhige Schluss hat doch eine Kopie ergeben: davor etwas anders
+    const k = notes.length - 2; if (k >= 0) notes[k] = fold(notes[k] + pick([-1, 1])); else notes.push(pick(homes));
+  }
+  // Zeit: dein Rhythmus, eine Spur ruhiger; der letzte Abstand länger, wie ein Ausatmen
+  const base = clamp(g.length ? median(g) : 520, 280, 900);
+  const step = k => clamp((g.length ? g[k % g.length] : base) * (rule === 'rhythm' ? 1.05 : 1.15), 220, 1100);
+  const v0 = clamp(mean(ph.map(p => p.vel)) * 0.8, 0.45, 0.8);
+  let t = 0;
+  return notes.map((i, k) => {
+    if (k > 0) t += step(k - 1) * (k === notes.length - 1 ? 1.35 : 1);
+    return { i, t, vel: clamp(v0 + rnd(-0.06, 0.06), 0.35, 0.85) * (k === notes.length - 1 ? 0.9 : 1),
+      roll: k === notes.length - 1 && ph[ph.length - 1].roll };
+  });
+}
+function answerStroke(i, vel, roll) {
+  lightUp(i, vel, 'you', 0.5);
+  const v = sound(i, vel, 'you', roll); if (v) ansVoices.push(v);
+}
+function playAnswer(notes) {
+  answering = true; ansVoices = [];
+  for (const nt of notes) {
+    ansTimers.push(setTimeout(() => answerStroke(nt.i, nt.vel, false), nt.t));
+    if (nt.roll) for (let k = 1; k <= 7; k++)                 // du hast mit einem Wirbel aufgehört: die Antwort auch, leiser werdend
+      ansTimers.push(setTimeout(() => answerStroke(nt.i, 0.45 - k * 0.03, true), nt.t + k * 115));
+  }
+  const last = notes[notes.length - 1];
+  ansTimers.push(setTimeout(() => { answering = false; ansTimers = []; }, last.t + (last.roll ? 1000 : 300)));
+}
+function stopAnswer() {
+  ansTimers.forEach(clearTimeout); ansTimers = []; answering = false;
+  if (ctx) { const now = ctx.currentTime; ansVoices.forEach(v => fade(v, now, 0.15)); }
+  ansVoices = [];
+}
+
+// ════════ Ruhiger gespielt ════════
+// Längere und gleichmäßigere Abstände zwischen deinen Schlägen machen den Grund langsam wärmer und den Klang etwas weicher.
+// Keine Zahl, keine Anzeige. Wieder schneller: es geht nur langsam zurück. Pausen ändern nichts.
+let calmTarget = 0, slowE = 0, devE = 0.6, lastGap = 0, lastCalmT = 0;
+function calmNote(now, roll) {
+  if (roll) return;                                        // ein Wirbel ist ein langer Ton, kein Tempo
+  if (lastCalmT) {
+    const gap = now - lastCalmT;
+    if (gap < 6000) {
+      slowE += (clamp((gap - 350) / 1250, 0, 1) - slowE) * 0.18;
+      if (lastGap) devE += (Math.abs(Math.log(gap / lastGap)) - devE) * 0.18;
+      lastGap = gap;
+    } else lastGap = 0;
+  }
+  lastCalmT = now;
+  calmTarget = slowE * (0.45 + 0.55 * clamp(1 - devE / 0.8, 0, 1));
+}
+setInterval(() => {
+  const d = calmTarget - calm;
+  if (Math.abs(d) < 0.0005) return;
+  calm += d * (d > 0 ? 0.1 / 15 : 0.1 / 35);               // an in etwa 15 Sekunden, zurück in etwa 35
+  if (ctx) warmLp.frequency.setTargetAtTime(14000 * (1 - 0.6 * calm), ctx.currentTime, 0.3);
+  if (!raf) draw(performance.now());
+}, 100);
+
+// ════════ Berühren ════════
+function hit(x, y) {
+  if (!L || y < L.top - 24 || y > L.bottom + 12 || x < L.x0 - 8 || x > L.x1 + 8) return null;
+  const i = clamp(Math.floor((x - L.x0) / L.col), 0, N() - 1), B = L.bars[i];
+  return { i, pos: (y - B.y0) / B.h };
+}
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  const h = hit(e.clientX, e.clientY); held.set(e.pointerId, h ? h.i : -1); if (h) me(h.i, h.pos);
+});
+cv.addEventListener('pointermove', e => {                   // darüberstreichen: ein Glissando
+  if (!held.has(e.pointerId)) return;
+  const h = hit(e.clientX, e.clientY);
+  if (h && h.i !== held.get(e.pointerId)) { held.set(e.pointerId, h.i); me(h.i, h.pos); }
+});
+['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, e => held.delete(e.pointerId)));
+const keysDown = new Set();
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest?.('input, button, a')) return;
+  const k = e.key.toLowerCase(), i = KEYS.indexOf(k);
+  if (i >= 0 && i < N() && !keysDown.has(k)) { keysDown.add(k); me(i, e.shiftKey ? 0.1 : 0.5); }   // mit Shift: am Ende des Stabs
+});
+addEventListener('keyup', e => keysDown.delete(e.key.toLowerCase()));
+
+// ════════ Countdown (aus der Harfe 1443: 1:30, startet mit dem ersten Ton) ════════
+const ICON = {
+  play: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"></path></svg>',
+  pause: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pause musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><rect x="14" y="3" width="5" height="18" rx="1"></rect><rect x="5" y="3" width="5" height="18" rx="1"></rect></svg>',
+  again: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>',
+};
+const CD_BTN = { unstarted: ['play', 'Starten'], playing: ['pause', 'Pause'], paused: ['play', 'Weiter'], ended: ['again', 'Noch einmal'] };
+const CD = 90, cd = { left: CD, running: false, started: false, at: 0, shown: null, thanked: false };
+const cdTime = document.getElementById('cd-time'), cdBtn = document.getElementById('cd-btn'), cdCap = document.getElementById('cd-cap'), btnDone = document.getElementById('btn-done');
+const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+let cdTimer = 0;
+function cdRender() {
+  const done = cd.left <= 0, st = done ? 'ended' : cd.running ? 'playing' : cd.started ? 'paused' : 'unstarted';
+  cdTime.textContent = mmss(Math.max(0, Math.ceil(cd.left))); cdTime.toggleAttribute('data-done', done);
+  const cap = cd.thanked ? 'Danke. Spiel gern weiter.' : done ? 'Schön, dass du 1:30 Minuten bei dir warst. Spiel gern weiter.' : 'mindestens spielen für diese Übung';
+  if (cdCap.textContent !== cap) cdCap.textContent = cap;
+  btnDone.toggleAttribute('data-waiting', st === 'unstarted' || st === 'playing' || cd.thanked);   // „Ich bin fertig“ erst nach Pause oder bei 0:00
+  if (cd.shown !== st) {
+    const had = cdBtn.contains(document.activeElement), [ic, label] = CD_BTN[st];
+    cdBtn.innerHTML = `<button type="button" tabindex="0" data-state="${st}" class="musy-btn musy-btn--ghost musy-mbtn musy-btn--min musy-mbtn--no-timer">${ICON[ic]}<span class="musy-btn__label">${label}</span><span class="musy-sr-only">, Countdown</span></button>`;
+    cd.shown = st; if (had) cdBtn.firstElementChild.focus();
+  }
+}
+function cdTick() { const now = performance.now(); cd.left -= (now - cd.at) / 1000; cd.at = now;
+  if (cd.left <= 0) { cd.left = 0; cd.running = false; clearInterval(cdTimer); } cdRender(); }
+function cdStart() { if (cd.running) return; if (cd.left <= 0) { cd.left = CD; cd.thanked = false; } cd.started = true; cd.running = true; cd.at = performance.now();
+  clearInterval(cdTimer); cdTimer = setInterval(cdTick, 250); cdRender(); }
+function cdPause() { if (!cd.running) return; cdTick(); cd.running = false; clearInterval(cdTimer); cdRender(); }
+cdBtn.addEventListener('click', () => { cd.running ? cdPause() : cdStart(); });
+btnDone.addEventListener('click', () => { cdPause(); cd.thanked = true; cdRender(); });   // Version 1: noch keine Umfrage
+
+// ════════ Leiste, Info, Hinweis ════════
+const panel = document.getElementById('panel'), note = document.getElementById('note');
+function render() {
+  setSwitch('sw-dialog', P.dialog); setSwitch('sw-vibration', haptics); setSwitch('sw-info', panel.classList.contains('open'));
+  setSeg(P.bars);
+  document.getElementById('haptic-info').textContent = hapticNote();
+  const running = ctx && ctx.state === 'running';
+  note.textContent = !running ? 'Tippe auf einen Stab, dann klingt das Marimbaphon.'
+    : P.dialog ? 'Machst du eine Pause, antwortet das Marimbaphon. Seine Stäbe leuchten grün.' : 'Spiel frei, so lange du magst.';
+  note.classList.add('shown');
+}
+document.querySelectorAll('#seg-bars .musy-seg__option').forEach(b => {
+  b.addEventListener('click', () => { const v = +b.dataset.value; if (v === P.bars) return; P.bars = v; save(); stopAnswer(); phrase = []; render(); layout(); });
+  b.addEventListener('keydown', e => { if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return; e.preventDefault();
+    P.bars = P.bars === 7 ? 10 : 7; save(); stopAnswer(); phrase = []; render(); layout(); document.getElementById('bars-' + P.bars).focus(); });
+});
+document.getElementById('sw-dialog').addEventListener('click', () => { P.dialog = !P.dialog; save(); if (!P.dialog) { stopAnswer(); clearTimeout(pauseTimer); phrase = []; } render(); });
+document.getElementById('sw-vibration').addEventListener('click', () => {
+  haptics = !haptics; try { localStorage.setItem('marimba-vibration', haptics ? 'an' : 'aus'); } catch (e) {}
+  render(); if (haptics) buzz(80, 2); });
+document.getElementById('sw-info').setAttribute('aria-controls', 'panel');
+document.getElementById('sw-info').addEventListener('click', () => { panel.classList.toggle('open'); render(); });
+
+// Leiste ein- und ausklappen, Info-Feld daneben (wie Kalimba und Harfe)
+function placePanel() {
+  const t = toolbarEl.getBoundingClientRect();
+  const panelLeft = innerWidth - parseFloat(getComputedStyle(panel).right) - panel.offsetWidth;
+  if (t.right > panelLeft) panel.style.setProperty('--panel-bottom', 'calc(' + Math.ceil(innerHeight - t.top) + 'px + var(--space-gap-stack))');
+  else panel.style.removeProperty('--panel-bottom');
+}
+new ResizeObserver(placePanel).observe(toolbarEl);
+const btnClose = document.getElementById('btn-close');
+function setExpanded(on) {
+  foot.classList.toggle('expanded', on); btnSettings.setAttribute('aria-expanded', on);
+  if (!on && panel.classList.contains('open')) { panel.classList.remove('open'); render(); }
+  if (on) placePanel();
+  (on ? document.getElementById('sw-dialog') : btnSettings).focus({ preventScroll: true });
+}
+btnSettings.addEventListener('click', () => setExpanded(true));
+btnClose.addEventListener('click', () => setExpanded(false));
+addEventListener('keydown', e => { if (e.key === 'Escape' && foot.classList.contains('expanded')) setExpanded(false); });
+new ResizeObserver(layout).observe(header);
+addEventListener('resize', layout);
+
+// ════════ Start ════════
+readColors();
+const recolor = () => { readColors(); draw(performance.now()); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', recolor);
+new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+initAudio();
+ctx.onstatechange = render;
+render(); cdRender(); layout();
+Promise.all(FILES.map(loadOne))
+  .catch(() => { note.textContent = 'Die Aufnahmen ließen sich nicht laden. Lade die Seite neu.'; });
+})();
+</script>
+</body>
+</html>

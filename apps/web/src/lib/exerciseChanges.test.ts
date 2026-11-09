@@ -77,6 +77,114 @@ describe('which paths are text', () => {
   });
 });
 
+/* ── THE INSTRUMENTS (2026-11-09) ─────────────────────────────────────────
+   Eight new words a therapist edits, plus the play step's headline and body,
+   and every one has to come out `text` — otherwise each edit to Kalimba,
+   Marimba or Harfe would stop the file at Ben's desk as a decision nobody
+   asked for. */
+const INSTRUMENT_TEXT = [
+  'run[0].copy.LOCALE.modeSoloLabel',
+  'run[0].copy.LOCALE.modeSoloMd',
+  'run[0].copy.LOCALE.modeMusieLabel',
+  'run[0].copy.LOCALE.modeMusieMd',
+  'run[0].copy.LOCALE.motionMd',
+  'run[0].copy.LOCALE.motionLabel',
+  'run[1].copy.LOCALE.headline',
+  'run[1].copy.LOCALE.bodyMd',
+  'run[1].copy.LOCALE.playTouchMd',
+  'run[1].copy.LOCALE.playPointerMd',
+  'run[1].copy.LOCALE.focusHeadline',
+  'run[1].copy.LOCALE.playCta',
+] as const;
+
+function kalimba(): ExerciseConfig {
+  const intro = (locale: string) => ({
+    headline: 'Bevor es losgeht', bodyMd: `Ruhig (${locale}).`,
+    modeSoloLabel: 'Alleine', modeSoloMd: 'Still.',
+    modeMusieLabel: 'Duett mit Musie', modeMusieMd: 'Antwortet.',
+    motionMd: 'Bewegung.', motionLabel: 'Schwingen erlauben',
+  });
+  const play = (locale: string) => ({
+    headline: 'Tippe', bodyMd: `Spiel (${locale}).`, playCta: 'Zur Kalimba',
+    playTouchMd: 'Mit dem Finger.', playPointerMd: 'Mit der Maus.', focusHeadline: 'Tippe.',
+  });
+  return {
+    id: 'kalimba',
+    kind: 'instruments',
+    implemented: true,
+    modes: null,
+    catalogue: {
+      sort: 6, timeframeMinutes: { min: 3, max: 10 }, cardsDealt: null,
+      artwork: 'k.webp', goals: ['relax'],
+    },
+    library: {
+      de: { name: 'Kalimba', description: 'D', needs: 'Dein Handy', imageAlt: 'A' },
+      en: { name: 'Kalimba', description: 'D', needs: 'Your phone', imageAlt: 'A' },
+    },
+    run: [
+      { step: 'intro', features: ['needs_note'], copy: { de: intro('de'), en: intro('en') } },
+      {
+        step: 'play', gateSeconds: 90,
+        features: ['answer_mode', 'motion_permission', 'play_timer'],
+        instrument: { id: 'kalimba', defaultMode: 'with_musie', vibrationDefault: true },
+        copy: { de: play('de'), en: play('en') },
+      },
+    ],
+    content: { locales: ['de', 'en'], textLocales: ['de', 'en'] },
+  };
+}
+
+describe('the instruments\' words are text', () => {
+  it('classifies every new field as text, in both locales', () => {
+    for (const shape of INSTRUMENT_TEXT) {
+      for (const locale of ['de', 'en']) {
+        expect(classifyPath(shape.replace('LOCALE', locale))).toBe('text');
+      }
+    }
+  });
+
+  /* Which instrument, and what its two switches start at, is what the
+     exercise IS. Turning the kalimba into a marimba is not a rewording. */
+  it('keeps the instrument itself structural', () => {
+    for (const path of [
+      'run[1].instrument', 'run[1].instrument.id',
+      'run[1].instrument.defaultMode', 'run[1].instrument.vibrationDefault',
+    ]) {
+      expect(classifyPath(path)).toBe('structural');
+    }
+  });
+
+  /* An instruments exercise has no modes, so a mode override of these words
+     is nothing the app could read: the allowlist leaves it out. */
+  it('does not take them as a mode override', () => {
+    expect(classifyPath('run[1].copy.de.digital.playCta')).toBe('structural');
+  });
+
+  it('logs an edit of each one as text, and the file stays safe to apply', () => {
+    for (const shape of INSTRUMENT_TEXT) {
+      for (const locale of ['de', 'en']) {
+        const path = shape.replace('LOCALE', locale);
+        const after = kalimba();
+        expect(setAtPath(after, path, 'Neu formuliert.')).toBe(true);
+
+        const log = changeLog(kalimba(), after);
+        expect(log).toEqual([
+          expect.objectContaining({ path, kind: 'text', after: 'Neu formuliert.' }),
+        ]);
+        expect(buildHandover(log, [], [], AT).safeToApply).toBe(true);
+      }
+    }
+  });
+
+  it('flags a changed instrument', () => {
+    const after = kalimba();
+    after.run[1]!.instrument!.id = 'marimba';
+    const handover = buildHandover(changeLog(kalimba(), after), [], [], AT);
+    expect(handover.safeToApply).toBe(false);
+    expect(handover.blockers).toEqual(['run[1].instrument.id: kalimba → marimba']);
+  });
+});
+
 describe('the change log', () => {
   it('is empty when nothing moved', () => {
     expect(changeLog(base(), base())).toEqual([]);

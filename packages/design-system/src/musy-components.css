@@ -734,6 +734,42 @@
   cursor: pointer;
 }
 
+/* ── SIZE `sm` (2026-11-09) ─────────────────────────────────────────────────
+   The harp experiment's `.musie-switch--sm`, moved into the system as it was
+   built there (harp/261104-1443, the settings toolbar): a switch for a row of
+   small controls, beside a `min` segmented control in label-md.
+
+   THE TRACK IS RE-DERIVED, NOT RE-DRAWN. Only the knob variable changes —
+   `--icon-size-sm` (16px) — and every other measure above is arithmetic over
+   it, so the track comes out 44×24 and the knob travel follows with no rule of
+   its own. The inset stays `--sp-1`.
+
+   THE ROW KEEPS ITS 44px. `min-height: --target-primary` is untouched: the
+   target is the row, never the track, at either size.
+
+   THE GLYPH STEPS DOWN WITH THE KNOB, to three quarters of `--icon-size-sm`
+   (12px) — the harp's own ratio. A 16px glyph in a 16px knob would fill it
+   edge to edge.
+
+   THE LABEL TAKES label-md AT ITS OWN WEIGHT, which is regular. label-lg is
+   semibold, and beside segments set in label-md a semibold switch label is the
+   loudest word in the row. */
+.musy-switch--sm {
+  --musy-switch-knob: var(--icon-size-sm);                              /* 16px */
+  gap: var(--space-gap-inline);
+}
+.musy-switch--sm .musy-switch__glyph .musy-icon {
+  width: calc(var(--icon-size-sm) * 0.75);
+  height: calc(var(--icon-size-sm) * 0.75);
+}
+.musy-switch--sm .musy-switch__label {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+}
+
 
 /* ═══ 6 · RADIO GROUP — TEXT ONLY ══════════════════════════════════════════
    base-ui RadioGroup + Radio (`@base-ui/react/radio-group`, `/radio`), with
@@ -3044,6 +3080,38 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   background-color: var(--interactive-primary-disabled);
   border-color: var(--border-subtle);
 }
+
+/* ── WHAT THE SELECTED OPTION MEANS (2026-11-09) ──────────────────────────
+   `SegmentedOption.description`, under the track. One paragraph per option
+   that has one; the ones not selected carry `hidden`, so NO `display` is
+   declared here — an author `display` would outrank the user agent's
+   `[hidden] { display: none }` and draw all of them at once.
+
+   Field's description, for the same job: body-sm, muted, the reading measure.
+   `--space-gap-related` from the track, the gap Layer 1 names for atoms that
+   belong together, which a control and the sentence about its value are.
+
+   `contain: inline-size` IS FOR THE FURNITURE SETTINGS. At `labels:
+   unchecked` and `none` the root is `max-content` wide — and a sentence's
+   max-content is the whole sentence on one line, which would stretch a
+   two-glyph toggle across the screen. Contained, the paragraph adds nothing
+   to the control's intrinsic width and wraps at whatever width the track
+   gave it. At `labels: all` the root is as wide as its container either way,
+   so the declaration changes nothing there. */
+.musy-seg__description {
+  margin: var(--space-gap-related) 0 0;
+  contain: inline-size;
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line);
+  letter-spacing: var(--type-body-sm-tracking);
+  color: var(--on-surface-muted);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+.musy-seg[data-disabled] .musy-seg__description { color: var(--on-surface-disabled); }
 
 
 
@@ -7515,6 +7583,58 @@ html[data-musy-scroll-snap='y'] {
   background-color: var(--surface-inverse);
 }
 
+/* ── THE STAGE — something to play, under every slot (2026-11-09) ─────────
+   The instruments: a canvas the size of the screen, under the header and the
+   foot, as the harp experiment drew its strings the full height of the window.
+   Out to the edges the same way the field is — Lightbox insets this sheet by
+   `--space-inset-sheet` on both axes, the negative inset undoes it.
+
+   THE SLOTS LET A PRESS THROUGH where they hold no control. The headline is
+   text over strings, and a string under it must still be a string — the
+   experiment's own construction (`.musie-top { pointer-events: none }`). Every
+   control in them takes its press back. */
+.musy-sheet__stage {
+  position: absolute;
+  inset: calc(var(--space-inset-sheet) * -1);
+}
+
+.musy-sheet[data-stage] .musy-sheet__header,
+.musy-sheet[data-stage] .musy-sheet__body,
+.musy-sheet[data-stage] .musy-sheet__foot {
+  pointer-events: none;
+}
+
+.musy-sheet[data-stage] :is(.musy-sheet__header, .musy-sheet__foot)
+  :is(button, a, input, select, textarea, [role="button"], [role="switch"], [role="radio"], [role="slider"]) {
+  pointer-events: auto;
+}
+
+/* With a stage the header starts below the row the X stands in —
+   max(`--space-inset-card`, `--target-primary`) from the top, the harp's own
+   padding (measured: 44px) — since the stage puts nothing else between them. */
+.musy-sheet[data-stage]:not([data-density="compact"]) .musy-sheet__header {
+  margin-block-start: calc(max(var(--space-inset-card), var(--target-primary)) - var(--space-inset-sheet));
+}
+
+/* With a stage the foot sits at `--space-inset-card` from the bottom, where the
+   harp's „Ich bin fertig“ stood (measured: 24px), not at the sheet's inset. */
+.musy-sheet[data-stage] .musy-sheet__foot {
+  margin-block-end: calc(var(--space-inset-card) - var(--space-inset-sheet));
+}
+
+/* ── COMPACT: the header and the foot closer to the edges ─────────────────
+   The marimba's experiment: its one-line headline at `--sp-4` from the top
+   and its foot at `--sp-3` from the bottom, which is where its bars got their
+   height. The X stays where it is. */
+.musy-sheet[data-density="compact"] .musy-sheet__header {
+  margin-block-start: calc(var(--sp-4) - var(--space-inset-sheet));
+}
+
+.musy-sheet[data-density="compact"][data-stage] .musy-sheet__foot,
+.musy-sheet[data-density="compact"] .musy-sheet__foot {
+  margin-block-end: calc(var(--sp-3) - var(--space-inset-sheet));
+}
+
 /* ── EVERY SLOT SITS OVER THE FIELD, AND THE LIST IS THE WHOLE RULE ───────
    The field is `position: absolute`, and a positioned element paints above
    STATIC siblings whatever the source order says. So anything that is not
@@ -8201,4 +8321,150 @@ html[data-musy-scroll-snap='y'] {
 .musy-ilink-action:disabled {
   color: var(--on-surface-disabled);
   cursor: not-allowed;
+}
+
+
+/* ═══ 29 · COUNTDOWN ═══════════════════════════════════════════════════════
+   The minimum an exercise asks for, as the largest thing on its screen: the
+   figure, the control that moves it, and the sentence that says what the
+   figure means. Moved here from the app's listen step
+   (`.musie-immersive__clock`, `__meter`, `__time`, `__caption` in
+   apps/web/src/shell.css), value for value, because the instruments are the
+   third screen to draw it (L14.3).
+
+   ONE DECLARATION DID NOT MOVE: the app's `margin-block: auto`, which centres
+   the clock vertically in the listen sheet. Where a component sits is the
+   screen's to say; what it looks like is the component's.               */
+.musy-countdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-inline);
+}
+
+/* ── THE FIGURE AND THE CONTROL THAT MOVES IT, IN ONE ROW ─────────────────
+   `center`, not `baseline`: `--type-display-xl-size` clamps 40px → 64px, so a
+   baseline-aligned 36px control would sit at a different height on a phone
+   than on a laptop. Centred, it tracks the figure whatever the clamp resolves
+   to. `fit-content`, so the row is as wide as its two children and the control
+   sits beside the figure rather than being pushed out by a stretched row.
+
+   THE GAP IS WIDER THAN THE TOKEN by the 8px `.musy-btn--min` bakes into its
+   own margin (the rung's spacing exception). Left as the token, as the app
+   left it: a hand correction would be a number nobody chose. */
+.musy-countdown__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-inline);
+  inline-size: fit-content;
+}
+
+/* display-xl, the largest step Layer 1 has — a countdown read from arm's
+   length with half-closed eyes.
+
+   `tabular-nums` IS LOAD-BEARING: proportional digits change width as they
+   tick, so `01:11` → `01:10` shifts every glyph after the one that changed and
+   the figure jitters once a second for ninety seconds. */
+.musy-countdown__time {
+  margin: 0;
+  transition: color var(--motion-toggle);
+  font-family: var(--type-display-xl-family);
+  font-size: var(--type-display-xl-size);
+  font-weight: var(--type-display-xl-weight);
+  line-height: var(--type-display-xl-line);
+  letter-spacing: var(--type-display-xl-tracking);
+  font-variant-numeric: tabular-nums;
+  color: var(--on-surface);
+}
+
+/* ── AND IT GOES QUIET AT 00:00 ───────────────────────────────────────────
+   The figure has done its job. Muted rather than removed, so nothing reflows
+   under a reader mid-sentence and the number reads as a RESULT. Transitioned
+   on `--motion-toggle`, because this is the moment the way on lights up too,
+   and three things changing in one frame with no motion between them reads as
+   a glitch. */
+.musy-countdown__time[data-done] {
+  color: var(--on-surface-muted);
+}
+
+/* The caption: muted and small, because it is read once and the figure is
+   read throughout. The reading measure rather than the heading's — once the
+   minimum is done it is a sentence or two, and it is the thing being read. */
+/* ── COMPACT: one row, the marimba's foot ─────────────────────────────────
+   Figure, transport and caption on one line; the figure in heading-md; the
+   caption only where there is room for it, as the experiment had it. */
+.musy-countdown[data-size="compact"] {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-gap-inline);
+}
+
+.musy-countdown[data-size="compact"] .musy-countdown__time {
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+}
+
+@media (max-width: 760px) {
+  .musy-countdown[data-size="compact"] .musy-countdown__caption { display: none; }
+}
+
+.musy-countdown__caption {
+  margin: 0;
+  max-inline-size: var(--measure-body);
+  text-wrap: var(--text-wrap-body);
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  font-weight: var(--type-body-sm-weight);
+  line-height: var(--type-body-sm-line);
+  letter-spacing: var(--type-body-sm-tracking);
+  color: var(--on-surface-muted);
+}
+
+
+/* ═══ 30 · INSTRUMENT CURSOR ═══════════════════════════════════════════════
+   The harp experiment's green dot (harp/261104-1443, `.musie-cursor`), which
+   stands in for the mouse and pen pointer over an instrument. The rule for
+   when it shows is in `InstrumentCursor.tsx`; this is its geometry.
+
+   `top` and `left`, PHYSICAL, on purpose: the dot is moved by a transform of
+   the pointer's clientX / clientY, which are physical too, so a logical
+   inset would put it on the wrong side of the screen in a right-to-left
+   document. Centred by a negative margin of half its size, as the
+   experiment did, so the transform can stay the pointer's position.
+
+   Above everything, toasts included — `--z-toast` is Layer 1's top step and
+   this is one higher: a pointer drawn under something would not be a
+   pointer. It is appended to the body, outside every stacking context the
+   sheet makes, so the step is compared with the sheet's own.
+
+   `visibility`, not `display`: the dot keeps its box while hidden, so the
+   first move after showing it does not lay anything out.              */
+.musy-instrument-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: calc(var(--z-toast) + 1);
+  inline-size: var(--instrument-cursor-size);
+  block-size: var(--instrument-cursor-size);
+  margin: calc(var(--instrument-cursor-size) / -2) 0 0 calc(var(--instrument-cursor-size) / -2);
+  border-radius: var(--radius-full);
+  background-color: var(--instrument-cursor-color);
+  pointer-events: none;
+  visibility: hidden;
+  will-change: transform;
+}
+
+.musy-instrument-cursor[data-shown] { visibility: visible; }
+
+/* The target — the instrument's canvas — hides the system pointer for exactly
+   as long as the dot stands in for it. */
+[data-musy-instrument-cursor] { cursor: none; }
+
+@media (forced-colors: active) {
+  /* A system colour scheme replaces ours, and the system pointer is the one it
+     already accounts for: keep it, and do not draw the dot. */
+  .musy-instrument-cursor[data-shown] { visibility: hidden; }
+  [data-musy-instrument-cursor] { cursor: auto; }
 }

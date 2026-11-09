@@ -29,6 +29,7 @@ Styles: `components/musy-components.css`.
 | Draggable List | *none of its own* — composes §7.9, §7.2, §7.4 and §7.23; the state machine is the component |
 | Content List | `Separator` (row rules) |
 | Logo | `useRender` |
+| Countdown | *none of its own* — composes 7.21's `TrackButton`; see 7.27 |
 
 **State model.** base-ui puts state on the part itself — `data-checked`,
 `data-unchecked`, `data-disabled`, `data-pressed`, `data-invalid` — so the
@@ -255,7 +256,7 @@ base-ui's own guidance is an enclosing `<label>`, but this component uses the si
 **Anatomy.**
 ```
 Switch
-└── div.musy-switch[--reverse][--guided][--accent-placeholder1|2]
+└── div.musy-switch[--sm][--reverse][--guided][--accent-placeholder1|2]
     ├── button.musy-switch__track   ← Switch.Root, the focusable element
     │   └── span.musy-switch__knob  ← Switch.Thumb
     │       ├── Icon onGlyph   [data-state=shown|hidden]
@@ -273,6 +274,7 @@ Geometry is **derived**, not invented: knob = `--icon-size-lg` (24), inset = `--
 | `labelHidden` | `boolean` | `false` |
 | `reverse` | `boolean` | `false` |
 | `accent` | `'primary' \| 'accent-placeholder1' \| 'accent-placeholder2'` | `'primary'` |
+| `size` | `'md' \| 'sm'` | `'md'` |
 | `guided` | `boolean` | `false` |
 | `showStateIcons` | `boolean` | `true` |
 | `onGlyph` / `offGlyph` | `LucideIcon` | `Check` / `X` |
@@ -284,6 +286,8 @@ and the reference dark-mode control uses it. Both glyphs stay mounted and
 crossfade, so the knob never resizes mid-toggle. The pair is decorative: it is a
 redundant cue for a state `role="switch"` already announces, which is why it
 carries no label and why `showStateIcons={false}` is a legitimate choice.
+
+**Size `sm` — added 2026-11-09.** The harp experiment built a smaller switch for itself as `.musie-switch--sm` (harp/261104-1443, its settings toolbar); this is that, moved into the system for the instruments' settings panel (7.26). Only the knob variable changes — `--icon-size-sm` (16) — so the track re-derives to **44 wide and 24 high** and the knob travel follows with no rule of its own. The embedded glyph steps down to three quarters of `--icon-size-sm` (12), the harp's ratio. The label drops to `label-md` at its own regular weight — label-lg is semibold, and beside segments set in label-md that made the switch label the loudest word in the row — and the gap closes to `--space-gap-inline`. **The row keeps `--target-primary` at both sizes**: the target is the row, never the track. Measured in Storybook: track 44×24, row 44, label 400 weight, glyph 12px; `md` unchanged at 60×32.
 
 **State matrix.** Every state exists twice, once per checked value.
 
@@ -299,7 +303,7 @@ carries no label and why `showStateIcons={false}` is a legitimate choice.
 
 **Responsive behaviour.** No breakpoint changes. `guided` raises the *row* to `--target-guided`; the track never grows, because a 64px track would read as a slider.
 
-**Token usage.** `--icon-size-lg` `--icon-size-sm` `--sp-1` `--space-gap-related` `--target-primary` `--target-guided` `--radius-full` `--border-width-regular` `--border-style-solid` `--border-strong` `--border-subtle` `--surface-sunken` `--surface-raised` `--elevation-1` `--on-surface` `--on-surface-muted` `--on-surface-disabled` `--interactive-primary` `--interactive-primary-hover` `--interactive-primary-active` `--interactive-primary-border` `--interactive-primary-disabled` `--interactive-primary-on-subtle` `--interactive-accent-placeholder1` `--interactive-accent-placeholder1-border` `--interactive-accent-placeholder1-on-subtle` `--interactive-accent-placeholder2` `--interactive-accent-placeholder2-border` `--interactive-accent-placeholder2-on-subtle` `--interactive-ghost-hover` `--interactive-ghost-active` `--focus-ring` `--motion-toggle` `--type-label-lg-*`
+**Token usage.** `--icon-size-lg` `--icon-size-sm` `--sp-1` `--space-gap-related` `--space-gap-inline` (`sm`) `--target-primary` `--target-guided` `--radius-full` `--border-width-regular` `--border-style-solid` `--border-strong` `--border-subtle` `--surface-sunken` `--surface-raised` `--elevation-1` `--on-surface` `--on-surface-muted` `--on-surface-disabled` `--interactive-primary` `--interactive-primary-hover` `--interactive-primary-active` `--interactive-primary-border` `--interactive-primary-disabled` `--interactive-primary-on-subtle` `--interactive-accent-placeholder1` `--interactive-accent-placeholder1-border` `--interactive-accent-placeholder1-on-subtle` `--interactive-accent-placeholder2` `--interactive-accent-placeholder2-border` `--interactive-accent-placeholder2-on-subtle` `--interactive-ghost-hover` `--interactive-ghost-active` `--focus-ring` `--motion-toggle` `--type-label-lg-*` `--type-label-md-*` (`sm`)
 
 **A11y notes.** A **visible** label associated by `<label for>` is the default and the documented preference (2.5.3); `labelHidden` keeps the label in the accessible name rather than swapping to `aria-label`, so the visible-string / accessible-name match still holds wherever a label *is* shown. Three cues carry the state — fill, knob travel, and the embedded check/x — so removing the hue leaves it readable (1.4.1). The 44px target is the whole row, not the 32px track, which is what makes it usable one-handed. The knob glyph is `--icon-size-sm`; Layer 1's pairing rule is documented here as **knob-relative**, since `label-lg → icon-md` would overflow a 24px knob (logged as delta).
 
@@ -966,10 +970,11 @@ That puts every item at 15px, below Layer 1 §4's 17px floor, which §4 permits 
 SegmentedControl
 └── Fieldset.Root.musy-seg[--accent-placeholder1|2][--guided]   (render=RadioGroup)
     ├── Fieldset.Legend.musy-radio-group__legend  (or .musy-sr-only)
-    └── div.musy-seg__track
-        └── Radio.Root.musy-seg__option    ×2–4   [data-checked|unchecked|disabled]
-            ├── Icon  (size md — REQUIRED)
-            └── span.musy-seg__label       (one line, ellipsed)
+    ├── div.musy-seg__track
+    │   └── Radio.Root.musy-seg__option    ×2–4   [data-checked|unchecked|disabled]  [aria-describedby → its own p]
+    │       ├── Icon  (size md — REQUIRED)
+    │       └── span.musy-seg__label       (one line, ellipsed)
+    └── p.musy-seg__description            ×0–4   one per option with a description; all but the selected one [hidden]
 ```
 
 **Props.**
@@ -984,7 +989,9 @@ SegmentedControl
 | `guided` | `boolean` | `false` |
 | `disabled` | `boolean` | `false` |
 
-Each option is `{ value, label, glyph, disabled? }`. **`glyph` is required, not optional** — see the truncation rule. Beyond four options a German label cannot survive the segment width; that case is 7.6 or a Select, and the component `console.warn`s in development rather than failing silently.
+Each option is `{ value, label, glyph, description?, disabled? }`. **`glyph` is required, not optional** — see the truncation rule.
+
+**`description` — added 2026-11-09.** What choosing an option means, in a sentence or two, for the case where the label cannot say it: the instruments' *Zusammenspiel*, where „Ich spiele allein“ and „Ich spiele mit Musie“ do not say that one of them makes the instrument answer. The **selected** option's sentence is drawn under the track (body-sm, muted, `--space-gap-related` below it, the reading measure). Every option's radio points at **its own** sentence with `aria-describedby`, and the ones not drawn carry `hidden` — which a description reference still reads — so a screen reader hears what an option means as focus lands on it, before it is chosen. Not one shared region whose text swaps: an arrow key moves focus and selection in one keystroke, and a reader that computes the new radio's description before the re-render would announce the option just left. An uncontrolled group mirrors its own value from `onValueChange` so the drawn sentence still follows it. `contain: inline-size` on the paragraph keeps a sentence from widening the `unchecked` / `none` furniture settings, which are `max-content` wide. **A control with no descriptions renders exactly as before** — no paragraph, no `aria-describedby`. Verified in Chromium: each radio's computed accessible description is its own sentence, selected or not. Beyond four options a German label cannot survive the segment width; that case is 7.6 or a Select, and the component `console.warn`s in development rather than failing silently.
 
 **Truncation.** Labels ellipse at one line. CSS truncation does not touch the accessibility tree, so the full label is still announced — only a sighted user loses the tail, and the icon is the cue that survives for them. That is the whole reason the glyph is mandatory. There is no measure-and-unclamp path here as in 7.6: a row can grow to two lines, a segment in a fixed-width track cannot.
 
@@ -1003,7 +1010,7 @@ Each option is `{ value, label, glyph, disabled? }`. **`glyph` is required, not 
 
 **Token usage.** `--sp-1` `--sp-2` `--sp-3` `--target-primary` `--target-guided` `--radius-control` `--border-width-hairline` `--border-width-regular` `--border-width-thick` `--border-style-solid` `--border-subtle` `--surface-sunken` `--surface-raised` `--interactive-primary-border` `-on-subtle` `-disabled` `--interactive-ghost-hover` `-active` both `--interactive-accent-placeholder{1,2}` border + on-subtle `--on-surface` `--on-surface-muted` `--on-surface-disabled` `--focus-ring` `--motion-toggle` `--type-label-md-*`
 
-**A11y notes.** Selection carries three cues — lifted fill, border weight, ink — so it reads with the hue removed (1.4.1). The legend is never dropped, only hidden: an unnamed radio group announces as a bare set of options (1.3.1, 4.1.2).
+**A11y notes.** Selection carries three cues — lifted fill, border weight, ink — so it reads with the hue removed (1.4.1). The legend is never dropped, only hidden: an unnamed radio group announces as a bare set of options (1.3.1, 4.1.2). An option's `description` is its radio's accessible description (1.3.1), announced on focus whatever is selected.
 
 **What it is NOT.** Not Tabs (see above), not a toggle button group with multiple active (that is a checkbox set), not a filter bar, not 7.6 (more options, longer labels, vertical rows).
 
@@ -1469,3 +1476,130 @@ Hint
 **A11y notes.** One button, one accessible name, one target at every size. The label changes with the state here — unlike 7.21's, because this control's label *is* the state, not the subject. Tabular figures keep the readout from shifting the label once a second. `aria-hidden` on the meter means a screen reader never walks twelve empty spans.
 
 **What it is NOT.** Not a player (no playback, no scrub, no delete — that is 7.19), not a recorder implementation, not a permissions flow, not a waveform editor.
+
+---
+
+## 7.27 Countdown `[SEED]`
+
+**Purpose.** The minimum an exercise asks for — 1:30 today — as the largest thing on the screen it is on. A figure, the control that moves it, and the sentence that says what the figure means.
+
+**Why a component.** The listen step's focus sheet has drawn it since 2026-10-07 as app CSS (`.musie-immersive__clock`, `__meter`, `__time`, `__caption` in `apps/web/src/shell.css`), the harp experiment copied that markup by hand (`cdRender`), and the instruments are the third screen to want it. [L14.3](10-layout.md): a pattern that recurs is a component request. The values are the app's, moved as they were; the app switches to this in a later task.
+
+**Composition, not a new control.** 7.21's `TrackButton` — `ghost`, `min`, `hideTimer` — is the control, as it is on the listen step. The countdown states the transport so the button lands on the right glyph (`running` → playing, `ended` → a head at the end of a one-second track, otherwise stopped) and chooses the word itself.
+
+**Fully controlled, and no timer.** The 7.21 / 7.22 split: it draws `remainingSeconds` and `state` and owns no interval. The screen holds the time — a track's position on the listen step, the first note on an instrument — so one component serves both with no branch inside.
+
+**Anatomy.**
+```
+Countdown
+└── div.musy-countdown                    [data-state]
+    ├── div.musy-countdown__meter
+    │   ├── p.musy-countdown__time        role="timer"  [data-done]   MM:SS
+    │   └── TrackButton                   ghost · min · hideTimer      "Starten, Countdown"
+    ├── p.musy-countdown__caption
+    └── p.musy-sr-only                    role="status" aria-live="polite"  (always mounted)
+```
+
+**Props.**
+
+| Prop | Type | Default |
+|---|---|---|
+| `remainingSeconds` | `number` | — (required) |
+| `state` | `'unstarted' \| 'running' \| 'paused' \| 'ended'` | — (required) |
+| `onToggle` | `() => void` | — |
+| `caption` | `string` | — (required) |
+| `playLabel` | `string` | „Starten“ / "Start" |
+| `resumeLabel` | `string` | `playLabel` if given, else „Weiter“ / "Resume" |
+| `pauseLabel` | `string` | „Pause“ |
+| `restartLabel` | `string` | „Noch einmal“ / "Start again" |
+| `trackLabel` | `string` | „Countdown“ / "countdown" |
+| `announcement` | `string` | the catalogue's word for the state |
+| `className` | `string` | — |
+
+Every default is the locale catalogue's (`countdown*` in `src/locale.ts`), and every word is the harp's. `resumeLabel` is the harp's distinction: taking a countdown up again is not starting it.
+
+**The figure.** MM:SS, padded so it never changes width across a minute, and **rounded up** — a countdown rounded to nearest shows 00:00 for the last half second while still running. `data-done` is set exactly when the figure reads 00:00, so the two cannot disagree; the figure then goes to `--on-surface-muted` over `--motion-toggle`, muted rather than removed so nothing reflows. `tabular-nums` is load-bearing: proportional digits jitter once a second.
+
+**What is heard.** `role="timer"` has an implicit `aria-live` of off, so the figure is read when somebody looks and is never announced four times a second. Start, pause and the end **are** announced, through a polite `role="status"` region that is always mounted — a region that arrives holding its text is, on most readers, not heard. The screen passes `announcement`; without one, „Countdown läuft“ / „pausiert“ / „abgelaufen“ stand in, so the component is not silent because a screen forgot. Nothing is announced for `unstarted`. An announcement is heard when it **changes**: the same string twice in a row is said once.
+
+**State matrix.**
+
+| State | Figure | Control | Live region (default) |
+| --- | --- | --- | --- |
+| unstarted | the full minimum | Play · „Starten“ | — |
+| running | counting | Pause · „Pause“ | „Countdown läuft“ |
+| paused | held | Play · „Weiter“ | „Countdown pausiert“ |
+| ended | 00:00, muted (`data-done`) | RotateCcw · „Noch einmal“ | „Countdown abgelaufen“ |
+
+**Responsive behaviour.** No breakpoint rules. The figure is `display-xl`, which clamps 40 → 64px; the row is centred rather than baseline-aligned so the 36px `min` control tracks the figure at every clamp, and `fit-content` keeps the control beside the figure. The root carries **no outer margin**: the listen step's `margin-block: auto` centred the clock in its sheet, and where a component sits is the screen's to say.
+
+**Token usage.** `--space-gap-inline` `--measure-body` `--text-wrap-body` `--on-surface` `--on-surface-muted` `--motion-toggle` `--type-display-xl-*` `--type-body-sm-*` + everything 7.21's `TrackButton` brings.
+
+**A11y notes.** The control's accessible name is the action then what it moves — "Pause, Countdown" — 7.21's construction. Start, pause and end are status messages (4.1.3) and are announced; the ticking figure is not. The caption carries the meaning the figure cannot, so the number is never the only statement of what is asked.
+
+**What it is NOT.** Not a stopwatch (it counts down to a floor, and stops at it), not a progress bar, not a timer implementation, not 7.21's readout — which is the track's remaining time, a different number for a different question.
+
+**`size="compact"`** (2026-11-09). One row: the figure in heading-md, the `min` transport, the caption beside it and only from 760px. The marimba's foot in its experiment, which bought its bars their height (Ben kept the marimba's own layout). `display` stays the default.
+
+---
+
+### 7.x addendum — Sheet: `stage`, `density` (2026-11-09)
+
+The instruments' focus sheet, rebuilt to the experiments' layout.
+
+- **`stage`** — something to PLAY under every slot, out to the screen's edges like the field (negative `--space-inset-sheet`). With a stage the header, body and foot let a press through except on their controls (buttons, links, form controls, switch/radio/slider roles), the experiment's own construction — a string under the headline is still a string. The foot then sits at `--space-inset-card` from the bottom, where the harp's „Ich bin fertig“ stood.
+- **`density="compact"`** — header at `--sp-4` from the top, foot at `--sp-3` from the bottom: the marimba's experiment.
+
+Stories: `Components/Sheet` → `WithStage`, `Compact`.
+
+---
+
+## 7.28 Instrument Cursor `[SEED]` · PROVISIONAL (G5)
+
+Storybook: **Components/InstrumentCursor**. Code: `InstrumentCursor`. The harp experiment's green dot (`harp/261104-1443`, `.musie-cursor` and `moveCursor`), made the mouse cursor of every instrument's focus sheet by Ben on 2026-11-09 and maintained here, as the tap effect is (`instrumentTap.ts`, Storybook **Foundations/Instrument tap**).
+
+**Purpose.** Stand in for the mouse and pen pointer over an instrument: a soft green disc where the arrow would be, so pointing at a string reads as touching it.
+
+**APG pattern.** None. It is the pointer's picture, not content: `aria-hidden`, no role, never focusable.
+
+**When it shows** — the experiment's rule, unchanged.
+
+| Pointer | Where | Dot | System pointer on the target |
+| --- | --- | --- | --- |
+| mouse or pen | over the target | follows it | hidden (`cursor: none`) |
+| mouse or pen | past the target's edge, the target holding its capture | follows it | — |
+| mouse or pen | anywhere else — a control laid over the instrument, the page | none | normal |
+| touch | anywhere | none | — |
+| — | the pointer leaves the document | none | normal |
+
+So `target` is the element **played on** — the canvas — not a container that also holds controls: over a child of the target the normal pointer comes back, as it did over the experiment's buttons.
+
+**Anatomy.**
+```
+InstrumentCursor              renders nothing in place
+└── (appended to the target's document body, while mounted)
+    div.musy-instrument-cursor   aria-hidden  [data-shown]  [data-theme = the target's]
+target                         [data-musy-instrument-cursor]  while the dot shows
+```
+
+**Props.**
+
+| Prop | Type | Default |
+|---|---|---|
+| `target` | `HTMLElement \| null \| RefObject<HTMLElement \| null>` | — (required; null draws nothing) |
+
+A ref object is read once, after mount; pass the element itself when it can be replaced while the cursor stays mounted.
+
+**Why on the body, and created rather than portaled.** A `position: fixed` element inside a transformed ancestor is fixed to that ancestor, not to the viewport, and inside a clipped one is clipped by it — and the sheet an instrument is played in is a 7.14 Lightbox, whose popup holds its entrance animation: a transform on the default surface (`musy-lb-in`), a clip-path on the immersive one (`musy-lb-grow`). On the body it is fixed to the viewport however the sheet is drawn; it copies the target's nearest `data-theme` so it is green for the theme the instrument is drawn in. Created with the DOM rather than through a React portal so the system does not import `react-dom`, which it does not declare. It moves by `transform` on every `pointermove` / `pointerdown`, with no React render in between.
+
+**Geometry.** `--instrument-cursor-size` square, `--radius-full`, `--instrument-cursor-color`, centred on the pointer by a negative margin of half its size. `top` / `left` are **physical** on purpose: the pointer's `clientX` / `clientY` are. `z-index: calc(var(--z-toast) + 1)` — a pointer drawn under something would not be a pointer.
+
+**State matrix.** Shown or hidden (`data-shown`), by the table above. No hover, active, focus or disabled state of its own.
+
+**Responsive behaviour.** None: a pointer is the same size on every screen, and on a touch screen it is never drawn.
+
+**Token usage.** `--instrument-cursor-size` `--instrument-cursor-color` (G5: `calc(var(--sp-5) * 2)`, `var(--interactive-primary)`) `--radius-full` `--z-toast`
+
+**A11y notes.** Under **forced colours** the dot is not drawn and the system pointer stays: a system colour scheme replaces ours, and the system pointer is the one it accounts for. No `prefers-reduced-motion` rule: it moves only when the person moves. Keyboard play is untouched — the dot belongs to pointers.
+
+**What it is NOT.** Not a custom `cursor:` image (a CSS cursor cannot take a token or follow the theme), not a focus indicator, not the tap effect — that is drawn on the canvas, by the instrument, where a note was played.

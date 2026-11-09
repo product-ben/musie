@@ -1,0 +1,44 @@
+{
+  "$comment": "The marimba's DEFAULT sound, from marimba/261108-1740 (commit 5590e20, PR #71): 10 bars, sound 'weich' (VCSL mid + VSCO loud layers, both CC0), DEFAULTS as in the file. Field names follow the experiment's constants.",
+  "id": "marimba",
+  "family": "key",
+  "source": { "experiment": "marimba/261108-1740", "commit": "5590e20", "branch": "the-marimbaphon" },
+  "sound": {
+    "DEFAULTS": { "bars": 10, "dialog": true, "sound": "weich" },
+    "SCALE": [
+      { "n": "d", "midi": 50 }, { "n": "e", "midi": 52 }, { "n": "g", "midi": 55 }, { "n": "a", "midi": 57 }, { "n": "h", "midi": 59 },
+      { "n": "d′", "midi": 62 }, { "n": "e′", "midi": 64 }, { "n": "g′", "midi": 67 }, { "n": "a′", "midi": 69 }, { "n": "h′", "midi": 71 }
+    ],
+    "samples": { "notes": { "C3": 48, "G3": 55, "B3": 59, "F4": 65, "C5": 72 }, "oct": 0, "pick": "nearest, ties downward", "layers": ["mittel", "laut"], "layerAt": 0.6 },
+    "normalise": { "peak": 0.89, "onsetFraction": 0.02, "backSamples": 32 },
+    "level": { "base": 0.5, "lowBoost": 0.35 },
+    "filter": { "lowpassQ": 0.5, "rollHz": 2600, "baseHz": 2500, "velHz": 9500 },
+    "envelope": { "attack": 0.0015, "rollAttack": 0.008 },
+    "voices": { "max": 32, "fadeTau": 0.04 },
+    "master": {
+      "compressor": { "threshold": -16, "knee": 10, "ratio": 2, "attack": 0.003, "release": 0.25 },
+      "makeup": 1.3,
+      "limiter": { "threshold": -2, "knee": 0, "ratio": 20, "attack": 0.001, "release": 0.1 },
+      "warm": { "hz": 14000, "q": 0.5, "calmCut": 0.6, "tau": 0.3 }
+    },
+    "calm": { "gapFloorMs": 350, "gapSpanMs": 1250, "smooth": 0.18, "deviationStart": 0.6, "deviationMax": 0.8, "slowShare": 0.45, "evenShare": 0.55, "maxGapMs": 6000, "riseSeconds": 15, "fallSeconds": 35, "step": 0.1, "tickMs": 100, "epsilon": 0.0005, "background": 0.85 },
+    "strike": {
+      "STRIKE_MS": 30, "noMotionWaitMs": 8,
+      "weights": { "motion": 0.5, "area": 0.35, "force": 0.15 },
+      "RS": { "lo": 0.05, "hi": 1.2 }, "RA": { "lo": 10, "hi": 26 }, "RF": { "lo": 0.4, "hi": 1 }, "adapt": 0.02,
+      "window": { "beforeMs": 40, "afterMs": 10, "touchMs": 80, "historyMs": 1000 },
+      "measured": { "base": 0.18, "span": 0.82, "edgeDrop": 0.15, "jitter": 0.03, "min": 0.15, "max": 1 },
+      "unmeasured": { "rollBase": 0.5, "rollJitter": 0.08, "edgeDrop": 0.3, "min": 0.6, "max": 1, "jitter": 0.04 }
+    },
+    "roll": { "sameBarMs": 260, "anyBarMs": 170, "keep": 0.6, "add": 0.4, "scale": 0.85, "min": 0.15, "max": 0.85 },
+    "glissando": { "decay": 0.92, "min": 0.2, "max": 0.9 },
+    "haptics": { "strike": { "baseMs": 30, "velMs": 50 }, "roll": { "ms": 20, "everyMs": 200 } },
+    "pendingMs": 700,
+    "visual": { "dotMs": 600, "glowTau": 0.85 }
+  },
+  "answer": {
+    "home": [0, 2, 5, 7], "homeNames": ["d", "g", "d′", "g′"],
+    "roll": { "strokes": 7, "everyMs": 115, "velocity": 0.45, "step": 0.03, "tailMs": 1000 }
+  },
+  "demo": { "bar": 2, "velocity": 0.6 }
+}

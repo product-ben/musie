@@ -32,7 +32,7 @@ import type { StepId } from '../routeHandle';
  * → `needsCards`, the VALUE would move too, so a grep for `listening_only`
  * would find the schema or the app but never both.
  */
-export const EXERCISE_KINDS = ['card_based', 'digital_interactive', 'listening_only'] as const;
+export const EXERCISE_KINDS = ['card_based', 'digital_interactive', 'listening_only', 'instruments'] as const;
 
 export type ExerciseKind = (typeof EXERCISE_KINDS)[number];
 
@@ -46,6 +46,7 @@ export function isExerciseKind(value: string | null | undefined): value is Exerc
  *   card_based           intro · scan · listen · reflect
  *   listening_only       intro · listen · reflect
  *   digital_interactive  intro · listen · reflect
+ *   instruments          intro · play · reflect      (2026-11-09)
  *
  * ── WHY LISTENING LOSES A MARKER RATHER THAN SHOWING A GAP ────────────────
  * D14 settled that a CARDLESS run draws four markers with `scan` visibly
@@ -70,6 +71,9 @@ const STEPS: Record<ExerciseKind, readonly StepId[]> = {
   card_based: ['intro', 'scan', 'listen', 'reflect'],
   listening_only: ['intro', 'listen', 'reflect'],
   digital_interactive: ['intro', 'listen', 'reflect'],
+  /* Kalimba, Marimba, Harfe. No scan and no listen: the person makes the
+     sound, on the focus sheet the play step opens. */
+  instruments: ['intro', 'play', 'reflect'],
 };
 
 /**

@@ -14,9 +14,9 @@ Consequence: anything listed here exists in code and **not** in Figma. A designe
 working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
-**36 properties in `musy-foundations.css` have no JSON expression.**
-**4 more live only in `musy-foundations-amendments.css`.**
-Total: **40**.
+**37 properties in `musy-foundations.css` have no JSON expression.**
+**31 more live only in `musy-foundations-amendments.css`.**
+Total: **68**.
 
 | Group | n |
 |---|---|
@@ -24,13 +24,13 @@ Total: **40**.
 | Semantic radius aliases | 5 |
 | Focus ring | 4 |
 | Motion travel | 3 |
-| Named font weights | 3 |
+| Named font weights | 4 |
 | Typography rules and measures | 7 |
 | Spacing roles | 2 |
 | Elevation ring | 1 |
 | Grid gap | 1 |
 | The measured viewport | 5 |
-| Amendment tokens | 4 |
+| Amendment tokens | 31 |
 
 ## The `stage` type step
 
@@ -79,7 +79,7 @@ The three travel distances. Their absence matters more than it looks: reduced mo
 
 ## Named font weights
 
-The JSON bakes weights into each typography composite as literals (`"fontWeight": 700`). The three named tokens have no JSON existence, so there is nothing to change if the scale ever re-weights.
+The JSON bakes weights into each typography composite as literals (`"fontWeight": 700`). The four named tokens have no JSON existence, so there is nothing to change if the scale ever re-weights.
 
 | Token | Declared in CSS |
 |---|---|
@@ -176,6 +176,32 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--border-style-dashed` | `dashed` | G2 |
 | `--border-style-solid` | `solid` | G2 |
 | `--icon-stroke-sm` | `1.5px` | G1 |
+| `--instrument-answer` | `var(--green-7)` | G5 |
+| `--instrument-cursor-color` | `var(--interactive-primary)` | G5 |
+| `--instrument-cursor-size` | `calc(var(--sp-5) * 2)` | G5 |
+| `--instrument-detail` | `var(--sand-8)` | G5 |
+| `--instrument-key` | `var(--sand-5)` | G5 |
+| `--instrument-played` | `var(--terracotta-7)` | G5 |
+| `--instrument-shadow-crispy` | `0.44` | G5 |
+| `--instrument-shadow-level` | `3` | G5 |
+| `--instrument-shadow-light-x` | `-0.25` | G5 |
+| `--instrument-shadow-light-y` | `-0.37` | G5 |
+| `--instrument-shadow-oomph` | `0.34` | G5 |
+| `--instrument-shadow-resolution` | `0.26` | G5 |
+| `--instrument-shadow-tint` | `1` | G5 |
+| `--instrument-string` | `var(--sand-7)` | G5 |
+| `--instrument-surface` | `var(--surface)` | G5 |
+| `--instrument-tap-duration` | `700ms` | G5 |
+| `--instrument-tap-fade-power` | `1.6` | G5 |
+| `--instrument-tap-growth` | `0.6` | G5 |
+| `--instrument-tap-growth-by-strength` | `3.4` | G5 |
+| `--instrument-tap-growth-power` | `3` | G5 |
+| `--instrument-tap-mix` | `0.3` | G5 |
+| `--instrument-tap-mix-by-strength` | `0.7` | G5 |
+| `--instrument-tap-opacity` | `0.45` | G5 |
+| `--instrument-tap-opacity-by-strength` | `0.75` | G5 |
+| `--instrument-tap-size` | `16.85px` | G5 |
+| `--instrument-tap-start` | `0.8` | G5 |
 | `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
 

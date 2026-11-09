@@ -12,6 +12,12 @@
  * because the label needs to sit on either side of the track for the settings
  * row — so Switch.Root renders a native <button> and takes \`nativeButton\`,
  * exactly as base-ui documents for that case.
+ *
+ * Two sizes (`size`, 2026-11-09). `md` is the switch as it always was; `sm` is
+ * the one the harp experiment built for itself as `.musie-switch--sm`, for a
+ * row of settings set in label-md beside a segmented control — knob
+ * `--icon-size-sm`, the label at label-md and regular weight. The ROW keeps
+ * its 44px target at both sizes; only the track and the type step down.
  */
 import * as React from 'react';
 import { Switch as BaseSwitch } from '@base-ui/react/switch';
@@ -20,6 +26,24 @@ import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
 
 export type SwitchAccent = 'primary' | 'accent';
+
+/**
+ * The track and the label's type step.
+ *
+ * `md` — the default and the switch as specified: a 24px knob (60×32 track),
+ * the label at label-lg.
+ *
+ * `sm` — a 16px knob (`--icon-size-sm`, a 44×24 track), the label at label-md
+ * and regular weight, the gap closed to `--space-gap-inline`. For a switch
+ * that sits among small controls — the instruments' settings, beside a
+ * SegmentedControl — where a label-lg semibold label would be the loudest
+ * thing in the panel. The harp experiment built exactly this as
+ * `.musie-switch--sm`; this is that, moved into the system.
+ *
+ * THE ROW IS STILL THE TARGET. `--target-primary` is the row's min-height at
+ * both sizes, so the smaller track costs a thumb nothing (2.5.8).
+ */
+export type SwitchSize = 'md' | 'sm';
 
 export interface SwitchProps
   extends Omit<React.ComponentPropsWithoutRef<typeof BaseSwitch.Root>, 'className' | 'render' | 'nativeButton'> {
@@ -31,6 +55,8 @@ export interface SwitchProps
    *  settings-row layout. */
   reverse?: boolean;
   accent?: SwitchAccent;
+  /** The track and the label's type step. `md` by default — see `SwitchSize`. */
+  size?: SwitchSize;
   /** Raise the row to --target-guided for assisted use. */
   guided?: boolean;
   /** Embedded knob glyphs. On by default per the brief; they are the
@@ -50,7 +76,7 @@ export interface SwitchProps
 
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
   function Switch({
-    label, labelHidden = false, reverse = false, accent = 'primary',
+    label, labelHidden = false, reverse = false, accent = 'primary', size = 'md',
     guided = false, showStateIcons = true, onGlyph = Check, offGlyph = X,
     id, checked, className, ...rest
   }, ref) {
@@ -62,6 +88,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         className={[
           'musy-switch',
           accent !== 'primary' ? `musy-switch--${accent}` : '',
+          size !== 'md' ? `musy-switch--${size}` : '',
           reverse ? 'musy-switch--reverse' : '',
           guided ? 'musy-switch--guided' : '',
           className ?? '',

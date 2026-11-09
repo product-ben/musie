@@ -44,6 +44,8 @@
 import { Armchair, BedSingle, Layers, Moon, Sunrise } from 'lucide-react';
 import { SegmentedControl, Switch } from '@musie/design-system';
 import { Markdown } from './Markdown';
+import { InstrumentIntro } from './InstrumentIntro';
+import type { InstrumentIntroProps } from './InstrumentIntro';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
@@ -99,6 +101,13 @@ export interface SessionIntroProps {
    * does — and which therefore has nothing to prepare here, and says so.
    */
   dealsHere?: boolean;
+  /**
+   * An instruments exercise's settings, made on this step (Ben, 2026-11-09):
+   * how to play, the vibration, the motion sensor. Held in `Session.tsx`;
+   * undefined for every other kind. `exercise.instrument` says whether there
+   * is an instrument at all.
+   */
+  instrumentSettings?: Omit<InstrumentIntroProps, 'instrument'>;
 }
 
 /** The glyph per option. A `Record`, so a third posture fails the typecheck
@@ -127,7 +136,7 @@ const ENDING_GLYPH: Record<Ending, typeof Armchair> = {
  */
 export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
-  cardsPresent, onCardsPresentChange, dealsHere = false,
+  cardsPresent, onCardsPresentChange, dealsHere = false, instrumentSettings,
 }: SessionIntroProps) {
   const t = useT();
 
@@ -272,6 +281,13 @@ export function SessionIntro({
         </div>
       )}
 
+      {/* ── AN INSTRUMENT: HOW TO PLAY, VIBRATION, MOTION — 2026-11-09 ─────
+          Below the exercise's own copy, which says how to be ready; these are
+          the settings, made here and nowhere else. `InstrumentIntro` has the
+          reasons. */}
+      {exercise.instrument !== null && instrumentSettings !== undefined && (
+        <InstrumentIntro instrument={exercise.instrument} {...instrumentSettings} />
+      )}
     </>
   );
 }

@@ -29,7 +29,7 @@
  *
  * Pure: no supabase, no React. `Exercise` is a type-only import.
  */
-import type { Exercise, Card } from './content';
+import type { Exercise, ExerciseInstrument, Card } from './content';
 import type { Locale } from '../i18n';
 import { joinHeadline } from './exerciseConfig';
 import type { ExerciseConfig, RunMode, StepCopy } from './exerciseConfig';
@@ -68,6 +68,52 @@ function mdFor(
   return joinHeadline(copy.headline, copy.bodyMd);
 }
 
+/**
+ * The play step's instrument and its words, or null where the run has none —
+ * which is every exercise that is not of the instruments kind.
+ *
+ * NOT NULL FOR A HOLE, unlike `content.ts`, which drops the whole instrument
+ * when a column is empty. That is right for a run — a play step with no
+ * button cannot be played — and wrong for a preview: she has just emptied one
+ * field, and the step vanishing would hide the very thing she is editing. The
+ * validator reports the empty field instead.
+ */
+function instrumentFor(
+  config: ExerciseConfig,
+  locale: Locale,
+  mode: RunMode,
+): ExerciseInstrument | null {
+  const play = config.run.find((entry) => entry.step === 'play');
+  if (play?.instrument === undefined) return null;
+  const intro = copyInMode(config.run.find((entry) => entry.step === 'intro')?.copy[locale], mode);
+  const here = copyInMode(play.copy[locale], mode);
+  const asksMotion = play.features.includes('motion_permission');
+
+  return {
+    id: play.instrument.id,
+    defaultMode: play.instrument.defaultMode,
+    vibrationDefault: play.instrument.vibrationDefault,
+    /* NULL MEANS NO SWITCH, and that is the FEATURE's to say: the words
+       without `motion_permission` would be a switch the config did not
+       promise, and `content.ts` reads '' as null for the same reason. */
+    motionMd: asksMotion && intro.motionMd !== undefined && intro.motionMd.trim() !== ''
+      ? intro.motionMd
+      : null,
+    motionLabel: asksMotion && intro.motionLabel !== undefined && intro.motionLabel.trim() !== ''
+      ? intro.motionLabel
+      : null,
+    playMd: joinHeadline(here.headline, here.bodyMd),
+    playTouchMd: here.playTouchMd ?? '',
+    playPointerMd: here.playPointerMd ?? '',
+    focusHeadline: here.focusHeadline ?? '',
+    playCta: here.playCta ?? '',
+    modeSoloLabel: intro.modeSoloLabel ?? '',
+    modeSoloMd: intro.modeSoloMd ?? '',
+    modeMusieLabel: intro.modeMusieLabel ?? '',
+    modeMusieMd: intro.modeMusieMd ?? '',
+  };
+}
+
 export function configToExercise(
   config: ExerciseConfig,
   locale: Locale,
@@ -76,6 +122,7 @@ export function configToExercise(
   const card = config.library[locale];
   const intro = config.run.find((entry) => entry.step === 'intro');
   const listen = config.run.find((entry) => entry.step === 'listen');
+  const play = config.run.find((entry) => entry.step === 'play');
   const reflect = config.run.find((entry) => entry.step === 'reflect');
   const reflectCopy = copyInMode(reflect?.copy[locale], mode);
 
@@ -96,7 +143,9 @@ export function configToExercise(
     imageUrl: config.catalogue.artwork === '' ? null : config.catalogue.artwork,
     implemented: config.implemented,
     sort: config.catalogue.sort,
-    listenGateSeconds: listen?.gateSeconds ?? 90,
+    /* One column for two steps: the listen gate, or the play step's timer.
+       A run has one or the other, never both. */
+    listenGateSeconds: listen?.gateSeconds ?? play?.gateSeconds ?? 90,
     name: card?.name ?? '',
     description: card?.description ?? '',
     needs: card?.needs ?? null,
@@ -113,6 +162,7 @@ export function configToExercise(
       : reflectCopy.placeholder,
     imageAlt: card?.imageAlt ?? '',
     goalIds: [...config.catalogue.goals],
+    instrument: instrumentFor(config, locale, mode),
   };
 }
 

@@ -433,6 +433,29 @@ export async function saveListeningAnswers(
 }
 
 /**
+ * HOW AN INSTRUMENT WAS PLAYED — written when the play step is left by
+ * *Weiter zum Reflektieren* (2026-11-09).
+ *
+ * The mode as it stood then, and the seconds from the person's first own note
+ * to that press, pauses included (Ben's decision; `engine/clock.ts`
+ * `playSeconds`). One write, because both describe the same moment. Zero
+ * seconds is an answer — somebody who went on without playing — not a gap.
+ */
+export async function savePlay(
+  id: string,
+  mode: 'solo' | 'with_musie',
+  seconds: number,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('sessions')
+    .update({ play_mode: mode, play_seconds: Math.max(0, Math.round(seconds)) })
+    .eq('id', id);
+  if (error !== null) {
+    throw new Error(`[musie] could not save how the instrument was played: ${error.message}`);
+  }
+}
+
+/**
  * WHAT ACTUALLY PLAYED — the piece, and the cut of it.
  *
  * ONE WRITE, TWO FACTS, for `saveCard`'s reason: they are decided by one act,

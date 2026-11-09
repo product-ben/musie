@@ -66,11 +66,15 @@ function asAny(value: string | null): string {
 }
 
 function copyFor(exercise: Exercise, step: string): StepCopy {
+  const instrument = exercise.instrument;
   const md = step === 'intro' ? exercise.introMd
     : step === 'scan' ? exercise.scanMd
       : step === 'listen' ? exercise.listenMd
-        : step === 'reflect' ? exercise.reflectMd
-          : '';
+        /* `play_md` is one Markdown string with a `## ` line, exactly like the
+           four step columns, so it splits the same way. */
+        : step === 'play' ? (instrument?.playMd ?? '')
+          : step === 'reflect' ? exercise.reflectMd
+            : '';
 
   const { headline, bodyMd } = splitHeadline(md);
   const copy: StepCopy = { headline, bodyMd };
@@ -81,6 +85,27 @@ function copyFor(exercise: Exercise, step: string): StepCopy {
      prompt, which is a different and worse thing. */
   if (step === 'reflect' && exercise.reflectPlaceholder !== null) {
     copy.placeholder = exercise.reflectPlaceholder;
+  }
+
+  /* ── THE INSTRUMENTS' OWN WORDS, on the step that shows each ───────────
+     `instrument` is null for every other kind, so nothing below reaches a
+     card or a listening exercise. */
+  if (instrument !== null && step === 'intro') {
+    copy.modeMusieLabel = instrument.modeMusieLabel;
+    copy.modeMusieMd = instrument.modeMusieMd;
+    copy.modeSoloLabel = instrument.modeSoloLabel;
+    copy.modeSoloMd = instrument.modeSoloMd;
+    /* ABSENT FOR THE HARP, not ''. Null is "there is no switch for it", and
+       the builder draws no field for a sensor the instrument does not use —
+       a sentence typed there would promise one. */
+    if (instrument.motionMd !== null) copy.motionMd = instrument.motionMd;
+    if (instrument.motionLabel !== null) copy.motionLabel = instrument.motionLabel;
+  }
+  if (instrument !== null && step === 'play') {
+    copy.playTouchMd = instrument.playTouchMd;
+    copy.playPointerMd = instrument.playPointerMd;
+    copy.focusHeadline = instrument.focusHeadline;
+    copy.playCta = instrument.playCta;
   }
 
   return copy;
@@ -109,6 +134,7 @@ export function buildExerciseConfig(source: ExerciseSource): ExerciseConfig {
   const base = source.byLocale.de;
   const card = base.kind === 'card_based';
   const listening = base.kind === 'listening_only';
+  const instruments = base.kind === 'instruments';
 
   /* ── Which locales have what ──────────────────────────────────────────
      TEXT is a row with a name in it. A RECORDING is a cut row — for a card
@@ -233,7 +259,40 @@ export function buildExerciseConfig(source: ExerciseSource): ExerciseConfig {
     listen.questions = perLocale((locale) => questionsFor(questions, locale));
   }
 
-  run.push(listen);
+  /* An instruments run has no listen step — `STEPS.instruments` is intro ·
+     play · reflect — and the play step's timer reads the same column. */
+  if (!instruments) run.push(listen);
+
+  /* ── play ────────────────────────────────────────────────────────────── */
+  if (instruments) {
+    const instrument = base.instrument;
+    /* Every one of these is something the play step draws for all three
+       instruments (the PRD, „Musizieren“), except the sensor: that is the
+       kalimba's swing and the marimba's touch strength, and its words —
+       `motion_md` — are null for the harp. The words sit on the intro, where
+       the permission is asked; the feature sits here because the registry
+       puts it here. */
+    const playFeatures = ['answer_mode', 'vibration_switch'];
+    if (instrument !== null && instrument.motionMd !== null) playFeatures.push('motion_permission');
+    playFeatures.push('demo_note', 'play_timer', 'immersive_view');
+
+    run.push({
+      step: 'play',
+      gateSeconds: base.listenGateSeconds,
+      features: playFeatures,
+      /* Absent where `content.ts` could not assemble one — no join row, or
+         copy missing — so the validator says so instead of the file
+         inventing an instrument. */
+      ...(instrument === null ? {} : {
+        instrument: {
+          id: instrument.id,
+          defaultMode: instrument.defaultMode,
+          vibrationDefault: instrument.vibrationDefault,
+        },
+      }),
+      copy: perLocale((locale) => copyFor(source.byLocale[locale], 'play')),
+    });
+  }
 
   /* ── reflect ─────────────────────────────────────────────────────────── */
   run.push({
@@ -269,6 +328,21 @@ export function buildExerciseConfig(source: ExerciseSource): ExerciseConfig {
     run,
     content: { locales, textLocales: [...textLocales] },
   };
+}
+
+/**
+ * The builder's list of exercises, in the catalogue's order: `exercises.sort`,
+ * then the id, so two loads can never disagree over a tie.
+ *
+ * Nothing here knows about instruments, and that is the point: Kalimba,
+ * Marimba and Harfe are appended at sort 6, 7 and 8, so they come last for the
+ * same reason Bodyscan comes fifth.
+ */
+export function exerciseOrder(configs: Record<string, ExerciseConfig>): string[] {
+  return Object.keys(configs).sort(
+    (a, b) => (configs[a]?.catalogue.sort ?? 0) - (configs[b]?.catalogue.sort ?? 0)
+      || a.localeCompare(b),
+  );
 }
 
 /**

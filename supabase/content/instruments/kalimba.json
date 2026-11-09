@@ -1,0 +1,49 @@
+{
+  "$comment": "The kalimba's DEFAULT sound, from kalimba/261106-1121 (commit cd962d3): tuning 'penta', sound 'still' (closed and open crossfaded by the swing), DEFAULTS as in the file. Recordings: HCP soundfonts, CC0. Field names follow the experiment's constants.",
+  "id": "kalimba",
+  "family": "key",
+  "source": { "experiment": "kalimba/261106-1121", "commit": "cd962d3", "branch": "main" },
+  "sound": {
+    "DEFAULTS": { "hard": 0.35, "len": 4, "swing": 0.8, "touch": 0.7, "tuning": "penta", "sound": "still" },
+    "tines": [
+      { "n": "e″", "hz": 659.26, "src": "E5", "semi": 0 }, { "n": "h′", "hz": 493.88, "src": "B4", "semi": 0 }, { "n": "g′", "hz": 392.00, "src": "A4", "semi": -2 },
+      { "n": "d′", "hz": 293.66, "src": "E4", "semi": -2 }, { "n": "A", "hz": 220.00, "src": "A3", "semi": 0 }, { "n": "H", "hz": 246.94, "src": "C4", "semi": -1 },
+      { "n": "e′", "hz": 329.63, "src": "E4", "semi": 0 }, { "n": "a′", "hz": 440.00, "src": "A4", "semi": 0 }, { "n": "d″", "hz": 587.33, "src": "E5", "semi": -2 }
+    ],
+    "NOTES": ["A3", "C4", "E4", "F4", "A4", "B4", "C5", "E5"],
+    "CENTS": {
+      "closed": { "A3": 9, "A4": 11, "B4": 5, "C4": 8, "C5": 10, "E4": 8, "E5": -4, "F4": 16 },
+      "open": { "A3": 9, "A4": 8, "B4": 0, "C4": 8, "C5": 10, "E4": 15, "E5": -4, "F4": 10 }
+    },
+    "layers": ["closed", "open"],
+    "onset": { "threshold": 0.01, "backSamples": 32 },
+    "tone": {
+      "cutoff": { "from": 1400, "to": 16000 }, "attack": { "base": 0.001, "span": 0.024 }, "shelf": { "hz": 300, "below": 0.2, "gain": 2 },
+      "lowpassQ": 0.5, "lowpassFloor": 500, "dullFactor": 0.75, "dullAttack": 0.012,
+      "level": { "base": 0.85, "jitter": 0.08 },
+      "release": { "fullAbove": 10, "startFactor": 0.15, "tauDivisor": 4, "stopFactor": 1.6, "stopPad": 0.1 },
+      "damp": { "tau": 0.018, "stop": 0.15 }
+    },
+    "velocity": { "touchFactor": 0.8, "posPower": 0.8 },
+    "membrane": {
+      "peak": { "hz": 800, "q": 1.1 },
+      "lfo": { "hz": 5.5, "baseHz": 4.5, "swingHz": 3, "rateTau": 0.1 },
+      "depth": { "tremolo": 0.55, "peakHz": 700, "pitchCents": 22, "peakGainDb": 10, "tau": 0.04, "peakGainTau": 0.05 },
+      "openMixFactor": 1.2, "crossfadeTau": 0.05
+    },
+    "swing": { "tickMs": 30, "rotDecay": 0.8, "rise": 0.45, "fall": 0.08, "floor": 0.003, "rotationDivisor": 110, "accelerationDivisor": 6 },
+    "master": {
+      "compressor": { "threshold": -16, "knee": 10, "ratio": 2, "attack": 0.003, "release": 0.25 },
+      "makeup": 1.4,
+      "limiter": { "threshold": -2, "knee": 0, "ratio": 20, "attack": 0.001, "release": 0.1 }
+    },
+    "haptics": {
+      "pluck": { "baseMs": 30, "velMs": 60, "ticks": [[0.6, 3], [0, 2]] },
+      "swing": { "threshold": 0.12, "baseMs": 30, "spanMs": 70, "idleFactor": 0.6, "everyMs": 140 }
+    },
+    "pendingMs": 700,
+    "visual": { "dotMs": 700 }
+  },
+  "answer": { "pitchOrder": [4, 5, 3, 6, 2, 7, 1, 8, 0], "home": [2, 4, 7], "homeNames": ["d′", "g′", "d″"], "roll": null },
+  "demo": { "tine": 4, "position": 1 }
+}

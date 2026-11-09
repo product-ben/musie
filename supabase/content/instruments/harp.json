@@ -1,0 +1,32 @@
+{
+  "$comment": "The harp's DEFAULT sound, from harp/261109-0920 (commit d0e88ac; sound identical to 261104-1443). Engine 'aufnahme' with Klangfarbe 'Weich' and the preset 'euer' of 4 November. Field names follow the experiment's constants so every number can be found there.",
+  "id": "harp",
+  "family": "string",
+  "source": { "experiment": "harp/261109-0920", "commit": "d0e88ac", "branch": "the-harp-answers" },
+  "sound": {
+    "tuning": { "ROOT": 50, "SCALE": [0, 2, 5, 7, 9], "COUNT": 7, "midis": [50, 52, 55, 57, 59, 62, 64], "names": ["d", "e", "g", "a", "h", "d′", "e′"] },
+    "engine": "aufnahme",
+    "samples": { "pick": "nearest", "notes": { "C3": 48, "E3": 52, "G3": 55, "B3": 59, "D4": 62, "F4": 65 } },
+    "preset": { "decay": 2.5, "duck": 0.15, "voices": 7, "wet": 0.32, "room": 3.0, "damp": true, "sound": "weich", "dynR": 17, "dynK": 1.2 },
+    "timbre": { "attack": 0.006, "cut": [1500, 3400], "shelf": 0, "gain": 1.0, "shelfHz": 260, "lowpassQ": 0.5 },
+    "envelope": { "releaseStartFactor": 0.08, "releaseTauDivisor": 5, "stopFactor": 1.2, "stopPad": 0.2 },
+    "voiceRules": { "dampTau": 0.04, "duckTau": 0.06, "limitTau": 0.05 },
+    "pan": { "from": -0.35, "span": 0.7 },
+    "reverb": { "noiseLowpass": 0.3, "decayPower": 3, "fadeInSec": 0.015, "level": 0.6, "channels": 2, "rebuildDelayMs": 120 },
+    "master": {
+      "compressor": { "threshold": -16, "knee": 10, "ratio": 2, "attack": 0.003, "release": 0.25 },
+      "makeup": 1.7,
+      "limiter": { "threshold": -2, "knee": 0, "ratio": 20, "attack": 0.001, "release": 0.1 }
+    },
+    "velocity": {
+      "dynamics": { "floor": 0.22, "span": 0.78 },
+      "pluck": { "min": 0.08, "max": 1 },
+      "pull": { "base": 0.22, "span": 0.78, "power": 1.2, "maxPx": 60, "maxOfGap": 0.85, "zoneOfGap": 0.32 },
+      "strum": { "base": 0.12, "speedDivisor": 2.2, "retriggerMs": 40 }
+    },
+    "haptics": { "pluck": { "baseMs": 20, "velMs": 80, "ticks": [[0.75, 3], [0.4, 2], [0, 1]] }, "pullStep": { "ms": 12, "steps": 3 } },
+    "visual": { "MOTION": 0.9, "width": [6, 4.5], "fadeInMs": 180, "fadeOutMs": 650, "steps": 40 }
+  },
+  "answer": { "home": [0, 2, 5], "homeNames": ["d", "g", "d′"], "roll": null },
+  "demo": { "string": 1, "velocity": 0.6 }
+}

@@ -95,6 +95,12 @@ const CHROME: Record<StepId, (shape: ChromeShape) => ChromeCopy> = {
     secondaryLabel: { key: 'session.listen.startLocked' },
   }),
 
+  /* The instruments' step: the CTA that opens the sheet is the exercise's own
+     (`exercise_i18n.play_cta`); the way on, inside the sheet, is chrome. */
+  play: () => ({
+    continueLabel: { key: 'session.play.continue' },
+  }),
+
   reflect: () => ({
     continueLabel: { key: 'reflect.save' },
   }),

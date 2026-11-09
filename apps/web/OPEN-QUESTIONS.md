@@ -10644,3 +10644,357 @@ chrome override, and Ben wants the same label everywhere.
 
 What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
 so Klangreise's English text now says something different from its German.
+
+---
+
+# The instruments — Kalimba, Marimba, Harfe as exercises (2026-11-09)
+
+Plan: `docs/plans/instruments-exercises.md`; PRD: `docs/plans/instruments-prd.md`.
+Everything below came out of building it and is either decided by Ben on
+2026-11-09 or waits for his (or Lucia's) eye on a phone.
+
+## The brief's premise did not match the repository in eight places — RESOLVED
+
+Where: the brief "Neuer Übungstyp Instruments", PRD section „Widersprüche“
+
+What I checked: the schema, the therapist's tools, CLAUDE.md, the experiments.
+No exercise-type table exists (`exercises.kind` is a check constraint, on
+purpose); occasions are `goals` and „Entspannen“ is `relax`; the therapist's
+`/exercise-builder` writes nothing (a JSON handover becomes a migration);
+CLAUDE.md rule 10 forbade porting an experiment into the app; the step names
+are „Einsteigen“ and „Nachdenken“; there is no version table under
+`musie.org/experiments`; the marimba and the answering harp were on unmerged
+branches; `git checkout` is denied.
+
+What I did: the real schema rules (PRD „Datenmodell“), rule 10 names the one
+exit, the step keeps its names and gains „Musizieren“, the version table is
+not built, PRs #71 and #72 were merged into the branch, the branch is a
+worktree from `origin/main`.
+
+Why: Ben decided every one of them on 2026-11-09 („Vorschlag gilt“, plus four
+explicit answers: only the default sound, samples static with a database
+index, the motion sensor 1:1 asked on the intro with its state shown, play
+time from the first own note to Weiter).
+
+What I need from Ben: nothing.
+
+## Kalimba bridge and marimba holes are now lighter than what they sit on — FLAGGED
+
+Where: `packages/design-system/tokens/musy-foundations-amendments.css` (G5),
+`apps/web/src/instruments/kalimba/draw.ts`, `marimba/draw.ts`
+
+What I checked: the family rule (strings lighter than keys) puts the tines and
+bars at `--instrument-key` (sand-9); details are `--instrument-detail`
+(sand-8). In both experiments the bridge and the holes were a step DARKER than
+the instrument. On a phone the tines and bars also read heavier than in the
+experiments (the marimba used sand-5).
+
+What I did: kept the tokens as proposed in the PRD.
+
+Why: it is a look, and it is the integrated result of a decision (family
+colours) that was never seen on a screen before.
+
+What I need from Ben: look at the three on a phone; then either a different
+step for `--instrument-key`, or `--instrument-detail` darker than it.
+
+## The kalimba's bridge wave is at full height — FLAGGED
+
+Where: `apps/web/src/instruments/kalimba/geometry.ts` (`bridgeY`)
+
+What I checked: Lucia wanted the bridge back as a still wave (PR #69). Her
+reference `kalimba/261105-2047` is in no commit. The port takes the swaying
+wave of `261105-1745` without its motion, at the full room the layout gives
+it (±8.75 px on a phone); at rest that version drew 0.6 of it.
+
+What I did: full height, one and a half waves, highest over the middle tine.
+
+What I need from Lucia: whether it should be calmer (0.6 is a one-line change).
+
+## „Ich spiele mit Musie“ is cut to „Ich spiele mit Mu…“ at phone width — FLAGGED
+
+Where: `SessionPlay` on the step and in the settings dialogue, at 393px
+
+What I checked: the segment needs 136px and gets about 115 in the dialogue and
+a little more on the step. The labels are the brief's and live in
+`exercise_i18n.mode_*_label`, so they can change without code.
+
+What I did: nothing yet.
+
+What I need from Ben: shorter labels (e.g. „Allein“ / „Mit Musie“, a copy edit
+through the builder), or a SegmentedControl whose labels may wrap (a design
+system change).
+
+## The marimba's warming ground is scaled to 0.14 of the experiment's — FLAGGED
+
+Where: `apps/web/src/instruments/marimba/index.ts` (`WARM_SHARE`)
+
+What I checked: calmer playing slowly warms the background toward the
+„played“ colour. `--instrument-played` (terracotta-7) is far stronger than the
+experiment's terracotta-2; at the experiment's factor the ground would turn
+the colour of a stroke. 0.14 reproduces its warmest ground on the tokens.
+
+What I need from Ben: keep it, or keep only the softening of the sound.
+
+## Kalimba and marimba draw no instrument shadow — FLAGGED
+
+Where: the three adapters; `--instrument-shadow-*`
+
+What I checked: only the harp's experiment had the multi-layer shadow; it is
+now a shared style in the design system, but the kalimba and the marimba were
+ported flat, as their experiments were.
+
+What I need from Ben: unify (both read `host.shadow()` like the harp), or keep.
+
+## The builder's „Sag mir, was ich ändern soll“ cannot reach the eight new fields — FLAGGED
+
+Where: `supabase/functions/exercise-prompt/index.ts` (`extractText`)
+
+What I checked: the Edge Function hands the model a fixed list of text paths.
+The eight instrument fields (volume, browser, motion, CTA, two mode labels,
+two explanations) are typed in the builder and auto-translated, but the prompt
+box does not see them.
+
+What I need from Ben: the function's list extended and a
+`supabase functions deploy` (not reachable from a contributor session).
+
+## The builder previews the play step's copy, not the instrument — FLAGGED
+
+Where: `apps/web/src/routes/ExerciseBuilder.tsx` (the play step's preview)
+
+What I checked: the builder was built before `SessionPlay` existed and shows
+the headline, body and CTA with an info message.
+
+What I need from Ben: nothing now; mounting `SessionPlay` there is the next
+small step once the look is settled.
+
+## Not verified on a phone: haptics timing, silent switch, Android latency — FLAGGED
+
+Where: `apps/web/src/instruments/engine/{haptics,audio}.ts`
+
+What I checked: everything ran in desktop Chromium. On iOS the haptic tick is
+paid on `touchend` (Lucia's iPhone 13 measurement), audio plays through the
+silent switch via `navigator.audioSession.type = 'playback'` (iOS 17+, per
+WebKit), Android vibrates through `navigator.vibrate`. None of it has been
+felt or heard on a device from this branch.
+
+What I need from Ben or Lucia: one round on an iPhone and an Android phone
+before the exercises go to testers.
+
+## The key colour is sand-5, and the details are darker than the keys again — RESOLVED
+
+Where: `packages/design-system/tokens/musy-foundations-amendments.css` (G5),
+answering „Kalimba bridge and marimba holes are now lighter than what they sit
+on“ above
+
+What I checked: the marimba's experiment drew its bars at sand-5, the kalimba's
+tines at sand-7; the first brief's family rule had put both at sand-9.
+
+What I did: `--instrument-key: var(--sand-5)` for both. `--instrument-detail`
+stays sand-8, so the kalimba's bridge and the marimba's holes are a step darker
+than what they sit on, as in both experiments. Keys are now lighter than
+strings (sand-7): the family rule is inverted, and the Storybook page
+„Instrument shadows“ says so.
+
+Why: Ben, round 2 (2026-11-09): „ein Tasten token sand 5“.
+
+What I need from Ben: nothing.
+
+## The headline and the kalimba stand differently from their experiments, by the round-2 layout — RESOLVED
+
+Where: `apps/web/src/components/SessionPlay.tsx`, `Sheet` `actions` and
+`stage` (`packages/design-system/src/Sheet.tsx`)
+
+What I checked: measured against the experiments at four sizes (plan, R0).
+Two boxes differ, both as a consequence of a decision rather than a defect:
+
+- The headline is 56 px narrower in portrait (229 px at 393, the experiment's
+  285): the settings icon now stands beside the X, and the headline clears
+  both. At 393 it takes one line more. In landscape and on desktop it is
+  within the experiment's width.
+- The kalimba's tines start about 65 px higher (y 197 at 393, the
+  experiment's 264): the harp's layout has no note line under the headline,
+  so the instrument's top inset is the headline's bottom.
+
+What I did: kept both.
+
+Why: Ben, round 2: the harp 1443 layout for all instruments, the settings icon
+at the top beside the X.
+
+What I need from Ben: nothing, unless the narrower headline reads worse on a
+phone than the moved icon is worth.
+
+## The marimba's bars are 11–12 px shorter than in its experiment — FLAGGED
+
+Where: `Countdown` `size="compact"`, the marimba's foot row
+
+What I checked: the compact clock's transport button is the design system's
+touch target on a coarse pointer (56 px tall; the experiment's was 44). The
+foot rises by the difference, and the bars, which end at the foot, lose it:
+263 px of 274 in landscape at 852×393.
+
+What I did: kept the system's target size.
+
+Why: CLAUDE.md rule 1. A screen does not shrink a component's target, and
+44 px is below what the system guarantees for a primary control on touch.
+
+What I need from Ben: nothing, unless the marimba should have a smaller
+transport, which would be a `Countdown` change for every exercise.
+
+## The marimba's tap dot is invisible on its lit bar — FLAGGED
+
+Where: `apps/web/src/instruments/marimba/draw.ts` (`paintTaps`), the
+`--instrument-tap-*` tokens
+
+What I checked: round 2 gave the marimba the kalimba's dot, for own strokes
+only, at the token's absolute size (16.85 px, the kalimba's tine width). It is
+painted, between `--instrument-key` and `--instrument-played`; the bar it sits
+on glows in `--instrument-played`. Sampled in the app at 40, 150, 300, 500 and
+690 ms after a click, the dot's centre differs from the lit bar beside it by
+at most 2 levels per channel: nobody will see it. It reaches past the bar's
+edge (about 330 ms in, at a medium stroke) only once it has mostly faded. On the kalimba it spills
+past the narrow tine onto the ground and is plainly visible. The
+experiment's own marimba dot shared the bar's colour as well, and showed only
+because it grew with the bar's width (up to 0.68 of it).
+
+What I did: nothing. The tests prove the dot is drawn, and drawn only for
+own strokes.
+
+What I need from Ben: one of — the marimba's dot in a colour of its own (one
+more token, e.g. terracotta-9 as the experiment's answer stroke was), the
+marimba's dot relative to the bar's width again (gives up "one size for all"),
+or no dot on the marimba at all, since the bar already lights where it was
+struck.
+
+## Mouse only: the green cursor covers a fresh tap dot — FLAGGED
+
+Where: `InstrumentCursor` over every instrument; the tap dot
+
+What I checked: the cursor is 48 px across; a fresh dot is 27 px, at the
+point of the click, and grows past the cursor after about 70 ms at a medium
+stroke, fading as it grows. With a mouse that held still, the dot shows as a
+halo around the cursor; once the mouse moves on it shows whole (a strum's
+dots trail behind it). On touch there is no cursor and the dot is whole.
+
+What I did: kept both, as asked.
+
+What I need from Ben: nothing, unless the desktop should see the tap too —
+then a smaller cursor while pressed, or the dot drawn larger than the cursor.
+
+## Round 2's lanes left three small choices — RESOLVED
+
+Where: `apps/web/src/instruments/{harp,kalimba,marimba}/`,
+`supabase/content/instruments/{kalimba,marimba}.json`
+
+What I checked: the three agents' reports.
+
+What I did, and why:
+- The harp's keys 1–7 leave a dot at the middle of the string: they are own
+  notes too, and the middle is where a string swings most.
+- The harp's held dot does not age while the string is held, so it does not
+  grow until release; from the release on it is the kalimba's tap exactly.
+- `visual.dotMs` (kalimba 700, marimba 600) stays in the locked sound configs
+  and the database though nothing reads it any more: the configs are the
+  experiments' 1:1 and locked (the brief), and the duration now lives in
+  `--instrument-tap-duration`. A comment in each `sound.ts` says so.
+
+What I need from Ben: nothing.
+
+## The marimba's demo sentence is cut at 852 × 393 — FLAGGED
+
+Where: `session.play.demo` in `apps/web/src/i18n/{de,en}.ts`, shown in the
+marimba's one-line head (`.musie-play__note`)
+
+What I checked: the side-by-side screenshots (experiment left, app right).
+In landscape on a phone the line beside „Spiel, bis du ruhig bist.“ now ends
+at the settings icon, which round 2 moved to the top. The German sentence („Ein
+erster Ton klingt, damit du hörst und siehst, wo du spielen kannst.“, 71
+characters) is cut after „wo du s…“; the experiment's own, shorter note
+(„Tippe auf einen Stab, dann klingt das Marimbaphon.“) fitted. At 1280 it fits.
+A screen reader hears it whole; the cut is visual only.
+
+What I did: nothing. It is copy, and the same key is the harp's and the
+kalimba's spoken sentence.
+
+What I need from Ben: one of — a shorter sentence for all three (e.g. „Musie
+spielt dir einen ersten Ton vor.“ / "Musie plays you a first note.", which
+fits), the line allowed to wrap (the bars lose about 20 px), or the
+experiment's per-instrument note back for the marimba.
+
+## The marimba held upright turns instead of asking to be turned — RESOLVED
+
+Where: `apps/web/src/components/InstrumentStage.tsx` (`TURNS_UPRIGHT`,
+`pointerOf`), `.musie-instrument[data-turned]` in `apps/web/src/shell.css`,
+`SessionPlay`
+
+What I checked: the experiment drew the bars anyway in portrait and covered
+them with „Leg dein Handy quer vor dich.“ Ben asked for the instrument turned
+in the mobile breakpoint and fitted to the phone's height, with only the
+instrument turning and the low notes at the bottom.
+
+What I did: in any box taller than wide, the stage lays the marimba out
+landscape, rotates the canvas a quarter turn counter-clockwise and turns each
+pointer back. Upright, the sheet takes the harp's layout (its one-line head
+and one-row foot do not fit 393 px). The rotate hint and its two strings are
+removed.
+
+Why: the adapter, its drawing and its hit test stay the experiment's, so
+their parity tests still hold.
+
+What I need from Ben: nothing. The exercise's copy still recommends laying
+the phone sideways („Am besten liegt das Handy quer vor dir“, „Leg dein Handy
+quer vor dich.“ on the step, „tief links und hoch rechts“ in the
+description). That is still good advice, but no longer required. Changing it
+is a content migration if wanted.
+
+## The focus sheet has no settings — RESOLVED
+
+Where: `apps/web/src/components/SessionPlay.tsx`; answers „The headline and
+the kalimba stand differently from their experiments, by the round-2 layout“
+above, in part
+
+What I checked: the sheet's settings icon opened the step's two settings
+again in a „Dialogue (non modal)“, at the top beside the X.
+
+What I did: removed the icon, the dialogue and their three strings. The
+headline is the experiment's width again; the kalimba's tines still start
+higher than in its experiment, for the reason given above.
+
+Why: Ben, 2026-11-09: „Die Einstellungen können nur davor gemacht werden.“
+
+What I need from Ben: whether `DialogueNonModal` and `Sheet`'s `actions`
+slot, built for this, stay in the design system without a consumer, or go.
+
+## `DialogueNonModal` and `Sheet`'s `actions` are removed — RESOLVED
+
+Where: `packages/design-system/src/`, answering the question in „The focus
+sheet has no settings“ above
+
+What I did: removed the component, its story, CSS and docs section, and the
+sheet's `actions` slot with its CSS.
+
+Why: Ben, 2026-11-09: „raus!“ Nothing used either once the sheet's settings
+were gone.
+
+What I need from Ben: nothing.
+
+## The settings moved to Einsteigen; two hints are gone — RESOLVED
+
+Where: `20261109160000_instruments_copy.sql`, `InstrumentIntro.tsx`,
+`SessionPlay.tsx`; answers „„Ich spiele mit Musie“ is cut …“ above, since the
+labels are now „Duett mit Musie“ / „Alleine“
+
+What I checked: Ben's brief for the three exercises, and four questions put
+back to him: the sheet's headline, the marimba's sensor, the browser and
+silent-switch hints, and whether the new words are editable.
+
+What I did: as briefed and answered. Two things decided along the way: a tap
+on a MacBook has no strength (no motion sensor, and a mouse or trackpad
+reports no contact area or force), so both motion switches show on touch
+screens only; and Ben's spelling was put right — Saiten, Zungen, „mit
+gedrückter Maustaste“, „Tippen“, „Benachrichtigungen“ (§8 of the German
+writing standard).
+
+Why: Ben, 2026-11-09.
+
+What I need from Ben: nothing. The motion switch's prompt is the one part
+no emulator walks — it needs an iPhone.

@@ -24,10 +24,10 @@ describe('completedBefore', () => {
      The real caller always knows its run — `Session.tsx` hands over
      `skippedForRun` — so the tests do too. These four constants are the three
      card runs and the listening one, spelled as that function would. */
-  const PAPER = ['view', 'select'] as const;
-  const FIVE = ['scan', 'view'] as const;
-  const ONE = ['scan', 'select'] as const;
-  const CARDLESS = ['scan', 'view', 'select'] as const;
+  const PAPER = ['view', 'select', 'play'] as const;
+  const FIVE = ['scan', 'view', 'play'] as const;
+  const ONE = ['scan', 'select', 'play'] as const;
+  const CARDLESS = ['scan', 'view', 'select', 'play'] as const;
 
   it('is empty at the first step — nothing is behind intro', () => {
     expect(completedBefore('intro', PAPER)).toEqual([]);

@@ -335,6 +335,13 @@ raw scale tokens), not 6 and 7 (catalogue strings), not L14, not LEGAL-PAGES
   `public/` into `dist/`, and Cloudflare serves a real file before the SPA
   fallback in `wrangler.jsonc`, so nothing in `apps/web/src` changes. Do not
   port an experiment into the React app; that is the trap this rule exists for.
+- **The one way out, and it is Ben's to take:** an experiment he explicitly
+  turns into an EXERCISE. Then it is rebuilt in the app on the design system,
+  every rule above applies in full, and the experiment stays where it is. The
+  first: Kalimba, Marimba and Harfe, 2026-11-09
+  (`docs/plans/instruments-exercises.md`) — their sound is locked to the
+  experiments by `apps/web/src/instruments/sources.test.ts`, so those
+  experiment files are load-bearing now and are not deleted with the rest.
 - **What still holds, because Ben asked for it:** nothing reaches PostHog before
   the visitor agrees (the harp makes agreeing the condition of taking part); no
   secret in the file (the PostHog project key is public by design); nothing is

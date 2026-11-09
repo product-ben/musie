@@ -300,3 +300,54 @@ export const ContentTopAligned: Story = {
     ),
   },
 };
+
+/** Seven strings, as a striped stand-in for a canvas — paint only, so the story
+ *  needs no instrument. */
+function Strings() {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute', inset: 0,
+        background: 'repeating-linear-gradient(90deg, transparent 0 calc(100% / 8 - 3px), var(--instrument-string) calc(100% / 8 - 3px) calc(100% / 8 + 3px), transparent calc(100% / 8 + 3px) calc(100% / 8))',
+      }}
+    />
+  );
+}
+
+/**
+ * `stage`: something to play under every slot, out to the screen's edges — the
+ * harp's strings running the full height behind the headline and the clock, as
+ * in its experiment (2026-11-09). The header and foot let a press through
+ * except on their controls.
+ */
+export const WithStage: Story = {
+  render: () => (
+    <Sheet
+      {...LABELS}
+      open
+      onOpenChange={() => {}}
+      stage={<Strings />}
+      header={<h2 style={{ margin: 0 }}>Breathe deeply in and out</h2>}
+      foot={<CtaButton onClick={() => {}}>Continue to reflection</CtaButton>}
+    />
+  ),
+};
+
+/**
+ * `density="compact"`: the header up to `--sp-4`, the foot down to `--sp-3` —
+ * the marimba's experiment, which bought its bars their height this way.
+ */
+export const Compact: Story = {
+  render: () => (
+    <Sheet
+      {...LABELS}
+      open
+      onOpenChange={() => {}}
+      density="compact"
+      stage={<Strings />}
+      header={<h2 style={{ margin: 0 }}>Play until you feel calm.</h2>}
+      foot={<CtaButton onClick={() => {}}>Continue to reflection</CtaButton>}
+    />
+  ),
+};

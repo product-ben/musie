@@ -39,6 +39,8 @@ import { EXERCISE_KINDS, POSTURES, ENDINGS } from './exerciseKind';
 import type { ExerciseKind, Posture, Ending } from './exerciseKind';
 import { LOCALES } from '../i18n';
 import type { Locale } from '../i18n';
+/* Type-only, so the erased import keeps this file free of supabase. */
+import type { PlayMode } from './content';
 
 /* ── THE FEATURE REGISTRY ──────────────────────────────────────────────────
  *
@@ -60,6 +62,10 @@ export const STEP_FEATURES: Record<StepId, readonly string[]> = {
     'skip_intro', 'card_visual', 'infographic', 'rotating_question',
     'question_helper_ladder', 'track_reveal', 'immersive_view',
   ],
+  /* The instruments (2026-11-09). Every one is something the play step draws:
+     the answer switch, the vibration switch where the device has one, the
+     demo note on opening, the timer, the sheet. */
+  play: ['answer_mode', 'vibration_switch', 'motion_permission', 'demo_note', 'play_timer', 'immersive_view'],
   reflect: [
     'mode_text', 'mode_voice', 'mode_photo',
     'sheet_feelings', 'sheet_thoughts', 'sheet_understand',
@@ -105,6 +111,11 @@ export interface QuestionText {
   helper: string;
 }
 
+/** The copy fields only an instruments exercise has. All plain strings. */
+export type InstrumentCopyField =
+  | 'modeSoloLabel' | 'modeSoloMd' | 'modeMusieLabel' | 'modeMusieMd' | 'motionMd' | 'motionLabel'
+  | 'playTouchMd' | 'playPointerMd' | 'focusHeadline' | 'playCta';
+
 /** What one step says, in one locale, in one mode. */
 export interface StepCopy {
   /** The `## ` line of today's `<step>_md`, lifted out so it can be a field. */
@@ -124,6 +135,42 @@ export interface StepCopy {
    * invisible to the person whose job is the wording.
    */
   secondaryLabel?: string;
+  /* ── THE INSTRUMENTS' OWN WORDS (2026-11-09) ───────────────────────────
+     One field per `exercise_i18n` column, spelled as `ExerciseInstrument`
+     spells it in `content.ts` — so the column, the config and the type the
+     screens read are three spellings of one thing, and turning a file back
+     into a migration is a rename, not a decision. Optional, like
+     `placeholder`: present only on the step that shows it, and only in an
+     exercise of the `instruments` kind. */
+  /** `intro` only (Ben, 2026-11-09: the settings are made before). The
+      segment for playing alone, and what it means. */
+  modeSoloLabel?: string;
+  modeSoloMd?: string;
+  /** `intro` only. The segment for the duet with Musie, and what it means. */
+  modeMusieLabel?: string;
+  modeMusieMd?: string;
+  /**
+   * `intro` only, and only where the play step asks for the motion sensor
+   * (`motion_permission`): a heading and what the sensor is for, and the
+   * switch that allows it. ABSENT for the harp, not empty: `motion_md` null
+   * is the screen's answer to "is there a switch for it".
+   */
+  motionMd?: string;
+  motionLabel?: string;
+  /** `play` only. How to play: on a touch screen, and with a mouse and keyboard. */
+  playTouchMd?: string;
+  playPointerMd?: string;
+  /** `play` only. The focus sheet's headline, one sentence over the instrument. */
+  focusHeadline?: string;
+  /**
+   * `play` only. `play_cta`, the button that opens the instrument — *Zur
+   * Harfe*. The exercise's own words and NOT a chrome override, unlike
+   * `continueLabel`: there is no app default for it to fall back to, which is
+   * why it is a field of its own rather than a second meaning of
+   * `secondaryLabel`. The play step's `continueLabel` is the way on inside the
+   * sheet, `session.play.continue`.
+   */
+  playCta?: string;
   /** Overrides for a digital run — the cards are on screen, not on a table. */
   digital?: Partial<StepCopy>;
   /** Overrides for an analogue run. Rare; the base case is usually analogue. */
@@ -144,13 +191,40 @@ export interface CutExpectation {
   ending: Ending | 'any';
 }
 
+/** How someone plays along: the instrument answers, or it does not. */
+const PLAY_MODES: readonly PlayMode[] = ['solo', 'with_musie'];
+
+/**
+ * `play` only. Which instrument, and what its two settings start at —
+ * `exercise_instruments`, one row per exercise.
+ *
+ * STATED, NOT EDITABLE, like `gateSeconds` and `cuts`: changing the instrument
+ * changes what the exercise IS. The sound itself is not here and never will
+ * be — it is locked to its experiment (`instrument_sounds`, written only by a
+ * migration generated from `supabase/content/instruments/*.json`).
+ */
+export interface InstrumentConfig {
+  /** `instruments.id` — harp, kalimba, marimba. */
+  id: string;
+  /** What *Zusammenspiel* starts at. */
+  defaultMode: PlayMode;
+  /** What the vibration switch starts at, where the device has one. */
+  vibrationDefault: boolean;
+}
+
 export interface RunStep {
   step: StepId;
   /** Binds the step to one mode. `scan` is analogue; `select`/`view` digital. */
   mode?: RunMode;
   features: string[];
-  /** `listen` only. The gate before the forward action unlocks. */
+  /**
+   * `listen` and `play`. The gate before the forward action unlocks — on
+   * `play`, the timer. One column, `listen_gate_seconds`, serves both
+   * (`20261109100000_instruments.sql` says so on the column).
+   */
   gateSeconds?: number;
+  /** `play` only. See `InstrumentConfig`. */
+  instrument?: InstrumentConfig;
   /** `intro` only. A key present means ask it; `null` means it cannot arise. */
   ask?: Partial<Record<'posture' | 'ending', AskConfig | null>>;
   /** `listen` only, and only with `cut_from_answers`. */
@@ -390,6 +464,15 @@ export function validateConfig(
     error('run', `Steps must be in ${STEP_IDS.join(' · ')} order.`);
   }
 
+  /* `play` is a screen only an instruments exercise has, and an instruments
+     exercise without one is an intro and a reflection with nothing between. */
+  if (steps.includes('play') && config.kind !== 'instruments') {
+    error('run', 'Only an instruments exercise has a play step.');
+  }
+  if (config.kind === 'instruments' && !steps.includes('play')) {
+    error('run', 'An instruments exercise needs a play step.');
+  }
+
   /* ── Modes ──────────────────────────────────────────────────────────── */
 
   const offers = config.modes?.offers ?? null;
@@ -471,6 +554,24 @@ export function validateConfig(
   const asksPosture = introStep?.features.includes('posture_question') ?? false;
   const asksEnding = introStep?.features.includes('ending_question') ?? false;
 
+  /* ── THE INSTRUMENTS' WORDS, AND WHICH ARE REQUIRED ─────────────────────
+     Every one of them: `content.ts` drops the whole instrument — and with it
+     the play step — when any is empty, so an empty one here is an exercise
+     that cannot be played. `motionMd` only where the play step asks for the
+     sensor, which is the `needs` / `needs_note` shape again: the feature
+     sits on one step and the words that explain it on another. */
+  const playStep = config.run.find((entry) => entry.step === 'play');
+  const asksMotion = playStep?.features.includes('motion_permission') ?? false;
+  const instrumentCopy: Partial<Record<StepId, InstrumentCopyField[]>> = playStep === undefined
+    ? {}
+    : {
+      intro: [
+        'modeMusieLabel', 'modeMusieMd', 'modeSoloLabel', 'modeSoloMd',
+        ...(asksMotion ? (['motionMd', 'motionLabel'] as const) : []),
+      ],
+      play: ['playTouchMd', 'playPointerMd', 'focusHeadline', 'playCta'],
+    };
+
   for (const [index, entry] of config.run.entries()) {
     const at = `run[${index}]`;
     const legal = STEP_FEATURES[entry.step] ?? [];
@@ -514,6 +615,17 @@ export function validateConfig(
           error(`library.${locale}.needs`,
             'The intro promises a note about what to have ready, and there is none.');
         }
+      }
+    }
+
+    /* ── The instrument a play step plays ───────────────────────────────── */
+
+    if (entry.step === 'play') {
+      if (entry.instrument === undefined) {
+        error(`${at}.instrument`, 'A play step needs an instrument to play.');
+      } else if (!PLAY_MODES.includes(entry.instrument.defaultMode)) {
+        error(`${at}.instrument.defaultMode`,
+          `${entry.instrument.defaultMode} is not one of ${PLAY_MODES.join(', ')}. A config cannot add one.`);
       }
     }
 
@@ -673,7 +785,9 @@ export function validateConfig(
       if (copy.headline.trim() === '') {
         error(`${at}.copy.${locale}.headline`, 'A step needs a headline.');
       }
-      if (copy.bodyMd.trim() === '') {
+      /* The instruments' play step says how to play in two fields of its own,
+         for touch and for mouse and keyboard — its heading stands alone. */
+      if (copy.bodyMd.trim() === '' && entry.step !== 'play') {
         warn(`${at}.copy.${locale}.bodyMd`, 'A headline with nothing under it.');
       }
 
@@ -683,6 +797,13 @@ export function validateConfig(
         if (copy.placeholder === undefined || copy.placeholder.trim() === '') {
           error(`${at}.copy.${locale}.placeholder`,
             'A text answer needs a placeholder to say what to write.');
+        }
+      }
+
+      for (const field of instrumentCopy[entry.step] ?? []) {
+        if ((copy[field] ?? '').trim() === '') {
+          error(`${at}.copy.${locale}.${field}`,
+            `The ${entry.step} step of an instruments exercise cannot do without its ${field}.`);
         }
       }
 
