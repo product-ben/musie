@@ -221,7 +221,8 @@
       "enum": [
         "card_based",
         "digital_interactive",
-        "listening_only"
+        "listening_only",
+        "instruments"
       ],
       "description": "exercises.kind. Which screens the run has is STEP_IDS and exerciseKind.ts, not this file."
     },
@@ -418,6 +419,42 @@
           "type": "string",
           "description": "Absent falls back to the chrome MessageKey."
         },
+        "secondaryLabel": {
+          "type": "string",
+          "description": "The step\u2019s other button, where it has two. Absent falls back to the chrome MessageKey."
+        },
+        "volumeMd": {
+          "type": "string",
+          "description": "intro of an instruments exercise only. exercise_i18n.volume_md, always shown: a quieter phone sounds better."
+        },
+        "browserMd": {
+          "type": "string",
+          "description": "intro of an instruments exercise only. exercise_i18n.browser_md: where the exercise works best."
+        },
+        "motionMd": {
+          "type": "string",
+          "description": "intro of an instruments exercise only, and only where the play step has motion_permission. exercise_i18n.motion_md. Absent, not empty, for the harp: null motion_md means there is no permission to ask for."
+        },
+        "playCta": {
+          "type": "string",
+          "description": "play only. exercise_i18n.play_cta, the button that opens the instrument (Zur Harfe). The exercise\u2019s own words, not a chrome override: there is no default to fall back to."
+        },
+        "modeSoloLabel": {
+          "type": "string",
+          "description": "play only. exercise_i18n.mode_solo_label: the segment for playing alone."
+        },
+        "modeSoloMd": {
+          "type": "string",
+          "description": "play only. exercise_i18n.mode_solo_md: what playing alone means, under the segmented control."
+        },
+        "modeMusieLabel": {
+          "type": "string",
+          "description": "play only. exercise_i18n.mode_musie_label: the segment for playing with Musie."
+        },
+        "modeMusieMd": {
+          "type": "string",
+          "description": "play only. exercise_i18n.mode_musie_md: what playing with Musie means, under the segmented control."
+        },
         "digital": {
           "$ref": "#/$defs/copyOverride"
         },
@@ -441,6 +478,9 @@
           "type": "string"
         },
         "continueLabel": {
+          "type": "string"
+        },
+        "secondaryLabel": {
           "type": "string"
         }
       }
@@ -490,6 +530,7 @@
             "view",
             "select",
             "listen",
+            "play",
             "reflect"
           ]
         },
@@ -510,7 +551,11 @@
         },
         "gateSeconds": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "listen and play. The gate before the forward action unlocks; on play, the timer. One column, listen_gate_seconds, serves both."
+        },
+        "instrument": {
+          "$ref": "#/$defs/instrument"
         },
         "ask": {
           "description": "intro only. Null means the question does not arise; an omitted key means do not ask. A config may switch a question off and preselect an answer; it cannot add an option.",
@@ -590,6 +635,34 @@
               "$ref": "#/$defs/stepCopy"
             }
           }
+        }
+      }
+    },
+    "instrument": {
+      "description": "play only. exercise_instruments: which instrument, and what its two settings start at. Stated, not editable \u2014 changing it changes what the exercise is. The sound is not here: it is locked to its experiment (instrument_sounds, written only by a migration).",
+      "type": "object",
+      "required": [
+        "id",
+        "defaultMode",
+        "vibrationDefault"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "instruments.id \u2014 harp, kalimba, marimba.",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "defaultMode": {
+          "enum": [
+            "solo",
+            "with_musie"
+          ],
+          "description": "What Zusammenspiel starts at."
+        },
+        "vibrationDefault": {
+          "type": "boolean",
+          "description": "What the vibration switch starts at, where the device has one."
         }
       }
     },

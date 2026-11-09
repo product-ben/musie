@@ -360,6 +360,123 @@ describe('implemented: false suspends the content rules', () => {
   });
 });
 
+/* ── THE INSTRUMENTS (2026-11-09) ─────────────────────────────────────────
+   `content.ts` drops the whole instrument — and with it the play step — when
+   any of its words is empty. So an emptied field in the builder is an
+   exercise that cannot be played, and the panel has to say so on the field
+   she emptied. */
+function instruments(motion = true): ExerciseConfig {
+  const introCopy = {
+    headline: 'Loslegen', bodyMd: 'Ruhig.', volumeMd: 'Leiser.', browserMd: 'Safari.',
+    ...(motion ? { motionMd: 'Bewegung.' } : {}),
+  };
+  const playCopy = {
+    headline: 'Spiel', bodyMd: 'Los.', playCta: 'Zur Kalimba',
+    modeSoloLabel: 'Allein', modeSoloMd: 'Still.', modeMusieLabel: 'Mit Musie', modeMusieMd: 'Antwortet.',
+  };
+  return {
+    id: motion ? 'kalimba' : 'harp',
+    kind: 'instruments',
+    implemented: true,
+    modes: null,
+    catalogue: {
+      sort: 6, timeframeMinutes: { min: 3, max: 10 }, cardsDealt: null,
+      artwork: 'k.webp', goals: ['relax'],
+    },
+    library: {
+      de: { name: 'Kalimba', description: 'D', needs: 'Dein Handy', imageAlt: 'A' },
+      en: { name: 'Kalimba', description: 'D', needs: 'Your phone', imageAlt: 'A' },
+    },
+    run: [
+      { step: 'intro', features: ['needs_note'], copy: { de: { ...introCopy }, en: { ...introCopy } } },
+      {
+        step: 'play', gateSeconds: 90,
+        features: [
+          'answer_mode', 'vibration_switch', ...(motion ? ['motion_permission'] : []),
+          'demo_note', 'play_timer', 'immersive_view',
+        ],
+        instrument: { id: motion ? 'kalimba' : 'harp', defaultMode: 'with_musie', vibrationDefault: true },
+        copy: { de: { ...playCopy }, en: { ...playCopy } },
+      },
+      {
+        step: 'reflect', features: ['mode_text'],
+        copy: copy('Wie fühlst du dich?', { placeholder: 'Welcher Ton?' }),
+      },
+    ],
+    content: { locales: ['de', 'en'], textLocales: ['de', 'en'] },
+  };
+}
+
+describe('an instruments exercise', () => {
+  it('accepts the kalimba, which asks for the motion sensor', () => {
+    expect(validateConfig(instruments(true))).toEqual([]);
+  });
+
+  it('accepts the harp, which does not and says nothing about it', () => {
+    expect(validateConfig(instruments(false))).toEqual([]);
+  });
+
+  it('refuses each of the play step\'s words emptied, on the field', () => {
+    for (const field of ['playCta', 'modeSoloLabel', 'modeSoloMd', 'modeMusieLabel', 'modeMusieMd'] as const) {
+      const config = instruments();
+      config.run[1]!.copy.en![field] = ' ';
+      expect(errors(config).map((problem) => problem.path)).toEqual([`run[1].copy.en.${field}`]);
+    }
+  });
+
+  it('refuses the intro\'s two notes emptied', () => {
+    for (const field of ['volumeMd', 'browserMd'] as const) {
+      const config = instruments();
+      delete config.run[0]!.copy.de![field];
+      expect(errors(config).map((problem) => problem.path)).toEqual([`run[0].copy.de.${field}`]);
+    }
+  });
+
+  /* The `needs` / `needs_note` shape again: the feature on one step, the
+     words that explain it on another. A permission asked with no sentence
+     above it is a button nobody was told about. */
+  it('refuses a motion permission with nothing said about it', () => {
+    const config = instruments(true);
+    delete config.run[0]!.copy.de!.motionMd;
+    expect(errors(config).map((problem) => problem.path)).toEqual(['run[0].copy.de.motionMd']);
+  });
+
+  it('does not ask a card exercise\'s intro for the instruments\' notes', () => {
+    expect(errors(card())).toEqual([]);
+  });
+
+  it('refuses a play step with no instrument', () => {
+    const config = instruments();
+    delete config.run[1]!.instrument;
+    expect(errors(config).map((problem) => problem.path)).toEqual(['run[1].instrument']);
+  });
+
+  it('refuses a starting mode the app does not have', () => {
+    const config = instruments();
+    (config.run[1]!.instrument as { defaultMode: string }).defaultMode = 'duet';
+    expect(errors(config).map((problem) => problem.path)).toEqual(['run[1].instrument.defaultMode']);
+  });
+
+  it('keeps play to the instruments kind, and the instruments kind to play', () => {
+    const borrowed = listening();
+    borrowed.run.splice(2, 0, structuredClone(instruments().run[1]!));
+    expect(errors(borrowed).map((problem) => problem.message).join())
+      .toContain('Only an instruments exercise has a play step');
+
+    const silent = instruments();
+    silent.run.splice(1, 1);
+    expect(errors(silent).map((problem) => problem.message).join())
+      .toContain('needs a play step');
+  });
+
+  it('suspends the word rules while it is unfinished', () => {
+    const config = instruments();
+    config.implemented = false;
+    config.run[1]!.copy.de!.playCta = '';
+    expect(errors(config)).toEqual([]);
+  });
+});
+
 describe('the headline split', () => {
   /* Real copy, from `exercise_i18n` as it stands. The round trip has to be
      exact or the builder rewrites every step the first time it is opened. */

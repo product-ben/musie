@@ -1888,6 +1888,26 @@ anzunehmen, das alte Ja gelte weiter.`,
   'builder.questions.add': 'Frage hinzufügen',
   'builder.questions.remove': 'Diese Frage entfernen',
 
+  /* ── Die Instrumente (2026-11-09) ──────────────────────────────────────
+     Ein Block, damit die `session.play.*`-Schlüssel einer anderen Lane
+     anderswo in dieser Datei ohne Konflikt dazukommen. */
+  'builder.field.volume': 'Hinweis zur Lautstärke',
+  'builder.field.volumeHint': 'Steht immer da. Die App kann nicht erkennen, wie laut das Handy ist – dieser Satz ist die einzige Erinnerung.',
+  'builder.field.browser': 'Hinweis zum Browser',
+  'builder.field.browserHint': 'Wo die Übung am besten klingt.',
+  'builder.field.motion': 'Hinweis zur Bewegung',
+  'builder.field.motionHint': 'Steht über dem Knopf, der die Erlaubnis für die Bewegung des Handys einholt. Sag, wofür die Übung sie braucht.',
+  'builder.field.modeSolo': 'Wahl: allein',
+  'builder.field.modeSoloMd': 'Erklärung: allein',
+  'builder.field.modeMusie': 'Wahl: mit Musie',
+  'builder.field.modeMusieMd': 'Erklärung: mit Musie',
+  'builder.field.modeHint': 'Die beiden Möglichkeiten stehen nebeneinander – halte jede kurz.',
+  'builder.field.modeMdHint': 'Steht unter den beiden Möglichkeiten, solange diese gewählt ist.',
+  'builder.field.playCta': 'Knopf, der das Instrument öffnet',
+  'builder.field.playCtaHint': 'Zwei oder drei Wörter. Der Knopf, der zur Reflexion weiterführt, wartet drinnen beim Instrument.',
+  'builder.playPreview.headline': 'Das Instrument fehlt in der Vorschau',
+  'builder.playPreview': 'Die Vorschau zeigt die Überschrift, den Text und den Knopf, der das Instrument öffnet. Die beiden Arten zu spielen und der Knopf darin erscheinen nur in der App – die Vorschau ändert sich bei diesen Feldern also nicht mit.',
+
   'builder.problems': 'Was noch fehlt',
   'builder.problems.none': 'Nichts fehlt. Diese Übung kann weitergegeben werden.',
 

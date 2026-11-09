@@ -42,6 +42,12 @@ const TEXT_PATHS: readonly RegExp[] = [
   /^run\[\d+]\.copy\.(de|en)\.(headline|bodyMd|placeholder|continueLabel|secondaryLabel)$/,
   /^run\[\d+]\.copy\.(de|en)\.(digital|analogue)\.(headline|bodyMd|placeholder|continueLabel|secondaryLabel)$/,
   /^run\[\d+]\.questions\.(de|en)\[\d+]\.(listen|reflect|helper)$/,
+  /* The instruments' own words (2026-11-09): the intro's three notes, the play
+     step's button and its two ways of playing. Base copy only — an
+     instruments exercise has no modes, so an override of one of these is
+     nothing the app could read. `run[n].instrument.*` is NOT here: which
+     instrument, and what its settings start at, is what the exercise is. */
+  /^run\[\d+]\.copy\.(de|en)\.(volumeMd|browserMd|motionMd|playCta|modeSoloLabel|modeSoloMd|modeMusieLabel|modeMusieMd)$/,
 ];
 
 export function classifyPath(path: string): ChangeKind {
