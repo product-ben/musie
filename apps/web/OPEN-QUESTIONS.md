@@ -10779,3 +10779,63 @@ felt or heard on a device from this branch.
 
 What I need from Ben or Lucia: one round on an iPhone and an Android phone
 before the exercises go to testers.
+
+## The key colour is sand-5, and the details are darker than the keys again — RESOLVED
+
+Where: `packages/design-system/tokens/musy-foundations-amendments.css` (G5),
+answering „Kalimba bridge and marimba holes are now lighter than what they sit
+on“ above
+
+What I checked: the marimba's experiment drew its bars at sand-5, the kalimba's
+tines at sand-7; the first brief's family rule had put both at sand-9.
+
+What I did: `--instrument-key: var(--sand-5)` for both. `--instrument-detail`
+stays sand-8, so the kalimba's bridge and the marimba's holes are a step darker
+than what they sit on, as in both experiments. Keys are now lighter than
+strings (sand-7): the family rule is inverted, and the Storybook page
+„Instrument shadows“ says so.
+
+Why: Ben, round 2 (2026-11-09): „ein Tasten token sand 5“.
+
+What I need from Ben: nothing.
+
+## The headline and the kalimba stand differently from their experiments, by the round-2 layout — RESOLVED
+
+Where: `apps/web/src/components/SessionPlay.tsx`, `Sheet` `actions` and
+`stage` (`packages/design-system/src/Sheet.tsx`)
+
+What I checked: measured against the experiments at four sizes (plan, R0).
+Two boxes differ, both as a consequence of a decision rather than a defect:
+
+- The headline is 56 px narrower in portrait (229 px at 393, the experiment's
+  285): the settings icon now stands beside the X, and the headline clears
+  both. At 393 it takes one line more. In landscape and on desktop it is
+  within the experiment's width.
+- The kalimba's tines start about 65 px higher (y 197 at 393, the
+  experiment's 264): the harp's layout has no note line under the headline,
+  so the instrument's top inset is the headline's bottom.
+
+What I did: kept both.
+
+Why: Ben, round 2: the harp 1443 layout for all instruments, the settings icon
+at the top beside the X.
+
+What I need from Ben: nothing, unless the narrower headline reads worse on a
+phone than the moved icon is worth.
+
+## The marimba's bars are 11–12 px shorter than in its experiment — FLAGGED
+
+Where: `Countdown` `size="compact"`, the marimba's foot row
+
+What I checked: the compact clock's transport button is the design system's
+touch target on a coarse pointer (56 px tall; the experiment's was 44). The
+foot rises by the difference, and the bars, which end at the foot, lose it:
+263 px of 274 in landscape at 852×393.
+
+What I did: kept the system's target size.
+
+Why: CLAUDE.md rule 1. A screen does not shrink a component's target, and
+44 px is below what the system guarantees for a primary control on touch.
+
+What I need from Ben: nothing, unless the marimba should have a smaller
+transport, which would be a `Countdown` change for every exercise.
