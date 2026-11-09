@@ -8630,3 +8630,50 @@ html[data-musy-scroll-snap='y'] {
   letter-spacing: var(--type-body-sm-tracking);
   color: var(--on-surface-muted);
 }
+
+
+/* ═══ 31 · INSTRUMENT CURSOR ═══════════════════════════════════════════════
+   The harp experiment's green dot (harp/261104-1443, `.musie-cursor`), which
+   stands in for the mouse and pen pointer over an instrument. The rule for
+   when it shows is in `InstrumentCursor.tsx`; this is its geometry.
+
+   `top` and `left`, PHYSICAL, on purpose: the dot is moved by a transform of
+   the pointer's clientX / clientY, which are physical too, so a logical
+   inset would put it on the wrong side of the screen in a right-to-left
+   document. Centred by a negative margin of half its size, as the
+   experiment did, so the transform can stay the pointer's position.
+
+   Above everything, toasts included — `--z-toast` is Layer 1's top step and
+   this is one higher: a pointer drawn under something would not be a
+   pointer. It is appended to the body, outside every stacking context the
+   sheet makes, so the step is compared with the sheet's own.
+
+   `visibility`, not `display`: the dot keeps its box while hidden, so the
+   first move after showing it does not lay anything out.              */
+.musy-instrument-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: calc(var(--z-toast) + 1);
+  inline-size: var(--instrument-cursor-size);
+  block-size: var(--instrument-cursor-size);
+  margin: calc(var(--instrument-cursor-size) / -2) 0 0 calc(var(--instrument-cursor-size) / -2);
+  border-radius: var(--radius-full);
+  background-color: var(--instrument-cursor-color);
+  pointer-events: none;
+  visibility: hidden;
+  will-change: transform;
+}
+
+.musy-instrument-cursor[data-shown] { visibility: visible; }
+
+/* The target — the instrument's canvas — hides the system pointer for exactly
+   as long as the dot stands in for it. */
+[data-musy-instrument-cursor] { cursor: none; }
+
+@media (forced-colors: active) {
+  /* A system colour scheme replaces ours, and the system pointer is the one it
+     already accounts for: keep it, and do not draw the dot. */
+  .musy-instrument-cursor[data-shown] { visibility: hidden; }
+  [data-musy-instrument-cursor] { cursor: auto; }
+}

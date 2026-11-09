@@ -101,10 +101,15 @@
      instruments exercises, 2026-11-09 — Kalimba, Marimba, Harfe, drawn on a
      canvas from these tokens and nothing else (docs/plans/instruments-prd.md).
 
-     COLOUR BY FAMILY, which is Ben's decision: a STRING instrument at rest is
-     lighter than a KEY instrument at rest. The harp is a string; the marimba
+     COLOUR BY FAMILY, which is Ben's decision: a STRING instrument and a KEY
+     instrument rest in different shades. The harp is a string; the marimba
      and the kalimba are keys. Step 7 is the harp's own default shade (the
-     experiment let you pick 1–12 and shipped 7); keys go two steps darker.
+     experiment let you pick 1–12 and shipped 7). Keys are step 5, LIGHTER
+     than strings: Ben inverted the family rule on 2026-11-09, after playing
+     the three on localhost, to match the experiments' brightness. sand-5 is
+     the marimba experiment's bars (the kalimba's tines were sand-7); the
+     first brief had keys two steps DARKER than strings, sand-9. One key
+     token for both key instruments.
      What the person touched is terracotta and what Musie answered is green,
      both at the harp's step, so the three colours read as one set.
 
@@ -119,10 +124,35 @@
      take a box-shadow, so the tokens are its PARAMETERS, not a shadow.
      Level 0–3 is Aus, Niedrig, Mittel, Hoch; tint 1 colours the shadow from
      the surface, 0 draws it neutral. Removed under prefers-contrast: more,
-     as --elevation-* is.                                                    */
+     as --elevation-* is.
+
+     TAP: the soft dot a note of YOUR OWN leaves where it was played, on all
+     three instruments; none for Musie's answer (Ben, 2026-11-09). The
+     kalimba experiment's `dots` (kalimba/261106-1121), read by
+     `instrumentTapAt()` (src/instrumentTap.ts) and tuned live in Storybook,
+     Foundations/Instrument tap, which prints these lines to paste back here.
+     At age p (0 → 1 over the duration) and strength v (0 … 1):
+         radius  = size × (start + (growth + growth-by-strength × v)
+                                  × (1 − (1 − p)^growth-power))
+         colour  = rest → played at  mix + mix-by-strength × v
+         opacity = min(1, (1 − p)^fade-power
+                          × (opacity + opacity-by-strength × v))
+     drawn as a radial gradient, because Safari has no canvas filter.
+     THE SIZE IS ABSOLUTE, in px, and that is the decision: the experiment
+     multiplied by the tine it was played on, and a marimba bar is about five
+     times as wide, so a relative dot would be five times as large there.
+     16.85px is the kalimba's tine width on a 393px phone — `layoutKalimba`,
+     min(393 − 32, 560) / 9 tines × 0.42 = 16.8467 — so the kalimba on the
+     reference phone draws exactly the experiment's dot, and every other
+     instrument and screen draws that same dot.
+
+     CURSOR: the harp experiment's green dot (harp/261104-1443,
+     `.musie-cursor`), which stands in for the mouse and pen pointer over an
+     instrument — `InstrumentCursor` (src/InstrumentCursor.tsx). Two --sp-5
+     across, centred on the pointer, in the primary interactive colour.      */
   --instrument-surface: var(--surface);
   --instrument-string: var(--sand-7);
-  --instrument-key: var(--sand-9);
+  --instrument-key: var(--sand-5);
   --instrument-detail: var(--sand-8);
   --instrument-played: var(--terracotta-7);
   --instrument-answer: var(--green-7);
@@ -133,6 +163,19 @@
   --instrument-shadow-light-x: -0.25;
   --instrument-shadow-light-y: -0.37;
   --instrument-shadow-tint: 1;
+  --instrument-tap-duration: 700ms;
+  --instrument-tap-size: 16.85px;
+  --instrument-tap-start: 0.8;
+  --instrument-tap-growth: 0.6;
+  --instrument-tap-growth-by-strength: 3.4;
+  --instrument-tap-growth-power: 3;
+  --instrument-tap-mix: 0.3;
+  --instrument-tap-mix-by-strength: 0.7;
+  --instrument-tap-opacity: 0.45;
+  --instrument-tap-opacity-by-strength: 0.75;
+  --instrument-tap-fade-power: 1.6;
+  --instrument-cursor-size: calc(var(--sp-5) * 2);
+  --instrument-cursor-color: var(--interactive-primary);
 }
 
 @media (prefers-contrast: more) {
