@@ -1,0 +1,341 @@
+{
+  "sources": {
+    "harp": {
+      "experiment": "harp/261109-0920",
+      "commit": "d0e88ac",
+      "branch": "the-harp-answers"
+    },
+    "kalimba": {
+      "experiment": "kalimba/261106-1121",
+      "commit": "cd962d3",
+      "branch": "main"
+    },
+    "marimba": {
+      "experiment": "marimba/261108-1740",
+      "commit": "5590e20",
+      "branch": "the-marimbaphon"
+    }
+  },
+  "samples": [
+    {
+      "instrument": "harp",
+      "file": "B3.m4a",
+      "path": "/instruments/harp/B3.m4a",
+      "midi": 59,
+      "layer": "aufnahme",
+      "bytes": 53453,
+      "sha256": "223332d811aa26199117eb3bf91e12ac4304c50357e88815e2e3a6fdee18ba95",
+      "from": "harp/261109-0920/index.html#SAMPLES[59]"
+    },
+    {
+      "instrument": "harp",
+      "file": "C3.m4a",
+      "path": "/instruments/harp/C3.m4a",
+      "midi": 48,
+      "layer": "aufnahme",
+      "bytes": 54087,
+      "sha256": "9d5d39de110fb213a553b954db75f04046ea48ad1c2653e0371cbb9de2f5d720",
+      "from": "harp/261109-0920/index.html#SAMPLES[48]"
+    },
+    {
+      "instrument": "harp",
+      "file": "D4.m4a",
+      "path": "/instruments/harp/D4.m4a",
+      "midi": 62,
+      "layer": "aufnahme",
+      "bytes": 53701,
+      "sha256": "7ea4d749846cf83c5bf6181fddc71550d174ef758f6859ed8a9ecddaadc76529",
+      "from": "harp/261109-0920/index.html#SAMPLES[62]"
+    },
+    {
+      "instrument": "harp",
+      "file": "E3.m4a",
+      "path": "/instruments/harp/E3.m4a",
+      "midi": 52,
+      "layer": "aufnahme",
+      "bytes": 53885,
+      "sha256": "0f368088cb3eac3c5805659ecb45dfbfa1731eca74d9151fd5b5e2415d61744c",
+      "from": "harp/261109-0920/index.html#SAMPLES[52]"
+    },
+    {
+      "instrument": "harp",
+      "file": "F4.m4a",
+      "path": "/instruments/harp/F4.m4a",
+      "midi": 65,
+      "layer": "aufnahme",
+      "bytes": 52362,
+      "sha256": "c0ebddb5ac92291fca430dedced0e41fdffe7f9c862232bbd9d4cbf2dc0bcc41",
+      "from": "harp/261109-0920/index.html#SAMPLES[65]"
+    },
+    {
+      "instrument": "harp",
+      "file": "G3.m4a",
+      "path": "/instruments/harp/G3.m4a",
+      "midi": 55,
+      "layer": "aufnahme",
+      "bytes": 52906,
+      "sha256": "c4390aa429ca3aa7debc8e889b98cd8eff3b2202f0f4c373d357b1ba7ba8c250",
+      "from": "harp/261109-0920/index.html#SAMPLES[55]"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-A3.mp3",
+      "path": "/instruments/kalimba/closed-A3.mp3",
+      "midi": 57,
+      "layer": "closed",
+      "bytes": 96549,
+      "sha256": "0e7a8e4a5e6fcdbdcdb18273485f65c52882e9ea2eb3e8a0ac7b8c0333d5bb13",
+      "from": "kalimba/samples/closed-A3.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-A4.mp3",
+      "path": "/instruments/kalimba/closed-A4.mp3",
+      "midi": 69,
+      "layer": "closed",
+      "bytes": 102505,
+      "sha256": "5e6f585f3e5ef35d727ac3b3e1c340579b458b0fe3f63a42b6ec1803d1112e5a",
+      "from": "kalimba/samples/closed-A4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-B4.mp3",
+      "path": "/instruments/kalimba/closed-B4.mp3",
+      "midi": 71,
+      "layer": "closed",
+      "bytes": 113162,
+      "sha256": "8495b30cb982066dce6b13ca1a89394b908f4d397ba0f578a5cb840e5dff4e4e",
+      "from": "kalimba/samples/closed-B4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-C4.mp3",
+      "path": "/instruments/kalimba/closed-C4.mp3",
+      "midi": 60,
+      "layer": "closed",
+      "bytes": 74919,
+      "sha256": "cc962e58a9f6fc46f8632ebc07cade2c82faa4a26fdbba081dd28a7fdcc633c1",
+      "from": "kalimba/samples/closed-C4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-C5.mp3",
+      "path": "/instruments/kalimba/closed-C5.mp3",
+      "midi": 72,
+      "layer": "closed",
+      "bytes": 110968,
+      "sha256": "207816d51cfaea0092d030820351d7bc91a31dee045905d17a9e27c2018f2191",
+      "from": "kalimba/samples/closed-C5.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-E4.mp3",
+      "path": "/instruments/kalimba/closed-E4.mp3",
+      "midi": 64,
+      "layer": "closed",
+      "bytes": 105953,
+      "sha256": "e03cfebf67a8644b43806422e153050b1e08a737c0c5f84cf742145366d9807b",
+      "from": "kalimba/samples/closed-E4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-E5.mp3",
+      "path": "/instruments/kalimba/closed-E5.mp3",
+      "midi": 76,
+      "layer": "closed",
+      "bytes": 73665,
+      "sha256": "a1067520a12f3b1647c741b23277d165cdba80ea48d078c566571215eaf004a3",
+      "from": "kalimba/samples/closed-E5.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "closed-F4.mp3",
+      "path": "/instruments/kalimba/closed-F4.mp3",
+      "midi": 65,
+      "layer": "closed",
+      "bytes": 97176,
+      "sha256": "3ae4d52b177e4217f80742da60f13ab26a8624536676ae72404ceac824399d97",
+      "from": "kalimba/samples/closed-F4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-A3.mp3",
+      "path": "/instruments/kalimba/open-A3.mp3",
+      "midi": 57,
+      "layer": "open",
+      "bytes": 120372,
+      "sha256": "d73166aaebe8951be733d249957ab48903e369179ace8fb8fadb5998488ed115",
+      "from": "kalimba/samples/open-A3.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-A4.mp3",
+      "path": "/instruments/kalimba/open-A4.mp3",
+      "midi": 69,
+      "layer": "open",
+      "bytes": 97176,
+      "sha256": "6377f949bba93feeb8666fa2216a4faa36a299f6fd912b7a899d86bd232c6f75",
+      "from": "kalimba/samples/open-A4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-B4.mp3",
+      "path": "/instruments/kalimba/open-B4.mp3",
+      "midi": 71,
+      "layer": "open",
+      "bytes": 100624,
+      "sha256": "0b511d2a04c3757d4463d13c3b87eda36b0946c3cde9f985198c2b852026d7a2",
+      "from": "kalimba/samples/open-B4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-C4.mp3",
+      "path": "/instruments/kalimba/open-C4.mp3",
+      "midi": 60,
+      "layer": "open",
+      "bytes": 120372,
+      "sha256": "79ac4ceedcba6a27d8a9978ebe61295ad45aaf20db1d3941e6ce599ee0b39b3b",
+      "from": "kalimba/samples/open-C4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-C5.mp3",
+      "path": "/instruments/kalimba/open-C5.mp3",
+      "midi": 72,
+      "layer": "open",
+      "bytes": 99997,
+      "sha256": "a65a35e663eed04c4f5366bac44865b4e0f9cedbd0c3b64aecf32796f84294dd",
+      "from": "kalimba/samples/open-C5.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-E4.mp3",
+      "path": "/instruments/kalimba/open-E4.mp3",
+      "midi": 64,
+      "layer": "open",
+      "bytes": 120372,
+      "sha256": "bb455cadbf37a51fde296f91898ceb3a570cd0291cdb5ad097e7004cbe5690c6",
+      "from": "kalimba/samples/open-E4.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-E5.mp3",
+      "path": "/instruments/kalimba/open-E5.mp3",
+      "midi": 76,
+      "layer": "open",
+      "bytes": 67082,
+      "sha256": "b35f00c7d3d4227998cfddcaba7db26cc226e151ca9dc0590bb11d77ce7fdc85",
+      "from": "kalimba/samples/open-E5.mp3"
+    },
+    {
+      "instrument": "kalimba",
+      "file": "open-F4.mp3",
+      "path": "/instruments/kalimba/open-F4.mp3",
+      "midi": 65,
+      "layer": "open",
+      "bytes": 120372,
+      "sha256": "512cb4cc80ee41eaf3e049561284b83c36d1e71515bcc7ed66213f5d3290e06a",
+      "from": "kalimba/samples/open-F4.mp3"
+    },
+    {
+      "instrument": "marimba",
+      "file": "B3.wav",
+      "path": "/instruments/marimba/B3.wav",
+      "midi": 59,
+      "layer": "laut",
+      "bytes": 360412,
+      "sha256": "d8da59e150fcb91760981d733c8846cc29e6c8dee2e0a8a2ff03b80da12d195d",
+      "from": "marimba/samples/B3.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "C3.wav",
+      "path": "/instruments/marimba/C3.wav",
+      "midi": 48,
+      "layer": "laut",
+      "bytes": 534504,
+      "sha256": "2d10a8c02093e99590fde7474118b9a54279dd19908625e2be63e5f16506e540",
+      "from": "marimba/samples/C3.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "C5.wav",
+      "path": "/instruments/marimba/C5.wav",
+      "midi": 72,
+      "layer": "laut",
+      "bytes": 169472,
+      "sha256": "630d23dde6fa3fc566fa59e44988b42e0767886b612ae5ad3447b94d0e3b2eb5",
+      "from": "marimba/samples/C5.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "F4.wav",
+      "path": "/instruments/marimba/F4.wav",
+      "midi": 65,
+      "layer": "laut",
+      "bytes": 271416,
+      "sha256": "80cfbd628d5e0fd0c050a17350b16098097aa7bda67d9f2e4e3d673f1543e351",
+      "from": "marimba/samples/F4.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "G3.wav",
+      "path": "/instruments/marimba/G3.wav",
+      "midi": 55,
+      "layer": "laut",
+      "bytes": 389706,
+      "sha256": "2f0a3fb8c94eed4ad7ee1fcd463e71833f1a7e57c0e0882ef3769d402c71439c",
+      "from": "marimba/samples/G3.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "mar-med-B3.wav",
+      "path": "/instruments/marimba/mar-med-B3.wav",
+      "midi": 59,
+      "layer": "mittel",
+      "bytes": 260504,
+      "sha256": "43ab30c74a281a372b23673d7fc0cf0fe69e1416f2b3c68522efe3a70e620004",
+      "from": "marimba/samples/mar-med-B3.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "mar-med-C3.wav",
+      "path": "/instruments/marimba/mar-med-C3.wav",
+      "midi": 48,
+      "layer": "mittel",
+      "bytes": 466104,
+      "sha256": "2bc54338931f6b37544fe06ed2bcca32299030a94b88e177bcc6c8d30be7b052",
+      "from": "marimba/samples/mar-med-C3.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "mar-med-C5.wav",
+      "path": "/instruments/marimba/mar-med-C5.wav",
+      "midi": 72,
+      "layer": "mittel",
+      "bytes": 144452,
+      "sha256": "212ab81e2ca9bc779f94411faa1d3b162a2d6fcb997e8a3079fec7a654d630ef",
+      "from": "marimba/samples/mar-med-C5.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "mar-med-F4.wav",
+      "path": "/instruments/marimba/mar-med-F4.wav",
+      "midi": 65,
+      "layer": "mittel",
+      "bytes": 215160,
+      "sha256": "63ce0a1a6acc154ed34037379e6fda7aca75733cf814d900896aae35fc0cbb66",
+      "from": "marimba/samples/mar-med-F4.wav"
+    },
+    {
+      "instrument": "marimba",
+      "file": "mar-med-G3.wav",
+      "path": "/instruments/marimba/mar-med-G3.wav",
+      "midi": 55,
+      "layer": "mittel",
+      "bytes": 315148,
+      "sha256": "03daea5598e8594d0d4d187120a4868a4ce10d31382a56df50d7be2f04a7f659",
+      "from": "marimba/samples/mar-med-G3.wav"
+    }
+  ]
+}
