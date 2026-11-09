@@ -109,6 +109,12 @@ export function level(s: StringState, now: number, target: number, visual: HarpS
   return reduced ? target : cur();
 }
 
+/**
+ * The height a held string bends at: the finger's, kept one pixel inside the
+ * canvas (the experiment's `frame`). The tap dot of a pull sits there too.
+ */
+export const bendY = (y: number, height: number): number => Math.max(1, Math.min(height - 1, y));
+
 export interface DrawnString {
   /** x of the string at height y, CSS px. */
   xAt: (y: number) => number;
@@ -157,7 +163,7 @@ export function shapeStrings(
 
     let xAt: (y: number) => number = () => x0;
     if (s.held) {
-      const fy = Math.max(1, Math.min(H - 1, s.held.y));
+      const fy = bendY(s.held.y, H);
       const fx = s.held.dx;
       xAt = (y) => x0 + fx * (y < fy ? Math.max(0, y) / fy : Math.max(0, H - y) / (H - fy));
     } else if (a) {

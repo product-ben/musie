@@ -9,12 +9,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { INSTRUMENT_SHADOW_DEFAULT, instrumentShadowLayers, INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
-import type { AnswerConfig, InstrumentHost, InstrumentSample, StagePointer, Stroke } from '../types';
+import {
+  INSTRUMENT_SHADOW_DEFAULT, instrumentShadowLayers, INSTRUMENT_TAP_DEFAULT, INSTRUMENT_TAP_STOPS, instrumentTapAt,
+  type InstrumentTapParams,
+} from '@musie/design-system';
+import type { AnswerConfig, InstrumentAdapter, InstrumentHost, InstrumentPalette, InstrumentSample, StagePointer, Stroke } from '../types';
 import { createHarp } from './index';
 import { createHarpInput } from './input';
 import { pluckBuzz, type HarpSound } from './sound';
-import { stringXs, strength } from './geometry';
+import { maxPull, stringXs, strength, strumVelocity } from './geometry';
 
 const ROOT = join(__dirname, '..', '..', '..', '..', '..');
 const read = <T>(path: string): T => JSON.parse(readFileSync(join(ROOT, path), 'utf8')) as T;
@@ -133,6 +136,7 @@ function recorder() {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('the adapter', () => {
@@ -314,5 +318,304 @@ describe('input beyond the experiment', () => {
       [3, strength(10, xs, pull)],
       [3, strength(0, xs, pull)],
     ]);
+  });
+});
+
+/* ── the tap dot (round 2) ─────────────────────────────────────────────── */
+
+interface PaintedDot {
+  x: number;
+  y: number;
+  r: number;
+  alpha: number;
+  stops: [number, string][];
+}
+
+/**
+ * A 2D context that keeps the tap dots it is asked to fill — the only
+ * `arc` and `fill` the harp makes — and lets every other call through.
+ */
+function dotRecorder() {
+  let painted: PaintedDot[] = [];
+  let arc: number[] = [];
+  const state: Record<string | symbol, unknown> = { globalAlpha: 1, fillStyle: '#000000' };
+  const own: Record<string, unknown> = {
+    createRadialGradient: (...args: number[]) => {
+      const stops: [number, string][] = [];
+      return { args, stops, addColorStop: (at: number, c: string) => void stops.push([at, c]) };
+    },
+    arc: (...args: number[]) => {
+      arc = args;
+    },
+    fill: () => {
+      const { stops } = state.fillStyle as { stops: [number, string][] };
+      painted.push({ x: arc[0], y: arc[1], r: arc[2], alpha: state.globalAlpha as number, stops });
+    },
+  };
+  const g = new Proxy(state, {
+    get: (t, key) => (typeof key === 'string' && key in own ? own[key] : key in t ? t[key] : () => {}),
+    set: (t, key, v) => {
+      t[key] = v;
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+  /** One frame: the dots it painted, and whether it asks for another. */
+  return (h: InstrumentAdapter, now: number) => {
+    painted = [];
+    const more = h.draw(g, now);
+    return { dots: painted, more };
+  };
+}
+
+const REST = [189, 188, 175] as const;
+const PLAYED = [227, 178, 148] as const;
+const css = (c: readonly number[]) => `rgb(${c.join(', ')})`;
+
+/** The dot the design system makes `age` ms after a stroke of `strength`, between `rest` and `played`. */
+function expectDot(
+  dot: PaintedDot | undefined,
+  want: { x: number; y: number; age: number; strength: number },
+  params: InstrumentTapParams = INSTRUMENT_TAP_DEFAULT,
+  rest: readonly number[] = REST,
+  played: readonly number[] = PLAYED,
+) {
+  expect(dot).toBeDefined();
+  const f = instrumentTapAt(params, { ageMs: want.age, strength: want.strength });
+  const c = rest.map((v, i) => Math.round(v + (played[i] - v) * f.mix)).join(',');
+  expect(dot!.x).toBeCloseTo(want.x, 9);
+  expect(dot!.y).toBeCloseTo(want.y, 9);
+  expect(dot!.r).toBeCloseTo(f.radius, 9);
+  expect(dot!.alpha).toBeCloseTo(f.alpha, 9);
+  expect(dot!.stops).toEqual(INSTRUMENT_TAP_STOPS.map(([at, a]) => [at, `rgba(${c},${a})`]));
+}
+
+describe('the tap dot (round 2): every own note, never the answer or the demo', () => {
+  /** `performance.now()`, which the adapter stamps a note with. */
+  function clock(start: number) {
+    const c = { now: start };
+    vi.spyOn(performance, 'now').mockImplementation(() => c.now);
+    return c;
+  }
+  const pull = sound.velocity.pull;
+
+  it('a pull: it appears at the grip — on the string, at the finger’s height — and does not age while held', () => {
+    const t = clock(1000);
+    const { harp: h, xs } = setup();
+    const frame = dotRecorder();
+    expect(frame(h, 1000).dots).toEqual([]);
+    /* 5 px beside the string is still taking it; the dot sits on the string. */
+    h.pointerDown(touch(1, xs[3] + 5, 300, 0));
+    const first = frame(h, 1000);
+    expect(first.dots).toHaveLength(1);
+    expectDot(first.dots[0], { x: xs[3], y: 300, age: 0, strength: strength(0, xs, pull) });
+    /* Held for five seconds: still the dot of the moment of the stroke. */
+    t.now = 6000;
+    const later = frame(h, 6000);
+    expect(later.more).toBe(true);
+    expectDot(later.dots[0], { x: xs[3], y: 300, age: 0, strength: strength(0, xs, pull) });
+  });
+
+  it('it travels with the pull: x from the pull, y from the finger, kept inside the canvas as the bend is', () => {
+    clock(1000);
+    const { harp: h, xs, box } = setup();
+    const frame = dotRecorder();
+    h.pointerDown(touch(1, xs[3] + 5, 300, 0));
+    h.pointerMove(touch(1, xs[3] + 25, 340, 16));
+    let dots = frame(h, 1016).dots;
+    expect(dots).toHaveLength(1);
+    expectDot(dots[0], { x: xs[3] + 20, y: 340, age: 0, strength: strength(20, xs, pull) });
+    h.pointerMove(touch(1, xs[3] - 10, -40, 32));
+    dots = frame(h, 1032).dots;
+    expectDot(dots[0], { x: xs[3] - 15, y: 1, age: 0, strength: strength(-15, xs, pull) });
+    h.pointerMove(touch(1, xs[3] + 1, box.height + 50, 48));
+    dots = frame(h, 1048).dots;
+    expect(dots).toHaveLength(1);
+    expectDot(dots[0], { x: xs[3] - 4, y: box.height - 1, age: 0, strength: strength(-4, xs, pull) });
+  });
+
+  it('let go, it stays where the string was let go, at the note’s velocity, and is gone after the duration', () => {
+    const t = clock(1000);
+    const { harp: h, xs, calls } = setup();
+    const frame = dotRecorder();
+    h.pointerDown(touch(1, xs[3], 300, 0));
+    h.pointerMove(touch(1, xs[3] + 20, 340, 16));
+    t.now = 1500;
+    /* The lift's own point is not a pull: the string was let go where it was last held. */
+    h.pointerUp(touch(1, xs[3] + 60, 500, 30));
+    expect(calls.played).toHaveLength(1);
+    const vel = calls.played[0].velocity;
+    expect(vel).toBe(strength(20, xs, pull));
+    const { durationMs } = INSTRUMENT_TAP_DEFAULT;
+    for (const age of [0, 100, 350, durationMs - 1]) {
+      const { dots } = frame(h, 1500 + age);
+      expect([age, dots.length]).toEqual([age, 1]);
+      expectDot(dots[0], { x: xs[3] + 20, y: 340, age, strength: vel });
+    }
+    expect(frame(h, 1500 + durationMs).dots).toEqual([]);
+  });
+
+  it('a pull that slips is let go where it was last held, at full strength — the played colour itself', () => {
+    clock(1000);
+    const { harp: h, xs, calls } = setup();
+    const frame = dotRecorder();
+    h.pointerDown(touch(1, xs[3], 300, 0));
+    h.pointerMove(touch(1, xs[3] + 30, 320, 16));
+    expect(45).toBeGreaterThan(maxPull(xs, pull));
+    expect(xs[3] + 45).toBeLessThan(xs[4]); /* it slips, and crosses nothing */
+    h.pointerMove(touch(1, xs[3] + 45, 330, 32));
+    expect(calls.played.map((s) => [s.degree, s.velocity])).toEqual([[3, 1]]);
+    const { dots } = frame(h, 1000);
+    expect(dots).toHaveLength(1);
+    expectDot(dots[0], { x: xs[3] + 30, y: 320, age: 0, strength: 1 });
+    expect(dots[0].stops[0][1]).toBe(`rgba(${PLAYED.join(',')},1)`);
+  });
+
+  it('a strum: one dot at each crossing, where the path crossed the string, at that crossing’s velocity', () => {
+    const t = clock(1000);
+    const { harp: h, xs, calls } = setup();
+    const frame = dotRecorder();
+    /* Down between strings 0 and 1, so it strums; the move comes as two coalesced segments. */
+    const a = { x: xs[0] + 24, y: 300, t: 0 };
+    /* Slow, then faster: each crossing takes its own segment's velocity. */
+    const b = { x: xs[2] + 1, y: 320, t: 200 };
+    const c = { x: xs[4] + 1, y: 400, t: 300 };
+    h.pointerDown(touch(1, a.x, a.y, a.t));
+    expect(frame(h, 1000).dots).toEqual([]);
+    h.pointerMove({ ...touch(1, c.x, c.y, c.t), coalesced: [b, c] });
+    expect(calls.played.map((s) => s.degree)).toEqual([1, 2, 3, 4]);
+    const crossing = (i: number, p: typeof a, q: typeof a) => ({
+      x: xs[i],
+      y: p.y + ((q.y - p.y) * (xs[i] - p.x)) / (q.x - p.x),
+      strength: strumVelocity(p, q, sound.velocity.strum),
+    });
+    const want = [crossing(1, a, b), crossing(2, a, b), crossing(3, b, c), crossing(4, b, c)];
+    expect(want[0].strength).toBeLessThan(want[2].strength);
+    expect(want[2].strength).toBeLessThan(1);
+    t.now = 1300;
+    for (const age of [0, 300, 699]) {
+      const { dots } = frame(h, 1000 + age);
+      expect(dots).toHaveLength(4);
+      want.forEach((w, k) => expectDot(dots[k], { ...w, age }));
+    }
+    expect(frame(h, 1700).dots).toEqual([]);
+  });
+
+  it('the desktop strum (A held) leaves its dots too, on the mouse’s path', () => {
+    clock(1000);
+    const { harp: h, xs } = setup();
+    const frame = dotRecorder();
+    h.keyDown('a', false);
+    const mouse = (x: number, y: number, t: number): StagePointer => ({ id: 1, x, y, t, type: 'mouse' });
+    h.pointerMove(mouse(5, 100, 0));
+    h.pointerMove(mouse(xs[1] + 1, 200, 30));
+    const { dots } = frame(h, 1000);
+    expect(dots.map((d) => d.x)).toEqual([xs[0], xs[1]]);
+    dots.forEach((d, i) => expect(d.y).toBeCloseTo(100 + (100 * (xs[i] - 5)) / (xs[1] + 1 - 5), 9));
+  });
+
+  it('a key: one dot at the middle of its string, at the key’s velocity', () => {
+    clock(1000);
+    const { harp: h, xs, box } = setup();
+    const frame = dotRecorder();
+    h.keyDown('5', false);
+    const { dots } = frame(h, 1000);
+    expect(dots).toHaveLength(1);
+    expectDot(dots[0], { x: xs[4], y: box.height / 2, age: 0, strength: harp.demo.velocity });
+  });
+
+  it('none for Musie’s answer, none for the demo', () => {
+    clock(1000);
+    const { harp: h } = setup();
+    const frame = dotRecorder();
+    expect(h.playAnswer({ degree: 2, velocity: 1, at: 0 })).not.toBeNull();
+    expect(h.playDemo()).toEqual({ degree: 1 });
+    for (const now of [1000, 1100, 1400]) {
+      const f = frame(h, now);
+      expect(f.more).toBe(true); /* the strings swing … */
+      expect(f.dots).toEqual([]); /* … and leave no dot */
+    }
+  });
+
+  it('the colour runs from the palette’s rest to its played colour — never the answer’s — re-read every frame', () => {
+    clock(1000);
+    const palette: InstrumentPalette = {
+      rest: css(REST),
+      played: css(PLAYED),
+      answer: 'rgb(0, 255, 0)',
+      background: 'rgb(250, 247, 241)',
+      detail: 'rgb(167, 168, 155)',
+    };
+    const { harp: h, xs, box } = setup({ palette: () => palette });
+    const frame = dotRecorder();
+    h.keyDown('3', false);
+    expectDot(frame(h, 1000).dots[0], { x: xs[2], y: box.height / 2, age: 0, strength: harp.demo.velocity });
+    /* A theme change: the host hands other colours, as a browser may report them. */
+    palette.rest = '#5a5850';
+    palette.played = 'rgb(240 150 110)';
+    expectDot(
+      frame(h, 1200).dots[0],
+      { x: xs[2], y: box.height / 2, age: 200, strength: harp.demo.velocity },
+      INSTRUMENT_TAP_DEFAULT,
+      [0x5a, 0x58, 0x50],
+      [240, 150, 110],
+    );
+    /* A colour the parser cannot read: the dot takes the other end rather than a wrong colour. */
+    palette.rest = 'oklch(0.7 0.02 90)';
+    expectDot(
+      frame(h, 1300).dots[0],
+      { x: xs[2], y: box.height / 2, age: 300, strength: harp.demo.velocity },
+      INSTRUMENT_TAP_DEFAULT,
+      [240, 150, 110],
+      [240, 150, 110],
+    );
+  });
+
+  it('the parameters are host.tap()’s, read every frame, and the frames go on while a dot lives', () => {
+    clock(1000);
+    const params: InstrumentTapParams = { ...INSTRUMENT_TAP_DEFAULT, durationMs: 20000 };
+    const { harp: h, xs, box } = setup({ tap: () => params });
+    const frame = dotRecorder();
+    h.keyDown('1', false);
+    const at = { x: xs[0], y: box.height / 2, strength: harp.demo.velocity };
+    expectDot(frame(h, 1000).dots[0], { ...at, age: 0 }, params);
+    params.size = 30;
+    expectDot(frame(h, 1100).dots[0], { ...at, age: 100 }, params);
+    /* Long after the string is still, the dot alone keeps the frames coming. */
+    const late = frame(h, 13000);
+    expect(late.dots).toHaveLength(1);
+    expect(late.more).toBe(true);
+    const gone = frame(h, 21000);
+    expect(gone.dots).toEqual([]);
+    expect(gone.more).toBe(false);
+  });
+
+  it('two fingers on one string: the dot is the string’s bent point; each lift leaves one', () => {
+    const t = clock(1000);
+    const { harp: h, xs, calls } = setup();
+    const frame = dotRecorder();
+    h.pointerDown(touch(1, xs[3], 300, 0));
+    h.pointerDown(touch(2, xs[3] + 2, 400, 5));
+    h.pointerMove(touch(1, xs[3] + 10, 300, 10));
+    expect(frame(h, 1000).dots.map((d) => [d.x, d.y])).toEqual([[xs[3] + 10, 300]]);
+    h.pointerUp(touch(1, xs[3] + 10, 300, 20));
+    t.now = 1100;
+    /* Finger 2 never moved, and the string is no longer held: it is let go where it took it. */
+    h.pointerUp(touch(2, xs[3] + 2, 400, 30));
+    expect(calls.played.map((s) => s.degree)).toEqual([3, 3]);
+    const { dots } = frame(h, 1100);
+    expect(dots).toHaveLength(2);
+    expectDot(dots[0], { x: xs[3] + 10, y: 300, age: 100, strength: calls.played[0].velocity });
+    expectDot(dots[1], { x: xs[3], y: 400, age: 0, strength: calls.played[1].velocity });
+  });
+
+  it('dispose forgets every dot', () => {
+    clock(1000);
+    const { harp: h, xs } = setup();
+    const frame = dotRecorder();
+    h.pointerDown(touch(1, xs[2], 200, 0));
+    h.keyDown('6', false);
+    expect(frame(h, 1000).dots).toHaveLength(2);
+    h.dispose();
+    expect(frame(h, 1000).dots).toEqual([]);
   });
 });

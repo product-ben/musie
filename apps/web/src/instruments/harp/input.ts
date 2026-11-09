@@ -17,6 +17,11 @@
  * Keys: holding 'A' and moving the mouse strums without a button (the
  * experiment's desktop strum). Added for people without a pointer (WCAG
  * 2.1.1): keys 1–7 pluck strings 1–7, low to high.
+ *
+ * Round 2 (2026-11-09) added one thing the experiment did not have: a pluck
+ * says WHERE it was played (`PluckSpot`), for the tap dot. The notes, pulls
+ * and fingers are untouched — `experiment.test.ts` still holds them to the
+ * experiment's, and it never reads the spot.
  */
 import type { StagePointer } from '../types';
 import { crossed, maxPull, nearest, strength, strumVelocity, tension, type Point } from './geometry';
@@ -28,9 +33,22 @@ export interface Pull {
   y: number;
 }
 
+/**
+ * Where an own note was played, CSS px — for its tap dot (`tap.ts`).
+ *   'pull'  — a held string let go: its bent point at the moment it was let
+ *             go (the string's x plus the pull, the finger's y), unclamped.
+ *   'strum' — the point where the finger's path crossed the string.
+ * A key (1–7) has no spot.
+ */
+export interface PluckSpot {
+  how: 'pull' | 'strum';
+  x: number;
+  y: number;
+}
+
 export interface HarpInputSink {
-  /** An own note — a pull let go, a string strummed, a key. */
-  pluck(i: number, vel: number): void;
+  /** An own note — a pull let go, a string strummed, a key (no `spot`). */
+  pluck(i: number, vel: number, spot?: PluckSpot): void;
   /** A string taken (`pull`) or let go (`null`). */
   hold(i: number, pull: Pull | null): void;
   /** A pull passed one of its steps: the experiment's small tick. */
@@ -100,10 +118,13 @@ export function createHarpInput(
   function release(f: Finger, vel: number): void {
     if (f.held === null) return;
     const i = f.held;
+    /* Where the string was let go: its latest pull — or this finger's own,
+       when another finger on the same string let go first (as in `up`). */
+    const at = pulls[i] ?? { dx: f.dx, y: f.y };
     setPull(i, null);
     f.held = null;
     f.last.set(i, f.t);
-    sink.pluck(i, vel);
+    sink.pluck(i, vel, { how: 'pull', x: strings()[i] + at.dx, y: at.y });
   }
 
   function crossings(f: Finger, to: Point): void {
@@ -112,7 +133,10 @@ export function createHarpInput(
     for (const i of crossed(f.x, to.x, xs)) {
       if (i !== f.held && to.t - (f.last.get(i) ?? -1e9) > strum.retriggerMs) {
         f.last.set(i, to.t);
-        sink.pluck(i, vel);
+        /* `crossed` lists a string only when the move has width
+           (lo < x ≤ hi), so the division is safe. */
+        const y = f.y + ((to.y - f.y) * (xs[i] - f.x)) / (to.x - f.x);
+        sink.pluck(i, vel, { how: 'strum', x: xs[i], y });
       }
     }
     f.x = to.x;
