@@ -44,6 +44,8 @@
 import { Armchair, BedSingle, Layers, Moon, Sunrise } from 'lucide-react';
 import { SegmentedControl, Switch } from '@musie/design-system';
 import { Markdown } from './Markdown';
+import { InstrumentIntro } from './InstrumentIntro';
+import type { MotionPermission } from './InstrumentIntro';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
@@ -99,6 +101,13 @@ export interface SessionIntroProps {
    * does — and which therefore has nothing to prepare here, and says so.
    */
   dealsHere?: boolean;
+  /**
+   * The motion sensor's permission for an instruments exercise that uses it —
+   * undefined everywhere else, including the harp. `exercise.instrument` says
+   * whether there is an instrument at all.
+   */
+  motion?: MotionPermission;
+  onRequestMotion?: () => void;
 }
 
 /** The glyph per option. A `Record`, so a third posture fails the typecheck
@@ -127,7 +136,7 @@ const ENDING_GLYPH: Record<Ending, typeof Armchair> = {
  */
 export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
-  cardsPresent, onCardsPresentChange, dealsHere = false,
+  cardsPresent, onCardsPresentChange, dealsHere = false, motion, onRequestMotion,
 }: SessionIntroProps) {
   const t = useT();
 
@@ -272,6 +281,12 @@ export function SessionIntro({
         </div>
       )}
 
+      {/* ── AN INSTRUMENT: VOLUME, BROWSER, MOTION — 2026-11-09 ──────────────
+          Below the exercise's own copy, which says where to be; these say how
+          the phone should be. `InstrumentIntro` has the reasons. */}
+      {exercise.instrument !== null && (
+        <InstrumentIntro instrument={exercise.instrument} motion={motion} onRequestMotion={onRequestMotion} />
+      )}
     </>
   );
 }

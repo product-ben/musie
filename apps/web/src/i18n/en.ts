@@ -530,6 +530,11 @@ export const en = {
   'session.step.listen': 'Listen',
   'session.step.play': 'Play',
   'session.play.continue': 'Continue to reflection',
+  'session.play.silentSwitch': 'If your iPhone is set to silent, you will hear nothing. Turn the sound on with the switch on its side.',
+  'session.play.motion.allow': 'Allow movement',
+  'session.play.motion.granted': 'Movement is allowed.',
+  'session.play.motion.denied': 'Movement is not allowed. You can allow it in the Safari settings under „Motion & Orientation Access“. The exercise works without it too.',
+  'session.play.motion.unavailable': 'Your device reports no movement. The exercise works without it too.',
   'session.step.reflect': 'Reflect',
   /* 'Completed', not 'Finished' (Ben, 2026-09-23). Both are true and only one
      of them is worth reading: finishing a session is an achievement, and the

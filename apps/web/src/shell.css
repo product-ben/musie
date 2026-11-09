@@ -2627,6 +2627,26 @@ html[data-musy-scroll-snap] {
   .musie-intro__small { display: none; }
 }
 
+/* ═══ INSTRUMENTS · WHAT EINSTEIGEN ADDS ═══════════════════════════════════
+   `InstrumentIntro`: volume, browser, and the motion permission under the
+   exercise's own intro. The same block rhythm as `.musie-intro__questions`
+   (L14: no component holds a column of copy and one button; every value is a
+   Layer 1 token). */
+.musie-intro__instrument {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+  margin-block: var(--space-gap-group);
+}
+
+.musie-intro__motion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-gap-related);
+  margin-block-start: var(--space-gap-related);
+}
+
 /* ── THE HAND ─────────────────────────────────────────────────────────────
    GONE FROM HERE — 2026-10-14. `.musie-cardgrid` was an L14 pattern with the
    component request logged beside it, exactly as §7.2 of `DIGITAL-CARDS.md`

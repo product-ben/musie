@@ -385,6 +385,11 @@ export const de: Messages = {
   'session.step.listen': 'Hören',
   'session.step.play': 'Musizieren',
   'session.play.continue': 'Weiter zum Reflektieren',
+  'session.play.silentSwitch': 'Ist dein iPhone auf lautlos gestellt, hörst du nichts. Schalte den Ton am Schalter an der Seite an.',
+  'session.play.motion.allow': 'Bewegung erlauben',
+  'session.play.motion.granted': 'Bewegung ist erlaubt.',
+  'session.play.motion.denied': 'Bewegung ist nicht erlaubt. Du kannst sie in den Safari-Einstellungen unter „Bewegung & Ausrichtung“ erlauben. Die Übung geht auch ohne.',
+  'session.play.motion.unavailable': 'Dein Gerät meldet keine Bewegung. Die Übung geht auch ohne.',
   'session.step.reflect': 'Nachdenken',
   /* 'Abgeschlossen', nicht 'Beendet' (Ben, 2026-09-23). 'Beendet' sagt nur,
      dass etwas aufgehört hat — das steht auch über einer abgebrochenen Runde.

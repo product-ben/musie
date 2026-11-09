@@ -58,7 +58,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 | I1 | `SessionPlay` step: settings on the step, CTA opens the focus sheet with `InstrumentStage`, demo note, timer, settings in a `DialogueNonModal` in sync with the step, *Weiter zum Reflektieren*; intro additions (volume, browser, motion permission with its state) | offen | L1, L3, L4 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `components/SessionIntro.tsx`, `routes/Session.tsx`, `lib/session.ts`, `i18n/{en,de}.ts` |
 | I2 | DS exports of the L1 components + CLAUDE.md rule 10 sentence | offen | L1 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
 | I3 | Tests: db (three exercises, kind, relax, samples, texts complete, sessions store mode + seconds, diary security unchanged), adjust `db.content` count; e2e walk intro → diary | in Arbeit — the database half is done: `db.instruments.db.test.ts` (14 checks) green on the isolated stack, `db.content` counts 8; the e2e walk waits for I1 | I1, F4 | `apps/web/src/lib/*.db.test.ts`, `apps/web/e2e/instruments.spec.ts` |
-| I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server | offen | I1–I3 | – |
+| I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server; **the three exercise images** (`assets/web/exercises/{kalimba,marimba,harp}.webp`, 768×768, referenced by the migration) rendered from the integrated instruments with Playwright + sharp — rendering them from the experiments would show the pre-token look (marimba bars sand-5, not the key token) | offen | I1–I3 | – |
 | I5 | PR, every deviation from the brief listed | offen | I4 | – |
 
 ## Parallelisation
