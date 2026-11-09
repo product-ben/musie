@@ -33,7 +33,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 
 | # | Task | Status | Depends on | Files |
 | --- | --- | --- | --- | --- |
-| F0 | PRD (artifact) and this plan. The repo copy `docs/plans/instruments-prd.md` is exported from the final doc in I5 | erledigt | – | `docs/plans/*` |
+| F0 | PRD (artifact) and this plan. The repo copy `docs/plans/instruments-prd.md` was written in I5 | erledigt | – | `docs/plans/*` |
 | F1 | Merge PR #71 (marimba) and PR #72 (answering harp) into the branch, so every source is in the tree | erledigt (`ca1de81`, `93443c3`) | – | `apps/web/public/experiments/{marimba,harp/261109-0920}/**` |
 | F2 | Copy the DEFAULT samples byte-identically to `apps/web/public/instruments/<id>/`; harp decoded from its base64. Manifest with path, bytes, SHA-256 | erledigt (`73b81f8`): 32 files, 6 harp · 16 kalimba · 10 marimba, 4.9 MB | F1 | `apps/web/public/instruments/**`, `supabase/content/instruments/samples.json`, `tools/instruments/extract-samples.mjs` |
 | F3 | Sound + answer config per instrument as JSON, transcribed from the experiment; extraction test that reads the experiment HTML and compares | erledigt (`73b81f8`): 48 checks green | F1 | `supabase/content/instruments/{answer,harp,kalimba,marimba}.json`, `apps/web/src/instruments/sources.test.ts` |
@@ -59,7 +59,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 | I2 | DS exports of the L1 components + CLAUDE.md rule 10 sentence | **erledigt**: `DialogueNonModal`, `Countdown`, `SwitchSize` exported; CLAUDE.md rule 10 names the one way out (an experiment Ben turns into an exercise) and that the instruments' experiments are now load-bearing | L1 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
 | I3 | Tests: db (three exercises, kind, relax, samples, texts complete, sessions store mode + seconds, diary security unchanged), adjust `db.content` count; e2e walk intro → diary | **erledigt**: `db.instruments.db.test.ts` (15) and `e2e/instruments.spec.ts` (3 walks, library → diary, German; English skipped by name, not silently) | I1, F4 | `apps/web/src/lib/*.db.test.ts`, `apps/web/e2e/instruments.spec.ts` |
 | I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server; **the three exercise images** (`assets/web/exercises/{kalimba,marimba,harp}.webp`, 768×768, referenced by the migration) rendered from the integrated instruments with Playwright + sharp — rendering them from the experiments would show the pre-token look (marimba bars sand-5, not the key token) | **erledigt**: `pnpm check` green (web 1197, docs 382, voice 51); web, storybook and docs builds green; db suite on the isolated stack 222 green, the 5 known snapshot tests red (see the log); the three images rendered from the app's own sheet at rest, 768×768 WebP | I1–I3 | – |
-| I5 | PR, every deviation from the brief listed | offen | I4 | – |
+| I5 | PR, every deviation from the brief listed | **erledigt**: PRD copied to `docs/plans/instruments-prd.md`, the open points logged in `apps/web/OPEN-QUESTIONS.md`, PR opened | I4 | – |
 
 ## What the lanes left for integration (I1) and for Ben
 
@@ -82,7 +82,7 @@ as the kalimba experiment does and keeps the maximum since the last read.
 clock; the first note of a rolled answer is a normal stroke, the seven after
 it roll strokes.
 
-**Open, for Ben or Lucia (logged in `apps/web/OPEN-QUESTIONS.md` at I5):**
+**Open, for Ben or Lucia — logged in `apps/web/OPEN-QUESTIONS.md` under „The instruments“:**
 1. Kalimba bridge: the still wave is drawn at the full height the layout
    allows (±8.75 px on a phone); the swaying version at rest was 0.6 × that.
    Lucia's reference `261105-2047` is in no commit.
@@ -184,5 +184,6 @@ the usual `supabase db reset` from one session (Ben).
 - 2026-11-09 — I3, I4 done. The e2e walk signs in by password through the
   service role (the sign-in screen mails a one-time code) and answers the two
   consent questions on the profile first.
+- 2026-11-09 — I5: PRD in the repo, open points in the log, PR opened. The isolated stack (`musie-instruments`) and the dev server on :5191 were stopped afterwards.
 - 2026-11-09 — Ben: the non-modal settings dialog is the generic component
   „Dialogue (non modal)“ — `DialogueNonModal` in code. PRD and plan renamed.

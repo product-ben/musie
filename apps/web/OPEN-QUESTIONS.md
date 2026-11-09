@@ -10644,3 +10644,138 @@ chrome override, and Ben wants the same label everywhere.
 
 What I need from Ben: nothing. Worth knowing: `machineTranslated` was empty,
 so Klangreise's English text now says something different from its German.
+
+---
+
+# The instruments — Kalimba, Marimba, Harfe as exercises (2026-11-09)
+
+Plan: `docs/plans/instruments-exercises.md`; PRD: `docs/plans/instruments-prd.md`.
+Everything below came out of building it and is either decided by Ben on
+2026-11-09 or waits for his (or Lucia's) eye on a phone.
+
+## The brief's premise did not match the repository in eight places — RESOLVED
+
+Where: the brief "Neuer Übungstyp Instruments", PRD section „Widersprüche“
+
+What I checked: the schema, the therapist's tools, CLAUDE.md, the experiments.
+No exercise-type table exists (`exercises.kind` is a check constraint, on
+purpose); occasions are `goals` and „Entspannen“ is `relax`; the therapist's
+`/exercise-builder` writes nothing (a JSON handover becomes a migration);
+CLAUDE.md rule 10 forbade porting an experiment into the app; the step names
+are „Einsteigen“ and „Nachdenken“; there is no version table under
+`musie.org/experiments`; the marimba and the answering harp were on unmerged
+branches; `git checkout` is denied.
+
+What I did: the real schema rules (PRD „Datenmodell“), rule 10 names the one
+exit, the step keeps its names and gains „Musizieren“, the version table is
+not built, PRs #71 and #72 were merged into the branch, the branch is a
+worktree from `origin/main`.
+
+Why: Ben decided every one of them on 2026-11-09 („Vorschlag gilt“, plus four
+explicit answers: only the default sound, samples static with a database
+index, the motion sensor 1:1 asked on the intro with its state shown, play
+time from the first own note to Weiter).
+
+What I need from Ben: nothing.
+
+## Kalimba bridge and marimba holes are now lighter than what they sit on — FLAGGED
+
+Where: `packages/design-system/tokens/musy-foundations-amendments.css` (G5),
+`apps/web/src/instruments/kalimba/draw.ts`, `marimba/draw.ts`
+
+What I checked: the family rule (strings lighter than keys) puts the tines and
+bars at `--instrument-key` (sand-9); details are `--instrument-detail`
+(sand-8). In both experiments the bridge and the holes were a step DARKER than
+the instrument. On a phone the tines and bars also read heavier than in the
+experiments (the marimba used sand-5).
+
+What I did: kept the tokens as proposed in the PRD.
+
+Why: it is a look, and it is the integrated result of a decision (family
+colours) that was never seen on a screen before.
+
+What I need from Ben: look at the three on a phone; then either a different
+step for `--instrument-key`, or `--instrument-detail` darker than it.
+
+## The kalimba's bridge wave is at full height — FLAGGED
+
+Where: `apps/web/src/instruments/kalimba/geometry.ts` (`bridgeY`)
+
+What I checked: Lucia wanted the bridge back as a still wave (PR #69). Her
+reference `kalimba/261105-2047` is in no commit. The port takes the swaying
+wave of `261105-1745` without its motion, at the full room the layout gives
+it (±8.75 px on a phone); at rest that version drew 0.6 of it.
+
+What I did: full height, one and a half waves, highest over the middle tine.
+
+What I need from Lucia: whether it should be calmer (0.6 is a one-line change).
+
+## „Ich spiele mit Musie“ is cut to „Ich spiele mit Mu…“ at phone width — FLAGGED
+
+Where: `SessionPlay` on the step and in the settings dialogue, at 393px
+
+What I checked: the segment needs 136px and gets about 115 in the dialogue and
+a little more on the step. The labels are the brief's and live in
+`exercise_i18n.mode_*_label`, so they can change without code.
+
+What I did: nothing yet.
+
+What I need from Ben: shorter labels (e.g. „Allein“ / „Mit Musie“, a copy edit
+through the builder), or a SegmentedControl whose labels may wrap (a design
+system change).
+
+## The marimba's warming ground is scaled to 0.14 of the experiment's — FLAGGED
+
+Where: `apps/web/src/instruments/marimba/index.ts` (`WARM_SHARE`)
+
+What I checked: calmer playing slowly warms the background toward the
+„played“ colour. `--instrument-played` (terracotta-7) is far stronger than the
+experiment's terracotta-2; at the experiment's factor the ground would turn
+the colour of a stroke. 0.14 reproduces its warmest ground on the tokens.
+
+What I need from Ben: keep it, or keep only the softening of the sound.
+
+## Kalimba and marimba draw no instrument shadow — FLAGGED
+
+Where: the three adapters; `--instrument-shadow-*`
+
+What I checked: only the harp's experiment had the multi-layer shadow; it is
+now a shared style in the design system, but the kalimba and the marimba were
+ported flat, as their experiments were.
+
+What I need from Ben: unify (both read `host.shadow()` like the harp), or keep.
+
+## The builder's „Sag mir, was ich ändern soll“ cannot reach the eight new fields — FLAGGED
+
+Where: `supabase/functions/exercise-prompt/index.ts` (`extractText`)
+
+What I checked: the Edge Function hands the model a fixed list of text paths.
+The eight instrument fields (volume, browser, motion, CTA, two mode labels,
+two explanations) are typed in the builder and auto-translated, but the prompt
+box does not see them.
+
+What I need from Ben: the function's list extended and a
+`supabase functions deploy` (not reachable from a contributor session).
+
+## The builder previews the play step's copy, not the instrument — FLAGGED
+
+Where: `apps/web/src/routes/ExerciseBuilder.tsx` (the play step's preview)
+
+What I checked: the builder was built before `SessionPlay` existed and shows
+the headline, body and CTA with an info message.
+
+What I need from Ben: nothing now; mounting `SessionPlay` there is the next
+small step once the look is settled.
+
+## Not verified on a phone: haptics timing, silent switch, Android latency — FLAGGED
+
+Where: `apps/web/src/instruments/engine/{haptics,audio}.ts`
+
+What I checked: everything ran in desktop Chromium. On iOS the haptic tick is
+paid on `touchend` (Lucia's iPhone 13 measurement), audio plays through the
+silent switch via `navigator.audioSession.type = 'playback'` (iOS 17+, per
+WebKit), Android vibrates through `navigator.vibrate`. None of it has been
+felt or heard on a device from this branch.
+
+What I need from Ben or Lucia: one round on an iPhone and an Android phone
+before the exercises go to testers.
