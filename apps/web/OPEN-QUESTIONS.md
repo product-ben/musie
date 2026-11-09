@@ -10963,3 +10963,16 @@ Why: Ben, 2026-11-09: „Die Einstellungen können nur davor gemacht werden.“
 
 What I need from Ben: whether `DialogueNonModal` and `Sheet`'s `actions`
 slot, built for this, stay in the design system without a consumer, or go.
+
+## `DialogueNonModal` and `Sheet`'s `actions` are removed — RESOLVED
+
+Where: `packages/design-system/src/`, answering the question in „The focus
+sheet has no settings“ above
+
+What I did: removed the component, its story, CSS and docs section, and the
+sheet's `actions` slot with its CSS.
+
+Why: Ben, 2026-11-09: „raus!“ Nothing used either once the sheet's settings
+were gone.
+
+What I need from Ben: nothing.

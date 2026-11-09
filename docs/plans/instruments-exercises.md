@@ -348,3 +348,6 @@ the usual `supabase db reset` from one session (Ben).
   the headline has the experiment's width again (285 at 393, 322 at 430, 744
   at 852). `DialogueNonModal` (with `top-end`) and `Sheet`'s `actions` stay
   in the design system, now without a consumer in the app.
+- 2026-11-09 — Ben: `DialogueNonModal` and `Sheet`'s `actions` out of the
+  design system, since nothing uses them. `pnpm check`, the web, Storybook and
+  docs builds and the e2e walk green after the removal.

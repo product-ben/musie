@@ -152,8 +152,8 @@ Pfad, Größe und SHA-256.
 
 | Gebraucht | Ergebnis |
 | --- | --- |
-| Fokus-Sheet | `Sheet` (bestehend), Runde 2: `stage`, `actions`, `density` |
-| Settings, nicht-modal | **neu `DialogueNonModal`**, Storybook „Dialogue (non modal)“, generisch |
+| Fokus-Sheet | `Sheet` (bestehend), Runde 2: `stage`, `density` |
+| Settings, nicht-modal | ~~neu `DialogueNonModal`~~ — gebaut und wieder entfernt: das Fokus-Sheet hat keine Einstellungen mehr (Ben, 2026-11-09) |
 | Timer 1:30 | **neu `Countdown`** (Ziffern, Bildunterschrift, `TrackButton`, Ansagen), Runde 2: `size="compact"` für die Marimba |
 | Tipp-Punkt, Cursor | Runde 2: **neu `instrumentTap`** und **`InstrumentCursor`**, Storybook „Instrument tap“ mit Live-Reglern |
 | Zusammenspiel mit Erklärung | `SegmentedControl` + `description` je Option |
