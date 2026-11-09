@@ -152,15 +152,16 @@ Pfad, Größe und SHA-256.
 
 | Gebraucht | Ergebnis |
 | --- | --- |
-| Fokus-Sheet | `Sheet` (bestehend) |
+| Fokus-Sheet | `Sheet` (bestehend), Runde 2: `stage`, `actions`, `density` |
 | Settings, nicht-modal | **neu `DialogueNonModal`**, Storybook „Dialogue (non modal)“, generisch |
-| Timer 1:30 | **neu `Countdown`** (Ziffern, Bildunterschrift, `TrackButton`, Ansagen) |
+| Timer 1:30 | **neu `Countdown`** (Ziffern, Bildunterschrift, `TrackButton`, Ansagen), Runde 2: `size="compact"` für die Marimba |
+| Tipp-Punkt, Cursor | Runde 2: **neu `instrumentTap`** und **`InstrumentCursor`**, Storybook „Instrument tap“ mit Live-Reglern |
 | Zusammenspiel mit Erklärung | `SegmentedControl` + `description` je Option |
 | Vibration im Dialog | `Switch` + `size="sm"` |
 
 Tokens als Lücke G5 in `musy-foundations-amendments.css`:
 `--instrument-surface` (= `--surface`), `--instrument-string` (sand-7, heller),
-`--instrument-key` (sand-9, dunkler), `--instrument-detail`,
+`--instrument-key` (sand-9, dunkler; **Runde 2: sand-5, heller**), `--instrument-detail`,
 `--instrument-played` (terracotta-7), `--instrument-answer` (green-7) und die
 Parameter des Harfen-Schattens `--instrument-shadow-*` („euer Schatten,
 4. November“). Die Schatten-Rechnung ist `instrumentShadow.ts`, die
@@ -190,11 +191,55 @@ Was beim Bauen offen blieb, steht im Format des Logs in
 
 - **Die Kalimba-Antwort und der Timer** sind die der Marimba, gezeigt Ton für
   Ton gleich zum `compose` des Experiments.
-- **Der Countdown sitzt im Kopf des Sheets**, nicht unten links wie bei der
-  Harfe, damit der Fuß eine Zeile bleibt und der Dialog über dem Icon sitzt.
+- ~~Der Countdown sitzt im Kopf des Sheets~~ — **Runde 2:** unten links wie
+  bei der Harfe; die Einstellungen sitzen oben neben dem X.
 - **Schließen des Sheets pausiert den Timer**, der Weiter-Knopf erscheint dann
   auch auf dem Schritt.
 - **Der Fortsetzen-Knopf des Countdowns heißt „Fortsetzen“**, nicht „Weiter“,
   neben „Weiter zum Reflektieren“.
 - **Die Übungsbilder** sind die Instrumente selbst, aus der App gerendert —
   Platzhalter.
+
+## Runde 2 — was die Instrumente aus den Experimenten verloren hatten
+
+Ben, 2026-11-09, nach dem Spielen auf localhost. Vier Änderungen, seine
+Antworten als Entscheidungen:
+
+1. **Layout wie Harfe 1443, für alle drei.** Das Instrument füllt das ganze
+   Sheet; Überschrift oben links darüber, Countdown unten links, „Weiter zum
+   Reflektieren“ unten rechts (nur bei Pause oder 0:00). **Das
+   Einstellungs-Icon steht oben neben dem X, der Dialog öffnet oben rechts.**
+   Nach der Messung: **die Marimba behält das Layout ihres Experiments** —
+   eine Zeile oben, die kleine Uhr in der Fußzeile —, weil die große Uhr ihr
+   im Querformat nur etwa 150 von 274 px für die Stäbe ließe. Hochkant auf
+   einem Touch-Gerät deckt ihr Hinweis „Leg dein Handy quer vor dich.“ den
+   ganzen Bildschirm.
+2. **Der Mauszeiger im Fokus-Sheet ist der grüne Punkt der Harfe**, für alle
+   Instrumente: über dem Instrument, nicht über Bedienelementen, nie bei
+   Touch.
+3. **Der Tipp-Punkt der Kalimba für jeden eigenen Ton, keiner bei Musies
+   Antwort oder Demo.** Harfe: am Griffpunkt, wandert beim Ziehen mit,
+   verblasst nach dem Loslassen; ein Strum hinterlässt einen pro Saite.
+   Marimba: ersetzt ihren eigenen Punkt. Zentral im Design-System, mit
+   Live-Reglern in Storybook.
+4. **Ein Tasten-Token: `--instrument-key` = sand-5.** Tasten sind jetzt heller
+   als Saiten (sand-7) — die Familienregel der ersten Fassung ist umgedreht.
+
+**Ergebnis**, gemessen mit Playwright bei 393×852, 430×932, 852×393 und
+1280×800 gegen die Experimente (Tabelle R0 im Bauplan): die Harfe ist
+deckungsgleich (gemalte Fläche identisch, Überschrift bei 32/44, Uhr ±1 px,
+Weiter rechtsbündig); die Marimba im Querformat steht wie ihr Experiment.
+
+**Folgen der Entscheidungen, behalten:** die Überschrift ist hochkant 56 px
+schmaler (das Icon steht jetzt oben) und braucht bei 393 eine Zeile mehr; die
+Zinken der Kalimba beginnen höher (das Harfen-Layout hat keine Hinweiszeile);
+die Stäbe der Marimba sind 11–12 px kürzer (Touch-Ziel des Systems, 56 statt
+44 px).
+
+**Offen für Ben** (`apps/web/OPEN-QUESTIONS.md`):
+- Der Tipp-Punkt der Marimba ist auf dem leuchtenden Stab unsichtbar — gleiche
+  Farbe, feste Größe. Eigene Farbe, wieder relativ zur Stabbreite, oder keiner.
+- Mit der Maus deckt der 48-px-Cursor einen frischen Tipp-Punkt zu (Touch
+  nicht betroffen).
+- Der Demo-Satz der Marimba wird bei 852×393 abgeschnitten — kürzerer Satz,
+  Umbruch, oder der eigene Hinweis des Experiments.
