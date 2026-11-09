@@ -1,15 +1,18 @@
-import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * The adapter against the contract: what it tells the host, what it asks of
  * it, and what reaches the sound — with a fake host, a fake sound output and
  * a hand-wound clock.
  */
 import { describe, expect, it } from 'vitest';
+import { INSTRUMENT_TAP_DEFAULT, instrumentTapAt, paintInstrumentTap } from '@musie/design-system';
+import type { InstrumentTapParams } from '@musie/design-system';
 import answer from '../../../../../supabase/content/instruments/answer.json';
 import kalimba from '../../../../../supabase/content/instruments/kalimba.json';
 import manifest from '../../../../../supabase/content/instruments/samples.json';
 import type { AnswerConfig, InstrumentDefinition, InstrumentHost, InstrumentPalette, StageBox, Stroke } from '../types';
+import { glowAt, glowMix, mixColour, parseColour } from './draw';
 import { createKalimbaWith, READY } from './index';
+import { KEY_POSITION } from './input';
 import { bridgeY, layoutKalimba } from './geometry';
 import type { KalimbaOutput, KalimbaSound, Membrane, Touch } from './sound';
 import { pluckHaptic, positionFor, touchAt } from './sound';
@@ -51,6 +54,7 @@ function setup() {
     canSound: true,
     sounding: 0,
     buffers: new Set<string>(),
+    tap: INSTRUMENT_TAP_DEFAULT as InstrumentTapParams,
   };
   const voice = { fade: () => {} };
   const host: InstrumentHost = {
@@ -59,7 +63,7 @@ function setup() {
     buffer: (file) => (state.buffers.has(file) ? ({} as AudioBuffer) : undefined),
     palette: () => PALETTE,
     shadow: () => null,
-    tap: () => INSTRUMENT_TAP_DEFAULT,
+    tap: () => state.tap,
     vibrate: (ms, ticks) => { log.vibrate.push([ms, ticks]); },
     motion: () => state.motion,
     joltsSince: () => [],
@@ -96,6 +100,26 @@ function setup() {
 }
 
 const pointer = (id: number, p: { x: number; y: number }) => ({ id, ...p, t: 0, type: 'touch' as const });
+
+/** A 2D context that records the tines' colours and every disc it fills, whole. */
+function canvas() {
+  const strokes: string[] = [];
+  const discs: { arc: number[]; alpha: number; stops: string[] }[] = [];
+  let arc: number[] = [];
+  let stops: string[] = [];
+  const g = {
+    setTransform() {}, fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+    arc(...args: number[]) { arc = args; },
+    fill() { discs.push({ arc, alpha: g.globalAlpha, stops }); },
+    stroke() { strokes.push(String(g.strokeStyle)); },
+    createRadialGradient() {
+      stops = [];
+      return { addColorStop: (_at: number, c: string) => { stops.push(c); } };
+    },
+    strokeStyle: '' as unknown, fillStyle: '' as unknown, lineWidth: 1, lineCap: '', lineJoin: '', globalAlpha: 1,
+  };
+  return { g: g as unknown as CanvasRenderingContext2D, strokes, discs };
+}
 
 describe('own notes', () => {
   it('report their degree in pitch order — the middle tine is degree 0, the left one degree 8', () => {
@@ -154,17 +178,37 @@ describe('own notes', () => {
     const draws = k.log.draws;
     k.adapter.pointerDown(pointer(1, on(4, 1)));
     expect(k.log.draws).toBeGreaterThan(draws);
-    const strokes: string[] = [];
-    const g = {
-      setTransform() {}, fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, arc() {}, fill() {},
-      stroke() { strokes.push(String(g.strokeStyle)); },
-      createRadialGradient: () => ({ addColorStop() {} }),
-      strokeStyle: '' as unknown, fillStyle: '' as unknown, lineWidth: 1, lineCap: '', lineJoin: '', globalAlpha: 1,
-    };
-    expect(k.adapter.draw(g as unknown as CanvasRenderingContext2D, k.now() + 16)).toBe(true);
-    expect(strokes[4]).not.toBe(PALETTE.rest);
-    expect(strokes[3]).toBe(PALETTE.rest);
-    expect(k.adapter.draw(g as unknown as CanvasRenderingContext2D, k.now() + 6000)).toBe(false);
+    const c = canvas();
+    expect(k.adapter.draw(c.g, k.now() + 16)).toBe(true);
+    expect(c.strokes[4]).not.toBe(PALETTE.rest);
+    expect(c.strokes[3]).toBe(PALETTE.rest);
+    expect(c.discs).toHaveLength(1);
+    expect(k.adapter.draw(canvas().g, k.now() + 6000)).toBe(false);
+  });
+
+  it('leave the design system’s tap, on the parameters host.tap() hands over, where and as hard as touched', () => {
+    const k = setup();
+    k.state.tap = { ...INSTRUMENT_TAP_DEFAULT, durationMs: 400, size: 10, start: 1, growthByStrength: 2, opacity: 0.6 };
+    const t0 = k.now();
+    k.adapter.pointerDown(pointer(1, on(6, 0.25)));
+    k.adapter.keyDown('s', true); // a key is an own note too: tine 1, Shift — near the bridge
+    const c = canvas();
+    k.adapter.draw(c.g, t0 + 120);
+
+    const want = canvas();
+    for (const [tine, pos] of [[6, 0.25], [1, KEY_POSITION.shift]] as const) {
+      const frame = instrumentTapAt(k.state.tap, { ageMs: 120, strength: touchAt(pos, sound).vel });
+      const y = bridgeY(L, L.tines[tine].cx) + pos * L.tines[tine].len;
+      paintInstrumentTap(want.g, L.tines[tine].cx, y, frame, parseColour(PALETTE.rest)!, parseColour(PALETTE.played)!);
+    }
+    expect(c.discs).toHaveLength(2);
+    expect(c.discs[0].arc[0]).toBe(L.tines[6].cx);
+    expect(c.discs[0].arc[1]).toBeCloseTo(on(6, 0.25).y, 9);
+    expect(c.discs).toEqual(want.discs);
+
+    const gone = canvas();
+    k.adapter.draw(gone.g, t0 + 400); // host.tap().durationMs, not the experiment's 700
+    expect(gone.discs).toEqual([]);
   });
 });
 
@@ -231,18 +275,14 @@ describe('the answer', () => {
     expect(k.log.plucks).toEqual([]);
   });
 
-  it('lights its tine in the answer colour', () => {
+  it('lights its tine in the answer colour — and leaves no dot', () => {
     const k = setup();
     k.adapter.playAnswer({ degree: 0, velocity: 1, at: 0 });
-    const strokes: string[] = [];
-    const g = {
-      setTransform() {}, fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, arc() {}, fill() {},
-      stroke() { strokes.push(String(g.strokeStyle)); },
-      createRadialGradient: () => ({ addColorStop() {} }),
-      strokeStyle: '' as unknown, fillStyle: '' as unknown, lineWidth: 1, lineCap: '', lineJoin: '', globalAlpha: 1,
-    };
-    k.adapter.draw(g as unknown as CanvasRenderingContext2D, k.now());
-    expect(strokes[4]).toBe('rgb(0,150,50)');
+    k.adapter.playAnswer({ degree: 5, velocity: 0.6, at: 0 });
+    const c = canvas();
+    expect(k.adapter.draw(c.g, k.now() + 16)).toBe(true);
+    expect(c.strokes[4]).toBe('rgb(0,150,50)');
+    expect(c.discs).toEqual([]);
   });
 
   it('is silent, not queued, before audio runs', () => {
@@ -263,6 +303,16 @@ describe('the demo', () => {
     expect(k.log.plucks[0]).toMatchObject({ tine: kalimba.demo.tine, touch: { pos: kalimba.demo.position, vel: 1 } });
     expect(k.log.vibrate).toEqual([]);
     expect(k.log.played).toEqual([]);
+  });
+
+  it('lights its tine in the played colour, so the person sees where to touch — and leaves no dot', () => {
+    const k = setup();
+    k.adapter.playDemo();
+    const c = canvas();
+    expect(k.adapter.draw(c.g, k.now() + 16)).toBe(true);
+    const vel = touchAt(kalimba.demo.position, sound).vel;
+    expect(c.strokes[kalimba.demo.tine]).toBe(mixColour(PALETTE.rest, PALETTE.played, glowMix(glowAt(16, vel))!));
+    expect(c.discs).toEqual([]);
   });
 });
 

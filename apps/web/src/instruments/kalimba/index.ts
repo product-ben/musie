@@ -5,18 +5,21 @@
  * What the adapter keeps from the experiment, 1:1: the sound (sound.ts), the
  * swing vibrato with its 30 ms membrane step (swing.ts), where a touch lands
  * and what that does to loudness and dullness (geometry.ts, sound.ts), the
- * look and the press dots (draw.ts), the keys (input.ts) and the vibration of
- * a pluck and of a swing.
+ * look (draw.ts), the keys (input.ts) and the vibration of a pluck and of a
+ * swing.
  *
  * What it takes from the host instead of doing itself: the AudioContext and
  * its unlocking (`audible`), the decoded recordings (`buffer`), the colours
- * (`palette`), the motion sensor (`motion`, already scaled to 0 … 1), and
- * whether a vibration can happen at all (`vibrate`).
+ * (`palette`), the tap effect's parameters (`tap`), the motion sensor
+ * (`motion`, already scaled to 0 … 1), and whether a vibration can happen at
+ * all (`vibrate`).
  *
  * New against the experiment (Ben, 2026-11-09): the kalimba ANSWERS, like the
  * marimba. Own notes are reported as `played` in pitch order (degrees.ts);
  * `playAnswer` sounds a degree's tine in the answer colour. The bridge is a
- * still wave rather than the arc (geometry.ts).
+ * still wave rather than the arc (geometry.ts). And the press dot is the
+ * design system's tap (round 2), left by the person's own notes only: an
+ * answer and the demo note light their tine and leave no dot.
  */
 import type {
   InstrumentAdapter,
@@ -91,12 +94,15 @@ export function createKalimbaWith(
   let pending: { tine: number; touch: Touch; at: number } | null = null;
   let disposed = false;
 
-  /** `pluckVisual`: the tine glows and a dot grows where it was touched. */
-  const show = (tine: number, touch: Touch, tone: Tone) => {
-    const t = deps.now();
-    glows[tine] = { t0: t, vel: touch.vel, tone };
-    presses.push({ tine, pos: touch.pos, vel: touch.vel, t0: t, tone });
+  /** The glow half of `pluckVisual`: the tine lights up. Own notes, answers and the demo. */
+  const light = (tine: number, touch: Touch, tone: Tone) => {
+    glows[tine] = { t0: deps.now(), vel: touch.vel, tone };
     host.requestDraw();
+  };
+
+  /** The dot half: the tap where the tine was touched — own notes only. */
+  const press = (tine: number, touch: Touch) => {
+    presses.push({ tine, pos: touch.pos, vel: touch.vel, t0: deps.now() });
   };
 
   const hear = (tine: number, touch: Touch, mayWait: boolean): Voice | null => {
@@ -111,7 +117,8 @@ export function createKalimbaWith(
   /** The person's own note: seen, felt, heard, and reported to the engine. */
   const own = (tine: number, pos: number) => {
     const touch = touchAt(pos, sound);
-    show(tine, touch, 'played');
+    press(tine, touch);
+    light(tine, touch, 'played');
     const h = pluckHaptic(touch.vel, sound.haptics.pluck);
     host.vibrate(h.ms, h.ticks);
     hear(tine, touch, true);
@@ -194,13 +201,9 @@ export function createKalimbaWith(
         g.fillRect(0, 0, box.width, box.height);
         return false;
       }
-      presses = presses.filter((d) => now - d.t0 < sound.visual.dotMs);
-      return drawKalimba(
-        g,
-        { layout: L, glows, presses, dotMs: sound.visual.dotMs, width: box.width, height: box.height },
-        palette,
-        now,
-      );
+      const tap = host.tap();
+      presses = presses.filter((d) => now - d.t0 < tap.durationMs);
+      return drawKalimba(g, { layout: L, glows, presses, tap, width: box.width, height: box.height }, palette, now);
     },
 
     pointerDown(e) {
@@ -251,7 +254,7 @@ export function createKalimbaWith(
       const tine = tineOfDegree(order, stroke.degree);
       if (tine === undefined) return null;
       const touch = touchAt(positionFor(stroke.velocity, sound), sound);
-      show(tine, touch, 'answer');
+      light(tine, touch, 'answer');
       return hear(tine, touch, false);
     },
 
@@ -259,7 +262,7 @@ export function createKalimbaWith(
       const tine = demo.tine;
       if (!disposed && sound.tines[tine]) {
         const touch = touchAt(demo.position, sound);
-        show(tine, touch, 'played');
+        light(tine, touch, 'played');
         hear(tine, touch, true);
       }
       return { degree: degreeOfTine(order, tine) };

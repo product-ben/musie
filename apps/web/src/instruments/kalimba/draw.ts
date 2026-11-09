@@ -12,7 +12,24 @@
  * Nothing moves but colour and the soft dot a press leaves; the bridge is
  * still (geometry.ts says why it is a wave). One fixed look: the experiment's
  * shade chooser and wood block are not ported (Ben, 2026-11-09).
+ *
+ * ── THE DOT IS THE DESIGN SYSTEM'S ─────────────────────────────────────────
+ * The experiment's `dots` became the tap effect of all three instruments in
+ * round 2 (Ben, 2026-11-09), maintained centrally: `instrumentTapAt` +
+ * `paintInstrumentTap` from '@musie/design-system', on the parameters
+ * `host.tap()` reads from the `--instrument-tap-*` tokens. So this file says
+ * only WHERE a dot is (the tine's centre, the touched point along it) and how
+ * STRONG (the note's velocity); how it grows, fades and is coloured is the
+ * design system's. It is drawn for the person's own notes only — never for
+ * Musie's answer, never for the demo note (index.ts decides which).
+ *
+ * One difference, accepted: the experiment's unit was the live tine width
+ * `L.tw`; the token's `--instrument-tap-size` is that width on the 393px
+ * phone (16.85px). Where the tine clamps at 22px (wide screens) the dot is
+ * about 23% smaller than the experiment's. parity.test.ts holds the rest.
  */
+import { instrumentTapAt, paintInstrumentTap } from '@musie/design-system';
+import type { InstrumentTapParams } from '@musie/design-system';
 import type { InstrumentPalette } from '../types';
 import type { KalimbaLayout } from './geometry';
 import { bridgePoints, bridgeStroke, bridgeY, tineSpan } from './geometry';
@@ -28,31 +45,20 @@ export interface TineGlow {
   tone: Tone;
 }
 
-/** A press dot (`presses` in the experiment). */
+/** An own note's press (`presses` in the experiment) — where the tap is drawn. */
 export interface Press {
   tine: number;
+  /** 0 at the bridge, 1 at the tip; drawn clamped to the tine. */
   pos: number;
+  /** The note's velocity: the tap's strength. */
   vel: number;
   t0: number;
-  tone: Tone;
 }
 
 /** The experiment's look, as numbers. */
 export const LOOK = {
   /** `glow = exp(-t / 1.1) * (0.4 + 0.6 * vel)`, shown while above 0.02, mixed at `glow * 1.1`. */
   glow: { tauS: 1.1, base: 0.4, span: 0.6, visible: 0.02, gain: 1.1 },
-  dot: {
-    /** `r = tw * (0.8 + (0.6 + 3.4 * vel) * grow)` — a soft edge looks smaller, so drawn larger. */
-    radius: { base: 0.8, grow: 0.6, vel: 3.4 },
-    /** `grow = 1 - (1 - p)^3`. */
-    growPower: 3,
-    /** rest → hit at `0.3 + 0.7 * vel`. */
-    mix: { base: 0.3, vel: 0.7 },
-    /** `alpha = min(1, (1 - p)^1.6 * (0.45 + 0.75 * vel))`. */
-    alpha: { power: 1.6, base: 0.45, vel: 0.75 },
-    /** Blur as a gradient: Safari has no canvas filter. */
-    stops: [[0, 1], [0.3, 0.8], [0.65, 0.3], [1, 0]] as const,
-  },
 } as const;
 
 export const hitColour = (p: InstrumentPalette, tone: Tone): string => (tone === 'answer' ? p.answer : p.played);
@@ -65,28 +71,11 @@ export const glowAt = (ageMs: number, vel: number): number =>
 export const glowMix = (glow: number): number | null =>
   glow > LOOK.glow.visible ? Math.min(1, glow * LOOK.glow.gain) : null;
 
-/** One press dot at `now`, or null once it has faded (`dotMs`). */
-export function dotAt(
-  L: KalimbaLayout,
-  d: Press,
-  now: number,
-  dotMs: number,
-): { x: number; y: number; r: number; alpha: number; mix: number } | null {
-  const age = now - d.t0;
-  if (age >= dotMs) return null;
+/** Where a press's tap sits: on the tine's centre line, at the touched point (`dots` in the experiment). */
+export function pressPoint(L: KalimbaLayout, d: Press): { x: number; y: number } | null {
   const T = L.tines[d.tine];
   if (!T) return null;
-  const p = Math.max(0, age) / dotMs;
-  const grow = 1 - Math.pow(1 - p, LOOK.dot.growPower);
-  const R = LOOK.dot.radius;
-  const A = LOOK.dot.alpha;
-  return {
-    x: T.cx,
-    y: bridgeY(L, T.cx) + clamp(d.pos, 0, 1) * T.len,
-    r: L.tw * (R.base + (R.grow + R.vel * d.vel) * grow),
-    alpha: Math.min(1, Math.pow(1 - p, A.power) * (A.base + A.vel * d.vel)),
-    mix: LOOK.dot.mix.base + LOOK.dot.mix.vel * d.vel,
-  };
+  return { x: T.cx, y: bridgeY(L, T.cx) + clamp(d.pos, 0, 1) * T.len };
 }
 
 /* ── colour arithmetic: a canvas cannot mix CSS colours itself ───────── */
@@ -98,7 +87,8 @@ const parsed = new Map<string, Rgb | null>();
 /**
  * A resolved CSS colour as sRGB 0–255: `rgb()`/`rgba()` in either syntax,
  * `#rgb`/`#rrggbb` (alpha ignored), `color(srgb …)`. Null for anything else,
- * and then the caller draws without mixing rather than in a wrong colour.
+ * and then the caller draws a tine without mixing, and no tap, rather than
+ * either in a wrong colour.
  */
 export function parseColour(colour: string): Rgb | null {
   const hit = parsed.get(colour);
@@ -130,19 +120,15 @@ export function mixColour(a: string, b: string, t: number): string {
   return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`;
 }
 
-/** The same colour at an alpha, for the dot's gradient stops. */
-export function withAlpha(colour: string, alpha: number): string {
-  const C = parseColour(colour);
-  return C ? `rgba(${C.map((v) => Math.round(v)).join(',')},${alpha})` : colour;
-}
-
 /* ── the frame ───────────────────────────────────────────────────────── */
 
 export interface Scene {
   layout: KalimbaLayout;
   glows: readonly TineGlow[];
+  /** The own notes' presses — never an answer's or the demo's. */
   presses: readonly Press[];
-  dotMs: number;
+  /** `host.tap()`: the tap effect's parameters, from the tokens. */
+  tap: InstrumentTapParams;
   width: number;
   height: number;
 }
@@ -177,19 +163,18 @@ export function drawKalimba(g: CanvasRenderingContext2D, scene: Scene, palette: 
   bridgePoints(L).forEach(([x, y], k) => (k === 0 ? g.moveTo(x, y) : g.lineTo(x, y)));
   g.stroke();
 
+  /* The tap, between the rest colour and the played one — the person's
+     colour, since only own notes leave one. The host resolves both through
+     a computed `color`, which reads as rgb(); one that cannot be read draws
+     no dot rather than a wrong one. */
+  const rest = parseColour(palette.rest);
+  const played = parseColour(palette.played);
   for (const d of scene.presses) {
-    const dot = dotAt(L, d, now, scene.dotMs);
-    if (!dot) continue;
-    const c = mixColour(palette.rest, hitColour(palette, d.tone), dot.mix);
-    const fill = g.createRadialGradient(dot.x, dot.y, 0, dot.x, dot.y, dot.r);
-    for (const [at, a] of LOOK.dot.stops) fill.addColorStop(at, withAlpha(c, a));
-    g.globalAlpha = dot.alpha;
-    g.fillStyle = fill;
-    g.beginPath();
-    g.arc(dot.x, dot.y, dot.r, 0, 2 * Math.PI);
-    g.fill();
+    const at = pressPoint(L, d);
+    const frame = instrumentTapAt(scene.tap, { ageMs: now - d.t0, strength: d.vel });
+    if (!at || frame.done) continue;
     moving = true;
+    if (rest && played) paintInstrumentTap(g, at.x, at.y, frame, rest, played);
   }
-  g.globalAlpha = 1;
   return moving;
 }
