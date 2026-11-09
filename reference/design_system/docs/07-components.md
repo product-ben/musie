@@ -1536,6 +1536,8 @@ DialogueNonModal
 
 **What it is NOT.** Not a Lightbox (no scrim, nothing inert), not a popover anchored to its trigger (it floats in a viewport corner), not a menu (it does not close when you look away), not a bottom sheet.
 
+**`placement="top-end"`** (2026-11-09). Under a trigger in a sheet's top bar — the instruments' settings icon moved beside the sheet's X (Ben). It keeps clear of that bar (`--space-inset-card` + `--target-primary` + `--space-gap-related`) and falls in from above instead of rising.
+
 ---
 
 ## 7.27 Countdown `[SEED]`
@@ -1597,3 +1599,17 @@ Every default is the locale catalogue's (`countdown*` in `src/locale.ts`), and e
 **A11y notes.** The control's accessible name is the action then what it moves — "Pause, Countdown" — 7.21's construction. Start, pause and end are status messages (4.1.3) and are announced; the ticking figure is not. The caption carries the meaning the figure cannot, so the number is never the only statement of what is asked.
 
 **What it is NOT.** Not a stopwatch (it counts down to a floor, and stops at it), not a progress bar, not a timer implementation, not 7.21's readout — which is the track's remaining time, a different number for a different question.
+
+**`size="compact"`** (2026-11-09). One row: the figure in heading-md, the `min` transport, the caption beside it and only from 760px. The marimba's foot in its experiment, which bought its bars their height (Ben kept the marimba's own layout). `display` stays the default.
+
+---
+
+### 7.x addendum — Sheet: `stage`, `actions`, `density` (2026-11-09)
+
+The instruments' focus sheet, rebuilt to the experiments' layout.
+
+- **`stage`** — something to PLAY under every slot, out to the screen's edges like the field (negative `--space-inset-sheet`). With a stage the header, body and foot let a press through except on their controls (buttons, links, form controls, switch/radio/slider roles), the experiment's own construction — a string under the headline is still a string. The foot then sits at `--space-inset-card` from the bottom, where the harp's „Ich bin fertig“ stood.
+- **`actions`** — controls beside the close X at the top trailing edge, in its row and one `--space-gap-related` before it; the header reserves room for both.
+- **`density="compact"`** — header at `--sp-4` from the top, foot at `--sp-3` from the bottom: the marimba's experiment.
+
+Stories: `Components/Sheet` → `WithStage`, `Compact`.

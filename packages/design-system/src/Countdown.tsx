@@ -49,6 +49,14 @@ import { useMusyText } from './locale';
 export type CountdownState = 'unstarted' | 'running' | 'paused' | 'ended';
 
 /**
+ * `display` — the figure in display-xl, the caption under it: the listening
+ * sheet and the harp. `compact` — one row, the figure in heading-md, the
+ * caption beside it and only from 760px: the marimba's foot, which left its
+ * bars the height (Ben, 2026-11-09).
+ */
+export type CountdownSize = 'display' | 'compact';
+
+/**
  * MM:SS, padded, and ROUNDED UP. A countdown that rounds to nearest shows
  * 00:00 for the last half second while it is still running; rounding up keeps
  * 00:00 for the moment it is actually over, which is also the moment
@@ -98,13 +106,15 @@ export interface CountdownProps {
    * `ended`. Pass an empty string to announce nothing.
    */
   announcement?: string;
+  /** `display` (default) or `compact` — see `CountdownSize`. */
+  size?: CountdownSize;
   className?: string;
 }
 
 export function Countdown({
   remainingSeconds, state, onToggle, caption,
   playLabel, resumeLabel, pauseLabel, restartLabel, trackLabel,
-  announcement, className,
+  announcement, size = 'display', className,
 }: CountdownProps) {
   const t = useMusyText();
   const done = Math.ceil(remainingSeconds) <= 0;
@@ -130,7 +140,11 @@ export function Countdown({
     : (playLabel ?? t.countdownStart);
 
   return (
-    <div className={['musy-countdown', className ?? ''].filter(Boolean).join(' ')} data-state={state}>
+    <div
+      className={['musy-countdown', className ?? ''].filter(Boolean).join(' ')}
+      data-state={state}
+      data-size={size === 'compact' ? 'compact' : undefined}
+    >
       <div className="musy-countdown__meter">
         <p className="musy-countdown__time" role="timer" data-done={done ? 'true' : undefined}>
           {countdownClock(remainingSeconds)}

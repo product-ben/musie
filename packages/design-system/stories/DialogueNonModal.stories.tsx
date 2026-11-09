@@ -199,6 +199,11 @@ export const Placements: Story = {
  *  under it. */
 export const WithVibrationSwitch: Story = { args: { open: true, children: WITH_VIBRATION } };
 
+/** `top-end`: under a trigger in the top bar, beside a sheet's X — where the
+ *  instruments' settings icon moved (Ben, 2026-11-09). It falls in from
+ *  above rather than rising. */
+export const TopEnd: Story = { args: { open: true, placement: 'top-end', children: WITH_VIBRATION } };
+
 /** The same settings where it cannot — no `navigator.vibrate` and no iOS
  *  switch haptic — so the Switch is not offered at all and „Zusammenspiel“
  *  stands alone. */

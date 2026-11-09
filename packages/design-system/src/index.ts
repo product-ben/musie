@@ -146,7 +146,7 @@ export { RadioImage } from './RadioImage';
 export type { RadioImageProps, RadioImageOption } from './RadioImage';
 
 export { Sheet } from './Sheet';
-export type { SheetProps, SheetPage, SheetContentAlign } from './Sheet';
+export type { SheetProps, SheetPage, SheetContentAlign, SheetDensity } from './Sheet';
 
 export { Logo } from './Logo';
 export type { LogoProps, LogoSize } from './Logo';
@@ -222,4 +222,4 @@ export type { InstrumentShadowParams, InstrumentShadowLayer } from './instrument
 export { DialogueNonModal } from './DialogueNonModal';
 export type { DialogueNonModalProps, DialogueNonModalPlacement } from './DialogueNonModal';
 export { Countdown } from './Countdown';
-export type { CountdownProps, CountdownState } from './Countdown';
+export type { CountdownProps, CountdownState, CountdownSize } from './Countdown';

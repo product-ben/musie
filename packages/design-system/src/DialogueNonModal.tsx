@@ -56,7 +56,12 @@ import { useMusyText } from './locale';
  * case — above a settings icon at the bottom left. Logical, so both mirror in
  * a right-to-left document.
  */
-export type DialogueNonModalPlacement = 'bottom-start' | 'bottom-end';
+/**
+ * Where the panel stands. `bottom-*` above a trigger at the sheet's bottom
+ * edge; `top-end` under a trigger at the top trailing edge — the instruments'
+ * settings icon beside the sheet's X (Ben, 2026-11-09).
+ */
+export type DialogueNonModalPlacement = 'bottom-start' | 'bottom-end' | 'top-end';
 
 export interface DialogueNonModalProps {
   /** Controlled open state. Omit for an uncontrolled dialogue the trigger opens. */

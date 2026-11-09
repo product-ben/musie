@@ -70,6 +70,9 @@ import type { LightboxOrigin } from './Lightbox';
  */
 export type SheetContentAlign = 'distributed' | 'top';
 
+/** How close the header and the foot sit to the screen's edges. */
+export type SheetDensity = 'default' | 'compact';
+
 export interface SheetPage {
   /** Stable identity. The React key. */
   id: string;
@@ -170,6 +173,33 @@ export interface SheetProps {
    * a way on at the end" is a decision about this flow, not about sheets.
    */
   foot?: React.ReactNode;
+  /**
+   * ── A STAGE UNDER EVERYTHING — the instruments, 2026-11-09 ─────────────
+   *
+   * Something to PLAY, laid over the whole sheet out to the screen's edges,
+   * under the header, the body and the foot — the harp's strings run the full
+   * height, behind the headline and the clock, as they did in the experiment
+   * the exercise came from (Ben: "inkl. der Harfe die über die full height
+   * geht").
+   *
+   * With a stage the header, body and foot let a press through wherever they
+   * hold no control, so a string under the headline is still a string. Their
+   * buttons, links and form controls take presses as before.
+   */
+  stage?: React.ReactNode;
+  /**
+   * Controls beside the close X, at the top trailing edge — the instruments'
+   * settings icon (Ben, 2026-11-09: "neben den X button"). The header keeps
+   * clear of them as it keeps clear of the X.
+   */
+  actions?: React.ReactNode;
+  /**
+   * `compact` brings the header up to `--sp-4` from the top and the foot down
+   * to `--sp-3` from the bottom — the marimba's experiment, which gave its
+   * bars the height that way. `default` is every other sheet; with a `stage`
+   * its foot sits at `--space-inset-card` from the bottom, as the harp's did.
+   */
+  density?: SheetDensity;
   className?: string;
 }
 
@@ -190,7 +220,7 @@ function nearestPage(scroller: HTMLElement): number {
 export function Sheet({
   open, onOpenChange, title, closeLabel, origin = null,
   header, pages, index = 0, onIndexChange, dotLabel, nextLabel, previousLabel,
-  children, foot, contentAlign = 'distributed', className,
+  children, foot, contentAlign = 'distributed', stage, actions, density = 'default', className,
 }: SheetProps) {
   const scrollerRef = React.useRef<HTMLOListElement>(null);
   const paged = pages !== undefined && pages.length > 0;
@@ -348,6 +378,9 @@ export function Sheet({
            white tone from it, and the paging controls re-tint for it. One
            attribute so the three cannot disagree. */
         data-media={tone === 'onMedia' ? 'true' : undefined}
+        data-stage={stage !== undefined ? 'true' : undefined}
+        data-actions={actions !== undefined ? 'true' : undefined}
+        data-density={density === 'compact' ? 'compact' : undefined}
       >
         {/* ── THE FIELD — the sheet's own surface, out to the edges ─────────
             A picture that is not cropped always leaves bars, and the bars have
@@ -365,7 +398,11 @@ export function Sheet({
 
             `aria-hidden` and no content: it is paint. */}
         <div className="musy-sheet__field" aria-hidden="true" />
+        {/* The stage, under every slot and out to the edges like the field —
+            but not paint: it is played on. */}
+        {stage !== undefined && <div className="musy-sheet__stage">{stage}</div>}
         {header !== undefined && <div className="musy-sheet__header">{header}</div>}
+        {actions !== undefined && <div className="musy-sheet__actions">{actions}</div>}
 
         {!paged ? (
           /* SINGLE BODY. The same box the pages would have filled, so the

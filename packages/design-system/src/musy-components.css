@@ -7584,6 +7584,71 @@ html[data-musy-scroll-snap='y'] {
   background-color: var(--surface-inverse);
 }
 
+/* ── THE STAGE — something to play, under every slot (2026-11-09) ─────────
+   The instruments: a canvas the size of the screen, under the header and the
+   foot, as the harp experiment drew its strings the full height of the window.
+   Out to the edges the same way the field is — Lightbox insets this sheet by
+   `--space-inset-sheet` on both axes, the negative inset undoes it.
+
+   THE SLOTS LET A PRESS THROUGH where they hold no control. The headline is
+   text over strings, and a string under it must still be a string — the
+   experiment's own construction (`.musie-top { pointer-events: none }`). Every
+   control in them takes its press back. */
+.musy-sheet__stage {
+  position: absolute;
+  inset: calc(var(--space-inset-sheet) * -1);
+}
+
+.musy-sheet[data-stage] .musy-sheet__header,
+.musy-sheet[data-stage] .musy-sheet__body,
+.musy-sheet[data-stage] .musy-sheet__foot {
+  pointer-events: none;
+}
+
+.musy-sheet[data-stage] :is(.musy-sheet__header, .musy-sheet__foot)
+  :is(button, a, input, select, textarea, [role="button"], [role="switch"], [role="radio"], [role="slider"]) {
+  pointer-events: auto;
+}
+
+/* With a stage the foot sits at `--space-inset-card` from the bottom, where the
+   harp's „Ich bin fertig“ stood (measured: 24px), not at the sheet's inset. */
+.musy-sheet[data-stage] .musy-sheet__foot {
+  margin-block-end: calc(var(--space-inset-card) - var(--space-inset-sheet));
+}
+
+/* ── ACTIONS BESIDE THE X ─────────────────────────────────────────────────
+   Lightbox's close control is pinned `--space-inset-card` from the popup's top
+   trailing corner, `--target-primary` square, pulled out by `--sp-2`. The
+   actions stand in the same row, one `--space-gap-related` before it. This
+   element is inside the sheet, which the popup insets by
+   `--space-inset-sheet`, so the offsets subtract it. */
+.musy-sheet__actions {
+  position: absolute;
+  inset-block-start: calc(var(--space-inset-card) - var(--space-inset-sheet));
+  inset-inline-end: calc(var(--space-inset-card) + var(--target-primary) + var(--space-gap-related) - var(--space-inset-sheet));
+  margin: calc(var(--sp-2) * -1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-related);
+}
+
+.musy-sheet[data-actions] .musy-sheet__header {
+  padding-inline-end: calc(var(--target-primary) * 2 + var(--space-gap-related));
+}
+
+/* ── COMPACT: the header and the foot closer to the edges ─────────────────
+   The marimba's experiment: its one-line headline at `--sp-4` from the top
+   and its foot at `--sp-3` from the bottom, which is where its bars got their
+   height. The actions and the X stay where they are. */
+.musy-sheet[data-density="compact"] .musy-sheet__header {
+  margin-block-start: calc(var(--sp-4) - var(--space-inset-sheet));
+}
+
+.musy-sheet[data-density="compact"][data-stage] .musy-sheet__foot,
+.musy-sheet[data-density="compact"] .musy-sheet__foot {
+  margin-block-end: calc(var(--sp-3) - var(--space-inset-sheet));
+}
+
 /* ── EVERY SLOT SITS OVER THE FIELD, AND THE LIST IS THE WHOLE RULE ───────
    The field is `position: absolute`, and a positioned element paints above
    STATIC siblings whatever the source order says. So anything that is not
@@ -8333,7 +8398,25 @@ html[data-musy-scroll-snap='y'] {
   inset-inline-start: auto;
   inset-inline-end: var(--musy-dialogue-inset);
 }
+/* ── TOP-END: under a trigger in the top bar, beside a sheet's X ──────────
+   The band it keeps clear is the top bar: Lightbox pins its close control at
+   `--space-inset-card`, `--target-primary` tall, and the trigger stands in that
+   row. The panel hangs below it and falls in from above. */
+.musy-dialogue[data-placement="top-end"] {
+  --musy-dialogue-clear: calc(var(--space-inset-card) + var(--target-primary) + var(--space-gap-related));
+  inset-block-end: auto;
+  inset-block-start: var(--musy-dialogue-clear);
+  inset-inline-start: auto;
+  inset-inline-end: var(--musy-dialogue-inset);
+  animation-name: musy-dialogue-in-top;
+}
 .musy-dialogue[data-closed] { animation: musy-dialogue-in var(--motion-exit) both reverse; }
+.musy-dialogue[data-placement="top-end"][data-closed] { animation-name: musy-dialogue-in-top; }
+
+@keyframes musy-dialogue-in-top {
+  from { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* It rises from the band it stands on. Travel is a token, so reduced motion
    flattens it to a fade rather than the panel jumping. */
@@ -8508,6 +8591,27 @@ html[data-musy-scroll-snap='y'] {
 /* The caption: muted and small, because it is read once and the figure is
    read throughout. The reading measure rather than the heading's — once the
    minimum is done it is a sentence or two, and it is the thing being read. */
+/* ── COMPACT: one row, the marimba's foot ─────────────────────────────────
+   Figure, transport and caption on one line; the figure in heading-md; the
+   caption only where there is room for it, as the experiment had it. */
+.musy-countdown[data-size="compact"] {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-gap-inline);
+}
+
+.musy-countdown[data-size="compact"] .musy-countdown__time {
+  font-family: var(--type-heading-md-family);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: var(--type-heading-md-line);
+  letter-spacing: var(--type-heading-md-tracking);
+}
+
+@media (max-width: 760px) {
+  .musy-countdown[data-size="compact"] .musy-countdown__caption { display: none; }
+}
+
 .musy-countdown__caption {
   margin: 0;
   max-inline-size: var(--measure-body);

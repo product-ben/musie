@@ -178,6 +178,13 @@ to four questions taken as decisions:
    value; the kalimba's tines were sand-7). Keys are now LIGHTER than strings
    (sand-7) — the family rule of the first brief is inverted, by Ben's choice.
 
+**Ben, after R0's measurement:** the harp layout for the harp and the
+kalimba; the **marimba keeps its own experiment's layout** — one-line headline
+at the very top, the small clock (heading-md figure, `min` transport, caption
+only from 760px) in the foot row beside Weiter — because the harp's big clock
+would leave its bars ~150px of 274 in landscape. The settings icon moves to
+the top beside the X for all three.
+
 **Two assumptions, to be corrected if wrong:**
 - The sheet's headline is the play step's heading AND its sentence, as one
   block, as each experiment's `<h1>` was a whole sentence („Atme tief ein und
@@ -192,8 +199,9 @@ to four questions taken as decisions:
 
 | # | Task | Status | Depends on | Files |
 | --- | --- | --- | --- | --- |
-| R0 | **Measure the experiments first.** Playwright on the three experiments at 393×852, 430×932, 852×393 (marimba) and 1280×800: headline box, clock box, button box, instrument extent (top/bottom/side of strings, tines, bars), cursor size. Written into this file as the acceptance table; R5 compares the app against it pixel box by pixel box (memory: measure, never derive from CSS) | offen | – | this file |
+| R0 | **Measure the experiments first.** Playwright on the three experiments at 393×852, 430×932, 852×393 (marimba) and 1280×800: headline box, clock box, button box, instrument extent (top/bottom/side of strings, tines, bars), cursor size. Written into this file as the acceptance table; R5 compares the app against it pixel box by pixel box (memory: measure, never derive from CSS) | **erledigt**: table below | – | this file |
 | R1 | **DS · `Sheet` overlay layout**: a `layout="overlay"` (name to settle) where the body fills the whole sheet under a transparent head and foot, pointer events passing through their empty parts; a header slot for actions beside the X (the settings icon). Stories + 07-components | offen | R0 | `packages/design-system/src/Sheet.tsx`, `musy-components.css`, `stories/Sheet.stories.tsx`, docs |
+| R2b | **DS · `Countdown` `size="compact"`**: the marimba's one-row clock (figure in heading-md, `min` transport, caption hidden below 760px) beside the existing display size | offen | R0 | `Countdown.tsx`, CSS, story |
 | R2 | **DS · `DialogueNonModal` `placement="top-end"`**: opens under the top bar at the right, the trigger beside the X | offen | – | `DialogueNonModal.tsx`, CSS, story |
 | R3 | **DS · tap effect + cursor, tokens and live controls**: tokens `--instrument-tap-*` (duration 700 ms, size, growth, opacity curve) and `--instrument-cursor-*` (size, colour) in the amendments; `instrumentTap.ts` (pure: the dot at time t for strength v — radius, alpha, gradient stops), its SIZE absolute (from the kalimba's tine width), not relative to what was hit, so a marimba bar does not get a dot five times as large; `InstrumentCursor` (follows mouse/pen over a target); Storybook „Instrument tap“ — a string, a tine and a bar to tap, with Controls bound to every parameter, the values shown as the token lines to paste. `--instrument-key` → sand-5. `TOKEN-DRIFT.md` | offen | – | `packages/design-system/{tokens/musy-foundations-amendments.css,TOKEN-DRIFT.md,src/instrumentTap.ts,src/InstrumentCursor.tsx,src/index.ts,stories/…}` |
 | R4a | **Harp**: tap dot at the grip, travelling with the pull, fading after release; one per strum crossing | offen | R3 | `apps/web/src/instruments/harp/**` |
@@ -201,6 +209,29 @@ to four questions taken as decisions:
 | R4c | **Marimba**: the kalimba's dot replaces its own; none on answers; the portrait hint becomes the experiment's full-screen overlay (stage side, R5) | offen | R3 | `apps/web/src/instruments/marimba/**` |
 | R5 | **App · the sheet as harp 1443**: `SessionPlay` on the overlay sheet; head = headline block; foot = Countdown left, Weiter right with the `placeFoot` rule; settings icon in the header slot opening the dialogue top-end; `InstrumentStage` fills the sheet and passes the measured head/foot as `inset` (kalimba and marimba lay out between them, the harp ignores them as its experiment did); `InstrumentCursor` over the canvas; the marimba's rotate overlay | offen | R1, R2, R3 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `shell.css`, i18n |
 | R6 | **Verify**: R0's table vs the app at the same four sizes (screenshots side by side, experiment left, app right, for each instrument), the e2e walk, `pnpm check`, the three builds; re-render the three exercise images (the key colour changed) | offen | R4, R5 | `e2e/instruments.spec.ts`, `public/assets/web/exercises/*.webp` |
+
+**R0 · what the experiments measure** (Playwright, CSS px, `[x, y, w, h]`;
+`paint` = the instrument's painted extent on the canvas; the done button shown):
+
+| Experiment | Size | Instrument (paint) | Headline | Clock (figure px) | Done |
+| --- | --- | --- | --- | --- | --- |
+| harp 1443 | 393×852 | [46, 0, 306, 851] | [32, 44, 285, 83] | [32, 681, 329, 86] (40) | [242, 782, 119, 46] |
+| harp 1443 | 430×932 | [50, 0, 334, 931] | [32, 44, 322, 83] | [32, 760, 366, 86] (40.8) | [279, 862, 119, 46] |
+| harp 1443 | 852×393 | [60, 0, 736, 392] | [32, 44, 744, 59] | [32, 266, 788, 87] (50.5) | [699, 322, 121, 47] |
+| harp 1443 | 1280×800 | [60, 0, 1164, 799] | [32, 44, 821, 32] | [32, 668, 1216, 92] (60.3) | [1125, 729, 123, 47] |
+| kalimba 1121 | 393×852 | [0, 264, 392, 492] | [32, 44, 285, 110] | – | – |
+| kalimba 1121 | 430×932 | [0, 236, 429, 599] | [32, 44, 322, 83] | – | – |
+| kalimba 1121 | 852×393 | [113, 187, 626, 113] | [32, 44, 744, 59] | – | – |
+| kalimba 1121 | 1280×800 | [327, 192, 626, 506] | [32, 44, 842, 63] | – | – |
+| marimba 1740 | 393×852 | rotate overlay | [32, 16, 230, 28] | [92, 796, 188, 44] (22) | [208, 794, 153, 46] |
+| marimba 1740 | 852×393 | [11, 54, 829, 274] | [32, 16, 248, 30] | [92, 337, 463, 44] (23.8) | [665, 334, 155, 47] |
+| marimba 1740 | 1280×800 | [11, 56, 1257, 679] | [32, 16, 265, 32] | [92, 744, 476, 44] (25.4) | [1090, 741, 158, 47] |
+
+The kalimba's extent is its tines between its header and its foot; with the
+harp's foot (a taller clock) it will sit higher and shorter — that is the
+consequence of Ben's layout choice, not a regression to fix. The marimba's
+clock starts at x=92 in the experiment because the gear stood before it; with
+the gear at the top it starts at the inset.
 
 **Parallel:** R1, R2 and R3 touch different design-system files and can run
 at once (R3 owns `index.ts` this round); R4a/b/c run at once after R3, one

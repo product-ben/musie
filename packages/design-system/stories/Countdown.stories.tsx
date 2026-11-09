@@ -116,3 +116,9 @@ export const Paused: Story = {
 export const Ended: Story = {
   args: { state: 'ended', remainingSeconds: 0, caption: CAPTION_DONE },
 };
+
+/** `size="compact"`: the marimba's foot — one row, the figure in heading-md,
+ *  the caption beside it and only from 760px (2026-11-09). */
+export const Compact: Story = {
+  args: { state: 'running', remainingSeconds: 64, size: 'compact' },
+};
