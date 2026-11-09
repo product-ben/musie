@@ -336,3 +336,10 @@ the usual `supabase db reset` from one session (Ben).
   cannot be emulated — Ben tests on his phone through a Cloudflare quick
   tunnel to a production build, the local stack proxied through the same
   origin (setup in the session's scratchpad, not in the repo).
+- 2026-11-09 — Ben: Weiter always under the clock, appearing smoothly and
+  pushing the clock up (`c046ccf`). The row is shut (0fr) until a pause or
+  0:00, so the clock stands on the edge; it opens over `--motion-sheet-slide`.
+  Watched frame by frame on the kalimba at 393 × 852: the clock rises 743 →
+  675 in about 300 ms, the tines' ends follow 712 → 644, never a blank frame
+  (the stage now assigns the canvas size only when it changes). In the
+  marimba's landscape the bars lose 68 px of 263 while Weiter shows.
