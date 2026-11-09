@@ -2763,22 +2763,22 @@ html[data-musy-scroll-snap] {
 /* The harp's foot: the clock at the leading edge, the button at the trailing
    edge, side by side where both fit — and where they do not, the button drops
    below with the clock above it (the harp's `placeFoot`). */
+/* THE CLOCK STANDS ON THE BOTTOM EDGE (Ben, 2026-11-09). `wrap-reverse`
+   stacks the rows from the bottom up: the clock's row is the lowest, and
+   where Weiter does not fit beside it, its row goes ABOVE the clock, not
+   below. The edge is the sheet's, a fixed box the size of what the browser
+   shows — on a phone that ends above a bottom address bar, never under it.
+   `end`, not `flex-end`: it means the bottom whatever the wrap direction. */
 .musie-play__foot {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  column-gap: var(--space-gap-stack);
-  row-gap: 0;
+  flex-wrap: wrap-reverse;
+  align-items: end;
+  gap: var(--space-gap-stack);
   inline-size: 100%;
 }
 
-/* The clock keeps `--space-gap-stack` above the foot's bottom whether the
-   button stands beside it or below it — the harp's body padding
-   (`--space-inset-card + --space-gap-stack` above the foot, measured: the
-   clock's bottom 16px above the button's). Hence no row gap above. */
 .musie-play__clock {
   min-inline-size: 0;
-  margin-block-end: var(--space-gap-stack);
 }
 
 .musie-play__done {
@@ -2800,7 +2800,6 @@ html[data-musy-scroll-snap] {
 
 .musie-play__foot[data-compact] .musie-play__clock {
   flex: 0 1 auto;
-  margin-block-end: 0;
 }
 
 .musie-play__foot[data-compact] .musie-play__done {
