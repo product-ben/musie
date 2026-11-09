@@ -1,3 +1,4 @@
+import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * The wiring: what `host.played`, `host.holding`, the demo, Weiter and the
  * finger lifting set in motion — with every browser part faked (node, no DOM).
@@ -74,6 +75,7 @@ function setup(opts: { mode?: PlayMode; vibration?: boolean; audible?: boolean; 
     watchPalette: () => ({
       palette: () => ({ rest: 'r', played: 'p', answer: 'a', background: 'b', detail: 'd' }),
       shadow: () => null,
+      tap: () => INSTRUMENT_TAP_DEFAULT,
       dispose: paletteDispose,
     }),
   };

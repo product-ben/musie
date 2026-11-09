@@ -1,3 +1,4 @@
+import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * Test support for the marimba's `*.test.ts` — imported by tests only, never
  * by the adapter. Not a `.test.ts` itself so vitest does not collect it; it
@@ -127,6 +128,7 @@ export function fakeHost(audio = new FakeAudio()) {
     buffer: (file) => buffers.get(file),
     palette: () => PALETTE,
     shadow: () => null,
+    tap: () => INSTRUMENT_TAP_DEFAULT,
     vibrate: (ms) => { log.vibrate.push(ms); },
     motion: () => state.motion,
     joltsSince: (t) => { log.joltsAsked.push(t); return state.jolts.filter((j) => j.at >= t); },

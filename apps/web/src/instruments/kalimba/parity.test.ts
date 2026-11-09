@@ -1,3 +1,4 @@
+import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * The port against the experiment itself — `kalimba/261106-1121` in the
  * tree, the same file `sources.test.ts` reads. Where an expression can be cut
@@ -298,7 +299,7 @@ describe('Schwenken → Vibrato, step for step', () => {
     const membranes: Membrane[] = [];
     const buzzes: [number, number | undefined][] = [];
     const host = {
-      audio: {} as AudioContext, audible: () => true, buffer: () => undefined, shadow: () => null,
+      audio: {} as AudioContext, audible: () => true, buffer: () => undefined, shadow: () => null, tap: () => INSTRUMENT_TAP_DEFAULT,
       palette: () => ({ rest: '', played: '', answer: '', background: '', detail: '' }),
       vibrate: (ms: number, ticks?: number) => { buzzes.push([ms, ticks]); },
       motion: () => reading, joltsSince: () => [], played() {}, holding() {}, requestDraw() {},

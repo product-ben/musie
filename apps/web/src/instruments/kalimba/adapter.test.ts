@@ -1,3 +1,4 @@
+import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * The adapter against the contract: what it tells the host, what it asks of
  * it, and what reaches the sound — with a fake host, a fake sound output and
@@ -58,6 +59,7 @@ function setup() {
     buffer: (file) => (state.buffers.has(file) ? ({} as AudioBuffer) : undefined),
     palette: () => PALETTE,
     shadow: () => null,
+    tap: () => INSTRUMENT_TAP_DEFAULT,
     vibrate: (ms, ticks) => { log.vibrate.push([ms, ticks]); },
     motion: () => state.motion,
     joltsSince: () => [],

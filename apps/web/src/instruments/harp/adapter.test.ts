@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { INSTRUMENT_SHADOW_DEFAULT, instrumentShadowLayers } from '@musie/design-system';
+import { INSTRUMENT_SHADOW_DEFAULT, instrumentShadowLayers, INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 import type { AnswerConfig, InstrumentHost, InstrumentSample, StagePointer, Stroke } from '../types';
 import { createHarp } from './index';
 import { createHarpInput } from './input';
@@ -85,6 +85,7 @@ function setup(over: Partial<InstrumentHost> = {}, loaded = samples.map((s) => s
       detail: 'rgb(167, 168, 155)',
     }),
     shadow: () => null,
+    tap: () => INSTRUMENT_TAP_DEFAULT,
     vibrate: (ms, ticks) => calls.vibrate.push([ms, ticks]),
     motion: () => null,
     joltsSince: () => [],

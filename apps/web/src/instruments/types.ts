@@ -23,7 +23,7 @@
  * Pure types: no React, no supabase, no DOM beyond the canvas type.
  */
 
-import type { InstrumentShadowLayer } from '@musie/design-system';
+import type { InstrumentShadowLayer, InstrumentTapParams } from '@musie/design-system';
 
 export const INSTRUMENT_IDS = ['harp', 'kalimba', 'marimba'] as const;
 export type InstrumentId = (typeof INSTRUMENT_IDS)[number];
@@ -32,7 +32,7 @@ export function isInstrumentId(value: string | null | undefined): value is Instr
   return INSTRUMENT_IDS.includes(value as InstrumentId);
 }
 
-/** `instruments.family` — strings draw lighter than keys (Ben, 2026-11-09). */
+/** `instruments.family` — keys draw lighter than strings: Ben inverted the first brief's rule on 2026-11-09 to match the experiments (`--instrument-key` is sand-5, `--instrument-string` sand-7). */
 export type InstrumentFamily = 'string' | 'key';
 
 /** One row of `instrument_samples`. `path` is served by the app's own host. */
@@ -145,6 +145,15 @@ export interface InstrumentHost {
    * `instrumentShadowProfile(width, layer, dpr)`.
    */
   shadow(): { layers: readonly InstrumentShadowLayer[]; rgb: readonly [number, number, number] } | null;
+  /**
+   * The tap effect's parameters from the `--instrument-tap-*` tokens (round 2,
+   * 2026-11-09): the kalimba's soft dot, drawn for every OWN note on all three
+   * instruments and never for an answer. Paint it with `instrumentTapAt` +
+   * `paintInstrumentTap` from '@musie/design-system', between
+   * `palette().rest` and `palette().played`. Re-read on a theme change, like
+   * the palette — so a value tuned in Storybook reaches the instruments.
+   */
+  tap(): InstrumentTapParams;
   /**
    * Vibrate now — Android immediately; on iOS the host owes `ticks` haptic
    * ticks to the next `touchend` (measured on an iPhone 13, PRD point 12).

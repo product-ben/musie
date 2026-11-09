@@ -12,7 +12,7 @@
  *
  * Which tokens: `--instrument-surface` behind the instrument (--sand-1, not
  * --surface: the amendments say why), `--instrument-string` or
- * `--instrument-key` at rest by family (Ben: strings draw lighter than keys),
+ * `--instrument-key` at rest by family (Ben, round 2: keys draw lighter than strings),
  * `--instrument-played`, `--instrument-answer`, `--instrument-detail`.
  *
  * RE-RESOLVED on a theme change: the `data-theme` attribute anywhere in the
@@ -30,7 +30,8 @@ import {
   instrumentShadowLayers,
   readInstrumentShadowParams,
 } from '@musie/design-system';
-import type { InstrumentShadowLayer } from '@musie/design-system';
+import { readInstrumentTapParams } from '@musie/design-system';
+import type { InstrumentShadowLayer, InstrumentTapParams } from '@musie/design-system';
 import type { InstrumentFamily, InstrumentPalette } from '../types';
 
 export type InstrumentShadow = { layers: readonly InstrumentShadowLayer[]; rgb: readonly [number, number, number] } | null;
@@ -91,6 +92,7 @@ export function shadowFrom(style: Pick<CSSStyleDeclaration, 'getPropertyValue'>,
 export interface PaletteWatch {
   palette(): InstrumentPalette;
   shadow(): InstrumentShadow;
+  tap(): InstrumentTapParams;
   dispose(): void;
 }
 
@@ -108,6 +110,7 @@ export const watchPalette: WatchPalette = (scope, family, onChange) => {
 
   let palette: InstrumentPalette;
   let shadow: InstrumentShadow;
+  let tap: InstrumentTapParams;
   const resolve = (token: string) => {
     probe.style.color = `var(${token})`;
     return getComputedStyle(probe).color;
@@ -118,6 +121,7 @@ export const watchPalette: WatchPalette = (scope, family, onChange) => {
       contrastMore: media[1].matches,
       forcedColors: media[2].matches,
     });
+    tap = readInstrumentTapParams(getComputedStyle(probe));
   };
   compute();
 
@@ -132,6 +136,7 @@ export const watchPalette: WatchPalette = (scope, family, onChange) => {
   return {
     palette: () => palette,
     shadow: () => shadow,
+    tap: () => tap,
     dispose() {
       observer.disconnect();
       media.forEach((m) => m.removeEventListener('change', changed));

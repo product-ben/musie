@@ -234,6 +234,7 @@ export function createInstrumentSession(options: InstrumentSessionOptions, env: 
     },
     palette: () => paletteWatch.palette(),
     shadow: () => paletteWatch.shadow(),
+    tap: () => paletteWatch.tap(),
     vibrate: (ms, ticks) => {
       if (!disposed) vibrator.vibrate(ms, ticks);
     },
