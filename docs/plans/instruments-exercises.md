@@ -326,3 +326,13 @@ the usual `supabase db reset` from one session (Ben).
   turned bars the marimba's 8 px chrome gap at the sides broke the
   experiment's layout parity (its side insets are the notch's safe area), and
   the bars already clear the clock by about 12 px.
+- 2026-11-09 — Ben: the clock stands on the bottom edge, never under a
+  phone's bottom address bar (`8bbf540`). The foot wraps upward
+  (`wrap-reverse`): the clock's row is the lowest, Weiter goes above it where
+  both do not fit. Measured: the clock 23–24 px above the edge at all four
+  sizes (the marimba's compact one 12). The edge is the immersive sheet's,
+  `position: fixed; inset: 0`, which follows what the browser shows; the
+  instruments measure that box, so they scale with it. A real bottom bar
+  cannot be emulated — Ben tests on his phone through a Cloudflare quick
+  tunnel to a production build, the local stack proxied through the same
+  origin (setup in the session's scratchpad, not in the repo).
