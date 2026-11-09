@@ -29,7 +29,6 @@ Styles: `components/musy-components.css`.
 | Draggable List | *none of its own* — composes §7.9, §7.2, §7.4 and §7.23; the state machine is the component |
 | Content List | `Separator` (row rules) |
 | Logo | `useRender` |
-| Dialogue (non modal) | `Dialog` with `modal={false}` (Root/Trigger/Portal/Popup/Title/Description/Close) — see 7.26 |
 | Countdown | *none of its own* — composes 7.21's `TrackButton`; see 7.27 |
 
 **State model.** base-ui puts state on the part itself — `data-checked`,
@@ -1480,66 +1479,6 @@ Hint
 
 ---
 
-## 7.26 Dialogue (non modal) `[SEED]`
-
-Storybook: **Components/Dialogue (non modal)**. Code: `DialogueNonModal`. Generic by decision (Ben, 2026-11-09); the instruments' settings are its first use.
-
-**Purpose.** Bring a panel forward **without taking the screen away** — the page behind stays exactly as usable as it was. For settings whose effect you want to see or hear while they are still open: the instruments' *Vibration* and *Zusammenspiel*, changed over an instrument that still sounds when touched.
-
-**APG pattern.** None of its own. It takes the [Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) pattern's role, naming and focus handoff and leaves out exactly what makes that pattern modal: the containment. base-ui `Dialog` with `modal={false}`.
-
-**What base-ui owns, and what it is told.** `modal={false}`: no inert background, no scroll lock, no internal backdrop, no focus trap — Tab walks out of the panel to what follows the trigger, and `aria-modal` is not set. Still base-ui's, as in 7.14: focus moves **into** the panel on open (the first tabbable element) and **back to the trigger** on close, Escape closes, the popup is `role="dialog"` named by its title, and it is portaled. `disablePointerDismissal`: for a non-modal dialog this stops **both** a press outside and focus leaving from closing it. base-ui's default closes on both, which suits a menu and defeats the point here — a panel that vanished the moment you touched the page would be a modal one with worse manners. The ways out are the close control, Escape, and the trigger again.
-
-**Why not Lightbox with a flag.** Lightbox's whole contract is the modal one — scrim, inert background, scroll lock — and its frame is written for a box centred over a page you cannot touch. This is the opposite promise, so it is a sibling component rather than a variant: the variant would share nothing that is hard.
-
-**Anatomy.**
-```
-DialogueNonModal
-├── Dialog.Trigger  (render = the consumer's own button; only when `trigger` is given)
-└── Dialog.Portal
-    └── Dialog.Popup.musy-dialogue        [data-placement] [data-title-hidden] [data-closed]
-        ├── Dialog.Title.musy-dialogue__title         (or .musy-sr-only)
-        ├── Dialog.Description.musy-dialogue__description   (optional; .musy-sr-only with the title)
-        ├── div.musy-dialogue__body       ← children; the part that scrolls
-        └── Dialog.Close.musy-dialogue__close → Icon X   ← LAST in the DOM, drawn top-trailing
-```
-
-**Props.**
-
-| Prop | Type | Default |
-|---|---|---|
-| `open` / `onOpenChange` | `boolean` / `(open: boolean) => void` | — (uncontrolled by default) |
-| `trigger` | `ReactElement` | — (optional, as on 7.14) |
-| `title` | `string` | — (required) |
-| `titleHidden` | `boolean` | `false` |
-| `description` | `string` | — |
-| `closeLabel` | `string` | the catalogue's `close` — „Schließen“ / "Close" |
-| `children` | `ReactNode` | — (required) |
-| `placement` | `'bottom-start' \| 'bottom-end'` | `'bottom-start'` |
-| `className` | `string` | — |
-
-`title` is required by the type for 7.14's reason (4.1.2). **`description` is visible**, unlike 7.14's sr-only one: a panel that stays open beside the page is read at leisure, and a description only a screen reader gets is one a sighted person never learns exists. It is hidden with the title when `titleHidden`, because a subtitle with no heading reads as stray body text.
-
-**The close control is last in the DOM.** Drawn in the top trailing corner, pinned to the panel, exactly as 7.14's — and placed last because base-ui focuses the **first** tabbable element on open. Measured: with the X first, opening the settings put the initial focus ring on "close". Last, the person lands on the first setting, which is what they opened the panel for.
-
-**Where it floats.** `position: fixed` to a bottom corner, `--space-inset-sheet` in from the side — the inset an immersive 7.14 sheet gives its content, so a trigger standing on that inset and the panel share an edge. **The band above the bottom inset is left free**, `--target-primary` plus `--space-gap-related` tall, because that is where the control that opened it stands (the instruments' settings icon, bottom left): the panel sits *above* the trigger, not over it, so the trigger stays visible and keeps `aria-expanded="true"`. Width is the viewport less both insets, **capped at `--bp-sm`** so a laptop shows the same object a phone does; height is capped at `--viewport-block` less the free band and the inset, and the body scrolls inside it.
-
-**Inside a modal Lightbox** — the instruments' focus sheet is 7.14 `surface="immersive"` — it is base-ui's **nested** dialog: its portal lands beside the sheet's positioner, it is not made inert by the sheet, and Escape closes the panel first and the sheet second. `--z-sheet`, not `--z-raised`: at a lower step the panel would paint under the sheet it was opened from; at the same step the later portal is on top. All verified in Chromium against a real immersive Lightbox.
-
-**State matrix.** Two states, base-ui's: open and closed. It rises by `--motion-travel-sm` at `--motion-enter` and leaves in reverse at `--motion-exit`. No hover, active or disabled — its close control and its contents have their own.
-
-**Responsive behaviour.** No breakpoint rules: the width is `min(viewport − 2 × --space-inset-sheet, --bp-sm)`. At 393px the panel is 329 wide and a two-option 7.25 inside it gets ~115px per label (stacked under the icon below 30rem of container); a label longer than that ellipses, as 7.25 specifies.
-
-**Token usage.** `--space-inset-sheet` `--space-inset-card` `--target-primary` `--space-gap-related` `--space-gap-stack` `--bp-sm` `--viewport-block` `--z-sheet` `--border-width-regular` `--border-style-solid` `--border-subtle` `--radius-panel` `--radius-full` `--surface-overlay` `--elevation-3` `--on-surface` `--on-surface-muted` `--interactive-ghost-hover` `--interactive-ghost-active` `--focus-ring` `--focus-ring-clearance` `--sp-2` `--motion-enter` `--motion-exit` `--motion-toggle` `--motion-travel-sm` `--measure-body` `--text-wrap-heading` `--text-wrap-body` `--text-hyphens` `--type-heading-sm-*` `--type-body-sm-*`
-
-**A11y notes.** Named by its title (4.1.2); focus moved in and restored to the trigger (2.4.3); Escape closes; nothing trapped, so 2.1.2 cannot bite. `--elevation-3` and a border are the only things lifting it off a page still in use, since there is no scrim. The body reaches out to the panel's edge and re-applies the inset itself — 7.14's fix — so a full-width control's focus ring is not clipped by the scroller.
-
-**What it is NOT.** Not a Lightbox (no scrim, nothing inert), not a popover anchored to its trigger (it floats in a viewport corner), not a menu (it does not close when you look away), not a bottom sheet.
-
-**`placement="top-end"`** (2026-11-09). Under a trigger in a sheet's top bar — the instruments' settings icon moved beside the sheet's X (Ben). It keeps clear of that bar (`--space-inset-card` + `--target-primary` + `--space-gap-related`) and falls in from above instead of rising.
-
----
-
 ## 7.27 Countdown `[SEED]`
 
 **Purpose.** The minimum an exercise asks for — 1:30 today — as the largest thing on the screen it is on. A figure, the control that moves it, and the sentence that says what the figure means.
@@ -1604,12 +1543,11 @@ Every default is the locale catalogue's (`countdown*` in `src/locale.ts`), and e
 
 ---
 
-### 7.x addendum — Sheet: `stage`, `actions`, `density` (2026-11-09)
+### 7.x addendum — Sheet: `stage`, `density` (2026-11-09)
 
 The instruments' focus sheet, rebuilt to the experiments' layout.
 
 - **`stage`** — something to PLAY under every slot, out to the screen's edges like the field (negative `--space-inset-sheet`). With a stage the header, body and foot let a press through except on their controls (buttons, links, form controls, switch/radio/slider roles), the experiment's own construction — a string under the headline is still a string. The foot then sits at `--space-inset-card` from the bottom, where the harp's „Ich bin fertig“ stood.
-- **`actions`** — controls beside the close X at the top trailing edge, in its row and one `--space-gap-related` before it; the header reserves room for both.
 - **`density="compact"`** — header at `--sp-4` from the top, foot at `--sp-3` from the bottom: the marimba's experiment.
 
 Stories: `Components/Sheet` → `WithStage`, `Compact`.

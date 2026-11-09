@@ -18,8 +18,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sheet } from '../src/Sheet';
 import type { SheetPage } from '../src/Sheet';
 import { CtaButton } from '../src/CtaButton';
-import { IconButton } from '../src/IconButton';
-import { Settings } from 'lucide-react';
 import { singlePane } from './_decorators';
 
 /* The five pictures the first consumer walks, as blocks of colour: the real
@@ -321,7 +319,7 @@ function Strings() {
  * `stage`: something to play under every slot, out to the screen's edges — the
  * harp's strings running the full height behind the headline and the clock, as
  * in its experiment (2026-11-09). The header and foot let a press through
- * except on their controls. `actions` puts the settings icon beside the X.
+ * except on their controls.
  */
 export const WithStage: Story = {
   render: () => (
@@ -330,7 +328,6 @@ export const WithStage: Story = {
       open
       onOpenChange={() => {}}
       stage={<Strings />}
-      actions={<IconButton glyph={Settings} label="Open the settings" variant="secondary" />}
       header={<h2 style={{ margin: 0 }}>Breathe deeply in and out</h2>}
       foot={<CtaButton onClick={() => {}}>Continue to reflection</CtaButton>}
     />
@@ -349,7 +346,6 @@ export const Compact: Story = {
       onOpenChange={() => {}}
       density="compact"
       stage={<Strings />}
-      actions={<IconButton glyph={Settings} label="Open the settings" variant="secondary" />}
       header={<h2 style={{ margin: 0 }}>Play until you feel calm.</h2>}
       foot={<CtaButton onClick={() => {}}>Continue to reflection</CtaButton>}
     />

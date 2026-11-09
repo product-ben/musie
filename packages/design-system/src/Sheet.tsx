@@ -188,12 +188,6 @@ export interface SheetProps {
    */
   stage?: React.ReactNode;
   /**
-   * Controls beside the close X, at the top trailing edge — the instruments'
-   * settings icon (Ben, 2026-11-09: "neben den X button"). The header keeps
-   * clear of them as it keeps clear of the X.
-   */
-  actions?: React.ReactNode;
-  /**
    * `compact` brings the header up to `--sp-4` from the top and the foot down
    * to `--sp-3` from the bottom — the marimba's experiment, which gave its
    * bars the height that way. `default` is every other sheet; with a `stage`
@@ -220,7 +214,7 @@ function nearestPage(scroller: HTMLElement): number {
 export function Sheet({
   open, onOpenChange, title, closeLabel, origin = null,
   header, pages, index = 0, onIndexChange, dotLabel, nextLabel, previousLabel,
-  children, foot, contentAlign = 'distributed', stage, actions, density = 'default', className,
+  children, foot, contentAlign = 'distributed', stage, density = 'default', className,
 }: SheetProps) {
   const scrollerRef = React.useRef<HTMLOListElement>(null);
   const paged = pages !== undefined && pages.length > 0;
@@ -379,7 +373,6 @@ export function Sheet({
            attribute so the three cannot disagree. */
         data-media={tone === 'onMedia' ? 'true' : undefined}
         data-stage={stage !== undefined ? 'true' : undefined}
-        data-actions={actions !== undefined ? 'true' : undefined}
         data-density={density === 'compact' ? 'compact' : undefined}
       >
         {/* ── THE FIELD — the sheet's own surface, out to the edges ─────────
@@ -402,7 +395,6 @@ export function Sheet({
             but not paint: it is played on. */}
         {stage !== undefined && <div className="musy-sheet__stage">{stage}</div>}
         {header !== undefined && <div className="musy-sheet__header">{header}</div>}
-        {actions !== undefined && <div className="musy-sheet__actions">{actions}</div>}
 
         {!paged ? (
           /* SINGLE BODY. The same box the pages would have filled, so the

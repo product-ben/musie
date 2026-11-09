@@ -69,7 +69,6 @@
 .musy-radio-card__body:focus-visible,
 .musy-rcard__body:focus-visible,
 .musy-lightbox__close:focus-visible,
-.musy-dialogue__close:focus-visible,
 .musy-msg__dismiss:focus-visible,
 .musy-box__dismiss:focus-visible,
 .musy-dot:focus-visible,
@@ -7623,30 +7622,10 @@ html[data-musy-scroll-snap='y'] {
   margin-block-end: calc(var(--space-inset-card) - var(--space-inset-sheet));
 }
 
-/* ── ACTIONS BESIDE THE X ─────────────────────────────────────────────────
-   Lightbox's close control is pinned `--space-inset-card` from the popup's top
-   trailing corner, `--target-primary` square, pulled out by `--sp-2`. The
-   actions stand in the same row, one `--space-gap-related` before it. This
-   element is inside the sheet, which the popup insets by
-   `--space-inset-sheet`, so the offsets subtract it. */
-.musy-sheet__actions {
-  position: absolute;
-  inset-block-start: calc(var(--space-inset-card) - var(--space-inset-sheet));
-  inset-inline-end: calc(var(--space-inset-card) + var(--target-primary) + var(--space-gap-related) - var(--space-inset-sheet));
-  margin: calc(var(--sp-2) * -1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-gap-related);
-}
-
-.musy-sheet[data-actions] .musy-sheet__header {
-  padding-inline-end: calc(var(--target-primary) * 2 + var(--space-gap-related));
-}
-
 /* ── COMPACT: the header and the foot closer to the edges ─────────────────
    The marimba's experiment: its one-line headline at `--sp-4` from the top
    and its foot at `--sp-3` from the bottom, which is where its bars got their
-   height. The actions and the X stay where they are. */
+   height. The X stays where it is. */
 .musy-sheet[data-density="compact"] .musy-sheet__header {
   margin-block-start: calc(var(--sp-4) - var(--space-inset-sheet));
 }
@@ -8345,195 +8324,7 @@ html[data-musy-scroll-snap='y'] {
 }
 
 
-/* ═══ 29 · DIALOGUE (NON MODAL) ════════════════════════════════════════════
-   base-ui Dialog with `modal={false}`. A raised panel that comes forward
-   WITHOUT taking the page away: no scrim, nothing inert, no scroll lock — so
-   there is no backdrop rule and no positioner here, only the panel. The
-   argument is in `DialogueNonModal.tsx`; this is its geometry.
-
-   ── WHERE IT FLOATS ──────────────────────────────────────────────────────
-   Fixed to a bottom corner of the viewport, one `--space-inset-sheet` in from
-   the side — the inset an immersive Lightbox gives its content, so a trigger
-   standing on that inset and the panel above it share an edge.
-
-   THE BAND ABOVE THE BOTTOM INSET IS LEFT FREE, one `--target-primary` tall
-   plus `--space-gap-related`, because that is where the control that opened it
-   stands (the instruments' settings icon, bottom left). The panel sits ABOVE
-   the trigger rather than over it, so the trigger stays visible and keeps
-   saying `aria-expanded="true"`. Declared once as `--musy-dialogue-clear` and
-   read by both the offset and the height cap, so the two cannot drift.
-
-   NEVER WIDER THAN `--bp-sm`. Layer 1's large-phone width: on a laptop the
-   panel stays the object it is on a phone instead of stretching into a bar,
-   and below that it takes the viewport less its two insets.
-
-   `--z-sheet`, Layer 1's step for a sheet. NOT `--z-raised`: inside an
-   immersive Lightbox — the instruments' focus sheet — this is base-ui's nested
-   dialog, its portal lands beside the Lightbox's positioner, and a lower step
-   would put the panel underneath the sheet it was opened from. At the same
-   step the later portal paints on top, which is the order they open in. */
-.musy-dialogue {
-  --musy-dialogue-inset: var(--space-inset-sheet);
-  --musy-dialogue-clear: calc(var(--musy-dialogue-inset) + var(--target-primary) + var(--space-gap-related));
-  position: fixed;
-  z-index: var(--z-sheet);
-  inset-block-end: var(--musy-dialogue-clear);
-  inset-inline-start: var(--musy-dialogue-inset);
-  box-sizing: border-box;
-  inline-size: min(calc(100% - var(--musy-dialogue-inset) * 2), var(--bp-sm));
-  /* Never taller than what is left above the free band, less the same inset
-     at the top. The body scrolls inside it; the head never does. */
-  max-block-size: calc(var(--viewport-block) - var(--musy-dialogue-clear) - var(--musy-dialogue-inset));
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-related);
-  /* No block-end padding: the body carries it, inside its own scrollport —
-     Lightbox's lesson, measured 2026-09-26: a scroll container clips at its
-     PADDING box, so an inset on the outer box is drawn and then not
-     respected by what scrolls under it. */
-  padding: var(--space-inset-card) var(--space-inset-card) 0;
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
-  border-radius: var(--radius-panel);
-  background-color: var(--surface-overlay);
-  /* The heaviest elevation, because there is no scrim: the shadow and the
-     edge are the only things lifting the panel off a page still in use. */
-  box-shadow: var(--elevation-3);
-  color: var(--on-surface);
-  animation: musy-dialogue-in var(--motion-enter) both;
-}
-.musy-dialogue[data-placement="bottom-end"] {
-  inset-inline-start: auto;
-  inset-inline-end: var(--musy-dialogue-inset);
-}
-/* ── TOP-END: under a trigger in the top bar, beside a sheet's X ──────────
-   The band it keeps clear is the top bar: Lightbox pins its close control at
-   `--space-inset-card`, `--target-primary` tall, and the trigger stands in that
-   row. The panel hangs below it and falls in from above. */
-.musy-dialogue[data-placement="top-end"] {
-  --musy-dialogue-clear: calc(var(--space-inset-card) + var(--target-primary) + var(--space-gap-related));
-  inset-block-end: auto;
-  inset-block-start: var(--musy-dialogue-clear);
-  inset-inline-start: auto;
-  inset-inline-end: var(--musy-dialogue-inset);
-  animation-name: musy-dialogue-in-top;
-}
-.musy-dialogue[data-closed] { animation: musy-dialogue-in var(--motion-exit) both reverse; }
-.musy-dialogue[data-placement="top-end"][data-closed] { animation-name: musy-dialogue-in-top; }
-
-@keyframes musy-dialogue-in-top {
-  from { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* It rises from the band it stands on. Travel is a token, so reduced motion
-   flattens it to a fade rather than the panel jumping. */
-@keyframes musy-dialogue-in {
-  from { opacity: 0; transform: translateY(var(--motion-travel-sm)); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── THE TITLE, AND THE X IN ITS CORNER ───────────────────────────────────
-   The close control is LAST in the DOM and DRAWN in the top trailing corner,
-   pinned to the panel rather than to anything that scrolls — Lightbox's
-   construction, for Lightbox's reason plus one: base-ui focuses the first
-   tabbable element on open, and the first one should be a setting, not the
-   way out (DialogueNonModal.tsx).
-
-   heading-sm, a step under Lightbox's heading-md — this is a panel beside the
-   page, not the page's subject. The X's column is reserved on the title, so a
-   long title wraps short of it instead of running under it. */
-.musy-dialogue__title {
-  margin: 0;
-  padding-inline-end: var(--target-primary);
-  font-family: var(--type-heading-sm-family);
-  font-size: var(--type-heading-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-heading-sm-line);
-  letter-spacing: var(--type-heading-sm-tracking);
-  color: var(--on-surface);
-  text-wrap: var(--text-wrap-heading);
-}
-
-/* Identical to §14's `.musy-lightbox__close`, deliberately: the dismiss
-   affordances in the system should not differ by a pixel. Ghost, at
-   --target-primary, on the panel's inset and pulled back by --sp-2 so the
-   glyph lines up with the title rather than the target's edge. */
-.musy-dialogue__close {
-  position: absolute;
-  inset-block-start: var(--space-inset-card);
-  inset-inline-end: var(--space-inset-card);
-  display: grid;
-  place-items: center;
-  width: var(--target-primary);
-  height: var(--target-primary);
-  margin: calc(var(--sp-2) * -1);
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-full);
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  transition: background-color var(--motion-toggle);
-}
-@media (hover: hover) and (pointer: fine) {
-  .musy-dialogue__close:hover,
-  .musy-dialogue__close[data-force~="hover"] { background-color: var(--interactive-ghost-hover); }
-}
-.musy-dialogue__close:active { background-color: var(--interactive-ghost-active); }
-
-/* Visible, unlike Lightbox's, and set like Field's description. */
-.musy-dialogue__description {
-  margin: 0;
-  max-inline-size: var(--measure-body);
-  font-family: var(--type-body-sm-family);
-  font-size: var(--type-body-sm-size);
-  font-weight: var(--type-body-sm-weight);
-  line-height: var(--type-body-sm-line);
-  letter-spacing: var(--type-body-sm-tracking);
-  color: var(--on-surface-muted);
-  text-wrap: var(--text-wrap-body);
-  hyphens: var(--text-hyphens);
-}
-
-/* ── THE PART THAT SCROLLS ────────────────────────────────────────────────
-   A column of controls at `--space-gap-stack`, Layer 1's gap between controls
-   inside one molecule.
-
-   IT REACHES OUT TO THE PANEL'S EDGE AND PUTS THE INSET BACK ITSELF — the fix
-   `.musy-lightbox__body` carries, for the same measured reason: a scroller
-   clips at its padding box, and with the inset on the panel that box sat on
-   the content edge and cut a full-width control's focus ring flat. The block
-   start reaches up by `--focus-ring-clearance` and pads it back, so the first
-   control's ring clears the clip while the gap under the head stays the
-   head's. */
-.musy-dialogue__body {
-  flex: 1 1 auto;
-  min-block-size: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-stack);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  margin-inline: calc(var(--space-inset-card) * -1);
-  margin-block-start: calc(var(--focus-ring-clearance) * -1);
-  padding-inline: var(--space-inset-card);
-  padding-block: var(--focus-ring-clearance) var(--space-inset-card);
-}
-
-/* ── A HIDDEN TITLE LEAVES THE X'S BAND EMPTY ─────────────────────────────
-   `.musy-sr-only` occupies nothing, so the body would start level with the X
-   and its first control would run under it. The body starts below the X
-   instead: the control's height less the --sp-2 it is pulled back by, then
-   the related gap, plus the ring clearance the body already reaches up by.
-   Lightbox reserves the same band for the same reason. */
-.musy-dialogue[data-title-hidden] > .musy-dialogue__body {
-  padding-block-start: calc(
-    var(--target-primary) - var(--sp-2) + var(--space-gap-related) + var(--focus-ring-clearance)
-  );
-}
-
-
-/* ═══ 30 · COUNTDOWN ═══════════════════════════════════════════════════════
+/* ═══ 29 · COUNTDOWN ═══════════════════════════════════════════════════════
    The minimum an exercise asks for, as the largest thing on its screen: the
    figure, the control that moves it, and the sentence that says what the
    figure means. Moved here from the app's listen step
@@ -8632,7 +8423,7 @@ html[data-musy-scroll-snap='y'] {
 }
 
 
-/* ═══ 31 · INSTRUMENT CURSOR ═══════════════════════════════════════════════
+/* ═══ 30 · INSTRUMENT CURSOR ═══════════════════════════════════════════════
    The harp experiment's green dot (harp/261104-1443, `.musie-cursor`), which
    stands in for the mouse and pen pointer over an instrument. The rule for
    when it shows is in `InstrumentCursor.tsx`; this is its geometry.

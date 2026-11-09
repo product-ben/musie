@@ -2649,8 +2649,7 @@ html[data-musy-scroll-snap] {
 
 /* ═══ INSTRUMENTS · MUSIZIEREN ═════════════════════════════════════════════
    `SessionPlay` and `InstrumentStage`. L14: the system has components for
-   every control here (Switch, SegmentedControl, Countdown, DialogueNonModal,
-   Sheet) and none for the column that holds them or for a canvas that fills
+   every control here (Switch, SegmentedControl, Countdown, Sheet) and none for the column that holds them or for a canvas that fills
    the sheet's middle — so these classes place, and every value is a token. */
 .musie-play__settings {
   display: flex;

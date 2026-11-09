@@ -214,13 +214,9 @@ export {
 } from './instrumentShadow';
 export type { InstrumentShadowParams, InstrumentShadowLayer } from './instrumentShadow';
 
-/* The instruments' two (2026-11-09). „Dialogue (non modal)“ is generic — the
-   page behind it stays playable, which is what the instrument settings need
-   and why it is not a Lightbox. `Countdown` is the minimum timer the listening
-   focus sheet drew as app CSS around a TrackButton; it is the system's now
-   (L14.3: a pattern that recurs is a component). */
-export { DialogueNonModal } from './DialogueNonModal';
-export type { DialogueNonModalProps, DialogueNonModalPlacement } from './DialogueNonModal';
+/* The instruments' timer (2026-11-09). `Countdown` is the minimum timer the
+   listening focus sheet drew as app CSS around a TrackButton; it is the
+   system's now (L14.3: a pattern that recurs is a component). */
 export { Countdown } from './Countdown';
 export type { CountdownProps, CountdownState, CountdownSize } from './Countdown';
 
