@@ -26,7 +26,7 @@ import { describe, expect, it } from 'vitest';
 import { INSTRUMENT_TAP_DEFAULT, instrumentTapAt, paintInstrumentTap } from '@musie/design-system';
 
 import type { InstrumentPalette } from '../types';
-import { WARM_SHARE, createPicture, hitBar, isPortrait, layoutBars, mixColour, parseColour, type Player } from './draw';
+import { WARM_SHARE, createPicture, hitBar, layoutBars, mixColour, parseColour, type Player } from './draw';
 import type { MarimbaSound } from './sound';
 import { PALETTE, loadMarimba } from './testing';
 
@@ -312,11 +312,6 @@ describe('layout and hit', () => {
     expect(hitBar(L, b.cx, L.top - 25)).toBeNull();
   });
 
-  it('portrait is a box taller than wide', () => {
-    expect(isPortrait(null)).toBe(false);
-    expect(isPortrait(BOX)).toBe(false);
-    expect(isPortrait({ ...BOX, width: 390, height: 844 })).toBe(true);
-  });
 });
 
 describe('colour', () => {

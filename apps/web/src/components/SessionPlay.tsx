@@ -47,7 +47,6 @@ import { announcement, remainingSeconds, showContinue } from '../instruments/eng
 import type { ClockState } from '../instruments/engine/clock';
 import type { InstrumentSession } from '../instruments/engine/host';
 import { isInstrumentId } from '../instruments/types';
-import { Smartphone } from 'lucide-react';
 
 const PHASE_TO_COUNTDOWN: Record<ClockState['phase'], CountdownState> = {
   unstarted: 'unstarted',
@@ -84,7 +83,12 @@ export function SessionPlay({
   const [session, setSession] = React.useState<InstrumentSession | null>(null);
   const [demoSaid, setDemoSaid] = React.useState(false);
   const [played, setPlayed] = React.useState(false);
-  const [rotate, setRotate] = React.useState(false);
+  /* The marimba held upright lies turned a quarter turn (the stage says so
+     once it has measured); first guess from the window, so the sheet does
+     not open in the wrong layout for a frame. */
+  const [turned, setTurned] = React.useState(
+    () => typeof matchMedia === 'function' && matchMedia('(orientation: portrait)').matches,
+  );
   const [stageError, setStageError] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const canVibrate = React.useMemo(() => supportsVibration(), []);
@@ -129,19 +133,22 @@ export function SessionPlay({
   );
 
   const said = announcement(clock);
-  /* The marimba keeps its own experiment's layout (Ben, after R0). */
-  const compact = instrument.id === 'marimba';
+  const marimba = instrument.id === 'marimba';
+  /* The marimba keeps its own experiment's layout in landscape (Ben, after
+     R0). Upright, its bars are turned and there is height to spare, so it
+     takes the harp's layout like the other two. */
+  const compact = marimba && !turned;
   /* THE SHEET'S HEADLINE IS A SENTENCE, as each experiment's <h1> was —
      heading and body in one line of heading type. The marimba's was its
-     heading alone („Spiel, bis du ruhig bist.“); its body is the rotation
-     screen's own sentence. */
+     heading alone („Spiel, bis du ruhig bist.“); its body is the step's
+     advice to lay the phone sideways. */
   const headline = React.useMemo(() => {
     const blocks = parseMarkdown(instrument.playMd);
     const head = plainText(headingOnly(blocks)).trim();
     const body = plainText(withoutHeading(blocks)).trim();
     const closed = /[.:!?…]$/.test(head) ? head : `${head}.`;
-    return compact || body === '' ? closed : `${closed} ${body}`;
-  }, [instrument.playMd, compact]);
+    return marimba || body === '' ? closed : `${closed} ${body}`;
+  }, [instrument.playMd, marimba]);
   const headRef = React.useRef<HTMLDivElement>(null);
   const footRef = React.useRef<HTMLDivElement>(null);
   const canvasLabel = isInstrumentId(instrument.id) ? t(`session.play.canvas.${instrument.id}`) : exercise.name;
@@ -184,39 +191,25 @@ export function SessionPlay({
             </DialogueNonModal>
           }
           stage={immersive ? (
-            <>
-              <InstrumentStage
-                definition={definition}
-                durationSeconds={exercise.listenGateSeconds}
-                mode={mode}
-                vibration={vibration}
-                clock={clock}
-                onClock={onClock}
-                onSession={setSession}
-                onDemo={() => setDemoSaid(true)}
-                onPlayed={() => setPlayed(true)}
-                onOrientationHint={setRotate}
-                onError={(error) => { console.error('[musie] instrument:', error); setStageError(true); }}
-                label={canvasLabel}
-                insetTop={headRef}
-                insetBottom={footRef}
-              />
-              {/* ── THE MARIMBA IN PORTRAIT — its experiment's full screen ──
-                  On a touch screen held upright the bars are drawn anyway,
-                  and this covers them, as `.musie-rotate` did; the head and
-                  the foot step aside (`data-covered`). The X and the settings
-                  stay, so nobody is held in a sheet they cannot use. */}
-              {rotate && (
-                <div className="musie-play__rotate" role="status">
-                  <Smartphone aria-hidden="true" className="musie-play__rotate-icon" />
-                  <p className="musie-play__headline">{t('session.play.rotate.title')}</p>
-                  <p className="musie-play__rotate-hint">{t('session.play.rotate.hint')}</p>
-                </div>
-              )}
-            </>
+            <InstrumentStage
+              definition={definition}
+              durationSeconds={exercise.listenGateSeconds}
+              mode={mode}
+              vibration={vibration}
+              clock={clock}
+              onClock={onClock}
+              onSession={setSession}
+              onDemo={() => setDemoSaid(true)}
+              onPlayed={() => setPlayed(true)}
+              onTurn={setTurned}
+              onError={(error) => { console.error('[musie] instrument:', error); setStageError(true); }}
+              label={canvasLabel}
+              insetTop={headRef}
+              insetBottom={footRef}
+            />
           ) : undefined}
           header={
-            <div ref={headRef} className="musie-play__head" data-compact={compact ? 'true' : undefined} data-covered={rotate ? 'true' : undefined}>
+            <div ref={headRef} className="musie-play__head" data-compact={compact ? 'true' : undefined}>
               <h2 className="musie-play__headline">{headline}</h2>
               {/* The demo, a load failure: polite, and in the marimba's one
                   line where its experiment kept its note. For the harp and the
@@ -232,7 +225,7 @@ export function SessionPlay({
             </div>
           }
           foot={
-            <div ref={footRef} className="musie-play__foot" data-compact={compact ? 'true' : undefined} data-covered={rotate ? 'true' : undefined}>
+            <div ref={footRef} className="musie-play__foot" data-compact={compact ? 'true' : undefined}>
               <Countdown
                 className="musie-play__clock"
                 size={compact ? 'compact' : 'display'}

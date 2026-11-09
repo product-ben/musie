@@ -159,7 +159,6 @@ export function fakeEnv(start = 1000) {
       };
     },
     random: () => 0.5,
-    coarsePointer: () => true,
     advance(ms) {
       const until = clock + ms;
       for (;;) {

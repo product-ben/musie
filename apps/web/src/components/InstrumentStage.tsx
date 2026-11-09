@@ -17,7 +17,18 @@
  *   · send `keyUp` for held keys when the window loses focus;
  *   · tell the session about every touch (`touched`), so a touch that hits
  *     no note still stops the demo and an answer;
- *   · show the harp's green cursor dot over the canvas (`InstrumentCursor`).
+ *   · show the harp's green cursor dot over the canvas (`InstrumentCursor`);
+ *   · turn the marimba a quarter turn when its box stands upright.
+ *
+ * ── THE MARIMBA UPRIGHT ───────────────────────────────────────────────────
+ * Landscape is the marimba's orientation, and its experiment asked for the
+ * phone to be turned. Ben, 2026-11-09: held upright, the instrument turns
+ * instead — the bars lie across the screen, the low ones at the bottom, and
+ * the words stay upright. The adapter never knows: it is handed a landscape
+ * box (the head and foot become its right and left insets), the canvas is
+ * drawn landscape and rotated a quarter turn counter-clockwise in CSS, and
+ * every pointer is turned back before the adapter sees it. So the experiment's
+ * drawing and hit test stay exactly what their parity tests compare.
  *
  * ── ONE SESSION PER OPENING ───────────────────────────────────────────────
  * Created when the sheet mounts this, disposed when it unmounts. The clock is
@@ -42,6 +53,13 @@ const FACTORIES: Record<InstrumentId, InstrumentFactory> = {
   marimba: createMarimba,
 };
 
+/** Which instruments turn a quarter turn in an upright box. */
+const TURNS_UPRIGHT: Record<InstrumentId, boolean> = {
+  harp: false,
+  kalimba: false,
+  marimba: true,
+};
+
 export interface InstrumentStageProps {
   definition: InstrumentDefinition;
   /** `exercises.listen_gate_seconds` — the timer. */
@@ -58,8 +76,8 @@ export interface InstrumentStageProps {
   onDemo: (degree: number) => void;
   /** The person played their first note: the onboarding sentence goes. */
   onPlayed: () => void;
-  /** The marimba wants the phone turned (portrait on a touch screen). */
-  onOrientationHint?: (show: boolean) => void;
+  /** The instrument is turned a quarter turn (the marimba in an upright box). */
+  onTurn?: (turned: boolean) => void;
   /** Samples failed to load. */
   onError: (error: unknown) => void;
   /** The accessible name of the canvas. */
@@ -74,15 +92,20 @@ export interface InstrumentStageProps {
   insetBottom?: React.RefObject<HTMLElement | null>;
 }
 
-function pointerOf(e: React.PointerEvent<HTMLCanvasElement>, box: DOMRect): StagePointer {
+function pointerOf(e: React.PointerEvent<HTMLCanvasElement>, box: DOMRect, turned: boolean): StagePointer {
+  /* A turned canvas is the landscape picture rotated counter-clockwise: its
+     x runs up the screen from the bottom, its y across from the left. `box`
+     is the rotated canvas's box on screen, which is the upright one. */
+  const at = (clientX: number, clientY: number) => (turned
+    ? { x: box.bottom - clientY, y: clientX - box.left }
+    : { x: clientX - box.left, y: clientY - box.top });
   const native = e.nativeEvent;
   const coalesced = typeof native.getCoalescedEvents === 'function'
-    ? native.getCoalescedEvents().map((c) => ({ x: c.clientX - box.left, y: c.clientY - box.top, t: c.timeStamp }))
+    ? native.getCoalescedEvents().map((c) => ({ ...at(c.clientX, c.clientY), t: c.timeStamp }))
     : undefined;
   return {
     id: e.pointerId,
-    x: e.clientX - box.left,
-    y: e.clientY - box.top,
+    ...at(e.clientX, e.clientY),
     t: e.timeStamp,
     type: e.pointerType === 'mouse' || e.pointerType === 'pen' ? e.pointerType : 'touch',
     radius: e.pointerType === 'touch' && e.width > 0 ? e.width / 2 : undefined,
@@ -93,11 +116,12 @@ function pointerOf(e: React.PointerEvent<HTMLCanvasElement>, box: DOMRect): Stag
 
 export function InstrumentStage({
   definition, durationSeconds, mode, vibration, clock, onClock, onSession, onDemo, onPlayed,
-  onOrientationHint, onError, label, insetTop, insetBottom,
+  onTurn, onError, label, insetTop, insetBottom,
 }: InstrumentStageProps) {
   const scopeRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const sessionRef = React.useRef<InstrumentSession | null>(null);
+  const turnedRef = React.useRef(false);
 
   /* The settings are read through refs: the session asks on every note, and
      re-creating it on every switch would cut the sound. */
@@ -106,8 +130,8 @@ export function InstrumentStage({
   modeRef.current = mode;
   vibrationRef.current = vibration;
 
-  const callbacks = React.useRef({ onClock, onSession, onDemo, onPlayed, onOrientationHint, onError });
-  callbacks.current = { onClock, onSession, onDemo, onPlayed, onOrientationHint, onError };
+  const callbacks = React.useRef({ onClock, onSession, onDemo, onPlayed, onTurn, onError });
+  callbacks.current = { onClock, onSession, onDemo, onPlayed, onTurn, onError };
   const initialClock = React.useRef(clock);
 
   /* Solo means no answer NOW, not only no next answer. */
@@ -148,23 +172,30 @@ export function InstrumentStage({
     const measure = () => {
       const rect = scope.getBoundingClientRect();
       const dpr = Math.min(3, window.devicePixelRatio || 1);
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
+      const turned = TURNS_UPRIGHT[definition.id] && rect.height > rect.width;
+      const width = turned ? rect.height : rect.width;
+      const height = turned ? rect.width : rect.height;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      /* The CSS turns the canvas (`.musie-instrument[data-turned]`); the
+         pointers are turned back in `pointerOf`. */
+      scope.toggleAttribute('data-turned', turned);
+      turnedRef.current = turned;
       const head = insetTop?.current?.getBoundingClientRect();
       const foot = insetBottom?.current?.getBoundingClientRect();
+      const above = head === undefined ? 0 : Math.max(0, head.bottom - rect.top);
+      const below = foot === undefined ? 0 : Math.max(0, rect.bottom - foot.top);
       session.layout({
-        width: rect.width,
-        height: rect.height,
+        width,
+        height,
         dpr,
-        inset: {
-          top: head === undefined ? 0 : Math.max(0, head.bottom - rect.top),
-          right: 0,
-          bottom: foot === undefined ? 0 : Math.max(0, rect.bottom - foot.top),
-          left: 0,
-        },
+        /* Turned, the screen's top is the picture's right and its bottom
+           the picture's left. */
+        inset: turned
+          ? { top: 0, right: above, bottom: 0, left: below }
+          : { top: above, right: 0, bottom: below, left: 0 },
       });
-      const hint = (session.adapter as { orientationHint?: boolean }).orientationHint;
-      callbacks.current.onOrientationHint?.(hint === true);
+      callbacks.current.onTurn?.(turned);
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -222,13 +253,13 @@ export function InstrumentStage({
     if (session === null) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     session.touched();
-    session.adapter.pointerDown(pointerOf(e, e.currentTarget.getBoundingClientRect()));
+    session.adapter.pointerDown(pointerOf(e, e.currentTarget.getBoundingClientRect(), turnedRef.current));
   }
   function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
-    sessionRef.current?.adapter.pointerMove(pointerOf(e, e.currentTarget.getBoundingClientRect()));
+    sessionRef.current?.adapter.pointerMove(pointerOf(e, e.currentTarget.getBoundingClientRect(), turnedRef.current));
   }
   function onPointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
-    sessionRef.current?.adapter.pointerUp(pointerOf(e, e.currentTarget.getBoundingClientRect()));
+    sessionRef.current?.adapter.pointerUp(pointerOf(e, e.currentTarget.getBoundingClientRect(), turnedRef.current));
   }
 
   return (

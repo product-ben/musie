@@ -135,11 +135,6 @@ export function hitBar(L: MarimbaLayout, x: number, y: number): { i: number; pos
   return { i, pos: (y - B.y0) / B.h };
 }
 
-/** Portrait: the marimba lies across, so the stage may ask to turn the phone. */
-export function isPortrait(box: StageBox | null): boolean {
-  return box !== null && box.height > box.width;
-}
-
 /* ── colour ──────────────────────────────────────────────────────────── */
 
 export type Rgb = readonly [number, number, number];

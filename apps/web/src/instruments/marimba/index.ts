@@ -9,9 +9,10 @@
  * roll, glissando, velocity, vibration length), the audio graph, the calm.
  *
  * One fixed look (Ben, 2026-11-09): 10 bars, „Marimba, weich“, no sound
- * chooser, no 7/10 switch, no settings panel. Landscape is its orientation;
- * a portrait box is drawn anyway and `orientationHint` tells the stage to show
- * the experiment's rotate hint.
+ * chooser, no 7/10 switch, no settings panel. Landscape is its orientation,
+ * always: held upright, the stage turns the canvas a quarter turn and hands
+ * this a landscape box (`InstrumentStage`, Ben 2026-11-09), so the
+ * experiment's rotate hint is gone.
  *
  * Degrees are bar indexes: the bars run low to high, left to right.
  */
@@ -19,7 +20,7 @@ import type {
   InstrumentAdapter, InstrumentDefinition, InstrumentFactory, InstrumentHost, StageBox, StagePointer, Stroke, Voice,
 } from '../types';
 import { calmNote, calmStart, calmStep } from './calm';
-import { WARM_SHARE, createPicture, hitBar, isPortrait, layoutBars, type MarimbaLayout } from './draw';
+import { WARM_SHARE, createPicture, hitBar, layoutBars, type MarimbaLayout } from './draw';
 import { asMarimbaDemo, asMarimbaSound, barFiles, createMarimbaAudio } from './sound';
 import { clamp, createStriker, startRanges, strength, type Measure } from './strike';
 
@@ -34,10 +35,8 @@ const READY_POLL_MS = 50;
 /** A host that has not ticked for a while does not get the whole gap at once. */
 const MAX_CALM_STEPS = 10;
 
-/** The adapter, plus what the stage may read for the rotate hint. */
+/** The adapter, with `tick` required. */
 export type MarimbaAdapter = InstrumentAdapter & {
-  /** The box is portrait on a touch screen: the experiment's „Leg dein Handy quer vor dich.“ */
-  readonly orientationHint: boolean;
   /** Not optional here: the calm needs it. */
   tick(now: number): void;
 };
@@ -48,8 +47,6 @@ export interface MarimbaEnv {
   /** Run `fn` after `ms`; returns a cancel. */
   later(fn: () => void, ms: number): () => void;
   random(): number;
-  /** The experiment showed its rotate hint only on `(pointer: coarse)`. */
-  coarsePointer(): boolean;
 }
 
 const browser: MarimbaEnv = {
@@ -59,7 +56,6 @@ const browser: MarimbaEnv = {
     return () => clearTimeout(id);
   },
   random: () => Math.random(),
-  coarsePointer: () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
 };
 
 export const createMarimba: InstrumentFactory = (definition, host) => createMarimbaWith(definition, host, browser);
@@ -146,10 +142,6 @@ export function createMarimbaWith(definition: InstrumentDefinition, host: Instru
   const adapter: MarimbaAdapter = {
     id: 'marimba',
     degrees: count,
-
-    get orientationHint() {
-      return isPortrait(box) && env.coarsePointer();
-    },
 
     /* The host fetches and decodes; `buffer(file)` has no promise, so this
        looks every READY_POLL_MS until all five recordings are there in both

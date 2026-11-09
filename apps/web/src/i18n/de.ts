@@ -409,8 +409,6 @@ export const de: Messages = {
   'session.play.timer.expired': 'Die Mindestzeit ist um. Du kannst weiter zum Reflektieren oder weiterspielen.',
   'session.play.timer.restarted': 'Der Countdown läuft von vorn.',
   'session.play.demo': 'Ein erster Ton klingt, damit du hörst und siehst, wo du spielen kannst.',
-  'session.play.rotate.title': 'Leg dein Handy quer vor dich.',
-  'session.play.rotate.hint': 'Dreht sich die Seite nicht mit, ist die Ausrichtungssperre an. Du kannst sie im Kontrollzentrum ausschalten.',
   'session.play.loadError': 'Die Aufnahmen ließen sich nicht laden. Lade die Seite neu.',
   'session.play.canvas.harp': 'Harfe. Zieh eine Saite und lass sie los, oder streich über die Saiten. Die Tasten 1 bis 7 spielen die Saiten.',
   'session.play.canvas.kalimba': 'Kalimba. Tippe auf eine Zunge. Die Tasten A bis L spielen die Zungen.',

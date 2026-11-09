@@ -469,19 +469,6 @@ describe('calm', () => {
 });
 
 describe('orientation', () => {
-  it('portrait on a touch screen asks for the rotate hint; landscape or a fine pointer does not', () => {
-    const t = setup({ box: PORTRAIT });
-    expect(t.m.orientationHint).toBe(true);
-    t.m.layout(LANDSCAPE);
-    expect(t.m.orientationHint).toBe(false);
-    const { definition } = loadMarimba();
-    const fake = fakeHost();
-    const env = { ...fakeEnv(), coarsePointer: () => false };
-    const desk = createMarimbaWith(definition, fake.host, env);
-    desk.layout(PORTRAIT);
-    expect(desk.orientationHint).toBe(false);
-  });
-
   it('a portrait box is still drawn, bars across its width', () => {
     const t = setup({ box: PORTRAIT });
     const fills: string[] = [];
