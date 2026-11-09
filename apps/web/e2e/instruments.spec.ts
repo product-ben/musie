@@ -134,6 +134,9 @@ test.describe('the instruments', () => {
       /* Gone, not only closing: during its exit the sheet's own Weiter is
          still there beside the row's. */
       await expect(sheet).toHaveCount(0);
+      /* Started: the instrument's button says „Weiterspielen“ (Ben). */
+      await expect(page.getByRole('button', { name: label(locale, 'session.play.keepPlaying'), exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: instrument.cta, exact: true })).toHaveCount(0);
 
       /* ── Weiter: mode and seconds on the row ────────────────────────── */
       await page.getByRole('button', { name: label(locale, 'session.play.continue'), exact: true }).click();

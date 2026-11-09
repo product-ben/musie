@@ -530,6 +530,7 @@ export const en = {
   'session.step.listen': 'Listen',
   'session.step.play': 'Play',
   'session.play.continue': 'Continue to reflection',
+  'session.play.keepPlaying': 'Keep playing',
   'session.intro.mode.legend': 'How would you like to play?',
   'session.intro.vibration.title': 'Feel the instrument?',
   'session.intro.vibration.body': 'Feel every touch of the instrument through your device’s vibration.',

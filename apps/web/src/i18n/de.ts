@@ -385,6 +385,7 @@ export const de: Messages = {
   'session.step.listen': 'Hören',
   'session.step.play': 'Musizieren',
   'session.play.continue': 'Weiter zum Reflektieren',
+  'session.play.keepPlaying': 'Weiterspielen',
   'session.intro.mode.legend': 'Wie möchtest du spielen?',
   'session.intro.vibration.title': 'Instrument spüren?',
   'session.intro.vibration.body': 'Spüre über die Vibration deines Geräts jede Interaktion mit dem Instrument.',

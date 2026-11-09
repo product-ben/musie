@@ -1235,20 +1235,21 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     );
   } else if (state.step === 'play') {
     /* MUSIZIEREN · BACK, THE INSTRUMENT, AND — ONCE THE TIMER IS PAUSED OR
-       DONE — THE WAY ON. The button that opens the instrument is the filled
-       primary until there is somewhere to go; then *Weiter zum Reflektieren*
-       takes it, and the instrument is still one press away. Its label is the
-       exercise's own (`play_cta`), the way on is chrome. */
+       DONE — THE WAY ON. The button that opens the instrument stays the
+       filled primary throughout (Ben, 2026-11-09): before the first note it
+       says the exercise's own `play_cta` („Zur Harfe“), once the person has
+       started it says *Weiterspielen*. *Weiter zum Reflektieren* stands
+       beside it as the secondary. */
     const canGoOn = showContinue(playClock);
+    const started = playClock.phase !== 'unstarted';
     actions = (
       <>
         {back}
-        {canGoOn && <CtaButton onClick={finishPlay}>{t('session.play.continue')}</CtaButton>}
-        <CtaButton
-          variant={canGoOn ? 'secondary' : 'primary'}
-          onClick={() => openPlaySheet(navigate, location.search)}
-        >
-          {instrument?.playCta ?? ''}
+        {canGoOn && (
+          <CtaButton variant="secondary" onClick={finishPlay}>{t('session.play.continue')}</CtaButton>
+        )}
+        <CtaButton onClick={() => openPlaySheet(navigate, location.search)}>
+          {started ? t('session.play.keepPlaying') : (instrument?.playCta ?? '')}
         </CtaButton>
       </>
     );
