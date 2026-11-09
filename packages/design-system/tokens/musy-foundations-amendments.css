@@ -108,8 +108,9 @@
      What the person touched is terracotta and what Musie answered is green,
      both at the harp's step, so the three colours read as one set.
 
-     The surface is --sand-1, not --surface (= --sand-2): the instruments are
-     drawn on the app canvas itself, which is what all three experiments did.
+     The surface is the page the instrument lies on, --surface: the focus
+     sheet is drawn on it, so the instrument has no box of its own around it.
+     (The experiments drew on sand-1 because sand-1 WAS their page.)
 
      SHADOW: the harp's multi-layer string shadow, after Josh Comeau's shadow
      palette (joshwcomeau.com/shadow-palette), with the values the harp
@@ -119,7 +120,7 @@
      Level 0–3 is Aus, Niedrig, Mittel, Hoch; tint 1 colours the shadow from
      the surface, 0 draws it neutral. Removed under prefers-contrast: more,
      as --elevation-* is.                                                    */
-  --instrument-surface: var(--sand-1);
+  --instrument-surface: var(--surface);
   --instrument-string: var(--sand-7);
   --instrument-key: var(--sand-9);
   --instrument-detail: var(--sand-8);

@@ -2647,6 +2647,80 @@ html[data-musy-scroll-snap] {
   margin-block-start: var(--space-gap-related);
 }
 
+/* ═══ INSTRUMENTS · MUSIZIEREN ═════════════════════════════════════════════
+   `SessionPlay` and `InstrumentStage`. L14: the system has components for
+   every control here (Switch, SegmentedControl, Countdown, DialogueNonModal,
+   Sheet) and none for the column that holds them or for a canvas that fills
+   the sheet's middle — so these classes place, and every value is a token. */
+.musie-play__settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+  margin-block: var(--space-gap-group);
+}
+
+/* The instrument fills the sheet's middle row. The row is the sheet's own
+   (`minmax(0, 1fr)`, positioned); this only places the stage inside it,
+   rather than changing the sheet's geometry (rule 1, L7). */
+.musie-instrument {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.musie-instrument__canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.musie-instrument__canvas:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+.musie-play__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
+.musie-play__head > .musie-md {
+  margin-block-end: 0;
+}
+
+.musie-play__status {
+  margin: 0;
+  color: var(--on-surface-muted);
+  min-block-size: calc(1em * var(--type-body-md-line));
+}
+
+/* The foot: the settings and the clock at the leading edge, as the harp had
+   them, the way on at the trailing edge. */
+.musie-play__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-gap-stack);
+  inline-size: 100%;
+}
+
+.musie-play__clock {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-gap-stack);
+}
+
+.musie-play__dialogue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-group);
+}
+
 /* ── THE HAND ─────────────────────────────────────────────────────────────
    GONE FROM HERE — 2026-10-14. `.musie-cardgrid` was an L14 pattern with the
    component request logged beside it, exactly as §7.2 of `DIGITAL-CARDS.md`

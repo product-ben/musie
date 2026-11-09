@@ -120,7 +120,7 @@ export function InstrumentShadowRamp() {
 }
 
 const SWATCHES = [
-  ['--instrument-surface', 'What the instruments are drawn on — the app canvas, sand-1'],
+  ['--instrument-surface', 'What the instruments are drawn on — the page they lie on, --surface'],
   ['--instrument-string', 'A string instrument at rest (harp) — lighter'],
   ['--instrument-key', 'A key instrument at rest (marimba, kalimba) — darker'],
   ['--instrument-played', 'What the person touched'],

@@ -188,7 +188,7 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--instrument-shadow-resolution` | `0.26` | G5 |
 | `--instrument-shadow-tint` | `1` | G5 |
 | `--instrument-string` | `var(--sand-7)` | G5 |
-| `--instrument-surface` | `var(--sand-1)` | G5 |
+| `--instrument-surface` | `var(--surface)` | G5 |
 | `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
 
