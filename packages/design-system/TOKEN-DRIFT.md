@@ -14,9 +14,9 @@ Consequence: anything listed here exists in code and **not** in Figma. A designe
 working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
-**36 properties in `musy-foundations.css` have no JSON expression.**
-**4 more live only in `musy-foundations-amendments.css`.**
-Total: **40**.
+**37 properties in `musy-foundations.css` have no JSON expression.**
+**18 more live only in `musy-foundations-amendments.css`.**
+Total: **55**.
 
 | Group | n |
 |---|---|
@@ -30,7 +30,7 @@ Total: **40**.
 | Elevation ring | 1 |
 | Grid gap | 1 |
 | The measured viewport | 5 |
-| Amendment tokens | 4 |
+| Amendment tokens | 18 |
 
 ## The `stage` type step
 
@@ -176,6 +176,19 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--border-style-dashed` | `dashed` | G2 |
 | `--border-style-solid` | `solid` | G2 |
 | `--icon-stroke-sm` | `1.5px` | G1 |
+| `--instrument-answer` | `var(--green-7)` | G5 |
+| `--instrument-detail` | `var(--sand-8)` | G5 |
+| `--instrument-key` | `var(--sand-9)` | G5 |
+| `--instrument-played` | `var(--terracotta-7)` | G5 |
+| `--instrument-shadow-crispy` | `0.44` | G5 |
+| `--instrument-shadow-level` | `3` | G5 |
+| `--instrument-shadow-light-x` | `-0.25` | G5 |
+| `--instrument-shadow-light-y` | `-0.37` | G5 |
+| `--instrument-shadow-oomph` | `0.34` | G5 |
+| `--instrument-shadow-resolution` | `0.26` | G5 |
+| `--instrument-shadow-tint` | `1` | G5 |
+| `--instrument-string` | `var(--sand-7)` | G5 |
+| `--instrument-surface` | `var(--sand-1)` | G5 |
 | `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
 

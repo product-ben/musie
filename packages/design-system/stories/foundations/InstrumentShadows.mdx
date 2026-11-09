@@ -1,0 +1,26 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { InstrumentColours, InstrumentShadowRamp } from './_pages/Instruments';
+
+<Meta title="Foundations/Instrument shadows" />
+
+# Instrument shadows
+
+The harp's multi-layer shadow, shared by every instrument — and the colours it
+falls from. Token gap G5 in `musy-foundations-amendments.css`; the arithmetic
+is `src/instrumentShadow.ts`.
+
+A canvas cannot take a `box-shadow`, so these tokens are the shadow's
+**parameters**: level, oomph, crispy, resolution, the light's position and
+whether the shadow is tinted from the surface. `instrumentShadowLayers()`
+turns them into layers; `instrumentShadowProfile()` into the cross-section
+each layer paints along a string or a bar. After Josh Comeau's shadow palette
+generator, with the values the harp shipped on 4 November.
+
+<InstrumentShadowRamp />
+
+## Colour by family
+
+A string instrument is lighter than a key instrument. The harp is a string;
+the marimba and the kalimba are keys.
+
+<InstrumentColours />

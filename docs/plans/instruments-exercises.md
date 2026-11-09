@@ -39,13 +39,13 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 | F3 | Sound + answer config per instrument as JSON, transcribed from the experiment; extraction test that reads the experiment HTML and compares | erledigt (`73b81f8`): 48 checks green | F1 | `supabase/content/instruments/{answer,harp,kalimba,marimba}.json`, `apps/web/src/instruments/sources.test.ts` |
 | F4 | Migration: `instruments` kind, `play` step, `sessions.play_mode`/`play_seconds`, `instruments` / `instrument_sounds` / `instrument_samples` / `exercise_instruments` (RLS, revoke, grant to authenticated AND service_role), new `exercise_i18n` columns, **the three exercises and their copy DE/EN**, `missing_translations` extended | erledigt: applies cleanly on an isolated stack | F2, F3 | `supabase/migrations/20261109100000_instruments.sql`, `tools/instruments/sound-sql.mjs` |
 | F5 | Types and pure contracts: `database.types.ts` (generated against the isolated stack — additions only), `STEP_IDS` + `play`, `STEPS.instruments`, `STEP_ICON`, step label keys, `Exercise.instrument`, `getInstrument`, the `InstrumentAdapter` / `InstrumentHost` contract | erledigt: typecheck green | F4 | `routeHandle.ts`, `lib/exerciseKind.ts`, `lib/stepIcons.ts`, `lib/chromeCopy.ts`, `lib/exerciseConfig.ts` (`STEP_FEATURES.play`), `i18n/{en,de}.ts` (two keys), `lib/content.ts`, `lib/instruments.ts`, `lib/database.types.ts`, `instruments/types.ts` |
+| F6 | Tokens + instrument shadows — **moved forward from lane L2**: the engine's host and the harp both draw the shadow, so it had to exist before they are built in parallel. Tokens as amendment gap G5 (Layer 1 is `[LOCKED]`), `instrumentShadow.ts` as a pure function, foundations page „Instrument shadows“, a test that runs the harp experiment's own `shadowLayers` beside it | erledigt: `verify-tokens` green, 5 checks green | F5 | `packages/design-system/{tokens/musy-foundations-amendments.css,TOKEN-DRIFT.md,src/instrumentShadow.ts,src/index.ts,stories/foundations/InstrumentShadows.mdx,stories/foundations/_pages/Instruments.tsx}`, `apps/web/src/instruments/shadow.test.ts` |
 
 ### Lanes — parallel after F5, one worktree each, no file shared between lanes
 
 | # | Lane | Status | Files (exclusive) | Definition of done |
 | --- | --- | --- | --- | --- |
 | L1 | DS components: **`DialogueNonModal`** — Storybook „Dialogue (non modal)“, generic, the settings are its first use (Ben, 2026-11-09) —, `Countdown`, `SegmentedControl` + `description`, `Switch` + `size="sm"` | offen | `packages/design-system/src/{DialogueNonModal,Countdown,SegmentedControl,Switch}.tsx`, `musy-components.css`, `stories/{DialogueNonModal,Countdown,SegmentedControl,Switch}.stories.tsx`, `reference/design_system/docs/07-components.md` | stories per CONVENTIONS.md (zu/offen/mit/ohne Vibration for the dialogue); keyboard + screen reader; `pnpm --filter @musie/design-system typecheck` green |
-| L2 | DS tokens + instrument shadows | offen | `tokens/musy-foundations.css`, `tokens/musy-foundations.tokens.json`, `TOKEN-DRIFT.md`, `stories/foundations/_lib/tokens.ts`, `stories/foundations/InstrumentShadows.mdx`, `src/instrumentShadow.ts` | `verify-tokens` green; foundations page shows Aus/Niedrig/Mittel/Hoch, light + dark |
 | L3 | Engine: audio unlock + master chain from config, answer (generalised from the marimba), play clock reducer, onboarding, haptics + feature detection, motion permission | offen | `apps/web/src/instruments/engine/**` | pure parts unit-tested: answer for 3 instruments on/off, clock (play, first note, demo does not start, pause, expire, play on, continue button), onboarding cancels on own touch, vibration detection |
 | L4 | The three instruments as adapters (draw, hit, play), ported from the experiments onto the tokens | offen | `apps/web/src/instruments/{harp,kalimba,marimba}/**` | each sounds from F2/F3 only; renders with `--instrument-*` tokens; keyboard-playable |
 | L5 | Copy DE/EN | **aufgegangen in F4** — the rows the copy fills are created by F4, so a second migration would write the same rows twice. Remaining check is in I3: `missing_translations` empty for the three | – | – |
@@ -56,7 +56,7 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 | # | Task | Status | Depends on | Files |
 | --- | --- | --- | --- | --- |
 | I1 | `SessionPlay` step: settings on the step, CTA opens the focus sheet with `InstrumentStage`, demo note, timer, settings in a `DialogueNonModal` in sync with the step, *Weiter zum Reflektieren*; intro additions (volume, browser, motion permission with its state) | offen | L1, L3, L4 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `components/SessionIntro.tsx`, `routes/Session.tsx`, `lib/session.ts`, `i18n/{en,de}.ts` |
-| I2 | DS exports + CLAUDE.md rule 10 sentence | offen | L1, L2 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
+| I2 | DS exports of the L1 components + CLAUDE.md rule 10 sentence | offen | L1 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
 | I3 | Tests: db (three exercises, kind, relax, samples, texts complete, sessions store mode + seconds, diary security unchanged), adjust `db.content` count; e2e walk intro → diary | offen | I1, F4 | `apps/web/src/lib/*.db.test.ts`, `apps/web/e2e/instruments.spec.ts` |
 | I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server | offen | I1–I3 | – |
 | I5 | PR, every deviation from the brief listed | offen | I4 | – |
@@ -71,15 +71,15 @@ flowchart LR
   F2 --> F4
   F3 --> F4[F4 migration + copy DE/EN]
   F4 --> F5[F5 types + contracts]
-  F5 --> L1[L1 DS components]
-  F5 --> L2[L2 tokens + shadows]
-  F5 --> L3[L3 engine]
-  F5 --> L4[L4 instruments]
-  F5 --> L6[L6 therapist UI]
+  F6 --> L1[L1 DS components]
+  F5 --> F6[F6 tokens + shadows]
+  F6 --> L3[L3 engine]
+  F6 --> L4[L4 instruments]
+  F6 --> L6[L6 therapist UI]
   L1 --> I1[I1 SessionPlay]
   L3 --> I1
   L4 --> I1
-  L2 --> I2[I2 exports + CLAUDE.md]
+  F6 --> I2[I2 exports + CLAUDE.md]
   L1 --> I2
   I1 --> I3[I3 tests]
   L6 --> I4
@@ -92,7 +92,7 @@ flowchart LR
 step list are read by every lane; two writers there is rule 9's failure
 (interleaved timestamps, another branch's tables in `database.types.ts`).
 
-**Merge order back onto the feature branch:** L2 → L1 → L3 → L4 → L6,
+**Merge order back onto the feature branch:** L1 → L3 → L4 → L6,
 then I1–I5 on the branch itself. Each lane's worktree is cut from the feature
 branch after F5 and touches only its own files; `index.ts` exports and
 `CLAUDE.md` are deliberately nobody's lane (I2).
@@ -122,5 +122,6 @@ the usual `supabase db reset` from one session (Ben).
   the experiments, sound configs held against the experiments' HTML.
 - 2026-11-09 — F4 + F5 done. **Deviation:** L5 (copy) folded into F4.
   The plan was not updated after F1–F3 as it should have been; caught up here.
+- 2026-11-09 — F6 done: lane L2 moved into the foundation (see the row). `TOKEN-DRIFT.md`'s counts corrected to what `verify-tokens` measures (37 + 18 = 55; they read 36 + 4 = 40 before this change while 42 were listed).
 - 2026-11-09 — Ben: the non-modal settings dialog is the generic component
   „Dialogue (non modal)“ — `DialogueNonModal` in code. PRD and plan renamed.

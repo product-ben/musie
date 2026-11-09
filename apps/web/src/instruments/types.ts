@@ -23,6 +23,8 @@
  * Pure types: no React, no supabase, no DOM beyond the canvas type.
  */
 
+import type { InstrumentShadowLayer } from '@musie/design-system';
+
 export const INSTRUMENT_IDS = ['harp', 'kalimba', 'marimba'] as const;
 export type InstrumentId = (typeof INSTRUMENT_IDS)[number];
 
@@ -135,8 +137,14 @@ export interface InstrumentHost {
   /** Decoded sample, by `InstrumentSample.file`. Undefined until loaded. */
   buffer(file: string): AudioBuffer | undefined;
   palette(): InstrumentPalette;
-  /** Instrument shadows: the harp's canvas shadow, from the tokens. */
-  shadowLevel(): 0 | 1 | 2 | 3;
+  /**
+   * Instrument shadows from the `--instrument-shadow-*` tokens, through
+   * `instrumentShadowLayers` / `instrumentShadowColor` (design system). Null
+   * at level 0, under `prefers-contrast: more` and under forced colours —
+   * the adapter then draws no shadow. Paint each layer with
+   * `instrumentShadowProfile(width, layer, dpr)`.
+   */
+  shadow(): { layers: readonly InstrumentShadowLayer[]; rgb: readonly [number, number, number] } | null;
   /**
    * Vibrate now — Android immediately; on iOS the host owes the tick to the
    * next `touchend` (measured on an iPhone 13, PRD point 12). No-op when the

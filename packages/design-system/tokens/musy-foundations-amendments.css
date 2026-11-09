@@ -95,6 +95,47 @@
      every one of those patterns silently resizes if the body font is ever
      swapped. A figure cap should not.                                       */
   --measure-figure: 416px;
+
+  /* ── G5 · the instruments ─────────────────────────────────────────────
+     Belongs in Layer 1 as its own family, beside §Elevation. Found by the
+     instruments exercises, 2026-11-09 — Kalimba, Marimba, Harfe, drawn on a
+     canvas from these tokens and nothing else (docs/plans/instruments-prd.md).
+
+     COLOUR BY FAMILY, which is Ben's decision: a STRING instrument at rest is
+     lighter than a KEY instrument at rest. The harp is a string; the marimba
+     and the kalimba are keys. Step 7 is the harp's own default shade (the
+     experiment let you pick 1–12 and shipped 7); keys go two steps darker.
+     What the person touched is terracotta and what Musie answered is green,
+     both at the harp's step, so the three colours read as one set.
+
+     The surface is --sand-1, not --surface (= --sand-2): the instruments are
+     drawn on the app canvas itself, which is what all three experiments did.
+
+     SHADOW: the harp's multi-layer string shadow, after Josh Comeau's shadow
+     palette (joshwcomeau.com/shadow-palette), with the values the harp
+     shipped as „euer Schatten, 4. November“. Unitless numbers, read by
+     `instrumentShadowLayers()` (src/instrumentShadow.ts) — a canvas cannot
+     take a box-shadow, so the tokens are its PARAMETERS, not a shadow.
+     Level 0–3 is Aus, Niedrig, Mittel, Hoch; tint 1 colours the shadow from
+     the surface, 0 draws it neutral. Removed under prefers-contrast: more,
+     as --elevation-* is.                                                    */
+  --instrument-surface: var(--sand-1);
+  --instrument-string: var(--sand-7);
+  --instrument-key: var(--sand-9);
+  --instrument-detail: var(--sand-8);
+  --instrument-played: var(--terracotta-7);
+  --instrument-answer: var(--green-7);
+  --instrument-shadow-level: 3;
+  --instrument-shadow-oomph: 0.34;
+  --instrument-shadow-crispy: 0.44;
+  --instrument-shadow-resolution: 0.26;
+  --instrument-shadow-light-x: -0.25;
+  --instrument-shadow-light-y: -0.37;
+  --instrument-shadow-tint: 1;
+}
+
+@media (prefers-contrast: more) {
+  :root, [data-theme] { --instrument-shadow-level: 0; }
 }
 
 /* prefers-contrast: more — Layer 1 already steps --border-subtle up to

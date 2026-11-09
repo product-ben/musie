@@ -18,7 +18,7 @@
  *
  * Import the stylesheets once, in this order, at the app root:
  *   import 'tokens/musy-foundations.css';
- *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1–G3
+ *   import 'tokens/musy-foundations-amendments.css';   // token gaps G1–G5
  *   import 'components/musy-components.css';
  */
 export {
@@ -202,3 +202,14 @@ export type { TimelineProps, TimelineGroup } from './Timeline';
    step of its own. InlineLink.tsx's header tells the two apart. */
 export { InlineLink } from './InlineLink';
 export type { InlineLinkProps, InlineLinkAction } from './InlineLink';
+
+/* Instrument shadows (2026-11-09): the harp's multi-layer canvas shadow as a
+   pure function of the `--instrument-shadow-*` tokens (amendments G5). Not a
+   component — the instruments are drawn on a canvas, which takes layers, not
+   a box-shadow. */
+export {
+  instrumentShadowLayers, instrumentShadowColor, instrumentShadowProfile,
+  readInstrumentShadowParams, hslToRgb,
+  INSTRUMENT_SHADOW_DEFAULT, INSTRUMENT_SHADOW_LEVELS,
+} from './instrumentShadow';
+export type { InstrumentShadowParams, InstrumentShadowLayer } from './instrumentShadow';
