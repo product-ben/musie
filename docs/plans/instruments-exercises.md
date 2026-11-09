@@ -359,3 +359,17 @@ the usual `supabase db reset` from one session (Ben).
   still leaves a way on. Walked: first open, play, close, reopen — hidden;
   Fortsetzen, Pause — shown. Kept at 0:00, which the brief named and Ben did
   not take back.
+- 2026-11-09 — Ben cleaned up the three exercises (`311b001`), with four
+  answers: the sheet keeps its headline in a field of its own; the marimba
+  gets its own motion switch (on a MacBook tap strength has no effect — no
+  sensor, and a mouse or trackpad reports no area or force — so both motion
+  switches show on touch screens only); the browser hint and the silent-switch
+  line go; the new words are editable in the builder. Einsteigen now holds
+  the settings (Duett mit Musie | Alleine, „Instrument spüren“, the motion
+  switch, off the first time and remembered once on); Musizieren says what to
+  do, for touch or for mouse and keyboard. Migration `20261109160000`: four
+  columns added, `volume_md` and `browser_md` dropped, the copy in German and
+  English. Applied to the isolated stack, types regenerated from it, db suite
+  223 green / the 5 known; `pnpm check` 1247 web tests; the walk on the
+  desktop and on an emulated phone. The motion switch's iOS prompt can only
+  be walked on a real iPhone.

@@ -258,3 +258,13 @@ Timer steht unten am Rand; „Weiter zum Reflektieren“ erscheint bei Pause ode
 Reflektieren“ erst, wenn die Person den Timer anhält (oder bei 0:00) — nicht
 beim Öffnen, auch nicht beim Wiederöffnen nach dem Schließen. Der Schritt
 zeigt Weiter nach dem Schließen weiterhin.
+
+**Nachtrag (Ben, 2026-11-09) — aufgeräumt:** Einsteigen heißt „Bevor es
+losgeht“ und trägt die Einstellungen: Zusammenspiel („Duett mit Musie“ zuerst
+und vorgewählt, „Alleine“), „Instrument spüren?“ (nur Touch-Geräte mit
+Vibration) und bei Kalimba und Marimba der Bewegungsschalter (nur
+Touch-Geräte; beim ersten Mal aus, eingeschaltet auf dem Gerät gemerkt).
+Musizieren sagt „Wenn du bereit bist, spiel auf der …“ und wie gespielt wird,
+für Touch oder Maus und Tastatur. Das Fokus-Sheet behält seinen Satz in einem
+eigenen Feld. Browser-Empfehlung und Stummschalter-Hinweis entfallen. Alle
+neuen Texte sind im Editor änderbar.

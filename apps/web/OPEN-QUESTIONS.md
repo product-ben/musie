@@ -10976,3 +10976,25 @@ Why: Ben, 2026-11-09: „raus!“ Nothing used either once the sheet's settings
 were gone.
 
 What I need from Ben: nothing.
+
+## The settings moved to Einsteigen; two hints are gone — RESOLVED
+
+Where: `20261109160000_instruments_copy.sql`, `InstrumentIntro.tsx`,
+`SessionPlay.tsx`; answers „„Ich spiele mit Musie“ is cut …“ above, since the
+labels are now „Duett mit Musie“ / „Alleine“
+
+What I checked: Ben's brief for the three exercises, and four questions put
+back to him: the sheet's headline, the marimba's sensor, the browser and
+silent-switch hints, and whether the new words are editable.
+
+What I did: as briefed and answered. Two things decided along the way: a tap
+on a MacBook has no strength (no motion sensor, and a mouse or trackpad
+reports no contact area or force), so both motion switches show on touch
+screens only; and Ben's spelling was put right — Saiten, Zungen, „mit
+gedrückter Maustaste“, „Tippen“, „Benachrichtigungen“ (§8 of the German
+writing standard).
+
+Why: Ben, 2026-11-09.
+
+What I need from Ben: nothing. The motion switch's prompt is the one part
+no emulator walks — it needs an iPhone.
