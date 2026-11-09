@@ -10898,3 +10898,24 @@ What I did, and why:
   `--instrument-tap-duration`. A comment in each `sound.ts` says so.
 
 What I need from Ben: nothing.
+
+## The marimba's demo sentence is cut at 852 × 393 — FLAGGED
+
+Where: `session.play.demo` in `apps/web/src/i18n/{de,en}.ts`, shown in the
+marimba's one-line head (`.musie-play__note`)
+
+What I checked: the side-by-side screenshots (experiment left, app right).
+In landscape on a phone the line beside „Spiel, bis du ruhig bist.“ now ends
+at the settings icon, which round 2 moved to the top. The German sentence („Ein
+erster Ton klingt, damit du hörst und siehst, wo du spielen kannst.“, 71
+characters) is cut after „wo du s…“; the experiment's own, shorter note
+(„Tippe auf einen Stab, dann klingt das Marimbaphon.“) fitted. At 1280 it fits.
+A screen reader hears it whole; the cut is visual only.
+
+What I did: nothing. It is copy, and the same key is the harp's and the
+kalimba's spoken sentence.
+
+What I need from Ben: one of — a shorter sentence for all three (e.g. „Musie
+spielt dir einen ersten Ton vor.“ / "Musie plays you a first note.", which
+fits), the line allowed to wrap (the bars lose about 20 px), or the
+experiment's per-instrument note back for the marimba.
