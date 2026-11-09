@@ -148,6 +148,65 @@ not touch (the migration, `database.types.ts`, another lane's files,
 `index.ts`), the decisions above, and its definition of done — a subagent
 inherits the directory, not this conversation (rule 9).
 
+## Round 2 — what the instruments lost from the experiments (planned, not built)
+
+Ben, 2026-11-09, after playing the three on localhost: "wir haben bei den
+Instrumenten Einiges verloren aus den Experimenten." Four changes, his answers
+to four questions taken as decisions:
+
+1. **Responsiveness exactly as in the experiments — the harp 1443 layout, for
+   all three.** The instrument fills the whole sheet (the harp's strings run
+   the full height, behind the headline and the foot). Headline laid over the
+   top left; Countdown bottom left; „Weiter zum Reflektieren“ bottom right,
+   shown on pause or at 0:00, rising above the clock where the two do not fit
+   side by side (the harp's `placeFoot`). **The settings icon moves to the
+   top, beside the X; the settings open at the top right.** The marimba in
+   portrait on a touch screen shows the experiment's full-screen hint „Leg dein
+   Handy quer vor dich“. The kalimba, which had no clock, gets the same layout.
+2. **The mouse cursor in the focus sheet is the harp's green dot** for all
+   instruments: `--interactive-primary`, 2 × `--sp-5` across, following mouse
+   and pen over the instrument (and past its edge while a string is held), the
+   normal pointer over controls, hidden for touch.
+3. **The kalimba's tap effect for every own note, none for Musie's answer.**
+   The soft dot (700 ms, radial gradient, grows with the stroke's strength,
+   colour between rest and played). Harp: it appears at the grip point,
+   travels with the finger while the string is pulled and fades after the
+   release; a strum leaves one at each crossing. Marimba: replaces its own
+   smaller dot (600 ms, also on answers). **Maintained centrally in the design
+   system, with live controls in Storybook** — the cursor too.
+4. **One key token, `--instrument-key: sand-5`** (the marimba's experiment
+   value; the kalimba's tines were sand-7). Keys are now LIGHTER than strings
+   (sand-7) — the family rule of the first brief is inverted, by Ben's choice.
+
+**Two assumptions, to be corrected if wrong:**
+- The sheet's headline is the play step's heading AND its sentence, as one
+  block, as each experiment's `<h1>` was a whole sentence („Atme tief ein und
+  aus: Spiele dabei Musies Harfe im Rhythmus deines Atems.“) — not the heading
+  alone.
+- Colours other than the key stay as they are: `--instrument-detail` sand-8
+  (now darker than the bars again, which settles open question 2/7), played
+  terracotta-7, answer green-7. The marimba's experiment had cords at sand-6
+  and its stroke at terracotta-9; matching those would be two more tokens.
+
+### Tasks
+
+| # | Task | Status | Depends on | Files |
+| --- | --- | --- | --- | --- |
+| R0 | **Measure the experiments first.** Playwright on the three experiments at 393×852, 430×932, 852×393 (marimba) and 1280×800: headline box, clock box, button box, instrument extent (top/bottom/side of strings, tines, bars), cursor size. Written into this file as the acceptance table; R5 compares the app against it pixel box by pixel box (memory: measure, never derive from CSS) | offen | – | this file |
+| R1 | **DS · `Sheet` overlay layout**: a `layout="overlay"` (name to settle) where the body fills the whole sheet under a transparent head and foot, pointer events passing through their empty parts; a header slot for actions beside the X (the settings icon). Stories + 07-components | offen | R0 | `packages/design-system/src/Sheet.tsx`, `musy-components.css`, `stories/Sheet.stories.tsx`, docs |
+| R2 | **DS · `DialogueNonModal` `placement="top-end"`**: opens under the top bar at the right, the trigger beside the X | offen | – | `DialogueNonModal.tsx`, CSS, story |
+| R3 | **DS · tap effect + cursor, tokens and live controls**: tokens `--instrument-tap-*` (duration 700 ms, size, growth, opacity curve) and `--instrument-cursor-*` (size, colour) in the amendments; `instrumentTap.ts` (pure: the dot at time t for strength v — radius, alpha, gradient stops), its SIZE absolute (from the kalimba's tine width), not relative to what was hit, so a marimba bar does not get a dot five times as large; `InstrumentCursor` (follows mouse/pen over a target); Storybook „Instrument tap“ — a string, a tine and a bar to tap, with Controls bound to every parameter, the values shown as the token lines to paste. `--instrument-key` → sand-5. `TOKEN-DRIFT.md` | offen | – | `packages/design-system/{tokens/musy-foundations-amendments.css,TOKEN-DRIFT.md,src/instrumentTap.ts,src/InstrumentCursor.tsx,src/index.ts,stories/…}` |
+| R4a | **Harp**: tap dot at the grip, travelling with the pull, fading after release; one per strum crossing | offen | R3 | `apps/web/src/instruments/harp/**` |
+| R4b | **Kalimba**: its dots through `instrumentTap` (parity test against the experiment's `dots` stays) | offen | R3 | `apps/web/src/instruments/kalimba/**` |
+| R4c | **Marimba**: the kalimba's dot replaces its own; none on answers; the portrait hint becomes the experiment's full-screen overlay (stage side, R5) | offen | R3 | `apps/web/src/instruments/marimba/**` |
+| R5 | **App · the sheet as harp 1443**: `SessionPlay` on the overlay sheet; head = headline block; foot = Countdown left, Weiter right with the `placeFoot` rule; settings icon in the header slot opening the dialogue top-end; `InstrumentStage` fills the sheet and passes the measured head/foot as `inset` (kalimba and marimba lay out between them, the harp ignores them as its experiment did); `InstrumentCursor` over the canvas; the marimba's rotate overlay | offen | R1, R2, R3 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `shell.css`, i18n |
+| R6 | **Verify**: R0's table vs the app at the same four sizes (screenshots side by side, experiment left, app right, for each instrument), the e2e walk, `pnpm check`, the three builds; re-render the three exercise images (the key colour changed) | offen | R4, R5 | `e2e/instruments.spec.ts`, `public/assets/web/exercises/*.webp` |
+
+**Parallel:** R1, R2 and R3 touch different design-system files and can run
+at once (R3 owns `index.ts` this round); R4a/b/c run at once after R3, one
+instrument each; R5 after R1–R3; R6 last. R0 first, because it is the
+definition of „exactly“.
+
 ## How the database is verified here
 
 `supabase db reset` and `pnpm gen:types` are denied in `.claude/settings.json`
