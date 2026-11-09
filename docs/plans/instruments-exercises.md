@@ -55,10 +55,10 @@ the experiment files **in the tree**, which is why F1 brings #71 and #72 in.
 
 | # | Task | Status | Depends on | Files |
 | --- | --- | --- | --- | --- |
-| I1 | `SessionPlay` step: settings on the step, CTA opens the focus sheet with `InstrumentStage`, demo note, timer, settings in a `DialogueNonModal` in sync with the step, *Weiter zum Reflektieren*; intro additions (volume, browser, motion permission with its state) | in Arbeit | L1, L3, L4 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `components/SessionIntro.tsx`, `routes/Session.tsx`, `lib/session.ts`, `i18n/{en,de}.ts` |
+| I1 | `SessionPlay` step: settings on the step, CTA opens the focus sheet with `InstrumentStage`, demo note, timer, settings in a `DialogueNonModal` in sync with the step, *Weiter zum Reflektieren*; intro additions (volume, browser, motion permission with its state) | **erledigt** (`083e495`): the step's buttons are the wizard's action row (Back · „Zur Harfe“ · „Weiter zum Reflektieren“ once paused or done); the sheet has headline + Countdown + one status line at the head, the instrument in the middle, settings icon + Weiter at the foot; closing the sheet pauses the clock; `--instrument-surface` became `--surface` so the instrument lies on the sheet | L1, L3, L4 | `components/SessionPlay.tsx`, `components/InstrumentStage.tsx`, `components/SessionIntro.tsx`, `routes/Session.tsx`, `lib/session.ts`, `i18n/{en,de}.ts` |
 | I2 | DS exports of the L1 components + CLAUDE.md rule 10 sentence | **erledigt**: `DialogueNonModal`, `Countdown`, `SwitchSize` exported; CLAUDE.md rule 10 names the one way out (an experiment Ben turns into an exercise) and that the instruments' experiments are now load-bearing | L1 | `packages/design-system/src/index.ts`, `CLAUDE.md` |
-| I3 | Tests: db (three exercises, kind, relax, samples, texts complete, sessions store mode + seconds, diary security unchanged), adjust `db.content` count; e2e walk intro → diary | in Arbeit — the database half is done: `db.instruments.db.test.ts` (14 checks) green on the isolated stack, `db.content` counts 8; the e2e walk waits for I1 | I1, F4 | `apps/web/src/lib/*.db.test.ts`, `apps/web/e2e/instruments.spec.ts` |
-| I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server; **the three exercise images** (`assets/web/exercises/{kalimba,marimba,harp}.webp`, 768×768, referenced by the migration) rendered from the integrated instruments with Playwright + sharp — rendering them from the experiments would show the pre-token look (marimba bars sand-5, not the key token) | offen | I1–I3 | – |
+| I3 | Tests: db (three exercises, kind, relax, samples, texts complete, sessions store mode + seconds, diary security unchanged), adjust `db.content` count; e2e walk intro → diary | **erledigt**: `db.instruments.db.test.ts` (15) and `e2e/instruments.spec.ts` (3 walks, library → diary, German; English skipped by name, not silently) | I1, F4 | `apps/web/src/lib/*.db.test.ts`, `apps/web/e2e/instruments.spec.ts` |
+| I4 | `pnpm check`, both builds, isolated-stack `test:db`, walk on the dev server; **the three exercise images** (`assets/web/exercises/{kalimba,marimba,harp}.webp`, 768×768, referenced by the migration) rendered from the integrated instruments with Playwright + sharp — rendering them from the experiments would show the pre-token look (marimba bars sand-5, not the key token) | **erledigt**: `pnpm check` green (web 1197, docs 382, voice 51); web, storybook and docs builds green; db suite on the isolated stack 222 green, the 5 known snapshot tests red (see the log); the three images rendered from the app's own sheet at rest, 768×768 WebP | I1–I3 | – |
 | I5 | PR, every deviation from the brief listed | offen | I4 | – |
 
 ## What the lanes left for integration (I1) and for Ben
@@ -175,5 +175,14 @@ the usual `supabase db reset` from one session (Ben).
 - 2026-11-09 — L4-marimba merged: 1095 unit tests green. All three adapters build their own master chain. L1 and L3 still running.
 - 2026-11-09 — L1 merged, I2 done. Only L3 (engine) is still running.
 - 2026-11-09 — L3 merged: every lane is in, 1197 unit tests green. `types.ts` comments corrected where L3 found them wrong (background token, motion units, `ticks: 0`, `holding`). I1 started.
+- 2026-11-09 — I1 walked in Chromium and corrected by looking: the step's
+  own button row became the wizard's (it stacked Zurück above the CTA); the
+  Countdown moved into the sheet's head so the foot is one row and the
+  dialogue sits above the settings icon; the instrument's surface is the
+  sheet's; the Countdown's resume label is „Fortsetzen“, not „Weiter“, beside
+  „Weiter zum Reflektieren“.
+- 2026-11-09 — I3, I4 done. The e2e walk signs in by password through the
+  service role (the sign-in screen mails a one-time code) and answers the two
+  consent questions on the profile first.
 - 2026-11-09 — Ben: the non-modal settings dialog is the generic component
   „Dialogue (non modal)“ — `DialogueNonModal` in code. PRD and plan renamed.
