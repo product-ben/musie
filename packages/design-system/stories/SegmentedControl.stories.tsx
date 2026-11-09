@@ -6,7 +6,7 @@
  * docs/07-components.md §7.25. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Mic, Pencil, Camera, Headphones } from 'lucide-react';
+import { Mic, Pencil, Camera, Headphones, User, Users } from 'lucide-react';
 import { SegmentedControl } from '../src/SegmentedControl';
 import { bothThemes, Stack } from './_decorators';
 
@@ -63,6 +63,12 @@ const meta = {
           'names at most one option is page furniture, so it takes the width of its',
           'own segments rather than the width on offer.',
           '',
+          '**What an option means** can be said under the control, per option',
+          '(`description`). The SELECTED option\'s sentence is shown; each option\'s',
+          'own radio is tied to its own sentence by `aria-describedby`, so a screen',
+          'reader hears what an option means as it lands on it — before choosing it,',
+          'not only after. A control with no descriptions renders exactly as it did.',
+          '',
           '---',
           '### Build notes',
           '',
@@ -88,7 +94,7 @@ const meta = {
     name: { control: 'text', description: 'Identifies the field when a form is submitted.' },
     legend: { control: 'text', description: 'The group’s accessible name. Rendered as a visible <legend> unless legendHidden — never dropped.' },
     legendHidden: { control: 'boolean', description: 'Hide the legend visually. It stays in the accessible name.' },
-    options: { control: false, description: '2–4 options. Each needs value, label and a required Lucide glyph.' },
+    options: { control: false, description: '2–4 options. Each needs value, label and a required Lucide glyph; `description` is optional — what choosing it means, shown under the control while it is selected.' },
     value: { control: 'text', description: 'Controlled selection.' },
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
     accent: {
@@ -204,6 +210,39 @@ export const Guided: Story = { args: { guided: true, legend: 'guided — 64px ta
 
 /** The legend stays in the accessible name; only its visible rendering goes. */
 export const LegendHidden: Story = { args: { legendHidden: true } };
+
+/**
+ * Each option says what choosing it means. The SELECTED option's sentence is
+ * drawn under the track; every option's radio points at its own sentence with
+ * `aria-describedby`, so a screen reader hears „Die Harfe antwortet nicht …“
+ * on reaching „Ich spiele allein“, before it is chosen. The sentences not drawn
+ * are `hidden`, which a description reference still reads.
+ *
+ * The instruments' „Zusammenspiel“, in the copy the instruments migration
+ * ships for the harp (`mode_solo_*`, `mode_musie_*`) — the first use.
+ */
+export const WithDescription: Story = {
+  args: {
+    name: 'zusammenspiel',
+    legend: 'Zusammenspiel',
+    value: 'with_musie',
+    options: [
+      {
+        value: 'solo',
+        label: 'Ich spiele allein',
+        glyph: User,
+        description: 'Die Harfe antwortet nicht. Spiel frei, so lange du magst.',
+      },
+      {
+        value: 'with_musie',
+        label: 'Ich spiele mit Musie',
+        glyph: Users,
+        description:
+          'Machst du eine Pause, antwortet die Harfe. Sie greift etwas aus deinem Spiel auf, ohne es nachzuspielen. Ihre Saiten leuchten grün. Tippst du dazwischen, hört sie auf, und du bist wieder dran.',
+      },
+    ],
+  },
+};
 
 /** Whole group disabled. */
 export const Disabled: Story = { args: { disabled: true, legend: 'disabled group' } };
