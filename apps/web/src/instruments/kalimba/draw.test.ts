@@ -1,11 +1,14 @@
 /**
  * The look: colours from the palette and nowhere else, a glow that fades,
- * dots that grow and fade. The canvas is a recording fake.
+ * and the design system's tap where a tine was pressed. The canvas is a
+ * recording fake.
  */
 import { describe, expect, it } from 'vitest';
+import { INSTRUMENT_TAP_DEFAULT, instrumentTapAt, paintInstrumentTap } from '@musie/design-system';
+import type { InstrumentTapParams } from '@musie/design-system';
 import kalimba from '../../../../../supabase/content/instruments/kalimba.json';
 import type { InstrumentPalette } from '../types';
-import { dotAt, drawKalimba, glowAt, glowMix, mixColour, parseColour, withAlpha } from './draw';
+import { drawKalimba, glowAt, glowMix, mixColour, parseColour, pressPoint } from './draw';
 import type { Press, TineGlow } from './draw';
 import { bridgeY, layoutKalimba } from './geometry';
 
@@ -19,11 +22,14 @@ const PALETTE: InstrumentPalette = {
 
 const L = layoutKalimba({ width: 390, height: 844, dpr: 2, inset: { top: 120, right: 0, bottom: 96, left: 0 } }, kalimba.sound.tines.map((t) => t.hz))!;
 
-/** A 2D context that records what was stroked and filled, in which colour. */
+/** A 2D context that records what was stroked and filled, in which colour — and every disc, whole. */
 function recorder() {
   const strokes: string[] = [];
   const fills: string[] = [];
   const stops: string[] = [];
+  const discs: { arc: number[]; alpha: number; stops: string[] }[] = [];
+  let arc: number[] = [];
+  let gradient: string[] = [];
   const g = {
     fillStyle: '' as unknown,
     strokeStyle: '' as unknown,
@@ -36,17 +42,23 @@ function recorder() {
     beginPath() {},
     moveTo() {},
     lineTo() {},
-    arc() {},
+    arc(...args: number[]) { arc = args; },
     stroke() { strokes.push(String(g.strokeStyle)); },
-    fill() { fills.push(typeof g.fillStyle === 'string' ? g.fillStyle : 'gradient'); },
-    createRadialGradient() { return { addColorStop: (_at: number, c: string) => stops.push(c) }; },
+    fill() {
+      fills.push(typeof g.fillStyle === 'string' ? g.fillStyle : 'gradient');
+      discs.push({ arc, alpha: g.globalAlpha, stops: gradient });
+    },
+    createRadialGradient() {
+      gradient = [];
+      return { addColorStop: (_at: number, c: string) => { stops.push(c); gradient.push(c); } };
+    },
   };
-  return { g: g as unknown as CanvasRenderingContext2D, strokes, fills, stops };
+  return { g: g as unknown as CanvasRenderingContext2D, strokes, fills, stops, discs };
 }
 
 const atRest = (): TineGlow[] => Array.from({ length: 9 }, () => ({ t0: -1e9, vel: 1, tone: 'played' as const }));
-const scene = (glows: TineGlow[], presses: Press[] = []) =>
-  ({ layout: L, glows, presses, dotMs: 700, width: 390, height: 844 });
+const scene = (glows: TineGlow[], presses: Press[] = [], tap: InstrumentTapParams = INSTRUMENT_TAP_DEFAULT) =>
+  ({ layout: L, glows, presses, tap, width: 390, height: 844 });
 
 describe('colour arithmetic', () => {
   it('reads what a resolved colour can look like', () => {
@@ -62,7 +74,6 @@ describe('colour arithmetic', () => {
     expect(mixColour(PALETTE.rest, PALETTE.played, 0)).toBe('rgb(100,100,100)');
     expect(mixColour(PALETTE.rest, PALETTE.played, 0.5)).toBe('rgb(150,100,50)');
     expect(mixColour(PALETTE.rest, PALETTE.played, 1)).toBe('rgb(200,100,0)');
-    expect(withAlpha('rgb(150,100,50)', 0.3)).toBe('rgba(150,100,50,0.3)');
   });
   it('a colour it cannot read is drawn unmixed, never as black', () => {
     expect(mixColour('oklch(0.7 0.1 50)', PALETTE.played, 0.2)).toBe('oklch(0.7 0.1 50)');
@@ -70,24 +81,21 @@ describe('colour arithmetic', () => {
   });
 });
 
-describe('glow and dots', () => {
+describe('glow and the tap’s place', () => {
   it('a tine glows for a while and then rests', () => {
     expect(glowAt(0, 1)).toBe(1);
     expect(glowAt(0, 0)).toBeCloseTo(0.4, 12);
     expect(glowMix(glowAt(1000, 1))).toBeCloseTo(Math.min(1, Math.exp(-1 / 1.1) * 1.1), 12);
     expect(glowMix(glowAt(5000, 1))).toBeNull();
   });
-  it('a dot sits where the tine was touched, grows, and is gone after 700 ms', () => {
-    const d: Press = { tine: 2, pos: 0.5, vel: 1, t0: 0, tone: 'played' };
-    const start = dotAt(L, d, 0, 700)!;
-    const later = dotAt(L, d, 350, 700)!;
-    expect(start.x).toBe(L.tines[2].cx);
-    expect(start.y).toBeCloseTo(bridgeY(L, L.tines[2].cx) + 0.5 * L.tines[2].len, 9);
-    expect(start.r).toBeCloseTo(L.tw * 0.8, 9);
-    expect(later.r).toBeGreaterThan(start.r);
-    expect(later.alpha).toBeLessThan(start.alpha);
-    expect(dotAt(L, d, 700, 700)).toBeNull();
-    expect(dotAt(L, { ...d, pos: 1.4 }, 0, 700)!.y).toBeCloseTo(bridgeY(L, L.tines[2].cx) + L.tines[2].len, 9);
+  it('a tap sits on the tine’s centre line where it was touched, clamped to the tine', () => {
+    const d: Press = { tine: 2, pos: 0.5, vel: 1, t0: 0 };
+    const at = pressPoint(L, d)!;
+    expect(at.x).toBe(L.tines[2].cx);
+    expect(at.y).toBeCloseTo(bridgeY(L, L.tines[2].cx) + 0.5 * L.tines[2].len, 9);
+    expect(pressPoint(L, { ...d, pos: 1.4 })!.y).toBeCloseTo(bridgeY(L, L.tines[2].cx) + L.tines[2].len, 9);
+    expect(pressPoint(L, { ...d, pos: -0.3 })!.y).toBeCloseTo(bridgeY(L, L.tines[2].cx), 9);
+    expect(pressPoint(L, { ...d, tine: 9 })).toBeNull();
   });
 });
 
@@ -111,12 +119,43 @@ describe('a frame', () => {
     expect(r.strokes[0]).toBe(PALETTE.rest);
   });
 
-  it('a dot is a soft gradient between rest and the hit colour, and keeps the frame moving', () => {
+  it('a press is painted by the design system’s tap, on the scene’s parameters, between rest and played', () => {
+    const tap: InstrumentTapParams = { ...INSTRUMENT_TAP_DEFAULT, size: 10, durationMs: 400, mix: 0.5, mixByStrength: 0.2 };
+    const presses: Press[] = [{ tine: 4, pos: 1, vel: 1, t0: 0 }, { tine: 7, pos: 0.3, vel: 0.5, t0: 50 }];
     const r = recorder();
-    const press: Press = { tine: 4, pos: 1, vel: 1, t0: 0, tone: 'answer' };
-    expect(drawKalimba(r.g, scene(atRest(), [press]), PALETTE, 10)).toBe(true);
-    const c = mixColour(PALETTE.rest, PALETTE.answer, 1);
-    expect(r.stops).toEqual([withAlpha(c, 1), withAlpha(c, 0.8), withAlpha(c, 0.3), withAlpha(c, 0)]);
-    expect(drawKalimba(recorder().g, scene(atRest(), [press]), PALETTE, 800)).toBe(false);
+    expect(drawKalimba(r.g, scene(atRest(), presses, tap), PALETTE, 120)).toBe(true);
+
+    const want = recorder();
+    for (const d of presses) {
+      const at = pressPoint(L, d)!;
+      const frame = instrumentTapAt(tap, { ageMs: 120 - d.t0, strength: d.vel });
+      paintInstrumentTap(want.g, at.x, at.y, frame, parseColour(PALETTE.rest)!, parseColour(PALETTE.played)!);
+    }
+    expect(r.discs).toHaveLength(2);
+    expect(r.discs).toEqual(want.discs);
+    expect(r.discs[0].arc[2]).toBeCloseTo(instrumentTapAt(tap, { ageMs: 120, strength: 1 }).radius, 12);
+  });
+
+  it('the tap’s size is the token’s, not the tine’s width', () => {
+    const r = recorder();
+    drawKalimba(r.g, scene(atRest(), [{ tine: 2, pos: 0.5, vel: 1, t0: 0 }]), PALETTE, 0);
+    expect(r.discs[0].arc[2]).toBeCloseTo(INSTRUMENT_TAP_DEFAULT.size * INSTRUMENT_TAP_DEFAULT.start, 12);
+    expect(L.tw).not.toBeCloseTo(INSTRUMENT_TAP_DEFAULT.size, 2);
+  });
+
+  it('it keeps the frame moving for the duration, and is gone after', () => {
+    const tap = { ...INSTRUMENT_TAP_DEFAULT, durationMs: 400 };
+    const press: Press = { tine: 4, pos: 1, vel: 1, t0: 0 };
+    expect(drawKalimba(recorder().g, scene(atRest(), [press], tap), PALETTE, 399)).toBe(true);
+    const r = recorder();
+    expect(drawKalimba(r.g, scene(atRest(), [press], tap), PALETTE, 400)).toBe(false);
+    expect(r.discs).toEqual([]);
+  });
+
+  it('a rest or played colour it cannot read draws no tap — but the frame still runs its course', () => {
+    const r = recorder();
+    const odd = { ...PALETTE, played: 'oklch(0.7 0.1 50)' };
+    expect(drawKalimba(r.g, scene(atRest(), [{ tine: 4, pos: 1, vel: 1, t0: 0 }]), odd, 10)).toBe(true);
+    expect(r.discs).toEqual([]);
   });
 });

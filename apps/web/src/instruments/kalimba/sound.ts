@@ -86,6 +86,11 @@ export interface KalimbaSound {
   };
   /** How long a note touched before audio was unlocked may still sound. */
   pendingMs: number;
+  /**
+   * Still in the locked sound (kalimba.json, the instruments migration) and
+   * NOT READ since round 2: the dot is the design system's tap, and how long
+   * it lives is `--instrument-tap-duration` (`host.tap().durationMs`).
+   */
   visual: { dotMs: number };
 }
 

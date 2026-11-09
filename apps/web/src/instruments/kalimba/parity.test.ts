@@ -1,4 +1,3 @@
-import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 /**
  * The port against the experiment itself — `kalimba/261106-1121` in the
  * tree, the same file `sources.test.ts` reads. Where an expression can be cut
@@ -10,18 +9,26 @@ import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
  * evaluating pieces of it is acceptable here (as in sources.test.ts).
  *
  * ── WHAT IS DELIBERATELY NOT THE SAME ─────────────────────────────────────
- * The bridge: an arc there, a still wave here (geometry.ts). So `hit` is run
- * with the port's `bridgeY` standing in for the experiment's `waveAt`.
+ * The bridge: an arc there, a still wave here (geometry.ts). So `hit` and
+ * `dots` are run with the port's `bridgeY` standing in for the experiment's
+ * `waveAt`.
+ *
+ * The press dot's size. Since round 2 the dot is the design system's tap
+ * (Ben, 2026-11-09), and its unit is the token `--instrument-tap-size`,
+ * 16.85px, where the experiment's was the live tine width `L.tw`. The token
+ * IS the tine width on the 393px phone it was measured on, so that is the
+ * box the dots are compared at; elsewhere the radius differs by the factor
+ * token / tine width and by nothing else.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { INSTRUMENT_TAP_DEFAULT } from '@musie/design-system';
 import answer from '../../../../../supabase/content/instruments/answer.json';
 import kalimba from '../../../../../supabase/content/instruments/kalimba.json';
 import manifest from '../../../../../supabase/content/instruments/samples.json';
 import type { AnswerConfig, InstrumentDefinition, InstrumentHost, StageBox } from '../types';
-import { LOOK, dotAt, glowAt } from './draw';
-import type { Press } from './draw';
+import { LOOK, glowAt } from './draw';
 import { GEOMETRY, bridgeY, hitTine, layoutKalimba } from './geometry';
 import { createKalimbaWith } from './index';
 import { KEYS, KEY_POSITION } from './input';
@@ -33,6 +40,12 @@ const src = html.slice(html.indexOf('<script>'), html.lastIndexOf('</script>'));
 const sound = kalimba.sound as unknown as KalimbaSound;
 const P = sound.DEFAULTS;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const hz = sound.tines.map((t) => t.hz);
+const definition: InstrumentDefinition = {
+  id: 'kalimba', family: 'key', sound: kalimba.sound as unknown as Record<string, unknown>,
+  answer: { ...answer, ...kalimba.answer } as unknown as AnswerConfig, demo: kalimba.demo,
+  samples: manifest.samples.filter((s) => s.instrument === 'kalimba'),
+};
 
 /** The first capture of `re` in the experiment's script. */
 function cut(re: RegExp): string {
@@ -139,33 +152,129 @@ describe('the look', () => {
     expect(src).toContain(`glow > ${LOOK.glow.visible} ? mix(C.rest, C.hit, Math.min(1, glow * ${LOOK.glow.gain})) : C.rest`);
   });
 
-  it('the press dot', () => {
-    expect(Number(cut(/const DOT_MS = (\d+)/))).toBe(sound.visual.dotMs);
-    const grow = cut(/grow = (1 - Math\.pow\(1 - p, \d+\))/);
-    const r = cut(/const r = (L\.tw \* [^;]+);/);
-    const alpha = cut(/g\.globalAlpha = (Math\.min\(1, [^;]+);/);
-    const mix = cut(/const c = mix\(C\.rest, C\.hit, ([^)]+)\)/);
-    const L = layoutKalimba({ width: 390, height: 844, dpr: 2, inset: { top: 120, right: 0, bottom: 96, left: 0 } }, sound.tines.map((t) => t.hz))!;
-    for (const p of [0, 0.25, 0.5, 0.9]) {
-      for (const vel of [0.44, 1]) {
-        const d: Press = { tine: 3, pos: 0.4, vel, t0: 0, tone: 'played' };
-        const dot = dotAt(L, d, p * sound.visual.dotMs, sound.visual.dotMs)!;
-        const g = run(grow, { p });
-        expect(dot.r).toBeCloseTo(run(r, { L, d, grow: g }), 9);
-        expect(dot.alpha).toBeCloseTo(run(alpha, { p, d }), 12);
-        expect(dot.mix).toBeCloseTo(run(mix, { d }), 12);
-      }
-    }
-    const stops = LOOK.dot.stops.map(([at, a]) => `fill.addColorStop(${at}, c + '${a})');`).join(' ');
-    expect(src).toContain(stops);
-  });
-
   it('the strokes: tine from just above the bridge, bridge width and reach, sampled every 4 px', () => {
     expect(src).toContain('const y0 = waveAt(T.cx) - L.tw * 0.5, y1 = waveAt(T.cx) + T.len;');
     const w = GEOMETRY.bridgeWidth;
     expect(src).toContain(`g.lineWidth = clamp(L.tw * ${w.ofTine}, ${w.min}, ${w.max})`);
     expect(src).toContain(`const ext = L.pitch * ${GEOMETRY.bridgeReach}`);
     expect(src).toContain(`x += ${GEOMETRY.bridgeStep}`);
+  });
+});
+
+/**
+ * The press dot, end to end: touches on the ADAPTER, drawn by its own frame
+ * (through `instrumentTapAt` + `paintInstrumentTap`, on `host.tap()` = the
+ * tokens as shipped), beside the experiment's OWN `dots` — cut out whole,
+ * from `const DOT_MS` to its closing brace — given the same presses. Both
+ * draw on one recording context.
+ */
+describe('the press dot = the experiment’s `dots`, through the design system’s tap', () => {
+  const REST = 'rgb(180, 170, 150)';
+  const PLAYED = 'rgb(170, 90, 60)';
+  /** From `const DOT_MS` to the closing brace of `function dots` — the effect, whole. */
+  const dots = fn('const DOT_MS = ');
+  const helpers = `${cut(/(const rgb = [^\n]+)/)}\n${cut(/(const mix = [^\n]+)/)}`;
+
+  type Disc = { arc: number[]; alpha: number; gradient: { args: number[]; stops: [number, string][] } };
+  /** A 2D context that keeps every disc it fills, whole, and lets every other call pass. */
+  function recorder() {
+    const discs: Disc[] = [];
+    let arc: number[] = [];
+    const g = {
+      globalAlpha: 1, fillStyle: null as unknown, strokeStyle: '' as unknown, lineWidth: 1, lineCap: '', lineJoin: '',
+      setTransform() {}, fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+      arc: (...args: number[]) => { arc = args; },
+      createRadialGradient: (...args: number[]) => {
+        const stops: [number, string][] = [];
+        return { args, stops, addColorStop: (at: number, c: string) => void stops.push([at, c]) };
+      },
+      fill: () => {
+        const { args, stops } = g.fillStyle as Disc['gradient'];
+        discs.push({ arc, alpha: g.globalAlpha, gradient: { args, stops } });
+      },
+    };
+    return { g: g as unknown as CanvasRenderingContext2D, discs };
+  }
+
+  /** Tine, and where on it (0 bridge … 1 tip; 1.2 is below the tip and is drawn at it). */
+  const TOUCHES = [[0, 0.1], [2, 0.35], [4, 0.6], [6, 0.85], [8, 1.2]] as const;
+
+  /** The same touches, `age` ms later: the kalimba's frame and the experiment's `dots`. */
+  function both(box: StageBox, age: number) {
+    const L = layoutKalimba(box, hz)!;
+    const host = {
+      audio: {} as AudioContext, audible: () => true, buffer: () => undefined, shadow: () => null,
+      tap: () => INSTRUMENT_TAP_DEFAULT,
+      palette: () => ({ rest: REST, played: PLAYED, answer: 'rgb(0, 150, 50)', background: 'rgb(250, 250, 240)', detail: 'rgb(120, 120, 110)' }),
+      vibrate() {}, motion: () => null, joltsSince: () => [], played() {}, holding() {}, requestDraw() {},
+    } satisfies InstrumentHost;
+    const k = createKalimbaWith(definition, host, {
+      output: { canSound: () => false, pluck: () => null, membrane() {}, sounding: () => 0, dispose() {} },
+      every: () => () => {},
+      now: () => 1000,
+    });
+    k.layout(box);
+    const presses = TOUCHES.map(([tine, at], n) => {
+      const x = L.tines[tine].cx;
+      const y = bridgeY(L, x) + at * L.tines[tine].len;
+      k.pointerDown({ id: n + 1, x, y, t: 0, type: 'touch' });
+      const h = hitTine(L, x, y)!;
+      return { i: h.tine, pos: h.pos, vel: touchAt(h.pos, sound).vel, t0: 1000 };
+    });
+    const mine = recorder();
+    k.draw(mine.g, 1000 + age);
+    const theirs = recorder();
+    run<void>(
+      `(() => { ${helpers}\n${dots}\npresses = list; dots(now); })()`,
+      { g: theirs.g, L, C: { rest: REST, hit: PLAYED }, waveAt: (x: number) => bridgeY(L, x), clamp, list: presses, now: 1000 + age },
+    );
+    return { L, kalimba: mine.discs, experiment: theirs.discs };
+  }
+
+  /** The same dots, but for the radius, which stands in the ratio `ratio` to the experiment's. */
+  function expectSame(kalimbaDiscs: Disc[], experimentDiscs: Disc[], ratio: number) {
+    expect(kalimbaDiscs).toHaveLength(experimentDiscs.length);
+    kalimbaDiscs.forEach((d, n) => {
+      const x = experimentDiscs[n];
+      const [cx, cy, r, ...arc] = d.arc;
+      const [xcx, xcy, xr, ...xarc] = x.arc;
+      expect([cx, cy, ...arc], `disc ${n}: centre and sweep`).toEqual([xcx, xcy, ...xarc]);
+      expect(r / xr, `disc ${n}: radius`).toBeCloseTo(ratio, 12);
+      expect(d.gradient.args.slice(0, 5), `disc ${n}: gradient`).toEqual(x.gradient.args.slice(0, 5));
+      expect(d.gradient.args[5]).toBe(r);
+      expect(d.gradient.stops, `disc ${n}: colour`).toEqual(x.gradient.stops);
+      expect(d.alpha, `disc ${n}: opacity`).toBe(x.alpha);
+    });
+  }
+
+  /** 393 × 852, the phone the size token was measured on: there the tine width is the token. */
+  const PHONE: StageBox = { width: 393, height: 852, dpr: 3, inset: { top: 160, right: 0, bottom: 96, left: 0 } };
+
+  it('at 393 px wide the kalimba’s tine width is the size token, to the token’s two decimals', () => {
+    const L = layoutKalimba(PHONE, hz)!;
+    expect(L.tw).toBeCloseTo(INSTRUMENT_TAP_DEFAULT.size, 2);
+    expect(INSTRUMENT_TAP_DEFAULT.size / L.tw).toBeCloseTo(1, 3);
+  });
+
+  it.each([0, 1, 35, 120, 350, 520, 699])('at 393 px wide, %i ms after the touch, it draws the experiment’s dots', (age) => {
+    const { L, kalimba: mine, experiment } = both(PHONE, age);
+    expect(experiment).toHaveLength(TOUCHES.length);
+    expectSame(mine, experiment, INSTRUMENT_TAP_DEFAULT.size / L.tw);
+  });
+
+  it('and both are gone after the experiment’s DOT_MS, which is the duration token', () => {
+    expect(Number(cut(/const DOT_MS = (\d+)/))).toBe(INSTRUMENT_TAP_DEFAULT.durationMs);
+    const { kalimba: mine, experiment } = both(PHONE, INSTRUMENT_TAP_DEFAULT.durationMs);
+    expect(experiment).toEqual([]);
+    expect(mine).toEqual([]);
+  });
+
+  it('on a wide screen the tine clamps at 22 px and the dot stays the token’s size: ~23% smaller, accepted', () => {
+    const wide: StageBox = { width: 1280, height: 800, dpr: 2, inset: { top: 140, right: 0, bottom: 60, left: 0 } };
+    const { L, kalimba: mine, experiment } = both(wide, 120);
+    expect(L.tw).toBe(GEOMETRY.tineWidth.max);
+    expectSame(mine, experiment, INSTRUMENT_TAP_DEFAULT.size / L.tw);
+    expect(1 - INSTRUMENT_TAP_DEFAULT.size / L.tw).toBeCloseTo(0.23, 1);
   });
 });
 
@@ -304,11 +413,6 @@ describe('Schwenken → Vibrato, step for step', () => {
       vibrate: (ms: number, ticks?: number) => { buzzes.push([ms, ticks]); },
       motion: () => reading, joltsSince: () => [], played() {}, holding() {}, requestDraw() {},
     } satisfies InstrumentHost;
-    const definition: InstrumentDefinition = {
-      id: 'kalimba', family: 'key', sound: kalimba.sound as unknown as Record<string, unknown>,
-      answer: { ...answer, ...kalimba.answer } as unknown as AnswerConfig, demo: kalimba.demo,
-      samples: manifest.samples.filter((s) => s.instrument === 'kalimba'),
-    };
     const k = createKalimbaWith(definition, host, {
       output: { canSound: () => false, pluck: () => null, membrane: (m) => { membranes.push(m); }, sounding: () => (sounding ? 1 : 0), dispose() {} },
       every: (ms, fn) => { if (ms === sound.swing.tickMs) tick = fn; return () => {}; },
