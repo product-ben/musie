@@ -253,3 +253,8 @@ entfällt. Die Texte der Übung empfehlen weiterhin, das Handy quer zu legen.
 Zusammenspiel und Vibration werden nur auf dem Schritt davor gewählt. Der
 Timer steht unten am Rand; „Weiter zum Reflektieren“ erscheint bei Pause oder
 0:00 darunter und schiebt ihn sanft hoch.
+
+**Nachtrag (Ben, 2026-11-09):** Im Fokus-Sheet erscheint „Weiter zum
+Reflektieren“ erst, wenn die Person den Timer anhält (oder bei 0:00) — nicht
+beim Öffnen, auch nicht beim Wiederöffnen nach dem Schließen. Der Schritt
+zeigt Weiter nach dem Schließen weiterhin.

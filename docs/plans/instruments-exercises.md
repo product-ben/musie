@@ -351,3 +351,11 @@ the usual `supabase db reset` from one session (Ben).
 - 2026-11-09 — Ben: `DialogueNonModal` and `Sheet`'s `actions` out of the
   design system, since nothing uses them. `pnpm check`, the web, Storybook and
   docs builds and the e2e walk green after the removal.
+- 2026-11-09 — Ben: Weiter not in the sheet as it opens, only once the
+  person pauses (`0f0095c`). It showed at once when the sheet was opened again
+  on a clock its own closing had paused. The clock now records who paused it
+  (`CLOSE` from the stage, `pausedBy`); the sheet asks `showContinueInSheet`
+  (the person's pause, or 0:00), the step keeps `showContinue` so closing
+  still leaves a way on. Walked: first open, play, close, reopen — hidden;
+  Fortsetzen, Pause — shown. Kept at 0:00, which the brief named and Ben did
+  not take back.
