@@ -1,6 +1,14 @@
 /**
- * Inline Link — Layer 2
+ * Inline Link — Layer 2 · DEPRECATED
  * base-ui: Button.
+ *
+ * ── DEPRECATED — Ben, 2026-11-11. Use `InlineButton`. ────────────────────
+ * Its successor keeps the reasoning below (inherited type, the 2.5.8 inline
+ * exception, base-ui `Button` with `render`) and changes the look: the
+ * heading's own ink with a persistent `--border-strong` underline instead of
+ * the accent colour, and no `actions`. Kept exported and working until its
+ * last caller (/exercises' headline) moves; then this file and §28 of
+ * musy-components.css are deleted.
  *
  * A link INSIDE something else — a sentence, a heading, a label — rather than
  * a control standing on its own. Everything about it follows from that.
@@ -71,6 +79,9 @@ import { Icon } from './Icon';
  * and padding and breaks the line it sits in, exactly as `CtaButton` would.
  *
  * So the component draws them and the caller says what they do.
+ *
+ * @deprecated Use `InlineButton`, which has no actions: text, glyph and
+ * underline are one target (D3).
  */
 export interface InlineLinkAction {
   /** Stable identity. The React key. */
@@ -83,6 +94,7 @@ export interface InlineLinkAction {
   disabled?: boolean;
 }
 
+/** @deprecated Use `InlineButtonProps`. */
 export interface InlineLinkProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'className'> {
   /** The link's text. Inherits every type property from where it sits. */
@@ -122,6 +134,10 @@ export interface InlineLinkProps
   className?: string;
 }
 
+/**
+ * @deprecated Use `InlineButton`. Kept working until /exercises' headline
+ * moves; then deleted.
+ */
 export function InlineLink({
   children, trailingIcon, actions, className, ...rest
 }: InlineLinkProps) {

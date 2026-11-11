@@ -1,5 +1,9 @@
 /**
- * InlineLink — stories. Shape per stories/CONVENTIONS.md.
+ * InlineLink — stories. Shape per stories/CONVENTIONS.md, except the title.
+ *
+ * DEPRECATED (Ben, 2026-11-11) — use InlineButton. Filed under `Deprecated/`
+ * rather than `Components/` so the sidebar stops offering it; kept until its
+ * last caller (/exercises' headline) moves, then deleted with the component.
  *
  * Docs text below is taken from the component's own header comment. Nothing
  * is invented.
@@ -19,12 +23,17 @@ import { InlineLink } from '../src/InlineLink';
 import { Stack, bothThemes } from './_decorators';
 
 const meta = {
-  title: 'Components/InlineLink',
+  title: 'Deprecated/InlineLink',
   component: InlineLink,
   parameters: {
     docs: {
       description: {
         component: [
+          '**Deprecated (2026-11-11) — use `InlineButton`** (Components/InlineButton).',
+          'It keeps this component’s reasoning and changes the look: the heading’s own',
+          'ink with a persistent `--border-strong` underline, and no `actions`. Kept',
+          'working until its last caller moves; then deleted.',
+          '',
           'base-ui: Button, drawn as a link inside something else — a sentence, a',
           'heading, a label.',
           '',

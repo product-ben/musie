@@ -76,6 +76,7 @@
 .musy-filter__toggle:focus-visible,
 .musy-filter__clear:focus-visible,
 .musy-filter__value:focus-visible,
+.musy-ibtn:focus-visible,
 [data-force~="focus"] {
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
@@ -8071,6 +8072,10 @@ html[data-musy-scroll-snap='y'] {
 
 
 /* ═══ 28 · INLINE LINK ══════════════════════════════════════════════════════
+   DEPRECATED (Ben, 2026-11-11) — use §28b, INLINE BUTTON. Kept working until
+   its last caller (/exercises' headline) moves; then this section goes with
+   InlineLink.tsx.
+
    base-ui Button, drawn as a link inside a sentence or a heading.
 
    ── EVERY TYPE PROPERTY IS INHERITED, AND THAT IS THE COMPONENT ──────────
@@ -8319,6 +8324,158 @@ html[data-musy-scroll-snap='y'] {
 }
 
 .musy-ilink-action:disabled {
+  color: var(--on-surface-disabled);
+  cursor: not-allowed;
+}
+
+
+/* ═══ 28b · INLINE BUTTON ═══════════════════════════════════════════════════
+   base-ui Button: a value inside a sentence or a heading that opens a choice.
+   InlineLink's successor (§28, deprecated 2026-11-11). It keeps that
+   section's type rule — every type property inherited, so `font: inherit`
+   and `letter-spacing: inherit` and nothing else — and takes its look from
+   the Figma *Ready to build* frames (Layer 1 file, section `107:2578`).
+
+     .musy-ibtn          the one target (D3): text, glyph and underline
+       __text            the words
+       __glyph           a 24px box with the 16px glyph centred in it
+       ::after           the underline
+
+   ── THE UNDERLINE IS THE CONTROL'S, NOT THE TEXT'S ──────────────────────
+   §28 put its rule on the text span so it would not run under the glyph.
+   This one runs under BOTH, because the frames draw it that way and the
+   value and its glyph are one thing to press.
+
+   IT IS THE 1.4.1 CUE. The text has the heading's own colour now, so without
+   the bar the value would be told apart by nothing at all — which is why it
+   is there at rest, in every state, with or without a glyph, and why there
+   is no `--bare` branch left to get wrong. `--border-strong` already means
+   "the edge of a control" and is solved ≥ 3:1 (3.63:1 light, 4.73:1 dark);
+   `--border-width-thick` is Layer 1's "selected / current" weight, which is
+   what a chosen value is.
+
+   DIRECTLY UNDER THE LINE BOX, AND IT TAKES NO LINE SPACE. The box gets one
+   `--border-width-thick` of block-end padding for the bar to sit in and the
+   same amount back as a negative block-end margin. An atomic inline's MARGIN
+   box is what its line box is built from, so the line stays exactly as tall
+   as the words around it and the bar hangs into the leading below.
+
+   A PSEUDO-ELEMENT DRAWN WITH A BORDER, rather than either alternative:
+     · not the box's own `border-block-end` — the focus ring wants §28's
+       `--radius-xs` corners, and a radius on a box with one border side
+       tapers that side's two ends into slivers;
+     · not a background — forced colours replace backgrounds and keep
+       borders, so a background bar would vanish in exactly the mode that
+       most needs a non-colour cue.
+   It sits INSIDE the box, so the focus ring clears it by the same offset it
+   keeps on every other side, and a press on the bar is a press on the
+   control. Its colour is `--musy-ibtn-bar`, set on the box per state, so a
+   state is a declaration on the control rather than a selector into a part.
+
+   ── INSET (Figma annotations a2–a4) ─────────────────────────────────────
+   `--inset-inline`, the default: `--sp-1` of padding on both sides and the
+   same amount back as a negative margin. The text stays exactly where the
+   sentence put it and the underline overhangs it by 4px each side — "x-4
+   positioning to balance out the extra space from the underline".
+   `--inset-none` has no rule because it is the base: no padding and no
+   overhang, for a value with no words beside it ("If no text left or right:
+   padding = 0"). The component cannot see its neighbours; the call site says.
+
+   ── NEVER WIDER THAN ITS WORDS ──────────────────────────────────────────
+   `inline-size: fit-content`. A flex column — a ContentBox slot — stretches
+   its items by default, and the underline would then run the width of the
+   card. The underline IS this control's width, so the width is the
+   content's wherever it lands; where it sits is still the parent's to say.
+
+   ── STATES — not drawn in Figma; derived from §28 (2026-11-11) ──────────
+     rest      text `--on-surface`, bar `--border-strong`.
+     hover     the bar takes the text's ink, `--on-surface`. §28's hover DREW
+               an underline in the control's own colour; this one already
+               has an underline, so hover turns it into that one. Nothing
+               moves, and the words keep the heading's colour.
+     active    text, glyph and bar `--accent-1-text`. §28's press was a step
+               into the accent family. `-text` rather than §28's
+               `--accent-1`, because this is heading text and `--accent-1`
+               is a fill colour that scores 3.0:1 as text (§28's own note).
+     focus     the shared ring (§0) with §28's `--radius-xs` corners. The bar
+               stays as at rest: it is what §28 added on focus, and it is
+               already there.
+     disabled  text and glyph `--on-surface-disabled`; the bar goes QUIET and
+               STAYS, `--border-subtle` — the outline button's rule (§2, §4):
+               a control whose edge vanished when disabled loses its shape,
+               and here the bar is the only thing that marks the value as a
+               control at all.
+
+   ── TARGET SIZE ─────────────────────────────────────────────────────────
+   2.5.8's inline exception, as §28; no min-height, which would break the line
+   box this component exists to keep. One caveat, written down rather than
+   solved: the glyph box is 24px, so at a type step whose line is shorter —
+   `body-sm`, 22.5px at its smallest — a value WITH a glyph makes its line
+   ~1.5px taller. Every call site with a glyph today is a heading.          */
+.musy-ibtn {
+  --musy-ibtn-bar: var(--border-strong);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  inline-size: fit-content;
+  margin: 0 0 calc(var(--border-width-thick) * -1);
+  padding: 0 0 var(--border-width-thick);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--on-surface);
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-toggle);
+}
+
+.musy-ibtn::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  border-block-end: var(--border-width-thick) var(--border-style-solid) var(--musy-ibtn-bar);
+  pointer-events: none;
+  transition: border-color var(--motion-toggle);
+}
+
+.musy-ibtn--inset-inline {
+  padding-inline: var(--sp-1);
+  margin-inline: calc(var(--sp-1) * -1);
+}
+
+/* The 24px box is `--icon-size-lg` — the grid every Lucide glyph is drawn on
+   — so a 16px glyph centred in it keeps the clear space a full-size glyph
+   carries inside its own box. Centred on the line by the row's
+   `align-items: center`, which is what the frames' auto layout does. */
+.musy-ibtn__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: var(--icon-size-lg);
+  block-size: var(--icon-size-lg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-ibtn:hover:not(:disabled):not([data-disabled]),
+  .musy-ibtn[data-force~="hover"] { --musy-ibtn-bar: var(--on-surface); }
+}
+
+.musy-ibtn:active:not(:disabled):not([data-disabled]),
+.musy-ibtn[data-force~="active"] {
+  --musy-ibtn-bar: var(--accent-1-text);
+  color: var(--accent-1-text);
+}
+
+.musy-ibtn:disabled,
+.musy-ibtn[data-disabled] {
+  --musy-ibtn-bar: var(--border-subtle);
   color: var(--on-surface-disabled);
   cursor: not-allowed;
 }

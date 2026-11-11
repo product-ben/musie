@@ -46,7 +46,7 @@
  */
 import * as React from 'react';
 import { Plus } from 'lucide-react';
-import { ButtonGroup, Chip, ChipRow, CtaButton, IconButton, InlineLink } from '@musie/design-system';
+import { ButtonGroup, Chip, ChipRow, CtaButton, IconButton, InlineButton } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import type { HeldFeeling } from '../lib/feelings';
 
@@ -90,20 +90,23 @@ export function SessionReflect({
 
           AND IT ENDS ON THE QUESTION — Ben, 2026-10-16. *Was soll das
           bringen?* was a third `CtaButton` in the group below; it is an
-          `InlineLink` on the end of this sentence now. The reason is what
+          `InlineButton` on the end of this sentence now. The reason is what
           the two kinds of control mean: the group holds the things to DO,
           and asking what any of it is for is not one of them. A box with a
           label in it standing beside two offers reads as a third offer.
 
-          `InlineLink` is built for exactly this — it inherits its type from
-          the paragraph, so it is body copy that happens to be pressable
+          `InlineButton` is built for exactly this — it inherits its type
+          from the paragraph, so it is body copy that happens to be pressable
           rather than a button that broke a line. Its own header makes the
-          argument against `CtaButton size="min"` here. */}
+          argument against `CtaButton size="min"` here. (`InlineLink` until
+          2026-11-11, when it was deprecated: ink with a strong underline now,
+          not the accent colour. The default inset, because there are words
+          to its left.) */}
       <section className="musie-reflect__section">
         <h2 className="musie-reflect__welcome">{t('reflect.welcome.headline')}</h2>
         <p className="musie-reflect__why">
           {t('reflect.welcome.breathe')}{' '}
-          <InlineLink onClick={onUnderstand}>{t('reflect.understand.cta')}</InlineLink>
+          <InlineButton onClick={onUnderstand}>{t('reflect.understand.cta')}</InlineButton>
         </p>
       </section>
 
@@ -182,7 +185,7 @@ export function SessionReflect({
           stacked down the page.
 
           THE THIRD DOOR IS NOT IN HERE. *Was soll das bringen?* was, and
-          came out the same day: it is an `InlineLink` on the end of the
+          came out the same day: it is an `InlineButton` on the end of the
           sentence above now. This group holds the things to DO, and asking
           what any of it is for is not one of them.
 
