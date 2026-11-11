@@ -10998,3 +10998,38 @@ Why: Ben, 2026-11-09.
 
 What I need from Ben: nothing. The motion switch's prompt is the one part
 no emulator walks — it needs an iPhone.
+
+## lq-04 and lq-05 became two body-marking experiments — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1109/` (lq-04) and
+`body-resonance/261111-1109/` (lq-05); `apps/web/src/content/questions.ts`
+
+What I checked: Ben, 2026-11-11 — the two questions out of the card
+exercises, and an experiment for each: the card exercises' listening focus
+sheet without the card picture, and in its place the outline of a body to
+mark where you hear or feel it. Several points; each records the moment in
+the music it was set; enabled and selected both in the accent colour; a
+selected point drags, with a ghost delete button beside it.
+
+What I did, and what differs from the app:
+- **The music is generated in the browser from the instrument samples**
+  already in `public/instruments/`. Ben chose a track from musie-assets
+  first; the card tracks are Epidemic Sound on a subscription and
+  `musie-assets/README.md` forbids committing them, while every experiment is
+  a public file in a public repository. He then chose the samples. lq-04's
+  notes wander between left and right; lq-05 sets low marimba against high
+  kalimba.
+- **The body is seen from behind**, labelled „links“ / „rechts“, so the left
+  of the screen is your left — the reading lq-04 needs.
+- **„Die Frage funktioniert für mich nicht“ logs and thanks** instead of
+  handing over another question: each experiment has only the one.
+- **The X and „Bereit? Beginne zu reflektieren“ both end the experiment**,
+  with `body_marking_finished` (every point: position, region, side, music
+  time) and a short summary.
+- The look is the app's: the rules the listen sheet uses, read from the
+  running app on 2026-11-11, and the app's own `/fonts/`.
+
+What I need from Ben: a PostHog survey on `body_marking_finished` if the
+experiments should ask anything afterwards (none is set up); and the delete
+button is the system's `min` icon button — small for a thumb, by the brief's
+„(s)“.
