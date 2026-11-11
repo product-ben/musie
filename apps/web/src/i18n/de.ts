@@ -1290,11 +1290,44 @@ export const de: Messages = {
   'exercises.headline.morning': 'Guten Morgen.',
   'exercises.headline.day': 'Guten Tag.',
   'exercises.headline.evening': 'Guten Abend.',
-  /* Das Angebot. 'Hier ist' gegen 'Hier sind' ist der zweite Grund, warum
-     sich die Pluralformen lohnen — das Verb kongruiert mit, nicht nur das
-     Substantiv, und das kann keine eingesetzte Zahl. `none` lässt das 'hier'
-     weg: *Hier sind keine Übungen* ist korrekt und klingt wie ein
-     Achselzucken.
+  /* ── Aus dem Angebot wird eine Einladung (Ben, 2026-11-11) ─────────────
+     *Lass uns zusammen {goal}*. Die Zahl verlässt die Überschrift: der
+     Stapel zeigt höchstens drei (D10) und die Legende sagt das, also stünde
+     da oben immer nur *drei*. Übrig bleibt die Hälfte, nach der das
+     Usertesting gefragt hat — WOFÜR das hier ist —, gesagt als etwas, das
+     Musie und die Leserin zusammen tun, statt als Bestandsliste.
+
+     '{goal}' WIRD WEITERHIN NICHT GEFÜLLT, dort steht das Bedienelement
+     (`i18n/slot.ts`). Eingesetzt wird jetzt eine VERBPHRASE aus
+     `goal_i18n.purpose` — *entspannen*, *Energie sammeln*, *Achtsamkeit
+     üben* —, deshalb klein, wo das Deutsche klein schreibt: im Satz ist
+     *entspannen* ein Verb, kein *das Entspannen* mehr nach 'zum'. Damit ist
+     auch das lose 'zum Musie kennenlernen' erledigt; das Ziel ist
+     stillgelegt.
+
+     KEIN PUNKT: der Platzhalter steht am Satzende, und das Bedienelement
+     endet mit einem Glyph — der Grund steht bei den Formen darunter.
+
+     `none` ist der leere Fall desselben Satzes. Der Platzhalter bleibt, damit
+     sich das Ziel auch dann in der Überschrift ändern lässt, und 'zusammen'
+     bleibt, damit beide Sätze mit einer Stimme sprechen. Die Verbphrase
+     verlangt ein Modalverb ohne 'zu' — *um zusammen Energie sammeln* geht
+     nicht —, daher der Relativsatz mit 'können'. Unter der heutigen
+     Zuordnung unerreichbar (`db.content.db.test.ts` prüft, dass jedes
+     angebotene Ziel etwas bietet) und für den Tag geschrieben, an dem das
+     nicht mehr stimmt. */
+  'exercises.headline.together': 'Lass uns zusammen {goal}',
+  'exercises.headline.none': 'Noch keine Übung, mit der wir zusammen {goal} können',
+  /* GEHT IN WELLE 2 von docs/plans/exercises-ready-to-build.md, zusammen mit
+     den Ziel-Chevrons unten: `routes/Exercises.tsx` zeichnet beide noch, bis
+     der Bildschirm auf `exercises.headline.together` umzieht, und ein
+     Schlüssel, den ein Bildschirm noch liest, lässt sich nicht löschen, ohne
+     die Typprüfung in einer Datei zu brechen, die diese Änderung nicht
+     anfasst.
+
+     Das Angebot, wie es war. 'Hier ist' gegen 'Hier sind' ist der zweite
+     Grund, warum sich die Pluralformen gelohnt haben — das Verb kongruiert
+     mit, nicht nur das Substantiv, und das kann keine eingesetzte Zahl.
 
      KEIN PUNKT bei allen dreien, und das ist keine Stilfrage: `{goal}` steht
      bei zweien am Satzende, und der Link, der ihn ersetzt, endet mit einem
@@ -1302,7 +1335,6 @@ export const de: Messages = {
      gezeichnet, einen halben Wortabstand vom Wort entfernt. Auf dem Schirm
      gesehen, auf Deutsch, bei 393px. Der GRUSS behält seinen Punkt, weil nach
      ihm ein Satz kommt, von dem er getrennt werden muss. */
-  'exercises.headline.none': 'Noch keine Übung zum {goal}',
   'exercises.headline.one': 'Hier ist eine Übung zum {goal}',
   'exercises.headline.other': 'Hier sind {count} Übungen zum {goal}',
   /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
@@ -1342,6 +1374,12 @@ export const de: Messages = {
   /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
      `route.session.title`. */
   'exercises.deckPosition': '{name} – Karte {index} von {total}',
+  /* Der Schalter unter den Punkten (Ben, 2026-11-11, D10). Der Stapel
+     zeigt höchstens drei Übungen eines Ziels; nur wenn es mehr hat, steht
+     dieser Schalter da und holt den Rest. Verbphrase, Infinitiv (§3), und
+     'alle' statt einer Zahl, weil sich die Zahl mit dem Ziel ändert und der
+     Schalter sie nicht braucht. */
+  'exercises.showAll': 'Alle Übungen zeigen',
   /* Bens Wortlaut, 2026-10-07: 'Karte' wird zu 'Übung'. Der Stapel besteht aus
      Karten, angeboten wird eine Übung — und 'Übung' ist das Wort, das die
      Überschrift, die Legende und die Blätter-Schaltflächen daneben alle
@@ -1385,6 +1423,16 @@ export const de: Messages = {
      goal is the page's headline, so the row was explaining the largest line
      on the screen; Ben cut it on 2026-10-15 and the key goes with it rather
      than being kept against a row that is not coming back. */
+  /* Die ERSTE Zeile der Legende seit 2026-11-11 — Bens Wortlaut (D10).
+     Sie sagt, warum der Stapel kurz ist: wer weiß, dass es mehr Übungen
+     gibt, liest drei Karten sonst als drei fehlende. Der Grund ist der der
+     Leserin — einfacher aussuchen —, nicht der des Produkts.
+
+     '{count}' IST EIN WORT, KEINE ZIFFER: der Bildschirm setzt
+     `numberWord(SUGGESTED, locale)` ein, also *drei*, wie man kleine Zahlen
+     im Fließtext schreibt. 'Übungen' steht fest im Plural; das trägt,
+     solange `SUGGESTED` 3 ist. Ein Satz, also mit Punkt. */
+  'exercises.guide.count': 'Musie schlägt dir immer nur {count} Übungen vor, damit du einfacher aussuchen kannst.',
   'exercises.guide.next': 'Wische für die nächste Übung',
   'exercises.guide.start': 'Tippe eine Übung an, um sie zu starten',
   'exercises.guide.dismiss': 'Zum Fortfahren drücken',
@@ -1405,9 +1453,10 @@ export const de: Messages = {
   /* KEIN 'exercises.goal.none' mehr. Das war 'Musie entdecken' — das einzige
      Ziel-Label, das hier stand statt in `goal_i18n`, weil es die ABWESENHEIT
      eines Ziels benannte und deshalb keine Zeile hatte, deren Label es hätte
-     sein können. Seit 2026-10-15 hat es eine (`get-to-know-musie`) und drei
-     zugeordnete Übungen; das Argument ist mit seinem Gegenstand weg. Der Text
-     ist in die Tabelle umgezogen, nicht gelöscht.
+     sein können. Am 2026-10-15 bekam es eine (`get-to-know-musie`), und das
+     Argument war mit seinem Gegenstand weg; der Text zog in die Tabelle um.
+     Seit 2026-11-11 ist diese Zeile STILLGELEGT — nicht mehr im Angebot,
+     aber behalten, weil Sessions auf sie zeigen.
 
      KEIN 'exercises.goal.pill' mehr. Das war 'Ziel: {goal}' auf dem
      Trichter-Button in der Werkzeugleiste. Die Überschrift ist jetzt das
@@ -1425,18 +1474,25 @@ export const de: Messages = {
      man schon steckt — und diese Änderung ist für Menschen mitten im Tag, nicht
      mitten in der Planung. 'gerade' statt 'heute': die alte Notiz wählte
      'heute', weil das Ziel einmal am Tag gewählt wird; die Frage zielt jetzt
-     auf den Moment. Nur so lassen sich die Karten als Nominalphrasen
-     beantworten — 'Entspannung', 'Energie' —, denn jede vervollständigt
-     'Ich brauche …'. */
+     auf den Moment.
+
+     DIE KARTEN SIND SEIT 2026-11-11 KEINE NOMINALPHRASEN MEHR. Sie
+     vervollständigten 'Ich brauche …' — 'Entspannung', 'Energie' — und
+     wiederholen jetzt die Verbphrase der Überschrift als Überschrift:
+     'Entspannen', 'Energie sammeln', 'Achtsamkeit üben'. So sagt die Karte,
+     die du antippst, dieselben Wörter wie der Satz, der die Wahl danach
+     meldet (Ben, D5; A6). Als gesprochene Antwort auf die Frage tragen sie
+     weiter; die Frage selbst bleibt. */
   'exercises.goal.question': 'Was brauchst du gerade?',
   /* Der fette Vorspann auf einer Ziel-Karte, vor den zwei Sätzen. Ein Wort,
      auf jeder Karte dasselbe, also Chrome — die SÄTZE sind `goal_i18n.why`
      und stehen pro Ziel woanders.
 
-     NUR EINE DER VIER KARTEN HAT ÜBERHAUPT EINEN TEXT (Ben, 2026-10-15):
-     Musie kennenlernen, Entspannung und Energie benennen sich selbst,
-     Achtsamkeit ist das abstrakte Ziel, zu dem im Testing 'was soll das
-     bringen?' kam. Dieses Wort wird also heute genau einmal gezeichnet. */
+     ALLE DREI ANGEBOTENEN KARTEN HABEN SEIT 2026-11-11 EINEN TEXT (A6).
+     Bis dahin nur Achtsamkeit — das abstrakte Ziel, zu dem im Testing 'was
+     soll das bringen?' kam —, und die anderen benannten sich selbst; neben
+     einer Karte, die sich erklärt, wirkten sie unfertig. Wo `why` null ist,
+     bleibt die Karte weiter eine Überschrift allein. */
   'exercises.goal.why': 'Warum?',
   /* Wird nie gesehen, nur gehört. Steht als sr-only-Text im Link der
      Überschrift, damit das Bedienelement als 'Entspannen, Ziel ändern'
@@ -1457,7 +1513,11 @@ export const de: Messages = {
      nicht sieht.
 
      'Ziel' und nicht 'Übung': sie schalten den FILTER weiter, und dass sich
-     der Stapel darunter ändert, ist die Folge und nicht die Handlung. */
+     der Stapel darunter ändert, ist die Folge und nicht die Handlung.
+
+     GEHEN IN WELLE 2 (D1, 2026-11-11): das Weiterschalten der Ziele
+     verlässt den Bildschirm, die Chevrons neben dem Stapel blättern dann
+     Karten. Bleiben, bis `routes/Exercises.tsx` sie nicht mehr liest. */
   'exercises.goal.previous': 'Vorheriges Ziel',
   'exercises.goal.next': 'Nächstes Ziel',
   /* Wird gehört, nie gesehen. Eine Wahl im Sheet sagt sich von selbst an —

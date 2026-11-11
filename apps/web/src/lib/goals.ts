@@ -15,12 +15,21 @@
  * map it. Absence cannot.
  *
  * That argument was right and it no longer applies. Ben's mapping of
- * 2026-10-15 gives *Musie kennenlernen* three NAMED exercises — Achtsam
- * Atmen, Bodyscan, Freie Bahn — so it promises something specific rather
- * than everything, and there is nothing left for absence to express. It is a
- * row (`get-to-know-musie`), it is the first of four, and `goalIdFor()` went
- * with the sentinel: a choice is now always a real goal id, and
- * `sessions.goal_id` is never null again.
+ * 2026-10-15 gave *Musie kennenlernen* three NAMED exercises — Achtsam
+ * Atmen, Bodyscan, Freie Bahn — so it promised something specific rather
+ * than everything, and there was nothing left for absence to express. It
+ * became a row (`get-to-know-musie`), and `goalIdFor()` went with the
+ * sentinel: a choice is always a real goal id, and the app never writes a
+ * null `sessions.goal_id` again.
+ *
+ * ── THREE GOALS, AND THE FOURTH IS RETIRED (2026-11-11) ───────────────────
+ * The headline became *Lass uns zusammen {goal}*, and *Musie kennenlernen*
+ * left the offer: three goals now, *entspannen* first and therefore the
+ * default. The row was RETIRED rather than deleted, because sessions name it
+ * and a delete would null them (`20261111120000_three_goals.sql`).
+ * `getGoals()` in `content.ts` returns only unretired goals, so nothing in
+ * this file needs to know retirement exists — every function below receives
+ * the offered list and nothing else.
  *
  * ── TWO STATES NOW, NOT THREE ─────────────────────────────────────────────
  *
@@ -32,13 +41,15 @@
  * than draws. What it does NOT mean, and never means again, is "nobody has
  * chosen" — `defaultGoal()` answers that.
  *
- * ── A STORED `__none__` IS A STALE VALUE AND FALLS BACK FOR FREE ──────────
- * Every browser that used this screen before today holds `__none__` in
- * `musie-goal`. `readCachedGoal` validates the stored id against the goals
- * that actually exist, and no row can spell it — ids are English slugs
- * constrained to `[a-z][a-z0-9-]*` by this content's own convention — so it
- * reads as never-chosen and the screen opens on the default. No migration,
- * no special case, and it is asserted in `goals.test.ts` rather than assumed.
+ * ── A STALE STORED VALUE FALLS BACK FOR FREE ──────────────────────────────
+ * Every browser that used this screen before 2026-10-15 holds `__none__` in
+ * `musie-goal`, and many that used it before 2026-11-11 hold
+ * `get-to-know-musie`. `readCachedGoal` validates the stored id against the
+ * goals that are OFFERED: no row can spell `__none__` — ids are English slugs
+ * constrained to `[a-z][a-z0-9-]*` by this content's own convention — and the
+ * retired goal is not in the list `getGoals` returns. Either way it reads as
+ * never-chosen and the screen opens on the default. No migration, no special
+ * case, and both are asserted in `goals.test.ts` rather than assumed.
  */
 import type { Exercise, Goal } from './content';
 
@@ -51,13 +62,17 @@ export type GoalChoice = string;
 /**
  * What was chosen last, or null if nothing was.
  *
- * VALIDATED AGAINST THE GOALS THAT ACTUALLY EXIST, which is the whole reason
- * this takes an argument. A goal removed from the content leaves a stale id
- * in a returning visitor's browser, and trusting it would filter the deck by
+ * VALIDATED AGAINST THE GOALS ON OFFER, which is the whole reason this takes
+ * an argument. A goal retired from the content leaves a stale id in a
+ * returning visitor's browser, and trusting it would filter the deck by
  * something that is no longer offered — an empty screen under a headline
  * naming a goal the sheet cannot show as checked. An unknown value reads as
  * "never chosen", which the screen turns into `defaultGoal()` and a full
  * pile. Same discipline `isLocale` applies to a stored locale.
+ *
+ * `goals` must be what `getGoals()` returns: the RETIRED goals are already
+ * out of it, and that is what makes a stored `get-to-know-musie` unknown
+ * here even though its row still exists.
  *
  * Call it only once `goals` has loaded; before that there is nothing to
  * validate against and the answer would be a false null.
@@ -88,14 +103,19 @@ export function cacheGoal(choice: GoalChoice): void {
  * `goals[0]` looks like an accident and is not. `getGoals` orders by `sort`,
  * and the goal sheet renders that same array in that same order — so "the
  * default goal" and "the first card in the sheet" are ONE fact rather than
- * two that can disagree. Ben's default is *Einen Weg Musie kennenzulernen*
- * and it is `sort = 1`; changing which goal is default is then a migration
- * rather than a migration plus a constant in here that somebody has to
- * remember to move with it.
+ * two that can disagree. Ben's default is *entspannen* (2026-11-11) and it is
+ * `sort = 1`; changing which goal is default is then a migration rather than
+ * a migration plus a constant in here that somebody has to remember to move
+ * with it. It moved exactly that way: *Einen Weg Musie kennenzulernen* was
+ * the default until that day, and this function did not change.
  *
- * A hardcoded `'get-to-know-musie'` was the obvious alternative and is worse
- * in the one way that matters: it can be true in this file and false in the
- * table, and nothing would notice.
+ * A hardcoded `'relax'` was the obvious alternative and is worse in the one
+ * way that matters: it can be true in this file and false in the table, and
+ * nothing would notice.
+ *
+ * A RETIRED GOAL CANNOT BE THE DEFAULT, whatever its `sort`, because
+ * `getGoals` never returns it — and the migration parks it at 1001 anyway, so
+ * a reader that forgot the filter would put it last rather than first.
  *
  * Null for an empty list, which is a catalogue that failed to load. The
  * screen already has an answer for that and it is not a goal.
@@ -131,11 +151,12 @@ export function filterByGoal(exercises: Exercise[], choice: GoalChoice | null): 
  *
  * IT COUNTED THE HEADLINE TOO, FOR HALF A DAY. The argument was that one
  * expression keeps the number and the shuffle from disagreeing — and it was
- * the wrong thing to make agree. `breathing-score` is mapped to three of the
+ * the wrong thing to make agree. `breathing-score` was mapped to three of the
  * four goals and is unbuilt, so the headline read *2 Übungen zum Aktivieren*
  * over a pile of three cards. Ben reported it on sight: a number directly
  * above the thing it counts has to be the count of that thing, whatever the
- * reasoning. The headline reads `visible` now.
+ * reasoning. The headline read `visible` after that, and since 2026-11-11 it
+ * carries no number at all.
  *
  * ── THE PILE IS NOT FILTERED BY THIS, AND THAT IS DELIBERATE ──────────────
  * The deck deals every mapped exercise, built or not, and refuses the unbuilt
@@ -153,14 +174,16 @@ export function goalLabel(goals: Goal[], choice: GoalChoice): string | null {
 }
 
 /**
- * The goal as a purpose phrase, for the headline's `{goal}` slot.
+ * The goal as a verb phrase, for the headline's `{goal}` slot: *Lass uns
+ * zusammen **entspannen*** / *Let's **relax** together*.
  *
  * A SECOND LOOKUP RATHER THAN A SECOND USE OF `goalLabel`, because the two
- * strings are not interchangeable: the headline reads "3 Übungen zum
- * *Entspannen*" and the card in the sheet is headed "*Entspannung*". German
- * grammar makes the difference obvious; English hides it well enough
- * ("relax" against "Relaxation") that one column would have looked
- * sufficient for a while and then been wrong in the harder language.
+ * strings are not interchangeable. They were different grammar until
+ * 2026-11-11 — "zum *Entspannen*" in the headline, "*Entspannung*" on the
+ * card — and they are still different CASE: the headline says *entspannen*
+ * mid-sentence and the card is headed *Entspannen*. English hides it ("relax"
+ * against "Relax") well enough that one column would look sufficient, and be
+ * wrong in the harder language.
  */
 export function goalPurpose(goals: Goal[], choice: GoalChoice): string | null {
   return goals.find((goal) => goal.id === choice)?.purpose ?? null;

@@ -23,27 +23,38 @@ describe('missing_translations', () => {
 });
 
 /**
- * The goal mapping — 20261015140000, and the reason it is asserted here.
+ * The goals and their mapping — 20261015140000, 20261111120000, and the reason
+ * they are asserted here.
  *
- * `/exercises` offers four goals and nothing else. There is no *show me
- * everything* option any more, so **the mapping is the only way an exercise is
- * reachable at all**: one filed under no goal is one the product cannot show,
- * and nothing in the app would say so — the deck would simply never deal it
- * and every check would stay green.
+ * `/exercises` offers three goals and nothing else. There is no *show me
+ * everything* option, so **the mapping is the only way an exercise is
+ * reachable at all**: one filed under no OFFERED goal is one the product
+ * cannot show, and nothing in the app would say so — the deck would simply
+ * never deal it and every check would stay green.
+ *
+ * SINCE 2026-11-11 A GOAL CAN BE RETIRED, which adds a second way to strand
+ * an exercise: map it only to a goal nobody can choose. So every assertion
+ * below about what is offered reads `retired = false`, the same filter
+ * `getGoals()` applies — and the queries are written as `getGoals()` writes
+ * its own, so a column the client could not read (rule 2) fails here first.
  *
  * That is a property of content, it changes by migration, and it is exactly
  * the kind of thing a migration gets half right. So it is a test.
  */
-describe('goals · four of them, and nothing is stranded', () => {
-  it('offers four goals, each with both locales and a purpose', async () => {
+describe('goals · three on offer, one retired, and nothing is stranded', () => {
+  it('offers three goals, each with both locales and a purpose', async () => {
     const { client } = await testUser();
+    /* `getGoals()`'s own select and filter, from a signed-in client. If
+       `retired` were not readable by `authenticated` — a column grant where a
+       table grant should be — this is the query that would say so. */
     const { data, error } = await client
       .from('goals')
       .select('id, sort, goal_i18n(locale, label, purpose, why)')
+      .eq('retired', false)
       .order('sort');
 
     expect(error).toBeNull();
-    expect(data).toHaveLength(4);
+    expect((data ?? []).map((goal) => goal.id)).toEqual(['relax', 'wake-up', 'mindfulness']);
 
     for (const goal of data ?? []) {
       expect(goal.goal_i18n).toHaveLength(2);
@@ -56,48 +67,85 @@ describe('goals · four of them, and nothing is stranded', () => {
     }
   }, 30_000);
 
-  /* THE DEFAULT IS THE FIRST BY `sort`, which `lib/goals.ts` relies on
-     without naming an id. Two goals claiming one sort would be caught by the
-     unique constraint; what it cannot catch is the first one being something
-     nobody meant to open on. */
-  it('opens on get-to-know-musie, which is sort 1', async () => {
+  /* THE DEFAULT IS THE FIRST OFFERED BY `sort`, which `lib/goals.ts` relies
+     on without naming an id. Two goals claiming one sort would be caught by
+     the unique constraint; what it cannot catch is the first one being
+     something nobody meant to open on. *entspannen* since 2026-11-11. */
+  it('opens on relax, which is sort 1', async () => {
     const { client } = await testUser();
-    const { data } = await client.from('goals').select('id, sort').order('sort');
+    const { data } = await client
+      .from('goals')
+      .select('id, sort')
+      .eq('retired', false)
+      .order('sort');
 
-    expect(data?.[0]).toEqual({ id: 'get-to-know-musie', sort: 1 });
+    expect(data?.[0]).toEqual({ id: 'relax', sort: 1 });
   }, 30_000);
 
-  it('maps every exercise to at least one goal', async () => {
+  /* RETIRED, NOT DELETED, and both halves are the point. The row must still
+     be there — `sessions.goal_id` names it, and a delete would have nulled
+     those entries — and it must be out of the offer, with its words intact so
+     an old entry can still be named. */
+  it('keeps get-to-know-musie as a retired row that is never offered', async () => {
+    const { client } = await testUser();
+    const [all, offered] = await Promise.all([
+      client.from('goals').select('id, retired, sort, goal_i18n(locale)').eq('id', 'get-to-know-musie'),
+      client.from('goals').select('id').eq('retired', false),
+    ]);
+
+    expect(all.error).toBeNull();
+    expect(all.data).toHaveLength(1);
+    expect(all.data?.[0].retired).toBe(true);
+    expect(all.data?.[0].goal_i18n).toHaveLength(2);
+    /* Parked last, so a reader that forgot the filter would put it at the
+       end of the sheet rather than make it the default. */
+    expect(all.data?.[0].sort).toBeGreaterThan(1000);
+
+    expect(offered.error).toBeNull();
+    expect((offered.data ?? []).map((goal) => goal.id)).not.toContain('get-to-know-musie');
+  }, 30_000);
+
+  /* Read with the SERVICE ROLE, which proves its grant covers `retired` too —
+     the half of rule 2 that was missed once already. */
+  it('maps every exercise to at least one offered goal', async () => {
     const service = serviceClient();
-    const [{ data: exercises }, { data: pairs }] = await Promise.all([
+    const [{ data: exercises }, { data: goals, error }, { data: pairs }] = await Promise.all([
       service.from('exercises').select('id'),
+      service.from('goals').select('id, retired'),
       service.from('exercise_goals').select('exercise_id, goal_id'),
     ]);
 
-    const mapped = new Set((pairs ?? []).map((pair) => pair.exercise_id));
+    expect(error).toBeNull();
+    const offered = new Set((goals ?? []).filter((g) => !g.retired).map((g) => g.id));
+    const mapped = new Set(
+      (pairs ?? []).filter((pair) => offered.has(pair.goal_id)).map((pair) => pair.exercise_id),
+    );
     /* Named in the failure, because "an exercise is unreachable" is useless
        without saying which one. */
     expect((exercises ?? []).map((e) => e.id).filter((id) => !mapped.has(id))).toEqual([]);
   }, 30_000);
 
-  it('gives every goal at least one exercise', async () => {
+  it('gives every offered goal at least one exercise, and a retired one none', async () => {
     const service = serviceClient();
     const [{ data: goals }, { data: pairs }] = await Promise.all([
-      service.from('goals').select('id'),
+      service.from('goals').select('id, retired'),
       service.from('exercise_goals').select('goal_id'),
     ]);
 
     const served = new Set((pairs ?? []).map((pair) => pair.goal_id));
     /* A goal serving nothing is a legal state the screen draws honestly —
        `exercises.goal.empty` — and not a state anybody should SHIP. */
-    expect((goals ?? []).map((g) => g.id).filter((id) => !served.has(id))).toEqual([]);
+    expect((goals ?? []).filter((g) => !g.retired && !served.has(g.id)).map((g) => g.id)).toEqual([]);
+    /* And the reverse for a retired goal: an exercise filed under it is filed
+       under nothing anybody can choose. */
+    expect((goals ?? []).filter((g) => g.retired && served.has(g.id)).map((g) => g.id)).toEqual([]);
   }, 30_000);
 
   /* ── A GOAL WHERE NOTHING CAN BE STARTED ────────────────────────────────
-     The headline counts the pile and the deck deals it, so a goal whose
-     exercises are ALL unbuilt still reads honestly — but every card in it
-     would refuse, and *Such mir eine Übung aus* would be a disabled control
-     over a full pile. That is a dead end dressed as a choice.
+     The deck deals the pile, so a goal whose exercises are ALL unbuilt still
+     draws — but every card in it would refuse, and *Such mir eine Übung aus*
+     would be a disabled control over a full pile. That is a dead end dressed
+     as a choice.
 
      It cannot happen under today's mapping and nothing in the schema forbids
      it, so this is what makes it a test failure rather than a screenshot. */
