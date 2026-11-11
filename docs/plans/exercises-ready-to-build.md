@@ -58,7 +58,21 @@ the repo. **This file is the current state**: update it after every task.
   - **Not verified:** real touch, iOS click-after-touch-move, dark mode and forced colours on the strips.
 - **T9 + T3b** done: `d83a2eb`. `onCoverDismiss={closeGuide}`, and CardDeck's `navActions` is deleted (no caller left). `pnpm check` green.
 - **Wave 3 · S6** running: the CtaButton → Button rename, plus a second commit for the collected follow-ups.
-- **Blocked on Ben's `supabase db reset`:** the app walk at 393/1440, `pnpm test:db`, and diffing `gen:types` against S4's hand-written types. `getGoals()` filters on the new `retired` column, so the app cannot load goals against the un-migrated local database.
+- **S5 (Figma)** done: `target/sm`; IconButton has 100 variants (`Size=sm` added); a new page and set `InlineButton` (`126:1386`), with every colour matching the measured browser value.
+- **Secondary update** (Ben's Figma change): the resting border is `--border-subtle` in Button and IconButton (`c3aa7bc`). In Figma, IconButton `min` was aligned.
+- **S6** done and merged: `0703467` (CtaButton → Button, 98 files) and `af9364e` (stale names), plus `dc9c506` for the comments S6 flagged in the main session's files.
+- **Verification:**
+  - `pnpm check` and `pnpm --filter docs build` are green.
+  - `pnpm test:db` against the local stack: every suite this branch touches is green. 5 tests in `deck.db.test.ts` / `music.db.test.ts` fail **before this branch too**: a reset yields the 2026-10-14 factory content (9 cards), while `deck.json` is the live snapshot (10). This is CLAUDE.md 4.1.
+  - The app was walked signed in at 393 and 1440 (German) and matches the frames. The desktop switch was moved to the column edge (`8d25246`). The switch shows all 6 of *Entspannen*.
+- **OPEN-QUESTIONS**: seven entries appended (`2f3b331`).
+- **Not done here:**
+  - `pnpm gen:types` (denied to agents) and the diff against S4's hand edit
+  - real touch on a phone
+  - the e2e walks
+  - `pnpm db:sync` after the merge (Ben's)
+- ~~Blocked on Ben's `supabase db reset`:~~ (the local stack already had the migration applied)
+  - **Blocked on Ben's `supabase db reset`:** the app walk at 393/1440, `pnpm test:db`, and diffing `gen:types` against S4's hand-written types. `getGoals()` filters on the new `retired` column, so the app cannot load goals against the un-migrated local database.
 
 ## Decisions
 
