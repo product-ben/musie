@@ -693,13 +693,13 @@ function frame(now) {
   touch.a += ((touch.on ? 1 : 0) - touch.a) * ease(touch.on ? 0.12 : 0.5);
 
   /* Fließen: mehr Teilchen und schnelleres Fallen mit jedem Ton. */
-  const rate = ((playing ? 18 : 7) + energy * 45) * (rm ? 0.5 : 1) * Math.min(1.6, Math.max(0.8, W / 400));
+  const rate = ((playing ? 27 : 10) + energy * 65) * (rm ? 0.5 : 1) * Math.min(1.6, Math.max(0.8, W / 400));   // ×1,5 (Ben: „a little more“)
   const vt = ((playing ? 62 : 34) + energy * 55 * (rm ? 0.4 : 1)) * scale * (rm ? 0.6 : 1);
   emitDebt += rate * dt;
   const e = emitter();
   while (emitDebt >= 1) {
     emitDebt -= 1;
-    if (falling.length > 900) continue;
+    if (falling.length > 1300) continue;
     falling.push({ x: e.x + gauss() * 3, y: e.y + gauss() * 3, vx: (bend * reachX()) / TAU_X + mouseV * 0.25 + gauss() * 8,
       vy: 10 + Math.random() * 15, r: 0.8 + Math.random() * 1.6, a: 0.35 + Math.random() * 0.5, ink: pickInk(), born: now, wob: Math.random() * 6.28, counted: playing });
   }
