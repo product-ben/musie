@@ -416,7 +416,9 @@ to `extractText` is an edit and a `supabase functions deploy`.
   per-locale copy needs one row per `(exercise, step, locale, mode)`. That is
   schema, so CLAUDE.md 4 applies untouched: new migration, new timestamp,
   `pnpm db:sync`.
-- **`QuestionId` is still a closed union.** `'lq-01' | … | 'lq-05'`, with
+- **`QuestionId` is still a closed union.** `'lq-01' | 'lq-02' | 'lq-03'`
+  since 2026-11-11 (lq-04 and lq-05 retired, see
+  `docs/LISTENING-QUESTION-ITERATION.md` §0.2), with
   `Record<QuestionId, QuestionText>` leaning on it. A therapist cannot write a
   sixth question until that goes. The config's ids are already plain strings
   scoped to their set, so the contract is ready and the app is not.

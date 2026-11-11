@@ -65,15 +65,22 @@
  * below. Unlike `tracks.id` there is nothing to hide here — a question is not
  * an answer — so the ids are readable.
  */
-export type QuestionId = 'lq-01' | 'lq-02' | 'lq-03' | 'lq-04' | 'lq-05';
+/* lq-04 (which side a sound came from) and lq-05 (where it resonated in the
+   body) were taken out of both card exercises on 2026-11-11 (Ben). They live
+   on as two experiments that let somebody mark it on a body instead of
+   writing it — `public/experiments/body-side/` and `body-resonance/`. The
+   diary keeps any answer given to them, because it renders the snapshot in
+   `sessions.listening_question`; a stored id that is no longer here is
+   treated as "not in the set" (`isKnownQuestion`). */
+export type QuestionId = 'lq-01' | 'lq-02' | 'lq-03';
 
 export interface QuestionText {
   /**
    * The headline on `/listen?focus`, while the music plays.
    *
-   * Not always a question, and that is deliberate: `lq-05` is an invitation
-   * whose last clause gives permission to feel nothing. On a sheet where the
-   * track is already playing, an invitation is the right shape.
+   * Not always a question, and that is deliberate: it may be an invitation
+   * (lq-02's „Lass die Klänge auf dich wirken“). On a sheet where the track is
+   * already playing, an invitation is the right shape.
    */
   listen: string;
   /**
@@ -107,7 +114,7 @@ export interface QuestionText {
  * and indexes, so this array is the one statement of what order means.
  */
 export const QUESTION_ORDER: readonly QuestionId[] = [
-  'lq-01', 'lq-02', 'lq-03', 'lq-04', 'lq-05',
+  'lq-01', 'lq-02', 'lq-03',
 ];
 
 /**
@@ -166,16 +173,6 @@ export const questionsDe: Record<QuestionId, QuestionText> = {
     reflect: 'Wie haben die Klänge auf dich gewirkt? Wo hast du die hohen Töne gespürt, wo die tiefen?',
     helper: 'Wo im Körper sitzen die hohen Töne – im Kopf, im Brustkorb, in den Füßen? Und die tiefen?',
   },
-  'lq-04': {
-    listen: 'Von welcher Seite kommt welcher Ton? Verändert sich die Richtung im Laufe der Musik?',
-    reflect: 'Von welcher Seite ist welcher Ton gekommen? Hat sich die Richtung im Laufe der Musik verändert?',
-    helper: 'Schließe die Augen und lass den Klang wandern. Kommt er von links, von rechts, von überall?',
-  },
-  'lq-05': {
-    listen: 'Spüre einmal nach, wo der Klang in deinem Körper resoniert. Vielleicht kribbelt es irgendwo. Vielleicht kommt eine Gänsehaut. Oder auch nicht – wir sind alle unterschiedlich.',
-    reflect: 'Hat der Klang in deinem Körper resoniert? Was hast du wo gespürt?',
-    helper: 'Geh in Gedanken von den Füßen bis zum Kopf. Wo ist es warm, wo eng, wo kribbelt es?',
-  },
 };
 
 export const questionsEn: Record<QuestionId, QuestionText> = {
@@ -193,15 +190,5 @@ export const questionsEn: Record<QuestionId, QuestionText> = {
     listen: 'Let the sounds work on you. Where do you feel the high notes? Where do you feel the low ones?',
     reflect: 'How did the sounds work on you? Where did you feel the high notes, and where the low ones?',
     helper: 'Where in your body do the high notes sit — head, chest, feet? And the low ones?',
-  },
-  'lq-04': {
-    listen: 'Which sound comes from which side? Does the direction change as the music goes on?',
-    reflect: 'Which sound came from which side? Did the direction change as the music went on?',
-    helper: 'Close your eyes and let the sound travel. Does it come from the left, the right, from everywhere?',
-  },
-  'lq-05': {
-    listen: 'Feel for where the sound resonates in your body. Maybe something tingles. Maybe you get goosebumps. Or maybe not — we are all different.',
-    reflect: 'Did the sound resonate in your body? What did you feel, and where?',
-    helper: 'Go from your feet to your head in your mind. Where is it warm, where tight, where does it tingle?',
   },
 };

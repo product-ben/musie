@@ -52,19 +52,19 @@ function walk(
 }
 
 describe('nextQuestion · the ordered walk', () => {
-  it('gives a writer the five in their initial order', () => {
-    expect(walk(5, true)).toEqual(['lq-01', 'lq-02', 'lq-03', 'lq-04', 'lq-05']);
+  it('gives a writer the three in their initial order', () => {
+    expect(walk(3, true)).toEqual(['lq-01', 'lq-02', 'lq-03']);
   });
 
-  it('gives a skipper the same five, which is why D3 changed', () => {
+  it('gives a skipper the same three, which is why D3 changed', () => {
     /* THE POINT OF THE WHOLE REVISION. Spending is finishing, not writing, so
        this sequence is identical to the writer's above. Under the original D3
        — spend only on a saved reflection — `spent` stayed empty and this
        returned lq-01, lq-02, lq-01, lq-02, … forever (§6.1). The test for
        that behaviour is `the skipper under the original rule` below, kept as
        the record of what was rejected. */
-    expect(walk(5, true)).toEqual(walk(5, true));
-    expect(walk(5, true)).toEqual([...QUESTION_ORDER]);
+    expect(walk(3, true)).toEqual(walk(3, true));
+    expect(walk(3, true)).toEqual([...QUESTION_ORDER]);
   });
 
   it('the skipper under the original rule: two questions, forever', () => {
@@ -79,15 +79,15 @@ describe('nextQuestion · the ordered walk', () => {
   it('goes random once every question is spent, and never repeats the last', () => {
     const spent = [...QUESTION_ORDER];
 
-    /* `random` at its floor picks the first CANDIDATE, and lq-05 is excluded
+    /* `random` at its floor picks the first CANDIDATE, and lq-03 is excluded
        as `previous`, so the first candidate is lq-01. */
-    expect(nextQuestion(PAUSE, { spent, previous: 'lq-05' }, [], first))
+    expect(nextQuestion(PAUSE, { spent, previous: 'lq-03' }, [], first))
       .toBe('lq-01');
 
-    /* At the top of the range it picks the last candidate — lq-05 with lq-01
+    /* At the top of the range it picks the last candidate — lq-03 with lq-01
        excluded. The clamp is what keeps `random() === 1` in range. */
     expect(nextQuestion(PAUSE, { spent, previous: 'lq-01' }, [], () => 1))
-      .toBe('lq-05');
+      .toBe('lq-03');
   });
 
   it('never returns the previous question while another is available', () => {
@@ -101,11 +101,11 @@ describe('nextQuestion · the ordered walk', () => {
 
   it('returns the previous question rather than nothing when it is all there is', () => {
     /* One candidate left and it is the one just seen. A repeat is worse than
-       nothing on the first four; on the fifth, nothing would mean no question
+       nothing on the first ones; on the last, nothing would mean no question
        at all, so the tie-breaker yields. */
-    const history: QuestionHistory = { spent: [], previous: 'lq-05' };
-    const exclude = ['lq-01', 'lq-02', 'lq-03', 'lq-04'];
-    expect(nextQuestion(PAUSE, history, exclude, first)).toBe('lq-05');
+    const history: QuestionHistory = { spent: [], previous: 'lq-03' };
+    const exclude = ['lq-01', 'lq-02'];
+    expect(nextQuestion(PAUSE, history, exclude, first)).toBe('lq-03');
   });
 });
 
@@ -119,7 +119,7 @@ describe('nextQuestion · rejections inside one session', () => {
 
   it('returns null at the dead end, which is a state and not a failure', () => {
     /* Everything rejected. §7.4's third button state, and the row that makes
-       `question_rejections.rejected_count = 5`. */
+       `question_rejections.rejected_count` equal to the set's size. */
     expect(nextQuestion(PAUSE, fresh, [...QUESTION_ORDER], first)).toBeNull();
   });
 
@@ -143,7 +143,7 @@ describe('canReroll', () => {
 
   it('counts the question on screen as already offered', () => {
     /* Four rejected plus the fifth in front of them is not an offer. */
-    expect(canReroll(PAUSE, 'lq-05', ['lq-01', 'lq-02', 'lq-03', 'lq-04']))
+    expect(canReroll(PAUSE, 'lq-03', ['lq-01', 'lq-02']))
       .toBe(false);
   });
 
@@ -167,7 +167,7 @@ describe('the catalogue', () => {
     expect(hasQuestionSet('body-scan-soundwalk')).toBe(false);
   });
 
-  it('hands both exercises the same five in the same order', () => {
+  it('hands both exercises the same three in the same order', () => {
     expect(questionsFor(PAUSE)).toEqual([...QUESTION_ORDER]);
     expect(questionsFor(REIN)).toEqual([...QUESTION_ORDER]);
   });
