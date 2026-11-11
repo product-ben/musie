@@ -8,7 +8,7 @@
 <!-- Musie-Experiment, gehostet unter /experiments (CLAUDE.md Regel 10: Ausnahme von den strengen Regeln).
      Frage lq-05: wo der Klang im Körper resoniert. Die Musik setzt tiefe und hohe Töne deutlich gegeneinander.
      Ben, 2026-11-11: das Fokus-Sheet des Hörens der Kartenübungen, ohne Kartenbild; an seiner Stelle ein Körper in 3D,
-     in Sand. Ziehen dreht ihn; ruhig halten färbt die Stelle langsam in Terrakotta ein, und je länger du hältst, desto
+     in Sand. Ziehen dreht ihn; ruhig halten färbt die Stelle langsam grün ein, und je länger du hältst, desto
      weiter wächst die Fläche über die Haut. „Flächen bearbeiten“ zeigt neben jeder Fläche einen roten Löschen-Knopf.
      Jede Fläche merkt sich den Zeitpunkt in der Musik und wie lange gehalten wurde. Die Frage stammt aus der App
      (lq-04 / lq-05, dort am 2026-11-11 herausgenommen).
@@ -631,7 +631,7 @@ const statusEl = document.getElementById('body-status'), editBtn = document.getE
 /* Tokens als Farbe: light-dark(…) löst ein unsichtbares Element zu rgb() auf. */
 const colorProbe = document.createElement('span'); colorProbe.hidden = true; document.body.appendChild(colorProbe);
 const tokenColor = (name) => { colorProbe.style.color = `var(${name})`; return new THREE.Color().setStyle(getComputedStyle(colorProbe).color); };
-const SAND = tokenColor('--sand-4'), PAINT = tokenColor('--interactive-accent');
+const SAND = tokenColor('--sand-4'), PAINT = tokenColor('--interactive-primary');   // Grün (Ben, 2026-11-11), vorher Terrakotta
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setClearColor(0x000000, 0);

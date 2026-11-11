@@ -11040,8 +11040,9 @@ Where: `apps/web/public/experiments/body-side/261111-1143/`, `body-resonance/261
 `body-model/` (the shared body) and `sound-builder/261111-1149/`
 
 What I checked: Ben, 2026-11-11 — a 3D body in sand instead of the outline;
-holding a spot colours it slowly in the accent colour, and the longer the
-hold, the larger the area; dragging turns the body; „Flächen bearbeiten“ puts
+holding a spot colours it slowly in green (`--interactive-primary`; it was
+terracotta for an hour, until Ben asked for green), and the longer the hold,
+the larger the area; dragging turns the body; „Flächen bearbeiten“ puts
 a small red ghost delete button beside every area. Then: the generated sound
 bed as its own experiment, with four sliders (Dichte, Tonhöhe, Klangfarbe,
 Weite) and Play, no timer.
