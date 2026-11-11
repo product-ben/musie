@@ -71,8 +71,7 @@ the repo. **This file is the current state**: update it after every task.
   - real touch on a phone
   - the e2e walks
   - `pnpm db:sync` after the merge (Ben's)
-- ~~Blocked on Ben's `supabase db reset`:~~ (the local stack already had the migration applied)
-  - **Blocked on Ben's `supabase db reset`:** the app walk at 393/1440, `pnpm test:db`, and diffing `gen:types` against S4's hand-written types. `getGoals()` filters on the new `retired` column, so the app cannot load goals against the un-migrated local database.
+- ~~Blocked on Ben's `supabase db reset`~~ — no longer: the local stack already had `20261111120000` applied, so the walk and `pnpm test:db` ran (above).
 
 ## Decisions
 
