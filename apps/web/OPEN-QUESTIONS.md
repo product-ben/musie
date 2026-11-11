@@ -11131,3 +11131,44 @@ What I need from Ben: the same two questions as the entry above (jsDelivr
 before consent; a PostHog survey). And one judgement: painting before
 „Jetzt starten“ is allowed and recorded with `t = 0`. Say if it should wait for
 the music.
+
+## Body side, third version: no body, a stream of particles — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1431/` (the two earlier
+versions stay beside it); the removed copy in
+`~/Documents/musie-assets/copy/unused-copy.md`, outside the repository
+
+What I checked: Ben, 2026-11-11, for lq-04: no body model. Everything else
+as the body resonance version: the instruments' countdown, „Jetzt starten“,
+„Weiter zum Reflektieren“ only after a pause or at 0:00. In its place a calm
+stream of particles in the middle of the screen, top to bottom, moving at the
+speed of the music and in the app's colours; tapping or dragging bends it
+left or right. Asked twice, Ben said yes: the bend stays where the finger
+leaves it, and the headline keeps both sentences.
+
+What I did:
+- **The stream is built here, not ported.** Ben remembered a particle
+  experiment, possibly Lucy's and not committed; none is in the repository or
+  among his artifacts, so this is new.
+- **It is a stage, like the instruments'**: a canvas under the header and the
+  foot, to the edges; the header and foot let a touch through except on their
+  buttons, so a tap on the headline steers too. Behind the question and the
+  countdown the particles fade to 30 %, so both stay readable.
+- **The speed of the music**: every note gives the stream a push at the moment
+  it sounds and brightens it a little; paused, it only drifts. Every note
+  pushes it the same way, wherever the note is panned, so the stream never
+  gives away the answer.
+- **The bend**: as far to the side as the finger is from the middle (up to a
+  third of the width), reaching that side at the finger's height. Keyboard:
+  the canvas is a slider (arrows, Home, End).
+- **What is recorded**: each bend (`stream_bent`), and at the end a timeline
+  of the bend every half second while the music played (at most 180 points),
+  with the share of time left, centre and right (`stream_finished`). Consent
+  has its own key, because its sentence changed.
+- **Colours**: green-9, -8 and -6, sand-8, and a little terracotta-9, in that
+  order of frequency.
+
+What I need from Ben: whether the particle experiment he meant looks like
+this, and if Lucy has it, what to take from it. And, as for the body
+pages, a PostHog survey on `stream_finished` if it should ask anything.
+

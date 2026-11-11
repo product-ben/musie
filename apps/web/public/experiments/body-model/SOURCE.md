@@ -1,7 +1,9 @@
 # body.bin — where the body comes from
 
-The 3D body in `/experiments/body-side/` and `/experiments/body-resonance/` (from
-version 261111-1143 on). Ben, 2026-11-11.
+The 3D body in `/experiments/body-side/261111-1143/` and
+`/experiments/body-resonance/` (from version 261111-1143 on). Ben, 2026-11-11.
+Body side's next version, `261111-1431`, has no body: a particle stream
+instead.
 
 - **Shape and topology:** Anny, NAVER Corporation —
   <https://github.com/naver/anny>, file `src/anny/data/topology/notoes.obj`.
