@@ -20,6 +20,15 @@
           ersten Fläche): das startet den Countdown und die Musik.
        4. Am Anfang schaut das Gesicht nach vorn.
        5. Die Person sitzt: das Netz wird beim Laden gebeugt (Knie, Hüfte, Arme), ohne Skelett.
+       6. (Nachtrag, gleicher Tag) Auch die andere Achse: ein senkrechter Regler neben dem Körper kippt ihn nach
+          vorn und hinten, ±90° (von oben bis von unten). Ziehen: links/rechts dreht, hoch/runter kippt.
+       7. (Nachtrag) „Flächen bearbeiten“ heißt „Flächen löschen“ und ist ein Ghost-Button. Liegen Löschen-Knöpfe
+          so nah, dass sie sich überdecken, stehen sie als ein Lupen-Knopf da: ein Tippen zoomt heran, bis jede
+          Fläche ihren eigenen Knopf hat. Gedreht und gekippt wird dann um diese Stelle; die Lupe mit Minus oder
+          „Fertig“ zoomt wieder heraus.
+       8. (Nachtrag) Jedes Halten beginnt eine neue Fläche, auch auf einer bestehenden (vorher wuchs dann die alte).
+          Überlappen sich Flächen, bekommen sie verschiedene Grüns aus der Palette (--green-9, -6, -12, -8); die
+          neuere liegt oben.
      Körper: Anny (NAVER, Apache 2.0, github.com/naver/anny) auf dem MakeHuman-Grundkörper (MPFB2, CC0), die neutrale
      Form, Topologie „notoes“; Herkunft und Umwandlung in /experiments/body-model/SOURCE.md. 3D: three.js 0.170 (MIT).
      Stil: die Regeln, die das Hören-Sheet der App und der Fuß der Instrumenten-Übung verwenden, aus der laufenden App
@@ -418,7 +427,7 @@ body { overflow: hidden; }
    das Sheet ist ein Raster (Kopf auto, Körper 1fr, Fuß auto), also hat seine Mitte eine feste Höhe. Kein fester
    Anteil am Bildschirm mehr — der war auf einem iPhone in Safari (≈ 660 px sichtbar) entweder zu groß oder winzig.
    Öffnet sich die Zeile unter dem Countdown, wird der Körper ein wenig kleiner, statt dass etwas überläuft.
-   Darunter der Drehregler und „Flächen bearbeiten“. Kein zweispaltiges Desktop-Layout: der Countdown ist im Fuß. */
+   Darunter der Drehregler und „Flächen löschen“. Kein zweispaltiges Desktop-Layout: der Countdown ist im Fuß. */
 .musy-sheet__body { align-content: stretch; }
 .musie-immersive__body { min-block-size: 0; }
 .musie-immersive__body .musie-body3d__block {
@@ -445,12 +454,18 @@ body { overflow: hidden; }
 .musie-body3d__loading { position: absolute; inset: 0; display: grid; place-items: center; margin: 0;
   font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); color: var(--on-surface-muted); }
 .musie-body3d__loading[hidden] { display: none; }
-/* „Flächen bearbeiten“: unter dem Körper, wo er nichts verdeckt. */
+/* „Flächen löschen“: unter dem Körper, wo er nichts verdeckt. */
 .musie-body3d__layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 /* Löschen: der Ghost-IconButton des Systems, in Fehler-Rot, neben jeder Fläche. */
 .musie-area-delete { position: absolute; pointer-events: auto; transform: translate(-50%, -50%);
   color: var(--feedback-error-icon); background-color: var(--surface); }
 .musie-area-delete[hidden] { display: none; }
+/* Mehrere Knöpfe übereinander: ein Lupen-Knopf an ihrer Mitte, in der Textfarbe, nicht in Rot (er löscht nichts). */
+.musie-area-cluster { position: absolute; pointer-events: auto; transform: translate(-50%, -50%);
+  color: var(--on-surface); background-color: var(--surface); }
+/* Herauszoomen: oben links in der Bühne, nur wenn herangezoomt ist. */
+.musie-body3d__zoomout { position: absolute; inset-block-start: 0; inset-inline-start: 0; z-index: 2; background-color: var(--surface); }
+.musie-body3d__zoomout[hidden] { display: none; }
 
 /* Einwilligung und Ende: die Karte aus den anderen Experimenten. */
 .musie-dialog { color: var(--on-surface); }
@@ -469,6 +484,14 @@ body { overflow: hidden; }
    Winkel hat keinen „gespielten Teil“. Die Mitte ist das Gesicht. */
 .musie-body3d__turn { inline-size: min(100%, 18rem); --musy-mplayer-accent: var(--interactive-primary); --musy-mplayer-accent-border: var(--interactive-primary-border); }
 .musie-body3d__turn .musy-mplayer__slider { block-size: var(--target-primary); }
+/* Der Kipp-Regler: derselbe Scrubber, senkrecht, am rechten Rand neben dem Körper. Base UI setzt den Daumen
+   senkrecht mit `bottom`; die Linie wird schmal und hoch. Oben ist „von unten gesehen“, wie wenn du hochziehst. */
+.musie-body3d__tilt { position: absolute; inset-inline-end: 0; inset-block: 18%; inline-size: var(--target-primary); z-index: 2;
+  display: flex; justify-content: center; --musy-mplayer-accent: var(--interactive-primary); --musy-mplayer-accent-border: var(--interactive-primary-border); }
+.musie-body3d__tilt .musy-mplayer__slider { inline-size: var(--target-primary); block-size: 100%; justify-content: center; }
+.musie-body3d__tilt .musy-mplayer__control { inline-size: auto; block-size: 100%; }
+.musie-body3d__tilt .musy-mplayer__track { inline-size: var(--sp-1); block-size: 100%; }
+.musie-body3d__tilt .musy-mplayer__thumb { inset-block-start: auto; inset-inline-start: 50%; translate: -50% 50%; }
 /* Vor dem Start gibt es nur „Jetzt starten“: die Transport-Taste kommt mit dem Start dazu. */
 .musie-play__clock[data-state="unstarted"] .musy-mbtn { display: none; }
 </style>
@@ -495,12 +518,14 @@ body { overflow: hidden; }
                 <canvas class="musie-body3d__canvas" id="body-canvas" tabindex="0" role="application"
                   aria-label="Körper in 3D, sitzend: ziehen dreht ihn, gedrückt halten färbt ein, wo du den Klang spürst" aria-describedby="body-help"></canvas>
                 <p class="musie-body3d__loading" id="body-loading">Der Körper lädt …</p>
-                <span class="musy-sr-only" id="body-help">Ziehen dreht den Körper, ebenso der Regler darunter. Halte eine Stelle gedrückt, dann färbt sie sich ein: je länger, desto größer. Mit der Tastatur: Pfeiltasten drehen, Leertaste halten färbt die Mitte ein.</span>
+                <span class="musy-sr-only" id="body-help">Nach links und rechts ziehen dreht den Körper, ebenso der Regler darunter; nach oben und unten ziehen kippt ihn, ebenso der Regler daneben. Halte eine Stelle gedrückt, dann färbt sie sich ein: je länger, desto größer. Mit der Tastatur: Pfeiltasten links und rechts drehen, hoch und runter kippen, Leertaste halten färbt die Mitte ein.</span>
                 <div class="musie-body3d__layer" id="area-buttons"></div>
+                <div class="musie-body3d__tilt" id="tilt"></div>
+                <button type="button" id="zoom-out" class="musy-icon-btn musy-icon-btn--ghost musie-body3d__zoomout" aria-label="Herauszoomen" hidden><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zoom-out musy-icon musy-icon--md" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line><line x1="8" x2="14" y1="11" y2="11"></line></svg></button>
                 <p class="musy-sr-only" id="body-status" role="status" aria-live="polite"></p>
               </div>
               <div class="musie-body3d__turn" id="turn"></div>
-              <button type="button" id="edit" class="musy-btn musy-btn--outline musy-btn--min musie-body3d__edit" aria-pressed="false"><span class="musy-btn__label">Flächen bearbeiten</span></button>
+              <button type="button" id="edit" class="musy-btn musy-btn--ghost musy-btn--min musie-body3d__edit" aria-pressed="false" disabled data-disabled=""><span class="musy-btn__label">Flächen löschen</span></button>
               </div>
             </div>
           </div>
@@ -653,7 +678,11 @@ const statusEl = document.getElementById('body-status'), editBtn = document.getE
 /* Tokens als Farbe: light-dark(…) löst ein unsichtbares Element zu rgb() auf. */
 const colorProbe = document.createElement('span'); colorProbe.hidden = true; document.body.appendChild(colorProbe);
 const tokenColor = (name) => { colorProbe.style.color = `var(${name})`; return new THREE.Color().setStyle(getComputedStyle(colorProbe).color); };
-const SAND = tokenColor('--sand-4'), PAINT = tokenColor('--interactive-primary');   // Grün (Ben, 2026-11-11), vorher Terrakotta
+const SAND = tokenColor('--sand-4');
+/* Grün (Ben, 2026-11-11, vorher Terrakotta). Überlappende Flächen in verschiedenen Grüns der Palette: zuerst das
+   Primär-Grün, dann die Stufen, die sich auf Sand und voneinander am deutlichsten abheben. */
+const SHADE_TOKENS = ['--green-9', '--green-6', '--green-12', '--green-8'];
+const SHADES = SHADE_TOKENS.map(tokenColor);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setClearColor(0x000000, 0);
@@ -666,23 +695,36 @@ const keyLight = new THREE.DirectionalLight(0xffffff, 1.6); keyLight.position.se
 const fillLight = new THREE.DirectionalLight(0xffffff, 0.45); fillLight.position.set(1.4, 0.1, 0.6); camera.add(fillLight);
 const root = new THREE.Group(); scene.add(root);
 /* Die Kamera steht bei −z. yaw = π: das Gesicht schaut zu dir. Der Regler zeigt yaw − π, von −180° bis 180°;
-   0° in der Mitte ist das Gesicht, ±180° der Rücken. */
-let yaw = Math.PI, FIT_H = 1.5, FIT_W = 0.95;            // FIT_*: was ins Bild muss, in Metern (nach dem Laden gemessen)
+   0° in der Mitte ist das Gesicht, ±180° der Rücken.
+   tilt kippt um die waagrechte Achse des Bildschirms (nach dem Drehen: Euler XYZ, also erst yaw um die eigene
+   Längsachse, dann tilt um die Welt-x-Achse), ±90°. Positiv: die Vorderseite geht nach oben, du siehst von unten. */
+let yaw = Math.PI, tilt = 0, RADIUS = 0.75;           // RADIUS: die Kugel um den sitzenden Körper (nach dem Laden gemessen)
+/* Heranzoomen (beim Löschen): die Kamera rückt näher (BASE_D / zoom), und gedreht wird um `pivot`, einen Punkt
+   auf dem Körper — das Netz wird dafür um −pivot verschoben, die Drehung bleibt am Ursprung. */
+let BASE_D = 3, zoom = 1;
+const pivot = new THREE.Vector3();
+const PITCH_MAX = Math.PI / 2;
+const tiltSays = (d) => (Math.abs(d) < 10 ? 'auf Augenhöhe' : d > 0 ? 'von unten' : 'von oben');
+let tiltSlider = null;
 const wrapDeg = (rad) => { let d = ((rad - Math.PI) * 180 / Math.PI) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d; };
 const faceSays = (d) => { const a = Math.abs(d); return a <= 45 ? 'Vorderseite' : a >= 135 ? 'Rückseite' : d > 0 ? 'rechte Seite' : 'linke Seite'; };
 let turnSlider = null;
-function setYaw(next, from) {
-  yaw = next; root.rotation.y = yaw;
+function setView(nextYaw, nextPitch, from) {
+  yaw = nextYaw; tilt = Math.max(-PITCH_MAX, Math.min(PITCH_MAX, nextPitch));
+  root.rotation.set(tilt, yaw, 0);
   if (from !== 'slider' && turnSlider) turnSlider.set(Math.round(wrapDeg(yaw)));
+  if (from !== 'tilt' && tiltSlider) tiltSlider.set(Math.round(tilt * 180 / Math.PI));
 }
-root.rotation.y = yaw;
+const setYaw = (next, from) => setView(next, tilt, from);
+root.rotation.set(tilt, yaw, 0);
 function fit() {
   const r = stage.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return;
   renderer.setSize(r.width, r.height, false);
   camera.aspect = r.width / r.height;
-  const h = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const d = Math.max(FIT_H / h, FIT_W / (h * camera.aspect)) + FIT_W / 2;
-  camera.position.set(0, 0.02, -d); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix();
+  /* Die ganze Kugel ins Bild: so passt der Körper in jeder Drehung und jedem Kippen, ohne dass die Kamera springt. */
+  const v = THREE.MathUtils.degToRad(camera.fov / 2), hz = Math.atan(Math.tan(v) * camera.aspect);
+  BASE_D = RADIUS * 1.04 / Math.sin(Math.min(v, hz));
+  camera.position.set(0, 0, -BASE_D / zoom); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix();
 }
 new ResizeObserver(fit).observe(stage); fit();
 
@@ -732,8 +774,8 @@ function buildBody(bin) {
     if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; }
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, cz = (z0 + z1) / 2;
   let reach = 0;
-  for (let v = 0; v < NV; v++) { pos[v * 3] -= cx; pos[v * 3 + 1] -= cy; pos[v * 3 + 2] -= cz; reach = Math.max(reach, Math.hypot(pos[v * 3], pos[v * 3 + 2])); }
-  FIT_H = (y1 - y0) * 1.1; FIT_W = reach * 2 * 1.06; fit();
+  for (let v = 0; v < NV; v++) { pos[v * 3] -= cx; pos[v * 3 + 1] -= cy; pos[v * 3 + 2] -= cz; reach = Math.max(reach, Math.hypot(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2])); }
+  RADIUS = reach; fit();
   geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geom.setIndex(new THREE.BufferAttribute(idx, 1));
@@ -809,16 +851,33 @@ const say = (a) => REGION_DE[a.region] + (SIDE_DE[a.side] ? `, ${SIDE_DE[a.side]
 let areas = [], nextId = 1, active = null, activeSince = 0, painting = false, editing = false;
 const radiusOf = (holdMs) => RMIN + (RMAX - RMIN) * (1 - Math.exp(-holdMs / 1000 / TAU));
 const alphaOf = (holdMs) => Math.min(1, 0.35 + holdMs / 700);   // färbt sich langsam ein
+/* In Schichten: Sand, darüber jede Fläche in ihrem Grün, in der Reihenfolge, in der sie entstanden — die neuere
+   liegt oben, ihr weicher Rand lässt die ältere durchscheinen. */
 function recolor(list) {
   for (let i = 0; i < list.length; i++) {
-    const v = list[i]; let p = 0;
-    for (const a of areas) { const dv = a.d[v]; if (dv < a.r) p = Math.max(p, a.alpha * (1 - soft(dv, a.r * 0.62, a.r))); }
-    const k = p * 0.92;
-    colors[v * 3] = SAND.r + (PAINT.r - SAND.r) * k; colors[v * 3 + 1] = SAND.g + (PAINT.g - SAND.g) * k; colors[v * 3 + 2] = SAND.b + (PAINT.b - SAND.b) * k;
+    const v = list[i]; let r = SAND.r, g = SAND.g, b = SAND.b;
+    for (const a of areas) {
+      const dv = a.d[v]; if (dv >= a.r) continue;
+      const k = a.alpha * (1 - soft(dv, a.r * 0.62, a.r)) * 0.92, c = SHADES[a.shade];
+      r += (c.r - r) * k; g += (c.g - g) * k; b += (c.b - b) * k;
+    }
+    colors[v * 3] = r; colors[v * 3 + 1] = g; colors[v * 3 + 2] = b;
   }
   geom.attributes.color.needsUpdate = true;
 }
-const snap = (a) => ({ id: a.id, region: a.region, side: a.side, facing: a.facing, radius_cm: Math.round(a.r * 1000) / 10,
+/* Zwei Flächen überlappen, wo ein Punkt in beiden liegt. */
+function overlaps(a, b) {
+  const list = a.reached.length <= b.reached.length ? a : b, other = list === a ? b : a;
+  for (const v of list.reached) if (list.d[v] < list.r && other.d[v] < other.r) return true;
+  return false;
+}
+/* Das erste Grün, das keine überlappende Fläche schon hat; sind alle vergeben, reihum. */
+function pickShade(a) {
+  const used = new Set(areas.filter((x) => x !== a && overlaps(a, x)).map((x) => x.shade));
+  for (let i = 0; i < SHADES.length; i++) if (!used.has(i)) return i;
+  return a.id % SHADES.length;
+}
+const snap = (a) => ({ id: a.id, region: a.region, side: a.side, facing: a.facing, shade: SHADE_TOKENS[a.shade], radius_cm: Math.round(a.r * 1000) / 10,
   hold_s: +(a.hold / 1000).toFixed(2), t: a.t, at: a.at, center: [a.center.x, a.center.y, a.center.z].map((x) => +x.toFixed(3)) });
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -833,9 +892,9 @@ function startPaint(clientX, clientY) {
   const hit = hitAt(clientX, clientY); if (!hit) return false;
   const p = mesh.worldToLocal(hit.point.clone()), f = hit.face;
   const seeds = [f.a, f.b, f.c].map((v) => [v, Math.hypot(pos[v * 3] - p.x, pos[v * 3 + 1] - p.y, pos[v * 3 + 2] - p.z)]);
-  /* Auf einer Fläche gehalten, wächst diese weiter; sonst beginnt eine neue. */
-  active = areas.find((a) => seeds.some(([v]) => a.d[v] < a.r)) ?? null;
-  if (!active) {
+  /* Jedes Halten beginnt eine neue Fläche, auch auf einer bestehenden (Ben, 2026-11-11; vorher wuchs dann die alte). */
+  active = null;
+  {
     /* RUND, UND TROTZDEM AUF DER HAUT: der Weg über die Kanten misst je nach Richtung zu lang (ein Stern statt
        eines Kreises). Darum zählt der größere von zwei Werten — der gerade Abstand, auf zusammenhängender Haut
        fast immer der richtige, und 80 % des Wegs über die Haut, der zwischen Arm und Rumpf weit größer ist. */
@@ -845,18 +904,25 @@ function startPaint(clientX, clientY) {
     const near = seeds.reduce((b, x) => (x[1] < b[1] ? x : b))[0];
     const restP = new THREE.Vector3(rest[near * 3], rest[near * 3 + 1], rest[near * 3 + 2]);
     const restN = new THREE.Vector3(restNormal[near * 3], restNormal[near * 3 + 1], restNormal[near * 3 + 2]);
-    active = { id: nextId++, d, reached, r: RMIN, alpha: alphaOf(0), hold: 0, center: p, normal: f.normal.clone(), ...regionOf(restP, restN),
+    active = { id: nextId++, d, reached, r: RMIN, alpha: alphaOf(0), hold: 0, shade: 0, center: p, normal: f.normal.clone(), ...regionOf(restP, restN),
       t: +listened.toFixed(1), at: new Date().toISOString(), button: null };
     areas.push(active);
-    ph('body_area_started', { area: snap(active), count: areas.length, playing });
+    active.shade = pickShade(active);
+    ph('body_area_started', { area: snap(active), count: areas.length, playing, overlaps: areas.filter((x) => x !== active && overlaps(active, x)).length });
   }
   painting = true; activeSince = performance.now();
   return true;
 }
+let shadeCheckAt = 0;
 function grow() {
   if (!painting || !active) return;
-  const held = active.hold + (performance.now() - activeSince);
+  const now = performance.now(), held = active.hold + (now - activeSince);
   active.r = radiusOf(held); active.alpha = alphaOf(held);
+  /* Wächst sie in eine Fläche desselben Grüns hinein, wechselt sie das Grün (alle 120 ms geprüft). */
+  if (now - shadeCheckAt > 120) {
+    shadeCheckAt = now;
+    if (areas.some((x) => x !== active && x.shade === active.shade && overlaps(active, x))) active.shade = pickShade(active);
+  }
   recolor(active.reached);
 }
 function endPaint() {
@@ -865,13 +931,14 @@ function endPaint() {
   painting = false;
   statusEl.textContent = `Eingefärbt: ${say(active)}.`;
   ph('body_area_painted', { area: snap(active), count: areas.length, listened: +listened.toFixed(1) });
-  active = null; renderButtons();
+  active = null; renderButtons(); syncEditButton();
 }
 function removeArea(a) {
   areas = areas.filter((x) => x !== a); a.r = 0; recolor(a.reached);
   if (a.button) a.button.remove();
   statusEl.textContent = `Entfernt: ${say(a)}.`;
-  ph('body_area_deleted', { area: snap(a), count: areas.length, listened: +listened.toFixed(1) });
+  ph('body_area_deleted', { area: snap(a), count: areas.length, listened: +listened.toFixed(1), zoom: +zoom.toFixed(2) });
+  if (!areas.length && editing) setEditing(false); else syncEditButton();
 }
 
 /* ── Bearbeiten: neben jeder Fläche ein roter Löschen-Knopf ── */
@@ -888,33 +955,113 @@ function renderButtons() {
   }
 }
 const wp = new THREE.Vector3(), wn = new THREE.Vector3(), toCam = new THREE.Vector3();
+/* ÜBERDECKEN SICH KNÖPFE, wird aus ihnen ein Lupen-Knopf. Ein Knopf ist 24 px groß (--target-min) mit 8 px Rand:
+   unter 36 px zwischen zwei Mitten trifft der Finger nicht mehr sicher den richtigen. */
+const GAP = 36, ZOOM_MAX = 10;
+const ZOOM_IN = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zoom-in musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line><line x1="11" x2="11" y1="8" y2="14"></line><line x1="8" x2="14" y1="11" y2="11"></line></svg>';
+const clusterButtons = new Map();                       // Schlüssel: die ids der Flächen, z. B. "3-5"
+function clusterButton(key, group) {
+  let b = clusterButtons.get(key);
+  if (!b) {
+    b = document.createElement('button');
+    b.type = 'button'; b.className = 'musy-icon-btn musy-icon-btn--ghost musy-icon-btn--min musie-area-cluster';
+    b.innerHTML = ZOOM_IN;
+    b.addEventListener('click', () => zoomInto(b.group));
+    layer.appendChild(b); clusterButtons.set(key, b);
+  }
+  b.group = group;
+  b.setAttribute('aria-label', `${group.length} Flächen liegen übereinander (${group.map(say).join(', ')}): heranzoomen, um eine zu löschen`);
+  return b;
+}
 function placeButtons() {
   const r = stage.getBoundingClientRect();
   if (!mesh) return;
+  const pxPerM = r.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.length());
+  const shown = [];
   for (const a of areas) {
     if (!a.button) continue;
     wp.copy(a.center).applyMatrix4(mesh.matrixWorld); wn.copy(a.normal).transformDirection(mesh.matrixWorld);
     const facesUs = wn.dot(toCam.copy(camera.position).sub(wp)) > 0.02;
     wp.project(camera);
-    const pxPerM = r.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.length());
-    a.button.style.left = `${(wp.x + 1) / 2 * r.width + Math.min(40, a.r * pxPerM * 0.7) + 14}px`;
-    a.button.style.top = `${(1 - wp.y) / 2 * r.height}px`;
-    a.button.hidden = !editing || !facesUs;
+    a.sx = (wp.x + 1) / 2 * r.width + Math.min(40, a.r * pxPerM * 0.7) + 14;
+    a.sy = (1 - wp.y) / 2 * r.height;
+    const onStage = a.sx > 0 && a.sx < r.width && a.sy > 0 && a.sy < r.height;
+    if (editing && facesUs && onStage) shown.push(a); else a.button.hidden = true;
   }
+  /* Gruppen: wer einem anderen näher als GAP ist, gehört zu seiner Gruppe (und so weiter). */
+  const groupOf = new Map();
+  for (const a of shown) groupOf.set(a, [a]);
+  for (let i = 0; i < shown.length; i++) for (let j = i + 1; j < shown.length; j++) {
+    const A = shown[i], B = shown[j];
+    if (Math.hypot(A.sx - B.sx, A.sy - B.sy) >= GAP) continue;
+    const ga = groupOf.get(A), gb = groupOf.get(B);
+    if (ga === gb) continue;
+    for (const x of gb) { ga.push(x); groupOf.set(x, ga); }
+  }
+  const live = new Set();
+  for (const g of new Set(groupOf.values())) {
+    if (g.length === 1) { const a = g[0]; a.button.hidden = false; a.button.style.left = `${a.sx}px`; a.button.style.top = `${a.sy}px`; continue; }
+    g.sort((x, y) => x.id - y.id);
+    const key = g.map((a) => a.id).join('-'); live.add(key);
+    const b = clusterButton(key, g);
+    b.style.left = `${g.reduce((t, a) => t + a.sx, 0) / g.length}px`; b.style.top = `${g.reduce((t, a) => t + a.sy, 0) / g.length}px`;
+    for (const a of g) a.button.hidden = true;
+  }
+  for (const [key, b] of clusterButtons) if (!live.has(key)) { b.remove(); clusterButtons.delete(key); }
 }
-editBtn.addEventListener('click', () => {
-  editing = !editing;
+
+/* Heranzoomen an eine Gruppe: so weit, dass ihre zwei nächsten Knöpfe gut auseinanderliegen (höchstens 10×),
+   und gedreht wird ab jetzt um ihre Mitte. Weich, außer bei „Bewegung reduzieren“. */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let zoomAnim = null;
+function zoomTo(nextZoom, nextPivot, why) {
+  const from = { zoom, pivot: pivot.clone() }, to = { zoom: nextZoom, pivot: nextPivot.clone() };
+  zoomAnim = { from, to, t0: performance.now(), ms: reduceMotion.matches ? 0 : 450 };
+  document.getElementById('zoom-out').hidden = nextZoom <= 1.001;
+  statusEl.textContent = nextZoom > 1.001 ? 'Herangezoomt. Jede Fläche hat jetzt ihren eigenen Löschen-Knopf, wenn sie weit genug auseinanderliegen.' : 'Herausgezoomt.';
+  ph('body_zoom', { zoom: +nextZoom.toFixed(2), why, count: areas.length });
+}
+function stepZoom() {
+  if (!zoomAnim || !mesh) return;
+  const { from, to, t0, ms } = zoomAnim;
+  const k = ms ? Math.min(1, (performance.now() - t0) / ms) : 1, e = k * k * (3 - 2 * k);
+  zoom = from.zoom + (to.zoom - from.zoom) * e;
+  pivot.lerpVectors(from.pivot, to.pivot, e);
+  mesh.position.copy(pivot).negate();
+  camera.position.set(0, 0, -BASE_D / zoom);
+  if (k >= 1) zoomAnim = null;
+}
+function zoomInto(group) {
+  const c = new THREE.Vector3(); for (const a of group) c.add(a.center); c.divideScalar(group.length);
+  let dmin = Infinity;
+  for (let i = 0; i < group.length; i++) for (let j = i + 1; j < group.length; j++) dmin = Math.min(dmin, Math.hypot(group[i].sx - group[j].sx, group[i].sy - group[j].sy));
+  const next = Math.min(ZOOM_MAX, zoom * Math.max(1.6, (GAP * 1.6) / Math.max(dmin, 3)));
+  zoomTo(next, c, 'cluster');
+}
+document.getElementById('zoom-out').addEventListener('click', () => zoomTo(1, new THREE.Vector3(), 'button'));
+
+/* „Flächen löschen“: ein Ghost-Button, ohne Flächen gesperrt. Wer die letzte löscht, ist fertig. */
+function setEditing(on) {
+  editing = on;
   editBtn.setAttribute('aria-pressed', String(editing));
-  editBtn.querySelector('.musy-btn__label').textContent = editing ? 'Fertig' : 'Flächen bearbeiten';
+  editBtn.querySelector('.musy-btn__label').textContent = editing ? 'Fertig' : 'Flächen löschen';
+  if (!editing && zoom > 1.001) zoomTo(1, new THREE.Vector3(), 'done');
+  syncEditButton();
   ph('body_edit_mode', { on: editing, count: areas.length });
-});
+}
+function syncEditButton() {
+  const off = areas.length === 0 && !editing;
+  editBtn.disabled = off;
+  if (off) editBtn.setAttribute('data-disabled', ''); else editBtn.removeAttribute('data-disabled');
+}
+editBtn.addEventListener('click', () => setEditing(!editing));
 
 /* ── Gesten: ziehen dreht, ruhig halten färbt ein; wer beim Halten zieht, dreht ── */
 let gesture = null;
 const HOLD_MS = 140, MOVE_PX = 7;
 canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId);
-  gesture = { id: e.pointerId, x0: e.clientX, y0: e.clientY, mode: 'pending', yaw0: yaw, timer: 0 };
+  gesture = { id: e.pointerId, x0: e.clientX, y0: e.clientY, mode: 'pending', yaw0: yaw, pitch0: tilt, axis: null, timer: 0 };
   if (!editing) gesture.timer = setTimeout(() => { if (gesture && gesture.mode === 'pending') gesture.mode = startPaint(gesture.x0, gesture.y0) ? 'paint' : 'rotate'; }, HOLD_MS);
   e.preventDefault();
 });
@@ -922,21 +1069,29 @@ canvas.addEventListener('pointermove', (e) => {
   if (!gesture || e.pointerId !== gesture.id) return;
   const moved = Math.hypot(e.clientX - gesture.x0, e.clientY - gesture.y0);
   if (gesture.mode === 'pending' && moved > MOVE_PX) { clearTimeout(gesture.timer); gesture.mode = 'rotate'; }
-  else if (gesture.mode === 'paint' && moved > MOVE_PX * 2) { endPaint(); Object.assign(gesture, { mode: 'rotate', x0: e.clientX, yaw0: yaw }); }
-  if (gesture.mode === 'rotate') setYaw(gesture.yaw0 + (e.clientX - gesture.x0) * 0.012, 'drag');
+  else if (gesture.mode === 'paint' && moved > MOVE_PX * 2) { endPaint(); Object.assign(gesture, { mode: 'rotate', x0: e.clientX, y0: e.clientY, yaw0: yaw, pitch0: tilt, axis: null }); }
+  if (gesture.mode === 'rotate') {
+    /* Links/rechts dreht, hoch/runter kippt (Ben, 2026-11-11). Die Richtung der ersten Pixel entscheidet: klar
+       waagrecht nur drehen, klar senkrecht nur kippen, schräg beides. Sonst kippt jedes Drehen ein wenig mit. */
+    const gx = e.clientX - gesture.x0, gy = e.clientY - gesture.y0;
+    if (!gesture.axis && Math.hypot(gx, gy) > MOVE_PX) gesture.axis = Math.abs(gx) > 2 * Math.abs(gy) ? 'x' : Math.abs(gy) > 2 * Math.abs(gx) ? 'y' : 'xy';
+    const ax = gesture.axis ?? 'xy';
+    setView(ax === 'y' ? gesture.yaw0 : gesture.yaw0 + gx * 0.012, ax === 'x' ? gesture.pitch0 : gesture.pitch0 - gy * 0.012, 'drag');
+  }
 });
 function endGesture(e) {
   if (!gesture || (e && e.pointerId !== gesture.id)) return;
   clearTimeout(gesture.timer);
   if (gesture.mode === 'pending' && !editing && startPaint(gesture.x0, gesture.y0)) endPaint();   // ein kurzes Tippen: ein kleiner Fleck
   if (gesture.mode === 'paint') endPaint();
-  if (gesture.mode === 'rotate') ph('body_turned', { deg: Math.round(wrapDeg(yaw)), via: 'drag' });
+  if (gesture.mode === 'rotate') ph('body_turned', { deg: Math.round(wrapDeg(yaw)), tilt_deg: Math.round(tilt * 180 / Math.PI), axis: gesture.axis, via: 'drag' });
   gesture = null;
 }
 canvas.addEventListener('pointerup', endGesture);
 canvas.addEventListener('pointercancel', endGesture);
 canvas.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { setYaw(yaw + (e.key === 'ArrowLeft' ? -1 : 1) * Math.PI / 12, 'keys'); e.preventDefault(); }
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { setView(yaw, tilt + (e.key === 'ArrowUp' ? 1 : -1) * Math.PI / 12, 'keys'); e.preventDefault(); }
   else if ((e.key === ' ' || e.key === 'Enter') && !e.repeat && !editing) {
     const r = canvas.getBoundingClientRect(); startPaint(r.left + r.width / 2, r.top + r.height * 0.42); e.preventDefault();
   }
@@ -953,9 +1108,16 @@ if (window.musieSlider) {
     /* Mit der Tastatur meldet Base UI jeden Schritt als fertig: erst nach einer halben Sekunde Ruhe ein Ereignis. */
     onCommit: (d) => { clearTimeout(turnQuiet); turnQuiet = setTimeout(() => ph('body_turned', { deg: Math.round(d), via: 'slider' }), 500); },
   });
+  let tiltQuiet = 0;
+  tiltSlider = window.musieSlider(document.getElementById('tilt'), {
+    label: 'Körper kippen', min: -90, max: 90, step: 1, initial: 0, orientation: 'vertical',
+    valueText: (d) => (Math.abs(d) < 10 ? 'auf Augenhöhe' : `${Math.abs(d)} Grad, ${tiltSays(d)}`),
+    onChange: (d) => setView(yaw, d * Math.PI / 180, 'tilt'),
+    onCommit: (d) => { clearTimeout(tiltQuiet); tiltQuiet = setTimeout(() => ph('body_tilted', { tilt_deg: Math.round(d), via: 'slider' }), 500); },
+  });
 } else console.warn('[Körper] Drehregler nicht geladen');
 
-(function frame() { grow(); renderer.render(scene, camera); placeButtons(); requestAnimationFrame(frame); })();
+(function frame() { grow(); stepZoom(); renderer.render(scene, camera); placeButtons(); requestAnimationFrame(frame); })();
 
 /* ── Die Musik: im Browser aus den Instrumenten-Samples ───────────────────────
    MODE 'side': einzelne Töne von Harfe und Kalimba, die zwischen links und rechts wandern, mit einzelnen Sprüngen
@@ -1119,7 +1281,7 @@ renderClock();
 function finish(via) {
   musicOff();
   if (painting) endPaint();
-  ph('body_marking_finished', { via, phase, areas: areas.map(snap), count: areas.length, listened: +listened.toFixed(1), gate_met: phase === 'expired' || clockSpent >= GATE_SECONDS, turned_deg: Math.round(wrapDeg(yaw)) });
+  ph('body_marking_finished', { via, phase, areas: areas.map(snap), count: areas.length, listened: +listened.toFixed(1), gate_met: phase === 'expired' || clockSpent >= GATE_SECONDS, turned_deg: Math.round(wrapDeg(yaw)), tilt_deg: Math.round(tilt * 180 / Math.PI) });
   document.getElementById('done-text').textContent = areas.length
     ? `Du hast ${areas.length === 1 ? 'eine Fläche' : areas.length + ' Flächen'} eingefärbt: ${areas.map(say).join(' · ')}.`
     : 'Du hast keine Fläche eingefärbt. Auch das ist eine Antwort.';
@@ -1129,7 +1291,7 @@ cta.addEventListener('click', () => (phase === 'unstarted' ? begin() : finish('c
 document.getElementById('close').addEventListener('click', () => finish('close'));
 document.getElementById('again').addEventListener('click', () => location.reload());
 /* Nur für die Prüfung beim Bauen: den Counter vorstellen, ohne 90 s zu warten. */
-window.__musieTest = { setClock(seconds) { clockSpent = seconds; }, get phase() { return phase; }, get yawDeg() { return wrapDeg(yaw); } };
+window.__musieTest = { setClock(seconds) { clockSpent = seconds; }, get phase() { return phase; }, get yawDeg() { return wrapDeg(yaw); }, get pitchDeg() { return tilt * 180 / Math.PI; }, get zoom() { return zoom; } };
 </script>
 </body>
 </html>
