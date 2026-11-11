@@ -6431,12 +6431,26 @@ html[data-musy-scroll-snap='y'] {
 
      AND THE DESKTOP OFFSET GOES. There is no column beside the pile here:
      the buttons are below the dots, and there is nothing above them to climb
-     level with. */
+     level with.
+
+     ── THE PAIR IS NOT IN IT ANY MORE (Ben, 2026-11-11) ──────────────────
+     The two chevrons left this column for the gutters either side of the
+     card — `.musy-deck__strip`, further down. What stays under the card is
+     whatever the screen adds (`actions`, and the deprecated `navActions`),
+     and when the screen adds nothing the column is not drawn at all: an
+     empty box here still costs the body's 32px gap under the dots. `:has()`
+     asks — the nav holds only the pair, and the column only the nav —
+     rather than a prop carrying the answer down. */
   .musy-deck__actions {
     inline-size: var(--musy-deck-card-inline);
     justify-items: end;
   }
   .musy-deck__stage:has(.musy-deck__dots) + .musy-deck__actions { margin-block-end: 0; }
+  .musy-deck__nav > .musy-deck__act { display: none; }
+  .musy-deck__nav:not(:has(> :not(.musy-deck__act))) { display: none; }
+  .musy-deck__actions:not(:has(> :not(.musy-deck__nav))):not(:has(> .musy-deck__nav > :not(.musy-deck__act))) {
+    display: none;
+  }
 }
 
 /* ── THE PILE ──────────────────────────────────────────────────────────────
@@ -6500,7 +6514,16 @@ html[data-musy-scroll-snap='y'] {
 
    THE RADIUS IS THE PILE'S, inherited, so an extra card has the same corner as
    a real one without the consumer naming a token. Everything else — fill,
-   blur, how it leaves — belongs to whatever is put in here.                 */
+   blur — belongs to whatever is put in here.
+
+   ── HOW IT LEAVES IS THE DECK'S NOW (Ben, 2026-11-11) ──────────────────────
+   It said "how it leaves" belonged to the content too, and the content's way
+   was a fade on a press. The cover now moves exactly as a card does: the same
+   two unitless numbers from the finger, multiplied by the same tokens, the
+   same spring back, and the SAME `musy-deck-throw` keyframes on the way out —
+   so a legend swiped away and a card swiped away cannot drift apart. What it
+   does not take is the pile's: no depth, no scatter, no rise. It is square
+   on top of the pile and leaves from there.                                 */
 .musy-deck__cover {
   grid-area: card;
   z-index: calc(var(--z-raised) + 1);
@@ -6508,6 +6531,34 @@ html[data-musy-scroll-snap='y'] {
   /* One cell, one child, stretched both ways — so whatever is put in here is
      the card's size without being told what that size is. */
   display: grid;
+  /* A drag surface, as a card is (L13), and the legend is a button full of
+     sentences a mouse drag would otherwise start selecting. */
+  user-select: none;
+  -webkit-user-select: none;
+
+  --musy-drag-x: 0;
+  --musy-drag-y: 0;
+  --musy-card-swing: 0;
+  /* The card's transform with the pile taken out of it: the finger and the
+     lean, nothing else. `musy-deck-throw`'s `from` is this exactly, which is
+     what lets the flight start where the finger let go. */
+  transform:
+    translate3d(calc(var(--musy-drag-x) * 1px), calc(var(--musy-drag-y) * 1px), 0)
+    rotate(calc(var(--musy-deck-swing-max) * var(--musy-card-swing)));
+  /* The card's spring back, the card's curve. */
+  transition: transform var(--motion-duration-base) var(--motion-ease-emphasis);
+}
+
+/* Under the finger: no lag, for the reason the card gives. */
+.musy-deck__cover[data-swiping='true'] { transition: none; will-change: transform; }
+
+/* Leaving: the card's throw, the card's duration, and nothing under the
+   pointer — the card it uncovers is live the moment this is let go. Reduced
+   motion collapses it to a cut through Layer 1, as it does a card's; the
+   animation still ENDS, and its end is what tells the consumer. */
+.musy-deck__cover[data-throwing='true'] {
+  animation: musy-deck-throw var(--motion-duration-slow) var(--motion-ease-exit) forwards;
+  pointer-events: none;
 }
 
 .musy-deck__card {
@@ -6884,7 +6935,141 @@ html[data-musy-scroll-snap='y'] {
    THE ONE DUPLICATE IS THE ACCEPT, which is also drawn on the card itself on
    the small tier. That is not the same compromise: both are visible, both are
    in the tree, and each is where its own input expects it — the card for a
-   thumb, the column for everything else.                                   */
+   thumb, the column for everything else.
+
+   STILL ALWAYS DRAWN SINCE 2026-11-11, AS ONE OF TWO SHAPES. Below --bp-md
+   the pair is the gutters (next block) and the two IconButtons are
+   `display: none`; at --bp-md and up it is the other way round. Exactly one
+   of each direction is in the box tree, and therefore in the tab order and
+   the accessibility tree, at any width — `display: none` takes it out of all
+   three, which `.musy-sr-only` never did.                                  */
+
+/* ═══ THE GUTTERS — the pair, below --bp-md (Ben, 2026-11-11) ══════════════
+   "The action is triggered over tapping on the right side next to the card
+   … over the whole [height] of the stack." Each direction is the whole strip
+   of screen between the card and the edge, as tall as the card in front,
+   with a ghost chevron at the primary rung in the middle of it. Reference:
+   Figma `91:7024`, 393px wide — a 297px card and the chevrons at the screen's
+   edges, level with the middle of the stack.
+
+   ── VERTICALLY: THE PILE'S OWN ROW ─────────────────────────────────────
+   An absolutely positioned child of a grid takes its GRID AREA as its
+   containing block, and these are placed in the stage's first row — the
+   pile's. So the strip is exactly as tall as the tallest face, in whatever
+   language, with no number measured anywhere. The row also holds the pile's
+   fringe reserve (its `margin-block-end`), which is taken back off the
+   bottom in the pile's own spelling, so the strip ends where the top card
+   ends and the chevron sits at the card's middle rather than the fringe's.
+
+   `1 / 2`, NEVER `1`. For an absolutely positioned child an `auto` end line
+   is not "span one track" but the grid container's PADDING EDGE — so
+   `grid-row: 1` ran the strip from the top of the pile to the bottom of the
+   stage, dots and all. Measured at 393: 330px against a 290px card, with the
+   chevron 20px below the card's middle.
+
+   ── HORIZONTALLY: TO THE EDGE OF THE SCREEN ────────────────────────────
+   Out from the card's edge by half of what the card leaves of the viewport.
+   That is the same viewport the card's own width is measured from
+   (`--musy-deck-card-inline` subtracts from 100vw), so the two cannot
+   disagree, and it reaches the screen's edge THROUGH the consumer's padding —
+   which the deck cannot see, and which is exactly where the Figma frame puts
+   the chevrons. At 393 that is 48px a side, twice 2.5.8's floor.
+
+   THE DECK'S OWN CLIP IS THE OTHER EDGE. `.musy-deck` clips sideways, so a
+   deck that is not full-bleed has its strips cut at its own box — and a
+   clipped box is clipped for the pointer too, so the hit area stays inside
+   the deck. /exercises is full-bleed (`.musie-deck-stage`), and the phone
+   story is too, because a strip cut down to the pane's padding shows nothing.
+
+   A CONSUMER THAT WIDENS THE CARD narrows these. Past `100vw - --sp-9` the
+   strip falls under the chevron's 44px and the chevron overhangs the card;
+   nothing does that today, and `--musy-deck-card-inline` is the knob.
+
+   ── THE LOOK IS THE GHOST RUNG'S, AND IT IS THE STRIP'S OWN ───────────────
+   The strip is a button the deck draws, not an IconButton stretched: that
+   component owns its own box. The chevron inside is drawn here from the same
+   tokens `.musy-icon-btn--ghost` at the primary rung uses — target, radius,
+   ghost fill and ink, `md` glyph — so it looks like that control without
+   being one. Hover, press and the focus ring go on the MARK, which is the
+   thing the eye reads as the control; on the strip they would light up a
+   column the height of a card, and the ring would be clipped at the screen's
+   edge.                                                                    */
+.musy-deck__strip { display: none; }
+
+@media (max-width: 767.98px) {
+  .musy-deck__strip {
+    position: absolute;
+    grid-row: 1 / 2;
+    grid-column: 1 / 2;
+    inset-block: 0 calc(var(--sp-2) * 4);
+    inline-size: calc((100vw - var(--musy-deck-card-inline)) / 2);
+
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--interactive-ghost-on);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Back on the leading side, forward on the trailing one — the pair's own
+     order, which is also the order they are in the tree. */
+  .musy-deck__strip--previous { inset-inline-end: 100%; }
+  .musy-deck__strip--next { inset-inline-start: 100%; }
+}
+
+.musy-deck__strip:focus-visible,
+.musy-deck__strip[data-force~="focus"] { outline: none; }
+
+.musy-deck__strip-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target-primary);
+  block-size: var(--target-primary);
+  border-radius: var(--radius-control);
+  background-color: var(--interactive-ghost);
+  transition: background-color var(--motion-toggle), color var(--motion-toggle);
+}
+
+/* THE ONE RING, on the mark. The shared focus rule at the top of this file
+   lists the controls that carry it; this one cannot sit in that list as
+   `.musy-deck__strip-mark:focus-visible`, because the mark is never what
+   holds focus — the strip is.
+
+   THE OFFSET IS TURNED INWARD, and that is the one departure. At 393 the
+   strip is 48px and the mark 44, so there are 2px either side of it — and the
+   shared offset puts the ring 5px out, 3px of it past the screen's edge on
+   the forward strip, where nothing can draw it. Measured: the right-hand ring
+   ran to 396 on a 393 screen. Pulled in by the same offset it would have
+   pushed out, the ring straddles the mark's edge and lands whole, a pixel
+   short of the screen on one side and of the card on the other. */
+.musy-deck__strip:focus-visible .musy-deck__strip-mark,
+.musy-deck__strip[data-force~="focus"] .musy-deck__strip-mark {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .musy-deck__strip:hover:not(:disabled) .musy-deck__strip-mark,
+  .musy-deck__strip[data-force~="hover"] .musy-deck__strip-mark {
+    background-color: var(--interactive-ghost-hover);
+  }
+}
+
+.musy-deck__strip:active:not(:disabled) .musy-deck__strip-mark,
+.musy-deck__strip[data-force~="active"] .musy-deck__strip-mark {
+  background-color: var(--interactive-ghost-active);
+}
+
+.musy-deck__strip:disabled { cursor: not-allowed; }
+.musy-deck__strip:disabled .musy-deck__strip-mark {
+  background-color: var(--interactive-ghost-disabled);
+  color: var(--interactive-ghost-on-disabled);
+}
 
 
 /* ═══ FILTER CHIPS ═════════════════════════════════════════════════════════

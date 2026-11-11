@@ -123,6 +123,22 @@ const meta = {
           '**Nothing is gated behind the gesture.** Back and forward are real',
           'buttons, always in the DOM; Arrow Right deals and Arrow Left goes back.',
           '',
+          '**On a phone the pair is the gutters** (Ben, 2026-11-11). Below',
+          '`--bp-md` back and forward are the two strips of screen either side of',
+          'the card, each as tall as the stack, with a ghost chevron in the middle:',
+          'the whole strip is the button, and a press on it never starts a drag.',
+          'At `--bp-md` and up the pair stays beside the card — **secondary** since',
+          'the same day, reversing the 2026-10-07 `outline`, because the new',
+          'desktop frame draws it so.',
+          '',
+          '**The cover moves like a card** (2026-11-11). An extra card on top of',
+          'the pile — the first-use legend on /exercises — takes the same drag,',
+          'threshold and fling, and leaves either way; the pair, the gutters, the',
+          'arrow keys, a sideways scroll and the dots send it away instead of',
+          'turning the pile under it. `onCoverDismiss` is called once it has',
+          'landed, with `\'next\'` or `\'previous\'`. A press still reaches whatever is',
+          'in it.',
+          '',
           '**The deck draws no accept of its own.** It had a primary button in the',
           'action column until 2026-10-05, and once a face could put one on the card',
           'that was the same action twice in two sizes a hand’s width apart. The',
@@ -171,6 +187,9 @@ const meta = {
     previousLabel: { control: 'text', description: 'The back button’s accessible name and tooltip, and nothing else — the overlay says nextLabel both ways. Required.' },
     label: { control: 'text', description: 'The pile’s accessible name, and the only place the keys are named: the overlay is aria-hidden.' },
     actions: { control: false, description: 'Extra controls under the deck’s own, in the same stack.' },
+    navActions: { control: false, description: 'DEPRECATED 2026-11-11 — put the control in the screen’s toolbar. Still renders: in the pair’s row at --bp-md and up, alone under the card below it.' },
+    cover: { control: false, description: 'An extra card on top of the pile, in the card’s own cell. Moves like a card since 2026-11-11: dragged, flung, or sent by any direction. No dot, no position.' },
+    onCoverDismiss: { action: 'coverDismiss', description: 'The cover has left — called once its flight has landed, with \'next\' (out over the leading edge) or \'previous\' (the trailing one). Not called for a press on the cover’s own content.' },
     positionLabel: { control: false, description: 'What the live region says when the top card changes. The deck knows the position, the consumer knows the name.' },
     busy: { control: 'boolean', description: 'True while an accept is in flight. The deck goes inert.' },
     className: { control: false },
@@ -315,6 +334,139 @@ export const Dealt: Story = {
           Deal again
         </CtaButton>
         <CardDeck {...args} dealKey={key} />
+      </div>
+    );
+  },
+};
+
+/* ── THE TWO WIDTHS THE PAIR HAS TWO SHAPES AT ─────────────────────────────
+   The gutters are a VIEWPORT media query (below --bp-md), so a pane narrowed
+   by a decorator changes nothing — the story has to narrow the viewport
+   itself. 393×852 is the Figma reference frame's width (`91:7024`); 1280 is
+   comfortably past --bp-md. */
+const VIEWPORTS = {
+  musyPhone: { name: 'Phone 393 (Figma 91:7024)', styles: { width: '393px', height: '852px' }, type: 'mobile' as const },
+  musyDesktop: { name: 'Desktop 1280', styles: { width: '1280px', height: '800px' }, type: 'desktop' as const },
+};
+
+/* The deck's box made as wide as the screen, which is what /exercises does
+   with `.musie-deck-stage`. The gutters reach the screen's edge THROUGH
+   whatever is around the deck, and the deck clips them at its own box — so
+   inside the theme pane's padding a strip would be cut down to a few pixels
+   and show nothing. */
+function FullBleed({ children }: { children: React.ReactNode }) {
+  return <div style={{ inlineSize: '100vw', marginInline: 'calc(50% - 50vw)' }}>{children}</div>;
+}
+
+/**
+ * ON A PHONE THE PAIR IS THE GUTTERS (Ben, 2026-11-11). Below `--bp-md` back
+ * and forward are the two strips of screen either side of the card, each as
+ * tall as the card in front, with a ghost chevron at the primary rung in the
+ * middle — "the action is triggered over tapping on the right side next to
+ * the card … over the whole [height] of the stack". Tap anywhere in a strip;
+ * it steps the pile exactly as the button did.
+ *
+ * A PRESS IN A STRIP NEVER STARTS A DRAG. The whole strip is a button, and a
+ * press on a button is never the gesture's — so on a phone the swipe starts on
+ * the card itself, where it used to start anywhere on the stage.
+ *
+ * TAB ORDER: the pile, the card's own Start, back, forward, then the dots.
+ *
+ * CANVAS ONLY. The layout answers to the viewport, which the Docs page cannot
+ * narrow; this story pins the canvas at 393px instead.
+ */
+export const PhoneGutters: Story = {
+  tags: ['!autodocs'],
+  parameters: { viewport: { options: VIEWPORTS } },
+  globals: { viewport: { value: 'musyPhone', isRotated: false } },
+  render: (args) => (
+    <FullBleed>
+      <CardDeck {...args} />
+    </FullBleed>
+  ),
+};
+
+/**
+ * AT `--bp-md` AND UP THE PAIR STAYS BESIDE THE CARD, at the foot of the
+ * stack — and is `secondary` since 2026-11-11 (D6), where it was `outline`
+ * from 2026-10-07. The new desktop frame draws it raised, beside a Shuffle
+ * that is secondary too; the reason it went quiet in October was a third icon
+ * in the row, and that help button leaves for the screen's toolbar.
+ *
+ * The gutters are in the tree here and `display: none`, so exactly one of each
+ * direction is reachable at any width.
+ */
+export const DesktopPair: Story = {
+  parameters: { viewport: { options: VIEWPORTS } },
+  globals: { viewport: { value: 'musyDesktop', isRotated: false } },
+};
+
+/* A stand-in for the /exercises legend: an extra card that is ONE BUTTON
+   from edge to edge, dismissing itself on a press — which is the hard case
+   for the deck, because a button is the one thing a drag never starts on
+   anywhere else. */
+function StoryCover({ onPress }: { onPress: () => void }) {
+  return (
+    <button
+      type="button"
+      className="musy-focusable"
+      onClick={onPress}
+      style={{
+        appearance: 'none', border: 0, font: 'inherit', textAlign: 'start', cursor: 'pointer',
+        display: 'grid', alignContent: 'center', gap: 'var(--space-gap-related)',
+        boxSizing: 'border-box', blockSize: '100%', padding: 'var(--space-inset-card)',
+        borderRadius: 'inherit',
+        backgroundColor: 'var(--interactive-primary)', color: 'var(--interactive-primary-on)',
+      }}
+    >
+      <span style={{ fontFamily: 'var(--type-heading-sm-family)', fontSize: 'var(--type-heading-sm-size)', fontWeight: 'var(--type-heading-sm-weight)', lineHeight: 'var(--type-heading-sm-line)' }}>
+        A cover on the pile
+      </span>
+      <span style={{ fontFamily: 'var(--type-body-md-family)', fontSize: 'var(--type-body-md-size)', lineHeight: 'var(--type-body-md-line)' }}>
+        Swipe it off either way, like a card. Or press it.
+      </span>
+    </button>
+  );
+}
+
+/**
+ * THE COVER MOVES LIKE A CARD (Ben, 2026-11-11). Drag it: it follows the
+ * pointer, flies out past a quarter of its width or on a flick — either way —
+ * and springs back below that. The pair, the gutters, Arrow Left and Right, a
+ * sideways scroll and the dots send it away too, INSTEAD of moving the pile
+ * under it; the first card is on top when it has gone, exactly as it was.
+ *
+ * `onCoverDismiss` is logged once the flight has LANDED, with `next` (out
+ * over the leading edge: a left swipe, Arrow Right, the forward button) or
+ * `previous` (the trailing one). The story unmounts the cover then, as the
+ * app does; *Put the cover back* passes a new one.
+ *
+ * A PRESS STILL REACHES WHAT IS IN IT. This cover dismisses itself on a press
+ * — the legend's own behaviour — and that is not `onCoverDismiss`: nothing is
+ * logged for it, because the deck did not send it anywhere.
+ *
+ * UNDER IT, THE CARD IN FRONT IS INERT: its Start button is not a tab stop
+ * while something is sitting on it, and Enter on the pile waits for the cover
+ * to go rather than starting an exercise nobody can see.
+ */
+export const WithCover: Story = {
+  render: (args) => {
+    /* eslint-disable-next-line react-hooks/rules-of-hooks -- a story body is a
+       component; Storybook renders it as one. */
+    const [up, setUp] = useState(true);
+    return (
+      <div style={{ display: 'grid', gap: 'var(--space-gap-group)', justifyItems: 'start' }}>
+        <CtaButton variant="secondary" size="min" disabled={up} onClick={() => setUp(true)}>
+          Put the cover back
+        </CtaButton>
+        <CardDeck
+          {...args}
+          cover={up ? <StoryCover onPress={() => setUp(false)} /> : undefined}
+          onCoverDismiss={(direction) => {
+            args.onCoverDismiss?.(direction);
+            setUp(false);
+          }}
+        />
       </div>
     );
   },
