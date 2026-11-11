@@ -176,6 +176,34 @@
   --instrument-tap-fade-power: 1.6;
   --instrument-cursor-size: calc(var(--sp-5) * 2);
   --instrument-cursor-color: var(--interactive-primary);
+
+  /* ── G6 · the 40px target ─────────────────────────────────────────────
+     Belongs in Layer 1 §Dimension, in the touch-target block (WCAG 2.5.8),
+     between --target-min and --target-primary. Found by /exercises,
+     2026-11-11; Ben's number (D7, docs/plans/exercises-ready-to-build.md).
+
+     The screen's toolbar is a ROW OF 40px CONTROLS — Shuffle and „Ziel
+     ändern“ are CtaButton `min`, which its label and block padding draw
+     about 40px tall — and the help button is the one icon-only control in
+     it. The ladder had nothing for that: --target-min (24px) is a speck
+     beside its neighbours, and --target-primary (44px) stands proud of
+     every one of them. So one target, at the row's height.
+
+     IT CLEARS 2.5.8 OUTRIGHT, WHICH --target-min DOES NOT. 24px is legal
+     only through the spacing exception, which is why .musy-icon-btn--min
+     bakes a --sp-2 margin in and Layer 1 confines it to prose and fine
+     pointers. 40px is over the 24px floor on its own: no exception, no
+     margin, no pointer condition. It is NOT 2.5.5's 44px (AAA), and that
+     stays --target-primary's job — an action that carries the person
+     onward still takes the 44px rung.
+
+     One component has the rung: IconButton `size="sm"`. CtaButton has not
+     (A8; IconButton.tsx's size note says why the ladders differ there).
+
+     Absorbing it: this line moves into musy-foundations.css's touch-target
+     block in ladder order, `target-sm` joins the JSON's `dimension` group
+     beside `target-min`, and its row leaves TOKEN-DRIFT.md.               */
+  --target-sm: 40px;
 }
 
 @media (prefers-contrast: more) {

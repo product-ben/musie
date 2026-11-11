@@ -30,8 +30,24 @@ import type { LucideIcon } from 'lucide-react';
  */
 export type IconButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 /* `comfort` is unused today and reserved — see CtaButton.tsx's note: it is
-   the rung for when Musie is optimised for elderly and for children. */
-export type IconButtonSize = 'min' | 'primary' | 'comfort' | 'guided';
+   the rung for when Musie is optimised for elderly and for children.
+
+   ── `sm` IS ON THIS LADDER AND NOT ON CtaButton's (Ben, 2026-11-11) ──────
+   40px, --target-sm (amendment gap G6). It exists for the help button in the
+   /exercises toolbar, which stands in a row of CtaButton `min`s — and those
+   draw about 40px tall (39px on a 393px phone, 40.4px at 1440, measured):
+   the label and the --sp-2 block padding set the height, not --target-min.
+   An IconButton has no label to grow it, so it needed the rung by name.
+
+   CtaButton does NOT get `sm`, on purpose: its `min` already IS the 40px
+   control, and a second name for the same height would be a rung nobody can
+   choose between. That breaks the rule both headers state — the two ladders
+   read identically, `min` named so on both for that reason — and it breaks it
+   knowingly. Do not "fix" the asymmetry by adding `sm` to CtaButton.
+
+   Unlike `min`, `sm` takes no baked-in margin: 40px clears 2.5.8 on its own,
+   without the spacing exception, so there is nothing for a margin to earn. */
+export type IconButtonSize = 'min' | 'sm' | 'primary' | 'comfort' | 'guided';
 
 export interface IconButtonProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'children' | 'className' | 'render'> {
@@ -51,8 +67,10 @@ export interface IconButtonProps
   className?: string;
 }
 
+/* Two ladders, one word: the BUTTON's `sm` (40px) carries the ICON's `md`
+   (20px), the same glyph as `primary` — 4px less box is not a smaller glyph. */
 const ICON_FOR_TARGET: Record<IconButtonSize, IconSize> = {
-  min: 'sm', primary: 'md', comfort: 'lg', guided: 'lg',
+  min: 'sm', sm: 'md', primary: 'md', comfort: 'lg', guided: 'lg',
 };
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
