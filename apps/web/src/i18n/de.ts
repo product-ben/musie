@@ -1335,8 +1335,11 @@ export const de: Messages = {
      gezeichnet, einen halben Wortabstand vom Wort entfernt. Auf dem Schirm
      gesehen, auf Deutsch, bei 393px. Der GRUSS behält seinen Punkt, weil nach
      ihm ein Satz kommt, von dem er getrennt werden muss. */
-  'exercises.headline.one': 'Hier ist eine Übung zum {goal}',
-  'exercises.headline.other': 'Hier sind {count} Übungen zum {goal}',
+  /* KEIN 'exercises.headline.one' / '.other' mehr (Ben, 2026-11-11). Das war
+     die gezählte Überschrift — *Hier sind {count} Übungen zum {goal}*. Die
+     Zahl steht jetzt auf der Onboarding-Karte (`exercises.guide.count`), die
+     Überschrift ist `exercises.headline.together`, mit `.none` als einziger
+     anderer Form. */
   /* KEIN 'exercises.intro' mehr. Das war die Zeile unter der Überschrift und
      sie ist ersatzlos weg (Ben, 2026-10-08). `DeckGuide` erklärt Tippen und
      Wischen auf der Karte selbst; die Liste erklärt er nicht, und genau diese
@@ -1515,11 +1518,10 @@ export const de: Messages = {
      'Ziel' und nicht 'Übung': sie schalten den FILTER weiter, und dass sich
      der Stapel darunter ändert, ist die Folge und nicht die Handlung.
 
-     GEHEN IN WELLE 2 (D1, 2026-11-11): das Weiterschalten der Ziele
-     verlässt den Bildschirm, die Chevrons neben dem Stapel blättern dann
-     Karten. Bleiben, bis `routes/Exercises.tsx` sie nicht mehr liest. */
-  'exercises.goal.previous': 'Vorheriges Ziel',
-  'exercises.goal.next': 'Nächstes Ziel',
+     GEGANGEN (D1, Ben, 2026-11-11): das Weiterschalten der Ziele hat den
+     Bildschirm verlassen; die Chevrons neben dem Stapel blättern Karten und
+     tragen `exercises.previous` / `.next`. Also KEIN 'exercises.goal.previous'
+     und KEIN 'exercises.goal.next' mehr. */
   /* Wird gehört, nie gesehen. Eine Wahl im Sheet sagt sich von selbst an —
      der Fokus kehrt zum Link zurück, und der nennt jetzt das neue Ziel —
      aber ein Chevron lässt den Fokus, wo er ist, und ändert eine Überschrift

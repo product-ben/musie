@@ -34,13 +34,15 @@ describe('splitSlot over a real message', () => {
   /* The contract this file depends on, asserted against `translate()` itself
      rather than against a hand-written string: an unmatched slot survives
      verbatim, which is what makes the split possible at all. */
-  it('survives translate() filling only the other slot', () => {
-    const rendered = translate('de', 'exercises.headline.other', { count: '3' });
+  /* Against the live headline since 2026-11-11, which has no other slot to
+     fill: the counted form this test used is gone with the count. */
+  it('survives translate() with the slot left unfilled', () => {
+    const rendered = translate('de', 'exercises.headline.together');
     expect(rendered).toContain('{goal}');
 
     const parts = splitSlot(rendered, 'goal');
     expect(parts).not.toBeNull();
-    expect(parts?.[0]).toContain('3');
+    expect(parts?.[0]).toContain('zusammen');
     expect(parts?.[0]).not.toContain('{');
   });
 });

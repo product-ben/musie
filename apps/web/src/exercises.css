@@ -1014,3 +1014,39 @@
 @media (min-width: 1024px) {
   .musie-goal-sheet { padding-inline: var(--sp-8); }
 }
+
+/* ═══ THE NOVEMBER CLEANUP (Ben, 2026-11-11) ═══════════════════════════════
+   docs/plans/exercises-ready-to-build.md, from the Figma section *Ready to
+   build*. Semantic tokens only (CLAUDE.md rule 1).
+
+   THE GREETING STEPS BACK. *Guten Morgen.* in the muted ink, so the eye
+   lands on the offer; the rest of the h1 keeps `--on-surface`. */
+.musie-greeting {
+  color: var(--on-surface-muted);
+}
+
+/* UNDER THE PILE: the *Alle Übungen zeigen* switch (only when the goal offers
+   more than three) and, on phones, *Ziel ändern*. Centred under the dots,
+   because both act on the pile above them rather than on the page. */
+.musie-under-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-related);
+}
+
+/* ONE *ZIEL ÄNDERN* PER BREAKPOINT. The toolbar row carries it from
+   --bp-md; below that it sits under the pile, where a thumb ends up after
+   browsing. `display: none` takes the other copy out of the accessibility
+   tree as well as off the screen, so nobody meets it twice. 768px is
+   --bp-md, written out because a custom property cannot sit in a media
+   query — the same literal the rest of this file uses. */
+@media (max-width: 767.98px) {
+  .musie-goal-change--row { display: none; }
+}
+@media (min-width: 768px) {
+  .musie-goal-change--below { display: none; }
+  /* With the button gone, a three-card goal would leave an empty block and
+     one `--space-gap-group` of nothing under the dots. */
+  .musie-under-pile:not(:has(.musy-switch)) { display: none; }
+}

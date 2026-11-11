@@ -48,15 +48,20 @@
 import * as React from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Icon } from '@musie/design-system';
-import { useT } from '../i18n/localeContext';
+import { useLocale, useT } from '../i18n/localeContext';
+import { numberWord } from '../i18n/numbers';
 
 export interface DeckGuideProps {
   /** Read and then gone. The parent owns whether it is drawn at all. */
   onDismiss: () => void;
+  /** How many exercises the pile shows — the screen's `SUGGESTED`. Passed
+   *  in rather than imported so the sentence and the pile read one number. */
+  count: number;
 }
 
-export function DeckGuide({ onDismiss }: DeckGuideProps) {
+export function DeckGuide({ onDismiss, count }: DeckGuideProps) {
   const t = useT();
+  const { locale } = useLocale();
   const [leaving, setLeaving] = React.useState(false);
 
   return (
@@ -89,6 +94,18 @@ export function DeckGuide({ onDismiss }: DeckGuideProps) {
 
           `exercises.guide.goal` went with it — a key nothing renders is the
           invisible rot the catalogue's own header warns about. */}
+
+      {/* ── WHY THE PILE IS SHORT, FIRST (Ben, 2026-11-11) ──────────────
+          The count left the headline and came here: *Musie schlägt dir immer
+          nur drei Übungen vor, damit du einfacher aussuchen kannst.* It goes
+          before the two gesture rows because it explains what the reader is
+          looking at before it explains what to do with it. The number is a
+          WORD, by the same rule the headline used (2026-10-15). */}
+      <span className="musie-deck-guide__row musie-deck-guide__row--count">
+        <span className="musie-deck-guide__text">
+          {t('exercises.guide.count', { count: numberWord(count, locale) })}
+        </span>
+      </span>
 
       {/* ── THE TWO DIRECTIONS, AT THE TWO EDGES ────────────────────────
           Both chevrons, in the order they sit in beside the pile and pushed

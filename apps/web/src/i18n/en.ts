@@ -1751,8 +1751,11 @@ export const en = {
      ellipsis, half a space clear of the word. Seen on screen, in German, at
      393px. The LEAD keeps its stop, because it has a sentence after it to be
      separated from. */
-  'exercises.headline.one': 'Here is one exercise to {goal}',
-  'exercises.headline.other': 'Here are {count} exercises to {goal}',
+  /* NO 'exercises.headline.one' / '.other' (Ben, 2026-11-11). They were the
+     counted headline — *Here are {count} exercises to {goal}*. The count
+     moved to the onboarding card (`exercises.guide.count`), and the headline
+     is `exercises.headline.together` now, with `.none` as its only other
+     form. */
   /* NO 'exercises.intro'. It was the subline — "Press a card to start that
      exercise, or swipe sideways to see another. Or see all of them in a list."
      — and it went with the header rewrite (Ben, 2026-10-08), unreplaced.
@@ -1957,11 +1960,10 @@ export const en = {
      "Goal" AND NOT "exercise": they step the FILTER, and the pile changing
      underneath is the consequence rather than the action.
 
-     LEAVING IN WAVE 2 (D1, 2026-11-11): goal stepping leaves the screen, and
-     the chevrons beside the deck step cards instead. Kept until
-     `routes/Exercises.tsx` stops reading them. */
-  'exercises.goal.previous': 'Previous goal',
-  'exercises.goal.next': 'Next goal',
+     GONE (D1, Ben, 2026-11-11): goal stepping left the screen, and the
+     chevrons beside the deck step CARDS, carrying `exercises.previous` /
+     `.next`. So there is NO 'exercises.goal.previous' and NO
+     'exercises.goal.next' any more. */
   /* Heard, never seen. Choosing in the sheet announces itself — focus
      returns to the link and the link now says the new goal — but a chevron
      leaves focus where it is and changes a heading beside it, which nothing

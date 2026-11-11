@@ -19,6 +19,9 @@
  *     t('exercises.headline.other', { count: '3' })   →  "3 Übungen zum {goal}"
  *     splitSlot(that, 'goal')                         →  ['3 Übungen zum ', '']
  *
+ * (That key is gone since 2026-11-11 — the headline is *Lass uns zusammen
+ * {goal}* and has no second slot — but the mechanism is unchanged.)
+ *
  * `translate()` leaves an unmatched slot VERBATIM — it is written that way so
  * a missing parameter shows up on screen rather than as an empty gap — and
  * this function is the other half of that behaviour rather than a trick

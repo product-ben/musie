@@ -58,21 +58,20 @@
 import * as React from 'react';
 import {
   ArrowRight, ChevronLeft, ChevronRight, HelpCircle, LayoutList, Layers,
-  Shuffle, SlidersHorizontal, Timer,
+  ListFilter, Shuffle, Timer,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import {
-  ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, IconButton, InlineLink, RadioCards,
-  SegmentedControl,
+  ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, IconButton, InlineButton, RadioCards,
+  SegmentedControl, Switch,
 } from '@musie/design-system';
 import type {
-  CardDeckCard, CardDeckItem, InlineLinkAction, LightboxOrigin, RadioCardFact,
+  CardDeckCard, CardDeckItem, LightboxOrigin, RadioCardFact,
 } from '@musie/design-system';
 import { GoalSheet } from '../components/GoalSheet';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
 import { SessionRunningLightbox } from '../components/SessionRunningLightbox';
-import { useLocale, useT } from '../i18n/localeContext';
-import { numberWord } from '../i18n/numbers';
+import { useT } from '../i18n/localeContext';
 import { splitSlot } from '../i18n/slot';
 import { timeOfDay } from '../lib/greeting';
 import { stepMessageKey } from '../routeHandle';
@@ -107,11 +106,18 @@ type View = 'deck' | 'list';
  */
 const NUDGE = 0.8;
 
+/* ── THREE, AND THE ONBOARDING CARD SAYS SO (Ben, 2026-11-11) ──────────────
+   The pile shows at most this many exercises; a goal that offers more puts a
+   switch under the dots that shows them all. One number, read by the pile and
+   by the sentence on the onboarding card (`exercises.guide.count`), so the
+   card can never promise a different count from the pile it is lying on. */
+const SUGGESTED = 3;
+
 export function Exercises() {
   const t = useT();
-  /* The headline writes its count as a WORD, and the word is per locale —
-     so the screen needs the locale itself, not only the lookup bound to it. */
-  const { locale } = useLocale();
+  /* The locale itself left with the counted headline (2026-11-11): the
+     number is written as a word on the onboarding card now, and DeckGuide
+     reads the locale for it. */
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { data, loading, error } = useExercises();
@@ -289,11 +295,26 @@ export function Exercises() {
      and every count, every card and every list row below reads `visible`. */
   const visible = React.useMemo(() => filterByGoal(exercises, choice), [exercises, choice]);
 
-  /* WHAT A PRESS WOULD ACTUALLY START. The headline counts these and *Such mir
-     eine Übung aus* draws from them — one memo, so the number on screen and
-     the set the shuffle can reach are the same thing rather than two filters
-     that agree today. `startable` carries the reasoning. */
-  const ready = React.useMemo(() => startable(visible), [visible]);
+  /* ── WHAT IS SHOWN: THE FIRST THREE, UNLESS ASKED (Ben, 2026-11-11) ───────
+     `visible` is everything the goal offers; `shown` is what the pile and the
+     list draw — the first `SUGGESTED` in the goal's own order, or all of them
+     once the switch under the dots is on.
+
+     THE SWITCH BELONGS TO ONE GOAL. It is stored as the goal it was turned on
+     for, so changing the goal turns it off by construction rather than by an
+     effect that resets it a render late. Not remembered across visits: it is
+     a look at more, not a setting. */
+  const [allFor, setAllFor] = React.useState<GoalChoice | null>(null);
+  const showAll = allFor !== null && allFor === choice;
+  const shown = React.useMemo(
+    () => (showAll ? visible : visible.slice(0, SUGGESTED)),
+    [showAll, visible],
+  );
+
+  /* WHAT A PRESS WOULD ACTUALLY START. *Such mir eine Übung aus* draws from
+     these — out of what is SHOWN since 2026-11-11, so the shuffle never deals
+     a card the pile is not showing. `startable` carries the reasoning. */
+  const ready = React.useMemo(() => startable(shown), [shown]);
 
   /* THE CHOICE IS KNOWN — which is not the same as "somebody chose".
      It is false only in the window before the goals have landed, and what it
@@ -302,6 +323,17 @@ export function Exercises() {
   const settled = choice !== null;
   const showDeck = settled && !loading && error === null;
 
+  /* ── AND THE COUNT LEFT IT AGAIN (Ben, 2026-11-11) ──────────────────────
+     The headline is *Lass uns zusammen {goal}* now — an invitation rather
+     than an inventory — and the number moved to the onboarding card, where it
+     explains the pile instead of announcing it: *Musie schlägt dir immer nur
+     drei Übungen vor …*. `purpose` became a verb phrase to fit (`entspannen`,
+     `Energie sammeln`, `Achtsamkeit üben`; migration `20261111120000`).
+
+     `none` survives as the one other form: a goal with nothing to offer still
+     needs its own sentence. Everything below this block is the history of the
+     counted headline, kept because the reasoning about which number sits over
+     which pile still applies to the onboarding card. */
   /* ── THE HEADLINE IS THE FILTER NOW (Ben, 2026-10-15) ────────────────────
      It was a question — *Welche Übung starten wir?* — and before that it was
      three states managing a count. It is a sentence again, and the count is
@@ -362,41 +394,31 @@ export function Exercises() {
      for at most one visit. */
   const greeting = React.useMemo(() => timeOfDay(), []);
 
-  /* ── STEPPING THE GOAL WITHOUT OPENING THE SHEET (Ben, 2026-10-16) ──────
-     User testing again: nobody read the link as a way to CHANGE the goal.
-     It reads as a label, because a word in a sentence is a label everywhere
-     else. So the headline grows two chevrons — the thing that says "there
-     are others" without having to be understood first — and the link keeps
-     the sheet, which is where the reasons are.
+  /* ── STEPPING THE GOAL HAS LEFT THE SCREEN (Ben, 2026-11-11) ────────────
+     From 2026-10-16 the headline carried two chevrons that stepped round the
+     goals without opening the sheet — user testing had found nobody read the
+     word as a control. The redesign answers that differently: the word is an
+     `InlineButton` with a filter glyph and a standing underline, and there is
+     a labelled *Ziel ändern* beside the pile. The chevrons that now sit beside
+     the deck step CARDS (D1 in docs/plans/exercises-ready-to-build.md) — one
+     meaning per axis — so `step` and the headline chevrons are gone.
 
-     THEY WRAP, which is Ben's call over hiding them at the ends. Four goals
-     is a short enough ring to go round, and a pair that is always there is
-     a pair you can learn: a control that appears and disappears teaches
-     nothing except that the screen moved. The cost is that neither chevron
-     ever says "this is the last one", which a list of four does not really
-     need to.
+     (Recorded from the old block, because the idea is a reasonable one to
+     have again: the back chevron was briefly an UNDO, hidden until you pressed
+     forward; it moved the forward chevron 10px under the finger and was
+     reverted on sight.) */
 
-     INDEX FROM `goals`, NOT FROM A COUNTER. The array is `sort` order
-     straight out of the query, so the ring is the same order the sheet
-     shows and the two cannot drift. An unknown choice — the window before
-     the goals land — gives -1, and both steps fall back to the first goal
-     rather than reaching past the end of the array. */
-  const step = React.useCallback((by: 1 | -1) => {
-    if (goals.length === 0) return;
-    const at = goals.findIndex((goal) => goal.id === choice);
-    const next = goals[(at + by + goals.length) % goals.length] ?? goals[0];
-    choose(next.id);
-  }, [goals, choice, choose]);
+  /* ── THE CHANGE IS ANNOUNCED, BECAUSE NOTHING ELSE WOULD ────────────────
+     Choosing through the headline announces itself for free: Lightbox
+     restores focus to the headline control, whose label is now the new goal.
+     *Ziel ändern* has no such mechanism — focus comes back to a button whose
+     own label does not change, and the heading is not something a screen
+     reader re-reads. (Until 2026-11-11 the silent path was the headline
+     chevrons; the reason for the region is the same.)
 
-  /* ── AND THEY ARE ANNOUNCED, BECAUSE NOTHING ELSE WOULD ─────────────────
-     Choosing in the sheet announces itself for free: Lightbox restores focus
-     to the link, whose label is now the new goal. A chevron has no such
-     mechanism — focus stays on the chevron, its own label does not change,
-     and the heading beside it is not something a screen reader re-reads.
-
-     So the one path that would otherwise be silent gets a polite live
-     region. `polite`, not `assertive`: the person pressed the button, so
-     they are expecting the answer and it can wait for a gap.
+     So that path gets a polite live region. `polite`, not `assertive`: the
+     person made the choice, so they are expecting the answer and it can wait
+     for a gap.
 
      IT ANNOUNCES THE PURPOSE, NOT THE LABEL, and the two are different
      strings for the same goal — *Entspannen* against *Entspannung*. The
@@ -407,48 +429,14 @@ export function Exercises() {
      text beside the rendered line rather than by thinking about it. */
   const goalName = choice === null ? null : goalPurpose(goals, choice);
 
-  /* ── BOTH CHEVRONS, ALWAYS — AND THE OTHER WAY WAS TRIED ───────────────
-     For one iteration the back chevron was an UNDO: hidden until you pressed
-     forward, reset on the next load of the route, there only to get you back
-     to the item you just left. Ben: *this hasn't worked out.* Reverted on
-     sight, and worth recording rather than quietly deleting, because the
-     idea is a reasonable one to have again.
-
-     WHAT WAS MEASURED WHILE IT WAS IN. Pressing forward moved the forward
-     chevron itself: the arriving back chevron pushed it right while the new
-     goal's shorter word pulled the line left, so it travelled 10px in a
-     direction that depended on the words. A control that moves when you
-     press it is a control you press twice badly, and browsing four goals
-     means pressing it twice.
-
-     A PAIR THAT IS ALWAYS THERE IS A PAIR YOU CAN LEARN, which is the same
-     reasoning that made them wrap rather than stop at the ends. */
-  const goalSteps: InlineLinkAction[] = [
-    {
-      id: 'previous',
-      glyph: ChevronLeft,
-      label: t('exercises.goal.previous'),
-      onClick: () => step(-1),
-    },
-    {
-      id: 'next',
-      glyph: ChevronRight,
-      label: t('exercises.goal.next'),
-      onClick: () => step(1),
-    },
-  ];
-
   const purpose = choice === null ? null : goalPurpose(goals, choice);
   const headline = React.useMemo(() => {
     if (purpose === null) return null;
-    const count = visible.length;
-    const key = count === 0
-      ? 'exercises.headline.none'
-      : count === 1 ? 'exercises.headline.one' : 'exercises.headline.other';
+    const key = visible.length === 0 ? 'exercises.headline.none' : 'exercises.headline.together';
     /* `goal` is deliberately not passed — `translate` leaves an unmatched slot
        verbatim, which is what there is to split on. */
-    return splitSlot(t(key, { count: numberWord(count, locale) }), 'goal');
-  }, [purpose, visible.length, locale, t]);
+    return splitSlot(t(key), 'goal');
+  }, [purpose, visible.length, t]);
 
   /* ── WHAT IS IN THE TOOLBAR, AND WHEN ────────────────────────────────────
      The pill and the view switch shared this row from 2026-10-07, and the
@@ -665,7 +653,7 @@ export function Exercises() {
     />
   );
 
-  const items: CardDeckItem[] = visible.map((exercise, index) => ({
+  const items: CardDeckItem[] = shown.map((exercise, index) => ({
     id: exercise.id,
     /* Fixed by the exercise's place in the printed order, NOT by its place in
        the pile, so a card keeps its colour as the deck is dealt. */
@@ -719,21 +707,27 @@ export function Exercises() {
 
               `{' '}` between them because JSX drops whitespace at a line
               break, and two sentences run together is the kind of thing that
-              is invisible in review and obvious on screen. */}
-          {t(`exercises.headline.${greeting}`)}{' '}
-          {headline[0]}
-          <InlineLink
-            /* A FILTER MARK, NOT AN ELLIPSIS (Ben, 2026-10-16). The three
-               dots said "there is a menu here" and people read it as
-               decoration on a label; sliders say the word narrows what is
-               below it, which is what the control does.
+              is invisible in review and obvious on screen.
 
-               `SlidersHorizontal` over `Funnel`, which is what the retired
-               GoalPill wore — Ben's pick, and the pill it would have
-               inherited from is gone, so nothing is left to be consistent
-               with. */
-            trailingIcon={SlidersHorizontal}
-            actions={goalSteps}
+              THE GREETING STEPS BACK (Ben, 2026-11-11): it is drawn in
+              `--on-surface-muted`, so the eye lands on the offer. Still the
+              same `h1` and still one sentence to a screen reader — the span
+              only carries a colour. */}
+          <span className="musie-greeting">{t(`exercises.headline.${greeting}`)}</span>{' '}
+          {headline[0]}
+          <InlineButton
+            /* ── THE GOAL IS AN InlineButton (Ben, 2026-11-11) ──────────────
+               It was an `InlineLink` in the accent colour with a sliders
+               glyph, two goal chevrons beside it, and an underline only on
+               hover. The Figma *Ready to build* frames draw the word in the
+               heading's own ink, with a ListFilter glyph and a standing
+               2px underline in `--border-strong` — the underline is now the
+               1.4.1 cue. InlineLink is deprecated with it.
+
+               `inset` stays at its default: there are words to the left,
+               so the control pads 4px and pulls back 4px, and the word lands
+               where the sentence put it. */
+            glyph={ListFilter}
             /* The sheet is a dialog and this is what opens it. base-ui's
                Dialog.Trigger would set both for us, but Sheet owns its
                Lightbox and does not expose the trigger slot — so they are
@@ -749,7 +743,7 @@ export function Exercises() {
                 would have REPLACED the visible text in the heading's
                 accessible name — see the key's own note in en.ts. */}
             <span className="musy-sr-only">{`, ${t('exercises.goal.change')}`}</span>
-          </InlineLink>
+          </InlineButton>
           {headline[1]}
         </h1>
       )}
@@ -941,13 +935,20 @@ export function Exercises() {
                 secondary's is `--surface-raised` — the card's own surface, on
                 a screen whose subject is a pile of raised cards.
 
+                SECONDARY AGAIN (Ben, 2026-11-11). The *Ready to build* frames
+                draw every control in this row filled — the shuffle, *Ziel
+                ändern* and the help button — and Ben chose that over the
+                2026-10-07 argument above; the deck's own card pair took the
+                same step in CardDeck. The argument is kept because it is the
+                one to weigh if a filled row starts to read as more cards.
+
                 IT IS DISABLED WHEN THERE IS NOTHING BUILT TO PICK. `ready` is
                 what it draws from, and a goal offering three unbuilt
                 exercises would otherwise give a control that does nothing at
                 all when pressed. Cannot happen under today's mapping; cheaper
                 to state than to rediscover. */}
             <CtaButton
-              variant="outline"
+              variant="secondary"
               size="min"
               leadingIcon={Shuffle}
               /* The row owns the spacing — `.musy-btn--min` brings `--sp-2`
@@ -959,6 +960,50 @@ export function Exercises() {
             >
               {t('exercises.surpriseMeShort')}
             </CtaButton>
+            {/* ── ZIEL ÄNDERN, IN THIS ROW FROM --bp-md (Ben, 2026-11-11) ───
+                The headline word already opens the sheet; this says so in
+                words, for the reader who takes a word in a sentence for a
+                label (the finding behind the retired goal chevrons). It opens
+                the EXISTING sheet — nothing new was built for it — and the
+                sheet grows out of this button, because `openSheet` takes the
+                rect of whatever was pressed.
+
+                ON A PHONE IT LIVES UNDER THE PILE instead (the copy below the
+                deck), where a thumb ends up after browsing; this one is
+                hidden there by `.musie-goal-change--row`. Two elements rather
+                than one moved by CSS order, because they sit in different
+                containers — and `display: none` takes the hidden one out of
+                the accessibility tree, so nobody meets it twice. */}
+            <CtaButton
+              variant="secondary"
+              size="min"
+              leadingIcon={ListFilter}
+              className="musie-toolbar-control musie-goal-change--row"
+              aria-haspopup="dialog"
+              aria-expanded={sheetOpen}
+              disabled={busy}
+              onClick={openSheet}
+            >
+              {t('exercises.goal.change')}
+            </CtaButton>
+            {/* ── THE WAY BACK TO THE LEGEND, MOVED UP HERE (Ben, 2026-11-11)
+                It was third in CardDeck's chevron row (`navActions`, now
+                deprecated), as the quietest control beside the pile. The
+                *Ready to build* frames put it in this row, filled like its
+                neighbours, at the new 40px `sm` rung so it stands level with
+                the CTA `min`s beside it (G6, `--target-sm`).
+
+                It still does not toggle: pressing it while the legend is up
+                would be a second way to dismiss something that already goes
+                on a press or a swipe, so it only ever shows. */}
+            <IconButton
+              glyph={HelpCircle}
+              label={t('exercises.guide.show')}
+              variant="secondary"
+              size="sm"
+              className="musie-toolbar-control"
+              onClick={() => setGuide(true)}
+            />
             {viewSwitch}
           </div>
           {scrollable && (
@@ -1025,8 +1070,12 @@ export function Exercises() {
               busy={busy || sheetOpen}
               /* THE GOAL IS THE KEY. Choosing deals the pile; changing the
                  goal deals it again; nothing else does, which is why this is
-                 the choice rather than `visible.length` or the item ids. */
-              dealKey={choice ?? undefined}
+                 the choice rather than `visible.length` or the item ids.
+
+                 …AND THE SWITCH (2026-11-11): showing all is a different
+                 pile, so it deals afresh from the top rather than splicing
+                 cards into one already browsed. */
+              dealKey={choice === null ? undefined : `${choice}:${showAll ? 'all' : SUGGESTED}`}
               onAccept={onAccept}
               onNext={onNext}
               onPrevious={onPrevious}
@@ -1047,33 +1096,13 @@ export function Exercises() {
                  over a start already in flight, it would explain controls that
                  are inert at that moment. */
               cover={guide && !busy && !sheetOpen
-                ? <DeckGuide onDismiss={closeGuide} />
+                ? <DeckGuide onDismiss={closeGuide} count={SUGGESTED} />
                 : undefined}
-              /* ── AND THE WAY BACK TO IT ────────────────────────────────
-                 Third in the row the chevrons are in, because it is the same
-                 KIND of thing they are: something you do to the pile rather
-                 than to the exercise. `ghost`, where they are `secondary` —
-                 it is the quietest control on the screen and the only one
-                 nobody needs twice.
-
-                 It does not toggle. Pressing it while the legend is up would
-                 be a second way to dismiss something that already dismisses on
-                 any press, so it only ever shows. */
-              navActions={(
-                <IconButton
-                  glyph={HelpCircle}
-                  label={t('exercises.guide.show')}
-                  variant="ghost"
-                  onClick={() => setGuide(true)}
-                />
-              )}
-              /* Under the deck's two directions, in the same column. It acts
-                 on the deck as a whole rather than on the card in front, which
-                 is why it is last and why it is the quiet one. The big *Übung
-                 starten* that used to head this column is gone (Ben,
-                 2026-10-05): the card carries that action now, and the same
-                 thing twice in two sizes is redundancy rather than
-                 reassurance. */
+              /* ── THE HELP BUTTON LEFT THIS ROW (Ben, 2026-11-11) ────────
+                 It was `navActions`, third beside the card pair, `ghost`
+                 where they were `secondary`. It is in the toolbar now — see
+                 the block there — and CardDeck's `navActions` is deprecated
+                 with no caller left. */
               positionLabel={(position, total, id) =>
                 t('exercises.deckPosition', {
                   name: byId.get(id)?.name,
@@ -1097,7 +1126,7 @@ export function Exercises() {
               legend={t('exercises.legend')}
               legendHidden
               headingLevel={2}
-              options={visible.map((exercise) => ({
+              options={shown.map((exercise) => ({
                 value: exercise.id,
                 headline: exercise.name,
                 description: exercise.description,
@@ -1117,6 +1146,37 @@ export function Exercises() {
               emptyLabel={t('content.empty')}
             />
           )}
+
+          {/* ── UNDER THE PILE: MORE, AND ANOTHER GOAL (Ben, 2026-11-11) ────
+              The switch first, directly under the dots it changes: it is
+              drawn only when the goal offers more than `SUGGESTED`, so a
+              three-card goal shows no control that could do nothing. Then,
+              on phones only, *Ziel ändern* — the toolbar carries it from
+              --bp-md (`.musie-goal-change--below` hides this one there). Both
+              sit under the list view too, since the list shows the same
+              three. */}
+          <div className="musie-under-pile">
+            {visible.length > SUGGESTED && (
+              <Switch
+                label={t('exercises.showAll')}
+                checked={showAll}
+                onCheckedChange={(on) => setAllFor(on ? choice : null)}
+                disabled={busy || sheetOpen}
+              />
+            )}
+            <CtaButton
+              variant="secondary"
+              size="min"
+              leadingIcon={ListFilter}
+              className="musie-goal-change--below"
+              aria-haspopup="dialog"
+              aria-expanded={sheetOpen}
+              disabled={busy}
+              onClick={openSheet}
+            >
+              {t('exercises.goal.change')}
+            </CtaButton>
+          </div>
         </>
       )}
 
