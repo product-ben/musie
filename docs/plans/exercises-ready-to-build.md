@@ -24,7 +24,29 @@ the repo. **This file is the current state**: update it after every task.
     - `reference/design_system/docs/08-token-gaps.md`, which has no G4–G6 entries
     - CtaButton's §7.4 sentence that the ladders are "named identically"
   - Pre-existing, left alone: G3 means `--on-scrim` in the amendments file and `--border-strong-hover` in `08-token-gaps.md`.
-- **S1, S2, S4** running.
+- **S4** done and merged: `e96efc7` → merge `e43945a`. The goals query lives in `lib/content.ts` (`getGoals`, now `.eq('retired', false)`).
+  - Grants on `goals` are table-level, so the new column needs none.
+  - The retired goal is parked at sort 1001.
+  - Strings: see the migration and `i18n/{de,en}.ts`. They are proposals for Ben's review.
+  - **Two corrections to this plan:**
+    - **A4's premise was wrong.** `sessions.goal_id` is not NOT NULL; "never null" was behaviour only, and the types say `string | null`. A delete would have succeeded and silently blanked the goal on old diary entries. Retiring is still right, for that reason.
+    - **After the migration** relax has 6 exercises, wake-up 3 and mindfulness 3. So **only *Entspannen* shows the switch**; the "Achtsamkeit üben (8)" in Verification was counting retired mappings.
+- **S1** done and merged: `dd87e7c` → merge `1ceae4c`. There were 7 call sites, not 6: SignInGate has 4.
+  - States as built: hover turns the bar `--on-surface`; active `--accent-1-text`; focus the shared ring; disabled `--on-surface-disabled` with a `--border-subtle` bar.
+  - Known edges:
+    - at `inset="inline"` the focus ring reaches 9px left of the text;
+    - with a glyph, a line under 24px grows ~1.5px. Every current glyph use is in a heading.
+- `pnpm check` green on the merged branch (S3 + S4 + S1).
+- **Needs Ben** — denied to agents in `.claude/settings.json`, rule 9: run `supabase db reset` and then `pnpm gen:types` **from the integration worktree** (the cwd decides which migrations apply). After that the main session runs `pnpm test:db` and diffs the generated `database.types.ts` against S4's hand edit.
+- **Follow-ups collected for wave 2 or 3** (stale names and comments outside the streams' files):
+  - `i18n/parity.test.ts` `HEADLINES`: gains `headline.together`, loses `one`/`other`
+  - `GoalSheet.tsx` header: no longer "one of four cards has a body"
+  - `apps/docs/features/goals.md` and `exercises.md`: four goals, the wrong default
+  - `RadioCards.stories.tsx`: uses `get-to-know-musie`
+  - `e2e/support.ts` ~329: *Musie kennenlernen*
+  - `shell.css` ~2979 and the `.musie-legal` comment: InlineLink and the accent colour
+  - InlineLink mentions in comments in `i18n/{en,de}.ts`, `i18n/slot.ts`, `i18n/parity.test.ts` and `apps/docs/features/goals.md:173`
+- **S2** running.
 
 ## Decisions
 
@@ -204,7 +226,7 @@ A subagent knows only its brief (rule 9: it inherits the directory, not the conv
 - By hand:
   - the default goal is *entspannen*
   - the sheet lists three goals and no *Musie kennenlernen*
-  - *Entspannen* (6) and *Achtsamkeit üben* (8) show three plus the switch; *Energie sammeln* (3) shows no switch
+  - *Entspannen* (6) shows three plus the switch; *Energie sammeln* (3) and *Achtsamkeit üben* (3) show no switch
   - the switch reveals all, and resets on goal change
   - *Ziel ändern* sits in the toolbar at ≥ `--bp-md` and below the cards on a phone, and opens the existing sheet
   - the live region speaks after a goal change
