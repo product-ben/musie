@@ -84,11 +84,11 @@
  * that says nothing gets a correct toast.
  */
 import * as React from 'react';
-import { Button } from '@base-ui/react/button';
+import { Button as BaseButton } from '@base-ui/react/button';
 import { CircleCheck, CircleX, TriangleAlert, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
-import { CtaButton } from './CtaButton';
+import { Button } from './Button';
 import { useMusyText } from './locale';
 import type { MusyStatusKey } from './locale';
 
@@ -387,15 +387,15 @@ export function Toast({
       </p>
 
       {action && (
-        <CtaButton variant="ghost" onClick={action.onAction}>
+        <Button variant="ghost" onClick={action.onAction}>
           {action.label}
-        </CtaButton>
+        </Button>
       )}
 
       {onDismiss ? (
-        <Button className="musy-toast__dismiss" onClick={onDismiss} aria-label={dismissLabel ?? t.dismissMessage}>
+        <BaseButton className="musy-toast__dismiss" onClick={onDismiss} aria-label={dismissLabel ?? t.dismissMessage}>
           <Icon glyph={X} size="md" />
-        </Button>
+        </BaseButton>
       ) : null}
 
       {/* Its own row, beneath everything. See `children` for why it is last

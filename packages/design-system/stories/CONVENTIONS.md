@@ -12,7 +12,7 @@ One file per component, named after the component, at the top level of
 
 ```
 stories/Icon.stories.tsx
-stories/CtaButton.stories.tsx
+stories/Button.stories.tsx
 ```
 
 Components exported from the same source file get **one story file each**,
@@ -69,7 +69,7 @@ Use `satisfies Meta<typeof X>` and `StoryObj<typeof meta>` — not a bare
 
 ### Batch B note — base-ui prop inheritance
 
-`IconButton`, `CtaButton`, `Switch` and `Field` extend an `Omit<>` of
+`IconButton`, `Button`, `Switch` and `Field` extend an `Omit<>` of
 `ComponentPropsWithoutRef<typeof SomeBaseUIPart>`. react-docgen cannot follow
 that and emits either nothing or several hundred DOM props. Hand-write
 `argTypes` for the component's **own** props only and ignore the inherited DOM

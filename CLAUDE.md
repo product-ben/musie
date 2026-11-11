@@ -65,7 +65,7 @@ A pattern that recurs is a **component request**, not a second copy (L14.3) —
 
 A screen never reaches into a component's own geometry (L14's opening rule,
 and L7). When a component cannot do what a screen needs, the fix goes into the
-component: that is why `CtaButton` has an `align` prop instead of the app
+component: that is why `Button` has an `align` prop instead of the app
 overriding `justify-content`.
 
 The four design-system stylesheets load once, at the app root, in the README's

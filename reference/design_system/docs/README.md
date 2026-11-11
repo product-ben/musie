@@ -31,7 +31,7 @@ components stop looking like one product.
 | 7 | Open questions 14–22 | [`06-open-questions.md`](06-open-questions.md#layer-2--open-questions-continues-the-numbering) |
 | 8 | Clickdummy handoff — component map + preview-only scaffolding | [`09-clickdummy-handoff.md`](09-clickdummy-handoff.md) |
 
-Components: Icon · Icon Button · CTA Button · Switch ·
+Components: Icon · Icon Button · Button · Switch ·
 Radio Group (text) · Radio Group (image+text) · Process Visualisation ·
 Content Box · Message · Content List · Radio Cards · Lightbox · Logo ·
 **Field · Interactive Wizard · Photo Upload · Voice Note**.

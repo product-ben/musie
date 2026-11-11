@@ -24,7 +24,7 @@
  * arrival. A sheet that owned its own open state could not be either.
  */
 import * as React from 'react';
-import { CtaButton, Sheet } from '@musie/design-system';
+import { Button, Sheet } from '@musie/design-system';
 import type { LightboxOrigin, SheetPage } from '@musie/design-system';
 import { Image } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
@@ -112,13 +112,13 @@ export function CardSheet({ cards, open, onOpenChange, origin, onDone }: CardShe
       foot={(() => {
         if (walked && index === 0) {
           return (
-            <CtaButton onClick={() => setIndex(1)}>
+            <Button onClick={() => setIndex(1)}>
               {t('session.cards.first')}
-            </CtaButton>
+            </Button>
           );
         }
         if (index === last) {
-          return <CtaButton onClick={onDone}>{t('common.continue')}</CtaButton>;
+          return <Button onClick={onDone}>{t('common.continue')}</Button>;
         }
         return undefined;
       })()}

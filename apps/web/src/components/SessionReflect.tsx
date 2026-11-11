@@ -46,7 +46,7 @@
  */
 import * as React from 'react';
 import { Plus } from 'lucide-react';
-import { ButtonGroup, Chip, ChipRow, CtaButton, IconButton, InlineButton } from '@musie/design-system';
+import { ButtonGroup, Chip, ChipRow, Button, IconButton, InlineButton } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import type { HeldFeeling } from '../lib/feelings';
 
@@ -89,7 +89,7 @@ export function SessionReflect({
           of the rest.
 
           AND IT ENDS ON THE QUESTION — Ben, 2026-10-16. *Was soll das
-          bringen?* was a third `CtaButton` in the group below; it is an
+          bringen?* was a third `Button` in the group below; it is an
           `InlineButton` on the end of this sentence now. The reason is what
           the two kinds of control mean: the group holds the things to DO,
           and asking what any of it is for is not one of them. A box with a
@@ -98,7 +98,7 @@ export function SessionReflect({
           `InlineButton` is built for exactly this — it inherits its type
           from the paragraph, so it is body copy that happens to be pressable
           rather than a button that broke a line. Its own header makes the
-          argument against `CtaButton size="min"` here. (`InlineLink` until
+          argument against `Button size="min"` here. (`InlineLink` until
           2026-11-11, when it was deprecated: ink with a strong underline now,
           not the accent colour. The default inset, because there are words
           to its left.) */}
@@ -208,17 +208,17 @@ export function SessionReflect({
       <section className="musie-reflect__section">
       <ButtonGroup stacked="hug" align="start">
         {!hasFeelings && (
-          <CtaButton variant="primary" onClick={onAddFeeling}>
+          <Button variant="primary" onClick={onAddFeeling}>
             {t('reflect.feelings.cta')}
-          </CtaButton>
+          </Button>
         )}
         {!hasThoughts && (
-          <CtaButton
+          <Button
             variant={hasFeelings ? 'primary' : 'outline'}
             onClick={onEditThoughts}
           >
             {t('reflect.thoughts.cta')}
-          </CtaButton>
+          </Button>
         )}
       </ButtonGroup>
       </section>

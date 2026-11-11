@@ -1,6 +1,6 @@
 /**
  * Draggable List — Layer 2 · §7.24
- * No new primitives: Content Box, Icon Button, CTA Button, Toast and an <ol>,
+ * No new primitives: Content Box, Icon Button, Button, Toast and an <ol>,
  * arranged per Layer 3 L3, L4, L5, L6, L9 and L13.
  *
  * WHAT MAKES IT A COMPONENT RATHER THAN A COMPOSITION is the state machine.
@@ -61,7 +61,7 @@
 import * as React from 'react';
 import { ChevronDown, GripVertical, Pencil, Trash } from 'lucide-react';
 import { ContentBox } from './ContentBox';
-import { CtaButton } from './CtaButton';
+import { Button } from './Button';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 import { useCoarsePointer, useToolSize } from './useCoarsePointer';
@@ -847,10 +847,10 @@ function DraggableListRow({
               {/* L6: right-aligned, Save outermost, Discard leading in the DOM so
                   tab order matches the screen. */}
               <div className="musy-dlist__actions musy-dlist__actions--end">
-                <CtaButton variant="secondary" onClick={discard}>{t.dragDiscard}</CtaButton>
-                <CtaButton variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
+                <Button variant="secondary" onClick={discard}>{t.dragDiscard}</Button>
+                <Button variant={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
                   {t.dragSave}
-                </CtaButton>
+                </Button>
               </div>
             </div>
           ) : (
@@ -892,8 +892,8 @@ function DraggableListRow({
              Toast's undo (L11) is a better safety net than a confirm dialog
              nobody reads. */
           <div className="musy-dlist__actions musy-dlist__actions--end" id={menuId}>
-            <CtaButton variant="ghost" leadingIcon={Trash} onClick={onDelete}>{t.dragDelete}</CtaButton>
-            <CtaButton variant="ghost" leadingIcon={Pencil} onClick={startEditing}>{t.dragEdit}</CtaButton>
+            <Button variant="ghost" leadingIcon={Trash} onClick={onDelete}>{t.dragDelete}</Button>
+            <Button variant="ghost" leadingIcon={Pencil} onClick={startEditing}>{t.dragEdit}</Button>
           </div>
         )}
       </ContentBox>

@@ -41,7 +41,7 @@ const meta = {
           '',
           'No APG pattern (a file input is a native control with its own affordances) and',
           'no base-ui primitive. The native `<input type="file">` **is** the control: it is',
-          'visually hidden with `.musy-sr-only` and triggered by a real CTA Button, which',
+          'visually hidden with `.musy-sr-only` and triggered by a real Button, which',
           'is the only accessible way to dress a file input — the input is **displaced,',
           'never restyled**, so keyboard, focus, and the platform picker all behave exactly',
           'as the OS intends.',

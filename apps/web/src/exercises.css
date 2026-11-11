@@ -346,7 +346,7 @@
 /* ── THE RUNG'S OWN MARGIN, GIVEN BACK ─────────────────────────────────────
    `.musy-btn--min` carries `margin: var(--sp-2)` on all four sides. In a row
    of nothing but min buttons that margin IS the spacing — L5's "never add a
-   gap to a row of `min` buttons" — but this row holds one min CtaButton and
+   gap to a row of `min` buttons" — but this row holds one min Button and
    one min SegmentedControl, and `.musy-seg--min` carries NO margin. The row
    is therefore asymmetric by construction, and all three measurements came
    out wrong at 1280:
@@ -371,7 +371,7 @@
    there would pull the switch 8px too close on every edge.
 
    Logged as a component request (L14.3) in the design system's own
-   OPEN-QUESTIONS: `CtaButton size="min"` should drop the margin now that the
+   OPEN-QUESTIONS: `Button size="min"` should drop the margin now that the
    rung renders at 36px, which is what `SegmentedControl` and `FilterChips`
    already do at the same height. Until it does, this is one screen's class on
    its own control rather than a rule against a `musy-` selector.           */
@@ -885,7 +885,7 @@
 
 /* ── A PICTURE OF THE START BUTTON ────────────────────────────────────────
    The card's own control, drawn as a chip of the card it sits on, so the eye
-   matches it to the thing underneath. NOT a CtaButton: it is a picture, it
+   matches it to the thing underneath. NOT a `Button`: it is a picture, it
    cannot be pressed, and a real button inside a button is both invalid and a
    second thing to hit.
 

@@ -10,7 +10,7 @@
  * ── IT INHERITS ITS TYPE, AND THAT IS STILL THE WHOLE COMPONENT ───────────
  * Family, size, weight, line height and tracking come from the parent, so the
  * same element is display type inside an `h1` and body type inside a `p`.
- * That is why this is not `CtaButton size="min"`: a button declares its own
+ * That is why this is not `Button size="min"`: a button declares its own
  * type step — it is a box with a label in it — and a box with a label in it
  * cannot sit inside a sentence without breaking the line it sits in.
  *

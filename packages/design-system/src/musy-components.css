@@ -186,7 +186,7 @@
 }
 
 .musy-icon-btn--min      { --musy-icon-btn-size: var(--target-min); }
-/* 40px (G6, 2026-11-11): the height of a row of CtaButton `min`s, for the one
+/* 40px (G6, 2026-11-11): the height of a row of Button `min`s, for the one
    icon-only control that stands in such a row. It clears 2.5.8 on its own, so
    it takes no margin — the baked-in spacing below is `min`'s alone. */
 .musy-icon-btn--sm       { --musy-icon-btn-size: var(--target-sm); }
@@ -389,7 +389,7 @@
    configured on Tooltip.Root in IconButton.tsx — not here. */
 
 
-/* ═══ 4 · CTA BUTTON ═══════════════════════════════════════════════════════
+/* ═══ 4 · BUTTON ═══════════════════════════════════════════════════════════
    APG button. Pill geometry from the Figma button; padding and height from
    Layer 1 (the Figma 10/20 padding yielded a 37px control, below 2.5.8).    */
 
@@ -1012,7 +1012,7 @@
    would not. The × inside is an ordinary IconButton and brings all of that
    with it.
 
-   The rung is `min`, the same 36px a `min` CtaButton and a `min` chip in §16
+   The rung is `min`, the same 36px a `min` Button and a `min` chip in §16
    come to, stated as the arithmetic so the three cannot drift.             */
 
 .musy-chip {
@@ -1081,7 +1081,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   min-inline-size: 0;
 }
 
-/* THE WAY UP IS A CtaButton — ghost, `min` — so everything about how it
+/* THE WAY UP IS A Button — ghost, `min` — so everything about how it
    looks and behaves is §7.4's, not this component's. What is left here is
    the one thing a button cannot know: that it must hug its own label rather
    than stretch to the column it sits in. */
@@ -2876,7 +2876,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-seg--guided .musy-seg__option { min-block-size: var(--target-guided); }
 
 /* ── THE `min` RUNG ────────────────────────────────────────────────────────
-   24px, the same rung CtaButton and IconButton call `min`. The inline padding
+   24px, the same rung Button and IconButton call `min`. The inline padding
    comes in with the height — a 24px segment with 12px of side padding reads as
    a pill that lost its middle — and the gap closes to match, so the glyph and
    its label stay one object rather than two things sharing a box. */
@@ -2895,7 +2895,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
      --musy-seg-rung is what the CONTROL measures, and the segments inside it
      are that less the track's own padding and border. So the number this rung
-     agrees with a `min` CtaButton on is stated once, and it stays true if the
+     agrees with a `min` Button on is stated once, and it stays true if the
      track's chrome ever changes.
 
    THE SEGMENT'S HEIGHT COMES FROM ITS FLOOR, with no block padding — which is
@@ -3235,7 +3235,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
 /* Both controls hold their size, and the pair takes the trailing edge — on one
    row that pushes them away from the text, on two it puts them at the row's
-   end, which is L6 either way. The action is a CtaButton the consumer passes,
+   end, which is L6 either way. The action is a Button the consumer passes,
    so it is addressed as a child rather than given a class of its own. */
 .musy-toast > .musy-btn {
   flex: 0 0 auto;
@@ -3413,7 +3413,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    corrects and removes. The list IS the editing surface: no separate edit
    mode, no toolbar, nothing in a dialog.
 
-   NO NEW PRIMITIVES. §9 Content Box, §02 Icon Button, §04 CTA Button, §23
+   NO NEW PRIMITIVES. §9 Content Box, §02 Icon Button, §04 Button, §23
    Toast and an <ol>, arranged per Layer 3 L3, L4, L5, L6, L9 and L13. What
    makes it a component is the state machine, which lives in the .tsx.
 
@@ -4959,7 +4959,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    live here: the empty drop zone and the selected-file row.
 
    The native <input type="file"> is NOT styled. It is displaced with
-   .musy-sr-only and triggered by a real CTA Button, which is the only way to
+   .musy-sr-only and triggered by a real Button, which is the only way to
    dress a file input without breaking the platform picker, the focus ring or
    the keyboard path.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -5433,7 +5433,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    touches getUserMedia.
 
    A · TRACK BUTTON (.musy-mbtn)
-     Composed on §04 CTA Button rather than being a new button: one control,
+     Composed on §04 Button rather than being a new button: one control,
      one target, the whole button state model inherited. The GLYPH and the
      LABEL both carry the state (play → pause → restart / "Start Listening" →
      "Pause" → "Replay"). The label used to hold the track name and stay still,
@@ -5491,7 +5491,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    control that looks like it failed to size itself, with its label adrift at
    the leading edge.
 
-   So it goes back to being an ordinary CTA Button: hugging its label, centred.
+   So it goes back to being an ordinary Button: hugging its label, centred.
    Declared here rather than by leaving the base rule off, because the two
    variations share one class and only one of them opts out.                */
 .musy-btn.musy-mbtn--no-timer {
@@ -7170,7 +7170,7 @@ html[data-musy-scroll-snap='y'] {
   --musy-filter-sel-on: var(--interactive-accent-on-subtle);
 }
 /* ── THE `min` RUNG ────────────────────────────────────────────────────────
-   36px, and it is the SAME 36px a `min` CtaButton and a `min` SegmentedControl
+   36px, and it is the SAME 36px a `min` Button and a `min` SegmentedControl
    come to — stated here as the arithmetic rather than as the number, so the
    three cannot drift. --target-min (24px) is the floor 2.5.8 asks for and
    --sp-3 is what carries it clear of it; a chip at 36px needs none of the

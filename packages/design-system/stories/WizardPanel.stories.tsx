@@ -5,7 +5,7 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { WizardPanel } from '../src/InteractiveWizard';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { ContentList } from '../src/ContentList';
 import { bothThemes } from './_decorators';
 
@@ -90,8 +90,8 @@ export const WithActions: Story = {
     ),
     actions: (
       <>
-        <CtaButton variant="ghost">Back</CtaButton>
-        <CtaButton variant="primary">Continue</CtaButton>
+        <Button variant="ghost">Back</Button>
+        <Button variant="primary">Continue</Button>
       </>
     ),
   },
@@ -103,7 +103,7 @@ export const OneAction: Story = {
     children: (
       <p data-type-step="body-md" style={{ margin: 0 }}>Ready when you are.</p>
     ),
-    actions: <CtaButton variant="primary">Start Reflection</CtaButton>,
+    actions: <Button variant="primary">Start Reflection</Button>,
   },
 };
 
@@ -122,8 +122,8 @@ export const WithContentList: Story = {
     ),
     actions: (
       <>
-        <CtaButton variant="secondary">Scan a different card</CtaButton>
-        <CtaButton variant="primary">Complete Exercise with this card</CtaButton>
+        <Button variant="secondary">Scan a different card</Button>
+        <Button variant="primary">Complete Exercise with this card</Button>
       </>
     ),
   },
@@ -144,6 +144,6 @@ export const LongCopy: Story = {
         not impose a measure on what you put inside it, so the content has to.
       </p>
     ),
-    actions: <CtaButton variant="primary">Continue</CtaButton>,
+    actions: <Button variant="primary">Continue</Button>,
   },
 };

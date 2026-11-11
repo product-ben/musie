@@ -183,7 +183,7 @@
      2026-11-11; Ben's number (D7, docs/plans/exercises-ready-to-build.md).
 
      The screen's toolbar is a ROW OF 40px CONTROLS — Shuffle and „Ziel
-     ändern“ are CtaButton `min`, which its label and block padding draw
+     ändern“ are Button `min`, which its label and block padding draw
      about 40px tall — and the help button is the one icon-only control in
      it. The ladder had nothing for that: --target-min (24px) is a speck
      beside its neighbours, and --target-primary (44px) stands proud of
@@ -197,7 +197,7 @@
      stays --target-primary's job — an action that carries the person
      onward still takes the 44px rung.
 
-     One component has the rung: IconButton `size="sm"`. CtaButton has not
+     One component has the rung: IconButton `size="sm"`. Button has not
      (A8; IconButton.tsx's size note says why the ladders differ there).
 
      Absorbing it: this line moves into musy-foundations.css's touch-target

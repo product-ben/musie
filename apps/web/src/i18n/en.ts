@@ -1668,8 +1668,9 @@ export const en = {
      promises what you can start, the pile shows what exists — and argued in
      GOAL-FILTER.md §7.
 
-     `{goal}` IS DELIBERATELY NOT FILLED. It marks where the `InlineLink` goes,
-     and `i18n/slot.ts` splits the rendered string on it. That is why this is
+     `{goal}` IS DELIBERATELY NOT FILLED. It marks where the goal control goes
+     (an `InlineLink` then, an `InlineButton` since 2026-11-11), and
+     `i18n/slot.ts` splits the rendered string on it. That is why this is
      one sentence per locale rather than a prefix and a suffix: the slot can
      sit anywhere, including first, and a translator reads a sentence. The
      word after it is the goal's `purpose`, which is content and lives in

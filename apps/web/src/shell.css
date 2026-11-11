@@ -282,7 +282,7 @@
 
 /* The secondary HUGS, and it needs saying out loud. `.musy-box__slot` is a
    flex column, so its default `align-items: stretch` makes every child fill
-   the measure — a `CtaButton` without `block` still came out 311px wide of a
+   the measure — a `Button` without `block` still came out 311px wide of a
    311px box, which is `block` by accident. Measured, then fixed.
 
    START, not centre. Ben, 2026-10-20: "left align it all". Everything else in
@@ -688,7 +688,7 @@
 /* ═══ THE CARD CODE, TYPED — E.1 ════════════════════════════════════════════
    A <form>, so Enter submits a five-character code rather than sending
    somebody hunting for the button. The system has a Field and it has a
-   CtaButton; it has no form layout between them, which is the gap this fills —
+   Button; it has no form layout between them, which is the gap this fills —
    and the whole of the fill is a column and a cap.
 
    THE CAP IS WHY IT EXISTS AT ALL. `.musy-field__control` is `width: 100%`,
@@ -888,7 +888,7 @@
   color: var(--on-surface-muted);
 }
 
-/* THE TWO DOORS HUG. A CtaButton is inline-flex and `.musie-reflect__section`
+/* THE TWO DOORS HUG. A `Button` is inline-flex and `.musie-reflect__section`
    is a flex column, which stretches it edge to edge — the same note
    `.musie-voice__controls` makes. An offer is not the end of a step, and a
    full-width pair would read as one. */
@@ -1749,7 +1749,7 @@
 
    A PERMITTED CUSTOM PATTERN (L14): the system has no disclosure component,
    and what is custom here is ONE stacking context. The control is a
-   `CtaButton`, the region holds a `ContentList` and a `BadgeRow`, and the
+   `Button`, the region holds a `ContentList` and a `BadgeRow`, and the
    open/closed state is `hidden` on the region plus `aria-expanded` on the
    control — markup, not styling. There is no height animation and no
    `max-height` trick: a measured collapse would need JS to know the content's
@@ -2480,7 +2480,7 @@ html[data-musy-scroll-snap] {
    `stacked="hug"` instead of staying here as a second copy (rule 1, L14.3).
 
    What the old block argued is still true and now lives in `ButtonGroup`:
-   `justify-content` and not `CtaButton.align`, because the two sound alike
+   `justify-content` and not `Button.align`, because the two sound alike
    and are not — `align` moves the LABEL inside the control and leaves the box
    where it is. Where the box sits in a row was this screen's business under
    L14; it is the component's now, which is the better home for it.
@@ -2976,8 +2976,10 @@ html[data-musy-scroll-snap] {
    rung — and these are neither prose nor essential to any task: they are two
    destinations whose own pages carry everything that matters. The thing that
    must be legible is that they EXIST, which is a question of contrast and
-   target size rather than of type step, and `InlineLink` inherits its size
-   from here while keeping its own 44px row.
+   target size rather than of type step. `InlineButton` inherits its type step
+   from here and brings its own contrast: words in `--on-surface`, not this
+   rule's muted ink, over a `--border-strong` underline. (It was `InlineLink`
+   in the accent colour until 2026-11-11.)
 
    --space-gap-inline between the words, not --space-gap-related: this is a run
    of items on ONE line, which is the rung that token names. Centred, because
@@ -2997,7 +2999,7 @@ html[data-musy-scroll-snap] {
 
 /* The middot. It is `aria-hidden` in the markup — two link names with
    punctuation read between them is worse than two link names — so all this has
-   to do is match the ink of the words it separates rather than the links'. */
+   to do is keep the row's muted ink rather than take the links' `--on-surface`. */
 .musie-legal > span {
   color: var(--on-surface-muted);
 }

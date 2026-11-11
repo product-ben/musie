@@ -23,7 +23,7 @@ flowchart TB
 ## What it is, and what it is made of
 
 A permitted custom pattern. **The design system has no Drawer**, so this
-composes existing components — Logo, IconButton, CtaButton, and whatever the
+composes existing components — Logo, IconButton, Button, and whatever the
 preferences slot holds — inside a hand-built shell.
 
 Order is **action first**: the thing you came to do sits at the top, then the

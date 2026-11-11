@@ -15,7 +15,7 @@ Styles: `components/musy-components.css`.
 |---|---|
 | Icon | `useRender` (composition API only — an icon has no behaviour) |
 | Icon Button | `Button` + `Tooltip` (Root/Trigger/Portal/Positioner/Popup) |
-| CTA Button | `Button` |
+| Button | `Button` |
 | Switch | `Switch.Root` + `Switch.Thumb` |
 | Radio Group (text) | `Fieldset` + `RadioGroup` + `Radio.Root`/`Indicator` |
 | Radio Group (image+text) | same |
@@ -61,12 +61,12 @@ what makes the *intended* behaviour work, and it is the app's to set.
 | 1 | Static Lucide default; `lucide-animated` allowed as an explicit per-component opt-in, gated by a user setting **and** `prefers-reduced-motion` | `Icon` has an `animate` prop, off everywhere. Conflict A1 is resolved by policy, not by token |
 | 2 | `--icon-stroke-sm: 1.5px` is a **token gap** — flagged, not invented locally | Gap G1. `Icon size="sm"` is PROVISIONAL |
 | 3 | Literal placeholder names kept verbatim | Every accent prop is `'primary' \| 'accent-placeholder1' \| 'accent-placeholder2'`. Renaming later is a find-replace |
-| 4 | Breakpoint + target-size system only; no separate shared-screen mode | `--target-guided` is a size variant on Icon Button, CTA Button, Switch and Radio Group. No new type set |
+| 4 | Breakpoint + target-size system only; no separate shared-screen mode | `--target-guided` is a size variant on Icon Button, Button, Switch and Radio Group. No new type set |
 | 5 | `surface-inverse` kept | Icon Button's tooltip consumes it. Open question 9 is closed |
 
 One correction to §2.4 as written: it names `--target-comfort` as the CTA default
 while §5.4 names `--target-primary`. §5.4 is the more specific statement about
-this component, so CTA Button defaults to `--target-primary` (44px) and offers
+this component, so Button defaults to `--target-primary` (44px) and offers
 `comfort` and `guided` as variants. Logged as conflict B8.
 
 ---
@@ -137,7 +137,7 @@ IconButton
 
 **Sizes.** `min` 24 · `sm` 40 · `primary` 44 · `comfort` 56 · `guided` 64px, on `--target-min`, `--target-sm`, `--target-primary`, `--target-comfort` and `--target-guided`. The glyph is `sm` (16px) at `min`, `md` (20px) at `sm` and `primary`, and `lg` (24px) at `comfort` and `guided`. Only `min` bakes in a margin (below).
 
-**`sm` — added 2026-11-11 (Ben, D7 of `docs/plans/exercises-ready-to-build.md`).** 40px on `--target-sm`, staged as amendment gap **G6** in `musy-foundations-amendments.css` — hence PROVISIONAL until Layer 1 absorbs it. It exists for the help button in the /exercises toolbar, which stands in a row of CtaButton `min`s, and those draw about 40px tall through their label and block padding (measured: 39px at 393, 40.4px at 1440). 40px clears 2.5.8 without the spacing exception, so `sm` takes **no** margin. **It is on this ladder only (A8):** CtaButton's `min` already is the 40px control, so CtaButton has no `sm`. That breaks the rule that the two ladders read identically (7.4, and both components' headers), and it is deliberate — `IconButton.tsx`'s size note says so, so the asymmetry is not "fixed".
+**`sm` — added 2026-11-11 (Ben, D7 of `docs/plans/exercises-ready-to-build.md`).** 40px on `--target-sm`, staged as amendment gap **G6** in `musy-foundations-amendments.css` — hence PROVISIONAL until Layer 1 absorbs it. It exists for the help button in the /exercises toolbar, which stands in a row of Button `min`s, and those draw about 40px tall through their label and block padding (measured: 39px at 393, 40.4px at 1440). 40px clears 2.5.8 without the spacing exception, so `sm` takes **no** margin. **It is on this ladder only (A8):** Button's `min` already is the 40px control, so Button has no `sm`. That breaks the rule the two ladders kept until then — they read identically — and it is deliberate: 7.4, `Button.tsx`'s header and `IconButton.tsx`'s size note all say so, so the asymmetry is not "fixed".
 
 **State matrix.**
 
@@ -184,7 +184,7 @@ segmented control, not as this component.
 
 ---
 
-## 7.4 CTA Button `[SEED]`
+## 7.4 Button `[SEED]`
 
 **Purpose.** The primary text action on a screen.
 
@@ -192,7 +192,7 @@ segmented control, not as this component.
 
 **Anatomy.**
 ```
-CtaButton
+Button
 └── button.musy-btn.musy-btn--<variant>[.musy-btn--comfort|--guided][.musy-btn--block][.musy-btn--wrap]
     ├── Icon (leading, optional, inline-nudged)
     ├── span.musy-btn__label
@@ -218,7 +218,7 @@ CtaButton
 
 **Responsive behaviour.** No breakpoint changes. `block` is offered because full-width-on-mobile is a *layout* decision — the button does not assume it. `--target-guided` also widens the inline padding to `--sp-6` so a 64px pill does not read as a circle.
 
-**`size="min"` is the small rung, and it carries a condition.** 24px at `--target-min`, with a `label-md` label and **zero block padding** — that last part is what makes 24px reachable at all: `--musy-btn-target` drives `min-block-size`, which is a *floor*, so the base rule's `--space-inset-control` left the rung at 47px until the block padding went. With no block padding the 18.61px line box sits inside the 24px floor, which is exactly how 7.2's min rung gets there. The inline padding stays, because it is what keeps the label off the edge. Layer 1 §5.4 permits 24px for inline controls in prose and card controls on a fine pointer, and **never for a primary action**, which is what a CTA usually is. So this rung exists for the narrow case where a *labelled* button is the inline control — a "change" beside a value, a dismiss inside a line of text. The stylesheet bakes in the `--sp-2` margin that earns 2.5.8's spacing exception, exactly as 7.2's min rung does, so the target cannot be made illegal by where it is placed; two of those margins meet at `--space-gap-stack`, so a row of them needs no gap. The leading icon steps to `sm` with it. Named `min` rather than `small` so the ladder reads identically here and on Icon Button.
+**`size="min"` is the small rung, and it carries a condition.** Its floor is `--target-min` (24px), with a `label-md` label. `--musy-btn-target` drives `min-block-size`, which is a *floor*, so the **block padding** decides the height: the base rule's `--space-inset-control` left the rung at 47px, zero padding brought it down to the 24px floor, and since 2026-10-02 (Ben) it is `--sp-2`, which draws the rung about 40px tall (measured 2026-11-11: 39px at 393, 40.4px at 1440). The inline padding is `--sp-4`, because it is what keeps the label off the edge. Layer 1 §5.4 permits 24px for inline controls in prose and card controls on a fine pointer, and **never for a primary action**, which is what a CTA usually is. So this rung exists for the narrow case where a *labelled* button is the inline control — a "change" beside a value, a dismiss inside a line of text. The stylesheet bakes in the `--sp-2` margin that earns 2.5.8's spacing exception, exactly as 7.2's min rung does, so the target cannot be made illegal by where it is placed; two of those margins meet at `--space-gap-stack`, so a row of them needs no gap. The leading icon steps to `sm` with it. Named `min` rather than `small` so the rung has the same name here and on Icon Button. **The two ladders are not identical, though:** Icon Button has `sm` (40px on `--target-sm`, gap G6, 2026-11-11) and Button deliberately does not — its `min` already draws about 40px tall, so a second name for that height would be a rung nobody could choose between (A8 of `docs/plans/exercises-ready-to-build.md`; `IconButton.tsx`'s size note). Do not add `sm` here to make the ladders match.
 
 **Token usage.** Icon Button's list, plus `--space-inset-control` `--sp-3` `--sp-6` `--space-gap-inline` `--type-label-lg-*` `--type-label-md-*` `--text-wrap-body` and, for the accent variants, both families' `--interactive-accent-placeholder{1,2}` `-hover` `-active` `-disabled` `-on` `-on-disabled` `-border`.
 
@@ -232,13 +232,13 @@ CtaButton
 
 **Purpose.** The two or three actions a screen or step ends with, as one part.
 
-**Not a new button, and not a toolbar.** No roving focus, no segmented selection, no shared radius — the children are ordinary 7.4 CTA Buttons and keep their own target, focus ring and state matrix. The group owns exactly one thing: what the row does when it stops fitting.
+**Not a new button, and not a toolbar.** No roving focus, no segmented selection, no shared radius — the children are ordinary 7.4 Buttons and keep their own target, focus ring and state matrix. The group owns exactly one thing: what the row does when it stops fitting.
 
 **Anatomy.**
 ```
 ButtonGroup
 └── div.musy-btn-group[.musy-btn-group--center|--end]
-    └── CtaButton ×2–3   (may include a TrackButton — it is a CTA Button)
+    └── Button ×2–3   (may include a TrackButton — it is a Button)
 ```
 
 **Props.** `children`, `align` (`'start' | 'center' | 'end'`, default `start`).
@@ -782,7 +782,7 @@ Lightbox
 Toast
 └── div.musy-toast   [role=status] [aria-live=polite]
     ├── p.musy-toast__text          body-sm
-    ├── CtaButton variant="ghost"   the single reversal
+    ├── Button variant="ghost"   the single reversal
     └── Button.musy-toast__dismiss  base-ui Button + Icon X
 ```
 
@@ -835,7 +835,7 @@ Two earlier builds of this section got it wrong in instructive ways, both worth 
 | The order is the user's, and they change it by dragging | The order is fixed and the rows are read, not manipulated |
 | Each row can be corrected, merged or deleted in place | Rows are label-and-value pairs |
 
-**No new primitives.** Content Box, Icon Button, CTA Button, Toast and an `<ol>`, arranged per [10 · Layout](10-layout.md) L3, L4, L5, L6, L9 and L13. What makes it a component rather than a composition is the **state machine**: twelve states, three pairs of them mutually exclusive in a way that is easy to get wrong by hand.
+**No new primitives.** Content Box, Icon Button, Button, Toast and an `<ol>`, arranged per [10 · Layout](10-layout.md) L3, L4, L5, L6, L9 and L13. What makes it a component rather than a composition is the **state machine**: twelve states, three pairs of them mutually exclusive in a way that is easy to get wrong by hand.
 
 **Where it came from.** The transcript workspace, where speech arrives as a sequence of statements and the user tidies them afterwards. Every state below is one that flow actually produces.
 
@@ -853,8 +853,8 @@ DraggableList
         │   │       ├── IconButton  GripVertical · drag
         │   │       └── IconButton  ChevronDown  · aria-expanded, aria-controls
         │   └── div.musy-dlist__actions--end   [id = aria-controls]      L6
-        │       ├── CtaButton ghost Trash2  Delete
-        │       └── CtaButton ghost Pencil  Edit
+        │       ├── Button ghost Trash2  Delete
+        │       └── Button ghost Pencil  Edit
         └── div.musy-dlist__drop    [after]
 ```
 
@@ -1068,7 +1068,7 @@ Nothing here is implemented; these are the API affordances the out-of-scope work
 | Burger + profile as ghost icon buttons | `IconButton variant="ghost"`, tooltip suppressed on touch |
 | 24×24 marker slots in the nav | `Icon size="lg"`, `IconButton size="min"` with its mandatory spacing |
 | Sheet close button | `IconButton` with `tooltip={false}` |
-| QR: closed → open → recognised | `CtaButton` (open), `Message variant="error" live="assertive"` (not recognised), `Message variant="success"` + one `action` (recognised) |
+| QR: closed → open → recognised | `Button` (open), `Message variant="error" live="assertive"` (not recognised), `Message variant="success"` + one `action` (recognised) |
 | "Open directly in Spotify" | `Switch`, `reverse` layout. Its on-state suppressing a Message + Button pair is **consuming-app state**, not Switch state — Switch exposes no such coupling, correctly |
 | Focus management on sheet open/close | base-ui `Dialog` / `Drawer` own it. Every control here is reachable and `:focus-visible`-styled, and none traps focus |
 | Right-side sheets with scrim | base-ui `Drawer` — already in the dependency, no new library at Pass 3 |
@@ -1218,7 +1218,7 @@ Selection changes the marker **fill** and the label **weight**; completion chang
 
 **Purpose.** Attach one image — in the reference flow, a photo of handwritten reflection notes.
 
-**Semantic HTML.** No APG pattern (a file input is a native control with its own affordances) and no base-ui primitive. The native `<input type="file">` **is** the control: it is displaced with `.musy-sr-only` and triggered by a real CTA Button. That is the only accessible way to dress a file input — it is **displaced, never restyled**, so keyboard, focus and the platform picker behave exactly as the OS intends.
+**Semantic HTML.** No APG pattern (a file input is a native control with its own affordances) and no base-ui primitive. The native `<input type="file">` **is** the control: it is displaced with `.musy-sr-only` and triggered by a real Button. That is the only accessible way to dress a file input — it is **displaced, never restyled**, so keyboard, focus and the platform picker behave exactly as the OS intends.
 
 **Composed, not re-declared.** Label, description and error are §7.16's `.musy-field__*` parts. Only the drop zone and the selected-file row are new, because only those are new.
 
@@ -1231,11 +1231,11 @@ PhotoUpload
     ├── div.musy-upload__zone   [data-dragover][data-invalid][data-disabled]   (empty)
     │   ├── span.musy-upload__zone-icon → Icon ImagePlus
     │   ├── p.musy-upload__zone-text
-    │   └── CtaButton secondary              (opens the picker)
+    │   └── Button secondary              (opens the picker)
     ├── div.musy-upload__preview                                              (selected)
     │   ├── img.musy-upload__thumb  [alt REQUIRED]
     │   ├── div.musy-upload__meta → __name + __size
-    │   └── div.musy-upload__preview-actions → CtaButton ghost + IconButton Trash2
+    │   └── div.musy-upload__preview-actions → Button ghost + IconButton Trash2
     ├── div.musy-field__error
     └── p.musy-field__description
 ```
@@ -1349,7 +1349,7 @@ VoiceNote
 | `TrackButton` (`.musy-mbtn`) | The track is offered inline — in prose, in a wizard panel — where a second row of chrome would outweigh what it controls. Glyph + action label + MM:SS countdown, one target. |
 | `MusicPlayer` (`.musy-mplayer`) | The listener needs to scrub. A `--target-guided` (64px) transport plus a slider, elapsed and remaining. |
 
-**Composition, not a new button.** `TrackButton` is §7.4 CTA Button with one extra part (`.musy-mbtn__time`), so it inherits the whole button state model — hover, active, focus, disabled, loading — rather than re-deriving it.
+**Composition, not a new button.** `TrackButton` is §7.4 Button with one extra part (`.musy-mbtn__time`), so it inherits the whole button state model — hover, active, focus, disabled, loading — rather than re-deriving it.
 
 **Fully controlled, and no media.** Both own the transport UI and its state machine and never an `<audio>` element, no fetch and no timer: the consuming app holds the media and feeds `position` back. Same split as 7.19, and the same reason — one component drives a real player and a simulated one with no prototype branch inside the design system.
 
@@ -1424,7 +1424,7 @@ Hint
 | --- | --- |
 | Speaking *is* the action on the screen, and the recording is handed straight on (sent, transcribed, discarded) | The user must review, replay, or delete the note before moving on — that needs a playback state and a second control |
 
-**Composition, not a new button.** 7.4 CTA Button with two extra parts (`.musy-rec__meter`, `.musy-rec__time`), so it inherits the whole button state model — hover, active, focus, disabled — and the full target ladder: `--target-primary` (44px), `--target-comfort` (56px), `--target-guided` (64px). The size raises the target and the glyph step, never the type step.
+**Composition, not a new button.** 7.4 Button with two extra parts (`.musy-rec__meter`, `.musy-rec__time`), so it inherits the whole button state model — hover, active, focus, disabled — and the full target ladder: `--target-primary` (44px), `--target-comfort` (56px), `--target-guided` (64px). The size raises the target and the glyph step, never the type step.
 
 **Fully controlled, and no media.** The component draws `levels`; it never calls `getUserMedia`, never encodes, and **does not hold the 60-second timer**. The app that owns the recorder owns both and calls `onLimit` at `maxSeconds`. Same split as 7.19 and 7.21, and the same payoff: one component drives a real recorder and a simulated one with no prototype branch inside the design system.
 

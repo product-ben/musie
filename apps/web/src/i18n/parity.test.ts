@@ -51,7 +51,7 @@ describe('catalogue parity', () => {
   /* ── THE ONE SLOT THAT IS NEVER FILLED ───────────────────────────────────
      `{goal}` in /exercises' headline marks where a CONTROL goes, not where a
      string goes: `splitSlot` cuts the rendered sentence at it and the screen
-     puts an `InlineLink` in the gap. The test above cannot protect it — a
+     puts an `InlineButton` in the gap. The test above cannot protect it — a
      locale that dropped `{goal}` from BOTH forms would still have matching
      slots, and the headline would quietly render with no goal in it and no
      way to change one.

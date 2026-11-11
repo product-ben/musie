@@ -303,7 +303,7 @@ test('a closed session lands in Postgres as abandoned', async ({ page }, testInf
      start row and *Continue session* is gone.
 
      `aria-busy` is asserted rather than assumed. An `exact` name match already
-     excludes the busy row — `CtaButton` adds an sr-only "Loading" to the
+     excludes the busy row — `Button` adds an sr-only "Loading" to the
      accessible name while it waits — but that is a property of the component,
      and this assertion is the one that would still fail loudly if it changed. */
   await page.getByRole('button', { name: label(locale, 'shell.menuLabel'), exact: true }).click();

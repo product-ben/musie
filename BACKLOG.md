@@ -138,7 +138,7 @@ alongside `--project-ref` to avoid prompting for a password.
 
 Kept deliberately — **Ben, 2026-10-13: it is the rung for when Musie is
 optimised for elderly and for children.** 56px between the 44px default and
-`guided`'s 64px. Documented on `CtaButton`'s `CtaSize`, with pointers from
+`guided`'s 64px. Documented on `Button`'s `ButtonSize`, with pointers from
 `IconButton`, `MusicPlayer` and `RecordButton`.
 
 It is in this file so that the next clear-out finds a reason rather than a

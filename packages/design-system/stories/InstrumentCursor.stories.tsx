@@ -11,7 +11,7 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { InstrumentCursor } from '../src/InstrumentCursor';
 import { bothThemes } from './_decorators';
 
@@ -57,7 +57,7 @@ function InstrumentCursorStage({ size, color }: InstrumentCursorStageProps) {
           Point here with a mouse or a pen
         </div>
         <div style={{ position: 'absolute', insetBlockStart: 'var(--sp-3)', insetInlineEnd: 'var(--sp-3)' }}>
-          <CtaButton variant="secondary" size="min">A control</CtaButton>
+          <Button variant="secondary" size="min">A control</Button>
         </div>
       </div>
       <InstrumentCursor target={target} />
