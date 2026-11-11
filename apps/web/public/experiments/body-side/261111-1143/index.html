@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Körper · Seite</title>
+<!-- Musie-Experiment, gehostet unter /experiments (CLAUDE.md Regel 10: Ausnahme von den strengen Regeln).
+     Frage lq-04: von welcher Seite kommt welcher Ton. Die Musik lässt die Töne zwischen links und rechts wandern.
+     Ben, 2026-11-11: das Fokus-Sheet des Hörens der Kartenübungen, ohne Kartenbild; an seiner Stelle ein Körper in 3D,
+     in Sand. Ziehen dreht ihn; ruhig halten färbt die Stelle langsam in Terrakotta ein, und je länger du hältst, desto
+     weiter wächst die Fläche über die Haut. „Flächen bearbeiten“ zeigt neben jeder Fläche einen roten Löschen-Knopf.
+     Jede Fläche merkt sich den Zeitpunkt in der Musik und wie lange gehalten wurde. Die Frage stammt aus der App
+     (lq-04 / lq-05, dort am 2026-11-11 herausgenommen).
+     Körper: Anny (NAVER, Apache 2.0, github.com/naver/anny) auf dem MakeHuman-Grundkörper (MPFB2, CC0), die neutrale
+     Form, Topologie „notoes“; Herkunft und Umwandlung in /experiments/body-model/SOURCE.md. 3D: three.js 0.170 (MIT).
+     Stil: die Regeln, die das Hören-Sheet der App verwendet, aus der laufenden App gelesen (CSSOM, 2026-11-11);
+     die Schriften lädt die App selbst unter /fonts/.
+     Musik: im Browser erzeugt aus den Instrumenten-Samples unter /instruments/ (Harfe: VSCO 2 CE, CC0; Kalimba und
+     Marimba: aus den Experimenten). Keine Epidemic-Sound-Aufnahme: das Repo ist öffentlich (musie-assets/README).
+     Nichts geht an PostHog vor der Zustimmung, nichts an Supabase. -->
+<style>
+@font-face { font-family: Onest; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/onest-latin.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: Onest; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/onest-latin-ext.woff2") format("woff2"); unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: Literata; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/literata-latin.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: Literata; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/literata-latin-ext.woff2") format("woff2"); unicode-range: U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: Literata; font-style: italic; font-weight: 400 700; font-display: swap; src: url("/fonts/literata-italic-latin.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root { color-scheme: light; }
+[data-theme="light"] { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
+:root, [data-theme] { --sand-1: light-dark(#FAF7F1, #111412); --sand-2: light-dark(#F3EEE4, #191D1A); --sand-3: light-dark(#E5E3D9, #222723); --sand-4: light-dark(#DEDCD1, #2A2F2B); --sand-5: light-dark(#D6D5C9, #323833); --sand-6: light-dark(#CFCEC2, #3B413C); --sand-7: light-dark(#BDBCAF, #4C534E); --sand-8: light-dark(#A7A89B, #616862); --sand-9: light-dark(#8A8C82, #79807A); --sand-10: light-dark(#7C7E74, #868D87); --sand-11: light-dark(#62645E, #9EA59F); --sand-12: light-dark(#1A1F1C, #EDF0EC); --sand-edge: light-dark(#6E7068, #7F867F); --sand-press: light-dark(#808278, #828981); --green-1: light-dark(#F5F8F5, #0E1512); --green-2: light-dark(#E9EFE9, #121E18); --green-3: light-dark(#E3E7DE, #16281E); --green-4: light-dark(#D5DBD0, #1B3224); --green-5: light-dark(#C7CCC0, #203B2B); --green-6: light-dark(#A3AB9B, #264633); --green-7: light-dark(#8C9785, #325A42); --green-8: light-dark(#768372, #427355); --green-9: light-dark(#2B5340, #5E9478); --green-10: light-dark(#22442F, #6FA688); --green-11: light-dark(#2B5340, #8FBCA2); --green-12: light-dark(#16281D, #D8E8DF); --green-edge: light-dark(#678271, #6B8F79); --green-press: light-dark(#1C3827, #538A6C); --terracotta-1: light-dark(#FDF8F5, #160F0B); --terracotta-2: light-dark(#F9EDE5, #221711); --terracotta-3: light-dark(#F4DFD2, #2F1F16); --terracotta-4: light-dark(#F0D5C4, #3A271C); --terracotta-5: light-dark(#ECCBB7, #442E21); --terracotta-6: light-dark(#E8C1AA, #513726); --terracotta-7: light-dark(#E3B294, #67462F); --terracotta-8: light-dark(#DEA37F, #85593B); --terracotta-9: light-dark(#D99673, #D99673); --terracotta-10: light-dark(#CE8865, #E6A684); --terracotta-11: light-dark(#824429, #D0937A); --terracotta-12: light-dark(#4A2718, #F6DACB); --terracotta-edge: light-dark(#B5704F, #A2694B); --terracotta-press: light-dark(#C47C58, #C9875F); --success-1: light-dark(#F8FAF5, #0D1208); --success-2: light-dark(#EDF4E6, #141C0D); --success-3: light-dark(#E1EDD6, #1B2612); --success-4: light-dark(#D8E8C9, #212E16); --success-5: light-dark(#CEE2BC, #27371A); --success-6: light-dark(#C4DCAF, #2E411F); --success-7: light-dark(#B2D097, #3A5327); --success-8: light-dark(#98BE77, #4C6C33); --success-9: light-dark(#4C8B2B, #7CB451); --success-10: light-dark(#417A22, #8CC460); --success-11: light-dark(#3F6E23, #9ACB6F); --success-12: light-dark(#24400F, #DCEBCB); --success-edge: light-dark(#638A42, #679050); --success-press: light-dark(#3A6D1C, #6EA544); --warning-1: light-dark(#FBF8F5, #160F09); --warning-2: light-dark(#FAECE0, #22170D); --warning-3: light-dark(#F6DDC9, #2F1E0E); --warning-4: light-dark(#F4D5BC, #3B240F); --warning-5: light-dark(#F2CEAF, #452A10); --warning-6: light-dark(#F0C7A3, #513112); --warning-7: light-dark(#EBB88C, #673E13); --warning-8: light-dark(#DF9F66, #854E10); --warning-9: light-dark(#FEA247, #FFA958); --warning-10: light-dark(#F29226, #FEC08A); --warning-11: light-dark(#894C00, #D08A48); --warning-12: light-dark(#4C2903, #F8D7BC); --warning-edge: light-dark(#A5692F, #A86E37); --warning-press: light-dark(#E68710, #FA9931); --error-1: light-dark(#FDF7F6, #180E0D); --error-2: light-dark(#FFE9E6, #261412); --error-3: light-dark(#FFD8D4, #351917); --error-4: light-dark(#FFCEC9, #411E1C); --error-5: light-dark(#FFC5C0, #4D2220); --error-6: light-dark(#FFBDB6, #5A2825); --error-7: light-dark(#FCABA4, #73322E); --error-8: light-dark(#F28F87, #943D3A); --error-9: light-dark(#D03C3C, #E7524F); --error-10: light-dark(#C02B2F, #F8625D); --error-11: light-dark(#A53231, #E87A73); --error-12: light-dark(#551F1D, #FFD2CD); --error-edge: light-dark(#B85B55, #BB605A); --error-press: light-dark(#B31B24, #DB4746); --alpha-scrim: light-dark(rgb(26 31 28 / 0.55), rgb(6 9 7 / 0.72)); --alpha-shadow-key: light-dark(rgb(32 44 36 / 0.10), rgb(0 0 0 / 0.46)); --alpha-shadow-ambient: light-dark(rgb(32 44 36 / 0.06), rgb(0 0 0 / 0.32)); }
+:root, [data-theme] { --surface: var(--sand-2); --surface-raised: light-dark(var(--sand-1), var(--sand-4)); --surface-sunken: light-dark(var(--sand-3), var(--sand-1)); --surface-overlay: light-dark(var(--sand-1), var(--sand-4)); --surface-inverse: var(--sand-12); --on-surface: var(--sand-12); --on-surface-muted: var(--sand-11); --on-surface-disabled: var(--sand-9); --on-surface-inverse: var(--sand-1); --border-subtle: var(--sand-6); --border-strong: var(--green-edge); --border-focus: light-dark(var(--green-9), var(--green-10)); --interactive-primary: var(--green-9); --interactive-primary-hover: var(--green-10); --interactive-primary-active: var(--green-press); --interactive-primary-disabled: var(--green-5); --interactive-primary-on: light-dark(var(--sand-2), var(--sand-1)); --interactive-primary-on-disabled: var(--sand-11); --interactive-primary-subtle: var(--green-3); --interactive-primary-subtle-hover: var(--green-4); --interactive-primary-subtle-active: var(--green-5); --interactive-primary-on-subtle: var(--sand-12); --interactive-primary-border: var(--green-edge); --interactive-accent: var(--terracotta-9); --interactive-accent-hover: var(--terracotta-10); --interactive-accent-active: var(--terracotta-press); --interactive-accent-disabled: var(--sand-5); --interactive-accent-on: light-dark(var(--sand-12), var(--sand-1)); --interactive-accent-on-disabled: var(--sand-10); --interactive-accent-subtle: var(--terracotta-3); --interactive-accent-subtle-hover: var(--terracotta-4); --interactive-accent-subtle-active: var(--terracotta-5); --interactive-accent-on-subtle: var(--terracotta-11); --interactive-accent-border: var(--terracotta-edge); --interactive-ghost: transparent; --interactive-ghost-hover: light-dark(var(--sand-3), var(--sand-4)); --interactive-ghost-active: light-dark(var(--sand-4), var(--sand-5)); --interactive-ghost-disabled: transparent; --interactive-ghost-on: var(--sand-12); --interactive-ghost-on-disabled: var(--sand-9); --interactive-ghost-border: light-dark(var(--green-9), var(--green-10)); --interactive-ghost-border-hover: var(--green-10); --accent-1: var(--green-9); --accent-1-subtle: var(--green-3); --accent-1-border: var(--green-edge); --accent-1-text: var(--green-11); --accent-1-on: light-dark(var(--sand-2), var(--sand-1)); --accent-2: var(--terracotta-9); --accent-2-subtle: var(--terracotta-3); --accent-2-border: var(--terracotta-edge); --accent-2-text: var(--terracotta-11); --accent-2-on: light-dark(var(--sand-12), var(--sand-1)); --feedback-info-surface: var(--sand-3); --feedback-info-border: var(--sand-edge); --feedback-info-icon: var(--sand-11); --feedback-info-text: var(--sand-12); --feedback-warning-surface: var(--warning-2); --feedback-warning-border: var(--warning-edge); --feedback-warning-icon: var(--warning-11); --feedback-warning-text: var(--warning-12); --feedback-success-surface: var(--success-2); --feedback-success-border: var(--success-edge); --feedback-success-icon: var(--success-11); --feedback-success-text: var(--success-12); --feedback-error-surface: var(--error-2); --feedback-error-border: var(--error-edge); --feedback-error-icon: var(--error-11); --feedback-error-text: var(--error-12); }
+:root, [data-theme] { --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px; --sp-10: 128px; --space-inset-control: var(--sp-3) var(--sp-5); --space-inset-card: var(--sp-5); --space-inset-sheet: var(--sp-6); --space-gap-inline: var(--sp-2); --space-gap-related: var(--sp-3); --space-gap-stack: var(--sp-4); --space-gap-group: var(--sp-6); --space-section: var(--sp-7); --space-section-lg: var(--sp-9); --target-min: 24px; --target-primary: 44px; --target-comfort: 56px; --target-guided: 64px; --radius-xs: 4px; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 999px; --radius-control: var(--radius-full); --radius-input: var(--radius-sm); --radius-card: var(--radius-md); --radius-panel: var(--radius-lg); --radius-sheet: var(--radius-xl); --border-width-hairline: 1px; --border-width-regular: 1.5px; --border-width-thick: 2px; --border-width-focus: 3px; --elevation-ring: light-dark(transparent, var(--sand-7)); --elevation-0: none; --elevation-1: 0 1px 2px var(--alpha-shadow-key), 0 1px 3px -1px var(--alpha-shadow-ambient), inset 0 0 0 1px var(--elevation-ring); --elevation-2: 0 2px 4px -1px var(--alpha-shadow-key), 0 8px 16px -6px var(--alpha-shadow-ambient), inset 0 0 0 1px var(--elevation-ring); --elevation-3: 0 4px 8px -2px var(--alpha-shadow-key), 0 20px 40px -12px var(--alpha-shadow-ambient), inset 0 0 0 1px var(--elevation-ring); --focus-ring-width: var(--border-width-focus); --focus-ring-offset: 2px; --focus-ring-color: var(--border-focus); --focus-ring-style: solid; --focus-ring: var(--focus-ring-width) var(--focus-ring-style) var(--focus-ring-color); --focus-ring-clearance: 5px; --motion-duration-instant: 80ms; --motion-duration-fast: 140ms; --motion-duration-base: 220ms; --motion-duration-slow: 340ms; --motion-duration-slower: 520ms; --motion-ease-standard: cubic-bezier(0.2, 0, 0.2, 1); --motion-ease-entrance: cubic-bezier(0, 0, 0.2, 1); --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1); --motion-ease-emphasis: cubic-bezier(0.2, 0.9, 0.1, 1); --motion-travel-sm: 8px; --motion-travel-md: 16px; --motion-travel-lg: 32px; --motion-enter: var(--motion-duration-base) var(--motion-ease-entrance); --motion-exit: var(--motion-duration-fast) var(--motion-ease-exit); --motion-toggle: var(--motion-duration-fast) var(--motion-ease-standard); --motion-sheet-slide: var(--motion-duration-slow) var(--motion-ease-emphasis); --motion-emphasis: var(--motion-duration-slower) var(--motion-ease-emphasis); --z-base: 0; --z-raised: 10; --z-sticky: 100; --z-overlay: 200; --z-sheet: 300; --z-tooltip: 400; --z-toast: 500; --icon-size-sm: 16px; --icon-size-md: 20px; --icon-size-lg: 24px; --icon-size-xl: 32px; --icon-stroke: 2px; --icon-optical-nudge: -0.055em; --font-display: Onest, ui-sans-serif, system-ui, sans-serif; --font-text: Literata, ui-serif, Georgia, serif; --font-weight-regular: 400; --font-weight-medium: 500; --font-weight-semibold: 600; --font-weight-bold: 700; --type-display-xl-size: clamp(40px, calc(30.991px + 2.2923vw), 64px); --type-display-xl-line: 1.0; --type-display-xl-tracking: -0.018em; --type-display-xl-weight: var(--font-weight-bold); --type-display-xl-family: var(--font-display); --type-display-lg-size: clamp(32px, calc(27.496px + 1.1461vw), 44px); --type-display-lg-line: 1.1; --type-display-lg-tracking: -0.014em; --type-display-lg-weight: var(--font-weight-medium); --type-display-lg-family: var(--font-display); --type-stage-size: clamp(26px, calc(22.997px + 0.7641vw), 34px); --type-stage-line: 1.3; --type-stage-tracking: -0.004em; --type-stage-weight: var(--font-weight-regular); --type-stage-family: var(--font-display); --type-heading-lg-size: clamp(26px, calc(22.997px + 0.7641vw), 34px); --type-heading-lg-line: 1.2; --type-heading-lg-tracking: -0.008em; --type-heading-lg-weight: var(--font-weight-medium); --type-heading-lg-family: var(--font-display); --type-body-xl-size: var(--type-heading-lg-size); --type-body-xl-line: var(--type-heading-lg-line); --type-body-xl-tracking: -0.008em; --type-body-xl-weight: var(--font-weight-medium); --type-body-xl-family: var(--font-display); --type-heading-md-size: clamp(22px, calc(20.499px + 0.3820vw), 26px); --type-heading-md-line: 1.25; --type-heading-md-tracking: -0.004em; --type-heading-md-weight: var(--font-weight-medium); --type-heading-md-family: var(--font-display); --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px); --type-heading-sm-line: 1.3; --type-heading-sm-tracking: 0; --type-heading-sm-weight: var(--font-weight-semibold); --type-heading-sm-family: var(--font-display); --type-body-lg-size: clamp(19px, calc(18.625px + 0.0955vw), 20px); --type-body-lg-line: 1.5; --type-body-lg-tracking: 0; --type-body-lg-weight: var(--font-weight-regular); --type-body-lg-family: var(--font-text); --type-body-md-size: clamp(17px, calc(16.625px + 0.0955vw), 18px); --type-body-md-line: 1.5; --type-body-md-tracking: 0; --type-body-md-weight: var(--font-weight-regular); --type-body-md-family: var(--font-text); --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px); --type-body-sm-line: 1.5; --type-body-sm-tracking: 0; --type-body-sm-weight: var(--font-weight-regular); --type-body-sm-family: var(--font-text); --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px); --type-label-lg-line: 1.2; --type-label-lg-tracking: 0; --type-label-lg-weight: var(--font-weight-semibold); --type-label-lg-family: var(--font-display); --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px); --type-label-md-line: 1.4; --type-label-md-tracking: 0.002em; --type-label-md-weight: var(--font-weight-regular); --type-label-md-family: var(--font-display); --type-body-min-size: var(--type-body-md-size); --measure-body: 62ch; --measure-heading: 50ch; --measure-compact: 26ch; --text-wrap-heading: balance; --text-wrap-body: pretty; --text-hyphens: auto; --bp-sm: 480px; --bp-md: 768px; --bp-lg: 1024px; --bp-xl: 1280px; --viewport-block: 100svh; --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline)
+       + var(--sp-5) + var(--sp-7)); --view-block: calc(var(--viewport-block) - var(--chrome-block)); --sticky-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline)); --view-block-scrolled: calc(var(--viewport-block) - var(--sticky-block)); --container-max: 1200px; --gutter: var(--sp-4); --columns: 4; --grid-gap: var(--sp-4); }
+@media (min-width: 768px) { :root, [data-theme] { --gutter: var(--sp-5); --columns: 8; --grid-gap: var(--sp-5); --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7)); } }
+@media (min-width: 1024px) { :root, [data-theme] { --gutter: var(--sp-6); --columns: 12; --grid-gap: var(--sp-5); --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7)); } }
+@media (min-width: 1280px) { :root, [data-theme] { --gutter: var(--sp-7); --columns: 12; --grid-gap: var(--sp-6); --chrome-block: calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline) + var(--sp-5) + var(--sp-7)); } }
+@media (prefers-reduced-motion: reduce) { :root, [data-theme] { --motion-duration-instant: 1ms; --motion-duration-fast: 1ms; --motion-duration-base: 1ms; --motion-duration-slow: 1ms; --motion-duration-slower: 1ms; --motion-travel-sm: 0px; --motion-travel-md: 0px; --motion-travel-lg: 0px; --motion-ease-emphasis: linear; } }
+@media (prefers-contrast: more) { :root, [data-theme] { --border-subtle: var(--sand-edge); --border-strong: var(--sand-11); --interactive-ghost-border-hover: var(--sand-11); --on-surface-muted: var(--sand-12); --on-surface-disabled: var(--sand-11); --elevation-ring: var(--sand-edge); --focus-ring-width: 4px; --border-width-hairline: 1.5px; } }
+@media (forced-colors: active) { :root, [data-theme] { --border-subtle: CanvasText; --border-strong: CanvasText; --interactive-ghost-border-hover: CanvasText; --border-focus: Highlight; --elevation-1: none; --elevation-2: none; --elevation-3: none; } }
+:root, [data-theme] { --icon-stroke-sm: 1.5px; --border-style-solid: solid; --border-style-dashed: dashed; --on-scrim: light-dark(var(--sand-1), var(--sand-12)); --measure-figure: 416px; --instrument-surface: var(--surface); --instrument-string: var(--sand-7); --instrument-key: var(--sand-5); --instrument-detail: var(--sand-8); --instrument-played: var(--terracotta-7); --instrument-answer: var(--green-7); --instrument-shadow-level: 3; --instrument-shadow-oomph: 0.34; --instrument-shadow-crispy: 0.44; --instrument-shadow-resolution: 0.26; --instrument-shadow-light-x: -0.25; --instrument-shadow-light-y: -0.37; --instrument-shadow-tint: 1; --instrument-tap-duration: 700ms; --instrument-tap-size: 16.85px; --instrument-tap-start: 0.8; --instrument-tap-growth: 0.6; --instrument-tap-growth-by-strength: 3.4; --instrument-tap-growth-power: 3; --instrument-tap-mix: 0.3; --instrument-tap-mix-by-strength: 0.7; --instrument-tap-opacity: 0.45; --instrument-tap-opacity-by-strength: 0.75; --instrument-tap-fade-power: 1.6; --instrument-cursor-size: calc(var(--sp-5) * 2); --instrument-cursor-color: var(--interactive-primary); }
+@media (prefers-contrast: more) { :root, [data-theme] { --instrument-shadow-level: 0; } }
+:root { --musy-card-min: 196px; }
+.musy-focusable:focus-visible, .musy-icon-btn:focus-visible, .musy-btn:focus-visible, .musy-switch__track:focus-visible, .musy-radio__body:focus-visible, .musy-field__control:focus-visible, .musy-code-field__box:focus-visible, .musy-wizard__trigger:focus-visible, .musy-radio-card__body:focus-visible, .musy-rcard__body:focus-visible, .musy-lightbox__close:focus-visible, .musy-msg__dismiss:focus-visible, .musy-box__dismiss:focus-visible, .musy-dot:focus-visible, .musy-carousel__slide:focus-visible, .musy-filter__toggle:focus-visible, .musy-filter__clear:focus-visible, .musy-filter__value:focus-visible, [data-force~="focus"] { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-sr-only, .musy-seg--labels-none .musy-seg__label, .musy-seg--labels-unchecked .musy-seg__option[data-checked] .musy-seg__label { position: absolute; width: var(--border-width-hairline); height: var(--border-width-hairline); padding: 0px; margin: calc(var(--border-width-hairline) * -1); overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0px; }
+.musy-icon { display: inline-block; flex-shrink: 0; width: var(--icon-size-md); height: var(--icon-size-md); stroke: currentcolor; stroke-width: var(--icon-stroke); fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.musy-icon--sm { width: var(--icon-size-sm); height: var(--icon-size-sm); stroke-width: var(--icon-stroke-sm); }
+.musy-icon--md { width: var(--icon-size-md); height: var(--icon-size-md); }
+.musy-icon--lg { width: var(--icon-size-lg); height: var(--icon-size-lg); }
+.musy-icon--inline { transform: translateY(var(--icon-optical-nudge)); }
+.musy-icon[data-animate="on"] { transition: transform var(--motion-emphasis); }
+@media (prefers-reduced-motion: reduce) { .musy-icon[data-animate="on"] { transition: none; animation: auto ease 0s 1 normal none running none !important; } }
+.musy-icon-btn { --musy-icon-btn-size: var(--target-primary); position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--musy-icon-btn-size); height: var(--musy-icon-btn-size); padding: 0px; border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-icon-btn--primary-size { --musy-icon-btn-size: var(--target-primary); }
+.musy-icon-btn--guided { --musy-icon-btn-size: var(--target-guided); }
+.musy-icon-btn--primary { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on); }
+.musy-icon-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--primary:hover:not(:disabled):not([data-loading]), .musy-icon-btn--primary[data-force~="hover"] { background-color: var(--interactive-primary-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-icon-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-icon-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-icon-btn--primary:active:not(:disabled), .musy-icon-btn--primary[data-pressed]:not(:disabled), .musy-icon-btn--primary[data-force~="active"] { background-color: var(--interactive-primary-active); }
+.musy-icon-btn--secondary:active:not(:disabled), .musy-icon-btn--secondary[data-pressed]:not(:disabled), .musy-icon-btn--outline:active:not(:disabled), .musy-icon-btn--outline[data-pressed]:not(:disabled), .musy-icon-btn--outline[data-force~="active"], .musy-icon-btn--ghost:active:not(:disabled), .musy-icon-btn--ghost[data-pressed]:not(:disabled), .musy-icon-btn--secondary[data-force~="active"], .musy-icon-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-icon-btn:disabled, .musy-icon-btn[data-disabled] { cursor: not-allowed; }
+.musy-icon-btn--primary:disabled, .musy-icon-btn--primary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--interactive-primary-on-disabled); }
+.musy-icon-btn--ghost:disabled, .musy-icon-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-icon-btn[data-loading] { cursor: progress; }
+.musy-icon-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-spinner { position: absolute; width: var(--icon-size-md); height: var(--icon-size-md); border-top-style: ; border-top-width: ; border-right-color: ; border-right-style: ; border-right-width: ; border-bottom-color: ; border-bottom-style: ; border-bottom-width: ; border-left-color: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; border-top-color: transparent; border-radius: var(--radius-full); animation: musy-spin var(--motion-duration-slower) linear infinite; }
+@keyframes musy-spin { 
+  100% { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) { .musy-spinner { animation: auto ease 0s 1 normal none running none; border-top-color: currentcolor; opacity: 0.55; } }
+.musy-btn { --musy-btn-target: var(--target-primary); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-gap-inline); min-height: var(--musy-btn-target); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background: none; font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); text-align: center; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-btn--min { --musy-btn-target: var(--target-min); padding-block: var(--sp-2); padding-inline: var(--sp-4); gap: var(--sp-1); margin: var(--sp-2); font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); border-radius: var(--radius-control); }
+.musy-btn--primary { background-color: var(--interactive-primary); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on); }
+.musy-btn--secondary { background-color: var(--surface-raised); border-color: var(--border-strong); color: var(--on-surface); }
+.musy-btn--outline { background-color: transparent; border-color: var(--border-strong); color: var(--on-surface); }
+.musy-btn--ghost { background-color: var(--interactive-ghost); border-color: transparent; color: var(--interactive-ghost-on); }
+@media (hover: hover) and (pointer: fine) { .musy-btn--primary:hover:not(:disabled):not([data-loading]), .musy-btn--primary[data-force~="hover"] { background-color: var(--interactive-primary-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-btn--secondary:hover:not(:disabled):not([data-loading]), .musy-btn--secondary[data-force~="hover"], .musy-btn--outline:hover:not(:disabled):not([data-loading]), .musy-btn--outline[data-force~="hover"] { background-color: var(--interactive-ghost-hover); border-color: var(--interactive-ghost-border-hover); } }
+@media (hover: hover) and (pointer: fine) { .musy-btn--ghost:hover:not(:disabled):not([data-loading]), .musy-btn--ghost[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-btn--primary:active:not(:disabled), .musy-btn--primary[data-pressed]:not(:disabled), .musy-btn--primary[data-force~="active"] { background-color: var(--interactive-primary-active); }
+.musy-btn--secondary:active:not(:disabled), .musy-btn--secondary[data-pressed]:not(:disabled), .musy-btn--outline:active:not(:disabled), .musy-btn--outline[data-pressed]:not(:disabled), .musy-btn--outline[data-force~="active"], .musy-btn--ghost:active:not(:disabled), .musy-btn--ghost[data-pressed]:not(:disabled), .musy-btn--secondary[data-force~="active"], .musy-btn--ghost[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-btn:disabled, .musy-btn[data-disabled] { cursor: not-allowed; }
+.musy-btn--primary:disabled, .musy-btn--primary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--interactive-primary-on-disabled); }
+.musy-btn--secondary:disabled, .musy-btn--secondary[data-disabled] { background-color: var(--interactive-primary-disabled); border-color: transparent; color: var(--on-surface-disabled); }
+.musy-btn--outline:disabled, .musy-btn--outline[data-disabled] { background-color: transparent; border-color: var(--border-subtle); color: var(--on-surface-disabled); }
+.musy-btn--ghost:disabled, .musy-btn--ghost[data-disabled] { background-color: var(--interactive-ghost-disabled); color: var(--interactive-ghost-on-disabled); }
+.musy-btn[data-loading] { cursor: progress; position: relative; }
+.musy-btn[data-loading] .musy-btn__label, .musy-btn[data-loading] .musy-icon { visibility: hidden; }
+.musy-btn[data-loading] .musy-spinner { left: 50%; top: 50%; margin-left: calc(var(--icon-size-md) / -2); margin-top: calc(var(--icon-size-md) / -2); }
+.musy-btn__label { text-wrap: var(--text-wrap-body); }
+.musy-btn--wrap { min-height: var(--musy-btn-target); height: auto; }
+.musy-btn--wrap .musy-btn__label { white-space: normal; }
+@keyframes musy-carousel-nudge { 
+  0% { transform: translateX(0px); }
+  45% { transform: translateX(calc(var(--motion-travel-lg) * -1)); }
+  100% { transform: translateX(0px); }
+}
+.musy-box { display: flex; flex-direction: column; gap: var(--space-gap-related); padding: var(--space-inset-card); border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-card); background-color: var(--surface-raised); }
+.musy-box--framed { gap: 0px; padding: 0px; overflow: clip; }
+.musy-box__header, .musy-box__body { display: flex; flex-direction: column; gap: var(--space-gap-related); padding: var(--space-inset-card); min-inline-size: 0px; }
+.musy-box__header { border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); }
+.musy-box__headline { margin: 0px; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+.musy-box--headline-muted .musy-box__headline { color: var(--on-surface-muted); }
+.musy-box__slot { display: flex; flex-direction: column; gap: var(--space-gap-stack); }
+[data-type-step="display-xl"] { font-family: var(--type-display-xl-family); font-size: var(--type-display-xl-size); font-weight: var(--type-display-xl-weight); line-height: var(--type-display-xl-line); letter-spacing: var(--type-display-xl-tracking); }
+[data-type-step="display-lg"] { font-family: var(--type-display-lg-family); font-size: var(--type-display-lg-size); font-weight: var(--type-display-lg-weight); line-height: var(--type-display-lg-line); letter-spacing: var(--type-display-lg-tracking); }
+[data-type-step="stage"] { font-family: var(--type-stage-family); font-size: var(--type-stage-size); font-weight: var(--type-stage-weight); line-height: var(--type-stage-line); letter-spacing: var(--type-stage-tracking); }
+[data-type-step="heading-lg"] { font-family: var(--type-heading-lg-family); font-size: var(--type-heading-lg-size); font-weight: var(--type-heading-lg-weight); line-height: var(--type-heading-lg-line); letter-spacing: var(--type-heading-lg-tracking); }
+[data-type-step="body-xl"] { font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--type-body-xl-weight); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); }
+[data-type-step="heading-md"] { font-family: var(--type-heading-md-family); font-size: var(--type-heading-md-size); font-weight: var(--type-heading-md-weight); line-height: var(--type-heading-md-line); letter-spacing: var(--type-heading-md-tracking); }
+[data-type-step="heading-sm"] { font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); }
+[data-type-step="body-lg"] { font-family: var(--type-body-lg-family); font-size: var(--type-body-lg-size); font-weight: var(--type-body-lg-weight); line-height: var(--type-body-lg-line); }
+[data-type-step="body-md"] { font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); }
+[data-type-step="body-sm"] { font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight); line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); }
+[data-type-step="label-lg"] { font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); line-height: var(--type-label-lg-line); letter-spacing: var(--type-label-lg-tracking); }
+[data-type-step="label-md"] { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); }
+@keyframes musy-msg-in { 
+  0% { opacity: 0; transform: translateY(var(--motion-travel-sm)); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+.musy-clist { display: flex; flex-direction: column; gap: var(--space-gap-stack); margin: 0px; }
+.musy-clist__row { display: grid; grid-template-columns: minmax(0px, 1fr); gap: var(--sp-1); }
+.musy-clist__rule { height: var(--border-width-hairline); border: 0px; margin: 0px; background-color: var(--border-subtle); }
+@media (min-width: 1024px) { .musy-clist__row { grid-template-columns: minmax(0px, 12rem) minmax(0px, 1fr); gap: var(--space-gap-stack); align-items: start; } }
+.musy-clist__term { margin: 0px; font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight); line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); }
+.musy-clist__def { margin: 0px; display: flex; flex-direction: column; gap: var(--space-gap-related); color: var(--on-surface); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); max-width: var(--measure-body); }
+.musy-logo { display: inline-flex; align-items: center; gap: var(--space-gap-inline); }
+.musy-logo__mark { display: block; width: auto; height: var(--icon-size-lg); }
+.musy-logo__wordmark { font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size); font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); letter-spacing: var(--type-heading-sm-tracking); color: var(--on-surface); }
+.musy-lightbox__backdrop { position: fixed; inset: 0px; z-index: var(--z-overlay); background-color: var(--alpha-scrim); animation: musy-lb-fade var(--motion-enter) both; }
+.musy-lightbox__backdrop[data-closed] { animation: musy-lb-fade var(--motion-exit) both reverse; }
+.musy-lightbox__positioner { position: fixed; inset: 0px; z-index: var(--z-sheet); display: grid; place-items: center; padding: var(--sp-4); overflow-y: auto; overscroll-behavior: contain; }
+.musy-lightbox__popup { position: relative; box-sizing: border-box; width: 100%; max-width: var(--measure-body); max-height: calc(100dvh - var(--sp-4) * 2); display: flex; flex-direction: column; overflow: hidden; padding-inline: var(--space-inset-card); border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-panel); background-color: var(--surface-overlay); box-shadow: var(--elevation-3); animation: musy-lb-in var(--motion-enter) both; }
+.musy-lightbox__popup[data-closed] { animation: musy-lb-in var(--motion-exit) both reverse; }
+@keyframes musy-lb-fade { 
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes musy-lb-in { 
+  0% { opacity: 0; transform: translateY(var(--motion-travel-md)) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0px) scale(1); }
+}
+.musy-lightbox__positioner[data-surface="immersive"] { padding: 0px; place-items: stretch; overflow: hidden; }
+.musy-lightbox__popup[data-surface="immersive"] { max-width: none; max-height: none; min-block-size: 100%; border: 0px; border-radius: 0px; box-shadow: none; background-color: var(--surface); padding-inline: var(--space-inset-sheet); animation: musy-lb-grow var(--motion-sheet-slide) both; }
+.musy-lightbox__popup[data-surface="immersive"][data-closed] { animation: musy-lb-grow var(--motion-exit) both reverse; }
+@keyframes musy-lb-grow { 
+  0% { opacity: 0; clip-path: inset(
+      var(--musy-lightbox-origin-top, 50%)
+      calc(100% - var(--musy-lightbox-origin-right, 50%))
+      calc(100% - var(--musy-lightbox-origin-bottom, 50%))
+      var(--musy-lightbox-origin-left, 50%)
+      round var(--radius-full)
+    ); }
+  20% { opacity: 1; }
+  100% { opacity: 1; clip-path: inset(0px); }
+}
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body { display: flex; flex-direction: column; margin-inline: calc(var(--space-inset-sheet) * -1); padding-inline: var(--space-inset-sheet); }
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body > :only-child { flex: 1 1 auto; min-block-size: 0px; }
+.musy-lightbox__close { position: absolute; inset-block-start: var(--space-inset-card); inset-inline-end: var(--space-inset-card); display: grid; place-items: center; width: var(--target-primary); height: var(--target-primary); margin: calc(var(--sp-2) * -1); padding: 0px; border: 0px; border-radius: var(--radius-full); background: none; color: var(--on-surface); cursor: pointer; transition: background-color var(--motion-toggle); }
+@media (hover: hover) and (pointer: fine) { .musy-lightbox__close:hover, .musy-lightbox__close[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-lightbox__close:active { background-color: var(--interactive-ghost-active); }
+.musy-lightbox__body { flex: 1 1 auto; min-block-size: 0px; overflow-y: auto; overscroll-behavior: contain; padding-block: var(--space-inset-card); margin-inline: calc(var(--space-inset-card) * -1); padding-inline: var(--space-inset-card); }
+.musy-lightbox__popup:has(> .musy-lightbox__close):not(:has(> .musy-lightbox__headline)) > .musy-lightbox__body { padding-block-start: max(var(--space-inset-card), var(--target-primary)); }
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__close { inset-block-start: var(--space-inset-sheet); inset-inline-end: var(--space-inset-sheet); }
+.musy-lightbox__popup[data-surface="immersive"] > .musy-lightbox__body { padding-block: var(--space-inset-sheet); }
+.musy-lightbox__popup[data-surface="immersive"]:has(> .musy-lightbox__close):not(:has(> .musy-lightbox__headline)) > .musy-lightbox__body { padding-block-start: var(--space-inset-sheet); }
+.musy-lightbox__popup[data-surface="immersive"]:has(> .musy-lightbox__close) { --musy-lightbox-close-reserve-block: calc(var(--target-primary) - var(--sp-2)); --musy-lightbox-close-reserve-inline: calc(
+    var(--target-primary) - var(--sp-2) + var(--space-gap-inline)
+  ); }
+@keyframes musy-toast-in { 
+  0% { opacity: 0; transform: translateY(var(--motion-travel-sm)); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+@keyframes musy-toast-in-top { 
+  0% { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+@keyframes musy-dlist-peek { 
+  0%, 20% { translate: 0px; }
+  55% { translate: calc(var(--motion-travel-lg) * -1); }
+  100% { translate: 0px; }
+}
+@keyframes musy-dlist-waiting { 
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+@media (forced-colors: active) { .musy-icon-btn, .musy-btn, .musy-radio__body, .musy-radio-card__body, .musy-rcard__body, .musy-switch__track, .musy-msg, .musy-box, .musy-lightbox__popup, .musy-wizard__marker { border-color: canvastext; } }
+@media (forced-colors: active) { .musy-wizard__trigger[data-state="selected"] .musy-wizard__marker { background-color: highlight; color: highlighttext; border-color: highlight; } }
+@media (forced-colors: active) { .musy-wizard__trigger[data-state="disabled"] .musy-wizard__marker, .musy-wizard__trigger[data-state="skipped"] .musy-wizard__marker { border-color: graytext; color: graytext; } }
+@media (forced-colors: active) { .musy-btn--primary, .musy-icon-btn--primary { background-color: buttonface; color: buttontext; } }
+@media (forced-colors: active) { .musy-icon-btn:disabled, .musy-btn:disabled, .musy-radio__body[data-disabled], .musy-switch__track[data-disabled] { color: graytext; border-color: graytext; } }
+.musy-wizard { min-inline-size: 0px; --musy-wizard-accent: var(--interactive-primary); --musy-wizard-accent-subtle: var(--interactive-primary-subtle); --musy-wizard-accent-border: var(--interactive-primary-border); --musy-wizard-accent-on: var(--interactive-primary-on); --musy-wizard-accent-on-subtle: var(--interactive-primary-on-subtle); }
+.musy-wizard__list { display: flex; flex-direction: row; align-items: stretch; gap: 0px; margin: 0px; padding: 0px; list-style: none; }
+.musy-wizard__step { display: flex; flex-direction: row; align-items: stretch; flex: 0 1 auto; min-inline-size: 0px; }
+@media (min-width: 768px) { .musy-wizard__step { flex: 1 1 0px; } }
+.musy-wizard__trigger { display: flex; align-items: center; gap: var(--space-gap-related); flex: 1 1 auto; min-width: 0px; min-height: var(--target-primary); padding: var(--sp-2); margin: 0px; border: 0px; border-radius: var(--radius-input); background: transparent; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-toggle); }
+@media (hover: hover) and (pointer: fine) { .musy-wizard__trigger:hover:not([data-state="disabled"]), .musy-wizard__trigger[data-force~="hover"] { background-color: var(--interactive-ghost-hover); } }
+.musy-wizard__trigger:active:not([data-state="disabled"]), .musy-wizard__trigger[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-wizard__trigger[data-state="disabled"] { cursor: not-allowed; }
+.musy-wizard__trigger[aria-current="step"] { flex: 1 1 auto; }
+@media (max-width: 767.98px) { .musy-wizard__connector { flex: 0 1 var(--sp-4); } }
+@media (max-width: 767.98px) { .musy-wizard__step { flex: 0 1 auto; } }
+.musy-wizard__marker { display: grid; place-items: center; flex-shrink: 0; box-sizing: border-box; width: var(--target-primary); height: var(--target-primary); border: var(--border-width-hairline) var(--border-style-solid) transparent; border-radius: var(--radius-full); background-color: transparent; color: var(--musy-wizard-accent-on-subtle); font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); letter-spacing: var(--type-label-md-tracking); transition: background-color var(--motion-toggle),
+              border-color var(--motion-toggle),
+              color var(--motion-toggle); }
+.musy-wizard__label { min-width: 0px; flex: 1 1 auto; overflow-wrap: normal; word-break: normal; font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); letter-spacing: var(--type-label-md-tracking); color: var(--on-surface); text-wrap: pretty; }
+.musy-wizard__trigger[data-state="disabled"] .musy-wizard__marker { border-color: transparent; color: var(--on-surface-disabled); }
+.musy-wizard__trigger[data-state="disabled"] .musy-wizard__label { color: var(--on-surface-disabled); }
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__marker { border-color: transparent; background-color: transparent; color: var(--on-surface-disabled); }
+.musy-wizard__trigger[data-state="skipped"] .musy-wizard__label { color: var(--on-surface-disabled); }
+.musy-wizard__trigger[data-state="skipped"] { cursor: not-allowed; }
+.musy-wizard__trigger[data-state="active"] .musy-wizard__marker { border-color: transparent; background-color: var(--musy-wizard-accent-subtle); color: var(--musy-wizard-accent-on-subtle); }
+@media (prefers-contrast: more) { .musy-wizard__marker { border-color: var(--border-subtle); } }
+.musy-wizard__trigger[data-state="selected"] .musy-wizard__marker { background-color: var(--musy-wizard-accent); border-color: transparent; color: var(--musy-wizard-accent-on); }
+.musy-wizard__trigger[data-state="selected"] .musy-wizard__label { color: var(--musy-wizard-accent-on-subtle); font-weight: var(--font-weight-bold); }
+.musy-wizard__trigger[aria-current="step"] .musy-wizard__label { color: var(--musy-wizard-accent-on-subtle); font-weight: var(--font-weight-bold); }
+.musy-wizard__trigger[data-state="completed"] .musy-wizard__marker { background-color: var(--musy-wizard-accent-subtle); border-color: transparent; color: var(--musy-wizard-accent-on-subtle); }
+.musy-wizard__num, .musy-wizard__check, .musy-wizard__skip { display: grid; place-items: center; }
+.musy-wizard__trigger[data-state="completed"] .musy-wizard__num, .musy-wizard__trigger[data-state="skipped"] .musy-wizard__num { display: none; }
+.musy-wizard__connector { position: relative; flex: 1 1 auto; align-self: center; min-width: var(--sp-2); color: var(--border-subtle); border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); }
+@media (min-width: 768px) { .musy-wizard__connector { min-width: var(--sp-4); } }
+.musy-wizard__connector > .musy-icon { display: none; position: absolute; inset-block-start: 50%; inset-inline-start: 50%; transform: translate(-50%, -50%); }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector { border-block-start: 0px; } }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector > .musy-icon { display: block; } }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__connector { min-width: 0px; } }
+@media (max-width: 767.98px) { .musy-wizard:not(.musy-wizard--vertical) .musy-wizard__trigger { padding-inline: var(--sp-1); } }
+.musy-wizard__connector[data-complete] { color: var(--musy-wizard-accent-border); border-color: var(--musy-wizard-accent-border); }
+.musy-wizard__panel { margin-block-start: var(--space-gap-stack); padding: var(--space-inset-card); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-card); background-color: var(--surface-raised); }
+.musy-box--framed .musy-wizard__panel { margin-block-start: 0px; padding: 0px; border: 0px; border-radius: 0px; background-color: transparent; }
+@keyframes musy-voice-pulse { 
+  100% { opacity: 0.4; }
+}
+.musy-btn-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-inline); }
+.musy-btn-group--end { justify-content: flex-end; }
+.musy-btn-group > .musy-btn { flex-shrink: 0; max-inline-size: 100%; }
+.musy-btn-group--molecule { gap: var(--space-gap-stack); }
+@media (max-width: 767.98px) { .musy-btn-group { flex-direction: column; align-items: stretch; gap: var(--space-gap-related); } }
+@media (max-width: 767.98px) { .musy-btn-group--molecule { gap: var(--space-gap-stack); } }
+@media (max-width: 767.98px) { .musy-btn-group > .musy-btn { inline-size: 100%; } }
+@media (max-width: 767.98px) { .musy-btn-group--stacked-hug { align-items: flex-start; } }
+@media (max-width: 767.98px) { .musy-btn-group--stacked-hug > .musy-btn { inline-size: auto; } }
+@media (max-width: 767.98px) { .musy-btn-group--end.musy-btn-group--stacked-hug { align-items: flex-end; } }
+.musy-btn.musy-mbtn { justify-content: flex-start; gap: var(--space-gap-related); min-inline-size: 18ch; }
+.musy-btn.musy-mbtn--no-timer { min-inline-size: 0px; justify-content: center; }
+.musy-mplayer { --musy-mplayer-accent: var(--interactive-primary); --musy-mplayer-accent-border: var(--interactive-primary-border); display: grid; grid-template-columns: auto minmax(0px, 1fr); align-items: center; gap: var(--space-gap-related); box-sizing: border-box; padding: var(--sp-3); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-card); background-color: var(--surface-raised); }
+.musy-mplayer[data-disabled] { border-color: var(--border-subtle); background-color: var(--interactive-primary-disabled); --musy-mplayer-accent: var(--on-surface-disabled); --musy-mplayer-accent-border: var(--on-surface-disabled); }
+.musy-mplayer__main { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0px; }
+.musy-mplayer__title { font-family: var(--type-label-lg-family); font-size: var(--type-label-lg-size); font-weight: var(--type-label-lg-weight); letter-spacing: var(--type-label-lg-tracking); color: var(--on-surface); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.musy-mplayer[data-disabled] .musy-mplayer__title { color: var(--on-surface-disabled); }
+.musy-mplayer__slider { position: relative; display: flex; align-items: center; inline-size: 100%; block-size: var(--target-primary); touch-action: none; cursor: pointer; }
+.musy-mplayer[data-disabled] .musy-mplayer__slider { cursor: not-allowed; }
+.musy-mplayer__control { position: relative; inline-size: 100%; }
+.musy-mplayer__track { display: block; block-size: var(--sp-1); inline-size: 100%; border-radius: var(--radius-full); background-color: var(--surface-sunken); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); box-sizing: border-box; }
+.musy-mplayer__fill { position: absolute; inset-block: 0px; inset-inline-start: 0px; border-radius: var(--radius-full); background-color: var(--musy-mplayer-accent); transition: inline-size var(--motion-toggle); }
+.musy-mplayer__slider[data-dragging] .musy-mplayer__fill { transition: none; }
+.musy-mplayer__thumb { position: absolute; inset-block-start: 50%; inline-size: var(--sp-4); block-size: var(--sp-4); translate: -50% -50%; border-radius: var(--radius-full); background-color: var(--musy-mplayer-accent); border: var(--border-width-regular) var(--border-style-solid) var(--musy-mplayer-accent-border); box-shadow: var(--elevation-1); }
+.musy-mplayer__thumb:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.musy-mplayer__times { display: flex; justify-content: space-between; gap: var(--sp-2); font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.musy-mplayer[data-disabled] .musy-mplayer__times { color: var(--on-surface-disabled); }
+@media (forced-colors: active) { .musy-mplayer__fill, .musy-mplayer__thumb { background-color: highlight; } }
+html[data-musy-scroll-snap="y"] { scroll-snap-type: y mandatory; scroll-padding-block-start: var(--musy-snap-inset, 0px); }
+.musy-snap-view { scroll-margin-block-start: var(--musy-fill-offset, 0px); scroll-snap-align: start; scroll-snap-stop: always; }
+@keyframes musy-deck-throw { 
+  0% { transform: translate3d(calc(var(--musy-drag-x) * 1px), calc(var(--musy-drag-y) * 1px), 0)
+      rotate(calc(var(--musy-deck-swing-max) * var(--musy-card-swing))); opacity: 1; }
+  100% { transform: translate3d(calc(100vw * var(--musy-throw-dir)), calc(var(--musy-drag-y) * 3px), 0)
+      rotate(calc(var(--musy-deck-swing-max) * var(--musy-card-swing) * 2.5)); opacity: 0; }
+}
+@keyframes musy-deck-arrive { 
+  0% { transform: translate3d(-100vw, 0, 0)
+      rotate(calc(var(--musy-deck-swing-max) * -1)); opacity: 0; }
+}
+@keyframes musy-deck-deal { 
+  0% { transform: translate3d(0, calc(var(--motion-travel-lg) * -1), 0) scale(0.96); opacity: 0; }
+}
+.musy-sheet { position: relative; display: grid; grid-template-rows: auto minmax(0px, 1fr) auto; block-size: 100%; min-block-size: 0px; }
+.musy-sheet__header { padding-inline-end: var(--target-primary); padding-block-end: var(--space-gap-stack); }
+.musy-sheet__body { min-block-size: 0px; display: grid; align-content: center; }
+.musy-sheet__body[data-align="top"] { align-content: start; margin-block-start: calc(var(--space-section) - var(--space-gap-stack)); overflow-y: auto; scrollbar-width: thin; }
+.musy-sheet__field { position: absolute; inset: calc(var(--space-inset-sheet) * -1); background-color: transparent; transition: background-color var(--motion-toggle); }
+.musy-sheet[data-media] .musy-sheet__field { background-color: var(--surface-inverse); }
+.musy-sheet[data-stage] .musy-sheet__header, .musy-sheet[data-stage] .musy-sheet__body, .musy-sheet[data-stage] .musy-sheet__foot { pointer-events: none; }
+.musy-sheet[data-stage] :is(.musy-sheet__header, .musy-sheet__foot) :is(button, a, input, select, textarea, [role="button"], [role="switch"], [role="radio"], [role="slider"]) { pointer-events: auto; }
+.musy-sheet[data-stage] .musy-sheet__foot { margin-block-end: calc(var(--space-inset-card) - var(--space-inset-sheet)); }
+.musy-sheet[data-density="compact"] .musy-sheet__header { margin-block-start: calc(var(--sp-4) - var(--space-inset-sheet)); }
+.musy-sheet[data-density="compact"][data-stage] .musy-sheet__foot, .musy-sheet[data-density="compact"] .musy-sheet__foot { margin-block-end: calc(var(--sp-3) - var(--space-inset-sheet)); }
+.musy-sheet__header, .musy-sheet__body, .musy-sheet__pages, .musy-sheet__dots, .musy-sheet__foot { position: relative; }
+.musy-sheet__foot { padding-block-start: var(--space-gap-stack); display: flex; align-items: flex-end; justify-content: flex-end; gap: var(--space-gap-stack); }
+.musy-sheet__foot > * { max-inline-size: 100%; }
+.musy-sheet__foot .musy-btn { min-block-size: var(--musy-btn-target); block-size: auto; }
+.musy-sheet__foot .musy-btn__label { white-space: normal; }
+.musy-image { display: block; inline-size: 100%; block-size: auto; max-inline-size: var(--musy-image-max, 100%); min-inline-size: var(--musy-image-min, 0); }
+[data-musy-instrument-cursor] { cursor: none; }
+@media (forced-colors: active) { [data-musy-instrument-cursor] { cursor: auto; } }
+* { box-sizing: border-box; }
+html, body { margin: 0px; padding: 0px; }
+body { position: relative; background-color: var(--surface); color: var(--on-surface); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); -webkit-font-smoothing: antialiased; }
+svg { display: block; }
+:root { --musie-main-wide: 980px; }
+.musie-app { isolation: isolate; display: flex; flex-direction: column; min-block-size: 100dvh; background-color: var(--surface); color: var(--on-surface); font-family: var(--type-body-md-family); }
+.musie-app { --musy-toast-inset-block-start: calc(var(--sp-3) * 2 + var(--target-primary) + var(--space-gap-stack)); }
+.musie-header { position: sticky; inset-block-start: 0px; z-index: var(--z-sticky); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-gap-related); padding: var(--sp-3) var(--gutter); background-color: var(--surface-raised); border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); transition: transform var(--motion-enter); will-change: transform; }
+.musie-header[data-hidden="true"] { transform: translateY(-100%); transition: transform var(--motion-exit); }
+.musie-header > :first-child { justify-self: start; }
+.musie-main { flex: 1 1 auto; inline-size: 100%; max-inline-size: var(--bp-md); margin-inline: auto; padding: var(--sp-5) var(--gutter) var(--sp-7); }
+.musie-main[data-wide="1"] { max-inline-size: calc(var(--musie-main-wide) + 2 * var(--gutter)); }
+@keyframes musie-message-in { 
+  0% { opacity: 0; visibility: hidden; transform: translateY(var(--motion-travel-md)); }
+  100% { opacity: 1; visibility: visible; transform: none; }
+}
+@keyframes musie-typing { 
+  0%, 60%, 100% { transform: none; opacity: 0.45; }
+  30% { transform: translateY(calc(var(--sp-1) * -1)); opacity: 1; }
+}
+.musie-session { display: flex; flex-direction: column; gap: var(--space-gap-stack); }
+.musie-session__exit { display: flex; justify-content: flex-start; }
+.musie-md { margin: 0 0 var(--space-gap-group); display: flex; flex-direction: column; gap: var(--space-gap-related); max-inline-size: var(--measure-body); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); font-weight: var(--type-body-md-weight); line-height: var(--type-body-md-line); letter-spacing: var(--type-body-md-tracking); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); }
+.musie-md > * { margin: 0px; }
+.musie-md h2 { max-inline-size: var(--measure-heading); font-family: var(--type-heading-md-family); font-size: var(--type-heading-md-size); font-weight: var(--type-heading-md-weight); line-height: var(--type-heading-md-line); letter-spacing: var(--type-heading-md-tracking); color: var(--on-surface); text-wrap: var(--text-wrap-heading); }
+.musie-rail { container-type: inline-size; }
+.musie-stack { display: flex; flex-direction: column; gap: var(--space-gap-stack); }
+.musie-listen { position: relative; }
+html[data-musy-scroll-snap] { --musy-snap-inset: var(--sticky-block); }
+.musie-listen__view--stage { box-sizing: border-box; min-block-size: calc(var(--viewport-block) - var(--musy-fill-offset, var(--chrome-block))); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-gap-stack); padding-block-end: var(--space-section); }
+.musie-listen__lead { display: flex; flex-direction: column; gap: var(--space-gap-related); }
+.musie-listen__lead > .musie-md { margin-block-end: calc(var(--space-gap-group) - var(--space-gap-related)); }
+.musie-listen__transport { inline-size: fit-content; }
+.musie-listen__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-related); padding-block: var(--space-section) var(--space-section-lg); }
+.musie-listen__view--warn, .musie-listen__view--detail { box-sizing: border-box; min-block-size: var(--view-block-scrolled); display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-gap-stack); }
+.musie-listen__view--warn { padding-block-start: var(--space-section-lg); padding-block-end: var(--space-section); }
+.musie-listen__warn { margin: 0px; max-inline-size: 26ch; text-wrap: pretty; font-family: var(--type-body-xl-family); font-size: var(--type-body-xl-size); font-weight: var(--font-weight-medium); line-height: var(--type-body-xl-line); letter-spacing: var(--type-body-xl-tracking); color: var(--on-surface-muted); }
+.musie-listen__warn-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-gap-related); }
+.musie-listen__view--detail { padding-block-start: var(--space-section-lg); padding-block-end: var(--space-section); }
+.musie-listen__view--detail > * { inline-size: 100%; }
+.musie-listen__rail { position: sticky; inset-block-end: var(--space-gap-stack); display: flex; justify-content: center; padding-block: var(--space-gap-related); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity var(--motion-duration-fast) var(--motion-ease-standard); }
+.musie-listen__rail[data-visible="true"] { opacity: 1; visibility: visible; }
+.musie-listen__rail > * { pointer-events: auto; }
+.musie-immersive__body { display: flex; flex-direction: column; justify-content: center; gap: var(--space-gap-stack); }
+.musie-immersive__lead > .musie-md { margin-block-end: 0px; max-inline-size: none; }
+.musie-immersive__lead .musie-md h2 { text-wrap: var(--text-wrap-body); }
+.musie-immersive__lead .musie-md h2::before { content: ""; float: inline-end; inline-size: var(--musy-lightbox-close-reserve-inline, 0); block-size: var(--musy-lightbox-close-reserve-block, 0); }
+.musie-immersive__clock { margin-block: auto; display: flex; flex-direction: column; gap: var(--space-gap-inline); }
+.musie-immersive__meter { display: flex; align-items: center; gap: var(--space-gap-inline); inline-size: fit-content; }
+.musie-immersive__time { margin: 0px; transition: color var(--motion-toggle); font-family: var(--type-display-xl-family); font-size: var(--type-display-xl-size); font-weight: var(--type-display-xl-weight); line-height: var(--type-display-xl-line); letter-spacing: var(--type-display-xl-tracking); font-variant-numeric: tabular-nums; color: var(--on-surface); }
+.musie-immersive__time[data-done] { color: var(--on-surface-muted); }
+.musie-immersive__caption { margin: 0px; max-inline-size: var(--measure-body); text-wrap: pretty; font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-question__swap { display: flex; flex-wrap: wrap; gap: var(--space-gap-related); margin-inline-start: calc(var(--sp-2) * -1); }
+.musie-immersive__card { align-self: start; max-block-size: calc(var(--viewport-block) * 0.4); border-radius: var(--radius-md); }
+@media (min-width: 60rem) { .musie-immersive__body:has(.musie-immersive__card) { display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1fr); align-items: center; column-gap: var(--space-gap-group); } }
+@media (min-width: 60rem) { .musie-immersive__body:has(.musie-immersive__card) .musie-immersive__card { max-block-size: calc(var(--viewport-block) * 0.5); } }
+@keyframes musie-guide-in { 
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes musie-guide-out { 
+  0% { opacity: 1; transform: translateY(0px); }
+  100% { opacity: 0; transform: translateY(calc(var(--motion-travel-sm) * -1)); }
+}
+.musie-question__helper { margin: 0px; margin-block-start: var(--space-gap-related); max-inline-size: var(--measure-body); text-wrap: var(--text-wrap-body); color: var(--on-surface-muted); font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight); line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); }
+.musy-icon-btn--min { --musy-icon-btn-size: var(--target-min); }
+.musy-icon-btn--min { margin: var(--sp-2); }
+.musy-lightbox__body > .musy-box:first-child .musy-box__headline, .musy-lightbox__popup .musy-lightbox__headline { padding-inline-end: var(--target-primary); }
+.musy-field { display: flex; flex-direction: column; gap: var(--space-gap-related); min-inline-size: 0px; }
+.musy-field__label { display: flex; align-items: baseline; gap: var(--sp-1); font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); letter-spacing: var(--type-label-md-tracking); color: var(--on-surface); cursor: pointer; }
+.musy-field__label[data-disabled] { color: var(--on-surface-disabled); cursor: not-allowed; }
+.musy-field__control { box-sizing: border-box; width: 100%; min-height: var(--target-primary); padding: var(--space-inset-control); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-input); background-color: var(--surface-raised); color: var(--on-surface); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size); line-height: var(--type-body-md-line); }
+.musy-field__control::placeholder { color: var(--on-surface-muted); opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .musy-field__control:hover:not([data-disabled]):not(:disabled), .musy-field__control[data-force~="hover"] { border-color: var(--on-surface-muted); } }
+.musy-field__control[data-filled] { background-color: var(--surface-raised); }
+.musy-field__control[data-invalid], .musy-field__control[aria-invalid="true"] { border-color: var(--feedback-error-border); border-width: var(--border-width-thick); background-color: var(--feedback-error-surface); }
+.musy-field__control[data-valid][data-touched] { border-color: var(--feedback-success-border); border-width: var(--border-width-thick); }
+.musy-field__control[data-disabled], .musy-field__control:disabled { border-color: var(--border-subtle); background-color: var(--interactive-primary-disabled); color: var(--on-surface-disabled); cursor: not-allowed; }
+.musy-ilink { display: inline-flex; align-items: baseline; gap: var(--space-gap-related); margin: 0px; padding: 0px; background: none; border: 0px; font: inherit; letter-spacing: inherit; color: var(--accent-1-text); text-align: inherit; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color var(--motion-toggle); }
+.musy-ilink--bare .musy-ilink__text { text-decoration: underline; text-underline-offset: var(--sp-1); }
+@media (hover: hover) and (pointer: fine) { .musy-ilink:hover:not(:disabled) .musy-ilink__text, .musy-ilink[data-force~="hover"] .musy-ilink__text { text-decoration: underline; text-underline-offset: var(--sp-1); } }
+.musy-ilink:active:not(:disabled), .musy-ilink[data-force~="active"] { color: var(--accent-1); }
+.musy-ilink:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-xs); }
+.musy-ilink:focus-visible .musy-ilink__text { text-decoration: underline; text-underline-offset: var(--sp-1); }
+.musy-ilink:disabled { color: var(--on-surface-disabled); cursor: not-allowed; }
+a { color: var(--interactive-primary-on-subtle); }
+a:hover { color: var(--on-surface); }
+a:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-xs); }
+</style>
+<style>
+/* ── Das Experiment ────────────────────────────────────────────────────────── */
+body { overflow: hidden; }
+
+/* Der Körper steht, wo in der App das Kartenbild steht (.musie-immersive__card: dieselbe Klasse, damit das
+   zweispaltige Desktop-Layout der App greift). Hochformatig, darum höher als die Karte. */
+.musie-immersive__body .musie-body3d__block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-related);
+  align-self: center;
+  justify-self: center;
+  max-block-size: none;
+  border-radius: 0;
+}
+.musie-body3d {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  block-size: calc(var(--viewport-block) * 0.42);
+  max-inline-size: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (min-width: 60rem) {
+  .musie-body3d { block-size: calc(var(--viewport-block) * 0.56); }
+}
+.musie-body3d__canvas { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; cursor: grab; outline: none; }
+.musie-body3d__canvas:active { cursor: grabbing; }
+.musie-body3d__canvas:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-md); }
+.musie-body3d__loading { position: absolute; inset: 0; display: grid; place-items: center; margin: 0;
+  font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); color: var(--on-surface-muted); }
+.musie-body3d__loading[hidden] { display: none; }
+/* „Flächen bearbeiten“: unter dem Körper, wo er nichts verdeckt. */
+.musie-body3d__layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+/* Löschen: der Ghost-IconButton des Systems, in Fehler-Rot, neben jeder Fläche. */
+.musie-area-delete { position: absolute; pointer-events: auto; transform: translate(-50%, -50%);
+  color: var(--feedback-error-icon); background-color: var(--surface); }
+.musie-area-delete[hidden] { display: none; }
+
+/* Einwilligung und Ende: die Karte aus den anderen Experimenten. */
+.musie-dialog { color: var(--on-surface); }
+.musie-dialog[hidden] { display: none; }
+.musie-note { margin: 0; max-inline-size: var(--measure-body); font-family: var(--type-body-md-family); font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); }
+.musie-legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-gap-inline); font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-consent-step { display: flex; flex-direction: column; gap: var(--space-gap-group); }
+.musie-consent-step[hidden] { display: none; }
+.musie-dialog .musy-lightbox__headline { margin-block-end: 0; }
+.musie-dialog .musy-lightbox__body { display: flex; flex-direction: column; gap: var(--space-gap-group); padding-block-start: var(--space-gap-group); }
+.musie-consent-step .musy-btn-group { flex-direction: column; align-items: stretch; gap: var(--space-gap-related); }
+.musie-consent-step .musy-btn-group > .musy-btn { inline-size: 100%; }
+#swap-note[hidden], #helper[hidden], #help[hidden] { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ── DAS FOKUS-SHEET, wie /session/…/listen?focus der Kartenübungen ───────── -->
+<div>
+  <div class="musy-lightbox__positioner" data-surface="immersive">
+    <div class="musy-lightbox__popup musy-sheet-host" role="dialog" aria-labelledby="sheet-title" data-open="" data-surface="immersive">
+      <h2 id="sheet-title" class="musy-sr-only">Hören</h2>
+      <div class="musy-lightbox__body">
+        <div class="musy-sheet">
+          <div class="musy-sheet__field" aria-hidden="true"></div>
+          <div class="musy-sheet__header">
+            <div class="musie-immersive__lead">
+              <div class="musie-md"><h2>Von welcher Seite kommt welcher Ton? Verändert sich die Richtung im Laufe der Musik?</h2></div>
+              <p class="musie-question__helper" id="helper" hidden>Schließe die Augen und lass den Klang wandern. Kommt er von links, von rechts, von überall?</p>
+              <p class="musie-question__helper" id="swap-note" role="status" hidden>Danke. Das notieren wir uns.</p>
+            </div>
+            <div class="musie-question__swap">
+              <button type="button" id="help" class="musy-btn musy-btn--outline musy-btn--min musy-btn--wrap"><span class="musy-btn__label">Hilf mir bitte</span></button>
+            </div>
+          </div>
+          <div class="musy-sheet__body">
+            <div class="musie-immersive__body">
+              <div class="musie-immersive__card musie-body3d__block">
+              <div class="musie-body3d" id="body">
+                <canvas class="musie-body3d__canvas" id="body-canvas" tabindex="0" role="application"
+                  aria-label="Körper in 3D: ziehen dreht ihn, gedrückt halten färbt ein, von welcher Seite du die Töne hörst" aria-describedby="body-help"></canvas>
+                <p class="musie-body3d__loading" id="body-loading">Der Körper lädt …</p>
+                <span class="musy-sr-only" id="body-help">Ziehen dreht den Körper. Halte eine Stelle gedrückt, dann färbt sie sich ein: je länger, desto größer. Mit der Tastatur: Pfeiltasten drehen, Leertaste halten färbt die Mitte ein.</span>
+                <div class="musie-body3d__layer" id="area-buttons"></div>
+                <p class="musy-sr-only" id="body-status" role="status" aria-live="polite"></p>
+              </div>
+              <button type="button" id="edit" class="musy-btn musy-btn--outline musy-btn--min musie-body3d__edit" aria-pressed="false"><span class="musy-btn__label">Flächen bearbeiten</span></button>
+              </div>
+              <div class="musie-immersive__clock">
+                <div class="musie-immersive__meter">
+                  <p class="musie-immersive__time" role="timer" id="time">01:30</p>
+                  <button type="button" id="transport" data-state="paused" class="musy-btn musy-btn--ghost musy-mbtn musy-btn--min musy-mbtn--no-timer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play musy-icon musy-icon--sm" aria-hidden="true" focusable="false" id="icon-play"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pause musy-icon musy-icon--sm" aria-hidden="true" focusable="false" id="icon-pause" style="display:none"><rect x="14" y="3" width="5" height="18" rx="1"></rect><rect x="5" y="3" width="5" height="18" rx="1"></rect></svg>
+                    <span class="musy-btn__label" id="transport-label">Abspielen</span><span class="musy-sr-only">, Deine Musik</span>
+                  </button>
+                </div>
+                <p class="musie-immersive__caption" id="caption">mindestens hören für diese Übung</p>
+              </div>
+            </div>
+          </div>
+          <div class="musy-sheet__foot">
+            <div class="musy-btn-group musy-btn-group--end musy-btn-group--stacked-hug musy-btn-group--molecule">
+              <button type="button" id="cta" data-disabled="" disabled class="musy-btn musy-btn--secondary musy-btn--wrap"><span class="musy-btn__label" id="cta-label">Fokussiere dich, bis der Counter abgelaufen ist. Dann geht’s weiter</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" id="close" aria-label="Hören beenden" class="musy-lightbox__close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EINWILLIGUNG: ohne Zustimmung läuft das Experiment nicht ──────────────── -->
+<div class="musie-dialog" id="consent" hidden>
+  <div class="musy-lightbox__backdrop" data-surface="panel" data-open=""></div>
+  <div class="musy-lightbox__positioner" data-surface="panel">
+    <div class="musy-lightbox__popup" data-surface="panel" role="dialog" aria-modal="true" aria-labelledby="consent-title" data-open="">
+      <h2 id="consent-title" class="musy-lightbox__headline">Mach mit beim Experiment</h2>
+      <div class="musy-lightbox__body">
+        <div class="musie-consent-step" data-step="ask">
+          <p class="musie-note">Wir tracken, wo du am Körper markierst und wie du die Musik hörst, und stellen dir danach ein paar Fragen. Dafür setzen wir Cookies. <strong>Tippe auf „Bereit? Beginne zu reflektieren“, wenn du fertig bist.</strong></p>
+          <div class="musy-field">
+            <label class="musy-field__label" for="consent-name">Vorname (freiwillig)</label>
+            <input class="musy-field__control" id="consent-name" type="text" name="given-name" autocomplete="given-name" maxlength="40">
+          </div>
+          <div class="musy-btn-group musy-btn-group--end">
+            <button type="button" class="musy-btn musy-btn--primary musy-btn--wrap musie-agree"><span class="musy-btn__label">Zustimmen und mitmachen</span></button>
+            <button type="button" class="musy-btn musy-btn--outline musy-btn--wrap musie-decline"><span class="musy-btn__label">Nicht teilnehmen</span></button>
+          </div>
+        </div>
+        <div class="musie-consent-step" data-step="no" hidden>
+          <p class="musie-note">Schade. Ohne Zustimmung läuft das Experiment nicht. Wenn du es dir anders überlegst, kannst du jederzeit mitmachen.</p>
+          <div class="musy-btn-group musy-btn-group--end">
+            <button type="button" class="musy-btn musy-btn--primary musy-btn--wrap musie-agree"><span class="musy-btn__label">Doch mitmachen</span></button>
+          </div>
+        </div>
+        <nav class="musie-legal" aria-label="Rechtliches">
+          <a href="/impressum" target="_blank" rel="noopener" class="musy-ilink musy-ilink--bare"><span class="musy-ilink__text">Impressum</span></a>
+          <span aria-hidden="true">·</span>
+          <a href="/privacy" target="_blank" rel="noopener" class="musy-ilink musy-ilink--bare"><span class="musy-ilink__text">Datenschutz</span></a>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ENDE ───────────────────────────────────────────────────────────────────── -->
+<div class="musie-dialog" id="done" hidden>
+  <div class="musy-lightbox__backdrop" data-surface="panel" data-open=""></div>
+  <div class="musy-lightbox__positioner" data-surface="panel">
+    <div class="musy-lightbox__popup" data-surface="panel" role="dialog" aria-modal="true" aria-labelledby="done-title" data-open="">
+      <h2 id="done-title" class="musy-lightbox__headline">Danke fürs Mitmachen</h2>
+      <div class="musy-lightbox__body">
+        <p class="musie-note" id="done-text"></p>
+        <div class="musy-btn-group musy-btn-group--end">
+          <button type="button" class="musy-btn musy-btn--outline musy-btn--wrap" id="again"><span class="musy-btn__label">Noch einmal</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" } }</script>
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups reset get_distinct_id get_session_id alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing is_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+</script>
+<script type="module">
+import * as THREE from 'three';
+const QUESTION = 'lq-04', MODE = 'side', EXPERIMENT = 'body-side-261111-1143';
+const GATE_SECONDS = 90;
+
+/* ── PostHog: erst nach der Antwort, wie in den anderen Experimenten ─────────
+   Zugestimmt: Cookies, Session Recording (Eingaben maskiert), Umfrage. Abgelehnt: nichts — das Experiment läuft dann nicht. */
+const PH_KEY = 'phc_rtUPNdTgxrSVvoCnVbaZNitHtsdsTTJ5FnNZxwi8XXXm', PH_HOST = 'https://eu.i.posthog.com', CONSENT_KEY = 'musie-body-consent';
+let consent = null; try { const c = localStorage.getItem(CONSENT_KEY); if (c === 'granted' || c === 'refused') consent = c; } catch (e) {}
+let phStarted = false;
+function startPostHog() {
+  if (phStarted || !window.posthog) return; phStarted = true;
+  posthog.init(PH_KEY, {
+    api_host: PH_HOST, autocapture: true, capture_pageview: true, capture_pageleave: true,
+    person_profiles: 'identified_only', disable_session_recording: false, session_recording: { maskAllInputs: true },
+  });
+  posthog.register({ experiment: EXPERIMENT, question: QUESTION });
+}
+function ph(event, properties) {
+  if (phStarted && window.posthog) posthog.capture(event, properties);
+  console.info('[PostHog]', event, properties);
+}
+function openDialog(id) { document.getElementById(id).hidden = false; const f = document.querySelector('#' + id + ' .musy-btn'); if (f) f.focus(); }
+function closeDialog(id) { document.getElementById(id).hidden = true; }
+function consentStep(s) { document.querySelectorAll('#consent .musie-consent-step').forEach((el) => { el.hidden = el.dataset.step !== s; }); }
+const nameInput = document.getElementById('consent-name');
+function agree() {
+  consent = 'granted'; try { localStorage.setItem(CONSENT_KEY, 'granted'); } catch (e) {}
+  startPostHog();
+  const name = nameInput.value.trim().slice(0, 40);
+  if (name && window.posthog) posthog.setPersonProperties({ first_name: name });
+  ph('body_consent', { consent: 'granted' });
+  closeDialog('consent');
+}
+document.querySelectorAll('#consent .musie-agree').forEach((b) => b.addEventListener('click', agree));
+document.querySelector('#consent .musie-decline').addEventListener('click', () => {
+  consent = 'refused'; try { localStorage.setItem(CONSENT_KEY, 'refused'); } catch (e) {}
+  consentStep('no'); document.querySelector('#consent [data-step="no"] .musie-agree').focus();
+});
+if (consent === 'granted') startPostHog();
+else { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); }
+
+/* ── Die Frage: „Hilf mir bitte“, dann „Die Frage funktioniert für mich nicht“ (wie in der App).
+   Hier gibt es nur diese eine Frage; ablehnen wird notiert, eine andere kommt nicht. */
+const helpBtn = document.getElementById('help');
+let helpRung = 0;
+helpBtn.addEventListener('click', () => {
+  if (helpRung === 0) {
+    helpRung = 1;
+    document.getElementById('helper').hidden = false;
+    helpBtn.querySelector('.musy-btn__label').textContent = 'Die Frage funktioniert für mich nicht';
+    ph('body_question_help', { listened: Math.round(listened) });
+  } else {
+    helpBtn.hidden = true;
+    document.getElementById('swap-note').hidden = false;
+    ph('body_question_rejected', { listened: Math.round(listened), areas: areas.length });
+  }
+});
+
+/* ── Der Körper, in 3D ────────────────────────────────────────────────────────
+   Anny auf dem MakeHuman-Grundkörper, neutrale Form (/experiments/body-model/body.bin: 12.272 Punkte, 24.540
+   Dreiecke; der Körper schaut nach +z, seine linke Seite ist +x). Am Anfang von hinten gesehen: links auf dem
+   Bildschirm ist deine linke Seite. Ziehen dreht ihn um die Längsachse; ruhig halten färbt die Stelle ein.
+
+   DIE FARBE WÄCHST ÜBER DIE HAUT, nicht durch den Raum: jede Fläche kennt für jeden Punkt des Körpers den Weg über
+   die Oberfläche (Dijkstra über die Kanten des Netzes). So springt sie nicht vom Arm auf die Hüfte oder vom einen
+   Bein aufs andere, wenn die zwei sich nahe sind. */
+const stage = document.getElementById('body'), canvas = document.getElementById('body-canvas');
+const statusEl = document.getElementById('body-status'), editBtn = document.getElementById('edit'), layer = document.getElementById('area-buttons');
+
+/* Tokens als Farbe: light-dark(…) löst ein unsichtbares Element zu rgb() auf. */
+const colorProbe = document.createElement('span'); colorProbe.hidden = true; document.body.appendChild(colorProbe);
+const tokenColor = (name) => { colorProbe.style.color = `var(${name})`; return new THREE.Color().setStyle(getComputedStyle(colorProbe).color); };
+const SAND = tokenColor('--sand-4'), PAINT = tokenColor('--interactive-accent');
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setClearColor(0x000000, 0);
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 20);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xffffff, SAND.clone().multiplyScalar(0.8), 1.5));
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.6); keyLight.position.set(-1.1, 1.5, 1.2); camera.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0xffffff, 0.45); fillLight.position.set(1.4, 0.1, 0.6); camera.add(fillLight);
+const root = new THREE.Group(); scene.add(root);
+let yaw = 0;                                            // 0 = von hinten
+function fit() {
+  const r = stage.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return;
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / r.height;
+  const h = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const d = Math.max(1.9 / h, 1.2 / (h * camera.aspect));
+  camera.position.set(0, 0.02, -d); camera.lookAt(0, 0.02, 0); camera.updateProjectionMatrix();
+}
+new ResizeObserver(fit).observe(stage); fit();
+
+/* ── Das Netz, im Hintergrund geladen: alles andere läuft schon, bevor es da ist ── */
+let NV = 0, NT = 0, pos = null, idx = null, geom = null, colors = null, mesh = null, YMIN = 0, HEIGHT = 1;
+let start = null, nbr = null, len = null;
+function buildBody(bin) {
+  if (String.fromCharCode(...new Uint8Array(bin, 0, 4)) !== 'MUSB') throw new Error('body.bin');
+  const head = new DataView(bin);
+  NV = head.getUint32(4, true); NT = head.getUint32(8, true);
+  pos = new Float32Array(bin, 12, NV * 3); idx = new Uint16Array(bin, 12 + NV * 12, NT * 3);
+  geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.setIndex(new THREE.BufferAttribute(idx, 1));
+  geom.computeVertexNormals();
+  colors = new Float32Array(NV * 3);
+  for (let v = 0; v < NV; v++) { colors[v * 3] = SAND.r; colors[v * 3 + 1] = SAND.g; colors[v * 3 + 2] = SAND.b; }
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  mesh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0 }));
+  root.add(mesh);
+  geom.computeBoundingBox();
+  YMIN = geom.boundingBox.min.y; HEIGHT = geom.boundingBox.max.y - geom.boundingBox.min.y;
+  /* Nachbarn je Punkt, mit Kantenlänge (CSR). Doppelte Kanten stören Dijkstra nicht. */
+  const deg = new Uint32Array(NV + 1);
+  for (let t = 0; t < NT * 3; t += 3) { deg[idx[t]] += 2; deg[idx[t + 1]] += 2; deg[idx[t + 2]] += 2; }
+  start = new Uint32Array(NV + 1); for (let v = 0; v < NV; v++) start[v + 1] = start[v] + deg[v];
+  nbr = new Uint32Array(start[NV]); len = new Float32Array(start[NV]);
+  const fillAt = start.slice(0, NV);
+  const dist3 = (a, b) => Math.hypot(pos[a * 3] - pos[b * 3], pos[a * 3 + 1] - pos[b * 3 + 1], pos[a * 3 + 2] - pos[b * 3 + 2]);
+  const link = (a, b) => { const l = dist3(a, b); nbr[fillAt[a]] = b; len[fillAt[a]++] = l; nbr[fillAt[b]] = a; len[fillAt[b]++] = l; };
+  for (let t = 0; t < NT * 3; t += 3) { const a = idx[t], b = idx[t + 1], c = idx[t + 2]; link(a, b); link(b, c); link(c, a); }
+  document.getElementById('body-loading').hidden = true;
+}
+fetch('/experiments/body-model/body.bin').then((r) => r.arrayBuffer()).then(buildBody).catch((err) => {
+  console.error('[Körper]', err);
+  document.getElementById('body-loading').textContent = 'Der Körper konnte nicht geladen werden. Lade die Seite neu.';
+});
+
+/* Wege über die Haut von den Startpunkten aus, bis RMAX. */
+const RMIN = 0.012, RMAX = 0.34, TAU = 5.5;             // Meter über die Haut; TAU: wie langsam sie wächst
+const REACH = RMAX * 1.3;                               // so weit sucht der Weg über die Haut
+function surfaceDistances(seeds) {
+  /* In 64 Bit, und jeder Punkt genau einmal: ein Float32Array rundet, und der Vergleich mit dem ungerundeten Wert
+     ließ Punkte aus und andere vielfach zu (das Muster sah aus wie ein Baum). */
+  const d = new Float64Array(NV).fill(Infinity), done = new Uint8Array(NV), reached = [];
+  const heap = [];                                     // [dist, v], Binärheap
+  const push = (x) => { heap.push(x); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= x[0]) break; heap[i] = heap[p]; i = p; } heap[i] = x; };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { let i = 0; for (;;) { let c = 2 * i + 1; if (c >= heap.length) break; if (c + 1 < heap.length && heap[c + 1][0] < heap[c][0]) c++; if (heap[c][0] >= last[0]) break; heap[i] = heap[c]; i = c; } heap[i] = last; } return top; };
+  for (const [v, d0] of seeds) if (d0 < d[v]) { d[v] = d0; push([d0, v]); }
+  while (heap.length) {
+    const [dv, v] = pop(); if (done[v]) continue;
+    done[v] = 1; reached.push(v);
+    for (let k = start[v]; k < start[v + 1]; k++) { const w = nbr[k], nd = dv + len[k]; if (nd < d[w] && nd <= REACH) { d[w] = nd; push([nd, w]); } }
+  }
+  return { d: Float32Array.from(d), reached: Uint32Array.from(reached) };
+}
+
+/* ── Regionen: aus dem Ort auf dem Körper (lokal) und der Richtung der Haut dort ── */
+const soft = (x, a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+function regionOf(p, n) {
+  const u = (p.y - YMIN) / HEIGHT, ax = Math.abs(p.x);
+  const side = ax < 0.025 ? 'center' : (p.x > 0 ? 'left' : 'right');
+  const facing = n.z > 0.35 ? 'front' : (n.z < -0.35 ? 'back' : 'side');
+  const torsoHalf = u < 0.6 ? 0.175 : u < 0.65 ? 0.155 : u < 0.7 ? 0.135 : 0.155;
+  let region;
+  if (u > 0.865) region = facing === 'front' ? 'face' : 'head';
+  else if (u > 0.83 && ax < 0.09) region = facing === 'back' ? 'nape' : 'neck';
+  else if (u > 0.53 && u < 0.8 && ax > torsoHalf + 0.02) region = u < 0.655 && ax > 0.33 ? 'hand' : (u < 0.72 ? 'forearm' : 'upper_arm');
+  else if (u > 0.78) region = 'shoulder';
+  else if (u > 0.7) region = facing === 'back' ? 'upper_back' : 'chest';
+  else if (u > 0.58) region = facing === 'back' ? 'lower_back' : 'belly';
+  else if (u > 0.47) region = facing === 'back' ? 'buttocks' : 'pelvis';
+  else if (u > 0.31) region = 'thigh';
+  else if (u > 0.255) region = 'knee';
+  else if (u > 0.05) region = 'lower_leg';
+  else region = 'foot';
+  return { region, side, facing };
+}
+const REGION_DE = { face: 'Gesicht', head: 'Kopf', neck: 'Hals', nape: 'Nacken', shoulder: 'Schulter', chest: 'Brust',
+  upper_back: 'oberer Rücken', belly: 'Bauch', lower_back: 'unterer Rücken', pelvis: 'Becken', buttocks: 'Gesäß',
+  upper_arm: 'Oberarm', forearm: 'Unterarm', hand: 'Hand', thigh: 'Oberschenkel', knee: 'Knie', lower_leg: 'Unterschenkel', foot: 'Fuß' };
+const SIDE_DE = { left: 'links', right: 'rechts', center: '' };
+const say = (a) => REGION_DE[a.region] + (SIDE_DE[a.side] ? `, ${SIDE_DE[a.side]}` : '');
+
+/* ── Die Flächen ── */
+let areas = [], nextId = 1, active = null, activeSince = 0, painting = false, editing = false;
+const radiusOf = (holdMs) => RMIN + (RMAX - RMIN) * (1 - Math.exp(-holdMs / 1000 / TAU));
+const alphaOf = (holdMs) => Math.min(1, 0.35 + holdMs / 700);   // färbt sich langsam ein
+function recolor(list) {
+  for (let i = 0; i < list.length; i++) {
+    const v = list[i]; let p = 0;
+    for (const a of areas) { const dv = a.d[v]; if (dv < a.r) p = Math.max(p, a.alpha * (1 - soft(dv, a.r * 0.62, a.r))); }
+    const k = p * 0.92;
+    colors[v * 3] = SAND.r + (PAINT.r - SAND.r) * k; colors[v * 3 + 1] = SAND.g + (PAINT.g - SAND.g) * k; colors[v * 3 + 2] = SAND.b + (PAINT.b - SAND.b) * k;
+  }
+  geom.attributes.color.needsUpdate = true;
+}
+const snap = (a) => ({ id: a.id, region: a.region, side: a.side, facing: a.facing, radius_cm: Math.round(a.r * 1000) / 10,
+  hold_s: +(a.hold / 1000).toFixed(2), t: a.t, at: a.at, center: [a.center.x, a.center.y, a.center.z].map((x) => +x.toFixed(3)) });
+
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function hitAt(clientX, clientY) {
+  if (!mesh) return null;
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  return ray.intersectObject(mesh, false)[0] ?? null;
+}
+function startPaint(clientX, clientY) {
+  const hit = hitAt(clientX, clientY); if (!hit) return false;
+  const p = mesh.worldToLocal(hit.point.clone()), f = hit.face;
+  const seeds = [f.a, f.b, f.c].map((v) => [v, Math.hypot(pos[v * 3] - p.x, pos[v * 3 + 1] - p.y, pos[v * 3 + 2] - p.z)]);
+  /* Auf einer Fläche gehalten, wächst diese weiter; sonst beginnt eine neue. */
+  active = areas.find((a) => seeds.some(([v]) => a.d[v] < a.r)) ?? null;
+  if (!active) {
+    /* RUND, UND TROTZDEM AUF DER HAUT: der Weg über die Kanten misst je nach Richtung zu lang (ein Stern statt
+       eines Kreises). Darum zählt der größere von zwei Werten — der gerade Abstand, auf zusammenhängender Haut
+       fast immer der richtige, und 80 % des Wegs über die Haut, der zwischen Arm und Rumpf weit größer ist. */
+    const { d, reached } = surfaceDistances(seeds);
+    for (const v of reached) d[v] = Math.max(d[v] * 0.8, Math.hypot(pos[v * 3] - p.x, pos[v * 3 + 1] - p.y, pos[v * 3 + 2] - p.z));
+    active = { id: nextId++, d, reached, r: RMIN, alpha: alphaOf(0), hold: 0, center: p, normal: f.normal.clone(), ...regionOf(p, f.normal),
+      t: +listened.toFixed(1), at: new Date().toISOString(), button: null };
+    areas.push(active);
+    ph('body_area_started', { area: snap(active), count: areas.length, playing });
+  }
+  painting = true; activeSince = performance.now();
+  return true;
+}
+function grow() {
+  if (!painting || !active) return;
+  const held = active.hold + (performance.now() - activeSince);
+  active.r = radiusOf(held); active.alpha = alphaOf(held);
+  recolor(active.reached);
+}
+function endPaint() {
+  if (!painting || !active) return;
+  active.hold += performance.now() - activeSince; grow();
+  painting = false;
+  statusEl.textContent = `Eingefärbt: ${say(active)}.`;
+  ph('body_area_painted', { area: snap(active), count: areas.length, listened: +listened.toFixed(1) });
+  active = null; renderButtons();
+}
+function removeArea(a) {
+  areas = areas.filter((x) => x !== a); a.r = 0; recolor(a.reached);
+  if (a.button) a.button.remove();
+  statusEl.textContent = `Entfernt: ${say(a)}.`;
+  ph('body_area_deleted', { area: snap(a), count: areas.length, listened: +listened.toFixed(1) });
+}
+
+/* ── Bearbeiten: neben jeder Fläche ein roter Löschen-Knopf ── */
+const TRASH = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 musy-icon musy-icon--sm" aria-hidden="true" focusable="false"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>';
+function renderButtons() {
+  for (const a of areas) {
+    if (!a.button) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'musy-icon-btn musy-icon-btn--ghost musy-icon-btn--min musie-area-delete';
+      b.setAttribute('aria-label', `Fläche entfernen: ${say(a)}`); b.innerHTML = TRASH; b.hidden = true;
+      b.addEventListener('click', () => removeArea(a));
+      layer.appendChild(b); a.button = b;
+    }
+  }
+}
+const wp = new THREE.Vector3(), wn = new THREE.Vector3(), toCam = new THREE.Vector3();
+function placeButtons() {
+  const r = stage.getBoundingClientRect();
+  if (!mesh) return;
+  for (const a of areas) {
+    if (!a.button) continue;
+    wp.copy(a.center).applyMatrix4(mesh.matrixWorld); wn.copy(a.normal).transformDirection(mesh.matrixWorld);
+    const facesUs = wn.dot(toCam.copy(camera.position).sub(wp)) > 0.02;
+    wp.project(camera);
+    const pxPerM = r.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.length());
+    a.button.style.left = `${(wp.x + 1) / 2 * r.width + Math.min(40, a.r * pxPerM * 0.7) + 14}px`;
+    a.button.style.top = `${(1 - wp.y) / 2 * r.height}px`;
+    a.button.hidden = !editing || !facesUs;
+  }
+}
+editBtn.addEventListener('click', () => {
+  editing = !editing;
+  editBtn.setAttribute('aria-pressed', String(editing));
+  editBtn.querySelector('.musy-btn__label').textContent = editing ? 'Fertig' : 'Flächen bearbeiten';
+  ph('body_edit_mode', { on: editing, count: areas.length });
+});
+
+/* ── Gesten: ziehen dreht, ruhig halten färbt ein; wer beim Halten zieht, dreht ── */
+let gesture = null;
+const HOLD_MS = 140, MOVE_PX = 7;
+canvas.addEventListener('pointerdown', (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  gesture = { id: e.pointerId, x0: e.clientX, y0: e.clientY, mode: 'pending', yaw0: yaw, timer: 0 };
+  if (!editing) gesture.timer = setTimeout(() => { if (gesture && gesture.mode === 'pending') gesture.mode = startPaint(gesture.x0, gesture.y0) ? 'paint' : 'rotate'; }, HOLD_MS);
+  e.preventDefault();
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!gesture || e.pointerId !== gesture.id) return;
+  const moved = Math.hypot(e.clientX - gesture.x0, e.clientY - gesture.y0);
+  if (gesture.mode === 'pending' && moved > MOVE_PX) { clearTimeout(gesture.timer); gesture.mode = 'rotate'; }
+  else if (gesture.mode === 'paint' && moved > MOVE_PX * 2) { endPaint(); Object.assign(gesture, { mode: 'rotate', x0: e.clientX, yaw0: yaw }); }
+  if (gesture.mode === 'rotate') { yaw = gesture.yaw0 + (e.clientX - gesture.x0) * 0.012; root.rotation.y = yaw; }
+});
+function endGesture(e) {
+  if (!gesture || (e && e.pointerId !== gesture.id)) return;
+  clearTimeout(gesture.timer);
+  if (gesture.mode === 'pending' && !editing && startPaint(gesture.x0, gesture.y0)) endPaint();   // ein kurzes Tippen: ein kleiner Fleck
+  if (gesture.mode === 'paint') endPaint();
+  if (gesture.mode === 'rotate') ph('body_turned', { deg: Math.round(yaw * 180 / Math.PI) });
+  gesture = null;
+}
+canvas.addEventListener('pointerup', endGesture);
+canvas.addEventListener('pointercancel', endGesture);
+canvas.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { yaw += (e.key === 'ArrowLeft' ? -1 : 1) * Math.PI / 12; root.rotation.y = yaw; e.preventDefault(); }
+  else if ((e.key === ' ' || e.key === 'Enter') && !e.repeat && !editing) {
+    const r = canvas.getBoundingClientRect(); startPaint(r.left + r.width / 2, r.top + r.height * 0.42); e.preventDefault();
+  }
+});
+canvas.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') endPaint(); });
+
+(function frame() { grow(); renderer.render(scene, camera); placeButtons(); requestAnimationFrame(frame); })();
+
+/* ── Die Musik: im Browser aus den Instrumenten-Samples ───────────────────────
+   MODE 'side': einzelne Töne von Harfe und Kalimba, die zwischen links und rechts wandern, mit einzelnen Sprüngen
+   ganz auf eine Seite. MODE 'body': tiefe, lange Marimba-Töne und hohe Kalimba-Funken, beide fast in der Mitte. */
+const SAMPLES = {
+  harp: { 48: '/instruments/harp/C3.m4a', 52: '/instruments/harp/E3.m4a', 55: '/instruments/harp/G3.m4a', 59: '/instruments/harp/B3.m4a', 62: '/instruments/harp/D4.m4a', 65: '/instruments/harp/F4.m4a' },
+  kalimba: { 57: '/instruments/kalimba/open-A3.mp3', 60: '/instruments/kalimba/open-C4.mp3', 64: '/instruments/kalimba/open-E4.mp3', 65: '/instruments/kalimba/open-F4.mp3', 69: '/instruments/kalimba/open-A4.mp3', 71: '/instruments/kalimba/open-B4.mp3', 72: '/instruments/kalimba/open-C5.mp3', 76: '/instruments/kalimba/open-E5.mp3' },
+  marimba: { 48: '/instruments/marimba/mar-med-C3.wav', 55: '/instruments/marimba/mar-med-G3.wav', 59: '/instruments/marimba/mar-med-B3.wav', 65: '/instruments/marimba/mar-med-F4.wav', 72: '/instruments/marimba/mar-med-C5.wav' },
+};
+const PENTA = [0, 2, 4, 7, 9];                           // C-Dur pentatonisch
+let ac = null, master = null, wet = null, buffers = {}, loading = null;
+function impulse(seconds) {
+  const len = Math.round(ac.sampleRate * seconds), ir = ac.createBuffer(2, len, ac.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+  return ir;
+}
+function setupAudio() {
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3; comp.connect(ac.destination);
+  master = ac.createGain(); master.gain.value = 0; master.connect(comp);
+  const verb = ac.createConvolver(); verb.buffer = impulse(3.2);
+  wet = ac.createGain(); wet.gain.value = 0.32; wet.connect(verb); verb.connect(master);
+  /* Ein Sample, das nicht lädt oder nicht dekodiert, fehlt eben: die übrigen spielen weiter. */
+  loading = Promise.all(Object.entries(SAMPLES).flatMap(([inst, map]) => Object.entries(map).map(async ([midi, url]) => {
+    try {
+      const res = await fetch(url); const buf = await ac.decodeAudioData(await res.arrayBuffer());
+      (buffers[inst] = buffers[inst] || {})[midi] = buf;
+    } catch (e) { console.warn('[Musik] nicht geladen:', url, e); }
+  })));
+  return loading;
+}
+function nearest(inst, midi) {
+  const keys = Object.keys(buffers[inst] || {}).map(Number); if (!keys.length) return null;
+  const k = keys.reduce((b, x) => (Math.abs(x - midi) < Math.abs(b - midi) ? x : b), keys[0]);
+  return { buf: buffers[inst][k], rate: Math.pow(2, (midi - k) / 12) };
+}
+function note(inst, midi, when, { pan = 0, vel = 0.6, length = 6 } = {}) {
+  const s = nearest(inst, midi) || nearest('kalimba', midi); if (!s) return;   // fehlt ein Instrument, spielt die Kalimba
+  const src = ac.createBufferSource(); src.buffer = s.buf; src.playbackRate.value = s.rate;
+  const gain = ac.createGain(); gain.gain.setValueAtTime(vel, when); gain.gain.setTargetAtTime(0, when + length - 1.2, 0.4);
+  const panner = ac.createStereoPanner(); panner.pan.setValueAtTime(pan, when);
+  src.connect(gain); gain.connect(panner); panner.connect(master); panner.connect(wet);
+  src.start(when); src.stop(when + length);
+}
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const pitch = (lo, hi) => { const cands = []; for (let m = lo; m <= hi; m++) if (PENTA.includes(m % 12)) cands.push(m); return pick(cands); };
+let nextAt = 0, step = 0, schedTimer = null;
+function schedule() {                                   // ein Blick 0,3 s voraus
+  while (nextAt < ac.currentTime + 0.3) {
+    const t = nextAt, clock = listened + (t - ac.currentTime);
+    if (MODE === 'side') {
+      const drift = Math.sin(clock * Math.PI * 2 / 17) * 0.8;
+      const jump = step % 5 === 4 ? (Math.random() < 0.5 ? -0.95 : 0.95) : null;
+      if (step % 9 === 8) {                             // drei schnelle Töne, die quer durch den Raum laufen
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        [0, 0.22, 0.44].forEach((o, i) => note('kalimba', pitch(64, 79), t + o, { pan: dir * (-0.9 + i * 0.9), vel: 0.42 }));
+        nextAt += 1.6;
+      } else {
+        note(step % 2 ? 'harp' : 'kalimba', pitch(57, 76), t, { pan: jump ?? drift, vel: jump ? 0.62 : 0.5 });
+        nextAt += 1.0 + Math.random() * 1.0;
+      }
+    } else {
+      if (step % 4 === 0) note('marimba', pick([36, 43, 41]), t, { pan: -0.1, vel: 0.75, length: 7 });   // tief: C2, G2, F2
+      if (step % 4 === 2) note('marimba', pick([48, 43]), t, { pan: 0.1, vel: 0.55, length: 6 });
+      if (Math.random() < 0.75) note('kalimba', pitch(84, 91), t + 0.35 + Math.random() * 0.4, { pan: (Math.random() - 0.5) * 0.4, vel: 0.32, length: 4 });  // hoch: C6–G6
+      nextAt += 1.3 + Math.random() * 0.7;
+    }
+    step += 1;
+  }
+}
+
+/* ── Abspielen und der Counter (1:30, wie listen_gate_seconds der Kartenübungen) ── */
+const timeEl = document.getElementById('time'), captionEl = document.getElementById('caption');
+const transport = document.getElementById('transport'), cta = document.getElementById('cta');
+let playing = false, listened = 0, lastTick = 0, gateMet = false, tickTimer = null;
+const mmss = (s) => { const w = Math.max(0, Math.ceil(s)); return `${String(Math.floor(w / 60)).padStart(2, '0')}:${String(w % 60).padStart(2, '0')}`; };
+function renderClock() {
+  timeEl.textContent = mmss(GATE_SECONDS - listened);
+  if (!gateMet && listened >= GATE_SECONDS) {
+    gateMet = true;
+    timeEl.setAttribute('data-done', '');
+    captionEl.textContent = 'Super, dass du dich 1:30 Minuten fokussiert hast.';
+    cta.disabled = false; cta.removeAttribute('data-disabled');
+    cta.classList.replace('musy-btn--secondary', 'musy-btn--primary');
+    document.getElementById('cta-label').textContent = 'Bereit? Beginne zu reflektieren';
+    ph('body_gate_reached', { areas: areas.length });
+  }
+}
+function setTransport() {
+  transport.dataset.state = playing ? 'playing' : 'paused';
+  document.getElementById('icon-play').style.display = playing ? 'none' : '';
+  document.getElementById('icon-pause').style.display = playing ? '' : 'none';
+  document.getElementById('transport-label').textContent = playing ? 'Pause' : 'Abspielen';
+}
+async function play() {
+  if (!ac) setupAudio();
+  if (ac.state !== 'running') await ac.resume();
+  await loading;
+  playing = true; setTransport(); lastTick = performance.now();
+  master.gain.cancelScheduledValues(ac.currentTime); master.gain.setTargetAtTime(0.9, ac.currentTime, 0.25);
+  nextAt = Math.max(nextAt, ac.currentTime + 0.1);
+  schedTimer = setInterval(schedule, 100); schedule();
+  tickTimer = setInterval(() => { const now = performance.now(); listened += (now - lastTick) / 1000; lastTick = now; renderClock(); }, 250);
+  ph('body_playback', { state: 'playing', listened: +listened.toFixed(1) });
+}
+function pause() {
+  playing = false; setTransport(); clearInterval(schedTimer); clearInterval(tickTimer);
+  listened += (performance.now() - lastTick) / 1000; renderClock();
+  if (ac) { master.gain.cancelScheduledValues(ac.currentTime); master.gain.setTargetAtTime(0, ac.currentTime, 0.2); }
+  ph('body_playback', { state: 'paused', listened: +listened.toFixed(1) });
+}
+transport.addEventListener('click', () => (playing ? pause() : play()));
+
+/* ── Das Ende: „Bereit? Beginne zu reflektieren“ oder das X ─────────────────── */
+function finish(via) {
+  if (playing) pause();
+  if (painting) endPaint();
+  ph('body_marking_finished', { via, areas: areas.map(snap), count: areas.length, listened: +listened.toFixed(1), gate_met: gateMet, turned_deg: Math.round(yaw * 180 / Math.PI) });
+  document.getElementById('done-text').textContent = areas.length
+    ? `Du hast ${areas.length === 1 ? 'eine Fläche' : areas.length + ' Flächen'} eingefärbt: ${areas.map(say).join(' · ')}.`
+    : 'Du hast keine Fläche eingefärbt. Auch das ist eine Antwort.';
+  openDialog('done');
+}
+cta.addEventListener('click', () => finish('cta'));
+document.getElementById('close').addEventListener('click', () => finish('close'));
+document.getElementById('again').addEventListener('click', () => location.reload());
+/* Nur für die Prüfung beim Bauen: den Counter vorstellen, ohne 90 s zu warten. */
+window.__musieTest = { setListened(seconds) { listened = seconds; } };
+</script>
+</body>
+</html>
