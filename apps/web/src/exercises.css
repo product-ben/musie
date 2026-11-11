@@ -1049,4 +1049,11 @@
   /* With the button gone, a three-card goal would leave an empty block and
      one `--space-gap-group` of nothing under the dots. */
   .musie-under-pile:not(:has(.musy-switch)) { display: none; }
+  /* FROM --bp-md THE COLUMN IS START-ALIGNED — headline, toolbar and card all
+     share its left edge — so the switch takes that edge too and sits under
+     the dots, rather than centring across a column the card fills only a
+     third of (seen on screen at 1440, 2026-11-11). Centring it under the card
+     would mean restating the deck's own `--musy-deck-card-inline` here, which
+     is the component's geometry and not the screen's to repeat (L14). */
+  .musie-under-pile { align-items: flex-start; }
 }
