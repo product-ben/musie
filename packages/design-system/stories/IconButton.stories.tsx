@@ -129,8 +129,9 @@ const meta = {
     },
     size: {
       control: 'inline-radio',
-      options: ['min', 'primary', 'comfort', 'guided'],
-      description: 'Target rung: 24 / 44 / 56 / 64px. Defaults to primary.',
+      options: ['min', 'sm', 'primary', 'comfort', 'guided'],
+      description:
+        'Target rung: 24 / 40 / 44 / 56 / 64px. Defaults to primary. `sm` (40px, 2026-11-11) is this ladder’s alone: it stands in a row of CtaButton `min`s, which already draw about 40px tall.',
     },
     tooltip: {
       control: 'boolean',
@@ -174,12 +175,19 @@ export const Variants: Story = {
   ),
 };
 
-/** The four target rungs: 24 / 44 / 56 / 64px. `min` sits further from its
- *  neighbours because its `--sp-2` margin is baked into the stylesheet. */
+/** The five target rungs: 24 / 40 / 44 / 56 / 64px. `min` sits further from
+ *  its neighbours because its `--sp-2` margin is baked into the stylesheet.
+ *
+ *  `sm` (40px, `--target-sm`, 2026-11-11) is the help button in the
+ *  /exercises toolbar, the height of the CtaButton `min`s it stands beside.
+ *  It clears 2.5.8 without the spacing exception, so it has no margin, and it
+ *  carries the same 20px glyph as `primary`. CtaButton has no `sm`: its `min`
+ *  is already that height. */
 export const Sizes: Story = {
   render: (args) => (
     <Row label="size">
       <IconButton {...args} size="min" label="min — 24px" />
+      <IconButton {...args} size="sm" label="sm — 40px" />
       <IconButton {...args} size="primary" label="primary — 44px" />
       <IconButton {...args} size="comfort" label="comfort — 56px" />
       <IconButton {...args} size="guided" label="guided — 64px" />

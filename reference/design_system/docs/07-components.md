@@ -105,7 +105,7 @@ Icon
 
 ---
 
-## 7.2 Icon Button `[SEED]`
+## 7.2 Icon Button `[SEED]` · PROVISIONAL (G6)
 
 **Purpose.** A single icon-only action, named once.
 
@@ -128,10 +128,14 @@ IconButton
 | `glyph` | `LucideIcon` | — |
 | `label` | `string` | — (required) |
 | `variant` | `'primary' \| 'secondary' \| 'ghost'` | `'ghost'` |
-| `size` | `'min' \| 'primary' \| 'comfort' \| 'guided'` | `'primary'` |
+| `size` | `'min' \| 'sm' \| 'primary' \| 'comfort' \| 'guided'` | `'primary'` |
 | `tooltip` | `boolean` | `true` |
 | `loading` | `boolean` | `false` |
 | `loadingLabel` | `string` | `'Wird geladen'` |
+
+**Sizes.** `min` 24 · `sm` 40 · `primary` 44 · `comfort` 56 · `guided` 64px, on `--target-min`, `--target-sm`, `--target-primary`, `--target-comfort` and `--target-guided`. The glyph is `sm` (16px) at `min`, `md` (20px) at `sm` and `primary`, and `lg` (24px) at `comfort` and `guided`. Only `min` bakes in a margin (below).
+
+**`sm` — added 2026-11-11 (Ben, D7 of `docs/plans/exercises-ready-to-build.md`).** 40px on `--target-sm`, staged as amendment gap **G6** in `musy-foundations-amendments.css` — hence PROVISIONAL until Layer 1 absorbs it. It exists for the help button in the /exercises toolbar, which stands in a row of CtaButton `min`s, and those draw about 40px tall through their label and block padding (measured: 39px at 393, 40.4px at 1440). 40px clears 2.5.8 without the spacing exception, so `sm` takes **no** margin. **It is on this ladder only (A8):** CtaButton's `min` already is the 40px control, so CtaButton has no `sm`. That breaks the rule that the two ladders read identically (7.4, and both components' headers), and it is deliberate — `IconButton.tsx`'s size note says so, so the asymmetry is not "fixed".
 
 **State matrix.**
 
@@ -150,11 +154,11 @@ Hover is scoped to fine pointers on purpose: applied on touch it stays stuck aft
 
 **Responsive behaviour.** No breakpoint changes. The tooltip is removed entirely at `(hover: none)` / `(pointer: coarse)` — a touch-triggered tooltip lands under the finger and the `aria-label` already names the control.
 
-**Token usage.** `--target-min` `--target-primary` `--target-comfort` `--target-guided` `--radius-control` `--radius-xs` `--radius-full` `--border-width-regular` `--border-width-thick` `--border-style-solid` `--interactive-primary` `--interactive-primary-hover` `--interactive-primary-active` `--interactive-primary-disabled` `--interactive-primary-on` `--interactive-primary-on-disabled` `--interactive-primary-border` `--interactive-ghost` `--interactive-ghost-hover` `--interactive-ghost-active` `--interactive-ghost-disabled` `--interactive-ghost-on` `--interactive-ghost-on-disabled` `--surface-raised` `--surface-inverse` `--on-surface` `--on-surface-inverse` `--on-surface-disabled` `--border-strong` `--sand-8` `--focus-ring` `--focus-ring-offset` `--focus-ring-clearance` `--motion-toggle` `--motion-duration-slower` `--icon-size-md` `--z-tooltip` `--sp-1` `--sp-2` `--type-label-md-*`
+**Token usage.** `--target-min` `--target-sm` *(G6)* `--target-primary` `--target-comfort` `--target-guided` `--radius-control` `--radius-xs` `--radius-full` `--border-width-regular` `--border-width-thick` `--border-style-solid` `--interactive-primary` `--interactive-primary-hover` `--interactive-primary-active` `--interactive-primary-disabled` `--interactive-primary-on` `--interactive-primary-on-disabled` `--interactive-primary-border` `--interactive-ghost` `--interactive-ghost-hover` `--interactive-ghost-active` `--interactive-ghost-disabled` `--interactive-ghost-on` `--interactive-ghost-on-disabled` `--surface-raised` `--surface-inverse` `--on-surface` `--on-surface-inverse` `--on-surface-disabled` `--border-strong` `--sand-8` `--focus-ring` `--focus-ring-offset` `--focus-ring-clearance` `--motion-toggle` `--motion-duration-slower` `--icon-size-md` `--z-tooltip` `--sp-1` `--sp-2` `--type-label-md-*`
 
 `--sand-8` is the one raw primitive referenced anywhere in this pass. It is the *hover* step of the neutral border and Layer 1 exposes no `--border-strong-hover` semantic alias. Logged as gap G3.
 
-**A11y notes.** `label` is required by the type — an icon-only control with no accessible name is a 4.1.2 failure and the API should make that unwritable. The tooltip popup is `aria-hidden`: it duplicates the trigger's accessible name, so announcing it would double it. base-ui opens a tooltip on **hover and focus** by default, which is what 1.4.13 requires — the hand-rolled version needed a second rule to achieve this and a media query to suppress it on touch. `size="min"` (24px) carries a mandatory `--sp-2` margin so 2.5.8's spacing exception applies; it is permitted inline in prose only. Loading is announced through a `role="status"` string, never by the spinner alone.
+**A11y notes.** `label` is required by the type — an icon-only control with no accessible name is a 4.1.2 failure and the API should make that unwritable. The tooltip popup is `aria-hidden`: it duplicates the trigger's accessible name, so announcing it would double it. base-ui opens a tooltip on **hover and focus** by default, which is what 1.4.13 requires — the hand-rolled version needed a second rule to achieve this and a media query to suppress it on touch. `size="min"` (24px) carries a mandatory `--sp-2` margin so 2.5.8's spacing exception applies; it is permitted inline in prose only. `size="sm"` (40px) needs neither the margin nor the condition: it is over 2.5.8's 24px on its own. It is not 2.5.5's 44px, so the action that carries the person onward stays on `primary`. Loading is announced through a `role="status"` string, never by the spinner alone.
 
 **What it is NOT.** Not a menu trigger, not a toggle (that is 7.3), and not a link — an icon that navigates is an `<a>`.
 

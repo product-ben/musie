@@ -185,6 +185,10 @@
 }
 
 .musy-icon-btn--min      { --musy-icon-btn-size: var(--target-min); }
+/* 40px (G6, 2026-11-11): the height of a row of CtaButton `min`s, for the one
+   icon-only control that stands in such a row. It clears 2.5.8 on its own, so
+   it takes no margin — the baked-in spacing below is `min`'s alone. */
+.musy-icon-btn--sm       { --musy-icon-btn-size: var(--target-sm); }
 .musy-icon-btn--primary-size { --musy-icon-btn-size: var(--target-primary); }
 .musy-icon-btn--comfort  { --musy-icon-btn-size: var(--target-comfort); }
 .musy-icon-btn--guided   { --musy-icon-btn-size: var(--target-guided); }
