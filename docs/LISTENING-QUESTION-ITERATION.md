@@ -27,6 +27,26 @@ Ben was away and asked for every remaining call to be made without him, on
 | The e2e walk | **16 / 24**, and the 8 failures are pre-existing — proven below |
 | The app, running | **walked, 2026-10-12**, and it found a bug. See §0.1 |
 
+### 0.2 · Q4 and Q5 retired — 2026-11-11
+
+Ben took `lq-04` (which side a sound came from) and `lq-05` (where it
+resonated in the body) out of both card exercises, with everything that
+belongs to them: the listen phrasing, the reflect phrasing and the helper, in
+both locales. The rotation is three questions now, in the same order. §4.5
+and §4.6 below are kept as the record of what they said.
+
+They were not dropped but moved: each became an experiment that lets
+somebody mark the place on an outline of a body while the music plays, rather
+than find words for it — `apps/web/public/experiments/body-side/` and
+`body-resonance/` (CLAUDE.md rule 10).
+
+Deleting rather than retiring with a flag was safe because of D10: the diary
+renders the snapshot in `sessions.listening_question`, never the catalogue,
+so every answer given under Q4 or Q5 keeps its question. A session started
+before the deploy that holds `lq-04` or `lq-05` as its id is read through
+`isKnownQuestion` as "not in the set" — the screens draw the exercise's own
+copy and the rotation skips the id.
+
 ### 0.1 · What the walk found — `d797571`
 
 The ? and the Lightbox's close X were **drawn in the same corner.** One
