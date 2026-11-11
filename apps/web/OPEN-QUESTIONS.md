@@ -11068,3 +11068,46 @@ What I need from Ben: whether the jsDelivr request before consent is fine for
 these pages (vendoring three.js would add about 700 KB to the repository); and
 a PostHog survey on `body_marking_finished` / `sound_session` if they should
 ask anything.
+
+## Body resonance, third version: a headline, a seated body, the instruments' countdown — FLAGGED
+
+Where: `apps/web/public/experiments/body-resonance/261111-1255/` (the two
+earlier versions stay beside it); the removed copy in
+`~/Documents/musie-assets/copy/unused-copy.md`, outside the repository
+
+What I checked: Ben, 2026-11-11, five changes for lq-05 only: the headline
+„Spüre einmal nach, wo der Klang in deinem Körper resoniert.“ and nothing else
+in the header; a Base UI slider under the body that turns it, with dragging
+still turning it (both, in step); the countdown and „Weiter zum Reflektieren“
+as in the instruments exercises, but started by an explicit „Jetzt starten“,
+not by the first area; the face in front at the start; the person sitting.
+
+What I did:
+- **The texts that went** (the rest of the question, the help ladder, the
+  listening CTA's two labels, the 1:30 praise) are in `copy/unused-copy.md`
+  in musie-assets, a new folder listed in that folder's README.
+- **The slider is the design system's own scrubber shape**: Base UI `Slider`
+  with `MusicPlayer`'s `musy-mplayer__*` classes, without the fill (an angle
+  has no played part), −180° to 180° with the face at 0° in the middle. A
+  static page cannot import the package, so it is bundled with React into
+  `rotation-slider.js` (260 KB, source beside it) with the repository's own
+  esbuild. Same origin, so nothing loads before consent that did not already.
+- **The foot is `SessionPlay.tsx`'s**: DS `Countdown` markup, and under it
+  the row that opens with the motion tokens and pushes the clock up. Before the
+  start the row holds „Jetzt starten“ and the transport button is hidden, so
+  there are not two ways to start; after it, the row opens only on the
+  person's own pause or at 0:00, as in `clock.ts`. The music keeps playing past
+  0:00 („Die Mindestzeit ist um. Hör weiter, so lange du magst.“), and
+  „Noch einmal“ restarts the clock, as with the instruments.
+- **Sitting is a bend at load**, not a rig: knee 92°, hip 88°, arms 34° toward
+  the body, each with a soft weight over a few centimetres. Regions are still
+  read from the standing body, so a seated thigh is still „Oberschenkel“.
+- **The body takes the height the sheet leaves** instead of a share of the
+  viewport: on an iPhone in Safari (about 660 px visible) a fixed share was
+  either too tall for the open row or tiny. It shrinks a little when the row
+  opens.
+
+What I need from Ben: the same two questions as the entry above (jsDelivr
+before consent; a PostHog survey). And one judgement: painting before
+„Jetzt starten“ is allowed and recorded with `t = 0`. Say if it should wait for
+the music.

@@ -27,3 +27,10 @@ indices           uint16 a, b, c per triangle
 
 12,272 vertices, 24,540 triangles, 294,516 bytes. The experiments compute the
 normals in the browser.
+
+## Sitting
+
+From `/experiments/body-resonance/261111-1255/` on, the page bends this mesh
+into a seated pose when it loads (knee, hip, arms; no skeleton, a weighted
+rotation per joint). `body.bin` itself stays the neutral standing shape, and
+the regions are still read from it.
