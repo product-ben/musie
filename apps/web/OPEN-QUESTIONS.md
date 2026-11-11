@@ -10998,3 +10998,189 @@ Why: Ben, 2026-11-09.
 
 What I need from Ben: nothing. The motion switch's prompt is the one part
 no emulator walks — it needs an iPhone.
+
+## lq-04 and lq-05 became two body-marking experiments — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1109/` (lq-04) and
+`body-resonance/261111-1109/` (lq-05); `apps/web/src/content/questions.ts`
+
+What I checked: Ben, 2026-11-11 — the two questions out of the card
+exercises, and an experiment for each: the card exercises' listening focus
+sheet without the card picture, and in its place the outline of a body to
+mark where you hear or feel it. Several points; each records the moment in
+the music it was set; enabled and selected both in the accent colour; a
+selected point drags, with a ghost delete button beside it.
+
+What I did, and what differs from the app:
+- **The music is generated in the browser from the instrument samples**
+  already in `public/instruments/`. Ben chose a track from musie-assets
+  first; the card tracks are Epidemic Sound on a subscription and
+  `musie-assets/README.md` forbids committing them, while every experiment is
+  a public file in a public repository. He then chose the samples. lq-04's
+  notes wander between left and right; lq-05 sets low marimba against high
+  kalimba.
+- **The body is seen from behind**, labelled „links“ / „rechts“, so the left
+  of the screen is your left — the reading lq-04 needs.
+- **„Die Frage funktioniert für mich nicht“ logs and thanks** instead of
+  handing over another question: each experiment has only the one.
+- **The X and „Bereit? Beginne zu reflektieren“ both end the experiment**,
+  with `body_marking_finished` (every point: position, region, side, music
+  time) and a short summary.
+- The look is the app's: the rules the listen sheet uses, read from the
+  running app on 2026-11-11, and the app's own `/fonts/`.
+
+What I need from Ben: a PostHog survey on `body_marking_finished` if the
+experiments should ask anything afterwards (none is set up); and the delete
+button is the system's `min` icon button — small for a thumb, by the brief's
+„(s)“.
+
+## The body experiments in 3D, and a sound builder — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1143/`, `body-resonance/261111-1143/`,
+`body-model/` (the shared body) and `sound-builder/261111-1149/`
+
+What I checked: Ben, 2026-11-11 — a 3D body in sand instead of the outline;
+holding a spot colours it slowly in green (`--interactive-primary`; it was
+terracotta for an hour, until Ben asked for green), and the longer the hold,
+the larger the area; dragging turns the body; „Flächen bearbeiten“ puts
+a small red ghost delete button beside every area. Then: the generated sound
+bed as its own experiment, with four sliders (Dichte, Tonhöhe, Klangfarbe,
+Weite) and Play, no timer.
+
+What I did:
+- **The body is Anny's** (github.com/naver/anny, Apache 2.0) on the MakeHuman
+  base mesh (CC0): its neutral shape, `topology/notoes.obj`, read as a file
+  and written into a 295 KB binary (`body-model/SOURCE.md`). No code from that
+  repository runs; installing it needed Python 3.10+ and fetching a toolchain,
+  which this machine does not have and I was not allowed to fetch.
+- **The colour spreads over the skin**, not through space: each area keeps the
+  distance along the surface from where it was held, so it does not jump from
+  an arm to the hip. It is round because the larger of the straight distance
+  and 80 % of the path along the mesh counts.
+- **Regions are computed** from the place on the body and the direction of the
+  skin there: front and back are told apart (Brust / oberer Rücken, Becken /
+  Gesäß). Left and right are the body's own; it starts seen from behind.
+- **three.js 0.170 is loaded from jsDelivr**, before consent, as the harp's
+  Google Fonts are.
+- The 2D versions stay beside the 3D ones (rule 10's versioning).
+
+What I need from Ben: whether the jsDelivr request before consent is fine for
+these pages (vendoring three.js would add about 700 KB to the repository); and
+a PostHog survey on `body_marking_finished` / `sound_session` if they should
+ask anything.
+
+## Body resonance, third version: a headline, a seated body, the instruments' countdown — FLAGGED
+
+Where: `apps/web/public/experiments/body-resonance/261111-1255/` (the two
+earlier versions stay beside it); the removed copy in
+`~/Documents/musie-assets/copy/unused-copy.md`, outside the repository
+
+What I checked: Ben, 2026-11-11, five changes for lq-05 only: the headline
+„Spüre einmal nach, wo der Klang in deinem Körper resoniert.“ and nothing else
+in the header; a Base UI slider under the body that turns it, with dragging
+still turning it (both, in step); the countdown and „Weiter zum Reflektieren“
+as in the instruments exercises, but started by an explicit „Jetzt starten“,
+not by the first area; the face in front at the start; the person sitting.
+Later the same day: a second slider for the other axis (dragging up/down
+tilts, left/right turns); „Flächen bearbeiten“ became a ghost
+„Flächen löschen“, with a zoom where areas lie too close to delete; a hold on
+an existing area makes a new one again, and overlapping areas get different
+greens.
+
+What I did:
+- **The texts that went** (the rest of the question, the help ladder, the
+  listening CTA's two labels, the 1:30 praise) are in `copy/unused-copy.md`
+  in musie-assets, a new folder listed in that folder's README.
+- **The slider is the design system's own scrubber shape**: Base UI `Slider`
+  with `MusicPlayer`'s `musy-mplayer__*` classes, without the fill (an angle
+  has no played part), −180° to 180° with the face at 0° in the middle. A
+  static page cannot import the package, so it is bundled with React into
+  `rotation-slider.js` (260 KB, source beside it) with the repository's own
+  esbuild. Same origin, so nothing loads before consent that did not already.
+- **The foot is `SessionPlay.tsx`'s**: DS `Countdown` markup, and under it
+  the row that opens with the motion tokens and pushes the clock up. Before the
+  start the row holds „Jetzt starten“ and the transport button is hidden, so
+  there are not two ways to start; after it, the row opens only on the
+  person's own pause or at 0:00, as in `clock.ts`. The music keeps playing past
+  0:00 („Die Mindestzeit ist um. Hör weiter, so lange du magst.“), and
+  „Noch einmal“ restarts the clock, as with the instruments.
+- **Sitting is a bend at load**, not a rig: knee 92°, hip 88°, arms 34° toward
+  the body, each with a soft weight over a few centimetres. Regions are still
+  read from the standing body, so a seated thigh is still „Oberschenkel“.
+- **The body takes the height the sheet leaves** instead of a share of the
+  viewport: on an iPhone in Safari (about 660 px visible) a fixed share was
+  either too tall for the open row or tiny. It shrinks a little when the row
+  opens.
+- **Tilting** is a vertical slider beside the body, ±90° (from above to from
+  below), and a vertical drag. A drag's first pixels pick its axis: clearly
+  sideways only turns, clearly up or down only tilts, diagonal does both, so
+  turning no longer tips the body by accident. The camera keeps the whole
+  bounding sphere in view, so no angle crops it.
+- **Delete buttons that would overlap** (centres under 36 px apart: a 24 px
+  button and its margin) stand as one zoom-in button. A tap zooms toward
+  those areas until their buttons are apart (up to 10×), and turning and
+  tilting then pivot there. The zoom-out button or „Fertig“ goes back. With
+  no areas the button is disabled; deleting the last one ends delete mode.
+- **Every hold starts a new area**, on an existing one too. Overlapping areas
+  take the first of `--green-9`, `-6`, `-12`, `-8` that none of their
+  neighbours has, and the newer one is drawn on top. The four are the steps
+  that differ most on sand; the scale is muted, so a fifth overlapping area
+  repeats one.
+
+What I need from Ben: the same two questions as the entry above (jsDelivr
+before consent; a PostHog survey). And one judgement: painting before
+„Jetzt starten“ is allowed and recorded with `t = 0`. Say if it should wait for
+the music.
+
+## Body side, third version: no body, a stream of particles that piles up — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1431/` (the two earlier
+versions stay beside it); the removed copy in
+`~/Documents/musie-assets/copy/unused-copy.md`, outside the repository
+
+What I checked: Ben, 2026-11-11, for lq-04: no body model. Everything else
+as the body resonance version: the instruments' countdown, „Jetzt starten“,
+„Weiter zum Reflektieren“ only after a pause or at 0:00, the headline the
+whole question (both sentences: Ben said yes). In the body's place, a calm
+stream of particles moving at the speed of the music, in the app's colours.
+The first take (a stream from the top, bent by the finger) "didn't quite
+work". The second, the one here: the stream comes out of the cursor (on a
+phone, out of the centre of the screen), falls, and piles up in the centre,
+on the left or on the right, and fallen particles turn smoothly to a light
+sand colour. The finger's direction stays when it lifts (Ben said yes).
+
+What I did:
+- **The stream is built here, not ported.** Ben remembered a particle
+  experiment, possibly Lucy's and not committed; none is in the repository or
+  among his artifacts, so this is new.
+- **Mouse: out of the pointer's tip**, falling straight; moving the mouse
+  throws it a little. **Finger: out of the centre**, thrown as far left or
+  right as the finger is from the middle (up to about a third of the width);
+  it keeps that direction until the finger moves it again. Keyboard: the
+  canvas is a slider (arrows, Home, End) and does what the finger does.
+- **It is a stage, like the instruments'**: a canvas under the header and the
+  foot, to the edges; touches pass through the header and foot except on
+  their buttons.
+- **The piles** sit on the bottom edge of the screen, under the countdown,
+  in 3 px columns that slide like sand (angle of repose). A landed particle
+  turns from its green to `--sand-5` over 2.6 s and is then painted into a
+  still image, so thousands cost nothing per frame. A pile stops growing at
+  about a quarter of the screen's height; what lands on a full one fades.
+- **The speed of the music**: every note makes more particles flow and fall
+  faster, at the moment it sounds. Every note pushes the same way, wherever
+  it is panned, so the stream never gives away the answer. Paused, it only
+  trickles.
+- **What is recorded**: each touch bend (`stream_bent`); at the end
+  (`stream_finished`), a half-second timeline of the direction while the
+  music played, the share of time left, centre and right, and how many
+  particles that flowed during the music landed left, centre and right.
+  The end card says the latter. Consent has its own key, because its
+  sentence changed.
+- **Colours** while falling: green-9, -8 and -6, sand-8, and a little
+  terracotta-9.
+
+What I need from Ben: whether the piles belong on the bottom edge, under the
+countdown and „Weiter“, or on a floor above the foot. Whether the particle
+experiment he meant looks like this, and if Lucy has it, what to take from
+it. And, as for the body pages, a PostHog survey on `stream_finished` if it
+should ask anything.
