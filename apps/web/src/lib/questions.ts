@@ -231,7 +231,7 @@ export function rememberHelperRevealed(sessionId: string, questionId: string): v
  *
  * It only matters on one path, and that path is reachable: *Fragen
  * zurücksetzen*. The ladder means a question cannot be rejected before its
- * helper has been revealed, so by the time the pool is empty ALL FIVE carry a
+ * helper has been revealed, so by the time the pool is empty EVERY ONE carries a
  * reveal flag. Without this, the question the reset hands back would arrive
  * with its helper already open and the button already on the rejection rung —
  * which reads as the app having given up on its own offer of help.
