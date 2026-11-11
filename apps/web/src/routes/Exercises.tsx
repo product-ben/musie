@@ -713,11 +713,10 @@ export function Exercises() {
               break, and two sentences run together is the kind of thing that
               is invisible in review and obvious on screen.
 
-              THE GREETING STEPS BACK (Ben, 2026-11-11): it is drawn in
-              `--on-surface-muted`, so the eye lands on the offer. Still the
-              same `h1` and still one sentence to a screen reader — the span
-              only carries a colour. */}
-          <span className="musie-greeting">{t(`exercises.headline.${greeting}`)}</span>{' '}
+              ONE INK (Ben, 2026-11-11): the greeting was drawn muted for a
+              few hours that day so the eye would land on the offer; he took
+              it back. The whole heading is `--on-surface`, as the h1 sets it. */}
+          {t(`exercises.headline.${greeting}`)}{' '}
           {headline[0]}
           <InlineButton
             /* ── THE GOAL IS AN InlineButton (Ben, 2026-11-11) ──────────────

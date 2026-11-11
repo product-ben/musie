@@ -8639,12 +8639,19 @@ html[data-musy-scroll-snap='y'] {
   transition: color var(--motion-toggle);
 }
 
+/* THE BAR HAS ROUND ENDS (Ben, 2026-11-11 — the Figma frames draw it as a
+   rounded box). A zero-height box ringed by HALF the thick width on every
+   side is a `--border-width-thick` bar whose ends `--radius-full` turns into
+   semicircles; a block-end border alone tapers to a point at each corner
+   instead. Still a border, never a background, so forced colours keep it. */
 .musy-ibtn::after {
   content: '';
   position: absolute;
   inset-inline: 0;
   inset-block-end: 0;
-  border-block-end: var(--border-width-thick) var(--border-style-solid) var(--musy-ibtn-bar);
+  block-size: 0;
+  border: calc(var(--border-width-thick) / 2) var(--border-style-solid) var(--musy-ibtn-bar);
+  border-radius: var(--radius-full);
   pointer-events: none;
   transition: border-color var(--motion-toggle);
 }

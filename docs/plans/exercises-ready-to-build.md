@@ -71,6 +71,10 @@ the repo. **This file is the current state**: update it after every task.
   - real touch on a phone
   - the e2e walks
   - `pnpm db:sync` after the merge (Ben's)
+- **Ben's review on localhost, 2026-11-11** — three changes:
+  - The greeting is no longer muted: the whole headline is `--on-surface` (`.musie-greeting` deleted).
+  - The InlineButton bar has round ends (`--radius-full`), as the Figma frames draw it.
+  - IconButton `sm` carries the Icon `sm` (16px, `--icon-stroke-sm`), like the Button `min`s beside it. At `md` the help *?* read bolder than they did.
 - ~~Blocked on Ben's `supabase db reset`~~ — no longer: the local stack already had `20261111120000` applied, so the walk and `pnpm test:db` ran (above).
 
 ## Decisions
@@ -157,7 +161,7 @@ Against `apps/web/src/routes/Exercises.tsx` and `exercises.css` on `main` at `1f
 
 | Block | Today | Target |
 |---|---|---|
-| Greeting | Same colour as the heading | *Guten Morgen.* in `--on-surface-muted`; still one `h1` |
+| Greeting | Same colour as the heading | ~~*Guten Morgen.* in `--on-surface-muted`~~ — taken back the same day: one ink, the whole `h1` `--on-surface` |
 | Headline | *Hier sind {count} Übungen zum {goal}* in an `InlineLink` with a sliders glyph and two goal chevrons | *Lass uns zusammen {goal}* with `InlineButton`: `--on-surface`, ListFilter 16px in a 24px box, strong underline, 4px inset, −4px offset. No count, no chevrons |
 | Goals | Four, *Musie kennenlernen* first and default | Three: *entspannen* (default) · *Energie sammeln* · *Achtsamkeit üben* |
 | Toolbar | Shuffle (outline, min) · Stapel/Liste | Shuffle (**secondary**) · *Ziel ändern* (secondary, ListFilter; ≥ `--bp-md` only) · help (secondary icon-only, new 40px size) · Stapel/Liste |
@@ -176,7 +180,7 @@ Against `apps/web/src/routes/Exercises.tsx` and `exercises.css` on `main` at `1f
 | T3 | CardDeck: on phones the card pair becomes two gutter strips (ghost chevron at mid-height, hit area the strip; a press there never starts a drag); ≥ `--bp-md` unchanged in place. The pair turns **secondary** (D6) | S2 |
 | T3b | CardDeck: delete `navActions` (its only caller, help, moves to the toolbar). Precedent: accent-alt | S2 |
 | T3c | CardDeck: the `cover` takes the cards' drag, thresholds and fling, leaves left or right, and calls a new `onCoverDismiss`. The card pair, the arrow keys and the gutters move it too. Reduced motion as for cards. Story: a deck with a cover, swiped both ways | S2 |
-| T4 | New size `sm` (D7, A8): `--target-sm: 40px` as gap G6 in `musy-foundations-amendments.css`; `musy-icon-btn--sm` (20px glyph, like `primary`); the `IconButtonSize` type; `verify-tokens`; the Sizes story gets the fifth rung; `reference/design_system/docs/07-components.md` | S3 |
+| T4 | New size `sm` (D7, A8): `--target-sm: 40px` as gap G6 in `musy-foundations-amendments.css`; `musy-icon-btn--sm` (~~20px glyph, like `primary`~~ 16px glyph since Ben's review); the `IconButtonSize` type; `verify-tokens`; the Sizes story gets the fifth rung; `reference/design_system/docs/07-components.md` | S3 |
 | T5 | Migration `2026111…_three_goals.sql` (never edit `20261015140000`, rule 4): DE/EN `purpose` and `label` per D5/A5/A6, `why` for relax and wake-up, `goals.retired` + retire `get-to-know-musie` + drop its `exercise_goals` rows (A4), `relax` sort 1, column comment for `purpose` (now *after "Lass uns zusammen"*). `getGoals` filters retired. Update `goals.test.ts`, `db.content.db.test.ts` | S4 |
 | T5b | Chrome keys in `de.ts`/`en.ts` (rule 6, one owner): headline *Lass uns zusammen {goal}* (and its empty case), `exercises.guide.count`, `exercises.showAll`; delete `exercises.goal.previous`/`next` and the count forms | S4 |
 | T6 | Screen: greeting span; headline with `InlineButton`; remove goal stepping (`step`, `goalSteps`), keep the polite live region (the new *Ziel ändern* path needs it) | main |

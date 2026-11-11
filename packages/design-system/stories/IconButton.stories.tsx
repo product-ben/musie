@@ -182,8 +182,9 @@ export const Variants: Story = {
  *  `sm` (40px, `--target-sm`, 2026-11-11) is the help button in the
  *  /exercises toolbar, the height of the Button `min`s it stands beside.
  *  It clears 2.5.8 without the spacing exception, so it has no margin, and it
- *  carries the same 20px glyph as `primary`. Button has no `sm`: its `min`
- *  is already that height. */
+ *  carries the 16px glyph (`Icon size="sm"`, the thinner `--icon-stroke-sm`)
+ *  that its Button neighbours carry — at 20px it read bolder than they do.
+ *  Button has no `sm`: its `min` is already that height. */
 export const Sizes: Story = {
   render: (args) => (
     <Row label="size">

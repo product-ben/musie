@@ -69,10 +69,11 @@ export interface IconButtonProps
 }
 
 /* Two ladders, one word: the ICON BUTTON's `sm` (40px) carries the ICON's
-   `md` (20px), the same glyph as `primary` — 4px less box is not a smaller
-   glyph. */
+   `sm` (16px, `--icon-stroke-sm`). It stands in a row of Button `min`s, whose
+   glyphs are that icon; at `md` its 2px stroke on a 20px glyph read visibly
+   bolder than its neighbours (Ben, 2026-11-11). */
 const ICON_FOR_TARGET: Record<IconButtonSize, IconSize> = {
-  min: 'sm', sm: 'md', primary: 'md', comfort: 'lg', guided: 'lg',
+  min: 'sm', sm: 'sm', primary: 'md', comfort: 'lg', guided: 'lg',
 };
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
