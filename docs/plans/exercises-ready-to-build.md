@@ -50,7 +50,15 @@ the repo. **This file is the current state**: update it after every task.
   - Still waiting on S2: T9's swipe wiring (`onCoverDismiss` → `closeGuide`) and T3b (delete CardDeck's `navActions`, which now has no caller).
   - **InlineLink stays deprecated, not deleted.** Ben said *deprecate*; it has no callers left, and deleting it is his call.
 - **S5 (Figma)** running as a subagent: `target/sm`, IconButton's 20 `Size=sm` variants, and the `InlineButton` set and page, measured from the rendered CSS.
-- **S2** running.
+- **S2** done and merged: `713a2ca` → merge `f26da3e`. Measured in a `file://` harness, Chromium and WebKit.
+  - **Phone strips:** each is the deck's own button, the full height of the pile row, from the card's edge to the screen edge. The 44px ghost mark sits at mid-height. The focus ring is turned inward so it doesn't cross the screen edge.
+  - **No drag from a strip:** guaranteed by the existing `closest('button')` early return. The cost: on a phone, a swipe must start on the card.
+  - **The cover:** takes the cards' own drag, thresholds and fling. The chevrons, arrows, wheel and dots send it away too. `onCoverDismiss` fires on the flight's own `animationend`.
+  - **Two calls beyond the brief:** the front card is `inert` while a cover is up, and Enter does nothing then.
+  - **Not verified:** real touch, iOS click-after-touch-move, dark mode and forced colours on the strips.
+- **T9 + T3b** done: `d83a2eb`. `onCoverDismiss={closeGuide}`, and CardDeck's `navActions` is deleted (no caller left). `pnpm check` green.
+- **Wave 3 · S6** running: the CtaButton → Button rename, plus a second commit for the collected follow-ups.
+- **Blocked on Ben's `supabase db reset`:** the app walk at 393/1440, `pnpm test:db`, and diffing `gen:types` against S4's hand-written types. `getGoals()` filters on the new `retired` column, so the app cannot load goals against the un-migrated local database.
 
 ## Decisions
 
