@@ -68,7 +68,7 @@ The streams build against these, and the screen is drafted against them while th
 
   Underline: `--border-strong` at `--border-width-thick`, under text and glyph.
 - **`CardDeck`**: `navActions` is **removed**. There is a new optional `onCoverDismiss?: (direction: 'previous' | 'next') => void`, called when the cover leaves. The card pair turns secondary, and the phone gutter strips are internal, with no prop.
-- **`IconButton`**: `size` gains `'sm'`. The token is `--target-sm: 40px`, staged in `musy-foundations-amendments.css` as gap **G4**, and mirrored into the Figma Dimension collection as `target/sm`.
+- **`IconButton`**: `size` gains `'sm'`. The token is `--target-sm: 40px`, staged in `musy-foundations-amendments.css` as gap **G6** (G4 and G5 were taken), and mirrored into the Figma Dimension collection as `target/sm`.
 - **i18n keys** (S4 owns them, DE and EN):
   - `exercises.headline.together` — *Lass uns zusammen {goal}* / *Let's {goal} together*
   - `exercises.headline.none` — rewritten to work with a verb phrase
@@ -112,12 +112,12 @@ Against `apps/web/src/routes/Exercises.tsx` and `exercises.css` on `main` at `1f
 
 | # | Task | Stream |
 |---|---|---|
-| T1 | `InlineButton` in Layer 2: inherits type; `--on-surface`; optional trailing glyph (16px in a 24px box, 4px gap); persistent underline in `--border-strong` at `--border-width-thick`; `inset` prop (a2/a3/a4); one `<button>` on base-ui Button, forwarding `aria-*` and `render`. States from InlineLink. Tokens only, `musy-` classes, `data-force` hooks, stories, `docs/07-components.md` | S1 |
+| T1 | `InlineButton` in Layer 2: inherits type; `--on-surface`; optional trailing glyph (16px in a 24px box, 4px gap); persistent underline in `--border-strong` at `--border-width-thick`; `inset` prop (a2/a3/a4); one `<button>` on base-ui Button, forwarding `aria-*` and `render`. States from InlineLink. Tokens only, `musy-` classes, `data-force` hooks, stories, `reference/design_system/docs/07-components.md` | S1 |
 | T2 | **Deprecate InlineLink**: `@deprecated` JSDoc pointing at InlineButton, its stories under *Deprecated/*. Migrate LegalLinks ×2, SessionReflect, SignInGate ×3 (A7). Remove it once nothing imports it — which is after S1 plus Exercises | S1 |
 | T3 | CardDeck: on phones the card pair becomes two gutter strips (ghost chevron at mid-height, hit area the strip; a press there never starts a drag); ≥ `--bp-md` unchanged in place. The pair turns **secondary** (D6) | S2 |
 | T3b | CardDeck: delete `navActions` (its only caller, help, moves to the toolbar). Precedent: accent-alt | S2 |
 | T3c | CardDeck: the `cover` takes the cards' drag, thresholds and fling, leaves left or right, and calls a new `onCoverDismiss`. The card pair, the arrow keys and the gutters move it too. Reduced motion as for cards. Story: a deck with a cover, swiped both ways | S2 |
-| T4 | New size `sm` (D7, A8): `--target-sm: 40px` as gap G4 in `musy-foundations-amendments.css`; `musy-icon-btn--sm` (20px glyph, like `primary`); the `IconButtonSize` type; `verify-tokens`; the Sizes story gets the fifth rung; `docs/07-components.md` | S3 |
+| T4 | New size `sm` (D7, A8): `--target-sm: 40px` as gap G6 in `musy-foundations-amendments.css`; `musy-icon-btn--sm` (20px glyph, like `primary`); the `IconButtonSize` type; `verify-tokens`; the Sizes story gets the fifth rung; `reference/design_system/docs/07-components.md` | S3 |
 | T5 | Migration `2026111…_three_goals.sql` (never edit `20261015140000`, rule 4): DE/EN `purpose` and `label` per D5/A5/A6, `why` for relax and wake-up, `goals.retired` + retire `get-to-know-musie` + drop its `exercise_goals` rows (A4), `relax` sort 1, column comment for `purpose` (now *after "Lass uns zusammen"*). `getGoals` filters retired. Update `goals.test.ts`, `db.content.db.test.ts` | S4 |
 | T5b | Chrome keys in `de.ts`/`en.ts` (rule 6, one owner): headline *Lass uns zusammen {goal}* (and its empty case), `exercises.guide.count`, `exercises.showAll`; delete `exercises.goal.previous`/`next` and the count forms | S4 |
 | T6 | Screen: greeting span; headline with `InlineButton`; remove goal stepping (`step`, `goalSteps`), keep the polite live region (the new *Ziel ändern* path needs it) | main |
@@ -146,9 +146,9 @@ A subagent knows only its brief (rule 9: it inherits the directory, not the conv
 
 | Stream | Tasks | Owns | Must not touch | Blocked by |
 |---|---|---|---|---|
-| **S1** InlineButton | T1, T2 | `InlineButton.tsx`, `InlineLink.tsx`, their stories, the InlineLink/InlineButton sections of `musy-components.css`, `index.ts` (one export line), `LegalLinks`, `SessionReflect`, `SignInGate`, `docs/07-components.md` (InlineButton entry) | `Exercises.tsx`, i18n, CardDeck | — |
+| **S1** InlineButton | T1, T2 | `InlineButton.tsx`, `InlineLink.tsx`, their stories, the InlineLink/InlineButton sections of `musy-components.css`, `index.ts` (one export line), `LegalLinks`, `SessionReflect`, `SignInGate`, `reference/design_system/docs/07-components.md` (InlineButton entry) | `Exercises.tsx`, i18n, CardDeck | — |
 | **S2** CardDeck | T3, T3b, T3c | `CardDeck.tsx`, its stories, the deck section of `musy-components.css` | IconButton, app files | — |
-| **S3** New size | T4 | `musy-foundations-amendments.css`, `IconButton.tsx`, the icon-button section of `musy-components.css`, `verify-tokens`, IconButton stories, `docs/07-components.md` (IconButton entry) | `CtaButton.tsx`, app files, i18n | — |
+| **S3** New size | T4 | `musy-foundations-amendments.css`, `IconButton.tsx`, the icon-button section of `musy-components.css`, `verify-tokens`, IconButton stories, `reference/design_system/docs/07-components.md` (IconButton entry) | `CtaButton.tsx`, app files, i18n | — |
 | **S4** Goals and copy | T5, T5b | `supabase/migrations/2026111…`, `lib/goals.ts` (+ tests), `db.content.db.test.ts`, `i18n/de.ts`, `i18n/en.ts` | DS, `Exercises.tsx` | — |
 | **S5** Figma (if subagents reach the Figma connector here; otherwise main) | T11 | the Layer 1 file; a CSS harness on a port other than 5173/6006/54321 | the repo | S1, S3 merged |
 | **S6** Rename | T10 | everything named `CtaButton` | — | wave 2 merged |
