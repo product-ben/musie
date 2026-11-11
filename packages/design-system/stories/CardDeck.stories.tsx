@@ -187,7 +187,6 @@ const meta = {
     previousLabel: { control: 'text', description: 'The back button’s accessible name and tooltip, and nothing else — the overlay says nextLabel both ways. Required.' },
     label: { control: 'text', description: 'The pile’s accessible name, and the only place the keys are named: the overlay is aria-hidden.' },
     actions: { control: false, description: 'Extra controls under the deck’s own, in the same stack.' },
-    navActions: { control: false, description: 'DEPRECATED 2026-11-11 — put the control in the screen’s toolbar. Still renders: in the pair’s row at --bp-md and up, alone under the card below it.' },
     cover: { control: false, description: 'An extra card on top of the pile, in the card’s own cell. Moves like a card since 2026-11-11: dragged, flung, or sent by any direction. No dot, no position.' },
     onCoverDismiss: { action: 'coverDismiss', description: 'The cover has left — called once its flight has landed, with \'next\' (out over the leading edge) or \'previous\' (the trailing one). Not called for a press on the cover’s own content.' },
     positionLabel: { control: false, description: 'What the live region says when the top card changes. The deck knows the position, the consumer knows the name.' },

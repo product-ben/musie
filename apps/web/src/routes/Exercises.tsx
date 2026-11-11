@@ -1098,6 +1098,14 @@ export function Exercises() {
               cover={guide && !busy && !sheetOpen
                 ? <DeckGuide onDismiss={closeGuide} count={SUGGESTED} />
                 : undefined}
+              /* ── AND IT SWIPES AWAY LIKE A CARD (Ben, 2026-11-11) ─────────
+                 The deck now takes the cover through its own drag, fling,
+                 chevrons, arrow keys and wheel, and calls this once it has
+                 flown off. Both endings land in `closeGuide`: the press (the
+                 card's own `onDismiss`) and the swipe (this). Without it a
+                 swiped-away legend would leave `guide` true, and the help
+                 button could never bring it back. */
+              onCoverDismiss={closeGuide}
               /* ── THE HELP BUTTON LEFT THIS ROW (Ben, 2026-11-11) ────────
                  It was `navActions`, third beside the card pair, `ghost`
                  where they were `secondary`. It is in the toolbar now — see

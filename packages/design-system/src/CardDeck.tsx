@@ -341,30 +341,13 @@ export interface CardDeckProps {
    * of choices.
    */
   actions?: React.ReactNode;
-  /**
-   * Extra ICON controls in the nav row, beside the two directions.
-   *
-   * `actions` is a column of labelled buttons under the deck; this is the row
-   * the chevrons are in. The difference is not cosmetic — a third icon-only
-   * control beside back and forward reads as another thing you can do to the
-   * PILE, and the same control as a labelled row underneath reads as another
-   * thing you can do to the exercise.
-   *
-   * The deck does not say what belongs here, only where it goes. It owns the
-   * two directions because it owns what they do to the pile; a screen's help
-   * control, which is what put this slot here, is the screen's own business
-   * down to its glyph.
-   *
-   * @deprecated 2026-11-11 — put the control in the screen's own toolbar.
-   * Its one caller, the help button on /exercises, moves there (Ben, D9 in
-   * docs/plans/exercises-ready-to-build.md), and the slot's premise goes
-   * with it: below --bp-md the two directions are no longer a row but the
-   * gutters either side of the card, so "beside the two directions" stops
-   * being a place. It still renders — in the row at --bp-md and up, alone
-   * under the card below it — so the app keeps compiling and behaving until
-   * the usage is taken out, and then the prop.
-   */
-  navActions?: React.ReactNode;
+  /* NO `navActions` ANY MORE (Ben, 2026-11-11). It put extra icon controls
+     in the nav row beside the two directions, and its one caller — the help
+     button on /exercises — moved to that screen's toolbar (D9 in
+     docs/plans/exercises-ready-to-build.md). Its premise went too: below
+     --bp-md the two directions are the gutters either side of the card, so
+     "beside the two directions" stopped being a place. Deprecated and
+     removed the same day, once the last usage was out. */
   /**
    * ── AN EXTRA CARD ON TOP OF THE PILE ────────────────────────────────────
    *
@@ -509,7 +492,7 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  nextLabel, previousLabel, navActions, cover, onCoverDismiss,
+  nextLabel, previousLabel, cover, onCoverDismiss,
   label, positionLabel, actions, busy = false, dealKey, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
@@ -1536,10 +1519,6 @@ export function CardDeck({
               disabled={inert || !browsable}
               onClick={goNext}
             />
-            {/* Third and after, never between: back and forward are a pair and
-                a stranger inserted into the middle of them would break the
-                one thing their order says. */}
-            {navActions}
           </div>
           {actions}
         </div>
