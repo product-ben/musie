@@ -79,7 +79,7 @@
  */
 import * as React from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { CtaButton } from './CtaButton';
+import { Button } from './Button';
 
 export interface DrillDownNode {
   /** Stable within its siblings. The React key, and what `value` carries. */
@@ -358,7 +358,7 @@ export function DrillDown({
           where "up" goes, and `leadingIcon` is the system's own slot for the
           chevron — not an Icon dropped inside a button. */}
       {parent !== null && (
-        <CtaButton
+        <Button
           className="musy-drilldown__back"
           variant="ghost"
           size="min"
@@ -366,7 +366,7 @@ export function DrillDown({
           onClick={up}
         >
           {backLabel(parent.label)}
-        </CtaButton>
+        </Button>
       )}
 
       <div ref={bodyRef} className="musy-drilldown__body">

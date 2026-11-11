@@ -251,7 +251,7 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
      Typing the code is the fallback behind *Enter the code*, so the walk opens
      it the way a person does.
 
-     A BUTTON AGAIN. It was a ghost `CtaButton`, then a `Switch` beside the
+     A BUTTON AGAIN. It was a ghost `Button`, then a `Switch` beside the
      frame, and is now a button INSIDE it — the frame shows the viewfinder or
      the form, one at a time, so the control fires a change rather than
      reporting a setting that stays true. Each of those three moves broke this

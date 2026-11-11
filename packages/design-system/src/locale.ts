@@ -77,7 +77,7 @@ export interface MusyTextCatalogue {
   close: string;
 
   /* ── Busy and empty ──────────────────────────────────────────────────── */
-  /** CtaButton and IconButton, announced while `loading`. */
+  /** Button and IconButton, announced while `loading`. */
   loading: string;
   /** ContentList with no items. */
   listEmpty: string;

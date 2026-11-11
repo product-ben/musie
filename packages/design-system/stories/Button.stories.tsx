@@ -1,20 +1,20 @@
 /**
- * CtaButton — Batch B (controls).
+ * Button — Batch B (controls).
  *
  * Docs text below comes from the component's own header comment and from
  * docs/07-components.md §7.4. Nothing is invented.
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Send, Sparkles } from 'lucide-react';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { bothThemes, Row, Stack } from './_decorators';
 
 /* The prototype's own primary CTA — ONBOARDING, "Start a session", default
-   size. See PROTOTYPE-USAGE.md, "CtaButton — 28 usages". */
+   size. See PROTOTYPE-USAGE.md, "Button — 28 usages". */
 
 const meta = {
-  title: 'Components/CtaButton',
-  component: CtaButton,
+  title: 'Components/Button',
+  component: Button,
   decorators: [bothThemes],
   parameters: {
     docs: {
@@ -92,8 +92,8 @@ const meta = {
           '_Temporary review scaffolding, added 2026-09-17. Delete once answered.',
           'This is not documentation._',
           '',
-          '## CtaButton — inherited base-ui Button props cannot be filtered out of the docs table',
-          'Where: `src/CtaButton.tsx:48` (`extends Omit<React.ComponentPropsWithoutRef<typeof Button>, \'className\'>`), `.storybook/main.ts`',
+          '## Button — inherited base-ui Button props cannot be filtered out of the docs table',
+          'Where: `src/Button.tsx:110` (`extends Omit<React.ComponentPropsWithoutRef<typeof BaseButton>, \'className\'>`), `.storybook/main.ts`',
           'What I checked: Level 1, the component source. react-docgen cannot follow an',
           '`Omit<ComponentPropsWithoutRef<>>`, so the docs table gets either nothing or the',
           'whole DOM surface. The fix is a `propFilter` in `.storybook/main.ts`, which this',
@@ -105,11 +105,11 @@ const meta = {
           'What I need from Ben: **a `propFilter` in `.storybook/main.ts`**. Same entry as',
           'IconButton and Switch — one fix covers all three.',
           '',
-          '## CtaButton — `render` is NOT omitted from the inherited props, where IconButton omits it',
-          'Where: `src/CtaButton.tsx:48` (`Omit<…, \'className\'>`) vs `src/IconButton.tsx:24`',
+          '## Button — `render` is NOT omitted from the inherited props, where IconButton omits it',
+          'Where: `src/Button.tsx:110` (`Omit<…, \'className\'>`) vs `src/IconButton.tsx:24`',
           '(`Omit<…, \'children\' | \'className\' | \'render\'>`)',
           'What I checked: Level 1 only; neither Level 2 nor Level 3 mentions `render`.',
-          'CtaButton therefore accepts base-ui’s `render` prop, which replaces the rendered',
+          'Button therefore accepts base-ui’s `render` prop, which replaces the rendered',
           'element — a consumer can swap the `<button>` for an `<a>` and keep `musy-btn`,',
           'which §7.4 "What it is NOT" explicitly describes ("a navigation affordance is an',
           '`<a>` styled with the same classes"). `children` is also both inherited and',
@@ -117,10 +117,10 @@ const meta = {
           'What I did: wrote no story using `render`. Left the API alone.',
           'Why: it may be intentional — §7.4 sanctions the styled-`<a>` case — but the two',
           'sibling buttons disagree and only one says why.',
-          'What I need from Ben: **a decision.** Either omit `render` on CtaButton too, or',
+          'What I need from Ben: **a decision.** Either omit `render` on Button too, or',
           'document it as the sanctioned link escape hatch.',
           '',
-          '## CtaButton — `size="min"` carries a baked-in margin, so it cannot be laid out flush',
+          '## Button — `size="min"` carries a baked-in margin, so it cannot be laid out flush',
           'Where: `src/musy-components.css:391` (`.musy-btn--min`), `docs/07-components.md` §7.4',
           'What I checked: Level 1 and Level 3 agree and explain it: the `--sp-2` margin',
           'earns 2.5.8’s spacing exception so the 24px target cannot be made illegal by',
@@ -131,8 +131,8 @@ const meta = {
           'What I need from Ben: nothing, just flagging — the gap in the `Sizes` story is',
           'correct and should not be "fixed".',
           '',
-          '## CtaButton — nothing said when to reach for an accent variant — ANSWERED BY DELETION',
-          'Where: `src/CtaButton.tsx` (`CtaVariant`), `src/musy-components.css`',
+          '## Button — nothing said when to reach for an accent variant — ANSWERED BY DELETION',
+          'Where: `src/Button.tsx` (`ButtonVariant`), `src/musy-components.css`',
           'What I checked: Level 1 said outright "There is still no rule in the system for',
           'WHEN to pick an accent over primary — see conflict B12 and open question 7", and',
           'the prototype used `accent` exactly twice — both for *start over / go back to',
@@ -141,11 +141,11 @@ const meta = {
           'with them. The question has no subject left for buttons.',
           'Why: a variant nobody can say when to use is a variant picked by taste, which is',
           'the drift a design system exists to prevent.',
-          'What I need from Ben: nothing for CtaButton. B12 stays open for the components',
+          'What I need from Ben: nothing for Button. B12 stays open for the components',
           'that take an `accent` PROP, which still offer all three.',
           '',
-          '## CtaButton — `loadingLabel` defaults to German and `loading` is never used in the prototype',
-          'Where: `src/CtaButton.tsx:70` (`loadingLabel = \'Wird geladen\'`)',
+          '## Button — `loadingLabel` defaults to German and `loading` is never used in the prototype',
+          'Where: `src/Button.tsx:70` (`loadingLabel = \'Wird geladen\'`)',
           'What I checked: Level 1, the default. Level 2: "`loading` is never used in the',
           'prototype. Neither is `size="min"`, `size="comfort"`, `block`, `wrap`, or',
           '`accent-alt`."',
@@ -192,7 +192,7 @@ const meta = {
     onClick: { action: 'click' },
     className: { control: false },
   },
-} satisfies Meta<typeof CtaButton>;
+} satisfies Meta<typeof Button>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -215,16 +215,16 @@ export const Variants: Story = {
   render: (args) => (
     <Stack>
       <Row label="variant: primary">
-        <CtaButton {...args} variant="primary">Continue</CtaButton>
+        <Button {...args} variant="primary">Continue</Button>
       </Row>
       <Row label="variant: secondary">
-        <CtaButton {...args} variant="secondary">Simulate scan</CtaButton>
+        <Button {...args} variant="secondary">Simulate scan</Button>
       </Row>
       <Row label="variant: outline">
-        <CtaButton {...args} variant="outline">Let Musie pick</CtaButton>
+        <Button {...args} variant="outline">Let Musie pick</Button>
       </Row>
       <Row label="variant: ghost">
-        <CtaButton {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+        <Button {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
       </Row>
     </Stack>
   ),
@@ -237,10 +237,10 @@ export const Variants: Story = {
 export const Sizes: Story = {
   render: (args) => (
     <Row label="size">
-      <CtaButton {...args} size="min">min</CtaButton>
-      <CtaButton {...args} size="primary">primary</CtaButton>
-      <CtaButton {...args} size="comfort">comfort</CtaButton>
-      <CtaButton {...args} size="guided">guided</CtaButton>
+      <Button {...args} size="min">min</Button>
+      <Button {...args} size="primary">primary</Button>
+      <Button {...args} size="comfort">comfort</Button>
+      <Button {...args} size="guided">guided</Button>
     </Row>
   ),
 };
@@ -252,10 +252,10 @@ export const OutlineSmall: Story = {
   render: (args) => (
     <Stack>
       <Row label="outline + size: min">
-        <CtaButton {...args} variant="outline" size="min">Let Musie pick</CtaButton>
+        <Button {...args} variant="outline" size="min">Let Musie pick</Button>
       </Row>
       <Row label="secondary + size: min — the filled sibling, for comparison">
-        <CtaButton {...args} variant="secondary" size="min">Let Musie pick</CtaButton>
+        <Button {...args} variant="secondary" size="min">Let Musie pick</Button>
       </Row>
     </Stack>
   ),
@@ -274,13 +274,13 @@ export const WithLeadingIcon: Story = {
   render: (args) => (
     <Stack>
       <Row label="ghost + leading icon">
-        <CtaButton {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+        <Button {...args} variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
       </Row>
       <Row label="ghost + leading icon">
-        <CtaButton {...args} variant="ghost" leadingIcon={Sparkles}>Let Musie pick an exercise</CtaButton>
+        <Button {...args} variant="ghost" leadingIcon={Sparkles}>Let Musie pick an exercise</Button>
       </Row>
       <Row label="secondary + leading icon">
-        <CtaButton {...args} variant="secondary" leadingIcon={Send}>Send reflection</CtaButton>
+        <Button {...args} variant="secondary" leadingIcon={Send}>Send reflection</Button>
       </Row>
     </Stack>
   ),
@@ -305,10 +305,10 @@ export const Wrap: Story = {
 export const AlignStart: Story = {
   render: (args) => (
     <Stack>
-      <CtaButton {...args} variant="primary">Start a session</CtaButton>
-      <CtaButton {...args} block align="start" variant="ghost">Your diary</CtaButton>
-      <CtaButton {...args} block align="start" variant="secondary">About you</CtaButton>
-      <CtaButton {...args} block align="start" variant="ghost">How Musie works</CtaButton>
+      <Button {...args} variant="primary">Start a session</Button>
+      <Button {...args} block align="start" variant="ghost">Your diary</Button>
+      <Button {...args} block align="start" variant="secondary">About you</Button>
+      <Button {...args} block align="start" variant="ghost">How Musie works</Button>
     </Stack>
   ),
 };
@@ -332,10 +332,10 @@ export const DisabledVariants: Story = {
   render: (args) => (
     <Stack>
       <Row label="disabled">
-        <CtaButton {...args} variant="primary" disabled>Continue</CtaButton>
-        <CtaButton {...args} variant="secondary" disabled>Simulate scan</CtaButton>
-        <CtaButton {...args} variant="outline" disabled>Let Musie pick</CtaButton>
-        <CtaButton {...args} variant="ghost" disabled>Back</CtaButton>
+        <Button {...args} variant="primary" disabled>Continue</Button>
+        <Button {...args} variant="secondary" disabled>Simulate scan</Button>
+        <Button {...args} variant="outline" disabled>Let Musie pick</Button>
+        <Button {...args} variant="ghost" disabled>Back</Button>
       </Row>
     </Stack>
   ),

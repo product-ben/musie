@@ -75,7 +75,7 @@ export interface SegmentedOption {
  * The rung the segments stand on.
  *
  * `min` and `primary` are the system's own names for these two heights — the
- * same words `CtaButton` and `IconButton` use — so "the small one" means the
+ * same words `Button` and `IconButton` use — so "the small one" means the
  * same thing in every component. `guided` is the third rung and keeps its own
  * boolean, because it predates this prop.
  */

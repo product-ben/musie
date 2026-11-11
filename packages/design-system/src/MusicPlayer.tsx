@@ -105,12 +105,12 @@ export interface TrackButtonProps {
    * the loudest thing on its screen — the listen step's full-screen sheet,
    * where the way ON is the filled control and this one only pauses what is
    * already playing. Nothing new was needed to support it: this button is
-   * composed on CTA Button, `.musy-btn--ghost` has existed since §04, and
+   * composed on Button, `.musy-btn--ghost` has existed since §04, and
    * `.musy-mbtn` only sets layout.
    */
   variant?: 'primary' | 'secondary' | 'accent' | 'ghost';
   /**
-   * The target ladder, and it is CTA Button's own — this control is composed
+   * The target ladder, and it is Button's own — this control is composed
    * on it, so the rungs are the same rungs and a `min` transport stands
    * exactly as high as a `min` CTA beside it (36px, by the same construction
    * rather than by a copied number; see `.musy-btn--min`'s note).
@@ -121,7 +121,7 @@ export interface TrackButtonProps {
    * on offer, `primary` (44px) is the floor, and `min` would be below what
    * 2.5.8 wants of a lone target.
    */
-  /* `comfort` reserved for the elderly/children pass — CtaButton.tsx. */
+  /* `comfort` reserved for the elderly/children pass — Button.tsx. */
   size?: 'min' | 'primary' | 'guided' | 'comfort';
   disabled?: boolean;
   /**
@@ -242,7 +242,7 @@ export function TrackButton({
       disabled={disabled}
       onClick={state === 'ended' ? (onRestart ?? onTogglePlay) : onTogglePlay}
     >
-      {/* THE GLYPH STEPS DOWN WITH THE RUNG, exactly as CTA Button's leading
+      {/* THE GLYPH STEPS DOWN WITH THE RUNG, exactly as Button's leading
           icon does — `md` inside a 36px button with a label-md line box is a
           glyph taller than the words beside it. Composed on that component, so
           it follows that component's rule rather than inventing a second one. */}

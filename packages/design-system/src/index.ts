@@ -48,8 +48,8 @@ export type { DotsProps } from './Dots';
 export { IconButton, MusyTooltipProvider } from './IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './IconButton';
 
-export { CtaButton } from './CtaButton';
-export type { CtaButtonProps, CtaVariant, CtaSize, CtaAlign } from './CtaButton';
+export { Button } from './Button';
+export type { ButtonProps, ButtonVariant, ButtonSize, ButtonAlign } from './Button';
 
 export { Switch } from './Switch';
 export type { SwitchProps, SwitchAccent, SwitchSize } from './Switch';
@@ -198,7 +198,7 @@ export { Timeline } from './Timeline';
 export type { TimelineProps, TimelineGroup } from './Timeline';
 
 /* A value INSIDE a sentence or a heading that opens a choice, which is the one
-   thing `CtaButton` cannot be: it inherits its type from where it sits rather
+   thing `Button` cannot be: it inherits its type from where it sits rather
    than declaring a step of its own. InlineButton.tsx's header tells the two
    apart. */
 export { InlineButton } from './InlineButton';

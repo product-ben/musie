@@ -1,5 +1,5 @@
 /**
- * CTA Button — Layer 2
+ * Button — Layer 2
  * base-ui: Button (`@base-ui/react/button`).
  * APG pattern: Button.
  *
@@ -46,12 +46,12 @@
  * those is a CTA.
  */
 import * as React from 'react';
-import { Button } from '@base-ui/react/button';
+import { Button as BaseButton } from '@base-ui/react/button';
 import { Icon } from './Icon';
 import { useMusyText } from './locale';
 import type { LucideIcon } from 'lucide-react';
 
-export type CtaVariant =
+export type ButtonVariant =
   | 'primary'
   | 'secondary'
   /**
@@ -95,7 +95,7 @@ export type CtaVariant =
  * and two further rules in `musy-components.css` use it directly. Deleting the
  * variant would be three CSS rules, never the token.
  */
-export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
+export type ButtonSize = 'min' | 'primary' | 'comfort' | 'guided';
 
 /**
  * Where the label sits on the inline axis.
@@ -104,13 +104,13 @@ export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
  * must mirror in RTL without a second rule, so this follows the same logical
  * axis as every other declaration in the stylesheet.
  */
-export type CtaAlign = 'center' | 'start';
+export type ButtonAlign = 'center' | 'start';
 
-export interface CtaButtonProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'className'> {
+export interface ButtonProps
+  extends Omit<React.ComponentPropsWithoutRef<typeof BaseButton>, 'className'> {
   children: React.ReactNode;
-  variant?: CtaVariant;
-  size?: CtaSize;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   /** Leading icon only. A trailing icon means "this opens something else",
    *  which is a different component. */
   leadingIcon?: LucideIcon;
@@ -130,22 +130,22 @@ export interface CtaButtonProps
    * Pairs with `block`: alignment only shows once the button is wider than its
    * label.
    */
-  align?: CtaAlign;
+  align?: ButtonAlign;
   /** Allow the label to wrap to two lines instead of overflowing. German
    *  compounds at 393px need this more often than English does. */
   wrap?: boolean;
   className?: string;
 }
 
-export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
-  function CtaButton({
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button({
     children, variant = 'primary', size = 'primary', leadingIcon,
     loading = false, loadingLabel, block = false, wrap = false,
     align = 'center', disabled, className, ...rest
   }, ref) {
     const t = useMusyText();
     return (
-      <Button
+      <BaseButton
         {...rest}
         ref={ref}
         className={[
@@ -164,7 +164,7 @@ export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
         <span className="musy-btn__label">{children}</span>
         {loading && <span className="musy-spinner" aria-hidden="true" />}
         {loading && <span className="musy-sr-only" role="status">{loadingLabel ?? t.loading}</span>}
-      </Button>
+      </BaseButton>
     );
   }
 );

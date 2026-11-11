@@ -8,7 +8,7 @@ import type * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowRight, Shuffle } from 'lucide-react';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { CardDeck } from '../src/CardDeck';
 import type { CardDeckCard } from '../src/CardDeck';
 import { bothThemes } from './_decorators';
@@ -40,9 +40,9 @@ function Face({ name, text, time, card }: { name: string; text: string; time: st
       <p style={{ margin: 0, fontFamily: 'var(--type-body-sm-family)', fontSize: 'var(--type-body-sm-size)', lineHeight: 'var(--type-body-sm-line)', color: 'var(--on-surface-muted)' }}>{text}</p>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-gap-inline)' }}>
         <p style={{ margin: 0, minInlineSize: 0, fontFamily: 'var(--type-label-md-family)', fontSize: 'var(--type-label-md-size)', color: 'var(--on-surface-muted)' }}>{time}</p>
-        <CtaButton variant="primary" size="min" leadingIcon={ArrowRight} disabled={card.disabled} onClick={card.accept}>
+        <Button variant="primary" size="min" leadingIcon={ArrowRight} disabled={card.disabled} onClick={card.accept}>
           Start
-        </CtaButton>
+        </Button>
       </div>
     </div>
   );
@@ -268,7 +268,7 @@ export const Busy: Story = { args: { busy: true } };
  */
 export const WithActions: Story = {
   args: {
-    actions: <CtaButton variant="ghost" leadingIcon={Shuffle}>Pick a card for me</CtaButton>,
+    actions: <Button variant="ghost" leadingIcon={Shuffle}>Pick a card for me</Button>,
   },
 };
 
@@ -324,14 +324,14 @@ export const Dealt: Story = {
     const [key, setKey] = useState('deal-1');
     return (
       <div style={{ display: 'grid', gap: 'var(--space-gap-group)', justifyItems: 'start' }}>
-        <CtaButton
+        <Button
           variant="secondary"
           size="min"
           leadingIcon={Shuffle}
           onClick={() => setKey(`deal-${String(Date.now())}`)}
         >
           Deal again
-        </CtaButton>
+        </Button>
         <CardDeck {...args} dealKey={key} />
       </div>
     );
@@ -455,9 +455,9 @@ export const WithCover: Story = {
     const [up, setUp] = useState(true);
     return (
       <div style={{ display: 'grid', gap: 'var(--space-gap-group)', justifyItems: 'start' }}>
-        <CtaButton variant="secondary" size="min" disabled={up} onClick={() => setUp(true)}>
+        <Button variant="secondary" size="min" disabled={up} onClick={() => setUp(true)}>
           Put the cover back
-        </CtaButton>
+        </Button>
         <CardDeck
           {...args}
           cover={up ? <StoryCover onPress={() => setUp(false)} /> : undefined}

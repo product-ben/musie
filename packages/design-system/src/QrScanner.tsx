@@ -2,7 +2,7 @@
  * QR Scanner — Layer 2
  * The viewfinder a paper card is held up to, and the two ways out of it.
  *
- * base-ui: none of its own. It composes §7.4 CTA Button and §7.2 Icon Button,
+ * base-ui: none of its own. It composes §7.4 Button and §7.2 Icon Button,
  * because every control in it is one of those two and a scanner that grew its
  * own button would have its own target ladder, its own focus ring and its own
  * disabled state to keep in step.
@@ -79,8 +79,8 @@
  */
 import * as React from 'react';
 import { CameraOff, ScanQrCode, TextCursorInput } from 'lucide-react';
-import { CtaButton } from './CtaButton';
-import type { CtaVariant } from './CtaButton';
+import { Button } from './Button';
+import type { ButtonVariant } from './Button';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 
@@ -132,7 +132,7 @@ export interface QrScannerProps {
   /** Something is already being looked up. Nothing new starts during it. */
   busy?: boolean;
   /** Announced while the camera is opening. Defaults to the locale
-   *  catalogue's word through CTA Button. */
+   *  catalogue's word through Button. */
   loadingLabel?: string;
   className?: string;
 }
@@ -164,10 +164,10 @@ export function QrScanner({
    * treatment; if one is, the retry is the way on and this drops back to a
    * ghost beneath it.
    */
-  const typeItInstead = (variant: CtaVariant) => (
-    <CtaButton variant={variant} leadingIcon={TextCursorInput} onClick={onManual} wrap>
+  const typeItInstead = (variant: ButtonVariant) => (
+    <Button variant={variant} leadingIcon={TextCursorInput} onClick={onManual} wrap>
       {manualLabel}
-    </CtaButton>
+    </Button>
   );
 
   return (
@@ -175,7 +175,7 @@ export function QrScanner({
       <div className={`musy-scanner__frame musy-scanner__frame--${mode}`}>
         {waiting && (
           <div className="musy-scanner__actions">
-            <CtaButton
+            <Button
               leadingIcon={ScanQrCode}
               loading={mode === 'starting'}
               loadingLabel={loadingLabel}
@@ -184,7 +184,7 @@ export function QrScanner({
               wrap
             >
               {scanLabel}
-            </CtaButton>
+            </Button>
             {typeItInstead('ghost')}
           </div>
         )}
@@ -247,9 +247,9 @@ export function QrScanner({
                 stretching: `.musy-btn` is inline-flex, and a block parent is
                 all that takes. */}
             <div>
-              <CtaButton variant="ghost" leadingIcon={ScanQrCode} onClick={onBack} wrap>
+              <Button variant="ghost" leadingIcon={ScanQrCode} onClick={onBack} wrap>
                 {backLabel}
-              </CtaButton>
+              </Button>
             </div>
           </div>
         )}
@@ -271,14 +271,14 @@ export function QrScanner({
                 is primary itself. Never both. */}
             <div className="musy-scanner__actions">
               {retryLabel !== undefined && (
-                <CtaButton
+                <Button
                   leadingIcon={ScanQrCode}
                   disabled={busy}
                   onClick={onScan}
                   wrap
                 >
                   {retryLabel}
-                </CtaButton>
+                </Button>
               )}
               {typeItInstead(retryLabel === undefined ? 'primary' : 'ghost')}
             </div>

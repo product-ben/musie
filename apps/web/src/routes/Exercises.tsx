@@ -62,7 +62,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import {
-  ButtonGroup, CardDeck, ContentBox, CtaButton, Icon, IconButton, InlineButton, RadioCards,
+  ButtonGroup, CardDeck, ContentBox, Button, Icon, IconButton, InlineButton, RadioCards,
   SegmentedControl, Switch,
 } from '@musie/design-system';
 import type {
@@ -794,15 +794,15 @@ export function Exercises() {
           text={t('exercises.running.stoppedAt', { step: t(stepMessageKey(running.step)) })}
         >
           <ButtonGroup align="end">
-            <CtaButton
+            <Button
               variant="ghost"
               loading={endingRunning}
               loadingLabel={t('content.loading')}
               onClick={() => void endRunning()}
             >
               {t('exercises.running.end')}
-            </CtaButton>
-            <CtaButton
+            </Button>
+            <Button
               variant="secondary"
               /* It renders an `<a>`; base-ui asks to be told so, and warns in
                  the console when it is not. */
@@ -812,7 +812,7 @@ export function Exercises() {
               }
             >
               {t('exercises.goToSession')}
-            </CtaButton>
+            </Button>
           </ButtonGroup>
         </ContentBox>
       )}
@@ -947,7 +947,7 @@ export function Exercises() {
                 exercises would otherwise give a control that does nothing at
                 all when pressed. Cannot happen under today's mapping; cheaper
                 to state than to rediscover. */}
-            <CtaButton
+            <Button
               variant="secondary"
               size="min"
               leadingIcon={Shuffle}
@@ -959,7 +959,7 @@ export function Exercises() {
               onClick={pickForMe}
             >
               {t('exercises.surpriseMeShort')}
-            </CtaButton>
+            </Button>
             {/* ── ZIEL ÄNDERN, IN THIS ROW FROM --bp-md (Ben, 2026-11-11) ───
                 The headline word already opens the sheet; this says so in
                 words, for the reader who takes a word in a sentence for a
@@ -974,7 +974,7 @@ export function Exercises() {
                 than one moved by CSS order, because they sit in different
                 containers — and `display: none` takes the hidden one out of
                 the accessibility tree, so nobody meets it twice. */}
-            <CtaButton
+            <Button
               variant="secondary"
               size="min"
               leadingIcon={ListFilter}
@@ -985,7 +985,7 @@ export function Exercises() {
               onClick={openSheet}
             >
               {t('exercises.goal.change')}
-            </CtaButton>
+            </Button>
             {/* ── THE WAY BACK TO THE LEGEND, MOVED UP HERE (Ben, 2026-11-11)
                 It was third in CardDeck's chevron row (`navActions`, now
                 deprecated), as the quietest control beside the pile. The
@@ -1047,9 +1047,9 @@ export function Exercises() {
                 where it will send the focus back to — and that is the better
                 destination from here anyway: the control that was pressed is
                 about to be replaced by a pile. */}
-            <CtaButton variant="secondary" onClick={() => setSheetOpen(true)}>
+            <Button variant="secondary" onClick={() => setSheetOpen(true)}>
               {t('exercises.goal.emptyAction')}
-            </CtaButton>
+            </Button>
           </ButtonGroup>
         </ContentBox>
       )}
@@ -1172,7 +1172,7 @@ export function Exercises() {
                 disabled={busy || sheetOpen}
               />
             )}
-            <CtaButton
+            <Button
               variant="secondary"
               size="min"
               leadingIcon={ListFilter}
@@ -1183,7 +1183,7 @@ export function Exercises() {
               onClick={openSheet}
             >
               {t('exercises.goal.change')}
-            </CtaButton>
+            </Button>
           </div>
         </>
       )}
@@ -1296,7 +1296,7 @@ function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCa
             accept DOES to the pile — the card lifts, the deck goes inert, a
             refusal brings it back — and a screen that reached past that would
             be the one place the card did not move when it was taken. */}
-        <CtaButton
+        <Button
           variant="primary"
           size="min"
           leadingIcon={ArrowRight}
@@ -1305,7 +1305,7 @@ function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCa
           onClick={card.accept}
         >
           {t('exercises.startShort')}
-        </CtaButton>
+        </Button>
       </div>
     </div>
   );

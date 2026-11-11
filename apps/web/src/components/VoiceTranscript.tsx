@@ -50,7 +50,7 @@
  * on screen rather than leaving as a dead button.
  */
 import * as React from 'react';
-import { CtaButton, DraggableList, Message, RecordButton, Toast } from '@musie/design-system';
+import { Button, DraggableList, Message, RecordButton, Toast } from '@musie/design-system';
 import {
   DEFAULT_MODEL, IDLE_STOP_MS, SESSION_SECONDS, setStatementsHandler, useTranscription,
 } from '@musie/voice';
@@ -328,14 +328,14 @@ export function VoiceTranscript({
           reordered and nothing is reorderable mid-capture, which is the same
           test `DraggableList`'s own `editable` takes. */}
       {editable && (
-        <CtaButton
+        <Button
           variant="ghost"
           aria-expanded={tipsOpen}
           aria-controls="voice-edit-tips"
           onClick={() => setTipsOpen((was) => !was)}
         >
           {t('voice.hint.editToggle')}
-        </CtaButton>
+        </Button>
       )}
       </div>
 

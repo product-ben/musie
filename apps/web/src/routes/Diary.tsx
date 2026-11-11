@@ -100,7 +100,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { ArrowDown, ArrowUp, CircleCheck, CircleDashed, List, Minus, Trash } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  ButtonGroup, ContentBox, CtaButton, FeelingsScale, LinkList, Message, SegmentedControl,
+  ButtonGroup, ContentBox, Button, FeelingsScale, LinkList, Message, SegmentedControl,
   Timeline, Toast,
 } from '@musie/design-system';
 import type { LinkListItem } from '@musie/design-system';
@@ -378,14 +378,14 @@ function StartAnother() {
        are one gap apart and not two. */
     <div className="musie-diary__start">
       <ButtonGroup align="start">
-        <CtaButton
+        <Button
           variant="primary"
           loading={unknown}
           loadingLabel={t('content.loading')}
           render={<Link to={href} />}
         >
           {t('menu.startSession')}
-        </CtaButton>
+        </Button>
       </ButtonGroup>
     </div>
   );
@@ -424,9 +424,9 @@ function FilterEmpty(
           rather than at the far edge of the box. Ghost, because it undoes a
           choice rather than being the screen's purpose. */}
       <ButtonGroup align="start">
-        <CtaButton variant="ghost" onClick={onShowAll}>
+        <Button variant="ghost" onClick={onShowAll}>
           {t('diary.filter.showAll')}
-        </CtaButton>
+        </Button>
       </ButtonGroup>
     </ContentBox>
   );
@@ -548,17 +548,17 @@ function DeleteEverything() {
           text={t('diary.deleteAll.text')}
           action={
             <ButtonGroup align="end">
-              <CtaButton variant="ghost" onClick={() => setStatus('idle')}>
+              <Button variant="ghost" onClick={() => setStatus('idle')}>
                 {t('common.cancel')}
-              </CtaButton>
-              <CtaButton
+              </Button>
+              <Button
                 variant="secondary"
                 loading={status === 'deleting'}
                 loadingLabel={t('content.loading')}
                 onClick={() => void removeEverything()}
               >
                 {t('diary.deleteAll.yes')}
-              </CtaButton>
+              </Button>
             </ButtonGroup>
           }
         />
@@ -571,9 +571,9 @@ function DeleteEverything() {
 
            `ghost`, and at the start edge: it is not what this screen is for. */
         <ButtonGroup align="start">
-          <CtaButton variant="ghost" leadingIcon={Trash} onClick={() => setStatus('confirming')}>
+          <Button variant="ghost" leadingIcon={Trash} onClick={() => setStatus('confirming')}>
             {t('diary.deleteAll')}
-          </CtaButton>
+          </Button>
         </ButtonGroup>
       )}
     </section>

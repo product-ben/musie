@@ -46,7 +46,7 @@
  */
 import * as React from 'react';
 import {
-  ContentBox, ContentList, CtaButton, Field, FieldGroup, Logo, Message,
+  ContentBox, ContentList, Button, Field, FieldGroup, Logo, Message,
   RadioGroupText, SegmentedControl,
 } from '@musie/design-system';
 import { Languages } from 'lucide-react';
@@ -267,7 +267,7 @@ export function BetaSignup() {
               emptyLabel={t('content.empty')}
             />
 
-            <CtaButton
+            <Button
               type="submit"
               block
               loading={busy}
@@ -278,7 +278,7 @@ export function BetaSignup() {
               wrap
             >
               {t('beta.submit')}
-            </CtaButton>
+            </Button>
 
             {/* What happens to the address, under the button that sends it.
                 `.musie-note` is the shell's muted paragraph and already takes

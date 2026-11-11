@@ -34,7 +34,7 @@
 import * as React from 'react';
 import { BookOpen, Music, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { Carousel, ContentBox, CtaButton } from '@musie/design-system';
+import { Carousel, ContentBox, Button } from '@musie/design-system';
 import type { CarouselSlide } from '@musie/design-system';
 import { BRAND_MARK_SRC } from '../brand';
 import { useT } from '../i18n/localeContext';
@@ -199,7 +199,7 @@ export function AboutMusie() {
             />
 
             <div className="musie-cta-stack">
-              <CtaButton
+              <Button
                 /* --target-guided once the run has been seen: it is then the
                    only thing left to do on the screen. */
                 size={seenAll ? 'guided' : 'primary'}
@@ -208,7 +208,7 @@ export function AboutMusie() {
                 onClick={() => navigate(hasUserType ? '/exercises' : '/about-you')}
               >
                 {t('menu.startSession')}
-              </CtaButton>
+              </Button>
               <p id="about-hint" className="musie-cta-stack__hint">{t(hintKey)}</p>
             </div>
           </ContentBox>

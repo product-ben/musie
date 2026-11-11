@@ -78,7 +78,7 @@ export interface FilterChipDimension {
  * The rung the chips stand on.
  *
  * `min` and `primary` are the system's own names for these two heights — the
- * words `CtaButton`, `IconButton` and `SegmentedControl` all use — so "the
+ * words `Button`, `IconButton` and `SegmentedControl` all use — so "the
  * small one" means the same thing on every component in the set.
  */
 export type FilterChipsSize = 'min' | 'primary';

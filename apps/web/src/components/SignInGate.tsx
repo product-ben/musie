@@ -56,7 +56,7 @@
  */
 import * as React from 'react';
 import {
-  CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineButton, Logo, Message, Switch,
+  CodeField, ContentBox, Button, Field, FieldGroup, InlineButton, Logo, Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
 import { ConsentToggles } from './ConsentToggles';
@@ -341,13 +341,13 @@ export function SignInGate() {
 
                   `.musie-gate-rule` in shell.css carries the L14 permission —
                   the system has no separator component, grepped not assumed. */}
-              <CtaButton type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
+              <Button type="submit" block loading={busy} loadingLabel={t('content.loading')} wrap>
                 {t('auth.submit')}
-              </CtaButton>
+              </Button>
 
               <hr className="musie-gate-rule" />
 
-              <CtaButton
+              <Button
                 type="button"
                 variant="outline"
                 className="musie-gate-secondary"
@@ -356,7 +356,7 @@ export function SignInGate() {
                 onClick={() => { go('signUpCode'); } }
               >
                 {t('auth.signIn.switch')}
-              </CtaButton>
+              </Button>
             </>
           )}
 
@@ -395,7 +395,7 @@ export function SignInGate() {
 
                   `.musie-gate-rule` in shell.css carries the L14 permission —
                   the system has no separator component, grepped not assumed. */}
-              <CtaButton
+              <Button
                 type="button"
                 block
                 loading={busy}
@@ -404,11 +404,11 @@ export function SignInGate() {
                 onClick={() => { void submitAccessCode(accessCode); }}
               >
                 {t('auth.signUp.codeSubmit')}
-              </CtaButton>
+              </Button>
 
               <hr className="musie-gate-rule" />
 
-              <CtaButton
+              <Button
                 type="button"
                 variant="outline"
                 className="musie-gate-secondary"
@@ -417,7 +417,7 @@ export function SignInGate() {
                 onClick={() => { go('signIn'); } }
               >
                 {t('auth.signUp.switch')}
-              </CtaButton>
+              </Button>
             </>
           )}
 
@@ -536,7 +536,7 @@ export function SignInGate() {
                   a disabled attribute is a hint to a browser and nothing to
                   anybody else. */}
               <div className="musie-cta-stack">
-                <CtaButton
+                <Button
                   type="submit"
                   block
                   loading={busy}
@@ -546,7 +546,7 @@ export function SignInGate() {
                   aria-describedby={signUpReady ? undefined : 'sign-up-hint'}
                 >
                   {t('auth.signUp.submit')}
-                </CtaButton>
+                </Button>
                 {!signUpReady && (
                   <p id="sign-up-hint" className="musie-cta-stack__hint">
                     {t('auth.signUp.hint')}

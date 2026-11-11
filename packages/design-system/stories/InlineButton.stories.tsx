@@ -50,7 +50,7 @@ const meta = {
           '**It inherits its type, and that is still the whole component.** Family, size,',
           'weight, line height and tracking come from the parent, so the same element is',
           'display type inside an `h1` and body type inside a `p`. That is why it is not',
-          '`CtaButton size="min"`: a box with a label in it cannot sit inside a sentence',
+          '`Button size="min"`: a box with a label in it cannot sit inside a sentence',
           'without breaking the line it sits in.',
           '',
           '**The look (Figma *Ready to build*).** Text in `--on-surface`, the heading’s own',

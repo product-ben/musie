@@ -324,7 +324,7 @@ So this action adds the fact:
   - The headline and the intro paragraph still render — they explain what this
     place is *for*, which is exactly what somebody with nothing here needs.
   - In place of the list: a line saying there is nothing yet and why — you
-    discover music by listening to it in an exercise — and a **CtaButton that
+    discover music by listening to it in an exercise — and a **Button that
     starts a session**.
   - The button goes where the drawer's own *Start a session* row goes, by the
     same rule: `/exercises` when a user type is recorded, `/about-you` when it

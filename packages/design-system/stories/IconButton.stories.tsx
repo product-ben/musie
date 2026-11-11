@@ -71,7 +71,7 @@ const meta = {
           'Why: config is off limits and the brief says to log it rather than fight the',
           'inference.',
           'What I need from Ben: **a `propFilter` in `.storybook/main.ts`** so the inherited',
-          'DOM props stop appearing. Applies equally to CtaButton and Switch.',
+          'DOM props stop appearing. Applies equally to Button and Switch.',
           '',
           '## IconButton — stories do not mount `MusyTooltipProvider`',
           'Where: `src/IconButton.tsx:94`',
@@ -94,7 +94,7 @@ const meta = {
           'writes `musy-icon-btn--primary-size`.',
           'What I did: wrote the stories against the props as declared.',
           'Why: the rename is deliberate and the ladder (`min`/`primary`/`comfort`/`guided`)',
-          'is shared with CtaButton on purpose.',
+          'is shared with Button on purpose.',
           'What I need from Ben: nothing, just flagging — reading a rendered IconButton’s',
           'class list, "primary" appears twice and means variant once and target once.',
           '',
@@ -131,7 +131,7 @@ const meta = {
       control: 'inline-radio',
       options: ['min', 'sm', 'primary', 'comfort', 'guided'],
       description:
-        'Target rung: 24 / 40 / 44 / 56 / 64px. Defaults to primary. `sm` (40px, 2026-11-11) is this ladder’s alone: it stands in a row of CtaButton `min`s, which already draw about 40px tall.',
+        'Target rung: 24 / 40 / 44 / 56 / 64px. Defaults to primary. `sm` (40px, 2026-11-11) is this ladder’s alone: it stands in a row of Button `min`s, which already draw about 40px tall.',
     },
     tooltip: {
       control: 'boolean',
@@ -179,9 +179,9 @@ export const Variants: Story = {
  *  its neighbours because its `--sp-2` margin is baked into the stylesheet.
  *
  *  `sm` (40px, `--target-sm`, 2026-11-11) is the help button in the
- *  /exercises toolbar, the height of the CtaButton `min`s it stands beside.
+ *  /exercises toolbar, the height of the Button `min`s it stands beside.
  *  It clears 2.5.8 without the spacing exception, so it has no margin, and it
- *  carries the same 20px glyph as `primary`. CtaButton has no `sm`: its `min`
+ *  carries the same 20px glyph as `primary`. Button has no `sm`: its `min`
  *  is already that height. */
 export const Sizes: Story = {
   render: (args) => (

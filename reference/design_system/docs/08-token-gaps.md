@@ -85,7 +85,7 @@ token stays one-directional. Flagged in open question 17.
 
 ## G3 · no `--border-strong-hover` (reported, not staged)
 
-**Needed by** Icon Button and CTA Button, `secondary` variant, hover state.
+**Needed by** Icon Button and Button, `secondary` variant, hover state.
 
 **Why.** The secondary variant's only affordance is its boundary
 (`--border-strong` = `--sand-edge`). On hover the fill changes, but the boundary

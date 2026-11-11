@@ -20,7 +20,7 @@ sequence of statements and the user tidies them afterwards. Every state below is
 one that flow actually produces — see `#/states`, which is this component given
 props.
 
-**No new primitives.** It is Content Box, Icon Button, CTA Button, Toast and an
+**No new primitives.** It is Content Box, Icon Button, Button, Toast and an
 `<ol>`, arranged per [10 · Layout](10-layout.md) L3, L4, L5, L6 and L9. What
 makes it a component rather than a composition is the **state machine** below:
 twelve states, three of them mutually exclusive in a way that is easy to get
@@ -41,8 +41,8 @@ ol.list                                            L3 — a real list
     │   │       ├── IconButton  GripVertical · drag
     │   │       └── IconButton  ChevronDown  · aria-expanded, aria-controls
     │   └── div.actions--end    [id = aria-controls]         L6
-    │       ├── CtaButton ghost Trash2  Delete
-    │       └── CtaButton ghost Pencil  Edit
+    │       ├── Button ghost Trash2  Delete
+    │       └── Button ghost Pencil  Edit
     └── div.drop                [after]
 ```
 

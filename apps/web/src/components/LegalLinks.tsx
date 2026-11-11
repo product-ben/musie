@@ -14,7 +14,7 @@
  * drawer, which is one tap from every screen in the app, and the foot of the
  * two screens a stranger can reach without an account. LEGAL-PAGES.md §5.
  *
- * ── `InlineButton` AND NOT `CtaButton` ─────────────────────────────────────
+ * ── `InlineButton` AND NOT `Button` ─────────────────────────────────────
  * The drawer's rows are 44px buttons that read as destinations you choose
  * between. These two are not that; they are the small print, and they should
  * look like it. `InlineButton` is the design system's component for a control

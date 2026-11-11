@@ -46,7 +46,7 @@
 import * as React from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  ButtonGroup, ContentBox, CtaButton, InteractiveWizard, Lightbox, Message,
+  ButtonGroup, ContentBox, Button, InteractiveWizard, Lightbox, Message,
   WizardPanel,
 } from '@musie/design-system';
 import type { LightboxOrigin } from '@musie/design-system';
@@ -233,9 +233,9 @@ export function Session() {
         text={t('session.notFoundText')}
         outline="dashed"
       >
-        <CtaButton variant="secondary" onClick={() => navigate('/exercises')}>
+        <Button variant="secondary" onClick={() => navigate('/exercises')}>
           {t('common.back')}
-        </CtaButton>
+        </Button>
       </ContentBox>
     );
   }
@@ -1153,8 +1153,8 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    */
   const backwards = stepBefore(state.step);
   const back = backwards === null
-    ? <CtaButton variant="ghost" render={<Link to="/exercises" />}>{t('common.back')}</CtaButton>
-    : <CtaButton variant="ghost" onClick={retreat}>{t('common.back')}</CtaButton>;
+    ? <Button variant="ghost" render={<Link to="/exercises" />}>{t('common.back')}</Button>
+    : <Button variant="ghost" onClick={retreat}>{t('common.back')}</Button>;
 
   /* The count the deal label quotes. A string, because `translate` fills slots
      from `Record<string, string | undefined>` and a number would be a silent
@@ -1174,11 +1174,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     actions = (
       <>
         {back}
-        <CtaButton onClick={advance}>
+        <Button onClick={advance}>
           {!digital
             ? t('common.continue')
             : (dealt === 1 ? t('session.intro.drawRandom') : t('session.intro.deal', { count }))}
-        </CtaButton>
+        </Button>
       </>
     );
   } else if (state.step === 'view') {
@@ -1190,13 +1190,13 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     actions = (
       <>
         {back}
-        <CtaButton
+        <Button
           loading={busy || card === null}
           loadingLabel={t('content.loading')}
           onClick={advance}
         >
           {t('common.continue')}
-        </CtaButton>
+        </Button>
       </>
     );
   } else if (state.step === 'select') {
@@ -1213,10 +1213,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
         {/* A WAY BACK INTO THE WALK. The sheet opens on arrival and collapses
             onto the grid; without this, closing it early — or coming back from
             Hören — would leave the five pictures unreachable. */}
-        <CtaButton variant="secondary" onClick={openSheet}>
+        <Button variant="secondary" onClick={openSheet}>
           {t('session.select.lookAgain')}
-        </CtaButton>
-        {card !== null && <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>}
+        </Button>
+        {card !== null && <Button onClick={advance}>{t('common.continue')}</Button>}
       </>
     );
   } else if (state.step === 'scan') {
@@ -1225,10 +1225,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
         {back}
         {card !== null && (
           <>
-            <CtaButton variant="secondary" onClick={() => void clearScan()}>
+            <Button variant="secondary" onClick={() => void clearScan()}>
               {t('session.scan.again')}
-            </CtaButton>
-            <CtaButton onClick={advance}>{t('common.continue')}</CtaButton>
+            </Button>
+            <Button onClick={advance}>{t('common.continue')}</Button>
           </>
         )}
       </>
@@ -1246,11 +1246,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       <>
         {back}
         {canGoOn && (
-          <CtaButton variant="secondary" onClick={finishPlay}>{t('session.play.continue')}</CtaButton>
+          <Button variant="secondary" onClick={finishPlay}>{t('session.play.continue')}</Button>
         )}
-        <CtaButton onClick={() => openPlaySheet(navigate, location.search)}>
+        <Button onClick={() => openPlaySheet(navigate, location.search)}>
           {started ? t('session.play.keepPlaying') : (instrument?.playCta ?? '')}
-        </CtaButton>
+        </Button>
       </>
     );
   } else if (state.step === 'listen') {
@@ -1304,7 +1304,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     actions = (
       <>
         {back}
-        <CtaButton
+        <Button
           variant={complete ? 'primary' : 'ghost'}
           loading={busy}
           loadingLabel={t('content.loading')}
@@ -1314,7 +1314,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           }}
         >
           {t('reflect.save')}
-        </CtaButton>
+        </Button>
       </>
     );
   }
@@ -1533,9 +1533,9 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           than adding one. */}
       {state.step !== 'reflect' && (
         <div className="musie-session__exit">
-          <CtaButton variant="ghost" onClick={() => setClosing(true)}>
+          <Button variant="ghost" onClick={() => setClosing(true)}>
             {t('session.close')}
-          </CtaButton>
+          </Button>
         </div>
       )}
 
@@ -1560,17 +1560,17 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                 `secondary` rather than the filled primary — carrying on is
                 what most people who opened this by accident want. */}
             <ButtonGroup align="end">
-              <CtaButton variant="ghost" onClick={() => setClosing(false)}>
+              <Button variant="ghost" onClick={() => setClosing(false)}>
                 {t('common.cancel')}
-              </CtaButton>
-              <CtaButton
+              </Button>
+              <Button
                 variant="secondary"
                 loading={busy}
                 loadingLabel={t('content.loading')}
                 onClick={() => void close()}
               >
                 {t('session.close.confirm')}
-              </CtaButton>
+              </Button>
             </ButtonGroup>
           </ContentBox>
         </Lightbox>
@@ -1674,7 +1674,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
 
                   IT DISMISSES THE DIALOG IN THE SAME ACT, so Escape from the
                   sheet lands on /reflect and not on a dialog underneath. */}
-              <CtaButton
+              <Button
                 variant="primary"
                 onClick={() => {
                   setConfirmingIncomplete(false);
@@ -1686,18 +1686,18 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                 {feelings.feelings.length === 0
                   ? t('reflect.incomplete.goFeelings')
                   : t('reflect.incomplete.goThoughts')}
-              </CtaButton>
-              <CtaButton
+              </Button>
+              <Button
                 variant="secondary"
                 onClick={() => setConfirmingIncomplete(false)}
               >
                 {t('reflect.incomplete.continue')}
-              </CtaButton>
+              </Button>
               {/* AND THE WAY OUT STAYS OPEN, in the third rank. It says
                   INCOMPLETE out loud — and note what it no longer covers:
                   the feelings are already written, so this saves the
                   reflection and the status and nothing else. */}
-              <CtaButton
+              <Button
                 variant="ghost"
                 loading={busy}
                 loadingLabel={t('content.loading')}
@@ -1707,7 +1707,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                 }}
               >
                 {t('reflect.incomplete.save')}
-              </CtaButton>
+              </Button>
             </ButtonGroup>
           </ContentBox>
         </Lightbox>

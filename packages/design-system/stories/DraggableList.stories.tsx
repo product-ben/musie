@@ -22,7 +22,7 @@ const meta = {
     docs: {
       description: {
         component: [
-          'No new primitives: Content Box, Icon Button, CTA Button, Toast and an',
+          'No new primitives: Content Box, Icon Button, Button, Toast and an',
           '`<ol>`, arranged per Layer 3 L3, L4, L5, L6, L9 and L13.',
           '',
           '**What makes it a component rather than a composition is the state**',

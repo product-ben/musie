@@ -57,7 +57,7 @@
  * where the system has NO component (10-layout.md L14) and here it has six.
  * The one thing the system could NOT do was be opened by a URL, and that went
  * into the system: `Lightbox.trigger` is now optional, which is L14's own
- * instruction and CtaButton's `align` all over again. The X in the card's
+ * instruction and Button's `align` all over again. The X in the card's
  * headline row went the same way on 2026-09-26 — `ContentBox` takes
  * `onDismiss` now, and `.musie-entry__head` is deleted rather than kept.
  *
