@@ -30,6 +30,8 @@ Styles: `components/musy-components.css`.
 | Content List | `Separator` (row rules) |
 | Logo | `useRender` |
 | Countdown | *none of its own* — composes 7.21's `TrackButton`; see 7.27 |
+| Inline Button | `Button` — see 7.29 |
+| Inline Link — **deprecated** (2026-11-11), use Inline Button | `Button` |
 
 **State model.** base-ui puts state on the part itself — `data-checked`,
 `data-unchecked`, `data-disabled`, `data-pressed`, `data-invalid` — so the
@@ -1607,3 +1609,60 @@ A ref object is read once, after mount; pass the element itself when it can be r
 **A11y notes.** Under **forced colours** the dot is not drawn and the system pointer stays: a system colour scheme replaces ours, and the system pointer is the one it accounts for. No `prefers-reduced-motion` rule: it moves only when the person moves. Keyboard play is untouched — the dot belongs to pointers.
 
 **What it is NOT.** Not a custom `cursor:` image (a CSS cursor cannot take a token or follow the theme), not a focus indicator, not the tap effect — that is drawn on the canvas, by the instrument, where a note was played.
+
+---
+
+## 7.29 Inline Button `[SEED]`
+
+Storybook: **Components/InlineButton**. Code: `InlineButton`. Figma: Layer 1 file, page *Selection screen*, section *Ready to build* (`107:2578`).
+
+**Purpose.** A value **inside** a sentence or a heading that opens a choice — the goal word in /exercises' `h1`, *Lass uns zusammen [entspannen ⏷]*, which opens the sheet that changes it.
+
+**Replaces Inline Link — deprecated 2026-11-11 (Ben, D4).** `InlineLink` was never given an entry here; this is its successor and inherits its reasoning — type inherited from the parent, the 2.5.8 inline exception, base-ui `Button` with `render`, a `<button>` by default. What changed is the look and one slot: the heading's own ink with a persistent strong underline instead of the accent colour with an underline on hover, and no `actions` (one target, D3). `InlineLink` stays exported and working, its stories under **Deprecated/InlineLink**, until its last caller moves; then it is deleted.
+
+**APG pattern.** [Button](https://www.w3.org/WAI/ARIA/apg/patterns/button/) — or a link, through `render={<a href=… />}` with `nativeButton={false}`.
+
+**Why not 7.4's `size="min"`.** A button declares its own type step — it is a box with a label in it — and a box with a label in it cannot sit inside a sentence without breaking the line. This sets no family, size, weight, line height or tracking; it is display type in an `h1` and body type in a `p`.
+
+**Anatomy.**
+```
+InlineButton
+└── button.musy-ibtn.musy-ibtn--inset-<inline|none>     (or the element `render` gives)
+    ├── span.musy-ibtn__text
+    ├── span.musy-ibtn__glyph        24px box, optional
+    │   └── Icon size="sm"           16px, aria-hidden
+    └── ::after                      the underline
+```
+
+**Props.**
+
+| Prop | Type | Default |
+|---|---|---|
+| `children` | `ReactNode` | — (required) |
+| `glyph` | `LucideIcon` | — |
+| `inset` | `'inline' \| 'none'` | `'inline'` |
+| `className` | `string` | — |
+
+Plus everything base-ui `Button` takes: `onClick`, `disabled`, `type`, `render`, `nativeButton`, `aria-*`.
+
+**Appearance.** Text `--on-surface`. Glyph trailing, `--sp-1` after the text, a 16px glyph centred in a 24px (`--icon-size-lg`) box, the box centred on the line. The underline runs under text **and** glyph: `--border-width-thick` in `--border-strong`, directly under the line box. It takes no line space — one `--border-width-thick` of block-end padding holds it and the same amount comes back as a negative block-end margin, so the line is exactly as tall as the words around it. It is drawn as a pseudo-element's **border**, not a background, so forced colours keep it. `inline-size: fit-content`, so a flex column that stretches its items cannot stretch the underline across a card.
+
+**`inset`** (Figma annotations a2–a4). `inline`: `--sp-1` of inline padding and the same amount back as a negative inline margin — the text stays where the sentence put it and the underline overhangs it by 4px each side. `none`: neither, for a value with no text to its left or right. The component cannot see its neighbours, so the call site says.
+
+**State matrix.** Not drawn in Figma; derived from Inline Link's, tokens only. `data-force~="hover|active|focus"` shows each without a pointer.
+
+| State | Text and glyph | Underline | Derived from Inline Link |
+| --- | --- | --- | --- |
+| rest | `--on-surface` | `--border-strong` | — |
+| hover (fine pointer) | `--on-surface` | `--on-surface` | its hover drew an underline in the control's own colour; this one turns the bar into that |
+| active | `--accent-1-text` | `--accent-1-text` | its press stepped into the accent family; `-text`, because `--accent-1` scores 3.0:1 as text |
+| focus-visible | as rest | as rest | the shared ring, `--radius-xs` corners; its focus underline is already there |
+| disabled | `--on-surface-disabled` | `--border-subtle` | quiet and **kept**, as 7.2's and 7.4's outline border is: the bar is the only thing marking the value as a control |
+
+**Responsive behaviour.** None of its own; it takes the type step of wherever it sits. It is atomic on the line (`inline-flex`): the words wrap around it, it never breaks across two lines. At a step whose line is under 24px (`body-sm`), a value **with** a glyph makes its line ~1.5px taller — every call site with a glyph is a heading.
+
+**Token usage.** `--on-surface` `--on-surface-disabled` `--border-strong` `--border-subtle` `--border-width-thick` `--border-style-solid` `--accent-1-text` `--sp-1` `--icon-size-lg` `--icon-size-sm` (through 7.1) `--radius-xs` `--motion-toggle` `--focus-ring` `--focus-ring-offset`
+
+**A11y notes.** 1.4.1: the text has the heading's colour, so the underline is the non-colour cue, present at rest and in every state; `--border-strong` is solved ≥ 3:1 (3.63:1 light, 4.73:1 dark). 2.5.8: the inline exception covers a target in a sentence or a block of text, the only place this belongs; no `min-height`, which would break the line box. A glyph is decorative (`aria-hidden`); a value whose text is a thin name — "entspannen" — gets the rest of its name from visually hidden text inside it at the call site, never from an `aria-label`, which would replace the visible text in a heading's accessible name. A navigating `render` needs `nativeButton={false}` or base-ui warns; whether the component should infer it is open in `apps/web/OPEN-QUESTIONS.md`.
+
+**What it is NOT.** Not a CTA, not a standalone control, not a nav item — 7.4 is the action, `LinkList` the list of destinations. Not a select: it opens whatever the screen opens.

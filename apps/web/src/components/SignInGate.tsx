@@ -56,7 +56,7 @@
  */
 import * as React from 'react';
 import {
-  CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineLink, Logo, Message, Switch,
+  CodeField, ContentBox, CtaButton, Field, FieldGroup, InlineButton, Logo, Message, Switch,
 } from '@musie/design-system';
 import { BRAND_NAME } from '../brand';
 import { ConsentToggles } from './ConsentToggles';
@@ -459,20 +459,25 @@ export function SignInGate() {
                 onCheckedChange={setAcceptedTerms}
                 disabled={busy}
               />
-              {/* `nativeButton={false}` on every anchor. InlineLink documents
-                  `render={<a href=… />}` as the way to make it navigate, but
-                  does not lower base-ui's `nativeButton` with it — so the
-                  documented case logs "expected a native <button>" and the
-                  element keeps button semantics it should not have. Caught by
-                  the browser walk, not by the typecheck. Logged in
-                  apps/web/OPEN-QUESTIONS.md as a design-system fix; this is
-                  the caller-side workaround until it lands. */}
-              <InlineLink
+              {/* `nativeButton={false}` on every anchor. `render={<a href=… />}`
+                  alone does not lower base-ui's `nativeButton` — so it logs
+                  "expected a native <button>" and the element keeps button
+                  semantics it should not have. Caught by the browser walk,
+                  not by the typecheck. Logged in apps/web/OPEN-QUESTIONS.md
+                  as a design-system question (should the component infer
+                  it?); this is the caller-side answer until it is decided.
+
+                  `InlineButton` (`InlineLink` until 2026-11-11, deprecated),
+                  `inset="none"`: it stands on its own line under the switch,
+                  with no words to its left or right, so the underline starts
+                  where the text does. */}
+              <InlineButton
+                inset="none"
                 nativeButton={false}
                 render={<a href={TERMS_PATH} target="_blank" rel="noreferrer" />}
               >
                 {t('auth.terms.link')}
-              </InlineLink>
+              </InlineButton>
 
               {/* ── TWO PERMISSIONS, AND NEITHER IS A CONDITION ──────────────
                   Ben, 2026-10-20. The terms toggle above is REQUIRED — the
@@ -501,12 +506,12 @@ export function SignInGate() {
                   class. */}
               <p>
                 {t('auth.privacy.note')}{' '}
-                <InlineLink
+                <InlineButton
                   nativeButton={false}
                   render={<a href={PRIVACY_PATH} target="_blank" rel="noreferrer" />}
                 >
                   {t('auth.privacy.link')}
-                </InlineLink>
+                </InlineButton>
               </p>
 
               {/* The action half of the same shape. No rule and no second
@@ -570,20 +575,29 @@ export function SignInGate() {
                 autoFocus
               />
 
-              <InlineLink type="button" onClick={() => { void resend(); }} disabled={busy}>
+              {/* `inset="none"` here and below: each stands alone on its line
+                  in the box's column, so there is nothing for an overhang to
+                  line up with. */}
+              <InlineButton
+                inset="none"
+                type="button"
+                onClick={() => { void resend(); }}
+                disabled={busy}
+              >
                 {t('auth.code.resend')}
-              </InlineLink>
+              </InlineButton>
 
               {/* The way out of a mistyped address, which is the commonest
                   failure here — and the only one the person cannot fix by
                   looking more carefully at their inbox. */}
-              <InlineLink
+              <InlineButton
+                inset="none"
                 type="button"
                 onClick={() => { setSignInCode(''); go('signIn'); }}
                 disabled={busy}
               >
                 {t('auth.code.back')}
-              </InlineLink>
+              </InlineButton>
             </>
           )}
         </ContentBox>

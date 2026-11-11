@@ -14,11 +14,15 @@
  * drawer, which is one tap from every screen in the app, and the foot of the
  * two screens a stranger can reach without an account. LEGAL-PAGES.md §5.
  *
- * ── `InlineLink` AND NOT `CtaButton` ───────────────────────────────────────
+ * ── `InlineButton` AND NOT `CtaButton` ─────────────────────────────────────
  * The drawer's rows are 44px buttons that read as destinations you choose
  * between. These two are not that; they are the small print, and they should
- * look like it. `InlineLink` is the design system's component for a link that
- * lives inside a line of text, which is exactly what this is.
+ * look like it. `InlineButton` is the design system's component for a control
+ * that lives inside a line of text, which is exactly what this is. (It was
+ * `InlineLink` until that was deprecated on 2026-11-11; the look moved from
+ * the accent colour to ink with a strong underline, and the default inset
+ * keeps both words where they were — the underline overhangs towards the
+ * middot, which is the text beside each.)
  *
  * ── A PLAIN `<a>`, AND THAT IS NOT LAZINESS ────────────────────────────────
  * The legal pages are NOT routes. They are mounted above `AuthProvider` by
@@ -31,7 +35,7 @@
  * The href uses the CANONICAL spelling from `publicRoute.ts`, so the URL
  * anybody copies out of the address bar is the one that gets printed.
  */
-import { InlineLink } from '@musie/design-system';
+import { InlineButton } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import { IMPRINT_PATH, PRIVACY_PATH } from '../lib/publicRoute';
 
@@ -48,13 +52,13 @@ export function LegalLinks() {
       {/* `nativeButton={false}` because `render` makes these anchors, and
           base-ui's Button otherwise assumes — and warns about — a native
           <button> whose semantics an <a> does not have. These ARE links. */}
-      <InlineLink render={<a href={IMPRINT_PATH} />} nativeButton={false}>
+      <InlineButton render={<a href={IMPRINT_PATH} />} nativeButton={false}>
         {t('legal.imprint.link')}
-      </InlineLink>
+      </InlineButton>
       <span aria-hidden="true">·</span>
-      <InlineLink render={<a href={PRIVACY_PATH} />} nativeButton={false}>
+      <InlineButton render={<a href={PRIVACY_PATH} />} nativeButton={false}>
         {t('legal.privacy.link')}
-      </InlineLink>
+      </InlineButton>
     </nav>
   );
 }
