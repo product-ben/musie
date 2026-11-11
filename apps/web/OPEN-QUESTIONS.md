@@ -11132,7 +11132,7 @@ before consent; a PostHog survey). And one judgement: painting before
 „Jetzt starten“ is allowed and recorded with `t = 0`. Say if it should wait for
 the music.
 
-## Body side, third version: no body, a stream of particles — FLAGGED
+## Body side, third version: no body, a stream of particles that piles up — FLAGGED
 
 Where: `apps/web/public/experiments/body-side/261111-1431/` (the two earlier
 versions stay beside it); the removed copy in
@@ -11140,35 +11140,47 @@ versions stay beside it); the removed copy in
 
 What I checked: Ben, 2026-11-11, for lq-04: no body model. Everything else
 as the body resonance version: the instruments' countdown, „Jetzt starten“,
-„Weiter zum Reflektieren“ only after a pause or at 0:00. In its place a calm
-stream of particles in the middle of the screen, top to bottom, moving at the
-speed of the music and in the app's colours; tapping or dragging bends it
-left or right. Asked twice, Ben said yes: the bend stays where the finger
-leaves it, and the headline keeps both sentences.
+„Weiter zum Reflektieren“ only after a pause or at 0:00, the headline the
+whole question (both sentences: Ben said yes). In the body's place, a calm
+stream of particles moving at the speed of the music, in the app's colours.
+The first take (a stream from the top, bent by the finger) "didn't quite
+work". The second, the one here: the stream comes out of the cursor (on a
+phone, out of the centre of the screen), falls, and piles up in the centre,
+on the left or on the right, and fallen particles turn smoothly to a light
+sand colour. The finger's direction stays when it lifts (Ben said yes).
 
 What I did:
 - **The stream is built here, not ported.** Ben remembered a particle
   experiment, possibly Lucy's and not committed; none is in the repository or
   among his artifacts, so this is new.
+- **Mouse: out of the pointer's tip**, falling straight; moving the mouse
+  throws it a little. **Finger: out of the centre**, thrown as far left or
+  right as the finger is from the middle (up to about a third of the width);
+  it keeps that direction until the finger moves it again. Keyboard: the
+  canvas is a slider (arrows, Home, End) and does what the finger does.
 - **It is a stage, like the instruments'**: a canvas under the header and the
-  foot, to the edges; the header and foot let a touch through except on their
-  buttons, so a tap on the headline steers too. Behind the question and the
-  countdown the particles fade to 30 %, so both stay readable.
-- **The speed of the music**: every note gives the stream a push at the moment
-  it sounds and brightens it a little; paused, it only drifts. Every note
-  pushes it the same way, wherever the note is panned, so the stream never
-  gives away the answer.
-- **The bend**: as far to the side as the finger is from the middle (up to a
-  third of the width), reaching that side at the finger's height. Keyboard:
-  the canvas is a slider (arrows, Home, End).
-- **What is recorded**: each bend (`stream_bent`), and at the end a timeline
-  of the bend every half second while the music played (at most 180 points),
-  with the share of time left, centre and right (`stream_finished`). Consent
-  has its own key, because its sentence changed.
-- **Colours**: green-9, -8 and -6, sand-8, and a little terracotta-9, in that
-  order of frequency.
+  foot, to the edges; touches pass through the header and foot except on
+  their buttons.
+- **The piles** sit on the bottom edge of the screen, under the countdown,
+  in 3 px columns that slide like sand (angle of repose). A landed particle
+  turns from its green to `--sand-5` over 2.6 s and is then painted into a
+  still image, so thousands cost nothing per frame. A pile stops growing at
+  about a quarter of the screen's height; what lands on a full one fades.
+- **The speed of the music**: every note makes more particles flow and fall
+  faster, at the moment it sounds. Every note pushes the same way, wherever
+  it is panned, so the stream never gives away the answer. Paused, it only
+  trickles.
+- **What is recorded**: each touch bend (`stream_bent`); at the end
+  (`stream_finished`), a half-second timeline of the direction while the
+  music played, the share of time left, centre and right, and how many
+  particles that flowed during the music landed left, centre and right.
+  The end card says the latter. Consent has its own key, because its
+  sentence changed.
+- **Colours** while falling: green-9, -8 and -6, sand-8, and a little
+  terracotta-9.
 
-What I need from Ben: whether the particle experiment he meant looks like
-this, and if Lucy has it, what to take from it. And, as for the body
-pages, a PostHog survey on `stream_finished` if it should ask anything.
-
+What I need from Ben: whether the piles belong on the bottom edge, under the
+countdown and „Weiter“, or on a floor above the foot. Whether the particle
+experiment he meant looks like this, and if Lucy has it, what to take from
+it. And, as for the body pages, a PostHog survey on `stream_finished` if it
+should ask anything.
