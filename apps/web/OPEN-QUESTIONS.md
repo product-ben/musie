@@ -11033,3 +11033,37 @@ What I need from Ben: a PostHog survey on `body_marking_finished` if the
 experiments should ask anything afterwards (none is set up); and the delete
 button is the system's `min` icon button — small for a thumb, by the brief's
 „(s)“.
+
+## The body experiments in 3D, and a sound builder — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1143/`, `body-resonance/261111-1143/`,
+`body-model/` (the shared body) and `sound-builder/261111-1149/`
+
+What I checked: Ben, 2026-11-11 — a 3D body in sand instead of the outline;
+holding a spot colours it slowly in the accent colour, and the longer the
+hold, the larger the area; dragging turns the body; „Flächen bearbeiten“ puts
+a small red ghost delete button beside every area. Then: the generated sound
+bed as its own experiment, with four sliders (Dichte, Tonhöhe, Klangfarbe,
+Weite) and Play, no timer.
+
+What I did:
+- **The body is Anny's** (github.com/naver/anny, Apache 2.0) on the MakeHuman
+  base mesh (CC0): its neutral shape, `topology/notoes.obj`, read as a file
+  and written into a 295 KB binary (`body-model/SOURCE.md`). No code from that
+  repository runs; installing it needed Python 3.10+ and fetching a toolchain,
+  which this machine does not have and I was not allowed to fetch.
+- **The colour spreads over the skin**, not through space: each area keeps the
+  distance along the surface from where it was held, so it does not jump from
+  an arm to the hip. It is round because the larger of the straight distance
+  and 80 % of the path along the mesh counts.
+- **Regions are computed** from the place on the body and the direction of the
+  skin there: front and back are told apart (Brust / oberer Rücken, Becken /
+  Gesäß). Left and right are the body's own; it starts seen from behind.
+- **three.js 0.170 is loaded from jsDelivr**, before consent, as the harp's
+  Google Fonts are.
+- The 2D versions stay beside the 3D ones (rule 10's versioning).
+
+What I need from Ben: whether the jsDelivr request before consent is fine for
+these pages (vendoring three.js would add about 700 KB to the repository); and
+a PostHog survey on `body_marking_finished` / `sound_session` if they should
+ask anything.
