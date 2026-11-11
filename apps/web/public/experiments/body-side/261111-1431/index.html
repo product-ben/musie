@@ -14,6 +14,7 @@
          liegen — in der Mitte, links oder rechts —, wo die Teilchen sich zu Haufen türmen und langsam hell
          sandfarben werden. Mit dem Finger lenkst du ihn nach links oder rechts; er bleibt so, wenn du loslässt.
          (Die erste Fassung desselben Tages, ein gebogener Strom von oben nach unten, „funktionierte nicht ganz“.)
+         Der Mauszeiger ist der grüne Punkt der Instrumente (DS InstrumentCursor), und der Strom kommt aus ihm.
        - Alles andere wie bei body-resonance 261111-1255: im Kopf nur die Frage, beide Sätze (Ben: „yes“); der
          Countdown und „Weiter zum Reflektieren“ wie in den Instrumenten-Übungen, gestartet mit „Jetzt starten“.
          Die entfernten Texte liegen in ~/Documents/musie-assets/copy/unused-copy.md.
@@ -422,8 +423,19 @@ body { overflow: hidden; }
 
 /* Der Strom: ein Canvas über die ganze Bühne. Kein Scrollen, kein Zoomen mit dem Finger: jede Bewegung lenkt. */
 .musie-stream { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; display: block; touch-action: none;
-  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: default; outline: none; }
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; outline: none; }
 .musie-stream:focus-visible { outline: var(--focus-ring); outline-offset: calc(var(--focus-ring-clearance) * -1); }
+
+/* Der Zeiger der Instrumente (DS InstrumentCursor, musy-components.css „INSTRUMENT CURSOR“, Ben 2026-11-11): der grüne
+   Punkt, --instrument-cursor-size und --instrument-cursor-color aus den Amendments; der Strom kommt aus ihm.
+   Die Regel für [data-musy-instrument-cursor] (cursor: none) liegt schon im gelesenen CSS. */
+.musy-instrument-cursor { position: fixed; top: 0; left: 0; z-index: calc(var(--z-toast) + 1);
+  inline-size: var(--instrument-cursor-size); block-size: var(--instrument-cursor-size);
+  margin: calc(var(--instrument-cursor-size) / -2) 0 0 calc(var(--instrument-cursor-size) / -2);
+  border-radius: var(--radius-full); background-color: var(--instrument-cursor-color);
+  pointer-events: none; visibility: hidden; will-change: transform; }
+.musy-instrument-cursor[data-shown] { visibility: visible; }
+@media (forced-colors: active) { .musy-instrument-cursor[data-shown] { visibility: hidden; } }
 
 /* Einwilligung und Ende: die Karte aus den anderen Experimenten. */
 .musie-dialog { color: var(--on-surface); }
@@ -743,6 +755,31 @@ function frame(now) {
 }
 let ariaAt = 0;
 requestAnimationFrame(frame);
+
+/* ── Der Zeiger der Instrumente: DS InstrumentCursor, hier ohne React nachgebaut, mit derselben Regel ──
+   Eine Maus oder ein Stift über der Bühne: der grüne Punkt folgt und die Bühne versteckt den System-Zeiger. Hält die
+   Bühne den Zeiger fest (gezogen über ihren Rand), bleibt er. Über einem Knopf, der über ihr liegt: der normale
+   Zeiger, kein Punkt. Ein Finger nie. Verlässt der Zeiger das Dokument, verschwindet er. */
+(() => {
+  const dot = document.createElement('div');
+  dot.className = 'musy-instrument-cursor'; dot.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(dot);
+  let shown = false;
+  const show = (on) => {
+    if (on === shown) return; shown = on;
+    if (on) { const theme = stream.closest('[data-theme]')?.getAttribute('data-theme'); if (theme) dot.setAttribute('data-theme', theme); dot.setAttribute('data-shown', ''); stream.setAttribute('data-musy-instrument-cursor', ''); }
+    else { dot.removeAttribute('data-shown'); stream.removeAttribute('data-musy-instrument-cursor'); }
+  };
+  const move = (e) => {
+    if (e.pointerType === 'touch') { show(false); return; }
+    const on = e.target === stream || stream.hasPointerCapture(e.pointerId);
+    if (on) dot.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+    show(on);
+  };
+  window.addEventListener('pointermove', move, { passive: true });
+  window.addEventListener('pointerdown', move, { passive: true });
+  document.documentElement.addEventListener('pointerleave', () => show(false));
+})();
 
 /* ── Lenken: Maus, Finger oder Tastatur ── */
 const sayDir = (d) => (Math.abs(d) < 0.2 ? 'in die Mitte' : `${Math.round(Math.abs(d) * 100)} Prozent nach ${d < 0 ? 'links' : 'rechts'}`);
