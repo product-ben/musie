@@ -159,11 +159,12 @@ export const Default: Story = {};
 /** All four fill postures. `ghost` is the default and the one the prototype
  *  reaches for most; `primary` is the Listen-step transport control.
  *
- *  `secondary` AND `outline` ARE ONE BORDER APART, which is the whole of the
- *  difference and the reason both exist: secondary fills with
- *  `--surface-raised`, outline fills with nothing. On a page of raised cards
- *  the fill is what makes a control read as another card — which is why the
- *  Card Deck's two chevrons took the outline on 2026-10-07. */
+ *  `secondary` AND `outline` ARE ONE FILL APART, which is the reason both
+ *  exist: secondary fills with `--surface-raised`, outline fills with
+ *  nothing. Since 2026-11-11 the border differs too — secondary's rests at
+ *  `--border-subtle` (the fill sets it off), outline keeps `--border-strong`
+ *  (the border is all it has). The Card Deck's two chevrons took the outline
+ *  on 2026-10-07 and went back to secondary on 2026-11-11. */
 export const Variants: Story = {
   render: (args) => (
     <Row label="variant">

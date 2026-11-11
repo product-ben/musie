@@ -204,9 +204,14 @@
   border-color: var(--interactive-primary-border);
   color: var(--interactive-primary-on);
 }
+/* `--border-subtle` at rest since 2026-11-11 (Ben, Figma *Ready to build*):
+   the filled control now marks its edge quietly — the fill already sets it
+   off — while `outline`, which has only its border, keeps `--border-strong`.
+   Same change, same day, as `.musy-btn--secondary`. Hover and press are
+   untouched. */
 .musy-icon-btn--secondary {
   background-color: var(--surface-raised);
-  border-color: var(--border-strong);
+  border-color: var(--border-subtle);
   color: var(--on-surface);
 }
 /* The border and the glyph, and nothing behind them — `.musy-btn--outline`'s
@@ -494,16 +499,27 @@
   border-color: var(--interactive-primary-border);
   color: var(--interactive-primary-on);
 }
+/* ── THE RESTING BORDER WENT QUIET (Ben, 2026-11-11) ──────────────────────
+   `--border-subtle`, was `--border-strong`. The Figma *Ready to build* frames
+   fill every control in the /exercises toolbar `secondary` (D6), and a row of
+   raised pills each ringed in the strong green read heavier than the cards
+   below them. The fill is what sets this control off the page, so its edge
+   can step back; `outline` has no fill and keeps the strong border. The
+   label carries the control's identity, so 1.4.11 does not need the edge at
+   3:1 here. Hover (`--interactive-ghost-border-hover`) and press are
+   untouched. */
 .musy-btn--secondary {
   background-color: var(--surface-raised);
-  border-color: var(--border-strong);
+  border-color: var(--border-subtle);
   color: var(--on-surface);
 }
 /* The border and the label, and nothing behind them. `--border-strong` rather
    than `--interactive-primary-border`: an outline button is a QUIET control
    whose job is to not interrupt the surface it sits on, and borrowing the
    primary's border colour would make it read as a primary that failed to
-   paint. Same border colour as `secondary`, no background. */
+   paint. No background. (It was the same border colour as `secondary` until
+   2026-11-11, when secondary's went to `--border-subtle`; outline kept the
+   strong one, because without a fill the border is all it has.) */
 .musy-btn--outline {
   background-color: transparent;
   border-color: var(--border-strong);
