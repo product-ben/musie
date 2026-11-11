@@ -10998,3 +10998,120 @@ Why: Ben, 2026-11-09.
 
 What I need from Ben: nothing. The motion switch's prompt is the one part
 no emulator walks — it needs an iPhone.
+
+## /exercises: the chevrons beside the deck step cards, and goal stepping is gone — RESOLVED
+
+Where: `routes/Exercises.tsx`, `packages/design-system/src/CardDeck.tsx`;
+docs/plans/exercises-ready-to-build.md D1
+
+What I checked: the Figma section *Ready to build* (`107:2578`). The phone
+frames draw chevrons beside the pile; frame A still carried the captured names
+„Vorheriges Ziel“ / „Nächstes Ziel“, while the updated desktop frame draws
+the deck's own card pair and no goal stepper at all.
+
+What I did: on phones CardDeck's previous/next became two gutter strips the
+height of the pile (the whole strip is the target, per the frame's
+annotation); from --bp-md the pair stays beside the card. The headline's two
+goal chevrons (2026-10-16) and `exercises.goal.previous`/`.next` are deleted.
+
+Why: Ben, 2026-11-11: „Cards!“ One meaning per axis.
+
+What I need from Ben: nothing. On a phone a swipe must now start on the card,
+not in the gutter — the strips are buttons.
+
+## /exercises: the goal is an InlineButton; InlineLink is deprecated — RESOLVED
+
+Where: `packages/design-system/src/InlineButton.tsx` (new), `InlineLink.tsx`,
+the seven call sites (LegalLinks ×2, SessionReflect, SignInGate ×4,
+Exercises); D2–D4
+
+What I did: a new Layer 2 component — text in the parent's ink, optional
+16px glyph in a 24px box, a standing 2px `--border-strong` underline (the
+1.4.1 cue now that the word is not coloured), 4px inset pulled back 4px.
+InlineLink is `@deprecated` and has no caller left.
+
+Why: Ben, 2026-11-11: „it's inline button. With this, please deprecate
+inline link“; underline „Strong“, „2px“; „one“ target.
+
+What I need from Ben: whether InlineLink is deleted now that nothing imports
+it, or kept deprecated for a while. It stays until you say.
+
+## /exercises: three goals, each a verb; *Musie kennenlernen* retired — RESOLVED
+
+Where: `supabase/migrations/20261111120000_three_goals.sql`,
+`lib/content.ts` (`getGoals` filters `retired`), `i18n/{de,en}.ts`; D5
+
+What I did: *entspannen* (default, sort 1) · *Energie sammeln* ·
+*Achtsamkeit üben*; English *relax · recharge · practise mindfulness*. The
+headline is „Lass uns zusammen {goal}“ / "Let's {goal} together". The goal
+`get-to-know-musie` is RETIRED, not deleted: `sessions.goal_id` still names it
+on old diary entries (`on delete set null` would blank them). New *Warum?*
+texts for relax and wake-up.
+
+Why: Ben, 2026-11-11.
+
+What I need from Ben: a read of the new German and English copy (labels,
+purposes, both *Warum?* texts, `exercises.headline.none`), and `pnpm db:sync`
+after the merge — hosted has no `goals.retired` until then, and the app
+cannot load goals without it.
+
+## Secondary: filled again on /exercises, and its border went quiet — RESOLVED
+
+Where: `musy-components.css` (`.musy-btn--secondary`,
+`.musy-icon-btn--secondary`), `CardDeck.tsx` (the pair), `Exercises.tsx`
+(Shuffle); D6
+
+What I did: Shuffle and the deck's card pair are `secondary` again (reversing
+2026-10-07, which made both `outline`). Secondary's resting border is
+`--border-subtle` instead of `--border-strong`, in Button and IconButton, as
+the Figma sets now draw it; hover, press and `outline` are unchanged.
+
+Why: Ben, 2026-11-11: „Both Secondary“, and his update to the Figma sets.
+
+What I need from Ben: nothing. The 2026-10-07 argument (a filled control
+beside a pile reads as another card) is kept in the comments in case the row
+starts to look heavy.
+
+## /exercises shows at most three exercises; the count moved to the onboarding card — RESOLVED
+
+Where: `routes/Exercises.tsx` (`SUGGESTED = 3`, the switch),
+`components/DeckGuide.tsx`; D10
+
+What I did: the pile and the list show the first three of a goal; a Switch
+„Alle Übungen zeigen“ under the dots appears when the goal has more (today
+only *Entspannen*, with 6) and resets on a goal change. The onboarding card
+opens with „Musie schlägt dir immer nur drei Übungen vor, damit du einfacher
+aussuchen kannst.“ — the number is `numberWord(SUGGESTED)`.
+
+Why: Ben, 2026-11-11: „Parameter: 3“, „Übungen“, a switch below the dots.
+
+What I need from Ben: nothing.
+
+## The onboarding card swipes away like a card; CardDeck's `navActions` removed — RESOLVED
+
+Where: `CardDeck.tsx` (`cover` takes the deck's drag and fling,
+`onCoverDismiss`), `Exercises.tsx`; D11, T3b
+
+What I did: the existing DeckGuide card leaves left or right with the cards'
+own motion; the pair, the arrow keys, the wheel and the dots send it too, and
+a press still dismisses it. The help button moved from the deck's
+`navActions` row into the toolbar (IconButton `sm`, 40px, new token
+`--target-sm`, gap G6), and `navActions` is deleted.
+
+Why: Ben, 2026-11-11.
+
+What I need from Ben: nothing. Real touch (and iOS Safari's click after a
+touch move) is untested — it needs a phone.
+
+## CtaButton is called Button — RESOLVED
+
+Where: `packages/design-system/src/Button.tsx` (was `CtaButton.tsx`), every
+importer, the stories, the docs, CLAUDE.md's wording, the Figma set; D12
+
+What I did: a total rename, no alias export; base-ui's own `Button` is
+imported as `BaseButton` where the names collide. Append-only logs keep the
+old name where they record the past.
+
+Why: Ben, 2026-11-11: „Rename CTA to button everywhere“.
+
+What I need from Ben: nothing.
