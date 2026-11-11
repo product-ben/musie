@@ -1247,8 +1247,9 @@ export const de: Messages = {
      die Überschrift verspricht, was du starten kannst, der Stapel zeigt, was
      es gibt. Begründet in GOAL-FILTER.md §7.
 
-     '{goal}' WIRD ABSICHTLICH NICHT GEFÜLLT. Der Platzhalter markiert, wo der
-     `InlineLink` steht; `i18n/slot.ts` teilt den fertigen Satz daran. Genau
+     '{goal}' WIRD ABSICHTLICH NICHT GEFÜLLT. Der Platzhalter markiert, wo das
+     Ziel als Steuerelement steht (damals ein `InlineLink`, seit 2026-11-11
+     ein `InlineButton`); `i18n/slot.ts` teilt den fertigen Satz daran. Genau
      deshalb ist das EIN Satz pro Sprache und kein Vorn-und-Hinten-Paar: der
      Platzhalter darf überall stehen, auch zuerst, und wer übersetzt, liest
      einen Satz. Das Wort danach ist `purpose` aus `goal_i18n` und damit

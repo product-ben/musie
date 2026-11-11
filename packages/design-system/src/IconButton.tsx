@@ -41,9 +41,10 @@ export type IconButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 
    Button does NOT get `sm`, on purpose: its `min` already IS the 40px
    control, and a second name for the same height would be a rung nobody can
-   choose between. That breaks the rule both headers state — the two ladders
+   choose between. That breaks the rule the two ladders kept until now — they
    read identically, `min` named so on both for that reason — and it breaks it
-   knowingly. Do not "fix" the asymmetry by adding `sm` to Button.
+   knowingly; Button.tsx's header and §7.4 say so too. Do not "fix" the
+   asymmetry by adding `sm` to Button.
 
    Unlike `min`, `sm` takes no baked-in margin: 40px clears 2.5.8 on its own,
    without the spacing exception, so there is nothing for a margin to earn. */
@@ -67,8 +68,9 @@ export interface IconButtonProps
   className?: string;
 }
 
-/* Two ladders, one word: the BUTTON's `sm` (40px) carries the ICON's `md`
-   (20px), the same glyph as `primary` — 4px less box is not a smaller glyph. */
+/* Two ladders, one word: the ICON BUTTON's `sm` (40px) carries the ICON's
+   `md` (20px), the same glyph as `primary` — 4px less box is not a smaller
+   glyph. */
 const ICON_FOR_TARGET: Record<IconButtonSize, IconSize> = {
   min: 'sm', sm: 'md', primary: 'md', comfort: 'lg', guided: 'lg',
 };

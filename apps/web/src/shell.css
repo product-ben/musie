@@ -2976,8 +2976,10 @@ html[data-musy-scroll-snap] {
    rung — and these are neither prose nor essential to any task: they are two
    destinations whose own pages carry everything that matters. The thing that
    must be legible is that they EXIST, which is a question of contrast and
-   target size rather than of type step, and `InlineLink` inherits its size
-   from here while keeping its own 44px row.
+   target size rather than of type step. `InlineButton` inherits its type step
+   from here and brings its own contrast: words in `--on-surface`, not this
+   rule's muted ink, over a `--border-strong` underline. (It was `InlineLink`
+   in the accent colour until 2026-11-11.)
 
    --space-gap-inline between the words, not --space-gap-related: this is a run
    of items on ONE line, which is the rung that token names. Centred, because
@@ -2997,7 +2999,7 @@ html[data-musy-scroll-snap] {
 
 /* The middot. It is `aria-hidden` in the markup — two link names with
    punctuation read between them is worse than two link names — so all this has
-   to do is match the ink of the words it separates rather than the links'. */
+   to do is keep the row's muted ink rather than take the links' `--on-surface`. */
 .musie-legal > span {
   color: var(--on-surface-muted);
 }

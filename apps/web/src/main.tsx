@@ -11,10 +11,15 @@ import { RouterProvider } from 'react-router';
  *
  *   musy-fonts.css                  @font-face for --font-display / --font-text
  *   musy-foundations.css            the whole token system, [LOCKED]
- *   musy-foundations-amendments.css token gaps G1 (--icon-stroke-sm) and
- *                                   G2 (--border-style-dashed)
- *   musy-components.css             consumes both; loading it before the
- *                                   amendments leaves those two unresolved
+ *   musy-foundations-amendments.css token gaps G1–G6, staged until Layer 1
+ *                                   absorbs them: G1 (--icon-stroke-sm),
+ *                                   G2 (--border-style-dashed), G3 (--on-scrim),
+ *                                   G4 (--measure-figure), G5 (the
+ *                                   --instrument-* family), G6 (--target-sm)
+ *   musy-components.css             consumes all of them but G4, which only
+ *                                   the app's own sheets use; loading it
+ *                                   before the amendments leaves them
+ *                                   unresolved
  *
  * The app's own sheets come last so they can build on the tokens.
  *

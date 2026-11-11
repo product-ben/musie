@@ -19,8 +19,14 @@
  * control: a "change" beside a value, a dismiss inside a line of text. The
  * stylesheet bakes in the --sp-2 margin that earns 2.5.8's spacing exception,
  * the same way §7.2's min rung does, so the target cannot be made illegal by
- * placing it. Named `min` rather than `small` so the ladder reads identically
+ * placing it. Named `min` rather than `small` so the rung has the same name
  * on this component and on Icon Button.
+ *
+ * THE LADDERS ARE NOT IDENTICAL, ON PURPOSE (Ben, 2026-11-11, A8). Icon
+ * Button has `sm` (40px, --target-sm, gap G6) and this component does not:
+ * the --sp-2 block padding draws `min` about 40px tall already, so a second
+ * name for that height would be a rung nobody could choose between.
+ * IconButton.tsx's size note has the whole of it. Do not add `sm` here.
  *
  * ── THERE ARE NO ACCENT CTAs ANY MORE (Ben, 2026-10-05) ───────────────────
  * `accent` (then ocher) and `accent-alt` (purple) were variants of this

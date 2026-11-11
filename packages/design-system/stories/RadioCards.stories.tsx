@@ -335,23 +335,28 @@ export const WithError: Story = {
 export const Tablet: Story = { decorators: [fixedWidth(834)] };
 
 /* ── THE TEXT-ONLY VARIANT (2026-10-15) ────────────────────────────────────
-   `image` and `imageAlt` are a union — both or neither — so these four options
-   are typed without them rather than with empty strings. The goal sheet on
-   /exercises is the call site: a goal has no artwork, and four placeholder
-   squares would be decoration standing in for information.
+   `image` and `imageAlt` are a union — both or neither — so these three
+   options are typed without them rather than with empty strings. The goal
+   sheet on /exercises is the call site: a goal has no artwork, and three
+   placeholder squares would be decoration standing in for information.
 
-   THE COPY IS THE REAL COPY, in English, including the asymmetry that matters:
-   only the fourth card carries a description. Ben, 2026-10-15 — the first
-   three goals name a state you already know you want, and Mindfulness is the
-   abstract one. A story that gave all four a body would make the component
+   THE COPY IS THE REAL COPY, in English — the three goals on offer since
+   2026-11-11 (`20261111120000_three_goals.sql`) — WITH ONE DELIBERATE GAP:
+   Recharge is passed without its *Why?*. Every goal carries one in the
+   content now, but `description` stays optional — `goal_i18n.why` may still
+   be null — and a story that gave every card a body would make the component
    look like it required one.                                               */
 const GOALS = [
-  { value: 'get-to-know-musie', headline: 'A way into Musie' },
-  { value: 'relax', headline: 'Relaxation' },
-  { value: 'wake-up', headline: 'Energy' },
+  {
+    value: 'relax',
+    headline: 'Relax',
+    descriptionLead: 'Why?',
+    description: 'When your body lets go of tension, your head often clears too. My exercises help you slow down with music.',
+  },
+  { value: 'wake-up', headline: 'Recharge' },
   {
     value: 'mindfulness',
-    headline: 'Mindfulness',
+    headline: 'Practise mindfulness',
     descriptionLead: 'Why?',
     description: 'More mindfulness helps you stay calm in stressful moments and notice what you need right now. My exercises help you practise that with music.',
   },
@@ -367,7 +372,7 @@ export const TextOnly: Story = {
     legend: 'What do you need right now?',
     legendHidden: true,
     options: GOALS,
-    value: 'get-to-know-musie',
+    value: 'relax',
   },
 };
 
@@ -380,14 +385,14 @@ export const TextOnly: Story = {
  * anything at all into it.
  *
  * Ignored without a description — a lead-in to nothing is not a sentence —
- * which is why the first three cards above draw no bold word despite being
- * passed one by the screen.
+ * which is why Recharge below draws no bold word despite being passed one,
+ * exactly as the screen passes it to every card.
  */
 export const DescriptionLead: Story = {
   args: {
     name: 'goal-lead',
     legend: 'What do you need right now?',
-    options: [GOALS[3], { ...GOALS[1], descriptionLead: 'Why?' }],
+    options: [GOALS[2], { ...GOALS[1], descriptionLead: 'Why?' }],
     value: 'mindfulness',
   },
 };
