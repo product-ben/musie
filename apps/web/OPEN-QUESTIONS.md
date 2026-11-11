@@ -11081,6 +11081,11 @@ in the header; a Base UI slider under the body that turns it, with dragging
 still turning it (both, in step); the countdown and „Weiter zum Reflektieren“
 as in the instruments exercises, but started by an explicit „Jetzt starten“,
 not by the first area; the face in front at the start; the person sitting.
+Later the same day: a second slider for the other axis (dragging up/down
+tilts, left/right turns); „Flächen bearbeiten“ became a ghost
+„Flächen löschen“, with a zoom where areas lie too close to delete; a hold on
+an existing area makes a new one again, and overlapping areas get different
+greens.
 
 What I did:
 - **The texts that went** (the rest of the question, the help ladder, the
@@ -11106,6 +11111,21 @@ What I did:
   viewport: on an iPhone in Safari (about 660 px visible) a fixed share was
   either too tall for the open row or tiny. It shrinks a little when the row
   opens.
+- **Tilting** is a vertical slider beside the body, ±90° (from above to from
+  below), and a vertical drag. A drag's first pixels pick its axis: clearly
+  sideways only turns, clearly up or down only tilts, diagonal does both, so
+  turning no longer tips the body by accident. The camera keeps the whole
+  bounding sphere in view, so no angle crops it.
+- **Delete buttons that would overlap** (centres under 36 px apart: a 24 px
+  button and its margin) stand as one zoom-in button. A tap zooms toward
+  those areas until their buttons are apart (up to 10×), and turning and
+  tilting then pivot there. The zoom-out button or „Fertig“ goes back. With
+  no areas the button is disabled; deleting the last one ends delete mode.
+- **Every hold starts a new area**, on an existing one too. Overlapping areas
+  take the first of `--green-9`, `-6`, `-12`, `-8` that none of their
+  neighbours has, and the newer one is drawn on top. The four are the steps
+  that differ most on sand; the scale is muted, so a fifth overlapping area
+  repeats one.
 
 What I need from Ben: the same two questions as the entry above (jsDelivr
 before consent; a PostHog survey). And one judgement: painting before
