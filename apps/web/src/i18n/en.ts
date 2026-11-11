@@ -1736,11 +1736,9 @@ export const en = {
      and written for the day that stops being true. */
   'exercises.headline.together': "Let's {goal} together",
   'exercises.headline.none': 'No exercises to {goal} together yet',
-  /* LEAVING IN WAVE 2 of docs/plans/exercises-ready-to-build.md, with the
-     goal chevrons below: `routes/Exercises.tsx` still renders both until the
-     screen moves to `exercises.headline.together`, and deleting a key a
-     screen still reads fails the typecheck in a file this change does not
-     own.
+  /* GONE IN WAVE 2 (2026-11-11): the counted forms below were deleted once
+     `routes/Exercises.tsx` moved to `exercises.headline.together`; the
+     note where they stood says so.
 
      The offer as it was. "Here are" / "Here is" is why the plural forms
      earned their keep twice over — the verb agrees as well as the noun,

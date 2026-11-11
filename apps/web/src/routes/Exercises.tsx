@@ -44,10 +44,12 @@
  * that does not navigate simply stops being busy and the deck puts itself
  * back.
  *
- * ── ALL FIVE EXERCISES, INCLUDING THE THREE THAT ARE NOT BUILT ────────────
+ * ── UNBUILT EXERCISES ARE SHOWN, NOT FILTERED OUT ─────────────────────────
  * A press on an unbuilt one opens `NotImplementedLightbox`, which is the same
- * refusal the list gives. Filtering them out would quietly show two exercises
- * where the product has five.
+ * refusal the list gives. Filtering them out would quietly show fewer
+ * exercises than the product has. (This block said "all five" until the
+ * catalogue grew; since 2026-11-11 the pile shows at most three per goal —
+ * see `SUGGESTED`.)
  *
  * ── NOTHING ON A CARD GOES THROUGH THE CATALOGUE ──────────────────────────
  * The name, the description, the picture and the timeframe are the exercise's,
@@ -186,9 +188,10 @@ export function Exercises() {
     cacheGoal(next);
     /* CHOOSING CLOSES IT. One tap, like every other choice on this screen —
        and closing is also what ANNOUNCES the change: Lightbox restores focus
-       to the link that opened the sheet, and that link's label is now the new
-       goal, so a screen reader hears the new state as the focus lands. A live
-       region on the headline would say it a second time. */
+       to whatever opened the sheet. From the headline's InlineButton that
+       label is now the new goal, so a screen reader hears the change as the
+       focus lands; from *Ziel ändern* it is not, which is what the polite
+       live region further down is for (2026-11-11). */
     setSheetOpen(false);
   }, []);
 
@@ -420,10 +423,11 @@ export function Exercises() {
      person made the choice, so they are expecting the answer and it can wait
      for a gap.
 
-     IT ANNOUNCES THE PURPOSE, NOT THE LABEL, and the two are different
-     strings for the same goal — *Entspannen* against *Entspannung*. The
-     label is the sheet's card headline and reads like the fuller answer;
-     the purpose is what the HEADING now says. A live region exists to
+     IT ANNOUNCES THE PURPOSE, NOT THE LABEL. Until 2026-11-11 they were
+     different strings for the same goal — *Entspannen* against
+     *Entspannung*; since the three-goals migration they are one phrase but
+     for the capital (*Entspannen* / *entspannen*), and the purpose is still
+     what the HEADING says. A live region exists to
      report what changed on screen, so hearing a word the screen does not
      show would be the one confusing option. Caught by reading the announced
      text beside the rendered line rather than by thinking about it. */
@@ -991,7 +995,7 @@ export function Exercises() {
                 deprecated), as the quietest control beside the pile. The
                 *Ready to build* frames put it in this row, filled like its
                 neighbours, at the new 40px `sm` rung so it stands level with
-                the CTA `min`s beside it (G6, `--target-sm`).
+                the Button `min`s beside it (G6, `--target-sm`).
 
                 It still does not toggle: pressing it while the legend is up
                 would be a second way to dismiss something that already goes

@@ -1253,11 +1253,11 @@ export const de: Messages = {
      deshalb ist das EIN Satz pro Sprache und kein Vorn-und-Hinten-Paar: der
      Platzhalter darf überall stehen, auch zuerst, und wer übersetzt, liest
      einen Satz. Das Wort danach ist `purpose` aus `goal_i18n` und damit
-     Inhalt — 'Entspannen', nicht 'Entspannung'.
+     Inhalt — seit 2026-11-11 ein Verb: 'entspannen', 'Energie sammeln',
+     'Achtsamkeit üben'.
 
-     'zum Musie kennenlernen' ist Bens Wortlaut und bleibt so. Der Duden will
-     'zum Musie-Kennenlernen' oder 'um Musie kennenzulernen'; in
-     OPEN-QUESTIONS notiert, nicht still korrigiert. */
+     ('zum Musie kennenlernen' war Bens Wortlaut; es ist am 2026-11-11 mit
+     dem Ziel gegangen.) */
   /* ── Der Einstieg, und warum er ein eigener Schlüssel ist (Ben, 2026-10-15)
      Die Überschrift bemerkt erst, dass jemand da ist, und sagt dann, was es
      gibt. Genau diese Hälfte hat im Usertesting gefehlt: *warum sollte ich
