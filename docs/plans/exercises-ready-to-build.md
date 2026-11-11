@@ -14,6 +14,18 @@ the repo. **This file is the current state**: update it after every task.
   interfaces the streams share are frozen below, so wave 1 can start.
 - Status words: **open** · **in progress** · **done** · **blocked**.
 
+## Progress
+
+- **Wave 0** done: branch `exercise-selection-nov-cleanup` at `657069d` (this plan) on `origin/main` `1fe3612`; integration worktree `../musie.worktrees/exercise-selection-nov-cleanup`.
+- **Figma housekeeping** done: `96:8303` deleted; the CTA set, its page and its showcase frames renamed to **Button**.
+- **S3** done and merged: `41d1f45` → merge `8c2ca9a`. `--target-sm` is gap **G6** (G4 = `--measure-figure`, G5 = the instruments family). It measured 40×40; CtaButton `min` measured 39px tall at 393 and 40.4px at 1440.
+  - Follow-ups for the main session, outside S3's files:
+    - the token-gap list in `apps/web/src/main.tsx`'s header
+    - `reference/design_system/docs/08-token-gaps.md`, which has no G4–G6 entries
+    - CtaButton's §7.4 sentence that the ladders are "named identically"
+  - Pre-existing, left alone: G3 means `--on-scrim` in the amendments file and `--border-strong-hover` in `08-token-gaps.md`.
+- **S1, S2, S4** running.
+
 ## Decisions
 
 | # | Decision |
