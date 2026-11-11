@@ -39,13 +39,17 @@ the repo. **This file is the current state**: update it after every task.
 - `pnpm check` green on the merged branch (S3 + S4 + S1).
 - **Needs Ben** — denied to agents in `.claude/settings.json`, rule 9: run `supabase db reset` and then `pnpm gen:types` **from the integration worktree** (the cwd decides which migrations apply). After that the main session runs `pnpm test:db` and diffs the generated `database.types.ts` against S4's hand edit.
 - **Follow-ups collected for wave 2 or 3** (stale names and comments outside the streams' files):
-  - `i18n/parity.test.ts` `HEADLINES`: gains `headline.together`, loses `one`/`other`
+  - ~~`i18n/parity.test.ts` `HEADLINES`~~ (done in `7d2a17a`)
   - `GoalSheet.tsx` header: no longer "one of four cards has a body"
   - `apps/docs/features/goals.md` and `exercises.md`: four goals, the wrong default
   - `RadioCards.stories.tsx`: uses `get-to-know-musie`
   - `e2e/support.ts` ~329: *Musie kennenlernen*
   - `shell.css` ~2979 and the `.musie-legal` comment: InlineLink and the accent colour
   - InlineLink mentions in comments in `i18n/{en,de}.ts`, `i18n/slot.ts`, `i18n/parity.test.ts` and `apps/docs/features/goals.md:173`
+- **Screen (wave 2)**: `7d2a17a` — T6, T7, T8 and T9's count sentence, plus the four retired keys deleted. `pnpm check` green.
+  - Still waiting on S2: T9's swipe wiring (`onCoverDismiss` → `closeGuide`) and T3b (delete CardDeck's `navActions`, which now has no caller).
+  - **InlineLink stays deprecated, not deleted.** Ben said *deprecate*; it has no callers left, and deleting it is his call.
+- **S5 (Figma)** running as a subagent: `target/sm`, IconButton's 20 `Size=sm` variants, and the `InlineButton` set and page, measured from the rendered CSS.
 - **S2** running.
 
 ## Decisions
