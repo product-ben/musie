@@ -1711,10 +1711,39 @@ export const en = {
   'exercises.headline.morning': 'Good morning.',
   'exercises.headline.day': 'Good afternoon.',
   'exercises.headline.evening': 'Good evening.',
-  /* The offer. "Here are" / "Here is" is why the plural forms earn their
-     keep twice over — the verb agrees as well as the noun, which no
-     interpolated count can do. `none` drops the "here" entirely: *Here are
-     no exercises* is grammatical and reads like a shrug.
+  /* ── THE OFFER BECOMES AN INVITATION (Ben, 2026-11-11) ─────────────────
+     *Let's {goal} together*. The count leaves the headline: the pile shows
+     at most three (D10) and says so on the guide card, so a number above it
+     would only ever say *three*. What is left is the half the user testing
+     asked for — what this is FOR — said as something Musie and the reader do
+     together rather than an inventory.
+
+     `{goal}` IS STILL NEVER FILLED. It is where the goal control goes
+     (`i18n/slot.ts`), and it is now a VERB PHRASE — `goal_i18n.purpose`,
+     *relax*, *recharge*, *practise mindfulness* — which is why it sits
+     between *Let's* and *together* rather than after *to*. English puts the
+     slot mid-sentence and German puts it last; one template per locale is
+     what lets them differ.
+
+     NO FULL STOP, for the reason the forms below give: in German the slot is
+     the last thing in the sentence and the control ends in a glyph.
+
+     `none` is the same sentence's empty case. It keeps the slot, so the goal
+     can still be changed from the headline, and it keeps *together*, so the
+     two read as one voice. Unreachable under today's mapping —
+     `db.content.db.test.ts` asserts every offered goal serves something —
+     and written for the day that stops being true. */
+  'exercises.headline.together': "Let's {goal} together",
+  'exercises.headline.none': 'No exercises to {goal} together yet',
+  /* LEAVING IN WAVE 2 of docs/plans/exercises-ready-to-build.md, with the
+     goal chevrons below: `routes/Exercises.tsx` still renders both until the
+     screen moves to `exercises.headline.together`, and deleting a key a
+     screen still reads fails the typecheck in a file this change does not
+     own.
+
+     The offer as it was. "Here are" / "Here is" is why the plural forms
+     earned their keep twice over — the verb agrees as well as the noun,
+     which no interpolated count can do.
 
      NO FULL STOP ON ANY OF THE THREE, and it is not a style choice: `{goal}`
      is the last thing in two of them, and the link that replaces it ends in
@@ -1722,7 +1751,6 @@ export const en = {
      ellipsis, half a space clear of the word. Seen on screen, in German, at
      393px. The LEAD keeps its stop, because it has a sentence after it to be
      separated from. */
-  'exercises.headline.none': 'No exercises to {goal} yet',
   'exercises.headline.one': 'Here is one exercise to {goal}',
   'exercises.headline.other': 'Here are {count} exercises to {goal}',
   /* NO 'exercises.intro'. It was the subline — "Press a card to start that
@@ -1764,6 +1792,13 @@ export const en = {
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',
+  /* ── THE SWITCH BELOW THE DOTS (Ben, 2026-11-11, D10) ──────────────────
+     The pile deals at most three of a goal's exercises; this switch, drawn
+     only when the goal has more, deals the rest. A verb phrase because it is
+     a control, and *all* rather than a number because the number changes
+     with the goal and the switch does not need it. Not remembered: it resets
+     when the goal changes and on reload (A2). */
+  'exercises.showAll': 'Show all exercises',
   /* THE ONLY FORM NOW. It was the short one of a pair — the long
      `exercises.surpriseMe` was a full-width CTA on this screen — and that
      one went when the control moved into the toolbar. The key keeps its name
@@ -1812,6 +1847,18 @@ export const en = {
      goal is the page's headline, so the row was explaining the largest line
      on the screen; Ben cut it on 2026-10-15 and the key goes with it rather
      than being kept against a row that is not coming back. */
+  /* THE GUIDE'S FIRST LINE SINCE 2026-11-11 (D10): why the pile is short.
+     The pile shows at most three of a goal's exercises, and somebody who
+     knows the catalogue is larger would otherwise read three cards as three
+     missing. It says what Musie does and why, and the reason is the
+     reader's — choosing is easier — not the product's.
+
+     `{count}` IS A WORD, NOT A DIGIT: the screen fills it with
+     `numberWord(SUGGESTED, locale)`, *three*, as running text writes small
+     numbers. The noun is plural and fixed, which is safe while `SUGGESTED`
+     is 3; a suggestion of one would need a second form, like the headline
+     once had. A sentence, so it ends in a full stop. */
+  'exercises.guide.count': 'Musie only ever suggests {count} exercises, so choosing is easier.',
   'exercises.guide.next': 'Swipe for the next exercise',
   'exercises.guide.start': 'Press an exercise to start it',
   'exercises.guide.dismiss': 'Press to continue',
@@ -1835,17 +1882,19 @@ export const en = {
   'exercises.view.deck': 'Stack',
   'exercises.view.list': 'List',
   /* ── THE GOAL, AND THE FOUR THINGS IT NEEDS TO SAY ──────────────────────
-     ALL FOUR goal labels are content and live in `goal_i18n` — they are the
-     product's own words and change by migration. Everything here is chrome:
+     EVERY goal label is content and lives in `goal_i18n` — they are the
+     product's own words and change by migration. Three are offered since
+     2026-11-11 (`20261111120000_three_goals.sql`). Everything here is chrome:
      the question, the bold lead on a card, the way a screen reader is told
      the headline is a control, and the sentence for a goal nothing serves.
 
      NO 'exercises.goal.none'. It was *Discover Musie*, and it was the one
      label in this group that lived here rather than in `goal_i18n` — because
      it named the ABSENCE of a goal and so had no row to be the label of. It
-     has a row now (`get-to-know-musie`, 2026-10-15) and three mapped
-     exercises, so the argument for it being chrome is gone with the thing it
-     argued about. The string moved to the table; it was not deleted.
+     got a row on 2026-10-15 (`get-to-know-musie`), so the argument for it
+     being chrome went with the thing it argued about; the string moved to
+     the table. That row is RETIRED since 2026-11-11 — out of the offer, kept
+     because sessions name it.
 
      NO 'exercises.goal.pill'. It was *Goal: {goal}*, worn by the Funnel
      button in the toolbar, and the headline is the control now. A key nothing
@@ -1864,19 +1913,24 @@ export const en = {
      *WHAT DO YOU NEED RIGHT NOW* rather than *what would you like to achieve
      today* (Ben, 2026-10-15). Achieving is a goal you set; needing is a state
      you are already in, and the people this change is for are mid-hustle
-     rather than mid-plan. It is also what makes the card labels answerable as
-     noun phrases — *Entspannung*, *Energie* — since each one completes
-     "I need …". */
+     rather than mid-plan.
+
+     THE CARDS STOPPED BEING NOUN PHRASES on 2026-11-11. They completed
+     "I need …" — *Relaxation*, *Energy* — and they now repeat the headline's
+     verb phrase as a heading, *Relax*, *Recharge*, *Practise mindfulness*, so
+     the card you press and the sentence that then reports it say the same
+     words (Ben, D5; A6). Read as a spoken answer to the question they still
+     work; the question itself did not change. */
   'exercises.goal.question': 'What do you need right now?',
   /* The bold lead on a goal card, before the two sentences. One word, the
      same on every card that has a body, so it is chrome — the SENTENCES are
      `goal_i18n.why` and differ per goal.
 
-     ONLY ONE OF THE FOUR CARDS HAS A BODY AT ALL (Ben, 2026-10-15): Musie
-     kennenlernen, Entspannung and Energie name themselves, and Achtsamkeit is
-     the abstract one the testing heard *was soll das bringen?* about. So this
-     word is drawn once today, and the card falls back to a headline alone
-     wherever `why` is null. */
+     ALL THREE OFFERED CARDS HAVE A BODY SINCE 2026-11-11 (A6). Until then
+     only Achtsamkeit did — the abstract one the testing heard *was soll das
+     bringen?* about — and the other two named themselves; beside one card
+     that explained itself, they read as unfinished. The card still falls back
+     to a headline alone wherever `why` is null. */
   'exercises.goal.why': 'Why?',
   /* NEVER SEEN, ONLY HEARD. It is appended inside the headline's link as
      sr-only text, so the control announces as "relax, change your goal" while
@@ -1901,7 +1955,11 @@ export const en = {
      is exactly the difference a screen reader cannot see.
 
      "Goal" AND NOT "exercise": they step the FILTER, and the pile changing
-     underneath is the consequence rather than the action. */
+     underneath is the consequence rather than the action.
+
+     LEAVING IN WAVE 2 (D1, 2026-11-11): goal stepping leaves the screen, and
+     the chevrons beside the deck step cards instead. Kept until
+     `routes/Exercises.tsx` stops reading them. */
   'exercises.goal.previous': 'Previous goal',
   'exercises.goal.next': 'Next goal',
   /* Heard, never seen. Choosing in the sheet announces itself — focus
