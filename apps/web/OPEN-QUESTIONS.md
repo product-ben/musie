@@ -11176,3 +11176,48 @@ the computed `box-shadow` is his list in light and in dark (0.205 computes as
 Why: Ben, 2026-11-12, "i want these values".
 
 What I need from Ben: nothing. Answers the open item in the entry above.
+
+## Eight card options, side by side: `/experiments/card-options/` — OPEN
+
+Where: `apps/web/public/experiments/card-options/261112-1137/index.html`
+(built), from `card-options/src/` (`main.tsx`, `options.css`, `chrome.ts`,
+`build.mjs`)
+
+What I did: one page that runs the eight frames of Figma section `134:3835`
+(„karten varianten“) on the REAL deck, switched by a segmented control of the
+numbers 1–8 at the foot of the screen (or the keys 1–8, or `?v=`). It is the
+first experiment built from source rather than hand-written: `CardDeck`, the
+four design-system stylesheets, `styles.css`, `shell.css`, `exercises.css`
+and the app's own hide-on-scroll header are imported as they are, so the
+drag, the fling, the deal and the pile's new shadows are the shipped ones;
+`options.css` changes only what the frames change (corners, card width, where
+the two directions sit). The header, greeting and toolbar are the live DOM of
+/exercises at 393px, copied in (`chrome.ts`). `build.mjs` inlines script and
+style into one static file; the fonts and pictures are the app's own URLs.
+No analytics, nothing stored, `noindex`. Wider than 480px the page shows
+itself in a 393px phone frame, because the frames are phone designs and the
+deck changes layout at `--bp-sm`. Rebuild with
+`node apps/web/public/experiments/card-options/src/build.mjs <yymmdd-hhmm>`.
+
+Three places it departs from the frames, on purpose:
+
+- **Every button in the frames is IconButton `primary` resized to 40px with a
+  1px glyph.** The system has no such rung: `sm` is 40 with a 16px glyph,
+  `primary` is 44 with the bolder 20px one. The page draws what the frames
+  draw. Choosing 2–8 also means choosing a rung, or adding one.
+- **4's arrow pair is a row of its own**, above the start row. In the frame
+  it sits in the empty part of a short card; the pile is as tall as its
+  TALLEST face (Klangreise), which has no empty part, so in 4 every card is
+  44px taller. That is the real cost of 4, so it is shown rather than hidden.
+- **The side chevrons (2, 7, 8) sit on the card's middle.** 2 and 7 draw
+  them 46 and 19px higher; 8 draws them on the middle, and the deck's own
+  strip already centres there. In 2, 7 and 8 only the 40px mark takes a tap
+  (an IconButton's target), where 1 — the app today — makes the whole gutter
+  the button.
+
+Why: Ben, 2026-11-12: „build a new experiment page to compare the 8 different
+card design & interaction options … Use the new shadow on all of them and add
+the latest version of the rest of the page. Add a segmented control (w. just
+the numbers as labels …)“.
+
+What I need from Ben: which variant, and if it has buttons, the rung above.

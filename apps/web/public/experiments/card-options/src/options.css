@@ -1,0 +1,191 @@
+/* card-options — what the eight frames of Figma `134:3835` change, and the
+   bar that switches between them. Everything else on the page is the app's
+   own stylesheets, imported in the app's order by main.tsx.
+
+   An experiment (CLAUDE.md rule 10), so the numbers are the frames' own
+   pixels at 393 wherever Layer 1 has no word for them. `html[data-opt]` is
+   the variant; 1 is the app as it stands and is not mentioned below. */
+
+/* ── THE CARD'S CORNERS ─────────────────────────────────────────────────────
+   The pile carries the shape and the cards inherit it (`border-radius:
+   inherit` down to the face). The picture's own corners follow, minus
+   nothing: its 4px border is drawn inside the same outline. */
+html[data-opt='2'] .musy-deck__pile {
+  border-radius: 20px 20px var(--musy-deck-card-radius-foot) var(--musy-deck-card-radius-foot);
+}
+html[data-opt='2'] .musie-exercise-card__image {
+  border-radius: 20px 20px var(--radius-sm) var(--radius-sm);
+}
+html:is([data-opt='3'], [data-opt='4'], [data-opt='5'], [data-opt='6'], [data-opt='7'], [data-opt='8']) .musy-deck__pile {
+  border-radius: var(--musy-deck-card-radius-foot);
+}
+html:is([data-opt='3'], [data-opt='4'], [data-opt='5'], [data-opt='6'], [data-opt='7'], [data-opt='8']) .musie-exercise-card__image {
+  border-radius: var(--musy-deck-card-radius-foot) var(--musy-deck-card-radius-foot) var(--radius-sm) var(--radius-sm);
+}
+
+/* ── THE CARD'S WIDTH ───────────────────────────────────────────────────────
+   The deck's own knob. At 393 the frames draw 325 (5, 6), 285 (7) and 315
+   (8); 1–4 keep the app's 297 (`100vw - --sp-9`). Written as what is left of
+   the viewport, so a wider phone gets a wider card the way the app's does. */
+html:is([data-opt='5'], [data-opt='6']) .musy-deck { --musy-deck-card-inline: min(22.5rem, 100vw - 68px); }
+html[data-opt='7'] .musy-deck { --musy-deck-card-inline: min(22.5rem, 100vw - 108px); }
+html[data-opt='8'] .musy-deck { --musy-deck-card-inline: min(22.5rem, 100vw - 78px); }
+
+/* ── THE BUTTONS AS THE FRAMES DRAW THEM ────────────────────────────────────
+   Every frame uses IconButton `primary` resized to 40px with the thin 20px
+   glyph. The system has no such rung (`sm` is 40 with a 16px glyph, `primary`
+   is 44 with the bold one), so this draws what the frames draw. */
+.opt-btn.musy-icon-btn { --musy-icon-btn-size: var(--target-sm); }
+.opt-btn .musy-icon { stroke-width: var(--icon-stroke-sm); }
+
+/* ── 2, 7, 8: THE GUTTERS BECOME BUTTONS ────────────────────────────────────
+   The deck's own strips, kept — they are what moves the pile, disabled
+   mid-flight and all — but only the 40px mark answers a press, as an
+   IconButton would, and it sits where each frame puts it rather than in the
+   middle of the strip. Vertically it stays on the card's middle. */
+html:is([data-opt='2'], [data-opt='7'], [data-opt='8']) .musy-deck__strip {
+  pointer-events: none;
+  z-index: var(--z-raised);
+  /* One column exactly as wide as the strip, so a mark wider than it (8: 40
+     in 39) overflows its area instead of growing the track off-screen. */
+  grid-template-columns: minmax(0, 1fr);
+}
+html:is([data-opt='2'], [data-opt='7'], [data-opt='8']) .musy-deck__strip-mark {
+  pointer-events: auto;
+  inline-size: var(--target-sm);
+  block-size: var(--target-sm);
+}
+html:is([data-opt='2'], [data-opt='7'], [data-opt='8']) .musy-deck__strip-mark .musy-icon {
+  stroke-width: var(--icon-stroke-sm);
+}
+/* `unsafe`, so that overflow goes toward the card and not past the screen. */
+html:is([data-opt='2'], [data-opt='7'], [data-opt='8']) .musy-deck__strip--previous {
+  justify-items: unsafe start;
+  padding-inline-start: var(--opt-edge-start, 0px);
+}
+html:is([data-opt='2'], [data-opt='7'], [data-opt='8']) .musy-deck__strip--next {
+  justify-items: unsafe end;
+  padding-inline-end: var(--opt-edge-end, 0px);
+}
+/* 7 draws them 5px in on the left and 7px in on the right. */
+html[data-opt='7'] { --opt-edge-start: 5px; --opt-edge-end: 7px; }
+
+/* ── 3, 4, 5, 6: NO GUTTERS ─────────────────────────────────────────────────
+   The strips stay in the DOM — the variants' own buttons press them — but
+   are not drawn and take no taps. */
+html:is([data-opt='3'], [data-opt='4'], [data-opt='5'], [data-opt='6']) .musy-deck__strip {
+  display: none;
+}
+
+/* ── 3, 6: ON THE PICTURE'S TOP CORNERS ─────────────────────────────────────
+   Raised: Elevation/1 in 3, Elevation/3 in 6. On the card in front only, and
+   on the one being thrown, which is the same card on its way out. */
+html:is([data-opt='3'], [data-opt='6']) .musie-exercise-card { position: relative; }
+.opt-on-image {
+  position: absolute;
+  inset-block-start: 19px;
+  inset-inline: 20px;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.opt-on-image > * { pointer-events: auto; }
+html[data-opt='6'] .opt-on-image { inset-block-start: 17px; }
+html[data-opt='3'] .opt-on-image .opt-btn { box-shadow: var(--elevation-1); }
+html[data-opt='6'] .opt-on-image .opt-btn { box-shadow: var(--elevation-3); }
+.musy-deck__card:not([data-front='true']):not([data-throwing]) :is(.opt-on-image, .opt-on-card) {
+  visibility: hidden;
+}
+
+/* ── 4: AN ARROW PAIR ON THE CARD, OVER THE START ROW ───────────────────────
+   Right-aligned, flat, 8px apart, its trailing edge 36px in from the card's
+   (the frame's 307 on a card ending at 343). */
+html[data-opt='4'] .musie-exercise-card { grid-template-rows: auto 1fr auto auto; }
+.opt-on-card {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding-inline: var(--space-inset-card) 36px;
+  padding-block-end: var(--sp-1);
+}
+
+/* ── 5: DOTS LEFT, A RAISED PAIR RIGHT, ON ONE ROW UNDER THE PILE ───────────
+   The dots start 14px in from the card's edge and the pair ends 3px past it,
+   as drawn. The pair is the deck's `actions` column (card-wide, end-aligned
+   on a phone), taken OUT OF FLOW and set on the dots' row: the stage's
+   bottom is the dots' bottom, and the pair overhangs it by half the
+   difference in height, so the two share a middle. Out of flow rather than
+   pulled up by a margin, which left the body's 32px gap and a stretched row
+   behind it. 12px between the two buttons. */
+html[data-opt='5'] .musy-deck__dots {
+  justify-self: start;
+  margin-inline-start: 14px;
+}
+html[data-opt='5'] .musy-deck__body { position: relative; }
+html[data-opt='5'] .musy-deck__actions {
+  position: absolute;
+  inset-block-end: calc((var(--target-min) - var(--target-sm)) / 2);
+  inset-inline: 0;
+  margin-inline: auto;
+}
+.opt-under-pile {
+  display: flex;
+  gap: var(--sp-3);
+  margin-inline-end: -3px;
+}
+.opt-under-pile .opt-btn { box-shadow: var(--elevation-3); }
+
+/* ── THE SWITCHER ───────────────────────────────────────────────────────────
+   Fixed to the foot of the screen, the system's segmented look with eight
+   numbers in it, a size below the system's 44 so it takes as little of the
+   page as a thumb can still hit. The page keeps room under its last row for
+   it: the segment, the track's padding and border, the bar's padding. */
+:root { --opt-seg-block: 36px; }
+body {
+  padding-block-end: calc(
+    var(--opt-seg-block) + var(--sp-1) * 2 + var(--border-width-hairline) * 3 + var(--sp-2) * 2 +
+    env(safe-area-inset-bottom)
+  );
+}
+.opt-bar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-2) var(--gutter) calc(var(--sp-2) + env(safe-area-inset-bottom));
+  background-color: var(--surface-raised);
+  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+.opt-seg { inline-size: 100%; max-inline-size: 26rem; }
+.opt-seg .musy-seg__option {
+  min-block-size: var(--opt-seg-block);
+  padding-inline: var(--sp-1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── WIDER THAN A PHONE: THE PAGE IN A PHONE ────────────────────────────────
+   The frames are 393px designs, so on a laptop the page runs in a 393px
+   frame of itself (`?frame=1`) rather than in the deck's wide layout. */
+.opt-frame {
+  display: grid;
+  place-items: center;
+  min-block-size: 100vh;
+  box-sizing: border-box;
+  padding: var(--sp-6);
+  background-color: var(--surface-sunken);
+}
+body:has(.opt-frame) { padding-block-end: 0; }
+.opt-frame__device {
+  display: block;
+  inline-size: 393px;
+  block-size: min(852px, 100vh - var(--sp-6) * 2);
+  border: 0;
+  border-radius: 40px;
+  background-color: var(--surface);
+  box-shadow: var(--elevation-3), 0 0 0 var(--border-width-hairline) var(--border-subtle);
+}
+html[data-framed] { scrollbar-width: none; }
+html[data-framed]::-webkit-scrollbar { display: none; }
