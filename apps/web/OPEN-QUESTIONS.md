@@ -11184,3 +11184,115 @@ countdown and „Weiter“, or on a floor above the foot. Whether the particle
 experiment he meant looks like this, and if Lucy has it, what to take from
 it. And, as for the body pages, a PostHog survey on `stream_finished` if it
 should ask anything.
+
+## Sound builder, second version: the body-resonance soundscape is the default
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/` (the first
+version, `261111-1149`, stays beside it)
+
+What I checked: Ben, 2026-11-12 — the soundscape in body resonance sounds
+different from the sound builder's; the default should be exactly the one
+body resonance generates. It was different, and the first version's comment
+was wrong to say otherwise: `261111-1149` had a generator of its own (one
+melody line around the middle, the instrument chosen per note, a low note
+now and then, 3.6 s of reverb). Body resonance (`261111-1255`, and
+`261111-1143` before it) plays deep marimba notes (C2, G2, F2, then C3 or G2)
+every other beat, with high kalimba sparks (C6–G6) above them, and 3.2 s of
+reverb at a fixed level.
+
+What I did:
+- **The generator is body resonance's**, copied line by line, and each of its
+  fixed numbers is now set by a slider. All four sliders start in the middle,
+  and the middle gives exactly the original number. The check: with the same
+  random seed, both pages made 163 identical Web Audio calls in 30 seconds
+  (26 notes: same samples, pitches, volumes, panning, timing, reverb).
+- **What the sliders change**:
+  - Dichte: the gap between beats (×2.3 to ×0.44) and how often a spark sounds.
+  - Tonhöhe: the sparks move within C pentatonic, from an octave lower to a
+    fifth higher. In the top quarter the deep notes also go up an octave; they
+    never go lower, because the marimba sounds poor below C2.
+  - Klangfarbe: which instrument plays the sparks (harp, kalimba, marimba).
+    The harp and marimba play them an octave lower, because their samples
+    end at F4 and C5. The marimba keeps the deep notes.
+  - Weite: the reverb level and the stereo width.
+
+What I need from Ben: whether the sliders should move these things. The
+middle is fixed by his request; how each end sounds is my choice.
+
+## Sound builder, second version, reworked: the deep tone stays; the controls shape the high notes
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/`. It was
+edited in place because it had never been pushed.
+
+What I checked: Ben, 2026-11-12, after hearing the version above:
+- „Lass uns den tiefen Ton immer lassen“, and the headline should say so.
+- The controls apply to the high notes only: the instrument as a segmented
+  control, then musical parameters (Lautstärke, Tonhöhe, Tondauer from
+  staccato to legato).
+- The one exception is ruhig ↔ bewegt (no longer „lebendig“). It applies to
+  both layers, needs a much bigger difference, and should be in BPM.
+- Pitch: think of 88 piano keys with c′ in the middle.
+
+What I did:
+- **The deep tone** (marimba C2, G2, F2, then C3 or G2) plays exactly as in
+  body resonance. Only the tempo moves it.
+- **Headline**: „Der tiefe Ton bleibt. Die hohen Töne baust du dir.“
+  Under it: „Nur das Tempo gilt für beide.“
+- **Instrument**: the design system's SegmentedControl, with markup and CSS
+  read from the running app (`/privacy`). Its keyboard behaviour is written
+  by hand. All three options use one glyph (`music`), the way the language
+  control uses `Languages` for both languages: the app has no icon per
+  instrument.
+- **Lautstärke**: from −18 dB to +8 dB around body resonance's level, shown
+  as pp, p, mp, mf or f. The default is mp.
+- **Tonhöhe**: in piano keys, shown in Helmholtz names (c′ is the middle C).
+  The high notes move within a fifth, from c′–g′ up to c′′′′–g′′′′; the
+  default is c′′′–g′′′. They stay in C pentatonic.
+- **Tondauer**: from 0.15 s (staccato) to body resonance's ring (legato).
+  **The default is the legato end**, because in body resonance every high
+  note rings until the next one starts. The slider can only shorten them;
+  longer than that would need sustained or looped samples.
+- **Tempo**: 20 to 120 BPM. The default is 36 BPM, body resonance's average:
+  a beat every 1.3–2.0 s, and the irregularity is kept at every tempo. Ruhig
+  also thins out the high notes. Bewegt adds a second high note between
+  beats. In 20 seconds: 8 notes at ruhig, 94 at bewegt.
+- **Weite is gone**: the reverb stays as it is in body resonance.
+- **The default is still exactly body resonance**: same seed, identical
+  Web Audio calls, checked with three seeds.
+
+What I need from Ben: how the harp and marimba sound up high. At c′′′ they
+play their highest sample (F4 or C5) at three to four and a half times its
+speed, and that may sound thin. And whether Tondauer should go beyond
+legato.
+
+## Sound builder: the harp up high is a plucked string, and the three instruments are equally loud
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/`. Still not
+pushed, so edited in place.
+
+What I checked: Ben, 2026-11-12: „Harfe funktioniert noch nicht“.
+- **The samples load and decode** in Chromium and WebKit, so the harp did
+  play.
+- **But it sounded wrong**: the highest harp recording is F4, so for
+  c′′′–g′′′ it ran at three to four and a half times its speed, which sounds
+  like chirping.
+- **And it was too loud**: rendered at the same Lautstärke, the high harp
+  notes were about 12 dB louder than the kalimba, and the marimba's about
+  11 dB (`level-probe.mjs`, RMS over 1.5 s).
+
+What I did:
+- **Above b′, the harp is the plucked string** from `harp/261109-0920`
+  (Karplus–Strong, "Version 1" there), copied unchanged with a fixed attack
+  of 0.5 and that file's soft low-pass. It plays at the true pitch, so the
+  note names on the Tonhöhe slider stay right. Each pitch is computed once,
+  in 1 to 6 ms, then cached. Up to b′ the recordings still play, never more
+  than a fourth above F4.
+- **Level trims for the high notes**: marimba ×0.28, harp recording ×0.25,
+  harp string ×0.75, kalimba ×1. The kalimba stays at 1, so the default is
+  still exactly body resonance, checked again with the same seed.
+
+What I need from Ben: whether the string sounds like a harp to him. If not,
+the alternative is higher VSCO 2 CE harp recordings (CC0), downloaded and
+added beside the six we have. The marimba above C5 is still a sped-up
+recording (two to three times its speed); whether it needs the same
+treatment is his ear's call.
