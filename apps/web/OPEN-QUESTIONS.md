@@ -11184,3 +11184,37 @@ countdown and „Weiter“, or on a floor above the foot. Whether the particle
 experiment he meant looks like this, and if Lucy has it, what to take from
 it. And, as for the body pages, a PostHog survey on `stream_finished` if it
 should ask anything.
+
+## Sound builder, second version: the body-resonance soundscape is the default
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/` (the first
+version, `261111-1149`, stays beside it)
+
+What I checked: Ben, 2026-11-12 — the soundscape in body resonance sounds
+different from the sound builder's; the default should be exactly the one
+body resonance generates. It was different, and the first version's comment
+was wrong to say otherwise: `261111-1149` had a generator of its own (one
+melody line around the middle, the instrument chosen per note, a low note
+now and then, 3.6 s of reverb). Body resonance (`261111-1255`, and
+`261111-1143` before it) plays deep marimba notes (C2, G2, F2, then C3 or G2)
+every other beat, with high kalimba sparks (C6–G6) above them, and 3.2 s of
+reverb at a fixed level.
+
+What I did:
+- **The generator is body resonance's**, copied line by line, and each of its
+  fixed numbers is now set by a slider. All four sliders start in the middle,
+  and the middle gives exactly the original number. The check: with the same
+  random seed, both pages made 163 identical Web Audio calls in 30 seconds
+  (26 notes: same samples, pitches, volumes, panning, timing, reverb).
+- **What the sliders change**:
+  - Dichte: the gap between beats (×2.3 to ×0.44) and how often a spark sounds.
+  - Tonhöhe: the sparks move within C pentatonic, from an octave lower to a
+    fifth higher. In the top quarter the deep notes also go up an octave; they
+    never go lower, because the marimba sounds poor below C2.
+  - Klangfarbe: which instrument plays the sparks (harp, kalimba, marimba).
+    The harp and marimba play them an octave lower, because their samples
+    end at F4 and C5. The marimba keeps the deep notes.
+  - Weite: the reverb level and the stereo width.
+
+What I need from Ben: whether the sliders should move these things. The
+middle is fixed by his request; how each end sounds is my choice.
