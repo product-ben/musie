@@ -11221,3 +11221,48 @@ the latest version of the rest of the page. Add a segmented control (w. just
 the numbers as labels …)“.
 
 What I need from Ben: which variant, and if it has buttons, the rung above.
+
+## card-options, round two: five variants, responsive, a modal on the card — OPEN
+
+Where: `apps/web/public/experiments/card-options/261112-1217/index.html`
+(built), from `card-options/src/`. The first round stays at `261112-1137/`.
+
+What I did: in Ben's order, 6, 10, 3, 7, 9:
+
+- **6** as before (card 100vw − 68, corners 40), the raised chevrons on the
+  pile's top corners — and they now STAY there while cards come and go under
+  them, instead of arriving with each card.
+- **10** is 6 with back beside forward in the top-right corner, 8px apart.
+- **3** is the app's card width with back beside forward top-right, on
+  Elevation/1.
+- **7** as before (card 100vw − 108, ghost chevrons beside it).
+- **9** is 7 with the top corners at 20.
+
+The directions are the deck's OWN two buttons in every variant, restyled and
+moved, so they move the pile exactly as the gutter or an arrow key does and
+sit above every card, the thrown one included. Only the 40px mark takes a
+tap. In 6, 10 and 3 that applies to all three, not only 6 as asked: a button
+that arrives with each card is the thing Ben asked to stop, and 10 and 3 are
+6's arrangement.
+
+No phone frame any more: everything is a distance from the card or a share
+of the viewport, so it holds at 360, 393 and 430. From --bp-sm (a phone on
+its side, a laptop) the screen keeps its own left-aligned layout, the deck's
+pair beside the pile is gone, and in 7 and 9 the pile moves in just far
+enough for the left chevron. Measured at 360 / 393 / 430 / 852 / 1440, no
+sideways scroll at any of them.
+
+A press on a card, or *Starten*, opens a modal („Aufgabe öffnen ist außerhalb
+des Experiments.“). The card lifts while it is open and comes back when it
+closes — the deck's own contract for a refused accept.
+
+Why: Ben, 2026-11-12: „Nimm das fake phone außenrum weg und bau die
+Varianten responsiv … V6 (lass die next/prev buttons oben stehen, nicht bei
+jeder Karte neu), eine neue V10 … mit dem previous button links neben dem
+next button, dann V3 aber mit dem previous button links neben dem next
+button, V7, eine neue V9 (basierend auf V7) mit border radius oben 20px …
+Klick auf die Karte öffnet ein Modal“. „V10 basierend auf v10“ read as based
+on V6, the variant named just before it.
+
+What I need from Ben: which variant, and for any with buttons, the rung from
+the entry above (still drawn at 40px with the thin glyph).

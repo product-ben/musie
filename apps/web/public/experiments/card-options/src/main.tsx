@@ -1,23 +1,28 @@
 /* eslint-disable react-refresh/only-export-components -- an entry file, built
    once into a static page and never hot-reloaded. */
 /**
- * card-options — the eight card designs of Figma section `134:3835`
- * („karten varianten“, file McSA3aX…), side by side on the real deck.
+ * card-options — card designs from Figma section `134:3835` („karten
+ * varianten“, file McSA3aX…), compared on the real deck.
  *
  * AN EXPERIMENT (CLAUDE.md rule 10): built by `build.mjs` into one static
  * index.html next to this folder, and nothing in apps/web/src changes. It runs
  * the REAL `CardDeck` and the screen's REAL stylesheets, so the drag, the
  * fling, the deal and Ben's pile shadows are the shipped ones, and only what
- * the eight frames change is changed here (options.css):
+ * the variants change is changed here (options.css).
  *
- *   1  the app today: 16/16/40/40, the gutters are the buttons
- *   2  top corners 20, side chevrons as 40px buttons at the screen edge
- *   3  40 all round, raised chevrons on the picture's top corners
- *   4  40 all round, an arrow pair on the card above the start row
- *   5  wider card (325), dots left + a raised pair right under the pile
- *   6  wider card (325), raised chevrons on the picture's top corners
- *   7  narrower card (285), side chevrons 5px in from the edge
- *   8  card 315, side chevrons at the screen edge
+ * THE SECOND ROUND (Ben, 2026-11-12), in his order:
+ *
+ *   6   card 100vw − 68, corners 40, raised chevrons on the pile's top corners
+ *   10  6, with back beside forward in the top-right corner
+ *   3   the app's card width, corners 40, the pair top-right, Elevation/1
+ *   7   card 100vw − 108, corners 40, ghost chevrons beside the card
+ *   9   7 with the top corners at 20
+ *
+ * The directions are the deck's OWN two buttons in every variant, restyled
+ * and moved: so they stay where they are while cards come and go under them
+ * (Ben: „oben stehen, nicht bei jeder Karte neu“), and they move the pile
+ * exactly as the gutter or an arrow key does. A press on a card opens a modal
+ * instead of an exercise.
  *
  * No analytics, no network beyond the page's own fonts and pictures, nothing
  * written anywhere but the URL (`?v=`).
@@ -25,10 +30,10 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  Button, CardDeck, Icon, IconButton, MusyLocaleProvider, MusyTooltipProvider, Switch,
+  Button, CardDeck, Icon, Lightbox, MusyLocaleProvider, MusyTooltipProvider, Switch,
 } from '@musie/design-system';
 import type { CardDeckCard, CardDeckItem } from '@musie/design-system';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ListFilter, Timer } from 'lucide-react';
+import { ArrowRight, ListFilter, Timer } from 'lucide-react';
 
 import '@musie/design-system/tokens/musy-fonts.css';
 import '@musie/design-system/tokens/musy-foundations.css';
@@ -42,8 +47,13 @@ import './options.css';
 import { useHeaderReveal } from '../../../../src/lib/useHeaderReveal';
 import { HEADER, HEADLINE, TOOLBAR_ROW } from './chrome';
 
-const VARIANTS = ['1', '2', '3', '4', '5', '6', '7', '8'] as const;
+/** Ben's order, and his names for them. */
+const VARIANTS = ['6', '10', '3', '7', '9'] as const;
 type Variant = (typeof VARIANTS)[number];
+
+interface Exercise {
+  id: string; name: string; image: string; alt: string; text: string; min: number; max: number;
+}
 
 /** The goal „entspannen“, as the local database serves it on 2026-11-12. The
  *  first three are the pile; the switch adds the rest, as on /exercises. */
@@ -86,48 +96,15 @@ const EXERCISES = [
   },
 ] as const satisfies readonly Exercise[];
 
-interface Exercise {
-  id: string; name: string; image: string; alt: string; text: string; min: number; max: number;
-}
-
 const SUGGESTED = 3;
 
 function readVariant(): Variant {
   const v = new URLSearchParams(window.location.search).get('v');
-  return (VARIANTS as readonly string[]).includes(v ?? '') ? (v as Variant) : '1';
+  return (VARIANTS as readonly string[]).includes(v ?? '') ? (v as Variant) : VARIANTS[0];
 }
 
-type Go = (direction: 'previous' | 'next') => void;
-
-/** The two directions, wherever a variant draws them. They press the deck's
- *  OWN buttons (the gutters, hidden in every variant but 1), so the pile moves
- *  exactly as it does from the gutter or an arrow key — inert mid-flight
- *  included, because a disabled button cannot be clicked. */
-function Pair({ go, arrows = false, className }: { go: Go; arrows?: boolean; className: string }) {
-  return (
-    <div className={className}>
-      <IconButton
-        glyph={arrows ? ArrowLeft : ChevronLeft}
-        label="Vorherige Übung"
-        variant="secondary"
-        className="opt-btn"
-        onClick={() => go('previous')}
-      />
-      <IconButton
-        glyph={arrows ? ArrowRight : ChevronRight}
-        label="Nächste Übung"
-        variant="secondary"
-        className="opt-btn"
-        onClick={() => go('next')}
-      />
-    </div>
-  );
-}
-
-/** The screen's ExerciseFace, verbatim, plus what a variant puts ON the card. */
-function Face({ exercise, card, variant, go }: {
-  exercise: Exercise; card: CardDeckCard; variant: Variant; go: Go;
-}) {
+/** The screen's ExerciseFace, verbatim. */
+function Face({ exercise, card }: { exercise: Exercise; card: CardDeckCard }) {
   const min = String(exercise.min);
   const max = String(exercise.max);
   return (
@@ -138,12 +115,10 @@ function Face({ exercise, card, variant, go }: {
         alt={exercise.alt}
         decoding="async"
       />
-      {(variant === '3' || variant === '6') && <Pair go={go} className="opt-on-image" />}
       <div className="musie-exercise-card__body">
         <h2 className="musie-exercise-card__headline">{exercise.name}</h2>
         <p className="musie-exercise-card__text">{exercise.text}</p>
       </div>
-      {variant === '4' && <Pair go={go} arrows className="opt-on-card" />}
       <div className="musie-exercise-card__foot">
         <p className="musie-exercise-card__time">
           <Icon glyph={Timer} size="sm" inline />
@@ -165,7 +140,7 @@ function Face({ exercise, card, variant, go }: {
   );
 }
 
-/** Eight numbers, one choice — the system's segmented look, drawn by hand
+/** The variants, one choice — the system's segmented look, drawn by hand
  *  because SegmentedControl is specified for 2–4 options with a glyph each. */
 function VariantPicker({ value, onChange }: { value: Variant; onChange: (v: Variant) => void }) {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
@@ -206,7 +181,10 @@ function VariantPicker({ value, onChange }: { value: Variant; onChange: (v: Vari
 function Page() {
   const [variant, setVariant] = React.useState<Variant>(readVariant);
   const [showAll, setShowAll] = React.useState(false);
-  const [busy, setBusy] = React.useState(false);
+  /* The card that was pressed. While it is set the deck is busy — the card
+     has lifted off the pile — and the modal says why nothing opens. Closing
+     it lets the card come back: the deck's own contract for a refused accept. */
+  const [opened, setOpened] = React.useState<string | null>(null);
   const toolbar = React.useRef<HTMLDivElement>(null);
   /* The app's own header behaviour: it leaves on the way down and comes back
      on the way up, which is most of what lets a phone show pile and dots. */
@@ -215,24 +193,8 @@ function Page() {
 
   React.useEffect(() => {
     document.documentElement.dataset.opt = variant;
-    const query = `?v=${variant}`;
-    window.history.replaceState(null, '', query);
-    try {
-      if (window.parent !== window) window.parent.history.replaceState(null, '', query);
-    } catch { /* a parent on another origin keeps its own URL */ }
+    window.history.replaceState(null, '', `?v=${variant}`);
   }, [variant]);
-
-  /* 1–8 on a keyboard, for flicking between two quickly on a laptop. In the
-     CAPTURE phase: the pile stops its keys from bubbling, so with focus on
-     the deck a listener on the way up would never hear them. */
-  React.useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if ((VARIANTS as readonly string[]).includes(event.key)) setVariant(event.key as Variant);
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, []);
 
   /* The toolbar's own „Nach rechts scrollen“, which the app drives from JS. */
   React.useEffect(() => {
@@ -248,15 +210,14 @@ function Page() {
     };
     const scroll = () => strip.scrollBy({ left: strip.clientWidth * 0.8, behavior: 'smooth' });
     strip.addEventListener('scroll', fade, { passive: true });
+    window.addEventListener('resize', fade);
     more.addEventListener('click', scroll);
     fade();
-    return () => { strip.removeEventListener('scroll', fade); more.removeEventListener('click', scroll); };
-  }, []);
-
-  /* One deck on the page, so the document is the place to look: a wrapper
-     around CardDeck would break the screen's `.musie-exercises > …` rules. */
-  const go = React.useCallback<Go>((direction) => {
-    document.querySelector<HTMLButtonElement>(`.musy-deck__strip--${direction}`)?.click();
+    return () => {
+      strip.removeEventListener('scroll', fade);
+      window.removeEventListener('resize', fade);
+      more.removeEventListener('click', scroll);
+    };
   }, []);
 
   const shown: readonly Exercise[] = showAll ? EXERCISES : EXERCISES.slice(0, SUGGESTED);
@@ -264,15 +225,9 @@ function Page() {
   const items: CardDeckItem[] = shown.map((exercise, index) => ({
     id: exercise.id,
     accent: ((index % 2) + 1) as 1 | 2,
-    content: (card: CardDeckCard) => <Face exercise={exercise} card={card} variant={variant} go={go} />,
+    content: (card: CardDeckCard) => <Face exercise={exercise} card={card} />,
   }));
-
-  /* Starting is not this page's business: the card lifts, and comes back —
-     the deck's own contract for an accept that is refused. */
-  const accept = () => {
-    setBusy(true);
-    window.setTimeout(() => setBusy(false), 900);
-  };
+  const openedName = opened === null ? '' : EXERCISES.find((e) => e.id === opened)?.name ?? '';
 
   return (
     <>
@@ -290,9 +245,9 @@ function Page() {
             <CardDeck
               className="musie-deck-stage"
               items={items}
-              busy={busy}
+              busy={opened !== null}
               dealKey={showAll ? 'all' : 'suggested'}
-              onAccept={accept}
+              onAccept={setOpened}
               onNext={() => {}}
               onPrevious={() => {}}
               nextLabel="Nächste Übung"
@@ -300,7 +255,6 @@ function Page() {
               label="Das Deck. Enter startet die Übung auf der obersten Karte, die Pfeiltasten blättern vor und zurück."
               positionLabel={(position, total, id) =>
                 `${byId.get(id)?.name ?? ''} – Karte ${position} von ${total}`}
-              actions={variant === '5' ? <Pair go={go} className="opt-under-pile" /> : undefined}
             />
             <div className="musie-under-pile">
               <Switch label="Alle Übungen zeigen" checked={showAll} onCheckedChange={setShowAll} />
@@ -316,6 +270,19 @@ function Page() {
           </div>
         </main>
       </div>
+      <Lightbox
+        open={opened !== null}
+        onOpenChange={(open) => { if (!open) setOpened(null); }}
+        title={openedName}
+        closeLabel="Schließen"
+      >
+        {/* In the body, not `description`: Lightbox draws that for a screen
+            reader only, and this sentence is the whole point of the modal. */}
+        <div className="opt-modal">
+          <p className="opt-modal__text">Aufgabe öffnen ist außerhalb des Experiments.</p>
+          <Button variant="primary" onClick={() => setOpened(null)}>Zurück zu den Karten</Button>
+        </div>
+      </Lightbox>
       <nav className="opt-bar" aria-label="Kartenvarianten">
         <VariantPicker value={variant} onChange={setVariant} />
       </nav>
@@ -323,20 +290,8 @@ function Page() {
   );
 }
 
-/** Wider than a phone, the page is shown IN one: the eight frames are 393px
- *  designs, and the deck's own layout changes at --bp-sm (480). */
-function Frame() {
-  const src = `${window.location.pathname}?frame=1&v=${readVariant()}`;
-  return (
-    <div className="opt-frame">
-      <iframe className="opt-frame__device" src={src} title="Kartenvarianten, Telefonansicht" />
-    </div>
-  );
-}
-
-const framed = new URLSearchParams(window.location.search).has('frame');
-if (framed) document.documentElement.dataset.framed = '';
-const wide = !framed && window.top === window && window.innerWidth >= 480;
+/* Before the first render, so the first frame is already the variant. */
+document.documentElement.dataset.opt = readVariant();
 
 const root = document.getElementById('root');
 if (root !== null) {
@@ -344,7 +299,7 @@ if (root !== null) {
     <React.StrictMode>
       <MusyLocaleProvider locale="de">
         <MusyTooltipProvider>
-          {wide ? <Frame /> : <Page />}
+          <Page />
         </MusyTooltipProvider>
       </MusyLocaleProvider>
     </React.StrictMode>,
