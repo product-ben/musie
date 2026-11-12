@@ -151,29 +151,17 @@ html:is([data-opt='7'], [data-opt='9']) .musy-deck__strip--next {
   color: var(--on-surface-muted);
 }
 
-/* ── THE SWITCHER ───────────────────────────────────────────────────────────
-   Fixed to the foot of the screen, the system's segmented look with the
-   variants' numbers in it, a size below the system's 44 so it takes as
-   little of the page as a thumb can still hit. The page keeps room under its
-   last row for it: the segment, the track's padding and border, the bar's
-   padding. */
+/* ── THE SWITCHER IS THE HEADER ─────────────────────────────────────────────
+   Where the app's menu and logo stand, on the header's own surface, sticky,
+   and hiding on the way down like it (`useHeaderReveal`) — so nothing is
+   fixed over the foot of the page any more. The system's segmented look with
+   the variants' numbers in it, a size below the system's 44 so the header
+   stays the app's height. The header is a three-column grid for menu, logo
+   and nothing; this one has a single thing to centre. */
 :root { --opt-seg-block: 36px; }
-body {
-  padding-block-end: calc(
-    var(--opt-seg-block) + var(--sp-1) * 2 + var(--border-width-hairline) * 3 + var(--sp-2) * 2 +
-    env(safe-area-inset-bottom)
-  );
-}
-.opt-bar {
-  position: fixed;
-  inset-inline: 0;
-  inset-block-end: 0;
-  z-index: var(--z-sticky);
+.opt-header {
   display: flex;
   justify-content: center;
-  padding: var(--sp-2) var(--gutter) calc(var(--sp-2) + env(safe-area-inset-bottom));
-  background-color: var(--surface-raised);
-  border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
 }
 .opt-seg { inline-size: 100%; max-inline-size: 22rem; }
 .opt-seg .musy-seg__option {

@@ -45,7 +45,7 @@ import '../../../../src/exercises.css';
 import './options.css';
 
 import { useHeaderReveal } from '../../../../src/lib/useHeaderReveal';
-import { HEADER, HEADLINE, TOOLBAR_ROW } from './chrome';
+import { HEADLINE, TOOLBAR_ROW } from './chrome';
 
 /** Ben's order, and his names for them. */
 const VARIANTS = ['6', '10', '3', '7', '9'] as const;
@@ -186,8 +186,12 @@ function Page() {
      it lets the card come back: the deck's own contract for a refused accept. */
   const [opened, setOpened] = React.useState<string | null>(null);
   const toolbar = React.useRef<HTMLDivElement>(null);
-  /* The app's own header behaviour: it leaves on the way down and comes back
-     on the way up, which is most of what lets a phone show pile and dots. */
+  /* THE SWITCHER IS THE HEADER (Ben, 2026-11-12: „ersetzt die aktuelle
+     Navigation mit dem Segmented Control … so dass man nach unten alles
+     sehen kann“). It was a bar fixed to the foot of the screen, over the last
+     row of the page. It now stands where the app's menu and logo stand, and
+     keeps the header's own behaviour: it leaves on the way down and comes
+     back on the way up. */
   const header = React.useRef<HTMLElement>(null);
   const headerHidden = useHeaderReveal(header, false, 'card-options');
 
@@ -234,10 +238,11 @@ function Page() {
       <div className="musie-app">
         <header
           ref={header}
-          className="musie-header"
+          className="musie-header opt-header"
           data-hidden={headerHidden ? 'true' : 'false'}
-          dangerouslySetInnerHTML={{ __html: HEADER }}
-        />
+        >
+          <VariantPicker value={variant} onChange={setVariant} />
+        </header>
         <main id="main" className="musie-main" data-wide="1" data-auth="ready" data-locale-resolved="1">
           <div className="musie-exercises">
             <h1 className="musie-placeholder" dangerouslySetInnerHTML={{ __html: HEADLINE }} />
@@ -283,9 +288,6 @@ function Page() {
           <Button variant="primary" onClick={() => setOpened(null)}>Zurück zu den Karten</Button>
         </div>
       </Lightbox>
-      <nav className="opt-bar" aria-label="Kartenvarianten">
-        <VariantPicker value={variant} onChange={setVariant} />
-      </nav>
     </>
   );
 }

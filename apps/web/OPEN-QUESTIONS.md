@@ -11266,3 +11266,22 @@ on V6, the variant named just before it.
 
 What I need from Ben: which variant, and for any with buttons, the rung from
 the entry above (still drawn at 40px with the thin glyph).
+
+## card-options: the switcher is the header now — RESOLVED
+
+Where: `apps/web/public/experiments/card-options/261112-1248/index.html`,
+from `card-options/src/` (`main.tsx`, `options.css`)
+
+What I did: the segmented control left its bar fixed to the foot of the
+screen and stands where the app's menu and logo stood, on the header's own
+surface, sticky, hiding on the way down and back on the way up
+(`useHeaderReveal`). Nothing is fixed over the page any more; scrolled to the
+end, the last row (*Ziel ändern*) is whole at 360, 393 and 430. The page's
+menu and logo are gone from this experiment, which is what "replace" asked.
+`261112-1217/` (live on musie.org since PR #79) stays as it was.
+
+Why: Ben, 2026-11-12: „Ersetzt die aktuelle Navigation mit dem Segmented
+Control bei dem Experiment, so dass man nach unten alles sehen kann“.
+
+What I need from Ben: the merge of the PR that puts `261112-1248/` on
+musie.org — `main` needs his review override, which I may not use.
