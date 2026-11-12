@@ -711,14 +711,53 @@ function nearest(inst, midi) {
   const k = keys.reduce((b, x) => (Math.abs(x - midi) < Math.abs(b - midi) ? x : b), keys[0]);
   return { buf: buffers[inst][k], rate: Math.pow(2, (midi - k) / 12) };
 }
+/* Die Harfe oben. Ihre höchste Aufnahme ist F4; für c′′′ liefe sie drei- bis viereinhalbmal so schnell und zirpte
+   (Ben, 2026-11-12: „Harfe funktioniert noch nicht“). Über HARP_TOP spielt darum die gezupfte Saite aus
+   harp/261109-0920 (Karplus-Strong, dort „Version 1“, unverändert übernommen, Anschlag 0,5) in der echten Tonhöhe,
+   durch dessen weichen Tiefpass. Darunter die Aufnahme, höchstens eine Quarte über F4. */
+const HARP_TOP = 70;                                    // b′
+/* Pegel der hohen Töne je Instrument, gemessen (level-probe.mjs, c′′′–g′′′, RMS über 1,5 s): die Aufnahmen von Harfe
+   und Marimba sind rund 12 und 11 dB lauter als die Kalimba, die Saite rund 2,5 dB. Bei gleicher Lautstärke klingen
+   so alle drei gleich laut. Die Kalimba bleibt 1, damit die Grundeinstellung genau body-resonance bleibt. */
+const TRIM = { kalimba: 1, marimba: 0.28, harp: 0.25, harpString: 0.75 };
+const strings = new Map();
+function harpString(midi) {
+  if (strings.has(midi)) return strings.get(midi);
+  const freq = 440 * Math.pow(2, (midi - 69) / 12), vel = 0.5;
+  const sr = ac.sampleRate, T60 = 6.5 - 2.5 * Math.max(0, Math.min(1, (freq - 150) / 900));
+  const len = Math.floor(sr * Math.min(6.5, T60 + 0.3)), y = new Float32Array(len);
+  const per = sr / freq, D = per - 0.5, rho = Math.pow(10, -3 / (T60 * freq));
+  const bright = 0.12 + 0.75 * vel;
+  const exc = new Float32Array(Math.ceil(per) + 2); let lp = 0;
+  for (let i = 0; i < exc.length; i++) { lp += bright * ((Math.random() * 2 - 1) - lp); exc[i] = lp; }
+  const pos = Math.max(1, Math.round(per * 0.18));
+  for (let i = exc.length - 1; i >= pos; i--) exc[i] -= 0.6 * exc[i - pos];
+  const at = (k) => { if (k < 0) return 0; const i = Math.floor(k), f = k - i; return y[i] * (1 - f) + (y[i + 1] || 0) * f; };
+  for (let n = 0; n < len; n++) {
+    const fb = n >= D + 1 ? 0.5 * (at(n - D) + at(n - D - 1)) * rho : 0;
+    y[n] = (n < exc.length ? exc[n] : 0) + fb;
+  }
+  let peak = 0; for (let n = 0; n < len; n++) peak = Math.max(peak, Math.abs(y[n]));
+  const b = ac.createBuffer(1, len, sr), d = b.getChannelData(0);
+  for (let n = 0; n < len; n++) d[n] = y[n] / (peak || 1);
+  strings.set(midi, b);
+  return b;
+}
 /* rel und tau: wann vor dem Ende das Ausklingen beginnt und wie schnell. Dort fest 1,2 s und 0,4 s; ein kurzer Ton
    (staccato) klingt im selben Verhältnis aus, sonst begänne das Ausklingen vor dem Ton. */
-function note(inst, midi, when, { pan = 0, vel = 0.6, length = 6, rel = 1.2, tau = 0.4 } = {}) {
-  const s = nearest(inst, midi) || nearest('kalimba', midi); if (!s) return;   // fehlt ein Instrument, spielt die Kalimba
-  const src = ac.createBufferSource(); src.buffer = s.buf; src.playbackRate.value = s.rate;
+function note(inst, midi, when, { pan = 0, vel = 0.6, length = 6, rel = 1.2, tau = 0.4, string = false } = {}) {
+  let src, head;
+  if (string) {                                         // die gezupfte Saite: in der echten Tonhöhe, weicher Tiefpass
+    src = ac.createBufferSource(); src.buffer = harpString(midi);
+    head = ac.createBiquadFilter(); head.type = 'lowpass'; head.Q.value = 0.5;
+    head.frequency.value = Math.max(3150, 2 * 440 * Math.pow(2, (midi - 69) / 12)); src.connect(head);
+  } else {
+    const s = nearest(inst, midi) || nearest('kalimba', midi); if (!s) return;   // fehlt ein Instrument, spielt die Kalimba
+    src = ac.createBufferSource(); src.buffer = s.buf; src.playbackRate.value = s.rate; head = src;
+  }
   const gain = ac.createGain(); gain.gain.setValueAtTime(vel, when); gain.gain.setTargetAtTime(0, when + length - rel, tau);
   const panner = ac.createStereoPanner(); panner.pan.setValueAtTime(pan, when);
-  src.connect(gain); gain.connect(panner); panner.connect(master); panner.connect(wet);
+  head.connect(gain); gain.connect(panner); panner.connect(master); panner.connect(wet);
   src.start(when); src.stop(when + length);
 }
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -727,7 +766,9 @@ const pitch = (lo, hi) => { const cands = []; for (let m = lo; m <= hi; m++) if 
 function spark(m, at) {
   const midi = pitch(m.lo, m.lo + 7), when = at();
   const fade = m.length >= 2.4 ? {} : { rel: m.length * 0.55, tau: m.length / 8 };
-  note(m.inst, midi, when, { pan: (Math.random() - 0.5) * 0.4, vel: m.vel, length: m.length, ...fade });
+  const string = m.inst === 'harp' && midi > HARP_TOP;
+  const vel = m.vel * (string ? TRIM.harpString : TRIM[m.inst]);
+  note(m.inst, midi, when, { pan: (Math.random() - 0.5) * 0.4, vel, length: m.length, ...fade, string });
 }
 let nextAt = 0, step = 0, schedTimer = null;
 function schedule() {                                   // ein Blick 0,3 s voraus

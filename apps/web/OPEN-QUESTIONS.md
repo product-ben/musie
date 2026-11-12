@@ -11264,3 +11264,35 @@ What I need from Ben: how the harp and marimba sound up high. At c′′′ they
 play their highest sample (F4 or C5) at three to four and a half times its
 speed, and that may sound thin. And whether Tondauer should go beyond
 legato.
+
+## Sound builder: the harp up high is a plucked string, and the three instruments are equally loud
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/`. Still not
+pushed, so edited in place.
+
+What I checked: Ben, 2026-11-12: „Harfe funktioniert noch nicht“.
+- **The samples load and decode** in Chromium and WebKit, so the harp did
+  play.
+- **But it sounded wrong**: the highest harp recording is F4, so for
+  c′′′–g′′′ it ran at three to four and a half times its speed, which sounds
+  like chirping.
+- **And it was too loud**: rendered at the same Lautstärke, the high harp
+  notes were about 12 dB louder than the kalimba, and the marimba's about
+  11 dB (`level-probe.mjs`, RMS over 1.5 s).
+
+What I did:
+- **Above b′, the harp is the plucked string** from `harp/261109-0920`
+  (Karplus–Strong, "Version 1" there), copied unchanged with a fixed attack
+  of 0.5 and that file's soft low-pass. It plays at the true pitch, so the
+  note names on the Tonhöhe slider stay right. Each pitch is computed once,
+  in 1 to 6 ms, then cached. Up to b′ the recordings still play, never more
+  than a fourth above F4.
+- **Level trims for the high notes**: marimba ×0.28, harp recording ×0.25,
+  harp string ×0.75, kalimba ×1. The kalimba stays at 1, so the default is
+  still exactly body resonance, checked again with the same seed.
+
+What I need from Ben: whether the string sounds like a harp to him. If not,
+the alternative is higher VSCO 2 CE harp recordings (CC0), downloaded and
+added beside the six we have. The marimba above C5 is still a sped-up
+recording (two to three times its speed); whether it needs the same
+treatment is his ear's call.
