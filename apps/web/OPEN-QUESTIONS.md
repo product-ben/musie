@@ -11218,3 +11218,49 @@ What I did:
 
 What I need from Ben: whether the sliders should move these things. The
 middle is fixed by his request; how each end sounds is my choice.
+
+## Sound builder, second version, reworked: the deep tone stays; the controls shape the high notes
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/`. It was
+edited in place because it had never been pushed.
+
+What I checked: Ben, 2026-11-12, after hearing the version above:
+- „Lass uns den tiefen Ton immer lassen“, and the headline should say so.
+- The controls apply to the high notes only: the instrument as a segmented
+  control, then musical parameters (Lautstärke, Tonhöhe, Tondauer from
+  staccato to legato).
+- The one exception is ruhig ↔ bewegt (no longer „lebendig“). It applies to
+  both layers, needs a much bigger difference, and should be in BPM.
+- Pitch: think of 88 piano keys with c′ in the middle.
+
+What I did:
+- **The deep tone** (marimba C2, G2, F2, then C3 or G2) plays exactly as in
+  body resonance. Only the tempo moves it.
+- **Headline**: „Der tiefe Ton bleibt. Die hohen Töne baust du dir.“
+  Under it: „Nur das Tempo gilt für beide.“
+- **Instrument**: the design system's SegmentedControl, with markup and CSS
+  read from the running app (`/privacy`). Its keyboard behaviour is written
+  by hand. All three options use one glyph (`music`), the way the language
+  control uses `Languages` for both languages: the app has no icon per
+  instrument.
+- **Lautstärke**: from −18 dB to +8 dB around body resonance's level, shown
+  as pp, p, mp, mf or f. The default is mp.
+- **Tonhöhe**: in piano keys, shown in Helmholtz names (c′ is the middle C).
+  The high notes move within a fifth, from c′–g′ up to c′′′′–g′′′′; the
+  default is c′′′–g′′′. They stay in C pentatonic.
+- **Tondauer**: from 0.15 s (staccato) to body resonance's ring (legato).
+  **The default is the legato end**, because in body resonance every high
+  note rings until the next one starts. The slider can only shorten them;
+  longer than that would need sustained or looped samples.
+- **Tempo**: 20 to 120 BPM. The default is 36 BPM, body resonance's average:
+  a beat every 1.3–2.0 s, and the irregularity is kept at every tempo. Ruhig
+  also thins out the high notes. Bewegt adds a second high note between
+  beats. In 20 seconds: 8 notes at ruhig, 94 at bewegt.
+- **Weite is gone**: the reverb stays as it is in body resonance.
+- **The default is still exactly body resonance**: same seed, identical
+  Web Audio calls, checked with three seeds.
+
+What I need from Ben: how the harp and marimba sound up high. At c′′′ they
+play their highest sample (F4 or C5) at three to four and a half times its
+speed, and that may sound thin. And whether Tondauer should go beyond
+legato.

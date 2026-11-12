@@ -15,6 +15,12 @@
      tiefe Marimba-Töne als Grund, hohe Kalimba-Funken darüber, Hall 3,2 s. Alle vier Regler stehen in der Mitte, und
      in der Mitte ist jede Zahl genau die von dort (beim Bauen geprüft: gleicher Zufall, gleiche Töne). Die Version
      261111-1149 hatte einen eigenen Generator, obwohl ihr Kommentar „dieselbe Musik“ sagte; sie bleibt, wo sie ist.
+     Ben, 2026-11-12, danach: „Lass uns den tiefen Ton immer lassen … die Controls gelten nur für die hohen Töne.“
+     Der tiefe Ton spielt immer genau wie dort. Für die hohen Töne: das Instrument (Segmented Control des Design-Systems,
+     aus der laufenden App gelesen), Lautstärke, Tonhöhe (in Klaviertasten, c′ ist das mittlere C) und Tondauer
+     (staccato … legato). Einzige Ausnahme ist das Tempo (ruhig … bewegt, in BPM): es gilt für beide. Die
+     Grundeinstellung bleibt genau body-resonance: Kalimba, Lautstärke und Tempo in der Mitte, Tonhöhe c′′′, Tondauer
+     legato (dort klingt jeder hohe Ton aus, bis der nächste kommt).
      Stil: die Regeln des Hören-Sheets der App, aus der laufenden App gelesen (CSSOM, 2026-11-11); Schriften unter /fonts/.
      Nichts geht an PostHog vor der Zustimmung, nichts an Supabase. -->
 <style>
@@ -409,6 +415,55 @@ body { overflow: hidden; }
 .musie-slider input[type="range"]:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-sm, 4px); }
 .musie-slider__ends { display: flex; justify-content: space-between; font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size);
   line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+/* Der Wert rechts neben dem Namen: in der Einheit der Musik (BPM, Tonname, Dynamik). */
+.musie-slider__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-gap-inline); }
+.musie-slider__value { font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); line-height: var(--type-label-md-line);
+  color: var(--on-surface-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Das Tempo gilt für beide Schichten: durch eine Linie von den Reglern der hohen Töne getrennt. */
+.musie-mixer__rule { margin: 0; border: 0; border-block-start: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); }
+.musie-mixer { gap: var(--space-gap-stack); }
+.musie-slider__ends { margin-block-start: calc(var(--sp-2) * -1); }
+/* Fünf Regler sind höher als ein kleines Telefon: der Körper beginnt oben und rollt, statt unter Kopf und Fuß zu
+   laufen. Unter ihm liegt keine Bühne, also nimmt er Berührungen selbst an. */
+.musy-sheet__body { align-content: start; overflow-y: auto; scrollbar-width: thin; pointer-events: auto; }
+.musie-immersive__body { justify-content: start; }
+#title { hyphens: manual; }
+
+/* ── Segmented Control: die Regeln des Design-Systems, aus der laufenden App gelesen (CSSOM, /privacy, 2026-11-12).
+   Das Markup ist das von SegmentedControl.tsx (Base UI RadioGroup); das Verhalten (Pfeile, Home, End) hier von Hand. ── */
+.musy-sr-only, .musy-seg--labels-none .musy-seg__label, .musy-seg--labels-unchecked .musy-seg__option[data-checked] .musy-seg__label { position: absolute; width: var(--border-width-hairline); height: var(--border-width-hairline); padding: 0px; margin: calc(var(--border-width-hairline) * -1); overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0px; }
+.musy-box__headrow > .musy-sr-only { flex: 0 0 auto; }
+.musy-seg { contain: layout; container-type: inline-size; border: 0px; padding: 0px; margin: 0px; min-inline-size: 0px; }
+.musy-seg__track { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--sp-1); box-sizing: border-box; inline-size: 100%; padding: var(--sp-1); border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle); border-radius: var(--radius-control); background-color: var(--surface-sunken); }
+.musy-seg__option { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); box-sizing: border-box; min-inline-size: 0px; min-block-size: var(--target-primary); padding-inline: var(--sp-3); border: var(--border-width-regular) var(--border-style-solid) transparent; border-radius: var(--radius-control); background-color: transparent; color: var(--on-surface-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight); line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); transition: background-color var(--motion-toggle), color var(--motion-toggle),
+              border-color var(--motion-toggle); }
+.musy-seg--guided .musy-seg__option { min-block-size: var(--target-guided); }
+.musy-seg--min { --musy-seg-rung: calc(var(--target-min) + var(--sp-3)); }
+.musy-seg--min .musy-seg__option { min-block-size: calc(var(--musy-seg-rung) - var(--sp-1) * 2 - var(--border-width-hairline) * 2); padding-inline: var(--sp-3); gap: var(--sp-1); }
+.musy-seg--labels-none, .musy-seg--labels-unchecked { container-type: normal; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__track, .musy-seg--labels-unchecked .musy-seg__track { grid-auto-flow: column; grid-auto-columns: auto; inline-size: max-content; }
+.musy-seg--labels-none .musy-seg__option { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); gap: 0px; }
+.musy-seg--labels-none.musy-seg--min .musy-seg__option { min-inline-size: var(--target-min); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked .musy-seg__option[data-checked] { min-inline-size: var(--target-primary); padding-inline: var(--sp-2); }
+.musy-seg--labels-unchecked.musy-seg--min .musy-seg__option[data-checked] { min-inline-size: var(--target-min); }
+.musy-seg__option > .musy-icon { flex: 0 0 auto; }
+.musy-seg__label { min-inline-size: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 30rem) { .musy-seg__option { flex-direction: column; gap: var(--sp-1); padding-inline: var(--sp-2); padding-block: var(--sp-2); } }
+@container (max-width: 30rem) { .musy-seg__label { max-inline-size: 100%; } }
+@container (max-width: 30rem) { .musy-seg--labels-none .musy-seg__option, .musy-seg--labels-unchecked .musy-seg__option { flex-direction: row; padding-block: 0px; } }
+@media (hover: hover) and (pointer: fine) { .musy-seg__option[data-unchecked]:hover:not([data-disabled]), .musy-seg__option[data-force~="hover"] { background-color: var(--interactive-ghost-hover); color: var(--on-surface); } }
+.musy-seg__option[data-unchecked]:active:not([data-disabled]), .musy-seg__option[data-force~="active"] { background-color: var(--interactive-ghost-active); }
+.musy-seg__option[data-checked] { background-color: var(--surface-raised); border-color: var(--interactive-primary-border); border-width: var(--border-width-thick); color: var(--interactive-primary-on-subtle); }
+.musy-seg--accent .musy-seg__option[data-checked] { border-color: var(--interactive-accent-border); color: var(--interactive-accent-on-subtle); }
+.musy-seg__option[data-disabled] { color: var(--on-surface-disabled); cursor: not-allowed; }
+.musy-seg__option[data-disabled][data-checked] { background-color: var(--interactive-primary-disabled); border-color: var(--border-subtle); }
+.musy-seg__description { margin: var(--space-gap-related) 0 0; contain: inline-size; max-inline-size: var(--measure-body); font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); font-weight: var(--type-body-sm-weight); line-height: var(--type-body-sm-line); letter-spacing: var(--type-body-sm-tracking); color: var(--on-surface-muted); text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); }
+.musy-seg[data-disabled] .musy-seg__description { color: var(--on-surface-disabled); }
+.musy-radio__body, .musy-radio__body[data-checked], .musy-radio-card__body, .musy-radio-card__body[data-checked], .musy-rcard__body, .musy-rcard__body[data-checked], .musy-seg__option, .musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+.musy-radio-group--accent .musy-radio__body[data-checked], .musy-radio-card-group--accent .musy-radio-card__body[data-checked], .musy-rcard-group--accent .musy-rcard__body[data-checked], .musy-seg--accent .musy-seg__option[data-checked] { border-color: transparent; border-width: var(--border-width-regular); }
+@media (prefers-contrast: more) { .musy-radio__body, .musy-radio-card__body, .musy-rcard__body, .musy-seg__option { border-color: var(--border-subtle); } }
+@media (prefers-contrast: more) { .musy-radio__body[data-checked], .musy-radio-card__body[data-checked], .musy-rcard__body[data-checked], .musy-seg__option[data-checked] { border-color: var(--border-strong); border-width: var(--border-width-thick); } }
+@media (forced-colors: active) { .musy-seg__option[data-checked] { border-color: highlight; color: highlight; } }
 </style>
 </head>
 <body>
@@ -421,32 +476,39 @@ body { overflow: hidden; }
           <div class="musy-sheet__field" aria-hidden="true"></div>
           <div class="musy-sheet__header">
             <div class="musie-immersive__lead">
-              <div class="musie-md"><h2 id="title">Bau dir deinen Klang</h2></div>
-              <p class="musie-question__helper">Vier Regler, ein ruhiges Stück. Es spielt, solange du magst, und hört auf dich, während es spielt.</p>
+              <div class="musie-md"><h2 id="title">Der tiefe Ton bleibt. Die hohen Töne baust du dir.</h2></div>
+              <p class="musie-question__helper">Nur das Tempo gilt für beide. Es spielt, solange du magst.</p>
             </div>
           </div>
           <div class="musy-sheet__body">
             <div class="musie-immersive__body">
               <div class="musie-mixer">
                 <div class="musie-slider">
-                  <label class="musie-slider__label" for="density">Dichte</label>
-                  <input type="range" id="density" min="0" max="100" value="50" aria-describedby="density-ends">
-                  <div class="musie-slider__ends" id="density-ends" aria-hidden="true"><span>ruhig</span><span>lebendig</span></div>
+                  <span class="musy-sr-only" id="instrument-label">Instrument der hohen Töne</span>
+                  <div role="radiogroup" class="musy-seg" id="instrument" aria-labelledby="instrument-label">
+                    <div class="musy-seg__track"><button type="button" role="radio" class="musy-seg__option" data-value="harp" data-unchecked="" aria-checked="false" tabindex="-1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-music musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg><span class="musy-seg__label">Harfe</span></button><button type="button" role="radio" class="musy-seg__option" data-value="kalimba" data-checked="" aria-checked="true" tabindex="0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-music musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg><span class="musy-seg__label">Kalimba</span></button><button type="button" role="radio" class="musy-seg__option" data-value="marimba" data-unchecked="" aria-checked="false" tabindex="-1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-music musy-icon musy-icon--md" aria-hidden="true" focusable="false"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg><span class="musy-seg__label">Marimba</span></button></div>
+                  </div>
                 </div>
                 <div class="musie-slider">
-                  <label class="musie-slider__label" for="pitch">Tonhöhe</label>
-                  <input type="range" id="pitch" min="0" max="100" value="50" aria-describedby="pitch-ends">
+                  <div class="musie-slider__head"><label class="musie-slider__label" for="volume">Lautstärke</label><output class="musie-slider__value" for="volume" id="volume-value" aria-hidden="true"></output></div>
+                  <input type="range" id="volume" min="0" max="100" value="50" aria-describedby="volume-ends">
+                  <div class="musie-slider__ends" id="volume-ends" aria-hidden="true"><span>leise</span><span>laut</span></div>
+                </div>
+                <div class="musie-slider">
+                  <div class="musie-slider__head"><label class="musie-slider__label" for="pitch">Tonhöhe</label><output class="musie-slider__value" for="pitch" id="pitch-value" aria-hidden="true"></output></div>
+                  <input type="range" id="pitch" min="60" max="96" step="1" value="84" aria-describedby="pitch-ends">
                   <div class="musie-slider__ends" id="pitch-ends" aria-hidden="true"><span>tief</span><span>hoch</span></div>
                 </div>
                 <div class="musie-slider">
-                  <label class="musie-slider__label" for="timbre">Klangfarbe</label>
-                  <input type="range" id="timbre" min="0" max="100" value="50" aria-describedby="timbre-ends">
-                  <div class="musie-slider__ends" id="timbre-ends" aria-hidden="true"><span>Harfe</span><span>Kalimba</span><span>Marimba</span></div>
+                  <div class="musie-slider__head"><label class="musie-slider__label" for="duration">Tondauer</label><output class="musie-slider__value" for="duration" id="duration-value" aria-hidden="true"></output></div>
+                  <input type="range" id="duration" min="0" max="100" value="100" aria-describedby="duration-ends">
+                  <div class="musie-slider__ends" id="duration-ends" aria-hidden="true"><span>staccato</span><span>legato</span></div>
                 </div>
+                <hr class="musie-mixer__rule">
                 <div class="musie-slider">
-                  <label class="musie-slider__label" for="space">Weite</label>
-                  <input type="range" id="space" min="0" max="100" value="50" aria-describedby="space-ends">
-                  <div class="musie-slider__ends" id="space-ends" aria-hidden="true"><span>nah</span><span>weit</span></div>
+                  <div class="musie-slider__head"><label class="musie-slider__label" for="tempo">Tempo, für beide</label><output class="musie-slider__value" for="tempo" id="tempo-value" aria-hidden="true"></output></div>
+                  <input type="range" id="tempo" min="0" max="100" value="50" aria-describedby="tempo-ends">
+                  <div class="musie-slider__ends" id="tempo-ends" aria-hidden="true"><span>ruhig</span><span>bewegt</span></div>
                 </div>
               </div>
             </div>
@@ -541,32 +603,82 @@ document.querySelector('#consent .musie-decline').addEventListener('click', () =
 if (consent === 'granted') startPostHog();
 else { consentStep(consent === 'refused' ? 'no' : 'ask'); openDialog('consent'); }
 
-/* Audio-Zustand vorab: die Regler stellen den Hall schon, bevor es Audio gibt. */
+/* Der Audio-Zustand: entsteht beim ersten Abspielen. */
 let ac = null, master = null, wet = null, buffers = {}, loading = null;
 
 /* ── Die Regler ──────────────────────────────────────────────────────────────── */
-const P = {};                                           // 0…1 je Regler
-const five = (a) => (v) => a[v < 0.2 ? 0 : v < 0.45 ? 1 : v <= 0.55 ? 2 : v < 0.8 ? 3 : 4];
-const WORDS = {
-  density: five(['sehr ruhig', 'ruhiger', 'mittel', 'bewegter', 'lebendig']),
-  pitch: five(['tief', 'tiefer', 'mittel', 'höher', 'hoch']),
-  timbre: five(['Harfe', 'Harfe und Kalimba', 'Kalimba', 'Kalimba und Marimba', 'Marimba']),
-  space: five(['nah', 'näher', 'mittel', 'weiter', 'weit']),
+/* Alle gelten den hohen Tönen, außer dem Tempo. Der tiefe Ton (Marimba, C–G–F, darüber c oder G) spielt immer genau
+   wie in body-resonance. Grundeinstellung = body-resonance: Kalimba, Lautstärke Mitte, Tonhöhe c′′′ bis g′′′,
+   Tondauer legato, Tempo Mitte (im Mittel 36 BPM). Bei dieser Einstellung ergibt jede Formel unten genau die Zahl
+   von dort, ohne Rundungsrest (x ** 0 = 1, 0,5 − 0,5 = 0), und der Zufall wird in derselben Reihenfolge gezogen. */
+const P = { instrument: 'kalimba' };
+const BASE_BPM = 60 / 1.65;                              // body-resonance: ein Schlag alle 1,3–2,0 s, im Mittel 1,65 s
+const SLOW_BPM = 20, MOVED_BPM = 120;                    // ruhig: alle 3 s ein Schlag; bewegt: zwei pro Sekunde
+const NAMES = ['c', 'cis', 'd', 'dis', 'e', 'f', 'fis', 'g', 'gis', 'a', 'ais', 'h'];
+const tone = (midi) => NAMES[midi % 12] + '′'.repeat(Math.floor(midi / 12) - 4);   // 60 = c′, das mittlere C der 88 Tasten
+const INSTRUMENT_NAME = { harp: 'Harfe', kalimba: 'Kalimba', marimba: 'Marimba' };
+function mix() {
+  const v = P.tempo ?? 0.5, q = P.volume ?? 0.5, d = P.duration ?? 1;
+  const gap = v < 0.5 ? (BASE_BPM / SLOW_BPM) ** ((0.5 - v) * 2) : (BASE_BPM / MOVED_BPM) ** ((v - 0.5) * 2);
+  return {
+    gap,                                                 // Faktor auf den Abstand der Schläge: 1,8 … 1 … 0,3
+    bpm: BASE_BPM / gap,
+    spark: 0.75 + (v - 0.5) * (v < 0.5 ? 0.7 : 0.5),     // wie oft ein hoher Ton fällt: 0,4 … 0,75 … 1
+    extra: v > 0.5 ? (v - 0.5) * 1.6 : 0,                // bewegt: ein zweiter hoher Ton zwischen den Schlägen, bis 0,8
+    inst: P.instrument,
+    vel: 0.32 * 10 ** ((q - 0.5) * (q < 0.5 ? 36 : 16) / 20),   // −18 dB … 0,32 … +8 dB
+    lo: P.pitch ?? 84,                                   // der tiefste der hohen Töne; sie liegen in einer Quinte darüber
+    length: d >= 1 ? 4 : 0.15 * (4 / 0.15) ** d,         // 0,15 s … 4 s
+  };
+}
+const band = (v) => (v < 0.2 ? 0 : v < 0.45 ? 1 : v <= 0.55 ? 2 : v < 0.8 ? 3 : 4);
+const SHOW = {
+  volume: (v) => ['pp', 'p', 'mp', 'mf', 'f'][band(v)],
+  pitch: (lo) => `${tone(lo)} bis ${tone(lo + 7)}`,
+  duration: (v) => (v < 0.35 ? 'staccato' : v < 0.8 ? 'portato' : 'legato'),
+  tempo: () => `${Math.round(mix().bpm)} BPM`,
+};
+const SAY = {
+  volume: (v) => `${['sehr leise', 'leise', 'mittel', 'lauter', 'laut'][band(v)]} (${SHOW.volume(v)})`,
+  pitch: SHOW.pitch,
+  duration: SHOW.duration,
+  tempo: () => `${Math.round(mix().bpm)} Schläge pro Minute`,
 };
 let changes = 0;
-for (const name of Object.keys(WORDS)) {
-  const input = document.getElementById(name);
-  const read = () => { P[name] = input.valueAsNumber / 100; input.setAttribute('aria-valuetext', WORDS[name](P[name])); applySpace(); };
+for (const name of Object.keys(SHOW)) {
+  const input = document.getElementById(name), out = document.getElementById(name + '-value');
+  const read = () => {
+    P[name] = name === 'pitch' ? input.valueAsNumber : input.valueAsNumber / 100;
+    out.textContent = SHOW[name](P[name]); input.setAttribute('aria-valuetext', SAY[name](P[name]));
+  };
   read();
   input.addEventListener('input', read);
-  input.addEventListener('change', () => { changes += 1; ph('sound_param', { name, value: +P[name].toFixed(2), words: WORDS[name](P[name]), playing, listened: Math.round(listened) }); });
+  input.addEventListener('change', () => { changes += 1; ph('sound_param', { name, value: +P[name].toFixed(2), shown: SHOW[name](P[name]), playing, listened: Math.round(listened) }); });
 }
+/* Das Instrument: Segmented Control wie im Design-System (RadioGroup: ein Tab-Halt, Pfeile wählen und fokussieren). */
+const seg = document.getElementById('instrument'), segOptions = [...seg.querySelectorAll('[role="radio"]')];
+function choose(btn, focus) {
+  for (const b of segOptions) {
+    const on = b === btn;
+    b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1;
+    b.toggleAttribute('data-checked', on); b.toggleAttribute('data-unchecked', !on);
+  }
+  if (focus) btn.focus();
+  if (P.instrument === btn.dataset.value) return;
+  P.instrument = btn.dataset.value; changes += 1;
+  ph('sound_param', { name: 'instrument', value: P.instrument, shown: INSTRUMENT_NAME[P.instrument], playing, listened: Math.round(listened) });
+}
+segOptions.forEach((b, i) => {
+  b.addEventListener('click', () => choose(b, false));
+  b.addEventListener('keydown', (e) => {
+    const n = segOptions.length;
+    const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: n - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault(); choose(segOptions[(to + n) % n], true);
+  });
+});
 
-/* ── Die Musik: der Generator aus body-resonance/261111-1255, mit Reglern ─────────
-   Alles, was dort eine feste Zahl ist, hängt hier an einem Regler, und zwar so, dass der Regler in der Mitte (0,5)
-   genau diese Zahl ergibt: v = Mitte + (Regler − 0,5) · Steigung, also bei 0,5 ohne Rundungsrest. Auch der Zufall
-   wird in derselben Reihenfolge gezogen; die Klangfarbe zieht nur dann eine Zahl, wenn wirklich zwei Instrumente
-   im Spiel sind. */
+/* ── Die Musik: der Generator aus body-resonance/261111-1255 ──────────────────── */
 const SAMPLES = {
   harp: { 48: '/instruments/harp/C3.m4a', 52: '/instruments/harp/E3.m4a', 55: '/instruments/harp/G3.m4a', 59: '/instruments/harp/B3.m4a', 62: '/instruments/harp/D4.m4a', 65: '/instruments/harp/F4.m4a' },
   kalimba: { 57: '/instruments/kalimba/open-A3.mp3', 60: '/instruments/kalimba/open-C4.mp3', 64: '/instruments/kalimba/open-E4.mp3', 65: '/instruments/kalimba/open-F4.mp3', 69: '/instruments/kalimba/open-A4.mp3', 71: '/instruments/kalimba/open-B4.mp3', 72: '/instruments/kalimba/open-C5.mp3', 76: '/instruments/kalimba/open-E5.mp3' },
@@ -584,7 +696,7 @@ function setupAudio() {
   const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3; comp.connect(ac.destination);
   master = ac.createGain(); master.gain.value = 0; master.connect(comp);
   const verb = ac.createConvolver(); verb.buffer = impulse(3.2);
-  wet = ac.createGain(); wet.gain.value = mix().wet; wet.connect(verb); verb.connect(master);   // sofort, nicht eingeblendet
+  wet = ac.createGain(); wet.gain.value = 0.32; wet.connect(verb); verb.connect(master);
   /* Ein Sample, das nicht lädt oder nicht dekodiert, fehlt eben: die übrigen spielen weiter. */
   loading = Promise.all(Object.entries(SAMPLES).flatMap(([inst, map]) => Object.entries(map).map(async ([midi, url]) => {
     try {
@@ -594,61 +706,39 @@ function setupAudio() {
   })));
   return loading;
 }
-/* Die Regler als Zahlen. In der Mitte: gap 1, spark 0,75, shift 0, ground 0, width 1, wet 0,32, Funken nur Kalimba.
-   Dichte   — Abstand der Schläge (1,3–2,0 s in der Mitte; ×2,3 ruhig … ×0,44 lebendig) und wie oft ein Funke fällt
-              (0,3 … 0,75 … 1).
-   Tonhöhe  — die Funken wandern in C-Dur pentatonisch (eine Oktave tiefer … eine Quinte höher); im obersten Viertel
-              geht auch der Grund eine Oktave hinauf. Darunter bleibt er: tiefer als C2 klingt die Marimba nicht mehr.
-   Klangfarbe — wer die Funken spielt: Harfe, Kalimba, Marimba als drei Hügel. Harfe und Marimba spielen sie eine
-              Oktave tiefer, weil ihre Samples bei C3–F4 und C3–C5 enden und oben dünn würden. Der Grund bleibt Marimba.
-   Weite    — Hall (0,06 … 0,32 … 0,62) und Stereobreite (mono … wie dort … ×4). */
-function mix() {
-  const d = P.density ?? 0.5, p = P.pitch ?? 0.5, t = P.timbre ?? 0.5, s = P.space ?? 0.5;
-  return {
-    gap: 2 ** ((0.5 - d) * 2.4),
-    spark: 0.75 + (d - 0.5) * (d < 0.5 ? 0.9 : 0.5),
-    shift: Math.round((p - 0.5) * (p < 0.5 ? 24 : 14)) || 0,
-    ground: p > 0.75 ? 12 : 0,
-    sparkWeights: { harp: Math.max(0, 1 - t * 2), kalimba: Math.max(0, 1 - Math.abs(t - 0.5) * 2), marimba: Math.max(0, t * 2 - 1) },
-    width: s < 0.5 ? s * 2 : 1 + (s - 0.5) * 6,
-    wet: 0.32 + (s - 0.5) * (s < 0.5 ? 0.52 : 0.6),
-  };
-}
-const REGISTER = { harp: -12, kalimba: 0, marimba: -12 };
-function sparkInstrument(w) {
-  const live = Object.keys(w).filter((k) => w[k] > 0);
-  if (live.length === 1) return live[0];                // nur ein Instrument: kein Zufall gezogen
-  let r = Math.random() * live.reduce((a, k) => a + w[k], 0);
-  for (const k of live) { r -= w[k]; if (r <= 0) return k; }
-  return live[live.length - 1];
-}
-function applySpace() { if (wet) wet.gain.setTargetAtTime(mix().wet, ac.currentTime, 0.3); }
 function nearest(inst, midi) {
   const keys = Object.keys(buffers[inst] || {}).map(Number); if (!keys.length) return null;
   const k = keys.reduce((b, x) => (Math.abs(x - midi) < Math.abs(b - midi) ? x : b), keys[0]);
   return { buf: buffers[inst][k], rate: Math.pow(2, (midi - k) / 12) };
 }
-function note(inst, midi, when, { pan = 0, vel = 0.6, length = 6 } = {}) {
+/* rel und tau: wann vor dem Ende das Ausklingen beginnt und wie schnell. Dort fest 1,2 s und 0,4 s; ein kurzer Ton
+   (staccato) klingt im selben Verhältnis aus, sonst begänne das Ausklingen vor dem Ton. */
+function note(inst, midi, when, { pan = 0, vel = 0.6, length = 6, rel = 1.2, tau = 0.4 } = {}) {
   const s = nearest(inst, midi) || nearest('kalimba', midi); if (!s) return;   // fehlt ein Instrument, spielt die Kalimba
   const src = ac.createBufferSource(); src.buffer = s.buf; src.playbackRate.value = s.rate;
-  const gain = ac.createGain(); gain.gain.setValueAtTime(vel, when); gain.gain.setTargetAtTime(0, when + length - 1.2, 0.4);
+  const gain = ac.createGain(); gain.gain.setValueAtTime(vel, when); gain.gain.setTargetAtTime(0, when + length - rel, tau);
   const panner = ac.createStereoPanner(); panner.pan.setValueAtTime(pan, when);
   src.connect(gain); gain.connect(panner); panner.connect(master); panner.connect(wet);
   src.start(when); src.stop(when + length);
 }
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const pitch = (lo, hi) => { const cands = []; for (let m = lo; m <= hi; m++) if (PENTA.includes(m % 12)) cands.push(m); return pick(cands); };
+/* Ein hoher Ton. Der Zufall in der Reihenfolge von dort: erst die Tonhöhe, dann der Zeitpunkt, dann die Seite. */
+function spark(m, at) {
+  const midi = pitch(m.lo, m.lo + 7), when = at();
+  const fade = m.length >= 2.4 ? {} : { rel: m.length * 0.55, tau: m.length / 8 };
+  note(m.inst, midi, when, { pan: (Math.random() - 0.5) * 0.4, vel: m.vel, length: m.length, ...fade });
+}
 let nextAt = 0, step = 0, schedTimer = null;
 function schedule() {                                   // ein Blick 0,3 s voraus
   while (nextAt < ac.currentTime + 0.3) {
     const t = nextAt, m = mix();
-    if (step % 4 === 0) note('marimba', pick([36, 43, 41]) + m.ground, t, { pan: -0.1 * m.width, vel: 0.75, length: 7 });   // tief: C2, G2, F2
-    if (step % 4 === 2) note('marimba', pick([48, 43]) + m.ground, t, { pan: 0.1 * m.width, vel: 0.55, length: 6 });
-    if (Math.random() < m.spark) {                      // hoch: C6–G6 auf der Kalimba
-      const inst = sparkInstrument(m.sparkWeights), o = m.shift + REGISTER[inst];
-      note(inst, pitch(84 + o, 91 + o), t + 0.35 + Math.random() * 0.4, { pan: (Math.random() - 0.5) * 0.4 * m.width, vel: 0.32, length: 4 });
-    }
-    nextAt += (1.3 + Math.random() * 0.7) * m.gap;
+    if (step % 4 === 0) note('marimba', pick([36, 43, 41]), t, { pan: -0.1, vel: 0.75, length: 7 });   // tief: C2, G2, F2
+    if (step % 4 === 2) note('marimba', pick([48, 43]), t, { pan: 0.1, vel: 0.55, length: 6 });
+    if (Math.random() < m.spark) spark(m, () => t + 0.35 * m.gap + Math.random() * 0.4 * m.gap);
+    const gap = (1.3 + Math.random() * 0.7) * m.gap;
+    if (m.extra > 0 && Math.random() < m.extra) spark(m, () => t + gap * 0.5 + (Math.random() - 0.5) * 0.1 * m.gap);
+    nextAt += gap;
     step += 1;
   }
 }
