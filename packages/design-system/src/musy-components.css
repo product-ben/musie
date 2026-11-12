@@ -6260,13 +6260,35 @@ html[data-musy-scroll-snap='y'] {
      with. Logged in stories/OPEN-QUESTIONS.md. */
   --musy-deck-card-radius-foot: 40px;
   /* ── THE SHADOWS ARE KNOBS (Ben, 2026-11-12) ─────────────────────────────
-     The frame gives every card `--elevation-3`, the one in front and the two
-     behind alike, so that is what both default to. They are published, one
-     for the card in front and one for every card behind it, because the
-     values are being tuned in /experiments/card-shadows: whatever comes out
-     of that playground lands here and nowhere else. */
-  --musy-deck-shadow-front: var(--elevation-3);
-  --musy-deck-shadow-back: var(--elevation-3);
+     One for the card in front and one for every card behind it. The frame
+     gave all three `--elevation-3`; these are Ben's values from
+     /experiments/card-shadows/261112-0938/, the same day, verbatim: four
+     layers, each about twice the last, the light a touch to the upper left —
+     the front card at about 16px of height, the ones behind at about 6.
+
+     ONE INK, NAMED ONCE. The playground writes the same colour into every
+     layer; it is a warm brown off the page's own hue, not Layer 1's green
+     `--alpha-shadow-*`, so it is no token, and it is stated here once rather
+     than eight times. `light-dark()` per colour, as `--elevation-*` does it —
+     a whole shadow list cannot sit inside one.
+
+     THE RING IS `--elevation-ring`. The playground wrote it out as
+     `light-dark(transparent, #4C534E)`, which is exactly what that token is
+     (#4C534E is `--sand-7`'s dark value) — and the token also takes the
+     high-contrast override, which the literal would not. */
+  --musy-deck-shadow-ink: light-dark(rgb(62 55 40 / 0.06), rgb(0 0 0 / 0.205));
+  --musy-deck-shadow-front:
+    0.1px 1.1px 2.3px -0.2px var(--musy-deck-shadow-ink),
+    0.3px 3.3px 5.8px -0.6px var(--musy-deck-shadow-ink),
+    0.8px 7.6px 12.9px -1.5px var(--musy-deck-shadow-ink),
+    1.7px 16.3px 27.1px -3.1px var(--musy-deck-shadow-ink),
+    inset 0 0 0 1px var(--elevation-ring);
+  --musy-deck-shadow-back:
+    0 0.4px 1.2px -0.1px var(--musy-deck-shadow-ink),
+    0.1px 1.3px 2.6px -0.2px var(--musy-deck-shadow-ink),
+    0.3px 3px 5.3px -0.6px var(--musy-deck-shadow-ink),
+    0.7px 6.3px 10.8px -1.2px var(--musy-deck-shadow-ink),
+    inset 0 0 0 1px var(--elevation-ring);
   /* How far a dragged card leans into the throw at full travel. Larger than
      the resting tilt on purpose: the lean is what makes the card feel picked
      up rather than slid. */
@@ -6643,7 +6665,7 @@ html[data-musy-scroll-snap='y'] {
   border-radius: inherit;
   background-color: var(--surface-raised);
   /* NO HAIRLINE (2026-11-12): the frame draws none, and the shadow is the
-     edge. In dark, `--elevation-3`'s own inset ring (`--elevation-ring`) still
+     edge. In dark, the shadow knobs' inset ring (`--elevation-ring`) still
      draws one, which is where the shadow alone would not. */
   box-shadow: var(--musy-deck-shadow-back);
   /* FROM THE DEPTH, NEVER FROM THE RISE. The rise is fractional mid-drag,

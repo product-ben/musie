@@ -11158,3 +11158,21 @@ body-lg over heading-md's size in the same font).
 
 What I need from Ben: the shadow values, from the playground, when he has
 them.
+
+## The pile's shadows are Ben's values from the playground — RESOLVED
+
+Where: `.musy-deck` in `musy-components.css` (`--musy-deck-shadow-front`,
+`--musy-deck-shadow-back`, and a new `--musy-deck-shadow-ink`)
+
+What I did: replaced the two `--elevation-3` defaults with the values Ben
+generated in `/experiments/card-shadows/261112-0938/`, four layers each,
+verbatim. Two spelling changes, neither a value change: the colour every
+layer repeats is named once (`--musy-deck-shadow-ink`), and the ring the
+playground wrote as `light-dark(transparent, #4C534E)` is `--elevation-ring`,
+which is that exactly and also takes the high-contrast override. Measured:
+the computed `box-shadow` is his list in light and in dark (0.205 computes as
+0.204, 8-bit alpha).
+
+Why: Ben, 2026-11-12, "i want these values".
+
+What I need from Ben: nothing. Answers the open item in the entry above.
