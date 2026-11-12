@@ -124,10 +124,10 @@ const meta = {
           'buttons, always in the DOM; Arrow Right deals and Arrow Left goes back.',
           '',
           '**On a phone the pair is the gutters** (Ben, 2026-11-11). Below',
-          '`--bp-md` back and forward are the two strips of screen either side of',
+          '`--bp-sm` back and forward are the two strips of screen either side of',
           'the card, each as tall as the stack, with a ghost chevron in the middle:',
           'the whole strip is the button, and a press on it never starts a drag.',
-          'At `--bp-md` and up the pair stays beside the card — **secondary** since',
+          'At `--bp-sm` and up the pair stays beside the card — **secondary** since',
           'the same day, reversing the 2026-10-07 `outline`, because the new',
           'desktop frame draws it so.',
           '',
@@ -157,10 +157,19 @@ const meta = {
           '_Temporary review scaffolding. Delete once answered. This is not',
           'documentation._',
           '',
-          'The resting tilt, the swing and the card width are three numbers Layer 1',
-          'has no token for — there is no rotation scale, and `--bp-sm` is a',
-          'breakpoint, not a card. Logged in stories/OPEN-QUESTIONS.md, along with',
-          'the corner of the card the deck now draws its own button into.',
+          'The two leans, the swing, the foot radius and the card width are numbers',
+          'Layer 1 has no token for — there is no rotation scale, no radius above 24,',
+          'and `--bp-sm` is a breakpoint, not a card. Logged in',
+          'stories/OPEN-QUESTIONS.md, along with the corner of the card the deck now',
+          'draws its own button into.',
+          '',
+          'Since 2026-11-12 the pile is Figma *Karten* (`120:3488`): two cards',
+          'behind the one in front, turned 2.7° and −4.68° about the same centre,',
+          'by PLACE rather than by a per-card seed; corners 16 / 16 / 40 / 40; one',
+          'shadow knob for the front card and one for the rest',
+          '(`--musy-deck-shadow-front`, `--musy-deck-shadow-back`, both',
+          '`--elevation-3`). Below `--bp-sm` the deck is the centred phone column',
+          'with the gutters; from `--bp-sm` the wide one (it was `--bp-md`).',
         ].join('\n'),
       },
     },
@@ -275,7 +284,7 @@ export const WithActions: Story = {
 /** Two cards: the floor at which a pile still reads as a pile. */
 export const TwoCards: Story = { args: { items: ITEMS.slice(0, 2) } };
 
-/** One card. There is nothing behind it, so the scatter has nothing to show,
+/** One card. There is nothing behind it, so the lean has nothing to show,
  *  the dots are not drawn, and the deck is just a card — correct, and worth
  *  seeing.
  *
@@ -339,10 +348,10 @@ export const Dealt: Story = {
 };
 
 /* ── THE TWO WIDTHS THE PAIR HAS TWO SHAPES AT ─────────────────────────────
-   The gutters are a VIEWPORT media query (below --bp-md), so a pane narrowed
+   The gutters are a VIEWPORT media query (below --bp-sm), so a pane narrowed
    by a decorator changes nothing — the story has to narrow the viewport
    itself. 393×852 is the Figma reference frame's width (`91:7024`); 1280 is
-   comfortably past --bp-md. */
+   comfortably past --bp-sm. */
 const VIEWPORTS = {
   musyPhone: { name: 'Phone 393 (Figma 91:7024)', styles: { width: '393px', height: '852px' }, type: 'mobile' as const },
   musyDesktop: { name: 'Desktop 1280', styles: { width: '1280px', height: '800px' }, type: 'desktop' as const },
@@ -358,7 +367,7 @@ function FullBleed({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * ON A PHONE THE PAIR IS THE GUTTERS (Ben, 2026-11-11). Below `--bp-md` back
+ * ON A PHONE THE PAIR IS THE GUTTERS (Ben, 2026-11-11). Below `--bp-sm` back
  * and forward are the two strips of screen either side of the card, each as
  * tall as the card in front, with a ghost chevron at the primary rung in the
  * middle — "the action is triggered over tapping on the right side next to
@@ -386,7 +395,7 @@ export const PhoneGutters: Story = {
 };
 
 /**
- * AT `--bp-md` AND UP THE PAIR STAYS BESIDE THE CARD, at the foot of the
+ * AT `--bp-sm` AND UP THE PAIR STAYS BESIDE THE CARD, at the foot of the
  * stack — and is `secondary` since 2026-11-11 (D6), where it was `outline`
  * from 2026-10-07. The new desktop frame draws it raised, beside a Shuffle
  * that is secondary too; the reason it went quiet in October was a third icon

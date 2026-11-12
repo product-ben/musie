@@ -104,13 +104,13 @@
  * arrows, because which way is back is not a product decision.
  *
  * ── ON A PHONE THE PAIR IS THE GUTTERS (Ben, 2026-11-11) ──────────────────
- * Below --bp-md the two directions stop being a pair of buttons under the
+ * Below --bp-sm the two directions stop being a pair of buttons under the
  * card and become the two strips of screen either side of it, each the full
  * height of the stack: "the action is triggered over tapping on the right
  * side next to the card". Under the card they were a second thing to find,
  * a thumb's length below the thing they move; beside it they are where a
  * thumb already is. The visible part is a quiet chevron in the middle of each
- * strip, and the whole strip is the target. At --bp-md and up nothing moves:
+ * strip, and the whole strip is the target. At --bp-sm and up nothing moves:
  * the pair stays beside the card, at the foot of the stack.
  *
  * What it costs is the swipe's landing area on a phone. The gutters used to
@@ -345,7 +345,7 @@ export interface CardDeckProps {
      in the nav row beside the two directions, and its one caller — the help
      button on /exercises — moved to that screen's toolbar (D9 in
      docs/plans/exercises-ready-to-build.md). Its premise went too: below
-     --bp-md the two directions are the gutters either side of the card, so
+     --bp-sm the two directions are the gutters either side of the card, so
      "beside the two directions" stopped being a place. Deprecated and
      removed the same day, once the last usage was out. */
   /**
@@ -1267,7 +1267,6 @@ export function CardDeck({
                   inert={!isFront || isSent || coverUp}
                   style={vars({
                     '--musy-card-depth': isSent ? 0 : depth,
-                    '--musy-card-seed': seedFor(id),
                     ...(isFront && cardDrag !== null
                       ? { '--musy-drag-x': cardDrag.x, '--musy-drag-y': cardDrag.y, '--musy-card-swing': cardDrag.swing }
                       : {}),
@@ -1322,7 +1321,7 @@ export function CardDeck({
                   onAnimationEnd={() =>
                     setDeparting((rest) => rest.filter((o) => o.key !== flight.key))}
                   style={vars({
-                    '--musy-card-depth': 0, '--musy-card-seed': seedFor(flight.id),
+                    '--musy-card-depth': 0,
                     '--musy-drag-x': flight.x, '--musy-drag-y': flight.y,
                     '--musy-card-swing': flight.swing, '--musy-throw-dir': flight.dir,
                   } as never)}
@@ -1378,10 +1377,10 @@ export function CardDeck({
           </div>
 
           {/* ── THE GUTTERS (Ben, 2026-11-11) ──────────────────────────────
-              Below --bp-md, the pair. Each is the whole strip of screen
+              Below --bp-sm, the pair. Each is the whole strip of screen
               between the card and the edge, the full height of the stack,
               with a quiet chevron in the middle of it: the stylesheet places
-              them, and hides them at --bp-md and up, where the pair below
+              them, and hides them at --bp-sm and up, where the pair below
               does the job beside the card.
 
               THE WHOLE STRIP IS THE BUTTON, not a hit area stretched out of a
@@ -1397,7 +1396,7 @@ export function CardDeck({
               Back before forward, as the pair reads.
 
               NO TOOLTIP, where IconButton would draw one. These exist only
-              below --bp-md, where the pointer is a thumb and IconButton draws
+              below --bp-sm, where the pointer is a thumb and IconButton draws
               none for a thumb either; and a tooltip anchored to a strip the
               height of a card would point at the middle of nothing. The label
               is the accessible name, which is the half of it that matters. */}
@@ -1430,7 +1429,7 @@ export function CardDeck({
               the scatter behind the top one.
 
               INSIDE THE STAGE, which is what centres them under the PILE
-              rather than under the deck: at --bp-md and up the body is a row
+              rather than under the deck: at --bp-sm and up the body is a row
               and the stage is only its first column, so dots placed after the
               body would sit under the stage and the action column together
               and read as belonging to neither.
@@ -1500,7 +1499,7 @@ export function CardDeck({
                 same day). Two raised chevrons at the foot of a pile read as
                 its controls, and the toolbar above now speaks the same rung.
 
-                ONLY WHERE THEY ARE DRAWN AS BUTTONS, which is --bp-md and up.
+                ONLY WHERE THEY ARE DRAWN AS BUTTONS, which is --bp-sm and up.
                 Below it the pair is the gutters above, and their ghost
                 chevron is the strip's own look, not a variant of this. */}
             <IconButton
@@ -1531,34 +1530,4 @@ export function CardDeck({
       </p>
     </div>
   );
-}
-
-/**
- * HOW SLOPPY THIS PARTICULAR CARD IS — one number in -1…1, hashed from its id,
- * which the stylesheet spends on an offset and an angle.
- *
- * DETERMINISTIC, and that is the point: `Math.random()` would re-scatter the
- * pile on every render, so every drag frame would reshuffle the cards nobody
- * is touching and the pile would read as shivering.
- *
- * IT HAS TO AVALANCHE. The obvious `hash * 31 + charCode` does not: on a set
- * of ids differing in one character — mc-01 … mc-09 — every card came out
- * within a pixel of the same offset, and the pile looked neatly stacked while
- * the hash looked like it was working. FNV-1a to fold, then MurmurHash3's
- * finalizer, whose two multiplies and two xor-shifts are what turn a one-bit
- * difference into a different number.
- */
-function seedFor(id: string): number {
-  let folded = 0x811c9dc5;
-  for (let i = 0; i < id.length; i += 1) {
-    folded ^= id.charCodeAt(i);
-    folded = Math.imul(folded, 0x01000193);
-  }
-  let h = Math.imul(folded, 0x85ebca6b);
-  h ^= h >>> 13;
-  h = Math.imul(h, 0xc2b2ae35);
-  h ^= h >>> 16;
-  /* `>>> 0` first: Math.imul returns a SIGNED 32-bit int, and dividing a
-     negative one gives a number outside -1…1. */
-  return Math.round((((h >>> 0) / 0xffffffff) * 2 - 1) * 1000) / 1000;
 }

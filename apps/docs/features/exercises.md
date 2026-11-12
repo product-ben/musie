@@ -25,7 +25,7 @@ flowchart TD
   goal is a control: pressing it opens the sheet *Was brauchst du gerade?*.
   See [Goals](/features/goals).
 - **The toolbar** — *Such mir eine Übung aus*; *Ziel ändern*, which opens the
-  same sheet (from `--bp-md`; on a phone it sits below the cards instead); the
+  same sheet (from `--bp-sm`, 480px; on a phone it sits below the cards instead); the
   **help** button, which brings the onboarding card back; and the switch
   between *Stapel* and *Liste*. The three buttons are filled (`secondary`) and
   stand at one height: the help button is an `IconButton` at the 40px `sm`

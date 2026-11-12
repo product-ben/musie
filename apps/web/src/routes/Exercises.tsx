@@ -963,7 +963,8 @@ export function Exercises() {
             >
               {t('exercises.surpriseMeShort')}
             </Button>
-            {/* ── ZIEL ÄNDERN, IN THIS ROW FROM --bp-md (Ben, 2026-11-11) ───
+            {/* ── ZIEL ÄNDERN, IN THIS ROW FROM --bp-sm (Ben, 2026-11-11;
+                --bp-md until 2026-11-12, when md went left-aligned) ───────
                 The headline word already opens the sheet; this says so in
                 words, for the reader who takes a word in a sentence for a
                 label (the finding behind the retired goal chevrons). It opens
@@ -1163,7 +1164,7 @@ export function Exercises() {
               drawn only when the goal offers more than `SUGGESTED`, so a
               three-card goal shows no control that could do nothing. Then,
               on phones only, *Ziel ändern* — the toolbar carries it from
-              --bp-md (`.musie-goal-change--below` hides this one there). Both
+              --bp-sm (`.musie-goal-change--below` hides this one there). Both
               sit under the list view too, since the list shows the same
               three. */}
           <div className="musie-under-pile">

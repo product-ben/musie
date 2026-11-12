@@ -396,8 +396,13 @@
 
    THE ONE `safe` IN THIS REPOSITORY. Logged in OPEN-QUESTIONS.md, because the
    next scrolling row will want it and the failure it prevents is invisible
-   until someone tries to reach the first control.                          */
-@media (max-width: 767.98px) {
+   until someone tries to reach the first control.
+
+   BELOW --bp-sm SINCE 2026-11-12 (Ben: "auch auf md viewports alles links
+   aligned"). The band from 480 to 767 is left-aligned now, as the deck is —
+   the component moved its own threshold to --bp-sm the same day, and this
+   row follows it for the reason above: the two states change together. */
+@media (max-width: 479.98px) {
   .musie-deck-toolbar { justify-content: safe center; }
 }
 
@@ -474,10 +479,15 @@
 .musy-deck__card[data-accent='2'] .musie-exercise-card { --musie-card-ink: var(--accent-2-text); }
 
 /* ── THE PICTURE ───────────────────────────────────────────────────────────
-   Flush to the top, the left and the right: no padding on the face, 100% of
-   the card's width, and the face's `overflow: clip` rounding its top corners
-   to the card's own radius. There is nothing to keep in step — the image has
-   no radius of its own to go stale when `--radius-lg` moves.
+   IN A FRAME OF THE CARD'S OWN COLOUR (Ben, 2026-11-12 — Figma *Karten*,
+   `120:3488`). It was flush to the top, the left and the right. Now the band
+   is still 100% of the card's width at 16:9, and a `--sp-1` border in
+   `--surface-raised` draws the frame inside it, all round — the bottom edge
+   too, where it meets the body in the same colour and disappears. A BORDER,
+   so `aspect-ratio` measures the outer box (`border-box`) exactly as the
+   frame's 16:9 does, and the radius clips the picture concentrically: 16 at
+   the top, the card's own, so the picture's inner corner is 12; 8 at the
+   foot, so it is 4 there.
 
    THE ONE NUMBER THAT IS NOT A TOKEN. 16:9 is the crop five photographs of
    five different shapes are presented at, and Layer 1 has no aspect-ratio
@@ -494,9 +504,12 @@
 
 .musie-exercise-card__image {
   display: block;
+  box-sizing: border-box;
   inline-size: 100%;
   aspect-ratio: var(--musie-card-crop);
   object-fit: cover;
+  border: var(--sp-1) var(--border-style-solid) var(--surface-raised);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
   /* While one is still arriving, this is what occupies its band — the sunken
      surface rather than the wash, so the gap reads as a hole in the card
      rather than as part of its colour. */
@@ -923,7 +936,13 @@
   letter-spacing: var(--type-label-md-tracking);
 }
 
-/* ── THE SENTENCE, AT `body-xl` (Ben, 2026-10-07) ─────────────────────────
+/* ── THE SENTENCE, AT `body-lg` SINCE 2026-11-12 ──────────────────────────
+   Ben: "der Text auf der Intro-Card ein Level kleiner" — body-xl to the next
+   step down, body-lg. That step is the TEXT family at regular weight, so the
+   sentences are serif again, as they were at body-sm before body-xl; the
+   whole step is taken, for the reason the next paragraph gives.
+
+   ── IT WAS `body-xl` (Ben, 2026-10-07) ──────────────────────────────────
    It was `body-sm`, chosen when the legend was a translucent pane over a
    photograph and three small sentences were all that would sit on it. The
    pane is opaque now, so the card underneath is no longer competing for the
@@ -937,11 +956,11 @@
    step rather than body-md set larger. */
 .musie-deck-guide__text {
   text-wrap: pretty;
-  font-family: var(--type-body-xl-family);
-  font-size: var(--type-body-xl-size);
-  font-weight: var(--type-body-xl-weight);
-  line-height: var(--type-body-xl-line);
-  letter-spacing: var(--type-body-xl-tracking);
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  font-weight: var(--type-body-lg-weight);
+  line-height: var(--type-body-lg-line);
+  letter-spacing: var(--type-body-lg-tracking);
 }
 
 
@@ -1033,20 +1052,23 @@
 }
 
 /* ONE *ZIEL ÄNDERN* PER BREAKPOINT. The toolbar row carries it from
-   --bp-md; below that it sits under the pile, where a thumb ends up after
+   --bp-sm; below that it sits under the pile, where a thumb ends up after
    browsing. `display: none` takes the other copy out of the accessibility
-   tree as well as off the screen, so nobody meets it twice. 768px is
-   --bp-md, written out because a custom property cannot sit in a media
-   query — the same literal the rest of this file uses. */
-@media (max-width: 767.98px) {
+   tree as well as off the screen, so nobody meets it twice. 480px is
+   --bp-sm, written out because a custom property cannot sit in a media
+   query. It was --bp-md until 2026-11-12, when the deck's own switch from
+   the phone's centred column to the wide one moved down to --bp-sm (Ben:
+   "auch auf md viewports alles links aligned"); this follows it, so the
+   button is in the row exactly where the deck is the wide one. */
+@media (max-width: 479.98px) {
   .musie-goal-change--row { display: none; }
 }
-@media (min-width: 768px) {
+@media (min-width: 480px) {
   .musie-goal-change--below { display: none; }
   /* With the button gone, a three-card goal would leave an empty block and
      one `--space-gap-group` of nothing under the dots. */
   .musie-under-pile:not(:has(.musy-switch)) { display: none; }
-  /* FROM --bp-md THE COLUMN IS START-ALIGNED — headline, toolbar and card all
+  /* FROM --bp-sm THE COLUMN IS START-ALIGNED — headline, toolbar and card all
      share its left edge — so the switch takes that edge too and sits under
      the dots, rather than centring across a column the card fills only a
      third of (seen on screen at 1440, 2026-11-11). Centring it under the card

@@ -4307,3 +4307,16 @@ is how the two drift.
 What I need from Ben: **nothing to decide**, but `docs/07-components.md`
 §7.13 says four cues and now describes a state the component does not draw.
 It is one sentence in a document this repository does not carry a copy of.
+
+## CardDeck — the pile's foot radius is 40, and Layer 1 stops at 24
+Where: `src/musy-components.css`, `.musy-deck` (`--musy-deck-card-radius-foot`)
+What I checked: Figma *Karten* (`120:3488`, Ben, 2026-11-12) draws each card
+with corners 16 / 16 / 40 / 40. 16 is `--radius-lg`. Layer 1's radius scale
+ends at `--radius-xl` (24); `--radius-full` is a pill, not a corner.
+What I did: named the 40 once on the deck, beside the two leans (2.7°,
+−4.68°) that replaced the hashed scatter the same day, and used it for the
+card, the pile (focus ring) and through it the cover.
+Why: `calc(var(--radius-xl) + var(--radius-lg))` would make 40 out of two
+tokens that have nothing to do with it — L14.1's letter, not its meaning.
+What I need from Ben: **nothing to decide now**. If a second component wants
+a corner above 24, that is the moment for a Layer 1 step (`--radius-2xl`).

@@ -11115,3 +11115,46 @@ old name where they record the past.
 Why: Ben, 2026-11-11: „Rename CTA to button everywhere“.
 
 What I need from Ben: nothing.
+
+## md is the wide layout: the deck's switch moved from --bp-md to --bp-sm — RESOLVED
+
+Where: `musy-components.css` (THE SMALLEST TIER, THE GUTTERS),
+`exercises.css` (toolbar `safe center`, *Ziel ändern* row/below, under the
+pile)
+
+What I did: between 480 and 767px — an iPad mini upright, half a laptop
+screen — the deck was still the phone's centred column with tap strips
+either side, under a left-aligned heading. From `--bp-sm` it is now the wide
+deck: left-aligned, the chevron pair beside the card, *Ziel ändern* in the
+toolbar row. Below 480 nothing changed.
+
+Why: Ben, 2026-11-12: „auch auf md viewports alles links aligned“, and of
+two options (move the switch, or left-align the phone mechanics) he chose
+the switch.
+
+What I need from Ben: nothing. Known edge: card and pair do not fit side by
+side below about 530px, so there the pair wraps under the card (the wrap is
+the component's own net). The pile's −4.68° card reaches ~19px past its box,
+so on a 16px gutter its corner meets the screen edge.
+
+## The pile is Figma *Karten*; the intro card's sentences are body-lg — RESOLVED
+
+Where: `.musy-deck` / `.musy-deck__card` / `.musy-deck__pile`
+(`musy-components.css`), `CardDeck.tsx` (the per-card seed is gone),
+`.musie-exercise-card__image` and `.musie-deck-guide__text` (`exercises.css`)
+
+What I did: the pile is drawn as `120:3488`. Three cards show, turned 0°,
+2.7° and −4.68° about one centre by PLACE in the pile, continuous while a
+card is dragged off. Further cards are hidden under the third. There is no
+step down, no shrink, no hairline, corners 16 / 16 / 40 / 40, the picture in
+a 4px frame of the card's colour, and every card on `--elevation-3`, through
+two new knobs `--musy-deck-shadow-front` / `-back` that
+`/experiments/card-shadows/` writes values for. The intro card's text went
+from body-xl to body-lg (Literata, 19–20px).
+
+Why: Ben, 2026-11-12: „ein exaktes VD Upgrade des Kartenstapels wie hier im
+Frame Karten“, „der Text auf der Intro-Card ein Level kleiner“ (he chose
+body-lg over heading-md's size in the same font).
+
+What I need from Ben: the shadow values, from the playground, when he has
+them.
