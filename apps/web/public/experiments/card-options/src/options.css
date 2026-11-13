@@ -25,12 +25,12 @@ html:is([data-opt='7'], [data-opt='9']) { --opt-inset: 54px; }
 /* ── THE CARD'S CORNERS ─────────────────────────────────────────────────────
    40 all round, 9 has its top two at 20. The pile carries the shape and the
    cards inherit it down to the face; the picture's 4px frame follows. */
-html[data-opt] .musy-deck__pile { border-radius: var(--musy-deck-card-radius-foot); }
+html[data-opt] .musy-deck__pile { border-radius: var(--musy-deck-card-radius); }
 html[data-opt] .musie-exercise-card__image {
-  border-radius: var(--musy-deck-card-radius-foot) var(--musy-deck-card-radius-foot) var(--radius-sm) var(--radius-sm);
+  border-radius: var(--musy-deck-card-radius) var(--musy-deck-card-radius) var(--radius-sm) var(--radius-sm);
 }
 html[data-opt='9'] .musy-deck__pile {
-  border-radius: 20px 20px var(--musy-deck-card-radius-foot) var(--musy-deck-card-radius-foot);
+  border-radius: 20px 20px var(--musy-deck-card-radius) var(--musy-deck-card-radius);
 }
 html[data-opt='9'] .musie-exercise-card__image {
   border-radius: 20px 20px var(--radius-sm) var(--radius-sm);

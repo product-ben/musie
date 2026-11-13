@@ -11285,3 +11285,32 @@ Control bei dem Experiment, so dass man nach unten alles sehen kann“.
 
 What I need from Ben: the merge of the PR that puts `261112-1248/` on
 musie.org — `main` needs his review override, which I may not use.
+
+## The pile is variant 7 — RESOLVED
+
+Where: `.musy-deck` and `.musy-deck__strip-mark` (`musy-components.css`),
+`.musie-exercise-card__image` (`exercises.css`)
+
+What I did: variant 7 of `/experiments/card-options/` is now the app's pile.
+At 393: card 285 (`100vw - --sp-9 - --sp-3`, was 297), corners 40 all round
+(was 16 / 16 / 40 / 40), the picture 40 / 40 / 8 / 8 by inheriting the
+card's top corners, gutters 54 a side with a 40px chevron at the thin glyph,
+in the middle of each gutter (7px from the edge both sides; the frame has 5
+on the left and 7 on the right). The intro card follows to 40 by itself.
+From `--bp-sm` up only the corners change: the pair beside the pile stays.
+Measured at 360 / 393 / 430 / 600 / 1440.
+
+Two choices that differ from what the experiment showed, both reversible in
+one line:
+
+- **The whole gutter is still the target.** In the experiment only the 40px
+  chevron took a tap; the app keeps Ben's rule from 2026-11-11 ("tapping on
+  the right side next to the card").
+- **Wider screens keep their layout.** In the experiment 7 also drew its side
+  chevrons from 480px up; the app keeps the secondary pair beside the pile
+  there (D6), because the five variants were phone frames.
+
+Why: Ben, 2026-11-13: „Oke! Let's take no 7!“
+
+What I need from Ben: nothing, unless either of the two choices above should
+go the experiment's way.

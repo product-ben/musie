@@ -6239,8 +6239,14 @@ html[data-musy-scroll-snap='y'] {
      percentage here makes the card's width depend on the box around it, and
      that box is the thing the layout is arranging — so the two chase each
      other. Against `100vw` the card is the same size wherever it is put. The
-     subtraction is the page's gutters plus room for the pile's corners. */
-  --musy-deck-card-inline: min(22.5rem, 100vw - var(--sp-9));
+     subtraction is the page's gutters plus room for the pile's corners.
+
+     ── 108, NOT 96 — VARIANT 7 (Ben, 2026-11-13: „Let's take no 7!") ────
+     Figma `138:6053` in section `134:3835`, tried on a phone in
+     /experiments/card-options/ against four others: 285px at 393, which
+     leaves the gutters 54px a side for the chevrons where `--sp-9` left 48.
+     Still capped at 22.5rem, so nothing changes from about 470px up. */
+  --musy-deck-card-inline: min(22.5rem, 100vw - var(--sp-9) - var(--sp-3));
   /* ── THE PILE, AS THE FIGMA FRAME *KARTEN* DRAWS IT (Ben, 2026-11-12) ───
      Figma `120:3488`. Two cards show behind the one in front, each turned
      about the SAME centre — no offset, no shrink — the first a little
@@ -6253,12 +6259,14 @@ html[data-musy-scroll-snap='y'] {
      is. A third card and below wait, hidden, under the second. */
   --musy-deck-lean-1: 2.7deg;
   --musy-deck-lean-2: -4.68deg;
-  /* The card's corners: `--radius-lg` at the top and 40 at the foot, where
-     the frame rounds them to sit around the Start pill. 40 is no Layer 1
-     radius — the scale stops at `--radius-xl`, 24 — so it is named here
-     rather than spelled as arithmetic over two tokens it has nothing to do
-     with. Logged in stories/OPEN-QUESTIONS.md. */
-  --musy-deck-card-radius-foot: 40px;
+  /* The card's corners: 40, ALL FOUR (variant 7, 2026-11-13). Until then
+     `--radius-lg` at the top and 40 only at the foot, where *Karten* rounded
+     them around the Start pill — so this was `--musy-deck-card-radius-foot`,
+     and the name went with the half it described. 40 is no Layer 1 radius —
+     the scale stops at `--radius-xl`, 24 — so it is named here rather than
+     spelled as arithmetic over two tokens it has nothing to do with. Logged
+     in stories/OPEN-QUESTIONS.md. */
+  --musy-deck-card-radius: 40px;
   /* ── THE SHADOWS ARE KNOBS (Ben, 2026-11-12) ─────────────────────────────
      One for the card in front and one for every card behind it. The frame
      gave all three `--elevation-3`; these are Ben's values from
@@ -6542,10 +6550,10 @@ html[data-musy-scroll-snap='y'] {
   inline-size: var(--musy-deck-card-inline);
   /* THE CARD'S OWN SHAPE (2026-11-12), so the focus ring follows the card and
      the cover — which inherits this — is the same shape as the card under it.
-     It was `--radius-xl` all round while the card was `--radius-lg`. */
-  border-radius:
-    var(--radius-lg) var(--radius-lg)
-    var(--musy-deck-card-radius-foot) var(--musy-deck-card-radius-foot);
+     It was `--radius-xl` all round while the card was `--radius-lg`, then
+     16 / 16 / 40 / 40 for a day, and is 40 all round since variant 7. Every
+     card inherits it, down to the face. */
+  border-radius: var(--musy-deck-card-radius);
   /* Room under the pile. It was the deepest a card could be pushed down it;
      no card is pushed down any more (see `--musy-deck-lean-*`), and the frame
      keeps the same 32px between the pile and the dots, so it stays. */
@@ -7035,9 +7043,10 @@ html[data-musy-scroll-snap='y'] {
    "The action is triggered over tapping on the right side next to the card
    … over the whole [height] of the stack." Each direction is the whole strip
    of screen between the card and the edge, as tall as the card in front,
-   with a ghost chevron at the primary rung in the middle of it. Reference:
-   Figma `91:7024`, 393px wide — a 297px card and the chevrons at the screen's
-   edges, level with the middle of the stack.
+   with a ghost chevron in the middle of it. Reference: Figma `91:7024`, 393px
+   wide — a 297px card and the chevrons at the screen's edges, level with the
+   middle of the stack — and since 2026-11-13 variant 7 (`138:6053`): a 285px
+   card, 54px gutters, and a 40px chevron with the thin glyph.
 
    ── VERTICALLY: THE PILE'S OWN ROW ─────────────────────────────────────
    An absolutely positioned child of a grid takes its GRID AREA as its
@@ -7060,7 +7069,8 @@ html[data-musy-scroll-snap='y'] {
    (`--musy-deck-card-inline` subtracts from 100vw), so the two cannot
    disagree, and it reaches the screen's edge THROUGH the consumer's padding —
    which the deck cannot see, and which is exactly where the Figma frame puts
-   the chevrons. At 393 that is 48px a side, twice 2.5.8's floor.
+   the chevrons. At 393 that is 54px a side (48 until variant 7), more than
+   twice 2.5.8's floor.
 
    THE DECK'S OWN CLIP IS THE OTHER EDGE. `.musy-deck` clips sideways, so a
    deck that is not full-bleed has its strips cut at its own box — and a
@@ -7068,19 +7078,27 @@ html[data-musy-scroll-snap='y'] {
    the deck. /exercises is full-bleed (`.musie-deck-stage`), and the phone
    story is too, because a strip cut down to the pane's padding shows nothing.
 
-   A CONSUMER THAT WIDENS THE CARD narrows these. Past `100vw - --sp-9` the
-   strip falls under the chevron's 44px and the chevron overhangs the card;
-   nothing does that today, and `--musy-deck-card-inline` is the knob.
+   A CONSUMER THAT WIDENS THE CARD narrows these. Once the card leaves less
+   than 80px of the viewport, the strip falls under the chevron's 40px and the
+   chevron overhangs the card; nothing does that today, and
+   `--musy-deck-card-inline` is the knob.
+
+   THE WHOLE STRIP IS STILL THE TARGET. Variant 7 was tried in the experiment
+   with only the 40px chevron taking a tap, the way an IconButton would; the
+   deck keeps Ben's own rule from 2026-11-11 — "tapping on the right side next
+   to the card" — so the look changed and the reach did not.
 
    ── THE LOOK IS THE GHOST RUNG'S, AND IT IS THE STRIP'S OWN ───────────────
    The strip is a button the deck draws, not an IconButton stretched: that
-   component owns its own box. The chevron inside is drawn here from the same
-   tokens `.musy-icon-btn--ghost` at the primary rung uses — target, radius,
-   ghost fill and ink, `md` glyph — so it looks like that control without
-   being one. Hover, press and the focus ring go on the MARK, which is the
-   thing the eye reads as the control; on the strip they would light up a
-   column the height of a card, and the ring would be clipped at the screen's
-   edge.                                                                    */
+   component owns its own box. The chevron inside is drawn here from the
+   ghost rung's tokens — radius, ghost fill and ink — at the size variant 7
+   draws: a 40px mark (`--target-sm`) and the 20px `md` glyph at the thin
+   stroke (`--icon-stroke-sm`). That pairing is no IconButton rung (`sm` is
+   40 with a 16px glyph, `primary` 44 with the 2px one), and it does not need
+   to be one: the mark is the strip's own. Hover, press and the focus ring go
+   on the MARK, which is the thing the eye reads as the control; on the strip
+   they would light up a column the height of a card, and the ring would be
+   clipped at the screen's edge.                                            */
 .musy-deck__strip { display: none; }
 
 @media (max-width: 479.98px) {
@@ -7115,25 +7133,28 @@ html[data-musy-scroll-snap='y'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: var(--target-primary);
-  block-size: var(--target-primary);
+  inline-size: var(--target-sm);
+  block-size: var(--target-sm);
   border-radius: var(--radius-control);
   background-color: var(--interactive-ghost);
   transition: background-color var(--motion-toggle), color var(--motion-toggle);
 }
+.musy-deck__strip-mark > .musy-icon { stroke-width: var(--icon-stroke-sm); }
 
 /* THE ONE RING, on the mark. The shared focus rule at the top of this file
    lists the controls that carry it; this one cannot sit in that list as
    `.musy-deck__strip-mark:focus-visible`, because the mark is never what
    holds focus — the strip is.
 
-   THE OFFSET IS TURNED INWARD, and that is the one departure. At 393 the
-   strip is 48px and the mark 44, so there are 2px either side of it — and the
-   shared offset puts the ring 5px out, 3px of it past the screen's edge on
-   the forward strip, where nothing can draw it. Measured: the right-hand ring
-   ran to 396 on a 393 screen. Pulled in by the same offset it would have
-   pushed out, the ring straddles the mark's edge and lands whole, a pixel
-   short of the screen on one side and of the card on the other. */
+   THE OFFSET IS TURNED INWARD, and that is the one departure. It was written
+   when the strip was 48px and the mark 44, 2px either side of it, and the
+   shared offset put the ring 5px out, 3px of it past the screen's edge on the
+   forward strip, where nothing can draw it. Measured: the right-hand ring ran
+   to 396 on a 393 screen. Pulled in by the same offset it would have pushed
+   out, the ring straddles the mark's edge and lands whole. Since variant 7
+   (54 and 40, 7px either side) the outward ring would just fit at 393 — and
+   would stop fitting again the moment a consumer widens the card, so it
+   stays inward. */
 .musy-deck__strip:focus-visible .musy-deck__strip-mark,
 .musy-deck__strip[data-force~="focus"] .musy-deck__strip-mark {
   outline: var(--focus-ring);

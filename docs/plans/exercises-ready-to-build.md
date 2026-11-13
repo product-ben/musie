@@ -76,6 +76,11 @@ the repo. **This file is the current state**: update it after every task.
   - The InlineButton bar has round ends (`--radius-full`), as the Figma frames draw it.
   - IconButton `sm` carries the Icon `sm` (16px, `--icon-stroke-sm`), like the Button `min`s beside it. At `md` the help *?* read bolder than they did.
 - ~~Blocked on Ben's `supabase db reset`~~ — no longer: the local stack already had `20261111120000` applied, so the walk and `pnpm test:db` ran (above).
+- **The pile is variant 7, 2026-11-13** — Ben's pick from `/experiments/card-options/` (Figma `134:3835`, frame `138:6053`):
+  - Corners 40 all round (`--musy-deck-card-radius`, was `-radius-foot`); the picture inherits the top two.
+  - Card `100vw - --sp-9 - --sp-3`, so 285 at 393 and 54px gutters.
+  - The gutter chevron is a 40px mark with the thin glyph; the whole gutter is still the target.
+  - From `--bp-sm` up nothing changes but the corners.
 
 ## Decisions
 

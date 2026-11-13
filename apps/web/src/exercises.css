@@ -485,9 +485,15 @@
    `--surface-raised` draws the frame inside it, all round — the bottom edge
    too, where it meets the body in the same colour and disappears. A BORDER,
    so `aspect-ratio` measures the outer box (`border-box`) exactly as the
-   frame's 16:9 does, and the radius clips the picture concentrically: 16 at
-   the top, the card's own, so the picture's inner corner is 12; 8 at the
-   foot, so it is 4 there.
+   frame's 16:9 does, and the radius clips the picture concentrically: the
+   card's own at the top, so the picture's inner corner is that less 4; 8 at
+   the foot, so it is 4 there.
+
+   THE TOP IS INHERITED, NOT RESTATED (variant 7, Ben, 2026-11-13). It was
+   `--radius-lg` twice, a copy of the card's 16, and the card went to 40 all
+   round. `inherit` takes the face's shape — which is the pile's, which is
+   the deck's `--musy-deck-card-radius` — and only the foot is this screen's:
+   so the picture can never disagree with the card it sits in.
 
    THE ONE NUMBER THAT IS NOT A TOKEN. 16:9 is the crop five photographs of
    five different shapes are presented at, and Layer 1 has no aspect-ratio
@@ -509,7 +515,9 @@
   aspect-ratio: var(--musie-card-crop);
   object-fit: cover;
   border: var(--sp-1) var(--border-style-solid) var(--surface-raised);
-  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
+  border-radius: inherit;
+  border-end-start-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
   /* While one is still arriving, this is what occupies its band — the sunken
      surface rather than the wash, so the gap reads as a hole in the card
      rather than as part of its colour. */

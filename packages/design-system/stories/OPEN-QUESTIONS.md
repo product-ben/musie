@@ -4320,3 +4320,22 @@ Why: `calc(var(--radius-xl) + var(--radius-lg))` would make 40 out of two
 tokens that have nothing to do with it — L14.1's letter, not its meaning.
 What I need from Ben: **nothing to decide now**. If a second component wants
 a corner above 24, that is the moment for a Layer 1 step (`--radius-2xl`).
+
+## CardDeck — variant 7: the 40 is every corner now, and the gutter mark is 40px
+Where: `src/musy-components.css`, `.musy-deck` (`--musy-deck-card-radius`,
+`--musy-deck-card-inline`), `.musy-deck__strip-mark`
+What I checked: Ben chose variant 7 of Figma `134:3835` (`138:6053`) on
+2026-11-13, after trying five on a phone. It draws the card with 40 on all
+four corners, 285px wide at 393, and the gutter chevrons as IconButton
+`primary` resized to 40px with the thin glyph.
+What I did: the corner knob is `--musy-deck-card-radius` and covers all four
+(it was `--musy-deck-card-radius-foot`, the entry above). The card is
+`100vw - --sp-9 - --sp-3`, so the gutters are 54. The strip's mark is
+`--target-sm` with the `md` glyph at `--icon-stroke-sm`.
+Why the mark is not an IconButton question: 40px with a 20px thin glyph is no
+IconButton rung (`sm` is 40 with a 16px glyph, `primary` 44 with the 2px
+one), but the gutter mark was never an IconButton — it is the strip's own,
+drawn from the ghost rung's tokens. So this needs no new rung.
+What I need from Ben: **nothing to decide**. If the 40px-with-20px-glyph
+button turns up as a real IconButton somewhere, that is the moment for the
+rung (the experiment's 6, 10 and 3 used it; 7 does not).
