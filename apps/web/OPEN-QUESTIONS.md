@@ -10999,6 +10999,304 @@ Why: Ben, 2026-11-09.
 What I need from Ben: nothing. The motion switch's prompt is the one part
 no emulator walks — it needs an iPhone.
 
+## lq-04 and lq-05 became two body-marking experiments — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1109/` (lq-04) and
+`body-resonance/261111-1109/` (lq-05); `apps/web/src/content/questions.ts`
+
+What I checked: Ben, 2026-11-11 — the two questions out of the card
+exercises, and an experiment for each: the card exercises' listening focus
+sheet without the card picture, and in its place the outline of a body to
+mark where you hear or feel it. Several points; each records the moment in
+the music it was set; enabled and selected both in the accent colour; a
+selected point drags, with a ghost delete button beside it.
+
+What I did, and what differs from the app:
+- **The music is generated in the browser from the instrument samples**
+  already in `public/instruments/`. Ben chose a track from musie-assets
+  first; the card tracks are Epidemic Sound on a subscription and
+  `musie-assets/README.md` forbids committing them, while every experiment is
+  a public file in a public repository. He then chose the samples. lq-04's
+  notes wander between left and right; lq-05 sets low marimba against high
+  kalimba.
+- **The body is seen from behind**, labelled „links“ / „rechts“, so the left
+  of the screen is your left — the reading lq-04 needs.
+- **„Die Frage funktioniert für mich nicht“ logs and thanks** instead of
+  handing over another question: each experiment has only the one.
+- **The X and „Bereit? Beginne zu reflektieren“ both end the experiment**,
+  with `body_marking_finished` (every point: position, region, side, music
+  time) and a short summary.
+- The look is the app's: the rules the listen sheet uses, read from the
+  running app on 2026-11-11, and the app's own `/fonts/`.
+
+What I need from Ben: a PostHog survey on `body_marking_finished` if the
+experiments should ask anything afterwards (none is set up); and the delete
+button is the system's `min` icon button — small for a thumb, by the brief's
+„(s)“.
+
+## The body experiments in 3D, and a sound builder — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1143/`, `body-resonance/261111-1143/`,
+`body-model/` (the shared body) and `sound-builder/261111-1149/`
+
+What I checked: Ben, 2026-11-11 — a 3D body in sand instead of the outline;
+holding a spot colours it slowly in green (`--interactive-primary`; it was
+terracotta for an hour, until Ben asked for green), and the longer the hold,
+the larger the area; dragging turns the body; „Flächen bearbeiten“ puts
+a small red ghost delete button beside every area. Then: the generated sound
+bed as its own experiment, with four sliders (Dichte, Tonhöhe, Klangfarbe,
+Weite) and Play, no timer.
+
+What I did:
+- **The body is Anny's** (github.com/naver/anny, Apache 2.0) on the MakeHuman
+  base mesh (CC0): its neutral shape, `topology/notoes.obj`, read as a file
+  and written into a 295 KB binary (`body-model/SOURCE.md`). No code from that
+  repository runs; installing it needed Python 3.10+ and fetching a toolchain,
+  which this machine does not have and I was not allowed to fetch.
+- **The colour spreads over the skin**, not through space: each area keeps the
+  distance along the surface from where it was held, so it does not jump from
+  an arm to the hip. It is round because the larger of the straight distance
+  and 80 % of the path along the mesh counts.
+- **Regions are computed** from the place on the body and the direction of the
+  skin there: front and back are told apart (Brust / oberer Rücken, Becken /
+  Gesäß). Left and right are the body's own; it starts seen from behind.
+- **three.js 0.170 is loaded from jsDelivr**, before consent, as the harp's
+  Google Fonts are.
+- The 2D versions stay beside the 3D ones (rule 10's versioning).
+
+What I need from Ben: whether the jsDelivr request before consent is fine for
+these pages (vendoring three.js would add about 700 KB to the repository); and
+a PostHog survey on `body_marking_finished` / `sound_session` if they should
+ask anything.
+
+## Body resonance, third version: a headline, a seated body, the instruments' countdown — FLAGGED
+
+Where: `apps/web/public/experiments/body-resonance/261111-1255/` (the two
+earlier versions stay beside it); the removed copy in
+`~/Documents/musie-assets/copy/unused-copy.md`, outside the repository
+
+What I checked: Ben, 2026-11-11, five changes for lq-05 only: the headline
+„Spüre einmal nach, wo der Klang in deinem Körper resoniert.“ and nothing else
+in the header; a Base UI slider under the body that turns it, with dragging
+still turning it (both, in step); the countdown and „Weiter zum Reflektieren“
+as in the instruments exercises, but started by an explicit „Jetzt starten“,
+not by the first area; the face in front at the start; the person sitting.
+Later the same day: a second slider for the other axis (dragging up/down
+tilts, left/right turns); „Flächen bearbeiten“ became a ghost
+„Flächen löschen“, with a zoom where areas lie too close to delete; a hold on
+an existing area makes a new one again, and overlapping areas get different
+greens.
+
+What I did:
+- **The texts that went** (the rest of the question, the help ladder, the
+  listening CTA's two labels, the 1:30 praise) are in `copy/unused-copy.md`
+  in musie-assets, a new folder listed in that folder's README.
+- **The slider is the design system's own scrubber shape**: Base UI `Slider`
+  with `MusicPlayer`'s `musy-mplayer__*` classes, without the fill (an angle
+  has no played part), −180° to 180° with the face at 0° in the middle. A
+  static page cannot import the package, so it is bundled with React into
+  `rotation-slider.js` (260 KB, source beside it) with the repository's own
+  esbuild. Same origin, so nothing loads before consent that did not already.
+- **The foot is `SessionPlay.tsx`'s**: DS `Countdown` markup, and under it
+  the row that opens with the motion tokens and pushes the clock up. Before the
+  start the row holds „Jetzt starten“ and the transport button is hidden, so
+  there are not two ways to start; after it, the row opens only on the
+  person's own pause or at 0:00, as in `clock.ts`. The music keeps playing past
+  0:00 („Die Mindestzeit ist um. Hör weiter, so lange du magst.“), and
+  „Noch einmal“ restarts the clock, as with the instruments.
+- **Sitting is a bend at load**, not a rig: knee 92°, hip 88°, arms 34° toward
+  the body, each with a soft weight over a few centimetres. Regions are still
+  read from the standing body, so a seated thigh is still „Oberschenkel“.
+- **The body takes the height the sheet leaves** instead of a share of the
+  viewport: on an iPhone in Safari (about 660 px visible) a fixed share was
+  either too tall for the open row or tiny. It shrinks a little when the row
+  opens.
+- **Tilting** is a vertical slider beside the body, ±90° (from above to from
+  below), and a vertical drag. A drag's first pixels pick its axis: clearly
+  sideways only turns, clearly up or down only tilts, diagonal does both, so
+  turning no longer tips the body by accident. The camera keeps the whole
+  bounding sphere in view, so no angle crops it.
+- **Delete buttons that would overlap** (centres under 36 px apart: a 24 px
+  button and its margin) stand as one zoom-in button. A tap zooms toward
+  those areas until their buttons are apart (up to 10×), and turning and
+  tilting then pivot there. The zoom-out button or „Fertig“ goes back. With
+  no areas the button is disabled; deleting the last one ends delete mode.
+- **Every hold starts a new area**, on an existing one too. Overlapping areas
+  take the first of `--green-9`, `-6`, `-12`, `-8` that none of their
+  neighbours has, and the newer one is drawn on top. The four are the steps
+  that differ most on sand; the scale is muted, so a fifth overlapping area
+  repeats one.
+
+What I need from Ben: the same two questions as the entry above (jsDelivr
+before consent; a PostHog survey). And one judgement: painting before
+„Jetzt starten“ is allowed and recorded with `t = 0`. Say if it should wait for
+the music.
+
+## Body side, third version: no body, a stream of particles that piles up — FLAGGED
+
+Where: `apps/web/public/experiments/body-side/261111-1431/` (the two earlier
+versions stay beside it); the removed copy in
+`~/Documents/musie-assets/copy/unused-copy.md`, outside the repository
+
+What I checked: Ben, 2026-11-11, for lq-04: no body model. Everything else
+as the body resonance version: the instruments' countdown, „Jetzt starten“,
+„Weiter zum Reflektieren“ only after a pause or at 0:00, the headline the
+whole question (both sentences: Ben said yes). In the body's place, a calm
+stream of particles moving at the speed of the music, in the app's colours.
+The first take (a stream from the top, bent by the finger) "didn't quite
+work". The second, the one here: the stream comes out of the cursor (on a
+phone, out of the centre of the screen), falls, and piles up in the centre,
+on the left or on the right, and fallen particles turn smoothly to a light
+sand colour. The finger's direction stays when it lifts (Ben said yes).
+
+What I did:
+- **The stream is built here, not ported.** Ben remembered a particle
+  experiment, possibly Lucy's and not committed; none is in the repository or
+  among his artifacts, so this is new.
+- **Mouse: out of the pointer's tip**, falling straight; moving the mouse
+  throws it a little. **Finger: out of the centre**, thrown as far left or
+  right as the finger is from the middle (up to about a third of the width);
+  it keeps that direction until the finger moves it again. Keyboard: the
+  canvas is a slider (arrows, Home, End) and does what the finger does.
+- **It is a stage, like the instruments'**: a canvas under the header and the
+  foot, to the edges; touches pass through the header and foot except on
+  their buttons.
+- **The piles** sit on the bottom edge of the screen, under the countdown,
+  in 3 px columns that slide like sand (angle of repose). A landed particle
+  turns from its green to `--sand-5` over 2.6 s and is then painted into a
+  still image, so thousands cost nothing per frame. A pile stops growing at
+  about a quarter of the screen's height; what lands on a full one fades.
+- **The speed of the music**: every note makes more particles flow and fall
+  faster, at the moment it sounds. Every note pushes the same way, wherever
+  it is panned, so the stream never gives away the answer. Paused, it only
+  trickles.
+- **What is recorded**: each touch bend (`stream_bent`); at the end
+  (`stream_finished`), a half-second timeline of the direction while the
+  music played, the share of time left, centre and right, and how many
+  particles that flowed during the music landed left, centre and right.
+  The end card says the latter. Consent has its own key, because its
+  sentence changed.
+- **Colours** while falling: green-9, -8 and -6, sand-8, and a little
+  terracotta-9.
+
+What I need from Ben: whether the piles belong on the bottom edge, under the
+countdown and „Weiter“, or on a floor above the foot. Whether the particle
+experiment he meant looks like this, and if Lucy has it, what to take from
+it. And, as for the body pages, a PostHog survey on `stream_finished` if it
+should ask anything.
+
+## Sound builder, second version: the body-resonance soundscape is the default
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/` (the first
+version, `261111-1149`, stays beside it)
+
+What I checked: Ben, 2026-11-12 — the soundscape in body resonance sounds
+different from the sound builder's; the default should be exactly the one
+body resonance generates. It was different, and the first version's comment
+was wrong to say otherwise: `261111-1149` had a generator of its own (one
+melody line around the middle, the instrument chosen per note, a low note
+now and then, 3.6 s of reverb). Body resonance (`261111-1255`, and
+`261111-1143` before it) plays deep marimba notes (C2, G2, F2, then C3 or G2)
+every other beat, with high kalimba sparks (C6–G6) above them, and 3.2 s of
+reverb at a fixed level.
+
+What I did:
+- **The generator is body resonance's**, copied line by line, and each of its
+  fixed numbers is now set by a slider. All four sliders start in the middle,
+  and the middle gives exactly the original number. The check: with the same
+  random seed, both pages made 163 identical Web Audio calls in 30 seconds
+  (26 notes: same samples, pitches, volumes, panning, timing, reverb).
+- **What the sliders change**:
+  - Dichte: the gap between beats (×2.3 to ×0.44) and how often a spark sounds.
+  - Tonhöhe: the sparks move within C pentatonic, from an octave lower to a
+    fifth higher. In the top quarter the deep notes also go up an octave; they
+    never go lower, because the marimba sounds poor below C2.
+  - Klangfarbe: which instrument plays the sparks (harp, kalimba, marimba).
+    The harp and marimba play them an octave lower, because their samples
+    end at F4 and C5. The marimba keeps the deep notes.
+  - Weite: the reverb level and the stereo width.
+
+What I need from Ben: whether the sliders should move these things. The
+middle is fixed by his request; how each end sounds is my choice.
+
+## Sound builder, second version, reworked: the deep tone stays; the controls shape the high notes
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/`. It was
+edited in place because it had never been pushed.
+
+What I checked: Ben, 2026-11-12, after hearing the version above:
+- „Lass uns den tiefen Ton immer lassen“, and the headline should say so.
+- The controls apply to the high notes only: the instrument as a segmented
+  control, then musical parameters (Lautstärke, Tonhöhe, Tondauer from
+  staccato to legato).
+- The one exception is ruhig ↔ bewegt (no longer „lebendig“). It applies to
+  both layers, needs a much bigger difference, and should be in BPM.
+- Pitch: think of 88 piano keys with c′ in the middle.
+
+What I did:
+- **The deep tone** (marimba C2, G2, F2, then C3 or G2) plays exactly as in
+  body resonance. Only the tempo moves it.
+- **Headline**: „Der tiefe Ton bleibt. Die hohen Töne baust du dir.“
+  Under it: „Nur das Tempo gilt für beide.“
+- **Instrument**: the design system's SegmentedControl, with markup and CSS
+  read from the running app (`/privacy`). Its keyboard behaviour is written
+  by hand. All three options use one glyph (`music`), the way the language
+  control uses `Languages` for both languages: the app has no icon per
+  instrument.
+- **Lautstärke**: from −18 dB to +8 dB around body resonance's level, shown
+  as pp, p, mp, mf or f. The default is mp.
+- **Tonhöhe**: in piano keys, shown in Helmholtz names (c′ is the middle C).
+  The high notes move within a fifth, from c′–g′ up to c′′′′–g′′′′; the
+  default is c′′′–g′′′. They stay in C pentatonic.
+- **Tondauer**: from 0.15 s (staccato) to body resonance's ring (legato).
+  **The default is the legato end**, because in body resonance every high
+  note rings until the next one starts. The slider can only shorten them;
+  longer than that would need sustained or looped samples.
+- **Tempo**: 20 to 120 BPM. The default is 36 BPM, body resonance's average:
+  a beat every 1.3–2.0 s, and the irregularity is kept at every tempo. Ruhig
+  also thins out the high notes. Bewegt adds a second high note between
+  beats. In 20 seconds: 8 notes at ruhig, 94 at bewegt.
+- **Weite is gone**: the reverb stays as it is in body resonance.
+- **The default is still exactly body resonance**: same seed, identical
+  Web Audio calls, checked with three seeds.
+
+What I need from Ben: how the harp and marimba sound up high. At c′′′ they
+play their highest sample (F4 or C5) at three to four and a half times its
+speed, and that may sound thin. And whether Tondauer should go beyond
+legato.
+
+## Sound builder: the harp up high is a plucked string, and the three instruments are equally loud
+
+Where: `apps/web/public/experiments/sound-builder/261112-1144/`. Still not
+pushed, so edited in place.
+
+What I checked: Ben, 2026-11-12: „Harfe funktioniert noch nicht“.
+- **The samples load and decode** in Chromium and WebKit, so the harp did
+  play.
+- **But it sounded wrong**: the highest harp recording is F4, so for
+  c′′′–g′′′ it ran at three to four and a half times its speed, which sounds
+  like chirping.
+- **And it was too loud**: rendered at the same Lautstärke, the high harp
+  notes were about 12 dB louder than the kalimba, and the marimba's about
+  11 dB (`level-probe.mjs`, RMS over 1.5 s).
+
+What I did:
+- **Above b′, the harp is the plucked string** from `harp/261109-0920`
+  (Karplus–Strong, "Version 1" there), copied unchanged with a fixed attack
+  of 0.5 and that file's soft low-pass. It plays at the true pitch, so the
+  note names on the Tonhöhe slider stay right. Each pitch is computed once,
+  in 1 to 6 ms, then cached. Up to b′ the recordings still play, never more
+  than a fourth above F4.
+- **Level trims for the high notes**: marimba ×0.28, harp recording ×0.25,
+  harp string ×0.75, kalimba ×1. The kalimba stays at 1, so the default is
+  still exactly body resonance, checked again with the same seed.
+
+What I need from Ben: whether the string sounds like a harp to him. If not,
+the alternative is higher VSCO 2 CE harp recordings (CC0), downloaded and
+added beside the six we have. The marimba above C5 is still a sped-up
+recording (two to three times its speed); whether it needs the same
+treatment is his ear's call.
+
 ## /exercises: the chevrons beside the deck step cards, and goal stepping is gone — RESOLVED
 
 Where: `routes/Exercises.tsx`, `packages/design-system/src/CardDeck.tsx`;
