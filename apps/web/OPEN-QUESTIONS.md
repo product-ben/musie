@@ -11631,3 +11631,26 @@ Why: Ben, 2026-11-13: „show the arrows left and right on all viewports“.
 
 What I need from Ben: nothing. The first choice above (the whole gutter is
 the target) still stands, at every width now.
+
+## A card shows at most 170 characters of its description — RESOLVED
+
+Where: `apps/web/src/lib/cardText.ts`, `ExerciseFace` in
+`apps/web/src/routes/Exercises.tsx`
+
+What I did: the description on a card face is cut at the last word that fits
+in 170 characters, ellipsis included, with nothing dangling before the „…“.
+A screen reader still gets the whole text (the cut one is `aria-hidden`, the
+whole one `.musy-sr-only`, as the time beside it already does). The list view
+keeps the whole text: it has no pile to keep short. On this date only
+Klangreise in German (232) is cut — to „…vor dem Einschlafen durchführen.
+Die…“. The pile at 393 went from 511 to 443px high, at 1440 from 522 to 474.
+
+Why: Ben, 2026-11-13: „lass uns ein Character-Limit von 170 Zeichen machen
+… dadurch sollten wir eine kompaktere Kartenhöhe bekommen.“ 170 is the
+Bodyscan text (169), which stays whole.
+
+What I need from Ben: nothing to decide. The limit is the app's, not the
+content's — a text over 170 is still stored whole and still saved whole, and
+`/maintenance` does not edit exercise text, so nothing there warns an editor
+yet. If exercise text ever moves to `/maintenance`, the limit belongs in its
+form as a counter.

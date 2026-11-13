@@ -84,6 +84,7 @@ import { createSession, endSession, useActiveSession } from '../lib/session';
 import type { ActiveSession } from '../lib/session';
 import { useExercises, useGoals } from '../lib/useContent';
 import { fromRoot } from '../lib/assets';
+import { cardText } from '../lib/cardText';
 import type { Exercise } from '../lib/content';
 import {
   cacheGoal, defaultGoal, filterByGoal, goalPurpose, readCachedGoal, startable,
@@ -1264,11 +1265,18 @@ function factsFor(exercise: Exercise, t: ReturnType<typeof useT>): RadioCardFact
  * the glyph for the eye, the whole sentence as visually-hidden text for a
  * screen reader, which would otherwise meet a bare "2–12 min" and a decorative
  * icon with no word saying what was measured.
+ *
+ * THE DESCRIPTION IS CUT AT 170 CHARACTERS (Ben, 2026-11-13), because the
+ * pile is as tall as its tallest face — `lib/cardText.ts` says why 170. Where
+ * it is cut, the same pattern as the time: the cut text for the eye, the
+ * whole of it for a screen reader, which has no card height to save. The list
+ * view keeps the whole text; it has no pile.
  */
 function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCard }) {
   const t = useT();
   const min = String(exercise.timeframeMin);
   const max = String(exercise.timeframeMax);
+  const text = cardText(exercise.description);
 
   return (
     <div className="musie-exercise-card">
@@ -1282,7 +1290,16 @@ function ExerciseFace({ exercise, card }: { exercise: Exercise; card: CardDeckCa
       )}
       <div className="musie-exercise-card__body">
         <h2 className="musie-exercise-card__headline">{exercise.name}</h2>
-        <p className="musie-exercise-card__text">{exercise.description}</p>
+        <p className="musie-exercise-card__text">
+          {text.cut ? (
+            <>
+              <span aria-hidden="true">{text.shown}</span>
+              <span className="musy-sr-only">{exercise.description}</span>
+            </>
+          ) : (
+            text.shown
+          )}
+        </p>
       </div>
       <div className="musie-exercise-card__foot">
         <p className="musie-exercise-card__time">
