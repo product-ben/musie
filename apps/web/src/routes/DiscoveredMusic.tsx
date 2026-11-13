@@ -28,7 +28,7 @@
  */
 import * as React from 'react';
 import { Link } from 'react-router';
-import { ContentBox, CtaButton, Message, MusicPlayer } from '@musie/design-system';
+import { ContentBox, Button, Message, MusicPlayer } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import { useTrackSource } from '../lib/audio';
 import { getDiscovered } from '../lib/discovered';
@@ -182,11 +182,11 @@ export function DiscoveredMusic() {
       <div className="musie-discovered__empty">
         <p className="musie-note">{t('discovered.empty')}</p>
         <p className="musie-note">{t('discovered.emptyDetail')}</p>
-        <CtaButton
+        <Button
           render={<Link to={profile?.user_type_id ? '/exercises' : '/about-you'} />}
         >
           {t('menu.startSession')}
-        </CtaButton>
+        </Button>
       </div>
     );
   } else {

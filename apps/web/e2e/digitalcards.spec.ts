@@ -41,9 +41,9 @@ test('a digital session deals, chooses, and writes the same two columns', async 
 
   await withLocale(page, locale);
   await reachTheLibrary(page, locale);
-  /* No name: the first row is `sort = 1`, which is Achtsame Pause — the
-     exercise that deals five. Freie Bahn's one-card shape is a different walk
-     and is not this one. */
+  /* No name: `startExercise` starts Achtsame Pause — the exercise that deals
+     five. Freie Bahn's one-card shape is a different walk and is not this
+     one. */
   await startExercise(page, locale);
 
   await expect(page).toHaveURL(/\/session\/[0-9a-f-]+\/intro$/);

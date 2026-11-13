@@ -33,7 +33,7 @@
 import * as React from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
-  Countdown, CtaButton, Message, Sheet,
+  Countdown, Button, Message, Sheet,
 } from '@musie/design-system';
 import type { CountdownState } from '@musie/design-system';
 import { InstrumentStage } from './InstrumentStage';
@@ -198,7 +198,7 @@ export function SessionPlay({
               <div className="musie-play__done" data-waiting={showContinueInSheet(clock) ? undefined : 'true'} inert={!showContinueInSheet(clock)}>
                 <div className="musie-play__done-clip">
                   <div className="musie-play__done-row">
-                    <CtaButton onClick={onAdvance}>{t('session.play.continue')}</CtaButton>
+                    <Button onClick={onAdvance}>{t('session.play.continue')}</Button>
                   </div>
                 </div>
               </div>

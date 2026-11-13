@@ -15,7 +15,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { Field } from '../src/Field';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { QrScanner } from '../src/QrScanner';
 import { bothThemes, fixedWidth } from './_decorators';
 
@@ -124,7 +124,7 @@ const meta = {
     notice: { control: false, description: 'One sentence. Under the frame while live; inside it while blocked.' },
     children: { control: false, description: 'The typed-code form. Rendered inside the frame, in manual only.' },
     busy: { control: 'boolean', description: 'Something is already being looked up. Nothing new starts during it.' },
-    loadingLabel: { control: 'text', description: 'Announced while the camera is opening. Defaults to the locale catalogue’s word through CTA Button.' },
+    loadingLabel: { control: 'text', description: 'Announced while the camera is opening. Defaults to the locale catalogue’s word through Button.' },
     className: { control: false },
   },
 } satisfies Meta<typeof QrScanner>;
@@ -211,7 +211,7 @@ export const Manual: Story = {
       <div>
         {/* PRIMARY: in this mode the form is the unit and this is its way
             on — see §7.4's "one primary per unit, and it is the way on". */}
-        <CtaButton>Diese Karte nehmen</CtaButton>
+        <Button>Diese Karte nehmen</Button>
       </div>
     </QrScanner>
   ),

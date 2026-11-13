@@ -16,7 +16,7 @@ a new file, never re-deriving the CSS, never adding a "prototype" variant.
 
 ```ts
 import {
-  Icon, IconButton, MusyTooltipProvider, CtaButton, Switch,
+  Icon, IconButton, MusyTooltipProvider, Button, Switch,
   RadioGroupText, RadioGroupImage, RadioCards, ProcessVisualisation,
   ContentBox, Message, ContentList, Lightbox, Logo,
   Field, FieldItem, FieldGroup, InteractiveWizard, WizardPanel,
@@ -51,24 +51,24 @@ localStorage key. Do not add a second theme mechanism.
 | Navbar | custom `<header>` | permitted custom pattern · uses `Logo` + 2 × `IconButton variant="ghost"` |
 | Left drawer | custom fixed panel | permitted custom pattern · `ContentBox outline="dashed"` + `IconButton` inside |
 | Right settings sheet | custom fixed panel | permitted custom pattern · `ContentBox`, `ContentList`, `Switch`, `RadioGroupText` inside |
-| Onboarding | `article.musy-box` + `ol.musy-process` | `ContentBox` + `ProcessVisualisation steps={5} ordinalPrefix="Step"` + `CtaButton` ("Got it!") |
+| Onboarding | `article.musy-box` + `ol.musy-process` | `ContentBox` + `ProcessVisualisation steps={5} ordinalPrefix="Step"` + `Button` ("Got it!") |
 | User type | `fieldset.musy-radio-group` + `button[role=radio]` | `RadioGroupText` — see **open item 1** |
 | Situation | same | `RadioGroupText` |
 | Method recommendation | `div.musy-rcard-group` + `button.musy-rcard__body` | `RadioCards` |
-| Method detail | `div.musy-lightbox__popup` | `Lightbox` framing `ContentBox` + `ContentList` + `CtaButton` |
+| Method detail | `div.musy-lightbox__popup` | `Lightbox` framing `ContentBox` + `ContentList` + `Button` |
 | Step rail | `nav.musy-wizard` | `InteractiveWizard steps current completed onStepChange` |
 | Step panels | `div.musy-wizard__panel` | `WizardPanel actions={…}` |
 | Step 1 instructions | `dl.musy-clist` with `ol.musy-clist__numbers` | `ContentList` with `list: { ordered: true, items }` |
-| QR reader | custom square viewport | permitted custom pattern · `Message variant="info"` carries the Simulate-scan `CtaButton` as its single `action` |
-| Card scanned | `div.musy-lightbox__popup` | `Lightbox` + `ContentBox` + `ContentList` + `Message` + `CtaButton` |
+| QR reader | custom square viewport | permitted custom pattern · `Message variant="info"` carries the Simulate-scan `Button` as its single `action` |
+| Card scanned | `div.musy-lightbox__popup` | `Lightbox` + `ContentBox` + `ContentList` + `Message` + `Button` |
 | Listen | `dl.musy-clist` + `div.musy-msg` + radio group | `ContentList` + `Message` + `RadioGroupText` |
 | Reflect — mode | radio group | `RadioGroupText` (voice is the default, per the flow) |
 | Reflect — voice | `div.musy-voice` | `VoiceNote state elapsed duration position playing on*` |
 | Reflect — written | `textarea.musy-field__control--textarea` | `Field multiline` |
 | Reflect — photo | `div.musy-upload` | `PhotoUpload value onValueChange previewAlt` |
 | Share | `input.musy-field__control[type=email]` | `Field type="email"` |
-| Not implemented | `div.musy-lightbox__popup` | `Lightbox` + `ContentBox` + `CtaButton` |
-| End | `div.musy-msg--success` | `ContentBox` + `Message variant="success"` + `CtaButton` |
+| Not implemented | `div.musy-lightbox__popup` | `Lightbox` + `ContentBox` + `Button` |
+| End | `div.musy-msg--success` | `ContentBox` + `Message variant="success"` + `Button` |
 
 ## Delete on port — preview-only scaffolding
 

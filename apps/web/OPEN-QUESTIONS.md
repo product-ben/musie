@@ -11296,3 +11296,361 @@ the alternative is higher VSCO 2 CE harp recordings (CC0), downloaded and
 added beside the six we have. The marimba above C5 is still a sped-up
 recording (two to three times its speed); whether it needs the same
 treatment is his ear's call.
+
+## /exercises: the chevrons beside the deck step cards, and goal stepping is gone — RESOLVED
+
+Where: `routes/Exercises.tsx`, `packages/design-system/src/CardDeck.tsx`;
+docs/plans/exercises-ready-to-build.md D1
+
+What I checked: the Figma section *Ready to build* (`107:2578`). The phone
+frames draw chevrons beside the pile; frame A still carried the captured names
+„Vorheriges Ziel“ / „Nächstes Ziel“, while the updated desktop frame draws
+the deck's own card pair and no goal stepper at all.
+
+What I did: on phones CardDeck's previous/next became two gutter strips the
+height of the pile (the whole strip is the target, per the frame's
+annotation); from --bp-md the pair stays beside the card. The headline's two
+goal chevrons (2026-10-16) and `exercises.goal.previous`/`.next` are deleted.
+
+Why: Ben, 2026-11-11: „Cards!“ One meaning per axis.
+
+What I need from Ben: nothing. On a phone a swipe must now start on the card,
+not in the gutter — the strips are buttons.
+
+## /exercises: the goal is an InlineButton; InlineLink is deprecated — RESOLVED
+
+Where: `packages/design-system/src/InlineButton.tsx` (new), `InlineLink.tsx`,
+the seven call sites (LegalLinks ×2, SessionReflect, SignInGate ×4,
+Exercises); D2–D4
+
+What I did: a new Layer 2 component — text in the parent's ink, optional
+16px glyph in a 24px box, a standing 2px `--border-strong` underline (the
+1.4.1 cue now that the word is not coloured), 4px inset pulled back 4px.
+InlineLink is `@deprecated` and has no caller left.
+
+Why: Ben, 2026-11-11: „it's inline button. With this, please deprecate
+inline link“; underline „Strong“, „2px“; „one“ target.
+
+What I need from Ben: whether InlineLink is deleted now that nothing imports
+it, or kept deprecated for a while. It stays until you say.
+
+## /exercises: three goals, each a verb; *Musie kennenlernen* retired — RESOLVED
+
+Where: `supabase/migrations/20261111120000_three_goals.sql`,
+`lib/content.ts` (`getGoals` filters `retired`), `i18n/{de,en}.ts`; D5
+
+What I did: *entspannen* (default, sort 1) · *Energie sammeln* ·
+*Achtsamkeit üben*; English *relax · recharge · practise mindfulness*. The
+headline is „Lass uns zusammen {goal}“ / "Let's {goal} together". The goal
+`get-to-know-musie` is RETIRED, not deleted: `sessions.goal_id` still names it
+on old diary entries (`on delete set null` would blank them). New *Warum?*
+texts for relax and wake-up.
+
+Why: Ben, 2026-11-11.
+
+What I need from Ben: a read of the new German and English copy (labels,
+purposes, both *Warum?* texts, `exercises.headline.none`), and `pnpm db:sync`
+after the merge — hosted has no `goals.retired` until then, and the app
+cannot load goals without it.
+
+## Secondary: filled again on /exercises, and its border went quiet — RESOLVED
+
+Where: `musy-components.css` (`.musy-btn--secondary`,
+`.musy-icon-btn--secondary`), `CardDeck.tsx` (the pair), `Exercises.tsx`
+(Shuffle); D6
+
+What I did: Shuffle and the deck's card pair are `secondary` again (reversing
+2026-10-07, which made both `outline`). Secondary's resting border is
+`--border-subtle` instead of `--border-strong`, in Button and IconButton, as
+the Figma sets now draw it; hover, press and `outline` are unchanged.
+
+Why: Ben, 2026-11-11: „Both Secondary“, and his update to the Figma sets.
+
+What I need from Ben: nothing. The 2026-10-07 argument (a filled control
+beside a pile reads as another card) is kept in the comments in case the row
+starts to look heavy.
+
+## /exercises shows at most three exercises; the count moved to the onboarding card — RESOLVED
+
+Where: `routes/Exercises.tsx` (`SUGGESTED = 3`, the switch),
+`components/DeckGuide.tsx`; D10
+
+What I did: the pile and the list show the first three of a goal; a Switch
+„Alle Übungen zeigen“ under the dots appears when the goal has more (today
+only *Entspannen*, with 6) and resets on a goal change. The onboarding card
+opens with „Musie schlägt dir immer nur drei Übungen vor, damit du einfacher
+aussuchen kannst.“ — the number is `numberWord(SUGGESTED)`.
+
+Why: Ben, 2026-11-11: „Parameter: 3“, „Übungen“, a switch below the dots.
+
+What I need from Ben: nothing.
+
+## The onboarding card swipes away like a card; CardDeck's `navActions` removed — RESOLVED
+
+Where: `CardDeck.tsx` (`cover` takes the deck's drag and fling,
+`onCoverDismiss`), `Exercises.tsx`; D11, T3b
+
+What I did: the existing DeckGuide card leaves left or right with the cards'
+own motion; the pair, the arrow keys, the wheel and the dots send it too, and
+a press still dismisses it. The help button moved from the deck's
+`navActions` row into the toolbar (IconButton `sm`, 40px, new token
+`--target-sm`, gap G6), and `navActions` is deleted.
+
+Why: Ben, 2026-11-11.
+
+What I need from Ben: nothing. Real touch (and iOS Safari's click after a
+touch move) is untested — it needs a phone.
+
+## CtaButton is called Button — RESOLVED
+
+Where: `packages/design-system/src/Button.tsx` (was `CtaButton.tsx`), every
+importer, the stories, the docs, CLAUDE.md's wording, the Figma set; D12
+
+What I did: a total rename, no alias export; base-ui's own `Button` is
+imported as `BaseButton` where the names collide. Append-only logs keep the
+old name where they record the past.
+
+Why: Ben, 2026-11-11: „Rename CTA to button everywhere“.
+
+What I need from Ben: nothing.
+
+## md is the wide layout: the deck's switch moved from --bp-md to --bp-sm — RESOLVED
+
+Where: `musy-components.css` (THE SMALLEST TIER, THE GUTTERS),
+`exercises.css` (toolbar `safe center`, *Ziel ändern* row/below, under the
+pile)
+
+What I did: between 480 and 767px — an iPad mini upright, half a laptop
+screen — the deck was still the phone's centred column with tap strips
+either side, under a left-aligned heading. From `--bp-sm` it is now the wide
+deck: left-aligned, the chevron pair beside the card, *Ziel ändern* in the
+toolbar row. Below 480 nothing changed.
+
+Why: Ben, 2026-11-12: „auch auf md viewports alles links aligned“, and of
+two options (move the switch, or left-align the phone mechanics) he chose
+the switch.
+
+What I need from Ben: nothing. Known edge: card and pair do not fit side by
+side below about 530px, so there the pair wraps under the card (the wrap is
+the component's own net). The pile's −4.68° card reaches ~19px past its box,
+so on a 16px gutter its corner meets the screen edge.
+
+## The pile is Figma *Karten*; the intro card's sentences are body-lg — RESOLVED
+
+Where: `.musy-deck` / `.musy-deck__card` / `.musy-deck__pile`
+(`musy-components.css`), `CardDeck.tsx` (the per-card seed is gone),
+`.musie-exercise-card__image` and `.musie-deck-guide__text` (`exercises.css`)
+
+What I did: the pile is drawn as `120:3488`. Three cards show, turned 0°,
+2.7° and −4.68° about one centre by PLACE in the pile, continuous while a
+card is dragged off. Further cards are hidden under the third. There is no
+step down, no shrink, no hairline, corners 16 / 16 / 40 / 40, the picture in
+a 4px frame of the card's colour, and every card on `--elevation-3`, through
+two new knobs `--musy-deck-shadow-front` / `-back` that
+`/experiments/card-shadows/` writes values for. The intro card's text went
+from body-xl to body-lg (Literata, 19–20px).
+
+Why: Ben, 2026-11-12: „ein exaktes VD Upgrade des Kartenstapels wie hier im
+Frame Karten“, „der Text auf der Intro-Card ein Level kleiner“ (he chose
+body-lg over heading-md's size in the same font).
+
+What I need from Ben: the shadow values, from the playground, when he has
+them.
+
+## The pile's shadows are Ben's values from the playground — RESOLVED
+
+Where: `.musy-deck` in `musy-components.css` (`--musy-deck-shadow-front`,
+`--musy-deck-shadow-back`, and a new `--musy-deck-shadow-ink`)
+
+What I did: replaced the two `--elevation-3` defaults with the values Ben
+generated in `/experiments/card-shadows/261112-0938/`, four layers each,
+verbatim. Two spelling changes, neither a value change: the colour every
+layer repeats is named once (`--musy-deck-shadow-ink`), and the ring the
+playground wrote as `light-dark(transparent, #4C534E)` is `--elevation-ring`,
+which is that exactly and also takes the high-contrast override. Measured:
+the computed `box-shadow` is his list in light and in dark (0.205 computes as
+0.204, 8-bit alpha).
+
+Why: Ben, 2026-11-12, "i want these values".
+
+What I need from Ben: nothing. Answers the open item in the entry above.
+
+## Eight card options, side by side: `/experiments/card-options/` — OPEN
+
+Where: `apps/web/public/experiments/card-options/261112-1137/index.html`
+(built), from `card-options/src/` (`main.tsx`, `options.css`, `chrome.ts`,
+`build.mjs`)
+
+What I did: one page that runs the eight frames of Figma section `134:3835`
+(„karten varianten“) on the REAL deck, switched by a segmented control of the
+numbers 1–8 at the foot of the screen (or the keys 1–8, or `?v=`). It is the
+first experiment built from source rather than hand-written: `CardDeck`, the
+four design-system stylesheets, `styles.css`, `shell.css`, `exercises.css`
+and the app's own hide-on-scroll header are imported as they are, so the
+drag, the fling, the deal and the pile's new shadows are the shipped ones;
+`options.css` changes only what the frames change (corners, card width, where
+the two directions sit). The header, greeting and toolbar are the live DOM of
+/exercises at 393px, copied in (`chrome.ts`). `build.mjs` inlines script and
+style into one static file; the fonts and pictures are the app's own URLs.
+No analytics, nothing stored, `noindex`. Wider than 480px the page shows
+itself in a 393px phone frame, because the frames are phone designs and the
+deck changes layout at `--bp-sm`. Rebuild with
+`node apps/web/public/experiments/card-options/src/build.mjs <yymmdd-hhmm>`.
+
+Three places it departs from the frames, on purpose:
+
+- **Every button in the frames is IconButton `primary` resized to 40px with a
+  1px glyph.** The system has no such rung: `sm` is 40 with a 16px glyph,
+  `primary` is 44 with the bolder 20px one. The page draws what the frames
+  draw. Choosing 2–8 also means choosing a rung, or adding one.
+- **4's arrow pair is a row of its own**, above the start row. In the frame
+  it sits in the empty part of a short card; the pile is as tall as its
+  TALLEST face (Klangreise), which has no empty part, so in 4 every card is
+  44px taller. That is the real cost of 4, so it is shown rather than hidden.
+- **The side chevrons (2, 7, 8) sit on the card's middle.** 2 and 7 draw
+  them 46 and 19px higher; 8 draws them on the middle, and the deck's own
+  strip already centres there. In 2, 7 and 8 only the 40px mark takes a tap
+  (an IconButton's target), where 1 — the app today — makes the whole gutter
+  the button.
+
+Why: Ben, 2026-11-12: „build a new experiment page to compare the 8 different
+card design & interaction options … Use the new shadow on all of them and add
+the latest version of the rest of the page. Add a segmented control (w. just
+the numbers as labels …)“.
+
+What I need from Ben: which variant, and if it has buttons, the rung above.
+
+## card-options, round two: five variants, responsive, a modal on the card — OPEN
+
+Where: `apps/web/public/experiments/card-options/261112-1217/index.html`
+(built), from `card-options/src/`. The first round stays at `261112-1137/`.
+
+What I did: in Ben's order, 6, 10, 3, 7, 9:
+
+- **6** as before (card 100vw − 68, corners 40), the raised chevrons on the
+  pile's top corners — and they now STAY there while cards come and go under
+  them, instead of arriving with each card.
+- **10** is 6 with back beside forward in the top-right corner, 8px apart.
+- **3** is the app's card width with back beside forward top-right, on
+  Elevation/1.
+- **7** as before (card 100vw − 108, ghost chevrons beside it).
+- **9** is 7 with the top corners at 20.
+
+The directions are the deck's OWN two buttons in every variant, restyled and
+moved, so they move the pile exactly as the gutter or an arrow key does and
+sit above every card, the thrown one included. Only the 40px mark takes a
+tap. In 6, 10 and 3 that applies to all three, not only 6 as asked: a button
+that arrives with each card is the thing Ben asked to stop, and 10 and 3 are
+6's arrangement.
+
+No phone frame any more: everything is a distance from the card or a share
+of the viewport, so it holds at 360, 393 and 430. From --bp-sm (a phone on
+its side, a laptop) the screen keeps its own left-aligned layout, the deck's
+pair beside the pile is gone, and in 7 and 9 the pile moves in just far
+enough for the left chevron. Measured at 360 / 393 / 430 / 852 / 1440, no
+sideways scroll at any of them.
+
+A press on a card, or *Starten*, opens a modal („Aufgabe öffnen ist außerhalb
+des Experiments.“). The card lifts while it is open and comes back when it
+closes — the deck's own contract for a refused accept.
+
+Why: Ben, 2026-11-12: „Nimm das fake phone außenrum weg und bau die
+Varianten responsiv … V6 (lass die next/prev buttons oben stehen, nicht bei
+jeder Karte neu), eine neue V10 … mit dem previous button links neben dem
+next button, dann V3 aber mit dem previous button links neben dem next
+button, V7, eine neue V9 (basierend auf V7) mit border radius oben 20px …
+Klick auf die Karte öffnet ein Modal“. „V10 basierend auf v10“ read as based
+on V6, the variant named just before it.
+
+What I need from Ben: which variant, and for any with buttons, the rung from
+the entry above (still drawn at 40px with the thin glyph).
+
+## card-options: the switcher is the header now — RESOLVED
+
+Where: `apps/web/public/experiments/card-options/261112-1248/index.html`,
+from `card-options/src/` (`main.tsx`, `options.css`)
+
+What I did: the segmented control left its bar fixed to the foot of the
+screen and stands where the app's menu and logo stood, on the header's own
+surface, sticky, hiding on the way down and back on the way up
+(`useHeaderReveal`). Nothing is fixed over the page any more; scrolled to the
+end, the last row (*Ziel ändern*) is whole at 360, 393 and 430. The page's
+menu and logo are gone from this experiment, which is what "replace" asked.
+`261112-1217/` (live on musie.org since PR #79) stays as it was.
+
+Why: Ben, 2026-11-12: „Ersetzt die aktuelle Navigation mit dem Segmented
+Control bei dem Experiment, so dass man nach unten alles sehen kann“.
+
+What I need from Ben: the merge of the PR that puts `261112-1248/` on
+musie.org — `main` needs his review override, which I may not use.
+
+## The pile is variant 7 — RESOLVED
+
+Where: `.musy-deck` and `.musy-deck__strip-mark` (`musy-components.css`),
+`.musie-exercise-card__image` (`exercises.css`)
+
+What I did: variant 7 of `/experiments/card-options/` is now the app's pile.
+At 393: card 285 (`100vw - --sp-9 - --sp-3`, was 297), corners 40 all round
+(was 16 / 16 / 40 / 40), the picture 40 / 40 / 8 / 8 by inheriting the
+card's top corners, gutters 54 a side with a 40px chevron at the thin glyph,
+in the middle of each gutter (7px from the edge both sides; the frame has 5
+on the left and 7 on the right). The intro card follows to 40 by itself.
+From `--bp-sm` up only the corners change: the pair beside the pile stays.
+Measured at 360 / 393 / 430 / 600 / 1440.
+
+Two choices that differ from what the experiment showed, both reversible in
+one line:
+
+- **The whole gutter is still the target.** In the experiment only the 40px
+  chevron took a tap; the app keeps Ben's rule from 2026-11-11 ("tapping on
+  the right side next to the card").
+- **Wider screens keep their layout.** In the experiment 7 also drew its side
+  chevrons from 480px up; the app keeps the secondary pair beside the pile
+  there (D6), because the five variants were phone frames.
+
+Why: Ben, 2026-11-13: „Oke! Let's take no 7!“
+
+What I need from Ben: nothing, unless either of the two choices above should
+go the experiment's way.
+
+## The arrows beside the card, at every width — RESOLVED
+
+Where: `.musy-deck__strip`, `.musy-deck__stage` (`musy-components.css`),
+`.musie-deck-stage` (`exercises.css`)
+
+What I did: the second of the two choices in the entry above went the
+experiment's way. From 480px up the pile no longer has the secondary pair
+beside it; it has the same two ghost chevrons as a phone, in 54px strips
+either side of the card. The card stays on the heading's line wherever the
+page margin can hold the left chevron (from about 1090px); narrower, it moves
+in by the difference, as in the experiment. At 768 the card starts at 54, the
+heading at 24. Measured at 360 / 393 / 479 / 480 / 600 / 768 / 1024 / 1280 /
+1440: no sideways overflow, both strips page the pile at 768 and 1440.
+
+Why: Ben, 2026-11-13: „show the arrows left and right on all viewports“.
+
+What I need from Ben: nothing. The first choice above (the whole gutter is
+the target) still stands, at every width now.
+
+## A card shows at most 170 characters of its description — RESOLVED
+
+Where: `apps/web/src/lib/cardText.ts`, `ExerciseFace` in
+`apps/web/src/routes/Exercises.tsx`
+
+What I did: the description on a card face is cut at the last word that fits
+in 170 characters, ellipsis included, with nothing dangling before the „…“.
+A screen reader still gets the whole text (the cut one is `aria-hidden`, the
+whole one `.musy-sr-only`, as the time beside it already does). The list view
+keeps the whole text: it has no pile to keep short. On this date only
+Klangreise in German (232) is cut — to „…vor dem Einschlafen durchführen.
+Die…“. The pile at 393 went from 511 to 443px high, at 1440 from 522 to 474.
+
+Why: Ben, 2026-11-13: „lass uns ein Character-Limit von 170 Zeichen machen
+… dadurch sollten wir eine kompaktere Kartenhöhe bekommen.“ 170 is the
+Bodyscan text (169), which stays whole.
+
+What I need from Ben: nothing to decide. The limit is the app's, not the
+content's — a text over 170 is still stored whole and still saved whole, and
+`/maintenance` does not edit exercise text, so nothing there warns an editor
+yet. If exercise text ever moves to `/maintenance`, the limit belongs in its
+form as a counter.

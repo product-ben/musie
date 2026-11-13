@@ -55,7 +55,7 @@
  * computes the step list the moment it mounts.
  */
 import { Link, Navigate, useParams } from 'react-router';
-import { ContentBox, CtaButton, Message } from '@musie/design-system';
+import { ContentBox, Button, Message } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { getCardByCode, getExercise } from '../lib/content';
 import { holdCode, scanCardInto } from '../lib/scan';
@@ -185,12 +185,12 @@ export function ScanLink() {
         text={t('scan.cardless.text')}
         outline="dashed"
       >
-        <CtaButton
+        <Button
           variant="secondary"
           render={<Link to={`/session/${encodeURIComponent(data.sessionId)}/${data.step}`} />}
         >
           {t('scan.cardless.action')}
-        </CtaButton>
+        </Button>
       </ContentBox>
     );
   }
@@ -207,9 +207,9 @@ export function ScanLink() {
 
   return (
     <ContentBox headingLevel={1} headline={headline} text={text} outline="dashed">
-      <CtaButton variant="secondary" render={<Link to="/exercises" />}>
+      <Button variant="secondary" render={<Link to="/exercises" />}>
         {t('scan.chooseExercise')}
-      </CtaButton>
+      </Button>
     </ContentBox>
   );
 }

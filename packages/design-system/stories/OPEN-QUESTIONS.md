@@ -4307,3 +4307,54 @@ is how the two drift.
 What I need from Ben: **nothing to decide**, but `docs/07-components.md`
 §7.13 says four cues and now describes a state the component does not draw.
 It is one sentence in a document this repository does not carry a copy of.
+
+## CardDeck — the pile's foot radius is 40, and Layer 1 stops at 24
+Where: `src/musy-components.css`, `.musy-deck` (`--musy-deck-card-radius-foot`)
+What I checked: Figma *Karten* (`120:3488`, Ben, 2026-11-12) draws each card
+with corners 16 / 16 / 40 / 40. 16 is `--radius-lg`. Layer 1's radius scale
+ends at `--radius-xl` (24); `--radius-full` is a pill, not a corner.
+What I did: named the 40 once on the deck, beside the two leans (2.7°,
+−4.68°) that replaced the hashed scatter the same day, and used it for the
+card, the pile (focus ring) and through it the cover.
+Why: `calc(var(--radius-xl) + var(--radius-lg))` would make 40 out of two
+tokens that have nothing to do with it — L14.1's letter, not its meaning.
+What I need from Ben: **nothing to decide now**. If a second component wants
+a corner above 24, that is the moment for a Layer 1 step (`--radius-2xl`).
+
+## CardDeck — variant 7: the 40 is every corner now, and the gutter mark is 40px
+Where: `src/musy-components.css`, `.musy-deck` (`--musy-deck-card-radius`,
+`--musy-deck-card-inline`), `.musy-deck__strip-mark`
+What I checked: Ben chose variant 7 of Figma `134:3835` (`138:6053`) on
+2026-11-13, after trying five on a phone. It draws the card with 40 on all
+four corners, 285px wide at 393, and the gutter chevrons as IconButton
+`primary` resized to 40px with the thin glyph.
+What I did: the corner knob is `--musy-deck-card-radius` and covers all four
+(it was `--musy-deck-card-radius-foot`, the entry above). The card is
+`100vw - --sp-9 - --sp-3`, so the gutters are 54. The strip's mark is
+`--target-sm` with the `md` glyph at `--icon-stroke-sm`.
+Why the mark is not an IconButton question: 40px with a 20px thin glyph is no
+IconButton rung (`sm` is 40 with a 16px glyph, `primary` 44 with the 2px
+one), but the gutter mark was never an IconButton — it is the strip's own,
+drawn from the ghost rung's tokens. So this needs no new rung.
+What I need from Ben: **nothing to decide**. If the 40px-with-20px-glyph
+button turns up as a real IconButton somewhere, that is the moment for the
+rung (the experiment's 6, 10 and 3 used it; 7 does not).
+
+## CardDeck — the gutters are the pair at every width, and a cursor gets no tooltip
+Where: `src/musy-components.css` (`--musy-deck-gutter`, `.musy-deck__strip`,
+`.musy-deck__stage`, `.musy-deck__nav > .musy-deck__act`), `src/CardDeck.tsx`
+What I checked: Ben, 2026-11-13: „show the arrows left and right on all
+viewports". From `--bp-sm` up the card is capped at 22.5rem, so a strip
+measured as "half of what the card leaves of the viewport" would be half a
+desktop wide.
+What I did: named the phone's 54 `--musy-deck-gutter` and wrote the card
+width with it; the strips are drawn at every width, one gutter wide from
+`--bp-sm` up, standing in a gutter of margin the stage now keeps either side
+(so a deck that is not full-bleed still shows its leading strip). The
+IconButton pair is `display: none` at every width and stays in the tree, so
+going back is one rule.
+What I need from Ben: **one small thing to know.** The old pair had a tooltip
+under a mouse; the strips have none (the comment in CardDeck.tsx says why).
+The label is still the accessible name. If a desktop user should see the word
+on hover, that is a `title` or a Tooltip on the strip, and it is a deck
+change, not the app's.

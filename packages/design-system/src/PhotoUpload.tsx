@@ -5,7 +5,7 @@
  *
  * No APG pattern (a file input is a native control with its own affordances)
  * and no base-ui primitive. The native <input type="file"> IS the control: it
- * is visually hidden with `.musy-sr-only` and triggered by a real CTA Button,
+ * is visually hidden with `.musy-sr-only` and triggered by a real Button,
  * which is the only accessible way to dress a file input — the input is
  * DISPLACED, never restyled, so keyboard, focus, and the platform picker all
  * behave exactly as the OS intends.

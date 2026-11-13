@@ -19,7 +19,7 @@
  * answer, so a selection the store never took is simply not there on the next
  * render.
  */
-import { ContentBox, CtaButton, Lightbox } from '@musie/design-system';
+import { ContentBox, Button, Lightbox } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 
 export interface NotImplementedLightboxProps {
@@ -56,9 +56,9 @@ export function NotImplementedLightbox({ what, onClose }: NotImplementedLightbox
         {/* The way back is the only action, so it is the box's single control.
             Escape, the close X and the scrim all do the same thing — this is
             the affordance for someone who reads before they reach for one. */}
-        <CtaButton variant="primary" onClick={onClose}>
+        <Button variant="primary" onClick={onClose}>
           {t('notImplemented.back')}
-        </CtaButton>
+        </Button>
       </ContentBox>
     </Lightbox>
   );

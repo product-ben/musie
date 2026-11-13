@@ -48,7 +48,7 @@
  * the same reason the init is here at all.
  */
 import * as React from 'react';
-import { CtaButton, Lightbox } from '@musie/design-system';
+import { Button, Lightbox } from '@musie/design-system';
 import { NO_CONSENT_YET, asConsent, bothConsentsPatch, needsAsking } from '../lib/consents';
 import type { ConsentAnswers } from '../lib/consents';
 import { useAuth } from '../lib/authContext';
@@ -141,9 +141,9 @@ function ConsentCard({ onAnswer }: { onAnswer: (answers: ConsentAnswers) => void
           a pair of equally weighted alternatives; two switches already carry
           the choice, and a second button beside Save could only mean "save
           something other than what the switches say". */}
-      <CtaButton variant="primary" block wrap onClick={() => onAnswer(answers)}>
+      <Button variant="primary" block wrap onClick={() => onAnswer(answers)}>
         {t('consent.card.save')}
-      </CtaButton>
+      </Button>
 
       {/* INFORMED is part of the definition, so the policy is one press away
           from the question. It leaves the app — these pages are not routes —

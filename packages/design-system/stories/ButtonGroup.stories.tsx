@@ -8,7 +8,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { ButtonGroup } from '../src/ButtonGroup';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { Switch } from '../src/Switch';
 import { bothThemes, fixedWidth, Stack, Row } from './_decorators';
 
@@ -17,8 +17,8 @@ import { bothThemes, fixedWidth, Stack, Row } from './_decorators';
    order once the group stacks. See PROTOTYPE-USAGE.md. */
 const WIZARD_ACTIONS = (
   <>
-    <CtaButton variant="primary">Continue</CtaButton>
-    <CtaButton variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+    <Button variant="primary">Continue</Button>
+    <Button variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
   </>
 );
 
@@ -129,7 +129,7 @@ const meta = {
   argTypes: {
     children: {
       control: false,
-      description: '2–3 CTA Buttons — or, with relation="molecule", the controls a step ends with. Among alternatives the primary comes first in the markup, because DOM order is priority order once the group stacks; in a molecule it is reading order and the way on comes last.',
+      description: '2–3 Buttons — or, with relation="molecule", the controls a step ends with. Among alternatives the primary comes first in the markup, because DOM order is priority order once the group stacks; in a molecule it is reading order and the way on comes last.',
     },
     align: {
       control: 'inline-radio',
@@ -182,7 +182,7 @@ export const Relations: Story = {
             onGlyph={VolumeX}
             offGlyph={Volume2}
           />
-          <CtaButton variant="primary">Start reflection</CtaButton>
+          <Button variant="primary">Start reflection</Button>
         </ButtonGroup>
       </Row>
     </Stack>
@@ -196,9 +196,9 @@ export const ThreeActions: Story = {
     align: 'end',
     children: (
       <>
-        <CtaButton variant="primary">Complete Exercise with this card</CtaButton>
-        <CtaButton variant="secondary">Scan a different card</CtaButton>
-        <CtaButton variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+        <Button variant="primary">Complete Exercise with this card</Button>
+        <Button variant="secondary">Scan a different card</Button>
+        <Button variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
       </>
     ),
   },
@@ -210,10 +210,10 @@ export const FourActions: Story = {
   args: {
     children: (
       <>
-        <CtaButton variant="primary">Continue</CtaButton>
-        <CtaButton variant="secondary">Show details &amp; player</CtaButton>
-        <CtaButton variant="ghost">Not right now</CtaButton>
-        <CtaButton variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+        <Button variant="primary">Continue</Button>
+        <Button variant="secondary">Show details &amp; player</Button>
+        <Button variant="ghost">Not right now</Button>
+        <Button variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
       </>
     ),
   },
@@ -227,8 +227,8 @@ export const GuidedTargets: Story = {
     align: 'end',
     children: (
       <>
-        <CtaButton variant="primary" size="guided">Start Reflection</CtaButton>
-        <CtaButton variant="secondary" size="guided">Track details &amp; Player</CtaButton>
+        <Button variant="primary" size="guided">Start Reflection</Button>
+        <Button variant="secondary" size="guided">Track details &amp; Player</Button>
       </>
     ),
   },
@@ -240,8 +240,8 @@ export const DisabledAction: Story = {
   args: {
     children: (
       <>
-        <CtaButton variant="primary" disabled>Continue</CtaButton>
-        <CtaButton variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+        <Button variant="primary" disabled>Continue</Button>
+        <Button variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
       </>
     ),
   },
@@ -252,8 +252,8 @@ export const LoadingAction: Story = {
   args: {
     children: (
       <>
-        <CtaButton variant="primary" loading>Finish session</CtaButton>
-        <CtaButton variant="ghost" leadingIcon={ArrowLeft}>Back</CtaButton>
+        <Button variant="primary" loading>Finish session</Button>
+        <Button variant="ghost" leadingIcon={ArrowLeft}>Back</Button>
       </>
     ),
   },
@@ -266,8 +266,8 @@ export const LongLabels: Story = {
     align: 'end',
     children: (
       <>
-        <CtaButton variant="primary" wrap>Complete Exercise with this card</CtaButton>
-        <CtaButton variant="secondary" wrap>Photo of your handwritten notes</CtaButton>
+        <Button variant="primary" wrap>Complete Exercise with this card</Button>
+        <Button variant="secondary" wrap>Photo of your handwritten notes</Button>
       </>
     ),
   },
@@ -295,8 +295,8 @@ export const StackedHug: Story = {
     stacked: 'hug',
     children: (
       <>
-        <CtaButton variant="outline" wrap>Die Frage funktioniert für mich nicht</CtaButton>
-        <CtaButton variant="primary" wrap>Wenn du bereit bist, beginne zu reflektieren</CtaButton>
+        <Button variant="outline" wrap>Die Frage funktioniert für mich nicht</Button>
+        <Button variant="primary" wrap>Wenn du bereit bist, beginne zu reflektieren</Button>
       </>
     ),
   },
@@ -324,9 +324,9 @@ export const ContinueOnly: Story = {
     purpose: 'continue-only',
     children: (
       <>
-        <CtaButton variant="primary">Entdecke deine Gefühle</CtaButton>
-        <CtaButton variant="outline">Weiter bearbeiten</CtaButton>
-        <CtaButton variant="ghost">Trotzdem speichern</CtaButton>
+        <Button variant="primary">Entdecke deine Gefühle</Button>
+        <Button variant="outline">Weiter bearbeiten</Button>
+        <Button variant="ghost">Trotzdem speichern</Button>
       </>
     ),
   },
@@ -338,8 +338,8 @@ export const ContinueOnlyPair: Story = {
     purpose: 'continue-only',
     children: (
       <>
-        <CtaButton variant="primary">Ich bin fertig</CtaButton>
-        <CtaButton variant="outline">Weiteres Gefühl festhalten</CtaButton>
+        <Button variant="primary">Ich bin fertig</Button>
+        <Button variant="outline">Weiteres Gefühl festhalten</Button>
       </>
     ),
   },
@@ -360,9 +360,9 @@ export const ContinueOnlyStacked: Story = {
     purpose: 'continue-only',
     children: (
       <>
-        <CtaButton variant="primary">Entdecke deine Gefühle</CtaButton>
-        <CtaButton variant="outline">Weiter bearbeiten</CtaButton>
-        <CtaButton variant="ghost">Trotzdem speichern</CtaButton>
+        <Button variant="primary">Entdecke deine Gefühle</Button>
+        <Button variant="outline">Weiter bearbeiten</Button>
+        <Button variant="ghost">Trotzdem speichern</Button>
       </>
     ),
   },

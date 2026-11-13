@@ -71,7 +71,7 @@ const meta = {
           'Why: config is off limits and the brief says to log it rather than fight the',
           'inference.',
           'What I need from Ben: **a `propFilter` in `.storybook/main.ts`** so the inherited',
-          'DOM props stop appearing. Applies equally to CtaButton and Switch.',
+          'DOM props stop appearing. Applies equally to Button and Switch.',
           '',
           '## IconButton — stories do not mount `MusyTooltipProvider`',
           'Where: `src/IconButton.tsx:94`',
@@ -94,7 +94,7 @@ const meta = {
           'writes `musy-icon-btn--primary-size`.',
           'What I did: wrote the stories against the props as declared.',
           'Why: the rename is deliberate and the ladder (`min`/`primary`/`comfort`/`guided`)',
-          'is shared with CtaButton on purpose.',
+          'is shared with Button on purpose.',
           'What I need from Ben: nothing, just flagging — reading a rendered IconButton’s',
           'class list, "primary" appears twice and means variant once and target once.',
           '',
@@ -129,8 +129,9 @@ const meta = {
     },
     size: {
       control: 'inline-radio',
-      options: ['min', 'primary', 'comfort', 'guided'],
-      description: 'Target rung: 24 / 44 / 56 / 64px. Defaults to primary.',
+      options: ['min', 'sm', 'primary', 'comfort', 'guided'],
+      description:
+        'Target rung: 24 / 40 / 44 / 56 / 64px. Defaults to primary. `sm` (40px, 2026-11-11) is this ladder’s alone: it stands in a row of Button `min`s, which already draw about 40px tall.',
     },
     tooltip: {
       control: 'boolean',
@@ -158,11 +159,12 @@ export const Default: Story = {};
 /** All four fill postures. `ghost` is the default and the one the prototype
  *  reaches for most; `primary` is the Listen-step transport control.
  *
- *  `secondary` AND `outline` ARE ONE BORDER APART, which is the whole of the
- *  difference and the reason both exist: secondary fills with
- *  `--surface-raised`, outline fills with nothing. On a page of raised cards
- *  the fill is what makes a control read as another card — which is why the
- *  Card Deck's two chevrons took the outline on 2026-10-07. */
+ *  `secondary` AND `outline` ARE ONE FILL APART, which is the reason both
+ *  exist: secondary fills with `--surface-raised`, outline fills with
+ *  nothing. Since 2026-11-11 the border differs too — secondary's rests at
+ *  `--border-subtle` (the fill sets it off), outline keeps `--border-strong`
+ *  (the border is all it has). The Card Deck's two chevrons took the outline
+ *  on 2026-10-07 and went back to secondary on 2026-11-11. */
 export const Variants: Story = {
   render: (args) => (
     <Row label="variant">
@@ -174,12 +176,20 @@ export const Variants: Story = {
   ),
 };
 
-/** The four target rungs: 24 / 44 / 56 / 64px. `min` sits further from its
- *  neighbours because its `--sp-2` margin is baked into the stylesheet. */
+/** The five target rungs: 24 / 40 / 44 / 56 / 64px. `min` sits further from
+ *  its neighbours because its `--sp-2` margin is baked into the stylesheet.
+ *
+ *  `sm` (40px, `--target-sm`, 2026-11-11) is the help button in the
+ *  /exercises toolbar, the height of the Button `min`s it stands beside.
+ *  It clears 2.5.8 without the spacing exception, so it has no margin, and it
+ *  carries the 16px glyph (`Icon size="sm"`, the thinner `--icon-stroke-sm`)
+ *  that its Button neighbours carry — at 20px it read bolder than they do.
+ *  Button has no `sm`: its `min` is already that height. */
 export const Sizes: Story = {
   render: (args) => (
     <Row label="size">
       <IconButton {...args} size="min" label="min — 24px" />
+      <IconButton {...args} size="sm" label="sm — 40px" />
       <IconButton {...args} size="primary" label="primary — 44px" />
       <IconButton {...args} size="comfort" label="comfort — 56px" />
       <IconButton {...args} size="guided" label="guided — 64px" />

@@ -346,7 +346,7 @@
 /* ── THE RUNG'S OWN MARGIN, GIVEN BACK ─────────────────────────────────────
    `.musy-btn--min` carries `margin: var(--sp-2)` on all four sides. In a row
    of nothing but min buttons that margin IS the spacing — L5's "never add a
-   gap to a row of `min` buttons" — but this row holds one min CtaButton and
+   gap to a row of `min` buttons" — but this row holds one min Button and
    one min SegmentedControl, and `.musy-seg--min` carries NO margin. The row
    is therefore asymmetric by construction, and all three measurements came
    out wrong at 1280:
@@ -371,7 +371,7 @@
    there would pull the switch 8px too close on every edge.
 
    Logged as a component request (L14.3) in the design system's own
-   OPEN-QUESTIONS: `CtaButton size="min"` should drop the margin now that the
+   OPEN-QUESTIONS: `Button size="min"` should drop the margin now that the
    rung renders at 36px, which is what `SegmentedControl` and `FilterChips`
    already do at the same height. Until it does, this is one screen's class on
    its own control rather than a rule against a `musy-` selector.           */
@@ -396,8 +396,13 @@
 
    THE ONE `safe` IN THIS REPOSITORY. Logged in OPEN-QUESTIONS.md, because the
    next scrolling row will want it and the failure it prevents is invisible
-   until someone tries to reach the first control.                          */
-@media (max-width: 767.98px) {
+   until someone tries to reach the first control.
+
+   BELOW --bp-sm SINCE 2026-11-12 (Ben: "auch auf md viewports alles links
+   aligned"). The band from 480 to 767 is left-aligned now, as the deck is —
+   the component moved its own threshold to --bp-sm the same day, and this
+   row follows it for the reason above: the two states change together. */
+@media (max-width: 479.98px) {
   .musie-deck-toolbar { justify-content: safe center; }
 }
 
@@ -433,9 +438,26 @@
      `overflow-clip-margin` is what this looks like it should use, and cannot:
      it takes a plain <length> and rejects calc()/max(), failing silently to 0.
      Widening the box is the spelling that works. */
+  --musie-deck-edge: max(var(--gutter), calc((100vw - var(--musie-main-wide)) / 2));
   inline-size: 100vw;
   margin-inline: calc(50% - 50vw);
-  padding-inline: max(var(--gutter), calc((100vw - var(--musie-main-wide)) / 2));
+  padding-inline: var(--musie-deck-edge);
+}
+
+/* ── THE LEADING CHEVRON STANDS IN THE PAGE MARGIN (Ben, 2026-11-13) ──────
+   „show the arrows left and right on all viewports". From --bp-sm up the deck
+   gives its stage a gutter either side for the two strips
+   (`--musy-deck-gutter`, published by the component). Taken as given, that
+   puts the card 54px right of the heading on every wide screen. So the
+   leading padding gives the gutter back wherever the page margin can hold
+   it: the card stays on the column line, and the chevron stands in the
+   margin, as the experiment drew it. Where the margin is narrower than the
+   gutter — up to about 1090px — the card moves in by the difference and no
+   further, because the chevron needs the room. */
+@media (min-width: 480px) {
+  .musie-deck-stage {
+    padding-inline-start: max(0px, var(--musie-deck-edge) - var(--musy-deck-gutter));
+  }
 }
 
 
@@ -474,10 +496,21 @@
 .musy-deck__card[data-accent='2'] .musie-exercise-card { --musie-card-ink: var(--accent-2-text); }
 
 /* ── THE PICTURE ───────────────────────────────────────────────────────────
-   Flush to the top, the left and the right: no padding on the face, 100% of
-   the card's width, and the face's `overflow: clip` rounding its top corners
-   to the card's own radius. There is nothing to keep in step — the image has
-   no radius of its own to go stale when `--radius-lg` moves.
+   IN A FRAME OF THE CARD'S OWN COLOUR (Ben, 2026-11-12 — Figma *Karten*,
+   `120:3488`). It was flush to the top, the left and the right. Now the band
+   is still 100% of the card's width at 16:9, and a `--sp-1` border in
+   `--surface-raised` draws the frame inside it, all round — the bottom edge
+   too, where it meets the body in the same colour and disappears. A BORDER,
+   so `aspect-ratio` measures the outer box (`border-box`) exactly as the
+   frame's 16:9 does, and the radius clips the picture concentrically: the
+   card's own at the top, so the picture's inner corner is that less 4; 8 at
+   the foot, so it is 4 there.
+
+   THE TOP IS INHERITED, NOT RESTATED (variant 7, Ben, 2026-11-13). It was
+   `--radius-lg` twice, a copy of the card's 16, and the card went to 40 all
+   round. `inherit` takes the face's shape — which is the pile's, which is
+   the deck's `--musy-deck-card-radius` — and only the foot is this screen's:
+   so the picture can never disagree with the card it sits in.
 
    THE ONE NUMBER THAT IS NOT A TOKEN. 16:9 is the crop five photographs of
    five different shapes are presented at, and Layer 1 has no aspect-ratio
@@ -494,9 +527,14 @@
 
 .musie-exercise-card__image {
   display: block;
+  box-sizing: border-box;
   inline-size: 100%;
   aspect-ratio: var(--musie-card-crop);
   object-fit: cover;
+  border: var(--sp-1) var(--border-style-solid) var(--surface-raised);
+  border-radius: inherit;
+  border-end-start-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
   /* While one is still arriving, this is what occupies its band — the sunken
      surface rather than the wash, so the gap reads as a hole in the card
      rather than as part of its colour. */
@@ -885,7 +923,7 @@
 
 /* ── A PICTURE OF THE START BUTTON ────────────────────────────────────────
    The card's own control, drawn as a chip of the card it sits on, so the eye
-   matches it to the thing underneath. NOT a CtaButton: it is a picture, it
+   matches it to the thing underneath. NOT a `Button`: it is a picture, it
    cannot be pressed, and a real button inside a button is both invalid and a
    second thing to hit.
 
@@ -923,7 +961,13 @@
   letter-spacing: var(--type-label-md-tracking);
 }
 
-/* ── THE SENTENCE, AT `body-xl` (Ben, 2026-10-07) ─────────────────────────
+/* ── THE SENTENCE, AT `body-lg` SINCE 2026-11-12 ──────────────────────────
+   Ben: "der Text auf der Intro-Card ein Level kleiner" — body-xl to the next
+   step down, body-lg. That step is the TEXT family at regular weight, so the
+   sentences are serif again, as they were at body-sm before body-xl; the
+   whole step is taken, for the reason the next paragraph gives.
+
+   ── IT WAS `body-xl` (Ben, 2026-10-07) ──────────────────────────────────
    It was `body-sm`, chosen when the legend was a translucent pane over a
    photograph and three small sentences were all that would sit on it. The
    pane is opaque now, so the card underneath is no longer competing for the
@@ -937,11 +981,11 @@
    step rather than body-md set larger. */
 .musie-deck-guide__text {
   text-wrap: pretty;
-  font-family: var(--type-body-xl-family);
-  font-size: var(--type-body-xl-size);
-  font-weight: var(--type-body-xl-weight);
-  line-height: var(--type-body-xl-line);
-  letter-spacing: var(--type-body-xl-tracking);
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  font-weight: var(--type-body-lg-weight);
+  line-height: var(--type-body-lg-line);
+  letter-spacing: var(--type-body-lg-tracking);
 }
 
 
@@ -1013,4 +1057,47 @@
 }
 @media (min-width: 1024px) {
   .musie-goal-sheet { padding-inline: var(--sp-8); }
+}
+
+/* ═══ THE NOVEMBER CLEANUP (Ben, 2026-11-11) ═══════════════════════════════
+   docs/plans/exercises-ready-to-build.md, from the Figma section *Ready to
+   build*. Semantic tokens only (CLAUDE.md rule 1).
+
+   No rule for the greeting: it was muted for a few hours on 2026-11-11 and
+   Ben took it back, so the whole h1 is one ink. */
+
+/* UNDER THE PILE: the *Alle Übungen zeigen* switch (only when the goal offers
+   more than three) and, on phones, *Ziel ändern*. Centred under the dots,
+   because both act on the pile above them rather than on the page. */
+.musie-under-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-gap-related);
+}
+
+/* ONE *ZIEL ÄNDERN* PER BREAKPOINT. The toolbar row carries it from
+   --bp-sm; below that it sits under the pile, where a thumb ends up after
+   browsing. `display: none` takes the other copy out of the accessibility
+   tree as well as off the screen, so nobody meets it twice. 480px is
+   --bp-sm, written out because a custom property cannot sit in a media
+   query. It was --bp-md until 2026-11-12, when the deck's own switch from
+   the phone's centred column to the wide one moved down to --bp-sm (Ben:
+   "auch auf md viewports alles links aligned"); this follows it, so the
+   button is in the row exactly where the deck is the wide one. */
+@media (max-width: 479.98px) {
+  .musie-goal-change--row { display: none; }
+}
+@media (min-width: 480px) {
+  .musie-goal-change--below { display: none; }
+  /* With the button gone, a three-card goal would leave an empty block and
+     one `--space-gap-group` of nothing under the dots. */
+  .musie-under-pile:not(:has(.musy-switch)) { display: none; }
+  /* FROM --bp-sm THE COLUMN IS START-ALIGNED — headline, toolbar and card all
+     share its left edge — so the switch takes that edge too and sits under
+     the dots, rather than centring across a column the card fills only a
+     third of (seen on screen at 1440, 2026-11-11). Centring it under the card
+     would mean restating the deck's own `--musy-deck-card-inline` here, which
+     is the component's geometry and not the screen's to repeat (L14). */
+  .musie-under-pile { align-items: flex-start; }
 }

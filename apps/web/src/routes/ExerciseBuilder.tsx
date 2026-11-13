@@ -59,7 +59,7 @@
 import * as React from 'react';
 import { Languages } from 'lucide-react';
 import {
-  Badge, BadgeRow, ContentBox, CtaButton, Field, InteractiveWizard, Message,
+  Badge, BadgeRow, ContentBox, Button, Field, InteractiveWizard, Message,
   RadioGroupText, SegmentedControl, Switch, WizardPanel,
 } from '@musie/design-system';
 import { SessionIntro } from '../components/SessionIntro';
@@ -273,7 +273,7 @@ function PreviewBody({
            therapist could override a button label and watch the preview go on
            saying the app's word. A field you can edit and not see is worse
            than a field you cannot edit. */
-        actions={<CtaButton variant="primary" disabled>{panelLabel}</CtaButton>}
+        actions={<Button variant="primary" disabled>{panelLabel}</Button>}
       >
         {step === 'intro' && (
           <SessionIntro
@@ -960,13 +960,13 @@ export function ExerciseBuilder() {
               onValueChange={setDraft}
             />
 
-            <CtaButton
+            <Button
               variant="secondary"
               disabled={busy || draft.trim() === ''}
               onClick={() => { void onPrompt(); }}
             >
               {busy ? t('builder.prompt.busy') : t('builder.prompt.submit')}
-            </CtaButton>
+            </Button>
 
             {note !== '' && <Message variant="info" headline={note} />}
 
@@ -1219,7 +1219,7 @@ export function ExerciseBuilder() {
                       })}
                     />
                   ))}
-                  <CtaButton
+                  <Button
                     variant="ghost"
                     size="min"
                     onClick={() => edit((draft) => {
@@ -1236,12 +1236,12 @@ export function ExerciseBuilder() {
                     })}
                   >
                     {t('builder.questions.remove')}
-                  </CtaButton>
+                  </Button>
                 </div>
               ))}
 
               {rotates && (
-                <CtaButton
+                <Button
                   variant="secondary"
                   onClick={() => edit((draft) => {
                     const target = draft.run[listenIndex];
@@ -1256,7 +1256,7 @@ export function ExerciseBuilder() {
                   })}
                 >
                   {t('builder.questions.add')}
-                </CtaButton>
+                </Button>
               )}
             </ContentBox>
           )}
@@ -1347,9 +1347,9 @@ export function ExerciseBuilder() {
         ))}
 
         <p className="musie-note">{t('builder.hand.intro')}</p>
-        <CtaButton variant="primary" disabled={packing} onClick={() => { void onDownload(); }}>
+        <Button variant="primary" disabled={packing} onClick={() => { void onDownload(); }}>
           {packing ? t('builder.download.packing') : t('builder.download')}
-        </CtaButton>
+        </Button>
       </ContentBox>
     </div>
   );

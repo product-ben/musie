@@ -58,7 +58,7 @@
  * system's.
  */
 import * as React from 'react';
-import { ContentBox, CtaButton, Field, RadioGroupText } from '@musie/design-system';
+import { ContentBox, Button, Field, RadioGroupText } from '@musie/design-system';
 import type { RadioOption } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import type { MessageKey } from '../i18n';
@@ -185,9 +185,9 @@ export function CapturingFeelingsExploration() {
             />
           </ContentBox>
         ) : (
-          <CtaButton onClick={() => setFeelingAsked(true)} wrap>
+          <Button onClick={() => setFeelingAsked(true)} wrap>
             {t('capturing.feeling.headline')}
-          </CtaButton>
+          </Button>
         )
       ) : null}
     </div>

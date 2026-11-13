@@ -59,7 +59,7 @@ plan had language as a Phase 6 afterthought. It is finished.
 | **The content re-cut** | `listening` and `question` follow the **exercise**, not the card. `card_i18n` keeps only `feeling`. Eighteen per-card strings were dropped; six exercise-level ones are owed |
 | **`sessions.track_id`** | The session records what actually played, in every exercise — not only where a track is linked to a session. See DOMAIN-MODEL.md, CHANGED ⑥ |
 | **The nav drawer, iterated** | Action-first order, rules rather than gaps, `aria-current` on the page beneath, `/menu` and `/diary` as routes |
-| **First change to `packages/design-system`** | `CtaButton` gained `align?: 'center' \| 'start'`, and the app's one geometry override is deleted. The app now overrides the design system nowhere |
+| **First change to `packages/design-system`** | `Button` gained `align?: 'center' \| 'start'`, and the app's one geometry override is deleted. The app now overrides the design system nowhere |
 
 ---
 
@@ -315,7 +315,7 @@ that block them.
   </details>
 
 - [ ] **B.2 Apply them, plus the API holes that remain.** One of the three is
-  already closed: `CtaButton` now takes `align`, and the app's
+  already closed: `Button` now takes `align`, and the app's
   `justify-content` override is gone. The renames, the
   Carousel resolution, ~~one language for the defaults~~ (**done differently in
   C.10 — a locale catalogue, which is a better answer than picking a

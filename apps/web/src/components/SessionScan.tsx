@@ -52,7 +52,7 @@
  * thing that calls it on this path.
  */
 import * as React from 'react';
-import { ContentList, CtaButton, Field } from '@musie/design-system';
+import { ContentList, Button, Field } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
 import { CardScanner } from './CardScanner';
 import { Markdown } from './Markdown';
@@ -234,17 +234,17 @@ export function SessionScan({
                 person onward takes the filled treatment. In this state the
                 frame IS the unit and taking the card is the only way out of
                 it — *Zurück zum Scannen* goes back, and going back is never
-                the primary. Written up in the CTA Button and Button Group
+                the primary. Written up in the Button and Button Group
                 docs. */}
             <div>
-              <CtaButton
+              <Button
                 type="submit"
                 loading={scanning}
                 loadingLabel={t('content.loading')}
                 disabled={code.trim() === ''}
               >
                 {t('session.scan.codeSubmit')}
-              </CtaButton>
+              </Button>
             </div>
           </form>
         </CardScanner>

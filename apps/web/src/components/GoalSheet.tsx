@@ -9,15 +9,18 @@
  * User testing found people stalling at the door — *warum sollte ich das
  * machen?*, *was soll das bringen?* — and a radio row is a one-line label
  * with nowhere to answer that. A card has a body. So the question moved out
- * of a box on the page and into a sheet, where four cards have room to say
- * what each goal is for, and the control that opens it moved into the
+ * of a box on the page and into a sheet, where each card has room to say
+ * what its goal is for, and the control that opens it moved into the
  * headline, where the goal is now the subject of the sentence rather than a
- * chip beside it.
+ * chip beside it. Since 2026-11-11 that sentence is *Lass uns zusammen
+ * {goal}*, the goal in it is an `InlineButton`, and *Ziel ändern* in the
+ * toolbar (below the cards on phones) opens the same sheet.
  *
  * ── THE SHEET IS SINGLE-BODY, NOT PAGED ──────────────────────────────────
- * `Sheet` without `pages`: no dots, no chevrons, four cards stacked and
- * scrolled if they do not fit. Paging was considered and is wrong here — the
- * four are meant to be COMPARED, and a gesture that shows one at a time is
+ * `Sheet` without `pages`: no dots, no chevrons, the cards stacked and
+ * scrolled if they do not fit — three since 2026-11-11 (relax, wake-up,
+ * mindfulness), four before. Paging was considered and is wrong here — the
+ * cards are meant to be COMPARED, and a gesture that shows one at a time is
  * the one arrangement that makes comparing them impossible.
  *
  * ── CHOOSING CLOSES IT, AND NOTHING CONFIRMS ─────────────────────────────
@@ -25,16 +28,20 @@
  * exercise on a tap, the deck starts one on a press, and the old goal box
  * applied its answer the moment a row was chosen. A *Done* button underneath
  * would be a second decision about a decision already made, and reopening is
- * one tap on the headline.
+ * one tap on the headline or on *Ziel ändern*.
  *
- * ── ONLY ONE OF THE FOUR CARDS HAS A BODY ────────────────────────────────
- * Ben, 2026-10-15: *"Musie kennenlernen", "Entspannung" und "Aktivierung"
- * brauchen keinen description text.* Those three name a state you already
- * know you want; Achtsamkeit is the abstract one, and it is the one the
- * testing actually heard the question about. `goal.why` is null for the other
- * three and `RadioCards` draws a headline alone — which is why `description`
- * became optional in the component rather than being passed an empty string
- * here.
+ * ── EVERY CARD HAS A BODY NOW ────────────────────────────────────────────
+ * It was one of four. Ben, 2026-10-15: *"Musie kennenlernen", "Entspannung"
+ * und "Aktivierung" brauchen keinen description text* — those named a state
+ * you already know you want, and Achtsamkeit, the abstract one, was the only
+ * card with a *Warum?*. On 2026-11-11 *Musie kennenlernen* was retired and
+ * the other two were given one each (`20261111120000_three_goals.sql`, A6):
+ * with three cards side by side and one explaining itself, the other two
+ * read as unfinished.
+ *
+ * `description` stays optional in `RadioCards`, and `goal.why ?? undefined`
+ * below stays: `goal_i18n.why` may still be null, and a card without one is
+ * a headline alone rather than an empty paragraph.
  */
 import * as React from 'react';
 import { RadioCards, Sheet } from '@musie/design-system';
@@ -49,7 +56,8 @@ export interface GoalSheetProps {
   choice: GoalChoice | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** The rect of the headline's link, so the sheet grows out of it. */
+  /** The rect of the control that opened it — the headline's goal or
+   *  *Ziel ändern* — so the sheet grows out of it. */
   origin: LightboxOrigin | null;
   onChoose: (choice: GoalChoice) => void;
 }

@@ -102,10 +102,41 @@
  * sensible default for it, and a component that guessed would be wrong in a
  * way nobody noticed until it shipped. The two DIRECTIONS carry the deck's own
  * arrows, because which way is back is not a product decision.
+ *
+ * ── ON A PHONE THE PAIR IS THE GUTTERS (Ben, 2026-11-11) ──────────────────
+ * Below --bp-sm the two directions stop being a pair of buttons under the
+ * card and become the two strips of screen either side of it, each the full
+ * height of the stack: "the action is triggered over tapping on the right
+ * side next to the card". Under the card they were a second thing to find,
+ * a thumb's length below the thing they move; beside it they are where a
+ * thumb already is. The visible part is a quiet chevron in the middle of each
+ * strip, and the whole strip is the target. At --bp-sm and up the pair
+ * stayed beside the card, at the foot of the stack, until 2026-11-13 („show
+ * the arrows left and right on all viewports"): the gutters are the pair at
+ * every width now, one `--musy-deck-gutter` wide where the card stops
+ * growing, and the IconButton pair below is never drawn.
+ *
+ * What it costs is the swipe's landing area on a phone. The gutters used to
+ * be part of the swipe surface — "a thumb that lands wide of a card still
+ * means that card" — and they are buttons now, and a press on a button never
+ * starts a drag. On a phone the swipe starts ON the card.
+ *
+ * ── THE COVER IS A CARD, AND IT LEAVES LIKE ONE (Ben, 2026-11-11) ────────
+ * The `cover` — an extra card on top of the pile, the /exercises legend —
+ * never moved. It sat on the pile looking exactly like a card, so people did
+ * to it what they do to a card, and it did nothing until it was pressed.
+ * Now the deck's own drag, thresholds and fling apply to it: it follows the
+ * finger, flies out either way past the threshold, springs back below it, and
+ * every direction the deck answers — the pair, the gutters, the arrow keys,
+ * a sideways scroll, a dot — sends IT away instead of moving the pile under
+ * it. `onCoverDismiss` says when it has gone. The pile underneath does not
+ * move: the first card is on top when the cover has left, exactly as it was.
  */
 import * as React from 'react';
+import { Button } from '@base-ui/react/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dots } from './Dots';
+import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 
 /**
@@ -313,21 +344,13 @@ export interface CardDeckProps {
    * of choices.
    */
   actions?: React.ReactNode;
-  /**
-   * Extra ICON controls in the nav row, beside the two directions.
-   *
-   * `actions` is a column of labelled buttons under the deck; this is the row
-   * the chevrons are in. The difference is not cosmetic — a third icon-only
-   * control beside back and forward reads as another thing you can do to the
-   * PILE, and the same control as a labelled row underneath reads as another
-   * thing you can do to the exercise.
-   *
-   * The deck does not say what belongs here, only where it goes. It owns the
-   * two directions because it owns what they do to the pile; a screen's help
-   * control, which is what put this slot here, is the screen's own business
-   * down to its glyph.
-   */
-  navActions?: React.ReactNode;
+  /* NO `navActions` ANY MORE (Ben, 2026-11-11). It put extra icon controls
+     in the nav row beside the two directions, and its one caller — the help
+     button on /exercises — moved to that screen's toolbar (D9 in
+     docs/plans/exercises-ready-to-build.md). Its premise went too: below
+     --bp-sm the two directions are the gutters either side of the card, so
+     "beside the two directions" stopped being a place. Deprecated and
+     removed the same day, once the last usage was out. */
   /**
    * ── AN EXTRA CARD ON TOP OF THE PILE ────────────────────────────────────
    *
@@ -343,11 +366,41 @@ export interface CardDeckProps {
    * languages. Handing the slot the card's own cell costs the consumer
    * nothing and cannot drift.
    *
-   * WHAT IT DOES NOT DO: it carries no dismissal, no state and no styling of
-   * its own. Whatever goes in here owns all three, because the deck has no
-   * opinion about when an extra card has been read.
+   * WHAT IT DOES NOT DO: it carries no state and no styling of its own, and
+   * the deck still has no opinion about when an extra card has been READ.
+   * A press on it reaches whatever is in it, untouched — the legend's own
+   * press-to-dismiss is the legend's.
+   *
+   * ── BUT IT MOVES LIKE A CARD (Ben, 2026-11-11) ──────────────────────────
+   * It used to sit still and carry no dismissal at all. It now takes the
+   * deck's drag, thresholds and fling — follows the finger, flies out the
+   * way the hand went past SWIPE_RATIO or a flick, springs back below — and
+   * the directions send it away instead of turning the pile under it: the
+   * pair and the gutters, Arrow Left and Right, a sideways scroll, a dot. It
+   * still has no dot and no position of its own; `positionLabel` stays about
+   * the cards.
+   *
+   * THE DECK NEVER UNMOUNTS IT. Once it has left, the deck stops drawing it
+   * and calls `onCoverDismiss`; taking it away is the consumer's. A cover
+   * that is still passed after that is NOT drawn again until `cover` has been
+   * undefined once — the deck cannot tell a new cover from the old one by
+   * identity, because every render of the consumer hands it a new element.
    */
   cover?: React.ReactNode;
+  /**
+   * The cover has left. Called ONCE, when its flight has LANDED rather than
+   * when it was let go, so the consumer can unmount it without cutting the
+   * animation short — under reduced motion that is a millisecond later.
+   *
+   * `'next'` when it went out over the leading edge — a left swipe, Arrow
+   * Right, the forward button or gutter, a rightward scroll — and
+   * `'previous'` over the trailing one: the way a CARD leaves when that
+   * button deals it, so the two words mean what the pair already means.
+   *
+   * A press on the cover's own content is not this. That reaches the
+   * content, and whatever the content does about it is its own.
+   */
+  onCoverDismiss?: (direction: 'previous' | 'next') => void;
   /** True while an accept is in flight. See the contract at the top. */
   busy?: boolean;
   /**
@@ -382,6 +435,10 @@ interface Gesture {
   /** Whether the pointer went down on the card in FRONT, which is the only
    *  place a press means the accept. */
   onFront: boolean;
+  /** Whether this gesture moves the COVER rather than the pile. Decided at
+   *  the press and kept: a cover sent away mid-gesture — by a key, say — must
+   *  not hand the rest of the gesture to the card that was under it. */
+  onCover: boolean;
 }
 
 /** Where a card is when it is let go of — the three numbers the stylesheet
@@ -412,6 +469,18 @@ interface Drag extends Flight {
   reveal: number;
   /** True once a release would move the pile. */
   armed: boolean;
+  /** True when the thing under the finger is the cover. Then `progress` and
+   *  `reveal` stay 0: the pile does not rise and the overlay does not show,
+   *  because nothing is happening to the pile. */
+  cover: boolean;
+}
+
+/** The cover on its way out — and, once `landed`, out, and waiting for the
+ *  consumer to take it away. */
+interface CoverExit extends Flight {
+  /** As `Departing.dir`: -1 off the leading edge, 1 off the trailing one. */
+  dir: 1 | -1;
+  landed: boolean;
 }
 
 interface Departing extends Flight {
@@ -426,7 +495,7 @@ interface Departing extends Flight {
 
 export function CardDeck({
   items, onAccept, onNext, onPrevious,
-  nextLabel, previousLabel, navActions, cover,
+  nextLabel, previousLabel, cover, onCoverDismiss,
   label, positionLabel, actions, busy = false, dealKey, className,
 }: CardDeckProps) {
   const [order, setOrder] = React.useState<string[]>(() => items.map((i) => i.id));
@@ -440,8 +509,13 @@ export function CardDeck({
   const [sent, setSent] = React.useState<string | null>(null);
   /** The whole pile is dealing itself in. Cleared when the deepest card lands. */
   const [dealing, setDealing] = React.useState(false);
+  /** The cover's way out. Null while it is up — or while there is none. */
+  const [coverExit, setCoverExit] = React.useState<CoverExit | null>(null);
 
   const gesture = React.useRef<Gesture | null>(null);
+  const coverBox = React.useRef<HTMLDivElement>(null);
+  /** The click a cover drag leaves behind, to be swallowed. See `onPointerUp`. */
+  const swallowClick = React.useRef(false);
   const throwKey = React.useRef(0);
   const arriveKey = React.useRef(0);
   /* STARTS UNDEFINED RATHER THAN AT `dealKey`, which is what makes the first
@@ -513,6 +587,15 @@ export function CardDeck({
     setDealing(true);
   }, [dealKey]);
 
+  /* A COVER THAT HAS GONE STAYS GONE UNTIL THE CONSUMER LETS GO OF IT. The
+     exit is forgotten only when `cover` goes undefined, so the next cover the
+     consumer passes — help pressed on /exercises — is a new one and comes up.
+     Identity cannot say that: every render hands the deck a new element. */
+  const hasCover = cover !== undefined;
+  React.useEffect(() => {
+    if (!hasCover) setCoverExit(null);
+  }, [hasCover]);
+
   /**
    * ── EVERY CARD STAYS THE SAME ELEMENT FOR AS LONG AS IT IS IN `items` ────
    * `order` is the PILE's order and nothing else: it is never what the cards
@@ -535,6 +618,35 @@ export function CardDeck({
   const inert = busy || sent !== null;
   /** A pile of one has no other card to go to, in either direction. */
   const browsable = order.filter((id) => id !== sent).length > 1;
+  /** The cover is on the pile and has not been sent anywhere: every move the
+   *  deck answers is the cover's until it goes. */
+  const coverUp = hasCover && coverExit === null;
+
+  /**
+   * ── THE COVER LEAVES THE WAY A CARD IS DEALT ────────────────────────────
+   * From where the finger left it, or from a standstill for the buttons and
+   * keys, along `dir`. It stays the SAME ELEMENT for its flight — not a copy
+   * in a throw layer, as a dealt card is — because what is in it is the
+   * consumer's and must not be mounted twice; the throw animation is applied
+   * to it where it is. The pile under it is live the instant it is let go,
+   * exactly as it is under a dealt card.
+   *
+   * IDEMPOTENT, because a fast double press on a gutter would otherwise send
+   * a cover that is already in the air a second time.
+   */
+  const sendCover = React.useCallback((from: Flight, dir: 1 | -1) => {
+    if (inert) return;
+    setDrag(null);
+    /* FOCUS COMES OUT FIRST. The cover goes inert for its flight, and an
+       element made inert while it holds focus drops it on the document body
+       — a keyboard user who sent the legend away with an arrow key would be
+       sent back to the top of the page. The pile is where they were. */
+    const box = coverBox.current;
+    if (box !== null && box.contains(document.activeElement)) {
+      pile.current?.focus({ preventScroll: true });
+    }
+    setCoverExit((current) => current ?? { x: from.x, y: from.y, swing: from.swing, dir, landed: false });
+  }, [inert]);
 
   const accept = React.useCallback((id: string | undefined) => {
     if (id === undefined || inert) return;
@@ -640,9 +752,21 @@ export function CardDeck({
     const target = items[at]?.id;
     if (target === undefined || inert) return;
     setDrag(null);
-    if (!browsable) return;
 
     const from = order.indexOf(target);
+    const ahead = from <= order.length - from;
+
+    /* ── A DOT UNDER A COVER SENDS THE COVER TOO (2026-11-11) ────────────
+       The other directions send the cover INSTEAD of moving the pile, because
+       "the next one" under a cover means the cover. A dot does not say "the
+       next one"; it names a card, and the only way to show a card that is
+       under a cover is to take the cover off it. So both happen: the cover
+       leaves the way the jump is drawn, and the pile jumps beneath it. The
+       current dot sends the cover alone. */
+    if (coverUp) sendCover(STILL, ahead ? -1 : 1);
+
+    if (!browsable) return;
+
     /* Already in front, or not in the pile at all. Pressing the current dot is
        a no-op rather than a lap of the deck. */
     if (from <= 0) return;
@@ -650,7 +774,7 @@ export function CardDeck({
     const leaving = order[0];
     const rotate = (current: string[]) => [...current.slice(from), ...current.slice(0, from)];
 
-    if (from <= order.length - from) {
+    if (ahead) {
       throwKey.current += 1;
       setDeparting((flying) => [...flying, { key: throwKey.current, id: leaving, ...STILL, dir: -1 }]);
       setOrder(rotate);
@@ -662,7 +786,21 @@ export function CardDeck({
     arriveKey.current += 1;
     setArriving({ key: arriveKey.current, id: target });
     if (leaving !== undefined) onPrevious(leaving);
-  }, [browsable, inert, items, onNext, onPrevious, order]);
+  }, [browsable, coverUp, inert, items, onNext, onPrevious, order, sendCover]);
+
+  /* THE TWO DIRECTIONS, AS EVERY CONTROL FOR THEM ASKS FOR THEM — the pair,
+     the gutters, the keys and the scroll. Under a cover each one sends the
+     cover the way that control deals a card: forward off the leading edge,
+     back off the trailing one. */
+  const goNext = React.useCallback(() => {
+    if (coverUp) sendCover(STILL, -1);
+    else next(frontId, STILL);
+  }, [coverUp, frontId, next, sendCover]);
+
+  const goPrevious = React.useCallback(() => {
+    if (coverUp) sendCover(STILL, 1);
+    else previous(frontId);
+  }, [coverUp, frontId, previous, sendCover]);
 
   /**
    * ── THE SCROLL GESTURE ────────────────────────────────────────
@@ -711,7 +849,9 @@ export function CardDeck({
 
     const onWheel = (event: WheelEvent) => {
       if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
-      if (inert || !browsable) return;
+      /* A cover can always be sent, even off a pile of one: there is a card
+         under it to show. */
+      if (inert || !(browsable || coverUp)) return;
 
       event.preventDefault();
 
@@ -759,13 +899,16 @@ export function CardDeck({
          gesture that has already been answered. */
       w.spent = true;
       w.dealtAt = event.timeStamp;
-      if (w.travelled > 0) next(frontId, STILL);
-      else previous(frontId);
+      /* Under a cover the flick sends the cover and is SPENT on it — the latch
+         above is what stops the same flick's momentum dealing the card that
+         was under it as well. */
+      if (w.travelled > 0) goNext();
+      else goPrevious();
     };
 
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => element.removeEventListener('wheel', onWheel);
-  }, [browsable, frontId, inert, next, previous]);
+  }, [browsable, coverUp, goNext, goPrevious, inert]);
 
   /* ── THE GESTURE ───────────────────────────────────────────────────────
      THE HANDLERS ARE ON THE STAGE, not on the card. The stage outlives every
@@ -781,12 +924,29 @@ export function CardDeck({
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (inert || frontId === undefined) return;
+    if (inert) return;
+    const target = event.target as Element;
+    /* ── WHILE A COVER IS UP, THE GESTURE IS THE COVER'S (2026-11-11) ──────
+       Wherever on the stage it starts, as a card's is: a thumb that lands
+       beside the cover still means the cover. The pile under it is not
+       reachable by hand until it has gone. */
+    const onCover = coverUp;
+    const inCover = onCover && coverBox.current !== null && coverBox.current.contains(target);
     /* A button speaks for itself. The card's own accept is one, which makes
        its corner a dead spot for the gesture — small, inset, and the one
-       place on the card where a press is already the right answer. */
-    if ((event.target as Element).closest('button') !== null) return;
-    const card = (event.target as Element).closest('.musy-deck__card');
+       place on the card where a press is already the right answer. The
+       gutters are two more (2026-11-11), which is what keeps a press there
+       from ever starting a drag: they are the whole strip, so there is no
+       part of them that is not a button.
+
+       EXCEPT INSIDE THE COVER. The legend on /exercises IS a button, edge to
+       edge, so this rule would make the cover undraggable from anywhere on
+       it. Inside the cover a gesture starts even on a button, and a PRESS
+       still reaches the button: the pointer is captured only once the axis
+       is decided, so a tap that never travelled lands where it fell. */
+    if (!inCover && target.closest('button') !== null) return;
+    if (!onCover && frontId === undefined) return;
+    const card = target.closest('.musy-deck__card');
     gesture.current = {
       x: event.clientX, y: event.clientY, axis: 'undecided',
       width: pile.current?.offsetWidth ?? event.currentTarget.offsetWidth,
@@ -794,8 +954,10 @@ export function CardDeck({
       /* WHETHER A PRESS HERE MEANS THE CARD. The stage is wider than the pile
          on purpose, and a thumb that lands beside a card still swipes it; it
          must not also START it. A consequential action does not get an
-         invisible target either side of the thing it acts on. */
-      onFront: card !== null && card.getAttribute('data-front') === 'true',
+         invisible target either side of the thing it acts on. Never under a
+         cover: the card is not what the press landed on. */
+      onFront: !onCover && card !== null && card.getAttribute('data-front') === 'true',
+      onCover,
     };
   };
 
@@ -835,11 +997,17 @@ export function CardDeck({
       /* THE PILE CLOSES UP EITHER WAY, because either way the card under this
          one is the card about to be on top. It was forward-only while a right
          swipe turned the pile back, where the rise would have promised the
-         wrong card. */
-      progress: Math.min(1, reach / PILE_CLOSES_AT),
+         wrong card.
+
+         NOT UNDER A COVER. The card under the cover is ALREADY the one on
+         top, and stays it: a rise there would shuffle the pile one place up
+         for a move that does not move it. Nor does the overlay show — it
+         names the next card, and the cover leaving brings no next card. */
+      progress: g.onCover ? 0 : Math.min(1, reach / PILE_CLOSES_AT),
       dir: travelled < 0 ? 'left' : 'right',
-      reveal: Math.min(1, reach / OVERLAY_FULL_AT),
+      reveal: g.onCover ? 0 : Math.min(1, reach / OVERLAY_FULL_AT),
       armed: reach >= SWIPE_RATIO,
+      cover: g.onCover,
     });
   };
 
@@ -864,6 +1032,27 @@ export function CardDeck({
        card has travelled: a throw that reverses at the last moment is somebody
        changing their mind, and the sign test is what hears that. */
     const flicked = Math.abs(g.vx) >= FLICK_PX_PER_MS && Math.sign(g.vx) === Math.sign(drag.x);
+
+    /* ── THE COVER: SAME THRESHOLD, SAME FLICK, ITS OWN EXIT ─────────────
+       Out the way the hand went, or back where it was. Nothing is dealt:
+       the pile under it is the pile it covered.
+
+       AND THE CLICK THIS DRAG LEAVES BEHIND IS SWALLOWED. The drag started
+       on the cover's content, which on /exercises is a button that dismisses
+       on click, and a mouse released after a drag still produces a click.
+       Most engines send it to the capture target rather than the button, and
+       "most" is not a thing to leave a sprung-back legend dismissing itself
+       on. The flag lives for ONE TASK — the click follows the pointerup in
+       the same one — so it can never outlast this gesture and eat a click
+       from the keyboard, which arrives with no pointer at all. */
+    if (g.onCover) {
+      swallowClick.current = true;
+      setTimeout(() => { swallowClick.current = false; }, 0);
+      if (coverUp && (drag.armed || flicked)) sendCover(drag, drag.dir === 'left' ? -1 : 1);
+      else setDrag(null);
+      return;
+    }
+
     if (drag.armed || flicked) {
       /* THE CARD IS THROWN THE WAY THE HAND WENT, and the pile turns the one
          way it turns. The direction is the only thing the two swipes differ
@@ -885,33 +1074,67 @@ export function CardDeck({
     setDrag(null);
   };
 
+  const onClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!swallowClick.current) return;
+    swallowClick.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (inert) return;
+    const target = event.target as Element;
+    const arrow = event.key === 'ArrowRight' || event.key === 'ArrowLeft';
     /* A BUTTON SPEAKS FOR ITSELF — the same rule the pointer follows, and it is
        here for a reason that only arrived with the card's own accept: that
        button is INSIDE the pile, so Enter on it raises the button's click AND
        bubbles to this handler. Both call `accept`, and whether the second one
        is refused depends on React having flushed `sent` between the keydown and
        the click — which it does today, and which is not a thing to leave a
-       one-way door standing on. */
-    if ((event.target as Element).closest('button') !== null) return;
+       one-way door standing on.
+
+       THE ARROWS FROM INSIDE A COVER ARE THE EXCEPTION (2026-11-11), for the
+       pointer's reason: the legend is a button from edge to edge, so focus on
+       it is focus on a button, and a keyboard user there could otherwise send
+       it away only by pressing it. An arrow on a button does nothing of its
+       own, so nothing is raised twice. */
+    const fromCover = coverUp && coverBox.current !== null && coverBox.current.contains(target);
+    if (target.closest('button') !== null && !(fromCover && arrow)) return;
     /* ENTER TAKES THE CARD, and the two arrow keys are the two buttons: Right
        deals the next card, Left brings back the one dealt before it. The
        gesture only goes forward — both swipes deal — so Left is the one move
-       no gesture makes, which is exactly why it has a key and a button. */
+       no gesture makes, which is exactly why it has a key and a button.
+
+       NOT UNDER A COVER (2026-11-11). Enter used to take the card the cover
+       was hiding — an exercise started from a card nobody could see. The
+       arrows send the cover instead; Enter waits for it to go. */
     if (event.key === 'Enter') {
       event.preventDefault();
-      accept(frontId);
+      if (!coverUp) accept(frontId);
     }
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      next(frontId, STILL);
+      goNext();
     }
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      previous(frontId);
+      goPrevious();
     }
   };
+
+  const onCoverAnimationEnd = (event: React.AnimationEvent<HTMLDivElement>) => {
+    /* ITS OWN THROW AND NOTHING ELSE. Animation events bubble, and what is in
+       the cover animates on its own account — the legend fades in — which
+       would otherwise land a cover that has not left. */
+    if (event.target !== event.currentTarget || event.animationName !== 'musy-deck-throw') return;
+    if (coverExit === null || coverExit.landed) return;
+    setCoverExit({ ...coverExit, landed: true });
+    onCoverDismiss?.(coverExit.dir === -1 ? 'next' : 'previous');
+  };
+
+  /** The drag, when it is a CARD's. The front card and the pile read this;
+   *  the cover reads `drag` itself. */
+  const cardDrag = drag !== null && !drag.cover ? drag : null;
 
   const position = items.findIndex((i) => i.id === frontId) + 1;
 
@@ -980,6 +1203,7 @@ export function CardDeck({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
+      onClickCapture={onClickCapture}
     >
       <div className="musy-deck__body">
         <div className="musy-deck__stage">
@@ -990,7 +1214,7 @@ export function CardDeck({
             tabIndex={0}
             aria-label={label}
             aria-busy={inert || undefined}
-            style={vars({ '--musy-deck-progress': drag?.progress ?? 0 } as never)}
+            style={vars({ '--musy-deck-progress': cardDrag?.progress ?? 0 } as never)}
             onKeyDown={onKeyDown}
           >
             {items.map((item) => {
@@ -1009,7 +1233,7 @@ export function CardDeck({
                   data-sent={isSent || undefined}
                   aria-hidden={isSent || undefined}
                   data-accent={item.accent ?? 1}
-                  data-swiping={isFront && drag !== null}
+                  data-swiping={isFront && cardDrag !== null}
                   data-arriving={arriving?.id === id || undefined}
                   data-dealing={dealing || undefined}
                   onAnimationEnd={(event) => {
@@ -1036,13 +1260,18 @@ export function CardDeck({
 
                      It does not touch the gesture: the handlers are on the
                      stage, so a thumb landing on a card behind still swipes
-                     the pile — it simply no longer lands on a card. */
-                  inert={!isFront || isSent}
+                     the pile — it simply no longer lands on a card.
+
+                     AND UNDER A COVER THE ONE IN FRONT IS TOO (2026-11-11).
+                     Its Start button was a tab stop the cover was sitting on:
+                     focus landed on a control nobody could see (2.4.11). It
+                     comes back the instant the cover is let go, which is the
+                     same instant a card under a dealt one goes live. */
+                  inert={!isFront || isSent || coverUp}
                   style={vars({
                     '--musy-card-depth': isSent ? 0 : depth,
-                    '--musy-card-seed': seedFor(id),
-                    ...(isFront && drag !== null
-                      ? { '--musy-drag-x': drag.x, '--musy-drag-y': drag.y, '--musy-card-swing': drag.swing }
+                    ...(isFront && cardDrag !== null
+                      ? { '--musy-drag-x': cardDrag.x, '--musy-drag-y': cardDrag.y, '--musy-card-swing': cardDrag.swing }
                       : {}),
                   } as never)}
                 >
@@ -1070,9 +1299,9 @@ export function CardDeck({
                   {isFront && (
                     <div
                       className="musy-deck__overlay"
-                      data-dir={drag?.dir ?? undefined}
+                      data-dir={cardDrag?.dir ?? undefined}
                       aria-hidden="true"
-                      style={vars({ '--musy-card-reveal': drag?.reveal ?? 0 } as never)}
+                      style={vars({ '--musy-card-reveal': cardDrag?.reveal ?? 0 } as never)}
                     >
                       <span className="musy-deck__overlay-label">{nextLabel}</span>
                     </div>
@@ -1095,7 +1324,7 @@ export function CardDeck({
                   onAnimationEnd={() =>
                     setDeparting((rest) => rest.filter((o) => o.key !== flight.key))}
                   style={vars({
-                    '--musy-card-depth': 0, '--musy-card-seed': seedFor(flight.id),
+                    '--musy-card-depth': 0,
                     '--musy-drag-x': flight.x, '--musy-drag-y': flight.y,
                     '--musy-card-swing': flight.swing, '--musy-throw-dir': flight.dir,
                   } as never)}
@@ -1107,18 +1336,94 @@ export function CardDeck({
 
             {/* ── THE EXTRA CARD ─────────────────────────────────────────
                 Last in the pile and in its one cell, so it is over every card
-                including one mid-flight. The deck gives it the card's box and
-                nothing else: no dismissal, no state, no styling — see the
-                prop.
+                including one mid-flight. The deck gives it the card's box and,
+                since 2026-11-11, the card's movement — and still no state and
+                no styling of its own; see the prop.
 
                 WRAPPED, and that is not ceremony: the cell is claimed by
                 `grid-area: card`, and a consumer's node cannot carry that
                 without being handed a design-system class to put on itself.
                 Measured before the wrapper existed — the legend landed BELOW
                 the card at its own content height instead of over it. The
-                wrapper is the grid item; what goes inside it stretches. */}
-            {cover !== undefined && <div className="musy-deck__cover">{cover}</div>}
+                wrapper is the grid item; what goes inside it stretches.
+
+                THE WRAPPER IS ALSO WHAT MOVES. The drag and the throw are
+                transforms on it, so whatever the consumer put inside travels
+                with it untouched — and keeps animating on its own account,
+                which is why its animationend is checked by name.
+
+                INERT FOR ITS FLIGHT, as a dealt card is aria-hidden for its
+                own: it is leaving, and nothing in it should be reachable on
+                the way out. */}
+            {hasCover && coverExit?.landed !== true && (
+              <div
+                ref={coverBox}
+                className="musy-deck__cover"
+                data-swiping={(coverUp && drag?.cover === true) || undefined}
+                data-throwing={coverExit !== null || undefined}
+                inert={coverExit !== null}
+                onAnimationEnd={onCoverAnimationEnd}
+                style={vars(
+                  coverExit !== null
+                    ? {
+                        '--musy-drag-x': coverExit.x, '--musy-drag-y': coverExit.y,
+                        '--musy-card-swing': coverExit.swing, '--musy-throw-dir': coverExit.dir,
+                      }
+                    : coverUp && drag?.cover === true
+                      ? { '--musy-drag-x': drag.x, '--musy-drag-y': drag.y, '--musy-card-swing': drag.swing }
+                      : {},
+                )}
+              >
+                {cover}
+              </div>
+            )}
           </div>
+
+          {/* ── THE GUTTERS (Ben, 2026-11-11) ──────────────────────────────
+              The pair, at every width since 2026-11-13 (below --bp-sm only
+              until then). Each is the whole strip of screen between the card
+              and the edge — one `--musy-deck-gutter` wide from --bp-sm up —
+              the full height of the stack, with a quiet chevron in the middle
+              of it: the stylesheet places them.
+
+              THE WHOLE STRIP IS THE BUTTON, not a hit area stretched out of a
+              44px one. IconButton owns its own box, and widening it from here
+              would be the deck reaching into another component's geometry —
+              so the strip is the deck's own button and the chevron is drawn
+              in it, in the ghost rung's own tokens. A press anywhere in it is
+              a press on a button, which is exactly what keeps it from ever
+              starting a drag (`onPointerDown`).
+
+              HERE IN THE TREE, between the pile and the dots, for the tab
+              order: the card, then the two directions, then the positions.
+              Back before forward, as the pair reads.
+
+              NO TOOLTIP, where IconButton would draw one. It was argued from
+              these existing only for a thumb, and that half went on
+              2026-11-13; the other half stands — a tooltip anchored to a
+              strip the height of a card would point at the middle of nothing.
+              The label is the accessible name. A cursor now finds no tooltip
+              where the old pair had one: logged in stories/OPEN-QUESTIONS.md. */}
+          <Button
+            className="musy-deck__strip musy-deck__strip--previous"
+            aria-label={previousLabel}
+            disabled={inert || !browsable}
+            onClick={goPrevious}
+          >
+            <span className="musy-deck__strip-mark">
+              <Icon glyph={ChevronLeft} size="md" />
+            </span>
+          </Button>
+          <Button
+            className="musy-deck__strip musy-deck__strip--next"
+            aria-label={nextLabel}
+            disabled={inert || !browsable}
+            onClick={goNext}
+          >
+            <span className="musy-deck__strip-mark">
+              <Icon glyph={ChevronRight} size="md" />
+            </span>
+          </Button>
 
           {/* ── WHERE YOU ARE IN THE PILE, FOR THE EYE ──────────────────
               The deck has always said this to a screen reader — the live
@@ -1128,7 +1433,7 @@ export function CardDeck({
               the scatter behind the top one.
 
               INSIDE THE STAGE, which is what centres them under the PILE
-              rather than under the deck: at --bp-md and up the body is a row
+              rather than under the deck: at --bp-sm and up the body is a row
               and the stage is only its first column, so dots placed after the
               body would sit under the stage and the action column together
               and read as belonging to neither.
@@ -1187,27 +1492,37 @@ export function CardDeck({
                 what a card is: three of them in a row beside the pile read as
                 more cards rather than as the controls for one. The outline
                 keeps the border and drops the fill, so the only raised thing
-                on this component is the thing you can take. */}
+                on this component is the thing you can take.
+
+                ── AND `secondary` AGAIN — Ben, 2026-11-11 (D6) ──────────────
+                Reversed. The new desktop frame in Figma (`76:4072`, *Ready to
+                build*) draws the pair secondary, beside a Shuffle that is
+                secondary too, and the argument above lost its third member:
+                the help button that made them "three in a row" leaves this
+                row for the screen's toolbar (`navActions`, deprecated the
+                same day). Two raised chevrons at the foot of a pile read as
+                its controls, and the toolbar above now speaks the same rung.
+
+                NOT DRAWN AT ANY WIDTH SINCE 2026-11-13: the pair is the
+                gutters above everywhere, and their ghost chevron is the
+                strip's own look, not a variant of this. Kept in the tree, and
+                hidden by the stylesheet, so going back is one rule there. */}
             <IconButton
               glyph={ChevronLeft}
               label={previousLabel}
-              variant="outline"
+              variant="secondary"
               className="musy-deck__act musy-deck__act--previous"
               disabled={inert || !browsable}
-              onClick={() => previous(frontId)}
+              onClick={goPrevious}
             />
             <IconButton
               glyph={ChevronRight}
               label={nextLabel}
-              variant="outline"
+              variant="secondary"
               className="musy-deck__act musy-deck__act--next"
               disabled={inert || !browsable}
-              onClick={() => next(frontId, STILL)}
+              onClick={goNext}
             />
-            {/* Third and after, never between: back and forward are a pair and
-                a stranger inserted into the middle of them would break the
-                one thing their order says. */}
-            {navActions}
           </div>
           {actions}
         </div>
@@ -1220,34 +1535,4 @@ export function CardDeck({
       </p>
     </div>
   );
-}
-
-/**
- * HOW SLOPPY THIS PARTICULAR CARD IS — one number in -1…1, hashed from its id,
- * which the stylesheet spends on an offset and an angle.
- *
- * DETERMINISTIC, and that is the point: `Math.random()` would re-scatter the
- * pile on every render, so every drag frame would reshuffle the cards nobody
- * is touching and the pile would read as shivering.
- *
- * IT HAS TO AVALANCHE. The obvious `hash * 31 + charCode` does not: on a set
- * of ids differing in one character — mc-01 … mc-09 — every card came out
- * within a pixel of the same offset, and the pile looked neatly stacked while
- * the hash looked like it was working. FNV-1a to fold, then MurmurHash3's
- * finalizer, whose two multiplies and two xor-shifts are what turn a one-bit
- * difference into a different number.
- */
-function seedFor(id: string): number {
-  let folded = 0x811c9dc5;
-  for (let i = 0; i < id.length; i += 1) {
-    folded ^= id.charCodeAt(i);
-    folded = Math.imul(folded, 0x01000193);
-  }
-  let h = Math.imul(folded, 0x85ebca6b);
-  h ^= h >>> 13;
-  h = Math.imul(h, 0xc2b2ae35);
-  h ^= h >>> 16;
-  /* `>>> 0` first: Math.imul returns a SIGNED 32-bit int, and dividing a
-     negative one gives a number outside -1…1. */
-  return Math.round((((h >>> 0) / 0xffffffff) * 2 - 1) * 1000) / 1000;
 }
