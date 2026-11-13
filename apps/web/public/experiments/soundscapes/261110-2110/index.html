@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Musie · Klangorte</title>
+<!-- Musie-Experiment „Soundscapes v3“ (CLAUDE.md Regel 10). Prototyp zum Anschauen und Anhören.
+     v3 nach Lucia: „nur natürliche Aufnahmen von natürlichen Soundscapes, nichts dazu“.
+     - Orte sind echte Aufnahmen (CC0, Freesound), drei Varianten je Ort zum Umschalten. Quellen: ../AUDIO_LICENSES.md.
+       Kein Füllrauschen, kein Hall, nichts Erzeugtes unter den Orten.
+     - Keine hörbare Schleife: jede Aufnahme spielt in Abschnitten von zufälliger Länge ab zufälliger Stelle,
+       weich ineinander überblendet (gleiche Leistung).
+     - „still ↔ bewegt“: legt dieselbe Aufnahme ein- oder zweimal versetzt darüber (dichter, nicht lauter).
+       „nah ↔ fern“: nur dumpfer und leiser.
+     - Klänge (Klangschale, Klangteppich, Monochord, Ambient) bleiben erzeugt, wie in v2, auf D.
+     - Die Aufnahmen werden per fetch geladen: Die Seite muss über einen Server laufen (pnpm --filter web dev), nicht per Doppelklick.
+     Kein PostHog, nichts an Supabase. Farben/Schriften: musy-foundations.css, je Theme aufgelöst. -->
+<style>html,body{margin:0;padding:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Literata:opsz,wght@7..72,400&display=swap">
+<style>
+/* Musie-Tokens (musy-foundations.css), aufgelöst wie in /experiments/marimba/261108-1740/ */
+:root {
+  --focus-ring: 3px solid #2B5340; --focus-ring-offset: 2px;
+  --border-width-hairline: 1px; --border-width-regular: 1.5px; --border-width-thick: 2px; --border-style-solid: solid;
+  --border-strong: #678271; --border-subtle: #CFCEC2;
+  --icon-size-md: 20px; --icon-size-sm: 16px; --icon-stroke: 2px; --icon-stroke-sm: 1.5px;
+  --on-surface: #1A1F1C; --on-surface-muted: #62645E;
+  --surface: #F3EEE4; --surface-sunken: #E5E3D9; --surface-raised: #FAF7F1;
+  --elevation-1: 0 1px 2px rgb(32 44 36 / 0.10), 0 1px 3px -1px rgb(32 44 36 / 0.06), inset 0 0 0 1px transparent;
+  --interactive-primary: #2B5340; --interactive-primary-hover: #22442F; --interactive-primary-on: #F3EEE4;
+  --interactive-primary-disabled: #C7CCC0; --interactive-primary-on-disabled: #62645E; --interactive-primary-border: #678271;
+  --interactive-primary-subtle: #E3E7DE; --interactive-primary-subtle-hover: #D5DBD0; --interactive-primary-on-subtle: #1A1F1C;
+  --interactive-accent: #D99673; --interactive-accent-border: #B5704F; --interactive-accent-subtle: #F4DFD2;
+  --interactive-accent-subtle-hover: #F0D5C4; --interactive-accent-on-subtle: #824429; --interactive-ghost-hover: #E5E3D9;
+  --motion-toggle: 140ms cubic-bezier(0.2, 0, 0.2, 1);
+  --radius-full: 999px; --radius-control: 999px; --radius-card: 12px; --radius-panel: 16px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+  --space-gap-inline: 8px; --space-gap-group: 32px; --target-primary: 44px;
+  --type-label-md-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-label-md-weight: 400; --type-label-md-line: 1.4; --type-label-md-tracking: 0.002em;
+  --type-heading-sm-family: Onest, ui-sans-serif, system-ui, sans-serif; --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
+  --type-heading-sm-weight: 600; --type-heading-sm-line: 1.3;
+  --type-body-sm-family: Literata, ui-serif, Georgia, serif; --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px); --type-body-sm-line: 1.5;
+  --type-body-md-family: Literata, ui-serif, Georgia, serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  color-scheme: dark;
+  --focus-ring: 3px solid #6FA688; --border-strong: #6B8F79; --border-subtle: #3B413C;
+  --on-surface: #EDF0EC; --on-surface-muted: #9EA59F;
+  --surface: #191D1A; --surface-sunken: #111412; --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478; --interactive-primary-hover: #6FA688; --interactive-primary-on: #111412;
+  --interactive-primary-disabled: #203B2B; --interactive-primary-on-disabled: #9EA59F; --interactive-primary-border: #6B8F79;
+  --interactive-primary-subtle: #16281E; --interactive-primary-subtle-hover: #1B3224; --interactive-primary-on-subtle: #EDF0EC;
+  --interactive-accent-border: #A2694B; --interactive-accent-subtle: #2F1F16; --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-on-subtle: #D0937A; --interactive-ghost-hover: #2A2F2B;
+} }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --focus-ring: 3px solid #6FA688; --border-strong: #6B8F79; --border-subtle: #3B413C;
+  --on-surface: #EDF0EC; --on-surface-muted: #9EA59F;
+  --surface: #191D1A; --surface-sunken: #111412; --surface-raised: #2A2F2B;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.46), 0 1px 3px -1px rgb(0 0 0 / 0.32), inset 0 0 0 1px #4C534E;
+  --interactive-primary: #5E9478; --interactive-primary-hover: #6FA688; --interactive-primary-on: #111412;
+  --interactive-primary-disabled: #203B2B; --interactive-primary-on-disabled: #9EA59F; --interactive-primary-border: #6B8F79;
+  --interactive-primary-subtle: #16281E; --interactive-primary-subtle-hover: #1B3224; --interactive-primary-on-subtle: #EDF0EC;
+  --interactive-accent-border: #A2694B; --interactive-accent-subtle: #2F1F16; --interactive-accent-subtle-hover: #3A271C;
+  --interactive-accent-on-subtle: #D0937A; --interactive-ghost-hover: #2A2F2B;
+}
+
+/* ── Seite ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--surface); color: var(--on-surface); font-family: var(--type-body-md-family); -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+[hidden] { display: none !important; }
+.musie-app { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100vh; height: 100dvh; max-inline-size: 560px; margin: 0 auto; }
+
+/* Szene */
+.musie-scene { position: relative; margin: calc(env(safe-area-inset-top, 0px) + var(--sp-4)) var(--sp-4) 0;
+  border-radius: var(--radius-panel); background: var(--surface-sunken); overflow: hidden; block-size: clamp(200px, 38dvh, 380px); }
+.musie-scene canvas { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; display: block; }
+.musie-scene__caption { position: absolute; left: var(--sp-3); bottom: var(--sp-3); margin: 0; max-inline-size: calc(100% - var(--sp-3) * 2);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-card); background: var(--surface-raised); box-shadow: var(--elevation-1); }
+.musie-scene__title { display: block; font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); color: var(--on-surface); text-wrap: balance; }
+.musie-scene__state { display: block; font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); }
+.musie-scene--off { block-size: auto; background: transparent; }
+.musie-scene--off canvas { display: none; }
+.musie-scene--off .musie-scene__caption { position: static; max-inline-size: none; }
+
+/* Auswahl */
+.musie-picks { overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-4) var(--sp-4) var(--sp-5); }
+.musie-group { border: 0; padding: 0; margin: 0 0 var(--sp-4); min-inline-size: 0; }
+.musie-group legend { padding: 0; font-family: var(--type-heading-sm-family); font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight); line-height: var(--type-heading-sm-line); color: var(--on-surface); }
+.musie-hint { margin: 0 0 var(--sp-4); font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); text-wrap: pretty; }
+.musie-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-block-start: var(--sp-2); }
+/* Chip: .musy-filter__value, Auswahl wie .musy-filter (primär) und .musy-filter--accent */
+.musie-chip { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-gap-inline);
+  min-block-size: var(--target-primary); padding-inline: var(--sp-4);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); border-radius: var(--radius-control);
+  background-color: transparent; color: var(--on-surface); cursor: pointer;
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line); letter-spacing: var(--type-label-md-tracking); white-space: nowrap;
+  transition: background-color var(--motion-toggle), color var(--motion-toggle), border-color var(--motion-toggle); }
+@media (hover: hover) { .musie-chip:hover { background-color: var(--interactive-ghost-hover); } }
+.musie-chip[aria-pressed="true"] { background-color: var(--interactive-primary-subtle); border-color: var(--interactive-primary-border); color: var(--interactive-primary-on-subtle); }
+@media (hover: hover) { .musie-chip[aria-pressed="true"]:hover { background-color: var(--interactive-primary-subtle-hover); } }
+.musie-chip .musy-icon { visibility: hidden; }
+.musie-chip[aria-pressed="true"] .musy-icon { visibility: visible; }
+.musie-chip--tone[aria-pressed="true"] { background-color: var(--interactive-accent-subtle); border-color: var(--interactive-accent-border); color: var(--interactive-accent-on-subtle); }
+@media (hover: hover) { .musie-chip--tone[aria-pressed="true"]:hover { background-color: var(--interactive-accent-subtle-hover); } }
+
+/* Aufnahme-Umschalter und Quelle */
+.musie-variant { padding-block: var(--sp-2) var(--sp-1); }
+.musie-variant .musie-chips { margin-block-start: var(--sp-1); }
+.musie-source { margin: var(--sp-2) 0 0; font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); color: var(--on-surface-muted); text-wrap: pretty; }
+.musie-source a { color: inherit; }
+
+/* Regler */
+.musie-controls { margin: 0 0 var(--space-gap-group); padding: var(--sp-2) var(--sp-4) var(--sp-3); border-radius: var(--radius-card); background: var(--surface-raised); box-shadow: var(--elevation-1); }
+.musie-slider { display: block; padding-block-start: var(--sp-2); }
+.musie-slider__name { display: block; font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: 500; line-height: var(--type-label-md-line); color: var(--on-surface); }
+.musie-slider__ends { display: flex; justify-content: space-between; gap: var(--sp-2); margin-block-start: calc(var(--sp-1) * -1); }
+.musie-slider__end { font-family: var(--type-body-sm-family); font-size: var(--type-body-sm-size); line-height: 1.2; color: var(--on-surface-muted); }
+.musie-range { -webkit-appearance: none; appearance: none; inline-size: 100%; block-size: var(--target-primary); margin: 0; background: transparent; cursor: pointer; touch-action: pan-y; }
+.musie-range::-webkit-slider-runnable-track { block-size: 4px; border-radius: var(--radius-full); background: var(--border-subtle); }
+.musie-range::-moz-range-track { block-size: 4px; border-radius: var(--radius-full); background: var(--border-subtle); }
+.musie-range::-webkit-slider-thumb { -webkit-appearance: none; inline-size: 28px; block-size: 28px; margin-block-start: -12px; border-radius: var(--radius-full); border: var(--border-width-thick) solid var(--surface-raised); background: var(--interactive-primary); }
+.musie-range::-moz-range-thumb { inline-size: 24px; block-size: 24px; border-radius: var(--radius-full); border: var(--border-width-thick) solid var(--surface-raised); background: var(--interactive-primary); }
+.musie-controls--tone .musie-range::-webkit-slider-thumb { background: var(--interactive-accent); }
+.musie-controls--tone .musie-range::-moz-range-thumb { background: var(--interactive-accent); }
+
+/* Leiste unten */
+.musie-bar { display: flex; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px)); border-top: var(--border-width-hairline) solid var(--border-subtle); background: var(--surface); }
+.musie-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-gap-inline); min-block-size: var(--target-primary); padding-inline: var(--sp-4);
+  border-radius: var(--radius-control); border: var(--border-width-regular) var(--border-style-solid) var(--border-strong); background: transparent; color: var(--on-surface);
+  font-family: var(--type-label-md-family); font-size: var(--type-label-md-size); font-weight: 500; line-height: 1.2; cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums;
+  transition: background-color var(--motion-toggle), color var(--motion-toggle), border-color var(--motion-toggle); }
+@media (hover: hover) { .musie-btn:hover { background-color: var(--interactive-ghost-hover); } }
+.musie-btn--primary { flex: 1 1 auto; border-color: transparent; background: var(--interactive-primary); color: var(--interactive-primary-on); }
+@media (hover: hover) { .musie-btn--primary:hover { background: var(--interactive-primary-hover); } }
+.musie-btn--primary:disabled { background: var(--interactive-primary-disabled); color: var(--interactive-primary-on-disabled); cursor: default; }
+.musie-btn[aria-pressed="false"] { color: var(--on-surface-muted); }
+.musy-icon { display: inline-block; flex-shrink: 0; width: var(--icon-size-md); height: var(--icon-size-md); stroke: currentcolor; stroke-width: var(--icon-stroke); fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.musy-icon--sm { width: var(--icon-size-sm); height: var(--icon-size-sm); stroke-width: var(--icon-stroke-sm); }
+@media (prefers-reduced-motion: reduce) { .musie-chip, .musie-btn { transition: none; } }
+</style>
+</head>
+<body>
+<main class="musie-app">
+  <section class="musie-scene" id="scene" aria-label="Szene">
+    <canvas id="canvas" aria-hidden="true"></canvas>
+    <p class="musie-scene__caption" aria-live="polite">
+      <span class="musie-scene__title" id="title"></span>
+      <span class="musie-scene__state" id="state"></span>
+    </p>
+  </section>
+
+  <div class="musie-picks">
+    <p class="musie-hint">Antippen, und es klingt. Nochmal antippen nimmt es wieder weg. Ein Ort und ein Klang gehen zusammen.</p>
+    <fieldset class="musie-group">
+      <legend>Ort</legend>
+      <div class="musie-chips" id="places"></div>
+    </fieldset>
+    <div class="musie-controls" id="placeControls" hidden>
+      <div class="musie-variant" role="group" aria-labelledby="variantName">
+        <span class="musie-slider__name" id="variantName">Aufnahme</span>
+        <div class="musie-chips" id="variants"></div>
+        <p class="musie-source" id="source"></p>
+      </div>
+      <label class="musie-slider"><span class="musie-slider__name">Bewegung</span>
+        <input class="musie-range" type="range" min="0" max="100" id="motion" aria-label="Bewegung, von still bis bewegt">
+        <span class="musie-slider__ends" aria-hidden="true"><span class="musie-slider__end">still</span><span class="musie-slider__end">bewegt</span></span></label>
+      <label class="musie-slider"><span class="musie-slider__name">Nähe</span>
+        <input class="musie-range" type="range" min="0" max="100" id="distance" aria-label="Nähe, von nah bis fern">
+        <span class="musie-slider__ends" aria-hidden="true"><span class="musie-slider__end">nah</span><span class="musie-slider__end">fern</span></span></label>
+    </div>
+    <fieldset class="musie-group">
+      <legend>Klang</legend>
+      <div class="musie-chips" id="tones"></div>
+    </fieldset>
+    <div class="musie-controls musie-controls--tone" id="toneControls" hidden>
+      <label class="musie-slider"><span class="musie-slider__name">Dichte</span>
+        <input class="musie-range" type="range" min="0" max="100" id="density" aria-label="Dichte, von sparsam bis getragen">
+        <span class="musie-slider__ends" aria-hidden="true"><span class="musie-slider__end">sparsam</span><span class="musie-slider__end">getragen</span></span></label>
+      <label class="musie-slider"><span class="musie-slider__name">Lautstärke</span>
+        <input class="musie-range" type="range" min="0" max="100" id="volume" aria-label="Lautstärke des Klangs, von leise bis laut">
+        <span class="musie-slider__ends" aria-hidden="true"><span class="musie-slider__end">leise</span><span class="musie-slider__end">laut</span></span></label>
+    </div>
+  </div>
+
+  <nav class="musie-bar" aria-label="Wiedergabe">
+    <button class="musie-btn musie-btn--primary" id="play" type="button"></button>
+    <button class="musie-btn" id="timer" type="button"></button>
+    <button class="musie-btn" id="image" type="button"></button>
+  </nav>
+</main>
+
+<script>
+'use strict';
+/* ════════ Grundlagen ════════ */
+const $ = s => document.querySelector(s);
+const lerp = (a, b, x) => a + (b - a) * x, clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
+const expo = rate => -Math.log(1 - Math.random()) / Math.max(rate, 1e-6);   // zufällige Abstände: nie ein Takt
+
+const PLACES = [
+  { id: 'strand', name: 'Strand' }, { id: 'wald', name: 'Wald' }, { id: 'regen', name: 'Regen' },
+  { id: 'bach', name: 'Bach' }, { id: 'kamin', name: 'Kamin' },
+];
+const TONES = [
+  { id: 'schale', name: 'Klangschale' }, { id: 'teppich', name: 'Klangteppich' },
+  { id: 'monochord', name: 'Monochord' }, { id: 'ambient', name: 'Ambient' },
+];
+const TIMERS = [5, 10, 15, 30, 60, 0];          // 0 = ohne Timer
+const END_FADE = 45;                             // Sekunden Ausklang am Timer-Ende
+const THUNDER_CAP = 0.2;                         // fester Deckel für Donner
+
+/* ════════ Zwischenstand ════════ */
+const KEY = 'musie-soundscapes-v1';              // gleicher Schlüssel wie v1: die Auswahl wandert mit
+const DEFAULTS = { place: null, tone: null, motion: 0.4, distance: 0.3, density: 0.5, volume: 0.7, timer: 15, image: true, variants: {} };
+function load() {
+  try {
+    const j = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (j && typeof j === 'object') {
+      const s = { ...DEFAULTS, ...j };
+      if (!PLACES.some(p => p.id === s.place)) s.place = null;
+      if (!TONES.some(p => p.id === s.tone)) s.tone = null;
+      if (!TIMERS.includes(s.timer)) s.timer = 15;
+      for (const k of ['motion', 'distance', 'density', 'volume']) s[k] = clamp(+s[k] || 0, 0, 1);
+      s.image = s.image !== false;
+      if (!s.variants || typeof s.variants !== 'object') s.variants = {};
+      return s;
+    }
+  } catch (e) {}
+  return { ...DEFAULTS };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const S = load();
+
+/* ════════ Audio: Summe, Begrenzer, Hall ════════ */
+let ctx = null, master, reverbIn, buf, unlocking = false;
+const layers = { place: null, tone: null };
+const now = () => ctx.currentTime;
+
+function gain(v) { const g = ctx.createGain(); g.gain.value = v; return g; }
+function filt(type, f, q) { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+function setT(param, v, t, tc) { param.setTargetAtTime(v, Math.max(t, now()), Math.max(tc, 0.005)); }
+function smooth(param, v, tc = 0.35) { const t = now(); param.cancelScheduledValues(t); param.setValueAtTime(param.value, t); param.setTargetAtTime(v, t, tc); }
+
+function makeNoise(kind, seconds) {
+  const sr = ctx.sampleRate, fade = Math.floor(sr * 0.5), L = Math.floor(sr * seconds), n = L + fade;
+  const raw = new Float32Array(n);
+  if (kind === 'white') for (let i = 0; i < n; i++) raw[i] = Math.random() * 2 - 1;
+  else if (kind === 'pink') {
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < n; i++) {
+      const w = Math.random() * 2 - 1;
+      b0 = .99886 * b0 + w * .0555179; b1 = .99332 * b1 + w * .0750759; b2 = .969 * b2 + w * .153852;
+      b3 = .8665 * b3 + w * .3104856; b4 = .55 * b4 + w * .5329522; b5 = -.7616 * b5 - w * .016898;
+      raw[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * .5362) * .11; b6 = w * .115926;
+    }
+  } else { let last = 0; for (let i = 0; i < n; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; raw[i] = last; } }
+  const b = ctx.createBuffer(1, L, sr), d = b.getChannelData(0);
+  for (let i = 0; i < L; i++) d[i] = raw[i];
+  for (let i = 0; i < fade; i++) { const a = i / fade; d[i] = raw[i] * a + raw[L + i] * (1 - a); }   // nahtlose Schleife
+  let peak = 0; for (let i = 0; i < L; i++) peak = Math.max(peak, Math.abs(d[i]));
+  const k = 0.9 / (peak || 1); for (let i = 0; i < L; i++) d[i] *= k;
+  return b;
+}
+function makeBurst(ms, decayMs) {
+  const sr = ctx.sampleRate, L = Math.max(2, Math.floor(sr * ms / 1000)), b = ctx.createBuffer(1, L, sr), d = b.getChannelData(0);
+  const att = Math.max(1, Math.floor(sr * 0.0004));
+  for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sr * decayMs / 1000)) * Math.min(1, i / att);
+  return b;
+}
+function makeImpulse(seconds, decay) {
+  const sr = ctx.sampleRate, L = Math.floor(sr * seconds), b = ctx.createBuffer(2, L, sr);
+  for (let c = 0; c < 2; c++) {
+    const d = b.getChannelData(c); let lp = 0;
+    for (let i = 0; i < L; i++) { lp += 0.3 * ((Math.random() * 2 - 1) - lp); d[i] = lp * Math.pow(1 - i / L, decay); }
+  }
+  return b;
+}
+
+function initAudio() {
+  if (ctx) return;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = gain(0);
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -22; comp.knee.value = 12; comp.ratio.value = 3; comp.attack.value = 0.01; comp.release.value = 0.4;
+  const limit = ctx.createDynamicsCompressor();      // Begrenzer: keine Spitze kommt durch
+  limit.threshold.value = -8; limit.knee.value = 0; limit.ratio.value = 20; limit.attack.value = 0.002; limit.release.value = 0.3;
+  const out = gain(1.2);
+  master.connect(comp); comp.connect(limit); limit.connect(out); out.connect(ctx.destination);
+  const verb = ctx.createConvolver(); verb.buffer = makeImpulse(2.6, 3.5);   // kürzerer, wärmerer Raum als v1
+  reverbIn = gain(1); const verbOut = gain(0.55);
+  reverbIn.connect(verb); verb.connect(verbOut); verbOut.connect(master);
+  buf = {};                                     // v3: kein erzeugtes Rauschen mehr, die Orte sind Aufnahmen
+  setInterval(schedule, 200);
+}
+function unlockAudio() {
+  if (!ctx || ctx.state === 'running' || !playing) return;
+  unlocking = true;
+  ctx.resume().then(() => { unlocking = false; }, () => { unlocking = false; });
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {}
+}
+['touchend', 'pointerup', 'click', 'keydown'].forEach(t => addEventListener(t, unlockAudio, { capture: true, passive: true }));
+
+function panTo(node, pan, dest) {
+  if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; node.connect(p); p.connect(dest); } else node.connect(dest);
+}
+/* Rausch-Fläche: zwei verschiedene Schleifen, links und rechts, an zufälliger Stelle begonnen */
+function bed(kind, dest, g, srcs) {
+  [-0.5, 0.5].forEach((pan, k) => {
+    const s = ctx.createBufferSource(); s.buffer = buf[kind][k]; s.loop = true;
+    const v = gain(g * 0.75); s.connect(v); panTo(v, pan, dest);
+    s.start(now(), Math.random() * s.buffer.duration); srcs.push(s);
+  });
+}
+function oneShot(b, dest, t, o) {
+  const s = ctx.createBufferSource(); s.buffer = b; s.playbackRate.value = o.rate || 1;
+  const v = gain(o.gain);
+  if (o.freq) { const f = filt(o.type || 'bandpass', o.freq, o.q || 0.7); s.connect(f); f.connect(v); } else s.connect(v);
+  panTo(v, o.pan || 0, dest);
+  s.start(t);
+}
+/* Bläschen: ein kurzer Sinus, dessen Ton nach oben rutscht. So klingt Wasser, das über Steine läuft. */
+function bubble(dest, t, f0, dur, g, pan) {
+  const o = ctx.createOscillator(), e = gain(0);
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * rnd(1.3, 2.1), t + dur);
+  e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .0015); e.gain.setTargetAtTime(0, t + .0015, dur / 3);
+  o.connect(e); panTo(e, pan, dest); o.start(t); o.stop(t + dur * 2 + .03);
+}
+/* Ereignisse in zufälligen Abständen (Poisson). Kein Raster, kein Beat. */
+function stream(rateFn, fire) {
+  let next = null;
+  return (from, to) => {
+    if (next === null || next < from) next = from + Math.random() * 0.3;
+    while (next < to) { fire(next); next += Math.max(0.004, expo(rateFn())); }
+  };
+}
+/* Hüllkurve einer Böe oder Welle zum Zeitpunkt x nach ihrem Beginn */
+const envAt = (x, up, hold, down) => x < 0 ? 0 : x < up ? x / up : x < up + hold ? 1 : Math.exp(-(x - up - hold) / down);
+
+/* ════════ Grundton D (für die Klänge) ════════
+   Die Klänge stehen auf D-Dur-Pentatonik: D E F♯ A H. Die Orte sind in v2 ungestimmt (Rauschen, Körner, Bläschen),
+   darum gibt es keine Reibung zwischen Ort und Klang. */
+const D2 = 73.416;
+const hz = semis => D2 * Math.pow(2, semis / 12);
+const PENTA = [0, 2, 4, 7, 9];
+const scale = (lo, hi) => { const r = []; for (let o = 0; o < 6; o++) for (const p of PENTA) { const s = o * 12 + p; if (s >= lo && s <= hi) r.push(s); } return r; };
+
+/* ════════ Orte: echte Aufnahmen ════════
+   Alle CC0 (Freesound, HQ-Vorschau 128 kbit/s), Einträge in ../AUDIO_LICENSES.md. Nichts wird dazugemischt. */
+const REC = {
+  strand: [
+    { file: 'strand-1', name: 'Leise Wellen', title: 'Gentle Waves - Quiet Beach', by: 'amholma', url: 'https://freesound.org/people/amholma/sounds/376795/' },
+    { file: 'strand-2', name: 'Brandung', title: 'Ocean Waves.wav', by: 'Noted451', url: 'https://freesound.org/people/Noted451/sounds/531015/' },
+    { file: 'strand-3', name: 'Plätschern am Ufer', title: 'Relaxing Beach Waves', by: 'ClubsHeartsSpadesDiamonds', url: 'https://freesound.org/people/ClubsHeartsSpadesDiamonds/sounds/325197/' },
+  ],
+  wald: [
+    { file: 'wald-1', name: 'Vögel und Insekten', title: 'Birds In The Forest', by: 'BurghRecords', url: 'https://freesound.org/people/BurghRecords/sounds/456123/' },
+    { file: 'wald-2', name: 'Bergwald im Frühling', title: 'Ambiance montagne printemps oiseaux.wav', by: 'indieground', url: 'https://freesound.org/people/indieground/sounds/223818/' },
+    { file: 'wald-3', name: 'Winterwald', title: 'Forest birds - ambient seamless loop', by: 'Magnesus', url: 'https://freesound.org/people/Magnesus/sounds/723913/' },
+  ],
+  regen: [
+    { file: 'regen-1', name: 'Leise Tropfen', title: 'soft rain drops.wav', by: 'bruno.auzet', url: 'https://freesound.org/people/bruno.auzet/sounds/664162/' },
+    { file: 'regen-2', name: 'Am Fenster', title: 'Rain.wav', by: 'softcoresoft', url: 'https://freesound.org/people/softcoresoft/sounds/341846/' },
+    { file: 'regen-3', name: 'Schauer', title: 'Rain Ambience', by: 'nick121087', url: 'https://freesound.org/people/nick121087/sounds/234317/' },
+  ],
+  bach: [
+    { file: 'bach-1', name: 'Plätschernder Bach', title: 'Water Stream 01', by: 'sammerz_', url: 'https://freesound.org/people/sammerz_/sounds/864283/' },
+    { file: 'bach-2', name: 'Über Steine', title: 'water in creek burbling.wav', by: 'cognito perceptu', url: 'https://freesound.org/people/cognito%20perceptu/sounds/370870/' },
+    { file: 'bach-3', name: 'Schneller Bach', title: 'River, stream, creek, sound of waves, moving water', by: 'kentspublicdomain', url: 'https://freesound.org/people/kentspublicdomain/sounds/325182/' },
+  ],
+  kamin: [
+    { file: 'kamin-1', name: 'Kleine Flamme', title: 'Fireplace crackling wood little flame.wav', by: 'BonnyOrbit', url: 'https://freesound.org/people/BonnyOrbit/sounds/484338/' },
+    { file: 'kamin-2', name: 'Kaminfeuer', title: 'Crackling Fire', by: 'samarobryn', url: 'https://freesound.org/people/samarobryn/sounds/414767/' },
+    { file: 'kamin-3', name: 'Hütte in den Bergen', title: 'Fire crackles in the fireplace', by: 'pater.marek.op', url: 'https://freesound.org/people/pater.marek.op/sounds/545637/' },
+  ],
+};
+const variantOf = id => clamp(S.variants[id] | 0, 0, REC[id].length - 1);
+const recCache = {};
+let loadFailed = false;
+function loadRec(file) {
+  if (!recCache[file]) {
+    recCache[file] = fetch(`../audio/cc0/${file}.mp3`)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(ab => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
+      .then(b => {      // auf gleiche mittlere Lautheit bringen, damit kein Wechsel plötzlich lauter ist
+        let sq = 0, n = 0;
+        for (let c = 0; c < b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i = 0; i < d.length; i += 16) { sq += d[i] * d[i]; n++; } }
+        b.norm = Math.min(4, 0.07 / (Math.sqrt(sq / (n || 1)) || 1e-3));
+        return b;
+      });
+    recCache[file].catch(() => { delete recCache[file]; });
+  }
+  return recCache[file];
+}
+const XF_N = 64, CURVE_IN = new Float32Array(XF_N), CURVE_OUT = new Float32Array(XF_N);
+for (let k = 0; k < XF_N; k++) { const x = k / (XF_N - 1); CURVE_IN[k] = Math.sin(x * Math.PI / 2); CURVE_OUT[k] = Math.cos(x * Math.PI / 2); }
+
+/* Eine Aufnahme ohne hörbare Schleife: Abschnitte von zufälliger Länge ab zufälliger Stelle, weich überblendet.
+   „Bewegt“ legt dieselbe Aufnahme ein- oder zweimal versetzt darüber: dichter, nicht lauter. */
+function recordingEngine(out, srcs, rec, L) {
+  let b = null, I = S.motion;
+  const norm = gain(1), level = gain(1); norm.connect(level); level.connect(out);
+  const voices = [0, 1, 2].map(k => { const g = gain(k ? 0 : 1); g.connect(norm); return { g, next: null }; });
+  function applyI() {
+    const a = clamp((I - .3) / .35, 0, 1) * .9, c = clamp((I - .65) / .35, 0, 1) * .8;
+    smooth(voices[1].g.gain, a, .8); smooth(voices[2].g.gain, c, .8);
+    smooth(level.gain, lerp(.85, 1.05, I) / Math.sqrt(1 + a * a + c * c), .8);
+  }
+  loadRec(rec.file).then(buf => { b = buf; norm.gain.value = buf.norm; L.ready = true; loadFailed = false; applyI(); render(); },
+    () => { loadFailed = true; render(); });
+  function segment(v, t) {
+    const D = b.duration, XF = Math.min(4, D * .15);
+    const len = Math.max(2 * XF + 1, Math.min(D - .1, rnd(Math.min(20, D * .6), Math.min(40, D * .9))));
+    const src = ctx.createBufferSource(), e = gain(0); src.buffer = b; src.connect(e); e.connect(v.g);
+    e.gain.setValueCurveAtTime(CURVE_IN, t, XF); e.gain.setValueCurveAtTime(CURVE_OUT, t + len - XF, XF);
+    src.start(t, rnd(0, Math.max(0, D - len)), len);
+    srcs.push(src); src.onended = () => { const k = srcs.indexOf(src); if (k >= 0) srcs.splice(k, 1); };
+    v.next = t + len - XF;
+  }
+  return {
+    setI(i) { I = i; if (b) applyI(); },
+    tick(from, to) {
+      if (!b) return;
+      for (const v of voices) { if (v.next === null || v.next < from) v.next = from + Math.random() * .2; while (v.next < to) segment(v, v.next); }
+    },
+  };
+}
+
+/* ════════ Klänge ════════ */
+const TONE_WET = { schale: .25, teppich: .15, monochord: .2, ambient: .35 };
+const TONE_ENGINES = {
+  schale(out, srcs) {
+    let d = S.density;
+    const hum = gain(0); hum.connect(out);
+    [12, 19].forEach(s => { const o = ctx.createOscillator(); o.frequency.value = hz(s); const g = gain(.5); o.connect(g); g.connect(hum); o.start(); srcs.push(o); });
+    const PARTIALS = [[1, 1], [2.005, .45], [3.01, .28], [4.52, .12]];
+    const strikes = stream(() => 1 / lerp(20, 7, d), t => {
+      const f = hz(pick([12, 19, 24, 26])), dec = lerp(7, 13, d) * rnd(.85, 1.15), lvl = .09 * rnd(.7, 1), pan = rnd(-.4, .4);
+      PARTIALS.forEach(([r, a], k) => {
+        for (const det of [-.35, .35]) {
+          const o = ctx.createOscillator(); o.frequency.value = f * r + det * (1 + k);
+          const e = gain(0); o.connect(e); panTo(e, pan, out);
+          e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(lvl * a * .5, t + .07);
+          e.gain.setTargetAtTime(0, t + .07, dec / (5 * (1 + k * .6)));
+          o.start(t); o.stop(t + dec * 1.6);
+        }
+      });
+      vis('ring', t, { dec });
+    });
+    return { setD(v) { d = v; smooth(hum.gain, lerp(0, .03, v), 1.5); }, tick(a, b) { strikes(a, b); } };
+  },
+  teppich(out, srcs) {
+    let d = S.density;
+    const lp = filt('lowpass', 700, .5); lp.connect(out);
+    const NOTES = [0, 12, 7, 19, 16, 24];
+    const voices = NOTES.map(s => {
+      const f = hz(s), vg = gain(0); vg.connect(lp);
+      const a = ctx.createOscillator(); a.type = 'triangle'; a.frequency.value = f;
+      const b = ctx.createOscillator(); b.type = 'sawtooth'; b.frequency.value = f; b.detune.value = rnd(-5, 5);
+      const ga = gain(.07), gb = gain(.01); a.connect(ga); b.connect(gb); ga.connect(vg); gb.connect(vg);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = rnd(.04, .1); const lg = gain(3); lfo.connect(lg); lg.connect(b.detune);
+      [a, b, lfo].forEach(o => { o.start(); srcs.push(o); });
+      return vg;
+    });
+    const active = k => k < 3 + Math.round(d * 3);
+    voices.forEach((v, k) => setT(v.gain, active(k) ? .7 : 0, now(), 2));
+    const swell = stream(() => 1 / 2.5, t => { const k = Math.floor(Math.random() * voices.length); setT(voices[k].gain, active(k) ? rnd(.45, 1) : 0, t, rnd(2, 4)); });
+    return {
+      setD(v) { d = v; smooth(lp.frequency, lerp(450, 1000, v), 1); voices.forEach((g, k) => setT(g.gain, active(k) ? .7 : 0, now(), 2)); },
+      tick(a, b) { swell(a, b); },
+    };
+  },
+  monochord(out, srcs) {
+    let d = S.density;
+    const N = 32, re = new Float32Array(N + 1), im = new Float32Array(N + 1);
+    for (let n = 1; n <= N; n++) im[n] = 1 / Math.pow(n, 1.1);
+    const wave = ctx.createPeriodicWave(re, im);
+    const droneLp = filt('lowpass', 280, .5), drone = gain(.03); droneLp.connect(drone); drone.connect(out);
+    const dOsc = ctx.createOscillator(); dOsc.setPeriodicWave(wave); dOsc.frequency.value = hz(0); dOsc.connect(droneLp); dOsc.start(); srcs.push(dOsc);
+    const STRINGS = [0, 0, 7, 12, 12, 12, 19, 24];
+    function pluck(t, f, pan) {
+      const o = ctx.createOscillator(); o.setPeriodicWave(wave); o.frequency.value = f;
+      const lp = filt('lowpass', 3000, .6), e = gain(0);
+      o.connect(lp); lp.connect(e); panTo(e, pan, out);
+      lp.frequency.setValueAtTime(rnd(2500, 4000), t); lp.frequency.setTargetAtTime(f * 3, t + .01, .5);
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(.045, t + .015); e.gain.setTargetAtTime(0, t + .015, lerp(1, 1.9, d));
+      o.start(t); o.stop(t + 10);
+    }
+    const strums = stream(() => 1 / lerp(9, 3.2, d), t => {
+      const n = Math.round(lerp(4, 8, d)), up = Math.random() < .5;
+      let tt = t;
+      for (let k = 0; k < n; k++) {
+        const i = up ? k % STRINGS.length : STRINGS.length - 1 - (k % STRINGS.length);
+        pluck(tt, hz(STRINGS[i]) * Math.pow(2, rnd(-3, 3) / 1200), lerp(-.5, .5, i / (STRINGS.length - 1)));
+        tt += rnd(.06, .16);
+      }
+      vis('strum', t);
+    });
+    return { setD(v) { d = v; smooth(drone.gain, lerp(.02, .07, v), 1.5); }, tick(a, b) { strums(a, b); } };
+  },
+  ambient(out, srcs) {
+    let d = S.density, last = -1;
+    const root = ctx.createOscillator(); root.frequency.value = hz(12); const rg = gain(.015); root.connect(rg); rg.connect(out); root.start(); srcs.push(root);
+    const NOTES = scale(12, 36);
+    const tones = stream(() => 1 / lerp(6, 2.2, d), t => {
+      let s; do { s = pick(NOTES); } while (s === last); last = s;
+      const f = hz(s), att = rnd(3, 6), hold = rnd(1.5, 4), rel = rnd(5, 9), lvl = .045;
+      const a = ctx.createOscillator(); a.frequency.value = f;
+      const b = ctx.createOscillator(); b.type = 'triangle'; b.frequency.value = f * 2; const bg = gain(.2);
+      const e = gain(0); a.connect(e); b.connect(bg); bg.connect(e); panTo(e, rnd(-.7, .7), out);
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(lvl, t + att); e.gain.setValueAtTime(lvl, t + att + hold);
+      e.gain.setTargetAtTime(0, t + att + hold, rel / 4);
+      const end = t + att + hold + rel * 1.5; a.start(t); b.start(t); a.stop(end); b.stop(end);
+      vis('glow', t, { att, hold, rel });
+    });
+    return { setD(v) { d = v; }, tick(a, b) { tones(a, b); } };
+  },
+};
+
+/* ════════ Schichten ════════ */
+function makeLayer(type, kind) {
+  const input = gain(1), fade = gain(0), L = { type, kind, srcs: [], h: 0 };
+  input.connect(fade); L.fade = fade;
+  if (type === 'place') {                       // Aufnahme → nur Tiefpass und Pegel, kein Hall
+    const [id, v] = kind.split(':');
+    L.lp = filt('lowpass', 18000, .5); L.dry = gain(1);
+    fade.connect(L.lp); L.lp.connect(L.dry); L.dry.connect(master);
+    L.eng = recordingEngine(input, L.srcs, REC[id][+v], L);
+  } else {
+    L.vol = gain(1); L.dry = gain(1); L.wet = gain(TONE_WET[kind]);
+    fade.connect(L.vol); L.vol.connect(L.dry); L.dry.connect(master); L.vol.connect(L.wet); L.wet.connect(reverbIn);
+    L.eng = TONE_ENGINES[kind](input, L.srcs);
+  }
+  applyParams(L);
+  fade.gain.setTargetAtTime(1, now(), 1);
+  return L;
+}
+function dropLayer(L) {
+  L.dead = true; smooth(L.fade.gain, 0, .7);
+  setTimeout(() => { L.srcs.forEach(s => { try { s.stop(); } catch (e) {} }); try { L.fade.disconnect(); } catch (e) {} }, 5000);
+}
+function applyParams(L) {
+  if (!L) return;
+  if (L.type === 'place') {
+    L.eng.setI(S.motion);
+    const n = S.distance;                     // fern: nur dumpfer und leiser
+    smooth(L.lp.frequency, 18000 * Math.pow(2500 / 18000, n), .4);
+    smooth(L.dry.gain, lerp(1, .55, n), .4);
+  } else {
+    L.eng.setD(S.density);
+    smooth(L.vol.gain, Math.pow(S.volume, 2) * 1.3, .3);
+  }
+}
+function syncLayers() {
+  if (!ctx) return;
+  for (const [type, id] of [['place', S.place && `${S.place}:${variantOf(S.place)}`], ['tone', S.tone]]) {
+    const cur = layers[type];
+    if (cur && cur.kind === id) continue;
+    if (cur) dropLayer(cur);
+    layers[type] = id ? makeLayer(type, id) : null;
+  }
+}
+function schedule() {
+  if (!ctx || ctx.state !== 'running') return;
+  const to = now() + 1.5;          // Vorlauf: auch wenn der Browser im Hintergrund den Takt drosselt
+  for (const L of [layers.place, layers.tone]) {
+    if (!L || L.dead) continue;
+    const from = Math.max(L.h, now());
+    if (to > from) { L.eng.tick(from, to); L.h = to; }
+  }
+}
+
+/* ════════ Wiedergabe und Timer ════════ */
+let playing = false, ending = false, pauseToken = 0, endAt = null, remaining = S.timer * 60000;
+function fadeMaster(target, s) {
+  const g = master.gain, t = now();
+  g.cancelScheduledValues(t); g.setValueAtTime(Math.max(g.value, .0001), t);
+  if (target <= 0) { g.exponentialRampToValueAtTime(.0001, t + s); g.setValueAtTime(0, t + s + .01); }
+  else g.exponentialRampToValueAtTime(target, t + s);
+}
+function play() {
+  if (!S.place && !S.tone) return;
+  initAudio();
+  if (!playing) {
+    playing = true; pauseToken++;
+    ctx.resume();
+    syncLayers();
+    fadeMaster(1, 4);
+    if (S.timer && endAt === null) endAt = Date.now() + remaining;
+  }
+  if (ending) { ending = false; remaining = S.timer * 60000; endAt = S.timer ? Date.now() + remaining : null; fadeMaster(1, 3); }
+  render();
+}
+function pause(s = 1.5) {
+  if (!playing) return;
+  playing = false; ending = false;
+  if (endAt !== null) { remaining = Math.max(0, endAt - Date.now()); endAt = null; }
+  fadeMaster(0, s);
+  const token = ++pauseToken;
+  setTimeout(() => { if (token === pauseToken && !playing && ctx) ctx.suspend(); }, s * 1000 + 300);
+  render();
+}
+function timerTick() {
+  if (!playing || endAt === null) return;
+  const left = endAt - Date.now();
+  if (!ending && left <= END_FADE * 1000) { ending = true; fadeMaster(0, Math.max(3, left / 1000)); }
+  if (left <= 0) { pause(.2); remaining = S.timer * 60000; }
+  renderBar();
+}
+setInterval(timerTick, 500);
+
+/* ════════ Szene ════════
+   Farben: Stufen aus der Musi-Palette (musy-foundations.css). Im dunklen Modus die helleren Stufen der dunklen Skala,
+   damit die Szene nicht schwarz wirkt. */
+const PAL = {
+  light: {
+    none: { bg: ['#F3EEE4', '#E5E3D9'] },
+    strand: { bg: ['#F3EEE4', '#E9EFE9'], sea: ['#C7CCC0', '#A3AB9B', '#8C9785', '#768372'], sand: '#F0D5C4', foam: '#FAF7F1' },
+    wald: { bg: ['#E3E7DE', '#C7CCC0'], trunk: ['#A3AB9B', '#8C9785', '#768372'], light: '#FAF7F1', leaf: '#DEA37F' },
+    regen: { bg: ['#DEDCD1', '#C7CCC0'], cloud: '#BDBCAF', rain: '#62645E', ripple: '#768372', pool: '#A3AB9B' },
+    bach: { bg: ['#E9EFE9', '#C7CCC0'], flow: ['#A3AB9B', '#8C9785', '#D5DBD0', '#E9EFE9'], stone: '#BDBCAF', glint: '#FAF7F1' },
+    kamin: { bg: ['#F9EDE5', '#ECCBB7'], flame: ['#DEA37F', '#D99673', '#CE8865'], core: '#FDF8F5', log: '#824429', ember: '#CE8865', glow: '#E3B294' },
+    tone: '#FAF7F1', toneLine: '#2B5340',
+  },
+  dark: {
+    none: { bg: ['#2A2F2B', '#222723'] },
+    strand: { bg: ['#3B413C', '#264633'], sea: ['#264633', '#325A42', '#427355', '#5E9478'], sand: '#67462F', foam: '#D8E8DF' },
+    wald: { bg: ['#325A42', '#264633'], trunk: ['#1B3224', '#16281E', '#121E18'], light: '#8FBCA2', leaf: '#D99673' },
+    regen: { bg: ['#4C534E', '#264633'], cloud: '#616862', rain: '#BDBCAF', ripple: '#9EA59F', pool: '#325A42' },
+    bach: { bg: ['#264633', '#427355'], flow: ['#325A42', '#5E9478', '#6FA688', '#8FBCA2'], stone: '#4C534E', glint: '#EDF0EC' },
+    kamin: { bg: ['#3A271C', '#67462F'], flame: ['#85593B', '#D99673', '#E6A684'], core: '#F6DACB', log: '#160F0B', ember: '#E6A684', glow: '#85593B' },
+    tone: '#EDF0EC', toneLine: '#D8E8DF',
+  },
+};
+const scene = $('#scene'), cv = $('#canvas'), g2 = cv.getContext('2d');
+const reduceQ = matchMedia('(prefers-reduced-motion: reduce)'), darkQ = matchMedia('(prefers-color-scheme: dark)');
+let W = 0, H = 0, DPR = 1, events = [], vI = S.motion, raf = 0, lastT = 0, seed = null, seededFor = null;
+const pal = () => {
+  const forced = document.documentElement.getAttribute('data-theme');
+  return PAL[forced === 'dark' || (forced !== 'light' && darkQ.matches) ? 'dark' : 'light'];
+};
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+const wob = x => .5 + .3 * Math.sin(x * 1.3) + .2 * Math.sin(x * 2.9 + 1.1);   // weiches, unregelmäßiges Schwanken
+function resize() {
+  const r = cv.getBoundingClientRect(); DPR = Math.min(2, devicePixelRatio || 1);
+  W = cv.width = Math.max(1, Math.round(r.width * DPR)); H = cv.height = Math.max(1, Math.round(r.height * DPR));
+  reseed(); frame();
+}
+function reseed() {
+  seededFor = S.place;
+  seed = {
+    trunks: [0, 1, 2].map(d => Array.from({ length: 5 + d * 2 }, () => ({ x: Math.random(), w: rnd(.02, .045) * (1.6 - d * .3), ph: rnd(0, 6.3) }))),
+    flecks: Array.from({ length: 12 }, () => ({ x: Math.random(), y: rnd(.1, .8), r: rnd(.06, .14), ph: rnd(0, 6.3), sp: rnd(.03, .08) })),
+    leaves: [],
+    streaks: Array.from({ length: 300 }, () => ({ x: Math.random(), y: Math.random(), len: rnd(.6, 1.4), v: rnd(.8, 1.2) })),
+    ripples: [], clouds: Array.from({ length: 4 }, (_, k) => ({ x: k / 4 + rnd(0, .2), y: rnd(.02, .14), r: rnd(.25, .4), sp: rnd(.004, .01) })),
+    stones: Array.from({ length: 7 }, (_, k) => ({ x: (k + rnd(.1, .9)) / 7, y: rnd(.82, .98), rx: rnd(.05, .09), ry: rnd(.03, .05) })),
+    glints: Array.from({ length: 40 }, (_, k) => ({ x: Math.random(), lane: k % 5, v: rnd(.7, 1.4), ph: rnd(0, 6.3) })),
+    embers: [],
+  };
+}
+function vis(kind, t, data = {}) {
+  if (!S.image || reduceQ.matches) return;
+  setTimeout(() => events.push({ kind, born: performance.now() / 1000, ...data }), Math.max(0, (t - now()) * 1000));
+}
+const animating = () => playing && S.image && !reduceQ.matches && !document.hidden;
+function loop(ms) {
+  raf = 0; const t = ms / 1000, dt = Math.min(.1, t - (lastT || t)); lastT = t;
+  vI += (S.motion - vI) * Math.min(1, dt * 1.5);
+  draw(t, dt);
+  if (animating()) raf = requestAnimationFrame(loop);
+}
+function kick() { if (animating() && !raf) { lastT = 0; raf = requestAnimationFrame(loop); } else if (!animating()) frame(); }
+function frame() { if (!S.image || !W) return; vI = S.motion; draw(20, 0); }
+
+function bgGrad(c) { const g = g2.createLinearGradient(0, 0, 0, H); g.addColorStop(0, c[0]); g.addColorStop(1, c[1]); g2.fillStyle = g; g2.fillRect(0, 0, W, H); }
+function softDot(x, y, r, col, a) { const g = g2.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0)); g2.fillStyle = g; g2.fillRect(x - r, y - r, r * 2, r * 2); }
+
+function draw(t, dt) {
+  if (seededFor !== S.place) reseed();
+  const C = pal(), P = S.place, T = S.tone, i = vI, s = DPR;
+  g2.clearRect(0, 0, W, H);
+  g2.lineCap = 'round';
+  if (!P) bgGrad(C.none.bg);
+
+  if (P === 'strand') {
+    const c = C.strand; bgGrad(c.bg);
+    for (let k = 0; k < 4; k++) {                 // Wasserbänder, hinten ruhig, vorne bewegter
+      const base = H * (.34 + k * .1), amp = (3 + 10 * i) * s * (.6 + k * .3), sp = (.25 + .5 * i) * (1 + k * .35);
+      g2.fillStyle = c.sea[k]; g2.beginPath(); g2.moveTo(0, H);
+      for (let x = 0; x <= W; x += 6 * s) g2.lineTo(x, base + amp * Math.sin(x / W * 6.3 * (1 + k * .3) - t * sp + k * 1.3));
+      g2.lineTo(W, H); g2.closePath(); g2.fill();
+    }
+    // Strand und Schaum: die Welle läuft den Sand hinauf und zieht sich zurück (v3: vom Bild selbst ausgelöst)
+    if (dt && Math.random() < dt / lerp(9, 5, i)) events.push({ kind: 'wave', born: t, rise: rnd(1.2, 2), down: rnd(3, 5) });
+    let reach = 0; for (const e of events) if (e.kind === 'wave') { const x = t - e.born; reach = Math.max(reach, envAt(x, e.rise + .6, .4, e.down / 2)); }
+    const shore = H * .78;
+    g2.fillStyle = c.sand; g2.beginPath(); g2.moveTo(0, H);
+    for (let x = 0; x <= W; x += 6 * s) g2.lineTo(x, shore + Math.sin(x / W * 3 + 1) * 4 * s); g2.lineTo(W, H); g2.closePath(); g2.fill();
+    const front = shore + (1 - reach) * H * .02 + reach * H * .16;
+    g2.fillStyle = rgba(c.foam, .55 + .3 * reach); g2.beginPath(); g2.moveTo(0, shore - 2 * s);
+    for (let x = 0; x <= W; x += 6 * s) g2.lineTo(x, front + Math.sin(x / W * 9 + t * .8) * 5 * s + Math.sin(x / W * 23 + t * 1.7) * 2 * s);
+    g2.lineTo(W, shore - 2 * s); g2.closePath(); g2.fill();
+    if (reduceQ.matches) { g2.fillStyle = rgba(c.foam, .6); g2.fillRect(0, shore - 2 * s, W, H * .05); }
+  }
+
+  if (P === 'wald') {
+    const c = C.wald; bgGrad(c.bg);
+    if (dt && Math.random() < dt / lerp(9, 4, i)) events.push({ kind: 'gust', born: t, g: rnd(.4, 1) });
+    let gust = 0; for (const e of events) if (e.kind === 'gust') { const x = t - e.born; if (x > 0) gust = Math.max(gust, e.g * envAt(x, 2.5, 2, 2.5)); }
+    for (let k = 0; k < 3; k++) {                 // Lichtbahnen schräg durch die Bäume
+      const x0 = ((k * .33 + t * .006) % 1.3 - .15) * W;
+      g2.fillStyle = rgba(c.light, .12 + .06 * Math.sin(t * .2 + k)); g2.beginPath();
+      g2.moveTo(x0, 0); g2.lineTo(x0 + W * .12, 0); g2.lineTo(x0 + W * .32, H); g2.lineTo(x0 + W * .18, H); g2.closePath(); g2.fill();
+    }
+    for (let d = 2; d >= 0; d--) {                // drei Tiefen: hinten schmal und blass, vorne breit
+      g2.fillStyle = c.trunk[2 - d];
+      for (const tr of seed.trunks[d]) {
+        const w = tr.w * W, x = tr.x * W, sway = Math.sin(t * (.25 + .1 * d) + tr.ph) * (1 + 5 * i + gust * 8) * s * (1 - d * .25);
+        g2.beginPath(); g2.moveTo(x - w / 2, H); g2.lineTo(x + w / 2, H); g2.lineTo(x + w * .35 + sway, -2); g2.lineTo(x - w * .35 + sway, -2); g2.closePath(); g2.fill();
+      }
+    }
+    for (const f of seed.flecks) {                 // Sonnenflecken, die wandern und atmen
+      const x = ((f.x + Math.sin(t * f.sp + f.ph) * .05 + gust * .02 * Math.sin(t * 3 + f.ph)) % 1) * W, y = f.y * H;
+      softDot(x, y, f.r * H * (.8 + .3 * Math.sin(t * .5 + f.ph)), c.light, .38);
+    }
+    if (dt && Math.random() < dt * (.3 + 1.5 * i) * (1 + gust * 4)) seed.leaves.push({ x: Math.random() * W, y: -10 * s, r: rnd(2.5, 4.5) * s, ph: rnd(0, 6.3), v: rnd(15, 30) * s });
+    seed.leaves = seed.leaves.filter(l => l.y < H + 20 * s);
+    g2.fillStyle = rgba(c.leaf, .85);
+    for (const l of seed.leaves) {
+      l.y += l.v * dt; l.x += Math.sin(t * 1.5 + l.ph) * 20 * s * dt + gust * 30 * s * dt;
+      g2.save(); g2.translate(l.x, l.y); g2.rotate(Math.sin(t * 2 + l.ph)); g2.beginPath(); g2.ellipse(0, 0, l.r * 1.6, l.r * .8, 0, 0, 6.3); g2.fill(); g2.restore();
+    }
+  }
+
+  if (P === 'regen') {
+    const c = C.regen; bgGrad(c.bg);
+    for (const cl of seed.clouds) { cl.x = (cl.x + cl.sp * dt) % 1.4; softDot((cl.x - .2) * W, cl.y * H, cl.r * W, c.cloud, .7); }
+    g2.fillStyle = rgba(c.pool, .45); g2.fillRect(0, H * .8, W, H * .2);
+    const n = Math.round(40 + 250 * i), len = (10 + 16 * i) * s;
+    g2.strokeStyle = rgba(c.rain, .5); g2.lineWidth = 1.3 * s; g2.beginPath();
+    for (let k = 0; k < n; k++) {
+      const d = seed.streaks[k]; d.y += d.v * dt * (.7 + .9 * i);
+      if (d.y > .86) { d.y -= .9 + Math.random() * .1; d.x = Math.random(); if (Math.random() < .35) seed.ripples.push({ x: d.x * W, y: H * rnd(.82, .98), born: t, life: rnd(.8, 1.3), r: rnd(10, 22) * s }); }
+      const x = d.x * W, y = d.y * H, l = len * d.len; g2.moveTo(x, y); g2.lineTo(x - l * .15, y + l);
+    }
+    g2.stroke();
+    seed.ripples = seed.ripples.filter(r => t - r.born < r.life).slice(-80);
+    g2.lineWidth = 1.2 * s;
+    for (const r of seed.ripples) {
+      const a = (t - r.born) / r.life; g2.strokeStyle = rgba(c.ripple, .7 * (1 - a));
+      g2.beginPath(); g2.ellipse(r.x, r.y, r.r * a + 2 * s, (r.r * a + 2 * s) * .3, 0, 0, 6.3); g2.stroke();
+    }
+  }
+
+  if (P === 'bach') {
+    const c = C.bach; bgGrad(c.bg);
+    const laneY = (k, x) => H * (.2 + .14 * k) + Math.sin(x / W * 6.3 * (.8 + k * .15) - t * (.6 + 1.2 * i) * (1 + k * .2) + k * 1.7) * H * .035;
+    for (let k = 0; k < 5; k++) {
+      const th = H * (.07 + .02 * Math.sin(t * .4 + k));
+      g2.fillStyle = rgba(c.flow[k % 4], .75); g2.beginPath();
+      for (let x = 0; x <= W; x += 6 * s) g2.lineTo(x, laneY(k, x) - th / 2);
+      for (let x = W; x >= 0; x -= 6 * s) g2.lineTo(x, laneY(k, x) + th / 2 + Math.sin(x / W * 11 - t * 1.4 + k) * 3 * s);
+      g2.closePath(); g2.fill();
+    }
+    g2.fillStyle = c.stone;
+    for (const st of seed.stones) { g2.beginPath(); g2.ellipse(st.x * W, st.y * H, st.rx * W, st.ry * W, 0, 0, 6.3); g2.fill(); }
+    for (const p of seed.glints) {
+      p.x = (p.x + p.v * dt * (.05 + .16 * i)) % 1; const x = p.x * W, tw = .5 + .5 * Math.sin(t * 4 + p.ph);
+      g2.fillStyle = rgba(c.glint, .35 + .55 * tw); g2.beginPath(); g2.arc(x, laneY(p.lane, x), (1.4 + 1.4 * tw) * s, 0, 6.3); g2.fill();
+    }
+  }
+
+  if (P === 'kamin') {
+    const c = C.kamin; bgGrad(c.bg);
+    softDot(W / 2, H * .95, H * (.9 + .08 * Math.sin(t * .7)) * (.85 + .3 * i), c.glow, .7);
+    const base = H * .84, n = 7;
+    for (let layer = 0; layer < 2; layer++) {
+      for (let k = 0; k < n; k++) {
+        const x = W * (.3 + .4 * k / (n - 1)), w = W * (layer ? .07 : .11), flick = wob(t * (2 + i * 2) + k * 1.9 + layer * 3);
+        const h = H * (.22 + .3 * i) * (.55 + .6 * flick) * (1 - Math.abs(k - (n - 1) / 2) / n) * (layer ? .6 : 1);
+        const sway = Math.sin(t * 2.6 + k * 1.3) * w * .25 * (.5 + i);
+        g2.fillStyle = layer ? rgba(c.core, .7) : rgba(c.flame[k % 3], .85);
+        g2.beginPath(); g2.moveTo(x - w / 2, base);
+        g2.quadraticCurveTo(x - w * .7 + sway * .5, base - h * .5, x + sway, base - h);
+        g2.quadraticCurveTo(x + w * .7 + sway * .5, base - h * .5, x + w / 2, base); g2.closePath(); g2.fill();
+      }
+    }
+    g2.fillStyle = c.log;
+    [[-.1, .05], [.1, -.05]].forEach(([dx, rot]) => { g2.save(); g2.translate(W * (.5 + dx), H * .88); g2.rotate(rot); g2.beginPath(); g2.ellipse(0, 0, W * .22, H * .045, 0, 0, 6.3); g2.fill(); g2.restore(); });
+    for (const e of events) if (e.kind === 'spark' && !e.used) { e.used = 1; seed.embers.push({ x: W / 2 + rnd(-.18, .18) * W, y: base, vy: rnd(25, 60) * s, born: t, life: rnd(2, 4), ph: rnd(0, 6.3) }); }
+    if (dt && Math.random() < dt * (2 + 8 * i)) seed.embers.push({ x: W / 2 + rnd(-.15, .15) * W, y: base, vy: rnd(20, 45) * s, born: t, life: rnd(2, 3.5), ph: rnd(0, 6.3) });
+    seed.embers = seed.embers.filter(p => t - p.born < p.life).slice(-60);
+    for (const p of seed.embers) {
+      const a = 1 - (t - p.born) / p.life; p.y -= p.vy * dt;
+      g2.fillStyle = rgba(c.ember, .9 * a); g2.beginPath(); g2.arc(p.x + Math.sin(t * 2 + p.ph) * 6 * s, p.y, 2 * s, 0, 6.3); g2.fill();
+    }
+  }
+
+  // Klang: darüber, hell und deutlich, aber ruhig
+  const tc = C.tone;
+  if (T === 'schale') {
+    for (const e of events) if (e.kind === 'ring') {
+      const age = t - e.born; if (age < 0 || age > e.dec) continue;
+      g2.strokeStyle = rgba(tc, .6 * (1 - age / e.dec)); g2.lineWidth = 2.5 * s; g2.beginPath();
+      g2.arc(W / 2, H * .42, (age / e.dec) * Math.max(W, H) * .55 + 8 * s, 0, 6.3); g2.stroke();
+    }
+    if (reduceQ.matches) { g2.strokeStyle = rgba(tc, .45); g2.lineWidth = 2 * s; [.15, .27].forEach(r => { g2.beginPath(); g2.arc(W / 2, H * .42, Math.min(W, H) * r, 0, 6.3); g2.stroke(); }); }
+  }
+  if (T === 'teppich') {
+    for (let k = 0; k < 3; k++) {
+      const y = H * (.3 + k * .15) + Math.sin(t * .12 + k * 2) * H * .05, h = H * (.06 + .04 * Math.sin(t * .2 + k)) * (.7 + .6 * S.density);
+      const g = g2.createLinearGradient(0, y - h, 0, y + h); g.addColorStop(0, rgba(tc, 0)); g.addColorStop(.5, rgba(tc, .22 + .15 * S.density)); g.addColorStop(1, rgba(tc, 0));
+      g2.fillStyle = g; g2.fillRect(0, y - h, W, h * 2);
+    }
+  }
+  if (T === 'monochord') {
+    let st = 0; for (const e of events) if (e.kind === 'strum') { const age = t - e.born; if (age > 0) st = Math.max(st, Math.exp(-age / 2.5)); }
+    for (let k = 0; k < 6; k++) {
+      const y0 = H * (.16 + k * .08), amp = st * 9 * s * Math.sin(t * 7 + k * 1.1);
+      g2.strokeStyle = rgba(tc, .55); g2.lineWidth = 1.6 * s; g2.beginPath();
+      for (let x = W * .08; x <= W * .92 + 1; x += 6 * s) { const u = (x - W * .08) / (W * .84), y = y0 + amp * Math.sin(Math.PI * u); x <= W * .08 ? g2.moveTo(x, y) : g2.lineTo(x, y); }
+      g2.stroke();
+    }
+  }
+  if (T === 'ambient') {
+    for (const e of events) if (e.kind === 'glow') {
+      if (e.x === undefined) { e.x = rnd(.15, .85); e.y = rnd(.15, .6); e.r = rnd(.18, .3); }
+      const age = t - e.born, total = e.att + e.hold + e.rel; if (age < 0 || age > total) continue;
+      const a = age < e.att ? age / e.att : age < e.att + e.hold ? 1 : Math.exp(-(age - e.att - e.hold) / (e.rel / 4));
+      softDot(e.x * W, e.y * H, e.r * H, tc, .5 * a);
+    }
+    if (reduceQ.matches) softDot(W * .6, H * .38, H * .3, tc, .4);
+  }
+  if (dt) events = events.filter(e => t - e.born < 30);
+}
+
+/* ════════ Bedienung ════════ */
+const ICON = {
+  check: '<svg class="musy-icon musy-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+  play: '<svg class="musy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>',
+  pause: '<svg class="musy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>',
+  timer: '<svg class="musy-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M10 2h4"/></svg>',
+  eye: '<svg class="musy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff: '<svg class="musy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+};
+function chips(el, list, key, cls) {
+  el.innerHTML = list.map(x => `<button type="button" class="musie-chip ${cls}" data-id="${x.id}" aria-pressed="false">${ICON.check}<span>${x.name}</span></button>`).join('');
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    S[key] = S[key] === b.dataset.id ? null : b.dataset.id;
+    save();
+    if (!S.place && !S.tone) { syncLayers(); pause(2.5); }
+    else { initAudio(); syncLayers(); play(); }
+    render(); kick();
+  });
+}
+chips($('#places'), PLACES, 'place', '');
+chips($('#tones'), TONES, 'tone', 'musie-chip--tone');
+// Aufnahme umschalten: die neue blendet ein, die alte aus
+$('#variants').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !S.place) return;
+  S.variants[S.place] = +b.dataset.v; save();
+  initAudio(); syncLayers(); play(); render(); kick();
+});
+
+for (const id of ['motion', 'distance', 'density', 'volume']) {
+  const el = $('#' + id); el.value = Math.round(S[id] * 100);
+  el.addEventListener('input', () => {
+    S[id] = el.value / 100; save();
+    applyParams(['motion', 'distance'].includes(id) ? layers.place : layers.tone);
+    if (!animating()) frame();
+  });
+}
+$('#play').addEventListener('click', () => { playing ? pause() : play(); kick(); });
+$('#timer').addEventListener('click', () => {
+  S.timer = TIMERS[(TIMERS.indexOf(S.timer) + 1) % TIMERS.length]; save();
+  remaining = S.timer * 60000; endAt = playing && S.timer ? Date.now() + remaining : null;
+  if (ending) { ending = false; fadeMaster(1, 3); }
+  renderBar();
+});
+$('#image').addEventListener('click', () => { S.image = !S.image; save(); render(); if (S.image) requestAnimationFrame(resize); kick(); });
+
+function fmt(ms) { const s = Math.ceil(ms / 1000), m = Math.floor(s / 60); return `${m}:${String(s % 60).padStart(2, '0')}`; }
+function renderBar() {
+  const pb = $('#play'), has = !!(S.place || S.tone);
+  pb.disabled = !has && !playing;
+  pb.innerHTML = playing ? `${ICON.pause}<span>Pause</span>` : `${ICON.play}<span>Abspielen</span>`;
+  const tb = $('#timer');
+  let label, name;
+  if (!S.timer) { label = 'Ohne Timer'; name = 'Timer aus. Tippen, um einen Timer zu wählen.'; }
+  else if (ending) { label = 'Klingt aus'; name = 'Klingt aus. Tippen, um den Timer zu ändern.'; }
+  else if (playing && endAt) { label = `Noch ${fmt(endAt - Date.now())}`; name = `Timer ${S.timer} Minuten, ${label.toLowerCase()}. Tippen, um ihn zu ändern.`; }
+  else { label = `${S.timer} min`; name = `Timer ${S.timer} Minuten. Tippen, um ihn zu ändern.`; }
+  tb.innerHTML = `${ICON.timer}<span>${label}</span>`; tb.setAttribute('aria-label', name);
+  const ib = $('#image');
+  ib.innerHTML = S.image ? `${ICON.eye}<span>Bild an</span>` : `${ICON.eyeOff}<span>Bild aus</span>`;
+  ib.setAttribute('aria-pressed', String(S.image)); ib.setAttribute('aria-label', 'Bild');
+}
+function render() {
+  document.querySelectorAll('#places .musie-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === S.place)));
+  document.querySelectorAll('#tones .musie-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === S.tone)));
+  $('#placeControls').hidden = !S.place; $('#toneControls').hidden = !S.tone;
+  if (S.place) {
+    const v = variantOf(S.place), list = REC[S.place], key = S.place + ':' + list.length;
+    const vEl = $('#variants');
+    if (vEl.dataset.key !== key) {
+      vEl.dataset.key = key;
+      vEl.innerHTML = list.map((r, k) => `<button type="button" class="musie-chip" data-v="${k}" aria-pressed="false">${ICON.check}<span>${r.name}</span></button>`).join('');
+    }
+    vEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === v)));
+    const r = list[v];
+    $('#source').innerHTML = `Aufnahme: <a href="${r.url}" target="_blank" rel="noopener">„${r.title}“</a> von ${r.by} · CC0`;
+  }
+  const names = [PLACES.find(p => p.id === S.place), TONES.find(p => p.id === S.tone)].filter(Boolean).map(x => x.name);
+  $('#title').textContent = names.length ? names.join(' · ') : 'Noch still';
+  const loading = playing && layers.place && !layers.place.ready;
+  $('#state').textContent = !names.length ? 'Wähle unten einen Ort, einen Klang oder beides.'
+    : loadFailed && S.place ? 'Die Aufnahme lädt nicht. Öffne die Seite über den Entwicklungsserver, nicht per Doppelklick.'
+    : ending ? 'klingt aus' : loading ? 'Aufnahme lädt …' : playing ? 'klingt' : 'pausiert';
+  scene.classList.toggle('musie-scene--off', !S.image);
+  renderBar();
+}
+
+reseed();
+darkQ.addEventListener('change', frame);
+reduceQ.addEventListener('change', kick);
+document.addEventListener('visibilitychange', kick);
+new ResizeObserver(resize).observe(cv);
+render();
+</script>
+</body>
+</html>
