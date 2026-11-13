@@ -11314,3 +11314,22 @@ Why: Ben, 2026-11-13: „Oke! Let's take no 7!“
 
 What I need from Ben: nothing, unless either of the two choices above should
 go the experiment's way.
+
+## The arrows beside the card, at every width — RESOLVED
+
+Where: `.musy-deck__strip`, `.musy-deck__stage` (`musy-components.css`),
+`.musie-deck-stage` (`exercises.css`)
+
+What I did: the second of the two choices in the entry above went the
+experiment's way. From 480px up the pile no longer has the secondary pair
+beside it; it has the same two ghost chevrons as a phone, in 54px strips
+either side of the card. The card stays on the heading's line wherever the
+page margin can hold the left chevron (from about 1090px); narrower, it moves
+in by the difference, as in the experiment. At 768 the card starts at 54, the
+heading at 24. Measured at 360 / 393 / 479 / 480 / 600 / 768 / 1024 / 1280 /
+1440: no sideways overflow, both strips page the pile at 768 and 1440.
+
+Why: Ben, 2026-11-13: „show the arrows left and right on all viewports“.
+
+What I need from Ben: nothing. The first choice above (the whole gutter is
+the target) still stands, at every width now.

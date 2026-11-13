@@ -4339,3 +4339,22 @@ drawn from the ghost rung's tokens. So this needs no new rung.
 What I need from Ben: **nothing to decide**. If the 40px-with-20px-glyph
 button turns up as a real IconButton somewhere, that is the moment for the
 rung (the experiment's 6, 10 and 3 used it; 7 does not).
+
+## CardDeck — the gutters are the pair at every width, and a cursor gets no tooltip
+Where: `src/musy-components.css` (`--musy-deck-gutter`, `.musy-deck__strip`,
+`.musy-deck__stage`, `.musy-deck__nav > .musy-deck__act`), `src/CardDeck.tsx`
+What I checked: Ben, 2026-11-13: „show the arrows left and right on all
+viewports". From `--bp-sm` up the card is capped at 22.5rem, so a strip
+measured as "half of what the card leaves of the viewport" would be half a
+desktop wide.
+What I did: named the phone's 54 `--musy-deck-gutter` and wrote the card
+width with it; the strips are drawn at every width, one gutter wide from
+`--bp-sm` up, standing in a gutter of margin the stage now keeps either side
+(so a deck that is not full-bleed still shows its leading strip). The
+IconButton pair is `display: none` at every width and stays in the tree, so
+going back is one rule.
+What I need from Ben: **one small thing to know.** The old pair had a tooltip
+under a mouse; the strips have none (the comment in CardDeck.tsx says why).
+The label is still the accessible name. If a desktop user should see the word
+on hover, that is a `title` or a Tooltip on the strip, and it is a deck
+change, not the app's.

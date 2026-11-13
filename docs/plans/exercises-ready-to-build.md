@@ -81,6 +81,7 @@ the repo. **This file is the current state**: update it after every task.
   - Card `100vw - --sp-9 - --sp-3`, so 285 at 393 and 54px gutters.
   - The gutter chevron is a 40px mark with the thin glyph; the whole gutter is still the target.
   - From `--bp-sm` up nothing changes but the corners.
+  - Later the same day: the gutters are the pair at every width (Ben: „show the arrows left and right on all viewports“). From `--bp-sm` up each is 54px (`--musy-deck-gutter`) and the secondary pair beside the pile is gone.
 
 ## Decisions
 

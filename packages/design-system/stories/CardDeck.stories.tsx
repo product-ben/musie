@@ -127,9 +127,10 @@ const meta = {
           '`--bp-sm` back and forward are the two strips of screen either side of',
           'the card, each as tall as the stack, with a ghost chevron in the middle:',
           'the whole strip is the button, and a press on it never starts a drag.',
-          'At `--bp-sm` and up the pair stays beside the card — **secondary** since',
-          'the same day, reversing the 2026-10-07 `outline`, because the new',
-          'desktop frame draws it so.',
+          '**At every width since 2026-11-13** („show the arrows left and right on',
+          'all viewports"): from `--bp-sm` up each strip is one',
+          '`--musy-deck-gutter` (54px) wide, in a margin the stage keeps for it,',
+          'and the secondary pair that stood beside the card there is not drawn.',
           '',
           '**The cover moves like a card** (2026-11-11). An extra card on top of',
           'the pile — the first-use legend on /exercises — takes the same drag,',
@@ -174,7 +175,9 @@ const meta = {
           'pick from /experiments/card-options/: corners 40 all round',
           '(`--musy-deck-card-radius`, which was `-radius-foot` while only the foot',
           'had them), the card `100vw - --sp-9 - --sp-3` (285 at 393) so the gutters',
-          'are 54, and the gutter chevron a 40px mark with the thin glyph.',
+          'are 54, and the gutter chevron a 40px mark with the thin glyph. The',
+          'same day the gutters became the pair at every width, and the 54 got',
+          'its name, `--musy-deck-gutter`.',
         ].join('\n'),
       },
     },
@@ -400,14 +403,15 @@ export const PhoneGutters: Story = {
 };
 
 /**
- * AT `--bp-sm` AND UP THE PAIR STAYS BESIDE THE CARD, at the foot of the
- * stack — and is `secondary` since 2026-11-11 (D6), where it was `outline`
- * from 2026-10-07. The new desktop frame draws it raised, beside a Shuffle
- * that is secondary too; the reason it went quiet in October was a third icon
- * in the row, and that help button leaves for the screen's toolbar.
+ * AT `--bp-sm` AND UP THE GUTTERS ARE THE PAIR TOO (Ben, 2026-11-13: „show the
+ * arrows left and right on all viewports"). Until that date a `secondary`
+ * IconButton pair stood beside the card here; now each direction is a strip
+ * one `--musy-deck-gutter` (54px) wide, in a margin the stage keeps either
+ * side, so it shows inside a deck that is not full-bleed. The IconButtons are
+ * in the tree and `display: none`, so exactly one of each direction is
+ * reachable at any width.
  *
- * The gutters are in the tree here and `display: none`, so exactly one of each
- * direction is reachable at any width.
+ * The name stays `DesktopPair` so the story's address does not move.
  */
 export const DesktopPair: Story = {
   parameters: { viewport: { options: VIEWPORTS } },

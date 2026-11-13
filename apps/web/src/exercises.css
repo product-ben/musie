@@ -438,9 +438,26 @@
      `overflow-clip-margin` is what this looks like it should use, and cannot:
      it takes a plain <length> and rejects calc()/max(), failing silently to 0.
      Widening the box is the spelling that works. */
+  --musie-deck-edge: max(var(--gutter), calc((100vw - var(--musie-main-wide)) / 2));
   inline-size: 100vw;
   margin-inline: calc(50% - 50vw);
-  padding-inline: max(var(--gutter), calc((100vw - var(--musie-main-wide)) / 2));
+  padding-inline: var(--musie-deck-edge);
+}
+
+/* ── THE LEADING CHEVRON STANDS IN THE PAGE MARGIN (Ben, 2026-11-13) ──────
+   „show the arrows left and right on all viewports". From --bp-sm up the deck
+   gives its stage a gutter either side for the two strips
+   (`--musy-deck-gutter`, published by the component). Taken as given, that
+   puts the card 54px right of the heading on every wide screen. So the
+   leading padding gives the gutter back wherever the page margin can hold
+   it: the card stays on the column line, and the chevron stands in the
+   margin, as the experiment drew it. Where the margin is narrower than the
+   gutter — up to about 1090px — the card moves in by the difference and no
+   further, because the chevron needs the room. */
+@media (min-width: 480px) {
+  .musie-deck-stage {
+    padding-inline-start: max(0px, var(--musie-deck-edge) - var(--musy-deck-gutter));
+  }
 }
 
 

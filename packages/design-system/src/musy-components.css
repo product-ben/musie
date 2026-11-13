@@ -6245,8 +6245,16 @@ html[data-musy-scroll-snap='y'] {
      Figma `138:6053` in section `134:3835`, tried on a phone in
      /experiments/card-options/ against four others: 285px at 393, which
      leaves the gutters 54px a side for the chevrons where `--sp-9` left 48.
-     Still capped at 22.5rem, so nothing changes from about 470px up. */
-  --musy-deck-card-inline: min(22.5rem, 100vw - var(--sp-9) - var(--sp-3));
+     Still capped at 22.5rem, so nothing changes from about 470px up.
+
+     ── THE 54 HAS A NAME SINCE THE SAME DAY: `--musy-deck-gutter` ─────────
+     Ben, 2026-11-13: „show the arrows left and right on all viewports". On a
+     phone the gutter is whatever the card leaves of the screen; from --bp-sm
+     up the card stops growing and the gutter would be half a desktop, so the
+     strips there take this width instead (THE GUTTERS, further down). One
+     number for both jobs, so the card and its gutters cannot disagree. */
+  --musy-deck-gutter: calc((var(--sp-9) + var(--sp-3)) / 2);
+  --musy-deck-card-inline: min(22.5rem, 100vw - var(--musy-deck-gutter) * 2);
   /* ── THE PILE, AS THE FIGMA FRAME *KARTEN* DRAWS IT (Ben, 2026-11-12) ───
      Figma `120:3488`. Two cards show behind the one in front, each turned
      about the SAME centre — no offset, no shrink — the first a little
@@ -6523,19 +6531,40 @@ html[data-musy-scroll-snap='y'] {
      card — `.musy-deck__strip`, further down. What stays under the card is
      whatever the screen adds (`actions`, and the deprecated `navActions`),
      and when the screen adds nothing the column is not drawn at all: an
-     empty box here still costs the body's 32px gap under the dots. `:has()`
-     asks — the nav holds only the pair, and the column only the nav —
-     rather than a prop carrying the answer down. */
+     empty box here still costs the body's 32px gap under the dots. That
+     half holds at every width since 2026-11-13 — the next block. */
   .musy-deck__actions {
     inline-size: var(--musy-deck-card-inline);
     justify-items: end;
   }
   .musy-deck__stage:has(.musy-deck__dots) + .musy-deck__actions { margin-block-end: 0; }
-  .musy-deck__nav > .musy-deck__act { display: none; }
-  .musy-deck__nav:not(:has(> :not(.musy-deck__act))) { display: none; }
-  .musy-deck__actions:not(:has(> :not(.musy-deck__nav))):not(:has(> .musy-deck__nav > :not(.musy-deck__act))) {
-    display: none;
-  }
+}
+
+/* ── THE PAIR IS THE GUTTERS AT EVERY WIDTH (Ben, 2026-11-13) ─────────────
+   „show the arrows left and right on all viewports". Until this date the
+   gutters were the phone's and the two IconButtons beside the pile were
+   everything wider's. Now the two buttons are never drawn, and a column
+   that held nothing else is not drawn either. `:has()` asks — the nav
+   holds only the pair, and the column only the nav — rather than a prop
+   carrying the answer down. */
+.musy-deck__nav > .musy-deck__act { display: none; }
+.musy-deck__nav:not(:has(> :not(.musy-deck__act))) { display: none; }
+.musy-deck__actions:not(:has(> :not(.musy-deck__nav))):not(:has(> .musy-deck__nav > :not(.musy-deck__act))) {
+  display: none;
+}
+
+/* ── FROM --bp-sm UP THE GUTTERS ARE THE DECK'S OWN ROOM ──────────────────
+   On a phone the gutters are the screen's edges, outside the deck's content
+   box and inside the full-bleed box a screen gives it. Wider, the pile is
+   left-aligned in the deck, and a strip hung outside the stage would hang
+   outside the deck too — clipped by its `overflow-x`, and over whatever a
+   screen puts beside it. So the stage takes a gutter either side as margin,
+   and the strips stand in it. A screen that wants the CARD on its own
+   column line, with the leading chevron in the page margin, takes that
+   margin back out of its own padding; /exercises does
+   (`.musie-deck-stage`). */
+@media (min-width: 480px) {
+  .musy-deck__stage { margin-inline: var(--musy-deck-gutter); }
 }
 
 /* ── THE PILE ──────────────────────────────────────────────────────────────
@@ -7033,13 +7062,14 @@ html[data-musy-scroll-snap='y'] {
 
    STILL ALWAYS DRAWN SINCE 2026-11-11, AS ONE OF TWO SHAPES. Below --bp-sm
    the pair is the gutters (next block) and the two IconButtons are
-   `display: none`; at --bp-sm and up it is the other way round (--bp-md
-   until 2026-11-12, see THE SMALLEST TIER). Exactly one
+   `display: none`; at --bp-sm and up it was the other way round (--bp-md
+   until 2026-11-12, see THE SMALLEST TIER) until 2026-11-13, when the
+   gutters became the pair at every width. Exactly one
    of each direction is in the box tree, and therefore in the tab order and
    the accessibility tree, at any width — `display: none` takes it out of all
    three, which `.musy-sr-only` never did.                                  */
 
-/* ═══ THE GUTTERS — the pair, below --bp-sm (Ben, 2026-11-11; --bp-md until 2026-11-12) ═
+/* ═══ THE GUTTERS — the pair (Ben, 2026-11-11; at every width since 2026-11-13) ═
    "The action is triggered over tapping on the right side next to the card
    … over the whole [height] of the stack." Each direction is the whole strip
    of screen between the card and the edge, as tall as the card in front,
@@ -7098,32 +7128,41 @@ html[data-musy-scroll-snap='y'] {
    to be one: the mark is the strip's own. Hover, press and the focus ring go
    on the MARK, which is the thing the eye reads as the control; on the strip
    they would light up a column the height of a card, and the ring would be
-   clipped at the screen's edge.                                            */
-.musy-deck__strip { display: none; }
+   clipped at the screen's edge.
 
-@media (max-width: 479.98px) {
-  .musy-deck__strip {
-    position: absolute;
-    grid-row: 1 / 2;
-    grid-column: 1 / 2;
-    inset-block: 0 calc(var(--sp-2) * 4);
-    inline-size: calc((100vw - var(--musy-deck-card-inline)) / 2);
+   ── FROM --bp-sm UP: ONE GUTTER WIDE (Ben, 2026-11-13) ───────────────────
+   „show the arrows left and right on all viewports". The card stops growing
+   at 22.5rem, so half of what it leaves of the viewport would be a strip
+   half a desktop wide; there the strip is `--musy-deck-gutter`, the 54 a
+   phone gets, and stands in the stage's margin (FROM --bp-sm UP THE GUTTERS
+   ARE THE DECK'S OWN ROOM, further up). The whole strip is still the target
+   — under a cursor too, which finds a ghost chevron where it found a raised
+   pair, and no tooltip: the label is the accessible name.          */
+.musy-deck__strip {
+  position: absolute;
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+  inset-block: 0 calc(var(--sp-2) * 4);
+  inline-size: calc((100vw - var(--musy-deck-card-inline)) / 2);
 
-    display: grid;
-    place-items: center;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    font: inherit;
-    color: var(--interactive-ghost-on);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  /* Back on the leading side, forward on the trailing one — the pair's own
-     order, which is also the order they are in the tree. */
-  .musy-deck__strip--previous { inset-inline-end: 100%; }
-  .musy-deck__strip--next { inset-inline-start: 100%; }
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--interactive-ghost-on);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Back on the leading side, forward on the trailing one — the pair's own
+   order, which is also the order they are in the tree. */
+.musy-deck__strip--previous { inset-inline-end: 100%; }
+.musy-deck__strip--next { inset-inline-start: 100%; }
+
+@media (min-width: 480px) {
+  .musy-deck__strip { inline-size: var(--musy-deck-gutter); }
 }
 
 .musy-deck__strip:focus-visible,

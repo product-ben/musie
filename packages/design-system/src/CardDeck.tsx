@@ -110,8 +110,11 @@
  * side next to the card". Under the card they were a second thing to find,
  * a thumb's length below the thing they move; beside it they are where a
  * thumb already is. The visible part is a quiet chevron in the middle of each
- * strip, and the whole strip is the target. At --bp-sm and up nothing moves:
- * the pair stays beside the card, at the foot of the stack.
+ * strip, and the whole strip is the target. At --bp-sm and up the pair
+ * stayed beside the card, at the foot of the stack, until 2026-11-13 („show
+ * the arrows left and right on all viewports"): the gutters are the pair at
+ * every width now, one `--musy-deck-gutter` wide where the card stops
+ * growing, and the IconButton pair below is never drawn.
  *
  * What it costs is the swipe's landing area on a phone. The gutters used to
  * be part of the swipe surface — "a thumb that lands wide of a card still
@@ -1377,11 +1380,11 @@ export function CardDeck({
           </div>
 
           {/* ── THE GUTTERS (Ben, 2026-11-11) ──────────────────────────────
-              Below --bp-sm, the pair. Each is the whole strip of screen
-              between the card and the edge, the full height of the stack,
-              with a quiet chevron in the middle of it: the stylesheet places
-              them, and hides them at --bp-sm and up, where the pair below
-              does the job beside the card.
+              The pair, at every width since 2026-11-13 (below --bp-sm only
+              until then). Each is the whole strip of screen between the card
+              and the edge — one `--musy-deck-gutter` wide from --bp-sm up —
+              the full height of the stack, with a quiet chevron in the middle
+              of it: the stylesheet places them.
 
               THE WHOLE STRIP IS THE BUTTON, not a hit area stretched out of a
               44px one. IconButton owns its own box, and widening it from here
@@ -1395,11 +1398,12 @@ export function CardDeck({
               order: the card, then the two directions, then the positions.
               Back before forward, as the pair reads.
 
-              NO TOOLTIP, where IconButton would draw one. These exist only
-              below --bp-sm, where the pointer is a thumb and IconButton draws
-              none for a thumb either; and a tooltip anchored to a strip the
-              height of a card would point at the middle of nothing. The label
-              is the accessible name, which is the half of it that matters. */}
+              NO TOOLTIP, where IconButton would draw one. It was argued from
+              these existing only for a thumb, and that half went on
+              2026-11-13; the other half stands — a tooltip anchored to a
+              strip the height of a card would point at the middle of nothing.
+              The label is the accessible name. A cursor now finds no tooltip
+              where the old pair had one: logged in stories/OPEN-QUESTIONS.md. */}
           <Button
             className="musy-deck__strip musy-deck__strip--previous"
             aria-label={previousLabel}
@@ -1499,9 +1503,10 @@ export function CardDeck({
                 same day). Two raised chevrons at the foot of a pile read as
                 its controls, and the toolbar above now speaks the same rung.
 
-                ONLY WHERE THEY ARE DRAWN AS BUTTONS, which is --bp-sm and up.
-                Below it the pair is the gutters above, and their ghost
-                chevron is the strip's own look, not a variant of this. */}
+                NOT DRAWN AT ANY WIDTH SINCE 2026-11-13: the pair is the
+                gutters above everywhere, and their ghost chevron is the
+                strip's own look, not a variant of this. Kept in the tree, and
+                hidden by the stylesheet, so going back is one rule there. */}
             <IconButton
               glyph={ChevronLeft}
               label={previousLabel}
