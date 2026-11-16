@@ -327,6 +327,29 @@ export function withoutHeading(blocks: Block[]): Block[] {
 }
 
 /**
+ * THE HEADING AND THE PARAGRAPH RIGHT AFTER IT — the Intro of a step that
+ * splits its copy around a control. Ben, 2026-11-16: every Einsteigen opens
+ * with its headline and the one sentence about the next few minutes, and on a
+ * card exercise both stand ABOVE the cards switch, so the sentence is there in
+ * the digital mode too (the instruction about paper below the switch is not).
+ *
+ * Only a PARAGRAPH directly after the heading is the lead: a list there is the
+ * content, not an introduction to it. No heading → nothing, like `headingOnly`.
+ */
+export function headingAndLead(blocks: Block[]): Block[] {
+  const at = blocks.findIndex((block) => block.kind === 'heading');
+  if (at === -1) return [];
+  const next = blocks[at + 1];
+  return next !== undefined && next.kind === 'paragraph' ? [blocks[at], next] : [blocks[at]];
+}
+
+/** Everything `headingAndLead` leaves: what follows the intro, in order. */
+export function withoutHeadingAndLead(blocks: Block[]): Block[] {
+  const taken = new Set(headingAndLead(blocks));
+  return blocks.filter((block) => !taken.has(block));
+}
+
+/**
  * The same words with the formatting thrown away, as one string.
  *
  * For the places that need a step's copy as a VALUE rather than as a block of

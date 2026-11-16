@@ -778,20 +778,11 @@
   overflow-wrap: anywhere;
 }
 
-/* ═══ THE STEP RAIL'S CONTAINER ═════════════════════════════════════════════
-   InteractiveWizard collapses below --bp-md — the current step keeps its
-   label, the rest shrink to markers — and that rule is a MEDIA query, which
-   cannot see that the rail sits inside a card inside a grid column. At 1024px
-   the viewport is wide and the column is not, so the expanded run would
-   overflow its own card.
-
-   An inline-size container is what lets the component's own `compact` rule
-   answer to the card instead. The component ships `.musy-wizard--compact` for
-   forcing it; this is the other half — declaring the container so the rail can
-   measure something true.                                                   */
-.musie-rail {
-  container-type: inline-size;
-}
+/* ═══ THE STEP RAIL'S CONTAINER — moved into the component, 2026-11-16 ═══════
+   `.musie-rail` declared an inline-size container around the stepper so its
+   rules could answer to the card rather than the viewport. `WizardPanel`'s
+   header (`.musy-wizard__header`) is that container now, so the wrapper and
+   this rule are gone. */
 
 /* ═══ A RUN OF THINGS INSIDE A STEP ═════════════════════════════════════════
    The stack gap, named once so four step panels do not each invent it.     */
@@ -2074,7 +2065,7 @@ html[data-musy-scroll-snap] {
 .musie-listen__warn {
   margin: 0;
   max-inline-size: 26ch;
-  text-wrap: pretty;
+  text-wrap: var(--text-wrap-body);
   font-family: var(--type-body-xl-family);
   font-size: var(--type-body-xl-size);
   font-weight: var(--font-weight-medium);
@@ -2411,7 +2402,7 @@ html[data-musy-scroll-snap] {
 .musie-immersive__caption {
   margin: 0;
   max-inline-size: var(--measure-body);
-  text-wrap: pretty;
+  text-wrap: var(--text-wrap-body);
   font-family: var(--type-body-sm-family);
   font-size: var(--type-body-sm-size);
   line-height: var(--type-body-sm-line);
@@ -2538,41 +2529,12 @@ html[data-musy-scroll-snap] {
   gap: var(--space-gap-stack);
 }
 
-/* ═══ THE EINSTEIGEN STEP'S TWO QUESTIONS ═══════════════════════════════════
-   A listening exercise asks two things before it plays — how you want to
-   listen, and what you are doing afterwards — and each is a legend with a
-   segmented control under it. Two molecules that do NOT belong to each other,
-   which is exactly what `--space-gap-group` is for (Layer 1's own words at its
-   declaration), and what `.musie-placeholder` and `.musie-sheet` already use
-   between blocks on these screens.
-
-   L14: a custom pattern only where the system has no component, and this is
-   one — `SegmentedControl` owns a control, not the spacing between two of
-   them, and `WizardPanel` owns the step's outer column rather than the
-   arrangement of one step's body. L14.1: every declaration resolves to a
-   Layer 1 token. L14.2: `musie-`, never `musy-`.
-
-   ── THE GAP IS ALSO BELOW THE SECOND ONE, AND THAT IS NOT SYMMETRY ────────
-   Ben, 2026-10-12. Under the second control is the panel's action row, which
-   is a third molecule and a different kind of thing — the way forward rather
-   than another question. Without the trailing gap the Continue button sits
-   closer to the question above it than the two questions sit to each other,
-   which reads as if it belonged to the second one.
-
-   `gap` on the column rather than a margin on the children: one spacing
-   mechanism per container, which is the rule `.musie-sheet .musie-placeholder`
-   next door exists to keep. */
-.musie-intro__questions {
-  display: flex;
-  flex-direction: column;
-  /* 24 between the two questions since 2026-11-16 (Ben, Figma *Exercise
-     pages*), down from --space-gap-group: two questions about one session
-     are closer kin than the copy above them is to either. Layer 1 names no
-     gap at 24, so it is the raw step. */
-  gap: var(--sp-5);
-  margin-block-start: var(--space-gap-group);
-  margin-block-end: var(--space-gap-group);
-}
+/* ═══ THE EINSTEIGEN STEP'S TWO QUESTIONS — into the panel, 2026-11-16 ══════
+   `.musie-intro__questions` held the two SegmentedControls with 24 between
+   them and 32 around them. Both numbers are `WizardPanel`'s now: the
+   questions are blocks of its Content (24 apart), and the Content is 32 from
+   the Intro above and the Actions below. Ben's spacing pass on the Figma
+   *Exercise pages* frames; the component carries it so no step has to. */
 
 /* ── THE INTRO'S HEADLINE AND PICTURE — Ben, 2026-11-16 ───────────────────
    Figma *Exercise pages*, with its two annotations: on a phone the picture is
@@ -2597,8 +2559,10 @@ html[data-musy-scroll-snap] {
   grid-template-columns: minmax(0, 1fr) calc(100% * 0.25);
   gap: var(--space-gap-related);
   align-items: start;
-  margin-block-end: var(--space-gap-group);
 }
+/* The panel spaces the Intro; the copy adds nothing of its own, with or
+   without a picture beside it. */
+.musie-intro__head > .musie-md { margin: 0; }
 .musie-intro__head:has(> .musie-intro__image) > .musie-md {
   display: contents;
 }
@@ -2625,22 +2589,32 @@ html[data-musy-scroll-snap] {
   border-radius: var(--radius-sm);
 }
 
-/* From 1024px the picture stands beside the whole column. The copy is one
-   block again, at its own measure, and the picture keeps 16:9 at the top of
-   its cell rather than stretching to the copy's height. */
-@media (min-width: 1024px) {
+/* FROM 480px THE PICTURE STANDS BESIDE THE WHOLE COLUMN — Ben, 2026-11-16,
+   the *Bodyscan · Einsteigen · 572* frame: a THIRD of the row, 16:9, top
+   right, 12 from the copy (158 of a 474 panel at 572). Below 480 it is the
+   phone arrangement above. The copy is one block again, at its own measure,
+   and the picture keeps 16:9 at the top of its cell rather than stretching to
+   the copy's height. 480 is --bp-sm, a large phone. */
+@media (min-width: 480px) {
   .musie-intro__head:has(> .musie-intro__image) {
-    grid-template-columns: minmax(0, 1fr) calc(100% * 0.2);
-    column-gap: var(--space-gap-group);
+    grid-template-columns: minmax(0, 1fr) calc(100% / 3);
   }
   .musie-intro__head:has(> .musie-intro__image) > .musie-md {
     display: flex;
     grid-column: 1;
     grid-row: 1;
-    margin: 0;
   }
   .musie-intro__image {
     align-self: start;
+  }
+}
+
+/* From 1024px a FIFTH, 32 from the copy (186 of a 931 panel): the desktop
+   frames, unchanged. */
+@media (min-width: 1024px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, 1fr) calc(100% * 0.2);
+    column-gap: var(--space-gap-group);
   }
 }
 
@@ -2663,10 +2637,9 @@ html[data-musy-scroll-snap] {
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-related);
-  /* The same block rhythm as `.musie-intro__questions` above: the switch sits
-     between the headline and the body copy, so it owns the space on both
-     sides rather than borrowing either neighbour's margin. */
-  margin-block: var(--space-gap-group);
+  /* No margin of its own since 2026-11-16: the switch is a block of
+     `WizardPanel`'s Content, 32 below the Intro and 24 above the list it
+     governs (Ben's spacing pass, Figma *Exercise pages*). */
 }
 
 /* The sentence that stands where an instruction about paper used to. Body ink

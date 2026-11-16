@@ -85,6 +85,8 @@ import * as React from 'react';
 import { Check, Dot, Minus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from './Icon';
+import { ContentBox } from './ContentBox';
+import type { HeadingLevel, TypeStep } from './ContentBox';
 import { useMusyText } from './locale';
 import { wizardStepState } from './wizardSteps';
 
@@ -297,20 +299,94 @@ export function InteractiveWizard({
   );
 }
 
-export interface WizardPanelProps {
-  children: React.ReactNode;
-  /** The action row below the panel body. */
+/* ═══ THE WIZARD PANEL — Ben, 2026-11-16 (Figma *Exercise pages*) ════════
+   One card, two sections, always in this order:
+
+     HEADER  the stepper, alone — then the divider
+     BODY    Intro → Content → Actions
+
+   and the panel owns every distance between them, so a step never spaces
+   itself: 32 between the three body sections (--space-gap-group), 24 between
+   the blocks inside Content (--sp-5), the header's 16 that puts the first
+   marker in line with the body's 24. The numbers are Ben's spacing pass on the
+   Einsteigen frames; `musy-components.css` §WIZARD PANEL carries them.
+
+   WITH `stepper` THE PANEL IS THE WHOLE CARD — a framed ContentBox whose
+   header is the stepper. It takes the box's `headline` (hidden or not) because
+   the card is still an <article> in the document outline. WITHOUT `stepper`
+   it is the body alone, as it always was, for a consumer that frames it
+   itself.
+
+   INTRO AND CONTENT ARE SECTIONS, not props alone. A step component renders
+   `<WizardIntro>` and `<WizardContent>` as its own two children, because the
+   step knows which of its blocks introduce it and which ask something of you;
+   `intro` as a prop is the shorthand for a consumer that has both in hand.
+   Children that are neither still render, in the body, as they always did. */
+
+interface WizardPanelBaseProps {
+  /** The body's Content — or `<WizardIntro>` and `<WizardContent>` as two
+   *  children, which is how a step component that renders both supplies them. */
+  children?: React.ReactNode;
+  /** The body's Intro: what the step is (headline, description, picture).
+   *  Shorthand for wrapping it in `<WizardIntro>` and the children in
+   *  `<WizardContent>`. */
+  intro?: React.ReactNode;
+  /** The action row, last in the body. */
   actions?: React.ReactNode;
   className?: string;
 }
 
-/** The panel the wizard drives. Content Box geometry — the wizard owns the
- *  header, not the body. */
-export function WizardPanel({ children, actions, className }: WizardPanelProps) {
-  return (
-    <div className={['musy-wizard__panel', className ?? ''].filter(Boolean).join(' ')}>
-      {children}
+export type WizardPanelProps = WizardPanelBaseProps & (
+  | { stepper?: undefined; headline?: undefined; headingLevel?: undefined; headlineStep?: undefined; headlineHidden?: undefined }
+  | {
+      /** The header: the stepper (an `InteractiveWizard`), above the divider.
+       *  With it, the panel draws the whole card. */
+      stepper: React.ReactNode;
+      /** The card's heading — required with a stepper, because the card is an
+       *  <article> in the outline. Usually hidden: the stepper names the step. */
+      headline: string;
+      headingLevel?: HeadingLevel;
+      headlineStep?: TypeStep;
+      headlineHidden?: boolean;
+    }
+);
+
+/** The body's first section: what this step is. */
+export function WizardIntro({ children }: { children: React.ReactNode }) {
+  return <div className="musy-wizard__intro">{children}</div>;
+}
+
+/** The body's middle section: what this step asks of you. Draws nothing when
+ *  it holds nothing, so an intro-only step does not leave an empty gap. */
+export function WizardContent({ children }: { children?: React.ReactNode }) {
+  const blocks = React.Children.toArray(children).filter(Boolean);
+  if (blocks.length === 0) return null;
+  return <div className="musy-wizard__content">{blocks}</div>;
+}
+
+/** The panel the wizard drives: header (stepper, divider) and body (intro,
+ *  content, actions). See the block above. */
+export function WizardPanel(props: WizardPanelProps) {
+  const { children, intro, actions, className } = props;
+  const body = (
+    <div className={['musy-wizard__panel', props.stepper === undefined ? className ?? '' : ''].filter(Boolean).join(' ')}>
+      {intro !== undefined
+        ? <><WizardIntro>{intro}</WizardIntro><WizardContent>{children}</WizardContent></>
+        : children}
       {actions && <div className="musy-wizard__actions">{actions}</div>}
     </div>
+  );
+  if (props.stepper === undefined) return body;
+  return (
+    <ContentBox
+      className={['musy-wizard__card', className ?? ''].filter(Boolean).join(' ')}
+      headline={props.headline}
+      headingLevel={props.headingLevel}
+      headlineStep={props.headlineStep}
+      headlineHidden={props.headlineHidden}
+      header={<div className="musy-wizard__header">{props.stepper}</div>}
+    >
+      {body}
+    </ContentBox>
   );
 }

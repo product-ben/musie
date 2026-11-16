@@ -162,7 +162,7 @@ export type {
 export { CodeField } from './CodeField';
 export type { CodeFieldProps } from './CodeField';
 
-export { InteractiveWizard, WizardPanel } from './InteractiveWizard';
+export { InteractiveWizard, WizardPanel, WizardIntro, WizardContent } from './InteractiveWizard';
 export type {
   InteractiveWizardProps, WizardPanelProps, WizardStep, WizardStepState, WizardStateWords, WizardAccent } from './InteractiveWizard';
 

@@ -232,7 +232,9 @@ function PreviewBody({
   const rotates = listen?.features.includes('rotating_question') ?? false;
 
   return (
-    <ContentBox
+    <WizardPanel
+      /* The session's own card, as `Session.tsx` draws it since 2026-11-16:
+         stepper in the header, Intro, Content and Actions below. */
       headingLevel={2}
       headlineStep="heading-sm"
       /* Hidden, as `Session.tsx` hides it since 2026-11-16: the real session
@@ -240,8 +242,7 @@ function PreviewBody({
          draw — the picker above already names the exercise being edited. */
       headlineHidden
       headline={exercise.name}
-      header={
-        <div className="musie-rail">
+      stepper={
           <InteractiveWizard
             label={t('session.wizardLabel')}
             steps={steps.map((id) => ({
@@ -267,17 +268,14 @@ function PreviewBody({
             skipped={[]}
             onStepChange={(next) => onStepChange(next as StepId)}
           />
-        </div>
       }
+      /* ── THE BUTTON SHOWS WHAT SHE WROTE ──────────────────────────────
+         Hard-coded to `common.continue` until 2026-10-27, which meant a
+         therapist could override a button label and watch the preview go on
+         saying the app's word. A field you can edit and not see is worse
+         than a field you cannot edit. */
+      actions={<Button variant="primary" disabled>{panelLabel}</Button>}
     >
-      <WizardPanel
-        /* ── THE BUTTON SHOWS WHAT SHE WROTE ──────────────────────────────
-           Hard-coded to `common.continue` until 2026-10-27, which meant a
-           therapist could override a button label and watch the preview go on
-           saying the app's word. A field you can edit and not see is worse
-           than a field you cannot edit. */
-        actions={<Button variant="primary" disabled>{panelLabel}</Button>}
-      >
         {step === 'intro' && (
           <SessionIntro
             exercise={exercise}
@@ -379,8 +377,7 @@ function PreviewBody({
             onUnderstand={() => { /* the sheet is its own screen. */ }}
           />
         )}
-      </WizardPanel>
-    </ContentBox>
+    </WizardPanel>
   );
 }
 

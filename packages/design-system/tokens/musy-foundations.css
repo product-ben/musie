@@ -692,8 +692,28 @@
      keep 26ch and say so, rather than silently following a token that now
      means something else.                                                   */
   --measure-compact: 26ch;
-  --text-wrap-heading: balance;  /* display + heading steps */
-  --text-wrap-body: pretty;      /* body steps and 2-line labels */
+  /* ── LINE BREAKING, BY ROLE — Ben, 2026-11-16 ────────────────────────────
+     From the Figma text styles' `textWrapStyle` (heading-md PRETTY, body-md
+     BALANCE, label-md PRETTY), taken over as a rule per ROLE rather than per
+     step, so every step of a role breaks the same way. It swaps what the two
+     roles did before: headings were balanced and prose was pretty.
+
+     · headings pretty — a heading fills its first line and only keeps the
+       last line from being a single word, so it reads as a sentence rather
+       than as two even halves ("Lass uns einen Bodyscan / beginnen").
+     · prose balanced — a short description comes out in even lines.
+       Browsers balance only short blocks (Chrome: up to 6 lines); a longer
+       paragraph wraps normally, so balance is for the short copy this app
+       writes, not a guarantee for long text.
+     · labels pretty — `label-*` steps had shared the prose token; with prose
+       balanced they need their own, which is the one new token here.
+
+     The measure note above still holds for headings: pretty also keeps a
+     German compound from being stranded on the last line, which is the half
+     of balance's job that 26ch was bought for. */
+  --text-wrap-heading: pretty;   /* display + heading steps */
+  --text-wrap-body: balance;     /* body steps */
+  --text-wrap-label: pretty;     /* label steps */
   --text-hyphens: auto;          /* required for German compounds at 393px */
 
   /* ── breakpoints & grid ──────────────────────────────────────────────────

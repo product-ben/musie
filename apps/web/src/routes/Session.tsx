@@ -1325,9 +1325,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
 
   return (
     <div className="musie-session">
-      <ContentBox
-        /* Framed: the rail above the hairline, the live step below it. §7.9's
-           own arrangement, and the prototype's. */
+      <WizardPanel
+        /* THE WHOLE CARD — Ben, 2026-11-16: the stepper in the header, the
+           divider, and below it the step's Intro, Content and Actions, spaced
+           by the panel. It was a framed ContentBox holding a WizardPanel; the
+           panel draws that box itself now. */
         headingLevel={1}
         headlineStep="heading-sm"
         /* THE NAME LEFT THE HEADER — Ben, 2026-11-16 (Figma *Exercise pages*).
@@ -1337,8 +1339,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
            what `headlineHidden` is for (§7.9). */
         headlineHidden
         headline={exercise.name}
-        header={
-          <div className="musie-rail">
+        stepper={
             <InteractiveWizard
               label={t('session.wizardLabel')}
               /* THE RUN'S OWN STEPS, not all four — so a listening exercise
@@ -1364,8 +1365,8 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
                  pasted URL behave identically. */
               onStepChange={(next) => go(next as StepId)}
             />
-          </div>
         }
+        actions={actions}
       >
         {/* THE ACTION ROW IS `WizardPanel`'s, and it is filled from out here.
             The step components render their own body and nothing else: a step
@@ -1377,7 +1378,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
             the rules about them live — the gate, the answer, and the fact that
             Back from the first step leaves the session rather than moving in
             it. */}
-        <WizardPanel actions={actions}>
           {state.step === 'intro' && (
             <SessionIntro
               exercise={exercise}
@@ -1511,8 +1511,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               onUnderstand={() => setReflectSheet(FOCUS_UNDERSTAND)}
             />
           )}
-        </WizardPanel>
-      </ContentBox>
+      </WizardPanel>
 
 
       {/* THE WAY OUT THAT IS NOT FINISHING.

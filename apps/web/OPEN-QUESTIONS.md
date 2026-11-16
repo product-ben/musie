@@ -11780,3 +11780,47 @@ What I need from Ben: nothing to decide. Four things to know:
    it (B25's mechanism). Achtsame Pause still has a NUMBERED list. The 12px
    rule doesn't touch it, because it sits after the switch in a block of its
    own.
+
+## Einsteigen — one sentence about the minutes, the 480 transition, the panel's sections — RESOLVED
+
+Where: `supabase/migrations/20261116160000_intro_sentence.sql`,
+`src/components/SessionIntro.tsx`, `src/lib/markdown.ts` (`headingAndLead`,
+`withoutHeadingAndLead`), `src/shell.css` (`.musie-intro__head`), `src/routes/
+Session.tsx` and `ExerciseBuilder.tsx` (`WizardPanel` with `stepper`)
+
+What I checked: Ben, 2026-11-16, three requests.
+- **The sentence.** „Füge zu jeder Karte den gleichen Intro-Text hinzu, mit
+  der richtigen Minutenzahl (min length), einfach als String": Bodyscan's
+  sentence, the number from `timeframe_min`.
+- **Where it goes.** Asked, he answered „ersetzen + unter Headline": it
+  replaces Klangreise's and the instruments' own „Stell sicher …“, and on the
+  card exercises it stands above the switch.
+- **The transition.** The *Bodyscan · Einsteigen · 572* frame: from 480 the
+  picture stands beside the whole copy column at a third of the row („ab
+  480, ein Drittel").
+
+What I did:
+- **The sentence.** The migration writes every intro whole, DE and EN:
+  Achtsame Pause 2 · Freie Bahn 2 · Atementspannung 5 (first intro, not
+  live) · Klangreise 10 · Bodyscan 4 · Kalimba/Marimba/Harfe 3.
+- **On the card exercises.** The intro takes the headline plus that first
+  paragraph (`headingAndLead`), so the sentence shows in the digital mode
+  too; the paper instructions stay below the switch.
+- **The picture.** Below 480 it stands beside the headline (a quarter);
+  from 480 to 1023 beside the column (a third, 12 apart); from 1024 a
+  fifth, 32 apart.
+- **Spacing.** The Einsteigen step renders `WizardIntro` and
+  `WizardContent`; the panel spaces them (32 between sections, 24 inside
+  Content). `.musie-intro__questions` and `.musie-rail` are gone, and
+  `.musie-intro__cards` and the intro head lost their own margins.
+
+Measured at 393, 572, 834 and 1440 for Bodyscan and Achtsame Pause: every
+section gap 32, every content gap 24, the picture at a quarter, a third and
+a fifth.
+
+Why: Ben's frames and answers.
+
+What I need from Ben: nothing to decide. The migration is applied to the
+shared local stack for review (backup in the session scratchpad); merging
+pushes it to hosted. The `{minutes}` placeholder logic in `SessionIntro`
+stays for any copy that still uses it; no intro does now.

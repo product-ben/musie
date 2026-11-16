@@ -4456,3 +4456,63 @@ What I need from Ben: **one thing to look at.** A Toast is 72px tall, so at
 40 it reads as a full pill (the corners clamp to 36). That follows from
 "any card with buttons inside", since undo and dismiss sit inside it. If it
 should stay a card, Toast leaves the list and keeps `--radius-card`.
+
+## Text wrap — a rule per role: headings pretty, prose balanced, labels pretty — RESOLVED
+Where: `tokens/musy-foundations.css` (`--text-wrap-heading`, `--text-wrap-body`,
+new `--text-wrap-label`), `src/musy-components.css` (11 rules), `TOKEN-DRIFT.md`;
+app: `exercises.css`, `shell.css`
+What I checked: Ben, 2026-11-16, "Ich habe ein paar Anpassungen an den Text
+Styles gemacht". Every size, line height, tracking, weight and family in the
+12 Figma text styles still matched the code at all three modes (measured), so
+the change was `textWrapStyle`: heading-md PRETTY, body-md BALANCE, label-md
+PRETTY, the other nine AUTO. The code broke lines by ROLE (headings balance,
+prose and labels pretty). Asked how to take it over, Ben chose "als Regel pro
+Rolle".
+What I did: heading → pretty, body → balance, and a label token at pretty,
+because labels had shared the prose token. 15 declarations moved onto their
+role's token; 13 of them had been literal `pretty`/`balance` (field
+descriptions and errors, the voice and upload copy, the wizard and scale
+labels, two app captions). `nowrap` stays: it is a constraint, not a style.
+Why: Ben's styles, generalised by role at his choice.
+What I need from Ben: **three things to know.**
+1. Browsers balance only short blocks (Chrome: up to 6 lines), so longer
+   prose wraps normally. The app's prose is short.
+2. A pretty heading fills its first line and will HYPHENATE to do it.
+   „Lass uns eine Acht-/same Pause / beginnen" at 393px, where balance gave
+   „Lass uns eine / Achtsame / Pause beginnen". Headings inherit
+   `--text-hyphens: auto`. If headlines should not hyphenate, that is one
+   rule (`hyphens: manual` on the heading role).
+3. The nine Figma styles on AUTO are not changed. In code their roles now
+   decide; setting their `textWrapStyle` to match is a Figma-side edit.
+
+## WizardPanel — the whole card: header (stepper), divider, body (intro, content, actions) — RESOLVED
+Where: `src/InteractiveWizard.tsx` (`WizardPanel`, new `WizardIntro`,
+`WizardContent`), `src/musy-components.css` (HEADER AND BODY block),
+`src/index.ts`, `stories/WizardPanel.stories.tsx` (`HeaderAndBody`)
+What I checked: Ben, 2026-11-16: „Packe [das Spacing] mit in die Komponente
+und überarbeite das Wizard Panel: oben (Header) immer der Stepper, dann der
+Divider, in der unteren Section (Body) erst Intro, dann Content, dann
+Actions." His spacing pass on the Einsteigen frames grouped the switch and
+the list (and the two questions) into one block 24 apart inside, 32 from the
+intro and the actions.
+What I did:
+- **`WizardPanel` with `stepper` is the card.** It draws a framed ContentBox
+  whose header is the stepper and requires a `headline`, because the card is
+  an <article> in the outline. Without `stepper` it is the body alone, as
+  before.
+- **The body runs Intro → Content → Actions,** as `<WizardIntro>` and
+  `<WizardContent>` children, or the `intro` prop as shorthand.
+- **The panel owns every distance.** 32 between the sections, 24 inside
+  Content. Block margins inside them are reset two classes deep, so the
+  app's later stylesheets cannot add their own.
+- **The header is the stepper's inline-size container,** which replaces the
+  app's `.musie-rail`.
+- **Migration:** Session and the exercise builder moved to it. The
+  Einsteigen step renders Intro and Content. The other steps still pass
+  plain children, which lay out as before.
+Why: Ben's structure and numbers; one component now spaces every step the
+same way.
+What I need from Ben: **one thing to know.** Only Einsteigen is split into
+Intro and Content so far. Hören, Auswählen, Ansehen, Spielen and
+Nachdenken still pass their body as one block. Splitting each is the same
+small change per step.

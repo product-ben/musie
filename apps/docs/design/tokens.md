@@ -120,12 +120,15 @@ needs no branch of its own. Same for `prefers-contrast: more` and
 its own family, size, weight, line-height and letter-spacing. `display-xl`,
 `display-lg`, `stage`, `heading-lg/md/sm`, `body-xl/lg/md/sm`, `label-lg/md`.
 
-Three text tokens are easy to miss and are load-bearing:
+Four text tokens are easy to miss and are load-bearing. The three wrap tokens are
+a rule per ROLE (2026-11-16, from the Figma text styles): headings pretty,
+prose balanced, labels pretty.
 
 | | |
 |---|---|
-| `--text-wrap-heading: balance` | stops a heading stranding one word |
-| `--text-wrap-body: pretty` | body and two-line labels |
+| `--text-wrap-heading: pretty` | fills a heading's lines and stops it stranding one word |
+| `--text-wrap-body: balance` | short prose in even lines (browsers balance only short blocks) |
+| `--text-wrap-label: pretty` | `label-*` steps, two-line labels included |
 | `--text-hyphens: auto` | **required** for German compounds at 393px |
 
 That last one is why `<html lang>` must follow the locale: `hyphens: auto`
