@@ -190,7 +190,13 @@ export function track(event: string, properties?: Record<string, unknown>): void
 /** Thank-you state is on screen. */
 export function completed(): void {
   if (!firstTime('completed')) return;
-  track('exp_completed', { total_visible_ms: totalVisibleMs(), total_wall_ms: totalWallMs() });
+  const properties = { total_visible_ms: totalVisibleMs(), total_wall_ms: totalWallMs() };
+  /* Instantly too: completion is the number the experiment is judged by. */
+  if (started) {
+    posthog.capture('exp_completed', properties, { send_instantly: true });
+    return;
+  }
+  track('exp_completed', properties);
 }
 
 /** Something failed that the visitor saw (or should have). Never the payload. */
@@ -227,6 +233,13 @@ export function surveySent(
   const comment = answers.comment?.trim();
   if (comment) {
     properties[`$survey_response_${SURVEY.comment.id}`] = comment;
+  }
+  /* Sent at once, not with the next batch: the person may close the tab right
+     after pressing send, and a batch still waiting would go with it. (Seen in
+     a test run on 2026-11-16: `survey shown` arrived, `survey sent` did not.) */
+  if (started) {
+    posthog.capture('survey sent', properties, { send_instantly: true });
+    return;
   }
   track('survey sent', properties);
 }
