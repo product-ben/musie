@@ -45,8 +45,19 @@ const router = createMemoryRouter(
     { path: DONE_PATH, element: <ThankYou /> },
     { path: '*', element: <Navigate to={INTRO_PATH} replace /> },
   ],
-  { initialEntries: [INTRO_PATH] },
+  { initialEntries: [initialPath()] },
 );
+
+/** DEV ONLY: `?step=reflect` (or `listen`, `play`, `done` …) opens that step
+    directly — for demos and checks without listening 90 s first. A production
+    build ignores it: `import.meta.env.DEV` is false there. */
+function initialPath(): string {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return INTRO_PATH;
+  const step = new URLSearchParams(window.location.search).get('step');
+  if (step === 'done') return DONE_PATH;
+  if (step !== null && isStepId(step)) return `/session/${RUN.sessionId}/${step}`;
+  return INTRO_PATH;
+}
 
 /** The current memory-router location, for the header and tracking. */
 export function currentStepKey(): string {
