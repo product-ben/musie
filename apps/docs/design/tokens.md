@@ -64,7 +64,7 @@ design. See [Light and dark](/features/theming).
 | `--space-gap-stack` | between controls inside one molecule |
 | `--space-gap-group` | between molecules that do **not** belong together |
 | `--space-section` / `-lg` | between sections — mobile, then ≥lg |
-| `--space-inset-control` | inside a control — gives 44px min height at `label-lg` |
+| `--space-inset-control` | inside a control — a 50px button at `label-lg` (44px until 2026-11-16) |
 | `--space-inset-card` | inside a card |
 | `--space-inset-sheet` | inside a sheet or modal |
 
@@ -120,15 +120,16 @@ needs no branch of its own. Same for `prefers-contrast: more` and
 its own family, size, weight, line-height and letter-spacing. `display-xl`,
 `display-lg`, `stage`, `heading-lg/md/sm`, `body-xl/lg/md/sm`, `label-lg/md`.
 
-Four text tokens are easy to miss and are load-bearing. The three wrap tokens are
-a rule per ROLE (2026-11-16, from the Figma text styles): headings pretty,
-prose balanced, labels pretty.
+Five text tokens are easy to miss and are load-bearing. They are rules per ROLE
+(2026-11-16, from the Figma text styles and Ben): headings pretty and never
+hyphenated, prose balanced, labels pretty.
 
 | | |
 |---|---|
 | `--text-wrap-heading: pretty` | fills a heading's lines and stops it stranding one word |
 | `--text-wrap-body: balance` | short prose in even lines (browsers balance only short blocks) |
 | `--text-wrap-label: pretty` | `label-*` steps, two-line labels included |
+| `--text-hyphens-heading: none` | a headline never breaks inside a word — every rule on `--text-wrap-heading` takes it |
 | `--text-hyphens: auto` | **required** for German compounds at 393px |
 
 That last one is why `<html lang>` must follow the locale: `hyphens: auto`

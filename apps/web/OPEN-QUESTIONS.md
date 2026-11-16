@@ -11850,3 +11850,33 @@ Why: Ben, 2026-11-16: „bitte das hier übernehmen und für die storybook
 wizard panel Komponente".
 
 What I need from Ben: nothing.
+
+## Einsteigen's questions at label-lg; headlines without hyphens; the new text field — RESOLVED
+
+Where: `components/SessionIntro.tsx`, `components/InstrumentIntro.tsx`
+(`legendStep="label-lg"`), `routes/ExerciseBuilder.tsx` (`legendStep=
+"label-md"`, was `legendAsLabel`), `shell.css`, `exercises.css`,
+`insight-map.css` (11 heading rules on `--text-hyphens-heading`)
+
+What I did: Ben's three asks of 2026-11-16, applied in the app; the design
+system's entries in `packages/design-system/stories/OPEN-QUESTIONS.md` have
+the detail.
+- **The questions above Einsteigen's segmented controls** („Wie möchtest du
+  zuhören?", „Was machst du nach der Übung?", Duett/Alleine) are label-lg.
+- **No headline hyphenates.** Every app rule on `--text-wrap-heading` now
+  carries `--text-hyphens-heading`: five switched from `--text-hyphens`
+  (placeholder title, reflect welcome and sheet headline, exercise card and
+  goal sheet headlines), six added (`.musie-md`'s headings, which had
+  inherited the container's `auto`, three in insight-map, one in shell).
+  Prose still hyphenates.
+- **Text fields** come from the component; nothing in the app changed for
+  them.
+
+Measured at 320 and 393, German, against the local stack: the legends are
+17px / 500 / 24.4px; every visible headline computes `none`; buttons are
+50.4px; no page scrolls sideways.
+
+Why: Ben's Figma and his words.
+
+What I need from Ben: see the dark-mode note in the design system's
+text-field entry.

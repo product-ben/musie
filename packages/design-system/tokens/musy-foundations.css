@@ -54,6 +54,7 @@
   --sand-12: light-dark(#1A1F1C, #EDF0EC);                /* High-contrast text — headings, emphasis (solved ≥7:1) */
   --sand-edge: light-dark(#6E7068, #7F867F);              /* Boundary — solved ≥3:1 vs every surface (1.4.11) */
   --sand-press: light-dark(#808278, #828981);             /* Solid fill — pressed; keeps the step-9 foreground legal */
+  --sand-field: light-dark(#FCFBF7, #323833);             /* Text-field fill — a shade above step 1 in light (Ben's Figma, 2026-11-16), step 5 in dark */
 
   /* ── green — THE BRAND. Buttons, links, focus, wordmark, and the default
      for every interactive element in the app. W2 `green`:
@@ -193,6 +194,8 @@
   --surface-overlay: light-dark(var(--sand-1), var(--sand-4));
   /* Tooltips, high-emphasis chips — deliberately opposite the theme. */
   --surface-inverse: var(--sand-12);
+  /* Inside a text field — input and textarea. A shade lighter than the card it sits on in light, a step lighter in dark (Ben, 2026-11-16). */
+  --surface-input: var(--sand-field);
 
   /* ── on ─────────────────────────────────────────────────────────── */
   /* Default body and heading text on any surface token. */
@@ -205,13 +208,17 @@
   --on-surface-inverse: var(--sand-1);
 
   /* ── border ─────────────────────────────────────────────────────────── */
-  /* Dividers and decorative outlines ONLY. Never permitted on an interactive boundary. */
+  /* Dividers and decorative outlines ONLY. Never permitted on an interactive boundary.
+     ONE EXCEPTION, BEN'S, 2026-11-16: the text field's edge (`.musy-field__control`),
+     from his Figma, knowing it is 1.5:1 where 1.4.11 asks 3:1. `prefers-contrast:
+     more` lifts this token to `--sand-edge` (below), which is 3:1. */
   --border-subtle: var(--sand-6);
   /* The only border allowed to carry a control boundary — solved to ≥3:1 (1.4.11).
      NO LONGER NEUTRAL. W2 names `border-ui` #678271 for "Konturen interaktiver
-     Elemente", and that is what draws the interactive card and the text field,
-     so the token follows the brand rather than the sand scale. A control edge
-     now says "control" by hue as well as by contrast. */
+     Elemente", and that is what draws the interactive card, so the token
+     follows the brand rather than the sand scale. A control edge now says
+     "control" by hue as well as by contrast. (It drew the text field too, until
+     2026-11-16 — see `--border-subtle`.) */
   --border-strong: var(--green-edge);
   /* Focus indicator colour. ≥3:1 against every surface token in both themes.
      W2: "Fokus-Ring Grün". 7.5:1 on the page in light. */
@@ -384,7 +391,7 @@
   /* semantic spacing — which step applies at which level.
      The app should feel light, so the jump BETWEEN groups is always at least
      two steps larger than the gap inside one.                               */
-  --space-inset-control: var(--sp-3) var(--sp-5); /* inside a control → 44px min height at label-lg */
+  --space-inset-control: var(--sp-3) var(--sp-5); /* inside a control → 50px at label-lg's 143.4% (44 until 2026-11-16, at 1.2) */
   --space-inset-card: var(--sp-5);                /* inside a card */
   --space-inset-sheet: var(--sp-6);               /* inside a sheet or modal */
   --space-gap-inline: var(--sp-2);                /* icon ↔ its own label. Never widen this */
@@ -641,9 +648,12 @@
   /* label-lg — Primary button and tab labels.
      iPhone 16 393px → 17px · tablet 834px → 17.4px · desktop 1440px → 18px */
   --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
-  --type-label-lg-line: 1.2;
+  /* Medium at 143.4% since 2026-11-16 — Ben's Figma text style, verbatim
+     (was SemiBold at 1.2). A primary button is 50px tall at 393 now, as his
+     frames draw it. */
+  --type-label-lg-line: 1.434;
   --type-label-lg-tracking: 0;
-  --type-label-lg-weight: var(--font-weight-semibold);
+  --type-label-lg-weight: var(--font-weight-medium);
   /* The sans labels and the serif reads, so a button label is the display face. */
   --type-label-lg-family: var(--font-display);
 
@@ -715,6 +725,22 @@
   --text-wrap-body: balance;     /* body steps */
   --text-wrap-label: pretty;     /* label steps */
   --text-hyphens: auto;          /* required for German compounds at 393px */
+  /* ── A HEADLINE NEVER HYPHENATES — Ben, 2026-11-16 ─────────────────────────
+     „In Headlines sind keine Worttrennungen erlaubt.“ The same per-role idea
+     as the wrap tokens: prose and labels keep `--text-hyphens` (rule 5 —
+     German breaks by the declared language), every rule on
+     `--text-wrap-heading` takes this one beside it. It generalises what the
+     Content Box had done for the display steps alone since 2026-10-02
+     (`be-wusster`, `si-cherer`); the session headline „Acht-/same Pause“ was
+     the same failure one step smaller.
+
+     `none`, not `manual`: Ben's wording is that no break is allowed, and a
+     soft hyphen in copy would be one. A word wider than its line can still
+     overflow-wrap where a rule allows it — a last resort that no visible
+     headline needed at 320 on 2026-11-16 (every Einsteigen, and /, /exercises,
+     /diary, /menu, /insight-map, /about-you, /discovered-music,
+     /feelings-selection, in German). */
+  --text-hyphens-heading: none;  /* display + heading steps */
 
   /* ── breakpoints & grid ──────────────────────────────────────────────────
      Mirror values only — a media query cannot read a custom property. The

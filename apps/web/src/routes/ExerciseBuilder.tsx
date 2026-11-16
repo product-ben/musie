@@ -899,13 +899,13 @@ export function ExerciseBuilder() {
               these two change WHAT THE PHONE SHOWS — a control belongs beside
               the thing it moves. Ben, 2026-10-27.
 
-              `legendAsLabel`, so they read as two fields rather than as two
-              section headings: the preview already is the section. */}
+              `legendStep="label-md"`, so they read as two fields rather than
+              as two section headings: the preview already is the section. */}
           <div className="musie-builder__variant">
             <SegmentedControl
               name="builder-locale"
               legend={t('builder.locale')}
-              legendAsLabel
+              legendStep="label-md"
               options={LOCALES.map((code) => ({
                 value: code,
                 label: t(code === 'de' ? 'builder.locale.de' : 'builder.locale.en'),
@@ -922,7 +922,7 @@ export function ExerciseBuilder() {
               <SegmentedControl
                 name="builder-mode"
                 legend={t('builder.mode')}
-                legendAsLabel
+                legendStep="label-md"
                 options={[
                   { value: 'analogue', label: t('builder.mode.analogue'), glyph: STEP_ICON.scan },
                   { value: 'digital', label: t('builder.mode.digital'), glyph: STEP_ICON.select },

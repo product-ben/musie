@@ -4516,3 +4516,82 @@ What I need from Ben: **one thing to know.** Only Einsteigen is split into
 Intro and Content so far. Hören, Auswählen, Ansehen, Spielen and
 Nachdenken still pass their body as one block. Splitting each is the same
 small change per step.
+
+## A headline never hyphenates — RESOLVED
+Where: `tokens/musy-foundations.css` (new `--text-hyphens-heading: none`),
+`src/musy-components.css` (every rule on `--text-wrap-heading`, the display
+steps of `.musy-box__text`, `.musy-llist__headline`), `TOKEN-DRIFT.md`, the
+JSON mirror's `typography.rules`
+What I checked: Ben, 2026-11-16: „In Headlines sind keine Worttrennungen
+erlaubt." This answers point 2 of the entry above („Acht-/same Pause").
+What I did:
+- **A role token, like the wrap tokens.** `--text-hyphens-heading: none`
+  sits beside `--text-hyphens: auto`. Prose and labels keep `auto` (rule 5).
+- **Every rule on `--text-wrap-heading` takes it.** 6 in this file and 11 in
+  the app, the ones that set `--text-hyphens` switched rather than added.
+  `.musy-box__text`'s display steps, `none` since 2026-10-02, now name the
+  token.
+- **`.musy-llist__headline` too.** It is set at label-lg and breaks like a
+  label, but it is an `<hN>` named headline; the diary's „Session vom …"
+  hyphenated through it.
+- **`none`, not `manual`.** Ben's wording forbids every break, and a soft
+  hyphen in the copy would be one.
+Measured in the app, German: every visible heading on every Einsteigen (320
+and 393) and on eight main screens (320) computes `none` or the default
+`manual`; none of them overflows. The two that did were `musy-sr-only`.
+What I need from Ben: nothing.
+
+## Text field: a paper fill, a subtle edge, a 24px textarea — RESOLVED
+Where: `tokens/musy-foundations.css` (new `--sand-field`, new
+`--surface-input`; the comments on `--border-subtle` and `--border-strong`),
+the JSON mirror and `proof-manifest.json` (palette, semantic, four audit
+rows), `src/musy-components.css` (§15 FIELD, the CodeField box)
+What I checked: Ben's Figma *umsetzen_v2* (190:15670), and his answers the
+same day: the fill as a new token; the edge as in Figma (`--border-subtle`),
+knowing it is below 3:1; single-line inputs take the fill and edge but keep
+their 8px corner.
+What I did:
+- **`--surface-input`** is `#FCFBF7` in light (a shade above sand-1, so a
+  palette step `--sand-field` like `-edge` and `-press`, because Layer 2
+  holds no raw hex) and sand-5 `#323833` in dark.
+- **The control:** fill `--surface-input` (resting and filled), edge
+  `--border-subtle` at the same 1.5px, the textarea alone at
+  `--radius-xl`. The label is unchanged (label-md, 12 above the control);
+  it gained its own line-height and the label wrap token.
+- **CodeField's boxes take the same fill and edge.** They are single-line
+  inputs and the stylesheet already had them mirror §15. That is my call,
+  not Ben's, and it is one rule to undo.
+- **The 1.4.11 exception is written where the token is defined.**
+  `--border-subtle` says "never on an interactive boundary"; it now names
+  this one, Ben's. `prefers-contrast: more` lifts it to `--sand-edge`.
+Measured (Storybook, both themes): the computed fill, edge and corners are
+the values above. Text on the fill is 16.1:1 light and 10.5:1 dark;
+placeholder 5.8:1 and 4.8:1.
+What I need from Ben: **one thing to look at, in dark.** There the edge is
+1.15:1 on the fill and the fill 1.14:1 on the card, so a field inside a
+dark card is close to invisible until it is focused. In light it reads as
+in Figma. A darker dark fill (below the card, `--surface-sunken`-like) would
+separate it; that is his call.
+
+## label-lg is Medium at 143.4%; a segmented control's legend has a step — RESOLVED
+Where: `tokens/musy-foundations.css` (`--type-label-lg-weight`, `-line`),
+the JSON mirror, `src/SegmentedControl.tsx` (`legendStep` replaces
+`legendAsLabel`), `src/musy-components.css` (the legend's label role),
+`src/index.ts`, `stories/SegmentedControl.stories.tsx` (`LegendSteps`)
+What I checked: Ben, 2026-11-16, „lies auch den upgedateten text style":
+the Figma style `type/label-lg` is Onest Medium at 143.4% (the code had
+SemiBold at 1.2); the other eleven styles match. And: „Bei Einsteigen: alle
+Labels der Segmented Controls, die aktuell Headline-Tokens haben, sollen
+label-lg bekommen."
+What I did:
+- **label-lg verbatim.** A primary button is 50.4px at 393 now, where it
+  was 44.4. His frames draw it at 50. The one calc on the line height
+  (insight-map.css) follows by itself.
+- **`legendStep: 'heading-sm' | 'label-lg' | 'label-md'`** replaces the
+  boolean. The component emits `data-type-step`, so the step comes from the
+  type utilities that already exist rather than a second declaration of the
+  scale. A label step moves the legend into the label role (wrap and
+  hyphenation). The builder's two `legendAsLabel` became `label-md`.
+Why: Ben's text style and his instruction. A second label step turned the
+boolean into a step, and a step is what the type utilities are for.
+What I need from Ben: nothing.

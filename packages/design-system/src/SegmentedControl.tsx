@@ -114,6 +114,9 @@ export type SegmentedSize = 'min' | 'primary';
  */
 export type SegmentedLabels = 'all' | 'unchecked' | 'none';
 
+/** The steps a segmented control's legend may take. See `legendStep`. */
+export type SegmentedLegendStep = 'heading-sm' | 'label-lg' | 'label-md';
+
 export interface SegmentedControlProps {
   name: string;
   /**
@@ -124,26 +127,26 @@ export interface SegmentedControlProps {
   legend: string;
   legendHidden?: boolean;
   /**
-   * Draw the legend at LABEL weight instead of heading-sm.
+   * The legend's type step. `heading-sm` by default — right when the group IS
+   * the screen's question.
    *
-   * For a group that is one field among several rather than a section of its
-   * own — the same step as `Field`'s label, so a segmented control and a text
-   * field read as siblings in a form. The default is right when the group IS
-   * the screen's question, and too loud under a headline that already asked
-   * one.
+   * · `label-lg` — a question inside a step whose headline already asked one:
+   *   the session's Einsteigen (Ben, 2026-11-16).
+   * · `label-md` — one field among several in a form: the same step as
+   *   `Field`'s label, so a segmented control and a text field read as
+   *   siblings.
    *
    * ── IT IS INK, NOT STRUCTURE ────────────────────────────────────────────
-   * Mirrors `ContentBox`'s `headlineTone`: the `<legend>` is still a legend
+   * Mirrors `ContentBox`'s `headlineStep`: the `<legend>` is still a legend
    * and still names the group to assistive tech. `legendHidden` is the other
    * axis and outranks nothing — the two compose.
    *
-   * ADDED 2026-10-27. `.musy-radio-group__legend--label` had been in
-   * `musy-components.css` since the group was built, with a comment
-   * describing exactly this case, and no prop ever reached it. The class was
-   * unreferenced by every file in the repository; this is the API it was
-   * written for.
+   * WAS `legendAsLabel` (2026-10-27 → 2026-11-16), a boolean for label-md
+   * alone. A second label step made it a step, and a step is what
+   * `[data-type-step]` already draws — the component emits it rather than
+   * declaring the scale a second time.
    */
-  legendAsLabel?: boolean;
+  legendStep?: SegmentedLegendStep;
   /** 2–4. More than that is the wrong component — see the note above. */
   options: SegmentedOption[];
   value?: string;
@@ -171,7 +174,7 @@ export interface SegmentedControlProps {
 }
 
 export function SegmentedControl({
-  name, legend, legendHidden = false, legendAsLabel = false, options, value, onValueChange,
+  name, legend, legendHidden = false, legendStep = 'heading-sm', options, value, onValueChange,
   accent = 'primary', size = 'primary', labels = 'all', guided = false,
   disabled = false, className,
 }: SegmentedControlProps) {
@@ -217,9 +220,8 @@ export function SegmentedControl({
       ].filter(Boolean).join(' ')}
     >
       <Fieldset.Legend
-        className={legendHidden
-          ? 'musy-sr-only'
-          : `musy-radio-group__legend${legendAsLabel ? ' musy-radio-group__legend--label' : ''}`}
+        className={legendHidden ? 'musy-sr-only' : 'musy-radio-group__legend'}
+        data-type-step={legendHidden ? undefined : legendStep}
       >
         {legend}
       </Fieldset.Legend>

@@ -14,9 +14,9 @@ Consequence: anything listed here exists in code and **not** in Figma. A designe
 working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
-**39 properties in `musy-foundations.css` have no JSON expression.**
+**40 properties in `musy-foundations.css` have no JSON expression.**
 **32 more live only in `musy-foundations-amendments.css`.**
-Total: **71**.
+Total: **72**.
 
 | Group | n |
 |---|---|
@@ -25,7 +25,7 @@ Total: **71**.
 | Focus ring | 4 |
 | Motion travel | 3 |
 | Named font weights | 4 |
-| Typography rules and measures | 8 |
+| Typography rules and measures | 9 |
 | Spacing roles | 2 |
 | Elevation ring | 1 |
 | Grid gap | 1 |
@@ -99,6 +99,7 @@ The JSON bakes weights into each typography composite as literals (`"fontWeight"
 | `--measure-heading` | `50ch` |
 | `--measure-compact` | `26ch` |
 | `--text-hyphens` | `auto` |
+| `--text-hyphens-heading` | `none` |
 | `--text-wrap-body` | `balance` |
 | `--text-wrap-heading` | `pretty` |
 | `--text-wrap-label` | `pretty` |

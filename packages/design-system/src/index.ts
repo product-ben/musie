@@ -125,7 +125,7 @@ export { Toast } from './Toast';
 export type { ToastProps, ToastAction, ToastLive, ToastTone, ToastPlacement } from './Toast';
 
 export { SegmentedControl } from './SegmentedControl';
-export type { SegmentedSize, SegmentedLabels, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
+export type { SegmentedSize, SegmentedLabels, SegmentedLegendStep, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
 
 /* Two levels, and §15's build-up with none of its semantics — a CheckboxGroup
    per dimension rather than one RadioGroup, scrolled rather than divided. The

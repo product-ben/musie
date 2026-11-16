@@ -830,19 +830,19 @@
   letter-spacing: var(--type-heading-sm-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
   max-width: var(--measure-heading);
 }
-/* A legend at LABEL weight, for a group that is one field among several rather
-   than a section of its own. The default legend is heading-sm, which is right
-   when the group IS the screen's question — and too loud when it sits under a
-   step headline that already asked one. Same step as .musy-field__label, so a
-   segmented control and a text field read as siblings in a form. */
-.musy-radio-group__legend--label {
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  letter-spacing: var(--type-label-md-tracking);
+/* A legend at a LABEL step — Segmented Control's `legendStep`. The step itself
+   comes from the `[data-type-step]` utilities below (later in this file, so
+   they win over the heading-sm above at equal weight); this rule only moves
+   the legend into the label ROLE, which breaks and hyphenates like a label.
+   `label-lg` is a question under a step headline that already asked one (the
+   session's Einsteigen, Ben, 2026-11-16); `label-md` is one field among
+   several, the same step as .musy-field__label. Was `--label`, label-md only. */
+.musy-radio-group__legend[data-type-step^="label-"] {
+  text-wrap: var(--text-wrap-label);
+  hyphens: var(--text-hyphens);
 }
 
 .musy-radio-group__hint {
@@ -1559,7 +1559,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
   max-width: var(--measure-heading);
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* Controls: prev at the start, next at the end, dots between. Same row as the
@@ -1744,7 +1744,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   padding: calc(var(--space-inset-card) - var(--sp-2));
 }
 
-.musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
+.musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); hyphens: var(--text-hyphens-heading); max-width: var(--measure-heading); }
 
 /* ── THE MEASURE, RELEASED ────────────────────────────────────────────────
    `--measure-heading` is right for a heading you read and then track back
@@ -1859,7 +1859,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    ever actually wanted, that is when the prop is earned.                    */
 .musy-box__text[data-type-step="stage"],
 .musy-box__text[data-type-step="display-lg"],
-.musy-box__text[data-type-step="display-xl"] { hyphens: none; }
+.musy-box__text[data-type-step="display-xl"] { hyphens: var(--text-hyphens-heading); }
 .musy-box__slot     { display: flex; flex-direction: column; gap: var(--space-gap-stack); }
 
 /* ── type-step utilities ─────────────────────────────────────────────────────
@@ -1903,7 +1903,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-msg--error   .musy-msg__icon { color: var(--feedback-error-icon); }
 
 .musy-msg__main { display: flex; flex-direction: column; gap: var(--space-gap-related); min-width: 0; }
-.musy-msg__headline { margin: 0; color: inherit; text-wrap: var(--text-wrap-heading); }
+.musy-msg__headline { margin: 0; color: inherit; text-wrap: var(--text-wrap-heading); hyphens: var(--text-hyphens-heading); }
 .musy-msg__text { margin: 0; color: inherit; text-wrap: var(--text-wrap-body); hyphens: var(--text-hyphens); max-width: var(--measure-body); }
 /* STRETCHED, NOT SHRINK-WRAPPED — 2026-09-24.
    It was `align-self: flex-start`, which made this box as wide as its content.
@@ -2243,6 +2243,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   margin: 0;
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 .musy-rcard__desc {
   margin: 0;
@@ -4247,8 +4248,10 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   font-family: var(--type-label-md-family);
   font-size: var(--type-label-md-size);
   font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
   letter-spacing: var(--type-label-md-tracking);
   color: var(--on-surface);
+  text-wrap: var(--text-wrap-label);
   cursor: pointer;
 }
 .musy-field__label[data-disabled] { color: var(--on-surface-disabled); cursor: not-allowed; }
@@ -4257,14 +4260,26 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    `required`, which base-ui reflects to assistive tech. */
 .musy-field__required { color: var(--feedback-error-icon); }
 
+/* THE FIELD IS A SHADE OF PAPER, NOT A GREEN OUTLINE — Ben, 2026-11-16.
+   Figma *umsetzen_v2* (190:15670): the fill is `--surface-input`, a shade
+   lighter than the card, and the edge is `--border-subtle` at the same 1.5px
+   — where it was `--border-strong`, green. Both for input and textarea; the
+   textarea alone also takes the 24px corner (below), the input keeps 8.
+
+   THE EDGE IS 1.5:1, AND THAT WAS CHOSEN. 1.4.11 asks 3:1 of a control's
+   boundary; Ben took the Figma value knowing it, and `prefers-contrast: more`
+   lifts `--border-subtle` to `--sand-edge`, which is 3:1. The token's own
+   comment in musy-foundations.css names this as its one exception. Hover
+   still darkens the edge, and focus is the 3px ring, which is ≥3:1 on the
+   fill. */
 .musy-field__control {
   box-sizing: border-box;
   width: 100%;
   min-height: var(--target-primary);
   padding: var(--space-inset-control);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong);
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   border-radius: var(--radius-input);
-  background-color: var(--surface-raised);
+  background-color: var(--surface-input);
   color: var(--on-surface);
   font-family: var(--type-body-md-family);
   font-size: var(--type-body-md-size);
@@ -4281,16 +4296,19 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   .musy-field__control[data-force~="hover"] { border-color: var(--on-surface-muted); }
 }
 
-/* Multi-line. Guided height is two comfort rows — derived, not picked. */
+/* Multi-line. Guided height is two comfort rows — derived, not picked. The
+   24px corner is the textarea's alone (Ben, 2026-11-16): at 112px tall it
+   reads as a card to write in; on a 44px input it would turn into a pill. */
 .musy-field__control--textarea {
   min-height: calc(var(--target-comfort) * 2);
+  border-radius: var(--radius-xl);
   resize: vertical;
   line-height: var(--type-body-md-line);
 }
 
 /* Filled is not a validity state — it only says the control carries a value.
    Kept as a hook (base-ui sets it) with a deliberately quiet treatment. */
-.musy-field__control[data-filled] { background-color: var(--surface-raised); }
+.musy-field__control[data-filled] { background-color: var(--surface-input); }
 
 .musy-field__control[data-invalid],
 .musy-field__control[aria-invalid="true"] {
@@ -4405,8 +4423,10 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   font-family: var(--type-label-md-family);
   font-size: var(--type-label-md-size);
   font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
   letter-spacing: var(--type-label-md-tracking);
   color: var(--on-surface);
+  text-wrap: var(--text-wrap-label);
 }
 
 .musy-code-field__boxes {
@@ -4424,9 +4444,11 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   padding: 0;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong);
+  /* The text field's edge and fill (§15, Ben, 2026-11-16): a box is a
+     single-line input, so it keeps the 8px corner and takes the rest. */
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   border-radius: var(--radius-input);
-  background-color: var(--surface-raised);
+  background-color: var(--surface-input);
   color: var(--on-surface);
   font-family: var(--type-body-lg-family);
   font-size: var(--type-body-lg-size);
@@ -5947,12 +5969,14 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 }
 
 /* label-lg, applied from the .tsx: body-md's size at weight 500. Emphasised
-   without dropping below L8's floor, which label-md and body-sm would. */
+   without dropping below L8's floor, which label-md and body-sm would.
+   It breaks like a label and hyphenates like a HEADLINE — it is one, an <hN>
+   by markup and by name, and a headline never hyphenates (Ben, 2026-11-16). */
 .musy-llist__headline {
   margin: 0;
   color: var(--on-surface);
   text-wrap: var(--text-wrap-label);
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* A column, so two or three meta lines stack instead of running together. */
@@ -6008,6 +6032,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   margin: 0;
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
   max-inline-size: var(--measure-heading);
 }
 
