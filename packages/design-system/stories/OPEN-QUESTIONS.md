@@ -4358,3 +4358,20 @@ under a mouse; the strips have none (the comment in CardDeck.tsx says why).
 The label is still the accessible name. If a desktop user should see the word
 on hover, that is a `title` or a Tooltip on the strip, and it is a deck
 change, not the app's.
+
+## CardDeck — the swipe overlay is gone, and the gutters have their tooltip — RESOLVED
+Where: `src/CardDeck.tsx` (`Gutter`, the header), `src/musy-components.css`
+(the `.musy-deck__overlay` block, now a note)
+What I checked: Ben, 2026-11-16, on a phone: „Grüner State weg, einfach so
+lassen wie die Karte ist" and „Icon buttons auf Desktop mit Tooltip:
+Vorherige Karte; Nächste Karte". The second answers the question the entry
+above left open.
+What I did: the overlay is no longer rendered and its rules and
+`--musy-card-reveal` are gone; `Drag.reveal` and `OVERLAY_FULL_AT` with them.
+`dir` stays — it is still the way a card is thrown. Each gutter is now a
+`Gutter`: the strip is still the button, and base-ui's Tooltip wraps it with
+IconButton's look and side, anchored to the chevron (`anchor`), so the
+tooltip stands over the mark rather than over the top of a card-tall strip.
+Coarse pointers get none, through the rule IconButton's already uses.
+What I need from Ben: **nothing**. `nextLabel` no longer appears anywhere
+visible, only as a name and a tooltip, so its prop docs say so.

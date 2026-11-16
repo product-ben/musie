@@ -11654,3 +11654,60 @@ content's — a text over 170 is still stored whole and still saved whole, and
 `/maintenance` does not edit exercise text, so nothing there warns an editor
 yet. If exercise text ever moves to `/maintenance`, the limit belongs in its
 form as a counter.
+
+## The onboarding card, the swipe without green, and the gutter tooltips — RESOLVED
+
+Where: `apps/web/src/components/DeckGuide.tsx`, `.musie-deck-guide__*`
+(`exercises.css`), `exercises.guide.*` / `exercises.next` / `.previous`
+(`i18n/de.ts`, `en.ts`), `Gutter` and the overlay note in
+`packages/design-system/src/CardDeck.tsx`
+
+What I did, on Ben's list of 2026-11-16:
+- The onboarding card's sentences are one type step down (body-lg to
+  body-md, 19–20px to 17–18px). Its three lines are Ben's: „Musie schlägt
+  dir drei Übungen vor, aus denen du wählen kannst.“, „Wische für die
+  nächste Übung“, „Tippen zum Starten“. The two chevrons inside the green
+  card are gone, because the deck's own chevrons stand beside it.
+- A card being swiped no longer goes green with „Nächste Übung“ on it. It
+  shows its own face until it has left. The overlay is gone from CardDeck,
+  not hidden by the app.
+- The two gutter chevrons have a tooltip under a mouse, „Vorherige Karte“ /
+  „Nächste Karte“, anchored to the chevron. These are also their accessible
+  names now. A touch screen gets no tooltip.
+
+Two wording choices, both written down in `de.ts`:
+- His digit „3“ is the word *drei*, by the catalogue's rule for small
+  numbers.
+- „Tippen“, not the „Tappen“ that appeared once in his message.
+
+Why: Ben, 2026-11-16, from testing on a phone through the tunnel.
+
+What I need from Ben: nothing on these.
+
+## The card height "flickers after every page turn" — NOT REPRODUCED
+
+Where: `.musy-deck__pile` and the cards in it (`musy-components.css`),
+`ExerciseFace` (`Exercises.tsx`)
+
+What I checked: Ben, 2026-11-16, on an iPhone through the tunnel: „Die
+Kartenhöhe sollte immer konsistent sein (wir haben ja jetzt das
+Character-Limit), aktuell flackert es nach jedem Blättern.“ I recorded the
+pile and every card on every animation frame while paging with the chevrons
+and while swiping. That ran in Chromium and WebKit at 393, in Chromium at
+1440, and as an iPhone 15 in WebKit with touch, before and after this
+change. The layout height never moved:
+- The pile and every card are 443px at 393 and 474px at 1440 throughout.
+- The dots below the pile do not move.
+- The page height does not change.
+- No card face, image or onboarding card is taller than the pile's cell: the
+  onboarding card's content is 318px.
+
+What the frames do show is movement. A card behind straightens as it comes
+to the front, and the thrown card fades over the new one. The corners of the
+cards behind therefore stick out by changing amounts while the pile turns.
+
+What I need from Ben: a screen recording from the phone, or a sentence on
+what moves. If it is the cards behind showing more or less while the pile
+turns, that is the lean (`--musy-deck-lean-*`) and can be calmed. If it is
+the pile changing height between goals, the card can reserve the room 170
+characters need, so that every pile is one height.

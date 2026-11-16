@@ -1368,13 +1368,18 @@ export const de: Messages = {
      Gegenrichtung dazu — nicht 'andere Übung', weil zwei Labels mit 'andere'
      nicht sagen würden, welche.
 
-     'Vorherige' und nicht 'Vorige': das Overlay zeigt jetzt in beide
-     Richtungen die NÄCHSTE Übung, also steht dieses Wort nur noch als Name und
-     Tooltip der Zurück-Schaltfläche. Dort hält es kein Maß — der Grund für die
-     Kurzform war ein unteilbares Wort von 155px gegen 148px Platz im Overlay,
-     und den Platz gibt es nicht mehr zu messen. */
-  'exercises.next': 'Nächste Übung',
-  'exercises.previous': 'Vorherige Übung',
+     'Vorherige' und nicht 'Vorige': der Grund für die Kurzform war ein
+     unteilbares Wort von 155px gegen 148px Platz im Overlay, und das Overlay
+     gibt es nicht mehr.
+
+     'KARTE' STATT 'ÜBUNG' SEIT 2026-11-16, Bens Wortlaut: „Icon buttons auf
+     Desktop mit Tooltip: Vorherige Karte; Nächste Karte“. Beide Wörter
+     stehen nur noch an den zwei Pfeilen neben dem Stapel, als Name und
+     Tooltip, und blättern heißt dort: eine Karte weiter. Das grüne Overlay,
+     das beim Wischen 'Nächste Übung' über die Karte schrieb, ist am selben
+     Tag weg — Ben: „Grüner State weg, einfach so lassen wie die Karte ist“. */
+  'exercises.next': 'Nächste Karte',
+  'exercises.previous': 'Vorherige Karte',
   /* Gedankenstrich als Halbgeviertstrich mit Leerzeichen, wie bei
      `route.session.title`. */
   'exercises.deckPosition': '{name} – Karte {index} von {total}',
@@ -1388,7 +1393,10 @@ export const de: Messages = {
      Karten, angeboten wird eine Übung — und 'Übung' ist das Wort, das die
      Überschrift, die Legende und die Blätter-Schaltflächen daneben alle
      benutzen. Der Schlüssel heißt weiter `…Short`: die Langform gab es, sie
-     ist weg, und ein Schlüssel wird nicht aus Ordnungsliebe umbenannt. */
+     ist weg, und ein Schlüssel wird nicht aus Ordnungsliebe umbenannt.
+     (Die Blätter-Schaltflächen sagen seit 2026-11-16 'Karte', auf Bens
+     Wunsch — siehe `exercises.next`. Dieser Knopf bleibt bei 'Übung': er
+     sucht eine aus, er blättert nicht.) */
   'exercises.surpriseMeShort': 'Such mir eine Übung aus',
   /* ONE OF THESE TWO IS NOW DRAWN: the switch labels the view you are NOT in,
      so the half you might press says what pressing it would get you.
@@ -1435,10 +1443,23 @@ export const de: Messages = {
      '{count}' IST EIN WORT, KEINE ZIFFER: der Bildschirm setzt
      `numberWord(SUGGESTED, locale)` ein, also *drei*, wie man kleine Zahlen
      im Fließtext schreibt. 'Übungen' steht fest im Plural; das trägt,
-     solange `SUGGESTED` 3 ist. Ein Satz, also mit Punkt. */
-  'exercises.guide.count': 'Musie schlägt dir immer nur {count} Übungen vor, damit du einfacher aussuchen kannst.',
+     solange `SUGGESTED` 3 ist. Ein Satz, also mit Punkt.
+
+     ── NEU GESCHRIEBEN AM 2026-11-16, Bens Wortlaut ────────────────────────
+     „Musie schlägt dir 3 Übungen vor, aus denen du wählen kannst“,
+     „Wische für die nächste Übung“, „Tippen zum Starten“. Die Ziffer in
+     seiner Nachricht wird hier trotzdem zum Wort, nach der Regel oben.
+
+     DIE STARTZEILE KEHRT ZWEI REGELN DIESES BLOCKS UM, und zwar bewusst, weil
+     Ben es so geschrieben hat. 'tippen' statt 'antippen': ohne Objekt und
+     unter einem Bild der Start-Schaltfläche liest niemand Tastatur. Und
+     'zum Starten' statt 'um sie zu starten': es gibt keine 'Übung' mehr im
+     Satz, an die sich die Präpositionalgruppe hängen könnte. In seiner
+     Nachricht stand einmal „Tappen“; „Tippen“ war das erste Wort und ist
+     das deutsche. */
+  'exercises.guide.count': 'Musie schlägt dir {count} Übungen vor, aus denen du wählen kannst.',
   'exercises.guide.next': 'Wische für die nächste Übung',
-  'exercises.guide.start': 'Tippe eine Übung an, um sie zu starten',
+  'exercises.guide.start': 'Tippen zum Starten',
   'exercises.guide.dismiss': 'Zum Fortfahren drücken',
   /* Verbphrase (§3). */
   'exercises.guide.show': 'Zeigen, wie diese Seite funktioniert',

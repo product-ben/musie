@@ -83,6 +83,11 @@ the repo. **This file is the current state**: update it after every task.
   - From `--bp-sm` up nothing changes but the corners.
   - Later the same day: the gutters are the pair at every width (Ben: „show the arrows left and right on all viewports“). From `--bp-sm` up each is 54px (`--musy-deck-gutter`) and the secondary pair beside the pile is gone.
 - **A card shows at most 170 characters of its description, 2026-11-13** (`lib/cardText.ts`): cut at a word with „…“, whole for a screen reader. Only Klangreise DE (232) is cut; the pile at 393 is 443px high instead of 511.
+- **Phone feedback, 2026-11-16:**
+  - The onboarding card is one type step smaller (body-md), has Ben's three lines and no chevrons of its own.
+  - A swiped card stays itself: the green overlay is gone from CardDeck.
+  - The gutter chevrons have tooltips „Vorherige Karte“ / „Nächste Karte“ under a mouse.
+  - The reported height flicker did not reproduce in any engine; it is logged in `apps/web/OPEN-QUESTIONS.md` with a request for a recording.
 
 ## Decisions
 

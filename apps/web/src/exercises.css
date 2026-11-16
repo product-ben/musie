@@ -786,7 +786,13 @@
    and the screen's two raised states are the same colour.
 
    IF THE SHIMMER IS WANTED BACK it returns with a pale solid and that solid's
-   own foreground — never by thinning this one.                              */
+   own foreground — never by thinning this one.
+
+   ── THE PAIR IS GONE, THE GREEN STAYS (2026-11-16) ────────────────────────
+   The overlay this matched left the deck the same day Ben rewrote this card
+   ("Grüner State weg"), so this is the screen's only green panel now. It
+   keeps the fill: Ben asked for the onboarding card "mit grünem BG", and the
+   reasons above for a solid with its own foreground hold without the pair. */
 .musie-deck-guide {
   /* It is a <button>, so the UA's own button styling has to go first. */
   appearance: none;
@@ -867,23 +873,24 @@
    is where the pill is; `--goal` is on the element for the next person who
    has to find this row from the markup. */
 
-/* ── BOTH DIRECTIONS, AT BOTH EDGES ───────────────────────────────────────
-   The chevrons go to the card's two sides rather than sitting together in a
-   column: the gesture is the pair, and two glyphs in one corner describe a
-   control instead of a movement. The sentence takes the middle and is centred
-   against them, because a start-aligned sentence between two centred glyphs
-   reads as belonging to the left one. */
+/* ── THE SWIPE, ACROSS THE MIDDLE — AND NO CHEVRONS OF ITS OWN ────────────
+   It drew a chevron at each edge of the card until 2026-11-16. Ben: "Chevron
+   icons innerhalb der grünen Karte weg, die werden von denen außen ersetzt" —
+   the deck's own gutter chevrons stand beside the card at every width since
+   2026-11-13, a hand's width from these, and two pairs of the same glyph
+   pointing the same ways said one thing twice. The sentence is alone in the
+   row now, and still centred: it is about a gesture across the card. */
 .musie-deck-guide__row--swipe {
-  justify-content: space-between;
+  justify-content: center;
   /* ── IT TAKES THE MIDDLE, NOW THAT THERE ARE TWO ROWS — 2026-10-15 ─────
      The legend was three rows spread top / middle / bottom by the column's
-     `space-between`, which put the chevrons across the card's waist for
-     free. With the goal row removed, `space-between` over two children
-     would pin this one to the TOP and lose the correspondence — the
-     gesture is a thing you do across the middle of the card.
+     `space-between`, which put this row across the card's waist for free.
+     With the goal row removed, `space-between` over two children would pin
+     this one to the TOP and lose the correspondence — the gesture is a
+     thing you do across the middle of the card.
 
      Growing it instead keeps both: this row fills whatever is left, its
-     own `align-items: center` holds the chevrons at the waist of that
+     own `align-items: center` holds the sentence at the waist of that
      space, and the press row stays in the bottom corner where the real
      button is. */
   flex: 1 1 auto;
@@ -908,18 +915,9 @@
   align-self: end;
 }
 
-/* The pictures of the controls, at the size the controls draw them.
-   NO FIXED COLUMN WIDTH: the three rows no longer line their sentences up
-   against a shared gutter — one leads with a glyph, one puts a glyph at each
-   end, and one has none — so `--target-primary` as a minimum here would only
-   be an indent nothing is measured against. */
-.musie-deck-guide__glyph {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-}
+/* NO `.musie-deck-guide__glyph` ANY MORE (2026-11-16). It held the swipe
+   row's two chevrons, the last glyphs on this card that were not a picture
+   of the Start button; with them gone it had nothing left to place. */
 
 /* ── A PICTURE OF THE START BUTTON ────────────────────────────────────────
    The card's own control, drawn as a chip of the card it sits on, so the eye
@@ -961,11 +959,16 @@
   letter-spacing: var(--type-label-md-tracking);
 }
 
-/* ── THE SENTENCE, AT `body-lg` SINCE 2026-11-12 ──────────────────────────
+/* ── THE SENTENCE, AT `body-md` SINCE 2026-11-16 ──────────────────────────
+   Ben: "Eine Schriftgröße runter" — body-lg to the next step down, body-md,
+   the second step down in four days. Same family and weight as body-lg, so
+   only the size moves (19–20px to 17–18px). The whole step is still taken,
+   all five properties, for the reason the last paragraph gives.
+
+   ── IT WAS `body-lg` (2026-11-12) ───────────────────────────────────────
    Ben: "der Text auf der Intro-Card ein Level kleiner" — body-xl to the next
    step down, body-lg. That step is the TEXT family at regular weight, so the
-   sentences are serif again, as they were at body-sm before body-xl; the
-   whole step is taken, for the reason the next paragraph gives.
+   sentences are serif again, as they were at body-sm before body-xl.
 
    ── IT WAS `body-xl` (Ben, 2026-10-07) ──────────────────────────────────
    It was `body-sm`, chosen when the legend was a translucent pane over a
@@ -981,11 +984,11 @@
    step rather than body-md set larger. */
 .musie-deck-guide__text {
   text-wrap: pretty;
-  font-family: var(--type-body-lg-family);
-  font-size: var(--type-body-lg-size);
-  font-weight: var(--type-body-lg-weight);
-  line-height: var(--type-body-lg-line);
-  letter-spacing: var(--type-body-lg-tracking);
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  font-weight: var(--type-body-md-weight);
+  line-height: var(--type-body-md-line);
+  letter-spacing: var(--type-body-md-tracking);
 }
 
 

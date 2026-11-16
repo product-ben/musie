@@ -1785,12 +1785,17 @@ export const en = {
      the invisible rot the note at the top of this file warns about, so it is
      deleted rather than kept against a line that may not come back.
 
-     The two directions. The overlay says the FORWARD one whichever way the
-     finger goes — both ways deal another card — so `exercises.previous` is now
-     only ever heard, as the back button's name and tooltip. NOT 'another one'
-     for either: two labels that both said "another" would not say which. */
-  'exercises.next': 'Next exercise',
-  'exercises.previous': 'Previous exercise',
+     The two directions. NOT 'another one' for either: two labels that both
+     said "another" would not say which.
+
+     "CARD", NOT "EXERCISE", SINCE 2026-11-16 — Ben, in German first:
+     "Icon buttons auf Desktop mit Tooltip: Vorherige Karte; Nächste Karte".
+     Both are now only the names and tooltips of the two chevrons beside the
+     pile, and what those do is turn one card. The green overlay that wrote
+     the forward word across a card being swiped went the same day ("Grüner
+     State weg"), so nothing else says either. */
+  'exercises.next': 'Next card',
+  'exercises.previous': 'Previous card',
   /* Announced when the top card changes — "3 / 5" alone would say the pile
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',
@@ -1810,7 +1815,9 @@ export const en = {
      eine Übung aus"), and the English follows it: the two locales cannot
      name the same thing differently. The pile is cards and what it offers is
      exercises, which is what this button hands you — and it is the word the
-     headline, the legend and the deck's own next/previous labels all use. */
+     headline and the legend use. (The deck's next/previous labels say "card"
+     since 2026-11-16, at Ben's request: they turn a card; this picks an
+     exercise.) */
   'exercises.surpriseMeShort': 'Pick an exercise for me',
   /* The view switch. ONE OF THESE TWO IS NOW DRAWN, not neither: the segmented
      control gives its word to the view you are NOT in (`labels="unchecked"`),
@@ -1859,10 +1866,16 @@ export const en = {
      `numberWord(SUGGESTED, locale)`, *three*, as running text writes small
      numbers. The noun is plural and fixed, which is safe while `SUGGESTED`
      is 3; a suggestion of one would need a second form, like the headline
-     once had. A sentence, so it ends in a full stop. */
-  'exercises.guide.count': 'Musie only ever suggests {count} exercises, so choosing is easier.',
+     once had. A sentence, so it ends in a full stop.
+
+     REWRITTEN 2026-11-16, following Ben's German: "Musie schlägt dir 3
+     Übungen vor, aus denen du wählen kannst", "Wische für die nächste
+     Übung", "Tippen zum Starten". The start line loses its object, as the
+     German does — it sits above a picture of the Start button, which is the
+     object. */
+  'exercises.guide.count': 'Musie suggests {count} exercises for you to choose from.',
   'exercises.guide.next': 'Swipe for the next exercise',
-  'exercises.guide.start': 'Press an exercise to start it',
+  'exercises.guide.start': 'Tap to start',
   'exercises.guide.dismiss': 'Press to continue',
   /* The `?` beside the chevrons. A verb phrase, because it is an action and
      not a label for a thing. */

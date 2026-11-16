@@ -21,8 +21,8 @@
  * carries the reasoning for the component half of the change.
  *
  * ── THE DECK IS THE DESIGN SYSTEM'S; THE CARD IS THIS SCREEN'S ────────────
- * `CardDeck` owns the pile, the gesture, the thresholds, the overlay that
- * names where a swipe is going, and every button. This file owns what is ON a
+ * `CardDeck` owns the pile, the gesture, the thresholds and every button.
+ * This file owns what is ON a
  * card — picture, name, description, time — and what the three actions MEAN.
  * That split is why the deck has a Storybook story at all: nothing in it knows
  * what an exercise is.
@@ -1084,10 +1084,10 @@ export function Exercises() {
               onAccept={onAccept}
               onNext={onNext}
               onPrevious={onPrevious}
-              /* ONE WORD FOR BOTH DIRECTIONS, which is the component's own
-                 arrangement since 2026-10-05: the overlay says `nextLabel`
-                 whichever way the card is going, and `previousLabel` is read
-                 by a screen reader off the back button rather than seen. */
+              /* The two gutter chevrons' names and, on a fine pointer, their
+                 tooltips — „Vorherige Karte“ / „Nächste Karte“ (Ben,
+                 2026-11-16). The swipe overlay that also wrote `nextLabel`
+                 across the card went the same day. */
               nextLabel={t('exercises.next')}
               previousLabel={t('exercises.previous')}
               label={t('exercises.deckLabel')}

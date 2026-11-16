@@ -31,8 +31,9 @@ flowchart TD
   stand at one height: the help button is an `IconButton` at the 40px `sm`
   rung, level with the `min` buttons beside it.
 - **The pile** (or the list) — the goal's first three exercises, in their own
-  order. Swipe or use the chevrons beside it to see another; press one to start
-  it.
+  order. Swipe or use the chevrons beside it to see another (under a mouse they
+  say *Vorherige Karte* / *Nächste Karte*); press one to start it. A card being
+  swiped shows its own face — there is no green overlay any more.
 - **Under the pile** — *Alle Übungen zeigen*, a switch, only when the goal has
   more than three. Then, on a phone, *Ziel ändern*.
 
@@ -46,9 +47,9 @@ switch belongs to one goal: changing the goal turns it off, and a reload
 forgets it — it is a look at more, not a setting.
 
 The **onboarding card** lies on top of the pile the first time a browser sees
-the screen. It says *Musie schlägt dir immer nur drei Übungen vor, damit du
-einfacher aussuchen kannst*, and shows how the pile works: swipe for the next,
-press to start. The number is the same constant the pile reads, so the card
+the screen. It says *Musie schlägt dir drei Übungen vor, aus denen du wählen
+kannst*, then *Wische für die nächste Übung* and *Tippen zum Starten* — no
+chevrons of its own, since the pile's are beside it. The number is the same constant the pile reads, so the card
 cannot promise a different count from the pile it is lying on. It **goes like
 a card**: a press, or a swipe either way, takes it off. The help button in the
 toolbar brings it back.

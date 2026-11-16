@@ -12,8 +12,9 @@
  * column that pointed nowhere. The wireframe's correction is that WHERE a
  * hint sits is half of what it says, so each row sits where its control is:
  *
- *   swipe  → the middle, with a chevron at each edge of the card, because the
- *            pair is the hint: the gesture goes either way.
+ *   swipe  → the middle of the card, where the gesture goes. It drew a chevron
+ *            at each edge until 2026-11-16; the deck's own chevrons beside the
+ *            card say that now (see the row below).
  *   start  → the bottom, with a picture of the Start button in the corner the
  *            real one is in on the face underneath.
  *
@@ -46,7 +47,7 @@
  * motion collapses it to 1ms through Layer 1 without this file knowing.
  */
 import * as React from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Icon } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { numberWord } from '../i18n/numbers';
@@ -96,30 +97,29 @@ export function DeckGuide({ onDismiss, count }: DeckGuideProps) {
           invisible rot the catalogue's own header warns about. */}
 
       {/* ── WHY THE PILE IS SHORT, FIRST (Ben, 2026-11-11) ──────────────
-          The count left the headline and came here: *Musie schlägt dir immer
-          nur drei Übungen vor, damit du einfacher aussuchen kannst.* It goes
-          before the two gesture rows because it explains what the reader is
-          looking at before it explains what to do with it. The number is a
-          WORD, by the same rule the headline used (2026-10-15). */}
+          The count left the headline and came here. Since 2026-11-16 it
+          reads *Musie schlägt dir drei Übungen vor, aus denen du wählen
+          kannst.* (Ben's wording; it was *…immer nur drei Übungen vor, damit
+          du einfacher aussuchen kannst.*). It goes before the two gesture
+          rows because it explains what the reader is looking at before it
+          explains what to do with it. The number is a WORD, by the same rule
+          the headline used (2026-10-15). */}
       <span className="musie-deck-guide__row musie-deck-guide__row--count">
         <span className="musie-deck-guide__text">
           {t('exercises.guide.count', { count: numberWord(count, locale) })}
         </span>
       </span>
 
-      {/* ── THE TWO DIRECTIONS, AT THE TWO EDGES ────────────────────────
-          Both chevrons, in the order they sit in beside the pile and pushed
-          to the card's own sides, because the row is about the PAIR — one
-          glyph would explain half a gesture, and both in one corner would
-          describe a control instead of a movement. */}
+      {/* ── THE SWIPE, AND NO CHEVRONS OF ITS OWN (Ben, 2026-11-16) ─────
+          It drew a chevron at each edge of the card, the pair pointing the
+          two ways the gesture goes. Ben: "Chevron icons innerhalb der grünen
+          Karte weg, die werden von denen außen ersetzt" — the deck's gutter
+          chevrons stand beside the card at every width since 2026-11-13, and
+          they point the same two ways a hand's width further out, so the
+          inner pair was the same hint twice. The sentence stays, centred
+          across the middle of the card. */}
       <span className="musie-deck-guide__row musie-deck-guide__row--swipe">
-        <span className="musie-deck-guide__glyph">
-          <Icon glyph={ChevronLeft} size="lg" />
-        </span>
         <span className="musie-deck-guide__text">{t('exercises.guide.next')}</span>
-        <span className="musie-deck-guide__glyph">
-          <Icon glyph={ChevronRight} size="lg" />
-        </span>
       </span>
 
       {/* ── THE WAY ON, DRAWN RATHER THAN NAMED ─────────────────────────

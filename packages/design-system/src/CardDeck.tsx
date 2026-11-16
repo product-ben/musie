@@ -19,9 +19,8 @@
  *
  *   SIDEWAYS DEALS, WHICHEVER WAY. A swipe throws the top card off the stage
  *   the way the finger went — rotating, fading — and the card under it is
- *   live before it lands. Both directions do the same thing to the pile,
- *   which is what the overlay has been saying in one word since Ben asked for
- *   it: another card. One threshold for both (SWIPE_RATIO), and a flick arms
+ *   live before it lands. Both directions do the same thing to the pile:
+ *   another card. One threshold for both (SWIPE_RATIO), and a flick arms
  *   either. The three asymmetries that used to protect the right swipe are
  *   gone with the door they were protecting.
  *
@@ -45,31 +44,17 @@
  *   back — and a press being the only way in is also what makes an accidental
  *   one unlikely: a press is a place, not a direction.
  *
- * ── THE OVERLAY IS NOT A VERDICT ANY MORE, AND IT ARRIVES AT ONCE ─────────
- * It used to appear AT the threshold, which for the accept was half the card's
- * width: by the time it could be read the card was half off the screen and the
- * decision had been made. Ben, 2026-10-05: "it is only visible once the user
- * already swiped it away."
- *
- * So it is no longer a verdict but the answer to "another card is coming", and
- * it fades in WITH the gesture — fully opaque at OVERLAY_FULL_AT, a tenth of
- * the card, well under half of SWIPE_RATIO. The two intent chips went with it:
- * they existed to let somebody COMPARE two outcomes before choosing one, and
- * with both directions free and the overlay up at a tenth of a card they
- * answered a question nobody is asking and were covered a frame later.
- *
- * ── IT SAYS THE SAME WORD BOTH WAYS (Ben, 2026-10-05) ─────────────────────
- * `nextLabel`, whichever way the finger is going. It named the direction for
- * half a day and Ben asked for one word: both ways deal another card, so
- * "another exercise" is true in both, and a label that changed under the thumb
- * made a browse feel like a decision again. WHICH way is still said, twice,
- * where it is a fact rather than a mood — by the two buttons, and by the SIDE
- * the overlay's word sits on, which stays the trailing edge so the word is
- * whole for the whole of the gesture.
- *
- * It is one line now. The second line named the press, and the press has a
- * button on the card to name it — a sentence under a verb is what you write
- * when there is nothing to point at.
+ * ── A CARD UNDER THE FINGER IS STILL THE CARD (Ben, 2026-11-16) ──────────
+ * There was an OVERLAY: from the first pixel of a swipe the whole face went
+ * over to the primary green with `nextLabel` on it, at full strength by a
+ * tenth of the card. It began as a verdict at the commit threshold ("it is
+ * only visible once the user already swiped it away", 2026-10-05), became
+ * "another card is coming", and is gone: "Grüner State weg, einfach so lassen
+ * wie die Karte ist". The card being thrown shows its own face to the end.
+ * What the overlay said is said by the motion — the card leaves, the next is
+ * under it — and by the two gutter chevrons and their names. Its stylesheet
+ * block and `--musy-card-reveal` went with it; `dir` stays, because it is the
+ * way the card is thrown.
  *
  * ── WHAT HAPPENS AFTER AN ACCEPT IS THE CONSUMER'S, AND IT CAN FAIL ───────
  * `onAccept` fires, the card lifts off the pile and fades, and the deck goes
@@ -134,7 +119,8 @@
  */
 import * as React from 'react';
 import { Button } from '@base-ui/react/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Tooltip } from '@base-ui/react/tooltip';
+import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Dots } from './Dots';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
@@ -169,16 +155,6 @@ const SWIPE_RATIO = 0.25;
  *  accident and it must never open a one-way door. There is no door on this
  *  axis any more, and flicking through a pile is exactly what a flick is for. */
 const FLICK_PX_PER_MS = 0.45;
-
-/** Where the overlay has finished fading in, as a fraction of the CARD: a
- *  tenth, so about 36px of the 360 a phone gives it, and well under half of
- *  SWIPE_RATIO.
- *
- *  DELIBERATELY NOT TIED TO THE THRESHOLD. The overlay's job is to name the
- *  card you are heading for while you can still change your mind, and a number
- *  derived from the commit point is a number that arrives when the decision
- *  does — which is the thing that was wrong with it. */
-const OVERLAY_FULL_AT = 0.1;
 
 /** How far the top card travels before the pile behind it has closed up.
  *  FORWARD ONLY — see `progress` in onPointerMove. */
@@ -308,25 +284,17 @@ export interface CardDeckProps {
    *  comes back to the top, which is the undo for a card dealt past. Carries
    *  the id of the card that was on top when it happened. */
   onPrevious: (id: string) => void;
-  /**
-   * What the overlay says while a card is being dealt — the card you are going
-   * TO, which is the same card whichever way the hand went — and the right-hand
-   * icon button's accessible name and tooltip. REQUIRED.
-   *
-   * It is `nextLabel` rather than a word of its own because the two are the
-   * same claim — another card is coming — and a deck with two strings for it
-   * is a deck where they will disagree.
-   */
+  /** The forward direction's name: the trailing gutter's accessible name and
+   *  its tooltip on a fine pointer. REQUIRED. It was also the word the swipe
+   *  overlay wrote across the card, until that went (2026-11-16). */
   nextLabel: string;
-  /** The backward direction's name. The icon button's accessible name and
-   *  tooltip, and nothing else: the overlay says `nextLabel` both ways, so this
-   *  is read rather than seen, and no measure binds it. REQUIRED. */
+  /** The backward direction's name: the leading gutter's accessible name and
+   *  its tooltip on a fine pointer. REQUIRED. */
   previousLabel: string;
   /** The pile's accessible name.
    *
    *  It is also the only place a keyboard or screen-reader user is told what
-   *  the keys do, because the overlay that teaches the press is a visual state
-   *  and is `aria-hidden`. Say both there. */
+   *  the keys do — nothing visible teaches them. Say both there. */
   label: string;
   /**
    * What the live region says when the top card changes: the card's own name
@@ -461,17 +429,13 @@ interface Drag extends Flight {
    * Which way the finger is going, from the first pixel past the slop.
    *
    * THE HAND'S DIRECTION, NOT AN ACTION. Both ways deal the same card off the
-   * same pile; this is what the card is thrown along and which edge the
-   * overlay's word sits on, and nothing else.
+   * same pile; this is what the card is thrown along, and nothing else.
    */
   dir: 'left' | 'right';
-  /** How much of the overlay is showing, 0…1. Full long before `armed`. */
-  reveal: number;
   /** True once a release would move the pile. */
   armed: boolean;
-  /** True when the thing under the finger is the cover. Then `progress` and
-   *  `reveal` stay 0: the pile does not rise and the overlay does not show,
-   *  because nothing is happening to the pile. */
+  /** True when the thing under the finger is the cover. Then `progress` stays
+   *  0: the pile does not rise, because nothing is happening to the pile. */
   cover: boolean;
 }
 
@@ -491,6 +455,57 @@ interface Departing extends Flight {
   /** -1 off the leading edge, 1 off the trailing one — whichever way the hand
    *  threw it. The stylesheet multiplies a viewport's width by it. */
   dir: 1 | -1;
+}
+
+/**
+ * ONE GUTTER: the strip of screen beside the card, which is the button, with
+ * a chevron in the middle that carries the tooltip.
+ *
+ * ── THE TOOLTIP IS ICONBUTTON'S, ANCHORED TO THE MARK (Ben, 2026-11-16) ────
+ * The same base-ui primitive, the same `.musy-icon-btn__tooltip` look, the
+ * same `top` side and offsets, so a cursor meets the one tooltip this system
+ * draws. What differs is the ANCHOR: by default base-ui positions a tooltip
+ * against its trigger, and this trigger is a strip as tall as the card, so the
+ * tooltip would stand over the top of the pile, far from anything the cursor
+ * is on. `anchor` points it at the chevron.
+ *
+ * NO TOOLTIP ON A FINGER, for IconButton's reason and through its rule: the
+ * stylesheet hides the popup on a coarse pointer, so a phone keeps only the
+ * accessible name.
+ */
+function Gutter({ side, label, glyph, disabled, onClick }: {
+  side: 'previous' | 'next';
+  label: string;
+  glyph: LucideIcon;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const mark = React.useRef<HTMLSpanElement>(null);
+  const button = (
+    <Button
+      className={`musy-deck__strip musy-deck__strip--${side}`}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <span className="musy-deck__strip-mark" ref={mark}>
+        <Icon glyph={glyph} size="md" />
+      </span>
+    </Button>
+  );
+  return (
+    <Tooltip.Root trackCursorAxis="none">
+      <Tooltip.Trigger render={button} />
+      <Tooltip.Portal>
+        <Tooltip.Positioner anchor={mark} side="top" sideOffset={8} collisionPadding={8}>
+          {/* aria-hidden: it repeats the button's accessible name. */}
+          <Tooltip.Popup className="musy-icon-btn__tooltip" aria-hidden="true">
+            {label}
+          </Tooltip.Popup>
+        </Tooltip.Positioner>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
 }
 
 export function CardDeck({
@@ -1001,11 +1016,9 @@ export function CardDeck({
 
          NOT UNDER A COVER. The card under the cover is ALREADY the one on
          top, and stays it: a rise there would shuffle the pile one place up
-         for a move that does not move it. Nor does the overlay show — it
-         names the next card, and the cover leaving brings no next card. */
+         for a move that does not move it. */
       progress: g.onCover ? 0 : Math.min(1, reach / PILE_CLOSES_AT),
       dir: travelled < 0 ? 'left' : 'right',
-      reveal: g.onCover ? 0 : Math.min(1, reach / OVERLAY_FULL_AT),
       armed: reach >= SWIPE_RATIO,
       cover: g.onCover,
     });
@@ -1277,35 +1290,8 @@ export function CardDeck({
                 >
                   {face(item, isFront && !isSent)}
 
-                  {/* ── THE OVERLAY ───────────────────────────────────────
-                      Where the swipe is going, named, from the first pixel of
-                      it. The whole face goes over to one colour with one word
-                      on it, and the word is the CARD YOU WILL GET rather than
-                      a verdict on this one — nothing is being decided, so
-                      there is nothing to decide between.
-
-                      ONE WORD BOTH WAYS, and NO DIRECTION GLYPH. The arrow
-                      here would have to mean "the way the finger is going",
-                      and the arrows on the two buttons mean "back and forward
-                      in a sequence" — which for the backward direction are
-                      opposite arrows for the same move. `data-dir` stays, and
-                      earns its keep twice over: it is what puts the word on
-                      the edge of the card that is still on screen, and what
-                      holds the fade off while a finger is down.
-
-                      `aria-hidden`: this is the visible half of a state the
-                      live region already announces, and a screen reader
-                      driving the deck by its buttons never reaches it. */}
-                  {isFront && (
-                    <div
-                      className="musy-deck__overlay"
-                      data-dir={cardDrag?.dir ?? undefined}
-                      aria-hidden="true"
-                      style={vars({ '--musy-card-reveal': cardDrag?.reveal ?? 0 } as never)}
-                    >
-                      <span className="musy-deck__overlay-label">{nextLabel}</span>
-                    </div>
-                  )}
+                  {/* NO OVERLAY HERE SINCE 2026-11-16 — the card under the
+                      finger shows its own face. The header says why. */}
                 </div>
               );
             })}
@@ -1398,32 +1384,25 @@ export function CardDeck({
               order: the card, then the two directions, then the positions.
               Back before forward, as the pair reads.
 
-              NO TOOLTIP, where IconButton would draw one. It was argued from
-              these existing only for a thumb, and that half went on
-              2026-11-13; the other half stands — a tooltip anchored to a
-              strip the height of a card would point at the middle of nothing.
-              The label is the accessible name. A cursor now finds no tooltip
-              where the old pair had one: logged in stories/OPEN-QUESTIONS.md. */}
-          <Button
-            className="musy-deck__strip musy-deck__strip--previous"
-            aria-label={previousLabel}
+              A TOOLTIP SINCE 2026-11-16, on the CHEVRON (Ben: „Icon buttons
+              auf Desktop mit Tooltip“). Until then there was none, because a
+              tooltip anchored to a strip the height of a card would point at
+              the middle of nothing. `Gutter` anchors it to the mark instead,
+              so it stands over the chevron the cursor is on. */}
+          <Gutter
+            side="previous"
+            label={previousLabel}
+            glyph={ChevronLeft}
             disabled={inert || !browsable}
             onClick={goPrevious}
-          >
-            <span className="musy-deck__strip-mark">
-              <Icon glyph={ChevronLeft} size="md" />
-            </span>
-          </Button>
-          <Button
-            className="musy-deck__strip musy-deck__strip--next"
-            aria-label={nextLabel}
+          />
+          <Gutter
+            side="next"
+            label={nextLabel}
+            glyph={ChevronRight}
             disabled={inert || !browsable}
             onClick={goNext}
-          >
-            <span className="musy-deck__strip-mark">
-              <Icon glyph={ChevronRight} size="md" />
-            </span>
-          </Button>
+          />
 
           {/* ── WHERE YOU ARE IN THE PILE, FOR THE EYE ──────────────────
               The deck has always said this to a screen reader — the live
