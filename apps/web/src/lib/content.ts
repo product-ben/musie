@@ -40,19 +40,20 @@ export interface UserType {
 /**
  * What a person is after when they start a session.
  *
- * FOUR ROWS SINCE 2026-10-15, and the fourth one is the change. "Musie
- * kennenlernen" was the ABSENCE of a goal — no row, null in
- * `sessions.goal_id` — for as long as it meant *show me everything*. It now
- * offers three named exercises like the other three, so there is nothing left
- * for absence to express and it is a row like them.
- * `20261015140000_the_headline_is_the_filter.sql` carries the argument;
- * `lib/goals.ts` is where `NO_GOAL` used to live.
+ * THREE ON OFFER SINCE 2026-11-11 — *entspannen*, *Energie sammeln*,
+ * *Achtsamkeit üben* — and a fourth row that is RETIRED rather than deleted.
+ * *Musie kennenlernen* was the absence of a goal until 2026-10-15, a row of
+ * its own after that, and is now `retired = true`: sessions still name it, so
+ * it stays, and `getGoals` below never returns it.
+ * `20261111120000_three_goals.sql` carries the argument.
  *
- * ── A GOAL IS SAID THREE WAYS, AND THEY ARE NOT ONE STRING REUSED ─────────
- * `label` names it, `purpose` says what its exercises are FOR, and `why`
- * argues for it. The grammar differs — *Entspannung* is what you need,
- * *Entspannen* is what the exercises are for — so no screen can derive one
- * from another and the table carries all three.
+ * ── A GOAL IS SAID THREE WAYS, AND TWO OF THEM NOW AGREE ──────────────────
+ * `label` names it on its card, `purpose` ends the headline *Lass uns
+ * zusammen …*, and `why` argues for it. Until 2026-11-11 label and purpose
+ * differed in grammar — *Entspannung* against *Entspannen* — and today they
+ * are the same phrase, capitalised as a heading in one. They stay two columns
+ * anyway: a sentence and a heading are different jobs, and German will want
+ * them different again the first time a purpose cannot stand as a title.
  *
  * Was `Situation` in the schema until 2026-10-07, and never read by anything.
  */
@@ -61,17 +62,19 @@ export interface Goal {
   sort: number;
   /** The goal's name, and the headline of its card in the goal sheet. */
   label: string;
-  /** Dropped into /exercises' h1 after "zum" / "to". Never empty. */
+  /**
+   * The verb phrase that ends /exercises' h1, *Lass uns zusammen {goal}* /
+   * *Let's {goal} together*. Never empty.
+   */
   purpose: string;
   /**
    * Two sentences under a bold "Warum?" on the card, or null.
    *
-   * NULL IS DATA AND NOT A GAP — Ben, 2026-10-15: three of the four goals
-   * name themselves and carry no explanation. Only Achtsamkeit has one, and
-   * it is the one the user testing heard *was soll das bringen?* about. The
-   * same distinction `Exercise.needs` makes, and the reason
-   * `public.missing_translations` reports a string only where one locale has
-   * it and the other does not.
+   * EVERY OFFERED GOAL CARRIES ONE SINCE 2026-11-11; until then only
+   * Achtsamkeit did. NULL stays legal and still means data rather than a gap
+   * — a card that is a headline alone — which is the distinction
+   * `Exercise.needs` makes, and the reason `public.missing_translations`
+   * reports a string only where one locale has it and the other does not.
    */
   why: string | null;
 }
@@ -331,21 +334,29 @@ export async function getUserTypes(locale: Locale): Promise<UserType[]> {
 }
 
 /**
- * The goals, in the order they are offered.
+ * The goals that are OFFERED, in the order they are offered.
  *
  * Ordered by `sort` rather than by label: the order is a content decision
  * (the schema's `sort integer not null unique`), and sorting by a translated
  * string would put the list in a different order in each locale.
  *
- * ALL FOUR ARE IN HERE SINCE 2026-10-15. "Musie kennenlernen" used to be
- * appended by the picker because it was the absence of a goal rather than a
- * row; it is a row now, and the only thing that decides the order of the four
- * is this query's `order('sort')`.
+ * ── ONLY THE UNRETIRED ONES (2026-11-11) ──────────────────────────────────
+ * `retired = false` is the whole of what retiring a goal means to the app,
+ * and it is filtered HERE, in the one query every reader of goals goes
+ * through: the sheet, the default, the headline, the cached choice and
+ * /goal-mappings all receive this list and nothing else. A retired goal stays
+ * in the table because `sessions.goal_id` names it; it simply never reaches
+ * a screen that offers goals. Filtered in the query rather than in the RLS
+ * policy, because who may READ a goal did not change — only what is offered.
+ *
+ * The cached choice falls back for free: `readCachedGoal()` validates against
+ * this list, so a browser that remembered *Musie kennenlernen* opens on the
+ * default instead.
  *
  * WHICH MAKES THE ORDER LOAD-BEARING TWICE. It is the order of the cards in
  * the goal sheet, and `defaultGoal()` in `lib/goals.ts` takes the FIRST of
  * them — so "the default goal" and "the first card" are one fact that cannot
- * drift, and both move by migration.
+ * drift, and both move by migration. *entspannen* is `sort = 1`.
  */
 export async function getGoals(locale: Locale): Promise<Goal[]> {
   const { data, error } = await getSupabase()
@@ -354,6 +365,7 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
        it applies to every select in this file: supabase-js parses this at the
        TYPE level, and TypeScript does not fold `'a' + 'b'` into a literal. */
     .select('id, sort, goal_i18n(locale, label, purpose, why)')
+    .eq('retired', false)
     .in('goal_i18n.locale', wanted(locale))
     .order('sort');
 
@@ -367,9 +379,9 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
       sort: row.sort,
       label: text.label,
       purpose: text.purpose,
-      /* `?? null` RATHER THAN A FALLBACK STRING. A goal with no explanation is
-         three of the four, and the card simply draws no body — inventing a
-         sentence here would put words in the product's mouth. */
+      /* `?? null` RATHER THAN A FALLBACK STRING. A goal with no explanation
+         is legal, and the card simply draws no body — inventing a sentence
+         here would put words in the product's mouth. */
       why: text.why ?? null,
     }];
   });

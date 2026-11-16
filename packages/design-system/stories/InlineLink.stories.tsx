@@ -1,5 +1,9 @@
 /**
- * InlineLink — stories. Shape per stories/CONVENTIONS.md.
+ * InlineLink — stories. Shape per stories/CONVENTIONS.md, except the title.
+ *
+ * DEPRECATED (Ben, 2026-11-11) — use InlineButton. Filed under `Deprecated/`
+ * rather than `Components/` so the sidebar stops offering it; kept until its
+ * last caller (/exercises' headline) moves, then deleted with the component.
  *
  * Docs text below is taken from the component's own header comment. Nothing
  * is invented.
@@ -19,12 +23,17 @@ import { InlineLink } from '../src/InlineLink';
 import { Stack, bothThemes } from './_decorators';
 
 const meta = {
-  title: 'Components/InlineLink',
+  title: 'Deprecated/InlineLink',
   component: InlineLink,
   parameters: {
     docs: {
       description: {
         component: [
+          '**Deprecated (2026-11-11) — use `InlineButton`** (Components/InlineButton).',
+          'It keeps this component’s reasoning and changes the look: the heading’s own',
+          'ink with a persistent `--border-strong` underline, and no `actions`. Kept',
+          'working until its last caller moves; then deleted.',
+          '',
           'base-ui: Button, drawn as a link inside something else — a sentence, a',
           'heading, a label.',
           '',
@@ -33,14 +42,14 @@ const meta = {
           'element is display type inside an `h1` and body type inside a `p`. It sets',
           'three things of its own: the colour, the optional glyph, and the states.',
           '',
-          '**That is why it is not `CtaButton size="min"`.** A button declares its own',
+          '**That is why it is not `Button size="min"`.** A button declares its own',
           'type step by design — it is a box with a label in it — and a box with a label',
           'in it cannot sit inside a sentence without breaking the line it sits in. The',
           'two components are opposites about the same question.',
           '',
           '**It is a `<button>` by default, and it is named for how it looks.** Its first',
           'call site opens a sheet, which is a button; a link that navigates is',
-          '`render={<a href=… />}`, inherited from base-ui’s Button exactly as CtaButton',
+          '`render={<a href=… />}`, inherited from base-ui’s Button exactly as the system’s own Button',
           'inherits it. The consumer picks the semantics; the component cannot know',
           'which it is.',
           '',
@@ -55,7 +64,7 @@ const meta = {
           'deliberately: one would break the line box it sits in.',
           '',
           '**What it is NOT.** Not a CTA, not a standalone control, not a nav item —',
-          '`LinkList` is the list of destinations and `CtaButton` is the action.',
+          '`LinkList` is the list of destinations and `Button` is the action.',
         ].join('\n'),
       },
     },

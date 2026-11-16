@@ -222,7 +222,7 @@
      the default for every interactive element in the app; `accent` is
      terracotta and a screen opts into it deliberately. The purple
      `accent-alt` family is gone with the purple scale — it was declared on
-     eight component APIs and used at zero call sites, which CtaButton's own
+     eight component APIs and used at zero call sites, which Button's own
      header had already noticed.                                            */
   /* Green solid fill — the family's resting state. THE DEFAULT. */
   --interactive-primary: var(--green-9);

@@ -26,7 +26,7 @@
  * the artwork alt text, because that is content and it reaches a listener.
  *
  * ── WHAT DRAWS WHAT ───────────────────────────────────────────────────────
- * `Field`, `ContentBox`, `CtaButton`, `Lightbox`, `Message`, `Toast`,
+ * `Field`, `ContentBox`, `Button`, `Lightbox`, `Message`, `Toast`,
  * `SegmentedControl` and `Badge` are the design system's; the only thing with no
  * component is the 5 × 5 grid itself, which `10-layout.md` L14 permits as a
  * `musie-`prefixed pattern whose every declaration resolves to a Layer 1
@@ -39,7 +39,7 @@ import { Clock, Image, LayoutGrid, Layers, Music, Redo2, Undo2 } from 'lucide-re
 import {
   Badge,
   ContentBox,
-  CtaButton,
+  Button,
   Field,
   IconButton,
   Lightbox,
@@ -272,7 +272,7 @@ function History(props: {
           <p className="musie-log__what">
             {edit.entity} {edit.row_id} — {changes(edit)}
           </p>
-          <CtaButton
+          <Button
             variant="secondary"
             size="min"
             loading={props.busy}
@@ -280,7 +280,7 @@ function History(props: {
             onClick={() => props.onRevert(edit.id)}
           >
             Revert this
-          </CtaButton>
+          </Button>
         </li>
       ))}
     </ol>
@@ -385,7 +385,7 @@ export function Maintenance(): React.ReactElement {
           headline="The deck could not be read"
           text={problem}
           statusWord="Error"
-          action={<CtaButton variant="secondary" size="min" onClick={() => void load()}>Try again</CtaButton>}
+          action={<Button variant="secondary" size="min" onClick={() => void load()}>Try again</Button>}
         />
       </div>
     );
@@ -785,14 +785,14 @@ export function Maintenance(): React.ReactElement {
             }}
           />
         </label>
-        <CtaButton
+        <Button
           variant="secondary"
           size="min"
           disabled={busy}
           onClick={() => setDraftTrack(true)}
         >
           Add one with no file
-        </CtaButton>
+        </Button>
       </div>
 
       <p className="musie-note">
@@ -991,7 +991,7 @@ export function Maintenance(): React.ReactElement {
         </button>
         {card.archived_at === null && (
           <span className="musie-row__actions">
-            <CtaButton
+            <Button
               variant="secondary"
               size="min"
               loading={busy}
@@ -1004,8 +1004,8 @@ export function Maintenance(): React.ReactElement {
               }}
             >
               Up
-            </CtaButton>
-            <CtaButton
+            </Button>
+            <Button
               variant="secondary"
               size="min"
               loading={busy}
@@ -1018,7 +1018,7 @@ export function Maintenance(): React.ReactElement {
               }}
             >
               Down
-            </CtaButton>
+            </Button>
           </span>
         )}
       </div>
@@ -1030,14 +1030,14 @@ export function Maintenance(): React.ReactElement {
   const cards = (
     <>
       <div className="musie-toolrow">
-        <CtaButton
+        <Button
           variant="primary"
           size="min"
           disabled={busy || free === null}
           onClick={() => { setDraftCell(''); setDraftCard(true); }}
         >
           {free === null ? 'All 99 codes are used' : `Add ${free}`}
-        </CtaButton>
+        </Button>
         <span className="musie-note">
           {liveCards.length} live of {deck.cards.length} ever made. A code is written
           once and never reused, so a retired card keeps its own for ever.
@@ -1150,9 +1150,9 @@ export function Maintenance(): React.ReactElement {
           */}
         {card.archived_at === null ? (
           <>
-            <CtaButton variant="secondary" disabled loading={false}>
+            <Button variant="secondary" disabled loading={false}>
               Retire this card
-            </CtaButton>
+            </Button>
             <p className="musie-note">
               Retiring a card is off until the app can hide one. The deck the
               product deals does not filter retired cards yet, so a card
@@ -1162,7 +1162,7 @@ export function Maintenance(): React.ReactElement {
             </p>
           </>
         ) : (
-          <CtaButton
+          <Button
             variant="secondary"
             loading={busy}
             loadingLabel="…"
@@ -1171,7 +1171,7 @@ export function Maintenance(): React.ReactElement {
             }}
           >
             Bring it back
-          </CtaButton>
+          </Button>
         )}
 
         <ContentBox headline="What changed here" headingLevel={3}>
@@ -1260,7 +1260,7 @@ export function Maintenance(): React.ReactElement {
         onChange={setDraftCell}
       />
 
-      <CtaButton
+      <Button
         variant="primary"
         loading={busy}
         loadingLabel="Creating"
@@ -1288,7 +1288,7 @@ export function Maintenance(): React.ReactElement {
         }}
       >
         Create {free}
-      </CtaButton>
+      </Button>
     </Lightbox>
   );
 
@@ -1301,7 +1301,7 @@ export function Maintenance(): React.ReactElement {
         so this never looks like it has been edited — because it never has been.
       </p>
       <History edits={deck.edits} onRevert={revert} busy={busy} />
-      <CtaButton
+      <Button
         variant="secondary"
         size="min"
         onClick={() => {
@@ -1311,7 +1311,7 @@ export function Maintenance(): React.ReactElement {
         }}
       >
         Load more
-      </CtaButton>
+      </Button>
     </>
   );
 
@@ -1757,11 +1757,11 @@ function TrackPanel(props: {
       )}
 
       <div className="musie-toolrow">
-        <CtaButton variant="primary" loading={props.busy} loadingLabel="Saving" onClick={save}>
+        <Button variant="primary" loading={props.busy} loadingLabel="Saving" onClick={save}>
           {props.isNew === true ? 'Create' : 'Save'}
-        </CtaButton>
+        </Button>
         {props.isNew !== true && (
-        <CtaButton
+        <Button
           variant="secondary"
           loading={props.busy}
           loadingLabel="…"
@@ -1775,7 +1775,7 @@ function TrackPanel(props: {
           }}
         >
           {track.archived_at === null ? 'Retire this piece' : 'Bring it back'}
-        </CtaButton>
+        </Button>
         )}
       </div>
 
@@ -1874,7 +1874,7 @@ function ArtworkPanel(props: {
       </Fact>
 
       <div className="musie-toolrow">
-        <CtaButton
+        <Button
           variant="primary"
           loading={props.busy}
           loadingLabel="Saving"
@@ -1893,8 +1893,8 @@ function ArtworkPanel(props: {
           }}
         >
           Save
-        </CtaButton>
-        <CtaButton
+        </Button>
+        <Button
           variant="secondary"
           loading={props.busy}
           loadingLabel="…"
@@ -1908,7 +1908,7 @@ function ArtworkPanel(props: {
           }}
         >
           {artwork.archived_at === null ? 'Retire this picture' : 'Bring it back'}
-        </CtaButton>
+        </Button>
       </div>
 
       <ContentBox headline="What changed here" headingLevel={3}>

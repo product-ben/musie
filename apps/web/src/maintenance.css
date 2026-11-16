@@ -7,7 +7,7 @@
  * has no component, and two things here qualify: the 5 × 5 grid, which is the
  * screen, and a select, which the system does not have. Everything else on
  * the screen is a design-system component with props — `Field`, `Lightbox`,
- * `ContentBox`, `CtaButton`, `Message`, `Toast`, `Badge`, `SegmentedControl`
+ * `ContentBox`, `Button`, `Message`, `Toast`, `Badge`, `SegmentedControl`
  * — and nothing below reaches into any of their geometry (L7).
  *
  * L14.1: every declaration resolves to a Layer 1 token or arithmetic over

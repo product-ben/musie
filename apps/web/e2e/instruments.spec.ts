@@ -4,7 +4,8 @@
  * One walk per instrument, from the library to the diary, asserting what the
  * brief promised and what no unit test can see:
  *
- *   · Kalimba, Marimba, Harfe are under „Entspannung“;
+ *   · Kalimba, Marimba, Harfe are under „Entspannen“, behind „Alle Übungen
+ *     zeigen“ (they are its fourth to sixth exercises);
  *   · Einsteigen says „Bevor es losgeht“ and holds the settings: „Duett mit
  *     Musie“ is chosen at first; on a desktop there is no vibration or motion
  *     switch (touch screens only — the phone walk below has them);
@@ -64,17 +65,21 @@ test.describe('the instruments', () => {
   test.skip(({ locale: browserLocale }) => browserLocale !== 'de-DE', 'German only — see the header');
 
   for (const instrument of INSTRUMENTS) {
-    test(`${instrument.name}: from Entspannung to the diary`, async ({ page }) => {
+    test(`${instrument.name}: from Entspannen to the diary`, async ({ page }) => {
       test.setTimeout(120_000);
       const userId = await signedIn(page);
 
-      /* ── the library, under Entspannung ─────────────────────────────── */
+      /* ── the library, under Entspannen ──────────────────────────────── */
+      /* NO GOAL TO CHOOSE (2026-11-11): *entspannen* is the default now, so a
+         fresh account opens on it — and pressing it in the sheet would change
+         nothing and leave the sheet open. The headline's goal is what says
+         which goal this is: its accessible name begins with the purpose. The
+         instruments are relax's fourth to sixth exercises, and the list shows
+         three until *Alle Übungen zeigen* is on. */
       await page.goto('/exercises');
       await page.getByRole('radio', { name: label(locale, 'exercises.view.list'), exact: true }).click();
-      await page.getByRole('button', { name: new RegExp(label(locale, 'exercises.goal.change')) }).click();
-      const goals = page.getByRole('radiogroup', { name: label(locale, 'exercises.goal.question') });
-      await goals.getByRole('radio', { name: /Entspannung/ }).click();
-      await expect(goals).toBeHidden();
+      await expect(page.getByRole('button', { name: /^entspannen/ })).toBeVisible({ timeout: 15_000 });
+      await page.getByRole('switch', { name: label(locale, 'exercises.showAll'), exact: true }).click();
       await page.getByRole('radiogroup', { name: label(locale, 'exercises.legend') })
         .getByRole('radio', { name: new RegExp(instrument.name) })
         .click();

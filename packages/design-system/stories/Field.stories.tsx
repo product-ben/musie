@@ -148,7 +148,7 @@ const meta = {
           '## Field — no way to pass `autoComplete`, `inputMode`, `maxLength` or an `aria-*` attribute',
           'Where: `src/Field.tsx:38-60` — `FieldProps` is a closed interface and the component',
           'spreads no rest props onto `Field.Control`',
-          'What I checked: Level 1. Unlike IconButton, CtaButton and Switch, `FieldProps`',
+          'What I checked: Level 1. Unlike IconButton, Button and Switch, `FieldProps`',
           'extends nothing — the batch brief’s "these components extend an Omit of',
           'ComponentPropsWithoutRef" is true of the other three and **not** of Field. Level 2:',
           'the prototype’s END screen field is `type="email"`, which is exactly the field that',

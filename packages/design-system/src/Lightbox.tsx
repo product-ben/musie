@@ -86,7 +86,7 @@ export interface LightboxProps {
   /**
    * The control that opens it. Rendered through Dialog.Trigger, so the trigger
    * keeps its own semantics and gets aria-haspopup / aria-expanded for free —
-   * pass a CtaButton or an IconButton, not a div.
+   * pass a Button or an IconButton, not a div.
    *
    * OPTIONAL, because a lightbox opened by navigation has no such element: the
    * route is what opened it. Omit it, drive `open`, and read `finalFocus`.

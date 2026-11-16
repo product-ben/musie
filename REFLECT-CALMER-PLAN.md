@@ -444,7 +444,7 @@ pass through, exactly as they do today. The fallback path (no question set →
 The file shrinks to the welcome copy and two sections.
 
 - Headline and the why-paragraph, from `i18n`.
-- Feelings: empty → `CtaButton`; filled → subheadline, then a
+- Feelings: empty → `Button`; filled → subheadline, then a
   `.musie-feeling-row` of `InlineLink`s each with its own `×` `IconButton`,
   then the outlined `+`. A permitted L14 pattern: it recurs nowhere else yet,
   every declaration resolves to a Layer 1 token, the class is `musie-` not
@@ -468,7 +468,7 @@ Three changes, all in the `else` branch that owns the reflect step.
 
 1. `complete` stops reading `feelingChange` and starts reading
    `feelings.length > 0 && hasAnswered(...)`.
-2. The `CtaButton` takes `variant="ghost"` while incomplete.
+2. The `Button` takes `variant="ghost"` while incomplete.
 3. The incomplete dialog gains the routing buttons from the PRD's table, laid
    out by `ButtonGroup` with §3a's `purpose="continue-only"` — primary
    rightmost in the row, primary last in the stack, DOM order unchanged. Its
@@ -611,7 +611,7 @@ each; this is what they cost in code.
 | The *why* paragraph left the step | rewritten into a third sheet; `reflect.welcome.text` retired |
 | A third door, `?focus-understand` | `UnderstandSheet.tsx`, `FOCUS_UNDERSTAND`, `REFLECT_SHEETS` |
 | The three buttons in one group | `ButtonGroup stacked="hug" align="start"`, inside a section |
-| The back row as a small ghost CTA | `CtaButton variant="ghost" size="min" leadingIcon` — `.musy-drilldown__back` shrank to one declaration |
+| The back row as a small ghost CTA | `Button variant="ghost" size="min" leadingIcon` — `.musy-drilldown__back` shrank to one declaration |
 | *einfach nur …* pre-checked at levels 2 and 3 | `DrillDownLevel.value`, and the two events below |
 | Taking it saves **and closes** | read off the path: a stop's last node still has children |
 | One pick per level | `locked` in `DrillDown`; cleared by remount |
@@ -692,7 +692,7 @@ implementation.
 The button group holds the things to **do**. Asking what any of it is for is
 not one of them, and a box with a label in it standing beside two offers reads
 as a third offer. `InlineLink` exists for exactly this and its own header
-argues against `CtaButton size="min"` in a sentence.
+argues against `Button size="min"` in a sentence.
 
 Consequence worth noting: once both sections are answered the group is empty,
 so it is no longer rendered at all. An empty section still spends a section's

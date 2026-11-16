@@ -8,7 +8,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ContentBox } from '../src/ContentBox';
 import { ContentList } from '../src/ContentList';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { bothThemes, Stack } from './_decorators';
 
 /* Every step `TypeStep` declares, in the scale's own order — largest first,
@@ -341,7 +341,7 @@ export const WithChildren: Story = {
             { label: 'You need', content: 'Your physical Mindfulness Cards deck' },
           ]}
         />
-        <CtaButton variant="primary">Start Exercise</CtaButton>
+        <Button variant="primary">Start Exercise</Button>
       </>
     ),
   },
@@ -498,7 +498,7 @@ export const CloseableFramed: Story = {
   args: {
     headline: 'Session vom 26. September 2026',
     dismissLabel: 'Close this entry',
-    header: <CtaButton variant="ghost">Session details</CtaButton>,
+    header: <Button variant="ghost">Session details</Button>,
     children: (
       <ContentList
         label="About this session"

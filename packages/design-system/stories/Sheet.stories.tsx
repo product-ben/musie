@@ -17,7 +17,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Sheet } from '../src/Sheet';
 import type { SheetPage } from '../src/Sheet';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { singlePane } from './_decorators';
 
 /* The five pictures the first consumer walks, as blocks of colour: the real
@@ -155,7 +155,7 @@ function Walk({ startAt = 0 }: { startAt?: number }) {
 
   return (
     <>
-      {!open && <CtaButton onClick={() => setOpen(true)}>Draw 5 cards</CtaButton>}
+      {!open && <Button onClick={() => setOpen(true)}>Draw 5 cards</Button>}
       <Sheet
         {...LABELS}
         open={open}
@@ -165,9 +165,9 @@ function Walk({ startAt = 0 }: { startAt?: number }) {
         onIndexChange={setIndex}
         foot={
           index === 0 ? (
-            <CtaButton onClick={() => setIndex(1)}>Look at the first image</CtaButton>
+            <Button onClick={() => setIndex(1)}>Look at the first image</Button>
           ) : last ? (
-            <CtaButton onClick={() => setOpen(false)}>Continue</CtaButton>
+            <Button onClick={() => setOpen(false)}>Continue</Button>
           ) : undefined
         }
       />
@@ -208,7 +208,7 @@ export const WithHeader: Story = {
         index={index}
         onIndexChange={setIndex}
         foot={index === PAGES.length - 1
-          ? <CtaButton onClick={() => {}}>Continue</CtaButton>
+          ? <Button onClick={() => {}}>Continue</Button>
           : undefined}
       />
     );
@@ -230,10 +230,10 @@ export const SingleBody: Story = {
       header={
         <>
           <h2 style={{ margin: 0 }}>What picture forms in your mind’s eye?</h2>
-          <CtaButton variant="secondary" size="min" onClick={() => {}}>Please help me</CtaButton>
+          <Button variant="secondary" size="min" onClick={() => {}}>Please help me</Button>
         </>
       }
-      foot={<CtaButton onClick={() => {}}>Ready? Start reflecting</CtaButton>}
+      foot={<Button onClick={() => {}}>Ready? Start reflecting</Button>}
     >
       <div style={{ display: 'grid', gap: 'var(--space-gap-group)', justifyItems: 'start' }}>
         <div style={{ inlineSize: '20rem', aspectRatio: '1.41', background: SWATCHES[0], borderRadius: 'var(--radius-md)' }} />
@@ -253,7 +253,7 @@ export const OnePage: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <>
-        {!open && <CtaButton onClick={() => setOpen(true)}>Draw your card</CtaButton>}
+        {!open && <Button onClick={() => setOpen(true)}>Draw your card</Button>}
         <Sheet
           {...LABELS}
           open={open}
@@ -261,7 +261,7 @@ export const OnePage: Story = {
           pages={[{ id: 'only', content: picture(SWATCHES[2], 'Your card') }]}
           index={0}
           onIndexChange={() => {}}
-          foot={<CtaButton variant="secondary" onClick={() => setOpen(false)}>Continue</CtaButton>}
+          foot={<Button variant="secondary" onClick={() => setOpen(false)}>Continue</Button>}
         />
       </>
     );
@@ -329,7 +329,7 @@ export const WithStage: Story = {
       onOpenChange={() => {}}
       stage={<Strings />}
       header={<h2 style={{ margin: 0 }}>Breathe deeply in and out</h2>}
-      foot={<CtaButton onClick={() => {}}>Continue to reflection</CtaButton>}
+      foot={<Button onClick={() => {}}>Continue to reflection</Button>}
     />
   ),
 };
@@ -347,7 +347,7 @@ export const Compact: Story = {
       density="compact"
       stage={<Strings />}
       header={<h2 style={{ margin: 0 }}>Play until you feel calm.</h2>}
-      foot={<CtaButton onClick={() => {}}>Continue to reflection</CtaButton>}
+      foot={<Button onClick={() => {}}>Continue to reflection</Button>}
     />
   ),
 };

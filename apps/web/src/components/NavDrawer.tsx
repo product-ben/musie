@@ -2,7 +2,7 @@
  * The left navigation drawer — a permitted custom pattern.
  *
  * The design system has no Drawer, so this composes existing components (Logo,
- * IconButton, CtaButton, and since 2026-09-24 whatever `preferences` holds)
+ * IconButton, Button, and since 2026-09-24 whatever `preferences` holds)
  * inside a hand-built shell. L14 permits that, and its conditions hold: every
  * declaration in shell.css resolves to a Layer 1 token, and the naming is
  * `musie-` rather than `musy-`.
@@ -45,7 +45,7 @@
 import type * as React from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 import { X } from 'lucide-react';
-import { CtaButton, IconButton, Logo } from '@musie/design-system';
+import { Button, IconButton, Logo } from '@musie/design-system';
 import { Link } from 'react-router';
 import { BRAND_NAME } from '../brand';
 import { useT } from '../i18n/localeContext';
@@ -93,11 +93,11 @@ export interface NavRow {
    * the mistake the database refuses.
    *
    * An `onSelect` row uses it for the other sense: the write is running. Same
-   * mechanism, same guarantee — `CtaButton`'s `loading` disables the control —
+   * mechanism, same guarantee — `Button`'s `loading` disables the control —
    * which is what stops a second press ending a session that is already being
    * ended.
    *
-   * `CtaButton`'s own `loading` sets `disabled` as well as `aria-busy`, so the
+   * `Button`'s own `loading` sets `disabled` as well as `aria-busy`, so the
    * row cannot be activated in this state.
    */
   loading?: boolean;
@@ -204,7 +204,7 @@ export function NavDrawer(
                       <hr role="separator" className="musie-nav__rule" />
                     ) : null}
 
-                    <CtaButton
+                    <Button
                       /* Left-aligned through the component's own prop, so five
                          labels form a readable column. `start`, not `left`, so
                          the stack mirrors in RTL without a second rule. */
@@ -235,7 +235,7 @@ export function NavDrawer(
                          different KIND of thing. */
                       block={row.action !== true}
                       /* German compounds at 393px need this more often than
-                         English does, which is what CtaButton's own docs say. */
+                         English does, which is what Button's own docs say. */
                       wrap
                       loading={row.loading === true}
                       loadingLabel={t('content.loading')}
@@ -252,7 +252,7 @@ export function NavDrawer(
                       }}
                     >
                       {t(row.labelKey)}
-                    </CtaButton>
+                    </Button>
                   </li>
                 );
               })}

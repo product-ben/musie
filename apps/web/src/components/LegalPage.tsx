@@ -37,7 +37,7 @@
  * `src/legal/` would read better and check nothing.
  */
 import * as React from 'react';
-import { ContentBox, CtaButton, Logo, SegmentedControl } from '@musie/design-system';
+import { ContentBox, Button, Logo, SegmentedControl } from '@musie/design-system';
 import { Languages } from 'lucide-react';
 import { BRAND_NAME } from '../brand';
 import { LOCALES, LOCALE_LABELS, isLocale } from '../i18n';
@@ -102,7 +102,7 @@ export function LegalPage({ page }: LegalPageProps) {
           of `/` is the correct behaviour here, not a compromise. Ghost,
           because leaving is not what the page is for. */}
       <div className="musie-stage__box">
-        <CtaButton
+        <Button
           variant="ghost"
           block
           wrap
@@ -114,7 +114,7 @@ export function LegalPage({ page }: LegalPageProps) {
           nativeButton={false}
         >
           {t('legal.back')}
-        </CtaButton>
+        </Button>
       </div>
 
       {/* ── THE LANGUAGE, AT THE FOOT ──────────────────────────────────────

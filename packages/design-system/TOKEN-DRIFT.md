@@ -15,8 +15,8 @@ working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
 **37 properties in `musy-foundations.css` have no JSON expression.**
-**31 more live only in `musy-foundations-amendments.css`.**
-Total: **68**.
+**32 more live only in `musy-foundations-amendments.css`.**
+Total: **69**.
 
 | Group | n |
 |---|---|
@@ -30,7 +30,7 @@ Total: **68**.
 | Elevation ring | 1 |
 | Grid gap | 1 |
 | The measured viewport | 5 |
-| Amendment tokens | 31 |
+| Amendment tokens | 32 |
 
 ## The `stage` type step
 
@@ -204,6 +204,7 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--instrument-tap-start` | `0.8` | G5 |
 | `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
+| `--target-sm` | `40px` | G6 |
 
 ## What is NOT drift
 

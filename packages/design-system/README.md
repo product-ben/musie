@@ -309,7 +309,7 @@ peers — the consuming app supplies them.
 ## Consuming components
 
 ```ts
-import { CtaButton, ContentBox, Icon } from '@musie/design-system';
+import { Button, ContentBox, Icon } from '@musie/design-system';
 ```
 
 The package ships TypeScript source, not a build. The consumer's bundler

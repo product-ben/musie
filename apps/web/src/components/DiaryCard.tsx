@@ -92,7 +92,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router';
 import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
 import {
-  Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, CtaButton, IconButton,
+  Badge, BadgeRow, ButtonGroup, ContentBox, ContentList, Button, IconButton,
   Message, TrackButton,
 } from '@musie/design-system';
 import type { ContentListItem } from '@musie/design-system';
@@ -428,7 +428,7 @@ export function DiaryCard({ entry, headingLevel, feelings = [] }: DiaryCardProps
         * A disclosure, spelled out rather than taken from a component: the
         * system has no disclosure, and L14 permits a custom pattern exactly
         * where it has none. What is custom is ONE class for the row; the
-        * control is a `CtaButton` and the revealed region is a `ContentList`
+        * control is a `Button` and the revealed region is a `ContentList`
         * and a `BadgeRow`, which are three components doing what they do.
         *
         * THE LABEL CHANGES AND `aria-expanded` CARRIES THE STATE. Ben asked
@@ -445,7 +445,7 @@ export function DiaryCard({ entry, headingLevel, feelings = [] }: DiaryCardProps
       {facts.length > 0 && (
         <div className="musie-entry__details">
           <ButtonGroup align="start">
-            <CtaButton
+            <Button
               variant="ghost"
               leadingIcon={detailsOpen ? ChevronUp : ChevronDown}
               aria-expanded={detailsOpen}
@@ -453,7 +453,7 @@ export function DiaryCard({ entry, headingLevel, feelings = [] }: DiaryCardProps
               onClick={() => setDetailsOpen((open) => !open)}
             >
               {t(detailsOpen ? 'diary.detailsHide' : 'diary.details')}
-            </CtaButton>
+            </Button>
           </ButtonGroup>
 
           {/* `hidden` rather than unmounting: the id `aria-controls` names has
@@ -512,17 +512,17 @@ export function DiaryCard({ entry, headingLevel, feelings = [] }: DiaryCardProps
           text={t('diary.delete.text')}
           action={
             <ButtonGroup align="end">
-              <CtaButton variant="ghost" onClick={() => setConfirming(false)}>
+              <Button variant="ghost" onClick={() => setConfirming(false)}>
                 {t('common.cancel')}
-              </CtaButton>
-              <CtaButton
+              </Button>
+              <Button
                 variant="secondary"
                 loading={deleting}
                 loadingLabel={t('content.loading')}
                 onClick={() => void remove()}
               >
                 {t('diary.delete.yes')}
-              </CtaButton>
+              </Button>
             </ButtonGroup>
           }
         />

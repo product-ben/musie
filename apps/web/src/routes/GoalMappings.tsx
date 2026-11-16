@@ -35,7 +35,7 @@
  */
 import * as React from 'react';
 import { Sparkles } from 'lucide-react';
-import { ContentBox, CtaButton, FilterChips } from '@musie/design-system';
+import { ContentBox, Button, FilterChips } from '@musie/design-system';
 import type { FilterChipSelection } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import { useExercises, useGoals } from '../lib/useContent';
@@ -123,22 +123,22 @@ export function GoalMappings() {
             emptyLabel={t('content.empty')}
           />
 
-          <CtaButton
+          <Button
             variant="primary"
             className="musie-goal-admin__action"
             onClick={() => { setConfig(configFor(exercises, selection)); setCopied(false); }}
           >
             {t('goalMap.submit')}
-          </CtaButton>
+          </Button>
         </div>
       )}
 
       {config !== null && (
         <ContentBox headline={t('goalMap.outputLabel')} headingLevel={2}>
           <pre className="musie-goal-config">{config}</pre>
-          <CtaButton variant="secondary" size="min" onClick={() => void onCopy(config)}>
+          <Button variant="secondary" size="min" onClick={() => void onCopy(config)}>
             {copied ? t('goalMap.copied') : t('goalMap.copy')}
-          </CtaButton>
+          </Button>
         </ContentBox>
       )}
     </div>

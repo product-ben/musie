@@ -53,7 +53,7 @@
  */
 import * as React from 'react';
 import {
-  ButtonGroup, ContentList, CtaButton, Image, Message, MusicPlayer, Sheet, Switch, TrackButton,
+  ButtonGroup, ContentList, Button, Image, Message, MusicPlayer, Sheet, Switch, TrackButton,
   useScrollSnap, useViewportFill,
 } from '@musie/design-system';
 import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
@@ -357,7 +357,7 @@ export function SessionListen({
    * inert, the page scroll locks, Escape closes. The frame is the design
    * system's because a screen styling a panel popup into a full-screen one is
    * reaching into a component's geometry (rule 1, L7) — so the variant went
-   * into the component, which is where `CtaButton.align` came from too.
+   * into the component, which is where `Button.align` came from too.
    *
    * ── THE ORIGIN IS MEASURED AT THE PRESS ──────────────────────────────────
    * `origin` is the transport's rect and the sheet's clip opens out of it, so
@@ -1101,7 +1101,7 @@ export function SessionListen({
                   nothing left   → Keine weitere Frage übrig   (disabled)   */}
             {question.rotates && (question.id !== null || question.exhausted) && (
               <div className="musie-question__swap">
-                <CtaButton
+                <Button
                   variant="outline"
                   size="min"
                   wrap
@@ -1113,11 +1113,11 @@ export function SessionListen({
                     : helperShown
                       ? t('session.listen.questionReroll')
                       : t('session.listen.questionHelp')}
-                </CtaButton>
+                </Button>
 
                 {/* The way out of the dead end, and only there (D16). */}
                 {!question.canSwap && (
-                  <CtaButton
+                  <Button
                     variant="outline"
                     size="min"
                     wrap
@@ -1125,7 +1125,7 @@ export function SessionListen({
                     onClick={question.reset}
                   >
                     {t('session.listen.questionReset')}
-                  </CtaButton>
+                  </Button>
                 )}
               </div>
             )}
@@ -1144,7 +1144,7 @@ export function SessionListen({
                   scrubber lives two views down on the stage.
 
                   OUTLINE, not secondary: this sits on the immersive sheet's
-                  own tinted surface, which is the case `CtaButton`'s docblock
+                  own tinted surface, which is the case `Button`'s docblock
                   names for the transparent rung. `secondary` would paint
                   `--surface-raised` onto a panel that is not the page.
 
@@ -1166,9 +1166,9 @@ export function SessionListen({
                   the track (`enterImmersive`), so there is nothing to start —
                   and a control that both seeks and plays is two controls. */}
               {introUntil !== null && position < introUntil && (
-                <CtaButton variant="outline" onClick={() => seek(introUntil)}>
+                <Button variant="outline" onClick={() => seek(introUntil)}>
                   {t('session.listen.skipIntro')}
-                </CtaButton>
+                </Button>
               )}
 
               {mix.hasVoiceOnly && !simulated && (
@@ -1180,7 +1180,7 @@ export function SessionListen({
                   offGlyph={Volume2}
                 />
               )}
-              <CtaButton
+              <Button
                 variant={met ? 'primary' : 'secondary'}
                 disabled={!met}
                 wrap
@@ -1189,7 +1189,7 @@ export function SessionListen({
                 {met
                   ? t('session.listen.start')
                   : t('session.listen.immersiveLocked')}
-              </CtaButton>
+              </Button>
             </ButtonGroup>
   );
 
@@ -1362,14 +1362,14 @@ export function SessionListen({
           because the locked label is a sentence, and German at 393px needs
           two lines for it. */}
       <div>
-        <CtaButton
+        <Button
           variant={met ? 'primary' : 'secondary'}
           disabled={!met}
           wrap
           onClick={onAdvance}
         >
           {met ? t('session.listen.start') : t('session.listen.startLocked')}
-        </CtaButton>
+        </Button>
       </div>
 
       {/* ── THE DETOUR, UNDER THE WAY ON — 2026-09-24 ──────────────────────
@@ -1385,13 +1385,13 @@ export function SessionListen({
           below. Ghost because it is the quietest of the three — a second
           outlined control under the CTA would read as an equal choice.
 
-          `leadingIcon`, because CtaButton takes no trailing one: a trailing
+          `leadingIcon`, because Button takes no trailing one: a trailing
           icon in this system means "this opens something else", which is
           exactly what this button does not do. */}
       <div>
-        <CtaButton variant="ghost" leadingIcon={ArrowDown} onClick={() => scrollTo(warnRef)}>
+        <Button variant="ghost" leadingIcon={ArrowDown} onClick={() => scrollTo(warnRef)}>
           {t('session.listen.detailsAction')}
-        </CtaButton>
+        </Button>
       </div>
       </div>
 
@@ -1427,17 +1427,17 @@ export function SessionListen({
             rather than invented again: one offer, one sentence, two places. */}
         <div className="musie-listen__warn-actions">
           {met ? (
-            <CtaButton variant="primary" onClick={onAdvance}>
+            <Button variant="primary" onClick={onAdvance}>
               {t('session.listen.start')}
-            </CtaButton>
+            </Button>
           ) : (
-            <CtaButton variant="primary" onClick={scrollToTop}>
+            <Button variant="primary" onClick={scrollToTop}>
               {t('session.listen.warnBack')}
-            </CtaButton>
+            </Button>
           )}
-          <CtaButton variant="secondary" onClick={() => scrollTo(detailRef)}>
+          <Button variant="secondary" onClick={() => scrollTo(detailRef)}>
             {t('session.listen.warnOn')}
-          </CtaButton>
+          </Button>
         </div>
       </section>
 
@@ -1519,9 +1519,9 @@ export function SessionListen({
           for the button: the rail spans the column and must not eat taps
           meant for the player under it. */}
       <div className="musie-listen__rail" data-visible={inDetail ? 'true' : 'false'}>
-        <CtaButton variant="ghost" onClick={scrollToTop}>
+        <Button variant="ghost" onClick={scrollToTop}>
           {t('session.listen.scrollUp')}
-        </CtaButton>
+        </Button>
       </div>
 
       {/* ── THE WAY BACK, AT THE FOOT OF THE WHOLE STEP — Ben, 2026-09-24 ───
@@ -1703,7 +1703,7 @@ export function SessionListen({
             {/* ── THE WAY ON, AT THE TRAILING EDGE — Ben, 2026-10-07 ──────
                 Right-aligned, and alone in its row until the switch joined it.
                 The alignment is the ROW's, not the button's:
-                `CtaButton.align` moves the LABEL inside the control, which is
+                `Button.align` moves the LABEL inside the control, which is
                 a different thing and would leave the box where it was.
 
                 Gated by the same latch as the stage's — `met`, which still
@@ -1726,7 +1726,7 @@ export function SessionListen({
                 component for exactly this (rule 1). TWO things it could not do
                 arrived the same day from two branches, and both went INTO the
                 component rather than being reimplemented here — the call
-                `CtaButton` made with `align`:
+                `Button` made with `align`:
 
                 `stacked="hug"` keeps the group TRAILING once it stacks instead
                 of turning it into two full-width rows, and is what stops a

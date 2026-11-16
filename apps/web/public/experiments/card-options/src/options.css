@@ -1,0 +1,171 @@
+/* card-options — what the variants change, and the bar that switches between
+   them. Everything else on the page is the app's own stylesheets, imported in
+   the app's order by main.tsx.
+
+   An experiment (CLAUDE.md rule 10), so the numbers are the Figma frames' own
+   pixels where Layer 1 has no word for them. `html[data-opt]` is the variant.
+
+   RESPONSIVE, NOT A 393 FRAME (Ben, 2026-11-12: „nimm das fake phone
+   aussenrum weg“). Every number below is either a distance from the CARD or a
+   share of the viewport, so a phone of any width gets the variant as drawn,
+   and from --bp-sm up the screen keeps its own wide, left-aligned layout with
+   the variant's directions instead of the deck's pair beside the pile. */
+
+/* ── THE CARD'S WIDTH ───────────────────────────────────────────────────────
+   The deck's own knob, written as what each variant leaves of the viewport
+   on either side, and capped where the app caps it. At 393 that is 325 (6,
+   10), 297 (3, the app's own) and 285 (7, 9). */
+html[data-opt] .musy-deck {
+  --musy-deck-card-inline: min(22.5rem, 100vw - var(--opt-inset) * 2);
+}
+html:is([data-opt='6'], [data-opt='10']) { --opt-inset: 34px; }
+html[data-opt='3'] { --opt-inset: calc(var(--sp-9) / 2); }
+html:is([data-opt='7'], [data-opt='9']) { --opt-inset: 54px; }
+
+/* ── THE CARD'S CORNERS ─────────────────────────────────────────────────────
+   40 all round, 9 has its top two at 20. The pile carries the shape and the
+   cards inherit it down to the face; the picture's 4px frame follows. */
+html[data-opt] .musy-deck__pile { border-radius: var(--musy-deck-card-radius); }
+html[data-opt] .musie-exercise-card__image {
+  border-radius: var(--musy-deck-card-radius) var(--musy-deck-card-radius) var(--radius-sm) var(--radius-sm);
+}
+html[data-opt='9'] .musy-deck__pile {
+  border-radius: 20px 20px var(--musy-deck-card-radius) var(--musy-deck-card-radius);
+}
+html[data-opt='9'] .musie-exercise-card__image {
+  border-radius: 20px 20px var(--radius-sm) var(--radius-sm);
+}
+
+/* ── THE TWO DIRECTIONS ARE THE DECK'S OWN, AT EVERY WIDTH ──────────────────
+   `.musy-deck__strip` — the phone's gutters — kept, because they are what
+   moves the pile, but drawn wherever the variant draws them and at every
+   width: the stylesheet shows them only below --bp-sm, and from there up the
+   deck draws a pair beside the pile, which no variant has. That pair's
+   column goes.
+
+   ABOVE EVERY CARD, the one being thrown included (`--z-raised + 1`), so
+   they stay put while cards come and go under them. ONLY THE MARK TAKES A
+   TAP — an IconButton's 40px target — so a thumb on the card around it still
+   swipes the card. Every frame draws IconButton `primary` resized to 40px
+   with the thin 20px glyph; the system has no such rung (`sm` is 40 with a
+   16px glyph, `primary` 44 with the bold one), so this draws what the frames
+   draw. */
+html[data-opt] .musy-deck__actions { display: none; }
+html[data-opt] .musy-deck__strip {
+  position: absolute;
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+  z-index: calc(var(--z-raised) + 2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--interactive-ghost-on);
+  cursor: pointer;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-opt] .musy-deck__strip-mark {
+  box-sizing: border-box;
+  inline-size: var(--target-sm);
+  block-size: var(--target-sm);
+  pointer-events: auto;
+}
+html[data-opt] .musy-deck__strip-mark .musy-icon { stroke-width: var(--icon-stroke-sm); }
+
+/* ── 6, 10, 3: RAISED, ON THE PILE'S TOP CORNERS ────────────────────────────
+   20px in from the card's side, 17px down (19 in 3). 6 puts back on the left
+   and forward on the right; 10 and 3 put back beside forward, 8px apart, in
+   the right-hand corner. Raised: the secondary IconButton's surface, border
+   and hover, on Elevation/3 (Elevation/1 in 3). */
+html:is([data-opt='6'], [data-opt='10']) { --opt-top: 17px; --opt-raise: var(--elevation-3); }
+html[data-opt='3'] { --opt-top: 19px; --opt-raise: var(--elevation-1); }
+html:is([data-opt='6'], [data-opt='10'], [data-opt='3']) .musy-deck__strip {
+  inset: var(--opt-top) auto auto auto;
+  inline-size: auto;
+  block-size: auto;
+}
+html:is([data-opt='6'], [data-opt='10'], [data-opt='3']) .musy-deck__strip--next { inset-inline-end: 20px; }
+html[data-opt='6'] .musy-deck__strip--previous { inset-inline-start: 20px; }
+html:is([data-opt='10'], [data-opt='3']) .musy-deck__strip--previous {
+  inset-inline-end: calc(20px + var(--target-sm) + var(--sp-2));
+}
+html:is([data-opt='6'], [data-opt='10'], [data-opt='3']) .musy-deck__strip-mark {
+  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  background-color: var(--surface-raised);
+  color: var(--on-surface);
+  box-shadow: var(--opt-raise);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:is([data-opt='6'], [data-opt='10'], [data-opt='3']) .musy-deck__strip:hover:not(:disabled) .musy-deck__strip-mark {
+    border-color: var(--interactive-ghost-border-hover);
+  }
+}
+
+/* ── 7, 9: GHOST CHEVRONS BESIDE THE CARD ───────────────────────────────────
+   A strip 54px wide on either side of the card, the full height of it, with
+   the mark 5px from its outer edge on the left and 7px on the right, as 7
+   draws them. On a phone that is the screen's edge; where the card stops
+   growing, it stays 54px from the card. From --bp-sm the pile sits at the
+   page's left edge, so it moves in by whatever of those 54px the page's own
+   margin does not already give it. */
+html:is([data-opt='7'], [data-opt='9']) .musy-deck__strip {
+  inset-block: 0 calc(var(--sp-2) * 4);
+  inline-size: var(--opt-inset);
+}
+html:is([data-opt='7'], [data-opt='9']) .musy-deck__strip--previous {
+  inset-inline: auto 100%;
+  justify-items: unsafe start;
+  padding-inline-start: 5px;
+}
+html:is([data-opt='7'], [data-opt='9']) .musy-deck__strip--next {
+  inset-inline: 100% auto;
+  justify-items: unsafe end;
+  padding-inline-end: 7px;
+}
+@media (min-width: 480px) {
+  html:is([data-opt='7'], [data-opt='9']) .musy-deck__stage {
+    margin-inline-start: max(
+      0px,
+      var(--opt-inset) - max(var(--gutter), (100vw - var(--musie-main-wide)) / 2)
+    );
+  }
+}
+
+/* ── THE MODAL ──────────────────────────────────────────────────────────────
+   One sentence and one button, sized to its label rather than the panel. */
+.opt-modal {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-gap-stack);
+}
+.opt-modal__text {
+  margin: 0;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  color: var(--on-surface-muted);
+}
+
+/* ── THE SWITCHER IS THE HEADER ─────────────────────────────────────────────
+   Where the app's menu and logo stand, on the header's own surface, sticky,
+   and hiding on the way down like it (`useHeaderReveal`) — so nothing is
+   fixed over the foot of the page any more. The system's segmented look with
+   the variants' numbers in it, a size below the system's 44 so the header
+   stays the app's height. The header is a three-column grid for menu, logo
+   and nothing; this one has a single thing to centre. */
+:root { --opt-seg-block: 36px; }
+.opt-header {
+  display: flex;
+  justify-content: center;
+}
+.opt-seg { inline-size: 100%; max-inline-size: 22rem; }
+.opt-seg .musy-seg__option {
+  min-block-size: var(--opt-seg-block);
+  padding-inline: var(--sp-1);
+  font-variant-numeric: tabular-nums;
+}

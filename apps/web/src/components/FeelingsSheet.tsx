@@ -51,7 +51,7 @@
  * inserted by any other route is legal — logged in OPEN-QUESTIONS.md.
  */
 import * as React from 'react';
-import { ButtonGroup, CtaButton, DrillDown, Message, RadioGroupText, Sheet } from '@musie/design-system';
+import { ButtonGroup, Button, DrillDown, Message, RadioGroupText, Sheet } from '@musie/design-system';
 import type { DrillDownLevel, DrillDownNode } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
 import { FEELINGS_SOFT_CAP, idOf, pathOf, wheelAsTree } from '../lib/feelings';
@@ -262,7 +262,7 @@ export function FeelingsSheet({
             So: nothing picked in this visit and a stop available → commit
             it, exactly as tapping the row would. Something already picked
             → it is already written, and this just closes. */}
-        <CtaButton
+        <Button
           variant="primary"
           onClick={() => {
             if (pickedHere === 0 && stopId !== null) { void pickId(stopId); return; }
@@ -270,17 +270,17 @@ export function FeelingsSheet({
           }}
         >
           {t('reflect.feelings.sheet.done')}
-        </CtaButton>
+        </Button>
         {/* ONLY BELOW THE CAP. Not disabled — a disabled control here would
             be the product explaining a limit nobody asked about. It simply
             stops offering, and removing one on /reflect brings it back. */}
         {!atCap && (
-          <CtaButton
+          <Button
             variant="outline"
             onClick={() => { setRun((n) => n + 1); setAlreadyHeld(false); }}
           >
             {t('reflect.feelings.sheet.another')}
-          </CtaButton>
+          </Button>
         )}
       </ButtonGroup>
     </div>

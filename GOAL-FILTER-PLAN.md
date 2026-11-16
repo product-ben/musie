@@ -268,7 +268,7 @@ export interface InlineLinkProps
 }
 ```
 
-Extending base-ui's `Button` is the same bargain `CtaButton` makes and it is
+Extending base-ui's `Button` is the same bargain the system's own `Button` makes and it is
 what gives us `render` and `nativeButton` for free — so the one call site that
 wants a real `<a>` later needs no new prop.
 
@@ -277,7 +277,7 @@ The CSS, and every declaration resolves to a Layer 1 token:
 - **Type is inherited**, all of it. `font: inherit` plus explicit
   `font-weight: inherit` and `letter-spacing: inherit`, so the control takes the
   `h1`'s type here and body type in a sentence. This is the whole reason the
-  component exists rather than a `CtaButton size="min"`.
+  component exists rather than a `Button size="min"`.
 - `color: var(--accent-1-text)` — green-11, documented *"accessible text +
   meaningful icons (solved ≥ 4.5:1)"*.
 - `display: inline-flex; align-items: baseline; gap: var(--space-gap-inline)` —

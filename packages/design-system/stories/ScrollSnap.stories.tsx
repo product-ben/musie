@@ -23,7 +23,7 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { useScrollSnap } from '../src/useScrollSnap';
 import { useViewportFill } from '../src/useViewportFill';
 import { singlePane } from './_decorators';
@@ -164,8 +164,8 @@ function JumpRun() {
         body="Both buttons behave from here. This view measured itself, so it has a snap range rather than an exact position, and nothing pulls the jump back."
       >
         <div style={ROW}>
-          <CtaButton onClick={guarded(two)}>Jump down · guarded</CtaButton>
-          <CtaButton variant="secondary" onClick={fought(two)}>Jump down · unguarded</CtaButton>
+          <Button onClick={guarded(two)}>Jump down · guarded</Button>
+          <Button variant="secondary" onClick={fought(two)}>Jump down · unguarded</Button>
         </div>
       </Panel>
 
@@ -175,8 +175,8 @@ function JumpRun() {
         body="Here is where it shows. On an iPhone the unguarded jump reaches view three and is animated straight back to this one."
       >
         <div style={ROW}>
-          <CtaButton onClick={guarded(three)}>Jump down · guarded</CtaButton>
-          <CtaButton variant="secondary" onClick={fought(three)}>Jump down · unguarded</CtaButton>
+          <Button onClick={guarded(three)}>Jump down · guarded</Button>
+          <Button variant="secondary" onClick={fought(three)}>Jump down · unguarded</Button>
         </div>
       </Panel>
 
@@ -186,12 +186,12 @@ function JumpRun() {
         body="And the same going back up, which is the rail's case on the listen step."
       >
         <div style={ROW}>
-          <CtaButton onClick={() => withoutSnapping(() => window.scrollTo({ top: 0, behavior: 'smooth' }))}>
+          <Button onClick={() => withoutSnapping(() => window.scrollTo({ top: 0, behavior: 'smooth' }))}>
             Back to the top · guarded
-          </CtaButton>
-          <CtaButton variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          </Button>
+          <Button variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             Back to the top · unguarded
-          </CtaButton>
+          </Button>
         </div>
       </Panel>
     </div>

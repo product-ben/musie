@@ -49,7 +49,7 @@
  * and the actions. The box earns its place where the frame means something;
  * here it was a wrapper repeating the dialog's name back to it.
  */
-import { ButtonGroup, CtaButton, Lightbox } from '@musie/design-system';
+import { ButtonGroup, Button, Lightbox } from '@musie/design-system';
 import { Link } from 'react-router';
 import { useT } from '../i18n/localeContext';
 import type { ActiveSession } from '../lib/session';
@@ -108,17 +108,17 @@ export function SessionRunningLightbox({
         {/* L6's action row: the likeliest answer outermost, the quiet one first
             in the DOM so tab order matches the screen. */}
         <ButtonGroup align="end">
-          <CtaButton variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             {t('common.cancel')}
-          </CtaButton>
-          <CtaButton
+          </Button>
+          <Button
             variant="secondary"
             loading={starting}
             loadingLabel={t('content.loading')}
             onClick={onEndAndStart}
           >
             {t('exercises.endAndStart', { name })}
-          </CtaButton>
+          </Button>
           {/* THE ONE THAT LOSES NOTHING. Absent when the running session could
               not be read back — there is nowhere to send anybody — and then the
               dialog is a choice between ending and backing out, which is the
@@ -127,7 +127,7 @@ export function SessionRunningLightbox({
               `nativeButton={false}` because this one renders an `<a>`: base-ui
               asks to be told, and warns in the console when it is not. */}
           {session !== null && (
-            <CtaButton
+            <Button
               variant="primary"
               nativeButton={false}
               render={
@@ -135,7 +135,7 @@ export function SessionRunningLightbox({
               }
             >
               {t('exercises.goToSession')}
-            </CtaButton>
+            </Button>
           )}
         </ButtonGroup>
       </div>

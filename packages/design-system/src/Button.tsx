@@ -1,5 +1,5 @@
 /**
- * CTA Button — Layer 2
+ * Button — Layer 2
  * base-ui: Button (`@base-ui/react/button`).
  * APG pattern: Button.
  *
@@ -19,8 +19,14 @@
  * control: a "change" beside a value, a dismiss inside a line of text. The
  * stylesheet bakes in the --sp-2 margin that earns 2.5.8's spacing exception,
  * the same way §7.2's min rung does, so the target cannot be made illegal by
- * placing it. Named `min` rather than `small` so the ladder reads identically
+ * placing it. Named `min` rather than `small` so the rung has the same name
  * on this component and on Icon Button.
+ *
+ * THE LADDERS ARE NOT IDENTICAL, ON PURPOSE (Ben, 2026-11-11, A8). Icon
+ * Button has `sm` (40px, --target-sm, gap G6) and this component does not:
+ * the --sp-2 block padding draws `min` about 40px tall already, so a second
+ * name for that height would be a rung nobody could choose between.
+ * IconButton.tsx's size note has the whole of it. Do not add `sm` here.
  *
  * ── THERE ARE NO ACCENT CTAs ANY MORE (Ben, 2026-10-05) ───────────────────
  * `accent` (then ocher) and `accent-alt` (purple) were variants of this
@@ -46,12 +52,12 @@
  * those is a CTA.
  */
 import * as React from 'react';
-import { Button } from '@base-ui/react/button';
+import { Button as BaseButton } from '@base-ui/react/button';
 import { Icon } from './Icon';
 import { useMusyText } from './locale';
 import type { LucideIcon } from 'lucide-react';
 
-export type CtaVariant =
+export type ButtonVariant =
   | 'primary'
   | 'secondary'
   /**
@@ -95,7 +101,7 @@ export type CtaVariant =
  * and two further rules in `musy-components.css` use it directly. Deleting the
  * variant would be three CSS rules, never the token.
  */
-export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
+export type ButtonSize = 'min' | 'primary' | 'comfort' | 'guided';
 
 /**
  * Where the label sits on the inline axis.
@@ -104,13 +110,13 @@ export type CtaSize = 'min' | 'primary' | 'comfort' | 'guided';
  * must mirror in RTL without a second rule, so this follows the same logical
  * axis as every other declaration in the stylesheet.
  */
-export type CtaAlign = 'center' | 'start';
+export type ButtonAlign = 'center' | 'start';
 
-export interface CtaButtonProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'className'> {
+export interface ButtonProps
+  extends Omit<React.ComponentPropsWithoutRef<typeof BaseButton>, 'className'> {
   children: React.ReactNode;
-  variant?: CtaVariant;
-  size?: CtaSize;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   /** Leading icon only. A trailing icon means "this opens something else",
    *  which is a different component. */
   leadingIcon?: LucideIcon;
@@ -130,22 +136,22 @@ export interface CtaButtonProps
    * Pairs with `block`: alignment only shows once the button is wider than its
    * label.
    */
-  align?: CtaAlign;
+  align?: ButtonAlign;
   /** Allow the label to wrap to two lines instead of overflowing. German
    *  compounds at 393px need this more often than English does. */
   wrap?: boolean;
   className?: string;
 }
 
-export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
-  function CtaButton({
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button({
     children, variant = 'primary', size = 'primary', leadingIcon,
     loading = false, loadingLabel, block = false, wrap = false,
     align = 'center', disabled, className, ...rest
   }, ref) {
     const t = useMusyText();
     return (
-      <Button
+      <BaseButton
         {...rest}
         ref={ref}
         className={[
@@ -164,7 +170,7 @@ export const CtaButton = React.forwardRef<HTMLButtonElement, CtaButtonProps>(
         <span className="musy-btn__label">{children}</span>
         {loading && <span className="musy-spinner" aria-hidden="true" />}
         {loading && <span className="musy-sr-only" role="status">{loadingLabel ?? t.loading}</span>}
-      </Button>
+      </BaseButton>
     );
   }
 );

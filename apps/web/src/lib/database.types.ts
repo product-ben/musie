@@ -639,14 +639,17 @@ export type Database = {
       goals: {
         Row: {
           id: string
+          retired: boolean
           sort: number
         }
         Insert: {
           id: string
+          retired?: boolean
           sort: number
         }
         Update: {
           id?: string
+          retired?: boolean
           sort?: number
         }
         Relationships: []

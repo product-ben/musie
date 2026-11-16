@@ -65,7 +65,7 @@ InteractiveWizard  current="reflect"           the step rail, unchanged
     │
     ├── TYPED BRANCH   Field multiline          unchanged
     └── PHOTO BRANCH   PhotoUpload              unchanged
-        actions={<CtaButton>Continue</CtaButton>}
+        actions={<Button>Continue</Button>}
 ```
 
 **Heading levels shift down by one.** On `#/musie` the page title is `<h1>` and a

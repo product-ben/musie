@@ -4,7 +4,7 @@
  * CTA. Two states on one target — ready ⇄ recording — and every switch resets
  * the clock, so there is no third "recorded" state to explain.
  *
- * COMPOSED ON §7.4 CTA BUTTON, NOT A NEW BUTTON. Same target ladder
+ * COMPOSED ON §7.4 BUTTON, NOT A NEW BUTTON. Same target ladder
  * (44 / 56 / 64), same six-state model, same pill. Two extra parts: the meter
  * (`.musy-rec__meter`) and the readout (`.musy-rec__time`).
  *
@@ -59,7 +59,7 @@ export interface RecordButtonProps {
    *  the same two states; only the family it borrows is quieter. */
   variant?: 'primary' | 'secondary' | 'accent';
   /** Raises the TARGET, not the type step — §7.4's ladder. */
-  /* `comfort` reserved for the elderly/children pass — CtaButton.tsx. */
+  /* `comfort` reserved for the elderly/children pass — Button.tsx. */
   size?: 'primary' | 'comfort' | 'guided';
   disabled?: boolean;
   block?: boolean;

@@ -251,7 +251,7 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
      Typing the code is the fallback behind *Enter the code*, so the walk opens
      it the way a person does.
 
-     A BUTTON AGAIN. It was a ghost `CtaButton`, then a `Switch` beside the
+     A BUTTON AGAIN. It was a ghost `Button`, then a `Switch` beside the
      frame, and is now a button INSIDE it — the frame shows the viewfinder or
      the form, one at a time, so the control fires a change rather than
      reporting a setting that stays true. Each of those three moves broke this
@@ -274,6 +274,27 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
     .click();
 }
 
+/** The exercise a walk that names none starts — see `startExercise`. */
+const UNNAMED_EXERCISE = 'mindfulness-cards';
+
+/**
+ * An exercise's name in the run's locale, read back with the service role:
+ * the name is content in `exercise_i18n`, not a catalogue key, so `label()`
+ * cannot give it.
+ */
+async function exerciseName(exercise: string, locale: Locale): Promise<string> {
+  const { data, error } = await service()
+    .from('exercise_i18n')
+    .select('name')
+    .eq('exercise_id', exercise)
+    .eq('locale', locale)
+    .single();
+  if (error !== null || data === null) {
+    throw new Error(`could not read ${exercise}'s ${locale} name: ${error?.message ?? 'no row'}`);
+  }
+  return data.name as string;
+}
+
 /**
  * Start an exercise from the library — ONE CLICK, since 2026-09-24.
  *
@@ -286,15 +307,23 @@ export async function enterCode(page: Page, locale: Locale, code: string) {
  * SHARED, because six walks start an exercise and the next flow change should
  * find them in one place rather than in six.
  *
- * WITH NO NAME it takes the FIRST card, which is a POSITION and deliberate:
- * the order is `exercises.sort`, a column with a `unique` constraint on it, so
- * it is a fact about the content rather than an accident of layout. The name
- * cannot be asked for from the catalogue either — it lives in `exercise_i18n`
- * — so a walk that needs a particular exercise reads the name from the
- * database and passes it here. NOT `exact`: a card's accessible name is its
- * headline followed by its description and its fact chips.
+ * WITH NO NAME it starts Achtsame Pause (`mindfulness-cards`), BY NAME. It
+ * used to take the FIRST card, by position, and every unnamed walk was
+ * written against the first card being a startable card exercise — the
+ * `card()` pairings they scan are Achtsame Pause's. That stopped holding on
+ * 2026-11-11: the default goal is *entspannen* now, whose first card is
+ * Achtsam Atmen (not built) and which offers no card exercise at all. So the
+ * exercise those walks meant is named here once, and its name is read from
+ * `exercise_i18n` in the run's locale rather than written down — a literal
+ * would be one language's copy in the other's run.
+ *
+ * A walk that needs a different exercise reads its name from the database
+ * and passes it. NOT `exact`: a card's accessible name is its headline
+ * followed by its description and its fact chips.
  */
-export async function startExercise(page: Page, locale: Locale, name?: string) {
+export async function startExercise(page: Page, locale: Locale, named?: string) {
+  const name = named ?? await exerciseName(UNNAMED_EXERCISE, locale);
+
   /* ── IT SWITCHES TO THE LIST FIRST, AND THAT IS NEW (2026-10-05) ─────────
      /exercises opened on a column of radios until the deck replaced it. The
      deck shows ONE card at a time, so "click the card called X" there means
@@ -321,57 +350,67 @@ export async function startExercise(page: Page, locale: Locale, name?: string) {
      name; it is visually hidden and still the thing to ask for. */
   const group = page.getByRole('radiogroup', { name: label(locale, 'exercises.legend') });
 
-  /* ── NO EXERCISE IS VISIBLE UNDER EVERY GOAL ANY MORE (2026-10-15) ───────
+  /* ── NO EXERCISE IS VISIBLE UNDER EVERY GOAL (since 2026-10-15) ──────────
      This helper used to answer the goal question with *Musie entdecken*, the
      option that filtered nothing, precisely so that no walk had to know which
-     goals its exercise was mapped to.
+     goals its exercise was mapped to. That option is gone, and since
+     2026-11-11 so is *Musie kennenlernen*: three goals, *entspannen* the
+     default, and none of them offers every exercise. A walk asking for
+     *Achtsame Pause* lands on a default goal that does not offer it.
 
-     THAT OPTION IS GONE. *Musie kennenlernen* is a real goal with three named
-     exercises now, and the four goals between them cover all five — but no
-     single one of them does. A walk asking for *Achtsame Pause* lands on a
-     default goal that does not offer it.
+     SO THE HELPER LOOKS, AND MOVES ON IF IT IS NOT THERE. At most three
+     goals. Deliberately NOT a hardcoded exercise-to-goal table: that is
+     content, it changes by migration, and a table in here would go stale
+     silently and fail as "the card never appeared" three specs away from the
+     thing that moved.
 
-     SO THE HELPER LOOKS, AND MOVES ON IF IT IS NOT THERE. At most four goals,
-     usually the first. Deliberately NOT a hardcoded exercise-to-goal table:
-     that is content, it changes by migration, and a table in here would go
-     stale silently and fail as "the card never appeared" three specs away
-     from the thing that moved.
+     THE FIRST THREE ONLY. The pile and the list show at most three of a
+     goal's exercises until *Alle Übungen zeigen* is on, and this helper does
+     not press it: every exercise a walk names today is among the first three
+     of some goal. One that is not (an instrument, under *entspannen*) is
+     reached the way `instruments.spec.ts` reaches it. */
+  const card = group.getByRole('radio', { name });
 
-     UNNAMED WALKS NEVER ENTER THE LOOP — any exercise will do, and the
-     default goal has three. */
-  const card = name === undefined
-    ? group.getByRole('radio').first()
-    : group.getByRole('radio', { name });
+  /* *ZIEL ÄNDERN*, BY ITS EXACT NAME. Three controls say it since 2026-11-11:
+     the labelled button in the toolbar (from --bp-md), its copy under the
+     pile (below --bp-md), and the headline's goal, whose accessible name is
+     the goal's purpose followed by *Ziel ändern*. CSS keeps exactly one of
+     the two buttons in the accessibility tree, and `exact` leaves the
+     headline out — the RegExp this used to be matches two visible controls
+     and fails Playwright's strict mode. */
+  const changeGoal = page.getByRole('button', {
+    name: label(locale, 'exercises.goal.change'),
+    exact: true,
+  });
+  const sheet = page.getByRole('radiogroup', {
+    name: label(locale, 'exercises.goal.question'),
+  });
 
-  if (name !== undefined) {
-    /* THE HEADLINE'S LINK, FOUND BY ITS SR-ONLY HALF. Its accessible name is
-       the goal's own purpose phrase followed by *Ziel ändern* — the phrase is
-       CONTENT and unknowable here, the suffix is chrome and in the catalogue,
-       so the regex matches on the half this file is allowed to know. */
-    const changeGoal = page.getByRole('button', {
-      name: new RegExp(label(locale, 'exercises.goal.change')),
-    });
+  for (let i = 0; i < 3; i += 1) {
+    if (await card.isVisible().catch(() => false)) break;
 
-    for (let i = 0; i < 4; i += 1) {
-      if (await card.isVisible().catch(() => false)) break;
+    await expect(changeGoal).toBeVisible({ timeout: 15_000 });
+    await changeGoal.click();
+    await expect(sheet).toBeVisible({ timeout: 15_000 });
 
-      await expect(changeGoal).toBeVisible({ timeout: 15_000 });
-      await changeGoal.click();
+    /* BY POSITION, not by label: a goal's label is content in `goal_i18n`
+       and this file has no business knowing it. The order is `goals.sort`,
+       which is a column with a unique constraint — a fact about the content
+       rather than an accident of layout. */
+    const goal = sheet.getByRole('radio').nth(i);
 
-      const sheet = page.getByRole('radiogroup', {
-        name: label(locale, 'exercises.goal.question'),
-      });
-      await expect(sheet).toBeVisible({ timeout: 15_000 });
-      /* BY POSITION, not by label: a goal's label is content in `goal_i18n`
-         and this file has no business knowing it. The order is `goals.sort`,
-         which is a column with a unique constraint — a fact about the content
-         rather than an accident of layout, which is the same argument the
-         note above `startExercise` makes about `exercises.sort`. */
-      await sheet.getByRole('radio').nth(i).click();
-      /* Choosing closes the sheet. Waiting for that is what stops the next
-         iteration clicking a link the scrim is still over. */
-      await expect(sheet).toBeHidden({ timeout: 15_000 });
+    /* THE GOAL ALREADY CHOSEN IS SKIPPED, not pressed: pressing a checked
+       radio changes nothing, so the sheet would never close and the wait
+       below would time out. The card was not under it — that is why the
+       loop is here — so the sheet is dismissed and the next goal tried. */
+    if (await goal.isChecked()) {
+      await page.keyboard.press('Escape');
+    } else {
+      await goal.click();
     }
+    /* Choosing (or Escape) closes the sheet. Waiting for that is what stops
+       the next iteration pressing a control the scrim is still over. */
+    await expect(sheet).toBeHidden({ timeout: 15_000 });
   }
 
   await expect(card).toBeVisible({ timeout: 15_000 });

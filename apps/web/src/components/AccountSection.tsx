@@ -48,7 +48,7 @@
  */
 import * as React from 'react';
 import { LogOut } from 'lucide-react';
-import { ButtonGroup, ContentBox, CtaButton } from '@musie/design-system';
+import { ButtonGroup, ContentBox, Button } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 import { useAuth } from '../lib/authContext';
 import { signOut } from '../lib/signIn';
@@ -70,7 +70,7 @@ export function AccountSection({ className }: { className?: string }) {
       text={t('auth.signedInAs', { email })}
     >
       <ButtonGroup align="start">
-        <CtaButton
+        <Button
           variant="ghost"
           leadingIcon={LogOut}
           loading={busy}
@@ -85,7 +85,7 @@ export function AccountSection({ className }: { className?: string }) {
           }}
         >
           {t('auth.signOut')}
-        </CtaButton>
+        </Button>
       </ButtonGroup>
     </ContentBox>
   );

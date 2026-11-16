@@ -84,7 +84,7 @@ const meta = {
           'Why: config is off limits and the brief says to log it rather than fight the',
           'inference.',
           'What I need from Ben: **a `propFilter` in `.storybook/main.ts`**. Same entry as',
-          'IconButton and CtaButton — one fix covers all three.',
+          'IconButton and Button — one fix covers all three.',
           '',
           '## Switch — `checked` and `onCheckedChange` are inherited, not own props, but every state story needs them',
           'Where: `src/Switch.tsx:31`',

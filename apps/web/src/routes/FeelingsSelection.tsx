@@ -37,7 +37,7 @@
  * one group without colliding.
  */
 import * as React from 'react';
-import { CtaButton, RadioGroupText, Sheet } from '@musie/design-system';
+import { Button, RadioGroupText, Sheet } from '@musie/design-system';
 import type { RadioOption } from '@musie/design-system';
 import { EMOTION_WHEEL } from '../content/emotionWheel';
 import type { WheelWord } from '../content/emotionWheel';
@@ -244,7 +244,7 @@ export function FeelingsSelection() {
         }
         foot={
           chosen ? (
-            <CtaButton onClick={() => setOpen(false)}>{t('feelings.sheet.done')}</CtaButton>
+            <Button onClick={() => setOpen(false)}>{t('feelings.sheet.done')}</Button>
           ) : undefined
         }
       />
@@ -255,9 +255,9 @@ export function FeelingsSelection() {
           ? t('feelings.result.chosen', { feeling: word(chosen, locale) })
           : t('feelings.result.empty')}
       </p>
-      <CtaButton onClick={() => setOpen(true)} disabled={open}>
+      <Button onClick={() => setOpen(true)} disabled={open}>
         {open ? t('feelings.reopen.open') : t('feelings.reopen.closed')}
-      </CtaButton>
+      </Button>
     </>
   );
 }

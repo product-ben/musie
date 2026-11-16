@@ -43,7 +43,7 @@
  */
 import * as React from 'react';
 import { useNavigate } from 'react-router';
-import { ContentBox, CtaButton, Message, RadioGroupText } from '@musie/design-system';
+import { ContentBox, Button, Message, RadioGroupText } from '@musie/design-system';
 import { AccountSection } from '../components/AccountSection';
 import { ConsentSettings } from '../components/ConsentSettings';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
@@ -134,7 +134,7 @@ export function AboutYou() {
         />
 
         <div className="musie-cta-stack">
-          <CtaButton
+          <Button
             size={shown === null ? 'primary' : 'guided'}
             disabled={shown === null}
             aria-describedby="about-you-hint"
@@ -150,7 +150,7 @@ export function AboutYou() {
             }}
           >
             {t('common.continue')}
-          </CtaButton>
+          </Button>
           <p id="about-you-hint" className="musie-cta-stack__hint">
             {t(shown === null ? 'aboutYou.hint.pick' : 'aboutYou.hint.ready')}
           </p>

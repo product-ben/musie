@@ -7,18 +7,24 @@ import type { Exercise, Goal } from './content';
 
 /* IN `sort` ORDER, because `defaultGoal` reads the first element and
    `getGoals` is what guarantees that order. A fixture shuffled for variety
-   would be testing a list this function never receives. */
+   would be testing a list this function never receives.
+
+   AND ONLY THE OFFERED THREE (2026-11-11). `getGoals` filters
+   `retired = false` in the query, so `get-to-know-musie` — retired, not
+   deleted — is never in the list these functions receive. Putting it in the
+   fixture would test a list that cannot happen. */
 const GOALS: Goal[] = [
   {
-    id: 'get-to-know-musie', sort: 1,
-    label: 'Einen Weg Musie kennenzulernen', purpose: 'Musie kennenlernen', why: null,
+    id: 'relax', sort: 1, label: 'Entspannen', purpose: 'entspannen',
+    why: 'Wenn dein Körper Anspannung loslässt, wird oft auch dein Kopf freier.',
   },
-  { id: 'relax', sort: 2, label: 'Entspannung', purpose: 'Entspannen', why: null },
-  { id: 'wake-up', sort: 3, label: 'Energie', purpose: 'Aktivieren', why: null },
   {
-    id: 'mindfulness', sort: 4,
-    label: 'Achtsamkeit', purpose: 'Achtsamer werden',
-    why: 'Mehr Achtsamkeit hilft dir in stressigen Situationen.',
+    id: 'wake-up', sort: 2, label: 'Energie sammeln', purpose: 'Energie sammeln',
+    why: 'Wenn du müde oder zerstreut bist, machen dich ein paar Minuten voller Aufmerksamkeit oft wieder wach.',
+  },
+  {
+    id: 'mindfulness', sort: 3, label: 'Achtsamkeit üben', purpose: 'Achtsamkeit üben',
+    why: 'Mehr Achtsamkeit hilft dir, in stressigen Situationen ruhig zu bleiben.',
   },
 ];
 
@@ -29,8 +35,8 @@ function exercise(id: string, goalIds: string[], implemented = true): Exercise {
 
 const DECK = [
   exercise('mindfulness-cards', ['mindfulness']),
-  exercise('free-rein', ['mindfulness', 'get-to-know-musie']),
-  exercise('breathing-score', ['get-to-know-musie'], false),
+  exercise('free-rein', ['mindfulness', 'wake-up']),
+  exercise('breathing-score', ['wake-up'], false),
 ];
 
 /* localStorage exists in this environment only because vitest's node project
@@ -55,7 +61,7 @@ describe('filterByGoal', () => {
   });
 
   it('offers only the exercises mapped to the chosen goal', () => {
-    expect(filterByGoal(DECK, 'get-to-know-musie').map((e) => e.id))
+    expect(filterByGoal(DECK, 'wake-up').map((e) => e.id))
       .toEqual(['free-rein', 'breathing-score']);
   });
 
@@ -69,17 +75,25 @@ describe('filterByGoal', () => {
   });
 
   it('returns nothing for a goal no exercise serves', () => {
-    expect(filterByGoal(DECK, 'wake-up')).toEqual([]);
+    expect(filterByGoal(DECK, 'relax')).toEqual([]);
+  });
+
+  /* THE RETIRED GOAL SERVES NOTHING. `20261111120000` deletes its
+     `exercise_goals` rows, so no exercise carries its id in `goalIds` — and a
+     stale choice of it never reaches here anyway, because `readCachedGoal`
+     refuses it first. This is the belt to that brace. */
+  it('offers nothing under the retired get-to-know-musie', () => {
+    expect(filterByGoal(DECK, 'get-to-know-musie')).toEqual([]);
   });
 });
 
 describe('defaultGoal', () => {
-  /* The contract is "the first one offered", not "get-to-know-musie". Written
-     this way on purpose: the day Ben reorders the sheet, this test should
-     follow the fixture rather than need editing. */
+  /* The contract is "the first one offered", not "relax". Written this way on
+     purpose, and it paid off on 2026-11-11: Ben moved the default from
+     *Musie kennenlernen* to *entspannen* and only the fixture changed. */
   it('is the first goal in the order the sheet shows them', () => {
-    expect(defaultGoal(GOALS)).toBe('get-to-know-musie');
-    expect(defaultGoal([GOALS[1], GOALS[0]])).toBe('relax');
+    expect(defaultGoal(GOALS)).toBe('relax');
+    expect(defaultGoal([GOALS[1], GOALS[0]])).toBe('wake-up');
   });
 
   it('is null when the catalogue failed to load', () => {
@@ -114,6 +128,15 @@ describe('readCachedGoal', () => {
     expect(readCachedGoal(GOALS)).toBeNull();
   });
 
+  /* THE SECOND UPGRADE PATH (2026-11-11). *Musie kennenlernen* was the
+     default for a month, so it is the commonest stored value there is. Its
+     row still exists — retired, not deleted — but `getGoals` does not return
+     it, so it is unknown here and the screen opens on *entspannen*. */
+  it('treats a stored get-to-know-musie, now retired, as never-chosen', () => {
+    withStorage({ [GOAL_STORAGE_KEY]: 'get-to-know-musie' });
+    expect(readCachedGoal(GOALS)).toBeNull();
+  });
+
   it('reports nothing when site data is blocked rather than throwing', () => {
     withStorage(null);
     expect(readCachedGoal(GOALS)).toBeNull();
@@ -141,7 +164,7 @@ describe('startable', () => {
      counts the pile (PRD §7.1). The pile is deliberately NOT filtered by
      this, which is why the deck deals two where this returns one. */
   it('drops the exercises that are not built yet', () => {
-    expect(startable(filterByGoal(DECK, 'get-to-know-musie')).map((e) => e.id))
+    expect(startable(filterByGoal(DECK, 'wake-up')).map((e) => e.id))
       .toEqual(['free-rein']);
   });
 
@@ -156,11 +179,12 @@ describe('startable', () => {
 
 describe('goalLabel and goalPurpose', () => {
   /* THE TWO ARE NOT INTERCHANGEABLE, which is the whole reason the second
-     column exists — the card is headed "Entspannung" and the headline reads
-     "zum Entspannen". */
+     column exists. Since 2026-11-11 they are the same phrase — and still not
+     the same string: the card is headed "Entspannen" and the headline reads
+     "Lass uns zusammen entspannen". */
   it('name a goal two different ways', () => {
-    expect(goalLabel(GOALS, 'relax')).toBe('Entspannung');
-    expect(goalPurpose(GOALS, 'relax')).toBe('Entspannen');
+    expect(goalLabel(GOALS, 'relax')).toBe('Entspannen');
+    expect(goalPurpose(GOALS, 'relax')).toBe('entspannen');
   });
 
   it('have nothing for a goal the catalogue has not loaded', () => {

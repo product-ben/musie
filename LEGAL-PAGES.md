@@ -482,7 +482,7 @@ foreground:
 - It costs **no pixels on any screen**, because the drawer is already there and
   `.musie-drawer__prefs` already sits at the foot of the viewport on an auto top
   margin.
-- It is **not a navigation row.** The drawer's rows are `CtaButton`s — 44px
+- It is **not a navigation row.** The drawer's rows are `Button`s — 44px
   targets that read as destinations you choose between. These two are not that;
   they are the small print, and they should look like it. `InlineLink` is the
   design system's component for a link that lives inside a line of text, which
@@ -529,7 +529,7 @@ after the email address has been typed is too late.**
   so v1 writes email addresses and provider URLs as plain text, which is normal
   for an Impressum and costs nothing. Adding an anchor branch is a real option
   later; it is not a precondition.
-- **A way back.** A ghost `CtaButton` rendering a plain `<a href="/">`, since
+- **A way back.** A ghost `Button` rendering a plain `<a href="/">`, since
   there is no router on these pages — a full page load, which is correct here.
 - **Not editable at `/maintenance`, ever.** These two pages are chrome: ours,
   permanent, and bundled. Routing them through the content tables would make a

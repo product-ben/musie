@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Musie – Kartenvarianten</title>
+    <!-- The system's theme before first paint, and the viewport height the
+         shell's stylesheet sizes views from. Nothing is stored. -->
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var dark = window.matchMedia('(prefers-color-scheme: dark)');
+        var theme = function () { root.dataset.theme = dark.matches ? 'dark' : 'light'; };
+        var block = function () { root.style.setProperty('--viewport-block', window.innerHeight + 'px'); };
+        theme();
+        block();
+        dark.addEventListener('change', theme);
+        window.addEventListener('resize', block);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

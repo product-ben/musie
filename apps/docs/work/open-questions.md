@@ -112,7 +112,7 @@ that decision — and the log says so, rather than leaving it to be rediscovered
 ## The design system's log is a different question
 
 4,248 lines, 118 questions raised while writing them. It is where a
-component's API is argued with — and the reason `CtaButton` has an `align` prop
+component's API is argued with — and the reason `Button` has an `align` prop
 at all.
 
 Read `packages/design-system/stories/CONVENTIONS.md` beside it.

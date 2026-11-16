@@ -1,6 +1,14 @@
 /**
- * Inline Link — Layer 2
+ * Inline Link — Layer 2 · DEPRECATED
  * base-ui: Button.
+ *
+ * ── DEPRECATED — Ben, 2026-11-11. Use `InlineButton`. ────────────────────
+ * Its successor keeps the reasoning below (inherited type, the 2.5.8 inline
+ * exception, base-ui `Button` with `render`) and changes the look: the
+ * heading's own ink with a persistent `--border-strong` underline instead of
+ * the accent colour, and no `actions`. Kept exported and working until its
+ * last caller (/exercises' headline) moves; then this file and §28 of
+ * musy-components.css are deleted.
  *
  * A link INSIDE something else — a sentence, a heading, a label — rather than
  * a control standing on its own. Everything about it follows from that.
@@ -11,7 +19,7 @@
  * It sets three things of its own: the colour, the optional glyph, and the
  * states.
  *
- * That is why this is not `CtaButton size="min"`. A button declares its own
+ * That is why this is not `Button size="min"`. A button declares its own
  * type step by design — it is a box with a label in it — and a box with a
  * label in it cannot sit inside a sentence without breaking the line it sits
  * in. The two components are opposites about the same question.
@@ -19,9 +27,9 @@
  * ── IT IS A `<button>` BY DEFAULT, AND IT IS NAMED FOR HOW IT LOOKS ───────
  * Its first call site opens a sheet, which is a button; a link that navigates
  * is `render={<a href=… />}`, inherited from base-ui's `Button` exactly as
- * `CtaButton` inherits it. Naming a design-system entry after its APPEARANCE
- * is the honest choice here — the consumer picks the semantics, and the
- * component cannot know which it is.
+ * this system's own `Button` inherits it. Naming a design-system entry after
+ * its APPEARANCE is the honest choice here — the consumer picks the
+ * semantics, and the component cannot know which it is.
  *
  * ── 1.4.1, AND WHY THE RULE IS IN HERE RATHER THAN IN THE CALLER ──────────
  * A link inside a block of text must not be told apart by COLOUR ALONE (1.4.1,
@@ -46,7 +54,7 @@
  * WHY THE COMPONENT DRAWS THEM rather than taking a node: an action here has
  * to look like it belongs to the word beside it, and the obvious thing for a
  * caller to reach for is `IconButton` — which brings its own box and padding
- * and breaks the line, for the same reason `CtaButton` cannot be this
+ * and breaks the line, for the same reason `Button` cannot be this
  * component. Handing out a slot would be handing out that problem.
  *
  * ── TARGET SIZE IS NOT A PROBLEM AND IT IS WORTH WRITING DOWN ─────────────
@@ -68,9 +76,12 @@ import { Icon } from './Icon';
  * the link's button and has to look like it belongs to the same word. Handing
  * the caller a slot means handing them that styling problem, and the first
  * thing they would reach for is an `IconButton` — which brings its own box
- * and padding and breaks the line it sits in, exactly as `CtaButton` would.
+ * and padding and breaks the line it sits in, exactly as `Button` would.
  *
  * So the component draws them and the caller says what they do.
+ *
+ * @deprecated Use `InlineButton`, which has no actions: text, glyph and
+ * underline are one target (D3).
  */
 export interface InlineLinkAction {
   /** Stable identity. The React key. */
@@ -83,6 +94,7 @@ export interface InlineLinkAction {
   disabled?: boolean;
 }
 
+/** @deprecated Use `InlineButtonProps`. */
 export interface InlineLinkProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Button>, 'className'> {
   /** The link's text. Inherits every type property from where it sits. */
@@ -122,6 +134,10 @@ export interface InlineLinkProps
   className?: string;
 }
 
+/**
+ * @deprecated Use `InlineButton`. Kept working until /exercises' headline
+ * moves; then deleted.
+ */
 export function InlineLink({
   children, trailingIcon, actions, className, ...rest
 }: InlineLinkProps) {

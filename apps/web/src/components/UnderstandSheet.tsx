@@ -28,7 +28,7 @@
  * this step that is purely something to read, which is why it has a single
  * way out and no actions.
  */
-import { CtaButton, Sheet } from '@musie/design-system';
+import { Button, Sheet } from '@musie/design-system';
 import { useT } from '../i18n/localeContext';
 
 export interface UnderstandSheetProps {
@@ -67,9 +67,9 @@ export function UnderstandSheet({ open, onOpenChange }: UnderstandSheetProps) {
         </h2>
       }
       foot={
-        <CtaButton variant="primary" onClick={() => onOpenChange(false)}>
+        <Button variant="primary" onClick={() => onOpenChange(false)}>
           {t('reflect.understand.sheet.done')}
-        </CtaButton>
+        </Button>
       }
     >
       <p className="musie-reflect__why">{t('reflect.understand.sheet.text')}</p>

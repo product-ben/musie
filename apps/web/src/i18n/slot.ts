@@ -3,11 +3,12 @@
  * unfilled, so a component can put an ELEMENT where a string cannot go.
  *
  * ── THE PROBLEM, AND WHY IT IS NOT SOLVED WITH THREE KEYS ─────────────────
- * /exercises' headline is "3 Übungen zum **Entspannen**", and the goal in it
- * is a control — an `InlineLink` that opens the goal sheet. `translate()`
- * returns a string, so the link cannot be a parameter.
+ * /exercises' headline is "Lass uns zusammen **entspannen**", and the goal in
+ * it is a control — an `InlineButton` that opens the goal sheet (an
+ * `InlineLink` until 2026-11-11). `translate()` returns a string, so the
+ * control cannot be a parameter.
  *
- * The obvious answer is three keys — a prefix, the link's own text, and a
+ * The obvious answer is three keys — a prefix, the control's own text, and a
  * suffix — and it is wrong in both the ways that matter. It fixes the WORD
  * ORDER in the component, so a language that puts the goal first cannot be
  * written at all; and it hands a translator three fragments with no sentence
@@ -18,6 +19,9 @@
  *
  *     t('exercises.headline.other', { count: '3' })   →  "3 Übungen zum {goal}"
  *     splitSlot(that, 'goal')                         →  ['3 Übungen zum ', '']
+ *
+ * (That key is gone since 2026-11-11 — the headline is *Lass uns zusammen
+ * {goal}* and has no second slot — but the mechanism is unchanged.)
  *
  * `translate()` leaves an unmatched slot VERBATIM — it is written that way so
  * a missing parameter shows up on screen rather than as an empty gap — and

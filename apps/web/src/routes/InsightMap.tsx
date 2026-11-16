@@ -44,7 +44,7 @@ import {
 } from '@xyflow/react';
 import type { Edge, Node, NodeProps, NodeTypes } from '@xyflow/react';
 import {
-  Badge, BadgeRow, ContentBox, CtaButton, IconButton, Lightbox, SegmentedControl,
+  Badge, BadgeRow, ContentBox, Button, IconButton, Lightbox, SegmentedControl,
   useToolSize,
 } from '@musie/design-system';
 import { NotImplementedLightbox } from '../components/NotImplementedLightbox';
@@ -831,7 +831,7 @@ export function InsightMap() {
                 pretending to post. A prototype may show a button; it may not
                 imply it sent a message to a channel. */}
             {statusForMetric(selectedNode.id, metric) === 'poor' && (
-              <CtaButton
+              <Button
                 variant="secondary"
                 align="start"
                 leadingIcon={Send}
@@ -839,7 +839,7 @@ export function InsightMap() {
                 onClick={() => setSharing(true)}
               >
                 {t('insightMap.card.share')}
-              </CtaButton>
+              </Button>
             )}
           </aside>
         )}

@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kartenschatten</title>
+<!--
+  Experiment (CLAUDE.md rule 10): a playground for the shadows of the
+  /exercises card stack. Static, self-contained, no analytics, nothing leaves
+  the page. The stack is the Figma frame "Karten" (120:3488): three cards of
+  one size around one centre, -4.68deg / 2.7deg / square, radius 16 16 40 40,
+  the picture in a 4px frame of the card's own colour.
+
+  The idea — layered shadows whose offsets, blur and opacity follow from an
+  elevation, a light source, a layer count and a sharpness — is the one Josh
+  W. Comeau's shadow palette generator popularised. The code is our own.
+
+  The output is the two properties the design system reads:
+  --musy-deck-shadow-front and --musy-deck-shadow-back. Geometry is shared by
+  both themes; only the colour differs, through light-dark(), which is how
+  Layer 1's own --elevation-* tokens do it.
+
+  Fonts: the app's own Onest and Literata (latin subset), copied next to this
+  page in ../fonts/ because the app's copies are bundled under hashed names.
+  SIL OFL 1.1, licence texts beside them.
+-->
+<style>
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/onest-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/literata-latin.woff2') format('woff2');
+}
+
+/* Layer 1 values, copied from packages/design-system/tokens/musy-foundations.css */
+:root {
+  color-scheme: light;
+  --surface: light-dark(#F3EEE4, #191D1A);          /* sand-2 */
+  --surface-raised: light-dark(#FAF7F1, #2A2F2B);   /* sand-1 / sand-4 */
+  --surface-sunken: light-dark(#E5E3D9, #111412);   /* sand-3 / sand-1 */
+  --on-surface: light-dark(#1A1F1C, #EDF0EC);       /* sand-12 */
+  --on-surface-muted: light-dark(#62645E, #9EA59F); /* sand-11 */
+  --border-subtle: light-dark(#CFCEC2, #3B413C);    /* sand-6 */
+  --interactive-primary: light-dark(#2B5340, #5E9478);    /* green-9 */
+  --interactive-primary-on: light-dark(#F3EEE4, #111412); /* sand-2 / sand-1 */
+  --accent-1-text: light-dark(#2B5340, #8FBCA2);    /* green-11 */
+  --font-display: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
+  --type-body-sm-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+  --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+
+  /* What the stack wears. Replaced by the script with the generated value,
+     or with elevation-3 in the comparison. */
+  --shadow-front: none;
+  --shadow-back: none;
+
+  --card-w: min(360px, 100vw - 64px);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  min-block-size: 100vh;
+}
+
+/* ── THE STAGE ─────────────────────────────────────────────────────────── */
+.stage {
+  position: sticky;
+  inset-block-start: 0;
+  block-size: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 32px 64px;
+  background: var(--surface);
+  overflow: clip;
+}
+.stage__badge {
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-start: 16px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--on-surface-muted);
+  font-size: 13px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+
+.pile {
+  display: grid;
+  grid-template-areas: 'card';
+  inline-size: var(--card-w);
+}
+
+.card {
+  grid-area: card;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border-radius: 16px 16px 40px 40px;
+  background: var(--surface-raised);
+  overflow: clip;
+  box-shadow: var(--shadow-back);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: box-shadow 200ms ease;
+}
+/* A transformed box paints in the positioned layer, so the two rotated
+   cards would cover the square one in front. Every card is positioned and
+   numbered instead, as .musy-deck__card does in the app. */
+.card { position: relative; }
+.card--bottom { transform: rotate(-4.68deg); z-index: 1; }
+.card--middle { transform: rotate(2.7deg); z-index: 2; }
+.card--front { box-shadow: var(--shadow-front); z-index: 3; }
+
+.card__img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  box-sizing: border-box;
+  border: 4px solid var(--surface-raised);
+  border-radius: 16px 16px 8px 8px;
+  background: var(--surface-sunken);
+  pointer-events: none;
+}
+
+.card__body {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+}
+.card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--type-heading-sm-size);
+  line-height: 1.3;
+  color: var(--on-surface);
+}
+.card__text {
+  margin: 0;
+  font-family: var(--font-text);
+  font-weight: 400;
+  font-size: var(--type-body-sm-size);
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+  hyphens: auto;
+}
+
+.card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 16px 16px 24px;
+}
+.card__time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--type-label-md-size);
+  line-height: 1.4;
+  letter-spacing: 0.002em;
+  color: var(--accent-1-text);
+  font-variant-numeric: tabular-nums;
+}
+.card__start {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 40px;
+  margin: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--interactive-primary);
+  color: var(--interactive-primary-on);
+  font-size: var(--type-label-md-size);
+  line-height: 1.4;
+  letter-spacing: 0.002em;
+}
+.icon {
+  inline-size: 16px;
+  block-size: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── THE PANEL ─────────────────────────────────────────────────────────── */
+.panel {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  padding: 24px;
+  background: var(--surface-raised);
+  border-inline-start: 1px solid var(--border-subtle);
+}
+.panel h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.lede {
+  margin: 8px 0 0;
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+}
+.lede code, .hint code { font-size: 13px; white-space: nowrap; }
+
+.group { display: grid; gap: 12px; }
+.group__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-surface-muted);
+}
+
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+.seg legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.seg label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--on-surface-muted);
+}
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg label:has(input:checked) {
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  box-shadow: 0 1px 2px rgb(32 44 36 / 0.12);
+}
+.seg label:has(input:focus-visible) { outline: 2px solid var(--interactive-primary); outline-offset: 2px; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.btn:hover { background: var(--surface-sunken); }
+.btn:focus-visible { outline: 2px solid var(--interactive-primary); outline-offset: 2px; }
+.btn--primary {
+  background: var(--interactive-primary);
+  border-color: var(--interactive-primary);
+  color: var(--interactive-primary-on);
+}
+.btn--primary:hover { background: var(--interactive-primary); filter: brightness(1.08); }
+
+.slider { display: grid; gap: 4px; }
+.slider__head { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+.slider__value { color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.slider input[type="range"] { inline-size: 100%; margin: 0; accent-color: var(--interactive-primary); }
+.slider[data-off] { opacity: 0.45; }
+
+.check { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.check input { inline-size: 18px; block-size: 18px; margin: 0; accent-color: var(--interactive-primary); }
+
+.hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--on-surface-muted); }
+
+/* The light pad: the card in the middle, the lamp wherever it is dragged. */
+.lightpad {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.pad {
+  position: relative;
+  inline-size: 132px;
+  block-size: 132px;
+  border-radius: 12px;
+  background: var(--surface-sunken);
+  touch-action: none;
+  cursor: crosshair;
+}
+.pad::before, .pad::after {
+  content: '';
+  position: absolute;
+  background: var(--border-subtle);
+}
+.pad::before { inset-inline: 8px; inset-block-start: 50%; block-size: 1px; }
+.pad::after { inset-block: 8px; inset-inline-start: 50%; inline-size: 1px; }
+.pad__card {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  inline-size: 24px;
+  block-size: 34px;
+  translate: -50% -50%;
+  border-radius: 4px 4px 8px 8px;
+  background: var(--surface-raised);
+  box-shadow: var(--pad-shadow, none);
+  z-index: 1;
+}
+.lamp {
+  position: absolute;
+  inline-size: 28px;
+  block-size: 28px;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #F2C14E;
+  color: #3D2E05;
+  box-shadow: 0 0 0 4px rgb(242 193 78 / 0.3);
+  z-index: 2;
+  cursor: grab;
+}
+.lamp:active { cursor: grabbing; }
+.lamp:focus-visible { outline: 2px solid var(--interactive-primary); outline-offset: 3px; }
+.lamp .icon { inline-size: 18px; block-size: 18px; }
+
+.swatch {
+  display: inline-block;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  vertical-align: middle;
+}
+.colorrow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 15px; }
+.colorrow input[type="color"] {
+  inline-size: 44px;
+  block-size: 32px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+.output { display: grid; gap: 8px; }
+.output pre {
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--surface-sunken);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+.output__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+@media (max-width: 899.98px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .stage { position: relative; block-size: auto; min-block-size: 0; padding: 64px 16px 72px; }
+  .panel { border-inline-start: 0; border-block-start: 1px solid var(--border-subtle); padding: 24px 16px 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="stage" aria-label="Vorschau des Kartenstapels">
+    <span class="stage__badge" id="badge">Generiert</span>
+    <div class="pile">
+      <article class="card card--bottom" aria-hidden="true">
+        <img class="card__img" src="/assets/web/exercises/sound-journey.webp" alt="">
+        <div class="card__body">
+          <h2 class="card__title">Klangreise</h2>
+          <p class="card__text">Lass dich von der Stimme durch die Klänge führen und mit deinem Körper verbinden.</p>
+        </div>
+        <div class="card__foot">
+          <p class="card__time"><svg class="icon" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>10–15 Min.</p>
+          <span class="card__start"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>Starten</span>
+        </div>
+      </article>
+      <article class="card card--middle" aria-hidden="true">
+        <img class="card__img" src="/assets/web/exercises/breathing-score.webp" alt="">
+        <div class="card__body">
+          <h2 class="card__title">Atementspannung</h2>
+          <p class="card__text">Atme mit meinen Anweisungen und Musik. Das hilft dir, zur Ruhe zu kommen und dich zu entspannen.</p>
+        </div>
+        <div class="card__foot">
+          <p class="card__time"><svg class="icon" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>5–8 Min.</p>
+          <span class="card__start"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>Starten</span>
+        </div>
+      </article>
+      <article class="card card--front">
+        <img class="card__img" src="/assets/web/exercises/free-rein.webp" alt="">
+        <div class="card__body">
+          <h2 class="card__title">Freie Bahn</h2>
+          <p class="card__text">Eine zufällige Bildkarte mit passender Musik und eine Höranleitung von mir helfen dir beim Entspannen und Üben von Achtsamkeit.</p>
+        </div>
+        <div class="card__foot">
+          <p class="card__time"><svg class="icon" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>2–5 Min.</p>
+          <span class="card__start"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>Starten</span>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <aside class="panel" aria-label="Einstellungen">
+    <header>
+      <h1>Kartenschatten</h1>
+      <p class="lede">Spielwiese für die Schatten des Kartenstapels auf /exercises. Was unten im Kasten steht, geht 1:1 in <code>--musy-deck-shadow-front</code> und <code>--musy-deck-shadow-back</code>.</p>
+    </header>
+
+    <div class="group">
+      <fieldset class="seg" id="compare">
+        <legend>Vergleich</legend>
+        <label><input type="radio" name="compare" value="gen" checked>Generiert</label>
+        <label><input type="radio" name="compare" value="cur">Aktuell (elevation-3)</label>
+      </fieldset>
+      <fieldset class="seg" id="theme">
+        <legend>Thema</legend>
+        <label><input type="radio" name="theme" value="light" checked>Hell</label>
+        <label><input type="radio" name="theme" value="dark">Dunkel</label>
+      </fieldset>
+      <p class="hint">Taste <kbd>A</kbd> schaltet zwischen Generiert und Aktuell.</p>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Vorlagen</h2>
+      <div class="row" id="presets">
+        <button class="btn" type="button" data-preset="soft">Weich</button>
+        <button class="btn" type="button" data-preset="medium">Mittel</button>
+        <button class="btn" type="button" data-preset="crisp">Knackig</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Licht</h2>
+      <div class="lightpad">
+        <div class="pad" id="pad">
+          <span class="pad__card" aria-hidden="true"></span>
+          <span class="lamp" id="lamp" tabindex="0" role="slider" aria-label="Lichtquelle" aria-valuetext="" aria-describedby="lamp-hint">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </span>
+        </div>
+        <p class="hint" id="lamp-hint">Lampe ziehen (oder Pfeiltasten). Der Schatten fällt von ihr weg. Steht sie genau über der Mitte, gibt es keinen Versatz, nur Unschärfe.</p>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Höhe</h2>
+      <div class="slider">
+        <div class="slider__head"><label for="front">Vorderste Karte</label><span class="slider__value" id="front-v"></span></div>
+        <input type="range" id="front" min="0" max="48" step="1">
+      </div>
+      <div class="slider" id="back-wrap">
+        <div class="slider__head"><label for="back">Karten dahinter</label><span class="slider__value" id="back-v"></span></div>
+        <input type="range" id="back" min="0" max="48" step="1">
+      </div>
+      <label class="check"><input type="checkbox" id="same">Gleich für alle</label>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Form</h2>
+      <div class="slider">
+        <div class="slider__head"><label for="layers">Ebenen</label><span class="slider__value" id="layers-v"></span></div>
+        <input type="range" id="layers" min="1" max="6" step="1">
+      </div>
+      <div class="slider">
+        <div class="slider__head"><label for="crispy">Schärfe</label><span class="slider__value" id="crispy-v"></span></div>
+        <input type="range" id="crispy" min="0" max="1" step="0.01">
+      </div>
+      <div class="slider">
+        <div class="slider__head"><label for="oomph" id="oomph-l">Intensität</label><span class="slider__value" id="oomph-v"></span></div>
+        <input type="range" id="oomph" min="0" max="1" step="0.01">
+      </div>
+      <p class="hint">Intensität und Farbe gelten pro Thema; Höhe, Licht, Ebenen und Schärfe für beide.</p>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Farbe</h2>
+      <div class="colorrow">
+        <label class="check"><input type="checkbox" id="auto">Aus dem Hintergrund</label>
+        <span class="swatch" id="swatch" aria-hidden="true"></span>
+        <input type="color" id="color" aria-label="Eigene Schattenfarbe">
+        <button class="btn" type="button" id="token-color">Token-Farbe</button>
+      </div>
+      <p class="hint" id="color-hint"></p>
+      <label class="check"><input type="checkbox" id="ring">Kante im Dunkeln (1px innen, wie elevation-3)</label>
+    </div>
+
+    <div class="group output">
+      <div class="output__head">
+        <h2 class="group__title">CSS</h2>
+        <button class="btn btn--primary" type="button" id="copy">
+          <svg class="icon" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span id="copy-l">Kopieren</span>
+        </button>
+      </div>
+      <pre><code id="css"></code></pre>
+      <p class="hint">Eine Deklaration für beide Themen: <code>light-dark()</code> trägt nur die Farbe, wie bei Layer 1s <code>--elevation-*</code>.</p>
+      <div class="row"><button class="btn" type="button" id="reset">Zurücksetzen</button></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Layer 1's elevation-3, verbatim in meaning: the comparison. ─────────
+  const ELEVATION_3 =
+    '0 4px 8px -2px light-dark(rgb(32 44 36 / 0.10), rgb(0 0 0 / 0.46)), ' +
+    '0 20px 40px -12px light-dark(rgb(32 44 36 / 0.06), rgb(0 0 0 / 0.32)), ' +
+    'inset 0 0 0 1px light-dark(transparent, #4C534E)';
+  const RING = 'inset 0 0 0 1px light-dark(transparent, #4C534E)'; // --elevation-ring: sand-7 in dark
+  const BG = { light: '#F3EEE4', dark: '#191D1A' };                 // --surface (sand-2)
+  const TOKEN_COLOR = { light: '#202C24', dark: '#000000' };        // --alpha-shadow-* hues
+
+  const PRESETS = {
+    soft:   { light: { x: -0.15, y: -0.9 }, front: 22, back: 9, same: false, layers: 5, crispy: 0.15, oomph: { light: 0.2, dark: 0.62 } },
+    medium: { light: { x: 0, y: -1 },      front: 18, back: 7, same: false, layers: 4, crispy: 0.5,  oomph: { light: 0.2, dark: 0.6 } },
+    crisp:  { light: { x: -0.3, y: -0.85 }, front: 12, back: 5, same: false, layers: 3, crispy: 0.9,  oomph: { light: 0.26, dark: 0.66 } },
+  };
+  const DEFAULTS = {
+    ...structuredClone(PRESETS.medium),
+    auto: { light: true, dark: true },
+    color: { light: TOKEN_COLOR.light, dark: TOKEN_COLOR.dark },
+    ring: true,
+    compare: 'gen',
+    theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+  };
+  const KEY = 'musie-card-shadows-v1';
+
+  let s = structuredClone(DEFAULTS);
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && typeof saved === 'object') s = { ...s, ...saved };
+  } catch { /* private window, blocked storage: defaults it is */ }
+
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+
+  // ── Colour helpers ───────────────────────────────────────────────────────
+  const hexToRgb = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const rgbToHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const rgbToHsl = (r, g, b) => {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (max === min) return [0, 0, l];
+    const d = max - min;
+    const sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h;
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    return [h * 60, sat, l];
+  };
+  const hslToRgb = (h, sat, l) => {
+    const k = (n) => (n + h / 30) % 12;
+    const a = sat * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [f(0) * 255, f(8) * 255, f(4) * 255];
+  };
+
+  // The derived colour: the background's hue, a little of its saturation,
+  // dark. On sand that is a warm brown; on the dark theme it is nearly black
+  // with the green the dark surface carries.
+  function derived(theme) {
+    const [h, sat] = rgbToHsl(...hexToRgb(BG[theme]));
+    const rgb = theme === 'light'
+      ? hslToRgb(h, Math.min(sat, 0.6) * 0.55, 0.2)
+      : hslToRgb(h, Math.min(sat, 0.6) * 0.6, 0.03);
+    return rgbToHex(...rgb);
+  }
+  const shadowColor = (theme) => (s.auto[theme] ? derived(theme) : s.color[theme]);
+
+  // ── The generator ────────────────────────────────────────────────────────
+  // Layer i of n sits at a distance that doubles each step (1, 3, 7, 15 … of
+  // the elevation), so the first layers are a tight contact shadow and the
+  // last one is the wide ambient. The light decides the direction; sharpness
+  // trades blur for negative spread; the opacity is split so the layers
+  // together reach the intensity, whatever their number.
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const px = (v) => {
+    const r = Math.round(v * 10) / 10;
+    return r === 0 || Object.is(r, -0) ? '0' : `${r}px`;
+  };
+  const alpha = (v) => String(Math.round(v * 1000) / 1000);
+
+  function layers(elevation) {
+    if (elevation <= 0) return [];
+    const n = s.layers;
+    const len = Math.hypot(s.light.x, s.light.y);
+    const k = len > 1 ? 1 / len : 1;
+    const dx = -s.light.x * k;
+    const dy = -s.light.y * k;
+    const blurF = lerp(2.4, 0.55, s.crispy);
+    const spreadF = lerp(0, 0.35, s.crispy);
+    const per = (o) => 1 - Math.pow(1 - Math.min(o, 0.99), 1 / n);
+    const aL = per(s.oomph.light);
+    const aD = per(s.oomph.dark);
+    const [lr, lg, lb] = hexToRgb(shadowColor('light'));
+    const [dr, dg, db] = hexToRgb(shadowColor('dark'));
+    const out = [];
+    for (let i = 1; i <= n; i++) {
+      const d = elevation * (Math.pow(2, i) - 1) / (Math.pow(2, n) - 1);
+      out.push(
+        `${px(dx * d)} ${px(dy * d)} ${px(d * blurF + 0.5)} ${px(-d * spreadF)} ` +
+        `light-dark(rgb(${lr} ${lg} ${lb} / ${alpha(aL)}), rgb(${dr} ${dg} ${db} / ${alpha(aD)}))`
+      );
+    }
+    return out;
+  }
+  function value(elevation) {
+    const list = layers(elevation);
+    if (s.ring) list.push(RING);
+    return list.length ? list : ['none'];
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  function render() {
+    root.dataset.theme = s.theme;
+    const back = s.same ? s.front : s.back;
+    const front = value(s.front);
+    const backV = value(back);
+
+    if (s.compare === 'cur') {
+      root.style.setProperty('--shadow-front', ELEVATION_3);
+      root.style.setProperty('--shadow-back', ELEVATION_3);
+    } else {
+      root.style.setProperty('--shadow-front', front.join(', '));
+      root.style.setProperty('--shadow-back', backV.join(', '));
+    }
+    $('badge').textContent = s.compare === 'cur' ? 'Aktuell · elevation-3' : 'Generiert';
+
+    const fmt = (name, list) => `${name}:\n  ${list.join(',\n  ')};`;
+    $('css').textContent = `${fmt('--musy-deck-shadow-front', front)}\n${fmt('--musy-deck-shadow-back', backV)}`;
+
+    // Controls reflect state.
+    document.querySelector(`input[name="compare"][value="${s.compare}"]`).checked = true;
+    document.querySelector(`input[name="theme"][value="${s.theme}"]`).checked = true;
+    $('front').value = s.front; $('front-v').textContent = `${s.front}px`;
+    $('back').value = back; $('back-v').textContent = `${back}px`;
+    $('back').disabled = s.same;
+    if (s.same) $('back-wrap').setAttribute('data-off', ''); else $('back-wrap').removeAttribute('data-off');
+    $('same').checked = s.same;
+    $('layers').value = s.layers; $('layers-v').textContent = s.layers;
+    $('crispy').value = s.crispy; $('crispy-v').textContent = Math.round(s.crispy * 100) + ' %';
+    $('oomph').value = s.oomph[s.theme];
+    $('oomph-v').textContent = Math.round(s.oomph[s.theme] * 100) + ' %';
+    $('oomph-l').textContent = `Intensität (${s.theme === 'light' ? 'hell' : 'dunkel'})`;
+    $('auto').checked = s.auto[s.theme];
+    const c = shadowColor(s.theme);
+    $('swatch').style.background = c;
+    $('color').value = c.toLowerCase();
+    $('color').disabled = s.auto[s.theme];
+    $('color-hint').textContent = s.auto[s.theme]
+      ? `Abgeleitet aus dem Hintergrund (${BG[s.theme]}): ${c}. Gilt für ${s.theme === 'light' ? 'Hell' : 'Dunkel'}.`
+      : `Eigene Farbe für ${s.theme === 'light' ? 'Hell' : 'Dunkel'}: ${c}.`;
+    $('ring').checked = s.ring;
+
+    // Lamp position: pad coordinates -1…1, centre is the card.
+    const pad = $('pad');
+    const half = pad.clientWidth / 2;
+    const lamp = $('lamp');
+    lamp.style.left = `${half + s.light.x * (half - 14)}px`;
+    lamp.style.top = `${half + s.light.y * (half - 14)}px`;
+    lamp.setAttribute('aria-valuetext', `x ${s.light.x.toFixed(2)}, y ${s.light.y.toFixed(2)}`);
+    const len = Math.hypot(s.light.x, s.light.y) || 1;
+    const k = len > 1 ? 1 / len : 1;
+    pad.style.setProperty('--pad-shadow', `${(-s.light.x * k * 6).toFixed(1)}px ${(-s.light.y * k * 6).toFixed(1)}px 6px rgb(0 0 0 / 0.3)`);
+
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage unavailable */ }
+  }
+
+  // ── Wiring ───────────────────────────────────────────────────────────────
+  document.querySelectorAll('input[name="compare"]').forEach((el) =>
+    el.addEventListener('change', () => { s.compare = el.value; render(); }));
+  document.querySelectorAll('input[name="theme"]').forEach((el) =>
+    el.addEventListener('change', () => { s.theme = el.value; render(); }));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'a' && e.key !== 'A') return;
+    if (e.target instanceof HTMLInputElement && e.target.type === 'color') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    s.compare = s.compare === 'gen' ? 'cur' : 'gen';
+    render();
+  });
+
+  $('presets').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-preset]');
+    if (!b) return;
+    s = { ...s, ...structuredClone(PRESETS[b.dataset.preset]), compare: 'gen' };
+    render();
+  });
+
+  $('front').addEventListener('input', (e) => { s.front = +e.target.value; render(); });
+  $('back').addEventListener('input', (e) => { s.back = +e.target.value; render(); });
+  $('same').addEventListener('change', (e) => { s.same = e.target.checked; render(); });
+  $('layers').addEventListener('input', (e) => { s.layers = +e.target.value; render(); });
+  $('crispy').addEventListener('input', (e) => { s.crispy = +e.target.value; render(); });
+  $('oomph').addEventListener('input', (e) => { s.oomph = { ...s.oomph, [s.theme]: +e.target.value }; render(); });
+  $('auto').addEventListener('change', (e) => {
+    if (!e.target.checked) s.color = { ...s.color, [s.theme]: derived(s.theme) };
+    s.auto = { ...s.auto, [s.theme]: e.target.checked };
+    render();
+  });
+  $('color').addEventListener('input', (e) => {
+    s.color = { ...s.color, [s.theme]: e.target.value.toUpperCase() };
+    s.auto = { ...s.auto, [s.theme]: false };
+    render();
+  });
+  $('token-color').addEventListener('click', () => {
+    s.color = { ...TOKEN_COLOR };
+    s.auto = { light: false, dark: false };
+    render();
+  });
+  $('ring').addEventListener('change', (e) => { s.ring = e.target.checked; render(); });
+  $('reset').addEventListener('click', () => {
+    const theme = s.theme;
+    s = { ...structuredClone(DEFAULTS), theme };
+    render();
+  });
+
+  // The pad: press anywhere to move the lamp there, then drag.
+  const pad = $('pad');
+  const clamp = (v) => Math.max(-1, Math.min(1, v));
+  function fromPointer(e) {
+    const r = pad.getBoundingClientRect();
+    const half = r.width / 2;
+    s.light = {
+      x: clamp((e.clientX - r.left - half) / (half - 14)),
+      y: clamp((e.clientY - r.top - half) / (half - 14)),
+    };
+    render();
+  }
+  pad.addEventListener('pointerdown', (e) => {
+    pad.setPointerCapture(e.pointerId);
+    fromPointer(e);
+    $('lamp').focus({ preventScroll: true });
+  });
+  pad.addEventListener('pointermove', (e) => { if (pad.hasPointerCapture(e.pointerId)) fromPointer(e); });
+  $('lamp').addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 0.25 : 0.05;
+    const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    if (!moves[e.key]) return;
+    e.preventDefault();
+    s.light = { x: clamp(s.light.x + moves[e.key][0]), y: clamp(s.light.y + moves[e.key][1]) };
+    render();
+  });
+
+  $('copy').addEventListener('click', async () => {
+    const text = $('css').textContent;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const sel = getSelection(); const range = document.createRange();
+      range.selectNodeContents($('css')); sel.removeAllRanges(); sel.addRange(range);
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+    }
+    $('copy-l').textContent = ok ? 'Kopiert' : 'Markiert – ⌘C';
+    setTimeout(() => { $('copy-l').textContent = 'Kopieren'; }, 1600);
+  });
+
+  addEventListener('resize', render);
+  render();
+})();
+</script>
+</body>
+</html>

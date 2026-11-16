@@ -11,7 +11,7 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TrackButton } from '../src/MusicPlayer';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { bothThemes, Row, Stack } from './_decorators';
 
 /* "Your track" is §7.21's own example accessible name ("Pause, Your track").
@@ -36,7 +36,7 @@ const meta = {
           'of chrome would outweigh the thing it controls. The other half of §7.21 is',
           '`MusicPlayer`, for when the listener needs to move around inside the track.',
           '',
-          '**Composition, not a new button.** §7.4 CTA Button with one extra part',
+          '**Composition, not a new button.** §7.4 Button with one extra part',
           '(`.musy-mbtn__time`), so it inherits the whole button state model rather than',
           're-deriving it.',
           '',
@@ -277,7 +277,7 @@ export const CopyOverrides: Story = {
  * `justify-content: flex-start` both exist FOR the readout — one reserves a
  * column so the digits do not resize the button, the other makes the pair read
  * as two columns — so with no readout they are dropped and it is an ordinary
- * CTA Button around its label.
+ * Button around its label.
  *
  * The number leaves the ACCESSIBLE NAME with it, which is the point: the
  * readout is plain text inside the button, so a hidden-but-announced time
@@ -320,7 +320,7 @@ export const MinRungBesideACta: Story = {
   render: (args) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <TrackButton {...args} size="min" variant="ghost" hideTimer />
-      <CtaButton size="min" variant="secondary">Weiter</CtaButton>
+      <Button size="min" variant="secondary">Weiter</Button>
     </div>
   ),
   args: { position: 72, playing: true },

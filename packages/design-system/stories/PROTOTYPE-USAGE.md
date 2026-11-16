@@ -27,7 +27,7 @@ data file `reference/design_system/data/mindfulness-cards.js`. Read once, on
 system's class names; it does not import the components. Follow its *intent* —
 which variant, which size, which copy — never its markup. Where it writes
 `<button class="musy-btn musy-btn--primary">`, the component call is
-`<CtaButton variant="primary">`.
+`<Button variant="primary">`.
 
 The prototype is **English**. Several components default to German copy. That
 is a real conflict; see OPEN-QUESTIONS.md.
@@ -74,7 +74,7 @@ the prototype — every icon inherits its colour from its container.
 
 ---
 
-## CtaButton — 28 usages
+## Button — 28 usages
 
 | Screen | variant | size | Copy |
 |---|---|---|---|

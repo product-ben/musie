@@ -97,7 +97,7 @@
  * stops both. Nothing else imports this file, so it can be changed freely.
  */
 import * as React from 'react';
-import { CtaButton, Switch } from '@musie/design-system';
+import { Button, Switch } from '@musie/design-system';
 import { Volume2, VolumeX } from 'lucide-react';
 import { signedTrackUrls } from '../lib/audio';
 
@@ -286,9 +286,9 @@ export function DevExperimentMixer() {
           <audio ref={b} src={urls.b} preload="auto" {...events('B')} />
 
           <div>
-            <CtaButton onClick={startBoth} disabled={started}>
+            <Button onClick={startBoth} disabled={started}>
               {started ? 'Running' : 'Start both'}
-            </CtaButton>
+            </Button>
           </div>
 
           <Switch

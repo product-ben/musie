@@ -51,7 +51,7 @@ describe('catalogue parity', () => {
   /* ── THE ONE SLOT THAT IS NEVER FILLED ───────────────────────────────────
      `{goal}` in /exercises' headline marks where a CONTROL goes, not where a
      string goes: `splitSlot` cuts the rendered sentence at it and the screen
-     puts an `InlineLink` in the gap. The test above cannot protect it — a
+     puts an `InlineButton` in the gap. The test above cannot protect it — a
      locale that dropped `{goal}` from BOTH forms would still have matching
      slots, and the headline would quietly render with no goal in it and no
      way to change one.
@@ -60,8 +60,7 @@ describe('catalogue parity', () => {
      anybody takes. */
   const HEADLINES = [
     'exercises.headline.none',
-    'exercises.headline.one',
-    'exercises.headline.other',
+    'exercises.headline.together',
   ] as const;
 
   it('keeps the {goal} slot in every headline form, in both locales', () => {
@@ -73,16 +72,16 @@ describe('catalogue parity', () => {
     expect(missing).toEqual([]);
   });
 
-  /* The count is interpolated in exactly one of the three. `none` and `one`
-     write the number as a word or leave it out, which is the whole reason
-     they are separate keys — a `{count}` in them would print a digit beside
-     the word that already says it. */
-  it('interpolates the count in the plural form and nowhere else', () => {
-    expect(slotsOf(en['exercises.headline.other'])).toContain('count');
-    expect(slotsOf(de['exercises.headline.other'])).toContain('count');
-    for (const key of ['exercises.headline.none', 'exercises.headline.one'] as const) {
+  /* THE COUNT LEFT THE HEADLINE (Ben, 2026-11-11) for the onboarding card.
+     So no headline form may carry `{count}` — it would print a raw slot —
+     and the card's sentence must, in both locales, or it would promise a
+     pile without saying how big. */
+  it('keeps the count out of the headline and in the onboarding card', () => {
+    for (const key of HEADLINES) {
       expect(slotsOf(en[key])).not.toContain('count');
       expect(slotsOf(de[key])).not.toContain('count');
     }
+    expect(slotsOf(en['exercises.guide.count'])).toContain('count');
+    expect(slotsOf(de['exercises.guide.count'])).toContain('count');
   });
 });

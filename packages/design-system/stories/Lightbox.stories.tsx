@@ -9,7 +9,7 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Lightbox } from '../src/Lightbox';
-import { CtaButton } from '../src/CtaButton';
+import { Button } from '../src/Button';
 import { ContentBox } from '../src/ContentBox';
 import { ContentList } from '../src/ContentList';
 import { singlePane } from './_decorators';
@@ -22,12 +22,12 @@ const METHOD_DETAILS = [
 ];
 
 /* The prototype does not record the trigger itself — see Build notes. */
-const TRIGGER = <CtaButton variant="secondary">Show details &amp; player</CtaButton>;
+const TRIGGER = <Button variant="secondary">Show details &amp; player</Button>;
 
 const DETAIL_CONTENT = (
   <>
     <ContentList label="Method details" items={METHOD_DETAILS} contentStep="body-md" />
-    <CtaButton variant="primary">Start Exercise</CtaButton>
+    <Button variant="primary">Start Exercise</Button>
   </>
 );
 
@@ -68,7 +68,7 @@ const meta = {
           '',
           '**Two ways in.** Opened by a CONTROL: pass `trigger`. It is rendered through',
           '`Dialog.Trigger`, so it keeps its own semantics and gets `aria-haspopup` /',
-          '`aria-expanded` for free — pass a CtaButton or an IconButton, not a div — and',
+          '`aria-expanded` for free — pass a Button or an IconButton, not a div — and',
           'focus returns to it on close.',
           '',
           'Opened by NAVIGATION: omit `trigger` and drive `open`. **The URL is the',
@@ -98,9 +98,9 @@ const meta = {
           'routes to the "Not implemented yet" lightbox, which is a radio, not a button —',
           'and `trigger` was then a required `ReactElement` rendered through',
           '`Dialog.Trigger`, so a story could not omit it. Level 1 says only "pass a',
-          'CtaButton or an IconButton, not a div". (`trigger` is optional as of the',
+          'Button or an IconButton, not a div". (`trigger` is optional as of the',
           'route-driven case — see `RouteDriven`. The rest of this note stands.)',
-          'What I did: used a `secondary` CtaButton reading "Show details & player" — the',
+          'What I did: used a `secondary` Button reading "Show details & player" — the',
           'prototype’s own copy for the control that opens a method’s detail, borrowed',
           'from METHOD FLOW.',
           'Why: every other option would have meant authoring copy. This borrows a string',
@@ -174,7 +174,7 @@ const meta = {
   argTypes: {
     trigger: {
       control: false,
-      description: 'Optional. The control that opens it, rendered through Dialog.Trigger — pass a CtaButton or an IconButton, not a div. Omit it for a lightbox opened by navigation.',
+      description: 'Optional. The control that opens it, rendered through Dialog.Trigger — pass a Button or an IconButton, not a div. Omit it for a lightbox opened by navigation.',
     },
     title: {
       control: 'text',
@@ -262,7 +262,7 @@ export const MinimalContent: Story = {
     children: (
       <>
         <p data-type-step="body-md">With a group</p>
-        <CtaButton variant="primary">Back to the choice</CtaButton>
+        <Button variant="primary">Back to the choice</Button>
       </>
     ),
   },
@@ -306,7 +306,7 @@ export const Mandatory: Story = {
     children: (
       <>
         <p data-type-step="body-md">With a group</p>
-        <CtaButton variant="primary">Back to the choice</CtaButton>
+        <Button variant="primary">Back to the choice</Button>
       </>
     ),
   },

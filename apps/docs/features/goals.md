@@ -1,20 +1,21 @@
 # Goals
 
-Four goals, four rows, and the goal is the **headline** of `/exercises` rather
-than a filter beside it. Picking one opens a sheet that says what each is for.
+Three goals, and the goal is the **headline** of `/exercises` rather than a
+filter beside it: *Lass uns zusammen **entspannen***. Pressing the goal, or
+*Ziel ändern*, opens a sheet that says what each is for.
 
 ```mermaid
 flowchart TD
-  H["h1 · 'Drei Übungen zum Entspannen'"] -->|"the goal is a link"| S["Sheet · 'Was brauchst du gerade?'"]
-  S --> G1["Einen Weg Musie kennenzulernen<br/><i>default — sort 1</i>"]
-  S --> G2["Entspannung"]
-  S --> G3["Energie"]
-  S --> G4["Achtsamkeit<br/><b>the only one with a Warum?</b>"]
+  H["h1 · 'Lass uns zusammen entspannen'"] -->|"the goal is an InlineButton"| S["Sheet · 'Was brauchst du gerade?'"]
+  Z["Ziel ändern"] --> S
+  S --> G1["Entspannen<br/><i>default — sort 1</i>"]
+  S --> G2["Energie sammeln"]
+  S --> G3["Achtsamkeit üben"]
   G1 --> M[("goals ⟷ exercise_goals ⟷ exercises")]
   G2 --> M
   G3 --> M
-  G4 --> M
-  M --> DB[("sessions.goal_id — never null")]
+  M --> DB[("sessions.goal_id")]
+  R["get-to-know-musie<br/><i>retired 2026-11-11</i>"] -.->|"still named by old sessions"| DB
 ```
 
 ::: designers
@@ -31,88 +32,94 @@ User testing found people stalling at the door of a mindfulness exercise —
 which worked, named the goals without ever saying what any of them was for.
 
 So the largest line on the screen stopped asking a question and started
-carrying the offer:
+carrying the offer. Since 2026-11-11 it is an invitation rather than a count:
 
 | goal | German | English |
 |---|---|---|
-| `get-to-know-musie` | Drei Übungen zum **Musie kennenlernen** | Three exercises to **get to know Musie** |
-| `relax` | Drei Übungen zum **Entspannen** | Three exercises to **relax** |
-| `wake-up` | Drei Übungen zum **Aktivieren** | Three exercises to **get going** |
-| `mindfulness` | Drei Übungen zum **Achtsamer werden** | Three exercises to **grow more mindful** |
+| `relax` | Lass uns zusammen **entspannen** | Let's **relax** together |
+| `wake-up` | Lass uns zusammen **Energie sammeln** | Let's **recharge** together |
+| `mindfulness` | Lass uns zusammen **Achtsamkeit üben** | Let's **practise mindfulness** together |
 
-The number is **written out** through twelve and set in figures above it —
-the ordinary rule for prose, and a headline is prose.
+A time-of-day greeting goes in front of it, in the same `h1` and in muted
+ink: *Guten Tag. Lass uns zusammen entspannen*.
 
-The bold part is a link. Pressing it opens the sheet.
+The bold part is an **`InlineButton`**: the heading's own ink, a filter glyph,
+and a standing 2px underline in `--border-strong`, which is the cue that it is
+a control. Pressing it opens the sheet. *Ziel ändern*, a labelled button, opens
+the same sheet — in the toolbar from `--bp-md`, below the cards on a phone —
+for anybody who reads a word in a sentence as a word.
+
+The number left the headline on the same day. It is on the onboarding card
+now — see [the exercise library](/features/exercises).
 
 ## A goal is said three ways
 
-Not one string reused. The grammar differs, so no screen can derive one from
-another:
+Three columns, because the three places need different words:
 
 | | German | where |
 |---|---|---|
-| `label` | *Entspannung* | the headline of its card in the sheet — it answers *Was brauchst du gerade?*, so it is a noun |
-| `purpose` | *Entspannen* | the page's `h1`, after *zum* |
+| `label` | *Entspannen* | the headline of its card in the sheet |
+| `purpose` | *entspannen* | the end of *Lass uns zusammen …* — a verb phrase, so lower case where German is lower case |
 | `why` | two sentences | under a bold **Warum?** on the card |
 
-English hides the difference well enough (*relax* against *Relaxation*) that
-one column would have looked sufficient. German does not.
+Until 2026-11-11 the label was a noun answering *Was brauchst du gerade?*
+(*Entspannung*) and the purpose a phrase after *zum* (*zum Entspannen*). Now
+the label is the purpose capitalised as a heading, so the card you press and
+the sentence that reports it say the same words.
 
-## Only one goal carries a *Warum?*
+## Every goal carries a *Warum?*
 
-Ben, 2026-10-15: *"Musie kennenlernen", "Entspannung" und "Aktivierung"
-brauchen keinen description text.*
+On 2026-10-15 only Achtsamkeit did: Ben ruled the others named a state you
+already know you want. With three cards side by side and one of them
+explaining itself, the other two read as unfinished, so since 2026-11-11 each
+has two sentences of its own — relax about the body letting go, wake-up about
+attention when you are flat, mindfulness about staying calm under stress.
 
-*Entspannung* and *Energie* name a state you already know you want.
-Explaining them is explaining the obvious. **Achtsamkeit is the abstract
-one**, and it is the one the testing actually heard the question about — so
-the explanation goes where the question was asked, and lands because it is
-the only body text in the sheet.
+`goal_i18n.why` stays **nullable, and null is data**: a card without one is a
+headline alone, not a missing translation.
 
-`goal_i18n.why` is therefore **nullable, and null is data** rather than a
-missing translation.
+## *Musie kennenlernen* is retired
 
-## "Musie kennenlernen" used to be the absence of a goal
+It started as the absence of a goal — *show me everything* — and became a row
+(`get-to-know-musie`) with three named exercises on 2026-10-15, and the default.
 
-It meant *show me everything*, and it was modelled as the LACK of a goal
-rather than as a row — because a row mapped to every exercise falls out of
-step the first time somebody adds an exercise and forgets to map it.
-
-That argument was right and stopped applying on 2026-10-15, when it was given
-three named exercises of its own. It is a row now, and two things follow:
-**there is no show-everything option**, and **`sessions.goal_id` is never null
-again**, which is better diary data than the old default of recording nothing.
+On 2026-11-11 it left the offer. It is **retired, not deleted**:
+`sessions.goal_id` points at it from every session started while it was the
+default, and `on delete set null` would have quietly blanked the goal on all of
+those diary entries. So the row stays, with both of its translations so old
+entries keep their name, parked at `sort = 1001` and flagged `retired`. It
+serves no exercise any more, and nothing offers it.
 
 ## The mapping
 
-| goal | exercises |
+| goal | exercises, in order |
 |---|---|
-| Musie kennenlernen | Achtsam Atmen · Bodyscan · Freie Bahn |
-| Entspannen | Klangreise · Bodyscan · Achtsam Atmen |
-| Aktivieren | Klangreise · Achtsam Atmen · Freie Bahn |
-| Achtsamer werden | Achtsame Pause · Freie Bahn · Klangreise |
+| Entspannen | Achtsam Atmen · Klangreise · Bodyscan · *Kalimba · Marimba · Harfe* |
+| Energie sammeln | Freie Bahn · Achtsam Atmen · Klangreise |
+| Achtsamkeit üben | Achtsame Pause · Freie Bahn · Klangreise |
 
-Three each, and between them all five exercises are reachable. Two things
-worth knowing:
+The order is `exercises.sort`. The screen shows **at most three** of a goal's
+exercises — the first three — and *Alle Übungen zeigen* shows the rest. Today
+only *Entspannen* has more than three, so it is the only goal with that switch;
+the instruments are behind it. Things worth knowing:
 
 - **Achtsame Pause appears under one goal only.** It is the exercise the paper
-  deck exists for, so somebody who never picks *Achtsamer werden* never meets
+  deck exists for, so somebody who never picks *Achtsamkeit üben* never meets
   the deck. Deliberate, and logged.
-- **Achtsam Atmen is in three of the four and is not built.** It is still
-  counted and still dealt — the headline reports the pile — and pressing it
-  opens the *not built yet* refusal. See
-  [the exercise library](/features/exercises).
+- **Achtsam Atmen is under two goals and is not built** — and it is the first
+  card under the default. It is still dealt, and pressing it opens the *not
+  built yet* refusal. See [the exercise library](/features/exercises).
 
 ## The default is the first card
 
-*Einen Weg Musie kennenzulernen*, because it is `sort = 1`. Not a hardcoded
-id: the sheet renders in `sort` order and the default is the first of them, so
-"the default goal" and "the first card" are one fact that cannot drift. Moving
-it is a migration.
+*Entspannen*, because it is `sort = 1`. Not a hardcoded id: the sheet renders
+in `sort` order and the default is the first of them, so "the default goal" and
+"the first card" are one fact that cannot drift. It moved from *Musie
+kennenlernen* on 2026-11-11 by exactly that: a migration, and no code change.
 
 Whatever is chosen is remembered in `localStorage` and survives the browser
-being closed.
+being closed. A browser that remembered *Musie kennenlernen* opens on the
+default.
 
 ## There is a tool for the mapping
 
@@ -129,8 +136,8 @@ configuration, which becomes the next migration. See
 |---|---|
 | `lib/goals.ts` | what a choice **is**, where it is remembered, what it filters, and which of the filtered can be started |
 | `components/GoalSheet.tsx` | the sheet |
-| `i18n/slot.ts` | splitting the headline around the link |
-| `lib/content.ts` | the query |
+| `i18n/slot.ts` | splitting the headline around the `InlineButton` |
+| `lib/content.ts` | the query — `getGoals()` reads `retired = false` |
 | `routes/GoalMappings.tsx` | the unlinked editing tool |
 | `goals`, `goal_i18n`, `exercise_goals` | the tables |
 
@@ -152,31 +159,40 @@ an id    → this goal
 the screen waits out rather than draws. It has not meant "nobody has chosen"
 since 2026-10-07, and now it cannot.
 
-**A browser still holding `__none__`** from before the sentinel went falls back
-for free: `readCachedGoal` validates the stored id against the goals that
-actually exist, and no row can spell it. Asserted in `goals.test.ts`.
+**A browser still holding `__none__`** from before the sentinel went, or
+`get-to-know-musie` from before it was retired, falls back for free:
+`readCachedGoal` validates the stored id against the goals `getGoals()`
+offers, and neither is among them. Asserted in `goals.test.ts`.
+
+## Retired is a flag, filtered in the query
+
+`goals.retired boolean not null default false`, and `getGoals()` asks for
+`retired = false` in the same change — a flag nothing reads would be a comment
+with a column type. The RLS policy stays `using (true)`: retirement decides
+what is OFFERED, not who may READ, and an old diary entry must still be able to
+name its goal. Both grants on `goals` are table-level, so the new column needed
+none (rule 2).
 
 ## `startable()` is the shuffle's candidate set
 
 *Such mir eine Übung aus* draws from it, so the shuffle can never start an
-exercise that would refuse. It is also what disables the button when a goal
-offers nothing built.
-
-**The headline does NOT count it** — it counts the pile. It counted
-`startable()` for half a day and Ben reported it as a bug on sight: the
-number sits directly above the cards it counts, so it has to be the number of
-cards there, whatever the reasoning behind the smaller figure.
+exercise that would refuse. Since 2026-11-11 it draws from what is **shown** —
+the first three, or all of them with the switch on — so it never deals a card
+the pile is not showing. It is also what disables the button when nothing shown
+is built.
 
 ## The headline is one string per locale, split on `{goal}`
 
 `translate()` leaves an unmatched slot verbatim, and `splitSlot()` cuts the
-rendered sentence there so the screen can put an `InlineLink` in the gap.
+rendered sentence there so the screen can put an `InlineButton` in the gap.
 
 Not a prefix key and a suffix key: the slot can sit anywhere a language puts
-it, including first, and whoever translates reads a sentence rather than
-three fragments. `parity.test.ts` asserts all six headline strings still
-contain the slot — the ordinary slot-parity test cannot catch a locale that
-dropped it from both forms.
+it — mid-sentence in English, last in German — and whoever translates reads a
+sentence rather than three fragments. `parity.test.ts` asserts both headline
+forms (`exercises.headline.together` and `.none`) still contain the slot in
+both locales — the ordinary slot-parity test cannot catch a locale that dropped
+it from both forms — and that neither carries `{count}`, which belongs to the
+onboarding card's `exercises.guide.count`.
 
 ## The rename, in one migration
 
@@ -191,17 +207,21 @@ a rename needs and the second of which is easy to forget.
 ## `sessions.goal_id` is `on delete set null`
 
 The goal is how the exercise was *found*, not what was done. Compare
-`exercise_id`, which is `restrict`.
+`exercise_id`, which is `restrict`. It is also why a goal is retired rather
+than deleted.
 
 ## What the mapping is tested for
 
 `db.content.db.test.ts`, because with no show-everything option the mapping is
 the only thing making an exercise reachable, and a hole in it is silent:
 
-- four goals, both locales, a non-empty `purpose` on each;
-- `get-to-know-musie` is `sort = 1`, so the default is what it should be;
-- every exercise has at least one goal — **nothing stranded**;
-- every goal has at least one exercise;
+- three goals offered — relax, wake-up, mindfulness — each in both locales with
+  a non-empty `purpose`;
+- `relax` is `sort = 1`, so the default is what it should be;
+- `get-to-know-musie` is still a row, retired, with both translations, parked
+  above 1000, and never offered;
+- every exercise is under at least one **offered** goal — **nothing stranded**;
+- every offered goal has at least one exercise, and a retired one has none;
 - no goal offers only exercises that are not built.
 :::
 
@@ -209,6 +229,7 @@ the only thing making an exercise reachable, and a hole in it is silent:
 
 **Source of truth:**
 [`lib/goals.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/goals.ts),
+[`20261111120000_three_goals.sql`](https://github.com/product-ben/musie/blob/main/supabase/migrations/20261111120000_three_goals.sql),
 [`20261015140000_the_headline_is_the_filter.sql`](https://github.com/product-ben/musie/blob/main/supabase/migrations/20261015140000_the_headline_is_the_filter.sql),
 [GOAL-FILTER.md](https://github.com/product-ben/musie/blob/main/GOAL-FILTER.md),
 [DOMAIN-MODEL.md](https://github.com/product-ben/musie/blob/main/DOMAIN-MODEL.md).

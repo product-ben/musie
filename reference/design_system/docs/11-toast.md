@@ -27,7 +27,7 @@ released set.
 ```
 div.musy-toast   [role=status] [aria-live=polite]
 ├── p.musy-toast__text                 body-sm
-├── CtaButton variant="ghost"          the single reversal
+├── Button variant="ghost"          the single reversal
 └── button.musy-toast__dismiss         base-ui Button + Icon
 ```
 

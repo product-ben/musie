@@ -73,7 +73,7 @@ next to it.
 its alignment, not its width.
 
 When a component cannot do what a screen needs, **the fix goes into the
-component.** That is why `CtaButton` has an `align` prop rather than the app
+component.** That is why `Button` has an `align` prop rather than the app
 overriding `justify-content` — and why the app overrides the design system in
 exactly zero places today.
 

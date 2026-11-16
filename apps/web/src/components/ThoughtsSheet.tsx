@@ -42,7 +42,7 @@
 import * as React from 'react';
 import { Camera, Mic, PenLine } from 'lucide-react';
 import {
-  CtaButton, Field, Image, Message, PhotoUpload, SegmentedControl, Sheet,
+  Button, Field, Image, Message, PhotoUpload, SegmentedControl, Sheet,
 } from '@musie/design-system';
 import type { UploadedPhoto } from '@musie/design-system';
 import { Markdown } from './Markdown';
@@ -121,9 +121,9 @@ export function ThoughtsSheet({
         )
       }
       foot={
-        <CtaButton variant="primary" onClick={() => onOpenChange(false)}>
+        <Button variant="primary" onClick={() => onOpenChange(false)}>
           {t('reflect.thoughts.sheet.done')}
-        </CtaButton>
+        </Button>
       }
     >
       <div className="musie-stack">

@@ -156,7 +156,7 @@ type Story = StoryObj<typeof meta>;
 /** Component defaults: three dimensions, nothing selected, nothing open. */
 export const Default: Story = {};
 
-/** The two rungs. `min` is 36px, the same height a `min` CtaButton and a `min`
+/** The two rungs. `min` is 36px, the same height a `min` Button and a `min`
  *  SegmentedControl come to — they stand in the same rows and have to agree. */
 export const Sizes: Story = {
   render: (args) => (
