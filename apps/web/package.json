@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build -c experiments/reflexion/vite.config.ts",
     "predev": "node ../../scripts/db-warn.mjs",
     "dev": "vite",
     "lint": "eslint .",
@@ -16,7 +16,8 @@
     "deck:pdf": "node scripts/deck-pdf.mjs",
     "music:migration": "node scripts/music-migration.mjs",
     "music:upload": "node scripts/music-upload.mjs",
-    "content:export": "node scripts/content-export.mjs"
+    "content:export": "node scripts/content-export.mjs",
+    "experiment:reflexion:dev": "vite -c experiments/reflexion/vite.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

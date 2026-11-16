@@ -1,0 +1,5 @@
+/* Experiment-only styles (CLAUDE.md rule 10: L14 does not bind here, but
+   prefer Layer 1 tokens anyway). Owned by the "Hülle & UI" agent. */
+.musie-reflexion-notice {
+  margin: 0;
+}

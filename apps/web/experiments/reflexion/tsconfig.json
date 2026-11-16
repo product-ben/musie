@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "../../src/env.d.ts", "../../src/window.d.ts", "../../src/process-shim.d.ts"],
+  "exclude": []
+}
