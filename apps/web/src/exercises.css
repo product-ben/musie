@@ -909,9 +909,18 @@
    Chevron Icon Buttons". It was centred while it sat between its own two
    chevrons; with them gone it starts on the line the other two sentences
    start on. The grid's middle track puts it on the gutter chevrons' line —
-   see `1fr auto 1fr` on the card. */
+   see `1fr auto 1fr` on the card.
+
+   ── AND --sp-1 HIGHER THAN THE GEOMETRY (Ben, 2026-11-16) ─────────────────
+   The sentence's box and the chevron's box measured 0.0px apart, and on the
+   phone it still read low: „immer noch nicht perfekt. 4px hoch". Boxes are
+   not ink — the line box carries the font's leading and the chevron is a
+   thin glyph in a 40px mark — so this is an optical correction, Ben's, by
+   eye, at one rung. `translate`, so it moves the sentence and not the
+   grid: the tracks and the other two rows stay where they are. */
 .musie-deck-guide__row--swipe {
   justify-content: start;
+  translate: 0 calc(var(--sp-1) * -1);
 }
 
 /* ── THE PRESS, AND ITS PICTURE IN THE CORNER THE REAL ONE IS IN ──────────
