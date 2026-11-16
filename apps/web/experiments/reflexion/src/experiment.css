@@ -117,3 +117,24 @@
 .musie-reflexion .musie-intro__cards > .musy-switch {
   display: none;
 }
+
+/* QUESTION 2 · THE FEELINGS HELP. A small ghost button between the question
+   and its field. In the DOM it stands BEFORE the field, so the tab order is
+   the seen order (button, then field); the field's own box steps aside with
+   `display: contents` and `order` lifts its label above the button. */
+.musie-reflexion-help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+.musie-reflexion-help > .musy-field { display: contents; }
+.musie-reflexion-help .musy-field__label { order: -1; }
+/* Flush with the question: the `min` rung brings its own --sp-2 margin, and
+   its --sp-4 inline padding is pulled back so the icon sits on the column
+   edge while the hover fill still has its room. */
+.musie-reflexion-help > .musy-btn {
+  align-self: flex-start;
+  text-align: start;
+  margin-block: 0;
+  margin-inline: calc(-1 * var(--sp-4)) 0;
+}

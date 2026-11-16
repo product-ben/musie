@@ -41,7 +41,16 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
 
 - **The questions** are `QUESTIONS`, with text in DE and EN. When the wording
   changes, raise `QUESTION_SET_VERSION`, so that answers to old and new
-  wording stay apart in `experiment_responses` and in PostHog.
+  wording stay apart in `experiment_responses` and in PostHog. Version 1 was
+  the placeholder set (local test rows only). Version 2 is Lucy's wording,
+  from 2026-11-16.
+- **The feelings help.** A question with `feelingsHelp: true` (today only q2)
+  gets a small ghost button under its label. The button opens the app's own
+  feelings sheet, which is not modified. A picked feeling is not stored as a
+  feeling. Its word is appended to the answer as plain text, and the person
+  can edit it like anything they typed. PostHog gets
+  `exp_feelings_help_opened` and `exp_feeling_picked`, which carry only the
+  depth and a count, never the word.
 - **The copy** of the modal, the reflect step, the thank-you state and the
   survey is `COPY.de` and `COPY.en`.
 - **The feedback survey** is `SURVEY`. It is PostHog survey

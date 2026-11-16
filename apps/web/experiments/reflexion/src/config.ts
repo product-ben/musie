@@ -13,7 +13,8 @@ export const EXPERIMENT_ID = 'reflexion-01';
 /** Kill switch. `false` → every link shows COPY.ended. */
 export const ENABLED = true;
 
-export const QUESTION_SET_VERSION = 1;
+/** 1 was the placeholder set (local test rows only); 2 is Lucy's wording, 2026-11-16. */
+export const QUESTION_SET_VERSION = 2;
 
 export type Slug = 'harfe' | 'body-scan' | 'freie-bahn';
 
@@ -46,13 +47,33 @@ export const EXERCISES: Record<Slug, ExperimentExercise> = {
 export interface ReflectionQuestion {
   question_key: string;
   text: Record<Locale, string>;
+  /** Offers the app's feelings sheet under the question; a pick is written
+      into the answer as plain text (Ben, 2026-11-16). */
+  feelingsHelp?: true;
 }
 
-/** Placeholders until Lucy's wording arrives. Same three for every exercise. */
+/** Lucy's three, the same for every exercise. A change of wording raises
+    QUESTION_SET_VERSION. */
 export const QUESTIONS: readonly ReflectionQuestion[] = [
-  { question_key: 'q1', text: { de: '[FRAGE 1 – Lucy]', en: '[FRAGE 1 – Lucy]' } },
-  { question_key: 'q2', text: { de: '[FRAGE 2 – Lucy]', en: '[FRAGE 2 – Lucy]' } },
-  { question_key: 'q3', text: { de: '[FRAGE 3 – Lucy]', en: '[FRAGE 3 – Lucy]' } },
+  {
+    question_key: 'q1',
+    text: { de: 'Was hast du gehört?', en: 'What did you hear?' },
+  },
+  {
+    question_key: 'q2',
+    text: {
+      de: 'Hat sich deine Stimmung während des Zuhörens bzw. des Spielens verändert? Wenn ja, inwiefern?',
+      en: 'Did your mood change while you were listening or playing? If so, how?',
+    },
+    feelingsHelp: true,
+  },
+  {
+    question_key: 'q3',
+    text: {
+      de: 'Wenn du der Musik einen Namen geben würdest, welcher wäre das?',
+      en: 'If you gave the music a name, what would it be?',
+    },
+  },
 ];
 
 /**
@@ -110,6 +131,7 @@ const de = {
   modalClose: 'Schließen',
 
   reflectionHeading: 'Nachdenken',
+  feelingsHelp: 'Hilf mir, meine Stimmung in Worte zu fassen',
   done: 'Fertig',
   saving: 'Wird gespeichert …',
   saveErrorHeadline: 'Das hat nicht geklappt.',
@@ -154,6 +176,7 @@ const en: Copy = {
   modalClose: 'Close',
 
   reflectionHeading: 'Reflect',
+  feelingsHelp: 'Help me put my mood into words',
   done: 'Done',
   saving: 'Saving …',
   saveErrorHeadline: 'That didn’t work.',

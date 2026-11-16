@@ -15,14 +15,26 @@
  * The text lives in a module-level draft as well as in state, so it survives
  * a language switch (no remount, but cheap insurance) AND a trip back to an
  * earlier step and forward again, which does unmount this route.
+ *
+ * ── THE FEELINGS HELP (Ben, 2026-11-16) ───────────────────────────────────
+ * A question marked `feelingsHelp` gets a small ghost button under its label
+ * that opens the app's own `FeelingsSheet`, unmodified. A pick is not stored
+ * anywhere as a feeling: its word is APPENDED TO THE ANSWER as plain text,
+ * which the person can then edit like anything they typed. The sheet's
+ * "already held" refers to the words picked here that are still in the text,
+ * so deleting a word frees it again.
  */
 import * as React from 'react';
+import { Smile } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import {
   Button, ContentBox, Field, InteractiveWizard, Message, WizardPanel,
 } from '@musie/design-system';
+import { FeelingsSheet } from '../../../src/components/FeelingsSheet';
 import { useLocale, useT } from '../../../src/i18n/localeContext';
 import { getExercise } from '../../../src/lib/content';
+import { idOf, pathOf, resolveFeeling } from '../../../src/lib/feelings';
+import type { HeldFeeling } from '../../../src/lib/feelings';
 import type { Exercise } from '../../../src/lib/content';
 import { stepsForRun } from '../../../src/lib/exerciseKind';
 import type { ExerciseKind } from '../../../src/lib/exerciseKind';
@@ -34,7 +46,7 @@ import { QUESTIONS, type Slug } from './config';
 import { useCopy, useExperiment } from './context';
 import { RUN } from './run';
 import { saveResponse } from './save';
-import { error as trackError } from './track';
+import { error as trackError, track } from './track';
 
 /** What each link's run looks like before (or without) the exercise row. */
 const FALLBACK_SHAPE: Record<Slug, { kind: ExerciseKind; cardsDealt: number | null }> = {
@@ -45,6 +57,15 @@ const FALLBACK_SHAPE: Record<Slug, { kind: ExerciseKind; cardsDealt: number | nu
 
 /* One page load = one run, so one draft. */
 const draft: Record<string, string> = {};
+/* The feelings picked through the sheet in this run, per question. */
+const draftPicks: Record<string, HeldFeeling[]> = {};
+
+/** A picked feeling's word, added to what is already written. */
+function withFeeling(text: string, word: string): string {
+  const trimmed = text.trimEnd();
+  if (trimmed === '') return word;
+  return /[.!?…:;,–-]$/.test(trimmed) ? `${trimmed} ${word}` : `${trimmed}, ${word}`;
+}
 
 const FIELD_SIZING = typeof CSS !== 'undefined'
   && typeof CSS.supports === 'function'
@@ -71,6 +92,9 @@ export function ReflectionStep() {
   const { id = RUN.sessionId } = useParams();
 
   const [answers, setAnswers] = React.useState<Record<string, string>>(() => ({ ...draft }));
+  const [picks, setPicks] = React.useState<Record<string, HeldFeeling[]>>(() => ({ ...draftPicks }));
+  /** The question whose feelings sheet is open, or null. */
+  const [feelingsFor, setFeelingsFor] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
 
@@ -98,13 +122,14 @@ export function ReflectionStep() {
   const previous: StepId | null = before[before.length - 1] ?? null;
   const goTo = (step: StepId) => navigate(`/session/${encodeURIComponent(id)}/${step}`);
 
-  /* Fields that already hold text (a draft, or after a language switch the
-     labels re-render) are sized on mount when the browser cannot. */
+  /* Sized whenever the text changes, typed or not, when the browser cannot
+     do it itself: a draft on mount, relabelling after a language switch, and
+     a feeling written in from the sheet, which fires no input event. */
   const areaRef = React.useRef<HTMLDivElement>(null);
   React.useLayoutEffect(() => {
     if (FIELD_SIZING) return;
     areaRef.current?.querySelectorAll('textarea').forEach(grow);
-  }, [locale]);
+  }, [locale, answers]);
 
   const focusTimer = React.useRef<number | undefined>(undefined);
   React.useEffect(() => () => window.clearTimeout(focusTimer.current), []);
@@ -114,6 +139,38 @@ export function ReflectionStep() {
   const change = (key: string, value: string) => {
     draft[key] = value;
     setAnswers((current) => ({ ...current, [key]: value }));
+  };
+
+  /** Picked here AND still in the text — what the sheet treats as held. */
+  const heldFor = (key: string): HeldFeeling[] => {
+    const text = (answers[key] ?? '').toLocaleLowerCase(locale);
+    return (picks[key] ?? []).filter((p) => text.includes(p.label.toLocaleLowerCase(locale)));
+  };
+
+  const pickFeeling = async (key: string, nodeId: string): Promise<'added' | 'already-held'> => {
+    const path = pathOf(nodeId);
+    const word = path === null ? null : resolveFeeling(path, locale);
+    if (path === null || word === null) return 'already-held';
+    const held = heldFor(key);
+    const feelingId = idOf(path);
+    if (held.some((h) => h.id === feelingId)) return 'already-held';
+    const next = withFeeling(draft[key] ?? answers[key] ?? '', word);
+    change(key, next);
+    const nextPicks = [...held, { ...path, id: feelingId, label: word }];
+    draftPicks[key] = nextPicks;
+    setPicks((current) => ({ ...current, [key]: nextPicks }));
+    /* Counts only, never the word (brief: no content to PostHog). */
+    track('exp_feeling_picked', {
+      question_key: key,
+      depth: path.specificI !== null ? 3 : path.detailedId !== null ? 2 : 1,
+      feelings_in_answer: nextPicks.length,
+    });
+    return 'added';
+  };
+
+  const openFeelings = (key: string) => {
+    setFeelingsFor(key);
+    track('exp_feelings_help_opened', { question_key: key });
   };
 
   const finish = async () => {
@@ -132,6 +189,7 @@ export function ReflectionStep() {
         })),
       });
       for (const key of Object.keys(draft)) delete draft[key];
+      for (const key of Object.keys(draftPicks)) delete draftPicks[key];
       navigate(DONE_PATH, { replace: true });
     } catch (error) {
       console.error('[reflexion] save failed:', error);
@@ -188,9 +246,6 @@ export function ReflectionStep() {
           <div
             ref={areaRef}
             className="musie-reflexion-answers ph-no-capture"
-            onInput={(event) => {
-              if (event.target instanceof HTMLTextAreaElement) grow(event.target);
-            }}
             onFocus={(event) => {
               /* Keep the field being typed into clear of the iOS keyboard:
                  wait for the keyboard to take its space, then centre. */
@@ -207,19 +262,40 @@ export function ReflectionStep() {
             }}
           >
             <h2 className="musie-reflect__welcome">{copy.reflectionHeading}</h2>
-            {QUESTIONS.map((question) => (
-              <Field
-                key={question.question_key}
-                className="musie-reflexion-answer"
-                label={question.text[locale]}
-                name={question.question_key}
-                multiline
-                rows={3}
-                value={answers[question.question_key] ?? ''}
-                onValueChange={(value) => change(question.question_key, value)}
-                errorWord={copy.statusError}
-              />
-            ))}
+            {QUESTIONS.map((question) => {
+              const field = (
+                <Field
+                  key={question.question_key}
+                  className="musie-reflexion-answer"
+                  label={question.text[locale]}
+                  name={question.question_key}
+                  multiline
+                  rows={3}
+                  value={answers[question.question_key] ?? ''}
+                  onValueChange={(value) => change(question.question_key, value)}
+                  errorWord={copy.statusError}
+                />
+              );
+              if (question.feelingsHelp !== true) return field;
+              /* The button comes FIRST in the DOM, so tabbing goes button →
+                 field, the order they are seen in; experiment.css lifts the
+                 question's label above it. */
+              return (
+                <div key={question.question_key} className="musie-reflexion-help">
+                  <Button
+                    variant="ghost"
+                    size="min"
+                    leadingIcon={Smile}
+                    align="start"
+                    wrap
+                    onClick={() => openFeelings(question.question_key)}
+                  >
+                    {copy.feelingsHelp}
+                  </Button>
+                  {field}
+                </div>
+              );
+            })}
             {failed && (
               <Message
                 variant="error"
@@ -233,6 +309,16 @@ export function ReflectionStep() {
           </div>
         </WizardPanel>
       </ContentBox>
+      {/* Beside the panel, as Session mounts it. */}
+      <FeelingsSheet
+        open={feelingsFor !== null}
+        onOpenChange={(next) => { if (!next) setFeelingsFor(null); }}
+        held={feelingsFor === null ? [] : heldFor(feelingsFor)}
+        onPick={(nodeId) => (feelingsFor === null
+          ? Promise.resolve('already-held' as const)
+          : pickFeeling(feelingsFor, nodeId))}
+        error={null}
+      />
     </div>
   );
 }
