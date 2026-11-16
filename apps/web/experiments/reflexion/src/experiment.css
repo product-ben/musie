@@ -109,3 +109,11 @@
 .musie-reflexion-done {
   padding-block-end: var(--sp-7);
 }
+
+/* Freie Bahn is ALWAYS the digital run here (one card, the blue sun). The
+   intro's „Die analogen Karten liegen vor mir“ switch would turn the run into
+   the paper scan step, where a visitor without the printed deck is stuck. The
+   switch goes; the intro's copy stays as the app has it. */
+.musie-reflexion .musie-intro__cards > .musy-switch {
+  display: none;
+}

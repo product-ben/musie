@@ -15,6 +15,9 @@
  * everything it does not override. Adding a shim is adding a file.
  *
  * dev:   pnpm --filter web experiment:reflexion:dev  → http://localhost:5180/experiments/reflexion/harfe/
+ * A NEW SHIM FILE needs a dev-server restart: the table is read per resolve,
+ * but Vite caches resolved import paths for modules it has already served.
+ *
  * build: chained into `pnpm --filter web build`, writes
  *        dist/experiments/reflexion/{harfe,body-scan,freie-bahn}/index.html
  */
