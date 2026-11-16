@@ -199,9 +199,11 @@
    it --sp-2 of clear space on every side. */
 .musy-icon-btn--min { margin: var(--sp-2); }
 
+/* No visible edge since 2026-11-16 — `.musy-btn--primary`'s change, for its
+   reason. See BORDERLESS SURFACES at the end of the file. */
 .musy-icon-btn--primary {
   background-color: var(--interactive-primary);
-  border-color: var(--interactive-primary-border);
+  border-color: transparent;
   color: var(--interactive-primary-on);
 }
 /* `--border-subtle` at rest since 2026-11-11 (Ben, Figma *Ready to build*):
@@ -494,9 +496,14 @@
    label, i.e. alongside `--block`. */
 .musy-btn--align-start { justify-content: flex-start; }
 
+/* No visible edge since 2026-11-16 (Ben): the solid fill is the whole shape.
+   Transparent rather than removed, so the box keeps its size and forced
+   colours can still paint it — see BORDERLESS SURFACES at the end of the
+   file. Hover and press only ever moved the fill, so they are untouched.
+   TrackButton and RecordButton `primary` inherit this rule. */
 .musy-btn--primary {
   background-color: var(--interactive-primary);
-  border-color: var(--interactive-primary-border);
+  border-color: transparent;
   color: var(--interactive-primary-on);
 }
 /* ── THE RESTING BORDER WENT QUIET (Ben, 2026-11-11) ──────────────────────
@@ -1461,20 +1468,25 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   padding: var(--sp-5) var(--musy-carousel-card-inset);
   text-align: center;
   background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16 (Ben) — not at rest, and not the green
+     one the centred card used to take. The raised fill sets every card off
+     the page; see BORDERLESS SURFACES at the end of the file. */
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   /* Off-centre slides sit back. Scale only — no opacity fade: dimmed text
      would drop below 4.5:1 (1.4.3) while still being read.
-     Not transitioned: the scale and border ARE the selected state, and a
-     transitioned property renders its start value until the clock advances —
-     under forced reduced motion, or in any paused/throttled frame, that
-     leaves the centred card looking unselected. The snap scroll is the
-     movement; this is just state. */
+     THE SCALE IS NOW THE WHOLE SELECTED STATE. It shared that job with a
+     green border until 2026-11-16; Ben chose size alone over keeping one
+     edge on the centred card. The dots below still say which slide is
+     current, to a screen reader and to the eye.
+     Not transitioned: a transitioned property renders its start value until
+     the clock advances — under forced reduced motion, or in any
+     paused/throttled frame, that leaves the centred card looking unselected.
+     The snap scroll is the movement; this is just state. */
   transform: scale(0.9);
 }
 .musy-carousel__slide[data-current="true"] .musy-carousel__card {
   transform: scale(1);
-  border-color: var(--musy-rest-border);
 }
 
 /* ── THE NUDGE: THE CAROUSEL SHOWS ITSELF BEING SWIPED, ONCE ───────────────
@@ -1530,7 +1542,8 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   flex-shrink: 0;
   inline-size: var(--target-guided);
   block-size: var(--target-guided);
-  border: var(--border-width-regular) var(--border-style-solid) var(--musy-rest-border);
+  /* The tinted fill alone since 2026-11-16 — its ring went with the cards'. */
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-full);
   background-color: var(--musy-rest-fill);
   color: var(--musy-rest-on);
@@ -1673,7 +1686,12 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   flex-direction: column;
   gap: var(--space-gap-related);
   padding: var(--space-inset-card);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16 (Ben): the raised fill against the page
+     is the box. Default, sunken and the framed box's outer edge all lose it;
+     `--dashed` names its own colour below and keeps its dashes, because they
+     MEAN something ("waiting for content"), and the framed header's divider
+     stays. See BORDERLESS SURFACES at the end of the file. */
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
 }
@@ -2461,7 +2479,10 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      scroller and travels with it: the first line starts below the inset and
      the last line ends above it, at every scroll position. */
   padding-inline: var(--space-inset-card);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16 (Ben): the scrim and the elevation set
+     the panel off. The 1px ring dark mode's --elevation-3 draws inside the
+     shadow is Layer 1's and stays. See BORDERLESS SURFACES at the end. */
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-panel);
   background-color: var(--surface-overlay);
   box-shadow: var(--elevation-3);
@@ -2844,7 +2865,9 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   box-sizing: border-box;
   inline-size: 100%;
   padding: var(--sp-1);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  /* The sunken fill alone since 2026-11-16 (Ben). See BORDERLESS SURFACES at
+     the end of the file. */
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
   border-radius: var(--radius-control);
   background-color: var(--surface-sunken);
 }
@@ -3097,9 +3120,11 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   color: var(--on-surface-disabled);
   cursor: not-allowed;
 }
+/* No edge here either since 2026-11-16 (Ben). The disabled fill still lifts
+   the chosen segment off the sunken track, and the disabled ink says the rest. */
 .musy-seg__option[data-disabled][data-checked] {
   background-color: var(--interactive-primary-disabled);
-  border-color: var(--border-subtle);
+  border-color: transparent;
 }
 
 /* ── WHAT THE SELECTED OPTION MEANS (2026-11-09) ──────────────────────────
@@ -3192,7 +3217,10 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   gap: var(--space-gap-stack);
   padding: var(--space-inset-control);
 
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16 (Ben), in every tone — the tones' own
+     border colours went with it. The fill and the elevation are the shape;
+     see BORDERLESS SURFACES at the end of the file. */
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: var(--surface-overlay);
   color: var(--on-surface);
@@ -3283,16 +3311,16 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 }
 
 /* ── TONE: SUCCESS ────────────────────────────────────────────────────────
-   The feedback family Layer 1 already ships, used exactly as §10 uses it —
-   surface, a ≥3:1 boundary, ≥7:1 text, and the icon at its own token. Token
-   only; not one literal.
+   The feedback family Layer 1 already ships, used as §10 uses it — surface,
+   ≥7:1 text, and the icon at its own token — minus the ≥3:1 boundary, which
+   went on 2026-11-16 with every toast's edge (Ben). The tinted surface still
+   sets the tone apart from a neutral toast. Token only; not one literal.
 
    THE FILL IS NOT THE MESSAGE (1.4.1). Three things carry it without colour:
    the check glyph, the sentence itself, and the screen-reader status word the
    component puts in front of the text. Remove the fill and nothing is lost but
    the fill.                                                                 */
 .musy-toast--success {
-  border-color: var(--feedback-success-border);
   background-color: var(--feedback-success-surface);
   color: var(--feedback-success-text);
 }
@@ -3319,14 +3347,12 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    front of the text for a screen reader. Remove the fill and nothing is lost
    but the fill.                                                             */
 .musy-toast--warning {
-  border-color: var(--feedback-warning-border);
   background-color: var(--feedback-warning-surface);
   color: var(--feedback-warning-text);
 }
 .musy-toast--warning .musy-toast__icon { color: var(--feedback-warning-icon); }
 
 .musy-toast--error {
-  border-color: var(--feedback-error-border);
   background-color: var(--feedback-error-surface);
   color: var(--feedback-error-text);
 }
@@ -4918,7 +4944,9 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-wizard__panel {
   margin-block-start: var(--space-gap-stack);
   padding: var(--space-inset-card);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  /* The raised fill alone since 2026-11-16 (Ben). See BORDERLESS SURFACES at
+     the end of the file. */
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
 }
@@ -5501,27 +5529,29 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
 /* ── B · Player ───────────────────────────────────────────────────────── */
 
+/* NO EDGES ANYWHERE IN THE PLAYER since 2026-11-16 (Ben): not the frame, not
+   the rail, not the thumb's ring. The raised fill is the player, the sunken
+   fill is the rail, and the thumb is its solid accent plus --elevation-1.
+   `--musy-mplayer-accent-border` went with the ring, its only reader. See
+   BORDERLESS SURFACES at the end of the file. */
 .musy-mplayer {
   --musy-mplayer-accent: var(--interactive-primary);
-  --musy-mplayer-accent-border: var(--interactive-primary-border);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-gap-related);
   box-sizing: border-box;
   padding: var(--sp-3);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-strong);
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
 }
 .musy-mplayer--accent {
   --musy-mplayer-accent: var(--interactive-accent);
-  --musy-mplayer-accent-border: var(--interactive-accent-border);
-}.musy-mplayer[data-disabled] {
-  border-color: var(--border-subtle);
+}
+.musy-mplayer[data-disabled] {
   background-color: var(--interactive-primary-disabled);
   --musy-mplayer-accent: var(--on-surface-disabled);
-  --musy-mplayer-accent-border: var(--on-surface-disabled);
 }
 
 .musy-mplayer__main { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
@@ -5560,7 +5590,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   inline-size: 100%;
   border-radius: var(--radius-full);
   background-color: var(--surface-sunken);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
   box-sizing: border-box;
 }
 
@@ -5584,7 +5614,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   translate: -50% -50%;
   border-radius: var(--radius-full);
   background-color: var(--musy-mplayer-accent);
-  border: var(--border-width-regular) var(--border-style-solid) var(--musy-mplayer-accent-border);
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   box-shadow: var(--elevation-1);
 }
 .musy-mplayer__thumb:focus-visible {
@@ -5653,6 +5683,19 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      meter is a floor, not a lid, and flex shrinking never runs until the BOX is
      bounded by its containing block. */
   max-inline-size: 100%;
+  /* NO VISIBLE EDGE IN ANY VARIANT since 2026-11-16 (Ben) — `secondary`
+     included, which is where this parts from §04: a secondary Button or
+     TrackButton keeps its edge. The fill is the shape. One class more than
+     §04's variant rules, so this wins at rest; the hover below has to be
+     restated because §04's carries two pseudo-classes more than this.
+     See BORDERLESS SURFACES at the end of the file. */
+  border-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .musy-btn--secondary.musy-rec:hover:not(:disabled):not([data-loading]),
+  .musy-btn--secondary.musy-rec[data-force~="hover"] {
+    border-color: transparent;
+  }
 }
 .musy-btn--comfort.musy-rec,
 .musy-btn--guided.musy-rec {
@@ -8171,18 +8214,44 @@ html[data-musy-scroll-snap='y'] {
 
 /* The whole cell is the control, so the target is the picture — 2.5.8 is
    satisfied by a wide margin and there is no separate hit area to miss. */
+/* NO EDGE, AND THE STATES DARKEN INSTEAD — Ben, 2026-11-16. The cell drew a
+   resting border, strengthened it on hover, and added an inset ring when
+   chosen. All three are gone. What replaces them is RadioGroupText's grammar
+   carried onto a picture: a row there darkens its FILL under the pointer and
+   takes its own fill when chosen, so here the picture darkens under a scrim —
+   a little on hover, more on press, most when chosen — and the chosen one
+   also fills its tick.
+
+   THE SCRIM IS LAYER 1'S, the green-black the Lightbox backdrop uses, so the
+   darkening is the system's own ink and flips with the theme (it is deeper in
+   dark, as the backdrop is). Only its OPACITY steps, through one custom
+   property, so the states differ in amount and never in colour.
+
+   `isolation: isolate` keeps the tick's z-index inside the cell: it has to
+   paint over the scrim, and nothing else on the page should care. */
 .musy-rimage__cell {
+  --musy-rimage-dim: 0;
   position: relative;
   display: block;
   box-sizing: border-box;
   inline-size: 100%;
   padding: 0;
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: transparent;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color var(--motion-toggle), box-shadow var(--motion-toggle);
+  isolation: isolate;
+}
+.musy-rimage__cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: var(--alpha-scrim);
+  opacity: var(--musy-rimage-dim);
+  pointer-events: none;
+  transition: opacity var(--motion-toggle);
 }
 
 /* THE PICTURE KEEPS ITS OWN RATIO. No crop and no fixed aspect: the artwork is
@@ -8195,6 +8264,7 @@ html[data-musy-scroll-snap='y'] {
 
 .musy-rimage__check {
   position: absolute;
+  z-index: 1;
   inset-block-start: var(--sp-2);
   inset-inline-end: var(--sp-2);
   display: grid;
@@ -8210,13 +8280,15 @@ html[data-musy-scroll-snap='y'] {
               border-color var(--motion-toggle);
 }
 
-/* ── CHOSEN · three cues, none of them colour alone (1.4.1) ──────────────
-   The border strengthens, an inset ring doubles it against a picture whose own
-   edge may be any colour, and the tick fills. A photograph can swallow a 1.5px
-   border on its own; the ring is what keeps the state legible over artwork. */
+/* ── CHOSEN · two cues, neither of them hue (1.4.1) ──────────────────────
+   The picture darkens to the deepest step and the tick fills — a shape that
+   was not there before, which is the cue that survives greyscale on any
+   artwork. (Until 2026-11-16 it was three: a strengthened border and an inset
+   ring did the darkening's job. `prefers-contrast: more` brings them back,
+   below.) The tick keeps its own light ring: that is the glyph's edge against
+   the picture, not the cell's. */
 .musy-rimage__cell[data-checked] {
-  border-color: var(--musy-sel-fill, var(--interactive-primary));
-  box-shadow: inset 0 0 0 var(--border-width-thick) var(--musy-sel-fill, var(--interactive-primary));
+  --musy-rimage-dim: 0.5;
 }
 
 .musy-rimage__cell[data-checked] .musy-rimage__check {
@@ -8229,10 +8301,17 @@ html[data-musy-scroll-snap='y'] {
   --musy-sel-fill: var(--interactive-accent);
 }
 
+/* Pointer and press darken an UNCHOSEN picture only — RadioGroupText's own
+   guard — so the chosen one never steps lighter under the cursor. Hover is
+   half of chosen and press sits between, so a hovered picture can never be
+   mistaken for the chosen one beside it, and the tick settles it either way. */
 @media (hover: hover) and (pointer: fine) {
   .musy-rimage__cell:not([data-checked]):not([data-disabled]):hover {
-    border-color: var(--border-strong);
+    --musy-rimage-dim: 0.25;
   }
+}
+.musy-rimage__cell:not([data-checked]):not([data-disabled]):active {
+  --musy-rimage-dim: 0.4;
 }
 
 .musy-rimage__cell:focus-visible {
@@ -8245,7 +8324,22 @@ html[data-musy-scroll-snap='y'] {
   opacity: 0.6;
 }
 
+/* More contrast asked for: the old edges come back, on top of the darkening.
+   A tint over artwork is exactly the kind of cue that preference says is not
+   enough, so the strengthened border and the inset ring return. */
+@media (prefers-contrast: more) {
+  .musy-rimage__cell { border-color: var(--border-subtle); }
+  .musy-rimage__cell[data-checked] {
+    border-color: var(--musy-sel-fill, var(--interactive-primary));
+    box-shadow: inset 0 0 0 var(--border-width-thick) var(--musy-sel-fill, var(--interactive-primary));
+  }
+}
+
+/* Forced colours keep a background's alpha, so the scrim would repaint as a
+   translucent veil of Canvas over the picture. It is dropped; the border is
+   still full width underneath, and Highlight on it is the chosen state. */
 @media (forced-colors: active) {
+  .musy-rimage__cell::after { display: none; }
   .musy-rimage__cell[data-checked] { border-color: Highlight; }
   .musy-rimage__cell[data-checked] .musy-rimage__check {
     background-color: Highlight;
@@ -8864,4 +8958,73 @@ html[data-musy-scroll-snap='y'] {
      already accounts for: keep it, and do not draw the dot. */
   .musy-instrument-cursor[data-shown] { visibility: hidden; }
   [data-musy-instrument-cursor] { cursor: auto; }
+}
+
+
+/* ═══ BORDERLESS SURFACES — Ben, 2026-11-16 ═══════════════════════════════
+   Every surface below lost its VISIBLE edge, wherever it is drawn. Each
+   component's own section says so at the rule; this is the one place that
+   names the whole decision, and the escapes that have to come after all of
+   them in the file.
+
+   GONE · ContentBox (default, sunken, and the framed box's outer edge) ·
+   SegmentedControl's track, and a disabled chosen segment · Button and
+   IconButton `primary`, and so TrackButton and RecordButton `primary` ·
+   RecordButton in EVERY variant · Carousel cards and the badge ring ·
+   Lightbox · MusicPlayer: frame, rail and the thumb's ring · RadioImage cells
+   (which darken instead — see §26) · Toast, in every tone · WizardPanel.
+
+   KEPT, ON PURPOSE · ContentBox `--dashed`, because the dashes MEAN "waiting
+   for content" · the framed header's divider · `secondary` and `outline`
+   Button, IconButton and TrackButton, whose edge is most of their shape ·
+   every error edge · focus rings · the 1px ring Layer 1's --elevation-* draws
+   in dark mode, which belongs to the shadow, not to any component.
+
+   TRANSPARENT, NOT REMOVED — B25's mechanism, for B25's reasons. The width
+   stays in the box model, so not one of these moved by a pixel on any screen;
+   and background-clip defaults to border-box, so a fill now runs to the edge
+   the border used to occupy. Forced colours repaint a transparent border as
+   CanvasText, which is exactly the boundary those users need — restated
+   explicitly below, as §FORCED COLOURS does for the families it lists.
+
+   WHAT SETS THEM OFF NOW is a fill that differs from what it sits on —
+   raised on the page, sunken track, solid primary, tinted toast — or
+   elevation. That is enough for these: none is a control whose boundary is
+   its only identity (1.4.11 asks that of the CONTROL; a label or a solid fill
+   carries it). The weakest case is the Carousel, whose centred card is now
+   marked by scale alone; Ben chose that over keeping one edge.
+
+   THE ESCAPES. `prefers-contrast: more` brings the edges back — Layer 1 has
+   promoted --border-subtle by then, so this is the system's own contrast
+   ladder, as in B25. Primary buttons stay bare there: a solid fill is
+   already the strongest boundary the system draws.                        */
+
+@media (prefers-contrast: more) {
+  .musy-box:not(.musy-box--plain),
+  .musy-seg__track,
+  .musy-seg__option[data-disabled][data-checked],
+  .musy-carousel__card,
+  .musy-lightbox__popup,
+  .musy-toast,
+  .musy-wizard__panel,
+  .musy-mplayer,
+  .musy-mplayer__track,
+  .musy-btn--secondary.musy-rec {
+    border-color: var(--border-subtle);
+  }
+  .musy-carousel__slide[data-current="true"] .musy-carousel__card,
+  .musy-carousel__badge {
+    border-color: var(--musy-rest-border);
+  }
+  .musy-toast--success { border-color: var(--feedback-success-border); }
+  .musy-toast--warning { border-color: var(--feedback-warning-border); }
+  .musy-toast--error   { border-color: var(--feedback-error-border); }
+}
+
+@media (forced-colors: active) {
+  .musy-seg__track, .musy-carousel__card, .musy-carousel__badge, .musy-toast,
+  .musy-wizard__panel, .musy-mplayer, .musy-mplayer__track,
+  .musy-rimage__cell {
+    border-color: CanvasText;
+  }
 }

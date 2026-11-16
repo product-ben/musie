@@ -383,7 +383,10 @@
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16, because the ContentBox that replaces
+     this bubble lost its own (design system, BORDERLESS SURFACES). A bubble
+     with an edge turning into a box without one would read as two things. */
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
 }
 
 .musie-typing__dot {
@@ -931,7 +934,9 @@
   inline-size: 100%;
   margin: 0;
   padding: var(--space-inset-control);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16 — ContentBox's raised surface, which
+     lost its edge that day (design system, BORDERLESS SURFACES). */
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
   color: var(--on-surface);
@@ -3059,7 +3064,9 @@ html[data-musy-scroll-snap] {
    the way of the thing being done. */
 .musie-builder__pick {
   padding: var(--space-inset-card);
-  border: var(--border-width-hairline) solid var(--border-subtle);
+  /* No visible edge since 2026-11-16 — a raised surface, as ContentBox now is
+     (design system, BORDERLESS SURFACES). */
+  border: var(--border-width-hairline) solid transparent;
   border-radius: var(--radius-card);
   background: var(--surface-raised);
 }

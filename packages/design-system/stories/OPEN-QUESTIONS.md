@@ -4375,3 +4375,44 @@ tooltip stands over the mark rather than over the top of a card-tall strip.
 Coarse pointers get none, through the rule IconButton's already uses.
 What I need from Ben: **nothing**. `nextLabel` no longer appears anywhere
 visible, only as a name and a tooltip, so its prop docs say so.
+
+## Borderless surfaces — twelve components lose their visible edge — RESOLVED
+Where: `src/musy-components.css` (each component's own rule, and the
+BORDERLESS SURFACES section at the end of the file), `src/RadioImage.tsx`,
+`src/ContentBox.tsx`; in the app, `apps/web/src/shell.css` (`.musie-typing`,
+`.musie-reflect__thoughts`, `.musie-builder__pick`)
+What I checked: Ben, 2026-11-16: „get rid of the borders on ContentBox,
+SegmentedControl, Button/primary (only this variant!), IconButton/primary
+(only this variant!), Carousel, Lightbox, MusicPlayer, RadioImage, RecordButton,
+Toast, TrackButton (only primary), WizardPanel" — then four answers in one
+round: RadioImage hover darkens and chosen is a deeper tint plus the tick;
+Carousel loses every edge (the centred card is marked by scale alone);
+MusicPlayer loses its rail edge and thumb ring too; Toast's tone edges, the
+disabled chosen segment and RecordButton `secondary` go as well. Kept by the
+same answers: ContentBox `dashed`, the framed header's divider, and the 1px
+ring Layer 1's dark `--elevation-*` draws (Lightbox, Toast, the thumb).
+Measured in Storybook before and after, every story of all fourteen
+components, both themes: every listed edge now computes transparent at its
+old width, so no box can change size. Walked in the running app (worktree
+build, local stack, a throwaway user; every top-level route and every
+exercise's session steps): no listed component draws an edge anywhere it renders.
+What I did: `border-color: transparent` at each rule, width kept — B25's
+mechanism, so nothing moves by a pixel and forced colours still paints the
+boundary. `prefers-contrast: more` restores the edges. RadioImage darkens
+under `--alpha-scrim` (hover 0.25, press 0.4, chosen 0.5 of it).
+`--musy-mplayer-accent-border` is deleted; the thumb ring was its only reader.
+In the app, the three surfaces above were ContentBox copies (raised fill,
+subtle edge, card radius) and would have kept an edge beside boxes that had
+lost theirs — the typing bubble turns INTO a ContentBox — so they follow.
+Why: Ben's call; the fill (raised, sunken, solid, tinted) or the elevation
+now sets every one of them off the page.
+What I need from Ben: **four small things to know, none blocking.**
+1. ContentBox's `outline="solid"` no longer draws a solid edge. The name is
+   kept so no call site changes; the type's doc says what it means now.
+2. RecordButton `variant="accent"` has had NO styling since the accent CTA
+   solids were removed (2026-10-05): it renders as a bare `.musy-btn`. Found
+   here, not caused here; the app only uses `primary`.
+3. The three app surfaces are ContentBox copies, which is L14.3's definition
+   of a component request. Aligned rather than logged as one, because
+   rebuilding them on ContentBox is a separate change.
+4. The Figma Layer 1 file still draws every one of these edges.
