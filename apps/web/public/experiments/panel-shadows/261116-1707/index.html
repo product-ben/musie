@@ -446,6 +446,26 @@ body {
   cursor: pointer;
 }
 
+/* Layer 1's two warm scales, all twelve steps, as the current theme sees them. */
+.scales { display: grid; gap: 10px; }
+.scale { display: grid; gap: 4px; }
+.scale__head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--on-surface-muted); }
+.scale__row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
+.scale__chip {
+  appearance: none;
+  aspect-ratio: 1;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  cursor: pointer;
+}
+.scale__chip:hover { scale: 1.12; }
+.scale__chip[aria-pressed="true"] { outline: 2px solid var(--on-surface); outline-offset: 2px; }
+.scale__chip:focus-visible { outline: 2px solid var(--interactive-primary); outline-offset: 2px; }
+.scale__steps { display: flex; justify-content: space-between; font-size: 11px; color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+
 .output { display: grid; gap: 8px; }
 .output pre {
   margin: 0;
@@ -614,6 +634,17 @@ body {
         <input type="color" id="color" aria-label="Eigene Schattenfarbe">
         <button class="btn" type="button" id="token-color">Token-Farbe</button>
       </div>
+      <div class="scales">
+        <div class="scale">
+          <div class="scale__head"><span>Sand</span><span id="scale-theme-1"></span></div>
+          <div class="scale__row" id="scale-sand"></div>
+        </div>
+        <div class="scale">
+          <div class="scale__head"><span>Terrakotta</span><span id="scale-theme-2"></span></div>
+          <div class="scale__row" id="scale-terracotta"></div>
+          <div class="scale__steps" aria-hidden="true"><span>1</span><span>12</span></div>
+        </div>
+      </div>
       <p class="hint" id="color-hint"></p>
       <label class="check"><input type="checkbox" id="ring">Kante im Dunkeln (1px innen, wie elevation-3)</label>
     </div>
@@ -640,6 +671,30 @@ body {
   const RING = 'inset 0 0 0 1px light-dark(transparent, #4C534E)'; // --elevation-ring: sand-7 in dark
   const BG = { light: '#F3EEE4', dark: '#191D1A' };                 // --surface (sand-2)
   const TOKEN_COLOR = { light: '#202C24', dark: '#000000' };        // --alpha-shadow-* hues
+  // Layer 1's warm scales, [light, dark] per step 1…12, copied from
+  // packages/design-system/tokens/musy-foundations.css (Ben, 2026-11-16:
+  // "sämtliche Sand und Terrakotta Werte zur Auswahl").
+  const SCALES = {
+    sand: { name: 'Sand', steps: [
+      ['#FAF7F1', '#111412'], ['#F3EEE4', '#191D1A'], ['#E5E3D9', '#222723'], ['#DEDCD1', '#2A2F2B'],
+      ['#D6D5C9', '#323833'], ['#CFCEC2', '#3B413C'], ['#BDBCAF', '#4C534E'], ['#A7A89B', '#616862'],
+      ['#8A8C82', '#79807A'], ['#7C7E74', '#868D87'], ['#62645E', '#9EA59F'], ['#1A1F1C', '#EDF0EC'],
+    ] },
+    terracotta: { name: 'Terrakotta', steps: [
+      ['#FDF8F5', '#160F0B'], ['#F9EDE5', '#221711'], ['#F4DFD2', '#2F1F16'], ['#F0D5C4', '#3A271C'],
+      ['#ECCBB7', '#442E21'], ['#E8C1AA', '#513726'], ['#E3B294', '#67462F'], ['#DEA37F', '#85593B'],
+      ['#D99673', '#D99673'], ['#CE8865', '#E6A684'], ['#824429', '#D0937A'], ['#4A2718', '#F6DACB'],
+    ] },
+  };
+  const scaleValue = (key, i, theme) => SCALES[key].steps[i][theme === 'light' ? 0 : 1];
+  // The token a colour is, in that theme, if it is one: 'sand-12', or null.
+  function tokenOf(theme, hex) {
+    for (const key of Object.keys(SCALES)) {
+      const i = SCALES[key].steps.findIndex((_, j) => scaleValue(key, j, theme) === hex.toUpperCase());
+      if (i >= 0) return `${key}-${i + 1}`;
+    }
+    return null;
+  }
 
   // The card stack's shipped shadows, as generator settings. Recovered from
   // --musy-deck-shadow-front / -back: they reproduce those values exactly.
@@ -764,7 +819,8 @@ body {
     const v = value(s.elev);
     root.style.setProperty('--shadow', s.compare === 'cur' ? 'none' : v.join(', '));
     $('badge').textContent = s.compare === 'cur' ? 'Aktuell · ohne Schatten' : 'Generiert';
-    $('css').textContent = `--musy-wizard-shadow:\n  ${v.join(',\n  ')};`;
+    const named = (t) => (s.auto[t] ? 'aus dem Hintergrund' : tokenOf(t, s.color[t]) ? `--${tokenOf(t, s.color[t])}` : s.color[t]);
+    $('css').textContent = `/* Farbe · hell: ${named('light')} · dunkel: ${named('dark')} */\n--musy-wizard-shadow:\n  ${v.join(',\n  ')};`;
 
     document.querySelector(`input[name="compare"][value="${s.compare}"]`).checked = true;
     document.querySelector(`input[name="theme"][value="${s.theme}"]`).checked = true;
@@ -779,9 +835,21 @@ body {
     $('swatch').style.background = c;
     $('color').value = c.toLowerCase();
     $('color').disabled = s.auto[s.theme];
+    const themeName = s.theme === 'light' ? 'Hell' : 'Dunkel';
+    const token = s.auto[s.theme] ? null : tokenOf(s.theme, c);
     $('color-hint').textContent = s.auto[s.theme]
-      ? `Abgeleitet aus dem Hintergrund (${BG[s.theme]}): ${c}. Gilt für ${s.theme === 'light' ? 'Hell' : 'Dunkel'}.`
-      : `Eigene Farbe für ${s.theme === 'light' ? 'Hell' : 'Dunkel'}: ${c}.`;
+      ? `Abgeleitet aus dem Hintergrund (${BG[s.theme]}): ${c}. Gilt für ${themeName}.`
+      : token
+        ? `--${token} (${c}) für ${themeName}.`
+        : `Eigene Farbe für ${themeName}: ${c}.`;
+    $('scale-theme-1').textContent = $('scale-theme-2').textContent = `Werte für ${themeName}`;
+    document.querySelectorAll('.scale__chip').forEach((b) => {
+      const v = scaleValue(b.dataset.scale, +b.dataset.i, s.theme);
+      b.style.background = v;
+      b.title = `--${b.dataset.scale}-${+b.dataset.i + 1} · ${v}`;
+      b.setAttribute('aria-label', `${SCALES[b.dataset.scale].name} ${+b.dataset.i + 1}, ${v}`);
+      b.setAttribute('aria-pressed', String(!s.auto[s.theme] && c === v));
+    });
     $('ring').checked = s.ring;
 
     // Lamp position: pad coordinates -1…1, centre is the panel.
@@ -832,6 +900,26 @@ body {
     s.auto = { ...s.auto, [s.theme]: false };
     render();
   });
+  // The scale chips: built once, painted per theme in render(). A pick sets
+  // the colour of the CURRENT theme only — sand-12 is near-black in light and
+  // near-white in dark, so one token for both would be a light shadow at night.
+  for (const key of Object.keys(SCALES)) {
+    const row = $(`scale-${key}`);
+    SCALES[key].steps.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'scale__chip';
+      b.dataset.scale = key;
+      b.dataset.i = String(i);
+      b.addEventListener('click', () => {
+        s.color = { ...s.color, [s.theme]: scaleValue(key, i, s.theme) };
+        s.auto = { ...s.auto, [s.theme]: false };
+        render();
+      });
+      row.append(b);
+    });
+  }
+
   $('token-color').addEventListener('click', () => {
     s.color = { ...TOKEN_COLOR };
     s.auto = { light: false, dark: false };
