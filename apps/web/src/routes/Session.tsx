@@ -50,6 +50,8 @@ import {
   WizardPanel,
 } from '@musie/design-system';
 import type { LightboxOrigin } from '@musie/design-system';
+import { ArrowLeft, X } from 'lucide-react';
+import { formatShortDate } from '../lib/diary';
 import { STEP_ICON } from '../lib/stepIcons';
 import { SessionIntro } from '../components/SessionIntro';
 import { SessionSelect } from '../components/SessionSelect';
@@ -1152,9 +1154,11 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
    * offers it back; closing it properly is the control in the context box.
    */
   const backwards = stepBefore(state.step);
+  /* The arrow is Ben's, 2026-11-16 (Figma *Exercise pages*): Back says which
+     way it goes, the same on every step. */
   const back = backwards === null
-    ? <Button variant="ghost" render={<Link to="/exercises" />}>{t('common.back')}</Button>
-    : <Button variant="ghost" onClick={retreat}>{t('common.back')}</Button>;
+    ? <Button variant="ghost" leadingIcon={ArrowLeft} render={<Link to="/exercises" />}>{t('common.back')}</Button>
+    : <Button variant="ghost" leadingIcon={ArrowLeft} onClick={retreat}>{t('common.back')}</Button>;
 
   /* The count the deal label quotes. A string, because `translate` fills slots
      from `Record<string, string | undefined>` and a number would be a silent
@@ -1322,15 +1326,16 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   return (
     <div className="musie-session">
       <ContentBox
-        /* Framed: the exercise's name and the rail above the hairline, the
-           live step below it. §7.9's own arrangement, and the prototype's. */
+        /* Framed: the rail above the hairline, the live step below it. §7.9's
+           own arrangement, and the prototype's. */
         headingLevel={1}
         headlineStep="heading-sm"
-        /* The name is CONTEXT, not an announcement: it sits above the rail as
-           a reminder of what you are in, and at full contrast it competes with
-           the step you are actually doing. The prototype makes the same call
-           inline. Ink only — the heading level is untouched. */
-        headlineTone="muted"
+        /* THE NAME LEFT THE HEADER — Ben, 2026-11-16 (Figma *Exercise pages*).
+           It is CONTEXT, not an announcement, and it now sits in the footer
+           under the box with the session's start date. HIDDEN, NOT REMOVED:
+           it is still the page's h1 and the box's accessible name, which is
+           what `headlineHidden` is for (§7.9). */
+        headlineHidden
         headline={exercise.name}
         header={
           <div className="musie-rail">
@@ -1531,13 +1536,25 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
           board's own reading: "session exit is done three ways over, one act…
           nothing on this board asks for more" — so this removes a door rather
           than adding one. */}
-      {state.step !== 'reflect' && (
-        <div className="musie-session__exit">
-          <Button variant="ghost" onClick={() => setClosing(true)}>
+      {/* ── THE FOOTER — Ben, 2026-11-16 (Figma *Exercise pages*) ───────────
+          The exit shrank to the quiet `min` rung with an ×, and beside it the
+          exercise's name and the day the session started, which is where the
+          name went when it left the box header. The name and date are on
+          EVERY step, reflect included; only the exit keeps its reflect rule
+          above. One catalogue string joins them, so the comma is copy. */}
+      <div className="musie-session__foot">
+        {state.step !== 'reflect' && (
+          <Button variant="ghost" size="min" leadingIcon={X} onClick={() => setClosing(true)}>
             {t('session.close')}
           </Button>
-        </div>
-      )}
+        )}
+        <p className="musie-session__context">
+          {t('session.context', {
+            exercise: exercise.name,
+            date: formatShortDate(data.row.startedAt, locale),
+          })}
+        </p>
+      </div>
 
       {closing && (
         <Lightbox

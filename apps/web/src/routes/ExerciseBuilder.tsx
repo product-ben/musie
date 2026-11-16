@@ -235,7 +235,10 @@ function PreviewBody({
     <ContentBox
       headingLevel={2}
       headlineStep="heading-sm"
-      headlineTone="muted"
+      /* Hidden, as `Session.tsx` hides it since 2026-11-16: the real session
+         shows the name in a footer under the box, which this preview does not
+         draw — the picker above already names the exercise being edited. */
+      headlineHidden
       headline={exercise.name}
       header={
         <div className="musie-rail">

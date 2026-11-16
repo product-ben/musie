@@ -6,7 +6,8 @@
  *
  *   · Kalimba, Marimba, Harfe are under „Entspannen“, behind „Alle Übungen
  *     zeigen“ (they are its fourth to sixth exercises);
- *   · Einsteigen says „Bevor es losgeht“ and holds the settings: „Duett mit
+ *   · Einsteigen says „Lass uns <Instrument> spielen“ (since 2026-11-16) and
+ *     holds the settings: „Duett mit
  *     Musie“ is chosen at first; on a desktop there is no vibration or motion
  *     switch (touch screens only — the phone walk below has them);
  *   · Musizieren says „Wenn du bereit bist, spiel auf der …“ and how to play
@@ -86,7 +87,7 @@ test.describe('the instruments', () => {
 
       /* ── Einsteigen ─────────────────────────────────────────────────── */
       await expect(page).toHaveURL(/\/intro$/, { timeout: 15_000 });
-      await expect(page.getByRole('heading', { name: 'Bevor es losgeht' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: `Lass uns ${instrument.name} spielen` })).toBeVisible();
       await expect(page.getByText(/nicht auf voller Lautstärke/)).toBeVisible();
       const mode = page.getByRole('radiogroup', { name: label(locale, 'session.intro.mode.legend') });
       await expect(mode.getByRole('radio', { name: /Duett mit Musie/ })).toBeChecked();
@@ -184,7 +185,7 @@ test.describe('the instruments on a phone', () => {
     if (error !== null) throw error;
     await page.goto(`/session/${row.id}/intro`);
 
-    await expect(page.getByRole('heading', { name: 'Bevor es losgeht' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Lass uns Kalimba spielen' })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('heading', { name: label(locale, 'session.intro.vibration.title') })).toBeVisible();
     await expect(page.getByRole('switch', { name: label(locale, 'session.intro.vibration.label') })).toBeChecked();
     await page.getByRole('button', { name: label(locale, 'common.continue'), exact: true }).click();

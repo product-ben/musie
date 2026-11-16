@@ -506,13 +506,48 @@
   gap: var(--space-gap-stack);
 }
 
-/* The only way out of a running session that is not finishing it. Leading
-   edge and quiet: it is not what the screen is for, but the nav drawer offers
-   nothing else while a session runs, so it has to be reachable. */
-.musie-session__exit {
-  display: flex;
-  justify-content: flex-start;
+/* ── THE FOOTER UNDER THE BOX — Ben, 2026-11-16 (Figma *Exercise pages*) ──
+   The exit, then the exercise's name and the day it started: „× Session
+   schließen   Bodyscan, 16.01.26". The exit is the only way out of a running
+   session that is not finishing it, so it has to be reachable; it is quiet
+   because it is not what the screen is for.
+
+   THE NUMBERS ARE THE FRAME'S, and the `min` rung's own --sp-2 margin (a
+   2.5.8 allowance the button carries in CSS) is taken back out by arithmetic
+   rather than overridden on the button, which a screen may not do (L7):
+   · its box 24 in from the column's edge, where the body text starts —
+     the footer's start inset is --sp-5 less that margin;
+   · 16 under the box, the session's own gap — the footer starts that margin
+     early;
+   · 12 to the text — the gap is --space-gap-related less that margin.
+   The text carries the same block margin so it centres on the button's box,
+   and on reflect, where there is no exit, it takes the inline one too and
+   lands at 24 like the button would have. */
+/* TWO COLUMNS, as the frame builds it: the exit at its own width and the
+   context in what is left. A long name ('Achtsame Pause, 16.11.26' at 393px)
+   then wraps INSIDE its column, beside the exit, rather than dropping under it
+   out of line with everything else — which is what a wrapping flex row did. */
+.musie-session__foot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: calc(var(--space-gap-related) - var(--sp-2));
+  margin-block-start: calc(var(--sp-2) * -1);
+  /* The start only. The frame lets the date run on into the right margin
+     rather than wrap under the exit, and on a 393px phone the pair needs
+     that width: with an end inset too, „Bodyscan, 16.01.26" wrapped by 1px. */
+  padding-inline-start: calc(var(--sp-5) - var(--sp-2));
 }
+.musie-session__context {
+  margin: var(--sp-2) 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+}
+.musie-session__context:first-child { margin-inline-start: var(--sp-2); }
 
 /* ═══ A STEP'S HEADLINE AND DESCRIPTION ═════════════════════════════════════
    `exercise_i18n.{intro,scan,listen,reflect}_md`, parsed by lib/markdown.ts
@@ -546,45 +581,25 @@
    a headline above it — and body-md is the floor: L8 bars body-sm for prose the
    user must read in order to act, and this is the instruction itself.
 
-   ── GAPS, AND WHY THE HEADLINE'S IS TWO RUNGS WIDER ───────────────────────
-   Ben, on the 260925 round: in a text list of any kind the ITEMS must sit
-   closer together than the headline sits to them. They did not — measured on
-   the intro step, the headline was 20.3px of white space above the list while
-   the items were 22.6px apart, so the headline was fractionally the TIGHTER
-   join. It read as the first line of the list rather than as its heading.
+   ── GAPS: ONE RUNG, HEADLINE INCLUDED — Ben, 2026-11-16 ──────────────────
+   Headline ↔ text and text ↔ text are both --space-gap-related, 12px, the
+   container's own gap and nothing on top of it. Figma *Exercise pages* draws
+   the headline 12px above its description, and Ben confirmed it as the rule:
+   the headline and its text are one block.
 
-   The cause is leading, not the declared gap: both were --space-gap-related.
-   A line box carries half its leading above and below the ink, and the two
-   voices lead very differently — heading-md is line-height 1.25 (~3px a side),
-   body-md is 1.6 (~5px a side). So the same 12px buys 20px of white under a
-   headline and 23px between two body lines. Matching the DECLARED gaps
-   un-matches the SEEN ones.
+   WHAT THIS REVERSES, AND WHY IT NO LONGER HOLDS. From the 260925 round until
+   now the headline sat --space-gap-group (32) above what followed, because in
+   a LIST the items must sit closer together than the headline sits to them —
+   measured then, a headline 12px above a bulleted list read as the list's
+   first line. That argument was about lists, and the content has none any
+   more (Ben: "we don't have bulleted lists anymore at all"). Under a single
+   paragraph the wide gap only pulled the headline away from its own text.
 
-   Hence three gaps rather than two:
+   If a list ever comes back into step copy, this is the rule to revisit: the
+   leading still makes 12px read as ~20px under a heading-md line and ~23px
+   between two body-md lines, which is the inversion the old rule fixed.
 
-   · item ↔ item, and block ↔ block — --space-gap-related. Unchanged, and the
-     same value in both places on purpose: `lib/markdown.ts` hands a bullet
-     over as a paragraph, so a bulleted run is a run of siblings on the
-     container's gap while a numbered run is <li>s on the list's. They are one
-     rung so that the two read identically, which is the invariant the <ol>
-     block below already records.
-   · headline ↔ the block under it — --space-gap-group, applied as the
-     difference on top of the container's gap, because a flex `gap` is one
-     value for the whole column. Arithmetic over two Layer 1 tokens, which is
-     L14.1's other permitted form. --space-gap-stack was tried first and is
-     the semantically neater fit; it moves the headline 4px and is invisible on
-     a step whose first item wraps, because the 4px it gains the headline the
-     tighter items give straight back. Measured, not guessed: it took the ratio
-     to 1.08, where this takes it to 1.78.
-   · below the whole thing — --space-gap-group, unchanged.
-
-   THE ONE THING TO KNOW: the headline's gap now EQUALS the block's own bottom
-   margin. L2's doubling check still holds where it is about atoms in a group
-   (32 ≥ 2 × 12 for the items), but the headline split is no longer smaller
-   than the split that ends the block. What keeps the block reading as one is
-   the TYPE — heading-md at full contrast over body-md muted — rather than the
-   space. Logged in OPEN-QUESTIONS.md; if it ever stops holding, the lever is
-   the bottom margin, not this gap.                                         */
+   · below the whole thing — --space-gap-group, unchanged.                 */
 .musie-md {
   margin: 0 0 var(--space-gap-group);
   display: flex;
@@ -605,19 +620,6 @@
    add to it, and unevenly — the three have different defaults. */
 .musie-md > * {
   margin: 0;
-}
-
-/* …except the one margin that is the spacing: whatever FOLLOWS a headline
-   makes the container's gap up to --space-gap-group. Written as five
-   selectors rather than one `:is()` because nothing else in this repo's CSS
-   uses `:is()`, and on the adjacent-sibling combinator so a headline that
-   ends a block cannot leave a trailing margin to add to the block's own. */
-.musie-md h2 + *,
-.musie-md h3 + *,
-.musie-md h4 + *,
-.musie-md h5 + *,
-.musie-md h6 + * {
-  margin-block-start: calc(var(--space-gap-group) - var(--space-gap-related));
 }
 
 /* THE STEP'S HEADLINE. `h2` is what content writes and what the parser clamps
@@ -1935,9 +1937,8 @@ html[data-musy-scroll-snap] {
 
    `:has()` RATHER THAN A SECOND CLASS FROM THE STEP. The condition is already
    in the DOM and the kind is already deciding whether the <img> renders, so a
-   modifier would be the same fact written twice. (The `:is()` note further up
-   this file is about that selector, not this one; `musy-components.css` uses
-   `:has()` for exactly this kind of "what follows this" rule.)              */
+   modifier would be the same fact written twice. `musy-components.css` uses
+   `:has()` for exactly this kind of "what follows this" rule.              */
 .musie-listen__lead > .musie-md {
   margin-block-end: calc(var(--space-gap-group) - var(--space-gap-related));
 }
@@ -2564,9 +2565,83 @@ html[data-musy-scroll-snap] {
 .musie-intro__questions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-gap-group);
+  /* 24 between the two questions since 2026-11-16 (Ben, Figma *Exercise
+     pages*), down from --space-gap-group: two questions about one session
+     are closer kin than the copy above them is to either. Layer 1 names no
+     gap at 24, so it is the raw step. */
+  gap: var(--sp-5);
   margin-block-start: var(--space-gap-group);
   margin-block-end: var(--space-gap-group);
+}
+
+/* ── THE INTRO'S HEADLINE AND PICTURE — Ben, 2026-11-16 ───────────────────
+   Figma *Exercise pages*, with its two annotations: on a phone the picture is
+   "fixed width, fill height and scale in bg" beside the HEADLINE; on desktop
+   it is "16:9, aligned top right" beside the whole text column.
+
+   A GRID, AND THE COPY JOINS IT ON A PHONE. The headline and the description
+   come out of one Markdown block, and only the headline may share a row with
+   the picture. `display: contents` on `.musie-md` makes its children the
+   grid's own items, so the headline takes the first cell and every block
+   after it spans both columns. The block's typography still inherits — that
+   is what `contents` keeps — and its gap and bottom margin move here.
+
+   THE WIDTHS ARE THE FRAME'S PROPORTIONS: 77 of a 312 panel on the phone is a
+   quarter, 186 of a 931 panel on desktop is a fifth. Written as fractions of
+   the row (L14.1's `100%` times a multiplier) so a wider phone gets a
+   proportionally wider picture rather than a fixed sliver.
+
+   Only when there IS a picture: without one the copy keeps its own column. */
+.musie-intro__head:has(> .musie-intro__image) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(100% * 0.25);
+  gap: var(--space-gap-related);
+  align-items: start;
+  margin-block-end: var(--space-gap-group);
+}
+.musie-intro__head:has(> .musie-intro__image) > .musie-md {
+  display: contents;
+}
+.musie-intro__head:has(> .musie-intro__image) > .musie-md > * {
+  grid-column: 1 / -1;
+}
+.musie-intro__head:has(> .musie-intro__image) > .musie-md > :first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+.musie-intro__image {
+  grid-column: 2;
+  grid-row: 1;
+  /* AS TALL AS THE HEADLINE, AND NEVER LESS THAN 16:9. `stretch` makes it
+     follow a two- or three-line headline (the frame's 77 × 55 at 393px);
+     the ratio is what it brings to the row on its own, so a one-line
+     headline on a wider phone gets a picture rather than a strip — without
+     it the file's own square shape set the row, 78px tall under 28px of
+     headline. `cover` crops whatever the cell asks for. */
+  align-self: stretch;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+/* From 1024px the picture stands beside the whole column. The copy is one
+   block again, at its own measure, and the picture keeps 16:9 at the top of
+   its cell rather than stretching to the copy's height. */
+@media (min-width: 1024px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, 1fr) calc(100% * 0.2);
+    column-gap: var(--space-gap-group);
+  }
+  .musie-intro__head:has(> .musie-intro__image) > .musie-md {
+    display: flex;
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+  }
+  .musie-intro__image {
+    align-self: start;
+  }
 }
 
 /* ═══ DIGITAL CARDS ═════════════════════════════════════════════════════════

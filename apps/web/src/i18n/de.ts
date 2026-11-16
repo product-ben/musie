@@ -424,9 +424,13 @@ export const de: Messages = {
   'session.wizardLabel': 'Schritte der Session',
   'session.notFound': 'Diese Session gibt es nicht',
   'session.notFoundText': 'Vielleicht wurde sie gelöscht, oder sie gehört zu einem anderen Browser.',
-  /* Two spellings on purpose: the panel's control names its object ('Diese
-     Session'), the dialog's confirm does not need to repeat it. */
-  'session.close': 'Diese Session schließen',
+  /* 'Session schließen', short — Ben, 2026-11-16 (Figma *Exercise pages*):
+     the control moved to the `min` rung in the footer, beside the exercise's
+     name, which already says WHICH session. The dialog keeps its question. */
+  'session.close': 'Session schließen',
+  /* Der Fuß unter der Session: Name der Übung und Starttag ('Bodyscan,
+     16.01.26'). '{date}' ist kurz und nach Gebietsschema formatiert. */
+  'session.context': '{exercise}, {date}',
   'session.close.title': 'Session schließen?',
   /* Gedankenstrich, not an em dash (§7). 'wie es dir gerade geht' rather than
      a literal 'dem Zustand, in dem du bist' — the English is plain and the

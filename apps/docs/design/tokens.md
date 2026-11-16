@@ -91,10 +91,17 @@ picked" — and two further rules use it.
 
 ## Radius, and the semantic layer over it
 
-`xs 4 · sm 8 · md 12 · lg 16 · xl 24 · full 999`, then the aliases that say
-what a thing *is*: `--radius-control` (full — from the Figma button geometry),
-`--radius-input` (sm), `--radius-card` (md), `--radius-panel` (lg),
-`--radius-sheet` (xl).
+`xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 40 · full 999`, then the aliases
+that say what a thing *is*: `--radius-control` (full — from the Figma button
+geometry), `--radius-input` (sm), `--radius-card` (md), `--radius-panel` (lg),
+`--radius-sheet` (xl), and `--radius-action-card` (2xl).
+
+`--radius-action-card` is **a card with buttons inside** (2026-11-16): pill
+buttons inside a 12px corner read as two shapes, and at 40 the card echoes the
+pill it holds. It is built *into* the components whose job is to hold actions —
+ContentBox, WizardPanel, Lightbox, Toast, MusicPlayer and the card deck — not
+applied by what a card happens to contain, so a box never changes shape when a
+button appears. The rule and its reason live in `tokens/musy-foundations.css`.
 
 Use the alias. A card is `--radius-card`, not `12px` and not `--radius-md`.
 

@@ -11711,3 +11711,72 @@ what moves. If it is the cards behind showing more or less while the pile
 turns, that is the lean (`--musy-deck-lean-*`) and can be calmed. If it is
 the pile changing height between goals, the card can reserve the room 170
 characters need, so that every pile is one height.
+
+## Exercise pages — the session gets Ben's desktop floorplan — RESOLVED
+
+Where: `src/routes/Session.tsx` (the box's hidden headline, the footer, Back's
+arrow), `src/components/SessionIntro.tsx` (`.musie-intro__head`),
+`src/shell.css` (`.musie-md`'s gaps, `.musie-intro__questions`,
+`.musie-intro__head`, `.musie-session__foot`), `src/i18n/{de,en}.ts`
+(`session.close`, `session.context`), `src/lib/diary.ts`
+(`formatShortDate`), `supabase/migrations/20261116150000_intro_headlines.sql`
+
+What I checked: Ben, 2026-11-16, the Figma file *Musie — design system
+(Layer 1)*, page *Exercise pages*, frames *1728w default* and *393w default*,
+with seven annotations and three comments. I measured the running intro step
+at both frame sizes before and after. The column was already the frame's
+(980 at 1728, 16px gutters on a phone), and so were the panel's 32px rhythm
+and the 16px from the box to the footer. What changed:
+- The headline sits 12 above its description, down from 32.
+- The two questions are 24 apart, down from 32.
+- The exercise's picture stands beside the headline: 16:9 top right from
+  1024px; on a phone a quarter of the row, as tall as the headline.
+- Back has a ← arrow.
+- The box header holds only the rail, and the exercise's name moved to a
+  footer: „× Session schließen   Bodyscan, 16.01.26".
+- Every exercise's intro headline names it.
+
+Ben's answers in this round:
+- The top bar stays.
+- The headline gap goes to 12: „we don't have bulleted lists anymore at
+  all, update the guideline".
+- The headlines are „Lass uns einen/eine … beginnen", names capitalised,
+  with two exceptions: the instruments say „Lass uns Kalimba spielen" and
+  Freie Bahn says „Lass uns mit Freier Bahn beginnen". Each is in EN too.
+
+What I did: rebuilt the intro to the frames' numbers and checked it at 1728
+and 393 against them; every gap above is within 2px. I also checked Achtsame
+Pause's intro, listen and reflect.
+
+How the footer is put together:
+- The footer is a two-column grid. A long name („Achtsame Pause, 16.11.26"
+  at 393) wraps beside the exit instead of under it.
+- The `min` rung carries 8px of its own margin. The footer subtracts it with
+  token arithmetic rather than overriding the button (L7).
+- On reflect the exit stays absent, the 2026-10-09 rule, but the name and
+  date are there.
+
+The migration replaces only the first `##` line of each intro, so the
+description under it cannot be undone by it.
+
+Why: Ben's frames and answers; the measurements are what say they now hold.
+
+What I need from Ben: nothing to decide. Four things to know:
+1. **The migration is NOT applied to the shared local stack.** Another
+   session's instruments walk asserts the old „Bevor es losgeht", and
+   `supabase db reset` would also replay this branch over whatever the
+   other sessions are testing (rule 9). The SQL was run inside a transaction
+   and rolled back: all 14 headlines changed, every description intact. A
+   reset from this branch shows the new headlines locally; merging pushes
+   them to hosted.
+2. **Atementspannung has no intro at all** (`null`, not live), so it has no
+   headline yet. The migration's header holds the one it will get.
+3. **On the card exercises the picture stands beside the headline alone.**
+   Achtsame Pause and Freie Bahn put the switch between the headline and
+   the text, so on desktop the row is as tall as the picture and the
+   headline has air under it.
+4. **The segmented track is 54px, not the frame's 52.** That is the 1px
+   transparent edge the borderless change kept so forced colours can draw
+   it (B25's mechanism). Achtsame Pause still has a NUMBERED list. The 12px
+   rule doesn't touch it, because it sits after the switch in a block of its
+   own.

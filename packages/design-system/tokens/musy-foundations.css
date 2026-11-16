@@ -406,12 +406,21 @@
   --radius-md: 12px;       /* Figma Corner/Medium — cards */
   --radius-lg: 16px;       /* panels, large media */
   --radius-xl: 24px;       /* sheets, bottom drawers */
+  --radius-2xl: 40px;      /* a card with buttons inside — see --radius-action-card */
   --radius-full: 999px;    /* pills and circles */
   --radius-control: var(--radius-full);  /* buttons — from the Figma button geometry */
   --radius-input: var(--radius-sm);
   --radius-card: var(--radius-md);
   --radius-panel: var(--radius-lg);
   --radius-sheet: var(--radius-xl);
+  /* A CARD WITH BUTTONS INSIDE — Ben, 2026-11-16. Pill buttons inside a 12px
+     corner read as two shapes that do not belong together; at 40 the card
+     echoes the pill it holds. Built INTO the components whose job is to hold
+     actions — ContentBox, WizardPanel, Lightbox, Toast, MusicPlayer, the card
+     deck — rather than applied by what a card happens to contain, so a box
+     never changes shape when a button appears. Small controls (radio rows,
+     image picks, the segmented track) keep their own radius. */
+  --radius-action-card: var(--radius-2xl);
 
   /* ── border width ────────────────────────────────────────────────────── */
   --border-width-hairline: 1px;   /* dividers, subtle outlines */
@@ -595,9 +604,14 @@
   --type-heading-sm-size: clamp(19px, calc(18.249px + 0.1910vw), 21px);
   --type-heading-sm-line: 1.3;
   --type-heading-sm-tracking: 0;
-  /* The one step that moves UP in weight: at 19–21px Medium stops separating
-     a card title from the serif body underneath it. */
-  --type-heading-sm-weight: var(--font-weight-semibold);
+  /* MEDIUM, like every other heading step — Ben, 2026-11-16 (Figma *Exercise
+     pages*: "heading sm → down to medium", and the headline weight "change
+     globally to medium"). It used to be the one step that moved UP to
+     semibold, on the argument that at 19–21px Medium stops separating a card
+     title from the serif body underneath it; the whole heading ladder now
+     speaks at one weight. The JSON mirror said 500 all along, so this also
+     ends a drift. display-xl stays bold: it is display, not a heading. */
+  --type-heading-sm-weight: var(--font-weight-medium);
   --type-heading-sm-family: var(--font-display);
 
   /* body-lg — Guided-exercise prose — the reading size during a session.

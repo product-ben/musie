@@ -14,14 +14,14 @@ Consequence: anything listed here exists in code and **not** in Figma. A designe
 working from the Figma libraries cannot see these, and a token pipeline that
 regenerates CSS from the JSON would silently delete them.
 
-**37 properties in `musy-foundations.css` have no JSON expression.**
+**38 properties in `musy-foundations.css` have no JSON expression.**
 **32 more live only in `musy-foundations-amendments.css`.**
-Total: **69**.
+Total: **70**.
 
 | Group | n |
 |---|---|
 | The `stage` type step | 5 |
-| Semantic radius aliases | 5 |
+| Semantic radius aliases | 6 |
 | Focus ring | 4 |
 | Motion travel | 3 |
 | Named font weights | 4 |
@@ -46,10 +46,11 @@ A whole type step. `musy-components.css:1383` ships a live `[data-type-step="sta
 
 ## Semantic radius aliases
 
-The JSON carries the six raw steps (`radius-xs` … `radius-full`) but none of the five role aliases. These are the ones a component should actually reference, so the layer Figma mirrors is the layer nothing consumes.
+The JSON carries the seven raw steps (`radius-xs` … `radius-full`) but none of the six role aliases. These are the ones a component should actually reference, so the layer Figma mirrors is the layer nothing consumes.
 
 | Token | Declared in CSS |
 |---|---|
+| `--radius-action-card` | `var(--radius-2xl)` |
 | `--radius-card` | `var(--radius-md)` |
 | `--radius-control` | `var(--radius-full)` |
 | `--radius-input` | `var(--radius-sm)` |

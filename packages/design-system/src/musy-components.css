@@ -1692,7 +1692,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      MEAN something ("waiting for content"), and the framed header's divider
      stays. See BORDERLESS SURFACES at the end of the file. */
   border: var(--border-width-regular) var(--border-style-solid) transparent;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-action-card); /* 40 — a box holds a screen's buttons (2026-11-16) */
   background-color: var(--surface-raised);
 }
 /* The dashed treatment, from the Figma screen container. G2 token gap —
@@ -1733,6 +1733,15 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 }
 .musy-box__header {
   border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+}
+/* A HEADER THAT HOLDS THE WIZARD gives back the step trigger's own inset —
+   Ben, 2026-11-16 (Figma *Exercise pages*). Each trigger pads its marker by
+   --sp-2, so the header's --space-inset-card less that --sp-2 puts the first
+   marker exactly where the body's text starts, 24 in from the edge, instead
+   of 8 further in. It also takes the run's 8px of air top and bottom back
+   out of the header's height. */
+.musy-box__header:has(.musy-wizard) {
+  padding: calc(var(--space-inset-card) - var(--sp-2));
 }
 
 .musy-box__headline { margin: 0; color: var(--on-surface); text-wrap: var(--text-wrap-heading); max-width: var(--measure-heading); }
@@ -2483,7 +2492,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      the panel off. The 1px ring dark mode's --elevation-3 draws inside the
      shadow is Layer 1's and stays. See BORDERLESS SURFACES at the end. */
   border: var(--border-width-regular) var(--border-style-solid) transparent;
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-action-card); /* 40 — its actions sit inside it (2026-11-16) */
   background-color: var(--surface-overlay);
   box-shadow: var(--elevation-3);
   animation: musy-lb-in var(--motion-enter) both;
@@ -3221,7 +3230,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
      border colours went with it. The fill and the elevation are the shape;
      see BORDERLESS SURFACES at the end of the file. */
   border: var(--border-width-regular) var(--border-style-solid) transparent;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-action-card); /* 40 — undo and dismiss sit inside it (2026-11-16) */
   background-color: var(--surface-overlay);
   color: var(--on-surface);
   box-shadow: var(--elevation-3);
@@ -4550,7 +4559,12 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   padding: var(--sp-2);
   margin: 0;
   border: 0;
-  border-radius: var(--radius-input);
+  /* A PILL — Ben, 2026-11-16 (Figma *Exercise pages*: "hover state must be
+     rounded on component level, 40px"). The trigger is 60px tall, so 40 and
+     --radius-control render the same pill; it is a control, so it takes the
+     control's radius. It was --radius-input, which drew the hover fill and
+     the focus ring as a rounded rectangle around a circular marker. */
+  border-radius: var(--radius-control);
   background: transparent;
   text-align: start;
   cursor: pointer;
@@ -4947,7 +4961,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   /* The raised fill alone since 2026-11-16 (Ben). See BORDERLESS SURFACES at
      the end of the file. */
   border: var(--border-width-hairline) var(--border-style-solid) transparent;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-action-card); /* 40 — its actions row sits inside it (2026-11-16) */
   background-color: var(--surface-raised);
 }
 /* Inside a framed Content Box the panel IS the body: a second outline at the
@@ -5543,7 +5557,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   box-sizing: border-box;
   padding: var(--sp-3);
   border: var(--border-width-regular) var(--border-style-solid) transparent;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-action-card); /* 40 — the transport sits inside it (2026-11-16) */
   background-color: var(--surface-raised);
 }
 .musy-mplayer--accent {
@@ -6313,11 +6327,12 @@ html[data-musy-scroll-snap='y'] {
   /* The card's corners: 40, ALL FOUR (variant 7, 2026-11-13). Until then
      `--radius-lg` at the top and 40 only at the foot, where *Karten* rounded
      them around the Start pill — so this was `--musy-deck-card-radius-foot`,
-     and the name went with the half it described. 40 is no Layer 1 radius —
-     the scale stops at `--radius-xl`, 24 — so it is named here rather than
-     spelled as arithmetic over two tokens it has nothing to do with. Logged
-     in stories/OPEN-QUESTIONS.md. */
-  --musy-deck-card-radius: 40px;
+     and the name went with the half it described. The 40 was a local value
+     here until 2026-11-16, when Layer 1 gained it as --radius-2xl /
+     --radius-action-card: the deck's card holds the Start pill, which is the
+     rule that token states, so the deck was its first user before it had a
+     name. */
+  --musy-deck-card-radius: var(--radius-action-card);
   /* ── THE SHADOWS ARE KNOBS (Ben, 2026-11-12) ─────────────────────────────
      One for the card in front and one for every card behind it. The frame
      gave all three `--elevation-3`; these are Ben's values from

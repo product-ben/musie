@@ -4416,3 +4416,43 @@ What I need from Ben: **four small things to know, none blocking.**
    of a component request. Aligned rather than logged as one, because
    rebuilding them on ContentBox is a separate change.
 4. The Figma Layer 1 file still draws every one of these edges.
+
+## Layer 1 — 40 becomes a radius step, for a card with buttons inside — RESOLVED
+Where: `tokens/musy-foundations.css` (`--radius-2xl`, `--radius-action-card`,
+`--type-heading-sm-weight`), `tokens/musy-foundations.tokens.json`,
+`TOKEN-DRIFT.md`, `src/musy-components.css` (`.musy-box`,
+`.musy-box__header:has(.musy-wizard)`, `.musy-lightbox__popup`, `.musy-toast`,
+`.musy-wizard__trigger`, `.musy-wizard__panel`, `.musy-mplayer`,
+`--musy-deck-card-radius`)
+What I checked: Ben, 2026-11-16, Figma *Exercise pages*, four annotations:
+- "Content box 40px (via variable) corner radius".
+- "hover state: must be rounded on component level, 40px".
+- "headline weight → change globally to medium".
+- "heading sm → down to medium".
+
+Asked where 40 should apply, he answered with a rule, "the new radius is
+there for any card with buttons inside", and chose to build it into the
+components rather than apply it by `:has()`. The scale stopped at 24. The
+card deck already used 40 as a local value, for exactly that reason (it
+holds the Start pill); see "CardDeck — the pile's foot radius is 40, and
+Layer 1 stops at 24" above.
+What I did:
+- **`--radius-2xl: 40px` and `--radius-action-card`.** ContentBox,
+  WizardPanel, Lightbox, Toast, MusicPlayer and the deck take the alias.
+  Radio rows, image picks and the segmented track keep theirs. Sheet has no
+  corners, so it is untouched.
+- **The step trigger takes `--radius-control`.** At 60px tall that is the
+  same pill as 40.
+- **heading-sm goes to medium.** heading-md already was, so "globally"
+  amounts to this one step. The JSON mirror had said 500 all along.
+  display-xl stays bold.
+- **A box header that holds the wizard pads by `--space-inset-card` less
+  `--sp-2`.** That is the frame's 16; it puts the first marker in line with
+  the body text, which the annotation's "8px are already included in
+  stepper element" describes.
+Why: Ben's annotations and rule. The deck's 40 now has a name, so this
+also resolves the open item that entry logged.
+What I need from Ben: **one thing to look at.** A Toast is 72px tall, so at
+40 it reads as a full pill (the corners clamp to 36). That follows from
+"any card with buttons inside", since undo and dismiss sit inside it. If it
+should stay a card, Toast leaves the list and keeps `--radius-card`.

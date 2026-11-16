@@ -1735,6 +1735,11 @@
       "$value": "24px",
       "$description": "Sheets, drawers"
     },
+    "radius-2xl": {
+      "$type": "dimension",
+      "$value": "40px",
+      "$description": "A card with buttons inside (--radius-action-card)"
+    },
     "radius-full": {
       "$type": "dimension",
       "$value": "999px",

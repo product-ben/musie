@@ -808,6 +808,15 @@ export function formatShortDateTime(iso: string, locale: Locale): string {
   }).format(new Date(iso));
 }
 
+/** The day alone, SHORT -- '16.01.26' / '16/01/2026'. The session footer's
+ *  start date (Ben, 2026-11-16): beside the exercise's name it identifies the
+ *  run, and the clock time would be noise. */
+export function formatShortDate(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALES[locale], {
+    dateStyle: 'short',
+  }).format(new Date(iso));
+}
+
 /** One short weekday for a graph column -- 'Mo', 'Tue'. Short, because seven
  *  of them share the width of a phone. */
 export function formatWeekday(iso: string, locale: Locale): string {

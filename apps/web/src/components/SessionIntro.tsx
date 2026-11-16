@@ -48,6 +48,7 @@ import { InstrumentIntro } from './InstrumentIntro';
 import type { InstrumentIntroProps } from './InstrumentIntro';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
+import { fromRoot } from '../lib/assets';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
 import { headingOnly, withoutHeading } from '../lib/markdown';
@@ -181,9 +182,25 @@ export function SessionIntro({
           about paper that is not there, and §6 records the three ways that
           could have gone: hiding it is the simplest thing that is honest, and
           the sheet one tap away carries what it used to say. */}
-      {asksForCards
-        ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingOnly} />
-        : <Markdown md={md} fallbackKey="session.intro.fallback" />}
+      {/* ── THE EXERCISE'S PICTURE BESIDE ITS HEADLINE — Ben, 2026-11-16 ──
+          Figma *Exercise pages*. On a phone it stands beside the HEADLINE
+          only, a fixed width as tall as the headline, cropped to fill; from
+          1024px it stands beside the whole text column, 16:9, top right.
+          `shell.css` (`.musie-intro__head`) carries both layouts. The same
+          picture and description the exercise card on /exercises shows. */}
+      <div className="musie-intro__head">
+        {asksForCards
+          ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingOnly} />
+          : <Markdown md={md} fallbackKey="session.intro.fallback" />}
+        {exercise.imageUrl !== null && (
+          <img
+            className="musie-intro__image"
+            src={fromRoot(exercise.imageUrl)}
+            alt={exercise.imageAlt}
+            decoding="async"
+          />
+        )}
+      </div>
 
       {asksForCards && (
         <div className="musie-intro__cards">
