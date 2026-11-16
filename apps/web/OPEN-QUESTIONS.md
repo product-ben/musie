@@ -11711,3 +11711,49 @@ what moves. If it is the cards behind showing more or less while the pile
 turns, that is the lean (`--musy-deck-lean-*`) and can be calmed. If it is
 the pile changing height between goals, the card can reserve the room 170
 characters need, so that every pile is one height.
+
+## Experiment „Reflexion 01“: four premises of the brief the repo contradicts — DECIDED
+
+Where: `apps/web/experiments/reflexion/` (its own Vite build), served as
+`/experiments/reflexion/{harfe,body-scan,freie-bahn}/`;
+`supabase/migrations/20261116100000_experiment_responses.sql`
+
+What the brief assumed, and what the repo says instead:
+- **"Auth gibt es nicht."** It does. Every app route sits behind
+  `SignInGate`, and anonymous sessions went on 2026-10-20. A route under
+  `/experiments` inside the app would therefore show the sign-in screen.
+- **The stepper can be reused for a visitor with no account.** Not
+  directly. The content tables, the `tracks` bucket and `instruments` are
+  closed to `anon`, and `Session.tsx` writes a `sessions` row at every step.
+- **"Inhalte werden nicht eingefroren."** Without an account this cannot be
+  live.
+- **"Bild und Track liegen im Repo."** The image does. „Aura“ (`trk-10`) is
+  only in the private bucket on hosted.
+
+What was built instead (Ben, 2026-11-16: "Go", option 4a):
+- **A static page under `/experiments`**, in rule 10's shape. It mounts the
+  app's unmodified `routes/Session.tsx` in a memory router, and Vite swaps
+  every Supabase-touching module it imports for an in-memory shim. The
+  reflect step is replaced by routing: `/session/:id/reflect` outranks
+  `/session/:id/:step`. `apps/web/src` is unchanged.
+- **Content is baked at build time** into `experiments/reflexion/src/data/content.json`.
+  Exercise copy still travels by migration (rule 4.1), so the page is stale
+  only between a copy migration and the next experiment build. Live content
+  would need an anon-readable function for these three exercises.
+- **Audio is a public file** under `/experiments/reflexion/media/`: „Aura“
+  (ES_ = Epidemic Sound) and the German body scan. Anyone with the link can
+  download them for as long as the experiment runs. Ben accepted that.
+- **Rule 10 says an experiment writes nothing to Supabase; this one does.**
+  It writes one table, insert-only for `anon`, read by `service_role`. Ben's
+  brief asks for it explicitly; it is the exception, not a new default.
+- **PostHog has its own init in the page.** The app's init needs an account
+  and a profile row. Pressing start in the name modal is the consent, so
+  the landing event is held back until then. A visitor who never starts is
+  therefore invisible, and the brief's "bounce in the name modal" cannot be
+  measured.
+- **The demo on 2026-11-16 ran locally.** Hosted gets the table only by a
+  merge and `pnpm db:sync`, and the brief says not to merge.
+
+What I need from Ben: Lucy's three questions, the final name-modal copy (it
+now also says what pressing start agrees to), the final survey wording, and,
+before the links go out, the merge plus `pnpm db:sync`.

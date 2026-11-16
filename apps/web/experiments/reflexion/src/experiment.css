@@ -3,3 +3,109 @@
 .musie-reflexion-notice {
   margin: 0;
 }
+
+/* ═══ HEADER ════════════════════════════════════════════════════════════════
+   The app's `.musie-header` with two columns instead of three: logo at the
+   start, the language switch at the end, nothing in the centre.
+
+   THE HEIGHT IS THE APP HEADER'S. There it is the hamburger — an IconButton
+   at `--target-primary` — that sets the row; this header has no control that
+   tall, so the row floor stands in for it. `--chrome-block` is composed from
+   exactly that, and Session's full-height views subtract it.             */
+.musie-reflexion-header {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-rows: minmax(var(--target-primary), auto);
+}
+
+.musie-reflexion-header > .musie-reflexion-lang {
+  justify-self: end;
+}
+
+.musie-reflexion-modal > .musie-reflexion-lang {
+  align-self: center;
+}
+
+/* Body scan's "only in German", one line under the header at its end edge —
+   under the switch it explains. Not sticky: see Header.tsx. */
+.musie-reflexion-langnote {
+  margin: 0;
+  padding: var(--sp-2) var(--gutter) 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-align: end;
+  text-wrap: balance;
+}
+
+/* The segmented control sizes itself as a FORM control: it stretches to the
+   width on offer and, as a size container, stacks its labels under 30rem.
+   In a header it is furniture, so it takes its own segments' width and stays
+   one row — the same two declarations the system's own furniture settings
+   (`labels: none | unchecked`) make, which this control cannot use because
+   both of its options carry the same glyph and need their word. */
+.musie-reflexion-lang .musy-seg {
+  container-type: normal;
+  inline-size: max-content;
+}
+
+.musie-reflexion-lang .musy-seg__track {
+  grid-auto-columns: auto;
+  inline-size: max-content;
+}
+
+/* ═══ NAME MODAL ════════════════════════════════════════════════════════════ */
+.musie-reflexion-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+.musie-reflexion-modal__intro {
+  margin: 0;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+.musie-reflexion-modal__small {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+/* ═══ REFLECT ═══════════════════════════════════════════════════════════════ */
+.musie-reflexion-answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+/* GROWS WITH ITS TEXT. `field-sizing: content` where the browser has it; the
+   step's `grow()` sets the height by hand where it does not. The floor is the
+   design system's own textarea floor, so an empty field looks as it does in
+   the app. */
+.musie-reflexion-answer textarea {
+  field-sizing: content;
+  min-block-size: calc(var(--target-comfort) * 2);
+  overflow-y: hidden;
+  resize: none;
+}
+
+/* Room under the last field, so centring it above an on-screen keyboard
+   has somewhere to scroll to. */
+.musie-reflexion-reflect {
+  padding-block-end: calc(var(--viewport-block) / 3);
+}
+
+/* ═══ THANK YOU ═════════════════════════════════════════════════════════════ */
+.musie-reflexion-survey {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+.musie-reflexion-done {
+  padding-block-end: var(--sp-7);
+}

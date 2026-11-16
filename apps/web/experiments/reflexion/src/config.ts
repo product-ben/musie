@@ -126,6 +126,8 @@ const de = {
   sendFeedback: 'Feedback senden',
   feedbackThanks: 'Danke für dein Feedback!',
   optionsEmpty: 'Keine Optionen',
+  statusError: 'Fehler',
+  statusSuccess: 'Erfolg',
 
   ended: 'Dieses Experiment ist beendet. Danke!',
   unknownLink: 'Diesen Link gibt es nicht.',
@@ -167,6 +169,8 @@ const en: Copy = {
   sendFeedback: 'Send feedback',
   feedbackThanks: 'Thanks for your feedback!',
   optionsEmpty: 'No options',
+  statusError: 'Error',
+  statusSuccess: 'Success',
 
   ended: 'This experiment has ended. Thank you!',
   unknownLink: 'This link does not exist.',

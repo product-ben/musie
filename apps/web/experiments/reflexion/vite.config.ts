@@ -90,7 +90,9 @@ export default defineConfig(({ command }) =>
     preview: { port: 5181 },
     build: {
       outDir: OUT,
-      emptyOutDir: true,
+      /* NOT emptied: the app's build ran first and copied
+         public/experiments/reflexion/media into this same folder. */
+      emptyOutDir: false,
     },
   }),
 );
