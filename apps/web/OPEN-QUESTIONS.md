@@ -11824,3 +11824,29 @@ What I need from Ben: nothing to decide. The migration is applied to the
 shared local stack for review (backup in the session scratchpad); merging
 pushes it to hosted. The `{minutes}` placeholder logic in `SessionIntro`
 stays for any copy that still uses it; no intro does now.
+
+## The WizardPanel has a shadow, Ben's values from the playground — RESOLVED
+
+Where: `.musy-wizard__card` and `.musy-wizard__panel` in
+`musy-components.css` (`--musy-wizard-shadow`, `--musy-wizard-shadow-ink`);
+`/experiments/panel-shadows/261116-1707/`
+
+What I did: built the playground (the card-shadows generator and controls,
+one elevation instead of two, Achtsame Pause's Einsteigen as the stage; the
+card stack's two shadows as presets, which reproduce
+`--musy-deck-shadow-front` / `-back` exactly; every Sand and Terrakotta step
+as a colour, per theme), then put the value Ben sent from it into the
+component verbatim. Four layers; light ink `--sand-8`'s light value at 5.7%,
+dark black at 20.5%. The same two spelling changes as the deck's: the ink is
+named once, and the playground's `light-dark(transparent, #4C534E)` is
+`--elevation-ring`. The shadow sits on the outer surface: the card when the
+panel has a stepper, the panel itself when it has none, never the body inside
+a card. Measured in Storybook (light and dark) and in the app at 393, 834 and
+1440, light and dark: the computed `box-shadow` is his list, and no ancestor
+clips it. The builder's phone preview clips at its screen edge, as a phone
+would.
+
+Why: Ben, 2026-11-16: „bitte das hier übernehmen und für die storybook
+wizard panel Komponente".
+
+What I need from Ben: nothing.

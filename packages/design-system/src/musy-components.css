@@ -4973,8 +4973,42 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   border: 0;
   border-radius: 0;
   background-color: transparent;
+  box-shadow: none;
 }
 .musy-box__body > .musy-wizard__panel:first-child { margin-block-start: 0; }
+
+/* ── THE PANEL'S SHADOW (Ben, 2026-11-16) ─────────────────────────────────
+   Ben's values from /experiments/panel-shadows/261116-1707/, verbatim: four
+   layers, each about twice the last, the light to the upper left. Until then
+   the panel stood on its raised fill alone.
+
+   ON THE OUTER SURFACE, WHICHEVER THAT IS. With a stepper the panel renders
+   as a framed Content Box (`.musy-wizard__card`) whose body is the
+   transparent `.musy-wizard__panel`, so the card wears the shadow; without
+   one the panel is the surface and wears it itself. The body inside a card
+   never does (`box-shadow: none` in the rule above): a shadow inside the
+   card's own would be the double outline that rule exists to refuse.
+
+   ONE INK, NAMED ONCE, as the deck's (`--musy-deck-shadow-ink`). Light is
+   `--sand-8`'s light value (#A7A89B) at 5.7%, dark is black at 20.5%. Written
+   as rgb because a shadow colour needs its alpha and `--sand-8` is itself a
+   light-dark() pair.
+
+   THE RING IS `--elevation-ring`. The playground writes it as
+   `light-dark(transparent, #4C534E)`, which is exactly that token, and the
+   token also takes the high-contrast override. Forced colours drop the whole
+   shadow, which is what they should do. */
+.musy-wizard__card,
+.musy-wizard__panel {
+  --musy-wizard-shadow-ink: light-dark(rgb(167 168 155 / 0.057), rgb(0 0 0 / 0.205));
+  --musy-wizard-shadow:
+    0.5px 0.7px 2.5px -0.2px var(--musy-wizard-shadow-ink),
+    1.5px 2.1px 6.4px -0.7px var(--musy-wizard-shadow-ink),
+    3.6px 4.9px 14.3px -1.6px var(--musy-wizard-shadow-ink),
+    7.7px 10.5px 30px -3.5px var(--musy-wizard-shadow-ink),
+    inset 0 0 0 1px var(--elevation-ring);
+  box-shadow: var(--musy-wizard-shadow);
+}
 
 /* ── HEADER AND BODY: INTRO → CONTENT → ACTIONS — Ben, 2026-11-16 ─────────
    Figma *Exercise pages*, Ben's spacing pass, and his naming: the header holds
