@@ -801,17 +801,34 @@
   text-align: start;
   cursor: pointer;
 
-  display: flex;
-  flex-direction: column;
   /* ── EACH ROW SITS WHERE ITS CONTROL IS (Ben, 2026-10-07) ─────────────
      Centred as a block, the three rows were a list of facts about the
      screen. Spread to the card's own top, middle and bottom they are a MAP
-     of it: the goal pill is in the row above the pile, the two directions
-     are across the card's waist, and Start is in the bottom-right corner of
-     the face underneath — which is the corner the last row's picture of it
-     sits in. The gap stays as the floor, so a tall card spreads the rows
-     and a short one never closes them up tighter than a group gap. */
-  justify-content: space-between;
+     of it: the count at the top, the swipe across the card's waist, and
+     Start in the bottom-right corner of the face underneath — which is the
+     corner the last row's picture of it sits in.
+
+     ── THREE TRACKS, `1fr auto 1fr` (Ben, 2026-11-16) ───────────────────
+     „Wische für die nächste Übung … middle alignen mit den beiden Chevron
+     Icon Buttons". The gutter chevrons sit at the vertical middle of the
+     card (each strip is the pile's height, its mark centred in it). This
+     was a flex column whose middle row grew into whatever the other two
+     left, so the swipe line was centred between THEM, not in the card: 1px
+     off on a phone, where the two happen to be about as tall, and 14px high
+     at 768 and 1440, where the count is two lines and the press row three.
+
+     Two equal `1fr` tracks either side of an `auto` one put the middle
+     track's centre on the card's centre whatever the other two hold. The
+     padding is the same all round, so the content box shares that centre.
+     A `1fr` track is `minmax(auto, 1fr)`, so if the count or the press row
+     ever outgrows half of what is left, that track grows and the swipe line
+     moves off centre rather than over a sentence. The gap stays as the
+     floor between rows, equal on both sides of the middle one.
+
+     A grid on a <button> works in every engine this app supports, measured
+     in Chromium and WebKit. */
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
   gap: var(--space-gap-group);
   box-sizing: border-box;
   block-size: 100%;
@@ -873,31 +890,28 @@
    is where the pill is; `--goal` is on the element for the next person who
    has to find this row from the markup. */
 
-/* ── THE SWIPE, ACROSS THE MIDDLE — AND NO CHEVRONS OF ITS OWN ────────────
+/* THE COUNT, AT THE TOP OF ITS TRACK. The track is a `1fr` share of the
+   card; without this the row would stretch over it and its sentence would
+   sit wherever a flex row puts a stretched item's text. */
+.musie-deck-guide__row--count {
+  align-self: start;
+}
+
+/* ── THE SWIPE, ON THE CHEVRONS' LINE — AND NO CHEVRONS OF ITS OWN ────────
    It drew a chevron at each edge of the card until 2026-11-16. Ben: "Chevron
    icons innerhalb der grünen Karte weg, die werden von denen außen ersetzt" —
    the deck's own gutter chevrons stand beside the card at every width since
    2026-11-13, a hand's width from these, and two pairs of the same glyph
-   pointing the same ways said one thing twice. The sentence is alone in the
-   row now, and still centred: it is about a gesture across the card. */
+   pointing the same ways said one thing twice.
+
+   LEFT-ALIGNED, ON THE CARD'S MIDDLE (Ben, the same day): „Wische für die
+   nächste Übung bitte left alignen und middle alignen mit den beiden
+   Chevron Icon Buttons". It was centred while it sat between its own two
+   chevrons; with them gone it starts on the line the other two sentences
+   start on. The grid's middle track puts it on the gutter chevrons' line —
+   see `1fr auto 1fr` on the card. */
 .musie-deck-guide__row--swipe {
-  justify-content: center;
-  /* ── IT TAKES THE MIDDLE, NOW THAT THERE ARE TWO ROWS — 2026-10-15 ─────
-     The legend was three rows spread top / middle / bottom by the column's
-     `space-between`, which put this row across the card's waist for free.
-     With the goal row removed, `space-between` over two children would pin
-     this one to the TOP and lose the correspondence — the gesture is a
-     thing you do across the middle of the card.
-
-     Growing it instead keeps both: this row fills whatever is left, its
-     own `align-items: center` holds the sentence at the waist of that
-     space, and the press row stays in the bottom corner where the real
-     button is. */
-  flex: 1 1 auto;
-}
-
-.musie-deck-guide__row--swipe .musie-deck-guide__text {
-  text-align: center;
+  justify-content: start;
 }
 
 /* ── THE PRESS, AND ITS PICTURE IN THE CORNER THE REAL ONE IS IN ──────────
@@ -909,6 +923,9 @@
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-gap-stack);
+  /* At the BOTTOM of its `1fr` track, so the picture of Start stays in the
+     corner the real one is in. */
+  align-self: end;
 }
 
 .musie-deck-guide__row--start .musie-deck-guide__cta {
