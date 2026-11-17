@@ -106,6 +106,8 @@ describe('the source rule: a card picture never goes through fromRoot', () => {
      the column that justifies it. */
   const ALLOWED = new Map([
     ['routes/Exercises.tsx', 'exercises.image_url — not moving'],
+    /* The same column, shown again beside the intro's headline (2026-11-16). */
+    ['components/SessionIntro.tsx', 'exercises.image_url — not moving'],
   ]);
 
   const files = sources(SRC);

@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Panelschatten</title>
+<!--
+  Experiment (CLAUDE.md rule 10): a playground for the shadow of the
+  WizardPanel card — the session's Einsteigen step, here Achtsame Pause.
+  Static, self-contained, no analytics, nothing leaves the page.
+
+  Same generator and the same controls as /experiments/card-shadows/261112-0938/
+  (Ben, 2026-11-12): layered shadows whose offsets, blur and opacity follow
+  from an elevation, a light source, a layer count and a sharpness — the idea
+  Josh W. Comeau's shadow palette generator popularised, the code our own.
+  One elevation instead of two: the panel is one card.
+
+  PRESETS "Kartenstapel · vorne / hinten" are the card stack's shadows as they
+  ship (--musy-deck-shadow-front / -back), recovered as generator settings:
+  4 layers, sharpness 0.5, elevation 18 / 7, the lamp at (-0.094, -0.906),
+  intensity 0.22 light / 0.60 dark, the light colour derived from the
+  background and the dark one black, the dark-mode ring on. They reproduce the
+  stylesheet's values to the tenth of a pixel.
+
+  The output is one property, --musy-wizard-shadow, for the design system to
+  read. Geometry is shared by both themes; only the colour differs, through
+  light-dark(), which is how Layer 1's own --elevation-* tokens do it.
+
+  The panel is a static replica of the app at tablet geometry, Layer 1 values
+  copied from packages/design-system/tokens/musy-foundations.css. Fonts: the
+  app's own Onest and Literata (latin subset) in ../fonts/, SIL OFL 1.1.
+-->
+<style>
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/onest-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/literata-latin.woff2') format('woff2');
+}
+
+/* Layer 1 values, copied from packages/design-system/tokens/musy-foundations.css */
+:root {
+  color-scheme: light;
+  --surface: light-dark(#F3EEE4, #191D1A);            /* sand-2 */
+  --surface-raised: light-dark(#FAF7F1, #2A2F2B);     /* sand-1 / sand-4 */
+  --surface-sunken: light-dark(#E5E3D9, #111412);     /* sand-3 / sand-1 */
+  --on-surface: light-dark(#1A1F1C, #EDF0EC);         /* sand-12 */
+  --on-surface-muted: light-dark(#62645E, #9EA59F);   /* sand-11 */
+  --on-surface-disabled: light-dark(#8A8C82, #79807A);/* sand-9 */
+  --border-subtle: light-dark(#CFCEC2, #3B413C);      /* sand-6 */
+  --interactive-primary: light-dark(#2B5340, #5E9478);      /* green-9 */
+  --interactive-primary-on: light-dark(#F3EEE4, #111412);   /* sand-2 / sand-1 */
+  --interactive-primary-border: light-dark(#678271, #6B8F79); /* green-edge */
+  --elevation-1: 0 1px 2px light-dark(rgb(32 44 36 / 0.10), rgb(0 0 0 / 0.46)),
+                 0 1px 3px -1px light-dark(rgb(32 44 36 / 0.06), rgb(0 0 0 / 0.32)),
+                 inset 0 0 0 1px light-dark(transparent, #4C534E);
+  --font-display: Onest, ui-sans-serif, system-ui, sans-serif;
+  --font-text: Literata, ui-serif, Georgia, serif;
+  --type-heading-md-size: clamp(22px, calc(20.499px + 0.3820vw), 26px);
+  --type-body-md-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-label-lg-size: clamp(17px, calc(16.625px + 0.0955vw), 18px);
+  --type-label-md-size: clamp(15px, calc(14.625px + 0.0955vw), 16px);
+
+  /* What the panel wears. Replaced by the script with the generated value,
+     or with nothing in the comparison — the panel ships without a shadow. */
+  --shadow: none;
+
+  --panel-w: min(786px, 100% - 64px);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  min-block-size: 100vh;
+}
+
+/* ── THE STAGE ─────────────────────────────────────────────────────────── */
+.stage {
+  position: sticky;
+  inset-block-start: 0;
+  block-size: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 32px 64px;
+  background: var(--surface);
+  overflow: clip;
+}
+.stage__badge {
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-start: 16px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--on-surface-muted);
+  font-size: 13px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+
+/* ── THE PANEL: WizardPanel, Achtsame Pause, Einsteigen ─────────────────── */
+.wp {
+  inline-size: var(--panel-w);
+  container-type: inline-size;
+  border: 1px solid transparent;
+  border-radius: 40px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  overflow: clip;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: box-shadow 200ms ease;
+}
+.wp__header {
+  padding: 16px;
+  border-block-end: 1px solid var(--border-subtle);
+}
+.steps { display: flex; margin: 0; padding: 0; list-style: none; }
+.step { display: flex; flex: 1 1 0; min-inline-size: 0; align-items: stretch; }
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-block-size: 60px;
+  padding: 8px;
+  border-radius: 999px;
+}
+.step:last-child .trigger { flex: 1 1 auto; }
+.marker {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 44px;
+  block-size: 44px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--on-surface-disabled);
+}
+.marker .icon { inline-size: 16px; block-size: 16px; stroke-width: 2; }
+.step--current .marker { background: var(--interactive-primary); color: var(--interactive-primary-on); }
+.step__label {
+  font-size: var(--type-label-md-size);
+  letter-spacing: 0.002em;
+  color: var(--on-surface-disabled);
+  white-space: nowrap;
+}
+.step--current .step__label { font-weight: 700; color: var(--on-surface); }
+.conn { flex: 1 1 auto; align-self: center; min-inline-size: 16px; block-size: 1px; background: var(--border-subtle); }
+/* A narrow card collapses the run, as the app does below 768px. */
+@container (max-width: 640px) {
+  .step:not(.step--current) { flex: none; }
+  .step:not(.step--current) .step__label { display: none; }
+  .conn { min-inline-size: 8px; }
+}
+
+.wp__body { padding: 24px; }
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(100% / 3);
+  gap: 12px;
+  align-items: start;
+  margin-block-end: 32px;
+}
+.intro__copy { display: flex; flex-direction: column; gap: 12px; }
+.intro__copy h2 {
+  margin: 0;
+  font-weight: 500;
+  font-size: var(--type-heading-md-size);
+  line-height: 1.25;
+  letter-spacing: -0.004em;
+  text-wrap: pretty;
+}
+.intro__copy p {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--type-body-md-size);
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+  text-wrap: balance;
+  hyphens: auto;
+}
+.intro__img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--surface-sunken);
+  pointer-events: none;
+}
+.content { display: flex; flex-direction: column; gap: 24px; margin-block-end: 32px; }
+.switch { display: flex; align-items: center; gap: 12px; min-block-size: 44px; }
+.track {
+  position: relative;
+  flex: none;
+  inline-size: 60px;
+  block-size: 32px;
+  border: 1px solid var(--interactive-primary-border);
+  border-radius: 999px;
+  background: var(--interactive-primary);
+}
+.knob {
+  position: absolute;
+  inset-inline-start: 30.5px;
+  inset-block-start: 2.5px;
+  display: grid;
+  place-items: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  box-shadow: var(--elevation-1);
+}
+.knob .icon { inline-size: 16px; block-size: 16px; stroke-width: 1.5; }
+.switch__label { font-weight: 600; font-size: var(--type-label-lg-size); line-height: 1.2; text-wrap: pretty; }
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-inline-start: 24px;
+  font-family: var(--font-text);
+  font-size: var(--type-body-md-size);
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+  text-wrap: balance;
+}
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 44px;
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: var(--type-label-lg-size);
+  line-height: 1.2;
+}
+.cta .icon { inline-size: 20px; block-size: 20px; stroke-width: 2; }
+.cta--primary { background: var(--interactive-primary); color: var(--interactive-primary-on); }
+
+.icon {
+  inline-size: 16px;
+  block-size: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── THE CONTROLS ──────────────────────────────────────────────────────── */
+.panel {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  padding: 24px;
+  background: var(--surface-raised);
+  border-inline-start: 1px solid var(--border-subtle);
+}
+.panel h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.lede {
+  margin: 8px 0 0;
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+}
+.lede code, .hint code { font-size: 13px; white-space: nowrap; }
+
+.group { display: grid; gap: 12px; }
+.group__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-surface-muted);
+}
+
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+.seg legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.seg label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--on-surface-muted);
+}
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg label:has(input:checked) {
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  box-shadow: 0 1px 2px rgb(32 44 36 / 0.12);
+}
+.seg label:has(input:focus-visible) { outline: 2px solid var(--interactive-primary); outline-offset: 2px; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.btn:hover { background: var(--surface-sunken); }
+.btn:focus-visible { outline: 2px solid var(--interactive-primary); outline-offset: 2px; }
+.btn--primary {
+  background: var(--interactive-primary);
+  border-color: var(--interactive-primary);
+  color: var(--interactive-primary-on);
+}
+.btn--primary:hover { background: var(--interactive-primary); filter: brightness(1.08); }
+
+.slider { display: grid; gap: 4px; }
+.slider__head { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+.slider__value { color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+.slider input[type="range"] { inline-size: 100%; margin: 0; accent-color: var(--interactive-primary); }
+
+.check { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.check input { inline-size: 18px; block-size: 18px; margin: 0; accent-color: var(--interactive-primary); }
+
+.hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--on-surface-muted); }
+
+/* The light pad: the panel in the middle, the lamp wherever it is dragged. */
+.lightpad {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.pad {
+  position: relative;
+  inline-size: 132px;
+  block-size: 132px;
+  border-radius: 12px;
+  background: var(--surface-sunken);
+  touch-action: none;
+  cursor: crosshair;
+}
+.pad::before, .pad::after {
+  content: '';
+  position: absolute;
+  background: var(--border-subtle);
+}
+.pad::before { inset-inline: 8px; inset-block-start: 50%; block-size: 1px; }
+.pad::after { inset-block: 8px; inset-inline-start: 50%; inline-size: 1px; }
+.pad__card {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  inline-size: 40px;
+  block-size: 30px;
+  translate: -50% -50%;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  box-shadow: var(--pad-shadow, none);
+  z-index: 1;
+}
+.lamp {
+  position: absolute;
+  inline-size: 28px;
+  block-size: 28px;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #F2C14E;
+  color: #3D2E05;
+  box-shadow: 0 0 0 4px rgb(242 193 78 / 0.3);
+  z-index: 2;
+  cursor: grab;
+}
+.lamp:active { cursor: grabbing; }
+.lamp:focus-visible { outline: 2px solid var(--interactive-primary); outline-offset: 3px; }
+.lamp .icon { inline-size: 18px; block-size: 18px; }
+
+.swatch {
+  display: inline-block;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  vertical-align: middle;
+}
+.colorrow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 15px; }
+.colorrow input[type="color"] {
+  inline-size: 44px;
+  block-size: 32px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+/* Layer 1's two warm scales, all twelve steps, as the current theme sees them. */
+.scales { display: grid; gap: 10px; }
+.scale { display: grid; gap: 4px; }
+.scale__head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--on-surface-muted); }
+.scale__row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
+.scale__chip {
+  appearance: none;
+  aspect-ratio: 1;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  cursor: pointer;
+}
+.scale__chip:hover { scale: 1.12; }
+.scale__chip[aria-pressed="true"] { outline: 2px solid var(--on-surface); outline-offset: 2px; }
+.scale__chip:focus-visible { outline: 2px solid var(--interactive-primary); outline-offset: 2px; }
+.scale__steps { display: flex; justify-content: space-between; font-size: 11px; color: var(--on-surface-muted); font-variant-numeric: tabular-nums; }
+
+.output { display: grid; gap: 8px; }
+.output pre {
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--surface-sunken);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+.output__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+@media (max-width: 899.98px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .stage { position: relative; block-size: auto; min-block-size: 0; padding: 64px 16px 72px; }
+  .panel { border-inline-start: 0; border-block-start: 1px solid var(--border-subtle); padding: 24px 16px 48px; }
+  :root { --panel-w: min(786px, 100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="stage" aria-label="Vorschau des WizardPanels">
+    <span class="stage__badge" id="badge">Generiert</span>
+
+    <article class="wp" aria-hidden="true">
+      <div class="wp__header">
+        <ol class="steps">
+          <li class="step step--current">
+            <span class="trigger">
+              <span class="marker"><svg class="icon" viewBox="0 0 24 24"><path d="M10 21H2"/><path d="M10 3H7a2 2 0 00-2 2v16"/><path d="M14 12h.01"/><path d="M19 21V5a2 2 0 00-1.675-1.974l-6.163-1.013A1 1 0 0010 3v18a1 1 0 001.124.992z"/><path d="M22 21h-3"/></svg></span>
+              <span class="step__label">Einsteigen</span>
+            </span>
+            <span class="conn"></span>
+          </li>
+          <li class="step">
+            <span class="trigger">
+              <span class="marker"><svg class="icon" viewBox="0 0 24 24"><path d="M17 12v4a1 1 0 0 1-1 1h-4"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M17 8V7"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M7 17h.01"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="5" height="5" rx="1"/></svg></span>
+              <span class="step__label">Scannen</span>
+            </span>
+            <span class="conn"></span>
+          </li>
+          <li class="step">
+            <span class="trigger">
+              <span class="marker"><svg class="icon" viewBox="0 0 24 24"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></span>
+              <span class="step__label">Hören</span>
+            </span>
+            <span class="conn"></span>
+          </li>
+          <li class="step">
+            <span class="trigger">
+              <span class="marker"><svg class="icon" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/></svg></span>
+              <span class="step__label">Nachdenken</span>
+            </span>
+          </li>
+        </ol>
+      </div>
+      <div class="wp__body">
+        <div class="intro">
+          <div class="intro__copy">
+            <h2>Lass uns eine Achtsame Pause beginnen</h2>
+            <p>Stell sicher, dass die nächsten 2 Minuten keine Notifications oder anderen Ablenkungen an dich heran kommen.</p>
+          </div>
+          <img class="intro__img" src="/assets/web/exercises/mindfulness-cards.webp" alt="">
+        </div>
+        <div class="content">
+          <div class="switch">
+            <span class="track"><span class="knob"><svg class="icon" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg></span></span>
+            <span class="switch__label">Die analogen Karten liegen vor mir.</span>
+          </div>
+          <ol class="list">
+            <li>Zieh fünf zufällige Karten und leg sie vor dich.</li>
+            <li>Lass die Bilder einen Moment auf dich wirken.</li>
+          </ol>
+        </div>
+        <div class="actions">
+          <span class="cta"><svg class="icon" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Zurück</span>
+          <span class="cta cta--primary">Weiter</span>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <aside class="panel" aria-label="Einstellungen">
+    <header>
+      <h1>Panelschatten</h1>
+      <p class="lede">Spielwiese für den Schatten des WizardPanels, am Beispiel Achtsame Pause. Was unten im Kasten steht, geht 1:1 in <code>--musy-wizard-shadow</code>.</p>
+    </header>
+
+    <div class="group">
+      <fieldset class="seg" id="compare">
+        <legend>Vergleich</legend>
+        <label><input type="radio" name="compare" value="gen" checked>Generiert</label>
+        <label><input type="radio" name="compare" value="cur">Aktuell (ohne Schatten)</label>
+      </fieldset>
+      <fieldset class="seg" id="theme">
+        <legend>Thema</legend>
+        <label><input type="radio" name="theme" value="light" checked>Hell</label>
+        <label><input type="radio" name="theme" value="dark">Dunkel</label>
+      </fieldset>
+      <p class="hint">Taste <kbd>A</kbd> schaltet zwischen Generiert und Aktuell.</p>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Vorlagen</h2>
+      <div class="row" id="presets">
+        <button class="btn" type="button" data-preset="deckFront">Kartenstapel · vorne</button>
+        <button class="btn" type="button" data-preset="deckBack">Kartenstapel · hinten</button>
+        <button class="btn" type="button" data-preset="soft">Weich</button>
+        <button class="btn" type="button" data-preset="medium">Mittel</button>
+        <button class="btn" type="button" data-preset="crisp">Knackig</button>
+      </div>
+      <p class="hint">Die beiden Kartenstapel-Vorlagen sind die Schatten, die der Stapel auf /exercises gerade trägt (vorderste Karte und die dahinter).</p>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Licht</h2>
+      <div class="lightpad">
+        <div class="pad" id="pad">
+          <span class="pad__card" aria-hidden="true"></span>
+          <span class="lamp" id="lamp" tabindex="0" role="slider" aria-label="Lichtquelle" aria-valuetext="" aria-describedby="lamp-hint">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </span>
+        </div>
+        <p class="hint" id="lamp-hint">Lampe ziehen (oder Pfeiltasten). Der Schatten fällt von ihr weg. Steht sie genau über der Mitte, gibt es keinen Versatz, nur Unschärfe.</p>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Höhe</h2>
+      <div class="slider">
+        <div class="slider__head"><label for="elev">Panel</label><span class="slider__value" id="elev-v"></span></div>
+        <input type="range" id="elev" min="0" max="48" step="1">
+      </div>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Form</h2>
+      <div class="slider">
+        <div class="slider__head"><label for="layers">Ebenen</label><span class="slider__value" id="layers-v"></span></div>
+        <input type="range" id="layers" min="1" max="6" step="1">
+      </div>
+      <div class="slider">
+        <div class="slider__head"><label for="crispy">Schärfe</label><span class="slider__value" id="crispy-v"></span></div>
+        <input type="range" id="crispy" min="0" max="1" step="0.01">
+      </div>
+      <div class="slider">
+        <div class="slider__head"><label for="oomph" id="oomph-l">Intensität</label><span class="slider__value" id="oomph-v"></span></div>
+        <input type="range" id="oomph" min="0" max="1" step="0.01">
+      </div>
+      <p class="hint">Intensität und Farbe gelten pro Thema; Höhe, Licht, Ebenen und Schärfe für beide.</p>
+    </div>
+
+    <div class="group">
+      <h2 class="group__title">Farbe</h2>
+      <div class="colorrow">
+        <label class="check"><input type="checkbox" id="auto">Aus dem Hintergrund</label>
+        <span class="swatch" id="swatch" aria-hidden="true"></span>
+        <input type="color" id="color" aria-label="Eigene Schattenfarbe">
+        <button class="btn" type="button" id="token-color">Token-Farbe</button>
+      </div>
+      <div class="scales">
+        <div class="scale">
+          <div class="scale__head"><span>Sand</span><span id="scale-theme-1"></span></div>
+          <div class="scale__row" id="scale-sand"></div>
+        </div>
+        <div class="scale">
+          <div class="scale__head"><span>Terrakotta</span><span id="scale-theme-2"></span></div>
+          <div class="scale__row" id="scale-terracotta"></div>
+          <div class="scale__steps" aria-hidden="true"><span>1</span><span>12</span></div>
+        </div>
+      </div>
+      <p class="hint" id="color-hint"></p>
+      <label class="check"><input type="checkbox" id="ring">Kante im Dunkeln (1px innen, wie elevation-3)</label>
+    </div>
+
+    <div class="group output">
+      <div class="output__head">
+        <h2 class="group__title">CSS</h2>
+        <button class="btn btn--primary" type="button" id="copy">
+          <svg class="icon" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span id="copy-l">Kopieren</span>
+        </button>
+      </div>
+      <pre><code id="css"></code></pre>
+      <p class="hint">Eine Deklaration für beide Themen: <code>light-dark()</code> trägt nur die Farbe, wie bei Layer 1s <code>--elevation-*</code>.</p>
+      <div class="row"><button class="btn" type="button" id="reset">Zurücksetzen</button></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const RING = 'inset 0 0 0 1px light-dark(transparent, #4C534E)'; // --elevation-ring: sand-7 in dark
+  const BG = { light: '#F3EEE4', dark: '#191D1A' };                 // --surface (sand-2)
+  const TOKEN_COLOR = { light: '#202C24', dark: '#000000' };        // --alpha-shadow-* hues
+  // Layer 1's warm scales, [light, dark] per step 1…12, copied from
+  // packages/design-system/tokens/musy-foundations.css (Ben, 2026-11-16:
+  // "sämtliche Sand und Terrakotta Werte zur Auswahl").
+  const SCALES = {
+    sand: { name: 'Sand', steps: [
+      ['#FAF7F1', '#111412'], ['#F3EEE4', '#191D1A'], ['#E5E3D9', '#222723'], ['#DEDCD1', '#2A2F2B'],
+      ['#D6D5C9', '#323833'], ['#CFCEC2', '#3B413C'], ['#BDBCAF', '#4C534E'], ['#A7A89B', '#616862'],
+      ['#8A8C82', '#79807A'], ['#7C7E74', '#868D87'], ['#62645E', '#9EA59F'], ['#1A1F1C', '#EDF0EC'],
+    ] },
+    terracotta: { name: 'Terrakotta', steps: [
+      ['#FDF8F5', '#160F0B'], ['#F9EDE5', '#221711'], ['#F4DFD2', '#2F1F16'], ['#F0D5C4', '#3A271C'],
+      ['#ECCBB7', '#442E21'], ['#E8C1AA', '#513726'], ['#E3B294', '#67462F'], ['#DEA37F', '#85593B'],
+      ['#D99673', '#D99673'], ['#CE8865', '#E6A684'], ['#824429', '#D0937A'], ['#4A2718', '#F6DACB'],
+    ] },
+  };
+  const scaleValue = (key, i, theme) => SCALES[key].steps[i][theme === 'light' ? 0 : 1];
+  // The token a colour is, in that theme, if it is one: 'sand-12', or null.
+  function tokenOf(theme, hex) {
+    for (const key of Object.keys(SCALES)) {
+      const i = SCALES[key].steps.findIndex((_, j) => scaleValue(key, j, theme) === hex.toUpperCase());
+      if (i >= 0) return `${key}-${i + 1}`;
+    }
+    return null;
+  }
+
+  // The card stack's shipped shadows, as generator settings. Recovered from
+  // --musy-deck-shadow-front / -back: they reproduce those values exactly.
+  const DECK = {
+    light: { x: -0.0944, y: -0.9056 }, layers: 4, crispy: 0.5,
+    oomph: { light: 0.22, dark: 0.6 },
+    auto: { light: true, dark: false }, color: { light: '#3E3728', dark: '#000000' },
+    ring: true,
+  };
+  const PRESETS = {
+    deckFront: { ...DECK, elev: 18 },
+    deckBack:  { ...DECK, elev: 7 },
+    soft:   { light: { x: -0.15, y: -0.9 }, elev: 22, layers: 5, crispy: 0.15, oomph: { light: 0.2, dark: 0.62 } },
+    medium: { light: { x: 0, y: -1 },      elev: 18, layers: 4, crispy: 0.5,  oomph: { light: 0.2, dark: 0.6 } },
+    crisp:  { light: { x: -0.3, y: -0.85 }, elev: 12, layers: 3, crispy: 0.9,  oomph: { light: 0.26, dark: 0.66 } },
+  };
+  const DEFAULTS = {
+    auto: { light: true, dark: true },
+    color: { light: TOKEN_COLOR.light, dark: TOKEN_COLOR.dark },
+    ring: true,
+    ...structuredClone(PRESETS.deckFront),
+    compare: 'gen',
+    theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+  };
+  const KEY = 'musie-panel-shadows-v1';
+
+  let s = structuredClone(DEFAULTS);
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && typeof saved === 'object') s = { ...s, ...saved };
+  } catch { /* private window, blocked storage: defaults it is */ }
+
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+
+  // ── Colour helpers ───────────────────────────────────────────────────────
+  const hexToRgb = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const rgbToHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const rgbToHsl = (r, g, b) => {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (max === min) return [0, 0, l];
+    const d = max - min;
+    const sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h;
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    return [h * 60, sat, l];
+  };
+  const hslToRgb = (h, sat, l) => {
+    const k = (n) => (n + h / 30) % 12;
+    const a = sat * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [f(0) * 255, f(8) * 255, f(4) * 255];
+  };
+
+  // The derived colour: the background's hue, a little of its saturation,
+  // dark. On sand that is a warm brown; on the dark theme it is nearly black
+  // with the green the dark surface carries.
+  function derived(theme) {
+    const [h, sat] = rgbToHsl(...hexToRgb(BG[theme]));
+    const rgb = theme === 'light'
+      ? hslToRgb(h, Math.min(sat, 0.6) * 0.55, 0.2)
+      : hslToRgb(h, Math.min(sat, 0.6) * 0.6, 0.03);
+    return rgbToHex(...rgb);
+  }
+  const shadowColor = (theme) => (s.auto[theme] ? derived(theme) : s.color[theme]);
+
+  // ── The generator (the card-shadows playground's, unchanged) ─────────────
+  // Layer i of n sits at a distance that doubles each step (1, 3, 7, 15 … of
+  // the elevation), so the first layers are a tight contact shadow and the
+  // last one is the wide ambient. The light decides the direction; sharpness
+  // trades blur for negative spread; the opacity is split so the layers
+  // together reach the intensity, whatever their number.
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const px = (v) => {
+    const r = Math.round(v * 10) / 10;
+    return r === 0 || Object.is(r, -0) ? '0' : `${r}px`;
+  };
+  const alpha = (v) => String(Math.round(v * 1000) / 1000);
+
+  function layers(elevation) {
+    if (elevation <= 0) return [];
+    const n = s.layers;
+    const len = Math.hypot(s.light.x, s.light.y);
+    const k = len > 1 ? 1 / len : 1;
+    const dx = -s.light.x * k;
+    const dy = -s.light.y * k;
+    const blurF = lerp(2.4, 0.55, s.crispy);
+    const spreadF = lerp(0, 0.35, s.crispy);
+    const per = (o) => 1 - Math.pow(1 - Math.min(o, 0.99), 1 / n);
+    const aL = per(s.oomph.light);
+    const aD = per(s.oomph.dark);
+    const [lr, lg, lb] = hexToRgb(shadowColor('light'));
+    const [dr, dg, db] = hexToRgb(shadowColor('dark'));
+    const out = [];
+    for (let i = 1; i <= n; i++) {
+      const d = elevation * (Math.pow(2, i) - 1) / (Math.pow(2, n) - 1);
+      out.push(
+        `${px(dx * d)} ${px(dy * d)} ${px(d * blurF + 0.5)} ${px(-d * spreadF)} ` +
+        `light-dark(rgb(${lr} ${lg} ${lb} / ${alpha(aL)}), rgb(${dr} ${dg} ${db} / ${alpha(aD)}))`
+      );
+    }
+    return out;
+  }
+  function value(elevation) {
+    const list = layers(elevation);
+    if (s.ring) list.push(RING);
+    return list.length ? list : ['none'];
+  }
+  // For the self-check below, and for anyone pasting values by hand.
+  window.__panelShadow = { value: (e) => value(e), state: () => s };
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  function render() {
+    root.dataset.theme = s.theme;
+    const v = value(s.elev);
+    root.style.setProperty('--shadow', s.compare === 'cur' ? 'none' : v.join(', '));
+    $('badge').textContent = s.compare === 'cur' ? 'Aktuell · ohne Schatten' : 'Generiert';
+    const named = (t) => (s.auto[t] ? 'aus dem Hintergrund' : tokenOf(t, s.color[t]) ? `--${tokenOf(t, s.color[t])}` : s.color[t]);
+    $('css').textContent = `/* Farbe · hell: ${named('light')} · dunkel: ${named('dark')} */\n--musy-wizard-shadow:\n  ${v.join(',\n  ')};`;
+
+    document.querySelector(`input[name="compare"][value="${s.compare}"]`).checked = true;
+    document.querySelector(`input[name="theme"][value="${s.theme}"]`).checked = true;
+    $('elev').value = s.elev; $('elev-v').textContent = `${s.elev}px`;
+    $('layers').value = s.layers; $('layers-v').textContent = s.layers;
+    $('crispy').value = s.crispy; $('crispy-v').textContent = Math.round(s.crispy * 100) + ' %';
+    $('oomph').value = s.oomph[s.theme];
+    $('oomph-v').textContent = Math.round(s.oomph[s.theme] * 100) + ' %';
+    $('oomph-l').textContent = `Intensität (${s.theme === 'light' ? 'hell' : 'dunkel'})`;
+    $('auto').checked = s.auto[s.theme];
+    const c = shadowColor(s.theme);
+    $('swatch').style.background = c;
+    $('color').value = c.toLowerCase();
+    $('color').disabled = s.auto[s.theme];
+    const themeName = s.theme === 'light' ? 'Hell' : 'Dunkel';
+    const token = s.auto[s.theme] ? null : tokenOf(s.theme, c);
+    $('color-hint').textContent = s.auto[s.theme]
+      ? `Abgeleitet aus dem Hintergrund (${BG[s.theme]}): ${c}. Gilt für ${themeName}.`
+      : token
+        ? `--${token} (${c}) für ${themeName}.`
+        : `Eigene Farbe für ${themeName}: ${c}.`;
+    $('scale-theme-1').textContent = $('scale-theme-2').textContent = `Werte für ${themeName}`;
+    document.querySelectorAll('.scale__chip').forEach((b) => {
+      const v = scaleValue(b.dataset.scale, +b.dataset.i, s.theme);
+      b.style.background = v;
+      b.title = `--${b.dataset.scale}-${+b.dataset.i + 1} · ${v}`;
+      b.setAttribute('aria-label', `${SCALES[b.dataset.scale].name} ${+b.dataset.i + 1}, ${v}`);
+      b.setAttribute('aria-pressed', String(!s.auto[s.theme] && c === v));
+    });
+    $('ring').checked = s.ring;
+
+    // Lamp position: pad coordinates -1…1, centre is the panel.
+    const pad = $('pad');
+    const half = pad.clientWidth / 2;
+    const lamp = $('lamp');
+    lamp.style.left = `${half + s.light.x * (half - 14)}px`;
+    lamp.style.top = `${half + s.light.y * (half - 14)}px`;
+    lamp.setAttribute('aria-valuetext', `x ${s.light.x.toFixed(2)}, y ${s.light.y.toFixed(2)}`);
+    const len = Math.hypot(s.light.x, s.light.y) || 1;
+    const k = len > 1 ? 1 / len : 1;
+    pad.style.setProperty('--pad-shadow', `${(-s.light.x * k * 6).toFixed(1)}px ${(-s.light.y * k * 6).toFixed(1)}px 6px rgb(0 0 0 / 0.3)`);
+
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage unavailable */ }
+  }
+
+  // ── Wiring ───────────────────────────────────────────────────────────────
+  document.querySelectorAll('input[name="compare"]').forEach((el) =>
+    el.addEventListener('change', () => { s.compare = el.value; render(); }));
+  document.querySelectorAll('input[name="theme"]').forEach((el) =>
+    el.addEventListener('change', () => { s.theme = el.value; render(); }));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'a' && e.key !== 'A') return;
+    if (e.target instanceof HTMLInputElement && e.target.type === 'color') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    s.compare = s.compare === 'gen' ? 'cur' : 'gen';
+    render();
+  });
+
+  $('presets').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-preset]');
+    if (!b) return;
+    s = { ...s, ...structuredClone(PRESETS[b.dataset.preset]), compare: 'gen' };
+    render();
+  });
+
+  $('elev').addEventListener('input', (e) => { s.elev = +e.target.value; render(); });
+  $('layers').addEventListener('input', (e) => { s.layers = +e.target.value; render(); });
+  $('crispy').addEventListener('input', (e) => { s.crispy = +e.target.value; render(); });
+  $('oomph').addEventListener('input', (e) => { s.oomph = { ...s.oomph, [s.theme]: +e.target.value }; render(); });
+  $('auto').addEventListener('change', (e) => {
+    if (!e.target.checked) s.color = { ...s.color, [s.theme]: derived(s.theme) };
+    s.auto = { ...s.auto, [s.theme]: e.target.checked };
+    render();
+  });
+  $('color').addEventListener('input', (e) => {
+    s.color = { ...s.color, [s.theme]: e.target.value.toUpperCase() };
+    s.auto = { ...s.auto, [s.theme]: false };
+    render();
+  });
+  // The scale chips: built once, painted per theme in render(). A pick sets
+  // the colour of the CURRENT theme only — sand-12 is near-black in light and
+  // near-white in dark, so one token for both would be a light shadow at night.
+  for (const key of Object.keys(SCALES)) {
+    const row = $(`scale-${key}`);
+    SCALES[key].steps.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'scale__chip';
+      b.dataset.scale = key;
+      b.dataset.i = String(i);
+      b.addEventListener('click', () => {
+        s.color = { ...s.color, [s.theme]: scaleValue(key, i, s.theme) };
+        s.auto = { ...s.auto, [s.theme]: false };
+        render();
+      });
+      row.append(b);
+    });
+  }
+
+  $('token-color').addEventListener('click', () => {
+    s.color = { ...TOKEN_COLOR };
+    s.auto = { light: false, dark: false };
+    render();
+  });
+  $('ring').addEventListener('change', (e) => { s.ring = e.target.checked; render(); });
+  $('reset').addEventListener('click', () => {
+    const theme = s.theme;
+    s = { ...structuredClone(DEFAULTS), theme };
+    render();
+  });
+
+  // The pad: press anywhere to move the lamp there, then drag.
+  const pad = $('pad');
+  const clamp = (v) => Math.max(-1, Math.min(1, v));
+  function fromPointer(e) {
+    const r = pad.getBoundingClientRect();
+    const half = r.width / 2;
+    s.light = {
+      x: clamp((e.clientX - r.left - half) / (half - 14)),
+      y: clamp((e.clientY - r.top - half) / (half - 14)),
+    };
+    render();
+  }
+  pad.addEventListener('pointerdown', (e) => {
+    pad.setPointerCapture(e.pointerId);
+    fromPointer(e);
+    $('lamp').focus({ preventScroll: true });
+  });
+  pad.addEventListener('pointermove', (e) => { if (pad.hasPointerCapture(e.pointerId)) fromPointer(e); });
+  $('lamp').addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 0.25 : 0.05;
+    const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    if (!moves[e.key]) return;
+    e.preventDefault();
+    s.light = { x: clamp(s.light.x + moves[e.key][0]), y: clamp(s.light.y + moves[e.key][1]) };
+    render();
+  });
+
+  $('copy').addEventListener('click', async () => {
+    const text = $('css').textContent;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const sel = getSelection(); const range = document.createRange();
+      range.selectNodeContents($('css')); sel.removeAllRanges(); sel.addRange(range);
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+    }
+    $('copy-l').textContent = ok ? 'Kopiert' : 'Markiert – ⌘C';
+    setTimeout(() => { $('copy-l').textContent = 'Kopieren'; }, 1600);
+  });
+
+  addEventListener('resize', render);
+  render();
+})();
+</script>
+</body>
+</html>

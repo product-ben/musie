@@ -162,9 +162,10 @@ export function RadioImage({
             onClick={() => onCommit?.(opt.value)}
           >
             <img className="musy-rimage__art" src={opt.image} alt={opt.imageAlt} />
-            {/* The tick is the SECOND cue, not the only one: the cell also
-                takes a border and an inset ring, so selection never rests on
-                one small glyph (1.4.1). `keepMounted` so the cell does not
+            {/* The tick is the SECOND cue, not the only one: the picture also
+                darkens under the system scrim (since 2026-11-16; it was a
+                border and an inset ring), so selection never rests on one
+                small glyph (1.4.1). `keepMounted` so the cell does not
                 resize as it is chosen. */}
             <span className="musy-rimage__check" aria-hidden="true">
               <Radio.Indicator keepMounted render={<span />}>

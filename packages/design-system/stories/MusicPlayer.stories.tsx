@@ -66,7 +66,8 @@ const meta = {
           'names `--interactive-accent/2`, and the CSS only sets',
           '`--musy-mplayer-accent` on the wrapper.',
           'What I did: wrote an `Accents` story showing all three anyway.',
-          'Why: the accent does change the fill, the thumb and the border, so the story',
+          'Why: the accent does change the fill and the thumb (and did the border, until',
+          'the player lost its edges on 2026-11-16), so the story',
           'is honest; it simply does not change the button.',
           'What I need from Ben: **a decision.** Either the transport is deliberately',
           'always primary, or `accent` should be threaded into it.',
@@ -129,8 +130,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /** Both accent families. The prototype uses the default `primary`.
- *  The accent reaches the fill, the thumb and the border, but not the
- *  transport button — see Build notes. */
+ *  The accent reaches the fill and the thumb, but not the transport
+ *  button (no player draws a border since 2026-11-16) — see Build notes. */
 export const Accents: Story = {
   render: (args) => (
     <Stack>
@@ -153,7 +154,7 @@ export const Playing: Story = { args: { position: 72, playing: true } };
  *  the glyph promised. */
 export const Ended: Story = { args: { position: DURATION, playing: false } };
 
-/** `--border-subtle`, `--interactive-primary-disabled`, accent and text to
+/** `--interactive-primary-disabled` fill (no edge), accent and text to
  *  `--on-surface-disabled`, thumb not focusable. */
 export const Disabled: Story = { args: { position: 72, disabled: true } };
 

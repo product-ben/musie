@@ -42,15 +42,17 @@
  * have four.
  */
 import { Armchair, BedSingle, Layers, Moon, Sunrise } from 'lucide-react';
-import { SegmentedControl, Switch } from '@musie/design-system';
+import { SegmentedControl, Switch, WizardContent, WizardIntro } from '@musie/design-system';
 import { Markdown } from './Markdown';
 import { InstrumentIntro } from './InstrumentIntro';
 import type { InstrumentIntroProps } from './InstrumentIntro';
 import { useT } from '../i18n/localeContext';
 import type { Exercise } from '../lib/content';
+import { fromRoot } from '../lib/assets';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
-import { headingOnly, withoutHeading } from '../lib/markdown';
+import { headingAndLead, withoutHeadingAndLead } from '../lib/markdown';
+import { useIntroImageFit } from '../lib/useIntroImageFit';
 
 export interface SessionIntroProps {
   exercise: Exercise;
@@ -139,6 +141,9 @@ export function SessionIntro({
   cardsPresent, onCardsPresentChange, dealsHere = false, instrumentSettings,
 }: SessionIntroProps) {
   const t = useT();
+  /* The picture's width on a tablet follows the copy's height (Ben,
+     2026-11-17); `lib/introImage.ts` says why that is measured. */
+  const headRef = useIntroImageFit<HTMLDivElement>();
 
   /* ONE FLAG PER QUESTION, read off the prop that carries its answer. The
      group itself survives as long as EITHER is asked: it is what spaces the
@@ -173,18 +178,49 @@ export function SessionIntro({
           makes true or false (*Leg die Karten vor dich*), so the answer is
           given above the sentence it governs rather than under it.
 
-          `headingOnly` / `bodyOnly` are `lib/markdown.ts`'s, already used by
-          the listen step to split one `listen_md` between two screens. One
-          string, two places, no second content column.
+          `headingAndLead` / `withoutHeadingAndLead` are `lib/markdown.ts`'s
+          (2026-11-16; `headingOnly` / `withoutHeading` before the intro
+          sentence came along above the switch). One string, two places, no
+          second content column.
 
           IN DIGITAL MODE THE BODY DOES NOT COME BACK. It is an instruction
           about paper that is not there, and §6 records the three ways that
           could have gone: hiding it is the simplest thing that is honest, and
           the sheet one tap away carries what it used to say. */}
-      {asksForCards
-        ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingOnly} />
-        : <Markdown md={md} fallbackKey="session.intro.fallback" />}
+      {/* ── THE EXERCISE'S PICTURE BESIDE ITS HEADLINE — Ben, 2026-11-16 ──
+          Figma *Exercise pages*. On a phone it stands beside the HEADLINE
+          only, a fixed width as tall as the headline, cropped to fill; on a
+          tablet it stands 12 beside the whole text column, as tall as the
+          copy and at most 30% of the row wide (2026-11-17, measured by
+          `useIntroImageFit`); from 1024px a fifth, 16:9, top right.
+          `shell.css` (`.musie-intro__head`) carries both layouts. The same
+          picture and description the exercise card on /exercises shows. */}
+      {/* ── INTRO, THEN CONTENT — Ben, 2026-11-16 ─────────────────────────
+          `WizardPanel`'s two body sections, in that order, and the panel owns
+          the space around and inside them. The INTRO is what this step is:
+          the headline, the sentence about the next minutes, the picture. On a
+          card exercise that sentence comes along ABOVE the switch
+          (`headingAndLead`), so it is there in the digital mode as well; the
+          instructions about paper stay below it. */}
+      <WizardIntro>
+        <div className="musie-intro__head" ref={headRef}>
+          {asksForCards
+            ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingAndLead} />
+            : <Markdown md={md} fallbackKey="session.intro.fallback" />}
+          {exercise.imageUrl !== null && (
+            <img
+              className="musie-intro__image"
+              src={fromRoot(exercise.imageUrl)}
+              alt={exercise.imageAlt}
+              decoding="async"
+            />
+          )}
+        </div>
+      </WizardIntro>
 
+      {/* The CONTENT: what the step asks of you. 24 between its blocks,
+          from the panel. */}
+      <WizardContent>
       {asksForCards && (
         <div className="musie-intro__cards">
           {/* Rule 7: the label is passed. `Layers` / `Layers` would be one
@@ -240,17 +276,13 @@ export function SessionIntro({
           display type, which is the same defect `withoutHeading` was added for
           on the reflect step. Achtsame Pause hid it by having a LIST as its
           body, and a list is never promoted. */}
-      {asksForCards && !digital && <Markdown md={md} arrange={withoutHeading} />}
+      {asksForCards && !digital && <Markdown md={md} arrange={withoutHeadingAndLead} />}
 
-      {(asksPosture || asksEnding) && (
-        /* `--space-gap-group` between the two question groups and under the
-            second — Ben, 2026-10-12. The class is `shell.css`'s and exists
-            because `SegmentedControl` owns a control rather than the space
-            between two of them; see its block there for the L14 argument. */
-        <div className="musie-intro__questions">
-          {/* Rule 7: the legend and every label are passed. The legend IS the
-              question, so it stays visible — `legendHidden` would leave an
-              unexplained pair of segments on the screen. */}
+      {/* The two questions sit directly in the Content: the panel's 24
+          between them is what `.musie-intro__questions` used to declare
+          (Ben, 2026-10-12, then 2026-11-16). Rule 7: the legend and every
+          label are passed. The legend IS the question, so it stays visible —
+          `legendHidden` would leave an unexplained pair of segments. */}
           {asksPosture && (
             <SegmentedControl
               name="session-posture"
@@ -278,8 +310,6 @@ export function SessionIntro({
               }))}
             />
           )}
-        </div>
-      )}
 
       {/* ── AN INSTRUMENT: HOW TO PLAY, VIBRATION, MOTION — 2026-11-09 ─────
           Below the exercise's own copy, which says how to be ready; these are
@@ -288,6 +318,7 @@ export function SessionIntro({
       {exercise.instrument !== null && instrumentSettings !== undefined && (
         <InstrumentIntro instrument={exercise.instrument} {...instrumentSettings} />
       )}
+      </WizardContent>
     </>
   );
 }

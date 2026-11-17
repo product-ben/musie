@@ -103,6 +103,7 @@
   letter-spacing: var(--type-display-lg-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 
 .musie-lede__text {
@@ -250,6 +251,7 @@
   letter-spacing: var(--type-heading-sm-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* ═══ ONE CIRCLE ════════════════════════════════════════════════════════════
@@ -535,6 +537,7 @@
   letter-spacing: var(--type-label-md-tracking);
   color: var(--on-surface-muted);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* ── THE ONE CARD THAT IS A NUMBER ───────────────────────────────────────

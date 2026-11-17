@@ -351,8 +351,8 @@ export const Tablet: Story = { args: { index: 2 }, decorators: [fixedWidth(834)]
 /**
  * THE PEEK, WHICH IS THE POINT OF THE 393px DECORATOR.
  *
- * Measured on the real onboarding screen: 27px of the next card, border and
- * the start of its badge. The value of looking at this story is the edge on
+ * Measured on the real onboarding screen: 27px of the next card, its raised
+ * fill and the start of its badge. The value of looking at this story is the edge on
  * the right — if it is not there, the container is wider than 420px and the
  * `@container` rule is not the one being demonstrated.
  *

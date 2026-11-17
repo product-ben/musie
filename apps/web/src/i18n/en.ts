@@ -571,7 +571,12 @@ export const en = {
      running — that follows from the one-running-session index — so without
      this control the only exit is to finish. Confirmed, because the row it
      writes is permanent and appears in the diary as unfinished. */
-  'session.close': 'Close this session',
+  /* Short since 2026-11-16: the footer's `min` control sits beside the
+     exercise's name, which already says which session. */
+  'session.close': 'Close session',
+  /* The footer under the session: the exercise's name and the day it
+     started ('Body Scan, 16/01/2026'). '{date}' is short and locale-formatted. */
+  'session.context': '{exercise}, {date}',
   'session.close.title': 'Close this session?',
   /* IT SAYS THE RUN CANNOT BE PICKED UP AGAIN, and that is the product rather
      than a technical limit: the exercise works from the state you are in NOW,

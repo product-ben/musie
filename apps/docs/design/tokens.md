@@ -64,7 +64,7 @@ design. See [Light and dark](/features/theming).
 | `--space-gap-stack` | between controls inside one molecule |
 | `--space-gap-group` | between molecules that do **not** belong together |
 | `--space-section` / `-lg` | between sections — mobile, then ≥lg |
-| `--space-inset-control` | inside a control — gives 44px min height at `label-lg` |
+| `--space-inset-control` | inside a control — a 50px button at `label-lg` (44px until 2026-11-16) |
 | `--space-inset-card` | inside a card |
 | `--space-inset-sheet` | inside a sheet or modal |
 
@@ -91,10 +91,17 @@ picked" — and two further rules use it.
 
 ## Radius, and the semantic layer over it
 
-`xs 4 · sm 8 · md 12 · lg 16 · xl 24 · full 999`, then the aliases that say
-what a thing *is*: `--radius-control` (full — from the Figma button geometry),
-`--radius-input` (sm), `--radius-card` (md), `--radius-panel` (lg),
-`--radius-sheet` (xl).
+`xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 40 · full 999`, then the aliases
+that say what a thing *is*: `--radius-control` (full — from the Figma button
+geometry), `--radius-input` (sm), `--radius-card` (md), `--radius-panel` (lg),
+`--radius-sheet` (xl), and `--radius-action-card` (2xl).
+
+`--radius-action-card` is **a card with buttons inside** (2026-11-16): pill
+buttons inside a 12px corner read as two shapes, and at 40 the card echoes the
+pill it holds. It is built *into* the components whose job is to hold actions —
+ContentBox, WizardPanel, Lightbox, Toast, MusicPlayer and the card deck — not
+applied by what a card happens to contain, so a box never changes shape when a
+button appears. The rule and its reason live in `tokens/musy-foundations.css`.
 
 Use the alias. A card is `--radius-card`, not `12px` and not `--radius-md`.
 
@@ -113,12 +120,16 @@ needs no branch of its own. Same for `prefers-contrast: more` and
 its own family, size, weight, line-height and letter-spacing. `display-xl`,
 `display-lg`, `stage`, `heading-lg/md/sm`, `body-xl/lg/md/sm`, `label-lg/md`.
 
-Three text tokens are easy to miss and are load-bearing:
+Five text tokens are easy to miss and are load-bearing. They are rules per ROLE
+(2026-11-16, from the Figma text styles and Ben): headings pretty and never
+hyphenated, prose balanced, labels pretty.
 
 | | |
 |---|---|
-| `--text-wrap-heading: balance` | stops a heading stranding one word |
-| `--text-wrap-body: pretty` | body and two-line labels |
+| `--text-wrap-heading: pretty` | fills a heading's lines and stops it stranding one word |
+| `--text-wrap-body: balance` | short prose in even lines (browsers balance only short blocks) |
+| `--text-wrap-label: pretty` | `label-*` steps, two-line labels included |
+| `--text-hyphens-heading: none` | a headline never breaks inside a word — every rule on `--text-wrap-heading` takes it |
 | `--text-hyphens: auto` | **required** for German compounds at 393px |
 
 That last one is why `<html lang>` must follow the locale: `hyphens: auto`

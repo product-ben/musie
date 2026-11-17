@@ -73,6 +73,11 @@
           "$value": "#808278",
           "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
         },
+        "field": {
+          "$type": "color",
+          "$value": "#FCFBF7",
+          "$description": "Text-field fill — a shade above step 1 in light (Ben's Figma, 2026-11-16), step 5 in dark"
+        },
         "$description": "Linen neutral with a green-black ink"
       },
       "green": {
@@ -530,6 +535,11 @@
           "$value": "#828981",
           "$description": "Solid fill — pressed; keeps the step-9 foreground legal"
         },
+        "field": {
+          "$type": "color",
+          "$value": "#323833",
+          "$description": "Text-field fill — a shade above step 1 in light (Ben's Figma, 2026-11-16), step 5 in dark"
+        },
         "$description": "Linen neutral with a green-black ink"
       },
       "green": {
@@ -944,6 +954,11 @@
         "$value": "{palette.light.sand.12}",
         "$description": "Tooltips, high-emphasis chips — deliberately opposite the theme."
       },
+      "surface-input": {
+        "$type": "color",
+        "$value": "{palette.light.sand.field}",
+        "$description": "Inside a text field — input and textarea. A shade lighter than the card it sits on in light, a step lighter in dark (Ben, 2026-11-16)."
+      },
       "on-surface": {
         "$type": "color",
         "$value": "{palette.light.sand.12}",
@@ -967,7 +982,7 @@
       "border-subtle": {
         "$type": "color",
         "$value": "CanvasText",
-        "$description": "Dividers and decorative outlines ONLY. Never permitted on an interactive boundary."
+        "$description": "Dividers and decorative outlines ONLY. Never permitted on an interactive boundary — one exception, Ben's, 2026-11-16: the text field's edge, knowing it is 1.5:1; prefers-contrast lifts it to sand-edge (3:1)."
       },
       "border-strong": {
         "$type": "color",
@@ -1286,6 +1301,11 @@
         "$value": "{palette.dark.sand.12}",
         "$description": "Tooltips, high-emphasis chips — deliberately opposite the theme."
       },
+      "surface-input": {
+        "$type": "color",
+        "$value": "{palette.dark.sand.field}",
+        "$description": "Inside a text field — input and textarea. A shade lighter than the card it sits on in light, a step lighter in dark (Ben, 2026-11-16)."
+      },
       "on-surface": {
         "$type": "color",
         "$value": "{palette.dark.sand.12}",
@@ -1309,7 +1329,7 @@
       "border-subtle": {
         "$type": "color",
         "$value": "CanvasText",
-        "$description": "Dividers and decorative outlines ONLY. Never permitted on an interactive boundary."
+        "$description": "Dividers and decorative outlines ONLY. Never permitted on an interactive boundary — one exception, Ben's, 2026-11-16: the text field's edge, knowing it is 1.5:1; prefers-contrast lifts it to sand-edge (3:1)."
       },
       "border-strong": {
         "$type": "color",
@@ -1735,6 +1755,11 @@
       "$value": "24px",
       "$description": "Sheets, drawers"
     },
+    "radius-2xl": {
+      "$type": "dimension",
+      "$value": "40px",
+      "$description": "A card with buttons inside (--radius-action-card)"
+    },
     "radius-full": {
       "$type": "dimension",
       "$value": "999px",
@@ -1887,7 +1912,7 @@
         "fontWeight": 500,
         "fontSize": "17px",
         "fontSizeMax": "18px",
-        "lineHeight": 1.2,
+        "lineHeight": 1.434,
         "letterSpacing": "0.002em"
       },
       "$description": "Primary button and tab labels. · 393px 17px / 834px 17.4px / 1440px 18px"
@@ -1924,9 +1949,13 @@
       },
       "wrapHeading": {
         "$type": "other",
-        "$value": "balance"
+        "$value": "pretty"
       },
       "wrapBody": {
+        "$type": "other",
+        "$value": "balance"
+      },
+      "wrapLabel": {
         "$type": "other",
         "$value": "pretty"
       },
@@ -1934,6 +1963,11 @@
         "$type": "other",
         "$value": "auto",
         "$description": "Required for German compounds at 393px"
+      },
+      "hyphensHeading": {
+        "$type": "other",
+        "$value": "none",
+        "$description": "Display and heading steps never hyphenate (Ben, 2026-11-16)"
       },
       "measureBody": {
         "$type": "other",

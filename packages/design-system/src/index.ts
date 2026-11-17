@@ -125,7 +125,7 @@ export { Toast } from './Toast';
 export type { ToastProps, ToastAction, ToastLive, ToastTone, ToastPlacement } from './Toast';
 
 export { SegmentedControl } from './SegmentedControl';
-export type { SegmentedSize, SegmentedLabels, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
+export type { SegmentedSize, SegmentedLabels, SegmentedLegendStep, SegmentedControlProps, SegmentedOption } from './SegmentedControl';
 
 /* Two levels, and §15's build-up with none of its semantics — a CheckboxGroup
    per dimension rather than one RadioGroup, scrolled rather than divided. The
@@ -162,7 +162,7 @@ export type {
 export { CodeField } from './CodeField';
 export type { CodeFieldProps } from './CodeField';
 
-export { InteractiveWizard, WizardPanel } from './InteractiveWizard';
+export { InteractiveWizard, WizardPanel, WizardIntro, WizardContent } from './InteractiveWizard';
 export type {
   InteractiveWizardProps, WizardPanelProps, WizardStep, WizardStepState, WizardStateWords, WizardAccent } from './InteractiveWizard';
 

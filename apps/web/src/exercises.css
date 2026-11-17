@@ -572,7 +572,7 @@
      393px, which is exactly the case Layer 1 turned hyphenation on for. It
      only works while <html lang> tracks the locale, which LocaleProvider
      guarantees. */
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 .musie-exercise-card__text {
@@ -640,7 +640,7 @@
   /* "2–12 min" and "10–12 min" sit at different widths and the deck is a fixed
      size, so the row would shift under a deal without this. */
   font-variant-numeric: tabular-nums;
-  text-wrap: var(--text-wrap-body);
+  text-wrap: var(--text-wrap-label);
 }
 
 .musie-exercise-card__time > .musy-icon { flex: 0 0 auto; }
@@ -1009,7 +1009,7 @@
    taken, all five properties, because weight and family are what make it that
    step rather than body-md set larger. */
 .musie-deck-guide__text {
-  text-wrap: pretty;
+  text-wrap: var(--text-wrap-body);
   font-family: var(--type-body-md-family);
   font-size: var(--type-body-md-size);
   font-weight: var(--type-body-md-weight);
@@ -1051,7 +1051,7 @@
   letter-spacing: var(--type-heading-md-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* ═══ THE GOAL SHEET'S GUTTER AT M AND L ═══════════════════════════════════

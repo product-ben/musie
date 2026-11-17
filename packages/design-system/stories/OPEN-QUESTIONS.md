@@ -4375,3 +4375,239 @@ tooltip stands over the mark rather than over the top of a card-tall strip.
 Coarse pointers get none, through the rule IconButton's already uses.
 What I need from Ben: **nothing**. `nextLabel` no longer appears anywhere
 visible, only as a name and a tooltip, so its prop docs say so.
+
+## Borderless surfaces — twelve components lose their visible edge — RESOLVED
+Where: `src/musy-components.css` (each component's own rule, and the
+BORDERLESS SURFACES section at the end of the file), `src/RadioImage.tsx`,
+`src/ContentBox.tsx`; in the app, `apps/web/src/shell.css` (`.musie-typing`,
+`.musie-reflect__thoughts`, `.musie-builder__pick`)
+What I checked: Ben, 2026-11-16: „get rid of the borders on ContentBox,
+SegmentedControl, Button/primary (only this variant!), IconButton/primary
+(only this variant!), Carousel, Lightbox, MusicPlayer, RadioImage, RecordButton,
+Toast, TrackButton (only primary), WizardPanel" — then four answers in one
+round: RadioImage hover darkens and chosen is a deeper tint plus the tick;
+Carousel loses every edge (the centred card is marked by scale alone);
+MusicPlayer loses its rail edge and thumb ring too; Toast's tone edges, the
+disabled chosen segment and RecordButton `secondary` go as well. Kept by the
+same answers: ContentBox `dashed`, the framed header's divider, and the 1px
+ring Layer 1's dark `--elevation-*` draws (Lightbox, Toast, the thumb).
+Measured in Storybook before and after, every story of all fourteen
+components, both themes: every listed edge now computes transparent at its
+old width, so no box can change size. Walked in the running app (worktree
+build, local stack, a throwaway user; every top-level route and every
+exercise's session steps): no listed component draws an edge anywhere it renders.
+What I did: `border-color: transparent` at each rule, width kept — B25's
+mechanism, so nothing moves by a pixel and forced colours still paints the
+boundary. `prefers-contrast: more` restores the edges. RadioImage darkens
+under `--alpha-scrim` (hover 0.25, press 0.4, chosen 0.5 of it).
+`--musy-mplayer-accent-border` is deleted; the thumb ring was its only reader.
+In the app, the three surfaces above were ContentBox copies (raised fill,
+subtle edge, card radius) and would have kept an edge beside boxes that had
+lost theirs — the typing bubble turns INTO a ContentBox — so they follow.
+Why: Ben's call; the fill (raised, sunken, solid, tinted) or the elevation
+now sets every one of them off the page.
+What I need from Ben: **four small things to know, none blocking.**
+1. ContentBox's `outline="solid"` no longer draws a solid edge. The name is
+   kept so no call site changes; the type's doc says what it means now.
+2. RecordButton `variant="accent"` has had NO styling since the accent CTA
+   solids were removed (2026-10-05): it renders as a bare `.musy-btn`. Found
+   here, not caused here; the app only uses `primary`.
+3. The three app surfaces are ContentBox copies, which is L14.3's definition
+   of a component request. Aligned rather than logged as one, because
+   rebuilding them on ContentBox is a separate change.
+4. The Figma Layer 1 file still draws every one of these edges.
+
+## Layer 1 — 40 becomes a radius step, for a card with buttons inside — RESOLVED
+Where: `tokens/musy-foundations.css` (`--radius-2xl`, `--radius-action-card`,
+`--type-heading-sm-weight`), `tokens/musy-foundations.tokens.json`,
+`TOKEN-DRIFT.md`, `src/musy-components.css` (`.musy-box`,
+`.musy-box__header:has(.musy-wizard)`, `.musy-lightbox__popup`, `.musy-toast`,
+`.musy-wizard__trigger`, `.musy-wizard__panel`, `.musy-mplayer`,
+`--musy-deck-card-radius`)
+What I checked: Ben, 2026-11-16, Figma *Exercise pages*, four annotations:
+- "Content box 40px (via variable) corner radius".
+- "hover state: must be rounded on component level, 40px".
+- "headline weight → change globally to medium".
+- "heading sm → down to medium".
+
+Asked where 40 should apply, he answered with a rule, "the new radius is
+there for any card with buttons inside", and chose to build it into the
+components rather than apply it by `:has()`. The scale stopped at 24. The
+card deck already used 40 as a local value, for exactly that reason (it
+holds the Start pill); see "CardDeck — the pile's foot radius is 40, and
+Layer 1 stops at 24" above.
+What I did:
+- **`--radius-2xl: 40px` and `--radius-action-card`.** ContentBox,
+  WizardPanel, Lightbox, Toast, MusicPlayer and the deck take the alias.
+  Radio rows, image picks and the segmented track keep theirs. Sheet has no
+  corners, so it is untouched.
+- **The step trigger takes `--radius-control`.** At 60px tall that is the
+  same pill as 40.
+- **heading-sm goes to medium.** heading-md already was, so "globally"
+  amounts to this one step. The JSON mirror had said 500 all along.
+  display-xl stays bold.
+- **A box header that holds the wizard pads by `--space-inset-card` less
+  `--sp-2`.** That is the frame's 16; it puts the first marker in line with
+  the body text, which the annotation's "8px are already included in
+  stepper element" describes.
+Why: Ben's annotations and rule. The deck's 40 now has a name, so this
+also resolves the open item that entry logged.
+What I need from Ben: **one thing to look at.** A Toast is 72px tall, so at
+40 it reads as a full pill (the corners clamp to 36). That follows from
+"any card with buttons inside", since undo and dismiss sit inside it. If it
+should stay a card, Toast leaves the list and keeps `--radius-card`.
+
+## Text wrap — a rule per role: headings pretty, prose balanced, labels pretty — RESOLVED
+Where: `tokens/musy-foundations.css` (`--text-wrap-heading`, `--text-wrap-body`,
+new `--text-wrap-label`), `src/musy-components.css` (11 rules), `TOKEN-DRIFT.md`;
+app: `exercises.css`, `shell.css`
+What I checked: Ben, 2026-11-16, "Ich habe ein paar Anpassungen an den Text
+Styles gemacht". Every size, line height, tracking, weight and family in the
+12 Figma text styles still matched the code at all three modes (measured), so
+the change was `textWrapStyle`: heading-md PRETTY, body-md BALANCE, label-md
+PRETTY, the other nine AUTO. The code broke lines by ROLE (headings balance,
+prose and labels pretty). Asked how to take it over, Ben chose "als Regel pro
+Rolle".
+What I did: heading → pretty, body → balance, and a label token at pretty,
+because labels had shared the prose token. 15 declarations moved onto their
+role's token; 13 of them had been literal `pretty`/`balance` (field
+descriptions and errors, the voice and upload copy, the wizard and scale
+labels, two app captions). `nowrap` stays: it is a constraint, not a style.
+Why: Ben's styles, generalised by role at his choice.
+What I need from Ben: **three things to know.**
+1. Browsers balance only short blocks (Chrome: up to 6 lines), so longer
+   prose wraps normally. The app's prose is short.
+2. A pretty heading fills its first line and will HYPHENATE to do it.
+   „Lass uns eine Acht-/same Pause / beginnen" at 393px, where balance gave
+   „Lass uns eine / Achtsame / Pause beginnen". Headings inherit
+   `--text-hyphens: auto`. If headlines should not hyphenate, that is one
+   rule (`hyphens: manual` on the heading role).
+3. The nine Figma styles on AUTO are not changed. In code their roles now
+   decide; setting their `textWrapStyle` to match is a Figma-side edit.
+
+## WizardPanel — the whole card: header (stepper), divider, body (intro, content, actions) — RESOLVED
+Where: `src/InteractiveWizard.tsx` (`WizardPanel`, new `WizardIntro`,
+`WizardContent`), `src/musy-components.css` (HEADER AND BODY block),
+`src/index.ts`, `stories/WizardPanel.stories.tsx` (`HeaderAndBody`)
+What I checked: Ben, 2026-11-16: „Packe [das Spacing] mit in die Komponente
+und überarbeite das Wizard Panel: oben (Header) immer der Stepper, dann der
+Divider, in der unteren Section (Body) erst Intro, dann Content, dann
+Actions." His spacing pass on the Einsteigen frames grouped the switch and
+the list (and the two questions) into one block 24 apart inside, 32 from the
+intro and the actions.
+What I did:
+- **`WizardPanel` with `stepper` is the card.** It draws a framed ContentBox
+  whose header is the stepper and requires a `headline`, because the card is
+  an <article> in the outline. Without `stepper` it is the body alone, as
+  before.
+- **The body runs Intro → Content → Actions,** as `<WizardIntro>` and
+  `<WizardContent>` children, or the `intro` prop as shorthand.
+- **The panel owns every distance.** 32 between the sections, 24 inside
+  Content. Block margins inside them are reset two classes deep, so the
+  app's later stylesheets cannot add their own.
+- **The header is the stepper's inline-size container,** which replaces the
+  app's `.musie-rail`.
+- **Migration:** Session and the exercise builder moved to it. The
+  Einsteigen step renders Intro and Content. The other steps still pass
+  plain children, which lay out as before.
+Why: Ben's structure and numbers; one component now spaces every step the
+same way.
+What I need from Ben: **one thing to know.** Only Einsteigen is split into
+Intro and Content so far. Hören, Auswählen, Ansehen, Spielen and
+Nachdenken still pass their body as one block. Splitting each is the same
+small change per step.
+
+## A headline never hyphenates — RESOLVED
+Where: `tokens/musy-foundations.css` (new `--text-hyphens-heading: none`),
+`src/musy-components.css` (every rule on `--text-wrap-heading`, the display
+steps of `.musy-box__text`, `.musy-llist__headline`), `TOKEN-DRIFT.md`, the
+JSON mirror's `typography.rules`
+What I checked: Ben, 2026-11-16: „In Headlines sind keine Worttrennungen
+erlaubt." This answers point 2 of the entry above („Acht-/same Pause").
+What I did:
+- **A role token, like the wrap tokens.** `--text-hyphens-heading: none`
+  sits beside `--text-hyphens: auto`. Prose and labels keep `auto` (rule 5).
+- **Every rule on `--text-wrap-heading` takes it.** 6 in this file and 11 in
+  the app, the ones that set `--text-hyphens` switched rather than added.
+  `.musy-box__text`'s display steps, `none` since 2026-10-02, now name the
+  token.
+- **`.musy-llist__headline` too.** It is set at label-lg and breaks like a
+  label, but it is an `<hN>` named headline; the diary's „Session vom …"
+  hyphenated through it.
+- **`none`, not `manual`.** Ben's wording forbids every break, and a soft
+  hyphen in the copy would be one.
+Measured in the app, German: every visible heading on every Einsteigen (320
+and 393) and on eight main screens (320) computes `none` or the default
+`manual`; none of them overflows. The two that did were `musy-sr-only`.
+What I need from Ben: nothing.
+
+## Text field: a paper fill, a subtle edge, a 24px textarea — RESOLVED
+Where: `tokens/musy-foundations.css` (new `--sand-field`, new
+`--surface-input`; the comments on `--border-subtle` and `--border-strong`),
+the JSON mirror and `proof-manifest.json` (palette, semantic, four audit
+rows), `src/musy-components.css` (§15 FIELD, the CodeField box)
+What I checked: Ben's Figma *umsetzen_v2* (190:15670), and his answers the
+same day: the fill as a new token; the edge as in Figma (`--border-subtle`),
+knowing it is below 3:1; single-line inputs take the fill and edge but keep
+their 8px corner.
+What I did:
+- **`--surface-input`** is `#FCFBF7` in light (a shade above sand-1, so a
+  palette step `--sand-field` like `-edge` and `-press`, because Layer 2
+  holds no raw hex) and sand-5 `#323833` in dark.
+- **The control:** fill `--surface-input` (resting and filled), edge
+  `--border-subtle` at the same 1.5px, the textarea alone at
+  `--radius-xl`. The label is unchanged (label-md, 12 above the control);
+  it gained its own line-height and the label wrap token.
+- **CodeField's boxes take the same fill and edge.** They are single-line
+  inputs and the stylesheet already had them mirror §15. That is my call,
+  not Ben's, and it is one rule to undo.
+- **The 1.4.11 exception is written where the token is defined.**
+  `--border-subtle` says "never on an interactive boundary"; it now names
+  this one, Ben's. `prefers-contrast: more` lifts it to `--sand-edge`.
+Measured (Storybook, both themes): the computed fill, edge and corners are
+the values above. Text on the fill is 16.1:1 light and 10.5:1 dark;
+placeholder 5.8:1 and 4.8:1.
+What I need from Ben: **one thing to look at, in dark.** There the edge is
+1.15:1 on the fill and the fill 1.14:1 on the card, so a field inside a
+dark card is close to invisible until it is focused. In light it reads as
+in Figma. A darker dark fill (below the card, `--surface-sunken`-like) would
+separate it; that is his call.
+
+## label-lg is Medium at 143.4%; a segmented control's legend has a step — RESOLVED
+Where: `tokens/musy-foundations.css` (`--type-label-lg-weight`, `-line`),
+the JSON mirror, `src/SegmentedControl.tsx` (`legendStep` replaces
+`legendAsLabel`), `src/musy-components.css` (the legend's label role),
+`src/index.ts`, `stories/SegmentedControl.stories.tsx` (`LegendSteps`)
+What I checked: Ben, 2026-11-16, „lies auch den upgedateten text style":
+the Figma style `type/label-lg` is Onest Medium at 143.4% (the code had
+SemiBold at 1.2); the other eleven styles match. And: „Bei Einsteigen: alle
+Labels der Segmented Controls, die aktuell Headline-Tokens haben, sollen
+label-lg bekommen."
+What I did:
+- **label-lg verbatim.** A primary button is 50.4px at 393 now, where it
+  was 44.4. His frames draw it at 50. The one calc on the line height
+  (insight-map.css) follows by itself.
+- **`legendStep: 'heading-sm' | 'label-lg' | 'label-md'`** replaces the
+  boolean. The component emits `data-type-step`, so the step comes from the
+  type utilities that already exist rather than a second declaration of the
+  scale. A label step moves the legend into the label role (wrap and
+  hyphenation). The builder's two `legendAsLabel` became `label-md`.
+Why: Ben's text style and his instruction. A second label step turned the
+boolean into a step, and a step is what the type utilities are for.
+What I need from Ben: nothing.
+
+## A segmented control's legend is label-lg; the heading variant is gone — RESOLVED
+Where: `src/SegmentedControl.tsx` (`legendStep: 'label-lg' | 'label-md'`,
+default `label-lg`), `stories/SegmentedControl.stories.tsx` (`LegendSteps`
+shows the two), the legend comment in `src/musy-components.css`
+What I checked: Ben, 2026-11-17: „get rid of the variant with the heading and
+make the one with label-lg the default. Where ever we are using currently
+heading-sm above a segmented control, use label-lg instead."
+What I did: removed `heading-sm` from the type and made `label-lg` the default.
+Every visible segmented-control legend becomes label-lg without a call-site
+change: Maintenance, the insight map's three, and Einsteigen, whose explicit
+`legendStep="label-lg"` came out. The other radio groups share the legend
+class and keep heading-sm; Ben named the segmented control. The hidden
+legends (language, reflect mode, diary filter, exercises view) have no
+heading above them.
+What I need from Ben: nothing.

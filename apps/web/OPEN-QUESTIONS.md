@@ -11711,3 +11711,221 @@ what moves. If it is the cards behind showing more or less while the pile
 turns, that is the lean (`--musy-deck-lean-*`) and can be calmed. If it is
 the pile changing height between goals, the card can reserve the room 170
 characters need, so that every pile is one height.
+
+## Exercise pages — the session gets Ben's desktop floorplan — RESOLVED
+
+Where: `src/routes/Session.tsx` (the box's hidden headline, the footer, Back's
+arrow), `src/components/SessionIntro.tsx` (`.musie-intro__head`),
+`src/shell.css` (`.musie-md`'s gaps, `.musie-intro__questions`,
+`.musie-intro__head`, `.musie-session__foot`), `src/i18n/{de,en}.ts`
+(`session.close`, `session.context`), `src/lib/diary.ts`
+(`formatShortDate`), `supabase/migrations/20261116150000_intro_headlines.sql`
+
+What I checked: Ben, 2026-11-16, the Figma file *Musie — design system
+(Layer 1)*, page *Exercise pages*, frames *1728w default* and *393w default*,
+with seven annotations and three comments. I measured the running intro step
+at both frame sizes before and after. The column was already the frame's
+(980 at 1728, 16px gutters on a phone), and so were the panel's 32px rhythm
+and the 16px from the box to the footer. What changed:
+- The headline sits 12 above its description, down from 32.
+- The two questions are 24 apart, down from 32.
+- The exercise's picture stands beside the headline: 16:9 top right from
+  1024px; on a phone a quarter of the row, as tall as the headline.
+- Back has a ← arrow.
+- The box header holds only the rail, and the exercise's name moved to a
+  footer: „× Session schließen   Bodyscan, 16.01.26".
+- Every exercise's intro headline names it.
+
+Ben's answers in this round:
+- The top bar stays.
+- The headline gap goes to 12: „we don't have bulleted lists anymore at
+  all, update the guideline".
+- The headlines are „Lass uns einen/eine … beginnen", names capitalised,
+  with two exceptions: the instruments say „Lass uns Kalimba spielen" and
+  Freie Bahn says „Lass uns mit Freier Bahn beginnen". Each is in EN too.
+
+What I did: rebuilt the intro to the frames' numbers and checked it at 1728
+and 393 against them; every gap above is within 2px. I also checked Achtsame
+Pause's intro, listen and reflect.
+
+How the footer is put together:
+- The footer is a two-column grid. A long name („Achtsame Pause, 16.11.26"
+  at 393) wraps beside the exit instead of under it.
+- The `min` rung carries 8px of its own margin. The footer subtracts it with
+  token arithmetic rather than overriding the button (L7).
+- On reflect the exit stays absent, the 2026-10-09 rule, but the name and
+  date are there.
+
+The migration replaces only the first `##` line of each intro, so the
+description under it cannot be undone by it.
+
+Why: Ben's frames and answers; the measurements are what say they now hold.
+
+What I need from Ben: nothing to decide. Four things to know:
+1. **The migration is NOT applied to the shared local stack.** Another
+   session's instruments walk asserts the old „Bevor es losgeht", and
+   `supabase db reset` would also replay this branch over whatever the
+   other sessions are testing (rule 9). The SQL was run inside a transaction
+   and rolled back: all 14 headlines changed, every description intact. A
+   reset from this branch shows the new headlines locally; merging pushes
+   them to hosted.
+2. **Atementspannung has no intro at all** (`null`, not live), so it has no
+   headline yet. The migration's header holds the one it will get.
+3. **On the card exercises the picture stands beside the headline alone.**
+   Achtsame Pause and Freie Bahn put the switch between the headline and
+   the text, so on desktop the row is as tall as the picture and the
+   headline has air under it.
+4. **The segmented track is 54px, not the frame's 52.** That is the 1px
+   transparent edge the borderless change kept so forced colours can draw
+   it (B25's mechanism). Achtsame Pause still has a NUMBERED list. The 12px
+   rule doesn't touch it, because it sits after the switch in a block of its
+   own.
+
+## Einsteigen — one sentence about the minutes, the 480 transition, the panel's sections — RESOLVED
+
+Where: `supabase/migrations/20261116160000_intro_sentence.sql`,
+`src/components/SessionIntro.tsx`, `src/lib/markdown.ts` (`headingAndLead`,
+`withoutHeadingAndLead`), `src/shell.css` (`.musie-intro__head`), `src/routes/
+Session.tsx` and `ExerciseBuilder.tsx` (`WizardPanel` with `stepper`)
+
+What I checked: Ben, 2026-11-16, three requests.
+- **The sentence.** „Füge zu jeder Karte den gleichen Intro-Text hinzu, mit
+  der richtigen Minutenzahl (min length), einfach als String": Bodyscan's
+  sentence, the number from `timeframe_min`.
+- **Where it goes.** Asked, he answered „ersetzen + unter Headline": it
+  replaces Klangreise's and the instruments' own „Stell sicher …“, and on the
+  card exercises it stands above the switch.
+- **The transition.** The *Bodyscan · Einsteigen · 572* frame: from 480 the
+  picture stands beside the whole copy column at a third of the row („ab
+  480, ein Drittel").
+
+What I did:
+- **The sentence.** The migration writes every intro whole, DE and EN:
+  Achtsame Pause 2 · Freie Bahn 2 · Atementspannung 5 (first intro, not
+  live) · Klangreise 10 · Bodyscan 4 · Kalimba/Marimba/Harfe 3.
+- **On the card exercises.** The intro takes the headline plus that first
+  paragraph (`headingAndLead`), so the sentence shows in the digital mode
+  too; the paper instructions stay below the switch.
+- **The picture.** Below 480 it stands beside the headline (a quarter);
+  from 480 to 1023 beside the column (a third, 12 apart); from 1024 a
+  fifth, 32 apart.
+- **Spacing.** The Einsteigen step renders `WizardIntro` and
+  `WizardContent`; the panel spaces them (32 between sections, 24 inside
+  Content). `.musie-intro__questions` and `.musie-rail` are gone, and
+  `.musie-intro__cards` and the intro head lost their own margins.
+
+Measured at 393, 572, 834 and 1440 for Bodyscan and Achtsame Pause: every
+section gap 32, every content gap 24, the picture at a quarter, a third and
+a fifth.
+
+Why: Ben's frames and answers.
+
+What I need from Ben: nothing to decide. The migration is applied to the
+shared local stack for review (backup in the session scratchpad); merging
+pushes it to hosted. The `{minutes}` placeholder logic in `SessionIntro`
+stays for any copy that still uses it; no intro does now.
+
+## The WizardPanel has a shadow, Ben's values from the playground — RESOLVED
+
+Where: `.musy-wizard__card` and `.musy-wizard__panel` in
+`musy-components.css` (`--musy-wizard-shadow`, `--musy-wizard-shadow-ink`);
+`/experiments/panel-shadows/261116-1707/`
+
+What I did: built the playground (the card-shadows generator and controls,
+one elevation instead of two, Achtsame Pause's Einsteigen as the stage; the
+card stack's two shadows as presets, which reproduce
+`--musy-deck-shadow-front` / `-back` exactly; every Sand and Terrakotta step
+as a colour, per theme), then put the value Ben sent from it into the
+component verbatim. Four layers; light ink `--sand-8`'s light value at 5.7%,
+dark black at 20.5%. The same two spelling changes as the deck's: the ink is
+named once, and the playground's `light-dark(transparent, #4C534E)` is
+`--elevation-ring`. The shadow sits on the outer surface: the card when the
+panel has a stepper, the panel itself when it has none, never the body inside
+a card. Measured in Storybook (light and dark) and in the app at 393, 834 and
+1440, light and dark: the computed `box-shadow` is his list, and no ancestor
+clips it. The builder's phone preview clips at its screen edge, as a phone
+would.
+
+Why: Ben, 2026-11-16: „bitte das hier übernehmen und für die storybook
+wizard panel Komponente".
+
+What I need from Ben: nothing.
+
+## Einsteigen's questions at label-lg; headlines without hyphens; the new text field — RESOLVED
+
+Where: `components/SessionIntro.tsx`, `components/InstrumentIntro.tsx`
+(`legendStep="label-lg"`), `routes/ExerciseBuilder.tsx` (`legendStep=
+"label-md"`, was `legendAsLabel`), `shell.css`, `exercises.css`,
+`insight-map.css` (11 heading rules on `--text-hyphens-heading`)
+
+What I did: Ben's three asks of 2026-11-16, applied in the app; the design
+system's entries in `packages/design-system/stories/OPEN-QUESTIONS.md` have
+the detail.
+- **The questions above Einsteigen's segmented controls** („Wie möchtest du
+  zuhören?", „Was machst du nach der Übung?", Duett/Alleine) are label-lg.
+- **No headline hyphenates.** Every app rule on `--text-wrap-heading` now
+  carries `--text-hyphens-heading`: five switched from `--text-hyphens`
+  (placeholder title, reflect welcome and sheet headline, exercise card and
+  goal sheet headlines), six added (`.musie-md`'s headings, which had
+  inherited the container's `auto`, three in insight-map, one in shell).
+  Prose still hyphenates.
+- **Text fields** come from the component; nothing in the app changed for
+  them.
+
+Measured at 320 and 393, German, against the local stack: the legends are
+17px / 500 / 24.4px; every visible headline computes `none`; buttons are
+50.4px; no page scrolls sideways.
+
+Why: Ben's Figma and his words.
+
+What I need from Ben: see the dark-mode note in the design system's
+text-field entry.
+
+## Every segmented control's question is label-lg — RESOLVED
+
+Where: the design system's `SegmentedControl` default (see its log);
+`components/SessionIntro.tsx`, `components/InstrumentIntro.tsx` lost their
+explicit `legendStep="label-lg"`
+
+What I did: Ben, 2026-11-17, made label-lg the default and dropped the
+heading variant. In the app that changes the visible legends of Maintenance
+(„What to work on") and the insight map (filter, care, level) from heading-sm
+to label-lg. The builder keeps label-md.
+
+Why: Ben's instruction.
+
+What I need from Ben: nothing.
+
+## On a tablet the Einsteigen picture is as tall as the copy; the phone footer loses its inset — RESOLVED
+
+Where: `shell.css` (the Intro's 480–1023 block, `.musie-session__foot`
+below 480), `lib/introImage.ts` (+ test), `lib/useIntroImageFit.ts`,
+`components/SessionIntro.tsx`
+
+What I did: Ben's annotations of 2026-11-17 on the Figma page *Einsteigen ·
+Bodyscan · 17.11.*, and his two answers the same day (12 between copy and
+picture in total, the rule for the tablet only).
+- **Tablet, 480–1023.** The picture is 16:9 at the copy's height, at most
+  30% of the row; past the cap it stays as tall as the copy and crops. It
+  stands 12 from the text, and the copy's column is only as wide as the copy,
+  so at 1023 (copy at its measure) it is 12 and not 124.
+- **The width is measured.** A pure CSS grid (second column pass) is exact
+  in WebKit, but Chromium does not re-size the row afterwards, and the copy
+  spills whenever the narrower column gives it another line (a 432px row:
+  copy 150 tall, row 94). `useIntroImageFit` measures the copy and writes
+  `--musie-intro-image-inline`; without script the column is the old third.
+- **Phone, below 480.** The footer's start inset goes, and the exit's box
+  sits flush with the column (the `min` rung's margin taken back). Ben wrote
+  „393 and smaller"; I drew the line at `--bp-sm`, where the Intro's phone
+  layout ends, so a 402 or 430 phone matches a 393 one.
+- **Ignored, as asked:** the navigation changes on the same page.
+
+Measured in Chromium and WebKit, Bodyscan and Achtsame Pause, at 393, 440,
+480, 600, 834, 1023, 1024 and 1440: on the tablet the picture's width is the
+rule's to the half pixel, its height the copy's, the gap 12, no spill; the
+desktop and the phone are unchanged; no ResizeObserver error.
+
+Why: Ben's annotations and answers.
+
+What I need from Ben: nothing to decide. At 480 the cap makes the picture
+taller than wide (119 × 170), which is the rule doing what it says.
