@@ -1,142 +1,196 @@
 /**
- * Whether the app header is on screen — as a function, with nothing mounted.
+ * Where the app header is — as a function, with nothing mounted.
  *
- * The header is sticky, and on a phone it costs 69px of every screen for as
- * long as you are reading one. The pattern that gives that back is the
- * familiar one: it slides out of the way while you read DOWN the page, and
- * comes back the moment you scroll UP, because scrolling up is what someone
- * does when they are looking for the way out of a screen.
+ * ── IT MOVES WITH THE PAGE · Ben, 2026-11-17 ──────────────────────────────
+ * „Wenn ich scrolle, sollte das Nav element direkt und ohne lag mit
+ * scrollen." Until that day the header waited for 56px of travel and then
+ * SLID away on a timer, and came back the same way — so on the way down it
+ * stood still while the page moved, and then moved while the page stood still.
+ * That is the lag. Now it is carried by the page, one pixel for one pixel, in
+ * both directions:
+ *
+ *   down  — it leaves with the content, as if it were the first line of it,
+ *           and once it is out of sight it waits just above the window;
+ *   up    — it comes back with the content from just above the window, and
+ *           once it is all the way in it is HELD at the top while the reader
+ *           goes on up.
+ *
+ * ── NOT MOVED BY SCRIPT, PLACED BY IT ─────────────────────────────────────
+ * The obvious build — read `scrollY` every frame, write a transform — is the
+ * one that lags. On a phone the page is scrolled by the compositor, off the
+ * main thread, and a header positioned from a scroll EVENT is a frame or more
+ * behind the content it is meant to be stuck to: it swims. So no position is
+ * ever written per frame. While it moves, the header is ordinary page content
+ * — `position: absolute` at `at`, a place in the DOCUMENT (shell.css) — and
+ * the browser scrolls it exactly as it scrolls the text. What this reducer
+ * decides is which of three things the header is, and for the first, where:
+ *
+ *   free   `position: absolute`, top `at`. Drawn at `at - scrollY`: part of
+ *          the page, carried with it.
+ *   gone   `position: fixed`, top `-reach`. Out of sight, just above the
+ *          window, whatever the page does.
+ *   held   `position: fixed`, top 0. At the top of the window, whatever the
+ *          page does.
+ *
+ * It changes only at a TURN, and at the one moment a leaving header passes
+ * out of sight — so a long scroll in one direction writes once at most.
+ *
+ * At a turn down from held, `at` becomes the turning point, so the page takes
+ * the header with it from exactly there. At a turn up from gone, `at` becomes
+ * the turning point less `reach`, so the page brings it back from exactly
+ * where it was waiting. Every frame between is the browser's.
+ *
+ * ── ABSOLUTE, NOT STICKY — Ben's iPhone, 2026-11-17 ───────────────────────
+ * It was `position: sticky` with a negative `top`, which moves the same way;
+ * but Safari never draws a fixed or sticky box in the area under the status
+ * bar, so the pill was cut off at the bar's edge as if by a mask while the
+ * page slid on beneath it. Absolute is page content, and page content is drawn
+ * there. Fixed is fine for `held` (below the bar) and for `gone` (above
+ * everything, drawn nowhere).
+ *
+ * WHY `gone` IS FIXED AND NOT LEFT IN THE PAGE: a header simply left behind in
+ * the document is still in the tab order, and Tab onto it makes the browser
+ * scroll the page all the way back to wherever it was left — the top of the
+ * page, as often as not. A fixed box has no place in the page to scroll to.
  *
  * ── WHY THE DECISION IS HERE AND NOT IN THE HOOK ──────────────────────────
  * The `unit` project runs in `environment: 'node'` with no jsdom
  * (apps/web/vitest.config.ts says why, and the reason is good), so a hook that
- * listens to `window` cannot be tested at all. What can be wrong here is not
- * the listener — it is the JUDGEMENT: does a 3px twitch hide the header, does
- * a rubber-band overscroll on iOS read as a scroll up, does a page with
- * nothing to scroll hide its own chrome. So the judgement is a reducer over
- * (state, reading) and the hook is left holding one `addEventListener`.
+ * listens to `window` cannot be tested at all. What can be wrong here is the
+ * JUDGEMENT — where to place it at a turn, when to hold it, what an iOS bounce
+ * means — so that is a reducer over (state, reading), and the hook is left
+ * holding one `addEventListener` and two style writes.
  *
- * ── THE WHOLE POINT IS THAT IT IS NOT JUMPY ───────────────────────────────
- * A naive version — `hidden = scrollingDown` — flickers, and on a touch
- * screen it flickers constantly: momentum scrolling reverses by a pixel or
- * two dozens of times as it settles, and each reversal would start a 220ms
- * slide. Four things stop that, and each is a separate rule below:
- *
- *   1. TRAVEL, NOT DIRECTION. Nothing happens on a direction change alone.
- *      The state remembers where the current run of scrolling STARTED (the
- *      anchor, reset at every turn), and only distance from there decides.
- *   2. TWO THRESHOLDS, NOT ONE. Hiding asks for HIDE_AFTER of downward
- *      travel, revealing for a quarter of that. They are not symmetric on
- *      purpose: hiding chrome the reader did not ask to lose should take a
- *      deliberate gesture, and getting it back should feel instant.
- *   3. A TOP BAND. Within one header's height of the top, the header is
- *      always shown — that is where it belongs, and it is also what makes
- *      "scroll back to the top" end with the chrome in place rather than one
- *      threshold short of it.
- *   4. A FLOOR ON THE DOCUMENT. A page that cannot scroll by more than its
- *      own header plus the threshold never hides it. Otherwise the stage
- *      screens — one centred decision, a handful of pixels of overflow —
- *      would throw their header away for nothing, and iOS's overscroll bounce
- *      would do it on a page that does not scroll at all.
+ * ── WHAT WENT WITH THE SLIDE ──────────────────────────────────────────────
+ * The thresholds (56 down, 14 up), the top band and the floor on short pages.
+ * All four existed to stop a TIMED slide from firing on jitter; a header that
+ * moves exactly as far as the page has nothing to fire. A momentum scroll
+ * settling back and forth by two pixels moves it two pixels, and a page that
+ * scrolls 30px takes it 30px — which is what the first line of that page does.
  */
+
+export type RevealMode = 'free' | 'gone' | 'held';
 
 /**
  * What the reducer has to remember between two scroll events.
  *
- * `anchor` is the position the current RUN of scrolling started from, not the
- * previous position: that is the whole of rule 1. `last` is the previous
- * position and exists only to tell which way we are now going.
+ * `at` is the header's place in the document, in px from its top — where the
+ * page draws it while it is `free`; it means nothing in the other two modes.
+ * `last` is the previous position and exists only to tell which way we are
+ * now going, and where a turn happened.
  */
 export type RevealState = {
-  hidden: boolean;
+  mode: RevealMode;
+  at: number;
   last: number;
-  anchor: number;
-  direction: 'down' | 'up';
 };
 
-/** The top of a page, header showing — where every screen starts. */
-export const AT_REST: RevealState = { hidden: false, last: 0, anchor: 0, direction: 'up' };
+/** The top of a page, the header in its own place — where every screen starts. */
+export const AT_REST: RevealState = { mode: 'free', at: 0, last: 0 };
 
 /**
- * One reading of the page, taken in a frame.
+ * Showing, from wherever the page is NOW — what the hook resets to when focus
+ * brings the header back: held at the top.
  *
- * `maxScrollY` and `headerBlock` are measured rather than assumed — the header
- * is `--target-primary` plus `--sp-3` twice plus a hairline today, and the day
- * that changes this must not be carrying the old number.
+ * ── FROM HERE, NOT FROM THE TOP · 2026-11-17 ─────────────────────────────
+ * Tab to the menu button while the header is gone, and focus brings it back —
+ * and the browser may scroll as well, to bring the control it just focused
+ * into view. Read against a state whose `last` is 0, that scroll was a long
+ * run down and took the header away again with focus inside it (WCAG 2.4.11).
+ * Anchored at the real position, a jump either way starts from where the page
+ * actually was. Clamped like every reading, for the same iOS reason.
+ */
+export function shownAt(scrollY: number): RevealState {
+  const y = Math.max(scrollY, 0);
+  return y === 0 ? AT_REST : { mode: 'held', at: 0, last: y };
+}
+
+/**
+ * One reading of the page, taken at a scroll event.
+ *
+ * `reach` is how far above the window the header waits when it is gone: its
+ * own MEASURED height (a large text size makes it taller) plus the clearance
+ * shell.css gives it — for its shadow everywhere, and on an iPhone for the
+ * band under the status bar too, where Safari draws the page. `maxScrollY` is
+ * the document as it is right now, for the clamp.
  */
 export type ScrollReading = {
   scrollY: number;
   maxScrollY: number;
-  headerBlock: number;
+  reach: number;
 };
 
 /**
- * How far down the reader must travel before the header goes, and how far back
- * up before it returns.
- *
- * NOT TOKENS, and not a token gap either: these are neither a spacing step nor
- * a distance anything is drawn at. They are how much gesture counts as intent,
- * which is a behaviour constant like a long-press duration. --motion-travel-lg
- * (32px) is the nearest token and it means "how far a thing moves", which is
- * a different measurement that happens to be in the same unit.
- *
- * 56 is roughly a thumb's flick and comfortably past the jitter of a settling
- * momentum scroll; 14 is small enough that the header is already arriving by
- * the time the reader has decided they want it.
+ * Where the header is drawn, relative to the window's top edge — 0 is all the
+ * way in, `-reach` is gone. What the browser will draw for this state; the
+ * tests use it to say "one pixel for one pixel" in numbers.
  */
-export const HIDE_AFTER = 56;
-export const REVEAL_AFTER = 14;
+export function drawnAt(state: RevealState, scrollY: number, reach: number): number {
+  if (state.mode === 'held') return 0;
+  if (state.mode === 'gone') return -reach;
+  return state.at - scrollY;
+}
 
 /** The state, one reading later. Pure: same inputs, same answer, no `window`. */
 export function nextReveal(state: RevealState, reading: ScrollReading): RevealState {
   /* CLAMPED, because iOS reports a scrollY below 0 at the top and above the
-     maximum at the bottom while the page is bouncing. Unclamped, the bounce
-     back from -80 to 0 is 80px of "scrolling down" and the header would hide
-     itself at the top of a page nobody scrolled. */
+     maximum at the bottom while the page is bouncing. Clamped, a bounce is no
+     movement at all, so it is never a turn. */
   const max = Math.max(reading.maxScrollY, 0);
   const y = Math.min(Math.max(reading.scrollY, 0), max);
 
-  /* Rule 4, and it is checked first: on a page that cannot scroll this far,
-     none of the rest of this has an opinion worth having. */
-  if (max <= reading.headerBlock + HIDE_AFTER) {
-    return { hidden: false, last: y, anchor: y, direction: 'up' };
+  /* The top of the page. The header is simply in its own place there, and
+     free, so the first pixel down takes it with the page without waiting for
+     a turn to be noticed. */
+  if (y === 0) return AT_REST;
+
+  /* A reading identical to the last one — `scrollend`, a resize — is no
+     movement, and decides nothing. */
+  if (y === state.last) return state;
+
+  const down = y > state.last;
+  const { reach } = reading;
+
+  /* Free and going down: out of sight is the one thing to watch for. The page
+     has carried it past `-reach`, so it can wait fixed above the window from
+     here — invisibly, since it is out of sight either way. */
+  const leaving = (at: number): RevealState => (
+    at - y < -reach ? { mode: 'gone', at: 0, last: y } : { mode: 'free', at, last: y }
+  );
+
+  if (state.mode === 'held') {
+    /* Held, and the reader turns down: let go where it is. Its place becomes
+       the TURNING POINT, where it was drawn at the top of the window, so the
+       page takes it away from exactly there — including the pixels this event
+       already covered. Going on up, it stays held. */
+    return down ? leaving(state.last) : { ...state, last: y };
   }
 
-  /* Rule 3. The anchor is re-laid here too, so leaving the band downward
-     starts its run from the band's edge rather than from wherever the reader
-     last turned around above it. */
-  if (y <= reading.headerBlock) {
-    return { hidden: false, last: y, anchor: y, direction: 'up' };
+  if (state.mode === 'gone') {
+    /* Gone, and still going down: it waits. Turning up: place it in the page
+       where it has been waiting, just above the window AT THE TURNING POINT,
+       so the page brings it back from there — and the pixels this event
+       already covered count, as if it had been there all along. */
+    if (down) return { ...state, last: y };
+    const at = Math.max(state.last - reach, 0);
+    return at - y >= 0
+      ? { mode: 'held', at: 0, last: y } // a jump bigger than `reach`: all the way in
+      : { mode: 'free', at, last: y };
   }
 
-  /* A reading identical to the last one — `scrollend`, a resize, a frame that
-     coalesced two events — keeps the direction rather than inventing one. */
-  const direction = y > state.last ? 'down' : y < state.last ? 'up' : state.direction;
+  /* Free. */
+  if (down) return leaving(state.at);
 
-  /* Rule 1: the anchor moves only at a turn, and it moves to the TURNING
-     POINT — `state.last`, the far end of the run that just ended, not `y`,
-     which is already a step back from it.
-
-     NEVER ABOVE THE BAND, and the tests are what found this. One scroll event
-     can cover more ground than one frame of gesture — a flick, a `scrollTo`,
-     a restored position — so the first reading below the band can arrive with
-     an anchor still sitting at 0. Measured from there, leaving the band AT
-     ALL is already HIDE_AFTER of travel, and the header would go at 70px on a
-     page the reader has barely entered. Travel downwards is therefore counted
-     from the band's edge at the earliest: the band is where the header lives,
-     so the run that takes it away starts where the band ends. An upward run
-     is unaffected — its anchor is below it and both are past the band
-     already, or rule 3 would have answered instead. */
-  const turn = direction === state.direction ? state.anchor : state.last;
-  const anchor = Math.max(turn, reading.headerBlock);
-  const travel = Math.abs(y - anchor);
-
-  /* Rule 2. Written as two half-sentences rather than one `if` each way so
-     that the state can only ever be: still hidden, newly hidden, still shown,
-     newly shown. */
-  const hidden = direction === 'down'
-    ? state.hidden || travel >= HIDE_AFTER
-    : state.hidden && travel < REVEAL_AFTER;
-
-  return { hidden, last: y, anchor, direction };
+  /* Free and going up: on its way back in, which the page is doing — until it
+     is all the way in (a jump can overshoot that), and then it is held at the
+     top, so going on up does not carry it down into the page. A free header
+     somehow above the window on the way up — never left as `gone` — is placed
+     as `gone` is, just above the window at the turn. */
+  const drawn = state.at - y;
+  if (drawn >= 0) return { mode: 'held', at: 0, last: y };
+  if (drawn < -reach) {
+    const at = Math.max(state.last - reach, 0);
+    return at - y >= 0 ? { mode: 'held', at: 0, last: y } : { mode: 'free', at, last: y };
+  }
+  return { ...state, last: y };
 }

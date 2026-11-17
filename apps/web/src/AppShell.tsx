@@ -12,8 +12,7 @@ import { BRAND_NAME } from './brand';
 import { useLocale, useT } from './i18n/localeContext';
 import { useAuth } from './lib/authContext';
 import { PagePathContext } from './lib/shellContext';
-import { HeaderPinContext, useHeaderReveal } from './lib/useHeaderReveal';
-import type { PinHeader } from './lib/useHeaderReveal';
+import { useHeaderReveal } from './lib/useHeaderReveal';
 import type { RouteHandle } from './routeHandle';
 
 const MAIN_ID = 'main';
@@ -134,32 +133,28 @@ export function AppShell() {
   /**
    * THE HEADER GETS OUT OF THE WAY WHILE YOU READ.
    *
-   * On a phone the sticky header costs 69px of every screen for as long as
-   * you are on it, and the diary, the exercise library and the reflect step
-   * are all longer than a window. So it slides out while the reader goes down
-   * the page and comes back as soon as they come up. `useHeaderReveal` holds
-   * the listener and `headerReveal.ts` every rule it applies; what belongs
-   * here is only the three things the SHELL knows.
+   * On a phone the header costs 88px of every screen for as long as you are
+   * on it (`--sticky-block`), and the diary, the exercise library and the
+   * reflect step are all longer than a window. So it leaves with the page
+   * while the reader goes down, one pixel for one pixel, and comes back with
+   * it as soon as they come up (Ben, 2026-11-17: „direkt und ohne lag").
+   * `useHeaderReveal` holds the listener and `headerReveal.ts` every rule it
+   * applies; what belongs here is only the two things the SHELL knows.
    *
    * WHICH PAGE COUNTS AS ARRIVING: `pagePath`, not the location — it is
    * already the path of the page underneath an overlay, so opening the drawer
    * over a scrolled page is not an arrival and closing it changes nothing.
    *
-   * WHO MAY PIN IT: any screen that does its own scrolling, through
-   * `usePinnedHeader`. Counted rather than set, because two screens overlap
-   * for a frame during a route change; see the hook.
+   * NO SCREEN PINS IT any more. The listen step did, until its views stopped
+   * being sized around the header (2026-11-17); with nothing left to call it,
+   * the pin went too.
    *
-   * WHERE THE ANSWER GOES: one attribute. The slide itself is a transform in
-   * shell.css, so nothing here reflows and no geometry moves — the header is
-   * drawn in the same place either way and only travels.
+   * WHERE THE ANSWER GOES: nowhere in React. The browser moves the header —
+   * it is sticky, in the flow of the page — and the hook only places it, by
+   * writing to the element directly at a turn. No scroll renders the shell.
    */
   const headerRef = React.useRef<HTMLElement>(null);
-  const [pins, setPins] = React.useState(0);
-  const pinHeader = React.useCallback<PinHeader>(() => {
-    setPins((count) => count + 1);
-    return () => setPins((count) => count - 1);
-  }, []);
-  const headerHidden = useHeaderReveal(headerRef, pins > 0, pagePath ?? '');
+  useHeaderReveal(headerRef, pagePath ?? '');
 
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
@@ -167,29 +162,36 @@ export function AppShell() {
        provider still has to sit above everything that renders an IconButton. */
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
-      <HeaderPinContext.Provider value={pinHeader}>
       <div className="musie-app">
-        <header
-          ref={headerRef}
-          className="musie-header"
-          data-hidden={headerHidden ? 'true' : 'false'}
-        >
-          <IconButton
-            glyph={Menu}
-            label={t('shell.menuLabel')}
-            variant="ghost"
-            size="primary"
-            aria-expanded={location.pathname === MENU_PATH}
-            onClick={() => navigate(MENU_PATH)}
-          />
-          {/* AND NOTHING AFTER IT. The profile button went with /settings on
-              2026-09-24: the preferences it opened are in the drawer now, so a
-              second icon would open the same overlay the first one does. The
-              header's third grid column is left in place and empty — `1fr auto
-              1fr` is what centres the logo against the VIEWPORT, and dropping
-              the column would centre it against the space left over beside the
-              hamburger instead. See .musie-header. */}
-          <Logo size="nav" showWordmark alt={BRAND_NAME} />
+        {/* `--musie-header-at` and `data-mode` are written by
+            `useHeaderReveal`, straight onto the element and only at a turn
+            of the scroll: rendering them here would re-render the shell on
+            every turn and fight the hook over who owns them. */}
+        <header ref={headerRef} className="musie-header">
+          {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
+              17.11.*). The full-width bar with its centred logo became one
+              rounded pill at the inline start: the flat mark and the wordmark,
+              then the menu button. The header element is the transparent band
+              it floats in — the band is what the page starts below, and the
+              pill is the only part of it that takes a pointer (shell.css).
+
+              Logo before the button, and that is the reading order too: the
+              logo is not focusable, so the menu button is still the first and
+              only tab stop in the header.
+
+              The profile button went with /settings on 2026-09-24, and nothing
+              has taken its place: the drawer holds what it opened. */}
+          <div className="musie-header__pill">
+            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <IconButton
+              glyph={Menu}
+              label={t('shell.menuLabel')}
+              variant="ghost"
+              size="sm"
+              aria-expanded={location.pathname === MENU_PATH}
+              onClick={() => navigate(MENU_PATH)}
+            />
+          </div>
         </header>
 
         {/* NO SKIP LINK, and it is a removal rather than an omission — Ben,
@@ -223,7 +225,6 @@ export function AppShell() {
             rather than two that can disagree. */}
         {isOverlay && contentReady ? outlet : null}
       </div>
-      </HeaderPinContext.Provider>
       </PagePathContext.Provider>
     </MusyTooltipProvider>
   );

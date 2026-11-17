@@ -69,7 +69,6 @@ import { markListened, savePlayed } from '../lib/session';
 import type { Card, Exercise, ListenAudio } from '../lib/content';
 import { contentImageUrl } from '../lib/assets';
 import { bodyOnly, headingOnly, parseMarkdown, plainText } from '../lib/markdown';
-import { usePinnedHeader } from '../lib/useHeaderReveal';
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
 const TICK_MS = 250;
@@ -799,23 +798,16 @@ export function SessionListen({
   }, [withoutSnapping]);
 
   /**
-   * AND THE HEADER STAYS PUT WHILE IT IS.
+   * THE HEADER MOVES HERE AS IT DOES EVERYWHERE — Ben, 2026-11-17.
    *
-   * Everywhere else the shell's header slides away as the reader goes down
-   * the page and comes back when they come up (`useHeaderReveal`). Not here,
-   * and the reason is the geometry directly above: these three views are
-   * sized `--view-block-scrolled` and land `--sticky-block` from the top of
-   * the window, and both of those numbers ARE the header's height. Let it
-   * leave and a view snaps into place with a header's worth of the previous
-   * one showing above it, in a band the snap will not let the reader scroll
-   * away.
-   *
-   * Declared rather than detected: `useScrollSnap` drops its attribute on
-   * `<html>` for the length of a programmatic jump, so the one signal that
-   * looks like it would do this is absent at precisely the moment a button
-   * scrolls a whole view downwards. The hook's own header has the rest.
+   * Until then this step pinned it: the three views were sized
+   * `--view-block-scrolled` and landed `--sticky-block` from the top of the
+   * window, so a header that left would have shown a header's worth of the
+   * previous view above the one that snapped. Now the views land at the top
+   * of the window and the two scrolled-to views fill it (shell.css), so the
+   * header leaves with the page, pixel for pixel, and comes back over the top
+   * of whatever view the reader is on — as on every other screen.
    */
-  usePinnedHeader();
   const warnRef = React.useRef<HTMLElement>(null);
   const detailRef = React.useRef<HTMLElement>(null);
 

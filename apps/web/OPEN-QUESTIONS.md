@@ -11959,3 +11959,197 @@ content box".
 
 What I need from Ben: nothing to decide unless one of the two flat choices or
 the two side effects above is wrong; each is one line to change.
+
+## The header becomes a floating pill — RESOLVED, with three things to look at
+
+Where: `AppShell.tsx`, `shell.css` (`.musie-header`, `.musie-header__pill`,
+`.musie-main`, the drawer header), `components/NavDrawer.tsx`,
+`lib/headerReveal.ts` + `lib/useHeaderReveal.ts` (+ test);
+`packages/design-system`: `src/Logo.tsx` (`variant="flat"`),
+`musy-components.css` §12 and the WizardPanel shadow,
+`tokens/musy-foundations-amendments.css` (G7, G8), `TOKEN-DRIFT.md`,
+`stories/Logo.stories.tsx`
+
+What I did: the navigation half of Ben's Figma page *Einsteigen · Bodyscan
+· 17.11.* (the half the entry above set aside), on branch
+`make-nav-more-minimal`. Ben chose, 2026-11-17: keep the hide-on-scroll as it
+is, logo-first only, one mark size, Figma's 16 on the phone.
+- **The pill.** Flat mark + „Musie" + the menu button (IconButton `sm`), on
+  `--surface-overlay`, fully round, WizardPanel's shadow. Phone: 56 tall, 16
+  from the window's top and start. From 768: 68 tall, 24 from both, at every
+  width (it does not follow the 980 column). The band around it is
+  transparent and takes no pointer, so the page under it stays tappable.
+- **The flat mark** is a `Logo` variant, inline SVG in `currentColor` (dark
+  theme and forced colours follow the ink). The drawer shows it too.
+- **The heights the layout leans on moved with it.** `--sticky-block` and
+  `--chrome-block` are 72 / 136 on a phone and 92 / 164 from 768 (were 69 /
+  141). Layer 1 is locked, so the new values are amendment G7. The listen
+  step snaps 72 / 92 down; the session intro does not scroll at 393, 834 or
+  1440.
+- **The shadow is one token now**, `--elevation-panel` (G8), worn by the
+  WizardPanel and the pill.
+- **A bug in the reveal, found walking it and fixed.** Tab to the menu button
+  while the header was hidden: focus brought it back, the browser then
+  scrolled to the focused button, and that scroll was read from position 0 as
+  a long run down — so the header hid again with focus inside it (2.4.11).
+  `shownAt(scrollY)` now restarts from where the page is. Tested in the
+  reducer, and walked with a real Shift+Tab at all three widths.
+
+Measured in Chromium against the local stack at 393, 834 and 1440: pill
+151 × 56 at (16, 16) on the phone, Figma's exact numbers; 164–166 × 68 at
+(24, 24) from 768; content 16 / 24 below the band; hidden, the pill clears
+the window (its bottom at −48); 40px of scroll up brings it back; light and
+dark.
+
+Why: Ben's design.
+
+What I need from Ben:
+1. **68, not 69.** Figma's large pill is 69: the old bar's 44 + 12 + 12 plus
+   its hairline. The pill has no hairline, so I built 68 from the same tokens
+   rather than add a non-token pixel. Say if the pixel matters.
+2. **The mirrored variant is not built** (menu first, wordmark, then mark —
+   the extra 834 frame „1729"). It was a decision, not an oversight; a
+   `?nav=` switch to compare the two would be small.
+3. **Tab to the hidden header still moves the page.** The header now stays,
+   but the browser scrolls the page up to the focused button first (about
+   500px on /exercises). That is the browser bringing focus into view, and
+   preventing it would mean taking the hidden header out of the tab order —
+   which is the other way of failing 2.4.11. Logged rather than fought.
+
+## The header moves with the page, pixel for pixel; 16 below the pill — RESOLVED
+
+Where: `lib/headerReveal.ts` (+ test, rewritten), `lib/useHeaderReveal.ts`,
+`AppShell.tsx`, `shell.css` (`.musie-header`), G7 in
+`packages/design-system/tokens/musy-foundations-amendments.css`,
+`packages/design-system/TOKEN-DRIFT.md`
+
+What I did: Ben, 2026-11-17, walking the pill: „Wenn ich scrolle, sollte das
+Nav element direkt und ohne lag mit scrollen" — and „16px padding bottom to
+the header container with the nav pill". This supersedes the slide in the
+entry above (decision 1 there was A; this is the other option, built the way
+that does not lag on a phone).
+- **One pixel for one pixel, both ways.** Down, the header leaves with the
+  page like its first line and waits just above the window. Up, it comes
+  back with the page from there, and is held at the top once it is all the
+  way in. The 56 / 14 thresholds, the top band and the short-page floor are
+  gone — they existed to stop a timed slide firing on jitter, and a header
+  that moves exactly as far as the page has nothing to fire.
+- **The browser moves it, not the script.** It is `position: sticky` with a
+  negative `top`, in the flow of the page; the hook only PLACES it (a margin
+  that the page gives straight back, and `top: 0` when held), at a turn of
+  direction. Nothing is written per frame, and no scroll renders React — so
+  on a phone, where the compositor scrolls off the main thread, it cannot
+  swim behind the content.
+- **16 below the pill**, both sizes: the band is 88 on a phone and 108 from
+  768 (was 72 / 92), and `--sticky-block` / `--chrome-block` follow (G7).
+
+Measured in Chromium against the local stack, scrolling in 12px steps at 393
+and 1440: the pill moved exactly as far as the content at every step down
+and up; `<main>`'s place in the document never moved through any placement;
+gone, the pill's edge waits 24px above the window; held through a further
+scroll up; Shift+Tab to the menu button holds it in view; the drawer opened
+and closed mid-page leaves it held and the page where it was; the listen
+step keeps it held and snaps 88 / 108 down.
+
+Why: Ben's instruction.
+
+What I need from Ben:
+1. **The phone intro is 7px taller than a 393 × 852 window now**, from the
+   extra 16 (Body Scan, English). Tablet and desktop still fit. Nothing done.
+2. **A fast flick up can overshoot by a frame.** When the header arrives with
+   the page, the switch to "held" is made by script at the next scroll event,
+   so on a very fast flick it can be drawn a few pixels too low for one frame
+   before it settles at the top. In the 12px-step walk it never did; on a
+   phone, watch for it.
+3. Item 3 of the entry above still stands: a Tab to the gone header brings it
+   back, but the browser first scrolls the page to the button.
+
+## The listen step lets the header move; the band stops tinting Safari's status bar — RESOLVED, one check on the phone
+
+Where: `components/SessionListen.tsx`, `lib/useHeaderReveal.ts`,
+`AppShell.tsx`, `shell.css` (`.musie-header`, the listen views)
+
+What I did: Ben, 2026-11-17, on his iPhone over the tunnel, two bugs.
+- **The listen step held the header still** (`usePinnedHeader`): its three
+  views snapped `--sticky-block` below the window's top and were sized
+  `--view-block-scrolled`, both the old, always-present bar's height. Now the
+  views snap to the window's top (no `--musy-snap-inset`) and the two
+  scrolled-to views fill the window (`--viewport-block`), so the header leaves
+  with the page and comes back over the top of the view, as on every screen.
+  It was the only screen that pinned, in every worktree, so the pin
+  mechanism went with it.
+- **A beige strip under the status bar cut the page off hard.** Safari 26
+  ignores `theme-color` and paints that strip from a fixed or sticky element
+  at the top edge spanning about 90% of the width or more; a transparent one
+  it fills with the page background. The header band was sticky and full
+  width — so: solid beige, white card and pill sliced at its edge. The old
+  bar was an opaque full-width bar of its own colour, which is why nobody saw
+  it. The band is now only as wide as the pill (`align-self: flex-start`; 47%
+  of a 393 window, 15% of 1440), so Safari has nothing to sample.
+  Undocumented by Apple; the sources (2025–26 community research) are
+  hawkshift.com/research/ios-26-safari-status-bar,
+  github.com/joe-bell/skills (apple-web-app, theme-color-and-status-bar) and
+  1ar.io/updates/safari-26-liquid-glass-web — they disagree in details, and
+  Ben's screenshots settled it for this page.
+
+Measured in Chromium against the local stack at 393 and 1440: on the listen
+step the header is at rest at the top, gone (24px above the window) after
+*About the music* and after a view's worth of wheel, back in its place after
+*Back to listening* and after a view up; each snapped view fills the window
+with no strip of the one before; the exercise list still moves pixel for
+pixel and `<main>` never moves.
+
+Why: Ben's report.
+
+What I need from Ben:
+1. **On the phone, after a reload** (Safari decides the strip on load): does
+   the white card now glide under the clock — and does the PILL? If Safari
+   draws the pill only below the status bar line and cuts it there, the
+   agreed next step is the larger change: the header as ordinary page content
+   (`position: absolute`) while it moves, `fixed` only while held.
+2. **A short swipe on the listen step shows the header briefly.** The views
+   snap mandatorily, so a swipe too short to change view springs back up —
+   and the header comes in by exactly as far as the page springs back. It is
+   the pixel-for-pixel rule doing what it says; say if it reads as a flicker.
+
+## The pill is page content while it moves, so it glides under the status bar — RESOLVED, check on the phone
+
+Where: `lib/headerReveal.ts` (+ test), `lib/useHeaderReveal.ts`, `shell.css`
+(`.musie-app`, `.musie-header`), `AppShell.tsx`
+
+What I did: Ben's iPhone, 2026-11-17, after the narrow band: the page now
+slides under the status bar, but the pill is cut off at the bar's edge, „wie
+eine Maske" — it should glide out from behind the bar with the rest of the
+page. Safari never draws a fixed or sticky box in that area, only page
+content, and the header was sticky. This is the „bigger rebuild" agreed as
+the fallback.
+- **Three modes instead of two.** `free`: `position: absolute` at a place in
+  the document, moving with the page as the page's own content (so Safari
+  draws it under the bar). `gone`: `position: fixed` just above the window.
+  `held`: `position: fixed` at the top. The reducer gained `gone`
+  explicitly; it still writes only at a turn and once as a leaving header
+  passes out of sight.
+- **The app root reserves the band** (`padding-block-start` by the measured
+  height), since an absolute header no longer pushes `<main>` down itself.
+- **On iOS the clearance above the window is --sp-8**, not --sp-2: Safari
+  lays the page out from the bottom of the status bar (59pt on Ben's phone,
+  read off his screenshots) and draws the page above that, so a header placed
+  just above the layout would already show behind the clock and pop in.
+  `@supports (-webkit-touch-callout: none)` — iOS and iPadOS WebKit only.
+- **A side effect, and a fix:** Tab to the gone header no longer moves the
+  page at all. A fixed box has no place in the page for the browser to
+  scroll back to. Item 3 of the second entry above is closed by this.
+
+Measured in Chromium against the local stack at 393 and 1440: pixel for
+pixel both ways in 12px steps; `<main>` never moves; gone, the pill waits
+24px above the window; Shift+Tab from y=700 holds the header in view with the
+page still at 700; the drawer leaves it held; the listen step rests, leaves
+and returns with its views.
+
+Why: Ben's report.
+
+What I need from Ben: **one look on the phone.** The iOS clearance and
+Safari's drawing under the bar cannot be measured here — Chromium has no
+status bar and does not take the iOS branch. If the pill now glides out from
+behind the clock with the page, this is done; if it pops in behind the clock
+at the turn, the clearance wants raising.

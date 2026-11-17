@@ -131,6 +131,11 @@ const meta = {
       options: ['nav', 'splash'],
       description: 'nav 24px (--icon-size-lg), splash 96px (--icon-size-xl * 3).',
     },
+    variant: {
+      control: 'inline-radio',
+      options: ['colour', 'flat'],
+      description: 'colour: the full-colour bitmap (default). flat: the one-colour vector mark, inline in currentColor.',
+    },
     showWordmark: {
       control: 'boolean',
       description: 'Show the "Musy" wordmark next to (nav) or under (splash) the mark.',
@@ -169,6 +174,21 @@ export const Sizes: Story = {
  *  mark goes aria-hidden and the wordmark carries the name, so it is announced
  *  once. Note the wordmark here reads "Musy" — see the build notes. */
 export const WithWordmark: Story = { args: { showWordmark: true } };
+
+/** `variant="flat"` — the one-colour vector mark from the minimal nav pill
+ *  (Ben, 2026-11-17). Drawn inline in `currentColor`, so it takes the
+ *  wordmark's ink in both themes; the wordmark beside it is label-lg. `src` is
+ *  ignored. The app shows it in the header pill and the drawer. */
+export const Flat: Story = {
+  args: { variant: 'flat', showWordmark: true, alt: 'Musie' },
+  render: (args) => (
+    <Stack>
+      <Row label="flat, with the wordmark — the nav pill's lockup"><Logo {...args} /></Row>
+      <Row label="flat, mark alone (named by alt)"><Logo {...args} showWordmark={false} /></Row>
+      <Row label="colour, with the wordmark — for comparison"><Logo {...args} variant="colour" /></Row>
+    </Stack>
+  ),
+};
 
 /** `splash` with the wordmark: the lockup stacks, mark above name. */
 export const SplashWithWordmark: Story = {
