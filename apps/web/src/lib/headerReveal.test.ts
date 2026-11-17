@@ -1,168 +1,158 @@
 /**
- * The header's hide-and-return, driven by scroll positions rather than a
+ * The header moving with the page, driven by scroll positions rather than a
  * thumb.
  *
  * Every case here is one a phone reaches and no test in this repository can:
  * the `unit` project is `environment: 'node'`, so there is no window to
- * scroll and no listener to fire. What is asserted instead is the JUDGEMENT —
- * given where the reader was and where they are now, is the header on screen.
+ * scroll and no sticky box to watch. What is asserted instead is where the
+ * header is DRAWN for each state — `drawnAt`, which is what the browser does
+ * with the two values the reducer places — so "one pixel for one pixel" can be
+ * said in numbers.
  *
- * `scroll` is a sequence, not an event, so most of these tests are a sequence
- * too: `run` feeds positions through the reducer the way a browser would feed
- * frames through it.
+ * `scroll` is a sequence, not an event, so most of these are a sequence too:
+ * `run` feeds positions through the reducer the way a browser feeds scroll
+ * events through the hook.
  */
 import { describe, expect, it } from 'vitest';
 
-import { AT_REST, HIDE_AFTER, REVEAL_AFTER, nextReveal, shownAt } from './headerReveal';
+import { AT_REST, drawnAt, nextReveal, shownAt } from './headerReveal';
 import type { RevealState } from './headerReveal';
 
-/** The real shell on a phone — the pill's band, 16 + 56 (`--sticky-block`,
- *  G7) — and a page several windows long. It was 69, the full-width bar,
- *  until 2026-11-17; nothing below depends on which. */
-const HEADER = 72;
+/** The real shell on a phone: the band (16 + 56 + 16, `--sticky-block`) plus
+ *  the shadow clearance (--sp-2) — how far above the window "gone" is. */
+const REACH = 88 + 8;
 const LONG_PAGE = 4000;
 
-function run(positions: number[], page = LONG_PAGE, from: RevealState = AT_REST): RevealState {
+function run(positions: number[], from: RevealState = AT_REST, page = LONG_PAGE): RevealState {
   return positions.reduce(
-    (state, scrollY) => nextReveal(state, { scrollY, maxScrollY: page, headerBlock: HEADER }),
+    (state, scrollY) => nextReveal(state, { scrollY, maxScrollY: page, reach: REACH }),
     from,
   );
 }
 
-/** Just past the top band, so the band rule is not what is under test. */
-const BELOW_BAND = HEADER + 1;
+/** Where the header is drawn after scrolling through `positions`. */
+function drawnAfter(positions: number[], from: RevealState = AT_REST): number {
+  const state = run(positions, from);
+  const y = Math.max(0, Math.min(positions[positions.length - 1] ?? 0, LONG_PAGE));
+  return drawnAt(state, y, REACH);
+}
 
-describe('reading down the page', () => {
-  it('keeps the header while the reader is still near the top', () => {
-    expect(run([10, 30, 60]).hidden).toBe(false);
+describe('going down, it leaves with the page', () => {
+  it('moves exactly as far as the page has, from the very first pixel', () => {
+    expect(drawnAfter([1])).toBe(-1);
+    expect(drawnAfter([10, 30])).toBe(-30);
+    expect(drawnAfter([10, 30, 60])).toBe(-60);
   });
 
-  /* Both of these count from HEADER rather than from BELOW_BAND: downward
-     travel is measured from the edge of the band, which is where the run that
-     takes the header away begins. See the anchor in headerReveal.ts. */
-  it('holds it for a nudge past the band that is short of the threshold', () => {
-    expect(run([BELOW_BAND, HEADER + HIDE_AFTER - 1]).hidden).toBe(false);
+  it('stops just above the window once it is gone, and waits there', () => {
+    expect(drawnAfter([50, 500])).toBe(-REACH);
+    expect(drawnAfter([50, 500, 2000])).toBe(-REACH);
   });
 
-  it('takes it away once the run down is deliberate', () => {
-    expect(run([BELOW_BAND, HEADER + HIDE_AFTER]).hidden).toBe(true);
-  });
-
-  it('keeps it away for the rest of the way down', () => {
-    expect(run([100, 400, 900, 1600, 2500]).hidden).toBe(true);
+  it('places nothing on the way down: no turn, no write', () => {
+    const state = run([50, 500, 2000]);
+    expect(state.at).toBe(0);
+    expect(state.held).toBe(false);
   });
 });
 
-describe('coming back up', () => {
-  const gone = run([100, 900]);
+describe('going up, it comes back with the page', () => {
+  const gone = run([100, 2000]);
 
-  it('is still hidden after a twitch upwards', () => {
-    expect(gone.hidden).toBe(true);
-    expect(run([900 - REVEAL_AFTER + 1], LONG_PAGE, gone).hidden).toBe(true);
+  it('starts back from the turning point, one pixel for one pixel', () => {
+    /* Turned at 2000. 1990 is ten pixels of the way back. */
+    expect(drawnAfter([1990], gone)).toBe(-REACH + 10);
+    expect(drawnAfter([1990, 1960], gone)).toBe(-REACH + 40);
   });
 
-  it('returns as soon as the reader means it', () => {
-    expect(run([900 - REVEAL_AFTER], LONG_PAGE, gone).hidden).toBe(false);
+  it('is placed once, at the turn, and then left to the page', () => {
+    const turned = run([1990], gone);
+    expect(run([1980, 1970, 1960], turned).at).toBe(turned.at);
   });
 
-  it('measures the way back from the turning point, not from where it hid', () => {
-    /* Down to 900, on to 2000, then back up a hand's width. The reader has
-       travelled far below the point the header went; what decides is the
-       turn, and the turn was at 2000. */
-    expect(run([100, 900, 2000, 2000 - REVEAL_AFTER]).hidden).toBe(false);
+  it('is held at the top once it is all the way in', () => {
+    const back = run([1990, 1960, 2000 - REACH], gone);
+    expect(back.held).toBe(true);
+    expect(drawnAt(back, 2000 - REACH, REACH)).toBe(0);
+  });
+
+  it('stays at the top while the reader goes on up', () => {
+    const back = run([1990, 2000 - REACH], gone);
+    expect(drawnAfter([1500, 900, 300], back)).toBe(0);
+  });
+
+  it('is in its own place again at the top of the page', () => {
+    expect(run([1990, 1000, 0], gone)).toEqual(AT_REST);
+  });
+});
+
+describe('turning down again', () => {
+  it('lets go from the top of the window, where it was drawn', () => {
+    const held = run([100, 2000, 1500]);
+    expect(held.held).toBe(true);
+    /* Turned at 1500; 1520 is twenty pixels of the page taking it away. */
+    expect(drawnAfter([1520], held)).toBe(-20);
+    expect(drawnAfter([1520, 1550], held)).toBe(-50);
+  });
+
+  it('leaves from wherever it was, half way back in', () => {
+    const halfway = run([100, 2000, 1960]);
+    expect(drawnAt(halfway, 1960, REACH)).toBe(-REACH + 40);
+    expect(drawnAfter([1970], halfway)).toBe(-REACH + 30);
   });
 });
 
 describe('the jitter a real scroll is made of', () => {
-  it('survives a momentum scroll settling in both directions', () => {
-    /* A flick down that overshoots and rocks back and forth by a few pixels,
-       the way an iOS deceleration does. None of those reversals is a gesture
-       and none of them may bring the header back. */
-    const settling = [600, 604, 602, 605, 603, 606, 604, 605];
-    expect(run([100, 600, ...settling]).hidden).toBe(true);
+  it('moves two pixels for two pixels, and nothing more', () => {
+    const held = run([100, 2000, 1500]);
+    expect(drawnAfter([1502], held)).toBe(-2);
+    expect(drawnAfter([1502, 1500], held)).toBe(0);
+    expect(drawnAfter([1502, 1500, 1501, 1500], held)).toBe(0);
   });
 
-  it('does not hide on the same jitter while the header is showing', () => {
-    expect(run([BELOW_BAND, BELOW_BAND + 4, BELOW_BAND + 2, BELOW_BAND + 6]).hidden).toBe(false);
-  });
-
-  it('keeps its direction when a frame reports no movement at all', () => {
-    const moving = run([100, 300]);
-    expect(nextReveal(moving, { scrollY: 300, maxScrollY: LONG_PAGE, headerBlock: HEADER }))
-      .toMatchObject({ direction: moving.direction, hidden: moving.hidden });
+  it('decides nothing on a reading that did not move', () => {
+    const state = run([100, 2000]);
+    expect(run([2000, 2000], state)).toBe(state);
   });
 });
 
-describe('the top band', () => {
-  it('shows the header again by the time the reader is back at the top', () => {
-    expect(run([100, 2000, 1000, 0]).hidden).toBe(false);
+describe('jumps — a flick, a scrollTo, the browser bringing focus into view', () => {
+  it('comes all the way in on a jump up longer than its reach', () => {
+    const gone = run([100, 2000]);
+    expect(run([1500], gone).held).toBe(true);
   });
 
-  it('shows it anywhere inside one header of the top', () => {
-    expect(run([100, 2000, HEADER]).hidden).toBe(false);
-  });
-
-  it('starts the next run down from the edge of the band, not from further up', () => {
-    /* Left the band at 69 and went down HIDE_AFTER. That is a run of exactly
-       the threshold and it counts — the band must not be a place where
-       downward travel is quietly forgiven. */
-    expect(run([0, HEADER, HEADER + HIDE_AFTER]).hidden).toBe(true);
-  });
-});
-
-describe('pages with nothing to give back', () => {
-  it('never hides the header on a page that barely scrolls', () => {
-    /* The stage screens: one centred decision, a few pixels of overflow.
-       Losing the way out of the screen to reclaim less than a header's height
-       is a bad trade at any threshold. */
-    expect(run([0, 40, 90, 120], HEADER + HIDE_AFTER).hidden).toBe(false);
-  });
-
-  it('hides on a page one pixel past the floor', () => {
-    const page = HEADER + HIDE_AFTER + 1;
-    expect(run([BELOW_BAND, page], page).hidden).toBe(true);
+  it('is gone after a jump down longer than its reach', () => {
+    const held = run([100, 2000, 1500]);
+    expect(drawnAfter([1900], held)).toBe(-REACH);
   });
 });
 
 describe('the bounce at either end', () => {
   it('reads iOS overscroll above the top as the top', () => {
-    /* Pull the page down past its start and let go: scrollY goes negative and
-       comes back. Unclamped, the return trip is a long scroll DOWN. */
-    expect(run([-80, -40, -10, 0]).hidden).toBe(false);
+    expect(run([-80, -40, -10, 0])).toEqual(AT_REST);
   });
 
-  it('reads overscroll past the end as the end', () => {
-    /* At the bottom, hidden, the reader pulls further and the page springs
-       back. The spring is upward travel the reader did not make, and it must
-       not hand the header back. */
+  it('reads overscroll past the end as the end, which is no movement', () => {
     const bottom = run([100, LONG_PAGE]);
-    expect(bottom.hidden).toBe(true);
-    expect(run([LONG_PAGE + 90, LONG_PAGE + 40, LONG_PAGE], LONG_PAGE, bottom).hidden).toBe(true);
+    expect(drawnAt(bottom, LONG_PAGE, REACH)).toBe(-REACH);
+    const bounced = run([LONG_PAGE + 90, LONG_PAGE + 40, LONG_PAGE], bottom);
+    expect(drawnAt(bounced, LONG_PAGE, REACH)).toBe(-REACH);
   });
 });
 
 describe('shown by focus, then scrolled by the browser', () => {
-  /* Hidden near the bottom; Tab lands on the menu button; focus reveals the
-     header; the browser then scrolls up to bring the focused button into
-     view. That scroll must not take the header away again. */
-  const page = 900;
-  const hidden = run([100, page - 16], page);
-
-  it('is hidden before the focus arrives', () => {
-    expect(hidden.hidden).toBe(true);
+  it('is held at the top from wherever the page is', () => {
+    expect(shownAt(884)).toEqual({ at: 0, held: true, last: 884 });
   });
 
   it('stays shown through the scroll the focus causes', () => {
-    expect(run([382], page, shownAt(page - 16)).hidden).toBe(false);
+    /* Focus brings it back at 884; the browser then scrolls up to 382. */
+    expect(drawnAfter([382], shownAt(884))).toBe(0);
   });
 
-  it('would have hidden again had it restarted from the top', () => {
-    /* The bug, kept as a test: AT_REST's `last` is 0, so the same jump reads
-       as a long run down. */
-    expect(run([382], page, AT_REST).hidden).toBe(true);
-  });
-
-  it('clamps an overscrolled position like any other reading', () => {
+  it('is simply at rest when the page is at the top, or bouncing above it', () => {
+    expect(shownAt(0)).toEqual(AT_REST);
     expect(shownAt(-40)).toEqual(AT_REST);
   });
 });

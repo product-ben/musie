@@ -1,47 +1,47 @@
 /**
- * The header's hide-on-the-way-down, show-on-the-way-up behaviour — the
- * wiring half. `headerReveal.ts` holds every decision it makes and says why;
- * what is left here is one scroll listener, one measurement, and the one
- * screen that is allowed to switch the whole thing off.
+ * The header moving with the page — the wiring half. `headerReveal.ts` holds
+ * every decision and says why; what is left here is one scroll listener, one
+ * measurement, two style writes, and the one screen allowed to hold it still.
  *
- * ── ONE LISTENER, ONE FRAME, ONE STATE UPDATE ─────────────────────────────
- * `scroll` fires far faster than the screen refreshes, so the reading is
- * coalesced into a frame — the same shape `useViewportFill` uses in the design
- * system, and for the same reason: every reading here ends in a React state
- * update, and one per event would be one render per pixel.
+ * ── NOTHING HERE MOVES THE HEADER ─────────────────────────────────────────
+ * The browser does, because the header is sticky and in the flow of the page
+ * (shell.css). This hook only PLACES it: `--musie-header-at` (its natural
+ * place in the document, written as a margin) and `data-held` (sticky
+ * `top: 0` instead of `top: -reach`). Both change only at a turn of
+ * direction, and only when they differ from what is already written, so a long
+ * scroll one way writes nothing at all — and no React state is touched, ever,
+ * so a scroll never renders anything either.
+ *
+ * NO FRAME COALESCING, on purpose. Browsers dispatch `scroll` once per frame
+ * now, in the same update that paints it, and a placement deferred to the
+ * next animation frame is a frame late at exactly the moment — a turn — when
+ * the reader is watching the header.
  *
  * `passive: true` because this listener never calls `preventDefault`, and a
  * non-passive scroll listener makes the browser wait for it before it may
- * scroll at all. On a touch screen that is the difference between a gesture
- * that tracks the thumb and one that lags behind it — which is precisely the
- * jumpiness this whole pattern is supposed to remove.
+ * scroll at all.
  *
  * ── THE HEADER MEASURES ITSELF ────────────────────────────────────────────
- * Not `--sticky-block` read off the computed style: that token is the header's
- * DESIGNED height, and what the rules need is its REAL one, which a wrapped
- * label or a large text-size preference can change. `offsetHeight` is
- * unaffected by the transform that hides it, so the number stays honest while
- * the header is off screen. A ResizeObserver keeps it in step rather than a
- * read per frame, which would force layout on every scroll.
+ * Not `--sticky-block`: that token is the header's DESIGNED height, and a
+ * large text-size preference makes the real one taller. `offsetHeight` leaves
+ * the margins out, so it is the band and nothing else. A ResizeObserver keeps
+ * it in step and writes it as `--musie-header-block`, which is what the
+ * sticky `top: -reach` in shell.css is made of — so the CSS and the reducer
+ * always agree on how far "gone" is. The clearance for the shadow is the
+ * CSS's own `--musie-header-clearance`, read back here rather than repeated.
  *
- * ── ARRIVING SOMEWHERE NEW SHOWS THE HEADER ───────────────────────────────
- * `resetKey` is the page's path. AppShell already scrolls a new route to its
- * top, and that scroll alone would usually reveal the header — but "usually"
- * is not good enough: a route that is already at the top fires no scroll event
- * at all, and would then be entered with the previous screen's chrome still
- * hidden and no gesture available to bring it back except scrolling a page
- * that may not scroll. Resetting on the key makes arrival unconditional.
- *
- * It is the path of the page BENEATH an overlay, not the location — so opening
- * the drawer over a page you had scrolled does not count as arriving
- * somewhere, and closing it puts you back exactly as you were.
+ * ── ARRIVING SOMEWHERE NEW STARTS AT REST ─────────────────────────────────
+ * `resetKey` is the page's path. AppShell scrolls a new route to its top
+ * before this runs, so arrival is the header in its own place. It is the path
+ * of the page BENEATH an overlay, not the location — so opening the drawer
+ * over a scrolled page is not an arrival.
  *
  * ── AND FOCUS BRINGS IT BACK ──────────────────────────────────────────────
- * Hidden is a transform, not `display: none`, so the menu button is still in
- * the tab order while it is off screen. A keyboard user tabbing into a control
- * they cannot see is WCAG 2.4.11 (Focus Not Obscured) failing in the most
- * literal way available, so `focusin` on the header reveals it. Nothing else
- * needs to know: the next scroll reads the current position and carries on.
+ * Gone is above the window, not `display: none`, so the menu button is still
+ * in the tab order. A keyboard user tabbing into a control they cannot see is
+ * WCAG 2.4.11 failing in the most literal way available, so `focusin` holds
+ * the header at the top — from where the page IS (`shownAt` says why that
+ * matters).
  */
 import * as React from 'react';
 import { AT_REST, nextReveal, shownAt } from './headerReveal';
@@ -51,59 +51,67 @@ export function useHeaderReveal(
   header: React.RefObject<HTMLElement | null>,
   pinned: boolean,
   resetKey: string,
-): boolean {
-  const [hidden, setHidden] = React.useState(false);
+): void {
   const state = React.useRef<RevealState>(AT_REST);
+  /* What is on the element right now, so a write happens only on a change. */
+  const written = React.useRef<{ at: number; held: boolean } | null>(null);
 
-  /* From where the page is now, not from the top: `shownAt` says why. On an
-     arrival the two are the same, because AppShell has already scrolled the
-     new route to 0 by the time this runs. */
+  const place = React.useCallback((next: RevealState) => {
+    state.current = next;
+    const element = header.current;
+    if (element === null) return;
+    const was = written.current;
+    if (was === null || was.at !== next.at) {
+      element.style.setProperty('--musie-header-at', `${next.at}px`);
+    }
+    if (was === null || was.held !== next.held) {
+      element.dataset.held = next.held ? 'true' : 'false';
+    }
+    written.current = { at: next.at, held: next.held };
+  }, [header]);
+
+  /* Arrival, focus and un-pinning are all "showing, from here". On an arrival
+     the page is already at 0, where that is simply the rest position. A
+     pinned screen is held for as long as it is mounted. */
   const show = React.useCallback(() => {
-    state.current = shownAt(window.scrollY);
-    setHidden(false);
-  }, []);
+    place(pinned ? { at: 0, held: true, last: window.scrollY } : shownAt(window.scrollY));
+  }, [place, pinned]);
 
-  /* Arrival, and un-pinning — both are "start again, showing". */
-  React.useEffect(() => { show(); }, [resetKey, pinned, show]);
+  React.useEffect(() => { show(); }, [resetKey, show]);
 
   React.useEffect(() => {
-    /* A pinned screen adds no listener at all, rather than adding one that
-       answers `false` every time. The screen that pins is the one doing its
-       own scrolling, and the cheapest listener is the one not attached. */
+    /* A pinned screen adds no listener at all. The screen that pins is the
+       one doing its own scrolling, and it is held at the top throughout. */
     if (pinned) return undefined;
 
     const element = header.current;
     if (element === null) return undefined;
 
-    let block = element.offsetHeight;
-    const observer = new ResizeObserver(() => {
-      block = element.offsetHeight;
-    });
+    let reach = 0;
+    const measure = () => {
+      const block = element.offsetHeight;
+      element.style.setProperty('--musie-header-block', `${block}px`);
+      /* A custom property's computed value has its var() resolved, so this
+         is the clearance in px — whatever token shell.css names. */
+      const clearance =
+        Number.parseFloat(getComputedStyle(element).getPropertyValue('--musie-header-clearance')) || 0;
+      reach = block + clearance;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
 
-    let frame = 0;
-    const settle = () => {
-      frame = 0;
-      const next = nextReveal(state.current, {
-        scrollY: window.scrollY,
-        /* The document as it is RIGHT NOW. It grows when data lands and
-           shrinks when a section collapses, and the floor rule is only worth
-           anything if it is asked of the current page. */
-        maxScrollY: document.documentElement.scrollHeight - window.innerHeight,
-        headerBlock: block,
-      });
-      state.current = next;
-      setHidden(next.hidden);
-    };
-
     const onScroll = () => {
-      if (frame !== 0) return;
-      frame = window.requestAnimationFrame(settle);
+      place(nextReveal(state.current, {
+        scrollY: window.scrollY,
+        maxScrollY: document.documentElement.scrollHeight - window.innerHeight,
+        reach,
+      }));
     };
 
     /* One reading now, before any gesture: the page may already be scrolled —
        a reload restores the position, and so does going Back. */
-    settle();
+    onScroll();
 
     window.addEventListener('scroll', onScroll, { passive: true });
     element.addEventListener('focusin', show);
@@ -112,11 +120,8 @@ export function useHeaderReveal(
       window.removeEventListener('scroll', onScroll);
       element.removeEventListener('focusin', show);
       observer.disconnect();
-      if (frame !== 0) window.cancelAnimationFrame(frame);
     };
-  }, [header, pinned, show]);
-
-  return pinned ? false : hidden;
+  }, [header, pinned, place, show]);
 }
 
 /**

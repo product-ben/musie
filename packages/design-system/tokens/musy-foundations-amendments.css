@@ -217,9 +217,14 @@
      69px) became a pill in a transparent band, and the band is what the page
      starts below. Two sizes, switched where the gutter first steps (768px):
 
-       phone      --sp-4 band + a 56px pill (--target-sm in --sp-2)    = 72
-       768px+     --sp-5 band + a 68px pill (--target-primary tall
-                  in --sp-3, which is the old bar less its hairline)   = 92
+       phone      --sp-4 above + a 56px pill (--target-sm in --sp-2)
+                  + --sp-4 below                                       = 88
+       768px+     --sp-5 above + a 68px pill (--target-primary tall
+                  in --sp-3, which is the old bar less its hairline)
+                  + --sp-4 below                                       = 108
+
+     The --sp-4 below the pill is Ben's, the same day, after walking the
+     first build (72 / 92): „16px padding bottom to the header container".
 
      Figma's large pill is 69 — the old bar's height, hairline included. The
      pill has no hairline, and the one pixel it would stand for is not worth a
@@ -235,7 +240,7 @@
      Absorbing it: these replace the --chrome-block / --sticky-block lines
      in musy-foundations.css (base block and the 768px query; the 1024 and
      1280 queries inherit), and their TOKEN-DRIFT.md rows take the new calc. */
-  --sticky-block: calc(var(--sp-4) + var(--target-sm) + (var(--sp-2) * 2));
+  --sticky-block: calc(var(--sp-4) + var(--target-sm) + (var(--sp-2) * 2) + var(--sp-4));
   --chrome-block: calc(var(--sticky-block) + var(--sp-4) + var(--sp-7));
 
   /* ── G8 · the panel shadow ──────────────────────────────────────────────
@@ -265,7 +270,7 @@
    queries, so it wins over those too — which is why one query is enough. */
 @media (min-width: 768px) {
   :root, [data-theme] {
-    --sticky-block: calc(var(--sp-5) + var(--target-primary) + (var(--sp-3) * 2));
+    --sticky-block: calc(var(--sp-5) + var(--target-primary) + (var(--sp-3) * 2) + var(--sp-4));
     --chrome-block: calc(var(--sticky-block) + var(--sp-5) + var(--sp-7));
   }
 }

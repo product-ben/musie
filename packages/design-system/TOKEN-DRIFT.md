@@ -162,7 +162,7 @@ here rather than in a `calc` inside a screen.
 
 **Re-valued by amendment G7 on 2026-11-17** (`musy-foundations-amendments.css`),
 when the header became a floating pill: `--sticky-block` and `--chrome-block`
-are 72 and 136px on a phone and 92 and 164px from 768px up. The table above is
+are 88 and 152px on a phone and 108 and 180px from 768px up. The table above is
 Layer 1's own, locked line; the amendment table below has the values in force.
 
 There are two subtractions because there are two situations. A view you LAND
@@ -215,7 +215,7 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--instrument-tap-start` | `0.8` | G5 |
 | `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
-| `--sticky-block` | `calc(var(--sp-4) + var(--target-sm) + (var(--sp-2) * 2))`; from 768px `calc(var(--sp-5) + var(--target-primary) + (var(--sp-3) * 2))` | G7 |
+| `--sticky-block` | `calc(var(--sp-4) + var(--target-sm) + (var(--sp-2) * 2) + var(--sp-4))`; from 768px `calc(var(--sp-5) + var(--target-primary) + (var(--sp-3) * 2) + var(--sp-4))` | G7 |
 | `--target-sm` | `40px` | G6 |
 
 ## What is NOT drift

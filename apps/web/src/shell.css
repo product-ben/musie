@@ -52,9 +52,10 @@
    transparent band, with the page showing all round it.
 
    TWO ELEMENTS, BECAUSE THERE ARE TWO JOBS. `.musie-header` is the BAND: it is
-   sticky, it is what slides, it is what the page starts below, and its height
-   is exactly `--sticky-block` (G7 in musy-foundations-amendments.css, which
-   states the same arithmetic). `.musie-header__pill` is what you see and tap.
+   sticky, it is what moves with the page, it is what the page starts below,
+   and its height is exactly `--sticky-block` (G7 in
+   musy-foundations-amendments.css, which states the same arithmetic).
+   `.musie-header__pill` is what you see and tap.
 
    THE BAND TAKES NO POINTER. It spans the window and is transparent, so once
    the page scrolls under it, it is lying over content the reader can see —
@@ -66,9 +67,15 @@
    nothing between; 768 is where Layer 1's gutter first steps, so the header
    and the page's margins change together rather than at two widths.
 
-     phone   band --sp-4 · pill --sp-2 / --sp-4 + --sp-2 around --target-sm = 56
-     768px+  band --sp-5 · pill 68 tall (--target-primary + --sp-3 twice),
-             --sp-5 / --sp-3 at the inline ends
+     phone   band --sp-4 above, --sp-4 below · pill --sp-2 / --sp-4 + --sp-2
+             around --target-sm = 56                         band = 88
+     768px+  band --sp-5 above, --sp-4 below · pill 68 tall
+             (--target-primary + --sp-3 twice), --sp-5 / --sp-3 at the
+             inline ends                                     band = 108
+
+   --sp-4 BELOW THE PILL, AT BOTH SIZES — Ben, 2026-11-17, after walking it:
+   „16px padding bottom to the header container with the nav pill". Figma
+   has the band end at the pill; this is the step after Figma.
 
    NOT THE GUTTER. The band is --sp-4 / --sp-5 at every width, where --gutter
    grows to 32 and 48 on a desktop: Figma keeps the pill 24px off the window's
@@ -84,36 +91,63 @@
    the pill wherever it is. `--space-gap-stack` on top is the toast's own
    clearance.
 
-   IT DOES NOT FOLLOW THE HEADER WHEN IT HIDES. The header slides away on
-   scroll, and a toast that chased it would be a second thing moving on a
+   IT DOES NOT FOLLOW THE HEADER WHEN IT LEAVES. The header goes with the
+   page, and a toast that chased it would be a second thing moving on a
    screen somebody is reading. It holds the position the header occupies when
    it is there, which is the only position that is correct in both states. */
 .musie-app {
   --musy-toast-inset-block-start: calc(var(--sticky-block) + var(--space-gap-stack));
 }
 
+/* ── IT MOVES WITH THE PAGE, AND THE BROWSER MOVES IT · 2026-11-17 ──────────
+   Ben: „direkt und ohne lag mit scrollen". `headerReveal.ts` has the whole
+   argument; the CSS half is three declarations and one modifier.
+
+   STICKY, FREE TO LEAVE. `top` is NEGATIVE: the band's own measured height
+   (`--musie-header-block`, written by the hook; the token until it has) plus
+   a clearance for the pill's shadow. So the header is carried off by the page
+   like the first line of it, and stops only once it is wholly above the
+   window — waiting there, out of sight, for the page to bring it back.
+
+   PLACED BY A MARGIN THAT COSTS THE PAGE NOTHING. `--musie-header-at` is the
+   header's natural place in the document, which the hook moves at a turn of
+   the scroll so that the page carries it from where it is drawn. The margin
+   above pushes the header down to that place and the equal negative margin
+   below gives the space straight back, so `<main>` never moves by a pixel:
+   the band's footprint in the page is always its own height, at the top.
+
+   `data-held` is `top: 0` — classic sticky — for a header all the way back
+   in, while the reader goes on up; and for a screen that pins it.
+
+   THE CLEARANCE IS --sp-2. The band already ends --sp-4 below the pill, so
+   gone, the pill's edge waits 24px above the window — past where its shadow
+   (four layers, 5.7% at most) is anything but arithmetic. Any more, and the
+   reader scrolls up through an empty strip before the pill appears, which is
+   the lag again by another name.
+
+   `overflow-anchor: none`, because a margin that moves is exactly what
+   scroll anchoring reacts to: were the browser ever to pick the header as its
+   anchor, it would scroll the page by every placement.
+
+   No transition and no `will-change`. Nothing here animates; a sticky box is
+   composited by the browser on its own.                                     */
 .musie-header {
+  --musie-header-clearance: var(--sp-2);
   position: sticky;
-  inset-block-start: 0;
+  inset-block-start: calc(-1 * (var(--musie-header-block, var(--sticky-block)) + var(--musie-header-clearance)));
+  margin-block-start: var(--musie-header-at, 0px);
+  margin-block-end: calc(-1 * var(--musie-header-at, 0px));
+  overflow-anchor: none;
   z-index: var(--z-sticky);
   display: flex;
   align-items: flex-start;
-  padding-block-start: var(--sp-4);
+  padding-block: var(--sp-4);
   padding-inline: var(--sp-4);
   pointer-events: none;
-  /* The slide. `--motion-enter` is the COMING BACK — L1's named motion for
-     something arriving, which decelerates — and the going away is
-     `--motion-exit` on the modifier below, which accelerates and is quicker.
-     They are asymmetric in exactly the way the thresholds in headerReveal.ts
-     are, and for the same reason: chrome should leave discreetly and return
-     without being waited for.
+}
 
-     `will-change` because this is the one transform in the shell that runs
-     during a scroll. Promoting the header once, up front, is cheaper than
-     promoting it at the start of every slide — and a mid-scroll promotion is
-     visible on a phone as exactly the stutter this pattern exists to avoid. */
-  transition: transform var(--motion-enter);
-  will-change: transform;
+.musie-header[data-held='true'] {
+  inset-block-start: 0;
 }
 
 .musie-header__pill {
@@ -144,31 +178,6 @@
     min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
     padding-inline: var(--sp-5) var(--sp-3);
   }
-}
-
-/* ── HIDDEN IS A TRANSFORM, NOT A LAYOUT CHANGE ────────────────────────────
-   Its own height and then some: `-100%` takes the band off the top of the
-   window, and the pill's shadow still hangs below the band's edge — four
-   layers, the widest reaching some 37px past the pill. `--sp-7` more carries
-   that out of sight too; without it a faint smudge would sit along the top
-   of the page for as long as the header was "hidden".
-
-   IT MUST NOT BE `display: none`, and not `block-size: 0` either. The header
-   is sticky, so it takes its space at the TOP OF THE DOCUMENT and nowhere
-   else; taking it out of flow would shorten the page by its height under a
-   reader who is halfway down it, and every `--view-block` on screen would be
-   wrong for a frame. Transformed, the header keeps its place in the document
-   exactly and only travels out of the window — so `--chrome-block`,
-   `--sticky-block` and every view sized from them stay true while it is gone.
-
-   Under `prefers-reduced-motion` Layer 1 collapses the durations to 1ms, so
-   this becomes a cut rather than a slide. That is the right answer rather
-   than a degraded one: the complaint against moving chrome is the movement,
-   and a header that is simply there or not is still one less thing taking up
-   a small screen.                                                           */
-.musie-header[data-hidden='true'] {
-  transform: translateY(calc(-100% - var(--sp-7)));
-  transition: transform var(--motion-exit);
 }
 
 /* ═══ MAIN ══════════════════════════════════════════════════════════════════

@@ -11985,3 +11985,51 @@ What I need from Ben:
    500px on /exercises). That is the browser bringing focus into view, and
    preventing it would mean taking the hidden header out of the tab order —
    which is the other way of failing 2.4.11. Logged rather than fought.
+
+## The header moves with the page, pixel for pixel; 16 below the pill — RESOLVED
+
+Where: `lib/headerReveal.ts` (+ test, rewritten), `lib/useHeaderReveal.ts`,
+`AppShell.tsx`, `shell.css` (`.musie-header`), G7 in
+`packages/design-system/tokens/musy-foundations-amendments.css`,
+`packages/design-system/TOKEN-DRIFT.md`
+
+What I did: Ben, 2026-11-17, walking the pill: „Wenn ich scrolle, sollte das
+Nav element direkt und ohne lag mit scrollen" — and „16px padding bottom to
+the header container with the nav pill". This supersedes the slide in the
+entry above (decision 1 there was A; this is the other option, built the way
+that does not lag on a phone).
+- **One pixel for one pixel, both ways.** Down, the header leaves with the
+  page like its first line and waits just above the window. Up, it comes
+  back with the page from there, and is held at the top once it is all the
+  way in. The 56 / 14 thresholds, the top band and the short-page floor are
+  gone — they existed to stop a timed slide firing on jitter, and a header
+  that moves exactly as far as the page has nothing to fire.
+- **The browser moves it, not the script.** It is `position: sticky` with a
+  negative `top`, in the flow of the page; the hook only PLACES it (a margin
+  that the page gives straight back, and `top: 0` when held), at a turn of
+  direction. Nothing is written per frame, and no scroll renders React — so
+  on a phone, where the compositor scrolls off the main thread, it cannot
+  swim behind the content.
+- **16 below the pill**, both sizes: the band is 88 on a phone and 108 from
+  768 (was 72 / 92), and `--sticky-block` / `--chrome-block` follow (G7).
+
+Measured in Chromium against the local stack, scrolling in 12px steps at 393
+and 1440: the pill moved exactly as far as the content at every step down
+and up; `<main>`'s place in the document never moved through any placement;
+gone, the pill's edge waits 24px above the window; held through a further
+scroll up; Shift+Tab to the menu button holds it in view; the drawer opened
+and closed mid-page leaves it held and the page where it was; the listen
+step keeps it held and snaps 88 / 108 down.
+
+Why: Ben's instruction.
+
+What I need from Ben:
+1. **The phone intro is 7px taller than a 393 × 852 window now**, from the
+   extra 16 (Body Scan, English). Tablet and desktop still fit. Nothing done.
+2. **A fast flick up can overshoot by a frame.** When the header arrives with
+   the page, the switch to "held" is made by script at the next scroll event,
+   so on a very fast flick it can be drawn a few pixels too low for one frame
+   before it settles at the top. In the 12px-step walk it never did; on a
+   phone, watch for it.
+3. Item 3 of the entry above still stands: a Tab to the gone header brings it
+   back, but the browser first scrolls the page to the button.

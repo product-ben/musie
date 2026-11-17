@@ -134,12 +134,13 @@ export function AppShell() {
   /**
    * THE HEADER GETS OUT OF THE WAY WHILE YOU READ.
    *
-   * On a phone the sticky header costs 72px of every screen for as long as
-   * you are on it (`--sticky-block`), and the diary, the exercise library and the reflect step
-   * are all longer than a window. So it slides out while the reader goes down
-   * the page and comes back as soon as they come up. `useHeaderReveal` holds
-   * the listener and `headerReveal.ts` every rule it applies; what belongs
-   * here is only the three things the SHELL knows.
+   * On a phone the header costs 88px of every screen for as long as you are
+   * on it (`--sticky-block`), and the diary, the exercise library and the
+   * reflect step are all longer than a window. So it leaves with the page
+   * while the reader goes down, one pixel for one pixel, and comes back with
+   * it as soon as they come up (Ben, 2026-11-17: „direkt und ohne lag").
+   * `useHeaderReveal` holds the listener and `headerReveal.ts` every rule it
+   * applies; what belongs here is only the three things the SHELL knows.
    *
    * WHICH PAGE COUNTS AS ARRIVING: `pagePath`, not the location — it is
    * already the path of the page underneath an overlay, so opening the drawer
@@ -149,13 +150,9 @@ export function AppShell() {
    * `usePinnedHeader`. Counted rather than set, because two screens overlap
    * for a frame during a route change; see the hook.
    *
-   * WHERE THE ANSWER GOES: one attribute. The slide itself is a transform in
-   * shell.css, so nothing here reflows and no geometry moves — the header is
-   * drawn in the same place either way and only travels.
-   *
-   * THE PILL CHANGED HOW IT LOOKS, NOT HOW IT MOVES (2026-11-17). Same
-   * thresholds, same pin, same arrival rule; the hook measures the band the
-   * pill floats in, which is the height `--sticky-block` now states.
+   * WHERE THE ANSWER GOES: nowhere in React. The browser moves the header —
+   * it is sticky, in the flow of the page — and the hook only places it, by
+   * writing to the element directly at a turn. No scroll renders the shell.
    */
   const headerRef = React.useRef<HTMLElement>(null);
   const [pins, setPins] = React.useState(0);
@@ -163,7 +160,7 @@ export function AppShell() {
     setPins((count) => count + 1);
     return () => setPins((count) => count - 1);
   }, []);
-  const headerHidden = useHeaderReveal(headerRef, pins > 0, pagePath ?? '');
+  useHeaderReveal(headerRef, pins > 0, pagePath ?? '');
 
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
@@ -173,11 +170,11 @@ export function AppShell() {
       <PagePathContext.Provider value={pagePath}>
       <HeaderPinContext.Provider value={pinHeader}>
       <div className="musie-app">
-        <header
-          ref={headerRef}
-          className="musie-header"
-          data-hidden={headerHidden ? 'true' : 'false'}
-        >
+        {/* `--musie-header-at` and `data-held` are written by
+            `useHeaderReveal`, straight onto the element and only at a turn
+            of the scroll: rendering them here would re-render the shell on
+            every turn and fight the hook over who owns them. */}
+        <header ref={headerRef} className="musie-header">
           {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
               17.11.*). The full-width bar with its centred logo became one
               rounded pill at the inline start: the flat mark and the wordmark,
