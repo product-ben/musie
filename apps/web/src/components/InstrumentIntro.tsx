@@ -61,7 +61,6 @@ export function InstrumentIntro({
       <SegmentedControl
         name="play-mode"
         legend={t('session.intro.mode.legend')}
-        legendStep="label-lg"
         value={mode}
         onValueChange={(next) => { if (next === 'solo' || next === 'with_musie') onModeChange(next); }}
         options={[

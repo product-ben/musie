@@ -4595,3 +4595,19 @@ What I did:
 Why: Ben's text style and his instruction. A second label step turned the
 boolean into a step, and a step is what the type utilities are for.
 What I need from Ben: nothing.
+
+## A segmented control's legend is label-lg; the heading variant is gone — RESOLVED
+Where: `src/SegmentedControl.tsx` (`legendStep: 'label-lg' | 'label-md'`,
+default `label-lg`), `stories/SegmentedControl.stories.tsx` (`LegendSteps`
+shows the two), the legend comment in `src/musy-components.css`
+What I checked: Ben, 2026-11-17: „get rid of the variant with the heading and
+make the one with label-lg the default. Where ever we are using currently
+heading-sm above a segmented control, use label-lg instead."
+What I did: removed `heading-sm` from the type and made `label-lg` the default.
+Every visible segmented-control legend becomes label-lg without a call-site
+change: Maintenance, the insight map's three, and Einsteigen, whose explicit
+`legendStep="label-lg"` came out. The other radio groups share the legend
+class and keep heading-sm; Ben named the segmented control. The hidden
+legends (language, reflect mode, diary filter, exercises view) have no
+heading above them.
+What I need from Ben: nothing.

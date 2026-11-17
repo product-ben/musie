@@ -281,7 +281,6 @@ export function SessionIntro({
             <SegmentedControl
               name="session-posture"
               legend={t('session.intro.posture.legend')}
-              legendStep="label-lg"
               value={posture}
               onValueChange={(next) => { if (isPosture(next)) onPostureChange?.(next); }}
               options={POSTURES.map((option) => ({
@@ -296,7 +295,6 @@ export function SessionIntro({
             <SegmentedControl
               name="session-ending"
               legend={t('session.intro.ending.legend')}
-              legendStep="label-lg"
               value={ending}
               onValueChange={(next) => { if (isEnding(next)) onEndingChange?.(next); }}
               options={ENDINGS.map((option) => ({

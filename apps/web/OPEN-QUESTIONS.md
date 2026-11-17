@@ -11880,3 +11880,18 @@ Why: Ben's Figma and his words.
 
 What I need from Ben: see the dark-mode note in the design system's
 text-field entry.
+
+## Every segmented control's question is label-lg — RESOLVED
+
+Where: the design system's `SegmentedControl` default (see its log);
+`components/SessionIntro.tsx`, `components/InstrumentIntro.tsx` lost their
+explicit `legendStep="label-lg"`
+
+What I did: Ben, 2026-11-17, made label-lg the default and dropped the
+heading variant. In the app that changes the visible legends of Maintenance
+(„What to work on") and the insight map (filter, care, level) from heading-sm
+to label-lg. The builder keeps label-md.
+
+Why: Ben's instruction.
+
+What I need from Ben: nothing.

@@ -833,13 +833,14 @@
   hyphens: var(--text-hyphens-heading);
   max-width: var(--measure-heading);
 }
-/* A legend at a LABEL step — Segmented Control's `legendStep`. The step itself
+/* A legend at a LABEL step — Segmented Control's `legendStep`, which is
+   label-lg by default since 2026-11-17 (Ben: the heading variant goes) and
+   label-md for one field among several. The heading-sm above stays the
+   default of the OTHER radio groups that share this class. The step itself
    comes from the `[data-type-step]` utilities below (later in this file, so
    they win over the heading-sm above at equal weight); this rule only moves
    the legend into the label ROLE, which breaks and hyphenates like a label.
-   `label-lg` is a question under a step headline that already asked one (the
-   session's Einsteigen, Ben, 2026-11-16); `label-md` is one field among
-   several, the same step as .musy-field__label. Was `--label`, label-md only. */
+   Was `--label`, label-md only. */
 .musy-radio-group__legend[data-type-step^="label-"] {
   text-wrap: var(--text-wrap-label);
   hyphens: var(--text-hyphens);

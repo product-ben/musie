@@ -115,7 +115,7 @@ export type SegmentedSize = 'min' | 'primary';
 export type SegmentedLabels = 'all' | 'unchecked' | 'none';
 
 /** The steps a segmented control's legend may take. See `legendStep`. */
-export type SegmentedLegendStep = 'heading-sm' | 'label-lg' | 'label-md';
+export type SegmentedLegendStep = 'label-lg' | 'label-md';
 
 export interface SegmentedControlProps {
   name: string;
@@ -127,14 +127,19 @@ export interface SegmentedControlProps {
   legend: string;
   legendHidden?: boolean;
   /**
-   * The legend's type step. `heading-sm` by default — right when the group IS
-   * the screen's question.
+   * The legend's type step.
    *
-   * · `label-lg` — a question inside a step whose headline already asked one:
-   *   the session's Einsteigen (Ben, 2026-11-16).
+   * · `label-lg` — THE DEFAULT. The question a segmented control asks is a
+   *   label, not a heading: Ben, 2026-11-17, „get rid of the variant with the
+   *   heading and make the one with label-lg the default". It had been
+   *   heading-sm since the group was built; label-lg was added the day before
+   *   for the session's Einsteigen, and is now every visible legend.
    * · `label-md` — one field among several in a form: the same step as
    *   `Field`'s label, so a segmented control and a text field read as
    *   siblings.
+   *
+   * The other radio groups (RadioGroupText, RadioCards, RadioGroupImage) share
+   * the legend class and keep heading-sm; this is the segmented control's own.
    *
    * ── IT IS INK, NOT STRUCTURE ────────────────────────────────────────────
    * Mirrors `ContentBox`'s `headlineStep`: the `<legend>` is still a legend
@@ -174,7 +179,7 @@ export interface SegmentedControlProps {
 }
 
 export function SegmentedControl({
-  name, legend, legendHidden = false, legendStep = 'heading-sm', options, value, onValueChange,
+  name, legend, legendHidden = false, legendStep = 'label-lg', options, value, onValueChange,
   accent = 'primary', size = 'primary', labels = 'all', guided = false,
   disabled = false, className,
 }: SegmentedControlProps) {
