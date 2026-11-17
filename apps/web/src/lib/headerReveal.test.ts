@@ -49,10 +49,13 @@ describe('going down, it leaves with the page', () => {
     expect(drawnAfter([50, 500, 2000])).toBe(-REACH);
   });
 
-  it('places nothing on the way down: no turn, no write', () => {
-    const state = run([50, 500, 2000]);
-    expect(state.at).toBe(0);
-    expect(state.held).toBe(false);
+  it('stays where the page put it while it is still in sight', () => {
+    expect(run([10, 60])).toEqual({ mode: 'free', at: 0, last: 60 });
+  });
+
+  it('is gone — fixed above the window — once it is out of sight', () => {
+    expect(run([50, REACH + 1]).mode).toBe('gone');
+    expect(run([50, 500, 2000]).mode).toBe('gone');
   });
 });
 
@@ -72,7 +75,7 @@ describe('going up, it comes back with the page', () => {
 
   it('is held at the top once it is all the way in', () => {
     const back = run([1990, 1960, 2000 - REACH], gone);
-    expect(back.held).toBe(true);
+    expect(back.mode).toBe('held');
     expect(drawnAt(back, 2000 - REACH, REACH)).toBe(0);
   });
 
@@ -89,7 +92,7 @@ describe('going up, it comes back with the page', () => {
 describe('turning down again', () => {
   it('lets go from the top of the window, where it was drawn', () => {
     const held = run([100, 2000, 1500]);
-    expect(held.held).toBe(true);
+    expect(held.mode).toBe('held');
     /* Turned at 1500; 1520 is twenty pixels of the page taking it away. */
     expect(drawnAfter([1520], held)).toBe(-20);
     expect(drawnAfter([1520, 1550], held)).toBe(-50);
@@ -119,11 +122,12 @@ describe('the jitter a real scroll is made of', () => {
 describe('jumps — a flick, a scrollTo, the browser bringing focus into view', () => {
   it('comes all the way in on a jump up longer than its reach', () => {
     const gone = run([100, 2000]);
-    expect(run([1500], gone).held).toBe(true);
+    expect(run([1500], gone).mode).toBe('held');
   });
 
   it('is gone after a jump down longer than its reach', () => {
     const held = run([100, 2000, 1500]);
+    expect(run([1900], held).mode).toBe('gone');
     expect(drawnAfter([1900], held)).toBe(-REACH);
   });
 });
@@ -143,7 +147,7 @@ describe('the bounce at either end', () => {
 
 describe('shown by focus, then scrolled by the browser', () => {
   it('is held at the top from wherever the page is', () => {
-    expect(shownAt(884)).toEqual({ at: 0, held: true, last: 884 });
+    expect(shownAt(884)).toEqual({ mode: 'held', at: 0, last: 884 });
   });
 
   it('stays shown through the scroll the focus causes', () => {

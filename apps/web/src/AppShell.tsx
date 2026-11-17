@@ -163,7 +163,7 @@ export function AppShell() {
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
       <div className="musie-app">
-        {/* `--musie-header-at` and `data-held` are written by
+        {/* `--musie-header-at` and `data-mode` are written by
             `useHeaderReveal`, straight onto the element and only at a turn
             of the scroll: rendering them here would re-render the shell on
             every turn and fight the hook over who owns them. */}

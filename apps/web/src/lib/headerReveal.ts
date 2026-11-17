@@ -10,7 +10,7 @@
  * both directions:
  *
  *   down  — it leaves with the content, as if it were the first line of it,
- *           and stops just above the window once it is gone;
+ *           and once it is out of sight it waits just above the window;
  *   up    — it comes back with the content from just above the window, and
  *           once it is all the way in it is HELD at the top while the reader
  *           goes on up.
@@ -20,21 +20,38 @@
  * one that lags. On a phone the page is scrolled by the compositor, off the
  * main thread, and a header positioned from a scroll EVENT is a frame or more
  * behind the content it is meant to be stuck to: it swims. So no position is
- * ever written per frame. The header is `position: sticky` in the flow of the
- * page (shell.css), and the browser moves it, exactly as it moves the text.
- * What this reducer decides is only WHERE IN THE DOCUMENT the header sits —
- * `at`, its natural place, written as a margin — and whether it is `held` by
- * `top: 0` instead of free to leave. Both change only at a TURN, so a long
- * scroll in one direction writes nothing at all.
+ * ever written per frame. While it moves, the header is ordinary page content
+ * — `position: absolute` at `at`, a place in the DOCUMENT (shell.css) — and
+ * the browser scrolls it exactly as it scrolls the text. What this reducer
+ * decides is which of three things the header is, and for the first, where:
  *
- *   free   `top: -reach`. Drawn at `at - scrollY`, but never higher than
- *          `-reach` — just above the window, out of sight, ready.
- *   held   `top: 0`, `at: 0`. Drawn at the top of the window, always.
+ *   free   `position: absolute`, top `at`. Drawn at `at - scrollY`: part of
+ *          the page, carried with it.
+ *   gone   `position: fixed`, top `-reach`. Out of sight, just above the
+ *          window, whatever the page does.
+ *   held   `position: fixed`, top 0. At the top of the window, whatever the
+ *          page does.
+ *
+ * It changes only at a TURN, and at the one moment a leaving header passes
+ * out of sight — so a long scroll in one direction writes once at most.
  *
  * At a turn down from held, `at` becomes the turning point, so the page takes
  * the header with it from exactly there. At a turn up from gone, `at` becomes
  * the turning point less `reach`, so the page brings it back from exactly
- * just above the window. Every frame between turns is the browser's.
+ * where it was waiting. Every frame between is the browser's.
+ *
+ * ── ABSOLUTE, NOT STICKY — Ben's iPhone, 2026-11-17 ───────────────────────
+ * It was `position: sticky` with a negative `top`, which moves the same way;
+ * but Safari never draws a fixed or sticky box in the area under the status
+ * bar, so the pill was cut off at the bar's edge as if by a mask while the
+ * page slid on beneath it. Absolute is page content, and page content is drawn
+ * there. Fixed is fine for `held` (below the bar) and for `gone` (above
+ * everything, drawn nowhere).
+ *
+ * WHY `gone` IS FIXED AND NOT LEFT IN THE PAGE: a header simply left behind in
+ * the document is still in the tab order, and Tab onto it makes the browser
+ * scroll the page all the way back to wherever it was left — the top of the
+ * page, as often as not. A fixed box has no place in the page to scroll to.
  *
  * ── WHY THE DECISION IS HERE AND NOT IN THE HOOK ──────────────────────────
  * The `unit` project runs in `environment: 'node'` with no jsdom
@@ -52,38 +69,40 @@
  * scrolls 30px takes it 30px — which is what the first line of that page does.
  */
 
+export type RevealMode = 'free' | 'gone' | 'held';
+
 /**
  * What the reducer has to remember between two scroll events.
  *
- * `at` is the header's natural place in the document, in px from its top —
- * where the page would draw it if it were not sticky. `held` is sticky
- * `top: 0` rather than `top: -reach`. `last` is the previous position and
- * exists only to tell which way we are now going, and where a turn happened.
+ * `at` is the header's place in the document, in px from its top — where the
+ * page draws it while it is `free`; it means nothing in the other two modes.
+ * `last` is the previous position and exists only to tell which way we are
+ * now going, and where a turn happened.
  */
 export type RevealState = {
+  mode: RevealMode;
   at: number;
-  held: boolean;
   last: number;
 };
 
 /** The top of a page, the header in its own place — where every screen starts. */
-export const AT_REST: RevealState = { at: 0, held: false, last: 0 };
+export const AT_REST: RevealState = { mode: 'free', at: 0, last: 0 };
 
 /**
  * Showing, from wherever the page is NOW — what the hook resets to when focus
- * brings the header back, or a screen stops pinning it: held at the top.
+ * brings the header back: held at the top.
  *
  * ── FROM HERE, NOT FROM THE TOP · 2026-11-17 ─────────────────────────────
  * Tab to the menu button while the header is gone, and focus brings it back —
- * and then the BROWSER may scroll, to bring the control it just focused into
- * view. Read against a state whose `last` is 0, that scroll was a long run
- * down and took the header away again with focus inside it (WCAG 2.4.11).
+ * and the browser may scroll as well, to bring the control it just focused
+ * into view. Read against a state whose `last` is 0, that scroll was a long
+ * run down and took the header away again with focus inside it (WCAG 2.4.11).
  * Anchored at the real position, a jump either way starts from where the page
  * actually was. Clamped like every reading, for the same iOS reason.
  */
 export function shownAt(scrollY: number): RevealState {
   const y = Math.max(scrollY, 0);
-  return y === 0 ? AT_REST : { at: 0, held: true, last: y };
+  return y === 0 ? AT_REST : { mode: 'held', at: 0, last: y };
 }
 
 /**
@@ -91,8 +110,9 @@ export function shownAt(scrollY: number): RevealState {
  *
  * `reach` is how far above the window the header waits when it is gone: its
  * own MEASURED height (a large text size makes it taller) plus the clearance
- * its shadow needs, so not even the shadow's tail shows along the top edge.
- * `maxScrollY` is the document as it is right now, for the clamp.
+ * shell.css gives it — for its shadow everywhere, and on an iPhone for the
+ * band under the status bar too, where Safari draws the page. `maxScrollY` is
+ * the document as it is right now, for the clamp.
  */
 export type ScrollReading = {
   scrollY: number;
@@ -106,8 +126,9 @@ export type ScrollReading = {
  * tests use it to say "one pixel for one pixel" in numbers.
  */
 export function drawnAt(state: RevealState, scrollY: number, reach: number): number {
-  if (state.held) return 0;
-  return Math.max(state.at - scrollY, -reach);
+  if (state.mode === 'held') return 0;
+  if (state.mode === 'gone') return -reach;
+  return state.at - scrollY;
 }
 
 /** The state, one reading later. Pure: same inputs, same answer, no `window`. */
@@ -128,38 +149,48 @@ export function nextReveal(state: RevealState, reading: ScrollReading): RevealSt
   if (y === state.last) return state;
 
   const down = y > state.last;
+  const { reach } = reading;
 
-  if (state.held) {
-    /* Held, and the reader turns down: let go where it is. Its natural place
-       becomes the TURNING POINT, where it was drawn at the top of the window,
-       so the page takes it away from exactly there — including the few pixels
-       this event already covered. Going on up, it stays held. */
-    return down
-      ? { at: state.last, held: false, last: y }
-      : { ...state, last: y };
+  /* Free and going down: out of sight is the one thing to watch for. The page
+     has carried it past `-reach`, so it can wait fixed above the window from
+     here — invisibly, since it is out of sight either way. */
+  const leaving = (at: number): RevealState => (
+    at - y < -reach ? { mode: 'gone', at: 0, last: y } : { mode: 'free', at, last: y }
+  );
+
+  if (state.mode === 'held') {
+    /* Held, and the reader turns down: let go where it is. Its place becomes
+       the TURNING POINT, where it was drawn at the top of the window, so the
+       page takes it away from exactly there — including the pixels this event
+       already covered. Going on up, it stays held. */
+    return down ? leaving(state.last) : { ...state, last: y };
   }
 
-  /* Free and going down: the page is carrying it away, or it is already gone
-     and waiting above the window. Either way, nothing to decide. */
-  if (down) return { ...state, last: y };
-
-  /* Free and going up. Where would the page draw it now? */
-  const drawn = state.at - y;
-
-  if (drawn < -reading.reach) {
-    /* Gone, and the reader turns up: place it just above the window AT THE
-       TURNING POINT, so the page brings it back from there — and the pixels
-       this event already covered count, as if it had been there all along. */
-    const at = Math.max(state.last - reading.reach, 0);
+  if (state.mode === 'gone') {
+    /* Gone, and still going down: it waits. Turning up: place it in the page
+       where it has been waiting, just above the window AT THE TURNING POINT,
+       so the page brings it back from there — and the pixels this event
+       already covered count, as if it had been there all along. */
+    if (down) return { ...state, last: y };
+    const at = Math.max(state.last - reach, 0);
     return at - y >= 0
-      ? { at: 0, held: true, last: y }   // a jump bigger than `reach`: all the way in
-      : { at, held: false, last: y };
+      ? { mode: 'held', at: 0, last: y } // a jump bigger than `reach`: all the way in
+      : { mode: 'free', at, last: y };
   }
 
-  /* All the way in (a jump can overshoot it): hold it at the top, so going on
-     up does not carry it down into the page. */
-  if (drawn >= 0) return { at: 0, held: true, last: y };
+  /* Free. */
+  if (down) return leaving(state.at);
 
-  /* On its way back in. The page is doing it. */
+  /* Free and going up: on its way back in, which the page is doing — until it
+     is all the way in (a jump can overshoot that), and then it is held at the
+     top, so going on up does not carry it down into the page. A free header
+     somehow above the window on the way up — never left as `gone` — is placed
+     as `gone` is, just above the window at the turn. */
+  const drawn = state.at - y;
+  if (drawn >= 0) return { mode: 'held', at: 0, last: y };
+  if (drawn < -reach) {
+    const at = Math.max(state.last - reach, 0);
+    return at - y >= 0 ? { mode: 'held', at: 0, last: y } : { mode: 'free', at, last: y };
+  }
   return { ...state, last: y };
 }

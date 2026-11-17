@@ -51,10 +51,10 @@
    the flat mark and the wordmark, then the menu button — floating in a
    transparent band, with the page showing all round it.
 
-   TWO ELEMENTS, BECAUSE THERE ARE TWO JOBS. `.musie-header` is the BAND: it is
-   sticky, it is what moves with the page, it is what the page starts below,
-   and its height is exactly `--sticky-block` (G7 in
-   musy-foundations-amendments.css, which states the same arithmetic).
+   TWO ELEMENTS, BECAUSE THERE ARE TWO JOBS. `.musie-header` is the BAND: it
+   is what moves with the page, it is what the page starts below, and its
+   height is exactly `--sticky-block` (G7 in musy-foundations-amendments.css,
+   which states the same arithmetic).
    `.musie-header__pill` is what you see and tap.
 
    THE BAND TAKES NO POINTER. It is transparent, so once the page scrolls
@@ -99,55 +99,72 @@
   --musy-toast-inset-block-start: calc(var(--sticky-block) + var(--space-gap-stack));
 }
 
-/* ── IT MOVES WITH THE PAGE, AND THE BROWSER MOVES IT · 2026-11-17 ──────────
-   Ben: „direkt und ohne lag mit scrollen". `headerReveal.ts` has the whole
-   argument; the CSS half is three declarations and one modifier.
+/* ── IT MOVES WITH THE PAGE, AS PART OF THE PAGE · 2026-11-17 ───────────────
+   Ben: „direkt und ohne lag mit scrollen", and then, on his iPhone: the pill
+   must slide out from behind Safari's top bar with the rest of the page, not
+   be cut off at the bar's edge as if by a mask. `headerReveal.ts` has the
+   whole argument; the CSS half is this.
 
-   STICKY, FREE TO LEAVE. `top` is NEGATIVE: the band's own measured height
-   (`--musie-header-block`, written by the hook; the token until it has) plus
-   a clearance for the pill's shadow. So the header is carried off by the page
-   like the first line of it, and stops only once it is wholly above the
-   window — waiting there, out of sight, for the page to bring it back.
+   ORDINARY PAGE CONTENT WHILE IT MOVES. `position: absolute` in the app root,
+   at `--musie-header-at` — a place in the DOCUMENT, which the hook sets at a
+   turn of the scroll. Between turns the browser scrolls it exactly as it
+   scrolls the text beside it, because to the browser it is just more page:
+   no lag, and Safari draws it under the status bar like any other page
+   content. It was `position: sticky` until the phone showed why not: Safari
+   never draws a fixed or sticky box in the area under the clock, so the pill
+   stopped dead at that line while the page slid on beneath the bar.
 
-   PLACED BY A MARGIN THAT COSTS THE PAGE NOTHING. `--musie-header-at` is the
-   header's natural place in the document, which the hook moves at a turn of
-   the scroll so that the page carries it from where it is drawn. The margin
-   above pushes the header down to that place and the equal negative margin
-   below gives the space straight back, so `<main>` never moves by a pixel:
-   the band's footprint in the page is always its own height, at the top.
+   FIXED WHEN IT IS NOT MOVING. `data-mode` says which of three it is:
+     free  — absolute, at its place in the page, moving with it;
+     gone  — fixed just above the window (`-reach`: its measured height and
+             the clearance below), out of sight while the reader reads on.
+             Fixed rather than left behind in the page, because a header left
+             behind is still in the tab order, and Tab onto it scrolls the
+             page all the way back to wherever it was left;
+     held  — fixed at the top of the window, which is below the clock, while
+             the reader goes on up.
 
-   `data-held` is `top: 0` — classic sticky — for a header all the way back
-   in, while the reader goes on up.
+   THE APP ROOT KEEPS ITS PLACE. Out of the flow, the header no longer pushes
+   `<main>` down by itself, so `.musie-app` pads its top by the band's height —
+   measured by the hook (`--musie-header-block`; a large text size makes it
+   taller), `--sticky-block` until it has. `<main>` starts exactly where it
+   always did.
 
-   ONLY AS WIDE AS THE PILL — `align-self: flex-start`, so the band hugs the
-   pill and its inline padding instead of spanning the window. Safari 26 on
-   the iPhone paints the strip under the status bar from a fixed or sticky
-   element at the top edge that spans about 90% of the width or more, and a
-   transparent one it fills with the page background: the full-width band
-   made a solid beige strip that cut the page off hard, the white card and
-   the pill with it (Ben's phone, 2026-11-17). Narrow, it is not a candidate,
-   Safari paints no strip, and the page scrolls on under the clock. Apple
-   documents none of this; OPEN-QUESTIONS.md has the sources.
+   ONLY AS WIDE AS THE PILL, so Safari 26 never takes it for a top bar: it
+   paints the strip under the status bar from a fixed or sticky element
+   spanning about 90% of the top edge, and fills a transparent one with the
+   page background — the solid beige strip of the full-width band (Ben's
+   phone, 2026-11-17; OPEN-QUESTIONS.md has the sources). An absolute box is
+   as wide as its content, and so is the fixed one.
 
-   THE CLEARANCE IS --sp-2. The band already ends --sp-4 below the pill, so
-   gone, the pill's edge waits 24px above the window — past where its shadow
-   (four layers, 5.7% at most) is anything but arithmetic. Any more, and the
-   reader scrolls up through an empty strip before the pill appears, which is
-   the lag again by another name.
+   THE CLEARANCE is how far beyond its own height a header that is gone
+   waits above the window. --sp-2 by default: the band already ends --sp-4
+   below the pill, so the pill's edge waits 24px up, past where its shadow is
+   anything but arithmetic. Any more, and the reader scrolls up through an
+   empty strip before the pill appears.
 
-   `overflow-anchor: none`, because a margin that moves is exactly what
-   scroll anchoring reacts to: were the browser ever to pick the header as its
-   anchor, it would scroll the page by every placement.
+   --sp-8 ON AN iPHONE (and iPad), because there the window does not end at
+   the top of the layout: Safari lays the page out from the bottom of the
+   status bar — 59pt on Ben's phone — and draws the page above that, behind
+   the clock. A header placed 24px above the layout's top would already be
+   showing behind the clock at the moment it is placed, and would pop in
+   there instead of gliding. 64px puts the pill and its shadow above the
+   clock band on every current iPhone. `-webkit-touch-callout` is the feature
+   only WebKit on iOS and iPadOS supports, which is exactly the set of
+   browsers that draw under that bar.
 
-   No transition and no `will-change`. Nothing here animates; a sticky box is
-   composited by the browser on its own.                                     */
+   `overflow-anchor: none`, so the browser never anchors the scroll on a box
+   the hook moves. No transition and no `will-change`: nothing here animates. */
+.musie-app {
+  position: relative;
+  padding-block-start: var(--musie-header-block, var(--sticky-block));
+}
+
 .musie-header {
   --musie-header-clearance: var(--sp-2);
-  align-self: flex-start;
-  position: sticky;
-  inset-block-start: calc(-1 * (var(--musie-header-block, var(--sticky-block)) + var(--musie-header-clearance)));
-  margin-block-start: var(--musie-header-at, 0px);
-  margin-block-end: calc(-1 * var(--musie-header-at, 0px));
+  position: absolute;
+  inset-block-start: var(--musie-header-at, 0px);
+  inset-inline-start: 0;
   overflow-anchor: none;
   z-index: var(--z-sticky);
   display: flex;
@@ -157,8 +174,20 @@
   pointer-events: none;
 }
 
-.musie-header[data-held='true'] {
+.musie-header[data-mode='gone'] {
+  position: fixed;
+  inset-block-start: calc(-1 * (var(--musie-header-block, var(--sticky-block)) + var(--musie-header-clearance)));
+}
+
+.musie-header[data-mode='held'] {
+  position: fixed;
   inset-block-start: 0;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .musie-header {
+    --musie-header-clearance: var(--sp-8);
+  }
 }
 
 .musie-header__pill {

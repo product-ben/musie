@@ -4,13 +4,14 @@
  * measurement and two style writes.
  *
  * ── NOTHING HERE MOVES THE HEADER ─────────────────────────────────────────
- * The browser does, because the header is sticky and in the flow of the page
- * (shell.css). This hook only PLACES it: `--musie-header-at` (its natural
- * place in the document, written as a margin) and `data-held` (sticky
- * `top: 0` instead of `top: -reach`). Both change only at a turn of
- * direction, and only when they differ from what is already written, so a long
- * scroll one way writes nothing at all — and no React state is touched, ever,
- * so a scroll never renders anything either.
+ * The browser does, because while it moves the header is ordinary page
+ * content — `position: absolute` at a place in the document (shell.css). This
+ * hook only PLACES it: `--musie-header-at` (that place) and `data-mode` —
+ * `free` in the page, `gone` fixed above the window, `held` fixed at its top.
+ * They change only at a turn of direction or as a leaving header passes out
+ * of sight, and are written only when they differ from what is already
+ * there, so a long scroll one way writes once at most — and no React state is
+ * touched, ever, so a scroll never renders anything either.
  *
  * NO FRAME COALESCING, on purpose. Browsers dispatch `scroll` once per frame
  * now, in the same update that paints it, and a placement deferred to the
@@ -23,12 +24,13 @@
  *
  * ── THE HEADER MEASURES ITSELF ────────────────────────────────────────────
  * Not `--sticky-block`: that token is the header's DESIGNED height, and a
- * large text-size preference makes the real one taller. `offsetHeight` leaves
- * the margins out, so it is the band and nothing else. A ResizeObserver keeps
- * it in step and writes it as `--musie-header-block`, which is what the
- * sticky `top: -reach` in shell.css is made of — so the CSS and the reducer
- * always agree on how far "gone" is. The clearance for the shadow is the
- * CSS's own `--musie-header-clearance`, read back here rather than repeated.
+ * large text-size preference makes the real one taller. A ResizeObserver keeps
+ * `offsetHeight` in step and writes it as `--musie-header-block` on the APP
+ * ROOT, the header's parent, which pads its top by it — out of the flow, the
+ * header no longer reserves its own space, so the root does it for it. The
+ * same height plus the CSS's own `--musie-header-clearance` (read back here
+ * rather than repeated) is `reach`, how far above the window a returning
+ * header is placed.
  *
  * ── ARRIVING SOMEWHERE NEW STARTS AT REST ─────────────────────────────────
  * `resetKey` is the page's path. AppShell scrolls a new route to its top
@@ -37,8 +39,9 @@
  * over a scrolled page is not an arrival.
  *
  * ── AND FOCUS BRINGS IT BACK ──────────────────────────────────────────────
- * Gone is above the window, not `display: none`, so the menu button is still
- * in the tab order. A keyboard user tabbing into a control they cannot see is
+ * Gone is fixed above the window, not `display: none`, so the menu button is
+ * still in the tab order — and being fixed, it gives the browser no place in
+ * the page to scroll back to when it is focused. A keyboard user tabbing into a control they cannot see is
  * WCAG 2.4.11 failing in the most literal way available, so `focusin` holds
  * the header at the top — from where the page IS (`shownAt` says why that
  * matters).
@@ -53,7 +56,7 @@ export function useHeaderReveal(
 ): void {
   const state = React.useRef<RevealState>(AT_REST);
   /* What is on the element right now, so a write happens only on a change. */
-  const written = React.useRef<{ at: number; held: boolean } | null>(null);
+  const written = React.useRef<{ at: number; mode: RevealState['mode'] } | null>(null);
 
   const place = React.useCallback((next: RevealState) => {
     state.current = next;
@@ -63,10 +66,10 @@ export function useHeaderReveal(
     if (was === null || was.at !== next.at) {
       element.style.setProperty('--musie-header-at', `${next.at}px`);
     }
-    if (was === null || was.held !== next.held) {
-      element.dataset.held = next.held ? 'true' : 'false';
+    if (was === null || was.mode !== next.mode) {
+      element.dataset.mode = next.mode;
     }
-    written.current = { at: next.at, held: next.held };
+    written.current = { at: next.at, mode: next.mode };
   }, [header]);
 
   /* Arrival and focus are both "showing, from here". On an arrival the page
@@ -84,7 +87,7 @@ export function useHeaderReveal(
     let reach = 0;
     const measure = () => {
       const block = element.offsetHeight;
-      element.style.setProperty('--musie-header-block', `${block}px`);
+      element.parentElement?.style.setProperty('--musie-header-block', `${block}px`);
       /* A custom property's computed value has its var() resolved, so this
          is the clearance in px — whatever token shell.css names. */
       const clearance =

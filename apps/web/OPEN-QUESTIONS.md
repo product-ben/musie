@@ -12081,3 +12081,45 @@ What I need from Ben:
    snap mandatorily, so a swipe too short to change view springs back up —
    and the header comes in by exactly as far as the page springs back. It is
    the pixel-for-pixel rule doing what it says; say if it reads as a flicker.
+
+## The pill is page content while it moves, so it glides under the status bar — RESOLVED, check on the phone
+
+Where: `lib/headerReveal.ts` (+ test), `lib/useHeaderReveal.ts`, `shell.css`
+(`.musie-app`, `.musie-header`), `AppShell.tsx`
+
+What I did: Ben's iPhone, 2026-11-17, after the narrow band: the page now
+slides under the status bar, but the pill is cut off at the bar's edge, „wie
+eine Maske" — it should glide out from behind the bar with the rest of the
+page. Safari never draws a fixed or sticky box in that area, only page
+content, and the header was sticky. This is the „bigger rebuild" agreed as
+the fallback.
+- **Three modes instead of two.** `free`: `position: absolute` at a place in
+  the document, moving with the page as the page's own content (so Safari
+  draws it under the bar). `gone`: `position: fixed` just above the window.
+  `held`: `position: fixed` at the top. The reducer gained `gone`
+  explicitly; it still writes only at a turn and once as a leaving header
+  passes out of sight.
+- **The app root reserves the band** (`padding-block-start` by the measured
+  height), since an absolute header no longer pushes `<main>` down itself.
+- **On iOS the clearance above the window is --sp-8**, not --sp-2: Safari
+  lays the page out from the bottom of the status bar (59pt on Ben's phone,
+  read off his screenshots) and draws the page above that, so a header placed
+  just above the layout would already show behind the clock and pop in.
+  `@supports (-webkit-touch-callout: none)` — iOS and iPadOS WebKit only.
+- **A side effect, and a fix:** Tab to the gone header no longer moves the
+  page at all. A fixed box has no place in the page for the browser to
+  scroll back to. Item 3 of the second entry above is closed by this.
+
+Measured in Chromium against the local stack at 393 and 1440: pixel for
+pixel both ways in 12px steps; `<main>` never moves; gone, the pill waits
+24px above the window; Shift+Tab from y=700 holds the header in view with the
+page still at 700; the drawer leaves it held; the listen step rests, leaves
+and returns with its views.
+
+Why: Ben's report.
+
+What I need from Ben: **one look on the phone.** The iOS clearance and
+Safari's drawing under the bar cannot be measured here — Chromium has no
+status bar and does not take the iOS branch. If the pill now glides out from
+behind the clock with the page, this is done; if it pops in behind the clock
+at the turn, the clearance wants raising.
