@@ -1,7 +1,7 @@
 /**
  * What Einsteigen adds for an instruments exercise — 2026-11-09.
  *
- * Under the exercise's own intro copy („Bevor es losgeht“: the volume, a
+ * Under the exercise's own intro copy („Lass uns Kalimba spielen“: the volume, a
  * quiet three minutes), THE SETTINGS, made here and nowhere else — Ben,
  * 2026-11-09: the focus sheet has none, and the play step only says how to
  * play. In this order:

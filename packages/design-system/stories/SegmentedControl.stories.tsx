@@ -94,6 +94,7 @@ const meta = {
     name: { control: 'text', description: 'Identifies the field when a form is submitted.' },
     legend: { control: 'text', description: 'The group’s accessible name. Rendered as a visible <legend> unless legendHidden — never dropped.' },
     legendHidden: { control: 'boolean', description: 'Hide the legend visually. It stays in the accessible name.' },
+    legendStep: { control: 'inline-radio', options: ['label-lg', 'label-md'], description: 'The legend’s type step. label-lg by default; label-md as one field in a form.' },
     options: { control: false, description: '2–4 options. Each needs value, label and a required Lucide glyph; `description` is optional — what choosing it means, shown under the control while it is selected.' },
     value: { control: 'text', description: 'Controlled selection.' },
     onValueChange: { action: 'valueChange', description: 'Fires with the new value.' },
@@ -210,6 +211,18 @@ export const Guided: Story = { args: { guided: true, legend: 'guided — 64px ta
 
 /** The legend stays in the accessible name; only its visible rendering goes. */
 export const LegendHidden: Story = { args: { legendHidden: true } };
+
+/** `legendStep`: label-lg by default — the question a segmented control asks
+ *  is a label, not a heading (Ben, 2026-11-17); label-md as one field among
+ *  several in a form. */
+export const LegendSteps: Story = {
+  render: (args) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-gap-group)' }}>
+      <SegmentedControl {...args} name="s-legend-label-lg" legend="label-lg — the question (default)" />
+      <SegmentedControl {...args} name="s-legend-label-md" legendStep="label-md" legend="label-md — one field among several" />
+    </div>
+  ),
+};
 
 /**
  * Each option says what choosing it means. The SELECTED option's sentence is

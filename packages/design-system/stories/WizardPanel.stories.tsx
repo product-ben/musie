@@ -3,8 +3,11 @@
  * InteractiveWizard, which Batch C documented; the batch was fixed at five
  * files, so this one was left over and is written here.
  */
+import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { WizardPanel } from '../src/InteractiveWizard';
+import { DoorOpen, Headphones, Quote, Armchair, BedSingle } from 'lucide-react';
+import { InteractiveWizard, WizardPanel } from '../src/InteractiveWizard';
+import { SegmentedControl } from '../src/SegmentedControl';
 import { Button } from '../src/Button';
 import { ContentList } from '../src/ContentList';
 import { bothThemes } from './_decorators';
@@ -66,6 +69,69 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/** THE WHOLE CARD — Ben, 2026-11-16 (Figma *Exercise pages*). With `stepper`
+ *  the panel draws its own framed card: the HEADER holds the stepper and the
+ *  divider closes it; the BODY runs Intro, Content, Actions. The panel owns
+ *  every distance: 32 between the three body sections, 24 between the blocks
+ *  of Content, the header's 16. `headline` is required with a stepper — the
+ *  card is an <article> — and usually hidden, as the session hides it. */
+export const HeaderAndBody: Story = {
+  render: () => (
+    <WizardPanel
+      headline="Bodyscan"
+      headingLevel={2}
+      headlineHidden
+      stepper={
+        <InteractiveWizard
+          label="Steps of the session"
+          steps={[
+            { id: 'intro', label: 'Get ready', icon: DoorOpen },
+            { id: 'listen', label: 'Listen', icon: Headphones },
+            { id: 'reflect', label: 'Reflect', icon: Quote },
+          ]}
+          current="intro"
+          /* The story column is narrow and the window is not; the stepper's
+             own collapse is a viewport rule, so a narrow card forces it. */
+          compact
+        />
+      }
+      intro={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-gap-related)' }}>
+          <h3 data-type-step="heading-md" style={{ margin: 0 }}>Let's begin a Body Scan</h3>
+          <p data-type-step="body-md" style={{ margin: 0, color: 'var(--on-surface-muted)', textWrap: 'var(--text-wrap-body)' } as React.CSSProperties}>
+            Make sure that for the next 4 minutes no notifications or other distractions can reach you.
+          </p>
+        </div>
+      }
+      actions={
+        <>
+          <Button variant="ghost">Back</Button>
+          <Button variant="primary">Continue</Button>
+        </>
+      }
+    >
+      <SegmentedControl
+        name="story-posture"
+        legend="How do you want to listen?"
+        value="sitting"
+        options={[
+          { value: 'sitting', label: 'Sitting', glyph: Armchair },
+          { value: 'lying', label: 'Lying down', glyph: BedSingle },
+        ]}
+      />
+      <SegmentedControl
+        name="story-ending"
+        legend="What do you do afterwards?"
+        value="day"
+        options={[
+          { value: 'day', label: 'Back into the day', glyph: Armchair },
+          { value: 'sleep', label: 'Fall asleep', glyph: BedSingle },
+        ]}
+      />
+    </WizardPanel>
+  ),
+};
 
 /** Body only. Without `actions` no action row is rendered at all. */
 export const Default: Story = {

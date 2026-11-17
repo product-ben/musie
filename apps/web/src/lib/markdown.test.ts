@@ -16,7 +16,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  bodyOnly, headingOnly, parseInline, parseMarkdown, plainText, withoutHeading,
+  bodyOnly, headingAndLead, headingOnly, parseInline, parseMarkdown, plainText, withoutHeading,
+  withoutHeadingAndLead,
 } from './markdown';
 
 /** The live German intro copy for Achtsame Pause, verbatim. */
@@ -324,5 +325,32 @@ describe('withoutHeading', () => {
     const out = withoutHeading(parseMarkdown('## One\n\n## Two'));
 
     expect(out.map((block) => plainText([block]))).toEqual(['Two']);
+  });
+});
+
+/* `headingAndLead` / `withoutHeadingAndLead` — the card exercises' Einsteigen,
+   split around the switch since 2026-11-16: headline and the one sentence
+   about the next minutes above it, the instructions about paper below. */
+describe('headingAndLead', () => {
+  const md = '## Lass uns eine Achtsame Pause beginnen\n\nStell sicher, dass die nächsten 2 Minuten keine Notifications oder anderen Ablenkungen an dich heran kommen.\n\n1. Zieh fünf zufällige Karten.\n2. Lass sie wirken.';
+
+  it('takes the heading and the paragraph right after it', () => {
+    expect(headingAndLead(parseMarkdown(md)).map((b) => b.kind)).toEqual(['heading', 'paragraph']);
+  });
+
+  it('leaves the rest, in order, to withoutHeadingAndLead', () => {
+    expect(withoutHeadingAndLead(parseMarkdown(md)).map((b) => b.kind)).toEqual(['list']);
+  });
+
+  it('does not take a list as the lead', () => {
+    const blocks = parseMarkdown('## Titel\n\n1. Eins\n2. Zwei');
+    expect(headingAndLead(blocks).map((b) => b.kind)).toEqual(['heading']);
+    expect(withoutHeadingAndLead(blocks).map((b) => b.kind)).toEqual(['list']);
+  });
+
+  it('draws nothing without a heading, and the whole copy stays in the rest', () => {
+    const blocks = parseMarkdown('Nur ein Satz.');
+    expect(headingAndLead(blocks)).toEqual([]);
+    expect(withoutHeadingAndLead(blocks).map((b) => b.kind)).toEqual(['paragraph']);
   });
 });

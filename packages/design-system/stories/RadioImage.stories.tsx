@@ -84,8 +84,10 @@ type Story = StoryObj<typeof meta>;
 /** Five pictures, nothing chosen yet. Resize the panel to cross 30rem. */
 export const Default: Story = {};
 
-/** One chosen: a stronger border, an inset ring and a tick — three cues, so
- *  the state never rests on colour alone (1.4.1). */
+/** One chosen: the picture darkens under the scrim and the tick fills — two
+ *  cues, neither of them hue, so the state never rests on colour alone
+ *  (1.4.1). Until 2026-11-16 it was a stronger border and an inset ring; no
+ *  cell draws an edge now, and hovering an unchosen one darkens it a little. */
 export const Chosen: Story = { args: { value: 'mc-03' } };
 
 /**

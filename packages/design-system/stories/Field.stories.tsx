@@ -336,9 +336,9 @@ export const ErrorBeatsValidMessage: Story = {
   },
 };
 
-/** Disabled. The border drops to `--border-subtle`, the control to
- *  `--interactive-primary-disabled`, and the label and description to
- *  `--on-surface-disabled`. */
+/** Disabled. The border stays `--border-subtle` (the resting edge since
+ *  2026-11-16), the control takes `--interactive-primary-disabled`, and the
+ *  label and description `--on-surface-disabled`. */
 export const Disabled: Story = {
   args: { disabled: true, value: 'ldamn@nitz.com', description: PRIVACY_NOTE },
 };

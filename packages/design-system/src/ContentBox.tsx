@@ -50,7 +50,12 @@ export type TypeStep =
 
 /** 'raised' was removed in review: an elevation-1 card and a solid-outlined
  *  card were doing the same job, and the shadow read as a second, competing
- *  boundary next to the outline. Depth stays with 'sunken'. */
+ *  boundary next to the outline. Depth stays with 'sunken'.
+ *
+ *  'solid' DRAWS NO VISIBLE EDGE since 2026-11-16 (Ben): it is the raised fill
+ *  on the page, and the name is kept so no call site changes. 'sunken' lost
+ *  its edge too. 'dashed' keeps its dashes, because they mean "waiting for
+ *  content"; 'plain' has neither fill nor edge, as before. */
 export type BoxOutline = 'solid' | 'dashed' | 'sunken' | 'plain';
 /**
  * 1 IS IN THE UNION, and it was not until D.1 needed it.

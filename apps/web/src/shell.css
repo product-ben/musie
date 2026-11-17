@@ -176,7 +176,7 @@
   letter-spacing: var(--type-heading-lg-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* IN A SHEET THE GAP IS ALREADY OWNED. `.musie-sheet` is a flex column with
@@ -383,7 +383,10 @@
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
-  border: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16, because the ContentBox that replaces
+     this bubble lost its own (design system, BORDERLESS SURFACES). A bubble
+     with an edge turning into a box without one would read as two things. */
+  border: var(--border-width-hairline) var(--border-style-solid) transparent;
 }
 
 .musie-typing__dot {
@@ -503,13 +506,60 @@
   gap: var(--space-gap-stack);
 }
 
-/* The only way out of a running session that is not finishing it. Leading
-   edge and quiet: it is not what the screen is for, but the nav drawer offers
-   nothing else while a session runs, so it has to be reachable. */
-.musie-session__exit {
-  display: flex;
-  justify-content: flex-start;
+/* ── THE FOOTER UNDER THE BOX — Ben, 2026-11-16 (Figma *Exercise pages*) ──
+   The exit, then the exercise's name and the day it started: „× Session
+   schließen   Bodyscan, 16.01.26". The exit is the only way out of a running
+   session that is not finishing it, so it has to be reachable; it is quiet
+   because it is not what the screen is for.
+
+   THE NUMBERS ARE THE FRAME'S, and the `min` rung's own --sp-2 margin (a
+   2.5.8 allowance the button carries in CSS) is taken back out by arithmetic
+   rather than overridden on the button, which a screen may not do (L7):
+   · its box 24 in from the column's edge, where the body text starts —
+     the footer's start inset is --sp-5 less that margin;
+   · 16 under the box, the session's own gap — the footer starts that margin
+     early;
+   · 12 to the text — the gap is --space-gap-related less that margin.
+   The text carries the same block margin so it centres on the button's box,
+   and on reflect, where there is no exit, it takes the inline one too and
+   lands at 24 like the button would have. */
+/* TWO COLUMNS, as the frame builds it: the exit at its own width and the
+   context in what is left. A long name ('Achtsame Pause, 16.11.26' at 393px)
+   then wraps INSIDE its column, beside the exit, rather than dropping under it
+   out of line with everything else — which is what a wrapping flex row did. */
+.musie-session__foot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: calc(var(--space-gap-related) - var(--sp-2));
+  margin-block-start: calc(var(--sp-2) * -1);
+  /* The start only. The frame lets the date run on into the right margin
+     rather than wrap under the exit, and on a 393px phone the pair needs
+     that width: with an end inset too, „Bodyscan, 16.01.26" wrapped by 1px. */
+  padding-inline-start: calc(var(--sp-5) - var(--sp-2));
 }
+/* ON A PHONE THE FOOTER STARTS AT THE BOX'S EDGE — Ben, 2026-11-17, on the
+   *Bodyscan · Einsteigen · 393* frame: „get rid of the left padding on 393
+   and smaller". The exit's box sits flush with the column, so the start inset
+   goes and the `min` rung's own --sp-2 margin is taken back by arithmetic, as
+   above. Below --bp-sm, the same line the Intro's phone layout ends at; the
+   reflect step's bare context lands at the edge the same way. */
+@media (max-width: 479.98px) {
+  .musie-session__foot {
+    padding-inline-start: 0;
+    margin-inline-start: calc(var(--sp-2) * -1);
+  }
+}
+.musie-session__context {
+  margin: var(--sp-2) 0;
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface-muted);
+}
+.musie-session__context:first-child { margin-inline-start: var(--sp-2); }
 
 /* ═══ A STEP'S HEADLINE AND DESCRIPTION ═════════════════════════════════════
    `exercise_i18n.{intro,scan,listen,reflect}_md`, parsed by lib/markdown.ts
@@ -543,45 +593,25 @@
    a headline above it — and body-md is the floor: L8 bars body-sm for prose the
    user must read in order to act, and this is the instruction itself.
 
-   ── GAPS, AND WHY THE HEADLINE'S IS TWO RUNGS WIDER ───────────────────────
-   Ben, on the 260925 round: in a text list of any kind the ITEMS must sit
-   closer together than the headline sits to them. They did not — measured on
-   the intro step, the headline was 20.3px of white space above the list while
-   the items were 22.6px apart, so the headline was fractionally the TIGHTER
-   join. It read as the first line of the list rather than as its heading.
+   ── GAPS: ONE RUNG, HEADLINE INCLUDED — Ben, 2026-11-16 ──────────────────
+   Headline ↔ text and text ↔ text are both --space-gap-related, 12px, the
+   container's own gap and nothing on top of it. Figma *Exercise pages* draws
+   the headline 12px above its description, and Ben confirmed it as the rule:
+   the headline and its text are one block.
 
-   The cause is leading, not the declared gap: both were --space-gap-related.
-   A line box carries half its leading above and below the ink, and the two
-   voices lead very differently — heading-md is line-height 1.25 (~3px a side),
-   body-md is 1.6 (~5px a side). So the same 12px buys 20px of white under a
-   headline and 23px between two body lines. Matching the DECLARED gaps
-   un-matches the SEEN ones.
+   WHAT THIS REVERSES, AND WHY IT NO LONGER HOLDS. From the 260925 round until
+   now the headline sat --space-gap-group (32) above what followed, because in
+   a LIST the items must sit closer together than the headline sits to them —
+   measured then, a headline 12px above a bulleted list read as the list's
+   first line. That argument was about lists, and the content has none any
+   more (Ben: "we don't have bulleted lists anymore at all"). Under a single
+   paragraph the wide gap only pulled the headline away from its own text.
 
-   Hence three gaps rather than two:
+   If a list ever comes back into step copy, this is the rule to revisit: the
+   leading still makes 12px read as ~20px under a heading-md line and ~23px
+   between two body-md lines, which is the inversion the old rule fixed.
 
-   · item ↔ item, and block ↔ block — --space-gap-related. Unchanged, and the
-     same value in both places on purpose: `lib/markdown.ts` hands a bullet
-     over as a paragraph, so a bulleted run is a run of siblings on the
-     container's gap while a numbered run is <li>s on the list's. They are one
-     rung so that the two read identically, which is the invariant the <ol>
-     block below already records.
-   · headline ↔ the block under it — --space-gap-group, applied as the
-     difference on top of the container's gap, because a flex `gap` is one
-     value for the whole column. Arithmetic over two Layer 1 tokens, which is
-     L14.1's other permitted form. --space-gap-stack was tried first and is
-     the semantically neater fit; it moves the headline 4px and is invisible on
-     a step whose first item wraps, because the 4px it gains the headline the
-     tighter items give straight back. Measured, not guessed: it took the ratio
-     to 1.08, where this takes it to 1.78.
-   · below the whole thing — --space-gap-group, unchanged.
-
-   THE ONE THING TO KNOW: the headline's gap now EQUALS the block's own bottom
-   margin. L2's doubling check still holds where it is about atoms in a group
-   (32 ≥ 2 × 12 for the items), but the headline split is no longer smaller
-   than the split that ends the block. What keeps the block reading as one is
-   the TYPE — heading-md at full contrast over body-md muted — rather than the
-   space. Logged in OPEN-QUESTIONS.md; if it ever stops holding, the lever is
-   the bottom margin, not this gap.                                         */
+   · below the whole thing — --space-gap-group, unchanged.                 */
 .musie-md {
   margin: 0 0 var(--space-gap-group);
   display: flex;
@@ -604,19 +634,6 @@
   margin: 0;
 }
 
-/* …except the one margin that is the spacing: whatever FOLLOWS a headline
-   makes the container's gap up to --space-gap-group. Written as five
-   selectors rather than one `:is()` because nothing else in this repo's CSS
-   uses `:is()`, and on the adjacent-sibling combinator so a headline that
-   ends a block cannot leave a trailing margin to add to the block's own. */
-.musie-md h2 + *,
-.musie-md h3 + *,
-.musie-md h4 + *,
-.musie-md h5 + *,
-.musie-md h6 + * {
-  margin-block-start: calc(var(--space-gap-group) - var(--space-gap-related));
-}
-
 /* THE STEP'S HEADLINE. `h2` is what content writes and what the parser clamps
    to; h3–h6 are here so a deeper heading is still typeset rather than falling
    back to the UA's own scale. They step DOWN through the system's headings
@@ -631,6 +648,7 @@
   letter-spacing: var(--type-heading-md-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 
 .musie-md h3,
@@ -645,6 +663,7 @@
   letter-spacing: var(--type-heading-sm-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* ── THE ONE LIST KEEPS ITS MARKERS ────────────────────────────────────────
@@ -773,20 +792,11 @@
   overflow-wrap: anywhere;
 }
 
-/* ═══ THE STEP RAIL'S CONTAINER ═════════════════════════════════════════════
-   InteractiveWizard collapses below --bp-md — the current step keeps its
-   label, the rest shrink to markers — and that rule is a MEDIA query, which
-   cannot see that the rail sits inside a card inside a grid column. At 1024px
-   the viewport is wide and the column is not, so the expanded run would
-   overflow its own card.
-
-   An inline-size container is what lets the component's own `compact` rule
-   answer to the card instead. The component ships `.musy-wizard--compact` for
-   forcing it; this is the other half — declaring the container so the rail can
-   measure something true.                                                   */
-.musie-rail {
-  container-type: inline-size;
-}
+/* ═══ THE STEP RAIL'S CONTAINER — moved into the component, 2026-11-16 ═══════
+   `.musie-rail` declared an inline-size container around the stepper so its
+   rules could answer to the card rather than the viewport. `WizardPanel`'s
+   header (`.musy-wizard__header`) is that container now, so the wrapper and
+   this rule are gone. */
 
 /* ═══ A RUN OF THINGS INSIDE A STEP ═════════════════════════════════════════
    The stack gap, named once so four step panels do not each invent it.     */
@@ -858,7 +868,7 @@
   letter-spacing: var(--type-heading-md-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* The why. Body copy at the reading measure — it is the longest thing on the
@@ -931,7 +941,9 @@
   inline-size: 100%;
   margin: 0;
   padding: var(--space-inset-control);
-  border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
+  /* No visible edge since 2026-11-16 — ContentBox's raised surface, which
+     lost its edge that day (design system, BORDERLESS SURFACES). */
+  border: var(--border-width-regular) var(--border-style-solid) transparent;
   border-radius: var(--radius-card);
   background-color: var(--surface-raised);
   color: var(--on-surface);
@@ -996,7 +1008,7 @@
   letter-spacing: var(--type-heading-md-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-heading);
-  hyphens: var(--text-hyphens);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* The card, between the headline and the controls. The Image component caps
@@ -1930,9 +1942,8 @@ html[data-musy-scroll-snap] {
 
    `:has()` RATHER THAN A SECOND CLASS FROM THE STEP. The condition is already
    in the DOM and the kind is already deciding whether the <img> renders, so a
-   modifier would be the same fact written twice. (The `:is()` note further up
-   this file is about that selector, not this one; `musy-components.css` uses
-   `:has()` for exactly this kind of "what follows this" rule.)              */
+   modifier would be the same fact written twice. `musy-components.css` uses
+   `:has()` for exactly this kind of "what follows this" rule.              */
 .musie-listen__lead > .musie-md {
   margin-block-end: calc(var(--space-gap-group) - var(--space-gap-related));
 }
@@ -2068,7 +2079,7 @@ html[data-musy-scroll-snap] {
 .musie-listen__warn {
   margin: 0;
   max-inline-size: 26ch;
-  text-wrap: pretty;
+  text-wrap: var(--text-wrap-body);
   font-family: var(--type-body-xl-family);
   font-size: var(--type-body-xl-size);
   font-weight: var(--font-weight-medium);
@@ -2405,7 +2416,7 @@ html[data-musy-scroll-snap] {
 .musie-immersive__caption {
   margin: 0;
   max-inline-size: var(--measure-body);
-  text-wrap: pretty;
+  text-wrap: var(--text-wrap-body);
   font-family: var(--type-body-sm-family);
   font-size: var(--type-body-sm-size);
   line-height: var(--type-body-sm-line);
@@ -2532,36 +2543,124 @@ html[data-musy-scroll-snap] {
   gap: var(--space-gap-stack);
 }
 
-/* ═══ THE EINSTEIGEN STEP'S TWO QUESTIONS ═══════════════════════════════════
-   A listening exercise asks two things before it plays — how you want to
-   listen, and what you are doing afterwards — and each is a legend with a
-   segmented control under it. Two molecules that do NOT belong to each other,
-   which is exactly what `--space-gap-group` is for (Layer 1's own words at its
-   declaration), and what `.musie-placeholder` and `.musie-sheet` already use
-   between blocks on these screens.
+/* ═══ THE EINSTEIGEN STEP'S TWO QUESTIONS — into the panel, 2026-11-16 ══════
+   `.musie-intro__questions` held the two SegmentedControls with 24 between
+   them and 32 around them. Both numbers are `WizardPanel`'s now: the
+   questions are blocks of its Content (24 apart), and the Content is 32 from
+   the Intro above and the Actions below. Ben's spacing pass on the Figma
+   *Exercise pages* frames; the component carries it so no step has to. */
 
-   L14: a custom pattern only where the system has no component, and this is
-   one — `SegmentedControl` owns a control, not the spacing between two of
-   them, and `WizardPanel` owns the step's outer column rather than the
-   arrangement of one step's body. L14.1: every declaration resolves to a
-   Layer 1 token. L14.2: `musie-`, never `musy-`.
+/* ── THE INTRO'S HEADLINE AND PICTURE — Ben, 2026-11-16 ───────────────────
+   Figma *Exercise pages*, with its two annotations: on a phone the picture is
+   "fixed width, fill height and scale in bg" beside the HEADLINE; on desktop
+   it is "16:9, aligned top right" beside the whole text column.
 
-   ── THE GAP IS ALSO BELOW THE SECOND ONE, AND THAT IS NOT SYMMETRY ────────
-   Ben, 2026-10-12. Under the second control is the panel's action row, which
-   is a third molecule and a different kind of thing — the way forward rather
-   than another question. Without the trailing gap the Continue button sits
-   closer to the question above it than the two questions sit to each other,
-   which reads as if it belonged to the second one.
+   A GRID, AND THE COPY JOINS IT ON A PHONE. The headline and the description
+   come out of one Markdown block, and only the headline may share a row with
+   the picture. `display: contents` on `.musie-md` makes its children the
+   grid's own items, so the headline takes the first cell and every block
+   after it spans both columns. The block's typography still inherits — that
+   is what `contents` keeps — and its gap and bottom margin move here.
 
-   `gap` on the column rather than a margin on the children: one spacing
-   mechanism per container, which is the rule `.musie-sheet .musie-placeholder`
-   next door exists to keep. */
-.musie-intro__questions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-group);
-  margin-block-start: var(--space-gap-group);
-  margin-block-end: var(--space-gap-group);
+   THE WIDTHS ARE THE FRAME'S PROPORTIONS: 77 of a 312 panel on the phone is a
+   quarter, 186 of a 931 panel on desktop is a fifth. Written as fractions of
+   the row (L14.1's `100%` times a multiplier) so a wider phone gets a
+   proportionally wider picture rather than a fixed sliver.
+
+   Only when there IS a picture: without one the copy keeps its own column. */
+.musie-intro__head:has(> .musie-intro__image) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(100% * 0.25);
+  gap: var(--space-gap-related);
+  align-items: start;
+}
+/* The panel spaces the Intro; the copy adds nothing of its own, with or
+   without a picture beside it. */
+.musie-intro__head > .musie-md { margin: 0; }
+.musie-intro__head:has(> .musie-intro__image) > .musie-md {
+  display: contents;
+}
+.musie-intro__head:has(> .musie-intro__image) > .musie-md > * {
+  grid-column: 1 / -1;
+}
+.musie-intro__head:has(> .musie-intro__image) > .musie-md > :first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+.musie-intro__image {
+  grid-column: 2;
+  grid-row: 1;
+  /* AS TALL AS THE HEADLINE, AND NEVER LESS THAN 16:9. `stretch` makes it
+     follow a two- or three-line headline (the frame's 77 × 55 at 393px);
+     the ratio is what it brings to the row on its own, so a one-line
+     headline on a wider phone gets a picture rather than a strip — without
+     it the file's own square shape set the row, 78px tall under 28px of
+     headline. `cover` crops whatever the cell asks for. */
+  align-self: stretch;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+/* FROM 480px THE PICTURE STANDS BESIDE THE WHOLE COLUMN — Ben, 2026-11-16,
+   the *Bodyscan · Einsteigen · 572* frame: a THIRD of the row, 16:9, top
+   right, 12 from the copy (158 of a 474 panel at 572). Below 480 it is the
+   phone arrangement above. The copy is one block again, at its own measure,
+   and the picture keeps 16:9 at the top of its cell rather than stretching to
+   the copy's height. 480 is --bp-sm, a large phone. */
+@media (min-width: 480px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, 1fr) calc(100% / 3);
+  }
+  .musie-intro__head:has(> .musie-intro__image) > .musie-md {
+    display: flex;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .musie-intro__image {
+    align-self: start;
+  }
+}
+
+/* ON A TABLET THE PICTURE IS AS TALL AS THE COPY — Ben, 2026-11-17, an
+   annotation on the *Bodyscan · Einsteigen · 834* frame: „image = fill height
+   of container, max width = 30% of parent frame", 12 from the copy, and the
+   desktop left as it is. 16:9 at the copy's height, capped at 30% of the row;
+   past the cap it stays as tall as the copy and `cover` crops it.
+
+   THE WIDTH IS MEASURED, NOT DERIVED HERE. `--musie-intro-image-inline` comes
+   from `useIntroImageFit` (the rule and the reason are in `lib/introImage.ts`:
+   Chromium does not re-size the row after the second column pass, so a pure
+   CSS version spills the copy). Until it arrives, and without script, the
+   column is the third it was. `contain: size` keeps the picture's own square
+   out of the row's height, so the row is the copy's, and `block-size: 100%`
+   then fills it.
+
+   THE COPY'S COLUMN IS AS WIDE AS THE COPY, not `1fr`: from about 900px the
+   copy reaches its measure and stops, and a `1fr` column would push the
+   picture to the row's end, 124 away at 1023px instead of 12. `max-content`
+   respects the copy's own max-inline-size, so the picture always stands 12
+   from the text and any spare width is left after it. */
+@media (min-width: 480px) and (max-width: 1023.98px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, max-content) var(--musie-intro-image-inline, calc(100% / 3));
+  }
+  .musie-intro__image {
+    align-self: stretch;
+    contain: size;
+    block-size: 100%;
+    aspect-ratio: auto;
+  }
+}
+
+/* From 1024px a FIFTH, 32 from the copy (186 of a 931 panel): the desktop
+   frames, unchanged. */
+@media (min-width: 1024px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, 1fr) calc(100% * 0.2);
+    column-gap: var(--space-gap-group);
+  }
 }
 
 /* ═══ DIGITAL CARDS ═════════════════════════════════════════════════════════
@@ -2583,10 +2682,9 @@ html[data-musy-scroll-snap] {
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-related);
-  /* The same block rhythm as `.musie-intro__questions` above: the switch sits
-     between the headline and the body copy, so it owns the space on both
-     sides rather than borrowing either neighbour's margin. */
-  margin-block: var(--space-gap-group);
+  /* No margin of its own since 2026-11-16: the switch is a block of
+     `WizardPanel`'s Content, 32 below the Intro and 24 above the list it
+     governs (Ben's spacing pass, Figma *Exercise pages*). */
 }
 
 /* The sentence that stands where an instruction about paper used to. Body ink
@@ -2724,6 +2822,7 @@ html[data-musy-scroll-snap] {
   line-height: var(--type-heading-md-line);
   letter-spacing: var(--type-heading-md-tracking);
   text-wrap: var(--text-wrap-heading);
+  hyphens: var(--text-hyphens-heading);
 }
 
 /* The marimba: headline and note on one line, the note always there even when
@@ -3059,7 +3158,9 @@ html[data-musy-scroll-snap] {
    the way of the thing being done. */
 .musie-builder__pick {
   padding: var(--space-inset-card);
-  border: var(--border-width-hairline) solid var(--border-subtle);
+  /* No visible edge since 2026-11-16 — a raised surface, as ContentBox now is
+     (design system, BORDERLESS SURFACES). */
+  border: var(--border-width-hairline) solid transparent;
   border-radius: var(--radius-card);
   background: var(--surface-raised);
 }
