@@ -52,6 +52,7 @@ import { fromRoot } from '../lib/assets';
 import { ENDINGS, POSTURES, isEnding, isPosture } from '../lib/exerciseKind';
 import type { Ending, Posture } from '../lib/exerciseKind';
 import { headingAndLead, withoutHeadingAndLead } from '../lib/markdown';
+import { useIntroImageFit } from '../lib/useIntroImageFit';
 
 export interface SessionIntroProps {
   exercise: Exercise;
@@ -140,6 +141,9 @@ export function SessionIntro({
   cardsPresent, onCardsPresentChange, dealsHere = false, instrumentSettings,
 }: SessionIntroProps) {
   const t = useT();
+  /* The picture's width on a tablet follows the copy's height (Ben,
+     2026-11-17); `lib/introImage.ts` says why that is measured. */
+  const headRef = useIntroImageFit<HTMLDivElement>();
 
   /* ONE FLAG PER QUESTION, read off the prop that carries its answer. The
      group itself survives as long as EITHER is asked: it is what spaces the
@@ -185,8 +189,10 @@ export function SessionIntro({
           the sheet one tap away carries what it used to say. */}
       {/* ── THE EXERCISE'S PICTURE BESIDE ITS HEADLINE — Ben, 2026-11-16 ──
           Figma *Exercise pages*. On a phone it stands beside the HEADLINE
-          only, a fixed width as tall as the headline, cropped to fill; from
-          1024px it stands beside the whole text column, 16:9, top right.
+          only, a fixed width as tall as the headline, cropped to fill; on a
+          tablet it stands 12 beside the whole text column, as tall as the
+          copy and at most 30% of the row wide (2026-11-17, measured by
+          `useIntroImageFit`); from 1024px a fifth, 16:9, top right.
           `shell.css` (`.musie-intro__head`) carries both layouts. The same
           picture and description the exercise card on /exercises shows. */}
       {/* ── INTRO, THEN CONTENT — Ben, 2026-11-16 ─────────────────────────
@@ -197,7 +203,7 @@ export function SessionIntro({
           (`headingAndLead`), so it is there in the digital mode as well; the
           instructions about paper stay below it. */}
       <WizardIntro>
-        <div className="musie-intro__head">
+        <div className="musie-intro__head" ref={headRef}>
           {asksForCards
             ? <Markdown md={md} fallbackKey="session.intro.fallback" arrange={headingAndLead} />
             : <Markdown md={md} fallbackKey="session.intro.fallback" />}

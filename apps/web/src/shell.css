@@ -538,6 +538,18 @@
      that width: with an end inset too, „Bodyscan, 16.01.26" wrapped by 1px. */
   padding-inline-start: calc(var(--sp-5) - var(--sp-2));
 }
+/* ON A PHONE THE FOOTER STARTS AT THE BOX'S EDGE — Ben, 2026-11-17, on the
+   *Bodyscan · Einsteigen · 393* frame: „get rid of the left padding on 393
+   and smaller". The exit's box sits flush with the column, so the start inset
+   goes and the `min` rung's own --sp-2 margin is taken back by arithmetic, as
+   above. Below --bp-sm, the same line the Intro's phone layout ends at; the
+   reflect step's bare context lands at the edge the same way. */
+@media (max-width: 479.98px) {
+  .musie-session__foot {
+    padding-inline-start: 0;
+    margin-inline-start: calc(var(--sp-2) * -1);
+  }
+}
 .musie-session__context {
   margin: var(--sp-2) 0;
   font-family: var(--type-label-md-family);
@@ -2608,6 +2620,37 @@ html[data-musy-scroll-snap] {
   }
   .musie-intro__image {
     align-self: start;
+  }
+}
+
+/* ON A TABLET THE PICTURE IS AS TALL AS THE COPY — Ben, 2026-11-17, an
+   annotation on the *Bodyscan · Einsteigen · 834* frame: „image = fill height
+   of container, max width = 30% of parent frame", 12 from the copy, and the
+   desktop left as it is. 16:9 at the copy's height, capped at 30% of the row;
+   past the cap it stays as tall as the copy and `cover` crops it.
+
+   THE WIDTH IS MEASURED, NOT DERIVED HERE. `--musie-intro-image-inline` comes
+   from `useIntroImageFit` (the rule and the reason are in `lib/introImage.ts`:
+   Chromium does not re-size the row after the second column pass, so a pure
+   CSS version spills the copy). Until it arrives, and without script, the
+   column is the third it was. `contain: size` keeps the picture's own square
+   out of the row's height, so the row is the copy's, and `block-size: 100%`
+   then fills it.
+
+   THE COPY'S COLUMN IS AS WIDE AS THE COPY, not `1fr`: from about 900px the
+   copy reaches its measure and stops, and a `1fr` column would push the
+   picture to the row's end, 124 away at 1023px instead of 12. `max-content`
+   respects the copy's own max-inline-size, so the picture always stands 12
+   from the text and any spare width is left after it. */
+@media (min-width: 480px) and (max-width: 1023.98px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, max-content) var(--musie-intro-image-inline, calc(100% / 3));
+  }
+  .musie-intro__image {
+    align-self: stretch;
+    contain: size;
+    block-size: 100%;
+    aspect-ratio: auto;
   }
 }
 

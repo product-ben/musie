@@ -11895,3 +11895,37 @@ to label-lg. The builder keeps label-md.
 Why: Ben's instruction.
 
 What I need from Ben: nothing.
+
+## On a tablet the Einsteigen picture is as tall as the copy; the phone footer loses its inset — RESOLVED
+
+Where: `shell.css` (the Intro's 480–1023 block, `.musie-session__foot`
+below 480), `lib/introImage.ts` (+ test), `lib/useIntroImageFit.ts`,
+`components/SessionIntro.tsx`
+
+What I did: Ben's annotations of 2026-11-17 on the Figma page *Einsteigen ·
+Bodyscan · 17.11.*, and his two answers the same day (12 between copy and
+picture in total, the rule for the tablet only).
+- **Tablet, 480–1023.** The picture is 16:9 at the copy's height, at most
+  30% of the row; past the cap it stays as tall as the copy and crops. It
+  stands 12 from the text, and the copy's column is only as wide as the copy,
+  so at 1023 (copy at its measure) it is 12 and not 124.
+- **The width is measured.** A pure CSS grid (second column pass) is exact
+  in WebKit, but Chromium does not re-size the row afterwards, and the copy
+  spills whenever the narrower column gives it another line (a 432px row:
+  copy 150 tall, row 94). `useIntroImageFit` measures the copy and writes
+  `--musie-intro-image-inline`; without script the column is the old third.
+- **Phone, below 480.** The footer's start inset goes, and the exit's box
+  sits flush with the column (the `min` rung's margin taken back). Ben wrote
+  „393 and smaller"; I drew the line at `--bp-sm`, where the Intro's phone
+  layout ends, so a 402 or 430 phone matches a 393 one.
+- **Ignored, as asked:** the navigation changes on the same page.
+
+Measured in Chromium and WebKit, Bodyscan and Achtsame Pause, at 393, 440,
+480, 600, 834, 1023, 1024 and 1440: on the tablet the picture's width is the
+rule's to the half pixel, its height the copy's, the gap 12, no spill; the
+desktop and the phone are unchanged; no ResizeObserver error.
+
+Why: Ben's annotations and answers.
+
+What I need from Ben: nothing to decide. At 480 the cap makes the picture
+taller than wide (119 × 170), which is the rule doing what it says.
