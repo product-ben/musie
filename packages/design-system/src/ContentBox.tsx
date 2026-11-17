@@ -55,7 +55,13 @@ export type TypeStep =
  *  'solid' DRAWS NO VISIBLE EDGE since 2026-11-16 (Ben): it is the raised fill
  *  on the page, and the name is kept so no call site changes. 'sunken' lost
  *  its edge too. 'dashed' keeps its dashes, because they mean "waiting for
- *  content"; 'plain' has neither fill nor edge, as before. */
+ *  content"; 'plain' has neither fill nor edge, as before.
+ *
+ *  'solid' WEARS THE WIZARD PANEL'S SHADOW since 2026-11-17 (Ben). The review
+ *  objection above was to a shadow BESIDE an outline, and the outline is gone,
+ *  so the depth that used to compete now replaces it. It is not 'raised' come
+ *  back: there is still one variant, and the shadow is simply what it looks
+ *  like. 'sunken', 'dashed' and 'plain' stay flat (musy-components.css §9). */
 export type BoxOutline = 'solid' | 'dashed' | 'sunken' | 'plain';
 /**
  * 1 IS IN THE UNION, and it was not until D.1 needed it.

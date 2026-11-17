@@ -249,7 +249,8 @@
      2026-11-16) — four layers, each about twice the last, the light to the
      upper left — lifted out of musy-components.css on 2026-11-17 because the
      nav pill wears it too, and a four-layer shadow in two places is two
-     shadows the day one is tuned. The component's own comment has the rest of
+     shadows the day one is tuned. The Content Box wears it as well since the
+     same day (`--musy-box-shadow`, §9), and the WizardPanel through it. The component's own comment has the rest of
      the argument: the ink is --sand-8's light value at 5.7% and black at
      20.5% in the dark, written as rgb because a shadow needs its alpha.
 

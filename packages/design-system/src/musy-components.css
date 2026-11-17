@@ -1710,6 +1710,47 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-box--sunken { background-color: var(--surface-sunken); }
 .musy-box--plain  { border-color: transparent; background-color: transparent; padding: 0; }
 
+/* ── THE BOX'S SHADOW: THE WIZARD PANEL'S, MOVED HERE (Ben, 2026-11-17) ───
+   Ben, 2026-11-17: "Apply the shadow of the wizard panel also to the content
+   box". His values from /experiments/panel-shadows/261116-1707/, verbatim:
+   four layers, each about twice the last, the light to the upper left.
+
+   THE BOX OWNS IT AND THE PANEL BORROWS IT. A WizardPanel with a stepper IS a
+   framed Content Box (`.musy-wizard__card`), so it wears this rule like any
+   other box; one without a stepper is a bare `.musy-wizard__panel` surface and
+   reads the same property in §16. Both get the definitions, so neither has
+   to sit inside the other to find them.
+
+   ONE INK, NAMED ONCE, as the deck's (`--musy-deck-shadow-ink`). Light is
+   `--sand-8`'s light value (#A7A89B) at 5.7%, dark is black at 20.5%. Written
+   as rgb because a shadow colour needs its alpha and `--sand-8` is itself a
+   light-dark() pair.
+
+   THE RING IS `--elevation-ring`. The playground writes it as
+   `light-dark(transparent, #4C534E)`, which is exactly that token, and the
+   token also takes the high-contrast override. Forced colours drop the whole
+   shadow, which is what they should do.
+
+   THE VALUES LIVE IN LAYER 1, as `--elevation-panel` (amendment G8, in
+   musy-foundations-amendments.css), since the two branches that each lifted
+   this shadow met on 2026-11-17: this one moved it from the wizard to the box,
+   and the nav pill's branch made it a token because the app's header pill
+   wears it too. One shadow, three wearers — box, wizard panel, nav pill — and
+   one place to tune it. The ink and ring notes above describe that token.
+
+   THE RAISED BOX ONLY. `--sunken` sits below the page, and a lift would say
+   the opposite; `--dashed` is a slot waiting for content, not content yet;
+   `--plain` has no surface to lift. Where a box gives up its fill to the
+   surface it sits in (the Lightbox's), it gives up the shadow with it. */
+.musy-box,
+.musy-wizard__panel {
+  --musy-box-shadow: var(--elevation-panel);
+}
+.musy-box { box-shadow: var(--musy-box-shadow); }
+.musy-box--dashed,
+.musy-box--sunken,
+.musy-box--plain { box-shadow: none; }
+
 /* ── FRAMED: header + body, divided edge to edge ──────────────────────────
    One decision worth recording: the separator is FULL-BLEED while everything
    else in the card is inset. A line that stops at the padding reads as a rule
@@ -2778,6 +2819,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-lightbox__body > .musy-box {
   border-color: transparent;
   background-color: transparent;
+  box-shadow: none;
   padding: 0;
 }
 
@@ -3632,11 +3674,20 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 
 /* THE CARD IS THE LID. `translate` rather than `transform`, so the value is
    the one thing the component writes and nothing else on the card's transform
-   can be clobbered by it. */
+   can be clobbered by it.
+
+   NO BOX SHADOW (2026-11-17). The card is a Content Box, and the box wears
+   the WizardPanel's shadow since then (§9). Here the clip above, which is what
+   keeps the delete panel hidden under the lid, cuts away everything the shadow
+   draws outside the card, and what survives is the dark theme's inset
+   `--elevation-ring` alone: a 1px edge on every row, the thing BORDERLESS
+   SURFACES took away. A row stays the raised fill it was; the dragged card's
+   preview has its own elevation. */
 .musy-dlist__swipe > .musy-dlist__item {
   position: relative;
   translate: var(--musy-dlist-swipe-x, 0);
   transition: translate var(--motion-toggle);
+  box-shadow: none;
 }
 /* WHILE THE FINGER IS DOWN THERE IS NO TRANSITION. A card that eases toward
    the finger lags behind it, and a gesture that lags is a gesture people let
@@ -5031,36 +5082,18 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
 .musy-box__body > .musy-wizard__panel:first-child { margin-block-start: 0; }
 
 /* ── THE PANEL'S SHADOW (Ben, 2026-11-16) ─────────────────────────────────
-   Ben's values from /experiments/panel-shadows/261116-1707/, verbatim: four
-   layers, each about twice the last, the light to the upper left. Until then
-   the panel stood on its raised fill alone.
+   Ben's values from /experiments/panel-shadows/261116-1707/. Since
+   2026-11-17 they belong to the Content Box (§9, THE BOX'S SHADOW), where the
+   values and their reasons live; the panel reads `--musy-box-shadow` from
+   there.
 
    ON THE OUTER SURFACE, WHICHEVER THAT IS. With a stepper the panel renders
    as a framed Content Box (`.musy-wizard__card`) whose body is the
-   transparent `.musy-wizard__panel`, so the card wears the shadow; without
-   one the panel is the surface and wears it itself. The body inside a card
-   never does (`box-shadow: none` in the rule above): a shadow inside the
-   card's own would be the double outline that rule exists to refuse.
-
-   ONE INK, NAMED ONCE, as the deck's (`--musy-deck-shadow-ink`). Light is
-   `--sand-8`'s light value (#A7A89B) at 5.7%, dark is black at 20.5%. Written
-   as rgb because a shadow colour needs its alpha and `--sand-8` is itself a
-   light-dark() pair.
-
-   THE RING IS `--elevation-ring`. The playground writes it as
-   `light-dark(transparent, #4C534E)`, which is exactly that token, and the
-   token also takes the high-contrast override. Forced colours drop the whole
-   shadow, which is what they should do.
-
-   THE VALUES LIVE IN LAYER 1 NOW, as `--elevation-panel` (amendment G8), since
-   2026-11-17: the app's nav pill wears the same shadow in Figma, and two
-   copies of a four-layer shadow are two shadows the day one is tuned. The
-   name below stays so nothing that reads it has to change. */
-.musy-wizard__card,
-.musy-wizard__panel {
-  --musy-wizard-shadow: var(--elevation-panel);
-  box-shadow: var(--musy-wizard-shadow);
-}
+   transparent `.musy-wizard__panel`, so the card wears the shadow as a box;
+   without one the panel is the surface and wears it itself. The body inside a
+   card never does (`box-shadow: none` in the rule above): a shadow inside the
+   card's own would be the double outline that rule exists to refuse. */
+.musy-wizard__panel { box-shadow: var(--musy-box-shadow); }
 
 /* ── HEADER AND BODY: INTRO → CONTENT → ACTIONS — Ben, 2026-11-16 ─────────
    Figma *Exercise pages*, Ben's spacing pass, and his naming: the header holds
