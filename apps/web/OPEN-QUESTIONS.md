@@ -11929,3 +11929,33 @@ Why: Ben's annotations and answers.
 
 What I need from Ben: nothing to decide. At 480 the cap makes the picture
 taller than wide (119 × 170), which is the rule doing what it says.
+
+## The Content Box wears the WizardPanel's shadow — RESOLVED
+
+Where: §9 of `musy-components.css` (`--musy-box-shadow`,
+`--musy-box-shadow-ink`, which replace yesterday's `--musy-wizard-shadow*`);
+the panel's own rule in §16 now reads the box's; `.musy-dlist__swipe >
+.musy-dlist__item` and `.musy-lightbox__body > .musy-box` opt out.
+
+What I did: moved Ben's playground shadow from the wizard to the box, so the
+box owns it and the panel borrows it. The wizard card IS a framed box and so
+wears it as one; the panel without a stepper reads the same property; the
+body inside a card stays `none`, as before. The values did not change by a
+character: computed in the app, the wizard card, a plain box and a bare panel
+give the same list, light and dark. Flat, on purpose: `--sunken` (it sits
+below the page), `--dashed` (a slot waiting for content), `--plain` (no
+surface), a box inside a Lightbox (it already gives its fill to the popup),
+and a DraggableList row, whose swipe wrapper clips everything outside the
+card and would leave the dark theme's 1px ring on every row and nothing else.
+Measured signed in on the local stack at 393 and 1440, light and dark:
+/about, /about-you, /discovered-music, /menu and /exercise-builder take it and
+nothing clips it; the empty /diary and /s/… stay flat. Two things now look
+different that nobody asked about by name: the Konto box in the /menu drawer
+reads as a card on the drawer, and /about's greeting bubble is lifted while
+the typing dots under it are not.
+
+Why: Ben, 2026-11-17: "Apply the shadow of the wizzard pannel also to the
+content box".
+
+What I need from Ben: nothing to decide unless one of the two flat choices or
+the two side effects above is wrong; each is one line to change.
