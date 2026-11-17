@@ -1,7 +1,7 @@
 /**
  * The header moving with the page — the wiring half. `headerReveal.ts` holds
  * every decision and says why; what is left here is one scroll listener, one
- * measurement, two style writes, and the one screen allowed to hold it still.
+ * measurement and two style writes.
  *
  * ── NOTHING HERE MOVES THE HEADER ─────────────────────────────────────────
  * The browser does, because the header is sticky and in the flow of the page
@@ -49,7 +49,6 @@ import type { RevealState } from './headerReveal';
 
 export function useHeaderReveal(
   header: React.RefObject<HTMLElement | null>,
-  pinned: boolean,
   resetKey: string,
 ): void {
   const state = React.useRef<RevealState>(AT_REST);
@@ -70,20 +69,15 @@ export function useHeaderReveal(
     written.current = { at: next.at, held: next.held };
   }, [header]);
 
-  /* Arrival, focus and un-pinning are all "showing, from here". On an arrival
-     the page is already at 0, where that is simply the rest position. A
-     pinned screen is held for as long as it is mounted. */
+  /* Arrival and focus are both "showing, from here". On an arrival the page
+     is already at 0, where that is simply the rest position. */
   const show = React.useCallback(() => {
-    place(pinned ? { at: 0, held: true, last: window.scrollY } : shownAt(window.scrollY));
-  }, [place, pinned]);
+    place(shownAt(window.scrollY));
+  }, [place]);
 
   React.useEffect(() => { show(); }, [resetKey, show]);
 
   React.useEffect(() => {
-    /* A pinned screen adds no listener at all. The screen that pins is the
-       one doing its own scrolling, and it is held at the top throughout. */
-    if (pinned) return undefined;
-
     const element = header.current;
     if (element === null) return undefined;
 
@@ -121,40 +115,5 @@ export function useHeaderReveal(
       element.removeEventListener('focusin', show);
       observer.disconnect();
     };
-  }, [header, pinned, place, show]);
-}
-
-/**
- * A screen saying "not on me".
- *
- * ── WHY ANY SCREEN GETS TO SAY THAT ───────────────────────────────────────
- * The listen step is a run of full-viewport sections that snap, and each one
- * is sized `--view-block-scrolled` — the window LESS the sticky header —
- * and lands `--sticky-block` down from the top of the window, because that is
- * where the header ends. Every one of those numbers is the header's height. A
- * header that comes and goes makes all of them wrong at once: the view snaps
- * into place and a header's worth of the PREVIOUS view shows above it, in a
- * band the reader cannot scroll away because the snap holds them there.
- *
- * It cannot be detected instead of declared. `data-musy-scroll-snap` looks
- * like the signal, but `useScrollSnap` takes that attribute off for the
- * duration of a programmatic jump — so a *Show details* button would scroll
- * you down a whole view with snapping off, the header would take that as a
- * long run downwards and hide, and the attribute would come back with the
- * header already gone. So the step says so itself, for as long as it is
- * mounted, and there is nothing to infer.
- *
- * ── COUNTED, NOT A FLAG ───────────────────────────────────────────────────
- * The same reason `useScrollSnap` counts: two screens overlap for a frame
- * during a route transition, and the one leaving must not un-pin the header
- * underneath the one arriving. StrictMode's mount / unmount / mount is the
- * same shape and is handled by the same counter.
- */
-export type PinHeader = () => () => void;
-
-export const HeaderPinContext = React.createContext<PinHeader>(() => () => {});
-
-export function usePinnedHeader(): void {
-  const pin = React.useContext(HeaderPinContext);
-  React.useEffect(() => pin(), [pin]);
+  }, [header, place, show]);
 }

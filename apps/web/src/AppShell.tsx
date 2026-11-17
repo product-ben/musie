@@ -12,8 +12,7 @@ import { BRAND_NAME } from './brand';
 import { useLocale, useT } from './i18n/localeContext';
 import { useAuth } from './lib/authContext';
 import { PagePathContext } from './lib/shellContext';
-import { HeaderPinContext, useHeaderReveal } from './lib/useHeaderReveal';
-import type { PinHeader } from './lib/useHeaderReveal';
+import { useHeaderReveal } from './lib/useHeaderReveal';
 import type { RouteHandle } from './routeHandle';
 
 const MAIN_ID = 'main';
@@ -140,27 +139,22 @@ export function AppShell() {
    * while the reader goes down, one pixel for one pixel, and comes back with
    * it as soon as they come up (Ben, 2026-11-17: „direkt und ohne lag").
    * `useHeaderReveal` holds the listener and `headerReveal.ts` every rule it
-   * applies; what belongs here is only the three things the SHELL knows.
+   * applies; what belongs here is only the two things the SHELL knows.
    *
    * WHICH PAGE COUNTS AS ARRIVING: `pagePath`, not the location — it is
    * already the path of the page underneath an overlay, so opening the drawer
    * over a scrolled page is not an arrival and closing it changes nothing.
    *
-   * WHO MAY PIN IT: any screen that does its own scrolling, through
-   * `usePinnedHeader`. Counted rather than set, because two screens overlap
-   * for a frame during a route change; see the hook.
+   * NO SCREEN PINS IT any more. The listen step did, until its views stopped
+   * being sized around the header (2026-11-17); with nothing left to call it,
+   * the pin went too.
    *
    * WHERE THE ANSWER GOES: nowhere in React. The browser moves the header —
    * it is sticky, in the flow of the page — and the hook only places it, by
    * writing to the element directly at a turn. No scroll renders the shell.
    */
   const headerRef = React.useRef<HTMLElement>(null);
-  const [pins, setPins] = React.useState(0);
-  const pinHeader = React.useCallback<PinHeader>(() => {
-    setPins((count) => count + 1);
-    return () => setPins((count) => count - 1);
-  }, []);
-  useHeaderReveal(headerRef, pins > 0, pagePath ?? '');
+  useHeaderReveal(headerRef, pagePath ?? '');
 
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
@@ -168,7 +162,6 @@ export function AppShell() {
        provider still has to sit above everything that renders an IconButton. */
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
-      <HeaderPinContext.Provider value={pinHeader}>
       <div className="musie-app">
         {/* `--musie-header-at` and `data-held` are written by
             `useHeaderReveal`, straight onto the element and only at a turn
@@ -232,7 +225,6 @@ export function AppShell() {
             rather than two that can disagree. */}
         {isOverlay && contentReady ? outlet : null}
       </div>
-      </HeaderPinContext.Provider>
       </PagePathContext.Provider>
     </MusyTooltipProvider>
   );

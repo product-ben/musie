@@ -12033,3 +12033,51 @@ What I need from Ben:
    phone, watch for it.
 3. Item 3 of the entry above still stands: a Tab to the gone header brings it
    back, but the browser first scrolls the page to the button.
+
+## The listen step lets the header move; the band stops tinting Safari's status bar — RESOLVED, one check on the phone
+
+Where: `components/SessionListen.tsx`, `lib/useHeaderReveal.ts`,
+`AppShell.tsx`, `shell.css` (`.musie-header`, the listen views)
+
+What I did: Ben, 2026-11-17, on his iPhone over the tunnel, two bugs.
+- **The listen step held the header still** (`usePinnedHeader`): its three
+  views snapped `--sticky-block` below the window's top and were sized
+  `--view-block-scrolled`, both the old, always-present bar's height. Now the
+  views snap to the window's top (no `--musy-snap-inset`) and the two
+  scrolled-to views fill the window (`--viewport-block`), so the header leaves
+  with the page and comes back over the top of the view, as on every screen.
+  It was the only screen that pinned, in every worktree, so the pin
+  mechanism went with it.
+- **A beige strip under the status bar cut the page off hard.** Safari 26
+  ignores `theme-color` and paints that strip from a fixed or sticky element
+  at the top edge spanning about 90% of the width or more; a transparent one
+  it fills with the page background. The header band was sticky and full
+  width — so: solid beige, white card and pill sliced at its edge. The old
+  bar was an opaque full-width bar of its own colour, which is why nobody saw
+  it. The band is now only as wide as the pill (`align-self: flex-start`; 47%
+  of a 393 window, 15% of 1440), so Safari has nothing to sample.
+  Undocumented by Apple; the sources (2025–26 community research) are
+  hawkshift.com/research/ios-26-safari-status-bar,
+  github.com/joe-bell/skills (apple-web-app, theme-color-and-status-bar) and
+  1ar.io/updates/safari-26-liquid-glass-web — they disagree in details, and
+  Ben's screenshots settled it for this page.
+
+Measured in Chromium against the local stack at 393 and 1440: on the listen
+step the header is at rest at the top, gone (24px above the window) after
+*About the music* and after a view's worth of wheel, back in its place after
+*Back to listening* and after a view up; each snapped view fills the window
+with no strip of the one before; the exercise list still moves pixel for
+pixel and `<main>` never moves.
+
+Why: Ben's report.
+
+What I need from Ben:
+1. **On the phone, after a reload** (Safari decides the strip on load): does
+   the white card now glide under the clock — and does the PILL? If Safari
+   draws the pill only below the status bar line and cuts it there, the
+   agreed next step is the larger change: the header as ordinary page content
+   (`position: absolute`) while it moves, `fixed` only while held.
+2. **A short swipe on the listen step shows the header briefly.** The views
+   snap mandatorily, so a swipe too short to change view springs back up —
+   and the header comes in by exactly as far as the page springs back. It is
+   the pixel-for-pixel rule doing what it says; say if it reads as a flicker.

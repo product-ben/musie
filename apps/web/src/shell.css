@@ -57,11 +57,11 @@
    musy-foundations-amendments.css, which states the same arithmetic).
    `.musie-header__pill` is what you see and tap.
 
-   THE BAND TAKES NO POINTER. It spans the window and is transparent, so once
-   the page scrolls under it, it is lying over content the reader can see —
-   and without `pointer-events: none` it would swallow every tap on that
-   strip. The pill takes them back. The same pair `.musie-listen__rail` uses,
-   for the same reason.
+   THE BAND TAKES NO POINTER. It is transparent, so once the page scrolls
+   under it, its padding round the pill is lying over content the reader can
+   see — and without `pointer-events: none` it would swallow every tap there.
+   The pill takes them back. The same pair `.musie-listen__rail` uses, for the
+   same reason.
 
    TWO SIZES, AT THE FIRST GUTTER STEP (768px). Figma draws 393 and 834 and
    nothing between; 768 is where Layer 1's gutter first steps, so the header
@@ -117,7 +117,17 @@
    the band's footprint in the page is always its own height, at the top.
 
    `data-held` is `top: 0` — classic sticky — for a header all the way back
-   in, while the reader goes on up; and for a screen that pins it.
+   in, while the reader goes on up.
+
+   ONLY AS WIDE AS THE PILL — `align-self: flex-start`, so the band hugs the
+   pill and its inline padding instead of spanning the window. Safari 26 on
+   the iPhone paints the strip under the status bar from a fixed or sticky
+   element at the top edge that spans about 90% of the width or more, and a
+   transparent one it fills with the page background: the full-width band
+   made a solid beige strip that cut the page off hard, the white card and
+   the pill with it (Ben's phone, 2026-11-17). Narrow, it is not a candidate,
+   Safari paints no strip, and the page scrolls on under the clock. Apple
+   documents none of this; OPEN-QUESTIONS.md has the sources.
 
    THE CLEARANCE IS --sp-2. The band already ends --sp-4 below the pill, so
    gone, the pill's edge waits 24px above the window — past where its shadow
@@ -133,6 +143,7 @@
    composited by the browser on its own.                                     */
 .musie-header {
   --musie-header-clearance: var(--sp-2);
+  align-self: flex-start;
   position: sticky;
   inset-block-start: calc(-1 * (var(--musie-header-block, var(--sticky-block)) + var(--musie-header-clearance)));
   margin-block-start: var(--musie-header-at, 0px);
@@ -1913,20 +1924,14 @@
   position: relative;
 }
 
-/* THE ONE THING THE SYSTEM CANNOT KNOW: how much of the window this app's own
-   chrome is sitting on top of. `.musy-snap-view` scrolls to the top of the
-   viewport, and the sticky header would be over the first `--sticky-block` of
-   every view it landed on. Declared against the attribute `useScrollSnap`
-   sets, so it exists only while something is snapping.
-
-   `--sticky-block` is the same subtraction `--view-block-scrolled` already
-   makes for these views' heights — the header alone, without `<main>`'s
-   insets, because by the time a view is scrolled TO the insets are behind
-   it. The two numbers have to be the same one, or a view is inset by an
-   amount it was not sized for.                                             */
-html[data-musy-scroll-snap] {
-  --musy-snap-inset: var(--sticky-block);
-}
+/* NO SNAP INSET — views land at the top of the window. `.musy-snap-view`
+   scrolls to the top of the viewport, and until 2026-11-17 this declared
+   `--musy-snap-inset: var(--sticky-block)` so each view landed below a header
+   that was pinned over this step. The header moves with the page here now, as
+   everywhere: going down it has left by the time a view snaps, so the view
+   takes the whole window; coming back up it floats over the view's top, as it
+   floats over every other page. The system's default inset, 0, is the right
+   one, and the variable is simply not declared.                            */
 
 /* ── Scroll 1 · the stage ──────────────────────────────────────────────────
    A FULL VIEW, like the two below it, and it has to be: at its natural height
@@ -2106,16 +2111,14 @@ html[data-musy-scroll-snap] {
 .musie-listen__view--warn,
 .musie-listen__view--detail {
   box-sizing: border-box;
-  /* MEASURED, AND MINUS THE CHROME. `100svh` sized these to the whole window
-     and then the sticky header sat on top of the first 141px of them, so the
-     Störer's sentence started under the header and the details view's player
-     was pushed below the fold. `--view-block` is the window as measured at
-     runtime, less what the shell actually takes — both from the design
-     system, both per breakpoint. `--view-block-scrolled` rather than
-     `--view-block`: these two are SCROLLED TO, and by then only the sticky
-     header is over them — subtracting `<main>`'s insets as well would leave
-     each one 72px short of the window. */
-  min-block-size: var(--view-block-scrolled);
+  /* THE WHOLE WINDOW, MEASURED. These two are SCROLLED TO, and since
+     2026-11-17 the header has left with the page by the time they arrive, so
+     nothing of the shell is over them: `--viewport-block`, the window as
+     measured at runtime (not `100svh`, which is the smallest the window ever
+     gets). Until then they were `--view-block-scrolled`, the window less a
+     header pinned over this step — and with the header gone that left a
+     header's worth of the previous view showing above them. */
+  min-block-size: var(--viewport-block);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
