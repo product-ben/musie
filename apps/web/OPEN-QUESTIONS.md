@@ -11929,3 +11929,59 @@ Why: Ben's annotations and answers.
 
 What I need from Ben: nothing to decide. At 480 the cap makes the picture
 taller than wide (119 × 170), which is the rule doing what it says.
+
+## The header becomes a floating pill — RESOLVED, with three things to look at
+
+Where: `AppShell.tsx`, `shell.css` (`.musie-header`, `.musie-header__pill`,
+`.musie-main`, the drawer header), `components/NavDrawer.tsx`,
+`lib/headerReveal.ts` + `lib/useHeaderReveal.ts` (+ test);
+`packages/design-system`: `src/Logo.tsx` (`variant="flat"`),
+`musy-components.css` §12 and the WizardPanel shadow,
+`tokens/musy-foundations-amendments.css` (G7, G8), `TOKEN-DRIFT.md`,
+`stories/Logo.stories.tsx`
+
+What I did: the navigation half of Ben's Figma page *Einsteigen · Bodyscan
+· 17.11.* (the half the entry above set aside), on branch
+`make-nav-more-minimal`. Ben chose, 2026-11-17: keep the hide-on-scroll as it
+is, logo-first only, one mark size, Figma's 16 on the phone.
+- **The pill.** Flat mark + „Musie" + the menu button (IconButton `sm`), on
+  `--surface-overlay`, fully round, WizardPanel's shadow. Phone: 56 tall, 16
+  from the window's top and start. From 768: 68 tall, 24 from both, at every
+  width (it does not follow the 980 column). The band around it is
+  transparent and takes no pointer, so the page under it stays tappable.
+- **The flat mark** is a `Logo` variant, inline SVG in `currentColor` (dark
+  theme and forced colours follow the ink). The drawer shows it too.
+- **The heights the layout leans on moved with it.** `--sticky-block` and
+  `--chrome-block` are 72 / 136 on a phone and 92 / 164 from 768 (were 69 /
+  141). Layer 1 is locked, so the new values are amendment G7. The listen
+  step snaps 72 / 92 down; the session intro does not scroll at 393, 834 or
+  1440.
+- **The shadow is one token now**, `--elevation-panel` (G8), worn by the
+  WizardPanel and the pill.
+- **A bug in the reveal, found walking it and fixed.** Tab to the menu button
+  while the header was hidden: focus brought it back, the browser then
+  scrolled to the focused button, and that scroll was read from position 0 as
+  a long run down — so the header hid again with focus inside it (2.4.11).
+  `shownAt(scrollY)` now restarts from where the page is. Tested in the
+  reducer, and walked with a real Shift+Tab at all three widths.
+
+Measured in Chromium against the local stack at 393, 834 and 1440: pill
+151 × 56 at (16, 16) on the phone, Figma's exact numbers; 164–166 × 68 at
+(24, 24) from 768; content 16 / 24 below the band; hidden, the pill clears
+the window (its bottom at −48); 40px of scroll up brings it back; light and
+dark.
+
+Why: Ben's design.
+
+What I need from Ben:
+1. **68, not 69.** Figma's large pill is 69: the old bar's 44 + 12 + 12 plus
+   its hairline. The pill has no hairline, so I built 68 from the same tokens
+   rather than add a non-token pixel. Say if the pixel matters.
+2. **The mirrored variant is not built** (menu first, wordmark, then mark —
+   the extra 834 frame „1729"). It was a decision, not an oversight; a
+   `?nav=` switch to compare the two would be small.
+3. **Tab to the hidden header still moves the page.** The header now stays,
+   but the browser scrolls the page up to the focused button first (about
+   500px on /exercises). That is the browser bringing focus into view, and
+   preventing it would mean taking the hidden header out of the tab order —
+   which is the other way of failing 2.4.11. Logged rather than fought.

@@ -13,11 +13,13 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { AT_REST, HIDE_AFTER, REVEAL_AFTER, nextReveal } from './headerReveal';
+import { AT_REST, HIDE_AFTER, REVEAL_AFTER, nextReveal, shownAt } from './headerReveal';
 import type { RevealState } from './headerReveal';
 
-/** The real shell: 44 + 12 + 12 + 1, and a page several windows long. */
-const HEADER = 69;
+/** The real shell on a phone — the pill's band, 16 + 56 (`--sticky-block`,
+ *  G7) — and a page several windows long. It was 69, the full-width bar,
+ *  until 2026-11-17; nothing below depends on which. */
+const HEADER = 72;
 const LONG_PAGE = 4000;
 
 function run(positions: number[], page = LONG_PAGE, from: RevealState = AT_REST): RevealState {
@@ -136,5 +138,31 @@ describe('the bounce at either end', () => {
     const bottom = run([100, LONG_PAGE]);
     expect(bottom.hidden).toBe(true);
     expect(run([LONG_PAGE + 90, LONG_PAGE + 40, LONG_PAGE], LONG_PAGE, bottom).hidden).toBe(true);
+  });
+});
+
+describe('shown by focus, then scrolled by the browser', () => {
+  /* Hidden near the bottom; Tab lands on the menu button; focus reveals the
+     header; the browser then scrolls up to bring the focused button into
+     view. That scroll must not take the header away again. */
+  const page = 900;
+  const hidden = run([100, page - 16], page);
+
+  it('is hidden before the focus arrives', () => {
+    expect(hidden.hidden).toBe(true);
+  });
+
+  it('stays shown through the scroll the focus causes', () => {
+    expect(run([382], page, shownAt(page - 16)).hidden).toBe(false);
+  });
+
+  it('would have hidden again had it restarted from the top', () => {
+    /* The bug, kept as a test: AT_REST's `last` is 0, so the same jump reads
+       as a long run down. */
+    expect(run([382], page, AT_REST).hidden).toBe(true);
+  });
+
+  it('clamps an overscrolled position like any other reading', () => {
+    expect(shownAt(-40)).toEqual(AT_REST);
   });
 });

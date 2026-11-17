@@ -43,52 +43,64 @@
   font-family: var(--type-body-md-family);
 }
 
-/* ═══ HEADER ════════════════════════════════════════════════════════════════
-   Three columns rather than the prototype's flex row, because the brief puts
-   the Logo in the CENTRE and the prototype does not — it groups the logo
-   beside the hamburger and pushes the profile button out with an auto margin.
-   `1fr auto 1fr` centres the logo against the viewport whatever the buttons'
-   labels do, which a flex row cannot promise.
+/* ═══ HEADER · THE PILL ══════════════════════════════════════════════════════
+   Ben, 2026-11-17 — Figma *Einsteigen · Bodyscan · 17.11.*, the nav panel and
+   its two sizes. Until then this was a full-width bar: a raised fill, a
+   hairline, the menu button at the start and the logo centred on the viewport
+   by a `1fr auto 1fr` grid. Now it is one rounded pill at the inline start —
+   the flat mark and the wordmark, then the menu button — floating in a
+   transparent band, with the page showing all round it.
 
-   THE THIRD COLUMN IS EMPTY SINCE 2026-09-24, when /settings and its profile
-   icon were deleted, and it stays. The two 1fr tracks are what make the middle
-   one land on the viewport's centre line; with one button and `1fr auto` the
-   logo would centre in whatever room is left beside the hamburger and sit
-   visibly off-axis.                                                         */
+   TWO ELEMENTS, BECAUSE THERE ARE TWO JOBS. `.musie-header` is the BAND: it is
+   sticky, it is what slides, it is what the page starts below, and its height
+   is exactly `--sticky-block` (G7 in musy-foundations-amendments.css, which
+   states the same arithmetic). `.musie-header__pill` is what you see and tap.
+
+   THE BAND TAKES NO POINTER. It spans the window and is transparent, so once
+   the page scrolls under it, it is lying over content the reader can see —
+   and without `pointer-events: none` it would swallow every tap on that
+   strip. The pill takes them back. The same pair `.musie-listen__rail` uses,
+   for the same reason.
+
+   TWO SIZES, AT THE FIRST GUTTER STEP (768px). Figma draws 393 and 834 and
+   nothing between; 768 is where Layer 1's gutter first steps, so the header
+   and the page's margins change together rather than at two widths.
+
+     phone   band --sp-4 · pill --sp-2 / --sp-4 + --sp-2 around --target-sm = 56
+     768px+  band --sp-5 · pill 68 tall (--target-primary + --sp-3 twice),
+             --sp-5 / --sp-3 at the inline ends
+
+   NOT THE GUTTER. The band is --sp-4 / --sp-5 at every width, where --gutter
+   grows to 32 and 48 on a desktop: Figma keeps the pill 24px off the window's
+   edge at 1440 and 1728 alike, beside a column centred well away from it.  */
+
 /* ── HOW FAR DOWN A TOP-PLACED TOAST STARTS ───────────────────────────────
    `--z-toast` (500) outranks `--z-sticky` (100) by Layer 1's own design, so a
    `placement="top"` Toast paints OVER this header unless something says
    otherwise. The component publishes this property and falls back to a token;
    only the app knows how tall its own header is, so the app answers.
 
-   MEASURED BY CONSTRUCTION, not by a number somebody read off a screenshot.
-   The header is `align-items: center` with `padding: var(--sp-3) …`, and its
-   tallest child is the menu control at `--target-primary` — the Logo's nav
-   mark is `--icon-size-lg`, well under it. So the height IS
-   `--sp-3 * 2 + --target-primary`, and it stays right the day either token
-   moves. `--space-gap-stack` on top is the toast's own clearance below the
-   hairline. (AppShell's comment says "69px", which is this plus the border.)
+   `--sticky-block` IS the band's height, per breakpoint, so the toast clears
+   the pill wherever it is. `--space-gap-stack` on top is the toast's own
+   clearance.
 
    IT DOES NOT FOLLOW THE HEADER WHEN IT HIDES. The header slides away on
    scroll, and a toast that chased it would be a second thing moving on a
    screen somebody is reading. It holds the position the header occupies when
    it is there, which is the only position that is correct in both states. */
 .musie-app {
-  --musy-toast-inset-block-start:
-    calc(var(--sp-3) * 2 + var(--target-primary) + var(--space-gap-stack));
+  --musy-toast-inset-block-start: calc(var(--sticky-block) + var(--space-gap-stack));
 }
 
 .musie-header {
   position: sticky;
   inset-block-start: 0;
   z-index: var(--z-sticky);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: var(--space-gap-related);
-  padding: var(--sp-3) var(--gutter);
-  background-color: var(--surface-raised);
-  border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
+  display: flex;
+  align-items: flex-start;
+  padding-block-start: var(--sp-4);
+  padding-inline: var(--sp-4);
+  pointer-events: none;
   /* The slide. `--motion-enter` is the COMING BACK — L1's named motion for
      something arriving, which decelerates — and the going away is
      `--motion-exit` on the modifier below, which accelerates and is quicker.
@@ -104,15 +116,48 @@
   will-change: transform;
 }
 
+.musie-header__pill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  padding-inline: var(--sp-4) var(--sp-2);
+  background-color: var(--surface-overlay);
+  border-radius: var(--radius-full);
+  /* WizardPanel's shadow, by name — G8. The pill wears the same one in Figma,
+     and a token is how the two stay one shadow. */
+  box-shadow: var(--elevation-panel);
+  pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+  .musie-header {
+    padding-block-start: var(--sp-5);
+    padding-inline: var(--sp-5);
+  }
+
+  /* 68 TALL, NOT 69. Figma's large pill keeps the old bar's 69px, and that
+     number was 44 + 12 + 12 + its hairline. The pill has no hairline; 68 is
+     the same arithmetic without it, and a non-token pixel is not worth the
+     one it would buy. Logged in OPEN-QUESTIONS.md. */
+  .musie-header__pill {
+    min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
+    padding-inline: var(--sp-5) var(--sp-3);
+  }
+}
+
 /* ── HIDDEN IS A TRANSFORM, NOT A LAYOUT CHANGE ────────────────────────────
-   `translateY(-100%)` — one of the geometric identities L14 allows, and the
-   only honest way to say "its own height, whatever that is today".
+   Its own height and then some: `-100%` takes the band off the top of the
+   window, and the pill's shadow still hangs below the band's edge — four
+   layers, the widest reaching some 37px past the pill. `--sp-7` more carries
+   that out of sight too; without it a faint smudge would sit along the top
+   of the page for as long as the header was "hidden".
 
    IT MUST NOT BE `display: none`, and not `block-size: 0` either. The header
    is sticky, so it takes its space at the TOP OF THE DOCUMENT and nowhere
-   else; taking it out of flow would shorten the page by 69px under a reader
-   who is halfway down it, and every `--view-block` on screen would be wrong
-   for a frame. Transformed, the header keeps its place in the document
+   else; taking it out of flow would shorten the page by its height under a
+   reader who is halfway down it, and every `--view-block` on screen would be
+   wrong for a frame. Transformed, the header keeps its place in the document
    exactly and only travels out of the window — so `--chrome-block`,
    `--sticky-block` and every view sized from them stay true while it is gone.
 
@@ -122,21 +167,8 @@
    and a header that is simply there or not is still one less thing taking up
    a small screen.                                                           */
 .musie-header[data-hidden='true'] {
-  transform: translateY(-100%);
+  transform: translateY(calc(-100% - var(--sp-7)));
   transition: transform var(--motion-exit);
-}
-
-.musie-header > :first-child {
-  justify-self: start;
-}
-
-/* `:nth-child(3)` rather than `:last-child`, which the logo now is. On an
-   `auto` track the two resolve identically — the grid area is exactly the
-   item's width, so `end` has nothing to move it within — and a rule that is
-   silently inert is a rule that misleads whoever reads it next. Named by
-   COLUMN, so it applies to a third child if the header ever takes one again. */
-.musie-header > :nth-child(3) {
-  justify-self: end;
 }
 
 /* ═══ MAIN ══════════════════════════════════════════════════════════════════
@@ -148,7 +180,14 @@
   inline-size: 100%;
   max-inline-size: var(--bp-md);
   margin-inline: auto;
-  padding: var(--sp-5) var(--gutter) var(--sp-7);
+  /* --sp-4 below the header band on a phone, --sp-5 from 768px — Figma's
+     numbers, 2026-11-17 (it was --sp-5 everywhere). `--chrome-block` states
+     the same pair (G7), so a view sized from it stays exact. */
+  padding: var(--sp-4) var(--gutter) var(--sp-7);
+}
+
+@media (min-width: 768px) {
+  .musie-main { padding-block-start: var(--sp-5); }
 }
 
 .musie-main[data-wide='1'] {
@@ -238,8 +277,8 @@
    IT ALSO OWES THE GUTTER, and the first version forgot it. `.musie-stage`
    never carried one because it has always rendered inside `.musie-main`, which
    pays it — so standing the stage on its own silently took it away and the box
-   met both screen edges. `--gutter` is the same token `.musie-main` and
-   `.musie-header` use, so the gate insets by exactly what every other screen
+   met both screen edges. `--gutter` is the same token `.musie-main` uses
+   (and `.musie-header` used, until it became a pill), so the gate insets by exactly what every other screen
    does; hardcoding a second value here is how two screens stop lining up.
 
    ON THE MODIFIER AND NOT ON `.musie-stage`, because the plain stage IS inside
@@ -1138,6 +1177,14 @@
    beaten by source order the way two single-class selectors can.            */
 .musie-sheet.musie-drawer {
   gap: var(--space-gap-stack);
+}
+
+/* THE DRAWER'S HEADER IS ONE LINE, so its logo and its close button centre on
+   each other — as the same logo and the menu button do in the header pill the
+   drawer opens from. `.musie-sheet__header` tops-aligns for every other sheet,
+   whose title can wrap to two lines beside the X. 2026-11-17, with the pill. */
+.musie-drawer .musie-sheet__header {
+  align-items: center;
 }
 
 /* ═══ THE PAGE LIST ═════════════════════════════════════════════════════════

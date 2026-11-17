@@ -134,8 +134,8 @@ export function AppShell() {
   /**
    * THE HEADER GETS OUT OF THE WAY WHILE YOU READ.
    *
-   * On a phone the sticky header costs 69px of every screen for as long as
-   * you are on it, and the diary, the exercise library and the reflect step
+   * On a phone the sticky header costs 72px of every screen for as long as
+   * you are on it (`--sticky-block`), and the diary, the exercise library and the reflect step
    * are all longer than a window. So it slides out while the reader goes down
    * the page and comes back as soon as they come up. `useHeaderReveal` holds
    * the listener and `headerReveal.ts` every rule it applies; what belongs
@@ -152,6 +152,10 @@ export function AppShell() {
    * WHERE THE ANSWER GOES: one attribute. The slide itself is a transform in
    * shell.css, so nothing here reflows and no geometry moves — the header is
    * drawn in the same place either way and only travels.
+   *
+   * THE PILL CHANGED HOW IT LOOKS, NOT HOW IT MOVES (2026-11-17). Same
+   * thresholds, same pin, same arrival rule; the hook measures the band the
+   * pill floats in, which is the height `--sticky-block` now states.
    */
   const headerRef = React.useRef<HTMLElement>(null);
   const [pins, setPins] = React.useState(0);
@@ -174,22 +178,30 @@ export function AppShell() {
           className="musie-header"
           data-hidden={headerHidden ? 'true' : 'false'}
         >
-          <IconButton
-            glyph={Menu}
-            label={t('shell.menuLabel')}
-            variant="ghost"
-            size="primary"
-            aria-expanded={location.pathname === MENU_PATH}
-            onClick={() => navigate(MENU_PATH)}
-          />
-          {/* AND NOTHING AFTER IT. The profile button went with /settings on
-              2026-09-24: the preferences it opened are in the drawer now, so a
-              second icon would open the same overlay the first one does. The
-              header's third grid column is left in place and empty — `1fr auto
-              1fr` is what centres the logo against the VIEWPORT, and dropping
-              the column would centre it against the space left over beside the
-              hamburger instead. See .musie-header. */}
-          <Logo size="nav" showWordmark alt={BRAND_NAME} />
+          {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
+              17.11.*). The full-width bar with its centred logo became one
+              rounded pill at the inline start: the flat mark and the wordmark,
+              then the menu button. The header element is the transparent band
+              it floats in — the band is what the page starts below, and the
+              pill is the only part of it that takes a pointer (shell.css).
+
+              Logo before the button, and that is the reading order too: the
+              logo is not focusable, so the menu button is still the first and
+              only tab stop in the header.
+
+              The profile button went with /settings on 2026-09-24, and nothing
+              has taken its place: the drawer holds what it opened. */}
+          <div className="musie-header__pill">
+            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <IconButton
+              glyph={Menu}
+              label={t('shell.menuLabel')}
+              variant="ghost"
+              size="sm"
+              aria-expanded={location.pathname === MENU_PATH}
+              onClick={() => navigate(MENU_PATH)}
+            />
+          </div>
         </header>
 
         {/* NO SKIP LINK, and it is a removal rather than an omission — Ben,

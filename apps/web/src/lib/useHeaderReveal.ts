@@ -44,7 +44,7 @@
  * needs to know: the next scroll reads the current position and carries on.
  */
 import * as React from 'react';
-import { AT_REST, nextReveal } from './headerReveal';
+import { AT_REST, nextReveal, shownAt } from './headerReveal';
 import type { RevealState } from './headerReveal';
 
 export function useHeaderReveal(
@@ -55,8 +55,11 @@ export function useHeaderReveal(
   const [hidden, setHidden] = React.useState(false);
   const state = React.useRef<RevealState>(AT_REST);
 
+  /* From where the page is now, not from the top: `shownAt` says why. On an
+     arrival the two are the same, because AppShell has already scrolled the
+     new route to 0 by the time this runs. */
   const show = React.useCallback(() => {
-    state.current = AT_REST;
+    state.current = shownAt(window.scrollY);
     setHidden(false);
   }, []);
 

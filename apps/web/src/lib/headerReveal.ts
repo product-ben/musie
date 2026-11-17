@@ -1,7 +1,7 @@
 /**
  * Whether the app header is on screen — as a function, with nothing mounted.
  *
- * The header is sticky, and on a phone it costs 69px of every screen for as
+ * The header is sticky, and on a phone it costs 72px of every screen for as
  * long as you are reading one. The pattern that gives that back is the
  * familiar one: it slides out of the way while you read DOWN the page, and
  * comes back the moment you scroll UP, because scrolling up is what someone
@@ -58,11 +58,34 @@ export type RevealState = {
 export const AT_REST: RevealState = { hidden: false, last: 0, anchor: 0, direction: 'up' };
 
 /**
+ * Showing, from wherever the page is NOW — what the hook resets to when focus
+ * brings the header back, or a screen stops pinning it.
+ *
+ * ── NOT `AT_REST`, AND IT USED TO BE ──────────────────────────────────────
+ * Found walking the pill on 2026-11-17. Tab to the menu button while the
+ * header is hidden: focus reveals it — and then the BROWSER scrolls, because
+ * the button it just focused was transformed off the top of the window, and
+ * bringing a focused control into view is what browsers do. That scroll was
+ * read against `AT_REST`, whose `last` is 0, so a jump from 884 up to 382
+ * looked like a run DOWN of 382px from the top, past HIDE_AFTER, and the
+ * header went away again with focus inside it — the exact 2.4.11 failure the
+ * `focusin` listener exists to prevent.
+ *
+ * Anchored at the real position, the same jump is a run UP, and a run up never
+ * hides anything. Clamped like every reading, for the same iOS reason.
+ */
+export function shownAt(scrollY: number): RevealState {
+  const y = Math.max(scrollY, 0);
+  return { hidden: false, last: y, anchor: y, direction: 'up' };
+}
+
+/**
  * One reading of the page, taken in a frame.
  *
  * `maxScrollY` and `headerBlock` are measured rather than assumed — the header
- * is `--target-primary` plus `--sp-3` twice plus a hairline today, and the day
- * that changes this must not be carrying the old number.
+ * was `--target-primary` plus `--sp-3` twice plus a hairline until 2026-11-17,
+ * when it became a pill in a band two sizes tall (`--sticky-block`), and this
+ * reducer did not have to hear about it. That was the point.
  */
 export type ScrollReading = {
   scrollY: number;
