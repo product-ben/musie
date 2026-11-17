@@ -76,10 +76,14 @@
 }
 
 /* ═══ REFLECT ═══════════════════════════════════════════════════════════════ */
+/* THE PANEL SPACES THE QUESTIONS, not this step (main, 2026-11-16: "the
+   panel owns every distance … a step never spaces itself"). The wrapper only
+   carries the ref and the focus handler; with `display: contents` each
+   question/answer pair is a block of `.musy-wizard__content` and gets its
+   --sp-5 (24) — twice the --space-gap-related (12) between a question and
+   its own field, so a label reads as belonging to the field below it. */
 .musie-reflexion-answers {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-gap-stack);
+  display: contents;
 }
 
 /* GROWS WITH ITS TEXT. `field-sizing: content` where the browser has it; the

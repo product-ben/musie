@@ -2,10 +2,12 @@
  * The experiment's reflect step — `/session/:id/reflect` in the memory router,
  * standing where Session's own reflect step would.
  *
- * SAME FRAME AS SESSION: `ContentBox` with the exercise's name muted above
- * the rail, the same `InteractiveWizard` (the run's own steps via
- * `stepsForRun`, reflect current), and `WizardPanel`'s action row with Back
- * first and the one forward action last (Session.tsx ~1330–1520).
+ * SAME FRAME AS SESSION (main, 2026-11-16): `WizardPanel` with `stepper` is
+ * the whole card — the run's own steps in the header (`stepsForRun`, reflect
+ * current), the exercise's name as the hidden h1, Intro then Content in the
+ * body, the action row last with Back (arrow) first and the one forward
+ * action after it. Under the card, Session's footer line: exercise, date.
+ * Reflect has no × there, as in Session.
  *
  * THE BODY (brief): three multi-line fields that grow with their text, each
  * labelled by a question from the config in the active language, none
@@ -25,14 +27,15 @@
  * so deleting a word frees it again.
  */
 import * as React from 'react';
-import { Smile } from 'lucide-react';
+import { ArrowLeft, Smile } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  Button, ContentBox, Field, InteractiveWizard, Message, WizardPanel,
+  Button, Field, InteractiveWizard, Message, WizardContent, WizardIntro, WizardPanel,
 } from '@musie/design-system';
 import { FeelingsSheet } from '../../../src/components/FeelingsSheet';
 import { useLocale, useT } from '../../../src/i18n/localeContext';
 import { getExercise } from '../../../src/lib/content';
+import { formatShortDate } from '../../../src/lib/diary';
 import { idOf, pathOf, resolveFeeling } from '../../../src/lib/feelings';
 import type { HeldFeeling } from '../../../src/lib/feelings';
 import type { Exercise } from '../../../src/lib/content';
@@ -54,6 +57,9 @@ const FALLBACK_SHAPE: Record<Slug, { kind: ExerciseKind; cardsDealt: number | nu
   'body-scan': { kind: 'listening_only', cardsDealt: null },
   'freie-bahn': { kind: 'card_based', cardsDealt: 1 },
 };
+
+/* The run's start, for the footer's date. */
+const STARTED_AT = new Date().toISOString();
 
 /* One page load = one run, so one draft. */
 const draft: Record<string, string> = {};
@@ -201,48 +207,53 @@ export function ReflectionStep() {
 
   return (
     <div className="musie-session musie-reflexion-reflect">
-      <ContentBox
+      <WizardPanel
         headingLevel={1}
         headlineStep="heading-sm"
-        headlineTone="muted"
+        headlineHidden
         headline={row?.name ?? copy.reflectionHeading}
-        header={
-          <div className="musie-rail">
-            <InteractiveWizard
-              label={t('session.wizardLabel')}
-              steps={steps.map((step) => ({
-                id: step,
-                label: t(stepMessageKey(step)),
-                icon: STEP_ICON[step],
-              }))}
-              current="reflect"
-              completed={before}
-              onStepChange={(next) => {
-                if (next !== 'reflect') goTo(next as StepId);
-              }}
-            />
-          </div>
+        stepper={
+          <InteractiveWizard
+            label={t('session.wizardLabel')}
+            steps={steps.map((step) => ({
+              id: step,
+              label: t(stepMessageKey(step)),
+              icon: STEP_ICON[step],
+            }))}
+            current="reflect"
+            completed={before}
+            onStepChange={(next) => {
+              if (next !== 'reflect') goTo(next as StepId);
+            }}
+          />
+        }
+        actions={
+          <>
+            {previous !== null && (
+              <Button
+                variant="ghost"
+                leadingIcon={ArrowLeft}
+                onClick={() => goTo(previous)}
+                disabled={saving}
+              >
+                {copy.back}
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              loading={saving}
+              loadingLabel={copy.saving}
+              onClick={() => void finish()}
+            >
+              {copy.done}
+            </Button>
+          </>
         }
       >
-        <WizardPanel
-          actions={
-            <>
-              {previous !== null && (
-                <Button variant="ghost" onClick={() => goTo(previous)} disabled={saving}>
-                  {copy.back}
-                </Button>
-              )}
-              <Button
-                variant="primary"
-                loading={saving}
-                loadingLabel={copy.saving}
-                onClick={() => void finish()}
-              >
-                {copy.done}
-              </Button>
-            </>
-          }
-        >
+        <WizardIntro>
+          <h2 className="musie-reflect__welcome">{copy.reflectionHeading}</h2>
+        </WizardIntro>
+        <WizardContent>
           <div
             ref={areaRef}
             className="musie-reflexion-answers ph-no-capture"
@@ -261,7 +272,6 @@ export function ReflectionStep() {
               }, 300);
             }}
           >
-            <h2 className="musie-reflect__welcome">{copy.reflectionHeading}</h2>
             {QUESTIONS.map((question) => {
               const field = (
                 <Field
@@ -307,8 +317,17 @@ export function ReflectionStep() {
               />
             )}
           </div>
-        </WizardPanel>
-      </ContentBox>
+        </WizardContent>
+      </WizardPanel>
+      {/* Session's footer line, without the × (reflect has none there). */}
+      <div className="musie-session__foot">
+        <p className="musie-session__context">
+          {t('session.context', {
+            exercise: row?.name ?? '',
+            date: formatShortDate(STARTED_AT, locale),
+          })}
+        </p>
+      </div>
       {/* Beside the panel, as Session mounts it. */}
       <FeelingsSheet
         open={feelingsFor !== null}
