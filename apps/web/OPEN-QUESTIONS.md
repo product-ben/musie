@@ -12218,7 +12218,15 @@ which becomes the pill again at the top. His answers, asked one by one:
 - **Handed over in place,** where the pill's own place reaches the window (16
   on a phone, 24 from 768px) — not at 0, so nothing jumps.
 - **Morphed by the scroll over the 24px (--sp-5) before that**, not timed.
-- **768–1440: large and full width** — 68 tall, --sp-5 off the sides, corners 34.
+- **768–1440: large** — 68 tall, corners 34.
+- **As wide as the page's column plus --sp-2 each side, at every width** —
+  Ben, after a look at 727: „I also want these slight overlaps on desktop!"
+  On a phone that is Figma's 8px off the window; from 768px it was full
+  width, which put it flush with the card at 834 and 200px past it at 1440.
+  The column is `<main>`'s content box (980 on the wide routes, 768 less two
+  gutters on the rest), so the bar is narrower on /diary than in a session,
+  and on a wide window the morph slides it from the centred column to the
+  pill's place at the edge.
 - **Over 1440: no bar.** The pill comes back as the pill, as before.
 
 Measured in Chromium (local stack, /exercises with a spacer) at 393, 834, 1440
@@ -12226,7 +12234,9 @@ and 1728: the held bar at 393 is 8 / 0 / 377 × 56 with corners 0/0/28/28 —
 Figma's numbers; half way through the morph it is 264 wide, one pixel before
 the handover 160.5, and the handover lands the pill at 16 / 0 / 151 × 56, the
 same box. `main` stays at 88 (108) in every state. Tab while gone brings the
-bar. 1728 is unchanged.
+bar. 1728 is unchanged. Against the session card on the listen step, the bar
+overhangs it by 8px each side at 727, 834, 1024, 1280 and 1440; on /diary by
+8px at 834 and 1440.
 
 Decided by me, say if wrong:
 1. **Reduced motion: no morph.** The bar stays the bar until the handover and

@@ -232,9 +232,23 @@
 /* ── ON THE WAY BACK, A BAR · Ben, 2026-11-18 ──────────────────────────────
    Figma *Navigation › Bodyscan · Hören · 393*, frame `header` (242:21976):
    scrolling up mid-page, the header comes back not as the pill but as a bar
-   across the window — flush with its top, --sp-2 off the sides on a phone
-   (--sp-5 from 768px, where the pill itself sits --sp-5 in), only the bottom
-   corners round. `headerReveal.ts` has when; this is what.
+   — flush with the window's top, only the bottom corners round.
+   `headerReveal.ts` has when; this is what.
+
+   AS WIDE AS THE PAGE'S COLUMN, AND --sp-2 MORE EACH SIDE — Ben, the same
+   day, from a window at 727 („I also want these slight overlaps on
+   desktop!"). On a phone Figma's bar is --sp-2 off the window, and the
+   page's column is a --gutter (--sp-4) in, so the bar overhangs the card it
+   floats over by --sp-2 on each side. That overhang is the rule now, at every
+   width: the bar is `<main>`'s content box widened by --sp-2 each way,
+   centred as `<main>` is. Measured before, the bar was flush with the card at
+   834, 8px over it at 1024 by coincidence, and 200px past it at 1440.
+
+   THE COLUMN IS `<main>`'s, recomputed rather than measured: the window less
+   two gutters, capped at `--musie-main-wide` on the wide routes and at
+   `--bp-md` less two gutters on the rest — the two caps `.musie-main` itself
+   declares below. `:has()` reads which kind of page it is off `<main>`'s own
+   `data-wide`, so there is one source for it.
 
    THE SAME PILL ELEMENT, STRETCHED. The menu button goes to the far end
    (`space-between`), the paddings inside stay the pill's, and so does the
@@ -253,12 +267,13 @@
    THE MORPH IS ARITHMETIC OVER ONE NUMBER. `--musie-header-morph` is 0 for
    the bar and 1 for the pill, written by the hook from the scroll position
    over the run before the handover (`--musie-header-morph-run`, --sp-5).
-   Between them the start moves from the bar's inset to the pill's, the width
-   from the window's less both insets to the pill's measured width
-   (`--musie-pill-inline`), and the top corners from square to the pill's
-   (half its measured height). At 1 it is the pill's box to the pixel, so the
-   handover — the header becoming the pill in its band, in the page — changes
-   nothing on the screen.
+   Between them the start moves from the bar's to the pill's, the width from
+   the bar's to the pill's measured width (`--musie-pill-inline`), and the top
+   corners from square to the pill's (half its measured height). At 1 it is
+   the pill's box to the pixel, so the handover — the header becoming the pill
+   in its band, in the page — changes nothing on the screen. On a wide window
+   the start travels further, from the centred column to the pill's place at
+   the window's edge.
 
    The corner is half the measured height, not `--radius-full`: with the top
    corners at 0, CSS scales a 999px pair at the bottom to the WHOLE height,
@@ -267,15 +282,17 @@
 
    UNDER REDUCED MOTION the run is 0: the bar stays the bar until the
    handover, and the handover swaps it. */
-.musie-header {
-  --musie-header-bar-inset: var(--sp-2);
-  --musie-header-morph-run: var(--sp-5);
+.musie-app {
+  --musie-column: calc(var(--bp-md) - (var(--gutter) * 2));
 }
 
-@media (min-width: 768px) {
-  .musie-header {
-    --musie-header-bar-inset: var(--sp-5);
-  }
+.musie-app:has(> .musie-main[data-wide='1']) {
+  --musie-column: var(--musie-main-wide);
+}
+
+.musie-header {
+  --musie-header-bar-overhang: var(--sp-2);
+  --musie-header-morph-run: var(--sp-5);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -288,13 +305,20 @@
   --musie-bar-morph: var(--musie-header-morph, 0);
   --musie-bar-corner: calc(var(--musie-pill-block, calc(var(--target-sm) + (var(--sp-2) * 2))) / 2);
   --musie-bar-corner-top: calc(var(--musie-bar-corner) * var(--musie-bar-morph));
+  /* Percentages here are the window's (or the app root's, which is as wide):
+     a custom property keeps them unresolved until a box uses them. */
+  --musie-bar-inline: calc(
+    min(100% - (var(--gutter) * 2), var(--musie-column))
+    + (var(--musie-header-bar-overhang) * 2)
+  );
+  --musie-bar-start: calc((100% - var(--musie-bar-inline)) / 2);
   inset-inline-start: calc(
-    var(--musie-header-bar-inset)
-    + (var(--musie-header-pad-inline) - var(--musie-header-bar-inset)) * var(--musie-bar-morph)
+    var(--musie-bar-start)
+    + (var(--musie-header-pad-inline) - var(--musie-bar-start)) * var(--musie-bar-morph)
   );
   inline-size: calc(
-    (100% - (var(--musie-header-bar-inset) * 2)) * (1 - var(--musie-bar-morph))
-    + var(--musie-pill-inline, calc(100% - (var(--musie-header-bar-inset) * 2))) * var(--musie-bar-morph)
+    var(--musie-bar-inline) * (1 - var(--musie-bar-morph))
+    + var(--musie-pill-inline, var(--musie-bar-inline)) * var(--musie-bar-morph)
   );
   padding: 0;
   background-color: var(--surface-overlay);
