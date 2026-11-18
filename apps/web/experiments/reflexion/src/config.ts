@@ -122,7 +122,7 @@ const de = {
 
   modalTitle: 'Willkommen bei Musie',
   modalIntro:
-    'Du machst gleich eine kurze Musie-Übung und beantwortest danach drei Fragen zu deinem Erleben.',
+    'Danke, dass du eine Musie-Übung ausprobierst. Dein Feedback ist super wertvoll, bitte beantworte daher auch die Fragen am Schluss.',
   nameLabel: 'Dein Name',
   nameRequired: 'Bitte gib deinen Namen ein.',
   start: 'Los geht’s',
@@ -171,7 +171,7 @@ const en: Copy = {
 
   modalTitle: 'Welcome to Musie',
   modalIntro:
-    'You’re about to do a short Musie exercise and then answer three questions about how it was for you.',
+    'Thanks for trying a Musie exercise. Your feedback is really valuable, so please answer the questions at the end too.',
   nameLabel: 'Your name',
   nameRequired: 'Please enter your name.',
   start: 'Let’s start',
