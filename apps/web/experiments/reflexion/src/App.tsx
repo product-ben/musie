@@ -28,7 +28,8 @@ import { Header } from './Header';
 import { NameModal } from './NameModal';
 import { ReflectionStep } from './ReflectionStep';
 import { ThankYou } from './ThankYou';
-import { languageChanged, landingViewed, participantStarted } from './track';
+import { RUN_SHAPE, runSteps } from './steps';
+import { languageChanged, landingViewed, participantStarted, stepViewed } from './track';
 
 export const INTRO_PATH = `/session/${RUN.sessionId}/intro`;
 export const DONE_PATH = '/done';
@@ -66,6 +67,18 @@ export function currentStepKey(): string {
   return path.split('/').pop() ?? '';
 }
 
+/** `exp_step_viewed` for the step on screen. The thank-you state is not a
+    step (it has `exp_completed`), and neither is anything off the run. */
+function reportStep(): void {
+  if (RUN.slug === null) return;
+  const key = currentStepKey();
+  const shape = RUN_SHAPE[RUN.slug];
+  const steps: string[] = runSteps(shape.kind, shape.cardsDealt);
+  const index = steps.indexOf(key);
+  if (index === -1) return;
+  stepViewed(key, index, steps.length);
+}
+
 function DesignSystemLocale({ children }: { children: React.ReactNode }) {
   const { locale } = useLocale();
   return <MusyLocaleProvider locale={locale}>{children}</MusyLocaleProvider>;
@@ -83,6 +96,9 @@ function Run() {
   const { participant } = useExperiment();
   React.useEffect(() => {
     landingViewed();
+    /* The first step, then every navigation inside the memory router. */
+    reportStep();
+    return router.subscribe(() => reportStep());
   }, []);
   return (
     <>

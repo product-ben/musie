@@ -13,11 +13,14 @@
  * original `timestamp`. A visitor who never presses start therefore sends
  * nothing at all, which also means a true bounce is not measurable.
  *
- * ── NO CONTENT ────────────────────────────────────────────────────────────
- * Never a name or a reflection text: `identify` gets the participant UUID,
- * events carry lengths, counts and times. `before_send` drops `name`,
- * `answer`, `answers` and `text` as a net under that. The survey answers are
- * the single exception (they are PostHog's own survey contract).
+ * ── NO REFLECTION TEXT; THE NAME ON THE PERSON (Ben, 2026-11-18) ──────────
+ * `identify` gets the participant UUID and `$set: { name }`, so the dashboard
+ * can say WHO took part and who finished. That is the one change to the
+ * brief's "never a name"; the consent line in the modal says so. A name is
+ * never an EVENT property: `before_send` drops `name`, `answer`, `answers`
+ * and `text` from every event, and `answer`/`answers`/`text` from `$set` too.
+ * A reflection text never reaches PostHog. The survey answers are the single
+ * exception (they are PostHog's own survey contract).
  */
 import posthog from 'posthog-js';
 import type { Participant } from './context';
@@ -33,7 +36,10 @@ const EU_CLOUD = 'https://eu.i.posthog.com';
 const key = import.meta.env.VITE_POSTHOG_KEY;
 const host = import.meta.env.VITE_POSTHOG_HOST ?? EU_CLOUD;
 
+/** Never an event property. */
 const NEVER_SEND = ['name', 'answer', 'answers', 'text'];
+/** Never a person property. The name is allowed there, on purpose. */
+const NEVER_SET = ['answer', 'answers', 'text'];
 
 /** PostHog's `current_iteration` of the survey: null, it is a draft never iterated. */
 const SURVEY_ITERATION = null;
@@ -97,11 +103,12 @@ function stripContent(properties: Record<string, unknown> | undefined): void {
   if (properties === undefined) return;
   for (const name of NEVER_SEND) {
     if (name in properties) delete properties[name];
-    for (const bag of ['$set', '$set_once']) {
-      const set: unknown = properties[bag];
-      if (set !== null && typeof set === 'object' && name in set) {
-        delete (set as Record<string, unknown>)[name];
-      }
+  }
+  for (const bag of ['$set', '$set_once']) {
+    const set: unknown = properties[bag];
+    if (set === null || typeof set !== 'object') continue;
+    for (const name of NEVER_SET) {
+      if (name in set) delete (set as Record<string, unknown>)[name];
     }
   }
 }
@@ -137,7 +144,7 @@ function start(participant: Participant): boolean {
     /* Runs before the initial $pageview, so the pageview is already the
        identified participant and carries the super properties. */
     loaded: (ph) => {
-      ph.identify(participant.id);
+      ph.identify(participant.id, { name: participant.name });
       ph.register({
         experiment_id: EXPERIMENT_ID,
         exercise_key: RUN.exercise?.exercise_key ?? null,
@@ -185,6 +192,35 @@ export function track(event: string, properties?: Record<string, unknown>): void
   if (pending.length < MAX_PENDING) {
     pending.push({ event, properties, timestamp: new Date() });
   }
+}
+
+/**
+ * A step of the run is on screen (the memory router's location, App.tsx).
+ * `reflect` reached is what the dashboard calls FINISHED (Ben, 2026-11-18).
+ * Once per step and run: a trip back and forth again is not a second view.
+ */
+export function stepViewed(stepKey: string, stepIndex: number, stepCount: number): void {
+  if (!firstTime(`step:${stepKey}`)) return;
+  track('exp_step_viewed', { step_key: stepKey, step_index: stepIndex, step_count: stepCount });
+}
+
+/** The listen step's audio started playing — first time in this run only. */
+export function audioStarted(): void {
+  if (!firstTime('audio_started')) return;
+  track('exp_audio_started', { visible_ms: totalVisibleMs() });
+}
+
+/** The listen step's audio played to its end — first time in this run only. */
+export function audioCompleted(): void {
+  if (!firstTime('audio_completed')) return;
+  track('exp_audio_completed', { visible_ms: totalVisibleMs() });
+}
+
+/** Harfe: the play step was left forward, with how long the harp was played.
+    The harp has no track; this is its "played to the end". */
+export function playFinished(playSeconds: number, playMode: string): void {
+  if (!firstTime('play_finished')) return;
+  track('exp_play_finished', { play_seconds: Math.round(playSeconds), play_mode: playMode });
 }
 
 /** Thank-you state is on screen. */

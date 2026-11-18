@@ -126,8 +126,10 @@ const de = {
   nameRequired: 'Bitte gib deinen Namen ein.',
   start: 'Los geht’s',
   privacy: 'Deine Antworten werden gespeichert und von Lucy und Ben gelesen.',
+  /* Ben, 2026-11-18: the name goes to PostHog (who took part, who finished),
+     so this line no longer promises "ohne deinen Namen". */
   consent:
-    'Mit „Los geht’s“ bist du einverstanden, dass wir messen, wie die Übung genutzt wird – ohne deinen Namen und ohne deine Antworten.',
+    'Mit „Los geht’s“ bist du einverstanden, dass wir unter deinem Namen messen, wie du die Übung nutzt. Was du in die Textfelder schreibst, ist nicht Teil dieser Messung.',
   modalClose: 'Schließen',
 
   reflectionHeading: 'Nachdenken',
@@ -172,7 +174,7 @@ const en: Copy = {
   start: 'Let’s start',
   privacy: 'Your answers are saved and read by Lucy and Ben.',
   consent:
-    'By pressing “Let’s start” you agree that we measure how the exercise is used – without your name and without your answers.',
+    'By pressing “Let’s start” you agree that we measure, under your name, how you use the exercise. What you write in the text fields is not part of that measurement.',
   modalClose: 'Close',
 
   reflectionHeading: 'Reflect',

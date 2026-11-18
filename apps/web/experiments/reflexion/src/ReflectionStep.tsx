@@ -39,24 +39,17 @@ import { formatShortDate } from '../../../src/lib/diary';
 import { idOf, pathOf, resolveFeeling } from '../../../src/lib/feelings';
 import type { HeldFeeling } from '../../../src/lib/feelings';
 import type { Exercise } from '../../../src/lib/content';
-import { stepsForRun } from '../../../src/lib/exerciseKind';
-import type { ExerciseKind } from '../../../src/lib/exerciseKind';
 import { STEP_ICON } from '../../../src/lib/stepIcons';
 import { stepMessageKey } from '../../../src/routeHandle';
 import type { StepId } from '../../../src/routeHandle';
 import { DONE_PATH } from './App';
-import { QUESTIONS, type Slug } from './config';
+import { QUESTIONS } from './config';
 import { useCopy, useExperiment } from './context';
 import { RUN } from './run';
 import { saveResponse } from './save';
+import { RUN_SHAPE, runSteps } from './steps';
 import { error as trackError, track } from './track';
 
-/** What each link's run looks like before (or without) the exercise row. */
-const FALLBACK_SHAPE: Record<Slug, { kind: ExerciseKind; cardsDealt: number | null }> = {
-  harfe: { kind: 'instruments', cardsDealt: null },
-  'body-scan': { kind: 'listening_only', cardsDealt: null },
-  'freie-bahn': { kind: 'card_based', cardsDealt: 1 },
-};
 
 /* The run's start, for the footer's date. */
 const STARTED_AT = new Date().toISOString();
@@ -116,14 +109,11 @@ export function ReflectionStep() {
     return () => { cancelled = true; };
   }, [exercise.exerciseId, locale]);
 
-  const fallback = FALLBACK_SHAPE[exercise.slug];
+  const fallback = RUN_SHAPE[exercise.slug];
   const kind = row?.kind ?? fallback.kind;
   const cardsDealt = row?.cardsDealt ?? fallback.cardsDealt;
   /* Freie Bahn deals its one card on screen: the digital run. */
-  const steps = React.useMemo(
-    () => stepsForRun(kind, { digital: kind === 'card_based', cardsDealt }),
-    [kind, cardsDealt],
-  );
+  const steps = React.useMemo(() => runSteps(kind, cardsDealt), [kind, cardsDealt]);
   const before = steps.slice(0, steps.indexOf('reflect'));
   const previous: StepId | null = before[before.length - 1] ?? null;
   const goTo = (step: StepId) => navigate(`/session/${encodeURIComponent(id)}/${step}`);

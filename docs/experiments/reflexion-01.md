@@ -14,7 +14,8 @@ AI follow-up feature, which is not part of this experiment.
 
 **Testing internally:** add `?internal=1` to a link. Every PostHog event of
 that visit then carries `is_internal = true`, and the dashboard filters it
-out.
+out. A local dev run (`localhost:5180`) is always internal, because the dev
+server sends to the real PostHog project.
 
 **Local:** run `pnpm --filter web experiment:reflexion:dev`, then open
 `http://localhost:5180/experiments/reflexion/harfe/`. It talks to the local
@@ -75,13 +76,31 @@ you!“.
 - **Survey:** in PostHog under Surveys, „Reflexion 01 – Feedback“. Answers are
   stored in German (Ja / Vielleicht / Nein) whatever the UI language was; the
   UI language is the event property `language`.
-- **Dashboard:** „Reflexion 01“ in PostHog (Phase 3; the link follows).
+- **Dashboard:** [„Reflexion 01“](https://eu.posthog.com/project/313428/dashboard/1127915)
+  in PostHog. One section for the overview (participants, started and
+  finished per exercise, the recommendation answers) and one per exercise:
+  how far people got, who it was (by name, with their survey answer and
+  feedback text), and the recommendation answers. „Finished“ means reaching
+  the reflect step. Audio finished means the track played to its last note;
+  for the harp, which has no track, it means pressing „Weiter“ after playing.
+  The dashboard filters are `is_internal = false` and a start date of
+  2026-11-18. Remove the first filter to see test runs.
 
 ## What reaches PostHog
 
 Nothing is sent before the person presses „Los geht’s“. That press is their
 consent, and the modal says so. After it:
-- Events carry the participant UUID, never the name.
+- The person is identified by the participant UUID, and their **name is a
+  person property** (Ben, 2026-11-18, so the dashboard can say who took
+  part). The modal's consent line says that measuring happens under their
+  name. The name is never an event property.
+- Events: `exp_landing_viewed`, `exp_participant_started`,
+  `exp_language_changed`, `exp_step_viewed` (`step_key`, `step_index`,
+  `step_count`), `exp_audio_started`, `exp_audio_completed`,
+  `exp_play_finished` (harp, `play_seconds`), `exp_feelings_help_opened`,
+  `exp_feeling_picked`, `exp_completed`, `exp_error`, `survey shown`,
+  `survey sent`. A person who never presses „Los geht’s“ sends nothing, so a
+  bounce in the name window cannot be counted.
 - The reflection is sent only as lengths, counts and times, never as text.
 - The feedback survey's answers are the single exception: they are sent as
   written.

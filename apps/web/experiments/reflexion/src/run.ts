@@ -30,6 +30,8 @@ export const RUN: {
     ? crypto.randomUUID()
     : `run-${Date.now()}`,
   loadedAt: typeof performance === 'undefined' ? 0 : performance.now(),
-  internal: typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).get('internal') === '1',
+  /* `?internal=1`, or any local dev run: the dev server sends to the REAL
+     PostHog project, and a demo on localhost is not a participant. */
+  internal: import.meta.env.DEV || (typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('internal') === '1'),
 };

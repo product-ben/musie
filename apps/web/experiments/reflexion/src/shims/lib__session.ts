@@ -10,6 +10,7 @@ import type { StepId } from '../../../../src/routeHandle';
 import type { SessionRow } from '../../../../src/lib/session';
 import type { SessionStatus } from '../../../../src/lib/sessionMachine';
 import * as store from '../data/store';
+import { playFinished } from '../track';
 
 export * from '../../../../src/lib/session';
 
@@ -34,8 +35,9 @@ export async function saveListeningAnswers(id: string, posture: string | null, e
   store.updateRow(id, { posture, ending });
 }
 
-export async function savePlay(_id: string, _mode: 'solo' | 'with_musie', _seconds: number): Promise<void> {
-  /* Not a column the stepper reads back. The experiment's own tracking owns it. */
+export async function savePlay(_id: string, mode: 'solo' | 'with_musie', seconds: number): Promise<void> {
+  /* The harp's "finished playing" (Session's finishPlay is the only caller). */
+  playFinished(seconds, mode);
 }
 
 export async function savePlayed(id: string, trackId: string | null, _cutId: string | null): Promise<void> {

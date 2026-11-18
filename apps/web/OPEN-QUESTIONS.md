@@ -11975,3 +11975,22 @@ What was built instead (Ben, 2026-11-16: "Go", option 4a):
 What I need from Ben: Lucy's three questions, the final name-modal copy (it
 now also says what pressing start agrees to), the final survey wording, and,
 before the links go out, the merge plus `pnpm db:sync`.
+
+## Experiment „Reflexion 01“: names go to PostHog — DECIDED
+
+Where: `apps/web/experiments/reflexion/src/track.ts` (`identify` with
+`$set: { name }`), `src/config.ts` (the consent line);
+PostHog dashboard „Reflexion 01“ (1127915)
+
+The brief said "Niemals Namen oder Reflexionstexte an PostHog senden". On
+2026-11-18 Ben asked for a dashboard that shows WHO took part and who
+finished, by the name typed in the start window. So the name is now a person
+property. It is still never an event property, and a reflection text still
+never reaches PostHog; `before_send` strips both.
+
+What changed with it, so the promise and the behaviour agree: the consent
+line in the name window said "ohne deinen Namen". It now says that measuring
+happens under your name and that what you write in the text fields is not
+part of it (DE and EN, written by me, for Ben to check).
+
+What I need from Ben: a look at the new consent wording.
