@@ -71,8 +71,9 @@
  * ── ON THE WAY BACK IT IS A BAR · Ben, 2026-11-18 ─────────────────────────
  * Figma *Navigation › Bodyscan · Hören · 393*, the frame `header`
  * (242:21976): scrolling up mid-page brings back not the pill but a bar
- * across the top of the window — flush with its top edge, --sp-2 off the
- * sides, only its bottom corners round. At the top of the page it is the pill
+ * across the top of the window — flush with its top edge, --sp-2 wider than
+ * the page's column each side, only its bottom corners round. At the top of
+ * the page it is the pill
  * again. Up to 1440px; wider than that, the pill comes back as the pill.
  * What Ben settled, one by one:
  *
@@ -88,12 +89,15 @@
  *   a phone, 24 from 768px). The held bar becomes the pill at rest right
  *   there, and the page carries it the last few pixels into its place.
  *
- *   MORPHED BY THE SCROLL, NOT BY A CLOCK. Over the `morph` (24px) of scroll
- *   before the handover, the bar narrows to the pill and its top corners
- *   round — as a function of the position, so it stops when the finger
- *   stops and goes back when the finger does. At the handover it already IS
- *   the pill, and the swap changes nothing on the screen. `morphAt` is that
- *   function.
+ *   DISSOLVED, NOT MOVED — the same day. It was first a morph, tied to
+ *   the scroll over the 24px before the handover: the bar narrowing to the
+ *   pill and sliding to its place. Scrolled up fast, those 24px pass between
+ *   two frames, so the whole change landed in one — „super abrupt", at 1440 a
+ *   996px bar becoming a 166px pill 200px to the left. Now nothing changes
+ *   shape: at the handover the bar fades out where it is while the pill fades
+ *   in at its place, both on one clock (shell.css names it), so a flick gets
+ *   the same gentle cross-fade as a slow scroll. `handedOver` says when; the
+ *   hook runs the fade.
  */
 
 export type RevealMode = 'free' | 'gone' | 'held';
@@ -127,13 +131,11 @@ export const AT_REST: RevealState = { mode: 'free', form: 'pill', at: 0, last: 0
  * page brings it in from there — its own height, plus as much again below it
  * as the pill's band has (--sp-4) and the same clearance, so its edge starts
  * exactly as far up as the pill's would. `handover` is where the pill's own
- * place meets the top of the window; `morph` is the run of scroll before it
- * over which the bar becomes the pill — 0 under reduced motion, so it swaps.
+ * place meets the top of the window.
  */
 export type BarGeometry = {
   reach: number;
   handover: number;
-  morph: number;
 };
 
 /**
@@ -188,17 +190,15 @@ export function drawnAt(state: RevealState, scrollY: number, reach: number): num
 }
 
 /**
- * How far the bar has become the pill: 0 the bar, 1 the pill — and 1 for the
- * pill itself, which already is. Read off the position alone, so the shape
- * follows the finger and needs no clock: 0 until `handover + morph`, 1 at
- * `handover`, a straight line between. With no run to morph over (reduced
- * motion) it stays the bar until the handover swaps it.
+ * Whether this step was the HANDOVER — the bar, in sight, becoming the pill in
+ * its own place — which is the one change the reader watches, and so the one
+ * the hook cross-fades. The bar becoming the pill anywhere else does it out
+ * of sight (leaving as `gone`) or because the window grew past 1440, and
+ * neither is anything to look at.
  */
-export function morphAt(state: RevealState, bar: BarGeometry | null): number {
-  if (state.form === 'pill' || bar === null) return 1;
-  if (bar.morph <= 0) return 0;
-  const p = (bar.handover + bar.morph - state.last) / bar.morph;
-  return Math.min(Math.max(p, 0), 1);
+export function handedOver(previous: RevealState, next: RevealState): boolean {
+  return previous.form === 'bar' && previous.mode !== 'gone'
+    && next.form === 'pill' && next.mode === 'free' && next.at === 0;
 }
 
 /** The state, one reading later. Pure: same inputs, same answer, no `window`. */
@@ -214,9 +214,9 @@ export function nextReveal(state: RevealState, reading: ScrollReading): RevealSt
 
   /* THE HANDOVER. The bar, wherever this reading left it, at or above the
      pill's own place: that place is in the window now, so it is the pill
-     there, at rest — which the page draws exactly where the held bar was
-     (shell.css makes the two the same box). A jump past the handover lands
-     here too, and simply finds the pill in its place. */
+     there, at rest — at the top of the window, where the held bar is, which
+     fades out over it as it fades in. A jump past the handover lands here
+     too, and finds the pill in its place, a little further down. */
   if (bar !== null && next.form === 'bar' && next.last <= bar.handover) {
     return { mode: 'free', form: 'pill', at: 0, last: next.last };
   }

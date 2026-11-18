@@ -264,24 +264,31 @@
    Whether that tinted strip is what Ben wants is his call on his phone
    (OPEN-QUESTIONS.md).
 
-   THE MORPH IS ARITHMETIC OVER ONE NUMBER. `--musie-header-morph` is 0 for
-   the bar and 1 for the pill, written by the hook from the scroll position
-   over the run before the handover (`--musie-header-morph-run`, --sp-5).
-   Between them the start moves from the bar's to the pill's, the width from
-   the bar's to the pill's measured width (`--musie-pill-inline`), and the top
-   corners from square to the pill's (half its measured height). At 1 it is
-   the pill's box to the pixel, so the handover — the header becoming the pill
-   in its band, in the page — changes nothing on the screen. On a wide window
-   the start travels further, from the centred column to the pill's place at
-   the window's edge.
-
-   The corner is half the measured height, not `--radius-full`: with the top
+   THE CORNER is half the measured height, not `--radius-full`: with the top
    corners at 0, CSS scales a 999px pair at the bottom to the WHOLE height,
-   56px, where Figma has 28. The fallbacks are the designed height, until the
+   56px, where Figma has 28. The fallback is the designed height, until the
    hook has measured.
 
-   UNDER REDUCED MOTION the run is 0: the bar stays the bar until the
-   handover, and the handover swaps it. */
+   IT BECOMES THE PILL BY A CROSS-FADE — Ben, the same day. At the handover
+   (the pill's own place reaching the top of the window) the bar fades out
+   where it is while the pill fades in at its place. Nothing moves or changes
+   shape. It was a morph first, tied to the scroll over the --sp-5 before the
+   handover — the bar narrowing to the pill and sliding to its place — and
+   scrolled up fast, that --sp-5 went by between two frames: „super abrupt",
+   and at 1440 a 996px bar became a 166px pill 200px to the left in one. A
+   fade on a clock is the same at every speed.
+
+   `--motion-duration-slow` and `--motion-ease-standard`: gentle, Ben's word,
+   and the standard curve because nothing is entering or leaving the screen —
+   one thing is becoming another. The hook reads both back for the Web
+   Animations it runs, and under reduced motion Layer 1 takes the duration to
+   1ms, which makes it the swap it should be.
+
+   THE GHOST is the bar that fades out — a copy AppShell keeps, `aria-hidden`
+   and `inert`, held at the bar's place by its own `data-mode="held"` and
+   `data-form="bar"`, so the rules below draw it exactly as they draw the
+   header. Hidden; the animation alone makes it visible, for as long as it
+   runs. */
 .musie-app {
   --musie-column: calc(var(--bp-md) - (var(--gutter) * 2));
 }
@@ -292,45 +299,37 @@
 
 .musie-header {
   --musie-header-bar-overhang: var(--sp-2);
-  --musie-header-morph-run: var(--sp-5);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .musie-header {
-    --musie-header-morph-run: 0px;
-  }
+  --musie-header-dissolve: var(--motion-duration-slow);
+  --musie-header-dissolve-ease: var(--motion-ease-standard);
 }
 
 .musie-header[data-form='bar'] {
-  --musie-bar-morph: var(--musie-header-morph, 0);
   --musie-bar-corner: calc(var(--musie-pill-block, calc(var(--target-sm) + (var(--sp-2) * 2))) / 2);
-  --musie-bar-corner-top: calc(var(--musie-bar-corner) * var(--musie-bar-morph));
   /* Percentages here are the window's (or the app root's, which is as wide):
      a custom property keeps them unresolved until a box uses them. */
   --musie-bar-inline: calc(
     min(100% - (var(--gutter) * 2), var(--musie-column))
     + (var(--musie-header-bar-overhang) * 2)
   );
-  --musie-bar-start: calc((100% - var(--musie-bar-inline)) / 2);
-  inset-inline-start: calc(
-    var(--musie-bar-start)
-    + (var(--musie-header-pad-inline) - var(--musie-bar-start)) * var(--musie-bar-morph)
-  );
-  inline-size: calc(
-    var(--musie-bar-inline) * (1 - var(--musie-bar-morph))
-    + var(--musie-pill-inline, var(--musie-bar-inline)) * var(--musie-bar-morph)
-  );
+  inset-inline-start: calc((100% - var(--musie-bar-inline)) / 2);
+  inline-size: var(--musie-bar-inline);
   padding: 0;
   background-color: var(--surface-overlay);
-  border-radius:
-    var(--musie-bar-corner-top) var(--musie-bar-corner-top)
-    var(--musie-bar-corner) var(--musie-bar-corner);
+  border-radius: 0 0 var(--musie-bar-corner) var(--musie-bar-corner);
 }
 
 .musie-header[data-form='bar'] .musie-header__pill {
   flex: 1 1 auto;
   justify-content: space-between;
   border-radius: inherit;
+}
+
+.musie-header--ghost {
+  visibility: hidden;
+}
+
+.musie-header--ghost .musie-header__pill {
+  pointer-events: none;
 }
 
 /* ═══ MAIN ══════════════════════════════════════════════════════════════════

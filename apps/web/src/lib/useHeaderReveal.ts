@@ -14,15 +14,18 @@
  * touched, ever, so a scroll never renders anything either.
  *
  * ── AND SHAPES IT · 2026-11-18 ────────────────────────────────────────────
- * `data-form` — `pill` or `bar` — and `--musie-header-morph`, how far the bar
- * has become the pill (0 to 1). The form changes where the mode does, out of
- * sight or at the handover. The morph is the one value written on consecutive
- * scroll events, and only inside the 24px run before the handover: there it
- * IS the scroll position, so it has to be. It is not a position — the bar is
- * held still at the top of the window while it narrows — so a frame of lag
- * would change a width a frame late, not make anything swim. Rounded to three
- * places and written only on a change; everywhere else it holds 0 or 1 and
- * writes nothing.
+ * `data-form` — `pill` or `bar` — changes where the mode does: out of sight,
+ * or at the handover. The handover is the one change the reader watches, so
+ * it is the one thing here that runs on a clock: the bar fades out where it
+ * is while the pill fades in at its place. The bar that fades is the GHOST —
+ * a copy of it the shell keeps, inert and hidden, at the bar's place — because
+ * the header itself is the pill from that frame on and cannot be both. Both
+ * fades are Web Animations, so one started over a running one simply replaces
+ * it, and with nothing to clean up: the ghost's own style is hidden, and the
+ * animation only holds it visible while it runs. Their duration and easing
+ * are shell.css's (`--musie-header-dissolve`), read back like the band's
+ * numbers — so reduced motion, which takes Layer 1's durations to 1ms, makes
+ * it a swap without a line here.
  *
  * NO FRAME COALESCING, on purpose. Browsers dispatch `scroll` once per frame
  * now, in the same update that paints it, and a placement deferred to the
@@ -47,11 +50,10 @@
  * and a root padded by THAT would pull the whole page up 32px the moment the
  * bar appeared.
  *
- * Three more numbers come out of the same reading. The band plus the CSS's
+ * Two more numbers come out of the same reading. The band plus the CSS's
  * `--musie-header-clearance` is `reach`, how far above the window a pill
- * waits. The pill's height, halved, is the bar's corner (`--musie-pill-block`).
- * And its width, taken only while it IS the pill — as the bar it is stretched —
- * is what the bar narrows to (`--musie-pill-inline`).
+ * waits. The pill's height, halved, is the bar's corner (`--musie-pill-block`,
+ * on the root too, so the ghost has it).
  *
  * ── ONLY UP TO 1440 ───────────────────────────────────────────────────────
  * Ben, 2026-11-18. Over that the bar is off and the header behaves exactly as
@@ -74,21 +76,19 @@
  * matters).
  */
 import * as React from 'react';
-import { AT_REST, morphAt, nextReveal, shownAt } from './headerReveal';
+import { AT_REST, handedOver, nextReveal, shownAt } from './headerReveal';
 import type { BarGeometry, RevealState } from './headerReveal';
 
 /** Where the bar stops — see ONLY UP TO 1440 above. */
 const BAR_QUERY = '(max-width: 1440px)';
 
-/** Re-measured on a change, because shell.css sets the morph's run to 0 there. */
-const STILL_QUERY = '(prefers-reduced-motion: reduce)';
-
-type Written = { at: number; mode: RevealState['mode']; form: RevealState['form']; morph: number };
+type Written = { at: number; mode: RevealState['mode']; form: RevealState['form'] };
 
 type Geometry = { reach: number; bar: BarGeometry | null };
 
 export function useHeaderReveal(
   header: React.RefObject<HTMLElement | null>,
+  ghost: React.RefObject<HTMLElement | null>,
   resetKey: string,
 ): void {
   const state = React.useRef<RevealState>(AT_REST);
@@ -98,10 +98,11 @@ export function useHeaderReveal(
   const written = React.useRef<Written | null>(null);
 
   const place = React.useCallback((next: RevealState) => {
+    const previous = state.current;
     state.current = next;
     const element = header.current;
     if (element === null) return;
-    const morph = Math.round(morphAt(next, geometry.current.bar) * 1000) / 1000;
+    if (handedOver(previous, next)) dissolve(element, ghost.current);
     const was = written.current;
     if (was === null || was.at !== next.at) {
       element.style.setProperty('--musie-header-at', `${next.at}px`);
@@ -112,11 +113,8 @@ export function useHeaderReveal(
     if (was === null || was.form !== next.form) {
       element.dataset.form = next.form;
     }
-    if (was === null || was.morph !== morph) {
-      element.style.setProperty('--musie-header-morph', String(morph));
-    }
-    written.current = { at: next.at, mode: next.mode, form: next.form, morph };
-  }, [header]);
+    written.current = { at: next.at, mode: next.mode, form: next.form };
+  }, [header, ghost]);
 
   /* Arrival and focus are both "showing, from here". On an arrival the page
      is already at 0, where that is simply the rest position. */
@@ -131,7 +129,6 @@ export function useHeaderReveal(
     if (element === null) return undefined;
     const pill = element.querySelector<HTMLElement>('.musie-header__pill') ?? element;
     const barQuery = window.matchMedia(BAR_QUERY);
-    const stillQuery = window.matchMedia(STILL_QUERY);
 
     const measure = () => {
       const style = getComputedStyle(element);
@@ -145,15 +142,10 @@ export function useHeaderReveal(
       const band = top + box.height + bottom;
 
       element.parentElement?.style.setProperty('--musie-header-block', `${band}px`);
-      element.style.setProperty('--musie-pill-block', `${box.height}px`);
-      if (state.current.form === 'pill') {
-        element.style.setProperty('--musie-pill-inline', `${box.width}px`);
-      }
+      element.parentElement?.style.setProperty('--musie-pill-block', `${box.height}px`);
       geometry.current = {
         reach: band + clearance,
-        bar: barQuery.matches
-          ? { reach: box.height + bottom + clearance, handover: top, morph: px('--musie-header-morph-run') }
-          : null,
+        bar: barQuery.matches ? { reach: box.height + bottom + clearance, handover: top } : null,
       };
     };
     measure();
@@ -169,9 +161,8 @@ export function useHeaderReveal(
       }));
     };
 
-    /* Crossing 1440, or the motion preference changing: new numbers, and the
-       same position read against them — a bar where there is no bar any more
-       is the pill on the spot. */
+    /* Crossing 1440: new numbers, and the same position read against them —
+       a bar where there is no bar any more is the pill on the spot. */
     const onQuery = () => {
       measure();
       onScroll();
@@ -184,16 +175,35 @@ export function useHeaderReveal(
     window.addEventListener('scroll', onScroll, { passive: true });
     element.addEventListener('focusin', show);
     barQuery.addEventListener('change', onQuery);
-    stillQuery.addEventListener('change', onQuery);
 
     return () => {
       window.removeEventListener('scroll', onScroll);
       element.removeEventListener('focusin', show);
       barQuery.removeEventListener('change', onQuery);
-      stillQuery.removeEventListener('change', onQuery);
       observer.disconnect();
     };
   }, [header, place, show]);
 
   React.useEffect(() => { show(); }, [resetKey, show]);
+}
+
+/**
+ * The handover's cross-fade: the ghost bar out, the header — the pill now —
+ * in, on one clock. `backwards`, so each starts from its first frame even
+ * before the animation has its start time, and the pill never shows at full
+ * strength for a frame before it fades.
+ */
+function dissolve(header: HTMLElement, ghost: HTMLElement | null): void {
+  if (typeof header.animate !== 'function') return;
+  const style = getComputedStyle(header);
+  const timing: KeyframeAnimationOptions = {
+    duration: Number.parseFloat(style.getPropertyValue('--musie-header-dissolve')) || 0,
+    easing: style.getPropertyValue('--musie-header-dissolve-ease').trim() || 'linear',
+    fill: 'backwards',
+  };
+  header.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+  ghost?.animate(
+    [{ opacity: 1, visibility: 'visible' }, { opacity: 0, visibility: 'visible' }],
+    timing,
+  );
 }

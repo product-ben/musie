@@ -12217,31 +12217,39 @@ which becomes the pill again at the top. His answers, asked one by one:
   with the page; the bar is a `gone` header coming back.
 - **Handed over in place,** where the pill's own place reaches the window (16
   on a phone, 24 from 768px) — not at 0, so nothing jumps.
-- **Morphed by the scroll over the 24px (--sp-5) before that**, not timed.
+- **Cross-faded there, not morphed.** First a morph tied to the scroll over
+  the 24px before the handover (the bar narrowing and sliding to the pill);
+  Ben, scrolling up fast: „the transition feel super abrupt" — at speed those
+  24px pass between two frames. Of three paths offered (a longer run, a
+  speed-limited follow, a timed animation) he chose none and asked instead for
+  „a gentle dissolve of the wide bar and a simultaneous fade in" of the pill.
+  So at the handover the bar fades out where it is while the pill fades in at
+  its place, over `--motion-duration-slow` (340ms) on the standard curve —
+  the same at every speed. The bar that fades is an inert, `aria-hidden` copy
+  the shell keeps, because the header is the pill from that frame on.
 - **768–1440: large** — 68 tall, corners 34.
 - **As wide as the page's column plus --sp-2 each side, at every width** —
   Ben, after a look at 727: „I also want these slight overlaps on desktop!"
   On a phone that is Figma's 8px off the window; from 768px it was full
   width, which put it flush with the card at 834 and 200px past it at 1440.
   The column is `<main>`'s content box (980 on the wide routes, 768 less two
-  gutters on the rest), so the bar is narrower on /diary than in a session,
-  and on a wide window the morph slides it from the centred column to the
-  pill's place at the edge.
+  gutters on the rest), so the bar is narrower on /diary than in a session.
 - **Over 1440: no bar.** The pill comes back as the pill, as before.
 
 Measured in Chromium (local stack, /exercises with a spacer) at 393, 834, 1440
 and 1728: the held bar at 393 is 8 / 0 / 377 × 56 with corners 0/0/28/28 —
-Figma's numbers; half way through the morph it is 264 wide, one pixel before
-the handover 160.5, and the handover lands the pill at 16 / 0 / 151 × 56, the
-same box. `main` stays at 88 (108) in every state. Tab while gone brings the
+Figma's numbers. At the handover the copy sits on the bar's box exactly and
+fades 1 → 0 while the pill fades 0 → 1 (0.2 / 0.8 at 150ms, done by 500ms),
+for a slow approach and for a jump straight to 0 alike, in Chromium and
+WebKit. `main` stays at 88 (108) in every state. Tab while gone brings the
 bar. 1728 is unchanged. Against the session card on the listen step, the bar
 overhangs it by 8px each side at 727, 834, 1024, 1280 and 1440; on /diary by
 8px at 834 and 1440.
 
 Decided by me, say if wrong:
-1. **Reduced motion: no morph.** The bar stays the bar until the handover and
-   is swapped there. The pixel-for-pixel movement itself was never gated, so
-   this is a choice, not a rule.
+1. **Reduced motion: no fade.** Layer 1 takes `--motion-duration-slow` to
+   1ms there, so the handover is a swap. The pixel-for-pixel movement itself
+   was never gated, so this is a choice, not a rule.
 2. **1440 is a raw number** (in `useHeaderReveal.ts`, once). Layer 1's
    breakpoints stop at `--bp-xl`, 1280, and a media query cannot read a token
    anyway. A token gap if a second thing ever needs it.

@@ -15,7 +15,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { AT_REST, drawnAt, morphAt, nextReveal, shownAt } from './headerReveal';
+import { AT_REST, drawnAt, handedOver, nextReveal, shownAt } from './headerReveal';
 import type { BarGeometry, RevealState } from './headerReveal';
 
 /** The real shell on a phone: the band (16 + 56 + 16, `--sticky-block`) plus
@@ -165,8 +165,8 @@ describe('shown by focus, then scrolled by the browser', () => {
    Everything above runs with no bar — the header over 1440px — and is
    exactly what it was. Below, the phone's numbers: the bar is the pill's
    56px with the band's --sp-4 and the clearance below it; the pill's own
-   place is --sp-4 down; the morph runs over --sp-5 before that. */
-const BAR: BarGeometry = { reach: 56 + 16 + 8, handover: 16, morph: 24 };
+   place is --sp-4 down. */
+const BAR: BarGeometry = { reach: 56 + 16 + 8, handover: 16 };
 
 function runBar(positions: number[], from: RevealState = AT_REST, bar: BarGeometry = BAR): RevealState {
   return positions.reduce(
@@ -257,35 +257,35 @@ function drawnAfterBar(positions: number[], from: RevealState): number {
   return drawnAt(state, positions[positions.length - 1] ?? 0, REACH);
 }
 
-describe('the morph follows the scroll', () => {
-  const heldAt = (y: number) => runBar([100, 2000, 1500, y]);
+describe('the handover is the one change that is cross-faded', () => {
+  const held = runBar([100, 2000, 1500, 17]);
 
-  it('is the bar until the run before the handover begins', () => {
-    expect(morphAt(heldAt(300), BAR)).toBe(0);
-    expect(morphAt(heldAt(40), BAR)).toBe(0);
+  it('is the held bar becoming the pill in its place', () => {
+    expect(handedOver(held, runBar([16], held))).toBe(true);
   });
 
-  it('is half the pill half way through the run, and nearly the pill at its end', () => {
-    expect(morphAt(heldAt(28), BAR)).toBe(0.5);
-    expect(morphAt(heldAt(17), BAR)).toBeCloseTo(23 / 24);
+  it('is a jump to the top of the page from the bar, too', () => {
+    expect(handedOver(held, runBar([0], held))).toBe(true);
+    const comingIn = runBar([1990], runBar([100, 2000]));
+    expect(comingIn).toMatchObject({ mode: 'free', form: 'bar' });
+    expect(handedOver(comingIn, runBar([5], comingIn))).toBe(true);
   });
 
-  it('goes back the way it came when the reader turns down inside the run', () => {
-    const turned = runBar([30], heldAt(20));
-    expect(turned).toMatchObject({ mode: 'free', form: 'bar' });
-    expect(morphAt(turned, BAR)).toBeCloseTo(10 / 24);
+  it('is not the bar leaving out of sight, which nobody sees', () => {
+    const away = runBar([1500 + BAR.reach + 1], runBar([100, 2000, 1500]));
+    expect(away.mode).toBe('gone');
+    expect(handedOver(runBar([100, 2000, 1500]), away)).toBe(false);
   });
 
-  it('is 1 for the pill, which already is one', () => {
-    expect(morphAt(AT_REST, BAR)).toBe(1);
-    expect(morphAt(heldAt(28), null)).toBe(1);
+  it('is not the window growing past 1440 under a held bar', () => {
+    const bar = runBar([100, 2000, 1500]);
+    const pill = nextReveal(bar, { scrollY: 1500, maxScrollY: LONG_PAGE, reach: REACH, bar: null });
+    expect(handedOver(bar, pill)).toBe(false);
   });
 
-  it('does not morph at all under reduced motion — the handover swaps it', () => {
-    const still: BarGeometry = { ...BAR, morph: 0 };
-    const held = runBar([100, 2000, 1500, 17], AT_REST, still);
-    expect(morphAt(held, still)).toBe(0);
-    expect(runBar([16], held, still)).toEqual({ mode: 'free', form: 'pill', at: 0, last: 16 });
+  it('is not anything the pill does', () => {
+    expect(handedOver(AT_REST, runBar([30]))).toBe(false);
+    expect(handedOver(runBar([30]), runBar([30, 10]))).toBe(false);
   });
 });
 

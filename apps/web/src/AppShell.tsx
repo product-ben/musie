@@ -154,7 +154,8 @@ export function AppShell() {
    * writing to the element directly at a turn. No scroll renders the shell.
    */
   const headerRef = React.useRef<HTMLElement>(null);
-  useHeaderReveal(headerRef, pagePath ?? '');
+  const ghostRef = React.useRef<HTMLDivElement>(null);
+  useHeaderReveal(headerRef, ghostRef, pagePath ?? '');
 
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
@@ -163,13 +164,34 @@ export function AppShell() {
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
       <div className="musie-app">
-        {/* `--musie-header-at`, `data-mode`, `data-form` and
-            `--musie-header-morph` are written by `useHeaderReveal`, straight
-            onto the element and only when they change: rendering them here
-            would re-render the shell on every turn — and, for the morph
-            (the bar becoming the pill on the way back up, 2026-11-18), on
-            every scroll event of its run — and fight the hook over who owns
-            them. */}
+        {/* THE GHOST · 2026-11-18. On the way back up the header is a bar,
+            and where it becomes the pill again the bar fades out while the
+            pill fades in (`useHeaderReveal`). The header is the pill from
+            that frame on, so the bar that fades is this: a copy of it, held
+            at the bar's place by its own two attributes, hidden until the
+            hook fades it. Decoration only — `aria-hidden` and `inert`, so
+            its button is in no tab order and its name in no tree; the label
+            is passed all the same, because nothing user-visible is left to
+            a default (CLAUDE.md rule 7). Before the header, so the pill
+            fades in above it. */}
+        <div
+          ref={ghostRef}
+          className="musie-header musie-header--ghost"
+          data-mode="held"
+          data-form="bar"
+          aria-hidden="true"
+          inert
+        >
+          <div className="musie-header__pill">
+            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <IconButton glyph={Menu} label={t('shell.menuLabel')} variant="ghost" size="sm" />
+          </div>
+        </div>
+
+        {/* `--musie-header-at`, `data-mode` and `data-form` are written by
+            `useHeaderReveal`, straight onto the element and only when they
+            change: rendering them here would re-render the shell on every
+            turn and fight the hook over who owns them. */}
         <header ref={headerRef} className="musie-header">
           {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
               17.11.*). The full-width bar with its centred logo became one
