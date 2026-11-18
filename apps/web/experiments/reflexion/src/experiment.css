@@ -79,6 +79,18 @@
 }
 
 /* ═══ NAME MODAL ════════════════════════════════════════════════════════════ */
+/* NO TOP PADDING ON THE BODY — Ben, 2026-11-18: the intro sits under the
+   title at the title's own margin, about 22px, as in his Figma frame
+   (node 280:2973). The Lightbox puts `--space-inset-card` above and below
+   the body's content, inside the scroll area. Only the top one goes here,
+   so the last line still clears the bottom edge. Reaching into a component's
+   geometry is L14's no; rule 10 lifts that under /experiments. The window is
+   mandatory and has no ×, so the `:has(> .musy-lightbox__close)` rule that
+   pushes the body down never applies to it. */
+.musie-reflexion-welcome > .musy-lightbox__body {
+  padding-block-start: 0;
+}
+
 .musie-reflexion-modal {
   display: flex;
   flex-direction: column;

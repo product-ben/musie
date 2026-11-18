@@ -66,7 +66,14 @@ export function NameModal() {
   };
 
   return (
-    <Lightbox open mandatory surface="panel" title={copy.modalTitle} closeLabel={copy.modalClose}>
+    <Lightbox
+      open
+      mandatory
+      surface="panel"
+      className="musie-reflexion-welcome"
+      title={copy.modalTitle}
+      closeLabel={copy.modalClose}
+    >
       <form className="musie-reflexion-modal" onSubmit={submit} noValidate>
         <p className="musie-reflexion-modal__intro">{copy.modalIntro}</p>
         <p className="musie-note musie-reflexion-modal__small">{copy.consent}</p>

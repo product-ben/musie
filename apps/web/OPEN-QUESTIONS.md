@@ -12397,3 +12397,14 @@ title; the page has 45. The difference is the Lightbox body's own top
 padding inside its scroll area (`--space-inset-card`), which the capture
 dropped: its body is exactly 24px shorter than the real DOM. Tightening it
 would be a Lightbox change, not one to this window.
+
+## Experiment „Reflexion 01“: the welcome window's top padding — DONE
+
+Where: `apps/web/experiments/reflexion/src/experiment.css`
+(`.musie-reflexion-welcome > .musy-lightbox__body`), `src/NameModal.tsx`
+
+Follows the previous entry. Ben, 2026-11-18: the padding above the intro
+goes to 0. The Lightbox body's top inset is taken out for this one window, in
+the experiment's own stylesheet and not in the component (rule 10). The
+bottom inset stays. The intro now sits 21px under the title, which is the
+title's own margin: Figma has 21.6.
