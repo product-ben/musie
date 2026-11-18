@@ -1,0 +1,433 @@
+/* Experiment-only styles (CLAUDE.md rule 10: L14 does not bind here, but
+   prefer Layer 1 tokens anyway). Owned by the "Hülle & UI" agent. */
+.musie-reflexion-notice {
+  margin: 0;
+}
+
+/* ═══ HEADER ════════════════════════════════════════════════════════════════
+   The app's band and pill (shell.css, since main's floating pill of
+   2026-11-17) with two differences: the pill holds only the logo, because
+   there is no menu, and the band spans the width so that the language switch
+   can sit at the far end, as the brief asks.
+
+   NO `useHeaderReveal`. The band stays at the top of the page and scrolls
+   away with it, which is the app's header between two turns. Its "bar on the
+   way back up" is not built here: spikes stay spikes. Being absolute and
+   never fixed, a full-width band is no top bar to Safari (shell.css, ONLY AS
+   WIDE AS THE PILL).
+
+   THE PILL KEEPS THE APP'S HEIGHT without its menu button. There the
+   IconButton (`--target-sm`) sets the phone pill's row, and the band — which
+   `.musie-app` pads its top by, as `--sticky-block` — is that plus the
+   paddings. From 768px shell.css sets the floor itself. With no button at the
+   end, the end padding matches the start padding.                         */
+.musie-reflexion-header {
+  inset-inline-end: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.musie-reflexion-header > .musie-header__pill {
+  min-block-size: calc(var(--target-sm) + (var(--sp-2) * 2));
+  padding-inline-end: var(--sp-4);
+}
+
+@media (min-width: 768px) {
+  .musie-reflexion-header > .musie-header__pill {
+    min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
+    padding-inline-end: var(--sp-5);
+  }
+}
+
+/* The band takes no pointer (shell.css); the switch takes them back. */
+.musie-reflexion-header > .musie-reflexion-lang {
+  pointer-events: auto;
+}
+
+.musie-reflexion-modal > .musie-reflexion-lang {
+  align-self: center;
+}
+
+/* Body scan's "only in German", one line under the header at its end edge —
+   under the switch it explains. Not sticky: see Header.tsx. */
+.musie-reflexion-langnote {
+  margin: 0;
+  padding: var(--sp-2) var(--gutter) 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+  text-align: end;
+  text-wrap: balance;
+}
+
+/* The segmented control sizes itself as a FORM control: it stretches to the
+   width on offer and, as a size container, stacks its labels under 30rem.
+   In a header it is furniture, so it takes its own segments' width and stays
+   one row — the same two declarations the system's own furniture settings
+   (`labels: none | unchecked`) make, which this control cannot use because
+   both of its options carry the same glyph and need their word. */
+.musie-reflexion-lang .musy-seg {
+  container-type: normal;
+  inline-size: max-content;
+}
+
+.musie-reflexion-lang .musy-seg__track {
+  grid-auto-columns: auto;
+  inline-size: max-content;
+}
+
+/* ═══ NAME MODAL ════════════════════════════════════════════════════════════ */
+/* NO TOP PADDING ON THE BODY — Ben, 2026-11-18: the intro sits under the
+   title at the title's own margin, about 22px, as in his Figma frame
+   (node 280:2973). The Lightbox puts `--space-inset-card` above and below
+   the body's content, inside the scroll area. Only the top one goes here,
+   so the last line still clears the bottom edge. Reaching into a component's
+   geometry is L14's no; rule 10 lifts that under /experiments. The window is
+   mandatory and has no ×, so the `:has(> .musy-lightbox__close)` rule that
+   pushes the body down never applies to it. */
+.musie-reflexion-welcome > .musy-lightbox__body {
+  padding-block-start: 0;
+}
+
+.musie-reflexion-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+
+.musie-reflexion-modal__intro {
+  margin: 0;
+  font-family: var(--type-body-md-family);
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  text-wrap: var(--text-wrap-body);
+  hyphens: var(--text-hyphens);
+}
+
+.musie-reflexion-modal__small {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+/* ═══ REFLECT ═══════════════════════════════════════════════════════════════ */
+/* THE PANEL SPACES THE QUESTIONS, not this step (main, 2026-11-16: "the
+   panel owns every distance … a step never spaces itself"). The wrapper only
+   carries the ref and the focus handler; with `display: contents` each
+   question/answer pair is a block of `.musy-wizard__content` and gets its
+   --sp-5 (24) — twice the --space-gap-related (12) between a question and
+   its own field, so a label reads as belonging to the field below it. */
+.musie-reflexion-answers {
+  display: contents;
+}
+
+/* GROWS WITH ITS TEXT. `field-sizing: content` where the browser has it; the
+   step's `grow()` sets the height by hand where it does not. The floor is the
+   design system's own textarea floor, so an empty field looks as it does in
+   the app. */
+.musie-reflexion-answer textarea {
+  field-sizing: content;
+  min-block-size: calc(var(--target-comfort) * 2);
+  overflow-y: hidden;
+  resize: none;
+}
+
+/* Room under the last field, so centring it above an on-screen keyboard
+   has somewhere to scroll to. */
+.musie-reflexion-reflect {
+  padding-block-end: calc(var(--viewport-block) / 3);
+}
+
+/* ═══ THANK YOU ═════════════════════════════════════════════════════════════
+   Four questions since 2026-11-18. Between question blocks --sp-6 (32), one
+   token above the reflect step's --sp-5 (Ben, 2026-11-18: „zwischen den
+   Fragen einen Token höher“); --space-gap-related (12) between a question
+   and its answer. */
+.musie-reflexion-survey {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* ═══ NPS SLIDER (NpsSlider.tsx) ═══════════════════════════════════════════
+   A native range, restyled: an --sp-2 track, a 20px thumb in the primary
+   colour, the part up to the thumb filled. Under it the eleven numbers,
+   and under those the two ends of the scale.
+
+   THE NUMBERS LINE UP WITH THE THUMB BY CONSTRUCTION. The thumb's centre at
+   step n is `thumb/2 + n/10 × (track − thumb)`. Eleven boxes, each as wide as
+   the thumb and spread with `space-between`, put the centre of box n at
+   exactly the same place. That is why the box width IS `--nps-thumb`. 20px
+   (not 24) because eleven of them have to fit the 240px a 320px phone
+   leaves inside the box.
+
+   THE INPUT IS --target-sm (40) TALL, so the track is easy to hit even
+   though it is drawn 8 tall. `touch-action: pan-y` lets a vertical swipe
+   still scroll the page while a horizontal one moves the thumb. */
+.musie-nps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
+/* The same type step as the open questions' Field labels around it, so a
+   rating question and an open one read as the same kind of thing: label-lg
+   since 2026-11-18 (see „THE QUESTIONS ONE TYPE STEP UP“). */
+.musie-nps__question {
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  line-height: var(--type-label-lg-line);
+  letter-spacing: var(--type-label-lg-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-label);
+}
+
+.musie-nps__control {
+  --nps-thumb: calc(var(--sp-4) + var(--sp-1));
+  --nps-track: var(--sp-2);
+  --nps-fill: calc(var(--nps-thumb) / 2 + (100% - var(--nps-thumb)) * var(--nps-ratio, 0));
+  display: flex;
+  flex-direction: column;
+}
+
+.musie-nps__input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  block-size: var(--target-sm);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.musie-nps__input:focus-visible { outline: none; }
+
+/* The track: filled up to the thumb, sunken after it. Chromium and Safari
+   paint the fill as a gradient; Firefox has its own progress part. */
+.musie-nps__input::-webkit-slider-runnable-track {
+  block-size: var(--nps-track);
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    var(--interactive-primary) 0 var(--nps-fill),
+    var(--surface-sunken) var(--nps-fill)
+  );
+}
+.musie-nps__input::-moz-range-track {
+  block-size: var(--nps-track);
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+}
+.musie-nps__input::-moz-range-progress {
+  block-size: var(--nps-track);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+}
+
+.musie-nps__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  inline-size: var(--nps-thumb);
+  block-size: var(--nps-thumb);
+  margin-block-start: calc((var(--nps-track) - var(--nps-thumb)) / 2);
+  border: var(--border-width-regular) var(--border-style-solid) var(--surface-raised);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+  box-shadow: var(--elevation-1);
+}
+.musie-nps__input::-moz-range-thumb {
+  box-sizing: border-box;
+  inline-size: var(--nps-thumb);
+  block-size: var(--nps-thumb);
+  border: var(--border-width-regular) var(--border-style-solid) var(--surface-raised);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+  box-shadow: var(--elevation-1);
+}
+.musie-nps__input:focus-visible::-webkit-slider-thumb {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.musie-nps__input:focus-visible::-moz-range-thumb {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* UNSET: no fill and no thumb, because nothing has been chosen. Focused from
+   the keyboard, a hollow thumb shows where the arrow keys will start, so the
+   focus ring has something to sit on. */
+.musie-nps__control[data-unset] .musie-nps__input::-webkit-slider-runnable-track {
+  background: var(--surface-sunken);
+}
+.musie-nps__control[data-unset] .musie-nps__input::-moz-range-progress {
+  background: transparent;
+}
+.musie-nps__control[data-unset] .musie-nps__input::-webkit-slider-thumb { opacity: 0; }
+.musie-nps__control[data-unset] .musie-nps__input::-moz-range-thumb { opacity: 0; }
+.musie-nps__control[data-unset] .musie-nps__input:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+  border-color: var(--interactive-primary);
+  background: var(--surface-raised);
+}
+.musie-nps__control[data-unset] .musie-nps__input:focus-visible::-moz-range-thumb {
+  opacity: 1;
+  border-color: var(--interactive-primary);
+  background: var(--surface-raised);
+}
+
+.musie-nps__steps {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.musie-nps__step {
+  display: flex;
+  justify-content: center;
+  inline-size: var(--nps-thumb);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--on-surface-muted);
+  cursor: pointer;
+}
+.musie-nps__step[data-active] {
+  color: var(--on-surface);
+  font-weight: var(--font-weight-semibold);
+}
+
+.musie-nps__anchors {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+/* Their own width where it fits, shrinking and hyphenating where it does
+   not. At 320px the two ends together („Unwahrscheinlich“ + „Sehr
+   wahrscheinlich“) are wider than the 240px in the box, and a flex item will
+   not shrink below its longest word by itself: the second one ran out of the
+   box. A 50/50 split fixed that but wrapped „Sehr wahrscheinlich“ at 375,
+   where both fit on one line. `hyphens` follows `<html lang>` (rule 5), so
+   German breaks at German points. */
+.musie-nps__anchors > * {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  hyphens: var(--text-hyphens);
+}
+.musie-nps__anchors > :last-child { text-align: end; }
+
+.musie-reflexion-done {
+  padding-block-end: var(--sp-7);
+}
+
+/* ═══ AFTER THE FEEDBACK: THE DECK (NextExercises.tsx) ══════════════════════
+   `/exercises`' own arrangement: `.musie-exercises` is the grid that spaces
+   heading and deck by --space-gap-group, and `.musie-deck-stage` makes the
+   deck full-bleed. Here the heading has a lead line under it, so heading and
+   lead are one block, --space-gap-related apart. `.musie-placeholder` drops
+   its own bottom margin, as `.musie-exercises > .musie-placeholder` does on
+   main, since the grid's gap already spaces it. */
+.musie-reflexion-next {
+  padding-block-end: var(--sp-7);
+}
+.musie-reflexion-next__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+.musie-reflexion-next__head > .musie-placeholder {
+  margin: 0;
+}
+.musie-reflexion-next__head > .musie-placeholder:focus { outline: none; }
+.musie-reflexion-next__lead {
+  margin: 0;
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+}
+
+/* Freie Bahn is ALWAYS the digital run here (one card, the blue sun). The
+   intro's „Die analogen Karten liegen vor mir“ switch would turn the run into
+   the paper scan step, where a visitor without the printed deck is stuck. The
+   switch goes; the intro's copy stays as the app has it. */
+.musie-reflexion .musie-intro__cards > .musy-switch {
+  display: none;
+}
+
+/* QUESTION 2 · JA / NEIN AND ITS FOLLOW-UP (v3, Ben, 2026-11-18). The radio
+   group and the field that „Ja“ opens are one block of the panel, so the
+   field reads as part of the question it follows: --space-gap-stack (16)
+   between them, where the panel puts 24 between questions. */
+.musie-reflexion-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-stack);
+}
+/* THE QUESTIONS ONE TYPE STEP UP — Ben, 2026-11-18, „ausprobieren“: every
+   question on the reflect step and in the thank-you survey is label-lg
+   (17–18px, medium) instead of the Field's own label-md (15–16px, regular).
+   label-lg is the step the app's own Einsteigen questions already wear
+   (SegmentedControl's legend), so a question reads the same before the
+   exercise and after it. The name window's „Dein Name“ is not a question and
+   keeps label-md.
+
+   Three kinds of label take it: the Fields' labels, the Ja/Nein question's
+   legend (RadioGroupText sets heading-sm there, with no prop to change it), and
+   the NPS questions (`.musie-nps__question`, below). Their 12 to the answer
+   stays, as a label's to its field. */
+.musie-reflexion-reflect .musy-field__label,
+.musie-reflexion-done .musy-field__label,
+.musie-reflexion-group .musy-radio-group__legend {
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  line-height: var(--type-label-lg-line);
+  letter-spacing: var(--type-label-lg-tracking);
+  text-wrap: var(--text-wrap-label);
+}
+
+/* THE FEELINGS HELP, INSIDE THE FIELD — Figma node 190:15804, Ben,
+   2026-11-18, hardcoded for this experiment. The system's `Button` at its
+   `min` rung (label-md, --sp-2 / --sp-4), ghost, wearing the ghost's own
+   hover fill (--surface-sunken, the same sand step) at rest, so it reads as
+   a chip in the field rather than as text in it. No icon, as in the frame.
+
+   Placed in the field's bottom end, --sp-2 from the end edge and --sp-1
+   plus the border from the bottom (the frame's 8.5 / 6.5 at 311 × 112). The
+   `min` rung's --sp-2 margin goes, because it is placed, not flowed. The
+   textarea keeps a strip clear at its bottom the button's height plus a
+   step (--target-sm + --sp-2), so a long answer never runs under it.
+
+   Hover and press keep their own feedback: one ghost step darker each. The
+   selectors are long because `.musy-btn--ghost:hover…` is four classes deep. */
+.musie-reflexion-infield {
+  position: relative;
+}
+.musie-reflexion-infield textarea {
+  padding-block-end: calc(var(--target-sm) + var(--sp-2));
+}
+.musie-reflexion-infield > .musie-reflexion-infield__btn {
+  position: absolute;
+  inset-block-end: calc(var(--sp-1) + var(--border-width-regular));
+  inset-inline-end: var(--sp-2);
+  margin: 0;
+  background-color: var(--surface-sunken);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musie-reflexion-infield > .musie-reflexion-infield__btn.musy-btn--ghost:hover:not(:disabled):not([data-loading]) {
+    background-color: var(--interactive-ghost-active);
+  }
+}

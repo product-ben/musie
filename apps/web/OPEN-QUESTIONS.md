@@ -12302,3 +12302,202 @@ What I need from Ben: nothing to decide, one cost to know. The 2026-09-20
 removal of the skip link (2.4.1) was argued on the header being ONE tab stop
 for a sighted keyboard user to walk past; it is two again, as it was before
 the profile button went. Still small; still a cost, and logged as one.
+
+## Experiment „Reflexion 01“: four premises of the brief the repo contradicts — DECIDED
+
+Where: `apps/web/experiments/reflexion/` (its own Vite build), served as
+`/experiments/reflexion/{harfe,body-scan,freie-bahn}/`;
+`supabase/migrations/20261116100000_experiment_responses.sql`
+
+What the brief assumed, and what the repo says instead:
+- **"Auth gibt es nicht."** It does. Every app route sits behind
+  `SignInGate`, and anonymous sessions went on 2026-10-20. A route under
+  `/experiments` inside the app would therefore show the sign-in screen.
+- **The stepper can be reused for a visitor with no account.** Not
+  directly. The content tables, the `tracks` bucket and `instruments` are
+  closed to `anon`, and `Session.tsx` writes a `sessions` row at every step.
+- **"Inhalte werden nicht eingefroren."** Without an account this cannot be
+  live.
+- **"Bild und Track liegen im Repo."** The image does. „Aura“ (`trk-10`) is
+  only in the private bucket on hosted.
+
+What was built instead (Ben, 2026-11-16: "Go", option 4a):
+- **A static page under `/experiments`**, in rule 10's shape. It mounts the
+  app's unmodified `routes/Session.tsx` in a memory router, and Vite swaps
+  every Supabase-touching module it imports for an in-memory shim. The
+  reflect step is replaced by routing: `/session/:id/reflect` outranks
+  `/session/:id/:step`. `apps/web/src` is unchanged.
+- **Content is baked at build time** into `experiments/reflexion/src/data/content.json`.
+  Exercise copy still travels by migration (rule 4.1), so the page is stale
+  only between a copy migration and the next experiment build. Live content
+  would need an anon-readable function for these three exercises.
+- **Audio is a public file** under `/experiments/reflexion/media/`: „Aura“
+  (ES_ = Epidemic Sound) and the German body scan. Anyone with the link can
+  download them for as long as the experiment runs. Ben accepted that.
+- **Rule 10 says an experiment writes nothing to Supabase; this one does.**
+  It writes one table, insert-only for `anon`, read by `service_role`. Ben's
+  brief asks for it explicitly; it is the exception, not a new default.
+- **PostHog has its own init in the page.** The app's init needs an account
+  and a profile row. Pressing start in the name modal is the consent, so
+  the landing event is held back until then. A visitor who never starts is
+  therefore invisible, and the brief's "bounce in the name modal" cannot be
+  measured.
+- **The demo on 2026-11-16 ran locally.** Hosted gets the table only by a
+  merge and `pnpm db:sync`, and the brief says not to merge.
+
+What I need from Ben: Lucy's three questions, the final name-modal copy (it
+now also says what pressing start agrees to), the final survey wording, and,
+before the links go out, the merge plus `pnpm db:sync`.
+
+## Experiment „Reflexion 01“: names go to PostHog — DECIDED
+
+Where: `apps/web/experiments/reflexion/src/track.ts` (`identify` with
+`$set: { name }`), `src/config.ts` (the consent line);
+PostHog dashboard „Reflexion 01“ (1127915)
+
+The brief said "Niemals Namen oder Reflexionstexte an PostHog senden". On
+2026-11-18 Ben asked for a dashboard that shows WHO took part and who
+finished, by the name typed in the start window. So the name is now a person
+property. It is still never an event property, and a reflection text still
+never reaches PostHog; `before_send` strips both.
+
+What changed with it, so the promise and the behaviour agree: the consent
+line in the name window said "ohne deinen Namen". It now says that measuring
+happens under your name and that what you write in the text fields is not
+part of it (DE and EN, written by me, for Ben to check).
+
+What I need from Ben: a look at the new consent wording.
+
+## Experiment „Reflexion 01“: the welcome window, Ben's wording — DONE, one word open
+
+Where: `apps/web/experiments/reflexion/src/NameModal.tsx`, `src/config.ts`;
+Figma `McSA3aXDQXEqGwulfMnliE`, node 280:2973 (an html.to.design capture of
+the page, edited by Ben, 2026-11-18)
+
+This answers the previous entry's question about the consent wording. Ben
+rewrote it in Figma, and the code now follows the frame:
+- The consent line comes BEFORE the name field, so it is read before
+  „Los geht’s“ is pressed.
+- New wording: measuring under your name, and that Lucy and Ben may contact
+  you with follow-up questions. The promise that the text fields are not
+  measured is gone, though it is still true (track.ts).
+- The line „Deine Antworten werden gespeichert und von Lucy und Ben gelesen“
+  is gone. The window no longer says that the answers are stored.
+
+Two small corrections I made to the frame's text, both punctuation: a comma
+after „nutzt“, which closes the inserted clause before „und dich …“, and a
+full stop at the end.
+
+Not applied: the frame's title reads „Willkommen beim Musie“. „beim“ needs
+an article („bei dem Musie“), and Musie has none anywhere else, so it stays
+„Willkommen bei Musie“ until Ben says the change was meant.
+
+Not changed either: in the frame the intro starts about 22px under the
+title; the page has 45. The difference is the Lightbox body's own top
+padding inside its scroll area (`--space-inset-card`), which the capture
+dropped: its body is exactly 24px shorter than the real DOM. Tightening it
+would be a Lightbox change, not one to this window.
+
+## Experiment „Reflexion 01“: the welcome window's top padding — DONE
+
+Where: `apps/web/experiments/reflexion/src/experiment.css`
+(`.musie-reflexion-welcome > .musy-lightbox__body`), `src/NameModal.tsx`
+
+Follows the previous entry. Ben, 2026-11-18: the padding above the intro
+goes to 0. The Lightbox body's top inset is taken out for this one window, in
+the experiment's own stylesheet and not in the component (rule 10). The
+bottom inset stays. The intro now sits 21px under the title, which is the
+title's own margin: Figma has 21.6.
+
+## Experiment „Reflexion 01“: the feedback survey is NPS now — DONE, one component request
+
+Where: `apps/web/experiments/reflexion/src/ThankYou.tsx`, `src/NpsSlider.tsx`,
+`src/config.ts` (`SURVEY`), `src/track.ts` (`surveySent`); PostHog survey
+`01a1e3ac-…` (questions v2); dashboard „Reflexion 01“ (1127915), seven tiles
+
+Ben, 2026-11-18: the thank-you survey asks two NPS questions on „a stepper
+slider whose steps are labelled“, then two open questions. Done like this:
+
+- The PostHog survey's questions were replaced rather than added to: two
+  rating questions (scale 10, NPS) and two open ones, all optional. v1
+  (Ja/Vielleicht/Nein plus a comment) only ever had test answers, and the
+  survey was never launched.
+- The dashboard's four survey tiles became NPS tables (answers, NPS,
+  promoters, passives, detractors, average). The three „Wer war dabei?“
+  tables swapped „Empfehlung“ and „Feedback“ for the four new answers. All
+  seven were run against two internal test responses.
+- „Feedback senden“ is ready as soon as one question is answered. No rating
+  is required, because a forced rating is a guess in the score.
+- No step is preselected. A slider always has a value, and a thumb already
+  at 5 would be an answer nobody gave.
+
+Two corrections to Ben's text: „am besten“ in lower case (Duden, superlative
+with „am“), and a question mark after „Was würdest du dir anders wünschen“.
+„FreundInnen“ and „KollegInnen“ are his and stay.
+
+THE SLIDER IS A COMPONENT REQUEST, NOT A PATTERN. The design system has no
+slider, and `FeelingsScale` is specified for three to five points with a
+glyph each. Rule 10 lets the experiment have its own, built on Layer 1 tokens
+(`experiment.css`, „NPS SLIDER“). If NPS ever reaches the app, it needs a
+system component: a native range with labelled steps and an unset state. It
+should not be a copy of this file.
+
+## Experiment „Reflexion 01“: the mood question is Ja/Nein first; the feelings button sits in the field — DONE
+
+Where: `apps/web/experiments/reflexion/src/config.ts` (`QUESTIONS`,
+`QUESTION_SET_VERSION` 3), `src/ReflectionStep.tsx`, `src/experiment.css`;
+`supabase/migrations/20261118140000_experiment_responses_wide_q2_how.sql`;
+Figma `McSA3aXDQXEqGwulfMnliE`, node 190:15804
+
+Ben, 2026-11-18. Done like this:
+- `q2` asks „Hat sich deine Stimmung während des Zuhörens bzw. des Spielens
+  verändert?“ with Ja and Nein as radio buttons (RadioGroupText).
+- Only „Ja“ shows `q2_how`, „Beschreibe, wie sich deine Stimmung verändert
+  hat“.
+- The feelings button moved INTO that field, bottom end, labelled
+  „Stimmung benennen“, as in the frame: the system's ghost `Button` at `min`
+  wearing the ghost's hover fill at rest, positioned by the experiment.
+  Hardcoded for this experiment, as Ben said. If the app ever wants a button
+  inside a Field, that is a Field slot (a component request), not this CSS.
+
+Decisions I made:
+- **Ja/Nein is stored in German** whatever the screen showed, so EN „Yes“
+  arrives as „Ja“. That is the survey's rule too.
+- **A hidden follow-up is saved empty.** Text typed under „Ja“ and then
+  switched to „Nein“ was not an answer. The draft keeps it on screen, so
+  switching back to „Ja“ brings it back.
+- **The table is unchanged.** `answers` is keyed jsonb, so `q2_how` is just
+  another element. Only the CSV view needed a column, in a new migration,
+  because the view picks its columns by key.
+- **`QUESTION_SET_VERSION` is 3**, so the v2 rows (one free-text mood answer
+  in `q2`) stay apart from v3 (Ja/Nein in `q2`).
+- **The Ja/Nein question uses the field labels' type style** (label-md), not
+  RadioGroupText's heading-sm, so the four questions read alike. That is an
+  experiment override of the legend.
+
+## Experiment „Reflexion 01“: after the feedback, the deck of the three exercises — DONE, one copied face
+
+Where: `apps/web/experiments/reflexion/src/NextExercises.tsx`,
+`src/ThankYou.tsx`, `src/experiment.css`
+
+Ben, 2026-11-18: the success message „Danke für dein Feedback!“ is gone.
+After sending, the page shows „Danke, dass du an unserem Experiment
+teilgenommen hast.“, then „Lust auf eine weitere Übung?“, then the card
+stack as on main's `/exercises` with the experiment's three exercises.
+
+- The deck is the system's `CardDeck`, set up as `/exercises` sets it up.
+- The exercise just done is at the bottom of the pile. All three are in it,
+  as asked, but the top card is a new one.
+- A press is a full page load of that exercise's link. The browser keeps the
+  participant, so the name is pre-filled, and the press of „Los geht's“ there
+  is a fresh consent. No new event: the next page's
+  `exp_participant_started` with `returning_participant: true` already
+  counts who went on.
+
+THE CARD FACE IS A COPY. `ExerciseFace` is a private function in
+`routes/Exercises.tsx`, and this experiment does not touch the app, so
+NextExercises rebuilds it from the same markup and classes, styled by the
+app's `exercises.css`. If the app's face changes, this copy does not follow.
+That is acceptable for a page that lives a few weeks. If a second screen ever
+wants exercise cards, the face should be exported from the app, not copied
+again.

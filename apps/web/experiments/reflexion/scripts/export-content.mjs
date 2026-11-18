@@ -1,0 +1,147 @@
+/**
+ * Experiment „Reflexion 01“ — bake the content the stepper reads into
+ * `src/data/content.json`, by calling the app's REAL lib functions against the
+ * LOCAL Supabase stack, so every shape matches by construction.
+ *
+ *   cd apps/web && node experiments/reflexion/scripts/export-content.mjs
+ *
+ * READ ONLY. The local stack is shared between sessions (CLAUDE.md rule 9):
+ * this script only selects. It needs the local service-role key because the
+ * content tables are closed to `anon`; the key is read from
+ * `supabase status -o env` at run time and never written anywhere.
+ *
+ * HOW THE REAL FUNCTIONS RUN IN NODE: a Vite dev server in SSR mode loads
+ * `src/lib/content.ts` and `src/lib/instruments.ts` unchanged, with ONE
+ * substitution — `src/lib/supabase.ts` (which refuses a service-role key, and
+ * rightly) is replaced by a module handing out a client built here.
+ *
+ * What is NOT the database's, and is overridden at run time by the shims
+ * rather than baked: the free-rein card's picture (config FREIE_BAHN) and its
+ * track (trk-10 „Aura“, which the local stack does not carry).
+ */
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
+import { createClient } from '@supabase/supabase-js';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const APP_ROOT = path.resolve(HERE, '../../..');
+const REPO_ROOT = path.resolve(APP_ROOT, '../..');
+const OUT = path.resolve(HERE, '../src/data/content.json');
+
+const LOCALES = ['de', 'en'];
+const EXERCISES = ['harp', 'body-scan-soundwalk', 'free-rein'];
+const FREE_REIN_CARD = 'mc-01';
+const POSTURES = ['sitting', 'lying'];
+const ENDINGS = ['day', 'sleep'];
+
+function localEnv() {
+  const out = execFileSync('supabase', ['status', '-o', 'env'], { cwd: REPO_ROOT, encoding: 'utf8' });
+  const env = {};
+  for (const line of out.split('\n')) {
+    const m = /^([A-Z_]+)="?(.*?)"?$/.exec(line.trim());
+    if (m) env[m[1]] = m[2];
+  }
+  if (!env.API_URL || !env.SERVICE_ROLE_KEY) throw new Error('supabase status gave no API_URL / SERVICE_ROLE_KEY');
+  if (!/^http:\/\/(127\.0\.0\.1|localhost):54321$/.test(env.API_URL)) {
+    throw new Error(`refusing a non-local stack: ${env.API_URL}`);
+  }
+  return env;
+}
+
+const env = localEnv();
+globalThis.__reflexionExportClient = createClient(env.API_URL, env.SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+const SUPABASE_MODULE = path.join(APP_ROOT, 'src/lib/supabase.ts');
+const VIRTUAL = '\0reflexion-export-supabase';
+
+const server = await createServer({
+  configFile: false,
+  root: APP_ROOT,
+  logLevel: 'warn',
+  server: { middlewareMode: true, hmr: false },
+  appType: 'custom',
+  optimizeDeps: { noDiscovery: true, include: [] },
+  plugins: [{
+    name: 'reflexion-export-supabase',
+    enforce: 'pre',
+    async resolveId(source, importer, options) {
+      if (importer === undefined) return null;
+      const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
+      if (resolved?.id === SUPABASE_MODULE) return VIRTUAL;
+      return null;
+    },
+    load(id) {
+      if (id !== VIRTUAL) return null;
+      return 'export function getSupabase() { return globalThis.__reflexionExportClient; }';
+    },
+  }],
+});
+
+try {
+  const content = await server.ssrLoadModule('/src/lib/content.ts');
+  const instruments = await server.ssrLoadModule('/src/lib/instruments.ts');
+
+  const exercises = {};
+  const cards = {};
+  const listenAudio = {};
+  const tracks = {};
+  for (const locale of LOCALES) {
+    exercises[locale] = {};
+    for (const id of EXERCISES) {
+      exercises[locale][id] = await content.getExercise(id, locale);
+      if (exercises[locale][id] === null) throw new Error(`no exercise ${id} (${locale})`);
+    }
+    cards[locale] = await content.getCard(FREE_REIN_CARD, locale);
+    if (cards[locale] === null) throw new Error(`no card ${FREE_REIN_CARD} (${locale})`);
+    /* Every answer pair, so the shim never has to re-implement `pickCut`. */
+    for (const posture of POSTURES) {
+      for (const ending of ENDINGS) {
+        const key = `body-scan-soundwalk|${locale}|${posture}|${ending}`;
+        listenAudio[key] = await content.getListenAudio('body-scan-soundwalk', locale, posture, ending);
+      }
+    }
+  }
+  /* What the two cardless exercises play through `getTrackFor(…, null)`. */
+  for (const id of ['harp', 'body-scan-soundwalk']) {
+    tracks[`${id}|null`] = await content.getTrackFor(id, null);
+  }
+
+  const instrument = { harp: await instruments.getInstrument('harp') };
+
+  /* The newest migration file in this tree. Whether the local stack has
+     applied exactly these is checked by hand (psql on
+     supabase_migrations.schema_migrations) — PostgREST does not expose it. */
+  const latestMigration = fs.readdirSync(path.join(REPO_ROOT, 'supabase/migrations')).sort().at(-1) ?? null;
+
+  const baked = {
+    $note:
+      'GENERATED by experiments/reflexion/scripts/export-content.mjs from the LOCAL Supabase stack '
+      + '(read only). Do not hand-edit; re-run the script. Shapes are what the real lib functions return.',
+    exportedAt: new Date().toISOString(),
+    latestMigration,
+    exercises,
+    cards,
+    listenAudio,
+    tracks,
+    instruments: instrument,
+  };
+
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, `${JSON.stringify(baked, null, 2)}\n`);
+  console.log(`wrote ${path.relative(process.cwd(), OUT)}`);
+  for (const locale of LOCALES) {
+    for (const id of EXERCISES) {
+      const e = exercises[locale][id];
+      console.log(`  ${locale} ${id}: ${e.name} · kind ${e.kind} · cardsDealt ${e.cardsDealt}`);
+    }
+  }
+  console.log('  listenAudio:', Object.entries(listenAudio).map(([k, v]) => `${k}=${v?.kind ?? 'null'}`).join(', '));
+  console.log('  harp samples:', instrument.harp.samples.length);
+} finally {
+  await server.close();
+}

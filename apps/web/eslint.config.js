@@ -9,7 +9,7 @@ export default [
     /* public/experiments: CLAUDE.md rule 10 — artifact spikes, exempt from the
        strict rules, and the first to ship a bundled script (body-resonance's
        Base UI slider, minified) would otherwise fail lint by the thousand. */
-    ignores: ["dist", "public/experiments"],
+    ignores: ["dist", "public/experiments", "experiments"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
