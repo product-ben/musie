@@ -59,7 +59,7 @@
  * listens to `window` cannot be tested at all. What can be wrong here is the
  * JUDGEMENT — where to place it at a turn, when to hold it, what an iOS bounce
  * means — so that is a reducer over (state, reading), and the hook is left
- * holding one `addEventListener` and two style writes.
+ * holding one `addEventListener` and the style writes.
  *
  * ── WHAT WENT WITH THE SLIDE ──────────────────────────────────────────────
  * The thresholds (56 down, 14 up), the top band and the floor on short pages.
@@ -67,9 +67,39 @@
  * moves exactly as far as the page has nothing to fire. A momentum scroll
  * settling back and forth by two pixels moves it two pixels, and a page that
  * scrolls 30px takes it 30px — which is what the first line of that page does.
+ *
+ * ── ON THE WAY BACK IT IS A BAR · Ben, 2026-11-18 ─────────────────────────
+ * Figma *Navigation › Bodyscan · Hören · 393*, the frame `header`
+ * (242:21976): scrolling up mid-page brings back not the pill but a bar
+ * across the top of the window — flush with its top edge, --sp-2 off the
+ * sides, only its bottom corners round. At the top of the page it is the pill
+ * again. Up to 1440px; wider than that, the pill comes back as the pill.
+ * What Ben settled, one by one:
+ *
+ *   ONLY ONCE THE PILL WAS OUT OF SIGHT. A short scroll that never took the
+ *   pill off the screen brings the pill back with the page, in its own place.
+ *   So the bar is a `gone` header coming back: it becomes the bar at the turn
+ *   up from `gone`, while it is out of sight, and it is the pill again the
+ *   moment it is out of sight once more (`gone` is always the pill, so a
+ *   wide, opaque, fixed box never waits above the window).
+ *
+ *   HANDED OVER IN PLACE. Not at the very top but where the pill's own place
+ *   reaches the top of the window — `handover`, the band's top padding (16 on
+ *   a phone, 24 from 768px). The held bar becomes the pill at rest right
+ *   there, and the page carries it the last few pixels into its place.
+ *
+ *   MORPHED BY THE SCROLL, NOT BY A CLOCK. Over the `morph` (24px) of scroll
+ *   before the handover, the bar narrows to the pill and its top corners
+ *   round — as a function of the position, so it stops when the finger
+ *   stops and goes back when the finger does. At the handover it already IS
+ *   the pill, and the swap changes nothing on the screen. `morphAt` is that
+ *   function.
  */
 
 export type RevealMode = 'free' | 'gone' | 'held';
+
+/** Which of its two shapes the header has: the pill at rest, or the bar. */
+export type RevealForm = 'pill' | 'bar';
 
 /**
  * What the reducer has to remember between two scroll events.
@@ -81,16 +111,34 @@ export type RevealMode = 'free' | 'gone' | 'held';
  */
 export type RevealState = {
   mode: RevealMode;
+  form: RevealForm;
   at: number;
   last: number;
 };
 
 /** The top of a page, the header in its own place — where every screen starts. */
-export const AT_REST: RevealState = { mode: 'free', at: 0, last: 0 };
+export const AT_REST: RevealState = { mode: 'free', form: 'pill', at: 0, last: 0 };
+
+/**
+ * The bar's numbers, measured by the hook. `null` in a reading means no bar
+ * at this width (over 1440px), and the header behaves as it did before it.
+ *
+ * `reach` is how far above the window the bar is placed at a turn up, so the
+ * page brings it in from there — its own height, plus as much again below it
+ * as the pill's band has (--sp-4) and the same clearance, so its edge starts
+ * exactly as far up as the pill's would. `handover` is where the pill's own
+ * place meets the top of the window; `morph` is the run of scroll before it
+ * over which the bar becomes the pill — 0 under reduced motion, so it swaps.
+ */
+export type BarGeometry = {
+  reach: number;
+  handover: number;
+  morph: number;
+};
 
 /**
  * Showing, from wherever the page is NOW — what the hook resets to when focus
- * brings the header back: held at the top.
+ * brings the header back: held at the top, as the bar where there is one.
  *
  * ── FROM HERE, NOT FROM THE TOP · 2026-11-17 ─────────────────────────────
  * Tab to the menu button while the header is gone, and focus brings it back —
@@ -99,31 +147,39 @@ export const AT_REST: RevealState = { mode: 'free', at: 0, last: 0 };
  * run down and took the header away again with focus inside it (WCAG 2.4.11).
  * Anchored at the real position, a jump either way starts from where the page
  * actually was. Clamped like every reading, for the same iOS reason.
+ *
+ * Above the handover the pill's own place is in sight, so that is where it is.
  */
-export function shownAt(scrollY: number): RevealState {
+export function shownAt(scrollY: number, bar: BarGeometry | null = null): RevealState {
   const y = Math.max(scrollY, 0);
-  return y === 0 ? AT_REST : { mode: 'held', at: 0, last: y };
+  if (y === 0) return AT_REST;
+  if (bar === null) return { mode: 'held', form: 'pill', at: 0, last: y };
+  if (y <= bar.handover) return { mode: 'free', form: 'pill', at: 0, last: y };
+  return { mode: 'held', form: 'bar', at: 0, last: y };
 }
 
 /**
  * One reading of the page, taken at a scroll event.
  *
- * `reach` is how far above the window the header waits when it is gone: its
- * own MEASURED height (a large text size makes it taller) plus the clearance
- * shell.css gives it — for its shadow everywhere, and on an iPhone for the
- * band under the status bar too, where Safari draws the page. `maxScrollY` is
- * the document as it is right now, for the clamp.
+ * `reach` is how far above the window the PILL waits when it is gone: its
+ * band's height — MEASURED, since a large text size makes it taller — plus the
+ * clearance shell.css gives it, for its shadow everywhere, and on an iPhone
+ * for the band under the status bar too, where Safari draws the page.
+ * `maxScrollY` is the document as it is right now, for the clamp. `bar` is the
+ * bar's own numbers, or `null` where there is no bar.
  */
 export type ScrollReading = {
   scrollY: number;
   maxScrollY: number;
   reach: number;
+  bar?: BarGeometry | null;
 };
 
 /**
  * Where the header is drawn, relative to the window's top edge — 0 is all the
  * way in, `-reach` is gone. What the browser will draw for this state; the
- * tests use it to say "one pixel for one pixel" in numbers.
+ * tests use it to say "one pixel for one pixel" in numbers. `reach` is the
+ * pill's: gone is always the pill.
  */
 export function drawnAt(state: RevealState, scrollY: number, reach: number): number {
   if (state.mode === 'held') return 0;
@@ -131,8 +187,43 @@ export function drawnAt(state: RevealState, scrollY: number, reach: number): num
   return state.at - scrollY;
 }
 
+/**
+ * How far the bar has become the pill: 0 the bar, 1 the pill — and 1 for the
+ * pill itself, which already is. Read off the position alone, so the shape
+ * follows the finger and needs no clock: 0 until `handover + morph`, 1 at
+ * `handover`, a straight line between. With no run to morph over (reduced
+ * motion) it stays the bar until the handover swaps it.
+ */
+export function morphAt(state: RevealState, bar: BarGeometry | null): number {
+  if (state.form === 'pill' || bar === null) return 1;
+  if (bar.morph <= 0) return 0;
+  const p = (bar.handover + bar.morph - state.last) / bar.morph;
+  return Math.min(Math.max(p, 0), 1);
+}
+
 /** The state, one reading later. Pure: same inputs, same answer, no `window`. */
 export function nextReveal(state: RevealState, reading: ScrollReading): RevealState {
+  const bar = reading.bar ?? null;
+  const next = move(
+    /* A bar where there is no bar any more — the window grew past 1440 — is
+       simply the pill, wherever it is. */
+    bar === null && state.form === 'bar' ? { ...state, form: 'pill' } : state,
+    reading,
+    bar,
+  );
+
+  /* THE HANDOVER. The bar, wherever this reading left it, at or above the
+     pill's own place: that place is in the window now, so it is the pill
+     there, at rest — which the page draws exactly where the held bar was
+     (shell.css makes the two the same box). A jump past the handover lands
+     here too, and simply finds the pill in its place. */
+  if (bar !== null && next.form === 'bar' && next.last <= bar.handover) {
+    return { mode: 'free', form: 'pill', at: 0, last: next.last };
+  }
+  return next;
+}
+
+function move(state: RevealState, reading: ScrollReading, bar: BarGeometry | null): RevealState {
   /* CLAMPED, because iOS reports a scrollY below 0 at the top and above the
      maximum at the bottom while the page is bouncing. Clamped, a bounce is no
      movement at all, so it is never a turn. */
@@ -149,48 +240,56 @@ export function nextReveal(state: RevealState, reading: ScrollReading): RevealSt
   if (y === state.last) return state;
 
   const down = y > state.last;
-  const { reach } = reading;
+  const reachOf = (form: RevealForm): number =>
+    form === 'bar' && bar !== null ? bar.reach : reading.reach;
+  /* What a header coming back from out of sight is: the bar, where there is
+     one. */
+  const returning: RevealForm = bar === null ? 'pill' : 'bar';
 
   /* Free and going down: out of sight is the one thing to watch for. The page
-     has carried it past `-reach`, so it can wait fixed above the window from
-     here — invisibly, since it is out of sight either way. */
-  const leaving = (at: number): RevealState => (
-    at - y < -reach ? { mode: 'gone', at: 0, last: y } : { mode: 'free', at, last: y }
+     has carried it past its reach, so it can wait fixed above the window from
+     here — invisibly, since it is out of sight either way. Gone is always the
+     pill: the bar, once out of sight, has no reason to stay one. */
+  const leaving = (at: number, form: RevealForm): RevealState => (
+    at - y < -reachOf(form)
+      ? { mode: 'gone', form: 'pill', at: 0, last: y }
+      : { mode: 'free', form, at, last: y }
   );
+
+  /* Coming back from out of sight: placed in the page just above the window
+     AT THE TURNING POINT, so the page brings it in from there — and the
+     pixels this event already covered count, as if it had been there all
+     along. A jump bigger than its reach brings it all the way in. */
+  const returningFrom = (turn: number): RevealState => {
+    const at = Math.max(turn - reachOf(returning), 0);
+    return at - y >= 0
+      ? { mode: 'held', form: returning, at: 0, last: y }
+      : { mode: 'free', form: returning, at, last: y };
+  };
 
   if (state.mode === 'held') {
     /* Held, and the reader turns down: let go where it is. Its place becomes
        the TURNING POINT, where it was drawn at the top of the window, so the
        page takes it away from exactly there — including the pixels this event
        already covered. Going on up, it stays held. */
-    return down ? leaving(state.last) : { ...state, last: y };
+    return down ? leaving(state.last, state.form) : { ...state, last: y };
   }
 
   if (state.mode === 'gone') {
-    /* Gone, and still going down: it waits. Turning up: place it in the page
-       where it has been waiting, just above the window AT THE TURNING POINT,
-       so the page brings it back from there — and the pixels this event
-       already covered count, as if it had been there all along. */
-    if (down) return { ...state, last: y };
-    const at = Math.max(state.last - reach, 0);
-    return at - y >= 0
-      ? { mode: 'held', at: 0, last: y } // a jump bigger than `reach`: all the way in
-      : { mode: 'free', at, last: y };
+    /* Gone, and still going down: it waits. Turning up: it comes back. */
+    return down ? { ...state, last: y } : returningFrom(state.last);
   }
 
   /* Free. */
-  if (down) return leaving(state.at);
+  if (down) return leaving(state.at, state.form);
 
   /* Free and going up: on its way back in, which the page is doing — until it
      is all the way in (a jump can overshoot that), and then it is held at the
      top, so going on up does not carry it down into the page. A free header
-     somehow above the window on the way up — never left as `gone` — is placed
-     as `gone` is, just above the window at the turn. */
+     somehow above the window on the way up — never left as `gone` — comes
+     back as `gone` does. */
   const drawn = state.at - y;
-  if (drawn >= 0) return { mode: 'held', at: 0, last: y };
-  if (drawn < -reach) {
-    const at = Math.max(state.last - reach, 0);
-    return at - y >= 0 ? { mode: 'held', at: 0, last: y } : { mode: 'free', at, last: y };
-  }
+  if (drawn >= 0) return { mode: 'held', form: state.form, at: 0, last: y };
+  if (drawn < -reachOf(state.form)) return returningFrom(state.last);
   return { ...state, last: y };
 }

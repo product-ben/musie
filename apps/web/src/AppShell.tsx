@@ -163,10 +163,13 @@ export function AppShell() {
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
       <div className="musie-app">
-        {/* `--musie-header-at` and `data-mode` are written by
-            `useHeaderReveal`, straight onto the element and only at a turn
-            of the scroll: rendering them here would re-render the shell on
-            every turn and fight the hook over who owns them. */}
+        {/* `--musie-header-at`, `data-mode`, `data-form` and
+            `--musie-header-morph` are written by `useHeaderReveal`, straight
+            onto the element and only when they change: rendering them here
+            would re-render the shell on every turn — and, for the morph
+            (the bar becoming the pill on the way back up, 2026-11-18), on
+            every scroll event of its run — and fight the hook over who owns
+            them. */}
         <header ref={headerRef} className="musie-header">
           {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
               17.11.*). The full-width bar with its centred logo became one

@@ -135,7 +135,8 @@
    spanning about 90% of the top edge, and fills a transparent one with the
    page background — the solid beige strip of the full-width band (Ben's
    phone, 2026-11-17; OPEN-QUESTIONS.md has the sources). An absolute box is
-   as wide as its content, and so is the fixed one.
+   as wide as its content, and so is the fixed one. THE BAR (below) is the
+   one exception, and it is a top bar on purpose.
 
    THE CLEARANCE is how far beyond its own height a header that is gone
    waits above the window. --sp-2 by default: the band already ends --sp-4
@@ -160,7 +161,15 @@
   padding-block-start: var(--musie-header-block, var(--sticky-block));
 }
 
+/* THE BAND'S NUMBERS ARE NAMED, because the hook reads them back
+   (`useHeaderReveal`): the band is the pill's measured height plus these two
+   paddings, and where the pill's own place reaches the window — the bar's
+   handover — is the top one. Named once, so the CSS and the script cannot
+   disagree about either. */
 .musie-header {
+  --musie-header-pad-top: var(--sp-4);
+  --musie-header-pad-bottom: var(--sp-4);
+  --musie-header-pad-inline: var(--sp-4);
   --musie-header-clearance: var(--sp-2);
   position: absolute;
   inset-block-start: var(--musie-header-at, 0px);
@@ -169,8 +178,8 @@
   z-index: var(--z-sticky);
   display: flex;
   align-items: flex-start;
-  padding-block: var(--sp-4);
-  padding-inline: var(--sp-4);
+  padding-block: var(--musie-header-pad-top) var(--musie-header-pad-bottom);
+  padding-inline: var(--musie-header-pad-inline);
   pointer-events: none;
 }
 
@@ -206,8 +215,8 @@
 
 @media (min-width: 768px) {
   .musie-header {
-    padding-block-start: var(--sp-5);
-    padding-inline: var(--sp-5);
+    --musie-header-pad-top: var(--sp-5);
+    --musie-header-pad-inline: var(--sp-5);
   }
 
   /* 68 TALL, NOT 69. Figma's large pill keeps the old bar's 69px, and that
@@ -218,6 +227,86 @@
     min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
     padding-inline: var(--sp-5) var(--sp-3);
   }
+}
+
+/* ── ON THE WAY BACK, A BAR · Ben, 2026-11-18 ──────────────────────────────
+   Figma *Navigation › Bodyscan · Hören · 393*, frame `header` (242:21976):
+   scrolling up mid-page, the header comes back not as the pill but as a bar
+   across the window — flush with its top, --sp-2 off the sides on a phone
+   (--sp-5 from 768px, where the pill itself sits --sp-5 in), only the bottom
+   corners round. `headerReveal.ts` has when; this is what.
+
+   THE SAME PILL ELEMENT, STRETCHED. The menu button goes to the far end
+   (`space-between`), the paddings inside stay the pill's, and so does the
+   height — which is why the hook can measure the pill once for both forms.
+
+   THE HEADER IS THE BAR'S OWN BOX. No band round it: no padding, offset from
+   the window's start by `inset-inline-start` and sized by `inline-size`, so
+   the fixed element at the top of the window is exactly the bar. And it is
+   OPAQUE — the pill's own fill, the same corners — because what Safari 26
+   paints under the status bar is sampled from that fixed element: an opaque
+   one gave the old full-width bar its own colour up there, a transparent one
+   gave the beige strip. The pill covers it exactly; nothing of it shows.
+   Whether that tinted strip is what Ben wants is his call on his phone
+   (OPEN-QUESTIONS.md).
+
+   THE MORPH IS ARITHMETIC OVER ONE NUMBER. `--musie-header-morph` is 0 for
+   the bar and 1 for the pill, written by the hook from the scroll position
+   over the run before the handover (`--musie-header-morph-run`, --sp-5).
+   Between them the start moves from the bar's inset to the pill's, the width
+   from the window's less both insets to the pill's measured width
+   (`--musie-pill-inline`), and the top corners from square to the pill's
+   (half its measured height). At 1 it is the pill's box to the pixel, so the
+   handover — the header becoming the pill in its band, in the page — changes
+   nothing on the screen.
+
+   The corner is half the measured height, not `--radius-full`: with the top
+   corners at 0, CSS scales a 999px pair at the bottom to the WHOLE height,
+   56px, where Figma has 28. The fallbacks are the designed height, until the
+   hook has measured.
+
+   UNDER REDUCED MOTION the run is 0: the bar stays the bar until the
+   handover, and the handover swaps it. */
+.musie-header {
+  --musie-header-bar-inset: var(--sp-2);
+  --musie-header-morph-run: var(--sp-5);
+}
+
+@media (min-width: 768px) {
+  .musie-header {
+    --musie-header-bar-inset: var(--sp-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .musie-header {
+    --musie-header-morph-run: 0px;
+  }
+}
+
+.musie-header[data-form='bar'] {
+  --musie-bar-morph: var(--musie-header-morph, 0);
+  --musie-bar-corner: calc(var(--musie-pill-block, calc(var(--target-sm) + (var(--sp-2) * 2))) / 2);
+  --musie-bar-corner-top: calc(var(--musie-bar-corner) * var(--musie-bar-morph));
+  inset-inline-start: calc(
+    var(--musie-header-bar-inset)
+    + (var(--musie-header-pad-inline) - var(--musie-header-bar-inset)) * var(--musie-bar-morph)
+  );
+  inline-size: calc(
+    (100% - (var(--musie-header-bar-inset) * 2)) * (1 - var(--musie-bar-morph))
+    + var(--musie-pill-inline, calc(100% - (var(--musie-header-bar-inset) * 2))) * var(--musie-bar-morph)
+  );
+  padding: 0;
+  background-color: var(--surface-overlay);
+  border-radius:
+    var(--musie-bar-corner-top) var(--musie-bar-corner-top)
+    var(--musie-bar-corner) var(--musie-bar-corner);
+}
+
+.musie-header[data-form='bar'] .musie-header__pill {
+  flex: 1 1 auto;
+  justify-content: space-between;
+  border-radius: inherit;
 }
 
 /* ═══ MAIN ══════════════════════════════════════════════════════════════════

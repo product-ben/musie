@@ -12203,3 +12203,46 @@ What I need from Ben:
    today; Einsteigen on a tablet narrows the picture below 16:9 only when the
    copy is much taller than the picture, and then `cover` trims the sides —
    the head first. A centred redraw would make that impossible.
+
+## On the way back up the header is a bar — DONE, one decision on the phone
+
+Where: `src/lib/headerReveal.ts` (+ test), `src/lib/useHeaderReveal.ts`,
+`src/shell.css` (*ON THE WAY BACK, A BAR*), `src/AppShell.tsx` (comment)
+
+What I did: Ben, 2026-11-18, Figma *Navigation › Bodyscan · Hören · 393*, frame
+`header` (242:21976): scrolling up mid-page brings back a bar across the top of
+the window — flush with it, --sp-2 off the sides, bottom corners round —
+which becomes the pill again at the top. His answers, asked one by one:
+- **Only after the pill was out of sight.** A short scroll brings the pill back
+  with the page; the bar is a `gone` header coming back.
+- **Handed over in place,** where the pill's own place reaches the window (16
+  on a phone, 24 from 768px) — not at 0, so nothing jumps.
+- **Morphed by the scroll over the 24px (--sp-5) before that**, not timed.
+- **768–1440: large and full width** — 68 tall, --sp-5 off the sides, corners 34.
+- **Over 1440: no bar.** The pill comes back as the pill, as before.
+
+Measured in Chromium (local stack, /exercises with a spacer) at 393, 834, 1440
+and 1728: the held bar at 393 is 8 / 0 / 377 × 56 with corners 0/0/28/28 —
+Figma's numbers; half way through the morph it is 264 wide, one pixel before
+the handover 160.5, and the handover lands the pill at 16 / 0 / 151 × 56, the
+same box. `main` stays at 88 (108) in every state. Tab while gone brings the
+bar. 1728 is unchanged.
+
+Decided by me, say if wrong:
+1. **Reduced motion: no morph.** The bar stays the bar until the handover and
+   is swapped there. The pixel-for-pixel movement itself was never gated, so
+   this is a choice, not a rule.
+2. **1440 is a raw number** (in `useHeaderReveal.ts`, once). Layer 1's
+   breakpoints stop at `--bp-xl`, 1280, and a media query cannot read a token
+   anyway. A token gap if a second thing ever needs it.
+3. **The Figma variant `small_full-width` of `nav_panel` is still identical to
+   `small`**; the frame's instance carries every difference as an override.
+   Not touched.
+
+What I need from Ben: **one look on the iPhone, and a call.** Safari 26 paints
+the strip under the status bar from a fixed element across ~90% of the top
+edge, and the held bar is one (377 of 393). Its own box is opaque in the bar's
+colour on purpose — a transparent one is what gave the beige strip on 17.11. —
+so the strip should come up in the bar's colour while the bar is held, and
+show the page while it glides. If the tint is wrong, the only way out is a bar
+narrower than ~90% on a phone, which is a design change.

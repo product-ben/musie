@@ -15,8 +15,8 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { AT_REST, drawnAt, nextReveal, shownAt } from './headerReveal';
-import type { RevealState } from './headerReveal';
+import { AT_REST, drawnAt, morphAt, nextReveal, shownAt } from './headerReveal';
+import type { BarGeometry, RevealState } from './headerReveal';
 
 /** The real shell on a phone: the band (16 + 56 + 16, `--sticky-block`) plus
  *  the shadow clearance (--sp-2) — how far above the window "gone" is. */
@@ -50,7 +50,7 @@ describe('going down, it leaves with the page', () => {
   });
 
   it('stays where the page put it while it is still in sight', () => {
-    expect(run([10, 60])).toEqual({ mode: 'free', at: 0, last: 60 });
+    expect(run([10, 60])).toEqual({ mode: 'free', form: 'pill', at: 0, last: 60 });
   });
 
   it('is gone — fixed above the window — once it is out of sight', () => {
@@ -147,7 +147,7 @@ describe('the bounce at either end', () => {
 
 describe('shown by focus, then scrolled by the browser', () => {
   it('is held at the top from wherever the page is', () => {
-    expect(shownAt(884)).toEqual({ mode: 'held', at: 0, last: 884 });
+    expect(shownAt(884)).toEqual({ mode: 'held', form: 'pill', at: 0, last: 884 });
   });
 
   it('stays shown through the scroll the focus causes', () => {
@@ -158,5 +158,147 @@ describe('shown by focus, then scrolled by the browser', () => {
   it('is simply at rest when the page is at the top, or bouncing above it', () => {
     expect(shownAt(0)).toEqual(AT_REST);
     expect(shownAt(-40)).toEqual(AT_REST);
+  });
+});
+
+/* ═══ THE BAR · Ben, 2026-11-18 ══════════════════════════════════════════════
+   Everything above runs with no bar — the header over 1440px — and is
+   exactly what it was. Below, the phone's numbers: the bar is the pill's
+   56px with the band's --sp-4 and the clearance below it; the pill's own
+   place is --sp-4 down; the morph runs over --sp-5 before that. */
+const BAR: BarGeometry = { reach: 56 + 16 + 8, handover: 16, morph: 24 };
+
+function runBar(positions: number[], from: RevealState = AT_REST, bar: BarGeometry = BAR): RevealState {
+  return positions.reduce(
+    (state, scrollY) => nextReveal(state, { scrollY, maxScrollY: LONG_PAGE, reach: REACH, bar }),
+    from,
+  );
+}
+
+describe('on the way back it is a bar', () => {
+  const gone = runBar([100, 2000]);
+
+  it('leaves as the pill, and waits out of sight as the pill', () => {
+    expect(runBar([10, 60])).toEqual({ mode: 'free', form: 'pill', at: 0, last: 60 });
+    expect(gone).toEqual({ mode: 'gone', form: 'pill', at: 0, last: 2000 });
+  });
+
+  it('comes back as the bar, from just above the window, pixel for pixel', () => {
+    const turned = runBar([1990], gone);
+    expect(turned.form).toBe('bar');
+    expect(turned.mode).toBe('free');
+    expect(drawnAt(turned, 1990, BAR.reach)).toBe(-BAR.reach + 10);
+    expect(drawnAt(runBar([1960], turned), 1960, BAR.reach)).toBe(-BAR.reach + 40);
+  });
+
+  it('is held at the top as the bar once it is all the way in', () => {
+    const held = runBar([1990, 2000 - BAR.reach], gone);
+    expect(held).toEqual({ mode: 'held', form: 'bar', at: 0, last: 2000 - BAR.reach });
+    expect(runBar([1500, 900, 300], held)).toEqual({ mode: 'held', form: 'bar', at: 0, last: 300 });
+  });
+
+  it('leaves with the page as the bar when the reader turns down', () => {
+    const held = runBar([1500], gone);
+    const leaving = runBar([1520], held);
+    expect(leaving).toEqual({ mode: 'free', form: 'bar', at: 1500, last: 1520 });
+    expect(drawnAt(leaving, 1520, BAR.reach)).toBe(-20);
+  });
+
+  it('is the pill again as soon as it is out of sight again', () => {
+    const held = runBar([1500], gone);
+    expect(runBar([1500 + BAR.reach + 1], held)).toEqual({
+      mode: 'gone', form: 'pill', at: 0, last: 1500 + BAR.reach + 1,
+    });
+  });
+});
+
+describe('a short scroll brings the pill back, not the bar', () => {
+  it('comes back with the page in its own place while it never left the screen', () => {
+    expect(runBar([30, 10])).toEqual({ mode: 'free', form: 'pill', at: 0, last: 10 });
+    expect(runBar([30, 10, 0])).toEqual(AT_REST);
+  });
+
+  it('is still the pill from as far down as it can go without being gone', () => {
+    expect(runBar([REACH - 1, 50])).toEqual({ mode: 'free', form: 'pill', at: 0, last: 50 });
+  });
+});
+
+describe('the handover, where the pill’s own place reaches the window', () => {
+  const held = runBar([100, 2000, 1500]);
+
+  it('is still the bar one pixel short of it', () => {
+    expect(runBar([200, 17], held)).toMatchObject({ mode: 'held', form: 'bar' });
+  });
+
+  it('is the pill at rest from there, drawn exactly where the bar was', () => {
+    const handed = runBar([200, 17, 16], held);
+    expect(handed).toEqual({ mode: 'free', form: 'pill', at: 0, last: 16 });
+    /* The band's top is drawn at -16; the pill sits 16 into the band. */
+    expect(drawnAt(handed, 16, REACH) + BAR.handover).toBe(0);
+  });
+
+  it('is carried by the page the last pixels into its place', () => {
+    expect(drawnAfterBar([200, 17, 16, 8], held)).toBe(-8);
+    expect(runBar([200, 17, 16, 8, 0], held)).toEqual(AT_REST);
+  });
+
+  it('is found in its place after a jump past it', () => {
+    expect(runBar([5], held)).toEqual({ mode: 'free', form: 'pill', at: 0, last: 5 });
+    expect(runBar([10], runBar([100, 2000]))).toEqual({ mode: 'free', form: 'pill', at: 0, last: 10 });
+  });
+
+  it('leaves with the page as the pill if the reader turns down after it', () => {
+    expect(runBar([200, 16, 30], held)).toEqual({ mode: 'free', form: 'pill', at: 0, last: 30 });
+  });
+});
+
+function drawnAfterBar(positions: number[], from: RevealState): number {
+  const state = runBar(positions, from);
+  return drawnAt(state, positions[positions.length - 1] ?? 0, REACH);
+}
+
+describe('the morph follows the scroll', () => {
+  const heldAt = (y: number) => runBar([100, 2000, 1500, y]);
+
+  it('is the bar until the run before the handover begins', () => {
+    expect(morphAt(heldAt(300), BAR)).toBe(0);
+    expect(morphAt(heldAt(40), BAR)).toBe(0);
+  });
+
+  it('is half the pill half way through the run, and nearly the pill at its end', () => {
+    expect(morphAt(heldAt(28), BAR)).toBe(0.5);
+    expect(morphAt(heldAt(17), BAR)).toBeCloseTo(23 / 24);
+  });
+
+  it('goes back the way it came when the reader turns down inside the run', () => {
+    const turned = runBar([30], heldAt(20));
+    expect(turned).toMatchObject({ mode: 'free', form: 'bar' });
+    expect(morphAt(turned, BAR)).toBeCloseTo(10 / 24);
+  });
+
+  it('is 1 for the pill, which already is one', () => {
+    expect(morphAt(AT_REST, BAR)).toBe(1);
+    expect(morphAt(heldAt(28), null)).toBe(1);
+  });
+
+  it('does not morph at all under reduced motion — the handover swaps it', () => {
+    const still: BarGeometry = { ...BAR, morph: 0 };
+    const held = runBar([100, 2000, 1500, 17], AT_REST, still);
+    expect(morphAt(held, still)).toBe(0);
+    expect(runBar([16], held, still)).toEqual({ mode: 'free', form: 'pill', at: 0, last: 16 });
+  });
+});
+
+describe('the bar and focus, and the window growing past 1440', () => {
+  it('is shown as the bar by focus mid-page, and as the pill near the top', () => {
+    expect(shownAt(884, BAR)).toEqual({ mode: 'held', form: 'bar', at: 0, last: 884 });
+    expect(shownAt(10, BAR)).toEqual({ mode: 'free', form: 'pill', at: 0, last: 10 });
+    expect(shownAt(0, BAR)).toEqual(AT_REST);
+  });
+
+  it('is the pill wherever it is once there is no bar any more', () => {
+    const held = runBar([100, 2000, 1500]);
+    expect(nextReveal(held, { scrollY: 1500, maxScrollY: LONG_PAGE, reach: REACH, bar: null }))
+      .toEqual({ mode: 'held', form: 'pill', at: 0, last: 1500 });
   });
 });
