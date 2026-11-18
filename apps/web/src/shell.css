@@ -1471,9 +1471,9 @@
    one week rather than three.
 
    ── THE COLUMN HEIGHT IS ARITHMETIC OVER ONE TOKEN ───────────────────────
-   A mark is square and capped at `--target-primary`, which is not a picked
-   size: it is the set's own touch target. From 393px up a column is wider
-   than that and the cap holds it steady; below 393px the mark fills its
+   A mark is 16:9 and its width is capped at `--target-primary`, which is not
+   a picked size: it is the set's own touch target. From 393px up a column is
+   wider than that and the cap holds it steady; below 393px the mark fills its
    column and is smaller, which is argued at the rule itself.
 
    Every column in every week is the SAME height, or the graph resizes as the
@@ -1643,9 +1643,17 @@
      Below 393px the marks are narrower than --target-primary (see the mark
      rule), so this reserves slightly MORE than the stack needs. Generous, not
      wrong: the columns stay level with each other and with the axis, which is
-     what the reservation is for. */
+     what the reservation is for.
+
+     TWO KINDS OF ROW SINCE THE MARKS WENT 16:9 (2026-11-18). A mark is now
+     9/16 of --target-primary tall; the plus on today is an IconButton and
+     stays a full --target-primary. `rows` always counts that plus as its last
+     row, so the reservation is every other row at the mark's height and one
+     at the button's. Reserving --target-primary for all of them, as before,
+     drew almost twice the stack's height on a busy day. */
   min-block-size: calc(
-    (var(--target-primary) + var(--space-gap-stack)) * var(--musie-graph-rows, 2)
+    (var(--target-primary) * 9 / 16 + var(--space-gap-stack)) * (var(--musie-graph-rows, 2) - 1)
+    + var(--target-primary)
   );
 }
 
@@ -1660,9 +1668,24 @@
 }
 
 /* ── ONE SESSION ──────────────────────────────────────────────────────────
-   A square the size of a touch target, with the exercise's picture in it. The
-   radius is --radius-card rather than --radius-full: these are pictures of
-   the exercise cards, and a circle would crop the artwork to its centre. */
+   The exercise's picture, 16:9 and as wide as a touch target — Ben,
+   2026-11-18: "Im Diary statt 1:1 in 16:9 anzeigen", with every exercise
+   artwork redrawn at 16:9 the same day. It was a square, cropped from square
+   sources; a square crop of the new pictures loses their sides.
+
+   THE TAP TARGET IS SHORTER, AND THAT IS THE PRICE. Seven columns share a
+   phone, so the width is fixed at --target-primary (44px at 393) and 16:9
+   makes the mark 44 × 25 — 34 × 19 at 320px. 2.5.8 holds at both: at 393
+   both sides clear 24px; at 320 the height does not, and the spacing
+   exception carries it — 16px (--space-gap-stack) between marks and 8px
+   (--sp-2) between columns keep every 24px circle clear of its
+   neighbours. Keeping 44px of
+   height instead would need 78px of width, which a seven-day week on a phone
+   does not have.
+
+   The radius is --radius-sm, not --radius-card (12px) any more: on a 25px
+   tile 12px is nearly a capsule. --radius-sm is what every other 16:9
+   thumbnail of this artwork wears (RadioCards, Einsteigen). */
 .musie-graph__mark {
   display: block;
   /* IT FILLS ITS COLUMN, UP TO THE TOUCH TARGET — it does not impose its own
@@ -1674,14 +1697,13 @@
      a column is wider than --target-primary, so the cap is what holds the
      marks at a consistent size instead of stretching them across a desktop.
 
-     `aspect-ratio` rather than a matching `block-size`, so the square
-     survives the shrink: the artwork is square (every source is centred and
-     cropped, per 20260924140000) and a mark that squashed would crop it
-     twice. */
+     `aspect-ratio` rather than a matching `block-size`, so the shape
+     survives the shrink: the artwork is 16:9 and a mark that squashed would
+     crop it. */
   inline-size: 100%;
   max-inline-size: var(--target-primary);
-  aspect-ratio: 1;
-  border-radius: var(--radius-card);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
   border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   background-color: var(--surface-sunken);
   overflow: hidden;
@@ -1767,8 +1789,8 @@
 .musie-graph__blank {
   inline-size: 100%;
   max-inline-size: var(--target-primary);
-  aspect-ratio: 1;
-  border-radius: var(--radius-card);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
   background-image: linear-gradient(to top, var(--surface-sunken), transparent);
 }
 
@@ -2682,8 +2704,9 @@
      follow a two- or three-line headline (the frame's 77 × 55 at 393px);
      the ratio is what it brings to the row on its own, so a one-line
      headline on a wider phone gets a picture rather than a strip — without
-     it the file's own square shape set the row, 78px tall under 28px of
-     headline. `cover` crops whatever the cell asks for. */
+     it the file's own shape set the row (square, until the 16:9 artwork of
+     2026-11-18), 78px tall under 28px of headline. `cover` crops whatever the
+     cell asks for. */
   align-self: stretch;
   inline-size: 100%;
   aspect-ratio: 16 / 9;
@@ -2721,7 +2744,7 @@
    from `useIntroImageFit` (the rule and the reason are in `lib/introImage.ts`:
    Chromium does not re-size the row after the second column pass, so a pure
    CSS version spills the copy). Until it arrives, and without script, the
-   column is the third it was. `contain: size` keeps the picture's own square
+   column is the third it was. `contain: size` keeps the picture's own height
    out of the row's height, so the row is the copy's, and `block-size: 100%`
    then fills it.
 

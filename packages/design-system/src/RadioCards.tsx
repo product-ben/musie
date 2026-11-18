@@ -35,6 +35,12 @@
  * words and nothing else: a goal has no artwork, and a placeholder square
  * four times over would have been decoration standing in for information.
  *
+ * ── THE PICTURE IS 16:9 (2026-11-18) ──────────────────────────────────────
+ * Ben: "Wir haben ab jetzt nur noch 16:9 imagery" — and no prop for it. The
+ * thumbnail was a square, at 64px and then a full-height 192px column; it is
+ * 16:9 at every width now (96 × 54, then 192 × 108), top-aligned in the row.
+ * The geometry is all in `musy-components.css` §13; nothing here changed.
+ *
  * THE CARD IS WHITE IN EVERY STATE. A selected card used to fill with
  * `--interactive-primary-subtle`; it keeps `--surface-raised` now, and
  * selection is carried by the thick green border and the filled check that

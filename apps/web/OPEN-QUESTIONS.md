@@ -12153,3 +12153,53 @@ Safari's drawing under the bar cannot be measured here — Chromium has no
 status bar and does not take the iOS branch. If the pill now glides out from
 behind the clock with the page, this is done; if it pops in behind the clock
 at the turn, the clearance wants raising.
+
+## The exercise artwork is 16:9, everywhere it is drawn — RESOLVED, two things to look at
+
+Where: `public/assets/web/exercises/*.webp` (all eight), `shell.css`
+(`.musie-graph__mark`, `.musie-graph__blank`, `.musie-graph__stack`),
+`packages/design-system/src/musy-components.css` §13 (`RadioCards`),
+`supabase/migrations/20261118100000_exercise_artwork_16x9.sql`,
+`docs/assets/exercises.md`
+
+What I did: Ben, 2026-11-18: eight new illustrations, 1376 × 768, in
+`~/Documents/musie-assets/app graphics/exercises/`, "überall wo ein altes
+eingesetzt ist, bitte mit dem Neuen ersetzen", and the diary in 16:9 instead of
+1:1. Asked whether the library's list view should keep its square crop, he
+answered: *"Radio Cards auf 16:9 ändern, keine Prop! Wir haben ab jetzt nur noch
+16:9 imagery."*
+- **The files** are overwritten under their old names, so `image_url` did not
+  move. WebP q80 at native size: 13.5 MB of PNG → 648 KB, 45–153 KB each
+  (the old square set was 748 KB for five). 1024 wide would save ~280 KB more
+  and lose the engraving's hairlines on retina; not taken.
+- **The diary's marks** are 16:9, 44 × 25 at 393 (34 × 19 at 320), radius
+  `--radius-sm`. The column reservation counts mark rows at 9/16 of
+  `--target-primary` and the plus on today at a full one.
+- **`RadioCards`** draws its picture 16:9 at every width, no prop: 96 × 54 below
+  a 480px group (the column grew from 64, or it would have been 36px tall),
+  192 × 108 above, top-aligned. The square's `min-block-size` and its
+  stretch-to-row are gone. Its stories show two of the real artworks instead of
+  the square `method-card.png`.
+- **All sixteen `image_alt` rows** are rewritten from the new pictures; the old
+  ones described the old ones (hands on a belly; ten marimba bars).
+
+Measured in Chromium against the local stack: the list's media 96 × 54 at 393
+and 192 × 108 at 1280; diary marks and blanks 44.0 × 24.8 at 393 and 1280,
+34.3 × 19.3 at 320, columns level; Einsteigen at 834 draws Bodyscan 167 × 94,
+whole. The migration ran in a rolled-back transaction against the local stack
+(UPDATE 16, constraints held); it was not applied there, so as not to move the
+shared stack under another branch.
+
+Why: Ben's brief and his answer above.
+
+What I need from Ben:
+1. **The diary's tap target is shorter.** 25px tall at 393 instead of 44 (2.5.8
+   still holds: above 24 both ways at 393, and the spacing exception at 320).
+   Seven columns fix the width, so 16:9 can only get shorter. Say if it reads
+   too small on the phone.
+2. **Figma's `RadioCards` is now square where the code is 16:9.** Not touched
+   here.
+3. **Bodyscan's head sits at the right edge of its frame.** Nothing crops it
+   today; Einsteigen on a tablet narrows the picture below 16:9 only when the
+   copy is much taller than the picture, and then `cover` trims the sides —
+   the head first. A centred redraw would make that impossible.

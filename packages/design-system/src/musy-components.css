@@ -2141,7 +2141,7 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    hyphenating mid-word. The floor is therefore the ROW's floor, not the
    stacked card's: --musy-rcard-row-min. Below it the grid drops a column
    rather than narrowing the text, so a wide group goes one- or two-up and the
-   card is wide enough for the full-height square media to earn its place.
+   card is wide enough for the larger 16:9 picture to earn its place.
    Still container-driven, not viewport-keyed: this group sits in the MVP's
    sidebar column and in the proof's theme panels, where a viewport-keyed
    two-up rule overflowed a 381px container by 35px.                         */
@@ -2183,10 +2183,17 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   -webkit-tap-highlight-color: transparent;
   transition: background-color var(--motion-toggle), border-color var(--motion-toggle);
 }
-/* The list thumbnail is a square at the height of the text block's first two
-   lines — derived from --target-guided rather than picked, so it steps with the
-   touch scale instead of drifting from it. */
-.musy-rcard__body { --musy-rcard-media: var(--target-guided); }
+/* THE LIST THUMBNAIL IS 16:9 — Ben, 2026-11-18: "Wir haben ab jetzt nur noch
+   16:9 imagery." No prop and no square variant: the artwork is drawn 16:9, so
+   the component is too, and a square crop of it is a picture with its edges
+   missing (the Bodyscan figure's head sits at the right of its frame).
+
+   1.5 × --target-guided wide, so 96 × 54 — about the height of the square it
+   replaces (64), i.e. still the text block's first two lines. Kept at 64 wide,
+   16:9 would be 36px tall: a sliver, with the 24px check crammed onto it.
+   Derived from --target-guided rather than picked, so it steps with the touch
+   scale instead of drifting from it. */
+.musy-rcard__body { --musy-rcard-media: calc(var(--target-guided) * 1.5); }
 
 /* ── THE CARD WITH NO PICTURE (2026-10-15) ────────────────────────────────
    ONE COLUMN, and the check comes off the media and onto the card. A goal has
@@ -2223,11 +2230,11 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
    the layout everywhere, because the thing being compared is the TEXT, and a
    row lets the eye run down a column of names and descriptions instead of
    hopping over an image each time. What width buys is a bigger picture, not a
-   different shape: from --bp-md the media grows into a full-height square and
-   goes full-bleed against the card's leading edge.
-   The square is derived from the card's own height, so it never needs a
-   second, invented size; the cap keeps a long description from inflating it
-   past three touch targets. */
+   different shape: from 480px of group the 16:9 thumbnail doubles to 192 × 108
+   and stays at the top of the row. It no longer stretches to the card's height
+   — that was a square's trick, filling a tall cell by cropping; a 16:9 picture
+   stretched the same way would lose its sides, which is the crop this change
+   exists to end. */
 /* The switch is queried on the GROUP, never on the card: an element cannot be
    styled by its own container query, so card-level declarations inside a
    card-scoped query are dead code. With the row floor at 480px the two rulers
@@ -2239,10 +2246,9 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
        line to sit on the bottom edge rather than under the description. */
     align-items: stretch;
     --musy-rcard-media: calc(var(--target-guided) * 3);
-    /* The square comes from the ROW: the card is at least as tall as the media
-       column is wide, so a short description still gets a square rather than a
-       letterbox. A long one makes the media taller, never narrower. */
-    min-block-size: calc(var(--target-guided) * 3);
+    /* No `min-block-size` any more. It made the row at least as tall as the
+       media column was wide, so a short description still got a square; a
+       16:9 picture is shorter than its column and sets no floor of its own. */
     /* ── `padding-inline-start: 0` IS GONE — Ben, 2026-10-15 ────────────
        The media used to run full-bleed to the card's leading edge, which
        meant a card WITH a picture had no left padding and a card without one
@@ -2257,31 +2263,26 @@ ul.musy-chip-row { margin: 0; padding: 0; list-style: none; }
   }
 }
 
+/* 16:9 at every width, from the column's definite width — the height follows
+   the width, never the other way round. `align-self: start` holds it at the
+   top of a row the text has made taller (the body is `stretch` from 480px).
+   `cover` stays: a source that is not exactly 16:9 (1376 × 768 is 1.79) is
+   trimmed by a pixel or two rather than letterboxed.
+
+   NO NEGATIVE MARGIN AND NO HALF-ROUNDED CORNER (2026-10-15). Both existed to
+   make the picture part of the card's edge; with the leading inset restored,
+   a bleed reads as a rendering fault. A thumbnail is rounded on all four
+   corners. */
 .musy-rcard__media {
   grid-area: media;
+  align-self: start;
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--radius-input);
   background-color: var(--surface-sunken);
 }
 .musy-rcard__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
-@container musy-rcard-group (min-width: 480px) {
-  .musy-rcard__media {
-    /* The column is a definite width and the media stretches to the row's
-       height — never the other way round. Deriving the width from a stretched
-       height is cyclic: the height comes from the text column the media just
-       narrowed, and it resolves by pinning to the cap and inflating the row. */
-    align-self: stretch;
-    aspect-ratio: auto;
-    /* NO NEGATIVE MARGIN AND NO HALF-ROUNDED CORNER. Both existed to make the
-       picture part of the card's edge; with the leading inset restored above,
-       a block bleed with an inset start is a picture hanging off three sides
-       of four, which reads as a rendering fault rather than a decision. A
-       thumbnail is rounded on all four corners. */
-    border-radius: var(--radius-input);
-  }
-}
 
 /* Selected check, over the media. Same treatment as 7.7 so the two radio
    families cannot teach two different selection languages. */

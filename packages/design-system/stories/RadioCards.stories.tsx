@@ -9,8 +9,14 @@ import { GalleryHorizontalEnd, Headphones, Timer } from 'lucide-react';
 import { RadioCardLegend, RadioCards } from '../src/RadioCards';
 import { Stack, asset, fixedWidth } from './_decorators';
 
-/* Storybook serves /assets. */
-const IMAGE = asset('assets/web/method-card.png');
+/* Storybook serves /assets. Two of the app's real exercise artworks, because
+   the component is drawn for 16:9 since 2026-11-18 and the old placeholder,
+   method-card.png, is square — it would show the crop rather than the
+   picture. Copies of apps/web/public/assets/web/exercises/. */
+const IMAGE = asset('assets/web/exercises/mindfulness-cards.webp');
+const IMAGE_BREATH = asset('assets/web/exercises/breathing-score.webp');
+const ALT = 'Four Mindfulness Cards fanned out in an arc, with a hand holding up a fifth below them';
+const ALT_BREATH = 'A figure sitting cross-legged on a cushion, breathing out gently, as fine lines of breath set a wind chime ringing';
 
 /* The three glyphs the prototype's cards use, and the legend that explains
    them. Both come from the prototype's markup verbatim — its own `dl` legend
@@ -39,7 +45,7 @@ const OPTIONS = [
     ],
     label: '2–12 minutes',
     image: IMAGE,
-    imageAlt: 'The Mindfulness Cards deck laid out on a table',
+    imageAlt: ALT,
   },
   {
     value: 'breathing-score',
@@ -51,8 +57,8 @@ const OPTIONS = [
       { id: 'time', glyph: Timer, text: 'Takes 5 to 8 minutes', shortText: '5–8 min' },
       { id: 'sound', glyph: Headphones, text: 'Sound on — headphones recommended' },
     ],
-    image: IMAGE,
-    imageAlt: 'Placeholder artwork for the Breathing Score Method',
+    image: IMAGE_BREATH,
+    imageAlt: ALT_BREATH,
   },
 ];
 
@@ -309,14 +315,14 @@ export const OptionDisabled: Story = {
         description: 'Nine paper cards, one feeling each. Scan the card you relate to and listen to the track behind it.',
         label: '2–12 minutes',
         image: IMAGE,
-        imageAlt: 'The Mindfulness Cards deck laid out on a table',
+        imageAlt: ALT,
       },
       {
         value: 'breathing-score',
         headline: 'Breathing Score',
         description: 'A slow score that follows your breath, for settling before anything else.',
-        image: IMAGE,
-        imageAlt: 'Placeholder artwork for the Breathing Score Method',
+        image: IMAGE_BREATH,
+        imageAlt: ALT_BREATH,
         disabled: true,
       },
     ],
