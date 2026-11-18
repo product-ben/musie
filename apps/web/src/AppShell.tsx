@@ -7,10 +7,11 @@
 import * as React from 'react';
 import { Menu } from 'lucide-react';
 import { IconButton, Logo, MusyTooltipProvider } from '@musie/design-system';
-import { useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
+import { Link, useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
 import { BRAND_NAME } from './brand';
 import { useLocale, useT } from './i18n/localeContext';
 import { useAuth } from './lib/authContext';
+import { useProfile } from './lib/profileContext';
 import { PagePathContext } from './lib/shellContext';
 import { useHeaderReveal } from './lib/useHeaderReveal';
 import type { RouteHandle } from './routeHandle';
@@ -157,6 +158,23 @@ export function AppShell() {
   const ghostRef = React.useRef<HTMLDivElement>(null);
   useHeaderReveal(headerRef, ghostRef, pagePath ?? '');
 
+  /**
+   * THE LOGO GOES HOME · Ben, 2026-11-18: „klicking on musie/the logo brings
+   * me back to /exercises". Home is /exercises behind the same gate every
+   * other way there uses (MenuDrawer's `startHref`): no user type yet means
+   * /about-you, which asks it first, and so does a profile still loading —
+   * asking again is recoverable, skipping the question is not.
+   *
+   * ALREADY THERE, it goes to the top. The router does nothing visible for a
+   * link to the current page, and the arrival scroll above keys on the path,
+   * so without this a logo tapped half way down the library would seem dead.
+   */
+  const { profile } = useProfile();
+  const homeHref = profile?.user_type_id ? '/exercises' : '/about-you';
+  const goHome = () => {
+    if (location.pathname === homeHref) window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
        written for the two header buttons; the header has one now, and the
@@ -200,14 +218,23 @@ export function AppShell() {
               it floats in — the band is what the page starts below, and the
               pill is the only part of it that takes a pointer (shell.css).
 
-              Logo before the button, and that is the reading order too: the
-              logo is not focusable, so the menu button is still the first and
-              only tab stop in the header.
+              Logo before the button, and that is the reading order too. The
+              logo is a link home since 2026-11-18, so the header has two tab
+              stops again: the logo, then the menu button. `render` is the
+              Logo's own composition point for exactly this (Logo.tsx: wrapping
+              it in an anchor is the app's job); its name is the wordmark.
 
               The profile button went with /settings on 2026-09-24, and nothing
               has taken its place: the drawer holds what it opened. */}
           <div className="musie-header__pill">
-            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <Logo
+              size="nav"
+              variant="flat"
+              showWordmark
+              alt={BRAND_NAME}
+              className="musie-header__home"
+              render={<Link to={homeHref} onClick={goHome} />}
+            />
             <IconButton
               glyph={Menu}
               label={t('shell.menuLabel')}
@@ -228,9 +255,10 @@ export function AppShell() {
             an id, so screen-reader users reach it by landmark navigation,
             which is how most of them actually move. What is lost is the
             KEYBOARD-ONLY, SIGHTED user, who has no landmark list — on this app
-            that is one tab stop of header to walk past (two, until the profile
-            button went with /settings), which is why the cost is small. It is a
-            cost, though, and it is logged as one.
+            that is two tab stops of header to walk past (the logo, a link home
+            since 2026-11-18, and the menu button; it was one from the profile
+            button going with /settings until then), which is why the cost is
+            small. It is a cost, though, and it is logged as one.
 
             `tabIndex={-1}` went with the link: it existed so the skip target
             could take programmatic focus, and nothing focuses main any more. */}

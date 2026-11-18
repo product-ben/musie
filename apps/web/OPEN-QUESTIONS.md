@@ -12275,3 +12275,30 @@ colour on purpose — a transparent one is what gave the beige strip on 17.11. �
 so the strip should come up in the bar's colour while the bar is held, and
 show the page while it glides. If the tint is wrong, the only way out is a bar
 narrower than ~90% on a phone, which is a design change.
+
+## The header logo is a link home — DONE, the skip-link cost is two tab stops again
+
+Where: `src/AppShell.tsx` (the pill's `Logo`, `render={<Link …>}`), `src/shell.css`
+(`.musie-header__home`)
+
+What I did: Ben, 2026-11-18: „klicking on musie/the logo brings me back to
+/exercises". The pill's logo — and the bar's, which is the same element — is
+a link through `Logo`'s own `render` composition, named by its wordmark
+("Musie"). It goes to /exercises behind the gate every other way there uses
+(`MenuDrawer`'s `startHref`): no user type yet, or a profile still loading,
+goes to /about-you first. Already on the page it goes to, it scrolls to the
+top, since the router does nothing visible for a link to the current page.
+The global `a` underline is taken back; the focus ring is the global
+`a:focus-visible` one.
+
+Measured in Chromium (local stack): the pill keeps 16 / 16 / 151 × 56; Tab
+reaches the logo first (ring drawn), then the menu button; /diary → logo →
+/exercises; on /exercises at 1900 with the bar held, the logo takes the page
+to 0 and the pill.
+
+Why: Ben's request.
+
+What I need from Ben: nothing to decide, one cost to know. The 2026-09-20
+removal of the skip link (2.4.1) was argued on the header being ONE tab stop
+for a sighted keyboard user to walk past; it is two again, as it was before
+the profile button went. Still small; still a cost, and logged as one.

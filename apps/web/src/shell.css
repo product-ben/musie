@@ -213,6 +213,14 @@
   pointer-events: auto;
 }
 
+/* THE LOGO IS A LINK HOME (2026-11-18, AppShell). The global `a` underlines
+   and recolours; the mark and the wordmark keep their own colours already, so
+   only the underline needs taking back. The focus ring is the global
+   `a:focus-visible` one, Layer 1's ring. */
+.musie-header__home {
+  text-decoration: none;
+}
+
 @media (min-width: 768px) {
   .musie-header {
     --musie-header-pad-top: var(--sp-5);
