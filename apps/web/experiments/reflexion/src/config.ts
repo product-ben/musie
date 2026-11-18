@@ -13,8 +13,9 @@ export const EXPERIMENT_ID = 'reflexion-01';
 /** Kill switch. `false` → every link shows COPY.ended. */
 export const ENABLED = true;
 
-/** 1 was the placeholder set (local test rows only); 2 is Lucy's wording, 2026-11-16. */
-export const QUESTION_SET_VERSION = 2;
+/** 1 was the placeholder set (local test rows only); 2 is Lucy's wording,
+    2026-11-16; 3 splits q2 into Ja/Nein and a follow-up (Ben, 2026-11-18). */
+export const QUESTION_SET_VERSION = 3;
 
 export type Slug = 'harfe' | 'body-scan' | 'freie-bahn';
 
@@ -44,16 +45,30 @@ export const EXERCISES: Record<Slug, ExperimentExercise> = {
   },
 };
 
+/** A yes/no answer is stored in German whatever the screen showed, as the
+    survey's are, so the dataset does not split by language. */
+export type YesNo = 'Ja' | 'Nein';
+export const YES_NO: readonly YesNo[] = ['Ja', 'Nein'];
+
 export interface ReflectionQuestion {
   question_key: string;
   text: Record<Locale, string>;
-  /** Offers the app's feelings sheet under the question; a pick is written
-      into the answer as plain text (Ben, 2026-11-16). */
+  /** `text` (the default): a multi-line field. `yesNo`: two radio buttons,
+      Ja and Nein. */
+  kind?: 'text' | 'yesNo';
+  /** Shown only while the question `key` has this answer; saved empty when it
+      is hidden, so a text typed under „Ja“ does not survive a switch to
+      „Nein“ into the data. */
+  showIf?: { key: string; answer: YesNo };
+  /** Puts the app's feelings sheet one button away, inside the field; a pick
+      is written into the answer as plain text (Ben, 2026-11-16/18). */
   feelingsHelp?: true;
 }
 
-/** Lucy's three, the same for every exercise. A change of wording raises
-    QUESTION_SET_VERSION. */
+/** Lucy's questions, the same for every exercise. A change of wording raises
+    QUESTION_SET_VERSION. Since v3 (Ben, 2026-11-18) the mood question is a
+    Ja/Nein first, and only „Ja“ asks how; `q2_how` is its own column in the
+    CSV view (20261118140000). */
 export const QUESTIONS: readonly ReflectionQuestion[] = [
   {
     question_key: 'q1',
@@ -61,9 +76,18 @@ export const QUESTIONS: readonly ReflectionQuestion[] = [
   },
   {
     question_key: 'q2',
+    kind: 'yesNo',
     text: {
-      de: 'Hat sich deine Stimmung während des Zuhörens bzw. des Spielens verändert? Wenn ja, inwiefern?',
-      en: 'Did your mood change while you were listening or playing? If so, how?',
+      de: 'Hat sich deine Stimmung während des Zuhörens bzw. des Spielens verändert?',
+      en: 'Did your mood change while you were listening or playing?',
+    },
+  },
+  {
+    question_key: 'q2_how',
+    showIf: { key: 'q2', answer: 'Ja' },
+    text: {
+      de: 'Beschreibe, wie sich deine Stimmung verändert hat',
+      en: 'Describe how your mood changed',
     },
     feelingsHelp: true,
   },
@@ -169,7 +193,10 @@ const de = {
   modalClose: 'Schließen',
 
   reflectionHeading: 'Nachdenken',
-  feelingsHelp: 'Hilf mir, meine Stimmung in Worte zu fassen',
+  /* Figma node 190:15804 (Ben, 2026-11-18): inside the field, shorter. */
+  feelingsHelp: 'Stimmung benennen',
+  yesNo: { Ja: 'Ja', Nein: 'Nein' } as Record<YesNo, string>,
+  optionsEmpty: 'Keine Optionen',
   done: 'Fertig',
   saving: 'Wird gespeichert …',
   saveErrorHeadline: 'Das hat nicht geklappt.',
@@ -218,7 +245,9 @@ const en: Copy = {
   modalClose: 'Close',
 
   reflectionHeading: 'Reflect',
-  feelingsHelp: 'Help me put my mood into words',
+  feelingsHelp: 'Name my mood',
+  yesNo: { Ja: 'Yes', Nein: 'No' },
+  optionsEmpty: 'No options',
   done: 'Done',
   saving: 'Saving …',
   saveErrorHeadline: 'That didn’t work.',

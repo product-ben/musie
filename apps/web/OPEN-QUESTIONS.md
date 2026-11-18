@@ -12441,3 +12441,36 @@ glyph each. Rule 10 lets the experiment have its own, built on Layer 1 tokens
 (`experiment.css`, „NPS SLIDER“). If NPS ever reaches the app, it needs a
 system component: a native range with labelled steps and an unset state. It
 should not be a copy of this file.
+
+## Experiment „Reflexion 01“: the mood question is Ja/Nein first; the feelings button sits in the field — DONE
+
+Where: `apps/web/experiments/reflexion/src/config.ts` (`QUESTIONS`,
+`QUESTION_SET_VERSION` 3), `src/ReflectionStep.tsx`, `src/experiment.css`;
+`supabase/migrations/20261118140000_experiment_responses_wide_q2_how.sql`;
+Figma `McSA3aXDQXEqGwulfMnliE`, node 190:15804
+
+Ben, 2026-11-18. Done like this:
+- `q2` asks „Hat sich deine Stimmung während des Zuhörens bzw. des Spielens
+  verändert?“ with Ja and Nein as radio buttons (RadioGroupText).
+- Only „Ja“ shows `q2_how`, „Beschreibe, wie sich deine Stimmung verändert
+  hat“.
+- The feelings button moved INTO that field, bottom end, labelled
+  „Stimmung benennen“, as in the frame: the system's ghost `Button` at `min`
+  wearing the ghost's hover fill at rest, positioned by the experiment.
+  Hardcoded for this experiment, as Ben said. If the app ever wants a button
+  inside a Field, that is a Field slot (a component request), not this CSS.
+
+Decisions I made:
+- **Ja/Nein is stored in German** whatever the screen showed, so EN „Yes“
+  arrives as „Ja“. That is the survey's rule too.
+- **A hidden follow-up is saved empty.** Text typed under „Ja“ and then
+  switched to „Nein“ was not an answer. The draft keeps it on screen, so
+  switching back to „Ja“ brings it back.
+- **The table is unchanged.** `answers` is keyed jsonb, so `q2_how` is just
+  another element. Only the CSV view needed a column, in a new migration,
+  because the view picks its columns by key.
+- **`QUESTION_SET_VERSION` is 3**, so the v2 rows (one free-text mood answer
+  in `q2`) stay apart from v3 (Ja/Nein in `q2`).
+- **The Ja/Nein question uses the field labels' type style** (label-md), not
+  RadioGroupText's heading-sm, so the four questions read alike. That is an
+  experiment override of the legend.

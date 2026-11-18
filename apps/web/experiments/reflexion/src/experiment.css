@@ -338,23 +338,57 @@
   display: none;
 }
 
-/* QUESTION 2 · THE FEELINGS HELP. A small ghost button between the question
-   and its field. In the DOM it stands BEFORE the field, so the tab order is
-   the seen order (button, then field); the field's own box steps aside with
-   `display: contents` and `order` lifts its label above the button. */
-.musie-reflexion-help {
+/* QUESTION 2 · JA / NEIN AND ITS FOLLOW-UP (v3, Ben, 2026-11-18). The radio
+   group and the field that „Ja“ opens are one block of the panel, so the
+   field reads as part of the question it follows: --space-gap-stack (16)
+   between them, where the panel puts 24 between questions. */
+.musie-reflexion-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-gap-related);
+  gap: var(--space-gap-stack);
 }
-.musie-reflexion-help > .musy-field { display: contents; }
-.musie-reflexion-help .musy-field__label { order: -1; }
-/* Flush with the question: the `min` rung brings its own --sp-2 margin, and
-   its --sp-4 inline padding is pulled back so the icon sits on the column
-   edge while the hover fill still has its room. */
-.musie-reflexion-help > .musy-btn {
-  align-self: flex-start;
-  text-align: start;
-  margin-block: 0;
-  margin-inline: calc(-1 * var(--sp-4)) 0;
+/* The question reads like the other three. RadioGroupText sets its legend in
+   heading-sm, with no prop to step it down; the Field labels around it are
+   label-md (`.musy-field__label`), and a question twice their size reads as
+   a section heading. Its 12 to the options stays, as a label's to its field. */
+.musie-reflexion-group .musy-radio-group__legend {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  text-wrap: var(--text-wrap-label);
+}
+
+/* THE FEELINGS HELP, INSIDE THE FIELD — Figma node 190:15804, Ben,
+   2026-11-18, hardcoded for this experiment. The system's `Button` at its
+   `min` rung (label-md, --sp-2 / --sp-4), ghost, wearing the ghost's own
+   hover fill (--surface-sunken, the same sand step) at rest, so it reads as
+   a chip in the field rather than as text in it. No icon, as in the frame.
+
+   Placed in the field's bottom end, --sp-2 from the end edge and --sp-1
+   plus the border from the bottom (the frame's 8.5 / 6.5 at 311 × 112). The
+   `min` rung's --sp-2 margin goes, because it is placed, not flowed. The
+   textarea keeps a strip clear at its bottom the button's height plus a
+   step (--target-sm + --sp-2), so a long answer never runs under it.
+
+   Hover and press keep their own feedback: one ghost step darker each. The
+   selectors are long because `.musy-btn--ghost:hover…` is four classes deep. */
+.musie-reflexion-infield {
+  position: relative;
+}
+.musie-reflexion-infield textarea {
+  padding-block-end: calc(var(--target-sm) + var(--sp-2));
+}
+.musie-reflexion-infield > .musie-reflexion-infield__btn {
+  position: absolute;
+  inset-block-end: calc(var(--sp-1) + var(--border-width-regular));
+  inset-inline-end: var(--sp-2);
+  margin: 0;
+  background-color: var(--surface-sunken);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musie-reflexion-infield > .musie-reflexion-infield__btn.musy-btn--ghost:hover:not(:disabled):not([data-loading]) {
+    background-color: var(--interactive-ghost-active);
+  }
 }

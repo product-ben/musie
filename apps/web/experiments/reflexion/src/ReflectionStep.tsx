@@ -9,28 +9,32 @@
  * action after it. Under the card, Session's footer line: exercise, date.
  * Reflect has no × there, as in Session.
  *
- * THE BODY (brief): three multi-line fields that grow with their text, each
- * labelled by a question from the config in the active language, none
- * required. „Fertig“ saves one row; a failure keeps every word and says so,
- * and pressing again retries.
+ * THE BODY (brief): the questions from the config in the active language,
+ * none required: multi-line fields that grow with their text, and since v3
+ * (Ben, 2026-11-18) one Ja/Nein question whose follow-up field appears only
+ * on „Ja“. A hidden follow-up is saved empty. „Fertig“ saves one row; a
+ * failure keeps every word and says so, and pressing again retries.
  *
  * The text lives in a module-level draft as well as in state, so it survives
  * a language switch (no remount, but cheap insurance) AND a trip back to an
  * earlier step and forward again, which does unmount this route.
  *
- * ── THE FEELINGS HELP (Ben, 2026-11-16) ───────────────────────────────────
- * A question marked `feelingsHelp` gets a small ghost button under its label
- * that opens the app's own `FeelingsSheet`, unmodified. A pick is not stored
+ * ── THE FEELINGS HELP (Ben, 2026-11-16; inside the field since 11-18) ─────
+ * A question marked `feelingsHelp` gets a small button INSIDE its field, at
+ * the bottom end (Figma node 190:15804), that opens the app's own
+ * `FeelingsSheet`, unmodified. Hardcoded for this experiment, which is what
+ * Ben asked for: the system's Field has no slot for it. A pick is not stored
  * anywhere as a feeling: its word is APPENDED TO THE ANSWER as plain text,
  * which the person can then edit like anything they typed. The sheet's
  * "already held" refers to the words picked here that are still in the text,
  * so deleting a word frees it again.
  */
 import * as React from 'react';
-import { ArrowLeft, Smile } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  Button, Field, InteractiveWizard, Message, WizardContent, WizardIntro, WizardPanel,
+  Button, Field, InteractiveWizard, Message, RadioGroupText, WizardContent, WizardIntro,
+  WizardPanel,
 } from '@musie/design-system';
 import { FeelingsSheet } from '../../../src/components/FeelingsSheet';
 import { useLocale, useT } from '../../../src/i18n/localeContext';
@@ -43,7 +47,7 @@ import { STEP_ICON } from '../../../src/lib/stepIcons';
 import { stepMessageKey } from '../../../src/routeHandle';
 import type { StepId } from '../../../src/routeHandle';
 import { DONE_PATH } from './App';
-import { QUESTIONS } from './config';
+import { QUESTIONS, YES_NO, type ReflectionQuestion } from './config';
 import { useCopy, useExperiment } from './context';
 import { RUN } from './run';
 import { saveResponse } from './save';
@@ -137,6 +141,10 @@ export function ReflectionStep() {
     setAnswers((current) => ({ ...current, [key]: value }));
   };
 
+  /** A follow-up shows only while its question has the answer it waits for. */
+  const visible = (question: ReflectionQuestion) =>
+    question.showIf === undefined || answers[question.showIf.key] === question.showIf.answer;
+
   /** Picked here AND still in the text — what the sheet treats as held. */
   const heldFor = (key: string): HeldFeeling[] => {
     const text = (answers[key] ?? '').toLocaleLowerCase(locale);
@@ -169,6 +177,40 @@ export function ReflectionStep() {
     track('exp_feelings_help_opened', { question_key: key });
   };
 
+  /** A multi-line answer; with `feelingsHelp`, the sheet's button sits inside
+      it. In the DOM the button comes AFTER the field, so tabbing goes field →
+      button, the order they are read in; experiment.css places it in the
+      field's bottom end and keeps the text clear of it. */
+  const renderText = (question: ReflectionQuestion) => {
+    const field = (
+      <Field
+        key={question.question_key}
+        className="musie-reflexion-answer"
+        label={question.text[locale]}
+        name={question.question_key}
+        multiline
+        rows={3}
+        value={answers[question.question_key] ?? ''}
+        onValueChange={(value) => change(question.question_key, value)}
+        errorWord={copy.statusError}
+      />
+    );
+    if (question.feelingsHelp !== true) return field;
+    return (
+      <div key={question.question_key} className="musie-reflexion-infield">
+        {field}
+        <Button
+          variant="ghost"
+          size="min"
+          className="musie-reflexion-infield__btn"
+          onClick={() => openFeelings(question.question_key)}
+        >
+          {copy.feelingsHelp}
+        </Button>
+      </div>
+    );
+  };
+
   const finish = async () => {
     if (saving) return;
     setSaving(true);
@@ -181,7 +223,9 @@ export function ReflectionStep() {
         answers: QUESTIONS.map((question) => ({
           question_key: question.question_key,
           question_text: question.text[locale],
-          answer: answers[question.question_key] ?? '',
+          /* A hidden follow-up is saved empty: text typed under „Ja“ and then
+             switched to „Nein“ is not an answer anybody gave. */
+          answer: visible(question) ? answers[question.question_key] ?? '' : '',
         })),
       });
       for (const key of Object.keys(draft)) delete draft[key];
@@ -265,36 +309,25 @@ export function ReflectionStep() {
             }}
           >
             {QUESTIONS.map((question) => {
-              const field = (
-                <Field
-                  key={question.question_key}
-                  className="musie-reflexion-answer"
-                  label={question.text[locale]}
-                  name={question.question_key}
-                  multiline
-                  rows={3}
-                  value={answers[question.question_key] ?? ''}
-                  onValueChange={(value) => change(question.question_key, value)}
-                  errorWord={copy.statusError}
-                />
+              /* A follow-up is drawn by its question, below, as one block. */
+              if (question.showIf !== undefined) return null;
+              if (question.kind !== 'yesNo') return renderText(question);
+              const followUps = QUESTIONS.filter(
+                (q) => q.showIf?.key === question.question_key && visible(q),
               );
-              if (question.feelingsHelp !== true) return field;
-              /* The button comes FIRST in the DOM, so tabbing goes button →
-                 field, the order they are seen in; experiment.css lifts the
-                 question's label above it. */
               return (
-                <div key={question.question_key} className="musie-reflexion-help">
-                  <Button
-                    variant="ghost"
-                    size="min"
-                    leadingIcon={Smile}
-                    align="start"
-                    wrap
-                    onClick={() => openFeelings(question.question_key)}
-                  >
-                    {copy.feelingsHelp}
-                  </Button>
-                  {field}
+                <div key={question.question_key} className="musie-reflexion-group">
+                  <RadioGroupText
+                    name={question.question_key}
+                    legend={question.text[locale]}
+                    options={YES_NO.map((answer) => ({ value: answer, label: copy.yesNo[answer] }))}
+                    /* '' rather than undefined: controlled from the first
+                       render, with nothing chosen. */
+                    value={answers[question.question_key] ?? ''}
+                    onValueChange={(value) => change(question.question_key, value)}
+                    emptyLabel={copy.optionsEmpty}
+                  />
+                  {followUps.map(renderText)}
                 </div>
               );
             })}

@@ -55,11 +55,17 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
 
 - **The questions** are `QUESTIONS`, with text in DE and EN. When the wording
   changes, raise `QUESTION_SET_VERSION`, so that answers to old and new
-  wording stay apart in `experiment_responses` and in PostHog. Version 1 was
-  the placeholder set (local test rows only). Version 2 is Lucy's wording,
-  from 2026-11-16.
-- **The feelings help.** A question with `feelingsHelp: true` (today only q2)
-  gets a small ghost button under its label. The button opens the app's own
+  wording stay apart in `experiment_responses` and in PostHog.
+  - Version 1 was the placeholder set (local test rows only).
+  - Version 2 is Lucy's wording, from 2026-11-16.
+  - Version 3 (2026-11-18) splits the mood question. `q2` is now Ja or Nein,
+    stored in German whatever the screen showed. Only „Ja“ shows `q2_how`
+    („Beschreibe, wie sich deine Stimmung verändert hat“). A follow-up is
+    declared with `showIf` and saved empty while it is hidden.
+- **The feelings help.** A question with `feelingsHelp: true` (today only
+  `q2_how`) gets a small button inside its field, at the bottom end,
+  labelled „Stimmung benennen“ (Figma node 190:15804, hardcoded for this
+  experiment). It opens the app's own
   feelings sheet, which is not modified. A picked feeling is not stored as a
   feeling. Its word is appended to the answer as plain text, and the person
   can edit it like anything they typed. PostHog gets
@@ -93,7 +99,9 @@ you!“.
 - **Table:** `public.experiment_responses`. An anonymous visitor can only
   insert into it. You read it through the Supabase dashboard (service role).
 - **CSV:** the view `public.experiment_responses_wide` has one row per
-  response, with the three questions as columns. In the Table Editor, open the
+  response, with the answers as columns `q1`, `q2`, `q2_how` and `q3`. Rows
+  from version 2 have their whole mood answer in `q2` and no `q2_how`. In the
+  Table Editor, open the
   view and export it as CSV. In the SQL editor, use
   `select * from experiment_responses_wide where not is_internal order by created_at`.
 - **Test runs:** the column `is_internal` is `true` for a reflection from a
@@ -143,7 +151,8 @@ consent, and the modal says so. After it:
 
 1. Merge the PR. Cloudflare builds the app and the experiment together.
 2. Run `pnpm db:sync` from `main` to create `experiment_responses` on hosted.
-   This applies two migrations: the table, and its `is_internal` column.
+   This applies three migrations: the table, its `is_internal` column, and
+   the view's `q2_how` column.
 3. Run `pnpm db:status`, which should report that hosted and the migration
    files agree.
 4. Open each link once with `?internal=1` and check three things: one row
