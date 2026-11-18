@@ -135,7 +135,8 @@
    spanning about 90% of the top edge, and fills a transparent one with the
    page background — the solid beige strip of the full-width band (Ben's
    phone, 2026-11-17; OPEN-QUESTIONS.md has the sources). An absolute box is
-   as wide as its content, and so is the fixed one.
+   as wide as its content, and so is the fixed one. THE BAR (below) is the
+   one exception, and it is a top bar on purpose.
 
    THE CLEARANCE is how far beyond its own height a header that is gone
    waits above the window. --sp-2 by default: the band already ends --sp-4
@@ -160,7 +161,15 @@
   padding-block-start: var(--musie-header-block, var(--sticky-block));
 }
 
+/* THE BAND'S NUMBERS ARE NAMED, because the hook reads them back
+   (`useHeaderReveal`): the band is the pill's measured height plus these two
+   paddings, and where the pill's own place reaches the window — the bar's
+   handover — is the top one. Named once, so the CSS and the script cannot
+   disagree about either. */
 .musie-header {
+  --musie-header-pad-top: var(--sp-4);
+  --musie-header-pad-bottom: var(--sp-4);
+  --musie-header-pad-inline: var(--sp-4);
   --musie-header-clearance: var(--sp-2);
   position: absolute;
   inset-block-start: var(--musie-header-at, 0px);
@@ -169,8 +178,8 @@
   z-index: var(--z-sticky);
   display: flex;
   align-items: flex-start;
-  padding-block: var(--sp-4);
-  padding-inline: var(--sp-4);
+  padding-block: var(--musie-header-pad-top) var(--musie-header-pad-bottom);
+  padding-inline: var(--musie-header-pad-inline);
   pointer-events: none;
 }
 
@@ -204,10 +213,18 @@
   pointer-events: auto;
 }
 
+/* THE LOGO IS A LINK HOME (2026-11-18, AppShell). The global `a` underlines
+   and recolours; the mark and the wordmark keep their own colours already, so
+   only the underline needs taking back. The focus ring is the global
+   `a:focus-visible` one, Layer 1's ring. */
+.musie-header__home {
+  text-decoration: none;
+}
+
 @media (min-width: 768px) {
   .musie-header {
-    padding-block-start: var(--sp-5);
-    padding-inline: var(--sp-5);
+    --musie-header-pad-top: var(--sp-5);
+    --musie-header-pad-inline: var(--sp-5);
   }
 
   /* 68 TALL, NOT 69. Figma's large pill keeps the old bar's 69px, and that
@@ -218,6 +235,109 @@
     min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
     padding-inline: var(--sp-5) var(--sp-3);
   }
+}
+
+/* ── ON THE WAY BACK, A BAR · Ben, 2026-11-18 ──────────────────────────────
+   Figma *Navigation › Bodyscan · Hören · 393*, frame `header` (242:21976):
+   scrolling up mid-page, the header comes back not as the pill but as a bar
+   — flush with the window's top, only the bottom corners round.
+   `headerReveal.ts` has when; this is what.
+
+   AS WIDE AS THE PAGE'S COLUMN, AND --sp-2 MORE EACH SIDE — Ben, the same
+   day, from a window at 727 („I also want these slight overlaps on
+   desktop!"). On a phone Figma's bar is --sp-2 off the window, and the
+   page's column is a --gutter (--sp-4) in, so the bar overhangs the card it
+   floats over by --sp-2 on each side. That overhang is the rule now, at every
+   width: the bar is `<main>`'s content box widened by --sp-2 each way,
+   centred as `<main>` is. Measured before, the bar was flush with the card at
+   834, 8px over it at 1024 by coincidence, and 200px past it at 1440.
+
+   THE COLUMN IS `<main>`'s, recomputed rather than measured: the window less
+   two gutters, capped at `--musie-main-wide` on the wide routes and at
+   `--bp-md` less two gutters on the rest — the two caps `.musie-main` itself
+   declares below. `:has()` reads which kind of page it is off `<main>`'s own
+   `data-wide`, so there is one source for it.
+
+   THE SAME PILL ELEMENT, STRETCHED. The menu button goes to the far end
+   (`space-between`), the paddings inside stay the pill's, and so does the
+   height — which is why the hook can measure the pill once for both forms.
+
+   THE HEADER IS THE BAR'S OWN BOX. No band round it: no padding, offset from
+   the window's start by `inset-inline-start` and sized by `inline-size`, so
+   the fixed element at the top of the window is exactly the bar. And it is
+   OPAQUE — the pill's own fill, the same corners — because what Safari 26
+   paints under the status bar is sampled from that fixed element: an opaque
+   one gave the old full-width bar its own colour up there, a transparent one
+   gave the beige strip. The pill covers it exactly; nothing of it shows.
+   Whether that tinted strip is what Ben wants is his call on his phone
+   (OPEN-QUESTIONS.md).
+
+   THE CORNER is half the measured height, not `--radius-full`: with the top
+   corners at 0, CSS scales a 999px pair at the bottom to the WHOLE height,
+   56px, where Figma has 28. The fallback is the designed height, until the
+   hook has measured.
+
+   IT BECOMES THE PILL BY A CROSS-FADE — Ben, the same day. At the handover
+   (the pill's own place reaching the top of the window) the bar fades out
+   where it is while the pill fades in at its place. Nothing moves or changes
+   shape. It was a morph first, tied to the scroll over the --sp-5 before the
+   handover — the bar narrowing to the pill and sliding to its place — and
+   scrolled up fast, that --sp-5 went by between two frames: „super abrupt",
+   and at 1440 a 996px bar became a 166px pill 200px to the left in one. A
+   fade on a clock is the same at every speed.
+
+   `--motion-duration-slow` and `--motion-ease-standard`: gentle, Ben's word,
+   and the standard curve because nothing is entering or leaving the screen —
+   one thing is becoming another. The hook reads both back for the Web
+   Animations it runs, and under reduced motion Layer 1 takes the duration to
+   1ms, which makes it the swap it should be.
+
+   THE GHOST is the bar that fades out — a copy AppShell keeps, `aria-hidden`
+   and `inert`, held at the bar's place by its own `data-mode="held"` and
+   `data-form="bar"`, so the rules below draw it exactly as they draw the
+   header. Hidden; the animation alone makes it visible, for as long as it
+   runs. */
+.musie-app {
+  --musie-column: calc(var(--bp-md) - (var(--gutter) * 2));
+}
+
+.musie-app:has(> .musie-main[data-wide='1']) {
+  --musie-column: var(--musie-main-wide);
+}
+
+.musie-header {
+  --musie-header-bar-overhang: var(--sp-2);
+  --musie-header-dissolve: var(--motion-duration-slow);
+  --musie-header-dissolve-ease: var(--motion-ease-standard);
+}
+
+.musie-header[data-form='bar'] {
+  --musie-bar-corner: calc(var(--musie-pill-block, calc(var(--target-sm) + (var(--sp-2) * 2))) / 2);
+  /* Percentages here are the window's (or the app root's, which is as wide):
+     a custom property keeps them unresolved until a box uses them. */
+  --musie-bar-inline: calc(
+    min(100% - (var(--gutter) * 2), var(--musie-column))
+    + (var(--musie-header-bar-overhang) * 2)
+  );
+  inset-inline-start: calc((100% - var(--musie-bar-inline)) / 2);
+  inline-size: var(--musie-bar-inline);
+  padding: 0;
+  background-color: var(--surface-overlay);
+  border-radius: 0 0 var(--musie-bar-corner) var(--musie-bar-corner);
+}
+
+.musie-header[data-form='bar'] .musie-header__pill {
+  flex: 1 1 auto;
+  justify-content: space-between;
+  border-radius: inherit;
+}
+
+.musie-header--ghost {
+  visibility: hidden;
+}
+
+.musie-header--ghost .musie-header__pill {
+  pointer-events: none;
 }
 
 /* ═══ MAIN ══════════════════════════════════════════════════════════════════

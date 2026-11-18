@@ -12203,3 +12203,102 @@ What I need from Ben:
    today; Einsteigen on a tablet narrows the picture below 16:9 only when the
    copy is much taller than the picture, and then `cover` trims the sides —
    the head first. A centred redraw would make that impossible.
+
+## On the way back up the header is a bar — DONE, one decision on the phone
+
+Where: `src/lib/headerReveal.ts` (+ test), `src/lib/useHeaderReveal.ts`,
+`src/shell.css` (*ON THE WAY BACK, A BAR*), `src/AppShell.tsx` (comment)
+
+What I did: Ben, 2026-11-18, Figma *Navigation › Bodyscan · Hören · 393*, frame
+`header` (242:21976): scrolling up mid-page brings back a bar across the top of
+the window — flush with it, --sp-2 off the sides, bottom corners round —
+which becomes the pill again at the top. His answers, asked one by one:
+- **Only after the pill was out of sight.** A short scroll brings the pill back
+  with the page; the bar is a `gone` header coming back.
+- **Handed over in place,** where the pill's own place reaches the window (16
+  on a phone, 24 from 768px) — not at 0, so nothing jumps.
+- **Cross-faded there, not morphed.** First a morph tied to the scroll over
+  the 24px before the handover (the bar narrowing and sliding to the pill);
+  Ben, scrolling up fast: „the transition feel super abrupt" — at speed those
+  24px pass between two frames. Of three paths offered (a longer run, a
+  speed-limited follow, a timed animation) he chose none and asked instead for
+  „a gentle dissolve of the wide bar and a simultaneous fade in" of the pill.
+  So at the handover the bar fades out where it is while the pill fades in at
+  its place, over `--motion-duration-slow` (340ms) on the standard curve —
+  the same at every speed. The bar that fades is an inert, `aria-hidden` copy
+  the shell keeps, because the header is the pill from that frame on.
+- **768–1440: large** — 68 tall, corners 34.
+- **As wide as the page's column plus --sp-2 each side, at every width** —
+  Ben, after a look at 727: „I also want these slight overlaps on desktop!"
+  On a phone that is Figma's 8px off the window; from 768px it was full
+  width, which put it flush with the card at 834 and 200px past it at 1440.
+  The column is `<main>`'s content box (980 on the wide routes, 768 less two
+  gutters on the rest), so the bar is narrower on /diary than in a session.
+- **Over 1440: no bar.** The pill comes back as the pill, as before.
+- **No bar within a screen of the top.** Ben: no bar when the top is reached
+  in under half a second. Nothing knows that at the turn, so of three ways
+  offered (wait 0.5s, guess from the speed, judge by distance) he chose the
+  distance: a turn up within one window height of the top brings no bar. The
+  header stays gone and the pill comes into sight with the page, in its own
+  place. Accepted with it: scrolling up slowly from there there is no header
+  until the top, and a page barely taller than the window never shows the
+  bar. Measured: a turn at 852 on an 852-tall window brings none, at 853 the
+  bar (900 / 901 at 1440); Tab still brings the bar. Over 1440 the pill
+  comes back as before — the rule is the bar's, so it stops where the bar
+  does.
+
+Measured in Chromium (local stack, /exercises with a spacer) at 393, 834, 1440
+and 1728: the held bar at 393 is 8 / 0 / 377 × 56 with corners 0/0/28/28 —
+Figma's numbers. At the handover the copy sits on the bar's box exactly and
+fades 1 → 0 while the pill fades 0 → 1 (0.2 / 0.8 at 150ms, done by 500ms),
+for a slow approach and for a jump straight to 0 alike, in Chromium and
+WebKit. `main` stays at 88 (108) in every state. Tab while gone brings the
+bar. 1728 is unchanged. Against the session card on the listen step, the bar
+overhangs it by 8px each side at 727, 834, 1024, 1280 and 1440; on /diary by
+8px at 834 and 1440.
+
+Decided by me, say if wrong:
+1. **Reduced motion: no fade.** Layer 1 takes `--motion-duration-slow` to
+   1ms there, so the handover is a swap. The pixel-for-pixel movement itself
+   was never gated, so this is a choice, not a rule.
+2. **1440 is a raw number** (in `useHeaderReveal.ts`, once). Layer 1's
+   breakpoints stop at `--bp-xl`, 1280, and a media query cannot read a token
+   anyway. A token gap if a second thing ever needs it.
+3. **The Figma variant `small_full-width` of `nav_panel` is still identical to
+   `small`**; the frame's instance carries every difference as an override.
+   Not touched.
+
+What I need from Ben: **one look on the iPhone, and a call.** Safari 26 paints
+the strip under the status bar from a fixed element across ~90% of the top
+edge, and the held bar is one (377 of 393). Its own box is opaque in the bar's
+colour on purpose — a transparent one is what gave the beige strip on 17.11. —
+so the strip should come up in the bar's colour while the bar is held, and
+show the page while it glides. If the tint is wrong, the only way out is a bar
+narrower than ~90% on a phone, which is a design change.
+
+## The header logo is a link home — DONE, the skip-link cost is two tab stops again
+
+Where: `src/AppShell.tsx` (the pill's `Logo`, `render={<Link …>}`), `src/shell.css`
+(`.musie-header__home`)
+
+What I did: Ben, 2026-11-18: „klicking on musie/the logo brings me back to
+/exercises". The pill's logo — and the bar's, which is the same element — is
+a link through `Logo`'s own `render` composition, named by its wordmark
+("Musie"). It goes to /exercises behind the gate every other way there uses
+(`MenuDrawer`'s `startHref`): no user type yet, or a profile still loading,
+goes to /about-you first. Already on the page it goes to, it scrolls to the
+top, since the router does nothing visible for a link to the current page.
+The global `a` underline is taken back; the focus ring is the global
+`a:focus-visible` one.
+
+Measured in Chromium (local stack): the pill keeps 16 / 16 / 151 × 56; Tab
+reaches the logo first (ring drawn), then the menu button; /diary → logo →
+/exercises; on /exercises at 1900 with the bar held, the logo takes the page
+to 0 and the pill.
+
+Why: Ben's request.
+
+What I need from Ben: nothing to decide, one cost to know. The 2026-09-20
+removal of the skip link (2.4.1) was argued on the header being ONE tab stop
+for a sighted keyboard user to walk past; it is two again, as it was before
+the profile button went. Still small; still a cost, and logged as one.

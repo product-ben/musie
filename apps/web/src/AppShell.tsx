@@ -7,10 +7,11 @@
 import * as React from 'react';
 import { Menu } from 'lucide-react';
 import { IconButton, Logo, MusyTooltipProvider } from '@musie/design-system';
-import { useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
+import { Link, useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
 import { BRAND_NAME } from './brand';
 import { useLocale, useT } from './i18n/localeContext';
 import { useAuth } from './lib/authContext';
+import { useProfile } from './lib/profileContext';
 import { PagePathContext } from './lib/shellContext';
 import { useHeaderReveal } from './lib/useHeaderReveal';
 import type { RouteHandle } from './routeHandle';
@@ -154,7 +155,25 @@ export function AppShell() {
    * writing to the element directly at a turn. No scroll renders the shell.
    */
   const headerRef = React.useRef<HTMLElement>(null);
-  useHeaderReveal(headerRef, pagePath ?? '');
+  const ghostRef = React.useRef<HTMLDivElement>(null);
+  useHeaderReveal(headerRef, ghostRef, pagePath ?? '');
+
+  /**
+   * THE LOGO GOES HOME · Ben, 2026-11-18: „klicking on musie/the logo brings
+   * me back to /exercises". Home is /exercises behind the same gate every
+   * other way there uses (MenuDrawer's `startHref`): no user type yet means
+   * /about-you, which asks it first, and so does a profile still loading —
+   * asking again is recoverable, skipping the question is not.
+   *
+   * ALREADY THERE, it goes to the top. The router does nothing visible for a
+   * link to the current page, and the arrival scroll above keys on the path,
+   * so without this a logo tapped half way down the library would seem dead.
+   */
+  const { profile } = useProfile();
+  const homeHref = profile?.user_type_id ? '/exercises' : '/about-you';
+  const goHome = () => {
+    if (location.pathname === homeHref) window.scrollTo({ top: 0, behavior: 'auto' });
+  };
 
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
@@ -163,10 +182,34 @@ export function AppShell() {
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
       <div className="musie-app">
-        {/* `--musie-header-at` and `data-mode` are written by
-            `useHeaderReveal`, straight onto the element and only at a turn
-            of the scroll: rendering them here would re-render the shell on
-            every turn and fight the hook over who owns them. */}
+        {/* THE GHOST · 2026-11-18. On the way back up the header is a bar,
+            and where it becomes the pill again the bar fades out while the
+            pill fades in (`useHeaderReveal`). The header is the pill from
+            that frame on, so the bar that fades is this: a copy of it, held
+            at the bar's place by its own two attributes, hidden until the
+            hook fades it. Decoration only — `aria-hidden` and `inert`, so
+            its button is in no tab order and its name in no tree; the label
+            is passed all the same, because nothing user-visible is left to
+            a default (CLAUDE.md rule 7). Before the header, so the pill
+            fades in above it. */}
+        <div
+          ref={ghostRef}
+          className="musie-header musie-header--ghost"
+          data-mode="held"
+          data-form="bar"
+          aria-hidden="true"
+          inert
+        >
+          <div className="musie-header__pill">
+            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <IconButton glyph={Menu} label={t('shell.menuLabel')} variant="ghost" size="sm" />
+          </div>
+        </div>
+
+        {/* `--musie-header-at`, `data-mode` and `data-form` are written by
+            `useHeaderReveal`, straight onto the element and only when they
+            change: rendering them here would re-render the shell on every
+            turn and fight the hook over who owns them. */}
         <header ref={headerRef} className="musie-header">
           {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
               17.11.*). The full-width bar with its centred logo became one
@@ -175,14 +218,23 @@ export function AppShell() {
               it floats in — the band is what the page starts below, and the
               pill is the only part of it that takes a pointer (shell.css).
 
-              Logo before the button, and that is the reading order too: the
-              logo is not focusable, so the menu button is still the first and
-              only tab stop in the header.
+              Logo before the button, and that is the reading order too. The
+              logo is a link home since 2026-11-18, so the header has two tab
+              stops again: the logo, then the menu button. `render` is the
+              Logo's own composition point for exactly this (Logo.tsx: wrapping
+              it in an anchor is the app's job); its name is the wordmark.
 
               The profile button went with /settings on 2026-09-24, and nothing
               has taken its place: the drawer holds what it opened. */}
           <div className="musie-header__pill">
-            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <Logo
+              size="nav"
+              variant="flat"
+              showWordmark
+              alt={BRAND_NAME}
+              className="musie-header__home"
+              render={<Link to={homeHref} onClick={goHome} />}
+            />
             <IconButton
               glyph={Menu}
               label={t('shell.menuLabel')}
@@ -203,9 +255,10 @@ export function AppShell() {
             an id, so screen-reader users reach it by landmark navigation,
             which is how most of them actually move. What is lost is the
             KEYBOARD-ONLY, SIGHTED user, who has no landmark list — on this app
-            that is one tab stop of header to walk past (two, until the profile
-            button went with /settings), which is why the cost is small. It is a
-            cost, though, and it is logged as one.
+            that is two tab stops of header to walk past (the logo, a link home
+            since 2026-11-18, and the menu button; it was one from the profile
+            button going with /settings until then), which is why the cost is
+            small. It is a cost, though, and it is logged as one.
 
             `tabIndex={-1}` went with the link: it existed so the skip target
             could take programmatic focus, and nothing focuses main any more. */}
