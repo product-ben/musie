@@ -118,6 +118,7 @@ const de = {
   languageEn: 'EN',
   onlyGerman: 'This exercise is only available in German.',
   logoAlt: 'Musie',
+  testMode: 'Testmodus – zählt nicht mit',
 
   modalTitle: 'Willkommen bei Musie',
   modalIntro:
@@ -165,6 +166,7 @@ const en: Copy = {
   languageEn: 'EN',
   onlyGerman: 'This exercise is only available in German.',
   logoAlt: 'Musie',
+  testMode: 'Test mode – not counted',
 
   modalTitle: 'Welcome to Musie',
   modalIntro:

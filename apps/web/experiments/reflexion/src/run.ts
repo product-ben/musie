@@ -16,6 +16,43 @@ function slugFromPath(pathname: string): Slug | null {
 
 const slug = typeof window === 'undefined' ? null : slugFromPath(window.location.pathname);
 
+/**
+ * A TEST RUN — Ben's and Lucy's, so the dashboard and the answers table can
+ * leave them out (Ben, 2026-11-18).
+ *
+ * `?internal=1` marks THIS DEVICE, not just this visit: the browser keeps the
+ * participant (name and id) across visits, so a once-only flag let the next
+ * plain visit count the same tester as a participant, under their name.
+ * `?internal=0` clears the mark. Every local dev run is internal too: the dev
+ * server sends to the REAL PostHog project.
+ *
+ * The parameter is then taken OUT of the address bar, so a link copied from
+ * a tester's browser and sent to a friend does not hide the friend. The
+ * header shows a „Testmodus“ badge while the mark is on (Header.tsx), so a
+ * phone handed to somebody else is not silently a test device.
+ */
+const INTERNAL_KEY = 'reflexion-internal';
+
+function readInternal(): boolean {
+  if (import.meta.env.DEV) return true;
+  if (typeof window === 'undefined') return false;
+  const url = new URL(window.location.href);
+  const param = url.searchParams.get('internal');
+  let internal = param === '1';
+  try {
+    if (param === '1') localStorage.setItem(INTERNAL_KEY, '1');
+    else if (param === '0') localStorage.removeItem(INTERNAL_KEY);
+    internal = localStorage.getItem(INTERNAL_KEY) === '1';
+  } catch {
+    /* Storage blocked (a private window): this visit only, from the URL. */
+  }
+  if (param !== null) {
+    url.searchParams.delete('internal');
+    window.history.replaceState(window.history.state, '', url);
+  }
+  return internal;
+}
+
 export const RUN: {
   slug: Slug | null;
   exercise: ExperimentExercise | null;
@@ -30,8 +67,6 @@ export const RUN: {
     ? crypto.randomUUID()
     : `run-${Date.now()}`,
   loadedAt: typeof performance === 'undefined' ? 0 : performance.now(),
-  /* `?internal=1`, or any local dev run: the dev server sends to the REAL
-     PostHog project, and a demo on localhost is not a participant. */
-  internal: import.meta.env.DEV || (typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).get('internal') === '1'),
+  /* A test device (`?internal=1`, remembered) or a local dev run. */
+  internal: readInternal(),
 };

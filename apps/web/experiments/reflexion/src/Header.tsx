@@ -11,8 +11,8 @@
  * says why. That line is English on a page pinned to `de`, so it carries its
  * own `lang`.
  */
-import { Languages } from 'lucide-react';
-import { Logo, SegmentedControl } from '@musie/design-system';
+import { FlaskConical, Languages } from 'lucide-react';
+import { Badge, Logo, SegmentedControl } from '@musie/design-system';
 import { useLocale } from '../../../src/i18n/localeContext';
 import { useCopy } from './context';
 import { RUN } from './run';
@@ -64,6 +64,13 @@ export function Header() {
       {GERMAN_ONLY && (
         <p className="musie-reflexion-langnote" lang="en">
           {copy.onlyGerman}
+        </p>
+      )}
+      {/* A test device (run.ts): said on screen, so a phone handed to a real
+          participant is noticed rather than silently left out of the data. */}
+      {RUN.internal && (
+        <p className="musie-reflexion-langnote">
+          <Badge variant="accent" glyph={FlaskConical}>{copy.testMode}</Badge>
         </p>
       )}
     </>

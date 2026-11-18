@@ -17,6 +17,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Locale } from '../../../src/i18n';
 import type { Participant } from './context';
 import { EXPERIMENT_ID, QUESTION_SET_VERSION, type Slug } from './config';
+import { RUN } from './run';
 
 /* Its OWN client, not the app's `getSupabase()`: in this build that module is
    shimmed to throw (src/shims/lib__supabase.ts), so nothing in the mounted
@@ -58,6 +59,9 @@ export async function saveResponse(input: {
       exercise_key: input.exerciseKey,
       language: input.language,
       question_set_version: QUESTION_SET_VERSION,
+      /* A test run (run.ts): the same flag PostHog gets, so the answers of
+         Ben's and Lucy's tests can be filtered out of the dataset. */
+      is_internal: RUN.internal,
       answers: input.answers.map(({ question_key, question_text, answer }) => ({
         question_key,
         question_text,

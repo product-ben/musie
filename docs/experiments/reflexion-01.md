@@ -12,9 +12,22 @@ AI follow-up feature, which is not part of this experiment.
 | Body Scan | `https://musie.org/experiments/reflexion/body-scan/` | DE only (EN is disabled; the guided audio exists in German only) |
 | Freie Bahn | `https://musie.org/experiments/reflexion/freie-bahn/` | DE, EN; always the blue sun (`art-01`) and „Aura“ (`trk-10`) |
 
-**Testing internally:** add `?internal=1` to a link. Every PostHog event of
-that visit then carries `is_internal = true`, and the dashboard filters it
-out. A local dev run (`localhost:5180`) is always internal, because the dev
+**Testing internally (Ben, Lucy):** open any link once with `?internal=1`.
+That marks the device, not just the visit: from then on every visit in that
+browser is a test, including through the plain link.
+- A „Testmodus – zählt nicht mit“ badge under the header shows that the
+  device is marked.
+- Every PostHog event carries `is_internal = true`, and the dashboard filters
+  those out.
+- Every saved reflection has `is_internal = true` in `experiment_responses`.
+- `?internal=0` removes the mark. Do this before you hand the device to a
+  real participant.
+- The page removes the parameter from the address bar, so a link copied from
+  a test device is a normal link.
+- A private window cannot store the mark, so it applies to that one visit
+  only.
+
+A local dev run (`localhost:5180`) is always internal, because the dev
 server sends to the real PostHog project.
 
 **Local:** run `pnpm --filter web experiment:reflexion:dev`, then open
@@ -72,10 +85,15 @@ you!“.
 - **CSV:** the view `public.experiment_responses_wide` has one row per
   response, with the three questions as columns. In the Table Editor, open the
   view and export it as CSV. In the SQL editor, use
-  `select * from experiment_responses_wide order by created_at`.
+  `select * from experiment_responses_wide where not is_internal order by created_at`.
+- **Test runs:** the column `is_internal` is `true` for a reflection from a
+  test device or a local dev run. Filter on `false` for the participants'
+  answers. The visitor's browser sets the flag, so it is a convenience for
+  filtering and not a guard.
 - **Survey:** in PostHog under Surveys, „Reflexion 01 – Feedback“. Answers are
   stored in German (Ja / Vielleicht / Nein) whatever the UI language was; the
-  UI language is the event property `language`.
+  UI language is the event property `language`. That page shows test answers
+  too. The dashboard does not.
 - **Dashboard:** [„Reflexion 01“](https://eu.posthog.com/project/313428/dashboard/1127915)
   in PostHog. One section for the overview (participants, started and
   finished per exercise, the recommendation answers) and one per exercise:
@@ -111,9 +129,10 @@ consent, and the modal says so. After it:
 
 1. Merge the PR. Cloudflare builds the app and the experiment together.
 2. Run `pnpm db:sync` from `main` to create `experiment_responses` on hosted.
+   This applies two migrations: the table, and its `is_internal` column.
 3. Run `pnpm db:status`, which should report that hosted and the migration
    files agree.
-4. Open each link once with `?internal=1` and check that one row arrives in
-   `experiment_responses_wide` and that the events show in PostHog's live
-   events.
+4. Open each link once with `?internal=1` and check three things: one row
+   arrives in `experiment_responses_wide` with `is_internal = true`, the
+   „Testmodus“ badge shows, and the events show in PostHog's live events.
 5. Launch the survey in PostHog. It is still a draft.
