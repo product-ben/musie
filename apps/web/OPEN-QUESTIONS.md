@@ -12474,3 +12474,30 @@ Decisions I made:
 - **The Ja/Nein question uses the field labels' type style** (label-md), not
   RadioGroupText's heading-sm, so the four questions read alike. That is an
   experiment override of the legend.
+
+## Experiment „Reflexion 01“: after the feedback, the deck of the three exercises — DONE, one copied face
+
+Where: `apps/web/experiments/reflexion/src/NextExercises.tsx`,
+`src/ThankYou.tsx`, `src/experiment.css`
+
+Ben, 2026-11-18: the success message „Danke für dein Feedback!“ is gone.
+After sending, the page shows „Danke, dass du an unserem Experiment
+teilgenommen hast.“, then „Lust auf eine weitere Übung?“, then the card
+stack as on main's `/exercises` with the experiment's three exercises.
+
+- The deck is the system's `CardDeck`, set up as `/exercises` sets it up.
+- The exercise just done is at the bottom of the pile. All three are in it,
+  as asked, but the top card is a new one.
+- A press is a full page load of that exercise's link. The browser keeps the
+  participant, so the name is pre-filled, and the press of „Los geht's“ there
+  is a fresh consent. No new event: the next page's
+  `exp_participant_started` with `returning_participant: true` already
+  counts who went on.
+
+THE CARD FACE IS A COPY. `ExerciseFace` is a private function in
+`routes/Exercises.tsx`, and this experiment does not touch the app, so
+NextExercises rebuilds it from the same markup and classes, styled by the
+app's `exercises.css`. If the app's face changes, this copy does not follow.
+That is acceptable for a page that lives a few weeks. If a second screen ever
+wants exercise cards, the face should be exported from the app, not copied
+again.

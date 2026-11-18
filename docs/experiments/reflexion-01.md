@@ -87,6 +87,12 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
   is preselected, and „Feedback senden“ works as soon as one question is
   answered. Change a question's text in PostHog and in `SURVEY` together,
   and never its ID: the dashboard reads the answers by ID.
+- **After „Feedback senden“** there is no success message. The page shows
+  the thanks, „Lust auf eine weitere Übung?“ and main's card deck with the
+  three exercises (`src/NextExercises.tsx`). The one just done is at the
+  bottom of the pile. A press opens that exercise's link with the name
+  pre-filled. Whoever goes on shows up in PostHog as
+  `exp_participant_started` with `returning_participant: true`.
 
 ## Ending the experiment
 

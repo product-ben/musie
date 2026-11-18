@@ -11,12 +11,17 @@
  *
  * Questions and their order come from `SURVEY` (config.ts), so the screen,
  * the event and PostHog's survey cannot list them differently.
+ *
+ * ONCE SENT, the page becomes `NextExercises`: the thanks, „Lust auf eine
+ * weitere Übung?“ and the deck of the three exercises. There is no success
+ * message any more (Ben, 2026-11-18).
  */
 import * as React from 'react';
-import { Button, ContentBox, Field, Message } from '@musie/design-system';
+import { Button, ContentBox, Field } from '@musie/design-system';
 import { SURVEY, type OpenKey, type RatingKey, type SurveyAnswers } from './config';
 import { useCopy } from './context';
 import { uuidV4 } from './NameModal';
+import { NextExercises } from './NextExercises';
 import { NpsSlider } from './NpsSlider';
 import { completed, surveySent, surveyShown } from './track';
 
@@ -49,18 +54,11 @@ export function ThankYou() {
     setSent(true);
   };
 
+  if (sent) return <NextExercises />;
+
   return (
     <div className="musie-session musie-reflexion-done">
       <ContentBox headingLevel={1} headline={copy.thanksHeadline}>
-        {sent ? (
-          <Message
-            variant="success"
-            live="assertive"
-            headingLevel={2}
-            headline={copy.feedbackThanks}
-            statusWord={copy.statusSuccess}
-          />
-        ) : (
           <form className="musie-reflexion-survey" onSubmit={send} noValidate>
             {SURVEY.questions.map((q) =>
               q.kind === 'rating' ? (
@@ -92,7 +90,6 @@ export function ThankYou() {
               {copy.sendFeedback}
             </Button>
           </form>
-        )}
       </ContentBox>
     </div>
   );

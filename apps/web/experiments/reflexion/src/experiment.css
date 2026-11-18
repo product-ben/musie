@@ -331,6 +331,34 @@
   padding-block-end: var(--sp-7);
 }
 
+/* ═══ AFTER THE FEEDBACK: THE DECK (NextExercises.tsx) ══════════════════════
+   `/exercises`' own arrangement: `.musie-exercises` is the grid that spaces
+   heading and deck by --space-gap-group, and `.musie-deck-stage` makes the
+   deck full-bleed. Here the heading has a lead line under it, so heading and
+   lead are one block, --space-gap-related apart. `.musie-placeholder` drops
+   its own bottom margin, as `.musie-exercises > .musie-placeholder` does on
+   main, since the grid's gap already spaces it. */
+.musie-reflexion-next {
+  padding-block-end: var(--sp-7);
+}
+.musie-reflexion-next__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+.musie-reflexion-next__head > .musie-placeholder {
+  margin: 0;
+}
+.musie-reflexion-next__head > .musie-placeholder:focus { outline: none; }
+.musie-reflexion-next__lead {
+  margin: 0;
+  font-family: var(--type-body-lg-family);
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-body);
+}
+
 /* Freie Bahn is ALWAYS the digital run here (one card, the blue sun). The
    intro's „Die analogen Karten liegen vor mir“ switch would turn the run into
    the paper scan step, where a visitor without the printed deck is stuck. The

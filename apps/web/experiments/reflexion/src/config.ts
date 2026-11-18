@@ -216,9 +216,10 @@ const de = {
   /* What a screen reader hears on a slider nobody has touched yet. */
   npsUnset: 'Noch keine Auswahl',
   sendFeedback: 'Feedback senden',
-  feedbackThanks: 'Danke für dein Feedback!',
+  /* Under the thanks once the feedback is sent, over the deck of the three
+     exercises (Ben, 2026-11-18). Replaced „Danke für dein Feedback!“. */
+  anotherExercise: 'Lust auf eine weitere Übung?',
   statusError: 'Fehler',
-  statusSuccess: 'Erfolg',
 
   ended: 'Dieses Experiment ist beendet. Danke!',
   unknownLink: 'Diesen Link gibt es nicht.',
@@ -266,9 +267,8 @@ const en: Copy = {
   npsHigh: 'Very likely',
   npsUnset: 'Nothing chosen yet',
   sendFeedback: 'Send feedback',
-  feedbackThanks: 'Thanks for your feedback!',
+  anotherExercise: 'Up for another exercise?',
   statusError: 'Error',
-  statusSuccess: 'Success',
 
   ended: 'This experiment has ended. Thank you!',
   unknownLink: 'This link does not exist.',
