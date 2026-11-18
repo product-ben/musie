@@ -51,7 +51,7 @@ export function ThankYou() {
 
   return (
     <div className="musie-session musie-reflexion-done">
-      <ContentBox headingLevel={1} headline={copy.thanksHeadline} text={copy.thanksSignature}>
+      <ContentBox headingLevel={1} headline={copy.thanksHeadline}>
         {sent ? (
           <Message
             variant="success"

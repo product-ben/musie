@@ -140,13 +140,14 @@
 }
 
 /* ═══ THANK YOU ═════════════════════════════════════════════════════════════
-   Four questions since 2026-11-18, so they are spaced as the reflect step's
-   three are: --sp-5 (24) between question blocks, --space-gap-related (12)
-   between a question and its answer. */
+   Four questions since 2026-11-18. Between question blocks --sp-6 (32), one
+   token above the reflect step's --sp-5 (Ben, 2026-11-18: „zwischen den
+   Fragen einen Token höher“); --space-gap-related (12) between a question
+   and its answer. */
 .musie-reflexion-survey {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--sp-6);
 }
 
 /* ═══ NPS SLIDER (NpsSlider.tsx) ═══════════════════════════════════════════
@@ -311,13 +312,15 @@
   line-height: var(--type-body-sm-line);
   color: var(--on-surface-muted);
 }
-/* Half the row each, and allowed to hyphenate. At 320px the two ends are
-   wider together („Unwahrscheinlich“ + „Sehr wahrscheinlich“) than the 240px
-   in the box, and a flex item will not shrink below its longest word by
-   itself: the second one ran out of the box. `hyphens` follows `<html
-   lang>` (rule 5), so German breaks at German points. */
+/* Their own width where it fits, shrinking and hyphenating where it does
+   not. At 320px the two ends together („Unwahrscheinlich“ + „Sehr
+   wahrscheinlich“) are wider than the 240px in the box, and a flex item will
+   not shrink below its longest word by itself: the second one ran out of the
+   box. A 50/50 split fixed that but wrapped „Sehr wahrscheinlich“ at 375,
+   where both fit on one line. `hyphens` follows `<html lang>` (rule 5), so
+   German breaks at German points. */
 .musie-nps__anchors > * {
-  flex: 1 1 0;
+  flex: 0 1 auto;
   min-inline-size: 0;
   hyphens: var(--text-hyphens);
 }

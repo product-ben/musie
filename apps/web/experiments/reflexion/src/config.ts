@@ -179,7 +179,6 @@ const de = {
   back: 'Zurück',
 
   thanksHeadline: 'Danke, dass du an unserem Experiment teilgenommen hast.',
-  thanksSignature: 'Liebe Grüße, Lucy und Ben',
   /* German IS the survey's base language, so the screen shows exactly what
      PostHog stores: one source, SURVEY above. */
   surveyQuestions: Object.fromEntries(
@@ -228,7 +227,6 @@ const en: Copy = {
   back: 'Back',
 
   thanksHeadline: 'Thank you for taking part in our experiment.',
-  thanksSignature: 'Warm regards, Lucy and Ben',
   surveyQuestions: {
     npsFriends: 'How likely are you to recommend this exercise for relaxing to your friends or family?',
     npsColleagues: 'How likely are you to recommend this exercise for relaxing to your colleagues?',
