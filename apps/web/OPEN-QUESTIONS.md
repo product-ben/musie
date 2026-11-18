@@ -11930,6 +11930,379 @@ Why: Ben's annotations and answers.
 What I need from Ben: nothing to decide. At 480 the cap makes the picture
 taller than wide (119 × 170), which is the rule doing what it says.
 
+## The Content Box wears the WizardPanel's shadow — RESOLVED
+
+Where: §9 of `musy-components.css` (`--musy-box-shadow`,
+`--musy-box-shadow-ink`, which replace yesterday's `--musy-wizard-shadow*`);
+the panel's own rule in §16 now reads the box's; `.musy-dlist__swipe >
+.musy-dlist__item` and `.musy-lightbox__body > .musy-box` opt out.
+
+What I did: moved Ben's playground shadow from the wizard to the box, so the
+box owns it and the panel borrows it. The wizard card IS a framed box and so
+wears it as one; the panel without a stepper reads the same property; the
+body inside a card stays `none`, as before. The values did not change by a
+character: computed in the app, the wizard card, a plain box and a bare panel
+give the same list, light and dark. Flat, on purpose: `--sunken` (it sits
+below the page), `--dashed` (a slot waiting for content), `--plain` (no
+surface), a box inside a Lightbox (it already gives its fill to the popup),
+and a DraggableList row, whose swipe wrapper clips everything outside the
+card and would leave the dark theme's 1px ring on every row and nothing else.
+Measured signed in on the local stack at 393 and 1440, light and dark:
+/about, /about-you, /discovered-music, /menu and /exercise-builder take it and
+nothing clips it; the empty /diary and /s/… stay flat. Two things now look
+different that nobody asked about by name: the Konto box in the /menu drawer
+reads as a card on the drawer, and /about's greeting bubble is lifted while
+the typing dots under it are not.
+
+Why: Ben, 2026-11-17: "Apply the shadow of the wizzard pannel also to the
+content box".
+
+What I need from Ben: nothing to decide unless one of the two flat choices or
+the two side effects above is wrong; each is one line to change.
+
+## The header becomes a floating pill — RESOLVED, with three things to look at
+
+Where: `AppShell.tsx`, `shell.css` (`.musie-header`, `.musie-header__pill`,
+`.musie-main`, the drawer header), `components/NavDrawer.tsx`,
+`lib/headerReveal.ts` + `lib/useHeaderReveal.ts` (+ test);
+`packages/design-system`: `src/Logo.tsx` (`variant="flat"`),
+`musy-components.css` §12 and the WizardPanel shadow,
+`tokens/musy-foundations-amendments.css` (G7, G8), `TOKEN-DRIFT.md`,
+`stories/Logo.stories.tsx`
+
+What I did: the navigation half of Ben's Figma page *Einsteigen · Bodyscan
+· 17.11.* (the half the entry above set aside), on branch
+`make-nav-more-minimal`. Ben chose, 2026-11-17: keep the hide-on-scroll as it
+is, logo-first only, one mark size, Figma's 16 on the phone.
+- **The pill.** Flat mark + „Musie" + the menu button (IconButton `sm`), on
+  `--surface-overlay`, fully round, WizardPanel's shadow. Phone: 56 tall, 16
+  from the window's top and start. From 768: 68 tall, 24 from both, at every
+  width (it does not follow the 980 column). The band around it is
+  transparent and takes no pointer, so the page under it stays tappable.
+- **The flat mark** is a `Logo` variant, inline SVG in `currentColor` (dark
+  theme and forced colours follow the ink). The drawer shows it too.
+- **The heights the layout leans on moved with it.** `--sticky-block` and
+  `--chrome-block` are 72 / 136 on a phone and 92 / 164 from 768 (were 69 /
+  141). Layer 1 is locked, so the new values are amendment G7. The listen
+  step snaps 72 / 92 down; the session intro does not scroll at 393, 834 or
+  1440.
+- **The shadow is one token now**, `--elevation-panel` (G8), worn by the
+  WizardPanel and the pill.
+- **A bug in the reveal, found walking it and fixed.** Tab to the menu button
+  while the header was hidden: focus brought it back, the browser then
+  scrolled to the focused button, and that scroll was read from position 0 as
+  a long run down — so the header hid again with focus inside it (2.4.11).
+  `shownAt(scrollY)` now restarts from where the page is. Tested in the
+  reducer, and walked with a real Shift+Tab at all three widths.
+
+Measured in Chromium against the local stack at 393, 834 and 1440: pill
+151 × 56 at (16, 16) on the phone, Figma's exact numbers; 164–166 × 68 at
+(24, 24) from 768; content 16 / 24 below the band; hidden, the pill clears
+the window (its bottom at −48); 40px of scroll up brings it back; light and
+dark.
+
+Why: Ben's design.
+
+What I need from Ben:
+1. **68, not 69.** Figma's large pill is 69: the old bar's 44 + 12 + 12 plus
+   its hairline. The pill has no hairline, so I built 68 from the same tokens
+   rather than add a non-token pixel. Say if the pixel matters.
+2. **The mirrored variant is not built** (menu first, wordmark, then mark —
+   the extra 834 frame „1729"). It was a decision, not an oversight; a
+   `?nav=` switch to compare the two would be small.
+3. **Tab to the hidden header still moves the page.** The header now stays,
+   but the browser scrolls the page up to the focused button first (about
+   500px on /exercises). That is the browser bringing focus into view, and
+   preventing it would mean taking the hidden header out of the tab order —
+   which is the other way of failing 2.4.11. Logged rather than fought.
+
+## The header moves with the page, pixel for pixel; 16 below the pill — RESOLVED
+
+Where: `lib/headerReveal.ts` (+ test, rewritten), `lib/useHeaderReveal.ts`,
+`AppShell.tsx`, `shell.css` (`.musie-header`), G7 in
+`packages/design-system/tokens/musy-foundations-amendments.css`,
+`packages/design-system/TOKEN-DRIFT.md`
+
+What I did: Ben, 2026-11-17, walking the pill: „Wenn ich scrolle, sollte das
+Nav element direkt und ohne lag mit scrollen" — and „16px padding bottom to
+the header container with the nav pill". This supersedes the slide in the
+entry above (decision 1 there was A; this is the other option, built the way
+that does not lag on a phone).
+- **One pixel for one pixel, both ways.** Down, the header leaves with the
+  page like its first line and waits just above the window. Up, it comes
+  back with the page from there, and is held at the top once it is all the
+  way in. The 56 / 14 thresholds, the top band and the short-page floor are
+  gone — they existed to stop a timed slide firing on jitter, and a header
+  that moves exactly as far as the page has nothing to fire.
+- **The browser moves it, not the script.** It is `position: sticky` with a
+  negative `top`, in the flow of the page; the hook only PLACES it (a margin
+  that the page gives straight back, and `top: 0` when held), at a turn of
+  direction. Nothing is written per frame, and no scroll renders React — so
+  on a phone, where the compositor scrolls off the main thread, it cannot
+  swim behind the content.
+- **16 below the pill**, both sizes: the band is 88 on a phone and 108 from
+  768 (was 72 / 92), and `--sticky-block` / `--chrome-block` follow (G7).
+
+Measured in Chromium against the local stack, scrolling in 12px steps at 393
+and 1440: the pill moved exactly as far as the content at every step down
+and up; `<main>`'s place in the document never moved through any placement;
+gone, the pill's edge waits 24px above the window; held through a further
+scroll up; Shift+Tab to the menu button holds it in view; the drawer opened
+and closed mid-page leaves it held and the page where it was; the listen
+step keeps it held and snaps 88 / 108 down.
+
+Why: Ben's instruction.
+
+What I need from Ben:
+1. **The phone intro is 7px taller than a 393 × 852 window now**, from the
+   extra 16 (Body Scan, English). Tablet and desktop still fit. Nothing done.
+2. **A fast flick up can overshoot by a frame.** When the header arrives with
+   the page, the switch to "held" is made by script at the next scroll event,
+   so on a very fast flick it can be drawn a few pixels too low for one frame
+   before it settles at the top. In the 12px-step walk it never did; on a
+   phone, watch for it.
+3. Item 3 of the entry above still stands: a Tab to the gone header brings it
+   back, but the browser first scrolls the page to the button.
+
+## The listen step lets the header move; the band stops tinting Safari's status bar — RESOLVED, one check on the phone
+
+Where: `components/SessionListen.tsx`, `lib/useHeaderReveal.ts`,
+`AppShell.tsx`, `shell.css` (`.musie-header`, the listen views)
+
+What I did: Ben, 2026-11-17, on his iPhone over the tunnel, two bugs.
+- **The listen step held the header still** (`usePinnedHeader`): its three
+  views snapped `--sticky-block` below the window's top and were sized
+  `--view-block-scrolled`, both the old, always-present bar's height. Now the
+  views snap to the window's top (no `--musy-snap-inset`) and the two
+  scrolled-to views fill the window (`--viewport-block`), so the header leaves
+  with the page and comes back over the top of the view, as on every screen.
+  It was the only screen that pinned, in every worktree, so the pin
+  mechanism went with it.
+- **A beige strip under the status bar cut the page off hard.** Safari 26
+  ignores `theme-color` and paints that strip from a fixed or sticky element
+  at the top edge spanning about 90% of the width or more; a transparent one
+  it fills with the page background. The header band was sticky and full
+  width — so: solid beige, white card and pill sliced at its edge. The old
+  bar was an opaque full-width bar of its own colour, which is why nobody saw
+  it. The band is now only as wide as the pill (`align-self: flex-start`; 47%
+  of a 393 window, 15% of 1440), so Safari has nothing to sample.
+  Undocumented by Apple; the sources (2025–26 community research) are
+  hawkshift.com/research/ios-26-safari-status-bar,
+  github.com/joe-bell/skills (apple-web-app, theme-color-and-status-bar) and
+  1ar.io/updates/safari-26-liquid-glass-web — they disagree in details, and
+  Ben's screenshots settled it for this page.
+
+Measured in Chromium against the local stack at 393 and 1440: on the listen
+step the header is at rest at the top, gone (24px above the window) after
+*About the music* and after a view's worth of wheel, back in its place after
+*Back to listening* and after a view up; each snapped view fills the window
+with no strip of the one before; the exercise list still moves pixel for
+pixel and `<main>` never moves.
+
+Why: Ben's report.
+
+What I need from Ben:
+1. **On the phone, after a reload** (Safari decides the strip on load): does
+   the white card now glide under the clock — and does the PILL? If Safari
+   draws the pill only below the status bar line and cuts it there, the
+   agreed next step is the larger change: the header as ordinary page content
+   (`position: absolute`) while it moves, `fixed` only while held.
+2. **A short swipe on the listen step shows the header briefly.** The views
+   snap mandatorily, so a swipe too short to change view springs back up —
+   and the header comes in by exactly as far as the page springs back. It is
+   the pixel-for-pixel rule doing what it says; say if it reads as a flicker.
+
+## The pill is page content while it moves, so it glides under the status bar — RESOLVED, check on the phone
+
+Where: `lib/headerReveal.ts` (+ test), `lib/useHeaderReveal.ts`, `shell.css`
+(`.musie-app`, `.musie-header`), `AppShell.tsx`
+
+What I did: Ben's iPhone, 2026-11-17, after the narrow band: the page now
+slides under the status bar, but the pill is cut off at the bar's edge, „wie
+eine Maske" — it should glide out from behind the bar with the rest of the
+page. Safari never draws a fixed or sticky box in that area, only page
+content, and the header was sticky. This is the „bigger rebuild" agreed as
+the fallback.
+- **Three modes instead of two.** `free`: `position: absolute` at a place in
+  the document, moving with the page as the page's own content (so Safari
+  draws it under the bar). `gone`: `position: fixed` just above the window.
+  `held`: `position: fixed` at the top. The reducer gained `gone`
+  explicitly; it still writes only at a turn and once as a leaving header
+  passes out of sight.
+- **The app root reserves the band** (`padding-block-start` by the measured
+  height), since an absolute header no longer pushes `<main>` down itself.
+- **On iOS the clearance above the window is --sp-8**, not --sp-2: Safari
+  lays the page out from the bottom of the status bar (59pt on Ben's phone,
+  read off his screenshots) and draws the page above that, so a header placed
+  just above the layout would already show behind the clock and pop in.
+  `@supports (-webkit-touch-callout: none)` — iOS and iPadOS WebKit only.
+- **A side effect, and a fix:** Tab to the gone header no longer moves the
+  page at all. A fixed box has no place in the page for the browser to
+  scroll back to. Item 3 of the second entry above is closed by this.
+
+Measured in Chromium against the local stack at 393 and 1440: pixel for
+pixel both ways in 12px steps; `<main>` never moves; gone, the pill waits
+24px above the window; Shift+Tab from y=700 holds the header in view with the
+page still at 700; the drawer leaves it held; the listen step rests, leaves
+and returns with its views.
+
+Why: Ben's report.
+
+What I need from Ben: **one look on the phone.** The iOS clearance and
+Safari's drawing under the bar cannot be measured here — Chromium has no
+status bar and does not take the iOS branch. If the pill now glides out from
+behind the clock with the page, this is done; if it pops in behind the clock
+at the turn, the clearance wants raising.
+
+## The exercise artwork is 16:9, everywhere it is drawn — RESOLVED, two things to look at
+
+Where: `public/assets/web/exercises/*.webp` (all eight), `shell.css`
+(`.musie-graph__mark`, `.musie-graph__blank`, `.musie-graph__stack`),
+`packages/design-system/src/musy-components.css` §13 (`RadioCards`),
+`supabase/migrations/20261118100000_exercise_artwork_16x9.sql`,
+`docs/assets/exercises.md`
+
+What I did: Ben, 2026-11-18: eight new illustrations, 1376 × 768, in
+`~/Documents/musie-assets/app graphics/exercises/`, "überall wo ein altes
+eingesetzt ist, bitte mit dem Neuen ersetzen", and the diary in 16:9 instead of
+1:1. Asked whether the library's list view should keep its square crop, he
+answered: *"Radio Cards auf 16:9 ändern, keine Prop! Wir haben ab jetzt nur noch
+16:9 imagery."*
+- **The files** are overwritten under their old names, so `image_url` did not
+  move. WebP q80 at native size: 13.5 MB of PNG → 648 KB, 45–153 KB each
+  (the old square set was 748 KB for five). 1024 wide would save ~280 KB more
+  and lose the engraving's hairlines on retina; not taken.
+- **The diary's marks** are 16:9, 44 × 25 at 393 (34 × 19 at 320), radius
+  `--radius-sm`. The column reservation counts mark rows at 9/16 of
+  `--target-primary` and the plus on today at a full one.
+- **`RadioCards`** draws its picture 16:9 at every width, no prop: 96 × 54 below
+  a 480px group (the column grew from 64, or it would have been 36px tall),
+  192 × 108 above, top-aligned. The square's `min-block-size` and its
+  stretch-to-row are gone. Its stories show two of the real artworks instead of
+  the square `method-card.png`.
+- **All sixteen `image_alt` rows** are rewritten from the new pictures; the old
+  ones described the old ones (hands on a belly; ten marimba bars).
+
+Measured in Chromium against the local stack: the list's media 96 × 54 at 393
+and 192 × 108 at 1280; diary marks and blanks 44.0 × 24.8 at 393 and 1280,
+34.3 × 19.3 at 320, columns level; Einsteigen at 834 draws Bodyscan 167 × 94,
+whole. The migration ran in a rolled-back transaction against the local stack
+(UPDATE 16, constraints held); it was not applied there, so as not to move the
+shared stack under another branch.
+
+Why: Ben's brief and his answer above.
+
+What I need from Ben:
+1. **The diary's tap target is shorter.** 25px tall at 393 instead of 44 (2.5.8
+   still holds: above 24 both ways at 393, and the spacing exception at 320).
+   Seven columns fix the width, so 16:9 can only get shorter. Say if it reads
+   too small on the phone.
+2. **Figma's `RadioCards` is now square where the code is 16:9.** Not touched
+   here.
+3. **Bodyscan's head sits at the right edge of its frame.** Nothing crops it
+   today; Einsteigen on a tablet narrows the picture below 16:9 only when the
+   copy is much taller than the picture, and then `cover` trims the sides —
+   the head first. A centred redraw would make that impossible.
+
+## On the way back up the header is a bar — DONE, one decision on the phone
+
+Where: `src/lib/headerReveal.ts` (+ test), `src/lib/useHeaderReveal.ts`,
+`src/shell.css` (*ON THE WAY BACK, A BAR*), `src/AppShell.tsx` (comment)
+
+What I did: Ben, 2026-11-18, Figma *Navigation › Bodyscan · Hören · 393*, frame
+`header` (242:21976): scrolling up mid-page brings back a bar across the top of
+the window — flush with it, --sp-2 off the sides, bottom corners round —
+which becomes the pill again at the top. His answers, asked one by one:
+- **Only after the pill was out of sight.** A short scroll brings the pill back
+  with the page; the bar is a `gone` header coming back.
+- **Handed over in place,** where the pill's own place reaches the window (16
+  on a phone, 24 from 768px) — not at 0, so nothing jumps.
+- **Cross-faded there, not morphed.** First a morph tied to the scroll over
+  the 24px before the handover (the bar narrowing and sliding to the pill);
+  Ben, scrolling up fast: „the transition feel super abrupt" — at speed those
+  24px pass between two frames. Of three paths offered (a longer run, a
+  speed-limited follow, a timed animation) he chose none and asked instead for
+  „a gentle dissolve of the wide bar and a simultaneous fade in" of the pill.
+  So at the handover the bar fades out where it is while the pill fades in at
+  its place, over `--motion-duration-slow` (340ms) on the standard curve —
+  the same at every speed. The bar that fades is an inert, `aria-hidden` copy
+  the shell keeps, because the header is the pill from that frame on.
+- **768–1440: large** — 68 tall, corners 34.
+- **As wide as the page's column plus --sp-2 each side, at every width** —
+  Ben, after a look at 727: „I also want these slight overlaps on desktop!"
+  On a phone that is Figma's 8px off the window; from 768px it was full
+  width, which put it flush with the card at 834 and 200px past it at 1440.
+  The column is `<main>`'s content box (980 on the wide routes, 768 less two
+  gutters on the rest), so the bar is narrower on /diary than in a session.
+- **Over 1440: no bar.** The pill comes back as the pill, as before.
+- **No bar within a screen of the top.** Ben: no bar when the top is reached
+  in under half a second. Nothing knows that at the turn, so of three ways
+  offered (wait 0.5s, guess from the speed, judge by distance) he chose the
+  distance: a turn up within one window height of the top brings no bar. The
+  header stays gone and the pill comes into sight with the page, in its own
+  place. Accepted with it: scrolling up slowly from there there is no header
+  until the top, and a page barely taller than the window never shows the
+  bar. Measured: a turn at 852 on an 852-tall window brings none, at 853 the
+  bar (900 / 901 at 1440); Tab still brings the bar. Over 1440 the pill
+  comes back as before — the rule is the bar's, so it stops where the bar
+  does.
+
+Measured in Chromium (local stack, /exercises with a spacer) at 393, 834, 1440
+and 1728: the held bar at 393 is 8 / 0 / 377 × 56 with corners 0/0/28/28 —
+Figma's numbers. At the handover the copy sits on the bar's box exactly and
+fades 1 → 0 while the pill fades 0 → 1 (0.2 / 0.8 at 150ms, done by 500ms),
+for a slow approach and for a jump straight to 0 alike, in Chromium and
+WebKit. `main` stays at 88 (108) in every state. Tab while gone brings the
+bar. 1728 is unchanged. Against the session card on the listen step, the bar
+overhangs it by 8px each side at 727, 834, 1024, 1280 and 1440; on /diary by
+8px at 834 and 1440.
+
+Decided by me, say if wrong:
+1. **Reduced motion: no fade.** Layer 1 takes `--motion-duration-slow` to
+   1ms there, so the handover is a swap. The pixel-for-pixel movement itself
+   was never gated, so this is a choice, not a rule.
+2. **1440 is a raw number** (in `useHeaderReveal.ts`, once). Layer 1's
+   breakpoints stop at `--bp-xl`, 1280, and a media query cannot read a token
+   anyway. A token gap if a second thing ever needs it.
+3. **The Figma variant `small_full-width` of `nav_panel` is still identical to
+   `small`**; the frame's instance carries every difference as an override.
+   Not touched.
+
+What I need from Ben: **one look on the iPhone, and a call.** Safari 26 paints
+the strip under the status bar from a fixed element across ~90% of the top
+edge, and the held bar is one (377 of 393). Its own box is opaque in the bar's
+colour on purpose — a transparent one is what gave the beige strip on 17.11. —
+so the strip should come up in the bar's colour while the bar is held, and
+show the page while it glides. If the tint is wrong, the only way out is a bar
+narrower than ~90% on a phone, which is a design change.
+
+## The header logo is a link home — DONE, the skip-link cost is two tab stops again
+
+Where: `src/AppShell.tsx` (the pill's `Logo`, `render={<Link …>}`), `src/shell.css`
+(`.musie-header__home`)
+
+What I did: Ben, 2026-11-18: „klicking on musie/the logo brings me back to
+/exercises". The pill's logo — and the bar's, which is the same element — is
+a link through `Logo`'s own `render` composition, named by its wordmark
+("Musie"). It goes to /exercises behind the gate every other way there uses
+(`MenuDrawer`'s `startHref`): no user type yet, or a profile still loading,
+goes to /about-you first. Already on the page it goes to, it scrolls to the
+top, since the router does nothing visible for a link to the current page.
+The global `a` underline is taken back; the focus ring is the global
+`a:focus-visible` one.
+
+Measured in Chromium (local stack): the pill keeps 16 / 16 / 151 × 56; Tab
+reaches the logo first (ring drawn), then the menu button; /diary → logo →
+/exercises; on /exercises at 1900 with the bar held, the logo takes the page
+to 0 and the pill.
+
+Why: Ben's request.
+
+What I need from Ben: nothing to decide, one cost to know. The 2026-09-20
+removal of the skip link (2.4.1) was argued on the header being ONE tab stop
+for a sighted keyboard user to walk past; it is two again, as it was before
+the profile button went. Still small; still a cost, and logged as one.
+
 ## Experiment „Reflexion 01“: four premises of the brief the repo contradicts — DECIDED
 
 Where: `apps/web/experiments/reflexion/` (its own Vite build), served as

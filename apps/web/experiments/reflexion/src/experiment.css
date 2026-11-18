@@ -5,20 +5,44 @@
 }
 
 /* ═══ HEADER ════════════════════════════════════════════════════════════════
-   The app's `.musie-header` with two columns instead of three: logo at the
-   start, the language switch at the end, nothing in the centre.
+   The app's band and pill (shell.css, since main's floating pill of
+   2026-11-17) with two differences: the pill holds only the logo, because
+   there is no menu, and the band spans the width so that the language switch
+   can sit at the far end, as the brief asks.
 
-   THE HEIGHT IS THE APP HEADER'S. There it is the hamburger — an IconButton
-   at `--target-primary` — that sets the row; this header has no control that
-   tall, so the row floor stands in for it. `--chrome-block` is composed from
-   exactly that, and Session's full-height views subtract it.             */
+   NO `useHeaderReveal`. The band stays at the top of the page and scrolls
+   away with it, which is the app's header between two turns. Its "bar on the
+   way back up" is not built here: spikes stay spikes. Being absolute and
+   never fixed, a full-width band is no top bar to Safari (shell.css, ONLY AS
+   WIDE AS THE PILL).
+
+   THE PILL KEEPS THE APP'S HEIGHT without its menu button. There the
+   IconButton (`--target-sm`) sets the phone pill's row, and the band — which
+   `.musie-app` pads its top by, as `--sticky-block` — is that plus the
+   paddings. From 768px shell.css sets the floor itself. With no button at the
+   end, the end padding matches the start padding.                         */
 .musie-reflexion-header {
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-auto-rows: minmax(var(--target-primary), auto);
+  inset-inline-end: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
 }
 
+.musie-reflexion-header > .musie-header__pill {
+  min-block-size: calc(var(--target-sm) + (var(--sp-2) * 2));
+  padding-inline-end: var(--sp-4);
+}
+
+@media (min-width: 768px) {
+  .musie-reflexion-header > .musie-header__pill {
+    min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
+    padding-inline-end: var(--sp-5);
+  }
+}
+
+/* The band takes no pointer (shell.css); the switch takes them back. */
 .musie-reflexion-header > .musie-reflexion-lang {
-  justify-self: end;
+  pointer-events: auto;
 }
 
 .musie-reflexion-modal > .musie-reflexion-lang {

@@ -43,100 +43,301 @@
   font-family: var(--type-body-md-family);
 }
 
-/* ═══ HEADER ════════════════════════════════════════════════════════════════
-   Three columns rather than the prototype's flex row, because the brief puts
-   the Logo in the CENTRE and the prototype does not — it groups the logo
-   beside the hamburger and pushes the profile button out with an auto margin.
-   `1fr auto 1fr` centres the logo against the viewport whatever the buttons'
-   labels do, which a flex row cannot promise.
+/* ═══ HEADER · THE PILL ══════════════════════════════════════════════════════
+   Ben, 2026-11-17 — Figma *Einsteigen · Bodyscan · 17.11.*, the nav panel and
+   its two sizes. Until then this was a full-width bar: a raised fill, a
+   hairline, the menu button at the start and the logo centred on the viewport
+   by a `1fr auto 1fr` grid. Now it is one rounded pill at the inline start —
+   the flat mark and the wordmark, then the menu button — floating in a
+   transparent band, with the page showing all round it.
 
-   THE THIRD COLUMN IS EMPTY SINCE 2026-09-24, when /settings and its profile
-   icon were deleted, and it stays. The two 1fr tracks are what make the middle
-   one land on the viewport's centre line; with one button and `1fr auto` the
-   logo would centre in whatever room is left beside the hamburger and sit
-   visibly off-axis.                                                         */
+   TWO ELEMENTS, BECAUSE THERE ARE TWO JOBS. `.musie-header` is the BAND: it
+   is what moves with the page, it is what the page starts below, and its
+   height is exactly `--sticky-block` (G7 in musy-foundations-amendments.css,
+   which states the same arithmetic).
+   `.musie-header__pill` is what you see and tap.
+
+   THE BAND TAKES NO POINTER. It is transparent, so once the page scrolls
+   under it, its padding round the pill is lying over content the reader can
+   see — and without `pointer-events: none` it would swallow every tap there.
+   The pill takes them back. The same pair `.musie-listen__rail` uses, for the
+   same reason.
+
+   TWO SIZES, AT THE FIRST GUTTER STEP (768px). Figma draws 393 and 834 and
+   nothing between; 768 is where Layer 1's gutter first steps, so the header
+   and the page's margins change together rather than at two widths.
+
+     phone   band --sp-4 above, --sp-4 below · pill --sp-2 / --sp-4 + --sp-2
+             around --target-sm = 56                         band = 88
+     768px+  band --sp-5 above, --sp-4 below · pill 68 tall
+             (--target-primary + --sp-3 twice), --sp-5 / --sp-3 at the
+             inline ends                                     band = 108
+
+   --sp-4 BELOW THE PILL, AT BOTH SIZES — Ben, 2026-11-17, after walking it:
+   „16px padding bottom to the header container with the nav pill". Figma
+   has the band end at the pill; this is the step after Figma.
+
+   NOT THE GUTTER. The band is --sp-4 / --sp-5 at every width, where --gutter
+   grows to 32 and 48 on a desktop: Figma keeps the pill 24px off the window's
+   edge at 1440 and 1728 alike, beside a column centred well away from it.  */
+
 /* ── HOW FAR DOWN A TOP-PLACED TOAST STARTS ───────────────────────────────
    `--z-toast` (500) outranks `--z-sticky` (100) by Layer 1's own design, so a
    `placement="top"` Toast paints OVER this header unless something says
    otherwise. The component publishes this property and falls back to a token;
    only the app knows how tall its own header is, so the app answers.
 
-   MEASURED BY CONSTRUCTION, not by a number somebody read off a screenshot.
-   The header is `align-items: center` with `padding: var(--sp-3) …`, and its
-   tallest child is the menu control at `--target-primary` — the Logo's nav
-   mark is `--icon-size-lg`, well under it. So the height IS
-   `--sp-3 * 2 + --target-primary`, and it stays right the day either token
-   moves. `--space-gap-stack` on top is the toast's own clearance below the
-   hairline. (AppShell's comment says "69px", which is this plus the border.)
+   `--sticky-block` IS the band's height, per breakpoint, so the toast clears
+   the pill wherever it is. `--space-gap-stack` on top is the toast's own
+   clearance.
 
-   IT DOES NOT FOLLOW THE HEADER WHEN IT HIDES. The header slides away on
-   scroll, and a toast that chased it would be a second thing moving on a
+   IT DOES NOT FOLLOW THE HEADER WHEN IT LEAVES. The header goes with the
+   page, and a toast that chased it would be a second thing moving on a
    screen somebody is reading. It holds the position the header occupies when
    it is there, which is the only position that is correct in both states. */
 .musie-app {
-  --musy-toast-inset-block-start:
-    calc(var(--sp-3) * 2 + var(--target-primary) + var(--space-gap-stack));
+  --musy-toast-inset-block-start: calc(var(--sticky-block) + var(--space-gap-stack));
+}
+
+/* ── IT MOVES WITH THE PAGE, AS PART OF THE PAGE · 2026-11-17 ───────────────
+   Ben: „direkt und ohne lag mit scrollen", and then, on his iPhone: the pill
+   must slide out from behind Safari's top bar with the rest of the page, not
+   be cut off at the bar's edge as if by a mask. `headerReveal.ts` has the
+   whole argument; the CSS half is this.
+
+   ORDINARY PAGE CONTENT WHILE IT MOVES. `position: absolute` in the app root,
+   at `--musie-header-at` — a place in the DOCUMENT, which the hook sets at a
+   turn of the scroll. Between turns the browser scrolls it exactly as it
+   scrolls the text beside it, because to the browser it is just more page:
+   no lag, and Safari draws it under the status bar like any other page
+   content. It was `position: sticky` until the phone showed why not: Safari
+   never draws a fixed or sticky box in the area under the clock, so the pill
+   stopped dead at that line while the page slid on beneath the bar.
+
+   FIXED WHEN IT IS NOT MOVING. `data-mode` says which of three it is:
+     free  — absolute, at its place in the page, moving with it;
+     gone  — fixed just above the window (`-reach`: its measured height and
+             the clearance below), out of sight while the reader reads on.
+             Fixed rather than left behind in the page, because a header left
+             behind is still in the tab order, and Tab onto it scrolls the
+             page all the way back to wherever it was left;
+     held  — fixed at the top of the window, which is below the clock, while
+             the reader goes on up.
+
+   THE APP ROOT KEEPS ITS PLACE. Out of the flow, the header no longer pushes
+   `<main>` down by itself, so `.musie-app` pads its top by the band's height —
+   measured by the hook (`--musie-header-block`; a large text size makes it
+   taller), `--sticky-block` until it has. `<main>` starts exactly where it
+   always did.
+
+   ONLY AS WIDE AS THE PILL, so Safari 26 never takes it for a top bar: it
+   paints the strip under the status bar from a fixed or sticky element
+   spanning about 90% of the top edge, and fills a transparent one with the
+   page background — the solid beige strip of the full-width band (Ben's
+   phone, 2026-11-17; OPEN-QUESTIONS.md has the sources). An absolute box is
+   as wide as its content, and so is the fixed one. THE BAR (below) is the
+   one exception, and it is a top bar on purpose.
+
+   THE CLEARANCE is how far beyond its own height a header that is gone
+   waits above the window. --sp-2 by default: the band already ends --sp-4
+   below the pill, so the pill's edge waits 24px up, past where its shadow is
+   anything but arithmetic. Any more, and the reader scrolls up through an
+   empty strip before the pill appears.
+
+   --sp-8 ON AN iPHONE (and iPad), because there the window does not end at
+   the top of the layout: Safari lays the page out from the bottom of the
+   status bar — 59pt on Ben's phone — and draws the page above that, behind
+   the clock. A header placed 24px above the layout's top would already be
+   showing behind the clock at the moment it is placed, and would pop in
+   there instead of gliding. 64px puts the pill and its shadow above the
+   clock band on every current iPhone. `-webkit-touch-callout` is the feature
+   only WebKit on iOS and iPadOS supports, which is exactly the set of
+   browsers that draw under that bar.
+
+   `overflow-anchor: none`, so the browser never anchors the scroll on a box
+   the hook moves. No transition and no `will-change`: nothing here animates. */
+.musie-app {
+  position: relative;
+  padding-block-start: var(--musie-header-block, var(--sticky-block));
+}
+
+/* THE BAND'S NUMBERS ARE NAMED, because the hook reads them back
+   (`useHeaderReveal`): the band is the pill's measured height plus these two
+   paddings, and where the pill's own place reaches the window — the bar's
+   handover — is the top one. Named once, so the CSS and the script cannot
+   disagree about either. */
+.musie-header {
+  --musie-header-pad-top: var(--sp-4);
+  --musie-header-pad-bottom: var(--sp-4);
+  --musie-header-pad-inline: var(--sp-4);
+  --musie-header-clearance: var(--sp-2);
+  position: absolute;
+  inset-block-start: var(--musie-header-at, 0px);
+  inset-inline-start: 0;
+  overflow-anchor: none;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: flex-start;
+  padding-block: var(--musie-header-pad-top) var(--musie-header-pad-bottom);
+  padding-inline: var(--musie-header-pad-inline);
+  pointer-events: none;
+}
+
+.musie-header[data-mode='gone'] {
+  position: fixed;
+  inset-block-start: calc(-1 * (var(--musie-header-block, var(--sticky-block)) + var(--musie-header-clearance)));
+}
+
+.musie-header[data-mode='held'] {
+  position: fixed;
+  inset-block-start: 0;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .musie-header {
+    --musie-header-clearance: var(--sp-8);
+  }
+}
+
+.musie-header__pill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  padding-inline: var(--sp-4) var(--sp-2);
+  background-color: var(--surface-overlay);
+  border-radius: var(--radius-full);
+  /* WizardPanel's shadow, by name — G8. The pill wears the same one in Figma,
+     and a token is how the two stay one shadow. */
+  box-shadow: var(--elevation-panel);
+  pointer-events: auto;
+}
+
+/* THE LOGO IS A LINK HOME (2026-11-18, AppShell). The global `a` underlines
+   and recolours; the mark and the wordmark keep their own colours already, so
+   only the underline needs taking back. The focus ring is the global
+   `a:focus-visible` one, Layer 1's ring. */
+.musie-header__home {
+  text-decoration: none;
+}
+
+@media (min-width: 768px) {
+  .musie-header {
+    --musie-header-pad-top: var(--sp-5);
+    --musie-header-pad-inline: var(--sp-5);
+  }
+
+  /* 68 TALL, NOT 69. Figma's large pill keeps the old bar's 69px, and that
+     number was 44 + 12 + 12 + its hairline. The pill has no hairline; 68 is
+     the same arithmetic without it, and a non-token pixel is not worth the
+     one it would buy. Logged in OPEN-QUESTIONS.md. */
+  .musie-header__pill {
+    min-block-size: calc(var(--target-primary) + (var(--sp-3) * 2));
+    padding-inline: var(--sp-5) var(--sp-3);
+  }
+}
+
+/* ── ON THE WAY BACK, A BAR · Ben, 2026-11-18 ──────────────────────────────
+   Figma *Navigation › Bodyscan · Hören · 393*, frame `header` (242:21976):
+   scrolling up mid-page, the header comes back not as the pill but as a bar
+   — flush with the window's top, only the bottom corners round.
+   `headerReveal.ts` has when; this is what.
+
+   AS WIDE AS THE PAGE'S COLUMN, AND --sp-2 MORE EACH SIDE — Ben, the same
+   day, from a window at 727 („I also want these slight overlaps on
+   desktop!"). On a phone Figma's bar is --sp-2 off the window, and the
+   page's column is a --gutter (--sp-4) in, so the bar overhangs the card it
+   floats over by --sp-2 on each side. That overhang is the rule now, at every
+   width: the bar is `<main>`'s content box widened by --sp-2 each way,
+   centred as `<main>` is. Measured before, the bar was flush with the card at
+   834, 8px over it at 1024 by coincidence, and 200px past it at 1440.
+
+   THE COLUMN IS `<main>`'s, recomputed rather than measured: the window less
+   two gutters, capped at `--musie-main-wide` on the wide routes and at
+   `--bp-md` less two gutters on the rest — the two caps `.musie-main` itself
+   declares below. `:has()` reads which kind of page it is off `<main>`'s own
+   `data-wide`, so there is one source for it.
+
+   THE SAME PILL ELEMENT, STRETCHED. The menu button goes to the far end
+   (`space-between`), the paddings inside stay the pill's, and so does the
+   height — which is why the hook can measure the pill once for both forms.
+
+   THE HEADER IS THE BAR'S OWN BOX. No band round it: no padding, offset from
+   the window's start by `inset-inline-start` and sized by `inline-size`, so
+   the fixed element at the top of the window is exactly the bar. And it is
+   OPAQUE — the pill's own fill, the same corners — because what Safari 26
+   paints under the status bar is sampled from that fixed element: an opaque
+   one gave the old full-width bar its own colour up there, a transparent one
+   gave the beige strip. The pill covers it exactly; nothing of it shows.
+   Whether that tinted strip is what Ben wants is his call on his phone
+   (OPEN-QUESTIONS.md).
+
+   THE CORNER is half the measured height, not `--radius-full`: with the top
+   corners at 0, CSS scales a 999px pair at the bottom to the WHOLE height,
+   56px, where Figma has 28. The fallback is the designed height, until the
+   hook has measured.
+
+   IT BECOMES THE PILL BY A CROSS-FADE — Ben, the same day. At the handover
+   (the pill's own place reaching the top of the window) the bar fades out
+   where it is while the pill fades in at its place. Nothing moves or changes
+   shape. It was a morph first, tied to the scroll over the --sp-5 before the
+   handover — the bar narrowing to the pill and sliding to its place — and
+   scrolled up fast, that --sp-5 went by between two frames: „super abrupt",
+   and at 1440 a 996px bar became a 166px pill 200px to the left in one. A
+   fade on a clock is the same at every speed.
+
+   `--motion-duration-slow` and `--motion-ease-standard`: gentle, Ben's word,
+   and the standard curve because nothing is entering or leaving the screen —
+   one thing is becoming another. The hook reads both back for the Web
+   Animations it runs, and under reduced motion Layer 1 takes the duration to
+   1ms, which makes it the swap it should be.
+
+   THE GHOST is the bar that fades out — a copy AppShell keeps, `aria-hidden`
+   and `inert`, held at the bar's place by its own `data-mode="held"` and
+   `data-form="bar"`, so the rules below draw it exactly as they draw the
+   header. Hidden; the animation alone makes it visible, for as long as it
+   runs. */
+.musie-app {
+  --musie-column: calc(var(--bp-md) - (var(--gutter) * 2));
+}
+
+.musie-app:has(> .musie-main[data-wide='1']) {
+  --musie-column: var(--musie-main-wide);
 }
 
 .musie-header {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: var(--z-sticky);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: var(--space-gap-related);
-  padding: var(--sp-3) var(--gutter);
-  background-color: var(--surface-raised);
-  border-block-end: var(--border-width-hairline) var(--border-style-solid) var(--border-subtle);
-  /* The slide. `--motion-enter` is the COMING BACK — L1's named motion for
-     something arriving, which decelerates — and the going away is
-     `--motion-exit` on the modifier below, which accelerates and is quicker.
-     They are asymmetric in exactly the way the thresholds in headerReveal.ts
-     are, and for the same reason: chrome should leave discreetly and return
-     without being waited for.
-
-     `will-change` because this is the one transform in the shell that runs
-     during a scroll. Promoting the header once, up front, is cheaper than
-     promoting it at the start of every slide — and a mid-scroll promotion is
-     visible on a phone as exactly the stutter this pattern exists to avoid. */
-  transition: transform var(--motion-enter);
-  will-change: transform;
+  --musie-header-bar-overhang: var(--sp-2);
+  --musie-header-dissolve: var(--motion-duration-slow);
+  --musie-header-dissolve-ease: var(--motion-ease-standard);
 }
 
-/* ── HIDDEN IS A TRANSFORM, NOT A LAYOUT CHANGE ────────────────────────────
-   `translateY(-100%)` — one of the geometric identities L14 allows, and the
-   only honest way to say "its own height, whatever that is today".
-
-   IT MUST NOT BE `display: none`, and not `block-size: 0` either. The header
-   is sticky, so it takes its space at the TOP OF THE DOCUMENT and nowhere
-   else; taking it out of flow would shorten the page by 69px under a reader
-   who is halfway down it, and every `--view-block` on screen would be wrong
-   for a frame. Transformed, the header keeps its place in the document
-   exactly and only travels out of the window — so `--chrome-block`,
-   `--sticky-block` and every view sized from them stay true while it is gone.
-
-   Under `prefers-reduced-motion` Layer 1 collapses the durations to 1ms, so
-   this becomes a cut rather than a slide. That is the right answer rather
-   than a degraded one: the complaint against moving chrome is the movement,
-   and a header that is simply there or not is still one less thing taking up
-   a small screen.                                                           */
-.musie-header[data-hidden='true'] {
-  transform: translateY(-100%);
-  transition: transform var(--motion-exit);
+.musie-header[data-form='bar'] {
+  --musie-bar-corner: calc(var(--musie-pill-block, calc(var(--target-sm) + (var(--sp-2) * 2))) / 2);
+  /* Percentages here are the window's (or the app root's, which is as wide):
+     a custom property keeps them unresolved until a box uses them. */
+  --musie-bar-inline: calc(
+    min(100% - (var(--gutter) * 2), var(--musie-column))
+    + (var(--musie-header-bar-overhang) * 2)
+  );
+  inset-inline-start: calc((100% - var(--musie-bar-inline)) / 2);
+  inline-size: var(--musie-bar-inline);
+  padding: 0;
+  background-color: var(--surface-overlay);
+  border-radius: 0 0 var(--musie-bar-corner) var(--musie-bar-corner);
 }
 
-.musie-header > :first-child {
-  justify-self: start;
+.musie-header[data-form='bar'] .musie-header__pill {
+  flex: 1 1 auto;
+  justify-content: space-between;
+  border-radius: inherit;
 }
 
-/* `:nth-child(3)` rather than `:last-child`, which the logo now is. On an
-   `auto` track the two resolve identically — the grid area is exactly the
-   item's width, so `end` has nothing to move it within — and a rule that is
-   silently inert is a rule that misleads whoever reads it next. Named by
-   COLUMN, so it applies to a third child if the header ever takes one again. */
-.musie-header > :nth-child(3) {
-  justify-self: end;
+.musie-header--ghost {
+  visibility: hidden;
+}
+
+.musie-header--ghost .musie-header__pill {
+  pointer-events: none;
 }
 
 /* ═══ MAIN ══════════════════════════════════════════════════════════════════
@@ -148,7 +349,14 @@
   inline-size: 100%;
   max-inline-size: var(--bp-md);
   margin-inline: auto;
-  padding: var(--sp-5) var(--gutter) var(--sp-7);
+  /* --sp-4 below the header band on a phone, --sp-5 from 768px — Figma's
+     numbers, 2026-11-17 (it was --sp-5 everywhere). `--chrome-block` states
+     the same pair (G7), so a view sized from it stays exact. */
+  padding: var(--sp-4) var(--gutter) var(--sp-7);
+}
+
+@media (min-width: 768px) {
+  .musie-main { padding-block-start: var(--sp-5); }
 }
 
 .musie-main[data-wide='1'] {
@@ -238,8 +446,8 @@
    IT ALSO OWES THE GUTTER, and the first version forgot it. `.musie-stage`
    never carried one because it has always rendered inside `.musie-main`, which
    pays it — so standing the stage on its own silently took it away and the box
-   met both screen edges. `--gutter` is the same token `.musie-main` and
-   `.musie-header` use, so the gate insets by exactly what every other screen
+   met both screen edges. `--gutter` is the same token `.musie-main` uses
+   (and `.musie-header` used, until it became a pill), so the gate insets by exactly what every other screen
    does; hardcoding a second value here is how two screens stop lining up.
 
    ON THE MODIFIER AND NOT ON `.musie-stage`, because the plain stage IS inside
@@ -1140,6 +1348,14 @@
   gap: var(--space-gap-stack);
 }
 
+/* THE DRAWER'S HEADER IS ONE LINE, so its logo and its close button centre on
+   each other — as the same logo and the menu button do in the header pill the
+   drawer opens from. `.musie-sheet__header` tops-aligns for every other sheet,
+   whose title can wrap to two lines beside the X. 2026-11-17, with the pill. */
+.musie-drawer .musie-sheet__header {
+  align-items: center;
+}
+
 /* ═══ THE PAGE LIST ═════════════════════════════════════════════════════════
    L3: a run of repeated destinations is a list, not a stack of divs.
 
@@ -1375,9 +1591,9 @@
    one week rather than three.
 
    ── THE COLUMN HEIGHT IS ARITHMETIC OVER ONE TOKEN ───────────────────────
-   A mark is square and capped at `--target-primary`, which is not a picked
-   size: it is the set's own touch target. From 393px up a column is wider
-   than that and the cap holds it steady; below 393px the mark fills its
+   A mark is 16:9 and its width is capped at `--target-primary`, which is not
+   a picked size: it is the set's own touch target. From 393px up a column is
+   wider than that and the cap holds it steady; below 393px the mark fills its
    column and is smaller, which is argued at the rule itself.
 
    Every column in every week is the SAME height, or the graph resizes as the
@@ -1547,9 +1763,17 @@
      Below 393px the marks are narrower than --target-primary (see the mark
      rule), so this reserves slightly MORE than the stack needs. Generous, not
      wrong: the columns stay level with each other and with the axis, which is
-     what the reservation is for. */
+     what the reservation is for.
+
+     TWO KINDS OF ROW SINCE THE MARKS WENT 16:9 (2026-11-18). A mark is now
+     9/16 of --target-primary tall; the plus on today is an IconButton and
+     stays a full --target-primary. `rows` always counts that plus as its last
+     row, so the reservation is every other row at the mark's height and one
+     at the button's. Reserving --target-primary for all of them, as before,
+     drew almost twice the stack's height on a busy day. */
   min-block-size: calc(
-    (var(--target-primary) + var(--space-gap-stack)) * var(--musie-graph-rows, 2)
+    (var(--target-primary) * 9 / 16 + var(--space-gap-stack)) * (var(--musie-graph-rows, 2) - 1)
+    + var(--target-primary)
   );
 }
 
@@ -1564,9 +1788,24 @@
 }
 
 /* ── ONE SESSION ──────────────────────────────────────────────────────────
-   A square the size of a touch target, with the exercise's picture in it. The
-   radius is --radius-card rather than --radius-full: these are pictures of
-   the exercise cards, and a circle would crop the artwork to its centre. */
+   The exercise's picture, 16:9 and as wide as a touch target — Ben,
+   2026-11-18: "Im Diary statt 1:1 in 16:9 anzeigen", with every exercise
+   artwork redrawn at 16:9 the same day. It was a square, cropped from square
+   sources; a square crop of the new pictures loses their sides.
+
+   THE TAP TARGET IS SHORTER, AND THAT IS THE PRICE. Seven columns share a
+   phone, so the width is fixed at --target-primary (44px at 393) and 16:9
+   makes the mark 44 × 25 — 34 × 19 at 320px. 2.5.8 holds at both: at 393
+   both sides clear 24px; at 320 the height does not, and the spacing
+   exception carries it — 16px (--space-gap-stack) between marks and 8px
+   (--sp-2) between columns keep every 24px circle clear of its
+   neighbours. Keeping 44px of
+   height instead would need 78px of width, which a seven-day week on a phone
+   does not have.
+
+   The radius is --radius-sm, not --radius-card (12px) any more: on a 25px
+   tile 12px is nearly a capsule. --radius-sm is what every other 16:9
+   thumbnail of this artwork wears (RadioCards, Einsteigen). */
 .musie-graph__mark {
   display: block;
   /* IT FILLS ITS COLUMN, UP TO THE TOUCH TARGET — it does not impose its own
@@ -1578,14 +1817,13 @@
      a column is wider than --target-primary, so the cap is what holds the
      marks at a consistent size instead of stretching them across a desktop.
 
-     `aspect-ratio` rather than a matching `block-size`, so the square
-     survives the shrink: the artwork is square (every source is centred and
-     cropped, per 20260924140000) and a mark that squashed would crop it
-     twice. */
+     `aspect-ratio` rather than a matching `block-size`, so the shape
+     survives the shrink: the artwork is 16:9 and a mark that squashed would
+     crop it. */
   inline-size: 100%;
   max-inline-size: var(--target-primary);
-  aspect-ratio: 1;
-  border-radius: var(--radius-card);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
   border: var(--border-width-regular) var(--border-style-solid) var(--border-subtle);
   background-color: var(--surface-sunken);
   overflow: hidden;
@@ -1671,8 +1909,8 @@
 .musie-graph__blank {
   inline-size: 100%;
   max-inline-size: var(--target-primary);
-  aspect-ratio: 1;
-  border-radius: var(--radius-card);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
   background-image: linear-gradient(to top, var(--surface-sunken), transparent);
 }
 
@@ -1857,20 +2095,14 @@
   position: relative;
 }
 
-/* THE ONE THING THE SYSTEM CANNOT KNOW: how much of the window this app's own
-   chrome is sitting on top of. `.musy-snap-view` scrolls to the top of the
-   viewport, and the sticky header would be over the first `--sticky-block` of
-   every view it landed on. Declared against the attribute `useScrollSnap`
-   sets, so it exists only while something is snapping.
-
-   `--sticky-block` is the same subtraction `--view-block-scrolled` already
-   makes for these views' heights — the header alone, without `<main>`'s
-   insets, because by the time a view is scrolled TO the insets are behind
-   it. The two numbers have to be the same one, or a view is inset by an
-   amount it was not sized for.                                             */
-html[data-musy-scroll-snap] {
-  --musy-snap-inset: var(--sticky-block);
-}
+/* NO SNAP INSET — views land at the top of the window. `.musy-snap-view`
+   scrolls to the top of the viewport, and until 2026-11-17 this declared
+   `--musy-snap-inset: var(--sticky-block)` so each view landed below a header
+   that was pinned over this step. The header moves with the page here now, as
+   everywhere: going down it has left by the time a view snaps, so the view
+   takes the whole window; coming back up it floats over the view's top, as it
+   floats over every other page. The system's default inset, 0, is the right
+   one, and the variable is simply not declared.                            */
 
 /* ── Scroll 1 · the stage ──────────────────────────────────────────────────
    A FULL VIEW, like the two below it, and it has to be: at its natural height
@@ -2050,16 +2282,14 @@ html[data-musy-scroll-snap] {
 .musie-listen__view--warn,
 .musie-listen__view--detail {
   box-sizing: border-box;
-  /* MEASURED, AND MINUS THE CHROME. `100svh` sized these to the whole window
-     and then the sticky header sat on top of the first 141px of them, so the
-     Störer's sentence started under the header and the details view's player
-     was pushed below the fold. `--view-block` is the window as measured at
-     runtime, less what the shell actually takes — both from the design
-     system, both per breakpoint. `--view-block-scrolled` rather than
-     `--view-block`: these two are SCROLLED TO, and by then only the sticky
-     header is over them — subtracting `<main>`'s insets as well would leave
-     each one 72px short of the window. */
-  min-block-size: var(--view-block-scrolled);
+  /* THE WHOLE WINDOW, MEASURED. These two are SCROLLED TO, and since
+     2026-11-17 the header has left with the page by the time they arrive, so
+     nothing of the shell is over them: `--viewport-block`, the window as
+     measured at runtime (not `100svh`, which is the smallest the window ever
+     gets). Until then they were `--view-block-scrolled`, the window less a
+     header pinned over this step — and with the header gone that left a
+     header's worth of the previous view showing above them. */
+  min-block-size: var(--viewport-block);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2594,8 +2824,9 @@ html[data-musy-scroll-snap] {
      follow a two- or three-line headline (the frame's 77 × 55 at 393px);
      the ratio is what it brings to the row on its own, so a one-line
      headline on a wider phone gets a picture rather than a strip — without
-     it the file's own square shape set the row, 78px tall under 28px of
-     headline. `cover` crops whatever the cell asks for. */
+     it the file's own shape set the row (square, until the 16:9 artwork of
+     2026-11-18), 78px tall under 28px of headline. `cover` crops whatever the
+     cell asks for. */
   align-self: stretch;
   inline-size: 100%;
   aspect-ratio: 16 / 9;
@@ -2633,7 +2864,7 @@ html[data-musy-scroll-snap] {
    from `useIntroImageFit` (the rule and the reason are in `lib/introImage.ts`:
    Chromium does not re-size the row after the second column pass, so a pure
    CSS version spills the copy). Until it arrives, and without script, the
-   column is the third it was. `contain: size` keeps the picture's own square
+   column is the third it was. `contain: size` keeps the picture's own height
    out of the row's height, so the row is the copy's, and `block-size: 100%`
    then fills it.
 

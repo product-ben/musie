@@ -7,13 +7,13 @@
 import * as React from 'react';
 import { Menu } from 'lucide-react';
 import { IconButton, Logo, MusyTooltipProvider } from '@musie/design-system';
-import { useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
+import { Link, useLocation, useMatches, useNavigate, useOutlet } from 'react-router';
 import { BRAND_NAME } from './brand';
 import { useLocale, useT } from './i18n/localeContext';
 import { useAuth } from './lib/authContext';
+import { useProfile } from './lib/profileContext';
 import { PagePathContext } from './lib/shellContext';
-import { HeaderPinContext, useHeaderReveal } from './lib/useHeaderReveal';
-import type { PinHeader } from './lib/useHeaderReveal';
+import { useHeaderReveal } from './lib/useHeaderReveal';
 import type { RouteHandle } from './routeHandle';
 
 const MAIN_ID = 'main';
@@ -134,32 +134,46 @@ export function AppShell() {
   /**
    * THE HEADER GETS OUT OF THE WAY WHILE YOU READ.
    *
-   * On a phone the sticky header costs 69px of every screen for as long as
-   * you are on it, and the diary, the exercise library and the reflect step
-   * are all longer than a window. So it slides out while the reader goes down
-   * the page and comes back as soon as they come up. `useHeaderReveal` holds
-   * the listener and `headerReveal.ts` every rule it applies; what belongs
-   * here is only the three things the SHELL knows.
+   * On a phone the header costs 88px of every screen for as long as you are
+   * on it (`--sticky-block`), and the diary, the exercise library and the
+   * reflect step are all longer than a window. So it leaves with the page
+   * while the reader goes down, one pixel for one pixel, and comes back with
+   * it as soon as they come up (Ben, 2026-11-17: „direkt und ohne lag").
+   * `useHeaderReveal` holds the listener and `headerReveal.ts` every rule it
+   * applies; what belongs here is only the two things the SHELL knows.
    *
    * WHICH PAGE COUNTS AS ARRIVING: `pagePath`, not the location — it is
    * already the path of the page underneath an overlay, so opening the drawer
    * over a scrolled page is not an arrival and closing it changes nothing.
    *
-   * WHO MAY PIN IT: any screen that does its own scrolling, through
-   * `usePinnedHeader`. Counted rather than set, because two screens overlap
-   * for a frame during a route change; see the hook.
+   * NO SCREEN PINS IT any more. The listen step did, until its views stopped
+   * being sized around the header (2026-11-17); with nothing left to call it,
+   * the pin went too.
    *
-   * WHERE THE ANSWER GOES: one attribute. The slide itself is a transform in
-   * shell.css, so nothing here reflows and no geometry moves — the header is
-   * drawn in the same place either way and only travels.
+   * WHERE THE ANSWER GOES: nowhere in React. The browser moves the header —
+   * it is sticky, in the flow of the page — and the hook only places it, by
+   * writing to the element directly at a turn. No scroll renders the shell.
    */
   const headerRef = React.useRef<HTMLElement>(null);
-  const [pins, setPins] = React.useState(0);
-  const pinHeader = React.useCallback<PinHeader>(() => {
-    setPins((count) => count + 1);
-    return () => setPins((count) => count - 1);
-  }, []);
-  const headerHidden = useHeaderReveal(headerRef, pins > 0, pagePath ?? '');
+  const ghostRef = React.useRef<HTMLDivElement>(null);
+  useHeaderReveal(headerRef, ghostRef, pagePath ?? '');
+
+  /**
+   * THE LOGO GOES HOME · Ben, 2026-11-18: „klicking on musie/the logo brings
+   * me back to /exercises". Home is /exercises behind the same gate every
+   * other way there uses (MenuDrawer's `startHref`): no user type yet means
+   * /about-you, which asks it first, and so does a profile still loading —
+   * asking again is recoverable, skipping the question is not.
+   *
+   * ALREADY THERE, it goes to the top. The router does nothing visible for a
+   * link to the current page, and the arrival scroll above keys on the path,
+   * so without this a logo tapped half way down the library would seem dead.
+   */
+  const { profile } = useProfile();
+  const homeHref = profile?.user_type_id ? '/exercises' : '/about-you';
+  const goHome = () => {
+    if (location.pathname === homeHref) window.scrollTo({ top: 0, behavior: 'auto' });
+  };
 
   return (
     /* Mounted once, so a tooltip's open delay is not re-run per control. It was
@@ -167,29 +181,69 @@ export function AppShell() {
        provider still has to sit above everything that renders an IconButton. */
     <MusyTooltipProvider>
       <PagePathContext.Provider value={pagePath}>
-      <HeaderPinContext.Provider value={pinHeader}>
       <div className="musie-app">
-        <header
-          ref={headerRef}
-          className="musie-header"
-          data-hidden={headerHidden ? 'true' : 'false'}
+        {/* THE GHOST · 2026-11-18. On the way back up the header is a bar,
+            and where it becomes the pill again the bar fades out while the
+            pill fades in (`useHeaderReveal`). The header is the pill from
+            that frame on, so the bar that fades is this: a copy of it, held
+            at the bar's place by its own two attributes, hidden until the
+            hook fades it. Decoration only — `aria-hidden` and `inert`, so
+            its button is in no tab order and its name in no tree; the label
+            is passed all the same, because nothing user-visible is left to
+            a default (CLAUDE.md rule 7). Before the header, so the pill
+            fades in above it. */}
+        <div
+          ref={ghostRef}
+          className="musie-header musie-header--ghost"
+          data-mode="held"
+          data-form="bar"
+          aria-hidden="true"
+          inert
         >
-          <IconButton
-            glyph={Menu}
-            label={t('shell.menuLabel')}
-            variant="ghost"
-            size="primary"
-            aria-expanded={location.pathname === MENU_PATH}
-            onClick={() => navigate(MENU_PATH)}
-          />
-          {/* AND NOTHING AFTER IT. The profile button went with /settings on
-              2026-09-24: the preferences it opened are in the drawer now, so a
-              second icon would open the same overlay the first one does. The
-              header's third grid column is left in place and empty — `1fr auto
-              1fr` is what centres the logo against the VIEWPORT, and dropping
-              the column would centre it against the space left over beside the
-              hamburger instead. See .musie-header. */}
-          <Logo size="nav" showWordmark alt={BRAND_NAME} />
+          <div className="musie-header__pill">
+            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
+            <IconButton glyph={Menu} label={t('shell.menuLabel')} variant="ghost" size="sm" />
+          </div>
+        </div>
+
+        {/* `--musie-header-at`, `data-mode` and `data-form` are written by
+            `useHeaderReveal`, straight onto the element and only when they
+            change: rendering them here would re-render the shell on every
+            turn and fight the hook over who owns them. */}
+        <header ref={headerRef} className="musie-header">
+          {/* THE PILL · Ben, 2026-11-17 (Figma *Einsteigen · Bodyscan ·
+              17.11.*). The full-width bar with its centred logo became one
+              rounded pill at the inline start: the flat mark and the wordmark,
+              then the menu button. The header element is the transparent band
+              it floats in — the band is what the page starts below, and the
+              pill is the only part of it that takes a pointer (shell.css).
+
+              Logo before the button, and that is the reading order too. The
+              logo is a link home since 2026-11-18, so the header has two tab
+              stops again: the logo, then the menu button. `render` is the
+              Logo's own composition point for exactly this (Logo.tsx: wrapping
+              it in an anchor is the app's job); its name is the wordmark.
+
+              The profile button went with /settings on 2026-09-24, and nothing
+              has taken its place: the drawer holds what it opened. */}
+          <div className="musie-header__pill">
+            <Logo
+              size="nav"
+              variant="flat"
+              showWordmark
+              alt={BRAND_NAME}
+              className="musie-header__home"
+              render={<Link to={homeHref} onClick={goHome} />}
+            />
+            <IconButton
+              glyph={Menu}
+              label={t('shell.menuLabel')}
+              variant="ghost"
+              size="sm"
+              aria-expanded={location.pathname === MENU_PATH}
+              onClick={() => navigate(MENU_PATH)}
+            />
+          </div>
         </header>
 
         {/* NO SKIP LINK, and it is a removal rather than an omission — Ben,
@@ -201,9 +255,10 @@ export function AppShell() {
             an id, so screen-reader users reach it by landmark navigation,
             which is how most of them actually move. What is lost is the
             KEYBOARD-ONLY, SIGHTED user, who has no landmark list — on this app
-            that is one tab stop of header to walk past (two, until the profile
-            button went with /settings), which is why the cost is small. It is a
-            cost, though, and it is logged as one.
+            that is two tab stops of header to walk past (the logo, a link home
+            since 2026-11-18, and the menu button; it was one from the profile
+            button going with /settings until then), which is why the cost is
+            small. It is a cost, though, and it is logged as one.
 
             `tabIndex={-1}` went with the link: it existed so the skip target
             could take programmatic focus, and nothing focuses main any more. */}
@@ -223,7 +278,6 @@ export function AppShell() {
             rather than two that can disagree. */}
         {isOverlay && contentReady ? outlet : null}
       </div>
-      </HeaderPinContext.Provider>
       </PagePathContext.Provider>
     </MusyTooltipProvider>
   );

@@ -171,9 +171,13 @@ export function NavDrawer(
         >
           {/* Logo, then the close control pushed to the inline end. The header
               uses space-between rather than a spacer element — same result,
-              one fewer node, and direction-agnostic either way. */}
+              one fewer node, and direction-agnostic either way.
+
+              The FLAT mark, as in the header pill since 2026-11-17: the drawer
+              opens from the pill's button, and the logo it shows should be the
+              one the reader just saw there. */}
           <div className="musie-sheet__header">
-            <Logo size="nav" showWordmark alt={BRAND_NAME} />
+            <Logo size="nav" variant="flat" showWordmark alt={BRAND_NAME} />
             <Dialog.Close
               render={
                 <IconButton

@@ -160,6 +160,11 @@ here rather than in a `calc` inside a screen.
 | `--sticky-block` | `calc(var(--target-primary) + (var(--sp-3) * 2) + var(--border-width-hairline))` |
 | `--view-block-scrolled` | `calc(var(--viewport-block) - var(--sticky-block))` |
 
+**Re-valued by amendment G7 on 2026-11-17** (`musy-foundations-amendments.css`),
+when the header became a floating pill: `--sticky-block` and `--chrome-block`
+are 88 and 152px on a phone and 108 and 180px from 768px up. The table above is
+Layer 1's own, locked line; the amendment table below has the values in force.
+
 There are two subtractions because there are two situations. A view you LAND
 on has the sticky header and `<main>`'s insets above it; a view you SCROLL TO
 has only the sticky header over it by the time you are there. Sizing the
@@ -177,6 +182,9 @@ same for anyone reading the JSON: the tokens are invisible.
 | Token | Declared | Gap |
 |---|---|---|
 | `--border-style-dashed` | `dashed` | G2 |
+| `--chrome-block` | `calc(var(--sticky-block) + var(--sp-4) + var(--sp-7))`; from 768px `calc(var(--sticky-block) + var(--sp-5) + var(--sp-7))` | G7 |
+| `--elevation-panel` | four `--elevation-panel-ink` layers + `inset 0 0 0 1px var(--elevation-ring)` | G8 |
+| `--elevation-panel-ink` | `light-dark(rgb(167 168 155 / 0.057), rgb(0 0 0 / 0.205))` | G8 |
 | `--border-style-solid` | `solid` | G2 |
 | `--icon-stroke-sm` | `1.5px` | G1 |
 | `--instrument-answer` | `var(--green-7)` | G5 |
@@ -207,6 +215,7 @@ same for anyone reading the JSON: the tokens are invisible.
 | `--instrument-tap-start` | `0.8` | G5 |
 | `--measure-figure` | `416px` | G4 |
 | `--on-scrim` | `light-dark(var(--sand-1), var(--sand-12))` | G3 |
+| `--sticky-block` | `calc(var(--sp-4) + var(--target-sm) + (var(--sp-2) * 2) + var(--sp-4))`; from 768px `calc(var(--sp-5) + var(--target-primary) + (var(--sp-3) * 2) + var(--sp-4))` | G7 |
 | `--target-sm` | `40px` | G6 |
 
 ## What is NOT drift

@@ -204,10 +204,84 @@
      block in ladder order, `target-sm` joins the JSON's `dimension` group
      beside `target-min`, and its row leaves TOKEN-DRIFT.md.               */
   --target-sm: 40px;
+
+  /* ── G7 · the header is a floating pill now ─────────────────────────────
+     Ben, 2026-11-17 — Figma *Einsteigen · Bodyscan · 17.11.*. NOT A NEW
+     TOKEN: a new VALUE for two Layer 1 already has, and it is staged here
+     because Layer 1 is locked and these two are the app shell's measurements
+     — musy-foundations.css says the day the header changes, it changes there
+     and not in a calc inside a screen. This is that day; this is the nearest
+     place the lock allows.
+
+     The full-width bar (a 44px control, --sp-3 above and below, a hairline:
+     69px) became a pill in a transparent band, and the band is what the page
+     starts below. Two sizes, switched where the gutter first steps (768px):
+
+       phone      --sp-4 above + a 56px pill (--target-sm in --sp-2)
+                  + --sp-4 below                                       = 88
+       768px+     --sp-5 above + a 68px pill (--target-primary tall
+                  in --sp-3, which is the old bar less its hairline)
+                  + --sp-4 below                                       = 108
+
+     The --sp-4 below the pill is Ben's, the same day, after walking the
+     first build (72 / 92): „16px padding bottom to the header container".
+
+     Figma's large pill is 69 — the old bar's height, hairline included. The
+     pill has no hairline, and the one pixel it would stand for is not worth a
+     non-token number; logged in apps/web/OPEN-QUESTIONS.md.
+
+     <main> starts --sp-4 below the band on a phone, --sp-5 from 768px —
+     Figma's numbers again, and the first of them is a change: it was --sp-5
+     everywhere. Its bottom inset is untouched.
+
+     `.musie-header` in apps/web/src/shell.css draws exactly this arithmetic;
+     the two must move together, as they always had to.
+
+     Absorbing it: these replace the --chrome-block / --sticky-block lines
+     in musy-foundations.css (base block and the 768px query; the 1024 and
+     1280 queries inherit), and their TOKEN-DRIFT.md rows take the new calc. */
+  --sticky-block: calc(var(--sp-4) + var(--target-sm) + (var(--sp-2) * 2) + var(--sp-4));
+  --chrome-block: calc(var(--sticky-block) + var(--sp-4) + var(--sp-7));
+
+  /* ── G8 · the panel shadow ──────────────────────────────────────────────
+     Belongs beside --elevation-1..3 in Layer 1 §Elevation.
+     WizardPanel's shadow (Ben's, from the panel-shadows playground,
+     2026-11-16) — four layers, each about twice the last, the light to the
+     upper left — lifted out of musy-components.css on 2026-11-17 because the
+     nav pill wears it too, and a four-layer shadow in two places is two
+     shadows the day one is tuned. The Content Box wears it as well since the
+     same day (`--musy-box-shadow`, §9), and the WizardPanel through it. The component's own comment has the rest of
+     the argument: the ink is --sand-8's light value at 5.7% and black at
+     20.5% in the dark, written as rgb because a shadow needs its alpha.
+
+     The ring is --elevation-ring, as for --elevation-1..3, so it steps up
+     under prefers-contrast: more with theirs. Forced colours drop it below,
+     with theirs. */
+  --elevation-panel-ink: light-dark(rgb(167 168 155 / 0.057), rgb(0 0 0 / 0.205));
+  --elevation-panel:
+    0.5px 0.7px 2.5px -0.2px var(--elevation-panel-ink),
+    1.5px 2.1px 6.4px -0.7px var(--elevation-panel-ink),
+    3.6px 4.9px 14.3px -1.6px var(--elevation-panel-ink),
+    7.7px 10.5px 30px -3.5px var(--elevation-panel-ink),
+    inset 0 0 0 1px var(--elevation-ring);
+}
+
+/* G7 from the first gutter step up. Declared after the base block above, so
+   it wins over it at this width; and after Layer 1's own 768 / 1024 / 1280
+   queries, so it wins over those too — which is why one query is enough. */
+@media (min-width: 768px) {
+  :root, [data-theme] {
+    --sticky-block: calc(var(--sp-5) + var(--target-primary) + (var(--sp-3) * 2) + var(--sp-4));
+    --chrome-block: calc(var(--sticky-block) + var(--sp-5) + var(--sp-7));
+  }
 }
 
 @media (prefers-contrast: more) {
   :root, [data-theme] { --instrument-shadow-level: 0; }
+}
+
+@media (forced-colors: active) {
+  :root, [data-theme] { --elevation-panel: none; }
 }
 
 /* prefers-contrast: more — Layer 1 already steps --border-subtle up to

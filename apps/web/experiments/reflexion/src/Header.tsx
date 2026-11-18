@@ -2,10 +2,10 @@
  * The experiment's header. Brief: "Kein Menü links. Musie-Logo ganz links.
  * Ganz rechts oben ein kleiner Segmented Control (Größe S) mit DE | EN."
  *
- * The app's `.musie-header` (sticky, raised surface, hairline) with the
- * hamburger gone: logo at the start, nothing in the centre, the language
- * switch at the end. Its height is held to the app header's — Session's
- * `--chrome-block` arithmetic assumes it — in experiment.css.
+ * The app's band and pill (AppShell.tsx, shell.css) with the menu button
+ * gone: the flat logo in the pill at the start, the language switch at the
+ * end of the band. Not a link home: this page has no home to go to. The pill
+ * keeps the app's height without the button, in experiment.css.
  *
  * Body scan exists in German only: EN is disabled, and the one English line
  * says why. That line is English on a page pinned to `de`, so it carries its
@@ -58,7 +58,9 @@ export function Header() {
   return (
     <>
       <header className="musie-header musie-reflexion-header">
-        <Logo size="nav" showWordmark alt={copy.logoAlt} />
+        <div className="musie-header__pill">
+          <Logo size="nav" variant="flat" showWordmark alt={copy.logoAlt} />
+        </div>
         <LanguageSwitch name="reflexion-language" />
       </header>
       {GERMAN_ONLY && (

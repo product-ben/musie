@@ -1,152 +1,227 @@
 /**
- * The header's hide-on-the-way-down, show-on-the-way-up behaviour — the
- * wiring half. `headerReveal.ts` holds every decision it makes and says why;
- * what is left here is one scroll listener, one measurement, and the one
- * screen that is allowed to switch the whole thing off.
+ * The header moving with the page — the wiring half. `headerReveal.ts` holds
+ * every decision and says why; what is left here is one scroll listener, one
+ * measurement and the style writes.
  *
- * ── ONE LISTENER, ONE FRAME, ONE STATE UPDATE ─────────────────────────────
- * `scroll` fires far faster than the screen refreshes, so the reading is
- * coalesced into a frame — the same shape `useViewportFill` uses in the design
- * system, and for the same reason: every reading here ends in a React state
- * update, and one per event would be one render per pixel.
+ * ── NOTHING HERE MOVES THE HEADER ─────────────────────────────────────────
+ * The browser does, because while it moves the header is ordinary page
+ * content — `position: absolute` at a place in the document (shell.css). This
+ * hook only PLACES it: `--musie-header-at` (that place) and `data-mode` —
+ * `free` in the page, `gone` fixed above the window, `held` fixed at its top.
+ * They change only at a turn of direction or as a leaving header passes out
+ * of sight, and are written only when they differ from what is already
+ * there, so a long scroll one way writes once at most — and no React state is
+ * touched, ever, so a scroll never renders anything either.
+ *
+ * ── AND SHAPES IT · 2026-11-18 ────────────────────────────────────────────
+ * `data-form` — `pill` or `bar` — changes where the mode does: out of sight,
+ * or at the handover. The handover is the one change the reader watches, so
+ * it is the one thing here that runs on a clock: the bar fades out where it
+ * is while the pill fades in at its place. The bar that fades is the GHOST —
+ * a copy of it the shell keeps, inert and hidden, at the bar's place — because
+ * the header itself is the pill from that frame on and cannot be both. Both
+ * fades are Web Animations, so one started over a running one simply replaces
+ * it, and with nothing to clean up: the ghost's own style is hidden, and the
+ * animation only holds it visible while it runs. Their duration and easing
+ * are shell.css's (`--musie-header-dissolve`), read back like the band's
+ * numbers — so reduced motion, which takes Layer 1's durations to 1ms, makes
+ * it a swap without a line here.
+ *
+ * NO FRAME COALESCING, on purpose. Browsers dispatch `scroll` once per frame
+ * now, in the same update that paints it, and a placement deferred to the
+ * next animation frame is a frame late at exactly the moment — a turn — when
+ * the reader is watching the header.
  *
  * `passive: true` because this listener never calls `preventDefault`, and a
  * non-passive scroll listener makes the browser wait for it before it may
- * scroll at all. On a touch screen that is the difference between a gesture
- * that tracks the thumb and one that lags behind it — which is precisely the
- * jumpiness this whole pattern is supposed to remove.
+ * scroll at all.
  *
  * ── THE HEADER MEASURES ITSELF ────────────────────────────────────────────
- * Not `--sticky-block` read off the computed style: that token is the header's
- * DESIGNED height, and what the rules need is its REAL one, which a wrapped
- * label or a large text-size preference can change. `offsetHeight` is
- * unaffected by the transform that hides it, so the number stays honest while
- * the header is off screen. A ResizeObserver keeps it in step rather than a
- * read per frame, which would force layout on every scroll.
+ * Not `--sticky-block`: that token is the header's DESIGNED height, and a
+ * large text-size preference makes the real one taller. A ResizeObserver keeps
+ * the PILL's size in step — the one box that is the same height in both
+ * forms — and the band is that height plus the band's own padding, which
+ * shell.css names and this reads back rather than repeats. The band goes on
+ * the APP ROOT as `--musie-header-block`, which pads its top by it: out of the
+ * flow, the header no longer reserves its own space, so the root does it for
+ * it.
  *
- * ── ARRIVING SOMEWHERE NEW SHOWS THE HEADER ───────────────────────────────
- * `resetKey` is the page's path. AppShell already scrolls a new route to its
- * top, and that scroll alone would usually reveal the header — but "usually"
- * is not good enough: a route that is already at the top fires no scroll event
- * at all, and would then be entered with the previous screen's chrome still
- * hidden and no gesture available to bring it back except scrolling a page
- * that may not scroll. Resetting on the key makes arrival unconditional.
+ * NOT THE HEADER'S OWN HEIGHT any more: as the bar it has no band round it,
+ * and a root padded by THAT would pull the whole page up 32px the moment the
+ * bar appeared.
  *
- * It is the path of the page BENEATH an overlay, not the location — so opening
- * the drawer over a page you had scrolled does not count as arriving
- * somewhere, and closing it puts you back exactly as you were.
+ * Three more numbers come out of the same reading. The window's height is
+ * how near the top a turn brings no bar. The band plus the CSS's
+ * `--musie-header-clearance` is `reach`, how far above the window a pill
+ * waits. The pill's height, halved, is the bar's corner (`--musie-pill-block`,
+ * on the root too, so the ghost has it).
+ *
+ * ── ONLY UP TO 1440 ───────────────────────────────────────────────────────
+ * Ben, 2026-11-18. Over that the bar is off and the header behaves exactly as
+ * before it. 1440 is not a Layer 1 breakpoint (`--bp-xl` is 1280), and a media
+ * query cannot read a custom property anyway; so the number lives here, once,
+ * logged as a token gap in OPEN-QUESTIONS.md.
+ *
+ * ── ARRIVING SOMEWHERE NEW STARTS AT REST ─────────────────────────────────
+ * `resetKey` is the page's path. AppShell scrolls a new route to its top
+ * before this runs, so arrival is the header in its own place. It is the path
+ * of the page BENEATH an overlay, not the location — so opening the drawer
+ * over a scrolled page is not an arrival.
  *
  * ── AND FOCUS BRINGS IT BACK ──────────────────────────────────────────────
- * Hidden is a transform, not `display: none`, so the menu button is still in
- * the tab order while it is off screen. A keyboard user tabbing into a control
- * they cannot see is WCAG 2.4.11 (Focus Not Obscured) failing in the most
- * literal way available, so `focusin` on the header reveals it. Nothing else
- * needs to know: the next scroll reads the current position and carries on.
+ * Gone is fixed above the window, not `display: none`, so the menu button is
+ * still in the tab order — and being fixed, it gives the browser no place in
+ * the page to scroll back to when it is focused. A keyboard user tabbing into a control they cannot see is
+ * WCAG 2.4.11 failing in the most literal way available, so `focusin` holds
+ * the header at the top — from where the page IS (`shownAt` says why that
+ * matters).
  */
 import * as React from 'react';
-import { AT_REST, nextReveal } from './headerReveal';
-import type { RevealState } from './headerReveal';
+import { AT_REST, handedOver, nextReveal, shownAt } from './headerReveal';
+import type { BarGeometry, RevealState } from './headerReveal';
+
+/** Where the bar stops — see ONLY UP TO 1440 above. */
+const BAR_QUERY = '(max-width: 1440px)';
+
+type Written = { at: number; mode: RevealState['mode']; form: RevealState['form'] };
+
+type Geometry = { reach: number; bar: BarGeometry | null };
 
 export function useHeaderReveal(
   header: React.RefObject<HTMLElement | null>,
-  pinned: boolean,
+  ghost: React.RefObject<HTMLElement | null>,
   resetKey: string,
-): boolean {
-  const [hidden, setHidden] = React.useState(false);
+): void {
   const state = React.useRef<RevealState>(AT_REST);
+  /* The measured numbers, so a scroll reads them rather than the layout. */
+  const geometry = React.useRef<Geometry>({ reach: 0, bar: null });
+  /* What is on the element right now, so a write happens only on a change. */
+  const written = React.useRef<Written | null>(null);
 
+  const place = React.useCallback((next: RevealState) => {
+    const previous = state.current;
+    state.current = next;
+    const element = header.current;
+    if (element === null) return;
+    if (handedOver(previous, next)) dissolve(element, ghost.current);
+    /* The bar back before a fade has finished: it is the bar, whole, now —
+       not a half-faded pill over a half-faded ghost. */
+    if (next.form === 'bar' && previous.form !== 'bar') settle(element, ghost.current);
+    const was = written.current;
+    if (was === null || was.at !== next.at) {
+      element.style.setProperty('--musie-header-at', `${next.at}px`);
+    }
+    if (was === null || was.mode !== next.mode) {
+      element.dataset.mode = next.mode;
+    }
+    if (was === null || was.form !== next.form) {
+      element.dataset.form = next.form;
+    }
+    written.current = { at: next.at, mode: next.mode, form: next.form };
+  }, [header, ghost]);
+
+  /* Arrival and focus are both "showing, from here". On an arrival the page
+     is already at 0, where that is simply the rest position. */
   const show = React.useCallback(() => {
-    state.current = AT_REST;
-    setHidden(false);
-  }, []);
+    place(shownAt(window.scrollY, geometry.current.bar));
+  }, [place]);
 
-  /* Arrival, and un-pinning — both are "start again, showing". */
-  React.useEffect(() => { show(); }, [resetKey, pinned, show]);
-
+  /* Declared BEFORE the reset below, so the first `show` already knows
+     whether there is a bar at this width. */
   React.useEffect(() => {
-    /* A pinned screen adds no listener at all, rather than adding one that
-       answers `false` every time. The screen that pins is the one doing its
-       own scrolling, and the cheapest listener is the one not attached. */
-    if (pinned) return undefined;
-
     const element = header.current;
     if (element === null) return undefined;
+    const pill = element.querySelector<HTMLElement>('.musie-header__pill') ?? element;
+    const barQuery = window.matchMedia(BAR_QUERY);
 
-    let block = element.offsetHeight;
-    const observer = new ResizeObserver(() => {
-      block = element.offsetHeight;
-    });
-    observer.observe(element);
+    const measure = () => {
+      const style = getComputedStyle(element);
+      /* A custom property's computed value has its var() resolved, so each
+         of these is px — whatever token shell.css names. */
+      const px = (name: string) => Number.parseFloat(style.getPropertyValue(name)) || 0;
+      const box = pill.getBoundingClientRect();
+      const top = px('--musie-header-pad-top');
+      const bottom = px('--musie-header-pad-bottom');
+      const clearance = px('--musie-header-clearance');
+      const band = top + box.height + bottom;
 
-    let frame = 0;
-    const settle = () => {
-      frame = 0;
-      const next = nextReveal(state.current, {
-        scrollY: window.scrollY,
-        /* The document as it is RIGHT NOW. It grows when data lands and
-           shrinks when a section collapses, and the floor rule is only worth
-           anything if it is asked of the current page. */
-        maxScrollY: document.documentElement.scrollHeight - window.innerHeight,
-        headerBlock: block,
-      });
-      state.current = next;
-      setHidden(next.hidden);
+      element.parentElement?.style.setProperty('--musie-header-block', `${band}px`);
+      element.parentElement?.style.setProperty('--musie-pill-block', `${box.height}px`);
+      geometry.current = {
+        reach: band + clearance,
+        bar: barQuery.matches
+          ? { reach: box.height + bottom + clearance, handover: top, near: window.innerHeight }
+          : null,
+      };
     };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(pill);
 
     const onScroll = () => {
-      if (frame !== 0) return;
-      frame = window.requestAnimationFrame(settle);
+      place(nextReveal(state.current, {
+        scrollY: window.scrollY,
+        maxScrollY: document.documentElement.scrollHeight - window.innerHeight,
+        reach: geometry.current.reach,
+        bar: geometry.current.bar,
+      }));
+    };
+
+    /* Crossing 1440: new numbers, and the same position read against them —
+       a bar where there is no bar any more is the pill on the spot. */
+    const onQuery = () => {
+      measure();
+      onScroll();
     };
 
     /* One reading now, before any gesture: the page may already be scrolled —
        a reload restores the position, and so does going Back. */
-    settle();
+    onScroll();
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    /* The window's height is the bar's `near`, and a window can change height
+       without the pill changing size — so it is re-read on a resize too. */
+    window.addEventListener('resize', measure, { passive: true });
     element.addEventListener('focusin', show);
+    barQuery.addEventListener('change', onQuery);
 
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', measure);
       element.removeEventListener('focusin', show);
+      barQuery.removeEventListener('change', onQuery);
       observer.disconnect();
-      if (frame !== 0) window.cancelAnimationFrame(frame);
     };
-  }, [header, pinned, show]);
+  }, [header, place, show]);
 
-  return pinned ? false : hidden;
+  React.useEffect(() => { show(); }, [resetKey, show]);
 }
 
 /**
- * A screen saying "not on me".
- *
- * ── WHY ANY SCREEN GETS TO SAY THAT ───────────────────────────────────────
- * The listen step is a run of full-viewport sections that snap, and each one
- * is sized `--view-block-scrolled` — the window LESS the sticky header —
- * and lands `--sticky-block` down from the top of the window, because that is
- * where the header ends. Every one of those numbers is the header's height. A
- * header that comes and goes makes all of them wrong at once: the view snaps
- * into place and a header's worth of the PREVIOUS view shows above it, in a
- * band the reader cannot scroll away because the snap holds them there.
- *
- * It cannot be detected instead of declared. `data-musy-scroll-snap` looks
- * like the signal, but `useScrollSnap` takes that attribute off for the
- * duration of a programmatic jump — so a *Show details* button would scroll
- * you down a whole view with snapping off, the header would take that as a
- * long run downwards and hide, and the attribute would come back with the
- * header already gone. So the step says so itself, for as long as it is
- * mounted, and there is nothing to infer.
- *
- * ── COUNTED, NOT A FLAG ───────────────────────────────────────────────────
- * The same reason `useScrollSnap` counts: two screens overlap for a frame
- * during a route transition, and the one leaving must not un-pin the header
- * underneath the one arriving. StrictMode's mount / unmount / mount is the
- * same shape and is handled by the same counter.
+ * The handover's cross-fade: the ghost bar out, the header — the pill now —
+ * in, on one clock. `backwards`, so each starts from its first frame even
+ * before the animation has its start time, and the pill never shows at full
+ * strength for a frame before it fades.
  */
-export type PinHeader = () => () => void;
+function dissolve(header: HTMLElement, ghost: HTMLElement | null): void {
+  if (typeof header.animate !== 'function') return;
+  const style = getComputedStyle(header);
+  const timing: KeyframeAnimationOptions = {
+    duration: Number.parseFloat(style.getPropertyValue('--musie-header-dissolve')) || 0,
+    easing: style.getPropertyValue('--musie-header-dissolve-ease').trim() || 'linear',
+    fill: 'backwards',
+  };
+  header.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+  ghost?.animate(
+    [{ opacity: 1, visibility: 'visible' }, { opacity: 0, visibility: 'visible' }],
+    timing,
+  );
+}
 
-export const HeaderPinContext = React.createContext<PinHeader>(() => () => {});
-
-export function usePinnedHeader(): void {
-  const pin = React.useContext(HeaderPinContext);
-  React.useEffect(() => pin(), [pin]);
+/** Ends any cross-fade still running, so both are simply what their state says. */
+function settle(header: HTMLElement, ghost: HTMLElement | null): void {
+  for (const element of [header, ghost]) {
+    if (element === null || typeof element.getAnimations !== 'function') continue;
+    for (const animation of element.getAnimations()) animation.cancel();
+  }
 }

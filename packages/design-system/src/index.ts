@@ -149,7 +149,7 @@ export { Sheet } from './Sheet';
 export type { SheetProps, SheetPage, SheetContentAlign, SheetDensity } from './Sheet';
 
 export { Logo } from './Logo';
-export type { LogoProps, LogoSize } from './Logo';
+export type { LogoProps, LogoSize, LogoVariant } from './Logo';
 
 export { Field, FieldItem, FieldGroup } from './Field';
 export type {
