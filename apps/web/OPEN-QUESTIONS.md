@@ -12367,3 +12367,33 @@ happens under your name and that what you write in the text fields is not
 part of it (DE and EN, written by me, for Ben to check).
 
 What I need from Ben: a look at the new consent wording.
+
+## Experiment „Reflexion 01“: the welcome window, Ben's wording — DONE, one word open
+
+Where: `apps/web/experiments/reflexion/src/NameModal.tsx`, `src/config.ts`;
+Figma `McSA3aXDQXEqGwulfMnliE`, node 280:2973 (an html.to.design capture of
+the page, edited by Ben, 2026-11-18)
+
+This answers the previous entry's question about the consent wording. Ben
+rewrote it in Figma, and the code now follows the frame:
+- The consent line comes BEFORE the name field, so it is read before
+  „Los geht’s“ is pressed.
+- New wording: measuring under your name, and that Lucy and Ben may contact
+  you with follow-up questions. The promise that the text fields are not
+  measured is gone, though it is still true (track.ts).
+- The line „Deine Antworten werden gespeichert und von Lucy und Ben gelesen“
+  is gone. The window no longer says that the answers are stored.
+
+Two small corrections I made to the frame's text, both punctuation: a comma
+after „nutzt“, which closes the inserted clause before „und dich …“, and a
+full stop at the end.
+
+Not applied: the frame's title reads „Willkommen beim Musie“. „beim“ needs
+an article („bei dem Musie“), and Musie has none anywhere else, so it stays
+„Willkommen bei Musie“ until Ben says the change was meant.
+
+Not changed either: in the frame the intro starts about 22px under the
+title; the page has 45. The difference is the Lightbox body's own top
+padding inside its scroll area (`--space-inset-card`), which the capture
+dropped: its body is exactly 24px shorter than the real DOM. Tightening it
+would be a Lightbox change, not one to this window.

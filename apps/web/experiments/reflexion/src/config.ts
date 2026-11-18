@@ -126,11 +126,12 @@ const de = {
   nameLabel: 'Dein Name',
   nameRequired: 'Bitte gib deinen Namen ein.',
   start: 'Los geht’s',
-  privacy: 'Deine Antworten werden gespeichert und von Lucy und Ben gelesen.',
-  /* Ben, 2026-11-18: the name goes to PostHog (who took part, who finished),
-     so this line no longer promises "ohne deinen Namen". */
+  /* Ben's wording, Figma node 280:2973, 2026-11-18. It replaced two lines:
+     the one on who reads the answers, and the one promising that the text
+     fields are not measured. The comma after „nutzt“ closes the inserted
+     clause, and the full stop ends the sentence. Figma has neither. */
   consent:
-    'Mit „Los geht’s“ bist du einverstanden, dass wir unter deinem Namen messen, wie du die Übung nutzt. Was du in die Textfelder schreibst, ist nicht Teil dieser Messung.',
+    'Mit „Los geht’s“ bist du einverstanden, dass wir unter deinem Namen messen, wie du die Übung nutzt, und dich eventuell mit Rückfragen kontaktieren.',
   modalClose: 'Schließen',
 
   reflectionHeading: 'Nachdenken',
@@ -174,9 +175,8 @@ const en: Copy = {
   nameLabel: 'Your name',
   nameRequired: 'Please enter your name.',
   start: 'Let’s start',
-  privacy: 'Your answers are saved and read by Lucy and Ben.',
   consent:
-    'By pressing “Let’s start” you agree that we measure, under your name, how you use the exercise. What you write in the text fields is not part of that measurement.',
+    'By pressing “Let’s start” you agree that we measure, under your name, how you use the exercise, and that we may contact you with follow-up questions.',
   modalClose: 'Close',
 
   reflectionHeading: 'Reflect',

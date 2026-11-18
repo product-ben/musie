@@ -1,9 +1,11 @@
 /**
  * The name modal, over the exercise on every page load until it is answered.
  *
- * Brief: one sentence on what this is, a required „Dein Name“, „Los geht's“,
- * and a small line on who reads the answers. Pressing start is also the
- * PostHog consent (`copy.consent`, and track.ts's one rule).
+ * One sentence on what this is, then the consent line, a required „Dein
+ * Name“ and „Los geht's“. That order is Ben's Figma (node 280:2973,
+ * 2026-11-18): the consent is read before the name is typed, because pressing
+ * start is the consent, for PostHog too (`copy.consent`, and track.ts's one
+ * rule). The brief's line on who reads the answers went with that change.
  *
  * `mandatory`: no X, no outside dismiss, and with no `onOpenChange` Escape
  * cannot close it either — the run needs a name.
@@ -67,6 +69,7 @@ export function NameModal() {
     <Lightbox open mandatory surface="panel" title={copy.modalTitle} closeLabel={copy.modalClose}>
       <form className="musie-reflexion-modal" onSubmit={submit} noValidate>
         <p className="musie-reflexion-modal__intro">{copy.modalIntro}</p>
+        <p className="musie-note musie-reflexion-modal__small">{copy.consent}</p>
         <Field
           id={FIELD_ID}
           className="ph-no-capture"
@@ -85,8 +88,6 @@ export function NameModal() {
         <Button type="submit" variant="primary" block wrap>
           {copy.start}
         </Button>
-        <p className="musie-note musie-reflexion-modal__small">{copy.privacy}</p>
-        <p className="musie-note musie-reflexion-modal__small">{copy.consent}</p>
         {!GERMAN_ONLY && <LanguageSwitch name="reflexion-language-modal" />}
       </form>
     </Lightbox>
