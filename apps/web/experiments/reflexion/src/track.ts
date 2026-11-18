@@ -28,7 +28,7 @@ import {
   EXPERIMENT_ID,
   QUESTION_SET_VERSION,
   SURVEY,
-  type RecommendChoice,
+  type SurveyAnswers,
 } from './config';
 import { RUN } from './run';
 
@@ -248,27 +248,29 @@ export function surveyShown(): void {
   });
 }
 
-export function surveySent(
-  answers: { recommend?: RecommendChoice; comment?: string },
-  submissionId: string,
-): void {
+/**
+ * The survey's contract (PostHog, API surveys): one `$survey_response_<id>`
+ * per ANSWERED question and none for a skipped one. A rating goes as a
+ * number, as posthog-js sends its own, so the NPS view can count it.
+ */
+export function surveySent(answers: SurveyAnswers, submissionId: string): void {
   if (!firstTime(`survey_sent:${submissionId}`)) return;
   const properties: Record<string, unknown> = {
     $survey_id: SURVEY.id,
     $survey_iteration: SURVEY_ITERATION,
     $survey_submission_id: submissionId,
     $survey_completed: true,
-    $survey_questions: [
-      { id: SURVEY.recommend.id, question: SURVEY.recommend.question },
-      { id: SURVEY.comment.id, question: SURVEY.comment.question },
-    ],
+    $survey_questions: SURVEY.questions.map(({ id, question }) => ({ id, question })),
   };
-  if (answers.recommend !== undefined) {
-    properties[`$survey_response_${SURVEY.recommend.id}`] = answers.recommend;
-  }
-  const comment = answers.comment?.trim();
-  if (comment) {
-    properties[`$survey_response_${SURVEY.comment.id}`] = comment;
+  for (const q of SURVEY.questions) {
+    const answer: unknown = answers[q.key];
+    if (q.kind === 'rating') {
+      if (typeof answer === 'number' && Number.isInteger(answer) && answer >= 0 && answer <= 10) {
+        properties[`$survey_response_${q.id}`] = answer;
+      }
+    } else if (typeof answer === 'string' && answer.trim() !== '') {
+      properties[`$survey_response_${q.id}`] = answer.trim();
+    }
   }
   /* Sent at once, not with the next batch: the person may close the tab right
      after pressing send, and a batch still waiting would go with it. (Seen in

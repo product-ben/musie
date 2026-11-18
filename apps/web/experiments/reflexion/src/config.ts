@@ -96,21 +96,55 @@ export const BODY_SCAN_AUDIO_SRC = '/experiments/reflexion/media/body-scan-de.mp
  * PostHog survey of type `api`, created 2026-11-16 via MCP (draft).
  * https://eu.posthog.com/project/313428/surveys/01a1e3ac-14f6-0000-babb-e48bb67229f0
  * Answers are sent in the survey's base language (de) whatever the UI shows.
+ *
+ * QUESTIONS v2 — Ben, 2026-11-18. Two NPS ratings (0–10) and two open
+ * questions, all optional. They replaced v1 (Ja/Vielleicht/Nein plus one
+ * comment), which only ever had test answers. The `id`s are PostHog's, made
+ * by that update. A response arrives as `$survey_response_<id>`, and the
+ * dashboard reads it by that name. Change a question's TEXT here and in
+ * PostHog together; never change an `id`.
+ *
+ * Ben's wording with two fixes: „am besten“ is lower case (Duden: the
+ * superlative with „am“), and the wish question gets its question mark.
  */
 export const SURVEY = {
   id: '01a1e3ac-14f6-0000-babb-e48bb67229f0',
-  recommend: {
-    id: 'a8eaa483-c6c2-4a44-9e41-eab5600b961e',
-    question: 'Würdest du Musie einem Freund oder einer Freundin empfehlen?',
-    choices: ['Ja', 'Vielleicht', 'Nein'] as const,
-  },
-  comment: {
-    id: 'e8cfcb36-3dd4-49e2-b694-5595cb46abb8',
-    question: 'Möchtest du uns noch etwas mitgeben?',
-  },
+  questions: [
+    {
+      key: 'npsFriends',
+      kind: 'rating',
+      id: '5c858623-7760-47f1-962e-68bbfe1e3405',
+      question:
+        'Wie wahrscheinlich ist es, dass du diese Übung zum Entspannen deinen FreundInnen oder deiner Familie empfehlen würdest?',
+    },
+    {
+      key: 'npsColleagues',
+      kind: 'rating',
+      id: 'aee57a83-e5d9-4fc1-9344-ecbb1e663533',
+      question:
+        'Wie wahrscheinlich ist es, dass du diese Übung zum Entspannen deinen KollegInnen empfehlen würdest?',
+    },
+    {
+      key: 'wish',
+      kind: 'open',
+      id: '47ed41d7-69cb-416f-8005-95b0b39aff6c',
+      question: 'Was würdest du dir anders wünschen?',
+    },
+    {
+      key: 'best',
+      kind: 'open',
+      id: '8862ec2e-6a79-4b9b-ac80-06dc2b3e7c00',
+      question: 'Was fandest du am besten?',
+    },
+  ],
 } as const;
 
-export type RecommendChoice = (typeof SURVEY.recommend.choices)[number];
+export type SurveyQuestion = (typeof SURVEY.questions)[number];
+export type SurveyKey = SurveyQuestion['key'];
+export type RatingKey = Extract<SurveyQuestion, { kind: 'rating' }>['key'];
+export type OpenKey = Extract<SurveyQuestion, { kind: 'open' }>['key'];
+/** One submission: a rating is a whole number 0–10, an open answer is text. */
+export type SurveyAnswers = Partial<Record<RatingKey, number> & Record<OpenKey, string>>;
 
 const de = {
   languageLegend: 'Sprache',
@@ -146,12 +180,17 @@ const de = {
 
   thanksHeadline: 'Danke, dass du an unserem Experiment teilgenommen hast.',
   thanksSignature: 'Liebe Grüße, Lucy und Ben',
-  recommendQuestion: 'Würdest du Musie einem Freund oder einer Freundin empfehlen?',
-  recommendChoices: { Ja: 'Ja', Vielleicht: 'Vielleicht', Nein: 'Nein' } as Record<RecommendChoice, string>,
-  commentLabel: 'Möchtest du uns noch etwas mitgeben?',
+  /* German IS the survey's base language, so the screen shows exactly what
+     PostHog stores: one source, SURVEY above. */
+  surveyQuestions: Object.fromEntries(
+    SURVEY.questions.map((q) => [q.key, q.question]),
+  ) as Record<SurveyKey, string>,
+  npsLow: 'Unwahrscheinlich',
+  npsHigh: 'Sehr wahrscheinlich',
+  /* What a screen reader hears on a slider nobody has touched yet. */
+  npsUnset: 'Noch keine Auswahl',
   sendFeedback: 'Feedback senden',
   feedbackThanks: 'Danke für dein Feedback!',
-  optionsEmpty: 'Keine Optionen',
   statusError: 'Fehler',
   statusSuccess: 'Erfolg',
 
@@ -190,12 +229,17 @@ const en: Copy = {
 
   thanksHeadline: 'Thank you for taking part in our experiment.',
   thanksSignature: 'Warm regards, Lucy and Ben',
-  recommendQuestion: 'Would you recommend Musie to a friend?',
-  recommendChoices: { Ja: 'Yes', Vielleicht: 'Maybe', Nein: 'No' },
-  commentLabel: 'Anything else you’d like to tell us?',
+  surveyQuestions: {
+    npsFriends: 'How likely are you to recommend this exercise for relaxing to your friends or family?',
+    npsColleagues: 'How likely are you to recommend this exercise for relaxing to your colleagues?',
+    wish: 'What would you like to be different?',
+    best: 'What did you like best?',
+  },
+  npsLow: 'Unlikely',
+  npsHigh: 'Very likely',
+  npsUnset: 'Nothing chosen yet',
   sendFeedback: 'Send feedback',
   feedbackThanks: 'Thanks for your feedback!',
-  optionsEmpty: 'No options',
   statusError: 'Error',
   statusSuccess: 'Success',
 

@@ -12408,3 +12408,36 @@ goes to 0. The Lightbox body's top inset is taken out for this one window, in
 the experiment's own stylesheet and not in the component (rule 10). The
 bottom inset stays. The intro now sits 21px under the title, which is the
 title's own margin: Figma has 21.6.
+
+## Experiment „Reflexion 01“: the feedback survey is NPS now — DONE, one component request
+
+Where: `apps/web/experiments/reflexion/src/ThankYou.tsx`, `src/NpsSlider.tsx`,
+`src/config.ts` (`SURVEY`), `src/track.ts` (`surveySent`); PostHog survey
+`01a1e3ac-…` (questions v2); dashboard „Reflexion 01“ (1127915), seven tiles
+
+Ben, 2026-11-18: the thank-you survey asks two NPS questions on „a stepper
+slider whose steps are labelled“, then two open questions. Done like this:
+
+- The PostHog survey's questions were replaced rather than added to: two
+  rating questions (scale 10, NPS) and two open ones, all optional. v1
+  (Ja/Vielleicht/Nein plus a comment) only ever had test answers, and the
+  survey was never launched.
+- The dashboard's four survey tiles became NPS tables (answers, NPS,
+  promoters, passives, detractors, average). The three „Wer war dabei?“
+  tables swapped „Empfehlung“ and „Feedback“ for the four new answers. All
+  seven were run against two internal test responses.
+- „Feedback senden“ is ready as soon as one question is answered. No rating
+  is required, because a forced rating is a guess in the score.
+- No step is preselected. A slider always has a value, and a thumb already
+  at 5 would be an answer nobody gave.
+
+Two corrections to Ben's text: „am besten“ in lower case (Duden, superlative
+with „am“), and a question mark after „Was würdest du dir anders wünschen“.
+„FreundInnen“ and „KollegInnen“ are his and stay.
+
+THE SLIDER IS A COMPONENT REQUEST, NOT A PATTERN. The design system has no
+slider, and `FeelingsScale` is specified for three to five points with a
+glyph each. Rule 10 lets the experiment have its own, built on Layer 1 tokens
+(`experiment.css`, „NPS SLIDER“). If NPS ever reaches the app, it needs a
+system component: a native range with labelled steps and an unset state. It
+should not be a copy of this file.

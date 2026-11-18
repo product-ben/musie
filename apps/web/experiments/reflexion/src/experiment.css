@@ -139,12 +139,189 @@
   padding-block-end: calc(var(--viewport-block) / 3);
 }
 
-/* ═══ THANK YOU ═════════════════════════════════════════════════════════════ */
+/* ═══ THANK YOU ═════════════════════════════════════════════════════════════
+   Four questions since 2026-11-18, so they are spaced as the reflect step's
+   three are: --sp-5 (24) between question blocks, --space-gap-related (12)
+   between a question and its answer. */
 .musie-reflexion-survey {
   display: flex;
   flex-direction: column;
-  gap: var(--space-gap-stack);
+  gap: var(--sp-5);
 }
+
+/* ═══ NPS SLIDER (NpsSlider.tsx) ═══════════════════════════════════════════
+   A native range, restyled: an --sp-2 track, a 20px thumb in the primary
+   colour, the part up to the thumb filled. Under it the eleven numbers,
+   and under those the two ends of the scale.
+
+   THE NUMBERS LINE UP WITH THE THUMB BY CONSTRUCTION. The thumb's centre at
+   step n is `thumb/2 + n/10 × (track − thumb)`. Eleven boxes, each as wide as
+   the thumb and spread with `space-between`, put the centre of box n at
+   exactly the same place. That is why the box width IS `--nps-thumb`. 20px
+   (not 24) because eleven of them have to fit the 240px a 320px phone
+   leaves inside the box.
+
+   THE INPUT IS --target-sm (40) TALL, so the track is easy to hit even
+   though it is drawn 8 tall. `touch-action: pan-y` lets a vertical swipe
+   still scroll the page while a horizontal one moves the thumb. */
+.musie-nps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-related);
+}
+
+/* The Field label's typography (`.musy-field__label`), so a rating question
+   and an open one read as the same kind of thing. */
+.musie-nps__question {
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  font-weight: var(--type-label-md-weight);
+  line-height: var(--type-label-md-line);
+  letter-spacing: var(--type-label-md-tracking);
+  color: var(--on-surface);
+  text-wrap: var(--text-wrap-label);
+}
+
+.musie-nps__control {
+  --nps-thumb: calc(var(--sp-4) + var(--sp-1));
+  --nps-track: var(--sp-2);
+  --nps-fill: calc(var(--nps-thumb) / 2 + (100% - var(--nps-thumb)) * var(--nps-ratio, 0));
+  display: flex;
+  flex-direction: column;
+}
+
+.musie-nps__input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  block-size: var(--target-sm);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.musie-nps__input:focus-visible { outline: none; }
+
+/* The track: filled up to the thumb, sunken after it. Chromium and Safari
+   paint the fill as a gradient; Firefox has its own progress part. */
+.musie-nps__input::-webkit-slider-runnable-track {
+  block-size: var(--nps-track);
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    var(--interactive-primary) 0 var(--nps-fill),
+    var(--surface-sunken) var(--nps-fill)
+  );
+}
+.musie-nps__input::-moz-range-track {
+  block-size: var(--nps-track);
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+}
+.musie-nps__input::-moz-range-progress {
+  block-size: var(--nps-track);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+}
+
+.musie-nps__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  inline-size: var(--nps-thumb);
+  block-size: var(--nps-thumb);
+  margin-block-start: calc((var(--nps-track) - var(--nps-thumb)) / 2);
+  border: var(--border-width-regular) var(--border-style-solid) var(--surface-raised);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+  box-shadow: var(--elevation-1);
+}
+.musie-nps__input::-moz-range-thumb {
+  box-sizing: border-box;
+  inline-size: var(--nps-thumb);
+  block-size: var(--nps-thumb);
+  border: var(--border-width-regular) var(--border-style-solid) var(--surface-raised);
+  border-radius: var(--radius-full);
+  background: var(--interactive-primary);
+  box-shadow: var(--elevation-1);
+}
+.musie-nps__input:focus-visible::-webkit-slider-thumb {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.musie-nps__input:focus-visible::-moz-range-thumb {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* UNSET: no fill and no thumb, because nothing has been chosen. Focused from
+   the keyboard, a hollow thumb shows where the arrow keys will start, so the
+   focus ring has something to sit on. */
+.musie-nps__control[data-unset] .musie-nps__input::-webkit-slider-runnable-track {
+  background: var(--surface-sunken);
+}
+.musie-nps__control[data-unset] .musie-nps__input::-moz-range-progress {
+  background: transparent;
+}
+.musie-nps__control[data-unset] .musie-nps__input::-webkit-slider-thumb { opacity: 0; }
+.musie-nps__control[data-unset] .musie-nps__input::-moz-range-thumb { opacity: 0; }
+.musie-nps__control[data-unset] .musie-nps__input:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+  border-color: var(--interactive-primary);
+  background: var(--surface-raised);
+}
+.musie-nps__control[data-unset] .musie-nps__input:focus-visible::-moz-range-thumb {
+  opacity: 1;
+  border-color: var(--interactive-primary);
+  background: var(--surface-raised);
+}
+
+.musie-nps__steps {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.musie-nps__step {
+  display: flex;
+  justify-content: center;
+  inline-size: var(--nps-thumb);
+  font-family: var(--type-label-md-family);
+  font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--on-surface-muted);
+  cursor: pointer;
+}
+.musie-nps__step[data-active] {
+  color: var(--on-surface);
+  font-weight: var(--font-weight-semibold);
+}
+
+.musie-nps__anchors {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: 0;
+  font-family: var(--type-body-sm-family);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  color: var(--on-surface-muted);
+}
+/* Half the row each, and allowed to hyphenate. At 320px the two ends are
+   wider together („Unwahrscheinlich“ + „Sehr wahrscheinlich“) than the 240px
+   in the box, and a flex item will not shrink below its longest word by
+   itself: the second one ran out of the box. `hyphens` follows `<html
+   lang>` (rule 5), so German breaks at German points. */
+.musie-nps__anchors > * {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  hyphens: var(--text-hyphens);
+}
+.musie-nps__anchors > :last-child { text-align: end; }
 
 .musie-reflexion-done {
   padding-block-end: var(--sp-7);

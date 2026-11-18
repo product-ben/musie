@@ -69,8 +69,18 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
   survey is `COPY.de` and `COPY.en`.
 - **The feedback survey** is `SURVEY`. It is PostHog survey
   `01a1e3ac-14f6-0000-babb-e48bb67229f0` of type `api`: our UI renders it, and
-  PostHog only evaluates it. Change the question text in PostHog and in
-  `SURVEY` together, and never the question IDs.
+  PostHog only evaluates it. Since 2026-11-18 it has four questions, all
+  optional:
+  - two NPS ratings (0–10, „würdest du diese Übung zum Entspannen …
+    empfehlen“), one for friends or family and one for colleagues;
+  - two open questions („Was würdest du dir anders wünschen?“, „Was fandest
+    du am besten?“).
+
+  A rating is a slider with eleven labelled steps (`src/NpsSlider.tsx`). It
+  is the experiment's own, because the design system has no slider. Nothing
+  is preselected, and „Feedback senden“ works as soon as one question is
+  answered. Change a question's text in PostHog and in `SURVEY` together,
+  and never its ID: the dashboard reads the answers by ID.
 
 ## Ending the experiment
 
@@ -90,15 +100,19 @@ you!“.
   test device or a local dev run. Filter on `false` for the participants'
   answers. The visitor's browser sets the flag, so it is a convenience for
   filtering and not a guard.
-- **Survey:** in PostHog under Surveys, „Reflexion 01 – Feedback“. Answers are
-  stored in German (Ja / Vielleicht / Nein) whatever the UI language was; the
-  UI language is the event property `language`. That page shows test answers
-  too. The dashboard does not.
+- **Survey:** in PostHog under Surveys, „Reflexion 01 – Feedback“. The
+  questions are stored in German whatever the UI language was; the UI
+  language is the event property `language`. A rating arrives as a number
+  from 0 to 10. That page shows test answers too. The dashboard does not.
 - **Dashboard:** [„Reflexion 01“](https://eu.posthog.com/project/313428/dashboard/1127915)
-  in PostHog. One section for the overview (participants, started and
-  finished per exercise, the recommendation answers) and one per exercise:
-  how far people got, who it was (by name, with their survey answer and
-  feedback text), and the recommendation answers. „Finished“ means reaching
+  in PostHog. One section for the overview and one per exercise.
+  - The overview shows participants, started and finished per exercise, and
+    the NPS across all exercises.
+  - Each exercise shows how far people got, an NPS table, and who it was:
+    by name, with both ratings and both open answers.
+
+  NPS is the share of 9–10 minus the share of 0–6, in points from −100 to
+  +100. Each person's last answer counts. „Finished“ means reaching
   the reflect step. Audio finished means the track played to its last note;
   for the harp, which has no track, it means pressing „Weiter“ after playing.
   The dashboard filters are `is_internal = false` and a start date of

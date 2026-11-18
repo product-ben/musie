@@ -1,32 +1,30 @@
 /**
  * `/done` — not a fifth step but a state of its own (brief): no rail, the
- * header stays. The thanks first, then a two-question survey in our own UI
+ * header stays. The thanks first, then the feedback survey in our own UI,
  * whose answers go to PostHog as the survey's events (track.ts), never to
  * Supabase.
  *
- * RadioGroupText rather than SegmentedControl for the recommendation: three
- * plain words with no glyph to invent and nothing to truncate at 320px — the
- * closed-beta form's precedent (BetaSignup.tsx).
+ * QUESTIONS v2 — Ben, 2026-11-18: two NPS ratings on a stepped slider
+ * (NpsSlider.tsx), then two open questions. All four are optional, and
+ * „Feedback senden“ is ready as soon as any one of them has an answer:
+ * forcing a rating would push a guess into the score.
  *
- * Choice VALUES are the survey's base-language answers (Ja/Vielleicht/Nein),
- * whatever the screen shows, so PostHog's results do not split by language.
+ * Questions and their order come from `SURVEY` (config.ts), so the screen,
+ * the event and PostHog's survey cannot list them differently.
  */
 import * as React from 'react';
-import { Button, ContentBox, Field, Message, RadioGroupText } from '@musie/design-system';
-import { SURVEY, type RecommendChoice } from './config';
+import { Button, ContentBox, Field, Message } from '@musie/design-system';
+import { SURVEY, type OpenKey, type RatingKey, type SurveyAnswers } from './config';
 import { useCopy } from './context';
 import { uuidV4 } from './NameModal';
+import { NpsSlider } from './NpsSlider';
 import { completed, surveySent, surveyShown } from './track';
-
-function isChoice(value: string): value is RecommendChoice {
-  return (SURVEY.recommend.choices as readonly string[]).includes(value);
-}
 
 export function ThankYou() {
   const copy = useCopy();
   const [submissionId] = React.useState(uuidV4);
-  const [recommend, setRecommend] = React.useState<RecommendChoice | undefined>(undefined);
-  const [comment, setComment] = React.useState('');
+  const [ratings, setRatings] = React.useState<Partial<Record<RatingKey, number>>>({});
+  const [texts, setTexts] = React.useState<Partial<Record<OpenKey, string>>>({});
   const [sent, setSent] = React.useState(false);
 
   /* Once per mount, StrictMode's double effect included: the ref survives it. */
@@ -38,16 +36,16 @@ export function ThankYou() {
     surveyShown();
   }, []);
 
-  const trimmed = comment.trim();
-  const answered = recommend !== undefined || trimmed !== '';
+  const answers: SurveyAnswers = { ...ratings };
+  for (const [key, text] of Object.entries(texts) as [OpenKey, string][]) {
+    if (text.trim() !== '') answers[key] = text.trim();
+  }
+  const answered = Object.keys(answers).length > 0;
 
   const send = (event: React.FormEvent) => {
     event.preventDefault();
     if (!answered || sent) return;
-    surveySent(
-      { recommend, comment: trimmed === '' ? undefined : trimmed },
-      submissionId,
-    );
+    surveySent(answers, submissionId);
     setSent(true);
   };
 
@@ -64,31 +62,32 @@ export function ThankYou() {
           />
         ) : (
           <form className="musie-reflexion-survey" onSubmit={send} noValidate>
-            <RadioGroupText
-              name="recommend"
-              legend={copy.recommendQuestion}
-              options={SURVEY.recommend.choices.map((choice) => ({
-                value: choice,
-                label: copy.recommendChoices[choice],
-              }))}
-              /* '' rather than undefined: the group is controlled from the
-                 first render, with nothing chosen. */
-              value={recommend ?? ''}
-              onValueChange={(value) => {
-                if (isChoice(value)) setRecommend(value);
-              }}
-              emptyLabel={copy.optionsEmpty}
-            />
-            <Field
-              className="musie-reflexion-answer ph-no-capture"
-              label={copy.commentLabel}
-              name="comment"
-              multiline
-              rows={3}
-              value={comment}
-              onValueChange={setComment}
-              errorWord={copy.statusError}
-            />
+            {SURVEY.questions.map((q) =>
+              q.kind === 'rating' ? (
+                <NpsSlider
+                  key={q.key}
+                  id={`reflexion-survey-${q.key}`}
+                  label={copy.surveyQuestions[q.key]}
+                  value={ratings[q.key] ?? null}
+                  onChange={(value) => setRatings((prev) => ({ ...prev, [q.key]: value }))}
+                  lowLabel={copy.npsLow}
+                  highLabel={copy.npsHigh}
+                  unsetText={copy.npsUnset}
+                />
+              ) : (
+                <Field
+                  key={q.key}
+                  className="musie-reflexion-answer ph-no-capture"
+                  label={copy.surveyQuestions[q.key]}
+                  name={q.key}
+                  multiline
+                  rows={3}
+                  value={texts[q.key] ?? ''}
+                  onValueChange={(value) => setTexts((prev) => ({ ...prev, [q.key]: value }))}
+                  errorWord={copy.statusError}
+                />
+              ),
+            )}
             <Button type="submit" variant="primary" size="guided" block wrap disabled={!answered}>
               {copy.sendFeedback}
             </Button>
