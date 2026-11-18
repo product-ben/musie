@@ -165,8 +165,8 @@ describe('shown by focus, then scrolled by the browser', () => {
    Everything above runs with no bar — the header over 1440px — and is
    exactly what it was. Below, the phone's numbers: the bar is the pill's
    56px with the band's --sp-4 and the clearance below it; the pill's own
-   place is --sp-4 down. */
-const BAR: BarGeometry = { reach: 56 + 16 + 8, handover: 16 };
+   place is --sp-4 down; the window is 852 tall. */
+const BAR: BarGeometry = { reach: 56 + 16 + 8, handover: 16, near: 852 };
 
 function runBar(positions: number[], from: RevealState = AT_REST, bar: BarGeometry = BAR): RevealState {
   return positions.reduce(
@@ -220,6 +220,40 @@ describe('a short scroll brings the pill back, not the bar', () => {
 
   it('is still the pill from as far down as it can go without being gone', () => {
     expect(runBar([REACH - 1, 50])).toEqual({ mode: 'free', form: 'pill', at: 0, last: 50 });
+  });
+});
+
+describe('within a screen of the top, no bar', () => {
+  it('stays gone on a turn up within the window’s height of the top', () => {
+    const gone = runBar([100, 600]);
+    expect(gone.mode).toBe('gone');
+    expect(runBar([590], gone)).toEqual({ mode: 'gone', form: 'pill', at: 0, last: 590 });
+    expect(runBar([590, 300, REACH + 1], gone).mode).toBe('gone');
+  });
+
+  it('lets the page bring the pill in once its own place is within reach', () => {
+    const coming = runBar([590, 300, REACH], runBar([100, 600]));
+    expect(coming).toEqual({ mode: 'free', form: 'pill', at: 0, last: REACH });
+    expect(drawnAt(coming, REACH, REACH)).toBe(-REACH);
+    expect(drawnAfterBar([590, 300, REACH, 40], runBar([100, 600]))).toBe(-40);
+    expect(runBar([590, 300, REACH, 0], runBar([100, 600]))).toEqual(AT_REST);
+  });
+
+  it('never cross-fades, because there is no bar to fade', () => {
+    const gone = runBar([100, 600]);
+    const states = [590, 300, 90, 40, 0].reduce<RevealState[]>(
+      (all, y) => [...all, runBar([y], all[all.length - 1] ?? gone)], [],
+    );
+    expect(states.some((state) => state.form === 'bar')).toBe(false);
+  });
+
+  it('brings the bar on a turn up from further down than that', () => {
+    expect(runBar([853], runBar([100, 854]))).toMatchObject({ form: 'bar' });
+    expect(runBar([851], runBar([100, 852]))).toMatchObject({ form: 'pill', mode: 'gone' });
+  });
+
+  it('is the old behaviour where there is no bar', () => {
+    expect(run([590], run([100, 600]))).toMatchObject({ mode: 'free', form: 'pill' });
   });
 });
 

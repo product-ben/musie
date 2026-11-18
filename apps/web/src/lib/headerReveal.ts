@@ -84,6 +84,17 @@
  *   moment it is out of sight once more (`gone` is always the pill, so a
  *   wide, opaque, fixed box never waits above the window).
  *
+ *   NOT WITHIN A SCREEN OF THE TOP — the same day. Flicked up to the top, the
+ *   bar came in for a moment only to dissolve into the pill. Ben asked for
+ *   no bar when the top is reached within half a second; nothing can know
+ *   that at the turn, so the rule is a distance standing in for the time:
+ *   a turn up within one window's height of the top (`near`) brings no bar.
+ *   The header stays gone, and the pill comes into sight with the page in
+ *   its own place, as if it had never left — the short scroll's behaviour,
+ *   from further down. Its cost, chosen knowingly: scrolled up slowly from
+ *   there, the reader has no header until the top, and a page barely taller
+ *   than the window never shows the bar at all. Focus still brings it.
+ *
  *   HANDED OVER IN PLACE. Not at the very top but where the pill's own place
  *   reaches the top of the window — `handover`, the band's top padding (16 on
  *   a phone, 24 from 768px). The held bar becomes the pill at rest right
@@ -131,11 +142,13 @@ export const AT_REST: RevealState = { mode: 'free', form: 'pill', at: 0, last: 0
  * page brings it in from there — its own height, plus as much again below it
  * as the pill's band has (--sp-4) and the same clearance, so its edge starts
  * exactly as far up as the pill's would. `handover` is where the pill's own
- * place meets the top of the window.
+ * place meets the top of the window. `near` is the window's height: a turn up
+ * closer to the top than that brings no bar.
  */
 export type BarGeometry = {
   reach: number;
   handover: number;
+  near: number;
 };
 
 /**
@@ -276,8 +289,15 @@ function move(state: RevealState, reading: ScrollReading, bar: BarGeometry | nul
   }
 
   if (state.mode === 'gone') {
-    /* Gone, and still going down: it waits. Turning up: it comes back. */
-    return down ? { ...state, last: y } : returningFrom(state.last);
+    /* Gone, and still going down: it waits. Turning up: it comes back —
+       except within a screen of the top, where it stays gone until the
+       pill's own place, the top of the page, is within its reach, and from
+       there the page brings the pill in. */
+    if (down) return { ...state, last: y };
+    if (bar !== null && state.last <= bar.near) {
+      return y <= reading.reach ? { mode: 'free', form: 'pill', at: 0, last: y } : { ...state, last: y };
+    }
+    return returningFrom(state.last);
   }
 
   /* Free. */

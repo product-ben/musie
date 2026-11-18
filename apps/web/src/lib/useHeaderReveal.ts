@@ -50,7 +50,8 @@
  * and a root padded by THAT would pull the whole page up 32px the moment the
  * bar appeared.
  *
- * Two more numbers come out of the same reading. The band plus the CSS's
+ * Three more numbers come out of the same reading. The window's height is
+ * how near the top a turn brings no bar. The band plus the CSS's
  * `--musie-header-clearance` is `reach`, how far above the window a pill
  * waits. The pill's height, halved, is the bar's corner (`--musie-pill-block`,
  * on the root too, so the ghost has it).
@@ -103,6 +104,9 @@ export function useHeaderReveal(
     const element = header.current;
     if (element === null) return;
     if (handedOver(previous, next)) dissolve(element, ghost.current);
+    /* The bar back before a fade has finished: it is the bar, whole, now —
+       not a half-faded pill over a half-faded ghost. */
+    if (next.form === 'bar' && previous.form !== 'bar') settle(element, ghost.current);
     const was = written.current;
     if (was === null || was.at !== next.at) {
       element.style.setProperty('--musie-header-at', `${next.at}px`);
@@ -145,7 +149,9 @@ export function useHeaderReveal(
       element.parentElement?.style.setProperty('--musie-pill-block', `${box.height}px`);
       geometry.current = {
         reach: band + clearance,
-        bar: barQuery.matches ? { reach: box.height + bottom + clearance, handover: top } : null,
+        bar: barQuery.matches
+          ? { reach: box.height + bottom + clearance, handover: top, near: window.innerHeight }
+          : null,
       };
     };
     measure();
@@ -173,11 +179,15 @@ export function useHeaderReveal(
     onScroll();
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    /* The window's height is the bar's `near`, and a window can change height
+       without the pill changing size — so it is re-read on a resize too. */
+    window.addEventListener('resize', measure, { passive: true });
     element.addEventListener('focusin', show);
     barQuery.addEventListener('change', onQuery);
 
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', measure);
       element.removeEventListener('focusin', show);
       barQuery.removeEventListener('change', onQuery);
       observer.disconnect();
@@ -206,4 +216,12 @@ function dissolve(header: HTMLElement, ghost: HTMLElement | null): void {
     [{ opacity: 1, visibility: 'visible' }, { opacity: 0, visibility: 'visible' }],
     timing,
   );
+}
+
+/** Ends any cross-fade still running, so both are simply what their state says. */
+function settle(header: HTMLElement, ghost: HTMLElement | null): void {
+  for (const element of [header, ghost]) {
+    if (element === null || typeof element.getAnimations !== 'function') continue;
+    for (const animation of element.getAnimations()) animation.cancel();
+  }
 }

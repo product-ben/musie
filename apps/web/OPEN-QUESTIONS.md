@@ -12235,6 +12235,17 @@ which becomes the pill again at the top. His answers, asked one by one:
   The column is `<main>`'s content box (980 on the wide routes, 768 less two
   gutters on the rest), so the bar is narrower on /diary than in a session.
 - **Over 1440: no bar.** The pill comes back as the pill, as before.
+- **No bar within a screen of the top.** Ben: no bar when the top is reached
+  in under half a second. Nothing knows that at the turn, so of three ways
+  offered (wait 0.5s, guess from the speed, judge by distance) he chose the
+  distance: a turn up within one window height of the top brings no bar. The
+  header stays gone and the pill comes into sight with the page, in its own
+  place. Accepted with it: scrolling up slowly from there there is no header
+  until the top, and a page barely taller than the window never shows the
+  bar. Measured: a turn at 852 on an 852-tall window brings none, at 853 the
+  bar (900 / 901 at 1440); Tab still brings the bar. Over 1440 the pill
+  comes back as before — the rule is the bar's, so it stops where the bar
+  does.
 
 Measured in Chromium (local stack, /exercises with a spacer) at 393, 834, 1440
 and 1728: the held bar at 393 is 8 / 0 / 377 × 56 with corners 0/0/28/28 —
