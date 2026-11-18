@@ -171,14 +171,15 @@
   gap: var(--space-gap-related);
 }
 
-/* The Field label's typography (`.musy-field__label`), so a rating question
-   and an open one read as the same kind of thing. */
+/* The same type step as the open questions' Field labels around it, so a
+   rating question and an open one read as the same kind of thing: label-lg
+   since 2026-11-18 (see „THE QUESTIONS ONE TYPE STEP UP“). */
 .musie-nps__question {
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  letter-spacing: var(--type-label-md-tracking);
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  line-height: var(--type-label-lg-line);
+  letter-spacing: var(--type-label-lg-tracking);
   color: var(--on-surface);
   text-wrap: var(--text-wrap-label);
 }
@@ -347,16 +348,26 @@
   flex-direction: column;
   gap: var(--space-gap-stack);
 }
-/* The question reads like the other three. RadioGroupText sets its legend in
-   heading-sm, with no prop to step it down; the Field labels around it are
-   label-md (`.musy-field__label`), and a question twice their size reads as
-   a section heading. Its 12 to the options stays, as a label's to its field. */
+/* THE QUESTIONS ONE TYPE STEP UP — Ben, 2026-11-18, „ausprobieren“: every
+   question on the reflect step and in the thank-you survey is label-lg
+   (17–18px, medium) instead of the Field's own label-md (15–16px, regular).
+   label-lg is the step the app's own Einsteigen questions already wear
+   (SegmentedControl's legend), so a question reads the same before the
+   exercise and after it. The name window's „Dein Name“ is not a question and
+   keeps label-md.
+
+   Three kinds of label take it: the Fields' labels, the Ja/Nein question's
+   legend (RadioGroupText sets heading-sm there, with no prop to change it), and
+   the NPS questions (`.musie-nps__question`, below). Their 12 to the answer
+   stays, as a label's to its field. */
+.musie-reflexion-reflect .musy-field__label,
+.musie-reflexion-done .musy-field__label,
 .musie-reflexion-group .musy-radio-group__legend {
-  font-family: var(--type-label-md-family);
-  font-size: var(--type-label-md-size);
-  font-weight: var(--type-label-md-weight);
-  line-height: var(--type-label-md-line);
-  letter-spacing: var(--type-label-md-tracking);
+  font-family: var(--type-label-lg-family);
+  font-size: var(--type-label-lg-size);
+  font-weight: var(--type-label-lg-weight);
+  line-height: var(--type-label-lg-line);
+  letter-spacing: var(--type-label-lg-tracking);
   text-wrap: var(--text-wrap-label);
 }
 
