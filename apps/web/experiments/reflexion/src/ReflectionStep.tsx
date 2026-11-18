@@ -241,7 +241,9 @@ export function ReflectionStep() {
         }
       >
         <WizardIntro>
-          <h2 className="musie-reflect__welcome">{copy.reflectionHeading}</h2>
+          {/* The app's own reflect headline (Ben, 2026-11-18: „Nachdenken“ did
+              not fit), from the app's catalogue, so the two stay one string. */}
+          <h2 className="musie-reflect__welcome">{t('reflect.welcome.headline')}</h2>
         </WizardIntro>
         <WizardContent>
           <div
