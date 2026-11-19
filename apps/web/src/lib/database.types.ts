@@ -604,6 +604,45 @@ export type Database = {
         }
         Relationships: []
       }
+      experiment_responses: {
+        Row: {
+          answers: Json
+          created_at: string
+          exercise_key: string
+          experiment_id: string
+          id: string
+          is_internal: boolean
+          language: string
+          name: string
+          participant_id: string
+          question_set_version: number
+        }
+        Insert: {
+          answers: Json
+          created_at?: string
+          exercise_key: string
+          experiment_id: string
+          id?: string
+          is_internal?: boolean
+          language: string
+          name: string
+          participant_id: string
+          question_set_version: number
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          exercise_key?: string
+          experiment_id?: string
+          id?: string
+          is_internal?: boolean
+          language?: string
+          name?: string
+          participant_id?: string
+          question_set_version?: number
+        }
+        Relationships: []
+      }
       goal_i18n: {
         Row: {
           goal_id: string
@@ -1223,6 +1262,54 @@ export type Database = {
       }
     }
     Views: {
+      experiment_responses_wide: {
+        Row: {
+          created_at: string | null
+          exercise_key: string | null
+          experiment_id: string | null
+          id: string | null
+          is_internal: boolean | null
+          language: string | null
+          name: string | null
+          participant_id: string | null
+          q1: string | null
+          q2: string | null
+          q2_how: string | null
+          q3: string | null
+          question_set_version: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exercise_key?: string | null
+          experiment_id?: string | null
+          id?: string | null
+          is_internal?: boolean | null
+          language?: string | null
+          name?: string | null
+          participant_id?: string | null
+          q1?: never
+          q2?: never
+          q2_how?: never
+          q3?: never
+          question_set_version?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exercise_key?: string | null
+          experiment_id?: string | null
+          id?: string | null
+          is_internal?: boolean | null
+          language?: string | null
+          name?: string | null
+          participant_id?: string | null
+          q1?: never
+          q2?: never
+          q2_how?: never
+          q3?: never
+          question_set_version?: number | null
+        }
+        Relationships: []
+      }
       missing_cuts: {
         Row: {
           ending: string | null
