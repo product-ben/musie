@@ -12635,3 +12635,56 @@ came from `localhost:5180`.
 
 OPEN: should `VITE_POSTHOG_KEY` be set in the Cloudflare build? It would
 turn PostHog on for the app too. Asked Ben, with trade-offs.
+
+## Reflexion 01: the body scan played silence on musie.org — FIXED, how to stream is open
+
+Where: `apps/web/experiments/reflexion/src/shims/lib__audio.ts`
+
+Ben, 2026-11-19: „beim musie experiment … body-scan hört man den audio track
+nicht“.
+
+What I checked:
+
+- **musie.org ignores `Range`.** `curl -r 0-1` on `body-scan-de.mp3` and
+  `aura.mp3` returns `200` with the whole file, never `206`, on musie.org and
+  workers.dev alike. Workers static assets do not do byte ranges. The Vite dev
+  server does, which is why `experiment:reflexion:dev` never showed it. The
+  app's own tracks come from Supabase Storage, which does too.
+- **Safari on iOS needs ranges for `<audio>`.** It is Apple's documented rule
+  for media on iOS. Without them the element errors, the mixer's `onError`
+  hands the step to the simulated clock, and the timer runs over silence.
+  **Not tested on an iPhone:** none here, and Playwright's WebKit plays the
+  `200` without complaint. So this is the cause by elimination, not by
+  watching it fail.
+- **Desktop Chrome on the live page plays.** Real Chrome, `currentTime`
+  moving, both stems loaded. Freie Bahn's Aura has the same problem as the
+  body scan, Harfe has no audio file.
+
+What I did: the shim fetches each file whole when the page loads and gives
+the mixer a `blob:` URL. A browser seeks inside a blob without asking the
+server, so ranges no longer matter. Run with a local server that ignores
+`Range` the way Cloudflare does: Chrome and WebKit, body scan and Freie Bahn,
+all play from `blob:`. The body scan's music switch hands over at the same
+second. If the download fails, the page uses the plain URL, so it is never
+worse than before.
+
+The cost: the whole file must arrive before „Abspielen“ does anything. That is
+11.7 MB for the body scan (two stems) and 4.6 MB for Aura. On normal LTE or
+Wi-Fi it is a few seconds, spent while the intro is read. At 4 Mbit/s it is
+about 23 seconds of a play button that does nothing. There is no countdown
+over silence, but there is no spinner either.
+
+Why: it is the only fix that stays inside the experiment. The others change
+deployment.
+
+What I need from Ben: nothing, unless the wait on slow connections matters.
+If it does, either of these streams instead:
+- **A small Worker** that answers `Range` for `/experiments/*/media/*`. It
+  would be the repo's first Worker script; `wrangler.jsonc` has no `main`
+  on purpose today.
+- **The files on a host that answers ranges**, R2 or a public Supabase
+  Storage bucket. That is a new place where media lives, and Ben's to set up.
+
+Cheapest of all: re-encode the stems, which are 256 kbit/s stereo. At
+128 kbit/s the wait halves. That touches the audio itself, so it is Ben's
+call.
