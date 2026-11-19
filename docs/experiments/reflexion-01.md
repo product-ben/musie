@@ -49,20 +49,16 @@ ships it on every deploy.
 exercise copy, re-run the export (`experiments/reflexion/scripts/`) and
 deploy.
 
-**Copy that differs from the app (Ben, 2026-11-19).** Three places change
-words for this experiment only. The app's own content and catalogue stay
-as they are.
-- `src/data/copyFixes.ts` replaces exact texts in the baked exercise
-  content: „herankommen“ in the intros and the harp's texts (volume, the two
-  ways to play, the play heading, the pointer hint, the focus line). A fix
-  that stops matching after a re-export is reported in the dev console.
-- `src/shims/content__emotionWheel.ts` turns the feelings sheet's nouns
-  into adjectives (Angst → Ängstlich, Trauer → Trauernd …), in DE and EN.
-  Labels change, `id` and `i` do not.
-- `src/shims/i18n__localeContext.ts` lower-cases the word in the sheet's
-  „einfach nur {feeling}“, the one string where an adjective sits
-  mid-sentence. A picked word is appended to the answer in lower case too
-  (`ReflectionStep.tsx`).
+**Exercise copy and feelings are the app's.** Ben's copy round of
+2026-11-19 applies to the app and the experiment alike, so it was made at
+the source, and the experiment carries no copy of its own for those texts:
+- the intros and the instruments' texts by migration
+  (`20261119100000_copy_round_intros_and_instruments.sql`), then a re-export;
+- the feelings, adjectives only, in `supabase/content/emotion-wheel.yml`.
+
+The experiment's own words are only those in `config.ts`. A picked feeling
+is appended to the answer in lower case (`ReflectionStep.tsx`), because
+every feeling is an adjective now.
 
 ## Changing things
 

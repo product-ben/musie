@@ -63,10 +63,10 @@ const draft: Record<string, string> = {};
 /* The feelings picked through the sheet in this run, per question. */
 const draftPicks: Record<string, HeldFeeling[]> = {};
 
-/** A picked feeling's word, added to what is already written. Every word is an
-    adjective since 2026-11-19 (shims/content__emotionWheel.ts), so in running
-    text it is lower case: „Erst unruhig, glücklich“. It keeps its capital
-    only where it starts the answer or a new sentence. */
+/** A picked feeling's word, added to what is already written. Every word on
+    the wheel is an adjective since 2026-11-19 (emotion-wheel.yml), so in
+    running text it is lower case: „Erst unruhig, glücklich“. It keeps its
+    capital only where it starts the answer or a new sentence. */
 function withFeeling(text: string, word: string, locale: string): string {
   const trimmed = text.trimEnd();
   if (trimmed === '' || /[.!?…]$/.test(trimmed)) {

@@ -154,8 +154,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
   {
     "id": "trust",
     "i": 1,
-    "en": "Trust",
-    "de": "Vertrauen",
+    "en": "Trusting",
+    "de": "Vertrauensvoll",
     "detailed": [
       {
         "id": "grateful",
@@ -170,8 +170,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
           },
           {
             "i": 13,
-            "en": "Admiration",
-            "de": "Bewunderung"
+            "en": "Admiring",
+            "de": "Bewundernd"
           }
         ]
       },
@@ -220,7 +220,7 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
           {
             "i": 18,
             "en": "Longing",
-            "de": "Sehnsucht"
+            "de": "Sehnsüchtig"
           },
           {
             "i": 19,
@@ -234,8 +234,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
   {
     "id": "fear",
     "i": 2,
-    "en": "Fear",
-    "de": "Angst",
+    "en": "Afraid",
+    "de": "Ängstlich",
     "detailed": [
       {
         "id": "cautious",
@@ -295,12 +295,12 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
         "id": "anxious",
         "i": 13,
         "en": "Anxious",
-        "de": "Ängstlich",
+        "de": "Beunruhigt",
         "specific": [
           {
             "i": 26,
-            "en": "Dread",
-            "de": "Grauen"
+            "en": "Fearful",
+            "de": "Angsterfüllt"
           },
           {
             "i": 27,
@@ -350,8 +350,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
   {
     "id": "surprise",
     "i": 3,
-    "en": "Surprise",
-    "de": "Überraschung",
+    "en": "Surprised",
+    "de": "Überrascht",
     "detailed": [
       {
         "id": "startled",
@@ -361,8 +361,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
         "specific": [
           {
             "i": 32,
-            "en": "Awe",
-            "de": "Ehrfurcht"
+            "en": "Awestruck",
+            "de": "Ehrfürchtig"
           },
           {
             "i": 33,
@@ -447,7 +447,7 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
           {
             "i": 41,
             "en": "Miserable",
-            "de": "Elend"
+            "de": "Miserabel"
           }
         ]
       },
@@ -472,18 +472,18 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
       {
         "id": "grief",
         "i": 22,
-        "en": "Grief",
-        "de": "Trauer",
+        "en": "Grieving",
+        "de": "Trauernd",
         "specific": [
           {
             "i": 44,
-            "en": "Despair",
-            "de": "Verzweiflung"
+            "en": "Despairing",
+            "de": "Verzweifelt"
           },
           {
             "i": 45,
-            "en": "Sorrow",
-            "de": "Kummer"
+            "en": "Sorrowful",
+            "de": "Bekümmert"
           }
         ]
       },
@@ -546,19 +546,19 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
   {
     "id": "disgust",
     "i": 5,
-    "en": "Disgust",
-    "de": "Ekel",
+    "en": "Disgusted",
+    "de": "Angeekelt",
     "detailed": [
       {
         "id": "disapproval",
         "i": 26,
-        "en": "Disapproval",
-        "de": "Missbilligung",
+        "en": "Disapproving",
+        "de": "Missbilligend",
         "specific": [
           {
             "i": 52,
-            "en": "Ridicule",
-            "de": "Spott"
+            "en": "Mocking",
+            "de": "Spöttisch"
           },
           {
             "i": 53,
@@ -570,8 +570,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
       {
         "id": "dislike",
         "i": 27,
-        "en": "Dislike",
-        "de": "Abneigung",
+        "en": "Averse",
+        "de": "Abgeneigt",
         "specific": [
           {
             "i": 54,
@@ -606,8 +606,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
       {
         "id": "contempt",
         "i": 29,
-        "en": "Contempt",
-        "de": "Verachtung",
+        "en": "Contemptuous",
+        "de": "Verächtlich",
         "specific": [
           {
             "i": 58,
@@ -674,7 +674,7 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
           {
             "i": 64,
             "en": "Enraged",
-            "de": "Außer sich"
+            "de": "Wutentbrannt"
           },
           {
             "i": 65,
@@ -742,8 +742,8 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
   {
     "id": "anticipation",
     "i": 7,
-    "en": "Anticipation",
-    "de": "Erwartung",
+    "en": "Expectant",
+    "de": "Gespannt",
     "detailed": [
       {
         "id": "stressed",
@@ -759,7 +759,7 @@ export const EMOTION_WHEEL: readonly WheelEmotion[] = [
           {
             "i": 73,
             "en": "Pressured",
-            "de": "Unter Druck"
+            "de": "Bedrängt"
           }
         ]
       },

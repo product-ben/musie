@@ -111,12 +111,15 @@ describe('instruments · the three exercises', () => {
     }
   });
 
-  it('say „Duett mit Musie“ first, and the harp keeps its sheet headline (Ben, 2026-11-09)', async () => {
+  /* The harp's sheet headline is its own field since 2026-11-09. Its words
+     changed on 2026-11-19 (Ben's copy round,
+     20261119100000_copy_round_intros_and_instruments.sql). */
+  it('say „Duett mit Musie“ first, and the harp has its own sheet headline (Ben, 2026-11-09 / 11-19)', async () => {
     const { data } = await alice.from('exercise_i18n')
       .select('locale, mode_musie_label, mode_solo_label, focus_headline').eq('exercise_id', 'harp').order('locale');
     expect(data?.[0]).toEqual({
       locale: 'de', mode_musie_label: 'Duett mit Musie', mode_solo_label: 'Alleine',
-      focus_headline: 'Atme tief ein und aus. Spiele dabei Musies Harfe im Rhythmus deines Atems.',
+      focus_headline: 'Atme ruhig weiter. Spiele die Harfe so, wie es sich gut anfühlt.',
     });
   });
 

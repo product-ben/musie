@@ -12502,41 +12502,57 @@ That is acceptable for a page that lives a few weeks. If a second screen ever
 wants exercise cards, the face should be exported from the app, not copied
 again.
 
-## Experiment „Reflexion 01“: Ben's copy list after the live test — DONE, one item open, one consent note
+## A copy round for the app and the experiment: intros, instruments, adjective feelings — DONE, one item open, one consent note
 
-Where: `apps/web/experiments/reflexion/src/data/copyFixes.ts`,
-`src/shims/content__emotionWheel.ts`, `src/shims/i18n__localeContext.ts`,
-`src/config.ts` (consent, `q2`, `QUESTION_SET_VERSION` 4, the NPS
-questions and scale labels), `src/ReflectionStep.tsx`; PostHog survey
-`01a1e3ac-…` (question text and bound labels, IDs unchanged)
+Where: `supabase/migrations/20261119100000_copy_round_intros_and_instruments.sql`,
+`supabase/content/emotion-wheel.yml` → `apps/web/src/content/emotionWheel.ts`,
+`apps/web/src/lib/feelings.ts` (`inSentence`), `src/components/FeelingsSheet.tsx`,
+`src/routes/FeelingsSelection.tsx`; the experiment's `config.ts` and its
+re-exported `content.json`; PostHog survey `01a1e3ac-…` (texts, IDs unchanged)
 
-Ben, 2026-11-19, a list of wording changes after testing the live links. All
-of it is the EXPERIMENT's: the exercise content and the emotion wheel are
-the app's, and the brief keeps the app untouched. So the content changes
-are applied over the baked texts, and the wheel and one catalogue lookup are
-replaced by shims. None of them is a migration.
+Ben, 2026-11-19: a list of wording changes after testing the „Reflexion 01“
+links, and then: „these count for the experiment pages as well as the main
+app“. So they were made at the source. The experiment's first version of
+this (overrides of its own, only for the experiment) was taken out again
+before this merged.
 
-Corrections to the list itself:
-- „Saiten“ for „Seiten“.
-- A comma before a „wie“ clause, twice.
-- A comma before „um“.
-- No full stop on the play step's heading.
+In the app, by migration (`exercise_i18n` travels by migration only):
+- „heran kommen“ → „herankommen“, in all eight German intros.
+- The volume sentence, the same in all three instruments' intros: „Bei
+  mittlerer Lautstärke klingen die Instrumente am besten.“
+- The two ways to play and the play heading, for the harp AND the kalimba
+  and the marimba. Ben's list names the harp. The other two had the same
+  sentence with their own name, and a harp worded differently from its
+  siblings would be the odd one out. THIS IS MY EXTENSION of the list, and it
+  is one `values` row each to undo.
+- The harp's pointer hint and focus line. Only the harp's: the kalimba's
+  and the marimba's are different sentences.
+- English follows every German change except the typo.
+
+In the app, the wheel (`emotion-wheel.yml`):
+- Adjectives only, which RESOLVES the word-class conflict the catalogue
+  named in its comment over `feelings.prompt.chosen` (de.ts, now updated).
+- 20 words, in both languages, so for those the English is no longer the
+  source wheel's own word. The yml's header lists them.
+- „Ängstlich“ under the new „Ängstlich“ became „Beunruhigt“, and „Elend“
+  became „Miserabel“.
+- `id` and `i` are unchanged, and a stored feeling is a path of them
+  (20261016100000), so no saved feeling changes meaning.
+- Mid-sentence an adjective is lower case: `inSentence` serves „einfach nur
+  {feeling}“ (the sheet) and „Einfach {feeling}“ (/feelings-selection).
+  Strings that name the label as a choice („Du hast {feeling} gewählt“) keep
+  its capital.
+
+In the experiment only (its own copy, in `config.ts`):
+- the consent line, `q2` („… währenddessen verändert?“, version 4), the NPS
+  questions („Freund:innen“, „Kolleg:innen“) and the lower-case scale ends;
+- a picked feeling is appended in lower case.
+
+Corrections to the list's text:
+- „Saiten“ instead of „Seiten“.
+- A comma before a „wie“ clause and before „um“.
+- No full stop on a heading.
 - „am besten“ in lower case.
-
-The adjectives: 20 nouns or phrases in the wheel were replaced, in DE and
-EN (Angst → Ängstlich, Trauer → Trauernd, Unter Druck → Bedrängt …).
-Because the old „Ängstlich“ under „Angst“ would have repeated its new parent,
-it became „Beunruhigt“. „Elend“ became „Miserabel“, because capitalised it
-reads as the noun. Ids and positions are unchanged. Adjectives in running
-text are lower case, which needed two small follow-ons:
-- a picked word is appended in lower case („Erst unruhig, ängstlich“);
-- the sheet's „einfach nur {feeling}“ lower-cases its word.
-
-THE APP KEEPS THE OLD WORDS. „heran kommen“ is still in the app's intros
-(`20261116160000_intro_sentence.sql`, `20261012100000_listening_steps.sql`).
-The harp's texts and the wheel's nouns are unchanged there too. Taking them
-over would be a content migration for `exercise_i18n` and an edit of
-`supabase/content/emotion-wheel.yml`.
 
 CONSENT. Ben's new line names cookies only. The page still identifies the
 person by name in PostHog (the „names go to PostHog“ entry above), which the

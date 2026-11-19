@@ -42,6 +42,7 @@ import type { RadioOption } from '@musie/design-system';
 import { EMOTION_WHEEL } from '../content/emotionWheel';
 import type { WheelWord } from '../content/emotionWheel';
 import { useLocale, useT } from '../i18n/localeContext';
+import { inSentence } from '../lib/feelings';
 
 /** The active locale's side of a wheel word. */
 function word(entry: WheelWord, locale: 'en' | 'de'): string {
@@ -163,7 +164,7 @@ export function FeelingsSelection() {
           hint={t('feelings.ring.detailed.hint')}
           options={[
             ...options(emotion.detailed, locale),
-            { value: STOP, label: t('feelings.stop', { feeling: word(emotion, locale) }) },
+            { value: STOP, label: t('feelings.stop', { feeling: inSentence(word(emotion, locale), locale) }) },
           ]}
           value={stoppedAt === 'emotion' ? STOP : detailedI === null ? '' : String(detailedI)}
           onValueChange={chooseDetailed}
@@ -196,7 +197,7 @@ export function FeelingsSelection() {
           hint={t('feelings.ring.specific.hint')}
           options={[
             ...options(detailed.specific, locale),
-            { value: STOP, label: t('feelings.stop', { feeling: word(detailed, locale) }) },
+            { value: STOP, label: t('feelings.stop', { feeling: inSentence(word(detailed, locale), locale) }) },
           ]}
           value={stoppedAt === 'detailed' ? STOP : specificI === null ? '' : String(specificI)}
           onValueChange={chooseSpecific}
