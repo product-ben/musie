@@ -49,6 +49,21 @@ ships it on every deploy.
 exercise copy, re-run the export (`experiments/reflexion/scripts/`) and
 deploy.
 
+**Copy that differs from the app (Ben, 2026-11-19).** Three places change
+words for this experiment only. The app's own content and catalogue stay
+as they are.
+- `src/data/copyFixes.ts` replaces exact texts in the baked exercise
+  content: „herankommen“ in the intros and the harp's texts (volume, the two
+  ways to play, the play heading, the pointer hint, the focus line). A fix
+  that stops matching after a re-export is reported in the dev console.
+- `src/shims/content__emotionWheel.ts` turns the feelings sheet's nouns
+  into adjectives (Angst → Ängstlich, Trauer → Trauernd …), in DE and EN.
+  Labels change, `id` and `i` do not.
+- `src/shims/i18n__localeContext.ts` lower-cases the word in the sheet's
+  „einfach nur {feeling}“, the one string where an adjective sits
+  mid-sentence. A picked word is appended to the answer in lower case too
+  (`ReflectionStep.tsx`).
+
 ## Changing things
 
 Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
@@ -62,6 +77,8 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
     stored in German whatever the screen showed. Only „Ja“ shows `q2_how`
     („Beschreibe, wie sich deine Stimmung verändert hat“). A follow-up is
     declared with `showIf` and saved empty while it is hidden.
+  - Version 4 (2026-11-19) rewords `q2` to „Hat sich deine Stimmung
+    währenddessen verändert?“.
 - **The feelings help.** A question with `feelingsHelp: true` (today only
   `q2_how`) gets a small button inside its field, at the bottom end,
   labelled „Stimmung benennen“ (Figma node 190:15804, hardcoded for this
@@ -138,8 +155,10 @@ Nothing is sent before the person presses „Los geht’s“. That press is thei
 consent, and the modal says so. After it:
 - The person is identified by the participant UUID, and their **name is a
   person property** (Ben, 2026-11-18, so the dashboard can say who took
-  part). The modal's consent line says that measuring happens under their
-  name. The name is never an event property.
+  part). The name is never an event property. Since 2026-11-19 the modal's
+  consent line names cookies only („… dass wir Cookies verwenden, um Musie
+  zu verbessern“, Ben's wording). It no longer says that the measuring
+  happens under the person's name, though it still does.
 - Events: `exp_landing_viewed`, `exp_participant_started`,
   `exp_language_changed`, `exp_step_viewed` (`step_key`, `step_index`,
   `step_count`), `exp_audio_started`, `exp_audio_completed`,

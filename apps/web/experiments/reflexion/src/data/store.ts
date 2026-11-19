@@ -14,6 +14,7 @@ import type { StepId } from '../../../../src/routeHandle';
 import { BODY_SCAN_AUDIO_SRC, FREIE_BAHN } from '../config';
 import { RUN } from '../run';
 import baked from './content.json';
+import { applyCopyFixes } from './copyFixes';
 
 /* ── The baked content ────────────────────────────────────────────────────*/
 
@@ -26,6 +27,9 @@ interface Baked {
 }
 
 const CONTENT = baked as unknown as Baked;
+
+/* Ben's copy changes of 2026-11-19, over the baked texts (copyFixes.ts). */
+applyCopyFixes(CONTENT.exercises as unknown as Record<string, Record<string, unknown>>);
 
 /** The one exercise that deals a card, and only digitally, one card. */
 export const FREE_REIN = 'free-rein';

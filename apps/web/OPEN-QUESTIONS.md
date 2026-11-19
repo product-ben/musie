@@ -12501,3 +12501,48 @@ app's `exercises.css`. If the app's face changes, this copy does not follow.
 That is acceptable for a page that lives a few weeks. If a second screen ever
 wants exercise cards, the face should be exported from the app, not copied
 again.
+
+## Experiment „Reflexion 01“: Ben's copy list after the live test — DONE, one item open, one consent note
+
+Where: `apps/web/experiments/reflexion/src/data/copyFixes.ts`,
+`src/shims/content__emotionWheel.ts`, `src/shims/i18n__localeContext.ts`,
+`src/config.ts` (consent, `q2`, `QUESTION_SET_VERSION` 4, the NPS
+questions and scale labels), `src/ReflectionStep.tsx`; PostHog survey
+`01a1e3ac-…` (question text and bound labels, IDs unchanged)
+
+Ben, 2026-11-19, a list of wording changes after testing the live links. All
+of it is the EXPERIMENT's: the exercise content and the emotion wheel are
+the app's, and the brief keeps the app untouched. So the content changes
+are applied over the baked texts, and the wheel and one catalogue lookup are
+replaced by shims. None of them is a migration.
+
+Corrections to the list itself:
+- „Saiten“ for „Seiten“.
+- A comma before a „wie“ clause, twice.
+- A comma before „um“.
+- No full stop on the play step's heading.
+- „am besten“ in lower case.
+
+The adjectives: 20 nouns or phrases in the wheel were replaced, in DE and
+EN (Angst → Ängstlich, Trauer → Trauernd, Unter Druck → Bedrängt …).
+Because the old „Ängstlich“ under „Angst“ would have repeated its new parent,
+it became „Beunruhigt“. „Elend“ became „Miserabel“, because capitalised it
+reads as the noun. Ids and positions are unchanged. Adjectives in running
+text are lower case, which needed two small follow-ons:
+- a picked word is appended in lower case („Erst unruhig, ängstlich“);
+- the sheet's „einfach nur {feeling}“ lower-cases its word.
+
+THE APP KEEPS THE OLD WORDS. „heran kommen“ is still in the app's intros
+(`20261116160000_intro_sentence.sql`, `20261012100000_listening_steps.sql`).
+The harp's texts and the wheel's nouns are unchanged there too. Taking them
+over would be a content migration for `exercise_i18n` and an edit of
+`supabase/content/emotion-wheel.yml`.
+
+CONSENT. Ben's new line names cookies only. The page still identifies the
+person by name in PostHog (the „names go to PostHog“ entry above), which the
+line no longer says. Ben's call. It is written down here so that it was
+seen.
+
+OPEN: „Bilder größer, Instrumente größer“ was too short to build from:
+which pictures (the intro's, the deck's?), and which size of the
+instrument? Asked Ben.
