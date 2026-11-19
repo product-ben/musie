@@ -12567,3 +12567,32 @@ exceptions. Below 834 nothing changed, including the phone's 73 × 55 beside
 the headline. Asked whether the phone should grow too.
 
 OPEN: „Instrumente größer“: which instrument view, and how much? Asked Ben.
+
+## Same round: Freie Bahn's sentence, the body scan's crop, the listen card's ratio and clock — DONE
+
+Where: `apps/web/src/components/SessionIntro.tsx`, `src/components/SessionListen.tsx`,
+`src/shell.css`, `src/routes/{Session,ExerciseBuilder}.tsx`,
+`src/i18n/{de,en}.ts`, `e2e/digitalcards.spec.ts`
+
+Ben, 2026-11-19, for the app and the experiment alike:
+- **„Es gibt nichts vorzubereiten, legen wir los.“ is gone.** It was
+  Freie Bahn's line in digital mode. The key `session.intro.nothingToLayOut`
+  and the `dealsHere` prop that existed only for it went with it. The e2e
+  walk no longer looks for it.
+- **The body scan's intro picture crops from the right** (`object-position:
+  right center`, keyed by `data-exercise`). Its figure lies with the head on
+  the right, and the centre crop cut the head off on a phone and up to 833px.
+  Every other picture still crops from the centre.
+- **The card on the listen sheet keeps its proportions.** The height cap
+  (40 % / 50 % of the window) used to squash it: `Image` fills the width,
+  and only the height yielded. Now the width follows the cap at 1200 × 849,
+  measured at 1.41 at six window sizes.
+- **With a card, the listen sheet uses the marimba's small clock:**
+  `Countdown` at `compact`, driven by the same track. Its caption shows from
+  760px only, as on the marimba. Every other listening exercise keeps the
+  large clock.
+
+Ben's message asked for the card's „16:9 dimensions“. The card files are
+1200 × 849 (about 1.41:1, the printed card's format), not 16:9, so „keep the
+original dimensions“ is what was built. A 16:9 version would crop the card.
+Asked.

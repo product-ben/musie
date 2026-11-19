@@ -306,10 +306,8 @@ test('a one-card digital session draws on arrival and looks before it listens', 
   ).toBeVisible();
   await expect(rail.getByRole('button')).toHaveCount(4);
 
-  /* Einsteigen has nothing to prepare, and says so. */
-  await expect(
-    page.getByText(label(locale, 'session.intro.nothingToLayOut'), { exact: true }),
-  ).toBeVisible();
+  /* Einsteigen has nothing to prepare, and since 2026-11-19 (Ben) it no
+     longer says so: the line „Es gibt nichts vorzubereiten …“ is gone. */
 
   /* ── THE STEP DRAWS, NOT THE BUTTON ─────────────────────────────────────
      The forward action carries a label and nothing else; the card is written

@@ -98,12 +98,6 @@ export interface SessionIntroProps {
   cardsPresent?: boolean;
   onCardsPresentChange?: (present: boolean) => void;
   /**
-   * Whether this exercise lays its cards out on THIS step. False for a
-   * one-card exercise, which draws on Auswählen because its own paper copy
-   * does — and which therefore has nothing to prepare here, and says so.
-   */
-  dealsHere?: boolean;
-  /**
    * An instruments exercise's settings, made on this step (Ben, 2026-11-09):
    * how to play, the vibration, the motion sensor. Held in `Session.tsx`;
    * undefined for every other kind. `exercise.instrument` says whether there
@@ -138,7 +132,7 @@ const ENDING_GLYPH: Record<Ending, typeof Armchair> = {
  */
 export function SessionIntro({
   exercise, durationSeconds, posture, ending, onPostureChange, onEndingChange,
-  cardsPresent, onCardsPresentChange, dealsHere = false, instrumentSettings,
+  cardsPresent, onCardsPresentChange, instrumentSettings,
 }: SessionIntroProps) {
   const t = useT();
   /* The picture's width on a tablet follows the copy's height (Ben,
@@ -213,6 +207,9 @@ export function SessionIntro({
               src={fromRoot(exercise.imageUrl)}
               alt={exercise.imageAlt}
               decoding="async"
+              /* Which picture this is, for a crop that has to keep one part
+                 of it in view (shell.css: the body scan's head). */
+              data-exercise={exercise.id}
             />
           )}
         </div>
@@ -239,17 +236,10 @@ export function SessionIntro({
             offGlyph={Layers}
           />
 
-          {/* ── WHAT TAKES THE BODY COPY'S PLACE ──────────────────────────
-              Only where the exercise deals ONE card. A five-card exercise
-              needs no line: its forward action has just become *5 Karten
-              ziehen*, and the screen explains itself by moving.
-
-              Chrome rather than content, because it is true of every one-card
-              card exercise and talks about the MODE rather than about the
-              exercise (§6). */}
-          {digital && !dealsHere && (
-            <p className="musie-intro__note">{t('session.intro.nothingToLayOut')}</p>
-          )}
+          {/* NO LINE WHERE THE PAPER INSTRUCTION WAS. A one-card exercise in
+              digital mode said „Es gibt nichts vorzubereiten, legen wir los.“
+              here until 2026-11-19, when Ben took it out: the forward action
+              already says what happens next. */}
 
           {/* ── THE SCREEN IS SMALL, AND THAT IS ALL IT SAYS ─────────────
               Ben, 2026-10-14. Drawn whenever the cards are not on the table,

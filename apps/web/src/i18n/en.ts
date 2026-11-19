@@ -737,10 +737,6 @@ export const en = {
      this one; nothing here has to be true of a thing nobody has designed. */
   'session.intro.cardsPresent': 'I have the physical cards in front of me.',
 
-  /* Under the switch, and only where the exercise deals ONE card — there is
-     nothing to lay out, so the step says so instead of leaving a gap where an
-     instruction about paper used to be. */
-  'session.intro.nothingToLayOut': 'There is nothing to lay out, let’s start.',
   /* ── A SMALL SCREEN, SAID ONCE AND WITHOUT A GATE ────────────────────────
      Only in digital mode, and only below 850px — the width is a CSS decision
      and lives in `shell.css`, because what fits on a screen is not something a

@@ -2834,6 +2834,18 @@
   border-radius: var(--radius-sm);
 }
 
+/* THE BODY SCAN KEEPS ITS HEAD IN VIEW — Ben, 2026-11-19. Its figure lies
+   with the head at the right edge, and `cover` crops from the centre, so on a
+   phone (a cell narrower than 16:9) and up to 833px (a cell as tall as the
+   copy) the head was cut off first. This picture crops from the right
+   instead. From 834px the cell is 16:9 like the file, and nothing is cropped
+   (above). Keyed by the exercise (`data-exercise`, SessionIntro.tsx) because
+   where the head sits is this picture's own fact; every other picture crops
+   from the centre. */
+.musie-intro__image[data-exercise='body-scan-soundwalk'] {
+  object-position: right center;
+}
+
 /* FROM 480px THE PICTURE STANDS BESIDE THE WHOLE COLUMN — Ben, 2026-11-16,
    the *Bodyscan · Einsteigen · 572* frame: a THIRD of the row, 16:9, top
    right, 12 from the copy (158 of a 474 panel at 572). Below 480 it is the
@@ -3271,12 +3283,24 @@
 
    THE BLOCK CAP STAYS, bounded by the viewport rather than by the picture's
    own ratio: on a landscape phone the sheet is 390px tall and an unbounded
-   picture would push the clock off the bottom. `block-size: auto` from the
-   component plus a `max-block-size` here means the ratio holds and the height
-   is what yields. */
+   picture would push the clock off the bottom.
+
+   ── AND THE WIDTH YIELDS WITH IT — Ben, 2026-11-19 ───────────────────────
+   „es wird gedrückt … es sollten immer die originalen dimensions behalten
+   werden“. The comment here used to promise that the ratio holds. It did not:
+   `Image` fills its container's width, so where the cap bit, the box kept
+   its full width, lost height, and the card was squashed (2.6:1 on a
+   728px-wide window). Now the width is the smaller of the container's and
+   what the cap allows at the card's own proportions, 1200 × 849 (the size
+   `SessionListen` passes, and the deck's), so the picture shrinks as a whole.
+   `aspect-ratio: auto …` lets the loaded file's own ratio win if a card is
+   ever drawn at another one. */
 .musie-immersive__card {
+  --musie-card-cap: calc(var(--viewport-block) * 0.4);
   align-self: start;
-  max-block-size: calc(var(--viewport-block) * 0.4);
+  inline-size: min(100%, calc(var(--musie-card-cap) * 1200 / 849));
+  aspect-ratio: auto 1200 / 849;
+  max-block-size: var(--musie-card-cap);
   border-radius: var(--radius-md);
 }
 
@@ -3305,9 +3329,9 @@
   }
 
   .musie-immersive__body:has(.musie-immersive__card) .musie-immersive__card {
-    /* A little taller where the row is half the width. The leading edge is
-       the base rule's and needs no restating. */
-    max-block-size: calc(var(--viewport-block) * 0.5);
+    /* A little taller where the row is half the width. The leading edge, the
+       width that follows the cap and the ratio are the base rule's. */
+    --musie-card-cap: calc(var(--viewport-block) * 0.5);
   }
 }
 

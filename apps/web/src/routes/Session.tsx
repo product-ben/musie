@@ -1412,10 +1412,6 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
               /* LOCAL, so the rail relabels under the thumb rather than after
                  a round trip. */
               onCardsPresentChange={(present) => setDigitalCards(!present)}
-              /* Where the cards are laid out, for the line that stands where
-                 the paper instruction was: an exercise dealing one card has
-                 nothing to prepare on this step. */
-              dealsHere={dealt !== null && dealt > 1}
               instrumentSettings={instrument === null ? undefined : {
                 mode: playMode,
                 onModeChange: setPlayMode,
