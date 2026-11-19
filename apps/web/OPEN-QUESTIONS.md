@@ -12688,3 +12688,50 @@ If it does, either of these streams instead:
 Cheapest of all: re-encode the stems, which are 256 kbit/s stereo. At
 128 kbit/s the wait halves. That touches the audio itself, so it is Ben's
 call.
+
+## Experiments: audio and video stream from a public `experiments` bucket — DONE, one upload is Ben's
+
+Where: `supabase/migrations/20261119170000_experiments_media_bucket.sql`,
+`apps/web/experiments/reflexion/src/shims/lib__audio.ts`,
+`apps/web/scripts/experiments-media-upload.mjs`
+
+Follows the entry above. Ben first kept the download fix (#92). Then he asked
+why the app streams and the experiment cannot. The reason is the host. The
+app's signed `tracks` URLs come from Supabase Storage, which answers `Range`.
+The experiment's files sit in `public/`, where Cloudflare answers `200`. He
+chose a public Supabase bucket over a Worker, „for the public experiments on
+/experiments, where we need way less content than in the private one“.
+
+What I did:
+
+- **A public bucket, `experiments`**, audio and video only, with no write
+  policy. The object key is the path below `/experiments/`.
+- **The page asks the bucket for two bytes of each file at load.** `206`
+  means it streams from there. Anything else falls back to #92's download, so
+  merging before the upload is safe and a forgotten upload is slow, not mute.
+- **`pnpm experiments:media`** uploads every file in a `media/` folder under
+  `public/experiments/` and fails unless each answers `206`. The instruments'
+  `samples/` are left out: they are fetched whole and need no range.
+- **`experimentsMedia.db.test.ts`**: public, the type list, and uploads
+  refused for a visitor and a signed-in user. With an insert policy added by
+  hand, the two refusals go red.
+
+Measured on the local stack: the bucket answers `206` with CORS open. A build
+pointed at it and served with no range support, like Cloudflare, streams the
+body scan and Aura in Chrome and WebKit. WebKit makes Safari's `bytes=0-1`
+first request. The music switch hands over at the same second. With Aura
+removed from the bucket, Freie Bahn falls back to the download and plays.
+**Hosted is not measured yet**, because the files are not uploaded there.
+
+Not changed: the files stay in `public/` as well, as the source for the
+upload and for the fallback. `pnpm test:db` locally: the new tests pass, six
+content-parity tests fail on the shared stack (`deck.json` and `music.json`
+against the stack's content), the same family that fails on hosted in CI.
+
+What I need from Ben: after the merge, run `pnpm experiments:media` from the
+main checkout (it uses the CLI's login, no key). It prints `206` for each file
+when streaming is on. Separately, `aura.mp3` (trk-10, Martin Landh,
+`licenceRef: null`) has been in this PUBLIC repository since `cea968b`.
+`music-upload.mjs` keeps masters out of git for exactly that reason. If Aura
+is an Epidemic Sound track, that is a licensing question about the repo, not
+about the bucket.

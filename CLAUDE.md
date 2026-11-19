@@ -31,6 +31,7 @@ pnpm workspace (`pnpm-workspace.yaml`), Node 22, pnpm pinned by `packageManager`
 | `pnpm deck:migration` | **retired 2026-10-14.** Refuses, and says where the deck is edited now |
 | `pnpm content:export` | the database → `deck.json`, `music.json`'s pieces and `grid.json`. The snapshot, not the source |
 | `pnpm deck:pdf` | the paper deck, print-ready, from `deck.json` |
+| `pnpm experiments:media` | audio and video in `media/` folders under `apps/web/public/experiments` → the public `experiments` bucket on hosted, then checks that each answers `206`. `--local` for the local stack |
 
 Planning documents: `BUILD-PLAN.md` (phases, and what "done" means),
 `DOMAIN-MODEL.md` (schema and its open questions),
@@ -346,6 +347,14 @@ raw scale tokens), not 6 and 7 (catalogue strings), not L14, not LEGAL-PAGES
   the visitor agrees (the harp makes agreeing the condition of taking part); no
   secret in the file (the PostHog project key is public by design); nothing is
   written to Supabase; `<meta name="robots" content="noindex">`.
+- **Audio and video stream from the `experiments` bucket, not from `public/`.**
+  musie.org serves `public/` as Workers static assets, which ignore `Range`,
+  and Safari on iOS plays no `<audio>` or `<video>` without it. The failure is
+  silent: desktop Chrome and the dev server play fine. That is how the
+  Reflexion body scan shipped mute on iPhones (2026-11-19). Keep the file in a
+  `media/` folder under the experiment and run `pnpm experiments:media`. Only
+  what is already public goes in; a licensed master stays in `tracks`
+  (`20261119170000_experiments_media_bucket.sql`).
 - **The first one:** `/experiments/harp/261104-1252/`, built from the artifact
   „Harfe v29“. Its survey is PostHog's own popover ("Harp experiment
   evaluation"), triggered by the page's `harp_countdown_finished` event — so
