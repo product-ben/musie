@@ -53,10 +53,10 @@
  */
 import * as React from 'react';
 import {
-  ButtonGroup, ContentList, Button, Image, Message, MusicPlayer, Sheet, Switch, TrackButton,
-  useScrollSnap, useViewportFill,
+  ButtonGroup, ContentList, Button, Countdown, Image, Message, MusicPlayer, Sheet, Switch,
+  TrackButton, useScrollSnap, useViewportFill,
 } from '@musie/design-system';
-import type { ContentListItem, LightboxOrigin } from '@musie/design-system';
+import type { ContentListItem, CountdownState, LightboxOrigin } from '@musie/design-system';
 import { ArrowDown, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Markdown } from './Markdown';
@@ -72,6 +72,18 @@ import { bodyOnly, headingOnly, parseMarkdown, plainText } from '../lib/markdown
 
 /** The simulated clock's tick. Four a second, so the countdown does not stutter. */
 const TICK_MS = 250;
+
+/**
+ * The track's transport as a `Countdown` state, for the card's small clock.
+ * The same reading TrackButton makes of the same three numbers: playing is
+ * running, a head at the end is ended (it offers a restart), a head anywhere
+ * else is paused, and a head at the start is unstarted.
+ */
+function listenState(playing: boolean, position: number, duration: number): CountdownState {
+  if (playing) return 'running';
+  if (duration > 0 && position >= duration) return 'ended';
+  return position > 0 ? 'paused' : 'unstarted';
+}
 
 /**
  * The step's picture, as a bare path — the same shape and the same reason as
@@ -1651,6 +1663,33 @@ export function SessionListen({
               />
             )}
 
+            {/* ── WITH A CARD, THE MARIMBA'S SMALL CLOCK — Ben, 2026-11-19 ──
+                „Nimm hier den kleineren Counter wie bei Marimba“: the system's
+                `Countdown` at `compact`, one row in heading-md, so the card is
+                the large thing on the screen. The figure, the transport and
+                the sentence are the same three as below, driven by the same
+                track. The caption shows from 760px only, as on the marimba;
+                below that the locked way on says what the figure means.
+                `announcement=""`, because this clock never spoke before and a
+                new voice is not part of the change.
+
+                WITHOUT A CARD (every other listening exercise) the large clock
+                below stays as it was. */}
+            {digital && card !== null ? (
+              <Countdown
+                className="musie-immersive__clock"
+                size="compact"
+                remainingSeconds={remaining}
+                state={listenState(playing, position, duration)}
+                onToggle={toggle}
+                caption={met ? doneText : t('session.listen.immersiveCountdown')}
+                trackLabel={t('session.listen.track')}
+                playLabel={t('session.listen.play')}
+                pauseLabel={t('session.listen.pause')}
+                restartLabel={t('session.listen.restart')}
+                announcement=""
+              />
+            ) : (
             <div className="musie-immersive__clock">
               <div className="musie-immersive__meter">
                 <p
@@ -1691,6 +1730,7 @@ export function SessionListen({
                 {met ? doneText : t('session.listen.immersiveCountdown')}
               </p>
             </div>
+            )}
 
             {/* ── THE WAY ON, AT THE TRAILING EDGE — Ben, 2026-10-07 ──────
                 Right-aligned, and alone in its row until the switch joined it.

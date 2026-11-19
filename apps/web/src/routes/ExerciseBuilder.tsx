@@ -288,7 +288,6 @@ function PreviewBody({
                its negative — same reading as `Session.tsx`. */
             cardsPresent={offersModes ? mode === 'analogue' : undefined}
             onCardsPresentChange={() => { /* the mode is a control above. */ }}
-            dealsHere={(config.catalogue.cardsDealt ?? 0) > 1}
           />
         )}
 

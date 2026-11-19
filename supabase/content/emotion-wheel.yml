@@ -11,6 +11,28 @@
 # Happy, and the same sweep inside every ring. Nothing here is sorted
 # alphabetically — the sequence is the picture.
 #
+# ── ADJECTIVES ONLY (Ben, 2026-11-19) ─────────────────────────────────────
+# Every word answers „Ich fühle mich …“ / "I feel …". The transcription mixed
+# adjectives with nouns (Trust, Fear, Grief, Sorrow …), which no sentence can
+# hold both of. 20 words were replaced in both languages, so for those the
+# English is no longer the source wheel's own word:
+#   Trust/Vertrauen → Trusting/Vertrauensvoll, Fear/Angst → Afraid/Ängstlich,
+#   Surprise → Surprised/Überrascht, Disgust/Ekel → Disgusted/Angeekelt,
+#   Anticipation/Erwartung → Expectant/Gespannt, Admiration → Admiring,
+#   Longing/Sehnsucht → Longing/Sehnsüchtig, Dread/Grauen → Fearful/
+#   Angsterfüllt, Awe → Awestruck/Ehrfürchtig, Grief/Trauer → Grieving/
+#   Trauernd, Despair → Despairing/Verzweifelt, Sorrow/Kummer → Sorrowful/
+#   Bekümmert, Disapproval → Disapproving/Missbilligend, Ridicule/Spott →
+#   Mocking/Spöttisch, Dislike/Abneigung → Averse/Abgeneigt, Contempt/
+#   Verachtung → Contemptuous/Verächtlich.
+# Three German words changed although they were not nouns:
+#   - „Ängstlich“ under the new „Ängstlich“ became „Beunruhigt“, so it does
+#     not repeat its parent;
+#   - „Elend“ became „Miserabel“, because capitalised it reads as the noun;
+#   - „Unter Druck“ and „Außer sich“ became „Bedrängt“ and „Wutentbrannt“.
+# `id` and `i` are untouched: they are the identity, and a stored feeling is a
+# path of them (20261016100000), so no saved feeling changes meaning.
+#
 # ── WHERE EACH FEELING SITS ───────────────────────────────────────────────
 # Every node carries its position, because the wheel is a circle and the
 # useful questions are about neighbours.
@@ -138,8 +160,8 @@ emotions:
   - id: trust
     i: 1
     deg: [45, 90]
-    en: Trust
-    de: Vertrauen
+    en: Trusting
+    de: Vertrauensvoll
     detailed:
       - id: grateful
         i: 6
@@ -148,7 +170,7 @@ emotions:
         de: Dankbar
         specific:
           - { i: 12, deg: [45, 50.625],     en: Blessed,    de: Gesegnet    }
-          - { i: 13, deg: [50.625, 56.25],  en: Admiration, de: Bewunderung }
+          - { i: 13, deg: [50.625, 56.25],  en: Admiring, de: Bewundernd }
 
       - id: peaceful
         i: 7
@@ -174,14 +196,14 @@ emotions:
         en: Hopeful
         de: Hoffnungsvoll
         specific:
-          - { i: 18, deg: [78.75, 84.375],  en: Longing,   de: Sehnsucht      }
+          - { i: 18, deg: [78.75, 84.375],  en: Longing,   de: Sehnsüchtig      }
           - { i: 19, deg: [84.375, 90],     en: Expectant, de: Erwartungsvoll }
 
   - id: fear
     i: 2
     deg: [90, 135]
-    en: Fear
-    de: Angst
+    en: Afraid
+    de: Ängstlich
     detailed:
       - id: cautious
         i: 10
@@ -214,9 +236,9 @@ emotions:
         i: 13
         deg: [112.5, 120]
         en: Anxious
-        de: Ängstlich
+        de: Beunruhigt
         specific:
-          - { i: 26, deg: [112.5, 116.25],  en: Dread,   de: Grauen  }
+          - { i: 26, deg: [112.5, 116.25],  en: Fearful,   de: Angsterfüllt  }
           - { i: 27, deg: [116.25, 120],    en: Panicky, de: Panisch }
 
       - id: nervous
@@ -240,8 +262,8 @@ emotions:
   - id: surprise
     i: 3
     deg: [135, 180]
-    en: Surprise
-    de: Überraschung
+    en: Surprised
+    de: Überrascht
     detailed:
       - id: startled
         i: 16
@@ -249,7 +271,7 @@ emotions:
         en: Startled
         de: Aufgeschreckt
         specific:
-          - { i: 32, deg: [135, 140.625],     en: Awe,     de: Ehrfurcht  }
+          - { i: 32, deg: [135, 140.625],     en: Awestruck,     de: Ehrfürchtig  }
           - { i: 33, deg: [140.625, 146.25],  en: Shocked, de: Schockiert }
 
       - id: confused
@@ -292,7 +314,7 @@ emotions:
         de: Unglücklich
         specific:
           - { i: 40, deg: [180, 183.75],    en: Hopeless,  de: Hoffnungslos }
-          - { i: 41, deg: [183.75, 187.5],  en: Miserable, de: Elend        }
+          - { i: 41, deg: [183.75, 187.5],  en: Miserable, de: Miserabel        }
 
       - id: depressed
         i: 21
@@ -306,11 +328,11 @@ emotions:
       - id: grief
         i: 22
         deg: [195, 202.5]
-        en: Grief
-        de: Trauer
+        en: Grieving
+        de: Trauernd
         specific:
-          - { i: 44, deg: [195, 198.75],    en: Despair, de: Verzweiflung }
-          - { i: 45, deg: [198.75, 202.5],  en: Sorrow,  de: Kummer       }
+          - { i: 44, deg: [195, 198.75],    en: Despairing, de: Verzweifelt }
+          - { i: 45, deg: [198.75, 202.5],  en: Sorrowful,  de: Bekümmert       }
 
       - id: hurt
         i: 23
@@ -342,23 +364,23 @@ emotions:
   - id: disgust
     i: 5
     deg: [225, 270]
-    en: Disgust
-    de: Ekel
+    en: Disgusted
+    de: Angeekelt
     detailed:
       - id: disapproval
         i: 26
         deg: [225, 236.25]
-        en: Disapproval
-        de: Missbilligung
+        en: Disapproving
+        de: Missbilligend
         specific:
-          - { i: 52, deg: [225, 230.625],     en: Ridicule,   de: Spott        }
+          - { i: 52, deg: [225, 230.625],     en: Mocking,   de: Spöttisch        }
           - { i: 53, deg: [230.625, 236.25],  en: Judgmental, de: Verurteilend }
 
       - id: dislike
         i: 27
         deg: [236.25, 247.5]
-        en: Dislike
-        de: Abneigung
+        en: Averse
+        de: Abgeneigt
         specific:
           - { i: 54, deg: [236.25, 241.875],  en: Awful,    de: Furchtbar }
           - { i: 55, deg: [241.875, 247.5],   en: Appalled, de: Empört    }
@@ -375,8 +397,8 @@ emotions:
       - id: contempt
         i: 29
         deg: [258.75, 270]
-        en: Contempt
-        de: Verachtung
+        en: Contemptuous
+        de: Verächtlich
         specific:
           - { i: 58, deg: [258.75, 264.375],  en: Detestable, de: Abscheulich }
           - { i: 59, deg: [264.375, 270],     en: Envious,    de: Neidisch    }
@@ -411,7 +433,7 @@ emotions:
         en: Mad
         de: Zornig
         specific:
-          - { i: 64, deg: [285, 288.75],    en: Enraged, de: Außer sich }
+          - { i: 64, deg: [285, 288.75],    en: Enraged, de: Wutentbrannt }
           - { i: 65, deg: [288.75, 292.5],  en: Furious, de: Rasend     }
 
       - id: upset
@@ -444,8 +466,8 @@ emotions:
   - id: anticipation
     i: 7
     deg: [315, 360]
-    en: Anticipation
-    de: Erwartung
+    en: Expectant
+    de: Gespannt
     detailed:
       - id: stressed
         i: 36
@@ -454,7 +476,7 @@ emotions:
         de: Gestresst
         specific:
           - { i: 72, deg: [315, 320.625],     en: Overwhelmed, de: Überfordert }
-          - { i: 73, deg: [320.625, 326.25],  en: Pressured,   de: Unter Druck }
+          - { i: 73, deg: [320.625, 326.25],  en: Pressured,   de: Bedrängt }
 
       - id: interested
         i: 37

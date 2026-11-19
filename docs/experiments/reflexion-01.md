@@ -49,6 +49,17 @@ ships it on every deploy.
 exercise copy, re-run the export (`experiments/reflexion/scripts/`) and
 deploy.
 
+**Exercise copy and feelings are the app's.** Ben's copy round of
+2026-11-19 applies to the app and the experiment alike, so it was made at
+the source, and the experiment carries no copy of its own for those texts:
+- the intros and the instruments' texts by migration
+  (`20261119100000_copy_round_intros_and_instruments.sql`), then a re-export;
+- the feelings, adjectives only, in `supabase/content/emotion-wheel.yml`.
+
+The experiment's own words are only those in `config.ts`. A picked feeling
+is appended to the answer in lower case (`ReflectionStep.tsx`), because
+every feeling is an adjective now.
+
 ## Changing things
 
 Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
@@ -62,6 +73,8 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
     stored in German whatever the screen showed. Only „Ja“ shows `q2_how`
     („Beschreibe, wie sich deine Stimmung verändert hat“). A follow-up is
     declared with `showIf` and saved empty while it is hidden.
+  - Version 4 (2026-11-19) rewords `q2` to „Hat sich deine Stimmung
+    währenddessen verändert?“.
 - **The feelings help.** A question with `feelingsHelp: true` (today only
   `q2_how`) gets a small button inside its field, at the bottom end,
   labelled „Stimmung benennen“ (Figma node 190:15804, hardcoded for this
@@ -138,8 +151,10 @@ Nothing is sent before the person presses „Los geht’s“. That press is thei
 consent, and the modal says so. After it:
 - The person is identified by the participant UUID, and their **name is a
   person property** (Ben, 2026-11-18, so the dashboard can say who took
-  part). The modal's consent line says that measuring happens under their
-  name. The name is never an event property.
+  part). The name is never an event property. Since 2026-11-19 the modal's
+  consent line names cookies only („… dass wir Cookies verwenden, um Musie
+  zu verbessern“, Ben's wording). It no longer says that the measuring
+  happens under the person's name, though it still does.
 - Events: `exp_landing_viewed`, `exp_participant_started`,
   `exp_language_changed`, `exp_step_viewed` (`step_key`, `step_index`,
   `step_count`), `exp_audio_started`, `exp_audio_completed`,

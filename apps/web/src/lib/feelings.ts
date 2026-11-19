@@ -53,6 +53,20 @@ function word(node: WheelWord, locale: Locale): string {
   return locale === 'de' ? node.de : node.en;
 }
 
+/**
+ * A wheel word INSIDE a sentence, lower case: „einfach nur ängstlich“.
+ *
+ * Every word on the wheel is an adjective since 2026-11-19
+ * (`supabase/content/emotion-wheel.yml`), and an adjective in running text
+ * is not capitalised. The labels keep their capital, because a label starts
+ * its line. Use this only where a string carries the word mid-sentence; a
+ * string that names the label as a choice („Du hast {feeling} gewählt“)
+ * keeps it as written.
+ */
+export function inSentence(feeling: string, locale: Locale): string {
+  return feeling.charAt(0).toLocaleLowerCase(locale) + feeling.slice(1);
+}
+
 function emotionOf(id: string): WheelEmotion | undefined {
   return EMOTION_WHEEL.find((e) => e.id === id);
 }

@@ -14,8 +14,9 @@ export const EXPERIMENT_ID = 'reflexion-01';
 export const ENABLED = true;
 
 /** 1 was the placeholder set (local test rows only); 2 is Lucy's wording,
-    2026-11-16; 3 splits q2 into Ja/Nein and a follow-up (Ben, 2026-11-18). */
-export const QUESTION_SET_VERSION = 3;
+    2026-11-16; 3 splits q2 into Ja/Nein and a follow-up (Ben, 2026-11-18);
+    4 rewords q2 to „… währenddessen verändert?“ (Ben, 2026-11-19). */
+export const QUESTION_SET_VERSION = 4;
 
 export type Slug = 'harfe' | 'body-scan' | 'freie-bahn';
 
@@ -78,8 +79,8 @@ export const QUESTIONS: readonly ReflectionQuestion[] = [
     question_key: 'q2',
     kind: 'yesNo',
     text: {
-      de: 'Hat sich deine Stimmung während des Zuhörens bzw. des Spielens verändert?',
-      en: 'Did your mood change while you were listening or playing?',
+      de: 'Hat sich deine Stimmung währenddessen verändert?',
+      en: 'Did your mood change along the way?',
     },
   },
   {
@@ -130,6 +131,9 @@ export const BODY_SCAN_AUDIO_SRC = '/experiments/reflexion/media/body-scan-de.mp
  *
  * Ben's wording with two fixes: „am besten“ is lower case (Duden: the
  * superlative with „am“), and the wish question gets its question mark.
+ * Reworded 2026-11-19 (Ben): „Freund:innen“ / „Kolleg:innen“, and „zum
+ * Entspannen“ after the people. The IDs stayed, so the dashboard is
+ * unaffected.
  */
 export const SURVEY = {
   id: '01a1e3ac-14f6-0000-babb-e48bb67229f0',
@@ -139,14 +143,14 @@ export const SURVEY = {
       kind: 'rating',
       id: '5c858623-7760-47f1-962e-68bbfe1e3405',
       question:
-        'Wie wahrscheinlich ist es, dass du diese Übung zum Entspannen deinen FreundInnen oder deiner Familie empfehlen würdest?',
+        'Wie wahrscheinlich ist es, dass du diese Übung deinen Freund:innen oder deiner Familie zum Entspannen empfehlen würdest?',
     },
     {
       key: 'npsColleagues',
       kind: 'rating',
       id: 'aee57a83-e5d9-4fc1-9344-ecbb1e663533',
       question:
-        'Wie wahrscheinlich ist es, dass du diese Übung zum Entspannen deinen KollegInnen empfehlen würdest?',
+        'Wie wahrscheinlich ist es, dass du diese Übung deinen Kolleg:innen zum Entspannen empfehlen würdest?',
     },
     {
       key: 'wish',
@@ -184,12 +188,11 @@ const de = {
   nameLabel: 'Dein Name',
   nameRequired: 'Bitte gib deinen Namen ein.',
   start: 'Los geht’s',
-  /* Ben's wording, Figma node 280:2973, 2026-11-18. It replaced two lines:
-     the one on who reads the answers, and the one promising that the text
-     fields are not measured. The comma after „nutzt“ closes the inserted
-     clause, and the full stop ends the sentence. Figma has neither. */
+  /* Ben's wording, 2026-11-19, replacing the one from Figma node 280:2973
+     (measuring under your name, and follow-up questions). The comma before
+     „um“ is the infinitive clause's; the full stop ends the sentence. */
   consent:
-    'Mit „Los geht’s“ bist du einverstanden, dass wir unter deinem Namen messen, wie du die Übung nutzt, und dich eventuell mit Rückfragen kontaktieren.',
+    'Wenn du „Los geht’s“ klickst, bist du einverstanden, dass wir Cookies verwenden, um Musie zu verbessern.',
   modalClose: 'Schließen',
 
   reflectionHeading: 'Nachdenken',
@@ -211,8 +214,9 @@ const de = {
   surveyQuestions: Object.fromEntries(
     SURVEY.questions.map((q) => [q.key, q.question]),
   ) as Record<SurveyKey, string>,
-  npsLow: 'Unwahrscheinlich',
-  npsHigh: 'Sehr wahrscheinlich',
+  /* Lower case (Ben, 2026-11-19): the ends of a scale, not headings. */
+  npsLow: 'unwahrscheinlich',
+  npsHigh: 'sehr wahrscheinlich',
   /* What a screen reader hears on a slider nobody has touched yet. */
   npsUnset: 'Noch keine Auswahl',
   sendFeedback: 'Feedback senden',
@@ -242,7 +246,7 @@ const en: Copy = {
   nameRequired: 'Please enter your name.',
   start: 'Let’s start',
   consent:
-    'By pressing “Let’s start” you agree that we measure, under your name, how you use the exercise, and that we may contact you with follow-up questions.',
+    'By clicking “Let’s start” you agree that we use cookies to improve Musie.',
   modalClose: 'Close',
 
   reflectionHeading: 'Reflect',
@@ -258,13 +262,13 @@ const en: Copy = {
 
   thanksHeadline: 'Thank you for taking part in our experiment.',
   surveyQuestions: {
-    npsFriends: 'How likely are you to recommend this exercise for relaxing to your friends or family?',
-    npsColleagues: 'How likely are you to recommend this exercise for relaxing to your colleagues?',
+    npsFriends: 'How likely are you to recommend this exercise to your friends or family for relaxing?',
+    npsColleagues: 'How likely are you to recommend this exercise to your colleagues for relaxing?',
     wish: 'What would you like to be different?',
     best: 'What did you like best?',
   },
-  npsLow: 'Unlikely',
-  npsHigh: 'Very likely',
+  npsLow: 'unlikely',
+  npsHigh: 'very likely',
   npsUnset: 'Nothing chosen yet',
   sendFeedback: 'Send feedback',
   anotherExercise: 'Up for another exercise?',

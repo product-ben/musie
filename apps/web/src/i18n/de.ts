@@ -548,7 +548,6 @@ export const de: Messages = {
      Siehe `en.ts` für die Begründungen. Register: §1 du und Imperativ
      Singular, §2 Satzanfang groß, §3 Verb zuerst, §7 Gedankenstrich. */
   'session.intro.cardsPresent': 'Die analogen Karten liegen vor mir.',
-  'session.intro.nothingToLayOut': 'Es gibt nichts vorzubereiten, legen wir los.',
   /* Bens Satz, auf den Standard gebracht (§7, §8): 'Bildschirmen' statt
      'Biuldschirmen', 'optimale' klein, 'Größe' mit ß, und das Komma vor dem
      Relativsatz. */
@@ -1633,11 +1632,15 @@ export const de: Messages = {
   /* `/feelings-selection`. Die 128 Gefühle stehen NICHT hier — sie sind die
      Worte des Rads, zweisprachig in `content/emotionWheel.ts`.
 
-     `feelings.prompt.chosen` berichtet statt zu formulieren: das Rad mischt
+     `feelings.prompt.chosen` berichtet statt zu formulieren: das Rad mischte
      Adjektive (Glücklich) und Substantive (Vertrauen), und ein Satz kann nur
      eines von beiden tragen – „Ich fühle mich Vertrauen" ist falsch, „Ich
      fühle glücklich" auch. Die Frage steht im leeren Zustand, das Wort danach
-     für sich. Siehe die offene Frage zum Wortartenkonflikt. */
+     für sich. SEIT 2026-11-19 SIND ES NUR NOCH ADJEKTIVE (Ben;
+     `emotion-wheel.yml`), der Konflikt ist damit aufgelöst. Ein Wort mitten
+     im Satz steht klein (`inSentence` in lib/feelings.ts, für
+     `feelings.stop` und `reflect.feelings.sheet.just`). Ein Satz wie
+     „Ich fühle mich {feeling}“ wäre jetzt möglich, ist aber nicht gebaut. */
   'feelings.sheet.title': 'Finde das Wort für dein Gefühl',
   'feelings.sheet.close': 'Schließen',
   'feelings.sheet.next': 'Weiter',

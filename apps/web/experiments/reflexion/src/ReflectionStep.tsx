@@ -63,11 +63,17 @@ const draft: Record<string, string> = {};
 /* The feelings picked through the sheet in this run, per question. */
 const draftPicks: Record<string, HeldFeeling[]> = {};
 
-/** A picked feeling's word, added to what is already written. */
-function withFeeling(text: string, word: string): string {
+/** A picked feeling's word, added to what is already written. Every word on
+    the wheel is an adjective since 2026-11-19 (emotion-wheel.yml), so in
+    running text it is lower case: „Erst unruhig, glücklich“. It keeps its
+    capital only where it starts the answer or a new sentence. */
+function withFeeling(text: string, word: string, locale: string): string {
   const trimmed = text.trimEnd();
-  if (trimmed === '') return word;
-  return /[.!?…:;,–-]$/.test(trimmed) ? `${trimmed} ${word}` : `${trimmed}, ${word}`;
+  if (trimmed === '' || /[.!?…]$/.test(trimmed)) {
+    return trimmed === '' ? word : `${trimmed} ${word}`;
+  }
+  const lower = word.charAt(0).toLocaleLowerCase(locale) + word.slice(1);
+  return /[:;,–-]$/.test(trimmed) ? `${trimmed} ${lower}` : `${trimmed}, ${lower}`;
 }
 
 const FIELD_SIZING = typeof CSS !== 'undefined'
@@ -158,7 +164,7 @@ export function ReflectionStep() {
     const held = heldFor(key);
     const feelingId = idOf(path);
     if (held.some((h) => h.id === feelingId)) return 'already-held';
-    const next = withFeeling(draft[key] ?? answers[key] ?? '', word);
+    const next = withFeeling(draft[key] ?? answers[key] ?? '', word, locale);
     change(key, next);
     const nextPicks = [...held, { ...path, id: feelingId, label: word }];
     draftPicks[key] = nextPicks;

@@ -12501,3 +12501,98 @@ app's `exercises.css`. If the app's face changes, this copy does not follow.
 That is acceptable for a page that lives a few weeks. If a second screen ever
 wants exercise cards, the face should be exported from the app, not copied
 again.
+
+## A copy round for the app and the experiment: intros, instruments, adjective feelings — DONE, one item open, one consent note
+
+Where: `supabase/migrations/20261119100000_copy_round_intros_and_instruments.sql`,
+`supabase/content/emotion-wheel.yml` → `apps/web/src/content/emotionWheel.ts`,
+`apps/web/src/lib/feelings.ts` (`inSentence`), `src/components/FeelingsSheet.tsx`,
+`src/routes/FeelingsSelection.tsx`; the experiment's `config.ts` and its
+re-exported `content.json`; PostHog survey `01a1e3ac-…` (texts, IDs unchanged)
+
+Ben, 2026-11-19: a list of wording changes after testing the „Reflexion 01“
+links, and then: „these count for the experiment pages as well as the main
+app“. So they were made at the source. The experiment's first version of
+this (overrides of its own, only for the experiment) was taken out again
+before this merged.
+
+In the app, by migration (`exercise_i18n` travels by migration only):
+- „heran kommen“ → „herankommen“, in all eight German intros.
+- The volume sentence, the same in all three instruments' intros: „Bei
+  mittlerer Lautstärke klingen die Instrumente am besten.“
+- The two ways to play and the play heading, for the harp AND the kalimba
+  and the marimba. Ben's list names the harp. The other two had the same
+  sentence with their own name, and a harp worded differently from its
+  siblings would be the odd one out. THIS IS MY EXTENSION of the list, and it
+  is one `values` row each to undo.
+- The harp's pointer hint and focus line. Only the harp's: the kalimba's
+  and the marimba's are different sentences.
+- English follows every German change except the typo.
+
+In the app, the wheel (`emotion-wheel.yml`):
+- Adjectives only, which RESOLVES the word-class conflict the catalogue
+  named in its comment over `feelings.prompt.chosen` (de.ts, now updated).
+- 20 words, in both languages, so for those the English is no longer the
+  source wheel's own word. The yml's header lists them.
+- „Ängstlich“ under the new „Ängstlich“ became „Beunruhigt“, and „Elend“
+  became „Miserabel“.
+- `id` and `i` are unchanged, and a stored feeling is a path of them
+  (20261016100000), so no saved feeling changes meaning.
+- Mid-sentence an adjective is lower case: `inSentence` serves „einfach nur
+  {feeling}“ (the sheet) and „Einfach {feeling}“ (/feelings-selection).
+  Strings that name the label as a choice („Du hast {feeling} gewählt“) keep
+  its capital.
+
+In the experiment only (its own copy, in `config.ts`):
+- the consent line, `q2` („… währenddessen verändert?“, version 4), the NPS
+  questions („Freund:innen“, „Kolleg:innen“) and the lower-case scale ends;
+- a picked feeling is appended in lower case.
+
+Corrections to the list's text:
+- „Saiten“ instead of „Seiten“.
+- A comma before a „wie“ clause and before „um“.
+- No full stop on a heading.
+- „am besten“ in lower case.
+
+CONSENT. Ben's new line names cookies only. The page still identifies the
+person by name in PostHog (the „names go to PostHog“ entry above), which the
+line no longer says. Ben's call. It is written down here so that it was
+seen.
+
+„Bilder größer“ — DONE, Ben's answer: the Einsteigen picture. From 834px
+it is a third of the row, at most 300px, 16:9, top right (`shell.css`).
+That replaces the tablet's picture as tall as the copy (now only 480–833)
+and the desktop's fifth. 834 and 300 are his numbers, flagged as L14.1
+exceptions. Below 834 nothing changed, including the phone's 73 × 55 beside
+the headline. Asked whether the phone should grow too.
+
+OPEN: „Instrumente größer“: which instrument view, and how much? Asked Ben.
+
+## Same round: Freie Bahn's sentence, the body scan's crop, the listen card's ratio and clock — DONE
+
+Where: `apps/web/src/components/SessionIntro.tsx`, `src/components/SessionListen.tsx`,
+`src/shell.css`, `src/routes/{Session,ExerciseBuilder}.tsx`,
+`src/i18n/{de,en}.ts`, `e2e/digitalcards.spec.ts`
+
+Ben, 2026-11-19, for the app and the experiment alike:
+- **„Es gibt nichts vorzubereiten, legen wir los.“ is gone.** It was
+  Freie Bahn's line in digital mode. The key `session.intro.nothingToLayOut`
+  and the `dealsHere` prop that existed only for it went with it. The e2e
+  walk no longer looks for it.
+- **The body scan's intro picture crops from the right** (`object-position:
+  right center`, keyed by `data-exercise`). Its figure lies with the head on
+  the right, and the centre crop cut the head off on a phone and up to 833px.
+  Every other picture still crops from the centre.
+- **The card on the listen sheet keeps its proportions.** The height cap
+  (40 % / 50 % of the window) used to squash it: `Image` fills the width,
+  and only the height yielded. Now the width follows the cap at 1200 × 849,
+  measured at 1.41 at six window sizes.
+- **With a card, the listen sheet uses the marimba's small clock:**
+  `Countdown` at `compact`, driven by the same track. Its caption shows from
+  760px only, as on the marimba. Every other listening exercise keeps the
+  large clock.
+
+Ben's message asked for the card's „16:9 dimensions“. The card files are
+1200 × 849 (about 1.41:1, the printed card's format), not 16:9, so „keep the
+original dimensions“ is what was built. A 16:9 version would crop the card.
+Asked.

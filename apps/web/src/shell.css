@@ -2834,6 +2834,18 @@
   border-radius: var(--radius-sm);
 }
 
+/* THE BODY SCAN KEEPS ITS HEAD IN VIEW — Ben, 2026-11-19. Its figure lies
+   with the head at the right edge, and `cover` crops from the centre, so on a
+   phone (a cell narrower than 16:9) and up to 833px (a cell as tall as the
+   copy) the head was cut off first. This picture crops from the right
+   instead. From 834px the cell is 16:9 like the file, and nothing is cropped
+   (above). Keyed by the exercise (`data-exercise`, SessionIntro.tsx) because
+   where the head sits is this picture's own fact; every other picture crops
+   from the centre. */
+.musie-intro__image[data-exercise='body-scan-soundwalk'] {
+  object-position: right center;
+}
+
 /* FROM 480px THE PICTURE STANDS BESIDE THE WHOLE COLUMN — Ben, 2026-11-16,
    the *Bodyscan · Einsteigen · 572* frame: a THIRD of the row, 16:9, top
    right, 12 from the copy (158 of a 474 panel at 572). Below 480 it is the
@@ -2872,8 +2884,11 @@
    copy reaches its measure and stops, and a `1fr` column would push the
    picture to the row's end, 124 away at 1023px instead of 12. `max-content`
    respects the copy's own max-inline-size, so the picture always stands 12
-   from the text and any spare width is left after it. */
-@media (min-width: 480px) and (max-width: 1023.98px) {
+   from the text and any spare width is left after it.
+
+   UP TO 833px since 2026-11-19: from 834 the picture is a third of the row
+   (below). The hook still writes its property there; nothing reads it. */
+@media (min-width: 480px) and (max-width: 833.98px) {
   .musie-intro__head:has(> .musie-intro__image) {
     grid-template-columns: minmax(0, max-content) var(--musie-intro-image-inline, calc(100% / 3));
   }
@@ -2885,11 +2900,28 @@
   }
 }
 
-/* From 1024px a FIFTH, 32 from the copy (186 of a 931 panel): the desktop
-   frames, unchanged. */
+/* FROM 834px A THIRD OF THE ROW, AT MOST 300px — Ben, 2026-11-19: „Bilder
+   größer … Ab 834 px kann das Bild ruhig 1/3 der width ausfüllen, mit einer
+   max width von 300 px“. It replaces two rules: the tablet's picture as tall
+   as the copy (still in force from 480 to 833), and the desktop's fifth. 16:9
+   at the top of its cell, at the row's end (the frames' „aligned top
+   right“), so the copy's column is `1fr` again.
+
+   834 AND 300 ARE L14.1 EXCEPTIONS, like the 660 in exercises.css: Ben's
+   numbers, not tokens. 834 is the tablet frame Figma draws (the same width
+   the 2026-11-17 rule was annotated on), and 300 is the cap, which the
+   third reaches at a row of 900, about a 1000px window. A breakpoint cannot
+   be a custom property anyway. */
+@media (min-width: 834px) {
+  .musie-intro__head:has(> .musie-intro__image) {
+    grid-template-columns: minmax(0, 1fr) min(calc(100% / 3), 300px);
+  }
+}
+
+/* From 1024px, 32 from the copy instead of 12: the desktop frames' gap,
+   unchanged. */
 @media (min-width: 1024px) {
   .musie-intro__head:has(> .musie-intro__image) {
-    grid-template-columns: minmax(0, 1fr) calc(100% * 0.2);
     column-gap: var(--space-gap-group);
   }
 }
@@ -3251,12 +3283,24 @@
 
    THE BLOCK CAP STAYS, bounded by the viewport rather than by the picture's
    own ratio: on a landscape phone the sheet is 390px tall and an unbounded
-   picture would push the clock off the bottom. `block-size: auto` from the
-   component plus a `max-block-size` here means the ratio holds and the height
-   is what yields. */
+   picture would push the clock off the bottom.
+
+   ── AND THE WIDTH YIELDS WITH IT — Ben, 2026-11-19 ───────────────────────
+   „es wird gedrückt … es sollten immer die originalen dimensions behalten
+   werden“. The comment here used to promise that the ratio holds. It did not:
+   `Image` fills its container's width, so where the cap bit, the box kept
+   its full width, lost height, and the card was squashed (2.6:1 on a
+   728px-wide window). Now the width is the smaller of the container's and
+   what the cap allows at the card's own proportions, 1200 × 849 (the size
+   `SessionListen` passes, and the deck's), so the picture shrinks as a whole.
+   `aspect-ratio: auto …` lets the loaded file's own ratio win if a card is
+   ever drawn at another one. */
 .musie-immersive__card {
+  --musie-card-cap: calc(var(--viewport-block) * 0.4);
   align-self: start;
-  max-block-size: calc(var(--viewport-block) * 0.4);
+  inline-size: min(100%, calc(var(--musie-card-cap) * 1200 / 849));
+  aspect-ratio: auto 1200 / 849;
+  max-block-size: var(--musie-card-cap);
   border-radius: var(--radius-md);
 }
 
@@ -3285,9 +3329,9 @@
   }
 
   .musie-immersive__body:has(.musie-immersive__card) .musie-immersive__card {
-    /* A little taller where the row is half the width. The leading edge is
-       the base rule's and needs no restating. */
-    max-block-size: calc(var(--viewport-block) * 0.5);
+    /* A little taller where the row is half the width. The leading edge, the
+       width that follows the cap and the ratio are the base rule's. */
+    --musie-card-cap: calc(var(--viewport-block) * 0.5);
   }
 }
 

@@ -54,7 +54,7 @@ import * as React from 'react';
 import { ButtonGroup, Button, DrillDown, Message, RadioGroupText, Sheet } from '@musie/design-system';
 import type { DrillDownLevel, DrillDownNode } from '@musie/design-system';
 import { useLocale, useT } from '../i18n/localeContext';
-import { FEELINGS_SOFT_CAP, idOf, pathOf, wheelAsTree } from '../lib/feelings';
+import { FEELINGS_SOFT_CAP, idOf, inSentence, pathOf, wheelAsTree } from '../lib/feelings';
 import type { HeldFeeling } from '../lib/feelings';
 
 export interface FeelingsSheetProps {
@@ -321,7 +321,8 @@ export function FeelingsSheet({
         onPick={pick}
         disabledIds={heldIds}
         onDepthChange={(next, stop) => { setDepth(next); setStopId(stop); }}
-        stopLabel={(parent) => t('reflect.feelings.sheet.just', { feeling: parent })}
+        /* Mid-sentence, so lower case: „einfach nur ängstlich“ (inSentence). */
+        stopLabel={(parent) => t('reflect.feelings.sheet.just', { feeling: inSentence(parent, locale) })}
         backLabel={(parent) => t('reflect.feelings.sheet.back', { feeling: parent })}
         levelLabel={(parent, count) => t('reflect.feelings.sheet.level', {
           feeling: parent, count: String(count),
