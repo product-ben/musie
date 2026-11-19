@@ -12688,3 +12688,12 @@ If it does, either of these streams instead:
 Cheapest of all: re-encode the stems, which are 256 kbit/s stereo. At
 128 kbit/s the wait halves. That touches the audio itself, so it is Ben's
 call.
+
+**Decided, Ben, 2026-11-19: this fix.** He asked why the app streams and the
+experiment cannot. The reason is the host. The app's signed `tracks` URLs come
+from Supabase Storage, which answers `Range`: `206`, 2 bytes, measured on the
+local stack. The experiment cannot use that bucket because it is closed to
+`anon`, so its files sit in `public/`, where Cloudflare answers `200`. He was
+offered a public Supabase bucket, which would stream like the app, and chose
+to keep this fix. Do not reopen that unless the wait on slow connections
+shows up in testing.
