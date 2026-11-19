@@ -12559,6 +12559,11 @@ person by name in PostHog (the „names go to PostHog“ entry above), which the
 line no longer says. Ben's call. It is written down here so that it was
 seen.
 
-OPEN: „Bilder größer, Instrumente größer“ was too short to build from:
-which pictures (the intro's, the deck's?), and which size of the
-instrument? Asked Ben.
+„Bilder größer“ — DONE, Ben's answer: the Einsteigen picture. From 834px
+it is a third of the row, at most 300px, 16:9, top right (`shell.css`).
+That replaces the tablet's picture as tall as the copy (now only 480–833)
+and the desktop's fifth. 834 and 300 are his numbers, flagged as L14.1
+exceptions. Below 834 nothing changed, including the phone's 73 × 55 beside
+the headline. Asked whether the phone should grow too.
+
+OPEN: „Instrumente größer“: which instrument view, and how much? Asked Ben.

@@ -2,7 +2,8 @@
  * Keeps `--musie-intro-image-inline` on the Einsteigen head in step with the
  * height of the copy beside the picture. The rule is `introImageWidth` in
  * `lib/introImage.ts`; this is the browser half, and `shell.css` is the only
- * reader — it uses the property between 480 and 1023px and ignores it
+ * reader — it uses the property between 480 and 833px (1023px until
+ * 2026-11-19, when 834 and up became a third of the row) and ignores it
  * everywhere else, so this hook needs to know no breakpoint.
  *
  * ── ONE FRAME LATER, ON PURPOSE ───────────────────────────────────────────
