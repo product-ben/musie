@@ -65,6 +65,13 @@ The experiment's own words are only those in `config.ts`. A picked feeling
 is appended to the answer in lower case (`ReflectionStep.tsx`), because
 every feeling is an adjective now.
 
+**Freie Bahn's card goes full screen on a phone turned sideways** (Ben,
+2026-11-19). On Ansehen and on the listen sheet, a touch screen in landscape
+under 500px tall shows the card alone, whole (`contain`, black bars), over
+everything else. The music and the countdown keep running underneath, and
+turning the phone back shows the step as it was. This lives in
+`src/experiment.css` only, so the app's own session is unchanged.
+
 ## Changing things
 
 Everything lives in `apps/web/experiments/reflexion/src/config.ts`:

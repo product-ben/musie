@@ -431,3 +431,51 @@
     background-color: var(--interactive-ghost-active);
   }
 }
+
+/* ═══ THE CARD, FULL SCREEN ON A PHONE TURNED SIDEWAYS ══════════════════════
+   Ben, 2026-11-19: „wenn man das Handy auf mobile ins Querformat dreht, sollte
+   das Bild full screen werden“. Freie Bahn is the only link with a card, and
+   it shows it twice: on Ansehen (`SessionView`, `.musie-cardshow__art`) and on
+   the listen sheet (`SessionListen`, `.musie-immersive__card`). Turned
+   sideways, a phone has ~390px of height and the card was either under the
+   fold or a third of the screen beside a cramped clock.
+
+   CSS ONLY, and only here: `Session.tsx` and its steps stay the app's,
+   unmodified (vite.config.ts). The picture is lifted out of the flow and over
+   everything, music and countdown keep running underneath, and turning the
+   phone back returns the step exactly as it was. Nothing to tap.
+
+   `contain`, not `cover`: the card is a composition at 1200 × 849 and a phone
+   is ~2.2:1, so cover would cut a third off the top and bottom („es sollten
+   immer die originalen dimensions behalten werden“, the same day). The bars
+   are black, and so is the page behind them, so that Safari's notch insets —
+   painted in the page's background, since there is no `viewport-fit=cover` —
+   are black too rather than sand.
+
+   `pointer: coarse` keeps a short desktop window out; `max-height: 500px`
+   keeps a tablet on its side out (its screen is tall enough for the step). */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  html:has(:is(.musie-cardshow__art, .musie-immersive__card)) {
+    background-color: #000;
+  }
+
+  .musie-cardshow__art,
+  .musie-immersive__card {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-toast);
+    inline-size: 100%;
+    block-size: 100%;
+    max-inline-size: none;
+    max-block-size: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+    border-radius: 0;
+    background-color: #000;
+  }
+
+  /* The ↗ on Ansehen's picture would sit under it, still reachable by Tab. */
+  .musy-image-frame:has(> .musie-cardshow__art) > .musy-image-frame__action {
+    display: none;
+  }
+}
