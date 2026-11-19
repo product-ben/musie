@@ -115,6 +115,7 @@ wrangler.jsonc            the whole host configuration
 | `pnpm db:sync` | push merged migrations to hosted. Guarded |
 | `pnpm deck:migration` · `pnpm deck:pdf` | the deck |
 | `pnpm music:upload` · `pnpm music:migration` | the music |
+| `pnpm experiments:media` | an experiment's audio and video → the public `experiments` bucket, which streams |
 | `pnpm gen:types` | regenerate `database.types.ts` — **denied**, see rule 9 |
 
 ## `reference/` is inherited, not current

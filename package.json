@@ -18,6 +18,7 @@
     "deck:pdf": "pnpm --filter web run deck:pdf --",
     "music:migration": "pnpm --filter web run music:migration --",
     "music:upload": "pnpm --filter web run music:upload --",
+    "experiments:media": "pnpm --filter web run experiments:media --",
     "content:export": "pnpm --filter web run content:export --"
   },
   "devDependencies": {
