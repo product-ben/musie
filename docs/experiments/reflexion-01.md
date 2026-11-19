@@ -30,6 +30,11 @@ browser is a test, including through the plain link.
 A local dev run (`localhost:5180`) is always internal, because the dev
 server sends to the real PostHog project.
 
+The PostHog key is written into `src/track.ts`, as on the harp's page. The
+production build has no `VITE_POSTHOG_KEY`, so before 2026-11-19 the live
+links sent nothing to PostHog. Every event and survey answer from before
+then is from a local run.
+
 **Local:** run `pnpm --filter web experiment:reflexion:dev`, then open
 `http://localhost:5180/experiments/reflexion/harfe/`. It talks to the local
 Supabase stack named in `apps/web/.env.local`.

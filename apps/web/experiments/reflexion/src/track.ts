@@ -33,8 +33,16 @@ import {
 import { RUN } from './run';
 
 const EU_CLOUD = 'https://eu.i.posthog.com';
-const key = import.meta.env.VITE_POSTHOG_KEY;
-const host = import.meta.env.VITE_POSTHOG_HOST ?? EU_CLOUD;
+
+/* THE KEY IS IN THE FILE, as on the harp's page (CLAUDE.md rule 10: a
+   PostHog project key is public by design). The production build has no
+   VITE_POSTHOG_KEY, so until 2026-11-19 the live pages sent nothing at all:
+   every event and survey answer in the project came from localhost. The
+   variable still wins when it is set; the app's own lib/posthog.ts is
+   unchanged and stays off in production. */
+const PROJECT_KEY = 'phc_rtUPNdTgxrSVvoCnVbaZNitHtsdsTTJ5FnNZxwi8XXXm';
+const key = import.meta.env.VITE_POSTHOG_KEY || PROJECT_KEY;
+const host = import.meta.env.VITE_POSTHOG_HOST || EU_CLOUD;
 
 /** Never an event property. */
 const NEVER_SEND = ['name', 'answer', 'answers', 'text'];

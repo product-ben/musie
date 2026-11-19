@@ -12613,3 +12613,25 @@ the device, so a tester's „Test“ came back on every later link.
 - `returning_participant` keeps its meaning: same device and same name.
 - The entry above that says „the name is pre-filled“ on the next exercise's
   page no longer holds. That page asks again, empty.
+
+## Reflexion 01: the live pages sent nothing to PostHog — FIXED
+
+Where: `apps/web/experiments/reflexion/src/track.ts`
+
+Found 2026-11-19, when Ben's incognito run on musie.org did not show up.
+`track.ts` read the key from `VITE_POSTHOG_KEY` only, and the Cloudflare
+build has no such variable. The live bundle had no key, so PostHog never
+started. All 371 Reflexion events and all 11 survey answers in the project
+came from `localhost:5180`.
+
+- **The key is now in the file**, as on the harp's page (rule 10: the
+  project key is public by design). The variable still wins when set.
+- **The app is not touched.** `lib/posthog.ts` still reads only the
+  variable, so the app stays without analytics in production. Turning that
+  on is a separate decision (consent card, LEGAL-PAGES) and Ben's.
+- **What was lost:** PostHog's half of every live run before the fix,
+  including the survey answers. The reflection texts went to Supabase, and
+  that path never depended on the key.
+
+OPEN: should `VITE_POSTHOG_KEY` be set in the Cloudflare build? It would
+turn PostHog on for the app too. Asked Ben, with trade-offs.
