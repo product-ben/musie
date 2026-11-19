@@ -22,8 +22,9 @@
  * ── A PRESS LEAVES THE PAGE ───────────────────────────────────────────────
  * Each exercise is its own static page (rule 10), so a card is a full page
  * load of `/experiments/reflexion/<slug>/`, not a route. The browser keeps
- * the participant and a test device's mark (`run.ts`), so the next page
- * pre-fills the name. The press there is a fresh consent. `busy` holds the
+ * the participant and a test device's mark (`run.ts`). The next page asks
+ * for the name again, empty; the same name keeps the same participant
+ * (NameModal.tsx). The press there is a fresh consent. `busy` holds the
  * card lifted until the page goes.
  *
  * The heading takes focus when this replaces the survey, so a screen reader

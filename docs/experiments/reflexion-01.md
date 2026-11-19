@@ -103,9 +103,11 @@ Everything lives in `apps/web/experiments/reflexion/src/config.ts`:
 - **After „Feedback senden“** there is no success message. The page shows
   the thanks, „Lust auf eine weitere Übung?“ and main's card deck with the
   three exercises (`src/NextExercises.tsx`). The one just done is at the
-  bottom of the pile. A press opens that exercise's link with the name
-  pre-filled. Whoever goes on shows up in PostHog as
-  `exp_participant_started` with `returning_participant: true`.
+  bottom of the pile. A press opens that exercise's link. The name field
+  is empty there, as on every link. Whoever types the same name again
+  stays the same participant and shows up in PostHog as
+  `exp_participant_started` with `returning_participant: true`. A
+  different name on the same device is a new participant.
 
 ## Ending the experiment
 
