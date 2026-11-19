@@ -1,7 +1,8 @@
 /**
  * The experiment's own state: who is taking part, and the copy in the active
  * language. Participant = `{ id, name }` in localStorage, so a second link on
- * the same device pre-fills the name and reuses the id.
+ * the same device reuses the id when the same name is typed again
+ * (NameModal.tsx). The name is never pre-filled.
  */
 import * as React from 'react';
 import { useLocale } from '../../../src/i18n/localeContext';

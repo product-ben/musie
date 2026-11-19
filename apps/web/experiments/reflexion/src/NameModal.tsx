@@ -10,8 +10,13 @@
  * `mandatory`: no X, no outside dismiss, and with no `onOpenChange` Escape
  * cannot close it either — the run needs a name.
  *
- * A second link on the same device pre-fills the stored name and keeps the
- * stored id, so one person is one participant across exercises.
+ * THE FIELD STARTS EMPTY, on every link (Ben, 2026-11-19: once someone had
+ * typed „Test“, every later link opened with „Test“ in it). The stored id is
+ * kept only when the same name is typed again, give or take case and spaces,
+ * so one person is still one participant across exercises, and a second
+ * person on the same device is a second participant. Before, the id was
+ * kept whatever was typed, and two testers on one laptop were one person in
+ * PostHog.
  */
 import * as React from 'react';
 import { Button, Field, Lightbox } from '@musie/design-system';
@@ -36,6 +41,11 @@ export function uuidV4(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+function sameName(a: string, b: string): boolean {
+  const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+  return norm(a) === norm(b);
+}
+
 function focusName() {
   document.getElementById(FIELD_ID)?.querySelector('input')?.focus();
 }
@@ -44,7 +54,7 @@ export function NameModal() {
   const copy = useCopy();
   const { start } = useExperiment();
   const stored = React.useMemo(readStoredParticipant, []);
-  const [name, setName] = React.useState(stored?.name ?? '');
+  const [name, setName] = React.useState('');
   const [missing, setMissing] = React.useState(false);
 
   /* Focus into the field once the dialog has mounted and run its own initial
@@ -62,7 +72,8 @@ export function NameModal() {
       focusName();
       return;
     }
-    start({ id: stored?.id ?? uuidV4(), name: trimmed });
+    const keepId = stored !== null && sameName(stored.name, trimmed);
+    start({ id: keepId ? stored.id : uuidV4(), name: trimmed });
   };
 
   return (

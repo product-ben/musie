@@ -12596,3 +12596,20 @@ Ben's message asked for the card's „16:9 dimensions“. The card files are
 1200 × 849 (about 1.41:1, the printed card's format), not 16:9, so „keep the
 original dimensions“ is what was built. A 16:9 version would crop the card.
 Asked.
+
+## Reflexion 01: the name is never pre-filled — DONE
+
+Where: `apps/web/experiments/reflexion/src/NameModal.tsx`
+
+Ben, 2026-11-19: „Der Name ist immer prefilled mit "Test" --> name sollte
+nicht prefilled sein.“ The modal filled the field with the name stored on
+the device, so a tester's „Test“ came back on every later link.
+
+- **The field starts empty on every link.**
+- **The stored id is kept only when the same name is typed again**, give or
+  take case and spaces. Before, it was kept whatever was typed, so two
+  testers on one laptop were one participant in PostHog, with the second
+  name overwriting the first. Now a different name is a new participant.
+- `returning_participant` keeps its meaning: same device and same name.
+- The entry above that says „the name is pre-filled“ on the next exercise's
+  page no longer holds. That page asks again, empty.
