@@ -994,11 +994,9 @@ export function SessionListen({
          goes from every screen; what identifies a card to somebody holding the
          deck is the code stamped on its back.
 
-         DISPLAY ONLY, AND DELIBERATELY SO. `card_i18n.feeling` is `not null`,
-         `deck.mjs` refuses an empty one, and `deck:pdf` prints the word on the
-         physical FRONT of MC-06…MC-09, which have no artwork master — emptying
-         the data would print four blank cards. So four render sites change and
-         no migration does. */
+         The word is no longer even read (2026-11-20): `deck:pdf` still prints
+         it on the physical front of the cards with no artwork master, from
+         the `deck.json` export, so the data stays and the app lets it go. */
       content: card.code,
     }]),
     /* THE DESCRIPTION WITHOUT ITS HEADLINE. `ContentList` takes a label and a
@@ -1280,7 +1278,20 @@ export function SessionListen({
       />
       )}
 
-      {audio === null ? (
+      {audio === null && exercise.kind === 'card_based' ? (
+        /* A CARD WITH NO PIECE IN THIS MODE — two tracks per card, PRD D8.
+           Not the simulated clock and not the quiet info line: under
+           „entspannen" a card plays its relax piece or nothing, and nothing
+           has to say so. The way out is the step's own Back, which returns to
+           the card — no second control for the same act. */
+        <Message
+          variant="error"
+          live="off"
+          headingLevel={3}
+          headline={t('session.listen.noCardTrack')}
+          text={t('session.listen.noCardTrackText')}
+        />
+      ) : audio === null ? (
         <Message
           variant="info"
           live="off"

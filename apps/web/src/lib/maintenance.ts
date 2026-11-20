@@ -30,6 +30,11 @@ export interface MaintenanceCard {
   valence: number | null;
   arousal: number | null;
   archived_at: string | null;
+  /** The card's own picture and its two pieces — 2026-11-20. They move with
+   *  the card; `image_url` is projected from `artwork_id`. */
+  artwork_id: string | null;
+  activation_track_id: string | null;
+  relax_track_id: string | null;
 }
 
 /**
@@ -70,6 +75,11 @@ export interface MaintenanceArtwork {
   alt_en: string | null;
 }
 
+/**
+ * A square of the grid. A PLACE since 2026-11-20: what a card plays and shows
+ * is the card's own. `track_id` and `artwork_id` are what the square held
+ * before that, kept so something parked on an empty square is not lost.
+ */
 export interface MaintenanceCell {
   valence: number;
   arousal: number;
