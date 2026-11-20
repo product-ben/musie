@@ -12861,71 +12861,69 @@ opening it — the type check is the cheapest place to notice.
 What I need from Ben: nothing, unless experiments should stay outside the
 gate (rule 10) — then drop the third `tsc` from `typecheck`.
 
-## Each goal its own order; the library suggests one exercise of each kind; the card exercises join „entspannen" — RESOLVED, one thing logged
+## Experiment „Duett 01“: a panel to tune how Musie answers — BUILT, decisions taken alone
 
-Where: `supabase/migrations/20261120200000_each_goal_its_own_order.sql`,
-`lib/goals.ts` (`filterByGoal`, `oneOfEachKind`), `lib/content.ts`
-(`goalSort`), `routes/Exercises.tsx`, `e2e/support.ts` (`startExercise`)
+Where: `apps/web/experiments/duett/**`, `apps/web/package.json` (`build`,
+`typecheck`, `experiment:duett:dev`), `apps/web/vitest.config.ts`,
+`apps/web/tsconfig.test.json`. Live after merge at `/experiments/duett/`.
 
-What I checked: Lucia entered the relax pieces, so D10 was due: map
-`mindfulness-cards` and `free-rein` to `relax`. Every goal read ONE order,
-`exercises.sort`, where the card exercises are 1 and 2. So they would have
-opened *entspannen*, the default goal, and the first three would have been
-Achtsame Pause · Freie Bahn · Achtsam Atmen (unbuilt), with Klangreise and
-Bodyscan behind the switch. I asked. Ben: „Own order per goal and Show one
-exercise of each type per goal by default."
+What I checked: Ben, 2026-11-20 — the duet is liked; Musie should take up the
+playing better, come in sooner, and play more exciting, longer answers. He
+chose „Experiment!“ over changing the app, asked for a panel of switches to
+combine while playing, ten figures as checkboxes, and switches and sliders for
+playing longer, then left me to build it. The app's answer (`engine/answer.ts`)
+is pinned note for note to Lucia's marimba v6 by `answer.test.ts`, so even one
+changed number breaks that lock; an experiment can move freely without
+touching it.
 
 What I did:
-- **`exercise_goals.sort`**, not null, unique per goal. It is filled with
-  today's order (each goal ranked by `exercises.sort`), so nothing moves
-  except what is added. Both card exercises join *entspannen* at 7 and 8.
-  Table-wide grants already cover the column (rule 2).
-- **`filterByGoal` orders by the goal's place.** `oneOfEachKind` replaces
-  `SUGGESTED = 3`: the first exercise of each `kind` in that order. The
-  onboarding card counts the same list, so it reads *vier* under
-  *entspannen*, *drei* under *Energie sammeln* and *zwei* under *Achtsamkeit
-  üben*.
-- **Measured on the private stack** (`/exercises` as a signed-in user, de):
-  *entspannen* suggests Atementspannung · Klangreise · Kalimba · Achtsame
-  Pause, and all eight with the switch. *Energie sammeln* suggests Achtsame
-  Pause · Atementspannung · Klangreise. *Achtsamkeit üben* suggests Achtsame
-  Pause · Klangreise. `test:db` 242/242, `pnpm check` green.
-- **`startExercise` (e2e) starts under the goal whose `music_mode` is
-  `activate`.** Every pairing the walks assert is an activation piece, and a
-  fresh local stack has no relax pieces. When the exercise is not among the
-  suggestions, it presses *Alle Übungen zeigen*. Verified with a temporary
-  spec behind a real sign-in: Achtsame Pause and Freie Bahn both start under
-  *Energie sammeln*.
+- **The Reflexion shape, not the static one rule 10 describes.** A Vite build
+  that mounts the app's real `InstrumentStage` for all three instruments and
+  swaps ONE module, `engine/answer.ts`, through a shim (for importers inside
+  `src/` only). Sound, drawing and input are the app's, so what Ben hears is
+  the app with a different answer. Definitions are assembled from
+  `supabase/content/instruments/*.json`; the harp's assembly equals the
+  Reflexion export field for field.
+- **All switches off is the app, proven.** `answer2.ts`'s `base` is today's
+  `compose`, copied with hooks that are inert at the defaults and with the
+  random numbers drawn in the same order; 400 seeded phrases per instrument
+  give identical answers, and `pause2` equals `pauseMs`. So any difference Ben
+  hears is a switch, not a porting slip — and the winning switches port back
+  as code that already runs against the app's types.
+- **The switches:** Einsteigen (lower floor + patience sliders; answer at the
+  finger's lift instead of up to 400 ms later; shorter when the phrase sounds
+  finished, longer mid-run; a learned factor that grows when the person plays
+  into Musie's first 450 ms and shrinks otherwise), Aufnehmen (keep their
+  rhythm, follow tempo, follow loudness), Länger (up to N × their length and M
+  notes; grow from half over K answers; no 2–3 note answers; wider register).
+- **The ten figures:** eight shapes, one per answer from those ticked (Echo,
+  Frage und Antwort, Sequenz, Spiegel, Erinnerung, Bogen, Pendel, Lauf),
+  falling back to today's answer when none fits the phrase; two ornaments on
+  top that stack (Vorschlag, Zweiklang). Every figure ends at home and keeps
+  the length caps — the tests hold all ten to that.
+- **Every constant the switches introduce is a GUESS** and is marked so in
+  `answer2.ts` and `conversation.ts` (e.g. the finished-phrase factor 0.55,
+  the 450 ms collision window, the run's 85–120 ms). Nothing was tuned by ear.
+- **PostHog only after „Einverstanden, los“** (`duett_started`,
+  `duett_settings`, `duett_answer`, `duett_turn`, each with `settings_key`, the
+  combination as its address fragment; session recording with inputs
+  visible — they are switches). „Ohne Aufzeichnung spielen“ never starts it.
+  `?internal=1` marks a tester's device. The combination lives in the address,
+  so „Link kopieren“ shares exactly what was set.
+- **Not built:** the motion sensor (off), the demo note, a timer that matters,
+  English, dark mode. None of them is the question.
 
-Choices made, to undo if wrong:
-- **An unbuilt exercise still stands for its kind.** Atementspannung is the
-  only `digital_interactive` one, so it is the digital suggestion under two
-  goals. Pressing it gives the *not built yet* refusal, as before.
-- **Consequences of the rule, not of a choice:**
-  - Bodyscan left the first view of *entspannen*: it is the second listening
-    exercise there.
-  - Freie Bahn is behind the switch under every goal: Achtsame Pause comes
-    first.
-  - Marimba and Harfe stay behind the switch.
-- **The order is set by migration.** No screen edits it, the same as the
-  mapping itself. `/goal-mappings` and the exercise builder still treat a
-  goal as a set. A builder preview stands at its catalogue place, and the
-  round-trip test now compares everything except `goalSort`.
-
-Still open:
-- **The e2e walks cannot reach the library.** `reachTheLibrary` clicks
-  through the anonymous carousel, which went with anonymous sessions on
-  2026-10-20. Every walk that calls it fails at the carousel, on `main` as
-  well. This is not touched here.
-- **A goal with only one kind** would read *Musie schlägt dir 1 Übungen vor*,
-  because `numberWord` starts at two. No goal has only one kind today.
-
-Why: where an exercise stands is a fact about the goal, and variety is what a
-first view should promise, not a count.
+Why: Ben's question is which combination sounds better, and that is answered
+by ear and by `duett_turn` (does Musie still collide when it comes in sooner?),
+not by a design document.
 
 What I need from Ben:
-- Before merging, a glance at /maintenance → Grid: no tile should show the
-  relax piece as a grey italic „–". After the merge, the Database run's asset
-  check names any card still without a relax piece („no relax piece yet").
-  Under *entspannen* such a card says „Kein Track zugeordnet".
-- The shared local stack needs `supabase db reset` from one session again.
+- **Merge, then play** at `/experiments/duett/` — on a phone too: the panel
+  folds under the instrument. Locally: `pnpm --filter web experiment:duett:dev`
+  (port 5182).
+- **Send the link of a combination you like** („Link kopieren“). That fragment
+  is the spec for porting it into the app — the one step that is yours to
+  take (rule 10's way out), and the one that retires `answer.test.ts`'s pin to
+  the marimba v6 for whatever changes.
+- **Lucia**: the answer is her design, and its restraint („never longer than
+  you“) was deliberate. Worth her ear before anything ports.

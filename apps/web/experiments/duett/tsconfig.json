@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "../../src/env.d.ts", "../../src/window.d.ts", "../../src/process-shim.d.ts"],
+  /* Tests are typechecked by apps/web/tsconfig.test.json, which has @types/node. */
+  "exclude": ["src/**/*.test.ts"]
+}

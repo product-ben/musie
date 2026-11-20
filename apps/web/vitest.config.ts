@@ -32,7 +32,8 @@ export default defineConfig({
       {
         test: {
           name: 'unit',
-          include: ['src/**/*.test.ts'],
+          /* experiments/: the Duett experiment's answer is held to the app's (rule 10 spares its shell, not its proof). */
+          include: ['src/**/*.test.ts', 'experiments/**/*.test.ts'],
           exclude: ['**/*.db.test.ts'],
           environment: 'node',
         },
