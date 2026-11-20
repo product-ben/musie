@@ -12860,3 +12860,70 @@ opening it — the type check is the cheapest place to notice.
 
 What I need from Ben: nothing, unless experiments should stay outside the
 gate (rule 10) — then drop the third `tsc` from `typecheck`.
+
+## Experiment „Duett 01“: a panel to tune how Musie answers — BUILT, decisions taken alone
+
+Where: `apps/web/experiments/duett/**`, `apps/web/package.json` (`build`,
+`typecheck`, `experiment:duett:dev`), `apps/web/vitest.config.ts`,
+`apps/web/tsconfig.test.json`. Live after merge at `/experiments/duett/`.
+
+What I checked: Ben, 2026-11-20 — the duet is liked; Musie should take up the
+playing better, come in sooner, and play more exciting, longer answers. He
+chose „Experiment!“ over changing the app, asked for a panel of switches to
+combine while playing, ten figures as checkboxes, and switches and sliders for
+playing longer, then left me to build it. The app's answer (`engine/answer.ts`)
+is pinned note for note to Lucia's marimba v6 by `answer.test.ts`, so even one
+changed number breaks that lock; an experiment can move freely without
+touching it.
+
+What I did:
+- **The Reflexion shape, not the static one rule 10 describes.** A Vite build
+  that mounts the app's real `InstrumentStage` for all three instruments and
+  swaps ONE module, `engine/answer.ts`, through a shim (for importers inside
+  `src/` only). Sound, drawing and input are the app's, so what Ben hears is
+  the app with a different answer. Definitions are assembled from
+  `supabase/content/instruments/*.json`; the harp's assembly equals the
+  Reflexion export field for field.
+- **All switches off is the app, proven.** `answer2.ts`'s `base` is today's
+  `compose`, copied with hooks that are inert at the defaults and with the
+  random numbers drawn in the same order; 400 seeded phrases per instrument
+  give identical answers, and `pause2` equals `pauseMs`. So any difference Ben
+  hears is a switch, not a porting slip — and the winning switches port back
+  as code that already runs against the app's types.
+- **The switches:** Einsteigen (lower floor + patience sliders; answer at the
+  finger's lift instead of up to 400 ms later; shorter when the phrase sounds
+  finished, longer mid-run; a learned factor that grows when the person plays
+  into Musie's first 450 ms and shrinks otherwise), Aufnehmen (keep their
+  rhythm, follow tempo, follow loudness), Länger (up to N × their length and M
+  notes; grow from half over K answers; no 2–3 note answers; wider register).
+- **The ten figures:** eight shapes, one per answer from those ticked (Echo,
+  Frage und Antwort, Sequenz, Spiegel, Erinnerung, Bogen, Pendel, Lauf),
+  falling back to today's answer when none fits the phrase; two ornaments on
+  top that stack (Vorschlag, Zweiklang). Every figure ends at home and keeps
+  the length caps — the tests hold all ten to that.
+- **Every constant the switches introduce is a GUESS** and is marked so in
+  `answer2.ts` and `conversation.ts` (e.g. the finished-phrase factor 0.55,
+  the 450 ms collision window, the run's 85–120 ms). Nothing was tuned by ear.
+- **PostHog only after „Einverstanden, los“** (`duett_started`,
+  `duett_settings`, `duett_answer`, `duett_turn`, each with `settings_key`, the
+  combination as its address fragment; session recording with inputs
+  visible — they are switches). „Ohne Aufzeichnung spielen“ never starts it.
+  `?internal=1` marks a tester's device. The combination lives in the address,
+  so „Link kopieren“ shares exactly what was set.
+- **Not built:** the motion sensor (off), the demo note, a timer that matters,
+  English, dark mode. None of them is the question.
+
+Why: Ben's question is which combination sounds better, and that is answered
+by ear and by `duett_turn` (does Musie still collide when it comes in sooner?),
+not by a design document.
+
+What I need from Ben:
+- **Merge, then play** at `/experiments/duett/` — on a phone too: the panel
+  folds under the instrument. Locally: `pnpm --filter web experiment:duett:dev`
+  (port 5182).
+- **Send the link of a combination you like** („Link kopieren“). That fragment
+  is the spec for porting it into the app — the one step that is yours to
+  take (rule 10's way out), and the one that retires `answer.test.ts`'s pin to
+  the marimba v6 for whatever changes.
+- **Lucia**: the answer is her design, and its restraint („never longer than
+  you“) was deliberate. Worth her ear before anything ports.
