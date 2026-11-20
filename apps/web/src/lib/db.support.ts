@@ -13,31 +13,42 @@
  *      worse, being skipped. A safety net that quietly does not run is the
  *      failure this whole step exists to prevent.
  *
- * ── AND IT CAN BE POINTED SOMEWHERE ELSE ───────────────────────────────────
- * `supabase status` only ever describes the LOCAL stack, which pinned this
- * suite to localhost — and a security net that can only be run against the
- * permissive environment is the wrong way round. The local stack ships
- * `alter default privileges … grant all on tables`, so a table with a missing
- * grant passes here and 403s on a hosted project. The suite has to be able to
- * run where that is true.
- *
- * So three environment variables override the default, and it is ALL THREE OR
+ * ── AND IT CAN BE POINTED AT ANOTHER LOCAL STACK — NEVER AT HOSTED ────────
+ * Three environment variables override the default, and it is ALL THREE OR
  * NONE: a partial set means someone meant to point this somewhere and got it
- * half right, and silently testing localhost instead is exactly the false
- * green this file exists to prevent.
+ * half right, and silently testing the shared stack instead is exactly the
+ * false green this file exists to prevent.
  *
  *   SUPABASE_TEST_URL
  *   SUPABASE_TEST_ANON_KEY
  *   SUPABASE_TEST_SERVICE_ROLE_KEY
  *
- * Pass them on the command line for one run. The service-role key bypasses RLS
- * and every column grant; it does not belong in a file, and least of all in
- * one a hosted project's key could reach.
+ * What they are for is a PRIVATE local stack — a copy of `supabase/` with its
+ * own `project_id` and ports, so a branch can `supabase start` its migrations
+ * from scratch without touching the one shared stack (CLAUDE.md rule 9;
+ * `docs/plans/instruments-exercises.md` has the recipe).
  *
- * The target is PRINTED on first use. These tests create real users wherever
- * they are aimed, and "why is my production project full of users" is a
- * question that should never have to be asked. They are also swept at the end
- * of every file — see sweepCreatedUsers.
+ * ── THE URL MUST BE LOOPBACK, AND THAT IS NEW — Ben, 2026-11-20 ───────────
+ * Until this date `db-push.yml` aimed this suite at the HOSTED project after
+ * every merge, and that is how it found the `service_role` grant hole (rule 2).
+ * It is also how it deleted a real track. `maintenance.db.test.ts` creates
+ * `trk-98` and hard-deletes it before and after every test, on the assumption
+ * that nobody counts that high; Lucia's library passed 98 around 2026-10-20,
+ * her „Reflection No. 2 for Solo Violin" WAS `trk-98`, and the next hosted run
+ * overwrote it and deleted it. Nothing noticed, because the hosted run had
+ * been red since 2026-10-13 for a second reason — two tests compared hosted
+ * with the export snapshots, which an operator edit breaks by design.
+ *
+ * Ben's call: on hosted, the one thing worth checking is that every file an
+ * exercise plays or shows is there. That is `pnpm assets:check`, read-only,
+ * and it is what `db-push.yml` runs now. Everything this suite asserts —
+ * policies, grants, triggers, the write path — is a property of the
+ * MIGRATIONS, and the migrations are the same files on every stack.
+ *
+ * So a target that is not loopback is refused here, before a single row is
+ * written, rather than trusted to every future test author to remember.
+ * These tests create real users wherever they are aimed; they are swept at
+ * the end of every file — see sweepCreatedUsers.
  */
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -51,6 +62,9 @@ interface Stack {
 }
 
 let cached: Stack | null = null;
+
+/** The only hosts this suite will write to. Exported for `db.globalSetup.ts`. */
+export const LOOPBACK = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
 
 /**
  * The override, or null when none of the three is set.
@@ -77,6 +91,14 @@ function fromEnvironment(): Stack | null {
     );
   }
 
+  if (!LOOPBACK.has(new URL(API_URL!).hostname)) {
+    throw new Error(
+      `The db suite writes, and ${API_URL} is not a local stack. It runs against loopback only `
+        + '(Ben, 2026-11-20 — the hosted run deleted a real track). To check hosted, run '
+        + '`pnpm assets:check`, which only reads.',
+    );
+  }
+
   return { API_URL: API_URL!, ANON_KEY: ANON_KEY!, SERVICE_ROLE_KEY: SERVICE_ROLE_KEY! };
 }
 
@@ -85,7 +107,6 @@ export function stack(): Stack {
 
   const override = fromEnvironment();
   if (override !== null) {
-    /* Loud, because a remote run creates real users on a real project. */
     console.info(`[db suite] target: ${override.API_URL} (from the environment)`);
     cached = override;
     return cached;
@@ -101,7 +122,7 @@ export function stack(): Stack {
     throw new Error(
       'The local Supabase stack is not reachable. Run `supabase start`, then ' +
         '`pnpm test:db` again — or set SUPABASE_TEST_URL, SUPABASE_TEST_ANON_KEY ' +
-        'and SUPABASE_TEST_SERVICE_ROLE_KEY to run against a hosted project. ' +
+        'and SUPABASE_TEST_SERVICE_ROLE_KEY to run against another LOCAL stack. ' +
         'These tests are deliberately NOT in `pnpm check` and are never skipped.',
     );
   }
@@ -136,7 +157,8 @@ export function anonClient(): SupabaseClient {
  * cost something.
  *
  * It cost this: `enable_anonymous_sign_ins` is false on the hosted project,
- * and `db-push.yml` runs this suite against hosted on every merge. Every one
+ * and `db-push.yml` ran this suite against hosted on every merge until
+ * 2026-11-20. Every one
  * of those runs failed with `anonymous_provider_disabled` — on 16 October and
  * again on the 20th — while the local suite stayed green, because the local
  * stack has the provider on.
@@ -191,8 +213,8 @@ export async function testUser(): Promise<{
 /**
  * ── EVERY USER THIS SUITE CREATES, SO THE RUN CAN TAKE THEM BACK ──────────
  *
- * `db-push.yml` runs this suite against the HOSTED project on every merge to
- * `main`, and each run left its anonymous users behind permanently. They are
+ * `db-push.yml` ran this suite against the HOSTED project on every merge to
+ * `main` until 2026-11-20, and each run left its users behind permanently. They are
  * real `auth.users` rows: they count toward monthly active users, and they
  * crowd out the real testers in exactly the table somebody is about to start
  * reading daily. The pile grew with merges rather than with use, which is why

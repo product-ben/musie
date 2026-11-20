@@ -33,7 +33,7 @@
  *
  * AFTERWARDS, and this script does none of it for you:
  *   supabase db reset   → every migration re-applied, this one included
- *   pnpm test:db        → music.db.test.ts proves the database matches the file
+ *   pnpm test:db        → music.db.test.ts proves the database's cuts match the file
  *   supabase db push    → the hosted project
  */
 import { execFile } from 'node:child_process';

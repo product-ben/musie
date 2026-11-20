@@ -1,23 +1,24 @@
 /**
- * THE DATABASE IS THE MUSIC FILE. This is the test that makes that true.
+ * THE CUTS ARE THE MUSIC FILE. This is the test that makes that true.
  *
- * `supabase/content/music.json` is only a source of truth if something fails
- * when it stops being one, and there are four ordinary ways for it to stop —
- * the same four `deck.db.test.ts` lists, because it is the same loop:
+ * `exercise_cuts` still travels by migration — `pnpm music:migration` writes
+ * it from `supabase/content/music.json` — so the file is a source of truth for
+ * the cuts, and something has to fail when the two disagree.
  *
- *   · the file is edited and `pnpm music:migration` is never run;
- *   · a generated migration is written and never applied (`supabase db reset`);
- *   · it is applied locally and never pushed (`supabase db push`) — this suite
- *     can be aimed at the hosted project, which is how that one gets caught;
- *   · somebody edits a row in Studio, where nothing stacks and nothing is
- *     recorded.
+ * ── THE PIECES CAME OUT OF THIS FILE ON 2026-11-20 ────────────────────────
+ * It compared `tracks` with `music.json` as well, and that half had been
+ * wrong since 2026-10-14, when `tracks` moved to `/maintenance` (CLAUDE.md
+ * 4.1). The database became the source and the file a snapshot of it, so
+ * every track Lucia added turned this red: 90 in the file, 107 on hosted.
+ * A test that fails when the product is used is not a test of the product.
+ * `deck.db.test.ts` went the same day, for the same reason.
  *
- * All four look identical from inside the app, and all four are red here.
+ * Whether the pieces behind the exercises have their files is a real
+ * question, and it is answered on hosted, where the files are — by
+ * `pnpm assets:check`.
  *
  * The service role because this reads content to COMPARE it, not to prove who
- * may see it — `db.security.db.test.ts` owns that question. It reads every
- * column, including `title` and `artist`, which the client's column grant
- * withholds and which are exactly what makes a credit checkable.
+ * may see it — `db.security.db.test.ts` owns that question.
  *
  * ── IT ALSO CHECKS THE TWO THINGS `music.mjs` CANNOT ──────────────────────
  * That every cut belongs to an exercise which exists and is
@@ -38,17 +39,7 @@ const service = serviceClient();
  *  than as nine rows in a different sequence. */
 const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
 
-describe('the database carries the library in supabase/content/music.json', () => {
-  it('has the same pieces, with the same credit, file and duration', async () => {
-    const { data, error } = await service
-      .from('tracks')
-      .select('id, src, duration_seconds, title, artist, licence_ref')
-      .order('id');
-
-    expect(error).toBeNull();
-    expect([...(data ?? [])].sort(byId)).toEqual([...expected.tracks].sort(byId));
-  });
-
+describe('the database carries the cuts in supabase/content/music.json', () => {
   it('has the same cuts, with the same files and the same credit', async () => {
     const { data, error } = await service
       .from('exercise_cuts')

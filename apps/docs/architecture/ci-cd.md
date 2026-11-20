@@ -15,7 +15,7 @@ flowchart TD
   CI -->|"green"| M["Merge to main"]
   M --> CF["Cloudflare Workers Builds<br/>pnpm check && vite build → wrangler deploy"]
   M --> PG2["pages.yml<br/>docs + Storybook → one artifact"]
-  M --> DB2["db-push.yml<br/>supabase db push → test:db against hosted"]
+  M --> DB2["db-push.yml<br/>supabase db push → assets:check against hosted"]
   CF --> LIVE1(["musie.lipinskib.workers.dev"])
   PG2 --> LIVE2(["product-ben.github.io/musie/"])
   DB2 --> LIVE3(["project-musie · Frankfurt"])
@@ -202,9 +202,9 @@ someone else's migrations are missing from the comparison, and ahead means the
 push would land schema whose code has not been pushed.
 
 It deliberately does **not** run `pnpm gen:types` (that would dirty the tree,
-contradicting its own precondition on the next run) and does **not** run the db
-suite against hosted (that needs the service-role key, which does not belong in
-a file — the Action does it, where the key is a secret).
+contradicting its own precondition on the next run) and does **not** run
+`pnpm assets:check` against hosted (that needs the service-role key, which does
+not belong in a file — the Action does it, where the key is a secret).
 
 Raw `supabase db push` stays denied in `.claude/settings.json`. The guard is
 the point, and it guards everyone (M5).

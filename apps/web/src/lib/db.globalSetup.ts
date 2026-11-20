@@ -30,32 +30,16 @@
  * decisions taken twice, and `deck-migration.mjs` versus
  * `music-migration.mjs` is the standing lesson about what that costs.
  *
- * ── AND WHY THIS SKIPS INSTEAD OF REFUSING ─────────────────────────────────
- * `seedTrackAudio` throws on anything but loopback, which is right for it:
- * silent files in the hosted bucket would be played back to real people out of
- * the real diary. But running the db suite against hosted is a DOCUMENTED
- * workflow — CLAUDE.md rule 4, and it is how the `service_role` grant hole was
- * found — so a global setup that threw there would make the suite unrunnable
- * against the one target that has caught a real bug. The hosted bucket holds
- * the real masters, so there is nothing to seed. It says so and returns.
+ * ── NO HOSTED BRANCH ANY MORE ─────────────────────────────────────────────
+ * This used to skip when the suite was aimed at hosted, whose bucket holds the
+ * real masters. Since 2026-11-20 `stack()` refuses any target that is not
+ * loopback (see `db.support.ts`), so every target this runs against is a local
+ * stack with fixture audio to give.
  */
 import seedTrackAudio from '../../e2e/fakeTracks';
 import { stack } from './db.support';
 
-const LOOPBACK = new Set(['127.0.0.1', 'localhost', '::1']);
-
 export default async function setup(): Promise<void> {
-  const { API_URL } = stack();
-
-  if (!LOOPBACK.has(new URL(API_URL).hostname)) {
-    /* Said out loud, so a hosted run cannot be mistaken for a seeded one. */
-    console.info(
-      `[db suite] ${API_URL} is not local, so no fixture audio was seeded — ` +
-        'that bucket holds the real masters, which are an operator upload.',
-    );
-    return;
-  }
-
   /* The target, injected: the walk's own `stack()` compares `.env.local`
      against it and refuses when they differ, which is right for a walk and
      wrong here. See `TrackAudioTarget`. */

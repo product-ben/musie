@@ -65,8 +65,8 @@ gh workflow run "Database" --repo product-ben/musie
 
 Step 3 is the point. The workflow takes `workflow_dispatch` precisely so it can
 be exercised on demand rather than only by a merge — and with nothing pending it
-is a no-op push followed by the 142 database tests against hosted, which is a
-safe way to confirm the whole path still works.
+is a no-op push followed by the read-only asset check against hosted, which is
+a safe way to confirm the whole path still works.
 
 Then delete the old token in the dashboard, and update the date at the top of
 this entry.

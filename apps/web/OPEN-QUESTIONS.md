@@ -12688,3 +12688,66 @@ If it does, either of these streams instead:
 Cheapest of all: re-encode the stems, which are 256 kbit/s stereo. At
 128 kbit/s the wait halves. That touches the audio itself, so it is Ben's
 call.
+
+---
+
+# Zwei Tracks pro Karte — Part 0: what runs on hosted (2026-11-20)
+
+## The hosted db run deleted a real track, and was red for a month so nobody saw — RESOLVED
+
+Where: `.github/workflows/db-push.yml` (the last step),
+`src/lib/maintenance.db.test.ts` (fixtures `trk-98` / `art-98` / `MC-98`,
+`cleanUp()`), `src/lib/music.db.test.ts`, `src/lib/deck.db.test.ts`
+
+What I checked: the `db-push.yml` logs since 2026-10-13. Every run is red, for
+two reasons that have nothing to do with schema:
+- **Snapshot comparisons.** `music.db.test.ts` expected exactly the tracks in
+  `supabase/content/music.json` (90; hosted has 107), and `deck.db.test.ts`
+  compared cards, alt text and pairings with `deck.json`. Since 4.1 those files
+  are snapshots of `/maintenance`, so every edit Lucia makes turns them red.
+  Run on a fresh local stack from `main`, the same five fail too, because the
+  local stack holds factory content and the snapshots follow hosted.
+- **Fixture ids inside the real id space.** `maintenance.db.test.ts` upserts
+  `trk-98` and hard-deletes it before and after each test. Lucia's library
+  passed 98 around 2026-10-20; her „Reflection No. 2 for Solo Violin" was
+  `trk-98`, and from the next run on it is missing on hosted while her
+  `content_edits` rows for it remain. Nothing referenced it, or the `restrict`
+  foreign keys would have refused the delete. The same cleanup empties the
+  first card-less grid cell on every run and swaps the first two cards' order
+  for a moment.
+
+What I did, on Ben's call („Das Ziel ist, sicherzustellen dass die Assets
+(music, images) die in Übungen eingebunden sind da sind. Alles andere ist egal
+und muss nicht getestet werden"):
+- `pnpm assets:check` (`scripts/assets-check.mjs`): read-only. Every card's
+  picture and the piece each card exercise plays for it, every implemented
+  exercise's picture, every cut's stems and credited piece, every instrument
+  sample (size and SHA-256 against `public/`). Exit 0 / 1 missing / 2 could
+  not check.
+- `db-push.yml` runs it instead of `pnpm test:db`, after every merge and once a
+  day at 05:17 UTC — `/maintenance` edits merge nothing, so a merge-only check
+  would see a broken upload at the next unrelated merge. The schedule skips
+  link and push.
+- `db.support.ts` refuses a target that is not loopback, so the suite cannot be
+  aimed at hosted again by a variable. Private local stacks still work.
+- `deck.db.test.ts` is deleted; `music.db.test.ts` keeps the cuts comparison
+  (cuts still travel by migration) and drops the pieces.
+- The local suite is otherwise untouched. Tests that assume factory content
+  (MC-03, exactly 8 exercises) stay: the local stack is always factory content,
+  so they are stable there, and Ben said the rest does not need testing on
+  hosted.
+
+Why: a check that writes to production has to be right about every id it
+touches forever; a check that only reads does not.
+
+What I need from Ben:
+- **Lucia re-creates „Reflection No. 2 for Solo Violin"** at `/maintenance`. It
+  gets a new id. Ask her to look at the card-less grid cells too, in case one
+  held a track or picture she had parked there.
+- **The first hosted run after the merge is the proof.** If it is red, the log
+  lists the missing files by card, exercise or cut. Red there is now a real
+  finding, not the normal state.
+- What hosted no longer catches automatically: a difference between the hosted
+  PROJECT and the local stack that is not in a migration — a project setting,
+  like the anonymous provider that broke the suite on hosted on 2026-10-16.
+  Accepted as Ben's trade; flagged so it is a choice, not a surprise.

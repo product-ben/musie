@@ -17,6 +17,7 @@
     "music:migration": "node scripts/music-migration.mjs",
     "music:upload": "node scripts/music-upload.mjs",
     "content:export": "node scripts/content-export.mjs",
+    "assets:check": "node scripts/assets-check.mjs",
     "experiment:reflexion:dev": "vite -c experiments/reflexion/vite.config.ts"
   },
   "dependencies": {
