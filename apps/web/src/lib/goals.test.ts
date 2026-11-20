@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   GOAL_STORAGE_KEY, cacheGoal, defaultGoal, filterByGoal, goalLabel, goalPurpose,
-  readCachedGoal, startable,
+  oneOfEachKind, readCachedGoal, startable,
 } from './goals';
 import type { Exercise, Goal } from './content';
 
@@ -28,9 +28,22 @@ const GOALS: Goal[] = [
   },
 ];
 
-/** Only the fields these functions read; the rest of an Exercise is irrelevant. */
-function exercise(id: string, goalIds: string[], implemented = true): Exercise {
-  return { id, goalIds, implemented } as Exercise;
+/**
+ * Only the fields these functions read; the rest of an Exercise is irrelevant.
+ *
+ * `goals` as a list puts the exercise at place 1 under each — a tie, which
+ * the stable sort leaves in fixture order. As a record it says the place.
+ */
+function exercise(
+  id: string,
+  goals: string[] | Record<string, number>,
+  implemented = true,
+  kind: Exercise['kind'] = 'card_based',
+): Exercise {
+  const goalSort = Array.isArray(goals)
+    ? Object.fromEntries(goals.map((goal) => [goal, 1]))
+    : goals;
+  return { id, goalIds: Object.keys(goalSort).sort(), goalSort, implemented, kind, sort: 0 } as Exercise;
 }
 
 const DECK = [
@@ -76,6 +89,65 @@ describe('filterByGoal', () => {
 
   it('returns nothing for a goal no exercise serves', () => {
     expect(filterByGoal(DECK, 'relax')).toEqual([]);
+  });
+
+  /* THE ORDER IS THE GOAL'S (2026-11-20). The catalogue opens with the card
+     exercises and *entspannen* closes with them; the same two rows have to
+     come out in two different orders depending on the goal asked about. */
+  it('orders by the place each goal gives, not by the catalogue', () => {
+    const catalogue = [
+      exercise('mindfulness-cards', { relax: 3, mindfulness: 1 }),
+      exercise('sound-journey', { relax: 1, mindfulness: 2 }, true, 'listening_only'),
+      exercise('kalimba', { relax: 2 }, true, 'instruments'),
+    ];
+    expect(filterByGoal(catalogue, 'relax').map((e) => e.id))
+      .toEqual(['sound-journey', 'kalimba', 'mindfulness-cards']);
+    expect(filterByGoal(catalogue, 'mindfulness').map((e) => e.id))
+      .toEqual(['mindfulness-cards', 'sound-journey']);
+  });
+
+  it('does not reorder the list it was given', () => {
+    const catalogue = [
+      exercise('a', { relax: 2 }),
+      exercise('b', { relax: 1 }),
+    ];
+    filterByGoal(catalogue, 'relax');
+    expect(catalogue.map((e) => e.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('oneOfEachKind', () => {
+  /* *entspannen* as it stands from 2026-11-20, in its own order: what the
+     pile shows before *Alle Übungen zeigen* is the first of each kind. */
+  const RELAX = [
+    exercise('breathing-score', ['relax'], false, 'digital_interactive'),
+    exercise('sound-journey', ['relax'], true, 'listening_only'),
+    exercise('body-scan-soundwalk', ['relax'], true, 'listening_only'),
+    exercise('kalimba', ['relax'], true, 'instruments'),
+    exercise('marimba', ['relax'], true, 'instruments'),
+    exercise('harp', ['relax'], true, 'instruments'),
+    exercise('mindfulness-cards', ['relax'], true, 'card_based'),
+    exercise('free-rein', ['relax'], true, 'card_based'),
+  ];
+
+  it('keeps the first of each kind, in the order given', () => {
+    expect(oneOfEachKind(RELAX).map((e) => e.id))
+      .toEqual(['breathing-score', 'sound-journey', 'kalimba', 'mindfulness-cards']);
+  });
+
+  /* The pile shows what the product has and refuses what is not built, so an
+     unbuilt exercise is still its kind's suggestion — and the shuffle, which
+     draws from `startable` of these, still never deals it. */
+  it('lets an unbuilt exercise stand for its kind', () => {
+    const suggested = oneOfEachKind(RELAX);
+    expect(suggested.map((e) => e.id)).toContain('breathing-score');
+    expect(startable(suggested).map((e) => e.id))
+      .toEqual(['sound-journey', 'kalimba', 'mindfulness-cards']);
+  });
+
+  it('suggests everything when every exercise is a different kind', () => {
+    const mixed = [RELAX[0], RELAX[1], RELAX[3], RELAX[6]];
+    expect(oneOfEachKind(mixed)).toEqual(mixed);
   });
 
   /* THE RETIRED GOAL SERVES NOTHING. `20261111120000` deletes its

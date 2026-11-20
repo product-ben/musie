@@ -187,6 +187,16 @@ export interface Exercise {
    */
   goalIds: string[];
   /**
+   * WHERE IT STANDS UNDER EACH GOAL IT SERVES — `exercise_goals.sort`, 1
+   * first (Ben, 2026-11-20). Keyed by goal id, one entry per id in `goalIds`.
+   *
+   * Per goal because the place is a fact about the goal: the card exercises
+   * open the catalogue and close „entspannen“. `filterByGoal` orders by it,
+   * and `sort` above stays the catalogue's order wherever no goal is chosen.
+   * Partial, so a reader has to say what a missing place means.
+   */
+  goalSort: Readonly<Partial<Record<string, number>>>;
+  /**
    * WHAT AN INSTRUMENTS EXERCISE IS PLAYED ON, AND ITS OWN WORDS — or null for
    * every other kind (2026-11-09).
    *
@@ -382,7 +392,7 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
-const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, motion_md, motion_label, play_md, play_touch_md, play_pointer_md, focus_headline, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id), exercise_instruments(instrument_id, default_mode, vibration_default)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, motion_md, motion_label, play_md, play_touch_md, play_pointer_md, focus_headline, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id, sort), exercise_instruments(instrument_id, default_mode, vibration_default)';
 
 interface ExerciseRow {
   id: string;
@@ -425,7 +435,7 @@ interface ExerciseRow {
   exercise_instruments: InstrumentRow | InstrumentRow[] | null;
   /* A to-many embed, so PostgREST returns an array — never an object. The
      collapse `getTrackFor` has to perform does not apply here. */
-  exercise_goals: { goal_id: string }[];
+  exercise_goals: { goal_id: string; sort: number }[];
 }
 
 /**
@@ -528,6 +538,7 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
        PostgREST does not promise one for an embed, and this array reaches a
        `useMemo` dependency in Exercises.tsx. */
     goalIds: row.exercise_goals.map((pair) => pair.goal_id).sort(),
+    goalSort: Object.fromEntries(row.exercise_goals.map((pair) => [pair.goal_id, pair.sort])),
     instrument: toInstrument(row.id, row.exercise_instruments, text),
   }];
 }

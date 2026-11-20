@@ -12860,3 +12860,72 @@ opening it — the type check is the cheapest place to notice.
 
 What I need from Ben: nothing, unless experiments should stay outside the
 gate (rule 10) — then drop the third `tsc` from `typecheck`.
+
+## Each goal its own order; the library suggests one exercise of each kind; the card exercises join „entspannen" — RESOLVED, one thing logged
+
+Where: `supabase/migrations/20261120200000_each_goal_its_own_order.sql`,
+`lib/goals.ts` (`filterByGoal`, `oneOfEachKind`), `lib/content.ts`
+(`goalSort`), `routes/Exercises.tsx`, `e2e/support.ts` (`startExercise`)
+
+What I checked: Lucia entered the relax pieces, so D10 was due: map
+`mindfulness-cards` and `free-rein` to `relax`. Every goal read ONE order,
+`exercises.sort`, where the card exercises are 1 and 2. So they would have
+opened *entspannen*, the default goal, and the first three would have been
+Achtsame Pause · Freie Bahn · Achtsam Atmen (unbuilt), with Klangreise and
+Bodyscan behind the switch. I asked. Ben: „Own order per goal and Show one
+exercise of each type per goal by default."
+
+What I did:
+- **`exercise_goals.sort`**, not null, unique per goal. It is filled with
+  today's order (each goal ranked by `exercises.sort`), so nothing moves
+  except what is added. Both card exercises join *entspannen* at 7 and 8.
+  Table-wide grants already cover the column (rule 2).
+- **`filterByGoal` orders by the goal's place.** `oneOfEachKind` replaces
+  `SUGGESTED = 3`: the first exercise of each `kind` in that order. The
+  onboarding card counts the same list, so it reads *vier* under
+  *entspannen*, *drei* under *Energie sammeln* and *zwei* under *Achtsamkeit
+  üben*.
+- **Measured on the private stack** (`/exercises` as a signed-in user, de):
+  *entspannen* suggests Atementspannung · Klangreise · Kalimba · Achtsame
+  Pause, and all eight with the switch. *Energie sammeln* suggests Achtsame
+  Pause · Atementspannung · Klangreise. *Achtsamkeit üben* suggests Achtsame
+  Pause · Klangreise. `test:db` 242/242, `pnpm check` green.
+- **`startExercise` (e2e) starts under the goal whose `music_mode` is
+  `activate`.** Every pairing the walks assert is an activation piece, and a
+  fresh local stack has no relax pieces. When the exercise is not among the
+  suggestions, it presses *Alle Übungen zeigen*. Verified with a temporary
+  spec behind a real sign-in: Achtsame Pause and Freie Bahn both start under
+  *Energie sammeln*.
+
+Choices made, to undo if wrong:
+- **An unbuilt exercise still stands for its kind.** Atementspannung is the
+  only `digital_interactive` one, so it is the digital suggestion under two
+  goals. Pressing it gives the *not built yet* refusal, as before.
+- **Consequences of the rule, not of a choice:**
+  - Bodyscan left the first view of *entspannen*: it is the second listening
+    exercise there.
+  - Freie Bahn is behind the switch under every goal: Achtsame Pause comes
+    first.
+  - Marimba and Harfe stay behind the switch.
+- **The order is set by migration.** No screen edits it, the same as the
+  mapping itself. `/goal-mappings` and the exercise builder still treat a
+  goal as a set. A builder preview stands at its catalogue place, and the
+  round-trip test now compares everything except `goalSort`.
+
+Still open:
+- **The e2e walks cannot reach the library.** `reachTheLibrary` clicks
+  through the anonymous carousel, which went with anonymous sessions on
+  2026-10-20. Every walk that calls it fails at the carousel, on `main` as
+  well. This is not touched here.
+- **A goal with only one kind** would read *Musie schlägt dir 1 Übungen vor*,
+  because `numberWord` starts at two. No goal has only one kind today.
+
+Why: where an exercise stands is a fact about the goal, and variety is what a
+first view should promise, not a count.
+
+What I need from Ben:
+- Before merging, a glance at /maintenance → Grid: no tile should show the
+  relax piece as a grey italic „–". After the merge, the Database run's asset
+  check names any card still without a relax piece („no relax piece yet").
+  Under *entspannen* such a card says „Kein Track zugeordnet".
+- The shared local stack needs `supabase db reset` from one session again.

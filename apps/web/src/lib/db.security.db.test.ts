@@ -230,7 +230,7 @@ describe('goals · the renamed content tables keep the access they had', () => {
   it('refuses an INSERT into exercise_goals', async () => {
     const { error } = await alice
       .from('exercise_goals')
-      .insert({ exercise_id: 'free-rein', goal_id: 'relax' });
+      .insert({ exercise_id: 'free-rein', goal_id: 'relax', sort: 99 });
     expect(error?.code).toBe(INSUFFICIENT_PRIVILEGE);
   });
 

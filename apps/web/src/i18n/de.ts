@@ -1389,8 +1389,8 @@ export const de: Messages = {
      `route.session.title`. */
   'exercises.deckPosition': '{name} – Karte {index} von {total}',
   /* Der Schalter unter den Punkten (Ben, 2026-11-11, D10). Der Stapel
-     zeigt höchstens drei Übungen eines Ziels; nur wenn es mehr hat, steht
-     dieser Schalter da und holt den Rest. Verbphrase, Infinitiv (§3), und
+     zeigt von jeder Art eine Übung des Ziels (bis 2026-11-20: die ersten
+     drei); nur wenn es mehr hat, steht dieser Schalter da und holt den Rest. Verbphrase, Infinitiv (§3), und
      'alle' statt einer Zahl, weil sich die Zahl mit dem Ziel ändert und der
      Schalter sie nicht braucht. */
   'exercises.showAll': 'Alle Übungen zeigen',
