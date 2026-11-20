@@ -12832,3 +12832,31 @@ What I need from Ben:
   `artwork_id`, `exercise_tracks`, `card_i18n.feeling`, `exercises.needs_cards`.
 - **Not built:** D13 / M6 (a read-only goal → exercises overview in
   maintenance). D11 is a separate feature, as decided.
+
+## Two tracks per card nearly broke Freie Bahn in the reflexion experiment — RESOLVED
+
+Where: `experiments/reflexion/src/shims/lib__content.ts`, `lib__session.ts`,
+`data/store.ts`; `package.json` (`typecheck`)
+
+What I checked: Ben asked whether `experiments/reflexion/*` could break. It
+renders the app's real `Session` route over shims, and the content shim
+re-exports the real module and overrides only what it knows. `Session.tsx` now
+calls `getTrack` — not overridden, so the REAL one ran and reached
+`getSupabase()`, which the experiment makes throw on purpose: Freie Bahn would
+have shown the error screen after drawing its card. The session shim's
+`saveCard` still had the old signature, and `store.ts` lacked `musicMode`. The
+web build stayed green throughout; the experiment's tsconfig is checked by
+nothing, so only its own `tsc` showed it.
+
+What I did: `getTrack` and the new `saveCard` (activation piece, as the
+trigger would choose without a goal) in the shims, `musicMode` in the row. Then
+walked Freie Bahn in the experiment's dev server to the listen step and pressed
+play: „Aura“ is requested and the transport shows, no Supabase call. And
+`apps/web`'s `typecheck` now includes `experiments/reflexion/tsconfig.json`, so
+`pnpm check` and CI fail the next time an app change leaves its shims behind.
+
+Why: the experiment embeds app code, so app changes reach it without anyone
+opening it — the type check is the cheapest place to notice.
+
+What I need from Ben: nothing, unless experiments should stay outside the
+gate (rule 10) — then drop the third `tsc` from `typecheck`.

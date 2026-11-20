@@ -7,7 +7,7 @@
  * `completedBefore` is the real, pure function (re-exported).
  */
 import type { StepId } from '../../../../src/routeHandle';
-import type { SessionRow } from '../../../../src/lib/session';
+import type { MusicMode, SessionRow } from '../../../../src/lib/session';
 import type { SessionStatus } from '../../../../src/lib/sessionMachine';
 import * as store from '../data/store';
 import { playFinished } from '../track';
@@ -22,8 +22,23 @@ export async function saveStep(id: string, step: StepId): Promise<void> {
   store.updateRow(id, { step });
 }
 
-export async function saveCard(id: string, cardId: string | null, trackId: string | null): Promise<void> {
-  store.updateRow(id, { cardId, trackId });
+/**
+ * What the database trigger `sessions_card_plays()` does in the app: the card
+ * is written, and the piece and mode are decided with it and handed back
+ * (two tracks per card, 2026-11-20). The experiment has no goals, so it is
+ * always the activation piece — Freie Bahn's „Aura“, as before.
+ */
+export async function saveCard(
+  id: string,
+  cardId: string | null,
+): Promise<{ trackId: string | null; musicMode: MusicMode | null }> {
+  const row = store.readRow(id);
+  const trackId = cardId === null || row === null
+    ? null
+    : store.trackFor(row.exerciseId, cardId)?.id ?? null;
+  const musicMode: MusicMode | null = cardId === null ? null : 'activate';
+  store.updateRow(id, { cardId, trackId, musicMode });
+  return store.tick({ trackId, musicMode });
 }
 
 /** Freie Bahn stays digital whatever is asked (`store.updateRow`). */
