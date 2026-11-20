@@ -1,11 +1,11 @@
 /**
  * The goal: what a person is after when they start a session.
  *
- * Four facts live here, and nothing else does. The query is in `content.ts`,
+ * Five facts live here, and nothing else does. The query is in `content.ts`,
  * the hook is in `useContent.ts`, the sheet is a component, and the screen
  * decides what to draw — this file owns only what a CHOICE is, where it is
- * remembered, what it filters, and which of the filtered exercises can
- * actually be started.
+ * remembered, what it filters (in the goal's own order), which of the
+ * filtered exercises are suggested, and which can actually be started.
  *
  * ── THE SENTINEL IS GONE, AND THAT IS THE CHANGE (2026-10-15) ─────────────
  * There used to be a `NO_GOAL` here, and a long argument for it: "Musie
@@ -125,12 +125,21 @@ export function defaultGoal(goals: Goal[]): GoalChoice | null {
 }
 
 /**
- * The exercises this choice offers.
+ * The exercises this choice offers, IN THE GOAL'S OWN ORDER.
  *
  * Client-side, over five rows already in hand, rather than a second query per
  * goal: the whole catalogue is one round trip and re-asking the server to
  * filter it would make switching goals a network round trip for an answer
  * that is already on the page.
+ *
+ * ── THE ORDER IS THE GOAL'S (Ben, 2026-11-20) ─────────────────────────────
+ * `exercise_goals.sort`, read into `goalSort`. Until that day every goal
+ * kept the catalogue's order, which is what `getExercises` returns — and
+ * Achtsame Pause and Freie Bahn, 1 and 2 there, would have opened
+ * *entspannen*, the default goal, ahead of everything it offered before.
+ * A missing place falls back to the catalogue's `sort`; only a builder
+ * preview has none, and the sort is stable, so ties keep the catalogue's
+ * order.
  *
  * `null` returns everything — the screen is what decides whether to DRAW
  * anything before a choice is known, which keeps this function total and
@@ -138,7 +147,35 @@ export function defaultGoal(goals: Goal[]): GoalChoice | null {
  */
 export function filterByGoal(exercises: Exercise[], choice: GoalChoice | null): Exercise[] {
   if (choice === null) return exercises;
-  return exercises.filter((exercise) => exercise.goalIds.includes(choice));
+  const place = (exercise: Exercise) => exercise.goalSort[choice] ?? exercise.sort;
+  return exercises
+    .filter((exercise) => exercise.goalIds.includes(choice))
+    .sort((a, b) => place(a) - place(b));
+}
+
+/**
+ * What the pile and the list show until *Alle Übungen zeigen* is on: THE
+ * FIRST EXERCISE OF EACH KIND, in the order given (Ben, 2026-11-20).
+ *
+ * It replaced *the first three*. Three was a number; one of each kind is a
+ * promise about variety — a card exercise, something to listen to, an
+ * instrument, a digital one — and it holds however many exercises a goal
+ * collects. Under *entspannen* that is four today, under *Achtsamkeit üben*
+ * two.
+ *
+ * AN UNBUILT EXERCISE STILL STANDS FOR ITS KIND, for the reason `startable`
+ * gives below: the pile shows what the product has and refuses what is not
+ * built, rather than quietly showing less. Today that is Achtsam Atmen, the
+ * only `digital_interactive` exercise. Which one stands for a kind is the
+ * goal's order, so it is decided where the order is.
+ */
+export function oneOfEachKind(exercises: Exercise[]): Exercise[] {
+  const seen = new Set<Exercise['kind']>();
+  return exercises.filter((exercise) => {
+    if (seen.has(exercise.kind)) return false;
+    seen.add(exercise.kind);
+    return true;
+  });
 }
 
 /**

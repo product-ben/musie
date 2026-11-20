@@ -48,8 +48,9 @@
  * A press on an unbuilt one opens `NotImplementedLightbox`, which is the same
  * refusal the list gives. Filtering them out would quietly show fewer
  * exercises than the product has. (This block said "all five" until the
- * catalogue grew; since 2026-11-11 the pile shows at most three per goal —
- * see `SUGGESTED`.)
+ * catalogue grew; since 2026-11-11 the pile shows a goal's suggestions —
+ * the first three until 2026-11-20, one of each kind since — see
+ * `oneOfEachKind`.)
  *
  * ── NOTHING ON A CARD GOES THROUGH THE CATALOGUE ──────────────────────────
  * The name, the description, the picture and the timeframe are the exercise's,
@@ -87,7 +88,7 @@ import { fromRoot } from '../lib/assets';
 import { cardText } from '../lib/cardText';
 import type { Exercise } from '../lib/content';
 import {
-  cacheGoal, defaultGoal, filterByGoal, goalPurpose, readCachedGoal, startable,
+  cacheGoal, defaultGoal, filterByGoal, goalPurpose, oneOfEachKind, readCachedGoal, startable,
 } from '../lib/goals';
 import { useEdgeFade } from '../lib/useEdgeFade';
 import { guideStore, noteDeckGuideSeen, shouldShowDeckGuide } from '../lib/deckGuide';
@@ -108,13 +109,6 @@ type View = 'deck' | 'list';
  * spacing, and there is no rung on the ladder for "most of a row".
  */
 const NUDGE = 0.8;
-
-/* ── THREE, AND THE ONBOARDING CARD SAYS SO (Ben, 2026-11-11) ──────────────
-   The pile shows at most this many exercises; a goal that offers more puts a
-   switch under the dots that shows them all. One number, read by the pile and
-   by the sentence on the onboarding card (`exercises.guide.count`), so the
-   card can never promise a different count from the pile it is lying on. */
-const SUGGESTED = 3;
 
 export function Exercises() {
   const t = useT();
@@ -299,21 +293,27 @@ export function Exercises() {
      and every count, every card and every list row below reads `visible`. */
   const visible = React.useMemo(() => filterByGoal(exercises, choice), [exercises, choice]);
 
-  /* ── WHAT IS SHOWN: THE FIRST THREE, UNLESS ASKED (Ben, 2026-11-11) ───────
-     `visible` is everything the goal offers; `shown` is what the pile and the
-     list draw — the first `SUGGESTED` in the goal's own order, or all of them
-     once the switch under the dots is on.
+  /* ── WHAT IS SHOWN: ONE OF EACH KIND, UNLESS ASKED ────────────────────────
+     `visible` is everything the goal offers, in the goal's own order;
+     `suggested` is the first exercise of each kind in it (Ben, 2026-11-20 —
+     it was the first three from 2026-11-11); `shown` is what the pile and the
+     list draw — the suggestions, or everything once the switch under the dots
+     is on.
+
+     ONE LIST, READ BY THE PILE AND BY THE ONBOARDING CARD. The card's
+     sentence (`exercises.guide.count`) counts `suggested`, so it can never
+     promise a different number from the pile it is lying on. That number
+     moves with the goal now — four under *entspannen*, two under *Achtsamkeit
+     üben* — and the card says whichever is true.
 
      THE SWITCH BELONGS TO ONE GOAL. It is stored as the goal it was turned on
      for, so changing the goal turns it off by construction rather than by an
      effect that resets it a render late. Not remembered across visits: it is
      a look at more, not a setting. */
+  const suggested = React.useMemo(() => oneOfEachKind(visible), [visible]);
   const [allFor, setAllFor] = React.useState<GoalChoice | null>(null);
   const showAll = allFor !== null && allFor === choice;
-  const shown = React.useMemo(
-    () => (showAll ? visible : visible.slice(0, SUGGESTED)),
-    [showAll, visible],
-  );
+  const shown = showAll ? visible : suggested;
 
   /* WHAT A PRESS WOULD ACTUALLY START. *Such mir eine Übung aus* draws from
      these — out of what is SHOWN since 2026-11-11, so the shuffle never deals
@@ -1080,7 +1080,7 @@ export function Exercises() {
                  …AND THE SWITCH (2026-11-11): showing all is a different
                  pile, so it deals afresh from the top rather than splicing
                  cards into one already browsed. */
-              dealKey={choice === null ? undefined : `${choice}:${showAll ? 'all' : SUGGESTED}`}
+              dealKey={choice === null ? undefined : `${choice}:${showAll ? 'all' : 'suggested'}`}
               onAccept={onAccept}
               onNext={onNext}
               onPrevious={onPrevious}
@@ -1101,7 +1101,7 @@ export function Exercises() {
                  over a start already in flight, it would explain controls that
                  are inert at that moment. */
               cover={guide && !busy && !sheetOpen
-                ? <DeckGuide onDismiss={closeGuide} count={SUGGESTED} />
+                ? <DeckGuide onDismiss={closeGuide} count={suggested.length} />
                 : undefined}
               /* ── AND IT SWIPES AWAY LIKE A CARD (Ben, 2026-11-11) ─────────
                  The deck now takes the cover through its own drag, fling,
@@ -1162,14 +1162,14 @@ export function Exercises() {
 
           {/* ── UNDER THE PILE: MORE, AND ANOTHER GOAL (Ben, 2026-11-11) ────
               The switch first, directly under the dots it changes: it is
-              drawn only when the goal offers more than `SUGGESTED`, so a
-              three-card goal shows no control that could do nothing. Then,
-              on phones only, *Ziel ändern* — the toolbar carries it from
-              --bp-sm (`.musie-goal-change--below` hides this one there). Both
-              sit under the list view too, since the list shows the same
-              three. */}
+              drawn only when the goal offers more than it suggests, so a
+              goal with one exercise of each kind shows no control that could
+              do nothing. Then, on phones only, *Ziel ändern* — the toolbar
+              carries it from --bp-sm (`.musie-goal-change--below` hides this
+              one there). Both sit under the list view too, since the list
+              shows the same suggestions. */}
           <div className="musie-under-pile">
-            {visible.length > SUGGESTED && (
+            {visible.length > suggested.length && (
               <Switch
                 label={t('exercises.showAll')}
                 checked={showAll}

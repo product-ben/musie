@@ -159,6 +159,9 @@ export function configToExercise(
       : reflectCopy.placeholder,
     imageAlt: card?.imageAlt ?? '',
     goalIds: [...config.catalogue.goals],
+    /* A preview has no `exercise_goals` rows to read a place from, so it
+       stands where the catalogue puts it under every goal it names. */
+    goalSort: Object.fromEntries(config.catalogue.goals.map((goal) => [goal, config.catalogue.sort])),
     instrument: instrumentFor(config, locale, mode),
   };
 }

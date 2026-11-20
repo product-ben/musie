@@ -92,23 +92,32 @@ serves no exercise any more, and nothing offers it.
 
 ## The mapping
 
-| goal | exercises, in order |
+| goal | exercises, in the goal's own order — **suggested** in bold |
 |---|---|
-| Entspannen | Achtsam Atmen · Klangreise · Bodyscan · *Kalimba · Marimba · Harfe* |
-| Energie sammeln | Freie Bahn · Achtsam Atmen · Klangreise |
-| Achtsamkeit üben | Achtsame Pause · Freie Bahn · Klangreise |
+| Entspannen | **Achtsam Atmen** · **Klangreise** · Bodyscan · **Kalimba** · Marimba · Harfe · **Achtsame Pause** · Freie Bahn |
+| Energie sammeln | **Achtsame Pause** · Freie Bahn · **Achtsam Atmen** · **Klangreise** |
+| Achtsamkeit üben | **Achtsame Pause** · Freie Bahn · **Klangreise** |
 
-The order is `exercises.sort`. The screen shows **at most three** of a goal's
-exercises — the first three — and *Alle Übungen zeigen* shows the rest. Today
-only *Entspannen* has more than three, so it is the only goal with that switch;
-the instruments are behind it. Things worth knowing:
+**Each goal has its own order** — `exercise_goals.sort`, since 2026-11-20 (Ben:
+*own order per goal*). Until then every goal read `exercises.sort`, so the card
+exercises, first in the catalogue, would have opened *Entspannen* as well; there
+they come last. `exercises.sort` is still the catalogue's order wherever no goal
+is involved.
 
-- **Achtsame Pause appears under one goal only.** It is the exercise the paper
-  deck exists for, so somebody who never picks *Achtsamkeit üben* never meets
-  the deck. Deliberate, and logged.
+**The screen suggests one exercise of each kind** — the first card exercise,
+the first to listen to, the first instrument, the first digital one, in the
+goal's order — and *Alle Übungen zeigen* shows the rest (Ben, 2026-11-20; it
+was the first three from 2026-11-11). Every goal offers more than it suggests
+today, so every goal has the switch. Things worth knowing:
+
+- **Both card exercises are under every goal** since 2026-11-20, and the goal
+  decides the music: under *Entspannen* a card plays its relax piece, under
+  *Energie sammeln* its activation piece, under *Achtsamkeit üben* one of the
+  two, drawn once at the scan. See [the deck pipeline](/features/deck-pipeline).
 - **Achtsam Atmen is under two goals and is not built** — and it is the first
-  card under the default. It is still dealt, and pressing it opens the *not
-  built yet* refusal. See [the exercise library](/features/exercises).
+  card under the default. An unbuilt exercise still stands for its kind: it is
+  dealt, and pressing it opens the *not built yet* refusal. See
+  [the exercise library](/features/exercises).
 
 ## The default is the first card
 
@@ -177,8 +186,8 @@ none (rule 2).
 
 *Such mir eine Übung aus* draws from it, so the shuffle can never start an
 exercise that would refuse. Since 2026-11-11 it draws from what is **shown** —
-the first three, or all of them with the switch on — so it never deals a card
-the pile is not showing. It is also what disables the button when nothing shown
+the suggestions (one of each kind since 2026-11-20), or all of them with the
+switch on — so it never deals a card the pile is not showing. It is also what disables the button when nothing shown
 is built.
 
 ## The headline is one string per locale, split on `{goal}`
@@ -222,13 +231,16 @@ the only thing making an exercise reachable, and a hole in it is silent:
   above 1000, and never offered;
 - every exercise is under at least one **offered** goal — **nothing stranded**;
 - every offered goal has at least one exercise, and a retired one has none;
-- no goal offers only exercises that are not built.
+- no goal offers only exercises that are not built;
+- every goal's order runs 1 to n, with no gap and no repeat;
+- *Entspannen* ends with Achtsame Pause and Freie Bahn.
 :::
 
 ---
 
 **Source of truth:**
 [`lib/goals.ts`](https://github.com/product-ben/musie/blob/main/apps/web/src/lib/goals.ts),
+[`20261120200000_each_goal_its_own_order.sql`](https://github.com/product-ben/musie/blob/main/supabase/migrations/20261120200000_each_goal_its_own_order.sql),
 [`20261111120000_three_goals.sql`](https://github.com/product-ben/musie/blob/main/supabase/migrations/20261111120000_three_goals.sql),
 [`20261015140000_the_headline_is_the_filter.sql`](https://github.com/product-ben/musie/blob/main/supabase/migrations/20261015140000_the_headline_is_the_filter.sql),
 [GOAL-FILTER.md](https://github.com/product-ben/musie/blob/main/GOAL-FILTER.md),

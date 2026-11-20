@@ -4,8 +4,8 @@
  * One walk per instrument, from the library to the diary, asserting what the
  * brief promised and what no unit test can see:
  *
- *   · Kalimba, Marimba, Harfe are under „Entspannen“, behind „Alle Übungen
- *     zeigen“ (they are its fourth to sixth exercises);
+ *   · Kalimba, Marimba, Harfe are under „Entspannen“ — Kalimba among its
+ *     suggestions, all three with „Alle Übungen zeigen“ on;
  *   · Einsteigen says „Lass uns <Instrument> spielen“ (since 2026-11-16) and
  *     holds the settings: „Duett mit
  *     Musie“ is chosen at first; on a desktop there is no vibration or motion
@@ -75,8 +75,9 @@ test.describe('the instruments', () => {
          fresh account opens on it — and pressing it in the sheet would change
          nothing and leave the sheet open. The headline's goal is what says
          which goal this is: its accessible name begins with the purpose. The
-         instruments are relax's fourth to sixth exercises, and the list shows
-         three until *Alle Übungen zeigen* is on. */
+         list suggests one exercise of each kind (2026-11-20) — Kalimba is the
+         instrument it shows — so the switch goes on for all three, and
+         *Alle Übungen zeigen* is what puts Marimba and Harfe there. */
       await page.goto('/exercises');
       await page.getByRole('radio', { name: label(locale, 'exercises.view.list'), exact: true }).click();
       await expect(page.getByRole('button', { name: /^entspannen/ })).toBeVisible({ timeout: 15_000 });

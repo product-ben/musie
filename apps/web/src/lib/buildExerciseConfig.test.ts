@@ -55,6 +55,7 @@ function instrumentExercise(
     reflectMd: REFLECT[locale],
     reflectPlaceholder: PLACEHOLDER[locale],
     goalIds: ['relax'],
+    goalSort: { relax: 6 },
     instrument: { id, defaultMode: 'with_musie', vibrationDefault: true, ...instrument },
   };
 }
@@ -189,12 +190,19 @@ describe('an instruments exercise as a config', () => {
 
 describe('the round trip, database → config → Exercise', () => {
   /* EVERY FIELD, in both locales and for both shapes: the copy the preview
-     renders is the copy the row holds, and nothing is lost on the way. */
+     renders is the copy the row holds, and nothing is lost on the way.
+
+     EXCEPT ONE, ON PURPOSE (2026-11-20): `goalSort`. The config names the
+     goals an exercise serves as a SET; where it stands under each is decided
+     in the migration that files it there, against the exercises already in
+     that goal — so the config cannot carry it, and the preview puts it at
+     its catalogue place. Everything else is still compared whole. */
   for (const [name, make] of [['harp', harp], ['kalimba', kalimba]] as const) {
     for (const locale of ['de', 'en'] as const) {
       it(`gives back the ${name} exactly, in ${locale}`, () => {
         const source = make();
-        expect(configToExercise(build(source), locale, 'analogue')).toEqual(source[locale]);
+        const back = configToExercise(build(source), locale, 'analogue');
+        expect({ ...back, goalSort: source[locale].goalSort }).toEqual(source[locale]);
       });
     }
   }

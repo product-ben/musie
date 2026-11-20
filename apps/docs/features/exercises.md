@@ -1,12 +1,12 @@
 # The exercise library
 
 `/exercises` — eight exercises as cards, with a duration, what you need, and a
-picture. A goal decides which of them you see, and the screen shows **at most
-three**. Seven of the eight open; one says why it will not.
+picture. A goal decides which of them you see, and the screen suggests **one of
+each kind**. Seven of the eight open; one says why it will not.
 
 ```mermaid
 flowchart TD
-  G["goal · Lass uns zusammen entspannen"] --> L["/exercises · at most three cards"]
+  G["goal · Lass uns zusammen entspannen"] --> L["/exercises · one card of each kind"]
   L -.->|"Alle Übungen zeigen"| A["every card the goal offers"]
   L --> P{"implemented?"}
   A --> P
@@ -30,26 +30,30 @@ flowchart TD
   between *Stapel* and *Liste*. The three buttons are filled (`secondary`) and
   stand at one height: the help button is an `IconButton` at the 40px `sm`
   rung, level with the `min` buttons beside it.
-- **The pile** (or the list) — the goal's first three exercises, in their own
-  order. Swipe or use the chevrons beside it to see another (under a mouse they
+- **The pile** (or the list) — the goal's first exercise of each kind, in the
+  goal's own order. Swipe or use the chevrons beside it to see another (under a mouse they
   say *Vorherige Karte* / *Nächste Karte*); press one to start it. A card being
   swiped shows its own face — there is no green overlay any more.
 - **Under the pile** — *Alle Übungen zeigen*, a switch, only when the goal has
-  more than three. Then, on a phone, *Ziel ändern*.
+  more than it suggests. Then, on a phone, *Ziel ändern*.
 
-## At most three, and the onboarding card says so
+## One of each kind, and the onboarding card says how many
 
-Ben, 2026-11-11: fewer to choose between makes choosing easier. The pile and
-the list show the first three of whatever the goal offers, and *Alle Übungen
-zeigen* shows the rest. Today only *Entspannen* has more than three (six), so
-it is the only goal with the switch, and the instruments are behind it. The
+Ben, 2026-11-11: fewer to choose between makes choosing easier. From then the
+pile and the list showed the first three of whatever the goal offered. Since
+2026-11-20 they show **the first exercise of each kind** — a card exercise,
+something to listen to, an instrument, a digital one — in the goal's own order
+(Ben: *show one exercise of each type per goal by default*). That is four under
+*Entspannen*, three under *Energie sammeln*, two under *Achtsamkeit üben*, and
+*Alle Übungen zeigen* shows the rest under all three. The
 switch belongs to one goal: changing the goal turns it off, and a reload
 forgets it — it is a look at more, not a setting.
 
 The **onboarding card** lies on top of the pile the first time a browser sees
-the screen. It says *Musie schlägt dir drei Übungen vor, aus denen du wählen
-kannst*, then *Wische für die nächste Übung* and *Tippen zum Starten* — no
-chevrons of its own, since the pile's are beside it. The number is the same constant the pile reads, so the card
+the screen. It says *Musie schlägt dir vier Übungen vor, aus denen du wählen
+kannst* — the number is the goal's, so it reads *zwei* under *Achtsamkeit
+üben* — then *Wische für die nächste Übung* and *Tippen zum Starten* — no
+chevrons of its own, since the pile's are beside it. The number counts the same list the pile reads, so the card
 cannot promise a different count from the pile it is lying on. It **goes like
 a card**: a press, or a swipe either way, takes it off. The help button in the
 toolbar brings it back.
@@ -111,9 +115,10 @@ counted only the startable ones for half a day, which read *2 Übungen* over a
 pile of three, and Ben reported it as a bug on sight: the count sits directly
 above the thing it counts.)
 
-Since 2026-11-11 the pile shows at most three, so a number above it would only
-ever say *three*. The number moved to the onboarding card, and the headline
-became an invitation.
+From 2026-11-11 the pile showed at most three, so a number above it would only
+ever have said *three*. The number moved to the onboarding card, and the headline
+became an invitation. (Since 2026-11-20 the number moves with the goal — one
+exercise of each kind — and the card still says whichever is true.)
 :::
 
 ::: devs

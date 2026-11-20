@@ -312,8 +312,9 @@ async function exerciseName(exercise: string, locale: Locale): Promise<string> {
  * written against the first card being a startable card exercise — the
  * `card()` pairings they scan are Achtsame Pause's. That stopped holding on
  * 2026-11-11: the default goal is *entspannen* now, whose first card is
- * Achtsam Atmen (not built) and which offers no card exercise at all. So the
- * exercise those walks meant is named here once, and its name is read from
+ * Achtsam Atmen (not built) and which offered no card exercise at all until
+ * 2026-11-20 (it closes with both since). So the exercise those walks meant
+ * is named here once, and its name is read from
  * `exercise_i18n` in the run's locale rather than written down — a literal
  * would be one language's copy in the other's run.
  *
@@ -355,21 +356,29 @@ export async function startExercise(page: Page, locale: Locale, named?: string) 
      option that filtered nothing, precisely so that no walk had to know which
      goals its exercise was mapped to. That option is gone, and since
      2026-11-11 so is *Musie kennenlernen*: three goals, *entspannen* the
-     default, and none of them offers every exercise. A walk asking for
-     *Achtsame Pause* lands on a default goal that does not offer it.
+     default, and none of them offered every exercise until 2026-11-20.
 
-     SO THE HELPER LOOKS, AND MOVES ON IF IT IS NOT THERE. At most three
-     goals. Deliberately NOT a hardcoded exercise-to-goal table: that is
-     content, it changes by migration, and a table in here would go stale
-     silently and fail as "the card never appeared" three specs away from the
-     thing that moved.
+     SO THE HELPER LOOKS, AND MOVES ON IF IT IS NOT THERE. Deliberately NOT a
+     hardcoded exercise-to-goal table: that is content, it changes by
+     migration, and a table in here would go stale silently and fail as "the
+     card never appeared" three specs away from the thing that moved.
 
-     THE FIRST THREE ONLY. The pile and the list show at most three of a
-     goal's exercises until *Alle Übungen zeigen* is on, and this helper does
-     not press it: every exercise a walk names today is among the first three
-     of some goal. One that is not (an instrument, under *entspannen*) is
-     reached the way `instruments.spec.ts` reaches it. */
+     ── IT STARTS UNDER THE GOAL THAT PLAYS THE ACTIVATION PIECE (2026-11-20)
+     A card plays the piece its session's goal asks for
+     (`sessions_card_plays()`), and every pairing a walk asserts — `card()`,
+     deck.json's `plays` — is the ACTIVATION piece. A fresh local stack has no
+     relax pieces at all (factory content, CLAUDE.md 4.1), so a card walk
+     under *entspannen* would meet „Kein Track zugeordnet“. Which goal that is
+     is read from `goals.music_mode`, not written down, for the same reason
+     as the table above.
+
+     ── AND IT ASKS FOR ALL OF THEM WHEN IT HAS TO (2026-11-20) ─────────────
+     The pile and the list show one exercise of each kind until *Alle Übungen
+     zeigen* is on, so Freie Bahn is behind the switch wherever Achtsame Pause
+     comes first. When the card is not among the suggestions, the switch is
+     pressed before the helper moves on. */
   const card = group.getByRole('radio', { name });
+  const showAll = page.getByRole('switch', { name: label(locale, 'exercises.showAll'), exact: true });
 
   /* *ZIEL ÄNDERN*, BY ITS EXACT NAME. Three controls say it since 2026-11-11:
      the labelled button in the toolbar (from --bp-md), its copy under the
@@ -386,31 +395,51 @@ export async function startExercise(page: Page, locale: Locale, named?: string) 
     name: label(locale, 'exercises.goal.question'),
   });
 
-  for (let i = 0; i < 3; i += 1) {
-    if (await card.isVisible().catch(() => false)) break;
+  /* BY POSITION in the sheet, not by label: a goal's label is content in
+     `goal_i18n` and this file has no business knowing it. The sheet's order
+     is `goals.sort`, read here the way `getGoals()` reads it. */
+  const { data: goals, error } = await service()
+    .from('goals')
+    .select('id, music_mode')
+    .eq('retired', false)
+    .order('sort');
+  if (error !== null || goals === null || goals.length === 0) {
+    throw new Error(`could not read the goals: ${error?.message ?? 'no rows'}`);
+  }
+  const activating = goals.findIndex((goal) => goal.music_mode === 'activate');
+  const tryOrder = [
+    ...(activating === -1 ? [] : [activating]),
+    ...goals.map((_, index) => index).filter((index) => index !== activating),
+  ];
 
+  for (const index of tryOrder) {
     await expect(changeGoal).toBeVisible({ timeout: 15_000 });
     await changeGoal.click();
     await expect(sheet).toBeVisible({ timeout: 15_000 });
 
-    /* BY POSITION, not by label: a goal's label is content in `goal_i18n`
-       and this file has no business knowing it. The order is `goals.sort`,
-       which is a column with a unique constraint — a fact about the content
-       rather than an accident of layout. */
-    const goal = sheet.getByRole('radio').nth(i);
+    const goal = sheet.getByRole('radio').nth(index);
 
-    /* THE GOAL ALREADY CHOSEN IS SKIPPED, not pressed: pressing a checked
-       radio changes nothing, so the sheet would never close and the wait
-       below would time out. The card was not under it — that is why the
-       loop is here — so the sheet is dismissed and the next goal tried. */
+    /* THE GOAL ALREADY CHOSEN IS NOT PRESSED: pressing a checked radio
+       changes nothing, so the sheet would never close and the wait below
+       would time out. Escape closes it on the goal that is already there. */
     if (await goal.isChecked()) {
       await page.keyboard.press('Escape');
     } else {
       await goal.click();
     }
     /* Choosing (or Escape) closes the sheet. Waiting for that is what stops
-       the next iteration pressing a control the scrim is still over. */
+       the next step pressing a control the scrim is still over. */
     await expect(sheet).toBeHidden({ timeout: 15_000 });
+
+    if (await card.isVisible().catch(() => false)) break;
+
+    /* The switch is drawn only when the goal offers more than it suggests,
+       and it resets when the goal changes — so it is off here whenever it
+       is there at all. */
+    if (await showAll.isVisible().catch(() => false)) {
+      await showAll.click();
+      if (await card.isVisible().catch(() => false)) break;
+    }
   }
 
   await expect(card).toBeVisible({ timeout: 15_000 });

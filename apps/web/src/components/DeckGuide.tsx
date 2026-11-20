@@ -55,8 +55,8 @@ import { numberWord } from '../i18n/numbers';
 export interface DeckGuideProps {
   /** Read and then gone. The parent owns whether it is drawn at all. */
   onDismiss: () => void;
-  /** How many exercises the pile shows — the screen's `SUGGESTED`. Passed
-   *  in rather than imported so the sentence and the pile read one number. */
+  /** How many exercises the pile suggests — one of each kind under the goal
+   *  (`oneOfEachKind`). Passed in so the sentence and the pile read one list. */
   count: number;
 }
 
