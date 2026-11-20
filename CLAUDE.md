@@ -134,9 +134,9 @@ later, elsewhere, looking unrelated.
   reason written into the script. Raw `supabase db push` stays denied: the guard
   is the point, and it guards everyone.
 - `pnpm --filter web dev` runs the check first and **warns without blocking**.
-- `.github/workflows/db-push.yml` does it on merge to `main` and then runs the
-  database suite against hosted — inert until two secrets exist, and the file
-  says which.
+- `.github/workflows/db-push.yml` does it on merge to `main` and then runs
+  `pnpm assets:check` against hosted, and runs that check alone once a day —
+  inert until two secrets exist, and the file says which.
 
 Content lives in a migration rather than `supabase/seed.sql` because `supabase
 db push` does not run `seed.sql` — header of `20260918150600_content_seed.sql`.
@@ -202,12 +202,25 @@ maintenance screen that refuses is the function refusing.
 `MAINTENANCE-UI.md` is the whole argument; `MAINTENANCE-UI-PLAN.md` is how it
 was built.
 
-**`pnpm test:db` runs against whichever database you point it at.** Bare, it
-uses the local stack. Set `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` and
-`SUPABASE_TEST_SERVICE_ROLE_KEY` — all three or none — to run it against
-hosted, which is how the `service_role` hole in rule 2 was found. It prints its
-target on the first call. Pass the keys for one run; the service-role key does
-not belong in a file.
+**`pnpm test:db` runs against a local stack only — never hosted.** Bare, it
+uses the shared stack. Set `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` and
+`SUPABASE_TEST_SERVICE_ROLE_KEY` — all three or none — to aim it at a private
+local stack (rule 9); `db.support.ts` refuses any URL that is not loopback.
+That inverted on 2026-11-20: a hosted run found the `service_role` hole in
+rule 2, and hosted runs also wrote fixtures and hard-deleted them — one was
+`trk-98`, by then a real track of Lucia's, and it is gone. The suite had been
+red on hosted for a month for snapshot reasons, so nobody saw.
+
+**On hosted, one question is asked: is every file an exercise plays or shows
+there?** (Ben, 2026-11-20.) That is `pnpm assets:check` — read-only, run by
+`db-push.yml` after every merge and once a day, because `/maintenance` edits
+merge nothing. Pass `SUPABASE_TEST_URL` and `SUPABASE_TEST_SERVICE_ROLE_KEY`
+for one run; the service-role key does not belong in a file.
+
+**No test compares the database with `deck.json` or `music.json`'s pieces.**
+Those files are snapshots of `/maintenance` (4.1), so a comparison turns red
+every time Lucia uses the product. `music.db.test.ts` still compares the
+cuts, which do travel by migration.
 
 
 Run `pnpm test:db` after any change under `supabase/migrations/`. It is

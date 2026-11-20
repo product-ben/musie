@@ -14,6 +14,7 @@
     "test": "pnpm -r run test",
     "test:db": "pnpm -r run test:db",
     "test:e2e": "pnpm -r run test:e2e",
+    "assets:check": "pnpm --filter web run assets:check --",
     "deck:migration": "pnpm --filter web run deck:migration --",
     "deck:pdf": "pnpm --filter web run deck:pdf --",
     "music:migration": "pnpm --filter web run music:migration --",

@@ -277,7 +277,7 @@ there.
 
 ```bash
 supabase db push                 # from the repo root, with the project linked
-pnpm test:db                     # against hosted, with all three variables set
+pnpm assets:check                # against hosted: SUPABASE_TEST_URL + SUPABASE_TEST_SERVICE_ROLE_KEY
 ```
 
 ---

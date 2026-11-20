@@ -89,14 +89,18 @@ rule 4, and it is not advisory: `pnpm check` never touches a database, so
 typecheck, lint, tests and CI are all green while the migration files and the
 hosted database disagree.
 
-### It runs against whichever database you point it at
+### It runs against a local stack, never hosted
 
-Bare, it uses the local stack. Set all three of `SUPABASE_TEST_URL`,
+Bare, it uses the shared local stack. Set all three of `SUPABASE_TEST_URL`,
 `SUPABASE_TEST_ANON_KEY` and `SUPABASE_TEST_SERVICE_ROLE_KEY` — all three or
-none — and it runs against hosted. **That is how the `service_role` grant hole
-was found.** It prints its target on the first call.
+none — to aim it at a private local stack. `db.support.ts` refuses any URL that
+is not loopback. It prints its target on the first call.
 
-Pass the keys for one run; the service-role key does not belong in a file.
+Until 2026-11-20 the same three variables aimed it at hosted, and that is how
+the `service_role` grant hole was found. It is also how a fixture's hard delete
+removed a real track (`trk-98`). Since then hosted gets one read-only question:
+`pnpm assets:check` — is every file an exercise plays or shows there? It runs
+after every merge and once a day, in `db-push.yml`.
 
 ### The trap in `.env.local`
 

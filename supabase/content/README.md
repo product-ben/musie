@@ -19,6 +19,12 @@
 > written by nothing now. It is still in the snapshot because `deck:pdf`
 > prints it on the front of the four cards that have no artwork master.
 >
+> **No test compares the database with this file any more (2026-11-20).**
+> `deck.db.test.ts` did, and on hosted it went red every time an operator
+> changed a card, which is what `/maintenance` is for. What is checked on
+> hosted instead is that every picture and piece a card uses is actually there:
+> `pnpm assets:check` (CLAUDE.md rule 4).
+>
 > The grid — 25 cells, their music and their pictures — is exported beside
 > this file as `grid.json`. It is not in here because four things parse
 > `deck.json` and adding a field would be the change that passes every check
@@ -121,7 +127,7 @@ what actually proves the database matches the file.
 | | |
 |---|---|
 | `apps/web/src/lib/deck.test.ts` | `deck.json` obeys every rule, and the checker is shown failing on each one. Runs in `pnpm check` — no database needed |
-| `apps/web/src/lib/deck.db.test.ts` | the database **is** this file, row for row. Runs in `pnpm test:db`, so it can be pointed at the hosted project (CLAUDE.md rule 4) and catch a deck that was applied locally and never pushed |
+| ~~`apps/web/src/lib/deck.db.test.ts`~~ | removed 2026-11-20 — the database is the source now, and this file its snapshot. `pnpm assets:check` asks the question that is left: is every picture and piece a card uses there? |
 
 ## The PDF
 
@@ -213,7 +219,7 @@ pnpm music:upload                            uploads, measures, writes keys and
 pnpm music:migration                         writes supabase/migrations/<stamp>_music_<name>.sql
   ↓
 supabase db reset                             re-applies every migration, the new one last
-pnpm test:db                                  music.db.test.ts proves the database matches the file
+pnpm test:db                                  music.db.test.ts proves the database's CUTS match the file
   ↓
 supabase db push                              sends it to the hosted project
 ```

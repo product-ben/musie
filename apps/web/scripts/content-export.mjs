@@ -24,7 +24,7 @@
  *
  * ── THE SHAPE OF deck.json DOES NOT MOVE ──────────────────────────────────
  * Byte-for-byte the same fields, in the same order, because `deck.mjs`
- * validates it, `deck.test.ts` asserts that validation, `deck.db.test.ts`
+ * validates it, `deck.test.ts` asserts that validation, `deck.db.test.ts` (removed 2026-11-20)
  * compares it against the database and `deck-pdf.mjs` prints from it. Four
  * readers is four reasons not to add a field here.
  *
