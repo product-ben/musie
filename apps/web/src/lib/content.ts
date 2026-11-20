@@ -96,15 +96,6 @@ export interface Exercise {
   timeframeMin: number;
   timeframeMax: number;
   /**
-   * SUPERSEDED BY `kind`, and held equal to it by a check constraint
-   * (`exercises_cards_match_kind`). Still selected because the column still
-   * exists — eight worktrees read it against the one shared Postgres, so
-   * dropping it is a follow-up migration rather than part of this change.
-   *
-   * Nothing in this app should branch on it any more: ask `kind`.
-   */
-  needsCards: boolean;
-  /**
    * HOW MANY CARDS THIS EXERCISE LAYS OUT, or null where it draws none —
    * `exercises.cards_dealt`, held to the kind by a check constraint.
    *
@@ -257,8 +248,8 @@ export interface Card {
   code: string;
   imageUrl: string | null;
   sort: number;
-  feeling: string;
-  /** Always null today: the source carries no per-card alt text. */
+  /** The picture's description, projected from the card's artwork. Null where
+   *  it has not been written — or where the card has no translation row yet. */
   imageAlt: string | null;
 }
 
@@ -391,14 +382,13 @@ export async function getGoals(locale: Locale): Promise<Goal[]> {
    the TYPE level to infer the row shape, and TypeScript does not fold `'a' +
    'b'` into a literal type — so splitting this across a `+` degrades the
    result to GenericStringError and every field access becomes an error. */
-const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, needs_cards, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, motion_md, motion_label, play_md, play_touch_md, play_pointer_md, focus_headline, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id), exercise_instruments(instrument_id, default_mode, vibration_default)';
+const EXERCISE_SELECT = 'id, kind, timeframe_min, timeframe_max, cards_dealt, needs_sound, asks_posture, image_url, implemented, sort, listen_gate_seconds, exercise_i18n(locale, name, description, needs, intro_md, scan_md, listen_md, reflect_md, reflect_placeholder, image_alt, motion_md, motion_label, play_md, play_touch_md, play_pointer_md, focus_headline, play_cta, mode_solo_label, mode_solo_md, mode_musie_label, mode_musie_md), exercise_goals(goal_id), exercise_instruments(instrument_id, default_mode, vibration_default)';
 
 interface ExerciseRow {
   id: string;
   kind: string;
   timeframe_min: number;
   timeframe_max: number;
-  needs_cards: boolean;
   cards_dealt: number | null;
   needs_sound: boolean;
   asks_posture: boolean | null;
@@ -511,7 +501,6 @@ function toExercise(row: ExerciseRow, locale: Locale): Exercise[] {
     kind: exerciseKind(row.id, row.kind),
     timeframeMin: row.timeframe_min,
     timeframeMax: row.timeframe_max,
-    needsCards: row.needs_cards,
     cardsDealt: row.cards_dealt,
     needsSound: row.needs_sound,
     /* Null is "the question does not arise", which the screen draws the same
@@ -570,7 +559,7 @@ export async function getExercise(id: string, locale: Locale): Promise<Exercise 
   return toExercise(data, locale)[0] ?? null;
 }
 
-const CARD_SELECT = 'id, code, image_url, sort, card_i18n(locale, feeling, image_alt)';
+const CARD_SELECT = 'id, code, image_url, sort, card_i18n(locale, image_alt)';
 
 interface CardRow {
   id: string;
@@ -579,21 +568,33 @@ interface CardRow {
   sort: number;
   card_i18n: {
     locale: string;
-    feeling: string;
     image_alt: string | null;
   }[];
 }
 
+/**
+ * A CARD IS A CARD WITHOUT ITS TRANSLATION ROW — 2026-11-20.
+ *
+ * This dropped any card with no `card_i18n` row, which was right while that
+ * row carried the feeling word the card was named for. The word left every
+ * screen on 2026-10-09; what was left behind was a card Lucia created at
+ * /maintenance being invisible to the app — `20261016150000` was a whole
+ * migration to make MC-10 drawable. The only thing the row still gives is the
+ * picture's alt text, and a card without it is a card with no alt text yet.
+ * `project_deck()` now writes the two rows for every card as well.
+ *
+ * `.find`, not `pickTranslation`: the English row is no fallback for alt
+ * text — a German screen reader reading English is the failure rule 6 exists
+ * for, and null is honest.
+ */
 function toCard(row: CardRow, locale: Locale): Card[] {
-  const text = pickTranslation(row.card_i18n, locale, 'card_i18n', row.id);
-  if (text === null) return [];
+  const text = row.card_i18n.find((translation) => translation.locale === locale);
   return [{
     id: row.id,
     code: row.code,
     imageUrl: row.image_url,
     sort: row.sort,
-    feeling: text.feeling,
-    imageAlt: text.image_alt,
+    imageAlt: text?.image_alt ?? null,
   }];
 }
 
@@ -643,61 +644,35 @@ export interface Track {
 }
 
 /**
- * WHICH RECORDING PLAYS, for an (exercise, card) pair.
+ * THE RECORDING A SESSION PLAYS, by its id — 2026-11-20.
  *
- * Two tables, and the split is the point: `tracks` is the recording, stored
- * once and licensed once; `exercise_tracks` says when it plays. So this reads
- * the PAIRING and embeds the recording, rather than looking a track up by card.
+ * Which piece a card plays is decided ONCE, by the database, when the card is
+ * written to the session: `sessions_card_plays()` reads the card's two pieces
+ * and the goal the session was started from, draws for „Achtsamkeit üben",
+ * and stores the answer in `sessions.track_id` and `sessions.music_mode`. So
+ * the session screen asks for the piece it was GIVEN, by id, and never works
+ * it out again — re-deciding on every load is what would make a random draw
+ * change on reload (PRD R2).
  *
- * `cardId` is nullable because a cardless exercise has its own track — one
- * pairing row with a null `card_id`, under `unique nulls not distinct`. Null
- * therefore has to be matched with `is`, not `eq`: PostgREST's `eq.null`
- * compares with `=`, which is never true of NULL in SQL and would silently
- * return nothing for exactly the exercises this branch exists for.
+ * This replaced `getTrackFor(exercise, card)`, which read `exercise_tracks`.
+ * That table is still projected, activation only, for open branches; nothing
+ * here reads it.
  *
- * Null for "no pairing row", which is ORDINARY today: Mindful Breathing, Sound
- * Journey and Body Scan all need sound, draw no card, and there is no file for
- * any of them. The listen step renders its no-recording line rather than an
- * error.
- *
- * NOT null for a SECOND exercise over the same deck. Free Rein draws the same
- * nine cards as Mindful Break and plays the same nine recordings, through nine
- * pairing rows of its own (`20260923150000`) — which is the split working as
- * designed: one row per recording, one pairing row per place it plays.
+ * Null for a null id, and for an id the client cannot see.
  */
-export async function getTrackFor(
-  exerciseId: string,
-  cardId: string | null,
-): Promise<Track | null> {
-  const query = getSupabase()
-    .from('exercise_tracks')
-    .select('track_id, tracks(id, src, duration_seconds)')
-    .eq('exercise_id', exerciseId);
+export async function getTrack(trackId: string | null): Promise<Track | null> {
+  if (trackId === null) return null;
 
-  const { data, error } = await (cardId === null
-    ? query.is('card_id', null)
-    : query.eq('card_id', cardId)
-  ).maybeSingle();
+  const { data, error } = await getSupabase()
+    .from('tracks')
+    .select('id, src, duration_seconds')
+    .eq('id', trackId)
+    .maybeSingle();
 
-  if (error !== null) fail(`exercise_tracks (${exerciseId}, ${cardId ?? 'null'})`, error.message);
+  if (error !== null) fail(`tracks (id=${trackId})`, error.message);
   if (data === null) return null;
 
-  /* PostgREST returns an OBJECT for a to-one embed and an ARRAY for a to-many
-     one, and supabase-js's inference reads the generated relationship rather
-     than the shape on the wire — the same trap diary.ts documents at
-     `Embedded<T>`. Collapsed here, at the boundary. */
-  const embed = data.tracks as unknown;
-  const track = (Array.isArray(embed) ? embed[0] : embed) as Track & {
-    duration_seconds: number;
-  } | null | undefined;
-
-  if (track === null || track === undefined) return null;
-
-  return {
-    id: track.id,
-    src: track.src,
-    durationSeconds: track.duration_seconds,
-  };
+  return { id: data.id, src: data.src, durationSeconds: data.duration_seconds };
 }
 
 /* ── WHAT A LISTENING RUN PLAYS ────────────────────────────────────────────*/

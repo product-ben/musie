@@ -739,6 +739,8 @@ export const de: Messages = {
   'session.listen.simulatedHeadline': 'Testmodus: keine Musik',
   'session.listen.simulated': 'Es ist noch keine Musik hinterlegt, deshalb läuft der Player auf einer Uhr in ihrer echten Länge.',
   'session.listen.noTrack': 'Für diese Übung gibt es noch keine Musik.',
+  'session.listen.noCardTrack': 'Kein Track zugeordnet',
+  'session.listen.noCardTrackText': 'Hinter dieser Karte liegt noch keine Musik. Gehe einen Schritt zurück und wähle eine andere Karte.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
   'reflect.legend': 'Wie möchtest du antworten?',

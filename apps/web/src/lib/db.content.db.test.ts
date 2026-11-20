@@ -383,6 +383,9 @@ describe('the tracks bucket · private, readable signed, and honest about absenc
       .from('tracks')
       .select('id, src')
       .not('src', 'is', null)
+      /* ORDERED, so the pick is the deck's first recording and never a
+         fixture `maintenance.db.test.ts` is creating in the same moment. */
+      .order('id')
       .limit(1)
       .maybeSingle();
 

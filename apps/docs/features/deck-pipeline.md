@@ -11,8 +11,8 @@ database the copy. It is the other way round now: the deck is edited at
 ```mermaid
 flowchart TD
   UI["/maintenance<br/>cards · tracks · artwork · the 5×5 grid"]
-  UI -->|"content-admin → admin_write()"| DB["the database<br/>cards · grid_cells · artworks · tracks"]
-  DB -->|"project_deck()"| P["cards.image_url + exercise_tracks<br/>DERIVED, rewritten on every write"]
+  UI -->|"content-admin → admin_write()"| DB["the database<br/>cards (picture + two pieces) · artworks · tracks"]
+  DB -->|"project_deck()"| P["cards.image_url · card_i18n.image_alt · exercise_tracks (activation)<br/>DERIVED, rewritten on every write"]
   DB -->|"pnpm content:export"| J["supabase/content/deck.json<br/>a readable snapshot, committed to git"]
   J -->|"pnpm deck:pdf"| PDF["deck.pdf + deck.html<br/>88×63mm, 3mm bleed, both faces"]
   J -->|"pnpm check"| T["deck.test.ts<br/>the file obeys every rule — no database"]
@@ -37,8 +37,16 @@ code      MC-01            PRINTED on the card, and what the QR encodes
 sort      1                the order the deck is dealt
 feeling   Freude / Joy     both locales, both required
 imageAlt  null / null      null in BOTH, or written in both
-plays     per exercise     which recording this card plays, per exercise
+plays     per exercise     the card's ACTIVATION piece — the same in both
+                           card exercises. Its relax piece is in grid.json
 ```
+
+**Since 2026-11-20 a card carries its own picture and two pieces** —
+`artwork_id`, `activation_track_id` (played under *Energie sammeln*) and
+`relax_track_id` (*entspannen*); *Achtsamkeit üben* draws one of the two,
+once per session. They move with the card on the grid. Which one a session
+plays is decided by the database when the card is written
+(`sessions_card_plays()`, `20261120100000_two_tracks_per_card.sql`).
 
 **`code` is the one that cannot change.** Changing it on a deck that has been
 printed invalidates the paper.

@@ -164,7 +164,16 @@ the guard is in code and not only here:
   the overlap that would otherwise clobber an edit on the next run.
 - `exercise_tracks`, `cards.image_url` and `card_i18n.image_alt` are
   **derived**, rewritten by `public.project_deck()` on every admin write. A
-  row written there by hand for a card is erased by the next cell change.
+  row written there by hand for a card is erased by the next change.
+  **Since 2026-11-20 the source is the CARD, not its grid square:**
+  `cards.artwork_id`, `activation_track_id` and `relax_track_id` belong to
+  the card and move with it; `grid_cells.track_id` / `artwork_id` are unread
+  and wait for a drop. `exercise_tracks` is activation only and the app no
+  longer reads it. Which piece a session plays is decided by the trigger
+  `sessions_card_plays()` when the card is written — by the goal's
+  `music_mode` (`relax` / `activate` / `random`, drawn once) — and stored in
+  `sessions.track_id` + `music_mode`. Never re-derive it in the client
+  (`20261120100000_two_tracks_per_card.sql`).
   **`image_alt` joined them on 2026-10-15, and the gap before it is the
   lesson:** the picture was derived and its description was not, so an artwork
   upload moved the one and left the other — a screen reader told confidently

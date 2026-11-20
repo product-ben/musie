@@ -195,39 +195,69 @@ export type Database = {
       }
       cards: {
         Row: {
+          activation_track_id: string | null
           archived_at: string | null
           arousal: number | null
+          artwork_id: string | null
           code: string
           id: string
           image_url: string | null
+          relax_track_id: string | null
           sort: number
           valence: number | null
         }
         Insert: {
+          activation_track_id?: string | null
           archived_at?: string | null
           arousal?: number | null
+          artwork_id?: string | null
           code: string
           id: string
           image_url?: string | null
+          relax_track_id?: string | null
           sort: number
           valence?: number | null
         }
         Update: {
+          activation_track_id?: string | null
           archived_at?: string | null
           arousal?: number | null
+          artwork_id?: string | null
           code?: string
           id?: string
           image_url?: string | null
+          relax_track_id?: string | null
           sort?: number
           valence?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cards_activation_track_id_fkey"
+            columns: ["activation_track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cards_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "artworks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cards_cell_fkey"
             columns: ["valence", "arousal"]
             isOneToOne: true
             referencedRelation: "grid_cells"
             referencedColumns: ["valence", "arousal"]
+          },
+          {
+            foreignKeyName: "cards_relax_track_id_fkey"
+            columns: ["relax_track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -678,16 +708,19 @@ export type Database = {
       goals: {
         Row: {
           id: string
+          music_mode: string
           retired: boolean
           sort: number
         }
         Insert: {
           id: string
+          music_mode?: string
           retired?: boolean
           sort: number
         }
         Update: {
           id?: string
+          music_mode?: string
           retired?: boolean
           sort?: number
         }
@@ -1048,6 +1081,7 @@ export type Database = {
           listened_at: string | null
           listening_question: string | null
           listening_question_id: string | null
+          music_mode: string | null
           play_mode: string | null
           play_seconds: number | null
           posture: string | null
@@ -1072,6 +1106,7 @@ export type Database = {
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
+          music_mode?: string | null
           play_mode?: string | null
           play_seconds?: number | null
           posture?: string | null
@@ -1096,6 +1131,7 @@ export type Database = {
           listened_at?: string | null
           listening_question?: string | null
           listening_question_id?: string | null
+          music_mode?: string | null
           play_mode?: string | null
           play_seconds?: number | null
           posture?: string | null

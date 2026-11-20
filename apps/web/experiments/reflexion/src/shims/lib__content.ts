@@ -33,6 +33,11 @@ export async function getCardByCode(code: string, locale: Locale): Promise<Card 
   return store.tick(card.code === code ? card : null);
 }
 
+/** The piece stored on the session row (`saveCard` below put it there). */
+export async function getTrack(trackId: string | null): Promise<Track | null> {
+  return store.tick(store.trackById(trackId));
+}
+
 export async function getTrackFor(exerciseId: string, cardId: string | null): Promise<Track | null> {
   return store.tick(store.trackFor(exerciseId, cardId));
 }

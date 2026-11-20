@@ -131,9 +131,6 @@ export function configToExercise(
     kind: config.kind,
     timeframeMin: config.catalogue.timeframeMinutes.min,
     timeframeMax: config.catalogue.timeframeMinutes.max,
-    /* Superseded by `kind` and held equal to it by a check constraint. Derived
-       rather than carried, because the config does not state it twice. */
-    needsCards: config.kind === 'card_based',
     cardsDealt: config.catalogue.cardsDealt,
     needsSound: true,
     /* Flattened to a boolean, exactly as `content.ts` flattens the column: the
@@ -186,7 +183,6 @@ export function previewCard(index = 1): Card {
        are the deck's own, so what she sees is what a run shows. */
     imageUrl: `assets/web/cards/mc-${n}.webp`,
     sort: index,
-    feeling: '',
     imageAlt: null,
   };
 }

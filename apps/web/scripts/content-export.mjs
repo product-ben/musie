@@ -63,8 +63,9 @@ const GRID_PATH = join(CONTENT, 'grid.json');
 const LOCALES = ['de', 'en'];
 
 /** Which exercise's pairings `deck.json` records. Both card exercises carry
- *  identical ones — the projection writes them from one cell — so one of them
- *  has to be the authority, and it is the one the import read. */
+ *  identical ones — the projection writes them from the card's ACTIVATION
+ *  piece (2026-11-20) — so `plays` is that piece, twice. A card's relax piece
+ *  is in `grid.json`: four readers parse this file and none of them needs it. */
 const DECK_EXERCISES = ['free-rein', 'mindfulness-cards'];
 
 /* ═══ WHERE TO READ FROM ════════════════════════════════════════════════════ */
@@ -188,27 +189,42 @@ async function main() {
       return piece;
     });
 
-  /* ── grid.json, which is new ────────────────────────────────────────────── */
+  /* ── grid.json: each card's picture and two pieces, and where it stands ──
+     CARD-SHAPED since 2026-11-20. The picture and both pieces belong to the
+     card and move with it (two tracks per card, PRD D12), so the snapshot
+     says what each card carries and which square it stands on. A square only
+     appears under `parked` when no card stands on it and it still holds what
+     somebody left there before cards carried their own. */
 
   const grid = {
-    $note: 'THE GRID, EXPORTED. Written by pnpm content:export, never by hand — '
-      + 'the grid is edited at /maintenance and lives in the database. This file '
-      + 'is a snapshot so a deck change can be read in git log; nothing imports it.',
-    cells: [...cells]
+    $note: 'THE DECK BY CARD, EXPORTED. Written by pnpm content:export, never by hand — '
+      + 'cards, their pictures and their two pieces are edited at /maintenance and live in '
+      + 'the database. `activate` plays under „Energie sammeln“, `relax` under '
+      + '„entspannen“; „Achtsamkeit üben“ draws one of the two. This file is a snapshot '
+      + 'so a deck change can be read in git log; nothing imports it.',
+    cards: [...cards]
+      .filter((card) => card.archived_at === null)
+      .sort((a, b) => a.sort - b.sort)
+      .map((card) => ({
+        card: card.code,
+        square: card.valence === null ? null : [card.valence, card.arousal],
+        artwork: card.artwork_id,
+        activate: card.activation_track_id,
+        relax: card.relax_track_id,
+      })),
+    parked: [...cells]
       /* Reading order: top row first, left to right, which is how the screen
-         draws it — so a diff of this file reads like the grid looks. */
+         draws it. */
       .sort((a, b) => b.arousal - a.arousal || a.valence - b.valence)
-      .map((cell) => {
-        const card = cards.find((c) => c.valence === cell.valence
-          && c.arousal === cell.arousal && c.archived_at === null);
-        return {
-          valence: cell.valence,
-          arousal: cell.arousal,
-          card: card ? card.code : null,
-          track: cell.track_id,
-          artwork: cell.artwork_id,
-        };
-      }),
+      .filter((cell) => (cell.track_id !== null || cell.artwork_id !== null)
+        && !cards.some((c) => c.valence === cell.valence
+          && c.arousal === cell.arousal && c.archived_at === null))
+      .map((cell) => ({
+        valence: cell.valence,
+        arousal: cell.arousal,
+        track: cell.track_id,
+        artwork: cell.artwork_id,
+      })),
     artworks: [...artworks]
       .filter((artwork) => artwork.archived_at === null)
       .sort((a, b) => a.id.localeCompare(b.id))
@@ -227,7 +243,7 @@ async function main() {
     '',
     `  ${deck.cards.length} cards      → supabase/content/deck.json`,
     `  ${music.pieces.length} pieces     → supabase/content/music.json (cuts untouched)`,
-    `  ${grid.cells.length} cells      → supabase/content/grid.json`,
+    `  ${grid.cards.length} cards, ${grid.parked.length} parked → supabase/content/grid.json`,
     '',
     'Commit these when the change is one you want in git log. Nothing else',
     'reads them except deck:pdf and music:upload — the database is the source.',

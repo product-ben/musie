@@ -59,6 +59,18 @@ export const REVEALS: Record<string, { title: string; artist: string; licenceRef
   [FREIE_BAHN.trackId]: { title: FREIE_BAHN.trackTitle, artist: FREIE_BAHN.trackArtist, licenceRef: null },
 };
 
+/**
+ * A track by id — what `getTrack` answers since the app stopped re-deriving
+ * the piece on every load and started playing the one stored on the session
+ * (two tracks per card, 2026-11-20).
+ */
+export function trackById(id: string | null): Track | null {
+  if (id === null || id === undefined) return null;
+  if (id === AURA.id) return { ...AURA };
+  const found = Object.values(CONTENT.tracks).find((track) => track?.id === id);
+  return found ? { ...found } : null;
+}
+
 export function trackFor(exerciseId: string, cardId: string | null): Track | null {
   if (exerciseId === FREE_REIN) return cardId === null ? null : { ...AURA };
   return CONTENT.tracks[`${exerciseId}|${cardId ?? 'null'}`] ?? null;
@@ -94,6 +106,7 @@ function freshRow(): SessionRow {
     exerciseId,
     cardId: null,
     trackId: null,
+    musicMode: null,
     status: 'started',
     step: 'intro' as StepId,
     startedAt: new Date().toISOString(),

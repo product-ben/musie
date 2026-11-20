@@ -8,7 +8,7 @@
     "predev": "node ../../scripts/db-warn.mjs",
     "dev": "vite",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json && tsc --noEmit -p experiments/reflexion/tsconfig.json",
     "test": "vitest run --project unit",
     "test:db": "vitest run --project db",
     "test:e2e": "playwright test",

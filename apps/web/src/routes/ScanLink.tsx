@@ -132,7 +132,7 @@ export function ScanLink() {
     /* THE SAME FUNCTION THE TYPED CODE CALLS. Not a second implementation of
        "find the pairing and write both columns" — lib/scan.ts exists so that
        a scanned card and a typed one are one act. */
-    const outcome = await scanCardInto(row.id, row.exerciseId, code, locale);
+    const outcome = await scanCardInto(row.id, code, locale);
     if (outcome.kind !== 'applied') {
       /* Unreachable in practice: the card was just read back successfully, so
          it is neither malformed nor unknown. Narrowed rather than cast — the

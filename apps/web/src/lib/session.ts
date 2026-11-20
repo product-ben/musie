@@ -119,11 +119,27 @@ export async function readActiveSession(): Promise<ActiveSession | null> {
  */
 
 /** A session row, as the flow reads it back. Column spellings stop here. */
+/**
+ * WHICH OF A CARD'S TWO PIECES A SESSION PLAYS — 2026-11-20.
+ *
+ * Resolved, never `random`: `sessions_card_plays()` draws for „Achtsamkeit
+ * üben" when the card is written and stores the answer. Null before a card is
+ * scanned and for every exercise that draws none.
+ */
+export type MusicMode = 'relax' | 'activate';
+
+export function isMusicMode(value: string | null | undefined): value is MusicMode {
+  return value === 'relax' || value === 'activate';
+}
+
 export interface SessionRow {
   id: string;
   exerciseId: string;
   cardId: string | null;
+  /** What this run plays. For a card exercise, decided by the database when
+   *  the card was written — see `saveCard`. */
   trackId: string | null;
+  musicMode: MusicMode | null;
   status: SessionStatus;
   step: StepId;
   startedAt: string;
@@ -211,7 +227,7 @@ export function completedBefore(
 /** Narrow the two constrained columns, exactly as `readActiveSession` does. */
 function toRow(row: {
   id: string; exercise_id: string; card_id: string | null; track_id: string | null;
-  status: string; step: string; started_at: string; ended_at: string | null;
+  music_mode: string | null; status: string; step: string; started_at: string; ended_at: string | null;
   listening_question_id: string | null; listening_question: string | null;
   rejected_question_ids: string[]; rejected_this_round: string[];
   posture: string | null; ending: string | null; digital_cards: boolean;
@@ -229,6 +245,7 @@ function toRow(row: {
     exerciseId: row.exercise_id,
     cardId: row.card_id,
     trackId: row.track_id,
+    musicMode: isMusicMode(row.music_mode) ? row.music_mode : null,
     status: row.status,
     step: row.step,
     listeningQuestionId: row.listening_question_id,
@@ -245,7 +262,7 @@ function toRow(row: {
   };
 }
 
-const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards';
+const SESSION_COLUMNS = 'id, exercise_id, card_id, track_id, music_mode, status, step, started_at, ended_at, listening_question_id, listening_question, rejected_question_ids, rejected_this_round, posture, ending, digital_cards';
 
 /**
  * One session by id. Null when there is no such row — which, under RLS, is
@@ -343,30 +360,38 @@ export async function saveStep(id: string, step: StepId): Promise<void> {
 }
 
 /**
- * What was drawn, and what it plays.
+ * What was drawn — and, read back, what it plays.
  *
- * ONE WRITE, TWO FACTS, deliberately. `card_id` and `track_id` are different
- * things — what you drew and what you heard — but they are decided by one act,
- * and writing them separately would allow a row that has a card and no
- * recording because the second request failed.
+ * ONLY THE CARD IS WRITTEN — 2026-11-20. Which of the card's two pieces plays
+ * depends on the goal the session was started from, and for „Achtsamkeit üben"
+ * on a draw. The trigger `sessions_card_plays()` decides it in the same
+ * statement and fills `track_id` and `music_mode`, so the card and its music
+ * still land in ONE write — the property this function always had — and the
+ * three places a card reaches a session (scanned, dealt, the only one left)
+ * cannot decide differently. The answer is selected back, not recomputed.
  *
- * BOTH NULLABLE, because clearing is the same act in reverse: *Scan a
- * different card* puts the step back to its reader, and a session that kept
- * the old track while losing the card would be claiming a recording it no
- * longer has a reason to play.
+ * NULL CLEARS, and the trigger clears the piece with it: *Scan a different
+ * card* puts the step back to its reader, and a session that kept the old
+ * track while losing the card would be claiming a recording it no longer has
+ * a reason to play.
  */
 export async function saveCard(
   id: string,
   cardId: string | null,
-  trackId: string | null,
-): Promise<void> {
-  const { error } = await getSupabase()
+): Promise<{ trackId: string | null; musicMode: MusicMode | null }> {
+  const { data, error } = await getSupabase()
     .from('sessions')
-    .update({ card_id: cardId, track_id: trackId })
-    .eq('id', id);
+    .update({ card_id: cardId })
+    .eq('id', id)
+    .select('track_id, music_mode')
+    .single();
   if (error !== null) {
     throw new Error(`[musie] could not save the card: ${error.message}`);
   }
+  return {
+    trackId: data.track_id,
+    musicMode: isMusicMode(data.music_mode) ? data.music_mode : null,
+  };
 }
 
 /**

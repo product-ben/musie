@@ -144,6 +144,14 @@
   hyphens: manual;
 }
 
+/* A card still waiting for one of its two pieces — PRD M2. The words say
+   „no relax piece“; the colour is only what makes twenty-five of them
+   scannable at once, so it never carries the meaning alone. */
+.musie-grid__track--missing {
+  color: var(--on-surface-disabled);
+  font-style: italic;
+}
+
 /* ═══ A SELECT, WHICH THE SYSTEM DOES NOT HAVE ══════════════════════════════
    Native on purpose: a list of nine wants the platform's own picker, which is
    a wheel on a phone and a keyboard-navigable menu everywhere else. Styled
