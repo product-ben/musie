@@ -4,6 +4,9 @@ Friends, Family & Fools do one Musie exercise and then answer three
 questions in the reflect step. The answers are a dataset for a later
 AI follow-up feature, which is not part of this experiment.
 
+What participants reported — problems, wishes, what they liked — is in
+[reflexion-01-feedback.md](reflexion-01-feedback.md).
+
 ## Links
 
 | Exercise | Link | Languages |
