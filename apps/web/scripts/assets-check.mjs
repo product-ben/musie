@@ -20,8 +20,10 @@
  * file, and that is the property worth keeping when it grows.
  *
  * ── WHAT "AN EXERCISE USES IT" MEANS, ROW BY ROW ──────────────────────────
- *   cards               every card not archived: its picture, and the piece
- *                       each card exercise plays for it (`exercise_tracks`).
+ *   cards               every card not archived: its picture, and both of
+ *                       its pieces — activation and relaxation (2026-11-20).
+ *                       A card with no relax piece yet is a NOTE: Lucia is
+ *                       filling them in, and the listen step says so.
  *   exercises           every implemented exercise: its picture.
  *   exercise_cuts       every cut: the mix, the voice stem if it has one,
  *                       and the file of the piece it credits.
@@ -182,26 +184,20 @@ async function check(db) {
 
   /* ── Cards ───────────────────────────────────────────────────────────── */
   const cards = await read(
-    db.from('cards').select('id, code, image_url').is('archived_at', null).order('sort'),
+    db.from('cards')
+      .select('id, code, image_url, activation_track_id, relax_track_id')
+      .is('archived_at', null)
+      .order('sort'),
     'cards',
-  );
-  const cardExercises = await read(
-    db.from('exercises').select('id').eq('kind', 'card_based').eq('implemented', true),
-    'card exercises',
-  );
-  const pairings = await read(
-    db.from('exercise_tracks').select('exercise_id, card_id, track_id').not('card_id', 'is', null),
-    'exercise_tracks',
   );
 
   for (const card of cards) {
     if (card.image_url === null) missing.push(`${card.code}: has no picture`);
     else await picture(card.image_url, card.code);
 
-    for (const exercise of cardExercises) {
-      const pairing = pairings.find((p) => p.card_id === card.id && p.exercise_id === exercise.id);
-      if (pairing === undefined) notes.push(`${card.code}: no piece in ${exercise.id} yet`);
-      else await piece(pairing.track_id, `${card.code} in ${exercise.id}`);
+    for (const [mode, trackId] of [['activate', card.activation_track_id], ['relax', card.relax_track_id]]) {
+      if (trackId === null) notes.push(`${card.code}: no ${mode} piece yet`);
+      else await piece(trackId, `${card.code} (${mode})`);
     }
   }
 

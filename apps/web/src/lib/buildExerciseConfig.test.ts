@@ -42,7 +42,6 @@ function instrumentExercise(
     kind: 'instruments',
     timeframeMin: 3,
     timeframeMax: 10,
-    needsCards: false,
     cardsDealt: null,
     needsSound: true,
     asksPosture: false,

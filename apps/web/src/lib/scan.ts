@@ -26,32 +26,34 @@
  * throw so the caller can render the generic failure it renders everywhere
  * else.
  */
-import { getCardByCode, getTrackFor } from './content';
+import { getCardByCode } from './content';
 import type { Card } from './content';
 import { decodeScan } from './scanCode';
 import { saveCard } from './session';
+import type { MusicMode } from './session';
 import type { Locale } from '../i18n';
 
 export type ScanOutcome =
   /** Written. The caller re-reads the session and the card is on screen. */
-  | { kind: 'applied'; card: Card; trackId: string | null }
+  | { kind: 'applied'; card: Card; trackId: string | null; musicMode: MusicMode | null }
   /** Not a card code at all — a typo, or the wrong QR code entirely. */
   | { kind: 'malformed' }
   /** A well-formed code this deck does not have. */
   | { kind: 'unknown'; code: string };
 
 /**
- * Decode, look up, pair, and write — in that order, and stopping at the first
- * thing that says no.
+ * Decode, look up, and write — in that order, and stopping at the first thing
+ * that says no.
  *
- * THE TRACK IS LOOKED UP FROM THE PAIR, not from the card. A card is what a
- * person draws; which recording it plays depends on the exercise it is drawn
- * in (`exercise_tracks`), and a pair with no recording is ordinary — it writes
- * null and the listen step says so rather than failing here.
+ * THE TRACK IS NOT LOOKED UP HERE — 2026-11-20. A card has two pieces, and
+ * which one plays depends on the goal this session was started from, so the
+ * database decides when the card is written (`saveCard`). A card with no piece
+ * in this session's mode is ordinary while Lucia fills them in: null comes
+ * back, and the listen step says „Kein Track zugeordnet" rather than failing
+ * here.
  */
 export async function scanCardInto(
   sessionId: string,
-  exerciseId: string,
   scanned: string,
   locale: Locale,
 ): Promise<ScanOutcome> {
@@ -61,10 +63,9 @@ export async function scanCardInto(
   const card = await getCardByCode(code, locale);
   if (card === null) return { kind: 'unknown', code };
 
-  const track = await getTrackFor(exerciseId, card.id);
-  await saveCard(sessionId, card.id, track?.id ?? null);
+  const { trackId, musicMode } = await saveCard(sessionId, card.id);
 
-  return { kind: 'applied', card, trackId: track?.id ?? null };
+  return { kind: 'applied', card, trackId, musicMode };
 }
 
 /**

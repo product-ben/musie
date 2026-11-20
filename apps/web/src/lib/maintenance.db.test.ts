@@ -21,21 +21,28 @@
  *      here.
  *
  * ── THE FIXTURES CLEAN UP AFTER THEMSELVES ────────────────────────────────
- * MC-98, trk-98, art-98 and whichever cell no card stands on — found at
- * startup, never assumed; see below.
- * Nothing touches mc-01…mc-09 or trk-01…trk-09: this suite can be pointed at
- * HOSTED (CLAUDE.md rule 4), and a test that moved a real card's music would
- * change what a beta tester hears. `20261014100200` is the migration that
- * grants the delete this needs, and says why withholding it was wrong.
+ * MC-98, trk-98, trk-97, art-98 and whichever cell no card stands on —
+ * found at startup, never assumed; see below.
+ * Nothing touches mc-01…mc-09 or trk-01…trk-09. `20261014100200` is the
+ * migration that grants the delete this needs, and says why withholding it
+ * was wrong.
+ *
+ * ── LOCAL ONLY, SINCE 2026-11-20 ──────────────────────────────────────────
+ * These fixtures are hard-deleted before and after every test, so their ids
+ * must never be real content. On hosted they were: Lucia's library passed 98
+ * and her `trk-98` was deleted by this file. `db.support.ts` now refuses any
+ * target that is not loopback, and the local stack holds factory content.
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { INSUFFICIENT_PRIVILEGE, anonClient, serviceClient } from './db.support';
+import { INSUFFICIENT_PRIVILEGE, anonClient, serviceClient, testUser } from './db.support';
 import { CELLS, cellId } from './deckRules';
 
 /** Top of the code space: the deck grows from MC-01 up, so these are last. */
 const CARD = 'mc-98';
 const CARD_CODE = 'MC-98';
 const TRACK = 'trk-98';
+/** A second piece, for a card's relax music. */
+const RELAX = 'trk-97';
 const ARTWORK = 'art-98';
 
 /**
@@ -109,8 +116,11 @@ async function cleanUp(): Promise<void> {
   await service.from('grid_cells')
     .update({ track_id: null, artwork_id: null })
     .eq('valence', CELL.valence).eq('arousal', CELL.arousal);
+  /* A session that drew the fixture card holds it with `no action`, so the
+     scan tests' sessions go before the card does. */
+  await service.from('sessions').delete().eq('card_id', CARD);
   await service.from('cards').delete().eq('id', CARD);
-  await service.from('tracks').delete().eq('id', TRACK);
+  await service.from('tracks').delete().in('id', [TRACK, RELAX]);
   await service.from('artwork_i18n').delete().eq('artwork_id', ARTWORK);
   await service.from('artworks').delete().eq('id', ARTWORK);
   /**
@@ -285,9 +295,18 @@ describe('a piece of music', () => {
 
 /* ═══ THE PROJECTION ════════════════════════════════════════════════════════ */
 
-describe('exercise_tracks is derived from the grid', () => {
+/* ── TWO TRACKS PER CARD — 2026-11-20 ──────────────────────────────────────
+   The card carries its picture and both pieces, and they move with it (PRD
+   D12). `exercise_tracks` is still projected — activation only — for the
+   branches that read it; the app reads the card. */
+
+describe('a card carries its picture and both pieces', () => {
   beforeEach(async () => {
-    await write('track', TRACK, { title: 'Test', artist: 'Test', src: `${TRACK}.mp3` });
+    /* NO `src`: these pieces have no file, and a src pointing at nothing
+       would be picked up by `db.content.db.test.ts`, which signs "any track
+       with a src" while this file runs beside it. */
+    await write('track', TRACK, { title: 'Test', artist: 'Test' });
+    await write('track', RELAX, { title: 'Relax', artist: 'Test' });
     await write('card', CARD, { code: CARD_CODE, valence: CELL.valence, arousal: CELL.arousal });
   });
 
@@ -297,8 +316,13 @@ describe('exercise_tracks is derived from the grid', () => {
     return (data ?? []) as Record<string, unknown>[];
   };
 
-  it('pairs a placed card with its cell\'s track, in both card exercises', async () => {
-    await write('cell', CELL_ID, { track_id: TRACK });
+  const card = async (): Promise<Record<string, unknown>> => {
+    const { data } = await serviceClient().from('cards').select('*').eq('id', CARD).single();
+    return (data ?? {}) as Record<string, unknown>;
+  };
+
+  it('pairs a card with its activation piece, in both card exercises', async () => {
+    await write('card', CARD, { activation_track_id: TRACK });
 
     const rows = await pairings();
     expect(rows).toHaveLength(2);
@@ -307,51 +331,240 @@ describe('exercise_tracks is derived from the grid', () => {
     expect(rows.every((r) => r.track_id === TRACK)).toBe(true);
   });
 
-  it('removes the pairing when the cell goes quiet', async () => {
-    await write('cell', CELL_ID, { track_id: TRACK });
-    expect(await pairings()).toHaveLength(2);
+  it('keeps the relax piece out of exercise_tracks — that table is activation only', async () => {
+    await write('card', CARD, { relax_track_id: RELAX });
+    expect(await pairings()).toHaveLength(0);
+    expect((await card()).relax_track_id).toBe(RELAX);
+  });
 
-    await write('cell', CELL_ID, { track_id: null });
+  it('removes the pairing when the activation piece is cleared', async () => {
+    await write('card', CARD, { activation_track_id: TRACK });
+    await write('card', CARD, { activation_track_id: null });
     expect(await pairings()).toHaveLength(0);
   });
 
-  it('removes the pairing when the card leaves the grid', async () => {
-    await write('cell', CELL_ID, { track_id: TRACK });
-    await write('card', CARD, { valence: null, arousal: null });
-    expect(await pairings()).toHaveLength(0);
-  });
-
-  /* Archiving names its cost on screen — *this leaves MC-02, MC-05 and MC-08
-     silent* — and this is the half that makes the sentence true. */
+  /* Archiving names its cost on screen — *this leaves MC-02 · Energie
+     sammeln silent* — and this is the half that makes the sentence true. */
   it('removes the pairing when the track is retired', async () => {
-    await write('cell', CELL_ID, { track_id: TRACK });
+    await write('card', CARD, { activation_track_id: TRACK });
     await write('track', TRACK, { archived_at: new Date().toISOString() });
     expect(await pairings()).toHaveLength(0);
   });
 
+  /* D12, Ben: „alles soll sich mit verschieben". */
+  it('moves its picture and both pieces with it, on and off the grid', async () => {
+    await write('artwork', ARTWORK, { src: 'art-98-ffffffff.webp' });
+    await write('card', CARD, { artwork_id: ARTWORK, activation_track_id: TRACK, relax_track_id: RELAX });
+
+    await write('card', CARD, { valence: null, arousal: null });
+
+    const off = await card();
+    expect(off.activation_track_id).toBe(TRACK);
+    expect(off.relax_track_id).toBe(RELAX);
+    expect(off.image_url).toBe('art-98-ffffffff.webp');
+    expect(await pairings()).toHaveLength(2);
+
+    await write('card', CARD, { valence: CELL.valence, arousal: CELL.arousal });
+    expect((await card()).relax_track_id).toBe(RELAX);
+  });
+
+  it('no longer takes anything from the square it stands on', async () => {
+    await write('cell', CELL_ID, { track_id: TRACK });
+    expect(await pairings()).toHaveLength(0);
+    expect((await card()).activation_track_id).toBeNull();
+  });
+
   /**
-   * `card_id is null` rows are a cardless exercise's OWN track — Atempartitur,
-   * Bodyscan — which is not the deck's. The projection deletes by card, and a
-   * missing `card_id is not null` would take all of them with it.
+   * `card_id is null` rows would be a cardless exercise's OWN track. None has
+   * ever existed, but the projection deletes by card, and a missing
+   * `card_id is not null` would take any of them with it.
    */
   it('leaves a cardless exercise\'s own track alone', async () => {
     const before = await serviceClient()
       .from('exercise_tracks').select('exercise_id').is('card_id', null);
 
-    await write('cell', CELL_ID, { track_id: TRACK });
+    await write('card', CARD, { activation_track_id: TRACK });
 
     const after = await serviceClient()
       .from('exercise_tracks').select('exercise_id').is('card_id', null);
     expect(after.data).toEqual(before.data);
   });
 
-  it('writes the cell\'s artwork onto the card', async () => {
-    await write('artwork', ARTWORK, { src: 'art-98-ffffffff.webp' });
-    await write('cell', CELL_ID, { artwork_id: ARTWORK });
+  it('writes its artwork onto image_url, and the description into both locales', async () => {
+    await write('artwork', ARTWORK, { src: 'art-98-ffffffff.webp', alt_de: 'Ein Test', alt_en: 'A test' });
+    await write('card', CARD, { artwork_id: ARTWORK });
 
+    expect((await card()).image_url).toBe('art-98-ffffffff.webp');
     const { data } = await serviceClient()
-      .from('cards').select('image_url').eq('id', CARD).single();
-    expect(data?.image_url).toBe('art-98-ffffffff.webp');
+      .from('card_i18n').select('locale, image_alt').eq('card_id', CARD).order('locale');
+    expect(data).toEqual([
+      { locale: 'de', image_alt: 'Ein Test' },
+      { locale: 'en', image_alt: 'A test' },
+    ]);
+  });
+
+  /* R3: a card made at /maintenance had no translation row, and the app's
+     `toCard` dropped it — MC-10 needed a migration of its own to be drawn. */
+  it('gives a new card its two translation rows, so a signed-in player can read it', async () => {
+    const { data } = await serviceClient()
+      .from('card_i18n').select('locale, feeling, image_alt').eq('card_id', CARD).order('locale');
+    expect(data).toEqual([
+      { locale: 'de', feeling: null, image_alt: null },
+      { locale: 'en', feeling: null, image_alt: null },
+    ]);
+
+    const { client } = await testUser();
+    const seen = await client.from('cards')
+      .select('id, activation_track_id, relax_track_id, card_i18n(locale)').eq('id', CARD).single();
+    expect(seen.error).toBeNull();
+    expect(seen.data?.card_i18n).toHaveLength(2);
+  });
+
+  it('undoes a change of piece like any other edit', async () => {
+    await write('card', CARD, { relax_track_id: RELAX });
+    const [, edit] = await editsFor('card', CARD);
+    expect(edit?.action).toBe('update');
+
+    const { error } = await serviceClient().rpc('admin_revert', {
+      p_actor_id: null,
+      p_actor_email: ACTOR,
+      p_edit_id: edit?.id,
+    });
+    expect(error).toBeNull();
+    expect((await card()).relax_track_id).toBeNull();
+  });
+});
+
+describe('today\'s mapping survived the move onto the card', () => {
+  /* Ben, 2026-11-20: "Make sure to keep todays mapping of card code (MC-01),
+     image and track." The migration RAISES if any pairing, picture or alt
+     text changed; this is the same claim read back on the stack afterwards —
+     every card standing on a square carries what that square held. */
+  it('gives every placed card its square\'s picture and piece', async () => {
+    const service = serviceClient();
+    const [{ data: cards }, { data: cells }] = await Promise.all([
+      service.from('cards').select('code, valence, arousal, artwork_id, activation_track_id')
+        .not('valence', 'is', null).neq('id', CARD),
+      service.from('grid_cells').select('valence, arousal, track_id, artwork_id'),
+    ]);
+    expect((cards ?? []).length).toBeGreaterThan(0);
+    for (const one of cards ?? []) {
+      const square = (cells ?? []).find((c) => c.valence === one.valence && c.arousal === one.arousal);
+      expect({ code: one.code, artwork: one.artwork_id, track: one.activation_track_id })
+        .toEqual({ code: one.code, artwork: square?.artwork_id ?? null, track: square?.track_id ?? null });
+    }
+  });
+});
+
+/* ═══ THE SCAN DECIDES WHAT PLAYS ═══════════════════════════════════════════ */
+
+describe('a session plays the piece its goal asks for', () => {
+  beforeEach(async () => {
+    /* NO `src`: these pieces have no file, and a src pointing at nothing
+       would be picked up by `db.content.db.test.ts`, which signs "any track
+       with a src" while this file runs beside it. */
+    await write('track', TRACK, { title: 'Test', artist: 'Test' });
+    await write('track', RELAX, { title: 'Relax', artist: 'Test' });
+    await write('card', CARD, { code: CARD_CODE, activation_track_id: TRACK, relax_track_id: RELAX });
+  });
+
+  /** A fresh player, a started Freie Bahn under `goal`, and the card drawn
+   *  through the player's own client — the path the app takes. */
+  async function draw(goal: string | null): Promise<{ track_id: string | null; music_mode: string | null }> {
+    const { client, userId } = await testUser();
+    const started = await client.from('sessions')
+      .insert({ user_id: userId, exercise_id: 'free-rein', goal_id: goal, status: 'started', step: 'scan' })
+      .select('id').single();
+    expect(started.error).toBeNull();
+
+    const drawn = await client.from('sessions')
+      .update({ card_id: CARD })
+      .eq('id', started.data!.id)
+      .select('track_id, music_mode')
+      .single();
+    expect(drawn.error).toBeNull();
+    return drawn.data!;
+  }
+
+  it('entspannen → the relax piece', async () => {
+    expect(await draw('relax')).toEqual({ track_id: RELAX, music_mode: 'relax' });
+  });
+
+  it('Energie sammeln → the activation piece', async () => {
+    expect(await draw('wake-up')).toEqual({ track_id: TRACK, music_mode: 'activate' });
+  });
+
+  it('no goal („Musie entdecken") → the activation piece, as before', async () => {
+    expect(await draw(null)).toEqual({ track_id: TRACK, music_mode: 'activate' });
+  });
+
+  it('entspannen on a card with no relax piece → nothing, never the other one', async () => {
+    await write('card', CARD, { relax_track_id: null });
+    expect(await draw('relax')).toEqual({ track_id: null, music_mode: 'relax' });
+  });
+
+  it('Achtsamkeit üben → one of the two, and over many draws both', async () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 16 && seen.size < 2; i += 1) {
+      const result = await draw('mindfulness');
+      expect([TRACK, RELAX]).toContain(result.track_id);
+      expect(result.music_mode).toBe(result.track_id === RELAX ? 'relax' : 'activate');
+      seen.add(String(result.music_mode));
+    }
+    /* 16 fair coins all landing the same way is 1 in 32 768. */
+    expect(seen).toEqual(new Set(['relax', 'activate']));
+  });
+
+  it('Achtsamkeit üben draws only among the pieces the card has (D7)', async () => {
+    await write('card', CARD, { relax_track_id: null });
+    for (let i = 0; i < 4; i += 1) {
+      expect(await draw('mindfulness')).toEqual({ track_id: TRACK, music_mode: 'activate' });
+    }
+  });
+
+  it('clears the piece and the mode with the card', async () => {
+    const { client, userId } = await testUser();
+    const started = await client.from('sessions')
+      .insert({ user_id: userId, exercise_id: 'free-rein', goal_id: 'relax', status: 'started', step: 'scan' })
+      .select('id').single();
+    const id = started.data!.id;
+    await client.from('sessions').update({ card_id: CARD }).eq('id', id);
+    const cleared = await client.from('sessions')
+      .update({ card_id: null }).eq('id', id).select('track_id, music_mode').single();
+    expect(cleared.data).toEqual({ track_id: null, music_mode: null });
+  });
+
+  it('keeps what a later write leaves alone — the draw is stored, not redone', async () => {
+    const { client, userId } = await testUser();
+    const started = await client.from('sessions')
+      .insert({ user_id: userId, exercise_id: 'free-rein', goal_id: 'mindfulness', status: 'started', step: 'scan' })
+      .select('id').single();
+    const id = started.data!.id;
+    const first = await client.from('sessions')
+      .update({ card_id: CARD }).eq('id', id).select('track_id, music_mode').single();
+    const later = await client.from('sessions')
+      .update({ step: 'listen' }).eq('id', id).select('track_id, music_mode').single();
+    expect(later.data).toEqual(first.data);
+  });
+});
+
+describe('a goal says which music it plays', () => {
+  it('entspannen relaxes, Energie sammeln activates, Achtsamkeit üben draws', async () => {
+    const { client } = await testUser();
+    const { data } = await client.from('goals').select('id, music_mode')
+      .in('id', ['relax', 'wake-up', 'mindfulness']).order('sort');
+    expect(data).toEqual([
+      { id: 'relax', music_mode: 'relax' },
+      { id: 'wake-up', music_mode: 'activate' },
+      { id: 'mindfulness', music_mode: 'random' },
+    ]);
+  });
+
+  it('offers Achtsame Pause under Energie sammeln now (D9)', async () => {
+    const { client } = await testUser();
+    const { data } = await client.from('exercise_goals')
+      .select('goal_id').eq('exercise_id', 'mindfulness-cards').order('goal_id');
+    expect((data ?? []).map((row) => row.goal_id)).toEqual(['mindfulness', 'wake-up']);
   });
 });
 

@@ -12751,3 +12751,84 @@ What I need from Ben:
   PROJECT and the local stack that is not in a migration — a project setting,
   like the anonymous provider that broke the suite on hosted on 2026-10-16.
   Accepted as Ben's trade; flagged so it is a choice, not a surprise.
+
+---
+
+# Zwei Tracks pro Karte — Parts 1 and 2: the feature and the cleanup (2026-11-20)
+
+## A card carries its picture and two pieces; the goal picks one — RESOLVED, with choices made while Ben was away
+
+Where: `supabase/migrations/20261120100000_two_tracks_per_card.sql`,
+`src/lib/session.ts` (`saveCard`), `src/lib/content.ts` (`getTrack`, `toCard`),
+`src/routes/Session.tsx`, `src/components/SessionListen.tsx`,
+`src/routes/Maintenance.tsx`, `scripts/content-export.mjs`,
+`scripts/assets-check.mjs`
+
+What I checked: Ben's decisions D1–D5, D8, D9 and his answers of 2026-11-20
+— D11 is its own feature; D12 „nein, alles soll sich mit verschieben";
+hosted checks only the assets. The PRD is the artifact „Zwei Tracks pro
+Karte" (https://claude.ai/artifact/BsJM6pW5HovrLCd2s1F7Zy).
+
+What I did, and the calls I made without him:
+- **The card owns `artwork_id`, `activation_track_id`, `relax_track_id`.**
+  D12 says all three move with the card, which is only true if they are the
+  card's. The migration copies each occupied square onto its card and then
+  RAISES if a single pairing, picture or alt text differs from before — so
+  „keep today's mapping" is proven on hosted at push time, not assumed.
+  `grid_cells.track_id` / `artwork_id` are unread from now on; an empty
+  square's leftovers are shown in its panel as "parked", read-only.
+- **The database decides which piece plays**, in the trigger
+  `sessions_card_plays()` when `card_id` is written: relax / activate by the
+  goal's new `music_mode`, a coin for „Achtsamkeit üben" among the pieces the
+  card has (D7), and activation for a session with no goal. Stored in
+  `sessions.track_id` + `music_mode`; the session screen reads the stored
+  piece (R2). Chosen over client code because three paths write a card
+  (scan, digital pick, the one-card draw) and one rule in SQL cannot drift.
+  `SECURITY DEFINER` with an empty `search_path`, because the client may not
+  read `tracks.archived_at`.
+- **D8's way out is the step's own Back**, not a new „Andere Karte scannen"
+  button: Back from `listen` already returns to the card. Copy:
+  „Kein Track zugeordnet" / „Hinter dieser Karte liegt noch keine Musik.
+  Gehe einen Schritt zurück und wähle eine andere Karte." Only for card
+  exercises and only when there is no piece at all; a piece without a file
+  still runs the simulated clock, and `assets:check` reports it on hosted.
+- **D9 now, D10 later:** Achtsame Pause is mapped to „Energie sammeln" in this
+  migration. Neither card exercise is mapped to „entspannen" yet.
+- **`deck.json` keeps its shape** (four readers): `plays` is the activation
+  piece, which is what `exercise_tracks` still holds. Each card's relax piece
+  is in `grid.json`, which is card-shaped now. The committed `grid.json` is
+  still the old shape until the next `pnpm content:export` against hosted.
+- **R3:** `toCard` no longer needs a `card_i18n` row, and `project_deck()`
+  writes the two rows for every live card, so a card made at /maintenance is
+  visible and its picture's alt text has somewhere to land. The alt text is
+  exact-locale now, with no English fallback for a German screen reader. The
+  app no longer reads `card_i18n.feeling` or `exercises.needs_cards`; both
+  columns stay (`deck:pdf` still prints `feeling`).
+- **R4:** `/dev/code-field` deleted.
+- **No `functions deploy` needed:** `content-admin` passes the patch through
+  and reads `cards` with `*`.
+- **`database.types.ts` was edited by hand.** Overwriting it with the
+  generator's output was blocked in this session; the hand edit is
+  byte-identical to `supabase gen types --db-url` against the private stack
+  (`musie-two-tracks`, ports +300), checked with `diff`.
+
+Why: one owner per fact — the card for what it carries, the database for
+what a session plays — so a move, a reload or a second code path cannot
+change the music.
+
+What I need from Ben:
+- **Merge order:** the Part 0 PR first, then this one. The migration lands on
+  hosted through `db-push.yml` (or `pnpm db:sync`). If the push fails with
+  "two tracks per card would change today's deck", nothing was applied and
+  hosted holds a pairing that the projection would not have written: that is
+  worth a look before anything is forced.
+- **After the merge, the shared local stack needs `supabase db reset` from one
+  session** (rule 9), and `pnpm gen:types` there if you want the generator's
+  own run.
+- **Lucia** assigns the relax pieces at /maintenance (card or square panel,
+  „☾ Music for „entspannen""). Then a one-line follow-up migration maps
+  `mindfulness-cards` and `free-rein` to `relax` (D10).
+- **Later drop**, once no open branch reads them: `grid_cells.track_id` /
+  `artwork_id`, `exercise_tracks`, `card_i18n.feeling`, `exercises.needs_cards`.
+- **Not built:** D13 / M6 (a read-only goal → exercises overview in
+  maintenance). D11 is a separate feature, as decided.

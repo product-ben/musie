@@ -995,6 +995,11 @@ export const en = {
   'session.listen.simulatedHeadline': 'Test mode: no music',
   'session.listen.simulated': 'No music is bundled yet, so the player runs on a clock at its real length.',
   'session.listen.noTrack': 'This exercise has no music yet.',
+  /* A CARD with no piece in this session's mode — two tracks per card,
+     2026-11-20. Ordinary while the relax pieces are being assigned, and the
+     way out is the step's own Back, which returns to the card. */
+  'session.listen.noCardTrack': 'No track assigned',
+  'session.listen.noCardTrackText': 'There’s no music behind this card yet. Go back one step and choose another card.',
 
   /* ── Reflect · D.5c ────────────────────────────────────────────────────── */
   /* `reflect.questionFallback` — "What stayed with you?" — is GONE, 2026-09-23.

@@ -84,7 +84,6 @@ import {
   saveCard,
   saveTrack,
   setArchived,
-  setCell,
   uploadMedia,
 } from '../lib/maintenance';
 import type {
@@ -99,6 +98,10 @@ import type {
 import '../maintenance.css';
 
 type View = 'grid' | 'music' | 'artwork' | 'cards' | 'log';
+
+/** The two pieces a card carries, named as the goals that play them. */
+const MODE_LABEL = { activate: 'Energie sammeln', relax: 'entspannen' } as const;
+const MODE_GLYPH = { activate: '⚡', relax: '☾' } as const;
 
 /**
  * The five positions on either axis, derived from `deckRules` so there is one
@@ -418,9 +421,21 @@ export function Maintenance(): React.ReactElement {
   const retiredArtworks = deck.artworks.filter((a) => a.archived_at !== null);
   const retiredCards = deck.cards.filter((c) => c.archived_at !== null);
 
-  /** Which cells a track or artwork sits on — the "archiving this costs" list. */
-  const cellsUsing = (kind: 'track' | 'artwork', id: string): MaintenanceCell[] =>
-    deck.cells.filter((cell) => (kind === 'track' ? cell.track_id : cell.artwork_id) === id);
+  /**
+   * WHICH CARDS USE a piece or a picture — the "archiving this costs" list.
+   *
+   * CARDS, NOT SQUARES, since 2026-11-20: the picture and both pieces belong
+   * to the card and travel with it (PRD D12), so what retiring a piece costs
+   * is a card going silent in one mode, and the sentence says which mode.
+   */
+  const usesOf = (kind: 'track' | 'artwork', id: string): string[] =>
+    liveCards.flatMap((card) => {
+      if (kind === 'artwork') return card.artwork_id === id ? [card.code] : [];
+      return [
+        ...(card.activation_track_id === id ? [`${card.code} · ${MODE_LABEL.activate}`] : []),
+        ...(card.relax_track_id === id ? [`${card.code} · ${MODE_LABEL.relax}`] : []),
+      ];
+    });
 
   const editsFor = (entity: string, rowId: string): ContentEdit[] =>
     deck.edits.filter((edit) => edit.entity === entity && edit.row_id === rowId);
@@ -477,15 +492,64 @@ export function Maintenance(): React.ReactElement {
   const describe = (edit: ContentEdit): string =>
     `${edit.entity} ${edit.row_id} — ${changes(edit)}`;
 
+  /* ── A CARD'S PICTURE AND ITS TWO PIECES ────────────────────────────────
+     One set of controls, used from the square and from the card, because it is
+     one fact about one card — two copies would be two places to forget the
+     relax piece. Each change is one `card.save`, so the log, undo and revert
+     work exactly as for any other edit. */
+  const trackOptions = [
+    { value: '', label: '— none —' },
+    ...liveTracks.map((track) => ({
+      value: track.id,
+      label: `${track.title} — ${track.artist}${track.src === null ? ' (no file)' : ''}`,
+    })),
+  ];
+  const cardMedia = (card: MaintenanceCard): React.ReactElement => (
+    <>
+      <Picker
+        label={`${MODE_GLYPH.activate} Music for „${MODE_LABEL.activate}“`}
+        value={card.activation_track_id ?? ''}
+        options={trackOptions}
+        disabled={busy}
+        onChange={(id) => {
+          void run('Music changed', () => saveCard(card.id, { activation_track_id: id === '' ? null : id }));
+        }}
+      />
+      <Picker
+        label={`${MODE_GLYPH.relax} Music for „${MODE_LABEL.relax}“`}
+        value={card.relax_track_id ?? ''}
+        options={trackOptions}
+        disabled={busy}
+        onChange={(id) => {
+          void run('Relax music changed', () => saveCard(card.id, { relax_track_id: id === '' ? null : id }));
+        }}
+      />
+      <Picker
+        label="Picture"
+        value={card.artwork_id ?? ''}
+        options={[
+          { value: '', label: '— none —' },
+          ...liveArtworks.map((artwork) => ({ value: artwork.id, label: artwork.id })),
+        ]}
+        disabled={busy}
+        onChange={(id) => {
+          void run('Picture changed', () => saveCard(card.id, { artwork_id: id === '' ? null : id }));
+        }}
+      />
+    </>
+  );
+
   /* ── THE GRID ───────────────────────────────────────────────────────────── */
 
   const grid = (
     <>
       <p className="musie-note">
-        Valence across, arousal up — both run −2 to +2. A card plays whatever
-        music sits on its square and shows whatever picture sits there. The same
-        piece may sit on several squares; an empty square is a silent card,
-        which is ordinary.
+        Valence across, arousal up — both run −2 to +2. Each card carries its
+        own picture and two pieces of music: {MODE_GLYPH.activate} for
+        „{MODE_LABEL.activate}“ and {MODE_GLYPH.relax} for „{MODE_LABEL.relax}“.
+        „Achtsamkeit üben“ plays one of the two, drawn once per session. Move a
+        card and all three move with it. A card with no piece for a mode tells
+        the player „Kein Track zugeordnet“ in that mode.
       </p>
       <div className="musie-grid" role="group" aria-label="The valence and arousal grid">
         {/* THE LABELS ARE `aria-hidden`. Each cell's own `aria-label` already
@@ -504,10 +568,10 @@ export function Maintenance(): React.ReactElement {
             <span className="musie-grid__axis" aria-hidden="true">{arousal}</span>
             {AXIS.map((valence) => {
               const cell = { valence, arousal };
-              const held = cellAt(cell);
               const card = cardAt(cell);
-              const track = trackById(held?.track_id ?? null);
-              const artwork = artworkById(held?.artwork_id ?? null);
+              const activate = trackById(card?.activation_track_id ?? null);
+              const relax = trackById(card?.relax_track_id ?? null);
+              const artwork = artworkById(card?.artwork_id ?? null);
               return (
                 <button
                   key={cellId(cell)}
@@ -524,9 +588,18 @@ export function Maintenance(): React.ReactElement {
                       alt=""
                     />
                   )}
-                  <span className="musie-grid__track">
-                    {track === undefined ? 'no music' : track.title}
-                  </span>
+                  {/* BOTH PIECES, and the missing one says so — PRD M2: which
+                      cards still wait for a relax piece, at a glance. */}
+                  {card !== undefined && (
+                    <>
+                      <span className="musie-grid__track">
+                        {MODE_GLYPH.activate} {activate === undefined ? 'no music' : activate.title}
+                      </span>
+                      <span className={`musie-grid__track${relax === undefined ? ' musie-grid__track--missing' : ''}`}>
+                        {MODE_GLYPH.relax} {relax === undefined ? 'no relax piece' : relax.title}
+                      </span>
+                    </>
+                  )}
                 </button>
               );
             })}
@@ -570,37 +643,40 @@ export function Maintenance(): React.ReactElement {
         }}
       />
 
-      <Picker
-        label="Music on this square"
-        value={heldCell.track_id ?? ''}
-        options={[
-          { value: '', label: '— silent —' },
-          ...liveTracks.map((track) => ({
-            value: track.id,
-            label: `${track.title} — ${track.artist}${track.src === null ? ' (no file)' : ''}`,
-          })),
-        ]}
-        disabled={busy}
-        onChange={(id) => {
-          void run('Music moved', () => setCell(cellId(openCell), { track_id: id === '' ? null : id }));
-        }}
-      />
-
-      <Picker
-        label="Picture on this square"
-        value={heldCell.artwork_id ?? ''}
-        options={[
-          { value: '', label: '— none —' },
-          ...liveArtworks.map((artwork) => ({ value: artwork.id, label: artwork.id })),
-        ]}
-        disabled={busy}
-        onChange={(id) => {
-          void run('Picture moved', () => setCell(cellId(openCell), { artwork_id: id === '' ? null : id }));
-        }}
-      />
+      {(() => {
+        const standing = cardAt(openCell);
+        if (standing !== undefined) return cardMedia(standing);
+        /* WHAT A SQUARE HELD BEFORE CARDS CARRIED THEIR OWN — 2026-11-20. The
+           migration copied every occupied square onto its card; an EMPTY
+           square may still hold a piece or a picture somebody parked there.
+           Shown so it is not lost, and not editable: a square is a place now. */
+        const parkedTrack = trackById(heldCell.track_id);
+        const parkedArt = artworkById(heldCell.artwork_id);
+        return (
+          <p className="musie-note">
+            No card stands here. Place one above to give it a picture and music.
+            {(parkedTrack !== undefined || parkedArt !== undefined) && (
+              <>
+                {' '}Parked on this square before cards carried their own:
+                {parkedTrack !== undefined && ` music „${parkedTrack.title}“ (${parkedTrack.id})`}
+                {parkedTrack !== undefined && parkedArt !== undefined && ','}
+                {parkedArt !== undefined && ` picture ${parkedArt.id}`}. Set it on a card to use it.
+              </>
+            )}
+          </p>
+        );
+      })()}
 
       <ContentBox headline="What changed here" headingLevel={3}>
-        <History edits={editsFor('cell', cellId(openCell))} onRevert={revert} busy={busy} />
+        {/* The CARD's history when one stands here — its picture and music are
+            card edits since 2026-11-20 — and the square's own otherwise. */}
+        <History
+          edits={cardAt(openCell) === undefined
+            ? editsFor('cell', cellId(openCell))
+            : editsFor('card', cardAt(openCell)!.id)}
+          onRevert={revert}
+          busy={busy}
+        />
       </ContentBox>
     </Lightbox>
   );
@@ -756,7 +832,7 @@ export function Maintenance(): React.ReactElement {
           {track.artist.trim() === '' ? 'artist not filled in yet' : track.artist}
           {track.tempo_bpm !== null && ` · ${track.tempo_bpm} bpm`}
           {track.src === null ? ' · no file' : ` · ${seconds(track.duration_seconds)}`}
-          {` · ${cellsUsing('track', track.id).length} square(s)`}
+          {` · ${usesOf('track', track.id).length} use(s)`}
         </span>
       </button>
     </li>
@@ -813,8 +889,7 @@ export function Maintenance(): React.ReactElement {
     return (
       <TrackPanel
         track={track}
-        cells={cellsUsing('track', track.id)}
-        cards={deck.cards}
+        uses={usesOf('track', track.id)}
         edits={editsFor('track', track.id)}
         busy={busy}
         onClose={() => setOpenTrack(null)}
@@ -906,7 +981,7 @@ export function Maintenance(): React.ReactElement {
           wants one shape, and the panel is where the picture is the subject. */}
       <img src={contentImageUrl(art.src)} alt="" className="musie-thumb__img" />
       <span className="musie-thumb__name">{art.id}</span>
-      <span className="musie-note">{cellsUsing('artwork', art.id).length} square(s)</span>
+      <span className="musie-note">{usesOf('artwork', art.id).length} card(s)</span>
     </button>
   );
 
@@ -944,8 +1019,7 @@ export function Maintenance(): React.ReactElement {
     return (
       <ArtworkPanel
         artwork={art}
-        cells={cellsUsing('artwork', art.id)}
-        cards={deck.cards}
+        uses={usesOf('artwork', art.id)}
         edits={editsFor('artwork', art.id)}
         busy={busy}
         onClose={() => setOpenArtwork(null)}
@@ -984,9 +1058,9 @@ export function Maintenance(): React.ReactElement {
               ? 'not on the grid'
               : `square ${card.valence}, ${card.arousal}`}
             {' · '}
-            {card.valence === null
-              ? 'no music'
-              : trackById(cellAt({ valence: card.valence, arousal: card.arousal ?? 0 })?.track_id ?? null)?.title ?? 'no music'}
+            {MODE_GLYPH.activate} {trackById(card.activation_track_id)?.title ?? 'no music'}
+            {' · '}
+            {MODE_GLYPH.relax} {trackById(card.relax_track_id)?.title ?? 'no relax piece'}
           </span>
         </button>
         {card.archived_at === null && (
@@ -1108,12 +1182,7 @@ export function Maintenance(): React.ReactElement {
           }}
         />
 
-        <Fact label="Plays">
-          {on === null ? '—' : trackById(cellAt(on)?.track_id ?? null)?.title ?? 'nothing'}
-        </Fact>
-        <Fact label="Shows">
-          {on === null ? '—' : cellAt(on)?.artwork_id ?? 'nothing'}
-        </Fact>
+        {cardMedia(card)}
         {/**
           * THE QR SEAM. `scanLink` is the one definition of what a printed
           * code encodes — `/dev/qr` builds its sheet from the same function —
@@ -1206,8 +1275,7 @@ export function Maintenance(): React.ReactElement {
         content_hash: null,
         archived_at: null,
       }}
-      cells={[]}
-      cards={deck.cards}
+      uses={[]}
       edits={[]}
       busy={busy}
       onClose={() => setDraftTrack(false)}
@@ -1542,8 +1610,8 @@ function Audition({ track }: { track: MaintenanceTrack }): React.ReactElement | 
 
 function TrackPanel(props: {
   track: MaintenanceTrack;
-  cells: MaintenanceCell[];
-  cards: MaintenanceCard[];
+  /** Which cards play this piece, and in which mode — `usesOf`. */
+  uses: string[];
   edits: ContentEdit[];
   busy: boolean;
   /** A draft: nothing exists in the database until Save. */
@@ -1570,11 +1638,7 @@ function TrackPanel(props: {
   };
 
   /** Which cards hear this piece — the sentence `Retire` has to be able to say. */
-  const hearing = props.cells
-    .map((cell) => props.cards.find((card) =>
-      card.valence === cell.valence && card.arousal === cell.arousal && card.archived_at === null))
-    .filter((card): card is MaintenanceCard => card !== undefined)
-    .map((card) => card.code);
+  const hearing = props.uses;
 
   const save = (): void => {
     const found = validateTrack({
@@ -1733,9 +1797,7 @@ function TrackPanel(props: {
         <Fact label="Key">{track.src ?? '—'}</Fact>
         <Fact label="Id">{track.id}</Fact>
         <Fact label="On">
-          {props.cells.length === 0
-            ? 'no squares'
-            : `${props.cells.length} square(s)${hearing.length > 0 ? ` — ${hearing.join(', ')}` : ''}`}
+          {hearing.length === 0 ? 'no cards' : hearing.join(', ')}
         </Fact>
 
         <label className="musie-file">
@@ -1767,9 +1829,8 @@ function TrackPanel(props: {
           loadingLabel="…"
           onClick={() => {
             const archived = track.archived_at === null;
-            if (archived && props.cells.length > 0 && !window.confirm(
-              `This piece sits on ${props.cells.length} square(s)` +
-              `${hearing.length > 0 ? ` — retiring it leaves ${hearing.join(', ')} silent` : ''}. Retire it?`,
+            if (archived && hearing.length > 0 && !window.confirm(
+              `Retiring this piece leaves ${hearing.join(', ')} silent. Retire it?`,
             )) return;
             void props.onArchive(archived);
           }}
@@ -1792,8 +1853,8 @@ function TrackPanel(props: {
 
 function ArtworkPanel(props: {
   artwork: MaintenanceArtwork;
-  cells: MaintenanceCell[];
-  cards: MaintenanceCard[];
+  /** Which cards show this picture — `usesOf`. */
+  uses: string[];
   edits: ContentEdit[];
   busy: boolean;
   onClose: () => void;
@@ -1812,11 +1873,7 @@ function ArtworkPanel(props: {
     setAltEn(artwork.alt_en ?? '');
   }, [artwork]);
 
-  const showing = props.cells
-    .map((cell) => props.cards.find((card) =>
-      card.valence === cell.valence && card.arousal === cell.arousal && card.archived_at === null))
-    .filter((card): card is MaintenanceCard => card !== undefined)
-    .map((card) => card.code);
+  const showing = props.uses;
 
   return (
     <Lightbox
@@ -1868,9 +1925,7 @@ function ArtworkPanel(props: {
 
       <Fact label="Key">{artwork.src}</Fact>
       <Fact label="On">
-        {props.cells.length === 0
-          ? 'no squares'
-          : `${props.cells.length} square(s)${showing.length > 0 ? ` — ${showing.join(', ')}` : ''}`}
+        {showing.length === 0 ? 'no cards' : showing.join(', ')}
       </Fact>
 
       <div className="musie-toolrow">
@@ -1900,9 +1955,8 @@ function ArtworkPanel(props: {
           loadingLabel="…"
           onClick={() => {
             const archived = artwork.archived_at === null;
-            if (archived && props.cells.length > 0 && !window.confirm(
-              `This picture sits on ${props.cells.length} square(s)` +
-              `${showing.length > 0 ? ` — retiring it leaves ${showing.join(', ')} with no picture` : ''}. Retire it?`,
+            if (archived && showing.length > 0 && !window.confirm(
+              `Retiring this picture leaves ${showing.join(', ')} with no picture. Retire it?`,
             )) return;
             void props.onArchive(archived);
           }}

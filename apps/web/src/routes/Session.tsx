@@ -73,7 +73,7 @@ import { UnderstandSheet } from '../components/UnderstandSheet';
 import { SessionScan } from '../components/SessionScan';
 import { useLocale, useT } from '../i18n/localeContext';
 import { warmTrackBytes } from '../lib/audio';
-import { getCard, getCards, getExercise, getListenAudio, getTrackFor } from '../lib/content';
+import { getCard, getCards, getExercise, getListenAudio, getTrack } from '../lib/content';
 import { analyticsReady, posthog } from '../lib/posthog';
 import { posthogLog } from '../lib/posthogLogs';
 import { SHEET_OPEN, dealtCards, withSheetOpen, withToken } from '../lib/digitalCards';
@@ -201,10 +201,18 @@ export function Session() {
     const exercise = await getExercise(row.exerciseId, locale);
     if (exercise === null) return null;
 
-    /* In parallel: neither depends on the other. */
+    /* In parallel: neither depends on the other.
+
+       THE STORED PIECE, NOT A FRESH LOOKUP — 2026-11-20 (PRD R2). Which of a
+       card's two pieces plays was decided when the card was written, by the
+       goal and for „Achtsamkeit üben" by a draw, and `track_id` holds the
+       answer. Looking it up again here would re-decide on every load, and a
+       reload would change the music. Card exercises only: a listening run's
+       `track_id` is what `savePlayed` credited, and the listen step reads its
+       audio through `getListenAudio` — this was null for those before too. */
     const [card, track] = await Promise.all([
       row.cardId === null ? Promise.resolve(null) : getCard(row.cardId, locale),
-      getTrackFor(row.exerciseId, row.cardId),
+      exercise.kind === 'card_based' ? getTrack(row.trackId) : Promise.resolve(null),
     ]);
 
     return { row, exercise, card, track };
@@ -889,7 +897,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     setBusy(true);
     setScanError(null);
     try {
-      const outcome = await scanCardInto(id, exercise.id, scanned, locale);
+      const outcome = await scanCardInto(id, scanned, locale);
       if (outcome.kind === 'applied') {
         onRescan();
         advance();
@@ -911,11 +919,10 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
   /**
    * ── TAKING A CARD WITHOUT SCANNING ONE — `DIGITAL-CARDS.md` section 7.3 ──
    *
-   * THE SAME WRITE, through the same pair of calls: `getTrackFor` for the
-   * recording the (exercise, card) pair plays, then `saveCard` for both
-   * columns in one update. What you drew and what it plays are decided by one
-   * act, which is `lib/scan.ts`'s argument and is unchanged by how the card
-   * was named.
+   * THE SAME WRITE: `saveCard`, which writes the card and lets the database
+   * decide which of its two pieces plays (2026-11-20). What you drew and what
+   * it plays are decided by one act, which is `lib/scan.ts`'s argument and is
+   * unchanged by how the card was named.
    *
    * `scanCardInto` is NOT reused, and that is the point of it being two lines
    * here: that function decodes a code, and there is no code. Its pure half
@@ -933,8 +940,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     setBusy(true);
     setCardError(null);
     try {
-      const track = await getTrackFor(exercise.id, chosen.id);
-      await saveCard(id, chosen.id, track?.id ?? null);
+      await saveCard(id, chosen.id);
       onRescan();
       advance();
     } catch (thrown: unknown) {
@@ -978,8 +984,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     setBusy(true);
     setCardError(null);
     try {
-      const track = await getTrackFor(exercise.id, only.id);
-      await saveCard(id, only.id, track?.id ?? null);
+      await saveCard(id, only.id);
       onRescan();
     } catch (thrown: unknown) {
       console.error('[musie] could not draw the card:', thrown);
@@ -1007,7 +1012,7 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
     setBusy(true);
     setScanError(null);
     try {
-      await saveCard(id, null, null);
+      await saveCard(id, null);
       onRescan();
     } catch (thrown: unknown) {
       console.error('[musie] could not clear the scan:', thrown);
@@ -1069,7 +1074,13 @@ function SessionRun({ data, id, urlStep, onRescan }: SessionRunProps) {
       const at = new Date().toISOString();
       await endSession(id, 'finished', at);
       if (analyticsReady()) {
-        posthog.capture('session_completed', { exercise_kind: exercise.kind });
+        /* `music_mode` — PRD A6: which of a card's two pieces this run
+           played, so relaxation and activation can be compared. Null for an
+           exercise that draws no card, and that is the honest value. */
+        posthog.capture('session_completed', {
+          exercise_kind: exercise.kind,
+          music_mode: data.row.musicMode,
+        });
       }
       posthogLog.sessionCompleted(exercise.kind);
       dispatch({ type: 'FINISH', at });
