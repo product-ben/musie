@@ -1806,8 +1806,9 @@ export const en = {
      moved but not what it moved to. */
   'exercises.deckPosition': '{name} — card {index} of {total}',
   /* ── THE SWITCH BELOW THE DOTS (Ben, 2026-11-11, D10) ──────────────────
-     The pile deals at most three of a goal's exercises; this switch, drawn
-     only when the goal has more, deals the rest. A verb phrase because it is
+     The pile deals one exercise of each kind under the goal (the first three
+     until 2026-11-20); this switch, drawn only when the goal has more, deals
+     the rest. A verb phrase because it is
      a control, and *all* rather than a number because the number changes
      with the goal and the switch does not need it. Not remembered: it resets
      when the goal changes and on reload (A2). */

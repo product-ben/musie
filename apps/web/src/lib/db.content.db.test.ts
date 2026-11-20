@@ -166,6 +166,45 @@ describe('goals · three on offer, one retired, and nothing is stranded', () => 
     const goals = [...new Set((pairs ?? []).map((pair) => pair.goal_id))];
     expect(goals.filter((id) => (startableBy.get(id) ?? 0) === 0)).toEqual([]);
   }, 30_000);
+
+  /* ── EACH GOAL ITS OWN ORDER (Ben, 2026-11-20) ──────────────────────────
+     `exercise_goals.sort`, read from a SIGNED-IN client because that is who
+     reads it: `getExercises()` embeds it, and the library orders every goal
+     by it. 1 to n under each goal — the unique constraint forbids a repeat,
+     and nothing but this forbids a gap. */
+  it('gives every goal its own order, 1 to n', async () => {
+    const { client } = await testUser();
+    const { data, error } = await client.from('exercise_goals').select('goal_id, sort');
+
+    expect(error).toBeNull();
+    const byGoal = new Map<string, number[]>();
+    for (const row of data ?? []) {
+      byGoal.set(row.goal_id, [...(byGoal.get(row.goal_id) ?? []), row.sort]);
+    }
+    expect(byGoal.size).toBeGreaterThan(0);
+    for (const [goal, places] of byGoal) {
+      expect({ goal, places: [...places].sort((a, b) => a - b) })
+        .toEqual({ goal, places: places.map((_, index) => index + 1) });
+    }
+  }, 30_000);
+
+  /* D10 and D11: the card exercises joined *entspannen* LAST, so the goal
+     keeps the order it had and its pile ends with the cards. */
+  it('closes entspannen with Achtsame Pause and Freie Bahn', async () => {
+    const { client } = await testUser();
+    const { data, error } = await client
+      .from('exercise_goals')
+      .select('exercise_id, sort')
+      .eq('goal_id', 'relax')
+      .order('sort');
+
+    expect(error).toBeNull();
+    expect((data ?? []).map((row) => row.exercise_id)).toEqual([
+      'breathing-score', 'sound-journey', 'body-scan-soundwalk',
+      'kalimba', 'marimba', 'harp',
+      'mindfulness-cards', 'free-rein',
+    ]);
+  }, 30_000);
 });
 
 describe('tracks · the ids are opaque, and that is the security model', () => {

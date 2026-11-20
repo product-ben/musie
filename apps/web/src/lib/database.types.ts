@@ -373,14 +373,17 @@ export type Database = {
         Row: {
           exercise_id: string
           goal_id: string
+          sort: number
         }
         Insert: {
           exercise_id: string
           goal_id: string
+          sort: number
         }
         Update: {
           exercise_id?: string
           goal_id?: string
+          sort?: number
         }
         Relationships: [
           {

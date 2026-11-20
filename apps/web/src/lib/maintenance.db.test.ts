@@ -560,11 +560,18 @@ describe('a goal says which music it plays', () => {
     ]);
   });
 
-  it('offers Achtsame Pause under Energie sammeln now (D9)', async () => {
+  it('offers Achtsame Pause under every goal, Energie sammeln (D9) and entspannen (D10)', async () => {
     const { client } = await testUser();
     const { data } = await client.from('exercise_goals')
       .select('goal_id').eq('exercise_id', 'mindfulness-cards').order('goal_id');
-    expect((data ?? []).map((row) => row.goal_id)).toEqual(['mindfulness', 'wake-up']);
+    expect((data ?? []).map((row) => row.goal_id)).toEqual(['mindfulness', 'relax', 'wake-up']);
+  });
+
+  it('offers Freie Bahn under every goal too, entspannen since D10', async () => {
+    const { client } = await testUser();
+    const { data } = await client.from('exercise_goals')
+      .select('goal_id').eq('exercise_id', 'free-rein').order('goal_id');
+    expect((data ?? []).map((row) => row.goal_id)).toEqual(['mindfulness', 'relax', 'wake-up']);
   });
 });
 
