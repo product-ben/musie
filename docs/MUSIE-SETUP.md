@@ -364,20 +364,30 @@ Resend keeps account data, logs and metadata in the **US**; the EU region
 changes routing, not storage. Accepted on 2026-10-20 for a twenty-person beta,
 to be revisited before the privacy copy is signed off.
 
-### The addresses
+### The addresses, read back on 2026-11-23
 
-| Address | Forwards to | State on 2026-11-23 |
+| Address | Forwards to | Since |
 |---|---|---|
-| `hallo@musie.org` | not read back | The sender of the sign-in codes, and testers reply to it. Keep it |
-| `bl@musie.org` | `lipinskib@gmail.com` | Decided, not yet created or checked. The Impressum and the privacy page name it (`apps/web/src/i18n/`), so it must never stop receiving |
-| `lvd@musie.org` | `lucia.vondamnitz@gmail.com` | Decided, not yet created |
-| `hi@musie.org` | `lipinskib@gmail.com`, and from there to `lucia.vondamnitz@gmail.com` by a Gmail filter (below) | Decided, not yet created |
+| `hallo@musie.org` | `lipinskib@gmail.com` | 2026-11-04. The sender of the sign-in codes, and testers reply to it |
+| `bl@musie.org` | `lipinskib@gmail.com` | 2026-11-04. The Impressum and the privacy page name it (`apps/web/src/i18n/`), so it must never stop receiving |
+| `hi@musie.org` | `lipinskib@gmail.com`, and from there to `lucia.vondamnitz@gmail.com` by a Gmail filter (below) | 2026-11-23. The filter is set up by hand and cannot be read back from here |
+| `lvd@musie.org` | `lucia.vondamnitz@gmail.com` | 2026-11-23 |
+
+**The catch-all is off**, so mail to any other address at `musie.org` is
+dropped. A new address is a new rule.
 
 **Every destination is verified once.** Cloudflare mails it a link, and nothing
-is forwarded there until somebody clicks it — Lucia clicks hers. Cloudflare
-compares strings, so `lipinskib@gmail.com` and `lipinskib@googlemail.com` are
-two destinations to it, although Google delivers both to one inbox. It is the
-same trap as the allowlist in `supabase/functions/content-admin/index.ts`.
+is forwarded there until somebody clicks it. Both destinations above were
+verified on 2026-11-04. Cloudflare compares strings, so `lipinskib@gmail.com`
+and `lipinskib@googlemail.com` are two destinations to it, although Google
+delivers both to one inbox. It is the same trap as the allowlist in
+`supabase/functions/content-admin/index.ts`.
+
+**From the terminal**, after `npx wrangler login`:
+`npx wrangler email routing rules list musie.org` reads the rules back, and
+`rules create`, `addresses list` and `settings` do the rest (open beta in
+wrangler 4.136). That is how the table above was read and the last two rows
+were created.
 
 **On 2026-11-04 the root had no MX record at all**, so nothing sent to
 `hallo@` or `bl@` arrived, whatever the routing rules said. The DNS table below
